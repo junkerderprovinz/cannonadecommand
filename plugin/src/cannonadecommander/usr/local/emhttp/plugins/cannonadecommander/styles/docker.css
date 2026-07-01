@@ -1,51 +1,60 @@
-/* CannonadeCommander - Docker-tab integration. IBM-Carbon dark, monochrome
-   except the orange action accent and the state badges. */
+/* CannonadeCommander - modern card-style Docker manager. IBM-Carbon dark. */
 
-:root {
+.cc-root {
   --cc-bg: #161616;
   --cc-bg2: #1e1e1e;
+  --cc-bg3: #262626;
   --cc-line: #2a2a2a;
   --cc-txt: #e6e6e6;
   --cc-dim: #8a8a8a;
   --cc-accent: #ff8c2f;
+  color: var(--cc-txt);
+  font: 13px/1.45 "Segoe UI", system-ui, sans-serif;
+  margin: 10px 0 18px;
 }
 
-/* ── toolbar strip above the native container list ── */
+/* ── toolbar ── */
 .cc-bar {
-  display: flex; align-items: center; gap: 12px;
-  background: var(--cc-bg); color: var(--cc-txt);
-  border: 1px solid var(--cc-line); border-radius: 8px;
-  padding: 8px 14px; margin: 10px 0;
-  font: 13px/1.4 "Segoe UI", system-ui, sans-serif;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--cc-bg); border: 1px solid var(--cc-line);
+  border-radius: 8px; padding: 9px 14px; margin-bottom: 12px;
 }
 .cc-bar .cc-title { font-weight: 600; letter-spacing: .2px; }
-.cc-bar .cc-status { font-size: 12px; }
-.cc-bar .cc-spacer { flex: 1; }
-.cc-ok-text { color: #3fae6a; }
+.cc-status { font-size: 12px; }
+.cc-spacer { flex: 1; }
+.cc-ok-text { color: #52c17a; }
 .cc-bad-text { color: #d9534f; }
-
+.cc-filter {
+  background: var(--cc-bg2); color: var(--cc-txt); border: 1px solid var(--cc-line);
+  border-radius: 6px; padding: 5px 10px; font-size: 12px; width: 160px;
+}
 .cc-btn {
-  background: transparent; color: var(--cc-accent);
-  border: 1px solid var(--cc-accent); border-radius: 4px;
-  padding: 5px 12px; font-size: 12px; cursor: pointer;
+  background: transparent; color: var(--cc-accent); border: 1px solid var(--cc-accent);
+  border-radius: 5px; padding: 5px 12px; font-size: 12px; cursor: pointer;
   transition: background .12s, color .12s;
 }
 .cc-btn:hover { background: var(--cc-accent); color: #fff; }
 .cc-btn-primary { font-weight: 600; }
 
-/* ── per-row injected control (state badge + chip + last-run pill) ── */
-.cc-cell {
-  display: inline-flex; align-items: center; gap: 8px;
-  flex-wrap: wrap; margin-top: 3px;
-  font: 12px/1.4 "Segoe UI", system-ui, sans-serif;
+/* ── card grid ── */
+.cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; }
+
+.cc-card {
+  background: var(--cc-bg2); border: 1px solid var(--cc-line); border-radius: 10px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;
+  transition: border-color .12s, transform .12s, box-shadow .12s;
 }
+.cc-card:hover { border-color: #3a3a3a; transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0,0,0,.35); }
+
+.cc-card-head { display: flex; align-items: center; gap: 10px; }
+.cc-card-ico { width: 34px; height: 34px; border-radius: 7px; object-fit: contain; background: var(--cc-bg3); flex: none; }
+.cc-card-ico-ph { background: var(--cc-bg3); }
+.cc-card-name { flex: 1; min-width: 0; }
+.cc-card-title { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-card-img { color: var(--cc-dim); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* state badges (BombVault-style pills) */
-.cc-badge {
-  display: inline-block; padding: 2px 9px; border-radius: 999px;
-  font-size: 11px; font-weight: 600; text-transform: capitalize;
-  border: 1px solid transparent; white-space: nowrap;
-}
+.cc-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: capitalize; border: 1px solid transparent; white-space: nowrap; flex: none; }
 .cc-badge-running    { color: #52c17a; background: rgba(63,174,106,.14); border-color: rgba(63,174,106,.35); }
 .cc-badge-exited     { color: #b0b0b0; background: rgba(140,140,140,.12); border-color: rgba(140,140,140,.30); }
 .cc-badge-created    { color: #6ea8fe; background: rgba(110,168,254,.12); border-color: rgba(110,168,254,.30); }
@@ -53,50 +62,54 @@
 .cc-badge-restarting { color: #d6a243; background: rgba(214,162,67,.14);  border-color: rgba(214,162,67,.35); }
 .cc-badge-dead       { color: #d9534f; background: rgba(217,83,79,.14);   border-color: rgba(217,83,79,.35); }
 .cc-badge-unknown    { color: #9a9a9a; background: rgba(140,140,140,.10); border-color: rgba(140,140,140,.25); }
-.cc-badge-alert      { color: #d9534f; background: rgba(217,83,79,.14); border-color: rgba(217,83,79,.40); }
+.cc-badge-alert      { color: #d9534f; background: rgba(217,83,79,.16);   border-color: rgba(217,83,79,.45); }
 
-/* the chain chip that opens the per-container editor */
+/* live gauges */
+.cc-card-stats { display: flex; flex-direction: column; gap: 6px; }
+.cc-stat { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+.cc-stat-lbl { color: var(--cc-dim); width: 30px; flex: none; }
+.cc-stat-val { color: var(--cc-dim); margin-left: auto; white-space: nowrap; }
+.cc-gauge { flex: 1; height: 6px; background: var(--cc-bg3); border-radius: 999px; overflow: hidden; }
+.cc-gauge-fill { height: 100%; background: #3fae6a; border-radius: 999px; transition: width .4s; }
+.cc-gauge-fill.cc-hot { background: #d9534f; }
+.cc-dim { color: var(--cc-dim); }
+
+/* actions row */
+.cc-card-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cc-abtn {
+  background: var(--cc-bg3); color: var(--cc-txt); border: 1px solid var(--cc-line);
+  border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; transition: background .12s;
+}
+.cc-abtn:hover { background: #333; }
+.cc-abtn-primary { color: #52c17a; border-color: rgba(63,174,106,.4); }
+
 .cc-chip {
-  display: inline-flex; align-items: center; gap: 5px;
+  display: inline-flex; align-items: center; gap: 5px; margin-left: auto;
   color: var(--cc-dim); text-decoration: none; cursor: pointer;
-  border: 1px solid var(--cc-line); border-radius: 999px; padding: 1px 9px;
+  border: 1px solid var(--cc-line); border-radius: 999px; padding: 3px 10px; font-size: 12px;
 }
 .cc-chip:hover { color: var(--cc-accent); border-color: var(--cc-accent); }
-.cc-chip .cc-ico { font-size: 12px; }
 .cc-chip-on { color: var(--cc-accent); border-color: rgba(255,140,47,.5); }
 
-/* last-run pill */
-.cc-pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; border: 1px solid; }
-.cc-pill-ready    { color: #3fae6a; border-color: #2f6b46; }
+.cc-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.cc-pill-ready { color: #52c17a; border-color: #2f6b46; }
 .cc-pill-degraded { color: #d6a243; border-color: #7a6028; }
-.cc-pill-failed   { color: #d9534f; border-color: #7a3331; }
-.cc-pill-skipped  { color: #9a9a9a; border-color: #444; }
+.cc-pill-failed { color: #d9534f; border-color: #7a3331; }
+.cc-pill-skipped { color: #9a9a9a; border-color: #444; }
 
 /* ── per-container editor popover ── */
 .cc-pop {
   position: absolute; z-index: 99999; width: 340px; max-width: 92vw;
-  background: var(--cc-bg); color: var(--cc-txt);
-  border: 1px solid #525252; border-radius: 10px;
-  box-shadow: 0 14px 40px rgba(0,0,0,.55);
+  background: var(--cc-bg, #161616); color: var(--cc-txt, #e6e6e6);
+  border: 1px solid #525252; border-radius: 10px; box-shadow: 0 14px 40px rgba(0,0,0,.55);
   font: 13px/1.5 "Segoe UI", system-ui, sans-serif;
 }
-.cc-pop-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--cc-line); }
-.cc-pop-x { cursor: pointer; color: var(--cc-dim); }
-.cc-pop-x:hover { color: var(--cc-txt); }
+.cc-pop-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #2a2a2a; }
+.cc-pop-x { cursor: pointer; color: #8a8a8a; }
+.cc-pop-x:hover { color: #e6e6e6; }
 .cc-pop-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }
-.cc-pop-lbl { color: var(--cc-dim); font-size: 12px; width: 118px; flex: none; }
+.cc-pop-lbl { color: #8a8a8a; font-size: 12px; width: 100px; flex: none; }
 .cc-pop-body.cc-dis { opacity: .4; pointer-events: none; }
-.cc-pop-foot { padding: 9px 14px; border-top: 1px solid var(--cc-line); color: var(--cc-dim); font-size: 11px; }
-.cc-in {
-  flex: 1; background: var(--cc-bg2); color: var(--cc-txt);
-  border: 1px solid var(--cc-line); border-radius: 4px; padding: 4px 6px; font-size: 12px;
-}
+.cc-pop-foot { padding: 9px 14px; border-top: 1px solid #2a2a2a; color: #8a8a8a; font-size: 11px; }
+.cc-in { flex: 1; background: #1e1e1e; color: #e6e6e6; border: 1px solid #2a2a2a; border-radius: 4px; padding: 4px 6px; font-size: 12px; }
 .cc-port { flex: none; width: 70px; margin-left: 6px; }
-
-/* ── fallback self-contained panel (only when native rows aren't found) ── */
-.cc-panel { background: var(--cc-bg); border: 1px solid var(--cc-line); border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
-.cc-table { width: 100%; border-collapse: collapse; font: 13px/1.5 "Segoe UI", system-ui, sans-serif; color: var(--cc-txt); }
-.cc-table th { text-align: left; color: var(--cc-dim); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding: 6px 8px; border-bottom: 1px solid var(--cc-line); }
-.cc-table td { padding: 6px 8px; border-bottom: 1px solid var(--cc-line); }
-.cc-name { color: var(--cc-txt); }
-.cc-dim { color: var(--cc-dim); }

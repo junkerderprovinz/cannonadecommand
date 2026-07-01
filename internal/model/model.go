@@ -92,3 +92,11 @@ type RunResult struct {
 	Nodes  []NodeResult `json:"nodes"`
 	Error  string       `json:"error,omitempty"` // set only when the plan itself is invalid
 }
+
+// Stats is a one-shot resource snapshot for a container, for the live card gauges.
+type Stats struct {
+	CPUPercent float64 `json:"cpu_percent"`
+	MemUsed    uint64  `json:"mem_used"`
+	MemLimit   uint64  `json:"mem_limit"`
+	MemPercent float64 `json:"mem_percent"`
+}

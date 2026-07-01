@@ -1,34 +1,31 @@
-/* CannonadeCommander - Docker-tab integration.
+/* CannonadeCommander - a modern, card-style Docker manager for Unraid.
  *
- * Injects into Unraid's NATIVE Docker container list: each row gets a state
- * badge and a "chain" chip that opens a compact editor for that container's
- * start dependencies, readiness probe and failure policy. A slim toolbar above
- * the list saves the plan and fires it in order. If the native rows can't be
- * found (unknown skin), it falls back to a self-contained panel.
- *
- * The browser only ever talks to a same-origin PHP proxy; it never touches the
- * Docker socket.
+ * Replaces Unraid's dated container table with a clean card grid rendered from
+ * the host supervisor: per container a state badge, live CPU/RAM gauges, health,
+ * lifecycle actions (start/stop/restart/pause), and the dependency-ordered,
+ * health-gated start plan. The native table is hidden (kept in the DOM so its
+ * container icons can be reused). The browser only ever talks to a same-origin
+ * PHP proxy; it never touches the Docker socket.
  */
 (function () {
   "use strict";
 
   var PROXY = "/plugins/cannonadecommander/server/api.php";
-  var MARK = "data-cc";
   var PROBES = ["health", "running", "tcp"];
   var POLICIES = ["abort", "continue", "degrade"];
-  var UPDATE_PHRASES = [
-    "aktualisierung", "auf dem neu", "nicht verf", "wird gepr", "up-to-date",
-    "up to date", "update ready", "apply update", "rebuild ready",
-  ];
 
-  var containers = [];       // from /api/state
-  var containerNames = [];   // sorted names, for the datalist
-  var workingPlan = {};      // name -> node (the editable plan)
-  var lastRun = {};          // name -> run result
+  var containers = [];
+  var containerNames = [];
+  var stats = {};
+  var workingPlan = {};
+  var lastRun = {};
+  var iconCache = {};
+  var filterText = "";
   var statusEl = null;
+  var gridEl = null;
   var openPop = null;
 
-  // ─────────────────────────────────────────── api + helpers
+  // ───────────────────────────────── api + helpers
   function api(method, path, body) {
     var opts = { method: method, headers: { Accept: "application/json" } };
     if (body != null) {
@@ -51,64 +48,39 @@
     return n;
   }
   function norm(s) { return String(s || "").trim().toLowerCase(); }
-
-  function stateBadge(c) {
-    var s = (c && c.state) || "unknown";
-    var b = el("span", "cc-badge cc-badge-" + s, s);
-    if (c && c.health === "unhealthy") { b.classList.add("cc-badge-alert"); b.textContent = s + " ✕"; }
-    else if (c && c.health === "starting") { b.textContent = s + " …"; }
-    return b;
+  function humanBytes(b) {
+    if (!b) return "0";
+    var u = ["B", "K", "M", "G", "T"], i = 0, n = b;
+    while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+    return (n >= 100 ? Math.round(n) : Math.round(n * 10) / 10) + u[i];
   }
 
-  // ─────────────────────────────────────────── native row finder (ShipLog, proven)
-  function isFolderHeader(tr) {
-    return !!(tr.classList.contains("folder") ||
-      tr.querySelector(":scope > td.folder-name, :scope > td.folder-update"));
-  }
-  function findRows() {
-    var candidates = [
-      "#docker_list tr.sortable, #docker_list tr.folder-element",
-      "#docker_list > tr",
-      "table#docker_containers tbody tr",
-      "table.tablesorter tbody tr",
-      "div.tabs table tbody tr",
-      "table tbody tr",
-    ];
-    for (var i = 0; i < candidates.length; i++) {
-      var rows = Array.prototype.slice.call(document.querySelectorAll(candidates[i])).filter(function (tr) {
-        return !isFolderHeader(tr) &&
-          (tr.querySelector("td.ct-name, td.updatecolumn") ||
-            (tr.querySelector("img") && tr.textContent.trim().length > 1));
-      });
-      if (rows.length) return rows;
+  // Grab the container's icon from Unraid's (now hidden) native row.
+  function iconFor(name) {
+    if (iconCache[name] !== undefined) return iconCache[name];
+    var src = "";
+    var row = document.getElementById("ct-" + name);
+    var img = row && row.querySelector("img");
+    if (!img) {
+      var all = document.querySelectorAll("#docker_containers img, #docker_list img");
+      for (var i = 0; i < all.length; i++) {
+        var tr = all[i].closest("tr");
+        if (tr && norm(rowName(tr)) === norm(name)) { img = all[i]; break; }
+      }
     }
-    return [];
+    if (img) src = img.getAttribute("src") || "";
+    iconCache[name] = src;
+    return src;
   }
   function rowName(tr) {
     var appname = tr.querySelector("td.ct-name .appname");
-    if (appname && appname.textContent.trim()) return appname.textContent.trim().slice(0, 60);
+    if (appname && appname.textContent.trim()) return appname.textContent.trim();
     var id = tr.id || "";
-    if (/^ct-/.test(id)) return id.slice(3).slice(0, 60);
-    var img = tr.querySelector("img");
-    var cell = img ? (img.closest("td") || tr) : tr;
-    var a = cell.querySelector("a");
-    var name = a && a.textContent.trim()
-      ? a.textContent.trim()
-      : (cell.textContent || tr.textContent).trim().split("\n")[0].trim();
-    return name.slice(0, 60);
-  }
-  function findUpdateCell(tr) {
-    var direct = tr.querySelector("td.updatecolumn:not(.folder-update)");
-    if (direct) return direct;
-    var cells = Array.prototype.slice.call(tr.querySelectorAll("td"));
-    for (var i = 0; i < cells.length; i++) {
-      var td = cells[i], txt = td.textContent.toLowerCase();
-      for (var j = 0; j < UPDATE_PHRASES.length; j++) if (txt.indexOf(UPDATE_PHRASES[j]) >= 0) return td;
-    }
-    return cells[cells.length - 1] || tr;
+    if (/^ct-/.test(id)) return id.slice(3);
+    return "";
   }
 
-  // ─────────────────────────────────────────── data
+  // ───────────────────────────────── data
   function indexState(state) {
     containers = (state && state.containers) || [];
     containerNames = containers.map(function (c) { return c.name; }).sort();
@@ -117,140 +89,197 @@
     lastRun = {};
     if (state && state.last_run && state.last_run.nodes) state.last_run.nodes.forEach(function (r) { lastRun[r.name] = r; });
   }
-  function containerByName(name) {
-    var k = norm(name);
-    for (var i = 0; i < containers.length; i++) if (norm(containers[i].name) === k) return containers[i];
-    return null;
-  }
-  function depsSummary(node) {
-    if (node && node.after && node.after.length) return "after " + node.after.join(", ");
-    return "in plan";
+
+  // Hide Unraid's native container table; keep it in the DOM for its icons.
+  function hideNative() {
+    ["#docker_containers", "table#docker_containers", "#docker_list"].forEach(function (sel) {
+      var n = document.querySelector(sel);
+      var t = n && (n.tagName === "TABLE" ? n : n.closest("table"));
+      if (t) t.style.display = "none";
+    });
   }
 
-  // ─────────────────────────────────────────── toolbar
-  function renderToolbar(mount) {
-    mount.className = "cc-bar";
+  // ───────────────────────────────── badges + gauges
+  function stateBadge(c) {
+    var s = (c && c.state) || "unknown";
+    var b = el("span", "cc-badge cc-badge-" + s, s);
+    if (c && c.health === "unhealthy") { b.classList.add("cc-badge-alert"); b.textContent = s + " ✕"; }
+    else if (c && c.health === "starting") b.textContent = s + " …";
+    return b;
+  }
+  function gauge(label, pct, right) {
+    var wrap = el("div", "cc-stat");
+    wrap.appendChild(el("span", "cc-stat-lbl", label));
+    var bar = el("div", "cc-gauge");
+    var fill = el("div", "cc-gauge-fill" + (pct >= 90 ? " cc-hot" : ""));
+    fill.style.width = Math.max(0, Math.min(100, pct)) + "%";
+    bar.appendChild(fill);
+    wrap.appendChild(bar);
+    wrap.appendChild(el("span", "cc-stat-val", right));
+    return wrap;
+  }
+
+  // ───────────────────────────────── actions
+  function doAction(name, action) {
+    flash(action + " " + name + "…");
+    api("POST", "action", { name: name, action: action })
+      .then(function () { return load(); })
+      .then(function () { flash("done"); })
+      .catch(function (e) { flash("Error: " + e.message, true); });
+  }
+  function actionBtn(label, name, action, primary) {
+    var b = el("button", "cc-abtn" + (primary ? " cc-abtn-primary" : ""), label);
+    b.addEventListener("click", function (e) { e.stopPropagation(); doAction(name, action); });
+    return b;
+  }
+
+  // ───────────────────────────────── card
+  function card(c) {
+    var wrap = el("div", "cc-card");
+    wrap.dataset.name = c.name;
+
+    var head = el("div", "cc-card-head");
+    var ico = iconFor(c.name);
+    if (ico) { var im = el("img", "cc-card-ico"); im.src = ico; im.onerror = function () { this.style.visibility = "hidden"; }; head.appendChild(im); }
+    else head.appendChild(el("div", "cc-card-ico cc-card-ico-ph"));
+    var nameBox = el("div", "cc-card-name");
+    nameBox.appendChild(el("div", "cc-card-title", c.name));
+    nameBox.appendChild(el("div", "cc-card-img", c.image || ""));
+    head.appendChild(nameBox);
+    head.appendChild(stateBadge(c));
+    wrap.appendChild(head);
+
+    var st = stats[c.name];
+    var statsBox = el("div", "cc-card-stats");
+    if (st && c.state === "running") {
+      statsBox.appendChild(gauge("CPU", st.cpu_percent, (st.cpu_percent || 0) + "%"));
+      statsBox.appendChild(gauge("RAM", st.mem_percent, humanBytes(st.mem_used) + " / " + humanBytes(st.mem_limit)));
+    } else {
+      statsBox.appendChild(el("div", "cc-stat cc-dim", c.state === "running" ? "…" : "not running"));
+    }
+    wrap.appendChild(statsBox);
+
+    var actions = el("div", "cc-card-actions");
+    if (c.state === "running") {
+      actions.appendChild(actionBtn("Stop", c.name, "stop"));
+      actions.appendChild(actionBtn("Restart", c.name, "restart"));
+      actions.appendChild(actionBtn("Pause", c.name, "pause"));
+    } else if (c.state === "paused") {
+      actions.appendChild(actionBtn("Resume", c.name, "unpause", true));
+      actions.appendChild(actionBtn("Stop", c.name, "stop"));
+    } else {
+      actions.appendChild(actionBtn("Start", c.name, "start", true));
+    }
+    var node = workingPlan[c.name];
+    var chip = el("a", "cc-chip" + (node ? " cc-chip-on" : ""));
+    chip.href = "#";
+    chip.innerHTML = '<span class="cc-ico">⛓</span><span class="cc-chip-txt"></span>';
+    chip.querySelector(".cc-chip-txt").textContent = node ? (node.after && node.after.length ? "after " + node.after.join(", ") : "in plan") : "plan";
+    chip.title = "start order for " + c.name;
+    chip.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openEditor(chip, c.name); });
+    actions.appendChild(chip);
+
+    var lr = lastRun[c.name];
+    if (lr) { var pill = el("span", "cc-pill cc-pill-" + lr.state, lr.state); pill.title = lr.reason || ""; actions.appendChild(pill); }
+    wrap.appendChild(actions);
+
+    if (filterText && norm(c.name).indexOf(filterText) < 0 && norm(c.image).indexOf(filterText) < 0) wrap.style.display = "none";
+    return wrap;
+  }
+
+  // ───────────────────────────────── render
+  var mount;
+  function render(state) {
+    if (state && state.docker_error) flash("engine up · docker: " + state.docker_error, true);
+    mount.className = "cc-root";
     mount.innerHTML = "";
-    mount.appendChild(el("span", "cc-title", "CannonadeCommander"));
+
+    var bar = el("div", "cc-bar");
+    bar.appendChild(el("span", "cc-title", "CannonadeCommander"));
     statusEl = el("span", "cc-status cc-ok-text", "engine up · " + containers.length + " containers");
-    mount.appendChild(statusEl);
-    mount.appendChild(el("span", "cc-spacer"));
+    bar.appendChild(statusEl);
+    bar.appendChild(el("span", "cc-spacer"));
+    var filter = el("input", "cc-filter"); filter.type = "text"; filter.placeholder = "filter…"; filter.value = filterText;
+    filter.addEventListener("input", function () { filterText = norm(filter.value); applyFilter(); });
+    bar.appendChild(filter);
     var save = el("button", "cc-btn", "Save plan");
     var fire = el("button", "cc-btn cc-btn-primary", "Start in order");
     save.addEventListener("click", function () { savePlan(false); });
     fire.addEventListener("click", function () { savePlan(true); });
-    mount.appendChild(save);
-    mount.appendChild(fire);
+    bar.appendChild(save); bar.appendChild(fire);
+    mount.appendChild(bar);
+
+    gridEl = el("div", "cc-grid");
+    containers.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).forEach(function (c) { gridEl.appendChild(card(c)); });
+    mount.appendChild(gridEl);
 
     var dl = document.getElementById("cc-names");
-    if (!dl) {
-      dl = el("datalist"); dl.id = "cc-names";
-      document.body.appendChild(dl);
-    }
+    if (!dl) { dl = el("datalist"); dl.id = "cc-names"; document.body.appendChild(dl); }
     dl.innerHTML = "";
     containerNames.forEach(function (n) { var o = el("option"); o.value = n; dl.appendChild(o); });
   }
+  function applyFilter() {
+    if (!gridEl) return;
+    Array.prototype.slice.call(gridEl.children).forEach(function (cd) {
+      var n = norm(cd.dataset.name);
+      cd.style.display = (!filterText || n.indexOf(filterText) >= 0) ? "" : "none";
+    });
+  }
+  function refreshStats() {
+    api("GET", "stats").then(function (m) {
+      stats = m || {};
+      if (!gridEl) return;
+      Array.prototype.slice.call(gridEl.children).forEach(function (cd) {
+        var name = cd.dataset.name, st = stats[name];
+        var box = cd.querySelector(".cc-card-stats");
+        if (!box || !st) return;
+        var fills = cd.querySelectorAll(".cc-gauge-fill");
+        var vals = cd.querySelectorAll(".cc-stat-val");
+        if (fills[0]) fills[0].style.width = Math.min(100, st.cpu_percent) + "%";
+        if (vals[0]) vals[0].textContent = (st.cpu_percent || 0) + "%";
+        if (fills[1]) fills[1].style.width = Math.min(100, st.mem_percent) + "%";
+        if (vals[1]) vals[1].textContent = humanBytes(st.mem_used) + " / " + humanBytes(st.mem_limit);
+      });
+    }).catch(function () {});
+  }
 
-  // ─────────────────────────────────────────── per-row injection
-  function tagRows() {
-    var rows = findRows(), n = 0;
-    rows.forEach(function (tr) {
-      var cell = findUpdateCell(tr);
-      if (!cell || cell.getAttribute(MARK)) return;
-      var name = rowName(tr);
-      var c = containerByName(name);
-      if (!c) return; // engine doesn't know this row (rare) → leave native row untouched
-      cell.setAttribute(MARK, "1");
-      cell.appendChild(buildRowControl(name, c));
-      n++;
-    });
-    return n;
-  }
-  function buildRowControl(name, c) {
-    var box = el("div", "cc-cell");
-    box.appendChild(stateBadge(c));
-    var node = workingPlan[name];
-    var chip = el("a", "cc-chip" + (node ? " cc-chip-on" : ""));
-    chip.href = "#";
-    chip.innerHTML = '<span class="cc-ico">⛓</span><span class="cc-chip-txt"></span>';
-    chip.querySelector(".cc-chip-txt").textContent = node ? depsSummary(node) : "plan";
-    chip.title = "CannonadeCommander: start order for " + name;
-    chip.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openEditor(chip, name); });
-    box.appendChild(chip);
-    var lr = lastRun[name];
-    if (lr) {
-      var pill = el("span", "cc-pill cc-pill-" + lr.state, lr.state);
-      pill.title = lr.reason || "";
-      box.appendChild(pill);
-    }
-    return box;
-  }
-  // Clear our injected controls so a refresh re-renders badges + last-run.
-  function untag() {
-    Array.prototype.slice.call(document.querySelectorAll("[" + MARK + "]")).forEach(function (cell) {
-      cell.removeAttribute(MARK);
-      var c = cell.querySelector(".cc-cell");
-      if (c) c.remove();
-    });
-  }
+  // ───────────────────────────────── plan editor popover
+  function closePop() { if (openPop) { openPop.remove(); openPop = null; } }
   function refreshChip(chip, name) {
     var node = workingPlan[name];
     chip.classList.toggle("cc-chip-on", !!node);
-    chip.querySelector(".cc-chip-txt").textContent = node ? depsSummary(node) : "plan";
+    chip.querySelector(".cc-chip-txt").textContent = node ? (node.after && node.after.length ? "after " + node.after.join(", ") : "in plan") : "plan";
   }
-
-  // ─────────────────────────────────────────── per-container editor popover
-  function closePop() { if (openPop) { openPop.remove(); openPop = null; } }
-
   function openEditor(anchor, name) {
     closePop();
     var existing = workingPlan[name];
     var node = existing || { name: name, after: [], probe: { kind: "health" }, policy: "abort" };
-
     var pop = el("div", "cc-pop");
-    var head = el("div", "cc-pop-head");
-    head.appendChild(el("b", null, name));
-    var x = el("span", "cc-pop-x", "✕");
-    x.addEventListener("click", closePop);
-    head.appendChild(x);
-    pop.appendChild(head);
+    var head = el("div", "cc-pop-head"); head.appendChild(el("b", null, name));
+    var x = el("span", "cc-pop-x", "✕"); x.addEventListener("click", closePop); head.appendChild(x); pop.appendChild(head);
 
     var manageRow = el("label", "cc-pop-row");
     var manage = el("input"); manage.type = "checkbox"; manage.checked = !!existing;
-    manageRow.appendChild(manage);
-    manageRow.appendChild(el("span", null, " Manage this container in the start plan"));
-    pop.appendChild(manageRow);
+    manageRow.appendChild(manage); manageRow.appendChild(el("span", null, " Manage in the start plan")); pop.appendChild(manageRow);
 
     var body = el("div", "cc-pop-body" + (existing ? "" : " cc-dis"));
+    var afterRow = el("div", "cc-pop-row"); afterRow.appendChild(el("label", "cc-pop-lbl", "Depends on"));
+    var after = el("input", "cc-in"); after.type = "text"; after.setAttribute("list", "cc-names"); after.placeholder = "comma-separated";
+    after.value = (node.after || []).join(", "); afterRow.appendChild(after); body.appendChild(afterRow);
 
-    var afterRow = el("div", "cc-pop-row");
-    afterRow.appendChild(el("label", "cc-pop-lbl", "Depends on (after)"));
-    var after = el("input", "cc-in"); after.type = "text"; after.setAttribute("list", "cc-names");
-    after.placeholder = "comma-separated container names";
-    after.value = (node.after || []).join(", ");
-    afterRow.appendChild(after);
-    body.appendChild(afterRow);
-
-    var probeRow = el("div", "cc-pop-row");
-    probeRow.appendChild(el("label", "cc-pop-lbl", "Ready when"));
+    var probeRow = el("div", "cc-pop-row"); probeRow.appendChild(el("label", "cc-pop-lbl", "Ready when"));
     var probe = el("select", "cc-in");
     PROBES.forEach(function (p) { var o = el("option", null, p); o.value = p; if (node.probe && node.probe.kind === p) o.selected = true; probe.appendChild(o); });
-    var port = el("input", "cc-in cc-port"); port.type = "number"; port.placeholder = "port";
-    port.value = (node.probe && node.probe.port) ? node.probe.port : "";
-    var syncPort = function () { port.style.display = probe.value === "tcp" ? "" : "none"; };
-    syncPort();
-    probeRow.appendChild(probe); probeRow.appendChild(port);
-    body.appendChild(probeRow);
+    var port = el("input", "cc-in cc-port"); port.type = "number"; port.placeholder = "port"; port.value = (node.probe && node.probe.port) ? node.probe.port : "";
+    var syncPort = function () { port.style.display = probe.value === "tcp" ? "" : "none"; }; syncPort();
+    probeRow.appendChild(probe); probeRow.appendChild(port); body.appendChild(probeRow);
 
-    var polRow = el("div", "cc-pop-row");
-    polRow.appendChild(el("label", "cc-pop-lbl", "On fail"));
+    var polRow = el("div", "cc-pop-row"); polRow.appendChild(el("label", "cc-pop-lbl", "On fail"));
     var pol = el("select", "cc-in");
     POLICIES.forEach(function (p) { var o = el("option", null, p); o.value = p; if (node.policy === p) o.selected = true; pol.appendChild(o); });
-    polRow.appendChild(pol);
-    body.appendChild(polRow);
-
+    polRow.appendChild(pol); body.appendChild(polRow);
     pop.appendChild(body);
-    pop.appendChild(el("div", "cc-pop-foot", "abort skips dependents · continue/degrade start them anyway. Changes apply on Save plan."));
+    pop.appendChild(el("div", "cc-pop-foot", "abort skips dependents · continue/degrade start them anyway. Save plan to persist."));
 
     function commit() {
       if (!manage.checked) { delete workingPlan[name]; body.classList.add("cc-dis"); refreshChip(anchor, name); return; }
@@ -263,7 +292,7 @@
       workingPlan[name] = { name: name, after: afterList, probe: pr, policy: pol.value };
       refreshChip(anchor, name);
     }
-    manage.addEventListener("change", function () { if (manage.checked && !workingPlan[name]) commit(); else commit(); });
+    manage.addEventListener("change", commit);
     [after, probe, port, pol].forEach(function (n) { n.addEventListener("change", commit); n.addEventListener("input", commit); });
     probe.addEventListener("change", syncPort);
 
@@ -276,7 +305,7 @@
     openPop = pop;
   }
 
-  // ─────────────────────────────────────────── save / apply
+  // ───────────────────────────────── save / apply
   function collectPlan() {
     var nodes = [];
     Object.keys(workingPlan).forEach(function (k) { nodes.push(workingPlan[k]); });
@@ -294,66 +323,32 @@
     return api("POST", "apply").then(function () { return load(); }).then(function () { flash("Started in order"); })
       .catch(function (e) { flash("Error: " + e.message, true); });
   }
-  function flash(msg, bad) {
-    if (!statusEl) return;
-    statusEl.textContent = msg;
-    statusEl.className = "cc-status " + (bad ? "cc-bad-text" : "cc-ok-text");
-  }
+  function flash(msg, bad) { if (statusEl) { statusEl.textContent = msg; statusEl.className = "cc-status " + (bad ? "cc-bad-text" : "cc-ok-text"); } }
 
-  // ─────────────────────────────────────────── fallback panel (no native rows)
-  function renderFallback(mount) {
-    var panel = el("div", "cc-panel");
-    var tbl = el("table", "cc-table");
-    var thead = el("thead"), hr = el("tr");
-    ["Container", "State", "Depends on", "Plan"].forEach(function (h) { hr.appendChild(el("th", null, h)); });
-    thead.appendChild(hr); tbl.appendChild(thead);
-    var tb = el("tbody");
-    containers.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).forEach(function (c) {
-      var tr = el("tr");
-      tr.appendChild(el("td", "cc-name", c.name));
-      var st = el("td"); st.appendChild(stateBadge(c)); tr.appendChild(st);
-      var node = workingPlan[c.name];
-      tr.appendChild(el("td", "cc-dim", node ? depsSummary(node) : "—"));
-      var chipTd = el("td");
-      var chip = el("a", "cc-chip" + (node ? " cc-chip-on" : ""));
-      chip.href = "#"; chip.innerHTML = '<span class="cc-ico">⛓</span><span class="cc-chip-txt">' + (node ? "edit" : "plan") + "</span>";
-      chip.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openEditor(chip, c.name); });
-      chipTd.appendChild(chip); tr.appendChild(chipTd);
-      tb.appendChild(tr);
-    });
-    tbl.appendChild(tb); panel.appendChild(tbl);
-    mount.appendChild(panel);
-  }
-
-  // ─────────────────────────────────────────── run
-  var mount;
+  // ───────────────────────────────── run
   function ensureMount() {
     mount = document.getElementById("cannonade-root");
     if (mount) return;
     mount = el("div"); mount.id = "cannonade-root";
     var host = document.getElementById("docker_containers") || document.querySelector(".tabs") || document.body;
-    if (host.parentNode) host.parentNode.insertBefore(mount, host); else host.appendChild(mount);
+    if (host && host.parentNode) host.parentNode.insertBefore(mount, host); else document.body.appendChild(mount);
   }
   function load() {
+    hideNative();
     return api("GET", "state").then(function (state) {
       indexState(state);
-      renderToolbar(mount);
-      untag();
-      var n = tagRows();
-      if (n === 0) renderFallback(mount);
-      if (statusEl && state.docker_error) flash("engine up (docker: " + state.docker_error + ")", true);
+      render(state);
+      refreshStats();
     }).catch(function (e) {
-      mount.className = "cc-bar";
-      mount.innerHTML = "";
-      mount.appendChild(el("span", "cc-bad-text", "CannonadeCommander engine unreachable: " + e.message));
+      mount.className = "cc-root"; mount.innerHTML = "";
+      mount.appendChild(el("div", "cc-bar", "CannonadeCommander engine unreachable: " + e.message));
     });
   }
-
   function boot() {
     ensureMount();
     load();
-    var mo = new MutationObserver(function () { tagRows(); });
-    try { mo.observe(document.body, { childList: true, subtree: true }); } catch (e) {}
+    setInterval(function () { if (!openPop) refreshStats(); }, 3000);
+    setInterval(function () { if (!openPop) load(); }, 8000);
     document.addEventListener("click", function (e) {
       if (openPop && !openPop.contains(e.target) && !e.target.closest(".cc-chip")) closePop();
     });

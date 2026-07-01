@@ -148,6 +148,21 @@ func (c *Client) Stop(ctx context.Context, ref string) error {
 	return c.post(ctx, "/containers/"+url.PathEscape(ref)+"/stop")
 }
 
+// Restart restarts a container.
+func (c *Client) Restart(ctx context.Context, ref string) error {
+	return c.post(ctx, "/containers/"+url.PathEscape(ref)+"/restart")
+}
+
+// Pause pauses a running container.
+func (c *Client) Pause(ctx context.Context, ref string) error {
+	return c.post(ctx, "/containers/"+url.PathEscape(ref)+"/pause")
+}
+
+// Unpause resumes a paused container.
+func (c *Client) Unpause(ctx context.Context, ref string) error {
+	return c.post(ctx, "/containers/"+url.PathEscape(ref)+"/unpause")
+}
+
 func (c *Client) post(ctx context.Context, path string) error {
 	resp, err := c.do(ctx, "POST", path)
 	if err != nil {
@@ -161,14 +176,7 @@ func (c *Client) post(ctx context.Context, path string) error {
 	return apiError(resp)
 }
 
-// Stats is a one-shot resource snapshot for the read-only gauges.
-type Stats struct {
-	CPUPercent float64 `json:"cpu_percent"`
-	MemUsed    uint64  `json:"mem_used"`
-	MemLimit   uint64  `json:"mem_limit"`
-	MemPercent float64 `json:"mem_percent"`
-}
-
+// dockerStats is the raw docker /stats response we compute a model.Stats from.
 type dockerStats struct {
 	CPUStats struct {
 		CPUUsage struct {
@@ -193,26 +201,26 @@ type dockerStats struct {
 }
 
 // Stats returns a one-shot resource snapshot (no streaming).
-func (c *Client) Stats(ctx context.Context, ref string) (Stats, error) {
+func (c *Client) Stats(ctx context.Context, ref string) (model.Stats, error) {
 	resp, err := c.do(ctx, "GET", "/containers/"+url.PathEscape(ref)+"/stats?stream=false&one-shot=true")
 	if err != nil {
-		return Stats{}, err
+		return model.Stats{}, err
 	}
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
-		return Stats{}, apiError(resp)
+		return model.Stats{}, apiError(resp)
 	}
 	var raw dockerStats
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
-		return Stats{}, fmt.Errorf("decode stats: %w", err)
+		return model.Stats{}, fmt.Errorf("decode stats: %w", err)
 	}
 	return computeStats(raw), nil
 }
 
 // computeStats mirrors the docker CLI's own CPU%/mem math and is a pure function
 // so it can be unit-tested with a canned snapshot.
-func computeStats(s dockerStats) Stats {
-	out := Stats{}
+func computeStats(s dockerStats) model.Stats {
+	out := model.Stats{}
 	cpuDelta := float64(s.CPUStats.CPUUsage.TotalUsage) - float64(s.PreCPUStats.CPUUsage.TotalUsage)
 	sysDelta := float64(s.CPUStats.SystemUsage) - float64(s.PreCPUStats.SystemUsage)
 	cpus := float64(s.CPUStats.OnlineCPUs)

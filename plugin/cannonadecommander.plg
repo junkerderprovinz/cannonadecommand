@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.1.1">
+  <!ENTITY version   "0.2.0">
   <!ENTITY launch    "Settings/cannonadecommander">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
@@ -33,6 +33,16 @@ Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
 
+### 0.2.0
+- Rebuilt the whole Docker tab as a modern CARD GRID. Unraid's dated container
+  table is hidden; each container becomes a clean card with a state badge, live
+  CPU and RAM gauges, image, health, and one-click lifecycle actions (start /
+  stop / restart / pause / resume) driven straight through the host supervisor.
+  The dependency-ordered start plan lives on each card; a toolbar filters, saves
+  the plan and fires it in order. New engine endpoints (per-container action, a
+  batched stats snapshot) and socket verbs (restart / pause / unpause). Plugin
+  icon added under icons/ so it shows in the Settings menu.
+
 ### 0.1.1
 - Integrated into Unraid's OWN Docker container list instead of a separate
   table: each row gets a state BADGE (running / exited / created / paused, red
@@ -59,7 +69,7 @@ containers that route through it. Read-mostly; the only writes are start/stop.
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>ca0de1c0164a4d67581821bc2cc369d8e3b29c2044880cb1c4abb6cf94d8b003</SHA256>
+  <SHA256>01f50e64e7fc3f2236eee4dd3cf484c8e60cdc286326f18a263be45d088e0545</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
