@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.4.1">
+  <!ENTITY version   "0.4.2">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,17 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.4.2
+- Thematically grouped columns and a cleaner look. Borderless MATERIAL badges
+  with strong colours (BombVault-style) and much better readability. The
+  container name is vertically centred next to its logo and its column is wider
+  for long names. Network, container IP, LAN IP and port are consolidated into
+  one column; the start plan sits next to autostart; container ID and source
+  (Von) move under the name. Uptime shows only in Advanced view.
+- More robust uninstall: the injected UI self-removes the moment the plugin's
+  proxy is gone, and re-arms automatically if the plugin comes back - no page
+  reload needed.
 
 ### 0.4.1
 - Every datum in a row is now a clean, uniform BADGE, integrated in place with no
@@ -131,7 +142,7 @@ rm -rf &emhttp;
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>91d3828b18aacb5194a4c334584c65a5d66fcc45719057d31257e192ddc9df59</SHA256>
+  <SHA256>771ba70668fa9d5b4deb216a1ef92494c6e451830ec78d3fe094cd7c456c6a73</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

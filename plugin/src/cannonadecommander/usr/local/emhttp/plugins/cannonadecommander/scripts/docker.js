@@ -45,7 +45,7 @@
   var mode = localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list";
   var containers = [], containerNames = [], stats = {}, shiplog = {}, workingPlan = {}, lastRun = {}, iconCache = {};
   var filterText = "", gridHolder = null, openPop = null, menu = null, menuAnchor = null, menuStatusEl = null, toastEl = null, toastTimer = null;
-  var mo = null, dead = false, miss = 0, lastAdv = false, timers = [];
+  var mo = null, dead = false, lastAdv = false, timers = [], moPending = false, moTimer = null;
 
   // ───────────────────────── api + helpers
   function api(method, path, body) {
@@ -136,10 +136,7 @@
     { key: "update", label: { de: "Update-Status", en: "Update status" } },
     { key: "force", label: { de: "Update erzwingen", en: "Force update" } },
     { key: "version", label: { de: "Image-Tag", en: "Image tag" } },
-    { key: "network", label: { de: "Netzwerk", en: "Network" } },
-    { key: "ip", label: { de: "Container-IP", en: "Container IP" } },
-    { key: "port", label: { de: "Port", en: "Port" } },
-    { key: "lan", label: { de: "LAN IP:Port", en: "LAN IP:Port" } },
+    { key: "net", label: { de: "Netzwerk / IP / Port", en: "Network / IP / Port" } },
     { key: "res", label: { de: "CPU / RAM", en: "CPU / RAM" } },
     { key: "id", label: { de: "Container-ID", en: "Container ID" } },
     { key: "von", label: { de: "Von / Quelle", en: "From / source" } },
@@ -152,11 +149,23 @@
   function saveCols() { localStorage.setItem(COLS_KEY, JSON.stringify(visibleCols)); }
   // CSS-driven cell → pill styling. Toggling a class flips that badge kind on/off.
   function applyEnhanceClasses() {
-    try { var tb = nativeTable(); if (!tb || tb.tagName !== "TABLE") return; tb.classList.add("cc-enh"); COLS.forEach(function (c) { tb.classList.toggle("cc-c-" + c.key, colOn(c.key)); }); } catch (e) {}
+    try { var tb = nativeTable(); if (!tb || tb.tagName !== "TABLE") return; tb.classList.add("cc-enh"); tb.classList.toggle("cc-adv", isAdvancedView()); COLS.forEach(function (c) { tb.classList.toggle("cc-c-" + c.key, colOn(c.key)); }); } catch (e) {}
   }
-  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); } catch (e) {} }
+  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh", "cc-adv"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); } catch (e) {} }
 
-  // ───────────────────────── LIST mode: per-row JS badges (state toggle + plan + id/Von)
+  // read a positional cell's value (docker_readmore), stripping nested advanced
+  // (MAC) + Tailscale tooltip, collapsed to one short line.
+  function readmoreText(tr, n) {
+    try {
+      var cell = tr.querySelector(":scope > td:nth-child(" + n + ")"); if (!cell) return "";
+      var rm = cell.querySelector("span.docker_readmore") || cell;
+      var clone = rm.cloneNode(true);
+      Array.prototype.slice.call(clone.querySelectorAll(".advanced, .TS_tooltip, script, style")).forEach(function (x) { x.remove(); });
+      return (clone.textContent || "").trim().replace(/\s+/g, " ").slice(0, 42);
+    } catch (e) { return ""; }
+  }
+
+  // ───────────────────────── LIST mode: per-row JS badges, thematically placed
   function injectRowBadges(tr) {
     try {
       if (tr.getAttribute(ROWMARK)) return;
@@ -164,30 +173,49 @@
       var name = rowName(tr);
       if (filterText) tr.style.display = (norm(name).indexOf(filterText) >= 0) ? "" : "none";
       var nameCell = tr.querySelector("td.ct-name"), upCell = tr.querySelector("td.updatecolumn");
-      var adv = isAdvancedView();
+      var adv = isAdvancedView(), c = containerByName(name);
+
+      // ── NAME cell (col 1): start/stop badge + (advanced) Container-ID / Von under the name ──
       if (nameCell) {
         var glyph = nameCell.querySelector(".inner i[id^='load-']");
-        var st = glyphState(glyph) || (containerByName(name) && containerByName(name).state) || "unknown";
-        var c = containerByName(name); if (c && c.health) { /* engine health enriches the badge */ }
-        var sh = el("span", "cc-rowbadges cc-state-holder"); sh.setAttribute(MARK, "1");
+        var st = glyphState(glyph) || (c && c.state) || "unknown";
+        var meta = el("div", "cc-namemeta"); meta.setAttribute(MARK, "1");
         var sb = stateToggle(name, st); if (c && c.health === "unhealthy") { sb.classList.add("cc-badge-alert"); sb.textContent = stateLabel(st) + " ✕"; }
-        sh.appendChild(sb);
-        var inner = nameCell.querySelector(".inner") || nameCell; inner.appendChild(sh);
-      }
-      if (upCell) {
-        var h = el("div", "cc-rowbadges"); h.setAttribute(MARK, "1");
-        if (colOn("plan")) h.appendChild(planBadge(name));
-        var p = lastRunPill(name); if (p) h.appendChild(p);
-        if (adv && nameCell) {
+        meta.appendChild(sb);
+        if (adv) {
           var advDiv = nameCell.querySelector(":scope > div.advanced");
           if (advDiv) {
             var added = false;
-            if (colOn("id")) { var cid = readContainerId(advDiv); if (cid) { h.appendChild(badgeInfo("ID", cid.slice(0, 12), "id")); added = true; } }
-            if (colOn("von")) { var a = advDiv.querySelector("a[target='_blank']"); if (a && a.textContent.trim()) { var vb = badgeInfo("Von", a.textContent.trim(), "von"); vb.title = a.getAttribute("href") || ""; h.appendChild(vb); added = true; } }
+            if (colOn("id")) { var cid = readContainerId(advDiv); if (cid) { meta.appendChild(badgeInfo("ID", cid.slice(0, 12), "id")); added = true; } }
+            if (colOn("von")) { var a = advDiv.querySelector("a[target='_blank']"); if (a && a.textContent.trim()) { var vb = badgeInfo("Von", a.textContent.trim(), "von"); vb.title = a.getAttribute("href") || ""; meta.appendChild(vb); added = true; } }
             if (added) advDiv.classList.add("cc-hidden");
           }
         }
-        if (h.children.length) upCell.appendChild(h);
+        var inner = nameCell.querySelector(".inner") || nameCell; inner.appendChild(meta);
+      }
+
+      // ── VERSION cell (col 2): native update/force/tag pills stay (CSS); add last-run ──
+      if (upCell) { var p = lastRunPill(name); if (p) { var lh = el("div", "cc-rowbadges"); lh.setAttribute(MARK, "1"); lh.appendChild(p); upCell.appendChild(lh); } }
+
+      // ── NETWORK group (col 3): consolidate Netzwerk / Container IP / LAN IP / Port ──
+      if (colOn("net")) {
+        var c3 = tr.querySelector(":scope > td:nth-child(3)");
+        if (c3) {
+          var netTxt = readmoreText(tr, 3), ipTxt = readmoreText(tr, 4), portTxt = readmoreText(tr, 5), lanTxt = readmoreText(tr, 6);
+          var g = el("div", "cc-rowbadges cc-netgroup"); g.setAttribute(MARK, "1");
+          if (netTxt) g.appendChild(badgeInfo("Netzwerk", netTxt, "net"));
+          if (ipTxt) g.appendChild(badgeInfo("Container IP", ipTxt, "ip"));
+          if (lanTxt) g.appendChild(badgeInfo("LAN IP", lanTxt, "lan"));
+          if (portTxt) g.appendChild(badgeInfo("Port", portTxt, "port"));
+          var nrm = c3.querySelector("span.docker_readmore"); if (nrm) nrm.classList.add("cc-hidden");
+          if (g.children.length) c3.appendChild(g);
+        }
+      }
+
+      // ── PLAN chip → autostart cell (col 9), grouped with the native autostart toggle ──
+      if (colOn("plan")) {
+        var c9 = tr.querySelector(":scope > td:nth-child(9)");
+        if (c9) { var ph = el("div", "cc-rowbadges cc-planholder"); ph.setAttribute(MARK, "1"); ph.appendChild(planBadge(name)); c9.appendChild(ph); }
       }
     } catch (e) { /* one bad row must never break Unraid's page */ }
   }
@@ -386,62 +414,81 @@
     dl.innerHTML = ""; containerNames.forEach(function (n) { var o = el("option"); o.value = n; dl.appendChild(o); });
   }
 
-  // ───────────────────────── SELF-REMOVE (uninstall / proxy 404): leave no trace
-  function teardown() {
+  // ───────────────────────── observer + timers (factored so re-arm can restart them)
+  function connectObserver() {
     try {
-      dead = true;
-      if (mo) { try { mo.disconnect(); } catch (e) {} }
-      timers.forEach(function (id) { try { clearInterval(id); } catch (e) {} }); timers = [];
-      removeEnhanceClasses();
-      clearRowBadges();
-      Array.prototype.slice.call(document.querySelectorAll(".cc-hgear, .cc-grid-holder, .cc-menu, .cc-toast, #cc-names")).forEach(function (n) { n.remove(); });
-      hideNative(false);
-    } catch (e) {}
-  }
-
-  // ───────────────────────── run
-  function load() {
-    if (dead) return Promise.resolve();
-    return Promise.all([api("GET", "state"), loadShiplog()]).then(function (res) {
-      miss = 0;
-      indexState(res[0]); ensureNames(); refresh();
-      if (res[0] && res[0].docker_error) flash("docker: " + res[0].docker_error, true);
-    }).catch(function (e) {
-      // 404/403/410 on the state endpoint = the proxy file is gone (uninstalled)
-      // → self-remove. Require a few CONSECUTIVE misses so a momentary blip (a
-      // webserver reload mid-update) can't spuriously nuke the UI. 502 = engine
-      // down but installed (do NOT tear down); 400 = a bad path (a real bug, show it).
-      if (e && (e.status === 404 || e.status === 403 || e.status === 410)) { if (++miss >= 3) teardown(); return; }
-      flash("engine unreachable: " + e.message, true);
-    });
-  }
-  function boot() {
-    try {
-      load();
-      var pending = false;
-      mo = new MutationObserver(function () {
-        if (dead || mode !== "list" || pending) return;
-        pending = true;
-        setTimeout(function () {
+      if (!mo) mo = new MutationObserver(function () {
+        if (dead || mode !== "list" || moPending) return;
+        moPending = true;
+        moTimer = setTimeout(function () {
+          moTimer = null;
+          if (dead) { moPending = false; return; } // a teardown may have fired during the debounce window
           try { applyEnhanceClasses(); injectHeaderGear(); injectAllRowBadges(); } catch (e) {}
-          // release the guard AFTER our own DOM writes flush, so any observer records
-          // they cause are swallowed while still guarded (defence vs a re-inject loop)
-          Promise.resolve().then(function () { pending = false; });
+          // release the guard AFTER our own DOM writes flush (defence vs a re-inject loop)
+          Promise.resolve().then(function () { moPending = false; });
         }, 250);
       });
       // Observe ONLY #docker_list's direct children: Unraid replaces the tbody
       // wholesale every 3-5s (which we must re-tag), but subtree:false keeps the
       // per-second nchan CPU/RAM text ticks — and our own deep badge appends — from
       // waking the observer, so there is no tick-storm and no double sweep.
-      try { var body = document.getElementById("docker_list"); if (body) mo.observe(body, { childList: true }); else mo.observe(nativeTable() || document.body, { childList: true, subtree: true }); } catch (e) {}
-      // Re-inject id/Von on an Advanced/Basic flip. Unraid's toggle is a cookie +
-      // global .advanced display swap with no reliable change event, so poll the
-      // effective state and reinject only on an actual flip (idempotent, cheap).
-      lastAdv = isAdvancedView();
-      timers.push(setInterval(function () { try { if (dead || mode !== "list") return; var a = isAdvancedView(); if (a !== lastAdv) { lastAdv = a; reinjectRowBadges(); } } catch (e) {} }, 1500));
+      var body = document.getElementById("docker_list");
+      if (body) mo.observe(body, { childList: true }); else mo.observe(nativeTable() || document.body, { childList: true, subtree: true });
+    } catch (e) {}
+  }
+  function startTimers() {
+    lastAdv = isAdvancedView();
+    // reinject id/Von + re-apply the advanced class on an Advanced/Basic flip
+    // (Unraid's toggle has no reliable event, so poll the effective state)
+    timers.push(setInterval(function () { try { if (dead || mode !== "list") return; var a = isAdvancedView(); if (a !== lastAdv) { lastAdv = a; applyEnhanceClasses(); reinjectRowBadges(); } } catch (e) {} }, 1500));
+    timers.push(setInterval(function () { try { if (!dead && !openPop && mode === "grid") refreshStats(); } catch (e) {} }, 3500));
+    timers.push(setInterval(function () { try { if (!dead && !openPop && !menu) load(); } catch (e) {} }, 9000));
+  }
+
+  // ───────────────────────── SELF-REMOVE + re-arm
+  // On a 404/403/410 from the state proxy (the plugin's files are gone) tear the
+  // whole thing down so nothing lingers, even in a cached tab. A persistent, low
+  // rate re-probe keeps checking; when the proxy returns (a reinstall, or a
+  // transient blip during an update) re-arm and rebuild — no page reload needed.
+  function teardown() {
+    try {
+      if (dead) return;
+      dead = true;
+      if (mo) { try { mo.disconnect(); } catch (e) {} }
+      if (moTimer) { clearTimeout(moTimer); moTimer = null; } // cancel an in-flight debounced sweep
+      timers.forEach(function (id) { try { clearInterval(id); } catch (e) {} }); timers = [];
+      try { closePop(); } catch (e) {} try { closeMenu(); } catch (e) {}
+      removeEnhanceClasses();
+      clearRowBadges();
+      Array.prototype.slice.call(document.querySelectorAll(".cc-hgear, .cc-grid-holder, .cc-menu, .cc-toast, .cc-pop, #cc-names")).forEach(function (n) { n.remove(); });
+      hideNative(false);
+    } catch (e) {}
+  }
+  function rearm() { try { if (!dead) return; dead = false; connectObserver(); startTimers(); load(); } catch (e) {} }
+
+  // ───────────────────────── run
+  function load() {
+    if (dead) return Promise.resolve();
+    return Promise.all([api("GET", "state"), loadShiplog()]).then(function (res) {
+      indexState(res[0]); ensureNames(); refresh();
+      if (res[0] && res[0].docker_error) flash("docker: " + res[0].docker_error, true);
+    }).catch(function (e) {
+      // 404/410 = proxy file gone (uninstalled) → self-remove now; the re-probe
+      // rebuilds if it ever returns. 502 = engine down but installed (do NOT tear
+      // down); 403 = a transient auth/session blip (NOT an uninstall); 400 = a
+      // disallowed path (a real bug — surface it).
+      if (e && (e.status === 404 || e.status === 410)) { teardown(); return; }
+      flash("engine unreachable: " + e.message, true);
+    });
+  }
+  function boot() {
+    try {
+      load();
+      connectObserver();
+      startTimers();
+      // persistent re-probe (NEVER cleared by teardown): rebuild when the proxy returns
+      setInterval(function () { try { if (!dead) return; fetch(PROXY + "?path=" + encodeURIComponent("state"), { headers: { Accept: "application/json" } }).then(function (r) { if (r.ok) rearm(); }).catch(function () {}); } catch (e) {} }, 8000);
       window.addEventListener("scroll", function () { try { if (menu) positionMenu(); } catch (e) {} }, true);
-      timers.push(setInterval(function () { try { if (!dead && !openPop && mode === "grid") refreshStats(); } catch (e) {} }, 3500));
-      timers.push(setInterval(function () { try { if (!dead && !openPop && !menu) load(); } catch (e) {} }, 9000));
       document.addEventListener("click", function (e) { try { if (openPop && !openPop.contains(e.target) && !e.target.closest(".cc-plan")) closePop(); if (menu && !menu.contains(e.target) && !e.target.closest(".cc-hgear")) closeMenu(); } catch (e2) {} });
       document.addEventListener("keydown", function (e) { if (e.key === "Escape") { try { closePop(); closeMenu(); } catch (e2) {} } });
     } catch (e) { /* a failure here must never break Unraid's page */ }
