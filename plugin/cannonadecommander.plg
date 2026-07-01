@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.2.0">
+  <!ENTITY version   "0.2.1">
   <!ENTITY launch    "Settings/cannonadecommander">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
@@ -32,6 +32,13 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.2.1
+- The native container LIST is the DEFAULT again and stays put: it is only
+  beautified in place (a state badge, a dependency chip and a last-run pill per
+  row). A List / Grid toggle in the toolbar switches to the card grid and your
+  choice is remembered; the native table is only hidden while Grid is active,
+  never removed. Reverts v0.2.0 replacing the list outright.
 
 ### 0.2.0
 - Rebuilt the whole Docker tab as a modern CARD GRID. Unraid's dated container
@@ -69,7 +76,7 @@ containers that route through it. Read-mostly; the only writes are start/stop.
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>01f50e64e7fc3f2236eee4dd3cf484c8e60cdc286326f18a263be45d088e0545</SHA256>
+  <SHA256>004331aa927aa4699a34d9d092124b991b91d5d3b9970d16663623ecfc0dda7c</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

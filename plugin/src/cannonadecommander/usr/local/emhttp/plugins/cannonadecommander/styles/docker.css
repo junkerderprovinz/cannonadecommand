@@ -36,6 +36,15 @@
 .cc-btn:hover { background: var(--cc-accent); color: #fff; }
 .cc-btn-primary { font-weight: 600; }
 
+/* List/Grid segmented toggle */
+.cc-seg { display: inline-flex; border: 1px solid var(--cc-line); border-radius: 6px; overflow: hidden; }
+.cc-seg-btn { background: var(--cc-bg2); color: var(--cc-dim); border: none; padding: 5px 14px; font-size: 12px; cursor: pointer; }
+.cc-seg-btn:hover { color: var(--cc-txt); }
+.cc-seg-btn.cc-seg-on { background: var(--cc-accent); color: #fff; font-weight: 600; }
+
+/* list-mode: the control we inject into each native row's update cell */
+.cc-cell { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 3px; font: 12px/1.4 "Segoe UI", system-ui, sans-serif; }
+
 /* ── card grid ── */
 .cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; }
 
