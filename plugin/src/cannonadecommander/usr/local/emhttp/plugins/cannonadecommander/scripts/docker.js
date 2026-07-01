@@ -1,35 +1,39 @@
 /* CannonadeCommander - Docker tab enhancer.
  *
- * Enhances Unraid's OWN container LIST in place. There is deliberately NO bar or
- * section of our own above the list (that is what the user rejected): every
- * global control - the List/Grid switch, column toggles, the plan Save / Start
- * in order, filter - lives behind a single gear injected into the native table
- * header. Each row gets clean, toggleable badges (state as a start/stop switch,
- * plan, and optionally update/network/IP/port/CPU/RAM). The container name is
- * enlarged and Unraid's redundant under-name state text is hidden.
+ * Turns EVERY datum in Unraid's native container row into a clean, uniform BADGE
+ * and hides the native clutter (the green play glyph + "started" text), with NO
+ * bar or section of our own. The heavy lifting is done by CSS: we add classes to
+ * the persistent <table id=docker_containers> and the CSS restyles the native
+ * cells (update status, force-update, image tag, network, IP, port, LAN, CPU/RAM)
+ * into pills IN PLACE. The native elements stay live (Unraid's nchan websocket
+ * keeps CPU/RAM ticking), clickable (start/stop stays on the icon's context menu)
+ * and sortable (the .appname sort key is untouched). JS only ADDS a clickable
+ * start/stop badge, the plan chip, and the Container-ID / "Von" badges per row,
+ * plus the single gear in the table header that holds the global controls.
  *
- * A List/Grid toggle still switches to a card grid. The update badge is read
- * from ShipLog's status API if ShipLog is installed (it stays fully standalone;
- * absent = badge simply not shown). The native table is never removed, only
- * hidden while in Grid mode. The browser talks only to same-origin proxies; it
- * never touches the Docker socket. Everything is idempotent + wrapped in
- * try/catch so a failure can never break Unraid's native page.
+ * Ground truth for every selector below is Unraid's webgui master source
+ * (dynamix.docker.manager/include/DockerContainers.php + DockerContainers.page).
+ *
+ * Everything is idempotent + wrapped in try/catch, and SELF-REMOVING: if the
+ * same-origin proxy 404s (the plugin was uninstalled) we tear the whole thing
+ * down, so nothing lingers even from a cached page. #docker_list (the tbody) is
+ * re-rendered wholesale every 3-5s, so per-row injection is re-applied via a
+ * debounced MutationObserver; the table + <thead> persist, so our CSS classes
+ * and header gear survive re-renders without churn.
  */
 (function () {
   "use strict";
 
   var PROXY = "/plugins/cannonadecommander/server/api.php";
   var SHIPLOG = "/plugins/shiplog/server/status.php";
-  var VIEW_KEY = "cc.view", COLS_KEY = "cc.cols", ADV_KEY = "cc.adv";
-  var MARK = "data-cc", NAME_MARK = "data-cc-name";
+  var VIEW_KEY = "cc.view", COLS_KEY = "cc.cols2", ADV_KEY = "cc.adv"; // cols2: reset stale v0.3 prefs
+  var MARK = "data-cc", ROWMARK = "data-cc-row";
   var PROBES = ["health", "running", "tcp"], POLICIES = ["abort", "continue", "degrade"];
-  var UPDATE_PHRASES = ["aktualisierung", "auf dem neu", "nicht verf", "wird gepr", "up-to-date", "up to date", "update ready", "apply update", "rebuild ready"];
-  var STATE_RE = /^(gestartet|gestoppt|angehalten|pausiert|neu ?gestartet|wird neu gestartet|started|stopped|paused|exited|running|dead|restarting)\b/;
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
 
   var T = {
-    de: { uptodate: "Aktuell", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Spalten", advanced: "Erweitert", view: "Ansicht", list: "Liste", grid: "Raster", noupd: "Update-Knopf nicht gefunden", done: "erledigt", saving: "speichere…", saved: "Plan gespeichert" },
-    en: { uptodate: "up to date", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Columns", advanced: "Advanced", view: "View", list: "List", grid: "Grid", noupd: "no update control found", done: "done", saving: "saving…", saved: "plan saved" },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "Plan gespeichert" },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "plan saved" },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -37,12 +41,11 @@
     en: { running: "running", exited: "stopped", created: "created", paused: "paused", restarting: "restarting", removing: "removing", dead: "dead" },
   };
   function stateLabel(s) { var m = STATE_LABELS[LANG] || STATE_LABELS.en; return m[s] || s || "?"; }
-  var RISK_CLASS = { low: "low", none: "low", medium: "mid", high: "high", unknown: "grey" };
 
   var mode = localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list";
-  var advanced = localStorage.getItem(ADV_KEY) === "1";
   var containers = [], containerNames = [], stats = {}, shiplog = {}, workingPlan = {}, lastRun = {}, iconCache = {};
   var filterText = "", gridHolder = null, openPop = null, menu = null, menuAnchor = null, menuStatusEl = null, toastEl = null, toastTimer = null;
+  var mo = null, dead = false, miss = 0, lastAdv = false, timers = [];
 
   // ───────────────────────── api + helpers
   function api(method, path, body) {
@@ -51,7 +54,7 @@
     return fetch(PROXY + "?path=" + encodeURIComponent(path), opts).then(function (r) {
       return r.text().then(function (t2) {
         var data = null; try { data = t2 ? JSON.parse(t2) : null; } catch (e) { data = null; }
-        if (!r.ok) throw new Error((data && data.error) ? data.error : "HTTP " + r.status);
+        if (!r.ok) { var err = new Error((data && data.error) ? data.error : "HTTP " + r.status); err.status = r.status; throw err; }
         return data;
       });
     });
@@ -60,34 +63,27 @@
   function norm(s) { return String(s || "").trim().toLowerCase(); }
   function humanBytes(b) { if (!b) return "0"; var u = ["B", "K", "M", "G", "T"], i = 0, n = b; while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; } return (n >= 100 ? Math.round(n) : Math.round(n * 10) / 10) + u[i]; }
 
-  // ───────────────────────── native table (ShipLog-proven finder)
+  // ───────────────────────── native table (source-verified selectors)
   function nativeTable() { var l = document.getElementById("docker_list"); if (l) return l.closest("table") || l.parentNode; return document.getElementById("docker_containers") || document.querySelector("table#docker_containers"); }
   function headerRow() { var tb = nativeTable(); if (!tb || tb.tagName !== "TABLE") return null; return tb.querySelector("thead tr:last-child") || tb.querySelector("thead tr") || null; }
   function isFolderHeader(tr) { return !!(tr.classList.contains("folder") || tr.querySelector(":scope > td.folder-name, :scope > td.folder-update")); }
   function findRows() {
     var cands = ["#docker_list tr.sortable, #docker_list tr.folder-element", "#docker_list > tr", "table#docker_containers tbody tr", "table.tablesorter tbody tr", "div.tabs table tbody tr", "table tbody tr"];
     for (var i = 0; i < cands.length; i++) {
-      var rows = Array.prototype.slice.call(document.querySelectorAll(cands[i])).filter(function (tr) { return !isFolderHeader(tr) && (tr.querySelector("td.ct-name, td.updatecolumn") || (tr.querySelector("img") && tr.textContent.trim().length > 1)); });
+      var rows = Array.prototype.slice.call(document.querySelectorAll(cands[i])).filter(function (tr) { return !isFolderHeader(tr) && !tr.classList.contains("advanced") && (tr.querySelector("td.ct-name, td.updatecolumn") || (tr.querySelector("img") && tr.textContent.trim().length > 1)); });
       if (rows.length) return rows;
     }
     return [];
   }
   function rowName(tr) { var a = tr.querySelector("td.ct-name .appname"); if (a && a.textContent.trim()) return a.textContent.trim(); var id = tr.id || ""; if (/^ct-/.test(id)) return id.slice(3); var img = tr.querySelector("img"); var cell = img ? (img.closest("td") || tr) : tr; var link = cell.querySelector("a"); return (link && link.textContent.trim() ? link.textContent.trim() : (cell.textContent || tr.textContent).trim().split("\n")[0].trim()); }
-  function findUpdateCell(tr) { var d = tr.querySelector("td.updatecolumn:not(.folder-update)"); if (d) return d; var cells = Array.prototype.slice.call(tr.querySelectorAll("td")); for (var i = 0; i < cells.length; i++) { var x = cells[i].textContent.toLowerCase(); for (var j = 0; j < UPDATE_PHRASES.length; j++) if (x.indexOf(UPDATE_PHRASES[j]) >= 0) return cells[i]; } return cells[cells.length - 1] || tr; }
   function hideNative(hide) { var tb = nativeTable(); if (tb) tb.style.display = hide ? "none" : ""; }
-  function triggerNativeUpdate(name) {
-    var rows = findRows();
-    for (var i = 0; i < rows.length; i++) {
-      if (norm(rowName(rows[i])) !== norm(name)) continue;
-      var cell = findUpdateCell(rows[i]);
-      var cands = Array.prototype.slice.call(cell.querySelectorAll("a[onclick],[onclick],a[href]")).filter(function (n) { return !n.closest(".cc-cell"); });
-      var blob = function (n) { return norm(n.textContent) + " " + norm(n.getAttribute("onclick") || ""); };
-      var target = cands.find(function (n) { return /apply update|aktualisierung anwenden|installupdate|updatecontainer|installxml|rebuild ready/.test(blob(n)); }) || cands.find(function (n) { return /update|aktualisier/.test(blob(n)); });
-      if (target) { target.click(); return true; }
-      return false;
-    }
-    return false;
+  // container state from the native glyph <i id='load-..' class='fa fa-play|pause|square ..'>
+  function glyphState(g) { if (!g) return ""; var c = " " + (g.className || "") + " "; if (/\bfa-play\b/.test(c)) return "running"; if (/\bfa-pause\b/.test(c)) return "paused"; if (/\bfa-square\b/.test(c)) return "exited"; return ""; }
+  // Unraid's Advanced/Basic view is a cookie + global .advanced/.basic toggle (no body class).
+  function isAdvancedView() {
+    try { var m = document.cookie.match(/(?:^|;\s*)docker_listview_mode=([^;]+)/); if (m) return decodeURIComponent(m[1]) === "advanced"; var a = document.querySelector("#docker_list .advanced"); return a ? getComputedStyle(a).display !== "none" : false; } catch (e) { return false; }
   }
+  function readContainerId(advDiv) { try { var m = /container id[:\s]+([0-9a-f]{6,})/i.exec(advDiv.textContent || ""); return m ? m[1] : ""; } catch (e) { return ""; } }
 
   // ───────────────────────── data
   function indexState(state) {
@@ -105,7 +101,7 @@
     }).catch(function () { shiplog = {}; });
   }
   function containerByName(name) { var k = norm(name); for (var i = 0; i < containers.length; i++) if (norm(containers[i].name) === k) return containers[i]; return null; }
-  function depsTxt(node) { return node ? (node.after && node.after.length ? "after " + node.after.join(", ") : "in plan") : "plan"; }
+  function depsTxt(node) { return node ? (node.after && node.after.length ? "after " + node.after.join(", ") : "in plan") : t("plan"); }
   function iconFor(name) {
     if (iconCache[name] !== undefined) return iconCache[name];
     var src = "", row = document.getElementById("ct-" + name), img = row && row.querySelector("img");
@@ -113,61 +109,96 @@
     if (img) src = img.getAttribute("src") || ""; iconCache[name] = src; return src;
   }
 
-  // ───────────────────────── badge builders
+  // ───────────────────────── badge builders (uniform)
   function stateBadge(c) { var s = (c && c.state) || "unknown", b = el("span", "cc-badge cc-badge-" + s, stateLabel(s)); if (c && c.health === "unhealthy") { b.classList.add("cc-badge-alert"); b.textContent = stateLabel(s) + " ✕"; } else if (c && c.health === "starting") b.textContent = stateLabel(s) + " …"; return b; }
-  // The list-mode state badge doubles as a start/stop switch: click toggles the
-  // container through the same host supervisor the grid uses.
-  function stateToggle(c) {
-    var b = stateBadge(c);
-    var action = c.state === "running" ? "stop" : (c.state === "paused" ? "unpause" : "start");
-    b.classList.add("cc-badge-toggle");
+  function stateToggle(name, state) {
+    var s = state || "unknown", b = el("span", "cc-badge cc-badge-" + s + " cc-badge-toggle", stateLabel(s));
+    var action = s === "running" ? "stop" : (s === "paused" ? "unpause" : "start");
     b.title = t(action === "stop" ? "stop" : action === "unpause" ? "resume" : "start");
-    b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); doAction(c.name, action); });
+    b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); doAction(name, action); });
     return b;
   }
-  function infoBadge(kind, text) { var b = el("span", "cc-info cc-info-" + kind); b.appendChild(el("span", "cc-info-k", kind)); b.appendChild(el("span", "cc-info-v", text)); return b; }
-  function statBadge(label, val) { var b = el("span", "cc-info cc-info-stat"); b.appendChild(el("span", "cc-info-k", label)); b.appendChild(el("span", "cc-info-v", val)); return b; }
-  function shiplogBadge(name) {
-    var st = shiplog[norm(name)]; if (!st) return null;
-    var kind = st.kind || "none", up = (kind === "none" || kind === "");
-    var label = up ? t("uptodate") : (kind === "digest" ? "Update" : String(kind).toUpperCase());
-    var cls = up ? "cc-up cc-up-low" : ("cc-up cc-up-" + (RISK_CLASS[st.risk] || "grey"));
-    var b = el("span", cls, label); b.title = st.risk_reason || ""; return b;
-  }
-  function depsChip(name) {
-    var node = workingPlan[name], chip = el("a", "cc-chip" + (node ? " cc-chip-on" : ""));
-    chip.href = "#"; chip.innerHTML = '<span class="cc-ico">⛓</span><span class="cc-chip-txt"></span>';
-    chip.querySelector(".cc-chip-txt").textContent = depsTxt(node); chip.title = "start order for " + name;
+  function badgeInfo(label, value, kind) { var b = el("span", "cc-b cc-b-info" + (kind ? " cc-b-" + kind : "")); b.appendChild(el("span", "cc-b-k", label)); b.appendChild(el("span", "cc-b-v", value)); return b; }
+  function planBadge(name) {
+    var node = workingPlan[name], chip = el("a", "cc-b cc-plan" + (node ? " cc-plan-on" : ""));
+    chip.href = "#"; chip.innerHTML = '<span class="cc-b-k">⛓ ' + t("plan") + '</span><span class="cc-b-v"></span>';
+    chip.querySelector(".cc-b-v").textContent = depsTxt(node); chip.title = "start order for " + name;
     chip.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openEditor(chip, name); });
     return chip;
   }
   function lastRunPill(name) { var lr = lastRun[name]; if (!lr) return null; var p = el("span", "cc-pill cc-pill-" + lr.state, lr.state); p.title = lr.reason || ""; return p; }
-  function forceBtn(name) { var b = el("button", "cc-abtn", t("force")); b.addEventListener("click", function (e) { e.stopPropagation(); if (!triggerNativeUpdate(name)) flash(t("noupd"), true); }); return b; }
 
-  // ───────────────────────── column model
-  // Defaults are deliberately minimal (state + plan) so the injected badges sit
-  // cleanly in the native cell and never duplicate Unraid's own advanced columns
-  // (network / IP / port / CPU / RAM). Turn any of those on via the gear menu.
+  // ───────────────────────── column model → CSS classes on the table + JS badge gates
+  // Everything defaults ON: the user wants every datum as a badge. Advanced-only
+  // data (image tag, CPU/RAM, container-ID, Von) only shows in Unraid's Advanced
+  // view because the native elements are .advanced (hidden by Unraid in Basic).
   var COLS = [
-    { key: "state", label: { de: "Status", en: "State" }, def: true, render: function (c) { return stateToggle(c); } },
-    { key: "plan", label: { de: "Startplan", en: "Plan" }, def: true, render: function (c) { return depsChip(c.name); } },
-    { key: "update", label: { de: "Update", en: "Update" }, def: false, render: function (c) { return shiplogBadge(c.name); } },
-    { key: "cpu", label: { de: "CPU", en: "CPU" }, def: false, render: function (c) { var s = stats[c.name]; return (s && c.state === "running") ? statBadge("CPU", (s.cpu_percent || 0) + "%") : null; } },
-    { key: "ram", label: { de: "RAM", en: "RAM" }, def: false, render: function (c) { var s = stats[c.name]; return (s && c.state === "running") ? statBadge("RAM", humanBytes(s.mem_used)) : null; } },
-    { key: "network", label: { de: "Netzwerk", en: "Network" }, def: false, render: function (c) { return c.network ? infoBadge("net", c.network) : null; } },
-    { key: "ip", label: { de: "IP", en: "IP" }, def: false, render: function (c) { return c.ip ? infoBadge("ip", c.ip) : null; } },
-    { key: "port", label: { de: "Port", en: "Port" }, def: false, render: function (c) { return (c.ports && c.ports.length) ? infoBadge("port", c.ports.join(" ")) : null; } },
-    { key: "lastrun", label: { de: "Letzter Lauf", en: "Last run" }, def: false, render: function (c) { return lastRunPill(c.name); } },
-    { key: "image", label: { de: "Image", en: "Image" }, adv: true, render: function (c) { return c.image ? infoBadge("img", c.image) : null; } },
-    { key: "id", label: { de: "Container-ID", en: "Container ID" }, adv: true, render: function (c) { return c.id ? infoBadge("id", c.id.slice(0, 12)) : null; } },
-    { key: "force", label: { de: "Update erzwingen", en: "Force update" }, adv: true, render: function (c) { return forceBtn(c.name); } },
+    { key: "update", label: { de: "Update-Status", en: "Update status" } },
+    { key: "force", label: { de: "Update erzwingen", en: "Force update" } },
+    { key: "version", label: { de: "Image-Tag", en: "Image tag" } },
+    { key: "network", label: { de: "Netzwerk", en: "Network" } },
+    { key: "ip", label: { de: "Container-IP", en: "Container IP" } },
+    { key: "port", label: { de: "Port", en: "Port" } },
+    { key: "lan", label: { de: "LAN IP:Port", en: "LAN IP:Port" } },
+    { key: "res", label: { de: "CPU / RAM", en: "CPU / RAM" } },
+    { key: "id", label: { de: "Container-ID", en: "Container ID" } },
+    { key: "von", label: { de: "Von / Quelle", en: "From / source" } },
+    { key: "plan", label: { de: "Startplan", en: "Plan" } },
   ];
-  function defaultCols() { var s = {}; COLS.forEach(function (c) { if (c.def) s[c.key] = true; }); return s; }
-  function loadCols() { try { var j = JSON.parse(localStorage.getItem(COLS_KEY) || "null"); if (j && typeof j === "object") return j; } catch (e) {} return defaultCols(); }
+  function defaultCols() { var s = {}; COLS.forEach(function (c) { s[c.key] = true; }); return s; }
+  function loadCols() { try { var j = JSON.parse(localStorage.getItem(COLS_KEY) || "null"); if (j && typeof j === "object") { var d = defaultCols(); Object.keys(j).forEach(function (k) { d[k] = !!j[k]; }); return d; } } catch (e) {} return defaultCols(); }
   var visibleCols = loadCols();
-  function colOn(c) { return !!visibleCols[c.key] && (!c.adv || advanced); }
+  function colOn(key) { return visibleCols[key] !== false; }
   function saveCols() { localStorage.setItem(COLS_KEY, JSON.stringify(visibleCols)); }
-  function renderBadges(c) { var out = []; COLS.forEach(function (col) { if (!colOn(col)) return; var n = col.render(c); if (n) out.push(n); }); return out; }
+  // CSS-driven cell → pill styling. Toggling a class flips that badge kind on/off.
+  function applyEnhanceClasses() {
+    try { var tb = nativeTable(); if (!tb || tb.tagName !== "TABLE") return; tb.classList.add("cc-enh"); COLS.forEach(function (c) { tb.classList.toggle("cc-c-" + c.key, colOn(c.key)); }); } catch (e) {}
+  }
+  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); } catch (e) {} }
+
+  // ───────────────────────── LIST mode: per-row JS badges (state toggle + plan + id/Von)
+  function injectRowBadges(tr) {
+    try {
+      if (tr.getAttribute(ROWMARK)) return;
+      tr.setAttribute(ROWMARK, "1");
+      var name = rowName(tr);
+      if (filterText) tr.style.display = (norm(name).indexOf(filterText) >= 0) ? "" : "none";
+      var nameCell = tr.querySelector("td.ct-name"), upCell = tr.querySelector("td.updatecolumn");
+      var adv = isAdvancedView();
+      if (nameCell) {
+        var glyph = nameCell.querySelector(".inner i[id^='load-']");
+        var st = glyphState(glyph) || (containerByName(name) && containerByName(name).state) || "unknown";
+        var c = containerByName(name); if (c && c.health) { /* engine health enriches the badge */ }
+        var sh = el("span", "cc-rowbadges cc-state-holder"); sh.setAttribute(MARK, "1");
+        var sb = stateToggle(name, st); if (c && c.health === "unhealthy") { sb.classList.add("cc-badge-alert"); sb.textContent = stateLabel(st) + " ✕"; }
+        sh.appendChild(sb);
+        var inner = nameCell.querySelector(".inner") || nameCell; inner.appendChild(sh);
+      }
+      if (upCell) {
+        var h = el("div", "cc-rowbadges"); h.setAttribute(MARK, "1");
+        if (colOn("plan")) h.appendChild(planBadge(name));
+        var p = lastRunPill(name); if (p) h.appendChild(p);
+        if (adv && nameCell) {
+          var advDiv = nameCell.querySelector(":scope > div.advanced");
+          if (advDiv) {
+            var added = false;
+            if (colOn("id")) { var cid = readContainerId(advDiv); if (cid) { h.appendChild(badgeInfo("ID", cid.slice(0, 12), "id")); added = true; } }
+            if (colOn("von")) { var a = advDiv.querySelector("a[target='_blank']"); if (a && a.textContent.trim()) { var vb = badgeInfo("Von", a.textContent.trim(), "von"); vb.title = a.getAttribute("href") || ""; h.appendChild(vb); added = true; } }
+            if (added) advDiv.classList.add("cc-hidden");
+          }
+        }
+        if (h.children.length) upCell.appendChild(h);
+      }
+    } catch (e) { /* one bad row must never break Unraid's page */ }
+  }
+  function injectAllRowBadges() { findRows().forEach(injectRowBadges); }
+  function clearRowBadges() {
+    var root = document.getElementById("docker_list") || nativeTable() || document; // scope to the list, not the whole page
+    Array.prototype.slice.call(root.querySelectorAll("[" + MARK + "]")).forEach(function (n) { n.remove(); });
+    Array.prototype.slice.call(root.querySelectorAll("[" + ROWMARK + "]")).forEach(function (n) { n.removeAttribute(ROWMARK); });
+    Array.prototype.slice.call(root.querySelectorAll(".cc-hidden")).forEach(function (n) { n.classList.remove("cc-hidden"); });
+  }
+  function reinjectRowBadges() { clearRowBadges(); injectAllRowBadges(); }
 
   // ───────────────────────── lifecycle (grid buttons + list state toggle)
   function doAction(name, action) { flash(action + " " + name + "…"); api("POST", "action", { name: name, action: action }).then(function () { return load(); }).then(function () { flash(t("done")); }).catch(function (e) { flash("Error: " + e.message, true); }); }
@@ -180,50 +211,7 @@
     return box;
   }
 
-  // ───────────────────────── LIST mode (in-place, IDEMPOTENT)
-  // The MutationObserver calls tagRows on every DOM change, so injection MUST be
-  // idempotent (a MARK guard per cell), or the observer and the injection would
-  // re-trigger each other in an infinite loop. To refresh use retagRows().
-  function decorateNameCell(tr) {
-    try {
-      var cell = tr.querySelector("td.ct-name");
-      if (!cell || cell.getAttribute(NAME_MARK)) return;
-      cell.setAttribute(NAME_MARK, "1");
-      var app = cell.querySelector(".appname"); if (app) app.classList.add("cc-bigname");
-      // Hide Unraid's redundant under-name state line ("Gestartet"/"Gestoppt"…) —
-      // the state now lives in our start/stop badge. Only a short leaf element whose
-      // text STARTS with a state word is touched, so nothing structural is hidden.
-      var nodes = cell.querySelectorAll("span, div, font");
-      for (var i = 0; i < nodes.length; i++) {
-        var n = nodes[i];
-        if (n.children.length > 1) continue;
-        if (n.classList && n.classList.contains("appname")) continue;
-        if (n.querySelector && n.querySelector(".appname")) continue;
-        var tx = norm(n.textContent);
-        if (tx && tx.length <= 22 && STATE_RE.test(tx)) { n.style.display = "none"; n.setAttribute("data-cc-hid", "1"); }
-      }
-    } catch (e) { /* one bad row must never break Unraid's page */ }
-  }
-  function tagRows() {
-    if (mode !== "list") return;
-    findRows().forEach(function (tr) {
-      try {
-        var name = rowName(tr), c = containerByName(name);
-        if (filterText) tr.style.display = (norm(name).indexOf(filterText) >= 0) ? "" : "none";
-        decorateNameCell(tr);
-        var cell = findUpdateCell(tr);
-        if (!cell || !c || cell.getAttribute(MARK)) return; // already tagged → skip
-        cell.setAttribute(MARK, "1");
-        var box = el("div", "cc-cell");
-        renderBadges(c).forEach(function (n) { box.appendChild(n); });
-        cell.appendChild(box);
-      } catch (e) { /* one bad row must never break Unraid's page */ }
-    });
-  }
-  function untagRows() { Array.prototype.slice.call(document.querySelectorAll("[" + MARK + "]")).forEach(function (cell) { cell.removeAttribute(MARK); var c = cell.querySelector(".cc-cell"); if (c) c.remove(); }); }
-  function retagRows() { untagRows(); tagRows(); } // explicit one-shot refresh
-
-  // ───────────────────────── GRID mode
+  // ───────────────────────── GRID mode (engine-driven cards)
   function card(c) {
     var wrap = el("div", "cc-card"); wrap.dataset.name = c.name;
     var head = el("div", "cc-card-head");
@@ -235,12 +223,13 @@
     if (s && c.state === "running") { sb.appendChild(gauge("CPU", s.cpu_percent, (s.cpu_percent || 0) + "%")); sb.appendChild(gauge("RAM", s.mem_percent, humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit))); } else sb.appendChild(el("div", "cc-stat cc-dim", c.state === "running" ? "…" : "not running"));
     wrap.appendChild(sb);
     var badges = el("div", "cc-card-badges");
-    COLS.forEach(function (col) { if (col.key === "state" || col.key === "cpu" || col.key === "ram" || col.key === "plan" || col.key === "force") return; if (!colOn(col)) return; var n = col.render(c); if (n) badges.appendChild(n); });
+    if (c.network) badges.appendChild(badgeInfo("NET", c.network, "net"));
+    if (c.ip) badges.appendChild(badgeInfo("IP", c.ip, "ip"));
+    if (c.ports && c.ports.length) badges.appendChild(badgeInfo("PORT", c.ports.join(" "), "port"));
     if (badges.children.length) wrap.appendChild(badges);
     var act = el("div", "cc-card-actions");
     act.appendChild(lifecycle(c));
-    if (colOn({ key: "force", adv: true })) act.appendChild(forceBtn(c.name));
-    act.appendChild(depsChip(c.name));
+    act.appendChild(planBadge(c.name));
     var p = lastRunPill(c.name); if (p) act.appendChild(p);
     wrap.appendChild(act);
     if (filterText && norm(c.name).indexOf(filterText) < 0) wrap.style.display = "none";
@@ -256,20 +245,14 @@
   function removeGridHolder() { try { if (gridHolder && gridHolder.parentNode) gridHolder.parentNode.removeChild(gridHolder); } catch (e) {} gridHolder = null; }
   function renderGrid() {
     ensureGridHolder(); gridHolder.innerHTML = "";
-    gridHolder.appendChild(makeGear("cc-hgear-grid")); // header is hidden in grid → keep the gear reachable
+    gridHolder.appendChild(makeGear("cc-hgear-grid"));
     var grid = el("div", "cc-grid");
     containers.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).forEach(function (c) { grid.appendChild(card(c)); });
     gridHolder.appendChild(grid);
   }
 
   // ───────────────────────── gear + menu (the only global control surface)
-  function makeGear(extra) {
-    var g = el("button", "cc-hgear" + (extra ? " " + extra : ""), "⚙"); g.type = "button"; g.title = "CannonadeCommander";
-    g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g); });
-    return g;
-  }
-  // Inject the gear into the native table header (list mode). No header cell (an
-  // unknown skin) → a floating gear pinned to the table corner. Idempotent.
+  function makeGear(extra) { var g = el("button", "cc-hgear" + (extra ? " " + extra : ""), "⚙"); g.type = "button"; g.title = "CannonadeCommander"; g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g); }); return g; }
   function injectHeaderGear() {
     try {
       var tb = nativeTable(); if (!tb) return false;
@@ -283,8 +266,8 @@
   function menuHead(txt) { return el("div", "cc-menu-h", txt); }
   function colRow(c) {
     var row = el("label", "cc-menu-row");
-    var cb = el("input"); cb.type = "checkbox"; cb.checked = !!visibleCols[c.key];
-    cb.addEventListener("change", function () { visibleCols[c.key] = cb.checked; saveCols(); refresh(); });
+    var cb = el("input"); cb.type = "checkbox"; cb.checked = colOn(c.key);
+    cb.addEventListener("change", function () { visibleCols[c.key] = cb.checked; saveCols(); applyEnhanceClasses(); reinjectRowBadges(); });
     row.appendChild(cb); row.appendChild(el("span", null, " " + (c.label[LANG] || c.label.en)));
     return row;
   }
@@ -292,7 +275,6 @@
     var m = el("div", "cc-menu cc-menu-wide");
     m.addEventListener("click", function (e) { e.stopPropagation(); });
     menuStatusEl = el("div", "cc-menu-status cc-ok-text", "engine up · " + containers.length); m.appendChild(menuStatusEl);
-
     m.appendChild(menuHead(t("view")));
     var seg = el("div", "cc-seg");
     var bL = el("button", "cc-seg-btn" + (mode === "list" ? " cc-seg-on" : ""), t("list"));
@@ -300,21 +282,12 @@
     bL.addEventListener("click", function () { closeMenu(); setMode("list"); }); bG.addEventListener("click", function () { closeMenu(); setMode("grid"); });
     seg.appendChild(bL); seg.appendChild(bG);
     var vrow = el("div", "cc-menu-row cc-menu-plain"); vrow.appendChild(seg); m.appendChild(vrow);
-
     var frow = el("div", "cc-menu-row cc-menu-plain");
     var filter = el("input", "cc-filter"); filter.type = "text"; filter.placeholder = t("filter"); filter.value = filterText;
     filter.addEventListener("input", function () { filterText = norm(filter.value); applyFilter(); });
     frow.appendChild(filter); m.appendChild(frow);
-
     m.appendChild(menuHead(t("cols")));
-    COLS.filter(function (c) { return !c.adv; }).forEach(function (c) { m.appendChild(colRow(c)); });
-    var advRow = el("label", "cc-menu-row");
-    var advCb = el("input"); advCb.type = "checkbox"; advCb.checked = advanced;
-    advCb.addEventListener("change", function () { advanced = advCb.checked; localStorage.setItem(ADV_KEY, advanced ? "1" : "0"); rebuildMenu(); refresh(); });
-    advRow.appendChild(advCb); advRow.appendChild(el("span", null, " " + t("advanced")));
-    m.appendChild(advRow);
-    if (advanced) COLS.filter(function (c) { return c.adv; }).forEach(function (c) { m.appendChild(colRow(c)); });
-
+    COLS.forEach(function (c) { m.appendChild(colRow(c)); });
     m.appendChild(el("div", "cc-menu-sep"));
     var prow = el("div", "cc-menu-row cc-menu-plain");
     var save = el("button", "cc-btn", t("save")), fire = el("button", "cc-btn cc-btn-primary", t("startorder"));
@@ -331,7 +304,6 @@
   }
   function openMenu(anchor) { closeMenu(); menuAnchor = anchor; menu = buildMenu(); document.body.appendChild(menu); positionMenu(); }
   function closeMenu() { if (menu) { menu.remove(); menu = null; menuStatusEl = null; } }
-  function rebuildMenu() { if (menu && menuAnchor) openMenu(menuAnchor); }
   function toggleMenu(anchor) { if (menu) closeMenu(); else openMenu(anchor); }
 
   // ───────────────────────── mode
@@ -339,8 +311,9 @@
   function refresh() { applyMode(); if (mode === "grid") refreshStats(); }
   function applyMode() {
     try {
-      if (mode === "grid") { hideNative(true); untagRows(); renderGrid(); }
-      else { hideNative(false); removeGridHolder(); injectHeaderGear(); retagRows(); }
+      if (dead) return;
+      if (mode === "grid") { removeEnhanceClasses(); clearRowBadges(); hideNative(true); renderGrid(); }
+      else { hideNative(false); removeGridHolder(); applyEnhanceClasses(); injectHeaderGear(); injectAllRowBadges(); }
     } catch (e) { try { hideNative(false); } catch (e2) {} } // never leave the native list hidden or broken
   }
   function applyFilter() {
@@ -356,7 +329,7 @@
 
   // ───────────────────────── plan editor popover
   function closePop() { if (openPop) { openPop.remove(); openPop = null; } }
-  function refreshChip(chip, name) { var node = workingPlan[name]; chip.classList.toggle("cc-chip-on", !!node); chip.querySelector(".cc-chip-txt").textContent = depsTxt(node); }
+  function refreshChip(chip, name) { var node = workingPlan[name]; chip.classList.toggle("cc-plan-on", !!node); var v = chip.querySelector(".cc-b-v"); if (v) v.textContent = depsTxt(node); }
   function openEditor(anchor, name) {
     closePop();
     var existing = workingPlan[name], node = existing || { name: name, after: [], probe: { kind: "health" }, policy: "abort" };
@@ -413,27 +386,63 @@
     dl.innerHTML = ""; containerNames.forEach(function (n) { var o = el("option"); o.value = n; dl.appendChild(o); });
   }
 
+  // ───────────────────────── SELF-REMOVE (uninstall / proxy 404): leave no trace
+  function teardown() {
+    try {
+      dead = true;
+      if (mo) { try { mo.disconnect(); } catch (e) {} }
+      timers.forEach(function (id) { try { clearInterval(id); } catch (e) {} }); timers = [];
+      removeEnhanceClasses();
+      clearRowBadges();
+      Array.prototype.slice.call(document.querySelectorAll(".cc-hgear, .cc-grid-holder, .cc-menu, .cc-toast, #cc-names")).forEach(function (n) { n.remove(); });
+      hideNative(false);
+    } catch (e) {}
+  }
+
   // ───────────────────────── run
   function load() {
+    if (dead) return Promise.resolve();
     return Promise.all([api("GET", "state"), loadShiplog()]).then(function (res) {
+      miss = 0;
       indexState(res[0]); ensureNames(); refresh();
       if (res[0] && res[0].docker_error) flash("docker: " + res[0].docker_error, true);
-    }).catch(function (e) { flash("engine unreachable: " + e.message, true); });
+    }).catch(function (e) {
+      // 404/403/410 on the state endpoint = the proxy file is gone (uninstalled)
+      // → self-remove. Require a few CONSECUTIVE misses so a momentary blip (a
+      // webserver reload mid-update) can't spuriously nuke the UI. 502 = engine
+      // down but installed (do NOT tear down); 400 = a bad path (a real bug, show it).
+      if (e && (e.status === 404 || e.status === 403 || e.status === 410)) { if (++miss >= 3) teardown(); return; }
+      flash("engine unreachable: " + e.message, true);
+    });
   }
   function boot() {
     try {
       load();
       var pending = false;
-      var mo = new MutationObserver(function () {
-        if (mode !== "list" || pending) return;
+      mo = new MutationObserver(function () {
+        if (dead || mode !== "list" || pending) return;
         pending = true;
-        setTimeout(function () { pending = false; try { injectHeaderGear(); tagRows(); } catch (e) {} }, 250);
+        setTimeout(function () {
+          try { applyEnhanceClasses(); injectHeaderGear(); injectAllRowBadges(); } catch (e) {}
+          // release the guard AFTER our own DOM writes flush, so any observer records
+          // they cause are swallowed while still guarded (defence vs a re-inject loop)
+          Promise.resolve().then(function () { pending = false; });
+        }, 250);
       });
-      try { var tb = nativeTable(); mo.observe(tb || document.body, { childList: true, subtree: true }); } catch (e) {}
+      // Observe ONLY #docker_list's direct children: Unraid replaces the tbody
+      // wholesale every 3-5s (which we must re-tag), but subtree:false keeps the
+      // per-second nchan CPU/RAM text ticks — and our own deep badge appends — from
+      // waking the observer, so there is no tick-storm and no double sweep.
+      try { var body = document.getElementById("docker_list"); if (body) mo.observe(body, { childList: true }); else mo.observe(nativeTable() || document.body, { childList: true, subtree: true }); } catch (e) {}
+      // Re-inject id/Von on an Advanced/Basic flip. Unraid's toggle is a cookie +
+      // global .advanced display swap with no reliable change event, so poll the
+      // effective state and reinject only on an actual flip (idempotent, cheap).
+      lastAdv = isAdvancedView();
+      timers.push(setInterval(function () { try { if (dead || mode !== "list") return; var a = isAdvancedView(); if (a !== lastAdv) { lastAdv = a; reinjectRowBadges(); } } catch (e) {} }, 1500));
       window.addEventListener("scroll", function () { try { if (menu) positionMenu(); } catch (e) {} }, true);
-      setInterval(function () { try { if (!openPop && mode === "grid") refreshStats(); } catch (e) {} }, 3500);
-      setInterval(function () { try { if (!openPop && !menu) load(); } catch (e) {} }, 9000);
-      document.addEventListener("click", function (e) { try { if (openPop && !openPop.contains(e.target) && !e.target.closest(".cc-chip")) closePop(); if (menu && !menu.contains(e.target) && !e.target.closest(".cc-hgear")) closeMenu(); } catch (e2) {} });
+      timers.push(setInterval(function () { try { if (!dead && !openPop && mode === "grid") refreshStats(); } catch (e) {} }, 3500));
+      timers.push(setInterval(function () { try { if (!dead && !openPop && !menu) load(); } catch (e) {} }, 9000));
+      document.addEventListener("click", function (e) { try { if (openPop && !openPop.contains(e.target) && !e.target.closest(".cc-plan")) closePop(); if (menu && !menu.contains(e.target) && !e.target.closest(".cc-hgear")) closeMenu(); } catch (e2) {} });
       document.addEventListener("keydown", function (e) { if (e.key === "Escape") { try { closePop(); closeMenu(); } catch (e2) {} } });
     } catch (e) { /* a failure here must never break Unraid's page */ }
   }

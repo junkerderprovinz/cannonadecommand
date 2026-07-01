@@ -6,7 +6,10 @@
  * exposes Docker create/exec/build. The browser never touches the Docker socket.
  */
 $sock  = getenv('CC_SOCK') ?: '/var/run/cannonadecommander.sock';
-$allow = ['state' => ['GET'], 'plan' => ['GET', 'PUT'], 'apply' => ['POST']];
+// state/stats: read-only; action: start|stop|restart|pause|unpause (the engine
+// validates the container name against the live list and never exposes
+// create/exec/build); plan/apply: the start-order plan. Nothing else is forwarded.
+$allow = ['state' => ['GET'], 'stats' => ['GET'], 'action' => ['POST'], 'plan' => ['GET', 'PUT'], 'apply' => ['POST']];
 
 $path   = isset($_GET['path']) ? preg_replace('/[^a-z]/', '', $_GET['path']) : '';
 $method = $_SERVER['REQUEST_METHOD'];

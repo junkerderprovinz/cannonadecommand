@@ -34,6 +34,13 @@ echo "==> normalising text files to LF"
 find "$PKGROOT" -type f ! -path "*/bin/*" ! -name '*.png' -print0 \
   | while IFS= read -r -d '' f; do perl -i -pe 's/\r\n/\n/g; s/\r$//' "$f"; done
 
+# Cache-bust: Unraid's autov() appends "?v=<filemtime>" to the injected .js/.css.
+# If installpkg restores an unchanged mtime, the browser serves a STALE script
+# (the "old toolbar still runs after an update" symptom). Stamp a fresh, uniform
+# mtime on every text asset so each release bumps ?v= and always loads fresh.
+echo "==> stamping fresh mtimes (cache-bust for autov ?v=)"
+find "$PKGROOT/usr/local/emhttp/plugins/$SLUG" -type f \( -name '*.js' -o -name '*.css' -o -name '*.page' -o -name '*.php' \) -exec touch {} +
+
 mkdir -p "$OUT"
 TXZ="$OUT/$SLUG-$VERSION-$ARCH-1.txz"
 echo "==> packaging -> $TXZ"

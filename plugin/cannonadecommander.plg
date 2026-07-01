@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.4.0">
+  <!ENTITY version   "0.4.1">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,18 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.4.1
+- Every datum in a row is now a clean, uniform BADGE, integrated in place with no
+  duplication: update status, force update, image tag, network, IP, port,
+  LAN IP:Port, live CPU and RAM, Container ID and the source (Von). The CPU and
+  RAM badges are back. The plan is a real, visible badge now.
+- The green play glyph and the redundant "started/Gestartet" text under the name
+  are hidden; the state is a badge you click to start or stop the container, and
+  the name is enlarged. Start/stop stays available via the icon's context menu.
+- Robust uninstall: the injected UI SELF-REMOVES when the plugin's proxy is gone,
+  so no bars linger even from a cached tab. Update installs wipe old plugin files
+  first (no orphans), and a cache-bust guarantees an update always loads fresh.
 
 ### 0.4.0
 - No more bar or section of our own above the Docker list. Every global control
@@ -102,13 +114,24 @@ containers that route through it. Read-mostly; the only writes are start/stop.
   socket. Working name, subject to change.
 </CHANGES>
 
+<!-- Pre-install: stop the old daemon and WIPE the plugin dir before installing, so
+     files removed between versions cannot linger (installpkg overwrites same-path
+     files but never deletes orphans - the "old bars/JS still there" symptom). The
+     saved start plan on the flash (/boot/config/plugins) is left untouched. -->
+<FILE Run="/bin/bash">
+<INLINE>
+&emhttp;/scripts/rc.&slug; stop 2>/dev/null
+rm -rf &emhttp;
+</INLINE>
+</FILE>
+
 <!--
   The package (supervisor binary + plugin files) is built by plugin/pkg_build.sh
   and attached to the GitHub release "v&version;". SHA256 is injected at release.
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>5d646219d0a3302cfebc4b609ce29dc8626cab1e3598e0112cd581d1f1eabcb2</SHA256>
+  <SHA256>91d3828b18aacb5194a4c334584c65a5d66fcc45719057d31257e192ddc9df59</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
