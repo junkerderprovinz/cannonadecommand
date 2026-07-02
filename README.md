@@ -42,13 +42,18 @@ Four pieces:
 - A **host supervisor** (a small Go daemon) that owns the dependency graph, talks
   to the Docker socket, and serves a localhost **unix-socket API**.
 - Unraid's **own container list, enhanced in place** — no bar or panel of our own.
-  Each row gets clean badges (the state doubles as a start/stop switch) and a chain
-  chip that opens a compact editor for that container's dependencies, readiness
-  probe and failure policy. A single **gear in the table header** holds every global
-  control: toggleable columns (update / network / IP / port / CPU / RAM and an
-  advanced set), a List/Grid switch, a filter, and **Save** / **Start in order**.
+  Every datum becomes a clean, consistent **material badge**: the state doubles as a
+  start/stop switch, a chain chip opens a compact editor for that container's
+  dependencies / readiness probe / failure policy, and a gear on the resource cell
+  edits **per-container CPU / RAM limits** live (Docker container-update, no restart).
+  A gear in Unraid's Advanced/Basic toggle bar holds the global controls (columns,
+  List/Grid, filter, **Save** / **Start in order**).
+- A **Settings page** (Settings → Utilities → CannonadeCommander): pick the badge
+  accent colour, choose which columns show in the Simple vs Advanced view, and set
+  the default view + row density.
 - A **same-origin PHP proxy**: the browser only ever talks to the proxy, never to
-  the Docker socket.
+  the Docker socket. The supervisor exposes only read + safe lifecycle + resource
+  limits — never create / exec / build.
 - **Event hooks**: on `docker_started` (the daemon is confirmed up) the supervisor
   applies your plan, starting each stage and waiting for readiness before the next.
 
