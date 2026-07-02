@@ -322,7 +322,6 @@
     ensureGridHolder(); gridHolder.innerHTML = "";
     gridHolder.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
     gridHolder.classList.toggle("cc-tint-icons", !!localStorage.getItem("cc.iconcolor"));
-    gridHolder.appendChild(makeGear("cc-hgear-grid"));
     var grid = el("div", "cc-grid");
     containers.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).forEach(function (c) { grid.appendChild(card(c)); });
     gridHolder.appendChild(grid);
@@ -388,7 +387,7 @@
     try {
       if (dead) return;
       if (mode === "grid") { removeEnhanceClasses(); clearRowBadges(); hideNative(true); renderGrid(); }
-      else { hideNative(false); removeGridHolder(); applyEnhanceClasses(); injectHeaderGear(); injectAllRowBadges(); }
+      else { hideNative(false); removeGridHolder(); applyEnhanceClasses(); injectAllRowBadges(); }
     } catch (e) { try { hideNative(false); } catch (e2) {} } // never leave the native list hidden or broken
   }
   function applyFilter() {
@@ -426,7 +425,14 @@
     var polrow = el("div", "cc-pop-row"); polrow.appendChild(el("label", "cc-pop-lbl", "On fail"));
     var pol = el("select", "cc-in"); POLICIES.forEach(function (p) { var o = el("option", null, p); o.value = p; if (node.policy === p) o.selected = true; pol.appendChild(o); });
     polrow.appendChild(pol); body.appendChild(polrow); pop.appendChild(body);
-    pop.appendChild(el("div", "cc-pop-foot", "abort skips dependents · continue/degrade start them anyway. Save plan to persist."));
+    pop.appendChild(el("div", "cc-pop-foot", "abort skips dependents · continue/degrade start them anyway."));
+    // Plan actions live here now (the Docker-tab gear is gone): save the whole plan
+    // or run it in dependency order immediately.
+    var act = el("div", "cc-pop-row cc-pop-act");
+    var bSave = el("button", "cc-btn", t("save")), bRun = el("button", "cc-btn cc-btn-primary", t("startorder"));
+    bSave.addEventListener("click", function () { savePlan(false); });
+    bRun.addEventListener("click", function () { savePlan(true); });
+    act.appendChild(bSave); act.appendChild(bRun); pop.appendChild(act);
     function commit() {
       if (!manage.checked) { delete workingPlan[name]; body.classList.add("cc-dis"); refreshChip(anchor, name); return; }
       body.classList.remove("cc-dis");
@@ -508,7 +514,7 @@
         moTimer = setTimeout(function () {
           moTimer = null;
           if (dead) { moPending = false; return; } // a teardown may have fired during the debounce window
-          try { applyEnhanceClasses(); injectHeaderGear(); injectAllRowBadges(); } catch (e) {}
+          try { applyEnhanceClasses(); injectAllRowBadges(); } catch (e) {}
           // release the guard AFTER our own DOM writes flush (defence vs a re-inject loop)
           Promise.resolve().then(function () { moPending = false; });
         }, 250);

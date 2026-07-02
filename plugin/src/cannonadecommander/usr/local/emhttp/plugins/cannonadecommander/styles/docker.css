@@ -206,6 +206,8 @@
 .cc-pop-foot { padding: 9px 14px; border-top: 1px solid #2a2a2a; color: #8a8a8a; font-size: 11px; }
 .cc-in { flex: 1; background: #1e1e1e; color: #e6e6e6; border: 1px solid #2a2a2a; border-radius: 4px; padding: 4px 6px; font-size: 12px; }
 .cc-port { flex: none; width: 70px; margin-left: 6px; }
+.cc-pop-act { gap: 8px; padding: 10px 14px 12px; border-top: 1px solid #2a2a2a; }
+.cc-pop-act .cc-btn { flex: 1; text-align: center; }
 
 /* ════════════════ RAINBOW mode + ICON tint + CPU/RAM force-show ════════════════ */
 /* rainbow: each badge kind its own colour (else all use the accent) */
@@ -240,6 +242,13 @@
 
 /* ════════════════ SETTINGS PAGE (Settings > Utilities) ════════════════ */
 #cc-settings { --bg: #161616; --bg2: #1c1c1c; --line: #2a2a2a; --line2: #333; --txt: #e6e6e6; --dim: #9a9a9a; --dim2: #6f6f6f; color: var(--txt); font: 14px/1.5 "Segoe UI", system-ui, sans-serif; padding-bottom: 40px; }
+/* Unraid's global button CSS paints an orange border on every <button>; neutralise
+   it for our controls so toggles/segments/swatches render clean. */
+#cc-settings button { -webkit-appearance: none; appearance: none; outline: none; font-family: inherit; }
+#cc-settings .cc-set-toggle, #cc-settings .cc-set-sw, #cc-settings .cc-set-mini, #cc-settings .cc-seg-btn, #cc-settings .cc-btn { box-shadow: none; }
+#cc-settings .cc-set-toggle, #cc-settings .cc-set-sw { border: 2px solid transparent; }
+#cc-settings .cc-seg { border: 1px solid var(--line2) !important; }
+#cc-settings .cc-seg-btn { border: 0 !important; }
 .cc-set-head { display: flex; flex-direction: column; gap: 5px; padding: 6px 0 16px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
 .cc-set-brand { font-size: 21px; letter-spacing: .2px; } .cc-set-brand b { font-weight: 700; } .cc-set-brand span { font-weight: 400; color: var(--dim); }
 .cc-set-sub { color: var(--dim2); font-size: 12.5px; }
@@ -247,8 +256,9 @@
 .cc-set-card { background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
 .cc-set-h { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
 .cc-set-card .cc-set-sub { margin-bottom: 12px; }
-.cc-set-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
-.cc-set-rl { min-width: 130px; }
+.cc-set-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; flex-wrap: wrap; }
+.cc-set-rl { min-width: 110px; }
+#cc-settings .cc-seg-btn { padding: 5px 12px; }
 .cc-set-spacer { flex: 1; }
 .cc-set-swatches { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 6px; }
 .cc-set-sw { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
@@ -257,7 +267,7 @@
 .cc-set-prev { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
 .cc-set-mini { background: transparent; color: var(--dim); border: 1px solid var(--line2); border-radius: 7px; padding: 5px 12px; font-size: 12.5px; cursor: pointer; }
 .cc-set-mini-on { color: #fff; border-color: var(--cc-accent, #2f6feb); background: rgba(255,255,255,.05); }
-.cc-set-toggle { width: 42px; height: 24px; border-radius: 999px; border: none; background: #3a3a3a; position: relative; cursor: pointer; transition: background .15s; flex: none; }
+.cc-set-toggle { width: 44px; height: 24px; border-radius: 999px; border: none !important; padding: 0 !important; background: #3a3a3a; position: relative; cursor: pointer; transition: background .15s; flex: none; box-sizing: border-box; }
 .cc-set-toggle-on { background: var(--cc-accent, #2f6feb); }
 .cc-set-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; }
 .cc-set-toggle-on .cc-set-knob { left: 21px; }
