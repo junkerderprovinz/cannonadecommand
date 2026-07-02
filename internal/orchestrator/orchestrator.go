@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/junkerderprovinz/cannonadecommander/internal/model"
 )
@@ -98,6 +99,18 @@ func (o *Orchestrator) Run(ctx context.Context, plan model.Plan) model.RunResult
 	blocked := make(map[string]bool) // nodes that aborted the chain, or were skipped
 
 	for stageIdx, stage := range stages {
+		// A cancelled context (request abort / timeout / shutdown) is a GLOBAL stop,
+		// not a per-node policy outcome: skip everything not yet run, uniformly.
+		if ctx.Err() != nil {
+			for _, rest := range stages[stageIdx:] {
+				for _, name := range rest {
+					if _, done := results[name]; !done {
+						results[name] = model.NodeResult{Name: name, Stage: stageIdx, State: model.StateSkipped, Reason: "run cancelled"}
+					}
+				}
+			}
+			break
+		}
 		// Phase 1 (sequential): decide skips. A node's dependencies always live
 		// in an earlier, already-finished stage, so `blocked` is final for them
 		// and this read/write happens with no goroutines running.
@@ -140,6 +153,18 @@ func (o *Orchestrator) Run(ctx context.Context, plan model.Plan) model.RunResult
 
 func (o *Orchestrator) runNode(ctx context.Context, node model.Node, stage int) model.NodeResult {
 	r := model.NodeResult{Name: node.Name, Stage: stage}
+	if node.DelaySeconds > 0 {
+		select {
+		case <-time.After(time.Duration(node.DelaySeconds) * time.Second):
+		case <-ctx.Done():
+			r.State, r.Reason = model.StateSkipped, "run cancelled" // cancellation is a clean stop, not a policy failure
+			return r
+		}
+	}
+	if ctx.Err() != nil {
+		r.State, r.Reason = model.StateSkipped, "run cancelled"
+		return r
+	}
 	if err := o.Starter.Start(ctx, node.Name); err != nil {
 		r.State = failState(node.Policy)
 		r.Reason = "start failed: " + err.Error()

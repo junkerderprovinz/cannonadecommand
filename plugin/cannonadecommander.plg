@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.5.1">
+  <!ENTITY version   "0.6.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,16 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.6.0
+- Redesigned Settings page (Settings > Utilities, ShipLog-style cards): all
+  configuration now lives here. Nicer colour picker (preset swatches + a custom
+  field), a RAINBOW mode (each badge kind its own colour), colourise every
+  container icon toward a chosen colour with a strength slider, the per-view column
+  matrix, default view and row density.
+- CPU / RAM is shown by default now (a feature), even in the Simple view.
+- The start delay is part of the start plan: set "wait N seconds before starting"
+  per container in the plan editor; the engine honours it.
 
 ### 0.5.1
 - CRITICAL uninstall fix. The REMOVE step ran `pkill -f cannonadecommander`, but
@@ -172,7 +182,7 @@ rm -rf &emhttp;
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>bfa50fc8e89f4a7938dc4999cadb9c1427696fa8e05ba53ad1dc99648167c2a8</SHA256>
+  <SHA256>7de742a47a06f32cb41105d256b28ab15a665bbaabcbfd9fd20045c255a404f8</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

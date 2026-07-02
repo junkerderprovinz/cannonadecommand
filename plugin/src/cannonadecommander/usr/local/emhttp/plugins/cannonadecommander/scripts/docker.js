@@ -150,7 +150,9 @@
   // advanced-detail badges (force/version/res/id/von) only in advanced.
   function defaultColview() {
     var adv = { s: false, a: true }, both = { s: true, a: true };
-    return { update: both, force: adv, version: adv, net: both, res: adv, id: adv, von: adv, plan: both };
+    // res (CPU/RAM) defaults ON in both views — it is a headline feature, and the
+    // CSS force-shows the native resource column even in Simple view.
+    return { update: both, force: adv, version: adv, net: both, res: both, id: adv, von: adv, plan: both };
   }
   function loadColview() {
     try { var j = JSON.parse(localStorage.getItem(COLS_KEY) || "null"); if (j && typeof j === "object") { var d = defaultColview(); Object.keys(d).forEach(function (k) { if (j[k]) d[k] = { s: !!j[k].s, a: !!j[k].a }; }); return d; } } catch (e) {}
@@ -158,25 +160,37 @@
   }
   var colview = loadColview();
   function colOn(key) { var v = colview[key]; if (!v) return true; return isAdvancedView() ? !!v.a : !!v.s; }
-  function saveColview() { localStorage.setItem(COLS_KEY, JSON.stringify(colview)); }
 
   // Settings (localStorage): accent colour + row density → CSS variables; picked up
   // live from the Settings page (which writes the same keys + a poke event).
+  // hue of a hex colour (for the icon tint), or -1 if unparseable.
+  function hexHue(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return -1; var n = parseInt(m[1], 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255; var mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, h = 0; if (d > 0) { if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; h *= 60; if (h < 0) h += 360; } return h; }
   function applySettings() {
     try {
-      var accent = localStorage.getItem("cc.accent"); if (accent) document.documentElement.style.setProperty("--cc-accent", accent);
-      var dens = localStorage.getItem("cc.density"); var map = { compact: "5px", normal: "9px", airy: "14px" };
-      document.documentElement.style.setProperty("--cc-density", map[dens] || "9px");
+      var root = document.documentElement.style;
+      var accent = localStorage.getItem("cc.accent"); if (accent) root.setProperty("--cc-accent", accent);
+      var dens = localStorage.getItem("cc.density"); root.setProperty("--cc-density", { compact: "5px", normal: "9px", airy: "14px" }[dens] || "9px");
+      // icon tint: approximate a colour via grayscale+sepia+hue-rotate+saturate.
+      var ic = localStorage.getItem("cc.iconcolor"), hue = hexHue(ic);
+      if (ic && hue >= 0) { var s = parseInt(localStorage.getItem("cc.iconstrength") || "100", 10); root.setProperty("--cc-icon-filter", "grayscale(1) sepia(1) hue-rotate(" + Math.round(hue - 50) + "deg) saturate(" + (Math.max(10, s) / 100 * 5 + 0.6) + ")"); }
+      else { root.removeProperty("--cc-icon-filter"); }
       colview = loadColview();
     } catch (e) {}
   }
 
   // CSS-driven cell → pill styling. Toggling a class flips that badge kind on/off
-  // for the CURRENT view (Simple/Advanced), per the visibility matrix.
+  // for the CURRENT view (Simple/Advanced), per the visibility matrix; also carries
+  // the rainbow + icon-tint modes chosen in the Settings page.
   function applyEnhanceClasses() {
-    try { var tb = nativeTable(); if (!tb || tb.tagName !== "TABLE") return; tb.classList.add("cc-enh"); tb.classList.toggle("cc-adv", isAdvancedView()); COLS.forEach(function (c) { tb.classList.toggle("cc-c-" + c.key, colOn(c.key)); }); } catch (e) {}
+    try {
+      var tb = nativeTable(); if (!tb || tb.tagName !== "TABLE") return;
+      tb.classList.add("cc-enh"); tb.classList.toggle("cc-adv", isAdvancedView());
+      tb.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
+      tb.classList.toggle("cc-tint-icons", !!localStorage.getItem("cc.iconcolor"));
+      COLS.forEach(function (c) { tb.classList.toggle("cc-c-" + c.key, colOn(c.key)); });
+    } catch (e) {}
   }
-  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh", "cc-adv"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); } catch (e) {} }
+  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh", "cc-adv", "cc-rainbow", "cc-tint-icons"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); } catch (e) {} }
 
   // read a positional cell's value (docker_readmore), stripping nested advanced
   // (MAC) + Tailscale tooltip, collapsed to one short line.
@@ -306,6 +320,8 @@
   function removeGridHolder() { try { if (gridHolder && gridHolder.parentNode) gridHolder.parentNode.removeChild(gridHolder); } catch (e) {} gridHolder = null; }
   function renderGrid() {
     ensureGridHolder(); gridHolder.innerHTML = "";
+    gridHolder.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
+    gridHolder.classList.toggle("cc-tint-icons", !!localStorage.getItem("cc.iconcolor"));
     gridHolder.appendChild(makeGear("cc-hgear-grid"));
     var grid = el("div", "cc-grid");
     containers.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).forEach(function (c) { grid.appendChild(card(c)); });
@@ -330,17 +346,6 @@
     } catch (e) { return false; }
   }
   function menuHead(txt) { return el("div", "cc-menu-h", txt); }
-  function colRow(c) {
-    var row = el("label", "cc-menu-row");
-    var cb = el("input"); cb.type = "checkbox"; cb.checked = colOn(c.key);
-    cb.addEventListener("change", function () {
-      var v = colview[c.key] || { s: true, a: true };
-      if (isAdvancedView()) v.a = cb.checked; else v.s = cb.checked; // toggles the CURRENT view
-      colview[c.key] = v; saveColview(); applyEnhanceClasses(); reinjectRowBadges();
-    });
-    row.appendChild(cb); row.appendChild(el("span", null, " " + (c.label[LANG] || c.label.en)));
-    return row;
-  }
   function buildMenu() {
     var m = el("div", "cc-menu cc-menu-wide");
     m.addEventListener("click", function (e) { e.stopPropagation(); });
@@ -356,8 +361,6 @@
     var filter = el("input", "cc-filter"); filter.type = "text"; filter.placeholder = t("filter"); filter.value = filterText;
     filter.addEventListener("input", function () { filterText = norm(filter.value); applyFilter(); });
     frow.appendChild(filter); m.appendChild(frow);
-    m.appendChild(menuHead(t("cols")));
-    COLS.forEach(function (c) { m.appendChild(colRow(c)); });
     m.appendChild(el("div", "cc-menu-sep"));
     var prow = el("div", "cc-menu-row cc-menu-plain");
     var save = el("button", "cc-btn", t("save")), fire = el("button", "cc-btn cc-btn-primary", t("startorder"));
@@ -412,6 +415,9 @@
     var body = el("div", "cc-pop-body" + (existing ? "" : " cc-dis"));
     var arow = el("div", "cc-pop-row"); arow.appendChild(el("label", "cc-pop-lbl", "Depends on"));
     var after = el("input", "cc-in"); after.type = "text"; after.setAttribute("list", "cc-names"); after.placeholder = "comma-separated"; after.value = (node.after || []).join(", "); arow.appendChild(after); body.appendChild(arow);
+    var drow = el("div", "cc-pop-row"); drow.appendChild(el("label", "cc-pop-lbl", "Start delay"));
+    var delay = el("input", "cc-in cc-port"); delay.type = "number"; delay.min = "0"; delay.placeholder = "sec"; delay.value = node.delay_seconds ? node.delay_seconds : "";
+    drow.appendChild(delay); drow.appendChild(el("span", null, " " + (LANG === "de" ? "Sek. vor dem Start warten" : "sec to wait before starting"))); body.appendChild(drow);
     var prow = el("div", "cc-pop-row"); prow.appendChild(el("label", "cc-pop-lbl", "Ready when"));
     var probe = el("select", "cc-in"); PROBES.forEach(function (p) { var o = el("option", null, p); o.value = p; if (node.probe && node.probe.kind === p) o.selected = true; probe.appendChild(o); });
     var port = el("input", "cc-in cc-port"); port.type = "number"; port.placeholder = "port"; port.value = (node.probe && node.probe.port) ? node.probe.port : "";
@@ -427,10 +433,13 @@
       var afterList = after.value.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
       var pr = { kind: probe.value }, pv = parseInt(port.value, 10);
       if (probe.value === "tcp" && pv > 0) pr.port = pv; if (probe.value === "running") pr.grace_seconds = 3;
-      workingPlan[name] = { name: name, after: afterList, probe: pr, policy: pol.value }; refreshChip(anchor, name);
+      var dv = parseInt(delay.value, 10);
+      var n = { name: name, after: afterList, probe: pr, policy: pol.value };
+      if (dv > 0) n.delay_seconds = dv;
+      workingPlan[name] = n; refreshChip(anchor, name);
     }
     manage.addEventListener("change", commit);
-    [after, probe, port, pol].forEach(function (n) { n.addEventListener("change", commit); n.addEventListener("input", commit); });
+    [after, delay, probe, port, pol].forEach(function (n) { n.addEventListener("change", commit); n.addEventListener("input", commit); });
     probe.addEventListener("change", syncPort);
     document.body.appendChild(pop);
     var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || 320;
@@ -540,6 +549,7 @@
       try { closePop(); } catch (e) {} try { closeMenu(); } catch (e) {}
       removeEnhanceClasses();
       clearRowBadges();
+      try { var rs = document.documentElement.style; ["--cc-icon-filter", "--cc-accent", "--cc-density"].forEach(function (p) { rs.removeProperty(p); }); } catch (e) {}
       Array.prototype.slice.call(document.querySelectorAll(".cc-hgear, .cc-grid-holder, .cc-menu, .cc-toast, .cc-pop, #cc-names")).forEach(function (n) { n.remove(); });
       hideNative(false);
     } catch (e) {}
@@ -568,7 +578,15 @@
       connectObserver();
       startTimers();
       // the Settings page (separate tab) writes cc.* keys → re-apply live here
-      window.addEventListener("storage", function (e) { try { if (!dead && e.key && e.key.indexOf("cc.") === 0) { applySettings(); if (mode === "list") { applyEnhanceClasses(); reinjectRowBadges(); } } } catch (e2) {} });
+      window.addEventListener("storage", function (e) {
+        try {
+          if (dead || !e.key || e.key.indexOf("cc.") !== 0) return;
+          if (e.key === "cc.view") { setMode(localStorage.getItem("cc.view") === "grid" ? "grid" : "list"); return; }
+          applySettings();
+          if (mode === "list") { applyEnhanceClasses(); reinjectRowBadges(); }
+          else if (mode === "grid") renderGrid();
+        } catch (e2) {}
+      });
       // persistent re-probe (NEVER cleared by teardown): rebuild when the proxy returns
       setInterval(function () { try { if (!dead) return; fetch(PROXY + "?path=" + encodeURIComponent("state"), { headers: { Accept: "application/json" } }).then(function (r) { if (r.ok) rearm(); }).catch(function () {}); } catch (e) {} }, 8000);
       window.addEventListener("scroll", function () { try { if (menu) positionMenu(); } catch (e) {} }, true);

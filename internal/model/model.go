@@ -57,10 +57,11 @@ const (
 
 // Node is one managed container in the start plan.
 type Node struct {
-	Name   string   `json:"name"`   // Unraid container name
-	After  []string `json:"after"`  // must start AFTER these nodes are ready (edge: dep -> this)
-	Probe  Probe    `json:"probe"`  // how to decide it's ready
-	Policy Policy   `json:"policy"` // what to do if it never becomes ready
+	Name         string   `json:"name"`                    // Unraid container name
+	After        []string `json:"after"`                   // must start AFTER these nodes are ready (edge: dep -> this)
+	DelaySeconds int      `json:"delay_seconds,omitempty"` // wait this long before starting it (the start delay)
+	Probe        Probe    `json:"probe"`                   // how to decide it's ready
+	Policy       Policy   `json:"policy"`                  // what to do if it never becomes ready
 }
 
 // Plan is the user's saved orchestration: which containers the engine manages

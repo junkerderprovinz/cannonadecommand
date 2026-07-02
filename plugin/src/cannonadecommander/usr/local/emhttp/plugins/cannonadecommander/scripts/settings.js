@@ -1,7 +1,8 @@
-/* CannonadeCommander settings page. Client-side only: renders a form into
- * #cc-settings and persists to localStorage (cc.accent / cc.density / cc.view /
- * cc.colview). The Docker-tab enhancer reads the same keys and reacts live via
- * the storage event, so changes here take effect the moment you switch tabs. */
+/* CannonadeCommander settings page. Client-side only: renders a polished,
+ * card-based form (ShipLog-style, Carbon dark) into #cc-settings and persists to
+ * localStorage (cc.accent / cc.rainbow / cc.iconcolor / cc.iconstrength /
+ * cc.density / cc.view / cc.colview). The Docker-tab enhancer reads the same keys
+ * and reacts live via the storage event. */
 (function () {
   "use strict";
   var root = document.getElementById("cc-settings");
@@ -20,112 +21,119 @@
     { key: "von", label: T("Von / Quelle", "From / source") },
     { key: "plan", label: T("Startplan", "Plan") },
   ];
-  var PRESETS = ["#2f6feb", "#1f9d55", "#ff8c2f", "#8b5cf6", "#e0912a", "#d9433f", "#0ea5a4", "#525252"];
+  var PRESETS = ["#2f6feb", "#1f9d55", "#ff8c2f", "#8b5cf6", "#e0912a", "#d9433f", "#0ea5a4", "#e05299", "#525252"];
 
-  function defColview() {
-    var adv = { s: false, a: true }, both = { s: true, a: true };
-    return { update: both, force: adv, version: adv, net: both, res: adv, id: adv, von: adv, plan: both };
-  }
+  function defColview() { var adv = { s: false, a: true }, both = { s: true, a: true }; return { update: both, force: adv, version: adv, net: both, res: both, id: adv, von: adv, plan: both }; }
   function get(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function del(k) { try { localStorage.removeItem(k); } catch (e) {} }
   function loadColview() { try { var j = JSON.parse(localStorage.getItem("cc.colview") || "null"); if (j && typeof j === "object") { var d = defColview(); Object.keys(d).forEach(function (k) { if (j[k]) d[k] = { s: !!j[k].s, a: !!j[k].a }; }); return d; } } catch (e) {} return defColview(); }
 
   var accent = get("cc.accent", "#2f6feb");
+  var rainbow = get("cc.rainbow", "0") === "1";
+  var iconcolor = get("cc.iconcolor", "");
+  var iconstrength = parseInt(get("cc.iconstrength", "100"), 10);
   var density = get("cc.density", "normal");
   var view = get("cc.view", "list");
   var colview = loadColview();
 
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
-  function h(txt) { var e = el("div", "cc-menu-h"); e.textContent = txt; e.style.fontSize = "12px"; e.style.marginTop = "18px"; return e; }
+  function card(title, sub) { var c = el("div", "cc-set-card"); c.appendChild(el("div", "cc-set-h", title)); if (sub) c.appendChild(el("div", "cc-set-sub", sub)); return c; }
+  function elk(t) { var s = el("span", "cc-b-k"); s.textContent = t; return s; }
+  function elv(t) { var s = el("span", "cc-b-v"); s.textContent = t; return s; }
+
+  // a badge-styled on/off toggle matching the plugin look
+  function toggle(on, onChange) {
+    var t = el("button", "cc-set-toggle" + (on ? " cc-set-toggle-on" : "")); t.type = "button";
+    t.setAttribute("role", "switch"); t.setAttribute("aria-checked", on ? "true" : "false");
+    t.appendChild(el("span", "cc-set-knob"));
+    t.addEventListener("click", function () { on = !on; t.classList.toggle("cc-set-toggle-on", on); t.setAttribute("aria-checked", on ? "true" : "false"); onChange(on); });
+    return t;
+  }
+  function toggleRow(labelText, on, onChange) {
+    var row = el("div", "cc-set-row"); row.appendChild(el("span", null, labelText)); var sp = el("span", "cc-set-spacer"); row.appendChild(sp);
+    row.appendChild(toggle(on, onChange)); return row;
+  }
 
   function render() {
     root.innerHTML = "";
     root.style.setProperty("--cc-accent", accent);
-    root.style.maxWidth = "760px";
 
-    var title = el("h2", null, "CannonadeCommander"); title.style.margin = "6px 0 2px";
-    root.appendChild(title);
-    root.appendChild(el("div", "cc-dim", T("Aussehen des Docker-Tab-Panels. Wird sofort im Docker-Tab wirksam (localStorage, pro Browser).", "Look of the Docker-tab panel. Applies live in the Docker tab (localStorage, per browser).")));
+    var head = el("div", "cc-set-head");
+    var brand = el("div", "cc-set-brand"); brand.appendChild(el("b", null, "Cannonade")); brand.appendChild(el("span", null, "Commander"));
+    head.appendChild(brand);
+    head.appendChild(el("div", "cc-set-sub", T("Aussehen des Docker-Tab-Panels — wirkt sofort im Docker-Tab (pro Browser gespeichert).", "Look of the Docker-tab panel — applies live in the Docker tab (per browser).")));
+    root.appendChild(head);
 
-    // ── accent colour ──
-    root.appendChild(h(T("Badge-Akzentfarbe", "Badge accent colour")));
-    var srow = el("div"); srow.style.cssText = "display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px";
+    var wrap = el("div", "cc-set-wrap");
+    root.appendChild(wrap);
+
+    // ── Badges ──
+    var c1 = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
+    var srow = el("div", "cc-set-swatches");
     PRESETS.forEach(function (c) {
-      var sw = el("button"); sw.type = "button"; sw.title = c;
-      sw.style.cssText = "width:26px;height:26px;border-radius:50%;border:2px solid " + (c === accent ? "#fff" : "transparent") + ";background:" + c + ";cursor:pointer";
+      var sw = el("button", "cc-set-sw" + (c === accent ? " cc-set-sw-on" : "")); sw.type = "button"; sw.title = c; sw.style.background = c;
       sw.addEventListener("click", function () { accent = c; set("cc.accent", accent); render(); });
       srow.appendChild(sw);
     });
-    var pick = el("input"); pick.type = "color"; pick.value = accent;
-    pick.style.cssText = "width:36px;height:30px;border:none;background:none;cursor:pointer";
-    pick.addEventListener("input", function () { accent = pick.value; set("cc.accent", accent); previewOnly(); });
-    pick.addEventListener("change", function () { render(); });
+    var pick = el("input", "cc-set-pick"); pick.type = "color"; pick.value = /^#[0-9a-f]{6}$/i.test(accent) ? accent : "#2f6feb";
+    pick.addEventListener("input", function () { accent = pick.value; set("cc.accent", accent); root.style.setProperty("--cc-accent", accent); paintPrev(); });
+    pick.addEventListener("change", render);
     srow.appendChild(pick);
-    root.appendChild(srow);
-    // live preview
-    var prev = el("div", "cc-b"); prev.id = "cc-prev";
-    prev.style.marginTop = "10px";
-    prev.appendChild(elk("Netzwerk")); prev.appendChild(elv("br0.20"));
-    root.appendChild(prev);
+    c1.appendChild(srow);
+    c1.appendChild(toggleRow(T("Regenbogen-Modus (jede Badge-Art eigene Farbe)", "Rainbow mode (each badge kind its own colour)"), rainbow, function (v) { rainbow = v; set("cc.rainbow", v ? "1" : "0"); paintPrev(); }));
+    var prev = el("div", "cc-set-prev");
+    ["net", "ip", "lan", "port"].forEach(function (k) { var b = el("span", "cc-b cc-b-" + k); b.appendChild(elk({ net: "Netzwerk", ip: "IP", lan: "LAN", port: "Port" }[k])); b.appendChild(elv("br0.20")); prev.appendChild(b); });
+    prev.id = "cc-set-prev"; c1.appendChild(prev);
+    wrap.appendChild(c1);
 
-    // ── column visibility matrix ──
-    root.appendChild(h(T("Spalten / Badges je Ansicht", "Columns / badges per view")));
-    var tbl = el("table"); tbl.style.cssText = "border-collapse:collapse;margin-top:6px;font-size:13px";
-    var thr = el("tr");
-    thr.appendChild(thc(""));
-    thr.appendChild(thc(T("Einfach", "Simple")));
-    thr.appendChild(thc(T("Advanced", "Advanced")));
-    tbl.appendChild(thr);
+    // ── Container icons ──
+    var c2 = card(T("Container-Icons einfärben", "Colourise container icons"), T("Tönt alle Icons in eine Farbe (Näherung über Farbfilter).", "Tints every icon toward one colour (approximated via colour filter)."));
+    var irow = el("div", "cc-set-row");
+    var offbtn = el("button", "cc-set-mini" + (iconcolor ? "" : " cc-set-mini-on")); offbtn.type = "button"; offbtn.textContent = T("Aus", "Off");
+    offbtn.addEventListener("click", function () { iconcolor = ""; del("cc.iconcolor"); render(); });
+    irow.appendChild(offbtn);
+    var ipick = el("input", "cc-set-pick"); ipick.type = "color"; ipick.value = /^#[0-9a-f]{6}$/i.test(iconcolor) ? iconcolor : accent;
+    ipick.addEventListener("input", function () { iconcolor = ipick.value; set("cc.iconcolor", iconcolor); });
+    irow.appendChild(ipick);
+    irow.appendChild(el("span", "cc-dim", T("← Farbe wählen", "← pick a colour")));
+    c2.appendChild(irow);
+    var strow = el("div", "cc-set-row");
+    strow.appendChild(el("span", null, T("Intensität", "Strength")));
+    var sl = el("input"); sl.type = "range"; sl.min = "10"; sl.max = "100"; sl.value = String(iconstrength); sl.style.flex = "1";
+    sl.addEventListener("input", function () { iconstrength = parseInt(sl.value, 10); set("cc.iconstrength", sl.value); });
+    strow.appendChild(sl);
+    c2.appendChild(strow);
+    wrap.appendChild(c2);
+
+    // ── Columns matrix ──
+    var c3 = card(T("Spalten / Badges je Ansicht", "Columns / badges per view"), T("Welche Badges in der einfachen und in der Advanced-Ansicht erscheinen.", "Which badges appear in the Simple and the Advanced view."));
+    var tbl = el("table", "cc-set-tbl");
+    var thr = el("tr"); thr.appendChild(el("th")); thr.appendChild(thc(T("Einfach", "Simple"))); thr.appendChild(thc(T("Advanced", "Advanced"))); tbl.appendChild(thr);
     COLS.forEach(function (c) {
-      var tr = el("tr");
-      var name = el("td", null, c.label); name.style.cssText = "padding:4px 16px 4px 0";
-      tr.appendChild(name);
-      tr.appendChild(chkCell(c.key, "s"));
-      tr.appendChild(chkCell(c.key, "a"));
-      tbl.appendChild(tr);
+      var tr = el("tr"); tr.appendChild(el("td", "cc-set-cname", c.label));
+      tr.appendChild(chkCell(c.key, "s")); tr.appendChild(chkCell(c.key, "a")); tbl.appendChild(tr);
     });
-    root.appendChild(tbl);
+    c3.appendChild(tbl);
+    wrap.appendChild(c3);
 
-    // ── default view + density ──
-    root.appendChild(h(T("Standard-Ansicht", "Default view")));
-    var vrow = el("div"); vrow.style.marginTop = "6px";
-    [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")]].forEach(function (o) {
-      var lab = el("label"); lab.style.marginRight = "16px";
-      var rb = el("input"); rb.type = "radio"; rb.name = "cc-view"; rb.checked = view === o[0];
-      rb.addEventListener("change", function () { view = o[0]; set("cc.view", view); });
-      lab.appendChild(rb); lab.appendChild(document.createTextNode(" " + o[1]));
-      vrow.appendChild(lab);
-    });
-    root.appendChild(vrow);
+    // ── View + density ──
+    var c4 = card(T("Ansicht", "View"), null);
+    c4.appendChild(segRow(T("Standard-Ansicht", "Default view"), [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")]], view, function (v) { view = v; set("cc.view", v); }));
+    c4.appendChild(segRow(T("Zeilenhöhe", "Row density"), [["compact", T("kompakt", "compact")], ["normal", "normal"], ["airy", T("luftig", "airy")]], density, function (v) { density = v; set("cc.density", v); }));
+    wrap.appendChild(c4);
 
-    root.appendChild(h(T("Zeilenhöhe", "Row density")));
-    var drow = el("div"); drow.style.marginTop = "6px";
-    [["compact", T("kompakt", "compact")], ["normal", T("normal", "normal")], ["airy", T("luftig", "airy")]].forEach(function (o) {
-      var lab = el("label"); lab.style.marginRight = "16px";
-      var rb = el("input"); rb.type = "radio"; rb.name = "cc-dens"; rb.checked = density === o[0];
-      rb.addEventListener("change", function () { density = o[0]; set("cc.density", density); });
-      lab.appendChild(rb); lab.appendChild(document.createTextNode(" " + o[1]));
-      drow.appendChild(lab);
-    });
-    root.appendChild(drow);
-
-    var note = el("div", "cc-dim", T("Öffne danach den Docker-Tab (oder wechsle dorthin) – die Änderungen erscheinen sofort.", "Open (or switch to) the Docker tab afterwards; changes appear immediately."));
-    note.style.marginTop = "22px";
-    root.appendChild(note);
+    root.appendChild(el("div", "cc-set-foot", T("Öffne (oder wechsle zu) den Docker-Tab — die Änderungen erscheinen sofort.", "Open (or switch to) the Docker tab — changes appear immediately.")));
+    paintPrev();
   }
-  function elk(t) { var s = el("span", "cc-b-k"); s.textContent = t; return s; }
-  function elv(t) { var s = el("span", "cc-b-v"); s.textContent = t; return s; }
-  function thc(t) { var e = el("th", null, t); e.style.cssText = "padding:4px 12px;text-align:center;color:#8a8a8a;font-weight:500;font-size:11px"; return e; }
-  function chkCell(key, view2) {
-    var td = el("td"); td.style.textAlign = "center";
-    var cb = el("input"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][view2]);
-    cb.addEventListener("change", function () {
-      if (!colview[key]) colview[key] = { s: true, a: true };
-      colview[key][view2] = cb.checked; set("cc.colview", JSON.stringify(colview));
-    });
-    td.appendChild(cb); return td;
+  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var kinds = { net: "#7fd1a3", ip: "#86b8f0", lan: "#d9b36b", port: "#c99ad9" }; Array.prototype.slice.call(p.children).forEach(function (b) { var k = (b.className.match(/cc-b-(\w+)/) || [])[1]; b.style.background = rainbow ? kinds[k] : accent; b.style.color = "#fff"; }); }
+  function thc(t) { var e = el("th", null, t); return e; }
+  function chkCell(key, v) { var td = el("td", "cc-set-chk"); var cb = el("input"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); cb.addEventListener("change", function () { if (!colview[key]) colview[key] = { s: true, a: true }; colview[key][v] = cb.checked; set("cc.colview", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
+  function segRow(labelText, opts, cur, onChange) {
+    var row = el("div", "cc-set-row"); row.appendChild(el("span", "cc-set-rl", labelText)); var seg = el("div", "cc-seg");
+    opts.forEach(function (o) { var b = el("button", "cc-seg-btn" + (cur === o[0] ? " cc-seg-on" : "")); b.type = "button"; b.textContent = o[1]; b.addEventListener("click", function () { onChange(o[0]); Array.prototype.slice.call(seg.children).forEach(function (x) { x.classList.remove("cc-seg-on"); }); b.classList.add("cc-seg-on"); }); seg.appendChild(b); });
+    row.appendChild(seg); return row;
   }
-  function previewOnly() { root.style.setProperty("--cc-accent", accent); var p = document.getElementById("cc-prev"); if (p) p.style.background = accent; }
 
   render();
 })();
