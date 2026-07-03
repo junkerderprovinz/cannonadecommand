@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.8.0">
+  <!ENTITY version   "0.8.1">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,20 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.8.1
+- CRITICAL uninstall fix, root-caused against Unraid's own plugin-manager source.
+  The removal script was wrapped in a bare `&lt;REMOVE&gt;` tag, which Unraid does NOT
+  execute (it only runs `&lt;FILE Method="remove"&gt;` blocks) - so on every prior version
+  the cleanup silently never ran: the daemon kept running, the plugin files, the
+  installed package and the cached flash .txz all stayed behind (Unraid still moved
+  the flash .plg off, because a remove that runs nothing trivially "succeeds"). This
+  also explains why the earlier "pkill" fix never helped - it lived in a block that
+  never executed. The removal is now a proper `&lt;FILE Run="/bin/bash" Method="remove"&gt;`
+  block that ends with `exit 0` (Unraid only clears the flash .plg on a zero exit, so
+  a non-zero exit would reinstall on boot), stops the daemon by PID, removes the exact
+  registered package, wipes the plugin dir and the cached .txz, and keeps your plan.
+  Installs also drop old flash .txz so packages no longer pile up across updates.
 
 ### 0.8.0
 - UI fixes from box testing. The per-container editor (the chain chip) and its new
@@ -206,12 +220,14 @@ containers that route through it. Read-mostly; the only writes are start/stop.
 
 <!-- Pre-install: stop the old daemon and WIPE the plugin dir before installing, so
      files removed between versions cannot linger (installpkg overwrites same-path
-     files but never deletes orphans - the "old bars/JS still there" symptom). The
-     saved start plan on the flash (/boot/config/plugins) is left untouched. -->
+     files but never deletes orphans - the "old bars/JS still there" symptom). Also
+     drop old flash .txz so packages do not pile up across updates. The saved start
+     plan/config on the flash (/boot/config/plugins/&slug;) is left untouched. -->
 <FILE Run="/bin/bash">
 <INLINE>
 &emhttp;/scripts/rc.&slug; stop 2>/dev/null
 rm -rf &emhttp;
+rm -f &plgPath;/*.txz
 </INLINE>
 </FILE>
 
@@ -221,7 +237,7 @@ rm -rf &emhttp;
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>8c6d4abd62a5207329d389731eccfedcdc1f5adbd499b2dcb6d1b15bc0e51212</SHA256>
+  <SHA256>5e597c669723f6704802fb6190a4138feb2340667eabbb082215faa8451600af</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
@@ -236,24 +252,30 @@ echo "CannonadeCommander &version; installed - open the Docker tab."
 </INLINE>
 </FILE>
 
-<!-- Remove: stop the daemon (by PID, via the rc script) and drop the package +
-     files; keep the saved plan.
-     CRITICAL, verified against Unraid's plugin manager source: do NOT
-     'pkill -f &slug;' here. Unraid runs this REMOVE as '/bin/bash
-     /tmp/inlineN-&slug;.sh' under the parent 'plugin remove &slug;.plg', so
-     'pkill -f &slug;' matches (and SIGTERMs) THIS script AND that orchestrator —
-     the script dies before 'rm -rf' runs (files linger) AND Unraid never moves
-     the .plg off the flash, so the plugin reinstalls on the next boot. rc stop
-     already stops the engine precisely via its PID file; Unraid removes the
-     flash .plg itself once its process is left alive. -->
-<REMOVE>
+<!-- Remove. This MUST be a <FILE ... Method="remove"> block: Unraid's plugin
+     manager (dynamix.plugin.manager/scripts/plugin) only executes <FILE> elements,
+     so a bare <REMOVE> tag is silently IGNORED and the whole cleanup never runs -
+     that is the bug that left the daemon, files, package and cached .txz behind on
+     every prior version (Unraid still moved the flash .plg off, because a remove
+     that runs no FILE trivially "succeeds").
+     INVARIANT: this script MUST end with exit 0. The manager only moves
+     /boot/config/plugins/&slug;.plg off the flash when the remove script returns 0;
+     a NON-ZERO exit leaves the .plg there and it REINSTALLS on the next boot. So:
+     never add `set -e`, and never `pkill -f &slug;` (it would match this very
+     /tmp/inlineN-&slug;.sh AND the `plugin remove` parent -> non-zero -> reinstall).
+     Stop by PID, kill any stray daemon ONLY by its full binary path, drop the
+     package (exact registered name) + files + cached flash .txz; plan/config kept. -->
+<FILE Run="/bin/bash" Method="remove">
 <INLINE>
 &emhttp;/scripts/rc.&slug; stop 2>/dev/null
-removepkg &slug; 2>/dev/null
+for p in $(pgrep -f '&emhttp;/bin/&slug;' 2>/dev/null); do kill -9 "$p" 2>/dev/null; done
+pkg=$(ls /var/log/packages/ 2>/dev/null | grep -E "^&slug;(-[^-]+-[^-]+-[^-]+)?$" | head -n1)
+if [ -n "$pkg" ]; then removepkg "$pkg" 2>/dev/null; fi
 rm -rf &emhttp;
-rm -f &plgPath;/*.txz /var/run/&slug;.pid /var/run/&slug;.sock
+rm -f &plgPath;/*.txz &plgPath;/*.txz.md5 /var/run/&slug;.pid /var/run/&slug;.sock
 echo "CannonadeCommander removed (start plan kept on the flash)."
+exit 0
 </INLINE>
-</REMOVE>
+</FILE>
 
 </PLUGIN>
