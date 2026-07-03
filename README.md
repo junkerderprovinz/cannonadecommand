@@ -37,20 +37,24 @@ first).
 
 ## How it works
 
-Four pieces:
+The pieces:
 
 - A **host supervisor** (a small Go daemon) that owns the dependency graph, talks
   to the Docker socket, and serves a localhost **unix-socket API**.
 - Unraid's **own container list, enhanced in place** — no bar or panel of our own.
   Every datum becomes a clean, consistent **material badge**: the state doubles as a
-  start/stop switch, a chain chip opens a compact editor for that container's
-  dependencies / readiness probe / failure policy, and a gear on the resource cell
+  start/stop switch, the chain chip opens a compact per-container editor for its
+  dependencies / readiness probe / failure policy **plus its automation** (below)
+  and the **Save** / **Start in order** actions, and a gear on the resource cell
   edits **per-container CPU / RAM limits** live (Docker container-update, no restart).
-  A gear in Unraid's Advanced/Basic toggle bar holds the global controls (columns,
-  List/Grid, filter, **Save** / **Start in order**).
-- A **Settings page** (Settings → Utilities → CannonadeCommander): pick the badge
-  accent colour, choose which columns show in the Simple vs Advanced view, and set
-  the default view + row density.
+- **Automation, per container**: **schedules** (start / stop / restart at a
+  wall-clock time on chosen weekdays), a **watchdog** (auto-restart on unhealthy or
+  a real crash — a clean/manual stop is left alone — with a per-hour cap), and
+  **notifications** (Unraid's own notifications and/or a webhook). Schedules and the
+  watchdog live in the chain-chip editor; notifications on the Settings page.
+- A **Settings page** (Settings → Utilities → CannonadeCommander): badge accent
+  colour and rainbow mode, container-icon tint, which columns show in the Simple vs
+  Advanced view, the default view + row density, and the **notification** settings.
 - A **same-origin PHP proxy**: the browser only ever talks to the proxy, never to
   the Docker socket. The supervisor exposes only read + safe lifecycle + resource
   limits — never create / exec / build.
@@ -93,10 +97,11 @@ same-origin PHP proxy.
 
 ## Status
 
-Pre-1.0 MVP. Shipping: dependency-ordered, health-gated **start** orchestration +
-read-only live state. Planned next: per-container schedules, a resource-limit
-editor (memory/CPU/IO with a dual-write into the template so it survives *apply*),
-and a per-container bandwidth view.
+Pre-1.0. Shipping: dependency-ordered, health-gated **start** orchestration,
+read-only live state, per-container **CPU / RAM limits**, and the **automation**
+subsystem (schedules, watchdog, notifications). Planned next: a resource-limit
+dual-write into the template so caps survive *apply*, and a per-container
+bandwidth view.
 
 ## Build from source
 
