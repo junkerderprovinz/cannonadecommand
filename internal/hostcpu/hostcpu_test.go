@@ -65,3 +65,13 @@ func TestCountPositive(t *testing.T) {
 		t.Fatalf("Count() must be >= 1, got %d", Count())
 	}
 }
+
+func TestParseMemTotal(t *testing.T) {
+	info := "MemFree:         1234 kB\nMemTotal:       32770560 kB\nBuffers:          500 kB\n"
+	if got := parseMemTotal(info); got != 32770560*1024 {
+		t.Fatalf("parseMemTotal = %d, want %d", got, int64(32770560)*1024)
+	}
+	if got := parseMemTotal("Buffers: 5 kB\n"); got != 0 {
+		t.Fatalf("no MemTotal line should yield 0, got %d", got)
+	}
+}

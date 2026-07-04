@@ -91,6 +91,7 @@ type stateResp struct {
 	DockerError string            `json:"docker_error,omitempty"`
 	HostCPUs    int               `json:"host_cpus"`              // host logical-CPU count, for the pin grid
 	HostCoreOf  []int             `json:"host_core_of,omitempty"` // physical-core id per logical CPU (HT grouping)
+	HostMem     int64             `json:"host_mem,omitempty"`     // host total RAM bytes, for "remove RAM limit"
 }
 
 func (s *Server) handleState(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +100,7 @@ func (s *Server) handleState(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusInternalServerError, err)
 		return
 	}
-	resp := stateResp{Plan: plan, HostCPUs: hostcpu.Count(), HostCoreOf: hostcpu.CoreOf()}
+	resp := stateResp{Plan: plan, HostCPUs: hostcpu.Count(), HostCoreOf: hostcpu.CoreOf(), HostMem: hostcpu.MemTotal()}
 	containers, derr := s.Docker.List(r.Context())
 	if derr != nil {
 		// Tolerate a docker hiccup: still return the plan + the last run, so the

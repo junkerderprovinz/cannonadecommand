@@ -20,12 +20,16 @@
   function filter() {
     var ic = ls("cc.iconcolor"), hue = hexHue(ic);
     if (dead || ls("cc.vmicons") !== "1" || !ic || hue < 0) return "";
-    var s = parseInt(ls("cc.iconstrength") || "100", 10);
-    return "grayscale(1) sepia(1) hue-rotate(" + Math.round(hue - 50) + "deg) saturate(" + (Math.max(10, s) / 100 * 5 + 0.6) + ")";
+    var s = Math.max(10, parseInt(ls("cc.iconstrength") || "100", 10));
+    // SAME bold duotone recipe as the container icons (docker.js iconFilter).
+    return "grayscale(1) sepia(1) saturate(" + (s / 100 * 6 + 1).toFixed(2) + ") hue-rotate(" + Math.round(hue - 40) + "deg)";
   }
-  // best-effort VM-row icon selectors (narrow on purpose: no broad page-wide match)
+  // VM-row icon selector — GROUND TRUTH from unraid/webgui dynamix.vm.manager
+  // VMMachines.php: the VM list is tbody#kvm_list, each row td.vm-name has the icon at
+  // span[id^="vm-"] > .img (an <img class="img"> or an <i class="… img"> glyph). The
+  // old selectors used #vms, which does not exist — that's why VM icons never tinted.
   function vmImgs() {
-    var sels = ["#vms tr.sortable td img", "#vms td img", "table#vms img", "div.tabs table.vm_manager td img"];
+    var sels = ["#kvm_list td.vm-name span[id^='vm-'] > .img", "#kvm_list td.vm-name img.img", "#kvm_list td.vm-name img"];
     for (var i = 0; i < sels.length; i++) { var n = document.querySelectorAll(sels[i]); if (n.length) return n; }
     return [];
   }
@@ -33,7 +37,7 @@
     try { var f = filter(), imgs = vmImgs(); for (var i = 0; i < imgs.length; i++) imgs[i].style.filter = f; } catch (e) {}
   }
   function connectObserver() {
-    var host = document.getElementById("vms") || document.body;
+    var host = document.getElementById("kvm_list") || document.getElementById("kvm_table") || document.body;
     // debounced: the VM list re-renders in bursts; re-apply at most every ~300ms.
     // (childList only — we never observe attributes, so our own style writes can't
     // re-trigger this into a loop.)

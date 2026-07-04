@@ -12,6 +12,34 @@ import (
 	"strings"
 )
 
+// MemTotal is the host's total RAM in bytes (from /proc/meminfo). Docker cannot UNSET
+// a memory limit through a live update, so the editor's "remove RAM limit" sets it to
+// this host total — effectively unlimited, applied live without recreating. 0 if the
+// value can't be read.
+func MemTotal() int64 {
+	data, err := os.ReadFile("/proc/meminfo")
+	if err != nil {
+		return 0
+	}
+	return parseMemTotal(string(data))
+}
+
+// parseMemTotal reads the "MemTotal: N kB" line of /proc/meminfo into bytes. Split out
+// so it is unit-testable without /proc.
+func parseMemTotal(data string) int64 {
+	for _, line := range strings.Split(data, "\n") {
+		if strings.HasPrefix(line, "MemTotal:") {
+			f := strings.Fields(line)
+			if len(f) >= 2 {
+				if kb, e := strconv.ParseInt(f[1], 10, 64); e == nil {
+					return kb * 1024
+				}
+			}
+		}
+	}
+	return 0
+}
+
 // Count is the host's logical CPU count (every core + hyperthread). It counts the
 // processor entries in /proc/cpuinfo — the TRUE host total — because runtime.NumCPU()
 // is affinity-aware: isolcpus (the cores a VM user reserves, exactly the ones the pin

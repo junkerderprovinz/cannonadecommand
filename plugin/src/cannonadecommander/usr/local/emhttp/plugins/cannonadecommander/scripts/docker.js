@@ -37,8 +37,8 @@
     : [["Mo", 1], ["Tu", 2], ["We", 3], ["Th", 4], ["Fr", 5], ["Sa", 6], ["Su", 0]];
 
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Watchdog (Auto-Neustart)", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", startDelay: "Startverzögerung", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert (ein bestehendes Limit ganz entfernen geht nur durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)" },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Watchdog (auto-restart)", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", startDelay: "Start delay", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged (removing an existing limit needs recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)" },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Watchdog (Auto-Neustart)", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", startDelay: "Startverzögerung", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen" },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Watchdog (auto-restart)", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", startDelay: "Start delay", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit" },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -53,7 +53,7 @@
   // the plan; loaded whole, mutated per-container in the editor, and PUT back whole.
   var config = { schedules: [], watchdogs: [], notify: { unraid: false, webhook: "" } };
   var limits = {}; // name → CONFIGURED caps {mem_bytes,nano_cpus,cpuset_cpus}, for the "is a limit set?" dots
-  var hostCpus = 0, hostCoreOf = []; // the HOST's logical-CPU count + HT-core grouping (from the engine, not the browser)
+  var hostCpus = 0, hostCoreOf = [], hostMem = 0; // the HOST's logical-CPU count + HT grouping + total RAM (from the engine)
   var filterText = "", gridHolder = null, openPop = null, openPopAnchor = null, menu = null, menuAnchor = null, menuStatusEl = null, toastEl = null, toastTimer = null;
   var mo = null, dead = false, lastAdv = false, timers = [], moPending = false, moTimer = null;
 
@@ -101,6 +101,7 @@
     containers = (state && state.containers) || [];
     if (state && state.host_cpus) hostCpus = state.host_cpus;
     if (state && state.host_core_of) hostCoreOf = state.host_core_of;
+    if (state && state.host_mem) hostMem = state.host_mem;
     containerNames = containers.map(function (c) { return c.name; }).sort();
     workingPlan = {};
     if (state && state.plan && state.plan.nodes) state.plan.nodes.forEach(function (n) { workingPlan[n.name] = n; });
@@ -180,6 +181,12 @@
   // only for these is the container IP also the LAN IP. A custom docker *bridge*
   // (e.g. "proxynet") has a NAT-internal IP that is NOT LAN-reachable.
   function isMacvlan(c) { return !!c && /^(br|bond|eth)\d/i.test(String(c.network || "")); }
+  // A limit at (near) the host's full RAM / all cores is effectively "no limit": Docker
+  // cannot UNSET a cap through a live update, so our "remove" sets it to that value.
+  // These treat such a value as NOT configured (hollow dot, empty editor field).
+  function ramLimited(lm) { return !!(lm && lm.mem_bytes > 0 && (!hostMem || lm.mem_bytes < hostMem * 0.95)); }
+  function cpuLimited(lm) { if (!lm || !(lm.nano_cpus > 0)) return false; var all = hostCpus > 0 ? hostCpus * 1e9 : 0; return !all || lm.nano_cpus < all * 0.99; }
+  function cpuPinned(lm) { if (!lm || !lm.cpuset_cpus) return false; var s = cpusetToSet(lm.cpuset_cpus); return s.length > 0 && (!hostCpus || s.length < hostCpus); }
 
   // ───────────────────────── column model → CSS classes on the table + JS badge gates
   // Everything defaults ON: the user wants every datum as a badge. Advanced-only
@@ -216,39 +223,35 @@
   // live from the Settings page (which writes the same keys + a poke event).
   // ideal badge text colour for a background: dark on light, white on dark.
   function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16); var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
-  // Tint the container icons by overlaying a MASK of each icon, filled with the
-  // chosen colour (opacity = strength) — a real, unmistakable recolour. The earlier
-  // CSS-filter approximation was too subtle/fragile. Ground truth (unraid/webgui
-  // DockerContainers.php): the icon is `td.ct-name span.hand > .img` — an <img> for
-  // template PNGs, or an <i class="… img"> font glyph. We overlay the <img> with a
-  // masked colour box; a font glyph is simply recoloured via its own `color`.
+  // Tint the container icons with a CSS FILTER applied DIRECTLY to each icon element.
+  // A filter on the element itself can NEVER be mis-positioned — the earlier masked
+  // overlay was offset on the real Unraid row box-model. It is a bold duotone recolour
+  // toward the chosen hue, unmistakable on the colourful CA icons. Ground truth
+  // (unraid/webgui DockerContainers.php): the icon is `td.ct-name span.hand > .img`,
+  // an <img> for template PNGs or an <i class="… img"> font glyph — a filter tints both.
+  function hexHue(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return -1; var n = parseInt(m[1], 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255; var mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, h = 0; if (d > 0) { if (mx === r) h = ((g - b) / d) % 6; else if (mx === g) h = (b - r) / d + 2; else h = (r - g) / d + 4; h *= 60; if (h < 0) h += 360; } return h; }
+  function iconFilter() {
+    var ic = localStorage.getItem("cc.iconcolor"), hue = hexHue(ic);
+    if (!ic || hue < 0) return "";
+    var s = Math.max(10, parseInt(localStorage.getItem("cc.iconstrength") || "100", 10)); // 10..100
+    // grayscale→sepia = a warm mono base (~40°); rotate onto the target hue + saturate
+    // hard so the tint reads boldly no matter what colours the source icon has.
+    return "grayscale(1) sepia(1) saturate(" + (s / 100 * 6 + 1).toFixed(2) + ") hue-rotate(" + Math.round(hue - 40) + "deg)";
+  }
   function tintTargets() {
     var out = [], rows = findRows();
     for (var i = 0; i < rows.length; i++) {
-      var img = rows[i].querySelector("td.ct-name span.hand > .img") || rows[i].querySelector("td.ct-name img");
+      var img = rows[i].querySelector("td.ct-name span.hand > .img") || rows[i].querySelector("td.ct-name img") || rows[i].querySelector("td.ct-name i.img");
       if (img) out.push(img);
     }
     return out;
   }
-  function ensureIconOverlay(img, on) {
-    var host = img.parentNode; if (!host || !host.classList) return;
-    var ov = host.querySelector ? host.querySelector(".cc-ico-tint") : null;
-    if (!on) { if (ov) ov.remove(); host.classList.remove("cc-ico-host"); if (img.tagName !== "IMG") img.style.color = ""; return; }
-    if (img.tagName !== "IMG") { host.classList.add("cc-ico-host"); img.style.color = localStorage.getItem("cc.iconcolor") || ""; if (ov) ov.remove(); return; }
-    // no src → no mask; a solid, unmasked overlay would paint a colour rectangle over
-    // the icon box, so skip (and drop any stale overlay) until the icon has a source.
-    var src = img.getAttribute("src") || "";
-    if (!src) { if (ov) ov.remove(); host.classList.remove("cc-ico-host"); return; }
-    host.classList.add("cc-ico-host");
-    if (!ov) { ov = el("span", "cc-ico-tint"); host.appendChild(ov); }
-    if (ov.dataset.src !== src) { var u = 'url("' + src.replace(/"/g, "%22") + '")'; ov.style.webkitMaskImage = u; ov.style.maskImage = u; ov.dataset.src = src; }
-  }
   function applyIconTint() {
     try {
-      var on = !!localStorage.getItem("cc.iconcolor");
+      var f = iconFilter();
       var imgs = tintTargets();
-      for (var i = 0; i < imgs.length; i++) ensureIconOverlay(imgs[i], on);
-      if (gridHolder) { var g = gridHolder.querySelectorAll("img.cc-card-ico"); for (var j = 0; j < g.length; j++) ensureIconOverlay(g[j], on); }
+      for (var i = 0; i < imgs.length; i++) imgs[i].style.filter = f;
+      if (gridHolder) { var g = gridHolder.querySelectorAll("img.cc-card-ico"); for (var j = 0; j < g.length; j++) g[j].style.filter = f; }
     } catch (e) {}
   }
   function applySettings() {
@@ -256,9 +259,6 @@
       var root = document.documentElement.style;
       var accent = localStorage.getItem("cc.accent"); if (accent) { root.setProperty("--cc-accent", accent); root.setProperty("--cc-accent-text", idealText(accent)); }
       var dens = localStorage.getItem("cc.density"); root.setProperty("--cc-density", { compact: "5px", normal: "9px", airy: "14px" }[dens] || "9px");
-      var ic = localStorage.getItem("cc.iconcolor");
-      if (ic) { root.setProperty("--cc-icon-color", ic); root.setProperty("--cc-icon-strength", String(Math.max(10, parseInt(localStorage.getItem("cc.iconstrength") || "100", 10)) / 100)); }
-      else { root.removeProperty("--cc-icon-color"); root.removeProperty("--cc-icon-strength"); }
       colview = loadColview();
     } catch (e) {}
   }
@@ -276,7 +276,7 @@
       applyIconTint();
     } catch (e) {}
   }
-  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh", "cc-adv", "cc-rainbow", "cc-tint-icons"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); Array.prototype.slice.call(document.querySelectorAll(".cc-ico-tint")).forEach(function (n) { n.remove(); }); Array.prototype.slice.call(document.querySelectorAll(".cc-ico-host")).forEach(function (n) { n.classList.remove("cc-ico-host"); }); Array.prototype.slice.call(document.querySelectorAll("td.ct-name span.hand > .img")).forEach(function (n) { if (n.tagName !== "IMG") n.style.color = ""; }); } catch (e) {} }
+  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh", "cc-adv", "cc-rainbow", "cc-tint-icons"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); var t2 = tintTargets(); for (var i = 0; i < t2.length; i++) t2[i].style.filter = ""; if (gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll("img.cc-card-ico")).forEach(function (n) { n.style.filter = ""; }); Array.prototype.slice.call(document.querySelectorAll(".cc-ico-tint")).forEach(function (n) { n.remove(); }); } catch (e) {} }
 
   // read a positional cell's value (docker_readmore), stripping nested advanced
   // (MAC) + Tailscale tooltip, collapsed to one short line.
@@ -333,7 +333,7 @@
         if (resCell && !resCell.querySelector(".cc-resgroup")) {
           var rg = el("div", "cc-rowbadges cc-resgroup"); rg.setAttribute(MARK, "1"); rg.dataset.name = name;
           var lm = limits[name] || {};
-          var cpuSet = !!(lm.nano_cpus || (lm.cpuset_cpus && lm.cpuset_cpus.length)), ramSet = !!lm.mem_bytes;
+          var cpuSet = cpuLimited(lm) || cpuPinned(lm), ramSet = ramLimited(lm);
           var cpuB = badgeInfo("CPU", "…", "cpu"); cpuB.appendChild(cfgDot(cpuSet));
           rg.appendChild(cpuB); rg.appendChild(limGear(name, "cpu", cpuSet));
           var ramB = badgeInfo("RAM", "…", "ram"); ramB.appendChild(cfgDot(ramSet));
@@ -412,7 +412,7 @@
     var wrap = el("div", "cc-card"); wrap.dataset.name = c.name;
     var head = el("div", "cc-card-head");
     var ico = iconFor(c.name);
-    if (ico) { var iw = el("span", "cc-card-ico-wrap"); var im = el("img", "cc-card-ico"); im.src = ico; im.onerror = function () { this.style.visibility = "hidden"; }; iw.appendChild(im); head.appendChild(iw); } else head.appendChild(el("div", "cc-card-ico cc-card-ico-ph"));
+    if (ico) { var im = el("img", "cc-card-ico"); im.src = ico; im.onerror = function () { this.style.visibility = "hidden"; }; head.appendChild(im); } else head.appendChild(el("div", "cc-card-ico cc-card-ico-ph"));
     var nb = el("div", "cc-card-name"); nb.appendChild(el("div", "cc-card-title", c.name)); nb.appendChild(el("div", "cc-card-img", c.image || "")); head.appendChild(nb);
     head.appendChild(stateBadge(c)); wrap.appendChild(head);
     var s = stats[c.name], sb = el("div", "cc-card-stats");
@@ -707,7 +707,23 @@
     }
     pop.appendChild(body);
     pop.appendChild(el("div", "cc-pop-foot", t("limitsFoot")));
-    var srow = el("div", "cc-pop-row"); var save = el("span", "cc-btn cc-btn-primary", t("saveShort")); srow.appendChild(save); pop.appendChild(srow);
+    function submitLimits(payload) {
+      flash(t("saving")); api("POST", "limits", payload)
+        .then(function () { flash(t("done")); closePop(); return loadLimits(); })
+        .then(function () { if (mode === "list") reinjectRowBadges(); else renderGrid(); })
+        .catch(function (e) { flash("Error: " + e.message, true); });
+    }
+    var srow = el("div", "cc-pop-row cc-pop-act");
+    // "remove" sets the field(s) to a practical-unlimited value (host RAM / all cores) —
+    // Docker cannot UNSET a limit through a live update, only recreating the container can.
+    var rem = el("span", "cc-btn", t("removeLim"));
+    rem.addEventListener("click", function () {
+      var payload = { name: name };
+      if (showRam && hostMem > 0) payload.mem_bytes = hostMem;
+      if (showCpu) { if (hostCpus > 0) payload.nano_cpus = Math.round(hostCpus * 1e9); payload.cpuset_cpus = hostCpus > 0 ? "0-" + (hostCpus - 1) : ""; }
+      submitLimits(payload);
+    });
+    var save = el("span", "cc-btn cc-btn-primary", t("saveShort"));
     save.addEventListener("click", function () {
       var mb = 0;
       if (memNum) { var v = String(memNum.value).trim().replace(",", "."); if (v) { var num = parseFloat(v); if (!(num >= 0)) { flash(t("invalid"), true); return; } mb = Math.round(num * (memUnit.value === "GB" ? 1073741824 : 1048576)); } }
@@ -718,20 +734,19 @@
       var payload = { name: name, mem_bytes: mb, nano_cpus: nc };
       if (cpuset) payload.cpuset_cpus = cpuset; // empty = leave unchanged, like the other fields
       if (mb === 0 && nc === 0 && !cpuset) { closePop(); return; }
-      flash(t("saving")); api("POST", "limits", payload)
-        .then(function () { flash(t("done")); closePop(); return loadLimits(); })
-        .then(function () { if (mode === "list") reinjectRowBadges(); else renderGrid(); })
-        .catch(function (e) { flash("Error: " + e.message, true); });
+      submitLimits(payload);
     });
+    srow.appendChild(rem); srow.appendChild(save); pop.appendChild(srow);
     document.body.appendChild(pop);
     var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || 340;
     pop.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 12)) + "px";
     pop.style.top = (window.scrollY + r.bottom + 6) + "px"; openPop = pop; openPopAnchor = anchor;
     api("GET", "limits", null, "name=" + encodeURIComponent(name)).then(function (l) {
       if (!l) return;
-      if (memNum && l.mem_bytes > 0) { if (l.mem_bytes >= 1073741824) { memNum.value = Math.round(l.mem_bytes / 1073741824 * 100) / 100; memUnit.value = "GB"; } else { memNum.value = Math.round(l.mem_bytes / 1048576); memUnit.value = "MB"; } }
-      if (cpu && l.nano_cpus > 0) cpu.value = String(Math.round(l.nano_cpus / 1e9 * 100) / 100);
-      if (l.cpuset_cpus) fillCpuset(l.cpuset_cpus);
+      // only prefill REAL limits; a practical-unlimited value (a prior "remove") stays blank.
+      if (memNum && ramLimited(l)) { if (l.mem_bytes >= 1073741824) { memNum.value = Math.round(l.mem_bytes / 1073741824 * 100) / 100; memUnit.value = "GB"; } else { memNum.value = Math.round(l.mem_bytes / 1048576); memUnit.value = "MB"; } }
+      if (cpu && cpuLimited(l)) cpu.value = String(Math.round(l.nano_cpus / 1e9 * 100) / 100);
+      if (cpuPinned(l)) fillCpuset(l.cpuset_cpus);
     }).catch(function () {});
   }
 

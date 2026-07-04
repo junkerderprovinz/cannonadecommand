@@ -298,22 +298,8 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-grid-holder.cc-rainbow .cc-b-ip   { background: #2f6feb; color: #fff; }
 .cc-grid-holder.cc-rainbow .cc-b-port { background: #8b5cf6; color: #fff; }
 
-/* tint container icons: JS (ensureIconOverlay) overlays a .cc-ico-tint box masked
-   by each icon's own shape and filled with --cc-icon-color at --cc-icon-strength
-   opacity — a real, flat recolour (strength 1 = solid one-colour silhouette; lower
-   = a colour wash that keeps the icon detail). The host (span.hand in the list, the
-   card-icon wrapper in the grid) is made a positioning context by .cc-ico-host. A
-   font-glyph icon (<i class="img">) has no raster to mask, so it is recoloured via
-   its own `color` in JS and needs no overlay. */
-.cc-ico-host { position: relative !important; display: inline-block; line-height: 0; }
-.cc-ico-tint {
-  position: absolute; inset: 0; pointer-events: none;
-  background: var(--cc-icon-color, #1f9d55); opacity: var(--cc-icon-strength, 1);
-  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
-  -webkit-mask-position: center; mask-position: center;
-  -webkit-mask-size: contain; mask-size: contain;
-}
-.cc-card-ico-wrap { display: inline-flex; }
+/* container-icon tint is a CSS filter applied inline on each icon in JS
+   (applyIconTint) — no positioned overlay, so it can never be mis-aligned. */
 
 /* CPU/RAM is a headline feature: when its badge is on, force the native resource
    column (8th) visible even in Simple view (overrides Unraid's .advanced hide). */
@@ -356,9 +342,12 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 }
 .cc-enh #docker_list .switch-button-background.checked .switch-button-button,
 .ToggleViewMode .switch-button-background.checked .switch-button-button { left: 21px !important; }
-/* no AN/AUS text next to the toggle */
-.cc-enh #docker_list .switch-button-label,
-.ToggleViewMode .switch-button-label { display: none !important; }
+/* hide the AN/AUS text next to the PER-ROW autostart switch only. The Basic/Advanced
+   view toggle (div.ToggleViewMode, OUTSIDE the table) keeps its label. */
+.cc-enh #docker_list .switch-button-label { display: none !important; }
+/* the native per-container autostart "wait N seconds" belongs in the start plan
+   (Startverzögerung), so hide it here — label text + input share one span#<id>-wait. */
+.cc-enh #docker_list span[id$="-wait"] { display: none !important; }
 
 /* ════════════════ SETTINGS PAGE (Settings > Utilities) ════════════════ */
 #cc-settings { --bg: #161616; --bg2: #1c1c1c; --line: #2a2a2a; --line2: #333; --txt: #e6e6e6; --dim: #9a9a9a; --dim2: #6f6f6f; color: var(--txt); font: 14px/1.5 "Segoe UI", system-ui, sans-serif; padding-bottom: 40px; }
