@@ -37,8 +37,8 @@
     : [["Mo", 1], ["Tu", 2], ["We", 3], ["Th", 4], ["Fr", 5], ["Sa", 6], ["Su", 0]];
 
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Watchdog (Auto-Neustart)", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", startDelay: "Startverzögerung", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert (ein bestehendes Limit ganz entfernen geht nur durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe" },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Watchdog (auto-restart)", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", startDelay: "Start delay", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged (removing an existing limit needs recreating the container).", invalid: "invalid value" },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Watchdog (Auto-Neustart)", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", startDelay: "Startverzögerung", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert (ein bestehendes Limit ganz entfernen geht nur durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)" },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Watchdog (auto-restart)", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", startDelay: "Start delay", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged (removing an existing limit needs recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)" },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -510,7 +510,7 @@
       var act2 = el("select", "cc-in cc-sched-act"); SCHED_ACTIONS.forEach(function (a) { var o = el("option", null, t(a)); o.value = a; if (s && s.action === a) o.selected = true; act2.appendChild(o); });
       var time = el("input", "cc-in cc-sched-time"); time.type = "time"; time.value = (s && s.time) || "";
       var days = el("div", "cc-days"), sel = {}; ((s && s.days) || []).forEach(function (d) { sel[d] = true; });
-      DAYS.forEach(function (d) { var b = el("button", "cc-day" + (sel[d[1]] ? " cc-day-on" : ""), d[0]); b.type = "button"; b.dataset.day = d[1]; b.addEventListener("click", function (e) { e.preventDefault(); b.classList.toggle("cc-day-on"); }); days.appendChild(b); });
+      DAYS.forEach(function (d) { var b = el("span", "cc-day" + (sel[d[1]] ? " cc-day-on" : ""), d[0]); b.dataset.day = d[1]; b.addEventListener("click", function (e) { e.preventDefault(); b.classList.toggle("cc-day-on"); }); days.appendChild(b); });
       var rm = el("span", "cc-sched-x", "✕"); rm.title = t("remove"); rm.addEventListener("click", function () { row.remove(); });
       row.appendChild(act2); row.appendChild(time); row.appendChild(days); row.appendChild(rm);
       // empty days = every day; only rows with a valid HH:MM time are saved
@@ -519,14 +519,14 @@
     }
     var sSec = el("div", "cc-pop-auto"); sSec.appendChild(el("div", "cc-pop-sech cc-pop-sech-lone", t("schedules")));
     var sList = el("div", "cc-sched-list"); schedulesFor(name).forEach(function (s) { sList.appendChild(schedRow(s)); }); sSec.appendChild(sList);
-    var addB = el("button", "cc-btn cc-btn-sm", t("addsched")); addB.type = "button"; addB.addEventListener("click", function () { sList.appendChild(schedRow(null)); }); sSec.appendChild(addB);
+    var addB = el("span", "cc-btn cc-btn-sm", t("addsched")); addB.addEventListener("click", function () { sList.appendChild(schedRow(null)); }); sSec.appendChild(addB);
     pop.appendChild(sSec);
     function readSchedules() { var out = []; Array.prototype.slice.call(sList.children).forEach(function (r) { if (r._read) { var v = r._read(); if (v) out.push(v); } }); return out; }
 
     // Plan actions live here now (the Docker-tab gear is gone): save the whole plan
     // AND this container's automation, or run it in dependency order immediately.
     var act = el("div", "cc-pop-row cc-pop-act");
-    var bSave = el("button", "cc-btn", t("save")), bRun = el("button", "cc-btn cc-btn-primary", t("startorder"));
+    var bSave = el("span", "cc-btn", t("save")), bRun = el("span", "cc-btn cc-btn-primary", t("startorder"));
     bSave.addEventListener("click", function () { saveEditor(name, readWatchdog(), readSchedules(), false); });
     bRun.addEventListener("click", function () { saveEditor(name, readWatchdog(), readSchedules(), true); });
     act.appendChild(bSave); act.appendChild(bRun); pop.appendChild(act);
@@ -551,11 +551,9 @@
   }
 
   // ───────────────────────── CPU/RAM limits editor (Docker container-update)
-  // return 0 for an empty field (= leave unchanged), a positive value for a valid
-  // limit, or -1 for unparseable input (comma decimals are normalised first).
-  function parseMem(s) { s = String(s || "").trim().replace(",", "."); if (!s) return 0; var m = /^([\d.]+)\s*([kmgt]?)i?b?$/i.exec(s); if (!m) return -1; var mult = { "": 1, k: 1024, m: 1048576, g: 1073741824, t: 1099511627776 }[m[2].toLowerCase()]; return Math.round(parseFloat(m[1]) * mult); }
+  // parseCPU: 0 for empty (= leave unchanged), NanoCPUs for a valid count, or -1 for
+  // unparseable input (comma decimals normalised first). RAM is a number + MB/GB unit.
   function parseCPU(s) { s = String(s || "").trim().replace(",", "."); if (!s) return 0; if (!/^[\d.]+$/.test(s)) return -1; var n = parseFloat(s); return n > 0 ? Math.round(n * 1e9) : 0; }
-  function fmtMem(b) { if (b >= 1073741824) return (Math.round(b / 1073741824 * 100) / 100) + "G"; if (b >= 1048576) return Math.round(b / 1048576) + "M"; return String(b); }
   function gearAfter(span) { var n = span.nextSibling; return n && n.nodeType === 1 && n.classList && n.classList.contains("cc-limbtn"); }
   function limGear(name, which) {
     var lb = el("span", "cc-limbtn"); lb.setAttribute(MARK, "1"); lb.textContent = "⚙";
@@ -564,6 +562,7 @@
     return lb;
   }
   // which = "cpu" | "ram" (each badge's own gear) — shows only that field.
+  // RAM = a number + a MB/GB unit; CPU = a core count + an optional pin (cpuset).
   function openLimits(anchor, name, which) {
     if (togglePop(anchor)) return;
     closePop();
@@ -571,24 +570,45 @@
     var title = which === "cpu" ? t("cpuLimit") : which === "ram" ? t("ramLimit") : "CPU / RAM";
     var pop = el("div", "cc-pop"), head = el("div", "cc-pop-head"); head.appendChild(el("b", null, name + " — " + title));
     var x = el("span", "cc-pop-x", "✕"); x.addEventListener("click", closePop); head.appendChild(x); pop.appendChild(head);
-    var body = el("div", "cc-pop-body"), mem = null, cpu = null;
-    if (showRam) { var mrow = el("div", "cc-pop-row"); mrow.appendChild(el("label", "cc-pop-lbl", t("ramLimit"))); mem = el("input", "cc-in"); mem.type = "text"; mem.placeholder = t("ramPh"); mrow.appendChild(mem); body.appendChild(mrow); }
-    if (showCpu) { var crow = el("div", "cc-pop-row"); crow.appendChild(el("label", "cc-pop-lbl", t("cpuLimit"))); cpu = el("input", "cc-in"); cpu.type = "text"; cpu.placeholder = t("cpuPh"); crow.appendChild(cpu); body.appendChild(crow); }
+    var body = el("div", "cc-pop-body"), memNum = null, memUnit = null, cpu = null, pin = null;
+    if (showRam) {
+      var mrow = el("div", "cc-pop-row"); mrow.appendChild(el("label", "cc-pop-lbl", t("ramLimit")));
+      memNum = el("input", "cc-in"); memNum.type = "number"; memNum.min = "0"; memNum.step = "0.5"; memNum.placeholder = t("ramNum");
+      memUnit = el("select", "cc-in cc-unit"); ["MB", "GB"].forEach(function (u) { var o = el("option", null, u); o.value = u; if (u === "GB") o.selected = true; memUnit.appendChild(o); });
+      mrow.appendChild(memNum); mrow.appendChild(memUnit); body.appendChild(mrow);
+    }
+    if (showCpu) {
+      var crow = el("div", "cc-pop-row"); crow.appendChild(el("label", "cc-pop-lbl", t("cpuLimit")));
+      cpu = el("input", "cc-in"); cpu.type = "text"; cpu.placeholder = t("cpuNum"); crow.appendChild(cpu); body.appendChild(crow);
+      var prow = el("div", "cc-pop-row"); prow.appendChild(el("label", "cc-pop-lbl", t("cpuPin")));
+      pin = el("input", "cc-in"); pin.type = "text"; pin.placeholder = t("cpuPinPh"); prow.appendChild(pin); body.appendChild(prow);
+    }
     pop.appendChild(body);
     pop.appendChild(el("div", "cc-pop-foot", t("limitsFoot")));
-    var srow = el("div", "cc-pop-row"); var save = el("button", "cc-btn cc-btn-primary", t("save")); srow.appendChild(save); pop.appendChild(srow);
+    var srow = el("div", "cc-pop-row"); var save = el("span", "cc-btn cc-btn-primary", t("saveShort")); srow.appendChild(save); pop.appendChild(srow);
     save.addEventListener("click", function () {
-      var mb = mem ? parseMem(mem.value) : 0, nc = cpu ? parseCPU(cpu.value) : 0;
-      if (mb < 0 || nc < 0) { flash(t("invalid"), true); return; }
-      if (mb === 0 && nc === 0) { closePop(); return; }
-      flash(t("saving")); api("POST", "limits", { name: name, mem_bytes: mb, nano_cpus: nc })
+      var mb = 0;
+      if (memNum) { var v = String(memNum.value).trim().replace(",", "."); if (v) { var num = parseFloat(v); if (!(num >= 0)) { flash(t("invalid"), true); return; } mb = Math.round(num * (memUnit.value === "GB" ? 1073741824 : 1048576)); } }
+      var nc = cpu ? parseCPU(cpu.value) : 0;
+      if (nc < 0) { flash(t("invalid"), true); return; }
+      var cpuset = pin ? String(pin.value).trim().replace(/\s+/g, "") : "";
+      if (cpuset && !/^[0-9,\-]+$/.test(cpuset)) { flash(t("invalid"), true); return; }
+      var payload = { name: name, mem_bytes: mb, nano_cpus: nc };
+      if (cpuset) payload.cpuset_cpus = cpuset; // empty = leave unchanged, like the other fields
+      if (mb === 0 && nc === 0 && !cpuset) { closePop(); return; }
+      flash(t("saving")); api("POST", "limits", payload)
         .then(function () { flash(t("done")); closePop(); }).catch(function (e) { flash("Error: " + e.message, true); });
     });
     document.body.appendChild(pop);
     var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || 340;
     pop.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 12)) + "px";
     pop.style.top = (window.scrollY + r.bottom + 6) + "px"; openPop = pop; openPopAnchor = anchor;
-    api("GET", "limits", null, "name=" + encodeURIComponent(name)).then(function (l) { if (!l) return; if (mem && l.mem_bytes > 0) mem.value = fmtMem(l.mem_bytes); if (cpu && l.nano_cpus > 0) cpu.value = String(Math.round(l.nano_cpus / 1e9 * 100) / 100); }).catch(function () {});
+    api("GET", "limits", null, "name=" + encodeURIComponent(name)).then(function (l) {
+      if (!l) return;
+      if (memNum && l.mem_bytes > 0) { if (l.mem_bytes >= 1073741824) { memNum.value = Math.round(l.mem_bytes / 1073741824 * 100) / 100; memUnit.value = "GB"; } else { memNum.value = Math.round(l.mem_bytes / 1048576); memUnit.value = "MB"; } }
+      if (cpu && l.nano_cpus > 0) cpu.value = String(Math.round(l.nano_cpus / 1e9 * 100) / 100);
+      if (pin && l.cpuset_cpus) pin.value = l.cpuset_cpus;
+    }).catch(function () {});
   }
 
   // ───────────────────────── save / apply + toast

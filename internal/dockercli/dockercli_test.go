@@ -2,10 +2,13 @@ package dockercli
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/junkerderprovinz/cannonadecommander/internal/model"
 )
 
 func testServer(t *testing.T) (*Client, *httptest.Server) {
@@ -143,6 +146,32 @@ func TestHealthFromStatus(t *testing.T) {
 		if got := healthFromStatus(status); got != want {
 			t.Errorf("healthFromStatus(%q) = %q, want %q", status, got, want)
 		}
+	}
+}
+
+func TestLimitsAndCpuset(t *testing.T) {
+	var gotBody string
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1.44/containers/pinme/json", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"HostConfig":{"Memory":1073741824,"NanoCpus":1500000000,"CpusetCpus":"0-3,6"}}`))
+	})
+	mux.HandleFunc("/v1.44/containers/pinme/update", func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		gotBody = string(b)
+		w.WriteHeader(http.StatusOK)
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	c := New(srv.Client(), srv.URL)
+	lim, err := c.Limits(context.Background(), "pinme")
+	if err != nil || lim.MemBytes != 1073741824 || lim.CpusetCPUs != "0-3,6" {
+		t.Fatalf("Limits read wrong: %+v err=%v", lim, err)
+	}
+	if err := c.UpdateResources(context.Background(), "pinme", model.Limits{CpusetCPUs: "0-3"}); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+	if !strings.Contains(gotBody, `"CpusetCpus":"0-3"`) {
+		t.Fatalf("update body missing cpuset: %s", gotBody)
 	}
 }
 

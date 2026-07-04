@@ -86,7 +86,7 @@
 /* update status keeps meaning: up-to-date = green, update-ready = amber, force = accent */
 .cc-enh.cc-c-update #docker_list tr.sortable td.updatecolumn > span.green-text { background: #1f9d55; color: #fff !important; }
 .cc-enh.cc-c-update #docker_list tr.sortable td.updatecolumn span.orange-text { background: #e0912a; color: #1a1a1a !important; }
-.cc-enh.cc-c-force  #docker_list tr.sortable td.updatecolumn a.exec { background: var(--cc-accent, #2f6feb); color: #fff !important; }
+.cc-enh.cc-c-force  #docker_list tr.sortable td.updatecolumn a.exec { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff) !important; }
 .cc-enh.cc-c-force  #docker_list tr.sortable td.updatecolumn a.exec:hover { filter: brightness(1.12); }
 .cc-enh #docker_list tr.sortable td.updatecolumn i { color: inherit !important; }
 
@@ -223,6 +223,7 @@
 /* selects lost their native arrow to appearance:none — give them a caret back */
 select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repeat; background-position: right 8px center; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%238a8a8a' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); }
 .cc-port { flex: none; width: 70px; margin-left: 6px; }
+.cc-unit { flex: none; width: 68px; margin-left: 6px; }
 .cc-pop-act { gap: 8px; padding: 10px 14px 12px; border-top: 1px solid #2a2a2a; }
 .cc-pop-act .cc-btn { flex: 1; text-align: center; font-size: 11.5px; padding: 7px 6px; white-space: normal; line-height: 1.2; }
 /* automation sections (watchdog + schedules) inside the plan editor */
@@ -247,20 +248,22 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 
 /* ════════════════ RAINBOW mode + ICON tint + CPU/RAM force-show ════════════════ */
 /* rainbow: each badge kind its own colour (else all use the accent) */
-.cc-enh.cc-rainbow .cc-b-net  { background: #1f9d55; }
-.cc-enh.cc-rainbow .cc-b-ip   { background: #2f6feb; }
-.cc-enh.cc-rainbow .cc-b-lan  { background: #e0912a; color: #1a1a1a; }
-.cc-enh.cc-rainbow .cc-b-port { background: #8b5cf6; }
-.cc-enh.cc-rainbow .cc-b-id   { background: #0ea5a4; }
-.cc-enh.cc-rainbow .cc-b-von  { background: #e05299; }
+/* rainbow badges: each carries its OWN contrast text colour (NOT the accent-derived
+   one), so a light accent can't make the dark badges get dark text. */
+.cc-enh.cc-rainbow .cc-b-net  { background: #1f9d55; color: #fff; }
+.cc-enh.cc-rainbow .cc-b-ip   { background: #2f6feb; color: #fff; }
+.cc-enh.cc-rainbow .cc-b-lan  { background: #e0912a; color: #161616; }
+.cc-enh.cc-rainbow .cc-b-port { background: #8b5cf6; color: #fff; }
+.cc-enh.cc-rainbow .cc-b-id   { background: #0ea5a4; color: #fff; }
+.cc-enh.cc-rainbow .cc-b-von  { background: #e05299; color: #fff; }
 .cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='cpu-'] { background: #d9433f; }
 .cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='mem-'] { background: #2f9d8b; }
 .cc-enh.cc-rainbow.cc-c-version #docker_list tr.sortable td.updatecolumn > div.advanced:last-of-type { background: #6b7280; }
 
 /* rainbow + tint also apply to the card GRID (parity with the list) */
-.cc-grid-holder.cc-rainbow .cc-b-net  { background: #1f9d55; }
-.cc-grid-holder.cc-rainbow .cc-b-ip   { background: #2f6feb; }
-.cc-grid-holder.cc-rainbow .cc-b-port { background: #8b5cf6; }
+.cc-grid-holder.cc-rainbow .cc-b-net  { background: #1f9d55; color: #fff; }
+.cc-grid-holder.cc-rainbow .cc-b-ip   { background: #2f6feb; color: #fff; }
+.cc-grid-holder.cc-rainbow .cc-b-port { background: #8b5cf6; color: #fff; }
 
 /* tint all container icons toward the chosen colour (filter set on :root) */
 .cc-enh.cc-tint-icons #docker_list tr.sortable td.ct-name .outer > span.hand img,
@@ -286,6 +289,7 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
    the JS drives, so the click behaviour is untouched. Reverts on teardown (cc-enh). */
 .cc-enh #docker_list .switch-button-background,
 .ToggleViewMode .switch-button-background {
+  border: none !important; outline: none !important; box-shadow: none !important;
   border-radius: 999px !important; background: #3a3a3a !important;
   display: inline-block; vertical-align: middle;
   transform: scale(2.1); transform-origin: left center; margin: 0 32px 0 4px;
@@ -325,7 +329,19 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-set-swatches { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 6px; }
 .cc-set-sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; flex: none; }
 .cc-set-sw-on { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.15); }
-.cc-set-pick { width: 40px; height: 30px; border: 1px solid var(--line2); border-radius: 6px; background: none; cursor: pointer; padding: 2px; }
+/* colour picker: force it VISIBLE as a real swatch. Unraid's global input CSS
+   (border:none; border-bottom; transparent bg) otherwise strips it to a thin line
+   so the picker looks missing — appearance:none + swatch pseudo-elements fix it.
+   (Sizing stays on the .cc-set-pick / .cc-set-pick-lg classes below.) */
+#cc-settings input[type="color"] {
+  -webkit-appearance: none; appearance: none;
+  border: 1px solid var(--line2) !important; border-radius: 6px !important;
+  background: #1e1e1e !important; cursor: pointer; padding: 3px !important; box-sizing: border-box;
+}
+#cc-settings input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+#cc-settings input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
+#cc-settings input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
+.cc-set-pick { width: 40px; height: 30px; box-sizing: border-box; }
 .cc-set-prev { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
 .cc-set-mini { background: transparent; color: var(--dim); border: 1px solid var(--line2); border-radius: 7px; padding: 5px 12px; font-size: 12.5px; cursor: pointer; }
 .cc-set-mini-on { color: #fff; border-color: var(--cc-accent, #2f6feb); background: rgba(255,255,255,.05); }

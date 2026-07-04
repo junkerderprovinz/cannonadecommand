@@ -23,8 +23,9 @@ type Container struct {
 // Docker's container-update — applied live, no restart, and persisted by Docker
 // across restarts. NanoCPUs is CPUs*1e9 (1.5 CPUs = 1_500_000_000).
 type Limits struct {
-	MemBytes int64 `json:"mem_bytes"`
-	NanoCPUs int64 `json:"nano_cpus"`
+	MemBytes   int64  `json:"mem_bytes"`
+	NanoCPUs   int64  `json:"nano_cpus"`
+	CpusetCPUs string `json:"cpuset_cpus,omitempty"` // CPU pinning, e.g. "0-3,6" (empty = all cores)
 }
 
 // ProbeKind is how the engine decides a container is "ready" so the next stage

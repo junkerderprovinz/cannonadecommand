@@ -272,10 +272,11 @@ func (c *Client) Limits(ctx context.Context, ref string) (model.Limits, error) {
 	}
 	var raw struct {
 		HostConfig struct {
-			Memory    int64 `json:"Memory"`
-			NanoCpus  int64 `json:"NanoCpus"`
-			CpuQuota  int64 `json:"CpuQuota"`
-			CpuPeriod int64 `json:"CpuPeriod"`
+			Memory     int64  `json:"Memory"`
+			NanoCpus   int64  `json:"NanoCpus"`
+			CpuQuota   int64  `json:"CpuQuota"`
+			CpuPeriod  int64  `json:"CpuPeriod"`
+			CpusetCpus string `json:"CpusetCpus"`
 		} `json:"HostConfig"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
@@ -287,7 +288,7 @@ func (c *Client) Limits(ctx context.Context, ref string) (model.Limits, error) {
 	if nano == 0 && raw.HostConfig.CpuQuota > 0 && raw.HostConfig.CpuPeriod > 0 {
 		nano = raw.HostConfig.CpuQuota * 1_000_000_000 / raw.HostConfig.CpuPeriod
 	}
-	return model.Limits{MemBytes: raw.HostConfig.Memory, NanoCPUs: nano}, nil
+	return model.Limits{MemBytes: raw.HostConfig.Memory, NanoCPUs: nano, CpusetCPUs: raw.HostConfig.CpusetCpus}, nil
 }
 
 // UpdateResources sets a container's memory + CPU caps via Docker's
@@ -297,7 +298,7 @@ func (c *Client) Limits(ctx context.Context, ref string) (model.Limits, error) {
 // REMOVE a cap; that needs recreating the container). Setting NanoCpus also
 // clears any legacy CpuQuota/CpuPeriod so the two can't conflict on next restart.
 func (c *Client) UpdateResources(ctx context.Context, ref string, l model.Limits) error {
-	body := map[string]int64{}
+	body := map[string]any{}
 	if l.MemBytes > 0 {
 		body["Memory"] = l.MemBytes
 		body["MemorySwap"] = l.MemBytes // cap total at Memory (no extra swap)
@@ -306,6 +307,9 @@ func (c *Client) UpdateResources(ctx context.Context, ref string, l model.Limits
 		body["NanoCpus"] = l.NanoCPUs
 		body["CpuQuota"] = 0
 		body["CpuPeriod"] = 0
+	}
+	if l.CpusetCPUs != "" {
+		body["CpusetCpus"] = l.CpusetCPUs // CPU pinning, e.g. "0-3,6"
 	}
 	if len(body) == 0 {
 		return nil // nothing to change

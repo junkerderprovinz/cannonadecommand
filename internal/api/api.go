@@ -262,12 +262,19 @@ func (s *Server) handleGetLimits(w http.ResponseWriter, r *http.Request) {
 // (Docker's update ignores 0 and cannot remove a cap — that needs recreating).
 func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Name     string `json:"name"`
-		MemBytes int64  `json:"mem_bytes"`
-		NanoCPUs int64  `json:"nano_cpus"`
+		Name       string `json:"name"`
+		MemBytes   int64  `json:"mem_bytes"`
+		NanoCPUs   int64  `json:"nano_cpus"`
+		CpusetCPUs string `json:"cpuset_cpus"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	// cpuset is passed straight to Docker; allow only a cpu-list (digits, commas,
+	// hyphens) so nothing else can reach the daemon.
+	if req.CpusetCPUs != "" && !validCpuset(req.CpusetCPUs) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bad cpuset (want a cpu list like 0-3,6): " + req.CpusetCPUs})
 		return
 	}
 	ok, err := s.known(r.Context(), req.Name)
@@ -279,7 +286,7 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unknown container: " + req.Name})
 		return
 	}
-	if err := s.Docker.UpdateResources(r.Context(), req.Name, model.Limits{MemBytes: req.MemBytes, NanoCPUs: req.NanoCPUs}); err != nil {
+	if err := s.Docker.UpdateResources(r.Context(), req.Name, model.Limits{MemBytes: req.MemBytes, NanoCPUs: req.NanoCPUs, CpusetCPUs: req.CpusetCPUs}); err != nil {
 		writeErr(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -349,6 +356,21 @@ func validScheduleTime(s string) bool {
 	h := int(s[0]-'0')*10 + int(s[1]-'0')
 	m := int(s[3]-'0')*10 + int(s[4]-'0')
 	return h <= 23 && m <= 59
+}
+
+// validCpuset accepts a Linux cpu-list like "0-3,6" (digits, commas, hyphens only,
+// bounded length). It is passed verbatim to Docker's CpusetCpus, so keep it strict.
+func validCpuset(s string) bool {
+	if len(s) == 0 || len(s) > 128 {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if !((c >= '0' && c <= '9') || c == ',' || c == '-') {
+			return false
+		}
+	}
+	return true
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
