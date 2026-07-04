@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.15.0">
+  <!ENTITY version   "0.16.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,25 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.16.0
+- VM-tab icons now really tint. Root cause found: Unraid's VMs tab is a "tabbed" page,
+  and our injector page had no title, so on many Unraid builds it was never emitted and
+  vms.js never loaded (which is why three earlier tint fixes changed nothing). The VM
+  injector is now a titled tab, so "CannonadeCommander" appears in the VMs area and the
+  script loads on every build and tints the VM row icons on the Virtual Machines tab.
+- VM icon tinting is now ON by default whenever you pick an icon colour. The separate
+  "Also tint VM icons" switch was an easy-to-miss opt-in; it is now an opt-out. Glyph
+  icons (most VM icons are a font glyph, not an image) are tinted with priority so
+  Unraid's own icon colour can't override it.
+- Removing (and setting) a CPU / RAM limit now works on hosts WITHOUT swap accounting
+  (most Unraid boxes). The live "docker update" was sent with a swap limit, which the
+  kernel rejects when there is no swap-accounting cgroup — the update failed and aborted
+  before the limit was removed, so the Remove button silently did nothing. It now sets
+  unlimited swap, which needs no swap cgroup. (The host-RAM value used for "unlimited"
+  also falls back to what the Docker daemon reports if /proc/meminfo can't be read.)
+- The Basic / Advanced view-toggle label is vertically centred with its switch again
+  (it sat too high next to the enlarged pill).
 
 ### 0.15.0
 - Container-icon colouring now hits the EXACT colour you pick. It was an approximate
@@ -364,7 +383,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>2287d2c2bbd66ea3888a299e84003011dc345db2f707526c006519b55199e9b2</SHA256>
+  <SHA256>5d310e86b6614d578d507883f074c5706ed75802465c7cf6f491ac80057bd810</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

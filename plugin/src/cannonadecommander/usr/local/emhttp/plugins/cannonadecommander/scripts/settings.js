@@ -37,7 +37,7 @@
   var rainbow = get("cc.rainbow", "0") === "1";
   var iconcolor = get("cc.iconcolor", "");
   var iconstrength = parseInt(get("cc.iconstrength", "100"), 10);
-  var vmicons = get("cc.vmicons", "0") === "1";
+  var vmicons = get("cc.vmicons", "1") === "1"; // ON by default; the switch is an opt-OUT
   var density = get("cc.density", "normal");
   var view = get("cc.view", "list");
   var colview = loadColview();

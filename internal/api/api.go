@@ -28,6 +28,19 @@ type Docker interface {
 	Stats(ctx context.Context, name string) (model.Stats, error)
 	Limits(ctx context.Context, name string) (model.Limits, error)
 	UpdateResources(ctx context.Context, name string, l model.Limits) error
+	HostMemTotal(ctx context.Context) int64
+}
+
+// hostMem returns the host's total RAM in bytes, preferring /proc/meminfo and falling
+// back to what the Docker daemon reports (GET /info), so a box where the supervisor
+// can't read /proc still yields a real value. Used for the state's host_mem AND the
+// "remove RAM limit" sentinel — if this were 0, removal would be a no-op and the UI
+// would read every container as still limited.
+func (s *Server) hostMem(ctx context.Context) int64 {
+	if m := hostcpu.MemTotal(); m > 0 {
+		return m
+	}
+	return s.Docker.HostMemTotal(ctx)
 }
 
 // Store persists the plan + the automation config.
@@ -103,7 +116,7 @@ func (s *Server) handleState(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusInternalServerError, err)
 		return
 	}
-	resp := stateResp{Plan: plan, HostCPUs: hostcpu.Count(), HostCoreOf: hostcpu.CoreOf(), HostMem: hostcpu.MemTotal()}
+	resp := stateResp{Plan: plan, HostCPUs: hostcpu.Count(), HostCoreOf: hostcpu.CoreOf(), HostMem: s.hostMem(r.Context())}
 	containers, derr := s.Docker.List(r.Context())
 	if derr != nil {
 		// Tolerate a docker hiccup: still return the plan + the last run, so the
@@ -324,7 +337,7 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 	// >0 so a (near-impossible) /proc parse failure never sends a bogus 0/negative
 	// cap; the template strip below still runs, so a recreate drops the cap either way.
 	if req.RemoveMem {
-		if mt := hostcpu.MemTotal(); mt > 0 {
+		if mt := s.hostMem(r.Context()); mt > 0 {
 			req.MemBytes = mt
 		}
 	}

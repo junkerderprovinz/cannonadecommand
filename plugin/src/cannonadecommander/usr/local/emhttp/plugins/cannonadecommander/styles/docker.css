@@ -355,6 +355,12 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 /* hide the AN/AUS text next to the PER-ROW autostart switch only. The Basic/Advanced
    view toggle (div.ToggleViewMode, OUTSIDE the table) keeps its label. */
 .cc-enh #docker_list .switch-button-label { display: none !important; }
+/* the Basic/Advanced view-toggle LABEL ("Einfache/Erweiterte Ansicht") sat too high:
+   its text baseline didn't line up with the enlarged 24px pill. Make the toggle row a
+   flex row so the label and the pill are centred on each other (both possible nestings
+   covered). Vertical alignment only — Unraid's click geometry is untouched. */
+.ToggleViewMode,
+.ToggleViewMode .switch-button-container { display: inline-flex !important; align-items: center !important; }
 /* the native per-container autostart "wait N seconds" belongs in the start plan
    (Startverzögerung), so hide it here — label text + input share one span#<id>-wait. */
 .cc-enh #docker_list span[id$="-wait"] { display: none !important; }

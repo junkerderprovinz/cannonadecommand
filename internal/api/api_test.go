@@ -13,11 +13,17 @@ import (
 	"github.com/junkerderprovinz/cannonadecommander/internal/model"
 )
 
+// fakeHostMem is the host RAM the fake Docker daemon reports via /info — used as the
+// fallback when /proc/meminfo is unreadable (e.g. a non-Linux dev box).
+const fakeHostMem = int64(8) << 30 // 8 GiB
+
 type fakeDocker struct {
 	containers []model.Container
 	actions    []string
 	limits     model.Limits
 }
+
+func (f *fakeDocker) HostMemTotal(context.Context) int64 { return fakeHostMem }
 
 func (f *fakeDocker) List(context.Context) ([]model.Container, error) { return f.containers, nil }
 func (f *fakeDocker) Start(_ context.Context, n string) error {
@@ -243,7 +249,12 @@ func TestLimitsRemoveSendsHostTotals(t *testing.T) {
 	if rec.Code != 200 {
 		t.Fatalf("remove limits code = %d: %s", rec.Code, rec.Body)
 	}
+	// mirror s.hostMem: /proc/meminfo if readable (Linux CI), else the daemon's /info
+	// (the fake) — so this passes on a non-Linux dev box too and proves the fallback.
 	wantMem := hostcpu.MemTotal()
+	if wantMem == 0 {
+		wantMem = fakeHostMem
+	}
 	wantCPU := int64(hostcpu.Count()) * 1e9
 	fd := s.Docker.(*fakeDocker)
 	want := fmt.Sprintf("limits:gluetun:%d:%d", wantMem, wantCPU)

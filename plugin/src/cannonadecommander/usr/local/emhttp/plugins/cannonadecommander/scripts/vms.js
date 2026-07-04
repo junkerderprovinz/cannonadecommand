@@ -20,10 +20,14 @@
   // docker.js): map every opaque pixel to the chosen sRGB colour, keep alpha, and
   // blend the original back by (100 - strength)%. hue-rotate only APPROXIMATES a
   // hue and got the colour wrong; feColorMatrix hits the picked colour exactly.
+  // VM tinting is ON by DEFAULT whenever a container-icon colour is chosen (cc.vmicons
+  // is an opt-OUT: only the literal "0" disables it). Requiring a separate "1" opt-in was
+  // an easy-to-miss toggle that made VMs look like they "never tinted".
+  function vmTintOff() { return ls("cc.vmicons") === "0"; }
   function ensureTintFilter() {
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ls("cc.iconcolor") || "");
     var host = document.getElementById("cc-vm-tint-svg");
-    if (dead || ls("cc.vmicons") !== "1" || !m) { if (host) host.remove(); return false; }
+    if (dead || vmTintOff() || !m) { if (host) host.remove(); return false; }
     var tr = (parseInt(m[1], 16) / 255).toFixed(4), tg = (parseInt(m[2], 16) / 255).toFixed(4), tb = (parseInt(m[3], 16) / 255).toFixed(4);
     var s = (Math.max(10, parseInt(ls("cc.iconstrength") || "100", 10)) / 100).toFixed(3);
     if (!host) { host = document.createElement("div"); host.id = "cc-vm-tint-svg"; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
@@ -49,7 +53,7 @@
   // before. Real `.png` icons render as `<img class="img">` and DO take the filter.
   function tintColor() {
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ls("cc.iconcolor") || "");
-    if (dead || ls("cc.vmicons") !== "1" || !m) return "";
+    if (dead || vmTintOff() || !m) return "";
     return "#" + m[1] + m[2] + m[3];
   }
   // VM-row icon selector — GROUND TRUTH from unraid/webgui dynamix.vm.manager
@@ -66,10 +70,11 @@
       var f = filterVal(), c = tintColor(), imgs = vmImgs();
       for (var i = 0; i < imgs.length; i++) {
         var n = imgs[i];
-        if (n.tagName === "IMG") { n.style.filter = f; n.style.color = ""; }
-        // font-glyph: `color` is the reliable exact tint; the filter is a harmless
-        // bonus for glyphs the browser rasterises (result is the same exact colour).
-        else { n.style.color = c; n.style.filter = f; }
+        if (n.tagName === "IMG") { n.style.filter = f; n.style.removeProperty("color"); }
+        // font-glyph: `color` is the reliable exact tint. Set it with PRIORITY — Unraid's
+        // VM CSS colours these glyphs via a class rule, which a plain inline colour can
+        // lose to; `!important` on the inline style wins. The filter is a harmless bonus.
+        else { if (c) { n.style.setProperty("color", c, "important"); } else { n.style.removeProperty("color"); } n.style.filter = f; }
       }
     } catch (e) {}
   }
@@ -93,7 +98,7 @@
     if (dead) return; dead = true;
     try { if (mo) mo.disconnect(); mo = null; } catch (e) {}
     try { if (liveTimer) clearInterval(liveTimer); liveTimer = null; } catch (e) {}
-    try { var imgs = vmImgs(); for (var i = 0; i < imgs.length; i++) { imgs[i].style.filter = ""; imgs[i].style.color = ""; } } catch (e) {}
+    try { var imgs = vmImgs(); for (var i = 0; i < imgs.length; i++) { imgs[i].style.filter = ""; imgs[i].style.removeProperty("color"); } } catch (e) {}
     try { var sv = document.getElementById("cc-vm-tint-svg"); if (sv) sv.remove(); } catch (e) {}
   }
   function arm() {

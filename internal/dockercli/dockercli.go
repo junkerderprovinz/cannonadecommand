@@ -337,6 +337,28 @@ func (c *Client) Limits(ctx context.Context, ref string) (model.Limits, error) {
 	return model.Limits{MemBytes: raw.HostConfig.Memory, NanoCPUs: nano, CpusetCPUs: raw.HostConfig.CpusetCpus}, nil
 }
 
+// HostMemTotal returns the host's total RAM in bytes as the Docker daemon reports it
+// (GET /info → MemTotal). It's a robust fallback for /proc/meminfo: the daemon always
+// knows the host RAM, so "remove RAM limit" (which sets the cap to the host total) and
+// the limit UI still work even if the supervisor can't read /proc. 0 on any error.
+func (c *Client) HostMemTotal(ctx context.Context) int64 {
+	resp, err := c.do(ctx, "GET", "/info")
+	if err != nil {
+		return 0
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return 0
+	}
+	var info struct {
+		MemTotal int64 `json:"MemTotal"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
+		return 0
+	}
+	return info.MemTotal
+}
+
 // UpdateResources sets a container's memory + CPU caps via Docker's
 // container-update endpoint: applied LIVE (no restart) and persisted by Docker
 // across restarts. Only the fields the caller actually set (> 0) are sent, so a
@@ -347,7 +369,12 @@ func (c *Client) UpdateResources(ctx context.Context, ref string, l model.Limits
 	body := map[string]any{}
 	if l.MemBytes > 0 {
 		body["Memory"] = l.MemBytes
-		body["MemorySwap"] = l.MemBytes // cap total at Memory (no extra swap)
+		// MemorySwap = -1 (unlimited swap), NOT = Memory. A POSITIVE MemorySwap needs the
+		// memory.memsw cgroup, which most Unraid hosts don't have (no swap accounting) — there
+		// `docker update` with a swap limit FAILS, which silently broke BOTH setting and
+		// removing a RAM limit (the failed update returned before the template was updated).
+		// -1 needs no memsw write and still satisfies Docker's MemorySwap >= Memory rule.
+		body["MemorySwap"] = -1
 	}
 	if l.NanoCPUs > 0 {
 		body["NanoCpus"] = l.NanoCPUs
