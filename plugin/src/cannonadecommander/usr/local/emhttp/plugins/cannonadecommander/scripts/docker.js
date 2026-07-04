@@ -49,6 +49,7 @@
 
   var mode = localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list";
   var containers = [], containerNames = [], stats = {}, shiplog = {}, workingPlan = {}, lastRun = {}, iconCache = {};
+  var netPrev = {}; // name → {rx,tx,t} previous cumulative net counters, to derive the live down/up RATE
   // Automation config (schedules + watchdogs + notify) lives on the flash next to
   // the plan; loaded whole, mutated per-container in the editor, and PUT back whole.
   var config = { schedules: [], watchdogs: [], bandwidths: [], notify: { unraid: false, webhook: "" } };
@@ -73,6 +74,9 @@
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
   function norm(s) { return String(s || "").trim().toLowerCase(); }
   function humanBytes(b) { if (!b) return "0"; var u = ["B", "K", "M", "G", "T"], i = 0, n = b; while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; } return (n >= 100 ? Math.round(n) : Math.round(n * 10) / 10) + u[i]; }
+  // live network rate label from a stats snapshot with derived _rxr/_txr (bytes/sec):
+  // "↓1.2M ↑340K" (down = received, up = transmitted). "…" until the second sample.
+  function netRate(s) { if (!s || s._rxr == null || s._txr == null) return "…"; return "↓" + humanBytes(s._rxr) + " ↑" + humanBytes(s._txr); }
 
   // ───────────────────────── native table (source-verified selectors)
   function nativeTable() { var l = document.getElementById("docker_list"); if (l) return l.closest("table") || l.parentNode; return document.getElementById("docker_containers") || document.querySelector("table#docker_containers"); }
@@ -272,6 +276,11 @@
       var root = document.documentElement.style;
       var accent = localStorage.getItem("cc.accent"); if (accent) { root.setProperty("--cc-accent", accent); root.setProperty("--cc-accent-text", idealText(accent)); }
       var dens = localStorage.getItem("cc.density"); root.setProperty("--cc-density", { compact: "5px", normal: "9px", airy: "14px" }[dens] || "9px");
+      // Colour for ShipLog's "update all" button (which we restyle to match our badges,
+      // in the toggle row). documentElement so it reaches .ToggleViewMode, which lives
+      // OUTSIDE our enhanced table. Green in rainbow mode, the accent otherwise.
+      var ub = localStorage.getItem("cc.rainbow") === "1" ? "#1f9d55" : (accent || "#2f6feb");
+      root.setProperty("--cc-updall-bg", ub); root.setProperty("--cc-updall-text", idealText(ub));
       colview = loadColview();
     } catch (e) {}
   }
@@ -354,7 +363,9 @@
           var ramB = badgeInfo("RAM", "…", "ram"); ramB.appendChild(cfgDot(ramSet));
           rg.appendChild(resLine(ramB, limGear(name, "ram", ramSet)));
           var bw = bandwidthFor(name), bwSet = !!(bw && bw.egress_kbit > 0);
-          var bwB = badgeInfo("BW", bwLabel(bw), "bw"); bwB.appendChild(cfgDot(bwSet));
+          // value = LIVE down/up rate (filled by updateResGroup); the configured upload
+          // cap shows in the tooltip + the dot/gear. Starts "…" until the first rate.
+          var bwB = badgeInfo("BW", "…", "bw"); bwB.title = t("egress") + ": " + bwLabel(bw); bwB.appendChild(cfgDot(bwSet));
           rg.appendChild(resLine(bwB, bwGear(name, bwSet)));
           updateResGroup(rg, stats[name], c && c.state);
           resCell.appendChild(rg);
@@ -434,7 +445,11 @@
     var nb = el("div", "cc-card-name"); nb.appendChild(el("div", "cc-card-title", c.name)); nb.appendChild(el("div", "cc-card-img", c.image || "")); head.appendChild(nb);
     head.appendChild(stateBadge(c)); wrap.appendChild(head);
     var s = stats[c.name], sb = el("div", "cc-card-stats");
-    if (s && c.state === "running") { sb.appendChild(gauge("CPU", s.cpu_percent, (s.cpu_percent || 0) + "%")); sb.appendChild(gauge("RAM", s.mem_percent, humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit))); } else sb.appendChild(el("div", "cc-stat cc-dim", c.state === "running" ? "…" : "not running"));
+    if (s && c.state === "running") {
+      sb.appendChild(gauge("CPU", s.cpu_percent, (s.cpu_percent || 0) + "%"));
+      sb.appendChild(gauge("RAM", s.mem_percent, humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit)));
+      var nl = el("div", "cc-stat cc-stat-net"); nl.appendChild(el("span", "cc-stat-lbl", "NET")); nl.appendChild(el("span", "cc-stat-val cc-card-net", netRate(s))); sb.appendChild(nl);
+    } else sb.appendChild(el("div", "cc-stat cc-dim", c.state === "running" ? "…" : "not running"));
     wrap.appendChild(sb);
     var badges = el("div", "cc-card-badges");
     if (c.network) badges.appendChild(badgeInfo("NET", c.network, "net"));
@@ -525,12 +540,14 @@
   function refresh() { applyMode(); if (mode === "grid" || (mode === "list" && colOn("res"))) refreshStats(); }
   // update one CPU/RAM engine-badge group in place (values only).
   function updateResGroup(rg, s, state) {
-    // Target the CPU/RAM live values BY KIND (not by index) so the third, config-driven
-    // Bandwidth badge is never overwritten by a live-stats refresh.
-    var cpuV = rg.querySelector(".cc-b-cpu .cc-b-v"), ramV = rg.querySelector(".cc-b-ram .cc-b-v");
-    if (state !== "running") { if (cpuV) cpuV.textContent = "–"; if (ramV) ramV.textContent = "–"; return; }
+    // Target the live values BY KIND (not by index). The BW badge now shows the live
+    // DOWN/UP rate (↓rx ↑tx), like CPU/RAM show live usage; the configured egress cap is
+    // still indicated by the badge's dot + gear colour (and the badge's title tooltip).
+    var cpuV = rg.querySelector(".cc-b-cpu .cc-b-v"), ramV = rg.querySelector(".cc-b-ram .cc-b-v"), bwV = rg.querySelector(".cc-b-bw .cc-b-v");
+    if (state !== "running") { if (cpuV) cpuV.textContent = "–"; if (ramV) ramV.textContent = "–"; if (bwV) bwV.textContent = "–"; return; }
     if (cpuV) cpuV.textContent = s ? (s.cpu_percent || 0) + "%" : "…";
     if (ramV) ramV.textContent = s ? humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit) : "…";
+    if (bwV) bwV.textContent = netRate(s);
   }
   function applyMode() {
     try {
@@ -546,7 +563,19 @@
   function refreshStats() {
     api("GET", "stats").then(function (m) {
       stats = m || {};
-      if (mode === "grid" && gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll(".cc-card")).forEach(function (cd) { var s = stats[cd.dataset.name]; if (!s) return; var f = cd.querySelectorAll(".cc-gauge-fill"), v = cd.querySelectorAll(".cc-stat-val"); if (f[0]) f[0].style.width = Math.min(100, s.cpu_percent) + "%"; if (v[0]) v[0].textContent = (s.cpu_percent || 0) + "%"; if (f[1]) f[1].style.width = Math.min(100, s.mem_percent) + "%"; if (v[1]) v[1].textContent = humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit); });
+      // derive the live down/up RATE (bytes/sec) by diffing the cumulative net counters
+      // against the previous sample. Guard the counter-reset case (container restart →
+      // counters drop) so a rate never goes negative.
+      var now = Date.now();
+      Object.keys(stats).forEach(function (nm) {
+        var s = stats[nm], p = netPrev[nm];
+        if (p && now > p.t && s.net_rx >= p.rx && s.net_tx >= p.tx) {
+          var dt = (now - p.t) / 1000;
+          s._rxr = (s.net_rx - p.rx) / dt; s._txr = (s.net_tx - p.tx) / dt;
+        }
+        netPrev[nm] = { rx: s.net_rx || 0, tx: s.net_tx || 0, t: now };
+      });
+      if (mode === "grid" && gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll(".cc-card")).forEach(function (cd) { var s = stats[cd.dataset.name]; if (!s) return; var f = cd.querySelectorAll(".cc-gauge-fill"), v = cd.querySelectorAll(".cc-stat-val"); if (f[0]) f[0].style.width = Math.min(100, s.cpu_percent) + "%"; if (v[0]) v[0].textContent = (s.cpu_percent || 0) + "%"; if (f[1]) f[1].style.width = Math.min(100, s.mem_percent) + "%"; if (v[1]) v[1].textContent = humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit); var nv = cd.querySelector(".cc-card-net"); if (nv) nv.textContent = netRate(s); });
       if (mode === "list") Array.prototype.slice.call(document.querySelectorAll(".cc-resgroup")).forEach(function (rg) { var cn = containerByName(rg.dataset.name); updateResGroup(rg, stats[rg.dataset.name], cn && cn.state); });
     }).catch(function () {});
   }
@@ -800,17 +829,40 @@
       if (showCpu) payload.remove_cpu = true;
       submitLimits(payload);
     });
+    // `cur` = this container's CURRENT limits, from the FRESH per-name prefill GET (not
+    // the bulk map, which can be stale). curLoaded flips true once that GET lands. The
+    // "clear a field to remove" decision uses cur AND only fires when curLoaded — so a
+    // Save fired before the prefill returns can't false-remove a limit the user never
+    // touched, and can't miss a real removal because the bulk map was stale.
+    var cur = limits[name] || {}, curLoaded = false;
     var save = el("span", "cc-btn cc-btn-primary", t("saveShort"));
     save.addEventListener("click", function () {
-      var mb = 0;
-      if (memNum) { var v = String(memNum.value).trim().replace(",", "."); if (v) { var num = parseFloat(v); if (!(num >= 0)) { flash(t("invalid"), true); return; } mb = Math.round(num * (memUnit.value === "GB" ? 1073741824 : 1048576)); } }
-      var nc = cpu ? parseCPU(cpu.value) : 0;
-      if (nc < 0) { flash(t("invalid"), true); return; }
-      var cpuset = readCpuset();
-      if (cpuset && !/^[0-9,\-]+$/.test(cpuset)) { flash(t("invalid"), true); return; }
-      var payload = { name: name, mem_bytes: mb, nano_cpus: nc };
-      if (cpuset) payload.cpuset_cpus = cpuset; // empty = leave unchanged, like the other fields
-      if (mb === 0 && nc === 0 && !cpuset) { closePop(); return; }
+      // The fields are PREFILLED with the current limits, so CLEARING a field means
+      // "remove that limit" (what a user does to lift a cap) — not "leave unchanged".
+      // A value sets the limit; an empty field on a currently-limited container removes
+      // it (remove_mem/remove_cpu). This fixes "it doesn't save when I delete the value".
+      var payload = { name: name }, act = false;
+      if (memNum) {
+        var v = String(memNum.value).trim().replace(",", ".");
+        if (v) {
+          var num = parseFloat(v);
+          if (!(num >= 0)) { flash(t("invalid"), true); return; }
+          payload.mem_bytes = Math.round(num * (memUnit.value === "GB" ? 1073741824 : 1048576)); act = true;
+        } else if (curLoaded && ramLimited(cur)) { payload.remove_mem = true; act = true; } // cleared → remove
+      }
+      if (showCpu) {
+        var cv = cpu ? String(cpu.value).trim() : "";
+        var cpuset = readCpuset();
+        if (cpuset && !/^[0-9,\-]+$/.test(cpuset)) { flash(t("invalid"), true); return; }
+        var nc = cv ? parseCPU(cpu.value) : 0;
+        if (nc < 0) { flash(t("invalid"), true); return; }
+        if (nc > 0 || cpuset) {
+          if (nc > 0) payload.nano_cpus = nc;
+          if (cpuset) payload.cpuset_cpus = cpuset;
+          act = true;
+        } else if (curLoaded && (cpuLimited(cur) || cpuPinned(cur))) { payload.remove_cpu = true; act = true; } // both CPU controls cleared → remove
+      }
+      if (!act) { closePop(); return; } // nothing set and nothing to remove
       submitLimits(payload);
     });
     srow.appendChild(rem); srow.appendChild(save); pop.appendChild(srow);
@@ -820,6 +872,7 @@
     pop.style.top = (window.scrollY + r.bottom + 6) + "px"; openPop = pop; openPopAnchor = anchor;
     api("GET", "limits", null, "name=" + encodeURIComponent(name)).then(function (l) {
       if (!l) return;
+      cur = l; curLoaded = true; // fresh current limits — the "clear to remove" decision uses these
       // only prefill REAL limits; a practical-unlimited value (a prior "remove") stays blank.
       if (memNum && ramLimited(l)) { if (l.mem_bytes >= 1073741824) { memNum.value = Math.round(l.mem_bytes / 1073741824 * 100) / 100; memUnit.value = "GB"; } else { memNum.value = Math.round(l.mem_bytes / 1048576); memUnit.value = "MB"; } }
       if (cpu && cpuLimited(l)) cpu.value = String(Math.round(l.nano_cpus / 1e9 * 100) / 100);

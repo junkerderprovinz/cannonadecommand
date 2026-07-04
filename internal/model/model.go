@@ -172,9 +172,13 @@ type Config struct {
 }
 
 // Stats is a one-shot resource snapshot for a container, for the live card gauges.
+// NetRx/NetTx are CUMULATIVE bytes since container start (summed over all interfaces);
+// the frontend diffs two samples to show a live download/upload RATE.
 type Stats struct {
 	CPUPercent float64 `json:"cpu_percent"`
 	MemUsed    uint64  `json:"mem_used"`
 	MemLimit   uint64  `json:"mem_limit"`
 	MemPercent float64 `json:"mem_percent"`
+	NetRx      uint64  `json:"net_rx"` // cumulative bytes received (download)
+	NetTx      uint64  `json:"net_tx"` // cumulative bytes transmitted (upload)
 }

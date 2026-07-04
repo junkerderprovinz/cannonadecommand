@@ -520,6 +520,11 @@ type dockerStats struct {
 			Cache uint64 `json:"cache"`
 		} `json:"stats"`
 	} `json:"memory_stats"`
+	// per-interface cumulative counters; we sum them for the live up/down rate.
+	Networks map[string]struct {
+		RxBytes uint64 `json:"rx_bytes"`
+		TxBytes uint64 `json:"tx_bytes"`
+	} `json:"networks"`
 }
 
 // Stats returns a one-shot resource snapshot (no streaming).
@@ -561,6 +566,11 @@ func computeStats(s dockerStats) model.Stats {
 	out.MemLimit = s.MemoryStats.Limit
 	if s.MemoryStats.Limit > 0 {
 		out.MemPercent = round2(float64(used) / float64(s.MemoryStats.Limit) * 100)
+	}
+	// cumulative network counters, summed over every interface (rx = download, tx = upload).
+	for _, n := range s.Networks {
+		out.NetRx += n.RxBytes
+		out.NetTx += n.TxBytes
 	}
 	return out
 }

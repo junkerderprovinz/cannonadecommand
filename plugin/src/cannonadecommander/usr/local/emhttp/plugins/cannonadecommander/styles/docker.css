@@ -355,12 +355,31 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 /* hide the AN/AUS text next to the PER-ROW autostart switch only. The Basic/Advanced
    view toggle (div.ToggleViewMode, OUTSIDE the table) keeps its label. */
 .cc-enh #docker_list .switch-button-label { display: none !important; }
-/* the Basic/Advanced view-toggle LABEL ("Einfache/Erweiterte Ansicht") sat too high:
-   its text baseline didn't line up with the enlarged 24px pill. Make the toggle row a
-   flex row so the label and the pill are centred on each other (both possible nestings
-   covered). Vertical alignment only — Unraid's click geometry is untouched. */
-.ToggleViewMode,
+/* The Basic/Advanced view-toggle row is NATIVELY display:flex; justify-content:flex-end;
+   align-items:center (full-width, right-aligned). Restate it so it stays right-aligned
+   even after other CSS touches it — the whole group (incl. ShipLog's "update all" button,
+   which injects as the row's first flex child and relies on flex-end) sits at the RIGHT. */
+.ToggleViewMode { display: flex !important; justify-content: flex-end !important; align-items: center !important; }
+/* Vertically centre the toggle's LABEL ("Einfache/Erweiterte Ansicht") against the enlarged
+   24px pill: in the real Unraid DOM the label + switch are FLOAT:left inside `.ToggleViewMode
+   > span`, so we make THAT the flex line (floats are ignored in a flex box → items centre).
+   (.switch-button-container is a fallback for builds that wrap the switch differently.) The
+   abs-positioned knob lives inside .switch-button-background and is untouched. */
+.ToggleViewMode > span,
 .ToggleViewMode .switch-button-container { display: inline-flex !important; align-items: center !important; }
+/* ShipLog's "update all" button (a.sl-updall), restyled to match our badges: an accent
+   pill (green in rainbow mode) with auto-contrast text, sitting left of the view toggle.
+   Colours come from --cc-updall-bg/-text (set on :root by docker.js, so they reach this
+   element outside our table). Only applies while CannonadeCommander is installed. */
+.sl-updall {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 13px;
+  border-radius: 999px !important; background: var(--cc-updall-bg, #2f6feb) !important;
+  color: var(--cc-updall-text, #fff) !important; font-weight: 600; font-size: 12px;
+  letter-spacing: .2px; white-space: nowrap; text-decoration: none !important;
+  border: none !important; box-shadow: none !important; cursor: pointer; margin: 0 10px 0 0;
+  transition: filter .12s;
+}
+.sl-updall:hover { filter: brightness(1.08); text-decoration: none !important; }
 /* the native per-container autostart "wait N seconds" belongs in the start plan
    (Startverzögerung), so hide it here — label text + input share one span#<id>-wait. */
 .cc-enh #docker_list span[id$="-wait"] { display: none !important; }

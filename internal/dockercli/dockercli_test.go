@@ -43,7 +43,8 @@ func testServer(t *testing.T) (*Client, *httptest.Server) {
 		_, _ = w.Write([]byte(`{
 			"cpu_stats":{"cpu_usage":{"total_usage":1100},"system_cpu_usage":11000,"online_cpus":2},
 			"precpu_stats":{"cpu_usage":{"total_usage":1000},"system_cpu_usage":10000},
-			"memory_stats":{"usage":209715200,"limit":1048576000,"stats":{"cache":52428800}}
+			"memory_stats":{"usage":209715200,"limit":1048576000,"stats":{"cache":52428800}},
+			"networks":{"eth0":{"rx_bytes":1000,"tx_bytes":200},"eth1":{"rx_bytes":50,"tx_bytes":5}}
 		}`))
 	})
 	srv := httptest.NewServer(mux)
@@ -141,6 +142,10 @@ func TestStats(t *testing.T) {
 	}
 	if s.MemPercent != 15 {
 		t.Fatalf("MemPercent = %v, want 15", s.MemPercent)
+	}
+	// net counters are summed across all interfaces (eth0 + eth1)
+	if s.NetRx != 1050 || s.NetTx != 205 {
+		t.Fatalf("net counters = rx %d / tx %d, want 1050 / 205", s.NetRx, s.NetTx)
 	}
 }
 
