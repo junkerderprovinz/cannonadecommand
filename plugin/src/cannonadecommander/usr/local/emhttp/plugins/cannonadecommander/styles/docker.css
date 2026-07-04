@@ -47,6 +47,15 @@
 .cc-enh #docker_list tr.sortable td.ct-name .inner > span.state { display: none !important; }
 .cc-enh #docker_list tr.sortable td.ct-name .appname { font-size: 15px !important; font-weight: 600 !important; letter-spacing: .1px; }
 .cc-enh #docker_list tr.sortable > td { padding-top: var(--cc-density) !important; padding-bottom: var(--cc-density) !important; }
+/* Row density: the row height is mostly the BADGE content, so the --cc-density td padding
+   alone was barely visible ("does nothing"). compact/airy also tighten/loosen the badge
+   groups + name meta so the density is actually felt. */
+.cc-enh.cc-dens-compact .cc-rowbadges { gap: 3px; margin-top: 2px; }
+.cc-enh.cc-dens-compact .cc-namemeta, .cc-enh.cc-dens-compact .cc-resgroup, .cc-enh.cc-dens-compact .cc-netgroup { gap: 3px; }
+.cc-enh.cc-dens-compact .cc-b { margin-top: 1px; margin-bottom: 1px; padding-top: 2px; padding-bottom: 2px; }
+.cc-enh.cc-dens-compact #docker_list td.ct-name .img, .cc-enh.cc-dens-compact #docker_list td.ct-name img { max-height: 34px; }
+.cc-enh.cc-dens-airy .cc-rowbadges { gap: 8px; margin-top: 6px; }
+.cc-enh.cc-dens-airy .cc-namemeta, .cc-enh.cc-dens-airy .cc-resgroup, .cc-enh.cc-dens-airy .cc-netgroup { gap: 8px; }
 
 /* consolidated network column: hide the separate native IP / Port / LAN columns */
 .cc-enh.cc-c-net thead tr:last-child th:nth-child(4), .cc-enh.cc-c-net #docker_list tr.sortable > td:nth-child(4),

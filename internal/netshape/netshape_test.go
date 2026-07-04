@@ -38,3 +38,21 @@ func TestEgressArgs_Clear(t *testing.T) {
 		t.Fatalf("egressArgs clear = %v, want %v", got, want)
 	}
 }
+
+func TestIngressArgs(t *testing.T) {
+	if got := ingressQdiscArgs("br0.20", 4242); !reflect.DeepEqual(got,
+		[]string{"-t", "4242", "-n", "tc", "qdisc", "add", "dev", "br0.20", "handle", "ffff:", "ingress"}) {
+		t.Fatalf("ingressQdiscArgs = %v", got)
+	}
+	if got := ingressDelArgs("", 4242); !reflect.DeepEqual(got,
+		[]string{"-t", "4242", "-n", "tc", "qdisc", "del", "dev", "eth0", "ingress"}) {
+		t.Fatalf("ingressDelArgs = %v", got)
+	}
+	// the police filter caps DOWNLOAD: match-all u32 + police drop at the rate.
+	got := strings.Join(ingressFilterArgs("eth0", 4242, 80000), " ")
+	for _, want := range []string{"parent ffff:", "u32 match u32 0 0", "police rate 80000kbit", "burst 1000000", "drop"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("ingressFilterArgs missing %q in %q", want, got)
+		}
+	}
+}

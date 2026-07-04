@@ -446,7 +446,7 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bandwidth entry with no container name"})
 			return
 		}
-		if b.EgressKbit < 0 || b.EgressKbit > 10_000_000 {
+		if b.EgressKbit < 0 || b.EgressKbit > 10_000_000 || b.IngressKbit < 0 || b.IngressKbit > 10_000_000 {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bad bandwidth rate (want 0-10000000 kbit)"})
 			return
 		}

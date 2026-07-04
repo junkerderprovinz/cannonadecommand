@@ -37,8 +37,8 @@
     : [["Mo", 1], ["Tu", 2], ["We", 3], ["Th", 4], ["Fr", 5], ["Sa", 6], ["Su", 0]];
 
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Watchdog (Auto-Neustart)", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", startDelay: "Startverzögerung", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", bwFoot: "Egress-Limit per tc im Container (experimentell). Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc auf dem Host (Interface eth0)." },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Watchdog (auto-restart)", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", startDelay: "Start delay", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", bwFoot: "Egress limit via tc inside the container (experimental). Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc on the host (interface eth0)." },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Watchdog (Auto-Neustart)", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", startDelay: "Startverzögerung", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Up-/Download-Limit per tc im Container (Upload = tbf-Shaper, Download = Ingress-Policing). Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc auf dem Host; die Schnittstelle stellst du in den Einstellungen ein." },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Watchdog (auto-restart)", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", startDelay: "Start delay", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Up/download limit via tc inside the container (upload = tbf shaper, download = ingress policing). Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc on the host; set the interface on the Settings page." },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -140,9 +140,14 @@
   function setWatchdog(name, wd) { var k = norm(name); config.watchdogs = config.watchdogs.filter(function (w) { return norm(w.name) !== k; }); if (wd) config.watchdogs.push(wd); }
   function setSchedules(name, list) { var k = norm(name); config.schedules = config.schedules.filter(function (s) { return norm(s.name) !== k; }); list.forEach(function (s) { config.schedules.push(s); }); }
   function bandwidthFor(name) { var k = norm(name), list = config.bandwidths || []; for (var i = 0; i < list.length; i++) if (norm(list[i].name) === k) return list[i]; return null; }
-  function setBandwidth(name, kbit) { var k = norm(name); config.bandwidths = (config.bandwidths || []).filter(function (b) { return norm(b.name) !== k; }); if (kbit > 0) config.bandwidths.push({ name: name, egress_kbit: kbit }); }
-  // short badge label for a configured egress cap: "5 Mbit" / "500 kbit" / "–" (none).
-  function bwLabel(bw) { if (!bw || !(bw.egress_kbit > 0)) return "–"; var k = bw.egress_kbit; return k >= 1000 ? (Math.round(k / 100) / 10) + " Mbit" : k + " kbit"; }
+  // egressKbit = upload cap, ingressKbit = download cap; 0 clears that direction. The entry
+  // is dropped only when BOTH are 0.
+  function setBandwidth(name, egressKbit, ingressKbit) { var k = norm(name); config.bandwidths = (config.bandwidths || []).filter(function (b) { return norm(b.name) !== k; }); if (egressKbit > 0 || ingressKbit > 0) config.bandwidths.push({ name: name, egress_kbit: egressKbit || 0, ingress_kbit: ingressKbit || 0 }); }
+  // a kbit rate as "5 Mbit" / "500 kbit" / "–" (0 = none).
+  function bwKbitLabel(kbit) { if (!(kbit > 0)) return "–"; return kbit >= 1000 ? (Math.round(kbit / 100) / 10) + " Mbit" : kbit + " kbit"; }
+  // configured caps for the badge tooltip: "↑ 5 Mbit  ↓ 80 Mbit".
+  function bwTitle(bw) { return "↑ " + bwKbitLabel(bw && bw.egress_kbit) + "  ↓ " + bwKbitLabel(bw && bw.ingress_kbit); }
+  function bwHasLimit(bw) { return !!(bw && (bw.egress_kbit > 0 || bw.ingress_kbit > 0)); }
   function containerByName(name) { var k = norm(name); for (var i = 0; i < containers.length; i++) if (norm(containers[i].name) === k) return containers[i]; return null; }
   // The plan badge's LABEL already says "Startplan"; the value only adds detail
   // (or nothing when unmanaged) so the chip never reads "Startplan Startplan".
@@ -294,11 +299,15 @@
       tb.classList.add("cc-enh"); tb.classList.toggle("cc-adv", isAdvancedView());
       tb.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
       tb.classList.toggle("cc-tint-icons", !!localStorage.getItem("cc.iconcolor"));
+      // row density as a CLASS too (not only the --cc-density padding var): the row height
+      // is mostly the badge content, so compact/airy also tighten/loosen the badge spacing.
+      var dens = localStorage.getItem("cc.density") || "normal";
+      ["compact", "normal", "airy"].forEach(function (d) { tb.classList.toggle("cc-dens-" + d, dens === d); });
       COLS.forEach(function (c) { tb.classList.toggle("cc-c-" + c.key, colOn(c.key)); });
       applyIconTint();
     } catch (e) {}
   }
-  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh", "cc-adv", "cc-rainbow", "cc-tint-icons"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); var t2 = tintTargets(); for (var i = 0; i < t2.length; i++) t2[i].style.filter = ""; if (gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll("img.cc-card-ico")).forEach(function (n) { n.style.filter = ""; }); Array.prototype.slice.call(document.querySelectorAll(".cc-ico-tint")).forEach(function (n) { n.remove(); }); var sv = document.getElementById("cc-tint-svg"); if (sv) sv.remove(); } catch (e) {} }
+  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh", "cc-adv", "cc-rainbow", "cc-tint-icons", "cc-dens-compact", "cc-dens-normal", "cc-dens-airy"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); var t2 = tintTargets(); for (var i = 0; i < t2.length; i++) t2[i].style.filter = ""; if (gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll("img.cc-card-ico")).forEach(function (n) { n.style.filter = ""; }); Array.prototype.slice.call(document.querySelectorAll(".cc-ico-tint")).forEach(function (n) { n.remove(); }); var sv = document.getElementById("cc-tint-svg"); if (sv) sv.remove(); } catch (e) {} }
 
   // read a positional cell's value (docker_readmore), stripping nested advanced
   // (MAC) + Tailscale tooltip, collapsed to one short line.
@@ -363,10 +372,10 @@
           rg.appendChild(resLine(cpuB, limGear(name, "cpu", cpuSet)));
           var ramB = badgeInfo("RAM", "…", "ram");
           rg.appendChild(resLine(ramB, limGear(name, "ram", ramSet)));
-          var bw = bandwidthFor(name), bwSet = !!(bw && bw.egress_kbit > 0);
-          // value = LIVE down/up rate (filled by updateResGroup); the configured upload
-          // cap shows in the tooltip. Starts "…" until the first rate.
-          var bwB = badgeInfo("BW", "…", "bw"); bwB.title = t("egress") + ": " + bwLabel(bw);
+          var bw = bandwidthFor(name), bwSet = bwHasLimit(bw);
+          // value = LIVE down/up rate (filled by updateResGroup); the configured up/down
+          // caps show in the tooltip. Starts "…" until the first rate.
+          var bwB = badgeInfo("BW", "…", "bw"); bwB.title = t("bandwidth") + " " + bwTitle(bw);
           rg.appendChild(resLine(bwB, bwGear(name, bwSet)));
           updateResGroup(rg, stats[name], c && c.state);
           resCell.appendChild(rg);
@@ -727,32 +736,38 @@
     var head = el("div", "cc-pop-head"); head.appendChild(el("b", null, name + " — " + t("bandwidth")));
     var x = el("span", "cc-pop-x", "✕"); x.addEventListener("click", closePop); head.appendChild(x); pop.appendChild(head);
     var body = el("div", "cc-pop-body");
-    var row = el("div", "cc-pop-row"); row.appendChild(el("label", "cc-pop-lbl", t("egress")));
     var cur = bandwidthFor(name);
-    var bwIn = el("input", "cc-in"); bwIn.type = "number"; bwIn.min = "0"; bwIn.step = "0.1"; bwIn.placeholder = "0 = ∞";
-    bwIn.value = (cur && cur.egress_kbit > 0) ? (Math.round(cur.egress_kbit / 1000 * 100) / 100) : "";
-    row.appendChild(bwIn); row.appendChild(el("span", "cc-unit", "Mbit/s")); body.appendChild(row);
+    // one Mbit/s field per direction. curKbit prefills it (blank = no cap).
+    function rateRow(labelText, curKbit) {
+      var row = el("div", "cc-pop-row"); row.appendChild(el("label", "cc-pop-lbl", labelText));
+      var inp = el("input", "cc-in"); inp.type = "number"; inp.min = "0"; inp.step = "0.1"; inp.placeholder = "0 = ∞";
+      inp.value = (curKbit > 0) ? (Math.round(curKbit / 1000 * 100) / 100) : "";
+      row.appendChild(inp); row.appendChild(el("span", "cc-unit", "Mbit/s")); body.appendChild(row);
+      return inp;
+    }
+    var upIn = rateRow(t("upload"), cur && cur.egress_kbit);
+    var downIn = rateRow(t("download"), cur && cur.ingress_kbit);
     pop.appendChild(body);
     pop.appendChild(el("div", "cc-pop-foot", t("bwFoot")));
-    function readBw() { var v = parseFloat(String(bwIn.value).trim().replace(",", ".")); return v > 0 ? Math.round(v * 1000) : 0; }
+    function readKbit(inp) { var v = parseFloat(String(inp.value).trim().replace(",", ".")); return v > 0 ? Math.round(v * 1000) : 0; }
     var srow = el("div", "cc-pop-row cc-pop-act");
-    var rem = el("span", "cc-btn", t("removeLim")); rem.addEventListener("click", function () { saveBandwidth(name, 0); });
-    var save = el("span", "cc-btn cc-btn-primary", t("saveShort")); save.addEventListener("click", function () { saveBandwidth(name, readBw()); });
+    var rem = el("span", "cc-btn", t("removeLim")); rem.addEventListener("click", function () { saveBandwidth(name, 0, 0); });
+    var save = el("span", "cc-btn cc-btn-primary", t("saveShort")); save.addEventListener("click", function () { saveBandwidth(name, readKbit(upIn), readKbit(downIn)); });
     srow.appendChild(rem); srow.appendChild(save); pop.appendChild(srow);
     document.body.appendChild(pop);
     var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || 300;
     pop.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 12)) + "px";
     pop.style.top = (window.scrollY + r.bottom + 6) + "px"; openPop = pop; openPopAnchor = anchor;
   }
-  // Persist ONE container's egress cap (0 = remove), read-modify-write against the LIVE
+  // Persist ONE container's up/down caps (0/0 = remove), read-modify-write against the LIVE
   // config so schedules/watchdogs/notify/shape_iface and every other container survive.
-  function saveBandwidth(name, kbit) {
+  function saveBandwidth(name, egressKbit, ingressKbit) {
     flash(t("saving"));
     api("GET", "config")
       .then(function (fresh) {
         if (!fresh || typeof fresh !== "object") throw new Error("config unreadable");
         config = { schedules: fresh.schedules || [], watchdogs: fresh.watchdogs || [], bandwidths: fresh.bandwidths || [], notify: fresh.notify || { unraid: false, webhook: "" }, shape_iface: fresh.shape_iface || "" };
-        setBandwidth(name, kbit);
+        setBandwidth(name, egressKbit, ingressKbit);
         return api("PUT", "config", config);
       })
       .then(function () { flash(t("done")); closePop(); if (mode === "list") reinjectRowBadges(); else renderGrid(); })

@@ -76,8 +76,8 @@ func env(key, def string) string {
 // shaperAdapter lets the monitor apply egress limits via the netshape package.
 type shaperAdapter struct{}
 
-func (shaperAdapter) Apply(iface string, pid, kbit int) error {
-	return netshape.Apply(iface, pid, kbit)
+func (shaperAdapter) Apply(iface string, pid, egressKbit, ingressKbit int) error {
+	return netshape.Apply(iface, pid, egressKbit, ingressKbit)
 }
 
 // inspectorAdapter bridges the docker client to the readiness prober's minimal

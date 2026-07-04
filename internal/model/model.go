@@ -150,13 +150,15 @@ type Notify struct {
 	Webhook string `json:"webhook,omitempty"` // POST a JSON body to this URL
 }
 
-// Bandwidth caps a container's EGRESS (upload) network rate. Docker has no native
-// bandwidth API, so the monitor applies it with tc (tbf qdisc) inside the container's
-// network namespace; it is re-applied while the container runs and is lost on restart
-// until re-applied. EgressKbit <= 0 means no cap.
+// Bandwidth caps a container's network rate. Docker has no native bandwidth API, so the
+// monitor applies it inside the container's network namespace with tc: EGRESS (upload) via
+// a tbf shaper on the interface root, INGRESS (download) via an ingress-policing filter.
+// Re-applied while the container runs, lost on restart until re-applied. A field <= 0 means
+// "no cap" for that direction.
 type Bandwidth struct {
-	Name       string `json:"name"`
-	EgressKbit int    `json:"egress_kbit"`
+	Name        string `json:"name"`
+	EgressKbit  int    `json:"egress_kbit"`            // upload cap (kbit/s)
+	IngressKbit int    `json:"ingress_kbit,omitempty"` // download cap (kbit/s)
 }
 
 // Config is the automation configuration the daemon acts on, persisted alongside
