@@ -478,6 +478,21 @@
     act.appendChild(planBadge(c.name));
     var p = lastRunPill(c.name); if (p) act.appendChild(p);
     wrap.appendChild(act);
+    // CPU / RAM / Bandwidth limit gears — the SAME three the list view injects (see
+    // injectRowBadges). They were LIST-ONLY, so in GRID (card) mode no gear was ever
+    // rendered — which is exactly why setting AND removing CPU/RAM/BW "did nothing" in
+    // card view: there was no editor to open, no request ever fired, no error to show.
+    var rg = el("div", "cc-rowbadges cc-resgroup cc-card-res"); rg.setAttribute(MARK, "1"); rg.dataset.name = c.name;
+    var lm = limits[c.name] || {};
+    var cpuB = badgeInfo("CPU", "…", "cpu");
+    rg.appendChild(resLine(cpuB, limGear(c.name, "cpu", cpuLimited(lm) || cpuPinned(lm))));
+    var ramB = badgeInfo("RAM", "…", "ram");
+    rg.appendChild(resLine(ramB, limGear(c.name, "ram", ramLimited(lm))));
+    var bw = bandwidthFor(c.name);
+    var bwB = badgeInfo("BW", "…", "bw"); bwB.title = t("bandwidth") + " " + bwTitle(bw);
+    rg.appendChild(resLine(bwB, bwGear(c.name, bwHasLimit(bw))));
+    updateResGroup(rg, stats[c.name], c.state);
+    wrap.appendChild(rg);
     if (filterText && norm(c.name).indexOf(filterText) < 0) wrap.style.display = "none";
     return wrap;
   }
@@ -605,7 +620,9 @@
         netPrev[nm] = { rx: s.net_rx || 0, tx: s.net_tx || 0, t: now };
       });
       if (mode === "grid" && gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll(".cc-card")).forEach(function (cd) { var s = stats[cd.dataset.name]; if (!s) return; var f = cd.querySelectorAll(".cc-gauge-fill"), v = cd.querySelectorAll(".cc-stat-val"); if (f[0]) f[0].style.width = Math.min(100, s.cpu_percent) + "%"; if (v[0]) v[0].textContent = (s.cpu_percent || 0) + "%"; if (f[1]) f[1].style.width = Math.min(100, s.mem_percent) + "%"; if (v[1]) v[1].textContent = humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit); var nv = cd.querySelector(".cc-card-net"); if (nv) nv.textContent = netRate(s); });
-      if (mode === "list") Array.prototype.slice.call(document.querySelectorAll(".cc-resgroup")).forEach(function (rg) { var cn = containerByName(rg.dataset.name); updateResGroup(rg, stats[rg.dataset.name], cn && cn.state); });
+      // update the CPU/RAM/BW resource badges live in BOTH modes — the resgroup now
+      // exists on grid cards too (querySelectorAll finds the list-cell AND the card ones).
+      Array.prototype.slice.call(document.querySelectorAll(".cc-resgroup")).forEach(function (rg) { var cn = containerByName(rg.dataset.name); updateResGroup(rg, stats[rg.dataset.name], cn && cn.state); });
     }).catch(function () {});
   }
 
@@ -614,6 +631,25 @@
   // clicking the SAME badge again closes its popover (toggle). Returns true if it closed.
   function togglePop(anchor) { if (openPop && openPopAnchor === anchor) { closePop(); return true; } return false; }
   function refreshChip(chip, name) { var node = workingPlan[name]; chip.classList.toggle("cc-plan-on", !!node); var v = chip.querySelector(".cc-b-v"); if (v) v.textContent = depsTxt(node); }
+  // A small ⓘ next to a label; hovering (or focusing) it shows a tidy explainer of the
+  // dropdown's options, so "Bereit wenn" / "Bei Fehlschlag" no longer need prior knowledge.
+  function infoBubble(items) {
+    var b = el("span", "cc-info", "ⓘ"); b.setAttribute("tabindex", "0"); b.setAttribute("aria-label", "info");
+    var tip = el("span", "cc-tip");
+    items.forEach(function (it) { var r = el("span", "cc-tip-row"); r.appendChild(el("b", "cc-tip-k", it[0])); r.appendChild(document.createTextNode(it[1])); tip.appendChild(r); });
+    b.appendChild(tip); return b;
+  }
+  function lblInfo(text, items) { var l = el("label", "cc-pop-lbl cc-lbl-info"); l.appendChild(document.createTextNode(text)); l.appendChild(infoBubble(items)); return l; }
+  function probeItems() {
+    return LANG === "de"
+      ? [["health", "Docker-Healthcheck meldet healthy"], ["running", "Container läuft (kurze Karenz)"], ["tcp", "ein TCP-Port nimmt Verbindungen an"], ["http", "ein HTTP-GET liefert 2xx/3xx"], ["exec", "ein Befehl im Container endet mit Code 0"], ["log", "ein Text taucht im Log auf"]]
+      : [["health", "Docker healthcheck reports healthy"], ["running", "container is up (short grace)"], ["tcp", "a TCP port accepts connections"], ["http", "an HTTP GET returns 2xx/3xx"], ["exec", "a command inside exits 0"], ["log", "a string appears in the log"]];
+  }
+  function policyItems() {
+    return LANG === "de"
+      ? [["abort", "Kette anhalten, Abhängige nicht starten"], ["continue", "trotzdem weiter, Abhängige starten"], ["degrade", "weiter, aber als degraded markieren"]]
+      : [["abort", "stop the chain, don't start dependents"], ["continue", "carry on, start dependents anyway"], ["degrade", "carry on but mark as degraded"]];
+  }
   function openEditor(anchor, name) {
     if (togglePop(anchor)) return;
     closePop();
@@ -634,7 +670,7 @@
     var drow = el("div", "cc-pop-row"); drow.appendChild(el("label", "cc-pop-lbl", t("startDelay")));
     var delay = el("input", "cc-in cc-port"); delay.type = "number"; delay.min = "0"; delay.placeholder = "sec"; delay.value = node.delay_seconds ? node.delay_seconds : "";
     drow.appendChild(delay); drow.appendChild(el("span", null, " " + t("secWait"))); body.appendChild(drow);
-    var prow = el("div", "cc-pop-row"); prow.appendChild(el("label", "cc-pop-lbl", t("readyWhen")));
+    var prow = el("div", "cc-pop-row"); prow.appendChild(lblInfo(t("readyWhen"), probeItems()));
     var probe = el("select", "cc-in"); PROBES.forEach(function (p) { var o = el("option", null, p); o.value = p; if (node.probe && node.probe.kind === p) o.selected = true; probe.appendChild(o); });
     var port = el("input", "cc-in cc-port"); port.type = "number"; port.placeholder = "port"; port.value = (node.probe && node.probe.port) ? node.probe.port : "";
     var pathIn = el("input", "cc-in cc-port"); pathIn.type = "text"; pathIn.placeholder = "/health"; pathIn.value = (node.probe && node.probe.path) ? node.probe.path : "";
@@ -642,7 +678,7 @@
     var matchIn = el("input", "cc-in"); matchIn.type = "text"; matchIn.placeholder = t("logPh"); matchIn.value = (node.probe && node.probe.match) ? node.probe.match : "";
     var syncPort = function () { var k = probe.value; port.style.display = (k === "tcp" || k === "http") ? "" : "none"; pathIn.style.display = k === "http" ? "" : "none"; cmdIn.style.display = k === "exec" ? "" : "none"; matchIn.style.display = k === "log" ? "" : "none"; }; syncPort();
     prow.appendChild(probe); prow.appendChild(port); prow.appendChild(pathIn); prow.appendChild(cmdIn); prow.appendChild(matchIn); body.appendChild(prow);
-    var polrow = el("div", "cc-pop-row"); polrow.appendChild(el("label", "cc-pop-lbl", t("onFail")));
+    var polrow = el("div", "cc-pop-row"); polrow.appendChild(lblInfo(t("onFail"), policyItems()));
     var pol = el("select", "cc-in"); POLICIES.forEach(function (p) { var o = el("option", null, p); o.value = p; if (node.policy === p) o.selected = true; pol.appendChild(o); });
     polrow.appendChild(pol); body.appendChild(polrow); pop.appendChild(body);
     pop.appendChild(el("div", "cc-pop-foot", t("failhint")));

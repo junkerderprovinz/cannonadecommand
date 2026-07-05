@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.21.0">
+  <!ENTITY version   "0.22.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,26 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.22.0
+- THE fix for "CPU / RAM / Bandwidth do nothing": those three gears only existed in the LIST
+  view. In the GRID (card) view there was no CPU/RAM/BW gear at all, so there was literally
+  nothing to click — which is why setting AND removing all three failed identically, with no
+  error (no request was ever sent). Each grid card now carries the same CPU / RAM / BW badges
+  and gears as a list row, so the limits are editable in both views.
+- Container icons are no longer stretched in the list view. A non-square logo was squashed into
+  a 48x48 box; it now keeps its aspect ratio (the grid cards already did this).
+- The Startplan chip no longer shows an underline on hover — it reacts like the "läuft" badge
+  (colour only, no line).
+- The toggle in the plan editor (and Settings) is now always ONE solid colour, never a rainbow
+  gradient, even in rainbow mode.
+- "Bereit wenn" and "Bei Fehlschlag" now have a small ⓘ info bubble that explains what each
+  option does (health / running / tcp / http / exec / log · abort / continue / degrade).
+- The schedule rows (Zeitpläne) are cleaner and roomier — each on its own card, with a clearly
+  visible clock icon on the time field.
+- VM-icon tinting is more reliable. The VM list is often filled by an AJAX call AFTER our script
+  runs; the tint now retries attaching until the list appears, so it stops intermittently not
+  colouring.
 
 ### 0.21.0
 - The toolbar gear is visible again. It was being inserted just ABOVE Unraid's Basic/Advanced
@@ -442,7 +462,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>9343a7e230606b344135185ed305f8331447b4a701cb58f0d4aede1144677e2a</SHA256>
+  <SHA256>38d88f12ff484f524c0fb5ce9d7d1e67dba6c0298969c9c8a8fe1281862d8c8e</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

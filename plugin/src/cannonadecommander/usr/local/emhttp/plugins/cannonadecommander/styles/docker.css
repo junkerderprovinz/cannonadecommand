@@ -42,7 +42,9 @@
 .cc-enh #docker_list tr.sortable td.ct-name { width: 225px !important; vertical-align: middle; }
 .cc-enh #docker_list tr.sortable td.ct-name .outer { display: flex; align-items: center; gap: 12px; }
 .cc-enh #docker_list tr.sortable td.ct-name .outer > span.hand { flex: none; display: flex; align-items: center; }
-.cc-enh #docker_list tr.sortable td.ct-name .outer > span.hand img,
+/* object-fit:contain so a NON-square logo keeps its aspect ratio instead of being squashed
+   into the 48x48 box ("verzogene Icons"); the glyph <i> keeps font-size, not object-fit. */
+.cc-enh #docker_list tr.sortable td.ct-name .outer > span.hand img { width: 48px !important; height: 48px !important; object-fit: contain !important; }
 .cc-enh #docker_list tr.sortable td.ct-name .outer > span.hand i.img { width: 48px !important; height: 48px !important; font-size: 48px !important; }
 .cc-enh #docker_list tr.sortable td.ct-name .inner { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; line-height: 1.2; min-width: 0; }
 .cc-enh #docker_list tr.sortable td.ct-name .inner br { display: none; }
@@ -56,7 +58,7 @@
 .cc-enh.cc-dens-compact .cc-rowbadges { gap: 3px; margin-top: 2px; }
 .cc-enh.cc-dens-compact .cc-namemeta, .cc-enh.cc-dens-compact .cc-resgroup, .cc-enh.cc-dens-compact .cc-netgroup { gap: 3px; }
 .cc-enh.cc-dens-compact .cc-b { margin-top: 1px; margin-bottom: 1px; padding-top: 2px; padding-bottom: 2px; }
-.cc-enh.cc-dens-compact #docker_list td.ct-name .img, .cc-enh.cc-dens-compact #docker_list td.ct-name img { max-height: 34px; }
+.cc-enh.cc-dens-compact #docker_list td.ct-name .img, .cc-enh.cc-dens-compact #docker_list td.ct-name img { max-height: 34px; object-fit: contain; }
 .cc-enh.cc-dens-airy .cc-rowbadges { gap: 8px; margin-top: 6px; }
 .cc-enh.cc-dens-airy .cc-namemeta, .cc-enh.cc-dens-airy .cc-resgroup, .cc-enh.cc-dens-airy .cc-netgroup { gap: 8px; }
 
@@ -150,6 +152,9 @@
 /* plan chip = one tappable Startplan badge (accent) */
 .cc-plan { cursor: pointer; background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
 .cc-plan:hover { filter: brightness(1.12); }
+/* badges are <a>/<span> chips — never show Unraid's global a:hover underline (the Startplan
+   chip must react like the "läuft" badge: colour only, no line). */
+.cc-b, .cc-b:hover, .cc-b:focus, .cc-plan, .cc-plan:hover, .cc-plan:focus { text-decoration: none !important; }
 .cc-plan-on { box-shadow: 0 0 0 2px rgba(255,255,255,.25) inset; }
 
 /* state badges (semantic solid, start/stop switch) */
@@ -191,6 +196,9 @@
 .cc-dim { color: var(--cc-dim); }
 .cc-card-badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .cc-card-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+/* the CPU/RAM/BW limit gears on a GRID card — a full-width stacked group with a hairline
+   separator, so the three limit editors sit together at the bottom of the card. */
+.cc-card-res { display: flex !important; width: 100%; border-top: 1px solid var(--cc-line); padding-top: 8px; margin-top: 2px; }
 .cc-life { display: inline-flex; gap: 6px; }
 .cc-abtn { background: var(--cc-bg3); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; transition: background .12s; }
 .cc-abtn:hover { background: #333; }
@@ -245,6 +253,15 @@
 .cc-pop-foot { padding: 9px 14px; border-top: 1px solid #2a2a2a; color: #8a8a8a; font-size: 11px; }
 /* backend/Docker rejection — stays on screen (not a 2.6s toast) so the exact reason is readable, and wraps long messages */
 .cc-pop-err { display: none; margin: 8px 14px 2px; padding: 7px 9px; border-radius: 6px; background: rgba(220,53,69,.13); border: 1px solid rgba(220,53,69,.55); color: #ff7a7a; font-size: 12px; line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
+/* ⓘ info bubble beside a dropdown label — hover/focus reveals a small explainer card that
+   lists what each option (health/running/… · abort/continue/degrade) actually does. */
+.cc-lbl-info { display: inline-flex; align-items: center; gap: 6px; }
+.cc-info { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 999px; background: rgba(255,255,255,.14); color: #cfcfcf; font-size: 10px; font-style: normal; cursor: help; flex: none; }
+.cc-info:hover, .cc-info:focus { background: var(--cc-accent, #2f6feb); color: #fff; outline: none; }
+.cc-tip { display: none; position: absolute; top: 21px; left: 0; z-index: 100000; width: 235px; max-width: 78vw; background: #0f0f0f; border: 1px solid #3a3a3a; border-radius: 8px; padding: 8px 10px; box-shadow: 0 12px 30px rgba(0,0,0,.55); color: #d6d6d6; font-size: 11.5px; font-weight: 400; line-height: 1.5; white-space: normal; text-align: left; cursor: default; }
+.cc-info:hover .cc-tip, .cc-info:focus .cc-tip { display: block; }
+.cc-tip-row { display: block; margin: 3px 0; }
+.cc-tip-k { color: var(--cc-accent, #6ea0ff); font-weight: 600; margin-right: 6px; }
 /* every editor field the SAME clean box (override Unraid's underline with !important) */
 .cc-in { flex: 1; background: #1e1e1e; color: #e6e6e6; border: 1px solid #2a2a2a !important; border-radius: 5px; padding: 5px 7px; font-size: 12px; }
 .cc-in:focus { border-color: var(--cc-accent, #2f6feb) !important; }
@@ -258,17 +275,23 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-pop-auto { border-top: 1px solid #2a2a2a; padding: 4px 0 8px; }
 .cc-pop-toggle { cursor: pointer; }
 .cc-pop-sech { font-weight: 600; font-size: 12.5px; }
-.cc-pop-sech-lone { display: block; color: #8a8a8a; padding: 8px 14px 2px; }
+.cc-pop-sech-lone { display: block; color: #9a9a9a; padding: 10px 14px 5px; text-transform: uppercase; letter-spacing: .5px; font-size: 10.5px; }
 .cc-pop-sub { padding-bottom: 4px; }
 .cc-pop-sub.cc-dis { opacity: .4; pointer-events: none; }
 .cc-btn-sm { margin: 4px 14px 6px; padding: 3px 10px; font-size: 11.5px; }
-.cc-sched-list { display: flex; flex-direction: column; gap: 6px; padding: 2px 14px; }
-.cc-sched-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.cc-sched-act { flex: none; width: 84px; }
-.cc-sched-time { flex: none; width: 86px; }
-.cc-days { display: flex; gap: 2px; }
-.cc-day { background: #1e1e1e; color: #8a8a8a; border: 1px solid #2a2a2a; border-radius: 4px; width: 22px; height: 22px; font-size: 10px; line-height: 1; cursor: pointer; padding: 0; }
+.cc-sched-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 14px 2px; }
+/* each schedule on its OWN tidy card so action / time / days don't run together */
+.cc-sched-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 7px; padding: 8px 9px; }
+.cc-sched-act { flex: none; width: 92px; }
+.cc-sched-time { flex: none; width: 100px; }
+/* the native dark clock glyph of <input type=time> is nearly invisible on our dark field —
+   invert it so the picker button is clearly readable ("Uhrsymbol kaum erkennbar"). */
+.cc-sched-time::-webkit-calendar-picker-indicator { filter: invert(0.85); opacity: .9; cursor: pointer; }
+.cc-days { display: flex; gap: 3px; flex-wrap: wrap; }
+.cc-day { background: #262626; color: #9a9a9a; border: 1px solid #333; border-radius: 5px; width: 26px; height: 26px; font-size: 11px; line-height: 1; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; transition: background .12s, color .12s, border-color .12s; }
+.cc-day:hover { border-color: var(--cc-accent, #2f6feb); color: #e6e6e6; }
 .cc-day-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); border-color: var(--cc-accent, #2f6feb); }
+.cc-sched-x { margin-left: auto; }
 /* CPU-pinning core grid (like the VM settings): one clickable cell per logical core */
 .cc-pin-row { align-items: flex-start; }
 .cc-cores { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
@@ -287,7 +310,8 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-pop.cc-rainbow .cc-core-on.cc-rb-7 { background: #6366f1; border-color: #6366f1; color: #fff; }
 /* popover checkboxes follow the accent; the manage toggle + day toggles go rainbow too */
 .cc-pop input[type="checkbox"] { accent-color: var(--cc-accent, #2f6feb); }
-.cc-pop.cc-rainbow .cc-set-toggle-on { background: linear-gradient(90deg, #1f9d55, #2f6feb, #8b5cf6, #e0912a, #d9433f); }
+/* a toggle is ALWAYS one solid colour, even in rainbow mode (never a gradient) */
+.cc-pop.cc-rainbow .cc-set-toggle-on { background: var(--cc-accent, #2f6feb); }
 .cc-pop.cc-rainbow .cc-day-on { background: #8b5cf6; border-color: #8b5cf6; color: #fff; }
 .cc-sched-x { cursor: pointer; color: #8a8a8a; padding: 0 4px; }
 .cc-sched-x:hover { color: #d9433f; }
@@ -446,7 +470,7 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-set-toggle { width: 44px; height: 24px; border-radius: 999px; border: none !important; padding: 0 !important; background: #3a3a3a; position: relative; cursor: pointer; transition: background .15s; flex: none; box-sizing: border-box; }
 .cc-set-toggle-on { background: var(--cc-accent, #2f6feb); }
 /* in rainbow mode the ON toggles wear the rainbow, matching the badge scheme */
-#cc-settings.cc-rainbow .cc-set-toggle-on { background: linear-gradient(90deg, #1f9d55, #2f6feb, #8b5cf6, #e0912a, #d9433f); }
+#cc-settings.cc-rainbow .cc-set-toggle-on { background: var(--cc-accent, #2f6feb); }
 .cc-set-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; }
 .cc-set-toggle-on .cc-set-knob { left: 21px; }
 .cc-set-tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }

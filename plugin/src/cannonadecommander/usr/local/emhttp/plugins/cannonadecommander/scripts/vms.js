@@ -105,6 +105,19 @@
     dead = false;
     apply();
     connectObserver();
+    // The VM list tbody (#kvm_list) is usually populated by an AJAX loadlist() AFTER this
+    // defer-loaded script runs — so connectObserver() no-ops (no tbody yet) and the first
+    // apply() finds nothing. That is why the tint "sometimes" didn't take: a timing race,
+    // not the colour code. Retry attaching the observer AND re-applying for a short window
+    // until the list appears and is tinted, so a late-rendered VM list still colours.
+    var tries = 0;
+    var poll = setInterval(function () {
+      if (dead) { clearInterval(poll); return; }
+      tries++;
+      if (!mo) connectObserver();
+      apply();
+      if ((mo && vmImgs().length) || tries >= 20) clearInterval(poll); // done, or give up after ~10s
+    }, 500);
     // liveness: a 404/410 from the proxy means the plugin is gone → clear + stop
     liveTimer = setInterval(function () {
       try { fetch(PROXY + "?path=state", { headers: { Accept: "application/json" } }).then(function (r) { if (r.status === 404 || r.status === 410) teardown(); }).catch(function () {}); } catch (e) {}
