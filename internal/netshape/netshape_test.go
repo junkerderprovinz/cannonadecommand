@@ -39,20 +39,12 @@ func TestEgressArgs_Clear(t *testing.T) {
 	}
 }
 
-func TestIngressArgs(t *testing.T) {
-	if got := ingressQdiscArgs("br0.20", 4242); !reflect.DeepEqual(got,
-		[]string{"-t", "4242", "-n", "tc", "qdisc", "add", "dev", "br0.20", "handle", "ffff:", "ingress"}) {
-		t.Fatalf("ingressQdiscArgs = %v", got)
-	}
-	if got := ingressDelArgs("", 4242); !reflect.DeepEqual(got,
-		[]string{"-t", "4242", "-n", "tc", "qdisc", "del", "dev", "eth0", "ingress"}) {
-		t.Fatalf("ingressDelArgs = %v", got)
-	}
-	// the police filter caps DOWNLOAD: match-all u32 + police drop at the rate.
-	got := strings.Join(ingressFilterArgs("eth0", 4242, 80000), " ")
-	for _, want := range []string{"parent ffff:", "u32 match u32 0 0", "police rate 80000kbit", "burst 1000000", "drop"} {
-		if !strings.Contains(got, want) {
-			t.Fatalf("ingressFilterArgs missing %q in %q", want, got)
-		}
+// Apply must NEVER create an ingress qdisc (the sch_ingress kernel-crash trigger). With a
+// bad pid it returns an error without running anything; the important guarantee — no
+// `handle ffff: ingress` command exists in the package — is enforced by there being no
+// ingress code left to call.
+func TestApply_NoIngress_BadPID(t *testing.T) {
+	if err := Apply("eth0", 0, 5000, 9000); err == nil {
+		t.Fatalf("Apply with pid 0 should error")
 	}
 }

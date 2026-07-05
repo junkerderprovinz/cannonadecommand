@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.22.0">
+  <!ENTITY version   "0.23.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,22 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.23.0
+- CRITICAL SAFETY FIX: the DOWNLOAD (ingress) bandwidth limit is removed — it could CRASH the
+  Unraid kernel. Setting a download cap ran "tc qdisc add ... ingress", which faults in the
+  kernel's sch_ingress module (at tcx_miniq_inc, "exited with irqs disabled") on affected Unraid
+  kernels: the WebUI and SSH freeze (ping and already-running containers keep working). Because
+  the limit was re-asserted every tick, it could even recur after a reboot. The plugin now NEVER
+  creates an ingress qdisc. UPLOAD limiting stays (a safe tbf egress qdisc). If your server
+  became unreachable after setting a bandwidth limit, THIS was the cause.
+  AFTER UPDATING: remove any bandwidth limit you set, and reboot once so no leftover ingress
+  qdisc lingers. Download limiting will return only via a method that cannot crash the host.
+- The CPU-pinning core grid is far more compact: a 32-thread CPU is now a few short rows instead
+  of one very long column.
+- The container state badge reacts immediately on click: it shows "wird gestoppt" / "startet neu"
+  the moment you press stop/restart (Docker has no "stopping" state to poll), until the next
+  refresh confirms the real state.
 
 ### 0.22.0
 - THE fix for "CPU / RAM / Bandwidth do nothing": those three gears only existed in the LIST
@@ -462,7 +478,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>38d88f12ff484f524c0fb5ce9d7d1e67dba6c0298969c9c8a8fe1281862d8c8e</SHA256>
+  <SHA256>fbcf8b3f825fe1b613d9d3ad7b950b7ca416de20e463f092a3727f2f362ab7be</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

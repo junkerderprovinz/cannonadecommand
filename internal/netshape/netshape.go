@@ -1,15 +1,20 @@
-// Package netshape applies per-container network rate limits inside the container's own
-// network namespace (entered via nsenter using the container PID), so it never touches the
-// host uplink. Two directions:
+// Package netshape applies a per-container EGRESS (upload) rate limit inside the container's
+// own network namespace (entered via nsenter using the container PID), via a tbf shaper on
+// the interface root qdisc. It never touches the host uplink.
 //
-//	EGRESS  (upload)   – a tbf shaper on the interface root qdisc (queues + paces).
-//	INGRESS (download) – an ingress qdisc + a u32 "police ... drop" filter (drops packets
-//	                     over the rate; TCP then backs off). Ingress can't be queued, so
-//	                     policing is the standard way to cap download.
+// DOWNLOAD (ingress) shaping was REMOVED. It required an ingress qdisc
+// (`tc qdisc add dev X handle ffff: ingress`), which triggers a KERNEL CRASH in the
+// sch_ingress module (fault at tcx_miniq_inc, "exited with irqs disabled") on some Unraid
+// kernels — freezing the WebUI/SSH and other TCP management services while ping and the
+// already-running containers keep working. Because the monitor re-asserts shaping every tick,
+// that crash could even recur after a reboot. There is also no safe per-container download cap
+// for macvlan containers (br0.x — no host-side veth to shape), so we do NOT create any ingress
+// qdisc at all. Only egress (upload) is shaped, with a plain tbf root qdisc (sch_tbf), which
+// is unaffected by the sch_ingress bug.
 //
-// Everything is bounded and safe: a failure just means "no shaping", never broken
-// networking. The rules are ephemeral (gone on container restart), so the monitor
-// re-applies them every tick while a limited container runs.
+// Everything is bounded and safe: a failure just means "no shaping", never broken networking
+// and never a kernel qdisc that can crash the host. Rules are ephemeral (gone on container
+// restart), so the monitor re-applies them every tick (tc qdisc replace is idempotent).
 package netshape
 
 import (
@@ -57,76 +62,40 @@ func egressArgs(iface string, pid, kbit int) []string {
 		"rate", strconv.Itoa(kbit)+"kbit", "burst", strconv.Itoa(burstBytes(kbit)), "latency", "50ms")
 }
 
-// ingressDelArgs removes the ingress qdisc (and its police filter) from `iface`.
-func ingressDelArgs(iface string, pid int) []string {
-	return []string{"-t", strconv.Itoa(pid), "-n", "tc", "qdisc", "del", "dev", ifaceOr(iface), "ingress"}
-}
-
-// ingressQdiscArgs adds the ingress qdisc (handle ffff:) to `iface`.
-func ingressQdiscArgs(iface string, pid int) []string {
-	return []string{"-t", strconv.Itoa(pid), "-n", "tc", "qdisc", "add", "dev", ifaceOr(iface), "handle", "ffff:", "ingress"}
-}
-
-// ingressFilterArgs adds a u32 "match everything" police filter that drops INGRESS traffic
-// over `kbit` on `iface`'s ingress qdisc — the download cap. protocol=all (not ip) so IPv6
-// downloads are capped too, matching the egress tbf which shapes all traffic.
-func ingressFilterArgs(iface string, pid, kbit int) []string {
-	return []string{"-t", strconv.Itoa(pid), "-n", "tc", "filter", "add", "dev", ifaceOr(iface),
-		"parent", "ffff:", "protocol", "all", "prio", "1", "u32", "match", "u32", "0", "0",
-		"police", "rate", strconv.Itoa(kbit) + "kbit", "burst", strconv.Itoa(burstBytes(kbit)), "drop", "flowid", ":1"}
-}
-
-// Apply sets the egress (upload) and ingress (download) caps on `iface` inside the container
-// whose main process is `pid`. A direction with kbit<=0 is CLEARED. Idempotent: egress uses
-// tc qdisc replace, ingress is torn down and rebuilt each call. Apply(iface,pid,0,0) clears
-// both directions (that is the monitor's "unshape" call).
-func Apply(iface string, pid, egressKbit, ingressKbit int) error {
+// Apply sets the EGRESS (upload) cap on `iface` inside the container whose main process is
+// `pid`. The 4th argument (the former ingress/download kbit) is accepted for signature
+// stability but is INTENTIONALLY IGNORED: download shaping needs an ingress qdisc, which
+// crashes some Unraid kernels (see the package doc), so it is never created. egressKbit<=0
+// clears the shaping; Apply(iface,pid,0,0) is the monitor's "unshape" call. Idempotent
+// (tc qdisc replace). A failure just means "no shaping", never broken networking.
+func Apply(iface string, pid, egressKbit, _ int) error {
 	if pid <= 0 {
 		return fmt.Errorf("netshape: invalid pid %d", pid)
 	}
-	var errs []string
-	// egress (upload) on the root qdisc
 	if egressKbit > 0 {
 		if err := run(egressArgs(iface, pid, egressKbit)); err != nil {
-			errs = append(errs, "egress: "+err.Error())
+			return fmt.Errorf("netshape: egress: %w", err)
 		}
-	} else if err := clearEgress(iface, pid); err != nil {
-		errs = append(errs, "egress clear: "+err.Error())
+		return nil
 	}
-	// ingress (download): tear down any existing ingress qdisc first (idempotent), then add
-	// a fresh qdisc + police filter if a cap is wanted. The del is best-effort (may be absent).
-	_ = clearIngress(iface, pid)
-	if ingressKbit > 0 {
-		if err := run(ingressQdiscArgs(iface, pid)); err != nil {
-			errs = append(errs, "ingress qdisc: "+err.Error())
-		} else if err := run(ingressFilterArgs(iface, pid, ingressKbit)); err != nil {
-			errs = append(errs, "ingress filter: "+err.Error())
-		}
-	}
-	if len(errs) > 0 {
-		return fmt.Errorf("netshape: %s", strings.Join(errs, "; "))
+	if err := clearEgress(iface, pid); err != nil {
+		return fmt.Errorf("netshape: egress clear: %w", err)
 	}
 	return nil
 }
 
-// Clear removes ALL shaping (both directions) from the container. Best-effort.
+// Clear removes the (egress) shaping from the container. Best-effort. It never touches an
+// ingress qdisc — none is ever created (see the package doc).
 func Clear(iface string, pid int) error {
 	if pid <= 0 {
 		return nil
 	}
-	_ = clearEgress(iface, pid)
-	_ = clearIngress(iface, pid)
-	return nil
+	return clearEgress(iface, pid)
 }
 
 // clearEgress deletes the root tbf (ignoring "nothing to delete").
 func clearEgress(iface string, pid int) error {
 	return ignoreMissing(run(egressArgs(iface, pid, 0)))
-}
-
-// clearIngress deletes the ingress qdisc (ignoring "nothing to delete").
-func clearIngress(iface string, pid int) error {
-	return ignoreMissing(run(ingressDelArgs(iface, pid)))
 }
 
 // ignoreMissing swallows a tc "no such file/qdisc" error (there was nothing to delete).

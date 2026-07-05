@@ -152,9 +152,10 @@
   function setBandwidth(name, egressKbit, ingressKbit) { var k = norm(name); config.bandwidths = (config.bandwidths || []).filter(function (b) { return norm(b.name) !== k; }); if (egressKbit > 0 || ingressKbit > 0) config.bandwidths.push({ name: name, egress_kbit: egressKbit || 0, ingress_kbit: ingressKbit || 0 }); }
   // a kbit rate as "5 Mbit" / "500 kbit" / "–" (0 = none).
   function bwKbitLabel(kbit) { if (!(kbit > 0)) return "–"; return kbit >= 1000 ? (Math.round(kbit / 100) / 10) + " Mbit" : kbit + " kbit"; }
-  // configured caps for the badge tooltip: "↑ 5 Mbit  ↓ 80 Mbit".
-  function bwTitle(bw) { return "↑ " + bwKbitLabel(bw && bw.egress_kbit) + "  ↓ " + bwKbitLabel(bw && bw.ingress_kbit); }
-  function bwHasLimit(bw) { return !!(bw && (bw.egress_kbit > 0 || bw.ingress_kbit > 0)); }
+  // configured UPLOAD cap for the badge tooltip: "↑ 5 Mbit". Download shaping was removed
+  // (its tc ingress qdisc crashes some Unraid kernels), so only the upload cap is shown.
+  function bwTitle(bw) { return "↑ " + bwKbitLabel(bw && bw.egress_kbit); }
+  function bwHasLimit(bw) { return !!(bw && bw.egress_kbit > 0); }
   function containerByName(name) { var k = norm(name); for (var i = 0; i < containers.length; i++) if (norm(containers[i].name) === k) return containers[i]; return null; }
   // The plan badge's LABEL already says "Startplan"; the value only adds detail
   // (or nothing when unmanaged) so the chip never reads "Startplan Startplan".
@@ -167,9 +168,9 @@
   }
 
   // ───────────────────────── badge builders (uniform)
-  function stateBadge(c) { var s = (c && c.state) || "unknown", b = el("span", "cc-badge cc-badge-" + s, stateLabel(s)); if (c && c.health === "unhealthy") { b.classList.add("cc-badge-alert"); b.textContent = stateLabel(s) + " ✕"; } else if (c && c.health === "starting") b.textContent = stateLabel(s) + " …"; return b; }
+  function stateBadge(c) { var s = (c && c.state) || "unknown", b = el("span", "cc-badge cc-badge-" + s, stateLabel(s)); b.dataset.name = (c && c.name) || ""; if (c && c.health === "unhealthy") { b.classList.add("cc-badge-alert"); b.textContent = stateLabel(s) + " ✕"; } else if (c && c.health === "starting") b.textContent = stateLabel(s) + " …"; return b; }
   function stateToggle(name, state) {
-    var s = state || "unknown", b = el("span", "cc-badge cc-badge-" + s + " cc-badge-toggle", stateLabel(s));
+    var s = state || "unknown", b = el("span", "cc-badge cc-badge-" + s + " cc-badge-toggle", stateLabel(s)); b.dataset.name = name;
     var action = s === "running" ? "stop" : (s === "paused" ? "unpause" : "start");
     b.title = t(action === "stop" ? "stop" : action === "unpause" ? "resume" : "start");
     b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); doAction(name, action); });
@@ -443,7 +444,26 @@
   function reinjectRowBadges() { clearRowBadges(); injectAllRowBadges(); applyIconTint(); }
 
   // ───────────────────────── lifecycle (grid buttons + list state toggle)
-  function doAction(name, action) { flash(action + " " + name + "…"); api("POST", "action", { name: name, action: action }).then(function () { return load(); }).then(function () { flash(t("done")); }).catch(function (e) { flash("Error: " + e.message, true); }); }
+  // The transient state to show IMMEDIATELY when the user clicks an action, until the next
+  // load() confirms the real Docker state — so a stop/restart gives instant "wird gestoppt" /
+  // "startet neu" feedback (Docker has no "stopping" state to poll, so we show it optimistically).
+  function transientLabel(action) {
+    var de = LANG === "de";
+    var m = { stop: de ? "wird gestoppt" : "stopping", restart: de ? "startet neu" : "restarting", start: de ? "startet" : "starting", unpause: de ? "startet" : "resuming", pause: de ? "pausiert…" : "pausing" };
+    return m[action] || "";
+  }
+  function markTransient(name, action) {
+    var lbl = transientLabel(action); if (!lbl) return;
+    try {
+      Array.prototype.slice.call(document.querySelectorAll(".cc-badge")).forEach(function (b) {
+        if (b.dataset && b.dataset.name === name) {
+          b.textContent = lbl;
+          b.className = b.className.replace(/cc-badge-(running|exited|paused|created|restarting|removing|dead|unknown)\b/g, "").replace(/\s+/g, " ").trim() + " cc-badge-transient";
+        }
+      });
+    } catch (e) {}
+  }
+  function doAction(name, action) { markTransient(name, action); flash(action + " " + name + "…"); api("POST", "action", { name: name, action: action }).then(function () { return load(); }).then(function () { flash(t("done")); }).catch(function (e) { flash("Error: " + e.message, true); }); }
   function actionBtn(label, name, action, primary) { var b = el("button", "cc-abtn" + (primary ? " cc-abtn-primary" : ""), label); b.addEventListener("click", function (e) { e.stopPropagation(); doAction(name, action); }); return b; }
   function lifecycle(c) {
     var box = el("span", "cc-life");
@@ -800,14 +820,20 @@
       row.appendChild(inp); row.appendChild(el("span", "cc-unit", "Mbit/s")); body.appendChild(row);
       return inp;
     }
+    // UPLOAD only. The download field is gone on purpose: download limiting needed a tc
+    // INGRESS qdisc, which crashes some Unraid kernels (sch_ingress → the WebUI/SSH freeze).
+    // Upload is shaped safely with a tbf egress qdisc and stays.
     var upIn = rateRow(t("upload"), cur && cur.egress_kbit);
-    var downIn = rateRow(t("download"), cur && cur.ingress_kbit);
     pop.appendChild(body);
-    pop.appendChild(el("div", "cc-pop-foot", t("bwFoot")));
+    var foot = el("div", "cc-pop-foot");
+    foot.textContent = LANG === "de"
+      ? "Nur Upload (tbf-Egress). Das Download-Limit wurde entfernt — es braucht eine tc-ingress-qdisc, die manche Unraid-Kernel zum Absturz bringt (WebUI/SSH werden unerreichbar)."
+      : "Upload only (tbf egress). Download limiting was removed — it needs a tc ingress qdisc that crashes some Unraid kernels (WebUI/SSH become unreachable).";
+    pop.appendChild(foot);
     function readKbit(inp) { var v = parseFloat(String(inp.value).trim().replace(",", ".")); return v > 0 ? Math.round(v * 1000) : 0; }
     var srow = el("div", "cc-pop-row cc-pop-act");
     var rem = el("span", "cc-btn", t("removeLim")); rem.addEventListener("click", function () { saveBandwidth(name, 0, 0); });
-    var save = el("span", "cc-btn cc-btn-primary", t("saveShort")); save.addEventListener("click", function () { saveBandwidth(name, readKbit(upIn), readKbit(downIn)); });
+    var save = el("span", "cc-btn cc-btn-primary", t("saveShort")); save.addEventListener("click", function () { saveBandwidth(name, readKbit(upIn), 0); });
     srow.appendChild(rem); srow.appendChild(save); pop.appendChild(srow);
     document.body.appendChild(pop);
     var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || 300;
