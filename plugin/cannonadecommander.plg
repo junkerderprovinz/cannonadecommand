@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.20.0">
+  <!ENTITY version   "0.21.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,18 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.21.0
+- The toolbar gear is visible again. It was being inserted just ABOVE Unraid's Basic/Advanced
+  toggle as a stray element that was easy to miss ("there is no gear"); it now sits INSIDE that
+  view-toggle row, right-aligned and accent-coloured, next to the toggle.
+- When setting or removing a CPU / RAM / bandwidth limit fails, the EXACT reason now STAYS on
+  screen in the editor (a red line you can read) instead of a 2.6-second toast. So if a
+  "docker update" is rejected, you can finally see WHY — the daemon's own error text.
+- Honest engine status. CPU / RAM / bandwidth ALL need the host daemon; the VM-icon tint does
+  NOT (it is pure browser CSS). So if limits fail while VM icons still colour, the daemon is not
+  reachable, which is a different problem. The gear now turns RED and the menu says "engine DOWN
+  — daemon not reachable" in that case, instead of the old, misleading "engine up · 0".
 
 ### 0.20.0
 - The gear menu now shows the RUNNING daemon version ("engine up · N · vX.Y.Z"). This is a
@@ -430,7 +442,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>631f3bd71c4104b4a81cc66b3b79f0555348762f05146ed4c45769501bf28e9a</SHA256>
+  <SHA256>9343a7e230606b344135185ed305f8331447b4a701cb58f0d4aede1144677e2a</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

@@ -24,10 +24,13 @@
 /* gear — small icon that lives in Unraid's Advanced/Basic toggle bar (moved there) */
 .cc-hgear { background: transparent; border: none; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 4px; vertical-align: middle; transition: color .12s; -webkit-appearance: none; appearance: none; }
 .cc-hgear:hover { color: var(--cc-accent, #2f6feb); }
-.cc-hgear-bar { margin-right: 10px; font-size: 16px; }
+.cc-hgear-bar { margin-right: 10px; font-size: 17px; color: var(--cc-accent, #2f6feb); }
 .cc-hgear-th { float: right; }
 .cc-hgear-float { position: absolute; top: 4px; right: 8px; z-index: 20; }
 .cc-hgear-grid { position: absolute; top: 8px; right: 10px; z-index: 20; font-size: 16px; }
+/* daemon unreachable → a permanent red gear (CPU/RAM/BW can't work without the daemon) */
+.cc-hgear-down { color: #d9534f !important; }
+.cc-hgear-down:hover { color: #e5484d !important; }
 .cc-ok-text { color: #52c17a; }
 .cc-bad-text { color: #d9534f; }
 .cc-hidden { display: none !important; }
@@ -240,6 +243,8 @@
 .cc-pop-lbl { color: #8a8a8a; font-size: 12px; width: 100px; flex: none; }
 .cc-pop-body.cc-dis { opacity: .4; pointer-events: none; }
 .cc-pop-foot { padding: 9px 14px; border-top: 1px solid #2a2a2a; color: #8a8a8a; font-size: 11px; }
+/* backend/Docker rejection — stays on screen (not a 2.6s toast) so the exact reason is readable, and wraps long messages */
+.cc-pop-err { display: none; margin: 8px 14px 2px; padding: 7px 9px; border-radius: 6px; background: rgba(220,53,69,.13); border: 1px solid rgba(220,53,69,.55); color: #ff7a7a; font-size: 12px; line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
 /* every editor field the SAME clean box (override Unraid's underline with !important) */
 .cc-in { flex: 1; background: #1e1e1e; color: #e6e6e6; border: 1px solid #2a2a2a !important; border-radius: 5px; padding: 5px 7px; font-size: 12px; }
 .cc-in:focus { border-color: var(--cc-accent, #2f6feb) !important; }

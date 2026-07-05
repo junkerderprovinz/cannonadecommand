@@ -51,6 +51,11 @@
   var containers = [], containerNames = [], stats = {}, shiplog = {}, workingPlan = {}, lastRun = {}, iconCache = {};
   var netPrev = {}; // name → {rx,tx,t} previous cumulative net counters, to derive the live down/up RATE
   var daemonVersion = ""; // the RUNNING daemon's version (from /api/state) — shown in the gear menu so it's obvious which backend is live after an update
+  // Did the LAST /api/state reach the host daemon? CPU/RAM/BW ALL need the daemon; the VM
+  // icon tint does NOT (it's pure client CSS). So a working tint with failing limits means
+  // the daemon is unreachable, not a feature bug. We paint the gear RED and say so plainly
+  // instead of the old, misleading "engine up · 0". null = not probed yet.
+  var daemonUp = null;
   // Automation config (schedules + watchdogs + notify) lives on the flash next to
   // the plan; loaded whole, mutated per-container in the editor, and PUT back whole.
   var config = { schedules: [], watchdogs: [], bandwidths: [], notify: { unraid: false, webhook: "" } };
@@ -495,14 +500,17 @@
   }
 
   // ───────────────────────── gear + menu (the only global control surface)
-  function makeGear(extra) { var g = el("button", "cc-hgear" + (extra ? " " + extra : ""), "⚙"); g.type = "button"; g.title = "CannonadeCommander"; g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g); }); return g; }
+  function makeGear(extra) { var g = el("button", "cc-hgear" + (extra ? " " + extra : "") + (daemonUp === false ? " cc-hgear-down" : ""), "⚙"); g.type = "button"; g.title = daemonUp === false ? "CannonadeCommander — daemon not reachable" : "CannonadeCommander"; g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g); }); return g; }
   function injectHeaderGear() {
     try {
       // Global idempotency: never place a second list-mode gear once one exists.
       if (document.querySelector(".cc-hgear:not(.cc-hgear-grid)")) return true;
-      // Preferred home: as a small icon in Unraid's Advanced/Basic view toggle bar.
+      // Preferred home: INSIDE Unraid's Advanced/Basic view-toggle row (a full-width
+      // flex-end row), as its first child, so the gear sits in the visible right-aligned
+      // control group next to the toggle — NOT as a preceding sibling, which lands it
+      // orphaned on the line above where it's easy to miss ("there's no gear").
       var tv = document.querySelector("div.ToggleViewMode");
-      if (tv && tv.parentNode) { if (tv.parentNode.querySelector(".cc-hgear-bar")) return true; tv.parentNode.insertBefore(makeGear("cc-hgear-bar"), tv); return true; }
+      if (tv) { if (tv.querySelector(".cc-hgear-bar")) return true; tv.insertBefore(makeGear("cc-hgear-bar"), tv.firstChild); return true; }
       var tb = nativeTable(); if (!tb) return false;
       var hr = headerRow();
       if (hr) { if (hr.querySelector(".cc-hgear")) return true; var th = hr.querySelector("th"); if (th) { th.appendChild(makeGear("cc-hgear-th")); return true; } }
@@ -515,9 +523,16 @@
   function buildMenu() {
     var m = el("div", "cc-menu cc-menu-wide");
     m.addEventListener("click", function (e) { e.stopPropagation(); });
-    // the RUNNING daemon version is shown here so it's unmistakable which backend is live
-    // (an update that didn't restart the daemon, or a stale install, shows the OLD version).
-    menuStatusEl = el("div", "cc-menu-status cc-ok-text", "engine up · " + containers.length + (daemonVersion ? " · v" + String(daemonVersion).replace(/^v/, "") : "")); m.appendChild(menuStatusEl);
+    // Honest, reachability-aware status. When the daemon can't be reached, CPU/RAM/BW cannot
+    // work AT ALL — so say so in red instead of the old misleading "engine up · 0". When it IS
+    // reachable, show its RUNNING version so it's unmistakable which backend is live (an update
+    // that didn't restart the daemon, or a stale install, shows the OLD version here).
+    if (daemonUp === false) {
+      menuStatusEl = el("div", "cc-menu-status cc-bad-text", "engine DOWN — daemon not reachable");
+    } else {
+      menuStatusEl = el("div", "cc-menu-status cc-ok-text", "engine up · " + containers.length + (daemonVersion ? " · v" + String(daemonVersion).replace(/^v/, "") : ""));
+    }
+    m.appendChild(menuStatusEl);
     m.appendChild(menuHead(t("view")));
     var seg = el("div", "cc-seg");
     var bL = el("button", "cc-seg-btn" + (mode === "list" ? " cc-seg-on" : ""), t("list"));
@@ -763,10 +778,22 @@
     pop.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 12)) + "px";
     pop.style.top = (window.scrollY + r.bottom + 6) + "px"; openPop = pop; openPopAnchor = anchor;
   }
+  // Show the EXACT backend/Docker rejection INSIDE the open popup and keep it there (a
+  // 2.6s toast is unreadable) so the user can read back why `docker update` refused — the
+  // only way to diagnose a set/remove failure once a stale install is ruled out. Also logs it.
+  function popError(e) {
+    var m = (e && e.message) ? e.message : String(e);
+    try { console.error("CannonadeCommander:", e); } catch (_) {}
+    var p = openPop; if (!p) { flash("Error: " + m, true); return; }
+    var box = p.querySelector(".cc-pop-err");
+    if (!box) { box = el("div", "cc-pop-err"); var foot = p.querySelector(".cc-pop-foot"); if (foot && foot.nextSibling) p.insertBefore(box, foot.nextSibling); else p.appendChild(box); }
+    box.textContent = "✕ " + m; box.style.display = "block";
+  }
+  function popClearError() { var p = openPop; if (!p) return; var box = p.querySelector(".cc-pop-err"); if (box) { box.textContent = ""; box.style.display = "none"; } }
   // Persist ONE container's up/down caps (0/0 = remove), read-modify-write against the LIVE
   // config so schedules/watchdogs/notify/shape_iface and every other container survive.
   function saveBandwidth(name, egressKbit, ingressKbit) {
-    flash(t("saving"));
+    popClearError(); flash(t("saving"));
     api("GET", "config")
       .then(function (fresh) {
         if (!fresh || typeof fresh !== "object") throw new Error("config unreadable");
@@ -775,7 +802,7 @@
         return api("PUT", "config", config);
       })
       .then(function () { flash(t("done")); closePop(); if (mode === "list") reinjectRowBadges(); else renderGrid(); })
-      .catch(function (e) { flash("Error: " + e.message, true); });
+      .catch(function (e) { popError(e); });
   }
   // which = "cpu" | "ram" (each badge's own gear) — shows only that field.
   // RAM = a number + a MB/GB unit; CPU = a core count + an optional pin (cpuset).
@@ -832,10 +859,10 @@
     pop.appendChild(body);
     pop.appendChild(el("div", "cc-pop-foot", t("limitsFoot")));
     function submitLimits(payload) {
-      flash(t("saving")); api("POST", "limits", payload)
+      popClearError(); flash(t("saving")); api("POST", "limits", payload)
         .then(function () { flash(t("done")); closePop(); return loadLimits(); })
         .then(function () { if (mode === "list") reinjectRowBadges(); else renderGrid(); })
-        .catch(function (e) { flash("Error: " + e.message, true); });
+        .catch(function (e) { popError(e); });
     }
     var srow = el("div", "cc-pop-row cc-pop-act");
     // "remove" is an explicit flag, NOT a client-computed value: the engine sets the
@@ -1008,7 +1035,7 @@
   function load() {
     if (dead) return Promise.resolve();
     return Promise.all([api("GET", "state"), loadShiplog(), loadConfig()]).then(function (res) {
-      indexState(res[0]); ensureNames(); refresh();
+      daemonUp = true; indexState(res[0]); ensureNames(); refresh(); updateGearHealth();
       if (res[0] && res[0].docker_error) flash("docker: " + res[0].docker_error, true);
     }).catch(function (e) {
       // 404/410 = proxy file gone (uninstalled) → self-remove now; the re-probe
@@ -1016,8 +1043,14 @@
       // down); 403 = a transient auth/session blip (NOT an uninstall); 400 = a
       // disallowed path (a real bug — surface it).
       if (e && (e.status === 404 || e.status === 410)) { teardown(); return; }
+      daemonUp = false; updateGearHealth();
       flash("engine unreachable: " + e.message, true);
     });
+  }
+  // Paint EVERY gear red while the daemon is unreachable — a permanent, always-visible
+  // health signal (the "engine unreachable" toast lasts 2.6s and is easy to miss). Blue = up.
+  function updateGearHealth() {
+    try { var bad = daemonUp === false; Array.prototype.slice.call(document.querySelectorAll(".cc-hgear")).forEach(function (g) { g.classList.toggle("cc-hgear-down", bad); }); } catch (e) {}
   }
   function boot() {
     try {
