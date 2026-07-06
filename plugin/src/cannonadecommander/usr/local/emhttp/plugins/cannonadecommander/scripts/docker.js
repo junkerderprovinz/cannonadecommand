@@ -347,7 +347,23 @@
       if (gridHolder) { var g = gridHolder.querySelectorAll("img.cc-card-ico"); for (var j = 0; j < g.length; j++) g[j].style.filter = f; }
     } catch (e) {}
   }
+  // ROTATING rainbow: 14 colours, and the kind→colour mapping shifts by a RANDOM offset
+  // chosen once per page load — every tab reload deals fresh colours across all badges.
+  var RB_KINDS = ["net", "ip", "lan", "port", "id", "von", "cpu", "ram", "bw", "version", "vol", "plan"];
+  var RB_PAL = ["#1f9d55", "#2f6feb", "#8b5cf6", "#e0912a", "#d9433f", "#0ea5a4", "#e05299", "#6366f1", "#84cc16", "#06b6d4", "#f97316", "#a855f7", "#10b981", "#eab308"];
+  var RB_OFFSET = Math.floor(Math.random() * RB_PAL.length);
+  function applyRainbowPalette() {
+    var rt = document.documentElement;
+    if (localStorage.getItem("cc.rainbow") !== "1") { RB_KINDS.forEach(function (k) { rt.style.removeProperty("--cc-rb-" + k); rt.style.removeProperty("--cc-rb-" + k + "-t"); }); return; }
+    RB_KINDS.forEach(function (k, i) {
+      var c = RB_PAL[(i + RB_OFFSET) % RB_PAL.length];
+      var n = parseInt(c.slice(1), 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255);
+      rt.style.setProperty("--cc-rb-" + k, c);
+      rt.style.setProperty("--cc-rb-" + k + "-t", L > 150 ? "#161616" : "#fff"); // auto text contrast
+    });
+  }
   function applySettings() {
+    applyRainbowPalette();
     try {
       var root = document.documentElement.style;
       var accent = localStorage.getItem("cc.accent"); if (accent) { root.setProperty("--cc-accent", accent); root.setProperty("--cc-accent-text", idealText(accent)); }

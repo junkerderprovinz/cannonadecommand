@@ -263,6 +263,22 @@
 .cc-pop-foot { padding: 9px 14px; border-top: 1px solid #2a2a2a; color: #8a8a8a; font-size: 11px; }
 /* backend/Docker rejection — stays on screen (not a 2.6s toast) so the exact reason is readable, and wraps long messages */
 .cc-pop-err { display: none; margin: 8px 14px 2px; padding: 7px 9px; border-radius: 6px; background: rgba(220,53,69,.13); border: 1px solid rgba(220,53,69,.55); color: #ff7a7a; font-size: 12px; line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
+/* ROTATING rainbow: colours come from --cc-rb-* vars set by docker.js — a random
+   rotation offset per page load walks every badge kind through a 14-colour palette. */
+.cc-enh.cc-rainbow .cc-b-net, .cc-grid-holder.cc-rainbow .cc-b-net { background: var(--cc-rb-net, #1f9d55); color: var(--cc-rb-net-t, #fff); }
+.cc-enh.cc-rainbow .cc-b-ip, .cc-grid-holder.cc-rainbow .cc-b-ip { background: var(--cc-rb-ip, #2f6feb); color: var(--cc-rb-ip-t, #fff); }
+.cc-enh.cc-rainbow .cc-b-lan, .cc-grid-holder.cc-rainbow .cc-b-lan { background: var(--cc-rb-lan, #e0912a); color: var(--cc-rb-lan-t, #161616); }
+.cc-enh.cc-rainbow .cc-b-port, .cc-grid-holder.cc-rainbow .cc-b-port { background: var(--cc-rb-port, #8b5cf6); color: var(--cc-rb-port-t, #fff); }
+.cc-enh.cc-rainbow .cc-b-id, .cc-grid-holder.cc-rainbow .cc-b-id { background: var(--cc-rb-id, #0ea5a4); color: var(--cc-rb-id-t, #fff); }
+.cc-enh.cc-rainbow .cc-b-von, .cc-grid-holder.cc-rainbow .cc-b-von { background: var(--cc-rb-von, #e05299); color: var(--cc-rb-von-t, #fff); }
+.cc-enh.cc-rainbow .cc-b-cpu, .cc-grid-holder.cc-rainbow .cc-b-cpu { background: var(--cc-rb-cpu, #d9433f); color: var(--cc-rb-cpu-t, #fff); }
+.cc-enh.cc-rainbow .cc-b-ram, .cc-grid-holder.cc-rainbow .cc-b-ram { background: var(--cc-rb-ram, #2f9d8b); color: var(--cc-rb-ram-t, #fff); }
+.cc-enh.cc-rainbow .cc-b-bw, .cc-grid-holder.cc-rainbow .cc-b-bw { background: var(--cc-rb-bw, #e0912a); color: var(--cc-rb-bw-t, #161616); }
+.cc-enh.cc-rainbow .cc-b-version, .cc-grid-holder.cc-rainbow .cc-b-version { background: var(--cc-rb-version, #6b7280); color: var(--cc-rb-version-t, #fff); }
+.cc-enh.cc-rainbow .cc-b-vol, .cc-grid-holder.cc-rainbow .cc-b-vol { background: var(--cc-rb-vol, #0891b2); color: var(--cc-rb-vol-t, #fff); }
+.cc-enh.cc-rainbow .cc-plan, .cc-grid-holder.cc-rainbow .cc-plan { background: var(--cc-rb-plan, #6366f1); color: var(--cc-rb-plan-t, #fff); }
+.cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='cpu-'] { background: var(--cc-rb-cpu, #d9433f); }
+.cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='mem-'] { background: var(--cc-rb-ram, #2f9d8b); }
 /* the same slot in green: the VERIFIED applied values after a successful save */
 .cc-pop-err.cc-pop-ok { background: rgba(31,157,85,.14); border-color: rgba(31,157,85,.6); color: #4bd58a; }
 /* multi-select dropdown under "Hängt ab von": stays open, every click toggles a container */
@@ -361,29 +377,12 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 /* rainbow: each badge kind its own colour (else all use the accent) */
 /* rainbow badges: each carries its OWN contrast text colour (NOT the accent-derived
    one), so a light accent can't make the dark badges get dark text. */
-.cc-enh.cc-rainbow .cc-b-net  { background: #1f9d55; color: #fff; }
-.cc-enh.cc-rainbow .cc-b-ip   { background: #2f6feb; color: #fff; }
-.cc-enh.cc-rainbow .cc-b-lan  { background: #e0912a; color: #161616; }
-.cc-enh.cc-rainbow .cc-b-port { background: #8b5cf6; color: #fff; }
-.cc-enh.cc-rainbow .cc-b-id   { background: #0ea5a4; color: #fff; }
-.cc-enh.cc-rainbow .cc-b-von  { background: #e05299; color: #fff; }
-.cc-enh.cc-rainbow .cc-b-cpu  { background: #d9433f; color: #fff; }
-.cc-enh.cc-rainbow .cc-b-ram  { background: #2f9d8b; color: #fff; }
-.cc-enh.cc-rainbow .cc-b-bw   { background: #e0912a; color: #161616; } /* amber is LIGHT → dark text, consistent with every other amber badge (auto-contrast rule) */
-.cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='cpu-'] { background: #d9433f; }
-.cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='mem-'] { background: #2f9d8b; }
-.cc-enh.cc-rainbow .cc-b-version { background: #6b7280; color: #fff; }
-.cc-enh.cc-rainbow .cc-b-vol { background: #0891b2; color: #fff; }
+ /* amber is LIGHT → dark text, consistent with every other amber badge (auto-contrast rule) */
 /* rainbow also colours the Startplan badge and the per-row AUTOSTART switch (they
    use the accent otherwise), so the whole row joins the rainbow scheme. */
-.cc-enh.cc-rainbow .cc-plan { background: #6366f1; color: #fff; }
-.cc-grid-holder.cc-rainbow .cc-plan { background: #6366f1; color: #fff; }
 .cc-enh.cc-rainbow #docker_list .switch-button-background.checked { background: #2f9d8b !important; }
 
 /* rainbow + tint also apply to the card GRID (parity with the list) */
-.cc-grid-holder.cc-rainbow .cc-b-net  { background: #1f9d55; color: #fff; }
-.cc-grid-holder.cc-rainbow .cc-b-ip   { background: #2f6feb; color: #fff; }
-.cc-grid-holder.cc-rainbow .cc-b-port { background: #8b5cf6; color: #fff; }
 
 /* container-icon tint is a CSS filter applied inline on each icon in JS
    (applyIconTint) — no positioned overlay, so it can never be mis-aligned. */
