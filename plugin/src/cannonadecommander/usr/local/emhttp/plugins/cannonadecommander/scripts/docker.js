@@ -446,9 +446,13 @@
       if (upCell) {
         var vh = el("div", "cc-rowbadges"); vh.setAttribute(MARK, "1");
         var advs = upCell.querySelectorAll(":scope > div.advanced");
-        var tagDiv = advs.length ? advs[advs.length - 1] : null;
+        var tagDiv = null; // the LAST advanced div without an action link = the image-tag text
+        for (var ai = advs.length - 1; ai >= 0; ai--) { if (!advs[ai].querySelector("a.exec")) { tagDiv = advs[ai]; break; } }
         var tagTxt = tagDiv ? tagDiv.textContent.replace(/\s+/g, " ").trim() : "";
-        Array.prototype.forEach.call(advs, function (d) { d.classList.add("cc-hidden"); });
+        // Hide only the TEXT advanced divs (the image tag we re-render as a badge) — NOT
+        // the one carrying the force-update a.exec link, or the "Update erzwingen" badge
+        // could never show no matter what the column matrix says.
+        Array.prototype.forEach.call(advs, function (d) { if (!d.querySelector("a.exec")) d.classList.add("cc-hidden"); });
         if (colOn("version") && tagTxt) vh.appendChild(badgeInfo("Tag", tagTxt, "version"));
         var p = lastRunPill(name); if (p) vh.appendChild(p);
         if (vh.children.length) upCell.appendChild(vh);
@@ -756,23 +760,8 @@
     var body = el("div", "cc-pop-body" + (existing ? "" : " cc-dis"));
     var arow = el("div", "cc-pop-row"); arow.appendChild(el("label", "cc-pop-lbl", t("dependsOn")));
     var after = el("input", "cc-in"); after.type = "text"; after.setAttribute("list", "cc-names"); after.placeholder = t("commaSep"); after.value = (node.after || []).join(", "); arow.appendChild(after); body.appendChild(arow);
-    // ONE-CLICK container chips under the field (a datalist needs a second click to open —
-    // "muss man zweimal anklicken"): clicking a chip toggles that container in the list.
-    var chipWrap = el("div", "cc-dep-chips");
-    function chipSync() { var cur2 = after.value.split(",").map(function (s2) { return s2.trim(); }).filter(Boolean); Array.prototype.slice.call(chipWrap.children).forEach(function (ch) { ch.classList.toggle("cc-dep-chip-on", cur2.indexOf(ch.textContent) >= 0); }); }
-    containerNames.forEach(function (n2) {
-      if (n2 === name) return;
-      var ch = el("span", "cc-dep-chip", n2);
-      ch.addEventListener("click", function () {
-        var list2 = after.value.split(",").map(function (s2) { return s2.trim(); }).filter(Boolean);
-        var ix = list2.indexOf(n2);
-        if (ix >= 0) list2.splice(ix, 1); else list2.push(n2);
-        after.value = list2.join(", "); chipSync(); commit();
-      });
-      chipWrap.appendChild(ch);
-    });
-    var crow2 = el("div", "cc-pop-row cc-dep-row"); crow2.appendChild(el("label", "cc-pop-lbl", "")); crow2.appendChild(chipWrap); body.appendChild(crow2);
-    after.addEventListener("input", chipSync); chipSync();
+    // (No chip list here — the datalist popup is enough; a chip wall under the field
+    // just added height. Explicit user call.)
     var drow = el("div", "cc-pop-row"); drow.appendChild(el("label", "cc-pop-lbl", t("startDelay")));
     var delay = el("input", "cc-in cc-port"); delay.type = "number"; delay.min = "0"; delay.placeholder = "sec"; delay.value = node.delay_seconds ? node.delay_seconds : "";
     drow.appendChild(delay); drow.appendChild(el("span", null, " " + t("secWait"))); body.appendChild(drow);

@@ -141,14 +141,14 @@
 
 /* injected per-row holders */
 .cc-namemeta { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-.cc-namemeta-ids { display: flex; flex-wrap: wrap; gap: 5px; }
+.cc-namemeta-ids { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; } /* ALL badges stacked (ID, Volumes, … one under the other) */
 .cc-rowbadges { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 5px; }
 .cc-netgroup { flex-direction: column; align-items: flex-start; }
 /* CPU, RAM and Bandwidth stacked one under the other, each on its own line */
 .cc-resgroup { flex-direction: column; align-items: flex-start; gap: 5px; }
 .cc-resline { display: inline-flex; align-items: center; gap: 5px; }
 #docker_list td.updatecolumn .cc-rowbadges { margin-top: 4px; }
-.cc-planholder { margin-top: 6px; }
+.cc-planholder { margin-top: 5px; } /* same gap as between the CPU and RAM badges (resgroup gap) */
 
 /* CPU/RAM limits editor button on the resource cell */
 .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px; background: rgba(255,255,255,.12); color: #8a8a8a; cursor: pointer; font-size: 12px; margin: 2px 0; }
@@ -265,12 +265,6 @@
 .cc-pop-err { display: none; margin: 8px 14px 2px; padding: 7px 9px; border-radius: 6px; background: rgba(220,53,69,.13); border: 1px solid rgba(220,53,69,.55); color: #ff7a7a; font-size: 12px; line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
 /* the same slot in green: the VERIFIED applied values after a successful save */
 .cc-pop-err.cc-pop-ok { background: rgba(31,157,85,.14); border-color: rgba(31,157,85,.6); color: #4bd58a; }
-/* one-click dependency chips under "Hängt ab von" */
-.cc-dep-row { align-items: flex-start; }
-.cc-dep-chips { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; max-height: 88px; overflow: auto; }
-.cc-dep-chip { background: #242424; border: 1px solid #333; border-radius: 999px; padding: 2px 9px; font-size: 11px; color: #9a9a9a; cursor: pointer; user-select: none; }
-.cc-dep-chip:hover { border-color: var(--cc-accent, #2f6feb); color: #e6e6e6; }
-.cc-dep-chip-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); border-color: var(--cc-accent, #2f6feb); }
 /* ⓘ info bubble beside a dropdown label — hover/focus reveals a small explainer card that
    lists what each option (health/running/… · abort/continue/degrade) actually does. */
 .cc-lbl-info { display: inline-flex; align-items: center; gap: 6px; }
@@ -294,7 +288,7 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-pop-body { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; margin: 10px 14px 6px; padding: 3px 0; }
 /* Unraid's theme gives inputs/labels chunky margins+min-heights that pushed the editor rows
    far apart — force them flat (!important: Unraid's sheet can load after ours). */
-.cc-pop-body .cc-pop-row, .cc-pop-auto .cc-pop-row { padding: 5px 10px !important; }
+.cc-pop-body .cc-pop-row, .cc-pop-auto .cc-pop-row { padding: 3px 10px !important; } /* rows really tight ("Hängt ab von" → "Startverzögerung" → "Bereit wenn") */
 .cc-pop .cc-pop-row > *, .cc-pop .cc-pop-row .cc-in { margin-top: 0 !important; margin-bottom: 0 !important; min-height: 0 !important; }
 .cc-pop .cc-in { padding-top: 5px !important; padding-bottom: 5px !important; line-height: 1.35 !important; }
 .cc-pop-auto { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; margin: 6px 14px; padding: 5px 0 7px; border-top: 1px solid #2a2a2a; }
@@ -368,7 +362,7 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-enh.cc-rainbow .cc-b-von  { background: #e05299; color: #fff; }
 .cc-enh.cc-rainbow .cc-b-cpu  { background: #d9433f; color: #fff; }
 .cc-enh.cc-rainbow .cc-b-ram  { background: #2f9d8b; color: #fff; }
-.cc-enh.cc-rainbow .cc-b-bw   { background: #e0912a; color: #fff; }
+.cc-enh.cc-rainbow .cc-b-bw   { background: #e0912a; color: #161616; } /* amber is LIGHT → dark text, consistent with every other amber badge (auto-contrast rule) */
 .cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='cpu-'] { background: #d9433f; }
 .cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='mem-'] { background: #2f9d8b; }
 .cc-enh.cc-rainbow .cc-b-version { background: #6b7280; color: #fff; }

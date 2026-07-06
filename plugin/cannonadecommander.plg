@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.28.0">
+  <!ENTITY version   "0.29.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,17 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.29.0
+- The force-update badge is back: our tag-badge code hid EVERY advanced div in the update
+  cell, including the one carrying the force-update link. Only the text divs are hidden now.
+- ALL badges in the name column stack vertically (ID, Volumes, ... one under the other).
+- Consistent badge text colour: amber badges always carry dark text now (the rainbow BW
+  badge was white-on-amber); accent-coloured badges already auto-switch by brightness.
+- The CPU/RAM diagnostics card sits DIRECTLY above the Bandwidth card.
+- The gap between the autostart toggle and the Startplan chip equals the CPU/RAM badge gap.
+- The container chip list under "Haengt ab von" is gone again (the suggestion popup is
+  enough), and the editor rows sit even tighter.
 
 ### 0.28.0
 - THE mystery of "saved but gone on reopen" is solved (reproduced headless with the real
@@ -543,7 +554,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>1bc1a6c875d33436ae870b995f3f3c67f949678752aff578b9bc7d9bf226581e</SHA256>
+  <SHA256>edec2f08ee9a5f4586fc207d26ec1826c86472252f9332faef4dafa96807508b</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
