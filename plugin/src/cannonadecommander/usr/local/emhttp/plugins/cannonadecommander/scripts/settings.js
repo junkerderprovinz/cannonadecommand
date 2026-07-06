@@ -159,7 +159,8 @@
     var c1 = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
     // The colour-picker field stays ALWAYS visible, PLUS a hex text field beside it;
     // both edit the same value and stay in sync.
-    c1.appendChild(el("div", "cc-set-lbl", T("Akzentfarbe", "Accent colour")));
+    // picker sits DIRECTLY under the card sub in BOTH colour cards (same height), full
+    // card width, hex field BELOW it — no "Akzentfarbe" label (the card title says it).
     var prow = el("div", "cc-set-pickrow");
     // PERMANENTLY EMBEDDED picker (an <input type=color> opens the OS colour dialog in
     // its own window — "ich will das Farbwählfeld fest integriert").
@@ -189,7 +190,7 @@
     wrap.appendChild(c1);
 
     // ── Container icons ──
-    var c2 = card(T("Container-Icons einfärben", "Colourise container icons"), T("Färbt alle Icons in einer Farbe. Der Schalter aktiviert die Färbung.", "Colours every icon in one colour. The switch turns it on."));
+    var c2 = card(T("Container-Icons einfärben", "Colourise container icons"), T("Der Schalter aktiviert die Färbung.", "The switch turns the tint on."));
     var ihexIn = el("input", "cc-set-hexin"); ihexIn.type = "text"; ihexIn.value = iconcolor || ""; ihexIn.placeholder = "#1f9d55"; ihexIn.maxLength = 7; ihexIn.spellcheck = false;
     var ipick = inlinePicker(/^#[0-9a-f]{6}$/i.test(iconcolor) ? iconcolor : (/^#[0-9a-f]{6}$/i.test(accent) ? accent : "#1f9d55"), function (v) { iconcolor = v; ihexIn.value = v; set("cc.iconcolor", v); syncIconTog(); });
     // A real ON/OFF toggle drives the tint (empty cc.iconcolor = off). The picker/hex
@@ -202,8 +203,9 @@
     iconTog.addEventListener("click", function () { setIconOn(!iconOn()); });
     iconTog.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setIconOn(!iconOn()); } });
     ihexIn.addEventListener("input", function () { var v = normHex(ihexIn.value); if (v) setIcon(v); });
-    var togRow = el("div", "cc-set-row cc-set-inline"); togRow.appendChild(el("span", null, T("Einfärben", "Colourise"))); togRow.appendChild(iconTog); c2.appendChild(togRow);
+    // picker FIRST (same position/height as the Badges card's picker), toggle below
     var irow = el("div", "cc-set-pickrow"); irow.appendChild(ipick); irow.appendChild(ihexIn); c2.appendChild(irow);
+    var togRow = el("div", "cc-set-row cc-set-inline"); togRow.appendChild(el("span", null, T("Einfärben", "Colourise"))); togRow.appendChild(iconTog); c2.appendChild(togRow);
     var strow = el("div", "cc-set-row");
     strow.appendChild(el("span", "cc-set-rl", T("Intensität", "Strength")));
     var sl = el("input"); sl.type = "range"; sl.min = "10"; sl.max = "100"; sl.value = String(iconstrength); sl.style.flex = "1";

@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.27.0">
+  <!ENTITY version   "0.28.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,20 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.28.0
+- THE mystery of "saved but gone on reopen" is solved (reproduced headless with the real
+  script): the limits WERE saved all along — but the reopened editor rendered EMPTY for the
+  seconds its fresh per-container read queued behind the save-triggered bulk inspect sweep,
+  and the post-save auto-close timer could even kill a popup you had reopened meanwhile.
+  The editor now prefills instantly from the cached (and docker-VERIFIED) values, refreshes
+  when the fresh read lands, and the auto-close only ever closes its own editor.
+- After resuming a PAUSED container the badge no longer flashes red "laeuft x": while paused
+  the healthchecks cannot run, so Docker briefly reports "unhealthy" - a pause artifact. An
+  unpause via the plugin now gets a 90s grace before the red alert, and the x badge carries
+  an explanatory tooltip.
+- Settings colour cards: the picker spans the full card width, the hex field sits BELOW it,
+  and both cards have the picker at the same height.
 
 ### 0.27.0
 - Every CPU/RAM limit change is now VERIFIED and LOGGED: after a save the editor shows the
@@ -529,7 +543,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>578152ebce02b1b8583c1be302a4e5d2855c9647f2ae751cba1d204347893335</SHA256>
+  <SHA256>1bc1a6c875d33436ae870b995f3f3c67f949678752aff578b9bc7d9bf226581e</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

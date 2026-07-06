@@ -173,7 +173,16 @@
   }
 
   // ───────────────────────── badge builders (uniform)
-  function stateBadge(c) { var s = (c && c.state) || "unknown", b = el("span", "cc-badge cc-badge-" + s, stateLabel(s)); b.dataset.name = (c && c.name) || ""; if (c && c.health === "unhealthy") { b.classList.add("cc-badge-alert"); b.textContent = stateLabel(s) + " ✕"; } else if (c && c.health === "starting") b.textContent = stateLabel(s) + " …"; return b; }
+  // While a container is PAUSED its healthchecks can't run, so right after an unpause
+  // Docker often still reports "unhealthy" until the next check passes — a pause artifact,
+  // not a real problem. After an unpause WE performed, give the health 90s of grace before
+  // alarming; a genuinely sick container turns red after that anyway.
+  var unpauseGrace = {};
+  function showUnhealthy(c) { return !!(c && c.health === "unhealthy" && !(unpauseGrace[c.name] > Date.now())); }
+  var UNHEALTHY_TIP_D = "Healthcheck meldet unhealthy — nach einer Pause normal; erholt sich mit dem nächsten erfolgreichen Check.";
+  var UNHEALTHY_TIP_E = "Healthcheck reports unhealthy — normal right after a pause; recovers with the next passing check.";
+  function unhealthyTip() { return LANG === "de" ? UNHEALTHY_TIP_D : UNHEALTHY_TIP_E; }
+  function stateBadge(c) { var s = (c && c.state) || "unknown", b = el("span", "cc-badge cc-badge-" + s, stateLabel(s)); b.dataset.name = (c && c.name) || ""; if (showUnhealthy(c)) { b.classList.add("cc-badge-alert"); b.textContent = stateLabel(s) + " ✕"; b.title = unhealthyTip(); } else if (c && c.health === "starting") b.textContent = stateLabel(s) + " …"; return b; }
   function stateToggle(name, state) {
     var s = state || "unknown", b = el("span", "cc-badge cc-badge-" + s + " cc-badge-toggle", stateLabel(s)); b.dataset.name = name;
     var action = s === "running" ? "stop" : (s === "paused" ? "unpause" : "start");
@@ -199,9 +208,11 @@
         var c = containerByName(b.dataset.name);
         if (!c) return;
         var s = c.state || "unknown", label = stateLabel(s);
-        if (c.health === "unhealthy") label += " ✕"; else if (c.health === "starting") label += " …";
+        var unh = showUnhealthy(c);
+        if (unh) label += " ✕"; else if (c.health === "starting") label += " …";
         var isToggle = b.classList.contains("cc-badge-toggle");
-        var cls = "cc-badge cc-badge-" + s + (isToggle ? " cc-badge-toggle" : "") + (c.health === "unhealthy" ? " cc-badge-alert" : "");
+        var cls = "cc-badge cc-badge-" + s + (isToggle ? " cc-badge-toggle" : "") + (unh ? " cc-badge-alert" : "");
+        if (unh) b.title = unhealthyTip();
         if (b.textContent !== label) b.textContent = label;
         if (b.className !== cls) b.className = cls;
         // keep the toggle's tooltip in step with the NEW state (the click handler already
@@ -383,7 +394,7 @@
         var glyph = nameCell.querySelector(".inner i[id^='load-']");
         var st = glyphState(glyph) || (c && c.state) || "unknown";
         var meta = el("div", "cc-namemeta"); meta.setAttribute(MARK, "1");
-        var sb = stateToggle(name, st); if (c && c.health === "unhealthy") { sb.classList.add("cc-badge-alert"); sb.textContent = stateLabel(st) + " ✕"; }
+        var sb = stateToggle(name, st); if (showUnhealthy(c)) { sb.classList.add("cc-badge-alert"); sb.textContent = stateLabel(st) + " ✕"; sb.title = unhealthyTip(); }
         meta.appendChild(sb);
         var advDiv = nameCell.querySelector(":scope > div.advanced");
         var idrow = el("div", "cc-namemeta-ids"), added = false, hideAdv = false;
@@ -507,6 +518,7 @@
     } catch (e) {}
   }
   function doAction(name, action) {
+    if (action === "unpause") unpauseGrace[name] = Date.now() + 90000; // pause artifact: stale "unhealthy" gets 90s to recover
     pendingAction[name] = true; markTransient(name, action); flash(action + " " + name + "…");
     api("POST", "action", { name: name, action: action })
       .then(function () { delete pendingAction[name]; return load(); }) // clear BEFORE the confirming load so its sync updates this badge
@@ -1026,10 +1038,21 @@
             msg += " · RAM " + humanBytes(resp.after_mem);
             if (resp.after_nano > 0) msg += " · CPU " + (Math.round(resp.after_nano / 1e7) / 100);
             if (resp.after_cpuset) msg += " · " + resp.after_cpuset;
+            // Seed the cache with the docker-VERIFIED values so an immediate reopen
+            // prefills instantly — the bulk re-inspect below can take seconds.
+            limits[name] = { mem_bytes: resp.after_mem, nano_cpus: resp.after_nano || 0, cpuset_cpus: resp.after_cpuset || "" };
+            cur = limits[name]; curLoaded = true;
           }
           popOk(msg); flash(t("done")); return loadLimits();
         })
-        .then(function () { if (mode === "list") reinjectRowBadges(); else renderGrid(); setTimeout(closePop, 1800); })
+        .then(function () {
+          if (mode === "list") reinjectRowBadges(); else renderGrid();
+          // Close ONLY this editor instance: capture the closure's OWN popup node — NOT
+          // openPop at schedule time, which (this .then runs after the slow bulk sweep)
+          // can already be a popup the user REOPENED, and the timer would kill it
+          // (reproduced headless: "TIMER1800 FIRED → reopened popup removed").
+          setTimeout(function () { if (openPop === pop) closePop(); }, 1800);
+        })
         .catch(function (e) { popError(e); });
     }
     var srow = el("div", "cc-pop-row cc-pop-act");
@@ -1085,13 +1108,23 @@
     var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || 340;
     pop.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 12)) + "px";
     pop.style.top = (window.scrollY + r.bottom + 6) + "px"; openPop = pop; openPopAnchor = anchor;
-    api("GET", "limits", null, "name=" + encodeURIComponent(name)).then(function (l) {
+    // Prefill IMMEDIATELY from the cached bulk map: the fresh per-name GET can queue
+    // SECONDS behind the save-triggered bulk inspect sweep, and an editor that renders
+    // empty in that window reads as "wird nicht gespeichert" although the limit IS saved
+    // (reproduced headless: popup empty 500ms+ after reopen while docker held the value).
+    // The authoritative per-name read then refreshes the fields when it lands.
+    // Only prefill REAL limits; a practical-unlimited value (a prior "remove") stays blank.
+    function prefill(l) {
       if (!l) return;
-      cur = l; curLoaded = true; // fresh current limits — the "clear to remove" decision uses these
-      // only prefill REAL limits; a practical-unlimited value (a prior "remove") stays blank.
       if (memNum && ramLimited(l)) { if (l.mem_bytes >= 1073741824) { memNum.value = Math.round(l.mem_bytes / 1073741824 * 100) / 100; memUnit.value = "GB"; } else { memNum.value = Math.round(l.mem_bytes / 1048576); memUnit.value = "MB"; } }
       if (cpu && cpuLimited(l)) cpu.value = String(Math.round(l.nano_cpus / 1e9 * 100) / 100);
       if (cpuPinned(l)) fillCpuset(l.cpuset_cpus);
+    }
+    if (limits[name]) prefill(limits[name]); // instant (cur/curLoaded stay with the FRESH read, so clear-to-remove can't act on a stale map)
+    api("GET", "limits", null, "name=" + encodeURIComponent(name)).then(function (l) {
+      if (!l) return;
+      cur = l; curLoaded = true; // fresh current limits — the "clear to remove" decision uses these
+      prefill(l);
     }).catch(function () {});
   }
 
