@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -396,7 +397,11 @@ func (c *Client) UpdateResources(ctx context.Context, ref string, l model.Limits
 		case cur.MemorySwap > 0 && l.MemBytes <= cur.MemorySwap:
 			// fits — leave the existing swap cap alone
 		default:
-			body["MemorySwap"] = int64(-1)
+			// 2×Memory = docker's own create-time default. A POSITIVE swap value is the
+			// only variant real dockerd accepted in the CI integration test — the -1
+			// (“unlimited”) form was rejected on update, and the no-swap retry then hit
+			// the raw “Memory limit should be smaller than already set memoryswap limit”.
+			body["MemorySwap"] = 2 * l.MemBytes
 		}
 	}
 	if l.NanoCPUs > 0 {
@@ -429,9 +434,9 @@ func (c *Client) UpdateResources(ctx context.Context, ref string, l model.Limits
 	}
 	err = c.postUpdate(ctx, ref, body)
 	if err != nil && body["MemorySwap"] != nil && mentionsSwap(err) {
-		// Defensive only: moby never forwards a MemorySwap <= 0 to the cgroup writer, so
-		// the classic cgroup-v1 memsw-ENOENT cannot come from OUR -1 — but should an older
-		// or patched daemon still reject the swap field, retry the Memory change alone.
+		// Defensive fallback for daemons that reject the swap field itself (cgroup-v1
+		// memsw). Log the FIRST error too — the retry's error otherwise masks it.
+		log.Printf("dockercli: update %s with MemorySwap failed (%v), retrying without", ref, err)
 		delete(body, "MemorySwap")
 		err = c.postUpdate(ctx, ref, body)
 	}

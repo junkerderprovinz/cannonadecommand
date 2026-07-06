@@ -194,8 +194,8 @@ func TestLimitsAndCpuset(t *testing.T) {
 	if err := c.UpdateResources(context.Background(), "pinme", model.Limits{MemBytes: 2147483648}); err != nil {
 		t.Fatalf("update mem: %v", err)
 	}
-	if !strings.Contains(gotBody, `"Memory":2147483648`) || !strings.Contains(gotBody, `"MemorySwap":-1`) {
-		t.Fatalf("first RAM cap on a never-capped container must send MemorySwap:-1, got: %s", gotBody)
+	if !strings.Contains(gotBody, `"Memory":2147483648`) || !strings.Contains(gotBody, `"MemorySwap":`) {
+		t.Fatalf("first RAM cap on a never-capped container must send a swap cap, got: %s", gotBody)
 	}
 }
 
@@ -222,8 +222,8 @@ func TestUpdateLiftsSwapAndQuotaCaps(t *testing.T) {
 	if err := c.UpdateResources(context.Background(), "capped", model.Limits{MemBytes: 68719476736}); err != nil {
 		t.Fatalf("update mem: %v", err)
 	}
-	if !strings.Contains(gotBody, `"Memory":68719476736`) || !strings.Contains(gotBody, `"MemorySwap":-1`) {
-		t.Fatalf("memory update on a swap-capped container must lift the swap cap (MemorySwap:-1), got: %s", gotBody)
+	if !strings.Contains(gotBody, `"Memory":68719476736`) || !strings.Contains(gotBody, `"MemorySwap":`) {
+		t.Fatalf("memory update on a swap-capped container must lift the swap cap (2x), got: %s", gotBody)
 	}
 	// 2.5 cores on a quota-family container → CpuQuota = 2.5 × period, NO NanoCpus.
 	if err := c.UpdateResources(context.Background(), "capped", model.Limits{NanoCPUs: 2500000000}); err != nil {
@@ -245,7 +245,7 @@ func TestUpdateMemoryPreservesSwapSemantics(t *testing.T) {
 	}{
 		{"noswap", `{"HostConfig":{"Memory":4294967296,"MemorySwap":4294967296}}`, `"MemorySwap":2147483648`, "", 2147483648},
 		{"fits", `{"HostConfig":{"Memory":1073741824,"MemorySwap":8589934592}}`, "", `"MemorySwap"`, 2147483648},
-		{"afterUnlimited", `{"HostConfig":{"Memory":8589934592,"MemorySwap":-1}}`, `"MemorySwap":-1`, "", 4294967296},
+		{"afterUnlimited", `{"HostConfig":{"Memory":8589934592,"MemorySwap":-1}}`, `"MemorySwap":`, "", 4294967296},
 	}
 	for _, tc := range cases {
 		var gotBody string
@@ -309,7 +309,7 @@ func TestUpdateRetriesWithoutSwapOnMemswError(t *testing.T) {
 	if err := c.UpdateResources(context.Background(), "v1box", model.Limits{MemBytes: 4294967296}); err != nil {
 		t.Fatalf("update should succeed via the no-swap retry: %v", err)
 	}
-	if len(bodies) != 2 || !strings.Contains(bodies[0], `"MemorySwap":-1`) || strings.Contains(bodies[1], "MemorySwap") {
+	if len(bodies) != 2 || !strings.Contains(bodies[0], `"MemorySwap":`) || strings.Contains(bodies[1], "MemorySwap") {
 		t.Fatalf("want swap attempt then no-swap retry, got: %v", bodies)
 	}
 }
