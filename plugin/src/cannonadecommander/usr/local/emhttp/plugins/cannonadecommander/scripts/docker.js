@@ -416,6 +416,9 @@
       var name = rowName(tr);
       if (filterText) tr.style.display = (norm(name).indexOf(filterText) >= 0) ? "" : "none";
       var nameCell = tr.querySelector("td.ct-name"), upCell = tr.querySelector("td.updatecolumn");
+      // vertically CENTRE every cell's content in the row (logo + name sat at the top —
+      // Unraid's td vertical-align beats the stylesheet, so it's enforced inline).
+      Array.prototype.slice.call(tr.children).forEach(function (td2) { td2.style.setProperty("vertical-align", "middle", "important"); });
       var adv = isAdvancedView(), c = containerByName(name);
 
       // ── NAME cell (col 1): start/stop badge, and BENEATH it Container-ID / Von ──
