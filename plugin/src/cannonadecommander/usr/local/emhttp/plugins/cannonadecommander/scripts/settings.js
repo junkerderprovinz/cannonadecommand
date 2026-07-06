@@ -185,6 +185,11 @@
     rr.appendChild(el("span", null, T("Regenbogen-Modus", "Rainbow mode")));
     rr.appendChild(toggle(rainbow, function (v) { rainbow = v; set("cc.rainbow", v ? "1" : "0"); render(); }));
     c1.appendChild(rr);
+    // rotation toggle: on = every tab reload deals a fresh colour mapping; off = stable colours
+    var rrot = el("div", "cc-set-row cc-set-inline");
+    rrot.appendChild(el("span", null, T("Farben bei jedem Neuladen rotieren", "Rotate colours on every reload")));
+    rrot.appendChild(toggle(get("cc.rainbowrot", "1") !== "0", function (v) { set("cc.rainbowrot", v ? "1" : "0"); }));
+    c1.appendChild(rrot);
     var prev = el("div", "cc-set-prev");
     ["net", "ip", "lan", "port"].forEach(function (k) { var b = el("span", "cc-b cc-b-" + k); b.appendChild(elk({ net: "Netzwerk", ip: "IP", lan: "LAN", port: "Port" }[k])); b.appendChild(elv("br0.20")); prev.appendChild(b); });
     prev.id = "cc-set-prev"; c1.appendChild(prev);

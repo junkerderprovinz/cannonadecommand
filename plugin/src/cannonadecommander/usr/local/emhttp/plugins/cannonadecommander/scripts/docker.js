@@ -355,8 +355,10 @@
   function applyRainbowPalette() {
     var rt = document.documentElement;
     if (localStorage.getItem("cc.rainbow") !== "1") { RB_KINDS.forEach(function (k) { rt.style.removeProperty("--cc-rb-" + k); rt.style.removeProperty("--cc-rb-" + k + "-t"); }); return; }
+    // rotation is TOGGLEABLE (cc.rainbowrot, default on): off = stable colours (offset 0)
+    var off = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
     RB_KINDS.forEach(function (k, i) {
-      var c = RB_PAL[(i + RB_OFFSET) % RB_PAL.length];
+      var c = RB_PAL[(i + off) % RB_PAL.length];
       var n = parseInt(c.slice(1), 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255);
       rt.style.setProperty("--cc-rb-" + k, c);
       rt.style.setProperty("--cc-rb-" + k + "-t", L > 150 ? "#161616" : "#fff"); // auto text contrast
@@ -766,6 +768,13 @@
   function hardenPop(root) {
     try {
       Array.prototype.slice.call(root.querySelectorAll(".cc-pop-row")).forEach(function (r) {
+        if (r.classList.contains("cc-pop-act")) {
+          // the action row is NOT flattened: 14px side insets = exactly the card width
+          // above, and a ROOMIER 18px gap to the bottom edge of the popup (user call).
+          r.style.setProperty("padding", "10px 14px 18px", "important");
+          r.style.setProperty("margin", "0", "important");
+          return;
+        }
         r.style.setProperty("padding", "3px 10px", "important");
         r.style.setProperty("margin", "0", "important");
         // the row itself: one tight flex line, nothing may wrap or stretch it
