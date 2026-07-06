@@ -421,6 +421,10 @@
       // vertically CENTRE every cell's content in the row (logo + name sat at the top —
       // Unraid's td vertical-align beats the stylesheet, so it's enforced inline).
       Array.prototype.slice.call(tr.children).forEach(function (td2) { td2.style.setProperty("vertical-align", "middle", "important"); });
+      // the icon/name wrapper itself: Unraid can give .outer full height + top alignment,
+      // which pins the logo to the top of the row even with the td centred — force it.
+      var outerBox = nameCell && nameCell.querySelector(".outer");
+      if (outerBox) { outerBox.style.setProperty("display", "flex", "important"); outerBox.style.setProperty("align-items", "center", "important"); outerBox.style.setProperty("height", "auto", "important"); }
       var adv = isAdvancedView(), c = containerByName(name);
 
       // ── NAME cell (col 1): start/stop badge, and BENEATH it Container-ID / Von ──
