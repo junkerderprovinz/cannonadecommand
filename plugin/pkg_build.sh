@@ -34,6 +34,13 @@ echo "==> normalising text files to LF"
 find "$PKGROOT" -type f ! -path "*/bin/*" ! -name '*.png' -print0 \
   | while IFS= read -r -d '' f; do perl -i -pe 's/\r\n/\n/g; s/\r$//' "$f"; done
 
+# Stamp the FRONTEND version into the scripts (shown as "UI vX" next to the engine
+# version), so a stale frontend under test is instantly recognisable.
+echo "==> stamping UI version"
+sed -i "s/@@CCVER@@/$VERSION/" \
+  "$PKGROOT/usr/local/emhttp/plugins/$SLUG/scripts/docker.js" \
+  "$PKGROOT/usr/local/emhttp/plugins/$SLUG/scripts/settings.js"
+
 # Cache-bust: Unraid's autov() appends "?v=<filemtime>" to the injected .js/.css.
 # If installpkg restores an unchanged mtime, the browser serves a STALE script
 # (the "old toolbar still runs after an update" symptom). Stamp a fresh, uniform

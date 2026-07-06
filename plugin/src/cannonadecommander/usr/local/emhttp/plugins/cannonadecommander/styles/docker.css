@@ -274,9 +274,9 @@
 .cc-info:hover .cc-tip, .cc-info:focus .cc-tip { display: block; }
 .cc-tip-row { display: block; margin: 3px 0; }
 .cc-tip-k { color: var(--cc-accent, #6ea0ff); font-weight: 600; margin-right: 6px; }
-/* every editor field the SAME clean box (override Unraid's underline with !important) */
-.cc-in { flex: 1; background: #1e1e1e; color: #e6e6e6; border: 1px solid #2a2a2a !important; border-radius: 5px; padding: 5px 7px; font-size: 12px; }
-.cc-in:focus { border-color: var(--cc-accent, #2f6feb) !important; }
+/* every editor field the SAME clean box: NO border, just a lighter background */
+.cc-in { flex: 1; background: #2e2e2e; color: #e6e6e6; border: none !important; border-radius: 6px; padding: 5px 8px; font-size: 12px; }
+.cc-in:focus { background: #383838; outline: none !important; box-shadow: 0 0 0 1px var(--cc-accent, #2f6feb); }
 /* selects lost their native arrow to appearance:none — give them a caret back */
 select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repeat; background-position: right 8px center; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%238a8a8a' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); }
 .cc-port { flex: none; width: 70px; margin-left: 6px; }
@@ -289,6 +289,7 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 /* Unraid's theme gives inputs/labels chunky margins+min-heights that pushed the editor rows
    far apart — force them flat (!important: Unraid's sheet can load after ours). */
 .cc-pop-body .cc-pop-row, .cc-pop-auto .cc-pop-row { padding: 3px 10px !important; } /* rows really tight ("Hängt ab von" → "Startverzögerung" → "Bereit wenn") */
+.cc-pop .cc-pop-row { margin: 0 !important; }
 .cc-pop .cc-pop-row > *, .cc-pop .cc-pop-row .cc-in { margin-top: 0 !important; margin-bottom: 0 !important; min-height: 0 !important; }
 .cc-pop .cc-in { padding-top: 5px !important; padding-bottom: 5px !important; line-height: 1.35 !important; }
 .cc-pop-auto { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; margin: 6px 14px; padding: 5px 0 7px; border-top: 1px solid #2a2a2a; }
