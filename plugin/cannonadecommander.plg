@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.25.0">
+  <!ENTITY version   "0.26.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,13 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.26.0
+- The native "apply update" button is back. Our styling hid EVERY update-column action link
+  whenever the "force update" badge column was off (its default in the Basic view) - which
+  also swallowed the apply-update link and its amber "update ready" text on containers with
+  an available update. The force toggle now only affects the advanced force-update link; the
+  apply-update action is always visible (amber pill).
 
 ### 0.25.0
 - Icon tinting now KEEPS the icon's shading: each pixel becomes its brightness in the chosen
@@ -511,7 +518,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>0a739e178725b75c7220420c390d72fa43d13880a7c8786c7b8fa17fccffd0c0</SHA256>
+  <SHA256>e70f1ddf4f794a374d1a4e6a4fd4cc6eb727dcb593e4e5d59cfb27ad43144f49</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

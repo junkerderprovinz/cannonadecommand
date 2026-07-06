@@ -120,9 +120,16 @@
    absent there — no reliance on how Unraid hides .advanced.) */
 .cc-enh:not(.cc-c-update)  #docker_list tr.sortable td.updatecolumn > span.green-text,
 .cc-enh:not(.cc-c-update)  #docker_list tr.sortable td.updatecolumn span.orange-text,
-.cc-enh:not(.cc-c-force)   #docker_list tr.sortable td.updatecolumn a.exec,
+.cc-enh:not(.cc-c-force)   #docker_list tr.sortable td.updatecolumn div.advanced a.exec,
 .cc-enh:not(.cc-c-res)     #docker_list tr.sortable td.advanced span[class^='cpu-'],
 .cc-enh:not(.cc-c-res)     #docker_list tr.sortable td.advanced span[class^='mem-'] { display: none !important; }
+/* The APPLY-UPDATE action ("Aktualisierung anwenden", an a.exec wrapping span.orange-text)
+   must NEVER be hidden: the force-update toggle above only scopes to the advanced block's
+   force link now, and this override keeps the apply link + its "update ready" text visible
+   even with the update-status column off — an actionable button may not vanish. */
+.cc-enh #docker_list tr.sortable td.updatecolumn a.exec:has(span.orange-text) { display: inline-flex !important; background: #e0912a; color: #1a1a1a !important; }
+.cc-enh #docker_list tr.sortable td.updatecolumn a.exec:has(span.orange-text):hover { filter: brightness(1.1); }
+.cc-enh #docker_list tr.sortable td.updatecolumn a.exec > span.orange-text { display: inline !important; background: transparent !important; color: inherit !important; padding: 0; margin: 0; }
 
 /* ShipLog "Changelog" chip → a solid badge coloured by its risk dot */
 .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip { color: #fff !important; background: #4a4a4a; }
