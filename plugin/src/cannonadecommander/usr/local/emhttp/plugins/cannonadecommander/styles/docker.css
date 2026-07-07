@@ -83,6 +83,9 @@
 .cc-actcell { white-space: nowrap; }
 .cc-act-th { font-size: 11px; }
 .cc-actbar { display: grid; grid-template-columns: repeat(3, 27px); gap: 4px; } /* two rows of three */
+.cc-actwide { grid-column: 1 / -1; width: auto; height: 16px; font-size: 12px; letter-spacing: 2px; }
+.cc-actoff { opacity: .35; cursor: default; }
+.cc-actoff:hover { background: #2e2e2e; color: #c9c9c9; }
 .cc-actmore { display: none; margin-top: 4px; }
 .cc-actmore.cc-open { display: grid; }
 .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }

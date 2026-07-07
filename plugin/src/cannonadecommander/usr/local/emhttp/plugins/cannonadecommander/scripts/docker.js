@@ -456,6 +456,10 @@
       var outerBox = nameCell && nameCell.querySelector(".outer");
       if (outerBox) { outerBox.style.setProperty("display", "flex", "important"); outerBox.style.setProperty("align-items", "center", "important"); outerBox.style.setProperty("height", "auto", "important"); }
       var adv = isAdvancedView(), c = containerByName(name);
+      // the ACTIONS cell must exist BEFORE any nth-child lookup below — it sits at
+      // position 2 and shifts every later column by one. Injecting it last put the
+      // resource badges into Autostart and the plan chip into Betriebszeit.
+      injectActionCell(tr, name, c);
 
       // ── NAME cell (col 1): start/stop badge, and BENEATH it Container-ID / Von ──
       if (nameCell) {
@@ -571,32 +575,60 @@
           c9.appendChild(ph);
         }
       }
-      injectActionCell(tr, name, c);
     } catch (e) { /* one bad row must never break Unraid's page */ }
   }
-  // Per-container WebUI + template path, harvested from the page's OWN inline
-  // addDockerContainerContext(...) registrations — no guessing, feature-detected.
-  var ctxMap = null;
+  // Per-container WebUI + template path + extra links. Two harvest paths:
+  // 1) WRAP the page's own addDockerContainerContext() — Unraid re-registers the
+  //    context menus from AJAX-loaded HTML that jQuery EXECUTES without ever adding
+  //    a <script> node to the DOM, so scanning script tags misses them entirely
+  //    (that is why WebUI/Edit icons were missing on the real box).
+  // 2) a one-time scan of real inline <script> tags as a fallback seed.
+  var ctxMap = {}, ctxScanned = false, ctxRefreshT = null;
+  function harvestVals(vals) {
+    if (!vals.length) return;
+    var entry = { webui: "", xml: "", urls: [] };
+    vals.forEach(function (v) {
+      if (v.indexOf("://") > 0) { if (!entry.webui) entry.webui = v; if (entry.urls.indexOf(v) < 0) entry.urls.push(v); }
+      if (!entry.xml && /\.xml$/i.test(v)) entry.xml = v;
+    });
+    var prev = ctxMap[vals[0]];
+    ctxMap[vals[0]] = entry;
+    // new or richer registration → rebuild that row's action cell shortly, so the
+    // WebUI/Edit icons appear as soon as their data exists
+    if (!prev || prev.webui !== entry.webui || prev.xml !== entry.xml || prev.urls.length !== entry.urls.length) {
+      clearTimeout(ctxRefreshT);
+      ctxRefreshT = setTimeout(function () { try { findRows().forEach(function (r2) { var n2 = rowName(r2); if (n2) injectActionCell(r2, n2, containerByName(n2)); }); } catch (e) {} }, 250);
+    }
+  }
+  function hookCtx() {
+    try {
+      var o = window.addDockerContainerContext;
+      if (typeof o === "function" && !o._ccHooked) {
+        var w = function () { try { harvestVals(Array.prototype.slice.call(arguments).filter(function (v) { return typeof v === "string"; })); } catch (e) {} return o.apply(this, arguments); };
+        w._ccHooked = true; window.addDockerContainerContext = w;
+      }
+    } catch (e) {}
+  }
+  // hook as early as possible and retry for a while — the page script that defines
+  // the global may load after us
+  (function reHook(n2) {
+    hookCtx();
+    if ((!window.addDockerContainerContext || !window.addDockerContainerContext._ccHooked) && n2 > 0) setTimeout(function () { reHook(n2 - 1); }, 250);
+  })(40);
   function ctxFor(name) {
-    if (ctxMap === null) {
-      ctxMap = {};
+    hookCtx();
+    if (!ctxScanned) {
+      ctxScanned = true;
       try {
         Array.prototype.slice.call(document.querySelectorAll("script")).forEach(function (sc) {
           var txt = sc.textContent || "";
           var re = /addDockerContainerContext\s*\(([^;]*?)\)\s*;/g, m3;
           while ((m3 = re.exec(txt))) {
             var toks = m3[1].match(/'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/g) || [];
-            var vals = toks.map(function (q) { return q.slice(1, -1); });
-            if (!vals.length) continue;
-            var entry = { webui: "", xml: "", urls: [] };
-            vals.forEach(function (v) {
-              if (v.indexOf("://") > 0) { if (!entry.webui) entry.webui = v; if (entry.urls.indexOf(v) < 0) entry.urls.push(v); }
-              if (!entry.xml && /\.xml$/i.test(v)) entry.xml = v;
-            });
-            ctxMap[vals[0]] = entry;
+            harvestVals(toks.map(function (q) { return q.slice(1, -1); }));
           }
         });
-      } catch (e) { ctxMap = {}; }
+      } catch (e) {}
     }
     return ctxMap[name] || {};
   }
@@ -606,12 +638,13 @@
     b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); fn(); });
     return b;
   }
-  // The ACTIONS column: appended at the END of each row (existing nth-child rules
-  // stay valid). Core one-click actions + "…" for the full native menu (Entfernen
-  // etc. stay deliberately behind a second click).
-  // rainbow: every action icon takes a rotating palette colour (falls back to grey)
+  // greyed placeholder: an action without a target still occupies its grid slot,
+  // so every row shows the same stable 2×3 icon block
+  function actBtnOff(glyph, tip) { var b = el("span", "cc-actbtn cc-actoff", glyph); b.title = tip; return b; }
+  // rainbow: every action icon takes a rotating palette colour (falls back to grey);
+  // disabled placeholders stay grey
   function tintAct(bar) {
-    Array.prototype.slice.call(bar.querySelectorAll(".cc-actbtn")).forEach(function (b2, i2) {
+    Array.prototype.slice.call(bar.querySelectorAll(".cc-actbtn:not(.cc-actoff)")).forEach(function (b2, i2) {
       var k2 = RB_KINDS[i2 % RB_KINDS.length];
       b2.style.setProperty("background", "var(--cc-rb-" + k2 + ", #2e2e2e)");
       b2.style.setProperty("color", "var(--cc-rb-" + k2 + "-t, #c9c9c9)");
@@ -621,27 +654,33 @@
     try {
       var hr2 = headerRow();
       if (hr2 && !hr2.querySelector(".cc-act-th")) { var th2 = el("th", "cc-act-th", LANG === "de" ? "Aktionen" : "Actions"); hr2.insertBefore(th2, hr2.children[1] || null); }
-      if (tr.querySelector(".cc-actcell")) return;
-      var tda = el("td", "cc-actcell"); tda.setAttribute(MARK, "1");
-      var bar = el("div", "cc-actbar");
-      var running = c && c.state === "running";
       var cx = ctxFor(name);
-      if (cx.webui) bar.appendChild(actBtn("🌐", "WebUI", function () { window.open(cx.webui, "_blank"); }));
-      if (typeof window.openTerminal === "function") bar.appendChild(actBtn(">_", LANG === "de" ? "Konsole" : "Console", function () { window.openTerminal("docker", name); }));
+      var sig = (cx.webui || "") + "|" + (cx.xml || "") + "|" + (cx.urls || []).length;
+      var old2 = tr.querySelector(".cc-actcell");
+      if (old2) { if (old2.dataset.ccSig === sig) return; old2.remove(); } // rebuild when the harvest caught up
+      var tda = el("td", "cc-actcell"); tda.setAttribute(MARK, "1"); tda.dataset.ccSig = sig;
+      tda.style.setProperty("vertical-align", "middle", "important");
+      var bar = el("div", "cc-actbar");
+      var running = c && c.state === "running", paused = c && c.state === "paused";
+      // ALWAYS a stable 2×3 grid — actions without a target render greyed out
+      bar.appendChild(cx.webui ? actBtn("🌐", "WebUI", function () { window.open(cx.webui, "_blank"); }) : actBtnOff("🌐", LANG === "de" ? "kein WebUI" : "no WebUI"));
+      bar.appendChild(typeof window.openTerminal === "function" ? actBtn(">_", LANG === "de" ? "Konsole" : "Console", function () { window.openTerminal("docker", name); }) : actBtnOff(">_", LANG === "de" ? "keine Konsole" : "no console"));
       bar.appendChild(actBtn(running ? "⏹" : "▶", running ? t("stop") : t("start"), function () { var cc2 = containerByName(name); doAction(name, cc2 && cc2.state === "running" ? "stop" : "start"); }));
       bar.appendChild(actBtn("⟳", t("restart"), function () { doAction(name, "restart"); }));
-      if (cx.xml) bar.appendChild(actBtn("🔧", LANG === "de" ? "Bearbeiten" : "Edit", function () { location.href = "/Docker/UpdateContainer?xmlTemplate=edit:" + encodeURIComponent(cx.xml); }));
-      // "…" expands the REMAINING actions in the SAME icon style (not the native list):
-      // pause/resume + every additional harvested link (project page, support, donate…).
+      bar.appendChild(actBtn(paused ? "▶" : "⏸", paused ? t("resume") : t("pause"), function () { var cc3 = containerByName(name); doAction(name, cc3 && cc3.state === "paused" ? "unpause" : "pause"); }));
+      bar.appendChild(cx.xml ? actBtn("🔧", LANG === "de" ? "Bearbeiten" : "Edit", function () { location.href = "/Docker/UpdateContainer?xmlTemplate=edit:" + encodeURIComponent(cx.xml); }) : actBtnOff("🔧", LANG === "de" ? "kein Template" : "no template"));
+      // "…" expands the remaining actions in the SAME icon style: every additional
+      // harvested link (project page, support, donate…)
       var more = el("div", "cc-actbar cc-actmore");
-      more.appendChild(actBtn(running ? "⏸" : "▶", running ? t("pause") : t("resume"), function () { var cc3 = containerByName(name); doAction(name, cc3 && cc3.state === "paused" ? "unpause" : "pause"); }));
       (cx.urls || []).forEach(function (u2) {
         if (u2 === cx.webui) return;
         var host = ""; try { host = new URL(u2).hostname; } catch (e2) {}
         var g2 = /paypal|ko-?fi|buymeacoffee|donate|liberapay/i.test(u2) ? "💰" : (/github|gitlab/i.test(u2) ? "📖" : "🔗");
         more.appendChild(actBtn(g2, host || u2, function () { window.open(u2, "_blank"); }));
       });
-      bar.appendChild(actBtn("⋯", LANG === "de" ? "Mehr" : "More", function () { more.classList.toggle("cc-open"); tintAct(more); }));
+      var dots = actBtn("⋯", LANG === "de" ? "Mehr" : "More", function () { more.classList.toggle("cc-open"); tintAct(more); });
+      dots.classList.add("cc-actwide"); // slim full-width bar UNDER the 2×3 block
+      bar.appendChild(dots);
       tda.appendChild(bar); tda.appendChild(more);
       tintAct(bar);
       tr.insertBefore(tda, tr.children[1] || null); // BETWEEN the name and the version column
