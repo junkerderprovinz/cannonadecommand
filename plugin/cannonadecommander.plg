@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.41.0">
+  <!ENTITY version   "0.42.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,17 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.42.0
+- Action icons really take their colour now: Unraid's theme CSS styles .fa
+  glyphs directly, which beat the inherited colour - the glyph is forced to
+  follow the button colour inline (black/white per background, rainbow too).
+- The update-all pill is gone from the header: Unraid's own Update-All button
+  below the table covers it (ShipLog stays untouched; the pill is only hidden
+  while CannonadeCommander is installed).
+- The Basic/Advanced view toggle moved into the gear menu as an Einfach/
+  Erweitert segment (it flips Unraid's own hidden checkbox, so cookie and
+  re-render stay native). The header strip now carries only the gear.
 
 ### 0.41.0
 - Action icons are Font-Awesome glyphs now, not emoji: emoji ignore CSS colour,
@@ -717,7 +728,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>8722135c82ed3fa72ffe0ed5cb9725e932171f0c7a624a04709b718800d31748</SHA256>
+  <SHA256>3da7e3aed77069a903ceb668f1cc0484678eed3aabb591b68b5edf4d6d19b1b3</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

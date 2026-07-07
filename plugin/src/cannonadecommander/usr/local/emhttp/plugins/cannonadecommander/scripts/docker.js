@@ -630,9 +630,13 @@
   function tintAct(bar) {
     Array.prototype.slice.call(bar.querySelectorAll(".cc-actbtn:not(.cc-actoff)")).forEach(function (b2, i2) {
       var k2 = RB_KINDS[i2 % RB_KINDS.length];
-      b2.style.setProperty("background", "var(--cc-rb-" + k2 + ", #2e2e2e)");
-      b2.style.setProperty("color", "var(--cc-rb-" + k2 + "-t, #c9c9c9)");
+      b2.style.setProperty("background", "var(--cc-rb-" + k2 + ", #2e2e2e)", "important");
+      b2.style.setProperty("color", "var(--cc-rb-" + k2 + "-t, #c9c9c9)", "important");
+      // Unraid's theme styles .fa glyphs directly (e.g. orange in the yellow theme),
+      // which beats inheritance — force the glyph to follow the button colour
+      var ic2 = b2.querySelector("i"); if (ic2) ic2.style.setProperty("color", "inherit", "important");
     });
+    Array.prototype.slice.call(bar.querySelectorAll(".cc-actbtn.cc-actoff i")).forEach(function (ic3) { ic3.style.setProperty("color", "inherit", "important"); });
   }
   function injectActionCell(tr, name, c) {
     try {
@@ -674,11 +678,11 @@
       tr.insertBefore(tda, tr.children[1] || null); // BETWEEN the name and the version column
     } catch (e) {}
   }
-  // Move everything that lives in Unraid's ToggleViewMode row (our gear, ShipLog's
-  // update-all pill, the native Basic/Advanced switch) into an overlay pinned to the
-  // RIGHT END of the dark column-header strip, then collapse the old row — the empty
-  // band between the main menu and the table header disappears. Runs on every badge
-  // pass so late injections (ShipLog appears after us) get rescued from the hidden row.
+  // Collapse Unraid's ToggleViewMode row and keep ONLY our gear, pinned to the right
+  // end of the dark column-header strip. ShipLog's update-all pill stays hidden with
+  // the row (the native Update-All button below the table covers it) and the native
+  // Basic/Advanced switch is driven from the gear menu instead. Runs on every badge
+  // pass so late injections land in the hidden row and the gear gets rescued.
   function relocateTopBar() {
     try {
       if (mode !== "list") return;
@@ -691,7 +695,8 @@
         try { if (getComputedStyle(tc).position === "static") tc.style.position = "relative"; } catch (e2) {}
         tc.appendChild(hc);
       }
-      while (tv.firstChild) hc.appendChild(tv.firstChild);
+      var g3 = tv.querySelector(".cc-hgear-bar");
+      if (g3) hc.appendChild(g3);
       tv.style.setProperty("display", "none", "important");
       var hr3 = headerRow();
       if (hr3 && hr3.offsetHeight) hc.style.height = hr3.offsetHeight + "px";
@@ -857,6 +862,20 @@
     bL.addEventListener("click", function () { closeMenu(); setMode("list"); }); bG.addEventListener("click", function () { closeMenu(); setMode("grid"); });
     seg.appendChild(bL); seg.appendChild(bG);
     var vrow = el("div", "cc-menu-row cc-menu-plain"); vrow.appendChild(seg); m.appendChild(vrow);
+    // Basic/Advanced lives HERE now (the native switch row above the table is
+    // hidden): flip Unraid's own hidden checkbox so cookie + re-render stay native.
+    var segA = el("div", "cc-seg");
+    var advNow = isAdvancedView();
+    var bB = el("button", "cc-seg-btn" + (!advNow ? " cc-seg-on" : ""), LANG === "de" ? "Einfach" : "Basic");
+    var bA = el("button", "cc-seg-btn" + (advNow ? " cc-seg-on" : ""), LANG === "de" ? "Erweitert" : "Advanced");
+    function setAdvView(v) {
+      try { var inp = document.querySelector("input.advancedview"); if (inp && window.jQuery) window.jQuery(inp).prop("checked", v).trigger("change"); } catch (e2) {}
+      closeMenu();
+    }
+    bB.addEventListener("click", function () { setAdvView(false); });
+    bA.addEventListener("click", function () { setAdvView(true); });
+    segA.appendChild(bB); segA.appendChild(bA);
+    var arow = el("div", "cc-menu-row cc-menu-plain"); arow.appendChild(segA); m.appendChild(arow);
     var frow = el("div", "cc-menu-row cc-menu-plain");
     var filter = el("input", "cc-filter"); filter.type = "text"; filter.placeholder = t("filter"); filter.value = filterText;
     filter.addEventListener("input", function () { filterText = norm(filter.value); applyFilter(); });
