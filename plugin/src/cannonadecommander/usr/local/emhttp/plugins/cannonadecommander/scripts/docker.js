@@ -72,18 +72,28 @@
   var mo = null, dead = false, lastAdv = false, timers = [], moPending = false, moTimer = null, lastObsLoad = 0;
 
   // ───────────────────────── api + helpers
+  // csrf_token, robustly: the JS global, else any form field, else the cookie.
+  function csrfToken() {
+    try {
+      if (typeof window.csrf_token !== "undefined" && window.csrf_token) return window.csrf_token;
+      var f2 = document.querySelector('input[name="csrf_token"]'); if (f2 && f2.value) return f2.value;
+      var m2 = (document.cookie || "").match(/csrf_token=([0-9A-Za-z]+)/); if (m2) return m2[1];
+    } catch (e) {}
+    return "";
+  }
   function api(method, path, body, query) {
     var opts = { method: method, headers: { Accept: "application/json" } };
     if (body != null) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
     var url = PROXY + "?path=" + encodeURIComponent(path); if (query) url += "&" + query;
-    // Unraid's emhttp DROPS any POST/PUT without a csrf_token (empty 200 reply!) — the
-    // reason every write "succeeded" in the UI but never reached docker, from day one.
-    if (method !== "GET" && typeof window.csrf_token !== "undefined") url += "&csrf_token=" + encodeURIComponent(window.csrf_token);
+    // Unraid's emhttp DROPS any POST/PUT without a csrf_token (empty 200 reply!). The
+    // token global is not always present — fall back to form fields and the cookie.
+    var tk2 = method !== "GET" ? csrfToken() : "";
+    if (tk2) url += "&csrf_token=" + encodeURIComponent(tk2);
     return fetch(url, opts).then(function (r) {
       return r.text().then(function (t2) {
         var data = null; try { data = t2 ? JSON.parse(t2) : null; } catch (e) { data = null; }
         if (!r.ok) { var err = new Error((data && data.error) ? data.error : "HTTP " + r.status); err.status = r.status; throw err; }
-        if (method !== "GET" && r.ok && data == null) { var e4 = new Error("leere Antwort der Web-Schicht (csrf_token abgelehnt?)"); e4.status = r.status; throw e4; } // an empty 200 must NEVER pass as success
+        if (method !== "GET" && r.ok && data == null) { var e4 = new Error("leere Antwort der Web-Schicht — " + (tk2 ? "csrf_token GESENDET, trotzdem verworfen" : "KEIN csrf_token im Fenster gefunden")); e4.status = r.status; throw e4; } // an empty 200 must NEVER pass as success
         if (data && typeof data === "object") { try { data.__via = (r.headers.get("server") || "") + "|" + (r.headers.get("via") || "") + "|" + (r.headers.get("cf-cache-status") || "") + "|" + (r.headers.get("x-cache") || ""); } catch (e3) {} }
         return data;
       });
@@ -319,11 +329,11 @@
     // matrix mapped every opaque pixel to ONE flat colour, losing all shading). The
     // strength slider still blends the tinted result back over the original.
     var lum = function (c) { return (0.2126 * c).toFixed(4) + " " + (0.7152 * c).toFixed(4) + " " + (0.0722 * c).toFixed(4); };
-    host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-icon-tint" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">'
-      + '<feColorMatrix in="SourceGraphic" type="matrix" result="flat" values="' + lum(tr) + ' 0 0 ' + lum(tg) + ' 0 0 ' + lum(tb) + ' 0 0 0 0 0 1 0"/>'
-      + '<feComponentTransfer in="flat" result="faded"><feFuncA type="linear" slope="' + s + '"/></feComponentTransfer>'
-      + '<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="faded"/></feMerge>'
-      + '</filter></svg>';
+    // At FULL strength the merge with the original caused a light halo on antialiased
+    // edges (semi-transparent tint over a bright source edge) — use the pure matrix then.
+    var mid = '<feColorMatrix in="SourceGraphic" type="matrix" result="flat" values="' + lum(tr) + ' 0 0 ' + lum(tg) + ' 0 0 ' + lum(tb) + ' 0 0 0 0 0 1 0"/>';
+    if (parseFloat(s) < 0.999) mid += '<feComponentTransfer in="flat" result="faded"><feFuncA type="linear" slope="' + s + '"/></feComponentTransfer><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="faded"/></feMerge>';
+    host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-icon-tint" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">' + mid + '</filter></svg>';
     return true;
   }
   function iconFilter() { return ensureTintFilter() ? "url(#cc-icon-tint)" : ""; }
@@ -524,7 +534,7 @@
           // for real host-interface nets — a custom docker bridge IP is NOT LAN-reachable.
           if (!lanTxt && c && c.ip && isMacvlan(c)) lanTxt = c.ip;
           var g = el("div", "cc-rowbadges cc-netgroup"); g.setAttribute(MARK, "1");
-          if (netTxt) { var netB = badgeInfo("Netzwerk", netTxt, "net"); netB.appendChild(cfgDot(netConfigured(c))); g.appendChild(netB); }
+          if (netTxt) { g.appendChild(badgeInfo("Netzwerk", netTxt, "net")); } // no trailing dot (user call)
           if (ipTxt) g.appendChild(badgeInfo("Container IP", ipTxt, "ip"));
           if (lanTxt) g.appendChild(badgeInfo("LAN IP", lanTxt, "lan"));
           if (portTxt) g.appendChild(badgeInfo("Port", portTxt, "port"));
@@ -1007,7 +1017,13 @@
       if (dv > 0) n.delay_seconds = dv;
       workingPlan[name] = n; refreshChip(anchor, name);
     }
-    [after, delay, probe, port, pathIn, cmdIn, matchIn, pol].forEach(function (n) { n.addEventListener("change", commit); n.addEventListener("input", commit); });
+    [after, delay, probe, port, pathIn, cmdIn, matchIn, pol].forEach(function (n) {
+      // editing ANY plan field while the manage toggle is OFF silently DISCARDED the
+      // input (commit() deletes unmanaged plans) — auto-enable managing on first edit.
+      var arm2 = function () { if (!manageOn) flipManage(); };
+      n.addEventListener("change", function () { arm2(); commit(); });
+      n.addEventListener("input", function () { arm2(); commit(); });
+    });
     probe.addEventListener("change", syncPort);
     // in rainbow mode, colour the editor's checkboxes too (the manage toggle + day
     // toggles are handled in CSS via .cc-pop.cc-rainbow).

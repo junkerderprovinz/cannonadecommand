@@ -56,7 +56,9 @@
     var opts = { method: method, headers: { Accept: "application/json" } };
     if (body != null) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
     var u = PROXY + "?path=" + encodeURIComponent(path);
-    if (method !== "GET" && typeof window.csrf_token !== "undefined") u += "&csrf_token=" + encodeURIComponent(window.csrf_token); // emhttp drops tokenless POSTs
+    var tk = "";
+    try { tk = (typeof window.csrf_token !== "undefined" && window.csrf_token) || (document.querySelector('input[name="csrf_token"]') || {}).value || ((document.cookie || "").match(/csrf_token=([0-9A-Za-z]+)/) || [])[1] || ""; } catch (e) {}
+    if (method !== "GET" && tk) u += "&csrf_token=" + encodeURIComponent(tk); // emhttp drops tokenless POSTs
     return fetch(u, opts).then(function (r) {
       return r.text().then(function (tx) { var d = null; try { d = tx ? JSON.parse(tx) : null; } catch (e) {} if (!r.ok) throw new Error((d && d.error) || ("HTTP " + r.status)); return d; });
     });
