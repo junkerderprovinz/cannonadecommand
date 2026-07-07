@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.37.0">
+  <!ENTITY version   "0.38.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,19 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.38.0
+- The ACTIONS column moved between the application and the version column; the
+  icons flow as a two-row grid (three per row).
+- "..." no longer opens the native list - it expands the REMAINING actions in
+  the same icon style: pause/resume plus every additional link harvested from
+  the page's own registrations (project page, support, donate).
+- Clicking a container ICON no longer opens the native menu: the action icons
+  flash briefly instead, pointing at the new column.
+- Rainbow mode tints the action icons through the palette.
+- Version and network columns are narrower (165/185px), the volumes column is
+  wider (260px, hover marquee kept).
+- The start-plan popup has ONE save button at the bottom.
 
 ### 0.37.0
 - Writes finally reach docker: Unraid's emhttp accepts a POST's csrf_token ONLY as a
@@ -662,7 +675,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>e972ca1a2708eac187d439f2c934a2992fc4c77647990fb98b43f94d00fb1f3c</SHA256>
+  <SHA256>539ff577748df4ca07339fdbf815ab1ac95b0ba65fb3c0b6ad69f1722a91cab8</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
