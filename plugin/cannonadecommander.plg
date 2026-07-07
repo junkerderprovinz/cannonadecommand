@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.45.0">
+  <!ENTITY version   "0.45.1">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,11 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.45.1
+- Fixes the download-limit rule on nf_tables-based iptables: hashlimit in byte
+  mode requires burst to be at least the rate - the burst is now exactly one
+  second of the configured rate. Caught by the new CI netns proof step.
 
 ### 0.45.0
 - DOWNLOAD limits are back - kernel-safe this time. The download cap is pure
@@ -762,7 +767,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>997e508f1115fb617b24a229ee2776e9a6a2550ba7433f6079df09eebf9ac555</SHA256>
+  <SHA256>d77208fcb67eff224a44f32bea0f431567bd0b60d514328390e31d87d111d22c</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

@@ -77,13 +77,10 @@ func dlRateKBs(kbit int) int {
 	return r
 }
 
-// dlBurstKB ≈ 0.5s of data (in kb), floored at 64 so small rates still pass traffic.
+// dlBurstKB = one second of the rate: iptables hashlimit in byte mode REQUIRES
+// burst >= rate ("burst cannot be smaller than <rate>b"), proven by the CI netns step.
 func dlBurstKB(kbit int) int {
-	b := kbit / 16
-	if b < 64 {
-		b = 64
-	}
-	return b
+	return dlRateKBs(kbit)
 }
 
 // iptArgs builds one nsenter+iptables argv inside the netns of `pid`. -w waits for the

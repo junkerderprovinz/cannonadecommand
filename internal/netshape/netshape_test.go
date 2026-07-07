@@ -51,8 +51,8 @@ func TestApply_NoIngress_BadPID(t *testing.T) {
 }
 
 func TestDlRuleSpec(t *testing.T) {
-	got := dlRuleSpec(8000) // 8000 kbit/s → 1000 kb/s, burst 500 kb
-	want := []string{"-m", "hashlimit", "--hashlimit-above", "1000kb/s", "--hashlimit-burst", "500kb", "--hashlimit-name", "ccdl", "-j", "DROP"}
+	got := dlRuleSpec(8000) // 8000 kbit/s → 1000 kb/s; burst = 1s of rate (hashlimit: burst >= rate)
+	want := []string{"-m", "hashlimit", "--hashlimit-above", "1000kb/s", "--hashlimit-burst", "1000kb", "--hashlimit-name", "ccdl", "-j", "DROP"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("dlRuleSpec =\n %v\nwant\n %v", got, want)
 	}
@@ -62,8 +62,8 @@ func TestDlRateAndBurstFloors(t *testing.T) {
 	if r := dlRateKBs(4); r != 1 { // tiny rate must still pass a positive byte rate
 		t.Fatalf("dlRateKBs(4) = %d, want 1", r)
 	}
-	if b := dlBurstKB(100); b != 64 { // burst floored at 64kb
-		t.Fatalf("dlBurstKB(100) = %d, want 64", b)
+	if b := dlBurstKB(100); b != dlRateKBs(100) { // hashlimit requires burst >= rate
+		t.Fatalf("dlBurstKB(100) = %d, want %d (== rate)", b, dlRateKBs(100))
 	}
 }
 
