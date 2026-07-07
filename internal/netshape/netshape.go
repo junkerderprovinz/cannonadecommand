@@ -1,20 +1,22 @@
-// Package netshape applies a per-container EGRESS (upload) rate limit inside the container's
-// own network namespace (entered via nsenter using the container PID), via a tbf shaper on
-// the interface root qdisc. It never touches the host uplink.
+// Package netshape applies per-container bandwidth caps inside the container's own network
+// namespace (entered via nsenter using the container PID). It never touches the host uplink.
 //
-// DOWNLOAD (ingress) shaping was REMOVED. It required an ingress qdisc
-// (`tc qdisc add dev X handle ffff: ingress`), which triggers a KERNEL CRASH in the
-// sch_ingress module (fault at tcx_miniq_inc, "exited with irqs disabled") on some Unraid
-// kernels — freezing the WebUI/SSH and other TCP management services while ping and the
-// already-running containers keep working. Because the monitor re-asserts shaping every tick,
-// that crash could even recur after a reboot. There is also no safe per-container download cap
-// for macvlan containers (br0.x — no host-side veth to shape), so we do NOT create any ingress
-// qdisc at all. Only egress (upload) is shaped, with a plain tbf root qdisc (sch_tbf), which
-// is unaffected by the sch_ingress bug.
+// UPLOAD (egress) is shaped with a plain tbf root qdisc (sch_tbf) on the container's
+// interface.
 //
-// Everything is bounded and safe: a failure just means "no shaping", never broken networking
-// and never a kernel qdisc that can crash the host. Rules are ephemeral (gone on container
-// restart), so the monitor re-applies them every tick (tc qdisc replace is idempotent).
+// DOWNLOAD (ingress) is POLICED with netfilter: an iptables hashlimit rule on the
+// container's INPUT chain drops packets above the byte rate, and TCP backs off to the cap.
+// This is pure netfilter — NO ingress qdisc is EVER created: `tc qdisc add dev X ingress`
+// triggers a KERNEL CRASH in the sch_ingress module (fault at tcx_miniq_inc, "exited with
+// irqs disabled") on some Unraid kernels, freezing WebUI/SSH while ping and running
+// containers keep working. That module stays untouched forever. Netfilter policing also
+// works identically for ipvlan AND macvlan networks (br0.x) — there is no host-side veth
+// to shape, but the rule lives inside the container's own netns, where the traffic always
+// passes the INPUT chain.
+//
+// Everything is bounded and safe: a failure just means "no shaping", never broken
+// networking and never a kernel qdisc that can crash the host. Rules are ephemeral (gone on
+// container restart), so the monitor re-applies them every tick (both paths idempotent).
 package netshape
 
 import (
@@ -27,8 +29,12 @@ import (
 )
 
 // DefaultIface is the in-container interface to shape when none is configured. eth0 is
-// the container's primary NIC in both bridge and macvlan setups.
+// the container's primary NIC in bridge, ipvlan and macvlan setups alike.
 const DefaultIface = "eth0"
+
+// dlChain is our private iptables chain inside the container netns; keeping the rule in
+// an own chain makes apply/remove surgical and visible (`iptables -S CC_DL`).
+const dlChain = "CC_DL"
 
 // ifaceOr returns the chosen interface, or DefaultIface when the (Settings-configured)
 // name is blank. The iface is threaded through every call rather than held in a mutable
@@ -62,13 +68,76 @@ func egressArgs(iface string, pid, kbit int) []string {
 		"rate", strconv.Itoa(kbit)+"kbit", "burst", strconv.Itoa(burstBytes(kbit)), "latency", "50ms")
 }
 
-// Apply sets the EGRESS (upload) cap on `iface` inside the container whose main process is
-// `pid`. The 4th argument (the former ingress/download kbit) is accepted for signature
-// stability but is INTENTIONALLY IGNORED: download shaping needs an ingress qdisc, which
-// crashes some Unraid kernels (see the package doc), so it is never created. egressKbit<=0
-// clears the shaping; Apply(iface,pid,0,0) is the monitor's "unshape" call. Idempotent
-// (tc qdisc replace). A failure just means "no shaping", never broken networking.
-func Apply(iface string, pid, egressKbit, _ int) error {
+// dlRateKBs converts kbit/s to hashlimit's byte rate unit (kb/s), min 1.
+func dlRateKBs(kbit int) int {
+	r := kbit / 8
+	if r < 1 {
+		r = 1
+	}
+	return r
+}
+
+// dlBurstKB ≈ 0.5s of data (in kb), floored at 64 so small rates still pass traffic.
+func dlBurstKB(kbit int) int {
+	b := kbit / 16
+	if b < 64 {
+		b = 64
+	}
+	return b
+}
+
+// iptArgs builds one nsenter+iptables argv inside the netns of `pid`. -w waits for the
+// xtables lock instead of failing on contention.
+func iptArgs(pid int, args ...string) []string {
+	return append([]string{"-t", strconv.Itoa(pid), "-n", "iptables", "-w"}, args...)
+}
+
+// dlRuleSpec is the hashlimit rule body (everything after the chain name). Split out so
+// the -C check and the -A add use the EXACT same spec, and for unit tests.
+func dlRuleSpec(kbit int) []string {
+	return []string{"-m", "hashlimit",
+		"--hashlimit-above", strconv.Itoa(dlRateKBs(kbit)) + "kb/s",
+		"--hashlimit-burst", strconv.Itoa(dlBurstKB(kbit)) + "kb",
+		"--hashlimit-name", "ccdl", "-j", "DROP"}
+}
+
+// applyIngressPolicing installs (or re-asserts) the download cap. Fast path: when the
+// exact rule and the INPUT jump already exist, nothing runs — the monitor calls this
+// every tick.
+func applyIngressPolicing(iface string, pid, kbit int) error {
+	dev := ifaceOr(iface)
+	if run(iptArgs(pid, append([]string{"-C", dlChain}, dlRuleSpec(kbit)...)...)) == nil &&
+		run(iptArgs(pid, "-C", "INPUT", "-i", dev, "-j", dlChain)) == nil {
+		return nil
+	}
+	_ = run(iptArgs(pid, "-N", dlChain)) // "chain exists" is fine
+	if err := run(iptArgs(pid, "-F", dlChain)); err != nil {
+		return err
+	}
+	if err := run(iptArgs(pid, append([]string{"-A", dlChain}, dlRuleSpec(kbit)...)...)); err != nil {
+		return err
+	}
+	if run(iptArgs(pid, "-C", "INPUT", "-i", dev, "-j", dlChain)) != nil {
+		return run(iptArgs(pid, "-I", "INPUT", "-i", dev, "-j", dlChain))
+	}
+	return nil
+}
+
+// clearIngressPolicing removes the download cap (jump, rules, chain). Best-effort:
+// "was never there" is success.
+func clearIngressPolicing(iface string, pid int) error {
+	dev := ifaceOr(iface)
+	_ = ignoreMissing(run(iptArgs(pid, "-D", "INPUT", "-i", dev, "-j", dlChain)))
+	_ = ignoreMissing(run(iptArgs(pid, "-F", dlChain)))
+	return ignoreMissing(run(iptArgs(pid, "-X", dlChain)))
+}
+
+// Apply sets the UPLOAD (egress tbf) and DOWNLOAD (netfilter policing) caps on `iface`
+// inside the container whose main process is `pid`. A value <=0 clears that direction;
+// Apply(iface,pid,0,0) is the monitor's "unshape" call. Both paths are idempotent, and
+// each direction is applied independently — a failure in one still leaves the other
+// correct (the monitor keeps the container tracked either way).
+func Apply(iface string, pid, egressKbit, ingressKbit int) error {
 	if pid <= 0 {
 		return fmt.Errorf("netshape: invalid pid %d", pid)
 	}
@@ -76,21 +145,28 @@ func Apply(iface string, pid, egressKbit, _ int) error {
 		if err := run(egressArgs(iface, pid, egressKbit)); err != nil {
 			return fmt.Errorf("netshape: egress: %w", err)
 		}
-		return nil
-	}
-	if err := clearEgress(iface, pid); err != nil {
+	} else if err := clearEgress(iface, pid); err != nil {
 		return fmt.Errorf("netshape: egress clear: %w", err)
+	}
+	if ingressKbit > 0 {
+		if err := applyIngressPolicing(iface, pid, ingressKbit); err != nil {
+			return fmt.Errorf("netshape: ingress policing: %w", err)
+		}
+	} else if err := clearIngressPolicing(iface, pid); err != nil {
+		return fmt.Errorf("netshape: ingress clear: %w", err)
 	}
 	return nil
 }
 
-// Clear removes the (egress) shaping from the container. Best-effort. It never touches an
-// ingress qdisc — none is ever created (see the package doc).
+// Clear removes the shaping (both directions) from the container. Best-effort.
 func Clear(iface string, pid int) error {
 	if pid <= 0 {
 		return nil
 	}
-	return clearEgress(iface, pid)
+	if err := clearEgress(iface, pid); err != nil {
+		return err
+	}
+	return clearIngressPolicing(iface, pid)
 }
 
 // clearEgress deletes the root tbf (ignoring "nothing to delete").
@@ -98,11 +174,13 @@ func clearEgress(iface string, pid int) error {
 	return ignoreMissing(run(egressArgs(iface, pid, 0)))
 }
 
-// ignoreMissing swallows a tc "no such file/qdisc" error (there was nothing to delete).
+// ignoreMissing swallows tc/iptables "nothing to delete" errors.
 func ignoreMissing(err error) error {
 	if err != nil {
 		m := err.Error()
-		if strings.Contains(m, "No such file or directory") || strings.Contains(m, "RTNETLINK answers: No such file") || strings.Contains(m, "Cannot find") {
+		if strings.Contains(m, "No such file or directory") || strings.Contains(m, "RTNETLINK answers: No such file") ||
+			strings.Contains(m, "Cannot find") || strings.Contains(m, "No chain/target/match by that name") ||
+			strings.Contains(m, "does not exist") {
 			return nil
 		}
 	}
@@ -114,7 +192,7 @@ func run(args []string) error {
 	defer cancel()
 	out, err := exec.CommandContext(ctx, "nsenter", args...).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("nsenter tc: %w: %s", err, strings.TrimSpace(string(out)))
+		return fmt.Errorf("nsenter: %w: %s", err, strings.TrimSpace(string(out)))
 	}
 	return nil
 }

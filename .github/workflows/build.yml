@@ -75,6 +75,22 @@ jobs:
           [ "$(docker inspect -f '{{.HostConfig.Memory}}' cc_plain)" = "2147483648" ] || { echo "first RAM cap FAILED"; exit 1; }
           echo "✅ limits set/raise/remove PROVEN against real dockerd"
 
+      - name: Download policing — real netns (netfilter only, no qdisc)
+        run: |
+          set -e
+          CID=$(docker run -d --rm alpine:3 sleep 120)
+          PID=$(docker inspect -f '{{.State.Pid}}' "$CID")
+          sudo nsenter -t "$PID" -n iptables -w -N CC_DL
+          sudo nsenter -t "$PID" -n iptables -w -A CC_DL -m hashlimit --hashlimit-above 625kb/s --hashlimit-burst 64kb --hashlimit-name ccdl -j DROP
+          sudo nsenter -t "$PID" -n iptables -w -I INPUT -i eth0 -j CC_DL
+          sudo nsenter -t "$PID" -n iptables -w -S CC_DL | grep -q hashlimit
+          sudo nsenter -t "$PID" -n iptables -w -S INPUT | grep -q CC_DL
+          sudo nsenter -t "$PID" -n iptables -w -D INPUT -i eth0 -j CC_DL
+          sudo nsenter -t "$PID" -n iptables -w -F CC_DL
+          sudo nsenter -t "$PID" -n iptables -w -X CC_DL
+          docker rm -f "$CID"
+          echo "✅ download policing (hashlimit in a container netns) PROVEN against a real kernel"
+
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:

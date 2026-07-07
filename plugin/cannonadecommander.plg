@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.44.0">
+  <!ENTITY version   "0.45.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,20 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.45.0
+- DOWNLOAD limits are back - kernel-safe this time. The download cap is pure
+  NETFILTER policing: an iptables hashlimit rule on the container's own INPUT
+  chain (entered via nsenter, like the upload shaper) drops packets above the
+  byte rate and TCP settles onto the cap. NO tc ingress qdisc is ever created -
+  the sch_ingress module that froze the server stays untouched forever, and a
+  unit test guards the download path against ever emitting a tc command.
+- Works identically for ipvlan and macvlan (br0.x) networks: the rule lives
+  inside the container's netns, host veth or not.
+- The bandwidth editor has its download field again (Mbit/s, 0 = unlimited);
+  the BW badge tooltip shows both directions.
+- CI proves the mechanics against a real kernel: a hashlimit rule is applied
+  and verified inside a live container netns on every build.
 
 ### 0.44.0
 - Icon colours are a rainbow-only feature again: with rainbow off every action
@@ -748,7 +762,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>a0948ea9fc658b650b9f97da37d70a0c34cd2784ffcadfb572c8f1c77bc803d3</SHA256>
+  <SHA256>997e508f1115fb617b24a229ee2776e9a6a2550ba7433f6079df09eebf9ac555</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
