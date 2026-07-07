@@ -1379,7 +1379,20 @@
   }
 
   // ───────────────────────── save / apply + toast
-  function collectPlan() { var nodes = []; Object.keys(workingPlan).forEach(function (k) { nodes.push(workingPlan[k]); }); return { nodes: nodes }; }
+  function collectPlan() {
+    var nodes = []; Object.keys(workingPlan).forEach(function (k) { nodes.push(workingPlan[k]); });
+    // A dependency may point at a container the user never opened in the editor — the
+    // daemon validates deps against PLAN NODES and rejected that as "unknown node".
+    // Auto-add an IMPLICIT node for every referenced-but-unmanaged container (no deps,
+    // ready when running, never blocks the chain).
+    var have = {}; nodes.forEach(function (n2) { have[norm(n2.name)] = true; });
+    nodes.slice().forEach(function (n2) {
+      (n2.after || []).forEach(function (dep) {
+        if (!have[norm(dep)]) { have[norm(dep)] = true; nodes.push({ name: dep, after: [], probe: { kind: "running", grace_seconds: 3 }, policy: "continue" }); }
+      });
+    });
+    return { nodes: nodes };
+  }
   function savePlan(thenApply) { flash(t("saving")); api("PUT", "plan", collectPlan()).then(function () { if (thenApply) return apply(); flash(t("saved")); }).catch(function (e) { flash("Error: " + e.message, true); }); }
   // Persist this container's automation (watchdog + schedules) AND the start plan,
   // then optionally run the plan. Config is PUT whole, so other containers' entries
