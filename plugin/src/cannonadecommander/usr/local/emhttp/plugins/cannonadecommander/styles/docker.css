@@ -82,12 +82,12 @@
 /* ACTIONS column: icon buttons, name as tooltip; "…" opens the native menu */
 .cc-actcell { white-space: nowrap; }
 .cc-act-th { font-size: 11px; }
-.cc-actbar { display: grid; grid-template-columns: repeat(3, 27px); gap: 4px; } /* two rows of three */
-.cc-actwide { grid-column: 1 / -1; width: auto; height: 16px; font-size: 12px; letter-spacing: 2px; }
+.cc-actbar { display: flex; flex-direction: column; gap: 4px; }
+.cc-actrow { display: flex; gap: 4px; } /* row 1: webui/console/edit — row 2: restart/pause/stop/more */
 .cc-actoff { opacity: .35; cursor: default; }
 .cc-actoff:hover { background: #2e2e2e; color: #c9c9c9; }
 .cc-actmore { display: none; margin-top: 4px; }
-.cc-actmore.cc-open { display: grid; }
+.cc-actmore.cc-open { display: flex; flex-wrap: wrap; }
 .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }
 @keyframes cc-actflash { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--cc-btn-accent, var(--cc-accent, #2f6feb)); } }
 .cc-actbtn { width: 27px; height: 26px; border-radius: 6px; background: #2e2e2e; color: #c9c9c9; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; user-select: none; transition: background .12s, color .12s; }
@@ -414,8 +414,8 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
    column (8th) visible even in Simple view (overrides Unraid's .advanced hide). */
 /* force the resource cell (8th) visible in BOTH views so our injected CPU/RAM badge
    shows even in Simple view (Unraid marks the cell .advanced and hides it there). */
-.cc-enh.cc-c-res thead tr:last-child th:nth-child(8),
-.cc-enh.cc-c-res #docker_list tr.sortable > td:nth-child(8) { display: table-cell !important; }
+.cc-enh.cc-c-res thead tr:last-child th:nth-child(9),
+.cc-enh.cc-c-res #docker_list tr.sortable > td:nth-child(9) { display: table-cell !important; } /* +1: actions column */
 /* the CPU/RAM values come from our engine badge (.cc-resgroup), so hide Unraid's
    native cpu/mem spans in the resource cell to avoid a duplicate. */
 .cc-enh.cc-c-res #docker_list tr.sortable td span[class^='cpu-'],

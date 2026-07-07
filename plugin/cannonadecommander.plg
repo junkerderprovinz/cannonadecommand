@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.39.0">
+  <!ENTITY version   "0.40.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,23 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.40.0
+- Action icons finally carry the RIGHT targets: the per-container data is now
+  read straight from the row's own onclick attribute (name, template, webui,
+  tailscale-webui, shell, support/project/registry/donate/readme links), parsed
+  positionally against Unraid's real addDockerContainerContext signature.
+  Wrapping the function could never work - the attribute only executes when the
+  icon is clicked, and we block that click ourselves.
+- Edit now navigates exactly like Unraid's own editContainer() (raw template
+  path - URL-encoding broke the edit page). Console passes the container's
+  configured shell.
+- Icon layout as requested: row 1 = WebUI, Konsole, Bearbeiten; row 2 =
+  Neustart, Pause, Stopp, dots. The dots button expands Tailscale-WebUI plus
+  the support/project/registry/donate/readme links as icons with proper names;
+  it greys out when a container has no extra links.
+- CPU/RAM/BW badges are back in the simple view: the column-unhide rule still
+  pointed at the pre-actions-column index.
 
 ### 0.39.0
 - Fixes the v0.38 column chaos: the actions cell was injected AFTER the shifted
@@ -690,7 +707,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>d65af97078fa39c9cfbb85f5bd2308a8f5a9b3a4567a6f6458e5ce1a01d19e56</SHA256>
+  <SHA256>114c804d702ce6e0ad1b79c629438590a7393fd1aa7ff806441bdbf6ae76417d</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

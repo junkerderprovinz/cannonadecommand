@@ -577,60 +577,42 @@
       }
     } catch (e) { /* one bad row must never break Unraid's page */ }
   }
-  // Per-container WebUI + template path + extra links. Two harvest paths:
-  // 1) WRAP the page's own addDockerContainerContext() — Unraid re-registers the
-  //    context menus from AJAX-loaded HTML that jQuery EXECUTES without ever adding
-  //    a <script> node to the DOM, so scanning script tags misses them entirely
-  //    (that is why WebUI/Edit icons were missing on the real box).
-  // 2) a one-time scan of real inline <script> tags as a fallback seed.
-  var ctxMap = {}, ctxScanned = false, ctxRefreshT = null;
-  function harvestVals(vals) {
-    if (!vals.length) return;
-    var entry = { webui: "", xml: "", urls: [] };
-    vals.forEach(function (v) {
-      if (v.indexOf("://") > 0) { if (!entry.webui) entry.webui = v; if (entry.urls.indexOf(v) < 0) entry.urls.push(v); }
-      if (!entry.xml && /\.xml$/i.test(v)) entry.xml = v;
-    });
-    var prev = ctxMap[vals[0]];
-    ctxMap[vals[0]] = entry;
-    // new or richer registration → rebuild that row's action cell shortly, so the
-    // WebUI/Edit icons appear as soon as their data exists
-    if (!prev || prev.webui !== entry.webui || prev.xml !== entry.xml || prev.urls.length !== entry.urls.length) {
-      clearTimeout(ctxRefreshT);
-      ctxRefreshT = setTimeout(function () { try { findRows().forEach(function (r2) { var n2 = rowName(r2); if (n2) injectActionCell(r2, n2, containerByName(n2)); }); } catch (e) {} }, 250);
-    }
-  }
-  function hookCtx() {
-    try {
-      var o = window.addDockerContainerContext;
-      if (typeof o === "function" && !o._ccHooked) {
-        var w = function () { try { harvestVals(Array.prototype.slice.call(arguments).filter(function (v) { return typeof v === "string"; })); } catch (e) {} return o.apply(this, arguments); };
-        w._ccHooked = true; window.addDockerContainerContext = w;
-      }
-    } catch (e) {}
-  }
-  // hook as early as possible and retry for a while — the page script that defines
-  // the global may load after us
-  (function reHook(n2) {
-    hookCtx();
-    if ((!window.addDockerContainerContext || !window.addDockerContainerContext._ccHooked) && n2 > 0) setTimeout(function () { reHook(n2 - 1); }, 250);
-  })(40);
+  // Per-container context data, read STRAIGHT from the row's own onclick
+  // attribute: DockerContainers.php puts addDockerContainerContext('name','image',
+  // 'template',started,paused,update,autostart,'webui','tswebui','shell','id',
+  // 'support','project','registry','donate','readme') on the icon's span.hand.
+  // It is a plain DOM attribute — nothing executes at render time (which is why
+  // wrapping the function harvested NOTHING until the icon was clicked, and we
+  // block that click ourselves). Parse the quoted tokens positionally instead.
   function ctxFor(name) {
-    hookCtx();
-    if (!ctxScanned) {
-      ctxScanned = true;
-      try {
-        Array.prototype.slice.call(document.querySelectorAll("script")).forEach(function (sc) {
-          var txt = sc.textContent || "";
-          var re = /addDockerContainerContext\s*\(([^;]*?)\)\s*;/g, m3;
-          while ((m3 = re.exec(txt))) {
-            var toks = m3[1].match(/'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/g) || [];
-            harvestVals(toks.map(function (q) { return q.slice(1, -1); }));
-          }
-        });
-      } catch (e) {}
-    }
-    return ctxMap[name] || {};
+    var out = { webui: "", tswebui: "", xml: "", shell: "", links: [] };
+    try {
+      var rows = findRows(), row = null;
+      for (var i2 = 0; i2 < rows.length; i2++) { if (rowName(rows[i2]) === name) { row = rows[i2]; break; } }
+      var hand = row ? row.querySelector("td.ct-name span.hand[onclick]") : null;
+      var oc = hand ? (hand.getAttribute("onclick") || "") : "";
+      var m3 = oc.match(/addDockerContainerContext\s*\(([\s\S]*)\)/);
+      if (!m3) return out;
+      var toks = m3[1].match(/'(?:[^'\\]|\\.)*'/g) || [];
+      var q = toks.map(function (s2) { return s2.slice(1, -1).replace(/\\(.)/g, "$1"); });
+      // quoted-token order (the numeric args carry no quotes and drop out):
+      // name image template webui tswebui shell id support project registry donate readme
+      var off = q.length >= 12 ? 0 : -1; // older Unraid builds have no tswebui slot
+      var xml = q[2] || "", webui = q[3] || "", ts = off === 0 ? (q[4] || "") : "";
+      out.shell = q[5 + off] || "";
+      if (webui && webui !== "#") out.webui = webui;
+      if (ts && ts !== "#") out.tswebui = ts;
+      if (/\.xml$/i.test(xml)) out.xml = xml;
+      var L = LANG === "de";
+      [[q[7 + off], "Support", "❓"],
+       [q[8 + off], L ? "Projektseite" : "Project page", "📖"],
+       [q[9 + off], L ? "Mehr Infos" : "More info", "ℹ️"],
+       [q[10 + off], L ? "Spenden" : "Donate", "💰"],
+       [q[11 + off], L ? "Zuerst lesen" : "Read me first", "📕"]].forEach(function (l2) {
+        if (l2[0] && l2[0].indexOf("://") > 0) out.links.push({ url: l2[0], tip: l2[1], glyph: l2[2] });
+      });
+    } catch (e) {}
+    return out;
   }
   // one action-icon button (name shows as tooltip on mouseover)
   function actBtn(glyph, tip, fn) {
@@ -655,32 +637,36 @@
       var hr2 = headerRow();
       if (hr2 && !hr2.querySelector(".cc-act-th")) { var th2 = el("th", "cc-act-th", LANG === "de" ? "Aktionen" : "Actions"); hr2.insertBefore(th2, hr2.children[1] || null); }
       var cx = ctxFor(name);
-      var sig = (cx.webui || "") + "|" + (cx.xml || "") + "|" + (cx.urls || []).length;
+      var sig = cx.webui + "|" + cx.xml + "|" + cx.tswebui + "|" + cx.links.length;
       var old2 = tr.querySelector(".cc-actcell");
-      if (old2) { if (old2.dataset.ccSig === sig) return; old2.remove(); } // rebuild when the harvest caught up
+      if (old2) { if (old2.dataset.ccSig === sig) return; old2.remove(); } // rebuild when the data changed
       var tda = el("td", "cc-actcell"); tda.setAttribute(MARK, "1"); tda.dataset.ccSig = sig;
       tda.style.setProperty("vertical-align", "middle", "important");
       var bar = el("div", "cc-actbar");
       var running = c && c.state === "running", paused = c && c.state === "paused";
-      // ALWAYS a stable 2×3 grid — actions without a target render greyed out
-      bar.appendChild(cx.webui ? actBtn("🌐", "WebUI", function () { window.open(cx.webui, "_blank"); }) : actBtnOff("🌐", LANG === "de" ? "kein WebUI" : "no WebUI"));
-      bar.appendChild(typeof window.openTerminal === "function" ? actBtn(">_", LANG === "de" ? "Konsole" : "Console", function () { window.openTerminal("docker", name); }) : actBtnOff(">_", LANG === "de" ? "keine Konsole" : "no console"));
-      bar.appendChild(actBtn(running ? "⏹" : "▶", running ? t("stop") : t("start"), function () { var cc2 = containerByName(name); doAction(name, cc2 && cc2.state === "running" ? "stop" : "start"); }));
-      bar.appendChild(actBtn("⟳", t("restart"), function () { doAction(name, "restart"); }));
-      bar.appendChild(actBtn(paused ? "▶" : "⏸", paused ? t("resume") : t("pause"), function () { var cc3 = containerByName(name); doAction(name, cc3 && cc3.state === "paused" ? "unpause" : "pause"); }));
-      bar.appendChild(cx.xml ? actBtn("🔧", LANG === "de" ? "Bearbeiten" : "Edit", function () { location.href = "/Docker/UpdateContainer?xmlTemplate=edit:" + encodeURIComponent(cx.xml); }) : actBtnOff("🔧", LANG === "de" ? "kein Template" : "no template"));
-      // "…" expands the remaining actions in the SAME icon style: every additional
-      // harvested link (project page, support, donate…)
-      var more = el("div", "cc-actbar cc-actmore");
-      (cx.urls || []).forEach(function (u2) {
-        if (u2 === cx.webui) return;
-        var host = ""; try { host = new URL(u2).hostname; } catch (e2) {}
-        var g2 = /paypal|ko-?fi|buymeacoffee|donate|liberapay/i.test(u2) ? "💰" : (/github|gitlab/i.test(u2) ? "📖" : "🔗");
-        more.appendChild(actBtn(g2, host || u2, function () { window.open(u2, "_blank"); }));
-      });
-      var dots = actBtn("⋯", LANG === "de" ? "Mehr" : "More", function () { more.classList.toggle("cc-open"); tintAct(more); });
-      dots.classList.add("cc-actwide"); // slim full-width bar UNDER the 2×3 block
-      bar.appendChild(dots);
+      // row 1: WebUI · Konsole · Bearbeiten (user-specified order)
+      var r1 = el("div", "cc-actrow");
+      r1.appendChild(cx.webui ? actBtn("🌐", "WebUI", function () { window.open(cx.webui, "_blank"); }) : actBtnOff("🌐", LANG === "de" ? "kein WebUI" : "no WebUI"));
+      r1.appendChild(typeof window.openTerminal === "function" ? actBtn(">_", LANG === "de" ? "Konsole" : "Console", function () { if (cx.shell) window.openTerminal("docker", name, cx.shell); else window.openTerminal("docker", name); }) : actBtnOff(">_", LANG === "de" ? "keine Konsole" : "no console"));
+      r1.appendChild(cx.xml ? actBtn("🔧", LANG === "de" ? "Bearbeiten" : "Edit", function () {
+        // exactly what Unraid's own editContainer() does — the template path is
+        // appended RAW (encodeURIComponent broke the edit page)
+        var p2 = location.pathname, x2 = p2.indexOf("?"); if (x2 !== -1) p2 = p2.substring(0, x2);
+        location.href = p2 + "/UpdateContainer?xmlTemplate=edit:" + cx.xml;
+      }) : actBtnOff("🔧", LANG === "de" ? "kein Template" : "no template"));
+      // row 2: Neustart · Pause · Stopp · "…" (user-specified order)
+      var r2 = el("div", "cc-actrow");
+      r2.appendChild(actBtn("⟳", t("restart"), function () { doAction(name, "restart"); }));
+      r2.appendChild(paused ? actBtn("▶", t("resume"), function () { doAction(name, "unpause"); })
+        : (running ? actBtn("⏸", t("pause"), function () { doAction(name, "pause"); }) : actBtnOff("⏸", t("pause"))));
+      r2.appendChild(actBtn(running || paused ? "⏹" : "▶", running || paused ? t("stop") : t("start"), function () { var cc2 = containerByName(name); doAction(name, cc2 && (cc2.state === "running" || cc2.state === "paused") ? "stop" : "start"); }));
+      // "…" expands the remaining harvested links in the same icon style
+      var more = el("div", "cc-actrow cc-actmore");
+      if (cx.tswebui) more.appendChild(actBtn("🌐", "Tailscale WebUI", function () { window.open(cx.tswebui, "_blank"); }));
+      cx.links.forEach(function (l2) { more.appendChild(actBtn(l2.glyph, l2.tip, function () { window.open(l2.url, "_blank"); })); });
+      r2.appendChild(more.children.length ? actBtn("⋯", LANG === "de" ? "Mehr" : "More", function () { more.classList.toggle("cc-open"); tintAct(more); })
+        : actBtnOff("⋯", LANG === "de" ? "keine weiteren Links" : "no more links"));
+      bar.appendChild(r1); bar.appendChild(r2);
       tda.appendChild(bar); tda.appendChild(more);
       tintAct(bar);
       tr.insertBefore(tda, tr.children[1] || null); // BETWEEN the name and the version column
