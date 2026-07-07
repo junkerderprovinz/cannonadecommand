@@ -1173,8 +1173,12 @@
             // prefills instantly — the bulk re-inspect below can take seconds.
             limits[name] = { mem_bytes: resp.after_mem, nano_cpus: resp.after_nano || 0, cpuset_cpus: resp.after_cpuset || "" };
             cur = limits[name]; curLoaded = true;
+          } else {
+            // NO verified values in the reply = the tell that either the verify read
+            // failed or the box daemon predates it — say so instead of a bare tick.
+            msg += " · " + (LANG === "de" ? "Rücklese fehlt" : "verify read missing") + (resp && resp.after_error ? ": " + resp.after_error : (LANG === "de" ? " (Engine älter als UI?)" : " (engine older than UI?)"));
           }
-          if (resp && resp.template && resp.template.indexOf("FAILED") >= 0) msg += " · ⚠ " + resp.template; // a failed template mirror = limits vanish on the next Unraid recreate
+          if (resp && resp.template) msg += " · " + resp.template; // ALWAYS show the template-mirror verdict (ok AND failed)
           popOk(msg); flash(t("done")); return loadLimits();
         })
         .then(function () {

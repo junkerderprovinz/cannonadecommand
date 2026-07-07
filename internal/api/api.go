@@ -437,6 +437,11 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 		after["after_nano"] = l.NanoCPUs
 		after["after_cpuset"] = l.CpusetCPUs
 		afterTxt = "mem=" + strconv.FormatInt(l.MemBytes, 10) + " nano=" + strconv.FormatInt(l.NanoCPUs, 10) + " cpuset=" + l.CpusetCPUs
+	} else {
+		// a FAILED verify read must be visible too — a bare "Angewendet" without values
+		// hid exactly this case from the user.
+		after["after_error"] = e.Error()
+		afterTxt = "verify FAILED: " + e.Error()
 	}
 	s.recordOp(req.Name, reqTxt, "ok", afterTxt+" · "+tmplResult)
 	writeJSON(w, http.StatusOK, after)
