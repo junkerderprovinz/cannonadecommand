@@ -76,10 +76,14 @@
     var opts = { method: method, headers: { Accept: "application/json" } };
     if (body != null) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
     var url = PROXY + "?path=" + encodeURIComponent(path); if (query) url += "&" + query;
+    // Unraid's emhttp DROPS any POST/PUT without a csrf_token (empty 200 reply!) — the
+    // reason every write "succeeded" in the UI but never reached docker, from day one.
+    if (method !== "GET" && typeof window.csrf_token !== "undefined") url += "&csrf_token=" + encodeURIComponent(window.csrf_token);
     return fetch(url, opts).then(function (r) {
       return r.text().then(function (t2) {
         var data = null; try { data = t2 ? JSON.parse(t2) : null; } catch (e) { data = null; }
         if (!r.ok) { var err = new Error((data && data.error) ? data.error : "HTTP " + r.status); err.status = r.status; throw err; }
+        if (method !== "GET" && r.ok && data == null) { var e4 = new Error("leere Antwort der Web-Schicht (csrf_token abgelehnt?)"); e4.status = r.status; throw e4; } // an empty 200 must NEVER pass as success
         if (data && typeof data === "object") { try { data.__via = (r.headers.get("server") || "") + "|" + (r.headers.get("via") || "") + "|" + (r.headers.get("cf-cache-status") || "") + "|" + (r.headers.get("x-cache") || ""); } catch (e3) {} }
         return data;
       });

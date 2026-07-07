@@ -55,7 +55,9 @@
   function api(method, path, body) {
     var opts = { method: method, headers: { Accept: "application/json" } };
     if (body != null) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
-    return fetch(PROXY + "?path=" + encodeURIComponent(path), opts).then(function (r) {
+    var u = PROXY + "?path=" + encodeURIComponent(path);
+    if (method !== "GET" && typeof window.csrf_token !== "undefined") u += "&csrf_token=" + encodeURIComponent(window.csrf_token); // emhttp drops tokenless POSTs
+    return fetch(u, opts).then(function (r) {
       return r.text().then(function (tx) { var d = null; try { d = tx ? JSON.parse(tx) : null; } catch (e) {} if (!r.ok) throw new Error((d && d.error) || ("HTTP " + r.status)); return d; });
     });
   }
