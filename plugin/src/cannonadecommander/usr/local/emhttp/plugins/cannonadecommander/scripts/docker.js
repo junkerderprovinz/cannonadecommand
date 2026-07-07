@@ -158,7 +158,7 @@
   // the domain origin (and vice versa) — that is the "my settings do nothing / is
   // this cached?" mystery. Every cc.* write is mirrored into the engine config
   // (ui_settings) and adopted back on every origin.
-  var uiSyncT = null;
+  var uiSyncT = null, uiSeeded = false;
   (function () {
     try {
       var orig = localStorage.setItem.bind(localStorage);
@@ -187,6 +187,9 @@
         config = { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: c.ui_settings || undefined };
         // cross-origin settings: adopt the server-side cc.* mirror, then re-render
         if (adoptUISettings(c.ui_settings)) { applySettings(); if (mode === "list") { applyEnhanceClasses(); reinjectRowBadges(); } else renderGrid(); }
+        // first run against this engine: SEED the server mirror from this browser's
+        // settings, so they survive origin switches and cleared browser data
+        if (!uiSeeded && (!c.ui_settings || !Object.keys(c.ui_settings).length)) { uiSeeded = true; if (Object.keys(collectUISettings()).length) pushUISettings(); }
       }
     }).catch(function () { /* older engine or transient: keep the current config */ });
   }
@@ -1314,12 +1317,7 @@
     // qdisc whose sch_ingress module crashes some Unraid kernels.
     var upIn = rateRow(t("upload"), cur && cur.egress_kbit);
     var dnIn = rateRow(t("download"), cur && cur.ingress_kbit);
-    pop.appendChild(body);
-    var foot = el("div", "cc-pop-foot");
-    foot.textContent = LANG === "de"
-      ? "Upload = tbf-Shaper. Download = Netfilter-Policing im Container (Pakete über der Rate werden verworfen, TCP pendelt sich aufs Limit ein) — KEIN ingress-qdisc, kernel-sicher."
-      : "Upload = tbf shaper. Download = netfilter policing inside the container (packets above the rate are dropped, TCP settles onto the cap) — NO ingress qdisc, kernel-safe.";
-    pop.appendChild(foot);
+    pop.appendChild(body); // no explainer text (user call) — the diagnosis line says what matters
     function readKbit(inp) { var v = parseFloat(String(inp.value).trim().replace(",", ".")); return v > 0 ? Math.round(v * 1000) : 0; }
     var srow = el("div", "cc-pop-row cc-pop-act");
     var rem = el("span", "cc-btn", t("removeLim")); rem.addEventListener("click", function () { saveBandwidth(name, 0, 0); });

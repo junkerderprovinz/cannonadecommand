@@ -396,6 +396,7 @@
     fullConfig = { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: c.ui_settings || undefined };
     configLoaded = true;
     adoptUISettings(c.ui_settings); // render() below shows the adopted values
+    if (!c.ui_settings || !Object.keys(c.ui_settings).length) { if (Object.keys(collectUISettings()).length) pushUISettings(); } // seed the mirror
     // keep the user's in-flight edits if they already started typing; otherwise
     // adopt the loaded values. Either way re-render to enable Save.
     if (!notifyDirty) notify = { unraid: !!fullConfig.notify.unraid, webhook: fullConfig.notify.webhook || "" };

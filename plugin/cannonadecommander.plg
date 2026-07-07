@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.47.0">
+  <!ENTITY version   "0.48.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,18 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.48.0
+- Download limit works with LEGACY iptables too (the box runs v1.8.13 legacy):
+  it enforces a minimum hashlimit burst of ~1.5x the rate, which rejected the
+  rule at higher rates ("burst cannot be smaller than ..." at 40 Mbit). The
+  burst is 2x the rate now, and CI proves the rule at the real 40-Mbit scale.
+- The explainer text in the bandwidth editor is gone - the popup is compact,
+  the diagnosis line carries the useful information.
+- UI settings survive cleared browser data: the engine-side settings mirror is
+  now SEEDED automatically from the browser's existing settings on first load,
+  not only after the next toggle. Clear your browser data - the settings come
+  back from the engine.
 
 ### 0.47.0
 - THE download-limit blocker, found via the new diagnosis line: applying the
@@ -799,7 +811,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>14f8888897b2dabdd8bfa2103148648f43473e40a29fabedb3bbeece9a487d1b</SHA256>
+  <SHA256>8387fe185a378f6ee4b49fe2cdf79b1436cc8081ee2d61c9b4e0223bd2c44ccd</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
