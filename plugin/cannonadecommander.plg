@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.34.0">
+  <!ENTITY version   "0.35.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,19 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.35.0
+- THE actual root cause of "limits never stick", proven on the box: Unraid's emhttp
+  silently DROPS every POST without a csrf_token and answers an empty 200 - so no
+  save from the browser ever reached docker, while every GET (status, lists,
+  versions) worked. All writes now carry the csrf_token, and an empty reply to a
+  write is a hard error instead of a fake "Angewendet". The daemon side was
+  verified healthy: a direct socket POST applied and verified a real cap.
+- The proxy additionally ships as ccapi.php and the scripts call the new name -
+  no stale PHP cache can ever answer again.
+- Popup buttons react on hover again; icon block vertically centred (stray
+  elements below it are hidden); rainbow = REAL rainbow order with 8 colours and
+  a "reset colours" button; forensic raw-reply line when a verify read is missing.
 
 ### 0.34.0
 - THE stale-engine root cause is fixed: the rc script trusted a pidfile that could hold the
@@ -621,7 +634,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>b5097e9525b3f42e14c26f74c638812a31b912070a1bb5ad40744881deb030df</SHA256>
+  <SHA256>7523b8b3f67177af9718e1acb765383aecdb6ae25d5d85721bfcde959bc94079</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
