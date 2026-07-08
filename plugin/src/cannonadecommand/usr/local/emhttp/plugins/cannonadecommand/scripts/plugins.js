@@ -128,15 +128,20 @@
     }
     var ico = tds[0].querySelector(".cc-plugico");
     if (ico) { ico.style.setProperty("width", "64px", "important"); ico.style.setProperty("height", "64px", "important"); }
-    var img = tds[0].querySelector("img, i.fa");
-    if (img && img.tagName === "IMG") {
-      img.style.setProperty("width", "62px", "important");
-      img.style.setProperty("height", "62px", "important");
-      img.style.setProperty("object-fit", "contain", "important"); // letterboxed, never squished
-      img.style.setProperty("vertical-align", "middle", "important");
-      autoFit(img); // even out baked-in icon padding
-      var f2 = ensureTint(); img.style.setProperty("filter", f2 || "none", "important");
-    } else if (img) { img.style.setProperty("font-size", "46px", "important"); var f3 = ensureTint(); img.style.setProperty("filter", f3 || "none", "important"); }
+    // EVERY icon element in the cell — the first-only selector left one logo untinted
+    var f2 = ensureTint();
+    Array.prototype.slice.call(tds[0].querySelectorAll("img, i.fa")).forEach(function (img) {
+      if (img.tagName === "IMG") {
+        img.style.setProperty("width", "62px", "important");
+        img.style.setProperty("height", "62px", "important");
+        img.style.setProperty("object-fit", "contain", "important"); // letterboxed, never squished
+        img.style.setProperty("vertical-align", "middle", "important");
+        autoFit(img); // even out baked-in icon padding
+      } else {
+        img.style.setProperty("font-size", "46px", "important");
+      }
+      img.style.setProperty("filter", f2 || "none", "important");
+    });
     // col 3: author as a badge
     var au = tds[2];
     if (!au.querySelector(".cc-b")) {

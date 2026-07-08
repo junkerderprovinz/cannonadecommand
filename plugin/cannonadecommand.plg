@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
-  <!ENTITY author    "junkerderprovinz">
+  <!ENTITY author    "Junker der Provinz">
   <!ENTITY version   "1.0.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
@@ -111,7 +111,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>7cf8794af7727877b6a104a058723475e8268256a18162756ecf21bf9e47d05f</SHA256>
+  <SHA256>2039c5864614554ceb4db86dbf93e624c5cfcb074cef97f08b5d0a52caeb047e</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
@@ -119,10 +119,11 @@ rm -f &plgPath;/*.txz
 <FILE Run="/bin/bash">
 <INLINE>
 chmod +x &emhttp;/bin/&slug; &emhttp;/scripts/rc.&slug; &emhttp;/event/* 2>/dev/null
-&emhttp;/bin/&slug; banner 2>/dev/null
 &emhttp;/scripts/rc.&slug; restart
 echo ""
-echo "CannonadeCommand &version; installed - open the Docker tab."
+&emhttp;/bin/&slug; banner 2>/dev/null
+echo ""
+echo "CannonadeCommand ist ready!"
 </INLINE>
 </FILE>
 
@@ -141,13 +142,17 @@ echo "CannonadeCommand &version; installed - open the Docker tab."
      package (exact registered name) + files + cached flash .txz; plan/config kept. -->
 <FILE Run="/bin/bash" Method="remove">
 <INLINE>
+# the goodbye ceremony runs FIRST, while the binary still exists
+&emhttp;/bin/&slug; banner 2>/dev/null
+echo ""
+echo "Bye!"
+echo ""
 &emhttp;/scripts/rc.&slug; stop 2>/dev/null
 for p in $(pgrep -f '&emhttp;/bin/&slug;' 2>/dev/null); do kill -9 "$p" 2>/dev/null; done
 pkg=$(ls /var/log/packages/ 2>/dev/null | grep -E "^&slug;(-[^-]+-[^-]+-[^-]+)?$" | head -n1)
 if [ -n "$pkg" ]; then removepkg "$pkg" 2>/dev/null; fi
 rm -rf &emhttp;
 rm -f &plgPath;/*.txz &plgPath;/*.txz.md5 /var/run/&slug;.pid /var/run/&slug;.sock
-echo "CannonadeCommand removed (start plan kept on the flash)."
 exit 0
 </INLINE>
 </FILE>
