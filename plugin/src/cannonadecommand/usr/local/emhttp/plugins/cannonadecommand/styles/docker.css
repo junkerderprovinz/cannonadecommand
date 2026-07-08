@@ -541,6 +541,8 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 
 /* ════════════════ PLUGINS TAB (Docker-tab style takeover) ════════════════ */
 .cc-plug #plugin_list > tr > td { padding-top: 12px !important; padding-bottom: 12px !important; }
+.cc-plug #plugin_list > tr > td:nth-child(2) { padding-right: 14px !important; } /* uniform right edge for the scroll windows */
+.cc-plug #plugin_list > tr > td:nth-child(2) p { margin: 0 !important; }
 .cc-plug thead th:first-child { width: 300px; } /* name column: wide enough, not wasteful */
 .cc-set-tbl, .cc-set-tbl th, .cc-set-tbl td, .cc-set-tbl tr { background: transparent !important; }
 .cc-plug #plugin_list > tr > td:first-child { text-align: left !important; }
@@ -550,7 +552,7 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 .cc-plugsup:hover { filter: brightness(1.18); transform: translateY(-1px); }
 /* the other tabs' tables (install errors etc.): same clean look */
 .cc-plug-lite thead th { text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; }
-.cc-desc { display: block; max-height: 5em; overflow-y: auto; padding-right: 6px; }
+.cc-desc { display: block; max-height: 5em; overflow-y: auto; padding-right: 6px; width: 100%; box-sizing: border-box; margin: 0; scrollbar-gutter: stable; }
 .cc-desc::-webkit-scrollbar { width: 6px; }
 .cc-desc::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
 .cc-desc::-webkit-scrollbar-track { background: transparent; }

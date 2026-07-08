@@ -146,27 +146,28 @@
     // ── col 4 (vid): version badge with the CHANGELOG badge stacked underneath
     // (Docker-tab style); the native info-circle keeps its delegated handler —
     // it is hidden and our badge clicks it.
+    // ── col 4 (vid): the stack is rebuilt after EVERY ajax rewrite —
+    // [Neu <new>] (amber, only with a pending update) → [Version <old>] → [Changelog]
     var vid = tds[3];
+    var col = vid.querySelector(".cc-plugver");
+    if (!col) { col = el("div", "cc-plugver"); vid.appendChild(col); }
     var redV = vid.querySelector("span.red-text:not([data-ccp]), span.orange-text:not([data-ccp])");
     if (redV && redV.textContent.trim()) {
       redV.setAttribute(MARK, "1");
       redV.style.setProperty("display", "none", "important");
-      var col0 = vid.querySelector(".cc-plugver");
-      if (!col0) { col0 = el("div", "cc-plugver"); vid.appendChild(col0); }
       var nb0 = el("span", "cc-b"); nb0.setAttribute(MARK, "1");
       nb0.appendChild(el("span", "cc-b-k", "Neu"));
       nb0.appendChild(el("span", "cc-b-v", redV.textContent.trim()));
       nb0.style.setProperty("background", "#e0912a", "important");
       nb0.style.setProperty("color", "#161616", "important");
-      col0.insertBefore(nb0, col0.firstChild);
+      col.insertBefore(nb0, col.firstChild);
     }
-    if (!vid.querySelector(".cc-b")) {
+    if (!col.querySelector(".cc-verb")) {
       var icon = vid.querySelector("span.fa, i.fa");
       var vtxt = "";
       Array.prototype.slice.call(vid.childNodes).forEach(function (n2) { if (n2.nodeType === 3) { vtxt += n2.textContent; n2.textContent = ""; } });
       vtxt = vtxt.replace(/ /g, " ").trim();
-      var col = el("div", "cc-plugver");
-      if (vtxt) col.appendChild(badge("Version", vtxt, idx + 3));
+      if (vtxt) { var vb = badge("Version", vtxt, idx + 3); vb.classList.add("cc-verb"); col.appendChild(vb); }
       if (icon) {
         icon.style.setProperty("display", "none", "important");
         var ib = el("span", "cc-b"); ib.setAttribute(MARK, "1");
@@ -178,7 +179,6 @@
         ib.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); icon.click(); });
         col.appendChild(ib);
       }
-      if (col.children.length) vid.appendChild(col);
     }
     // ── col 5 (sid): status badge — green "auf dem neuesten Stand", amber update.
     // The cell is REWRITTEN by the update-check ajax, so this re-runs per mutation.
@@ -234,6 +234,10 @@
       desc.style.setProperty("height", "auto", "important");
       desc.style.setProperty("max-height", "5em", "important");
       desc.style.setProperty("overflow-y", "auto", "important");
+      // IDENTICAL geometry in every row, so the scrollbars line up exactly
+      desc.style.setProperty("width", "100%", "important");
+      desc.style.setProperty("box-sizing", "border-box", "important");
+      desc.style.setProperty("margin", "0", "important");
     }
   }
 
