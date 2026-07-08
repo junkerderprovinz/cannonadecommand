@@ -1327,8 +1327,11 @@
   // the fill is enforced INLINE with priority: Unraid's theme CSS beats the
   // stylesheet (the gears looked hollow again on the box)
   function gearFill(lb, set) {
-    lb.style.setProperty("background", set ? "#35d07f" : "#3a3a3a", "important");
-    lb.style.setProperty("color", set ? "#10321f" : "#ececec", "important");
+    var bg = set ? (localStorage.getItem("cc.accent") || "#2f6feb") : "#4a4a4a"; // active = badge accent (user call)
+    var tx = "#f2f2f2";
+    if (set) { var n2 = parseInt(String(bg).replace("#", ""), 16), L2 = 0.299 * (n2 >> 16 & 255) + 0.587 * (n2 >> 8 & 255) + 0.114 * (n2 & 255); tx = L2 > 150 ? "#161616" : "#fff"; }
+    lb.style.setProperty("background", bg, "important");
+    lb.style.setProperty("color", tx, "important");
   }
   function limGear(name, which, set) {
     var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "")); lb.setAttribute(MARK, "1"); lb.textContent = "⚙";

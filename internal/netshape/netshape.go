@@ -26,6 +26,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -94,12 +95,46 @@ func iptArgs(pid int, args ...string) []string {
 	return append([]string{"-t", strconv.Itoa(pid), "-n", "iptables", "-w"}, args...)
 }
 
+// byteRateFactor compensates a legacy-iptables byte-rate bug: legacy builds
+// >= 1.8.12 APPLY a byte rate as BITS — the box (v1.8.13 legacy) enforced
+// exactly 1/8 of the configured cap (30 Mbit set → 3.45 Mbit measured, twice),
+// while the nf_tables build enforces bytes correctly (CI measures 105% of cap).
+// Detected once from `iptables --version`; 8 = compensate, 1 = correct build.
+var (
+	rfOnce         sync.Once
+	byteRateFactor = 1
+)
+
+func rateFactor() int {
+	rfOnce.Do(func() {
+		out, err := exec.Command("iptables", "--version").CombinedOutput()
+		if err != nil {
+			return
+		}
+		v := strings.TrimSpace(string(out))
+		if !strings.Contains(v, "(legacy)") {
+			return
+		}
+		var maj, min, patch int
+		if _, err := fmt.Sscanf(v, "iptables v%d.%d.%d", &maj, &min, &patch); err != nil {
+			return
+		}
+		if maj > 1 || min > 8 || (min == 8 && patch >= 12) {
+			byteRateFactor = 8
+		}
+	})
+	return byteRateFactor
+}
+
 // dlRuleSpec is the hashlimit rule body (everything after the chain name). Split out so
-// the -C check and the -A add use the EXACT same spec, and for unit tests.
+// the -C check and the -A add use the EXACT same spec, and for unit tests. The rate is
+// multiplied by rateFactor() (see above) — on an affected legacy build the rule TEXT
+// shows 8x the target, but the kernel then enforces the intended byte rate.
 func dlRuleSpec(kbit int) []string {
+	f := rateFactor()
 	return []string{"-m", "hashlimit",
-		"--hashlimit-above", strconv.Itoa(dlRateBytes(kbit)) + "b/s",
-		"--hashlimit-burst", strconv.Itoa(dlBurstBytes(kbit)) + "b",
+		"--hashlimit-above", strconv.Itoa(dlRateBytes(kbit)*f) + "b/s",
+		"--hashlimit-burst", strconv.Itoa(dlBurstBytes(kbit)*f) + "b",
 		"--hashlimit-name", "ccdl", "-j", "DROP"}
 }
 

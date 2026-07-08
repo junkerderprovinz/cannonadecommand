@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommander">
   <!ENTITY slug      "cannonadecommander">
   <!ENTITY author    "junkerderprovinz">
-  <!ENTITY version   "0.50.0">
+  <!ENTITY version   "0.51.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommander/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommander/releases/download/v&version;">
@@ -30,6 +30,17 @@
 Dependency-aware, health-gated Docker start orchestration for Unraid: start the
 DB, wait until it is healthy, then start the app; bring up the VPN before the
 containers that route through it. Read-mostly; the only writes are start/stop.
+
+### 0.51.0
+- THE download-limit fix: the box's legacy iptables (v1.8.13) APPLIES byte
+  rates as BITS - the live rule read back exactly 1/8 of the cap, twice
+  (30 Mbit set, 3.45 measured). The daemon detects the iptables flavour once
+  and compensates with factor 8 on affected legacy builds (>= 1.8.12); the
+  nf_tables build stays uncompensated (CI measures 105% of the cap there).
+  Note: the rule TEXT then shows 8x the target - the kernel enforces the
+  intended rate.
+- The CPU/RAM/BW gears fill with the CONFIGURED accent colour (like the
+  badges) when a limit is set; unset gears are a clearly visible grey.
 
 ### 0.50.0
 - Action icons follow the CONFIGURED accent colour, exactly like the badges;
@@ -841,7 +852,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>a316a6595ccd004211b44a7ee4776a20d54c0ee516d4a2653fc4ce9c2bafb211</SHA256>
+  <SHA256>f7a5fb35a2d4f275a5f6e25149b2b74e3ee275bd84bb44636f6073890b12bc3b</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

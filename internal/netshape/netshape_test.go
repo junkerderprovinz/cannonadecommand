@@ -51,6 +51,8 @@ func TestApply_NoIngress_BadPID(t *testing.T) {
 }
 
 func TestDlRuleSpec(t *testing.T) {
+	rfOnce.Do(func() {}) // pin: no detection in tests
+	byteRateFactor = 1
 	got := dlRuleSpec(8000) // 8000 kbit/s → 1,000,000 B/s; burst = 2s of rate; NATIVE byte unit
 	want := []string{"-m", "hashlimit", "--hashlimit-above", "1000000b/s", "--hashlimit-burst", "2000000b", "--hashlimit-name", "ccdl", "-j", "DROP"}
 	if !reflect.DeepEqual(got, want) {
@@ -72,6 +74,18 @@ func TestIptArgs(t *testing.T) {
 	want := []string{"-t", "4242", "-n", "iptables", "-w", "-F", "CC_DL"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("iptArgs = %v, want %v", got, want)
+	}
+}
+
+// On an affected legacy iptables the byte rate is multiplied by 8 so the kernel
+// enforces the intended cap (it applies byte rates as bits there).
+func TestDlRuleSpec_LegacyCompensation(t *testing.T) {
+	rfOnce.Do(func() {})
+	byteRateFactor = 8
+	defer func() { byteRateFactor = 1 }()
+	got := strings.Join(dlRuleSpec(8000), " ")
+	if !strings.Contains(got, "8000000b/s") || !strings.Contains(got, "16000000b") {
+		t.Fatalf("legacy compensation should send 8x the byte rate, got %q", got)
 	}
 }
 
