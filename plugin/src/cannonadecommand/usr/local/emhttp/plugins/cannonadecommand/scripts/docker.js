@@ -772,12 +772,25 @@
       // the gear sits INSIDE the header row's last th: the absolute overlay on the
       // TableContainer got clipped by its overflow and was invisible
       var hr3 = headerRow(); if (!hr3) return;
-      if (hr3.querySelector(".cc-hgear-th2")) return;
       var th3 = hr3.lastElementChild; if (!th3) return;
       try { if (getComputedStyle(th3).position === "static") th3.style.position = "relative"; } catch (e2) {}
-      var g3 = tv ? tv.querySelector(".cc-hgear-bar") : null; if (g3) g3.remove();
-      var hc = document.querySelector(".cc-headctl"); if (hc) hc.remove(); // old overlay
-      th3.appendChild(makeGear("cc-hgear-th2"));
+      if (!hr3.querySelector(".cc-hgear-th2")) {
+        var g3 = tv ? tv.querySelector(".cc-hgear-bar") : null; if (g3) g3.remove();
+        var hc = document.querySelector(".cc-headctl"); if (hc) hc.remove(); // old overlay
+        th3.appendChild(makeGear("cc-hgear-th2"));
+      }
+      // tiny Basic/Advanced switch left of the gear (user call) — flips Unraid's
+      // own hidden checkbox, so cookie + re-render stay native
+      if (!hr3.querySelector(".cc-advmini")) {
+        var am = el("span", "cc-advmini" + (isAdvancedView() ? " cc-advmini-on" : "")); am.setAttribute(MARK, "1");
+        am.title = LANG === "de" ? "Einfache / Erweiterte Ansicht" : "Basic / Advanced view";
+        am.appendChild(el("span", "cc-advmini-knob"));
+        am.addEventListener("click", function (e) {
+          e.preventDefault(); e.stopPropagation();
+          try { var inp9 = document.querySelector("input.advancedview"); if (inp9 && window.jQuery) window.jQuery(inp9).prop("checked", !inp9.checked).trigger("change"); } catch (e9) {}
+        });
+        th3.appendChild(am);
+      }
     } catch (e) {}
   }
   function injectAllRowBadges() {

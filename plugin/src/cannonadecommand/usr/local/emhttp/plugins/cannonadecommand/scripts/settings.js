@@ -255,6 +255,7 @@
     var rrot = el("div", "cc-set-row cc-set-inline");
     rrot.appendChild(el("span", null, T("Farben bei jedem Neuladen rotieren", "Rotate colours on every reload")));
     rrot.appendChild(toggle(get("cc.rainbowrot", "1") !== "0", function (v) { set("cc.rainbowrot", v ? "1" : "0"); }));
+    if (!rainbow) { rrot.style.opacity = ".4"; rrot.style.pointerEvents = "none"; } // only makes sense WITH rainbow
     c1.appendChild(rrot);
     // EVERY rainbow palette colour is editable: click a swatch, adjust it in the
     // embedded picker below; stored as cc.rbpal (JSON), read live by the Docker tab.
@@ -278,20 +279,21 @@
     var rbReset = el("span", "cc-btn cc-btn-sm", T("Farben zurücksetzen", "Reset colours"));
     rbReset.addEventListener("click", function () { del("cc.rbpal"); render(); });
     c1.appendChild(rbrow); c1.appendChild(rbPickWrap); c1.appendChild(rbReset);
+    c1.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var prev = el("div", "cc-set-prev");
     ["net", "ip", "lan", "port"].forEach(function (k) { var b = el("span", "cc-b cc-b-" + k); b.appendChild(elk({ net: "Netzwerk", ip: "IP", lan: "LAN", port: "Port" }[k])); b.appendChild(elv("br0.20")); prev.appendChild(b); });
     prev.id = "cc-set-prev"; c1.appendChild(prev);
     wrap.appendChild(c1);
 
     // ── Container icons ──
-    var c2 = card(T("Container-Icons einfärben", "Colourise container icons"), T("Der Schalter aktiviert die Färbung.", "The switch turns the tint on."));
+    var c2 = card(T("Container-Logos", "Container logos"), T("Der Schalter aktiviert die Färbung.", "The switch turns the tint on."));
     var ihexIn = el("input", "cc-set-hexin"); ihexIn.type = "text"; ihexIn.value = iconcolor || ""; ihexIn.placeholder = "#1f9d55"; ihexIn.maxLength = 7; ihexIn.spellcheck = false;
     var ipick = inlinePicker(/^#[0-9a-f]{6}$/i.test(iconcolor) ? iconcolor : (/^#[0-9a-f]{6}$/i.test(accent) ? accent : "#1f9d55"), function (v) { iconcolor = v; ihexIn.value = v; set("cc.iconcolor", v); syncIconTog(); });
     // A real ON/OFF toggle drives the tint (empty cc.iconcolor = off). The picker/hex
     // set WHICH colour; changing either also switches the tint on.
     function iconOn() { return !!iconcolor; }
     var iconTog = el("span", "cc-set-toggle" + (iconOn() ? " cc-set-toggle-on" : "")); iconTog.setAttribute("role", "switch"); iconTog.setAttribute("tabindex", "0"); iconTog.setAttribute("aria-checked", iconOn() ? "true" : "false"); iconTog.appendChild(el("span", "cc-set-knob"));
-    function syncIconTog() { var on = iconOn(); iconTog.classList.toggle("cc-set-toggle-on", on); iconTog.setAttribute("aria-checked", on ? "true" : "false"); }
+    function syncIconTog() { var on = iconOn(); iconTog.classList.toggle("cc-set-toggle-on", on); iconTog.setAttribute("aria-checked", on ? "true" : "false"); try { tintPrev(); } catch (e9) {} }
     function setIcon(v) { iconcolor = v; ipick._set(v); ihexIn.value = v; set("cc.iconcolor", iconcolor); syncIconTog(); }
     function setIconOn(on) { if (on) { setIcon(ipick._get()); } else { iconcolor = ""; del("cc.iconcolor"); ihexIn.value = ""; syncIconTog(); } }
     iconTog.addEventListener("click", function () { setIconOn(!iconOn()); });
@@ -303,10 +305,26 @@
     var strow = el("div", "cc-set-row");
     strow.appendChild(el("span", "cc-set-rl", T("Intensität", "Strength")));
     var sl = el("input"); sl.type = "range"; sl.min = "10"; sl.max = "100"; sl.value = String(iconstrength); sl.style.flex = "1";
-    sl.addEventListener("input", function () { iconstrength = parseInt(sl.value, 10); set("cc.iconstrength", sl.value); });
+    sl.addEventListener("input", function () { iconstrength = parseInt(sl.value, 10); set("cc.iconstrength", sl.value); try { tintPrev(); } catch (e9) {} });
     strow.appendChild(sl);
     c2.appendChild(strow);
-    c2.appendChild(toggleRow(T("VM-Icons auch einfärben", "Also tint VM icons"), vmicons, function (v) { vmicons = v; set("cc.vmicons", v ? "1" : "0"); }));
+    // (the VM-icons toggle is obsolete — the VM tab has its own style section)
+    c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
+    var tprevWrap = el("div", "cc-set-prev");
+    var tprevImg = el("img"); tprevImg.src = "/plugins/cannonadecommand/images/cannonadecommand.png"; tprevImg.alt = ""; tprevImg.style.width = "62px"; tprevImg.style.height = "62px";
+    tprevWrap.appendChild(tprevImg);
+    function tintPrev() {
+      var hx9 = /^#?([0-9a-f]{6})$/i.exec(iconcolor || "");
+      if (!hx9) { tprevImg.style.filter = "none"; return; }
+      var n9 = parseInt(hx9[1], 16), r9 = (n9 >> 16 & 255) / 255, g9 = (n9 >> 8 & 255) / 255, b9 = (n9 & 255) / 255;
+      var st9 = Math.max(10, iconstrength || 100) / 100, i9 = 1 - st9;
+      function row9(c9, ix9) { var v9 = [0.2126 * c9 * st9, 0.7152 * c9 * st9, 0.0722 * c9 * st9, 0, 0]; v9[ix9] += i9; return v9.join(" "); }
+      var host9 = document.getElementById("cc-set-tintsvg");
+      if (!host9) { host9 = document.createElement("div"); host9.id = "cc-set-tintsvg"; host9.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host9); }
+      host9.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-set-tint" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + row9(r9, 0) + " " + row9(g9, 1) + " " + row9(b9, 2) + ' 0 0 0 1 0"/></filter></svg>';
+      tprevImg.style.filter = "url(#cc-set-tint)";
+    }
+    c2.appendChild(tprevWrap); tintPrev();
     wrap.appendChild(c2);
 
     // (The CPU/RAM diagnostics card is built right before the Bandwidth card below,

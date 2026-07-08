@@ -172,7 +172,15 @@
       if (sib && /readmore|toggle/i.test(sib.className || "")) sib.style.setProperty("display", "none", "important");
       // manually scrollable window (the auto-marquee scrolled unevenly)
     }
-    if (desc) { desc.style.setProperty("color", "#9a9a9a", "important"); desc.style.setProperty("font-size", "12px", "important"); }
+    if (desc) {
+      desc.style.setProperty("color", "#9a9a9a", "important"); desc.style.setProperty("font-size", "12px", "important");
+      // inline, EVERY pass: the readmore lib left inline heights on some rows,
+      // which killed the scroll window there
+      desc.style.setProperty("display", "block", "important");
+      desc.style.setProperty("height", "auto", "important");
+      desc.style.setProperty("max-height", "5em", "important");
+      desc.style.setProperty("overflow-y", "auto", "important");
+    }
   }
 
   function paint() {

@@ -91,6 +91,10 @@
 .cc-actbtn i.fa { font-size: 13px; line-height: 1; color: inherit !important; } /* theme CSS colours .fa directly */
 /* gear inside the header strip (last th) — absolute overlays got clipped */
 .cc-hgear-th2 { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
+.cc-advmini { position: absolute; right: 38px; top: 50%; transform: translateY(-50%); width: 30px; height: 16px; border-radius: 999px; background: #3a3a3a; cursor: pointer; display: inline-block; }
+.cc-advmini-knob { position: absolute; left: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: #cfcfcf; transition: transform .15s; }
+.cc-advmini-on { background: var(--cc-accent, #2f6feb); }
+.cc-advmini-on .cc-advmini-knob { transform: translateX(14px); background: #fff; }
 /* card view: the same action block the list rows carry */
 .cc-card-actbar { padding: 6px 12px 0 12px; }
 /* ShipLog's update-all pill is redundant here — Unraid's own Update-All button
@@ -503,6 +507,16 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 
 /* ── page tabs, EVERYWHERE the stylesheet loads: grey pill, accent-filled when
    active — driven purely by the :checked state, so switching just works. ── */
+/* Unraid 7 renders tabs as <button role=tab aria-selected> in nav.tabs */
+nav.tabs { background: transparent !important; border: none !important; box-shadow: none !important; }
+nav.tabs .tabs-container > button[role=tab] {
+  background: #2a2a2a !important; color: #b5b5b5 !important; border: none !important;
+  box-shadow: none !important; border-radius: 999px !important; padding: 4px 14px !important;
+  text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; cursor: pointer; margin-right: 6px;
+}
+nav.tabs .tabs-container > button[role=tab][aria-selected="true"] {
+  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+}
 div.tab { background: transparent !important; border: none !important; }
 div.tab input[type=radio] + label,
 .tabbed input[type=radio] + label {
@@ -524,8 +538,9 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 .tabs .tab, #tabs .tab { background: transparent !important; border: 0 !important; text-transform: uppercase; letter-spacing: 1.5px; }
 
 /* ════════════════ PLUGINS TAB (Docker-tab style takeover) ════════════════ */
-.cc-plug #plugin_list > tr > td { padding-top: 10px !important; padding-bottom: 10px !important; }
+.cc-plug #plugin_list > tr > td { padding-top: 12px !important; padding-bottom: 12px !important; }
 .cc-plug thead th:first-child { width: 300px; } /* name column: wide enough, not wasteful */
+.cc-set-tbl, .cc-set-tbl th, .cc-set-tbl td, .cc-set-tbl tr { background: transparent !important; }
 .cc-plug #plugin_list > tr > td:first-child { text-align: left !important; }
 .cc-plugname { display: flex; align-items: center; gap: 14px; }
 .cc-plugico { display: flex !important; align-items: center; justify-content: center; flex: none; }
@@ -575,6 +590,7 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 .cc-set-card { background: #222222; border: none; border-radius: 12px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.45); } /* borderless but clearly a card */
 .cc-set-h { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
 .cc-set-card .cc-set-sub { margin-bottom: 12px; }
+.cc-set-card .cc-set-row, .cc-set-card .cc-set-swatches, .cc-set-card .cc-set-lbl { margin-top: 12px; } /* airier cards */
 .cc-set-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; flex-wrap: wrap; }
 .cc-set-rl { min-width: 110px; }
 #cc-settings .cc-seg-btn { padding: 5px 12px; }
