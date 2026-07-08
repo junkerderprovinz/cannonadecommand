@@ -382,18 +382,12 @@
       var row = el("div", "cc-set-row"); row.appendChild(el("span", "cc-set-lbl", T("Docker-Tab-Stil übernehmen", "Adopt the Docker-tab style"))); row.appendChild(tg);
       return row;
     }
-    function applyPluginStyleGate() {
-      var off = localStorage.getItem("cc.styleplugin") === "0";
-      root.style.setProperty("--cc-accent", off ? "#6b7280" : accent);
-      root.style.setProperty("--cc-accent-text", off ? "#fff" : idealText(accent));
-    }
-    var cP = card(T("Stil", "Style"), T("Akzentfarbe und Farbmodus des Docker-Tabs auch auf diesen Einstellungs-Tab anwenden.", "Apply the Docker tab's accent and colour mode to this settings tab too."));
-    cP.appendChild(styleToggle("cc.styleplugin", applyPluginStyleGate));
+    var cP = card(T("Stil", "Style"), T("Unraids Plugins-Tab im Docker-Tab-Stil darstellen: Badges für Autor/Version/Status, Akzent- bzw. Rainbow-Farben, Pill-Buttons.", "Render Unraid's Plugins tab in the Docker-tab style: badges for author/version/status, accent or rainbow colours, pill buttons."));
+    cP.appendChild(styleToggle("cc.styleplugin", null));
     wrapPlugin.appendChild(cP);
     var cV = card(T("Stil", "Style"), T("Akzentfarbe und Icon-Färbung des Docker-Tabs auch auf den VM-Tab anwenden.", "Apply the Docker tab's accent and icon tint to the VMs tab too."));
     cV.appendChild(styleToggle("cc.stylevms", null));
     wrapVms.appendChild(cV);
-    applyPluginStyleGate();
     showSec(parseInt(localStorage.getItem("cc.settab") || "0", 10) || 0);
     paintPrev();
   }

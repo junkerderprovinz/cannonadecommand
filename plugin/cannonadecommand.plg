@@ -64,6 +64,11 @@ Docker tab:
   filled accent gears; card view with the same controls; instant paint from a
   local state cache.
 
+Plugins tab:
+- Unraid's Plugins tab gets the same treatment (toggleable in the settings):
+  author/version badges, a green/amber status pill, tinted icons, pill
+  buttons for check/update/remove - accent or rainbow, in place.
+
 Theming and settings:
 - One accent colour everywhere or rainbow mode (editable palette, rotation);
   automatic black/white text by luminance.
@@ -106,7 +111,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>f47b67ce9bb6b3e12c366715100c9e8bf9a92dc532bd82634e2697dad10051b5</SHA256>
+  <SHA256>6b8ae083a6a44a64dc443a95fd184eb24aa5e01c16822ccab1f27653e011cdd6</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
