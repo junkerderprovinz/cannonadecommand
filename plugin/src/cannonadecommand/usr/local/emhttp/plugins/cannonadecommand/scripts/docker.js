@@ -453,6 +453,7 @@
     try {
       var root = document.documentElement.style;
       var accent = localStorage.getItem("cc.accent"); if (accent) { root.setProperty("--cc-accent", accent); root.setProperty("--cc-accent-text", idealText(accent)); }
+      root.setProperty("--cc-b-radius", ({ pill: "999px", rounded: "6px", square: "0px" })[localStorage.getItem("cc.badgeshape") || "pill"] || "999px");
       var dens = localStorage.getItem("cc.density"); root.setProperty("--cc-density", { compact: "5px", normal: "9px", airy: "14px" }[dens] || "9px");
       // Colour for ShipLog's "update all" button (which we restyle to match our badges,
       // in the toggle row). documentElement so it reaches .ToggleViewMode, which lives

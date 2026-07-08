@@ -252,6 +252,7 @@
       if (!tbs.length) return;
       Array.prototype.slice.call(tbs).forEach(function (t5) { t5.classList.add(t5.querySelector("#plugin_list") ? "cc-plug" : "cc-plug-lite"); });
       var tb = document.querySelector("table.cc-plug") || tbs[0];
+      document.documentElement.style.setProperty("--cc-b-radius", shapeRadius());
       var ths = tb.querySelectorAll("thead th");
       if (ths.length >= 2 && !ths[0].getAttribute(MARK)) {
         ths[0].setAttribute(MARK, "1");
