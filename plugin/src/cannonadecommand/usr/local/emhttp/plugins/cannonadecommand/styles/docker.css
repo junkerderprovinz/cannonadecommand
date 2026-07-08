@@ -26,7 +26,7 @@
 .cc-hgear:hover { color: var(--cc-accent, #2f6feb); }
 .cc-hgear-bar { margin-right: 10px; font-size: 17px; color: var(--cc-accent, #2f6feb); }
 .cc-hgear-th { float: right; }
-.cc-hgear-float { position: absolute; top: 4px; right: 8px; z-index: 20; }
+.cc-hgear-float { display: none !important; } /* fallback gear caused the load flash */
 /* the grid gear is a tile within the card grid, not a floating button */
 .cc-gear-tile { display: flex; align-items: center; justify-content: center; min-height: 90px; border: 1px dashed #333; background: transparent; }
 .cc-gear-tile .cc-hgear { position: static; font-size: 18px; }
@@ -526,6 +526,10 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 .cc-set-heroleft { display: flex; align-items: center; gap: 16px; }
 .cc-set-logo { width: 64px; height: 64px; border-radius: 14px; display: block; }
 .cc-set-claim { color: var(--dim); font-size: 13px; font-style: italic; margin-top: 2px; }
+.cc-set-version { margin-left: auto; text-align: right; align-self: center; }
+.cc-set-tabs { display: flex; gap: 4px; margin: 0 0 18px; border-bottom: 1px solid var(--line); }
+.cc-set-tab { background: transparent; border: none !important; box-shadow: none !important; color: var(--dim); cursor: pointer; padding: 8px 14px; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 2px solid transparent !important; }
+.cc-set-tab-on { color: var(--txt); border-bottom: 2px solid var(--cc-accent, #2f6feb) !important; }
 .cc-set-brand { font-size: 24px; letter-spacing: .2px; } .cc-set-brand b { font-weight: 700; } .cc-set-brand span { font-weight: 400; color: var(--dim); }
 .cc-set-sub { color: var(--dim2); font-size: 12.5px; }
 .cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }

@@ -66,6 +66,7 @@
     return [];
   }
   function apply() {
+    if (ls("cc.stylevms") === "0") return; // style takeover turned off in the settings
     try {
       var f = filterVal(), c = tintColor(), imgs = vmImgs();
       for (var i = 0; i < imgs.length; i++) {

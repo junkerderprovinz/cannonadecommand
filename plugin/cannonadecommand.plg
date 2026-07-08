@@ -28,21 +28,57 @@
 
 <CHANGES>
 ### 1.0.0
-FIRST STABLE RELEASE of CannonadeCommand (every pre-release folded in).
-- Branding: CannonadeCommand, cannon logo, claim "Shoots your commands where
-  you need them - and that very nicely."; the installer migrates configs from
-  the old cannonadecommander name automatically.
-- Start-plan orchestration: dependencies with parallel stages, readiness
-  probes (running/tcp/http/log/exec), failure policies, implicit deps on
-  unmanaged containers, watchdog (rate-capped), time schedules.
-- Live limits: CPU limit, topology-aware pinning (Intel P/E), RAM limit via
-  docker update - CI-proven against real dockerd.
-- Bandwidth: upload tbf shaper + download netfilter policing (never a tc
-  ingress qdisc), ipvlan/macvlan-ready, legacy-iptables x8 compensation,
-  immediate apply, live proof diagnostics; CI measures real throughput.
-- Docker tab: actions column, badges with copyable IPs, card view, accent and
-  rainbow theming, cross-origin settings sync (survives cleared browser data).
-- Settings page: hero with logo + claim, coloured cards, clean page chrome.
+FIRST STABLE RELEASE of CannonadeCommand - every pre-release folded in.
+
+Start-plan orchestration:
+- Dependencies with PARALLEL start stages; a stage is released only when the
+  previous one is READY, not merely running.
+- Readiness probes per container: running (grace), tcp, http, log match, exec.
+- Failure policies per node (abort dependents / continue / degrade).
+- Deps on containers OUTSIDE the plan resolve implicitly at stage build -
+  nothing is persisted, disabling a referenced container sticks.
+- Watchdog (crash/unhealthy auto-restart, hourly rate cap, pause-grace) and
+  per-weekday time schedules; one-click apply; per-container start delay.
+
+Live resource limits:
+- CPU limit, topology-aware CPU pinning (Intel P/E split), RAM limit via
+  docker update, no restart - CI-proven against a real dockerd.
+- Editors read applied values BACK and show a verified line or the exact
+  refusal; diagnostics card with recent limit operations; template dual-write.
+
+Bandwidth (kernel-safe):
+- Upload = tbf shaper, download = pure netfilter policing in the container's
+  own netns - NEVER a tc ingress qdisc (a unit test enforces the download path
+  cannot emit tc at all). Works for bridge, ipvlan and macvlan alike.
+- Legacy-iptables quirks compensated (byte rates applied as bits: x8; minimum
+  burst; explicit byte units); CI measures REAL throughput through the rule.
+- Immediate apply on save; the editor shows the LIVE rule + the monitor's last
+  attempt - a silent no-op is impossible. Interface auto-detected from the
+  container's default route; host-network containers are skipped.
+
+Docker tab:
+- Actions column (WebUI, log, edit, restart, pause, stop/start + "..." link
+  expander), harvested from Unraid's own page data.
+- Badges: state with transition feedback, network, copyable IPs, ports,
+  volumes with hover marquee, update status; live CPU/RAM/BW values with
+  filled accent gears; card view with the same controls; instant paint from a
+  local state cache.
+
+Theming and settings:
+- One accent colour everywhere or rainbow mode (editable palette, rotation);
+  automatic black/white text by luminance.
+- Cross-origin settings sync via the engine config (per-key merge) - settings
+  survive cleared browser data and apply on IP, hostname and domain alike.
+- Settings page: logo hero with claim, three sections (Docker tab / Plugin
+  tab / VM tab) with style-takeover toggles, embedded colour picker,
+  notifications, diagnostics.
+
+Engine and safety:
+- Go daemon on a local unix socket; same-origin PHP proxy with a strict
+  allowlist; csrf token in the form body; only read + lifecycle verbs.
+- Plan/config persist on the flash; the installer migrates configs from the
+  old plugin name automatically.
+- CI: build, lint, and three hardware-truth proofs on every push.
 </CHANGES>
 
 <!-- Pre-install: stop the old daemon and WIPE the plugin dir before installing, so
@@ -70,7 +106,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>3413992db006e8593e9caa1a2d61de2e5a367a60b5fdd4f6ac4b495598bb4d9b</SHA256>
+  <SHA256>f47b67ce9bb6b3e12c366715100c9e8bf9a92dc532bd82634e2697dad10051b5</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

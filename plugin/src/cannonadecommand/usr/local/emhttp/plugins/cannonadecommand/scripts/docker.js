@@ -764,6 +764,7 @@
       var tv = document.querySelector("div.ToggleViewMode");
       if (tv) tv.style.setProperty("display", "none", "important");
       if (mode !== "list") return;
+      if (!findRows().length) return; // no gear before the rows exist (the load flash)
       // the gear sits INSIDE the header row's last th: the absolute overlay on the
       // TableContainer got clipped by its overflow and was invisible
       var hr3 = headerRow(); if (!hr3) return;

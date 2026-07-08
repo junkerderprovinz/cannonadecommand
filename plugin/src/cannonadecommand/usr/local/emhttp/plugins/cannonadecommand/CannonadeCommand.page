@@ -1,6 +1,6 @@
 Menu="Utilities"
 Title="CannonadeCommand"
-Icon="rocket"
+Icon="cannonadecommand.png"
 ---
 <?php
 /* CannonadeCommand settings (Settings > Utilities). Appearance prefs (badge

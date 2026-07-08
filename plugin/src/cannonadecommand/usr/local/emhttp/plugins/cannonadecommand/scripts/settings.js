@@ -150,15 +150,7 @@
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
   var cardN = 0;
   function card(title, sub) {
-    var c = el("div", "cc-set-card");
-    // coloured top bar per card: the accent normally, the rotating palette in rainbow mode
-    var bar = "var(--cc-accent, #2f6feb)";
-    if (localStorage.getItem("cc.rainbow") === "1") {
-      var pal = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
-      try { var jp = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e9) {}
-      bar = pal[cardN++ % pal.length];
-    }
-    c.style.setProperty("border-top", "3px solid " + bar, "important");
+    var c = el("div", "cc-set-card"); // no coloured top bar (user call)
     c.appendChild(el("div", "cc-set-h", title)); if (sub) c.appendChild(el("div", "cc-set-sub", sub)); return c;
   }
   function elk(t) { var s = el("span", "cc-b-k"); s.textContent = t; return s; }
@@ -200,19 +192,35 @@
     hleft.appendChild(htx);
     hero.appendChild(hleft);
     head.appendChild(hero);
-    head.appendChild(el("div", "cc-set-sub", T("Aussehen des Docker-Tab-Panels — wirkt sofort im Docker-Tab (pro Browser gespeichert).", "Look of the Docker-tab panel — applies live in the Docker tab (per browser).")));
     // The RUNNING engine version, always findable HERE (the Docker-tab gear was hard to
     // locate) — an old value after an update = the update didn't take / daemon not restarted.
     var CC_VER = "@@CCVER@@"; if (CC_VER.indexOf("@@") === 0) CC_VER = "dev";
     var verLine = el("div", "cc-set-sub cc-set-version", "UI v" + CC_VER + " · " + T("Engine: verbinde…", "Engine: connecting…"));
-    head.appendChild(verLine);
+    hero.appendChild(verLine); // far right of the hero (user call)
     api("GET", "state").then(function (s) {
       verLine.textContent = "UI v" + CC_VER + " · " + ((s && s.version) ? ("Engine " + String(s.version).replace(/^v/, "v")) + " · " + T("läuft", "running") : T("Engine läuft (Version unbekannt)", "Engine running (version unknown)"));
     }).catch(function (e) { verLine.textContent = "UI v" + CC_VER + " · " + T("Engine NICHT erreichbar", "Engine NOT reachable") + " — " + (e && e.message ? e.message : ""); verLine.style.color = "#d9433f"; });
     root.appendChild(head);
 
+    // the Unraid title strip between the main menu and our hero is redundant here
+    try { Array.prototype.slice.call(document.querySelectorAll("div.title")).forEach(function (tt) { tt.style.setProperty("display", "none", "important"); }); } catch (e9) {}
+    // three sections: Docker Tab | Plugin Tab | VM Tab (minimal tab row)
+    var tabRow = el("div", "cc-set-tabs");
     var wrap = el("div", "cc-set-wrap");
-    root.appendChild(wrap);
+    var wrapPlugin = el("div", "cc-set-wrap"), wrapVms = el("div", "cc-set-wrap");
+    var SECS = [[T("Docker-Tab", "Docker tab"), wrap], [T("Plugin-Tab", "Plugin tab"), wrapPlugin], [T("VM-Tab", "VM tab"), wrapVms]];
+    var tabBtns = [];
+    function showSec(i) {
+      localStorage.setItem("cc.settab", String(i));
+      SECS.forEach(function (sc, j) { sc[1].style.display = j === i ? "" : "none"; tabBtns[j].classList.toggle("cc-set-tab-on", j === i); });
+    }
+    SECS.forEach(function (sc, i) {
+      var b = el("button", "cc-set-tab", sc[0]); b.type = "button";
+      b.addEventListener("click", function () { showSec(i); });
+      tabBtns.push(b); tabRow.appendChild(b);
+    });
+    root.appendChild(tabRow);
+    root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms);
 
     // ── Badges ──
     var c1 = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
@@ -360,7 +368,33 @@
     save6.addEventListener("click", function () { if (configLoaded && !save6.classList.contains("cc-set-disabled")) saveShape(save6); }); c6.appendChild(save6);
     wrap.appendChild(c6);
 
-    root.appendChild(el("div", "cc-set-foot", T("Öffne (oder wechsle zu) den Docker-Tab — die Änderungen erscheinen sofort. Zeitpläne und Watchdog stellst du pro Container über den ⛓-Chip im Docker-Tab ein.", "Open (or switch to) the Docker tab — changes appear immediately. Set schedules and the watchdog per container via the ⛓ chip in the Docker tab.")));
+    // ── Plugin-Tab / VM-Tab sections: adopt the Docker-tab style there too? ──
+    function styleToggle(key, onChange) {
+      var on = localStorage.getItem(key) !== "0";
+      var tg = el("span", "cc-set-toggle" + (on ? " cc-set-toggle-on" : ""), on ? T("An", "On") : T("Aus", "Off"));
+      tg.addEventListener("click", function () {
+        var v = localStorage.getItem(key) !== "0" ? "0" : "1";
+        localStorage.setItem(key, v);
+        tg.classList.toggle("cc-set-toggle-on", v !== "0");
+        tg.textContent = v !== "0" ? T("An", "On") : T("Aus", "Off");
+        if (onChange) onChange();
+      });
+      var row = el("div", "cc-set-row"); row.appendChild(el("span", "cc-set-lbl", T("Docker-Tab-Stil übernehmen", "Adopt the Docker-tab style"))); row.appendChild(tg);
+      return row;
+    }
+    function applyPluginStyleGate() {
+      var off = localStorage.getItem("cc.styleplugin") === "0";
+      root.style.setProperty("--cc-accent", off ? "#6b7280" : accent);
+      root.style.setProperty("--cc-accent-text", off ? "#fff" : idealText(accent));
+    }
+    var cP = card(T("Stil", "Style"), T("Akzentfarbe und Farbmodus des Docker-Tabs auch auf diesen Einstellungs-Tab anwenden.", "Apply the Docker tab's accent and colour mode to this settings tab too."));
+    cP.appendChild(styleToggle("cc.styleplugin", applyPluginStyleGate));
+    wrapPlugin.appendChild(cP);
+    var cV = card(T("Stil", "Style"), T("Akzentfarbe und Icon-Färbung des Docker-Tabs auch auf den VM-Tab anwenden.", "Apply the Docker tab's accent and icon tint to the VMs tab too."));
+    cV.appendChild(styleToggle("cc.stylevms", null));
+    wrapVms.appendChild(cV);
+    applyPluginStyleGate();
+    showSec(parseInt(localStorage.getItem("cc.settab") || "0", 10) || 0);
     paintPrev();
   }
   function saveNotify(btn) {
