@@ -147,6 +147,19 @@
     // (Docker-tab style); the native info-circle keeps its delegated handler —
     // it is hidden and our badge clicks it.
     var vid = tds[3];
+    var redV = vid.querySelector("span.red-text:not([data-ccp]), span.orange-text:not([data-ccp])");
+    if (redV && redV.textContent.trim()) {
+      redV.setAttribute(MARK, "1");
+      redV.style.setProperty("display", "none", "important");
+      var col0 = vid.querySelector(".cc-plugver");
+      if (!col0) { col0 = el("div", "cc-plugver"); vid.appendChild(col0); }
+      var nb0 = el("span", "cc-b"); nb0.setAttribute(MARK, "1");
+      nb0.appendChild(el("span", "cc-b-k", "Neu"));
+      nb0.appendChild(el("span", "cc-b-v", redV.textContent.trim()));
+      nb0.style.setProperty("background", "#e0912a", "important");
+      nb0.style.setProperty("color", "#161616", "important");
+      col0.insertBefore(nb0, col0.firstChild);
+    }
     if (!vid.querySelector(".cc-b")) {
       var icon = vid.querySelector("span.fa, i.fa");
       var vtxt = "";
@@ -169,7 +182,14 @@
     }
     // ── col 5 (sid): status badge — green "auf dem neuesten Stand", amber update.
     // The cell is REWRITTEN by the update-check ajax, so this re-runs per mutation.
-    var sid = tds[4], stEl = sid.querySelector("span, a");
+    var sid = tds[4];
+    var upA = sid.querySelector("a:not([data-ccp]), input[type=button]:not([data-ccp])");
+    if (upA && /update|aktualis/i.test(upA.textContent || upA.value || "")) {
+      upA.setAttribute(MARK, "1"); pill(upA, "#e0912a", "#161616");
+      upA.style.setProperty("cursor", "pointer", "important");
+      upA.style.setProperty("font-weight", "600", "important");
+    }
+    var stEl = sid.querySelector("span, a");
     if (!stEl && sid.textContent.trim() && !/checking|prüf/i.test(sid.textContent)) {
       stEl = el("span", null); while (sid.firstChild) stEl.appendChild(sid.firstChild); sid.appendChild(stEl);
     }
@@ -282,7 +302,7 @@
   function boot() {
     adopt(function () {
       paint();
-      var host = document.getElementById("plugin_list") || document.body;
+      var host = document.getElementById("displaybox") || document.body; // whole page: tab switches + ajax rewrites
       var t3 = null;
       new MutationObserver(function () { clearTimeout(t3); t3 = setTimeout(paint, 250); }).observe(host, { childList: true, subtree: true, characterData: true });
       document.addEventListener("change", function () { setTimeout(paint, 50); }); // tab switches repaint the pills
