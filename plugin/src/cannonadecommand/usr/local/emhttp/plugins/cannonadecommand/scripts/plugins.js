@@ -66,6 +66,33 @@
     return b;
   }
 
+  // CONTENT-AWARE logo sizing: many plugin icons carry baked-in padding, so a
+  // fixed box alone still LOOKS uneven. The alpha bounding box of each icon is
+  // measured once on a canvas and the image scaled so the visible artwork spans
+  // the same size everywhere.
+  var fitCache = {};
+  function autoFit(img) {
+    var src = img.src || ""; if (!src) return;
+    if (fitCache[src] != null) { if (fitCache[src] > 1.01) { img.style.transform = "scale(" + fitCache[src] + ")"; img.style.transformOrigin = "center"; } return; }
+    fitCache[src] = 1; // provisional (avoid rework while loading)
+    try {
+      var probe = new Image(); probe.src = src;
+      probe.onload = function () {
+        try {
+          var N = 48, cv = document.createElement("canvas"); cv.width = cv.height = N;
+          var cx = cv.getContext("2d"); cx.drawImage(probe, 0, 0, N, N);
+          var dpx = cx.getImageData(0, 0, N, N).data;
+          var minX = N, minY = N, maxX = -1, maxY = -1;
+          for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) { if (dpx[(y * N + x) * 4 + 3] > 8) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; } }
+          if (maxX < 0) return;
+          var span = Math.max(maxX - minX + 1, maxY - minY + 1);
+          var k = Math.min(1.6, Math.max(1, (N - 4) / span));
+          fitCache[src] = k;
+          if (k > 1.01) { img.style.transform = "scale(" + k.toFixed(2) + ")"; img.style.transformOrigin = "center"; }
+        } catch (e9) {}
+      };
+    } catch (e9) {}
+  }
   function paintRow(tr, idx) {
     var tds = tr.children;
     if (!tds || tds.length < 6) return;
@@ -107,6 +134,7 @@
       img.style.setProperty("height", "62px", "important");
       img.style.setProperty("object-fit", "contain", "important"); // letterboxed, never squished
       img.style.setProperty("vertical-align", "middle", "important");
+      autoFit(img); // even out baked-in icon padding
       var f2 = ensureTint(); img.style.setProperty("filter", f2 || "none", "important");
     } else if (img) { img.style.setProperty("font-size", "46px", "important"); var f3 = ensureTint(); img.style.setProperty("filter", f3 || "none", "important"); }
     // col 3: author as a badge

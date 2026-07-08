@@ -512,7 +512,8 @@ nav.tabs { background: transparent !important; border: none !important; box-shad
 nav.tabs .tabs-container > button[role=tab] {
   background: #2a2a2a !important; color: #b5b5b5 !important; border: none !important;
   box-shadow: none !important; border-radius: 999px !important; padding: 4px 14px !important;
-  text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; cursor: pointer; margin-right: 6px;
+  text-transform: uppercase !important; letter-spacing: 1.5px !important; font-size: 12px !important;
+  font-weight: 600 !important; cursor: pointer; margin-right: 6px;
 }
 nav.tabs .tabs-container > button[role=tab][aria-selected="true"] {
   background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
@@ -543,7 +544,7 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 .cc-set-tbl, .cc-set-tbl th, .cc-set-tbl td, .cc-set-tbl tr { background: transparent !important; }
 .cc-plug #plugin_list > tr > td:first-child { text-align: left !important; }
 .cc-plugname { display: flex; align-items: center; gap: 14px; }
-.cc-plugico { display: flex !important; align-items: center; justify-content: center; flex: none; background: rgba(255,255,255,.06); border-radius: 12px; } /* identical tile behind every logo — evens out intrinsic padding differences */
+.cc-plugico { display: flex !important; align-items: center; justify-content: center; flex: none; overflow: hidden; } /* no tile (user call); clips the content-aware upscale */
 .cc-plugsup { transition: filter .12s, transform .12s; }
 .cc-plugsup:hover { filter: brightness(1.18); transform: translateY(-1px); }
 /* the other tabs' tables (install errors etc.): same clean look */
@@ -582,7 +583,7 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 .cc-set-claim { color: var(--dim); font-size: 13px; font-style: italic; margin-top: 2px; }
 .cc-set-version { margin-left: auto; text-align: right; align-self: center; }
 .cc-set-tabs { display: flex; gap: 8px; margin: 0 0 18px; }
-.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; color: #b5b5b5 !important; cursor: pointer; padding: 4px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; border-radius: 999px; } /* EXACTLY the nav.tabs pill metrics */
+.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; color: #b5b5b5 !important; cursor: pointer; padding: 4px 14px !important; font-size: 12px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important; border-radius: 999px !important; font-family: inherit !important; } /* typography FORCED — Unraid's button CSS overrode it */
 .cc-set-tab-on { background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important; }
 .cc-set-brand { font-size: 24px; letter-spacing: .2px; } .cc-set-brand b { font-weight: 700; } .cc-set-brand span { font-weight: 400; color: var(--dim); }
 .cc-set-sub { color: var(--dim2); font-size: 12.5px; }
