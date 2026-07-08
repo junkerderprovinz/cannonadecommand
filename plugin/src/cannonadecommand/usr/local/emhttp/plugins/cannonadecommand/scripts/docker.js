@@ -772,16 +772,24 @@
       // the gear sits INSIDE the header row's last th: the absolute overlay on the
       // TableContainer got clipped by its overflow and was invisible
       var hr3 = headerRow(); if (!hr3) return;
-      var th3 = hr3.lastElementChild; if (!th3) return;
+      // the LAST th is the uptime column, which is CSS-HIDDEN in the Basic view —
+      // gear + switch must live in the last VISIBLE th, and move on view change
+      var th3 = hr3.lastElementChild;
+      while (th3 && !th3.offsetParent) th3 = th3.previousElementSibling;
+      if (!th3) return;
       try { if (getComputedStyle(th3).position === "static") th3.style.position = "relative"; } catch (e2) {}
-      if (!hr3.querySelector(".cc-hgear-th2")) {
+      var g9 = hr3.querySelector(".cc-hgear-th2");
+      if (g9 && !g9.offsetParent) { g9.remove(); g9 = null; } // stranded in a hidden th
+      var a9 = hr3.querySelector(".cc-advmini");
+      if (a9 && !a9.offsetParent) { a9.remove(); a9 = null; }
+      if (!g9) {
         var g3 = tv ? tv.querySelector(".cc-hgear-bar") : null; if (g3) g3.remove();
         var hc = document.querySelector(".cc-headctl"); if (hc) hc.remove(); // old overlay
         th3.appendChild(makeGear("cc-hgear-th2"));
       }
       // tiny Basic/Advanced switch left of the gear (user call) — flips Unraid's
       // own hidden checkbox, so cookie + re-render stay native
-      if (!hr3.querySelector(".cc-advmini")) {
+      if (!a9) {
         var am = el("span", "cc-advmini" + (isAdvancedView() ? " cc-advmini-on" : "")); am.setAttribute(MARK, "1");
         am.title = LANG === "de" ? "Einfache / Erweiterte Ansicht" : "Basic / Advanced view";
         am.appendChild(el("span", "cc-advmini-knob"));
