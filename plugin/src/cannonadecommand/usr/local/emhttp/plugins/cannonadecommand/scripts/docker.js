@@ -780,17 +780,18 @@
       if (!th3) return;
       try { if (getComputedStyle(th3).position === "static") th3.style.position = "relative"; } catch (e2) {}
       var g9 = hr3.querySelector(".cc-hgear-th2");
-      if (g9 && !g9.offsetParent) { g9.remove(); g9 = null; } // stranded in a hidden th
       var a9 = hr3.querySelector(".cc-advmini");
       if (a9 && !a9.offsetParent) { a9.remove(); a9 = null; }
-      // the gear lives in the AKTIONEN header (user call: not next to the view
-      // toggle); before the actions th exists it parks in th3 and moves later
-      var thA = hr3.querySelector(".cc-act-th");
-      if (g9 && thA && g9.parentNode !== thA) thA.appendChild(g9);
-      if (!g9) {
+      // the gear lives as a pill at the END of the page tab strip (user call:
+      // in the header it inflated the strip); header th only as a fallback
+      var tc9 = document.querySelector("nav.tabs .tabs-container");
+      if (tc9) {
+        if (g9) g9.remove();
         var g3 = tv ? tv.querySelector(".cc-hgear-bar") : null; if (g3) g3.remove();
         var hc = document.querySelector(".cc-headctl"); if (hc) hc.remove(); // old overlay
-        (thA || th3).appendChild(makeGear("cc-hgear-th2"));
+        if (!tc9.querySelector(".cc-hgear-tabs")) tc9.appendChild(makeGear("cc-hgear-tabs"));
+      } else if (!g9) {
+        th3.appendChild(makeGear("cc-hgear-th2"));
       }
       // tiny Basic/Advanced switch left of the gear (user call) — flips Unraid's
       // own hidden checkbox, so cookie + re-render stay native

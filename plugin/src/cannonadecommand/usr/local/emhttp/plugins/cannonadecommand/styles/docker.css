@@ -91,7 +91,8 @@
 .cc-actbtn i.fa { font-size: 13px; line-height: 1; color: inherit !important; } /* theme CSS colours .fa directly */
 /* gear inside the header strip (last th) — absolute overlays got clipped */
 .cc-hgear-th2 { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: #9a9a9a !important; }
-.cc-act-th .cc-hgear-th2 { position: static; transform: none; margin-left: 8px; vertical-align: middle; } /* inline in the Aktionen header */
+.cc-hgear-tabs { background: #2a2a2a !important; color: #b5b5b5 !important; border: none !important; box-shadow: none !important; padding: 4px 12px !important; margin-left: 6px; cursor: pointer; font-size: 14px; line-height: 1; align-self: center; }
+.cc-hgear-tabs:hover { background: #3a3a3a !important; color: #fff !important; }
 .cc-advmini { position: absolute; right: 38px; top: 50%; transform: translateY(-50%); width: 30px; height: 16px; border-radius: 999px; background: #3a3a3a; cursor: pointer; display: inline-block; }
 .cc-advmini-knob { position: absolute; left: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: #cfcfcf; transition: transform .15s; }
 .cc-advmini-on { background: var(--cc-accent, #2f6feb); }
@@ -569,16 +570,6 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 
 /* badge SHAPE follows the Ansicht setting: pills / rounded rectangles / squares */
 .cc-b, .cc-plug .cc-b { border-radius: var(--cc-b-radius, 999px) !important; }
-/* ...and the CONTROLS follow the same shape (user call): action icons, toggles
-   with their knobs, segment buttons, and every tab pill */
-.cc-actbtn, .cc-seg-btn, .cc-set-tab, nav.tabs .tabs-container > button[role=tab] { border-radius: var(--cc-b-radius, 999px) !important; }
-.cc-set-toggle, .cc-set-knob, .cc-advmini, .cc-advmini-knob { border-radius: var(--cc-b-radius, 999px) !important; }
-/* the remaining badge-shaped elements: the NATIVE update-column badges (up to
-   date / force / changelog / tag / apply pill), the limit gears, the scheduler
-   day chips and the popup buttons */
-.cc-enh td.updatecolumn span.green-text, .cc-enh td.updatecolumn span.orange-text,
-.cc-enh td.updatecolumn a.exec, .cc-enh td.updatecolumn div.advanced span,
-.cc-limbtn, .cc-day, .cc-btn { border-radius: var(--cc-b-radius, 999px) !important; }
 
 /* ════════════════ SETTINGS PAGE (Settings > Utilities) ════════════════ */
 #cc-settings { --bg: #161616; --bg2: #1c1c1c; --line: #2a2a2a; --line2: #333; --txt: #e6e6e6; --dim: #9a9a9a; --dim2: #6f6f6f; color: var(--txt); font: 14px/1.5 "Segoe UI", system-ui, sans-serif; padding-bottom: 40px; }
@@ -672,3 +663,25 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 .cc-set-pickrow { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .cc-set-pick-lg { width: 100%; max-width: 130px; height: 40px; }
 .cc-set-hex { font-family: ui-monospace, "Cascadia Code", monospace; color: var(--dim); font-size: 13px; text-transform: uppercase; letter-spacing: .5px; }
+
+/* ___ the page-bottom action bar: OUR pills, floating above the list while it scrolls ___ */
+div.js-actions { position: sticky; bottom: 0; z-index: 40; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 0; background: rgba(22,22,22,.93); backdrop-filter: blur(6px); border-top: 1px solid #2c2c2c; }
+div.js-actions input[type=button] { background: #2a2a2a !important; color: #b5b5b5 !important; border: none !important; box-shadow: none !important; padding: 6px 16px !important; font-size: 12px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.2px !important; font-family: inherit !important; cursor: pointer; }
+div.js-actions input[type=button]:hover { background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important; }
+
+/* ___ badge-shape MASTER overrides: these must remain the LAST rules in this
+   file, because any later rule with the same !important radius would win
+   (exactly what broke the settings tabs). Covers badges, state badges, action
+   icons, all toggles incl. the native autostart switch, segments, tab pills,
+   the tab-strip gear, ShipLog chips, the native update-column badges, limit
+   gears, day chips, popup buttons and the bottom action bar. ___ */
+html .cc-b, html .cc-badge, html .cc-pill,
+html .cc-actbtn, html .cc-seg-btn, html .cc-set-tab, html nav.tabs .tabs-container > button[role=tab],
+html .cc-set-toggle, html .cc-set-knob, html .cc-advmini, html .cc-advmini-knob,
+html .cc-limbtn, html .cc-day, html .cc-btn, html .cc-hgear-tabs, html .sl-chip,
+html .cc-enh td.updatecolumn span.green-text, html .cc-enh td.updatecolumn span.orange-text,
+html .cc-enh td.updatecolumn a, html .cc-enh td.updatecolumn div.advanced span,
+html .cc-enh #docker_list .switch-button-background, html .ToggleViewMode .switch-button-background,
+html .cc-enh #docker_list .switch-button-background .switch-button-button,
+html .ToggleViewMode .switch-button-background .switch-button-button,
+html div.js-actions input[type=button] { border-radius: var(--cc-b-radius, 999px) !important; }

@@ -249,11 +249,11 @@
     // rainbow toggle: label + switch adjacent (no parenthetical, no far-right spacer)
     var rr = el("div", "cc-set-row cc-set-inline");
     rr.appendChild(el("span", null, T("Regenbogen-Modus", "Rainbow mode")));
-    rr.appendChild(toggle(rainbow, function (v) { rainbow = v; set("cc.rainbow", v ? "1" : "0"); render(); }));
+    rr.appendChild(toggle(rainbow, function (v) { rainbow = v; set("cc.rainbow", v ? "1" : "0"); if (!v) set("cc.rainbowrot", "0"); render(); }));
     c1.appendChild(rr);
     // rotation toggle: on = every tab reload deals a fresh colour mapping; off = stable colours
     var rrot = el("div", "cc-set-row cc-set-inline");
-    rrot.appendChild(el("span", null, T("Farben bei jedem Neuladen rotieren", "Rotate colours on every reload")));
+    rrot.appendChild(el("span", null, T("Automatische Farbenrotation", "Automatic colour rotation")));
     rrot.appendChild(toggle(get("cc.rainbowrot", "1") !== "0", function (v) { set("cc.rainbowrot", v ? "1" : "0"); }));
     if (!rainbow) { rrot.style.opacity = ".4"; rrot.style.pointerEvents = "none"; } // only makes sense WITH rainbow
     c1.appendChild(rrot);
@@ -281,7 +281,8 @@
     c1.appendChild(rbrow); c1.appendChild(rbPickWrap); c1.appendChild(rbReset);
     c1.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var prev = el("div", "cc-set-prev");
-    ["net", "ip", "lan", "port"].forEach(function (k) { var b = el("span", "cc-b cc-b-" + k); b.appendChild(elk({ net: "Netzwerk", ip: "IP", lan: "LAN", port: "Port" }[k])); b.appendChild(elv("br0.20")); prev.appendChild(b); });
+    var pvKinds = { net: ["Netzwerk", "br0.20"], ip: ["IP", "192.168.20.11"], lan: ["LAN", "192.168.20.11"], port: ["Port", "all"], cpu: ["CPU", "2/8"], ram: ["RAM", "4G"], bw: ["BW", "10 MB/s"], plan: ["Start", "#3"] };
+    Object.keys(pvKinds).forEach(function (k) { var b = el("span", "cc-b cc-b-" + k); b.appendChild(elk(pvKinds[k][0])); b.appendChild(elv(pvKinds[k][1])); prev.appendChild(b); });
     prev.id = "cc-set-prev"; c1.appendChild(prev);
     wrap.appendChild(c1);
 
@@ -456,7 +457,7 @@
       // live badge preview, exactly like the Docker section
       cA.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
       var pv = el("div", "cc-set-prev");
-      var pvBadges = [["Netzwerk", "br0.20"], ["IP", "192.168.20.11"], ["LAN", "192.168.20.11"], ["Port", "all"]].map(function (d9) {
+      var pvBadges = [["Netzwerk", "br0.20"], ["IP", "192.168.20.11"], ["LAN", "192.168.20.11"], ["Port", "all"], ["CPU", "2/8"], ["RAM", "4G"], ["BW", "10 MB/s"], ["Start", "#3"]].map(function (d9) {
         var b9 = el("span", "cc-b"); b9.appendChild(el("span", "cc-b-k", d9[0])); b9.appendChild(el("span", "cc-b-v", d9[1])); pv.appendChild(b9); return b9;
       });
       function paintPv() {
@@ -555,7 +556,7 @@
   function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16); var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
   // preview uses the REAL rainbow palette (identical to docker.css) so it matches
   // what the Docker tab actually shows, with auto-contrast text.
-  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var kinds = { net: "#1f9d55", ip: "#2f6feb", lan: "#e0912a", port: "#8b5cf6" }; Array.prototype.slice.call(p.children).forEach(function (b) { var k = (b.className.match(/cc-b-(\w+)/) || [])[1]; var c = rainbow ? kinds[k] : accent; b.style.background = c; b.style.color = idealText(c); }); }
+  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var kinds = { net: "#1f9d55", ip: "#2f6feb", lan: "#e0912a", port: "#8b5cf6", cpu: "#d9433f", ram: "#0ea5a4", bw: "#f97316", plan: "#e05299" }; Array.prototype.slice.call(p.children).forEach(function (b) { var k = (b.className.match(/cc-b-(\w+)/) || [])[1]; var c = rainbow ? kinds[k] : accent; b.style.background = c; b.style.color = idealText(c); }); }
   // live-highlight the preset swatch that matches the current accent (no re-render)
   function syncSwOn() { var a = (accent || "").toLowerCase(); Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-sw")).forEach(function (sw) { sw.classList.toggle("cc-set-sw-on", (sw.dataset.c || "").toLowerCase() === a); }); }
   function thc(t) { var e = el("th", null, t); return e; }
