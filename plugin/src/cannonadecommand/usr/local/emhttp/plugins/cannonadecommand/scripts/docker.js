@@ -642,7 +642,7 @@
   // wrapping the function harvested NOTHING until the icon was clicked, and we
   // block that click ourselves). Parse the quoted tokens positionally instead.
   function ctxFor(name) {
-    var out = { webui: "", tswebui: "", xml: "", shell: "", links: [] };
+    var out = { webui: "", tswebui: "", xml: "", shell: "", image: "", id: "", links: [] };
     try {
       var rows = findRows(), row = null;
       for (var i2 = 0; i2 < rows.length; i2++) { if (rowName(rows[i2]) === name) { row = rows[i2]; break; } }
@@ -656,6 +656,7 @@
       // name image template webui tswebui shell id support project registry donate readme
       var off = q.length >= 12 ? 0 : -1; // older Unraid builds have no tswebui slot
       var xml = q[2] || "", webui = q[3] || "", ts = off === 0 ? (q[4] || "") : "";
+      out.image = q[1] || ""; out.id = q[6 + off] || ""; // for the native remove dialog
       out.shell = q[5 + off] || "";
       if (webui && webui !== "#") out.webui = webui;
       if (ts && ts !== "#") out.tswebui = ts;
@@ -731,6 +732,9 @@
     r2.appendChild(actBtn(running || paused ? "fa-stop" : "fa-play", running || paused ? t("stop") : t("start"), function () { var cc2 = containerByName(name); doAction(name, cc2 && (cc2.state === "running" || cc2.state === "paused") ? "stop" : "start"); }));
     var more = el("div", "cc-actrow cc-actmore");
     if (typeof window.openTerminal === "function") more.appendChild(actBtn("fa-terminal", LANG === "de" ? "Konsole" : "Console", function () { if (cx.shell) window.openTerminal("docker", name, cx.shell); else window.openTerminal("docker", name); }));
+    // REMOVE lives here (deliberately behind the second click) — Unraid's own
+    // confirm dialog via rmContainer(name, image, id)
+    if (typeof window.rmContainer === "function" && cx.id) more.appendChild(actBtn("fa-trash", LANG === "de" ? "Entfernen" : "Remove", function () { window.rmContainer(name, cx.image, cx.id); }));
     if (cx.tswebui) more.appendChild(actBtn("fa-globe", "Tailscale WebUI", function () { window.open(cx.tswebui, "_blank"); }));
     cx.links.forEach(function (l2) { more.appendChild(actBtn(l2.glyph, l2.tip, function () { window.open(l2.url, "_blank"); })); });
     r2.appendChild(more.children.length ? actBtn("fa-ellipsis-h", LANG === "de" ? "Mehr" : "More", function () { more.classList.toggle("cc-open"); tintAct(more); })

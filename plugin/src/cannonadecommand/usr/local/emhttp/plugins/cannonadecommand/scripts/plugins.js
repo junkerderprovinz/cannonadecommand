@@ -20,6 +20,21 @@
   function accent() { return ls("cc.accent") || "#2f6feb"; }
   function colorFor(i) { return ls("cc.rainbow") === "1" ? pal()[i % pal().length] : accent(); }
 
+  // the Docker-tab icon tint, standalone: luminance x target colour via an SVG
+  // feColorMatrix, blended by cc.iconstrength; imgs get filter: url(#cc-plug-tint)
+  function ensureTint() {
+    var hex = /^#?([0-9a-f]{6})$/i.exec(ls("cc.iconcolor") || "");
+    if (!hex) return "";
+    var n = parseInt(hex[1], 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+    var st = Math.max(10, parseInt(ls("cc.iconstrength") || "100", 10)) / 100;
+    var lr = 0.2126, lg = 0.7152, lb = 0.0722, i2 = 1 - st;
+    function row(c, idx) { var v = [lr * c * st, lg * c * st, lb * c * st, 0, 0]; v[idx] += i2; return v.join(" "); }
+    var vals = row(r, 0) + " " + row(g, 1) + " " + row(b, 2) + " 0 0 0 1 0";
+    var host = document.getElementById("cc-plug-tint-svg");
+    if (!host) { host = document.createElement("div"); host.id = "cc-plug-tint-svg"; host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
+    host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-plug-tint" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>';
+    return "url(#cc-plug-tint)";
+  }
   function pill(node, bg, tx) {
     node.style.setProperty("background", bg, "important");
     node.style.setProperty("color", tx || idealText(bg), "important");
@@ -51,11 +66,11 @@
     // out; the description keeps its own column.
     if (!tds[0].getAttribute(MARK)) {
       tds[0].setAttribute(MARK, "1");
-      var nameEl = tds[1].querySelector("strong, b");
+      var nameEl = tds[1].querySelector("h1, h2, h3") || tds[1].querySelector("strong, b");
       var nm = nameEl ? nameEl.textContent.trim() : ((tds[3].id || "").replace(/^vid-/, ""));
-      if (nameEl) nameEl.remove();
+      if (nameEl) nameEl.remove(); // no doubled name in the description column
       var sup = null;
-      Array.prototype.slice.call(tds[1].querySelectorAll("a")).forEach(function (a2) { if (/support/i.test(a2.textContent)) sup = a2; });
+      Array.prototype.slice.call(tds[1].querySelectorAll("a")).forEach(function (a2) { if (/support|hilfe|foren|forum/i.test(a2.textContent)) sup = a2; });
       var box = el("div", "cc-plugname");
       var icoWrap = el("div", "cc-plugico");
       while (tds[0].firstChild) icoWrap.appendChild(tds[0].firstChild);
@@ -74,8 +89,13 @@
       tds[0].appendChild(box);
     }
     var img = tds[0].querySelector("img, i.fa");
-    if (img && img.tagName === "IMG") { img.style.setProperty("width", "62px", "important"); img.style.setProperty("height", "62px", "important"); img.style.setProperty("vertical-align", "middle", "important"); }
-    else if (img) { img.style.setProperty("font-size", "48px", "important"); }
+    if (img && img.tagName === "IMG") {
+      img.style.setProperty("width", "62px", "important");
+      img.style.setProperty("height", "62px", "important");
+      img.style.setProperty("object-fit", "contain", "important"); // no squishing
+      img.style.setProperty("vertical-align", "middle", "important");
+      var f2 = ensureTint(); img.style.setProperty("filter", f2 || "none", "important");
+    } else if (img) { img.style.setProperty("font-size", "48px", "important"); var f3 = ensureTint(); img.style.setProperty("filter", f3 || "none", "important"); }
     // col 3: author as a badge
     var au = tds[2];
     if (!au.querySelector(".cc-b")) {
@@ -109,6 +129,9 @@
     // ── col 5 (sid): status badge — green "auf dem neuesten Stand", amber update.
     // The cell is REWRITTEN by the update-check ajax, so this re-runs per mutation.
     var sid = tds[4], stEl = sid.querySelector("span, a");
+    if (!stEl && sid.textContent.trim() && !/checking|prüf/i.test(sid.textContent)) {
+      stEl = el("span", null); while (sid.firstChild) stEl.appendChild(sid.firstChild); sid.appendChild(stEl);
+    }
     if (stEl && !stEl.getAttribute(MARK)) {
       var t2 = sid.textContent.toLowerCase();
       if (/up.to.date|aktuell|neuesten stand|current/.test(t2)) { pill(stEl, "#1f9d55", "#fff"); stEl.setAttribute(MARK, "1"); }
@@ -116,11 +139,15 @@
     }
     var lnk = sid.querySelector("a"); if (lnk) lnk.style.setProperty("color", "inherit", "important");
     // ── col 6: the remove action as a red badge
-    var rm = tds[5].querySelector("a");
+    var rm = tds[5].querySelector("a, input[type=button], input[type=submit], button");
     if (rm && !rm.getAttribute(MARK)) {
       rm.setAttribute(MARK, "1");
       pill(rm, "#d9433f", "#fff");
-      var rt = rm.textContent.trim(); if (!rt) rm.textContent = LANG === "de" ? "Entfernen" : "Remove";
+      rm.style.setProperty("cursor", "pointer", "important");
+      rm.style.setProperty("letter-spacing", "0", "important");
+      rm.style.setProperty("text-transform", "none", "important");
+      rm.style.setProperty("font-weight", "600", "important");
+      if (rm.tagName === "INPUT" && !rm.value.trim()) rm.value = LANG === "de" ? "Entfernen" : "Remove";
     }
     // col 2: description in its own column, dimmed but readable
     var desc = tds[1].querySelector(".desc_readmore");
@@ -140,6 +167,17 @@
       }
       var rows = document.querySelectorAll("#plugin_list > tr");
       Array.prototype.slice.call(rows).forEach(function (tr, i) { try { paintRow(tr, i); } catch (e) {} });
+      // the page TABS become filled pills — no frames, minimal
+      Array.prototype.slice.call(document.querySelectorAll(".tabs label, #tabs label, div.tabs > div")).forEach(function (lb2) {
+        var inp = document.getElementById(lb2.htmlFor || "") || lb2.querySelector("input");
+        var act = !!(inp && inp.checked) || lb2.classList.contains("active");
+        lb2.style.setProperty("background", act ? accent() : "transparent", "important");
+        lb2.style.setProperty("color", act ? idealText(accent()) : "#9a9a9a", "important");
+        lb2.style.setProperty("border", "none", "important");
+        lb2.style.setProperty("box-shadow", "none", "important");
+        lb2.style.setProperty("border-radius", "999px", "important");
+        lb2.style.setProperty("padding", "4px 14px", "important");
+      });
       // the Check/Update/Remove buttons in the tab bar become accent pills
       Array.prototype.slice.call(document.querySelectorAll("#checkall input, #updateall input, #removeall input")).forEach(function (b2, i2) {
         if (!b2.getAttribute(MARK)) { pill(b2, colorFor(i2 + 6)); b2.style.setProperty("cursor", "pointer", "important"); b2.setAttribute(MARK, "1"); }
@@ -165,6 +203,7 @@
       var host = document.getElementById("plugin_list") || document.body;
       var t3 = null;
       new MutationObserver(function () { clearTimeout(t3); t3 = setTimeout(paint, 250); }).observe(host, { childList: true, subtree: true, characterData: true });
+      document.addEventListener("change", function () { setTimeout(paint, 50); }); // tab switches repaint the pills
       [600, 1500, 3500].forEach(function (ms) { setTimeout(paint, ms); });
     });
   }
