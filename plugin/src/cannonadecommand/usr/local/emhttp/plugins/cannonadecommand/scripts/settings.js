@@ -370,16 +370,10 @@
 
     // ── Plugin-Tab / VM-Tab sections: adopt the Docker-tab style there too? ──
     function styleToggle(key, onChange, lbl) {
-      var on = localStorage.getItem(key) !== "0";
-      var tg = el("span", "cc-set-toggle" + (on ? " cc-set-toggle-on" : ""), on ? T("An", "On") : T("Aus", "Off"));
-      tg.addEventListener("click", function () {
-        var v = localStorage.getItem(key) !== "0" ? "0" : "1";
-        localStorage.setItem(key, v);
-        tg.classList.toggle("cc-set-toggle-on", v !== "0");
-        tg.textContent = v !== "0" ? T("An", "On") : T("Aus", "Off");
-        if (onChange) onChange();
-      });
-      var row = el("div", "cc-set-row"); row.appendChild(el("span", "cc-set-lbl", lbl || T("Docker-Tab-Stil übernehmen", "Adopt the Docker-tab style"))); row.appendChild(tg);
+      // the SAME knob switch as everywhere else (the text-in-pill variant looked wrong)
+      var row = el("div", "cc-set-row cc-set-inline");
+      row.appendChild(el("span", null, lbl || T("Docker-Tab-Stil übernehmen", "Adopt the Docker-tab style")));
+      row.appendChild(toggle(localStorage.getItem(key) !== "0", function (v) { localStorage.setItem(key, v ? "1" : "0"); if (onChange) onChange(); }));
       return row;
     }
     var cP = card(T("Stil", "Style"), T("Unraids Plugins-Tab im Docker-Tab-Stil darstellen: Badges für Autor/Version/Status, Akzent- bzw. Rainbow-Farben, Pill-Buttons.", "Render Unraid's Plugins tab in the Docker-tab style: badges for author/version/status, accent or rainbow colours, pill buttons."));

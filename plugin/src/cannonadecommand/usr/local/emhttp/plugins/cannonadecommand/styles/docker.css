@@ -501,6 +501,20 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
    (Startverzögerung), so hide it here — label text + input share one span#<id>-wait. */
 .cc-enh #docker_list span[id$="-wait"] { display: none !important; }
 
+/* ── page tabs, EVERYWHERE the stylesheet loads: grey pill, accent-filled when
+   active — driven purely by the :checked state, so switching just works. ── */
+div.tab { background: transparent !important; border: none !important; }
+div.tab input[type=radio] + label,
+.tabbed input[type=radio] + label {
+  background: #2a2a2a !important; color: #b5b5b5 !important; border: none !important;
+  box-shadow: none !important; border-radius: 999px !important; padding: 4px 14px !important;
+  text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; cursor: pointer;
+}
+div.tab input[type=radio]:checked + label,
+.tabbed input[type=radio]:checked + label {
+  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+}
+
 /* ── minimal, clean page chrome on OUR pages (this stylesheet only loads there):
    Unraid's title bars / tab strips go flat — no background block, a thin base
    line, spaced uppercase labels. ── */
@@ -519,7 +533,10 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 .cc-plugsup:hover { filter: brightness(1.18); transform: translateY(-1px); }
 /* the other tabs' tables (install errors etc.): same clean look */
 .cc-plug-lite thead th { text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; }
-.cc-desc { display: block; max-height: 3.9em; overflow: hidden; }
+.cc-desc { display: block; max-height: 5em; overflow-y: auto; padding-right: 6px; }
+.cc-desc::-webkit-scrollbar { width: 6px; }
+.cc-desc::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
+.cc-desc::-webkit-scrollbar-track { background: transparent; }
 .cc-descin { display: block; }
 .cc-plug-lite tbody td { padding-top: 6px !important; padding-bottom: 6px !important; }
 .cc-plugico { display: flex; align-items: center; justify-content: center; min-width: 64px; }
@@ -554,8 +571,8 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 .cc-set-tab-on { background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important; }
 .cc-set-brand { font-size: 24px; letter-spacing: .2px; } .cc-set-brand b { font-weight: 700; } .cc-set-brand span { font-weight: 400; color: var(--dim); }
 .cc-set-sub { color: var(--dim2); font-size: 12.5px; }
-.cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
-.cc-set-card { background: var(--bg2); border: none; border-radius: 12px; padding: 16px 18px; } /* borderless, clean */
+.cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; } /* auto-fill: identical arrangement on every tab */
+.cc-set-card { background: #222222; border: none; border-radius: 12px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.45); } /* borderless but clearly a card */
 .cc-set-h { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
 .cc-set-card .cc-set-sub { margin-bottom: 12px; }
 .cc-set-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; flex-wrap: wrap; }

@@ -170,14 +170,7 @@
       desc.appendChild(inn);
       var sib = desc.nextElementSibling; // the chevron the readmore lib left behind
       if (sib && /readmore|toggle/i.test(sib.className || "")) sib.style.setProperty("display", "none", "important");
-      desc.addEventListener("mouseenter", function () {
-        var dist = inn.scrollHeight - desc.clientHeight;
-        if (dist > 4) {
-          inn.style.transition = "transform " + Math.max(1.5, dist / 28) + "s linear";
-          inn.style.transform = "translateY(-" + dist + "px)";
-        }
-      });
-      desc.addEventListener("mouseleave", function () { inn.style.transition = "transform .3s ease"; inn.style.transform = "translateY(0)"; });
+      // manually scrollable window (the auto-marquee scrolled unevenly)
     }
     if (desc) { desc.style.setProperty("color", "#9a9a9a", "important"); desc.style.setProperty("font-size", "12px", "important"); }
   }
@@ -197,26 +190,10 @@
       }
       var rows = document.querySelectorAll("#plugin_list > tr");
       Array.prototype.slice.call(rows).forEach(function (tr, i) { try { paintRow(tr, i); } catch (e) {} });
-      // the page TABS become filled pills — no frames, minimal. Unraid builds
-      // differ, so every plausible strip is covered (.tabs-container is the one
-      // the Plugins page itself appends its buttons to).
-      var tabEls = document.querySelectorAll("div.tab > label, .tabbed label, .tabs label, #tabs label, .tabs-container > a, .tabs-container .tab, [role=tab]");
-      Array.prototype.slice.call(tabEls).forEach(function (lb2) {
-        if (lb2.querySelector("input[type=button], input[type=submit]")) return; // not the action buttons
-        var txt2 = (lb2.textContent || "").trim(); if (!txt2 || txt2.length > 40) return;
-        var inp = lb2.control || document.getElementById(lb2.htmlFor || "") || lb2.querySelector("input[type=radio]") || (lb2.previousElementSibling && lb2.previousElementSibling.type === "radio" ? lb2.previousElementSibling : null);
-        var act = !!(inp && inp.checked) || /(^|\s)(active|current|selected)(\s|$)/.test(lb2.className) || lb2.getAttribute("aria-selected") === "true";
-        // inactive tabs get a GREY fill so they still read as tabs
-        lb2.style.setProperty("background", act ? accent() : "#2a2a2a", "important");
-        lb2.style.setProperty("color", act ? idealText(accent()) : "#b5b5b5", "important");
-        lb2.style.setProperty("border", "none", "important");
-        lb2.style.setProperty("box-shadow", "none", "important");
-        lb2.style.setProperty("border-radius", "999px", "important");
-        lb2.style.setProperty("padding", "4px 14px", "important");
-        lb2.style.setProperty("text-transform", "uppercase", "important");
-        lb2.style.setProperty("letter-spacing", "1.5px", "important");
-        lb2.style.setProperty("font-size", "12px", "important");
-      });
+      // the page TABS are styled by pure CSS (input:checked + label in docker.css)
+      // — the accent lives in :root vars so the CSS follows the configured colour
+      document.documentElement.style.setProperty("--cc-accent", accent());
+      document.documentElement.style.setProperty("--cc-accent-text", idealText(accent()));
       // Install-Plugin tab: clean dark input + accent pill button + accent checkbox
       Array.prototype.slice.call(document.querySelectorAll("form[name=plugin_install]")).forEach(function (fm) {
         var ti = fm.querySelector("input[type=text]");
