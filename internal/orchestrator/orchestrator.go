@@ -13,12 +13,37 @@ import (
 	"github.com/junkerderprovinz/cannonadecommander/internal/model"
 )
 
+// withImplicitDeps appends an IMPLICIT node (ready-when-running, never blocking)
+// for every dependency that references a container OUTSIDE the plan. The UI used
+// to persist such nodes into the stored plan, which made the referenced container
+// look "managed" forever — it re-appeared after every save of a dependent editor
+// and could not be disabled. Now the dependency just works without ever touching
+// the user's stored plan.
+func withImplicitDeps(plan model.Plan) model.Plan {
+	known := make(map[string]bool, len(plan.Nodes))
+	for _, n := range plan.Nodes {
+		known[n.Name] = true
+	}
+	out := plan
+	out.Nodes = append([]model.Node{}, plan.Nodes...)
+	for _, n := range plan.Nodes {
+		for _, d := range n.After {
+			if d != "" && !known[d] {
+				known[d] = true
+				out.Nodes = append(out.Nodes, model.Node{Name: d, Probe: model.Probe{Kind: "running", GraceSeconds: 3}, Policy: "continue"})
+			}
+		}
+	}
+	return out
+}
+
 // TopoStages groups a plan's nodes into ordered start stages via Kahn's
 // algorithm. Every node in a stage has all its dependencies satisfied by an
 // earlier stage, so the stage can be started in parallel. Within a stage, plan
 // order is preserved for stable output. It returns an error if a node lists an
 // unknown dependency, a name is duplicated, or the graph contains a cycle.
 func TopoStages(plan model.Plan) ([][]string, error) {
+	plan = withImplicitDeps(plan)
 	known := make(map[string]bool, len(plan.Nodes))
 	for _, n := range plan.Nodes {
 		if known[n.Name] {

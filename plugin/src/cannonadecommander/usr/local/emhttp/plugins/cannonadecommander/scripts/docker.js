@@ -684,21 +684,25 @@
   function actBtnOff(icon, tip) { var b = el("span", "cc-actbtn cc-actoff", ""); b.title = tip; b.appendChild(el("i", "fa " + icon)); return b; }
   // rainbow: every action icon takes a rotating palette colour (falls back to grey);
   // disabled placeholders stay grey
-  // Colours are a RAINBOW-ONLY feature: rainbow off = neutral grey + white glyph.
-  // The colour is computed DIRECTLY from the palette (no CSS-var indirection — var
-  // scoping/timing made the result unreliable) and the glyph gets auto black/white
-  // per luminance, exactly like the badge text.
+  // Icons follow THE CONFIGURED ACCENT COLOUR, exactly like the badges (user call):
+  // normal mode = cc.accent, rainbow mode = the rainbow palette. cc.actcolors = "0"
+  // turns the colours off (grey buttons) via the gear menu. Colours are computed
+  // directly (no CSS-var indirection) with auto black/white glyphs.
   function tintAct(bar) {
-    var on = localStorage.getItem("cc.rainbow") === "1";
+    var colorsOn = localStorage.getItem("cc.actcolors") !== "0";
+    var rb = localStorage.getItem("cc.rainbow") === "1";
     var pal = RB_PAL;
     try { var jp = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e2) {}
     var off = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
     Array.prototype.slice.call(bar.querySelectorAll(".cc-actbtn")).forEach(function (b2, i2) {
-      var bg = "#2e2e2e", tx = b2.classList.contains("cc-actoff") ? "#7a7a7a" : "#e9e9e9";
-      if (on && !b2.classList.contains("cc-actoff")) {
-        bg = pal[(i2 + off) % pal.length];
-        var n2 = parseInt(String(bg).slice(1), 16), L2 = 0.299 * (n2 >> 16 & 255) + 0.587 * (n2 >> 8 & 255) + 0.114 * (n2 & 255);
-        tx = L2 > 150 ? "#161616" : "#fff";
+      var bg = "#2e2e2e", tx = "#7a7a7a";
+      if (!b2.classList.contains("cc-actoff")) {
+        tx = "#e9e9e9";
+        if (colorsOn) {
+          bg = rb ? pal[(i2 + off) % pal.length] : (localStorage.getItem("cc.accent") || "#2f6feb");
+          var n2 = parseInt(String(bg).replace("#", ""), 16), L2 = 0.299 * (n2 >> 16 & 255) + 0.587 * (n2 >> 8 & 255) + 0.114 * (n2 & 255);
+          tx = L2 > 150 ? "#161616" : "#fff";
+        }
       }
       b2.style.setProperty("background", bg, "important");
       b2.style.setProperty("color", tx, "important");
@@ -984,6 +988,16 @@
     bRon.addEventListener("click", function () { setRb(true); });
     segR.appendChild(bRoff); segR.appendChild(bRon);
     var rrow = el("div", "cc-menu-row cc-menu-plain"); rrow.appendChild(segR); m.appendChild(rrow);
+    // icon colours on/off (default on) — base palette normally, rainbow palette in rainbow mode
+    var segC = el("div", "cc-seg");
+    var acOn = localStorage.getItem("cc.actcolors") !== "0";
+    var bCoff = el("button", "cc-seg-btn" + (!acOn ? " cc-seg-on" : ""), LANG === "de" ? "Icons grau" : "Icons grey");
+    var bCon = el("button", "cc-seg-btn" + (acOn ? " cc-seg-on" : ""), LANG === "de" ? "Icons farbig" : "Icons coloured");
+    function setAc(v) { localStorage.setItem("cc.actcolors", v ? "1" : "0"); closeMenu(); applySettings(); if (mode === "list") { applyEnhanceClasses(); reinjectRowBadges(); } else renderGrid(); }
+    bCoff.addEventListener("click", function () { setAc(false); });
+    bCon.addEventListener("click", function () { setAc(true); });
+    segC.appendChild(bCoff); segC.appendChild(bCon);
+    var crow = el("div", "cc-menu-row cc-menu-plain"); crow.appendChild(segC); m.appendChild(crow);
     var frow = el("div", "cc-menu-row cc-menu-plain");
     var filter = el("input", "cc-filter"); filter.type = "text"; filter.placeholder = t("filter"); filter.value = filterText;
     filter.addEventListener("input", function () { filterText = norm(filter.value); applyFilter(); });
@@ -1310,8 +1324,15 @@
   // cpuset string ("0-3,6") <-> a sorted array of core indices, for the pin grid.
   function cpusetToSet(str) { var out = []; String(str || "").split(",").forEach(function (p) { p = p.trim(); var m = /^(\d+)-(\d+)$/.exec(p); if (m) { for (var i = +m[1]; i <= +m[2]; i++) out.push(i); } else if (/^\d+$/.test(p)) out.push(+p); }); return out; }
   function setToCpuset(arr) { arr = arr.slice().sort(function (a, b) { return a - b; }); var parts = [], i = 0; while (i < arr.length) { var j = i; while (j + 1 < arr.length && arr[j + 1] === arr[j] + 1) j++; parts.push(i === j ? String(arr[i]) : arr[i] + "-" + arr[j]); i = j + 1; } return parts.join(","); }
+  // the fill is enforced INLINE with priority: Unraid's theme CSS beats the
+  // stylesheet (the gears looked hollow again on the box)
+  function gearFill(lb, set) {
+    lb.style.setProperty("background", set ? "#35d07f" : "#3a3a3a", "important");
+    lb.style.setProperty("color", set ? "#10321f" : "#ececec", "important");
+  }
   function limGear(name, which, set) {
     var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "")); lb.setAttribute(MARK, "1"); lb.textContent = "⚙";
+    gearFill(lb, set);
     lb.title = (which === "cpu" ? t("cpuLimit") : t("ramLimit")) + " · " + (set ? t("cfgSet") : t("cfgUnset"));
     lb.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openLimits(lb, name, which); });
     return lb;
@@ -1319,6 +1340,7 @@
   // the Bandwidth gear (third resource line) — opens the egress-limit editor.
   function bwGear(name, set) {
     var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "")); lb.setAttribute(MARK, "1"); lb.textContent = "⚙";
+    gearFill(lb, set);
     lb.title = t("bandwidth") + " · " + (set ? t("cfgSet") : t("cfgUnset"));
     lb.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openBandwidth(lb, name); });
     return lb;
@@ -1376,7 +1398,7 @@
       if ((wantUp && !hasUp) || (wantDn && !hasDn)) {
         popError(new Error((LANG === "de" ? "Limit greift NICHT · " : "limit NOT active · ") + line + " · " + (st.qdisc || "") + " " + (st.filter || "")));
       } else {
-        popOk("✓ " + line);
+        popOk("✓ " + line + (st.filter && st.filter.indexOf("-A") >= 0 ? " · " + st.filter.split("\n").filter(function (l2) { return l2.indexOf("hashlimit") >= 0; }).join(" ") : ""));
       }
     }).catch(function () {});
   }
@@ -1608,11 +1630,8 @@
     // Auto-add an IMPLICIT node for every referenced-but-unmanaged container (no deps,
     // ready when running, never blocks the chain).
     var have = {}; nodes.forEach(function (n2) { have[norm(n2.name)] = true; });
-    nodes.slice().forEach(function (n2) {
-      (n2.after || []).forEach(function (dep) {
-        if (!have[norm(dep)]) { have[norm(dep)] = true; nodes.push({ name: dep, after: [], probe: { kind: "running", grace_seconds: 3 }, policy: "continue" }); }
-      });
-    });
+    // deps on unmanaged containers are handled IMPLICITLY by the daemon now —
+    // nothing extra is persisted, so disabling a container in the plan STICKS
     return { nodes: nodes };
   }
   function savePlan(thenApply) { flash(t("saving")); api("PUT", "plan", collectPlan()).then(function () { if (thenApply) return apply(); flash(t("saved")); }).catch(function (e) { flash("Error: " + e.message, true); }); }

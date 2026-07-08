@@ -81,9 +81,12 @@ func TestTopoStages(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "unknown dependency",
-			plan:    model.Plan{Nodes: []model.Node{node("a", "ghost")}},
-			wantErr: true,
+			// a dependency OUTSIDE the plan becomes an IMPLICIT node (ready-when-
+			// running) instead of an error — the UI no longer persists such nodes,
+			// so disabling a referenced container in the plan sticks.
+			name: "unknown dependency becomes an implicit node",
+			plan: model.Plan{Nodes: []model.Node{node("a", "ghost")}},
+			want: [][]string{{"ghost"}, {"a"}},
 		},
 		{
 			name:    "duplicate node",
