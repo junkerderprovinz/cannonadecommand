@@ -358,7 +358,7 @@
     var c4 = card(T("Ansicht", "View"), null);
     c4.appendChild(segRow(T("Standard-Ansicht", "Default view"), [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")]], view, function (v) { view = v; set("cc.view", v); }));
     c4.appendChild(segRow(T("Zeilenhöhe", "Row density"), [["compact", T("kompakt", "compact")], ["normal", "normal"], ["airy", T("luftig", "airy")]], density, function (v) { density = v; set("cc.density", v); }));
-    function applyShape() { var m9 = { pill: "999px", rounded: "6px", square: "0px" }; root.style.setProperty("--cc-b-radius", m9[get("cc.badgeshape", "pill")] || "999px"); }
+    function applyShape() { var m9 = { pill: "999px", rounded: "6px", square: "0px" }; var r9 = m9[get("cc.badgeshape", "pill")] || "999px"; root.style.setProperty("--cc-b-radius", r9); document.documentElement.style.setProperty("--cc-b-radius", r9); }
     c4.appendChild(segRow(T("Badge-Form", "Badge shape"), [["pill", "Pills"], ["rounded", T("abgerundet", "rounded")], ["square", T("eckig", "square")]], get("cc.badgeshape", "pill"), function (v) { set("cc.badgeshape", v); applyShape(); }));
     applyShape();
     wrap.appendChild(c4);
