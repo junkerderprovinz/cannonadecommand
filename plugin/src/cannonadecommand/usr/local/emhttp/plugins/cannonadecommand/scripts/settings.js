@@ -208,7 +208,20 @@
     var tabRow = el("div", "cc-set-tabs");
     var wrap = el("div", "cc-set-wrap");
     var wrapPlugin = el("div", "cc-set-wrap"), wrapVms = el("div", "cc-set-wrap");
-    var SECS = [[T("Docker-Tab", "Docker tab"), wrap], [T("Plugin-Tab", "Plugin tab"), wrapPlugin], [T("VM-Tab", "VM tab"), wrapVms]];
+    var wrapMain = el("div", "cc-set-wrap");
+    // Bereiche: enable/disable each area CannonadeCommand enhances
+    (function () {
+      var c = card(T("Bereiche", "Areas"), T("Aktiviere, welche Bereiche CannonadeCommand verschönert. Änderungen greifen nach dem Neuladen der jeweiligen Seite.", "Choose which areas CannonadeCommand enhances. Changes take effect after reloading the relevant page."));
+      [["cc.enable.header", T("Hauptmenüleiste", "Main menu bar"), "0"], ["cc.enable.docker", T("Docker-Tab", "Docker tab"), "1"], ["cc.enable.plugins", T("Plugin-Tab", "Plugins tab"), "1"], ["cc.enable.vms", T("VM-Tab", "VMs tab"), "1"]].forEach(function (a) {
+        var row = el("div", "cc-set-row cc-set-inline");
+        row.appendChild(el("span", null, a[1]));
+        var cur = localStorage.getItem(a[0]);
+        row.appendChild(toggle(cur == null ? a[2] !== "0" : cur !== "0", function (v) { localStorage.setItem(a[0], v ? "1" : "0"); }));
+        c.appendChild(row);
+      });
+      wrapMain.appendChild(c);
+    })();
+    var SECS = [[T("Bereiche", "Areas"), wrapMain], [T("Docker-Tab", "Docker tab"), wrap], [T("Plugin-Tab", "Plugin tab"), wrapPlugin], [T("VM-Tab", "VM tab"), wrapVms]];
     var tabBtns = [];
     function showSec(i) {
       localStorage.setItem("cc.settab", String(i));
@@ -220,7 +233,7 @@
       tabBtns.push(b); tabRow.appendChild(b);
     });
     root.appendChild(tabRow);
-    root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms);
+    root.appendChild(wrapMain); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms);
 
     // ── Badges ──
     var c1 = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));

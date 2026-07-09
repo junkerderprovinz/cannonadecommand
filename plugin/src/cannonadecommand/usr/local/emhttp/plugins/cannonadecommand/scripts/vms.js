@@ -126,6 +126,7 @@
     }, 8000);
   }
   function boot() {
+    if (localStorage.getItem("cc.enable.vms") === "0") return; // area disabled in CC settings
     try {
       arm();
       window.addEventListener("storage", function (e) { try { if (!dead && e && e.key && e.key.indexOf("cc.") === 0) apply(); } catch (e2) {} });

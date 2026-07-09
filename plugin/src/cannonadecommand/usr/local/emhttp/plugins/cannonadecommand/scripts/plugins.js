@@ -375,6 +375,7 @@
   }
 
   function boot() {
+    if (localStorage.getItem("cc.enable.plugins") === "0") return; // area disabled in CC settings
     adopt(function () {
       paint();
       var host = document.getElementById("displaybox") || document.body; // whole page: tab switches + ajax rewrites

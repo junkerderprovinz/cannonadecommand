@@ -1,0 +1,16 @@
+Menu="Buttons:95"
+Title="CannonadeCommand"
+Icon="cannonadecommand.png"
+Link="cc-hdr-hook"
+---
+<?php
+/* CannonadeCommand GLOBAL hook. Registered under Menu="Buttons" so Unraid loads
+   this page's assets into the <head> of EVERY page: sheets/CannonadeCommand.Header.css
+   (auto-injected because the basename matches this .page) restyles the main menu
+   bar, and the script below loads the tiny header enhancer. Link="cc-hdr-hook"
+   makes Navigation renders a bare <div> instead of adding a visible CC icon to the
+   bar - we only want to RESTYLE the existing icons, not add one. All styling is
+   gated behind html.cc-header-on, which the enhancer only sets when the user
+   enables the "Hauptmenueleiste" area in CC settings. */
+?>
+<script defer src="<?autov('/plugins/cannonadecommand/scripts/header.js')?>"></script>

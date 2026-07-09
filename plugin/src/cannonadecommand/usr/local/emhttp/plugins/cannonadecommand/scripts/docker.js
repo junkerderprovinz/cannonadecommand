@@ -1937,6 +1937,7 @@
     try { var bad = daemonUp === false; Array.prototype.slice.call(document.querySelectorAll(".cc-hgear")).forEach(function (g) { g.classList.toggle("cc-hgear-down", bad); }); } catch (e) {}
   }
   function boot() {
+    if (localStorage.getItem("cc.enable.docker") === "0") return; // area disabled in CC settings
     try {
       applySettings();
       // INSTANT first paint: the last known engine state seeds the badges right away;
