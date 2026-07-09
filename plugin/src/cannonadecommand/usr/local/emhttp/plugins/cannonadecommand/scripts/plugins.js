@@ -108,7 +108,7 @@
         if (maxX < 0) { normCache[src] = "1"; return; }
         var bw = maxX - minX + 1, bh = maxY - minY + 1;
         // re-render the cropped content, centered, filling 88% of the output square
-        var OUT = 128, avail = OUT * 0.88, k = Math.min(avail / bw, avail / bh);
+        var OUT = 128, avail = OUT * 0.82, k = Math.min(avail / bw, avail / bh);
         var out = document.createElement("canvas"); out.width = out.height = OUT;
         var ocx = out.getContext("2d"); ocx.imageSmoothingEnabled = true; ocx.imageSmoothingQuality = "high";
         var tw = bw * k, th = bh * k;
@@ -154,20 +154,27 @@
     }
     var ico = tds[0].querySelector(".cc-plugico");
     if (ico) { ico.style.setProperty("width", "64px", "important"); ico.style.setProperty("height", "64px", "important"); }
-    // EVERY icon element in the cell — the first-only selector left one logo untinted
+    // ALL THREE icon types Unraid emits in this cell: <img> (PNG), <i class="fa …">
+    // (FontAwesome) AND <i class="icon-… list"> (Unraid's own glyph font). The old
+    // "img, i.fa" selector missed the icon-* glyphs entirely and sized fa (46px) vs
+    // img (62px) differently — exactly why the logos came out different sizes.
     var f2 = ensureTint();
-    Array.prototype.slice.call(tds[0].querySelectorAll("img, i.fa")).forEach(function (img) {
-      if (img.tagName === "IMG") {
-        img.style.setProperty("width", "62px", "important");
-        img.style.setProperty("height", "62px", "important");
-        img.style.setProperty("object-fit", "contain", "important"); // letterboxed, never squished
-        img.style.setProperty("vertical-align", "middle", "important");
-        img.style.removeProperty("transform"); // superseded by content normalization
-        normalizeIcon(img); // crop to content bbox -> every logo the SAME visual size
+    Array.prototype.slice.call(tds[0].querySelectorAll("img, i")).forEach(function (el2) {
+      el2.style.setProperty("width", "56px", "important");
+      el2.style.setProperty("height", "56px", "important");
+      el2.style.setProperty("vertical-align", "middle", "important");
+      if (el2.tagName === "IMG") {
+        el2.style.setProperty("object-fit", "contain", "important");
+        el2.style.removeProperty("transform"); // superseded by content normalization
+        normalizeIcon(el2); // crop to content bbox -> uniform visual size
       } else {
-        img.style.setProperty("font-size", "46px", "important");
+        // font glyph (fa- or icon-): size + center to visually match the images
+        el2.style.setProperty("font-size", "50px", "important");
+        el2.style.setProperty("line-height", "56px", "important");
+        el2.style.setProperty("text-align", "center", "important");
+        el2.style.setProperty("display", "inline-block", "important");
       }
-      img.style.setProperty("filter", f2 || "none", "important");
+      el2.style.setProperty("filter", f2 || "none", "important");
     });
     // col 3: author as a badge
     var au = tds[2];

@@ -781,7 +781,9 @@
       var hr0 = headerRow();
       if (hr0) {
         var r0 = hr0.getBoundingClientRect();
-        var bl = Math.max(0, Math.round(r0.left)), br = Math.max(0, Math.round(window.innerWidth - r0.right));
+        // right edge: never cover Unraid's fixed red scroll arrows (.back_to_top /
+        // .move_to_end at right:12-40px, ~40px glyphs) -> keep at least 88px clear
+        var bl = Math.max(0, Math.round(r0.left)), br = Math.max(88, Math.round(window.innerWidth - r0.right));
         if (bl < 800 && br < 1200) { document.documentElement.style.setProperty("--cc-bar-left", bl + "px"); document.documentElement.style.setProperty("--cc-bar-right", br + "px"); }
       }
     } catch (e) {}
