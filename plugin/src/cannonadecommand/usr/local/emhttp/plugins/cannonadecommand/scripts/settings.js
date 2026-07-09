@@ -207,33 +207,51 @@
     // three sections: Docker Tab | Plugin Tab | VM Tab (minimal tab row)
     var tabRow = el("div", "cc-set-tabs");
     var wrap = el("div", "cc-set-wrap");
-    var wrapPlugin = el("div", "cc-set-wrap"), wrapVms = el("div", "cc-set-wrap");
+    var wrapPlugin = el("div", "cc-set-wrap"), wrapVms = el("div", "cc-set-wrap"), wrapHeader = el("div", "cc-set-wrap");
     var wrapMain = el("div", "cc-set-wrap");
     // Bereiche: enable/disable each area CannonadeCommand enhances
     (function () {
-      var c = card(T("Bereiche", "Areas"), T("Aktiviere, welche Bereiche CannonadeCommand verschönert. Änderungen greifen nach dem Neuladen der jeweiligen Seite.", "Choose which areas CannonadeCommand enhances. Changes take effect after reloading the relevant page."));
+      var c = card(T("Bereiche", "Areas"), T("Aktiviere, welche Bereiche CannonadeCommand verschönert. Ein deaktivierter Bereich blendet seinen Tab hier sofort aus.", "Choose which areas CannonadeCommand enhances. Disabling an area hides its tab here immediately."));
       [["cc.enable.header", T("Hauptmenüleiste", "Main menu bar"), "0"], ["cc.enable.docker", T("Docker-Tab", "Docker tab"), "1"], ["cc.enable.plugins", T("Plugin-Tab", "Plugins tab"), "1"], ["cc.enable.vms", T("VM-Tab", "VMs tab"), "1"]].forEach(function (a) {
         var row = el("div", "cc-set-row cc-set-inline");
         row.appendChild(el("span", null, a[1]));
         var cur = localStorage.getItem(a[0]);
-        row.appendChild(toggle(cur == null ? a[2] !== "0" : cur !== "0", function (v) { localStorage.setItem(a[0], v ? "1" : "0"); }));
+        row.appendChild(toggle(cur == null ? a[2] !== "0" : cur !== "0", function (v) { localStorage.setItem(a[0], v ? "1" : "0"); refreshTabs(); }));
         c.appendChild(row);
       });
       wrapMain.appendChild(c);
     })();
-    var SECS = [[T("Bereiche", "Areas"), wrapMain], [T("Docker-Tab", "Docker tab"), wrap], [T("Plugin-Tab", "Plugin tab"), wrapPlugin], [T("VM-Tab", "VM tab"), wrapVms]];
+    var SECS = [
+      { t: T("Bereiche", "Areas"), w: wrapMain, key: null },
+      { t: T("Hauptmenüleiste", "Main menu bar"), w: wrapHeader, key: "cc.enable.header" },
+      { t: T("Docker-Tab", "Docker tab"), w: wrap, key: "cc.enable.docker" },
+      { t: T("Plugin-Tab", "Plugins tab"), w: wrapPlugin, key: "cc.enable.plugins" },
+      { t: T("VM-Tab", "VMs tab"), w: wrapVms, key: "cc.enable.vms" }
+    ];
     var tabBtns = [];
+    function areaOn(key) { return !key || localStorage.getItem(key) !== "0"; }
     function showSec(i) {
+      if (!SECS[i] || !areaOn(SECS[i].key)) i = 0; // never land on a hidden section
       localStorage.setItem("cc.settab", String(i));
-      SECS.forEach(function (sc, j) { sc[1].style.display = j === i ? "" : "none"; tabBtns[j].classList.toggle("cc-set-tab-on", j === i); });
+      SECS.forEach(function (sc, j) { sc.w.style.display = j === i ? "" : "none"; tabBtns[j].classList.toggle("cc-set-tab-on", j === i); });
+    }
+    // hide the tab of any disabled area immediately; if we were ON it, fall back to Bereiche
+    function refreshTabs() {
+      var activeHidden = false;
+      SECS.forEach(function (sc, j) {
+        var on = areaOn(sc.key);
+        tabBtns[j].style.display = on ? "" : "none";
+        if (!on && tabBtns[j].classList.contains("cc-set-tab-on")) { activeHidden = true; sc.w.style.display = "none"; }
+      });
+      if (activeHidden) showSec(0);
     }
     SECS.forEach(function (sc, i) {
-      var b = el("button", "cc-set-tab", sc[0]); b.type = "button";
+      var b = el("button", "cc-set-tab", sc.t); b.type = "button";
       b.addEventListener("click", function () { showSec(i); });
       tabBtns.push(b); tabRow.appendChild(b);
     });
     root.appendChild(tabRow);
-    root.appendChild(wrapMain); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms);
+    root.appendChild(wrapMain); root.appendChild(wrapHeader); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms);
 
     // ── Badges ──
     var c1 = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
@@ -522,17 +540,17 @@
       cB.appendChild(tpw); tp();
       into.appendChild(cB);
     }
-    // real plugin/VM icons that exist on every Unraid box as preview subjects
-    buildStyleCards("ccp.", wrapPlugin, ["/plugins/dynamix.plugin.manager/images/dynamix.plugin.manager.png", "/plugins/dynamix.docker.manager/images/dynamix.docker.manager.png", "/plugins/cannonadecommand/images/cannonadecommand.png"]);
-    buildStyleCards("ccv.", wrapVms, ["/plugins/dynamix.vm.manager/templates/images/linux.png", "/plugins/dynamix.vm.manager/templates/images/windows.png", "/plugins/cannonadecommand/images/cannonadecommand.png"]);
-    // adopt cards LAST, so every section starts [Badges][Logos] like the Docker
-    // tab. cV is DEFINED before it is appended — the use-before-define TypeError
-    // here killed showSec(), which left every section visible at once and the
-    // active tab unstyled.
+    // the adopt "Stil" card is the FIRST card of every section (user call), then
+    // the Badges/Logos cards. Same cards for the Hauptmenueleiste as Plugins/VMs.
     var cV = card(T("Stil", "Style"), T("AN = die Docker-Tab-Einstellungen gelten auch hier. AUS = die eigenen Karten dieses Abschnitts gelten.", "ON = the Docker-tab settings apply here too. OFF = this section's own cards apply."));
     cV.appendChild(styleToggle("cc.stylevms", null));
-    wrapPlugin.appendChild(cP);
-    wrapVms.appendChild(cV);
+    var cH = card(T("Stil", "Style"), T("AN = die Docker-Tab-Einstellungen gelten auch hier. AUS = die eigenen Karten dieses Abschnitts gelten.", "ON = the Docker-tab settings apply here too. OFF = this section's own cards apply."));
+    cH.appendChild(styleToggle("cc.styleheader", null));
+    wrapHeader.appendChild(cH); wrapPlugin.appendChild(cP); wrapVms.appendChild(cV);
+    buildStyleCards("cch.", wrapHeader, ["/plugins/cannonadecommand/images/cannonadecommand.png", "/plugins/dynamix.plugin.manager/images/dynamix.plugin.manager.png"]);
+    buildStyleCards("ccp.", wrapPlugin, ["/plugins/dynamix.plugin.manager/images/dynamix.plugin.manager.png", "/plugins/dynamix.docker.manager/images/dynamix.docker.manager.png", "/plugins/cannonadecommand/images/cannonadecommand.png"]);
+    buildStyleCards("ccv.", wrapVms, ["/plugins/dynamix.vm.manager/templates/images/linux.png", "/plugins/dynamix.vm.manager/templates/images/windows.png", "/plugins/cannonadecommand/images/cannonadecommand.png"]);
+    refreshTabs();
     showSec(parseInt(localStorage.getItem("cc.settab") || "0", 10) || 0);
     paintPrev();
   }

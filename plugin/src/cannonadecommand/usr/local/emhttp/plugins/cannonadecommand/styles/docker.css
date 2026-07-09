@@ -615,6 +615,7 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 .cc-set-card .cc-set-sub { margin-bottom: 12px; }
 .cc-set-card .cc-set-row, .cc-set-card .cc-set-swatches, .cc-set-card .cc-set-lbl { margin-top: 12px; } /* airier cards */
 .cc-set-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; flex-wrap: wrap; }
+.cc-set-card .cc-set-inline { justify-content: space-between; flex-wrap: nowrap; } /* label left, toggle flush right -> all toggles line up */
 .cc-set-rl { min-width: 110px; }
 #cc-settings .cc-seg-btn { padding: 5px 12px; }
 .cc-set-spacer { flex: 1; }
