@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.1.0">
+  <!ENTITY version   "2.2.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,11 @@
 </ICON>
 
 <CHANGES>
+### 2.2.0
+- VMs tab: first CannonadeCommand pass. Each VM row gets a CC state badge
+  (running/paused/stopped, shape-aware) and the accent theme, alongside the
+  existing icon tinting. Toggle it under Settings > CannonadeCommand > Bereiche.
+
 ### 2.1.0
 - New "Bereiche" settings tab to enable/disable each area: main menu bar, Docker,
   Plugins, VMs.
@@ -158,7 +163,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>5c5558136eac3d5901dafb3920eb642ad5cd8f11c2dd3349e6990a54be90f2be</SHA256>
+  <SHA256>f59e664a21daad376ea1e3463d9b5139425e1efc9f81750c87bc3472838e58c1</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

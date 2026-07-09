@@ -65,7 +65,37 @@
     for (var i = 0; i < sels.length; i++) { var n = document.querySelectorAll(sels[i]); if (n.length) return n; }
     return [];
   }
+  // ── CC treatment for the VM rows: a state badge (green/amber/grey, shape-aware)
+  //    on td.vm-name, mirroring the Docker-tab state badge, plus the accent vars on
+  //    the document root. Self-contained + idempotent; the tint stays separate below.
+  function effK(k) { return ls("cc.stylevms") !== "0" ? ls("cc." + k) : ls("ccv." + k); }
+  function ccIdeal(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
+  function ccAccent() { var a = effK("accent") || "#2f6feb"; return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
+  function ccShape() { return ({ pill: "999px", rounded: "6px", square: "0px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
+  function enhanceRows() {
+    try {
+      var a = ccAccent(), rad = ccShape(), root = document.documentElement.style;
+      root.setProperty("--cc-accent", a); root.setProperty("--cc-accent-text", ccIdeal(a)); root.setProperty("--cc-b-radius", rad);
+      Array.prototype.slice.call(document.querySelectorAll("#kvm_list tr.sortable td.vm-name span.state")).forEach(function (st) {
+        var txt = (st.textContent || "").trim(); if (!txt) return;
+        var low = txt.toLowerCase();
+        var c = /run|l\u00e4uft/.test(low) ? "#1f9d55" : /paus/.test(low) ? "#e0912a" : "#3c3c3c";
+        st.style.setProperty("display", "inline-block", "important");
+        st.style.setProperty("background", c, "important");
+        st.style.setProperty("color", ccIdeal(c), "important");
+        st.style.setProperty("border-radius", rad, "important");
+        st.style.setProperty("padding", "2px 9px", "important");
+        st.style.setProperty("margin-left", "4px", "important");
+        st.style.setProperty("font-size", "11px", "important");
+        st.style.setProperty("font-weight", "600", "important");
+        st.style.setProperty("text-transform", "uppercase", "important");
+        st.style.setProperty("letter-spacing", ".4px", "important");
+        st.style.setProperty("line-height", "1.5", "important");
+      });
+    } catch (e) {}
+  }
   function apply() {
+    try { enhanceRows(); } catch (e) {}
     // adopt-toggle ON (default) -> Docker's cc.* settings; OFF -> own ccv.* keys
     if (ls("cc.stylevms") === "0" && !ls("ccv.iconcolor")) return;
     try {
