@@ -762,8 +762,27 @@
   // the row (the native Update-All button below the table covers it) and the native
   // Basic/Advanced switch is driven from the gear menu instead. Runs on every badge
   // pass so late injections land in the hidden row and the gear gets rescued.
+  // Measure Unraid's always-visible footer so our docked action bar (CSS:
+  // div.js-actions { bottom: var(--cc-footer-h) }) sits exactly on top of it.
+  // Only dock when #footer is actually FIXED (desktop / landscape); on narrow
+  // portrait viewports it flows in-document and our bar must flow too — clearing
+  // the var lets the CSS media query keep the bar in flow there.
+  function syncFooterDock() {
+    try {
+      var f = document.getElementById("footer");
+      var fixed = f && getComputedStyle(f).position === "fixed";
+      var h = f ? Math.round(f.getBoundingClientRect().height) : 0;
+      if (fixed && h > 0 && h < 160) document.documentElement.style.setProperty("--cc-footer-h", h + "px");
+      else document.documentElement.style.removeProperty("--cc-footer-h");
+    } catch (e) {}
+    if (!window.__ccDockResize) {
+      window.__ccDockResize = true;
+      window.addEventListener("resize", function () { try { syncFooterDock(); } catch (e) {} });
+    }
+  }
   function relocateTopBar() {
     try {
+      syncFooterDock();
       // both views: the switch lives in the gear menu, ShipLog's pill is covered
       // by the native Update-All button — the whole row stays collapsed
       var tv = document.querySelector("div.ToggleViewMode");
@@ -786,8 +805,10 @@
       // in the header it inflated the strip); header th only as a fallback
       var tc9 = document.querySelector("nav.tabs .tabs-container");
       if (tc9) {
-        if (g9) g9.remove();
-        var g3 = tv ? tv.querySelector(".cc-hgear-bar") : null; if (g3) g3.remove();
+        // ONE canonical home in the tab strip; sweep away every stray list-mode
+        // gear the fallback placer may have dropped in a header th (the one that
+        // reappeared when the hidden uptime th became visible in Advanced view)
+        Array.prototype.slice.call(document.querySelectorAll(".cc-hgear:not(.cc-hgear-grid):not(.cc-hgear-tabs)")).forEach(function (x9) { x9.remove(); });
         var hc = document.querySelector(".cc-headctl"); if (hc) hc.remove(); // old overlay
         if (!tc9.querySelector(".cc-hgear-tabs")) tc9.appendChild(makeGear("cc-hgear-tabs"));
       } else if (!g9) {
@@ -968,6 +989,11 @@
     try {
       // Global idempotency: never place a second list-mode gear once one exists.
       if (document.querySelector(".cc-hgear:not(.cc-hgear-grid)")) return true;
+      // Canonical home: the END of the page tab strip (same as relocateTopBar).
+      // Placing it here — instead of a header th that is CSS-hidden in Basic view
+      // and reappears in Advanced view — is what stopped the gear ghosting back.
+      var tcH = document.querySelector("nav.tabs .tabs-container");
+      if (tcH) { tcH.appendChild(makeGear("cc-hgear-tabs")); return true; }
       // Preferred home: INSIDE Unraid's Advanced/Basic view-toggle row (a full-width
       // flex-end row), as its first child, so the gear sits in the visible right-aligned
       // control group next to the toggle — NOT as a preceding sibling, which lands it
