@@ -546,6 +546,20 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 .cc-plug #plugin_list > tr > td:first-child { text-align: left !important; }
 .cc-plugname { display: flex; align-items: center; gap: 14px; }
 .cc-plugico { display: flex !important; align-items: center; justify-content: center; flex: none; overflow: hidden; } /* no tile (user call); clips the content-aware upscale */
+/* Unraid emits the col-1 icon as ONE of three element types — <img class=list>,
+   <i class="fa … list">, or <i class="icon-… list"> (its own glyph font) — none
+   with an inline size, so they render at wildly different sizes. Force ALL of
+   them (both before and after our relocation into .cc-plugico) to the SAME 56px
+   box HERE in CSS, so it holds even on a re-render the JS pass misses. The JS
+   additionally content-crops the raster logos so padded ones still fill the box. */
+#plugin_list td:first-child img.list, #plugin_list td:first-child i.list,
+.cc-plugico img, .cc-plugico i {
+  width: 56px !important; height: 56px !important; min-width: 56px !important; min-height: 56px !important;
+  max-width: 56px !important; max-height: 56px !important;
+  font-size: 50px !important; line-height: 56px !important;
+  object-fit: contain !important; text-align: center !important;
+  display: inline-block !important; vertical-align: middle !important; box-sizing: border-box !important;
+}
 .cc-plugsup { transition: filter .12s, transform .12s; }
 .cc-plugsup:hover { filter: brightness(1.18); transform: translateY(-1px); }
 /* the other tabs' tables (install errors etc.): same clean look */
@@ -672,7 +686,7 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 div.js-actions { display: flex !important; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0; }
 @media (min-width: 768px) {
   /* thinner strip, SAME colour as Unraid's footer (theme var), flush on top of it */
-  div.js-actions { position: fixed !important; left: var(--cc-bar-left, 0); right: var(--cc-bar-right, 88px); bottom: var(--cc-footer-h, 30px); z-index: 9999; padding: 3px 16px; background: var(--footer-background-color, var(--mild-background-color, #1c1c1c)); border-top: 1px solid rgba(255,255,255,.06); box-shadow: none; }
+  div.js-actions { position: fixed !important; left: var(--cc-bar-left, 0); right: var(--cc-bar-right, 0); bottom: var(--cc-footer-h, 30px); z-index: 998; padding: 3px 56px 3px 16px; background: var(--footer-background-color, var(--mild-background-color, #1c1c1c)); border: none !important; box-shadow: none; }
   /* reserve room so the docked bar never covers the last container row (runtime
      --cc-actbar-h = the bar's measured height) */
   #displaybox { padding-bottom: calc(var(--cc-footer-h, 30px) + var(--cc-actbar-h, 40px) + 12px) !important; }

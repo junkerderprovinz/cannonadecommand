@@ -783,7 +783,7 @@
         var r0 = hr0.getBoundingClientRect();
         // right edge: never cover Unraid's fixed red scroll arrows (.back_to_top /
         // .move_to_end at right:12-40px, ~40px glyphs) -> keep at least 88px clear
-        var bl = Math.max(0, Math.round(r0.left)), br = Math.max(88, Math.round(window.innerWidth - r0.right));
+        var bl = Math.max(0, Math.round(r0.left)), br = Math.max(0, Math.round(window.innerWidth - r0.right));
         if (bl < 800 && br < 1200) { document.documentElement.style.setProperty("--cc-bar-left", bl + "px"); document.documentElement.style.setProperty("--cc-bar-right", br + "px"); }
       }
     } catch (e) {}
@@ -797,7 +797,7 @@
   // loadlist() — the reliable path proven on the box (triggering the hidden
   // checkbox did nothing there).
   function ensureBarToggle(bar) {
-    function advWord() { return isAdvancedView() ? (LANG === "de" ? "Erweitert" : "Advanced") : (LANG === "de" ? "Einfach" : "Basic"); }
+    function advWord() { return isAdvancedView() ? (LANG === "de" ? "ERWEITERTE ANSICHT" : "ADVANCED VIEW") : (LANG === "de" ? "EINFACHE ANSICHT" : "BASIC VIEW"); }
     var existing = bar.querySelector(".cc-bar-adv");
     if (existing) { var on0 = isAdvancedView(); var t0 = existing.querySelector(".cc-set-toggle"), l0 = existing.querySelector(".cc-bar-adv-lbl"); if (t0) { t0.classList.toggle("cc-set-toggle-on", on0); t0.setAttribute("aria-checked", on0 ? "true" : "false"); } if (l0) l0.textContent = advWord(); return; }
     var wrap = el("span", "cc-bar-adv"); wrap.setAttribute(MARK, "1");
@@ -809,7 +809,7 @@
     function flip() {
       var next = !isAdvancedView();
       tg.classList.toggle("cc-set-toggle-on", next); tg.setAttribute("aria-checked", next ? "true" : "false");
-      lbl.textContent = next ? (LANG === "de" ? "Erweitert" : "Advanced") : (LANG === "de" ? "Einfach" : "Basic");
+      lbl.textContent = next ? (LANG === "de" ? "ERWEITERTE ANSICHT" : "ADVANCED VIEW") : (LANG === "de" ? "EINFACHE ANSICHT" : "BASIC VIEW");
       try { document.cookie = "docker_listview_mode=" + (next ? "advanced" : "basic") + "; path=/"; } catch (e9) {}
       try { var inp9 = document.querySelector("input.advancedview"); if (inp9) inp9.checked = next; } catch (e9) {}
       if (typeof window.loadlist === "function") { try { window.loadlist(); } catch (e9) {} }
