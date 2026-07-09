@@ -328,8 +328,12 @@
       Array.prototype.slice.call(document.querySelectorAll("#checkall input, #updateall input, #removeall input")).forEach(function (b2, i2) {
         if (!b2.getAttribute(MARK)) {
           pill(b2, colorFor(i2 + 6));
-          // SAME metrics as the tab pills (user call)
-          b2.style.setProperty("padding", "8px 20px", "important");
+          // EXACT same box as the tab pills: fixed height + centered (pill()'s
+          // line-height:1.5 had made these ~4px taller than the tabs)
+          b2.style.setProperty("height", "34px", "important");
+          b2.style.setProperty("padding", "0 20px", "important");
+          b2.style.setProperty("line-height", "1", "important");
+          b2.style.setProperty("box-sizing", "border-box", "important");
           b2.style.setProperty("font-size", "13px", "important");
           b2.style.setProperty("font-weight", "600", "important");
           b2.style.setProperty("text-transform", "uppercase", "important");

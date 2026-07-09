@@ -28,8 +28,8 @@ const __dir = dirname(fileURLToPath(import.meta.url));
 // ---- content + styling -----------------------------------------------------
 const NAME_A = "Cannonade";
 const NAME_B = "Command";
-const CLAIM1 = "Shoots your commands where you need them —";
-const CLAIM2 = "and that very nicely.";
+const CLAIM1 = "Firepower and finish for Unraid's";
+const CLAIM2 = "Docker, Plugins and VM tabs.";
 const W = 1600, H = 500;
 const maxTextW = 900; // wordmark + claim must fit between textX and the right margin
 const nameFill = "#242626"; // ONE colour for the whole wordmark (user call)

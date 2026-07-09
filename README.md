@@ -50,16 +50,21 @@ leaves your server.
 
 ## 1. What is this?
 
-Unraid's Docker tab starts containers in whatever order they come. CannonadeCommand
-replaces guesswork with a **start plan**: containers declare what they depend on,
-the engine starts them in dependency order and only releases the next stage when a
-container is actually **ready** (not merely "running"). On top of that it brings
-per-container **CPU, RAM and bandwidth limits**, a compact **actions column**, and
-a badge-based UI that shows live state at a glance — without replacing any Unraid
-page. Everything is enhanced in place.
+CannonadeCommand gives Unraid's native **Docker, Plugins and VM tabs** both muscle
+and a makeover — without replacing a single page. Everything is enhanced in place.
 
-The name says it: it shoots your commands where you need them — and that very
-nicely.
+On the **Docker tab** it replaces start-order guesswork with a **start plan**:
+containers declare what they depend on, and the engine starts them in dependency
+order, releasing the next stage only when a container is actually **ready** (not
+merely "running"). It adds per-container **CPU, RAM and bandwidth limits**, a
+compact **actions column**, and a badge-based UI that shows live state at a glance.
+The **Plugins tab** gets the same styling — uniform logos and badges for author,
+version, status and changelog — and the **VM tab** picks up matching icon theming.
+
+Accent or rainbow colours, a configurable badge shape and a floating action bar tie
+it all together.
+
+**Firepower and finish for Unraid's Docker, Plugins and VM tabs.**
 
 <br>
 

@@ -1482,7 +1482,7 @@
       if (st.last_apply) line += " · Apply " + st.last_apply;
       if (!wantUp && !wantDn) {
         if (hasUp || hasDn) popError(new Error((LANG === "de" ? "entfernt, Regel noch aktiv — wird gleich geräumt · " : "removed, rule still active — clearing shortly · ") + line));
-        else popOk("✓ " + (LANG === "de" ? "kein Limit aktiv" : "no limit active"));
+        else popClearError(); // nothing configured -> no message at all (user call)
         return;
       }
       if ((wantUp && !hasUp) || (wantDn && !hasDn)) {

@@ -188,7 +188,7 @@
     var htx = el("div", null);
     var brand = el("div", "cc-set-brand"); brand.appendChild(el("b", null, "Cannonade")); brand.appendChild(el("span", null, "Command"));
     htx.appendChild(brand);
-    htx.appendChild(el("div", "cc-set-claim", "Shoots your commands where you need them — and that very nicely."));
+    htx.appendChild(el("div", "cc-set-claim", "Firepower and finish for Unraid's Docker, Plugins and VM tabs."));
     hleft.appendChild(htx);
     hero.appendChild(hleft);
     head.appendChild(hero);

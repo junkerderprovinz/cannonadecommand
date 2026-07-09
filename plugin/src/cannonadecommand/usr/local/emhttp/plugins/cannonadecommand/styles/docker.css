@@ -510,9 +510,11 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 nav.tabs { background: transparent !important; border: none !important; box-shadow: none !important; }
 nav.tabs .tabs-container > button[role=tab] {
   background: #2a2a2a !important; color: #b5b5b5 !important; border: none !important;
-  box-shadow: none !important; border-radius: 999px !important; padding: 8px 20px !important;
+  box-shadow: none !important; border-radius: 999px !important; padding: 0 20px !important;
   text-transform: uppercase !important; letter-spacing: 1.5px !important; font-size: 13px !important;
   font-weight: 600 !important; cursor: pointer; margin-right: 8px;
+  height: 34px !important; box-sizing: border-box !important; line-height: 1 !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 6px;
 }
 nav.tabs .tabs-container > button[role=tab][aria-selected="true"] {
   background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
@@ -521,8 +523,10 @@ div.tab { background: transparent !important; border: none !important; }
 div.tab input[type=radio] + label,
 .tabbed input[type=radio] + label {
   background: #2a2a2a !important; color: #b5b5b5 !important; border: none !important;
-  box-shadow: none !important; border-radius: 999px !important; padding: 4px 14px !important;
-  text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; cursor: pointer;
+  box-shadow: none !important; border-radius: 999px !important; padding: 0 20px !important;
+  text-transform: uppercase; letter-spacing: 1.5px; font-size: 13px; cursor: pointer;
+  height: 34px; box-sizing: border-box; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
 }
 div.tab input[type=radio]:checked + label,
 .tabbed input[type=radio]:checked + label {
