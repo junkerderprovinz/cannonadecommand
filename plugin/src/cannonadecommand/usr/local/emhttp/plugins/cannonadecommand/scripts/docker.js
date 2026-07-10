@@ -565,11 +565,11 @@
       var outerBox = nameCell && nameCell.querySelector(".outer");
       if (outerBox) { outerBox.style.setProperty("display", "flex", "important"); outerBox.style.setProperty("align-items", "center", "important"); outerBox.style.setProperty("height", "auto", "important"); }
       var adv = isAdvancedView(), c = containerByName(name);
-      setupVolMarquee(tr, c); // now c.mounts is available
       // the ACTIONS cell must exist BEFORE any nth-child lookup below — it sits at
       // position 2 and shifts every later column by one. Injecting it last put the
       // resource badges into Autostart and the plan chip into Betriebszeit.
       injectActionCell(tr, name, c);
+      setupVolMarquee(tr, c); // AFTER the actions cell exists, so the header th index and the row td index line up (else it landed one column over -> the doubled copy)
 
       // ── NAME cell (col 1): start/stop badge, and BENEATH it Container-ID / Von ──
       if (nameCell) {

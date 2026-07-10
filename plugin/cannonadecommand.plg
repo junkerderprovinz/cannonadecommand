@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.2.9">
+  <!ENTITY version   "2.2.10">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,12 @@
 </ICON>
 
 <CHANGES>
+### 2.2.10
+- Volumes marquee doubling fixed: it ran before the Actions column was inserted, so
+  the header/row column indices were off by one and it landed in the CPU/Memory
+  column. Now runs after, in the Volume column.
+- Search restyle disabled (native Unraid search) pending theme confirmation.
+
 ### 2.2.9
 - Volumes marquee: finds the Volume column by its header (no more doubled copy in
   the wrong column); only the hovered line scrolls.
@@ -212,7 +218,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>0d9e0cacdbc24aab953ce4d75a8a79d3e880e9a91393ee98dae657a00f666723</SHA256>
+  <SHA256>c364cf538d62912bc252876c8d3e1534f43f15259fdc73563b8dbfb4017e8889</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
