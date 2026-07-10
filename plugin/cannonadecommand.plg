@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.2.11">
+  <!ENTITY version   "2.2.12">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,10 @@
 </ICON>
 
 <CHANGES>
+### 2.2.12
+- Search: the box grows to fill the full menu bar when open (was right-aligned with
+  empty space); the array-usage meter stays visible on the right.
+
 ### 2.2.11
 - Search (top-nav themes): open search shrinks/scrolls the left tabs so the box +
   array-usage stay fully visible on the right, nothing covered (grid minmax(0,1fr) auto).
@@ -222,7 +226,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>097a63d1b918421825bc5df4dae8a77f4bab2b09ee57f5aef459bd53fd605876</SHA256>
+  <SHA256>11bfa183537a96cdd9d0761a7f7c469a5e227ab8950386c17fa2eecc4d408502</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

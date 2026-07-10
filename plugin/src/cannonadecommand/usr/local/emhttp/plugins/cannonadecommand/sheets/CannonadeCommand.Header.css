@@ -80,7 +80,10 @@ html.cc-header-on #menu .usage-bar > span {
     background: rgba(18, 18, 18, .94) !important; color: #eaeaea !important; font-size: 13px !important;
     box-shadow: none !important; outline: none !important;
   }
-  html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu { grid-template-columns: minmax(0, 1fr) auto !important; }
-  html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-tile:not(.right) { overflow-x: auto !important; min-width: 0 !important; }
-  html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-tile.right { min-width: 0 !important; overflow: visible !important; }
+  html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu { grid-template-columns: 0 1fr !important; }
+  html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-tile:not(.right) { display: none !important; }
+  html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-tile.right { display: flex !important; align-items: center !important; justify-content: flex-start !important; gap: 10px; min-width: 0 !important; overflow: visible !important; }
+  /* the search box GROWS to fill the freed bar; the array-usage meter stays to its right */
+  html.cc-header-on.cc-search-open:not(.Theme--sidebar) #guiSearchBoxSpan { flex: 1 1 auto !important; min-width: 0 !important; order: -1 !important; }
+  html.cc-header-on.cc-search-open:not(.Theme--sidebar) #guiSearchBox { width: 100% !important; max-width: none !important; }
 }
