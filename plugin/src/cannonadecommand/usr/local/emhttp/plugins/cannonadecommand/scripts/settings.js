@@ -394,6 +394,7 @@
     var c4 = card(T("Ansicht", "View"), null);
     c4.appendChild(segRow(T("Standard-Ansicht", "Default view"), [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")]], view, function (v) { view = v; set("cc.view", v); }));
     c4.appendChild(segRow(T("Zeilenhöhe", "Row density"), [["compact", T("kompakt", "compact")], ["normal", "normal"], ["airy", T("luftig", "airy")]], density, function (v) { density = v; set("cc.density", v); }));
+    c4.appendChild(toggleRow(T("Logo-Hintergrund", "Logo background"), get("cc.iconbg", "0") === "1", function (v) { set("cc.iconbg", v ? "1" : "0"); }));
     function applyShape() { var m9 = { pill: "999px", rounded: "6px", square: "0px" }; var r9 = m9[get("cc.badgeshape", "pill")] || "999px"; root.style.setProperty("--cc-b-radius", r9); document.documentElement.style.setProperty("--cc-b-radius", r9); }
     wrap.appendChild(c4);
     // Badge-Form as its OWN card (kept identical across every section)
@@ -550,6 +551,12 @@
       }
       cB.appendChild(tpw); tp();
       if (!noLogos) into.appendChild(cB); // header tab: badges only, no logo-tint card
+      // ── Ansicht card: Logo-Hintergrund badge toggle (all areas except the header tab) ──
+      if (P !== "cch.") {
+        var cViewA = card(T("Ansicht", "View"), null);
+        cViewA.appendChild(toggleRow(T("Logo-Hintergrund", "Logo background"), get(P + "iconbg", P === "ccs." ? "1" : "0") === "1", function (v) { set(P + "iconbg", v ? "1" : "0"); }));
+        into.appendChild(cViewA);
+      }
     }
     // the adopt "Stil" card is the FIRST card of every section (user call), then
     // the Badges/Logos cards. Same cards for the Hauptmenueleiste as Plugins/VMs.

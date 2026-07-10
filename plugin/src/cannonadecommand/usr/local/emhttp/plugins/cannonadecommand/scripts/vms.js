@@ -71,6 +71,26 @@
   function effK(k) { return ls("cc.stylevms") !== "0" ? ls("cc." + k) : ls("ccv." + k); }
   function ccIdeal(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
   function ccAccent() { var a = effK("accent") || "#2f6feb"; return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
+  // Logo-Hintergrund read-side: a monochrome b/w feColorMatrix that flattens any icon
+  // to a single ink (black on a light accent, white on a dark accent), so a coloured
+  // glyph/png reads cleanly on the accent-filled badge box. Signature-guarded like
+  // ensureTintFilter so a blind innerHTML write can't feed a MutationObserver loop.
+  function ensureMonoFilter(hostId, filtId, accentHex) {
+    var host = document.getElementById(hostId);
+    var m = /^#?([0-9a-f]{6})$/i.exec(accentHex || "");
+    if (!m) { if (host) host.remove(); return ""; }
+    var ink = ccIdeal("#" + m[1]);
+    var hx = ink.length === 4 ? ink[1] + ink[1] + ink[2] + ink[2] + ink[3] + ink[3] : ink.slice(1);
+    var c = ((parseInt(hx, 16) >> 16 & 255) / 255).toFixed(4);
+    if (!host) { host = document.createElement("div"); host.id = hostId; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
+    var sig = filtId + "|" + c;
+    if (host.dataset.sig !== sig) {
+      var vals = "0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 1 0";
+      host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>';
+      host.dataset.sig = sig;
+    }
+    return "url(#" + filtId + ")";
+  }
   function ccShape() { return ({ pill: "999px", rounded: "6px", square: "0px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
   function enhanceRows() {
     try {
@@ -96,17 +116,25 @@
   }
   function apply() {
     try { enhanceRows(); } catch (e) {}
-    // adopt-toggle ON (default) -> Docker's cc.* settings; OFF -> own ccv.* keys
-    if (ls("cc.stylevms") === "0" && !ls("ccv.iconcolor")) return;
+    // adopt-toggle ON (default) -> Docker's cc.* settings; OFF -> own ccv.* keys.
+    // Stay even with adopt-off + no tint colour when the Logo-Hintergrund badge is on.
+    if (ls("cc.stylevms") === "0" && !ls("ccv.iconcolor") && effK("iconbg") !== "1") return;
     try {
       var f = filterVal(), c = tintColor(), imgs = vmImgs();
+      // Logo-Hintergrund: badge box + monochrome ink flatten, applied INLINE (VMs.page
+      // loads no stylesheet). ibgMono is "" when off, so the tint path below is unchanged.
+      var ibgOn = effK("iconbg") === "1"; var ibgAcc = ccAccent(); var ibgMono = ibgOn ? ensureMonoFilter("cc-vm-mono-svg", "cc-vm-mono-tint", ibgAcc) : "";
       for (var i = 0; i < imgs.length; i++) {
         var n = imgs[i];
-        if (n.tagName === "IMG") { n.style.filter = f; n.style.removeProperty("color"); }
+        if (n.tagName === "IMG") { n.style.filter = ibgMono || f; if (ibgOn) n.style.removeProperty("color"); }
         // font-glyph: `color` is the reliable exact tint. Set it with PRIORITY — Unraid's
         // VM CSS colours these glyphs via a class rule, which a plain inline colour can
         // lose to; `!important` on the inline style wins. The filter is a harmless bonus.
-        else { if (c) { n.style.setProperty("color", c, "important"); } else { n.style.removeProperty("color"); } n.style.filter = f; }
+        // With the badge on, the ink is the accent's ideal text colour (b/w contrast).
+        else { n.style.setProperty("color", ibgOn ? ccIdeal(ibgAcc) : (c || ""), "important"); n.style.filter = ibgMono || f; }
+        // Wrapper span becomes the accent-filled badge box (or reverts when off).
+        if (ibgOn) { var w = n.parentElement; w.style.setProperty("background", ibgAcc, "important"); w.style.setProperty("border-radius", "min(var(--cc-b-radius,14px),16px)", "important"); w.style.setProperty("display", "inline-flex", "important"); w.style.setProperty("align-items", "center", "important"); w.style.setProperty("justify-content", "center", "important"); w.style.setProperty("box-sizing", "border-box", "important"); w.style.setProperty("width", "56px", "important"); w.style.setProperty("height", "56px", "important"); w.style.setProperty("padding", "8px", "important"); }
+        else { var w2 = n.parentElement; w2.style.removeProperty("background"); w2.style.removeProperty("border-radius"); w2.style.removeProperty("width"); w2.style.removeProperty("height"); w2.style.removeProperty("padding"); w2.style.removeProperty("display"); w2.style.removeProperty("align-items"); w2.style.removeProperty("justify-content"); w2.style.removeProperty("box-sizing"); }
       }
     } catch (e) {}
   }
@@ -130,8 +158,9 @@
     if (dead) return; dead = true;
     try { if (mo) mo.disconnect(); mo = null; } catch (e) {}
     try { if (liveTimer) clearInterval(liveTimer); liveTimer = null; } catch (e) {}
-    try { var imgs = vmImgs(); for (var i = 0; i < imgs.length; i++) { imgs[i].style.filter = ""; imgs[i].style.removeProperty("color"); } } catch (e) {}
+    try { var imgs = vmImgs(); for (var i = 0; i < imgs.length; i++) { imgs[i].style.filter = ""; imgs[i].style.removeProperty("color"); var w = imgs[i].parentElement; if (w) { w.style.removeProperty("background"); w.style.removeProperty("border-radius"); w.style.removeProperty("width"); w.style.removeProperty("height"); w.style.removeProperty("padding"); w.style.removeProperty("display"); w.style.removeProperty("align-items"); w.style.removeProperty("justify-content"); w.style.removeProperty("box-sizing"); } } } catch (e) {}
     try { var sv = document.getElementById("cc-vm-tint-svg"); if (sv) sv.remove(); } catch (e) {}
+    try { var hh = document.getElementById("cc-vm-mono-svg"); if (hh) hh.remove(); } catch (e) {}
   }
   function arm() {
     dead = false;

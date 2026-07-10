@@ -58,6 +58,14 @@
    into the 48x48 box ("verzogene Icons"); the glyph <i> keeps font-size, not object-fit. */
 .cc-enh #docker_list tr.sortable td.ct-name .outer > span.hand img { width: 62px !important; height: 62px !important; object-fit: contain !important; }
 .cc-enh #docker_list tr.sortable td.ct-name .outer > span.hand i.img { width: 62px !important; height: 62px !important; font-size: 62px !important; }
+/* Logo-Hintergrund (cc.iconbg): the container icon sits on an accent badge, the logo
+   recoloured monochrome (docker.js applies the mono filter / contrast glyph colour). */
+.cc-enh.cc-docker-iconbg #docker_list tr.sortable td.ct-name .outer > span.hand {
+  background: var(--cc-accent, #2f6feb) !important;
+  border-radius: min(var(--cc-b-radius, 14px), 16px) !important;
+  padding: 8px !important; box-sizing: border-box !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+}
 .cc-enh #docker_list tr.sortable td.ct-name .inner { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; line-height: 1.2; min-width: 0; }
 .cc-enh #docker_list tr.sortable td.ct-name .inner br { display: none; }
 .cc-enh #docker_list tr.sortable td.ct-name .inner > i[id^='load-'],
@@ -569,6 +577,14 @@ div.title span.left, div.title span.right { text-transform: uppercase; letter-sp
 .cc-plug #plugin_list > tr > td:first-child { text-align: left !important; }
 .cc-plugname { display: flex; align-items: center; gap: 14px; }
 .cc-plugico { display: flex !important; align-items: center; justify-content: center; flex: none; overflow: hidden; } /* no tile (user call); clips the content-aware upscale */
+/* Logo-Hintergrund (ccp.iconbg / cc.iconbg when adopting): the plugin logo sits on an
+   accent badge, recoloured monochrome (plugins.js applies the mono filter / glyph colour). */
+html.cc-plugins-iconbg .cc-plugico {
+  background: var(--cc-accent, #2f6feb) !important;
+  border-radius: min(var(--cc-b-radius, 14px), 16px) !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  box-sizing: border-box !important; padding: 6px !important;
+}
 /* Unraid emits the col-1 icon as ONE of three element types — <img class=list>,
    <i class="fa … list">, or <i class="icon-… list"> (its own glyph font) — none
    with an inline size, so they render at wildly different sizes. Force ALL of

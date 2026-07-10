@@ -56,7 +56,7 @@
   function apply() {
     try {
       var root = document.documentElement;
-      var on = g("cc.enable.settings", "1") !== "0" && onSettings();
+      var on = g("cc.enable.settings", "1") !== "0" && g("ccs.iconbg", "1") !== "0" && onSettings();
       root.classList.toggle("cc-settingsgrid-on", on);
       if (!on) return;
       var a = accent();

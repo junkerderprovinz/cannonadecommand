@@ -43,6 +43,26 @@
     host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-plug-tint" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>';
     return "url(#cc-plug-tint)";
   }
+  // logo-background monochrome tint: flatten the logo to a single ink tone (the
+  // ideal-contrast text colour for the accent badge box) via an SVG feColorMatrix
+  // that keeps alpha but maps RGB to one grey. Signature-guarded so the shared
+  // MutationObserver never re-writes identical SVG in a repaint loop.
+  function ensureMonoFilter(hostId, filtId, accentHex) {
+    var host = document.getElementById(hostId);
+    var m = /^#?([0-9a-f]{6})$/i.exec(accentHex || "");
+    if (!m) { if (host) host.remove(); return ""; }
+    var ink = idealText("#" + m[1]);
+    var hx = ink.length === 4 ? ink[1] + ink[1] + ink[2] + ink[2] + ink[3] + ink[3] : ink.slice(1);
+    var c = ((parseInt(hx, 16) >> 16 & 255) / 255).toFixed(4);
+    if (!host) { host = document.createElement("div"); host.id = hostId; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
+    var sig = filtId + "|" + c;
+    if (host.dataset.sig !== sig) {
+      var vals = "0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 1 0";
+      host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>';
+      host.dataset.sig = sig;
+    }
+    return "url(#" + filtId + ")";
+  }
   function shapeRadius() { return ({ pill: "999px", rounded: "6px", square: "0px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
   function pill(node, bg, tx) {
     node.style.setProperty("font-size", "12px", "important"); // same height as the badges
@@ -159,6 +179,10 @@
     // "img, i.fa" selector missed the icon-* glyphs entirely and sized fa (46px) vs
     // img (62px) differently — exactly why the logos came out different sizes.
     var f2 = ensureTint();
+    // logo-background badge on: flatten every logo to one ink tone so it reads on
+    // the accent box (mono filter overrides the iconcolor tint f2 when active)
+    var ibgOn = document.documentElement.classList.contains("cc-plugins-iconbg");
+    var ibgMono = ibgOn ? ensureMonoFilter("cc-plug-mono-svg", "cc-plug-mono-tint", accent()) : "";
     Array.prototype.slice.call(tds[0].querySelectorAll("img, i")).forEach(function (el2) {
       el2.style.setProperty("width", "56px", "important");
       el2.style.setProperty("height", "56px", "important");
@@ -167,14 +191,16 @@
         el2.style.setProperty("object-fit", "contain", "important");
         el2.style.removeProperty("transform"); // superseded by content normalization
         normalizeIcon(el2); // crop to content bbox -> uniform visual size
+        el2.style.setProperty("filter", ibgMono || f2 || "none", "important");
       } else {
         // font glyph (fa- or icon-): size + center to visually match the images
         el2.style.setProperty("font-size", "50px", "important");
         el2.style.setProperty("line-height", "56px", "important");
         el2.style.setProperty("text-align", "center", "important");
         el2.style.setProperty("display", "inline-block", "important");
+        if (ibgOn) el2.style.setProperty("color", idealText(accent()), "important");
+        el2.style.setProperty("filter", ibgMono || f2 || "none", "important");
       }
-      el2.style.setProperty("filter", f2 || "none", "important");
     });
     // col 3: author as a badge
     var au = tds[2];
@@ -314,6 +340,9 @@
       // — the accent lives in :root vars so the CSS follows the configured colour
       document.documentElement.style.setProperty("--cc-accent", accent());
       document.documentElement.style.setProperty("--cc-accent-text", idealText(accent()));
+      // logo-background badge: scope the docker.css .cc-plugico box on/off from the
+      // adopt-aware key (honours "Adopt Docker style" via eff()), same as the Docker tab
+      document.documentElement.classList.toggle("cc-plugins-iconbg", eff("iconbg") === "1");
       colorTabs();
       if (!window.__ccTabClick) { window.__ccTabClick = 1; document.addEventListener("click", function (e) { try { if (e.target.closest && e.target.closest("nav.tabs, div.tab, .tabbed")) setTimeout(colorTabs, 30); } catch (x) {} }, true); }
       // Install-Plugin tab: clean dark input + accent pill button + accent checkbox

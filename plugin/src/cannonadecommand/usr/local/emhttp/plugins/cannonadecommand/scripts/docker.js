@@ -397,6 +397,26 @@
     host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-icon-tint" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">' + mid + '</filter></svg>';
     return true;
   }
+  // Logo-Hintergrund: when the icon sits on an accent-coloured badge box, the icon
+  // is flattened to a single INK colour (black or white, whichever idealText picks for
+  // the accent) so it reads cleanly on the box. Signature-guarded on host.dataset.sig
+  // so the MutationObserver can't loop-rebuild the identical <filter>.
+  function ensureMonoFilter(hostId, filtId, accentHex) {
+    var host = document.getElementById(hostId);
+    var m = /^#?([0-9a-f]{6})$/i.exec(accentHex || "");
+    if (!m) { if (host) host.remove(); return ""; }
+    var ink = idealText("#" + m[1]);
+    var hx = ink.length === 4 ? ink[1] + ink[1] + ink[2] + ink[2] + ink[3] + ink[3] : ink.slice(1);
+    var c = ((parseInt(hx, 16) >> 16 & 255) / 255).toFixed(4);
+    if (!host) { host = document.createElement("div"); host.id = hostId; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
+    var sig = filtId + "|" + c;
+    if (host.dataset.sig !== sig) {
+      var vals = "0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 1 0";
+      host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>';
+      host.dataset.sig = sig;
+    }
+    return "url(#" + filtId + ")";
+  }
   function iconFilter() { return ensureTintFilter() ? "url(#cc-icon-tint)" : ""; }
   function tintTargets() {
     var out = [], rows = findRows();
@@ -410,9 +430,16 @@
     try {
       var f = iconFilter();
       var imgs = tintTargets();
+      // Logo-Hintergrund (cc.iconbg): the icon sits on an accent-coloured badge box, so
+      // flatten it to mono ink (dark/white per the accent). IMGs get the filter; glyphs
+      // (font-icon <i>) also take an !important text colour so the glyph itself inks.
+      var ibgAcc = localStorage.getItem("cc.accent") || "#2f6feb";
+      var ibgOn = localStorage.getItem("cc.iconbg") === "1";
+      var ibgMono = ibgOn ? ensureMonoFilter("cc-mono-svg", "cc-mono-tint", ibgAcc) : "";
       for (var i = 0; i < imgs.length; i++) {
         var n = imgs[i];
-        n.style.filter = f;
+        if (n.tagName === "IMG") { n.style.filter = ibgMono || f; }
+        else { if (ibgOn) n.style.setProperty("color", idealText(ibgAcc), "important"); else n.style.removeProperty("color"); n.style.filter = ibgMono || f; }
         // Size hardened INLINE (+30% per user call: 48 → 62px): Unraid's theme kept
         // beating our stylesheet on the real page and the icons "shrank back".
         n.style.setProperty("width", "62px", "important");
@@ -473,6 +500,7 @@
       tb.classList.add("cc-enh"); tb.classList.toggle("cc-adv", isAdvancedView());
       tb.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
       tb.classList.toggle("cc-tint-icons", !!localStorage.getItem("cc.iconcolor"));
+      tb.classList.toggle("cc-docker-iconbg", localStorage.getItem("cc.iconbg") === "1");
       // row density as a CLASS too (not only the --cc-density padding var): the row height
       // is mostly the badge content, so compact/airy also tighten/loosen the badge spacing.
       var dens = localStorage.getItem("cc.density") || "normal";
@@ -481,7 +509,7 @@
       applyIconTint();
     } catch (e) {}
   }
-  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh", "cc-adv", "cc-rainbow", "cc-tint-icons", "cc-dens-compact", "cc-dens-normal", "cc-dens-airy"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); var t2 = tintTargets(); for (var i = 0; i < t2.length; i++) t2[i].style.filter = ""; if (gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll("img.cc-card-ico")).forEach(function (n) { n.style.filter = ""; }); Array.prototype.slice.call(document.querySelectorAll(".cc-ico-tint")).forEach(function (n) { n.remove(); }); var sv = document.getElementById("cc-tint-svg"); if (sv) sv.remove(); } catch (e) {} }
+  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh", "cc-adv", "cc-rainbow", "cc-tint-icons", "cc-docker-iconbg", "cc-dens-compact", "cc-dens-normal", "cc-dens-airy"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); var t2 = tintTargets(); for (var i = 0; i < t2.length; i++) t2[i].style.filter = ""; if (gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll("img.cc-card-ico")).forEach(function (n) { n.style.filter = ""; }); Array.prototype.slice.call(document.querySelectorAll(".cc-ico-tint")).forEach(function (n) { n.remove(); }); var sv = document.getElementById("cc-tint-svg"); if (sv) sv.remove(); var h = document.getElementById("cc-mono-svg"); if (h) h.remove(); } catch (e) {} }
 
   // read a positional cell's value (docker_readmore), stripping nested advanced
   // (MAC) + Tailscale tooltip, collapsed to one short line.
