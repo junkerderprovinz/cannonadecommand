@@ -485,6 +485,9 @@
       var rs = el("span", "cc-btn cc-btn-sm", T("Farben zurücksetzen", "Reset colours"));
       rs.addEventListener("click", function () { del(P + "rbpal"); render(); });
       cA.appendChild(rw); cA.appendChild(rpw); cA.appendChild(rs);
+      // badge shape control — same global cc.badgeshape as the Docker card, now
+      // exposed in every section's Badges card (Hauptmenueleiste / Plugins / VMs)
+      cA.appendChild(segRow(T("Badge-Form", "Badge shape"), [["pill", "Pills"], ["rounded", T("abgerundet", "rounded")], ["square", T("eckig", "square")]], get("cc.badgeshape", "pill"), function (v) { set("cc.badgeshape", v); applyShape(); paintPv(); }));
       // live badge preview, exactly like the Docker section
       cA.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
       var pv = el("div", "cc-set-prev");

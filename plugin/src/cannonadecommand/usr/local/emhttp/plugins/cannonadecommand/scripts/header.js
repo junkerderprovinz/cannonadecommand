@@ -21,6 +21,28 @@
   function eff(k, d) { return g("cc.styleheader", "1") !== "0" ? g("cc." + k, d) : g("cch." + k, d); }
   function accent() { var a = eff("accent", "#2f6feb"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
   function shape() { return ({ pill: "999px", rounded: "6px", square: "0px" })[eff("badgeshape", "pill")] || "999px"; }
+  var RB = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
+  var RB_OFF = Math.floor(Math.random() * RB.length);
+  function pal() { try { var p = JSON.parse(eff("rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
+  function rbOn() { return eff("rainbow", "0") === "1"; }
+  function rbColor(i) { if (!rbOn()) return accent(); var off = eff("rainbowrot", "0") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; }
+  // rainbow: colour the active tab, each utility icon box and the usage fill with a
+  // rotated palette colour (in accent mode the CSS handles it via --cc-accent, so we
+  // just clear our overrides). childList observer only, so these style writes can't loop.
+  function paintNav() {
+    try {
+      var rb = rbOn();
+      var act = document.querySelector("#menu .nav-tile:not(.right) .nav-item.active > a");
+      if (act) { if (rb) { var c0 = rbColor(0); act.style.setProperty("background", c0, "important"); act.style.setProperty("color", idealText(c0), "important"); } else { act.style.removeProperty("background"); act.style.removeProperty("color"); } }
+      Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile.right .nav-item.util > a")).forEach(function (aEl, i) {
+        var gl = aEl.querySelector("b.system, img.system");
+        if (rb) { var c = rbColor(i + 1); aEl.style.setProperty("background", c, "important"); if (gl) gl.style.setProperty("color", idealText(c), "important"); }
+        else { aEl.style.removeProperty("background"); if (gl) gl.style.removeProperty("color"); }
+      });
+      var u = document.querySelector("#menu .usage-bar > span");
+      if (u) { if (rb) { var cu = rbColor(9); u.style.setProperty("background", cu, "important"); u.style.setProperty("color", idealText(cu), "important"); } else { u.style.removeProperty("background"); u.style.removeProperty("color"); } }
+    } catch (e) {}
+  }
   function apply() {
     try {
       var root = document.documentElement;
@@ -31,6 +53,8 @@
       root.style.setProperty("--cc-accent", a);
       root.style.setProperty("--cc-accent-text", idealText(a));
       root.style.setProperty("--cc-b-radius", shape());
+      root.classList.toggle("cc-header-rb", rbOn());
+      paintNav();
     } catch (e) {}
   }
   // gui_search() prepends #guiSearchBox into the bar; flag it so the sheet can clear
@@ -40,6 +64,7 @@
       var target = document.getElementById("menu") || document.body;
       var mo = new MutationObserver(function () {
         document.documentElement.classList.toggle("cc-search-open", !!document.getElementById("guiSearchBoxSpan"));
+        paintNav();
       });
       mo.observe(target, { childList: true, subtree: true });
     } catch (e) {}
