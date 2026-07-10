@@ -76,10 +76,10 @@
 
 /* volumes (col 7): NARROW column; long paths scroll as a marquee on mouseover */
 .cc-enh thead tr:last-child th:nth-child(8) { width: 260px; }
-.cc-enh #docker_list tr.sortable > td:nth-child(8) { max-width: 260px; }
-.cc-enh #docker_list tr.sortable > td:nth-child(8) span.docker_readmore { display: block; max-width: 260px; overflow: visible; white-space: normal; }
-.cc-vline { display: block; overflow: hidden; white-space: nowrap; max-width: 260px; }
-.cc-vtext { display: inline-block; white-space: nowrap; will-change: transform; }
+.cc-enh #docker_list tr.sortable > td:nth-child(8) { max-width: 260px; overflow: hidden; }
+.cc-volmarq { display: block; max-width: 260px; }
+.cc-vline { display: block; overflow: hidden; white-space: nowrap !important; word-break: normal !important; max-width: 260px; padding: 1px 0; }
+.cc-vtext { display: inline-block; white-space: nowrap !important; will-change: transform; }
 
 /* ACTIONS column: icon buttons, name as tooltip; "…" opens the native menu */
 .cc-actcell { white-space: nowrap; }

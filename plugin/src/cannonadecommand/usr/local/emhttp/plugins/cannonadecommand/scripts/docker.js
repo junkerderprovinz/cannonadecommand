@@ -512,18 +512,27 @@
   // span.docker_readmore with <br>-separated lines, so the old text-indent only
   // moved the first line. We wrap each line and ping-pong it just far enough to
   // read the whole thing, then back, repeating while hovered — each independently.
-  function setupVolMarquee(tr) {
+  function setupVolMarquee(tr, c) {
     try {
       var cell = tr.querySelector(":scope > td:nth-child(8)"); if (!cell) return;
-      var span = cell.querySelector("span.docker_readmore"); if (!span || span.getAttribute("data-cc-vm") === "1") return;
-      span.setAttribute("data-cc-vm", "1");
-      var lines = span.innerHTML.split(/<br\s*\/?>/i);
-      span.innerHTML = "";
-      lines.forEach(function (ln) { var w = el("span", "cc-vline"); var t = el("span", "cc-vtext"); t.innerHTML = ln; w.appendChild(t); span.appendChild(w); });
+      if (!c || !c.mounts || !c.mounts.length) return;
+      if (cell.getAttribute("data-cc-vm") === "1") return; // already rebuilt this render
+      cell.setAttribute("data-cc-vm", "1");
+      // Build the mount list from CC's OWN data and REPLACE the cell content. Unraid's
+      // readmore lib restructures span.docker_readmore (it stops matching that
+      // selector), which is why the DOM-parsing version silently fell back to the
+      // native word-break wrap. Owning the markup sidesteps readmore entirely.
+      var host = el("div", "cc-volmarq");
+      c.mounts.forEach(function (m) {
+        var w = el("span", "cc-vline"), t = el("span", "cc-vtext");
+        t.textContent = (m.source || "") + " \u2194 " + (m.dest || "") + (m.rw ? "" : " (ro)");
+        w.appendChild(t); host.appendChild(w);
+      });
+      cell.innerHTML = ""; cell.appendChild(host);
       var hov = { on: false }, ivs = [];
       cell.addEventListener("mouseenter", function () {
         hov.on = true;
-        Array.prototype.slice.call(span.querySelectorAll(".cc-vline")).forEach(function (w) {
+        Array.prototype.slice.call(host.querySelectorAll(".cc-vline")).forEach(function (w) {
           var t = w.querySelector(".cc-vtext"); var over = t.scrollWidth - w.clientWidth; if (over <= 2) return;
           var dur = Math.max(1000, Math.round(over / 55 * 1000)), toEnd = true;
           t.style.transition = "transform " + (dur / 1000) + "s linear"; t.style.transform = "translateX(-" + over + "px)";
@@ -533,7 +542,7 @@
       });
       cell.addEventListener("mouseleave", function () {
         hov.on = false; ivs.forEach(clearInterval); ivs = [];
-        Array.prototype.slice.call(span.querySelectorAll(".cc-vtext")).forEach(function (t) { t.style.transition = "transform .3s ease"; t.style.transform = "translateX(0)"; });
+        Array.prototype.slice.call(host.querySelectorAll(".cc-vtext")).forEach(function (t) { t.style.transition = "transform .3s ease"; t.style.transform = "translateX(0)"; });
       });
     } catch (e) {}
   }
@@ -541,7 +550,6 @@
     try {
       if (tr.getAttribute(ROWMARK)) return;
       tr.setAttribute(ROWMARK, "1");
-      setupVolMarquee(tr);
       var name = rowName(tr);
       if (filterText) tr.style.display = (norm(name).indexOf(filterText) >= 0) ? "" : "none";
       var nameCell = tr.querySelector("td.ct-name"), upCell = tr.querySelector("td.updatecolumn");
@@ -556,6 +564,7 @@
       var outerBox = nameCell && nameCell.querySelector(".outer");
       if (outerBox) { outerBox.style.setProperty("display", "flex", "important"); outerBox.style.setProperty("align-items", "center", "important"); outerBox.style.setProperty("height", "auto", "important"); }
       var adv = isAdvancedView(), c = containerByName(name);
+      setupVolMarquee(tr, c); // now c.mounts is available
       // the ACTIONS cell must exist BEFORE any nth-child lookup below — it sits at
       // position 2 and shifts every later column by one. Injecting it last put the
       // resource badges into Autostart and the plan chip into Betriebszeit.
