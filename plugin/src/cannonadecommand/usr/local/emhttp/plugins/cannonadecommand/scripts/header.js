@@ -96,9 +96,28 @@
       mo.observe(target, { childList: true, subtree: true });
     } catch (e) {}
   }
+  // Native gui_search only OPENS on a click; make a 2nd click on the magnifier CLOSE it.
+  // Delegated capture-phase listener runs BEFORE the toggle's inline onclick="gui_search()",
+  // so when the box is already open we close it and stop the event from re-opening it.
+  function wireSearchToggle() {
+    document.addEventListener("click", function (e) {
+      try {
+        if (!document.documentElement.classList.contains("cc-header-on")) return;
+        if (!document.getElementById("guiSearchBoxSpan")) return; // not open -> let native open it
+        var tgt = e.target && e.target.closest ? e.target.closest(".nav-item.gui_search, [onclick*='gui_search']") : null;
+        if (!tgt) return; // click wasn't on the search toggle
+        e.preventDefault(); e.stopImmediatePropagation(); // block the inline gui_search() re-open
+        if (typeof window.closeSearchBox === "function") { window.closeSearchBox(); return; }
+        var s = document.getElementById("guiSearchBoxSpan"); if (s) s.parentNode.removeChild(s);
+        var hid = document.querySelectorAll(".nav-item.util, .nav-user.show");
+        for (var i = 0; i < hid.length; i++) hid[i].style.removeProperty("display"); // restore what gui_search hid
+      } catch (err) {}
+    }, true);
+  }
   function boot() {
     apply();
     watchSearch();
+    wireSearchToggle();
     // the Settings page (or the Docker tab) writes cc.* keys from another origin/tab
     try { window.addEventListener("storage", function (e) { if (e.key && e.key.indexOf("cc.") === 0) apply(); }); } catch (e) {}
   }
