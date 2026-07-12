@@ -24,8 +24,10 @@
 /* CC badge size system — MIRRORED from styles/docker.css (keep in sync). This sheet
    is standalone (docker.css never loads here), so the sm tier (list-cell badges) + md
    tier (tab pills, bottom action buttons) need their own copy of the tokens, or they
-   render too small (the ad-hoc padding this replaces was the root cause). */
-:root { --cc-sm-fs: 11px; --cc-sm-pad: 3px 11px; --cc-md-fs: 13px; --cc-md-h: 30px; --cc-md-pad: 0 20px; }
+   render too small (the ad-hoc padding this replaces was the root cause). The lg tier is
+   the share-NAME headline badge — bigger than docker.css's button-lg (11px/4px 14px), so
+   the share name reads as the row's headline (~15px, taller pill) above the sm value pills. */
+:root { --cc-sm-fs: 11px; --cc-sm-pad: 3px 11px; --cc-md-fs: 13px; --cc-md-h: 30px; --cc-md-pad: 0 20px; --cc-lg-fs: 15px; --cc-lg-pad: 6px 16px; }
 
 /* ═══ sub-page tabs -> badges ═══ */
 html.cc-shares-on #displaybox nav.tabs .tabs-container { gap: 6px; }
@@ -93,6 +95,34 @@ html.cc-shares-on #displaybox table.unraid.share_status .cc-b .cc-b-v { font-fam
 html.cc-shares-on #displaybox table.unraid.share_status .cc-b a,
 html.cc-shares-on #displaybox table.unraid.share_status .cc-b i { color: inherit; }
 html.cc-shares-on #displaybox table.unraid.share_status .cc-b em { font-style: italic; opacity: .82; }
+
+/* ═══ share NAME -> a LARGE (lg) headline badge ═══
+   shares.js turns the name link (a[href*="/Share?name="]) into a .cc-b.cc-b-name — same
+   accent/rainbow pill as the value badges but the lg tier (bigger font, taller pad), so the
+   share name is the row's headline. The link stays live (href/onclick intact). Background is
+   the accent by default; in rainbow, paintRows sets an inline row colour that beats this
+   sheet's non-!important var(). Higher specificity (.cc-b.cc-b-name) so the lg size wins. */
+html.cc-shares-on #displaybox table.unraid.share_status .cc-b.cc-b-name {
+  padding: var(--cc-lg-pad, 6px 16px); font-size: var(--cc-lg-fs, 15px);
+  font-weight: 700; letter-spacing: .2px;
+}
+html.cc-shares-on #displaybox table.unraid.share_status .cc-b.cc-b-name:hover { filter: brightness(1.14); }
+html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-name,
+html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-name:hover { text-decoration: none; }
+
+/* ═══ protected-status badge ═══
+   shares.js converts the Name-cell status orb (i.orb.green-orb = protected,
+   i.orb.yellow-orb/fa-warning = unprotected) into a small SEMANTIC pill placed before the
+   name badge. Colours are semantic (green = protected, orange = unprotected), NEVER the
+   accent and NEVER rainbow — the pill has no .cc-b class, so paintRows leaves it alone. */
+html.cc-shares-on #displaybox table.unraid.share_status .cc-b-status {
+  display: inline-flex; align-items: center; gap: 5px; border: none;
+  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 3px 11px);
+  font-size: var(--cc-sm-fs, 11px); font-weight: 600; line-height: 1.35;
+  white-space: nowrap; vertical-align: middle; margin-right: 6px;
+}
+html.cc-shares-on #displaybox table.unraid.share_status .cc-b-prot { background: #3fae6a; color: #08240f; }
+html.cc-shares-on #displaybox table.unraid.share_status .cc-b-unprot { background: #d6a243; color: #241a04; }
 
 /* ═══ browse column -> a Browse badge ═══
    shares.js lifts the a.view (icon-u-tab browse link) out of the Name cell into its

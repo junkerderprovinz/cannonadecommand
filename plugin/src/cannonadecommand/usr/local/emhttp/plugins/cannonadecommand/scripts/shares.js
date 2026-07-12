@@ -42,7 +42,7 @@
   function pn() { try { return location.pathname.replace(/\/+$/, ""); } catch (e) { return ""; } }
   // tiny i18n (same shape as docker.js): en fallback, de when the page lang is German.
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
-  var T = { de: { browse: "Durchsuchen" }, en: { browse: "Browse" } };
+  var T = { de: { browse: "Durchsuchen", protected: "Geschützt", unprotected: "Ungeschützt" }, en: { browse: "Browse", protected: "Protected", unprotected: "Unprotected" } };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
   // rainbow: paint the ACTIVE tab button a rotated palette colour; accent mode = clear
@@ -116,6 +116,28 @@
     while (td.firstChild) v.appendChild(td.firstChild); // keep links/icons/orbs working
     b.appendChild(v); td.appendChild(b);
   }
+  // Name cell -> [status][name]: convert the protected-status orb (i.orb.green-orb =
+  // protected, i.orb.yellow-orb/fa-warning = unprotected) into a small SEMANTIC pill placed
+  // before the name, and turn the share-name link into a LARGE (lg) badge. Both idempotent
+  // (a set-once .cc-b-status check + a class guard) so a tbody refill never double-wraps;
+  // called only from the guarded enhanceRow, so it runs once per row lifecycle.
+  function enhanceName(name) {
+    var nl = name.querySelector('a[href*="/Share?name="]'); // the share-name link
+    if (!name.querySelector(":scope > .cc-b-status")) { // status pill from the orb
+      var orb = name.querySelector("i.orb, i.green-orb, i.yellow-orb");
+      if (orb) {
+        var cn = orb.className || "", green = /green-orb/.test(cn), yellow = /yellow-orb|fa-warning/.test(cn);
+        if (green || yellow) {
+          var sb = el("span", "cc-b-status " + (green ? "cc-b-prot" : "cc-b-unprot"), t(green ? "protected" : "unprotected"));
+          var infoA = orb.closest("a"); // a.info.nohand — hide the bare orb, keep its tooltip on the pill
+          if (infoA) { var ti = infoA.getAttribute("title"); if (ti) sb.title = ti; infoA.style.setProperty("display", "none", "important"); }
+          else orb.style.setProperty("display", "none", "important");
+          name.insertBefore(sb, nl || name.firstChild); // before the name badge -> row reads [status] [name]
+        }
+      }
+    }
+    if (nl && !nl.classList.contains("cc-b-name")) { nl.classList.add("cc-b"); nl.classList.add("cc-b-name"); } // lg badge, href/onclick intact
+  }
   function enhanceRow(tr) {
     if (tr.getAttribute("data-cc-sh")) return; // set-and-bail idempotency
     tr.setAttribute("data-cc-sh", "1");
@@ -131,6 +153,7 @@
       bt.appendChild(view); // moves it OUT of the Name cell, href/onclick intact
     }
     name.parentNode.insertBefore(bt, name.nextSibling);
+    enhanceName(name); // [status][name] badges in the Name cell (after the browse link left it)
     for (var i = 2; i < tds.length; i++) badgeCell(tds[i]); // SMB, NFS, Storage, Size, Free (skip Name+Comment)
   }
   function enhanceHead(table) {
@@ -150,6 +173,33 @@
         var table = tb.closest ? tb.closest("table") : null; if (table) enhanceHead(table);
         var rows = tb.children;
         for (var r = 0; r < rows.length; r++) if (rows[r].tagName === "TR") enhanceRow(rows[r]);
+      }
+    } catch (e) {}
+  }
+  // Rainbow PER ROW: when rainbow is on, paint EACH row's name + value badges (.cc-b) a
+  // SINGLE rotated palette colour rbColor(rowIndex) with idealText() contrast, so a whole
+  // row shares one colour. The Browse pill (a.cc-b-browse) and the semantic status pill
+  // (.cc-b-status) are NOT .cc-b, so they keep their own colours. Accent mode: clear the
+  // inline colour so the sheet's --cc-shr-accent default shows. Writes inline styles ONLY
+  // (attribute changes) — no childList mutation, so the MutationObserver can't loop; the row
+  // index counts only real (non-placeholder) rows so it stays stable across tbody refills.
+  function paintRows() {
+    try {
+      if (g("cc.enable.shares", "0") === "0") return;
+      if (pn() !== "/Shares") return;
+      var rb = rbOn(), ids = ["shareslist", "disk_list"];
+      for (var j = 0; j < ids.length; j++) {
+        var tb = document.getElementById(ids[j]); if (!tb) continue;
+        var rows = tb.children, ri = 0;
+        for (var r = 0; r < rows.length; r++) {
+          var tr = rows[r]; if (tr.tagName !== "TR" || tr.querySelector(":scope > td.empty")) continue; // skip the no-shares placeholder
+          var c = rb ? rbColor(ri) : "", tc = rb ? idealText(c) : "", bs = tr.querySelectorAll(".cc-b");
+          for (var k = 0; k < bs.length; k++) {
+            if (rb) { bs[k].style.setProperty("background", c, "important"); bs[k].style.setProperty("color", tc, "important"); }
+            else { bs[k].style.removeProperty("background"); bs[k].style.removeProperty("color"); }
+          }
+          ri++;
+        }
       }
     } catch (e) {}
   }
@@ -175,6 +225,7 @@
       hideRedundantTabs();
       paintTabs();
       enhanceShares();
+      paintRows(); // per-row rainbow AFTER the badges exist (re-applies when rbOn toggles via storage)
     } catch (e) {}
   }
   // Observe the content container ONLY (never body). apply()'s follow-ups make no
@@ -186,7 +237,7 @@
       if (!host) return;
       mo = new MutationObserver(function () {
         if (moPending) return; moPending = true;
-        setTimeout(function () { moPending = false; hideRedundantTabs(); paintTabs(); enhanceShares(); }, 150);
+        setTimeout(function () { moPending = false; hideRedundantTabs(); paintTabs(); enhanceShares(); paintRows(); }, 150);
       });
       mo.observe(host, { childList: true, subtree: true });
     } catch (e) {}
