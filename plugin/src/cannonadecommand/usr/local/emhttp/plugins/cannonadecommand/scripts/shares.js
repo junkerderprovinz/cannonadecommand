@@ -205,7 +205,7 @@
         var rows = tb.children, ri = 0;
         for (var r = 0; r < rows.length; r++) {
           var tr = rows[r]; if (tr.tagName !== "TR" || tr.querySelector(":scope > td.empty")) continue; // skip the no-shares placeholder
-          var c = rb ? rbColor(ri) : "", tc = rb ? idealText(c) : "", bs = tr.querySelectorAll(".cc-b");
+          var c = rb ? rbColor(ri) : "", tc = rb ? idealText(c) : "", bs = tr.querySelectorAll(".cc-b, .cc-b-browse"); // browse pill is coloured too now
           for (var k = 0; k < bs.length; k++) {
             if (rb) { bs[k].style.setProperty("background", c, "important"); bs[k].style.setProperty("color", tc, "important"); }
             else { bs[k].style.removeProperty("background"); bs[k].style.removeProperty("color"); }

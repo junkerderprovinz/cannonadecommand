@@ -155,6 +155,10 @@
   }
   function elk(t) { var s = el("span", "cc-b-k"); s.textContent = t; return s; }
   function elv(t) { var s = el("span", "cc-b-v"); s.textContent = t; return s; }
+  // Systemwide INFO ICON: a small "i" in a circle; hover OR keyboard-focus shows a CSS bubble with
+  // the explanation (styled in docker.css). Lets us tuck long info texts behind a clean glyph so the
+  // cards stay uncluttered — reuse this anywhere a control needs a "what does this do?" hint.
+  function infoIcon(tip) { var s = el("span", "cc-info", "i"); if (tip) { s.setAttribute("data-tip", tip); s.setAttribute("aria-label", tip); } s.setAttribute("tabindex", "0"); return s; }
   // normalise a typed hex ("2f6feb" / "#2F6FEB") to "#rrggbb", or "" if invalid.
   function normHex(s) { var v = String(s || "").trim(); if (/^[0-9a-f]{6}$/i.test(v)) v = "#" + v; return /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : ""; }
 
@@ -299,7 +303,10 @@
     c1.appendChild(rr);
     // rotation toggle: on = every tab reload deals a fresh colour mapping; off = stable colours
     var rrot = el("div", "cc-set-row cc-set-inline");
-    rrot.appendChild(el("span", null, T("Automatische Farbenrotation", "Automatic colour rotation")));
+    var rrotL = el("span", "cc-set-lblwrap");
+    rrotL.appendChild(el("span", null, T("Automatische Farbenrotation", "Automatic colour rotation")));
+    rrotL.appendChild(infoIcon(T("Mischt die Rainbow-Farben bei jedem Neuladen der Seite neu durch, statt die Reihenfolge fest zu lassen.", "Reshuffles the rainbow colours on every page reload instead of keeping the order fixed.")));
+    rrot.appendChild(rrotL);
     rrot.appendChild(toggle(get("cc.rainbowrot", "1") !== "0", function (v) { set("cc.rainbowrot", v ? "1" : "0"); syncHeaderBar(); syncSharesBar(); }));
     if (!rainbow) { rrot.style.opacity = ".4"; rrot.style.pointerEvents = "none"; } // only makes sense WITH rainbow
     c1.appendChild(rrot);
@@ -327,8 +334,12 @@
     c1.appendChild(rbrow); c1.appendChild(rbPickWrap); c1.appendChild(rbReset);
     c1.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var prev = el("div", "cc-set-prev");
-    var pvKinds = { net: ["Netzwerk", "br0.20"], ip: ["IP", "192.168.20.11"], lan: ["LAN", "192.168.20.11"], port: ["Port", "all"], cpu: ["CPU", "2/8"], ram: ["RAM", "4G"], bw: ["BW", "10 MB/s"], plan: ["Start", "#3"] };
-    Object.keys(pvKinds).forEach(function (k) { var b = el("span", "cc-b cc-b-" + k); b.appendChild(elk(pvKinds[k][0])); b.appendChild(elv(pvKinds[k][1])); prev.appendChild(b); });
+    // 2-3 mixed categories (user call): a NAME headline badge (lg), a key/value badge (sm) and a
+    // menu-style tab pill (md) — shows CC's badge range, cleaner than the old eight Docker badges.
+    var pvName = el("span", "cc-b cc-b-lg", "nextcloud");
+    var pvVal = el("span", "cc-b"); pvVal.appendChild(elk("CPU")); pvVal.appendChild(elv("2/8"));
+    var pvTab = el("span", "cc-navtab cc-navtab-on", "Docker");
+    prev.appendChild(pvName); prev.appendChild(pvVal); prev.appendChild(pvTab);
     prev.id = "cc-set-prev"; c1.appendChild(prev);
     wrapMain.appendChild(c1); // GLOBAL badge colour + rainbow -> the "Allgemein" tab (was the Docker tab)
     // Docker is now a normal area like the others: a "Stil" adopt card + its OWN Badges (accent)
@@ -550,9 +561,11 @@
           var t9 = el("span", "cc-navtab" + (i9 === activeIx ? " cc-navtab-on" : ""), nm9); pv.appendChild(t9); return t9;
         });
       } else {
-        pvBadges = [["Netzwerk", "br0.20"], ["IP", "192.168.20.11"], ["LAN", "192.168.20.11"], ["Port", "all"], ["CPU", "2/8"], ["RAM", "4G"], ["BW", "10 MB/s"], ["Start", "#3"]].map(function (d9) {
-          var b9 = el("span", "cc-b"); b9.appendChild(el("span", "cc-b-k", d9[0])); b9.appendChild(el("span", "cc-b-v", d9[1])); pv.appendChild(b9); return b9;
-        });
+        // 2-3 mixed categories (same as the Allgemein preview): NAME headline (lg) + key/value (sm) + tab pill (md)
+        var pvName9 = el("span", "cc-b cc-b-lg", "nextcloud"); pv.appendChild(pvName9);
+        var pvVal9 = el("span", "cc-b"); pvVal9.appendChild(el("span", "cc-b-k", "CPU")); pvVal9.appendChild(el("span", "cc-b-v", "2/8")); pv.appendChild(pvVal9);
+        var pvTab9 = el("span", "cc-navtab cc-navtab-on", "Docker"); pv.appendChild(pvTab9);
+        pvBadges = [pvName9, pvVal9, pvTab9];
       }
       function paintPv() {
         var rbOn9 = get("cc.rainbow", "0") === "1", p9 = palG();
@@ -675,7 +688,7 @@
   function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16); var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
   // preview uses the REAL rainbow palette (identical to docker.css) so it matches
   // what the Docker tab actually shows, with auto-contrast text.
-  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var kinds = { net: "#1f9d55", ip: "#2f6feb", lan: "#e0912a", port: "#8b5cf6", cpu: "#d9433f", ram: "#0ea5a4", bw: "#f97316", plan: "#e05299" }; Array.prototype.slice.call(p.children).forEach(function (b) { var k = (b.className.match(/cc-b-(\w+)/) || [])[1]; var c = rainbow ? kinds[k] : accent; b.style.background = c; b.style.color = idealText(c); }); }
+  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; var pal = DEF; try { var j = JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
   // live-highlight the preset swatch that matches the current accent (no re-render)
   function syncSwOn() { var a = (accent || "").toLowerCase(); Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-sw")).forEach(function (sw) { sw.classList.toggle("cc-set-sw-on", (sw.dataset.c || "").toLowerCase() === a); }); }
   function thc(t) { var e = el("th", null, t); return e; }

@@ -673,12 +673,32 @@ html.cc-plugins-iconbg .cc-plugico {
 /* hex text field beside the colour picker (override Unraid's input underline) */
 #cc-settings .cc-set-hexin { flex: none; width: 104px; font-family: ui-monospace, "Cascadia Code", monospace; text-transform: uppercase; letter-spacing: .5px; background: #1e1e1e !important; color: var(--txt); border: 1px solid var(--line2) !important; border-radius: 6px !important; padding: 8px 10px !important; font-size: 13px; box-sizing: border-box; }
 #cc-settings .cc-set-hexin:focus { outline: none; border-color: var(--cc-accent, #2f6feb) !important; }
-.cc-set-prev { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.cc-set-prev { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; align-items: center; }
+.cc-set-prev .cc-b-lg { font-size: 14px; font-weight: 700; padding: 5px 15px; letter-spacing: .2px; } /* preview NAME headline badge (lg tier) — bigger than the sm value pill */
 /* Hauptmenueleiste preview: mock of the top nav TABS (idle grey pill + one accent-filled
    active pill, mirroring CannonadeCommand.Header.css). The active tab's colour is set inline
    by settings.js paintPv(); idle tabs keep the grey pill below. */
 .cc-set-navprev { gap: 6px; align-items: center; }
 .cc-navtab { display: inline-flex; align-items: center; justify-content: center; height: 30px; padding: 0 16px; line-height: 1; border-radius: var(--cc-b-radius, 999px); background: rgba(128,128,128,.18); color: #cfcfcf; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; white-space: nowrap; }
+/* ═══ systemwide INFO ICON ═══ an "i" in a circle + a hover/focus bubble; hides long explanations
+   behind a clean glyph so the cards stay uncluttered. settings.js infoIcon(tip) emits
+   <span class="cc-info" data-tip="…">i</span>. .cc-set-card has no overflow clip, so the ::after
+   bubble shows in full. Reuse .cc-info anywhere a control needs a "what does this do?" hint. */
+.cc-set-lblwrap { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.cc-info { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; border: 1px solid currentColor; opacity: .5; font: italic 700 10px/1 Georgia, "Times New Roman", serif; cursor: help; position: relative; user-select: none; flex: 0 0 auto; }
+.cc-info:hover, .cc-info:focus { opacity: 1; outline: none; }
+.cc-info[data-tip]:hover::after, .cc-info[data-tip]:focus::after {
+  content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+  z-index: 9999; width: max-content; max-width: 260px; text-align: left;
+  background: #1c1c1c; color: #eaeaea; border: 1px solid rgba(255, 255, 255, .14); border-radius: 8px;
+  padding: 8px 10px; font-size: 12px; font-weight: 400; font-style: normal; line-height: 1.45;
+  text-transform: none; letter-spacing: normal; white-space: normal;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .45); pointer-events: none;
+}
+.cc-info[data-tip]:hover::before, .cc-info[data-tip]:focus::before {
+  content: ""; position: absolute; left: 50%; bottom: calc(100% + 3px); transform: translateX(-50%);
+  z-index: 9999; border: 5px solid transparent; border-top-color: #1c1c1c; pointer-events: none;
+}
 .cc-set-mini { background: transparent; color: var(--dim); border: 1px solid var(--line2); border-radius: 7px; padding: 5px 12px; font-size: 12.5px; cursor: pointer; }
 .cc-set-mini-on { color: #fff; border-color: var(--cc-accent, #2f6feb); background: rgba(255,255,255,.05); }
 /* limit-diagnostics card: monospace log lines, red on a docker rejection */

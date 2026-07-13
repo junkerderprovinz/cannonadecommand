@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.8.0">
+  <!ENTITY version   "2.9.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,16 @@
 </ICON>
 
 <CHANGES>
+### 2.9.0
+- Freigaben: the "Durchsuchen" badge is now coloured like the row's data badges (accent, or the row's
+  rainbow colour) and its left-clip is gone; the list rows are a little taller (less cramped) and the
+  share name has a small left indent.
+- Settings: a new systemwide info icon — a small "i" in a circle; hover or focus it for a bubble that
+  explains the setting, so the cards stay uncluttered. The first one sits on the rainbow "Automatic
+  colour rotation" toggle; more will follow at helpful spots.
+- Settings: the live preview now shows three mixed sample badges (a name headline, a key/value pill
+  and a tab pill) instead of eight Docker badges, so it represents CC's whole badge range.
+
 ### 2.8.0
 - Freigaben: the two share sub-pages (Freigabeeinstellungen + SMB-Sicherheitseinstellungen) now
   follow the CC look — the buttons, the prev/next arrows and the section headers are themed, and CC
@@ -422,7 +432,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>c048eefabf4c63d7dc239f2e86173f72b0e1283e1d7a6398b88fe737b410f853</SHA256>
+  <SHA256>3d97a76a5596ff36542d658dfc2377d5d86b0b6ead86adec091f5a28f9298b16</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
