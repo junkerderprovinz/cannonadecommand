@@ -140,10 +140,10 @@
     var nl = name.querySelector('a[href*="/Share?name="]'); // the share-name link
     if (nl && !nl.classList.contains("cc-b-name")) { nl.classList.add("cc-b"); nl.classList.add("cc-b-name"); }
   }
-  // Row -> [Status] [Name] [Browse] [Comment] [values…]. The Status pill and the Browse control
-  // each get their OWN column (user request); both cells are ALWAYS inserted so the body column
-  // count matches the head. Snapshot the original cells BEFORE inserting, since the two new
-  // <td>s shift nth-child. Idempotent via data-cc-sh set-and-bail on the <tr>.
+  // Row -> [Name] [Status] [Browse] [Comment] [values…]. The Status pill and the Browse control
+  // each get their OWN column to the RIGHT of the name (user request); both cells are ALWAYS
+  // inserted so the body column count matches the head. Snapshot the original cells BEFORE
+  // inserting, since the two new <td>s shift nth-child. Idempotent via data-cc-sh set-and-bail.
   function enhanceRow(tr) {
     if (tr.getAttribute("data-cc-sh")) return; // set-and-bail idempotency
     tr.setAttribute("data-cc-sh", "1");
@@ -151,10 +151,10 @@
     if (empty) { empty.colSpan = (empty.colSpan || 1) + 2; return; } // no-shares placeholder: widen by the 2 new cols
     var tds = Array.prototype.slice.call(tr.children); // snapshot BEFORE inserting the Status+Browse cells
     var name = tds[0]; if (!name) return;
-    var st = el("td", "cc-status-col"); // Status cell, inserted BEFORE the Name cell
+    var st = el("td", "cc-status-col"); // Status cell, inserted right AFTER the Name cell
     var pill = statusPill(name); if (pill) st.appendChild(pill);
-    name.parentNode.insertBefore(st, name);
-    var bt = el("td", "cc-browse-col"); // Browse cell, inserted AFTER the Name cell
+    name.parentNode.insertBefore(st, name.nextSibling);
+    var bt = el("td", "cc-browse-col"); // Browse cell, inserted AFTER the Status cell
     var view = name.querySelector("a.view");
     if (view && view.getAttribute("href")) { // real browse link (disk sub-rows carry an empty a.view)
       view.classList.add("cc-b-browse");
@@ -162,7 +162,7 @@
       if (!view.querySelector(".cc-b-lab")) view.appendChild(el("span", "cc-b-lab", t("browse")));
       bt.appendChild(view); // moves it OUT of the Name cell, href/onclick intact
     }
-    name.parentNode.insertBefore(bt, name.nextSibling);
+    name.parentNode.insertBefore(bt, st.nextSibling);
     enhanceName(name); // name link -> lg badge (status + browse have already left this cell)
     for (var i = 2; i < tds.length; i++) badgeCell(tds[i]); // SMB, NFS, Storage, Size, Free (skip Name+Comment)
   }
@@ -171,8 +171,9 @@
     if (!head || head.getAttribute("data-cc-sh")) return;
     head.setAttribute("data-cc-sh", "1");
     var name = head.children[0]; if (!name) return;
-    head.insertBefore(el("td", "cc-status-col", t("protection")), name); // Status header BEFORE Name
-    head.insertBefore(el("td", "cc-browse-col", t("browse")), name.nextSibling); // Browse header AFTER Name
+    var sh = el("td", "cc-status-col", t("protection"));
+    head.insertBefore(sh, name.nextSibling); // Status header AFTER Name
+    head.insertBefore(el("td", "cc-browse-col", t("browse")), sh.nextSibling); // Browse header AFTER Status
   }
   function enhanceShares() {
     try {
