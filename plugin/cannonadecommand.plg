@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.9.0">
+  <!ENTITY version   "2.9.1">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,13 @@
 </ICON>
 
 <CHANGES>
+### 2.9.1
+- Freigaben: the Storage column was too narrow — CC's two new columns had shifted Unraid's fixed
+  column widths onto the wrong columns (Storage fell from a 15% slot to an ~8% one). The nine columns
+  are now re-proportioned so Storage gets the widest slot and "Cache -> Array" no longer clips.
+- Settings: the info icon is a cleaner SVG glyph now (neutral, not the old serif "i"), and its
+  tooltip uses the interface font — it was accidentally rendering in a serif font.
+
 ### 2.9.0
 - Freigaben: the "Durchsuchen" badge is now coloured like the row's data badges (accent, or the row's
   rainbow colour) and its left-clip is gone; the list rows are a little taller (less cramped) and the
@@ -432,7 +439,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>3d97a76a5596ff36542d658dfc2377d5d86b0b6ead86adec091f5a28f9298b16</SHA256>
+  <SHA256>02d857d4a6c4542a928566002c022f0a5d2d755b357e25ec7d209381405eab93</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

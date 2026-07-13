@@ -158,7 +158,7 @@
   // Systemwide INFO ICON: a small "i" in a circle; hover OR keyboard-focus shows a CSS bubble with
   // the explanation (styled in docker.css). Lets us tuck long info texts behind a clean glyph so the
   // cards stay uncluttered — reuse this anywhere a control needs a "what does this do?" hint.
-  function infoIcon(tip) { var s = el("span", "cc-info", "i"); if (tip) { s.setAttribute("data-tip", tip); s.setAttribute("aria-label", tip); } s.setAttribute("tabindex", "0"); return s; }
+  function infoIcon(tip) { var s = el("span", "cc-info"); s.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.1" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="4.7" r="1.05" fill="currentColor"/><rect x="7.05" y="6.8" width="1.9" height="5" rx=".95" fill="currentColor"/></svg>'; if (tip) { s.setAttribute("data-tip", tip); s.setAttribute("aria-label", tip); } s.setAttribute("tabindex", "0"); return s; }
   // normalise a typed hex ("2f6feb" / "#2F6FEB") to "#rrggbb", or "" if invalid.
   function normHex(s) { var v = String(s || "").trim(); if (/^[0-9a-f]{6}$/i.test(v)) v = "#" + v; return /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : ""; }
 

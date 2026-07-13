@@ -680,18 +680,20 @@ html.cc-plugins-iconbg .cc-plugico {
    by settings.js paintPv(); idle tabs keep the grey pill below. */
 .cc-set-navprev { gap: 6px; align-items: center; }
 .cc-navtab { display: inline-flex; align-items: center; justify-content: center; height: 30px; padding: 0 16px; line-height: 1; border-radius: var(--cc-b-radius, 999px); background: rgba(128,128,128,.18); color: #cfcfcf; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; white-space: nowrap; }
-/* ═══ systemwide INFO ICON ═══ an "i" in a circle + a hover/focus bubble; hides long explanations
-   behind a clean glyph so the cards stay uncluttered. settings.js infoIcon(tip) emits
-   <span class="cc-info" data-tip="…">i</span>. .cc-set-card has no overflow clip, so the ::after
-   bubble shows in full. Reuse .cc-info anywhere a control needs a "what does this do?" hint. */
+/* ═══ systemwide INFO ICON ═══ a clean SVG "i" glyph + a hover/focus bubble; hides long explanations
+   behind a small icon so the cards stay uncluttered. settings.js infoIcon(tip) emits
+   <span class="cc-info" data-tip="…"><svg>…</svg></span>. Neutral colour (var(--dim)), never accent.
+   .cc-set-card has no overflow clip, so the ::after bubble shows in full. Reuse .cc-info anywhere. */
 .cc-set-lblwrap { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
-.cc-info { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; border: 1px solid currentColor; opacity: .5; font: italic 700 10px/1 Georgia, "Times New Roman", serif; cursor: help; position: relative; user-select: none; flex: 0 0 auto; }
-.cc-info:hover, .cc-info:focus { opacity: 1; outline: none; }
+.cc-info { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; color: var(--dim, #9a9a9a); opacity: .85; cursor: help; position: relative; flex: 0 0 auto; }
+.cc-info svg { width: 15px; height: 15px; display: block; }
+.cc-info:hover, .cc-info:focus { opacity: 1; color: var(--txt, #e6e6e6); outline: none; }
 .cc-info[data-tip]:hover::after, .cc-info[data-tip]:focus::after {
   content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
   z-index: 9999; width: max-content; max-width: 260px; text-align: left;
   background: #1c1c1c; color: #eaeaea; border: 1px solid rgba(255, 255, 255, .14); border-radius: 8px;
-  padding: 8px 10px; font-size: 12px; font-weight: 400; font-style: normal; line-height: 1.45;
+  padding: 8px 10px; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 12px; font-weight: 400; font-style: normal; line-height: 1.45;
   text-transform: none; letter-spacing: normal; white-space: normal;
   box-shadow: 0 6px 20px rgba(0, 0, 0, .45); pointer-events: none;
 }

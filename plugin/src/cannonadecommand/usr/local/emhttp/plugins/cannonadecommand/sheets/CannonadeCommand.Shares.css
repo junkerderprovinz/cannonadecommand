@@ -101,6 +101,23 @@ html.cc-shares-on #displaybox table.unraid.share_status tr > td:first-child { pa
 /* ═══ roomier rows (user: "nicht so gedrungen") ═══ a bit more vertical breathing room per body row */
 html.cc-shares-on #displaybox table.unraid.share_status tbody td { padding-top: 7px; padding-bottom: 7px; }
 
+/* ═══ re-assert per-column widths for the CC 9-column layout (user: "Speicherspalte zu schmal") ═══
+   CC inserts Status+Browse after Name, so Unraid's fixed-layout nth-child widths land on SHIFTED
+   columns: Status stole Comment's 30%, SMB stole Storage's 15%, and Storage fell onto the 10% bucket
+   (~8% after the 120%-total down-scale) -> "Cache -> Array" clipped. Re-map all nine columns (sum =
+   100% so fixed-layout does no down-scaling); Storage gets the widest slot. #displaybox + 4 classes
+   beats default-base.css's table.share_status nth-child rules on specificity, no !important. Scoped
+   .cc-on-shares (list only). Covers both #shareslist + #disk_list (both share_status). */
+html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status tr > td:nth-child(1) { width: 15%; } /* Name        */
+html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status tr > td:nth-child(2) { width:  8%; } /* Status (CC) */
+html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status tr > td:nth-child(3) { width:  9%; } /* Browse (CC) */
+html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status tr > td:nth-child(4) { width: 16%; } /* Comment     */
+html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status tr > td:nth-child(5) { width:  8%; } /* SMB         */
+html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status tr > td:nth-child(6) { width:  8%; } /* NFS         */
+html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status tr > td:nth-child(7) { width: 18%; } /* Storage     */
+html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status tr > td:nth-child(8) { width:  9%; } /* Size        */
+html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status tr > td:nth-child(9) { width:  9%; } /* Free        */
+
 /* ═══ list-cell values -> CC badges ═══
    shares.js wraps each SMB/NFS/Storage/Size/Free value in .cc-b>.cc-b-v. docker.css
    isn't loaded here, so mirror its .cc-b shape (sm tier) + solid-accent look, exactly
