@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.9.1">
+  <!ENTITY version   "2.9.2">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,16 @@
 </ICON>
 
 <CHANGES>
+### 2.9.2
+- Freigaben: the share sub-pages (Freigabeeinstellungen + SMB) now wear the flat CC look — the section
+  panels dropped their light background, the input fields are filled boxes instead of underlines, and
+  the "Löschen" control is a proper badge. The redundant share-name heading above the tabs is gone; the
+  name already sits in the Freigabename field.
+- Plugins: the per-row uninstall button now reads "Löschen" too, matching the Freigaben page (it used
+  to say "Entfernen").
+- Settings: the info "i" no longer has a light box behind it — the circle and the "i" both take the
+  surface text colour.
+
 ### 2.9.1
 - Freigaben: the Storage column was too narrow — CC's two new columns had shifted Unraid's fixed
   column widths onto the wrong columns (Storage fell from a 15% slot to an ~8% one). The nine columns
@@ -439,7 +449,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>02d857d4a6c4542a928566002c022f0a5d2d755b357e25ec7d209381405eab93</SHA256>
+  <SHA256>e0e83267df777f4aa906ae5e7ec2efc9dd9a2ed34d34eb459380edb8f39d9eb6</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

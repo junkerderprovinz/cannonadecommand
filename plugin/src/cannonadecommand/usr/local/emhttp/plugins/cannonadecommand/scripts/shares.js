@@ -215,23 +215,14 @@
       }
     } catch (e) {}
   }
-  // Share DETAIL page (/Shares/Share?name=X): Unraid renders NO share-name heading there (the xmenu
-  // parent has no Title), only the two sub-tab labels. Inject a CC title with the share name (from
-  // the ?name= query, falling back to the ShareName field) as the first child of #displaybox.
-  // Idempotent: reuse + retext the existing node, so the prev/next arrows (which navigate to another
-  // share) just update it instead of stacking a second title.
+  // Share DETAIL page (/Shares/Share): CC no longer injects a share-name title — the user pointed out
+  // the name is already in the Freigabename field, so the heading above the tabs was redundant. This
+  // now just cleans up any leftover .cc-share-title (e.g. from a cached older version). The detail
+  // page's CC theming (buttons, inputs, flat sections) is all CSS via the cc-on-share-detail class.
   function enhanceShareDetail() {
     try {
-      if (g("cc.enable.shares", "0") === "0") return;
-      if (pn() !== "/Shares/Share") return;
       var box = document.getElementById("displaybox"); if (!box) return;
-      var name = "";
-      try { name = decodeURIComponent(((location.search.match(/[?&]name=([^&]+)/) || [])[1] || "").replace(/\+/g, " ")); } catch (e) {}
-      if (!name) { var inp = box.querySelector('input#shareName, input[name="shareName"]'); if (inp) name = inp.value || ""; }
-      if (!name) return;
-      var ttl = box.querySelector(":scope > .cc-share-title"); // NB: not the i18n t()
-      if (ttl) { if (ttl.textContent !== name) ttl.textContent = name; return; }
-      box.insertBefore(el("div", "cc-share-title", name), box.firstChild);
+      var ttl = box.querySelector(":scope > .cc-share-title"); if (ttl) ttl.parentNode.removeChild(ttl);
     } catch (e) {}
   }
   function apply() {

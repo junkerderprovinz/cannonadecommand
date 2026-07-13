@@ -279,7 +279,16 @@
       rm.style.setProperty("letter-spacing", "0", "important");
       rm.style.setProperty("text-transform", "none", "important");
       rm.style.setProperty("font-weight", "600", "important");
-      if (rm.tagName === "INPUT" && !rm.value.trim()) rm.value = LANG === "de" ? "Entfernen" : "Remove";
+      // Relabel the per-row uninstall control to "Löschen"/"Delete" so it matches the
+      // Shares delete badge. Locale-independent gate: the native button carries class="remove"
+      // (PHP class='$method'); its onclick holds the untranslated shell command "plugin remove <file>".
+      // The sibling class="remove" checkbox is handled above as `cb`, so `rm` is the button.
+      if (rm.tagName === "INPUT" &&
+          (rm.classList.contains("remove") || /plugin\s+remove\b/.test(rm.getAttribute("onclick") || ""))) {
+        rm.value = LANG === "de" ? "Löschen" : "Delete";
+      } else if (rm.tagName === "INPUT" && !rm.value.trim()) {
+        rm.value = LANG === "de" ? "Entfernen" : "Remove";
+      }
     }
     // col 2: description in its own column — NOT click-expandable any more; a
     // fixed window whose content scrolls UP while hovered (Docker-volumes style)

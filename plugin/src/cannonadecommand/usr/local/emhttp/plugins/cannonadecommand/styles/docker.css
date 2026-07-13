@@ -685,9 +685,9 @@ html.cc-plugins-iconbg .cc-plugico {
    <span class="cc-info" data-tip="…"><svg>…</svg></span>. Neutral colour (var(--dim)), never accent.
    .cc-set-card has no overflow clip, so the ::after bubble shows in full. Reuse .cc-info anywhere. */
 .cc-set-lblwrap { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
-.cc-info { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; color: var(--dim, #9a9a9a); opacity: .85; cursor: help; position: relative; flex: 0 0 auto; }
-.cc-info svg { width: 15px; height: 15px; display: block; }
-.cc-info:hover, .cc-info:focus { opacity: 1; color: var(--txt, #e6e6e6); outline: none; }
+.cc-info { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; background: none; color: var(--txt, #e6e6e6); opacity: .8; cursor: help; position: relative; flex: 0 0 auto; }
+.cc-info svg { width: 15px; height: 15px; display: block; background: none; }
+.cc-info:hover, .cc-info:focus { opacity: 1; outline: none; }
 .cc-info[data-tip]:hover::after, .cc-info[data-tip]:focus::after {
   content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
   z-index: 9999; width: max-content; max-width: 260px; text-align: left;
