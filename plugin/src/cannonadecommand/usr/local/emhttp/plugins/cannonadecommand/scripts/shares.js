@@ -422,7 +422,11 @@
         } else {                                              // last resort: never shout the raw id
           head.textContent = (btn && btn.textContent.trim()) || (section.id || "").replace(/-panel$/, "");
         }
-        section.insertBefore(head, section.firstChild);       // PREPEND only — never move the forms
+        // put the title badge INSIDE the main card (user: "Die überschriftbadges sollen in die Card"):
+        // if this panel was split, the badge goes into the top-level .cc-main-col; otherwise into the
+        // section (which is itself the card). PREPEND only — never move the forms.
+        var mainCol = section.querySelector(":scope > .cc-split-row > .cc-main-col") || section;
+        mainCol.insertBefore(head, mainCol.firstChild);
       }
       ccSelects(box);   // convert native <select> to the CC disk-dropdown look (see ccWrapSelect)
     } catch (e) {}

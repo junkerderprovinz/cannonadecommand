@@ -454,14 +454,19 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-main-col {
   background: #222; border: none; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-side-card {
-  flex: 0 0 260px;
+  flex: 0 0 260px; position: relative;   /* contain any residual absolutely-positioned clone child */
   background: #222; border: none; border-radius: 12px; padding: 12px 14px; box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
 }
-/* the columns are the cards now -> drop the inner .shade backgrounds/insets */
+/* the columns are the cards now -> drop the inner .shade backgrounds, and NEUTRALIZE the native float:
+   div.clone-settings is position:absolute (a top-right float inside its .relative) in Unraid, so once
+   moved into a card it must FLOW normally — otherwise it floats over the form (the "durcheinander" the
+   user saw in the Freigabeeinstellungen). Reset the clone + any wrapping .relative to static. */
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-main-col > .shade,
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-side-card .clone-settings,
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-side-card .relative,
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-side-card .shade {
   background: none !important; padding: 0; margin: 0;
+  position: static !important; inset: auto !important; width: auto !important;
 }
 /* SMB "User Access" = its own main card, stacked under the SMB-settings split. LEFT-aligned + full
    host width so its left edge lines up with the split-row above (align-to-menu-bar) AND its own inner
