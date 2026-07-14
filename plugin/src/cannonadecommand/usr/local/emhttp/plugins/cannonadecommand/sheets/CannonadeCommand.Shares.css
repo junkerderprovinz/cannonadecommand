@@ -406,7 +406,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item .ui-
    and dress each section as a settings-style card. shares.js prepends a header per card. */
 html.cc-shares-on.cc-on-share-detail #displaybox section[role="tabpanel"] {
   display: block !important;                 /* beats the inline style.display:none AND .tab-content{display:none} */
-  max-width: 760px; margin: 0 auto 16px;     /* narrow + centered like .cc-set-card, not full page width */
+  max-width: 960px; margin: 0 auto 16px;     /* clone-less panels: wider than the old 760, still centered */
   background: #222; border-radius: 12px; padding: 16px 20px 20px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
   overflow: visible !important;              /* the open dropdown overlay must NOT grow a card scrollbar — beats .content{overflow-x:auto} which forces both axes to auto; only the list scrolls */
@@ -428,6 +428,10 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-card-head {
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-card-head i.title,
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-card-head i,
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
+/* SMB "User Access": its native sub-heading is converted into an in-card title badge, so hide the
+   native one; its "guests have … access" note is kept as a small muted line under the badge. */
+html.cc-shares-on.cc-on-share-detail #displaybox .title.cc-carded { display: none !important; }
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-card-note { color: #9a9a9a; font-size: 12px; font-style: italic; margin: -4px 0 12px; }
 /* card body text: the section is now a dark #222 card, so make the form's default field labels + help
    text light enough to read on it (the theme-default label colour would otherwise be dark-on-dark).
    Accent headers, inputs and the SMB bar span.left keep their own more-specific colours. */
@@ -447,18 +451,18 @@ html.cc-shares-on.cc-on-share-detail #displaybox section[role="tabpanel"] blockq
    cards get the SAME #222 fill; no border lines ([[cc-standardize-widget-style-systemwide]]) — they
    read as two separate cards via fill + shadow + the gap between them. */
 html.cc-shares-on.cc-on-share-detail #displaybox .tab-content:has(.cc-split-row) {
-  max-width: 1040px;                                 /* room for Hauptcard + Nebencard side by side */
+  max-width: 1480px;                                 /* wider: the Hauptcard + Nebencard use the page (user: cards too narrow) */
   background: none; box-shadow: none; border-radius: 0; padding: 0;   /* host, not a card -> NO enclosing frame */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-split-row {
   display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;   /* Nebencard stacks below on narrow screens */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-main-col {
-  flex: 1 1 460px; min-width: 0;
+  flex: 1 1 620px; min-width: 0;                     /* wider Hauptcard basis (host 1480 - side 360 - gap -> ~1100px) */
   background: #222; border: none; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-side-card {
-  flex: 0 0 260px; align-self: flex-start;
+  flex: 0 1 360px; min-width: 0; align-self: flex-start;   /* wider Nebencard; can shrink on narrow (no overflow), no grow */
   background: #222; border: none; border-radius: 12px; padding: 12px 14px; box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
 }
 /* the two columns ARE the cards now -> drop every inner .shade fill, and NEUTRALIZE the native float:

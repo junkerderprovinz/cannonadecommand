@@ -335,7 +335,7 @@
   }
   function paint() {
     try {
-      if (localStorage.getItem("cc.theming") === "0") return; // MASTER THEMING off: don't paint (reverts on reload)
+      if (localStorage.getItem("cc.theming") === "0" || localStorage.getItem("cc.enable.plugins") === "0") return; // master theming off OR area disabled: don't paint (reverts on reload)
       var tbs = document.querySelectorAll("#plugin_table, table.tablesorter");
       if (!tbs.length) return;
       Array.prototype.slice.call(tbs).forEach(function (t5) { t5.classList.add(t5.querySelector("#plugin_list") ? "cc-plug" : "cc-plug-lite"); });
@@ -429,6 +429,11 @@
       document.addEventListener("change", function () { setTimeout(paint, 50); }); // tab switches repaint the pills
       [600, 1500, 3500].forEach(function (ms) { setTimeout(paint, ms); });
     });
+    // the CC Settings page writes cc.*/ccp.* keys from another origin/tab -> repaint live, so an
+    // accent / adopt-toggle change is reflected without a manual reload. Exclude cc.stateCache (the
+    // Docker tab rewrites it every 9s; matching it would repaint the plugins table on every poll —
+    // every other cc-key consumer excludes it too). paint() self-gates on theming + area-enable.
+    try { window.addEventListener("storage", function (e) { if (e && e.key && e.key !== "cc.stateCache" && /^cc[a-z]*\./.test(e.key)) paint(); }); } catch (e) {}
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();

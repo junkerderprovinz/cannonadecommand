@@ -333,6 +333,16 @@
     rrot.appendChild(toggle(get("cc.rainbowrot", "1") !== "0", function (v) { set("cc.rainbowrot", v ? "1" : "0"); syncHeaderBar(); syncSharesBar(); }));
     if (!rainbow) { rrot.style.opacity = ".4"; rrot.style.pointerEvents = "none"; } // only makes sense WITH rainbow
     c1.appendChild(rrot);
+    // rainbow sub-mode: "active only" — idle badges go neutral grey, the ACTIVE one keeps its colour,
+    // and any badge shows its colour on hover. Global like cc.rainbow; live-applied via the sync.
+    var rmode = el("div", "cc-set-row cc-set-inline");
+    var rmodeL = el("span", "cc-set-lblwrap");
+    rmodeL.appendChild(el("span", null, T("Nur aktives Badge färben", "Colour only the active badge")));
+    rmodeL.appendChild(infoIcon(T("Statt alle Badges einzufärben, bleiben sie neutral-grau; nur das aktive Badge zeigt Farbe, und jedes Badge wird bei Mausüber farbig. Gilt für die Hauptmenüleiste.", "Instead of colouring every badge, they stay neutral grey; only the active badge shows colour, and any badge colours on hover. Applies to the main menu bar.")));
+    rmode.appendChild(rmodeL);
+    rmode.appendChild(toggle(get("cc.rbmode", "all") === "active", function (v) { set("cc.rbmode", v ? "active" : "all"); syncHeaderBar(); syncSharesBar(); }));
+    if (!rainbow) { rmode.style.opacity = ".4"; rmode.style.pointerEvents = "none"; } // only makes sense WITH rainbow
+    c1.appendChild(rmode);
     // EVERY rainbow palette colour is editable: click a swatch, adjust it in the
     // embedded picker below; stored as cc.rbpal (JSON), read live by the Docker tab.
     var RBDEF = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; // real rainbow order
@@ -518,11 +528,22 @@
     function syncHeaderBar() { try { if (typeof window.ccHeaderApply === "function") window.ccHeaderApply(); } catch (e) {} }
     // same live push for the Freigaben tabs (no 'storage' event fires in this document)
     function syncSharesBar() { try { if (typeof window.ccSharesApply === "function") window.ccSharesApply(); } catch (e) {} }
+    // adopt-key -> the area's own key prefix (for seeding its own accent on adopt-OFF)
+    var ADOPT_PREF = { "cc.styleheader": "cch.", "cc.styleshares": "ccsh.", "cc.styledocker": "ccd.", "cc.styleplugin": "ccp.", "cc.stylevms": "ccv.", "cc.stylesettings": "ccs." };
     function styleToggle(key, onChange, lbl) {
       // the SAME knob switch as everywhere else (the text-in-pill variant looked wrong)
       var row = el("div", "cc-set-row cc-set-inline");
       row.appendChild(el("span", null, lbl || T("Globale Badge-Farbe übernehmen", "Adopt the global badge colour")));
-      var tg = toggle(localStorage.getItem(key) !== "0", function (v) { localStorage.setItem(key, v ? "1" : "0"); if (onChange) onChange(); syncHeaderBar(); syncSharesBar(); });
+      var tg = toggle(localStorage.getItem(key) !== "0", function (v) {
+        localStorage.setItem(key, v ? "1" : "0");
+        // Adopt OFF + this area never had its OWN colour: seed it from the CURRENT global accent, so
+        // (a) the colour doesn't jump to the #2f6feb default and (b) the area's picker reflects the
+        // live colour and any later edit visibly applies (the "toggle does nothing" the user hit —
+        // an unset own-accent otherwise fell back to the same default as the global).
+        var p = ADOPT_PREF[key];
+        if (!v && p && localStorage.getItem(p + "accent") == null) set(p + "accent", get("cc.accent", "#2f6feb"));
+        if (onChange) onChange(); syncHeaderBar(); syncSharesBar();
+      });
       adoptToggles[key] = tg; row.appendChild(tg);
       return row;
     }

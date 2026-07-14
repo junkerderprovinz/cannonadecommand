@@ -61,6 +61,20 @@
       }
     } catch (e) {}
   }
+  // The share DETAIL page has NO tab bar (the sub-tabs are stacked cards), so paintTabs never touches
+  // it — paint each card's title badge here instead, so rainbow follows the rotated palette on the
+  // detail page too. Non-rainbow: clear the inline colour and the CSS var(--cc-shr-accent) shows.
+  function paintCards() {
+    try {
+      if (pn() !== "/Shares/Share") return;
+      var rb = rbOn(), heads = document.querySelectorAll("#displaybox .cc-card-head");
+      for (var i = 0; i < heads.length; i++) {
+        var h = heads[i];
+        if (rb) { var c = rbColor(i); h.style.setProperty("background", c, "important"); h.style.setProperty("color", idealText(c), "important"); }
+        else { h.style.removeProperty("background"); h.style.removeProperty("color"); }
+      }
+    } catch (e) {}
+  }
   // Enabling the area needs Unraid's [display] tabs=0 (Tabbed) mode so a multi-section
   // page renders the tab bar we restyle. The current value is NOT exposed to JS, so we
   // infer "tabbed is OFF" from the ABSENCE of #displaybox nav.tabs on a page that HAS
@@ -408,11 +422,34 @@
         } else {                                              // last resort: never shout the raw id
           head.textContent = (btn && btn.textContent.trim()) || (section.id || "").replace(/-panel$/, "");
         }
-        // put the tab-title badge INSIDE the Hauptcard (user: "Die überschriftbadges sollen in die
-        // Card"): if this panel has a clone split, the badge goes into the FIRST .cc-main-col; otherwise
-        // into the section (which is itself the card when there's no split). PREPEND — never move forms.
-        var mainCol = section.querySelector(".cc-main-col") || section;
-        mainCol.insertBefore(head, mainCol.firstChild);
+        // EVERY Hauptcard gets its OWN title badge (user: "SMB Benutzerzugriff hat kein Titelbadge in
+        // der Card"). The FIRST .cc-main-col takes the tab-button-derived head; a SECOND crow in the
+        // same panel (SMB "User Access", whose Hauptcard is the smb_user_edit .shade) takes a badge
+        // built from the native .title.nocontrol sub-heading that precedes its crow — which is then
+        // hidden (.cc-carded), its "guests …" note kept as a small line under the badge.
+        var cols = section.querySelectorAll(".cc-main-col");
+        if (!cols.length) { section.insertBefore(head, section.firstChild); }   // no split: section is the card
+        else {
+          cols[0].insertBefore(head, cols[0].firstChild);
+          for (var ci = 1; ci < cols.length; ci++) {
+            var col = cols[ci];
+            if (col.querySelector(":scope > .cc-card-head")) continue;   // idempotent
+            var crow = col.closest(".cc-split-row"), nh = crow ? crow.previousElementSibling : null;
+            // walk back to the nearest native .title, but STOP at the previous crow so we never grab an
+            // earlier unrelated heading (bounded search).
+            while (nh && !(nh.classList && (nh.classList.contains("title") || nh.classList.contains("cc-split-row")))) nh = nh.previousElementSibling;
+            if (nh && nh.classList && nh.classList.contains("cc-split-row")) nh = null;   // hit a crow first -> no heading for this col
+            var lft = nh && (nh.querySelector("span.left") || nh);
+            var h2 = el("div", "cc-card-head");
+            h2.textContent = (lft && (lft.textContent || "").trim()) || "SMB";
+            col.insertBefore(h2, col.firstChild);
+            if (nh) {
+              var rgt = nh.querySelector("span.right");
+              if (rgt && (rgt.textContent || "").trim()) { var note = el("div", "cc-card-note"); note.textContent = (rgt.textContent || "").trim(); col.insertBefore(note, h2.nextSibling); }
+              nh.classList.add("cc-carded");   // hide the now-redundant native heading (CSS: .title.cc-carded)
+            }
+          }
+        }
       }
       ccSelects(box);   // convert native <select> to the CC disk-dropdown look (see ccWrapSelect)
     } catch (e) {}
@@ -435,8 +472,13 @@
         // tab-switching), but the JS-injected card headers would linger as stray unstyled divs -> pull
         // them out and clear their markers so the page is clean without a reload.
         try {
-          var stray = document.querySelectorAll("#displaybox .cc-card-head");
+          var stray = document.querySelectorAll("#displaybox .cc-card-head, #displaybox .cc-card-note");
           for (var s = 0; s < stray.length; s++) stray[s].parentNode.removeChild(stray[s]);
+          // un-hide the native SMB "User Access" sub-heading we carded (its .cc-carded hide rule is
+          // gated on cc-shares-on, so without stripping the class the native heading reappears AND the
+          // orphaned .cc-card-note would show the same text = a duplicate that stacks per toggle).
+          var carded = document.querySelectorAll("#displaybox .cc-carded");
+          for (var cd = 0; cd < carded.length; cd++) carded[cd].classList.remove("cc-carded");
           var marked = document.querySelectorAll("#displaybox [data-cc-card]");
           for (var m = 0; m < marked.length; m++) marked[m].removeAttribute("data-cc-card");
           ccSelectsTeardown();   // unwrap the custom <select> overlays -> native form back, clean
@@ -460,6 +502,7 @@
       enhanceShares();
       paintRows(); // per-row rainbow AFTER the badges exist (re-applies when rbOn toggles via storage)
       enhanceShareDetail(); // inject the share-name title on /Shares/Share
+      paintCards();         // rainbow (or accent) on the detail-page card title badges
     } catch (e) {}
   }
   // Observe the content container ONLY (never body). apply()'s follow-ups make no
@@ -471,7 +514,7 @@
       if (!host) return;
       mo = new MutationObserver(function () {
         if (moPending) return; moPending = true;
-        setTimeout(function () { moPending = false; if (g("cc.theming", "1") === "0") return; hideRedundantTabs(); paintTabs(); enhanceShares(); paintRows(); enhanceShareDetail(); }, 150); // MASTER THEMING off: observer must not re-inject (apply()'s teardown already cleaned up)
+        setTimeout(function () { moPending = false; if (g("cc.theming", "1") === "0") return; hideRedundantTabs(); paintTabs(); enhanceShares(); paintRows(); enhanceShareDetail(); paintCards(); }, 150); // MASTER THEMING off: observer must not re-inject (apply()'s teardown already cleaned up)
       });
       mo.observe(host, { childList: true, subtree: true });
     } catch (e) {}

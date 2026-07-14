@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.12.0">
+  <!ENTITY version   "2.13.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,18 @@
 </ICON>
 
 <CHANGES>
+### 2.13.0
+1. Colour live-update fixed. Changing an area's accent, or toggling "adopt the global colour" off, now
+   takes effect **live** on the Plugins and VM tabs too (they only updated on a reload). Toggling adopt
+   off now also seeds the area's own colour from the current global, so the colour no longer looks like
+   nothing changed and the area's own picker is ready to edit.
+2. New: a rainbow sub-mode **"colour only the active badge"** (CC Settings -> General, with rainbow on).
+   The badges stay neutral grey; only the active item shows colour, and any badge colours on hover.
+   Applies to the main menu bar.
+3. Freigaben (share detail): the main card and the side card are **wider**, "SMB Benutzerzugriff" now
+   has its own **title badge** inside its card (the "guests…" note is kept), and rainbow mode colours
+   the detail cards too.
+
 ### 2.12.0
 1. New: **master theming switch.** CC Settings -> General has a new "Theming" toggle at the top. Turn
    it OFF to keep ONLY CannonadeCommand's Docker functions (the start plan, dependencies, health-gate,
@@ -525,7 +537,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>6c037582f5d83d0e3890f45406053fb7558770f856b0eaa1de47fbb3e603f24f</SHA256>
+  <SHA256>eebfdb5b5316bfca9a31b7533a8a891f6365568f9013a2249ea6f310ec46ebea</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

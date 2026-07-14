@@ -206,7 +206,7 @@
     if (localStorage.getItem("cc.enable.vms") === "0") return; // area disabled in CC settings
     try {
       arm();
-      window.addEventListener("storage", function (e) { try { if (!dead && e && e.key && e.key.indexOf("cc.") === 0) apply(); } catch (e2) {} });
+      window.addEventListener("storage", function (e) { try { if (!dead && e && e.key && /^ccv?\./.test(e.key)) apply(); } catch (e2) {} }); // cc.* AND the VM tab's own ccv.* (accent/iconcolor) — else an adopt-OFF own-colour pick never live-updates
       // persistent re-probe (NEVER cleared): re-arm when the proxy returns, so a
       // transient gap during a plugin UPDATE doesn't kill the tint until reload.
       setInterval(function () { try { if (!dead) return; fetch(PROXY + "?path=state", { headers: { Accept: "application/json" } }).then(function (r) { if (r.ok) arm(); }).catch(function () {}); } catch (e) {} }, 8000);

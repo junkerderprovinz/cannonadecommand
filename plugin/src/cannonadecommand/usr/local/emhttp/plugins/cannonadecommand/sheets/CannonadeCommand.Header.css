@@ -45,6 +45,21 @@ html.cc-header-on #menu .nav-tile:not(.right) .nav-item.active > a {
 html.cc-header-on.cc-header-rb #menu .nav-tile:not(.right) .nav-item.active > a {
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .45) !important;
 }
+/* ═══ rainbow "active only" sub-mode (cc.rbmode=active -> html.cc-header-rbneutral): idle badges stay
+   neutral grey, the ACTIVE left tab keeps its paintNav-painted colour, and every badge colours on hover
+   using the per-item --cc-rb-c/--cc-rb-ct vars paintNav stamps. The idle LEFT tabs are already grey
+   (base rule); only the accent-filled util icons + usage meter need overriding to neutral. */
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile.right .nav-item.util > a,
+html.cc-header-on.cc-header-rbneutral #menu .usage-bar > span { background: rgba(128, 128, 128, .18) !important; }
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile.right .nav-item.util b.system,
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile.right .nav-item.util img.system { color: #cfcfcf !important; }
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile:not(.right) .nav-item:not(.active) > a:hover,
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile.right .nav-item.util > a:hover,
+html.cc-header-on.cc-header-rbneutral #menu .usage-bar > span:hover {
+  background: var(--cc-rb-c, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)) !important;
+}
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile.right .nav-item.util > a:hover b.system,
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile.right .nav-item.util > a:hover img.system { color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)) !important; }
 /* the underline accent is redundant now that the tab itself is a badge */
 html.cc-header-on #menu .nav-item:after, html.cc-header-on #menu .nav-user.show:after { display: none !important; }
 

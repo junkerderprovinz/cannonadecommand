@@ -37,28 +37,43 @@
   // rainbow: colour the active tab, each utility icon box and the usage fill with a
   // rotated palette colour (in accent mode the CSS handles it via --cc-accent, so we
   // just clear our overrides). childList observer only, so these style writes can't loop.
+  // rainbow sub-mode "active only" (cc.rbmode=active, global like cc.rainbow): idle badges go
+  // neutral, only the active one keeps its colour, and CSS colours any badge on hover using the
+  // per-item --cc-rb-c/--cc-rb-ct vars this function still stamps on every item.
+  function rbNeutral() { return g("cc.rbmode", "all") === "active"; }
   function paintNav() {
     try {
       // gate on the enabled class: if the menu-bar area is OFF, rb=false -> every branch below
       // removeProperty's, so a disabled area (even with Rainbow ON) never paints and any lingering
       // inline colours are cleared. paintNav runs from apply() + the always-on search observer.
-      var rb = rbOn() && document.documentElement.classList.contains("cc-header-on"), n = 0;
-      // rainbow: paint EVERY left page tab (active AND idle), then the util icons, then the usage fill —
-      // one running counter n sweeps the palette across the whole bar. Was: only .nav-item.active got a
-      // colour, so the strip stayed grey and rainbow looked identical to accent mode.
+      var rb = rbOn() && document.documentElement.classList.contains("cc-header-on"), neutral = rb && rbNeutral(), n = 0;
+      document.documentElement.classList.toggle("cc-header-rbneutral", neutral);
+      // each item ALWAYS carries its rotated colour as --cc-rb-c/--cc-rb-ct (for the CSS :hover);
+      // the DIRECT background is painted only when NOT neutral, or on the ACTIVE left tab.
+      function stamp(elm, c, t) { elm.style.setProperty("--cc-rb-c", c); elm.style.setProperty("--cc-rb-ct", t); }
+      function clear(elm) { elm.style.removeProperty("background"); elm.style.removeProperty("color"); elm.style.removeProperty("--cc-rb-c"); elm.style.removeProperty("--cc-rb-ct"); }
       Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile:not(.right) .nav-item > a")).forEach(function (aEl) {
-        if (rb) { var c = rbColor(n); aEl.style.setProperty("background", c, "important"); aEl.style.setProperty("color", idealText(c), "important"); }
+        if (!rb) { clear(aEl); n++; return; }
+        var c = rbColor(n), t = idealText(c), item = aEl.closest(".nav-item"), active = !!(item && item.classList.contains("active"));
+        stamp(aEl, c, t);
+        if (!neutral || active) { aEl.style.setProperty("background", c, "important"); aEl.style.setProperty("color", t, "important"); }
         else { aEl.style.removeProperty("background"); aEl.style.removeProperty("color"); }
         n++;
       });
       Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile.right .nav-item.util > a")).forEach(function (aEl) {
         var gl = aEl.querySelector("b.system, img.system");
-        if (rb) { var c = rbColor(n); aEl.style.setProperty("background", c, "important"); if (gl) gl.style.setProperty("color", idealText(c), "important"); }
+        if (!rb) { clear(aEl); if (gl) gl.style.removeProperty("color"); n++; return; }
+        var c = rbColor(n), t = idealText(c);
+        stamp(aEl, c, t);
+        if (!neutral) { aEl.style.setProperty("background", c, "important"); if (gl) gl.style.setProperty("color", t, "important"); }
         else { aEl.style.removeProperty("background"); if (gl) gl.style.removeProperty("color"); }
         n++;
       });
       var u = document.querySelector("#menu .usage-bar > span");
-      if (u) { if (rb) { var cu = rbColor(n); u.style.setProperty("background", cu, "important"); u.style.setProperty("color", idealText(cu), "important"); } else { u.style.removeProperty("background"); u.style.removeProperty("color"); } }
+      if (u) {
+        if (!rb) { clear(u); }
+        else { var cu = rbColor(n), tu = idealText(cu); stamp(u, cu, tu); if (!neutral) { u.style.setProperty("background", cu, "important"); u.style.setProperty("color", tu, "important"); } else { u.style.removeProperty("background"); u.style.removeProperty("color"); } }
+      }
     } catch (e) {}
   }
   function apply() {
