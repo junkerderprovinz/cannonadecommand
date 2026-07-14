@@ -39,16 +39,26 @@
   // just clear our overrides). childList observer only, so these style writes can't loop.
   function paintNav() {
     try {
-      var rb = rbOn();
-      var act = document.querySelector("#menu .nav-tile:not(.right) .nav-item.active > a");
-      if (act) { if (rb) { var c0 = rbColor(0); act.style.setProperty("background", c0, "important"); act.style.setProperty("color", idealText(c0), "important"); } else { act.style.removeProperty("background"); act.style.removeProperty("color"); } }
-      Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile.right .nav-item.util > a")).forEach(function (aEl, i) {
+      // gate on the enabled class: if the menu-bar area is OFF, rb=false -> every branch below
+      // removeProperty's, so a disabled area (even with Rainbow ON) never paints and any lingering
+      // inline colours are cleared. paintNav runs from apply() + the always-on search observer.
+      var rb = rbOn() && document.documentElement.classList.contains("cc-header-on"), n = 0;
+      // rainbow: paint EVERY left page tab (active AND idle), then the util icons, then the usage fill —
+      // one running counter n sweeps the palette across the whole bar. Was: only .nav-item.active got a
+      // colour, so the strip stayed grey and rainbow looked identical to accent mode.
+      Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile:not(.right) .nav-item > a")).forEach(function (aEl) {
+        if (rb) { var c = rbColor(n); aEl.style.setProperty("background", c, "important"); aEl.style.setProperty("color", idealText(c), "important"); }
+        else { aEl.style.removeProperty("background"); aEl.style.removeProperty("color"); }
+        n++;
+      });
+      Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile.right .nav-item.util > a")).forEach(function (aEl) {
         var gl = aEl.querySelector("b.system, img.system");
-        if (rb) { var c = rbColor(i + 1); aEl.style.setProperty("background", c, "important"); if (gl) gl.style.setProperty("color", idealText(c), "important"); }
+        if (rb) { var c = rbColor(n); aEl.style.setProperty("background", c, "important"); if (gl) gl.style.setProperty("color", idealText(c), "important"); }
         else { aEl.style.removeProperty("background"); if (gl) gl.style.removeProperty("color"); }
+        n++;
       });
       var u = document.querySelector("#menu .usage-bar > span");
-      if (u) { if (rb) { var cu = rbColor(9); u.style.setProperty("background", cu, "important"); u.style.setProperty("color", idealText(cu), "important"); } else { u.style.removeProperty("background"); u.style.removeProperty("color"); } }
+      if (u) { if (rb) { var cu = rbColor(n); u.style.setProperty("background", cu, "important"); u.style.setProperty("color", idealText(cu), "important"); } else { u.style.removeProperty("background"); u.style.removeProperty("color"); } }
     } catch (e) {}
   }
   function apply() {

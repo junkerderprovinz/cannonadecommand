@@ -40,6 +40,11 @@ html.cc-header-on #menu .nav-tile:not(.right) .nav-item:hover > a { filter: brig
 html.cc-header-on #menu .nav-tile:not(.right) .nav-item.active > a {
   background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important;
 }
+/* rainbow: every page tab wears its own palette colour (inline by paintNav); ring the ACTIVE one so the
+   current page stays obvious once all tabs are coloured. cc-header-rb is already toggled by header.js. */
+html.cc-header-on.cc-header-rb #menu .nav-tile:not(.right) .nav-item.active > a {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .45) !important;
+}
 /* the underline accent is redundant now that the tab itself is a badge */
 html.cc-header-on #menu .nav-item:after, html.cc-header-on #menu .nav-user.show:after { display: none !important; }
 

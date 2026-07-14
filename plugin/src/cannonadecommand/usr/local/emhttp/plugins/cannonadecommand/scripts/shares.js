@@ -55,8 +55,8 @@
     try {
       var rb = rbOn(), btns = document.querySelectorAll('#displaybox nav.tabs button[role="tab"]');
       for (var i = 0; i < btns.length; i++) {
-        var b = btns[i], active = b.getAttribute("aria-selected") === "true";
-        if (rb && active) { var c = rbColor(i); b.style.setProperty("background", c, "important"); b.style.setProperty("color", idealText(c), "important"); }
+        var b = btns[i];   // rainbow paints EVERY tab (not just the active one); active cue = CSS inset ring
+        if (rb) { var c = rbColor(i); b.style.setProperty("background", c, "important"); b.style.setProperty("color", idealText(c), "important"); }
         else { b.style.removeProperty("background"); b.style.removeProperty("color"); }
       }
     } catch (e) {}
@@ -215,6 +215,78 @@
       }
     } catch (e) {}
   }
+  // ── Convert native <select> to the CC disk-dropdown look (user: "alle dropdownlisten ... alle
+  // listen!"). A native <select>'s OPEN popup is OS-rendered and unreachable by CSS, so we build a
+  // small overlay (.cc-sel) mirroring the options into the disk-chip look. The REAL <select> stays
+  // (display:none) as the source of truth — the form POST + all Unraid inline JS read .value /
+  // .selectedIndex; we write selectedIndex back + dispatch change so the inline onchange handlers
+  // (updateScreen, checkShareSettingsSMB, checkPublicSelection, toggleButton) still fire. The storage
+  // cascade (#primary/#secondary/#direction) is re-selected by updateScreen() via property writes (no
+  // event, no attribute), invisible to the observer, so after every pick we re-sync each sibling label
+  // (ccSyncGroup) — dispatch is synchronous, so updateScreen has already run.
+  function ccSelects(box) {
+    try {
+      if (pn() !== "/Shares/Share") return;
+      var sels = box.querySelectorAll('form select:not([multiple]):not([data-cc-sel])'); // multiples = dropdownchecklist (already badged)
+      for (var i = 0; i < sels.length; i++) ccWrapSelect(sels[i]);
+    } catch (e) {}
+  }
+  function ccWrapSelect(sel) {
+    sel.setAttribute("data-cc-sel", "1");                 // set FIRST -> observer re-fire is a no-op
+    var wrap = el("span", "cc-sel"); sel.parentNode.insertBefore(wrap, sel);
+    sel.style.display = "none"; wrap.appendChild(sel);    // KEEP the select (form POST + Unraid JS read .value/.selectedIndex)
+    var trig = el("span", "cc-sel-trigger"); wrap.appendChild(trig);
+    var panel = el("div", "cc-sel-panel"); wrap.appendChild(panel);
+    for (var k = 0; k < sel.options.length; k++) {        // build chips ONCE (no later childList mutation)
+      var chip = el("div", "cc-sel-opt", sel.options[k].text); chip.setAttribute("data-i", k);
+      chip.addEventListener("click", (function (idx) {
+        return function (ev) {
+          ev.stopPropagation();
+          if (sel.options[idx].disabled) return;
+          sel.selectedIndex = idx;
+          sel.dispatchEvent(new Event("change", { bubbles: true })); // fires inline onchange (updateScreen etc.)
+          ccSyncGroup(sel.form);                          // refresh sibling labels updateScreen just changed
+          wrap.classList.remove("cc-open");
+        };
+      })(k));
+      panel.appendChild(chip);
+    }
+    trig.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      if (sel.disabled) return;
+      ccSyncOne(sel);                                     // reflect live disabled/selected BEFORE opening
+      var open = wrap.classList.toggle("cc-open");
+      if (open) { var o = document.querySelectorAll(".cc-sel.cc-open"); for (var j = 0; j < o.length; j++) if (o[j] !== wrap) o[j].classList.remove("cc-open"); }
+    });
+    ccSyncOne(sel);
+  }
+  function ccSyncOne(sel) {
+    var w = sel.parentNode; if (!w) return;
+    w.classList.toggle("cc-sel-disabled", !!sel.disabled);   // statically-disabled selects (shareCOW on existing shares, moverDirection2) read as inert, not interactive
+    var t = w.querySelector(".cc-sel-trigger"), c = w.querySelectorAll(".cc-sel-opt");
+    if (t) t.textContent = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : "";
+    for (var k = 0; k < c.length; k++) {
+      var o = sel.options[+c[k].getAttribute("data-i")]; if (!o) continue;
+      c[k].classList.toggle("is-selected", o.selected);
+      c[k].classList.toggle("is-disabled", !!o.disabled);
+    }
+  }
+  function ccSyncGroup(f) { if (!f) return; var s = f.querySelectorAll("select[data-cc-sel]"); for (var i = 0; i < s.length; i++) ccSyncOne(s[i]); }
+  function ccSelectsTeardown() {
+    try {
+      var wraps = document.querySelectorAll("#displaybox .cc-sel");
+      for (var i = 0; i < wraps.length; i++) {
+        var w = wraps[i], sel = w.querySelector("select");
+        if (sel) { sel.style.display = ""; sel.removeAttribute("data-cc-sel"); w.parentNode.insertBefore(sel, w); }
+        if (w.parentNode) w.parentNode.removeChild(w);
+      }
+    } catch (e) {}
+  }
+  // one-time: click outside any open cc-select closes it
+  document.addEventListener("click", function () {
+    var o = document.querySelectorAll(".cc-sel.cc-open"); for (var i = 0; i < o.length; i++) o[i].classList.remove("cc-open");
+  });
+
   // Share DETAIL page (/Shares/Share): CC no longer injects a share-name title — the user pointed out
   // the name is already in the Freigabename field, so the heading above the tabs was redundant. This
   // now just cleans up any leftover .cc-share-title (e.g. from a cached older version). The detail
@@ -223,6 +295,7 @@
     try {
       var box = document.getElementById("displaybox"); if (!box) return;
       if (pn() !== "/Shares/Share") return;   // only the share detail page (match the sibling enhancers' pn() gating; keeps the DOM-move off any other #displaybox form)
+      if (g("cc.enable.shares", "0") === "0") return;   // area disabled -> don't inject/re-wrap (the observer can still fire after a runtime disable; teardown lives in apply()'s !on branch)
       var ttl = box.querySelector(":scope > .cc-share-title"); if (ttl) ttl.parentNode.removeChild(ttl);
       // Standardize the delete control to match the plugin list (user: badge must hug its text,
       // and the checkbox must NOT sit inside the badge). Unraid nests input[name=confirmDelete]
@@ -255,23 +328,33 @@
         }
       }
       // Flatten the sub-tabs to CARDS: the CSS reveals every <section role=tabpanel> and hides the tab
-      // buttons; here we prepend a header (the now-hidden tab button's icon + label) to each panel so
-      // each card is titled. Set-and-bail (data-cc-card) so the MutationObserver re-run is a no-op.
-      var panels = box.querySelectorAll('section[role="tabpanel"]:not([data-cc-card])');
+      // buttons; here we prepend a header (the now-hidden tab button's icon + label) to each panel.
+      // Pair panel<->button by DOM INDEX, NOT aria-labelledby: Unraid's MainContentTabbed.php numbers
+      // buttons and panels in two separate loops with different skip logic ($skipIndexIncrement fires
+      // only in the panel loop for the no-Title parent Share.page), so a panel's aria-labelledby can
+      // point to a non-existent button id -> the old getElementById() returned null and the header
+      // shouted the raw "tabN-panel" id. Both loops emit one item per titled child in the SAME order,
+      // so the Nth button describes the Nth panel. Iterate the FULL list + skip carded ones BY
+      // ATTRIBUTE so i stays the real DOM index that lines up with tabBtns[i].
+      var tablist = box.querySelector('nav.tabs, [role="tablist"]');
+      var tabBtns = tablist ? tablist.querySelectorAll('button[role="tab"]') : [];
+      var panels = box.querySelectorAll('section[role="tabpanel"]');
       for (var i = 0; i < panels.length; i++) {
         var section = panels[i];
-        section.setAttribute("data-cc-card", "1");   // set FIRST -> a re-fire finds nothing to do
+        if (section.getAttribute("data-cc-card")) continue;   // idempotent; keeps i == real DOM index
+        section.setAttribute("data-cc-card", "1");
         var head = document.createElement("div");
         head.className = "cc-card-head";
-        var tabBtn = document.getElementById(section.getAttribute("aria-labelledby") || "");
-        if (tabBtn) {
-          var kids = tabBtn.childNodes;
+        var btn = tabBtns[i];
+        if (btn && btn.childNodes.length) {                   // clone the localized <span.left><icon>Title</span>
+          var kids = btn.childNodes;
           for (var k = 0; k < kids.length; k++) head.appendChild(kids[k].cloneNode(true));
-        } else {
-          head.textContent = section.getAttribute("id") || "";
+        } else {                                              // last resort: never shout the raw id
+          head.textContent = (btn && btn.textContent.trim()) || (section.id || "").replace(/-panel$/, "");
         }
-        section.insertBefore(head, section.firstChild);   // PREPEND only — never move the forms
+        section.insertBefore(head, section.firstChild);       // PREPEND only — never move the forms
       }
+      ccSelects(box);   // convert native <select> to the CC disk-dropdown look (see ccWrapSelect)
     } catch (e) {}
   }
   function apply() {
@@ -294,6 +377,7 @@
           for (var s = 0; s < stray.length; s++) stray[s].parentNode.removeChild(stray[s]);
           var marked = document.querySelectorAll("#displaybox [data-cc-card]");
           for (var m = 0; m < marked.length; m++) marked[m].removeAttribute("data-cc-card");
+          ccSelectsTeardown();   // unwrap the custom <select> overlays -> native form back, clean
         } catch (e) {}
         return;
       }

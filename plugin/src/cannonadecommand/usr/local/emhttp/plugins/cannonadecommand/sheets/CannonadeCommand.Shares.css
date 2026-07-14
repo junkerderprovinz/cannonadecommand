@@ -366,23 +366,26 @@ html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-text { co
    THROUGH to the item-div, so a single click toggles. Restyle only the INNER list — never the
    dropcontainer-WRAPPER (its position is widget-managed). */
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-dropcontainer {
-  display: flex !important; flex-direction: column !important; align-items: stretch !important;
-  gap: 6px !important; height: auto !important; padding: 8px !important;
-  max-height: 50vh !important; overflow-y: auto !important; overflow-x: hidden !important;  /* many-disk arrays scroll instead of overflowing the card/viewport */
-  background: #2b2b2b !important; border: none !important; min-width: 220px;
+  display: flex !important; flex-direction: column !important; align-items: flex-start !important;  /* pills hug their label, not full width */
+  gap: 6px !important; padding: 8px !important;
+  width: max-content !important; min-width: 160px !important; max-width: min(92vw, 420px) !important;  /* panel hugs the widest pill, not the widget's inline 300px */
+  height: auto !important; max-height: 50vh !important; overflow-y: auto !important; overflow-x: hidden !important;  /* the list is the ONLY scroll container */
+  background: #303030 !important; border: 1px solid rgba(255, 255, 255, .16) !important; border-radius: 10px !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .6) !important;   /* elevated floating panel, clearly off the #222 card */
 }
-/* the widget also writes a stale inline px height (from the old horizontal layout) onto the OUTER
-   wrapper -> free its height/overflow ONLY (never its widget-managed position/top/left/width) so the
-   taller vertical column isn't clipped. */
+/* the widget writes a stale inline px height + width:300 onto the OUTER wrapper -> free height/width/
+   overflow ONLY (never its widget-managed position/top/left/z-index) so the list hugs its content and
+   its new border/shadow are never clipped. */
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-dropcontainer-wrapper {
-  height: auto !important; overflow: visible !important;
+  height: auto !important; width: auto !important; overflow: visible !important;
 }
-html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item {
+html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item,
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt {
   display: flex !important; align-items: center; gap: 8px; justify-content: flex-start;
   height: auto !important; line-height: 1.3 !important; margin: 0 !important;
   padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 999px);
   background: rgba(255, 255, 255, .14) !important;   /* raised from .08 -> legible when NOT selected */
-  border: 1px solid #6f6f6f !important; color: #ececec !important;
+  border: 1px solid #6f6f6f !important; color: #ececec !important; white-space: nowrap;
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item:has(input:checked) {
   background: var(--cc-shr-accent, #2f6feb) !important; border-color: var(--cc-shr-accent, #2f6feb) !important;
@@ -404,22 +407,29 @@ html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item .ui-
    and dress each section as a settings-style card. shares.js prepends a header per card. */
 html.cc-shares-on.cc-on-share-detail #displaybox section[role="tabpanel"] {
   display: block !important;                 /* beats the inline style.display:none AND .tab-content{display:none} */
-  background: #222; border-radius: 12px; padding: 16px 20px 20px; margin: 0 0 16px;
+  max-width: 760px; margin: 0 auto 16px;     /* narrow + centered like .cc-set-card, not full page width */
+  background: #222; border-radius: 12px; padding: 16px 20px 20px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
+  overflow: visible !important;              /* the open dropdown overlay must NOT grow a card scrollbar — beats .content{overflow-x:auto} which forces both axes to auto; only the list scrolls */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox nav.tabs button[role="tab"] { display: none !important; }
 html.cc-shares-on.cc-on-share-detail #displaybox nav.tabs { border: none; min-height: 0; }
 /* the prev/next arrows stay flowed so nav.tabs keeps a height (they were position:absolute) */
 html.cc-shares-on.cc-on-share-detail #displaybox .menuNavButtonsTabbed { position: static; margin-left: auto; }
-/* the per-card header (built by shares.js from the now-hidden tab button's icon + label) */
+/* per-card header = a CC BADGE/pill (accent chip, hugs its text), NO underline line (user: "Keine
+   Linien, wir machen die überschrift in ein badge"). Text comes from the tab button via shares.js. */
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-card-head {
-  display: flex; align-items: center; gap: 8px;
-  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: 13px;
+  display: inline-flex; align-items: center; gap: 7px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: 12px; line-height: 1;
   color: var(--cc-shr-accent, #2f6feb);
-  padding-bottom: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--cc-shr-accent, #2f6feb);
+  background: rgba(255, 255, 255, .08);                                  /* fallback chip if no color-mix */
+  background: color-mix(in srgb, var(--cc-shr-accent, #2f6feb) 16%, transparent);
+  border: none; border-radius: var(--cc-b-radius, 999px);
+  padding: 6px 14px; margin: 0 0 14px;
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-card-head i.title,
-html.cc-shares-on.cc-on-share-detail #displaybox .cc-card-head i { color: inherit; }
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-card-head i,
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
 /* card body text: the section is now a dark #222 card, so make the form's default field labels + help
    text light enough to read on it (the theme-default label colour would otherwise be dark-on-dark).
    Accent headers, inputs and the SMB bar span.left keep their own more-specific colours. */
@@ -428,3 +438,35 @@ html.cc-shares-on.cc-on-share-detail #displaybox section[role="tabpanel"] dt,
 html.cc-shares-on.cc-on-share-detail #displaybox section[role="tabpanel"] dd,
 html.cc-shares-on.cc-on-share-detail #displaybox section[role="tabpanel"] .inline_help,
 html.cc-shares-on.cc-on-share-detail #displaybox section[role="tabpanel"] blockquote { color: #d5d5d5; }
+
+/* ═══ custom single-<select> overlay (.cc-sel): a native <select>'s open popup is OS-rendered and
+   unreachable by CSS, so shares.js mirrors each into this overlay to match the disk dropdown (user:
+   "alle dropdownlisten ... alle listen!"). The real <select> stays (display:none) as the source of
+   truth; the chip look is shared with .ui-dropdownchecklist-item (above). */
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel { position: relative; display: inline-block; }
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-trigger {
+  display: inline-flex; align-items: center; min-width: 220px;
+  background: rgba(255, 255, 255, .07); border-radius: 6px; padding: 6px 10px; color: #eaeaea; cursor: pointer;
+}
+/* the open panel = same floating, elevated vertical list as the disk dropdown */
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-panel {
+  display: none; position: absolute; z-index: 20; margin-top: 4px; flex-direction: column; gap: 6px;
+  padding: 8px; width: max-content; min-width: 160px; max-width: min(92vw, 420px);
+  max-height: 50vh; overflow-y: auto; overflow-x: hidden;
+  background: #303030; border: 1px solid rgba(255, 255, 255, .16); border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .6);
+}
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel.cc-open .cc-sel-panel { display: flex; }
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel.cc-sel-disabled .cc-sel-trigger { opacity: .5; cursor: not-allowed; }
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-selected {
+  background: var(--cc-shr-accent, #2f6feb) !important; border-color: var(--cc-shr-accent, #2f6feb) !important;
+  color: var(--cc-shr-accent-text, #fff) !important;
+}
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-disabled { opacity: .4; pointer-events: none; }
+
+/* rainbow: EVERY sub-tab pill is coloured per-item by shares.js paintTabs(); ring the ACTIVE one so the
+   current tab stays obvious (cc-shares-rb already toggled by shares.js). Matters on the /Shares list +
+   /Docker tab bars (on the detail page the tab buttons are hidden as cards). */
+html.cc-shares-rb #displaybox nav.tabs button[role="tab"][aria-selected="true"] {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .45) !important;
+}

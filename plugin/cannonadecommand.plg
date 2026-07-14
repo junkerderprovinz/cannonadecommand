@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.10.0">
+  <!ENTITY version   "2.11.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,18 @@
 </ICON>
 
 <CHANGES>
+### 2.11.0
+- Freigaben: the share detail sub-pages are now shown in narrower, centered cards (like the CC settings
+  cards, not full page width), and each card title is a badge showing the real sub-page name — the
+  wrong "TAB3-PANEL" heading is fixed.
+- Freigaben: EVERY dropdown on the share settings pages now matches the disk-list look — a small custom
+  dropdown mirrors each native select (Verteilungsmethode, Aufteilungs-Niveau, Speicher/Pool, Export,
+  ...), so all the lists look the same.
+- Freigaben: the disk badges hug their text now, the open list floats and only the list scrolls (the
+  card no longer grows a scrollbar), and the list stands out more from the card.
+- Rainbow: rainbow mode now colours the WHOLE main menu bar and the CannonadeCommand settings tab bar
+  (and the sub-tabs), not just the active tab.
+
 ### 2.10.0
 - Freigaben: the share detail sub-pages are now shown as stacked CARDS on one page instead of tabs, so
   everything is visible at once (the prev/next share arrows stay). This is CC's new canonical layout for
@@ -471,7 +483,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>8d453b9c5f639910770d5b6622fbbe0f85a33a037ae6e460cd9a66475c156445</SHA256>
+  <SHA256>a4412aaa6d78d490fe5816dcdb04be5f28d7763a85321315292d6368275877f7</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

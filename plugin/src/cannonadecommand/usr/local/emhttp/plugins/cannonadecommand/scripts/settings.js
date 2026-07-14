@@ -244,6 +244,19 @@
       if (!SECS[i] || !areaOn(SECS[i].key)) i = 0; // never land on a hidden section
       localStorage.setItem("cc.settab", String(i));
       SECS.forEach(function (sc, j) { sc.w.style.display = j === i ? "" : "none"; tabBtns[j].classList.toggle("cc-set-tab-on", j === i); });
+      paintSetTabs();
+    }
+    // rainbow: colour EVERY settings tab per palette index (was: only the accent-filled active tab, so
+    // rainbow never reached the CC tab bar). palG() is the shared rainbow palette; idealText is hoisted.
+    function paintSetTabs() {
+      var rb = get("cc.rainbow", "0") === "1";
+      // palG() is scoped inside buildStyleCards, not reachable here -> read the palette directly.
+      var DEF = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"], p = DEF;
+      try { var j = JSON.parse(get("cc.rbpal", "null")); if (j && j.length) p = j; } catch (e) {}
+      tabBtns.forEach(function (b, i) {
+        if (rb) { var c = p[i % p.length]; b.style.setProperty("background", c, "important"); b.style.setProperty("color", idealText(c), "important"); }
+        else { b.style.removeProperty("background"); b.style.removeProperty("color"); }
+      });
     }
     // hide the tab of any disabled area immediately; if we were ON it, fall back to Bereiche
     function refreshTabs() {
@@ -570,10 +583,13 @@
       function paintPv() {
         var rbOn9 = get("cc.rainbow", "0") === "1", p9 = palG();
         pvBadges.forEach(function (b9, i9) {
-          if (isTabs && i9 !== activeIx) { b9.style.removeProperty("background"); b9.style.removeProperty("color"); return; } // idle tab keeps its grey CSS pill
-          var col9 = rbOn9 ? p9[(isTabs ? activeIx : i9) % p9.length] : acc;
-          b9.style.setProperty("background", col9, "important");
-          b9.style.setProperty("color", idealText(col9), "important");
+          if (rbOn9) {   // rainbow: colour EVERY badge/tab by index (matches the now-fully-rainbow live bar)
+            var cr = p9[i9 % p9.length];
+            b9.style.setProperty("background", cr, "important"); b9.style.setProperty("color", idealText(cr), "important");
+            return;
+          }
+          if (isTabs && i9 !== activeIx) { b9.style.removeProperty("background"); b9.style.removeProperty("color"); return; } // accent: idle tab keeps its grey CSS pill
+          b9.style.setProperty("background", acc, "important"); b9.style.setProperty("color", idealText(acc), "important");
         });
       }
       paintPv();
