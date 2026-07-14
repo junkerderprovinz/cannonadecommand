@@ -287,71 +287,58 @@
     var o = document.querySelectorAll(".cc-sel.cc-open"); for (var i = 0; i < o.length; i++) o[i].classList.remove("cc-open");
   });
 
-  // ── Clone-settings block -> its own SIDE card beside the main content (user: "Einstellungen
-  // übernehmen von als Nebencard"). div.clone-settings is a SIBLING of the form and carries NO form
-  // state (its Read/Write buttons read the selects document-wide), so it can be wrapped/moved as a
-  // whole block. We wrap the clone + its paired main block (the form; or in the SMB top block the
-  // following .shade that holds smb_edit) into a flex row: main -> .cc-main-col (card), clone ->
-  // .cc-side-card. WHOLE forms/blocks move as a unit — no field ever leaves its <form>. Idempotent per
-  // block (data-cc-clone), guarded so the debounced #displaybox observer no-ops on re-fire.
-  function ccSplitCloneBlocks(root) {
+  // ── Clone-settings block -> Nebencard beside the Hauptcard. Unraid renders THREE variants of the
+  // "Read/Write settings from" clone next to the settings form; we normalize all three to ONE structure
+  // by REUSING the enclosing .relative as the flex row (adds .cc-split-row). It then holds exactly two
+  // children: [.cc-main-col = Hauptcard (the whole settings form/blocks), .cc-side-card = Nebencard
+  // (the clone block)].
+  //   A  ShareEdit:        .relative = [clone, form]                -> Hauptcard = form
+  //   B  SMB settings:     .relative = [clone];  form-.shade is the .relative's NEXT sibling
+  //   C  SMB user-access:  .relative = [clone, .shade>form]         -> Hauptcard = .shade
+  // Hauptcard = every NON-clone child of .relative, else (B — nothing inside) the following siblings up
+  // to the next .title/.relative. WHOLE forms/blocks move as units — no field ever leaves its <form>, so
+  // the share/SMB form JS (references by name/id) keeps working. Idempotent per clone (data-cc-clone);
+  // REUSING .relative means no wrapper is ever inserted into the wrong parent — that mis-parenting was
+  // the old bug (empty Hauptcard, form leaking out below, a stray shadow frame around the section).
+  function ccCards(root) {
     try {
       var clones = root.querySelectorAll(".clone-settings:not([data-cc-clone])");
       for (var i = 0; i < clones.length; i++) {
         try {
-          var clone = clones[i], rel = clone.closest(".relative"); if (!rel) continue;
-          var sideEl, mainEl, anchor;
-          if (rel.querySelector("form")) {           // ShareEdit + SMB user-access: clone + form share the .relative
-            sideEl = clone; mainEl = clone.nextElementSibling; anchor = clone;
-          } else {                                   // SMB top block: .relative holds only the clone; smb_edit is the .relative's next sibling
-            sideEl = rel; mainEl = rel.nextElementSibling; anchor = rel;
+          var clone = clones[i], rel = clone.closest(".relative");
+          if (!rel || rel.classList.contains("cc-split-row")) continue;
+          var mains = [], c;
+          for (c = rel.firstElementChild; c; c = c.nextElementSibling) { if (c !== clone) mains.push(c); }
+          if (!mains.length) {                        // variant B: the settings form lives AFTER .relative
+            var n = rel.nextElementSibling;
+            while (n && n.tagName !== "SCRIPT" && n.tagName !== "STYLE" && !(n.classList && (n.classList.contains("title") || n.classList.contains("relative")))) { var nx = n.nextElementSibling; mains.push(n); n = nx; }
           }
-          if (!mainEl) continue;
-          var rowEl = el("div", "cc-split-row"), main = el("div", "cc-main-col"), side = el("div", "cc-side-card");
-          anchor.parentNode.insertBefore(rowEl, anchor);
-          main.appendChild(mainEl);                  // whole form/.shade -> left (main) card
-          side.appendChild(sideEl);                  // whole clone block -> side card
-          rowEl.appendChild(main); rowEl.appendChild(side);
+          var main = el("div", "cc-main-col"), side = el("div", "cc-side-card");
+          for (var m = 0; m < mains.length; m++) main.appendChild(mains[m]);   // whole settings blocks -> Hauptcard (left)
+          side.appendChild(clone);                                             // clone block -> Nebencard (right)
+          rel.appendChild(main); rel.appendChild(side);                        // reuse .relative as the flex row
+          rel.classList.add("cc-split-row");
           clone.setAttribute("data-cc-clone", "1");
         } catch (e) {}
       }
     } catch (e) {}
   }
-  // ── SMB "User Access" region -> its OWN main card (user: "SMB Benutzerzugriff ist eine hauptcard").
-  // smb_user_edit is its own <form> (a sibling of smb_edit); the region = [div.title.nocontrol] [help]
-  // [div.relative(clone + form)]. Wrap that whole run into ONE .cc-card (whole blocks move as units),
-  // then split its own clone. Idempotent (data-cc-user).
-  function ccWrapUserAccess(root) {
-    try {
-      var form = root.querySelector('form[name="smb_user_edit"]'); if (!form) return;
-      var rel = form.closest(".relative"); if (!rel || rel.getAttribute("data-cc-user")) return;
-      var nodes = [rel], p = rel.previousElementSibling;
-      while (p && !(p.classList && p.classList.contains("title"))) { nodes.unshift(p); p = p.previousElementSibling; }
-      if (p) nodes.unshift(p);                       // the leading div.title.nocontrol ("SMB User Access")
-      var card = el("div", "cc-card cc-user-access-card");
-      nodes[0].parentNode.insertBefore(card, nodes[0]);
-      for (var i = 0; i < nodes.length; i++) card.appendChild(nodes[i]);
-      rel.setAttribute("data-cc-user", "1");
-      ccSplitCloneBlocks(card);                      // split the readusersmb clone inside this card too
-    } catch (e) {}
-  }
   function ccUnwrap(node) { if (!node || !node.parentNode) return; while (node.firstChild) node.parentNode.insertBefore(node.firstChild, node); node.parentNode.removeChild(node); }
   function ccCardsTeardown() {
     try {
-      // Restore NATIVE sibling order before flattening: the split emits [main, side] but the native
-      // order is always side-then-main (the clone/.relative precedes its form/.shade in both cases).
-      // Re-ordering side before main first means unwrapping yields the native DOM, so a re-enable
-      // (no reload) re-splits correctly instead of reading a null nextElementSibling and dropping it.
-      var rows0 = document.querySelectorAll("#displaybox .cc-split-row");
-      for (var q = 0; q < rows0.length; q++) {
-        var side0 = rows0[q].querySelector(":scope > .cc-side-card"), main0 = rows0[q].querySelector(":scope > .cc-main-col");
-        if (side0 && main0) rows0[q].insertBefore(side0, main0);
+      // Flatten each reused .relative row back: lift the Hauptcard + Nebencard children back up, drop
+      // the row class + markers. The clone reverts to its native absolute float once the CSS is gone, so
+      // the DOM order (main-then-clone) is visually irrelevant, and a re-enable re-runs ccCards cleanly.
+      var rows = document.querySelectorAll("#displaybox .cc-split-row");
+      for (var r = 0; r < rows.length; r++) {
+        var row = rows[r];
+        var main = row.querySelector(":scope > .cc-main-col"), side = row.querySelector(":scope > .cc-side-card");
+        if (main) ccUnwrap(main);
+        if (side) ccUnwrap(side);
+        row.classList.remove("cc-split-row");
       }
-      var cols = document.querySelectorAll("#displaybox .cc-main-col, #displaybox .cc-side-card"); for (var i = 0; i < cols.length; i++) ccUnwrap(cols[i]);
-      var rows = document.querySelectorAll("#displaybox .cc-split-row"); for (var r = 0; r < rows.length; r++) ccUnwrap(rows[r]);
-      var uac = document.querySelectorAll("#displaybox .cc-user-access-card"); for (var u = 0; u < uac.length; u++) ccUnwrap(uac[u]);
-      var marks = document.querySelectorAll("#displaybox [data-cc-clone], #displaybox [data-cc-user]");
-      for (var m = 0; m < marks.length; m++) { marks[m].removeAttribute("data-cc-clone"); marks[m].removeAttribute("data-cc-user"); }
+      var marks = document.querySelectorAll("#displaybox [data-cc-clone]");
+      for (var k = 0; k < marks.length; k++) marks[k].removeAttribute("data-cc-clone");
     } catch (e) {}
   }
 
@@ -411,8 +398,7 @@
         var section = panels[i];
         if (section.getAttribute("data-cc-card")) continue;   // idempotent; keeps i == real DOM index
         section.setAttribute("data-cc-card", "1");
-        ccWrapUserAccess(section);    // SMB "User Access" -> its own main card (splits its own clone) — run FIRST
-        ccSplitCloneBlocks(section);  // remaining clone-settings block -> side card beside the main content
+        ccCards(section);   // clone-settings block(s) -> Nebencard beside their Hauptcard (handles all 3 Unraid variants; SMB "User Access" form becomes its own Hauptcard automatically)
         var head = document.createElement("div");
         head.className = "cc-card-head";
         var btn = tabBtns[i];
@@ -422,10 +408,10 @@
         } else {                                              // last resort: never shout the raw id
           head.textContent = (btn && btn.textContent.trim()) || (section.id || "").replace(/-panel$/, "");
         }
-        // put the title badge INSIDE the main card (user: "Die überschriftbadges sollen in die Card"):
-        // if this panel was split, the badge goes into the top-level .cc-main-col; otherwise into the
-        // section (which is itself the card). PREPEND only — never move the forms.
-        var mainCol = section.querySelector(":scope > .cc-split-row > .cc-main-col") || section;
+        // put the tab-title badge INSIDE the Hauptcard (user: "Die überschriftbadges sollen in die
+        // Card"): if this panel has a clone split, the badge goes into the FIRST .cc-main-col; otherwise
+        // into the section (which is itself the card when there's no split). PREPEND — never move forms.
+        var mainCol = section.querySelector(".cc-main-col") || section;
         mainCol.insertBefore(head, mainCol.firstChild);
       }
       ccSelects(box);   // convert native <select> to the CC disk-dropdown look (see ccWrapSelect)

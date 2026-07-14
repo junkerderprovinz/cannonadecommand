@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.11.2">
+  <!ENTITY version   "2.11.3">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,16 @@
 </ICON>
 
 <CHANGES>
+### 2.11.3
+1. Freigaben: the settings cards are fixed properly. The settings form now sits INSIDE its main card
+   (it was leaving the main card empty and rendering the form below it), and the "Einstellungen
+   übernehmen von" block is a separate, decoupled side card beside it — there is no longer an enclosing
+   frame drawn around both cards.
+2. Freigaben: the main card and the side card share the same background colour and read as two
+   independent cards separated by a gap, not one boxed group.
+3. Freigaben (SMB): "SMB Benutzerzugriff" is reliably its own main card, next to its own small
+   "Einstellungen übernehmen von" side card.
+
 ### 2.11.2
 1. Freigaben: the card title badges now sit INSIDE their card (they were floating above it).
 2. Freigaben: the "Einstellungen übernehmen von" block no longer overlaps the form — it flows cleanly
@@ -500,7 +510,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>75ec94ae2dcd24837eb03649f250e011abb4e30f9454366a5a7f2511a15887ba</SHA256>
+  <SHA256>8dc3f99a594608cdb85fe5cd52e7e67468ad4474f136686b3ec36b2700a7dd05</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

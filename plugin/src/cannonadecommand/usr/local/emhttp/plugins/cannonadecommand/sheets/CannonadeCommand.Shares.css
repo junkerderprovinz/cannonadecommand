@@ -437,30 +437,35 @@ html.cc-shares-on.cc-on-share-detail #displaybox section[role="tabpanel"] dd,
 html.cc-shares-on.cc-on-share-detail #displaybox section[role="tabpanel"] .inline_help,
 html.cc-shares-on.cc-on-share-detail #displaybox section[role="tabpanel"] blockquote { color: #d5d5d5; }
 
-/* ═══ clone-settings "Einstellungen übernehmen von" -> small SIDE card beside the main card, and the
-   SMB "User Access" region -> its own MAIN card (user: clone = Nebencard, SMB Benutzerzugriff =
-   Hauptcard). shares.js wraps whole forms/blocks (no field leaves its <form>). When a section holds a
-   split it stops being the card itself and becomes a transparent, wider flex host; the two columns are
-   the cards. NO border lines (rule [[cc-standardize-widget-style-systemwide]]) — distinguish by fill +
-   shadow. */
+/* ═══ clone-settings "Einstellungen übernehmen von" (Read/Write settings from) -> a small Nebencard
+   BESIDE the Hauptcard (user: clone = Nebencard, the settings form = Hauptcard, DECOUPLED — "nicht mit
+   einem umschließenden Rahmen umgeben", and "die Hintergründe gleich einfärben"). shares.js REUSES the
+   native .relative as the flex row (.cc-split-row) holding [.cc-main-col = Hauptcard, .cc-side-card =
+   Nebencard]; whole forms/blocks move as units. When a panel holds a split it is NO LONGER the card —
+   it becomes a transparent flex HOST, so its own card fill/shadow/radius must be fully removed (that
+   left-over section shadow WAS the "umschließender Rahmen" the user saw around both cards). The two
+   cards get the SAME #222 fill; no border lines ([[cc-standardize-widget-style-systemwide]]) — they
+   read as two separate cards via fill + shadow + the gap between them. */
 html.cc-shares-on.cc-on-share-detail #displaybox .tab-content:has(.cc-split-row) {
-  max-width: 1040px; background: none; padding: 0;   /* room for main + side card; section is a host now, not the card */
+  max-width: 1040px;                                 /* room for Hauptcard + Nebencard side by side */
+  background: none; box-shadow: none; border-radius: 0; padding: 0;   /* host, not a card -> NO enclosing frame */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-split-row {
-  display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;   /* side card stacks below on narrow screens */
+  display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;   /* Nebencard stacks below on narrow screens */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-main-col {
   flex: 1 1 460px; min-width: 0;
   background: #222; border: none; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-side-card {
-  flex: 0 0 260px; position: relative;   /* contain any residual absolutely-positioned clone child */
+  flex: 0 0 260px; align-self: flex-start;
   background: #222; border: none; border-radius: 12px; padding: 12px 14px; box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
 }
-/* the columns are the cards now -> drop the inner .shade backgrounds, and NEUTRALIZE the native float:
-   div.clone-settings is position:absolute (a top-right float inside its .relative) in Unraid, so once
-   moved into a card it must FLOW normally — otherwise it floats over the form (the "durcheinander" the
-   user saw in the Freigabeeinstellungen). Reset the clone + any wrapping .relative to static. */
+/* the two columns ARE the cards now -> drop every inner .shade fill, and NEUTRALIZE the native float:
+   div.clone-settings is position:absolute; width:40rem; top:0; right:0 (a top-right float inside its
+   .relative) at >=1330px in Unraid's default-base.css, so once it sits inside the Nebencard it must
+   FLOW normally — otherwise it escapes the card and floats over the form (the "durcheinander"). Reset
+   the clone (and any nested .relative/.shade) to a static, auto-width in-flow block. */
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-main-col > .shade,
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-side-card .clone-settings,
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-side-card .relative,
@@ -468,15 +473,12 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-side-card .shade {
   background: none !important; padding: 0; margin: 0;
   position: static !important; inset: auto !important; width: auto !important;
 }
-/* SMB "User Access" = its own main card, stacked under the SMB-settings split. LEFT-aligned + full
-   host width so its left edge lines up with the split-row above (align-to-menu-bar) AND its own inner
-   clone split (main + side) fits without wrapping. */
-html.cc-shares-on.cc-on-share-detail #displaybox .cc-user-access-card {
-  background: #222; border: none; border-radius: 12px; padding: 16px 20px; margin: 16px 0 0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
-}
-html.cc-shares-on.cc-on-share-detail #displaybox .cc-user-access-card > .title.nocontrol {
-  margin: 0 0 12px !important; padding: 0 !important; border: 0 !important;   /* title bar = the card header */
+/* a native sub-heading that sits BETWEEN two crows in the same panel (e.g. "SMB User Access", whose
+   form becomes its OWN Hauptcard in the next crow) -> a light, left-aligned label on the transparent
+   host, not a boxed title bar. */
+html.cc-shares-on.cc-on-share-detail #displaybox .tab-content:has(.cc-split-row) > .title.nocontrol {
+  background: none !important; border: 0 !important; box-shadow: none !important;
+  margin: 4px 0 10px !important; padding: 0 !important;
 }
 
 /* ═══ custom single-<select> overlay (.cc-sel): a native <select>'s open popup is OS-rendered and
