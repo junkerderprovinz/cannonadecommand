@@ -83,6 +83,11 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
   them implicitly, nothing is written into your plan.
 - Watchdog (auto-restart on crash or unhealthy, rate-capped per hour) and time
   schedules (start/stop/restart at fixed times, per weekday).
+- Idle auto-stop (ContainerNursery-style): stop a container after it stays idle —
+  low CPU **and** low network — for a set number of minutes. A busy container is
+  never stopped, and a host/container-network container (whose per-container idle
+  can't be measured) is skipped. CC does not wake it back up — a schedule, the
+  plan, or Unraid's autostart does.
 
 **Resource limits**
 - Live CPU limit, CPU pinning (topology-aware, with P/E-core detection on Intel
@@ -104,6 +109,9 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
 - Theming: one accent colour for everything, or rainbow mode with an editable
   palette; icon colours toggleable; settings sync across origins (IP, hostname,
   domain) via the engine — and they survive cleared browser data.
+- Master theming switch: one toggle turns **all** visual theming off and keeps
+  only the orchestration functions (start plan, limits, bandwidth, watchdog,
+  schedules, idle-stop), leaving a native-looking Docker tab.
 - Areas: the Docker, Plugins and VM tabs, plus (opt-in) the main menu bar and the
   Settings-page category icons (large square badges) — each toggleable under
   **Bereiche** (Areas) with its own style tab.
