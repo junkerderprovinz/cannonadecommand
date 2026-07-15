@@ -37,7 +37,7 @@
 3. Rainbow "colour only the active badge" mode now also covers the Freigaben list (each whole row), the
    Freigaben tabs, and the Settings + Tools tab tiles — not just the main menu bar.
 4. New: the Werkzeuge (Tools) tab is now styled like the Settings tab — its category tiles get the CC
-   badge treatment. The area toggle is now "Einstellungen & Werkzeuge".
+   badge treatment. The area toggle is now "Einstellungen und Werkzeuge" (Settings and Tools).
 
 ### 2.13.0
 1. Colour live-update fixed. Changing an area's accent, or toggling "adopt the global colour" off, now
