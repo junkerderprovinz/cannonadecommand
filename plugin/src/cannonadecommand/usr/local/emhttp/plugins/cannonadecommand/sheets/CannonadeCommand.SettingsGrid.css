@@ -2,8 +2,8 @@
  *
  * Auto-<link>-injected into <head> on EVERY Unraid page (Buttons .page hook). To make
  * that safe, EVERY rule is scoped to html.cc-settingsgrid-on, a class settingsgrid.js
- * only adds on the /Settings LANDING page when the "Einstellungen" area is enabled.
- * Absent => this sheet has ZERO effect anywhere (including the identically-marked /Tools).
+ * only adds on the /Settings AND /Tools LANDING pages (identical .Panel tile grid)
+ * when the "Einstellungen & Werkzeuge" area is enabled. Absent => ZERO effect anywhere.
  *
  * Each category tile's icon wrapper (the bare <span> inside the tile's <a>, DOM:
  *   <div class="Panel"><a><span><i class="icon-x PanelIcon"></i></span>
@@ -48,3 +48,19 @@ html.cc-settingsgrid-on #displaybox .Panel > a > span > i.favo {
 }
 /* a touch more air between the badge and its label */
 html.cc-settingsgrid-on #displaybox .Panel .PanelText { margin-top: 4px; }
+
+/* rainbow "active only" sub-mode (cc.rbmode=active -> html.cc-settingsgrid-rbneutral, set by paintGrid):
+   the tiles have no active tile, so idle badges go neutral grey and colour on HOVER via the per-tile
+   --cc-rb-c/--cc-rb-ct paintGrid stamps on the span. Same specificity as the base badge rules but
+   appended last, so it wins once paintGrid clears the inline background. Covers /Settings AND /Tools.
+   ALSO gated on .cc-settingsgrid-on (the badge-mode class): paintGrid only toggles -rbneutral in the
+   badge branch and never clears it when badge/theming/area turns off, so pairing with -on stops the
+   neutral rules the instant -on is removed (else grey badges leak onto native tiles until a reload). */
+html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a > span { background: rgba(128, 128, 128, .18) !important; }
+html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a > span > i.PanelIcon { color: #cfcfcf !important; }
+html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a:hover > span {
+  background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; filter: none !important;
+}
+html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a:hover > span > i.PanelIcon {
+  color: var(--cc-rb-ct, var(--cc-iconbg-text, var(--cc-accent-text, #fff))) !important;
+}

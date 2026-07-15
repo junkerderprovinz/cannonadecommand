@@ -233,34 +233,43 @@ html.cc-shares-on.cc-on-share-detail #displaybox .menuNavButtonsTabbed a.button 
 html.cc-shares-on.cc-on-share-detail #displaybox .menuNavButtonsTabbed a.button:hover { filter: brightness(1.14); }
 html.cc-shares-on.cc-on-share-detail #displaybox .menuNavButtonsTabbed a.button i { color: inherit !important; }
 
-/* action buttons: shared pill shape for Apply/Done, SMB apply, and the Read/Write clone buttons */
-html.cc-shares-on.cc-on-share-detail #displaybox form[name="share_edit"] input[type="submit"],
-html.cc-shares-on.cc-on-share-detail #displaybox form[name="share_edit"] input[type="button"],
-html.cc-shares-on.cc-on-share-detail #displaybox form[name="smb_edit"] input[type="submit"],
-html.cc-shares-on.cc-on-share-detail #displaybox form[name="smb_edit"] input[type="button"],
-html.cc-shares-on.cc-on-share-detail #displaybox form[name="smb_user_edit"] input[type="submit"],
-html.cc-shares-on.cc-on-share-detail #displaybox form[name="smb_user_edit"] input[type="button"],
-html.cc-shares-on.cc-on-share-detail #displaybox .clone-settings input[type="button"] {
+/* action buttons: shared pill shape for the Apply/Done submit, the SMB Apply, and the Read/Write
+   clone buttons. Broadened PAST the named forms — the Unraid "Anwenden"/Apply submit is a plain
+   #displaybox input[type="submit"] that did NOT sit inside share_edit/smb_edit/smb_user_edit, so it
+   never got wired; and the clone Read/Write controls are input.clone with ids #readshare/#writeshare/
+   #readsmb/#writesmb. The detail page's ONLY submit/clone controls are these apply-type buttons, so a
+   #displaybox scope is safe. */
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="submit"],
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="button"] {   /* EVERY detail-page button (incl. the NFS Apply/Done) gets the pill shape */
   border: none !important; box-shadow: none !important;
   padding: 0 14px !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: 0.6px !important; font-family: inherit !important;
-  border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer; transition: filter .12s;
+  border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer; transition: filter .12s, opacity .12s;
 }
-/* submit = primary (accent fill); button/clone = secondary (neutral grey) -> clear hierarchy */
-html.cc-shares-on.cc-on-share-detail #displaybox form[name="share_edit"] input[type="submit"],
-html.cc-shares-on.cc-on-share-detail #displaybox form[name="smb_edit"] input[type="submit"],
-html.cc-shares-on.cc-on-share-detail #displaybox form[name="smb_user_edit"] input[type="submit"] {
+/* ACCENT fill (user: colour-wire them) — the Apply submit, the SMB Apply, AND the clone Read/Write
+   controls all take the area accent. Only plain non-clone form buttons (Done/Cancel) stay neutral. */
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="submit"],
+html.cc-shares-on.cc-on-share-detail #displaybox input.clone,
+html.cc-shares-on.cc-on-share-detail #displaybox #readshare,
+html.cc-shares-on.cc-on-share-detail #displaybox #writeshare,
+html.cc-shares-on.cc-on-share-detail #displaybox #readsmb,
+html.cc-shares-on.cc-on-share-detail #displaybox #writesmb,
+html.cc-shares-on.cc-on-share-detail #displaybox .clone-settings input[type="button"] {
   background: var(--cc-shr-accent, #2f6feb) !important; color: var(--cc-shr-accent-text, #fff) !important;
 }
-html.cc-shares-on.cc-on-share-detail #displaybox form[name="share_edit"] input[type="button"],
-html.cc-shares-on.cc-on-share-detail #displaybox form[name="smb_edit"] input[type="button"],
-html.cc-shares-on.cc-on-share-detail #displaybox form[name="smb_user_edit"] input[type="button"],
-html.cc-shares-on.cc-on-share-detail #displaybox .clone-settings input[type="button"] {
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="button"]:not(.clone) {   /* every non-clone button (Done/Cancel + the NFS Done) = neutral secondary */
   background: #4a4a4a !important; color: #f0f0f0 !important;
 }
-html.cc-shares-on.cc-on-share-detail #displaybox input[type="submit"]:hover,
-html.cc-shares-on.cc-on-share-detail #displaybox input[type="button"]:hover { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="submit"]:hover:not(:disabled),
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="button"]:hover:not(:disabled),
+html.cc-shares-on.cc-on-share-detail #displaybox input.clone:hover:not(:disabled) { filter: brightness(1.14); }
+/* a DISABLED apply/read/write button (the clone Read/Write start disabled until a share is picked) must
+   read as inactive, not as an enabled accent primary (user: they were fully accent-filled while disabled). */
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="submit"]:disabled,
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="button"]:disabled {
+  opacity: .45 !important; filter: grayscale(.4) !important; cursor: not-allowed !important;
+}
 
 /* sections FLAT (user: "die ganzen Felder sollen keinen hellen Hintergrund haben") — drop Unraid's
    .shade section backgrounds and the section-header tint so the page reads flat/dark; keep a thin
@@ -377,18 +386,29 @@ html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-dropconta
    its new border/shadow are never clipped. */
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-dropcontainer-wrapper {
   height: auto !important; width: auto !important; overflow: visible !important;
+  border: none !important; box-shadow: none !important; background: transparent !important; padding: 0 !important;  /* strip jQuery-UI's .ui-widget-content translucent frame (user: "halbtransparenter Rahmen") — the inner dropcontainer already carries the #303030 fill + shadow */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item,
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt {
   display: flex !important; align-items: center; gap: 8px; justify-content: flex-start;
   height: auto !important; line-height: 1.3 !important; margin: 0 !important;
   padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 999px);
-  background: rgba(255, 255, 255, .14) !important;   /* legible chip fill vs the #303030 panel — NO border line */
+  background: rgba(255, 255, 255, .09) !important;   /* NEUTRAL idle chip vs the #303030 panel — NO border line */
   border: none !important; color: #ececec !important; white-space: nowrap;
+  transition: background .12s, color .12s, box-shadow .12s;   /* mouseover-reactive (user) */
 }
+/* HOVER: any dropdown option (disk item OR cc-select overlay) colours to the accent on mouseover */
+html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item:hover,
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt:hover {
+  background: var(--cc-shr-accent, #2f6feb) !important; color: var(--cc-shr-accent-text, #fff) !important;
+}
+/* selected stays accent (specificity/order below); a hover just brightens it */
+html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item:has(input:checked):hover,
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-selected:hover { filter: brightness(1.12); }
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item:has(input:checked) {
   background: var(--cc-shr-accent, #2f6feb) !important; border-color: var(--cc-shr-accent, #2f6feb) !important;
   color: var(--cc-shr-accent-text, #fff) !important;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .55) !important;   /* ring so a SELECTED disk still reads selected while a neighbour is hovered accent */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item input[type="checkbox"] { display: none !important; }
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item label,
@@ -419,11 +439,11 @@ html.cc-shares-on.cc-on-share-detail #displaybox .menuNavButtonsTabbed { positio
    (user: "Die Cards überschriften in richtige Badges formatieren. inkl. Färbung"). Text from the tab
    button via shares.js. Uses the area accent (rainbow-agnostic like the other semantic headers). */
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-card-head {
-  display: inline-flex; align-items: center; gap: 7px;
-  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: 12px; line-height: 1;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: 15px; line-height: 1;   /* bigger card-title badge (user: 3 main cards' titles bigger) — 12 -> 15px */
   background: var(--cc-shr-accent, #2f6feb) !important; color: var(--cc-shr-accent-text, #fff) !important;
   border: none; border-radius: var(--cc-b-radius, 999px);
-  padding: 6px 14px; margin: 0 0 14px;
+  padding: 9px 18px; margin: 0 0 16px;   /* roomier pill + a touch more clearance under it */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-card-head i.title,
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-card-head i,
@@ -456,14 +476,16 @@ html.cc-shares-on.cc-on-share-detail #displaybox .tab-content:has(.cc-split-row)
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-split-row {
   display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;   /* Nebencard stacks below on narrow screens */
+  margin-bottom: 16px;   /* vertical spacing between STACKED crows (SMB settings crow + SMB user-access crow) — the hidden .title.cc-carded between them breaks `+` adjacency, so use a per-crow bottom margin */
 }
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-split-row:last-child { margin-bottom: 0; }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-main-col {
   flex: 1 1 620px; min-width: 0;                     /* wider Hauptcard basis (host 1480 - side 360 - gap -> ~1100px) */
   background: #222; border: none; border-radius: 12px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-side-card {
-  flex: 0 1 360px; min-width: 0; align-self: flex-start;   /* wider Nebencard; can shrink on narrow (no overflow), no grow */
-  background: #222; border: none; border-radius: 12px; padding: 12px 14px; box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
+  flex: 0 1 460px; min-width: 0; align-self: flex-start;   /* Nebencard basis bumped 360 -> 460 (user: too small); can shrink on narrow (no overflow), no grow */
+  background: #222; border: none; border-radius: 12px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
 }
 /* the two columns ARE the cards now -> drop every inner .shade fill, and NEUTRALIZE the native float:
    div.clone-settings is position:absolute; width:40rem; top:0; right:0 (a top-right float inside its
@@ -507,6 +529,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel.cc-sel-disabled .cc-sel
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-selected {
   background: var(--cc-shr-accent, #2f6feb) !important; border-color: var(--cc-shr-accent, #2f6feb) !important;
   color: var(--cc-shr-accent-text, #fff) !important;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .55) !important;   /* selected ring (stays readable next to a hovered-accent neighbour) */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-disabled { opacity: .4; pointer-events: none; }
 
@@ -515,4 +538,25 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-disabled { opaci
    /Docker tab bars (on the detail page the tab buttons are hidden as cards). */
 html.cc-shares-rb #displaybox nav.tabs button[role="tab"][aria-selected="true"] {
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .45) !important;
+}
+
+/* ═══ rainbow "active only" sub-mode (cc.rbmode=active -> html.cc-shares-rbneutral, set by paintRows/
+   paintTabs). Freigaben LIST: the name + Browse badges go neutral grey, and the WHOLE row recolours on
+   hover via the --cc-rb-c/--cc-rb-ct that paintRows stamps on the <tr> (they inherit down). The
+   semantic status pill (.cc-b-status) is NOT .cc-b, so it keeps its green/orange. Tab bar: idle tabs
+   fall back to the base grey (paintTabs cleared the inline), the active tab stays painted, hover
+   recolours. */
+/* name/value badge: base .cc-b is non-!important, so this !important grey wins. Browse pill: its base
+   (html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-browse) IS !important, so the neutral
+   rule must MATCH its selector prefix + add the two rbneutral/on-shares classes to out-specify it. */
+html.cc-shares-rbneutral.cc-on-shares #displaybox .cc-b { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-on.cc-shares-rbneutral.cc-on-shares #displaybox table.unraid.share_status a.cc-b-browse { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-on-shares #displaybox tr:hover .cc-b,
+html.cc-shares-on.cc-shares-rbneutral.cc-on-shares #displaybox table.unraid.share_status tr:hover a.cc-b-browse {
+  background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
+}
+/* tab bar: also gate on .cc-on-shares so a live area/theming disable (which removes cc-on-shares but
+   NOT the lingering cc-shares-rbneutral) stops the hover recolour immediately. */
+html.cc-shares-rbneutral.cc-on-shares #displaybox nav.tabs button[role="tab"]:not([aria-selected="true"]):hover {
+  background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
 }

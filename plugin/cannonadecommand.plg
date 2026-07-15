@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.13.0">
+  <!ENTITY version   "2.14.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,18 @@
 </ICON>
 
 <CHANGES>
+### 2.14.0
+1. Freigaben (share detail): the disk dropdown panels no longer show a faint frame, and every dropdown
+   option is now mouse-reactive — neutral grey until you hover it (then it fills with the accent). A
+   selected disk keeps a ring so it still reads as selected.
+2. Freigaben (share detail): the side cards are wider, the two stacked SMB cards now have a gap between
+   them, the Apply / Read / Write buttons are colour-wired to the accent (a disabled one is dimmed), and
+   the card title badges are bigger.
+3. Rainbow "colour only the active badge" mode now also covers the Freigaben list (each whole row), the
+   Freigaben tabs, and the Settings + Tools tab tiles — not just the main menu bar.
+4. New: the Werkzeuge (Tools) tab is now styled like the Settings tab — its category tiles get the CC
+   badge treatment. The area toggle is now "Einstellungen & Werkzeuge".
+
 ### 2.13.0
 1. Colour live-update fixed. Changing an area's accent, or toggling "adopt the global colour" off, now
    takes effect **live** on the Plugins and VM tabs too (they only updated on a reload). Toggling adopt
@@ -537,7 +549,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>eebfdb5b5316bfca9a31b7533a8a891f6365568f9013a2249ea6f310ec46ebea</SHA256>
+  <SHA256>f141a33a427100e953de5f76d1d153de7dd9b641ac39a8ffa291316866c7a8cc</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

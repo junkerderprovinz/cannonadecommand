@@ -40,6 +40,8 @@
   function pal() { try { var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
   function rbOn() { return g("cc.rainbow", "0") === "1"; }
   function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "0") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; }
+  // rainbow "active only" sub-mode (cc.rbmode=active): idle badges neutral, active painted, hover colours.
+  function rbNeutral() { return g("cc.rbmode", "all") === "active"; }
   // /Shares editor is /Shares/Share?name=... -> a strict, trailing-slash-normalised
   // pathname check keeps us on the LANDING pages only (see settingsgrid.onSettings).
   function pn() { try { return location.pathname.replace(/\/+$/, ""); } catch (e) { return ""; } }
@@ -53,10 +55,15 @@
   // attribute changes, so they never re-trigger the childList observer.
   function paintTabs() {
     try {
-      var rb = rbOn(), btns = document.querySelectorAll('#displaybox nav.tabs button[role="tab"]');
+      var rb = rbOn(), neutral = rb && rbNeutral(), btns = document.querySelectorAll('#displaybox nav.tabs button[role="tab"]');
+      document.documentElement.classList.toggle("cc-shares-rbneutral", neutral); // also set by paintRows; needed here for the /Docker tab bar where paintRows never runs
       for (var i = 0; i < btns.length; i++) {
-        var b = btns[i];   // rainbow paints EVERY tab (not just the active one); active cue = CSS inset ring
-        if (rb) { var c = rbColor(i); b.style.setProperty("background", c, "important"); b.style.setProperty("color", idealText(c), "important"); }
+        var b = btns[i], active = b.getAttribute("aria-selected") === "true";
+        if (!rb) { b.style.removeProperty("background"); b.style.removeProperty("color"); b.style.removeProperty("--cc-rb-c"); b.style.removeProperty("--cc-rb-ct"); continue; }
+        var c = rbColor(i), tc = idealText(c);
+        b.style.setProperty("--cc-rb-c", c); b.style.setProperty("--cc-rb-ct", tc); // per-tab colour for the neutral-mode :hover
+        // "all" mode paints every tab; "active only" paints ONLY the active tab (idle -> grey via base CSS, colour on hover)
+        if (!neutral || active) { b.style.setProperty("background", c, "important"); b.style.setProperty("color", tc, "important"); }
         else { b.style.removeProperty("background"); b.style.removeProperty("color"); }
       }
     } catch (e) {}
@@ -213,15 +220,23 @@
     try {
       if (g("cc.enable.shares", "0") === "0") return;
       if (pn() !== "/Shares") return;
-      var rb = rbOn(), ids = ["shareslist", "disk_list"];
+      var rb = rbOn(), neutral = rb && rbNeutral(), ids = ["shareslist", "disk_list"];
+      document.documentElement.classList.toggle("cc-shares-rbneutral", neutral); // "active only": rows neutral, whole row colours on hover
       for (var j = 0; j < ids.length; j++) {
         var tb = document.getElementById(ids[j]); if (!tb) continue;
         var rows = tb.children, ri = 0;
         for (var r = 0; r < rows.length; r++) {
           var tr = rows[r]; if (tr.tagName !== "TR" || tr.querySelector(":scope > td.empty")) continue; // skip the no-shares placeholder
-          var c = rb ? rbColor(ri) : "", tc = rb ? idealText(c) : "", bs = tr.querySelectorAll(".cc-b, .cc-b-browse"); // browse pill is coloured too now
+          var bs = tr.querySelectorAll(".cc-b, .cc-b-browse"); // browse pill is coloured too now
+          if (!rb) {
+            tr.style.removeProperty("--cc-rb-c"); tr.style.removeProperty("--cc-rb-ct");
+            for (var k = 0; k < bs.length; k++) { bs[k].style.removeProperty("background"); bs[k].style.removeProperty("color"); }
+            ri++; continue;
+          }
+          var c = rbColor(ri), tc = idealText(c);
+          tr.style.setProperty("--cc-rb-c", c); tr.style.setProperty("--cc-rb-ct", tc); // stamp on the ROW: custom props inherit to every badge + drive the neutral-mode :hover
           for (var k = 0; k < bs.length; k++) {
-            if (rb) { bs[k].style.setProperty("background", c, "important"); bs[k].style.setProperty("color", tc, "important"); }
+            if (!neutral) { bs[k].style.setProperty("background", c, "important"); bs[k].style.setProperty("color", tc, "important"); }
             else { bs[k].style.removeProperty("background"); bs[k].style.removeProperty("color"); }
           }
           ri++;
@@ -481,6 +496,11 @@
           for (var cd = 0; cd < carded.length; cd++) carded[cd].classList.remove("cc-carded");
           var marked = document.querySelectorAll("#displaybox [data-cc-card]");
           for (var m = 0; m < marked.length; m++) marked[m].removeAttribute("data-cc-card");
+          // rainbow "active only" leftovers: drop the neutral class and clear the inline rb colours
+          // paintTabs/paintRows stamped (inline survives a class removal, so it must be cleared here).
+          root.classList.remove("cc-shares-rbneutral");
+          var painted = document.querySelectorAll('#displaybox nav.tabs button[role="tab"], #displaybox #shareslist tr, #displaybox #disk_list tr, #displaybox .cc-b, #displaybox .cc-b-browse');
+          for (var p = 0; p < painted.length; p++) { painted[p].style.removeProperty("background"); painted[p].style.removeProperty("color"); painted[p].style.removeProperty("--cc-rb-c"); painted[p].style.removeProperty("--cc-rb-ct"); }
           ccSelectsTeardown();   // unwrap the custom <select> overlays -> native form back, clean
           ccCardsTeardown();     // unwrap the split/side/user-access card wrappers -> native structure back
         } catch (e) {}

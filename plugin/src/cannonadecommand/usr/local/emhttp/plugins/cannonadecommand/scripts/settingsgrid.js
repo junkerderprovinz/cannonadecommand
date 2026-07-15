@@ -2,11 +2,12 @@
 //
 // Loaded on EVERY Unraid page via the Buttons .page hook
 // (CannonadeCommand.SettingsGrid.page). Like header.js it does the MINIMUM in JS:
-//   * ONLY on the /Settings LANDING page AND when the "Einstellungen" area is enabled
-//     (cc.enable.settings != "0") -> toggle html.cc-settingsgrid-on so the auto-injected
-//     sheet turns each category-tile icon wrapper (a bare <span> inside the tile <a>)
-//     into a big square accent badge. Any other page (incl. the identically-marked
-//     /Tools) or a disabled area = ZERO effect anywhere.
+//   * ONLY on the /Settings AND /Tools LANDING pages (identical .Panel tile grid) AND
+//     when the "Einstellungen & Werkzeuge" area is enabled (cc.enable.settings != "0")
+//     -> toggle html.cc-settingsgrid-on so the auto-injected sheet turns each
+//     category-tile icon wrapper (a bare <span> inside the tile <a>) into a big square
+//     accent badge. Any other page (a /Settings/<Name> or /Tools/<Name> sub-page) or a
+//     disabled area = ZERO effect anywhere.
 //   * mirror the CC accent/text/badge-shape vars onto the document root; in rainbow mode
 //     paint each badge a rotated palette colour (accent mode = pure CSS via --cc-accent).
 // All sizing/shape lives in sheets/CannonadeCommand.SettingsGrid.css, every rule of it
@@ -54,28 +55,42 @@
   function pal() { try { var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
   function rbOn() { return g("cc.rainbow", "0") === "1"; }
   function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "0") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; }
-  // Settings LANDING page only. A Settings sub-page is /Settings/<Name>; /Tools has the
-  // SAME .Panel markup, so a strict pathname check is what keeps us off both.
-  function onSettings() { try { return location.pathname.replace(/\/+$/, "") === "/Settings"; } catch (e) { return false; } }
+  // rainbow "active only" sub-mode (cc.rbmode=active): tiles have no active item -> neutral idle + hover.
+  function rbNeutral() { return g("cc.rbmode", "all") === "active"; }
+  // Category-grid LANDING pages: /Settings AND /Tools both render the identical
+  // <div class="Panel"><a><span><i .PanelIcon></span>…</a></div> tile grid inside
+  // #displaybox, so the SAME badge restyle fits both (both are Type="xmenu"). A
+  // sub-page is /Settings/<Name> or /Tools/<Name>; the exact-match list keeps us off
+  // those. (Was onSettings(), /Settings only — /Tools now shares the Settings area.)
+  function onGrid() { try { var p = location.pathname.replace(/\/+$/, ""); return p === "/Settings" || p === "/Tools"; } catch (e) { return false; } }
   // rainbow: paint each badge <span> a rotated palette colour + contrast glyph; accent
   // mode: clear our inline overrides so the sheet's --cc-accent shows through. Inline
   // style writes are attribute changes, so they never re-trigger the childList observer.
   function paintGrid() {
     try {
-      var rb = rbOn(), spans = document.querySelectorAll("#displaybox .Panel > a > span");
+      var rb = rbOn(), neutral = rb && rbNeutral();
+      document.documentElement.classList.toggle("cc-settingsgrid-rbneutral", neutral); // "active only": tiles neutral, colour on hover
+      var spans = document.querySelectorAll("#displaybox .Panel > a > span");
       var accBg = badgeBg();
       for (var i = 0; i < spans.length; i++) {
         var s = spans[i], gl = s.querySelector("i.PanelIcon"), im = s.querySelector("img.PanelImg");
-        var c = rb ? rbColor(i) : accBg;                // this tile's badge background
-        if (rb) {
-          s.style.setProperty("background", c, "important");
-          if (gl) gl.style.setProperty("color", idealText(c), "important");
-        } else {
-          s.style.removeProperty("background");
-          if (gl) gl.style.removeProperty("color");     // glyph colour comes from CSS --cc-iconbg-text
+        if (!rb) {
+          s.style.removeProperty("background"); s.style.removeProperty("--cc-rb-c"); s.style.removeProperty("--cc-rb-ct");
+          if (gl) gl.style.removeProperty("color");      // glyph colour comes from CSS --cc-iconbg-text
+          if (im) im.style.setProperty("filter", ensureMonoFilter(idealText(accBg)), "important");
+          continue;
         }
-        // raster logo: flatten to the badge's ink tone so it reads on the box (docker/plugins parity)
-        if (im) im.style.setProperty("filter", ensureMonoFilter(idealText(c)), "important");
+        var c = rbColor(i), tc = idealText(c);
+        s.style.setProperty("--cc-rb-c", c); s.style.setProperty("--cc-rb-ct", tc); // per-tile colour for the neutral-mode :hover
+        if (!neutral) {
+          s.style.setProperty("background", c, "important");
+          if (gl) gl.style.setProperty("color", tc, "important");
+          if (im) im.style.setProperty("filter", ensureMonoFilter(tc), "important"); // raster logo -> badge ink tone
+        } else {
+          s.style.removeProperty("background");          // CSS neutral-idle grey shows; hover recolours via --cc-rb-c
+          if (gl) gl.style.removeProperty("color");
+          if (im) im.style.setProperty("filter", ensureMonoFilter("#fff"), "important"); // neutral badge is dark grey -> white-ink logo (idle + hover)
+        }
       }
     } catch (e) {}
   }
@@ -131,7 +146,7 @@
     try {
       var root = document.documentElement;
       // MASTER THEMING off behaves like the area being disabled (purely presentational).
-      var live = g("cc.enable.settings", "1") !== "0" && g("cc.theming", "1") !== "0" && onSettings();
+      var live = g("cc.enable.settings", "1") !== "0" && g("cc.theming", "1") !== "0" && onGrid();
       var badge = live && g("ccs.iconbg", "1") !== "0";
       // tint only when the badge is OFF and a valid colour is set (mutually exclusive UI)
       var tint = live && !badge && /^#[0-9a-f]{6}$/i.test(g("ccs.iconcolor", ""));
