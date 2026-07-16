@@ -131,9 +131,48 @@
       var hh = document.getElementById("cc-vm-mono-svg"); if (hh) hh.remove();
     } catch (e) {}
   }
+  // wrap the vCPU (a.vcpu-*) and RAM (mem) cell values in CC value badges (span.cc-vmb), styled by
+  // CannonadeCommand.VMs.css. Idempotent via .cc-vmb-cell; the tbody re-renders, so this re-runs from
+  // the observer. Never touch td.vm-name (logo/state handled inline above), the disks/graphics/ip
+  // cells (they carry live markup) or the autostart cell (styled purely by CSS).
+  function vmCell(td, label) {
+    if (!td || td.classList.contains("cc-vmb-cell")) return;
+    if (td.querySelector("br, table, .diskresize")) return;      // skip multi-line / interactive cells
+    var txt = (td.textContent || "").trim(); if (!txt || txt === "-") return;
+    var b = document.createElement("span"); b.className = "cc-vmb";
+    if (label) { var k = document.createElement("span"); k.className = "cc-vmb-k"; k.textContent = label; b.appendChild(k); }
+    // move the cell's existing children into the badge so a click target like a.vcpu-* stays intact
+    while (td.firstChild) b.appendChild(td.firstChild);
+    td.appendChild(b); td.classList.add("cc-vmb-cell");
+  }
+  function enhanceCells() {
+    try {
+      var rows = document.querySelectorAll("#kvm_list tr.sortable");
+      for (var i = 0; i < rows.length; i++) {
+        var tds = rows[i].querySelectorAll(":scope > td");
+        // native column order: 0 vm-name, 1 desc, 2 vCPU, 3 RAM, 4 disks, 5 graphics, 6 ip, 7 autostart
+        if (tds[2]) vmCell(tds[2], "CPU");
+        if (tds[3]) vmCell(tds[3], "RAM");
+      }
+    } catch (e) {}
+  }
+  function enhanceCellsTeardown() {
+    try {
+      var cells = document.querySelectorAll("#kvm_list td.cc-vmb-cell");
+      for (var i = 0; i < cells.length; i++) {
+        var td = cells[i], b = td.querySelector(":scope > span.cc-vmb");
+        if (b) { var k = b.querySelector(".cc-vmb-k"); if (k) b.removeChild(k); while (b.firstChild) td.insertBefore(b.firstChild, b); td.removeChild(b); }
+        td.classList.remove("cc-vmb-cell");
+      }
+    } catch (e) {}
+  }
   function apply() {
-    if (ls("cc.theming") === "0") { stripVmTheming(); return; } // MASTER THEMING off: VMs page fully native
+    var root = document.documentElement;
+    var live = ls("cc.theming") !== "0" && ls("cc.enable.vms") !== "0";
+    root.classList.toggle("cc-vms-on", live);
+    if (!live) { stripVmTheming(); enhanceCellsTeardown(); return; } // MASTER THEMING / area off: VMs page fully native
     try { enhanceRows(); } catch (e) {}
+    try { enhanceCells(); } catch (e) {}
     // adopt-toggle ON (default) -> Docker's cc.* settings; OFF -> own ccv.* keys.
     // Stay even with adopt-off + no tint colour when the Logo-Hintergrund badge is on.
     if (ls("cc.stylevms") === "0" && !ls("ccv.iconcolor") && effK("iconbg") !== "1") return;

@@ -1,0 +1,78 @@
+/* CannonadeCommand - VM-tab (/VMs) restyle, analogous to the Docker tab.
+ *
+ * Loaded ONLY on /VMs (CannonadeCommand.VMs.page, Menu="VMs"), so it can use broad selectors safely —
+ * it is absent on every other page. Every rule is still scoped to html.cc-vms-on, which vms.js sets
+ * only when the VM area (cc.enable.vms) AND master theming (cc.theming) are on, so disabling either
+ * live-reverts the page with no reload. Colours come from --cc-accent / --cc-b-radius (vms.js mirrors
+ * the VM area's own accent onto them, adopt-aware). Native VM markup verified against
+ * dynamix.vm.manager/include/VMMachines.php:
+ *   tr.sortable > td.vm-name [logo + name + state] · td[desc] · td[a.vcpu-*] · td[mem] · td[disks]
+ *   · td[span.vmgraphics=graphics] · td[span.vmgraphics=ip] · td[input.autostart]
+ * The row logo/state badges are still applied INLINE by vms.js (kept as-is); this sheet adds the rest.
+ */
+
+/* ═══ align the VM content with the MAIN MENU BAR (self-measured --cc-align-left; header.js sets it) ═══ */
+html.cc-vms-on { --cc-align-left: 10px; }
+html.cc-vms-on.cc-header-on { --cc-align-left: 15px; }
+html.cc-vms-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 10px); }
+html.cc-vms-on:not(.Theme--sidebar) #displaybox div.title { padding-left: 0; }
+
+/* ═══ table -> a light CC polish (no border lines; fill + subtle header row) ═══ */
+html.cc-vms-on #displaybox table.tablesorter { background: none; }
+html.cc-vms-on #displaybox #kvm_list tr.sortable > td { border: none !important; }
+html.cc-vms-on #displaybox table.tablesorter thead th {
+  background: rgba(128, 128, 128, .14) !important; border: none !important;
+  text-transform: uppercase; letter-spacing: .6px; font-weight: 600;
+}
+
+/* ═══ vCPU / RAM VALUE badges (vms.js wraps the cell text in span.cc-vmb) ═══ */
+html.cc-vms-on #displaybox #kvm_list span.cc-vmb {
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
+  background: rgba(128, 128, 128, .16); color: inherit;
+  border-radius: var(--cc-b-radius, 999px); padding: 2px 10px;
+  font-size: 11px; font-weight: 600; line-height: 1.5;
+}
+html.cc-vms-on #displaybox #kvm_list span.cc-vmb .cc-vmb-k { opacity: .7; text-transform: uppercase; letter-spacing: .4px; }
+/* keep the vCPU link (a.vcpu-*) readable inside its badge */
+html.cc-vms-on #displaybox #kvm_list span.cc-vmb a { color: inherit !important; text-decoration: none; }
+
+/* ═══ autostart toggle -> CC accent ═══
+   VMMachines.page turns input.autostart into a jQuery switchButton (verified: $('.autostart').
+   switchButton(...)), which HIDES the native checkbox and inserts its own markup:
+     .switch-button-background (the track, #ccc; .checked -> #486dba)  ·  .switch-button-button (knob)
+     .switch-button-label(.on -> #0088cc)
+   So we colour the CHECKED track with the CC accent and the ON label to match, instead of the (hidden)
+   native checkbox. Rounder track to read as a modern switch; the knob stays native. */
+html.cc-vms-on #displaybox .switch-button-background { border-radius: 999px !important; }
+html.cc-vms-on #displaybox .switch-button-background.checked { background-color: var(--cc-accent, #2f6feb) !important; border-color: var(--cc-accent, #2f6feb) !important; }
+html.cc-vms-on #displaybox .switch-button-button { border-radius: 999px !important; }
+html.cc-vms-on #displaybox .switch-button-label.on { color: var(--cc-accent, #2f6feb) !important; }
+
+/* ═══ bottom action buttons (input[type=button]) -> CC pills ═══ */
+html.cc-vms-on #displaybox input[type="button"]:not(.autostart) {
+  border: none !important; box-shadow: none !important;
+  height: var(--cc-md-h, 30px) !important; padding: 0 16px !important; min-width: 0 !important; box-sizing: border-box !important;
+  border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer;
+  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
+  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important; transition: filter .12s;
+}
+html.cc-vms-on #displaybox input[type="button"]:not(.autostart):hover:not(:disabled) { filter: brightness(1.14); }
+html.cc-vms-on #displaybox input[type="button"]:not(.autostart):disabled { opacity: .45 !important; filter: grayscale(.4) !important; cursor: not-allowed !important; }
+
+/* ═══ the VM logo context menu (click the VM icon -> addVMContext builds ul.dropdown-menu.dropdown-context,
+   appended to <body> by the shared context lib). Style it as a CC dropdown: dark fill, no border line,
+   accent hover, FA icons inherit. Scoped to cc-vms-on so it only dresses the menu while on /VMs. ═══ */
+html.cc-vms-on ul.dropdown-menu.dropdown-context {
+  background: #303030 !important; border: none !important; border-radius: 10px !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .6) !important; padding: 6px !important;
+}
+html.cc-vms-on ul.dropdown-menu.dropdown-context > li > a,
+html.cc-vms-on ul.dropdown-menu.dropdown-context > li > span {
+  color: #ececec !important; border-radius: var(--cc-b-radius, 8px) !important; padding: 6px 12px !important; transition: background .12s, color .12s;
+}
+html.cc-vms-on ul.dropdown-menu.dropdown-context > li > a:hover {
+  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+}
+html.cc-vms-on ul.dropdown-menu.dropdown-context > li > a i,
+html.cc-vms-on ul.dropdown-menu.dropdown-context > li > a:hover i { color: inherit !important; }
+html.cc-vms-on ul.dropdown-menu.dropdown-context > li.divider { background: rgba(255, 255, 255, .1) !important; margin: 4px 0 !important; }
