@@ -13,6 +13,15 @@ Link="cc-vmtab-hook"
    (badges + alignment) never applied. All rules are gated behind html.cc-vms-on,
    which vms.js sets only when the VM area + master theming are on, so this sheet is
    inert on every other page. Link="cc-vmtab-hook" renders a bare <div> instead of a
-   visible CC menu icon (we only restyle, never add an icon). No script here — vms.js
-   still loads via CannonadeCommand.VMs.page on /VMs. */
+   visible CC menu icon (we only restyle, never add an icon).
+
+   vms.js is ALSO loaded here (not from a Menu="VMs" page): Unraid's /VMs page is
+   Tabs="true", so a title-less child page goes through the tabbed layout's inline-eval
+   branch — which does NOT execute a <script> tag (dynamically eval'd markup never runs
+   script elements). That is why the whole VM enhancer was inert ("VM tab completely
+   unchanged"): vms.js never ran, so html.cc-vms-on was never set and this sheet couldn't
+   apply. Loading it from this Buttons hook puts it in the <head> of every page like
+   header.js/shares.js, bypassing the inline-eval branch entirely. vms.js self-gates to
+   /VMs, so it is inert elsewhere. */
 ?>
+<script defer src="<?autov('/plugins/cannonadecommand/scripts/vms.js')?>"></script>

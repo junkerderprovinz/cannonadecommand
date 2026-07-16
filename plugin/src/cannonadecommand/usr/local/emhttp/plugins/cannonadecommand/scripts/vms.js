@@ -242,6 +242,11 @@
     }, 8000);
   }
   function boot() {
+    // vms.js now loads GLOBALLY via the Buttons hook (CannonadeCommand.VmTab.page) so it reliably runs
+    // on /VMs — the old Menu="VMs" injector went through the tabbed inline-eval branch, which never
+    // executes a <script>, so the whole enhancer was dead. Being global, it must self-gate to /VMs:
+    // otherwise its proxy poll/liveness timers would run on every page.
+    try { if (location.pathname.replace(/\/+$/, "") !== "/VMs") return; } catch (e) { return; }
     if (localStorage.getItem("cc.enable.vms") === "0") return; // area disabled in CC settings
     try {
       arm();

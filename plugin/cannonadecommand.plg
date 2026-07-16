@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.20.0">
+  <!ENTITY version   "2.20.1">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,13 @@
 </ICON>
 
 <CHANGES>
+### 2.20.1
+1. VM-Tab: der komplette CC-Stil war weiterhin unsichtbar, weil das VM-Skript gar nicht lief. Unraids
+   VM-Seite nutzt die Tab-Ansicht, und in diesem Modus wird ein eingebettetes Skript nicht ausgefuehrt.
+   Das Skript wird jetzt global geladen (wie bei den anderen Bereichen) und laeuft dadurch zuverlaessig
+   auf der VM-Seite. Damit greift der gesamte VM-Stil (Badges, Ausrichtung, Autostart, Buttons,
+   Kontextmenue, Logo-Einfaerbung) endlich.
+
 ### 2.20.0
 1. Die Haupttabs der Menueleiste lassen sich jetzt per Drag-and-Drop beliebig anordnen. Die Reihenfolge
    wird gemerkt und bei jedem Laden wiederhergestellt; neue Tabs (z. B. von Plugins) kommen ans Ende. Ein
@@ -623,7 +630,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>84a08536eb3b05ded2cbd9ea471314b208857cb015fbd42f8011eda40af11bc0</SHA256>
+  <SHA256>c20a1911c66a6a59720e098ca0bb2fe659410fcba283ff79127058a392b5c993</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
