@@ -77,7 +77,9 @@ const claim1Path = claimFit.paths[0], claim2Path = claimFit.paths[1];
 // the logo artwork goes in VERBATIM — only wrapped in a scaling group
 const logoSrc = readFileSync(join(__dir, "logo.svg"), "utf8");
 const inner = logoSrc.replace(/^[\s\S]*?<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
-const scale = logoBox / 994.78;
+const vb = logoSrc.match(/viewBox="[\d.\-]+\s+[\d.\-]+\s+([\d.]+)\s+([\d.]+)"/);
+const vbW = vb ? parseFloat(vb[1]) : 994.78;
+const scale = logoBox / vbW;
 
 const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="CannonadeCommand">
@@ -94,4 +96,16 @@ ${inner}
 writeFileSync(join(__dir, "cannonadecommand-banner.svg"), svg);
 const png = new Resvg(svg, { fitTo: { mode: "width", value: W } }).render().asPng();
 writeFileSync(join(__dir, "cannonadecommand-banner.png"), png);
+// text-free support banner (logo only, on white) — house-standard "-banner-logo" name (support thread)
+const logoOnly = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="CannonadeCommand">
+  <rect width="${W}" height="${H}" fill="#ffffff"/>
+  <g transform="translate(${(W - logoBox) / 2},${logoY}) scale(${scale.toFixed(6)})">
+${inner}
+  </g>
+</svg>
+`;
+writeFileSync(join(__dir, "cannonadecommand-banner-logo.svg"), logoOnly);
+const pngLogo = new Resvg(logoOnly, { fitTo: { mode: "width", value: W } }).render().asPng();
+writeFileSync(join(__dir, "cannonadecommand-banner-logo.png"), pngLogo);
 console.log(`banner ok: ${W}x${H}, claim ${claimSize}px, png ${png.length} bytes`);

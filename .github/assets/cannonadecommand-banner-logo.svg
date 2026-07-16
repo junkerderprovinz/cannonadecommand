@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="Ebene_2" data-name="Ebene 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960.28 960.28">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 500" width="1600" height="500" role="img" aria-label="CannonadeCommand">
+  <rect width="1600" height="500" fill="#ffffff"/>
+  <g transform="translate(600,50) scale(0.416545)">
+
   <defs>
     <style>
       .cls-1 {
@@ -144,5 +147,7 @@
       <path class="cls-7" d="M190.05,202.69l16.6-6.16c1.45-.56,3.66.87,4.19,2.34l.39.87c.58,1.63-.45,4.47-2.04,5.11l-17.15,6.43c-1.51.61-3.32-.82-3.8-2.4l-.45-1.47c-.49-1.62.7-4.13,2.26-4.73Z"/>
     </g>
     <path id="rahmen_dunkel" class="cls-1" d="M865.8,94.48v771.32H94.48V94.48h771.32M896.83,0H63.45C28.41,0,0,28.41,0,63.45v833.38c0,35.04,28.41,63.45,63.45,63.45h833.38c35.04,0,63.45-28.41,63.45-63.45V63.45c0-35.04-28.41-63.45-63.45-63.45h0Z"/>
+  </g>
+
   </g>
 </svg>
