@@ -98,8 +98,13 @@
       root.setProperty("--cc-accent", a); root.setProperty("--cc-accent-text", ccIdeal(a)); root.setProperty("--cc-b-radius", rad);
       Array.prototype.slice.call(document.querySelectorAll("#kvm_list tr.sortable td.vm-name span.state")).forEach(function (st) {
         var txt = (st.textContent || "").trim(); if (!txt) return;
-        var low = txt.toLowerCase();
-        var c = /run|l\u00e4uft/.test(low) ? "#1f9d55" : /paus/.test(low) ? "#e0912a" : "#3c3c3c";
+        // colour by the NATIVE status class on the sibling <i.fa> (VMMachines.php: 'started'/'paused'/
+        // 'stopped' + green-/orange-/red-text), NOT the translated label \u2014 the old /run|l\u00e4uft/ text match
+        // never matched German "GESTARTET", so every state badge came out grey.
+        var icon = st.previousElementSibling, cls = (icon && icon.className) || "", low = txt.toLowerCase();
+        var running = /\bstarted\b|green-text/.test(cls) || /run|l\u00e4uft|gestartet/.test(low);
+        var paused = /\bpaused\b|orange-text/.test(cls) || /paus/.test(low);
+        var c = running ? "#1f9d55" : paused ? "#e0912a" : "#3c3c3c";
         st.style.setProperty("display", "inline-block", "important");
         st.style.setProperty("background", c, "important");
         st.style.setProperty("color", ccIdeal(c), "important");
@@ -145,6 +150,19 @@
     while (td.firstChild) b.appendChild(td.firstChild);
     td.appendChild(b); td.classList.add("cc-vmb-cell");
   }
+  // IP cell (td[6]) is a nested table of addresses (or a "guest agent" note when stopped). Extract the
+  // IPv4/IPv6 addresses and show each as its own pill; if there are none, leave the native note alone.
+  function vmIpCell(td) {
+    if (!td || td.classList.contains("cc-vmb-cell")) return;
+    var raw = (td.textContent || "");
+    var ips = raw.match(/(?:\d{1,3}(?:\.\d{1,3}){3}(?:\/\d+)?)|(?:[0-9a-f]{0,4}:[0-9a-f:]+(?:\/\d+)?)/gi);
+    if (!ips || !ips.length) return;                          // "Erfordert einen laufenden Gast-Agenten" -> keep native
+    var wrap = document.createElement("span"); wrap.className = "cc-vmb-ips";
+    ips.forEach(function (ip) { var p = document.createElement("span"); p.className = "cc-vmb"; p.textContent = ip; wrap.appendChild(p); });
+    // HIDE the native content (don't destroy it) so teardown can restore it without a reload
+    for (var c = td.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) c.style.display = "none"; }
+    td.appendChild(wrap); td.classList.add("cc-vmb-cell", "cc-vmb-ipcell");
+  }
   function enhanceCells() {
     try {
       var rows = document.querySelectorAll("#kvm_list tr.sortable");
@@ -153,6 +171,8 @@
         // native column order: 0 vm-name, 1 desc, 2 vCPU, 3 RAM, 4 disks, 5 graphics, 6 ip, 7 autostart
         if (tds[2]) vmCell(tds[2], "CPU");
         if (tds[3]) vmCell(tds[3], "RAM");
+        if (tds[5]) vmCell(tds[5], "");     // graphics (VNC:5900 Treiber:QXL) — one-line, value-only pill
+        if (tds[6]) vmIpCell(tds[6]);       // IP addresses -> one pill each
       }
     } catch (e) {}
   }
@@ -160,7 +180,13 @@
     try {
       var cells = document.querySelectorAll("#kvm_list td.cc-vmb-cell");
       for (var i = 0; i < cells.length; i++) {
-        var td = cells[i], b = td.querySelector(":scope > span.cc-vmb");
+        var td = cells[i];
+        if (td.classList.contains("cc-vmb-ipcell")) {         // IP cell: drop the pills, un-hide the native content
+          var ipw = td.querySelector(":scope > span.cc-vmb-ips"); if (ipw) td.removeChild(ipw);
+          for (var c = td.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) c.style.removeProperty("display"); }
+          td.classList.remove("cc-vmb-cell", "cc-vmb-ipcell"); continue;
+        }
+        var b = td.querySelector(":scope > span.cc-vmb");
         if (b) { var k = b.querySelector(".cc-vmb-k"); if (k) b.removeChild(k); while (b.firstChild) td.insertBefore(b.firstChild, b); td.removeChild(b); }
         td.classList.remove("cc-vmb-cell");
       }

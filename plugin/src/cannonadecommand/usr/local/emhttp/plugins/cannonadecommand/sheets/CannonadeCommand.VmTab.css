@@ -35,6 +35,17 @@ html.cc-vms-on #displaybox #kvm_list span.cc-vmb {
 html.cc-vms-on #displaybox #kvm_list span.cc-vmb .cc-vmb-k { opacity: .7; text-transform: uppercase; letter-spacing: .4px; }
 /* keep the vCPU link (a.vcpu-*) readable inside its badge */
 html.cc-vms-on #displaybox #kvm_list span.cc-vmb a { color: inherit !important; text-decoration: none; }
+/* IP column: one pill per address, stacked (vms.js extracts them into span.cc-vmb-ips) */
+html.cc-vms-on #displaybox #kvm_list .cc-vmb-ips { display: inline-flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+
+/* ═══ VM NAME -> a filled accent headline badge, like the Docker-tab container name ═══
+   The name is td.vm-name span.inner > a (keeps its onclick VM-info toggle). Sits above the state badge. */
+html.cc-vms-on #displaybox #kvm_list td.vm-name span.inner > a:first-child {
+  display: inline-block; background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+  border-radius: var(--cc-b-radius, 999px); padding: 3px 12px; margin-bottom: 4px;
+  font-weight: 700; font-size: 14px; text-decoration: none !important; line-height: 1.4;
+}
+html.cc-vms-on #displaybox #kvm_list td.vm-name span.inner > a:first-child:hover { filter: brightness(1.12); }
 
 /* ═══ autostart toggle -> CC accent ═══
    VMMachines.page turns input.autostart into a jQuery switchButton (verified: $('.autostart').

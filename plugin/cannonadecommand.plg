@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.20.1">
+  <!ENTITY version   "2.20.2">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,12 @@
 </ICON>
 
 <CHANGES>
+### 2.20.2
+1. VM-Tab weiter an den Docker-Tab angeglichen: der Status-Badge ist jetzt farbig (gruen = gestartet,
+   orange = pausiert, grau = gestoppt) statt immer grau -- er las vorher den uebersetzten Text und traf
+   "GESTARTET" nie. Der VM-Name ist jetzt ein gefuelltes Akzent-Badge wie der Container-Name im
+   Docker-Tab. Grafik und die IP-Adressen erscheinen jetzt ebenfalls als Badges (eine Pille je IP).
+
 ### 2.20.1
 1. VM-Tab: der komplette CC-Stil war weiterhin unsichtbar, weil das VM-Skript gar nicht lief. Unraids
    VM-Seite nutzt die Tab-Ansicht, und in diesem Modus wird ein eingebettetes Skript nicht ausgefuehrt.
@@ -630,7 +636,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>c20a1911c66a6a59720e098ca0bb2fe659410fcba283ff79127058a392b5c993</SHA256>
+  <SHA256>a1cea4caaa4255f2961298810ee782e0d37bef913b756cefecb33658751970ba</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
