@@ -31,7 +31,7 @@
   // cc.badgeshape is a GLOBAL key (one Badge-Form control for every area) -> read it
   // DIRECTLY, not via eff(): eff() would fall back to an UNSET ccsh.badgeshape when the
   // adopt toggle is off, so --cc-b-radius would flip between pages (see header.js).
-  function shape() { return ({ pill: "999px", rounded: "6px", square: "0px" })[g("cc.badgeshape", "pill")] || "999px"; }
+  function shape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[g("cc.badgeshape", "pill")] || "999px"; }
   var RB = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
   var RB_OFF = Math.floor(Math.random() * RB.length);
   // Rainbow is a GLOBAL mode: read cc.rainbow / cc.rbpal / cc.rainbowrot DIRECTLY (not the
@@ -62,11 +62,63 @@
   // below can be page-scoped; there is no plugin-internal markup in our selectors, so if the plugin is
   // absent the class simply never appears.
   function onStats() { return pn() === "/Stats"; }
+  // /Stats: SystemStats.page injects its control group (`$('.tabs').append(<span class="status">…)`) —
+  // two interval <select>s + a Reset button — INTO nav.tabs. The user wants it BELOW the graphs, not in
+  // the tab bar. CSS `order` can't move it out of nav.tabs, so we relocate the whole <span.status> to
+  // the end of #displaybox (after the graphs). It's moved as ONE unit, so the plugin's modeller()/
+  // resizer() onchange handlers (by id) and its own $('span.status').show()/.hide() (by class) keep
+  // working wherever it sits. Idempotent via data-cc-moved; re-homed to nav.tabs on teardown.
+  function moveStatsControls() {
+    try {
+      var box = document.getElementById("displaybox"); if (!box) return;
+      var st = box.querySelector("span.status"); if (!st) return;
+      if (st.getAttribute("data-cc-moved") === "1" && st.parentNode === box) return;   // already at the bottom
+      box.appendChild(st);                       // -> last child of #displaybox, under the graphs
+      st.setAttribute("data-cc-moved", "1");
+    } catch (e) {}
+  }
+  function statsControlsTeardown() {
+    try {
+      var st = document.querySelector("#displaybox > span.status[data-cc-moved]"); if (!st) return;
+      var tabs = document.querySelector("#displaybox nav.tabs");
+      if (tabs) tabs.appendChild(st);            // native home: SystemStats.page appended it to .tabs
+      st.removeAttribute("data-cc-moved");
+    } catch (e) {}
+  }
   // tiny i18n (same shape as docker.js): en fallback, de when the page lang is German.
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
   var T = { de: { browse: "Durchsuchen", protected: "Geschützt", unprotected: "Ungeschützt", protection: "Schutz" }, en: { browse: "Browse", protected: "Protected", unprotected: "Unprotected", protection: "Protection" } };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
+  // ── Browse (file manager): wrap the OWNER / PERMISSION / SIZE cell values in hugging CC badges (user:
+  // "badges in alle Spalten, der Dateimanager auf allen Ebenen im CC-Style"). SAFETY (this page deletes
+  // and moves): we touch ONLY the value cells owner_N/perm_N/the size cell — NEVER the check glyph
+  // (td:first-child), the name cell, the Location cell (its icon colour encodes encryption state) or the
+  // actions cell. We wrap the cell's existing TEXT NODE in a span; we do not add/remove columns, change
+  // any cell's display, or alter tablesorter's data- attributes (sort still reads the td, not the span).
+  // Idempotent via .cc-bcell; the tbody is AJAX-replaced, so this re-runs from the observer.
+  function ccBrowseCell(td, cls) {
+    if (!td || td.classList.contains("cc-bcell")) return;
+    var txt = (td.textContent || "").trim(); if (!txt) return;
+    var b = el("span", "cc-fmb " + (cls || ""), txt);   // cc-fmb = file-manager cell badge (distinct from the Shares-list .cc-b-browse link)
+    td.textContent = ""; td.appendChild(b); td.classList.add("cc-bcell");
+  }
+  function enhanceBrowse() {
+    try {
+      if (!onBrowse()) return;
+      var rows = document.querySelectorAll("#displaybox table.indexer tbody:not(.tablesorter-infoOnly) tr");
+      for (var i = 0; i < rows.length; i++) {
+        var tr = rows[i];
+        ccBrowseCell(tr.querySelector('td[id^="owner_"]'), "cc-b-owner");
+        ccBrowseCell(tr.querySelector('td[id^="perm_"]'), "cc-b-perm");
+        // size = the td carrying a numeric data="" that is NOT the timestamp/name/loc; it sits right
+        // after perm_N. Guard by "has a data attr and a plain text value, no child element".
+        var perm = tr.querySelector('td[id^="perm_"]');
+        var size = perm && perm.nextElementSibling;
+        if (size && size.hasAttribute("data") && !size.querySelector("*") && !size.classList.contains("loc")) ccBrowseCell(size, "cc-b-size");
+      }
+    } catch (e) {}
+  }
   // rainbow: paint the ACTIVE tab button a rotated palette colour; accent mode = clear
   // our overrides so the sheet's --cc-accent shows through. Inline style writes are
   // attribute changes, so they never re-trigger the childList observer.
@@ -548,8 +600,12 @@
       // the whole teardown. NB the page runs DESTRUCTIVE jobs (delete/move) — see the cc-on-browse block
       // in Shares.css for the rules on why nothing there touches rows, columns or the check glyphs.
       root.classList.toggle("cc-on-browse", on && onBrowse());
-      // /Stats: CSS-only, like Browse — the class toggle IS the teardown.
-      root.classList.toggle("cc-on-stats", on && onStats());
+      if (on && onBrowse()) enhanceBrowse();   // wrap the owner/perm/size cell values in CC badges
+      // /Stats: the class drives the CSS look; moveStatsControls() relocates the injected control group
+      // below the graphs (a real DOM move, so it has its own teardown).
+      var statsOn = on && onStats();
+      root.classList.toggle("cc-on-stats", statsOn);
+      if (statsOn) moveStatsControls(); else statsControlsTeardown();
       if (!on) {
         // area disabled at runtime: removing the class reverts every CSS rule (cards collapse back to
         // tab-switching), but the JS-injected card headers would linger as stray unstyled divs -> pull
@@ -591,6 +647,8 @@
       paintRows(); // per-row rainbow AFTER the badges exist (re-applies when rbOn toggles via storage)
       enhanceShareDetail(); // inject the share-name title on /Shares/Share
       paintCards();         // rainbow (or accent) on the detail-page card title badges
+      if (onStats()) moveStatsControls(); // /Stats: keep the control group relocated below the graphs (span.status can arrive late)
+      if (onBrowse()) enhanceBrowse();    // Browse: (re-)badge the owner/perm/size cells (tbody is AJAX-replaced on navigation)
     } catch (e) {}
   }
   // Observe the content container ONLY (never body). apply()'s follow-ups make no
@@ -602,7 +660,7 @@
       if (!host) return;
       mo = new MutationObserver(function () {
         if (moPending) return; moPending = true;
-        setTimeout(function () { moPending = false; if (g("cc.theming", "1") === "0") return; hideRedundantTabs(); paintTabs(); enhanceShares(); paintRows(); enhanceShareDetail(); paintCards(); }, 150); // MASTER THEMING off: observer must not re-inject (apply()'s teardown already cleaned up)
+        setTimeout(function () { moPending = false; if (g("cc.theming", "1") === "0") return; hideRedundantTabs(); paintTabs(); enhanceShares(); paintRows(); enhanceShareDetail(); paintCards(); if (g("cc.enable.shares", "0") !== "0" && onStats()) moveStatsControls(); if (g("cc.enable.shares", "0") !== "0" && onBrowse()) enhanceBrowse(); }, 150); // MASTER THEMING off: observer must not re-inject (apply()'s teardown already cleaned up)
       });
       mo.observe(host, { childList: true, subtree: true });
     } catch (e) {}

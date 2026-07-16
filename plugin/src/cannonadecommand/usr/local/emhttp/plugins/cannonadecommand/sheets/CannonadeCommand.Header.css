@@ -19,11 +19,11 @@
 
 :root {
   /* CC badge size system, md tier — MIRRORED from styles/docker.css (keep in sync).
-     The menu-bar tab badges, the array-usage meter and the search field share this
-     ONE height (--cc-md-h) so the whole bar lines up and the tabs match the plugin-page
-     tabs; the right-side icon boxes use the smaller --cc-md-ibox so they read as light
-     icon chips, not heavy accent squares, while staying vertically centred in the same bar. */
-  --cc-md-fs: 13px; --cc-md-h: 30px; --cc-md-pad: 0 20px; --cc-md-icon: 14px; --cc-md-ibox: 26px;
+     The menu-bar tab badges, the array-usage meter, the search field AND the right-side icon
+     boxes now ALL share ONE height (--cc-md-h) so the three groups line up at exactly the same
+     height across the whole bar (user: "die drei Gruppen auf dieselbe Höhe bringen"). The icon
+     boxes were 26px (deliberately smaller); they are now --cc-md-h too, i.e. square 30×30. */
+  --cc-md-fs: 13px; --cc-md-h: 30px; --cc-md-pad: 0 20px; --cc-md-icon: 14px; --cc-md-ibox: var(--cc-md-h, 30px);
 }
 
 /* ═══ left page tabs -> badges ═══ */
@@ -144,3 +144,7 @@ html.cc-header-on #menu .usage-bar > span {
   html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-tile:not(.right) { min-width: 0 !important; overflow-x: auto !important; }
   html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-tile.right { min-width: 0 !important; flex-wrap: nowrap !important; }
 }
+
+/* Badge-Form "circle" (v2.18.0): round the SQUARE utility icon boxes to full circles. Only square/
+   near-square objects get this — rectangular text pills stay capsules (--cc-b-radius 999px). */
+html.cc-shape-circle.cc-header-on #menu .nav-tile.right .nav-item.util > a { border-radius: 50% !important; }

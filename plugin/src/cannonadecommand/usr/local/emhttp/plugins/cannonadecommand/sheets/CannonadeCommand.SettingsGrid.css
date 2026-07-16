@@ -56,8 +56,11 @@ html.cc-settingsgrid-on #displaybox .Panel > a > span > i.PanelIcon {
   font-size: var(--cc-sg-glyph, 32px) !important; line-height: 1 !important;
   color: var(--cc-iconbg-text, var(--cc-accent-text, #fff)) !important; margin: 0 !important; padding: 0 !important;
 }
-/* a raster glyph (img.PanelImg) can't be tinted -> just scale it to the badge */
-html.cc-settingsgrid-on #displaybox .Panel > a > span > img.PanelImg {
+/* a raster logo can't be tinted -> just scale it to the badge. Covers BOTH img.PanelImg AND img.icon:
+   a category whose Tag= is a .png renders <img class="icon"> (PageBuilder.php:97), and paintGrid used to
+   skip it, so a PNG-logo tile in Tools/Settings kept its full colour while glyph tiles went monochrome
+   (user: "im Werkzeugtab ist im untersten Abschnitt das Icon farbig, angleichen"). */
+html.cc-settingsgrid-on #displaybox .Panel > a > span > img {
   width: var(--cc-sg-glyph, 32px) !important; height: var(--cc-sg-glyph, 32px) !important;
   max-width: none !important; object-fit: contain !important; margin: 0 !important;
 }
@@ -150,3 +153,6 @@ html.cc-settingsgrid-heads-on.cc-settingsgrid-headsneutral #displaybox div.title
   color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
   filter: none !important;
 }
+
+/* Badge-Form "circle": the square category-tile badges become circles. */
+html.cc-shape-circle.cc-settingsgrid-on #displaybox .Panel > a > span { border-radius: 50% !important; }

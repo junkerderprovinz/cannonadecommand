@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.17.0">
+  <!ENTITY version   "2.18.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,20 @@
 </ICON>
 
 <CHANGES>
+### 2.18.0
+1. Neue Badge-Form "Kreise": in CC Settings -> Allgemein waehlbar. Rundet nur quadratische Objekte
+   (Kachel-Icons, Logo-Badges, Menue-Icons) zu Kreisen; rechteckige Text-Badges bleiben Kapseln.
+2. Werkzeuge- und Einstellungen-Tab: ein Kachel-Icon, das ein Bild-Logo statt eines Schrift-Symbols
+   ist, wird jetzt genauso eingefaerbt wie die anderen (vorher behielt es seine Originalfarbe).
+3. Hauptmenueleiste: die Tab-Pillen, die Array-Fuellstandsanzeige und die Icons rechts sind jetzt alle
+   gleich hoch.
+4. Stats-Tab: das Steuermenue (Intervall-Auswahl + Zuruecksetzen) im System-Stats-Untertab sitzt jetzt
+   unter den Graphen statt in der Tab-Leiste, und im CC-Stil.
+5. Docker-Tab: Netzwerk, Container-IP, LAN-IP und Ports lassen sich jetzt EINZELN pro Ansicht (einfach
+   / erweitert) ein- und ausblenden -- vorher waren sie eine gemeinsame Spalte.
+6. Durchsuchen (Dateimanager): Eigentuemer, Berechtigung und Groesse werden jetzt als CC-Badges
+   angezeigt. Die Auswahl-, Namens- und Speicherort-Spalten bleiben unangetastet.
+
 ### 2.17.0
 1. CC Settings, Bereich "Einstellungen und Werkzeuge": die Logo-Vorschau war leer. Die Kacheln dort
    nutzen Schrift-Symbole (keine Bild-Logos), daher zeigt die Vorschau jetzt Beispiel-Symbole
@@ -592,7 +606,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>1d12f3809f0ef8991d3b26ce36531c06530f1268f004fa83c7da21f221a0fbb5</SHA256>
+  <SHA256>bad661cbb487a89d45b49bab3eb0c2484ecb2b83cb7420a376978276ed156b40</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

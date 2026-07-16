@@ -46,7 +46,7 @@
   // cc.badgeshape is SHARED across all areas; eff() returns it while the adopt toggle is on
   // cc.badgeshape is a GLOBAL key -> read it DIRECTLY, not via eff() (see header.js): an
   // adopt-aware read would fall back to an unset ccs.badgeshape and flip the shape per page.
-  function shape() { return ({ pill: "999px", rounded: "6px", square: "0px" })[g("cc.badgeshape", "pill")] || "999px"; }
+  function shape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[g("cc.badgeshape", "pill")] || "999px"; }
   var RB = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
   var RB_OFF = Math.floor(Math.random() * RB.length);
   // Rainbow is a GLOBAL mode: read cc.rainbow / cc.rbpal / cc.rainbowrot DIRECTLY (not the
@@ -73,7 +73,7 @@
       var spans = document.querySelectorAll("#displaybox .Panel > a > span");
       var accBg = badgeBg();
       for (var i = 0; i < spans.length; i++) {
-        var s = spans[i], gl = s.querySelector("i.PanelIcon"), im = s.querySelector("img.PanelImg");
+        var s = spans[i], gl = s.querySelector("i.PanelIcon"), im = s.querySelector("img");
         if (!rb) {
           s.style.removeProperty("background"); s.style.removeProperty("--cc-rb-c"); s.style.removeProperty("--cc-rb-ct");
           if (gl) gl.style.removeProperty("color");      // glyph colour comes from CSS --cc-iconbg-text
@@ -168,7 +168,7 @@
       var ic = g("ccs.iconcolor", ""), f = ensureTintFilter() ? "url(#cc-sg-icon-tint)" : "";
       var spans = document.querySelectorAll("#displaybox .Panel > a > span");
       for (var i = 0; i < spans.length; i++) {
-        var s = spans[i], gl = s.querySelector("i.PanelIcon"), im = s.querySelector("img.PanelImg");
+        var s = spans[i], gl = s.querySelector("i.PanelIcon"), im = s.querySelector("img");
         s.style.removeProperty("background");
         if (gl) gl.style.setProperty("color", ic, "important");
         if (im) im.style.filter = f;
@@ -181,7 +181,7 @@
     try {
       var spans = document.querySelectorAll("#displaybox .Panel > a > span");
       for (var i = 0; i < spans.length; i++) {
-        var s = spans[i], gl = s.querySelector("i.PanelIcon"), im = s.querySelector("img.PanelImg");
+        var s = spans[i], gl = s.querySelector("i.PanelIcon"), im = s.querySelector("img");
         s.style.removeProperty("background");
         if (gl) gl.style.removeProperty("color");
         if (im) im.style.filter = "";

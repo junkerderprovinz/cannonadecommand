@@ -24,7 +24,7 @@
   // DIRECTLY, not via eff(): eff() would fall back to an UNSET cch.badgeshape when the
   // header's adopt toggle is off, so --cc-b-radius (and thus the menu-bar badge shape)
   // would flip between pages depending on which script set it last.
-  function shape() { return ({ pill: "999px", rounded: "6px", square: "0px" })[g("cc.badgeshape", "pill")] || "999px"; }
+  function shape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[g("cc.badgeshape", "pill")] || "999px"; }
   var RB = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
   var RB_OFF = Math.floor(Math.random() * RB.length);
   // Rainbow is a GLOBAL mode: read cc.rainbow / cc.rbpal / cc.rainbowrot DIRECTLY (not the
@@ -113,6 +113,11 @@
       // purely presentational. The storage listener re-runs apply(), so a live toggle reverts.
       var on = g("cc.enable.header", "0") !== "0" && g("cc.theming", "1") !== "0";
       root.classList.toggle("cc-header-on", on);
+      // GLOBAL Badge-Form "circle": header.js runs on every page, so it owns the one global class the
+      // per-object 50%-radius overrides in every sheet key off. Set it UNCONDITIONALLY (badge shape is
+      // global, independent of whether the header area itself is on) — it only rounds SQUARE badges, and
+      // if no area is enabled there are no badges to round, so it's harmless when everything is off.
+      root.classList.toggle("cc-shape-circle", g("cc.badgeshape", "pill") === "circle");
       // paintNav() with cc-header-on now removed => rb=false => it removeProperty's every
       // lingering rainbow inline colour, so a live theming-OFF (even with Rainbow on) fully
       // reverts the menu bar instead of leaving the coloured tabs behind.

@@ -743,6 +743,19 @@ html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"]:disable
   opacity: .55 !important; filter: none !important; cursor: not-allowed !important;
 }
 
+/* ── OWNER / PERMISSION / SIZE cell values -> hugging CC badges (user: "Badges in alle Spalten").
+   shares.js wraps each value's text node in span.cc-fmb (only these three value cells — never the
+   check glyph, name, Location icon or the actions cell; see enhanceBrowse). Quiet grey pills so the
+   listing stays readable at scale; the permission pill uses a monospace font so drwxr-xr-x lines up. */
+html.cc-shares-on.cc-on-browse #displaybox table.indexer span.cc-fmb {
+  display: inline-flex; align-items: center; border-radius: var(--cc-b-radius, 999px);
+  background: rgba(128, 128, 128, .16); color: inherit;
+  padding: 2px 10px; font-size: var(--cc-sm-fs, 11px); font-weight: 600; line-height: 1.5; white-space: nowrap;
+}
+html.cc-shares-on.cc-on-browse #displaybox table.indexer span.cc-fmb.cc-b-perm { font-family: ui-monospace, "Bitstream Vera Sans Mono", monospace; letter-spacing: .3px; }
+html.cc-shares-on.cc-on-browse #displaybox table.indexer span.cc-fmb.cc-b-owner { background: color-mix(in srgb, var(--cc-shr-accent, #2f6feb) 20%, transparent); }
+html.cc-shares-on.cc-on-browse #displaybox table.indexer td.cc-bcell { padding-top: 4px; padding-bottom: 4px; }
+
 /* RAINBOW: Browse is deliberately rainbow-AGNOSTIC (accent only), like the semantic status pill and
    the card-title badges. Files/folders have no active/idle semantics, and mapping rbmode="active"
    onto SELECTION would make a hover colour indistinguishable from a selected colour on a page with a
@@ -756,29 +769,33 @@ html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"]:disable
    bar this sheet already restyles. Nothing below names a plugin-internal class, so if the plugin is
    absent (or its markup changes) these rules simply match nothing.
 
-   THE BUG (user: the tabs are pushed down when the System Stats sub-tab shows its settings):
    SystemStats.page does `$('.tabs').append("<span class='status'>…</span>")` — it injects its control
-   group (the two interval <select>s + Reset) as a SECOND CHILD of nav.tabs, alongside .tabs-container.
-   Native default-base.css:
-       .tabs           { display:flex; align-items:center; justify-content:space-between; gap:.5rem }
-       .tabs-container { display:flex; ...; width:100% }
-       span.status     { display:inline-block; margin-left:auto }
-   With no wrapping, the full-width .tabs-container and the taller control group are forced onto ONE
-   line: the container shrinks and `align-items:center` re-centres the short tab buttons against the
-   taller sibling — i.e. the tabs visibly drop. Giving the control group its own line removes the
-   height conflict entirely, so the tabs sit where they do on every other page.
+   group (the two interval <select>s + Reset) INTO nav.tabs, which shoved the short tab buttons down.
+   v2.18.0 (user: move the control group BELOW the graphs, in CC style): shares.js moveStatsControls()
+   relocates the whole <span.status> to the END of #displaybox (after the graphs), so it can no longer
+   affect the tab bar at all, and we dress it as a quiet CC control strip there.
 
    NEVER set `display` on span.status: SystemStats.page shows/hides it with jQuery .show()/.hide(),
    which writes an INLINE display. A `display:…!important` here would beat .hide() and leak the
-   controls onto the Disk Stats tab. `order`/`flex-basis` are safe — they only apply while it IS a
-   flex item, i.e. while it is visible.
+   controls onto the Disk Stats tab. We style the RELOCATED strip's children (selects/button), never
+   the container's display.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
-html.cc-shares-on.cc-on-stats #displaybox nav.tabs {
-  flex-wrap: wrap;           /* let the appended control group wrap onto its own line */
-  align-items: flex-start;   /* belt-and-braces: a taller sibling must never re-centre the tabs downward */
-  row-gap: 10px;
+/* the relocated control strip, now a direct child of #displaybox (moved out of nav.tabs by JS) */
+html.cc-shares-on.cc-on-stats #displaybox > span.status {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  margin: 22px 0 0 !important; padding-top: 16px; border-top: 1px solid rgba(128, 128, 128, .18);
 }
-html.cc-shares-on.cc-on-stats #displaybox nav.tabs > span.status {
-  order: 99;                 /* always AFTER .tabs-container, whatever order the plugin appended in */
-  flex: 0 0 auto;            /* native margin-left:auto keeps it right-aligned on its own row */
+/* the two interval selects -> CC filled boxes (flatten the native underline) */
+html.cc-shares-on.cc-on-stats #displaybox > span.status select {
+  background: rgba(128, 128, 128, .12) !important; border: none !important; box-shadow: none !important;
+  border-radius: 6px !important; padding: 6px 10px !important; min-height: var(--cc-md-h, 30px); box-sizing: border-box;
 }
+/* the Reset button -> a neutral CC pill (it's an input[type=button]) */
+html.cc-shares-on.cc-on-stats #displaybox > span.status input[type="button"] {
+  background: #4a4a4a !important; color: #f0f0f0 !important; border: none !important; box-shadow: none !important;
+  height: var(--cc-md-h, 30px) !important; padding: 0 16px !important; min-width: 0 !important; box-sizing: border-box !important;
+  border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer;
+  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
+  transition: filter .12s;
+}
+html.cc-shares-on.cc-on-stats #displaybox > span.status input[type="button"]:hover { filter: brightness(1.14); }

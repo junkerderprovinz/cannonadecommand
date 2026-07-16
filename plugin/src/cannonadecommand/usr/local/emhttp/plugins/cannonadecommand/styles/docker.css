@@ -82,10 +82,12 @@
 .cc-enh.cc-dens-airy .cc-rowbadges { gap: 8px; margin-top: 6px; }
 .cc-enh.cc-dens-airy .cc-namemeta, .cc-enh.cc-dens-airy .cc-resgroup, .cc-enh.cc-dens-airy .cc-netgroup { gap: 8px; }
 
-/* consolidated network column: hide the separate native IP / Port / LAN columns */
-.cc-enh.cc-c-net thead tr:last-child th:nth-child(5), .cc-enh.cc-c-net #docker_list tr.sortable > td:nth-child(5),
-.cc-enh.cc-c-net thead tr:last-child th:nth-child(6), .cc-enh.cc-c-net #docker_list tr.sortable > td:nth-child(6),
-.cc-enh.cc-c-net thead tr:last-child th:nth-child(7), .cc-enh.cc-c-net #docker_list tr.sortable > td:nth-child(7) { display: none !important; }
+/* consolidated network column: hide each separate native cell (IP=5 / Port=6 / LAN=7) only when ITS
+   own CC badge column is on — net/ip/lan/port are now independent columns (user split), so a native
+   cell must survive when the user turned its badge OFF for the current view (else the datum vanishes). */
+.cc-enh.cc-c-ip thead tr:last-child th:nth-child(5), .cc-enh.cc-c-ip #docker_list tr.sortable > td:nth-child(5),
+.cc-enh.cc-c-port thead tr:last-child th:nth-child(6), .cc-enh.cc-c-port #docker_list tr.sortable > td:nth-child(6),
+.cc-enh.cc-c-lan thead tr:last-child th:nth-child(7), .cc-enh.cc-c-lan #docker_list tr.sortable > td:nth-child(7) { display: none !important; }
 /* NARROW version + network columns → more room for volumes (actions col = position 2) */
 .cc-enh thead tr:last-child th:nth-child(3) { width: 165px; }
 .cc-enh #docker_list tr.sortable > td:nth-child(3) { max-width: 165px; }
@@ -836,3 +838,8 @@ html .cc-enh #docker_list .switch-button-background, html .ToggleViewMode .switc
 html .cc-enh #docker_list .switch-button-background .switch-button-button,
 html .ToggleViewMode .switch-button-background .switch-button-button,
 html div.js-actions input[type=button] { border-radius: var(--cc-b-radius, 999px) !important; }
+
+/* Badge-Form "circle" (v2.18.0): round the square container/plugin logo badges to full circles.
+   Rectangular data/tab pills stay capsules via --cc-b-radius (999px in circle mode). */
+html.cc-shape-circle .cc-enh.cc-docker-iconbg #docker_list tr.sortable td.ct-name .outer > span.hand { border-radius: 50% !important; }
+html.cc-shape-circle.cc-plugins-iconbg .cc-plugico { border-radius: 50% !important; }

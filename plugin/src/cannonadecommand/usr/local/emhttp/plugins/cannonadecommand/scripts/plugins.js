@@ -66,7 +66,7 @@
     }
     return "url(#" + filtId + ")";
   }
-  function shapeRadius() { return ({ pill: "999px", rounded: "6px", square: "0px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
+  function shapeRadius() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
   function pill(node, bg, tx) {
     node.style.setProperty("font-size", "12px", "important"); // same height as the badges
     node.style.setProperty("vertical-align", "middle", "important");

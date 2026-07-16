@@ -15,7 +15,10 @@
     { key: "update", label: T("Update-Status", "Update status") },
     { key: "force", label: T("Update erzwingen", "Force update") },
     { key: "version", label: T("Image-Tag (latest)", "Image tag (latest)") },
-    { key: "net", label: T("Netzwerk / IP / Port", "Network / IP / Port") },
+    { key: "net", label: T("Netzwerk", "Network") },
+    { key: "ip", label: T("Container-IP", "Container IP") },
+    { key: "lan", label: T("LAN-IP", "LAN IP") },
+    { key: "port", label: T("Ports", "Ports") },
     { key: "res", label: T("CPU / RAM", "CPU / RAM") },
     { key: "id", label: T("Container-ID", "Container ID") },
     { key: "von", label: T("Von / Quelle", "From / source") },
@@ -25,9 +28,10 @@
   var PRESETS = ["#2f6feb", "#1f9d55", "#ff8c2f", "#8b5cf6", "#e0912a", "#d9433f", "#0ea5a4", "#e05299", "#525252"];
   // rainbow-mode colour per column (same order as COLS): the matrix checkboxes take
   // these when rainbow mode is on, so the settings echo the Docker-tab badge colours.
-  var RB = ["#1f9d55", "#2f6feb", "#6b7280", "#8b5cf6", "#d9433f", "#0ea5a4", "#e05299", "#0891b2", "#6366f1"];
+  // net/ip/lan/port share a network-ish family (net kept its old purple; ip/lan/port added after it).
+  var RB = ["#1f9d55", "#2f6feb", "#6b7280", "#8b5cf6", "#7c6df0", "#5b8def", "#4aa3c7", "#d9433f", "#0ea5a4", "#e05299", "#0891b2", "#6366f1"];
 
-  function defColview() { var adv = { s: false, a: true }, both = { s: true, a: true }; return { update: both, force: adv, version: adv, net: both, res: both, id: adv, von: adv, vol: adv, plan: both }; }
+  function defColview() { var adv = { s: false, a: true }, both = { s: true, a: true }; return { update: both, force: adv, version: adv, net: both, ip: both, lan: both, port: both, res: both, id: adv, von: adv, vol: adv, plan: both }; }
   function get(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function del(k) { try { localStorage.removeItem(k); } catch (e) {} }
@@ -318,7 +322,7 @@
     c1.appendChild(srow);
     // GLOBAL badge SHAPE (Form) — one control for every area, exactly like the global colour above
     // (writes the shared cc.badgeshape). The per-area cards no longer repeat it.
-    c1.appendChild(segRow(T("Badge-Form", "Badge shape"), [["pill", "Pills"], ["rounded", T("abgerundet", "rounded")], ["square", T("eckig", "square")]], get("cc.badgeshape", "pill"), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); }));
+    c1.appendChild(segRow(T("Badge-Form", "Badge shape"), [["pill", "Pills"], ["rounded", T("abgerundet", "rounded")], ["square", T("eckig", "square")], ["circle", T("Kreise", "Circles")]], get("cc.badgeshape", "pill"), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); }));
     // rainbow toggle: label + switch adjacent (no parenthetical, no far-right spacer)
     var rr = el("div", "cc-set-row cc-set-inline");
     rr.appendChild(el("span", null, T("Regenbogen-Modus", "Rainbow mode")));
@@ -476,7 +480,7 @@
     var c4 = card(T("Ansicht", "View"), null);
     c4.appendChild(segRow(T("Standard-Ansicht", "Default view"), [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")]], view, function (v) { view = v; set("cc.view", v); }));
     c4.appendChild(segRow(T("Zeilenhöhe", "Row density"), [["compact", T("kompakt", "compact")], ["normal", "normal"], ["airy", T("luftig", "airy")]], density, function (v) { density = v; set("cc.density", v); }));
-    function applyShape() { var m9 = { pill: "999px", rounded: "6px", square: "0px" }; var r9 = m9[get("cc.badgeshape", "pill")] || "999px"; root.style.setProperty("--cc-b-radius", r9); document.documentElement.style.setProperty("--cc-b-radius", r9); }
+    function applyShape() { var m9 = { pill: "999px", rounded: "6px", square: "0px", circle: "999px" }; var sh9 = get("cc.badgeshape", "pill"); var r9 = m9[sh9] || "999px"; root.style.setProperty("--cc-b-radius", r9); document.documentElement.style.setProperty("--cc-b-radius", r9); document.documentElement.classList.toggle("cc-shape-circle", sh9 === "circle"); }
     wrap.appendChild(c4);
     // Badge-Form (shape) is a single GLOBAL control in the Allgemein "Badges" card now — not per
     // area — so the Docker tab has no inline Badge-Form card either. Keep the initial applyShape()
@@ -673,9 +677,11 @@
           if (ibg) {
             var gbg9 = /^#[0-9a-f]{6}$/i.test(icol) ? icol : acc;
             gi9.style.background = gbg9; gi9.style.color = idealText(gbg9);
-            // same square-badge radius family as the real tiles (SettingsGrid.css min(--cc-b-radius,16px))
-            var brm9 = { pill: "999px", rounded: "6px", square: "0px" }[get("cc.badgeshape", "pill")] || "999px";
-            gi9.style.borderRadius = "min(" + brm9 + ", 16px)"; gi9.style.padding = "";
+            // same square-badge radius family as the real tiles: rounded-square, except CIRCLE mode
+            // which makes the square glyph a full circle (the 16px cap must be bypassed there).
+            var sh9b = get("cc.badgeshape", "pill");
+            var brm9 = { pill: "999px", rounded: "6px", square: "0px", circle: "999px" }[sh9b] || "999px";
+            gi9.style.borderRadius = sh9b === "circle" ? "50%" : "min(" + brm9 + ", 16px)"; gi9.style.padding = "";
           } else if (/^#[0-9a-f]{6}$/i.test(icol)) {
             gi9.style.background = "none"; gi9.style.color = icol; gi9.style.borderRadius = "";
           } else {

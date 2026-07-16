@@ -398,7 +398,10 @@
     { key: "update", label: { de: "Update-Status", en: "Update status" } },
     { key: "force", label: { de: "Update erzwingen", en: "Force update" } },
     { key: "version", label: { de: "Image-Tag", en: "Image tag" } },
-    { key: "net", label: { de: "Netzwerk / IP / Port", en: "Network / IP / Port" } },
+    { key: "net", label: { de: "Netzwerk", en: "Network" } },
+    { key: "ip", label: { de: "Container-IP", en: "Container IP" } },
+    { key: "lan", label: { de: "LAN-IP", en: "LAN IP" } },
+    { key: "port", label: { de: "Ports", en: "Ports" } },
     { key: "res", label: { de: "CPU / RAM", en: "CPU / RAM" } },
     { key: "id", label: { de: "Container-ID", en: "Container ID" } },
     { key: "von", label: { de: "Von / Quelle", en: "From / source" } },
@@ -412,7 +415,9 @@
     var adv = { s: false, a: true }, both = { s: true, a: true };
     // res (CPU/RAM) defaults ON in both views — it is a headline feature, and the
     // CSS force-shows the native resource column even in Simple view.
-    return { update: both, force: adv, version: adv, net: both, res: both, id: adv, von: adv, vol: adv, plan: both };
+    // net/ip/lan/port were ONE "net" column; now split so each can be set per view (user request).
+    // Defaults keep the old visible-everywhere behaviour (all `both`); the user narrows them per field.
+    return { update: both, force: adv, version: adv, net: both, ip: both, lan: both, port: both, res: both, id: adv, von: adv, vol: adv, plan: both };
   }
   function loadColview() {
     try { var j = JSON.parse(localStorage.getItem(COLS_KEY) || "null"); if (j && typeof j === "object") { var d = defaultColview(); Object.keys(d).forEach(function (k) { if (j[k]) d[k] = { s: !!j[k].s, a: !!j[k].a }; }); return d; } } catch (e) {}
@@ -550,7 +555,7 @@
     try {
       var root = document.documentElement.style;
       var accent = effc("accent"); if (accent) { root.setProperty("--cc-accent", accent); root.setProperty("--cc-accent-text", idealText(accent)); }
-      root.setProperty("--cc-b-radius", ({ pill: "999px", rounded: "6px", square: "0px" })[localStorage.getItem("cc.badgeshape") || "pill"] || "999px");
+      root.setProperty("--cc-b-radius", ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[localStorage.getItem("cc.badgeshape") || "pill"] || "999px");
       var dens = localStorage.getItem("cc.density"); root.setProperty("--cc-density", { compact: "5px", normal: "9px", airy: "14px" }[dens] || "9px");
       // Colour for ShipLog's "update all" button (which we restyle to match our badges,
       // in the toggle row). documentElement so it reaches .ToggleViewMode, which lives
@@ -761,8 +766,10 @@
       }
 
       // ── NETWORK group (col 3): consolidate Netzwerk / Container IP / LAN IP / Port ──
-      // Decorative info badges — theming only; native network cell stays when off.
-      if (themingOn() && colOn("net")) {
+      // Decorative info badges — theming only; native network cell stays when off. Network / Container-IP
+      // / LAN-IP / Port are now FOUR independent columns (user: set each one's simple/advanced visibility
+      // separately), so each badge is gated on its OWN colOn() rather than one shared "net" toggle.
+      if (themingOn() && (colOn("net") || colOn("ip") || colOn("lan") || colOn("port"))) {
         var c3 = tr.querySelector(":scope > td:nth-child(4)"); // +1: actions column
         if (c3) {
           var netTxt = readmoreText(tr, 4), ipTxt = readmoreText(tr, 5), portTxt = readmoreText(tr, 6), lanTxt = readmoreText(tr, 7); // +1: actions column
@@ -775,11 +782,11 @@
           // for real host-interface nets — a custom docker bridge IP is NOT LAN-reachable.
           if (!lanTxt && c && c.ip && isMacvlan(c)) lanTxt = c.ip;
           var g = el("div", "cc-rowbadges cc-netgroup"); g.setAttribute(MARK, "1");
-          if (netTxt) { g.appendChild(badgeInfo("Netzwerk", netTxt, "net")); } // no trailing dot (user call)
-          if (ipTxt) g.appendChild(badgeInfo("Container IP", ipTxt, "ip"));
-          if (lanTxt) g.appendChild(badgeInfo("LAN IP", lanTxt, "lan"));
-          if (portTxt) g.appendChild(badgeInfo("Port", portTxt, "port"));
-          var nrm = c3.querySelector("span.docker_readmore"); if (nrm) nrm.classList.add("cc-hidden");
+          if (netTxt && colOn("net")) { g.appendChild(badgeInfo("Netzwerk", netTxt, "net")); } // no trailing dot (user call)
+          if (ipTxt && colOn("ip")) g.appendChild(badgeInfo("Container IP", ipTxt, "ip"));
+          if (lanTxt && colOn("lan")) g.appendChild(badgeInfo("LAN IP", lanTxt, "lan"));
+          if (portTxt && colOn("port")) g.appendChild(badgeInfo("Port", portTxt, "port"));
+          var nrm = c3.querySelector("span.docker_readmore"); if (nrm && colOn("net")) nrm.classList.add("cc-hidden"); // keep the native network name visible if only its badge is OFF
           if (g.children.length) c3.appendChild(g);
         }
       }

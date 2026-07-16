@@ -91,7 +91,7 @@
     }
     return "url(#" + filtId + ")";
   }
-  function ccShape() { return ({ pill: "999px", rounded: "6px", square: "0px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
+  function ccShape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
   function enhanceRows() {
     try {
       var a = ccAccent(), rad = ccShape(), root = document.documentElement.style;
@@ -151,7 +151,7 @@
         // With the badge on, the ink is the accent's ideal text colour (b/w contrast).
         else { n.style.setProperty("color", ibgOn ? ccIdeal(ibgAcc) : (c || ""), "important"); n.style.filter = ibgMono || f; }
         // Wrapper span becomes the accent-filled badge box (or reverts when off).
-        if (ibgOn) { var w = n.parentElement; w.style.setProperty("background", ibgAcc, "important"); w.style.setProperty("border-radius", "min(var(--cc-b-radius,14px),16px)", "important"); w.style.setProperty("display", "inline-flex", "important"); w.style.setProperty("align-items", "center", "important"); w.style.setProperty("justify-content", "center", "important"); w.style.setProperty("box-sizing", "border-box", "important"); w.style.setProperty("width", "56px", "important"); w.style.setProperty("height", "56px", "important"); w.style.setProperty("padding", "8px", "important"); }
+        if (ibgOn) { var w = n.parentElement; var vrad = ls("cc.badgeshape") === "circle" ? "50%" : "min(var(--cc-b-radius,14px),16px)"; w.style.setProperty("background", ibgAcc, "important"); w.style.setProperty("border-radius", vrad, "important"); w.style.setProperty("display", "inline-flex", "important"); w.style.setProperty("align-items", "center", "important"); w.style.setProperty("justify-content", "center", "important"); w.style.setProperty("box-sizing", "border-box", "important"); w.style.setProperty("width", "56px", "important"); w.style.setProperty("height", "56px", "important"); w.style.setProperty("padding", "8px", "important"); }
         else { var w2 = n.parentElement; w2.style.removeProperty("background"); w2.style.removeProperty("border-radius"); w2.style.removeProperty("width"); w2.style.removeProperty("height"); w2.style.removeProperty("padding"); w2.style.removeProperty("display"); w2.style.removeProperty("align-items"); w2.style.removeProperty("justify-content"); w2.style.removeProperty("box-sizing"); }
       }
     } catch (e) {}
