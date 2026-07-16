@@ -148,3 +148,9 @@ html.cc-header-on #menu .usage-bar > span {
 /* Badge-Form "circle" (v2.18.0): round the SQUARE utility icon boxes to full circles. Only square/
    near-square objects get this — rectangular text pills stay capsules (--cc-b-radius 999px). */
 html.cc-shape-circle.cc-header-on #menu .nav-tile.right .nav-item.util > a { border-radius: 50% !important; }
+
+/* Drag-and-drop menu-tab ordering (v2.20.0): a grab cursor signals draggability; the dragged pill
+   dims. header.js persists the order to cc.navorder. Only while the header area is on. */
+html.cc-header-on #menu .nav-tile:not(.right) .nav-item.cc-navdrag > a { cursor: grab; }
+html.cc-header-on #menu .nav-tile:not(.right) .nav-item.cc-dragging { opacity: .45; }
+html.cc-header-on #menu .nav-tile:not(.right) .nav-item.cc-navdrag:active > a { cursor: grabbing; }

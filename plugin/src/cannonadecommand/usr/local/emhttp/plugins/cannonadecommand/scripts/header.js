@@ -106,6 +106,51 @@
       if (align >= 0 && align < 200) root.style.setProperty("--cc-align-left", align + "px");  // sanity-bounded; overrides the sheets' static fallback inline
     } catch (e) {}
   }
+  // ── DRAG-AND-DROP main-menu tab ordering (v2.20.0). The left menu tabs (#menu .nav-tile:not(.right)
+  // > .nav-item, each an <a href="/PageName">) can be reordered by dragging; the order (a list of hrefs)
+  // is saved to cc.navorder and re-applied on every page load. Native menu order comes from the server,
+  // so this is a pure front-end reorder + persistence. A normal CLICK still navigates — HTML5 dragging
+  // needs a real drag gesture, so a click never triggers a reorder. Only active while the header area is
+  // on (opt-in via cc.navdrag, default on when the area is on). New/unknown tabs (added by plugins) keep
+  // their native position AFTER the saved ones, so the order survives added tabs.
+  function navTile() { return document.querySelector("#menu .nav-tile:not(.right)"); }
+  function navItems(tile) { return Array.prototype.slice.call(tile.querySelectorAll(":scope > .nav-item")); }
+  function navHref(it) { var a = it.querySelector("a[href]"); return a ? a.getAttribute("href") : null; }
+  function applyNavOrder() {
+    try {
+      var order; try { order = JSON.parse(g("cc.navorder", "null")); } catch (e) { return; }
+      if (!order || !order.length) return;
+      var tile = navTile(); if (!tile) return;
+      var items = navItems(tile), byHref = {};
+      items.forEach(function (it) { var h = navHref(it); if (h) byHref[h] = it; });
+      var placed = {};
+      order.forEach(function (h) { if (byHref[h]) { tile.appendChild(byHref[h]); placed[h] = 1; } });   // saved ones first, in saved order
+      items.forEach(function (it) { var h = navHref(it); if (h && !placed[h]) tile.appendChild(it); });   // then any new/unknown tabs, native order
+    } catch (e) {}
+  }
+  function saveNavOrder() {
+    try { var tile = navTile(); if (!tile) return; var order = []; navItems(tile).forEach(function (it) { var h = navHref(it); if (h) order.push(h); }); localStorage.setItem("cc.navorder", JSON.stringify(order)); } catch (e) {}
+  }
+  var ccDragged = null;
+  function setupNavDrag() {
+    try {
+      if (g("cc.navdrag", "1") === "0") return;                 // opt-out
+      var tile = navTile(); if (!tile) return;
+      if (tile.getAttribute("data-cc-drag") === "1") return; tile.setAttribute("data-cc-drag", "1");
+      navItems(tile).forEach(function (it) {
+        it.setAttribute("draggable", "true"); it.classList.add("cc-navdrag");
+        var la = it.querySelector("a"); if (la) la.setAttribute("draggable", "false");  // else the browser drags the LINK URL instead of our item
+
+        it.addEventListener("dragstart", function (e) { ccDragged = it; it.classList.add("cc-dragging"); try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", navHref(it) || ""); } catch (e2) {} });
+        it.addEventListener("dragend", function () { it.classList.remove("cc-dragging"); ccDragged = null; saveNavOrder(); });
+        it.addEventListener("dragover", function (e) {
+          if (!ccDragged || ccDragged === it) return; e.preventDefault();
+          var r = it.getBoundingClientRect(), before = e.clientX < r.left + r.width / 2;
+          tile.insertBefore(ccDragged, before ? it : it.nextSibling);
+        });
+      });
+    } catch (e) {}
+  }
   function apply() {
     try {
       var root = document.documentElement;
@@ -131,6 +176,8 @@
       root.style.setProperty("--cc-hdr-accent-text", idealText(a));
       root.style.setProperty("--cc-b-radius", shape());
       root.classList.toggle("cc-header-rb", rbOn());
+      applyNavOrder();  // restore the user's saved tab order BEFORE painting/measuring (it reorders the DOM)
+      setupNavDrag();   // make the tabs draggable (idempotent per tile)
       paintNav();
       measureAlign();   // after the pill geometry is live -> measure the real left edge
     } catch (e) {}
