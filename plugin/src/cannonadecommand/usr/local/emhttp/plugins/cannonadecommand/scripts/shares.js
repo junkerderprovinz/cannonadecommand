@@ -161,9 +161,12 @@
   function ensureTabbed() {
     try {
       if (tabbedTried) return;
-      if (g("cc.enable.shares", "0") === "0") return;
+      // re-gated from cc.enable.shares to cc.theming so ANY theming-on install adopts Unraid's Tabbed
+      // mode once (the Tab-Ansicht feature needs it on /Shares, /Docker AND /Main). boot() still gates
+      // the whole enhancer on cc.enable.shares, so in practice this fires when the Freigaben area is on.
+      if (g("cc.theming", "1") === "0") return;
       var p = pn();
-      if (p !== "/Shares" && p !== "/Docker") return;
+      if (p !== "/Shares" && p !== "/Docker" && p !== "/Main") return;
       if (document.querySelector("#displaybox nav.tabs")) return; // already tabbed
       if (!window.jQuery) return;
       // sessionStorage guard: attempt the tabbed flip at most ONCE per browser session.
@@ -485,6 +488,70 @@
     } catch (e) {}
   }
 
+  // Flatten a tabbed container (nav.tabs + section[role=tabpanel]) into stacked CC cards: prepend a
+  // .cc-card-head (cloned from each now-hidden tab button) to every panel. SHARED by the /Shares/Share
+  // detail page and the /Main (START) tab — both render the identical MainContentTabbed DOM. Extracted
+  // out of enhanceShareDetail so the per-area Tab-Ansicht toggle can gate the CALL (stacked sections
+  // vs native sub-tabs). Panel<->button paired by DOM INDEX (not aria-labelledby): MainContentTabbed.php
+  // numbers buttons and panels in two loops with different skip logic, so a panel's aria-labelledby can
+  // point to a missing button id. Iterate the FULL list + skip carded ones BY ATTRIBUTE so i stays the
+  // real DOM index that lines up with tabBtns[i]. Idempotent via data-cc-card.
+  function cardPanels(box) {
+    var tablist = box.querySelector('nav.tabs, [role="tablist"]');
+    var tabBtns = tablist ? tablist.querySelectorAll('button[role="tab"]') : [];
+    var panels = box.querySelectorAll('section[role="tabpanel"]');
+    for (var i = 0; i < panels.length; i++) {
+      var section = panels[i];
+      if (section.getAttribute("data-cc-card")) continue;   // idempotent; keeps i == real DOM index
+      section.setAttribute("data-cc-card", "1");
+      ccCards(section);   // clone-settings block(s) -> Nebencard beside their Hauptcard (all 3 Unraid variants; /Main has none, so no-op)
+      var head = document.createElement("div");
+      head.className = "cc-card-head";
+      var btn = tabBtns[i];
+      if (btn && btn.childNodes.length) {                   // clone the localized <span.left><icon>Title</span>
+        var kids = btn.childNodes;
+        for (var k = 0; k < kids.length; k++) head.appendChild(kids[k].cloneNode(true));
+      } else {                                              // last resort: never shout the raw id
+        head.textContent = (btn && btn.textContent.trim()) || (section.id || "").replace(/-panel$/, "");
+      }
+      var cols = section.querySelectorAll(".cc-main-col");
+      if (!cols.length) { section.insertBefore(head, section.firstChild); }   // no split (e.g. /Main): the section IS the card
+      else {
+        cols[0].insertBefore(head, cols[0].firstChild);
+        for (var ci = 1; ci < cols.length; ci++) {
+          var col = cols[ci];
+          if (col.querySelector(":scope > .cc-card-head")) continue;   // idempotent
+          var crow = col.closest(".cc-split-row"), nh = crow ? crow.previousElementSibling : null;
+          while (nh && !(nh.classList && (nh.classList.contains("title") || nh.classList.contains("cc-split-row")))) nh = nh.previousElementSibling;
+          if (nh && nh.classList && nh.classList.contains("cc-split-row")) nh = null;   // hit a crow first -> no heading for this col
+          var lft = nh && (nh.querySelector("span.left") || nh);
+          var h2 = el("div", "cc-card-head");
+          h2.textContent = (lft && (lft.textContent || "").trim()) || "SMB";
+          col.insertBefore(h2, col.firstChild);
+          if (nh) {
+            var rgt = nh.querySelector("span.right");
+            if (rgt && (rgt.textContent || "").trim()) { var note = el("div", "cc-card-note"); note.textContent = (rgt.textContent || "").trim(); col.insertBefore(note, h2.nextSibling); }
+            nh.classList.add("cc-carded");   // hide the now-redundant native heading (CSS: .title.cc-carded)
+          }
+        }
+      }
+    }
+  }
+  // Revert cardPanels: pull the injected .cc-card-head/.cc-card-note out, un-hide carded native headings,
+  // drop the data-cc-card markers, unwrap the split/side card rows. Idempotent (guards on the markers).
+  // Runs when a per-area Tab-Ansicht toggle is OFF so the native sub-tabs show instead of stacked sections.
+  function flattenTeardown() {
+    try {
+      var stray = document.querySelectorAll("#displaybox .cc-card-head, #displaybox .cc-card-note");
+      for (var s = 0; s < stray.length; s++) stray[s].parentNode.removeChild(stray[s]);
+      var carded = document.querySelectorAll("#displaybox .cc-carded");
+      for (var cd = 0; cd < carded.length; cd++) carded[cd].classList.remove("cc-carded");
+      var marked = document.querySelectorAll("#displaybox [data-cc-card]");
+      for (var m = 0; m < marked.length; m++) marked[m].removeAttribute("data-cc-card");
+      ccCardsTeardown();
+    } catch (e) {}
+  }
+
   // Share DETAIL page (/Shares/Share): CC no longer injects a share-name title — the user pointed out
   // the name is already in the Freigabename field, so the heading above the tabs was redundant. This
   // now just cleans up any leftover .cc-share-title (e.g. from a cached older version). The detail
@@ -525,62 +592,63 @@
           });
         }
       }
-      // Flatten the sub-tabs to CARDS: the CSS reveals every <section role=tabpanel> and hides the tab
-      // buttons; here we prepend a header (the now-hidden tab button's icon + label) to each panel.
-      // Pair panel<->button by DOM INDEX, NOT aria-labelledby: Unraid's MainContentTabbed.php numbers
-      // buttons and panels in two separate loops with different skip logic ($skipIndexIncrement fires
-      // only in the panel loop for the no-Title parent Share.page), so a panel's aria-labelledby can
-      // point to a non-existent button id -> the old getElementById() returned null and the header
-      // shouted the raw "tabN-panel" id. Both loops emit one item per titled child in the SAME order,
-      // so the Nth button describes the Nth panel. Iterate the FULL list + skip carded ones BY
-      // ATTRIBUTE so i stays the real DOM index that lines up with tabBtns[i].
-      var tablist = box.querySelector('nav.tabs, [role="tablist"]');
-      var tabBtns = tablist ? tablist.querySelectorAll('button[role="tab"]') : [];
-      var panels = box.querySelectorAll('section[role="tabpanel"]');
-      for (var i = 0; i < panels.length; i++) {
-        var section = panels[i];
-        if (section.getAttribute("data-cc-card")) continue;   // idempotent; keeps i == real DOM index
-        section.setAttribute("data-cc-card", "1");
-        ccCards(section);   // clone-settings block(s) -> Nebencard beside their Hauptcard (handles all 3 Unraid variants; SMB "User Access" form becomes its own Hauptcard automatically)
-        var head = document.createElement("div");
-        head.className = "cc-card-head";
-        var btn = tabBtns[i];
-        if (btn && btn.childNodes.length) {                   // clone the localized <span.left><icon>Title</span>
-          var kids = btn.childNodes;
-          for (var k = 0; k < kids.length; k++) head.appendChild(kids[k].cloneNode(true));
-        } else {                                              // last resort: never shout the raw id
-          head.textContent = (btn && btn.textContent.trim()) || (section.id || "").replace(/-panel$/, "");
-        }
-        // EVERY Hauptcard gets its OWN title badge (user: "SMB Benutzerzugriff hat kein Titelbadge in
-        // der Card"). The FIRST .cc-main-col takes the tab-button-derived head; a SECOND crow in the
-        // same panel (SMB "User Access", whose Hauptcard is the smb_user_edit .shade) takes a badge
-        // built from the native .title.nocontrol sub-heading that precedes its crow — which is then
-        // hidden (.cc-carded), its "guests …" note kept as a small line under the badge.
-        var cols = section.querySelectorAll(".cc-main-col");
-        if (!cols.length) { section.insertBefore(head, section.firstChild); }   // no split: section is the card
-        else {
-          cols[0].insertBefore(head, cols[0].firstChild);
-          for (var ci = 1; ci < cols.length; ci++) {
-            var col = cols[ci];
-            if (col.querySelector(":scope > .cc-card-head")) continue;   // idempotent
-            var crow = col.closest(".cc-split-row"), nh = crow ? crow.previousElementSibling : null;
-            // walk back to the nearest native .title, but STOP at the previous crow so we never grab an
-            // earlier unrelated heading (bounded search).
-            while (nh && !(nh.classList && (nh.classList.contains("title") || nh.classList.contains("cc-split-row")))) nh = nh.previousElementSibling;
-            if (nh && nh.classList && nh.classList.contains("cc-split-row")) nh = null;   // hit a crow first -> no heading for this col
-            var lft = nh && (nh.querySelector("span.left") || nh);
-            var h2 = el("div", "cc-card-head");
-            h2.textContent = (lft && (lft.textContent || "").trim()) || "SMB";
-            col.insertBefore(h2, col.firstChild);
-            if (nh) {
-              var rgt = nh.querySelector("span.right");
-              if (rgt && (rgt.textContent || "").trim()) { var note = el("div", "cc-card-note"); note.textContent = (rgt.textContent || "").trim(); col.insertBefore(note, h2.nextSibling); }
-              nh.classList.add("cc-carded");   // hide the now-redundant native heading (CSS: .title.cc-carded)
-            }
-          }
-        }
-      }
+      // Tab-Ansicht: stacked CC sections (default) or native sub-tabs. cardPanels() prepends the
+      // section-header badges; when the per-area toggle is OFF, flattenTeardown() reverts to the native
+      // sub-tabs. ccSelects(box) runs in BOTH modes (the disk-dropdown look is layout-independent).
+      if (g("cc.sections.shares", "1") !== "0") cardPanels(box); else flattenTeardown();
       ccSelects(box);   // convert native <select> to the CC disk-dropdown look (see ccWrapSelect)
+    } catch (e) {}
+  }
+  // /Main (START tab): the device table is table.unraid.disk_status — 10 heterogeneous columns,
+  // nchan-refilled, carrying structural rows (colspan placeholders, pool_header, tr_last, offline
+  // colspan rows) that the fixed-9-col share_status logic would corrupt. So DUPLICATE the enhancer
+  // (don't overload enhanceShares/enhanceRow): badge only TEXT-ONLY value cells and lift a.view into
+  // its own Browse column colspan-awarely. onMain() gates on nav.tabs so it only fires in Tabbed mode.
+  function onMain() { try { return pn() === "/Main" && !!document.querySelector("#displaybox nav.tabs"); } catch (e) { return false; } }
+  function mainBadgeCell(td) {
+    if (!td || td.classList.contains("cc-bcell")) return;
+    if (td.querySelector("*")) return;                       // skip usage-disk bars, the assignment <select>, temp/link icons
+    var txt = (td.textContent || "").trim(); if (txt === "" || txt === "-") return;
+    var b = el("span", "cc-b"), v = el("span", "cc-b-v", txt);
+    b.appendChild(v); td.textContent = ""; td.appendChild(b); td.classList.add("cc-bcell");
+  }
+  function enhanceMainHead(table) {
+    var h = table && table.querySelector("thead tr"); if (!h || h.getAttribute("data-cc-main")) return;
+    h.setAttribute("data-cc-main", "1");
+    var dev = h.children[0]; if (!dev) return;
+    h.insertBefore(el("td", "cc-browse-col", t("browse")), dev.nextSibling);   // Browse header AFTER the Device cell
+  }
+  function enhanceMainRow(tr) {
+    if (tr.getAttribute("data-cc-main")) return; tr.setAttribute("data-cc-main", "1");
+    var first = tr.children[0]; if (!first) return;
+    // structural rows (colspan placeholder / pool header / total / offline) -> just widen for the new col
+    if (first.hasAttribute("colspan") || tr.classList.contains("pool_header") || tr.classList.contains("tr_last") || tr.querySelector(":scope > td.empty")) {
+      var span = tr.querySelector("td[colspan]"); if (span) span.colSpan = (span.colSpan || 1) + 1; return;
+    }
+    var bt = el("td", "cc-browse-col");                      // Browse cell, inserted AFTER the Device cell
+    var view = first.querySelector("a.view");
+    if (view && view.getAttribute("href")) {
+      view.classList.add("cc-b-browse");
+      var ic = view.querySelector("i"); if (ic) ic.parentNode.removeChild(ic);   // drop the folder glyph -> text-only badge
+      if (!view.querySelector(".cc-b-lab")) view.appendChild(el("span", "cc-b-lab", t("browse")));
+      bt.appendChild(view);                                  // moves it OUT of the Device cell, href/onclick intact
+    }
+    first.parentNode.insertBefore(bt, first.nextSibling);
+    var tds = Array.prototype.slice.call(tr.children);
+    for (var i = 2; i < tds.length; i++) mainBadgeCell(tds[i]);   // skip Device(0)+Browse(1); wrap Temp/Reads/Writes/Errors/FS/Size text cells
+  }
+  function enhanceMain() {
+    try {
+      if (g("cc.enable.shares", "0") === "0") return;
+      if (!onMain()) return;
+      var box = document.getElementById("displaybox");
+      if (box) { if (g("cc.sections.main", "1") !== "0") cardPanels(box); else flattenTeardown(); }
+      var tbs = document.querySelectorAll("#displaybox table.unraid.disk_status");
+      for (var i = 0; i < tbs.length; i++) {
+        enhanceMainHead(tbs[i]);
+        var rows = tbs[i].querySelectorAll("tbody > tr");
+        for (var r = 0; r < rows.length; r++) enhanceMainRow(rows[r]);
+      }
     } catch (e) {}
   }
   function apply() {
@@ -596,6 +664,13 @@
       // single-tab-hide rule skips it (else the prev/next arrows, which live in the tab bar, vanish)
       // and so its own CC theming (buttons/inputs/title) applies.
       root.classList.toggle("cc-on-share-detail", on && pn() === "/Shares/Share");
+      // per-area Tab-Ansicht gates (stacked CC sections vs native sub-tabs) + the /Main (START) marker.
+      // cc-on-share-detail STAYS (it gates button/input/dropdown theming in BOTH modes); these are
+      // additive gates. The merged CSS flatten rule keys off (.cc-on-share-detail.cc-sections-share)
+      // OR (.cc-on-main.cc-sections-main), so turning a section toggle off reverts to native sub-tabs.
+      root.classList.toggle("cc-sections-share", on && g("cc.sections.shares", "1") !== "0" && pn() === "/Shares/Share");
+      root.classList.toggle("cc-sections-main", on && g("cc.sections.main", "1") !== "0" && onMain());
+      root.classList.toggle("cc-on-main", on && onMain());
       // the file manager (/<parent>/Browse). CSS-ONLY area: nothing is injected, so this class toggle IS
       // the whole teardown. NB the page runs DESTRUCTIVE jobs (delete/move) — see the cc-on-browse block
       // in Shares.css for the rules on why nothing there touches rows, columns or the check glyphs.
@@ -627,6 +702,15 @@
           for (var p = 0; p < painted.length; p++) { painted[p].style.removeProperty("background"); painted[p].style.removeProperty("color"); painted[p].style.removeProperty("--cc-rb-c"); painted[p].style.removeProperty("--cc-rb-ct"); }
           ccSelectsTeardown();   // unwrap the custom <select> overlays -> native form back, clean
           ccCardsTeardown();     // unwrap the split/side/user-access card wrappers -> native structure back
+          // /Main disk_status: pull the injected Browse column + unwrap value badges + drop markers so a
+          // live area-disable reverts before the next nchan refill (the thead Browse cell is static markup;
+          // any 1-too-wide structural colspan self-heals on the next tbody refill).
+          var mbrowse = document.querySelectorAll("#displaybox table.unraid.disk_status td.cc-browse-col");
+          for (var mb = 0; mb < mbrowse.length; mb++) mbrowse[mb].parentNode.removeChild(mbrowse[mb]);
+          var mbc = document.querySelectorAll("#displaybox table.unraid.disk_status td.cc-bcell");
+          for (var bcx = 0; bcx < mbc.length; bcx++) { var vv = mbc[bcx].querySelector(".cc-b-v"); mbc[bcx].textContent = vv ? vv.textContent : (mbc[bcx].textContent || ""); mbc[bcx].classList.remove("cc-bcell"); }
+          var mmk = document.querySelectorAll("#displaybox [data-cc-main]");
+          for (var mmx = 0; mmx < mmk.length; mmx++) mmk[mmx].removeAttribute("data-cc-main");
         } catch (e) {}
         return;
       }
@@ -647,6 +731,7 @@
       paintRows(); // per-row rainbow AFTER the badges exist (re-applies when rbOn toggles via storage)
       enhanceShareDetail(); // inject the share-name title on /Shares/Share
       paintCards();         // rainbow (or accent) on the detail-page card title badges
+      enhanceMain();        // /Main (START): stacked sections + disk_status row badges + Browse column
       if (onStats()) moveStatsControls(); // /Stats: keep the control group relocated below the graphs (span.status can arrive late)
       if (onBrowse()) enhanceBrowse();    // Browse: (re-)badge the owner/perm/size cells (tbody is AJAX-replaced on navigation)
     } catch (e) {}
@@ -660,7 +745,7 @@
       if (!host) return;
       mo = new MutationObserver(function () {
         if (moPending) return; moPending = true;
-        setTimeout(function () { moPending = false; if (g("cc.theming", "1") === "0") return; hideRedundantTabs(); paintTabs(); enhanceShares(); paintRows(); enhanceShareDetail(); paintCards(); if (g("cc.enable.shares", "0") !== "0" && onStats()) moveStatsControls(); if (g("cc.enable.shares", "0") !== "0" && onBrowse()) enhanceBrowse(); }, 150); // MASTER THEMING off: observer must not re-inject (apply()'s teardown already cleaned up)
+        setTimeout(function () { moPending = false; if (g("cc.theming", "1") === "0") return; hideRedundantTabs(); paintTabs(); enhanceShares(); paintRows(); enhanceShareDetail(); paintCards(); enhanceMain(); if (g("cc.enable.shares", "0") !== "0" && onStats()) moveStatsControls(); if (g("cc.enable.shares", "0") !== "0" && onBrowse()) enhanceBrowse(); }, 150); // MASTER THEMING off: observer must not re-inject (apply()'s teardown already cleaned up)
       });
       mo.observe(host, { childList: true, subtree: true });
     } catch (e) {}

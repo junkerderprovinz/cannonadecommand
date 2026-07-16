@@ -112,9 +112,13 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
 - Master theming switch: one toggle turns **all** visual theming off and keeps
   only the orchestration functions (start plan, limits, bandwidth, watchdog,
   schedules, idle-stop), leaving a native-looking Docker tab.
-- Areas: the Docker, Plugins and VM tabs, plus (opt-in) the main menu bar and the
-  Settings-page category icons (large square badges) — each toggleable under
-  **Bereiche** (Areas) with its own style tab.
+- Areas: the Docker, Plugins, VM and **Favorites** tabs, plus (opt-in) the main menu
+  bar, the **Start (Main)** tab and the Settings-page category icons (large square
+  badges) — each toggleable under **Bereiche** (Areas) with its own style tab. The VM
+  tab is styled to match the Docker tab exactly (logo badge, state/CPU/RAM/IP badges,
+  autostart switch); the Favorites tab reuses the category-icon badges.
+- Tab view: on tabbed pages (Shares detail, Start/Main) choose per tab whether the
+  sub-tabs render as stacked CC sections or as native Unraid sub-tabs.
 - Logo background (per area, in the View card): put the container / plugin / VM /
   category logo on a coloured accent badge and recolour it monochrome black or white
   for contrast, or leave it natural.

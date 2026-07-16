@@ -1,0 +1,13 @@
+Menu="Buttons:99"
+Title="CannonadeCommand"
+Icon="cannonadecommand.png"
+Link="cc-fav-hook"
+---
+<?php
+/* CannonadeCommand GLOBAL hook. Menu="Buttons" => Unraid auto-injects the same-basename
+   sheet sheets/CannonadeCommand.Favorites.css into <head> of EVERY page; the <script>
+   below loads favorites.js. All CSS is gated behind html.cc-favorites-on, which
+   favorites.js sets ONLY on /Favorites when the Favoriten area + master theming are on,
+   so this sheet is inert everywhere else. Link="cc-fav-hook" renders a bare <div>, no icon. */
+?>
+<script defer src="<?autov('/plugins/cannonadecommand/scripts/favorites.js')?>"></script>

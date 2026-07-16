@@ -1,0 +1,45 @@
+/* CannonadeCommand - Favorites tab (/Favorites) restyle, made to match the Docker/Settings tiles.
+ *
+ * Loaded globally via the Buttons hook (CannonadeCommand.Favorites.page), gated on
+ * html.cc-favorites-on which favorites.js sets only on /Favorites when the Favoriten area +
+ * master theming are on. A scoped copy of CannonadeCommand.SettingsGrid.css's tile rules: the
+ * favorites tab has the IDENTICAL .Panel > a > span / .PanelText / i.favo DOM (MyFavorites.page),
+ * so the same 64px square-accent-badge recipe gives instant parity. Inert on every other page.
+ */
+
+:root { --cc-fav-size: 64px; --cc-fav-glyph: 32px; --cc-fav-rmax: 16px; }
+
+/* align favorites content with the MAIN MENU BAR (mirrors SettingsGrid.css) */
+html.cc-favorites-on { --cc-align-left: 10px; }
+html.cc-favorites-on.cc-header-on { --cc-align-left: 15px; }
+html.cc-favorites-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 10px); }
+
+/* each favourite tile's icon wrapper <span> -> big square accent badge */
+html.cc-favorites-on #displaybox .Panel > a > span {
+  display: inline-flex !important; align-items: center; justify-content: center;
+  box-sizing: border-box !important; position: relative;
+  width: var(--cc-fav-size, 64px) !important; height: var(--cc-fav-size, 64px) !important;
+  margin: 0 auto !important; padding: 0 !important;
+  border-radius: min(var(--cc-b-radius, 14px), var(--cc-fav-rmax, 16px)) !important;
+  background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important;
+  transition: filter .12s;
+}
+html.cc-favorites-on #displaybox .Panel > a:hover > span { filter: brightness(1.1); }
+html.cc-favorites-on #displaybox .Panel > a > span > i.PanelIcon {
+  font-size: var(--cc-fav-glyph, 32px) !important; line-height: 1 !important;
+  color: var(--cc-iconbg-text, var(--cc-accent-text, #fff)) !important; margin: 0 !important; padding: 0 !important;
+}
+html.cc-favorites-on #displaybox .Panel > a > span > img {
+  width: var(--cc-fav-glyph, 32px) !important; height: var(--cc-fav-glyph, 32px) !important;
+  max-width: none !important; object-fit: contain !important; margin: 0 !important;
+}
+/* the fa-trash-o 'remove favorite' icon MyFavorites.page injects into the span on hover */
+html.cc-favorites-on #displaybox .Panel > a > span > i.favo {
+  position: absolute !important; top: 3px !important; right: 4px !important; left: auto !important;
+  font-size: 12px !important; line-height: 1 !important; color: var(--cc-accent-text, #fff) !important; opacity: .8;
+}
+html.cc-favorites-on #displaybox .Panel .PanelText { margin-top: 4px; }
+/* empty state (MyFavorites.page #nofavs h3) */
+html.cc-favorites-on #displaybox #nofavs { color: var(--cc-accent, #2f6feb); }
+/* Badge-Form circle: square tile badge -> circle (mirrors SettingsGrid.css) */
+html.cc-shape-circle.cc-favorites-on #displaybox .Panel > a > span { border-radius: 50% !important; }

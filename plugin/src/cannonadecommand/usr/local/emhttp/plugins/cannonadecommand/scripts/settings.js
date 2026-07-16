@@ -219,6 +219,7 @@
     var wrap = el("div", "cc-set-wrap");
     var wrapPlugin = el("div", "cc-set-wrap"), wrapVms = el("div", "cc-set-wrap"), wrapHeader = el("div", "cc-set-wrap"), wrapShares = el("div", "cc-set-wrap");
     var wrapSettings = el("div", "cc-set-wrap");
+    var wrapFavorites = el("div", "cc-set-wrap");
     var wrapMain = el("div", "cc-set-wrap");
     var adoptToggles = {}; // adopt-key → its toggle element (a colour pick flips it live); declared UP here (not further down) because the Docker area's styleToggle now runs early, with the moved global Badges card
     // MASTER THEMING switch (first, prominent). Off = keep ONLY the Docker orchestration
@@ -234,7 +235,7 @@
     // Bereiche: enable/disable each area CannonadeCommand enhances
     (function () {
       var c = card(T("Bereiche", "Areas"), T("Aktiviere, welche Bereiche CannonadeCommand verschönert. Ein deaktivierter Bereich blendet seinen Tab hier sofort aus.", "Choose which areas CannonadeCommand enhances. Disabling an area hides its tab here immediately."));
-      [["cc.enable.header", T("Hauptmenüleiste", "Main menu bar"), "0"], ["cc.enable.shares", T("Freigaben", "Shares"), "0"], ["cc.enable.docker", T("Docker-Tab", "Docker tab"), "1"], ["cc.enable.plugins", T("Plugin-Tab", "Plugins tab"), "1"], ["cc.enable.vms", T("VM-Tab", "VMs tab"), "1"], ["cc.enable.settings", T("Einstellungen & Werkzeuge", "Settings & Tools"), "1"]].forEach(function (a) {
+      [["cc.enable.header", T("Hauptmenüleiste", "Main menu bar"), "0"], ["cc.enable.shares", T("Freigaben", "Shares"), "0"], ["cc.enable.docker", T("Docker-Tab", "Docker tab"), "1"], ["cc.enable.plugins", T("Plugin-Tab", "Plugins tab"), "1"], ["cc.enable.vms", T("VM-Tab", "VMs tab"), "1"], ["cc.enable.settings", T("Einstellungen & Werkzeuge", "Settings & Tools"), "1"], ["cc.enable.favorites", T("Favoriten", "Favorites"), "1"]].forEach(function (a) {
         var row = el("div", "cc-set-row cc-set-inline");
         row.appendChild(el("span", null, a[1]));
         var cur = localStorage.getItem(a[0]);
@@ -250,7 +251,8 @@
       { t: T("Docker-Tab", "Docker tab"), w: wrap, key: "cc.enable.docker" },
       { t: T("Plugin-Tab", "Plugins tab"), w: wrapPlugin, key: "cc.enable.plugins" },
       { t: T("VM-Tab", "VMs tab"), w: wrapVms, key: "cc.enable.vms" },
-      { t: T("Einstellungen & Werkzeuge", "Settings & Tools"), w: wrapSettings, key: "cc.enable.settings" }
+      { t: T("Einstellungen & Werkzeuge", "Settings & Tools"), w: wrapSettings, key: "cc.enable.settings" },
+      { t: T("Favoriten", "Favorites"), w: wrapFavorites, key: "cc.enable.favorites" }
     ];
     var tabBtns = [];
     function areaOn(key) { return !key || localStorage.getItem(key) !== "0"; }
@@ -290,7 +292,7 @@
       tabBtns.push(b); tabRow.appendChild(b);
     });
     root.appendChild(tabRow);
-    root.appendChild(wrapMain); root.appendChild(wrapHeader); root.appendChild(wrapShares); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms); root.appendChild(wrapSettings);
+    root.appendChild(wrapMain); root.appendChild(wrapHeader); root.appendChild(wrapShares); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms); root.appendChild(wrapSettings); root.appendChild(wrapFavorites);
 
     // ── Badges ──
     var c1 = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
@@ -533,7 +535,7 @@
     // same live push for the Freigaben tabs (no 'storage' event fires in this document)
     function syncSharesBar() { try { if (typeof window.ccSharesApply === "function") window.ccSharesApply(); } catch (e) {} }
     // adopt-key -> the area's own key prefix (for seeding its own accent on adopt-OFF)
-    var ADOPT_PREF = { "cc.styleheader": "cch.", "cc.styleshares": "ccsh.", "cc.styledocker": "ccd.", "cc.styleplugin": "ccp.", "cc.stylevms": "ccv.", "cc.stylesettings": "ccs." };
+    var ADOPT_PREF = { "cc.styleheader": "cch.", "cc.styleshares": "ccsh.", "cc.styledocker": "ccd.", "cc.styleplugin": "ccp.", "cc.stylevms": "ccv.", "cc.stylesettings": "ccs.", "cc.stylefavorites": "ccf." };
     function styleToggle(key, onChange, lbl) {
       // the SAME knob switch as everywhere else (the text-in-pill variant looked wrong)
       var row = el("div", "cc-set-row cc-set-inline");
@@ -564,7 +566,7 @@
       // adopt toggle OFF (else eff() keeps reading the global cc.* accent and the pick is
       // ignored, the "colour not applied to the menu" bug). Reflected live on the toggle +
       // the real header bar. Turn adopt back ON to re-follow the global Docker accent.
-      var ADOPT = { "ccd.": "cc.styledocker", "ccp.": "cc.styleplugin", "ccv.": "cc.stylevms", "cch.": "cc.styleheader", "ccs.": "cc.stylesettings", "ccsh.": "cc.styleshares" };
+      var ADOPT = { "ccd.": "cc.styledocker", "ccp.": "cc.styleplugin", "ccv.": "cc.stylevms", "cch.": "cc.styleheader", "ccs.": "cc.stylesettings", "ccsh.": "cc.styleshares", "ccf.": "cc.stylefavorites" };
       var adoptKey = ADOPT[P];
       function useOwn() {
         if (adoptKey && localStorage.getItem(adoptKey) !== "0") {
@@ -724,12 +726,24 @@
     cSh.appendChild(styleToggle("cc.styleshares", null));
     var cSet = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
     cSet.appendChild(styleToggle("cc.stylesettings", null));
-    wrapHeader.appendChild(cH); wrapShares.appendChild(cSh); wrapPlugin.appendChild(cP); wrapVms.appendChild(cV); wrapSettings.appendChild(cSet);
+    var cFav = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
+    cFav.appendChild(styleToggle("cc.stylefavorites", null));
+    wrapHeader.appendChild(cH); wrapShares.appendChild(cSh); wrapPlugin.appendChild(cP); wrapVms.appendChild(cV); wrapSettings.appendChild(cSet); wrapFavorites.appendChild(cFav);
+    // per-main-tab "Tab-Ansicht" toggle: stacked CC sections (default) vs native Unraid sub-tabs.
+    // Only Shares has a flatten sheet today, so only its row is wired live (via syncSharesBar).
+    function sectionsToggleRow(area, applyFn) {
+      return toggleRow(T("Abschnitte statt Reiter", "Stacked sections instead of sub-tabs"), get("cc.sections." + area, "1") !== "0", function (v) { set("cc.sections." + area, v ? "1" : "0"); if (applyFn) applyFn(); });
+    }
+    var cShTabs = card(T("Tab-Ansicht", "Tab view"), T("AN = Unterreiter als Abschnitte (CC-Karten) untereinander. AUS = native Unraid-Unterreiter.", "ON = sub-tabs stacked as CC sections. OFF = native Unraid sub-tabs."));
+    cShTabs.appendChild(sectionsToggleRow("shares", syncSharesBar));
+    cShTabs.appendChild(sectionsToggleRow("main", syncSharesBar));
+    wrapShares.appendChild(cShTabs);
     buildStyleCards("cch.", wrapHeader, [], true); // Hauptmenueleiste: pill/badge settings only
     buildStyleCards("ccsh.", wrapShares, [], true); // Freigaben: tab pills use FA glyphs -> badges only, no logo card
     buildStyleCards("ccs.", wrapSettings, ["fa-cog", "fa-globe", "fa-star"], false); // Einstellungs-Tab: badges + logo-tint + Logo-Hintergrund cards; the tiles use FA glyphs, so the preview shows sample glyphs (cog/globe/star = System/Network/User category icons), coloured via CSS not the raster filter
     buildStyleCards("ccp.", wrapPlugin, ["/plugins/dynamix.plugin.manager/images/dynamix.plugin.manager.png", "/plugins/dynamix.docker.manager/images/dynamix.docker.manager.png", "/plugins/cannonadecommand/images/cannonadecommand.png"]);
     buildStyleCards("ccv.", wrapVms, ["/plugins/dynamix.vm.manager/templates/images/linux.png", "/plugins/dynamix.vm.manager/templates/images/windows.png", "/plugins/cannonadecommand/images/cannonadecommand.png"]);
+    buildStyleCards("ccf.", wrapFavorites, ["fa-star", "fa-heart", "fa-cog"], false); // Favoriten: tiles use FA glyphs -> preview shows sample glyphs coloured via CSS (like the Settings card)
     refreshTabs();
     showSec(parseInt(localStorage.getItem("cc.settab") || "0", 10) || 0);
     paintPrev();

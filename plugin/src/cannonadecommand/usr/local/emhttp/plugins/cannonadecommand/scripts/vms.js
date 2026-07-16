@@ -96,26 +96,18 @@
     try {
       var a = ccAccent(), rad = ccShape(), root = document.documentElement.style;
       root.setProperty("--cc-accent", a); root.setProperty("--cc-accent-text", ccIdeal(a)); root.setProperty("--cc-b-radius", rad);
+      // VM state -> a Docker-IDENTICAL cc-badge (class-driven, colours from VmTab.css). Read the native
+      // status from the sibling <i.fa> class (started/paused/stopped + green-/orange-/red-text), NOT the
+      // translated label \u2014 the old text match never matched German "GESTARTET". Map to Docker's state
+      // names (running/paused/exited) so the exact .cc-badge-<state> colours apply.
       Array.prototype.slice.call(document.querySelectorAll("#kvm_list tr.sortable td.vm-name span.state")).forEach(function (st) {
         var txt = (st.textContent || "").trim(); if (!txt) return;
-        // colour by the NATIVE status class on the sibling <i.fa> (VMMachines.php: 'started'/'paused'/
-        // 'stopped' + green-/orange-/red-text), NOT the translated label \u2014 the old /run|l\u00e4uft/ text match
-        // never matched German "GESTARTET", so every state badge came out grey.
         var icon = st.previousElementSibling, cls = (icon && icon.className) || "", low = txt.toLowerCase();
         var running = /\bstarted\b|green-text/.test(cls) || /run|l\u00e4uft|gestartet/.test(low);
         var paused = /\bpaused\b|orange-text/.test(cls) || /paus/.test(low);
-        var c = running ? "#1f9d55" : paused ? "#e0912a" : "#3c3c3c";
-        st.style.setProperty("display", "inline-block", "important");
-        st.style.setProperty("background", c, "important");
-        st.style.setProperty("color", ccIdeal(c), "important");
-        st.style.setProperty("border-radius", rad, "important");
-        st.style.setProperty("padding", "2px 9px", "important");
-        st.style.setProperty("margin-left", "4px", "important");
-        st.style.setProperty("font-size", "11px", "important");
-        st.style.setProperty("font-weight", "600", "important");
-        st.style.setProperty("text-transform", "uppercase", "important");
-        st.style.setProperty("letter-spacing", ".4px", "important");
-        st.style.setProperty("line-height", "1.5", "important");
+        var dstate = running ? "running" : paused ? "paused" : "exited";
+        st.className = "state cc-badge cc-badge-" + dstate;   // keep native .state (sort/hooks) + Docker classes
+        st.style.cssText = "";                                // CSS owns the look now
       });
     } catch (e) {}
   }
@@ -124,9 +116,12 @@
   // observer/timers alone (unlike teardown), so re-enabling theming re-tints via apply().
   function stripVmTheming() {
     try {
+      // state badge -> back to the bare native span (drop the cc-badge classes + any old inline styles)
       Array.prototype.slice.call(document.querySelectorAll("#kvm_list tr.sortable td.vm-name span.state")).forEach(function (st) {
-        ["display", "background", "color", "border-radius", "padding", "margin-left", "font-size", "font-weight", "text-transform", "letter-spacing", "line-height"].forEach(function (p) { st.style.removeProperty(p); });
+        st.className = "state"; st.style.cssText = "";
       });
+      document.documentElement.classList.remove("cc-vm-iconbg");                 // Logo-Hintergrund box is CSS-driven now
+      document.documentElement.style.removeProperty("--cc-iconbg-color");
       var imgs = vmImgs();
       for (var i = 0; i < imgs.length; i++) {
         imgs[i].style.filter = ""; imgs[i].style.removeProperty("color");
@@ -140,27 +135,41 @@
   // CannonadeCommand.VMs.css. Idempotent via .cc-vmb-cell; the tbody re-renders, so this re-runs from
   // the observer. Never touch td.vm-name (logo/state handled inline above), the disks/graphics/ip
   // cells (they carry live markup) or the autostart cell (styled purely by CSS).
-  function vmCell(td, label) {
+  // el() + badgeInfo() ported from docker.js so the VM badges use Docker's EXACT classes/structure.
+  function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
+  function vmCell(td, label, kind) {
     if (!td || td.classList.contains("cc-vmb-cell")) return;
     if (td.querySelector("br, table, .diskresize")) return;      // skip multi-line / interactive cells
     var txt = (td.textContent || "").trim(); if (!txt || txt === "-") return;
-    var b = document.createElement("span"); b.className = "cc-vmb";
-    if (label) { var k = document.createElement("span"); k.className = "cc-vmb-k"; k.textContent = label; b.appendChild(k); }
-    // move the cell's existing children into the badge so a click target like a.vcpu-* stays intact
-    while (td.firstChild) b.appendChild(td.firstChild);
+    var b = el("span", "cc-b cc-b-info" + (kind ? " cc-b-" + kind : ""));
+    if (label) b.appendChild(el("span", "cc-b-k", label));
+    var v = el("span", "cc-b-v"); while (td.firstChild) v.appendChild(td.firstChild); b.appendChild(v);  // keep live children (a.vcpu-*) inside .cc-b-v
     td.appendChild(b); td.classList.add("cc-vmb-cell");
   }
-  // IP cell (td[6]) is a nested table of addresses (or a "guest agent" note when stopped). Extract the
-  // IPv4/IPv6 addresses and show each as its own pill; if there are none, leave the native note alone.
+  // IP cell: the native $iptablestr joins one "addr/prefix" per line with <br> (VMMachines.php), and
+  // textContent DROPS those <br> separators, gluing "…/24" + "10.…" into garbage ("24172…"). Split
+  // STRUCTURALLY on the <br> element boundaries instead, validate each line, and emit Docker-style
+  // click-to-copy pills. If there are no addresses (e.g. "guest agent" note) keep the native content.
   function vmIpCell(td) {
     if (!td || td.classList.contains("cc-vmb-cell")) return;
-    var raw = (td.textContent || "");
-    var ips = raw.match(/(?:\d{1,3}(?:\.\d{1,3}){3}(?:\/\d+)?)|(?:[0-9a-f]{0,4}:[0-9a-f:]+(?:\/\d+)?)/gi);
-    if (!ips || !ips.length) return;                          // "Erfordert einen laufenden Gast-Agenten" -> keep native
-    var wrap = document.createElement("span"); wrap.className = "cc-vmb-ips";
-    ips.forEach(function (ip) { var p = document.createElement("span"); p.className = "cc-vmb"; p.textContent = ip; wrap.appendChild(p); });
-    // HIDE the native content (don't destroy it) so teardown can restore it without a reload
-    for (var c = td.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) c.style.display = "none"; }
+    var span = td.querySelector("span.vmgraphics") || td, lines = [], cur = "";
+    Array.prototype.forEach.call(span.childNodes, function (n) {
+      if (n.nodeType === 1 && n.tagName === "BR") { lines.push(cur); cur = ""; }
+      else cur += (n.textContent || "");
+    });
+    lines.push(cur);
+    var ips = lines.map(function (s) { return s.trim(); }).filter(function (s) {
+      return /^(?:\d{1,3}\.){3}\d{1,3}(?:\/\d+)?$/.test(s) || /^[0-9a-f:]+(?:\/\d+)?$/i.test(s);
+    });
+    if (!ips.length) return;
+    var wrap = el("span", "cc-vmb-ips");
+    ips.forEach(function (ip) {
+      var b = el("span", "cc-b cc-b-info cc-b-ip cc-b-copy"); b.appendChild(el("span", "cc-b-k", "IP")); b.appendChild(el("span", "cc-b-v", ip));
+      b.title = "Klicken zum Kopieren";
+      b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ip); } catch (_) {} });
+      wrap.appendChild(b);
+    });
+    for (var c = td.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) c.style.display = "none"; }  // hide native, don't destroy -> reversible teardown
     td.appendChild(wrap); td.classList.add("cc-vmb-cell", "cc-vmb-ipcell");
   }
   function enhanceCells() {
@@ -169,10 +178,10 @@
       for (var i = 0; i < rows.length; i++) {
         var tds = rows[i].querySelectorAll(":scope > td");
         // native column order: 0 vm-name, 1 desc, 2 vCPU, 3 RAM, 4 disks, 5 graphics, 6 ip, 7 autostart
-        if (tds[2]) vmCell(tds[2], "CPU");
-        if (tds[3]) vmCell(tds[3], "RAM");
-        if (tds[5]) vmCell(tds[5], "");     // graphics (VNC:5900 Treiber:QXL) — one-line, value-only pill
-        if (tds[6]) vmIpCell(tds[6]);       // IP addresses -> one pill each
+        if (tds[2]) vmCell(tds[2], "CPU", "cpu");
+        if (tds[3]) vmCell(tds[3], "RAM", "ram");
+        if (tds[5]) vmCell(tds[5], "", "");   // graphics -> plain accent pill (value only)
+        if (tds[6]) vmIpCell(tds[6]);         // IP addresses -> one copy-pill each
       }
     } catch (e) {}
   }
@@ -186,8 +195,8 @@
           for (var c = td.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) c.style.removeProperty("display"); }
           td.classList.remove("cc-vmb-cell", "cc-vmb-ipcell"); continue;
         }
-        var b = td.querySelector(":scope > span.cc-vmb");
-        if (b) { var k = b.querySelector(".cc-vmb-k"); if (k) b.removeChild(k); while (b.firstChild) td.insertBefore(b.firstChild, b); td.removeChild(b); }
+        var b = td.querySelector(":scope > span.cc-b-info");
+        if (b) { var k = b.querySelector(".cc-b-k"); if (k) b.removeChild(k); var v = b.querySelector(".cc-b-v"); var src = v || b; while (src.firstChild) td.insertBefore(src.firstChild, b); td.removeChild(b); }
         td.classList.remove("cc-vmb-cell");
       }
     } catch (e) {}
@@ -204,20 +213,21 @@
     if (ls("cc.stylevms") === "0" && !ls("ccv.iconcolor") && effK("iconbg") !== "1") return;
     try {
       var f = filterVal(), c = tintColor(), imgs = vmImgs();
-      // Logo-Hintergrund: badge box + monochrome ink flatten, applied INLINE (VMs.page
-      // loads no stylesheet). ibgMono is "" when off, so the tint path below is unchanged.
-      var ibgOn = effK("iconbg") === "1"; var vIcon = effK("iconcolor"); var ibgAcc = (vIcon && /^#[0-9a-f]{6}$/i.test(vIcon)) ? vIcon : ccAccent(); var ibgMono = ibgOn ? ensureMonoFilter("cc-vm-mono-svg", "cc-vm-mono-tint", ibgAcc) : "";
+      var ibgOn = effK("iconbg") === "1"; var vIcon = effK("iconcolor"); var ibgAcc = (vIcon && /^#[0-9a-f]{6}$/i.test(vIcon)) ? vIcon : ccAccent();
+      // Logo-Hintergrund badge box is now drawn by VmTab.css via html.cc-vm-iconbg (mirroring Docker's
+      // cc-docker-iconbg) — the box shape/size/circle live in CSS. We only toggle the class + hand it the
+      // tint colour; the monochrome ink flatten still has to be an INLINE filter on each logo image.
+      var root2 = document.documentElement;
+      root2.classList.toggle("cc-vm-iconbg", ibgOn);
+      if (ibgOn) root2.style.setProperty("--cc-iconbg-color", ibgAcc); else root2.style.removeProperty("--cc-iconbg-color");
+      var ibgMono = ibgOn ? ensureMonoFilter("cc-vm-mono-svg", "cc-vm-mono-tint", ibgAcc) : "";
       for (var i = 0; i < imgs.length; i++) {
         var n = imgs[i];
         if (n.tagName === "IMG") { n.style.filter = ibgMono || f; if (ibgOn) n.style.removeProperty("color"); }
-        // font-glyph: `color` is the reliable exact tint. Set it with PRIORITY — Unraid's
-        // VM CSS colours these glyphs via a class rule, which a plain inline colour can
-        // lose to; `!important` on the inline style wins. The filter is a harmless bonus.
-        // With the badge on, the ink is the accent's ideal text colour (b/w contrast).
+        // font-glyph: `color` is the reliable exact tint. Set it with PRIORITY — Unraid's VM CSS colours
+        // these glyphs via a class rule, which a plain inline colour can lose to; `!important` wins. With
+        // the badge on, the ink is the accent's ideal text colour (b/w contrast).
         else { n.style.setProperty("color", ibgOn ? ccIdeal(ibgAcc) : (c || ""), "important"); n.style.filter = ibgMono || f; }
-        // Wrapper span becomes the accent-filled badge box (or reverts when off).
-        if (ibgOn) { var w = n.parentElement; var vrad = ls("cc.badgeshape") === "circle" ? "50%" : "min(var(--cc-b-radius,14px),16px)"; w.style.setProperty("background", ibgAcc, "important"); w.style.setProperty("border-radius", vrad, "important"); w.style.setProperty("display", "inline-flex", "important"); w.style.setProperty("align-items", "center", "important"); w.style.setProperty("justify-content", "center", "important"); w.style.setProperty("box-sizing", "border-box", "important"); w.style.setProperty("width", "56px", "important"); w.style.setProperty("height", "56px", "important"); w.style.setProperty("padding", "8px", "important"); }
-        else { var w2 = n.parentElement; w2.style.removeProperty("background"); w2.style.removeProperty("border-radius"); w2.style.removeProperty("width"); w2.style.removeProperty("height"); w2.style.removeProperty("padding"); w2.style.removeProperty("display"); w2.style.removeProperty("align-items"); w2.style.removeProperty("justify-content"); w2.style.removeProperty("box-sizing"); }
       }
     } catch (e) {}
   }
@@ -241,6 +251,8 @@
     if (dead) return; dead = true;
     try { if (mo) mo.disconnect(); mo = null; } catch (e) {}
     try { if (liveTimer) clearInterval(liveTimer); liveTimer = null; } catch (e) {}
+    try { document.documentElement.classList.remove("cc-vms-on", "cc-vm-iconbg"); document.documentElement.style.removeProperty("--cc-iconbg-color"); } catch (e) {}
+    try { enhanceCellsTeardown(); } catch (e) {}
     try { var imgs = vmImgs(); for (var i = 0; i < imgs.length; i++) { imgs[i].style.filter = ""; imgs[i].style.removeProperty("color"); var w = imgs[i].parentElement; if (w) { w.style.removeProperty("background"); w.style.removeProperty("border-radius"); w.style.removeProperty("width"); w.style.removeProperty("height"); w.style.removeProperty("padding"); w.style.removeProperty("display"); w.style.removeProperty("align-items"); w.style.removeProperty("justify-content"); w.style.removeProperty("box-sizing"); } } } catch (e) {}
     try { var sv = document.getElementById("cc-vm-tint-svg"); if (sv) sv.remove(); } catch (e) {}
     try { var hh = document.getElementById("cc-vm-mono-svg"); if (hh) hh.remove(); } catch (e) {}

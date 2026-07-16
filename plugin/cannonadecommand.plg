@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.20.2">
+  <!ENTITY version   "2.21.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,22 @@
 </ICON>
 
 <CHANGES>
+### 2.21.0
+1. VM-Tab jetzt exakt im Docker-Tab-Look: das VM-Logo sitzt in einem grossen Akzent-Badge wie das
+   Container-Logo, der Status-Badge nutzt exakt die Docker-Farben (gruen = laeuft, orange = pausiert,
+   grau = gestoppt), und vCPU, RAM, Grafik und die IP-Adressen erscheinen als dieselben Badges wie im
+   Docker-Tab. Der VM-Name ist jetzt -- wie beim Docker-Tab -- fetter Klartext statt einer gefuellten
+   Pille. Ein Fehler, bei dem mehrere IP-Adressen zu einer zusammenliefen (z. B. "24172..."), ist behoben.
+2. Neuer Bereich "Favoriten": der Favoriten-Tab bekommt denselben CC-Look wie die Kacheln in den
+   Einstellungen (Icon in einem Akzent-Badge, Kreis-Form wird beruecksichtigt). In CC Settings gibt es
+   dafuer einen eigenen Abschnitt mit eigener Stil- und Farbwahl.
+3. Start-Tab (Main): die Unterreiter (Array-Geraete, Pool-Geraete, Boot-Geraet, nicht zugewiesene
+   Geraete, Array-Operation) werden jetzt als gestapelte CC-Abschnitte untereinander gezeigt; die
+   Geraeteliste bekommt Wert-Badges und eine eigene Durchsuchen-Spalte.
+4. Neue "Tab-Ansicht"-Umschaltung (CC Settings -> Freigaben): pro Haupttab waehlbar, ob die Unterreiter
+   als gestapelte CC-Abschnitte oder als native Unraid-Unterreiter gezeigt werden. Standard ist die
+   Abschnitts-Ansicht.
+
 ### 2.20.2
 1. VM-Tab weiter an den Docker-Tab angeglichen: der Status-Badge ist jetzt farbig (gruen = gestartet,
    orange = pausiert, grau = gestoppt) statt immer grau -- er las vorher den uebersetzten Text und traf
