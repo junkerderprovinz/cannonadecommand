@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.27.1">
+  <!ENTITY version   "2.27.2">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,20 @@
 </ICON>
 
 <CHANGES>
+### 2.27.2
+#1 Array-Vorgang: Das staendige Hin-und-her-Flippen ist weg -- Unraid baut die Paritaets-Zeilen bei
+   jedem Tick neu auf; die Card VERSCHIEBT die Zeilen deshalb nicht mehr, sondern SPIEGELT nur noch
+   ihre Werte (die Original-Zeilen bleiben unsichtbar an Ort und Stelle und aktualisieren weiter).
+#2 Der Textlauf der Identifikation zeigt jetzt wirklich den fehlenden Text -- der Wert hatte sich
+   selbst abgeschnitten; waehrend des Laufs wird nur noch die Pille als Fenster benutzt.
+#3 Plugin-Tab: Der Aktualisierungen-Button ist jetzt absolut auf der Reiter-Zeile verankert
+   (exakt Pillen-Hoehe, rechts buendig) -- unabhaengig von jedem Leisten-Innenabstand.
+#4 Pool-Liste: Der dunkle Fleck ist weg -- leere Fuellbalken-Spuren in Struktur-Zeilen werden
+   ausgeblendet.
+#5 Unassigned Devices: Der Abstand zum ersten Unterabschnitt ist kompakt.
+#6 Unassigned Devices: Zahnrad und Aktualisieren sind jetzt als Icons gebaut -- die Anker selbst
+   werden gestylt (das Symbol steckt je nach UD-Version direkt im Link), hell mit Akzent beim Hover.
+
 ### 2.27.1
 #1 Plugin-Tab: Der Aktualisierungen-Button sitzt jetzt EXAKT auf der Unterreiter-Zeile -- der native
    Reiter-Streifen (width:100%) hatte die Button-Gruppe aus der Zeile gedraengt.
@@ -880,7 +894,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>eb802da6f8e0edd123114ccb0d45ff66acab2c6714d55fdb3f5783135fde36d1</SHA256>
+  <SHA256>cd017bd16e3675d6531bd8bd39ed9a152efd3fe4609bf51ad0f634dba728afb2</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

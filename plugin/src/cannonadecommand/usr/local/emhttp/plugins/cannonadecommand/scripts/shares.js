@@ -957,6 +957,10 @@
         if (k.tagName === "A" || (k.querySelector && k.querySelector("a, input[type='checkbox'], .switch-button-background"))) wrap.appendChild(k);
       }
       if (!wrap.firstChild) return;
+      // gear + refresh: stamp cc-ud-icon on every NON-switch anchor — the glyph may be the anchor's
+      // OWN text (icon font char, no <i>), so CSS styles the stamped anchor itself version-proof.
+      var as = wrap.querySelectorAll("a");
+      for (var ai = 0; ai < as.length; ai++) { if (!as[ai].closest("[class*='switch']")) as[ai].classList.add("cc-ud-icon"); }
       head.appendChild(wrap); bar.setAttribute("data-cc-ud-moved", "1"); bar.classList.add("cc-ud-moved");
     } catch (e) {}
   }
@@ -1158,39 +1162,29 @@
     while (td.firstChild) v.appendChild(td.firstChild);
     b.appendChild(v); td.appendChild(b); td.classList.add("cc-aop-st");
   }
-  // Parity-check progress rows (label + td#lineN value, live-updated by id) -> an OWN CARD right of
-  // the button column (user: die Daten als eigene Card; die Button-Spalte bleibt unveraendert). The
-  // ROWS are MOVED (ids intact -> nchan/JS updates keep flowing) with a hidden placeholder per row
-  // marking the way home; when the check ends (no td[id^=line] left in the tables) the card retires.
+  // Parity-check progress -> an OWN CARD right of the button column. MIRROR, never move: Unraid
+  // RE-RENDERS these rows on parity ticks — moving them fought the refresh (the constant flip
+  // between inline and card). The native rows stay in place (CSS-hidden via tr:has(td[id^=line]),
+  // ids keep updating invisibly); the card shows synced text copies (guarded writes -> no observer
+  // churn, refresh-proof by construction). Card retires when the check ends.
   function ccAopParityCard(box) {
     try {
       var lines = box.querySelectorAll("table.array_status td[id^='line']");
       var card = box.querySelector(".cc-aop-pcard");
-      if (!lines.length) { if (card) ccAopParityHome(); return; }
-      if (!card) {
-        card = el("div", "cc-aop-pcard"); card.setAttribute("data-cc-aop-pcard", "1");
-        var sec = lines[0].closest("section") || box; sec.appendChild(card);
-      }
+      if (!lines.length) { if (card) card.parentNode.removeChild(card); return; }
+      if (!card) { card = el("div", "cc-aop-pcard"); var sec = lines[0].closest("section") || box; sec.appendChild(card); }
+      var n = 0;
       for (var i = 0; i < lines.length; i++) {
-        var tr = lines[i].closest("tr");
-        if (!tr || tr.getAttribute("data-cc-aop-p")) continue;
-        var ph = el("tr", "cc-aop-ph"); ph.style.display = "none";
-        tr.parentNode.insertBefore(ph, tr);
-        tr.setAttribute("data-cc-aop-p", "1");
-        card.appendChild(tr);
+        var tr = lines[i].closest("tr"); if (!tr) continue;
+        var lab = tr.cells && tr.cells[0] ? (tr.cells[0].textContent || "").trim() : "";
+        var val = (lines[i].textContent || "").trim();
+        var row = card.children[n];
+        if (!row) { row = el("div", "cc-aop-prow"); row.appendChild(el("span", "cc-aop-pl")); row.appendChild(el("span", "cc-aop-pv")); card.appendChild(row); }
+        if (row.firstChild.textContent !== lab) row.firstChild.textContent = lab;
+        if (row.lastChild.textContent !== val) row.lastChild.textContent = val;
+        n++;
       }
-      // NO JS top-measurement: writing style.top per tick against a live-updating layout produced a
-      // feedback loop ("die Seite huepft auf und ab") — the card top is now static CSS.
-    } catch (e) {}
-  }
-  function ccAopParityHome() {
-    try {
-      var card = document.querySelector("#displaybox .cc-aop-pcard"); if (!card) return;
-      var rows = card.querySelectorAll("tr[data-cc-aop-p]");
-      var phs = document.querySelectorAll("#displaybox table.array_status tr.cc-aop-ph");
-      for (var i = 0; i < rows.length && i < phs.length; i++) { phs[i].parentNode.insertBefore(rows[i], phs[i]); rows[i].removeAttribute("data-cc-aop-p"); }
-      for (var p = 0; p < phs.length; p++) if (phs[p].parentNode) phs[p].parentNode.removeChild(phs[p]);
-      card.parentNode.removeChild(card);
+      while (card.children.length > n) card.removeChild(card.lastChild);
     } catch (e) {}
   }
   function enhanceArrayOps(box) {
@@ -1202,7 +1196,7 @@
   }
   function aopTeardown() {
     try {
-      ccAopParityHome();   // FIRST: parity rows back into their table (before any unwinding below)
+      var pc = document.querySelector("#displaybox .cc-aop-pcard"); if (pc) pc.parentNode.removeChild(pc);   // parity card is a pure mirror — just drop it (rows unhide via the class-gated CSS)
       var infos = document.querySelectorAll("#displaybox table.array_status .cc-info");
       for (var i = 0; i < infos.length; i++) infos[i].parentNode.removeChild(infos[i]);
       // moved (Planung)/Wiki link badges -> back into their row's desc cell, original "(...)" text restored
