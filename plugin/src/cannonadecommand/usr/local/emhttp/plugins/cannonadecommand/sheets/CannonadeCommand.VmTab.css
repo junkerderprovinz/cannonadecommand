@@ -18,6 +18,13 @@ html.cc-vms-on:not(.cc-header-on) { --cc-align-left: 10px; }
 html.cc-vms-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 10px); }
 html.cc-vms-on:not(.Theme--sidebar) #displaybox div.title { padding-left: 0; }
 
+/* ═══ sub-tab vertical gap (BUG C): /VMs is NOT covered by the Shares.css 12px gap rule (that one is gated
+   on html.cc-shares-on, which does not ride /VMs), so the sub-tab bar sat too far below the main menu.
+   Mirror it here gated html.cc-vms-on so /VMs gets the SAME menu->sub-tab gap as every other tab. Native
+   /VMs renders #displaybox > nav.tabs directly (MainContentTabbed.php). Sidebar theme excluded. ═══ */
+html.cc-vms-on:not(.Theme--sidebar) #displaybox:has(> nav.tabs) { padding-top: 12px; }
+html.cc-vms-on:not(.Theme--sidebar) #displaybox > nav.tabs { margin-top: 0 !important; }
+
 /* ═══ table -> the Docker row polish: no border lines, subtle header, density padding ═══ */
 html.cc-vms-on #displaybox table.tablesorter { background: none; }
 html.cc-vms-on #displaybox #kvm_list tr.sortable > td { border: none !important; padding-top: var(--cc-density, 9px) !important; padding-bottom: var(--cc-density, 9px) !important; }
@@ -68,20 +75,24 @@ html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand i { color: inherit !import
 html.cc-vms-on #kvm_list td.vm-name { vertical-align: middle; }
 html.cc-vms-on #kvm_list td.vm-name .outer { display: flex; align-items: center; gap: 12px; }
 html.cc-vms-on #kvm_list td.vm-name .outer > span.hand { flex: none; display: flex; align-items: center; justify-content: center; }
-html.cc-vms-on #kvm_list td.vm-name .outer > span.hand img { width: 62px !important; height: 62px !important; object-fit: contain !important; display: block !important; }
-/* NATIVE VM logo nests the icon in an extra span[id^="vm-"] wrapper Docker's row lacks (span.hand > span#vm-… >
-   .img). Collapse it with display:contents so the 62x62 icon becomes span.hand's DIRECT flex child -> the
-   accent box is a PERFECT SQUARE (62 base / 78 with iconbg padding) and the logo is centred, like Docker. */
-html.cc-vms-on #kvm_list td.vm-name .outer > span.hand span[id^="vm-"] { display: contents; }
+/* Ground truth (VMMachines.php): span[id^="vm-"] IS span.hand (same element), and the icon is USUALLY an
+   inline <i class="fa fa-… img"> glyph, not an <img>. So the earlier display:contents on span[id^="vm-"]
+   collapsed the very box the accent square is drawn on (why it did nothing). Fix: the img is a block 62px;
+   the glyph <i> is an explicitly CENTERED flex box (font 44px fits inside the 62px square). */
+html.cc-vms-on #kvm_list td.vm-name .outer > span.hand img { display: block !important; width: 62px !important; height: 62px !important; object-fit: contain !important; margin: 0 !important; }
 html.cc-vms-on #kvm_list td.vm-name .outer > span.hand i.img {
-  width: 62px !important; height: 62px !important; font-size: 62px !important;
-  display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  line-height: 1 !important; text-align: center !important;   /* center the FA glyph in the box + row */
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  width: 62px !important; height: 62px !important; font-size: 44px !important; line-height: 1 !important; text-align: center !important; margin: 0 !important;
 }
+/* iconbg accent box pinned to a FIXED 78x78 square (62 icon + 2*8 pad, border-box) so it is ALWAYS a
+   perfect centred square regardless of whether the child is an <img> or a glyph <i> — instead of shrink-
+   wrapping the child (which made it non-square for glyph VMs). */
 html.cc-vms-on.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand {
+  flex: none !important;
+  width: 78px !important; height: 78px !important; min-width: 78px !important; max-width: 78px !important;
+  padding: 8px !important; box-sizing: border-box !important; overflow: hidden !important;
   background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important;
   border-radius: min(var(--cc-b-radius, 14px), 16px) !important;
-  padding: 8px !important; box-sizing: border-box !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
 }
 html.cc-shape-circle.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand { border-radius: 50% !important; }

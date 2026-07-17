@@ -113,11 +113,12 @@
       rt.setProperty("--cc-rb-" + k, c); rt.setProperty("--cc-rb-" + k + "-t", L > 150 ? "#161616" : "#fff");
     });
   }
-  // ── GRID / CARD view: a DOM-only mirror of Docker's list/grid toggle. vms.js has no engine data model
-  //    (it enhances the native table in place), so instead of building card DOM we reflow the native
-  //    #kvm_list into cards via CSS (html.cc-vmgrid) — every native cell + our badges stay live/clickable.
-  //    Storage key cc.vmview; grid is a THEMING view (list when theming off). el() is hoisted (defined below).
-  function currentView() { return (ls(VMVIEW_KEY) === "grid" && ls("cc.theming") !== "0") ? "grid" : "list"; }
+  // ── GRID / CARD view — DISABLED (v2.23.1). The CSS-only reflow (html.cc-vmgrid) of Unraid's LIVE
+  //    jQuery-tablesorter + jQuery-UI-sortable table overlapped badly (drag/sort machinery + stray
+  //    non-.sortable rows fight the reflow). vms.js has no engine data model to emit real card DOM, so a
+  //    robust grid needs a purpose-built card view (a follow-up), not a CSS patch. Until then force LIST:
+  //    currentView() always returns "list" and ensureViewToggle() is a no-op, so cc-vmgrid is never set.
+  function currentView() { return "list"; }
   function applyView() {
     document.documentElement.classList.toggle("cc-vmgrid", currentView() === "grid");
     var tg = document.getElementById("cc-vm-viewtoggle"); if (!tg) return;
@@ -125,22 +126,10 @@
     if (b[0]) b[0].classList.toggle("cc-seg-on", !g); if (b[1]) b[1].classList.toggle("cc-seg-on", g);
   }
   function ensureViewToggle() {
-    if (document.getElementById("cc-vm-viewtoggle")) return;
-    // Home the List/Grid toggle ON the /VMs sub-tab row (nav.tabs .tabs-container), right-aligned + same
-    // height as the tabs — mirroring Docker, whose global controls live in nav.tabs .tabs-container. The
-    // old bordered .cc-vm-toolbar bar above the table is gone; CSS right-aligns via margin-left:auto.
-    var box = document.getElementById("displaybox");
-    var nav = box && box.querySelector("nav.tabs");
-    var tabsC = (nav && nav.querySelector(".tabs-container")) || nav;
-    if (!tabsC) return;
-    var de = LANG === "de";
-    var seg = el("div", "cc-seg cc-vm-viewseg"); seg.id = "cc-vm-viewtoggle";
-    var bL = el("button", "cc-seg-btn", de ? "Liste" : "List"); bL.type = "button";
-    var bG = el("button", "cc-seg-btn", de ? "Raster" : "Grid"); bG.type = "button";
-    bL.addEventListener("click", function () { try { localStorage.setItem(VMVIEW_KEY, "list"); } catch (e) {} applyView(); });
-    bG.addEventListener("click", function () { try { localStorage.setItem(VMVIEW_KEY, "grid"); } catch (e) {} applyView(); });
-    seg.appendChild(bL); seg.appendChild(bG);
-    tabsC.appendChild(seg);
+    // Grid view DISABLED (see currentView): do NOT inject the List/Grid toggle, and remove any stale one
+    // (e.g. left over from a v2.23.0 session) so no broken grid or dangling control remains.
+    var ex = document.getElementById("cc-vm-viewtoggle");
+    if (ex) { var eb = ex.closest(".cc-vm-toolbar") || ex; if (eb.parentNode) eb.parentNode.removeChild(eb); }
   }
   // ── Tab-Ansicht: flatten the /VMs sub-tabs ("Virtual Machines" #kvm_list + "VM Usage Statistics"
   //    #vmstats) into stacked CC sections. Same MainContentTabbed DOM as /Shares/Share + /Main. Prepend a
@@ -281,7 +270,8 @@
     var path = location.pathname; var xi = path.indexOf("?"); if (xi !== -1) path = path.substring(0, xi);
     var bar = el("div", "cc-actbar");
     var r1 = el("div", "cc-actrow");
-    r1.appendChild((cx.webui && running) ? actBtn("fa-globe", "WebUI", function () { if (typeof window.ajaxVMDispatchWebUI === "function") window.ajaxVMDispatchWebUI({ action: "domain-openWebUI", uuid: uuid, vmrcurl: cx.webui }, "loadlist"); }) : actBtnOff("fa-globe", de ? "kein WebUI" : "no WebUI"));
+    // Primary icon = VNC/VM console (user: replace the Docker "WebUI" globe with the VNC console). Opens vmrcurl.
+    r1.appendChild((cx.vmrcurl && running) ? actBtn("fa-desktop", (de ? "VNC-Konsole" : "VNC Console") + (cx.proto ? " (" + cx.proto + ")" : ""), function () { window.open(cx.vmrcurl, "_blank", "scrollbars=yes,resizable=yes"); }) : actBtnOff("fa-desktop", de ? "keine Konsole" : "no console"));
     r1.appendChild((cx.log && typeof window.openTerminal === "function") ? actBtn("fa-navicon", "Log", function () { window.openTerminal("log", name, cx.log); }) : actBtnOff("fa-navicon", "Log"));
     r1.appendChild(actBtn("fa-pencil", de ? "Bearbeiten" : "Edit", function () { location.href = path + "/UpdateVM?uuid=" + uuid; }));
     var r2 = el("div", "cc-actrow");
@@ -306,17 +296,28 @@
     tintAct(bar);
     return { bar: bar, more: more, sig: st + "|" + cx.webui + "|" + cx.vmrcurl + "|" + cx.log + "|" + uuid };
   }
-  function injectVmActionCell(tr) {
+  function injectVmActionCell(tr, nameTd) {
     try {
       var de = LANG === "de";
+      nameTd = nameTd || tr.querySelector(":scope > td.vm-name");
       var head = document.querySelector("#kvm_table thead tr");
-      if (head && !head.querySelector(".cc-act-th")) { var th = el("th", "cc-act-th", de ? "Aktionen" : "Actions"); head.insertBefore(th, head.children[1] || null); }
-      var ab = vmActionBars(tr);
+      // Header Actions TH inserted ONCE, right after the Name th. It MUST stay in lockstep with the row TD
+      // below: thead is a SEPARATE block that survives #kvm_list AJAX re-renders, so if any row lacks its
+      // Actions TD while this TH exists, that row renders one column short (CPU+RAM badge lands under
+      // "Beschreibung" — the reported shift).
+      if (head && !head.querySelector(".cc-act-th")) {
+        var nameTh = head.querySelector("th.th1") || head.children[0];
+        var th = el("th", "cc-act-th", de ? "Aktionen" : "Actions");
+        head.insertBefore(th, nameTh ? nameTh.nextSibling : head.firstChild);
+      }
       var old = tr.querySelector(":scope > td.cc-actcell");
-      if (old) { if (old.getAttribute("data-cc-sig") === ab.sig) return; old.remove(); } // rebuild only when state/context changed
-      var td = el("td", "cc-actcell"); td.setAttribute("data-cc-sig", ab.sig);
-      td.appendChild(ab.bar); td.appendChild(ab.more);
-      tr.insertBefore(td, tr.children[1] || null);
+      var ab = null;
+      try { ab = vmActionBars(tr); } catch (e) { ab = null; }              // per-row failure must NOT skip the TD
+      if (old) { if (ab && old.getAttribute("data-cc-sig") === ab.sig) return; old.remove(); } // rebuild only on change
+      var td = el("td", "cc-actcell");
+      if (ab) { td.setAttribute("data-cc-sig", ab.sig); td.appendChild(ab.bar); td.appendChild(ab.more); }
+      // ALWAYS insert the TD (even empty) so header-TH / body-TD column counts can never diverge -> no shift.
+      tr.insertBefore(td, nameTd ? nameTd.nextSibling : (tr.children[1] || null));
     } catch (e) {}
   }
   function vmCell(td, label, kind) {
@@ -429,15 +430,26 @@
     try {
       var rows = document.querySelectorAll("#kvm_list tr.sortable");
       for (var i = 0; i < rows.length; i++) {
-        var tds = rows[i].querySelectorAll(":scope > td");
-        // native column order: 0 vm-name, 1 desc, 2 vCPU, 3 RAM, 4 disks, 5 graphics, 6 ip, 7 autostart.
-        // tds is a static snapshot; injectVmActionCell inserts the Actions column LAST so indices stay native.
-        if (tds[1]) vmCell(tds[1], "", "");            // description -> plain accent pill
-        if (tds[2]) vmResCell(tds[2], tds[3]);         // CPU + RAM merged into ONE stacked column (Docker .cc-resgroup)
-        if (tds[5]) vmCell(tds[5], "", "");            // graphics -> plain accent pill
-        if (tds[6]) vmIpCell(tds[6]);                  // IP addresses -> one copy-pill each
-        if (tds[4]) vmDiskCell(tds[4]);                // disks -> vDisks/CD/Snapshots badges (keeps the ISO-picker link)
-        injectVmActionCell(rows[i]);                   // LAST: inserts the Actions <td> AFTER tds[] captured above
+        var row = rows[i];
+        // CONTENT-ANCHORED cell lookup (ground truth: dynamix.vm.manager VMMachines.php L217-229). Fixed
+        // tds[] indices are fragile (a row transiently missing its injected Actions TD shifts everything);
+        // anchor every cell by class/content so it always maps to the right column, description or not.
+        var nameTd = row.querySelector(":scope > td.vm-name");
+        var vcpuA = row.querySelector(":scope > td a[class*='vcpu-']");   // <a class='vcpu-$uuid'> (L224)
+        var cpuTd = vcpuA ? vcpuA.closest("td") : null;
+        var ramTd = cpuTd ? cpuTd.nextElementSibling : null;             // $mem cell (L225)
+        var descTd = null;                                               // the cell before vCPU, unless it's name/Actions
+        if (cpuTd) { var p = cpuTd.previousElementSibling; if (p && !p.classList.contains("vm-name") && !p.classList.contains("cc-actcell")) descTd = p; }
+        var diskSpan = row.querySelector(":scope > td > span.state");    // vm-name's span.state is nested -> never matches (L226)
+        var diskTd = diskSpan ? diskSpan.parentNode : null;
+        var vg = row.querySelectorAll(":scope > td > span.vmgraphics");  // graphics (L227) then ip (L228), document order
+        var graphicsTd = vg[0] ? vg[0].parentNode : null, ipTd = vg[1] ? vg[1].parentNode : null;
+        if (descTd) vmCell(descTd, "", "");            // description -> plain accent pill (self-skips when empty)
+        if (cpuTd) vmResCell(cpuTd, ramTd);            // CPU + RAM merged into ONE stacked column
+        if (graphicsTd) vmCell(graphicsTd, "", "");    // graphics -> plain accent pill
+        if (ipTd) vmIpCell(ipTd);                      // IP addresses -> one copy-pill each
+        if (diskTd) vmDiskCell(diskTd);                // disks -> vDisks/CD/Snapshots badges
+        injectVmActionCell(row, nameTd);               // LAST: always inserts the Actions <td> right after td.vm-name
       }
     } catch (e) {}
   }

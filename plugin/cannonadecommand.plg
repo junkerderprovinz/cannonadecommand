@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.23.0">
+  <!ENTITY version   "2.23.1">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,21 @@
 </ICON>
 
 <CHANGES>
+### 2.23.1
+1. VM-Tab: Bei VMs OHNE Beschreibung verschob sich die Zeile um eine Spalte (CPU/RAM landete unter
+   "Beschreibung"). Ursache war nicht die Beschreibung (die wird immer als Zelle ausgegeben), sondern die
+   Aktions-Spalte: der Spalten-Kopf ueberlebt Unraids Sekunden-Refresh, die Zellen nicht -- eine Zeile ohne
+   ihre Aktions-Zelle war dann eine Spalte zu kurz. Jetzt bekommt JEDE Zeile immer eine Aktions-Zelle, und die
+   Zell-Zuordnung erfolgt inhaltsbasiert (robust gegen jede Spalten-Verschiebung).
+2. Logo-Hintergrund ist jetzt wirklich ein exaktes Quadrat mit zentriertem Logo. Der vorige Versuch traf die
+   falsche Ebene (der Wrapper IST das Hintergrund-Element); jetzt feste 78x78-Box + Glyph mittig.
+3. Das erste Aktions-Icon ist jetzt die VNC-Konsole (statt WebUI).
+4. Die Unterreiter im VM-Tab sassen zu weit unten -- jetzt gleicher Abstand zur Menueleiste wie in den
+   anderen Tabs.
+5. Rasteransicht (Grid) im VM-Tab vorerst DEAKTIVIERT: der CSS-Umbau der nativen, live-sortierbaren Tabelle
+   fuehrte zu ueberlagerten Karten. Eine saubere Kartenansicht kommt als eigenes Feature; bis dahin bleibt die
+   zuverlaessige Listenansicht.
+
 ### 2.23.0
 1. VM-Tab jetzt Docker-identisch (Code 1:1 aus dem Docker-Tab uebernommen): Die Aktions-Spalte enthaelt
    jetzt ALLE Aktions-Icons wie im Docker-Tab (WebUI, Log, Bearbeiten, Neustart, Pause/Fortsetzen,
@@ -692,7 +707,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>a91bcb6d04d7f0df3888766aa8ce4a8f3ca48c0219fc3a4b03d7bcc293e92963</SHA256>
+  <SHA256>b00e92adc1793acbf30baf342e05ee93eb47c258a410e31e418cbaa88db83dbe</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
