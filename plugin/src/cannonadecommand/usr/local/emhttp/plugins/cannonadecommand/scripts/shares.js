@@ -762,6 +762,15 @@
       if (tr.classList.contains("pool_header")) {
         var pnl = first.querySelector('a[href*="/Main/Device?name="], a[href*="/Main/Boot?name="]');
         if (pnl && !pnl.classList.contains("cc-b-name")) { pnl.classList.add("cc-b"); pnl.classList.add("cc-b-name"); }
+        // the pool header's OWN browse link (the bare external-link glyph left of the pool name) ->
+        // the same Durchsuchen badge as the data rows, lifted into the inserted Browse cell
+        var pbt = tr.children[1], pview = first.querySelector("a.view");
+        if (pview && pview.getAttribute("href") && pbt && pbt.classList.contains("cc-browse-col") && !pbt.firstChild) {
+          pview.classList.add("cc-b-browse");
+          var pic = pview.querySelector("i"); if (pic) pic.parentNode.removeChild(pic);
+          if (!pview.querySelector(".cc-b-lab")) pview.appendChild(el("span", "cc-b-lab", t("browse")));
+          pbt.appendChild(pview);
+        }
         var pc = tr.children;
         for (var p = 1; p < pc.length; p++) mainBadgeCell(pc[p]);
       }

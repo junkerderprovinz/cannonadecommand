@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.27.2">
+  <!ENTITY version   "2.27.3">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,10 @@
 </ICON>
 
 <CHANGES>
+### 2.27.3
+#1 Pool-Datentraeger: Das nackte Durchsuchen-Symbol der Pool-Kopfzeilen (Cache/Fastcache) ist jetzt
+   ein richtiges Durchsuchen-Badge in der Durchsuchen-Spalte, wie bei den Datenzeilen.
+
 ### 2.27.2
 #1 Array-Vorgang: Das staendige Hin-und-her-Flippen ist weg -- Unraid baut die Paritaets-Zeilen bei
    jedem Tick neu auf; die Card VERSCHIEBT die Zeilen deshalb nicht mehr, sondern SPIEGELT nur noch
@@ -894,7 +898,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>cd017bd16e3675d6531bd8bd39ed9a152efd3fe4609bf51ad0f634dba728afb2</SHA256>
+  <SHA256>507171db80487d7556ef6cb6e42ba6b4d0ba9be2b03e076d5aef311696d13d96</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
