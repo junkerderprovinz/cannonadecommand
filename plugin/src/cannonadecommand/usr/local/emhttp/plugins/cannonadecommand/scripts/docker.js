@@ -1708,20 +1708,34 @@
       var hasUp = (st.qdisc || "").indexOf("tbf") >= 0, hasDn = (st.filter || "").indexOf("hashlimit") >= 0;
       var cur2 = bandwidthFor(name);
       var wantUp = !!(cur2 && cur2.egress_kbit > 0), wantDn = !!(cur2 && cur2.ingress_kbit > 0);
-      var line = "iface " + (st.iface || "eth0") + " · ↑ tbf " + (hasUp ? (LANG === "de" ? "AKTIV" : "ACTIVE") : (LANG === "de" ? "FEHLT" : "MISSING")) + " · ↓ policing " + (hasDn ? (LANG === "de" ? "AKTIV" : "ACTIVE") : (LANG === "de" ? "FEHLT" : "MISSING"));
-      if (st.last_apply) line += " · Apply " + st.last_apply;
-      if (!wantUp && !wantDn) {
-        if (hasUp || hasDn) popError(new Error((LANG === "de" ? "entfernt, Regel noch aktiv — wird gleich geräumt · " : "removed, rule still active — clearing shortly · ") + line));
-        else popClearError(); // nothing configured -> no message at all (user call)
-        return;
-      }
-      if ((wantUp && !hasUp) || (wantDn && !hasDn)) {
-        popError(new Error((LANG === "de" ? "Limit greift NICHT · " : "limit NOT active · ") + line + " · " + (st.qdisc || "") + " " + (st.filter || "")));
-      } else {
-        popOk("✓ " + line + (st.filter && st.filter.indexOf("-A") >= 0 ? " · " + st.filter.split("\n").filter(function (l2) { return l2.indexOf("hashlimit") >= 0; }).join(" ") : ""));
-      }
+      var base = "iface " + (st.iface || "eth0") + (st.last_apply ? " · Apply " + st.last_apply : "");
+      // status per FIELD (user): a round green-check / red-cross dot behind Upload and Download,
+      // the full diagnosis in its hover bubble — no loose status box in the window anymore.
+      var rows = pop.querySelectorAll(".cc-pop-body > .cc-pop-row"), rUp = rows[0], rDn = rows[1];
+      var A = LANG === "de" ? "AKTIV" : "ACTIVE", M = LANG === "de" ? "FEHLT" : "MISSING";
+      var hl = st.filter && st.filter.indexOf("hashlimit") >= 0 ? st.filter.split("\n").filter(function (l2) { return l2.indexOf("hashlimit") >= 0; }).join(" ") : "";
+      popClearError();
+      if (wantUp) statDot(rUp, hasUp, "↑ tbf " + (hasUp ? A : M) + " · " + base + (st.qdisc ? " · " + st.qdisc : ""));
+      else if (hasUp) statDot(rUp, false, (LANG === "de" ? "entfernt, Regel noch aktiv — wird gleich geräumt · " : "removed, rule still active — clearing shortly · ") + base);
+      else statClear(rUp);
+      if (wantDn) statDot(rDn, hasDn, "↓ policing " + (hasDn ? A : M) + " · " + base + (hl ? " · " + hl : ""));
+      else if (hasDn) statDot(rDn, false, (LANG === "de" ? "entfernt, Regel noch aktiv — wird gleich geräumt · " : "removed, rule still active — clearing shortly · ") + base);
+      else statClear(rDn);
     }).catch(function () {});
   }
+  // Round apply-status dot BEHIND a field (user): green check = verified applied, red cross =
+  // failed; the detail text opens on hover exactly like the ⓘ info bubbles. One dot per row,
+  // replaced in place on every re-check.
+  function statDot(row, ok, text) {
+    if (!row) return;
+    var d = row.querySelector(":scope > .cc-stat");
+    if (!d) { d = el("span", "cc-stat"); row.appendChild(d); }
+    d.className = "cc-stat " + (ok ? "cc-stat-ok" : "cc-stat-bad");
+    d.textContent = ok ? "✓" : "✕";
+    d.appendChild(el("span", "cc-tip", text || ""));
+    return d;
+  }
+  function statClear(row) { var d = row && row.querySelector(":scope > .cc-stat"); if (d) d.remove(); }
   // Show the EXACT backend/Docker rejection INSIDE the open popup and keep it there (a
   // 2.6s toast is unreadable) so the user can read back why `docker update` refused — the
   // only way to diagnose a set/remove failure once a stale install is ruled out. Also logs it.
@@ -1759,7 +1773,7 @@
         // should exist within moments — show the proof (or failure) right here
         var pop0 = openPop;
         if (pop0) {
-          popOk(LANG === "de" ? "gespeichert — wende an…" : "saved — applying…");
+          flash(LANG === "de" ? "gespeichert — wende an…" : "saved — applying…");   // transient note as toast; the per-field dots carry the verified result
           setTimeout(function () { if (openPop === pop0) checkBwStatus(pop0, name); }, 1600);
           setTimeout(function () { if (openPop === pop0) checkBwStatus(pop0, name); }, 5000);
         }
@@ -1842,34 +1856,36 @@
           // The engine now VERIFIES the change by re-reading the live caps and returns
           // them — show the confirmed values in green so "did it apply?" is answered
           // right in the editor, then close.
-          var msg = "✓ " + (LANG === "de" ? "Angewendet" : "Applied");
+          // per-FIELD result (user): a round green-check dot behind the field, the verified
+          // values in its hover bubble — no loose green status box, and the window STAYS OPEN
+          // so the dot can actually be hovered.
+          var tmpl = resp && resp.template ? " · " + resp.template : "";
           if (resp && resp.after_mem != null) {
-            msg += " · RAM " + humanBytes(resp.after_mem);
-            if (resp.after_nano > 0) msg += " · CPU " + (Math.round(resp.after_nano / 1e7) / 100);
-            if (resp.after_cpuset) msg += " · " + resp.after_cpuset;
+            if (showRam && mrow) statDot(mrow, true, "RAM " + humanBytes(resp.after_mem) + tmpl);
+            if (showCpu && crow) statDot(crow, true, "CPU " + (resp.after_nano > 0 ? (Math.round(resp.after_nano / 1e7) / 100) : "∞") + (resp.after_cpuset ? " · " + resp.after_cpuset : "") + tmpl);
             // Seed the cache with the docker-VERIFIED values so an immediate reopen
             // prefills instantly — the bulk re-inspect below can take seconds.
             limits[name] = { mem_bytes: resp.after_mem, nano_cpus: resp.after_nano || 0, cpuset_cpus: resp.after_cpuset || "" };
             cur = limits[name]; curLoaded = true;
           } else {
             // NO verified values in the reply = the tell that either the verify read
-            // failed or the box daemon predates it — say so instead of a bare tick.
-            // FORENSIC: show the RAW reply + where it came from — a v0.34 engine always
-            // sends after_*+template, so a bare reply means something in between answered.
-            msg += " · " + (LANG === "de" ? "Rücklese fehlt" : "verify read missing") + " · raw=" + JSON.stringify(resp);
+            // failed or the box daemon predates it — red dot with the RAW reply as forensics.
+            var fmsg = (LANG === "de" ? "Rücklese fehlt" : "verify read missing") + " · raw=" + JSON.stringify(resp) + tmpl;
+            if (showRam && mrow) statDot(mrow, false, fmsg);
+            if (showCpu && crow) statDot(crow, false, fmsg);
           }
-          if (resp && resp.template) msg += " · " + resp.template; // ALWAYS show the template-mirror verdict (ok AND failed)
-          popOk(msg); flash(t("done")); return loadLimits();
+          flash(t("done")); return loadLimits();
         })
         .then(function () {
           if (mode === "list") reinjectRowBadges(); else renderGrid();
-          // Close ONLY this editor instance: capture the closure's OWN popup node — NOT
-          // openPop at schedule time, which (this .then runs after the slow bulk sweep)
-          // can already be a popup the user REOPENED, and the timer would kill it
-          // (reproduced headless: "TIMER1800 FIRED → reopened popup removed").
-          setTimeout(function () { if (openPop === pop) closePop(); }, 1800);
+          // NO auto-close anymore: the result dot lives in the window; the user closes via ✕.
         })
-        .catch(function (e) { popError(e); });
+        .catch(function (e) {
+          var em = (e && e.message) ? e.message : String(e);
+          if (showRam && mrow) statDot(mrow, false, em);
+          if (showCpu && crow) statDot(crow, false, em);
+          try { console.error("CannonadeCommand:", e); } catch (_) {}
+        });
     }
     var srow = el("div", "cc-pop-row cc-pop-act");
     // "remove" is an explicit flag, NOT a client-computed value: the engine sets the

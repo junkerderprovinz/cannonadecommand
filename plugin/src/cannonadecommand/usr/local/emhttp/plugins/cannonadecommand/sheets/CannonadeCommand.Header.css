@@ -26,9 +26,17 @@
   --cc-md-fs: 13px; --cc-md-h: 30px; --cc-md-pad: 0 20px; --cc-md-icon: 14px; --cc-md-ibox: var(--cc-md-h, 30px);
 }
 
-/* ═══ left page tabs -> badges ═══ */
+/* ═══ page tabs -> badges. Selectors are TILE-AGNOSTIC (v2.30.0 merged drag zone: any item may
+   live in either tile and must keep its own look there). ═══ */
 html.cc-header-on #menu .nav-tile:not(.right) { padding-left: 12px; } /* breathing room before the first badge */
-html.cc-header-on #menu .nav-tile:not(.right) .nav-item > a {
+/* EXACT alignment (user: Tabs + Icons + Füllstandsanzeige exakt gleiche Höhe + horizontal bündig):
+   both tiles are centered flex rows and every participant self-centres on the ONE --cc-md-h line. */
+html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile { display: flex !important; align-items: center !important; }
+html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile > .nav-item {
+  display: inline-flex !important; align-items: center !important; align-self: center !important;
+  float: none !important; margin-top: 0 !important; margin-bottom: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important;
+}
+html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a {
   display: inline-flex !important; align-items: center; justify-content: center;
   line-height: 1; height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-pad, 0 20px) !important; margin: 0 3px; /* same metrics as the CC settings tabs */
   border-radius: var(--cc-b-radius, 999px) !important;
@@ -36,35 +44,35 @@ html.cc-header-on #menu .nav-tile:not(.right) .nav-item > a {
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important;
   transition: filter .12s, background .12s, color .12s;
 }
-html.cc-header-on #menu .nav-tile:not(.right) .nav-item:hover > a { filter: brightness(1.14); }
-html.cc-header-on #menu .nav-tile:not(.right) .nav-item.active > a {
+html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search):hover > a { filter: brightness(1.14); }
+html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search).active > a {
   background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important;
 }
 /* rainbow: every page tab wears its own palette colour (inline by paintNav); ring the ACTIVE one so the
    current page stays obvious once all tabs are coloured. cc-header-rb is already toggled by header.js. */
-html.cc-header-on.cc-header-rb #menu .nav-tile:not(.right) .nav-item.active > a {
+html.cc-header-on.cc-header-rb #menu .nav-tile .nav-item.active > a {
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .45) !important;
 }
 /* ═══ rainbow "active only" sub-mode (cc.rbmode=active -> html.cc-header-rbneutral): idle badges stay
    neutral grey, the ACTIVE left tab keeps its paintNav-painted colour, and every badge colours on hover
    using the per-item --cc-rb-c/--cc-rb-ct vars paintNav stamps. The idle LEFT tabs are already grey
    (base rule); only the accent-filled util icons + usage meter need overriding to neutral. */
-html.cc-header-on.cc-header-rbneutral #menu .nav-tile.right .nav-item.util > a,
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util > a,
 html.cc-header-on.cc-header-rbneutral #menu .usage-bar > span { background: rgba(128, 128, 128, .18) !important; }
-html.cc-header-on.cc-header-rbneutral #menu .nav-tile.right .nav-item.util b.system,
-html.cc-header-on.cc-header-rbneutral #menu .nav-tile.right .nav-item.util img.system { color: #cfcfcf !important; }
-html.cc-header-on.cc-header-rbneutral #menu .nav-tile:not(.right) .nav-item:not(.active) > a:hover,
-html.cc-header-on.cc-header-rbneutral #menu .nav-tile.right .nav-item.util > a:hover,
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util b.system,
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util img.system { color: #cfcfcf !important; }
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item:not(.util):not(.active) > a:hover,
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util > a:hover,
 html.cc-header-on.cc-header-rbneutral #menu .usage-bar > span:hover {
   background: var(--cc-rb-c, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)) !important;
 }
-html.cc-header-on.cc-header-rbneutral #menu .nav-tile.right .nav-item.util > a:hover b.system,
-html.cc-header-on.cc-header-rbneutral #menu .nav-tile.right .nav-item.util > a:hover img.system { color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)) !important; }
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util > a:hover b.system,
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util > a:hover img.system { color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)) !important; }
 /* the underline accent is redundant now that the tab itself is a badge */
 html.cc-header-on #menu .nav-item:after, html.cc-header-on #menu .nav-user.show:after { display: none !important; }
 
-/* ═══ right-side utility icons -> accent-filled boxes, black/white glyph ═══ */
-html.cc-header-on #menu .nav-tile.right .nav-item.util > a {
+/* ═══ utility icons -> accent-filled boxes, black/white glyph (tile-agnostic) ═══ */
+html.cc-header-on #menu .nav-tile .nav-item.util > a {
   display: inline-flex !important; align-items: center; justify-content: center;
   box-sizing: border-box !important; flex: 0 0 auto;
   width: var(--cc-md-ibox, 26px) !important; height: var(--cc-md-ibox, 26px) !important; padding: 0 !important; margin: 0 3px;
@@ -74,16 +82,16 @@ html.cc-header-on #menu .nav-tile.right .nav-item.util > a {
   background: var(--cc-hdr-accent, #2f6feb) !important;
   transition: filter .12s;
 }
-html.cc-header-on #menu .nav-tile.right .nav-item.util > a:hover { filter: brightness(1.14); }
-html.cc-header-on #menu .nav-tile.right .nav-item.util > a span { display: none !important; }
-html.cc-header-on #menu .nav-tile.right .nav-item.util b.system,
-html.cc-header-on #menu .nav-tile.right .nav-item.util img.system {
+html.cc-header-on #menu .nav-tile .nav-item.util > a:hover { filter: brightness(1.14); }
+html.cc-header-on #menu .nav-tile .nav-item.util > a span { display: none !important; }
+html.cc-header-on #menu .nav-tile .nav-item.util b.system,
+html.cc-header-on #menu .nav-tile .nav-item.util img.system {
   font-size: var(--cc-md-icon, 15px) !important; line-height: 1 !important;
   padding: 0 !important; margin: 0 !important; color: var(--cc-hdr-accent-text, #fff) !important;
 }
 /* raster glyphs (img.system) ignore font-size — pin them to the icon token so they
    scale to the box exactly like the icon-font glyphs, instead of rendering natural size */
-html.cc-header-on #menu .nav-tile.right .nav-item.util img.system {
+html.cc-header-on #menu .nav-tile .nav-item.util img.system {
   width: var(--cc-md-icon, 15px) !important; height: var(--cc-md-icon, 15px) !important;
   object-fit: contain !important;
 }
@@ -147,7 +155,7 @@ html.cc-header-on #menu .usage-bar > span {
 
 /* Badge-Form "circle" (v2.18.0): round the SQUARE utility icon boxes to full circles. Only square/
    near-square objects get this — rectangular text pills stay capsules (--cc-b-radius 999px). */
-html.cc-shape-circle.cc-header-on #menu .nav-tile.right .nav-item.util > a { border-radius: 50% !important; }
+html.cc-shape-circle.cc-header-on #menu .nav-tile .nav-item.util > a { border-radius: 50% !important; }
 
 /* Drag-and-drop menu-tab ordering (v2.24.1): the cursor stays the NORMAL link pointer on hover — no grab
    hand. Draggability is armed by a press-and-HOLD (~450ms, in header.js): the bar enters reorder mode and

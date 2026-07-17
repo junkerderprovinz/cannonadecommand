@@ -903,7 +903,7 @@
     var ov = v.scrollWidth - b.clientWidth + 24;
     if (ov <= 6) return;
     var dur = Math.min(8, Math.max(2, ov / 60));
-    ccMarqRun = { ov: ov, dur: dur, t0: Date.now() };
+    ccMarqRun = { ov: ov, dur: dur, t0: Date.now(), key: (v.textContent || "").trim() };   // key = the value text: identifies "the same pill" across node swaps
     b.setAttribute("data-cc-marq", "1");
     v.style.transition = "transform " + dur + "s linear";
     v.style.transform = "translateX(-" + ov + "px)";
@@ -918,6 +918,7 @@
     if (!b) { ccMarqRun = null; return; }                        // pointer left while the node was swapped
     if (b.getAttribute("data-cc-marq") === "1") return;          // node survived this tick — animation intact
     var v = b.querySelector(":scope > .cc-b-v"); if (!v) return;
+    if ((v.textContent || "").trim() !== ccMarqRun.key) { ccMarqRun = null; return; }   // different pill under the pointer — not our run
     var p = Math.min(1, (Date.now() - ccMarqRun.t0) / (ccMarqRun.dur * 1000));
     b.setAttribute("data-cc-marq", "1");
     v.style.transition = "none";
@@ -934,6 +935,12 @@
     host.addEventListener("mouseover", function (e) {
       var b = e.target && e.target.closest ? e.target.closest("table.unraid.disk_status td.desc .cc-b") : null;
       if (!b || b.getAttribute("data-cc-marq") === "1") return;
+      // THE STUTTER (user: "huepfen und springen zurueck, laufen nie durch"): when the refill swaps
+      // the node under the pointer, the browser re-fires mouseover on the NEW node — starting fresh
+      // reset t0 every second, so the slide restarted forever. Same pill still running => RESUME at
+      // the interpolated point instead.
+      var v0 = b.querySelector(":scope > .cc-b-v");
+      if (ccMarqRun && v0 && (v0.textContent || "").trim() === ccMarqRun.key) { ccMarqResume(); return; }
       ccMarqStart(b);
     });
     host.addEventListener("mouseout", function (e) {
@@ -1035,10 +1042,16 @@
         if (k.tagName === "A" || (k.querySelector && k.querySelector("a, input[type='checkbox'], .switch-button-background"))) wrap.appendChild(k);
       }
       if (!wrap.firstChild) return;
-      // gear + refresh: stamp cc-ud-icon on every NON-switch anchor — the glyph may be the anchor's
-      // OWN text (icon font char, no <i>), so CSS styles the stamped anchor itself version-proof.
+      // gear + refresh: stamp cc-ud-icon on every NON-switch anchor WITH content — the glyph may be
+      // the anchor's OWN text (icon font char, no <i>). EMPTY anchors (each toggle span carries an
+      // empty a.tooltip) must NOT be stamped: the v2.29 tile recipe turned them into blank accent
+      // squares between every toggle and its label ("durch die icons hat sich vieles verschoben").
       var as = wrap.querySelectorAll("a");
-      for (var ai = 0; ai < as.length; ai++) { if (!as[ai].closest("[class*='switch']")) as[ai].classList.add("cc-ud-icon"); }
+      for (var ai = 0; ai < as.length; ai++) {
+        var aEl = as[ai], hasGlyph = !!((aEl.textContent || "").trim() || aEl.querySelector("i, img, span, svg, b"));
+        if (!aEl.closest("[class*='switch']") && hasGlyph) aEl.classList.add("cc-ud-icon");
+        else aEl.classList.remove("cc-ud-icon");   // heal stamps from earlier versions (title bar is static markup)
+      }
       head.appendChild(wrap); bar.setAttribute("data-cc-ud-moved", "1"); bar.classList.add("cc-ud-moved");
     } catch (e) {}
   }

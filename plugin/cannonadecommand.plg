@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.29.0">
+  <!ENTITY version   "2.30.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,33 @@
 </ICON>
 
 <CHANGES>
+### 2.30.0
+#1 Plugin-Tab: Der Aktualisierungen-Button wird jetzt per JS-INLINE-Styles (Prioritaet important)
+   auf der Unterreiter-Zeile verankert -- kein Stylesheet kann das mehr ueberstimmen. Zusaetzlich
+   MISST das Script die echte Geometrie und pinnt die Gruppe notfalls absolut auf die Pillen-Mitte.
+#2 Lauftexte: Das Huepfen/Zurueckspringen ist gefixt -- beim Sekunden-Refresh feuerte der Browser
+   mouseover auf dem neuen Knoten und STARTETE den Lauf jede Sekunde neu; jetzt wird derselbe Text
+   erkannt und nahtlos an der interpolierten Position fortgesetzt, bis zum Ende.
+#3 Array-Vorgang: Reaktive Buttons leuchten beim Ueberfahren auf -- ausgegraute nie.
+#4 Die Paritaetspruefungs-Card ist schmaler (560px-Kappe statt bis zum rechten Rand).
+#5 Die leeren orangen Kacheln zwischen den UD-Toggles sind weg -- die Toggle-Zeilen tragen leere
+   Anker, die faelschlich als Icon gekachelt wurden; leere Anker werden nicht mehr gestampt.
+#6 CPU-, RAM-, Bandbreiten- und Startplan-Fenster: ALLE Rahmen und Linien entfernt (Fensterrand,
+   Kopf-Trennlinie, innere Boxen, Termin-Karten, Tages-/Kern-Chips, Menues, Bubbles) -- Trennung
+   kommt jetzt ueberall aus Fuellungen und Schatten; Buttons sind gefuellt (Primaer = Akzent).
+#7 NEU: Nach dem Anwenden erscheint HINTER dem jeweiligen Feld ein runder gruener Haken (oder bei
+   Fehlschlag ein rotes Kreuz); der Detailtext oeffnet beim Ueberfahren als Infobubble wie bei den
+   (i)-Bubbles. Gilt fuer CPU, RAM und beide Bandbreiten-Richtungen; das Fenster bleibt offen.
+#8 Hauptmenueleiste: Die per Drag-and-drop geaenderte Icon-Reihenfolge wird jetzt WIRKLICH
+   wiederhergestellt -- die meisten Icons werden von Unraid-Scripts erst NACH dem Seitenstart
+   eingefuegt und verpassten die gespeicherte Ordnung; die Einsortierung laeuft jetzt auch im
+   Beobachter (strikt idempotent) und neue Icons werden sofort verdrahtet.
+#9 Hauptmenueleiste: Tabs, Icon-Kacheln und Fuellstandsanzeige sitzen exakt auf EINER Hoehenlinie
+   (beide Leisten-Haelften zentrierte Flex-Reihen, eine gemeinsame Hoehe).
+#10 NEU: EINE Drag-Zone ueber die ganze Leiste -- Tabs, Icons und Fuellstandsanzeige lassen sich
+   frei durchmischen, auch ueber die Seiten-Grenze (Speicher: cc.navorder.all, alte Ordnung wird
+   uebernommen); jedes Element behaelt seinen Look, egal wo es steht.
+
 ### 2.29.0
 #1 Plugin-Tab: Der Aktualisierungen-Button sitzt jetzt WIRKLICH auf der Unterreiter-Zeile -- die alte
    Absolut-Verankerung hing an einer :has()-Regel ohne !important; verlor sie die Kaskade, rutschte
@@ -949,7 +976,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>6c499de72a451de3d62d7a2c946ffd7cb9de6d5792a41fcfdba148e1cb3bf341</SHA256>
+  <SHA256>b6813daa86f33eae1dea0d17445374a11b86c6c998ced46601998dc7268cd733</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

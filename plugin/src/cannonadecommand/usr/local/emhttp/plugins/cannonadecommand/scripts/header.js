@@ -52,7 +52,7 @@
       // the DIRECT background is painted only when NOT neutral, or on the ACTIVE left tab.
       function stamp(elm, c, t) { elm.style.setProperty("--cc-rb-c", c); elm.style.setProperty("--cc-rb-ct", t); }
       function clear(elm) { elm.style.removeProperty("background"); elm.style.removeProperty("color"); elm.style.removeProperty("--cc-rb-c"); elm.style.removeProperty("--cc-rb-ct"); }
-      Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile:not(.right) .nav-item > a")).forEach(function (aEl) {
+      Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a")).forEach(function (aEl) {   // tabs match in EITHER tile — the merged drag zone can park one on the right
         if (!rb) { clear(aEl); n++; return; }
         var c = rbColor(n), t = idealText(c), item = aEl.closest(".nav-item"), active = !!(item && item.classList.contains("active"));
         stamp(aEl, c, t);
@@ -60,7 +60,7 @@
         else { aEl.style.removeProperty("background"); aEl.style.removeProperty("color"); }
         n++;
       });
-      Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile.right .nav-item.util > a")).forEach(function (aEl) {
+      Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile .nav-item.util > a")).forEach(function (aEl) {   // icons match in EITHER tile
         var gl = aEl.querySelector("b.system, img.system");
         if (!rb) { clear(aEl); if (gl) gl.style.removeProperty("color"); n++; return; }
         var c = rbColor(n), t = idealText(c);
@@ -118,94 +118,108 @@
   // on (opt-in via cc.navdrag, default on). New/unknown items keep native position AFTER the saved ones.
   function navTile() { return document.querySelector("#menu .nav-tile:not(.right)"); }
   function navTileR() { return document.querySelector("#menu .nav-tile.right"); }
-  function navItems(tile) { return Array.prototype.slice.call(tile.querySelectorAll(":scope > .nav-item")); }
-  // RIGHT-side reorderables (user request: das Verschieben/Zittern auch fuer Fuellstandsanzeige + Icons):
-  // the utility icon items + the array-usage meter. The user menu, the transient #guiSearchBoxSpan and any
-  // unknown children are NOT reordered — they keep their native spot (the reorder happens INSIDE the
-  // participants' own block, see the fixed `next` anchor below).
-  function navItemsR(tile) { return Array.prototype.slice.call(tile.querySelectorAll(":scope > .nav-item.util, :scope > .usage-bar")); }
-  function navHref(it) { var a = it.querySelector("a[href]"); return a ? a.getAttribute("href") : null; }
-  // stable per-item key on the RIGHT: utils by link signature (href, else onclick, else the localised
-  // title — a language switch then just resets that one icon to its native position), the meter fixed.
-  function navKeyR(it) {
+  // ONE MERGED ZONE across BOTH tiles (v2.30.0, user chose per popup: "alles überall anordnen").
+  // Participants = every page tab, every utility icon AND the array-usage meter, in EITHER tile.
+  // Non-participants (user menu .nav-user, the transient #guiSearchBoxSpan) never move.
+  function navParts(tile) { if (!tile) return []; return Array.prototype.slice.call(tile.querySelectorAll(":scope > .nav-item, :scope > .usage-bar")); }
+  function navAllParts() { return navParts(navTile()).concat(navParts(navTileR())); }
+  // stable key: tabs by href; utils by link signature (href, else onclick, else the localised
+  // title — a language switch then just resets that one icon); the meter fixed.
+  function navKeyAll(it) {
     if (it.classList.contains("usage-bar")) return "usage-bar";
     var a = it.querySelector("a"); if (!a) return null;
     return ((a.getAttribute("href") || a.getAttribute("onclick") || a.getAttribute("title") || "") + "").slice(0, 160) || null;
   }
-  function applyNavOrderZone(tile, items, keyFn, storeKey) {
+  // storage: cc.navorder.all = {left:[keys], right:[keys]} — each tile's own sequence INCLUDING
+  // items dragged over from the other side. One-time fallback-migration from the old zone keys.
+  function navReadAll() {
+    try { var o = JSON.parse(g("cc.navorder.all", "null")); if (o && o.left && o.right) return o; } catch (e) {}
     try {
-      var order; try { order = JSON.parse(g(storeKey, "null")); } catch (e) { return; }
-      if (!order || !order.length || !tile || !items.length) return;
-      var byKey = {}, i, k;
-      for (i = 0; i < items.length; i++) { k = keyFn(items[i]); if (k && !byKey[k]) byKey[k] = items[i]; }
-      var next = items[items.length - 1].nextSibling;   // fixed anchor AFTER the block: participants reorder inside it, non-participants never move
-      var placed = {};
-      for (i = 0; i < order.length; i++) { var it = byKey[order[i]]; if (it) { tile.insertBefore(it, next); placed[order[i]] = 1; } }
-      for (i = 0; i < items.length; i++) { k = keyFn(items[i]); if (!k || !placed[k]) tile.insertBefore(items[i], next); }   // new/unknown items keep native relative order, after the saved ones
-    } catch (e) {}
+      var l = JSON.parse(g("cc.navorder", "null")) || [], r = JSON.parse(g("cc.navorder.right", "null")) || [];
+      if (l.length || r.length) return { left: l, right: r };
+    } catch (e2) {}
+    return null;
   }
   function applyNavOrder() {
-    var t = navTile(); if (t) applyNavOrderZone(t, navItems(t), navHref, "cc.navorder");
-    var r = navTileR(); if (r) applyNavOrderZone(r, navItemsR(r), navKeyR, "cc.navorder.right");
-  }
-  function saveNavOrderZone(tile, items, keyFn, storeKey) {
-    try { var order = []; for (var i = 0; i < items.length; i++) { var k = keyFn(items[i]); if (k) order.push(k); } localStorage.setItem(storeKey, JSON.stringify(order)); } catch (e) {}
+    try {
+      if (ccReorder || ccDragged) return;                      // never fight a live drag
+      var o = navReadAll(); if (!o) return;
+      var lt = navTile(), rt = navTileR(); if (!lt || !rt) return;
+      var byKey = {}, all = navAllParts(), i, k;
+      for (i = 0; i < all.length; i++) { k = navKeyAll(all[i]); if (k && !byKey[k]) byKey[k] = all[i]; }
+      // IDEMPOTENCE GATE — this also runs from the #menu observer now. THE OLD BUG ("die
+      // Reihenfolge wird nicht gespeichert"): the order was applied ONLY at boot, but most
+      // utility icons are appended by native scripts AFTER boot, so their saved positions
+      // never took effect. insertBefore always mutates, so re-running from the observer
+      // demands a strict no-op when the arrangement already matches — else it loops.
+      function inPlace(tile2, want) {
+        var wantHere = [], wset = {}, have = [], cur = navParts(tile2), j, kk;
+        for (j = 0; j < want.length; j++) if (byKey[want[j]]) { wantHere.push(want[j]); wset[want[j]] = 1; }
+        for (j = 0; j < cur.length; j++) { kk = navKeyAll(cur[j]); if (kk && wset[kk]) have.push(kk); }
+        if (have.length !== wantHere.length) return false;     // a saved item currently sits in the OTHER tile
+        for (j = 0; j < have.length; j++) if (have[j] !== wantHere[j]) return false;
+        return true;
+      }
+      if (inPlace(lt, o.left) && inPlace(rt, o.right)) return;
+      function place(tile2, want) {
+        var anchor = tile2.querySelector(":scope > .nav-user");   // the user menu stays the tail; null => append
+        for (var j = 0; j < want.length; j++) { var it = byKey[want[j]]; if (it) tile2.insertBefore(it, anchor); }
+      }
+      place(lt, o.left); place(rt, o.right);                   // unknown/new items keep their native tile + slot
+    } catch (e) {}
   }
   function saveNavOrder() {
-    var t = navTile(); if (t) saveNavOrderZone(t, navItems(t), navHref, "cc.navorder");
-    var r = navTileR(); if (r) saveNavOrderZone(r, navItemsR(r), navKeyR, "cc.navorder.right");
+    try {
+      var lt = navTile(), rt = navTileR(); if (!lt || !rt) return;
+      function seq(tile2) { var out = [], ps = navParts(tile2), i, k; for (i = 0; i < ps.length; i++) { k = navKeyAll(ps[i]); if (k) out.push(k); } return out; }
+      localStorage.setItem("cc.navorder.all", JSON.stringify({ left: seq(lt), right: seq(rt) }));
+    } catch (e) {}
   }
-  var ccDragged = null, ccZone = null, ccReorder = false, ccHoldTimer = null, ccPressXY = null, ccSuppressClick = false, ccDocBound = false;
-  function zoneItems(zone) { if (!zone) return []; return zone.classList.contains("right") ? navItemsR(zone) : navItems(zone); }
+  var ccDragged = null, ccReorder = false, ccHoldTimer = null, ccPressXY = null, ccSuppressClick = false, ccDocBound = false;
   function cancelHold() { if (ccHoldTimer) { clearTimeout(ccHoldTimer); ccHoldTimer = null; } ccPressXY = null; }
-  function enterReorder(zone) {   // long-press satisfied => THAT zone jiggles and its items become draggable
-    if (ccReorder) return; ccReorder = true; ccZone = zone;
-    zoneItems(zone).forEach(function (it) { it.setAttribute("draggable", "true"); it.classList.add("cc-nav-wiggle"); });
+  function enterReorder() {   // long-press satisfied => EVERYTHING jiggles and becomes draggable (one zone)
+    if (ccReorder) return; ccReorder = true;
+    navAllParts().forEach(function (it) { it.setAttribute("draggable", "true"); it.classList.add("cc-nav-wiggle"); });
   }
   function exitReorder() {    // back to plain, clickable, un-draggable items
-    var z = ccZone; ccReorder = false; ccZone = null;
-    zoneItems(z).forEach(function (it) { it.setAttribute("draggable", "false"); it.classList.remove("cc-nav-wiggle", "cc-dragging"); });
+    ccReorder = false;
+    navAllParts().forEach(function (it) { it.setAttribute("draggable", "false"); it.classList.remove("cc-nav-wiggle", "cc-dragging"); });
   }
-  // wire ONE zone (the left tab tile, or the right icons+usage-meter tile — user: das Verschieben/Zittern
-  // auch fuer die Fuellstandsanzeige und die Icons). Items reorder only within their own zone.
-  function setupNavDragZone(tile, items) {
-    if (tile.getAttribute("data-cc-drag") === "1") return; tile.setAttribute("data-cc-drag", "1");
-    items.forEach(function (it) {
-      it.setAttribute("draggable", "false"); it.classList.add("cc-navdrag");   // NOT draggable until a long-press arms it — a plain click just acts normally
-      var la = it.querySelectorAll("a"); for (var ai = 0; ai < la.length; ai++) la[ai].setAttribute("draggable", "false");  // else the browser drags the LINK URL instead of our item
-
-      // press-and-HOLD to arm: hold ~450ms without moving => enterReorder(zone). Moving before it fires, or
-      // a short click, cancels the hold and just clicks. Once armed, the native HTML5 drag takes over.
-      it.addEventListener("pointerdown", function (e) {
-        if (e.button !== 0) return;                            // left button only
-        cancelHold(); ccPressXY = { x: e.clientX, y: e.clientY };
-        ccHoldTimer = setTimeout(function () { ccHoldTimer = null; enterReorder(tile); }, 450);
-      });
-      it.addEventListener("pointermove", function (e) {
-        if (!ccPressXY || ccReorder) return;                  // once armed, let the native drag run
-        if (Math.abs(e.clientX - ccPressXY.x) > 8 || Math.abs(e.clientY - ccPressXY.y) > 8) cancelHold();  // moved before arming => it's a click/scroll, not a hold
-      });
-
-      it.addEventListener("dragstart", function (e) {
-        if (!ccReorder || ccZone !== tile) { e.preventDefault(); return; }   // no dragging until the long-press armed THIS zone
-        ccDragged = it; it.classList.add("cc-dragging");
-        try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", navHref(it) || ""); } catch (e2) {}
-      });
-      it.addEventListener("dragend", function () { ccDragged = null; saveNavOrder(); exitReorder(); });
-      it.addEventListener("dragover", function (e) {
-        if (!ccDragged || ccDragged === it || ccZone !== tile) return; e.preventDefault();
-        var r = it.getBoundingClientRect(), before = e.clientX < r.left + r.width / 2;
-        tile.insertBefore(ccDragged, before ? it : it.nextSibling);
-      });
-      // a long-press that never turned into a drag must not ALSO fire the item's click/navigation
-      it.addEventListener("click", function (e) { if (ccSuppressClick) { e.preventDefault(); e.stopPropagation(); ccSuppressClick = false; } });
+  // wire ONE participant. Guard PER ITEM (the old per-TILE guard skipped every icon a native
+  // script appended after the first pass — those were never draggable and never restored).
+  function wireNavItem(it) {
+    if (it.getAttribute("data-cc-drag") === "1") return; it.setAttribute("data-cc-drag", "1");
+    it.setAttribute("draggable", "false"); it.classList.add("cc-navdrag");   // NOT draggable until a long-press arms it — a plain click just acts normally
+    var la = it.querySelectorAll("a"); for (var ai = 0; ai < la.length; ai++) la[ai].setAttribute("draggable", "false");  // else the browser drags the LINK URL instead of our item
+    // press-and-HOLD to arm: hold ~450ms without moving => enterReorder(). Moving before it fires,
+    // or a short click, cancels the hold and just clicks. Once armed, the native HTML5 drag runs.
+    it.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0) return;                            // left button only
+      cancelHold(); ccPressXY = { x: e.clientX, y: e.clientY };
+      ccHoldTimer = setTimeout(function () { ccHoldTimer = null; enterReorder(); }, 450);
     });
+    it.addEventListener("pointermove", function (e) {
+      if (!ccPressXY || ccReorder) return;                  // once armed, let the native drag run
+      if (Math.abs(e.clientX - ccPressXY.x) > 8 || Math.abs(e.clientY - ccPressXY.y) > 8) cancelHold();  // moved before arming => it's a click/scroll, not a hold
+    });
+    it.addEventListener("dragstart", function (e) {
+      if (!ccReorder) { e.preventDefault(); return; }        // no dragging until the long-press armed the bar
+      ccDragged = it; it.classList.add("cc-dragging");
+      try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", navKeyAll(it) || ""); } catch (e2) {}
+    });
+    it.addEventListener("dragend", function () { ccDragged = null; saveNavOrder(); exitReorder(); });
+    it.addEventListener("dragover", function (e) {
+      if (!ccDragged || ccDragged === it) return; e.preventDefault();
+      var r = it.getBoundingClientRect(), before = e.clientX < r.left + r.width / 2;
+      it.parentNode.insertBefore(ccDragged, before ? it : it.nextSibling);   // parentNode = whichever TILE the hovered item lives in => cross-tile drops just work
+    });
+    // a long-press that never turned into a drag must not ALSO fire the item's click/navigation
+    it.addEventListener("click", function (e) { if (ccSuppressClick) { e.preventDefault(); e.stopPropagation(); ccSuppressClick = false; } });
   }
   function setupNavDrag() {
     try {
       if (g("cc.navdrag", "1") === "0") return;                 // opt-out
-      var t = navTile(); if (t) setupNavDragZone(t, navItems(t));
-      var r = navTileR(); if (r) setupNavDragZone(r, navItemsR(r));
+      navAllParts().forEach(wireNavItem);
       if (!ccDocBound) {   // release/Escape anywhere ends an armed-but-undragged hold — bind once, not per replaced tile
         ccDocBound = true;
         document.addEventListener("pointerup", function () {
@@ -282,6 +296,9 @@
       var mo = new MutationObserver(function () {
         reorderSearch();
         document.documentElement.classList.toggle("cc-search-open", !!document.getElementById("guiSearchBoxSpan"));
+        // late-added utility icons (native scripts append them AFTER boot) get their saved slot
+        // + drag wiring here — applyNavOrder is a strict no-op once the arrangement matches.
+        if (document.documentElement.classList.contains("cc-header-on")) { applyNavOrder(); setupNavDrag(); }
         paintNav();
       });
       mo.observe(target, { childList: true, subtree: true });

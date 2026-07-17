@@ -392,6 +392,35 @@
         var s = document.getElementById(id);
         if (s && s.parentNode !== host) host.appendChild(s);
       });
+      // v2.30.0, 5th attempt — END OF CASCADE GUESSING: inline styles with priority "important"
+      // cannot be beaten by ANY stylesheet. And because some theme somewhere may still bend the
+      // flex geometry, MEASURE the result: if the group's centre isn't on the first pill's centre,
+      // pin it absolutely from the real rectangles. Style-attribute writes never re-trigger the
+      // childList observer, and within one synchronous pass there is no intermediate paint.
+      navt.style.setProperty("display", "flex", "important");
+      navt.style.setProperty("align-items", "center", "important");
+      navt.style.setProperty("flex-wrap", "nowrap", "important");
+      cont.style.setProperty("flex", "1 1 auto", "important");
+      cont.style.setProperty("min-width", "0", "important");
+      cont.style.setProperty("width", "auto", "important");
+      host.style.setProperty("position", "static", "important");
+      host.style.setProperty("margin", "0 0 0 auto", "important");
+      host.style.setProperty("align-self", "center", "important");
+      host.style.setProperty("display", "inline-flex", "important");
+      host.style.setProperty("align-items", "center", "important");
+      host.style.setProperty("gap", "12px", "important");
+      var tab0 = cont.querySelector("button[role='tab']");
+      if (tab0 && host.offsetHeight) {
+        var tr0 = tab0.getBoundingClientRect(), hr0 = host.getBoundingClientRect();
+        if (Math.abs((tr0.top + tr0.height / 2) - (hr0.top + hr0.height / 2)) > 4) {
+          var nr0 = navt.getBoundingClientRect();
+          navt.style.setProperty("position", "relative", "important");
+          host.style.setProperty("position", "absolute", "important");
+          host.style.setProperty("right", "0", "important");
+          host.style.setProperty("margin", "0", "important");
+          host.style.setProperty("top", Math.round((tr0.top + tr0.height / 2) - nr0.top - hr0.height / 2) + "px", "important");
+        }
+      }
     } catch (e) {}
   }
   function paint() {

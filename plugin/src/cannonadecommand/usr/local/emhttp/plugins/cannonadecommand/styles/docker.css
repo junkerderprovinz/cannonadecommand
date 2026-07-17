@@ -297,15 +297,18 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
 .cc-abtn-primary { color: #52c17a; border-color: rgba(63,174,106,.4); }
 
 .cc-filter { background: var(--cc-bg2); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: 6px; padding: 5px 10px; font-size: 12px; }
-.cc-btn { background: transparent; color: var(--cc-accent); border: 1px solid var(--cc-accent); border-radius: 5px; padding: 5px 12px; font-size: 12px; cursor: pointer; transition: background .12s, color .12s; }
-.cc-btn:hover { background: var(--cc-accent); color: #fff; }
-.cc-btn-primary { font-weight: 600; }
-.cc-seg { display: inline-flex; border: 1px solid var(--cc-line); border-radius: 6px; overflow: hidden; }
+/* CC style, NO borders anywhere (user: "keine rahmen oder linien"): buttons are FILLED —
+   secondary = neutral fill, primary = accent fill; separation comes from fills + shadows. */
+.cc-btn { background: #2e2e2e; color: #e6e6e6; border: none; border-radius: 5px; padding: 5px 12px; font-size: 12px; cursor: pointer; transition: background .12s, color .12s, filter .12s; }
+.cc-btn:hover { background: var(--cc-accent); color: var(--cc-accent-text, #fff); }
+.cc-btn-primary { font-weight: 600; background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
+.cc-btn-primary:hover { filter: brightness(1.14); }
+.cc-seg { display: inline-flex; border: none; border-radius: 6px; overflow: hidden; }
 .cc-seg-btn { background: var(--cc-bg2); color: var(--cc-dim); border: none; padding: 5px 14px; font-size: 12px; cursor: pointer; }
 .cc-seg-btn:hover { color: var(--cc-txt); }
 .cc-seg-btn.cc-seg-on { background: var(--cc-accent); color: var(--cc-accent-text, #fff); font-weight: 600; }
 
-.cc-menu { position: absolute; z-index: 99999; min-width: 190px; background: var(--cc-bg, #161616); border: 1px solid #525252; border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); padding: 6px; font: 13px/1.5 "Segoe UI", system-ui, sans-serif; color: #e6e6e6; }
+.cc-menu { position: absolute; z-index: 99999; min-width: 190px; background: var(--cc-bg, #161616); border: none; border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); padding: 6px; font: 13px/1.5 "Segoe UI", system-ui, sans-serif; color: #e6e6e6; }
 .cc-menu-wide { min-width: 240px; max-width: 92vw; }
 .cc-menu-status { font-size: 12px; padding: 2px 8px 6px; }
 .cc-menu-h { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: #8a8a8a; padding: 7px 8px 3px; }
@@ -315,14 +318,14 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
 .cc-menu-plain:hover { background: transparent; }
 .cc-menu-plain .cc-filter { width: 100%; }
 .cc-menu-plain .cc-btn { flex: 1; text-align: center; }
-.cc-menu-sep { height: 1px; background: #2a2a2a; margin: 5px 4px; }
+.cc-menu-sep { height: 6px; background: transparent; margin: 0; }   /* spacing, not a line (user: keine Linien) */
 .cc-menu-link { color: var(--cc-accent); font-size: 12px; padding: 6px 8px; display: block; text-decoration: none; }
 .cc-menu-link:hover { text-decoration: underline; }
 
-.cc-toast { position: fixed; right: 18px; bottom: 18px; z-index: 100000; background: #161616; color: #e6e6e6; border: 1px solid #525252; border-radius: 8px; padding: 9px 14px; font: 12px/1.4 "Segoe UI", system-ui, sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,.5); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .2s, transform .2s; max-width: 60vw; }
+.cc-toast { position: fixed; right: 18px; bottom: 18px; z-index: 100000; background: #161616; color: #e6e6e6; border: none; border-radius: 8px; padding: 9px 14px; font: 12px/1.4 "Segoe UI", system-ui, sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,.5); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .2s, transform .2s; max-width: 60vw; }
 .cc-toast-show { opacity: 1; transform: translateY(0); }
 
-.cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: 92vw; background: var(--cc-bg, #161616); color: var(--cc-txt, #e6e6e6); border: 1px solid #525252; border-radius: 10px; box-shadow: 0 14px 40px rgba(0,0,0,.55); font: 13px/1.5 "Segoe UI", system-ui, sans-serif; }
+.cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: 92vw; background: var(--cc-bg, #161616); color: var(--cc-txt, #e6e6e6); border: none; border-radius: 10px; box-shadow: 0 14px 40px rgba(0,0,0,.55); font: 13px/1.5 "Segoe UI", system-ui, sans-serif; }
 /* Neutralise Unraid's global button/input/select theming INSIDE our popover — it
    lives on document.body, OUTSIDE #cc-settings, so without this it inherits the
    orange borders, the uppercasing that clipped our button labels, and the stray
@@ -336,16 +339,16 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
   -webkit-appearance: auto; appearance: auto; accent-color: var(--cc-accent, #2f6feb);
   width: 15px; height: 15px; flex: none; cursor: pointer; margin: 0;
 }
-.cc-pop-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #2a2a2a; }
+.cc-pop-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: none; }   /* no separator line (user: keine Linien) */
 .cc-pop-ttl { display: inline-flex; align-items: center; gap: 8px; }   /* window title + its ONE info bubble (user: aller Infotext oben neben der Ueberschrift) */
 .cc-pop-x { cursor: pointer; color: #8a8a8a; }
 .cc-pop-x:hover { color: #e6e6e6; }
 .cc-pop-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }
 .cc-pop-lbl { color: #8a8a8a; font-size: 12px; width: 100px; flex: none; }
 .cc-pop-body.cc-dis { opacity: .4; pointer-events: none; }
-.cc-pop-foot { padding: 9px 14px; border-top: 1px solid #2a2a2a; color: #8a8a8a; font-size: 11px; }
+.cc-pop-foot { padding: 9px 14px; border-top: none; color: #8a8a8a; font-size: 11px; }
 /* backend/Docker rejection — stays on screen (not a 2.6s toast) so the exact reason is readable, and wraps long messages */
-.cc-pop-err { display: none; margin: 8px 14px 2px; padding: 7px 9px; border-radius: 6px; background: rgba(220,53,69,.13); border: 1px solid rgba(220,53,69,.55); color: #ff7a7a; font-size: 12px; line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
+.cc-pop-err { display: none; margin: 8px 14px 2px; padding: 7px 9px; border-radius: 6px; background: rgba(220,53,69,.13); border: none; color: #ff7a7a; font-size: 12px; line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
 /* ROTATING rainbow: colours come from --cc-rb-* vars set by docker.js — a random
    rotation offset per page load walks every badge kind through a 14-colour palette. */
 .cc-enh.cc-rainbow .cc-b-net, .cc-grid-holder.cc-rainbow .cc-b-net { background: var(--cc-rb-net, #1f9d55); color: var(--cc-rb-net-t, #fff); }
@@ -363,9 +366,9 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
 .cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='cpu-'] { background: var(--cc-rb-cpu, #d9433f); }
 .cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='mem-'] { background: var(--cc-rb-ram, #2f9d8b); }
 /* the same slot in green: the VERIFIED applied values after a successful save */
-.cc-pop-err.cc-pop-ok { background: rgba(31,157,85,.14); border-color: rgba(31,157,85,.6); color: #4bd58a; }
+.cc-pop-err.cc-pop-ok { background: rgba(31,157,85,.14); color: #4bd58a; }
 /* multi-select dropdown under "Hängt ab von": stays open, every click toggles a container */
-.cc-drop { position: absolute; z-index: 100001; background: #1c1c1c; border: 1px solid #3a3a3a; border-radius: 8px; box-shadow: 0 12px 30px rgba(0,0,0,.55); max-height: 220px; overflow: auto; padding: 4px; }
+.cc-drop { position: absolute; z-index: 100001; background: #1c1c1c; border: none; border-radius: 8px; box-shadow: 0 12px 30px rgba(0,0,0,.55); max-height: 220px; overflow: auto; padding: 4px; }
 .cc-drop-it { padding: 5px 11px; border-radius: 5px; font-size: 12px; color: #c9c9c9; cursor: pointer; white-space: nowrap; }
 .cc-drop-it:hover { background: #2a2a2a; color: #fff; }
 .cc-drop-on { color: var(--cc-accent, #6ea0ff); font-weight: 600; }
@@ -375,8 +378,15 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
 .cc-lbl-info { display: inline-flex; align-items: center; gap: 6px; }
 .cc-info { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 999px; background: rgba(255,255,255,.14); color: #cfcfcf; font-size: 10px; font-style: normal; cursor: help; flex: none; }
 .cc-info:hover, .cc-info:focus { background: var(--cc-accent, #2f6feb); color: #fff; outline: none; }
-.cc-tip { display: none; position: absolute; top: 21px; left: 0; z-index: 100000; width: 235px; max-width: 78vw; background: #0f0f0f; border: 1px solid #3a3a3a; border-radius: 8px; padding: 8px 10px; box-shadow: 0 12px 30px rgba(0,0,0,.55); color: #d6d6d6; font-size: 11.5px; font-weight: 400; line-height: 1.5; white-space: normal; text-align: left; cursor: default; }
+.cc-tip { display: none; position: absolute; top: 21px; left: 0; z-index: 100000; width: 235px; max-width: 78vw; background: #0f0f0f; border: none; border-radius: 8px; padding: 8px 10px; box-shadow: 0 12px 30px rgba(0,0,0,.55); color: #d6d6d6; font-size: 11.5px; font-weight: 400; line-height: 1.5; white-space: normal; text-align: left; cursor: default; }
 .cc-info:hover .cc-tip, .cc-info:focus .cc-tip { display: block; }
+/* apply-status dot behind a field (user): round green check / red cross, the detail text opens
+   on hover exactly like the ⓘ bubbles. */
+.cc-stat { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 999px; flex: none; font-size: 10px; font-weight: 700; color: #fff; cursor: help; }
+.cc-stat-ok { background: #1f9d55; }
+.cc-stat-bad { background: #d9433f; }
+.cc-stat > .cc-tip { top: 23px; left: auto; right: 0; }
+.cc-stat:hover > .cc-tip { display: block; }
 .cc-tip-row { display: block; margin: 3px 0; }
 .cc-tip-k { color: var(--cc-accent, #6ea0ff); font-weight: 600; margin-right: 6px; }
 /* every editor field the SAME clean box: NO border, just a lighter background */
@@ -386,18 +396,18 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
 select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repeat; background-position: right 8px center; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%238a8a8a' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); }
 .cc-port { flex: none; width: 70px; margin-left: 6px; }
 .cc-unit { flex: none; width: 68px; margin-left: 6px; }
-.cc-pop-act { gap: 8px; padding: 10px 14px 12px; border-top: 1px solid #2a2a2a; }
+.cc-pop-act { gap: 8px; padding: 10px 14px 12px; border-top: none; }
 .cc-pop-act .cc-btn { flex: 1; text-align: center; font-size: 11.5px; padding: 7px 6px; white-space: normal; line-height: 1.2; }
 /* Plan editor: each section is a CARD (like the schedule rows) — plan fields, watchdog and
    schedules get their own bordered block, rows sit tight instead of drifting apart. */
-.cc-pop-body { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; margin: 10px 14px 6px; padding: 3px 0; }
+.cc-pop-body { background: #1a1a1a; border: none; border-radius: 8px; margin: 10px 14px 6px; padding: 3px 0; }   /* fill separates, no line */
 /* Unraid's theme gives inputs/labels chunky margins+min-heights that pushed the editor rows
    far apart — force them flat (!important: Unraid's sheet can load after ours). */
 .cc-pop-body .cc-pop-row, .cc-pop-auto .cc-pop-row { padding: 3px 10px !important; } /* rows really tight ("Hängt ab von" → "Startverzögerung" → "Bereit wenn") */
 .cc-pop .cc-pop-row { margin: 0 !important; }
 .cc-pop .cc-pop-row > *, .cc-pop .cc-pop-row .cc-in { margin-top: 0 !important; margin-bottom: 0 !important; min-height: 0 !important; }
 .cc-pop .cc-in { padding-top: 5px !important; padding-bottom: 5px !important; line-height: 1.35 !important; }
-.cc-pop-auto { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; margin: 6px 14px; padding: 5px 0 7px; border-top: 1px solid #2a2a2a; }
+.cc-pop-auto { background: #1a1a1a; border: none; border-radius: 8px; margin: 6px 14px; padding: 5px 0 7px; }
 .cc-pop-auto .cc-pop-row { padding: 5px 10px; }
 .cc-pop-auto .cc-pop-lbl { width: 90px; }
 .cc-pop-foot { border-top: none; padding-top: 0; }
@@ -410,16 +420,16 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-btn-sm { margin: 4px 14px 6px; padding: 3px 10px; font-size: 11.5px; }
 .cc-sched-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 14px 2px; }
 /* each schedule on its OWN tidy card so action / time / days don't run together */
-.cc-sched-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 7px; padding: 8px 9px; }
+.cc-sched-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #1e1e1e; border: none; border-radius: 7px; padding: 8px 9px; }
 .cc-sched-act { flex: none; width: 92px; }
 .cc-sched-time { flex: none; width: 100px; }
 /* the native dark clock glyph of <input type=time> is nearly invisible on our dark field —
    invert it so the picker button is clearly readable ("Uhrsymbol kaum erkennbar"). */
 .cc-sched-time::-webkit-calendar-picker-indicator { filter: invert(0.85); opacity: .9; cursor: pointer; }
 .cc-days { display: flex; gap: 3px; flex-wrap: wrap; }
-.cc-day { background: #262626; color: #9a9a9a; border: 1px solid #333; border-radius: 5px; width: 26px; height: 26px; font-size: 11px; line-height: 1; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; transition: background .12s, color .12s, border-color .12s; }
-.cc-day:hover { border-color: var(--cc-accent, #2f6feb); color: #e6e6e6; }
-.cc-day-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); border-color: var(--cc-accent, #2f6feb); }
+.cc-day { background: #2e2e2e; color: #9a9a9a; border: none; border-radius: 5px; width: 26px; height: 26px; font-size: 11px; line-height: 1; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; transition: background .12s, color .12s; }
+.cc-day:hover { background: #3a3a3a; color: #e6e6e6; }
+.cc-day-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
 .cc-sched-x { margin-left: auto; }
 /* CPU-pinning core grid (like the VM settings): one clickable cell per logical core */
 .cc-pin-row { align-items: flex-start; }
@@ -428,15 +438,13 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
    fixed: bigger cells, clear grouping). On Intel hybrid CPUs each box carries a P / E tag. */
 .cc-pop-wide { width: 430px; }
 .cc-cores { display: flex; flex-wrap: wrap; gap: 5px; flex: 1; }
-.cc-corebox { display: inline-flex; flex-direction: column; gap: 3px; padding: 4px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 7px; align-items: stretch; }
+.cc-corebox { display: inline-flex; flex-direction: column; gap: 3px; padding: 4px; background: #1e1e1e; border: none; border-radius: 7px; align-items: stretch; }
 .cc-corebox-tag { text-align: center; font-size: 9px; line-height: 1; color: #8a8a8a; letter-spacing: .5px; user-select: none; }
-.cc-corebox-p { border-top: 2px solid var(--cc-accent, #2f6feb); }
-.cc-corebox-p .cc-corebox-tag { color: var(--cc-accent, #6ea0ff); }
-.cc-corebox-e { border-top: 2px solid #e0912a; }
+.cc-corebox-p .cc-corebox-tag { color: var(--cc-accent, #6ea0ff); }   /* P/E stays readable via the coloured TAG, not a border line */
 .cc-corebox-e .cc-corebox-tag { color: #e0912a; }
-.cc-core { width: 34px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: #242424; color: #9a9a9a; border: 1px solid #333; border-radius: 5px; font-size: 12px; cursor: pointer; user-select: none; box-sizing: border-box; transition: background .1s, color .1s, border-color .1s; }
-.cc-core:hover { border-color: var(--cc-accent, #2f6feb); color: #e6e6e6; }
-.cc-core-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); border-color: var(--cc-accent, #2f6feb); }
+.cc-core { width: 34px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: #2e2e2e; color: #9a9a9a; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; user-select: none; box-sizing: border-box; transition: background .1s, color .1s; }
+.cc-core:hover { background: #3a3a3a; color: #e6e6e6; }
+.cc-core-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
 /* rainbow mode: selected cores wear their physical-core group's colour */
 .cc-pop.cc-rainbow .cc-core-on.cc-rb-0 { background: #1f9d55; border-color: #1f9d55; color: #fff; }
 .cc-pop.cc-rainbow .cc-core-on.cc-rb-1 { background: #2f6feb; border-color: #2f6feb; color: #fff; }

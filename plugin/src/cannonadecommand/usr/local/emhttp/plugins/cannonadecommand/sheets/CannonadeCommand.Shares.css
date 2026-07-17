@@ -447,6 +447,14 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status a.button {
   width: var(--cc-lgb-w, 200px) !important; min-width: var(--cc-lgb-w, 200px) !important; max-width: var(--cc-lgb-w, 200px) !important;
   flex: 0 0 auto !important; white-space: nowrap !important; padding: 0 12px !important;   /* ONE fixed width pins the (i) bubble + PLANUNG badge to identical x in every row */
 }
+/* hover glow — reactive buttons light up, greyed-out ones NEVER do (user) */
+html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="submit"]:hover:not(:disabled),
+html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="button"]:hover:not(:disabled),
+html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="reset"]:hover:not(:disabled),
+html.cc-shares-on.cc-on-main #displaybox table.array_status button:not([role="tab"]):hover:not(:disabled),
+html.cc-shares-on.cc-on-main #displaybox table.array_status a.button:hover { filter: brightness(1.14) !important; }
+html.cc-shares-on.cc-on-main #displaybox table.array_status input:disabled:hover,
+html.cc-shares-on.cc-on-main #displaybox table.array_status button:disabled:hover { filter: none !important; }
 /* ALLE /Main-Buttons in CC (user: "Alle buttons und schalter in den CC Style!!!"): the Unassigned-Devices
    "ADD REMOTE SMB/NFS SHARE" / "ADD ISO FILE SHARE" / "ADD ROOT SHARE" controls are <button> elements
    (verified UD source: <button onclick='add_samba_share()'> inside <div id='remotes-buttons'>), plus other
@@ -664,8 +672,9 @@ html.cc-shares-on.cc-on-main #displaybox :is(p, div, form, span, section):has(> 
    Sections mode: absolute inside the position:relative section, left of-set past both grid tracks.
    Native-tabs fallback: a static block under the table, indented to the button column. */
 html.cc-shares-on.cc-on-main.cc-sections-main #displaybox .cc-aop-pcard {
-  position: absolute; left: calc(var(--cc-aop-c1, 380px) + var(--cc-aop-c2, 560px) + 24px); right: 12px;
-  top: 52px;   /* STATIC top (below the section-badge row) — the old per-tick JS measurement looped against the live layout and made the page bounce */
+  position: absolute; left: calc(var(--cc-aop-c1, 380px) + var(--cc-aop-c2, 560px) + 24px);
+  width: 560px; max-width: calc(100% - var(--cc-aop-c1, 380px) - var(--cc-aop-c2, 560px) - 36px); box-sizing: border-box;   /* user: "muss nicht ganz so breit sein" — capped instead of stretching to the right edge */
+  top: 52px;   /* base offset; ccAopParityCard measures the first button and overrides inline (guarded write, card is out of flow -> no feedback) */
   background: rgba(255, 255, 255, .045); border-radius: 12px; padding: 14px 18px;
   display: flex; flex-direction: column; gap: 8px; z-index: 1;
 }
