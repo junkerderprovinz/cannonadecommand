@@ -252,6 +252,45 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tr > td:nth-ch
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tr > td:nth-child(10) { width:  8%; } /* Used           */
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tr > td:nth-child(11) { width: 10%; } /* Free           */
 
+/* ═══ /Main (START) disk_status polish: roomier rows, a large disk-NAME headline badge (Shares size),
+   a gap before the Reads/Writes count pill, and CC action buttons. --cc-shr-accent is set by shares.js
+   to the START area's own accent on /Main, so these paint in the Start colour. ═══ */
+/* (c) roomier rows — disk_status had no per-row padding (user: "zu kompakt/gedrungen"). */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tbody td { padding-top: 9px; padding-bottom: 9px; }
+/* (b) disk NAME -> a LARGE headline badge, same lg tier as the share name (.cc-b.cc-b-name wins on specificity). */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b.cc-b-name {
+  padding: var(--cc-lg-pad, 6px 16px); font-size: var(--cc-lg-fs, 15px);
+  font-weight: 700; letter-spacing: .2px;
+}
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b.cc-b-name:hover { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status a.cc-b-name,
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status a.cc-b-name:hover { text-decoration: none; }
+/* (e) the Reads/Writes count pill sits right after the inline .diskio rate — keep a small gap. */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status td span.diskio { margin-right: 6px; }
+/* (d) /Main action buttons (Start/Stop/Format/Check/Sync/Clear/History/Move/Pause/Cancel/Reboot/Shutdown)
+   -> CC accent pills. The /Shares form[name=share_form] + cc-on-share-detail rules do NOT reach /Main. */
+html.cc-shares-on.cc-on-main #displaybox input[type="submit"],
+html.cc-shares-on.cc-on-main #displaybox input[type="button"] {
+  border: none !important; box-shadow: none !important;
+  padding: 0 14px !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
+  min-width: 0 !important; font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  text-transform: uppercase !important; letter-spacing: .6px !important; font-family: inherit !important;
+  border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer; transition: filter .12s, opacity .12s;
+  background: var(--cc-shr-accent, #2f6feb) !important; color: var(--cc-shr-accent-text, #fff) !important;
+}
+/* Stop + Reboot/Shutdown read as neutral/secondary, not the primary accent action */
+html.cc-shares-on.cc-on-main #displaybox input#stop-button,
+html.cc-shares-on.cc-on-main #displaybox form[name="shutdownOps"] input[type="button"] {
+  background: #4a4a4a !important; color: #f0f0f0 !important;
+}
+html.cc-shares-on.cc-on-main #displaybox input[type="submit"]:hover:not(:disabled),
+html.cc-shares-on.cc-on-main #displaybox input[type="button"]:hover:not(:disabled) { filter: brightness(1.14); }
+/* Format/Check/pause/cancel start disabled -> flat inert, never a live accent primary */
+html.cc-shares-on.cc-on-main #displaybox input[type="submit"]:disabled,
+html.cc-shares-on.cc-on-main #displaybox input[type="button"]:disabled {
+  background: #3a3a3a !important; color: #8a8a8a !important; opacity: .55 !important; filter: none !important; cursor: not-allowed !important;
+}
+
 /* ═══ bottom action buttons -> CC action buttons ═══
    Mirror the Docker footer bar (div.js-actions input[type=button]) — accent bg, md
    size, uppercase, radius. Scoped to #displaybox so nothing leaks off the Shares area. */

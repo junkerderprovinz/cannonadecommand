@@ -120,8 +120,11 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
   badges) — each toggleable under **Bereiche** (Areas) with its own style tab. The VM
   tab is styled to match the Docker tab exactly (logo badge, state/CPU/RAM/IP badges,
   autostart switch); the Favorites tab reuses the category-icon badges.
-- Tab view: on tabbed pages (Shares detail, Start/Main) choose per tab whether the
-  sub-tabs render as stacked CC sections or as native Unraid sub-tabs.
+- Tab view: on every tab with sub-tabs (Shares detail, Start/Main, Plugins, VMs)
+  choose per tab whether the sub-tabs render as stacked CC sections or as native
+  Unraid sub-tabs (native by default).
+- VM tab: full Docker-tab parity — logo badge, state/CPU/RAM/IP badges, an actions
+  column, the accent autostart switch, a list/grid (card) view and rainbow mode.
 - Logo background (per area, in the View card): put the container / plugin / VM /
   category logo on a coloured accent badge and recolour it monochrome black or white
   for contrast, or leave it natural.

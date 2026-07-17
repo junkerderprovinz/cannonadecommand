@@ -55,9 +55,13 @@ html.cc-vms-on #kvm_list .cc-vmb-ips { display: flex; flex-direction: column; al
    html.cc-vm-iconbg (vms.js toggles it, mirroring cc-docker-iconbg). ═══ */
 html.cc-vms-on #kvm_list td.vm-name { vertical-align: middle; }
 html.cc-vms-on #kvm_list td.vm-name .outer { display: flex; align-items: center; gap: 12px; }
-html.cc-vms-on #kvm_list td.vm-name .outer > span.hand { flex: none; display: flex; align-items: center; }
-html.cc-vms-on #kvm_list td.vm-name .outer > span.hand img { width: 62px !important; height: 62px !important; object-fit: contain !important; }
-html.cc-vms-on #kvm_list td.vm-name .outer > span.hand i.img { width: 62px !important; height: 62px !important; font-size: 62px !important; }
+html.cc-vms-on #kvm_list td.vm-name .outer > span.hand { flex: none; display: flex; align-items: center; justify-content: center; }
+html.cc-vms-on #kvm_list td.vm-name .outer > span.hand img { width: 62px !important; height: 62px !important; object-fit: contain !important; display: block !important; }
+html.cc-vms-on #kvm_list td.vm-name .outer > span.hand i.img {
+  width: 62px !important; height: 62px !important; font-size: 62px !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  line-height: 1 !important; text-align: center !important;   /* center the FA glyph in the box + row */
+}
 html.cc-vms-on.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand {
   background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important;
   border-radius: min(var(--cc-b-radius, 14px), 16px) !important;
@@ -86,10 +90,30 @@ html.cc-vms-on #kvm_list td.vm-name .inner > a:first-child:hover { text-decorati
    (verified: $('.autostart').switchButton(...)) which HIDES the native checkbox and inserts
    .switch-button-background (track; .checked -> accent) + .switch-button-button (knob) +
    .switch-button-label(.on). Matches docker.css:504 (which colours only the .checked track). ═══ */
-html.cc-vms-on #displaybox .switch-button-background { border-radius: 999px !important; }
-html.cc-vms-on #displaybox .switch-button-background.checked { background-color: var(--cc-accent, #2f6feb) !important; border-color: var(--cc-accent, #2f6feb) !important; }
-html.cc-vms-on #displaybox .switch-button-button { border-radius: 999px !important; }
-html.cc-vms-on #displaybox .switch-button-label.on { color: var(--cc-accent, #2f6feb) !important; }
+html.cc-vms-on #kvm_list .switch-button-background {
+  width: 44px !important; height: 24px !important; border-radius: 999px !important;
+  border: none !important; outline: none !important; box-shadow: none !important;
+  background: #3a3a3a !important; transform: none !important; position: relative !important;
+  display: inline-block; vertical-align: middle; margin: 0 12px 0 3px; cursor: pointer;
+  transition: background .15s; box-sizing: border-box;
+}
+html.cc-vms-on #kvm_list .switch-button-background.checked { background: var(--cc-accent, #2f6feb) !important; }
+html.cc-vms-on #kvm_list .switch-button-background .switch-button-button {
+  width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important;
+  border-radius: 50% !important; background: #fff !important; box-shadow: none !important;
+  border: none !important; transition: left .15s;
+}
+html.cc-vms-on #kvm_list .switch-button-background.checked .switch-button-button { left: 21px !important; }
+html.cc-vms-on #kvm_list .switch-button-label { display: none !important; }
+
+/* ═══ Actions column (injected by vms.js injectVmActionCell; styles/docker.css is NOT loaded on /VMs) ═══ */
+html.cc-vms-on #kvm_table thead tr .cc-act-th { font-size: 11px; width: 60px; }
+html.cc-vms-on #kvm_list td.cc-actcell { white-space: nowrap; vertical-align: middle; }
+html.cc-vms-on .cc-actbar { display: flex; flex-direction: column; gap: 4px; }
+html.cc-vms-on .cc-actrow { display: flex; gap: 4px; }
+html.cc-vms-on .cc-actbtn { width: 27px; height: 26px; border-radius: var(--cc-b-radius, 6px); background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; user-select: none; transition: filter .12s; }
+html.cc-vms-on .cc-actbtn:hover { filter: brightness(1.14); }
+html.cc-vms-on .cc-actbtn i.fa { font-size: 13px; line-height: 1; color: inherit !important; }
 
 /* ═══ bottom action buttons (input[type=button]) -> CC accent pills ═══ */
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart) {
@@ -117,3 +141,84 @@ html.cc-vms-on ul.dropdown-menu.dropdown-context > li > a:hover {
 html.cc-vms-on ul.dropdown-menu.dropdown-context > li > a i,
 html.cc-vms-on ul.dropdown-menu.dropdown-context > li > a:hover i { color: inherit !important; }
 html.cc-vms-on ul.dropdown-menu.dropdown-context > li.divider { background: rgba(255, 255, 255, .1) !important; margin: 4px 0 !important; }
+
+/* ═══ VM USAGE STATISTICS subtab (VMUsageStats.page, Menu="VMs:2") — the SECOND role=tabpanel under /VMs,
+   so html.cc-vms-on already applies (no gating change). Native markup is a SEPARATE table
+   (#vmstats > tbody#vmstatsbody), rows pushed live via the /sub/vm_usage websocket, so the #kvm_list-scoped
+   rules never reached it. Styled CSS-only (no JS — a JS enhancer would fight the ~3s re-render). Row order:
+   1 name · 2 guest CPU td.advanced · 3 host CPU td.advanced · 4 memory · 5 disk IO · 6 network IO. ═══ */
+html.cc-vms-on #displaybox #vmstats { background: none; }
+html.cc-vms-on #displaybox #vmstats tbody tr > td {
+  border: none !important;
+  padding-top: var(--cc-density, 9px) !important; padding-bottom: var(--cc-density, 9px) !important;
+  vertical-align: middle;
+}
+html.cc-vms-on #vmstats tbody tr > td:first-child { font-size: 15px; font-weight: 600; letter-spacing: .1px; }
+/* Guest/Host CPU % readout (span first child of td.advanced) -> CC accent value pill */
+html.cc-vms-on #vmstats tbody td.advanced > span:first-child {
+  display: inline-flex; align-items: center;
+  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 3px 11px);
+  font-size: var(--cc-sm-fs, 11px); font-weight: 600; line-height: 1.35; white-space: nowrap;
+  font-family: Consolas, "SFMono-Regular", monospace;
+  background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff);
+}
+/* live usage bar (native .usage-disk.mm) -> accent fill on a subtle rounded track */
+html.cc-vms-on #vmstats td.advanced .usage-disk.mm { background: rgba(128, 128, 128, .20) !important; border-radius: 999px; }
+html.cc-vms-on #vmstats td.advanced .usage-disk.mm > span:first-child { background: var(--cc-accent, #2f6feb) !important; border-radius: 999px; }
+/* memory / disk IO / network IO cells (cols 4-6) -> monospace numerics */
+html.cc-vms-on #vmstats tbody tr > td:nth-child(n+4) { font-family: Consolas, "SFMono-Regular", monospace; font-size: var(--cc-md-fs, 13px); }
+
+/* ═══ Tab-Ansicht (cc.sections.vms): flatten the two /VMs sub-tabs — "Virtual Machines" (#kvm_list) and
+   "VM Usage Statistics" (#vmstats) — into stacked CC sections. Same MainContentTabbed DOM as the
+   /Shares/Share + /Main flatten: both panels are server-rendered as sibling section[role=tabpanel] inside
+   #displaybox and Unraid's tab JS only toggles inline display, so reveal EVERY panel, hide the tab BUTTONS
+   ONLY, and dress each section with a .cc-card-head badge vms.js clones from the (hidden) tab button. ═══ */
+html.cc-vms-on.cc-sections-vms #displaybox section[role="tabpanel"] {
+  display: block !important;                 /* beats the inline display:none Unraid's tab JS sets */
+  margin: 0 0 28px; background: none; border-radius: 0; padding: 0; box-shadow: none; overflow: visible !important;
+}
+html.cc-vms-on.cc-sections-vms #displaybox section[role="tabpanel"]:last-child { margin-bottom: 0; }
+html.cc-vms-on.cc-sections-vms #displaybox nav.tabs button[role="tab"] { display: none !important; }
+html.cc-vms-on.cc-sections-vms #displaybox nav.tabs { border: none; min-height: 0; }
+html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: 15px; line-height: 1;
+  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+  border: none; border-radius: var(--cc-b-radius, 999px); padding: 9px 18px; margin: 0 0 16px;
+}
+html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head i,
+html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head i.title,
+html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
+
+/* ═══ VIEW TOGGLE (List/Grid) — docker.css .cc-seg is NOT loaded here, so restyle the injected control. ═══ */
+html.cc-vms-on .cc-vm-toolbar { display: flex; justify-content: flex-end; margin: 6px 0 10px; }
+html.cc-vms-on .cc-seg { display: inline-flex; border: 1px solid #2a2a2a; border-radius: 6px; overflow: hidden; }
+html.cc-vms-on .cc-seg-btn { background: #1e1e1e; color: #8a8a8a; border: none; padding: 5px 14px; font-size: 12px; cursor: pointer; }
+html.cc-vms-on .cc-seg-btn:hover { color: #e6e6e6; }
+html.cc-vms-on .cc-seg-btn.cc-seg-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); font-weight: 600; }
+
+/* ═══ GRID / CARD view (cc.vmview="grid", html.cc-vmgrid) — DOM-only mirror of Docker's card grid. vms.js
+   has no engine data, so REFLOW the native #kvm_list table into cards via CSS: every native cell + our
+   badges stay live/clickable. Scoped table.tablesorter:has(#kvm_list) so the #vmstats table (also a
+   .tablesorter, and revealed when sections are on) is NEVER reflowed into a grid. ═══ */
+html.cc-vms-on.cc-vmgrid #displaybox table.tablesorter:has(#kvm_list) { display: block; background: none; }
+html.cc-vms-on.cc-vmgrid #displaybox table.tablesorter:has(#kvm_list) thead { display: none; }
+html.cc-vms-on.cc-vmgrid #displaybox table.tablesorter tbody#kvm_list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; padding-top: 4px;
+}
+html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable {
+  display: flex; flex-direction: column; gap: 10px;
+  background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px 14px;
+  transition: border-color .12s, transform .12s, box-shadow .12s;
+}
+html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable:hover { border-color: #3a3a3a; transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0, 0, 0, .35); }
+html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable > td {
+  display: block; border: none !important; padding: 0 !important; max-width: none !important; white-space: normal !important;
+}
+
+/* ═══ RAINBOW mode (html.cc-vm-rainbow) — reads the SAME global cc.rainbow + --cc-rb-* palette vms.js
+   stamps on <html>. Only the info badges (CPU/RAM/IP) recolour; the state badge keeps its semantic
+   colour, exactly like Docker. Applies in BOTH list and grid view. ═══ */
+html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-cpu { background: var(--cc-rb-cpu, #d9433f); color: var(--cc-rb-cpu-t, #fff); }
+html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ram { background: var(--cc-rb-ram, #2f9d8b); color: var(--cc-rb-ram-t, #fff); }
+html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ip  { background: var(--cc-rb-ip, #2f6feb); color: var(--cc-rb-ip-t, #fff); }

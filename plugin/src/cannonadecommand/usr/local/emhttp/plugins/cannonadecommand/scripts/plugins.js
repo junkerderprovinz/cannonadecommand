@@ -176,7 +176,9 @@
       tds[0].appendChild(box);
     }
     var ico = tds[0].querySelector(".cc-plugico");
-    if (ico) { ico.style.setProperty("width", "64px", "important"); ico.style.setProperty("height", "64px", "important"); }
+    // Let the box be CONTENT-sized like Docker/VM span.hand (62px logo + 8px padding = 78px). The old
+    // fixed 64px !important made the plugin box smaller than Docker/VM AND clipped the logo under overflow:hidden.
+    if (ico) { ico.style.removeProperty("width"); ico.style.removeProperty("height"); }
     // ALL THREE icon types Unraid emits in this cell: <img> (PNG), <i class="fa …">
     // (FontAwesome) AND <i class="icon-… list"> (Unraid's own glyph font). The old
     // "img, i.fa" selector missed the icon-* glyphs entirely and sized fa (46px) vs
@@ -188,8 +190,8 @@
     var ibgIcon = eff("iconcolor"); var ibgBg = (ibgIcon && /^#?[0-9a-f]{6}$/i.test(ibgIcon)) ? ibgIcon : accent();
     var ibgMono = ibgOn ? ensureMonoFilter("cc-plug-mono-svg", "cc-plug-mono-tint", ibgBg) : "";
     Array.prototype.slice.call(tds[0].querySelectorAll("img, i")).forEach(function (el2) {
-      el2.style.setProperty("width", "56px", "important");
-      el2.style.setProperty("height", "56px", "important");
+      el2.style.setProperty("width", "62px", "important");   // 62px = Docker/VM logo size (was 56px)
+      el2.style.setProperty("height", "62px", "important");
       el2.style.setProperty("vertical-align", "middle", "important");
       if (el2.tagName === "IMG") {
         el2.style.setProperty("object-fit", "contain", "important");
@@ -198,8 +200,8 @@
         el2.style.setProperty("filter", ibgMono || f2 || "none", "important");
       } else {
         // font glyph (fa- or icon-): size + center to visually match the images
-        el2.style.setProperty("font-size", "50px", "important");
-        el2.style.setProperty("line-height", "56px", "important");
+        el2.style.setProperty("font-size", "62px", "important");   // 62px = Docker/VM glyph size (was 50px)
+        el2.style.setProperty("line-height", "62px", "important");
         el2.style.setProperty("text-align", "center", "important");
         el2.style.setProperty("display", "inline-block", "important");
         if (ibgOn) el2.style.setProperty("color", idealText(ibgBg), "important");
@@ -333,6 +335,41 @@
       });
     } catch (e) {}
   }
+  // ── Tab-Ansicht: flatten the native Plugins sub-tabs into stacked CC sections. In Unraid's Tabbed
+  // display mode the Plugins page renders the SAME MainContentTabbed DOM as /Shares/Share and /Main —
+  // nav.tabs > button[role=tab] paired by DOM INDEX with sibling section[role=tabpanel] inside
+  // #displaybox — so this mirrors shares.js/cardPanels(): prepend a .cc-card-head (cloned from each
+  // now-hidden tab button) to every panel. The CSS (docker.css, gated html.cc-on-plugins.cc-sections-plugins)
+  // reveals every panel and hides the tab BUTTONS only (the Check/Update/Remove span.status buttons stay).
+  // Idempotent via data-cc-card; the Plugins panels have no clone-settings split, so no .cc-main-col here.
+  function cardPanels(box) {
+    var tablist = box.querySelector('nav.tabs, [role="tablist"]');
+    var tabBtns = tablist ? tablist.querySelectorAll('button[role="tab"]') : [];
+    var panels = box.querySelectorAll('section[role="tabpanel"]');
+    for (var i = 0; i < panels.length; i++) {
+      var section = panels[i];
+      if (section.getAttribute("data-cc-card")) continue; // idempotent; keeps i == real DOM index
+      section.setAttribute("data-cc-card", "1");
+      var head = document.createElement("div");
+      head.className = "cc-card-head";
+      var btn = tabBtns[i];
+      if (btn && btn.childNodes.length) { // clone the localized <span.left><icon>Title</span>
+        var kids = btn.childNodes;
+        for (var k = 0; k < kids.length; k++) head.appendChild(kids[k].cloneNode(true));
+      } else {
+        head.textContent = (btn && btn.textContent.trim()) || (section.id || "").replace(/-panel$/, "");
+      }
+      section.insertBefore(head, section.firstChild);
+    }
+  }
+  function flattenTeardown() {
+    try {
+      var stray = document.querySelectorAll("#displaybox .cc-card-head");
+      for (var s = 0; s < stray.length; s++) stray[s].parentNode.removeChild(stray[s]);
+      var marked = document.querySelectorAll("#displaybox [data-cc-card]");
+      for (var m = 0; m < marked.length; m++) marked[m].removeAttribute("data-cc-card");
+    } catch (e) {}
+  }
   function paint() {
     try {
       if (localStorage.getItem("cc.theming") === "0" || localStorage.getItem("cc.enable.plugins") === "0") return; // master theming off OR area disabled: don't paint (reverts on reload)
@@ -359,6 +396,14 @@
       var pIcon = eff("iconcolor");
       if (eff("iconbg") === "1" && pIcon && /^#?[0-9a-f]{6}$/i.test(pIcon)) document.documentElement.style.setProperty("--cc-iconbg-color", pIcon);
       else document.documentElement.style.removeProperty("--cc-iconbg-color");
+      // Tab-Ansicht (cc.sections.plugins, default OFF = native sub-tabs): opt in to stacked CC sections.
+      // cc-on-plugins marks the page; the CSS flatten block (docker.css) is gated
+      // html.cc-on-plugins.cc-sections-plugins. Only flattens where nav.tabs sections exist (else no-op).
+      document.documentElement.classList.add("cc-on-plugins");
+      var secOn = localStorage.getItem("cc.sections.plugins") === "1";
+      document.documentElement.classList.toggle("cc-sections-plugins", secOn);
+      var pbox = document.getElementById("displaybox");
+      if (pbox) { if (secOn) cardPanels(pbox); else flattenTeardown(); }
       colorTabs();
       if (!window.__ccTabClick) { window.__ccTabClick = 1; document.addEventListener("click", function (e) { try { if (e.target.closest && e.target.closest("nav.tabs, div.tab, .tabbed")) setTimeout(colorTabs, 30); } catch (x) {} }, true); }
       // Install-Plugin tab: clean dark input + accent pill button + accent checkbox
@@ -420,6 +465,7 @@
   }
 
   function boot() {
+    try { window.ccPluginsApply = paint; } catch (e) {} // let the CC Settings page live-update the Tab-Ansicht toggle (parity with ccSharesApply)
     if (localStorage.getItem("cc.enable.plugins") === "0" || localStorage.getItem("cc.theming") === "0") return; // area disabled, or master theming off
     adopt(function () {
       paint();

@@ -14,6 +14,14 @@
   "use strict";
   var PROXY = "/plugins/cannonadecommand/server/ccapi.php";
   var dead = false, mo = null, liveTimer = null, moPending = false;
+  var VMVIEW_KEY = "cc.vmview";
+  var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
+  // Rainbow: ported verbatim from docker.js so the VM badges read the SAME global palette. --cc-rb-* vars
+  // are stamped on <html>; the kind->colour map rotates by a per-load random offset (toggle cc.rainbowrot).
+  // VM info badges carry kinds cpu/ram/ip, so only those recolour.
+  var RB_KINDS = ["net", "ip", "lan", "port", "id", "von", "cpu", "ram", "bw", "version", "vol", "plan"];
+  var RB_PAL = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
+  var RB_OFFSET = Math.floor(Math.random() * RB_PAL.length);
 
   function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   // EXACT-colour tint via an inline SVG feColorMatrix (identical recipe to
@@ -92,6 +100,70 @@
     return "url(#" + filtId + ")";
   }
   function ccShape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
+  // ── Rainbow palette (verbatim port of docker.js applyRainbowPalette): read the GLOBAL cc.rainbow +
+  //    cc.rbpal/cc.rainbowrot and stamp --cc-rb-* on <html>. Cleared when off.
+  function applyRainbowPalette() {
+    var rt = document.documentElement.style, on = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1";
+    if (!on) { RB_KINDS.forEach(function (k) { rt.removeProperty("--cc-rb-" + k); rt.removeProperty("--cc-rb-" + k + "-t"); }); return; }
+    var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
+    var pal = RB_PAL; try { var jp = JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e) {}
+    RB_KINDS.forEach(function (k, i) {
+      var c = pal[(i + off) % pal.length], n = parseInt(String(c).slice(1), 16);
+      var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255);
+      rt.setProperty("--cc-rb-" + k, c); rt.setProperty("--cc-rb-" + k + "-t", L > 150 ? "#161616" : "#fff");
+    });
+  }
+  // ── GRID / CARD view: a DOM-only mirror of Docker's list/grid toggle. vms.js has no engine data model
+  //    (it enhances the native table in place), so instead of building card DOM we reflow the native
+  //    #kvm_list into cards via CSS (html.cc-vmgrid) — every native cell + our badges stay live/clickable.
+  //    Storage key cc.vmview; grid is a THEMING view (list when theming off). el() is hoisted (defined below).
+  function currentView() { return (ls(VMVIEW_KEY) === "grid" && ls("cc.theming") !== "0") ? "grid" : "list"; }
+  function applyView() {
+    document.documentElement.classList.toggle("cc-vmgrid", currentView() === "grid");
+    var tg = document.getElementById("cc-vm-viewtoggle"); if (!tg) return;
+    var g = currentView() === "grid", b = tg.querySelectorAll(".cc-seg-btn");
+    if (b[0]) b[0].classList.toggle("cc-seg-on", !g); if (b[1]) b[1].classList.toggle("cc-seg-on", g);
+  }
+  function ensureViewToggle() {
+    if (document.getElementById("cc-vm-viewtoggle")) return;
+    var list = document.getElementById("kvm_list"), tbl = list && list.closest("table");
+    if (!tbl || !tbl.parentNode) return;
+    var de = LANG === "de";
+    var seg = el("div", "cc-seg"); seg.id = "cc-vm-viewtoggle";
+    var bL = el("button", "cc-seg-btn", de ? "Liste" : "List"); bL.type = "button";
+    var bG = el("button", "cc-seg-btn", de ? "Raster" : "Grid"); bG.type = "button";
+    bL.addEventListener("click", function () { try { localStorage.setItem(VMVIEW_KEY, "list"); } catch (e) {} applyView(); });
+    bG.addEventListener("click", function () { try { localStorage.setItem(VMVIEW_KEY, "grid"); } catch (e) {} applyView(); });
+    seg.appendChild(bL); seg.appendChild(bG);
+    var bar = el("div", "cc-vm-toolbar"); bar.appendChild(seg);
+    tbl.parentNode.insertBefore(bar, tbl);
+  }
+  // ── Tab-Ansicht: flatten the /VMs sub-tabs ("Virtual Machines" #kvm_list + "VM Usage Statistics"
+  //    #vmstats) into stacked CC sections. Same MainContentTabbed DOM as /Shares/Share + /Main. Prepend a
+  //    .cc-card-head cloned from each hidden tab button to every panel. Idempotent via data-cc-card.
+  function cardPanels(box) {
+    var tablist = box.querySelector('nav.tabs, [role="tablist"]');
+    var tabBtns = tablist ? tablist.querySelectorAll('button[role="tab"]') : [];
+    var panels = box.querySelectorAll('section[role="tabpanel"]');
+    for (var i = 0; i < panels.length; i++) {
+      var section = panels[i];
+      if (section.getAttribute("data-cc-card")) continue;   // idempotent; keeps i == real DOM index
+      section.setAttribute("data-cc-card", "1");
+      var head = document.createElement("div"); head.className = "cc-card-head";
+      var btn = tabBtns[i];
+      if (btn && btn.childNodes.length) { var kids = btn.childNodes; for (var k = 0; k < kids.length; k++) head.appendChild(kids[k].cloneNode(true)); }
+      else { head.textContent = (btn && btn.textContent.trim()) || (section.id || "").replace(/-panel$/, ""); }
+      section.insertBefore(head, section.firstChild);       // VM panels have no split, so the section IS the card
+    }
+  }
+  function flattenTeardown() {
+    try {
+      var stray = document.querySelectorAll("#displaybox .cc-card-head, #displaybox .cc-card-note");
+      for (var s = 0; s < stray.length; s++) stray[s].parentNode.removeChild(stray[s]);
+      var marked = document.querySelectorAll("#displaybox [data-cc-card]");
+      for (var m = 0; m < marked.length; m++) marked[m].removeAttribute("data-cc-card");
+    } catch (e) {}
+  }
   function enhanceRows() {
     try {
       var a = ccAccent(), rad = ccShape(), root = document.documentElement.style;
@@ -129,6 +201,10 @@
       }
       var sv = document.getElementById("cc-vm-tint-svg"); if (sv) sv.remove();
       var hh = document.getElementById("cc-vm-mono-svg"); if (hh) hh.remove();
+      // grid/rainbow live-revert: drop the classes, clear the palette vars, remove the injected view toggle
+      document.documentElement.classList.remove("cc-vmgrid", "cc-vm-rainbow");
+      RB_KINDS.forEach(function (k) { document.documentElement.style.removeProperty("--cc-rb-" + k); document.documentElement.style.removeProperty("--cc-rb-" + k + "-t"); });
+      var vt = document.getElementById("cc-vm-viewtoggle"); if (vt) { var vbar = vt.closest(".cc-vm-toolbar") || vt; if (vbar.parentNode) vbar.parentNode.removeChild(vbar); }
     } catch (e) {}
   }
   // wrap the vCPU (a.vcpu-*) and RAM (mem) cell values in CC value badges (span.cc-vmb), styled by
@@ -137,6 +213,24 @@
   // cells (they carry live markup) or the autostart cell (styled purely by CSS).
   // el() + badgeInfo() ported from docker.js so the VM badges use Docker's EXACT classes/structure.
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
+  // ACTIONS column (parity with the Docker tab, which has one via injectActionCell). The native VM menu
+  // (Start/Stop/Console/Edit/Remove) is bound to the logo's onclick=addVMContext (VMMachines.php); CC
+  // gives it a VISIBLE column button that re-fires that click, so it no longer hides behind the logo.
+  // #kvm_table thead + #kvm_list tbody share one table, so an injected th+td stays column-aligned.
+  function injectVmActionCell(tr) {
+    try {
+      var de = (document.documentElement.lang || "").slice(0, 2).toLowerCase() === "de";
+      var head = document.querySelector("#kvm_table thead tr");
+      if (head && !head.querySelector(".cc-act-th")) { var th = el("th", "cc-act-th", de ? "Aktionen" : "Actions"); head.insertBefore(th, head.children[1] || null); }
+      if (tr.querySelector(":scope > td.cc-actcell")) return;
+      var hand = tr.querySelector("td.vm-name span.outer > span.hand");
+      var td = el("td", "cc-actcell"), bar = el("div", "cc-actbar"), row = el("div", "cc-actrow");
+      var btn = el("span", "cc-actbtn"); btn.title = de ? "Aktionen" : "Actions"; btn.appendChild(el("i", "fa fa-bars"));
+      btn.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); if (!hand) return; var r = btn.getBoundingClientRect(); hand.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window, clientX: r.left, clientY: r.bottom })); });
+      row.appendChild(btn); bar.appendChild(row); td.appendChild(bar);
+      tr.insertBefore(td, tr.children[1] || null);
+    } catch (e) {}
+  }
   function vmCell(td, label, kind) {
     if (!td || td.classList.contains("cc-vmb-cell")) return;
     if (td.querySelector("br, table, .diskresize")) return;      // skip multi-line / interactive cells
@@ -178,10 +272,12 @@
       for (var i = 0; i < rows.length; i++) {
         var tds = rows[i].querySelectorAll(":scope > td");
         // native column order: 0 vm-name, 1 desc, 2 vCPU, 3 RAM, 4 disks, 5 graphics, 6 ip, 7 autostart
+        if (tds[1]) vmCell(tds[1], "", "");   // description -> plain accent pill (vmCell no-ops on empty/"-")
         if (tds[2]) vmCell(tds[2], "CPU", "cpu");
         if (tds[3]) vmCell(tds[3], "RAM", "ram");
         if (tds[5]) vmCell(tds[5], "", "");   // graphics -> plain accent pill (value only)
         if (tds[6]) vmIpCell(tds[6]);         // IP addresses -> one copy-pill each
+        injectVmActionCell(rows[i]);          // LAST: inserts the Actions <td> (shifts indices) AFTER tds[] captured above
       }
     } catch (e) {}
   }
@@ -199,15 +295,28 @@
         if (b) { var k = b.querySelector(".cc-b-k"); if (k) b.removeChild(k); var v = b.querySelector(".cc-b-v"); var src = v || b; while (src.firstChild) td.insertBefore(src.firstChild, b); td.removeChild(b); }
         td.classList.remove("cc-vmb-cell");
       }
+      // drop the injected Actions column + its header so master-theming/area-off fully reverts
+      Array.prototype.slice.call(document.querySelectorAll("#kvm_list td.cc-actcell")).forEach(function (td) { td.remove(); });
+      var actTh = document.querySelector("#kvm_table thead tr .cc-act-th"); if (actTh) actTh.remove();
     } catch (e) {}
   }
   function apply() {
     var root = document.documentElement;
     var live = ls("cc.theming") !== "0" && ls("cc.enable.vms") !== "0";
     root.classList.toggle("cc-vms-on", live);
-    if (!live) { stripVmTheming(); enhanceCellsTeardown(); return; } // MASTER THEMING / area off: VMs page fully native
+    if (!live) { root.classList.remove("cc-sections-vms"); stripVmTheming(); enhanceCellsTeardown(); flattenTeardown(); return; } // MASTER THEMING / area off: VMs page fully native
     try { enhanceRows(); } catch (e) {}
     try { enhanceCells(); } catch (e) {}
+    // Tab-Ansicht (cc.sections.vms, default OFF): stacked CC sections vs native sub-tabs. MUST run BEFORE
+    // the adopt/tint early-return below so it still applies with adopt-off + no tint colour. Idempotent.
+    try {
+      var vmSections = ls("cc.sections.vms") === "1";
+      root.classList.toggle("cc-sections-vms", vmSections);
+      var vbox = document.getElementById("displaybox");
+      if (vbox) { if (vmSections) cardPanels(vbox); else flattenTeardown(); }
+    } catch (e) {}
+    try { ensureViewToggle(); applyView(); } catch (e) {}   // Grid/List view (cc.vmview)
+    try { applyRainbowPalette(); root.classList.toggle("cc-vm-rainbow", ls("cc.theming") !== "0" && ls("cc.rainbow") === "1"); } catch (e) {}
     // adopt-toggle ON (default) -> Docker's cc.* settings; OFF -> own ccv.* keys.
     // Stay even with adopt-off + no tint colour when the Logo-Hintergrund badge is on.
     if (ls("cc.stylevms") === "0" && !ls("ccv.iconcolor") && effK("iconbg") !== "1") return;
@@ -251,8 +360,9 @@
     if (dead) return; dead = true;
     try { if (mo) mo.disconnect(); mo = null; } catch (e) {}
     try { if (liveTimer) clearInterval(liveTimer); liveTimer = null; } catch (e) {}
-    try { document.documentElement.classList.remove("cc-vms-on", "cc-vm-iconbg"); document.documentElement.style.removeProperty("--cc-iconbg-color"); } catch (e) {}
-    try { enhanceCellsTeardown(); } catch (e) {}
+    try { document.documentElement.classList.remove("cc-vms-on", "cc-vm-iconbg", "cc-sections-vms", "cc-vmgrid", "cc-vm-rainbow"); document.documentElement.style.removeProperty("--cc-iconbg-color"); } catch (e) {}
+    try { RB_KINDS.forEach(function (k) { document.documentElement.style.removeProperty("--cc-rb-" + k); document.documentElement.style.removeProperty("--cc-rb-" + k + "-t"); }); var vt = document.getElementById("cc-vm-viewtoggle"); if (vt) { var vbar = vt.closest(".cc-vm-toolbar") || vt; if (vbar.parentNode) vbar.parentNode.removeChild(vbar); } } catch (e) {}
+    try { enhanceCellsTeardown(); flattenTeardown(); } catch (e) {}
     try { var imgs = vmImgs(); for (var i = 0; i < imgs.length; i++) { imgs[i].style.filter = ""; imgs[i].style.removeProperty("color"); var w = imgs[i].parentElement; if (w) { w.style.removeProperty("background"); w.style.removeProperty("border-radius"); w.style.removeProperty("width"); w.style.removeProperty("height"); w.style.removeProperty("padding"); w.style.removeProperty("display"); w.style.removeProperty("align-items"); w.style.removeProperty("justify-content"); w.style.removeProperty("box-sizing"); } } } catch (e) {}
     try { var sv = document.getElementById("cc-vm-tint-svg"); if (sv) sv.remove(); } catch (e) {}
     try { var hh = document.getElementById("cc-vm-mono-svg"); if (hh) hh.remove(); } catch (e) {}
@@ -285,6 +395,7 @@
     // executes a <script>, so the whole enhancer was dead. Being global, it must self-gate to /VMs:
     // otherwise its proxy poll/liveness timers would run on every page.
     try { if (location.pathname.replace(/\/+$/, "") !== "/VMs") return; } catch (e) { return; }
+    try { window.ccVmsApply = apply; } catch (e) {} // same-tab live toggle hook for the CC Settings page (only set on /VMs, never on the Settings page -> no VmTab.css bleed)
     if (localStorage.getItem("cc.enable.vms") === "0") return; // area disabled in CC settings
     try {
       arm();

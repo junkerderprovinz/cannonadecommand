@@ -603,6 +603,37 @@ html:not(.Theme--sidebar) #displaybox:has(#docker_list) { padding-left: var(--cc
    Zero that inset so the button lines up with the plugins-list right edge. These IDs
    exist ONLY on the Plugins page, so this is inherently page-scoped. */
 #checkall.status, #updateall.status, #removeall.status { margin-right: 0 !important; }
+/* Plugins tab: Unraid appends the Check/Update/Remove controls as <span class='status vhshift'> INTO the
+   shared flex .tabs-container (Plugins.page). Its 1.4rem font-leading makes the wrapper TALLER than a 30px
+   tab pill, and .tabs-container{align-items:center} then re-centres the shorter tab buttons in the taller
+   row -> the Plugins sub-tabs sit LOWER than every other tab's. Pin the wrapper + its button to the tab
+   height and zero the wrapper leading so the flex row height == tab height. Do NOT set display —
+   #updateall/#removeall start display:none and must stay hidden. */
+nav.tabs .tabs-container > span.status.vhshift { height: var(--cc-md-h, 30px) !important; line-height: var(--cc-md-h, 30px) !important; font-size: 0 !important; }
+nav.tabs .tabs-container > span.status.vhshift > input[type="button"] { height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; vertical-align: middle !important; }
+/* ── Plugins Tab-Ansicht: flatten the native sub-tabs (the MainContentTabbed DOM — nav.tabs button[role=tab]
+   + sibling section[role=tabpanel]) into stacked CC sections. plugins.js sets html.cc-on-plugins and toggles
+   html.cc-sections-plugins from cc.sections.plugins (default OFF), prepending a .cc-card-head per panel;
+   turning the toggle OFF drops the class -> native sub-tabs return. Mirrors the Shares/Main flatten block.
+   Hide the tab BUTTONS only (never nav.tabs itself — it holds the Check/Update/Remove span.status buttons). ── */
+html.cc-on-plugins.cc-sections-plugins #displaybox section[role="tabpanel"] {
+  display: block !important;                 /* beats the inline display:none Unraid's tab JS sets */
+  max-width: 960px; margin: 0 0 28px;
+  background: none; border-radius: 0; padding: 0; box-shadow: none;
+  overflow: visible !important;
+}
+html.cc-on-plugins.cc-sections-plugins #displaybox section[role="tabpanel"]:last-child { margin-bottom: 0; }
+html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs button[role="tab"] { display: none !important; }
+html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs { border: none; min-height: 0; }
+html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: 15px; line-height: 1;
+  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+  border: none; border-radius: var(--cc-b-radius, 999px);
+  padding: 9px 18px; margin: 0 0 16px;
+}
+html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head i,
+html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
 .cc-plug #plugin_list > tr > td { padding-top: 12px !important; padding-bottom: 12px !important; }
 .cc-plug #plugin_list > tr > td:nth-child(2) { padding-right: 14px !important; } /* uniform right edge for the scroll windows */
 .cc-plug #plugin_list > tr > td:nth-child(2) p { margin: 0 !important; }
@@ -617,7 +648,7 @@ html.cc-plugins-iconbg .cc-plugico {
   background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important;
   border-radius: min(var(--cc-b-radius, 14px), 16px) !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  box-sizing: border-box !important; padding: 6px !important;
+  box-sizing: border-box !important; padding: 8px !important;   /* 8px = Docker/VM box (was 6px -> plugin box was 4px smaller) */
 }
 /* Unraid emits the col-1 icon as ONE of three element types — <img class=list>,
    <i class="fa … list">, or <i class="icon-… list"> (its own glyph font) — none
@@ -627,9 +658,9 @@ html.cc-plugins-iconbg .cc-plugico {
    additionally content-crops the raster logos so padded ones still fill the box. */
 #plugin_list td:first-child img.list, #plugin_list td:first-child i.list,
 .cc-plugico img, .cc-plugico i {
-  width: 56px !important; height: 56px !important; min-width: 56px !important; min-height: 56px !important;
-  max-width: 56px !important; max-height: 56px !important;
-  font-size: 50px !important; line-height: 56px !important;
+  width: 62px !important; height: 62px !important; min-width: 62px !important; min-height: 62px !important;
+  max-width: 62px !important; max-height: 62px !important;
+  font-size: 62px !important; line-height: 62px !important;   /* 62px = Docker/VM logo size (was 56/50px -> plugin logo was smaller) */
   object-fit: contain !important; text-align: center !important;
   display: inline-block !important; vertical-align: middle !important; box-sizing: border-box !important;
 }
@@ -643,7 +674,8 @@ html.cc-plugins-iconbg .cc-plugico {
 .cc-desc::-webkit-scrollbar-track { background: transparent; }
 .cc-descin { display: block; }
 .cc-plug-lite tbody td { padding-top: 6px !important; padding-bottom: 6px !important; }
-.cc-plugico { display: flex; align-items: center; justify-content: center; min-width: 64px; }
+/* (min-width:64px removed: it force-sized the box independently of content and clipped the 62px logo+8px
+   padding under .cc-plugico overflow:hidden — Docker/VM span.hand is content-sized, so match that.) */
 .cc-plugtxt { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .cc-plugtitle { font-size: 16px; font-weight: 600; } /* the Docker-tab container-name look */
 .cc-plugsup { font-size: 11px; }

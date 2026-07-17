@@ -31,11 +31,14 @@
   // net/ip/lan/port share a network-ish family (net kept its old purple; ip/lan/port added after it).
   var RB = ["#1f9d55", "#2f6feb", "#6b7280", "#8b5cf6", "#7c6df0", "#5b8def", "#4aa3c7", "#d9433f", "#0ea5a4", "#e05299", "#0891b2", "#6366f1"];
 
-  function defColview() { var adv = { s: false, a: true }, both = { s: true, a: true }; return { update: both, force: adv, version: adv, net: both, ip: both, lan: both, port: both, res: both, id: adv, von: adv, vol: adv, plan: both }; }
+  // Each column gets its OWN object via a factory call — chkCell mutates colview[key][v] IN PLACE, so a
+  // SHARED `both`/`adv` reference let one checkbox flip every aliased column (net/ip/lan/port all aliased
+  // `both`, blanking the whole Simple-view network area). Must stay in lock-step with docker.js defaultColview().
+  function defColview() { var adv = function () { return { s: false, a: true }; }, both = function () { return { s: true, a: true }; }; return { update: both(), force: adv(), version: adv(), net: both(), ip: both(), lan: both(), port: both(), res: both(), id: adv(), von: adv(), vol: adv(), plan: both() }; }
   function get(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function del(k) { try { localStorage.removeItem(k); } catch (e) {} }
-  function loadColview() { try { var j = JSON.parse(localStorage.getItem("cc.colview") || "null"); if (j && typeof j === "object") { var d = defColview(); Object.keys(d).forEach(function (k) { if (j[k]) d[k] = { s: !!j[k].s, a: !!j[k].a }; }); return d; } } catch (e) {} return defColview(); }
+  function loadColview() { try { var j = JSON.parse(localStorage.getItem("cc.colview2") || "null"); if (j && typeof j === "object") { var d = defColview(); Object.keys(d).forEach(function (k) { if (j[k]) d[k] = { s: !!j[k].s, a: !!j[k].a }; }); return d; } } catch (e) {} return defColview(); }
 
   var accent = get("cc.accent", "#2f6feb");
   var rainbow = get("cc.rainbow", "0") === "1";
@@ -220,6 +223,7 @@
     var wrapPlugin = el("div", "cc-set-wrap"), wrapVms = el("div", "cc-set-wrap"), wrapHeader = el("div", "cc-set-wrap"), wrapShares = el("div", "cc-set-wrap");
     var wrapSettings = el("div", "cc-set-wrap");
     var wrapFavorites = el("div", "cc-set-wrap");
+    var wrapStart = el("div", "cc-set-wrap");   // Start (/Main) area — its own CC-settings section
     var wrapMain = el("div", "cc-set-wrap");
     var adoptToggles = {}; // adopt-key → its toggle element (a colour pick flips it live); declared UP here (not further down) because the Docker area's styleToggle now runs early, with the moved global Badges card
     // MASTER THEMING switch (first, prominent). Off = keep ONLY the Docker orchestration
@@ -235,7 +239,7 @@
     // Bereiche: enable/disable each area CannonadeCommand enhances
     (function () {
       var c = card(T("Bereiche", "Areas"), T("Aktiviere, welche Bereiche CannonadeCommand verschönert. Ein deaktivierter Bereich blendet seinen Tab hier sofort aus.", "Choose which areas CannonadeCommand enhances. Disabling an area hides its tab here immediately."));
-      [["cc.enable.header", T("Hauptmenüleiste", "Main menu bar"), "0"], ["cc.enable.shares", T("Freigaben", "Shares"), "0"], ["cc.enable.docker", T("Docker-Tab", "Docker tab"), "1"], ["cc.enable.plugins", T("Plugin-Tab", "Plugins tab"), "1"], ["cc.enable.vms", T("VM-Tab", "VMs tab"), "1"], ["cc.enable.settings", T("Einstellungen & Werkzeuge", "Settings & Tools"), "1"], ["cc.enable.favorites", T("Favoriten", "Favorites"), "1"]].forEach(function (a) {
+      [["cc.enable.main", T("Start", "Start"), "0"], ["cc.enable.header", T("Hauptmenüleiste", "Main menu bar"), "0"], ["cc.enable.shares", T("Freigaben", "Shares"), "0"], ["cc.enable.docker", T("Docker-Tab", "Docker tab"), "1"], ["cc.enable.plugins", T("Plugin-Tab", "Plugins tab"), "1"], ["cc.enable.vms", T("VM-Tab", "VMs tab"), "1"], ["cc.enable.settings", T("Einstellungen & Werkzeuge", "Settings & Tools"), "1"], ["cc.enable.favorites", T("Favoriten", "Favorites"), "1"]].forEach(function (a) {
         var row = el("div", "cc-set-row cc-set-inline");
         row.appendChild(el("span", null, a[1]));
         var cur = localStorage.getItem(a[0]);
@@ -246,6 +250,7 @@
     })();
     var SECS = [
       { t: T("Allgemein", "General"), w: wrapMain, key: null },
+      { t: T("Start", "Start"), w: wrapStart, key: "cc.enable.main" },
       { t: T("Hauptmenüleiste", "Main menu bar"), w: wrapHeader, key: "cc.enable.header" },
       { t: T("Freigaben", "Shares"), w: wrapShares, key: "cc.enable.shares" },
       { t: T("Docker-Tab", "Docker tab"), w: wrap, key: "cc.enable.docker" },
@@ -292,7 +297,7 @@
       tabBtns.push(b); tabRow.appendChild(b);
     });
     root.appendChild(tabRow);
-    root.appendChild(wrapMain); root.appendChild(wrapHeader); root.appendChild(wrapShares); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms); root.appendChild(wrapSettings); root.appendChild(wrapFavorites);
+    root.appendChild(wrapMain); root.appendChild(wrapStart); root.appendChild(wrapHeader); root.appendChild(wrapShares); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms); root.appendChild(wrapSettings); root.appendChild(wrapFavorites);
 
     // ── Badges ──
     var c1 = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
@@ -535,7 +540,7 @@
     // same live push for the Freigaben tabs (no 'storage' event fires in this document)
     function syncSharesBar() { try { if (typeof window.ccSharesApply === "function") window.ccSharesApply(); } catch (e) {} }
     // adopt-key -> the area's own key prefix (for seeding its own accent on adopt-OFF)
-    var ADOPT_PREF = { "cc.styleheader": "cch.", "cc.styleshares": "ccsh.", "cc.styledocker": "ccd.", "cc.styleplugin": "ccp.", "cc.stylevms": "ccv.", "cc.stylesettings": "ccs.", "cc.stylefavorites": "ccf." };
+    var ADOPT_PREF = { "cc.styleheader": "cch.", "cc.styleshares": "ccsh.", "cc.styledocker": "ccd.", "cc.styleplugin": "ccp.", "cc.stylevms": "ccv.", "cc.stylesettings": "ccs.", "cc.stylefavorites": "ccf.", "cc.stylemain": "ccm." };
     function styleToggle(key, onChange, lbl) {
       // the SAME knob switch as everywhere else (the text-in-pill variant looked wrong)
       var row = el("div", "cc-set-row cc-set-inline");
@@ -566,7 +571,7 @@
       // adopt toggle OFF (else eff() keeps reading the global cc.* accent and the pick is
       // ignored, the "colour not applied to the menu" bug). Reflected live on the toggle +
       // the real header bar. Turn adopt back ON to re-follow the global Docker accent.
-      var ADOPT = { "ccd.": "cc.styledocker", "ccp.": "cc.styleplugin", "ccv.": "cc.stylevms", "cch.": "cc.styleheader", "ccs.": "cc.stylesettings", "ccsh.": "cc.styleshares", "ccf.": "cc.stylefavorites" };
+      var ADOPT = { "ccd.": "cc.styledocker", "ccp.": "cc.styleplugin", "ccv.": "cc.stylevms", "cch.": "cc.styleheader", "ccs.": "cc.stylesettings", "ccsh.": "cc.styleshares", "ccf.": "cc.stylefavorites", "ccm.": "cc.stylemain" };
       var adoptKey = ADOPT[P];
       function useOwn() {
         if (adoptKey && localStorage.getItem(adoptKey) !== "0") {
@@ -728,22 +733,34 @@
     cSet.appendChild(styleToggle("cc.stylesettings", null));
     var cFav = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
     cFav.appendChild(styleToggle("cc.stylefavorites", null));
-    wrapHeader.appendChild(cH); wrapShares.appendChild(cSh); wrapPlugin.appendChild(cP); wrapVms.appendChild(cV); wrapSettings.appendChild(cSet); wrapFavorites.appendChild(cFav);
-    // per-main-tab "Tab-Ansicht" toggle: stacked CC sections (default) vs native Unraid sub-tabs.
-    // Only Shares has a flatten sheet today, so only its row is wired live (via syncSharesBar).
+    var cStart = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
+    cStart.appendChild(styleToggle("cc.stylemain", null));
+    wrapHeader.appendChild(cH); wrapShares.appendChild(cSh); wrapPlugin.appendChild(cP); wrapVms.appendChild(cV); wrapSettings.appendChild(cSet); wrapFavorites.appendChild(cFav); wrapStart.appendChild(cStart);
+    // per-area "Tab-Ansicht" toggle: native Unraid sub-tabs (default) vs stacked CC sections. Persists
+    // cc.sections.<area> (default "0" = native sub-tabs; the user opts INTO stacking per tab). Shown ONLY
+    // in areas that actually HAVE sub-tabs to flatten: Freigaben (/Shares/Share), Start (/Main), Plugin
+    // (/Plugins) and VM (/VMs). Live re-apply via each area's same-page hook.
     function sectionsToggleRow(area, applyFn) {
-      return toggleRow(T("Abschnitte statt Reiter", "Stacked sections instead of sub-tabs"), get("cc.sections." + area, "1") !== "0", function (v) { set("cc.sections." + area, v ? "1" : "0"); if (applyFn) applyFn(); });
+      return toggleRow(T("Unterreiter als Abschnitte stapeln", "Stack sub-tabs as sections"), get("cc.sections." + area, "0") !== "0", function (v) { set("cc.sections." + area, v ? "1" : "0"); if (applyFn) applyFn(); });
     }
-    var cShTabs = card(T("Tab-Ansicht", "Tab view"), T("AN = Unterreiter als Abschnitte (CC-Karten) untereinander. AUS = native Unraid-Unterreiter.", "ON = sub-tabs stacked as CC sections. OFF = native Unraid sub-tabs."));
-    cShTabs.appendChild(sectionsToggleRow("shares", syncSharesBar));
-    cShTabs.appendChild(sectionsToggleRow("main", syncSharesBar));
-    wrapShares.appendChild(cShTabs);
+    function sectionsCard(area, applyFn) {
+      var c = card(T("Tab-Ansicht", "Tab view"), T("AN = Unterreiter als CC-Abschnitte untereinander. AUS = native Unraid-Unterreiter (Standard).", "ON = sub-tabs stacked as CC sections. OFF = native Unraid sub-tabs (default)."));
+      c.appendChild(sectionsToggleRow(area, applyFn));
+      return c;
+    }
+    function syncPluginsBar() { try { if (typeof window.ccPluginsApply === "function") window.ccPluginsApply(); } catch (e) {} }
+    function syncVmsBar() { try { if (typeof window.ccVmsApply === "function") window.ccVmsApply(); } catch (e) {} }
+    wrapShares.appendChild(sectionsCard("shares", syncSharesBar));
+    wrapStart.appendChild(sectionsCard("main", syncSharesBar));
+    wrapPlugin.appendChild(sectionsCard("plugins", syncPluginsBar));
+    wrapVms.appendChild(sectionsCard("vms", syncVmsBar));
     buildStyleCards("cch.", wrapHeader, [], true); // Hauptmenueleiste: pill/badge settings only
     buildStyleCards("ccsh.", wrapShares, [], true); // Freigaben: tab pills use FA glyphs -> badges only, no logo card
     buildStyleCards("ccs.", wrapSettings, ["fa-cog", "fa-globe", "fa-star"], false); // Einstellungs-Tab: badges + logo-tint + Logo-Hintergrund cards; the tiles use FA glyphs, so the preview shows sample glyphs (cog/globe/star = System/Network/User category icons), coloured via CSS not the raster filter
     buildStyleCards("ccp.", wrapPlugin, ["/plugins/dynamix.plugin.manager/images/dynamix.plugin.manager.png", "/plugins/dynamix.docker.manager/images/dynamix.docker.manager.png", "/plugins/cannonadecommand/images/cannonadecommand.png"]);
     buildStyleCards("ccv.", wrapVms, ["/plugins/dynamix.vm.manager/templates/images/linux.png", "/plugins/dynamix.vm.manager/templates/images/windows.png", "/plugins/cannonadecommand/images/cannonadecommand.png"]);
     buildStyleCards("ccf.", wrapFavorites, ["fa-star", "fa-heart", "fa-cog"], false); // Favoriten: tiles use FA glyphs -> preview shows sample glyphs coloured via CSS (like the Settings card)
+    buildStyleCards("ccm.", wrapStart, [], true); // Start (/Main): disk_status value + name badges, no per-row logos -> badges only, no logo card
     refreshTabs();
     showSec(parseInt(localStorage.getItem("cc.settab") || "0", 10) || 0);
     paintPrev();
@@ -785,7 +802,7 @@
   // live-highlight the preset swatch that matches the current accent (no re-render)
   function syncSwOn() { var a = (accent || "").toLowerCase(); Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-sw")).forEach(function (sw) { sw.classList.toggle("cc-set-sw-on", (sw.dataset.c || "").toLowerCase() === a); }); }
   function thc(t) { var e = el("th", null, t); return e; }
-  function chkCell(key, v, color) { var td = el("td", "cc-set-chk"); var cb = el("input"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); if (rainbow && color) cb.style.accentColor = color; cb.addEventListener("change", function () { if (!colview[key]) colview[key] = { s: true, a: true }; colview[key][v] = cb.checked; set("cc.colview", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
+  function chkCell(key, v, color) { var td = el("td", "cc-set-chk"); var cb = el("input"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); if (rainbow && color) cb.style.accentColor = color; cb.addEventListener("change", function () { var cur = colview[key] || { s: true, a: true }; colview[key] = { s: cur.s, a: cur.a }; colview[key][v] = cb.checked; set("cc.colview2", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
   function segRow(labelText, opts, cur, onChange) {
     var row = el("div", "cc-set-row"); row.appendChild(el("span", "cc-set-rl", labelText)); var seg = el("div", "cc-seg");
     opts.forEach(function (o) {

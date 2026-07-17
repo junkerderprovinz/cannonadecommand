@@ -26,7 +26,7 @@
 
   var PROXY = "/plugins/cannonadecommand/server/ccapi.php";
   var SHIPLOG = "/plugins/shiplog/server/status.php";
-  var VIEW_KEY = "cc.view", COLS_KEY = "cc.colview"; // cols2: reset stale v0.3 prefs
+  var VIEW_KEY = "cc.view", COLS_KEY = "cc.colview2"; // colview2 (v2.22.0): reset the map corrupted by the shared-reference aliasing bug (one checkbox flipped every aliased column -> Simple view lost all network badges)
   var MARK = "data-cc", ROWMARK = "data-cc-row";
   var PROBES = ["health", "running", "tcp", "http", "exec", "log"], POLICIES = ["abort", "continue", "degrade"];
   var SCHED_ACTIONS = ["start", "stop", "restart"];
@@ -412,12 +412,13 @@
   // view (set in the Settings page). {s,a} = show in simple / advanced. Defaults:
   // advanced-detail badges (force/version/res/id/von) only in advanced.
   function defaultColview() {
-    var adv = { s: false, a: true }, both = { s: true, a: true };
-    // res (CPU/RAM) defaults ON in both views — it is a headline feature, and the
-    // CSS force-shows the native resource column even in Simple view.
-    // net/ip/lan/port were ONE "net" column; now split so each can be set per view (user request).
-    // Defaults keep the old visible-everywhere behaviour (all `both`); the user narrows them per field.
-    return { update: both, force: adv, version: adv, net: both, ip: both, lan: both, port: both, res: both, id: adv, von: adv, vol: adv, plan: both };
+    // Each column gets its OWN object via a factory call — settings.js chkCell mutates colview[key][v]
+    // IN PLACE, so a SHARED `both`/`adv` reference let one checkbox flip every aliased column at once
+    // (net/ip/lan/port all aliased `both`, so toggling any one blanked the whole Simple-view network
+    // area — the "no badges in Simple view" bug). res (CPU/RAM) defaults ON in both views; force/version/
+    // id/von/vol default advanced-only; net/ip/lan/port (the split of the old single "net") default both.
+    var adv = function () { return { s: false, a: true }; }, both = function () { return { s: true, a: true }; };
+    return { update: both(), force: adv(), version: adv(), net: both(), ip: both(), lan: both(), port: both(), res: both(), id: adv(), von: adv(), vol: adv(), plan: both() };
   }
   function loadColview() {
     try { var j = JSON.parse(localStorage.getItem(COLS_KEY) || "null"); if (j && typeof j === "object") { var d = defaultColview(); Object.keys(d).forEach(function (k) { if (j[k]) d[k] = { s: !!j[k].s, a: !!j[k].a }; }); return d; } } catch (e) {}

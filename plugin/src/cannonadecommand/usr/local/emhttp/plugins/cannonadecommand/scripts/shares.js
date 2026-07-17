@@ -28,6 +28,12 @@
   // adopt toggle: cc.styleshares on -> shared cc.* keys, else this area's own ccsh.* keys
   function eff(k, d) { return g("cc.styleshares", "1") !== "0" ? g("cc." + k, d) : g("ccsh." + k, d); }
   function accent() { var a = eff("accent", "#2f6feb"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
+  // The /Main (START) page is its OWN CC area (cc.enable.main / cc.stylemain / ccm.*), living in this
+  // enhancer since it reuses the flatten + badge machinery. On /Main we set --cc-shr-accent to the START
+  // accent (a distinct page load, so no clash with the Shares list colour), so every shares-scoped rule
+  // there paints in the Start colour without needing a second CSS scope.
+  function effMain(k, d) { return g("cc.stylemain", "1") !== "0" ? g("cc." + k, d) : g("ccm." + k, d); }
+  function mainAccent() { var a = effMain("accent", "#2f6feb"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
   // cc.badgeshape is a GLOBAL key (one Badge-Form control for every area) -> read it
   // DIRECTLY, not via eff(): eff() would fall back to an UNSET ccsh.badgeshape when the
   // adopt toggle is off, so --cc-b-radius would flip between pages (see header.js).
@@ -116,6 +122,10 @@
         var perm = tr.querySelector('td[id^="perm_"]');
         var size = perm && perm.nextElementSibling;
         if (size && size.hasAttribute("data") && !size.querySelector("*") && !size.classList.contains("loc")) ccBrowseCell(size, "cc-b-size");
+        // Modified/Date column (user: "badges in alle Spalten"): the plain-text td after size that also
+        // carries a numeric data="" timestamp. Same safety guard (no child element, not the Location cell).
+        var dateTd = size && size.nextElementSibling;
+        if (dateTd && dateTd.hasAttribute("data") && !dateTd.querySelector("*") && !dateTd.classList.contains("loc")) ccBrowseCell(dateTd, "cc-b-date");
       }
     } catch (e) {}
   }
@@ -167,6 +177,7 @@
       if (g("cc.theming", "1") === "0") return;
       var p = pn();
       if (p !== "/Shares" && p !== "/Docker" && p !== "/Main") return;
+      if (p === "/Main" && g("cc.enable.main", "0") === "0") return; // /Main only flips Tabbed when the Start area is on
       if (document.querySelector("#displaybox nav.tabs")) return; // already tabbed
       if (!window.jQuery) return;
       // sessionStorage guard: attempt the tabbed flip at most ONCE per browser session.
@@ -612,6 +623,25 @@
     var b = el("span", "cc-b"), v = el("span", "cc-b-v", txt);
     b.appendChild(v); td.textContent = ""; td.appendChild(b); td.classList.add("cc-bcell");
   }
+  // (b) disk NAME -> lg headline badge, mirroring enhanceName() on /Shares. The Device cell holds the
+  // browse link, the status orb and the name link a[href="/Main/Device?name=…"] (or /Main/Boot?name=…);
+  // tag ONLY that link .cc-b.cc-b-name so the disk name reads as the row headline. href/onclick intact.
+  function enhanceMainName(first) {
+    var nl = first.querySelector('a[href*="/Main/Device?name="], a[href*="/Main/Boot?name="]');
+    if (nl && !nl.classList.contains("cc-b-name")) { nl.classList.add("cc-b"); nl.classList.add("cc-b-name"); }
+  }
+  // (e) Reads/Writes cells are <span class='diskio'>rate</span><span class='number'>count</span> — the
+  // child spans make mainBadgeCell skip them, so those two columns stayed plain. Badge the COUNT span
+  // (the .diskio rate stays inline). Idempotent via the inner .cc-b guard; observer-safe (the flicker
+  // fix re-applies synchronously before paint).
+  function mainBadgeNumber(td) {
+    if (!td) return;
+    var num = td.querySelector(":scope > span.number");
+    if (!num || num.querySelector(":scope > .cc-b")) return;
+    var txt = (num.textContent || "").trim(); if (txt === "" || txt === "-") return;
+    var b = el("span", "cc-b"), v = el("span", "cc-b-v", txt);
+    b.appendChild(v); num.textContent = ""; num.appendChild(b);
+  }
   function enhanceMainHead(table) {
     var h = table && table.querySelector("thead tr"); if (!h || h.getAttribute("data-cc-main")) return;
     h.setAttribute("data-cc-main", "1");
@@ -634,15 +664,16 @@
       bt.appendChild(view);                                  // moves it OUT of the Device cell, href/onclick intact
     }
     first.parentNode.insertBefore(bt, first.nextSibling);
+    enhanceMainName(first);                                       // (b) disk name link -> lg headline badge
     var tds = Array.prototype.slice.call(tr.children);
-    for (var i = 2; i < tds.length; i++) mainBadgeCell(tds[i]);   // skip Device(0)+Browse(1); wrap Temp/Reads/Writes/Errors/FS/Size text cells
+    for (var i = 2; i < tds.length; i++) { mainBadgeCell(tds[i]); mainBadgeNumber(tds[i]); }   // (e) also badge Reads/Writes counters
   }
   function enhanceMain() {
     try {
-      if (g("cc.enable.shares", "0") === "0") return;
+      if (g("cc.enable.main", "0") === "0") return;   // Start (/Main) is its OWN area now (was cc.enable.shares)
       if (!onMain()) return;
       var box = document.getElementById("displaybox");
-      if (box) { if (g("cc.sections.main", "1") !== "0") cardPanels(box); else flattenTeardown(); }
+      if (box) { if (g("cc.sections.main", "0") !== "0") cardPanels(box); else flattenTeardown(); }   // Tab-Ansicht default OFF (native sub-tabs)
       var tbs = document.querySelectorAll("#displaybox table.unraid.disk_status");
       for (var i = 0; i < tbs.length; i++) {
         enhanceMainHead(tbs[i]);
@@ -657,7 +688,12 @@
       // MASTER THEMING off behaves like the area being disabled → on=false runs the teardown
       // branch below (cards unwrapped, classes removed) for a clean live revert.
       var on = g("cc.enable.shares", "0") !== "0" && g("cc.theming", "1") !== "0"; // default OFF (flips Unraid's tabbed setting: opt in)
-      root.classList.toggle("cc-shares-on", on);
+      // Start (/Main) is its OWN area (cc.enable.main). It reuses this enhancer, so we set the global
+      // cc-shares-on class on /Main when the Start area is on even if the Shares area is off — but ONLY
+      // on /Main (onMain() checks pathname), so it never leaks the Shares styling onto other pages.
+      var onMainArea = g("cc.enable.main", "0") !== "0" && g("cc.theming", "1") !== "0";
+      var active = on || (onMainArea && onMain());
+      root.classList.toggle("cc-shares-on", active);
       // /Shares legitimately shows one tab family -> mark it so the CSS single-tab-hide excludes it
       root.classList.toggle("cc-on-shares", on && pn() === "/Shares");
       // the share DETAIL page (/Shares/Share) is a legit single-family tab page too -> mark it so the
@@ -668,9 +704,9 @@
       // cc-on-share-detail STAYS (it gates button/input/dropdown theming in BOTH modes); these are
       // additive gates. The merged CSS flatten rule keys off (.cc-on-share-detail.cc-sections-share)
       // OR (.cc-on-main.cc-sections-main), so turning a section toggle off reverts to native sub-tabs.
-      root.classList.toggle("cc-sections-share", on && g("cc.sections.shares", "1") !== "0" && pn() === "/Shares/Share");
-      root.classList.toggle("cc-sections-main", on && g("cc.sections.main", "1") !== "0" && onMain());
-      root.classList.toggle("cc-on-main", on && onMain());
+      root.classList.toggle("cc-sections-share", on && g("cc.sections.shares", "0") !== "0" && pn() === "/Shares/Share");   // Tab-Ansicht default OFF
+      root.classList.toggle("cc-sections-main", onMainArea && g("cc.sections.main", "0") !== "0" && onMain());              // Tab-Ansicht default OFF
+      root.classList.toggle("cc-on-main", onMainArea && onMain());
       // the file manager (/<parent>/Browse). CSS-ONLY area: nothing is injected, so this class toggle IS
       // the whole teardown. NB the page runs DESTRUCTIVE jobs (delete/move) — see the cc-on-browse block
       // in Shares.css for the rules on why nothing there touches rows, columns or the check glyphs.
@@ -681,7 +717,7 @@
       var statsOn = on && onStats();
       root.classList.toggle("cc-on-stats", statsOn);
       if (statsOn) moveStatsControls(); else statsControlsTeardown();
-      if (!on) {
+      if (!active) {
         // area disabled at runtime: removing the class reverts every CSS rule (cards collapse back to
         // tab-switching), but the JS-injected card headers would linger as stray unstyled divs -> pull
         // them out and clear their markers so the page is clean without a reload.
@@ -711,10 +747,17 @@
           for (var bcx = 0; bcx < mbc.length; bcx++) { var vv = mbc[bcx].querySelector(".cc-b-v"); mbc[bcx].textContent = vv ? vv.textContent : (mbc[bcx].textContent || ""); mbc[bcx].classList.remove("cc-bcell"); }
           var mmk = document.querySelectorAll("#displaybox [data-cc-main]");
           for (var mmx = 0; mmx < mmk.length; mmx++) mmk[mmx].removeAttribute("data-cc-main");
+          // also strip the lg disk-name badge + the Reads/Writes .number badges so a live disable reverts.
+          var mname = document.querySelectorAll("#displaybox table.unraid.disk_status a.cc-b-name");
+          for (var mn = 0; mn < mname.length; mn++) { mname[mn].classList.remove("cc-b"); mname[mn].classList.remove("cc-b-name"); }
+          var mnum = document.querySelectorAll("#displaybox table.unraid.disk_status span.number > .cc-b");
+          for (var mnx = 0; mnx < mnum.length; mnx++) { var nv = mnum[mnx].querySelector(".cc-b-v"); var np = mnum[mnx].parentNode; np.textContent = nv ? nv.textContent : (mnum[mnx].textContent || ""); }
         } catch (e) {}
         return;
       }
-      var a = accent();
+      // On /Main the START area owns the colour: set --cc-shr-accent to the Start accent (distinct page
+      // load, so no clash with the Shares-list colour). Everywhere else use the Shares accent.
+      var a = (onMainArea && onMain()) ? mainAccent() : accent();
       // ISOLATED accent var — NOT the shared --cc-accent. Every global enhancer (header.js,
       // shares.js) writes --cc-accent on documentElement, so they clobber each other: the
       // Freigaben colour bled onto the menu bar and the header colour got overwritten. Each
@@ -743,16 +786,29 @@
     try {
       var host = document.getElementById("displaybox") || document.getElementById("content");
       if (!host) return;
-      mo = new MutationObserver(function () {
+      mo = new MutationObserver(function (recs) {
+        if (g("cc.theming", "1") === "0") return; // MASTER THEMING off: apply()'s teardown already cleaned up
+        // FLICKER FIX (/Main START tab): Unraid's devices subscriber WHOLESALE-replaces the disk table
+        // body every nchan tick (ArrayOperation.page: `for (name in get) $('#'+name).html(get[name])` ->
+        // $('#array_devices').html(<all rows>)), wiping our Browse column + badges. Re-applying via the
+        // 150ms debounce below lands one paint frame LATE, so the browser PAINTS the plain 10-col rows
+        // (misaligned vs our 11-col head) first, then repaints ours = the constant jitter. Re-apply
+        // enhanceMain SYNCHRONOUSLY here: a MutationObserver callback is a microtask that runs AFTER
+        // Unraid's .html() but BEFORE the next paint, so the un-enhanced state is never rendered.
+        // enhanceMain is marker-idempotent, so its own writes re-enter this callback once then no-op.
+        for (var i = 0; i < recs.length; i++) {
+          var tgt = recs[i].target;
+          if (tgt && (tgt.id === "array_devices" || (tgt.closest && tgt.closest("table.unraid.disk_status")))) { enhanceMain(); break; }
+        }
         if (moPending) return; moPending = true;
-        setTimeout(function () { moPending = false; if (g("cc.theming", "1") === "0") return; hideRedundantTabs(); paintTabs(); enhanceShares(); paintRows(); enhanceShareDetail(); paintCards(); enhanceMain(); if (g("cc.enable.shares", "0") !== "0" && onStats()) moveStatsControls(); if (g("cc.enable.shares", "0") !== "0" && onBrowse()) enhanceBrowse(); }, 150); // MASTER THEMING off: observer must not re-inject (apply()'s teardown already cleaned up)
+        setTimeout(function () { moPending = false; if (g("cc.theming", "1") === "0") return; hideRedundantTabs(); paintTabs(); enhanceShares(); paintRows(); enhanceShareDetail(); paintCards(); enhanceMain(); if (g("cc.enable.shares", "0") !== "0" && onStats()) moveStatsControls(); if (g("cc.enable.shares", "0") !== "0" && onBrowse()) enhanceBrowse(); }, 150);
       });
       mo.observe(host, { childList: true, subtree: true });
     } catch (e) {}
   }
   function boot() {
-    try { window.ccSharesApply = apply; } catch (e) {} // let the Settings page live-update
-    if (g("cc.enable.shares", "0") === "0") return; // area disabled in CC settings
+    try { window.ccSharesApply = apply; } catch (e) {} // let the Settings page live-update (Shares AND Start)
+    if (g("cc.enable.shares", "0") === "0" && g("cc.enable.main", "0") === "0") return; // both areas off -> inert
     apply();
     watch();
     // the CC settings page writes cc.*/ccsh.* keys from another origin/tab -> re-apply on
