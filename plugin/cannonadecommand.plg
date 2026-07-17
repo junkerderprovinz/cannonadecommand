@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.27.3">
+  <!ENTITY version   "2.28.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,11 @@
 </ICON>
 
 <CHANGES>
+### 2.28.0
+#1 NEU: Die Paritaetspruefungs-Card hat jetzt einen Fortschrittsbalken -- dezente Spur mit
+   Akzent-Fuellung in der eingestellten Badge-Form, Prozent-Label innen rechts, sanfte Animation
+   bei jedem Update. Der Prozentwert wird sprachunabhaengig aus der Positionszeile gelesen.
+
 ### 2.27.3
 #1 Pool-Datentraeger: Das nackte Durchsuchen-Symbol der Pool-Kopfzeilen (Cache/Fastcache) ist jetzt
    ein richtiges Durchsuchen-Badge in der Durchsuchen-Spalte, wie bei den Datenzeilen.
@@ -898,7 +903,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>507171db80487d7556ef6cb6e42ba6b4d0ba9be2b03e076d5aef311696d13d96</SHA256>
+  <SHA256>bbecb7e77b552012ea55b2a41c5ce1ddf429bb2ac0ac4ce5d205271f0d70e0f6</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

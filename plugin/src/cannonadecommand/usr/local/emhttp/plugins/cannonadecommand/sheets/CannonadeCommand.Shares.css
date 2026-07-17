@@ -634,6 +634,22 @@ html.cc-shares-on.cc-on-main:not(.cc-sections-main) #displaybox .cc-aop-pcard {
 }
 html.cc-shares-on.cc-on-main #displaybox .cc-aop-prow { display: flex; justify-content: space-between; gap: 18px; align-items: center; font-size: var(--cc-md-fs, 13px); }
 html.cc-shares-on.cc-on-main #displaybox .cc-aop-prow .cc-aop-pv { font-weight: 700; white-space: nowrap; }
+html.cc-shares-on.cc-on-main #displaybox .cc-aop-rows { display: flex; flex-direction: column; gap: 8px; }
+/* PROGRESS BAR (user: "einen schoenen progressbar"): the usage-bar look — subtle track, accent fill,
+   percent label inside-right, Badge-Form radius, smooth width transition on each tick. */
+html.cc-shares-on.cc-on-main #displaybox .cc-aop-pbar {
+  position: relative; height: 22px; margin-bottom: 12px; overflow: hidden;
+  background: rgba(128, 128, 128, .18); border-radius: var(--cc-b-radius, 999px);
+}
+html.cc-shares-on.cc-on-main #displaybox .cc-aop-pbar > .cc-aop-pfill {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+  background: var(--cc-shr-accent, #2f6feb); border-radius: inherit; transition: width .6s linear;
+}
+html.cc-shares-on.cc-on-main #displaybox .cc-aop-pbar > .cc-aop-plab {
+  position: absolute; right: 10px; top: 0; bottom: 0; z-index: 1;
+  display: inline-flex; align-items: center;
+  font-size: 12px; font-weight: 700; line-height: 1; text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+}
 /* the native progress rows stay IN the tables (ids keep live-updating) but render only in the card
    mirror — hiding them here is refresh-proof: Unraid may rebuild these rows every parity tick. */
 html.cc-shares-on.cc-on-main #displaybox table.array_status tr:has(> td[id^="line"]) { display: none; }

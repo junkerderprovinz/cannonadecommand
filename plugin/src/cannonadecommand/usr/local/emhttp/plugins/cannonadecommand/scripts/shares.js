@@ -1182,18 +1182,43 @@
       var card = box.querySelector(".cc-aop-pcard");
       if (!lines.length) { if (card) card.parentNode.removeChild(card); return; }
       if (!card) { card = el("div", "cc-aop-pcard"); var sec = lines[0].closest("section") || box; sec.appendChild(card); }
+      if (!card.querySelector(":scope > .cc-aop-rows")) {   // (re)build the card shell: progress bar on top, rows below
+        card.textContent = "";
+        var bar = el("div", "cc-aop-pbar");
+        bar.appendChild(el("span", "cc-aop-pfill"));
+        bar.appendChild(el("span", "cc-aop-plab"));
+        card.appendChild(bar);
+        card.appendChild(el("div", "cc-aop-rows"));
+      }
+      var rowsBox = card.querySelector(":scope > .cc-aop-rows");
       var n = 0;
       for (var i = 0; i < lines.length; i++) {
         var tr = lines[i].closest("tr"); if (!tr) continue;
         var lab = tr.cells && tr.cells[0] ? (tr.cells[0].textContent || "").trim() : "";
         var val = (lines[i].textContent || "").trim();
-        var row = card.children[n];
-        if (!row) { row = el("div", "cc-aop-prow"); row.appendChild(el("span", "cc-aop-pl")); row.appendChild(el("span", "cc-aop-pv")); card.appendChild(row); }
+        var row = rowsBox.children[n];
+        if (!row) { row = el("div", "cc-aop-prow"); row.appendChild(el("span", "cc-aop-pl")); row.appendChild(el("span", "cc-aop-pv")); rowsBox.appendChild(row); }
         if (row.firstChild.textContent !== lab) row.firstChild.textContent = lab;
         if (row.lastChild.textContent !== val) row.lastChild.textContent = val;
         n++;
       }
-      while (card.children.length > n) card.removeChild(card.lastChild);
+      while (rowsBox.children.length > n) rowsBox.removeChild(rowsBox.lastChild);
+      // PROGRESS BAR: the percentage rides inside the current-position value, e.g. "585 GB (3.3 %)" —
+      // parsed language-independently ("(x %)" with . or , decimals). Guarded writes only.
+      var pct = null;
+      for (var j = 0; j < lines.length; j++) { var m = /\(([\d.,]+)\s*%\s*\)/.exec(lines[j].textContent || ""); if (m) { pct = parseFloat(m[1].replace(",", ".")); break; } }
+      var pb = card.querySelector(":scope > .cc-aop-pbar");
+      if (pb) {
+        if (pct == null || !(pct >= 0)) { if (pb.style.display !== "none") pb.style.display = "none"; }
+        else {
+          if (pb.style.display !== "") pb.style.display = "";
+          var fl = pb.querySelector(".cc-aop-pfill"), pl2 = pb.querySelector(".cc-aop-plab");
+          var wv = Math.min(100, Math.max(0, pct)) + "%";
+          if (fl && fl.style.width !== wv) fl.style.width = wv;
+          var lt = (Math.round(pct * 10) / 10) + " %";
+          if (pl2 && pl2.textContent !== lt) pl2.textContent = lt;
+        }
+      }
     } catch (e) {}
   }
   function enhanceArrayOps(box) {
