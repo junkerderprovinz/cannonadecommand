@@ -126,17 +126,21 @@
   }
   function ensureViewToggle() {
     if (document.getElementById("cc-vm-viewtoggle")) return;
-    var list = document.getElementById("kvm_list"), tbl = list && list.closest("table");
-    if (!tbl || !tbl.parentNode) return;
+    // Home the List/Grid toggle ON the /VMs sub-tab row (nav.tabs .tabs-container), right-aligned + same
+    // height as the tabs — mirroring Docker, whose global controls live in nav.tabs .tabs-container. The
+    // old bordered .cc-vm-toolbar bar above the table is gone; CSS right-aligns via margin-left:auto.
+    var box = document.getElementById("displaybox");
+    var nav = box && box.querySelector("nav.tabs");
+    var tabsC = (nav && nav.querySelector(".tabs-container")) || nav;
+    if (!tabsC) return;
     var de = LANG === "de";
-    var seg = el("div", "cc-seg"); seg.id = "cc-vm-viewtoggle";
+    var seg = el("div", "cc-seg cc-vm-viewseg"); seg.id = "cc-vm-viewtoggle";
     var bL = el("button", "cc-seg-btn", de ? "Liste" : "List"); bL.type = "button";
     var bG = el("button", "cc-seg-btn", de ? "Raster" : "Grid"); bG.type = "button";
     bL.addEventListener("click", function () { try { localStorage.setItem(VMVIEW_KEY, "list"); } catch (e) {} applyView(); });
     bG.addEventListener("click", function () { try { localStorage.setItem(VMVIEW_KEY, "grid"); } catch (e) {} applyView(); });
     seg.appendChild(bL); seg.appendChild(bG);
-    var bar = el("div", "cc-vm-toolbar"); bar.appendChild(seg);
-    tbl.parentNode.insertBefore(bar, tbl);
+    tabsC.appendChild(seg);
   }
   // ── Tab-Ansicht: flatten the /VMs sub-tabs ("Virtual Machines" #kvm_list + "VM Usage Statistics"
   //    #vmstats) into stacked CC sections. Same MainContentTabbed DOM as /Shares/Share + /Main. Prepend a
@@ -213,21 +217,105 @@
   // cells (they carry live markup) or the autostart cell (styled purely by CSS).
   // el() + badgeInfo() ported from docker.js so the VM badges use Docker's EXACT classes/structure.
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
-  // ACTIONS column (parity with the Docker tab, which has one via injectActionCell). The native VM menu
-  // (Start/Stop/Console/Edit/Remove) is bound to the logo's onclick=addVMContext (VMMachines.php); CC
-  // gives it a VISIBLE column button that re-fires that click, so it no longer hides behind the logo.
-  // #kvm_table thead + #kvm_list tbody share one table, so an injected th+td stays column-aligned.
+  // ACTIONS column — Docker-VERBATIM action bar (docker.js actBtn/actBtnOff/tintAct/actionBars/
+  // injectActionCell). Each icon is wired to the SAME native global the VM context menu calls
+  // (vmmanager.js addVMContext). Per-VM context is read from the logo span#vm-<uuid> id + its
+  // onclick=addVMContext('name','uuid','template','state','vmrcurl','PROTO','log','fstype',
+  // 'console;rdp','','webui',...). Every native call is typeof-guarded so a renamed/missing Unraid
+  // global degrades the button to a no-op instead of throwing.
+  function actBtn(icon, tip, fn) {
+    var b = el("span", "cc-actbtn"); b.title = tip; b.appendChild(el("i", "fa " + icon));
+    b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); try { fn(); } catch (_) {} });
+    return b;
+  }
+  function actBtnOff(icon, tip) { var b = el("span", "cc-actbtn cc-actoff"); b.title = tip; b.appendChild(el("i", "fa " + icon)); return b; }
+  function vmDisp(action, uuid) { if (typeof window.ajaxVMDispatch === "function") window.ajaxVMDispatch({ action: action, uuid: uuid }, "loadlist"); }
+  // tintAct: verbatim port of docker.js tintAct — accent (or rainbow) inline colour per button, grey
+  // for cc-actoff. Reuses vms.js RB_PAL/RB_OFFSET/ccAccent + the cc.actcolors gate.
+  function tintAct(bar) {
+    var colorsOn = ls("cc.actcolors") !== "0";
+    var rb = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1";
+    var pal = RB_PAL; try { var jp = JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e2) {}
+    var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
+    Array.prototype.slice.call(bar.querySelectorAll(".cc-actbtn")).forEach(function (b2, i2) {
+      var bg = "#2e2e2e", tx = "#7a7a7a";
+      if (!b2.classList.contains("cc-actoff")) {
+        tx = "#e9e9e9";
+        if (colorsOn) { bg = rb ? pal[(i2 + off) % pal.length] : ccAccent(); tx = ccIdeal(bg); }
+      }
+      b2.style.setProperty("background", bg, "important");
+      b2.style.setProperty("color", tx, "important");
+      var ic2 = b2.querySelector("i"); if (ic2) ic2.style.setProperty("color", "inherit", "important");
+    });
+  }
+  function vmCtxFor(tr) {
+    var out = { uuid: "", name: "", state: "", vmrcurl: "", proto: "", log: "", fstype: "QEMU", webui: "", console: "web" };
+    try {
+      var hand = tr.querySelector("td.vm-name span.outer > span.hand[id^='vm-']") || tr.querySelector("td.vm-name span.hand[onclick*='addVMContext']");
+      if (!hand) return out;
+      var id = hand.id || ""; if (id.indexOf("vm-") === 0) out.uuid = id.slice(3);
+      var oc = hand.getAttribute("onclick") || "";
+      var m = oc.match(/addVMContext\s*\(([\s\S]*)\)/); if (!m) return out;
+      var toks = m[1].match(/'(?:[^'\\]|\\.)*'/g) || [];
+      var q = toks.map(function (s) { return s.slice(1, -1).replace(/\\(.)/g, "$1"); });
+      out.name = q[0] || ""; if (!out.uuid) out.uuid = q[1] || "";
+      out.state = q[3] || ""; out.vmrcurl = q[4] || ""; out.proto = q[5] || "";
+      out.log = q[6] || ""; out.fstype = q[7] || "QEMU"; out.console = (q[8] || "web").split(";")[0];
+      out.webui = q[10] || "";
+    } catch (e) {}
+    return out;
+  }
+  function vmRemove(uuid, name, withDisks) {
+    var de = LANG === "de";
+    var run = function () { vmDisp(withDisks ? "domain-delete" : "domain-undefine", uuid); };
+    if (typeof window.swal === "function") {
+      window.swal({ title: de ? "Sicher?" : "Are you sure?", text: (withDisks ? (de ? "Vollstaendig ENTFERNEN " : "Completely REMOVE ") : (de ? "Definition entfernen: " : "Remove definition: ")) + name, type: "warning", showCancelButton: true, confirmButtonText: de ? "Fortfahren" : "Proceed", cancelButtonText: de ? "Abbrechen" : "Cancel" }, run);
+    } else if (window.confirm((de ? "Entfernen: " : "Remove: ") + name)) run();
+  }
+  // actionBars for a VM row — mirrors docker.js actionBars(): row1 WebUI/Log/Edit, row2 Restart/
+  // Pause|Resume/Stop|Start + "…", more = Console/Hibernate/ForceStop/Snapshot/Clone/Remove(+Disks).
+  function vmActionBars(tr) {
+    var de = LANG === "de";
+    var cx = vmCtxFor(tr), uuid = cx.uuid, name = cx.name, st = cx.state;
+    var running = st === "running", paused = st === "paused" || st === "pmsuspended", shutoff = !running && !paused;
+    var path = location.pathname; var xi = path.indexOf("?"); if (xi !== -1) path = path.substring(0, xi);
+    var bar = el("div", "cc-actbar");
+    var r1 = el("div", "cc-actrow");
+    r1.appendChild((cx.webui && running) ? actBtn("fa-globe", "WebUI", function () { if (typeof window.ajaxVMDispatchWebUI === "function") window.ajaxVMDispatchWebUI({ action: "domain-openWebUI", uuid: uuid, vmrcurl: cx.webui }, "loadlist"); }) : actBtnOff("fa-globe", de ? "kein WebUI" : "no WebUI"));
+    r1.appendChild((cx.log && typeof window.openTerminal === "function") ? actBtn("fa-navicon", "Log", function () { window.openTerminal("log", name, cx.log); }) : actBtnOff("fa-navicon", "Log"));
+    r1.appendChild(actBtn("fa-pencil", de ? "Bearbeiten" : "Edit", function () { location.href = path + "/UpdateVM?uuid=" + uuid; }));
+    var r2 = el("div", "cc-actrow");
+    r2.appendChild(running ? actBtn("fa-refresh", de ? "Neustart" : "Restart", function () { vmDisp("domain-restart", uuid); }) : actBtnOff("fa-refresh", de ? "Neustart" : "Restart"));
+    r2.appendChild(paused ? actBtn("fa-play", de ? "Fortsetzen" : "Resume", function () { vmDisp(st === "pmsuspended" ? "domain-pmwakeup" : "domain-resume", uuid); })
+      : (running ? actBtn("fa-pause", "Pause", function () { vmDisp("domain-pause", uuid); }) : actBtnOff("fa-pause", "Pause")));
+    r2.appendChild((running || paused) ? actBtn("fa-stop", de ? "Stoppen" : "Stop", function () { vmDisp("domain-stop", uuid); })
+      : actBtn("fa-play", de ? "Starten" : "Start", function () { vmDisp("domain-start", uuid); }));
+    var more = el("div", "cc-actrow cc-actmore");
+    if (cx.vmrcurl && running) more.appendChild(actBtn("fa-desktop", (de ? "VM-Konsole" : "VM Console") + (cx.proto ? " (" + cx.proto + ")" : ""), function () { window.open(cx.vmrcurl, "_blank", "scrollbars=yes,resizable=yes"); }));
+    if (running) more.appendChild(actBtn("fa-bed", de ? "Ruhezustand" : "Hibernate", function () { vmDisp("domain-pmsuspend", uuid); }));
+    if (running || paused) more.appendChild(actBtn("fa-bomb", de ? "Stopp erzwingen" : "Force Stop", function () { vmDisp("domain-destroy", uuid); }));
+    if ((running || shutoff) && typeof window.selectsnapshot === "function") more.appendChild(actBtn("fa-camera", de ? "Snapshot erstellen" : "Create Snapshot", function () { window.selectsnapshot(uuid, name, "--generate", "create", false, st, cx.fstype); }));
+    if (shutoff && typeof window.VMClone === "function") more.appendChild(actBtn("fa-clone", de ? "Klonen" : "Clone", function () { window.VMClone(uuid, name); }));
+    if (shutoff) {
+      more.appendChild(actBtn("fa-minus", de ? "VM entfernen" : "Remove VM", function () { vmRemove(uuid, name, false); }));
+      more.appendChild(actBtn("fa-trash", de ? "VM + Disks entfernen" : "Remove VM & Disks", function () { vmRemove(uuid, name, true); }));
+    }
+    r2.appendChild(more.children.length ? actBtn("fa-ellipsis-h", de ? "Mehr" : "More", function () { more.classList.toggle("cc-open"); tintAct(more); })
+      : actBtnOff("fa-ellipsis-h", de ? "keine weiteren Aktionen" : "no more actions"));
+    bar.appendChild(r1); bar.appendChild(r2);
+    tintAct(bar);
+    return { bar: bar, more: more, sig: st + "|" + cx.webui + "|" + cx.vmrcurl + "|" + cx.log + "|" + uuid };
+  }
   function injectVmActionCell(tr) {
     try {
-      var de = (document.documentElement.lang || "").slice(0, 2).toLowerCase() === "de";
+      var de = LANG === "de";
       var head = document.querySelector("#kvm_table thead tr");
       if (head && !head.querySelector(".cc-act-th")) { var th = el("th", "cc-act-th", de ? "Aktionen" : "Actions"); head.insertBefore(th, head.children[1] || null); }
-      if (tr.querySelector(":scope > td.cc-actcell")) return;
-      var hand = tr.querySelector("td.vm-name span.outer > span.hand");
-      var td = el("td", "cc-actcell"), bar = el("div", "cc-actbar"), row = el("div", "cc-actrow");
-      var btn = el("span", "cc-actbtn"); btn.title = de ? "Aktionen" : "Actions"; btn.appendChild(el("i", "fa fa-bars"));
-      btn.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); if (!hand) return; var r = btn.getBoundingClientRect(); hand.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window, clientX: r.left, clientY: r.bottom })); });
-      row.appendChild(btn); bar.appendChild(row); td.appendChild(bar);
+      var ab = vmActionBars(tr);
+      var old = tr.querySelector(":scope > td.cc-actcell");
+      if (old) { if (old.getAttribute("data-cc-sig") === ab.sig) return; old.remove(); } // rebuild only when state/context changed
+      var td = el("td", "cc-actcell"); td.setAttribute("data-cc-sig", ab.sig);
+      td.appendChild(ab.bar); td.appendChild(ab.more);
       tr.insertBefore(td, tr.children[1] || null);
     } catch (e) {}
   }
@@ -239,6 +327,44 @@
     if (label) b.appendChild(el("span", "cc-b-k", label));
     var v = el("span", "cc-b-v"); while (td.firstChild) v.appendChild(td.firstChild); b.appendChild(v);  // keep live children (a.vcpu-*) inside .cc-b-v
     td.appendChild(b); td.classList.add("cc-vmb-cell");
+  }
+  // CPU + RAM merged into ONE stacked column, mirroring Docker's .cc-resgroup (docker.css:229-231).
+  // Docker keeps cpu-/mem- in one native cell; VMs split them, so we move the RAM badge under the CPU
+  // badge in the CPU cell and HIDE the native RAM cell + header. Live children are MOVED (not cloned).
+  function vmResCell(cpuTd, ramTd) {
+    if (!cpuTd || cpuTd.classList.contains("cc-vmb-cell")) return;
+    var group = el("div", "cc-resgroup");
+    var cpuTxt = (cpuTd.textContent || "").trim();
+    if (cpuTxt && cpuTxt !== "-") {
+      var cb = el("span", "cc-b cc-b-info cc-b-cpu"); cb.appendChild(el("span", "cc-b-k", "CPU"));
+      var cv = el("span", "cc-b-v"); while (cpuTd.firstChild) cv.appendChild(cpuTd.firstChild); cb.appendChild(cv);
+      var cl = el("div", "cc-resline"); cl.appendChild(cb); group.appendChild(cl);
+    }
+    if (ramTd) {
+      var ramTxt = (ramTd.textContent || "").trim();
+      if (ramTxt && ramTxt !== "-") {
+        var rb = el("span", "cc-b cc-b-info cc-b-ram"); rb.appendChild(el("span", "cc-b-k", "RAM"));
+        var rv = el("span", "cc-b-v"); while (ramTd.firstChild) rv.appendChild(ramTd.firstChild); rb.appendChild(rv);
+        var rl = el("div", "cc-resline"); rl.appendChild(rb); group.appendChild(rl);
+      }
+      ramTd.style.display = "none"; ramTd.classList.add("cc-vmb-ramcell");   // hidden, reverted in teardown
+    }
+    cpuTd.appendChild(group); cpuTd.classList.add("cc-vmb-cell", "cc-vmb-rescell");
+    hideResHeader();
+  }
+  // Hide the native RAM/Memory column header ONCE (thead persists across tbody re-renders). Located by
+  // header TEXT (the injected Actions column shifts indices, so nth-child is fragile). Reverted in teardown.
+  function hideResHeader() {
+    try {
+      var head = document.querySelector("#kvm_table thead tr");
+      if (!head || head.getAttribute("data-cc-reshdr")) return;
+      var ths = head.querySelectorAll("th");
+      for (var i = 0; i < ths.length; i++) {
+        var t = (ths[i].textContent || "").trim().toLowerCase();
+        if (/memory|speicher|^ram\b|^mem\b/.test(t)) { ths[i].style.display = "none"; ths[i].classList.add("cc-vmb-ramhdr"); break; }
+      }
+      head.setAttribute("data-cc-reshdr", "1");
+    } catch (e) {}
   }
   // IP cell: the native $iptablestr joins one "addr/prefix" per line with <br> (VMMachines.php), and
   // textContent DROPS those <br> separators, gluing "…/24" + "10.…" into garbage ("24172…"). Split
@@ -266,18 +392,52 @@
     for (var c = td.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) c.style.display = "none"; }  // hide native, don't destroy -> reversible teardown
     td.appendChild(wrap); td.classList.add("cc-vmb-cell", "cc-vmb-ipcell");
   }
+  // DISKS cell (native td index 4): span.state = "DISKS&nbsp;&nbsp;&nbsp;&nbsp;CDS<a.hand ISO-picker><br>(Snapshots: X)".
+  // vmCell skips it (has a <br>). Split into three Docker-style badges (vDisks / CD / Snapshots), CLONE the
+  // live ISO-picker a.hand (inline onclick survives cloneNode) into the CD badge, hide the native span
+  // (reversible). The .diskresize control lives in the separate child detail table, not this cell.
+  function vmDiskCell(td) {
+    if (!td || td.classList.contains("cc-vmb-cell")) return;
+    var span = td.querySelector(":scope > span.state"); if (!span) return;
+    var preTxt = "", postTxt = "", seenBr = false, link = null;
+    Array.prototype.forEach.call(span.childNodes, function (n) {
+      if (n.nodeType === 1 && n.tagName === "BR") { seenBr = true; return; }
+      if (!seenBr) { if (n.nodeType === 1 && n.classList && n.classList.contains("hand")) link = n; else preTxt += (n.textContent || ""); }
+      else postTxt += (n.textContent || "");
+    });
+    var parts = preTxt.split(/\s+/).map(function (s) { return s.trim(); }).filter(function (s) { return s !== ""; });
+    var disksVal = parts.length ? parts[0] : "", cdsVal = parts.length > 1 ? parts.slice(1).join(" ") : "";
+    var sm = /\(([^:]+):\s*([^)]*)\)/.exec(postTxt.replace(/ /g, " ").trim());
+    var snapLabel = sm ? sm[1].trim() : "Snapshots", snapVal = sm ? sm[2].trim() : "";
+    var mk = function (label, value, kind) {
+      var b = el("span", "cc-b cc-b-info" + (kind ? " cc-b-" + kind : "")); b.appendChild(el("span", "cc-b-k", label));
+      var v = el("span", "cc-b-v"); v.textContent = value; b.appendChild(v); return b;
+    };
+    var wrap = el("span", "cc-vmb-disks");
+    if (disksVal && disksVal !== "-") wrap.appendChild(mk("vDisks", disksVal, "vol"));
+    if (cdsVal) {
+      var cdB = mk("CD", cdsVal, "vol");
+      if (link) { var cl = link.cloneNode(true); cl.style.marginLeft = "6px"; cdB.querySelector(".cc-b-v").appendChild(cl); }
+      wrap.appendChild(cdB);
+    }
+    if (snapVal) wrap.appendChild(mk(snapLabel, snapVal, ""));
+    if (!wrap.childNodes.length) return;               // nothing parseable -> leave native untouched
+    span.style.display = "none";                        // hide native, reversible
+    td.appendChild(wrap); td.classList.add("cc-vmb-cell", "cc-vmb-diskcell");
+  }
   function enhanceCells() {
     try {
       var rows = document.querySelectorAll("#kvm_list tr.sortable");
       for (var i = 0; i < rows.length; i++) {
         var tds = rows[i].querySelectorAll(":scope > td");
-        // native column order: 0 vm-name, 1 desc, 2 vCPU, 3 RAM, 4 disks, 5 graphics, 6 ip, 7 autostart
-        if (tds[1]) vmCell(tds[1], "", "");   // description -> plain accent pill (vmCell no-ops on empty/"-")
-        if (tds[2]) vmCell(tds[2], "CPU", "cpu");
-        if (tds[3]) vmCell(tds[3], "RAM", "ram");
-        if (tds[5]) vmCell(tds[5], "", "");   // graphics -> plain accent pill (value only)
-        if (tds[6]) vmIpCell(tds[6]);         // IP addresses -> one copy-pill each
-        injectVmActionCell(rows[i]);          // LAST: inserts the Actions <td> (shifts indices) AFTER tds[] captured above
+        // native column order: 0 vm-name, 1 desc, 2 vCPU, 3 RAM, 4 disks, 5 graphics, 6 ip, 7 autostart.
+        // tds is a static snapshot; injectVmActionCell inserts the Actions column LAST so indices stay native.
+        if (tds[1]) vmCell(tds[1], "", "");            // description -> plain accent pill
+        if (tds[2]) vmResCell(tds[2], tds[3]);         // CPU + RAM merged into ONE stacked column (Docker .cc-resgroup)
+        if (tds[5]) vmCell(tds[5], "", "");            // graphics -> plain accent pill
+        if (tds[6]) vmIpCell(tds[6]);                  // IP addresses -> one copy-pill each
+        if (tds[4]) vmDiskCell(tds[4]);                // disks -> vDisks/CD/Snapshots badges (keeps the ISO-picker link)
+        injectVmActionCell(rows[i]);                   // LAST: inserts the Actions <td> AFTER tds[] captured above
       }
     } catch (e) {}
   }
@@ -286,6 +446,12 @@
       var cells = document.querySelectorAll("#kvm_list td.cc-vmb-cell");
       for (var i = 0; i < cells.length; i++) {
         var td = cells[i];
+        if (td.classList.contains("cc-vmb-rescell")) continue;   // merged CPU+RAM cell handled by the dedicated pass below
+        if (td.classList.contains("cc-vmb-diskcell")) {          // disks cell: drop badges, un-hide the native span
+          var dw = td.querySelector(":scope > span.cc-vmb-disks"); if (dw) td.removeChild(dw);
+          var ds = td.querySelector(":scope > span.state"); if (ds) ds.style.removeProperty("display");
+          td.classList.remove("cc-vmb-cell", "cc-vmb-diskcell"); continue;
+        }
         if (td.classList.contains("cc-vmb-ipcell")) {         // IP cell: drop the pills, un-hide the native content
           var ipw = td.querySelector(":scope > span.cc-vmb-ips"); if (ipw) td.removeChild(ipw);
           for (var c = td.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) c.style.removeProperty("display"); }
@@ -295,6 +461,20 @@
         if (b) { var k = b.querySelector(".cc-b-k"); if (k) b.removeChild(k); var v = b.querySelector(".cc-b-v"); var src = v || b; while (src.firstChild) td.insertBefore(src.firstChild, b); td.removeChild(b); }
         td.classList.remove("cc-vmb-cell");
       }
+      // merged CPU+RAM rescell: move both values back to their native cells, un-hide the RAM cell + header
+      Array.prototype.slice.call(document.querySelectorAll("#kvm_list td.cc-vmb-rescell")).forEach(function (cpuTd) {
+        var g = cpuTd.querySelector(":scope > .cc-resgroup"), ramTd = cpuTd.nextElementSibling;
+        if (g) {
+          var cpuV = g.querySelector(".cc-b-cpu .cc-b-v"), ramV = g.querySelector(".cc-b-ram .cc-b-v");
+          if (cpuV) while (cpuV.firstChild) cpuTd.insertBefore(cpuV.firstChild, g);
+          if (ramV && ramTd) while (ramV.firstChild) ramTd.appendChild(ramV.firstChild);
+          g.remove();
+        }
+        if (ramTd && ramTd.classList.contains("cc-vmb-ramcell")) { ramTd.style.removeProperty("display"); ramTd.classList.remove("cc-vmb-ramcell"); }
+        cpuTd.classList.remove("cc-vmb-cell", "cc-vmb-rescell");
+      });
+      var rh = document.querySelector("#kvm_table thead tr .cc-vmb-ramhdr"); if (rh) { rh.style.removeProperty("display"); rh.classList.remove("cc-vmb-ramhdr"); }
+      var hdrRow = document.querySelector("#kvm_table thead tr[data-cc-reshdr]"); if (hdrRow) hdrRow.removeAttribute("data-cc-reshdr");
       // drop the injected Actions column + its header so master-theming/area-off fully reverts
       Array.prototype.slice.call(document.querySelectorAll("#kvm_list td.cc-actcell")).forEach(function (td) { td.remove(); });
       var actTh = document.querySelector("#kvm_table thead tr .cc-act-th"); if (actTh) actTh.remove();
@@ -399,6 +579,25 @@
     if (localStorage.getItem("cc.enable.vms") === "0") return; // area disabled in CC settings
     try {
       arm();
+      // Clicking a VM ICON no longer opens the native dropdown — the action icons FLASH instead, pointing
+      // the user at the actions column (verbatim mirror of docker.js boot() logo flash). If there is no CC
+      // action bar (theming off) the native menu opens as before.
+      if (!window.__ccVmLogoFlash) {
+        window.__ccVmLogoFlash = true;
+        document.addEventListener("click", function (e) {
+          try {
+            if (dead) return;
+            if (location.pathname.replace(/\/+$/, "") !== "/VMs") return;
+            var hand = e.target && e.target.closest ? e.target.closest("#kvm_list td.vm-name span.hand") : null;
+            if (!hand) return;
+            var row2 = hand.closest("tr"), bar2 = row2 && row2.querySelector(".cc-actbar");
+            if (!bar2) return; // no CC bar -> let the native menu open
+            e.preventDefault(); e.stopPropagation();
+            bar2.classList.add("cc-act-flash");
+            setTimeout(function () { bar2.classList.remove("cc-act-flash"); }, 1600);
+          } catch (e2) {}
+        }, true);
+      }
       window.addEventListener("storage", function (e) { try { if (!dead && e && e.key && e.key !== "cc.stateCache" && /^ccv?\./.test(e.key)) apply(); } catch (e2) {} }); // cc.* AND the VM tab's own ccv.* (accent/iconcolor) — else an adopt-OFF own-colour pick never live-updates. // cc.stateCache EXCLUDED: docker.js rewrites it every 9s, which would repaint this area on a 9s loop in every other open tab
       // persistent re-probe (NEVER cleared): re-arm when the proxy returns, so a
       // transient gap during a plugin UPDATE doesn't kill the tint until reload.

@@ -38,6 +38,11 @@ html.cc-vms-on #kvm_list .cc-badge {
 html.cc-vms-on #kvm_list .cc-b { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
 html.cc-vms-on #kvm_list .cc-b-k { opacity: .72; font-weight: 500; }
 html.cc-vms-on #kvm_list .cc-b-v { font-family: Consolas, "SFMono-Regular", monospace; }
+/* Badge VALUE (incl. the a.vcpu-* CPU link vms.js moves into .cc-b-v) inherits the badge text colour;
+   without this Unraid's theme link colour wins and the CPU number is unreadable (docker.css:191/214). */
+html.cc-vms-on #kvm_list .cc-b a,
+html.cc-vms-on #kvm_list .cc-b a:hover,
+html.cc-vms-on #kvm_list .cc-b .cc-b-v a { color: inherit !important; text-decoration: none !important; }
 html.cc-vms-on #kvm_list .cc-b-copy { cursor: pointer; transition: filter .12s, transform .12s; }
 html.cc-vms-on #kvm_list .cc-b-copy:hover { filter: brightness(1.18); transform: translateY(-1px); }
 /* state badge colours (docker.css:250-262) — VM started->running, paused->paused, stopped->exited */
@@ -46,9 +51,16 @@ html.cc-vms-on #kvm_list .cc-badge-paused  { background: #e0912a; color: #1a1a1a
 html.cc-vms-on #kvm_list .cc-badge-exited,
 html.cc-vms-on #kvm_list .cc-badge-created { background: #3c3c3c; color: #cfcfcf; }
 html.cc-vms-on #kvm_list .cc-badge-dead    { background: #d9433f; color: #fff; }
-/* group stacks (docker.css:225-231): IP pills stacked one per line */
+/* group stacks (docker.css:225-231): IP pills + disk badges stacked one per line */
 html.cc-vms-on #kvm_list .cc-namemeta,
-html.cc-vms-on #kvm_list .cc-vmb-ips { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+html.cc-vms-on #kvm_list .cc-vmb-ips,
+html.cc-vms-on #kvm_list .cc-vmb-disks { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+/* CPU + RAM merged into ONE stacked column (docker.css:229-231 .cc-resgroup/.cc-resline) */
+html.cc-vms-on #kvm_list .cc-resgroup { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+html.cc-vms-on #kvm_list .cc-resline { display: inline-flex; align-items: center; gap: 5px; }
+/* keep the cloned native ISO-picker link (a.hand) legible inside the CD badge */
+html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand,
+html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand i { color: inherit !important; text-decoration: none !important; }
 
 /* ═══ LOGO box, pixel-identical to Docker (docker.css:54-68 + circle 844), retargeted td.ct-name -> td.vm-name.
    Native VM logo is span.outer > span.hand, so the selectors map 1:1. The accent badge box is gated on
@@ -57,6 +69,10 @@ html.cc-vms-on #kvm_list td.vm-name { vertical-align: middle; }
 html.cc-vms-on #kvm_list td.vm-name .outer { display: flex; align-items: center; gap: 12px; }
 html.cc-vms-on #kvm_list td.vm-name .outer > span.hand { flex: none; display: flex; align-items: center; justify-content: center; }
 html.cc-vms-on #kvm_list td.vm-name .outer > span.hand img { width: 62px !important; height: 62px !important; object-fit: contain !important; display: block !important; }
+/* NATIVE VM logo nests the icon in an extra span[id^="vm-"] wrapper Docker's row lacks (span.hand > span#vm-… >
+   .img). Collapse it with display:contents so the 62x62 icon becomes span.hand's DIRECT flex child -> the
+   accent box is a PERFECT SQUARE (62 base / 78 with iconbg padding) and the logo is centred, like Docker. */
+html.cc-vms-on #kvm_list td.vm-name .outer > span.hand span[id^="vm-"] { display: contents; }
 html.cc-vms-on #kvm_list td.vm-name .outer > span.hand i.img {
   width: 62px !important; height: 62px !important; font-size: 62px !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
@@ -106,14 +122,22 @@ html.cc-vms-on #kvm_list .switch-button-background .switch-button-button {
 html.cc-vms-on #kvm_list .switch-button-background.checked .switch-button-button { left: 21px !important; }
 html.cc-vms-on #kvm_list .switch-button-label { display: none !important; }
 
-/* ═══ Actions column (injected by vms.js injectVmActionCell; styles/docker.css is NOT loaded on /VMs) ═══ */
-html.cc-vms-on #kvm_table thead tr .cc-act-th { font-size: 11px; width: 60px; }
+/* ═══ Actions column — Docker's EXACT action bar (docker.css:104-133), retargeted to #kvm_list. Grey icon
+   buttons that vms.js tintAct() colours to the accent/rainbow inline (like Docker); "…" (cc-actmore) expands
+   the extra VM actions; cc-act-flash pulses the whole bar when the VM logo is clicked. docker.css not loaded here. ═══ */
+html.cc-vms-on #kvm_table thead tr .cc-act-th { font-size: 11px; width: 122px; }
 html.cc-vms-on #kvm_list td.cc-actcell { white-space: nowrap; vertical-align: middle; }
 html.cc-vms-on .cc-actbar { display: flex; flex-direction: column; gap: 4px; }
 html.cc-vms-on .cc-actrow { display: flex; gap: 4px; }
-html.cc-vms-on .cc-actbtn { width: 27px; height: 26px; border-radius: var(--cc-b-radius, 6px); background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; user-select: none; transition: filter .12s; }
-html.cc-vms-on .cc-actbtn:hover { filter: brightness(1.14); }
+html.cc-vms-on .cc-actbtn { width: 27px; height: 26px; border-radius: var(--cc-b-radius, 6px); background: #2e2e2e; color: #c9c9c9; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; user-select: none; transition: background .12s, color .12s, box-shadow .12s; }
+html.cc-vms-on .cc-actbtn:hover { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
 html.cc-vms-on .cc-actbtn i.fa { font-size: 13px; line-height: 1; color: inherit !important; }
+html.cc-vms-on .cc-actoff { opacity: .35; cursor: default; }
+html.cc-vms-on .cc-actoff:hover { background: #2e2e2e; color: #c9c9c9; }
+html.cc-vms-on .cc-actmore { display: none; margin-top: 4px; }
+html.cc-vms-on .cc-actmore.cc-open { display: flex; flex-wrap: wrap; }
+html.cc-vms-on .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }
+@keyframes cc-actflash { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--cc-accent, #2f6feb); } }
 
 /* ═══ bottom action buttons (input[type=button]) -> CC accent pills ═══ */
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart) {
@@ -190,10 +214,18 @@ html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head i,
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head i.title,
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
 
-/* ═══ VIEW TOGGLE (List/Grid) — docker.css .cc-seg is NOT loaded here, so restyle the injected control. ═══ */
-html.cc-vms-on .cc-vm-toolbar { display: flex; justify-content: flex-end; margin: 6px 0 10px; }
-html.cc-vms-on .cc-seg { display: inline-flex; border: 1px solid #2a2a2a; border-radius: 6px; overflow: hidden; }
-html.cc-vms-on .cc-seg-btn { background: #1e1e1e; color: #8a8a8a; border: none; padding: 5px 14px; font-size: 12px; cursor: pointer; }
+/* ═══ VIEW TOGGLE (List/Grid) — homed ON the /VMs sub-tab row (nav.tabs .tabs-container), right-aligned and
+   the SAME height as the sub-tabs, WITHOUT a border. Mirrors Docker, whose global controls live in
+   nav.tabs .tabs-container; sub-tab pill height = --cc-md-h. ═══ */
+html.cc-vms-on #displaybox nav.tabs .tabs-container { display: flex; align-items: center; }
+html.cc-vms-on #displaybox nav.tabs .tabs-container > .cc-vm-viewseg { margin-left: auto; }
+html.cc-vms-on .cc-seg { display: inline-flex; border: none; border-radius: 999px; overflow: visible; gap: 4px; }
+html.cc-vms-on .cc-seg-btn {
+  background: #2a2a2a; color: #b5b5b5; border: none; border-radius: 999px;
+  height: var(--cc-md-h, 30px); box-sizing: border-box; padding: 0 16px;
+  font-size: 12px; line-height: 1; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
 html.cc-vms-on .cc-seg-btn:hover { color: #e6e6e6; }
 html.cc-vms-on .cc-seg-btn.cc-seg-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); font-weight: 600; }
 
@@ -222,3 +254,17 @@ html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable > td {
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-cpu { background: var(--cc-rb-cpu, #d9433f); color: var(--cc-rb-cpu-t, #fff); }
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ram { background: var(--cc-rb-ram, #2f9d8b); color: var(--cc-rb-ram-t, #fff); }
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ip  { background: var(--cc-rb-ip, #2f6feb); color: var(--cc-rb-ip-t, #fff); }
+html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-vol { background: var(--cc-rb-vol, #8b5cf6); color: var(--cc-rb-vol-t, #fff); }
+
+/* ═══ badge-shape MASTER override (mirrors docker.css:857-872) — MUST remain the LAST rules in this file so
+   the chosen --cc-b-radius (cc.badgeshape: pill 999px / rounded 6px / square 0 / circle 999px) wins for every
+   CC pill AND the native autostart switch TRACK + KNOB, exactly like the Docker tab. Without it the VM switch
+   stayed a hardcoded pill while Docker's followed the shape setting ("hat nicht die richtige form"). ═══ */
+html.cc-vms-on #kvm_list .cc-b,
+html.cc-vms-on #kvm_list .cc-badge,
+html.cc-vms-on .cc-actbtn,
+html.cc-vms-on .cc-seg-btn,
+html.cc-vms-on #kvm_list .switch-button-background,
+html.cc-vms-on #kvm_list .switch-button-background .switch-button-button {
+  border-radius: var(--cc-b-radius, 999px) !important;
+}

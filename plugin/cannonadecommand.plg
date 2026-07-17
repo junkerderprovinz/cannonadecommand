@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.22.0">
+  <!ENTITY version   "2.23.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,23 @@
 </ICON>
 
 <CHANGES>
+### 2.23.0
+1. VM-Tab jetzt Docker-identisch (Code 1:1 aus dem Docker-Tab uebernommen): Die Aktions-Spalte enthaelt
+   jetzt ALLE Aktions-Icons wie im Docker-Tab (WebUI, Log, Bearbeiten, Neustart, Pause/Fortsetzen,
+   Stopp/Start und ein "Mehr"-Menue mit Konsole, Ruhezustand, Stopp erzwingen, Snapshot, Klonen,
+   Entfernen). Ein Klick auf das VM-Logo laesst diese Icons aufleuchten (statt das alte Menue zu oeffnen).
+2. Logo sitzt jetzt zentriert auf einem exakt quadratischen Hintergrund (der native VM-Logo-Wrapper hatte
+   eine Extra-Ebene, die die Box verzogen hat -- behoben).
+3. Liste/Raster-Umschalter sitzt jetzt auf derselben Zeile wie die Unterreiter, rechtsbuendig, ohne Rahmen.
+4. Autostart-Schalter nimmt jetzt die eingestellte Badge-Form an (wie im Docker-Tab) statt fest rund zu sein.
+5. CPU- und RAM-Badge sind jetzt in EINER Spalte gestapelt (wie im Docker-Tab); die RAM-Spalte entfaellt.
+6. Die Zahl im CPU-Badge ist jetzt lesbar (sie ist ein Link und hatte ihre eigene Farbe erzwungen -- jetzt
+   erbt sie die Badge-Textfarbe wie die "CPU"-Beschriftung).
+7. VDisks/VCDS und "(Snapshots: ...)" werden jetzt ebenfalls als Badges dargestellt; der ISO-Auswahl-Link
+   bleibt funktionsfaehig.
+Hinweis: Bandbreiten-Begrenzung fuer VMs ist NICHT enthalten -- sie braucht eigene Engine-Arbeit (VMs haben
+kein Container-Netzwerk-Namespace, sondern ein Host-Tap), und wird als eigenes Feature geplant.
+
 ### 2.22.0
 1. Docker-Tab, einfache Ansicht: die Badges (Netzwerk, Container-IP, LAN-IP, Ports, Volumes) fehlten
    komplett -- eine Regression aus der Spalten-Aufteilung. Ursache: ein Haekchen in den Spalten-
@@ -675,7 +692,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>14798ab39b337068f94bfccad791f63eb3bc53a978ec216ce2d9f93dd68f37af</SHA256>
+  <SHA256>a91bcb6d04d7f0df3888766aa8ce4a8f3ca48c0219fc3a4b03d7bcc293e92963</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
