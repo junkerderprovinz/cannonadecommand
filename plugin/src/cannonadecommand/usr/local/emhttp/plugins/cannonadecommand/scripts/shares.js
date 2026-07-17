@@ -382,6 +382,18 @@
           bi++;
         }
       }
+      // buttons BELOW the arrays (UD "ADD ... SHARE" row + every other /Main <button> outside the
+      // array tables): continue the same palette rotation (user: "ab unassigned devices abwaerts ist
+      // nicht alles in den rainbowmode ... inbegriffen"). Sub-tab pills + the parity card stay out.
+      var xbtns = document.querySelectorAll('#displaybox button:not([role="tab"])');
+      for (var x2 = 0; x2 < xbtns.length; x2++) {
+        var xb = xbtns[x2];
+        if (xb.closest("table.array_status") || xb.closest("nav.tabs") || xb.closest(".cc-aop-pcard")) continue;
+        if (!rb || neutral || xb.disabled) { xb.style.removeProperty("background"); xb.style.removeProperty("color"); continue; }
+        var xc = rbColor(bi), xtc = idealText(xc);
+        xb.style.setProperty("background", xc, "important"); xb.style.setProperty("color", xtc, "important");
+        bi++;
+      }
       // Rainbow reaches the UD area + ALL /Main heading badges. UD rows: same row-counter contract
       // as the disk_status loop (one palette colour per row, neutral sub-mode clears to accent).
       var acc = mainAccent(), accDark = idealText(acc) !== "#fff";
@@ -392,6 +404,8 @@
           var utr = urows[ur]; if (utr.tagName !== "TR") continue;
           var ubs = utr.querySelectorAll(".cc-b"); if (!ubs.length) continue;
           var uc = rbColor(uri), utc = idealText(uc);
+          if (rb) { utr.style.setProperty("--cc-rb-c", uc); utr.style.setProperty("--cc-rb-ct", utc); }   // drives the neutral sub-mode's row hover (same contract as disk_status)
+          else { utr.style.removeProperty("--cc-rb-c"); utr.style.removeProperty("--cc-rb-ct"); }
           for (var uk = 0; uk < ubs.length; uk++) {
             if (!rb || neutral) { ubs[uk].style.removeProperty("background"); ubs[uk].style.removeProperty("color"); ubs[uk].classList.toggle("cc-ink-dark", accDark); }
             else { ubs[uk].style.setProperty("background", uc, "important"); ubs[uk].style.setProperty("color", utc, "important"); ubs[uk].classList.toggle("cc-ink-dark", utc !== "#fff"); }
@@ -883,16 +897,44 @@
   // the pill ellipsis-clips at rest; on mouseover the value slides left just far enough to reveal the
   // tail, and slides back on leave. Delegated once; inline transform only — the nchan refill recreates
   // the cells clean, and teardown unwraps the pills wholesale.
-  var ccMarqBound = false;
+  var ccMarqBound = false, ccMarqRun = null;   // run state OUTSIDE the DOM — the 1s nchan tbody refill destroys the animated node mid-slide
+  function ccMarqStart(b) {
+    var v = b.querySelector(":scope > .cc-b-v"); if (!v) return;
+    var ov = v.scrollWidth - b.clientWidth + 24;
+    if (ov <= 6) return;
+    var dur = Math.min(8, Math.max(2, ov / 60));
+    ccMarqRun = { ov: ov, dur: dur, t0: Date.now() };
+    b.setAttribute("data-cc-marq", "1");
+    v.style.transition = "transform " + dur + "s linear";
+    v.style.transform = "translateX(-" + ov + "px)";
+  }
+  // seamless resume (user: "der lauftext stockt immer und springt zurueck"): the refill recreates the
+  // hovered cell without transform -> visible jump-back + restart every tick. Called from enhanceMain's
+  // sync pass (inside the observer, before paint): re-enter the freshly built pill at the exact
+  // interpolated offset and continue for the REMAINING time — one continuous slide across refills.
+  function ccMarqResume() {
+    if (!ccMarqRun) return;
+    var b = document.querySelector("#displaybox table.unraid.disk_status td.desc:hover .cc-b");
+    if (!b) { ccMarqRun = null; return; }                        // pointer left while the node was swapped
+    if (b.getAttribute("data-cc-marq") === "1") return;          // node survived this tick — animation intact
+    var v = b.querySelector(":scope > .cc-b-v"); if (!v) return;
+    var p = Math.min(1, (Date.now() - ccMarqRun.t0) / (ccMarqRun.dur * 1000));
+    b.setAttribute("data-cc-marq", "1");
+    v.style.transition = "none";
+    v.style.transform = "translateX(-" + Math.round(ccMarqRun.ov * p) + "px)";
+    void v.offsetWidth;                                          // commit the entry point before re-arming the transition
+    if (p < 1) {
+      v.style.transition = "transform " + (ccMarqRun.dur * (1 - p)) + "s linear";
+      v.style.transform = "translateX(-" + ccMarqRun.ov + "px)";
+    }
+  }
   function ccIdentMarq() {
     if (ccMarqBound) return; ccMarqBound = true;
     var host = document.getElementById("displaybox"); if (!host) return;
     host.addEventListener("mouseover", function (e) {
       var b = e.target && e.target.closest ? e.target.closest("table.unraid.disk_status td.desc .cc-b") : null;
       if (!b || b.getAttribute("data-cc-marq") === "1") return;
-      var v = b.querySelector(":scope > .cc-b-v"); if (!v) return;
-      var ov = v.scrollWidth - b.clientWidth + 24;
-      if (ov > 6) { b.setAttribute("data-cc-marq", "1"); v.style.transition = "transform " + Math.min(8, Math.max(2, ov / 60)) + "s linear"; v.style.transform = "translateX(-" + ov + "px)"; }
+      ccMarqStart(b);
     });
     host.addEventListener("mouseout", function (e) {
       var b = e.target && e.target.closest ? e.target.closest("table.unraid.disk_status td.desc .cc-b") : null;
@@ -901,6 +943,7 @@
       var v = b.querySelector(":scope > .cc-b-v");
       if (v) v.style.transform = "translateX(0)";
       b.removeAttribute("data-cc-marq");
+      ccMarqRun = null;
     });
   }
   function ccColDown(e) {
@@ -951,9 +994,25 @@
     try {
       var gps = document.querySelectorAll("#displaybox table.unraid.disk_status .cc-colgrip");
       for (var i = 0; i < gps.length; i++) gps[i].parentNode.removeChild(gps[i]);
+      var rb = document.querySelector("#displaybox .cc-colreset"); if (rb) rb.parentNode.removeChild(rb);
       ccColClear();
       ccDrag = null;
       document.documentElement.classList.remove("cc-col-dragging");
+    } catch (e) {}
+  }
+  // visible reset button NEXT TO the read/write toggle (user): lives inside the toggle's span.status,
+  // so it travels with it between nav.tabs and the section head. Same tile look as the UD icon
+  // buttons (.cc-ibtn). Grip double-click stays as the power-user shortcut.
+  function ccColResetBtn() {
+    try {
+      var a = document.querySelector("#displaybox span.status a.tooltip_diskio"); if (!a) return;
+      var st = a.parentNode; if (!st || st.querySelector(".cc-colreset")) return;
+      var b = el("a", "cc-ibtn cc-colreset");
+      b.href = "#";
+      b.setAttribute("title", mtText("Reset column widths"));
+      var ic = document.createElement("i"); ic.className = "fa fa-undo"; b.appendChild(ic);
+      b.addEventListener("click", function (e) { e.preventDefault(); ccColReset(); ccColApply(); });
+      st.appendChild(b);
     } catch (e) {}
   }
   // ── UD controls relocation (user: Toggles + Zahnrad/Refresh auf Hoehe des UNASSIGNED-DEVICES-
@@ -1005,6 +1064,8 @@
         for (var r = 0; r < rows.length; r++) enhanceMainRow(rows[r]);
       }
       ccColApply();   // shared column widths on ALL tables (stored user px, else auto-derived once)
+      ccColResetBtn();   // visible width-reset next to the read/write toggle
+      ccMarqResume();   // continue a running ident marquee seamlessly across the tbody refill
       ccIdentMarq();  // hover-marquee for over-long Identification pills (delegated, binds once)
       if (box) enhanceArrayOps(box);   // Array-Vorgang form: CC buttons + (i) info-bubbles, separator lines removed via CSS
       ccLocalizeMain();   // s3-sleep button / UD strings / Internal-Boot sentence in the UI language
@@ -1198,6 +1259,17 @@
       var card = box.querySelector(".cc-aop-pcard");
       if (!lines.length) { if (card) card.parentNode.removeChild(card); return; }
       if (!card) { card = el("div", "cc-aop-pcard"); var sec = lines[0].closest("section") || box; sec.appendChild(card); }
+      // top edge FLUSH with the first button row (user): the CSS top:52px was a guess that ignored the
+      // variable-height badge row. Measure the first array-op table's offset inside the card's containing
+      // block and write it ONCE (guarded, absolute mode only): the card is out of flow, so this cannot
+      // feed back into layout — unlike the v2.27.0 row-moving loop.
+      if (window.getComputedStyle(card).position === "absolute") {
+        var csec = card.parentNode, fb = csec.querySelector("table.array_status input[type='button'], table.array_status input[type='submit'], table.array_status button, table.array_status a.button");
+        if (fb) {
+          var off = Math.round(fb.getBoundingClientRect().top - csec.getBoundingClientRect().top);   // first button = STOPP, disabled or not
+          if (off > 0 && Math.abs((parseInt(card.style.top, 10) || 0) - off) > 1) card.style.top = off + "px";
+        }
+      }
       var rowsBox = card.querySelector(":scope > .cc-aop-rows"), pbx = card.querySelector(":scope > .cc-aop-pbar");
       if (!rowsBox || !pbx || pbx.previousElementSibling !== rowsBox) {   // (re)build the card shell: rows on top, progress bar at the BOTTOM (user)
         card.textContent = "";
@@ -1463,6 +1535,7 @@
       "No internal boot setup detected. Launch": "Kein internes Boot-Setup erkannt.",
       "to configure one.": "starten, um eines einzurichten.",
       "Toggle reads/writes display": "Lese-/Schreibanzeige umschalten",
+      "Reset column widths": "Spaltenbreiten zurücksetzen",
       "Schedule": "Planung",
       "Sleep will immediately put the server in sleep mode.": "Ruhezustand versetzt den Server sofort in den Ruhezustand.",
       "Make sure your server supports S3 sleep.": "Stellen Sie sicher, dass Ihr Server S3-Ruhezustand unterstützt.",

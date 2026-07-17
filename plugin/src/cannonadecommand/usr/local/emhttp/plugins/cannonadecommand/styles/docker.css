@@ -337,6 +337,7 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
   width: 15px; height: 15px; flex: none; cursor: pointer; margin: 0;
 }
 .cc-pop-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #2a2a2a; }
+.cc-pop-ttl { display: inline-flex; align-items: center; gap: 8px; }   /* window title + its ONE info bubble (user: aller Infotext oben neben der Ueberschrift) */
 .cc-pop-x { cursor: pointer; color: #8a8a8a; }
 .cc-pop-x:hover { color: #e6e6e6; }
 .cc-pop-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }
@@ -617,14 +618,16 @@ nav.tabs .tabs-container > span.status.vhshift,
 #cc-plugbtns > span.status.vhshift { margin-top: 0 !important; margin-bottom: 0 !important; height: var(--cc-md-h, 30px) !important; line-height: var(--cc-md-h, 30px) !important; font-size: 0 !important; }
 nav.tabs .tabs-container > span.status.vhshift > input[type="button"],
 #cc-plugbtns > span.status.vhshift > input[type="button"] { height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; vertical-align: middle !important; }
-/* the relocated home: right-aligned flex group ON the tab row. Native .tabs-container has width:100%
-   — as a flex SIBLING that pushed #cc-plugbtns off the row (the "not exactly on the sub-tab height"
-   drop): once the group exists, the strip must SHARE the row (flex-basis auto + shrinkable). */
-nav.tabs:has(> #cc-plugbtns) { flex-wrap: nowrap; position: relative; }
-nav.tabs:has(> #cc-plugbtns) > .tabs-container { width: auto !important; flex: 1 1 auto; min-width: 0; }
-/* ABSOLUTE anchor on the tab row (still "zu tief" as a flex item — whatever pads nav.tabs no longer
-   matters): pinned to the strip's top, exactly one pill tall, right edge flush. */
-#cc-plugbtns { position: absolute; right: 0; top: 0; height: var(--cc-md-h, 30px); display: inline-flex; align-items: center; gap: 12px; margin: 0; }
+/* the relocated home, v2.29.0 (4th attempt, PROVEN cause): the absolute anchor hung on a :has() gate
+   plus position rules WITHOUT !important — whenever the native theme won that cascade, #cc-plugbtns
+   fell back into normal flow beside the width:100% strip and the nav's flex line WRAPPED it under the
+   pills (exactly the observed "zu tief, rechtsbuendig"). Cure: no :has(), no absolute. relocateChecks()
+   stamps .cc-has-plugbtns on nav.tabs; the group is an IN-FLOW flex child pushed right by
+   margin-left:auto and vertically centred by align-self — with a nowrap nav and a shrinkable strip it
+   is geometrically impossible for it to leave the pill row. All !important. */
+nav.tabs.cc-has-plugbtns { display: flex !important; align-items: center !important; flex-wrap: nowrap !important; }
+nav.tabs.cc-has-plugbtns > .tabs-container { flex: 1 1 auto !important; min-width: 0 !important; width: auto !important; overflow-x: auto !important; }
+#cc-plugbtns { position: static !important; flex: 0 0 auto !important; margin: 0 0 0 auto !important; align-self: center !important; height: var(--cc-md-h, 30px); display: inline-flex; align-items: center; gap: 12px; }
 #cc-plugbtns > span.status.vhshift { margin: 0 !important; }
 /* keep the strip itself one NOWRAP line; the buttons sit OUTSIDE it in #cc-plugbtns, so they can
    never wrap or drop. */

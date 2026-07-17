@@ -240,9 +240,10 @@
   function bwTitle(bw) { return "↑ " + bwKbitLabel(bw && bw.egress_kbit) + " · ↓ " + bwKbitLabel(bw && bw.ingress_kbit); }
   function bwHasLimit(bw) { return !!(bw && (bw.egress_kbit > 0 || bw.ingress_kbit > 0)); }
   function containerByName(name) { var k = norm(name); for (var i = 0; i < containers.length; i++) if (norm(containers[i].name) === k) return containers[i]; return null; }
-  // The plan badge's LABEL already says "Startplan"; the value only adds detail
-  // (or nothing when unmanaged) so the chip never reads "Startplan Startplan".
-  function depsTxt(node) { return node ? (node.after && node.after.length ? t("after") + " " + node.after.join(", ") : t("active")) : ""; }
+  // The plan badge's LABEL already says "Startplan"; a managed container shows the plain word
+  // "aktiv" and NOTHING else (user: "soll einfach dort aktiv stehen, keine zusaetzlichen symbole") —
+  // the dependency list + automation details live in the tooltip and the editor.
+  function depsTxt(node) { return node ? t("active") : ""; }
   function iconFor(name) {
     if (iconCache[name] !== undefined) return iconCache[name];
     var src = "", row = document.getElementById("ct-" + name), img = row && row.querySelector("img");
@@ -364,9 +365,7 @@
     chip.href = "#"; chip.innerHTML = '<span class="cc-b-k"></span><span class="cc-b-v"></span>';
     chip.querySelector(".cc-b-k").textContent = t("plan");
     chip.querySelector(".cc-b-v").textContent = depsTxt(node);
-    chip.title = "start order for " + name + (wdOn ? " · watchdog" : "") + (schedN ? " · " + schedN + "× " + t("schedules").toLowerCase() : "") + (idleOn ? " · " + t("idleStop").toLowerCase() : "");
-    // a small marker so the row shows at a glance that automation is attached (⏻ watchdog, ⏱ schedule, ☾ idle-stop)
-    if (auto) { var m = el("span", "cc-plan-mark"); m.textContent = (wdOn ? "⏻" : "") + (schedN ? "⏱" : "") + (idleOn ? "☾" : ""); chip.appendChild(m); }
+    chip.title = "start order for " + name + (node && node.after && node.after.length ? " · " + t("after") + " " + node.after.join(", ") : "") + (wdOn ? " · watchdog" : "") + (schedN ? " · " + schedN + "× " + t("schedules").toLowerCase() : "") + (idleOn ? " · " + t("idleStop").toLowerCase() : "");
     chip.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openEditor(chip, name); });
     return chip;
   }
@@ -1437,8 +1436,11 @@
   // dropdown's options, so "Bereit wenn" / "Bei Fehlschlag" no longer need prior knowledge.
   function infoBubble(items) {
     var b = el("span", "cc-info", "ⓘ"); b.setAttribute("tabindex", "0"); b.setAttribute("aria-label", "info");
+    // inside a <label> the ⓘ must not toggle the label's checkbox (section-header bubbles)
+    b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); });
     var tip = el("span", "cc-tip");
-    items.forEach(function (it) { var r = el("span", "cc-tip-row"); r.appendChild(el("b", "cc-tip-k", it[0])); r.appendChild(document.createTextNode(it[1])); tip.appendChild(r); });
+    if (typeof items === "string") items = [["", items]];   // plain prose bubble (user: Infotext -> Infobubble)
+    items.forEach(function (it) { var r = el("span", "cc-tip-row"); if (it[0]) r.appendChild(el("b", "cc-tip-k", it[0])); r.appendChild(document.createTextNode(it[1])); tip.appendChild(r); });
     b.appendChild(tip); return b;
   }
   function lblInfo(text, items) { var l = el("label", "cc-pop-lbl cc-lbl-info"); l.appendChild(document.createTextNode(text)); l.appendChild(infoBubble(items)); return l; }
@@ -1517,10 +1519,9 @@
     var matchIn = el("input", "cc-in"); matchIn.type = "text"; matchIn.placeholder = t("logPh"); matchIn.value = (node.probe && node.probe.match) ? node.probe.match : "";
     var syncPort = function () { var k = probe.value; port.style.display = (k === "tcp" || k === "http") ? "" : "none"; pathIn.style.display = k === "http" ? "" : "none"; cmdIn.style.display = k === "exec" ? "" : "none"; matchIn.style.display = k === "log" ? "" : "none"; }; syncPort();
     prow.appendChild(probe); prow.appendChild(port); prow.appendChild(pathIn); prow.appendChild(cmdIn); prow.appendChild(matchIn); body.appendChild(prow);
-    var polrow = el("div", "cc-pop-row"); polrow.appendChild(lblInfo(t("onFail"), policyItems()));
+    var polrow = el("div", "cc-pop-row"); polrow.appendChild(lblInfo(t("onFail"), policyItems().concat([["", t("failhint")]])));   // failhint lives IN the bubble now (user: kein loser Infotext im Fenster)
     var pol = el("select", "cc-in"); POLICIES.forEach(function (p) { var o = el("option", null, p); o.value = p; if (node.policy === p) o.selected = true; pol.appendChild(o); });
     polrow.appendChild(pol); body.appendChild(polrow); pop.appendChild(body);
-    pop.appendChild(el("div", "cc-pop-foot", t("failhint")));
 
     // ── Watchdog (auto-restart) — independent of plan membership ──
     var wd = watchdogFor(name);
@@ -1547,7 +1548,7 @@
     var ni = idleStopFor(name);
     var nSec = el("div", "cc-pop-auto");
     var nHead = el("label", "cc-pop-row cc-pop-toggle"), nEn = el("input"); nEn.type = "checkbox"; nEn.checked = !!(ni && ni.enabled);
-    nHead.appendChild(nEn); nHead.appendChild(el("span", "cc-pop-sech", t("idleStop"))); nSec.appendChild(nHead);
+    nHead.appendChild(nEn); nHead.appendChild(el("span", "cc-pop-sech", t("idleStop"))); nHead.appendChild(infoBubble(t("idleFoot"))); nSec.appendChild(nHead);   // idleFoot as bubble on the header, no loose foot text (user)
     var nBody = el("div", "cc-pop-sub" + (nEn.checked ? "" : " cc-dis"));
     var nMrow = el("div", "cc-pop-row"); nMrow.appendChild(el("label", "cc-pop-lbl", t("idleMin")));
     var nMin = el("input", "cc-in cc-port"); nMin.type = "number"; nMin.min = "1"; nMin.placeholder = "30"; nMin.value = (ni && ni.idle_minutes) ? ni.idle_minutes : "";
@@ -1555,7 +1556,6 @@
     var nCrow = el("div", "cc-pop-row"); nCrow.appendChild(el("label", "cc-pop-lbl", t("idleCpu")));
     var nCpu = el("input", "cc-in cc-port"); nCpu.type = "number"; nCpu.min = "0"; nCpu.max = "100"; nCpu.placeholder = "5"; nCpu.value = (ni && ni.cpu_threshold_pct) ? ni.cpu_threshold_pct : "";
     nCrow.appendChild(nCpu); nBody.appendChild(nCrow); nSec.appendChild(nBody);
-    nSec.appendChild(el("div", "cc-pop-foot", t("idleFoot")));
     nEn.addEventListener("change", function () { nBody.classList.toggle("cc-dis", !nEn.checked); });
     pop.appendChild(nSec);
     // Enabled but blank/invalid minutes => default to the placeholder (30), never 0: a 0
@@ -1666,7 +1666,13 @@
     if (togglePop(anchor)) return;
     closePop();
     var pop = el("div", "cc-pop"); if (localStorage.getItem("cc.rainbow") === "1") pop.classList.add("cc-rainbow");
-    var head = el("div", "cc-pop-head"); head.appendChild(el("b", null, t("bandwidth"))); // container name removed — one style everywhere
+    var head = el("div", "cc-pop-head");
+    // ALL info text lives in ONE bubble right next to the window title (user call)
+    var ttl = el("span", "cc-pop-ttl"); ttl.appendChild(el("b", null, t("bandwidth")));
+    ttl.appendChild(infoBubble(LANG === "de"
+      ? "Bandbreitenlimit pro Container: Upload wird per tbf-Shaper begrenzt, Download per Netfilter-Policing. 0 oder leer = unbegrenzt. Die Statuszeile unten prüft live, ob die Regel wirklich greift."
+      : "Per-container bandwidth cap: upload is shaped via tbf, download via netfilter policing. 0 or blank = unlimited. The status line below verifies live that the rule is really in place."));
+    head.appendChild(ttl);
     var x = el("span", "cc-pop-x", "✕"); x.addEventListener("click", closePop); head.appendChild(x); pop.appendChild(head);
     var body = el("div", "cc-pop-body");
     var cur = bandwidthFor(name);
@@ -1768,7 +1774,10 @@
     var showRam = which !== "cpu", showCpu = which !== "ram";
     var title = which === "cpu" ? t("cpuLimit") : which === "ram" ? t("ramLimit") : "CPU / RAM";
     var pop = el("div", "cc-pop"); if (localStorage.getItem("cc.rainbow") === "1") pop.classList.add("cc-rainbow");
-    var head = el("div", "cc-pop-head"); head.appendChild(el("b", null, title)); // container name removed — one style everywhere
+    var head = el("div", "cc-pop-head");
+    // ALL info text lives in ONE bubble right next to the window title (user call) — the former
+    // limitsFoot line at the bottom is gone.
+    var ttl = el("span", "cc-pop-ttl"); ttl.appendChild(el("b", null, title)); ttl.appendChild(infoBubble(t("limitsFoot"))); head.appendChild(ttl);
     var x = el("span", "cc-pop-x", "✕"); x.addEventListener("click", closePop); head.appendChild(x); pop.appendChild(head);
     var body = el("div", "cc-pop-body"), memNum = null, memUnit = null, cpu = null;
     var readCpuset = function () { return ""; }, fillCpuset = function () {};
@@ -1827,7 +1836,6 @@
       body.appendChild(prow);
     }
     pop.appendChild(body);
-    pop.appendChild(el("div", "cc-pop-foot", t("limitsFoot")));
     function submitLimits(payload) {
       popClearError(); flash(t("saving")); api("POST", "limits", payload)
         .then(function (resp) {

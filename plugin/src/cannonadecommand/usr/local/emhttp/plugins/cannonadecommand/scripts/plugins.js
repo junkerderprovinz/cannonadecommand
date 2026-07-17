@@ -387,6 +387,7 @@
       var cont = navt.querySelector(".tabs-container"); if (!cont) return;
       var host = document.getElementById("cc-plugbtns");
       if (!host) { host = document.createElement("div"); host.id = "cc-plugbtns"; navt.appendChild(host); }
+      navt.classList.add("cc-has-plugbtns");   // plain-class key for the layout rules — :has() + non-!important position lost the cascade to the theme and the group wrapped BELOW the pill row
       ["checkall", "updateall", "removeall"].forEach(function (id) {
         var s = document.getElementById(id);
         if (s && s.parentNode !== host) host.appendChild(s);

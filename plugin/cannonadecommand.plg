@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.28.1">
+  <!ENTITY version   "2.29.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,38 @@
 </ICON>
 
 <CHANGES>
+### 2.29.0
+#1 Plugin-Tab: Der Aktualisierungen-Button sitzt jetzt WIRKLICH auf der Unterreiter-Zeile -- die alte
+   Absolut-Verankerung hing an einer :has()-Regel ohne !important; verlor sie die Kaskade, rutschte
+   die Gruppe in den Umbruch UNTER die Zeile. Jetzt: JS-Markerklasse + In-Flow-Flexkind mit
+   margin-left:auto und Selbstzentrierung -- kann die Zeile geometrisch nicht mehr verlassen.
+#2 NEU: Ein Zuruecksetzen-Button neben dem Lese-/Schreib-Schalter stellt die Original-Spaltenbreiten
+   wieder her (gleiche Icon-Kachel-Optik; Doppelklick auf einen Spaltengriff geht weiterhin).
+#3 NEU: Beim Ueberfahren der Listen-Titelzeile werden alle Spalten-Trennlinien sanft sichtbar;
+   der direkt beruehrte Griff leuchtet in der Akzentfarbe.
+#4 Unassigned Devices: Das Abschnitts-Icon hat jetzt die richtige Farbe und Groesse -- es war das
+   einzige Abschnitts-Icon als Vollfarb-BILD in Naturgroesse; jetzt auf Glyphengroesse normiert und
+   monochrom zur Badge-Tinte gefiltert.
+#5 Zahnrad + Aktualisieren sind jetzt ECHTE Icon-Kacheln wie in der Hauptmenueleiste: gefuellte
+   Akzent-Kachel, weisse Glyphe, Menueleisten-Hoehe, Badge-Form, Hover-Aufhellen.
+#6 Array-Vorgang: ALLE Buttons exakt gleich gross (200px) -- min-width:0 liess die Einzel-Buttons
+   (Stopp/Verlauf/Verschieben/Ruhezustand) im Zeilen-Flex unter ihre Beschriftung schrumpfen
+   ("VERSCHIEE"); Breite jetzt auf beiden Flex-Achsen fixiert, button-Elemente eingeschlossen.
+   Die Paritaets-Card beginnt buendig mit der Oberkante des ersten Buttons (gemessen statt geraten).
+#7 NEU: DS, GROESSE, BENUTZT und FREI stehen zentriert in ihrer Spalte (Fuellbalken mittig).
+#8 Rainbow- und Nur-aktives-Badge-Modus reichen jetzt bis GANZ unten: UD-Tabellen-Badges folgen
+   beiden Modi (inkl. Zeilen-Hover), die Buttons unterhalb der Arrays rotieren in der Palette mit.
+#9 Boot-Datentraeger: Der Lauftext stockt nicht mehr und springt nicht mehr zurueck -- der
+   Sekunden-Refresh zerstoerte den animierten Knoten; der Lauf wird jetzt nahtlos an der exakt
+   interpolierten Position fortgesetzt.
+#10 Die Linien in einigen Listen-Titelleisten sind weg (native Theme-Raender abgeschaltet).
+#11 Docker: Das Startplan-Badge zeigt bei aktivem Plan schlicht "aktiv" -- keine Zusatzsymbole,
+   Details (Abhaengigkeiten, Watchdog, Zeitplaene) stehen im Tooltip.
+#12 Startplan-Fenster: Die restlichen Infotexte stecken jetzt in Infobubbles (Fehlschlag-Hinweis in
+   der Bei-Fehlschlag-Bubble, Leerlauf-Hinweis als Bubble an der Abschnitts-Ueberschrift).
+#13 CPU-, RAM- und Bandbreiten-Fenster: aller Infotext in EINER Bubble direkt neben der
+   Fensterueberschrift; keine losen Fusszeilen mehr.
+
 ### 2.28.1
 #1 Pool-Datentraeger: Das Durchsuchen-Badge der Pool-Kopfzeilen hat wieder die normale Groesse --
    die bereits gebadgte Browse-Zelle wurde faelschlich ein zweites Mal eingewickelt (Doppel-Badge).
@@ -917,7 +949,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>7cb67b6d08f4d6e16f2684b640995ea2e8a6c696f2b17a57ac708f20a2f01c86</SHA256>
+  <SHA256>6c499de72a451de3d62d7a2c946ffd7cb9de6d5792a41fcfdba148e1cb3bf341</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
