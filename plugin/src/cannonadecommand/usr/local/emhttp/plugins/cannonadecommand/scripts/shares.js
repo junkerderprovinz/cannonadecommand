@@ -914,11 +914,15 @@
   // interpolated offset and continue for the REMAINING time — one continuous slide across refills.
   function ccMarqResume() {
     if (!ccMarqRun) return;
+    if ((Date.now() - ccMarqRun.t0) / 1000 > ccMarqRun.dur + 2) { ccMarqRun = null; return; }   // run naturally over (+grace) — let go
     var b = document.querySelector("#displaybox table.unraid.disk_status td.desc:hover .cc-b");
-    if (!b) { ccMarqRun = null; return; }                        // pointer left while the node was swapped
+    // NO :hover match this instant does NOT mean the pointer left: right after the node swap the
+    // browser's hit-test can lag a frame. Killing the run here was why the slide never reached the
+    // end — KEEP the state; the next tick / the re-fired mouseover resumes it, mouseout ends it.
+    if (!b) return;
     if (b.getAttribute("data-cc-marq") === "1") return;          // node survived this tick — animation intact
     var v = b.querySelector(":scope > .cc-b-v"); if (!v) return;
-    if ((v.textContent || "").trim() !== ccMarqRun.key) { ccMarqRun = null; return; }   // different pill under the pointer — not our run
+    if ((v.textContent || "").trim() !== ccMarqRun.key) return;  // different pill under the pointer — not our run (its own mouseover will start it)
     var p = Math.min(1, (Date.now() - ccMarqRun.t0) / (ccMarqRun.dur * 1000));
     b.setAttribute("data-cc-marq", "1");
     v.style.transition = "none";

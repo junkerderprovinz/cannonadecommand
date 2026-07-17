@@ -373,9 +373,13 @@
       });
       rbrow.appendChild(sw);
     });
-    var rbReset = el("span", "cc-btn cc-btn-sm", T("Farben zurücksetzen", "Reset colours"));
+    // icon-only undo arrow RIGHT of the swatches (user: "statt dem badge ... nur so ein rueckgaengig pfeil")
+    var rbReset = el("span", "cc-set-ibtn");
+    rbReset.setAttribute("title", T("Farben zurücksetzen", "Reset colours"));
+    var rbRi = document.createElement("i"); rbRi.className = "fa fa-undo"; rbReset.appendChild(rbRi);
     rbReset.addEventListener("click", function () { del("cc.rbpal"); render(); syncHeaderBar(); syncSharesBar(); });
-    c1.appendChild(rbrow); c1.appendChild(rbPickWrap); c1.appendChild(rbReset);
+    rbrow.appendChild(rbReset);
+    c1.appendChild(rbrow); c1.appendChild(rbPickWrap);
     c1.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var prev = el("div", "cc-set-prev");
     // 2-3 mixed categories (user call): a NAME headline badge (lg), a key/value badge (sm) and a

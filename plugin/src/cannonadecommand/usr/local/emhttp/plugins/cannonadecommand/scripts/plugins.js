@@ -381,6 +381,30 @@
   // while the buttons stay pinned on the row at ANY width. Mirrors shares.js ccDiskioMove. Idempotent
   // (parent check); native .show()/.hide() + inline onclick are id-bound and survive the move; reverts
   // on reload when the area is disabled (paint() gates before calling this).
+  // measure-and-pin: reset the group to its in-flow home, compare its centre to the first pill's
+  // centre, and pin it absolutely from the REAL rectangles if they diverge. Inline "important"
+  // styles — unbeatable by any stylesheet; re-run by timers because late CSS/font loads can move
+  // the row without a single DOM mutation.
+  var plugTimersArmed = false;
+  function plugRealign() {
+    try {
+      var navt = (document.getElementById("displaybox") || document).querySelector("nav.tabs"); if (!navt) return;
+      var cont = navt.querySelector(".tabs-container"), host = document.getElementById("cc-plugbtns");
+      if (!cont || !host || !host.offsetHeight) return;
+      var tab0 = cont.querySelector("button[role='tab']"); if (!tab0) return;
+      navt.style.setProperty("position", "relative", "important");
+      host.style.setProperty("position", "static", "important");
+      host.style.setProperty("margin", "0 0 0 auto", "important");
+      var tr0 = tab0.getBoundingClientRect(), hr0 = host.getBoundingClientRect();
+      if (Math.abs((tr0.top + tr0.height / 2) - (hr0.top + hr0.height / 2)) > 4) {
+        var nr0 = navt.getBoundingClientRect();
+        host.style.setProperty("position", "absolute", "important");
+        host.style.setProperty("right", "0", "important");
+        host.style.setProperty("margin", "0", "important");
+        host.style.setProperty("top", Math.round((tr0.top + tr0.height / 2) - nr0.top - hr0.height / 2) + "px", "important");
+      }
+    } catch (e) {}
+  }
   function relocateChecks() {
     try {
       var navt = (document.getElementById("displaybox") || document).querySelector("nav.tabs"); if (!navt) return;
@@ -409,17 +433,14 @@
       host.style.setProperty("display", "inline-flex", "important");
       host.style.setProperty("align-items", "center", "important");
       host.style.setProperty("gap", "12px", "important");
-      var tab0 = cont.querySelector("button[role='tab']");
-      if (tab0 && host.offsetHeight) {
-        var tr0 = tab0.getBoundingClientRect(), hr0 = host.getBoundingClientRect();
-        if (Math.abs((tr0.top + tr0.height / 2) - (hr0.top + hr0.height / 2)) > 4) {
-          var nr0 = navt.getBoundingClientRect();
-          navt.style.setProperty("position", "relative", "important");
-          host.style.setProperty("position", "absolute", "important");
-          host.style.setProperty("right", "0", "important");
-          host.style.setProperty("margin", "0", "important");
-          host.style.setProperty("top", Math.round((tr0.top + tr0.height / 2) - nr0.top - hr0.height / 2) + "px", "important");
-        }
+      plugRealign();
+      // late CSS/font loads can shift the row AFTER the last mutation — no observer event fires
+      // then, so the one-shot measurement went stale. Re-measure on a few timers + load/resize.
+      if (!plugTimersArmed) {
+        plugTimersArmed = true;
+        [400, 1200, 3000].forEach(function (ms) { setTimeout(plugRealign, ms); });
+        window.addEventListener("load", plugRealign);
+        window.addEventListener("resize", plugRealign);
       }
     } catch (e) {}
   }

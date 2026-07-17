@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.30.0">
+  <!ENTITY version   "2.31.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,29 @@
 </ICON>
 
 <CHANGES>
+### 2.31.0
+#1 CPU-, RAM- und Bandbreiten-Fenster: Der Platz fuer das Ergebnis-Symbol ist von Anfang an
+   reserviert und die Fenster sind entsprechend breiter -- die Felder schrumpfen nicht mehr,
+   wenn der Haken erscheint.
+#2 Unassigned Devices: Icons und Texte der Kontrollleiste sauber ausgerichtet (Labels exakt
+   vertikal zentriert, einheitliche Abstaende).
+#3 Array-Vorgang: Das Hover-Aufleuchten ist jetzt bei JEDER Farbe sichtbar -- zusaetzlich zum
+   Aufhellen erscheint ein Ring in der Kontrastfarbe des Buttons (dunkler Ring auf hellen,
+   heller Ring auf dunklen Fuellungen). Ausgegraute Buttons reagieren weiterhin nicht.
+#4 Lauftexte laufen jetzt bis zum Ende durch: Der Fortsetzer beendete den Lauf faelschlich,
+   wenn der Browser-Treffertest beim Knoten-Tausch einen Augenblick lang kein Hover meldete --
+   der Lauf bleibt jetzt am Leben und setzt beim naechsten Tick nahtlos fort.
+#5 EINE Kontroll-Linie (30px) ueberall: Alle Toggles (Start-Tab, Docker-Liste, Docker-Formular,
+   VM-Tab, Einstellungs-Fenster) sind jetzt exakt so hoch wie die Icon-Kacheln und die
+   Menueleisten-Badges; Namen stehen als Text daneben, Erklaerungen stecken in (i)-Bubbles.
+#6 Plugin-Tab: Die Button-Messung laeuft jetzt auch NACH spaeten Style-/Font-Ladevorgaengen
+   erneut (Timer + load/resize) -- eine Verschiebung ohne DOM-Ereignis konnte die einmalige
+   Messung veralten lassen.
+#7 "Nur aktives Badge faerben" erfasst jetzt auch die Array-Vorgang-Badges (Status-Pillen und
+   Planungs-/Wiki-Badges werden neutral grau und faerben sich beim Ueberfahren der Zeile).
+#8 Einstellungen: Der "Farben zuruecksetzen"-Badge ist jetzt ein reiner Undo-Pfeil-Button
+   rechts neben den Farbfeldern (Icon-Kachel, Tooltip erklaert die Funktion).
+
 ### 2.30.0
 #1 Plugin-Tab: Der Aktualisierungen-Button wird jetzt per JS-INLINE-Styles (Prioritaet important)
    auf der Unterreiter-Zeile verankert -- kein Stylesheet kann das mehr ueberstimmen. Zusaetzlich
@@ -976,7 +999,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>b6813daa86f33eae1dea0d17445374a11b86c6c998ced46601998dc7268cd733</SHA256>
+  <SHA256>6a0b63fe532c4b7e0c42e5ce66eb372b7942ed6a400c7d2c9600dd62a5963635</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

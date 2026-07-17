@@ -1689,6 +1689,8 @@
     // qdisc whose sch_ingress module crashes some Unraid kernels.
     var upIn = rateRow(t("upload"), cur && cur.egress_kbit);
     var dnIn = rateRow(t("download"), cur && cur.ingress_kbit);
+    Array.prototype.slice.call(body.children).forEach(statSlot);   // pre-reserve the dot slots — fields never shrink
+    pop.classList.add("cc-pop-stat");                              // window sized for field + unit + dot
     pop.appendChild(body); // no explainer text (user call) — the diagnosis line says what matters
     function readKbit(inp) { var v = parseFloat(String(inp.value).trim().replace(",", ".")); return v > 0 ? Math.round(v * 1000) : 0; }
     var srow = el("div", "cc-pop-row cc-pop-act");
@@ -1735,7 +1737,10 @@
     d.appendChild(el("span", "cc-tip", text || ""));
     return d;
   }
-  function statClear(row) { var d = row && row.querySelector(":scope > .cc-stat"); if (d) d.remove(); }
+  // reserve the dot's slot from the start (user: "das feld schrumpft wenn er erscheint") — an
+  // invisible placeholder keeps the row geometry constant; statDot just makes it visible.
+  function statSlot(row) { if (row && !row.querySelector(":scope > .cc-stat")) row.appendChild(el("span", "cc-stat cc-stat-slot")); }
+  function statClear(row) { var d = row && row.querySelector(":scope > .cc-stat"); if (d) { d.className = "cc-stat cc-stat-slot"; d.textContent = ""; } }
   // Show the EXACT backend/Docker rejection INSIDE the open popup and keep it there (a
   // 2.6s toast is unreadable) so the user can read back why `docker update` refused — the
   // only way to diagnose a set/remove failure once a stale install is ruled out. Also logs it.
@@ -1787,7 +1792,7 @@
     closePop();
     var showRam = which !== "cpu", showCpu = which !== "ram";
     var title = which === "cpu" ? t("cpuLimit") : which === "ram" ? t("ramLimit") : "CPU / RAM";
-    var pop = el("div", "cc-pop"); if (localStorage.getItem("cc.rainbow") === "1") pop.classList.add("cc-rainbow");
+    var pop = el("div", "cc-pop cc-pop-stat"); if (localStorage.getItem("cc.rainbow") === "1") pop.classList.add("cc-rainbow");
     var head = el("div", "cc-pop-head");
     // ALL info text lives in ONE bubble right next to the window title (user call) — the former
     // limitsFoot line at the bottom is gone.
@@ -1799,11 +1804,11 @@
       var mrow = el("div", "cc-pop-row"); mrow.appendChild(el("label", "cc-pop-lbl", t("ramLimit")));
       memNum = el("input", "cc-in"); memNum.type = "number"; memNum.min = "0"; memNum.step = "0.5"; memNum.placeholder = t("ramNum");
       memUnit = el("select", "cc-in cc-unit"); ["MB", "GB"].forEach(function (u) { var o = el("option", null, u); o.value = u; if (u === "GB") o.selected = true; memUnit.appendChild(o); });
-      mrow.appendChild(memNum); mrow.appendChild(memUnit); body.appendChild(mrow);
+      mrow.appendChild(memNum); mrow.appendChild(memUnit); statSlot(mrow); body.appendChild(mrow);
     }
     if (showCpu) {
       var crow = el("div", "cc-pop-row"); crow.appendChild(el("label", "cc-pop-lbl", t("cpuLimit")));
-      cpu = el("input", "cc-in"); cpu.type = "text"; cpu.placeholder = t("cpuNum"); crow.appendChild(cpu); body.appendChild(crow);
+      cpu = el("input", "cc-in"); cpu.type = "text"; cpu.placeholder = t("cpuNum"); crow.appendChild(cpu); statSlot(crow); body.appendChild(crow);
       // CPU pinning as a GRAPHICAL core picker like the VM manager: one BOX per physical
       // core, its hyperthreads stacked vertically inside, wrapping into rows — so a
       // 32-thread CPU is a tidy block, not a long column. On an Intel hybrid CPU the boxes

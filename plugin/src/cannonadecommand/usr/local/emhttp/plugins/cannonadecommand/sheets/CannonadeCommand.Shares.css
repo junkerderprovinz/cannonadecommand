@@ -447,14 +447,19 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status a.button {
   width: var(--cc-lgb-w, 200px) !important; min-width: var(--cc-lgb-w, 200px) !important; max-width: var(--cc-lgb-w, 200px) !important;
   flex: 0 0 auto !important; white-space: nowrap !important; padding: 0 12px !important;   /* ONE fixed width pins the (i) bubble + PLANUNG badge to identical x in every row */
 }
-/* hover glow — reactive buttons light up, greyed-out ones NEVER do (user) */
+/* hover glow — reactive buttons light up, greyed-out ones NEVER do (user). brightness alone is
+   invisible on LIGHT fills, so add a ring in currentColor: the ink always contrasts its own fill
+   (white ink on dark pills, dark ink on light ones) — visible for every palette colour. */
 html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="submit"]:hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="button"]:hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="reset"]:hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox table.array_status button:not([role="tab"]):hover:not(:disabled),
-html.cc-shares-on.cc-on-main #displaybox table.array_status a.button:hover { filter: brightness(1.14) !important; }
+html.cc-shares-on.cc-on-main #displaybox table.array_status a.button:hover {
+  filter: brightness(1.14) !important;
+  box-shadow: 0 0 0 2px currentColor !important;
+}
 html.cc-shares-on.cc-on-main #displaybox table.array_status input:disabled:hover,
-html.cc-shares-on.cc-on-main #displaybox table.array_status button:disabled:hover { filter: none !important; }
+html.cc-shares-on.cc-on-main #displaybox table.array_status button:disabled:hover { filter: none !important; box-shadow: none !important; }
 /* ALLE /Main-Buttons in CC (user: "Alle buttons und schalter in den CC Style!!!"): the Unassigned-Devices
    "ADD REMOTE SMB/NFS SHARE" / "ADD ISO FILE SHARE" / "ADD ROOT SHARE" controls are <button> elements
    (verified UD source: <button onclick='add_samba_share()'> inside <div id='remotes-buttons'>), plus other
@@ -555,8 +560,11 @@ html.cc-shares-on.cc-on-main.cc-sections-main #displaybox .cc-card-head > .cc-ud
 }
 /* EVERY moved child joins the flex row (generic — the live UD build's wrapper classes vary; the
    v2.27.0 :is(span.right.ud, div.right.ud) selector missed them -> the vertical pile-up) */
-html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls > * { display: inline-flex !important; align-items: center; float: none !important; margin: 0 !important; position: static !important; }
-html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls span.switch-button-label { float: none; line-height: 1; font-size: var(--cc-md-fs, 13px); font-weight: 600; letter-spacing: .4px; }
+html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls > * { display: inline-flex !important; align-items: center; gap: 8px; float: none !important; margin: 0 !important; position: static !important; height: var(--cc-md-h, 30px); }
+html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls span.switch-button-label {
+  float: none; font-size: var(--cc-md-fs, 13px); font-weight: 600; letter-spacing: .4px;
+  display: inline-flex !important; align-items: center; height: var(--cc-md-h, 30px); line-height: var(--cc-md-h, 30px); margin: 0 !important; padding: 0 !important;   /* label vertically centred on the 30px control line (user: Texte richtig ausrichten) */
+}
 /* ═══ Unassigned Devices B2: the three UD tables in the /Main list look (mirror of the disk_status
    block above — UD tables are usb_mounts/samba_mounts/usb_absent, NOT table.unraid.disk_status). */
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) thead td {
@@ -596,7 +604,7 @@ html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mount
    .switch-button-button knob; the source checkbox is hidden). Recolour/round ONLY, never the JS-driven
    inline geometry — same proven pattern as the Docker/VM autostart toggles (docker.css/VmTab.css). */
 html.cc-shares-on.cc-on-main #displaybox .switch-button-background {
-  width: 44px !important; height: 24px !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important;   /* follows the global Badge-Form; 12px cap = half the track, pill unchanged, ECKIG goes square */
+  width: 54px !important; height: var(--cc-md-h, 30px) !important; border-radius: min(var(--cc-b-radius, 999px), 15px) !important;   /* ONE 30px control line (user popup choice); 15px cap = half the track, pill unchanged, ECKIG goes square */
   border: none !important; outline: none !important; box-shadow: none !important;
   background: #3a3a3a !important; transform: none !important; position: relative !important;
   display: inline-block; vertical-align: middle; margin: 0 12px 0 3px !important; cursor: pointer;   /* !important: UD's unassigned.css ships .switch-button-background{margin-top:2px!important} */
@@ -604,10 +612,10 @@ html.cc-shares-on.cc-on-main #displaybox .switch-button-background {
 }
 html.cc-shares-on.cc-on-main #displaybox .switch-button-background.checked { background: var(--cc-shr-accent, #2f6feb) !important; }
 html.cc-shares-on.cc-on-main #displaybox .switch-button-background .switch-button-button {
-  width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important;
-  border-radius: min(var(--cc-b-radius, 999px), 9px) !important; background: #fff !important; box-shadow: none !important; border: none !important; transition: left .15s;   /* 9px cap = half the knob, stays inside the track */
+  width: 24px !important; height: 24px !important; top: 3px !important; left: 3px !important;
+  border-radius: min(var(--cc-b-radius, 999px), 12px) !important; background: #fff !important; box-shadow: none !important; border: none !important; transition: left .15s;   /* 12px cap = half the knob, stays inside the track */
 }
-html.cc-shares-on.cc-on-main #displaybox .switch-button-background.checked .switch-button-button { left: 21px !important; }
+html.cc-shares-on.cc-on-main #displaybox .switch-button-background.checked .switch-button-button { left: 27px !important; }
 /* label centring: the UD containers are inline-block with FLOATED switchButton children (webgui
    jquery.switchbutton.css floats label+track), so the label rode high. Flex-centre the whole cluster;
    floats become flex items, the plugin's inline .show()/.hide() on the twin labels survives. */
@@ -1252,6 +1260,15 @@ html.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_status .cc-b {
 html.cc-shares-on.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_status a.cc-b-browse { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
 html.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_status tr:hover .cc-b,
 html.cc-shares-on.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_status tr:hover a.cc-b-browse {
+  background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
+}
+/* v2.31.0: the sub-mode also covers the ARRAY-VORGANG badges (user: "nur aktives badge faerben ist
+   bei den array vorgang badges nicht aktiviert") — status pills + the PLANUNG/Wiki link badges go
+   neutral grey and recolour on row hover (accent fallback: aop rows carry no palette var). */
+html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status .cc-b,
+html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status .cc-aop-link { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status tr:hover .cc-b,
+html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status tr:hover .cc-aop-link {
   background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
 }
 /* v2.29.0: the sub-mode reaches BELOW Unassigned Devices too (user: "ab unassigned devices abwaerts
