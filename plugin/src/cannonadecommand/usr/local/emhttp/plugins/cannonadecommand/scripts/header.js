@@ -107,12 +107,13 @@
     } catch (e) {}
   }
   // ── DRAG-AND-DROP main-menu tab ordering (v2.20.0). The left menu tabs (#menu .nav-tile:not(.right)
-  // > .nav-item, each an <a href="/PageName">) can be reordered by dragging; the order (a list of hrefs)
-  // is saved to cc.navorder and re-applied on every page load. Native menu order comes from the server,
-  // so this is a pure front-end reorder + persistence. A normal CLICK still navigates — HTML5 dragging
-  // needs a real drag gesture, so a click never triggers a reorder. Only active while the header area is
-  // on (opt-in via cc.navdrag, default on when the area is on). New/unknown tabs (added by plugins) keep
-  // their native position AFTER the saved ones, so the order survives added tabs.
+  // > .nav-item, each an <a href="/PageName">) can be reordered, but ONLY after a press-and-HOLD arms it
+  // (v2.24.1): the cursor stays the normal link pointer (no grab hand), and a plain click just navigates.
+  // Hold a tab for ~450ms and the whole bar starts to jiggle (cc-nav-wiggle) to signal "you can move me
+  // now"; from that same held press a drag reorders the tab. The order (a list of hrefs) is saved to
+  // cc.navorder and re-applied on every page load. Native menu order comes from the server, so this is a
+  // pure front-end reorder + persistence. Only active while the header area is on (opt-in via cc.navdrag,
+  // default on). New/unknown tabs (added by plugins) keep their native position AFTER the saved ones.
   function navTile() { return document.querySelector("#menu .nav-tile:not(.right)"); }
   function navItems(tile) { return Array.prototype.slice.call(tile.querySelectorAll(":scope > .nav-item")); }
   function navHref(it) { var a = it.querySelector("a[href]"); return a ? a.getAttribute("href") : null; }
@@ -131,24 +132,61 @@
   function saveNavOrder() {
     try { var tile = navTile(); if (!tile) return; var order = []; navItems(tile).forEach(function (it) { var h = navHref(it); if (h) order.push(h); }); localStorage.setItem("cc.navorder", JSON.stringify(order)); } catch (e) {}
   }
-  var ccDragged = null;
+  var ccDragged = null, ccReorder = false, ccHoldTimer = null, ccPressXY = null, ccSuppressClick = false, ccDocBound = false;
+  function ccNavAll() { var t = navTile(); return t ? navItems(t) : []; }
+  function cancelHold() { if (ccHoldTimer) { clearTimeout(ccHoldTimer); ccHoldTimer = null; } ccPressXY = null; }
+  function enterReorder() {   // long-press satisfied => the bar jiggles and every tab becomes draggable
+    if (ccReorder) return; ccReorder = true;
+    ccNavAll().forEach(function (it) { it.setAttribute("draggable", "true"); it.classList.add("cc-nav-wiggle"); });
+  }
+  function exitReorder() {    // back to plain, clickable, un-draggable tabs
+    ccReorder = false;
+    ccNavAll().forEach(function (it) { it.setAttribute("draggable", "false"); it.classList.remove("cc-nav-wiggle", "cc-dragging"); });
+  }
   function setupNavDrag() {
     try {
       if (g("cc.navdrag", "1") === "0") return;                 // opt-out
       var tile = navTile(); if (!tile) return;
       if (tile.getAttribute("data-cc-drag") === "1") return; tile.setAttribute("data-cc-drag", "1");
       navItems(tile).forEach(function (it) {
-        it.setAttribute("draggable", "true"); it.classList.add("cc-navdrag");
+        it.setAttribute("draggable", "false"); it.classList.add("cc-navdrag");   // NOT draggable until a long-press arms it — a plain click just navigates
         var la = it.querySelector("a"); if (la) la.setAttribute("draggable", "false");  // else the browser drags the LINK URL instead of our item
 
-        it.addEventListener("dragstart", function (e) { ccDragged = it; it.classList.add("cc-dragging"); try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", navHref(it) || ""); } catch (e2) {} });
-        it.addEventListener("dragend", function () { it.classList.remove("cc-dragging"); ccDragged = null; saveNavOrder(); });
+        // press-and-HOLD to arm: hold ~450ms without moving => enterReorder(). Moving before it fires, or a
+        // short click, cancels the hold and just navigates. Once armed, the native HTML5 drag takes over.
+        it.addEventListener("pointerdown", function (e) {
+          if (e.button !== 0) return;                            // left button only
+          cancelHold(); ccPressXY = { x: e.clientX, y: e.clientY };
+          ccHoldTimer = setTimeout(function () { ccHoldTimer = null; enterReorder(); }, 450);
+        });
+        it.addEventListener("pointermove", function (e) {
+          if (!ccPressXY || ccReorder) return;                  // once armed, let the native drag run
+          if (Math.abs(e.clientX - ccPressXY.x) > 8 || Math.abs(e.clientY - ccPressXY.y) > 8) cancelHold();  // moved before arming => it's a click/scroll, not a hold
+        });
+
+        it.addEventListener("dragstart", function (e) {
+          if (!ccReorder) { e.preventDefault(); return; }        // no dragging until the long-press armed it
+          ccDragged = it; it.classList.add("cc-dragging");
+          try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", navHref(it) || ""); } catch (e2) {}
+        });
+        it.addEventListener("dragend", function () { ccDragged = null; saveNavOrder(); exitReorder(); });
         it.addEventListener("dragover", function (e) {
           if (!ccDragged || ccDragged === it) return; e.preventDefault();
           var r = it.getBoundingClientRect(), before = e.clientX < r.left + r.width / 2;
           tile.insertBefore(ccDragged, before ? it : it.nextSibling);
         });
+        // a long-press that never turned into a drag must not ALSO fire the tab's navigation
+        it.addEventListener("click", function (e) { if (ccSuppressClick) { e.preventDefault(); e.stopPropagation(); ccSuppressClick = false; } });
       });
+      if (!ccDocBound) {   // release/Escape anywhere ends an armed-but-undragged hold — bind once, not per replaced tile
+        ccDocBound = true;
+        document.addEventListener("pointerup", function () {
+          var armed = ccReorder && !ccDragged;   // held long enough to jiggle but released without dragging
+          cancelHold();
+          if (armed) { ccSuppressClick = true; exitReorder(); }
+        });
+        document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ccReorder && !ccDragged) exitReorder(); });
+      }
     } catch (e) {}
   }
   function apply() {

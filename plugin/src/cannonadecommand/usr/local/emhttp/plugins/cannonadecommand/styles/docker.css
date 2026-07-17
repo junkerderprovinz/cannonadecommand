@@ -611,6 +611,16 @@ html:not(.Theme--sidebar) #displaybox:has(#docker_list) { padding-left: var(--cc
    #updateall/#removeall start display:none and must stay hidden. */
 nav.tabs .tabs-container > span.status.vhshift { height: var(--cc-md-h, 30px) !important; line-height: var(--cc-md-h, 30px) !important; font-size: 0 !important; }
 nav.tabs .tabs-container > span.status.vhshift > input[type="button"] { height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; vertical-align: middle !important; }
+/* Keep the Check/Update/Remove controls on the SAME row as the sub-tabs (v2.24.1). Unraid's .tabs-container is
+   a NOWRAP flex row (default-base.css: display:flex; align-items:center; overflow-x:auto; width:100%). But the
+   CC-restyled uppercase sub-tab pills (padding:0 20px + letter-spacing:1.5px + margin-right:8px) plus the long
+   German labels and the wide "Nach Aktualisierungen suchen" button can exceed the strip width. #checkall is a
+   <span class="status vhshift"> whose ONLY right-align is native span.status{margin-left:auto}; on an OVERFLOWING
+   flex line an auto-margin item breaks onto the next line and right-aligns THERE -> the button drops to a second
+   row below the tabs, pushed right + lower. Re-assert nowrap so the strip stays one line; an over-wide row then
+   scrolls via the native overflow-x:auto instead of wrapping. Touches flex-wrap ONLY — the height/centering cap
+   above is untouched, so the sub-tab vertical-alignment fix is preserved. */
+nav.tabs .tabs-container { flex-wrap: nowrap !important; }
 /* ── Plugins Tab-Ansicht: flatten the native sub-tabs (the MainContentTabbed DOM — nav.tabs button[role=tab]
    + sibling section[role=tabpanel]) into stacked CC sections. plugins.js sets html.cc-on-plugins and toggles
    html.cc-sections-plugins from cc.sections.plugins (default OFF), prepending a .cc-card-head per panel;

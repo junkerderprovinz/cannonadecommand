@@ -149,8 +149,23 @@ html.cc-header-on #menu .usage-bar > span {
    near-square objects get this — rectangular text pills stay capsules (--cc-b-radius 999px). */
 html.cc-shape-circle.cc-header-on #menu .nav-tile.right .nav-item.util > a { border-radius: 50% !important; }
 
-/* Drag-and-drop menu-tab ordering (v2.20.0): a grab cursor signals draggability; the dragged pill
-   dims. header.js persists the order to cc.navorder. Only while the header area is on. */
-html.cc-header-on #menu .nav-tile:not(.right) .nav-item.cc-navdrag > a { cursor: grab; }
-html.cc-header-on #menu .nav-tile:not(.right) .nav-item.cc-dragging { opacity: .45; }
-html.cc-header-on #menu .nav-tile:not(.right) .nav-item.cc-navdrag:active > a { cursor: grabbing; }
+/* Drag-and-drop menu-tab ordering (v2.24.1): the cursor stays the NORMAL link pointer on hover — no grab
+   hand. Draggability is armed by a press-and-HOLD (~450ms, in header.js): the bar enters reorder mode and
+   every tab jiggles (cc-nav-wiggle) to signal it can be moved, then a drag reorders it and the order
+   persists to cc.navorder. The pill being dragged dims and drops its own jiggle. Header area only. */
+html.cc-header-on #menu .nav-tile:not(.right) .nav-item.cc-navdrag > a { cursor: pointer; }
+html.cc-header-on #menu .nav-tile:not(.right) .nav-item.cc-dragging { opacity: .45; animation: none; }
+@keyframes cc-nav-wiggle {
+  0%   { transform: rotate(-1.6deg) translateY(0); }
+  25%  { transform: rotate(1.4deg)  translateY(-0.5px); }
+  50%  { transform: rotate(-1.2deg) translateY(0); }
+  75%  { transform: rotate(1.6deg)  translateY(0.5px); }
+  100% { transform: rotate(-1.6deg) translateY(0); }
+}
+html.cc-header-on #menu .nav-tile:not(.right) .nav-item.cc-nav-wiggle {
+  animation: cc-nav-wiggle .32s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+@media (prefers-reduced-motion: reduce) {
+  html.cc-header-on #menu .nav-tile:not(.right) .nav-item.cc-nav-wiggle { animation: none; outline: 2px dashed var(--cc-accent, #70b8ff); outline-offset: 2px; }
+}

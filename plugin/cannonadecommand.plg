@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.24.0">
+  <!ENTITY version   "2.24.1">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,18 @@
 </ICON>
 
 <CHANGES>
+### 2.24.1
+1. Hauptmenue-Badges: beim Ueberfahren mit der Maus erscheint keine Greifhand mehr, sondern der normale
+   Zeiger. Zum Verschieben haelt man einen Badge jetzt kurz gedrueckt (ca. eine halbe Sekunde), dann faengt
+   die Menueleiste an zu wackeln und signalisiert, dass die Reiter neu angeordnet werden koennen; ein
+   normaler Klick navigiert wie gewohnt.
+2. Plugin-Tab: der Button "Nach Aktualisierungen suchen" rutschte in eine zweite Zeile unter die Reiter,
+   sobald die breiteren CC-Reiter-Pillen die Leiste ueberliefen. Die Leiste bleibt jetzt einzeilig.
+3. Start-Tab: die Spalte "Identifikation" war zu schmal, sodass die Festplatten-Modelle abgeschnitten
+   wurden. Sie ist jetzt breit genug -- das volle Modell ist sichtbar, ohne horizontalen Scrollbalken.
+4. Start-Tab: die Buttons im Array-Vorgang stehen jetzt oben buendig, damit sie auf gleicher Hoehe mit
+   gleichem Abstand sitzen, auch neben mehrzeiligen Beschreibungen mit Checkbox.
+
 ### 2.24.0
 Start-Tab (/Main) durchgehend im CC-Style (nach echter DiskList/ArrayOperation-Quelle):
 1. Kein horizontaler Scrollbalken mehr — die Disk-Tabelle nutzt jetzt die volle Breite (Unraids feste
@@ -720,7 +732,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>ec5c7895fab1fb0e125669b4a0ea49fb2b7f7dafcc21cae070b394a5959117ca</SHA256>
+  <SHA256>eb85d94b1c56732706c30b312042673d04027fee864a9500061564ae75f62cf9</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
