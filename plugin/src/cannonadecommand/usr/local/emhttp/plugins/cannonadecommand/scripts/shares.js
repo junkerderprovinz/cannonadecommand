@@ -616,31 +616,28 @@
   // (don't overload enhanceShares/enhanceRow): badge only TEXT-ONLY value cells and lift a.view into
   // its own Browse column colspan-awarely. onMain() gates on nav.tabs so it only fires in Tabbed mode.
   function onMain() { try { return pn() === "/Main" && !!document.querySelector("#displaybox nav.tabs"); } catch (e) { return false; } }
+  // Badge EVERY value cell (user: "ALLES in badges") — move the cell's existing children into .cc-b>.cc-b-v
+  // so Reads/Writes (span.diskio + span.number) and the errored-Errors info-icon keep working inside the
+  // pill (verified native DOM: DiskList.php / device_list). Guards: the usage-disk bar (CSS-restyled, never
+  // badged), the assignment <select> (stays interactive), a colspan structural cell, and the disk-name link
+  // (which is its own lg badge via enhanceMainName). Idempotent via .cc-bcell; reversible in teardown.
   function mainBadgeCell(td) {
     if (!td || td.classList.contains("cc-bcell")) return;
-    if (td.querySelector("*")) return;                       // skip usage-disk bars, the assignment <select>, temp/link icons
-    var txt = (td.textContent || "").trim(); if (txt === "" || txt === "-") return;
-    var b = el("span", "cc-b"), v = el("span", "cc-b-v", txt);
-    b.appendChild(v); td.textContent = ""; td.appendChild(b); td.classList.add("cc-bcell");
+    if (td.querySelector(".usage-disk")) return;             // usage bar -> restyled by CSS
+    if (td.querySelector("select")) return;                  // array-stopped assignment dropdown stays native
+    if (td.hasAttribute("colspan")) return;                  // structural spanning cell
+    if (td.querySelector("a.cc-b-name")) return;             // disk-name link is the lg headline badge
+    var txt = (td.textContent || "").trim(); if (txt === "" || txt === "-" || txt === "*") return;
+    var b = el("span", "cc-b"), v = el("span", "cc-b-v");
+    while (td.firstChild) v.appendChild(td.firstChild);      // keep diskio/number spans + the error info-icon/tooltip live
+    b.appendChild(v); td.appendChild(b); td.classList.add("cc-bcell");
   }
-  // (b) disk NAME -> lg headline badge, mirroring enhanceName() on /Shares. The Device cell holds the
-  // browse link, the status orb and the name link a[href="/Main/Device?name=…"] (or /Main/Boot?name=…);
-  // tag ONLY that link .cc-b.cc-b-name so the disk name reads as the row headline. href/onclick intact.
-  function enhanceMainName(first) {
-    var nl = first.querySelector('a[href*="/Main/Device?name="], a[href*="/Main/Boot?name="]');
+  // Disk NAME -> lg headline badge like the share name. The name link a[href*="?name="] lives in the
+  // Identification cell (td.desc), NOT the Device cell — so search the whole ROW (content-anchored) and tag
+  // that link .cc-b.cc-b-name (href/onclick intact). This is why the disk name was never badged before.
+  function enhanceMainName(tr) {
+    var nl = tr.querySelector('a[href*="/Main/Device?name="], a[href*="/Main/Boot?name="]') || tr.querySelector(':scope > td.desc a[href]');
     if (nl && !nl.classList.contains("cc-b-name")) { nl.classList.add("cc-b"); nl.classList.add("cc-b-name"); }
-  }
-  // (e) Reads/Writes cells are <span class='diskio'>rate</span><span class='number'>count</span> — the
-  // child spans make mainBadgeCell skip them, so those two columns stayed plain. Badge the COUNT span
-  // (the .diskio rate stays inline). Idempotent via the inner .cc-b guard; observer-safe (the flicker
-  // fix re-applies synchronously before paint).
-  function mainBadgeNumber(td) {
-    if (!td) return;
-    var num = td.querySelector(":scope > span.number");
-    if (!num || num.querySelector(":scope > .cc-b")) return;
-    var txt = (num.textContent || "").trim(); if (txt === "" || txt === "-") return;
-    var b = el("span", "cc-b"), v = el("span", "cc-b-v", txt);
-    b.appendChild(v); num.textContent = ""; num.appendChild(b);
   }
   function enhanceMainHead(table) {
     var h = table && table.querySelector("thead tr"); if (!h || h.getAttribute("data-cc-main")) return;
@@ -664,9 +661,9 @@
       bt.appendChild(view);                                  // moves it OUT of the Device cell, href/onclick intact
     }
     first.parentNode.insertBefore(bt, first.nextSibling);
-    enhanceMainName(first);                                       // (b) disk name link -> lg headline badge
+    enhanceMainName(tr);                                          // disk name link -> lg headline badge (wherever it is in the row)
     var tds = Array.prototype.slice.call(tr.children);
-    for (var i = 2; i < tds.length; i++) { mainBadgeCell(tds[i]); mainBadgeNumber(tds[i]); }   // (e) also badge Reads/Writes counters
+    for (var i = 2; i < tds.length; i++) mainBadgeCell(tds[i]);   // badge EVERY value cell (usage-disk/select/name-link self-skip)
   }
   function enhanceMain() {
     try {
@@ -680,6 +677,52 @@
         var rows = tbs[i].querySelectorAll("tbody > tr");
         for (var r = 0; r < rows.length; r++) enhanceMainRow(rows[r]);
       }
+      if (box) enhanceArrayOps(box);   // Array-Vorgang form: CC buttons + (i) info-bubbles, separator lines removed via CSS
+    } catch (e) {}
+  }
+  // ── /Main "Array-Vorgang" (ArrayOperation.page: table.ArrayOperation-Table.array_status). Each control
+  //    is <tr><td>[status]</td><td>[button]</td><td>[description]</td></tr>, with separator rows
+  //    <tr><td></td><td class="line" colspan=2></td></tr>. User: buttons flush + equal spacing, NO lines,
+  //    all infotexts as (i) info-bubbles (style guide §9). We build a .cc-info span from the description in
+  //    the button cell and tag the description cell .cc-aop-desc (CSS hides it + the td.line lines). CRITICAL:
+  //    fold ONLY PURE-TEXT descriptions — many description cells carry FUNCTIONAL controls (confirmStart/
+  //    confirmFormat/optionCorrect/safemode checkboxes that gate Start/Format, the mover Schedule link);
+  //    hiding those would break the array. Idempotent (data-cc-aop) + reversible (aopTeardown; text is only hidden).
+  function svgEl(tag, attrs) { var n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (var k in attrs) if (attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]); return n; }
+  function ccInfoIcon(tip) {   // §9: span > inline-SVG (circle + top dot + rounded stem), all currentColor, NEVER accent
+    var s = el("span", "cc-info"); s.setAttribute("data-tip", tip); s.setAttribute("aria-label", tip); s.setAttribute("tabindex", "0");
+    var svg = svgEl("svg", { viewBox: "0 0 16 16", width: "15", height: "15", "aria-hidden": "true" });
+    svg.appendChild(svgEl("circle", { cx: "8", cy: "8", r: "7", fill: "none", stroke: "currentColor", "stroke-width": "1.4" }));
+    svg.appendChild(svgEl("circle", { cx: "8", cy: "4.4", r: "1.05", fill: "currentColor" }));
+    svg.appendChild(svgEl("rect", { x: "7.1", y: "6.5", width: "1.8", height: "5.3", rx: ".9", fill: "currentColor" }));
+    s.appendChild(svg); return s;
+  }
+  function enhanceArrayOpRow(tr) {
+    if (tr.getAttribute("data-cc-aop")) return; tr.setAttribute("data-cc-aop", "1");   // set-and-bail idempotency
+    if (tr.querySelector(":scope > td.line")) return;                                  // separator row -> CSS collapses it
+    var tds = tr.children; if (tds.length < 3) return;
+    var btnCell = tds[1], descCell = tds[2];
+    if (!btnCell.querySelector("input, button, a")) return;                            // must hold a control
+    if (descCell.querySelector("input, select, a, label")) return;                     // FUNCTIONAL cell (checkbox/link) -> leave inline, never hide
+    if (btnCell.querySelector(":scope > .cc-info")) return;
+    var txt = (descCell.textContent || "").replace(/\s+/g, " ").trim(); if (!txt) return;
+    btnCell.appendChild(ccInfoIcon(txt));                                              // (i) bubble beside the button
+    descCell.classList.add("cc-aop-desc");                                             // CSS hides the redundant inline text
+  }
+  function enhanceArrayOps(box) {
+    try {
+      var tables = box.querySelectorAll("table.array_status");
+      for (var i = 0; i < tables.length; i++) { var rows = tables[i].rows; for (var r = 0; r < rows.length; r++) enhanceArrayOpRow(rows[r]); }
+    } catch (e) {}
+  }
+  function aopTeardown() {
+    try {
+      var infos = document.querySelectorAll("#displaybox table.array_status .cc-info");
+      for (var i = 0; i < infos.length; i++) infos[i].parentNode.removeChild(infos[i]);
+      var descs = document.querySelectorAll("#displaybox table.array_status td.cc-aop-desc");
+      for (var d = 0; d < descs.length; d++) descs[d].classList.remove("cc-aop-desc");
+      var marked = document.querySelectorAll("#displaybox table.array_status tr[data-cc-aop]");
+      for (var m = 0; m < marked.length; m++) marked[m].removeAttribute("data-cc-aop");
     } catch (e) {}
   }
   function apply() {
@@ -743,15 +786,21 @@
           // any 1-too-wide structural colspan self-heals on the next tbody refill).
           var mbrowse = document.querySelectorAll("#displaybox table.unraid.disk_status td.cc-browse-col");
           for (var mb = 0; mb < mbrowse.length; mb++) mbrowse[mb].parentNode.removeChild(mbrowse[mb]);
+          // unwrap value badges by MOVING children back (not textContent — that would destroy the wrapped
+          // diskio/number spans + the error info-icon).
           var mbc = document.querySelectorAll("#displaybox table.unraid.disk_status td.cc-bcell");
-          for (var bcx = 0; bcx < mbc.length; bcx++) { var vv = mbc[bcx].querySelector(".cc-b-v"); mbc[bcx].textContent = vv ? vv.textContent : (mbc[bcx].textContent || ""); mbc[bcx].classList.remove("cc-bcell"); }
+          for (var bcx = 0; bcx < mbc.length; bcx++) {
+            var cbx = mbc[bcx].querySelector(":scope > .cc-b"), vvx = cbx && cbx.querySelector(":scope > .cc-b-v");
+            if (vvx) { while (vvx.firstChild) mbc[bcx].insertBefore(vvx.firstChild, cbx); }
+            if (cbx) mbc[bcx].removeChild(cbx);
+            mbc[bcx].classList.remove("cc-bcell");
+          }
           var mmk = document.querySelectorAll("#displaybox [data-cc-main]");
           for (var mmx = 0; mmx < mmk.length; mmx++) mmk[mmx].removeAttribute("data-cc-main");
-          // also strip the lg disk-name badge + the Reads/Writes .number badges so a live disable reverts.
+          // strip the lg disk-name badge classes off the device link.
           var mname = document.querySelectorAll("#displaybox table.unraid.disk_status a.cc-b-name");
           for (var mn = 0; mn < mname.length; mn++) { mname[mn].classList.remove("cc-b"); mname[mn].classList.remove("cc-b-name"); }
-          var mnum = document.querySelectorAll("#displaybox table.unraid.disk_status span.number > .cc-b");
-          for (var mnx = 0; mnx < mnum.length; mnx++) { var nv = mnum[mnx].querySelector(".cc-b-v"); var np = mnum[mnx].parentNode; np.textContent = nv ? nv.textContent : (mnum[mnx].textContent || ""); }
+          aopTeardown();   // Array-Vorgang: pull (i) info-bubbles, un-hide description cells, drop markers
         } catch (e) {}
         return;
       }

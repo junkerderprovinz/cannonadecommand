@@ -267,29 +267,88 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status a.cc-b-name,
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status a.cc-b-name:hover { text-decoration: none; }
 /* (e) the Reads/Writes count pill sits right after the inline .diskio rate — keep a small gap. */
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status td span.diskio { margin-right: 6px; }
+/* NO horizontal scrollbar + wider table (user: "kein horizontaler scrollbalken"). default-base.css sets
+   `.TableContainer table{min-width:1000px}`, forcing the overflow-x:auto container to scroll below 1000px.
+   Kill it .cc-on-main-scoped so /Shares/Docker/Device/Disk/Browse keep their native scroll. */
+html.cc-shares-on.cc-on-main #displaybox .TableContainer table.unraid.disk_status { min-width: 0 !important; width: 100%; table-layout: fixed; }
+/* header tint, matching the /Shares share_status header (consistency). */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status thead td,
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status thead th { background: rgba(128, 128, 128, .14); font-weight: 600; }
+/* Füllstandsanzeigen (Used/Free usage bars) -> CC look (user: "Die Füllstandsanzeigen auch im CC Style"):
+   accent fill on a subtle rounded track, like the header array meter. Native (device_list): div.usage-disk >
+   span:first-child (fill, greenbar/orangebar/redbar, inline width:X%) + span:last-child (label). NB this
+   overrides Unraid's semantic warning/critical colours by design (the user asked for the CC accent look). */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .usage-disk {
+  background-color: rgba(128, 128, 128, .18) !important; border-radius: var(--cc-b-radius, 999px);
+}
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .usage-disk > span:first-child {
+  background: var(--cc-shr-accent, #2f6feb) !important; border-radius: var(--cc-b-radius, 999px) !important; box-shadow: none !important;
+}
 /* (d) /Main action buttons (Start/Stop/Format/Check/Sync/Clear/History/Move/Pause/Cancel/Reboot/Shutdown)
-   -> CC accent pills. The /Shares form[name=share_form] + cc-on-share-detail rules do NOT reach /Main. */
+   -> CC accent pills. The /Shares form[name=share_form] + cc-on-share-detail rules do NOT reach /Main.
+   a.button included (an Unraid-standard control element used in ArrayOperation) so no op button stays native. */
 html.cc-shares-on.cc-on-main #displaybox input[type="submit"],
-html.cc-shares-on.cc-on-main #displaybox input[type="button"] {
+html.cc-shares-on.cc-on-main #displaybox input[type="button"],
+html.cc-shares-on.cc-on-main #displaybox a.button {
   border: none !important; box-shadow: none !important;
   padding: 0 14px !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
-  min-width: 0 !important; font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  min-width: 150px !important; font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; font-family: inherit !important;
   border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer; transition: filter .12s, opacity .12s;
+  display: inline-flex !important; align-items: center; justify-content: center; text-decoration: none !important;
   background: var(--cc-shr-accent, #2f6feb) !important; color: var(--cc-shr-accent-text, #fff) !important;
 }
-/* Stop + Reboot/Shutdown read as neutral/secondary, not the primary accent action */
-html.cc-shares-on.cc-on-main #displaybox input#stop-button,
-html.cc-shares-on.cc-on-main #displaybox form[name="shutdownOps"] input[type="button"] {
-  background: #4a4a4a !important; color: #f0f0f0 !important;
+/* No grey secondaries (user: "ALLE buttons in den cc style"). Reboot + Shutdown are the two consequential
+   power-off actions -> CC danger-red (#d9433f, semantic per style guide §12); everything else keeps the
+   accent pill. Targeted BY NAME so CC's own Smokesignal/Sleep in the same form stay accent. */
+html.cc-shares-on.cc-on-main #displaybox form[name="shutdownOps"] input[name="reboot"],
+html.cc-shares-on.cc-on-main #displaybox form[name="shutdownOps"] input[name="shutdown"] {
+  background: #d9433f !important; color: #fff !important;
 }
 html.cc-shares-on.cc-on-main #displaybox input[type="submit"]:hover:not(:disabled),
-html.cc-shares-on.cc-on-main #displaybox input[type="button"]:hover:not(:disabled) { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-main #displaybox input[type="button"]:hover:not(:disabled),
+html.cc-shares-on.cc-on-main #displaybox a.button:hover:not(:disabled) { filter: brightness(1.14); }
 /* Format/Check/pause/cancel start disabled -> flat inert, never a live accent primary */
 html.cc-shares-on.cc-on-main #displaybox input[type="submit"]:disabled,
 html.cc-shares-on.cc-on-main #displaybox input[type="button"]:disabled {
   background: #3a3a3a !important; color: #8a8a8a !important; opacity: .55 !important; filter: none !important; cursor: not-allowed !important;
 }
+/* ═══ /Main "Array-Vorgang" (table.array_status): no separator lines, buttons flush + equal spacing, inline
+   descriptions folded into (i) info-bubbles (shares.js/enhanceArrayOps). User: "alle buttons bündig
+   untereinander mit gleichem Abstand, keine Linien, alle Infotexte in I-Bubbles". ═══ */
+html.cc-shares-on.cc-on-main #displaybox table.array_status { border-collapse: collapse; }
+html.cc-shares-on.cc-on-main #displaybox table.array_status td { border: none !important; vertical-align: middle; padding: 6px 8px !important; }
+html.cc-shares-on.cc-on-main #displaybox table.array_status td.line { border: none !important; padding: 0 !important; height: 0 !important; line-height: 0 !important; font-size: 0 !important; }
+html.cc-shares-on.cc-on-main #displaybox table.array_status tr > td:first-child { padding-left: 0 !important; }
+html.cc-shares-on.cc-on-main #displaybox table.array_status td.cc-aop-desc { display: none !important; }   /* text now lives in the (i) bubble */
+/* §9 (i) info-bubble — MIRRORED from styles/docker.css (not loaded on /Main). Neutral (currentColor, NEVER
+   accent); hover/focus reveals a pure-CSS tooltip from data-tip. */
+html.cc-shares-on.cc-on-main #displaybox .cc-info {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; margin-left: 10px; flex: 0 0 auto; vertical-align: middle;
+  color: var(--txt, #e6e6e6); opacity: .8; background: none; cursor: help; text-transform: none; letter-spacing: normal;
+}
+html.cc-shares-on.cc-on-main #displaybox .cc-info:hover,
+html.cc-shares-on.cc-on-main #displaybox .cc-info:focus { opacity: 1; outline: none; }
+html.cc-shares-on.cc-on-main #displaybox .cc-info svg { width: 15px; height: 15px; display: block; }
+html.cc-shares-on.cc-on-main #displaybox .cc-info::after {
+  content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: 300px; white-space: normal; text-align: left; line-height: 1.4;
+  background: #1c1c1c; color: #e9e9e9; padding: 8px 11px; border-radius: 8px;
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-size: 12px; font-weight: 400;
+  text-transform: none; letter-spacing: normal;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .5); z-index: 9999; opacity: 0; pointer-events: none; transition: opacity .12s;
+}
+html.cc-shares-on.cc-on-main #displaybox .cc-info::before {
+  content: ""; position: absolute; bottom: calc(100% + 3px); left: 50%; transform: translateX(-50%);
+  border: 5px solid transparent; border-top-color: #1c1c1c; z-index: 9999; opacity: 0; transition: opacity .12s;
+}
+html.cc-shares-on.cc-on-main #displaybox .cc-info:hover::after,
+html.cc-shares-on.cc-on-main #displaybox .cc-info:focus::after,
+html.cc-shares-on.cc-on-main #displaybox .cc-info:hover::before,
+html.cc-shares-on.cc-on-main #displaybox .cc-info:focus::before { opacity: 1; }
+/* the array-op panel must let the bubble overflow (Tab-Ansicht panels already do; native sub-tabs may clip) */
+html.cc-shares-on.cc-on-main #displaybox section:has(table.array_status) { overflow: visible !important; }
 
 /* ═══ bottom action buttons -> CC action buttons ═══
    Mirror the Docker footer bar (div.js-actions input[type=button]) — accent bg, md
@@ -552,7 +611,7 @@ html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-main.cc-secti
 }
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head i.title,
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head i,
-html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
+html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head img.icon { color: inherit; margin: 0 8px 0 0; }   /* icon->title gap (user: "icons zu nah am text"); native gap-1 was only ~4px */
 /* SMB "User Access": its native sub-heading is converted into an in-card title badge, so hide the native one. */
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .title.cc-carded { display: none !important; }
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-note { color: inherit; opacity: .7; font-size: 12px; font-style: italic; margin: -4px 0 12px; }
