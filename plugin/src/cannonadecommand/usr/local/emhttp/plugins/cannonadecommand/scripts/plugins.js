@@ -29,6 +29,18 @@
       if (host.parentNode !== db) db.appendChild(host);
       var spans = document.querySelectorAll("#displaybox span.status.vhshift, #displaybox span.vhshift, #checkall, #updateall, #removeall");
       for (var sp = 0; sp < spans.length; sp++) { var s = spans[sp]; if (s !== host && !host.contains(s) && s.parentNode !== host) host.appendChild(s); }
+      if (!host.firstChild) {
+        // last-resort adoption: this Unraid build may wrap the trio differently — match any
+        // button whose handler/label smells like the update-check controls (de + en).
+        var ins = db.querySelectorAll("input[type='button'], input[type='submit'], button");
+        for (var q = 0; q < ins.length; q++) {
+          var oc = ((ins[q].getAttribute("onclick") || "") + " " + (ins[q].value || ins[q].textContent || ""));
+          if (/checkall|updateall|removeall|check\s*for\s*updates|aktualisierungen/i.test(oc)) {
+            var we = ins[q].closest("span") || ins[q];
+            if (we !== host && !host.contains(we) && we.parentNode !== host) host.appendChild(we);
+          }
+        }
+      }
       if (!host.firstChild) return;
       db.style.setProperty("position", "relative", "important");
       host.style.setProperty("position", "absolute", "important");
