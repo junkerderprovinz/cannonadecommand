@@ -196,14 +196,18 @@ html.cc-popups-on .ui-dialog .ui-widget-content,
 html.cc-popups-on .ui-dialog .ui-dialog-content {
   background: #161616 !important; border: none !important; color: #d6d6d6 !important;
 }
+/* dialog buttons: LARGE (lg tier) and LEFT-aligned (user) */
 html.cc-popups-on .ui-dialog .ui-dialog-buttonpane {
-  background: #161616 !important; border: none !important; margin: 0 !important; padding: 10px 18px 14px !important;
+  background: #161616 !important; border: none !important; margin: 0 !important; padding: 10px 18px 16px !important;
+  text-align: left !important; display: flex !important; justify-content: flex-start !important; gap: 10px;
 }
+html.cc-popups-on .ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset { float: none !important; margin: 0 !important; display: inline-flex; gap: 10px; }
 html.cc-popups-on .ui-dialog .ui-dialog-buttonpane button,
 html.cc-popups-on .ui-dialog .ui-dialog-content button:not([class*="switch"]) {
   border: none !important; border-radius: 6px !important; box-shadow: none !important;
   background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important;
-  padding: 7px 18px !important; font-weight: 600 !important; text-transform: uppercase !important;
+  height: 36px !important; padding: 0 24px !important; font-size: 14px !important;
+  font-weight: 600 !important; text-transform: uppercase !important;
   letter-spacing: .6px !important; cursor: pointer; transition: filter .12s;
 }
 html.cc-popups-on .ui-dialog .ui-dialog-buttonpane button:hover { filter: brightness(1.14); }
@@ -221,10 +225,12 @@ html.cc-popups-on .sweet-alert {
 /* (sweet-alert h2 badge styling above) */
 html.cc-popups-on .sweet-alert p, html.cc-popups-on .sweet-alert .sa-text { color: #bdbdbd !important; }
 html.cc-popups-on .sweet-alert hr { display: none !important; }
+html.cc-popups-on .sweet-alert .sa-button-container { text-align: left !important; }
 html.cc-popups-on .sweet-alert .sa-button-container button {
   border: none !important; border-radius: 6px !important; box-shadow: none !important;
-  padding: 8px 20px !important; font-weight: 600 !important; text-transform: uppercase !important;
-  letter-spacing: .6px !important; transition: filter .12s;
+  height: 36px !important; padding: 0 24px !important; font-size: 14px !important;
+  font-weight: 600 !important; text-transform: uppercase !important;
+  letter-spacing: .6px !important; transition: filter .12s; margin: 0 10px 0 0 !important;
 }
 html.cc-popups-on .sweet-alert button.confirm { background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important; }
 html.cc-popups-on .sweet-alert button.cancel { background: #2e2e2e !important; color: #e6e6e6 !important; }

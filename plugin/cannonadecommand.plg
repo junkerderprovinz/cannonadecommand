@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.32.1">
+  <!ENTITY version   "2.32.2">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,11 @@
 </ICON>
 
 <CHANGES>
+### 2.32.2
+- #1 Popup-Fenster: Die Buttons sind jetzt GROSS (36px, kraeftige Beschriftung) und LINKSBUENDIG
+  angeordnet -- auch innerhalb der eingebetteten Dialog-Inhalte (der Fertig-Knopf der
+  Update-Pruefung), die per Same-Origin-Injektion mitgestylt werden.
+
 ### 2.32.1
 - #1 Popup-Fenster: Der graue Titel-Balken ist weg -- der Titel steht jetzt als BADGE frei auf
   der Flaeche und ist in die Farbmodi integriert (Akzentfarbe; im Rainbow-Modus Palettenfarbe).
@@ -1146,7 +1151,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>0f0b1db0dc787fbf0ea1c4424815bbfbd40950860a91d0c296ed9f00c0b67626</SHA256>
+  <SHA256>2091e485d5f6f5c14ef40ca3c5284dc7a516dce36d2e538ef2c8e62e42714513</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

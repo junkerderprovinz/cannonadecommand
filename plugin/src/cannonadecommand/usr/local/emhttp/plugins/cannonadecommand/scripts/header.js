@@ -89,10 +89,34 @@
       }
     } catch (e) {}
   }
+  // dialog CONTENT often lives in a SAME-ORIGIN iframe the parent CSS cannot style — inject a
+  // small CC style into the inner document (user: "der button in den popupfenstern soll
+  // groesser sein und linksbuendig"): big accent buttons, left-aligned button rows.
+  function ccPopIframes() {
+    try {
+      var acc = (getComputedStyle(document.documentElement).getPropertyValue("--cc-hdr-accent") || "").trim() || "#2f6feb";
+      var ifr = document.querySelectorAll(".ui-dialog iframe");
+      for (var i = 0; i < ifr.length; i++) {
+        (function (f) {
+          function inject() {
+            try {
+              var d = f.contentDocument;
+              if (!d || !d.head || d.getElementById("cc-pop-inner")) return;
+              var st = d.createElement("style"); st.id = "cc-pop-inner";
+              st.textContent = "input[type=button],input[type=submit],button{height:36px !important;padding:0 24px !important;font-size:14px !important;border:0 !important;border-radius:6px !important;box-shadow:none !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important;cursor:pointer} center,.buttons{text-align:left !important}";
+              d.head.appendChild(st);
+            } catch (e2) {}
+          }
+          inject();
+          try { f.addEventListener("load", inject); } catch (e3) {}
+        })(ifr[i]);
+      }
+    } catch (e) {}
+  }
   var ccPopObs = null;
   function watchPopups() {
     try {
-      if (ccPopObs) return; ccPopObs = new MutationObserver(paintPopups);
+      if (ccPopObs) return; ccPopObs = new MutationObserver(function () { paintPopups(); ccPopIframes(); });
       ccPopObs.observe(document.body, { childList: true });   // dialogs/sweetalerts append as direct body children — cheap, no subtree
     } catch (e) {}
   }
