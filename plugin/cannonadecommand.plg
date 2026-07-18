@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.32.2">
+  <!ENTITY version   "2.32.3">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,11 @@
 </ICON>
 
 <CHANGES>
+### 2.32.3
+- #1 Plugin-Tab: Der Aktualisierungen-Button fluchtet jetzt mit der rechten Kante der
+  MENUELEISTEN-ICONS darueber (die Haus-Referenz "alles richtet sich an der Menueleiste aus";
+  gemessen pro Durchlauf) -- Rueckfall-Referenzen: Tabellenkante, dann Seitenrand.
+
 ### 2.32.2
 - #1 Popup-Fenster: Die Buttons sind jetzt GROSS (36px, kraeftige Beschriftung) und LINKSBUENDIG
   angeordnet -- auch innerhalb der eingebetteten Dialog-Inhalte (der Fertig-Knopf der
@@ -1151,7 +1156,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>2091e485d5f6f5c14ef40ca3c5284dc7a516dce36d2e538ef2c8e62e42714513</SHA256>
+  <SHA256>7e6910a466ab9316c53bfcc8cd860c9bbbc53581ecfd900038a0f9e9dc6da7f5</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
