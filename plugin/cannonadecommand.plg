@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.32.10">
+  <!ENTITY version   "2.33.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,10 @@
 </ICON>
 
 <CHANGES>
+### 2.33.0
+- #1 Versionssprung: Unraids Update-Pruefung vergleicht Versionen als TEXT, wodurch 2.32.10 als
+  aelter als 2.32.8 galt und das Update nie angeboten wurde. Inhaltlich identisch mit 2.32.10.
+
 ### 2.32.10
 - #1 Hauptseite: Die Status-Pillen behalten im neuen Stapel ihre BADGE-Optik (gruen/orange,
   ohne Statuspunkt) -- die Farbregeln waren auf die Tabelle beschraenkt, und seit der Stapel
@@ -1200,7 +1204,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>91a8c161a2055bff5223ecf258fa590af04bc5251c9b117d5b309a7aea1049a1</SHA256>
+  <SHA256>b1c8f2024c5f4d3126932cc6d6edd9d10c760ffca87ac0bb1c517e6c2d29d33c</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
