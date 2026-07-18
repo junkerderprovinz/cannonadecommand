@@ -1125,7 +1125,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-selected:hover {
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item:has(input:checked) {
   background: var(--cc-shr-accent, #2f6feb) !important; border-color: var(--cc-shr-accent, #2f6feb) !important;
   color: var(--cc-shr-accent-text, #fff) !important;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .55) !important;   /* ring so a SELECTED disk still reads selected while a neighbour is hovered accent */
+  box-shadow: none !important;   /* KEINE Rahmen/Ringe — Nutzer-Gesetz, gilt auch fuer aktive/selektierte Badges */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item input[type="checkbox"] { display: none !important; }
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item label,
@@ -1285,7 +1285,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel.cc-sel-disabled .cc-sel
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-selected {
   background: var(--cc-shr-accent, #2f6feb) !important; border-color: var(--cc-shr-accent, #2f6feb) !important;
   color: var(--cc-shr-accent-text, #fff) !important;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .55) !important;   /* selected ring (stays readable next to a hovered-accent neighbour) */
+  box-shadow: none !important;   /* KEINE Rahmen/Ringe — Nutzer-Gesetz, gilt auch fuer aktive/selektierte Badges */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-disabled { opacity: .4; pointer-events: none; }
 
@@ -1293,7 +1293,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-disabled { opaci
    current tab stays obvious (cc-shares-rb already toggled by shares.js). Matters on the /Shares list +
    /Docker tab bars (on the detail page the tab buttons are hidden as cards). */
 html.cc-shares-rb #displaybox nav.tabs button[role="tab"][aria-selected="true"] {
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .45) !important;
+  box-shadow: none !important;   /* KEINE Rahmen/Ringe — Nutzer-Gesetz, gilt auch fuer aktive/selektierte Badges */
 }
 
 /* ═══ rainbow "active only" sub-mode (cc.rbmode=active -> html.cc-shares-rbneutral, set by paintRows/

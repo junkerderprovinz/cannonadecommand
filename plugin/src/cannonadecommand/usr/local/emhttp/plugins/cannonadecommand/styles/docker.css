@@ -743,7 +743,7 @@ html.cc-plugins-iconbg .cc-plugico {
 .cc-set-tab-on { background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important; }
 /* rainbow: every settings tab is palette-coloured inline by paintSetTabs(); ring the active one so it
    stays obvious. id+2-class specificity beats .cc-set-tab{box-shadow:none!important}. */
-#cc-settings.cc-rainbow .cc-set-tab-on { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .45) !important; }
+box-shadow: none !important;   /* KEINE Rahmen/Ringe — Nutzer-Gesetz, gilt auch fuer aktive/selektierte Badges */
 .cc-set-brand { font-size: 24px; letter-spacing: .2px; } .cc-set-brand b { font-weight: 700; } .cc-set-brand span { font-weight: 400; color: var(--dim); }
 .cc-set-sub { color: var(--dim2); font-size: 12.5px; }
 .cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; } /* auto-fill: identical arrangement on every tab */
@@ -986,7 +986,7 @@ html.cc-docker-on.cc-on-addct .cc-dsel-opt {
 html.cc-docker-on.cc-on-addct .cc-dsel-opt:hover { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
 html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-selected {
   background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .55);   /* selected ring */
+  box-shadow: none !important;   /* KEINE Rahmen/Ringe — Nutzer-Gesetz, gilt auch fuer aktive/selektierte Badges */
 }
 html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-selected:hover { filter: brightness(1.12); }
 html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-disabled { opacity: .4; pointer-events: none; }

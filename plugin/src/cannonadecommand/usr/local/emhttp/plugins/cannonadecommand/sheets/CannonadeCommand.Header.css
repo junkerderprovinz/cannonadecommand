@@ -51,7 +51,7 @@ html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search).active >
 /* rainbow: every page tab wears its own palette colour (inline by paintNav); ring the ACTIVE one so the
    current page stays obvious once all tabs are coloured. cc-header-rb is already toggled by header.js. */
 html.cc-header-on.cc-header-rb #menu .nav-tile .nav-item.active > a {
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .45) !important;
+  box-shadow: none !important;   /* KEINE Rahmen/Ringe — Nutzer-Gesetz, gilt auch fuer aktive/selektierte Badges */
 }
 /* ═══ rainbow "active only" sub-mode (cc.rbmode=active -> html.cc-header-rbneutral): idle badges stay
    neutral grey, the ACTIVE left tab keeps its paintNav-painted colour, and every badge colours on hover
@@ -156,6 +156,58 @@ html.cc-header-on #menu .usage-bar > span {
 /* Badge-Form "circle" (v2.18.0): round the SQUARE utility icon boxes to full circles. Only square/
    near-square objects get this — rectangular text pills stay capsules (--cc-b-radius 999px). */
 html.cc-shape-circle.cc-header-on #menu .nav-tile .nav-item.util > a { border-radius: 50% !important; }
+
+/* ═══ NATIVE POPUP WINDOWS -> CC look (v2.32.0, user: "alle Subfenster/Popupfenster in den CC
+   Style — keine Rahmen, Linien, super clean, modern, minimalistisch"). Gated on html.cc-popups-on
+   (master theming, set by header.js on EVERY page). Covers the two native dialog families:
+   jQuery-UI dialogs (openBox/openPlugin — the update-check window) and SweetAlert confirmations.
+   The dialog CONTENT is often an iframe (its inner document is out of reach) — this styles the
+   window chrome: surface, title bar, buttons. Separation via fill + shadow, never a line. */
+html.cc-popups-on .ui-dialog {
+  background: #161616 !important; border: none !important; border-radius: 12px !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .6) !important; padding: 0 !important; overflow: hidden;
+}
+html.cc-popups-on .ui-dialog .ui-dialog-titlebar {
+  background: #202020 !important; border: none !important; border-radius: 0 !important;
+  color: #e6e6e6 !important; font-weight: 600 !important; padding: 12px 18px !important;
+}
+html.cc-popups-on .ui-dialog .ui-dialog-title { color: #e6e6e6 !important; }
+html.cc-popups-on .ui-dialog .ui-dialog-titlebar-close {
+  border: none !important; background: transparent !important; box-shadow: none !important; opacity: .7;
+}
+html.cc-popups-on .ui-dialog .ui-dialog-titlebar-close:hover { opacity: 1; }
+html.cc-popups-on .ui-dialog .ui-widget-content,
+html.cc-popups-on .ui-dialog .ui-dialog-content {
+  background: #161616 !important; border: none !important; color: #d6d6d6 !important;
+}
+html.cc-popups-on .ui-dialog .ui-dialog-buttonpane {
+  background: #161616 !important; border: none !important; margin: 0 !important; padding: 10px 18px 14px !important;
+}
+html.cc-popups-on .ui-dialog .ui-dialog-buttonpane button,
+html.cc-popups-on .ui-dialog .ui-dialog-content button:not([class*="switch"]) {
+  border: none !important; border-radius: 6px !important; box-shadow: none !important;
+  background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important;
+  padding: 7px 18px !important; font-weight: 600 !important; text-transform: uppercase !important;
+  letter-spacing: .6px !important; cursor: pointer; transition: filter .12s;
+}
+html.cc-popups-on .ui-dialog .ui-dialog-buttonpane button:hover { filter: brightness(1.14); }
+html.cc-popups-on .ui-widget-overlay { background: rgba(0, 0, 0, .55) !important; opacity: 1 !important; }
+/* SweetAlert confirmations (start/stop/remove dialogs) */
+html.cc-popups-on .sweet-alert {
+  background: #161616 !important; border: none !important; border-radius: 12px !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .6) !important;
+}
+html.cc-popups-on .sweet-alert h2 { color: #e6e6e6 !important; border: none !important; }
+html.cc-popups-on .sweet-alert p, html.cc-popups-on .sweet-alert .sa-text { color: #bdbdbd !important; }
+html.cc-popups-on .sweet-alert hr { display: none !important; }
+html.cc-popups-on .sweet-alert .sa-button-container button {
+  border: none !important; border-radius: 6px !important; box-shadow: none !important;
+  padding: 8px 20px !important; font-weight: 600 !important; text-transform: uppercase !important;
+  letter-spacing: .6px !important; transition: filter .12s;
+}
+html.cc-popups-on .sweet-alert button.confirm { background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important; }
+html.cc-popups-on .sweet-alert button.cancel { background: #2e2e2e !important; color: #e6e6e6 !important; }
+html.cc-popups-on .sweet-alert .sa-button-container button:hover { filter: brightness(1.14); }
 
 /* Drag-and-drop menu-tab ordering (v2.24.1): the cursor stays the NORMAL link pointer on hover — no grab
    hand. Draggability is armed by a press-and-HOLD (~450ms, in header.js): the bar enters reorder mode and

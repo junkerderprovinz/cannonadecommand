@@ -243,6 +243,10 @@
       // global, independent of whether the header area itself is on) — it only rounds SQUARE badges, and
       // if no area is enabled there are no badges to round, so it's harmless when everything is off.
       root.classList.toggle("cc-shape-circle", g("cc.badgeshape", "pill") === "circle");
+      // GLOBAL popup theming (user: "alle Subfenster/Popupfenster in den CC Style"): the native
+      // jQuery-UI dialogs (openBox/openPlugin) + SweetAlert confirmations follow the CC look on
+      // every page. Master-gated only — it is chrome, not an area of its own.
+      root.classList.toggle("cc-popups-on", g("cc.theming", "1") !== "0");
       // paintNav() with cc-header-on now removed => rb=false => it removeProperty's every
       // lingering rainbow inline colour, so a live theming-OFF (even with Rainbow on) fully
       // reverts the menu bar instead of leaving the coloured tabs behind.

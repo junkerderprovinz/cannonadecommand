@@ -57,7 +57,11 @@
       var inn = host.querySelectorAll("span, input, button");
       for (var n2 = 0; n2 < inn.length; n2++) { inn[n2].style.setProperty("margin-top", "0", "important"); inn[n2].style.setProperty("margin-bottom", "0", "important"); }
       var tr0 = tab.getBoundingClientRect(), dr = db.getBoundingClientRect();
-      var pr = Math.round(parseFloat(getComputedStyle(db).paddingRight) || 16);
+      // flush RIGHT with the plugin TABLE's edge (user: "noch nicht rechtsbuendig") — the page
+      // padding put the button short of the Deinstallieren column; align to the real content edge.
+      var tbl = document.querySelector("#plugin_table, table.cc-plug"), pr;
+      if (tbl) pr = Math.max(0, Math.round(dr.right - tbl.getBoundingClientRect().right));
+      else pr = Math.round(parseFloat(getComputedStyle(db).paddingRight) || 16);
       if ((parseInt(host.style.right, 10) || -1) !== pr) host.style.setProperty("right", pr + "px", "important");
       var btn = null, cand2 = host.querySelectorAll("input, button");
       for (var c2 = 0; c2 < cand2.length; c2++) { if (cand2[c2].offsetHeight) { btn = cand2[c2]; break; } }
