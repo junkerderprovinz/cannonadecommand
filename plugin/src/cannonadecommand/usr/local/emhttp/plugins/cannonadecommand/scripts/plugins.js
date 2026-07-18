@@ -393,69 +393,43 @@
     }
     return navs[0] || null;
   }
-  // measure-and-pin: reset the group to its in-flow home, compare its centre to the first pill's
-  // centre, and pin it absolutely from the REAL rectangles if they diverge. Inline "important"
-  // styles — unbeatable by any stylesheet; re-run by timers because late CSS/font loads can move
-  // the row without a single DOM mutation.
-  var plugTimersArmed = false;
-  function plugRealign() {
+  // v2.31.3 — THE SELF-CONTAINED PIN LOOP. Every earlier attempt ran inside paint()'s observer
+  // path: ONE exception anywhere upstream and the relocation silently never happened, which is
+  // the only theory that matches every single "immer noch falsch" report. This block depends on
+  // NOTHING else: own interval, own try/catch. It adopts the three native spans, hosts them in
+  // #displaybox and pins the group's centre onto the first VISIBLE sub-tab pill's centre,
+  // right-aligned to the content edge — re-asserted every 600ms, forever.
+  function plugPinTick() {
     try {
-      var navt = plugNav(document.getElementById("displaybox") || document); if (!navt) return;
-      var cont = navt.querySelector(".tabs-container"), host = document.getElementById("cc-plugbtns");
-      if (!cont || !host || !host.offsetHeight) return;
-      var tab0 = cont.querySelector("button[role='tab']"); if (!tab0) return;
-      // ALWAYS pin (user: "auf gleicher Hoehe wie die Subtab-Badges"): the in-flow home plus a
-      // fix-only-when-off threshold still left a few px of drift — pin the group's centre to the
-      // measured pill centre on every pass instead, guarded to the px so there is no write churn.
-      navt.style.setProperty("position", "relative", "important");
-      host.style.setProperty("position", "absolute", "important");
-      host.style.setProperty("right", "0", "important");
-      host.style.setProperty("margin", "0", "important");
-      var tr0 = tab0.getBoundingClientRect(), nr0 = navt.getBoundingClientRect(), hh0 = host.offsetHeight;
-      var top0 = Math.round((tr0.top + tr0.height / 2) - nr0.top - hh0 / 2);
-      if (Math.abs((parseInt(host.style.top, 10) || 0) - top0) > 1) host.style.setProperty("top", top0 + "px", "important");
-    } catch (e) {}
-  }
-  function relocateChecks() {
-    try {
-      var navt = plugNav(document.getElementById("displaybox") || document); if (!navt) return;
-      var cont = navt.querySelector(".tabs-container"); if (!cont) return;
+      if (localStorage.getItem("cc.theming") === "0" || localStorage.getItem("cc.enable.plugins") === "0") return;
+      var db = document.getElementById("displaybox"); if (!db) return;
+      if (!document.getElementById("checkall")) return;              // not the Plugins page
+      var tabs = db.querySelectorAll("button[role='tab']"), tab = null;
+      for (var i = 0; i < tabs.length; i++) { if (tabs[i].offsetParent !== null && tabs[i].offsetHeight) { tab = tabs[i]; break; } }
+      if (!tab) return;
       var host = document.getElementById("cc-plugbtns");
-      if (!host) { host = document.createElement("div"); host.id = "cc-plugbtns"; navt.appendChild(host); }
-      else if (host.parentNode !== navt) navt.appendChild(host);   // heal a host parked on the WRONG (hidden) nav from an earlier pass
-      navt.classList.add("cc-has-plugbtns");   // plain-class key for the layout rules — :has() + non-!important position lost the cascade to the theme and the group wrapped BELOW the pill row
+      if (!host) { host = document.createElement("div"); host.id = "cc-plugbtns"; }
+      if (host.parentNode !== db) db.appendChild(host);
       ["checkall", "updateall", "removeall"].forEach(function (id) {
         var s = document.getElementById(id);
         if (s && s.parentNode !== host) host.appendChild(s);
       });
-      // v2.30.0, 5th attempt — END OF CASCADE GUESSING: inline styles with priority "important"
-      // cannot be beaten by ANY stylesheet. And because some theme somewhere may still bend the
-      // flex geometry, MEASURE the result: if the group's centre isn't on the first pill's centre,
-      // pin it absolutely from the real rectangles. Style-attribute writes never re-trigger the
-      // childList observer, and within one synchronous pass there is no intermediate paint.
-      navt.style.setProperty("display", "flex", "important");
-      navt.style.setProperty("align-items", "center", "important");
-      navt.style.setProperty("flex-wrap", "nowrap", "important");
-      cont.style.setProperty("flex", "1 1 auto", "important");
-      cont.style.setProperty("min-width", "0", "important");
-      cont.style.setProperty("width", "auto", "important");
-      host.style.setProperty("position", "static", "important");
-      host.style.setProperty("margin", "0 0 0 auto", "important");
-      host.style.setProperty("align-self", "center", "important");
+      db.style.setProperty("position", "relative", "important");
+      host.style.setProperty("position", "absolute", "important");
       host.style.setProperty("display", "inline-flex", "important");
       host.style.setProperty("align-items", "center", "important");
       host.style.setProperty("gap", "12px", "important");
-      plugRealign();
-      // late CSS/font loads can shift the row AFTER the last mutation — no observer event fires
-      // then, so the one-shot measurement went stale. Re-measure on a few timers + load/resize.
-      if (!plugTimersArmed) {
-        plugTimersArmed = true;
-        [400, 1200, 3000].forEach(function (ms) { setTimeout(plugRealign, ms); });
-        window.addEventListener("load", plugRealign);
-        window.addEventListener("resize", plugRealign);
-      }
+      host.style.setProperty("margin", "0", "important");
+      host.style.setProperty("z-index", "3", "important");
+      var tr0 = tab.getBoundingClientRect(), dr = db.getBoundingClientRect(), hh = host.offsetHeight || 30;
+      var top = Math.round((tr0.top + tr0.height / 2) - dr.top - hh / 2);
+      var pr = Math.round(parseFloat(getComputedStyle(db).paddingRight) || 16);
+      if (Math.abs((parseInt(host.style.top, 10) || 0) - top) > 1) host.style.setProperty("top", top + "px", "important");
+      if ((parseInt(host.style.right, 10) || -1) !== pr) host.style.setProperty("right", pr + "px", "important");
     } catch (e) {}
   }
+  try { setInterval(plugPinTick, 600); } catch (e) {}
+  function relocateChecks() { plugPinTick(); }   // paint()'s call site drives the SAME mechanism — no second path to diverge
   function paint() {
     try {
       if (localStorage.getItem("cc.theming") === "0" || localStorage.getItem("cc.enable.plugins") === "0") return; // master theming off OR area disabled: don't paint (reverts on reload)

@@ -410,6 +410,17 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tbody td {
   background: transparent !important; background-image: none !important; box-shadow: none !important;
 }
 html.cc-shares-on.cc-on-main #displaybox .TableContainer { background: transparent !important; background-image: none !important; }
+/* THE REAL FLECK (round 6) + the resize "Huepfen" share one cause: the container's HORIZONTAL
+   SCROLLBAR. A table a few px wider than its container spawns a dark scrollbar track under the
+   rows (the stripe at the right end), and during a column drag it pops in/out per pixel — the
+   container height changes by the bar's height, so the page jumps. Auto-derived widths must
+   NEVER scroll (width:100% contract), a live drag freezes overflow, and the user-dragged mode
+   keeps a slim, trackless bar. */
+html.cc-shares-on.cc-on-main #displaybox .TableContainer:has(table.unraid.disk_status.cc-colauto) { overflow-x: hidden !important; }
+html.cc-col-dragging #displaybox .TableContainer { overflow-x: hidden !important; }
+html.cc-shares-on.cc-on-main #displaybox .TableContainer::-webkit-scrollbar { height: 8px; }
+html.cc-shares-on.cc-on-main #displaybox .TableContainer::-webkit-scrollbar-track { background: transparent; }
+html.cc-shares-on.cc-on-main #displaybox .TableContainer::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, .35); border-radius: 4px; }
 /* centre the DS / GROESSE / BENUTZT / FREI columns (8-11; Browse insert makes Device=1, Browse=2,
    user: "benutzt und frei sollen zentriert in der spalte sein ... auch DS und Groesse"). Inline-flex
    value badges centre via text-align; the usage bars centre via their auto margins above. Structural
@@ -584,13 +595,9 @@ html.cc-shares-on.cc-on-main.cc-sections-main #displaybox .cc-card-head > .cc-ud
 /* EVERY moved child joins the flex row (generic — the live UD build's wrapper classes vary; the
    v2.27.0 :is(span.right.ud, div.right.ud) selector missed them -> the vertical pile-up) */
 html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls > * { display: inline-flex !important; align-items: center; gap: 8px; float: none !important; margin: 0 !important; position: static !important; }
-/* NO display forcing on the labels: switchButton keeps a hidden ON/OFF twin label toggled via
-   inline .show()/.hide() — forcing display:inline-flex!important resurrected the hidden twin
-   ("HISTORISCHHISTORISCH"). Centre via the flex parent instead. */
-html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls span.switch-button-label {
-  float: none; font-size: var(--cc-md-fs, 13px); font-weight: 600; letter-spacing: .4px;
-  line-height: 1; align-self: center; margin: 0 !important; padding: 0 !important;
-}
+/* labels GONE from the cluster (user: "text nur durch hover sichtbar") — the name lives in the
+   wrapper's title tooltip that ccUdCtrlsMove stamps; this also buries the twin-label issue. */
+html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls span.switch-button-label { display: none !important; }
 /* ═══ Unassigned Devices B2: the three UD tables in the /Main list look (mirror of the disk_status
    block above — UD tables are usb_mounts/samba_mounts/usb_absent, NOT table.unraid.disk_status). */
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) thead td {
@@ -1287,6 +1294,13 @@ html.cc-shares-on.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_s
 html.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_status tr:hover .cc-b,
 html.cc-shares-on.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_status tr:hover a.cc-b-browse {
   background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
+}
+/* status pills share the buttons' vertical rhythm (user: "gleicher abstand wie die anderen
+   buttons"): their column cell centres its pill on the same 36px-plus-padding pitch the
+   button rows run on. */
+html.cc-shares-on.cc-on-main #displaybox table.array_status tr > td:nth-child(1) {
+  display: flex; align-items: center; min-height: var(--cc-lgb-h, 36px);
+  padding-top: 8px; padding-bottom: 8px;
 }
 /* v2.31.0/.2: the sub-mode also covers the ARRAY-VORGANG badges — EXCEPT the semantic status
    pills (user: "gestartet und paritaetspruefung ... sollen nicht reaktiv sein und immer ihre

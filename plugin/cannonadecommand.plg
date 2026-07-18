@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.31.2">
+  <!ENTITY version   "2.31.3">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,22 @@
 </ICON>
 
 <CHANGES>
+### 2.31.3
+#1 Plugin-Tab: Die Button-Verankerung laeuft jetzt in einer EIGENSTAENDIGEN Schleife, voellig
+   unabhaengig vom uebrigen Skript (eigener Timer, eigene Fehlerbehandlung) -- ein Fehler
+   irgendwo anders konnte bisher die gesamte Verankerung still ausfallen lassen; das ist die
+   einzige Erklaerung, die zu allen bisherigen Fehlrunden passt. Die Gruppe wird alle 0,6s auf
+   die gemessene Mitte der Unterreiter-Badges gepinnt, rechtsbuendig zur Inhaltskante.
+#2 Der dunkle Fleck UND das Huepfen beim Spaltenziehen hatten EINE gemeinsame Ursache: der
+   horizontale SCROLLBALKEN des Tabellen-Containers (dunkle Leiste unter den Zeilen; beim Ziehen
+   erschien/verschwand er pro Pixel und aenderte die Hoehe = Huepfen). Automatische Spaltenbreiten
+   scrollen jetzt NIE, waehrend des Ziehens ist der Ueberlauf eingefroren, und im manuell
+   gezogenen Modus bleibt nur ein schlanker Balken ohne dunkle Spur.
+#3 Historisch/Freigaben/Datentraeger: Der Text ist ausgeblendet und erscheint nur noch beim
+   Ueberfahren (Mouseover-Text am Schalter).
+#4 "Gestartet" und "Paritaetspruefung laeuft." stehen jetzt im selben vertikalen Rhythmus wie
+   die Buttons daneben (gleiche Zeilenhoehe und Abstaende).
+
 ### 2.31.2
 #1 Plugin-Tab: Der Aktualisierungen-Button wird jetzt bei JEDEM Durchlauf exakt auf die gemessene
    Mitte der Unterreiter-Badges gepinnt (vorher nur korrigiert, wenn die Abweichung gross war --
@@ -1034,7 +1050,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>b79845ef6978762ab2523d27a546ff20ba2702ccfda04a5d4e780b4a4468a21e</SHA256>
+  <SHA256>dc5699c7251207333495ae275d957767122a25c5d67f2af265521591dcd13806</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
