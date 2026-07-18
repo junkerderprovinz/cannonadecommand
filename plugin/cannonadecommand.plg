@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.31.5">
+  <!ENTITY version   "2.31.6">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,21 @@
 </ICON>
 
 <CHANGES>
+### 2.31.6
+- #1 Plugin-Tab GEFUNDEN: Die Plugins-Seite nutzt Unraids ALTE Tab-Struktur (Radio-Knopf +
+  Label), nicht die moderne mit Tab-Buttons -- deshalb fand JEDE bisherige Runde keinen Anker
+  und brach still ab (der Hinweis stand als Kommentar in unserem eigenen Code). Der Button wird
+  jetzt an den sichtbaren Tab-LABELS verankert.
+- #2 Der schwebende Text beim Ueberfahren von Zahnrad/Refresh ist UDs eigene Ballon-Tooltip-
+  Mechanik, die unseren Hover-Text ablas -- der Ballon ist deaktiviert, es bleibt der normale
+  schlichte Mouseover-Text.
+- #3 Kontroll-Cluster: Die Selektoren decken jetzt alle UD-Markup-Varianten ab -- Titelleiste
+  als Flex-Zeile, Cluster hart RECHTSBUENDIG, alle Kinder ohne Eigen-Raender, EIN gleichmaessiger
+  Abstand; Hover-Texte greifen damit in jeder Variante.
+- #4 "Gestartet" / "Paritaetspruefung laeuft.": Der Rhythmus-Fix hatte versehentlich auch die
+  LEEREN Zwischenzeilen aufgeblasen (dadurch war der Abstand der Pillen GROESSER als der der
+  Buttons) -- die Zeilenhoehe gilt jetzt nur noch fuer Zellen, die wirklich eine Pille tragen.
+
 ### 2.31.5
 - #1 Plugin-Tab: Die Pin-Schleife des Aktualisierungen-Buttons steht jetzt als ALLERERSTE
   Anweisung im Skript -- stirbt das Skript weiter unten (die verbliebene Erklaerung, warum der
@@ -1083,7 +1098,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>beaab473bdb11737a9f436231096abcbb8d8a1b2294815a6c996a6b436970de0</SHA256>
+  <SHA256>c309e3485397c61477234b75ebd88528ae0005537e2c11a2a6ba692bf14fb014</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

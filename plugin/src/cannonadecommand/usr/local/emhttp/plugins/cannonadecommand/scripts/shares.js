@@ -1114,7 +1114,7 @@
   // (user: "teilweise kein mouseover infotext"). Runs every pass, cheap and idempotent.
   function ccUdTitles() {
     try {
-      var hosts = document.querySelectorAll("#displaybox .cc-ud-ctrls, #displaybox div.title.ud :is(span.right.ud, div.right.ud)");
+      var hosts = document.querySelectorAll("#displaybox .cc-ud-ctrls, #displaybox div.title.ud :is(span.right, div.right, span.right.ud, div.right.ud)");
       for (var h = 0; h < hosts.length; h++) {
         var kids = hosts[h].children;
         for (var k = 0; k < kids.length; k++) {
@@ -1127,6 +1127,19 @@
             if (/gear|cog|setting/i.test(kcls)) kd.setAttribute("title", LANG === "de" ? "Unassigned-Devices-Einstellungen" : "Unassigned Devices settings");
             else if (/refresh|sync|rotate/i.test(kcls)) kd.setAttribute("title", LANG === "de" ? "Datenträger neu einlesen" : "Refresh disks");
           }
+        }
+        // the "frei schwebende" text appears ON HOVER of gear/refresh — that is UD's own balloon
+        // tooltip machinery reading the title attr. Kill the balloon, keep the plain title.
+        var bal = hosts[h].querySelectorAll("a");
+        for (var b3 = 0; b3 < bal.length; b3++) {
+          var ba = bal[b3];
+          if (ba.getAttribute("data-cc-ud-ttoff")) continue;
+          if (window.jQuery) {
+            try { if (window.jQuery.fn.tooltipster) window.jQuery(ba).tooltipster("disable"); } catch (e3) {}
+            try { if (window.jQuery.fn.tooltip) window.jQuery(ba).tooltip("destroy"); } catch (e4) {}
+          }
+          ba.classList.remove("tooltip");   // UD binds its balloon by this class
+          ba.setAttribute("data-cc-ud-ttoff", "1");
         }
       }
     } catch (e) {}

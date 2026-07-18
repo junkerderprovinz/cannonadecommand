@@ -616,14 +616,20 @@ html.cc-shares-on.cc-on-main #displaybox .cc-ud-hidden { display: none !importan
 /* the UD section must never show a frame ("zeigt manchmal ein rahmen"), and its control cluster is
    flush-RIGHT — same right edge as the read/write toggle above (user). */
 html.cc-shares-on.cc-on-main #displaybox :is(.show-disks, .show-shares, .show-historical, div.title.ud, [id*="unassigned" i]) { border: none !important; box-shadow: none !important; outline: none !important; }
-html.cc-shares-on.cc-on-main #displaybox div.title.ud :is(span.right.ud, div.right.ud) { margin-left: auto !important; float: none !important; }
+/* the .ud-suffixed classes vary per UD build — match plain .right too, make the title bar a flex
+   row and push the cluster hard RIGHT (user: "rechts buendig ausrichten"). */
+html.cc-shares-on.cc-on-main #displaybox div.title.ud { display: flex !important; align-items: center; }
+html.cc-shares-on.cc-on-main #displaybox div.title.ud :is(span.right, div.right, span.right.ud, div.right.ud) {
+  margin-left: auto !important; float: none !important; text-align: right;
+  display: inline-flex !important; align-items: center; gap: 10px; justify-content: flex-end;
+}
 html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls { justify-content: flex-end; gap: 10px; }
 /* tidy, EVEN spacing inside the cluster (user: "alle zueinander ausrichten, schoen geordnet"):
-   the switch tracks drop their native lopsided 12px/3px margins — the cluster gap is the ONLY
+   the switch tracks and every child drop their native lopsided margins — the gap is the ONLY
    spacing, so icons and toggles sit on one rhythm. */
 html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls .switch-button-background,
-html.cc-shares-on.cc-on-main #displaybox div.title.ud :is(span.right.ud, div.right.ud) .switch-button-background { margin: 0 !important; }
-html.cc-shares-on.cc-on-main #displaybox div.title.ud :is(span.right.ud, div.right.ud) { gap: 10px; }
+html.cc-shares-on.cc-on-main #displaybox div.title.ud :is(span.right, div.right) .switch-button-background { margin: 0 !important; }
+html.cc-shares-on.cc-on-main #displaybox div.title.ud :is(span.right, div.right) > * { margin: 0 !important; float: none !important; }
 /* ═══ Unassigned Devices B2: the three UD tables in the /Main list look (mirror of the disk_status
    block above — UD tables are usb_mounts/samba_mounts/usb_absent, NOT table.unraid.disk_status). */
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) thead td {
@@ -1322,9 +1328,11 @@ html.cc-shares-on.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_s
   background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
 }
 /* status pills share the buttons' vertical rhythm (user: "gleicher abstand wie die anderen
-   buttons"): their column cell centres its pill on the same 36px-plus-padding pitch the
-   button rows run on. */
-html.cc-shares-on.cc-on-main #displaybox table.array_status tr > td:nth-child(1) {
+   buttons"): ONLY cells that actually hold a pill get the 36px pitch — the first version put
+   min-height on EVERY first-column cell and inflated the empty rows between the two pills,
+   which made their distance BIGGER than the button gap. */
+html.cc-shares-on.cc-on-main #displaybox table.array_status tr > td:nth-child(1) { padding-top: 0; padding-bottom: 0; min-height: 0; }
+html.cc-shares-on.cc-on-main #displaybox table.array_status tr > td:nth-child(1):has(.cc-b) {
   display: flex; align-items: center; min-height: var(--cc-lgb-h, 36px);
   padding-top: 8px; padding-bottom: 8px;
 }

@@ -16,9 +16,13 @@
       if (localStorage.getItem("cc.theming") === "0" || localStorage.getItem("cc.enable.plugins") === "0") return;
       var db = document.getElementById("displaybox"); if (!db) return;
       if (!document.querySelector("#plugin_table, table.cc-plug")) return;   // not the Plugins page
-      var tab = null, tabs = db.querySelectorAll("button[role='tab']");
-      for (var i = 0; i < tabs.length; i++) { if (tabs[i].offsetHeight && tabs[i].getBoundingClientRect().width) { tab = tabs[i]; break; } }
-      if (!tab) tab = db.querySelector(".tabs-container > *");               // fallback pill source
+      // THE ANCHOR (v2.31.6): the Plugins page uses Unraid's OLD radio+label tab markup —
+      // paint()'s own comment says these tabs are styled via "input:checked + label". There is
+      // NO button[role=tab] and NO .tabs-container on this page, so every earlier pass (and this
+      // loop's first version) bailed out silently at this exact line. Labels first, modern
+      // variants as fallbacks.
+      var tab = null, cands = db.querySelectorAll("div.tabs label, .tabs label, button[role='tab'], .tabs-container > *");
+      for (var i = 0; i < cands.length; i++) { var cr0 = cands[i].getBoundingClientRect(); if (cands[i].offsetHeight && cr0.width) { tab = cands[i]; break; } }
       if (!tab) return;
       var host = document.getElementById("cc-plugbtns");
       if (!host) { host = document.createElement("div"); host.id = "cc-plugbtns"; }
