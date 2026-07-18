@@ -76,6 +76,26 @@
       }
     } catch (e) {}
   }
+  // popup title badges follow the COLOUR MODES (user): accent by default (CSS vars), palette in
+  // rainbow — painted here because dialogs appear as direct BODY children at any time.
+  function paintPopups() {
+    try {
+      if (!document.documentElement.classList.contains("cc-popups-on")) return;
+      var ts = document.querySelectorAll(".ui-dialog .ui-dialog-title, .sweet-alert h2");
+      for (var i = 0; i < ts.length; i++) {
+        if (!rbOn()) { ts[i].style.removeProperty("background"); ts[i].style.removeProperty("color"); continue; }   // CSS accent vars rule
+        var c = rbColor(i), t = idealText(c);
+        ts[i].style.setProperty("background", c, "important"); ts[i].style.setProperty("color", t, "important");
+      }
+    } catch (e) {}
+  }
+  var ccPopObs = null;
+  function watchPopups() {
+    try {
+      if (ccPopObs) return; ccPopObs = new MutationObserver(paintPopups);
+      ccPopObs.observe(document.body, { childList: true });   // dialogs/sweetalerts append as direct body children — cheap, no subtree
+    } catch (e) {}
+  }
   // ── SELF-MEASURING alignment anchor (v2.17.0). Every CC area lines its left edge up with the main
   // menu bar (rule cc-align-everything-to-menu-bar). We used to GUESS the offset with a header-gated
   // px constant (10px native text edge / 15px CC-pill edge) — which was fragile and drifted (Settings
@@ -247,6 +267,7 @@
       // jQuery-UI dialogs (openBox/openPlugin) + SweetAlert confirmations follow the CC look on
       // every page. Master-gated only — it is chrome, not an area of its own.
       root.classList.toggle("cc-popups-on", g("cc.theming", "1") !== "0");
+      paintPopups(); watchPopups();
       // paintNav() with cc-header-on now removed => rb=false => it removeProperty's every
       // lingering rainbow inline colour, so a live theming-OFF (even with Rainbow on) fully
       // reverts the menu bar instead of leaving the coloured tabs behind.

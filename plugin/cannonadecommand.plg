@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.32.0">
+  <!ENTITY version   "2.32.1">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,14 @@
 </ICON>
 
 <CHANGES>
+### 2.32.1
+- #1 Popup-Fenster: Der graue Titel-Balken ist weg -- der Titel steht jetzt als BADGE frei auf
+  der Flaeche und ist in die Farbmodi integriert (Akzentfarbe; im Rainbow-Modus Palettenfarbe).
+- #2 Der Hintergrund hinter Popup-Fenstern wird staerker abgedunkelt UND leicht geblurrt, damit
+  sich die Fenster klar abheben.
+- #3 Hinweis: Die Rechtsbuendigkeit des Aktualisierungen-Buttons kam bereits mit 2.32.0 --
+  nach dem Update einmal hart neu laden (Strg+F5).
+
 ### 2.32.0
 - #1 Plugin-Tab: Der Aktualisierungen-Button ist jetzt RECHTSBUENDIG zur Kante der Plugin-Tabelle
   ausgerichtet (fluchtet mit der Deinstallieren-Spalte) statt am Seitenrand-Polster zu enden.
@@ -1138,7 +1146,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>5ad57196ee2e67f895a83e0f40d8c26e66e2e76520da68e33265099110bad399</SHA256>
+  <SHA256>0f0b1db0dc787fbf0ea1c4424815bbfbd40950860a91d0c296ed9f00c0b67626</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
