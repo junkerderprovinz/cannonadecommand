@@ -49,11 +49,22 @@
       host.style.setProperty("gap", "12px", "important");
       host.style.setProperty("margin", "0", "important");
       host.style.setProperty("z-index", "3", "important");
-      var tr0 = tab.getBoundingClientRect(), dr = db.getBoundingClientRect(), hh = host.offsetHeight || 30;
-      var top = Math.round((tr0.top + tr0.height / 2) - dr.top - hh / 2);
+      // v2.31.9 — align the VISIBLE BUTTON, not the host box: the user's console proved the host
+      // rect pixel-perfect on the pill row while the screenshot showed the button lower — an
+      // INNER offset (Update.css's 13px vhshift on the span, or anything else) pushed the content
+      // down inside the aligned box. Zero the inner vertical margins, then iteratively nudge the
+      // host until the button's own centre sits on the pill centre — cascade-proof by measurement.
+      var inn = host.querySelectorAll("span, input, button");
+      for (var n2 = 0; n2 < inn.length; n2++) { inn[n2].style.setProperty("margin-top", "0", "important"); inn[n2].style.setProperty("margin-bottom", "0", "important"); }
+      var tr0 = tab.getBoundingClientRect(), dr = db.getBoundingClientRect();
       var pr = Math.round(parseFloat(getComputedStyle(db).paddingRight) || 16);
-      if (Math.abs((parseInt(host.style.top, 10) || 0) - top) > 1) host.style.setProperty("top", top + "px", "important");
       if ((parseInt(host.style.right, 10) || -1) !== pr) host.style.setProperty("right", pr + "px", "important");
+      var btn = null, cand2 = host.querySelectorAll("input, button");
+      for (var c2 = 0; c2 < cand2.length; c2++) { if (cand2[c2].offsetHeight) { btn = cand2[c2]; break; } }
+      var refEl = btn || host, rr = refEl.getBoundingClientRect();
+      var cur = parseInt(host.style.top, 10); if (isNaN(cur)) { cur = Math.round((tr0.top + tr0.height / 2) - dr.top - (host.offsetHeight || 30) / 2); host.style.setProperty("top", cur + "px", "important"); rr = refEl.getBoundingClientRect(); }
+      var need = Math.round(cur + ((tr0.top + tr0.height / 2) - (rr.top + rr.height / 2)));
+      if (Math.abs(need - cur) > 1) host.style.setProperty("top", need + "px", "important");
     } catch (e) {}
   }
   try { setInterval(plugPinTick, 600); } catch (e) {}
