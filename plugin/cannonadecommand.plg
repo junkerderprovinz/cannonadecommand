@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.32.6">
+  <!ENTITY version   "2.32.7">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,12 @@
 </ICON>
 
 <CHANGES>
+### 2.32.7
+- #1 Popup-Fenster (live in der WebUI nachgemessen): Der Titel-Badge umschliesst jetzt nur noch
+  seinen Text statt sich ueber die volle Breite zu strecken, und der Fertig-Knopf steht
+  wirklich LINKS (die Knopf-Zeile ist jetzt eine Links-Flexzeile -- ein Block-Knopf hatte die
+  Text-Ausrichtung ignoriert).
+
 ### 2.32.6
 - #1 Plugin-Tab: Der Aktualisierungen-Button ist jetzt WIRKLICH rechtsbuendig -- der Rahmen war
   buendig, aber der sichtbare Knopf trug ein natives margin-right von 12px und endete deshalb
@@ -1171,7 +1177,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>bbde572c1bcc864db5052a12345d0b92a1e7e47419d819cefa8d6dba307d5641</SHA256>
+  <SHA256>94ca10db91bf1c5c9a1f4d0d5dbd68d8f806df2d4dce0638fe6ba5bb9406ddb2</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
