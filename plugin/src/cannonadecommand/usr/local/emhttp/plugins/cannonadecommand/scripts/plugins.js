@@ -60,8 +60,16 @@
       // flush RIGHT with the MENU BAR's icon edge (house rule "alles richtet sich an der
       // Menueleiste aus" — user measurement 2026-07-19: icons end at 1414, table at 1417, the
       // 3px offset read as "nicht rechtsbuendig"). Fallbacks: table edge, then page padding.
-      var ref = null, mi = document.querySelectorAll("#menu .nav-tile.right .nav-item.util > a");
-      for (var m2 = mi.length - 1; m2 >= 0; m2--) { if (mi[m2].offsetHeight) { ref = mi[m2].getBoundingClientRect().right; break; } }
+      // the VISUALLY rightmost element, not the DOM-last one: the merged drag zone lets the user
+      // reorder icons + usage meter freely, so DOM order can differ from visual order (proven
+      // live: DOM-last icon at 1414 measured "flush" while the eye saw the button left of the
+      // real right edge). Take the MAX right edge over all visible candidates.
+      var ref = null, mi = document.querySelectorAll("#menu .nav-tile.right .nav-item.util > a, #menu .usage-bar");
+      for (var m2 = 0; m2 < mi.length; m2++) {
+        if (!mi[m2].offsetHeight) continue;
+        var mr2 = mi[m2].getBoundingClientRect().right;
+        if (ref == null || mr2 > ref) ref = mr2;
+      }
       if (ref == null) { var tbl = document.querySelector("#plugin_table, table.cc-plug"); if (tbl) ref = tbl.getBoundingClientRect().right; }
       var pr = ref != null ? Math.max(0, Math.round(dr.right - ref)) : Math.round(parseFloat(getComputedStyle(db).paddingRight) || 16);
       if ((parseInt(host.style.right, 10) || -1) !== pr) host.style.setProperty("right", pr + "px", "important");
