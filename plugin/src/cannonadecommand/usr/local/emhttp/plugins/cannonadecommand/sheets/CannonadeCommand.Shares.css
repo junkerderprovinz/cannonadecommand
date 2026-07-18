@@ -587,11 +587,17 @@ html.cc-shares-on.cc-on-main #displaybox a.cc-ibtn:hover { filter: brightness(1.
 /* dead-centre the glyph: UD's own rules (and our older generic one) gave the inner <i> a fixed
    20px box + inline-block baseline — inside the 24px tile that sat visibly off (user: "logo ist
    nicht zentriert"). Neutralise every inner box; the flex tile does the centring. */
-html.cc-shares-on.cc-on-main #displaybox a.cc-ud-icon :is(i, img, span),
-html.cc-shares-on.cc-on-main #displaybox a.cc-ibtn :is(i, img, span) {
+html.cc-shares-on.cc-on-main #displaybox a.cc-ud-icon :is(i, img, span:not(.help-content)),
+html.cc-shares-on.cc-on-main #displaybox a.cc-ibtn :is(i, img, span:not(.help-content)) {
   width: auto !important; height: auto !important; line-height: 1 !important;
   margin: 0 !important; padding: 0 !important; display: block !important; opacity: 1 !important;
 }
+/* the anchors CARRY their tooltip source (span.help-content) as a child; the neutralise rule above
+   force-showed it (its `display:block` outranked .cc-ud-hidden on specificity) and the 200px+ text
+   spilled out of the 24px tile across the toggles. Hide the source spans HARD, everywhere. */
+html.cc-shares-on.cc-on-main #displaybox a.cc-ud-icon span.help-content,
+html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls span.help-content,
+html.cc-shares-on.cc-on-main #displaybox div.title.ud span.help-content { display: none !important; }
 /* the column-width reset arrow keeps a clear gap to the (i)+toggle pair (user: "zu weit rechts") */
 html.cc-shares-on.cc-on-main #displaybox a.cc-colreset { margin-right: 14px !important; }
 /* Badge-Form "circle": full round like the header tiles */
@@ -603,7 +609,7 @@ html.cc-shape-circle.cc-shares-on.cc-on-main #displaybox a.cc-ibtn { border-radi
    sits at the section top, so a small fixed top puts the cluster on the badge row. */
 html.cc-shares-on.cc-on-main.cc-sections-main #displaybox .cc-card-head > .cc-ud-ctrls {
   position: absolute; right: 0; top: 6px;
-  display: inline-flex; align-items: center; gap: 14px;
+  display: inline-flex; align-items: center; gap: 8px;   /* user: "kleinere abstaende" — ONE 8px rhythm, same as the in-cluster child gap */
 }
 /* EVERY moved child joins the flex row (generic — the live UD build's wrapper classes vary; the
    v2.27.0 :is(span.right.ud, div.right.ud) selector missed them -> the vertical pile-up) */
@@ -623,7 +629,7 @@ html.cc-shares-on.cc-on-main #displaybox div.title.ud :is(span.right, div.right,
   margin-left: auto !important; float: none !important; text-align: right;
   display: inline-flex !important; align-items: center; gap: 10px; justify-content: flex-end;
 }
-html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls { justify-content: flex-end; gap: 10px; }
+html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls { justify-content: flex-end; gap: 8px; }
 /* tidy, EVEN spacing inside the cluster (user: "alle zueinander ausrichten, schoen geordnet"):
    the switch tracks and every child drop their native lopsided margins — the gap is the ONLY
    spacing, so icons and toggles sit on one rhythm. */

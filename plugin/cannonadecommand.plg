@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.32.7">
+  <!ENTITY version   "2.32.8">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,17 @@
 </ICON>
 
 <CHANGES>
+### 2.32.8
+- #1 Hauptseite: Die Status-Pillen (Gestartet / Paritaetspruefung) stehen jetzt im GLEICHEN
+  Abstand untereinander wie die Buttons rechts (16px-Luecke, 52px-Raster) -- der Pillen-Stapel
+  wurde nie erzeugt, weil das Einfuegen an der falschen Verschachtelungsebene ansetzte (die
+  Tabelle steckt in einem Formular) und still scheiterte. Live in der WebUI diagnostiziert.
+- #2 Unassigned Devices: Der ueber den Schaltern schwebende Grosstext (UNASSIGNED DEVICES
+  SETTINGS / REFRESH DISKS...) ist weg -- das war die Tooltip-QUELLE in den Icon-Ankern, die
+  eine allgemeinere Zentrier-Regel wieder sichtbar gemacht hatte; jetzt hart versteckt.
+- #3 Unassigned Devices: Icons und Schalter sauber auf einer Linie mit KLEINEREN, einheitlichen
+  Abstaenden (ein 8px-Rhythmus fuer den ganzen Cluster).
+
 ### 2.32.7
 - #1 Popup-Fenster (live in der WebUI nachgemessen): Der Titel-Badge umschliesst jetzt nur noch
   seinen Text statt sich ueber die volle Breite zu strecken, und der Fertig-Knopf steht
@@ -1177,7 +1188,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>94ca10db91bf1c5c9a1f4d0d5dbd68d8f806df2d4dce0638fe6ba5bb9406ddb2</SHA256>
+  <SHA256>099c813a07aa97bc9aa86890c4a4f9ab6319ba977e2ccf1bf94c664c7aaa5f3b</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

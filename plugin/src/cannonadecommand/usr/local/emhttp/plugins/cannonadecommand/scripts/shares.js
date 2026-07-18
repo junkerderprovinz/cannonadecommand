@@ -1106,6 +1106,11 @@
         var cand = scopes[s0].querySelectorAll("*");
         for (var i = 0; i < cand.length; i++) {
           var e2 = cand[i];
+          // the gear/refresh anchors CONTAIN their tooltip-source span.help-content, so the
+          // anchor's own textContent EQUALS a target — stamping it killed the icon (only the
+          // tile recipe's higher specificity kept it visible). Never touch the icon or its
+          // insides; heal stamps from earlier versions. The leaked text is hidden via CSS.
+          if (e2.classList.contains("cc-ud-icon") || (e2.closest && e2.closest("a.cc-ud-icon"))) { e2.classList.remove("cc-ud-hidden"); continue; }
           if (e2.classList.contains("cc-ud-hidden")) continue;
           if (e2.querySelector(".switch-button-background, a.cc-ud-icon, input")) continue;   // never a container of real controls
           var t2 = ((e2.value || e2.textContent || "") + "").replace(new RegExp(String.fromCharCode(160), "g"), " ").replace(/\s+/g, " ").trim().toUpperCase();
@@ -1439,12 +1444,27 @@
   var ccPillSeq = 0;
   function ccAopPillStack(box) {
     try {
-      var t0 = box.querySelector("table.array_status"); if (!t0) return;
-      var sec = t0.closest("section") || box;
-      var stack = sec.querySelector(".cc-aop-pills");
       var pills = box.querySelectorAll("table.array_status td.cc-aop-st > .cc-b.cc-aop-status");
-      if (pills.length && !stack) { stack = el("div", "cc-aop-pills"); sec.insertBefore(stack, t0); }
+      // anchor on the PILLS' table (5 array_status tables exist on /Main), and insert at the
+      // section's DIRECT child: the table lives inside a FORM, so the old sec.insertBefore(stack,
+      // table) threw a silent NotFoundError and the stack never existed (live-diagnosed).
+      var pt = pills.length ? pills[0].closest("table") : box.querySelector("table.array_status");
+      if (!pt) return;
+      var sec = pt.closest("section") || box;
+      var stack = sec.querySelector(".cc-aop-pills");
+      if (pills.length && !stack) {
+        stack = el("div", "cc-aop-pills");
+        var anch = pt; while (anch.parentElement && anch.parentElement !== sec) anch = anch.parentElement;
+        sec.insertBefore(stack, anch);
+      }
       if (!stack) return;
+      // nchan rebuilds the rows: a rebuilt td gets a fresh pill, the stacked one goes stale —
+      // drop stack pills whose home cell no longer exists before adopting the current set.
+      var olds = stack.querySelectorAll(".cc-b.cc-aop-status[data-cc-aop-pillref]");
+      for (var k = 0; k < olds.length; k++) {
+        var rf = olds[k].getAttribute("data-cc-aop-pillref");
+        if (!box.querySelector('table.array_status td[data-cc-aop-pillhome="' + rf + '"]')) stack.removeChild(olds[k]);
+      }
       for (var i = 0; i < pills.length; i++) {
         var home = pills[i].parentNode;
         if (!home.getAttribute("data-cc-aop-pillhome")) home.setAttribute("data-cc-aop-pillhome", String(++ccPillSeq));
@@ -1453,7 +1473,7 @@
       }
       // top edge = first button top (same measurement contract as the parity card)
       if (window.getComputedStyle(stack).position === "absolute") {
-        var fb2 = box.querySelector("table.array_status input[type='button'], table.array_status input[type='submit'], table.array_status button, table.array_status a.button");
+        var fb2 = pt.querySelector("input[type='button'], input[type='submit'], button, a.button");
         if (fb2) {
           var off2 = Math.round(fb2.getBoundingClientRect().top - sec.getBoundingClientRect().top);
           if (off2 > 0 && Math.abs((parseInt(stack.style.top, 10) || 0) - off2) > 1) stack.style.top = off2 + "px";
