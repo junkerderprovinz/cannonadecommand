@@ -1098,10 +1098,36 @@
   // icons — hide them wherever they ended up (user: "text schwebt frei herum").
   function ccUdLoose() {
     try {
-      var els = document.querySelectorAll("#displaybox input[type='button'], #displaybox input[type='submit'], #displaybox a, #displaybox span.hand, #displaybox div.hand");
+      // LEAF elements of any kind (the first pass only scanned inputs/anchors and missed the
+      // element type this UD build actually uses); NBSP-normalised compare.
+      var els = document.querySelectorAll("#displaybox input[type='button'], #displaybox input[type='submit'], #displaybox a, #displaybox span, #displaybox div, #displaybox b, #displaybox u");
       for (var i = 0; i < els.length; i++) {
-        var e2 = els[i], t2 = ((e2.value || e2.textContent || "") + "").trim().toUpperCase();
+        var e2 = els[i];
+        if (e2.tagName !== "INPUT" && e2.childElementCount > 0) continue;   // leaves only — never hide a container
+        var t2 = ((e2.value || e2.textContent || "") + "").replace(new RegExp(String.fromCharCode(160), "g"), " ").replace(/\s+/g, " ").trim().toUpperCase();
         if (t2 === "UNASSIGNED DEVICES SETTINGS" || t2 === "REFRESH DISKS AND CONFIGURATION") e2.classList.add("cc-ud-hidden");
+      }
+    } catch (e) {}
+  }
+  // hover names for the UD controls in BOTH homes (native title bar AND relocated cluster) —
+  // the first pass stamped only during the sections-mode relocation, so parts had no tooltip
+  // (user: "teilweise kein mouseover infotext"). Runs every pass, cheap and idempotent.
+  function ccUdTitles() {
+    try {
+      var hosts = document.querySelectorAll("#displaybox .cc-ud-ctrls, #displaybox div.title.ud :is(span.right.ud, div.right.ud)");
+      for (var h = 0; h < hosts.length; h++) {
+        var kids = hosts[h].children;
+        for (var k = 0; k < kids.length; k++) {
+          var kd = kids[k];
+          if (kd.getAttribute("title")) continue;
+          var lbl = kd.querySelector ? kd.querySelector(".switch-button-label") : null;
+          if (lbl) { kd.setAttribute("title", (lbl.textContent || "").trim()); continue; }
+          if (kd.tagName === "A") {
+            var kcls = ((kd.querySelector("i, span") || {}).className || "") + " " + (kd.className || "");
+            if (/gear|cog|setting/i.test(kcls)) kd.setAttribute("title", LANG === "de" ? "Unassigned-Devices-Einstellungen" : "Unassigned Devices settings");
+            else if (/refresh|sync|rotate/i.test(kcls)) kd.setAttribute("title", LANG === "de" ? "Datenträger neu einlesen" : "Refresh disks");
+          }
+        }
       }
     } catch (e) {}
   }
@@ -1134,6 +1160,7 @@
       ccLocalizeMain();   // s3-sleep button / UD strings / Internal-Boot sentence in the UI language
       enhanceUD();   // AFTER ccLocalizeMain: the heading split consumes the already-translated text; ccTr guards on data-cc-i18n and no-ops once the span holds badges
       ccUdLoose();   // hide UD's loose native text buttons (our gear/refresh icons carry those functions)
+      ccUdTitles();   // hover names on toggles + icons in BOTH homes, every pass
     } catch (e) {}
   }
   // ── /Main "Array-Vorgang" (ArrayOperation.page: table.ArrayOperation-Table.array_status). Each control

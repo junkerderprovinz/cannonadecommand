@@ -417,6 +417,12 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tbody td {
   border: none !important;   /* the totals row (tr_last) drew a native rule line instead of a background (user: "eine Linie. das soll so nicht sein") */
 }
 html.cc-shares-on.cc-on-main #displaybox .TableContainer { background: transparent !important; background-image: none !important; }
+/* the TOTALS bar gets the header tint BACK (user: "die unterste Leiste hat keinen hintergrund
+   sondern eine Linie") — the nuke above stripped it along with everything else; it should read
+   as a bar like the thead, line-free. Placed after the nuke; the extra class outweighs it. */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tbody tr.tr_last > td {
+  background: rgba(128, 128, 128, .14) !important; border: none !important;
+}
 /* THE REAL FLECK (round 6) + the resize "Huepfen" share one cause: the container's HORIZONTAL
    SCROLLBAR. A table a few px wider than its container spawns a dark scrollbar track under the
    rows (the stripe at the right end), and during a column drag it pops in/out per pixel — the
@@ -611,7 +617,13 @@ html.cc-shares-on.cc-on-main #displaybox .cc-ud-hidden { display: none !importan
    flush-RIGHT — same right edge as the read/write toggle above (user). */
 html.cc-shares-on.cc-on-main #displaybox :is(.show-disks, .show-shares, .show-historical, div.title.ud, [id*="unassigned" i]) { border: none !important; box-shadow: none !important; outline: none !important; }
 html.cc-shares-on.cc-on-main #displaybox div.title.ud :is(span.right.ud, div.right.ud) { margin-left: auto !important; float: none !important; }
-html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls { justify-content: flex-end; }
+html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls { justify-content: flex-end; gap: 10px; }
+/* tidy, EVEN spacing inside the cluster (user: "alle zueinander ausrichten, schoen geordnet"):
+   the switch tracks drop their native lopsided 12px/3px margins — the cluster gap is the ONLY
+   spacing, so icons and toggles sit on one rhythm. */
+html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls .switch-button-background,
+html.cc-shares-on.cc-on-main #displaybox div.title.ud :is(span.right.ud, div.right.ud) .switch-button-background { margin: 0 !important; }
+html.cc-shares-on.cc-on-main #displaybox div.title.ud :is(span.right.ud, div.right.ud) { gap: 10px; }
 /* ═══ Unassigned Devices B2: the three UD tables in the /Main list look (mirror of the disk_status
    block above — UD tables are usb_mounts/samba_mounts/usb_absent, NOT table.unraid.disk_status). */
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) thead td {

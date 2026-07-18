@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.31.4">
+  <!ENTITY version   "2.31.5">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,20 @@
 </ICON>
 
 <CHANGES>
+### 2.31.5
+- #1 Plugin-Tab: Die Pin-Schleife des Aktualisierungen-Buttons steht jetzt als ALLERERSTE
+  Anweisung im Skript -- stirbt das Skript weiter unten (die verbliebene Erklaerung, warum der
+  Button trotz allem unten blieb), laeuft die Schleife trotzdem. Zusaetzlich Ersatz-Anker, falls
+  keine Unterreiter-Buttons gefunden werden.
+- #2 Unassigned Devices: Der schwebende Text wird jetzt in JEDEM Elementtyp gefunden
+  (Blatt-Elemente aller Art, Sonder-Leerzeichen normalisiert) und ausgeblendet.
+- #3 Alle Schalter und Icons haben in BEIDEN Darstellungen (native Leiste + verlegter Cluster)
+  ihren Mouseover-Text; der Cluster laeuft auf EINEM gleichmaessigen Abstand (die schiefen
+  nativen Schalter-Raender sind raus) -- sauber geordnet.
+- #4 Die unterste Leiste der Datentraeger-Liste (Summenzeile) traegt wieder ihren getoenten
+  Hintergrund wie die Kopfzeile -- der Rundum-Putz von v2.31.2 hatte ihn mitentfernt; die Linie
+  bleibt weg.
+
 ### 2.31.4
 - #1 Veroeffentlichungshinweise sauber formatiert: Unraids Dialog rendert die Notizen als Markdown,
   wodurch jede "#N"-Zeile zur Riesen-Ueberschrift explodierte -- ALLE Eintraege (auch die alten)
@@ -1069,7 +1083,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>dcd72d90204eb2b17a4ce71eec7f87fd49c475ab8b9e83aab6990c91d46e15be</SHA256>
+  <SHA256>beaab473bdb11737a9f436231096abcbb8d8a1b2294815a6c996a6b436970de0</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

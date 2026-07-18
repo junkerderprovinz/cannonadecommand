@@ -1,4 +1,4 @@
-/* CannonadeCommand — enhances Unraid's PLUGINS tab in place, Docker-tab style:
+﻿/* CannonadeCommand — enhances Unraid's PLUGINS tab in place, Docker-tab style:
  * plugin cell with container-sized logo + name + support badge, description in
  * its own column, version + changelog badges stacked, status and remove as
  * pills, accent or rainbow colours — all idempotent on top of the native
@@ -7,6 +7,42 @@
 (function () {
   "use strict";
   if (window.__ccPlug) return; window.__ccPlug = 1;
+  // ═══ UPDATE-BUTTON PIN LOOP — FIRST STATEMENT IN THE FILE (v2.31.5). The purple pill proves
+  // the CSS reaches the button while every JS relocation round changed nothing — the one
+  // remaining explanation is that the script DIES somewhere above the loop registration.
+  // So the registration now happens before ANY other top-level statement can throw.
+  function plugPinTick() {
+    try {
+      if (localStorage.getItem("cc.theming") === "0" || localStorage.getItem("cc.enable.plugins") === "0") return;
+      var db = document.getElementById("displaybox"); if (!db) return;
+      if (!document.querySelector("#plugin_table, table.cc-plug")) return;   // not the Plugins page
+      var tab = null, tabs = db.querySelectorAll("button[role='tab']");
+      for (var i = 0; i < tabs.length; i++) { if (tabs[i].offsetHeight && tabs[i].getBoundingClientRect().width) { tab = tabs[i]; break; } }
+      if (!tab) tab = db.querySelector(".tabs-container > *");               // fallback pill source
+      if (!tab) return;
+      var host = document.getElementById("cc-plugbtns");
+      if (!host) { host = document.createElement("div"); host.id = "cc-plugbtns"; }
+      if (host.parentNode !== db) db.appendChild(host);
+      var spans = document.querySelectorAll("#displaybox span.status.vhshift, #displaybox span.vhshift, #checkall, #updateall, #removeall");
+      for (var sp = 0; sp < spans.length; sp++) { var s = spans[sp]; if (s !== host && !host.contains(s) && s.parentNode !== host) host.appendChild(s); }
+      if (!host.firstChild) return;
+      db.style.setProperty("position", "relative", "important");
+      host.style.setProperty("position", "absolute", "important");
+      host.style.setProperty("display", "inline-flex", "important");
+      host.style.setProperty("align-items", "center", "important");
+      host.style.setProperty("gap", "12px", "important");
+      host.style.setProperty("margin", "0", "important");
+      host.style.setProperty("z-index", "3", "important");
+      var tr0 = tab.getBoundingClientRect(), dr = db.getBoundingClientRect(), hh = host.offsetHeight || 30;
+      var top = Math.round((tr0.top + tr0.height / 2) - dr.top - hh / 2);
+      var pr = Math.round(parseFloat(getComputedStyle(db).paddingRight) || 16);
+      if (Math.abs((parseInt(host.style.top, 10) || 0) - top) > 1) host.style.setProperty("top", top + "px", "important");
+      if ((parseInt(host.style.right, 10) || -1) !== pr) host.style.setProperty("right", pr + "px", "important");
+    } catch (e) {}
+  }
+  try { setInterval(plugPinTick, 600); } catch (e) {}
+  try { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", plugPinTick); else plugPinTick(); } catch (e) {}
+  // ═══ end pin loop — everything below may fail without taking the loop down with it. ═══
   var PROXY = "/plugins/cannonadecommand/server/ccapi.php";
   var LANG = ((document.documentElement.lang || navigator.language || "en").toLowerCase().indexOf("de") === 0) ? "de" : "en";
   var MARK = "data-ccp";
@@ -382,56 +418,7 @@
   // (parent check); native .show()/.hide() + inline onclick are id-bound and survive the move; reverts
   // on reload when the area is disabled (paint() gates before calling this).
   // pick the RIGHT nav strip: the page can hold MORE THAN ONE nav.tabs (hidden templates /
-  // nested layouts) — querySelector's first hit could be an invisible one, and every layout
-  // rule we hang on the WRONG nav leaves the visible strip untouched (the "immer noch zu
-  // tief" that survived every fix). Choose the first VISIBLE nav.tabs that really contains
-  // the sub-tab pills.
-  function plugNav(db) {
-    var navs = db.querySelectorAll("nav.tabs");
-    for (var i = 0; i < navs.length; i++) {
-      if (navs[i].offsetParent !== null && navs[i].offsetHeight && navs[i].querySelector("button[role='tab']")) return navs[i];
-    }
-    return navs[0] || null;
-  }
-  // v2.31.3 — THE SELF-CONTAINED PIN LOOP. Every earlier attempt ran inside paint()'s observer
-  // path: ONE exception anywhere upstream and the relocation silently never happened, which is
-  // the only theory that matches every single "immer noch falsch" report. This block depends on
-  // NOTHING else: own interval, own try/catch. It adopts the three native spans, hosts them in
-  // #displaybox and pins the group's centre onto the first VISIBLE sub-tab pill's centre,
-  // right-aligned to the content edge — re-asserted every 600ms, forever.
-  function plugPinTick() {
-    try {
-      if (localStorage.getItem("cc.theming") === "0" || localStorage.getItem("cc.enable.plugins") === "0") return;
-      var db = document.getElementById("displaybox"); if (!db) return;
-      if (!document.querySelector("#plugin_table, table.cc-plug")) return;   // not the Plugins page (do NOT gate on ids)
-      var tabs = db.querySelectorAll("button[role='tab']"), tab = null;
-      for (var i = 0; i < tabs.length; i++) { if (tabs[i].offsetParent !== null && tabs[i].offsetHeight) { tab = tabs[i]; break; } }
-      if (!tab) return;
-      var host = document.getElementById("cc-plugbtns");
-      if (!host) { host = document.createElement("div"); host.id = "cc-plugbtns"; }
-      if (host.parentNode !== db) db.appendChild(host);
-      // adopt the native controls BY CLASS, not by id — every earlier round assumed the
-      // #checkall/#updateall/#removeall ids from the master webgui source; if this Unraid
-      // build names them differently, everything silently no-opped. The plugin manager's own
-      // Update.css targets span.vhshift, so that class is the reliable hook.
-      var spans = document.querySelectorAll("#displaybox span.status.vhshift, #displaybox span.vhshift, #checkall, #updateall, #removeall");
-      for (var sp = 0; sp < spans.length; sp++) { var s = spans[sp]; if (s !== host && !host.contains(s) && s.parentNode !== host) host.appendChild(s); }
-      if (!host.firstChild) return;   // nothing to place (yet)
-      db.style.setProperty("position", "relative", "important");
-      host.style.setProperty("position", "absolute", "important");
-      host.style.setProperty("display", "inline-flex", "important");
-      host.style.setProperty("align-items", "center", "important");
-      host.style.setProperty("gap", "12px", "important");
-      host.style.setProperty("margin", "0", "important");
-      host.style.setProperty("z-index", "3", "important");
-      var tr0 = tab.getBoundingClientRect(), dr = db.getBoundingClientRect(), hh = host.offsetHeight || 30;
-      var top = Math.round((tr0.top + tr0.height / 2) - dr.top - hh / 2);
-      var pr = Math.round(parseFloat(getComputedStyle(db).paddingRight) || 16);
-      if (Math.abs((parseInt(host.style.top, 10) || 0) - top) > 1) host.style.setProperty("top", top + "px", "important");
-      if ((parseInt(host.style.right, 10) || -1) !== pr) host.style.setProperty("right", pr + "px", "important");
-    } catch (e) {}
-  }
-  try { setInterval(plugPinTick, 600); } catch (e) {}
+  // (pin loop lives at the TOP of the file — v2.31.5; relocateChecks below is its stub)
   function relocateChecks() { plugPinTick(); }   // paint()'s call site drives the SAME mechanism — no second path to diverge
   function paint() {
     try {
