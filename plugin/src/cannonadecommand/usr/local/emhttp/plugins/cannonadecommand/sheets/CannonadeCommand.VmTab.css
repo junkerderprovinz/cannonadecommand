@@ -251,10 +251,10 @@ html.cc-vms-on.cc-vmgrid #displaybox table.tablesorter tbody#kvm_list {
 }
 html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable {
   display: flex; flex-direction: column; gap: 10px;
-  background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 10px; padding: 12px 14px;
-  transition: border-color .12s, transform .12s, box-shadow .12s;
+  background: #1e1e1e; border: none; border-radius: 10px; padding: 12px 14px;
+  transition: transform .12s, box-shadow .12s;
 }
-html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable:hover { border-color: #3a3a3a; transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0, 0, 0, .35); }
+html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0, 0, 0, .35); } /* elevation only — no resting border, no hover border tint (law) */
 html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable > td {
   display: block; border: none !important; padding: 0 !important; max-width: none !important; white-space: normal !important;
 }

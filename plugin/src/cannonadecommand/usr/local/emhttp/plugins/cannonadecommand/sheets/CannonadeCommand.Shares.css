@@ -178,22 +178,26 @@ html.cc-shares-on #displaybox table.unraid.share_status .cc-b.cc-b-name:hover { 
 html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-name,
 html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-name:hover { text-decoration: none; }
 
-/* ═══ protected-status badge -> its OWN leading column ═══
-   shares.js lifts the Name-cell status orb (i.orb.green-orb = protected, i.orb.yellow-orb/
-   fa-warning = unprotected) into a small SEMANTIC pill in a dedicated leading Status column
-   (td.cc-status-col). Colours are semantic (green = protected, orange = unprotected), NEVER
-   the accent and NEVER rainbow — the pill has no .cc-b class, so paintRows leaves it alone.
-   nowrap keeps the pill on one line; the column sizes to its content (NO width:1% — a fixed-layout
-   share table clipped that to a single letter). */
-html.cc-shares-on #displaybox table.unraid.share_status td.cc-status-col { white-space: nowrap; }
-html.cc-shares-on #displaybox table.unraid.share_status .cc-b-status {
-  display: inline-flex; align-items: center; gap: 5px; border: none;
-  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-bmd-pad, 4px 12px);
-  font-size: var(--cc-md-fs, 13px); font-weight: 600; line-height: 1.35;
-  white-space: nowrap; vertical-align: middle;
+/* ═══ protection state -> disk-style dot ═══
+   Colours stay semantic (green = protected, amber = unprotected), NEVER accent and NEVER
+   rainbow — the dot has no .cc-b class, so paintRows leaves it alone. */
+/* v2.35.0 (user: "zustandsanzeige der disks und der shares gleich machen"): the protection state
+   is a DISK-STYLE dot leading the name cell — no own Status column any more. The dot follows the
+   badge form via --cc-dot-r (pill/circle = round, rounded = soft, square = hard; stamped by apply()). */
+html.cc-shares-on #displaybox .cc-dot {
+  display: inline-block; width: 10px; height: 10px; flex: 0 0 auto;
+  border-radius: var(--cc-dot-r, 50%); margin-right: 8px; vertical-align: middle;
 }
-html.cc-shares-on #displaybox table.unraid.share_status .cc-b-prot { background: #3fae6a; color: #08240f; }
-html.cc-shares-on #displaybox table.unraid.share_status .cc-b-unprot { background: #d6a243; color: #241a04; }
+html.cc-shares-on #displaybox .cc-dot-prot { background: #3fae6a; }
+html.cc-shares-on #displaybox .cc-dot-unprot { background: #d6a243; }
+/* the native disk orbs (i.fa-circle.orb, GERÄT column on /Main + disk rows) join the same shape
+   family: a font glyph cannot change form, so the glyph collapses (font-size 0) and the box
+   carries currentColor — the orb colour classes (green/grey/red) keep driving the state colour. */
+html.cc-shares-on #displaybox i.fa-circle.orb {
+  font-size: 0 !important; width: 10px !important; height: 10px !important;
+  display: inline-block !important; background: currentColor !important;
+  border-radius: var(--cc-dot-r, 50%) !important; vertical-align: middle !important;
+}
 
 /* ═══ browse column -> a text-only Browse badge ═══
    shares.js lifts the a.view browse link out of the Name cell into its own column, STRIPS its
@@ -484,16 +488,16 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status a.button {
   width: var(--cc-lgb-w, 200px) !important; min-width: var(--cc-lgb-w, 200px) !important; max-width: var(--cc-lgb-w, 200px) !important;
   flex: 0 0 auto !important; white-space: nowrap !important; padding: 0 12px !important;   /* ONE fixed width pins the (i) bubble + PLANUNG badge to identical x in every row */
 }
-/* hover glow — reactive buttons light up, greyed-out ones NEVER do (user). brightness alone is
-   invisible on LIGHT fills, so add a ring in currentColor: the ink always contrasts its own fill
-   (white ink on dark pills, dark ink on light ones) — visible for every palette colour. */
+/* hover glow — reactive buttons light up, greyed-out ones NEVER do (user). Brightness ONLY:
+   the old currentColor ring survived the borderless sweep and drew a white frame on hover
+   (user law: "mouseover soll keinen rahmen erzeugen — keine rahmen, keine linien"). */
 html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="submit"]:hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="button"]:hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="reset"]:hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox table.array_status button:not([role="tab"]):hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox table.array_status a.button:hover {
-  filter: brightness(1.14) !important;
-  box-shadow: 0 0 0 2px currentColor !important;
+  filter: brightness(1.22) !important;
+  box-shadow: none !important;
 }
 html.cc-shares-on.cc-on-main #displaybox table.array_status input:disabled:hover,
 html.cc-shares-on.cc-on-main #displaybox table.array_status button:disabled:hover { filter: none !important; box-shadow: none !important; }
@@ -573,14 +577,14 @@ html.cc-shares-on.cc-on-main #displaybox a.cc-ibtn {
   box-sizing: border-box !important; flex: 0 0 auto;
   width: 24px !important; height: 24px !important; padding: 0 !important;   /* /Main exception (user): icon tiles match the SLIM toggle height, not the 30px menu tier */
   border-radius: min(var(--cc-b-radius, 8px), 8px) !important;
-  background: var(--cc-shr-accent, #2f6feb) !important;
+  background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important;   /* rainbow: paintMain stamps --cc-rb-c per tile; unstamped = accent */
   text-decoration: none !important; opacity: 1; transition: filter .12s;
 }
 html.cc-shares-on.cc-on-main #displaybox a.cc-ud-icon,
 html.cc-shares-on.cc-on-main #displaybox a.cc-ud-icon *,
 html.cc-shares-on.cc-on-main #displaybox a.cc-ibtn,
 html.cc-shares-on.cc-on-main #displaybox a.cc-ibtn * {
-  font-size: 13px !important; line-height: 1 !important; color: var(--cc-shr-accent-text, #fff) !important;   /* glyph proportional to the 24px tile, dead-centred by the flex box */
+  font-size: 13px !important; line-height: 1 !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;   /* glyph proportional to the 24px tile, dead-centred by the flex box */
 }
 html.cc-shares-on.cc-on-main #displaybox a.cc-ud-icon:hover,
 html.cc-shares-on.cc-on-main #displaybox a.cc-ibtn:hover { filter: brightness(1.14); }
@@ -698,7 +702,7 @@ html.cc-shares-on.cc-on-main #displaybox .switch-button-background {
   display: inline-block; vertical-align: middle; margin: 0 12px 0 3px !important; cursor: pointer;   /* !important: UD's unassigned.css ships .switch-button-background{margin-top:2px!important} */
   transition: background .15s; box-sizing: border-box;
 }
-html.cc-shares-on.cc-on-main #displaybox .switch-button-background.checked { background: var(--cc-shr-accent, #2f6feb) !important; }
+html.cc-shares-on.cc-on-main #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; }   /* rainbow: paintMain stamps --cc-rb-c per track; unstamped = accent. Checked stays coloured in the neutral sub-mode (active = coloured, like the active menu tab) */
 html.cc-shares-on.cc-on-main #displaybox .switch-button-background .switch-button-button {
   width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important;
   border-radius: min(var(--cc-b-radius, 999px), 9px) !important; background: #fff !important; box-shadow: none !important; border: none !important; transition: left .15s;   /* 9px cap = half the knob, stays inside the track */
@@ -830,7 +834,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-hide { displ
    bubble (moved into the button cell by enhanceArrayOpRow). */
 html.cc-shares-on.cc-on-main #displaybox table.array_status a.cc-aop-link {
   display: inline-flex; align-items: center; margin-left: 8px; vertical-align: middle;
-  background: var(--cc-shr-accent, #2f6feb); color: var(--cc-shr-accent-text, #fff);
+  background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff));   /* rainbow: stamped per link by paintMain; unstamped = accent */
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 3px 11px);
   font-size: var(--cc-sm-fs, 11px); font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
   text-decoration: none !important; white-space: nowrap; transition: filter .12s;
@@ -1403,6 +1407,23 @@ html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status a.button:hove
    grey at rest, whole-row recolour on hover via the tr-stamped vars (now stamped by the UD loop). */
 html.cc-shares-rbneutral.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) .cc-b { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
 html.cc-shares-rbneutral.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) tr:hover .cc-b {
+  background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
+}
+/* the last rainbow gaps (user: "auf der Start-Seite sind nicht alle toggles und badges und buttons
+   im rainbowmode"): UD cluster icon tiles, the column-reset icon button and the (Planung)/Wiki
+   links join the neutral contract — grey at rest, their stamped palette colour on hover. Toggle
+   tracks are NOT greyed: checked = active = coloured (same contract as the active menu tab). */
+html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ud-icon,
+html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ibtn,
+html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status a.cc-aop-link { background: rgba(128, 128, 128, .18) !important; }
+html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ud-icon:not(:hover),
+html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ud-icon:not(:hover) *,
+html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ibtn:not(:hover),
+html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ibtn:not(:hover) *,
+html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status a.cc-aop-link:not(:hover) { color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ud-icon:hover,
+html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ibtn:hover,
+html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status a.cc-aop-link:hover {
   background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
 }
 

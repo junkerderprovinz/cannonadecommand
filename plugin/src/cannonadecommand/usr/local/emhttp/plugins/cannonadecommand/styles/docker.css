@@ -272,8 +272,8 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
 /* optimistic in-transition state (shown the moment stop/restart is clicked, until reload) */
 .cc-badge-transient  { background: #8a6d1f; color: #ffe6a8; animation: cc-badge-pulse 1s ease-in-out infinite; }
 @keyframes cc-badge-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
-.cc-badge-toggle { cursor: pointer; user-select: none; transition: filter .12s, box-shadow .12s; }
-.cc-badge-toggle:hover { filter: brightness(1.13); box-shadow: 0 0 0 2px rgba(255,255,255,.22) inset; }
+.cc-badge-toggle { cursor: pointer; user-select: none; transition: filter .12s; }
+.cc-badge-toggle:hover { filter: brightness(1.13); } /* no hover ring — the zero-border law covers hover states too */
 
 /* last-run pill */
 .cc-pill-ready { background: #1f7a45; color: #dff5e8; }
@@ -283,8 +283,8 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
 
 /* ════════════════ GRID mode + gear menu + toast + editor ════════════════ */
 .cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; padding-top: 30px; } /* room for the grid gear pinned top-right */
-.cc-card { background: var(--cc-bg2); border: 1px solid var(--cc-line); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; transition: border-color .12s, transform .12s, box-shadow .12s; }
-.cc-card:hover { border-color: #3a3a3a; transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0,0,0,.35); }
+.cc-card { background: var(--cc-bg2); border: none; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; transition: transform .12s, box-shadow .12s; }
+.cc-card:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0,0,0,.35); } /* elevation only — resting borders and hover border tints are LINES (law); bg contrast separates the card */
 .cc-card-head { display: flex; align-items: center; gap: 10px; }
 .cc-card-ico { width: 44px; height: 44px; border-radius: 7px; object-fit: contain; background: var(--cc-bg3); flex: none; }
 .cc-card-ico-ph { background: var(--cc-bg3); }

@@ -228,12 +228,16 @@
   // keeps its tooltip on the pill. Returns the pill, or null when there's no status orb (e.g.
   // disk sub-rows), so enhanceRow can drop it into the leading Status <td>.
   function statusPill(name) {
+    // v2.35.0 (user: "zustandsanzeige der disks und der shares gleich machen ... punkt anstatt
+    // der eigenen spalte"): the share's protection state is a DISK-STYLE dot in the name cell,
+    // not a text pill in an own column. Shape follows the badge form via --cc-dot-r.
     var orb = name.querySelector("i.orb, i.green-orb, i.yellow-orb");
     if (!orb) return null;
     var cn = orb.className || "", green = /green-orb/.test(cn), yellow = /yellow-orb|fa-warning/.test(cn);
     if (!green && !yellow) return null;
-    var sb = el("span", "cc-b-status " + (green ? "cc-b-prot" : "cc-b-unprot"), t(green ? "protected" : "unprotected"));
-    var infoA = orb.closest("a"); // a.info.nohand — hide the bare orb, keep its tooltip on the pill
+    var sb = el("span", "cc-dot " + (green ? "cc-dot-prot" : "cc-dot-unprot"));
+    sb.title = t(green ? "protected" : "unprotected");
+    var infoA = orb.closest("a"); // a.info.nohand — hide the bare orb, keep its tooltip on the dot
     if (infoA) { var ti = infoA.getAttribute("title"); if (ti) sb.title = ti; infoA.style.setProperty("display", "none", "important"); }
     else orb.style.setProperty("display", "none", "important");
     return sb;
@@ -252,13 +256,13 @@
     if (tr.getAttribute("data-cc-sh")) return; // set-and-bail idempotency
     tr.setAttribute("data-cc-sh", "1");
     var empty = tr.querySelector(":scope > td.empty");
-    if (empty) { empty.colSpan = (empty.colSpan || 1) + 2; return; } // no-shares placeholder: widen by the 2 new cols
-    var tds = Array.prototype.slice.call(tr.children); // snapshot BEFORE inserting the Status+Browse cells
+    if (empty) { empty.colSpan = (empty.colSpan || 1) + 1; return; } // no-shares placeholder: widen by the ONE new col (Browse; the Status column is a name-cell dot now)
+    var tds = Array.prototype.slice.call(tr.children); // snapshot BEFORE inserting the Browse cell
     var name = tds[0]; if (!name) return;
-    var st = el("td", "cc-status-col"); // Status cell, inserted right AFTER the Name cell
-    var pill = statusPill(name); if (pill) st.appendChild(pill);
-    name.parentNode.insertBefore(st, name.nextSibling);
-    var bt = el("td", "cc-browse-col"); // Browse cell, inserted AFTER the Status cell
+    // protection state -> disk-style DOT leading the name cell (v2.35.0; the old own Status
+    // column is gone — head and body stay in sync, both add only the Browse column now)
+    var dot = statusPill(name); if (dot) name.insertBefore(dot, name.firstChild);
+    var bt = el("td", "cc-browse-col"); // Browse cell, inserted right AFTER the Name cell
     var view = name.querySelector("a.view");
     if (view && view.getAttribute("href")) { // real browse link (disk sub-rows carry an empty a.view)
       view.classList.add("cc-b-browse");
@@ -266,8 +270,8 @@
       if (!view.querySelector(".cc-b-lab")) view.appendChild(el("span", "cc-b-lab", t("browse")));
       bt.appendChild(view); // moves it OUT of the Name cell, href/onclick intact
     }
-    name.parentNode.insertBefore(bt, st.nextSibling);
-    enhanceName(name); // name link -> lg badge (status + browse have already left this cell)
+    name.parentNode.insertBefore(bt, name.nextSibling);
+    enhanceName(name); // name link -> lg badge (browse has already left this cell)
     for (var i = 2; i < tds.length; i++) badgeCell(tds[i]); // SMB, NFS, Storage, Size, Free (skip Name+Comment)
   }
   function enhanceHead(table) {
@@ -275,9 +279,7 @@
     if (!head || head.getAttribute("data-cc-sh")) return;
     head.setAttribute("data-cc-sh", "1");
     var name = head.children[0]; if (!name) return;
-    var sh = el("td", "cc-status-col", t("protection"));
-    head.insertBefore(sh, name.nextSibling); // Status header AFTER Name
-    head.insertBefore(el("td", "cc-browse-col", t("browse")), sh.nextSibling); // Browse header AFTER Status
+    head.insertBefore(el("td", "cc-browse-col", t("browse")), name.nextSibling); // Browse header AFTER Name (no Status header — the state is a name-cell dot now)
   }
   function enhanceShares() {
     try {
@@ -398,6 +400,17 @@
         if (!rb || neutral || xb.disabled) { xb.style.removeProperty("background"); xb.style.removeProperty("color"); bi++; continue; }
         xb.style.setProperty("background", xc, "important"); xb.style.setProperty("color", xtc, "important");
         bi++;
+      }
+      // The last rainbow gaps (user: "auf der Start-Seite sind nicht alle toggles und badges und
+      // buttons im rainbowmode"): UD cluster icon tiles, toggle tracks, the column-reset icon and
+      // the (Planung)/Wiki links. Their CSS consumers read --cc-rb-c with the accent as fallback,
+      // so un-stamping (rainbow off) falls straight back to the accent sheet. Checked toggle
+      // tracks keep their stamped colour in the neutral sub-mode: active = coloured.
+      var extras = document.querySelectorAll("#displaybox a.cc-ud-icon, #displaybox a.cc-ibtn, #displaybox .cc-aop-link, #displaybox .switch-button-background");
+      for (var e3 = 0; e3 < extras.length; e3++) {
+        var ex = extras[e3];
+        if (rb) { var ec = rbColor(bi), ect = idealText(ec); ex.style.setProperty("--cc-rb-c", ec); ex.style.setProperty("--cc-rb-ct", ect); bi++; }
+        else { ex.style.removeProperty("--cc-rb-c"); ex.style.removeProperty("--cc-rb-ct"); }
       }
       // Rainbow reaches the UD area + ALL /Main heading badges. UD rows: same row-counter contract
       // as the disk_status loop (one palette colour per row, neutral sub-mode clears to accent).
@@ -1873,7 +1886,7 @@
           // rainbow "active only" leftovers: drop the neutral class and clear the inline rb colours
           // paintTabs/paintRows stamped (inline survives a class removal, so it must be cleared here).
           root.classList.remove("cc-shares-rbneutral");
-          var painted = document.querySelectorAll('#displaybox nav.tabs button[role="tab"], #displaybox #shareslist tr, #displaybox #disk_list tr, #displaybox .cc-b, #displaybox .cc-b-browse, #displaybox table.unraid.disk_status tr, #displaybox table.array_status input[type="submit"], #displaybox table.array_status input[type="button"], #displaybox table.array_status a.button, #displaybox table.array_status button, #displaybox .cc-card-head');
+          var painted = document.querySelectorAll('#displaybox nav.tabs button[role="tab"], #displaybox #shareslist tr, #displaybox #disk_list tr, #displaybox .cc-b, #displaybox .cc-b-browse, #displaybox table.unraid.disk_status tr, #displaybox table.array_status input[type="submit"], #displaybox table.array_status input[type="button"], #displaybox table.array_status a.button, #displaybox table.array_status button, #displaybox .cc-card-head, #displaybox a.cc-ud-icon, #displaybox a.cc-ibtn, #displaybox .cc-aop-link, #displaybox .switch-button-background');
           for (var p = 0; p < painted.length; p++) { painted[p].style.removeProperty("background"); painted[p].style.removeProperty("color"); painted[p].style.removeProperty("--cc-rb-c"); painted[p].style.removeProperty("--cc-rb-ct"); }
           ccSelectsTeardown();   // unwrap the custom <select> overlays -> native form back, clean
           ccCardsTeardown();     // unwrap the split/side/user-access card wrappers -> native structure back
@@ -1914,6 +1927,9 @@
       root.style.setProperty("--cc-shr-accent", a);
       root.style.setProperty("--cc-shr-accent-text", idealText(a));
       root.style.setProperty("--cc-b-radius", shape());
+      // the state DOT (disk orbs + share protection) follows the badge form at dot scale:
+      // pill/circle = round, rounded = soft corner, square = hard corner
+      root.style.setProperty("--cc-dot-r", ({ pill: "50%", circle: "50%", rounded: "3px", square: "0px" })[g("cc.badgeshape", "pill")] || "50%");
       root.classList.toggle("cc-shares-rb", rbOn());
       ensureTabbed();
       hideRedundantTabs();
