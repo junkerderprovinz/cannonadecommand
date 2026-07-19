@@ -77,11 +77,10 @@ func applyExtraParams(doc, name string, kv map[string]string) (string, bool) {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
+	// strip EVERY key first (token-aware: "=" and space forms, quoted args opaque),
+	// then append the new values — CC's value always wins over a template-written flag.
+	inner = strings.TrimSpace(StripFlags(inner, keys...))
 	for _, flag := range keys {
-		// drop any existing "flag=value" / "flag value" (not the "-swap" sibling: the char
-		// after the flag must be '=' or whitespace, which "--memory-swap" doesn't have).
-		rm := regexp.MustCompile(regexp.QuoteMeta(flag) + `(?:=|\s+)\S+`)
-		inner = strings.TrimSpace(rm.ReplaceAllString(inner, ""))
 		if v := kv[flag]; v != "" {
 			if inner != "" {
 				inner += " "
@@ -89,7 +88,6 @@ func applyExtraParams(doc, name string, kv map[string]string) (string, bool) {
 			inner += flag + "=" + v
 		}
 	}
-	inner = strings.TrimSpace(inner)
 	newEP := "<ExtraParams>" + inner + "</ExtraParams>"
 	if loc != nil {
 		return doc[:loc[0]] + newEP + doc[loc[1]:], true
@@ -99,6 +97,120 @@ func applyExtraParams(doc, name string, kv map[string]string) (string, bool) {
 	}
 	return doc + "\n" + newEP + "\n", true
 }
+
+// StripFlags removes every occurrence of the given docker CLI flags from a
+// space-separated ExtraParams string, in BOTH forms: "--flag=value" (one token)
+// and "--flag value" (flag + separate value token; the value is eaten unless it
+// starts with '-', i.e. is the next flag). Short flags ("-m") also match their
+// attached form ("-m2g"). Quoted segments are opaque — flag text inside quotes
+// (e.g. an --env value) is never touched. Everything not removed stays
+// byte-identical; whitespace collapses only where a token was removed.
+func StripFlags(s string, flags ...string) string {
+	if s == "" || len(flags) == 0 {
+		return s
+	}
+	spans := tokenize(s)
+	remove := make([]bool, len(spans))
+	for i, sp := range spans {
+		if remove[i] {
+			continue // already consumed as a preceding flag's value
+		}
+		tok := s[sp[0]:sp[1]]
+		for _, f := range flags {
+			if f == "" || !matchFlag(tok, f) {
+				continue
+			}
+			remove[i] = true
+			if tok == f && i+1 < len(spans) { // bare flag → space-form value follows
+				if next := s[spans[i+1][0]:spans[i+1][1]]; !strings.HasPrefix(next, "-") {
+					remove[i+1] = true
+				}
+			}
+			break
+		}
+	}
+	// merge runs of removed tokens (only whitespace sits between tokens) so a run
+	// that ends the string drops its LEADING gap too — no trailing space left over.
+	type rng struct{ start, end int }
+	var rngs []rng
+	for i := 0; i < len(spans); i++ {
+		if !remove[i] {
+			continue
+		}
+		start, end := spans[i][0], spans[i][1]
+		for i+1 < len(spans) && remove[i+1] {
+			i++
+			end = spans[i][1]
+		}
+		rngs = append(rngs, rng{start, end})
+	}
+	var b strings.Builder
+	b.Grow(len(s))
+	prev := 0
+	for _, r := range rngs {
+		start, end := r.start, r.end
+		for end < len(s) && isSpace(s[end]) { // eat the gap AFTER the run…
+			end++
+		}
+		if end == len(s) { // …unless it ends the string: then eat the gap BEFORE
+			for start > prev && isSpace(s[start-1]) {
+				start--
+			}
+		}
+		b.WriteString(s[prev:start])
+		prev = end
+	}
+	b.WriteString(s[prev:])
+	return b.String()
+}
+
+// matchFlag reports whether token tok IS flag f: exact ("--cpus"), '='-joined
+// ("--cpus=2"), or — short flags like "-m" only — attached value ("-m2g").
+// "--memory" never matches "--memory-swap": no exact/'='/short rule fires.
+func matchFlag(tok, f string) bool {
+	if tok == f || strings.HasPrefix(tok, f+"=") {
+		return true
+	}
+	short := len(f) == 2 && f[0] == '-' && f[1] != '-'
+	return short && len(tok) > 2 && strings.HasPrefix(tok, f) && tok[2] != '-'
+}
+
+// tokenize returns [start,end) byte spans of whitespace-separated tokens. A
+// quote (double or single) opens a run in which spaces do NOT split, also
+// mid-token (FOO="a b" is ONE token), matching how dockerMan hands ExtraParams to sh.
+func tokenize(s string) [][2]int {
+	var spans [][2]int
+	for i := 0; i < len(s); {
+		for i < len(s) && isSpace(s[i]) {
+			i++
+		}
+		if i >= len(s) {
+			break
+		}
+		start := i
+		var q byte
+		for i < len(s) {
+			c := s[i]
+			switch {
+			case q != 0:
+				if c == q {
+					q = 0
+				}
+			case c == '"' || c == '\'':
+				q = c
+			case isSpace(c):
+			}
+			if q == 0 && isSpace(c) {
+				break
+			}
+			i++
+		}
+		spans = append(spans, [2]int{start, i})
+	}
+	return spans
+}
+
+func isSpace(c byte) bool { return c == ' ' || c == '\t' || c == '\n' || c == '\r' }
 
 func writeAtomic(path string, data []byte) error {
 	tmp := path + ".cc.tmp"

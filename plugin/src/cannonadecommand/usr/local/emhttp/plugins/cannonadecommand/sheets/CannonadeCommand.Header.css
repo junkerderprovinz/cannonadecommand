@@ -292,6 +292,14 @@ html.cc-header-on #menu .cc-nav-wiggle {
   animation: cc-nav-wiggle .32s ease-in-out infinite;
   transform-origin: 50% 50%;
 }
+
+/* ═══ native footer strip: footer#footer (position:fixed, 28px — array status + temps +
+   copyright). DEFAULT HIDDEN (user: "komplett ausblenden"); the settings toggle
+   (cc.footer="0") restores it. header.js stamps cc-footer-off master-gated, so theming
+   OFF = class absent = fully native. No body give-back rule: the native layout sizes the
+   scroll area via fillAvailableHeight(), not a body padding-bottom — nothing reserves
+   the 28px on the body itself. ═══ */
+html.cc-footer-off #footer { display: none !important; }
 @media (prefers-reduced-motion: reduce) {
   html.cc-header-on #menu .cc-nav-wiggle { animation: none; outline: 2px dashed var(--cc-hdr-accent, #70b8ff); outline-offset: 2px; }
 }

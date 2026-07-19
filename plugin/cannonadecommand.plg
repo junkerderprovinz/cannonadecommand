@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.36.2">
+  <!ENTITY version   "2.37.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,20 @@
 </ICON>
 
 <CHANGES>
+### 2.37.0
+- #1 CC-Werte gehen IMMER vor: Beim Setzen von CPU- oder RAM-Limits entfernt die Engine
+  konfligierende Eintraege (--memory, -m, --memory-swap, --cpus, --cpuset-cpus,
+  --cpu-shares) aus den Extra-Parametern der Vorlage -- ein Container-Neuerstellen kann
+  alte Werte nicht mehr zurueckbringen. Alle uebrigen Extra-Parameter bleiben unangetastet.
+- #2 Einstellungen/Werkzeuge: Die Abschnitts-Badges behalten ihre Farbe in BEIDEN
+  Rainbow-Modi (wie auf der Startseite), die Abschnitte ruecken enger zusammen.
+- #3 NEU: Kachelgroesse in drei Stufen (Klein/Mittel/Gross) in den CC-Einstellungen --
+  Standard "Mittel" entspricht exakt der Docker-Logo-Kachel; gilt auch fuer Favoriten.
+- #4 Tailscale-Kachel: statt des weissen Flecks jetzt das Punkte-Symbol in der
+  Kontrastfarbe (zweifarbiges Punktraster bleibt erhalten).
+- #5 NEU: Die untere Statusleiste (Array gestartet / shiplog / Temperaturen) ist komplett
+  ausgeblendet -- per Schalter in den Einstellungen zurueckholbar.
+
 ### 2.36.2
 - #1 Konfigurations-Popup: die Auswahllisten (Konfigurationstyp, Zugriffsrechte, Anzeigen,
   Erforderlich, Password Mask) nutzen jetzt das CC-Dropdown -- die nativen Listen entstehen
@@ -1292,7 +1306,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>7dd8ec3c7b02cd108edb983cbc412ec50445447a2d4cfdae40ba9195592f7a25</SHA256>
+  <SHA256>e936d3dacc7edcd988cb6581bd00d217d1e7f5406b90bb5401cb6c5a30b3d4fa</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

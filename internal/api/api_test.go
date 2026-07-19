@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/junkerderprovinz/cannonadecommand/internal/hostcpu"
@@ -260,6 +263,38 @@ func TestLimitsRemoveSendsHostTotals(t *testing.T) {
 	want := fmt.Sprintf("limits:gluetun:%d:%d", wantMem, wantCPU)
 	if len(fd.actions) != 1 || fd.actions[0] != want {
 		t.Fatalf("remove must send host totals %q, got %v", want, fd.actions)
+	}
+}
+
+// The limits dual-write must run the conflict stripper for BOTH cpu and memory:
+// template-written flags CC never sets itself (-m, --cpu-shares, space forms)
+// are gone after a set and CC's own values are in — so an Unraid recreate
+// cannot resurrect stale caps from the template's Extra Parameters.
+func TestLimitsDualWriteStripsTemplateConflicts(t *testing.T) {
+	s, h := newServer()
+	dir := t.TempDir()
+	s.TemplatesDir = dir
+	f := filepath.Join(dir, "my-gluetun.xml")
+	tmpl := `<Container><Name>gluetun</Name><ExtraParams>--restart=always -m 1g --memory-swap=4g --cpu-shares 512 --cpuset-cpus 0-7</ExtraParams></Container>`
+	if err := os.WriteFile(f, []byte(tmpl), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	body, _ := json.Marshal(map[string]any{"name": "gluetun", "mem_bytes": 1073741824, "nano_cpus": 2000000000})
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("POST", "/api/limits", bytes.NewReader(body)))
+	if rec.Code != 200 {
+		t.Fatalf("set limits code = %d: %s", rec.Code, rec.Body)
+	}
+	got, _ := os.ReadFile(f)
+	for _, gone := range []string{"-m 1g", "--memory-swap", "--cpu-shares", "--cpuset-cpus", "0-7"} {
+		if strings.Contains(string(got), gone) {
+			t.Fatalf("conflicting template flag %q must be stripped:\n%s", gone, got)
+		}
+	}
+	for _, want := range []string{"--restart=always", "--memory=1073741824", "--cpus=2"} {
+		if !strings.Contains(string(got), want) {
+			t.Fatalf("missing %q in rewritten template:\n%s", want, got)
+		}
 	}
 }
 

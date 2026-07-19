@@ -18,7 +18,10 @@
  * from --cc-accent / --cc-accent-text (set by settingsgrid.js; rainbow mode paints each
  * badge per-tile inline). The native .Panels grid layout is left intact. */
 
-:root { --cc-sg-size: 64px; --cc-sg-glyph: 32px; --cc-sg-rmax: 16px; --cc-lgb-h: 36px; } /* --cc-lgb-h: per-sheet copy (house rule) */
+/* --cc-sg-size/-glyph: DEFAULTS for the cc.sgsize=m step (78px = Docker's logo-tile box, 62px
+   content + 8px pad); settingsgrid.js paintGrid stamps s(64/32)|m(78/38)|l(96/46) live.
+   --cc-lgb-h: per-sheet copy (house rule). */
+:root { --cc-sg-size: 78px; --cc-sg-glyph: 38px; --cc-sg-rmax: 16px; --cc-lgb-h: 36px; }
 
 /* ═══ align the Settings/Tools content with the MAIN MENU BAR (v2.16.0) ═══
    --cc-align-left is the geometry token every other CC area wires — but each globally-injected sheet
@@ -41,7 +44,7 @@ html.cc-settingsgrid-heads-on:not(.Theme--sidebar) #displaybox { padding-left: v
 html.cc-settingsgrid-on #displaybox .Panel > a > span {
   display: inline-flex !important; align-items: center; justify-content: center;
   box-sizing: border-box !important; position: relative;
-  width: var(--cc-sg-size, 64px) !important; height: var(--cc-sg-size, 64px) !important;
+  width: var(--cc-sg-size, 78px) !important; height: var(--cc-sg-size, 78px) !important;
   margin: 0 auto !important; padding: 0 !important;
   /* cap the radius so pill-mode gives a rounded SQUARE; rounded(6px)/square(0) stay exact
      -> one shape family across all badge-form modes (same trick as the header sheet) */
@@ -53,7 +56,7 @@ html.cc-settingsgrid-on #displaybox .Panel > a:hover > span { filter: brightness
 
 /* the icon-font glyph (icon-* / fa-*) inside the badge: big, contrast colour */
 html.cc-settingsgrid-on #displaybox .Panel > a > span > i.PanelIcon {
-  font-size: var(--cc-sg-glyph, 32px) !important; line-height: 1 !important;
+  font-size: var(--cc-sg-glyph, 38px) !important; line-height: 1 !important;
   color: var(--cc-iconbg-text, var(--cc-accent-text, #fff)) !important; margin: 0 !important; padding: 0 !important;
 }
 /* a raster logo can't be tinted -> just scale it to the badge. Covers BOTH img.PanelImg AND img.icon:
@@ -61,8 +64,20 @@ html.cc-settingsgrid-on #displaybox .Panel > a > span > i.PanelIcon {
    skip it, so a PNG-logo tile in Tools/Settings kept its full colour while glyph tiles went monochrome
    (user: "im Werkzeugtab ist im untersten Abschnitt das Icon farbig, angleichen"). */
 html.cc-settingsgrid-on #displaybox .Panel > a > span > img {
-  width: var(--cc-sg-glyph, 32px) !important; height: var(--cc-sg-glyph, 32px) !important;
+  width: var(--cc-sg-glyph, 38px) !important; height: var(--cc-sg-glyph, 38px) !important;
   max-width: none !important; object-fit: contain !important; margin: 0 !important;
+}
+/* ═══ Tailscale tile: the shipped tailscale.png flattens to a white BLOB on the badge ═══
+   Swap it for our dots SVG rendered as an ALPHA MASK, so the dots take the badge's contrast
+   colour and the 0.2-opacity corner dots come through at 20% (mask keeps per-pixel alpha ->
+   the two-tone design survives any badge colour). [href*="ailscale"] = case-tolerant anchor. */
+html.cc-settingsgrid-on #displaybox .Panel > a[href*="ailscale"] > span > img { display: none !important; }
+html.cc-settingsgrid-on #displaybox .Panel > a[href*="ailscale"] > span::after {
+  content: ""; display: block;   /* the span is already a centred flex box -> auto-centred */
+  width: var(--cc-sg-glyph, 38px); height: var(--cc-sg-glyph, 38px);
+  background-color: var(--cc-iconbg-text, var(--cc-accent-text, #fff));
+  -webkit-mask: url(/plugins/cannonadecommand/images/tailscale-dots.svg) center / contain no-repeat;
+  mask: url(/plugins/cannonadecommand/images/tailscale-dots.svg) center / contain no-repeat;
 }
 /* the favourites heart that Settings.page injects into the span on hover -> pin it to a
    corner so it doesn't sit under the glyph, and keep it readable on the accent badge */
@@ -119,8 +134,12 @@ html.cc-settingsgrid-heads-on #displaybox div.title {
   background: none !important; background-color: transparent !important;
   border-bottom: 0 !important; padding: 0 !important;
   letter-spacing: normal !important; font-size: inherit !important;
-  margin: 22px 0 12px !important;
+  /* user: "die Abschnitte sind sehr weit auseinander" -> inter-section rhythm ~40% tighter
+     (22px top -> 13px); the 12px badge-to-tiles gap stays untouched. */
+  margin: 13px 0 12px !important;
 }
+/* native .Panels bottom margin must not stack extra air onto the next title's top margin */
+html.cc-settingsgrid-heads-on #displaybox .Panels { margin-bottom: 0 !important; }
 html.cc-settingsgrid-heads-on #displaybox div.title:first-of-type { margin-top: 0 !important; }
 html.cc-settingsgrid-heads-on #displaybox div.title > span.right { flex: 0 0 auto; }   /* the empty right slot must not stretch the space-between row */
 
@@ -144,25 +163,10 @@ html.cc-settingsgrid-heads-on #displaybox div.title > span.left > img.icon {
                                          keep theirs; our (1,3,3) beats their (0,2,1). */
 }
 
-/* rainbow "colour only the active badge" sub-mode. Headings have no active item, so idle badges go
-   neutral grey and colour on HOVER via the per-heading --cc-rb-c/--cc-rb-ct paintHeads stamps —
-   the same contract paintGrid uses for the tiles. Gated on BOTH -headsneutral AND -heads-on so the
-   neutral rules die the instant area/theming is disabled live (else grey badges leak onto the native
-   headings until a reload). A SEPARATE class from -rbneutral on purpose: -rbneutral is toggled only
-   inside paintGrid(), which never runs in tint mode, so reusing it would strand headings colourful there. */
-html.cc-settingsgrid-heads-on.cc-settingsgrid-headsneutral #displaybox div.title > span.left {
-  background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important;
-}
-/* hover the BADGE, not the row: native div.title is a full-width flex row (default-base.css
-   `div.title{display:flex;justify-content:space-between}`) and its right slot is empty, so keying the
-   hover off the ROW would recolour the badge from anywhere on a ~1700px invisible strip — we strip the
-   row's own background just above, so there is nothing there to hover. (The tile analogue keys off
-   .Panel > a, which is legitimate: .Panel is max-width:120px, i.e. the tile IS the target.) */
-html.cc-settingsgrid-heads-on.cc-settingsgrid-headsneutral #displaybox div.title > span.left:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
-  filter: none !important;
-}
+/* HOUSE LAW: section heads ALWAYS keep their colour. The rainbow "active only" (neutral)
+   sub-mode greys the TILES only (-rbneutral block above) — heads are EXEMPT, so there are NO
+   -headsneutral grey-rest rules any more: paintHeads stamps the painted palette/accent colour
+   in BOTH rainbow sub-modes and always removes the legacy -headsneutral class. */
 
 /* ═══ FOCUS LAW: keyboard focus draws NO outline/ring/shadow either — feedback is brightness only ═══ */
 html.cc-settingsgrid-on #displaybox .Panel > a:focus-visible,

@@ -388,29 +388,38 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 	// hosts without swap accounting — matching the live path, which omits MemorySwap).
 	tmplResult := "template: no change"
 	if s.TemplatesDir != "" {
+		// CC's window value must ALWAYS win over the template's Extra Parameters: any
+		// touch of RAM/CPU strips ALL conflicting docker flags of that family (an empty
+		// value = remove-only), then re-adds only what CC set — so an Unraid recreate
+		// cannot resurrect a stale template-written cap. A CLEAR only strips (rule: the
+		// user's template is never re-populated on remove).
 		flags := map[string]string{}
-		switch {
-		case req.RemoveMem:
+		if req.RemoveMem || req.MemBytes > 0 {
 			flags["--memory"] = ""
-			flags["--memory-swap"] = "" // strip any stale swap flag too
-		case req.MemBytes > 0:
-			flags["--memory"] = strconv.FormatInt(req.MemBytes, 10)
-			flags["--memory-swap"] = "" // never set a swap cap
+			flags["-m"] = ""                   // short form of --memory
+			flags["--memory-swap"] = ""        // never set a swap cap (memsw cgroup)
+			flags["--memory-reservation"] = "" // soft cap would fight CC's hard cap
+			if !req.RemoveMem {
+				flags["--memory"] = strconv.FormatInt(req.MemBytes, 10)
+			}
 		}
-		switch {
-		case req.RemoveCPU:
+		if req.RemoveCPU || req.NanoCPUs > 0 || req.CpusetCPUs != "" {
 			flags["--cpus"] = ""
 			flags["--cpuset-cpus"] = ""
-		default:
-			if req.NanoCPUs > 0 {
-				// 'f' (not 'g') so a small value never becomes scientific notation
-				// (e.g. "1e-06"), which docker run --cpus would reject on an Apply.
-				flags["--cpus"] = strconv.FormatFloat(float64(req.NanoCPUs)/1e9, 'f', -1, 64)
-			}
-			if req.CpusetCPUs != "" {
-				flags["--cpuset-cpus"] = req.CpusetCPUs
+			flags["--cpu-shares"] = "" // relative weight would fight CC's absolute cap
+			if !req.RemoveCPU {
+				if req.NanoCPUs > 0 {
+					// 'f' (not 'g') so a small value never becomes scientific notation
+					// (e.g. "1e-06"), which docker run --cpus would reject on an Apply.
+					flags["--cpus"] = strconv.FormatFloat(float64(req.NanoCPUs)/1e9, 'f', -1, 64)
+				}
+				if req.CpusetCPUs != "" {
+					flags["--cpuset-cpus"] = req.CpusetCPUs
+				}
 			}
 		}
+		// Bandwidth limits are tc-only (monitor/netshape); CC never wrote a rate flag
+		// into ExtraParams, so there is no legacy rate token to strip here.
 		if len(flags) > 0 {
 			// NOT silent anymore: a failing template mirror means every Unraid recreate
 			// (edit/apply/update) WIPES the live limits — the exact "green message but

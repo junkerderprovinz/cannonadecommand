@@ -293,6 +293,11 @@
       // jQuery-UI dialogs (openBox/openPlugin) + SweetAlert confirmations follow the CC look on
       // every page. Master-gated only — it is chrome, not an area of its own.
       root.classList.toggle("cc-popups-on", g("cc.theming", "1") !== "0");
+      // GLOBAL footer hide (user: "die native Leiste wo Array gestartet steht ... komplett
+      // ausblenden"): footer#footer = the fixed 28px strip (#statusraid/#statusbar + temps +
+      // copyright). DEFAULT HIDDEN — cc.footer="0" (settings toggle) brings it back. Same
+      // master-gating idiom as cc-popups-on; the storage listener re-runs apply() live.
+      root.classList.toggle("cc-footer-off", g("cc.footer", "1") === "1" && g("cc.theming", "1") !== "0");
       paintPopups(); watchPopups();
       // paintNav() with cc-header-on now removed => rb=false => it removeProperty's every
       // lingering rainbow inline colour, so a live theming-OFF (even with Rainbow on) fully

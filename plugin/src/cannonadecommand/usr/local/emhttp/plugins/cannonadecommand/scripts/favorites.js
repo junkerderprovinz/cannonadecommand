@@ -25,6 +25,11 @@
     root.style.setProperty("--cc-accent", a);
     root.style.setProperty("--cc-accent-text", idealText(a));
     root.style.setProperty("--cc-b-radius", shape());
+    // cc.sgsize (GLOBAL, same key settingsgrid.js stamps): s|m|l tile step so /Favorites
+    // matches /Settings + /Tools. m DEFAULT = Docker's 78px logo-tile box (62px + 8px pad).
+    var sz = ({ s: ["64px", "32px"], m: ["78px", "38px"], l: ["96px", "46px"] })[g("cc.sgsize", "m")] || ["78px", "38px"];
+    root.style.setProperty("--cc-fav-size", sz[0]);
+    root.style.setProperty("--cc-fav-glyph", sz[1]);
   }
   var mo = null;
   function boot() {

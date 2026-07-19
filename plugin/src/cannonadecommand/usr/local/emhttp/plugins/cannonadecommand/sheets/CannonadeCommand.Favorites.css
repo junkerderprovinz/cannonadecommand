@@ -4,10 +4,13 @@
  * html.cc-favorites-on which favorites.js sets only on /Favorites when the Favoriten area +
  * master theming are on. A scoped copy of CannonadeCommand.SettingsGrid.css's tile rules: the
  * favorites tab has the IDENTICAL .Panel > a > span / .PanelText / i.favo DOM (MyFavorites.page),
- * so the same 64px square-accent-badge recipe gives instant parity. Inert on every other page.
+ * so the same square-accent-badge recipe (cc.sgsize-stepped box) gives instant parity. Inert
+ * on every other page.
  */
 
-:root { --cc-fav-size: 64px; --cc-fav-glyph: 32px; --cc-fav-rmax: 16px; }
+/* DEFAULTS = cc.sgsize=m step (78px = Docker's logo-tile box); favorites.js stamps
+   s(64/32)|m(78/38)|l(96/46) live from the SAME cc.sgsize key settingsgrid.js uses. */
+:root { --cc-fav-size: 78px; --cc-fav-glyph: 38px; --cc-fav-rmax: 16px; }
 
 /* align favorites content with the MAIN MENU BAR (mirrors SettingsGrid.css) */
 html.cc-favorites-on { --cc-align-left: 10px; }
@@ -18,7 +21,7 @@ html.cc-favorites-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-a
 html.cc-favorites-on #displaybox .Panel > a > span {
   display: inline-flex !important; align-items: center; justify-content: center;
   box-sizing: border-box !important; position: relative;
-  width: var(--cc-fav-size, 64px) !important; height: var(--cc-fav-size, 64px) !important;
+  width: var(--cc-fav-size, 78px) !important; height: var(--cc-fav-size, 78px) !important;
   margin: 0 auto !important; padding: 0 !important;
   border-radius: min(var(--cc-b-radius, 14px), var(--cc-fav-rmax, 16px)) !important;
   background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important;
@@ -26,11 +29,11 @@ html.cc-favorites-on #displaybox .Panel > a > span {
 }
 html.cc-favorites-on #displaybox .Panel > a:hover > span { filter: brightness(1.1); }
 html.cc-favorites-on #displaybox .Panel > a > span > i.PanelIcon {
-  font-size: var(--cc-fav-glyph, 32px) !important; line-height: 1 !important;
+  font-size: var(--cc-fav-glyph, 38px) !important; line-height: 1 !important;
   color: var(--cc-iconbg-text, var(--cc-accent-text, #fff)) !important; margin: 0 !important; padding: 0 !important;
 }
 html.cc-favorites-on #displaybox .Panel > a > span > img {
-  width: var(--cc-fav-glyph, 32px) !important; height: var(--cc-fav-glyph, 32px) !important;
+  width: var(--cc-fav-glyph, 38px) !important; height: var(--cc-fav-glyph, 38px) !important;
   max-width: none !important; object-fit: contain !important; margin: 0 !important;
 }
 /* the fa-trash-o 'remove favorite' icon MyFavorites.page injects into the span on hover */

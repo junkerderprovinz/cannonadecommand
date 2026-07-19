@@ -89,6 +89,65 @@ func TestApplyExtraParams_NameMismatch(t *testing.T) {
 	}
 }
 
+func TestStripFlags(t *testing.T) {
+	tests := []struct {
+		name  string
+		in    string
+		flags []string
+		want  string
+	}{
+		{"equals form", "--restart=always --memory=2g --net=host", []string{"--memory"}, "--restart=always --net=host"},
+		{"space form eats value", "--restart=always --memory 2g --net=host", []string{"--memory"}, "--restart=always --net=host"},
+		{"bare flag at end", "--restart=always --cpus", []string{"--cpus"}, "--restart=always"},
+		{"bare flag then another flag keeps it", "--cpus --restart=always", []string{"--cpus"}, "--restart=always"},
+		{"short -m space form", "-m 2g --net=host", []string{"-m"}, "--net=host"},
+		{"short -m equals form", "-m=2g --net=host", []string{"-m"}, "--net=host"},
+		{"short -m attached form", "-m2g --net=host", []string{"-m"}, "--net=host"},
+		{"memory does not eat swap sibling", "--memory-swap=8g --memory=2g", []string{"--memory"}, "--memory-swap=8g"},
+		{"quoted arg untouched", `--env FOO="--memory=2g -m 1g" --memory=4g`, []string{"--memory", "-m"}, `--env FOO="--memory=2g -m 1g"`},
+		{"single-quoted arg untouched", `--label a='--cpus=9' --cpus=2`, []string{"--cpus"}, `--label a='--cpus=9'`},
+		{"quoted value of stripped flag eaten", `--cpuset-cpus "0-3" --net=host`, []string{"--cpuset-cpus"}, "--net=host"},
+		{"multiple flags one pass", "--cpus=2 --cpu-shares 512 --cpuset-cpus=0-3 --net=host", []string{"--cpus", "--cpuset-cpus", "--cpu-shares"}, "--net=host"},
+		{"repeated flag all occurrences", "--memory=1g -v /a:/b --memory 2g", []string{"--memory"}, "-v /a:/b"},
+		{"no-op keeps bytes identical", "  --restart=always   --net=host ", []string{"--memory", "--cpus"}, "  --restart=always   --net=host "},
+		{"spacing collapses only at removal", "a   b  --cpus=1  c", []string{"--cpus"}, "a   b  c"},
+		{"removal at string end trims gap", "--net=host --memory=2g", []string{"--memory"}, "--net=host"},
+		{"empty input", "", []string{"--memory"}, ""},
+		{"everything removed", "--memory=1g --cpus 2", []string{"--memory", "--cpus"}, ""},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := StripFlags(tc.in, tc.flags...); got != tc.want {
+				t.Fatalf("StripFlags(%q, %v) = %q, want %q", tc.in, tc.flags, got, tc.want)
+			}
+		})
+	}
+}
+
+// The dual-write transform must strip CONFLICTING template flags (short -m,
+// --cpu-shares, --memory-reservation, space forms) even though CC never writes
+// them itself — an empty kv value is remove-only.
+func TestApplyExtraParams_StripsConflictingFlags(t *testing.T) {
+	doc := `<Container><Name>x</Name><ExtraParams>--restart=always -m 1g --memory-reservation=512m --cpu-shares 512 --memory-swap=4g</ExtraParams></Container>`
+	out, ok := applyExtraParams(doc, "x", map[string]string{
+		"--memory": "1073741824", "-m": "", "--memory-swap": "", "--memory-reservation": "",
+		"--cpus": "2", "--cpuset-cpus": "", "--cpu-shares": "",
+	})
+	if !ok {
+		t.Fatal("should match")
+	}
+	for _, gone := range []string{"-m 1g", "-m=", "--memory-reservation", "--cpu-shares", "--memory-swap"} {
+		if strings.Contains(out, gone) {
+			t.Fatalf("conflicting flag %q must be stripped:\n%s", gone, out)
+		}
+	}
+	for _, want := range []string{"--restart=always", "--memory=1073741824", "--cpus=2"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("missing %q in:\n%s", want, out)
+		}
+	}
+}
+
 func TestSetExtraParams_FileRoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	f := filepath.Join(dir, "my-plex.xml")

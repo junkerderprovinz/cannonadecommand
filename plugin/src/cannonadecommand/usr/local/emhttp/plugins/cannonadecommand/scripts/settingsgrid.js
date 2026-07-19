@@ -47,6 +47,10 @@
   // cc.badgeshape is a GLOBAL key -> read it DIRECTLY, not via eff() (see header.js): an
   // adopt-aware read would fall back to an unset ccs.badgeshape and flip the shape per page.
   function shape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[g("cc.badgeshape", "pill")] || "999px"; }
+  // cc.sgsize (GLOBAL key like cc.badgeshape): tile-badge size step [box, glyph].
+  // s = 64/32 (old look), m = 78/38 DEFAULT (= Docker's logo-tile box: 62px content + 8px pad),
+  // l = 96/46. favorites.js mirrors the SAME key so /Favorites always matches.
+  function sgSize() { return ({ s: ["64px", "32px"], m: ["78px", "38px"], l: ["96px", "46px"] })[g("cc.sgsize", "m")] || ["78px", "38px"]; }
   var RB = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
   var RB_OFF = Math.floor(Math.random() * RB.length);
   // Rainbow is a GLOBAL mode: read cc.rainbow / cc.rbpal / cc.rainbowrot DIRECTLY (not the
@@ -70,6 +74,9 @@
     try {
       var rb = rbOn(), neutral = rb && rbNeutral();
       document.documentElement.classList.toggle("cc-settingsgrid-rbneutral", neutral); // "active only": tiles neutral, colour on hover
+      var sz = sgSize(); // cc.sgsize s|m|l -> box + glyph tokens the sheet sizes the badges with
+      document.documentElement.style.setProperty("--cc-sg-size", sz[0]);
+      document.documentElement.style.setProperty("--cc-sg-glyph", sz[1]);
       var spans = document.querySelectorAll("#displaybox .Panel > a > span");
       var accBg = badgeBg();
       for (var i = 0; i < spans.length; i++) {
@@ -110,8 +117,12 @@
   // so no tile index can shift.
   function paintHeads() {
     try {
-      var rb = rbOn(), neutral = rb && rbNeutral();
-      document.documentElement.classList.toggle("cc-settingsgrid-headsneutral", neutral); // "active only": headings neutral, colour on hover
+      // HOUSE LAW: section heads ALWAYS keep their colour. The rainbow "active only" (neutral)
+      // sub-mode greys the TILES only — the div.title > span.left heads stay painted in BOTH
+      // rainbow sub-modes (consistent with the /Main heads). Legacy -headsneutral class is
+      // therefore always removed here (clearHeads keeps removing it on teardown too).
+      var rb = rbOn();
+      document.documentElement.classList.remove("cc-settingsgrid-headsneutral");
       var heads = document.querySelectorAll("#displaybox div.title > span.left");
       for (var i = 0; i < heads.length; i++) {
         var h = heads[i];
@@ -122,9 +133,8 @@
           continue;
         }
         var c = rbColor(i), tc = idealText(c);
-        h.style.setProperty("--cc-rb-c", c); h.style.setProperty("--cc-rb-ct", tc);   // per-heading colour for the neutral-mode :hover
-        if (!neutral) { h.style.setProperty("background", c, "important"); h.style.setProperty("color", tc, "important"); }
-        else { h.style.removeProperty("background"); h.style.removeProperty("color"); } // CSS neutral-idle grey shows; hover recolours via --cc-rb-c
+        h.style.setProperty("--cc-rb-c", c); h.style.setProperty("--cc-rb-ct", tc);
+        h.style.setProperty("background", c, "important"); h.style.setProperty("color", tc, "important"); // painted in BOTH rainbow sub-modes
       }
     } catch (e) {}
   }
