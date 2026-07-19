@@ -890,15 +890,15 @@ html.cc-shares-on.cc-on-main #displaybox .cc-info:focus { opacity: 1; outline: n
 html.cc-shares-on.cc-on-main #displaybox .cc-info svg { width: 15px; height: 15px; display: block; }
 html.cc-shares-on.cc-on-main #displaybox .cc-info::after {
   content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-  width: max-content; max-width: 300px; white-space: normal; text-align: left; line-height: 1.4;
-  background: #1c1c1c; color: #e9e9e9; padding: 8px 11px; border-radius: 8px;
-  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-size: 12px; font-weight: 400;
+  width: max-content; max-width: 280px; white-space: normal; text-align: left; line-height: 1.45;
+  background: #393939; color: #f4f4f4; padding: 9px 12px; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-size: 12.5px; font-weight: 400;
   text-transform: none; letter-spacing: normal;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .5); z-index: 9999; opacity: 0; pointer-events: none; transition: opacity .12s;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .55); z-index: 9999; opacity: 0; pointer-events: none; transition: opacity .12s;
 }
 html.cc-shares-on.cc-on-main #displaybox .cc-info::before {
   content: ""; position: absolute; bottom: calc(100% + 3px); left: 50%; transform: translateX(-50%);
-  border: 5px solid transparent; border-top-color: #1c1c1c; z-index: 9999; opacity: 0; transition: opacity .12s;
+  border: 5px solid transparent; border-top-color: #393939; z-index: 9999; opacity: 0; transition: opacity .12s;
 }
 html.cc-shares-on.cc-on-main #displaybox .cc-info:hover::after,
 html.cc-shares-on.cc-on-main #displaybox .cc-info:focus::after,
@@ -1421,11 +1421,12 @@ html.cc-shares-rbneutral.cc-on-main #displaybox .cc-xbtn:hover:not(:disabled) {
 html.cc-shares-on #displaybox [data-cc-tip] { position: relative; }
 html.cc-shares-on #displaybox [data-cc-tip]:hover::after {
   content: attr(data-cc-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
-  z-index: 9999; width: max-content; max-width: 260px;
-  background: #1c1c1c; color: #eaeaea; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);
-  padding: 6px 10px; font-size: 12px; font-weight: 400; line-height: 1.4;
-  text-transform: none; letter-spacing: normal; white-space: normal;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, .45); pointer-events: none;
+  z-index: 9999; width: max-content; max-width: 280px;
+  background: #393939; color: #f4f4f4; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);
+  padding: 9px 12px; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 12.5px; font-weight: 400; line-height: 1.45;
+  text-transform: none; letter-spacing: normal; white-space: normal; text-align: left;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .55); pointer-events: none;
 }
 /* the last rainbow gaps (user: "auf der Start-Seite sind nicht alle toggles und badges und buttons
    im rainbowmode"): UD cluster icon tiles, the column-reset icon button and the (Planung)/Wiki

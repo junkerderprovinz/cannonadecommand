@@ -13,8 +13,10 @@
  *   - the array-usage meter becomes a clean, thin accent pill.
  * Colours come from --cc-hdr-accent / --cc-hdr-accent-text (this bar's OWN isolated vars,
  * set by header.js — NOT the shared --cc-accent, which shares.js / the tab enhancers would
- * clobber) plus --cc-b-radius. The top-header Connect icons (bell/avatar/power) are Shadow-DOM web
- * components and cannot be restyled by plugin CSS - left untouched on purpose.
+ * clobber) plus --cc-b-radius. The top-header Connect components (unraid-header-os-version /
+ * unraid-user-profile) render LIGHT DOM: CSS from outside matches them and SURVIVES the
+ * auto-mount rebuilds — see the TOP HEADER TAKEOVER section (CSS-only there; DOM surgery
+ * inside those components would be wiped on every rebuild).
  */
 
 :root {
@@ -103,34 +105,47 @@ html.cc-header-on #menu .nav-tile .nav-item.util img.system {
    (a) OUR bubble for the utility icons: header.js moves the native title -> data-cc-tip (the OS
    balloon can't be styled); pure-CSS bubble, frameless, follows the badge form (user law).
    (b) tooltipster + jQuery-UI tooltips (Unraid's own systems) get the same frameless dark look. */
-/* bubble shared by the #menu icons AND the status-island chips (#cc-island) — opens DOWNWARD */
+/* bubble shared by the #menu icons AND the status-island chips (#cc-island) — opens DOWNWARD.
+   UNIFIED BUBBLE SPEC (identical across all CC sheets — keep in sync). */
 html.cc-header-on :is(#menu, #cc-island) [data-cc-tip] { position: relative; }
 html.cc-header-on :is(#menu, #cc-island) [data-cc-tip]:hover::after {
   content: attr(data-cc-tip); position: absolute; left: 50%; top: calc(100% + 8px); transform: translateX(-50%);
-  z-index: 9999; width: max-content; max-width: 260px;
-  background: #1c1c1c; color: #eaeaea; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);
-  padding: 6px 10px; font-size: 12px; font-weight: 400; line-height: 1.4;
-  text-transform: none; letter-spacing: normal; white-space: normal;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, .45); pointer-events: none;
+  z-index: 9999; width: max-content; max-width: 280px;
+  background: #393939; color: #f4f4f4; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);
+  padding: 9px 12px; font-size: 12.5px; font-weight: 400; line-height: 1.45;
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  text-transform: none; letter-spacing: normal; white-space: normal; text-align: left;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .55); pointer-events: none;
+}
+/* the arrow: a FILLED triangle (border-trick = fill, not a stroke) bridging chip and bubble */
+html.cc-header-on :is(#menu, #cc-island) [data-cc-tip]:hover::before {
+  content: ""; position: absolute; left: 50%; top: calc(100% + 2px); transform: translateX(-50%);
+  z-index: 9999; width: 0; height: 0;
+  border-style: solid; border-width: 0 6px 6px 6px;
+  border-color: transparent transparent #393939 transparent;
+  pointer-events: none;
 }
 html.cc-header-on .tooltipster-base .tooltipster-box,
 html.cc-header-on .ui-tooltip {
-  background: #1c1c1c !important; color: #eaeaea !important; border: none !important;
+  background: #393939 !important; color: #f4f4f4 !important; border: none !important;
   border-radius: min(var(--cc-b-radius, 8px), 10px) !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, .45) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .55) !important;
 }
 html.cc-header-on .tooltipster-base .tooltipster-arrow { display: none !important; }   /* the arrow draws tinted edges = lines */
 
 /* ═══ STATUS ISLAND (span#cc-island, built by header.js ccIsland()) ═══
-   Lives INSIDE div#header (the 91px top strip) between the two Connect web components
-   (unraid-header-os-version / unraid-user-profile) — those are Shadow-DOM and untouchable
-   (never restyled or moved); the island is our OWN light-DOM element NEXT to them.
+   Lives INSIDE div#header (the 91px top strip) between the two Connect components
+   (unraid-header-os-version / unraid-user-profile) — restyled CSS-only in the TAKEOVER
+   section below (their light DOM is rebuilt by the auto-mount observer, so never DOM-edit
+   them); the island is our OWN light-DOM element NEXT to them.
    S-tier chips (~21px, 11px font) + 10px state dots. NO borders/lines (law): the grey
    fill alone is the chip; the dot COLOUR is set inline per state by header.js. */
-html.cc-header-on #header { display: flex; align-items: center; }   /* flex row so margin-left:auto works + the island centres in the strip */
+html.cc-header-on #header { display: flex; align-items: center; }   /* flex row so margin-left:auto works + everything centres on ONE 91px line */
 html.cc-header-on #cc-island {
   display: inline-flex; align-items: center; gap: 8px;
-  margin-left: auto; margin-right: 12px; align-self: center;
+  /* 135px right clearance: #UserProfile (bell + burger) is ABSOLUTE top-right (~115px zone
+     + breathing room) — chips must never underlap it */
+  margin-left: auto; margin-right: 135px; align-self: center;
 }
 html.cc-header-on #cc-island .cc-isl-chip {
   display: inline-flex; align-items: center; white-space: nowrap;
@@ -139,9 +154,69 @@ html.cc-header-on #cc-island .cc-isl-chip {
   background: rgba(128, 128, 128, .18); color: #e6e6e6;
   font-size: 11px; font-weight: 600; line-height: 1.4;
 }
+/* the dot is OPTIONAL: text-only chips (uptime/OS, prepended by header.js) carry no
+   .cc-isl-dot span — nothing above assumes one, the symmetric padding stands alone */
 html.cc-header-on #cc-island .cc-isl-dot {
   width: 10px; height: 10px; flex: 0 0 auto; margin-right: 6px;
   border-radius: var(--cc-dot-r, 50%);           /* state dots follow the global dot radius */
+}
+
+/* ═══ TOP HEADER TAKEOVER: brand + version chip + bell/burger in CC style ═══
+   The Connect components render LIGHT DOM, so outside CSS matches and survives the
+   auto-mount rebuilds (DOM surgery would not — CSS-only here, header.js only ADDS
+   siblings like #cc-brand). FRAGILITY CONTRACT: the Tailwind class soup on these nodes
+   is generated output, NOT a stable API — every selector below is structural
+   (tag / :nth-child / [id^="reka-menu-trigger"]). If a future Unraid build reorders the
+   nodes, these rules fail SOFT (natives simply reappear); re-measure the live DOM and
+   re-pin. Measured DOM (7.3.2): unraid-header-os-version > div > a > img = wordmark,
+   sibling div holds the version dropdown trigger; #UserProfile > div:1 = text row,
+   > div:2 = [server-name div, bell span, burger span]. */
+
+/* 1) hide natives: wordmark anchor, #UserProfile text row, server-name div in the controls row */
+html.cc-header-on unraid-header-os-version a { display: none !important; }
+html.cc-header-on #UserProfile > div:first-child { display: none !important; }
+html.cc-header-on #UserProfile > div:nth-child(2) > div:first-child { display: none !important; }
+
+/* 2) #cc-brand (header.js, first child of #header): server name takes the wordmark's place */
+html.cc-header-on #cc-brand {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: 22px; font-weight: 600; color: #f4f4f4; letter-spacing: .3px;
+  margin-right: 14px;
+}
+/* the native version dropdown trigger stays FUNCTIONAL, dressed as an S-tier chip */
+html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"] {
+  display: inline-flex; align-items: center; white-space: nowrap; line-height: 1.4;
+  background: rgba(128, 128, 128, .18); color: #cfcfcf;
+  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 3px 11px);
+  font-size: 11px; font-weight: 600;
+  /* its Tailwind ring-offset/underline visuals are lines — never (law) */
+  outline: none !important; box-shadow: none !important; text-decoration: none !important;
+  transition: filter .12s;
+}
+html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"]:hover { filter: brightness(1.14); }
+html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"]:focus,
+html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"]:focus-visible {
+  outline: none !important; box-shadow: none !important; text-decoration: none !important;
+}
+/* complete the height chain + vertically centre what remains of the component: the wrapper
+   div (native mt-4 ml-4 flex-col) spans the 91px strip and centres the version chip, so
+   brand, chip, island and the native controls all sit on the ONE #header flex line */
+html.cc-header-on unraid-header-os-version { display: inline-flex; align-items: center; height: 100%; }
+html.cc-header-on unraid-header-os-version > div { margin: 0 !important; justify-content: center; height: 100%; }
+
+/* 3) bell + burger: #UserProfile stays ABSOLUTE top-right (native positioning untouched);
+   after the hides its controls row keeps only the two triggers — centred over the full 91px */
+html.cc-header-on #UserProfile > div:nth-child(2) { height: 100%; align-items: center; }
+html.cc-header-on #UserProfile > div:nth-child(2) > span {
+  color: #cfcfcf; padding: 8px;
+  transition: color .12s, filter .12s;
+}
+html.cc-header-on #UserProfile > div:nth-child(2) > span:hover { color: #fff; filter: brightness(1.15); }
+html.cc-header-on #UserProfile > div:nth-child(2) > span svg { width: 22px !important; height: 22px !important; }
+/* their Tailwind ring-offset classes may paint focus rings — kill on every focusable (law) */
+html.cc-header-on #UserProfile > div:nth-child(2) :is(span, button, a):focus,
+html.cc-header-on #UserProfile > div:nth-child(2) :is(span, button, a):focus-visible {
+  outline: none !important; box-shadow: none !important;
 }
 
 /* ═══ right-edge alignment: line the right group up with the page content ═══

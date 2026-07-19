@@ -609,10 +609,18 @@
     try {
       var bar = document.querySelector("div.js-actions"); if (!bar) return;
       var btns = bar.querySelectorAll("input[type=button]");
-      if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") { Array.prototype.slice.call(btns).forEach(function (b) { b.style.removeProperty("background"); b.style.removeProperty("color"); }); return; }
+      if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") { Array.prototype.slice.call(btns).forEach(function (b) { b.style.removeProperty("background"); b.style.removeProperty("color"); b.style.removeProperty("--cc-rb-c"); b.style.removeProperty("--cc-rb-ct"); }); return; }
       var pal = RB_PAL; try { var jp = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e2) {}
       var off = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
-      Array.prototype.slice.call(btns).forEach(function (b, i) { var c = pal[(i + off) % pal.length]; b.style.setProperty("background", c, "important"); b.style.setProperty("color", idealText(c), "important"); });
+      // reactive sub-mode: rest grey via CSS, colour only on hover — an inline !important
+      // background would beat ANY sheet rule, so neutral stamps the vars and paints nothing
+      var neutral = localStorage.getItem("cc.rbmode") === "active";
+      Array.prototype.slice.call(btns).forEach(function (b, i) {
+        var c = pal[(i + off) % pal.length];
+        b.style.setProperty("--cc-rb-c", c); b.style.setProperty("--cc-rb-ct", idealText(c));
+        if (neutral) { b.style.removeProperty("background"); b.style.removeProperty("color"); }
+        else { b.style.setProperty("background", c, "important"); b.style.setProperty("color", idealText(c), "important"); }
+      });
     } catch (e) {}
   }
   // (2) Per-line hover marquee for the volumes column. The native cell is ONE
@@ -900,8 +908,17 @@
           tx = L2 > 150 ? "#161616" : "#fff";
         }
       }
-      b2.style.setProperty("background", bg, "important");
-      b2.style.setProperty("color", tx, "important");
+      // reactive sub-mode: enabled coloured buttons rest grey (CSS) and take their palette
+      // colour on hover via the stamped vars — inline !important would make CSS powerless
+      var neutral = rb && localStorage.getItem("cc.rbmode") === "active";
+      if (neutral && colorsOn && !b2.classList.contains("cc-actoff")) {
+        b2.style.setProperty("--cc-rb-c", bg); b2.style.setProperty("--cc-rb-ct", tx);
+        b2.style.removeProperty("background"); b2.style.removeProperty("color");
+      } else {
+        b2.style.removeProperty("--cc-rb-c"); b2.style.removeProperty("--cc-rb-ct");
+        b2.style.setProperty("background", bg, "important");
+        b2.style.setProperty("color", tx, "important");
+      }
       // Unraid's theme styles .fa glyphs directly, which beats inheritance
       var ic2 = b2.querySelector("i"); if (ic2) ic2.style.setProperty("color", "inherit", "important");
     });

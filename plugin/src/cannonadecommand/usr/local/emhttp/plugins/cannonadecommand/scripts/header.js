@@ -18,6 +18,8 @@
     var n = parseInt(m[1], 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255);
     return L > 150 ? "#161616" : "#fff";
   }
+  var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
+  function T(d, e) { return LANG === "de" ? d : e; }   // same bilingual helper as settings.js
   function eff(k, d) { return g("cc.styleheader", "1") !== "0" ? g("cc." + k, d) : g("cch." + k, d); }
   function accent() { var a = eff("accent", "#2f6feb"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
   // cc.badgeshape is a GLOBAL key (one Badge-Form control for every area), so read it
@@ -318,9 +320,20 @@
       var warn = parseFloat(g("cc.tempwarn", "60")); if (!isFinite(warn) || warn <= 0) warn = 60;
       // parity/…% progress text (e.g. "Parity … 12.3 %") — goes into the ARRAY chip tooltip only
       var par = /parit[^•%]{0,120}?\d+(?:[.,]\d+)?\s*%/i.exec(footTxt);
+      // native uptime + edition (top-strip restyle): the Connect profile's FIRST row carries
+      // "Betriebszeit …" (span.text-xs, title "Server hoch seit …") and "Unraid OS" + <em>edition.
+      // Both spans STAY in the DOM (Header.css hides them visually) — we only READ them here
+      // (law: never move/edit inside the components). Missing uptime span = chip skipped.
+      var up = document.querySelector("#UserProfile > div:first-child span.text-xs");
+      var upTxt = ((up && up.textContent) || "").replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
+      var upTitle = (up && up.getAttribute("title")) || "";
+      var osSp = null, osRow = document.querySelector("#UserProfile > div:first-child");
+      if (osRow) { var sps = osRow.querySelectorAll("span"); for (var oj = 0; oj < sps.length; oj++) { if (/Unraid\s*OS/i.test(sps[oj].textContent || "")) { osSp = sps[oj]; break; } } }
+      // the span's textContent already includes the nested <em> edition ("Unraid OS Plus"); no em -> plain "Unraid OS"
+      var osLabel = osSp ? (osSp.textContent || "").replace(/\s+/g, " ").replace(/^\s|\s$/g, "") : "Unraid OS";
       // idempotence guard: nchan rewrites the footer every few seconds with UNCHANGED text most
       // of the time — compare the source signature and skip the DOM rebuild when nothing moved
-      var sig = raw + "|" + temps.join(",") + "|" + warn + "|" + (par ? par[0] : "");
+      var sig = upTxt + "|" + upTitle + "|" + osLabel + "|" + raw + "|" + temps.join(",") + "|" + warn + "|" + (par ? par[0] : "");
       if (isle && sig === ccIslandSig) return;
       ccIslandSig = sig;
       if (!isle) {
@@ -329,14 +342,20 @@
         if (prof) hdr.insertBefore(isle, prof); else hdr.appendChild(isle);
       }
       while (isle.firstChild) isle.removeChild(isle.firstChild);   // clear + refill = idempotent rebuild
-      function chip(label, dot, tip) {
-        var c = document.createElement("span"); c.className = "cc-isl-chip";
+      function chip(label, dot, tip, cls) {
+        var c = document.createElement("span"); c.className = "cc-isl-chip" + (cls ? " " + cls : "");
         var d = document.createElement("span"); d.className = "cc-isl-dot";
         d.style.background = dot;   // state COLOUR inline; size/shape (var(--cc-dot-r)) in the sheet
         c.appendChild(d); c.appendChild(document.createTextNode(label));
         if (tip) c.setAttribute("data-cc-tip", tip);   // frameless CC bubble (law) — no native balloon
         isle.appendChild(c);
       }
+      // UPTIME chip first: label = the native text minus its leading word ("Betriebszeit"/"Uptime"
+      // per locale); bubble = the native title ("Server hoch seit …") + the full text
+      if (upTxt) chip(upTxt.replace(/^(Betriebszeit|Uptime)\s*/i, ""), "#3fae6a", (upTitle ? upTitle + " — " : "") + upTxt, "cc-isl-up");
+      // OS/edition chip: neutral grey dot — informational, not a state. The native 7.3.2 version
+      // dropdown stays functional in place (CSS restyles it) — deliberately NOT duplicated here.
+      chip(osLabel, "#8d8d8d", T("Unraid-Edition", "Unraid edition"), "cc-isl-os");
       var segs = raw ? raw.split("•") : [], i, s;
       for (i = 0; i < segs.length; i++) {
         s = segs[i].replace(/^\s+|\s+$/g, ""); if (!s) continue;
@@ -363,6 +382,53 @@
       var f = document.getElementById("footer"); if (!f) return;   // no footer yet -> the next apply() retries
       ccIslandObs = new MutationObserver(function () { ccIsland(); });
       ccIslandObs.observe(f, { childList: true, subtree: true, characterData: true });   // we write into #header, never #footer -> no loop
+    } catch (e) {}
+  }
+  // ── SERVER-NAME BRAND (top-strip restyle). span#cc-brand = FIRST child of div#header, a
+  // light-DOM SIBLING of the Connect components (law: never inside them — auto-mount rebuilds
+  // their nodes; our sibling survives, and Header.css does all the styling). Name source is the
+  // document title ("Bottich/Dashboard" -> "Bottich"), fallback the native server-name span in
+  // the profile's controls row, else "Unraid". Gates on header+theming ONLY — NOT cc.island:
+  // hiding the status island must not remove the server name.
+  var ccBrandSig = "";
+  function ccBrandOn() { return g("cc.enable.header", "0") !== "0" && g("cc.theming", "1") !== "0"; }
+  function ccBrand() {
+    try {
+      var br = document.getElementById("cc-brand");
+      if (!ccBrandOn()) { if (br && br.parentNode) br.parentNode.removeChild(br); ccBrandSig = ""; return; }   // teardown: gate off = brand gone (island idiom)
+      var hdr = document.getElementById("header"); if (!hdr) return;
+      var name = (document.title.split("/")[0] || "").replace(/^\s+|\s+$/g, "");
+      if (!name) {   // titleless page -> read the native server-name span (first span of the profile's controls row)
+        var ns = document.querySelector("#UserProfile > div:nth-child(2) span");
+        name = ((ns && ns.textContent) || "").replace(/^\s+|\s+$/g, "");
+      }
+      if (!name) name = "Unraid";
+      if (br && name === ccBrandSig) return;   // idempotence: profile rebuilds re-run us, only a real change re-renders
+      ccBrandSig = name;
+      if (!br) { br = document.createElement("span"); br.id = "cc-brand"; hdr.insertBefore(br, hdr.firstChild); }
+      while (br.firstChild) br.removeChild(br.firstChild);   // clear + refill = idempotent rebuild
+      var nm = document.createElement("span"); nm.className = "cc-brand-name";
+      nm.appendChild(document.createTextNode(name));
+      br.appendChild(nm);
+    } catch (e) {}
+  }
+  var ccProfObs = null, ccProfT = null;
+  function watchProfile() {   // uptime/edition/name live inside the Connect profile — auto-mount rebuilds it at will
+    try {
+      if (ccProfObs) return;
+      // observe the CUSTOM ELEMENT when present (it survives auto-mount replacing div#UserProfile
+      // wholesale), never div#header — we write #cc-island/#cc-brand into #header ourselves and
+      // must not observe our own writes
+      var p = document.querySelector("unraid-user-profile") || document.getElementById("UserProfile");
+      if (!p) return;   // not mounted yet -> the next apply() retries (watchIsland idiom)
+      ccProfObs = new MutationObserver(function () {
+        if (ccProfT) return;   // DEBOUNCE 120ms (freeze law): coalesce auto-mount's rebuild burst into ONE pass
+        ccProfT = setTimeout(function () {
+          ccProfT = null;
+          ccIsland(); ccBrand();   // both are sig-guarded no-ops when nothing changed; we never write inside the component, so no loop is possible — the debounce stays anyway
+        }, 120);
+      });
+      ccProfObs.observe(p, { childList: true, subtree: true, characterData: true });
     } catch (e) {}
   }
   function apply() {
@@ -393,6 +459,7 @@
       if (!on) {
         paintNav(); measureAlign();
         ccIsland();   // gate off inside -> removes span#cc-island from div#header
+        ccBrand();    // same teardown for span#cc-brand (server name)
         // styled hover bubbles -> native title balloons back (area off = fully native)
         var tps0 = document.querySelectorAll("#menu [data-cc-tip]");
         for (var tq = 0; tq < tps0.length; tq++) { tps0[tq].setAttribute("title", tps0[tq].getAttribute("data-cc-tip")); tps0[tq].removeAttribute("data-cc-tip"); }
@@ -416,7 +483,9 @@
       paintNav();
       measureAlign();   // after the pill geometry is live -> measure the real left edge
       ccIsland();       // status island in the top strip (self-gated on cc.island, default on)
+      ccBrand();        // server-name brand, first child of the top strip (header+theming gated, NOT cc.island)
       watchIsland();    // live footer observer so nchan status/temp updates flow into the chips
+      watchProfile();   // debounced profile observer so uptime/edition/name rebuilds flow into chips + brand
     } catch (e) {}
   }
   // gui_search() prepends #guiSearchBoxSpan at the FAR-LEFT of .nav-tile.right, focuses

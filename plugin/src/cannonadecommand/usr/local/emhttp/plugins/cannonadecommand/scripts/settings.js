@@ -239,6 +239,8 @@
     var wrapStart = el("div", "cc-set-wrap");   // Start (/Main) area — its own CC-settings section
     var wrapMain = el("div", "cc-set-wrap");    // Allgemein — also hosts the export/import card (last)
     var adoptToggles = {}; // adopt-key → its toggle element (a colour pick flips it live); declared UP here (not further down) because the Docker area's styleToggle now runs early, with the moved global Badges card
+    var styleCardSync = {}; // adopt-key → refresher: repaints an area card's picker/hex/swatches/preview with the EFFECTIVE colour (global while adopt is ON, own while OFF)
+    function syncAllStyleCards() { for (var k9 in styleCardSync) { try { styleCardSync[k9](); } catch (e9) {} } }
     // MASTER THEMING switch (first, prominent). Off = keep ONLY the Docker orchestration
     // FUNCTIONS (start plan, dependencies, health-gate, watchdog, schedules, limits, bandwidth,
     // idle-stop) and disable ALL visual theming (badges, colours, rainbow, cards, and every
@@ -259,6 +261,45 @@
         row.appendChild(toggle(cur == null ? a[2] !== "0" : cur !== "0", function (v) { localStorage.setItem(a[0], v ? "1" : "0"); refreshTabs(); }));
         c.appendChild(row);
       });
+      wrapMain.appendChild(c);
+    })();
+    // ── Anzeige: direct wire to Unraid's native display settings. Posts the SAME hidden
+    // fields the native /Settings/DisplaySettings form sends (#file/#section/csrf_token),
+    // so the values land in dynamix/dynamix.cfg and the page reloads with them applied.
+    // Built ONLY when the csrf_token global exists — without it the native POST is impossible.
+    (function () {
+      if (typeof csrf_token === "undefined") return; // no token -> no card
+      var c = card(T("Anzeige", "Display"), T("Direktdraht zu Unraids Anzeige-Einstellungen: Änderungen hier werden nativ gespeichert und laden die Seite neu.", "Direct wire to Unraid's display settings: changes are saved natively and reload the page."));
+      function postDisplay(field, value) {
+        try {
+          var fd = new FormData();
+          fd.append("#file", "dynamix/dynamix.cfg");
+          fd.append("#section", "display");
+          fd.append("csrf_token", window.csrf_token);
+          fd.append(field, value);
+          fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function () { location.reload(); });
+        } catch (e9) {}
+      }
+      // current theme is stamped on <html> as Theme--<name>
+      var thm = (/Theme--(azure|black|gray|white)/.exec(document.documentElement.className || "") || [])[1] || "black";
+      c.appendChild(segRow(T("Farbschema", "Colour scheme"), [["white", T("Hell", "Light")], ["black", T("Dunkel", "Dark")], ["azure", T("Azurblau", "Azure")], ["gray", T("Grau", "Gray")]], thm, function (v) { postDisplay("theme", v); }));
+      // tabbed view: the current value only lives in the native settings page -> build the row
+      // with a provisional "0", then fetch+parse the <select name="tabs"> and repaint the
+      // selection. Parse failure keeps the default and disables nothing.
+      var tabsKeys = ["0", "1"];
+      var tabsRow = segRow(T("Tabansicht", "Tabbed view"), [["0", T("Mit Tabs", "Tabbed")], ["1", T("Ohne Tabs", "Non-tabbed")]], "0", function (v) { postDisplay("tabs", v); });
+      c.appendChild(tabsRow);
+      fetch("/Settings/DisplaySettings", { credentials: "same-origin" }).then(function (r) { return r.text(); }).then(function (html) {
+        try {
+          var cur = "0";
+          var sel = /<select[^>]*\bname=["']?tabs["']?[^>]*>([\s\S]*?)<\/select>/i.exec(html || "");
+          (sel ? sel[1].match(/<option\b[^>]*>/gi) || [] : []).forEach(function (tag) {
+            if (/\bselected\b/i.test(tag)) { var vm = /\bvalue=["']?([^"'\s>]+)/i.exec(tag); if (vm) cur = vm[1]; }
+          });
+          // segRow's seg container is the row's last child; buttons follow the opts order
+          Array.prototype.slice.call(tabsRow.lastChild.children).forEach(function (b9, i9) { b9.classList.toggle("cc-seg-on", tabsKeys[i9] === cur); });
+        } catch (e9) {}
+      }).catch(function () {});
       wrapMain.appendChild(c);
     })();
     // ── section order = the USER'S main-menu order. header.js persists the drag-reordered
@@ -327,6 +368,7 @@
       tabBtns.push(b); tabRow.appendChild(b);
     });
     root.appendChild(tabRow);
+    alignSetTabs(); // indent the strip to the first main-menu tab (internally try/catch'd, can't break the build)
     root.appendChild(wrapMain); root.appendChild(wrapStart); root.appendChild(wrapHeader); root.appendChild(wrapShares); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms); root.appendChild(wrapSettings); root.appendChild(wrapFavorites);
 
     // ── Badges ──
@@ -343,8 +385,8 @@
     // use their OWN isolated vars, so setting --cc-accent here alone doesn't reach them) — this is
     // why "the global colour didn't apply everywhere": the menu bar / Freigaben only updated on
     // reload. syncHeaderBar/syncSharesBar re-run their apply() so every enabled area follows live.
-    var pick = inlinePicker(/^#[0-9a-f]{6}$/i.test(accent) ? accent : "#2f6feb", function (v) { accent = v; hexIn.value = v; set("cc.accent", v); root.style.setProperty("--cc-accent", v); root.style.setProperty("--cc-accent-text", idealText(v)); paintPrev(); syncSwOn(); syncHeaderBar(); syncSharesBar(); });
-    function setAccent(v) { accent = v; pick._set(v); hexIn.value = v; set("cc.accent", accent); root.style.setProperty("--cc-accent", accent); root.style.setProperty("--cc-accent-text", idealText(accent)); paintPrev(); syncSwOn(); syncHeaderBar(); syncSharesBar(); }
+    var pick = inlinePicker(/^#[0-9a-f]{6}$/i.test(accent) ? accent : "#2f6feb", function (v) { accent = v; hexIn.value = v; set("cc.accent", v); root.style.setProperty("--cc-accent", v); root.style.setProperty("--cc-accent-text", idealText(v)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); });
+    function setAccent(v) { accent = v; pick._set(v); hexIn.value = v; set("cc.accent", accent); root.style.setProperty("--cc-accent", accent); root.style.setProperty("--cc-accent-text", idealText(accent)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); }
     hexIn.addEventListener("input", function () { var v = normHex(hexIn.value); if (v) setAccent(v); });
     prow.appendChild(pick); prow.appendChild(hexIn); c1.appendChild(prow);
     // ...and the preset swatches sit BELOW it.
@@ -352,7 +394,7 @@
     PRESETS.forEach(function (c) {
       // a <span>, NOT a <button>: Unraid's global button CSS was bloating these into
       // big bordered rectangles. dataset.c lets syncSwOn highlight the active one.
-      var sw = el("span", "cc-set-sw" + (c === accent ? " cc-set-sw-on" : "")); sw.title = c; sw.style.background = c; sw.dataset.c = c;
+      var sw = el("span", "cc-set-sw" + (c === accent ? " cc-set-sw-on" : "")); sw.setAttribute("data-tip", c); sw.style.background = c; sw.dataset.c = c;
       sw.addEventListener("click", function () { accent = c; set("cc.accent", accent); render(); syncHeaderBar(); syncSharesBar(); });
       srow.appendChild(sw);
     });
@@ -394,11 +436,11 @@
     var rbrow = el("div", "cc-set-swatches");
     var rbPick = null, rbIdx = -1, rbPickWrap = el("div", "cc-set-pickrow"); rbPickWrap.style.display = "none";
     rbpal.forEach(function (cx, ix) {
-      var sw = el("span", "cc-set-sw"); sw.style.background = cx; sw.title = cx;
+      var sw = el("span", "cc-set-sw"); sw.style.background = cx; sw.setAttribute("data-tip", cx);
       sw.addEventListener("click", function () {
         rbIdx = ix; rbPickWrap.style.display = "";
         if (!rbPick) {
-          rbPick = inlinePicker(rbpal[ix], function (v) { if (rbIdx >= 0) { rbpal[rbIdx] = v; rbrow.children[rbIdx].style.background = v; rbrow.children[rbIdx].title = v; set("cc.rbpal", JSON.stringify(rbpal)); syncHeaderBar(); syncSharesBar(); } });
+          rbPick = inlinePicker(rbpal[ix], function (v) { if (rbIdx >= 0) { rbpal[rbIdx] = v; rbrow.children[rbIdx].style.background = v; rbrow.children[rbIdx].setAttribute("data-tip", v); set("cc.rbpal", JSON.stringify(rbpal)); syncHeaderBar(); syncSharesBar(); } });
           rbPickWrap.appendChild(rbPick);
         } else rbPick._set(rbpal[ix]);
       });
@@ -406,7 +448,7 @@
     });
     // icon-only undo arrow RIGHT of the swatches (user: "statt dem badge ... nur so ein rueckgaengig pfeil")
     var rbReset = el("span", "cc-set-ibtn");
-    rbReset.setAttribute("title", T("Farben zurücksetzen", "Reset colours"));
+    rbReset.setAttribute("data-tip", T("Farben zurücksetzen", "Reset colours"));
     var rbRi = document.createElement("i"); rbRi.className = "fa fa-undo"; rbReset.appendChild(rbRi);
     rbReset.addEventListener("click", function () { del("cc.rbpal"); render(); syncHeaderBar(); syncSharesBar(); });
     rbrow.appendChild(rbReset);
@@ -456,11 +498,13 @@
     strow.appendChild(sl);
     c2.appendChild(strow);
     // (the VM-icons toggle is obsolete — the VM tab has its own style section)
-    // cc.sgsize is GLOBAL (same key + builder as the Einstellungen area): ONE size drives the
-    // Settings/Tools grid AND the Docker logo tiles — surfaced here too for discoverability.
-    var sgRow = segRow(T("Logo-Kachelgröße", "Logo tile size"), [["s", T("Klein", "Small")], ["m", T("Mittel", "Medium")], ["l", T("Groß", "Large")]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); });
-    sgRow.insertBefore(infoIcon(T("Gilt global – dieselbe Größe steuert auch das Einstellungen-/Werkzeuge-Raster.", "Global – the same size also drives the Settings/Tools grid.")), sgRow.lastChild);
-    c2.appendChild(sgRow);
+    // cc.sgsize is GLOBAL (one key): the SAME row closes the Docker "Logos" card and the
+    // Einstellungen/Werkzeuge "Stil" card — normalised slot: always the LAST row of its card.
+    function tileSizeRow() {
+      var r = segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small")], ["m", T("Mittel", "Medium")], ["l", T("Groß", "Large")]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); });
+      r.insertBefore(infoIcon(T("Gilt global – dieselbe Größe steuert das Einstellungen-/Werkzeuge-Raster und die Docker-/Plugin-Logos.", "Global – the same size drives the Settings/Tools grid and the Docker/Plugin logos.")), r.lastChild);
+      return r;
+    }
     c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var tprevWrap = el("div", "cc-set-prev");
     var tprevImgs = [];
@@ -510,6 +554,7 @@
       tprevImgs.forEach(function (im9) { im9.style.filter = "url(#cc-set-tint)"; im9.style.background = ""; im9.style.padding = ""; im9.style.borderRadius = ""; });
     }
     c2.appendChild(tprevWrap); tintPrev(); applyBgMode(iconbg);
+    c2.appendChild(tileSizeRow()); // tile size is ALWAYS the card's last row (same slot as the Settings/Tools card)
     wrap.appendChild(c2);
 
     // (The CPU/RAM diagnostics card is built right before the Bandwidth card below,
@@ -597,6 +642,7 @@
         // an unset own-accent otherwise fell back to the same default as the global).
         var p = ADOPT_PREF[key];
         if (!v && p && localStorage.getItem(p + "accent") == null) set(p + "accent", get("cc.accent", "#2f6feb"));
+        if (styleCardSync[key]) styleCardSync[key](); // picker/swatches/preview jump to the now-effective colour (user call)
         if (onChange) onChange(); syncHeaderBar(); syncSharesBar();
       });
       adoptToggles[key] = tg; row.appendChild(tg);
@@ -610,13 +656,16 @@
     // picker, swatches, rainbow palette, tint toggle + strength) on their own
     // key prefix; they apply while "Adopt the Docker-tab style" is OFF.
     function buildStyleCards(P, into, samples, noLogos) {
-      var acc = get(P + "accent", "#2f6feb"), icol = get(P + "iconcolor", ""), istr = parseInt(get(P + "iconstrength", "100"), 10) || 100;
       // Picking a colour in an area's card means "this area uses its OWN style" — so turn its
       // adopt toggle OFF (else eff() keeps reading the global cc.* accent and the pick is
       // ignored, the "colour not applied to the menu" bug). Reflected live on the toggle +
       // the real header bar. Turn adopt back ON to re-follow the global Docker accent.
       var ADOPT = { "ccd.": "cc.styledocker", "ccp.": "cc.styleplugin", "ccv.": "cc.stylevms", "cch.": "cc.styleheader", "ccs.": "cc.stylesettings", "ccsh.": "cc.styleshares", "ccf.": "cc.stylefavorites", "ccm.": "cc.stylemain" };
       var adoptKey = ADOPT[P];
+      // the card always shows the EFFECTIVE colour: the global accent while adopt is ON,
+      // the area's own accent while OFF (user call: the fields must "jump" on adopt)
+      function effAcc() { return (adoptKey && localStorage.getItem(adoptKey) !== "0") ? get("cc.accent", "#2f6feb") : get(P + "accent", "#2f6feb"); }
+      var acc = effAcc(), icol = get(P + "iconcolor", ""), istr = parseInt(get(P + "iconstrength", "100"), 10) || 100;
       function useOwn() {
         if (adoptKey && localStorage.getItem(adoptKey) !== "0") {
           localStorage.setItem(adoptKey, "0");
@@ -632,7 +681,7 @@
       pr.appendChild(pk); pr.appendChild(hx); cA.appendChild(pr);
       var sr = el("div", "cc-set-swatches");
       PRESETS.forEach(function (c) {
-        var sw = el("span", "cc-set-sw" + (c === acc ? " cc-set-sw-on" : "")); sw.title = c; sw.style.background = c;
+        var sw = el("span", "cc-set-sw" + (c === acc ? " cc-set-sw-on" : "")); sw.setAttribute("data-tip", c); sw.style.background = c;
         sw.addEventListener("click", function () { acc = c; pk._set(c); hx.value = c; set(P + "accent", c); useOwn(); paintPv(); });
         sr.appendChild(sw);
       });
@@ -680,6 +729,14 @@
       }
       paintPv();
       cA.appendChild(pv);
+      // adopt flip / global-accent edit → this card repaints with the effective colour
+      if (adoptKey) styleCardSync[adoptKey] = function () {
+        acc = effAcc();
+        try { pk._set(/^#[0-9a-f]{6}$/i.test(acc) ? acc : "#2f6feb"); } catch (e9) {}
+        hx.value = acc;
+        Array.prototype.slice.call(sr.querySelectorAll(".cc-set-sw")).forEach(function (sw9) { sw9.classList.toggle("cc-set-sw-on", sw9.getAttribute("data-tip") === acc); });
+        paintPv();
+      };
       into.appendChild(cA);
       // Badge-Form (shape) is now a single GLOBAL control in the Allgemein "Badges" card, so it is
       // no longer repeated per area here.
@@ -787,8 +844,9 @@
     cSh.appendChild(styleToggle("cc.styleshares", null));
     var cSet = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
     cSet.appendChild(styleToggle("cc.stylesettings", null));
-    // tile size of the /Settings + /Tools category grid (cc.sgsize s/m/l, default m; settingsgrid.js reads it)
-    cSet.appendChild(segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small")], ["m", T("Mittel", "Medium")], ["l", T("Groß", "Large")]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); }));
+    // tile size of the /Settings + /Tools category grid (cc.sgsize s/m/l, default m; settingsgrid.js
+    // reads it) — the SAME shared row as the Docker Logos card, always the card's LAST row
+    cSet.appendChild(tileSizeRow());
     var cFav = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
     cFav.appendChild(styleToggle("cc.stylefavorites", null));
     var cStart = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
@@ -934,6 +992,17 @@
     });
     row.appendChild(seg); return row;
   }
+  // indent the settings tab strip so it starts at the first main-menu tab: --cc-align-left is
+  // stamped by header.js (fallback 15px). Queries the CURRENT strip, so re-renders stay covered.
+  function alignSetTabs() {
+    try {
+      var strip = root.querySelector(".cc-set-tabs"); if (!strip) return;
+      var need = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cc-align-left")) || 15) - strip.getBoundingClientRect().left;
+      if (need > 0 && need < 60) strip.style.paddingLeft = need + "px"; else strip.style.paddingLeft = "";
+    } catch (e) {}
+  }
+  var alignT = null; // ONE debounced resize listener for the page's lifetime (module scope, added once)
+  window.addEventListener("resize", function () { clearTimeout(alignT); alignT = setTimeout(alignSetTabs, 150); });
 
   render();
   // Pull the engine-side config so the Notifications card reflects what is saved,

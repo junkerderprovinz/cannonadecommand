@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.38.1">
+  <!ENTITY version   "2.39.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,30 @@
 </ICON>
 
 <CHANGES>
+### 2.39.0
+- #1 Kopfbereich im CC-Style: Der Servername steht jetzt gross links, wo vorher der
+  Unraid-Schriftzug war; Betriebszeit und Unraid-OS-Edition wandern als Chips in die
+  Status-Insel (neben Array, Diensten und Temperaturen); Glocke und Menue-Knopf sind
+  ins CC-Design eingefaerbt; der Versions-Chip (z. B. 7.3.2) bleibt klickbar und traegt
+  jetzt den CC-Badge-Look.
+- #2 NEU in den CC-Einstellungen (Allgemein): Karte "Anzeige" mit Direktdraht zu Unraids
+  Anzeige-Einstellungen -- Farbschema (Hell/Dunkel/Azurblau/Grau) und Tabansicht werden
+  nativ gespeichert und die Seite laedt neu.
+- #3 Alle Hover-Blasen vereinheitlicht UND besser lesbar: hellere Flaeche, hellerer Text,
+  kraeftigerer Schatten; auch die bisher nativen Browser-Tooltips (z. B. auf den
+  Farb-Feldern) sind jetzt CC-Blasen. Rahmenlos und formfolgend wie gehabt.
+- #4 Der reaktive Rainbow-Modus gilt jetzt auch im Docker-Tab: Badges, Aktions-Icons,
+  untere Buttonleiste, Reiter und Editor-Chrome ruhen grau und faerben sich beim
+  Ueberfahren; Aktives/Gesetztes (aktiver Reiter, Startplan aktiv, gesetzte Limits,
+  eingeschaltete Schalter) bleibt farbig.
+- #5 Die CC-Reiter haben jetzt WIRKLICH den Hauptmenue-Abstand (Unraids Button-CSS
+  schmuggelte 12px Margin ein) und starten buendig mit dem ersten Menue-Tab.
+- #6 "Globale Badge-Farbe uebernehmen" laesst Farbfelder, Hex-Feld, Farbpunkte und
+  Vorschau des Bereichs sofort auf die geltende Farbe springen -- auch wenn die globale
+  Farbe geaendert wird, ziehen adoptierende Bereiche live mit.
+- #7 Die Kachelgroesse-Einstellung sitzt jetzt in jedem Tab an derselben Stelle (letzte
+  Zeile ihrer Karte) und heisst ueberall gleich.
+
 ### 2.38.1
 - #1 FIX: Browser-Einfrieren beim Umschalten der Fussleiste (und anderen Kopfbereich-Aenderungen)
   behoben. Ursache: Unraids Connect-Skript baut seine Menue-Komponenten bei jeder Umsortierung
@@ -1332,7 +1356,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>7e6fe05a8c23e4fb85b7e2ca182a428c792927308b32e0a708dd1609bfc88edb</SHA256>
+  <SHA256>f44311af9d6240eddb80f594cd52ea30dba628618f41b0deefb7950c50662972</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

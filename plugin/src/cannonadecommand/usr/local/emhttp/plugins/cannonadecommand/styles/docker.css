@@ -761,7 +761,7 @@ html.cc-plugins-iconbg .cc-plugico {
 .cc-set-claim { color: var(--dim); font-size: 13px; font-style: italic; margin-top: 2px; }
 .cc-set-version { margin-left: auto; text-align: right; align-self: center; }
 .cc-set-tabs { display: flex; gap: 6px; margin: 0 0 18px; } /* 6px = the main menu bar's per-tab margin 0 3px — identical tab distance (user call) */
-.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; color: #b5b5b5 !important; cursor: pointer; display: inline-flex !important; align-items: center; justify-content: center; height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-pad, 0 20px) !important; font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important; border-radius: 999px !important; font-family: inherit !important; } /* typography FORCED — Unraid's button CSS overrode it */
+.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: inline-flex !important; align-items: center; justify-content: center; height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-pad, 0 20px) !important; font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important; border-radius: 999px !important; font-family: inherit !important; } /* typography + margin FORCED — Unraid's global button CSS (margin: 10px 12px 10px 0) inflated the 6px strip gap to 18px */
 .cc-set-tab-on { background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important; }
 .cc-set-brand { font-size: 24px; letter-spacing: .2px; } .cc-set-brand b { font-weight: 700; } .cc-set-brand span { font-weight: 400; color: var(--dim); }
 .cc-set-sub { color: var(--dim2); font-size: 12.5px; }
@@ -809,18 +809,24 @@ html.cc-plugins-iconbg .cc-plugico {
 .cc-info { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; background: none; color: var(--txt, #e6e6e6); opacity: .8; cursor: help; position: relative; flex: 0 0 auto; }
 .cc-info svg { width: 15px; height: 15px; display: block; background: none; }
 .cc-info:hover, .cc-info:focus { opacity: 1; outline: none; }
-.cc-info[data-tip]:hover::after, .cc-info[data-tip]:focus::after {
+/* the bubble covers ANY [data-tip] carrier in the settings panel (colour swatches .cc-set-sw,
+   the reset button .cc-set-ibtn, ...) — they just need the anchor position. */
+#cc-settings [data-tip] { position: relative; }
+/* UNIFIED bubble spec — identical in every sheet (keep hover AND focus triggers) */
+.cc-info[data-tip]:hover::after, .cc-info[data-tip]:focus::after,
+#cc-settings [data-tip]:hover::after, #cc-settings [data-tip]:focus::after {
   content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
-  z-index: 9999; width: max-content; max-width: 260px; text-align: left;
-  background: #1c1c1c; color: #eaeaea; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);   /* hover bubbles: no frame, follow the badge form (user law) */
-  padding: 8px 10px; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
-  font-size: 12px; font-weight: 400; font-style: normal; line-height: 1.45;
+  z-index: 9999; width: max-content; max-width: 280px; text-align: left;
+  background: #393939; color: #f4f4f4; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);   /* hover bubbles: no frame, follow the badge form (user law) */
+  padding: 9px 12px; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 12.5px; font-weight: 400; font-style: normal; line-height: 1.45;
   text-transform: none; letter-spacing: normal; white-space: normal;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, .45); pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .55); pointer-events: none;   /* elevation shadow, not a ring */
 }
-.cc-info[data-tip]:hover::before, .cc-info[data-tip]:focus::before {
+.cc-info[data-tip]:hover::before, .cc-info[data-tip]:focus::before,
+#cc-settings [data-tip]:hover::before, #cc-settings [data-tip]:focus::before {
   content: ""; position: absolute; left: 50%; bottom: calc(100% + 3px); transform: translateX(-50%);
-  z-index: 9999; border: 5px solid transparent; border-top-color: #1c1c1c; pointer-events: none;
+  z-index: 9999; border: 5px solid transparent; border-top-color: #393939; pointer-events: none;
 }
 .cc-set-mini { background: transparent; color: var(--dim); border: 1px solid var(--line2); border-radius: 7px; padding: 5px 12px; font-size: 12.5px; cursor: pointer; }
 .cc-set-mini-on { color: #fff; border-color: var(--cc-accent, #2f6feb); background: rgba(255,255,255,.05); }
@@ -1153,6 +1159,50 @@ html.cc-docker-on.cc-on-addct .ui-dialog select:focus-visible { outline: none !i
    scope is safe; the field rules above already swap mouse-focus rings for fill feedback. ═══ */
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
 [tabindex]:focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
+
+/* ═══ REACTIVE RAINBOW "active only" on /Docker (global signal html.cc-shares-rbneutral, stamped
+   by shares.js on every page — same contract as /Main, see CannonadeCommand.Shares.css): ALL
+   CC-painted chrome rests GREY and takes its stamped palette colour (--cc-rb-c/--cc-rb-ct per
+   element, accent fallback) only on :hover. ACTIVE/checked/selected chrome keeps its colour:
+   [aria-selected=true] tabs, .cc-plan-on (Startplan aktiv), checked switch tracks (.checked —
+   exempt by not being matched below), .cc-limbtn-set (= a configured limit), and the semantic
+   state/update badges + dots (.cc-badge-*, green/orange-text, .sl-chip, .cc-statdot — none are
+   .cc-b, so no rule below reaches them). Everything gated on .cc-docker-on so other tabs are
+   untouched; !important beats the inline palette paints docker.js stamps. ═══ */
+/* value badges in #docker_list (incl. the idle Startplan chip; .cc-plan-on = active, keeps colour) */
+html.cc-shares-rbneutral.cc-docker-on #docker_list .cc-b:not(.cc-plan-on) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on #docker_list .cc-b:not(.cc-plan-on):hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
+/* bottom action bar: the docked .js-actions buttons rest grey, palette colour on hover */
+html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:not(:disabled) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:hover:not(:disabled) { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
+/* page tabs: NON-active tabs rest grey (paintTabs stamps --cc-rb-c per tab for the hover);
+   the [aria-selected=true] tab stays painted */
+html.cc-shares-rbneutral.cc-docker-on nav.tabs .tabs-container > button[role=tab]:not([aria-selected="true"]) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on nav.tabs .tabs-container > button[role=tab]:not([aria-selected="true"]):hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
+/* limit gears (list rows + grid cards): idle gear rests grey; a SET gear stays green (live state) */
+html.cc-shares-rbneutral.cc-docker-on .cc-limbtn:not(.cc-limbtn-set) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-limbtn:not(.cc-limbtn-set):hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
+/* popup chrome painted by docker.js (.cc-pop editors + the .cc-menu gear menu): buttons —
+   incl. the accent-filled .cc-btn-primary — rest grey; selected day chips (.cc-day-on),
+   checked toggles and selected cores keep their colour (active contract). */
+html.cc-shares-rbneutral.cc-docker-on :is(.cc-pop, .cc-menu) .cc-btn { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on :is(.cc-pop, .cc-menu) .cc-btn:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-pop .cc-day:not(.cc-day-on) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-pop .cc-day:not(.cc-day-on):hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
+/* action icons: tintAct() skips its inline paint in neutral and stamps --cc-rb-c instead —
+   enabled icons rest DARK grey (their own base, not the translucent chip grey) and take the
+   stamped palette colour on hover; disabled .cc-actoff keeps its inline grey (never matched). */
+html.cc-shares-rbneutral.cc-docker-on .cc-actbtn:not(.cc-actoff) { background: #2e2e2e !important; color: #e9e9e9 !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-actbtn:not(.cc-actoff):hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
+/* value badges carry per-KIND colours (--cc-rb-net/ip/lan/port/vol, stamped on the container,
+   see the .cc-rainbow kind rules above) — hovering restores the badge's OWN kind colour instead
+   of the generic accent fallback. Placed after the generic hover so equal importance resolves
+   by order. */
+html.cc-shares-rbneutral.cc-docker-on #docker_list .cc-b-net:hover { background: var(--cc-rb-net, #1f9d55) !important; color: var(--cc-rb-net-t, #fff) !important; }
+html.cc-shares-rbneutral.cc-docker-on #docker_list .cc-b-ip:hover { background: var(--cc-rb-ip, #2f6feb) !important; color: var(--cc-rb-ip-t, #fff) !important; }
+html.cc-shares-rbneutral.cc-docker-on #docker_list .cc-b-lan:hover { background: var(--cc-rb-lan, #e0912a) !important; color: var(--cc-rb-lan-t, #161616) !important; }
+html.cc-shares-rbneutral.cc-docker-on #docker_list .cc-b-port:hover { background: var(--cc-rb-port, #8b5cf6) !important; color: var(--cc-rb-port-t, #fff) !important; }
+html.cc-shares-rbneutral.cc-docker-on #docker_list .cc-b-vol:hover { background: var(--cc-rb-vol, #0891b2) !important; color: var(--cc-rb-vol-t, #fff) !important; }
 
 /* ___ badge-shape MASTER overrides: these must remain the LAST rules in this
    file, because any later rule with the same !important radius would win
