@@ -1037,19 +1037,21 @@ html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-selected {
 html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-selected:hover { filter: brightness(1.12); }
 html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-disabled { opacity: .4; pointer-events: none; }
 
-/* ── PAGE TITLE as a CC head badge: docker.js ctTitleWrap wraps the heading's icon + BARE text
-   node ("CONTAINER HINZUFUEGEN") into span.cc-b.cc-pagehead (NATIVE nodes inside — restored by
-   ctTitleUnwrap, never a [MARK] sweep). Head-badge tier metrics; accent fill + contrast text.
+/* ── PAGE TITLE as a CC head badge. Unraid 7.3 puts icon + text in div.title > span.left
+   (live-diagnosed — NOT a bare text node, so the ctTitleWrap path never fires there; it stays
+   as the fallback for builds that DO render bare text). Style span.left directly as the badge.
    div.title loses ALL borders here — the divider line under the title bar is illegal. */
 html.cc-docker-on.cc-on-addct div.title { border: none !important; }
+html.cc-docker-on.cc-on-addct #displaybox div.title > span.left,
 html.cc-docker-on.cc-on-addct div.title .cc-pagehead {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-size: var(--cc-head-fs, 15px); font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
+  display: inline-flex !important; align-items: center; gap: 8px;
+  font-size: var(--cc-head-fs, 15px) !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
   padding: var(--cc-head-pad, 9px 18px); min-height: var(--cc-lgb-h, 36px); box-sizing: border-box;
   border-radius: var(--cc-b-radius, 999px); line-height: 1;
-  background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff);
+  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
 }
-html.cc-docker-on.cc-on-addct div.title .cc-pagehead i.fa { color: inherit; }
+html.cc-docker-on.cc-on-addct #displaybox div.title > span.left i,
+html.cc-docker-on.cc-on-addct div.title .cc-pagehead i.fa { color: inherit !important; }
 /* title-bar toggle labels ("ERWEITERTE ANSICHT"): muted uppercase, never link-blue */
 html.cc-docker-on.cc-on-addct div.title span.right,
 html.cc-docker-on.cc-on-addct div.title span.right .switch-button-label { color: #cfcfcf !important; font-size: 13px; font-weight: 600; text-transform: uppercase; }
