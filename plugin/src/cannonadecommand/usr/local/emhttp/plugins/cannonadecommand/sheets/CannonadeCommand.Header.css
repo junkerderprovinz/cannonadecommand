@@ -142,11 +142,15 @@ html.cc-header-on .tooltipster-base .tooltipster-arrow { display: none !importan
    fill alone is the chip; the dot COLOUR is set inline per state by header.js. */
 html.cc-header-on #header { display: flex; align-items: center; }   /* flex row so margin-left:auto works + everything centres on ONE 91px line */
 html.cc-header-on #cc-island {
-  display: inline-flex; align-items: center; gap: 8px;
-  /* 135px right clearance: #UserProfile (bell + burger) is ABSOLUTE top-right (~115px zone
-     + breathing room) — chips must never underlap it */
-  margin-left: auto; margin-right: 135px; align-self: center;
+  display: inline-flex; align-items: center; gap: 8px; flex-wrap: nowrap;
+  /* flush right (user call: "ganz rechts"): clearance = exactly the bell+burger zone
+     (~106px) + 8px gap, so the chip row ends right where the controls begin */
+  margin-left: auto; margin-right: 114px; align-self: center;
 }
+/* island bubbles anchor RIGHT: the chips sit at the page edge — a centred 280px bubble
+   on the last chip would overflow the viewport */
+html.cc-header-on #cc-island [data-cc-tip]:hover::after,
+html.cc-header-on #cc-island [data-cc-tip]:focus::after { left: auto; right: 0; transform: none; }
 html.cc-header-on #cc-island .cc-isl-chip {
   display: inline-flex; align-items: center; white-space: nowrap;
   padding: 3px 11px;                             /* S tier: 11px text + 3px pads ≈ 21px chip */
@@ -176,6 +180,8 @@ html.cc-header-on #cc-island .cc-isl-dot {
 html.cc-header-on unraid-header-os-version a { display: none !important; }
 html.cc-header-on #UserProfile > div:first-child { display: none !important; }
 html.cc-header-on #UserProfile > div:nth-child(2) > div:first-child { display: none !important; }
+/* the menu usage-bar hides while the island shows its fill-level chip (header.js gate class) */
+html.cc-header-on.cc-usage-isl #menu .usage-bar { display: none !important; }
 
 /* 2) #cc-brand (header.js, first child of #header): server name takes the wordmark's place */
 html.cc-header-on #cc-brand {
@@ -206,13 +212,18 @@ html.cc-header-on unraid-header-os-version > div { margin: 0 !important; justify
 
 /* 3) bell + burger: #UserProfile stays ABSOLUTE top-right (native positioning untouched);
    after the hides its controls row keeps only the two triggers — centred over the full 91px */
-html.cc-header-on #UserProfile > div:nth-child(2) { height: 100%; align-items: center; }
+html.cc-header-on #UserProfile > div:nth-child(2) { height: 100%; align-items: center; gap: 8px; }
+/* bell + burger dress as BADGES (user call): the same grey chip fill as the island chips,
+   badge-form radius, hover = brightness only (law) */
 html.cc-header-on #UserProfile > div:nth-child(2) > span {
-  color: #cfcfcf; padding: 8px;
-  transition: color .12s, filter .12s;
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 26px; padding: 0 10px;
+  background: rgba(128, 128, 128, .18) !important;
+  border-radius: var(--cc-b-radius, 999px);
+  color: #cfcfcf; transition: color .12s, filter .12s;
 }
-html.cc-header-on #UserProfile > div:nth-child(2) > span:hover { color: #fff; filter: brightness(1.15); }
-html.cc-header-on #UserProfile > div:nth-child(2) > span svg { width: 22px !important; height: 22px !important; }
+html.cc-header-on #UserProfile > div:nth-child(2) > span:hover { color: #fff; filter: brightness(1.25); }
+html.cc-header-on #UserProfile > div:nth-child(2) > span svg { width: 18px !important; height: 18px !important; }
 /* their Tailwind ring-offset classes may paint focus rings — kill on every focusable (law) */
 html.cc-header-on #UserProfile > div:nth-child(2) :is(span, button, a):focus,
 html.cc-header-on #UserProfile > div:nth-child(2) :is(span, button, a):focus-visible {

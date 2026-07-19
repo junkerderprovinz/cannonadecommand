@@ -90,7 +90,10 @@
    own CC badge column is on — net/ip/lan/port are now independent columns (user split), so a native
    cell must survive when the user turned its badge OFF for the current view (else the datum vanishes). */
 .cc-enh.cc-c-ip thead tr:last-child th:nth-child(5), .cc-enh.cc-c-ip #docker_list tr.sortable > td:nth-child(5),
-.cc-enh.cc-c-port thead tr:last-child th:nth-child(6), .cc-enh.cc-c-port #docker_list tr.sortable > td:nth-child(6),
+/* the native CONTAINER-PORT column hides UNCONDITIONALLY under the enhance (user call: "die Spalte
+   soll nicht da sein") — with the CC PORT badge column off it showed a 580px "all" monster that
+   squeezed every other column. Port info stays available via the PORT badge (gear column menu). */
+.cc-enh thead tr:last-child th:nth-child(6), .cc-enh #docker_list tr.sortable > td:nth-child(6),
 .cc-enh.cc-c-lan thead tr:last-child th:nth-child(7), .cc-enh.cc-c-lan #docker_list tr.sortable > td:nth-child(7) { display: none !important; }
 /* NARROW version + network columns → more room for volumes (actions col = position 2) */
 .cc-enh thead tr:last-child th:nth-child(3) { width: 165px; }
@@ -776,7 +779,7 @@ html.cc-plugins-iconbg .cc-plugico {
 #cc-settings .cc-seg-btn { padding: 5px 12px; }
 .cc-set-spacer { flex: 1; }
 .cc-set-swatches { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 6px; }
-.cc-set-sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; flex: none; }
+.cc-set-sw { width: 22px; height: 22px; border-radius: var(--cc-dot-r, 50%); border: 2px solid transparent; cursor: pointer; padding: 0; flex: none; } /* swatches follow the badge form like the state dots (user call) */
 .cc-set-sw-on { transform: scale(1.18); filter: brightness(1.15); }   /* ring-free on-state — KEINE Rahmen/Ringe (Nutzer-Gesetz) */
 /* colour picker: force it VISIBLE as a real swatch. Unraid's global input CSS
    (border:none; border-bottom; transparent bg) otherwise strips it to a thin line
@@ -836,6 +839,13 @@ button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-t
 #cc-settings [data-tip]:focus::before {
   content: ""; position: absolute; left: 50%; bottom: calc(100% + 3px); transform: translateX(-50%);
   z-index: 9999; border: 5px solid transparent; border-top-color: #393939; pointer-events: none;
+}
+/* inside the settings cards the bubble anchors LEFT (grows rightward): a centred 280px bubble on
+   a first-column card overflowed the page edge (user report). The ::before arrow stays centred
+   on the icon, so the pointer still marks the anchor. */
+#cc-settings .cc-set-card [data-tip]:hover::after, #cc-settings .cc-set-card [data-tip]:focus::after,
+#cc-settings .cc-set-card .cc-info[data-tip]:hover::after, #cc-settings .cc-set-card .cc-info[data-tip]:focus::after {
+  left: -6px; transform: none;
 }
 .cc-set-mini { background: transparent; color: var(--dim); border: 1px solid var(--line2); border-radius: 7px; padding: 5px 12px; font-size: 12.5px; cursor: pointer; }
 .cc-set-mini-on { color: #fff; border-color: var(--cc-accent, #2f6feb); background: rgba(255,255,255,.05); }

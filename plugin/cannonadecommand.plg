@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.39.2">
+  <!ENTITY version   "2.40.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,19 @@
 </ICON>
 
 <CHANGES>
+### 2.40.0
+- #1 Kopfbereich: Glocke und Menue-Knopf sind jetzt Badges (graue Chip-Flaeche, Badge-Form);
+  die Status-Insel sitzt buendig ganz rechts direkt vor den beiden; Temperaturen sind IMMER
+  sichtbar (Punkt gruen unter der Warnschwelle, bernstein darueber, rot ab Schwelle+15);
+  NEU: Array-Fuellstand als Chip in der Insel (die Anzeige in der Menueleiste wandert dorthin).
+- #2 CC-Einstellungen: Das ganze Panel (Logo, Reiter, Karten) startet buendig am ersten
+  Menue-Tab; Sichern und Uebertragen wohnt jetzt in der Theming-Karte; Karten-Infoblasen
+  oeffnen nach rechts statt zentriert (liefen am linken Seitenrand ueber); die
+  voreingestellten Farbpunkte folgen der Badge-Form.
+- #3 Docker-Tab: Die native CONTAINER-PORT-Spalte ist unter dem CC-Look immer ausgeblendet
+  (sie erschien als 580px-Riese und verschob alle Spalten; Port-Infos gibt es weiter als
+  Badge ueber das Zahnrad-Spaltenmenue); der Startplan-Badge hat keinen Hover-Text mehr.
+
 ### 2.39.2
 - #1 Tooltip-Restfeger im Docker-Tab: Auch Hover-Texte, die FREMDE Quellen in die Liste
   bringen (ShipLog-Chips, Unraids Warte-Sekunden-Felder), rendern jetzt als CC-Blase --
@@ -1373,7 +1386,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>9042e59b97f45897ae5a7fe70bf4ff2f4ffd1cd1bb05b670482c2f88d5788223</SHA256>
+  <SHA256>c7f6a02604be453f7a853188f93233db38d8b889e6ee0c085a3749ce5b0ea376</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

@@ -365,7 +365,7 @@
     chip.href = "#"; chip.innerHTML = '<span class="cc-b-k"></span><span class="cc-b-v"></span>';
     chip.querySelector(".cc-b-k").textContent = t("plan");
     chip.querySelector(".cc-b-v").textContent = depsTxt(node);
-    chip.setAttribute("data-tip", "start order for " + name + (node && node.after && node.after.length ? " · " + t("after") + " " + node.after.join(", ") : "") + (wdOn ? " · watchdog" : "") + (schedN ? " · " + schedN + "× " + t("schedules").toLowerCase() : "") + (idleOn ? " · " + t("idleStop").toLowerCase() : ""));
+    // NO hover text on the plan badge (user call) — the chip itself says everything
     chip.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openEditor(chip, name); });
     return chip;
   }

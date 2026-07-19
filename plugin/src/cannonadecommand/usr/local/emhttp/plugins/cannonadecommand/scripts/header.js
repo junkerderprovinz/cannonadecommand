@@ -331,9 +331,13 @@
       if (osRow) { var sps = osRow.querySelectorAll("span"); for (var oj = 0; oj < sps.length; oj++) { if (/Unraid\s*OS/i.test(sps[oj].textContent || "")) { osSp = sps[oj]; break; } } }
       // the span's textContent already includes the nested <em> edition ("Unraid OS Plus"); no em -> plain "Unraid OS"
       var osLabel = osSp ? (osSp.textContent || "").replace(/\s+/g, " ").replace(/^\s|\s$/g, "") : "Unraid OS";
+      // array fill level: mirror the menu usage-bar's text (the native bar hides under
+      // cc-usage-isl while the island is on — the chip replaces it, user call)
+      var ub = document.querySelector("#menu .usage-bar > span");
+      var usage = ub ? (ub.textContent || "").replace(/\s+/g, "").trim() : "";
       // idempotence guard: nchan rewrites the footer every few seconds with UNCHANGED text most
       // of the time — compare the source signature and skip the DOM rebuild when nothing moved
-      var sig = upTxt + "|" + upTitle + "|" + osLabel + "|" + raw + "|" + temps.join(",") + "|" + warn + "|" + (par ? par[0] : "");
+      var sig = upTxt + "|" + upTitle + "|" + osLabel + "|" + raw + "|" + temps.join(",") + "|" + warn + "|" + usage + "|" + (par ? par[0] : "");
       if (isle && sig === ccIslandSig) return;
       ccIslandSig = sig;
       if (!isle) {
@@ -364,15 +368,18 @@
           if (low.indexOf("gestartet") !== -1 || low.indexOf("started") !== -1) dc = "#3fae6a";
           else if (low.indexOf("gestoppt") !== -1 || low.indexOf("stopped") !== -1) dc = "#d9433f";
           chip(s, dc, par ? s + " — " + par[0].replace(/\s+/g, " ") : s);
+          // FILL-LEVEL chip right beside the array state (green <80, amber <95, red above)
+          if (usage) { var un = parseInt(usage, 10); chip(usage, isNaN(un) ? "#8d8d8d" : un >= 95 ? "#d9433f" : un >= 80 ? "#d6a243" : "#3fae6a", T("Array-Füllstand ", "Array usage ") + usage); }
         } else {         // ONE chip per service segment: label = name before ":", full text -> bubble
           var ci = s.indexOf(":"), name = ci > 0 ? s.slice(0, ci).replace(/\s+$/, "") : s;
           var rest = ci > 0 ? s.slice(ci + 1).toLowerCase() : "";
           chip(name, rest.indexOf("started") !== -1 ? "#3fae6a" : "#d6a243", s);
         }
       }
-      // TEMP chips ONLY at/above the warn threshold (calm strip: a healthy box shows nothing)
+      // TEMP chips: always visible (user call) — the DOT carries the state (green below the
+      // cc.tempwarn threshold, amber at/above, red at threshold+15)
       for (i = 0; i < temps.length; i++) {
-        if (temps[i] >= warn) chip(Math.round(temps[i]) + " °C", temps[i] >= warn + 15 ? "#d9433f" : "#d6a243", temps[i] + " °C");
+        chip(Math.round(temps[i]) + " °C", temps[i] >= warn + 15 ? "#d9433f" : temps[i] >= warn ? "#d6a243" : "#3fae6a", temps[i] + " °C");
       }
     } catch (e) {}
   }
@@ -452,6 +459,9 @@
       // copyright). DEFAULT HIDDEN — cc.footer="0" (settings toggle) brings it back. Same
       // master-gating idiom as cc-popups-on; the storage listener re-runs apply() live.
       root.classList.toggle("cc-footer-off", g("cc.footer", "1") === "1" && g("cc.theming", "1") !== "0");
+      // array-usage chip lives in the island now — hide the native menu usage-bar while the
+      // island is on (its data source; the chip mirrors the text). Island off = native bar back.
+      root.classList.toggle("cc-usage-isl", on && ccIslandOn());
       paintPopups(); watchPopups();
       // paintNav() with cc-header-on now removed => rb=false => it removeProperty's every
       // lingering rainbow inline colour, so a live theming-OFF (even with Rainbow on) fully

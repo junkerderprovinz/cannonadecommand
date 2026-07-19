@@ -246,9 +246,11 @@
     // idle-stop) and disable ALL visual theming (badges, colours, rainbow, cards, and every
     // area's restyling). Defaults on, so existing installs are unchanged. render() on change
     // keeps the toggle in sync; the tabs pick it up via their storage listeners / on next load.
+    var themingCard; // the first Allgemein card — Sichern & Übertragen moves in here (user call)
     (function () {
       var tc = card(T("Theming", "Theming"), T("Aus = nur die Docker-FUNKTIONEN von CannonadeCommand bleiben (Startplan, Abhängigkeiten, Health-Gate, Watchdog, Zeitpläne, Limits, Bandbreite, Auto-Stop bei Leerlauf). Das gesamte visuelle Theming — Badges, Farben, Rainbow, Karten und die Umgestaltung aller Tabs — wird abgeschaltet.", "Off = only CannonadeCommand's Docker FUNCTIONS remain (start plan, dependencies, health-gate, watchdog, schedules, limits, bandwidth, idle auto-stop). All visual theming — badges, colours, rainbow, cards and every tab's restyling — is turned off."));
       tc.appendChild(toggleRow(T("Theming aktiv", "Theming on"), localStorage.getItem("cc.theming") !== "0", function (v) { set("cc.theming", v ? "1" : "0"); render(); syncHeaderBar(); syncSharesBar(); }));
+      themingCard = tc;
       wrapMain.appendChild(tc);
     })();
     // Bereiche: enable/disable each area CannonadeCommand enhances
@@ -578,7 +580,7 @@
     c4.appendChild(segRow(T("Standard-Ansicht", "Default view"), [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")]], view, function (v) { view = v; set("cc.view", v); }));
     // cc.density is GLOBAL: Docker + Start + Freigaben all read this one key
     c4.appendChild(segRow(T("Zeilenhöhe (global: Docker, Start, Freigaben)", "Row density (global: Docker, Start, Shares)"), [["compact", T("kompakt", "compact")], ["normal", "normal"], ["airy", T("luftig", "airy")]], density, function (v) { density = v; set("cc.density", v); }));
-    function applyShape() { var m9 = { pill: "999px", rounded: "6px", square: "0px", circle: "999px" }; var sh9 = get("cc.badgeshape", "pill"); var r9 = m9[sh9] || "999px"; root.style.setProperty("--cc-b-radius", r9); document.documentElement.style.setProperty("--cc-b-radius", r9); document.documentElement.classList.toggle("cc-shape-circle", sh9 === "circle"); }
+    function applyShape() { var m9 = { pill: "999px", rounded: "6px", square: "0px", circle: "999px" }; var sh9 = get("cc.badgeshape", "pill"); var r9 = m9[sh9] || "999px"; root.style.setProperty("--cc-b-radius", r9); document.documentElement.style.setProperty("--cc-b-radius", r9); document.documentElement.classList.toggle("cc-shape-circle", sh9 === "circle"); var d9 = { pill: "50%", rounded: "3px", square: "0px", circle: "50%" }[sh9] || "50%"; document.documentElement.style.setProperty("--cc-dot-r", d9); /* dot token: the preset swatches follow the badge form too (user call) */ }
     wrap.appendChild(c4);
     // Badge-Form (shape) is a single GLOBAL control in the Allgemein "Badges" card now — not per
     // area — so the Docker tab has no inline Badge-Form card either. Keep the initial applyShape()
@@ -888,9 +890,13 @@
     buildStyleCards("ccf.", wrapFavorites, ["fa-star", "fa-heart", "fa-cog"], false); // Favoriten: tiles use FA glyphs -> preview shows sample glyphs coloured via CSS (like the Settings card)
     buildStyleCards("ccm.", wrapStart, [], true); // Start (/Main): disk_status value + name badges, no per-row logos -> badges only, no logo card
     // ── Sichern & Übertragen: export/import of every cc-family localStorage setting.
-    // Lives as the LAST card of the Allgemein section now (no own tab, user call). ──
+    // Lives INSIDE the Theming card now (user call) — a label row + the two buttons.
     (function () {
-      var cX = card(T("Sichern & Übertragen", "Backup & transfer"), T("Exportiert alle CC-Einstellungen (cc.*-Schlüssel) als JSON-Datei. Der Import schreibt sie zurück und lädt die Seite neu.", "Exports every CC setting (cc.* keys) as a JSON file. Import writes them back and reloads the page."));
+      var cX = themingCard;
+      var lblw = el("div", "cc-set-lbl cc-set-lblwrap");
+      lblw.appendChild(el("span", null, T("Sichern & Übertragen", "Backup & transfer")));
+      lblw.appendChild(infoIcon(T("Exportiert alle CC-Einstellungen (cc.*-Schlüssel) als JSON-Datei. Der Import schreibt sie zurück und lädt die Seite neu.", "Exports every CC setting (cc.* keys) as a JSON file. Import writes them back and reloads the page.")));
+      cX.appendChild(lblw);
       var note = el("div", "cc-set-xnote"); // inline notice — this page has no toast mechanism
       function say(msg, bad) { note.textContent = msg || ""; note.style.color = bad ? "#d9433f" : ""; }
       var ex = el("span", "cc-btn cc-set-xbtn", T("Exportieren", "Export")); // grey fill + hover accent, md tier, no rings
@@ -935,8 +941,7 @@
       });
       im.addEventListener("click", function () { fin.click(); });
       var brow = el("div", "cc-set-row"); brow.appendChild(ex); brow.appendChild(im);
-      cX.appendChild(brow); cX.appendChild(fin); cX.appendChild(note);
-      wrapMain.appendChild(cX); // last Allgemein card (runs after every other wrapMain append)
+      cX.appendChild(brow); cX.appendChild(fin); cX.appendChild(note); // rows land at the end of the Theming card
     })();
     refreshTabs();
     // cc.settab holds a stable section id ("general"/"header"/…). A legacy numeric index
@@ -994,13 +999,13 @@
     });
     row.appendChild(seg); return row;
   }
-  // indent the settings tab strip so it starts at the first main-menu tab: --cc-align-left is
-  // stamped by header.js (fallback 15px). Queries the CURRENT strip, so re-renders stay covered.
+  // indent the WHOLE panel (logo/hero, tab strip AND cards) so it starts at the first
+  // main-menu tab: --cc-align-left is stamped by header.js (fallback 15px). Padding the
+  // root is idempotent — the root's border edge doesn't move with its own padding.
   function alignSetTabs() {
     try {
-      var strip = root.querySelector(".cc-set-tabs"); if (!strip) return;
-      var need = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cc-align-left")) || 15) - strip.getBoundingClientRect().left;
-      if (need > 0 && need < 60) strip.style.paddingLeft = need + "px"; else strip.style.paddingLeft = "";
+      var need = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cc-align-left")) || 15) - root.getBoundingClientRect().left;
+      if (need > 0 && need < 60) root.style.paddingLeft = need + "px"; else root.style.paddingLeft = "";
     } catch (e) {}
   }
   var alignT = null; // ONE debounced resize listener for the page's lifetime (module scope, added once)
