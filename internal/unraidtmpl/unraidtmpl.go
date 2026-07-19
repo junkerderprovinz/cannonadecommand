@@ -198,7 +198,6 @@ func tokenize(s string) [][2]int {
 				}
 			case c == '"' || c == '\'':
 				q = c
-			case isSpace(c):
 			}
 			if q == 0 && isSpace(c) {
 				break
