@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.36.1">
+  <!ENTITY version   "2.36.2">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,25 @@
 </ICON>
 
 <CHANGES>
+### 2.36.2
+- #1 Konfigurations-Popup: die Auswahllisten (Konfigurationstyp, Zugriffsrechte, Anzeigen,
+  Erforderlich, Password Mask) nutzen jetzt das CC-Dropdown -- die nativen Listen entstehen
+  in einem Dialog AUSSERHALB des Seitencontainers und entgingen der Verpackung.
+- #2 Container hinzufuegen: Titel-Badge buendig mit der Hauptmenueleiste, Schalter folgen der
+  Badge-Form, Kategorienfeld nicht mehr beschnitten (25px-Klammer um ein 32px-Feld),
+  Erweiterte-Ansicht-Text mittig zum Schalter, und der Rainbow-Modus laeuft ueber die ganze
+  Seite (neutraler Modus: grau in Ruhe, Farbe beim Ueberfahren).
+- #3 Startseite: die drei Freigabe-hinzufuegen-Schaltflaechen laufen im Rainbow mit (waren
+  als input-Elemente an der Rotation vorbeigerutscht).
+- #4 Startplan-Chip: Beschriftung in voller Staerke -- war auf dem grauen Chip zu blass.
+- #5 Hover-Blasen UEBERALL rahmenlos und in der Badge-Form: eigene Blasen, Unraids
+  Tooltip-Systeme UND die nativen Titel-Balloons der Menue-Icons und Steuerelemente
+  (durch die CC-Blase ersetzt).
+- #6 Einstellungen/Werkzeuge: die Beschriftung unter den Kacheln erscheint nur noch beim
+  Ueberfahren -- grau, nie blau, nie unterstrichen.
+- #7 Letzte Linien getilgt: Trennlinie unter den Detail-Kopfzeilen, Trennlinie ueber der
+  Statistik-Leiste und der Akzent-Rahmen des Suchfelds sind weg.
+
 ### 2.36.1
 - #1 Nachbesserung: Der Container-hinzufuegen-Titel wird jetzt wirklich zum Kopf-Badge --
   Unraid 7.3 legt Icon und Text in einen eigenen Container, den die erste Fassung verfehlte
@@ -1273,7 +1292,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>9062ca0557a56ba821aad20fe522cec2c22ec41988b0273bd4fa3daa1a3a722c</SHA256>
+  <SHA256>7dd8ec3c7b02cd108edb983cbc412ec50445447a2d4cfdae40ba9195592f7a25</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

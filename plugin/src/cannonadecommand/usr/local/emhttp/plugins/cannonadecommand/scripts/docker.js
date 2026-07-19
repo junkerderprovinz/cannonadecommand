@@ -2271,10 +2271,28 @@
       if (!on2) { ctSelectsTeardown(); ctTitleUnwrap(); return; }
       applySettings();                                           // --cc-accent/-text + --cc-b-radius (+ rainbow vars) — same chokepoint as list mode
       ctTitleWrap();
-      var sels = document.querySelectorAll('#canvas select:not([multiple]):not([data-cc-dsel])');
+      // jQuery-UI dialogs (Konfiguration hinzufuegen) append to BODY, outside #canvas — their
+      // selects rendered native (user screenshot). The body-childList observer re-enters here
+      // when the dialog fills, so wrapping them in the same pass is enough.
+      var sels = document.querySelectorAll('#canvas select:not([multiple]):not([data-cc-dsel]), .ui-dialog select:not([multiple]):not([data-cc-dsel])');
       for (var i = 0; i < sels.length; i++) ctWrapSelect(sels[i]);
-      var done = document.querySelectorAll('#canvas select[data-cc-dsel]');
+      var done = document.querySelectorAll('#canvas select[data-cc-dsel], .ui-dialog select[data-cc-dsel]');
       for (var j = 0; j < done.length; j++) ctSyncOne(done[j]);  // Unraid re-selects/re-labels at runtime (loadTemplate/showSubnet)
+      // rainbow on the form page (user: "alles ist orange"): rotate the palette over the visible
+      // chrome. Consumers read var(--cc-rb-c, var(--cc-accent)); un-stamping (rainbow off) falls
+      // back to the accent. The neutral sub-mode greys buttons via CSS; badge + checked toggles
+      // keep their stamped colour (heading/active contract).
+      var rbOn2 = localStorage.getItem("cc.rainbow") === "1";
+      var pal2 = RB_PAL; try { var cp2 = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (cp2 && cp2.length) pal2 = cp2; } catch (e0) {}
+      var off3 = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
+      var chrome = document.querySelectorAll('#displaybox div.title > span.left, .cc-pagehead, .switch-button-background, #canvas #readmore_toggle a, #canvas #allocations_toggle a, #canvas dl > dd > a, #canvas input[type="submit"], #canvas button:not([role="tab"]), .ui-dialog .ui-dialog-buttonpane button');
+      for (var r3 = 0, ci3 = 0; r3 < chrome.length; r3++) {
+        var ce = chrome[r3];
+        if (!rbOn2) { ce.style.removeProperty("--cc-rb-c"); ce.style.removeProperty("--cc-rb-ct"); continue; }
+        var cc0 = pal2[(ci3 + off3) % pal2.length]; ci3++;
+        var n0 = parseInt(cc0.slice(1), 16), L0 = 0.299 * (n0 >> 16 & 255) + 0.587 * (n0 >> 8 & 255) + 0.114 * (n0 & 255);
+        ce.style.setProperty("--cc-rb-c", cc0); ce.style.setProperty("--cc-rb-ct", L0 > 150 ? "#161616" : "#fff");
+      }
     } catch (e) {}
   }
   function bootCtForm() {

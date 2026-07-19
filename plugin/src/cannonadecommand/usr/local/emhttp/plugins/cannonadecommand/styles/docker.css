@@ -242,6 +242,9 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
 /* plan chip = one tappable Startplan badge (accent) */
 .cc-plan { cursor: pointer; background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
 .cc-plan:hover { filter: brightness(1.12); }
+/* full-strength label: the key span's .72 opacity made "Startplan" murky, especially on the
+   neutral-mode grey chip (user: "text nicht gut lesbar") */
+.cc-plan .cc-b-k, .cc-plan .cc-b-v { opacity: 1 !important; font-weight: 600; color: inherit; }
 /* badges are <a>/<span> chips — never show Unraid's global a:hover underline (the Startplan
    chip must react like the "läuft" badge: colour only, no line). */
 .cc-b, .cc-b:hover, .cc-b:focus, .cc-plan, .cc-plan:hover, .cc-plan:focus { text-decoration: none !important; }
@@ -808,7 +811,7 @@ box-shadow: none !important;   /* KEINE Rahmen/Ringe — Nutzer-Gesetz, gilt auc
 .cc-info[data-tip]:hover::after, .cc-info[data-tip]:focus::after {
   content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
   z-index: 9999; width: max-content; max-width: 260px; text-align: left;
-  background: #1c1c1c; color: #eaeaea; border: 1px solid rgba(255, 255, 255, .14); border-radius: 8px;
+  background: #1c1c1c; color: #eaeaea; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);   /* hover bubbles: no frame, follow the badge form (user law) */
   padding: 8px 10px; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   font-size: 12px; font-weight: 400; font-style: normal; line-height: 1.45;
   text-transform: none; letter-spacing: normal; white-space: normal;
@@ -952,9 +955,22 @@ html.cc-docker-on.cc-on-addct .ui-dialog .ui-dialog-buttonpane button {
   text-transform: uppercase !important; letter-spacing: .6px !important; font-family: inherit !important;
   border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer; transition: filter .12s, opacity .12s;
   display: inline-flex !important; align-items: center; justify-content: center;
-  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;   /* rainbow: ctApply stamps per button; unstamped = accent */
 }
 html.cc-docker-on.cc-on-addct #canvas input[type="button"] { background: #4a4a4a !important; color: #f0f0f0 !important; }   /* FERTIG/Done = neutral */
+/* neutral rainbow sub-mode (global signal html.cc-shares-rbneutral — shares.js stamps it on every
+   page): buttons rest GREY and take their stamped colour on hover; the title badge and checked
+   toggles keep their colour (heading/active contract). */
+html.cc-shares-rbneutral.cc-docker-on.cc-on-addct #canvas input[type="submit"]:not(:disabled),
+html.cc-shares-rbneutral.cc-docker-on.cc-on-addct #canvas button:not([role="tab"]):not(:disabled),
+html.cc-shares-rbneutral.cc-docker-on.cc-on-addct .ui-dialog .ui-dialog-buttonpane button {
+  background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important;
+}
+html.cc-shares-rbneutral.cc-docker-on.cc-on-addct #canvas input[type="submit"]:hover:not(:disabled),
+html.cc-shares-rbneutral.cc-docker-on.cc-on-addct #canvas button:not([role="tab"]):hover:not(:disabled),
+html.cc-shares-rbneutral.cc-docker-on.cc-on-addct .ui-dialog .ui-dialog-buttonpane button:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
 html.cc-docker-on.cc-on-addct #canvas input[type="submit"]:hover:not(:disabled),
 html.cc-docker-on.cc-on-addct #canvas input[type="button"]:hover:not(:disabled),
 html.cc-docker-on.cc-on-addct #canvas button:hover:not(:disabled),
@@ -976,7 +992,7 @@ html.cc-docker-on.cc-on-addct #canvas #readmore_toggle a:hover,
 html.cc-docker-on.cc-on-addct #canvas #allocations_toggle a:hover,
 html.cc-docker-on.cc-on-addct #canvas dl > dd > a:has(> i.fa-plus):hover,
 html.cc-docker-on.cc-on-addct #canvas a[href="javascript:addConfigPopup()"]:hover {
-  background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;   /* rainbow: hover takes the stamped palette colour */
 }
 html.cc-docker-on.cc-on-addct #canvas #readmore_toggle a i.fa,
 html.cc-docker-on.cc-on-addct #canvas #allocations_toggle a i.fa,
@@ -988,7 +1004,7 @@ html.cc-docker-on.cc-on-addct #canvas a[href="javascript:addConfigPopup()"] i.fa
    — the widget stays Unraid's, only the look changes. Checked accent takes the rainbow stamp
    first, the Shares fallback chain (--cc-rb-c). */
 html.cc-docker-on.cc-on-addct .switch-button-background {
-  width: 44px !important; height: 24px !important; border-radius: 999px !important;
+  width: 44px !important; height: 24px !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important;   /* track follows the badge form (12px cap = half the track; ECKIG goes square) — the hardcoded pill broke the form law */
   border: none !important; outline: none !important; box-shadow: none !important;
   background: #3a3a3a !important; transform: none !important; position: relative !important;
   display: inline-block; vertical-align: middle; margin: 0 12px 0 3px; cursor: pointer;
@@ -997,7 +1013,7 @@ html.cc-docker-on.cc-on-addct .switch-button-background {
 html.cc-docker-on.cc-on-addct .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; }
 html.cc-docker-on.cc-on-addct .switch-button-background .switch-button-button {
   width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important;
-  border-radius: 50% !important; background: #fff !important; box-shadow: none !important;
+  border-radius: min(var(--cc-b-radius, 999px), 9px) !important; background: #fff !important; box-shadow: none !important;   /* 9px cap = half the knob */
   border: none !important; transition: left .15s;
 }
 html.cc-docker-on.cc-on-addct .switch-button-background.checked .switch-button-button { left: 21px !important; }
@@ -1041,26 +1057,36 @@ html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-disabled { opacity: .4; pointer-ev
    (live-diagnosed — NOT a bare text node, so the ctTitleWrap path never fires there; it stays
    as the fallback for builds that DO render bare text). Style span.left directly as the badge.
    div.title loses ALL borders here — the divider line under the title bar is illegal. */
-html.cc-docker-on.cc-on-addct div.title { border: none !important; }
+html.cc-docker-on.cc-on-addct div.title { border: none !important; padding-left: 0; }
+/* the form page joins the house left edge: #displaybox aligns with the main menu bar
+   (--cc-align-left, set by header.js) — the badge sat 10px vs the menu's 15px (user). */
+html.cc-docker-on.cc-on-addct:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 15px); }
 html.cc-docker-on.cc-on-addct #displaybox div.title > span.left,
 html.cc-docker-on.cc-on-addct div.title .cc-pagehead {
   display: inline-flex !important; align-items: center; gap: 8px;
   font-size: var(--cc-head-fs, 15px) !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
   padding: var(--cc-head-pad, 9px 18px); min-height: var(--cc-lgb-h, 36px); box-sizing: border-box;
   border-radius: var(--cc-b-radius, 999px); line-height: 1;
-  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;   /* rainbow: ctApply stamps per element; unstamped = accent */
 }
 html.cc-docker-on.cc-on-addct #displaybox div.title > span.left i,
 html.cc-docker-on.cc-on-addct div.title .cc-pagehead i.fa { color: inherit !important; }
-/* title-bar toggle labels ("ERWEITERTE ANSICHT"): muted uppercase, never link-blue */
+/* title-bar toggle labels ("ERWEITERTE ANSICHT"): muted uppercase, never link-blue; the label
+   and its track self-centre on ONE line (user: "text nicht vertikal zentriert mit toggle"). */
 html.cc-docker-on.cc-on-addct div.title span.right,
 html.cc-docker-on.cc-on-addct div.title span.right .switch-button-label { color: #cfcfcf !important; font-size: 13px; font-weight: 600; text-transform: uppercase; }
+html.cc-docker-on.cc-on-addct div.title span.right span.status,
+html.cc-docker-on.cc-on-addct #canvas span.status { display: inline-flex !important; align-items: center; gap: 8px; vertical-align: middle; }
 
 /* ── CATEGORIES (jquery dropdownchecklist #ddcl-catSelect — #catSelect is [multiple], so it
    skips the cc-dsel overlay): selector box = the filled .cc-in field; drop panel = elevated
    dark card (fill + shadow separate, no line); items get accent hover + the 16px CC checkbox
    (accent fill + tick when checked, no border/ring — law). */
 html.cc-docker-on.cc-on-addct .ui-dropdownchecklist-selector-wrapper { background: transparent !important; border: none !important; box-shadow: none !important; }
+/* the plugin sets an inline 25px height + overflow:hidden on the wrapper span — it clipped the
+   32px filled selector at the bottom (user: "Kategorienfeld ist falsch beschnitten") */
+html.cc-docker-on.cc-on-addct #ddcl-catSelect,
+html.cc-docker-on.cc-on-addct span.ui-dropdownchecklist-selector-wrapper { height: auto !important; overflow: visible !important; }
 html.cc-docker-on.cc-on-addct .ui-dropdownchecklist-selector {
   background: #262626 !important; border: none !important; outline: none !important; box-shadow: none !important;
   border-radius: min(var(--cc-b-radius, 8px), 8px) !important; padding: 5px 12px !important;

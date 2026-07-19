@@ -391,10 +391,14 @@
       // buttons BELOW the arrays (UD "ADD ... SHARE" row + every other /Main <button> outside the
       // array tables): continue the same palette rotation (user: "ab unassigned devices abwaerts ist
       // nicht alles in den rainbowmode ... inbegriffen"). Sub-tab pills + the parity card stay out.
-      var xbtns = document.querySelectorAll('#displaybox button:not([role="tab"])');
+      // INPUTS included too (the ADD-SHARE trio are <input>, the button-only query missed them —
+      // user: "drei schaltflaechen nebeneinander orange"); painted buttons get .cc-xbtn so the
+      // neutral sub-mode's grey-rest/hover-colour CSS can reach them.
+      var xbtns = document.querySelectorAll('#displaybox button:not([role="tab"]), #displaybox input[type="button"], #displaybox input[type="submit"]');
       for (var x2 = 0; x2 < xbtns.length; x2++) {
         var xb = xbtns[x2];
         if (xb.closest("table.array_status") || xb.closest("nav.tabs") || xb.closest(".cc-aop-pcard")) continue;
+        xb.classList.add("cc-xbtn");
         var xc = rbColor(bi), xtc = idealText(xc);
         if (rb) { xb.style.setProperty("--cc-rb-c", xc); xb.style.setProperty("--cc-rb-ct", xtc); }
         else { xb.style.removeProperty("--cc-rb-c"); xb.style.removeProperty("--cc-rb-ct"); }
@@ -413,6 +417,12 @@
         if (rb) { var ec = rbColor(bi), ect = idealText(ec); ex.style.setProperty("--cc-rb-c", ec); ex.style.setProperty("--cc-rb-ct", ect); bi++; }
         else { ex.style.removeProperty("--cc-rb-c"); ex.style.removeProperty("--cc-rb-ct"); }
       }
+      // native title balloons on OUR controls -> the styled CC bubble (user: hover bubbles must
+      // be frameless and follow the badge form; the OS balloon can't be styled). title moves to
+      // data-cc-tip; teardown swaps it back. ccUdTitles may re-stamp a title between passes —
+      // the next paint converts it again (idempotent churn, no leak).
+      var tips = document.querySelectorAll("#displaybox a.cc-ud-icon[title], #displaybox a.cc-ibtn[title], #displaybox .cc-dot[title], #displaybox .cc-ud-ctrls [title], #displaybox .cc-aop-link[title]");
+      for (var t3 = 0; t3 < tips.length; t3++) { var te = tips[t3]; te.setAttribute("data-cc-tip", te.getAttribute("title")); te.removeAttribute("title"); }
       // Rainbow reaches the UD area + ALL /Main heading badges. UD rows: same row-counter contract
       // as the disk_status loop (one palette colour per row, neutral sub-mode clears to accent).
       var acc = mainAccent(), accDark = idealText(acc) !== "#fff";
@@ -1967,6 +1977,9 @@
           udTeardown();   // UD: restore the joined heading text + unwrap the UD table badges — MUST run BEFORE ccI18nTeardown so its text-node-matching restore finds the (restored) translated text nodes
           ccMutedTeardown();   // empty-state pills -> bare native text back
           ccDensity(false);    // density classes off (the tables are native again)
+          // styled hover bubbles -> native title balloons back
+          var tps = document.querySelectorAll("#displaybox [data-cc-tip]");
+          for (var tp = 0; tp < tps.length; tp++) { tps[tp].setAttribute("title", tps[tp].getAttribute("data-cc-tip")); tps[tp].removeAttribute("data-cc-tip"); }
           ccI18nTeardown();   // restore the original English strings (sleep value + UD/native text nodes)
         } catch (e) {}
         return;

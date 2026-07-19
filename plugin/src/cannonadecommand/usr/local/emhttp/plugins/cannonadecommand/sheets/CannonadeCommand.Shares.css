@@ -1024,7 +1024,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .shade { background: transparen
    and the SMB/NFS "Benutzerzugriff" bar (which alone carries span.left/span.right) gets a real
    CC treatment: accent uppercase title on the left, muted note pill on the right. */
 html.cc-shares-on.cc-on-share-detail #displaybox div.title.nocontrol {
-  background: transparent !important; border-bottom: 1px solid var(--cc-shr-accent, #2f6feb) !important;
+  background: transparent !important; border: none !important;   /* the old thin accent separator was a LINE (law) — the accent uppercase title alone carries the section */
   margin: 18px 0 10px !important; padding: 7px 0 !important; gap: 12px;
   letter-spacing: normal !important; justify-content: flex-start !important;
 }
@@ -1409,6 +1409,24 @@ html.cc-shares-rbneutral.cc-on-main #displaybox :is(table.usb_mounts, table.samb
 html.cc-shares-rbneutral.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) tr:hover .cc-b {
   background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
 }
+/* outside-the-tables buttons (paintMain stamps .cc-xbtn: the ADD-SHARE trio + friends) follow the
+   neutral contract too — grey at rest, stamped palette colour on hover (user: "drei schaltflächen
+   nebeneinander orange, kann auch nicht sein"). */
+html.cc-shares-rbneutral.cc-on-main #displaybox .cc-xbtn:not(:disabled) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-on-main #displaybox .cc-xbtn:hover:not(:disabled) {
+  background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
+}
+/* CC hover bubble replaces the native title balloon on our controls (user: bubbles frameless +
+   badge-form). shares.js moves title -> data-cc-tip; the bubble is pure CSS. */
+html.cc-shares-on #displaybox [data-cc-tip] { position: relative; }
+html.cc-shares-on #displaybox [data-cc-tip]:hover::after {
+  content: attr(data-cc-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+  z-index: 9999; width: max-content; max-width: 260px;
+  background: #1c1c1c; color: #eaeaea; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);
+  padding: 6px 10px; font-size: 12px; font-weight: 400; line-height: 1.4;
+  text-transform: none; letter-spacing: normal; white-space: normal;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .45); pointer-events: none;
+}
 /* the last rainbow gaps (user: "auf der Start-Seite sind nicht alle toggles und badges und buttons
    im rainbowmode"): UD cluster icon tiles, the column-reset icon button and the (Planung)/Wiki
    links join the neutral contract — grey at rest, their stamped palette colour on hover. Toggle
@@ -1600,7 +1618,7 @@ html.cc-shares-on.cc-on-browse #displaybox table.indexer td.cc-bcell { padding-t
 /* the relocated control strip, now a direct child of #displaybox (moved out of nav.tabs by JS) */
 html.cc-shares-on.cc-on-stats #displaybox > span.status {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-  margin: 22px 0 0 !important; padding-top: 16px; border-top: 1px solid rgba(128, 128, 128, .18);
+  margin: 22px 0 0 !important; padding-top: 16px; border: none;   /* the old top separator was a LINE (law) — spacing alone separates the strip */
 }
 /* the two interval selects -> CC filled boxes (flatten the native underline) */
 html.cc-shares-on.cc-on-stats #displaybox > span.status select {

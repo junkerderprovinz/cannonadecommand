@@ -297,7 +297,17 @@
       // paintNav() with cc-header-on now removed => rb=false => it removeProperty's every
       // lingering rainbow inline colour, so a live theming-OFF (even with Rainbow on) fully
       // reverts the menu bar instead of leaving the coloured tabs behind.
-      if (!on) { paintNav(); measureAlign(); return; }   // measure even when the header area is off: OTHER areas (shares/settings) still align to the native menu-text edge
+      if (!on) {
+        paintNav(); measureAlign();
+        // styled hover bubbles -> native title balloons back (area off = fully native)
+        var tps0 = document.querySelectorAll("#menu [data-cc-tip]");
+        for (var tq = 0; tq < tps0.length; tq++) { tps0[tq].setAttribute("title", tps0[tq].getAttribute("data-cc-tip")); tps0[tq].removeAttribute("data-cc-tip"); }
+        return;   // measure even when the header area is off: OTHER areas (shares/settings) still align to the native menu-text edge
+      }
+      // utility-icon titles -> the styled CC bubble (user: hover bubbles frameless + badge-form;
+      // the native OS balloon can't be styled). Idempotent; the off-branch above restores.
+      var tps1 = document.querySelectorAll("#menu .nav-item.util a[title], #menu .usage-bar [title]");
+      for (var tr1 = 0; tr1 < tps1.length; tr1++) { var th = tps1[tr1]; th.setAttribute("data-cc-tip", th.getAttribute("title")); th.removeAttribute("title"); }
       var a = accent();
       // ISOLATED accent var — NOT the shared --cc-accent. Other global enhancers (shares.js,
       // the page-specific docker/plugins/vms) also write --cc-accent on documentElement and

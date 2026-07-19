@@ -70,8 +70,17 @@ html.cc-settingsgrid-on #displaybox .Panel > a > span > i.favo {
   position: absolute !important; top: 3px !important; right: 4px !important; left: auto !important;
   font-size: 12px !important; line-height: 1 !important; color: var(--cc-accent-text, #fff) !important; opacity: .8;
 }
-/* a touch more air between the badge and its label */
-html.cc-settingsgrid-on #displaybox .Panel .PanelText { margin-top: 4px; }
+/* tile labels appear ONLY on hover, muted, never link-blue, never underlined (user) —
+   the fade keeps the grid calm; the reserved line height stops the grid from jumping. */
+html.cc-settingsgrid-on #displaybox .Panel .PanelText {
+  margin-top: 4px; opacity: 0; transition: opacity .12s;
+  color: #cfcfcf !important; text-decoration: none !important;
+}
+html.cc-settingsgrid-on #displaybox .Panel:hover .PanelText,
+html.cc-settingsgrid-on #displaybox .Panel > a:focus-visible .PanelText { opacity: 1; }
+html.cc-settingsgrid-on #displaybox .Panel .PanelText a,
+html.cc-settingsgrid-on #displaybox .Panel a .PanelText,
+html.cc-settingsgrid-on #displaybox .Panel > a { color: #cfcfcf !important; text-decoration: none !important; }
 
 /* rainbow "active only" sub-mode (cc.rbmode=active -> html.cc-settingsgrid-rbneutral, set by paintGrid):
    the tiles have no active tile, so idle badges go neutral grey and colour on HOVER via the per-tile
