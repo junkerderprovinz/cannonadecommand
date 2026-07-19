@@ -810,21 +810,30 @@ html.cc-plugins-iconbg .cc-plugico {
 .cc-info svg { width: 15px; height: 15px; display: block; background: none; }
 .cc-info:hover, .cc-info:focus { opacity: 1; outline: none; }
 /* the bubble covers ANY [data-tip] carrier in the settings panel (colour swatches .cc-set-sw,
-   the reset button .cc-set-ibtn, ...) — they just need the anchor position. */
-#cc-settings [data-tip] { position: relative; }
-/* UNIFIED bubble spec — identical in every sheet (keep hover AND focus triggers) */
+   the reset button .cc-set-ibtn, ...) AND every CC control on the Docker pages — docker.js now
+   emits data-tip instead of native title everywhere (state badges, copy badges, Startplan chips,
+   action icons, limit gears, cfg dots, pin grid, gear button). They just need the anchor position. */
+:is(#cc-settings, .cc-enh, .cc-grid-holder, .cc-actbar, .cc-pop, .cc-menu, nav.tabs) [data-tip],
+button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-tip] { position: relative; }
+/* UNIFIED bubble spec — identical in every sheet (keep hover AND focus triggers).
+   white-space pre-line: the volume badge joins its mount list with \n — keep those breaks,
+   single-line tips are unaffected. */
 .cc-info[data-tip]:hover::after, .cc-info[data-tip]:focus::after,
-#cc-settings [data-tip]:hover::after, #cc-settings [data-tip]:focus::after {
+:is(#cc-settings, .cc-enh, .cc-grid-holder, .cc-actbar, .cc-pop, .cc-menu, nav.tabs) [data-tip]:hover::after,
+:is(button.cc-hgear, .cc-b, .cc-badge, .cc-pill)[data-tip]:hover::after,
+#cc-settings [data-tip]:focus::after {
   content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
   z-index: 9999; width: max-content; max-width: 280px; text-align: left;
   background: #393939; color: #f4f4f4; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);   /* hover bubbles: no frame, follow the badge form (user law) */
   padding: 9px 12px; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   font-size: 12.5px; font-weight: 400; font-style: normal; line-height: 1.45;
-  text-transform: none; letter-spacing: normal; white-space: normal;
+  text-transform: none; letter-spacing: normal; white-space: pre-line;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .55); pointer-events: none;   /* elevation shadow, not a ring */
 }
 .cc-info[data-tip]:hover::before, .cc-info[data-tip]:focus::before,
-#cc-settings [data-tip]:hover::before, #cc-settings [data-tip]:focus::before {
+:is(#cc-settings, .cc-enh, .cc-grid-holder, .cc-actbar, .cc-pop, .cc-menu, nav.tabs) [data-tip]:hover::before,
+:is(button.cc-hgear, .cc-b, .cc-badge, .cc-pill)[data-tip]:hover::before,
+#cc-settings [data-tip]:focus::before {
   content: ""; position: absolute; left: 50%; bottom: calc(100% + 3px); transform: translateX(-50%);
   z-index: 9999; border: 5px solid transparent; border-top-color: #393939; pointer-events: none;
 }

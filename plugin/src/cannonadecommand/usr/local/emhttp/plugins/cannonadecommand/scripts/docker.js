@@ -264,11 +264,11 @@
   var UNHEALTHY_TIP_D = "Healthcheck meldet unhealthy — nach einer Pause normal; erholt sich mit dem nächsten erfolgreichen Check.";
   var UNHEALTHY_TIP_E = "Healthcheck reports unhealthy — normal right after a pause; recovers with the next passing check.";
   function unhealthyTip() { return LANG === "de" ? UNHEALTHY_TIP_D : UNHEALTHY_TIP_E; }
-  function stateBadge(c) { var s = (c && c.state) || "unknown", b = el("span", "cc-badge cc-badge-" + s, stateLabel(s)); b.dataset.name = (c && c.name) || ""; if (showUnhealthy(c)) { b.classList.add("cc-badge-alert"); b.textContent = stateLabel(s) + " ✕"; b.title = unhealthyTip(); } else if (c && c.health === "starting") b.textContent = stateLabel(s) + " …"; return b; }
+  function stateBadge(c) { var s = (c && c.state) || "unknown", b = el("span", "cc-badge cc-badge-" + s, stateLabel(s)); b.dataset.name = (c && c.name) || ""; if (showUnhealthy(c)) { b.classList.add("cc-badge-alert"); b.textContent = stateLabel(s) + " ✕"; b.setAttribute("data-tip", unhealthyTip()); } else if (c && c.health === "starting") b.textContent = stateLabel(s) + " …"; return b; }
   function stateToggle(name, state) {
     var s = state || "unknown", b = el("span", "cc-badge cc-badge-" + s + " cc-badge-toggle", stateLabel(s)); b.dataset.name = name;
     var action = s === "running" ? "stop" : (s === "paused" ? "unpause" : "start");
-    b.title = t(action === "stop" ? "stop" : action === "unpause" ? "resume" : "start");
+    b.setAttribute("data-tip", t(action === "stop" ? "stop" : action === "unpause" ? "resume" : "start"));
     // Decide the action AT CLICK TIME from the CURRENT state, not the state the badge was
     // built with: badges are now live-synced in place (syncStateBadges), so a badge that
     // flipped running→stopped must start (not re-stop) on the next click.
@@ -294,12 +294,12 @@
         if (unh) label += " ✕"; else if (c.health === "starting") label += " …";
         var isToggle = b.classList.contains("cc-badge-toggle");
         var cls = "cc-badge cc-badge-" + s + (isToggle ? " cc-badge-toggle" : "") + (unh ? " cc-badge-alert" : "");
-        if (unh) b.title = unhealthyTip();
+        if (unh) b.setAttribute("data-tip", unhealthyTip());
         if (b.textContent !== label) b.textContent = label;
         if (b.className !== cls) b.className = cls;
         // keep the toggle's tooltip in step with the NEW state (the click handler already
         // re-derives its action at click time).
-        if (isToggle) b.title = t(s === "running" ? "stop" : s === "paused" ? "resume" : "start");
+        if (isToggle) b.setAttribute("data-tip", t(s === "running" ? "stop" : s === "paused" ? "resume" : "start"));
       });
       syncActionBars(); // the action bar's start/stop/pause icons need the SAME live sync
     } catch (e) {}
@@ -345,7 +345,7 @@
     var b = el("span", "cc-b cc-b-info" + (kind ? " cc-b-" + kind : ""));
     b.appendChild(el("span", "cc-b-k", label)); b.appendChild(el("span", "cc-b-v", value));
     if (kind === "ip" || kind === "lan") { // IPs copy themselves on click
-      b.classList.add("cc-b-copy"); b.title = LANG === "de" ? "Klicken zum Kopieren" : "Click to copy";
+      b.classList.add("cc-b-copy"); b.setAttribute("data-tip", LANG === "de" ? "Klicken zum Kopieren" : "Click to copy");
       b.addEventListener("click", function (e) {
         e.preventDefault(); e.stopPropagation();
         var txt = String(value).trim();
@@ -365,15 +365,15 @@
     chip.href = "#"; chip.innerHTML = '<span class="cc-b-k"></span><span class="cc-b-v"></span>';
     chip.querySelector(".cc-b-k").textContent = t("plan");
     chip.querySelector(".cc-b-v").textContent = depsTxt(node);
-    chip.title = "start order for " + name + (node && node.after && node.after.length ? " · " + t("after") + " " + node.after.join(", ") : "") + (wdOn ? " · watchdog" : "") + (schedN ? " · " + schedN + "× " + t("schedules").toLowerCase() : "") + (idleOn ? " · " + t("idleStop").toLowerCase() : "");
+    chip.setAttribute("data-tip", "start order for " + name + (node && node.after && node.after.length ? " · " + t("after") + " " + node.after.join(", ") : "") + (wdOn ? " · watchdog" : "") + (schedN ? " · " + schedN + "× " + t("schedules").toLowerCase() : "") + (idleOn ? " · " + t("idleStop").toLowerCase() : ""));
     chip.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openEditor(chip, name); });
     return chip;
   }
-  function lastRunPill(name) { var lr = lastRun[name]; if (!lr) return null; var p = el("span", "cc-pill cc-pill-" + lr.state, lr.state); p.title = lr.reason || ""; return p; }
+  function lastRunPill(name) { var lr = lastRun[name]; if (!lr) return null; var p = el("span", "cc-pill cc-pill-" + lr.state, lr.state); if (lr.reason) p.setAttribute("data-tip", lr.reason); return p; }
   // a little status dot on a badge: filled = a value is configured here, hollow = not.
   // Lets you tell at a glance which containers have a CPU/RAM limit or a custom
   // network set, and which are on the defaults.
-  function cfgDot(on) { var d = el("span", "cc-cfg " + (on ? "cc-cfg-on" : "cc-cfg-off")); d.title = on ? t("cfgSet") : t("cfgUnset"); return d; }
+  function cfgDot(on) { var d = el("span", "cc-cfg " + (on ? "cc-cfg-on" : "cc-cfg-off")); d.setAttribute("data-tip", on ? t("cfgSet") : t("cfgUnset")); return d; }
   // whether a container is on a deliberately-chosen network (a custom docker network
   // / static IP) rather than the stock bridge/host defaults.
   function netConfigured(c) { if (!c) return false; var n = String(c.network || "").toLowerCase(); return !!n && n !== "bridge" && n !== "host" && n !== "none"; }
@@ -553,6 +553,10 @@
   function applySettings() {
     applyRainbowPalette();
     try {
+      // page gate for docker.css list rules (rbneutral block etc.): ctApply stamps this only on
+      // the Add/UpdateContainer form — the LIST page must stamp it too, or html.cc-docker-on
+      // never matches here and the reactive-rainbow rest-grey stays dead (live-proven).
+      document.documentElement.classList.toggle("cc-docker-on", themingOn() && localStorage.getItem("cc.enable.docker") !== "0");
       var root = document.documentElement.style;
       var accent = effc("accent"); if (accent) { root.setProperty("--cc-accent", accent); root.setProperty("--cc-accent-text", idealText(accent)); }
       root.setProperty("--cc-b-radius", ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[localStorage.getItem("cc.badgeshape") || "pill"] || "999px");
@@ -695,7 +699,7 @@
         var glyph = nameCell.querySelector(".inner i[id^='load-']");
         var st = (c && c.state) || glyphState(glyph) || "unknown";
         var meta = el("div", "cc-namemeta"); meta.setAttribute(MARK, "1");
-        var sb = stateToggle(name, st); if (showUnhealthy(c)) { sb.classList.add("cc-badge-alert"); sb.textContent = stateLabel(st) + " ✕"; sb.title = unhealthyTip(); }
+        var sb = stateToggle(name, st); if (showUnhealthy(c)) { sb.classList.add("cc-badge-alert"); sb.textContent = stateLabel(st) + " ✕"; sb.setAttribute("data-tip", unhealthyTip()); }
         meta.appendChild(sb); // the start/stop state toggle is a CONTROL — always
         // ID / Von / Volumes are DECORATIVE info badges — theming only.
         if (themingOn()) {
@@ -703,14 +707,14 @@
           var idrow = el("div", "cc-namemeta-ids"), added = false, hideAdv = false;
           if (advDiv) {
             if (colOn("id")) { var cid = readContainerId(advDiv); if (cid) { idrow.appendChild(badgeInfo("ID", cid.slice(0, 12), "id")); added = true; hideAdv = true; } }
-            if (colOn("von")) { var a = advDiv.querySelector("a[target='_blank']"); if (a && a.textContent.trim()) { var vb = badgeInfo("Von", a.textContent.trim(), "von"); vb.title = a.getAttribute("href") || ""; idrow.appendChild(vb); added = true; hideAdv = true; } }
+            if (colOn("von")) { var a = advDiv.querySelector("a[target='_blank']"); if (a && a.textContent.trim()) { var vb = badgeInfo("Von", a.textContent.trim(), "von"); var hf = a.getAttribute("href") || ""; if (hf) vb.setAttribute("data-tip", hf); idrow.appendChild(vb); added = true; hideAdv = true; } }
           }
           // Volumes come from the ENGINE (Mounts), so they show even for a stopped
           // container that has no native advanced block. One badge = the mount count,
           // with every "source → dest" (ro/rw) in its tooltip.
           if (colOn("vol") && c && c.mounts && c.mounts.length) {
             var volB = badgeInfo("Volumes", String(c.mounts.length), "vol");
-            volB.title = c.mounts.map(function (m) { return m.source + " → " + m.dest + (m.rw ? "" : " (ro)"); }).join("\n");
+            volB.setAttribute("data-tip", c.mounts.map(function (m) { return m.source + " → " + m.dest + (m.rw ? "" : " (ro)"); }).join("\n"));
             idrow.appendChild(volB); added = true;
           }
           if (added) { if (hideAdv && advDiv) advDiv.classList.add("cc-hidden"); meta.appendChild(idrow); }
@@ -737,7 +741,7 @@
           var bw = bandwidthFor(name), bwSet = bwHasLimit(bw);
           // value = LIVE down/up rate (filled by updateResGroup); the configured up/down
           // caps show in the tooltip. Starts "…" until the first rate.
-          var bwB = badgeInfo("BW", "…", "bw"); bwB.title = t("bandwidth") + " " + bwTitle(bw);
+          var bwB = badgeInfo("BW", "…", "bw"); bwB.setAttribute("data-tip", t("bandwidth") + " " + bwTitle(bw));
           rg.appendChild(resLine(bwB, bwGear(name, bwSet)));
           updateResGroup(rg, stats[name], c && c.state);
           resCell.appendChild(rg);
@@ -879,13 +883,13 @@
   // glyphs, NOT emoji: emoji ignore CSS color, FA inherits it — so the icon is
   // automatically black or white against its background, like the badge text.
   function actBtn(icon, tip, fn) {
-    var b = el("span", "cc-actbtn"); b.title = tip; b.appendChild(el("i", "fa " + icon));
+    var b = el("span", "cc-actbtn"); b.setAttribute("data-tip", tip); b.appendChild(el("i", "fa " + icon));
     b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); fn(); });
     return b;
   }
   // greyed placeholder: an action without a target still occupies its slot,
   // so every row shows the same stable icon block
-  function actBtnOff(icon, tip) { var b = el("span", "cc-actbtn cc-actoff", ""); b.title = tip; b.appendChild(el("i", "fa " + icon)); return b; }
+  function actBtnOff(icon, tip) { var b = el("span", "cc-actbtn cc-actoff", ""); b.setAttribute("data-tip", tip); b.appendChild(el("i", "fa " + icon)); return b; }
   // rainbow: every action icon takes a rotating palette colour (falls back to grey);
   // disabled placeholders stay grey
   // Icons follow THE CONFIGURED ACCENT COLOUR, exactly like the badges (user call):
@@ -1010,7 +1014,7 @@
     var lbl = el("span", "cc-bar-adv-lbl", advWord()); wrap.appendChild(lbl);
     var tg = el("span", "cc-set-toggle" + (isAdvancedView() ? " cc-set-toggle-on" : ""));
     tg.setAttribute("role", "switch"); tg.setAttribute("tabindex", "0"); tg.setAttribute("aria-checked", isAdvancedView() ? "true" : "false");
-    tg.title = LANG === "de" ? "Einfache / Erweiterte Ansicht" : "Basic / Advanced view";
+    tg.setAttribute("data-tip", LANG === "de" ? "Einfache / Erweiterte Ansicht" : "Basic / Advanced view");
     tg.appendChild(el("span", "cc-set-knob"));
     function flip() {
       var next = !isAdvancedView();
@@ -1197,7 +1201,7 @@
     var ramB = badgeInfo("RAM", "…", "ram");
     rg.appendChild(resLine(ramB, limGear(c.name, "ram", ramLimited(lm))));
     var bw = bandwidthFor(c.name);
-    var bwB = badgeInfo("BW", "…", "bw"); bwB.title = t("bandwidth") + " " + bwTitle(bw);
+    var bwB = badgeInfo("BW", "…", "bw"); bwB.setAttribute("data-tip", t("bandwidth") + " " + bwTitle(bw));
     rg.appendChild(resLine(bwB, bwGear(c.name, bwHasLimit(bw))));
     updateResGroup(rg, stats[c.name], c.state);
     wrap.appendChild(rg);
@@ -1234,7 +1238,7 @@
   }
 
   // ───────────────────────── gear + menu (the only global control surface)
-  function makeGear(extra) { var g = el("button", "cc-hgear" + (extra ? " " + extra : "") + (daemonUp === false ? " cc-hgear-down" : ""), "⚙"); g.type = "button"; g.title = daemonUp === false ? "CannonadeCommand — daemon not reachable" : "CannonadeCommand"; g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g); }); return g; }
+  function makeGear(extra) { var g = el("button", "cc-hgear" + (extra ? " " + extra : "") + (daemonUp === false ? " cc-hgear-down" : ""), "⚙"); g.type = "button"; g.setAttribute("data-tip", daemonUp === false ? "CannonadeCommand — daemon not reachable" : "CannonadeCommand"); g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g); }); return g; }
   function injectHeaderGear() {
     try {
       // Global idempotency: never place a second list-mode gear once one exists.
@@ -1610,7 +1614,7 @@
       var time = el("input", "cc-in cc-sched-time"); time.type = "time"; time.value = (s && s.time) || "";
       var days = el("div", "cc-days"), sel = {}; ((s && s.days) || []).forEach(function (d) { sel[d] = true; });
       DAYS.forEach(function (d) { var b = el("span", "cc-day" + (sel[d[1]] ? " cc-day-on" : ""), d[0]); b.dataset.day = d[1]; b.addEventListener("click", function (e) { e.preventDefault(); b.classList.toggle("cc-day-on"); }); days.appendChild(b); });
-      var rm = el("span", "cc-sched-x", "✕"); rm.title = t("remove"); rm.addEventListener("click", function () { row.remove(); });
+      var rm = el("span", "cc-sched-x", "✕"); rm.setAttribute("data-tip", t("remove")); rm.addEventListener("click", function () { row.remove(); });
       row.appendChild(act2); row.appendChild(time); row.appendChild(days); row.appendChild(rm);
       // empty days = every day; only rows with a valid HH:MM time are saved
       row._read = function () { if (!/^\d{2}:\d{2}$/.test(time.value)) return null; var ds = []; Array.prototype.slice.call(days.children).forEach(function (x) { if (x.classList.contains("cc-day-on")) ds.push(parseInt(x.dataset.day, 10)); }); var o = { name: name, action: act2.value, time: time.value, enabled: true }; if (ds.length) o.days = ds; return o; };
@@ -1686,7 +1690,7 @@
   function limGear(name, which, set) {
     var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "")); lb.setAttribute(MARK, "1"); lb.textContent = "⚙";
     gearFill(lb, set);
-    lb.title = (which === "cpu" ? t("cpuLimit") : t("ramLimit")) + " · " + (set ? t("cfgSet") : t("cfgUnset"));
+    lb.setAttribute("data-tip", (which === "cpu" ? t("cpuLimit") : t("ramLimit")) + " · " + (set ? t("cfgSet") : t("cfgUnset")));
     lb.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openLimits(lb, name, which); });
     return lb;
   }
@@ -1694,7 +1698,7 @@
   function bwGear(name, set) {
     var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "")); lb.setAttribute(MARK, "1"); lb.textContent = "⚙";
     gearFill(lb, set);
-    lb.title = t("bandwidth") + " · " + (set ? t("cfgSet") : t("cfgUnset"));
+    lb.setAttribute("data-tip", t("bandwidth") + " · " + (set ? t("cfgSet") : t("cfgUnset")));
     lb.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openBandwidth(lb, name); });
     return lb;
   }
@@ -1877,7 +1881,7 @@
           }
           groups[g].forEach(function (cpu2) {
             var core = el("span", "cc-core cc-rb-" + (g % 8), String(cpu2)); core.dataset.core = cpu2; // cc-rb-N: rainbow mode colours selected cores per physical-core group
-            core.title = "CPU " + cpu2 + (coreOf ? " · core " + g : "") + (hybrid ? (isE[cpu2] ? " · E-core" : " · P-core") : "");
+            core.setAttribute("data-tip", "CPU " + cpu2 + (coreOf ? " · core " + g : "") + (hybrid ? (isE[cpu2] ? " · E-core" : " · P-core") : ""));
             core.addEventListener("click", function () { this.classList.toggle("cc-core-on"); });
             box.appendChild(core);
           });

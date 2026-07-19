@@ -272,7 +272,9 @@
       var c = card(T("Anzeige", "Display"), T("Direktdraht zu Unraids Anzeige-Einstellungen: Änderungen hier werden nativ gespeichert und laden die Seite neu.", "Direct wire to Unraid's display settings: changes are saved natively and reload the page."));
       function postDisplay(field, value) {
         try {
-          var fd = new FormData();
+          // URLSearchParams, NOT FormData: update.php 504s on multipart (live-proven) — the
+          // native form posts application/x-www-form-urlencoded and only that returns 200.
+          var fd = new URLSearchParams();
           fd.append("#file", "dynamix/dynamix.cfg");
           fd.append("#section", "display");
           fd.append("csrf_token", window.csrf_token);
