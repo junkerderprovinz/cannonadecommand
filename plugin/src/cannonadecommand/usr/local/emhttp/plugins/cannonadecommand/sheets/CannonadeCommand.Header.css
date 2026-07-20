@@ -364,15 +364,19 @@ html.cc-popups-on .ui-dialog .ui-dialog-title {
   font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .8px !important;
 }
-html.cc-popups-on .sweet-alert { text-align: left !important; }
+html.cc-popups-on .sweet-alert { text-align: center !important; }
 html.cc-popups-on .sweet-alert h2 {
-  display: flex !important; align-items: center; justify-content: center !important; float: none !important;
-  width: 100% !important; box-sizing: border-box !important;   /* v2.33.1 (user): full-width badge, centred text */
-  height: var(--cc-lgb-h, 36px); padding: 0 20px !important; border-radius: var(--cc-b-radius, 999px);
+  /* v2.44.2 (user: "nicht schön formatiert"): a CENTRED, content-width badge — the old
+     width:100% made it a jarring full-bleed bar. */
+  display: inline-flex !important; align-items: center; justify-content: center !important; float: none !important;
+  width: fit-content !important; max-width: 100% !important; box-sizing: border-box !important;
+  height: var(--cc-lgb-h, 36px); padding: 0 18px !important; border-radius: var(--cc-b-radius, 999px);
   background: var(--cc-hdr-accent, #2f6feb); color: var(--cc-hdr-accent-text, #fff) !important;
   font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
-  text-transform: uppercase !important; letter-spacing: .8px !important; margin: 0 0 12px 0 !important;
+  text-transform: uppercase !important; letter-spacing: .6px !important; margin: 4px auto 14px !important;
 }
+/* the native success/error/warning icon rings sit calmer on the dark surface */
+html.cc-popups-on .sweet-alert .sa-icon { margin-top: 6px !important; }
 html.cc-popups-on .ui-dialog .ui-dialog-titlebar-close {
   border: none !important; background: transparent !important; box-shadow: none !important; opacity: .7;
 }

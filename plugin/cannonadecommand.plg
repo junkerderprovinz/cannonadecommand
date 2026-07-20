@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.44.1">
+  <!ENTITY version   "2.44.2">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,12 @@
 </ICON>
 
 <CHANGES>
+### 2.44.2
+- #1 Favoriten-Tab: Die "Meine Favoriten"-Kopfzeile ist ausgeblendet.
+- #2 Bestaetigungs-Meldungen (SweetAlert, z. B. "Zu Favoriten hinzugefuegt") sind schoener
+  formatiert: der Titel ist jetzt ein mittiges Badge in Inhaltsbreite statt eines
+  vollflaechigen Balkens.
+
 ### 2.44.1
 - #1 Docker: In der Aktionen-Spalte werden jetzt maximal 4 Icons pro Zeile angezeigt.
 - #2 Container bearbeiten: Dropdown-Felder (z. B. "Max Expiry") waren zu klein/flach und
@@ -1486,7 +1492,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>82d2c97ae585e9124da31804fdf65d828e95b7542496e6f61fe70e9abfd50bd3</SHA256>
+  <SHA256>025f1ee7635a82d890945a2f56df79fbd696ec2977fc51fca828b77c36e2756b</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

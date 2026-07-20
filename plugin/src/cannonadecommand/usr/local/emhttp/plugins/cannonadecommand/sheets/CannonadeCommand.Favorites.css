@@ -16,6 +16,8 @@
 html.cc-favorites-on { --cc-align-left: 10px; }
 html.cc-favorites-on.cc-header-on { --cc-align-left: 15px; }
 html.cc-favorites-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 10px); }
+/* hide the "❤ Meine Favoriten" page-title bar (user call) — the tiles speak for themselves */
+html.cc-favorites-on #displaybox .content > div.title { display: none !important; }
 
 /* each favourite tile's icon wrapper <span> -> big square accent badge */
 html.cc-favorites-on #displaybox .Panel > a > span {
