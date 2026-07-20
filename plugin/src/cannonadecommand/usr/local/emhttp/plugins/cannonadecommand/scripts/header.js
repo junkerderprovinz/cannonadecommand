@@ -386,11 +386,9 @@
             uch.setAttribute("data-cc-tip", T("Array-Füllstand ", "Array usage ") + usage);
             isle.appendChild(uch);
           }
-        } else {         // ONE chip per service segment: label = name before ":", full text -> bubble
-          var ci = s.indexOf(":"), name = ci > 0 ? s.slice(0, ci).replace(/\s+$/, "") : s;
-          var rest = ci > 0 ? s.slice(ci + 1).toLowerCase() : "";
-          chip(name, rest.indexOf("started") !== -1 ? "#3fae6a" : "#d6a243", s);
         }
+        // service segments (e.g. "shiplog: started …") are deliberately NOT mirrored as chips —
+        // the user questioned them twice; that daemon status stays in the (hidden) native footer
       }
       // TEMP chips: always visible (user call) — the DOT carries the state (green below the
       // cc.tempwarn threshold, amber at/above, red at threshold+15)
@@ -493,8 +491,17 @@
       ccTipBound = true;
       function over(e) {
         if (!document.documentElement.classList.contains("cc-popups-on")) return;   // master theming off -> fully native
-        var t = e.target && e.target.closest ? e.target.closest("[data-cc-tip], [data-tip]") : null;
-        if (!t || t === ccTipCur) return;                          // same anchor -> the bubble already stands
+        var t = e.target && e.target.closest ? e.target.closest("[data-cc-tip], [data-tip], [title]") : null;
+        if (!t) return;
+        // a raw title anywhere (a menu icon a script never converted, a native control) becomes a
+        // CC bubble on the fly + the OS balloon is suppressed — so EVERY hover text is a CC bubble
+        // (user: "die Symbole haben nicht alle ein Mouseover-Text"). Skip empty/whitespace titles.
+        if (!t.getAttribute("data-cc-tip") && !t.getAttribute("data-tip")) {
+          var nt = t.getAttribute("title");
+          if (nt && nt.trim()) { t.setAttribute("data-cc-tip", nt); t.removeAttribute("title"); }
+          else return;
+        }
+        if (t === ccTipCur) return;                                // same anchor -> the bubble already stands
         ccTipCur = t; ccTipShow(t);
       }
       function out(e) {
@@ -540,6 +547,10 @@
       for (i = 0; i < sp.length; i++) {
         var ss = sp[i].style;
         if (ss.getPropertyValue("min-height") !== "30px") { ss.setProperty("width", "30px", "important"); ss.setProperty("height", "30px", "important"); ss.setProperty("min-width", "30px", "important"); ss.setProperty("min-height", "30px", "important"); }
+        // CC bubbles instead of native balloons (the #menu sweep can't reach these — they
+        // live outside #menu); i===0 = bell, the last = burger (auto-mount keeps this order)
+        if (!sp[i].getAttribute("data-cc-tip")) sp[i].setAttribute("data-cc-tip", i === 0 ? T("Benachrichtigungen", "Notifications") : T("Menü", "Menu"));
+        if (sp[i].getAttribute("title")) sp[i].removeAttribute("title");
       }
       var vw = document.documentElement.clientWidth;
       var target = Math.min(Math.round(r.right + 8), vw - 84);     // 8px right of the row tail, clamped into the viewport
@@ -552,12 +563,16 @@
       set("left", target + "px");
       // MEASURED correction (v2.31.9 idiom): margins/justify inside the component can offset
       // the visible row from the container edge — measure where it landed, shift by the delta.
+      // BOTH axes: the row also sat 4px below the icon line (inner margins, live-measured).
+      var targetTop = Math.round(r.top + (r.height - 30) / 2);
       var row = up.querySelector(":scope > div:nth-child(2)");
       if (row) {
         var rwr = row.getBoundingClientRect();
         if (rwr.width > 0) {
           var delta = target - Math.round(rwr.left);
           if (delta) set("left", (parseInt(up.style.getPropertyValue("left"), 10) + delta) + "px");
+          var deltaY = targetTop - Math.round(rwr.top);
+          if (deltaY) set("top", (parseInt(up.style.getPropertyValue("top"), 10) + deltaY) + "px");
         }
       }
     } catch (e) {}

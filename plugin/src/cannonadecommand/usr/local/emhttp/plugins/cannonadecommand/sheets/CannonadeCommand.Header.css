@@ -158,8 +158,10 @@ html.cc-header-on #cc-island {
      the 91px strip. Bubbles come from the global #cc-tipfloat engine (viewport-clamped), so no
      per-chip ::after rules live here any more. */
   flex-wrap: wrap; justify-content: flex-end; max-width: 430px;
-  margin-left: auto; margin-right: 12px; align-self: center;
-  order: 2;   /* right cluster: island first, version chip (order 3) after it */
+  /* 96px right reserve: the version chip sits ABSOLUTE in the strip's top-right corner and
+     visually completes the island's FIRST row (user call) */
+  margin-left: auto; margin-right: 96px; align-self: center;
+  order: 2;
 }
 html.cc-header-on #cc-island .cc-isl-chip {
   display: inline-flex; align-items: center; white-space: nowrap;
@@ -206,7 +208,7 @@ html.cc-header-on.cc-usage-isl #menu .usage-bar { display: none !important; }
    its left edge flush with the first menu tab below (the measured shared alignment anchor) */
 html.cc-header-on #cc-brand {
   display: inline-flex; align-items: center; gap: 10px;
-  font-size: 22px; font-weight: 600; color: #f4f4f4; letter-spacing: .3px;
+  font-size: 30px; font-weight: 650; color: #f4f4f4; letter-spacing: .3px;   /* "wesentlich größer" (user call) */
   /* -8px: #header's own left offset (the wordmark sat at x=8) — without the correction
      the brand landed at 23 instead of the tabs' 15 (live-measured) */
   margin-left: calc(var(--cc-align-left, 15px) - 8px);
@@ -227,13 +229,11 @@ html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"]:focus,
 html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"]:focus-visible {
   outline: none !important; box-shadow: none !important; text-decoration: none !important;
 }
-/* complete the height chain + vertically centre what remains of the component: the wrapper
-   div (native mt-4 ml-4 flex-col) spans the 91px strip and centres the version chip, so
-   brand, chip and island all sit on the ONE #header flex line. The COMPONENT rides RIGHT of
-   the island via flex ORDER (CSS-only, no DOM moves — law; proven live: order moves the
-   host) — the wordmark stays hidden, so only the S-tier version chip shows in the cluster */
-html.cc-header-on unraid-header-os-version { display: inline-flex; align-items: center; height: 100%; order: 3; margin-left: 8px; }
-html.cc-header-on unraid-header-os-version > div { margin: 0 !important; justify-content: center; height: 100%; }
+/* the COMPONENT sits ABSOLUTE in the strip's TOP-RIGHT corner (user call: the version chip
+   belongs to the island's FIRST line): the island keeps a matching right reserve below, so
+   the chip visually completes row one of the chip block. CSS-only, no DOM moves — law. */
+html.cc-header-on unraid-header-os-version { display: inline-flex; align-items: flex-start; position: absolute; top: 10px; right: 12px; height: auto; }
+html.cc-header-on unraid-header-os-version > div { margin: 0 !important; }
 
 /* 3) bell + burger: div#UserProfile is DOCKED at the FAR RIGHT END of the MENU icon row by
    header.js ccDockProfile() (inline position:fixed, left = 8px right of the row's last visible
@@ -241,18 +241,22 @@ html.cc-header-on unraid-header-os-version > div { margin: 0 !important; justify
    section below) reserves the room. After the hides the controls row keeps only the two
    trigger boxes. */
 html.cc-header-on #UserProfile > div:nth-child(2) { align-items: center; gap: 8px; }
-/* bell + burger dress as UTILITY ICON BOXES (user call): the exact --cc-md-ibox square, grey
-   chip fill, capped radius (same shape family as the util icons), hover = brightness only (law) */
+/* bell + burger dress EXACTLY like the utility icon boxes beside them (user call): accent
+   fill + contrast glyph in normal mode, grey fill + grey glyph in the reactive sub-mode —
+   the native glyph STATE colours (yellow bell, red warning) are overridden for consistency */
 html.cc-header-on #UserProfile > div:nth-child(2) > span {
   display: inline-flex; align-items: center; justify-content: center;
   box-sizing: border-box; width: var(--cc-md-ibox, 30px); height: var(--cc-md-ibox, 30px); padding: 0;
-  background: rgba(128, 128, 128, .18) !important;
+  background: var(--cc-hdr-accent, #2f6feb) !important;
   border-radius: min(var(--cc-b-radius, 8px), 8px);
-  color: #cfcfcf; transition: color .12s, filter .12s;
+  color: var(--cc-hdr-accent-text, #fff); transition: color .12s, filter .12s;
 }
-html.cc-header-on #UserProfile > div:nth-child(2) > span:hover { color: #fff; filter: brightness(1.25); }
-/* glyphs at 16px — the 14px icon token +2px, these two glyphs read better a notch larger */
-html.cc-header-on #UserProfile > div:nth-child(2) > span svg { width: 16px !important; height: 16px !important; }
+html.cc-header-on #UserProfile > div:nth-child(2) > span:hover { filter: brightness(1.14); }
+html.cc-header-on.cc-header-rbneutral #UserProfile > div:nth-child(2) > span { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf; }
+html.cc-header-on.cc-header-rbneutral #UserProfile > div:nth-child(2) > span:hover { background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff); }
+/* glyphs at 16px — the 14px icon token +2px, these two glyphs read better a notch larger;
+   color FORCED onto the svg so the native state tints (yellow/red) cannot leak through */
+html.cc-header-on #UserProfile > div:nth-child(2) > span svg { width: 16px !important; height: 16px !important; color: inherit !important; fill: currentColor; }
 /* the burger's SECOND svg is a dropdown chevron — visual noise inside a 30px box */
 html.cc-header-on #UserProfile > div:nth-child(2) > span[id^="reka-menu-trigger"] svg:nth-of-type(2) { display: none !important; }
 /* their Tailwind ring-offset classes may paint focus rings — kill on every focusable (law) */
@@ -260,6 +264,15 @@ html.cc-header-on #UserProfile > div:nth-child(2) :is(span, button, a):focus,
 html.cc-header-on #UserProfile > div:nth-child(2) :is(span, button, a):focus-visible {
   outline: none !important; box-shadow: none !important;
 }
+/* the burger's dropdown MENU (Connect popover, appended to body as .bg-popover) in CC style:
+   dark carbon surface, no frame, CC radius, elevation shadow — matches the ui-dialog/SweetAlert
+   popup theming. Gated on cc-popups-on (master theming), like the other popup restyles. */
+html.cc-popups-on .bg-popover {
+  background: #161616 !important; color: #e6e6e6 !important;
+  border: none !important; border-radius: 12px !important;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .55) !important;
+}
+html.cc-popups-on .bg-popover :is(button, a, [role="menuitem"]):hover { filter: brightness(1.15); }
 
 /* ═══ right-edge room: the docked bell + burger extend the icon row ═══
    The native right nav group (.nav-tile.right, justify-content:flex-end) would end flush

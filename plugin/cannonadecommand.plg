@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.42.1">
+  <!ENTITY version   "2.43.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,22 @@
 </ICON>
 
 <CHANGES>
+### 2.43.0
+- #1 Kopfbereich: Glocke und Menue-Knopf haben jetzt exakt die Optik der Icons daneben
+  (Akzent-Fuellung + Kontrast-Glyph, im reaktiven Modus grau) und sitzen auf der Icon-Linie
+  (vertikal korrigiert); das Menue oeffnet jetzt im CC-Stil (dunkle Flaeche, rahmenlos).
+- #2 Die Symbole der Hauptmenueleiste zeigen jetzt ALLE einen CC-Mouseover-Text -- die
+  schwebende Blase greift jetzt auch auf verbliebene native Titel zurueck und unterdrueckt
+  den OS-Ballon.
+- #3 Status-Insel: Die Unraid-Version sitzt jetzt oben rechts in der ersten Zeile; der
+  Dienst-Chip (z. B. shiplog) ist entfernt -- dieser Status bleibt in der (versteckten)
+  nativen Fussleiste. Der Servername ist wesentlich groesser.
+- #4 Docker-Tab: "Auf dem neusten Stand", die Aktualisierungs-Chips und der Changelog-Chip
+  ruhen im reaktiven Modus grau und faerben sich erst beim Ueberfahren der Zeile.
+- #5 FIX: Beim Ueberfahren der unteren Buttonleiste blitzte die Docker-Zeile dahinter auf --
+  die feste Leiste faengt in ihrer rechten Zone keine Zeiger ab; CC unterdrueckt die
+  Zeilen-Faerbung jetzt, solange der Zeiger im Bereich der Leiste ist.
+
 ### 2.42.1
 - #1 FIX: Glocke und Menue-Knopf landeten ausserhalb des Bildschirms -- der Andock-Container
   behielt seine native Breite (die Knoepfe klebten an dessen fernem Ende) und die erste
@@ -1442,7 +1458,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>f59c3a1d196ebf299522f933397d50743cf3e2e66153c8263e0b6b2f726fb83f</SHA256>
+  <SHA256>4446a3a42d0a541f8d5e23e9743d0743bdb084c59f9697a08ebf20cdc16736b1</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

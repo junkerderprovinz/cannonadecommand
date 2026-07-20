@@ -1224,6 +1224,32 @@ html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list td.c
 html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list tr.sortable:hover td.ct-name .outer > span.hand { background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card-ico { background: rgba(128, 128, 128, .18) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card:hover .cc-card-ico { background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important; }
+/* UPDATE-column badges join the row too (user: "changelog und auf aktuellem Stand nur farbig
+   wenn aktiv/mouseover"): the "auf dem neusten Stand" green / "Aktualisierung" orange chips and
+   the ShipLog changelog chip rest GREY in neutral and take their state colour on ROW hover.
+   Placed AFTER the .cc-c-update colour rules so equal-importance ties resolve by order. */
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn > span.green-text,
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn span.orange-text,
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip {
+  background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important;
+}
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn > span.green-text { background: #1f9d55 !important; color: #fff !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn span.orange-text { background: #e0912a !important; color: #1a1a1a !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip { background: #4a4a4a !important; color: #fff !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-low) { background: #1f9d55 !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-mid) { background: #e0912a !important; color: #1a1a1a !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-high) { background: #d9433f !important; color: #fff !important; }
+/* FLASH FIX (user: "wenn ich über die unterste Buttonleiste fahre blitzt die Docker-Zeile
+   dahinter auf"): the fixed bottom action bar does NOT hit-test across its right region (proven:
+   z-index 3000 still leaves the row topmost there), so the pointer passing the bar's right zone
+   :hover'd the row underneath and fired the reactive colouring. docker.js stamps html.cc-actbar-hot
+   while the pointer is in the bar's Y-band; suppress the row-hover colouring back to grey then. */
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover td.ct-name .outer > span.hand { background: rgba(128, 128, 128, .18) !important; }
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b:not(.cc-plan-on),
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover td.updatecolumn > span.green-text,
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover td.updatecolumn span.orange-text,
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover td.updatecolumn .sl-chip,
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-actbtn:not(.cc-actoff) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
 /* PLUGINS tab logo tiles (their background rule lives above: html.cc-plugins-iconbg .cc-plugico):
    same reactive contract — rest grey, the ROW hover restores the configured tile colour.
    cc-plugins-iconbg is only ever stamped on /Plugins, so nothing can leak elsewhere. */

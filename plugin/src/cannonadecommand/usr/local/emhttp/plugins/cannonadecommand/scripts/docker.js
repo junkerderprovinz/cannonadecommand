@@ -2150,7 +2150,26 @@
       slMo.observe(document.body, { childList: true });
     } catch (e) {}
   }
+  // FLASH GUARD: the fixed bottom action bar (div.js-actions) does NOT hit-test across its
+  // right region (proven: z-index 3000 still leaves the row topmost there), so a pointer in
+  // that zone :hover'd the row underneath and fired the reactive colouring — a flicker as the
+  // mouse moved along the bar. Stamp html.cc-actbar-hot whenever the pointer is within the bar's
+  // Y-band (docker.css suppresses the row-hover colour then). Y-band, not hit-test, so it
+  // catches the un-hittable right region too. Bound ONCE on document; rAF-throttled.
+  var ccBarRaf = 0, ccBarHot = false;
+  function ccBarCheck(e) {
+    if (ccBarRaf) return;
+    ccBarRaf = (window.requestAnimationFrame || function (f) { return setTimeout(f, 16); })(function () {
+      ccBarRaf = 0;
+      var bar = document.querySelector("div.js-actions"), hot = false;
+      if (bar) { var r = bar.getBoundingClientRect(); if (r.height && e.clientY >= r.top && e.clientY <= r.bottom && e.clientX >= r.left && e.clientX <= r.right) hot = true; }
+      if (hot !== ccBarHot) { ccBarHot = hot; document.documentElement.classList.toggle("cc-actbar-hot", hot); }
+    });
+  }
+  function bindBarGuard() { if (ccBarBound) return; ccBarBound = true; document.addEventListener("pointermove", ccBarCheck, { passive: true }); }
+  var ccBarBound = false;
   function startTimers() {
+    bindBarGuard();
     lastAdv = isAdvancedView();
     // reinject id/Von + re-apply the advanced class on an Advanced/Basic flip
     // (Unraid's toggle has no reliable event, so poll the effective state)
