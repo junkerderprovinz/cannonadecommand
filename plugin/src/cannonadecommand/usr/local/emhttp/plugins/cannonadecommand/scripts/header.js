@@ -238,59 +238,66 @@
     } catch (e) {}
   }
   var ccDragged = null, ccReorder = false, ccHoldTimer = null, ccPressXY = null, ccSuppressClick = false, ccDocBound = false;
+  var ccPressItem = null, ccPressPtr = 0, ccMoved = false;   // POINTER-drag state (replaces the HTML5 drag)
   var ccNavTruce = 0, ccNavTries = 0, ccNavLast = 0;   // anti-ping-pong truce vs Unraid's Connect auto-mount observer (see applyNavOrder)
-  function cancelHold() { if (ccHoldTimer) { clearTimeout(ccHoldTimer); ccHoldTimer = null; } ccPressXY = null; }
-  function enterReorder() {   // long-press satisfied => EVERYTHING jiggles and becomes draggable (one zone)
+  function cancelHold() { if (ccHoldTimer) { clearTimeout(ccHoldTimer); ccHoldTimer = null; } ccPressXY = null; ccPressItem = null; }
+  function enterReorder() {   // long-press satisfied => EVERYTHING jiggles (one zone)
     if (ccReorder) return; ccReorder = true;
-    navAllParts().forEach(function (it) { it.setAttribute("draggable", "true"); it.classList.add("cc-nav-wiggle"); });
+    navAllParts().forEach(function (it) { it.classList.add("cc-nav-wiggle"); });
   }
-  function exitReorder() {    // back to plain, clickable, un-draggable items
-    ccReorder = false;
-    navAllParts().forEach(function (it) { it.setAttribute("draggable", "false"); it.classList.remove("cc-nav-wiggle", "cc-dragging"); });
+  function exitReorder() {    // back to plain, clickable items
+    ccReorder = false; ccDragged = null; ccMoved = false;
+    navAllParts().forEach(function (it) { it.classList.remove("cc-nav-wiggle", "cc-dragging"); });
   }
-  // wire ONE participant. Guard PER ITEM (the old per-TILE guard skipped every icon a native
-  // script appended after the first pass — those were never draggable and never restored).
+  // wire ONE participant. Guard PER ITEM. POINTER-based drag (NOT HTML5): the native drag needs
+  // draggable=true set BEFORE pointerdown, so arming it on a long-press made the first press do
+  // nothing (user had to press 2-3x). Pointer capture + manual insertBefore has no such rule —
+  // the very gesture that armed the hold continues straight into the drag.
   function wireNavItem(it) {
     if (it.getAttribute("data-cc-drag") === "1") return; it.setAttribute("data-cc-drag", "1");
-    it.setAttribute("draggable", "false"); it.classList.add("cc-navdrag");   // NOT draggable until a long-press arms it — a plain click just acts normally
-    var la = it.querySelectorAll("a"); for (var ai = 0; ai < la.length; ai++) la[ai].setAttribute("draggable", "false");  // else the browser drags the LINK URL instead of our item
-    // press-and-HOLD to arm: hold ~450ms without moving => enterReorder(). Moving before it fires,
-    // or a short click, cancels the hold and just clicks. Once armed, the native HTML5 drag runs.
+    it.setAttribute("draggable", "false"); it.classList.add("cc-navdrag");
+    var la = it.querySelectorAll("a"); for (var ai = 0; ai < la.length; ai++) la[ai].setAttribute("draggable", "false");
     it.addEventListener("pointerdown", function (e) {
-      if (e.button !== 0) return;                            // left button only
-      cancelHold(); ccPressXY = { x: e.clientX, y: e.clientY };
-      ccHoldTimer = setTimeout(function () { ccHoldTimer = null; enterReorder(); }, 450);
+      if (e.button !== 0) return;                            // left only
+      cancelHold(); ccPressXY = { x: e.clientX, y: e.clientY }; ccPressItem = it; ccPressPtr = e.pointerId; ccMoved = false;
+      // shorter hold (300ms) + capture on the pressed item so the SAME gesture drags
+      ccHoldTimer = setTimeout(function () {
+        ccHoldTimer = null; enterReorder(); ccDragged = ccPressItem;
+        if (ccDragged) { ccDragged.classList.add("cc-dragging"); try { ccDragged.setPointerCapture(ccPressPtr); } catch (e2) {} }
+      }, 300);
     });
-    it.addEventListener("pointermove", function (e) {
-      if (!ccPressXY || ccReorder) return;                  // once armed, let the native drag run
-      if (Math.abs(e.clientX - ccPressXY.x) > 8 || Math.abs(e.clientY - ccPressXY.y) > 8) cancelHold();  // moved before arming => it's a click/scroll, not a hold
-    });
-    it.addEventListener("dragstart", function (e) {
-      if (!ccReorder) { e.preventDefault(); return; }        // no dragging until the long-press armed the bar
-      ccDragged = it; it.classList.add("cc-dragging");
-      try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", navKeyAll(it) || ""); } catch (e2) {}
-    });
-    it.addEventListener("dragend", function () { ccDragged = null; saveNavOrder(); exitReorder(); });
-    it.addEventListener("dragover", function (e) {
-      if (!ccDragged || ccDragged === it) return; e.preventDefault();
-      var r = it.getBoundingClientRect(), before = e.clientX < r.left + r.width / 2;
-      it.parentNode.insertBefore(ccDragged, before ? it : it.nextSibling);   // parentNode = whichever TILE the hovered item lives in => cross-tile drops just work
-    });
-    // a long-press that never turned into a drag must not ALSO fire the item's click/navigation
-    it.addEventListener("click", function (e) { if (ccSuppressClick) { e.preventDefault(); e.stopPropagation(); ccSuppressClick = false; } });
+  }
+  // document-level pointer handlers (bound once) run the whole gesture — capture routes moves here
+  function ccNavPointerMove(e) {
+    if (ccPressXY && !ccReorder) {   // still deciding: a real move before arming = a click/scroll, cancel the hold
+      if (Math.abs(e.clientX - ccPressXY.x) > 8 || Math.abs(e.clientY - ccPressXY.y) > 8) { cancelHold(); }
+      return;
+    }
+    if (!ccDragged) return;
+    ccMoved = true;
+    // find the nav item under the pointer and insert the dragged one before/after it
+    var parts = navAllParts(), i, best = null;
+    for (i = 0; i < parts.length; i++) { if (parts[i] === ccDragged) continue; var r = parts[i].getBoundingClientRect(); if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top - 20 && e.clientY <= r.bottom + 20) { best = parts[i]; break; } }
+    if (best) { var br = best.getBoundingClientRect(), before = e.clientX < br.left + br.width / 2; best.parentNode.insertBefore(ccDragged, before ? best : best.nextSibling); }
+  }
+  function ccNavPointerUp() {
+    var wasReorder = ccReorder, dragged = ccDragged, moved = ccMoved;
+    cancelHold();
+    if (dragged) { try { dragged.releasePointerCapture(ccPressPtr); } catch (e) {} saveNavOrder(); }
+    if (wasReorder) { if (!moved) ccSuppressClick = true; exitReorder(); }   // armed but never moved -> suppress the click, don't navigate
   }
   function setupNavDrag() {
     try {
       if (g("cc.navdrag", "1") === "0") return;                 // opt-out
       navAllParts().forEach(wireNavItem);
-      if (!ccDocBound) {   // release/Escape anywhere ends an armed-but-undragged hold — bind once, not per replaced tile
+      if (!ccDocBound) {
         ccDocBound = true;
-        document.addEventListener("pointerup", function () {
-          var armed = ccReorder && !ccDragged;   // held long enough to jiggle but released without dragging
-          cancelHold();
-          if (armed) { ccSuppressClick = true; exitReorder(); }
-        });
-        document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ccReorder && !ccDragged) exitReorder(); });
+        document.addEventListener("pointermove", ccNavPointerMove);
+        document.addEventListener("pointerup", ccNavPointerUp);
+        document.addEventListener("pointercancel", ccNavPointerUp);
+        document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ccReorder) { cancelHold(); exitReorder(); } });
+        // a long-press that never became a drag must not ALSO navigate (capture phase so it beats the link)
+        document.addEventListener("click", function (e) { if (ccSuppressClick) { e.preventDefault(); e.stopPropagation(); ccSuppressClick = false; } }, true);
       }
     } catch (e) {}
   }

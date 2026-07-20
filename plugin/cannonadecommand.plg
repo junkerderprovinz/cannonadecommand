@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.44.2">
+  <!ENTITY version   "2.45.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,12 @@
 </ICON>
 
 <CHANGES>
+### 2.45.0
+- #1 Menueleisten-Icons/Tabs verschieben: Das Drag-and-Drop funktioniert jetzt beim ersten
+  Mal. Bisher musste man oft 2-3x lange klicken, weil der native Browser-Drag erst beim
+  naechsten Druck startete -- CC nutzt jetzt ein Zeiger-basiertes Ziehen (dieselbe zuverlaessige
+  Mechanik wie beim Spalten-Verschieben): lange druecken (~0,3s) bis es wackelt, dann direkt ziehen.
+
 ### 2.44.2
 - #1 Favoriten-Tab: Die "Meine Favoriten"-Kopfzeile ist ausgeblendet.
 - #2 Bestaetigungs-Meldungen (SweetAlert, z. B. "Zu Favoriten hinzugefuegt") sind schoener
@@ -1492,7 +1498,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>025f1ee7635a82d890945a2f56df79fbd696ec2977fc51fca828b77c36e2756b</SHA256>
+  <SHA256>5adf7819f8f1b892650e28e16960b60ace9a09ecdf8041073f180b22b21ce7e1</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
