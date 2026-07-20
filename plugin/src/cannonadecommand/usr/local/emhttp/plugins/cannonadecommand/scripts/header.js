@@ -341,10 +341,14 @@
       var un = parseInt(usage, 10);
       var uw = isNaN(un) ? 0 : Math.max(0, Math.min(100, un));
       var uc = isNaN(un) ? "#8d8d8d" : un >= 95 ? "#d9433f" : un >= 80 ? "#d6a243" : "#3fae6a";
+      // per-element visibility (user: an/abhaken welche Chips die Insel zeigt) — cc.isl.<key>,
+      // default ON; a fixed render order gives the island a deterministic, tidy layout
+      function iOn(k) { return g("cc.isl." + k, "1") !== "0"; }
+      var items = "u" + (iOn("uptime") ? 1 : 0) + "o" + (iOn("os") ? 1 : 0) + "a" + (iOn("array") ? 1 : 0) + "f" + (iOn("fill") ? 1 : 0) + "t" + (iOn("temps") ? 1 : 0);
       // idempotence guard: nchan rewrites the footer every few seconds with UNCHANGED text most
       // of the time — compare the source signature and skip the DOM rebuild when nothing moved
-      // (bar width/colour included so a fill change always redraws)
-      var sig = upTxt + "|" + upTitle + "|" + osLabel + "|" + raw + "|" + temps.join(",") + "|" + warn + "|" + usage + "|" + uw + uc + "|" + (par ? par[0] : "");
+      // (bar width/colour + the item toggles included so a change always redraws)
+      var sig = upTxt + "|" + upTitle + "|" + osLabel + "|" + raw + "|" + temps.join(",") + "|" + warn + "|" + usage + "|" + uw + uc + "|" + (par ? par[0] : "") + "|" + items;
       if (isle && sig === ccIslandSig) return;
       ccIslandSig = sig;
       if (!isle) {
@@ -361,40 +365,48 @@
         if (tip) c.setAttribute("data-cc-tip", tip);   // frameless CC bubble (law) — no native balloon
         isle.appendChild(c);
       }
-      // UPTIME chip first: label = the native text minus its leading word ("Betriebszeit"/"Uptime"
-      // per locale); bubble = the native title ("Server hoch seit …") + the full text
-      if (upTxt) chip(upTxt.replace(/^(Betriebszeit|Uptime)\s*/i, ""), "#3fae6a", (upTitle ? upTitle + " — " : "") + upTxt, "cc-isl-up");
-      // OS/edition chip: neutral grey dot — informational, not a state. The native 7.3.2 version
-      // dropdown stays functional in place (CSS restyles it) — deliberately NOT duplicated here.
-      chip(osLabel, "#8d8d8d", T("Unraid-Edition", "Unraid edition"), "cc-isl-os");
-      var segs = raw ? raw.split("•") : [], i, s;
-      for (i = 0; i < segs.length; i++) {
-        s = segs[i].replace(/^\s+|\s+$/g, ""); if (!s) continue;
-        if (i === 0) {   // ARRAY chip: first segment = array state, label = the segment text
-          var low = s.toLowerCase(), dc = "#d6a243";   // amber = unclear/transitional state
-          if (low.indexOf("gestartet") !== -1 || low.indexOf("started") !== -1) dc = "#3fae6a";
-          else if (low.indexOf("gestoppt") !== -1 || low.indexOf("stopped") !== -1) dc = "#d9433f";
-          chip(s, dc, par ? s + " — " + par[0].replace(/\s+/g, " ") : s);
-          // FILL-LEVEL chip right beside the array state: MINI BAR (track + fill) + % text, no
-          // dot — the fill colour alone carries the state (uw/uc computed above with the sig)
-          if (usage) {
-            var uch = document.createElement("span"); uch.className = "cc-isl-chip cc-isl-usage";
-            var ubar = document.createElement("span"); ubar.className = "cc-isl-bar";
-            var ufill = document.createElement("span"); ufill.className = "cc-isl-fill";
-            ufill.style.width = uw + "%"; ufill.style.background = uc;   // width/state inline; track size/shape in the sheet
-            ubar.appendChild(ufill); uch.appendChild(ubar); uch.appendChild(document.createTextNode(usage));
-            uch.setAttribute("data-cc-tip", T("Array-Füllstand ", "Array usage ") + usage);
-            isle.appendChild(uch);
-          }
+      // FIXED render order (user: "total unsortiert" -> deterministic layout): uptime, OS,
+      // array state, fill bar, temps. Each element is gated by its cc.isl.<key> toggle. Every
+      // tooltip carries REAL extra info, never just the label back (user call).
+      var arrSeg = (raw ? raw.split("•")[0] : "").replace(/^\s+|\s+$/g, "");   // first bullet segment = array state
+      // 1) UPTIME — label without the leading word; bubble = the boot timestamp (the useful bit)
+      if (iOn("uptime") && upTxt) {
+        var upClean = upTxt.replace(/^(Betriebszeit|Uptime)\s*/i, "");
+        chip(upClean, "#3fae6a", upTitle || (T("Läuft seit ", "Up since ") + upClean), "cc-isl-up");
+      }
+      // 2) OS EDITION — bubble names the running version (the native 7.3.2 dropdown stays in place)
+      if (iOn("os")) {
+        var verEl = document.querySelector('unraid-header-os-version span[id^="reka-menu-trigger"]');
+        var verTxt = ((verEl && verEl.textContent) || "").replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
+        chip(osLabel, "#8d8d8d", T("Version ", "Version ") + (verTxt || "?"), "cc-isl-os");
+      }
+      // 3) ARRAY STATE — bubble adds the parity/progress line when one is running
+      if (iOn("array") && arrSeg) {
+        var low = arrSeg.toLowerCase(), dc = "#d6a243";
+        if (low.indexOf("gestartet") !== -1 || low.indexOf("started") !== -1) dc = "#3fae6a";
+        else if (low.indexOf("gestoppt") !== -1 || low.indexOf("stopped") !== -1) dc = "#d9433f";
+        chip(arrSeg, dc, par ? arrSeg + " — " + par[0].replace(/\s+/g, " ") : arrSeg, "cc-isl-array");
+      }
+      // 4) FILL LEVEL — mini bar + % text (no dot; the fill colour is the state); bubble = plain sentence
+      if (iOn("fill") && usage) {
+        var uch = document.createElement("span"); uch.className = "cc-isl-chip cc-isl-usage";
+        var ubar = document.createElement("span"); ubar.className = "cc-isl-bar";
+        var ufill = document.createElement("span"); ufill.className = "cc-isl-fill";
+        ufill.style.width = uw + "%"; ufill.style.background = uc;
+        ubar.appendChild(ufill); uch.appendChild(ubar); uch.appendChild(document.createTextNode(usage));
+        uch.setAttribute("data-cc-tip", T("Array zu " + usage + " belegt", "Array " + usage + " used"));
+        isle.appendChild(uch);
+      }
+      // 5) TEMPS — first sensor = CPU, second = Mainboard (Unraid footer order), rest generic; the
+      // dot carries the state (green below cc.tempwarn, amber at/above, red at threshold+15)
+      if (iOn("temps")) {
+        for (i = 0; i < temps.length; i++) {
+          var tlab = i === 0 ? T("CPU-Temperatur", "CPU temperature") : i === 1 ? T("Mainboard-Temperatur", "Motherboard temperature") : T("Temperatur", "Temperature");
+          chip(Math.round(temps[i]) + " °C", temps[i] >= warn + 15 ? "#d9433f" : temps[i] >= warn ? "#d6a243" : "#3fae6a", tlab + ": " + temps[i] + " °C");
         }
-        // service segments (e.g. "shiplog: started …") are deliberately NOT mirrored as chips —
-        // the user questioned them twice; that daemon status stays in the (hidden) native footer
       }
-      // TEMP chips: always visible (user call) — the DOT carries the state (green below the
-      // cc.tempwarn threshold, amber at/above, red at threshold+15)
-      for (i = 0; i < temps.length; i++) {
-        chip(Math.round(temps[i]) + " °C", temps[i] >= warn + 15 ? "#d9433f" : temps[i] >= warn ? "#d6a243" : "#3fae6a", temps[i] + " °C");
-      }
+      // service segments (e.g. "shiplog: started …") are deliberately NOT mirrored — that daemon
+      // status stays in the (hidden) native footer (user questioned it twice)
     } catch (e) {}
   }
   function watchIsland() {   // nchan rewrites the (hidden) footer live — mirror every update into the island
@@ -424,11 +436,22 @@
         name = ((ns && ns.textContent) || "").replace(/^\s+|\s+$/g, "");
       }
       if (!name) name = "Unraid";
-      if (br && name === ccBrandSig) return;   // idempotence: profile rebuilds re-run us, only a real change re-renders
-      ccBrandSig = name;
+      // customisation (user: size/weight/italic/font/colour in CC settings) — read the cc.brand.*
+      // keys and inline them; part of the sig so a live settings change re-renders.
+      var bSize = g("cc.brand.size", "30"), bWeight = g("cc.brand.weight", "650"), bItalic = g("cc.brand.italic", "0"),
+          bFont = g("cc.brand.font", ""), bColor = g("cc.brand.color", "");
+      var sig = name + "|" + bSize + "|" + bWeight + "|" + bItalic + "|" + bFont + "|" + bColor;
+      if (br && sig === ccBrandSig) return;   // idempotence: profile rebuilds re-run us, only a real change re-renders
+      ccBrandSig = sig;
       if (!br) { br = document.createElement("span"); br.id = "cc-brand"; hdr.insertBefore(br, hdr.firstChild); }
       while (br.firstChild) br.removeChild(br.firstChild);   // clear + refill = idempotent rebuild
       var nm = document.createElement("span"); nm.className = "cc-brand-name";
+      // inline overrides (the sheet's defaults apply when a key is unset/empty)
+      if (/^\d{1,3}$/.test(bSize)) nm.style.fontSize = bSize + "px";
+      if (bWeight) nm.style.fontWeight = bWeight;
+      nm.style.fontStyle = bItalic === "1" ? "italic" : "normal";
+      if (bFont) nm.style.fontFamily = bFont;
+      if (/^#[0-9a-f]{6}$/i.test(bColor)) nm.style.color = bColor;
       nm.appendChild(document.createTextNode(name));
       br.appendChild(nm);
     } catch (e) {}

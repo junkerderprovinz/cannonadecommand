@@ -621,8 +621,10 @@
     // ── View + density ──
     var c4 = card(T("Ansicht", "View"), null);
     c4.appendChild(segRow(T("Standard-Ansicht", "Default view"), [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")]], view, function (v) { view = v; set("cc.view", v); }));
-    // cc.density is GLOBAL: Docker + Start + Freigaben all read this one key
-    c4.appendChild(segRow(T("Zeilenhöhe (global: Docker, Start, Freigaben)", "Row density (global: Docker, Start, Shares)"), [["compact", T("kompakt", "compact")], ["normal", "normal"], ["airy", T("luftig", "airy")]], density, function (v) { density = v; set("cc.density", v); }));
+    // cc.density is ONE GLOBAL key — Docker + Start + Freigaben all read it (user: "einfach global")
+    var dRow = segRow(T("Dichte (global)", "Density (global)"), [["compact", T("Kompakt", "Compact")], ["normal", "Normal"], ["airy", T("Luftig", "Airy")]], density, function (v) { density = v; set("cc.density", v); });
+    dRow.insertBefore(infoIcon(T("Zeilenhöhe für alle Listen (Docker, Start, Freigaben) auf einmal.", "Row height for every list (Docker, Start, Shares) at once.")), dRow.lastChild);
+    c4.appendChild(dRow);
     function applyShape() { var m9 = { pill: "999px", rounded: "6px", square: "0px", circle: "999px" }; var sh9 = get("cc.badgeshape", "pill"); var r9 = m9[sh9] || "999px"; root.style.setProperty("--cc-b-radius", r9); document.documentElement.style.setProperty("--cc-b-radius", r9); document.documentElement.classList.toggle("cc-shape-circle", sh9 === "circle"); var d9 = { pill: "50%", rounded: "3px", square: "0px", circle: "50%" }[sh9] || "50%"; document.documentElement.style.setProperty("--cc-dot-r", d9); /* dot token: the preset swatches follow the badge form too (user call) */ }
     wrap.appendChild(c4);
     // Badge-Form (shape) is a single GLOBAL control in the Allgemein "Badges" card now — not per
@@ -944,9 +946,50 @@
     // belongs to THIS area. header.js renders it and reads cc.island / cc.tempwarn live.
     (function () {
       var cI = card(T("Status-Insel", "Status island"), T("Die Status-Insel im oberen Streifen gehört zum Kopfbereich.", "The status island in the top strip belongs to the header area."));
-      cI.appendChild(toggleRow(T("Status-Insel", "Status island"), get("cc.island", "1") !== "0", function (v) { set("cc.island", v ? "1" : "0"); syncHeaderBar(); }));
+      cI.appendChild(toggleRow(T("Status-Insel anzeigen", "Show status island"), get("cc.island", "1") !== "0", function (v) { set("cc.island", v ? "1" : "0"); syncHeaderBar(); }));
+      // per-element checklist (user: an/abhaken welche Chips die Insel zeigt); header.js renders
+      // them in a FIXED order and reads cc.isl.<key> live. Default all on.
+      cI.appendChild(el("div", "cc-set-lbl", T("Angezeigte Elemente", "Shown elements")));
+      [["uptime", T("Betriebszeit", "Uptime")], ["os", T("Unraid-Edition", "Unraid edition")], ["array", T("Array-Zustand", "Array state")], ["fill", T("Array-Füllstand", "Array usage")], ["temps", T("Temperaturen", "Temperatures")]].forEach(function (it) {
+        cI.appendChild(toggleRow(it[1], get("cc.isl." + it[0], "1") !== "0", function (v) { set("cc.isl." + it[0], v ? "1" : "0"); syncHeaderBar(); }));
+      });
       cI.appendChild(segRow(T("Temperatur-Warnschwelle", "Temperature warning threshold"), [["50", "50 °C"], ["60", "60 °C"], ["70", "70 °C"]], get("cc.tempwarn", "60"), function (v) { set("cc.tempwarn", v); syncHeaderBar(); }));
       wrapHeader.appendChild(cI);
+    })();
+    // ── SERVERNAME card (user: size/weight/italic/font/colour customisable). header.js reads the
+    // cc.brand.* keys live and inlines them on span.cc-brand-name; a live preview mirrors it here.
+    (function () {
+      var cB = card(T("Servername", "Server name"), T("Aussehen des Servernamens oben links.", "Look of the server name at the top left."));
+      var prev = el("div", "cc-set-prev"); var pv = el("span", null, (document.title.split("/")[0] || "Server").trim());
+      prev.appendChild(pv);
+      function paintPv() {
+        var sz = get("cc.brand.size", "30"); pv.style.fontSize = (/^\d{1,3}$/.test(sz) ? sz : "30") + "px";
+        pv.style.fontWeight = get("cc.brand.weight", "650");
+        pv.style.fontStyle = get("cc.brand.italic", "0") === "1" ? "italic" : "normal";
+        var fn = get("cc.brand.font", ""); pv.style.fontFamily = fn || "inherit";
+        var col = get("cc.brand.color", ""); pv.style.color = /^#[0-9a-f]{6}$/i.test(col) ? col : "#f4f4f4";
+      }
+      // size slider 16..64
+      var szRow = el("div", "cc-set-row"); szRow.appendChild(el("span", "cc-set-rl", T("Größe", "Size")));
+      var sz = el("input"); sz.type = "range"; sz.min = "16"; sz.max = "64"; sz.value = get("cc.brand.size", "30"); sz.style.flex = "1";
+      sz.addEventListener("input", function () { set("cc.brand.size", sz.value); paintPv(); syncHeaderBar(); });
+      szRow.appendChild(sz); cB.appendChild(szRow);
+      // weight
+      cB.appendChild(segRow(T("Stärke", "Weight"), [["300", T("Dünn", "Thin")], ["400", T("Normal", "Normal")], ["650", T("Halbfett", "Semibold")], ["800", T("Fett", "Bold")]], get("cc.brand.weight", "650"), function (v) { set("cc.brand.weight", v); paintPv(); syncHeaderBar(); }));
+      // italic
+      cB.appendChild(toggleRow(T("Kursiv", "Italic"), get("cc.brand.italic", "0") === "1", function (v) { set("cc.brand.italic", v ? "1" : "0"); paintPv(); syncHeaderBar(); }));
+      // font family (web-safe / system stacks)
+      cB.appendChild(segRow(T("Schriftart", "Font"), [["", T("Standard", "Default")], ['Georgia,"Times New Roman",serif', T("Serif", "Serif")], ['"Courier New",monospace', "Mono"], ['"Segoe UI",system-ui,sans-serif', "Sans"]], get("cc.brand.font", ""), function (v) { set("cc.brand.font", v); paintPv(); syncHeaderBar(); }));
+      // colour picker + hex (empty = default light)
+      var col = get("cc.brand.color", "");
+      var pr = el("div", "cc-set-pickrow");
+      var hx = el("input", "cc-set-hexin"); hx.type = "text"; hx.value = col || ""; hx.placeholder = "#f4f4f4"; hx.maxLength = 7; hx.spellcheck = false;
+      var pk = inlinePicker(/^#[0-9a-f]{6}$/i.test(col) ? col : "#f4f4f4", function (v) { hx.value = v; set("cc.brand.color", v); paintPv(); syncHeaderBar(); });
+      hx.addEventListener("input", function () { var v = normHex(hx.value); if (v) { pk._set(v); set("cc.brand.color", v); paintPv(); syncHeaderBar(); } else if (!hx.value) { del("cc.brand.color"); paintPv(); syncHeaderBar(); } });
+      pr.appendChild(pk); pr.appendChild(hx); cB.appendChild(pr);
+      cB.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
+      paintPv(); cB.appendChild(prev);
+      wrapHeader.appendChild(cB);
     })();
     buildStyleCards("ccsh.", wrapShares, [], true); // Freigaben: tab pills use FA glyphs -> badges only, no logo card
     buildStyleCards("ccs.", wrapSettings, ["fa-cog", "fa-globe", "fa-star"], false); // Einstellungs-Tab: badges + logo-tint + Logo-Hintergrund cards; the tiles use FA glyphs, so the preview shows sample glyphs (cog/globe/star = System/Network/User category icons), coloured via CSS not the raster filter
