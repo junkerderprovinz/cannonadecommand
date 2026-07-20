@@ -653,6 +653,8 @@ html.cc-shape-circle.cc-shares-on:is(.cc-on-main, .cc-on-shares) #displaybox a.c
    position:relative SECTION (like the diskio switch), NOT the .cc-card-head — the head IS the badge
    pill (fit-content), so right:0 of the head landed ON the badge text (the v2.27.0 overlap). The head
    sits at the section top, so a small fixed top puts the cluster on the badge row. */
+/* SmokeSignal sub-tab excluded from /Main (user #17): shares.js marks its tab button + panel */
+html.cc-shares-on.cc-on-main #displaybox .cc-smoke-hidden { display: none !important; }
 html.cc-shares-on.cc-on-main.cc-sections-main #displaybox .cc-card-head > .cc-ud-ctrls {
   position: absolute; right: 0; top: 6px;
   display: inline-flex; align-items: center; gap: 8px;   /* user: "kleinere abstaende" — ONE 8px rhythm, same as the in-cluster child gap */

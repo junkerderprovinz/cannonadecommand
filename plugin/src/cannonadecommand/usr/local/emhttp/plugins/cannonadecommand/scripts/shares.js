@@ -132,8 +132,29 @@
   // rainbow: paint the ACTIVE tab button a rotated palette colour; accent mode = clear
   // our overrides so the sheet's --cc-accent shows through. Inline style writes are
   // attribute changes, so they never re-trigger the childList observer.
+  // hide the SmokeSignal sub-tab on /Main (user #17) in NATIVE-tab mode too: hide the button + its
+  // panel; if it was the active tab, activate the first real tab so no dead panel shows. Only on
+  // /Main (onMain), idempotent, teardown restores. Sections mode is handled in cardPanels.
+  function ccHideSmokeTab() {
+    try {
+      if (!onMain()) return;
+      var btns = document.querySelectorAll('#displaybox nav.tabs button[role="tab"]');
+      var panels = document.querySelectorAll('#displaybox section[role="tabpanel"]');
+      for (var i = 0; i < btns.length; i++) {
+        var b = btns[i];
+        if (!/smokesignal/i.test(b.textContent || "")) continue;
+        if (b.classList.contains("cc-smoke-hidden")) return;   // already handled
+        var wasActive = b.getAttribute("aria-selected") === "true";
+        b.classList.add("cc-smoke-hidden");
+        if (panels[i]) panels[i].classList.add("cc-smoke-hidden");
+        if (wasActive && btns[0]) { try { btns[0].click(); } catch (e2) {} }   // move focus off the now-hidden tab
+        return;
+      }
+    } catch (e) {}
+  }
   function paintTabs() {
     try {
+      ccHideSmokeTab();
       var rb = rbOn(), neutral = rb && rbNeutral(), btns = document.querySelectorAll('#displaybox nav.tabs button[role="tab"]');
       document.documentElement.classList.toggle("cc-shares-rbneutral", neutral); // also set by paintRows; needed here for the /Docker tab bar where paintRows never runs
       for (var i = 0; i < btns.length; i++) {
@@ -638,6 +659,9 @@
   // numbers buttons and panels in two loops with different skip logic, so a panel's aria-labelledby can
   // point to a missing button id. Iterate the FULL list + skip carded ones BY ATTRIBUTE so i stays the
   // real DOM index that lines up with tabBtns[i]. Idempotent via data-cc-card.
+  // the SmokeSignal plugin injects its OWN sub-tab into the /Main tab bar; the user does not want
+  // it as a separate tab/section here (it has its own page). Match by the tab button's text.
+  function ccIsSmokeTab(btn) { return !!btn && /smokesignal/i.test(btn.textContent || ""); }
   function cardPanels(box) {
     var tablist = box.querySelector('nav.tabs, [role="tablist"]');
     var tabBtns = tablist ? tablist.querySelectorAll('button[role="tab"]') : [];
@@ -645,6 +669,7 @@
     for (var i = 0; i < panels.length; i++) {
       var section = panels[i];
       if (section.getAttribute("data-cc-card")) continue;   // idempotent; keeps i == real DOM index
+      if (ccIsSmokeTab(tabBtns[i])) { section.setAttribute("data-cc-card", "1"); section.classList.add("cc-smoke-hidden"); continue; }   // skip SmokeSignal: no card head, hidden (user #17)
       section.setAttribute("data-cc-card", "1");
       ccCards(section);   // clone-settings block(s) -> Nebencard beside their Hauptcard (all 3 Unraid variants; /Main has none, so no-op)
       var head = document.createElement("div");
