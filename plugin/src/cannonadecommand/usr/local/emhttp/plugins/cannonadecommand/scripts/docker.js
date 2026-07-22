@@ -997,6 +997,19 @@
       // the docked bar's own height feeds the scroll clearance (CSS padding-bottom)
       var bar = document.querySelector("div.js-actions");
       if (bar) { var bh = Math.round(bar.getBoundingClientRect().height); if (bh > 0 && bh < 200) document.documentElement.style.setProperty("--cc-actbar-h", bh + "px"); }
+      // #12: match the docked bar's WIDTH to the container list (user: "so breit wie die Dockerliste").
+      // The native bar is position:fixed full-viewport-width; measure the list's left/right and inset the
+      // bar to the same edges (width:auto so left+right win). Re-measured here (apply/resize/scroll).
+      if (bar) {
+        var lst = document.querySelector("#docker_list") || document.querySelector("table.cc-enh");
+        var lr = lst && lst.getBoundingClientRect();
+        if (lr && lr.width > 0) {
+          bar.style.setProperty("left", Math.round(lr.left) + "px", "important");
+          bar.style.setProperty("right", Math.round(document.documentElement.clientWidth - lr.right) + "px", "important");
+          bar.style.setProperty("width", "auto", "important");
+          bar.style.setProperty("padding-right", "16px", "important");   // fill the inset (native reserved 88px would gap the toggle)
+        }
+      }
       colorBarButtons(); // rainbow-tint the native bar buttons (accent handled by CSS)
     } catch (e) {}
     if (!window.__ccDockResize) {

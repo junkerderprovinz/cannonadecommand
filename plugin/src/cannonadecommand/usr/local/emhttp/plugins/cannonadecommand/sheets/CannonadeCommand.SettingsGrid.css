@@ -168,12 +168,16 @@ html.cc-settingsgrid-heads-on #displaybox div.title > span.right { flex: 0 0 aut
 
 /* span.left (glyph + label) -> the filled accent badge; same recipe as Shares' .cc-card-head */
 html.cc-settingsgrid-heads-on #displaybox div.title > span.left {
-  display: inline-flex !important; align-items: center; gap: 8px !important;   /* native .gap-1 is .25rem -> match the card badge */
-  min-height: var(--cc-lgb-h, 36px); box-sizing: border-box;   /* head badges sit on the 36px lg line */
-  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: 15px; line-height: 1;
+  display: inline-flex !important; align-items: center; gap: 6px !important;
+  /* #11 (user: "Subtabs und Abschnittsbadges gleich groß, in allen Tabs vereinheitlichen"): adopt the
+     md TAB-BADGE tier — the exact height/font/padding/weight/tracking of the Shares/Docker/Plugins
+     subtabs AND the main menu tabs (Shares.css button[role=tab]) — so every badge-tab across the WebGUI
+     is one size. Was the lg heading tier (36px/15px/9-18) = the lone outlier. */
+  min-height: var(--cc-md-h, 30px) !important; box-sizing: border-box;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-md-fs, 13px); line-height: 1;
   background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
-  padding: 9px 18px !important; margin: 0 !important;
+  padding: var(--cc-md-pad, 0 20px) !important; margin: 0 !important;
   text-decoration: none !important; transition: filter .12s;
 }
 /* glyph inherits the badge ink; zero native i.title{margin-right:8px} — the gap handles spacing.

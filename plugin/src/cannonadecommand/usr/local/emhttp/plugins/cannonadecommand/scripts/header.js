@@ -670,11 +670,11 @@
       }
       var vw = document.documentElement.clientWidth;
       // 6px right of the row tail so the bell sits EXACTLY one icon-gap from the last util icon —
-      // the native util icons carry 3px+3px a-margins (=6px visual gap), so the bell must sit 6px
-      // box-to-box from the last util icon (N5). The single-pass measured correction below lands the
-      // span a consistent 3px SHORT of `target` (proven live: +6 -> 3px gap, +9 -> 6px gap at 2128px
-      // AND 2560px), so aim +9 to net the intended 6px. Bell<->burger gap is 6px too (Header.css).
-      var target = Math.min(Math.round(r.right + 9), vw - 84);
+      // the native util icons carry 3px+3px a-margins (=6px visual gap). The axis correction below
+      // pins the span to a fixed spot regardless of this offset (proven live: +6 AND +9 both land a
+      // 3px gap), so the FINAL gap-enforce block at the very end is what actually nets 6px; this
+      // offset just seeds a close-enough start. Bell<->burger gap is 6px too (Header.css).
+      var target = Math.min(Math.round(r.right + 6), vw - 84);
       set("position", "fixed");
       set("right", "auto");
       // KILL the Tailwind pl-[160px]/pl-[30%]: with border-box that padding forced the box ≥160px
@@ -699,6 +699,11 @@
           if (dy) set("top", (parseInt(up.style.getPropertyValue("top"), 10) + dy) + "px");
         }
       }
+      // FINAL GAP ENFORCE (#2a): the axis correction above pins the span to a fixed spot that leaves a
+      // 3px util->bell gap regardless of `target` (proven live). Measure the ACTUAL gap to the last util
+      // icon and nudge the container so it is EXACTLY 6px — matching the 6px util-icon gaps. Idempotent
+      // (delta 0 once at 6px), synchronous (no flicker).
+      if (sp.length) { var br = sp[0].getBoundingClientRect(); if (br.width > 0) { var gdx = Math.round(6 - (br.left - r.right)); if (gdx) set("left", (parseInt(up.style.getPropertyValue("left"), 10) + gdx) + "px"); } }
     } catch (e) {}
   }
   function ccUndockProfile() {                                     // OFF branch: remove exactly the props we set -> fully native again
