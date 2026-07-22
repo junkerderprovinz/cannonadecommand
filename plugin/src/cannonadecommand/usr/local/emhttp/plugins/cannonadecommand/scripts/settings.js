@@ -250,61 +250,107 @@
     (function () {
       var tc = card(T("Theming", "Theming"), T("Aus = nur die Docker-FUNKTIONEN von CannonadeCommand bleiben (Startplan, Abhängigkeiten, Health-Gate, Watchdog, Zeitpläne, Limits, Bandbreite, Auto-Stop bei Leerlauf). Das gesamte visuelle Theming — Badges, Farben, Rainbow, Karten und die Umgestaltung aller Tabs — wird abgeschaltet.", "Off = only CannonadeCommand's Docker FUNCTIONS remain (start plan, dependencies, health-gate, watchdog, schedules, limits, bandwidth, idle auto-stop). All visual theming — badges, colours, rainbow, cards and every tab's restyling — is turned off."));
       tc.appendChild(toggleRow(T("Theming aktiv", "Theming on"), localStorage.getItem("cc.theming") !== "0", function (v) { set("cc.theming", v ? "1" : "0"); render(); syncHeaderBar(); syncSharesBar(); }));
-      // ── Anzeige (Unraid): CC MIRRORS Unraid's ENTIRE native Display Settings page here (user: no
-      // more back-and-forth between CC and the native page). Every native <select> is parsed LIVE
-      // from /Settings/DisplaySettings and rebuilt as a CC control that posts the SAME field back
-      // (URLSearchParams -> update.php — the only encoding that returns 200, multipart 504s) and
-      // reloads. ONE source of truth (dynamix.cfg); the native Display-Settings tile is hidden on the
-      // /Settings page (CSS, CannonadeCommand.Header.css). Parsing LIVE means new Unraid fields appear
-      // automatically and the option
-      // language always matches. The 3 header-COLOUR text fields are skipped — CC paints its own
-      // header, so they are inert here (still reachable on the native page by URL). The "favorites"
-      // field also drives CC's tab-hide (cc.hidefavtab) because Unraid's favorites=no does NOT hide
-      // the menu tab (CC's own #menu layout rule even force-shows it). csrf_token gates the POST.
-      if (typeof csrf_token !== "undefined") {
-        var dlA = el("div", "cc-set-lbl cc-set-lblwrap");
-        dlA.appendChild(el("span", null, T("Anzeige (Unraid)", "Display (Unraid)")));
-        dlA.appendChild(infoIcon(T("Unraids komplette Anzeige-Einstellungen — hier gebündelt, nativ gespeichert, die Seite lädt neu.", "Unraid's full display settings — bundled here, saved natively, the page reloads.")));
-        tc.appendChild(dlA);
-        var dispHost = el("div"); tc.appendChild(dispHost);   // controls land here once the fetch parses them
-        var postDisplay = function (field, value) {
-          try {
-            var fd = new URLSearchParams();
-            fd.append("#file", "dynamix/dynamix.cfg"); fd.append("#section", "display");
-            fd.append("csrf_token", window.csrf_token); fd.append(field, value);
-            if (field === "favorites") set("cc.hidefavtab", value === "no" ? "1" : "0");   // native favorites=no does NOT hide the tab -> CC enforces it
-            fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function () { location.reload(); });
-          } catch (e9) {}
-        };
-        fetch("/Settings/DisplaySettings", { credentials: "same-origin" }).then(function (r) { return r.text(); }).then(function (html) {
-          try {
-            var doc = new DOMParser().parseFromString(html, "text/html");
-            // Scope STRICTLY to the display form (#section=display): the fetched page is the whole
-            // Unraid chrome and OTHER forms (SMART/spin-down) carry stray selects like disks/op/-c/
-            // queue that must never leak into CC's panel. The display form's selects are exactly the
-            // 21 display fields; its 3 text inputs (header colours) stay skipped (CC paints the head).
-            var dispForm = null;
-            Array.prototype.forEach.call(doc.querySelectorAll("form"), function (f) {
-              var sec = f.querySelector('input[name="#section"]');
-              if (sec && sec.value === "display") dispForm = f;
-            });
-            if (!dispForm) return;
-            Array.prototype.forEach.call(dispForm.querySelectorAll("select[name]"), function (c) {
-              var nm = c.getAttribute("name"); if (!nm || /^(csrf|#)/.test(nm)) return;
-              var dd = c.closest("dd"), dt = dd ? dd.previousElementSibling : null;
-              var lbl = (dt && dt.tagName === "DT") ? (dt.textContent || "").replace(/\s*:\s*$/, "").trim() : nm;
-              var opts = Array.prototype.map.call(c.options, function (o) { return [o.value, (o.textContent || "").trim()]; });
-              if (nm === "favorites") set("cc.hidefavtab", c.value === "no" ? "1" : "0");   // sync CC's tab-hide with the saved native value on load
-              dispHost.appendChild(opts.length > 3
-                ? dropRow(lbl, opts, c.value, function (v) { postDisplay(nm, v); })
-                : segRow(lbl, opts, c.value, function (v) { postDisplay(nm, v); }));
-            });
-            syncHeaderBar();   // the favorites sync may have flipped cc.hidefavtab -> reflect it live
-          } catch (e9) {}
-        }).catch(function () {});
-      }
       themingCard = tc;
       wrapMain.appendChild(tc);
+    })();
+    // ── Anzeige (Unraid): CannonadeCommand hosts Unraid's ENTIRE native Display Settings, now split
+    // into THEMATIC cards (user: the Theming card was ultra long) with a CC info bubble on EVERY field
+    // (native page has none). Fields are parsed LIVE from the #section=display form and rebuilt as CC
+    // controls posting the SAME field via update.php (URLSearchParams -> 200; multipart 504s) + reload.
+    // Non-select fields are mirrored too now: the 3 header COLOURS as CC pickers (#7) and the banner as
+    // an upload link (#6 — the native file drop lives on Unraid's page). The "favorites" field also
+    // drives cc.hidefavtab. csrf_token gates the POST.
+    if (typeof csrf_token !== "undefined") (function () {
+      var postDisplay = function (field, value) {
+        try {
+          var fd = new URLSearchParams();
+          fd.append("#file", "dynamix/dynamix.cfg"); fd.append("#section", "display");
+          fd.append("csrf_token", window.csrf_token); fd.append(field, value);
+          if (field === "favorites") set("cc.hidefavtab", value === "no" ? "1" : "0");
+          fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function () { location.reload(); });
+        } catch (e9) {}
+      };
+      // field -> concise CC help text [de, en] (native page ships none)
+      var H = {
+        width: ["Verpackt hält den Inhalt in fester Breite; Unbegrenzt nutzt die volle Fensterbreite.", "Packed keeps a fixed content width; Unlimited uses the full window width."],
+        locale: ["Sprache der WebGUI.", "Language of the WebGUI."],
+        font: ["Grundschriftgröße der Oberfläche.", "Base UI font size."],
+        tty: ["Schriftgröße im eingebauten Terminal.", "Font size in the built-in terminal."],
+        terminalButton: ["Terminal-Knopf im Kopfbereich anzeigen.", "Show the terminal button in the header."],
+        number: ["Dezimal- und Tausender-Trennzeichen für Zahlen.", "Decimal and thousands separators for numbers."],
+        scale: ["Einheit für Dateigrößen (automatisch oder fest).", "Unit for file sizes (automatic or fixed)."],
+        tabs: ["Unterseiten als Tabs oder als eine lange Abschnitts-Seite.", "Sub-pages as tabs or one long sectioned page."],
+        users: ["Wo das Benutzermenü sitzt: Kopfzeile oder Einstellungsmenü.", "Where the user menu sits: header or settings menu."],
+        resize: ["Listen automatisch mitwachsen lassen oder feste Höhe.", "Let lists grow automatically or use a fixed height."],
+        raw: ["Datenträgernamen normalisiert oder roh anzeigen.", "Show disk names normalised or raw."],
+        wwn: ["World-Wide-Name in der Geräte-ID einblenden.", "Show the World-Wide-Name in the device ID."],
+        total: ["Summenzeile mit Array-Gesamtwerten anzeigen.", "Show a totals row with array totals."],
+        usage: ["Auslastungsbalken pro Datenträger anzeigen.", "Show a usage bar per disk."],
+        unit: ["Temperaturen in Celsius oder Fahrenheit.", "Temperatures in Celsius or Fahrenheit."],
+        theme: ["Grund-Farbschema von Unraid (CannonadeCommand färbt darüber).", "Unraid's base colour scheme (CannonadeCommand paints over it)."],
+        text: ["Darstellung der Belegt/Frei-Spalten (Text, Balken, Farbe).", "How the used/free columns look (text, bar, colour)."],
+        headerdescription: ["Beschreibungstext im Kopfbereich anzeigen.", "Show the description text in the header."],
+        banner: ["Eigenes Kopf-Banner ein-/ausblenden (Bild unten hochladen).", "Show/hide a custom header banner (upload the image below)."],
+        showBannerGradient: ["Weichen Farbverlauf über dem Banner anzeigen.", "Show a soft gradient over the banner."],
+        favorites: ["Favoriten-Funktion aktivieren; Nein blendet den Favoriten-Tab aus.", "Enable favourites; No hides the Favorites tab."],
+        header: ["Native Kopfzeilen-Textfarbe. Sichtbar nur, wenn CannonadeCommands Kopfbereich AUS ist (sonst übermalt CC den Kopf).", "Native header text colour. Visible only when CannonadeCommand's header area is OFF (otherwise CC overpaints the header)."],
+        headermetacolor: ["Native Kopfzeilen-Sekundärtextfarbe. Wirkt nur bei ausgeschaltetem CC-Kopfbereich.", "Native header secondary text colour. Only when CC's header area is off."],
+        background: ["Native Kopf-Hintergrundfarbe. Wirkt nur bei ausgeschaltetem CC-Kopfbereich.", "Native header background colour. Only when CC's header area is off."]
+      };
+      function help(nm) { var h = H[nm]; return h ? T(h[0], h[1]) : ""; }
+      function fieldLabel(c, nm) { var dd = c.closest("dd"), dt = dd ? dd.previousElementSibling : null; return (dt && dt.tagName === "DT") ? (dt.textContent || "").replace(/\s*:\s*$/, "").trim() : nm; }
+      // #7 native header COLOUR field -> CC picker + hex; commit (post+reload) on hex change or 700ms
+      // after the picker settles (dragging must not reload per-frame).
+      function colorRow(lbl, hexv, onCommit, helpTxt) {
+        hexv = (hexv || "").replace(/^#/, "");
+        var row = el("div", "cc-set-row"); var rl = el("span", "cc-set-rl", lbl); if (helpTxt) rl.appendChild(infoIcon(helpTxt)); row.appendChild(rl);
+        var pr = el("div", "cc-set-pickrow"), colT;
+        var hx = el("input", "cc-set-hexin"); hx.type = "text"; hx.value = hexv ? "#" + hexv : ""; hx.placeholder = "#000000"; hx.maxLength = 7; hx.spellcheck = false;
+        var pk = inlinePicker(/^[0-9a-f]{6}$/i.test(hexv) ? "#" + hexv : "#161616", function (v) { hx.value = v; clearTimeout(colT); colT = setTimeout(function () { onCommit(v.replace(/^#/, "")); }, 700); });
+        hx.addEventListener("change", function () { clearTimeout(colT); var v = normHex(hx.value); if (v) { pk._set(v); onCommit(v.replace(/^#/, "")); } else if (!hx.value) onCommit(""); });
+        pr.appendChild(pk); pr.appendChild(hx); row.appendChild(pr); return row;
+      }
+      // #6 the native banner IMAGE upload is a file-drop on Unraid's page — link out to it (re-implementing
+      // a multipart file upload through the proxy is out of scope; the native page is reachable by URL).
+      function bannerUploadRow() {
+        var row = el("div", "cc-set-row"); row.appendChild(el("span", "cc-set-rl", T("Eigenes Banner-Bild", "Custom banner image")));
+        var b = el("button", "cc-btn", T("Hochladen / ändern …", "Upload / change …")); b.type = "button";
+        b.addEventListener("click", function () { location.href = "/Settings/DisplaySettings"; });
+        row.appendChild(b); return row;
+      }
+      // thematic groups: card title + ordered field names
+      var GROUPS = [
+        { t: T("Anzeige — Allgemein", "Display — General"), f: ["width", "tabs", "users", "resize", "locale", "font", "tty", "terminalButton"] },
+        { t: T("Anzeige — Werte & Einheiten", "Display — Values & units"), f: ["number", "scale", "unit", "raw", "wwn", "total", "usage"] },
+        { t: T("Anzeige — Kopfbereich & Banner", "Display — Header & banner"), f: ["theme", "text", "headerdescription", "header", "headermetacolor", "background", "banner", "showBannerGradient", "favorites"] }
+      ];
+      var host = {}; // field name -> the card body to append its row into (preserves the grouped order)
+      GROUPS.forEach(function (g) { var c = card(g.t, null); g.f.forEach(function (nm) { host[nm] = c; }); wrapMain.appendChild(c); });
+      fetch("/Settings/DisplaySettings", { credentials: "same-origin" }).then(function (r) { return r.text(); }).then(function (html) {
+        try {
+          var doc = new DOMParser().parseFromString(html, "text/html");
+          // Scope STRICTLY to the #section=display form (other forms carry stray selects disks/op/queue).
+          var form = null;
+          Array.prototype.forEach.call(doc.querySelectorAll("form"), function (f) { var s = f.querySelector('input[name="#section"]'); if (s && s.value === "display") form = f; });
+          if (!form) return;
+          Array.prototype.forEach.call(form.querySelectorAll("select[name], input[name][type='text']"), function (c) {
+            var nm = c.getAttribute("name"); if (!nm || /^(csrf|#|rtl)/.test(nm)) return;
+            var into = host[nm]; if (!into) return;                      // unknown/new field -> skip (keeps the grouped layout tidy)
+            var lbl = fieldLabel(c, nm);
+            if (c.tagName === "SELECT") {
+              var opts = Array.prototype.map.call(c.options, function (o) { return [o.value, (o.textContent || "").trim()]; });
+              if (nm === "favorites") set("cc.hidefavtab", c.value === "no" ? "1" : "0");
+              into.appendChild(opts.length > 3
+                ? dropRow(lbl, opts, c.value, function (v) { postDisplay(nm, v); }, help(nm))
+                : segRow(lbl, opts, c.value, function (v) { postDisplay(nm, v); }, help(nm)));
+              if (nm === "banner") into.appendChild(bannerUploadRow());   // #6 upload link right after "Banner anzeigen"
+            } else {
+              into.appendChild(colorRow(lbl, c.value || "", function (v) { postDisplay(nm, v); }, help(nm)));   // #7 header colour
+            }
+          });
+          syncHeaderBar();
+        } catch (e9) {}
+      }).catch(function () {});
     })();
     // Bereiche: enable/disable each area CannonadeCommand enhances
     (function () {
@@ -469,7 +515,7 @@
       sw.addEventListener("click", function () {
         rbIdx = ix; rbPickWrap.style.display = "";
         if (!rbPick) {
-          rbPick = inlinePicker(rbpal[ix], function (v) { if (rbIdx >= 0) { rbpal[rbIdx] = v; rbrow.children[rbIdx].style.background = v; rbrow.children[rbIdx].setAttribute("data-tip", v); set("cc.rbpal", JSON.stringify(rbpal)); syncHeaderBar(); syncSharesBar(); } });
+          rbPick = inlinePicker(rbpal[ix], function (v) { if (rbIdx >= 0) { rbpal[rbIdx] = v; rbrow.children[rbIdx].style.background = v; rbrow.children[rbIdx].setAttribute("data-tip", v); set("cc.rbpal", JSON.stringify(rbpal)); del("cc.flag"); syncHeaderBar(); syncSharesBar(); } });   // manual edit -> no longer a flag preset
           rbPickWrap.appendChild(rbPick);
         } else rbPick._set(rbpal[ix]);
       });
@@ -479,9 +525,27 @@
     var rbReset = el("span", "cc-set-ibtn");
     rbReset.setAttribute("data-tip", T("Farben zurücksetzen", "Reset colours"));
     var rbRi = document.createElement("i"); rbRi.className = "fa fa-undo"; rbReset.appendChild(rbRi);
-    rbReset.addEventListener("click", function () { del("cc.rbpal"); render(); syncHeaderBar(); syncSharesBar(); });
+    rbReset.addEventListener("click", function () { del("cc.rbpal"); del("cc.flag"); render(); syncHeaderBar(); syncSharesBar(); });
     rbrow.appendChild(rbReset);
     c1.appendChild(rbrow); c1.appendChild(rbPickWrap);
+    // ── FLAGGEN-MODUS (user: analog zum Rainbow-Mode): pick a country and its flag colours BECOME the
+    // rainbow palette (cc.rbpal) with rainbow switched on — so the ENTIRE rainbow machinery (per-area
+    // colouring AND the reactive rainbow toggle above = the "reactive flag mode") applies for free.
+    // The flag's 2-5 colours are cycled to fill all 8 palette slots so the swatch editor above stays
+    // consistent and the colouring (p[i % len]) is identical. cc.flag stores the picked code; "— aus —"
+    // clears it back to the default rainbow palette. Data: window.CC_FLAGS (scripts/flags.js, ~195).
+    if (window.CC_FLAGS && window.CC_FLAGS.length) {
+      var flagOpts = [["", T("— aus —", "— off —")]];
+      window.CC_FLAGS.forEach(function (f9) { flagOpts.push([f9.code, f9.emoji + "  " + f9.name_de]); });
+      c1.appendChild(dropRow(T("Flaggen-Modus", "Flag mode"), flagOpts, get("cc.flag", ""), function (code) {
+        if (!code) { del("cc.flag"); del("cc.rbpal"); set("cc.rainbow", "1"); render(); syncHeaderBar(); syncSharesBar(); return; }
+        var f9 = null; for (var i9 = 0; i9 < window.CC_FLAGS.length; i9++) { if (window.CC_FLAGS[i9].code === code) { f9 = window.CC_FLAGS[i9]; break; } }
+        if (!f9 || !f9.colors || !f9.colors.length) return;
+        var pal = []; for (var k9 = 0; k9 < RBDEF.length; k9++) pal.push(f9.colors[k9 % f9.colors.length]);   // cycle flag colours across all 8 slots
+        set("cc.flag", code); set("cc.rbpal", JSON.stringify(pal)); set("cc.rainbow", "1");
+        render(); syncHeaderBar(); syncSharesBar();
+      }, T("Färbt alles in den Farben einer Landesflagge — die Flaggenpalette wird zur Regenbogen-Palette. Der reaktive Regenbogen-Modus oben wirkt dann als reaktiver Flaggen-Modus.", "Colours everything in a country flag's colours — the flag palette becomes the rainbow palette. The reactive rainbow toggle above then acts as the reactive flag mode.")));
+    }
     c1.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var prev = el("div", "cc-set-prev");
     // 2-3 mixed categories (user call): a NAME headline badge (lg), a key/value badge (sm) and a
@@ -1120,8 +1184,8 @@
   function syncSwOn() { var a = (accent || "").toLowerCase(); Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-sw")).forEach(function (sw) { sw.classList.toggle("cc-set-sw-on", (sw.dataset.c || "").toLowerCase() === a); }); }
   function thc(t) { var e = el("th", null, t); return e; }
   function chkCell(key, v, color) { var td = el("td", "cc-set-chk"); var cb = el("input"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); if (rainbow && color) cb.style.accentColor = color; cb.addEventListener("change", function () { var cur = colview[key] || { s: true, a: true }; colview[key] = { s: cur.s, a: cur.a }; colview[key][v] = cb.checked; set("cc.colview2", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
-  function segRow(labelText, opts, cur, onChange) {
-    var row = el("div", "cc-set-row"); row.appendChild(el("span", "cc-set-rl", labelText)); var seg = el("div", "cc-seg");
+  function segRow(labelText, opts, cur, onChange, help) {
+    var row = el("div", "cc-set-row"); var rl = el("span", "cc-set-rl", labelText); if (help) rl.appendChild(infoIcon(help)); row.appendChild(rl); var seg = el("div", "cc-seg");
     opts.forEach(function (o) {
       // <span> not <button> (Unraid's button CSS painted orange borders on these)
       var b = el("span", "cc-seg-btn" + (cur === o[0] ? " cc-seg-on" : "")); b.textContent = o[1];
@@ -1132,8 +1196,8 @@
   }
   // Native <select> styled as a CC control (no orange Unraid border). opts = [value, label, face?];
   // when a third element is given the option renders in that font-family (used by the font picker).
-  function dropRow(labelText, opts, cur, onChange) {
-    var row = el("div", "cc-set-row"); row.appendChild(el("span", "cc-set-rl", labelText));
+  function dropRow(labelText, opts, cur, onChange, help) {
+    var row = el("div", "cc-set-row"); var rl = el("span", "cc-set-rl", labelText); if (help) rl.appendChild(infoIcon(help)); row.appendChild(rl);
     var sel = el("select", "cc-set-sel");
     opts.forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; if (o[0] === cur) op.selected = true; if (o[2]) op.style.fontFamily = o[2]; sel.appendChild(op); });
     sel.addEventListener("change", function () { onChange(sel.value); });

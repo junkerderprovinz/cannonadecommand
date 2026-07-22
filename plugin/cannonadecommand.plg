@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.48.1">
+  <!ENTITY version   "2.49.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,19 @@
 </ICON>
 
 <CHANGES>
+### 2.49.0
+- #1 Anzeige-Einstellungen aufgeraeumt: die lange Theming-Karte ist in drei thematische Karten
+  gesplittet (Allgemein / Werte und Einheiten / Kopfbereich und Banner), und JEDE Einstellung hat
+  jetzt eine Info-Blase mit Erklaerung.
+- #2 Kopfzeilen-Farben (Text, Sekundaertext, Hintergrund) sind als Farbwaehler zurueck, und ein
+  eigenes Banner-Bild laesst sich wieder setzen (Knopf oeffnet Unraids Banner-Upload).
+- #3 NEU Flaggen-Modus: waehle eine von rund 195 Laenderflaggen und alles faerbt sich in deren
+  Flaggenfarben. Der reaktive Regenbogen-Modus wirkt dann als reaktiver Flaggen-Modus.
+- #4 Kopf-Icons gleichmaessig beabstandet: die Luecke zwischen dem letzten Icon und der Glocke ist
+  jetzt 6px wie ueberall (war 3px).
+- #5 Einstellungen/Werkzeuge: das Raster-Icon einer Abschnitts-Ueberschrift (z.B. Systeminformation)
+  ist jetzt weiss wie die uebrigen und fuegt sich ein.
+
 ### 2.48.1
 - #1 Kein Aufblitzen der nativen Oberflaeche mehr beim Seitenaufbau (FOUC): CannonadeCommand setzt
   seinen Stil jetzt schon VOR dem ersten Rendern (synchron im Seitenkopf), statt kurz die native
@@ -1564,7 +1577,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>7a922eeecf16b701d878f1bcd1a72b4ba979b65fe8e148a874d6847757fbfd37</SHA256>
+  <SHA256>4796a9eaf6f52ba507ca2dd7c63d57dc762f81972f68975ca4d73b2259a47236</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

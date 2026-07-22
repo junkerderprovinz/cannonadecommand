@@ -12,4 +12,5 @@ Icon="cannonadecommand.png"
 ?>
 <link type="text/css" rel="stylesheet" href="<?autov('/plugins/cannonadecommand/styles/docker.css')?>">
 <div id="cc-settings" class="cc-root"></div>
+<script defer src="<?autov('/plugins/cannonadecommand/scripts/flags.js')?>"></script>
 <script defer src="<?autov('/plugins/cannonadecommand/scripts/settings.js')?>"></script>

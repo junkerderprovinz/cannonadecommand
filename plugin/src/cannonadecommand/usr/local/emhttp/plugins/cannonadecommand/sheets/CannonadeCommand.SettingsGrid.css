@@ -185,6 +185,15 @@ html.cc-settingsgrid-heads-on #displaybox div.title > span.left > img.icon {
                                          which would strip the glyph out of OUR badge while the tiles
                                          keep theirs; our (1,3,3) beats their (0,2,1). */
 }
+/* #9: a category whose heading icon is a raster PNG (<img class="icon">, e.g. "System Information")
+   kept its ORIGINAL colours on the accent badge while every glyph-based heading rendered a clean
+   white icon -> it "didn't fit" (user). color:inherit can't tint a raster, so force it to the badge
+   ink with a filter: brightness(0) crushes it to black, invert(1) flips to white = matches the
+   white heading text. Sits AFTER the rule above so it wins; only touches heading <img>, not tiles. */
+html.cc-settingsgrid-heads-on #displaybox div.title > span.left > img.icon {
+  filter: brightness(0) invert(1) !important;
+  width: 20px !important; height: 20px !important; object-fit: contain !important;
+}
 
 /* HOUSE LAW: section heads ALWAYS keep their colour. The rainbow "active only" (neutral)
    sub-mode greys the TILES only (-rbneutral block above) — heads are EXEMPT, so there are NO

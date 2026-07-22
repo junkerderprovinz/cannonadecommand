@@ -670,9 +670,11 @@
       }
       var vw = document.documentElement.clientWidth;
       // 6px right of the row tail so the bell sits EXACTLY one icon-gap from the last util icon —
-      // the native util icons carry 3px+3px a-margins (=6px visual gap), so 6px makes the whole
-      // menu-icon row evenly spaced (N5). Bell<->burger gap is 6px too (Header.css).
-      var target = Math.min(Math.round(r.right + 6), vw - 84);
+      // the native util icons carry 3px+3px a-margins (=6px visual gap), so the bell must sit 6px
+      // box-to-box from the last util icon (N5). The single-pass measured correction below lands the
+      // span a consistent 3px SHORT of `target` (proven live: +6 -> 3px gap, +9 -> 6px gap at 2128px
+      // AND 2560px), so aim +9 to net the intended 6px. Bell<->burger gap is 6px too (Header.css).
+      var target = Math.min(Math.round(r.right + 9), vw - 84);
       set("position", "fixed");
       set("right", "auto");
       // KILL the Tailwind pl-[160px]/pl-[30%]: with border-box that padding forced the box ≥160px
