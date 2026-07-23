@@ -398,7 +398,7 @@
   // /sub/cpuload for CPU load (empty on boxes that don't measure it; the chip then simply hides). One
   // lightweight websocket each, started when the island is on, torn down when it goes off; every message
   // repaints the island (sig-guarded, so unchanged values are no-ops). Never loops: we write #header only.
-  var ccLiveRam = "", ccLiveRamUsed = "", ccLiveCpu = "", ccLiveSubs = null;
+  var ccLiveRam = "", ccLiveRamUsed = "", ccLiveCpu = "", ccLiveDocker = "", ccLiveSubs = null;
   function ccStartLive() {
     if (ccLiveSubs || typeof window.NchanSubscriber !== "function") return;
     ccLiveSubs = [];
@@ -422,8 +422,35 @@
       });
       cl.start(); ccLiveSubs.push(cl);
     } catch (e) {}
+    try {
+      // #23: /sub/dockerload publishes ONE line per RUNNING container ("<id>;<cpu%>;<mem> / <lim>") on
+      // every page — the running-container count is just the number of non-empty lines.
+      var dk = new window.NchanSubscriber("/sub/dockerload", { subscriber: "websocket" });
+      dk.on("message", function (m) {
+        try { var n = String(m).split("\n").filter(function (l) { return l.indexOf(";") > 0; }).length; var s = n > 0 ? String(n) : ""; if (s !== ccLiveDocker) { ccLiveDocker = s; ccIsland(); } } catch (e) {}
+      });
+      dk.start(); ccLiveSubs.push(dk);
+    } catch (e) {}
   }
-  function ccStopLive() { if (ccLiveSubs) { ccLiveSubs.forEach(function (s) { try { s.stop(); } catch (e) {} }); ccLiveSubs = null; } ccLiveRam = ccLiveRamUsed = ccLiveCpu = ""; }
+  function ccStopLive() { if (ccLiveSubs) { ccLiveSubs.forEach(function (s) { try { s.stop(); } catch (e) {} }); ccLiveSubs = null; } ccLiveRam = ccLiveRamUsed = ccLiveCpu = ccLiveDocker = ""; }
+  // #18: on /Main, compute the size-weighted array-disk fill % and cache it (cc.arrfill) so the island's
+  // fill chip has a value on EVERY page (7.3.x dropped the cross-page menu usage-bar). Refreshes each /Main.
+  function ccArrFill() {
+    try {
+      if (!/^\/Main/.test(location.pathname)) return;
+      var tbl = document.querySelector("table.disk_status"); if (!tbl) return;   // first disk_status table = the array data disks
+      var usedSum = 0, sizeSum = 0, n = 0;
+      Array.prototype.forEach.call(tbl.querySelectorAll("tr"), function (row) {
+        var sp = row.querySelector(".usage-disk span"); if (!sp) return;
+        var w = parseFloat(sp.style.width || ""); if (isNaN(w)) return;
+        var mm = (row.textContent || "").match(/(\d+(?:[.,]\d+)?)\s*(PB|TB|GB|MB)\b/i); if (!mm) return;   // first size in the row = the GRÖSSE column
+        var val = parseFloat(mm[1].replace(",", ".")), unit = mm[2].toUpperCase();
+        var mult = unit === "PB" ? 1e15 : unit === "TB" ? 1e12 : unit === "GB" ? 1e9 : 1e6, bytes = val * mult;
+        usedSum += bytes * w / 100; sizeSum += bytes; n++;
+      });
+      if (n > 0 && sizeSum > 0) { var pct = Math.round(usedSum / sizeSum * 100); if (pct >= 0 && pct <= 100) { var v = pct + "%"; if (g("cc.arrfill", "") !== v) { localStorage.setItem("cc.arrfill", v); ccIsland(); } } }
+    } catch (e) {}
+  }
   function ccIsland() {
     try {
       var isle = document.getElementById("cc-island");
@@ -450,10 +477,11 @@
       if (osRow) { var sps = osRow.querySelectorAll("span"); for (var oj = 0; oj < sps.length; oj++) { if (/Unraid\s*OS/i.test(sps[oj].textContent || "")) { osSp = sps[oj]; break; } } }
       // the span's textContent already includes the nested <em> edition ("Unraid OS Plus"); no em -> plain "Unraid OS"
       var osLabel = osSp ? (osSp.textContent || "").replace(/\s+/g, " ").replace(/^\s|\s$/g, "") : "Unraid OS";
-      // array fill level: mirror the menu usage-bar's text (the native bar hides under
-      // cc-usage-isl while the island is on — the chip replaces it, user call)
+      // array fill level: prefer the menu usage-bar's text (older Unraid); 7.3.x dropped it, so fall back
+      // to cc.arrfill — the size-weighted array-disk fill that ccArrFill() computes+caches while on /Main
+      // (#18: the enabled fill chip was blank because the native bar is gone).
       var ub = document.querySelector("#menu .usage-bar > span");
-      var usage = ub ? (ub.textContent || "").replace(/\s+/g, "").trim() : "";
+      var usage = ub ? (ub.textContent || "").replace(/\s+/g, "").trim() : (g("cc.arrfill", "") || "");
       // usage MINI BAR geometry (user: "die Füllstandanzeige soll so ein schöner balken sein wie
       // zuvor"): fill width = the percentage, fill COLOUR carries the state (green <80, amber <95,
       // red above — the same thresholds the dot used); non-numeric text -> empty grey track
@@ -466,11 +494,11 @@
       var verNum = "";
       var verElN = document.querySelector('unraid-header-os-version span[id^="reka-menu-trigger"]');
       if (verElN) verNum = ((verElN.textContent) || "").replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
-      var items = "u" + (iOn("uptime") ? 1 : 0) + "o" + (iOn("os") ? 1 : 0) + "v" + (iOn("version") ? 1 : 0) + "a" + (iOn("array") ? 1 : 0) + "f" + (iOn("fill") ? 1 : 0) + "r" + (iOn("ram") ? 1 : 0) + "c" + (iOn("cpu") ? 1 : 0) + "t" + (iOn("temps") ? 1 : 0);
+      var items = "u" + (iOn("uptime") ? 1 : 0) + "o" + (iOn("os") ? 1 : 0) + "v" + (iOn("version") ? 1 : 0) + "a" + (iOn("array") ? 1 : 0) + "f" + (iOn("fill") ? 1 : 0) + "r" + (iOn("ram") ? 1 : 0) + "c" + (iOn("cpu") ? 1 : 0) + "d" + (iOn("containers") ? 1 : 0) + "t" + (iOn("temps") ? 1 : 0);
       // idempotence guard: nchan rewrites the footer every few seconds with UNCHANGED text most
       // of the time — compare the source signature and skip the DOM rebuild when nothing moved
       // (bar width/colour + the item toggles included so a change always redraws)
-      var sig = upTxt + "|" + upTitle + "|" + osLabel + "|" + verNum + "|" + raw + "|" + temps.join(",") + "|" + warn + "|" + usage + "|" + uw + uc + "|" + (par ? par[0] : "") + "|" + ccLiveRam + "/" + ccLiveRamUsed + "/" + ccLiveCpu + "|" + items;
+      var sig = upTxt + "|" + upTitle + "|" + osLabel + "|" + verNum + "|" + raw + "|" + temps.join(",") + "|" + warn + "|" + usage + "|" + uw + uc + "|" + (par ? par[0] : "") + "|" + ccLiveRam + "/" + ccLiveRamUsed + "/" + ccLiveCpu + "/" + ccLiveDocker + "|" + items;
       if (isle && sig === ccIslandSig) return;
       ccIslandSig = sig;
       if (!isle) {
@@ -537,6 +565,9 @@
       if (iOn("ram") && ccLiveRam) barChip("RAM", ccLiveRam, T("RAM zu " + ccLiveRam + " belegt" + (ccLiveRamUsed ? " (" + ccLiveRamUsed + ")" : ""), "RAM " + ccLiveRam + " used" + (ccLiveRamUsed ? " (" + ccLiveRamUsed + ")" : "")), "cc-isl-ram");
       // 5b) CPU LOAD — live from nchan /sub/cpuload; empty on boxes that don't measure it (chip hides).
       if (iOn("cpu") && ccLiveCpu) barChip("CPU", ccLiveCpu, T("CPU-Last " + ccLiveCpu, "CPU load " + ccLiveCpu), "cc-isl-cpu");
+      // 5c) CONTAINERS — #23: running-container count, live from nchan /sub/dockerload (one line per running
+      // container); a dotted chip, not a bar. Cross-page. Hides if none / no data.
+      if (iOn("containers") && ccLiveDocker) chip(ccLiveDocker, "#3fae6a", T(ccLiveDocker + " laufende Container", ccLiveDocker + " running containers"), "cc-isl-docker");
       // 6) TEMPS — first sensor = CPU, second = Mainboard (Unraid footer order), rest generic; the
       // dot carries the state (green below cc.tempwarn, amber at/above, red at threshold+15)
       if (iOn("temps")) {
@@ -828,6 +859,7 @@
         var toolsPg = !ownPg && (/^\/Tools\//.test(p0) || /^\/Settings\/./.test(p0) || !!document.querySelector("#displaybox fieldset legend"));
         root.classList.toggle("cc-tools-on", toolsPg && g("cc.theming", "1") !== "0");
       } catch (e0) {}
+      ccArrFill();      // #18: on /Main, refresh the cached array-fill % the island's fill chip reads
       ccStateBars();   // #16: usage-bar fills follow the fill-level state colour when cc.statenative, else the palette
       paintPopups(); watchPopups();
       ccWireTips();     // document-wide floating-bubble delegation (bound once) — on EVERY page: docker/shares/settings anchors ride it even with the header area off

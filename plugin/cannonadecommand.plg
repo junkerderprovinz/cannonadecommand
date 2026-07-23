@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.54.0">
+  <!ENTITY version   "2.55.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,17 @@
 </ICON>
 
 <CHANGES>
+### 2.55.0
+- #18 Status-Insel: der Array-Fuellstand-Chip wird endlich befuellt -- auf /Main berechnet CC die
+  groessengewichtete Array-Auslastung und cacht sie (cc.arrfill), sodass die Insel den Wert auf JEDER
+  Seite zeigt (Unraid 7.3.x liefert den alten Menue-Balken nicht mehr cross-page).
+- #23 NEU: Container-Zaehler-Chip in der Insel -- laufende Container live aus Unraids nchan-Feed
+  /sub/dockerload (eine Zeile pro laufendem Container), cross-page; eigener Schalter.
+- #6 Kopf-Icons ausblenden richtet die verbliebenen Icons live neu aus (ruecken rechtsbuendig nach) --
+  war schon durch den 2.51.0-Hide-Fix abgedeckt, jetzt bestaetigt.
+- #29 Netzwerk-Durchsatz-Chip NICHT umgesetzt: RX/TX liefert Unraid nur als Dashboard-Globals, nicht
+  cross-page ueber nchan -- bewusst weggelassen statt zu faken.
+
 ### 2.54.0
 - #5 Anzeige-Einstellungen weiter aufgeraeumt: die kompakte Karte enthaelt jetzt nur noch die 3 nativen
   Kopf-Farben (live-sync); Farbschema/Seitenanzeige/Banner/Favoriten liegen komplett nativ (dort im CC-Stil,
@@ -1640,7 +1651,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>02b0e0395758d691aa86bee222fedae3ef2d9427964fbeb2953c21c17a3a9845</SHA256>
+  <SHA256>38dc690709e398ffb4799562eb835fcdabe13b726a8c4d02978afdbec3940c59</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
