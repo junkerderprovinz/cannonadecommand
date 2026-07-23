@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.49.1">
+  <!ENTITY version   "2.50.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,19 @@
 </ICON>
 
 <CHANGES>
+### 2.50.0
+- #1 NEU: jedes Kopf-Icon oben rechts einzeln ein- und ausblendbar (Einstellungen -> Kopfbereich ->
+  Kopf-Icons) -- inklusive Glocke und Menue-Knopf.
+- #2 NEU: Schalter "Zustandsanzeigen nativ faerben" (Einstellungen -> Allgemein). AN = Auslastungs-
+  balken zeigen ihre Zustandsfarbe (gruen/gelb/rot je Fuellstand); AUS = sie folgen dem Farbmodus
+  (Akzent/Regenbogen/Flagge).
+- #3 Werkzeug-Unterseiten im CannonadeCommand-Stil: Feldsets als dunkle Karten, Ueberschriften als
+  Badges, Tabellen/Formulare/Knoepfe/Log-Ausgaben im Carbon-Look (erste Fassung, wird pro Werkzeug
+  weiter verfeinert).
+- #4 Das Container-Installations-/Log-Fenster ("Container hinzufuegen") ist jetzt ebenfalls im CC-Stil.
+- #5 Kopfbereich robuster: Servername und Glocke richten sich nach dem vollstaendigen Laden neu aus
+  (kein kurzes Verrutschen mehr bei breiten Fenstern).
+
 ### 2.49.1
 - #1 Kopf-Icons perfekt gleichmaessig: die Luecke vom letzten Icon zur Glocke ist jetzt exakt 6px wie
   ueberall (der Abstands-Versuch aus 2.49.0 griff noch nicht -- jetzt misst CC die echte Luecke und
@@ -1585,7 +1598,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>d857ca64ffdeeea3746610664a3d4795fe6f3f6a56dedd37a04cf8d763fceef6</SHA256>
+  <SHA256>8989bdabd100e598111c04d73b73c823f149173514b9d5dc513b822fdf362afe</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

@@ -546,6 +546,16 @@
         render(); syncHeaderBar(); syncSharesBar();
       }, T("Färbt alles in den Farben einer Landesflagge — die Flaggenpalette wird zur Regenbogen-Palette. Der reaktive Regenbogen-Modus oben wirkt dann als reaktiver Flaggen-Modus.", "Colours everything in a country flag's colours — the flag palette becomes the rainbow palette. The reactive rainbow toggle above then acts as the reactive flag mode.")));
     }
+    // #16 (user): let STATE indicators keep their NATIVE state colour (green/amber/red) instead of
+    // folding into the accent/rainbow/flag palette. Default OFF = integrated (current look). ON stamps
+    // html.cc-state-native; the sheets then let the native semantic colours through (usage bars, dots).
+    var snR = el("div", "cc-set-row cc-set-inline");
+    var snL = el("span", "cc-set-lblwrap");
+    snL.appendChild(el("span", null, T("Zustandsanzeigen nativ färben", "Native state colours")));
+    snL.appendChild(infoIcon(T("AN = Auslastungsbalken und Zustands-Punkte behalten ihre native Zustandsfarbe (grün/gelb/rot). AUS = sie werden in den aktuellen Farbmodus (Akzent/Regenbogen/Flagge) integriert.", "ON = usage bars and state dots keep their native state colour (green/amber/red). OFF = they fold into the current colour mode (accent/rainbow/flag).")));
+    snR.appendChild(snL);
+    snR.appendChild(toggle(get("cc.statenative", "0") === "1", function (v) { set("cc.statenative", v ? "1" : "0"); syncHeaderBar(); syncSharesBar(); }));
+    c1.appendChild(snR);
     c1.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var prev = el("div", "cc-set-prev");
     // 2-3 mixed categories (user call): a NAME headline badge (lg), a key/value badge (sm) and a
@@ -1077,6 +1087,17 @@
       hx.addEventListener("input", function () { var v = normHex(hx.value); if (v) { pk._set(v); set("cc.brand.color", v); syncHeaderBar(); } else if (!hx.value) { del("cc.brand.color"); syncHeaderBar(); } });
       pr.appendChild(pk); pr.appendChild(hx); cB.appendChild(pr);
       wrapHeader.appendChild(cB);
+    })();
+    // #2b: per-icon SHOW/HIDE for the top-right utility icons (user: "jedes Icon ein-/ausblendbar").
+    // Toggle ON = visible (default). cc.hideicon.<key>="1" hides it; header.js apply() stamps
+    // html.cc-hideicon-<key> (Header.css hides the #menu .<Class>Button), and ccDockProfile hides the
+    // docked bell/burger spans. Keys map to the native #menu button classes.
+    (function () {
+      var cIc = card(T("Kopf-Icons", "Header icons"), T("Blende einzelne Icons oben rechts aus. Aus = versteckt.", "Hide individual icons in the top-right. Off = hidden."));
+      [["lang", T("Sprache", "Language")], ["search", T("Suche", "Search")], ["logout", T("Abmelden", "Logout")], ["terminal", T("Terminal", "Terminal")], ["browse", T("Datei-Verwaltung", "File manager")], ["feedback", T("Feedback", "Feedback")], ["info", T("Info", "Info")], ["log", T("Protokoll", "Log")], ["help", T("Hilfe", "Help")], ["bell", T("Benachrichtigungen", "Notifications")], ["burger", T("Menü", "Menu")]].forEach(function (ic) {
+        cIc.appendChild(toggleRow(ic[1], get("cc.hideicon." + ic[0], "0") === "0", function (v) { set("cc.hideicon." + ic[0], v ? "0" : "1"); syncHeaderBar(); }));
+      });
+      wrapHeader.appendChild(cIc);
     })();
     buildStyleCards("ccsh.", wrapShares, [], true); // Freigaben: tab pills use FA glyphs -> badges only, no logo card
     buildStyleCards("ccs.", wrapSettings, ["fa-cog", "fa-globe", "fa-star"], false); // Einstellungs-Tab: badges + logo-tint + Logo-Hintergrund cards; the tiles use FA glyphs, so the preview shows sample glyphs (cog/globe/star = System/Network/User category icons), coloured via CSS not the raster filter

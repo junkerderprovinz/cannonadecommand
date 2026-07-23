@@ -1,0 +1,96 @@
+/* CannonadeCommand — GLOBAL Carbon restyle for the Tools SUB-pages (#14) and the docker/plugin
+ * EXECUTION-OUTPUT / install-log pages (#1). Auto-<link>-injected on EVERY page via the Tools .page
+ * hook, but EVERY rule is scoped to html.cc-tools-on, which header.js stamps ONLY when:
+ *   - location.pathname starts with /Tools/  (System Information, System Devices, Diagnostics, …), OR
+ *   - #displaybox contains a native <fieldset><legend> (the "Container hinzufügen" install log).
+ * Absent everywhere else => ZERO effect. First-pass broad restyle; refined tool-by-tool afterwards
+ * (user: "wenn du es gemacht hast gehen wir Werkzeug für Werkzeug durch und bugfixen").
+ *
+ * House laws: Carbon dark surface (#161616/#1c1c1c), NO borders/rings anywhere, focus = brightness
+ * only, accent from --cc-accent (fallback #2f6feb), content indented to the menu bar (--cc-align-left). */
+
+html.cc-tools-on { --cc-tl-surface: #1c1c1c; --cc-tl-surface2: #232323; }
+
+/* content column lines up with the menu bar, like every other CC area */
+html.cc-tools-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 15px); }
+
+/* ── FIELDSETS -> borderless dark cards; the <legend> becomes an accent badge ── */
+html.cc-tools-on #displaybox fieldset {
+  background: var(--cc-tl-surface, #1c1c1c) !important;
+  border: none !important; outline: none !important;
+  border-radius: 12px !important;
+  margin: 0 0 14px !important; padding: 16px 18px !important;
+  box-shadow: none !important;
+}
+html.cc-tools-on #displaybox fieldset > legend,
+html.cc-tools-on #displaybox legend {
+  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px;
+  font-size: var(--cc-md-fs, 13px) !important; line-height: 1;
+  padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px);
+  display: inline-flex; align-items: center; margin: 0 0 12px !important;
+}
+
+/* ── PRE / code + log output -> dark block, soft-wrapped, no border ── */
+html.cc-tools-on #displaybox pre,
+html.cc-tools-on #displaybox pre.text,
+html.cc-tools-on #displaybox textarea.wide {
+  background: #0f0f0f !important; color: #d6d6d6 !important;
+  border: none !important; outline: none !important; border-radius: 8px !important;
+  padding: 10px 12px !important; box-shadow: none !important;
+  white-space: pre-wrap; word-break: break-word;
+}
+
+/* ── native TABLES on tools pages -> dark, borderless, comfy rows ── */
+html.cc-tools-on #displaybox table:not(.cc-enh) { background: transparent !important; border: none !important; }
+html.cc-tools-on #displaybox table:not(.cc-enh) th,
+html.cc-tools-on #displaybox table:not(.cc-enh) td {
+  border: none !important; border-bottom: 1px solid rgba(255, 255, 255, .06) !important;
+  padding: 7px 10px !important; color: #d6d6d6;
+}
+html.cc-tools-on #displaybox table:not(.cc-enh) thead th { color: #9a9a9a; text-transform: uppercase; font-size: 11.5px; letter-spacing: .6px; }
+html.cc-tools-on #displaybox table:not(.cc-enh) tr:hover td { background: rgba(255, 255, 255, .03) !important; }
+
+/* ── form rows (dl/dt/dd) tidy ── */
+html.cc-tools-on #displaybox dl { margin: 0; }
+html.cc-tools-on #displaybox dt { color: #cfcfcf; font-weight: 600; }
+html.cc-tools-on #displaybox dd { color: #d6d6d6; }
+
+/* ── INPUTS / SELECT / TEXTAREA -> dark fills, NO focus ring (focus = brightness) ── */
+html.cc-tools-on #displaybox input[type="text"],
+html.cc-tools-on #displaybox input[type="number"],
+html.cc-tools-on #displaybox input[type="password"],
+html.cc-tools-on #displaybox input[type="search"],
+html.cc-tools-on #displaybox select,
+html.cc-tools-on #displaybox textarea {
+  background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important;
+  border: none !important; outline: none !important; border-radius: 8px !important;
+  box-shadow: none !important;
+}
+html.cc-tools-on #displaybox input:focus,
+html.cc-tools-on #displaybox select:focus,
+html.cc-tools-on #displaybox textarea:focus { outline: none !important; box-shadow: none !important; background: rgba(255, 255, 255, .11) !important; }
+
+/* ── BUTTONS (incl. the install-log "VIEW CONTAINER LOG" / "FERTIG") -> accent, md tier, no ring ── */
+html.cc-tools-on #displaybox input[type="button"],
+html.cc-tools-on #displaybox input[type="submit"],
+html.cc-tools-on #displaybox button:not([role="tab"]),
+html.cc-tools-on #displaybox a.button {
+  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+  border: none !important; outline: none !important; border-radius: var(--cc-b-radius, 999px) !important;
+  height: var(--cc-md-h, 30px); padding: var(--cc-md-pad, 0 20px) !important;
+  font-weight: 600; box-shadow: none !important; text-decoration: none !important;
+  transition: filter .12s;
+}
+html.cc-tools-on #displaybox input[type="button"]:hover:not(:disabled),
+html.cc-tools-on #displaybox input[type="submit"]:hover:not(:disabled),
+html.cc-tools-on #displaybox button:not([role="tab"]):hover:not(:disabled),
+html.cc-tools-on #displaybox a.button:hover { filter: brightness(1.14); }
+html.cc-tools-on #displaybox input[type="button"]:focus-visible,
+html.cc-tools-on #displaybox button:focus-visible,
+html.cc-tools-on #displaybox a:focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
+
+/* links: no native blue / underline on tools pages */
+html.cc-tools-on #displaybox a:not(.button) { color: var(--cc-accent, #2f6feb); text-decoration: none; }
+html.cc-tools-on #displaybox a:not(.button):hover { filter: brightness(1.14); text-decoration: none; }

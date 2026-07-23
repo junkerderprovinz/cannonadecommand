@@ -1,0 +1,13 @@
+Menu="Buttons:96"
+Title="CannonadeCommand"
+Icon="cannonadecommand.png"
+Link="cc-tools-hook"
+---
+<?php
+/* CannonadeCommand GLOBAL hook #2 — loads sheets/CannonadeCommand.Tools.css into the <head> of EVERY
+   page (basename auto-injection, same mechanism as the Header hook). The sheet is scoped entirely to
+   html.cc-tools-on, which header.js stamps ONLY on the Tools SUB-pages (/Tools/...) AND on the native
+   docker/plugin EXECUTION-OUTPUT pages (a <fieldset><legend> in #displaybox — the "Container
+   hinzufügen" install log). Absent everywhere else => zero effect. Link="cc-tools-hook" renders a bare
+   <div> instead of adding a visible CC icon to the menu bar. */
+?>

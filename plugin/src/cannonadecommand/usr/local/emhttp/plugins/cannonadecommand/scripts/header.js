@@ -502,6 +502,23 @@
       // status stays in the (hidden) native footer (user questioned it twice)
     } catch (e) {}
   }
+  // #16 (user: "Zustandsanzeigen native Zustandsfarbe ODER in den Farbmodus integriert"): the /Main
+  // array/pool usage bars (.usage-disk > span:first-child, coloured with the accent by the sheets) get
+  // their fill-LEVEL semantic colour (green <80% / amber <95% / red ≥95%, same thresholds as the island
+  // fill chip) when cc.statenative is ON. OFF -> remove the inline colour so the palette (accent/rainbow/
+  // flag) shows through. The fill % lives in the span's inline width. Runs from apply() (load + storage).
+  function ccStateBars() {
+    try {
+      var on = g("cc.statenative", "0") === "1" && g("cc.theming", "1") !== "0";
+      var fills = document.querySelectorAll(".usage-disk > span:first-child");
+      for (var i = 0; i < fills.length; i++) {
+        var f = fills[i];
+        if (!on) { f.style.removeProperty("background"); continue; }
+        var w = parseFloat(f.style.width) || 0;
+        f.style.setProperty("background", w >= 95 ? "#d9433f" : w >= 80 ? "#d6a243" : "#3fae6a", "important");
+      }
+    } catch (e) {}
+  }
   function watchIsland() {   // nchan rewrites the (hidden) footer live — mirror every update into the island
     try {
       if (ccIslandObs) return;
@@ -660,14 +677,22 @@
       // the triggers carry Tailwind MIN-width/height (36px) that beat even sheet !important
       // height rules (live-proven) — enforce the 30px icon box INLINE per span
       var sp = up.querySelectorAll(":scope > div:nth-child(2) > span");
+      var hideBell = g("cc.hideicon.bell", "0") === "1", hideBurger = g("cc.hideicon.burger", "0") === "1";   // #2b
       for (i = 0; i < sp.length; i++) {
         var ss = sp[i].style;
+        // #2b: bell = first span, burger = last span (auto-mount keeps this order). Hide per cc.hideicon.
+        if (i === 0 && hideBell) ss.setProperty("display", "none", "important");
+        else if (i === sp.length - 1 && hideBurger) ss.setProperty("display", "none", "important");
+        else ss.removeProperty("display");
         if (ss.getPropertyValue("min-height") !== "30px") { ss.setProperty("width", "30px", "important"); ss.setProperty("height", "30px", "important"); ss.setProperty("min-width", "30px", "important"); ss.setProperty("min-height", "30px", "important"); }
         // CC bubbles instead of native balloons (the #menu sweep can't reach these — they
         // live outside #menu); i===0 = bell, the last = burger (auto-mount keeps this order)
         if (!sp[i].getAttribute("data-cc-tip")) sp[i].setAttribute("data-cc-tip", i === 0 ? T("Benachrichtigungen", "Notifications") : T("Menü", "Menu"));
         if (sp[i].getAttribute("title")) sp[i].removeAttribute("title");
       }
+      // the FIRST VISIBLE span drives the dock geometry below (so hiding the bell doesn't strand the
+      // burger 30px off — #2b). Falls back to sp[0] if all are hidden (geometry is moot then).
+      var bsp = null; for (i = 0; i < sp.length; i++) { if (getComputedStyle(sp[i]).display !== "none" && sp[i].getBoundingClientRect().width > 0) { bsp = sp[i]; break; } } if (!bsp) bsp = sp[0];
       var vw = document.documentElement.clientWidth;
       // 6px right of the row tail so the bell sits EXACTLY one icon-gap from the last util icon —
       // the native util icons carry 3px+3px a-margins (=6px visual gap). The axis correction below
@@ -690,8 +715,8 @@
       // MEASURED correction against the VISIBLE BELL BOX (not the container/row — inner margins
       // offset both from it, live-proven ±4px): align the first trigger's box exactly to the
       // icon line on both axes. v2.31.9 idiom — measure where it landed, shift by the delta.
-      if (sp.length) {
-        var sr = sp[0].getBoundingClientRect();
+      if (bsp) {
+        var sr = bsp.getBoundingClientRect();
         if (sr.width > 0) {
           var dx = target - Math.round(sr.left);
           if (dx) set("left", (parseInt(up.style.getPropertyValue("left"), 10) + dx) + "px");
@@ -703,7 +728,7 @@
       // 3px util->bell gap regardless of `target` (proven live). Measure the ACTUAL gap to the last util
       // icon and nudge the container so it is EXACTLY 6px — matching the 6px util-icon gaps. Idempotent
       // (delta 0 once at 6px), synchronous (no flicker).
-      if (sp.length) { var br = sp[0].getBoundingClientRect(); if (br.width > 0) { var gdx = Math.round(6 - (br.left - r.right)); if (gdx) set("left", (parseInt(up.style.getPropertyValue("left"), 10) + gdx) + "px"); } }
+      if (bsp) { var br = bsp.getBoundingClientRect(); if (br.width > 0) { var gdx = Math.round(6 - (br.left - r.right)); if (gdx) set("left", (parseInt(up.style.getPropertyValue("left"), 10) + gdx) + "px"); } }
     } catch (e) {}
   }
   function ccUndockProfile() {                                     // OFF branch: remove exactly the props we set -> fully native again
@@ -742,6 +767,16 @@
       // array-usage chip lives in the island now — hide the native menu usage-bar while the
       // island is on (its data source; the chip mirrors the text). Island off = native bar back.
       root.classList.toggle("cc-usage-isl", on && ccIslandOn());
+      // #2b per-icon hide (top-right utility icons) + #16 native state colours — global chrome toggles,
+      // master-theming-gated. cc.hideicon.<key>=1 hides that icon (Header.css); the docked bell/burger
+      // are handled in ccDockProfile. cc.statenative=1 lets state indicators keep their native colour.
+      ["lang", "search", "logout", "terminal", "browse", "feedback", "info", "log", "help", "bell", "burger"].forEach(function (k9) { root.classList.toggle("cc-hideicon-" + k9, g("cc.hideicon." + k9, "0") === "1" && g("cc.theming", "1") !== "0"); });
+      root.classList.toggle("cc-state-native", g("cc.statenative", "0") === "1" && g("cc.theming", "1") !== "0");
+      // #14 + #1: Carbon-ify the Tools SUB-pages and the docker/plugin execution-output (install-log)
+      // pages. cc-tools-on = on a /Tools/... path OR the content carries a native <fieldset><legend>
+      // (the "Container hinzufügen" install log). Master-theming-gated. CannonadeCommand.Tools.css styles.
+      try { var toolsPg = /^\/Tools\//.test(location.pathname) || !!document.querySelector("#displaybox fieldset legend"); root.classList.toggle("cc-tools-on", toolsPg && g("cc.theming", "1") !== "0"); } catch (e0) {}
+      ccStateBars();   // #16: usage-bar fills follow the fill-level state colour when cc.statenative, else the palette
       paintPopups(); watchPopups();
       ccWireTips();     // document-wide floating-bubble delegation (bound once) — on EVERY page: docker/shares/settings anchors ride it even with the header area off
       // paintNav() with cc-header-on now removed => rb=false => it removeProperty's every
@@ -859,12 +894,16 @@
   function boot() {
     try { window.ccHeaderApply = apply; } catch (e) {} // let the Settings page live-update this bar same-page
     apply();
-    // re-measure the alignment anchor after fonts settle + on resize (the pill edge shifts with the
-    // viewport/font). rAF catches the post-layout pass; the load event catches late web-font swaps.
+    // re-settle the header geometry after fonts/layout finish + on resize (the pill edge shifts with the
+    // viewport/font). #10 + #15: the brand and the docked bell can land off during the FIRST paint (a
+    // load-transient) before the anchor is measured — re-run the FULL settle (anchor + brand + dock),
+    // not just measureAlign, on rAF AND on load, so any early misalignment self-corrects once layout is
+    // stable. Idempotent (diff-writes), so the extra passes are cheap.
+    function reSettle() { try { measureAlign(); ccBrand(); ccDockProfile(); } catch (e2) {} }
     try {
-      if (window.requestAnimationFrame) window.requestAnimationFrame(measureAlign);
+      if (window.requestAnimationFrame) window.requestAnimationFrame(reSettle);
       window.addEventListener("resize", measureAlign);
-      window.addEventListener("load", measureAlign);
+      window.addEventListener("load", reSettle);
     } catch (e) {}
     watchSearch();
     wireSearchToggle();
