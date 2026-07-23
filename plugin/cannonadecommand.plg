@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.52.0">
+  <!ENTITY version   "2.53.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,20 @@
 </ICON>
 
 <CHANGES>
+### 2.53.0
+- #1 Regenbogen-Modus-Toggle repariert: der Schalter sprang nach jedem Klick zurueck auf AUS, weil das
+  Theming-Snapshot (accent/rainbow/...) nur EINMAL beim Laden gelesen wurde; jetzt liest render() ihn bei
+  jeder Aenderung frisch nach.
+- #2 Flaggen-Modus zeigt jetzt die ECHTE Flagge (Muster/Wappen) statt drei Farbbalken -- 195 gebuendelte
+  flag-icons-SVGs; die Farbstreifen bleiben nur als Fallback fuer fehlende Codes.
+- #3 Die Farbfelder (Rainbow-Palette + Flaggenfarben) fuellen jetzt die ganze Kartenbreite; der Reset-Knopf
+  sitzt rechts in einer Flucht mit den Schaltern.
+- #4 Die Flaggen-Auswahl sitzt jetzt direkt unter dem Flaggen-Modus-Schalter (ohne "Land waehlen"-Ueberschrift).
+- #20 Die Servername-Dropdowns sind jetzt klar als Dropdowns erkennbar (deutlicheres Feld + Pfeil).
+- #25 Der Flaggen-Auswaehler ist tastaturbedienbar (Pfeile/Enter/Escape); die Suche matcht Name, Landescode
+  und den englischen Namen.
+- #28 NEU: Paletten-Presets (Carbon/Nord/Solarized/Dracula/Sunset/Forest) -- ein Klick uebernimmt die Palette.
+
 ### 2.52.0
 - #1 Anzeige-Einstellungen aufgeraeumt (Option A): der Spiegel aller ~21 nativen Anzeige-Felder in den
   CC-Einstellungen war unuebersichtlich. Jetzt liegt die VOLLSTAENDIGE native Anzeige-Seite wieder an
@@ -1619,7 +1633,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>50f0870471af17c94336d8b9e007ee4c893880f313a77286d140a7787ed01beb</SHA256>
+  <SHA256>9805dd23418fe1e9e35028307803e51bbe0018706c116d057479a51f8523c8be</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

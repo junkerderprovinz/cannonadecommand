@@ -802,9 +802,13 @@ html.cc-plugins-iconbg .cc-plugico {
 /* hex text field beside the colour picker (override Unraid's input underline) */
 #cc-settings .cc-set-hexin { flex: none; width: 104px; font-family: ui-monospace, "Cascadia Code", monospace; text-transform: uppercase; letter-spacing: .5px; background: #1e1e1e !important; color: var(--txt); border: 1px solid var(--line2) !important; border-radius: 6px !important; padding: 8px 10px !important; font-size: 13px; box-sizing: border-box; }
 #cc-settings .cc-set-hexin:focus { outline: none; border-color: var(--cc-accent, #2f6feb) !important; }
-/* native <select> styled as a borderless CC control (Servername size/weight/italic/font pickers) */
-#cc-settings .cc-set-sel { flex: 1; min-width: 0; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-color: #232323 !important; color: var(--txt); border: 0 !important; border-radius: 8px !important; padding: 8px 34px 8px 12px !important; font-size: 13px; cursor: pointer; box-sizing: border-box; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" fill="none" stroke="%23888" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>') !important; background-repeat: no-repeat !important; background-position: right 12px center !important; }
-#cc-settings .cc-set-sel:focus { outline: none; }
+/* #20: native <select> styled as a clearly-readable CC control (Servername size/weight/italic/font
+   pickers). The old #232323 fill barely differed from the card, so the pickers read as underlined text
+   rather than dropdowns. Distinct lighter fill + a max-width so they don't stretch full-width + a bolder,
+   brighter caret in its own chip so it unmistakably reads as a dropdown. No border/ring (house law). */
+#cc-settings .cc-set-sel { flex: 1; min-width: 0; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-color: #2e2e2e !important; color: #eaeaea !important; border: 0 !important; border-radius: 8px !important; padding: 8px 36px 8px 13px !important; font-size: 13px; font-weight: 600; cursor: pointer; box-sizing: border-box; min-height: var(--cc-md-h, 30px); background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" fill="none" stroke="%23cfcfcf" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>') !important; background-repeat: no-repeat !important; background-position: right 12px center !important; transition: background-color .12s, filter .12s; }
+#cc-settings .cc-set-sel:hover { background-color: #383838 !important; }
+#cc-settings .cc-set-sel:focus { outline: none; filter: brightness(1.12); }
 #cc-settings .cc-set-sel option { background: #1e1e1e; color: #f4f4f4; }
 .cc-set-prev { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; align-items: center; }
 .cc-set-prev .cc-b-lg { font-size: 15px; font-weight: 700; padding: 6px 16px; letter-spacing: .2px; } /* preview NAME headline badge — 15px / 6px 16px = the live Shares lg tier (Shares.css --cc-lg-*) */
