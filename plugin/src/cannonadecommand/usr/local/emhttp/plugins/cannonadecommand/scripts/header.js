@@ -392,10 +392,43 @@
   // (radius var(--cc-dot-r)); tooltips ride the frameless CC data-cc-tip bubble, never title=.
   var ccIslandObs = null, ccIslandSig = "";
   function ccIslandOn() { return g("cc.enable.header", "0") !== "0" && g("cc.theming", "1") !== "0" && g("cc.island", "1") !== "0"; }
+  // #13 (user: "was können wir noch sinnvolles anzeigen?"): CPU/RAM live only as Dashboard page-globals,
+  // but Unraid PUBLISHES them cross-page on nchan (the same feed the footer rides). We subscribe to
+  // /sub/update1 — JSON {"ram":["95%","29.7 GiB",…],"sys":[…]} — for the RAM %/used, and DEFENSIVELY to
+  // /sub/cpuload for CPU load (empty on boxes that don't measure it; the chip then simply hides). One
+  // lightweight websocket each, started when the island is on, torn down when it goes off; every message
+  // repaints the island (sig-guarded, so unchanged values are no-ops). Never loops: we write #header only.
+  var ccLiveRam = "", ccLiveRamUsed = "", ccLiveCpu = "", ccLiveSubs = null;
+  function ccStartLive() {
+    if (ccLiveSubs || typeof window.NchanSubscriber !== "function") return;
+    ccLiveSubs = [];
+    try {
+      var u1 = new window.NchanSubscriber("/sub/update1", { subscriber: "websocket" });
+      u1.on("message", function (m) {
+        try {
+          var d = JSON.parse(String(m));
+          if (d && d.ram && d.ram.length && /%/.test(String(d.ram[0]))) {
+            var r = String(d.ram[0]).replace(/\s+/g, ""), used = d.ram[1] ? String(d.ram[1]) : "";
+            if (r !== ccLiveRam || used !== ccLiveRamUsed) { ccLiveRam = r; ccLiveRamUsed = used; ccIsland(); }
+          }
+        } catch (e) {}
+      });
+      u1.start(); ccLiveSubs.push(u1);
+    } catch (e) {}
+    try {
+      var cl = new window.NchanSubscriber("/sub/cpuload", { subscriber: "websocket" });
+      cl.on("message", function (m) {
+        try { var mm = String(m).match(/(\d+(?:[.,]\d+)?)\s*%/); if (mm) { var c = Math.round(parseFloat(mm[1].replace(",", "."))) + "%"; if (c !== ccLiveCpu) { ccLiveCpu = c; ccIsland(); } } } catch (e) {}
+      });
+      cl.start(); ccLiveSubs.push(cl);
+    } catch (e) {}
+  }
+  function ccStopLive() { if (ccLiveSubs) { ccLiveSubs.forEach(function (s) { try { s.stop(); } catch (e) {} }); ccLiveSubs = null; } ccLiveRam = ccLiveRamUsed = ccLiveCpu = ""; }
   function ccIsland() {
     try {
       var isle = document.getElementById("cc-island");
-      if (!ccIslandOn()) { if (isle && isle.parentNode) isle.parentNode.removeChild(isle); ccIslandSig = ""; return; }   // teardown: gate off = island gone
+      if (!ccIslandOn()) { if (isle && isle.parentNode) isle.parentNode.removeChild(isle); ccIslandSig = ""; ccStopLive(); return; }   // teardown: gate off = island gone (+ drop the live nchan subs)
+      ccStartLive();   // #13: ensure the RAM/CPU nchan subscriptions are running while the island is on (idempotent)
       var hdr = document.getElementById("header"); if (!hdr) return;
       var foot = document.getElementById("footer"), sb = document.getElementById("statusbar");
       var raw = ((sb && sb.textContent) || "").replace(/^\s+|\s+$/g, "");
@@ -433,11 +466,11 @@
       var verNum = "";
       var verElN = document.querySelector('unraid-header-os-version span[id^="reka-menu-trigger"]');
       if (verElN) verNum = ((verElN.textContent) || "").replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
-      var items = "u" + (iOn("uptime") ? 1 : 0) + "o" + (iOn("os") ? 1 : 0) + "v" + (iOn("version") ? 1 : 0) + "a" + (iOn("array") ? 1 : 0) + "f" + (iOn("fill") ? 1 : 0) + "t" + (iOn("temps") ? 1 : 0);
+      var items = "u" + (iOn("uptime") ? 1 : 0) + "o" + (iOn("os") ? 1 : 0) + "v" + (iOn("version") ? 1 : 0) + "a" + (iOn("array") ? 1 : 0) + "f" + (iOn("fill") ? 1 : 0) + "r" + (iOn("ram") ? 1 : 0) + "c" + (iOn("cpu") ? 1 : 0) + "t" + (iOn("temps") ? 1 : 0);
       // idempotence guard: nchan rewrites the footer every few seconds with UNCHANGED text most
       // of the time — compare the source signature and skip the DOM rebuild when nothing moved
       // (bar width/colour + the item toggles included so a change always redraws)
-      var sig = upTxt + "|" + upTitle + "|" + osLabel + "|" + verNum + "|" + raw + "|" + temps.join(",") + "|" + warn + "|" + usage + "|" + uw + uc + "|" + (par ? par[0] : "") + "|" + items;
+      var sig = upTxt + "|" + upTitle + "|" + osLabel + "|" + verNum + "|" + raw + "|" + temps.join(",") + "|" + warn + "|" + usage + "|" + uw + uc + "|" + (par ? par[0] : "") + "|" + ccLiveRam + "/" + ccLiveRamUsed + "/" + ccLiveCpu + "|" + items;
       if (isle && sig === ccIslandSig) return;
       ccIslandSig = sig;
       if (!isle) {
@@ -453,6 +486,21 @@
         c.appendChild(d); c.appendChild(document.createTextNode(label));
         if (tip) c.setAttribute("data-cc-tip", tip);   // frameless CC bubble (law) — no native balloon
         isle.appendChild(c);
+      }
+      // mini-BAR chip (fill / RAM / CPU): a short lead label + fill width = %, fill COLOUR carries the
+      // state (green <80, amber <95, red above — same thresholds as the dots); non-numeric % -> grey track.
+      // The lead label disambiguates the three bars visually (else identical); tooltip carries the detail.
+      function barChip(lead, pctText, tip, cls) {
+        var n = parseInt(pctText, 10), w = isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
+        var col = isNaN(n) ? "#8d8d8d" : n >= 95 ? "#d9433f" : n >= 80 ? "#d6a243" : "#3fae6a";
+        var uch = document.createElement("span"); uch.className = "cc-isl-chip cc-isl-usage" + (cls ? " " + cls : "");
+        if (lead) { var lb = document.createElement("span"); lb.className = "cc-isl-lead"; lb.textContent = lead; uch.appendChild(lb); }
+        var ubar = document.createElement("span"); ubar.className = "cc-isl-bar";
+        var ufill = document.createElement("span"); ufill.className = "cc-isl-fill";
+        ufill.style.width = w + "%"; ufill.style.background = col;
+        ubar.appendChild(ufill); uch.appendChild(ubar); uch.appendChild(document.createTextNode(pctText));
+        if (tip) uch.setAttribute("data-cc-tip", tip);
+        isle.appendChild(uch);
       }
       // FIXED render order (user: "total unsortiert" -> deterministic layout): uptime, OS,
       // array state, fill bar, temps. Each element is gated by its cc.isl.<key> toggle. Every
@@ -480,17 +528,16 @@
         else if (low.indexOf("gestoppt") !== -1 || low.indexOf("stopped") !== -1) dc = "#d9433f";
         chip(arrSeg, dc, par ? arrSeg + " — " + par[0].replace(/\s+/g, " ") : arrSeg, "cc-isl-array");
       }
-      // 4) FILL LEVEL — mini bar + % text (no dot; the fill colour is the state); bubble = plain sentence
-      if (iOn("fill") && usage) {
-        var uch = document.createElement("span"); uch.className = "cc-isl-chip cc-isl-usage";
-        var ubar = document.createElement("span"); ubar.className = "cc-isl-bar";
-        var ufill = document.createElement("span"); ufill.className = "cc-isl-fill";
-        ufill.style.width = uw + "%"; ufill.style.background = uc;
-        ubar.appendChild(ufill); uch.appendChild(ubar); uch.appendChild(document.createTextNode(usage));
-        uch.setAttribute("data-cc-tip", T("Array zu " + usage + " belegt", "Array " + usage + " used"));
-        isle.appendChild(uch);
-      }
-      // 5) TEMPS — first sensor = CPU, second = Mainboard (Unraid footer order), rest generic; the
+      // 4) ARRAY FILL LEVEL — mini bar + % text (fill colour = state); bubble = plain sentence. Source is
+      // the native menu usage-bar, which 7.3.x dropped -> usually empty here (chip hides); kept for boxes
+      // that still expose it. RAM (5) is the always-available live usage bar in its place.
+      if (iOn("fill") && usage) barChip(T("Array", "Array"), usage, T("Array zu " + usage + " belegt", "Array " + usage + " used"), "cc-isl-array-fill");
+      // 5) RAM USAGE — live from nchan /sub/update1 (ccLiveRam="95%", ccLiveRamUsed="29.7 GiB"); mini bar,
+      // works on EVERY page (the missing "fill/temps show nothing" fix + the "was noch anzeigen" expansion).
+      if (iOn("ram") && ccLiveRam) barChip("RAM", ccLiveRam, T("RAM zu " + ccLiveRam + " belegt" + (ccLiveRamUsed ? " (" + ccLiveRamUsed + ")" : ""), "RAM " + ccLiveRam + " used" + (ccLiveRamUsed ? " (" + ccLiveRamUsed + ")" : "")), "cc-isl-ram");
+      // 5b) CPU LOAD — live from nchan /sub/cpuload; empty on boxes that don't measure it (chip hides).
+      if (iOn("cpu") && ccLiveCpu) barChip("CPU", ccLiveCpu, T("CPU-Last " + ccLiveCpu, "CPU load " + ccLiveCpu), "cc-isl-cpu");
+      // 6) TEMPS — first sensor = CPU, second = Mainboard (Unraid footer order), rest generic; the
       // dot carries the state (green below cc.tempwarn, amber at/above, red at threshold+15)
       if (iOn("temps")) {
         for (i = 0; i < temps.length; i++) {
@@ -772,10 +819,15 @@
       // are handled in ccDockProfile. cc.statenative=1 lets state indicators keep their native colour.
       ["lang", "search", "logout", "terminal", "browse", "feedback", "info", "log", "help", "bell", "burger"].forEach(function (k9) { root.classList.toggle("cc-hideicon-" + k9, g("cc.hideicon." + k9, "0") === "1" && g("cc.theming", "1") !== "0"); });
       root.classList.toggle("cc-state-native", g("cc.statenative", "0") === "1" && g("cc.theming", "1") !== "0");
-      // #14 + #1: Carbon-ify the Tools SUB-pages and the docker/plugin execution-output (install-log)
-      // pages. cc-tools-on = on a /Tools/... path OR the content carries a native <fieldset><legend>
-      // (the "Container hinzufügen" install log). Master-theming-gated. CannonadeCommand.Tools.css styles.
-      try { var toolsPg = /^\/Tools\//.test(location.pathname) || !!document.querySelector("#displaybox fieldset legend"); root.classList.toggle("cc-tools-on", toolsPg && g("cc.theming", "1") !== "0"); } catch (e0) {}
+      // #14 + #1 + Anzeige-Rework: Carbon-ify the Tools SUB-pages, the docker/plugin execution-output
+      // (install-log) pages AND every native /Settings/* SUB-page (so the un-hidden Display Settings page
+      // is CC-styled). cc-tools-on = a /Tools/... path OR a /Settings/<x> sub-page (NOT our own CC page,
+      // which owns #cc-settings) OR the content carries a native <fieldset><legend>. Master-theming-gated.
+      try {
+        var p0 = location.pathname, ownPg = /^\/Settings\/CannonadeCommand/.test(p0);
+        var toolsPg = !ownPg && (/^\/Tools\//.test(p0) || /^\/Settings\/./.test(p0) || !!document.querySelector("#displaybox fieldset legend"));
+        root.classList.toggle("cc-tools-on", toolsPg && g("cc.theming", "1") !== "0");
+      } catch (e0) {}
       ccStateBars();   // #16: usage-bar fills follow the fill-level state colour when cc.statenative, else the palette
       paintPopups(); watchPopups();
       ccWireTips();     // document-wide floating-bubble delegation (bound once) — on EVERY page: docker/shares/settings anchors ride it even with the header area off

@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.51.0">
+  <!ENTITY version   "2.52.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,18 @@
 </ICON>
 
 <CHANGES>
+### 2.52.0
+- #1 Anzeige-Einstellungen aufgeraeumt (Option A): der Spiegel aller ~21 nativen Anzeige-Felder in den
+  CC-Einstellungen war unuebersichtlich. Jetzt liegt die VOLLSTAENDIGE native Anzeige-Seite wieder an
+  ihrem Platz -- aber im CannonadeCommand-Stil (Carbon) -- und CC behaelt nur eine kompakte Karte
+  "Anzeige (Unraid, live)" mit Theme, den drei Kopf-Farben, Banner, Tab-Ansicht und Favoriten. Diese
+  schalten live auch die native Einstellung mit um.
+- #2 Der CC-Stil deckt jetzt auch die nativen /Settings-Unterseiten ab (nicht nur die Werkzeuge), damit
+  die wieder eingeblendete Anzeige-Seite und die uebrigen Einstellungsseiten einheitlich aussehen.
+- #3 Status-Insel (#13): neuer LIVE-RAM-Balken auf JEDER Seite (aus Unraids nchan-Feed /sub/update1, z.B.
+  "RAM 48% -- 15.1 GiB") plus ein defensiver CPU-Last-Balken (blendet sich aus, wenn die Box keine
+  CPU-Last meldet). Die Balken tragen jetzt ein Kuerzel (Array / RAM / CPU); neue Schalter je Chip.
+
 ### 2.51.0
 - #1 Flaggen-Modus komplett ueberarbeitet: eigener Ein-/Aus-Schalter, eigener reaktiver Flaggen-Modus
   und ein eigener Flaggen-Auswaehler mit Farbstreifen (statt Emoji-Abkuerzungen wie "DE"/"AF", die auf
@@ -1607,7 +1619,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>36fbc8199585ccf7f510f3b208685af9cc9963755c76289dc4a1900038fdb764</SHA256>
+  <SHA256>50f0870471af17c94336d8b9e007ee4c893880f313a77286d140a7787ed01beb</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

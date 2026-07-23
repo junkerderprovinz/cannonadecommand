@@ -47,11 +47,9 @@ html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile > .nav-item {
    The .nav-tile>.nav-item variant covers header-off too (beats Unraid's non-important flex). */
 html.cc-hide-favtab.cc-header-on #menu .nav-item:has(> a[href="/Favorites"]),
 html.cc-hide-favtab #menu .nav-tile > .nav-item:has(> a[href="/Favorites"]) { display: none !important; }
-/* HIDE Unraid's native Display-Settings tile on the /Settings page: CannonadeCommand now hosts the
-   COMPLETE display settings inside its own "Anzeige" section (no more back-and-forth, one source of
-   truth). Gated on cc-popups-on = CC's master switch (cc.theming != 0) so turning CC off brings the
-   native tile back. The tile is <div.Panel> wrapping <a href="/Settings/DisplaySettings">. */
-html.cc-popups-on .Panels > .Panel:has(> a[href="/Settings/DisplaySettings"]) { display: none !important; }
+/* (Anzeige-Rework/Option A) The native Display-Settings tile is VISIBLE again: mirroring all ~21 fields
+   into CC was too cluttered, so the full page now lives natively — Carbon-styled by CannonadeCommand via
+   cc-tools-on (which now covers /Settings/*) — and CC keeps only a compact live-sync card. No hide rule. */
 /* #2b: per-icon SHOW/HIDE for the top-right utility icons (settings toggles cc.hideicon.<key> ->
    html.cc-hideicon-<key>, stamped by header.js apply()). Keys map to the native #menu button classes.
    The docked bell/burger are hidden in header.js ccDockProfile (they live outside #menu). */
@@ -211,6 +209,12 @@ html.cc-header-on #cc-island .cc-isl-bar {
   background: rgba(128, 128, 128, .25); overflow: hidden;
 }
 html.cc-header-on #cc-island .cc-isl-fill { display: block; height: 100%; }
+/* #13: short lead label before the fill/RAM/CPU mini-bars — disambiguates the three otherwise-identical
+   bars (Array / RAM / CPU); the % text stays to the right of the bar, the tooltip carries the detail */
+html.cc-header-on #cc-island .cc-isl-lead {
+  flex: 0 0 auto; margin-right: 6px; font-size: 10px; font-weight: 700;
+  letter-spacing: .4px; opacity: .72; text-transform: uppercase;
+}
 
 /* ═══ TOP HEADER TAKEOVER: brand + version chip + bell/burger in CC style ═══
    The Connect components render LIGHT DOM, so outside CSS matches and survives the

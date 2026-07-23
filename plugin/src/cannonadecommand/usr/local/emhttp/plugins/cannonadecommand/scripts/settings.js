@@ -266,13 +266,12 @@
       themingCard = tc;
       wrapMain.appendChild(tc);
     })();
-    // ── Anzeige (Unraid): CannonadeCommand hosts Unraid's ENTIRE native Display Settings, now split
-    // into THEMATIC cards (user: the Theming card was ultra long) with a CC info bubble on EVERY field
-    // (native page has none). Fields are parsed LIVE from the #section=display form and rebuilt as CC
-    // controls posting the SAME field via update.php (URLSearchParams -> 200; multipart 504s) + reload.
-    // Non-select fields are mirrored too now: the 3 header COLOURS as CC pickers (#7) and the banner as
-    // an upload link (#6 — the native file drop lives on Unraid's page). The "favorites" field also
-    // drives cc.hidefavtab. csrf_token gates the POST.
+    // ── Anzeige (Unraid), LIVE-SYNC (Option A rework): mirroring all ~21 native display fields into CC
+    // was "super unübersichtlich" (user). Now the FULL native Display Settings live on Unraid's own page
+    // — Carbon-styled by CannonadeCommand (cc-tools-on covers /Settings/*), tile un-hidden — and CC keeps
+    // only the handful that were genuinely useful here as LIVE-SYNC controls: they POST the SAME field via
+    // update.php (URLSearchParams -> 200; multipart 504s) + reload, so switching here flips the native
+    // setting too. csrf_token gates the POST. "favorites" also drives cc.hidefavtab.
     if (typeof csrf_token !== "undefined") (function () {
       var postDisplay = function (field, value) {
         try {
@@ -331,14 +330,16 @@
         b.addEventListener("click", function () { location.href = "/Settings/DisplaySettings"; });
         row.appendChild(b); return row;
       }
-      // thematic groups: card title + ordered field names
-      var GROUPS = [
-        { t: T("Anzeige — Allgemein", "Display — General"), f: ["width", "tabs", "users", "resize", "locale", "font", "tty", "terminalButton"] },
-        { t: T("Anzeige — Werte & Einheiten", "Display — Values & units"), f: ["number", "scale", "unit", "raw", "wwn", "total", "usage"] },
-        { t: T("Anzeige — Kopfbereich & Banner", "Display — Header & banner"), f: ["theme", "text", "headerdescription", "header", "headermetacolor", "background", "banner", "showBannerGradient", "favorites"] }
-      ];
-      var host = {}; // field name -> the card body to append its row into (preserves the grouped order)
-      GROUPS.forEach(function (g) { var c = card(g.t, null); g.f.forEach(function (nm) { host[nm] = c; }); wrapMain.appendChild(c); });
+      // KEEP = the only fields we still surface in CC (build order in the single card), each live-syncing
+      // to native: theme + tabbed view + banner (#6) + favourites, then the 3 header COLOURS (#7).
+      var KEEP = ["theme", "tabs", "banner", "favorites", "header", "headermetacolor", "background"];
+      var cCard = card(T("Anzeige (Unraid, live)", "Display (Unraid, live)"), T("Diese Optionen schreiben direkt in Unraids native Anzeige-Einstellungen und schalten dort live mit um. Alle weiteren Anzeige-Optionen liegen auf der nativen Seite — jetzt im CannonadeCommand-Stil.", "These write straight into Unraid's native Display Settings and switch live there too. Every other display option lives on the native page — now in CannonadeCommand style."));
+      (function () {
+        var b = el("button", "cc-btn", T("Alle Unraid-Anzeige-Einstellungen öffnen …", "Open all Unraid display settings …")); b.type = "button";
+        b.addEventListener("click", function () { location.href = "/Settings/DisplaySettings"; });
+        var r = el("div", "cc-set-row"); r.appendChild(el("span", "cc-set-rl", T("Native Anzeige-Seite", "Native display page"))); r.appendChild(b); cCard.appendChild(r);
+      })();
+      wrapMain.appendChild(cCard);
       fetch("/Settings/DisplaySettings", { credentials: "same-origin" }).then(function (r) { return r.text(); }).then(function (html) {
         try {
           var doc = new DOMParser().parseFromString(html, "text/html");
@@ -346,19 +347,19 @@
           var form = null;
           Array.prototype.forEach.call(doc.querySelectorAll("form"), function (f) { var s = f.querySelector('input[name="#section"]'); if (s && s.value === "display") form = f; });
           if (!form) return;
-          Array.prototype.forEach.call(form.querySelectorAll("select[name], input[name][type='text']"), function (c) {
-            var nm = c.getAttribute("name"); if (!nm || /^(csrf|#|rtl)/.test(nm)) return;
-            var into = host[nm]; if (!into) return;                      // unknown/new field -> skip (keeps the grouped layout tidy)
+          KEEP.forEach(function (nm) {
+            var c = form.querySelector('select[name="' + nm + '"], input[name="' + nm + '"][type="text"]');
+            if (!c) return;                                              // field absent on this Unraid build -> skip
             var lbl = fieldLabel(c, nm);
             if (c.tagName === "SELECT") {
               var opts = Array.prototype.map.call(c.options, function (o) { return [o.value, (o.textContent || "").trim()]; });
               if (nm === "favorites") set("cc.hidefavtab", c.value === "no" ? "1" : "0");
-              into.appendChild(opts.length > 3
+              cCard.appendChild(opts.length > 3
                 ? dropRow(lbl, opts, c.value, function (v) { postDisplay(nm, v); }, help(nm))
                 : segRow(lbl, opts, c.value, function (v) { postDisplay(nm, v); }, help(nm)));
-              if (nm === "banner") into.appendChild(bannerUploadRow());   // #6 upload link right after "Banner anzeigen"
+              if (nm === "banner") cCard.appendChild(bannerUploadRow());  // #6 upload link right after "Banner anzeigen"
             } else {
-              into.appendChild(colorRow(lbl, c.value || "", function (v) { postDisplay(nm, v); }, help(nm)));   // #7 header colour
+              cCard.appendChild(colorRow(lbl, c.value || "", function (v) { postDisplay(nm, v); }, help(nm)));   // #7 header colour
             }
           });
           syncHeaderBar();
@@ -377,7 +378,7 @@
       });
       wrapMain.appendChild(c);
     })();
-    // (the Anzeige rows live INSIDE the Theming card above now — no standalone card)
+    // (the compact live-sync "Anzeige (Unraid, live)" card is built above; everything else lives natively)
     // ── section order = the USER'S main-menu order. header.js persists the drag-reordered
     // menu as cc.navorder.all {left:[href keys],right:[...]}; read DEFENSIVELY (accept .left
     // or a plain array; absent/garbage -> native menu order fallback below).
@@ -1112,7 +1113,7 @@
       // per-element checklist (user: an/abhaken welche Chips die Insel zeigt); header.js renders
       // them in a FIXED order and reads cc.isl.<key> live. Default all on.
       cI.appendChild(el("div", "cc-set-lbl", T("Angezeigte Elemente", "Shown elements")));
-      [["uptime", T("Betriebszeit", "Uptime")], ["os", T("Unraid-Edition", "Unraid edition")], ["version", T("Unraid-Version", "Unraid version")], ["array", T("Array-Zustand", "Array state")], ["fill", T("Array-Füllstand", "Array usage")], ["temps", T("Temperaturen", "Temperatures")]].forEach(function (it) {
+      [["uptime", T("Betriebszeit", "Uptime")], ["os", T("Unraid-Edition", "Unraid edition")], ["version", T("Unraid-Version", "Unraid version")], ["array", T("Array-Zustand", "Array state")], ["fill", T("Array-Füllstand", "Array usage")], ["ram", T("RAM-Auslastung", "RAM usage")], ["cpu", T("CPU-Last", "CPU load")], ["temps", T("Temperaturen", "Temperatures")]].forEach(function (it) {
         cI.appendChild(toggleRow(it[1], get("cc.isl." + it[0], "1") !== "0", function (v) { set("cc.isl." + it[0], v ? "1" : "0"); syncHeaderBar(); }));
       });
       cI.appendChild(segRow(T("Temperatur-Warnschwelle", "Temperature warning threshold"), [["50", "50 °C"], ["60", "60 °C"], ["70", "70 °C"]], get("cc.tempwarn", "60"), function (v) { set("cc.tempwarn", v); syncHeaderBar(); }));

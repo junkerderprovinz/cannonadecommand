@@ -2,6 +2,8 @@
  * EXECUTION-OUTPUT / install-log pages (#1). Auto-<link>-injected on EVERY page via the Tools .page
  * hook, but EVERY rule is scoped to html.cc-tools-on, which header.js stamps ONLY when:
  *   - location.pathname starts with /Tools/  (System Information, System Devices, Diagnostics, …), OR
+ *   - location.pathname is a native /Settings/<x> sub-page (NOT our own CannonadeCommand page) — e.g.
+ *     the un-hidden Display Settings page after the Anzeige-Rework, OR
  *   - #displaybox contains a native <fieldset><legend> (the "Container hinzufügen" install log).
  * Absent everywhere else => ZERO effect. First-pass broad restyle; refined tool-by-tool afterwards
  * (user: "wenn du es gemacht hast gehen wir Werkzeug für Werkzeug durch und bugfixen").
