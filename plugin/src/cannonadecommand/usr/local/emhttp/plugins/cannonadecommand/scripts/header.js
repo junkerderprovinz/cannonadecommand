@@ -438,7 +438,8 @@
   function ccArrFill() {
     try {
       if (!/^\/Main/.test(location.pathname)) return;
-      var tbl = document.querySelector("table.disk_status"); if (!tbl) return;   // first disk_status table = the array data disks
+      var tbl = document.querySelector("table.disk_status");
+      if (!tbl) { if (!ccArrFill._t) { ccArrFill._t = setTimeout(function () { ccArrFill._t = 0; ccArrFill(); }, 900); } return; }   // apply() can run before /Main's array table is parsed -> retry until it exists
       var usedSum = 0, sizeSum = 0, n = 0;
       Array.prototype.forEach.call(tbl.querySelectorAll("tr"), function (row) {
         var sp = row.querySelector(".usage-disk span"); if (!sp) return;
