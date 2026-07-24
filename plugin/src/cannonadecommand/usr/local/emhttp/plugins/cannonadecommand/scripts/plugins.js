@@ -128,6 +128,20 @@
   // returns grey at rest in that mode; otherwise the normal accent/rainbow colour.
   function reactive() { return ls("cc.rainbow") === "1" && ls("cc.rbmode") === "active"; }
   function restBg(i) { return reactive() ? "#2e2e2e" : colorFor(i); }
+  // #17/#27: a CC confirmation for the per-row plugin uninstall — same shape as the container
+  // remove (a themed swal), so deleting a plugin is a single trash icon + an "are you sure?"
+  // dialog instead of Unraid's separate confirm CHECKBOX. Falls back to confirm() if SweetAlert
+  // is somehow unavailable.
+  function ccPluginConfirm(name, run) {
+    var txt = LANG === "de" ? '"' + name + '.plg" wird entfernt. Fortfahren?' : '"' + name + '.plg" will be removed. Continue?';
+    if (typeof window.swal === "function") {
+      window.swal({
+        title: LANG === "de" ? "Plugin entfernen?" : "Remove plugin?", text: txt, type: "warning",
+        showCancelButton: true, confirmButtonText: LANG === "de" ? "Löschen" : "Delete",
+        cancelButtonText: LANG === "de" ? "Abbrechen" : "Cancel", confirmButtonColor: "#c0392b"
+      }, function (ok) { if (ok) run(); });
+    } else if (window.confirm(txt)) { run(); }
+  }
   // ONE global tile-size key (cc.sgsize, GLOBAL like cc.rainbow — not eff-gated):
   // s 48/62 · m 62/78 · l 76/94 [img, box]. Docker's applySettings stamps the same
   // vars there; stamp them HERE too (docker.js doesn't run on this page) so the
@@ -396,11 +410,28 @@
       // Shares delete badge. Locale-independent gate: the native button carries class="remove"
       // (PHP class='$method'); its onclick holds the untranslated shell command "plugin remove <file>".
       // The sibling class="remove" checkbox is handled above as `cb`, so `rm` is the button.
-      if (rm.tagName === "INPUT" &&
-          (rm.classList.contains("remove") || /plugin\s+remove\b/.test(rm.getAttribute("onclick") || ""))) {
+      var isRemove = rm.tagName === "INPUT" &&
+        (rm.classList.contains("remove") || /plugin\s+remove\b/.test(rm.getAttribute("onclick") || ""));
+      if (isRemove) {
         rm.value = LANG === "de" ? "Löschen" : "Delete";
       } else if (rm.tagName === "INPUT" && !rm.value.trim()) {
         rm.value = LANG === "de" ? "Entfernen" : "Remove";
+      }
+      // #17/#27: turn the per-row uninstall into a single trash ICON with a CC confirmation
+      // (like the container remove), dropping Unraid's separate confirm CHECKBOX. The button's
+      // native onclick runs the real "plugin remove <file>" via openInstall(); we detach it, gate
+      // it behind ccPluginConfirm, and enable the button (Unraid disabled it until the — now hidden
+      // — checkbox was ticked). The .cc-b-delicon look + the hidden checkbox live in docker.css.
+      var native = isRemove ? (rm.getAttribute("onclick") || "") : "";
+      if (native) {
+        rm.removeAttribute("onclick");
+        rm.disabled = false;
+        rm.classList.add("cc-b-delicon");
+        rm.title = LANG === "de" ? "Plugin löschen" : "Delete plugin";
+        var slug = (tr.id || "").trim() || "Plugin";
+        var runNative; try { runNative = new Function(native); } catch (e) { runNative = function () {}; }
+        rm.addEventListener("click", function (ev) { ev.preventDefault(); ev.stopPropagation(); ccPluginConfirm(slug, runNative); });
+        if (cb) cb.classList.add("cc-cb-hidden");
       }
     }
     // col 2: description in its own column — NOT click-expandable any more; a
