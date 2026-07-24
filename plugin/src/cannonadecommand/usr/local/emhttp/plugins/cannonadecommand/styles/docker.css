@@ -194,14 +194,14 @@ html.cc-on-plugins .cc-cb-del.cc-cb-hidden { display: none !important; }
 html.cc-on-plugins .cc-b-del.cc-b-delicon {
   width: 32px !important; min-width: 32px !important; height: 30px !important; padding: 0 !important;
   font-size: 0 !important; letter-spacing: 0 !important; text-transform: none !important;
-  background-color: transparent !important;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff6b6b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3Cline x1='10' y1='11' x2='10' y2='17'/%3E%3Cline x1='14' y1='11' x2='14' y2='17'/%3E%3C/svg%3E") !important;
+  background-color: #d9433f !important;   /* filled red (user: "mit ausgefuellter farbe") — matches the .cc-b-del badge */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3Cline x1='10' y1='11' x2='10' y2='17'/%3E%3Cline x1='14' y1='11' x2='14' y2='17'/%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important; background-position: center !important; background-size: 15px !important;
-  border: 1px solid rgba(255, 107, 107, .4) !important; box-shadow: none !important;
+  border: none !important; box-shadow: none !important;
   border-radius: var(--cc-b-radius, 6px) !important; cursor: pointer;
-  transition: background-color .15s, border-color .15s;
+  transition: filter .15s;
 }
-html.cc-on-plugins .cc-b-del.cc-b-delicon:hover { background-color: rgba(224, 54, 54, .22) !important; border-color: #e03636 !important; filter: none !important; }
+html.cc-on-plugins .cc-b-del.cc-b-delicon:hover { filter: brightness(1.12) !important; }
 /* "is a value configured here?" dot on a badge: filled green = set, hollow = default */
 .cc-cfg { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 6px; vertical-align: middle; box-sizing: border-box; }
 .cc-cfg-on { background: #35d07f; box-shadow: 0 0 0 1px rgba(0, 0, 0, .28); }

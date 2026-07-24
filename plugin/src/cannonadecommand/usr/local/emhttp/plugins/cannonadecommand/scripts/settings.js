@@ -528,7 +528,8 @@
     var rr = el("div", "cc-set-row cc-set-inline");
     rr.appendChild(el("span", null, T("Regenbogen-Modus", "Rainbow mode")));
     rr.appendChild(toggle(rbOnly, function (v) { set("cc.rainbow", v ? "1" : "0"); set("cc.flagmode", "0"); if (v) { del("cc.flag"); del("cc.rbpal"); } else set("cc.rainbowrot", "0"); render(); syncHeaderBar(); syncSharesBar(); }));
-    if (flagOn) { rr.style.opacity = ".4"; rr.style.pointerEvents = "none"; }   // greyed while Flaggen-Modus is active
+    // user: the two MASTER toggles stay clickable and flip each other — turning Rainbow on turns Flaggen-Modus
+    // off (handler above sets cc.flagmode=0) and vice versa; NO greying of the master row.
     c1.appendChild(rr);
     // rainbow sub-mode: REACTIVE — everything rests neutral grey, colours on hover, the ACTIVE
     // one keeps its colour. Global like cc.rainbow (key cc.rbmode); sits DIRECTLY under the
@@ -609,7 +610,8 @@
         else { set("cc.flagmode", "0"); set("cc.rainbow", "0"); }
         render(); syncHeaderBar(); syncSharesBar();
       }));
-      if (rbOnly) { fr.style.opacity = ".4"; fr.style.pointerEvents = "none"; }   // greyed while Rainbow is active
+      // NOT greyed while Rainbow is active — the master toggle stays clickable; turning Flaggen-Modus on
+      // sets cc.flagmode=1 (+cc.rainbow=1 for the engine) so Rainbow-only display flips off, and vice versa.
       c1.appendChild(fr);
       // reactive flag toggle — shares cc.rbmode (only one mode is active at a time)
       var fmode = el("div", "cc-set-row cc-set-inline");
@@ -633,7 +635,9 @@
         window.CC_FLAGS.forEach(function (f0) {
           if (q && f0.name_de.toLowerCase().indexOf(q) < 0 && f0.name.toLowerCase().indexOf(q) < 0 && f0.code.indexOf(q) < 0) return;
           var row = el("div", "cc-flag-item"); row.appendChild(flagImg(f0)); row.appendChild(el("span", "cc-flag-name", f0.name_de));
-          row.addEventListener("click", function () { applyFlag(f0); render(); syncHeaderBar(); syncSharesBar(); });
+          // picking a flag ACTIVATES flag mode (and thus flips Rainbow off) — the picker now lives in the
+          // master row, so selecting a country should just turn the mode on.
+          row.addEventListener("click", function () { set("cc.flagmode", "1"); set("cc.rainbow", "1"); applyFlag(f0); render(); syncHeaderBar(); syncSharesBar(); });
           list.appendChild(row);
         });
       };
@@ -652,8 +656,8 @@
       var moveSel = function (dir) { var items = list.querySelectorAll(".cc-flag-item"); if (!items.length) return; var cur = list.querySelector(".cc-flag-item.cc-sel"); var idx = cur ? Array.prototype.indexOf.call(items, cur) : -1; idx += dir; if (idx < 0) idx = 0; if (idx >= items.length) idx = items.length - 1; if (cur) cur.classList.remove("cc-sel"); items[idx].classList.add("cc-sel"); items[idx].scrollIntoView({ block: "nearest" }); };
       search.addEventListener("keydown", function (e9) { if (e9.key === "ArrowDown") { e9.preventDefault(); moveSel(1); } else if (e9.key === "ArrowUp") { e9.preventDefault(); moveSel(-1); } else if (e9.key === "Enter") { e9.preventDefault(); var sel = list.querySelector(".cc-flag-item.cc-sel") || list.querySelector(".cc-flag-item"); if (sel) sel.click(); } else if (e9.key === "Escape") { e9.preventDefault(); closePanel(); } });
       picker.appendChild(trigger); picker.appendChild(panel);
-      c1.appendChild(picker);
-      c1.appendChild(fmode);   // #4: reactive-flag toggle AFTER the picker
+      fr.insertBefore(picker, fr.lastChild);   // user: the flag picker sits BETWEEN the "Flaggen-Modus" label and its toggle
+      c1.appendChild(fmode);   // reactive-flag toggle below
       // the selected flag's COLOURS, shown separately (not the rainbow editor)
       var f1 = curFlag();
       if (f1) {
@@ -668,7 +672,7 @@
         frow.appendChild(fReset);
         c1.appendChild(frow);
       }
-      if (!flagOn) { [fmode, picker].forEach(function (e9) { e9.style.opacity = ".4"; e9.style.pointerEvents = "none"; }); }   // flag sub-controls only when flag mode is on
+      if (!flagOn) { fmode.style.opacity = ".4"; fmode.style.pointerEvents = "none"; }   // the reactive-flag sub-toggle only with flag mode on; the picker stays usable (picking a flag turns the mode on)
     }
     // #28: one-click curated PALETTE PRESETS — apply the 8 colours as cc.rbpal + turn Rainbow on (and
     // clear any flag). A quick way to a nice look without hand-picking eight swatches.

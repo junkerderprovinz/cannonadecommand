@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.62.2">
+  <!ENTITY version   "2.63.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,15 @@
 </ICON>
 
 <CHANGES>
+### 2.63.0
+- Der Plugin-Loeschen-Button (Papierkorb-Icon) ist jetzt VOLL ausgefuellt (solides Rot mit weissem Icon)
+  statt nur umrandet - passt zum roten Loesch-Badge und liest sich klarer als Aktion.
+- Flaggen-Modus: die Laenderauswahl sitzt jetzt DIREKT in der "Flaggen-Modus"-Zeile, zwischen dem Text und
+  seinem Schalter (vorher als eigene Zeile darunter).
+- Flaggen-Modus und Regenbogen-Modus schliessen sich jetzt sauber gegenseitig aus: beide Schalter bleiben
+  klickbar, und das Einschalten des einen schaltet den anderen automatisch aus (kein Ausgrauen mehr). Eine
+  Flagge aus der Auswahl zu waehlen aktiviert den Flaggen-Modus direkt.
+
 ### 2.62.2
 - Fix Container-Installationsseite: die Felder klebten alle im linken Drittel. Die feste 210px-Label-Spalte
   aus 2.62.1 richtete zwar aus, quetschte die Form aber nach links. Jetzt wie die NATIVE Ansicht: 35%-breite
@@ -1741,7 +1750,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>aa6f5e9a1bbcb8821cf87b78c7c9692dc16c45b131ff62e44e766376d5f95736</SHA256>
+  <SHA256>c93f33535e4eb1e13b4eff7c47c6fd4a61d796735072f72ca308391fe6d88623</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
