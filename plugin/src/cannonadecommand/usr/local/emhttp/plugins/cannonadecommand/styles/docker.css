@@ -1132,15 +1132,14 @@ html.cc-docker-on.cc-on-addct .ui-dialog dl > dt.cc-dtlab {
   background: rgba(255, 255, 255, .08); /* #7: clean neutral chip — the old accent-mix read muddy/brown with warm accents */
   color: #e6e6e6; font-weight: 600; line-height: 1.3;
 }
-/* #7a + alignment fix: pull the field badges next to their fields. The native docker form uses a
-   ~664px label column that strands the badge far to the left. The form is ~104 SEPARATE <dl> grids,
-   so a `max-content` label column sized EACH row independently -> every row's field started at a
-   different x and the whole page looked misaligned ("nichts mehr richtig ausgerichtet"). A FIXED
-   210px label column (fits the longest label, "Fixed MAC address (Optional)") makes every field
-   line up in one column; the badge is right-aligned inside it (justify-self:end below) so it still
-   sits right beside its input. */
+/* Alignment: the form is ~104 SEPARATE <dl> grids that share no column widths. A `max-content` label
+   column sized EACH row on its own -> fields started at different x (misaligned), and a narrow fixed
+   column crammed the whole form into the left third ("klebt alles links"). MATCH the native layout:
+   its dl grid is `35% 1fr` with right-aligned labels, so the fields sit centred and every row lines
+   up. Same 35% here + the badge right-aligned in it (justify-self:end below) reproduces the native
+   look while keeping the CC badge sitting right beside its input. */
 html.cc-docker-on.cc-on-addct #canvas dl,
-html.cc-docker-on.cc-on-addct .ui-dialog dl { grid-template-columns: 210px minmax(0, 1fr) !important; }
+html.cc-docker-on.cc-on-addct .ui-dialog dl { grid-template-columns: 35% minmax(0, 1fr) !important; }
 html.cc-docker-on.cc-on-addct #canvas dl > dt > span.cc-varlab i.fa,
 html.cc-docker-on.cc-on-addct .ui-dialog dl > dt > span.cc-varlab i.fa,
 html.cc-docker-on.cc-on-addct #canvas dl > dt.cc-dtlab i.fa,

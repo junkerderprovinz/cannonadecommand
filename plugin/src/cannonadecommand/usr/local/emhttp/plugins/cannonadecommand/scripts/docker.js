@@ -2302,18 +2302,20 @@
   // clip and always shows its own scrollbar. Flips upward when there is more room above.
   function ccPositionDsel(trig, panel) {
     try {
-      var r = trig.getBoundingClientRect(), gap = 4, edge = 8;
+      var r = trig.getBoundingClientRect(), gap = 4, edge = 14;
       var below = window.innerHeight - r.bottom - edge, above = r.top - edge;
       panel.style.position = "fixed";
+      panel.style.boxSizing = "border-box";   // max-height must INCLUDE the panel's own padding, else the
+                                              // list spills ~16px past the viewport and its scrollbar end is cut off
       panel.style.left = Math.round(r.left) + "px";
       panel.style.minWidth = Math.round(r.width) + "px";
       panel.style.maxWidth = "min(92vw, 480px)";
       if (below >= 200 || below >= above) {
         panel.style.top = Math.round(r.bottom + gap) + "px"; panel.style.bottom = "auto";
-        panel.style.maxHeight = Math.max(140, below) + "px";
+        panel.style.maxHeight = Math.max(140, below - gap) + "px";
       } else {
         panel.style.bottom = Math.round(window.innerHeight - r.top + gap) + "px"; panel.style.top = "auto";
-        panel.style.maxHeight = Math.max(140, above) + "px";
+        panel.style.maxHeight = Math.max(140, above - gap) + "px";
       }
     } catch (e) {}
   }
