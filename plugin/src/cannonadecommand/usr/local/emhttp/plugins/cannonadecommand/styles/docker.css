@@ -1119,6 +1119,13 @@ html.cc-docker-on.cc-on-addct #canvas dl > dt > span.docker-allocation-dt.cc-var
 html.cc-docker-on.cc-on-addct .ui-dialog dl > dt > span.docker-allocation-dt.cc-varlab,
 html.cc-docker-on.cc-on-addct #canvas #dockerAllocations dt,
 html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations dt { display: none !important; }
+/* #10: a STOPPED container's IP/port cells that the engine filled in (its configured static IP +
+   published ports) — override Unraid's red "invalid IP" styling and mark them as the configured (not
+   live) value: calm colour + italic. */
+html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-filled,
+html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .cc-alloc-filled {
+  color: #c8c8c8 !important; font-style: italic; opacity: .92;
+}
 /* FIELD LABELS as badges — docker.js ctVarLabels adds .cc-varlab (ENV var <span>) OR .cc-dtlab
    (top-level bare <dt>) and strips the trailing colon. The tint FOLLOWS the colour mode: the
    accent normally, the rainbow-primary (--cc-btn-accent) in rainbow mode. Required fields get a

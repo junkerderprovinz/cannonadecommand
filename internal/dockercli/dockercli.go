@@ -122,6 +122,13 @@ func (c *Client) List(ctx context.Context) ([]model.Container, error) {
 	out := make([]model.Container, 0, len(raw))
 	for _, r := range raw {
 		net, ip := firstNetwork(r.NetworkSettings.Networks)
+		ports := formatPorts(r.Ports)
+		// A stopped container reports no Ports in the list; read its configured PortBindings so
+		// the Docker tab + allocations view still show the mappings (user #10). One extra inspect
+		// only for the stopped-and-portless ones.
+		if len(ports) == 0 && r.State != "running" {
+			ports = c.portsFor(ctx, r.ID)
+		}
 		out = append(out, model.Container{
 			ID:       r.ID,
 			Name:     firstName(r.Names),
@@ -131,7 +138,7 @@ func (c *Client) List(ctx context.Context) ([]model.Container, error) {
 			Health:   healthFromStatus(r.Status),
 			Network:  net,
 			IP:       ip,
-			Ports:    formatPorts(r.Ports),
+			Ports:    ports,
 			Mounts:   formatMounts(r.Mounts),
 		})
 	}
@@ -187,6 +194,78 @@ func formatPorts(ports []apiPort) []string {
 		if s != "" && !seen[s] {
 			seen[s] = true
 			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// portsFor reads a STOPPED container's CONFIGURED port mappings from its HostConfig.PortBindings.
+// The /containers/json list endpoint reports Ports only for RUNNING containers, so a stopped
+// container comes back with an empty Ports slice — but the user's published mappings (e.g. a
+// bridge container's 8080:80) live in HostConfig.PortBindings and survive a stop. Formatted like
+// formatPorts ("hostPort:containerPort/proto" when published, else "containerPort/proto"), sorted
+// for stability. Best-effort: any error yields nil (the row simply shows no ports, as before).
+func (c *Client) portsFor(ctx context.Context, ref string) []string {
+	resp, err := c.do(ctx, "GET", "/containers/"+url.PathEscape(ref)+"/json")
+	if err != nil {
+		return nil
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+	var raw struct {
+		HostConfig struct {
+			PortBindings map[string][]struct {
+				HostPort string `json:"HostPort"`
+			} `json:"PortBindings"`
+		} `json:"HostConfig"`
+		Config struct {
+			ExposedPorts map[string]struct{} `json:"ExposedPorts"`
+		} `json:"Config"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+		return nil
+	}
+	out := make([]string, 0, len(raw.HostConfig.PortBindings))
+	seen := map[string]bool{}
+	keys := make([]string, 0, len(raw.HostConfig.PortBindings))
+	for k := range raw.HostConfig.PortBindings {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys { // k = "80/tcp"
+		binds := raw.HostConfig.PortBindings[k]
+		if len(binds) == 0 {
+			if !seen[k] {
+				seen[k] = true
+				out = append(out, k)
+			}
+			continue
+		}
+		for _, b := range binds {
+			s := k
+			if b.HostPort != "" {
+				s = b.HostPort + ":" + k // "8080:80/tcp"
+			}
+			if !seen[s] {
+				seen[s] = true
+				out = append(out, s)
+			}
+		}
+	}
+	// nothing published -> fall back to the exposed (unpublished) ports so the row still shows something
+	if len(out) == 0 {
+		ek := make([]string, 0, len(raw.Config.ExposedPorts))
+		for k := range raw.Config.ExposedPorts {
+			ek = append(ek, k)
+		}
+		sort.Strings(ek)
+		for _, k := range ek {
+			if !seen[k] {
+				seen[k] = true
+				out = append(out, k)
+			}
 		}
 	}
 	return out

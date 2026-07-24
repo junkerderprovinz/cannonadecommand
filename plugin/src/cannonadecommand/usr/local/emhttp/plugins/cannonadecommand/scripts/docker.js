@@ -797,6 +797,9 @@
           // the engine's value (the configured static br0.x IP, which survives a stop).
           if (!ipTxt && c && c.ip) ipTxt = c.ip;
           if (!netTxt && c && c.network) netTxt = c.network;
+          // #10: a stopped container also reports no ports natively — the engine now reads its
+          // configured HostConfig.PortBindings, so show those (e.g. a bridge 8080:80) too.
+          if (!portTxt && c && c.ports && c.ports.length) portTxt = c.ports.join(" ");
           // on an Unraid macvlan/ipvlan (br0.x) the container's static IP IS its LAN IP,
           // so show it for a stopped container too (the native LAN cell is empty). Only
           // for real host-interface nets — a custom docker bridge IP is NOT LAN-reachable.
@@ -2447,6 +2450,47 @@
       }
     } catch (e) {}
   }
+  // #10: the native #dockerAllocations table ("Docker-Zuweisungen") shows "invalid IP" for a STOPPED
+  // container's IP and "???" for its ports. The CC engine knows the CONFIGURED static IP (survives a
+  // stop) + the published ports (HostConfig.PortBindings), so fetch the engine state once and fill
+  // those cells. The AddContainer page runs only bootCtForm (no list machinery), so fetch the state
+  // directly from the proxy here. norm()/MARK/PROXY are the same helpers the list enhancer uses.
+  var ccAllocState = null, ccAllocPending = false;
+  function ccAllocFill() {
+    var tbl = document.getElementById("dockerAllocations");
+    if (!tbl || !tbl.querySelector(".docker-allocation-row")) return;
+    if (!ccAllocState) {
+      if (ccAllocPending) return;
+      ccAllocPending = true;
+      fetch(PROXY + "?path=" + encodeURIComponent("state"), { headers: { Accept: "application/json" } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (st) {
+          ccAllocState = {};
+          ((st && st.containers) || []).forEach(function (c) { if (c && c.name) ccAllocState[norm(c.name)] = c; });
+          ccAllocPending = false; ccAllocPaint();
+        }).catch(function () { ccAllocPending = false; });
+      return;
+    }
+    ccAllocPaint();
+  }
+  function ccAllocPaint() {
+    var tbl = document.getElementById("dockerAllocations");
+    if (!tbl || !ccAllocState) return;
+    var rows = tbl.querySelectorAll(".docker-allocation-row");
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      if (row.getAttribute(MARK)) continue;
+      var spans = row.querySelectorAll(":scope > span");
+      if (spans.length < 4) continue;
+      var c = ccAllocState[norm((spans[0].textContent || "").trim())];
+      if (!c) continue;
+      row.setAttribute(MARK, "1");
+      // IP col: "invalid IP" (stopped) -> the configured static IP the engine kept
+      if (/invalid ip/i.test(spans[2].textContent || "") && c.ip) { spans[2].textContent = c.ip; spans[2].classList.add("cc-alloc-filled"); }
+      // Port col: "???" -> the published ports (bridge containers) from the engine's HostConfig read
+      if (/\?\?\?/.test(spans[3].textContent || "") && c.ports && c.ports.length) { spans[3].textContent = c.ports.join(" "); spans[3].classList.add("cc-alloc-filled"); }
+    }
+  }
   function ctApply() {
     try {
       var root = document.documentElement;
@@ -2480,6 +2524,7 @@
         var n0 = parseInt(cc0.slice(1), 16), L0 = 0.299 * (n0 >> 16 & 255) + 0.587 * (n0 >> 8 & 255) + 0.114 * (n0 & 255);
         ce.style.setProperty("--cc-rb-c", cc0); ce.style.setProperty("--cc-rb-ct", L0 > 150 ? "#161616" : "#fff");
       }
+      ccAllocFill();   // #10: fill stopped-container IP/ports in the Docker-Zuweisungen table when it's open
     } catch (e) {}
   }
   function bootCtForm() {
