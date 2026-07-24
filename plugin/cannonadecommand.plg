@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.64.1">
+  <!ENTITY version   "2.64.2">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,13 @@
 </ICON>
 
 <CHANGES>
+### 2.64.2
+- #14 Wenn ein Container angelegt/angewendet wird, ist die Ausgabe (docker-run-Befehl + Ergebnis) jetzt ein
+  schwebendes Fenster wie das Container-Update-Fenster: eine zentrierte dunkle Carbon-Karte ueber einem
+  abgedunkelten Hintergrund, mit der Ueberschrift als Akzent-Badge oben (vorher nur schlichter Text) und
+  CC-Buttons. Ursache war, dass CC die Ausgabeseite gar nicht erkannte (die Erkennung verlangte ein
+  Formular, das nach dem Anwenden durch die Ausgabe ersetzt ist) - jetzt hat sie ihre eigene Erkennung.
+
 ### 2.64.1
 - Fix Dropdowns im "Konfiguration hinzufuegen"-Dialog (Weiteren Pfad/Port/Variable ...): die aufgeklappte
   Liste sass voellig verschoben am rechten Rand und die unteren drei liessen sich gar nicht oeffnen. Ursache:
@@ -1769,7 +1776,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>148ebf4dc260265d04a82f905669209042befc231893dbac81d22c160fd6da0b</SHA256>
+  <SHA256>9948afea997b72a782991139ac7173e1369275e734b1ec18b84b33c40ccfc483</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

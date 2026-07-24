@@ -2566,9 +2566,44 @@
       window.addEventListener("storage", function (e) { try { if (e && e.key && e.key !== "cc.stateCache" && /^ccd?\./.test(e.key)) ctApply(); } catch (e2) {} });
     } catch (e) {}
   }
+  // #14: the container create/update OUTPUT page (docker run/create result) shares the
+  // /Docker/AddContainer|UpdateContainer URL with the form but has NO form (the output replaced it),
+  // so onCtForm() is false and CC never styled it (user: "kein Schwebefenster, oben kein Badge").
+  // Detect it and turn #displaybox .content into a floating Carbon window with an accent title badge,
+  // like the container-update dialog. All the look lives in docker.css under html.cc-ctout-on.
+  function onCtOutput() {
+    try {
+      if (!/^\/Docker\/(AddContainer|UpdateContainer)$/.test(ctPn())) return false;
+      if (document.querySelector('#canvas form[onsubmit^="return prepareConfig"]')) return false; // that's the FORM page
+      var content = document.querySelector("#displaybox .content");
+      return !!content && (/docker\s+(create|run)/i.test(content.textContent || "") || !!content.querySelector("pre, h2"));
+    } catch (e) { return false; }
+  }
+  function bootCtOutput() {
+    try {
+      if (!themingOn()) return;
+      document.documentElement.classList.add("cc-docker-on", "cc-ctout-on");
+      applySettings();   // stamp --cc-hdr-accent etc. so the badge/buttons follow the theme
+      var box = document.getElementById("displaybox");
+      var content = box && box.querySelector(".content");
+      if (!content) return;
+      if (!document.getElementById("cc-ctout-bd")) { var bd = el("div"); bd.id = "cc-ctout-bd"; document.body.appendChild(bd); }
+      // accent title badge from the page heading (our badge replaces the native grey heading)
+      if (!document.getElementById("cc-ctout-title")) {
+        var t = box.querySelector(".title");
+        var tb = el("div"); tb.id = "cc-ctout-title";
+        tb.textContent = ((t ? t.textContent : "") || "Container").replace(/\s+/g, " ").trim().toUpperCase();
+        content.insertBefore(tb, content.firstChild);
+      }
+      // hide the native grey heading(s) the badge stands in for (never our own badge)
+      var heads = box.querySelectorAll(".title, span.left");
+      for (var i = 0; i < heads.length; i++) { if (heads[i].id !== "cc-ctout-title" && /container/i.test(heads[i].textContent || "")) heads[i].style.display = "none"; }
+    } catch (e) {}
+  }
   function boot() {
     if (localStorage.getItem("cc.enable.docker") === "0") return; // area disabled in CC settings
     if (onCtForm()) { bootCtForm(); return; } // /Docker/AddContainer|UpdateContainer: form styling only — none of the list machinery, API polling or timers below
+    if (onCtOutput()) { bootCtOutput(); return; } // #14: the create/update OUTPUT page (docker run result) -> floating CC window
     try {
       applySettings();
       // INSTANT first paint: the last known engine state seeds the badges right away;

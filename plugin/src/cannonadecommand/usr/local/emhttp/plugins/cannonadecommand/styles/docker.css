@@ -1126,6 +1126,29 @@ html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-filled,
 html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .cc-alloc-filled {
   color: #c8c8c8 !important; font-style: italic; opacity: .92;
 }
+/* #14: the container create/update OUTPUT page (docker run/create result) as a floating Carbon window,
+   like the container-update dialog (docker.js bootCtOutput adds html.cc-ctout-on + the backdrop + the
+   #cc-ctout-title accent badge, and hides the native grey heading). */
+html.cc-ctout-on #cc-ctout-bd { position: fixed; inset: 0; background: rgba(0, 0, 0, .55); z-index: 9998; }
+html.cc-ctout-on #displaybox .content {
+  position: fixed; z-index: 9999; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(900px, 92vw); max-height: 86vh; overflow: auto;
+  background: #1c1c1c; border-radius: 14px; box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+  padding: 0 26px 22px; box-sizing: border-box;
+}
+html.cc-ctout-on #cc-ctout-title {
+  position: sticky; top: 0; z-index: 1; margin: 0 -26px 18px; padding: 14px 26px;
+  background: var(--cc-hdr-accent, #2f6feb); color: var(--cc-hdr-accent-text, #fff);
+  font-weight: 700; font-size: 15px; letter-spacing: .6px; text-transform: uppercase; border-radius: 14px 14px 0 0;
+}
+html.cc-ctout-on #displaybox .content h2 { color: #f0f0f0; }
+html.cc-ctout-on #displaybox .content button,
+html.cc-ctout-on #displaybox .content input[type="button"],
+html.cc-ctout-on #displaybox .content input[type="submit"] {
+  background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important;
+  border: none !important; border-radius: 8px !important; padding: 9px 20px !important;
+  font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .5px !important; box-shadow: none !important; cursor: pointer;
+}
 /* FIELD LABELS as badges — docker.js ctVarLabels adds .cc-varlab (ENV var <span>) OR .cc-dtlab
    (top-level bare <dt>) and strips the trailing colon. The tint FOLLOWS the colour mode: the
    accent normally, the rainbow-primary (--cc-btn-accent) in rainbow mode. Required fields get a
