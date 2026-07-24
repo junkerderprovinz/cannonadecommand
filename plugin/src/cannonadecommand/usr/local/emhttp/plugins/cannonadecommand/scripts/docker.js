@@ -2306,18 +2306,30 @@
   function ccPositionDsel(trig, panel) {
     try {
       var r = trig.getBoundingClientRect(), gap = 4, edge = 14;
+      // position:fixed is offset by the nearest ancestor with a transform/filter/perspective (its
+      // "containing block"), NOT always the viewport. jQuery-UI dialogs (Konfiguration hinzufuegen)
+      // are centred with a transform, so plain viewport coords threw the panel far off to the side
+      // and the lower dropdowns opened off-screen. Find that block and subtract its origin so the
+      // panel lands right under its trigger in every context.
+      var ox = 0, oy = 0, cbBottom = window.innerHeight;
+      for (var pe = panel.parentElement; pe && pe.nodeType === 1 && pe !== document.documentElement; pe = pe.parentElement) {
+        var pcs = getComputedStyle(pe);
+        if (pcs.transform !== "none" || pcs.perspective !== "none" || (pcs.filter && pcs.filter !== "none") || (pcs.willChange || "").indexOf("transform") >= 0) {
+          var pr = pe.getBoundingClientRect(); ox = pr.left; oy = pr.top; cbBottom = pr.bottom; break;
+        }
+      }
       var below = window.innerHeight - r.bottom - edge, above = r.top - edge;
       panel.style.position = "fixed";
       panel.style.boxSizing = "border-box";   // max-height must INCLUDE the panel's own padding, else the
                                               // list spills ~16px past the viewport and its scrollbar end is cut off
-      panel.style.left = Math.round(r.left) + "px";
+      panel.style.left = Math.round(r.left - ox) + "px";
       panel.style.minWidth = Math.round(r.width) + "px";
       panel.style.maxWidth = "min(92vw, 480px)";
       if (below >= 200 || below >= above) {
-        panel.style.top = Math.round(r.bottom + gap) + "px"; panel.style.bottom = "auto";
+        panel.style.top = Math.round(r.bottom + gap - oy) + "px"; panel.style.bottom = "auto";
         panel.style.maxHeight = Math.max(140, below - gap) + "px";
       } else {
-        panel.style.bottom = Math.round(window.innerHeight - r.top + gap) + "px"; panel.style.top = "auto";
+        panel.style.bottom = Math.round(cbBottom - r.top + gap) + "px"; panel.style.top = "auto";
         panel.style.maxHeight = Math.max(140, above - gap) + "px";
       }
     } catch (e) {}
@@ -2402,6 +2414,14 @@
         var sp = sps[i];
         if (!sp.classList.contains("cc-varlab")) { ctStripColon(sp); sp.classList.add("cc-varlab"); }
         ctMarkReq(sp, sp.parentNode);
+        // some dialog labels keep the ":" as a TEXT NODE in the <dt> AFTER the badge span
+        // (e.g. "<span>Container-Pfad</span>:") — the span strip above can't reach it, so remove it
+        // here (stash it on the dt so the teardown can restore native).
+        var pdt = sp.parentNode;
+        if (pdt && pdt.tagName === "DT" && !pdt.hasAttribute("data-cc-dtcolon") && pdt.lastChild && pdt.lastChild.nodeType === 3 && /:\s*$/.test(pdt.lastChild.textContent)) {
+          pdt.setAttribute("data-cc-dtcolon", pdt.lastChild.textContent);
+          pdt.lastChild.textContent = pdt.lastChild.textContent.replace(/\s*:\s*$/, "");
+        }
       }
       // (B) top-level field labels: bare <dt>Name:</dt> with NO child span — badge the dt itself.
       // (#canvas dl is a single-column grid: dt sits on its own row above dd, so an inline-flex
@@ -2425,6 +2445,13 @@
         var h = hosts[i], orig = h.getAttribute("data-cc-lab");
         if (orig) { for (var n = h.childNodes.length - 1; n >= 0; n--) { var nd = h.childNodes[n]; if (nd.nodeType === 3 && nd.textContent.replace(/\s+/g, "")) { nd.textContent = orig; break; } } }
         h.classList.remove("cc-varlab"); h.classList.remove("cc-dtlab"); h.classList.remove("cc-req"); h.removeAttribute("data-cc-lab");
+      }
+      // restore the trailing ":" text node we stripped off dialog <dt>s (data-cc-dtcolon)
+      var cdts = document.querySelectorAll("#canvas dl > dt[data-cc-dtcolon], .ui-dialog dl > dt[data-cc-dtcolon]");
+      for (var q = 0; q < cdts.length; q++) {
+        var cdt = cdts[q];
+        if (cdt.lastChild && cdt.lastChild.nodeType === 3) cdt.lastChild.textContent = cdt.getAttribute("data-cc-dtcolon");
+        cdt.removeAttribute("data-cc-dtcolon");
       }
     } catch (e) {}
   }
