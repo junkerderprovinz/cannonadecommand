@@ -216,3 +216,12 @@ html.cc-tools-on.cc-tools-rbneutral #displaybox .cc-tsel-opt.is-selected {
    so a converted help block stays in its bubble regardless of the native toggle. */
 html.cc-tools-on #displaybox blockquote.inline_help[data-cc-help],
 html.cc-tools-on #displaybox .inline-help[data-cc-help] { display: none !important; }
+
+/* #2-B: native colour-picker swatch injected next to the header colour hex fields (ccToolsEnhance). */
+html.cc-tools-on #displaybox .cc-colpick {
+  width: 34px; height: 30px; padding: 2px; margin-right: 8px; flex: 0 0 auto; box-sizing: border-box;
+  background: var(--cc-tl-surface2, #232323) !important; border: none !important; outline: none !important;
+  border-radius: 6px !important; cursor: pointer; vertical-align: middle;
+}
+html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch-wrapper { padding: 0; }
+html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch { border: none; border-radius: 4px; }

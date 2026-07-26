@@ -99,10 +99,8 @@
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
       var ts = document.querySelectorAll(".ui-dialog .ui-dialog-title, .sweet-alert h2");
       for (var i = 0; i < ts.length; i++) {
-        // while a streaming install/update dialog is IN PROGRESS, grey the title badge out (user) —
-        // the clean spinner (ccNchanStyle) sits bright beside it; the badge recolours when it finishes.
-        var sa0 = ts[i].closest ? ts[i].closest(".sweet-alert") : null;
-        if (sa0 && sa0.classList.contains("cc-nchan-loading")) { ts[i].style.setProperty("background", "#2e2e2e", "important"); ts[i].style.setProperty("color", "#9a9a9a", "important"); continue; }
+        // #7-II (user NEW SPEC): the title badge must carry NO status indication — it stays its normal accent/
+        // colour-mode colour the whole time. (The running/done state now lives in the bottom-left indicator.)
         if (!rbOn()) { ts[i].style.removeProperty("background"); ts[i].style.removeProperty("color"); continue; }   // CSS accent vars rule
         var c = popBadge(i), t = idealText(c);
         ts[i].style.setProperty("background", c, "important"); ts[i].style.setProperty("color", t, "important");
@@ -119,15 +117,31 @@
       var sas = document.querySelectorAll(".sweet-alert.nchan");
       for (var i = 0; i < sas.length; i++) {
         var sa = sas[i], h2 = sa.querySelector("h2"); if (!h2) continue;
-        var loading = /in\s*progress/i.test(h2.textContent || "");
-        sa.classList.toggle("cc-nchan-loading", loading);
-        // user: the loader moves OUT of the title badge to the BOTTOM-LEFT (beside the Schließen button),
-        // as a clean 3-dot pulse (the same "working" look shown over a container logo). Remove any legacy
-        // in-badge spinner; the loader is a direct child of the sweet-alert, CSS-anchored bottom-left.
-        var oldspin = h2.querySelector(".cc-nchan-spin"); if (oldspin) oldspin.remove();
+        // #7-II (user NEW SPEC): the TITLE badge must carry NO status text and NO loader — just the clean name.
+        // The status lives BOTTOM-LEFT beside the buttons: a 3-dot loader (no text) while running, which turns
+        // into a circle-with-check (no text) when finished. Because the title cycles (step names AND
+        // "-IN PROGRESS"/"-FINISHED"), the state is LATCHED on the element (dataset) so stripping the suffix
+        // doesn't lose it: once seen "in progress" -> run; once "finished" -> done; step names don't reset it.
+        var raw = (h2.textContent || "");
+        if (/in\s*progress/i.test(raw)) sa.dataset.ccState = "run";
+        else if (/finished/i.test(raw)) sa.dataset.ccState = "done";
+        var state = sa.dataset.ccState || "";
+        sa.classList.toggle("cc-nchan-loading", state === "run");
+        sa.classList.toggle("cc-nchan-done", state === "done");
+        // strip the status suffix from the title so the badge shows only the clean name
+        var clean = raw.replace(/\s*[-–—]\s*(IN\s*PROGRESS|FINISHED)\b[\s\S]*$/i, "").replace(/\s+$/, "");
+        if (clean && clean !== raw && h2.textContent !== clean) h2.textContent = clean;
+        var oldspin = h2.querySelector(".cc-nchan-spin"); if (oldspin) oldspin.remove();   // kill any legacy in-badge spinner
+        // bottom-left indicator (no text): 3-dot loader while running, circle+check when finished
         var loader = sa.querySelector(":scope > .cc-nchan-loader");
-        if (loading && !loader) { loader = document.createElement("span"); loader.className = "cc-nchan-loader"; loader.setAttribute("role", "status"); loader.setAttribute("aria-label", T("Läuft…", "Working…")); loader.innerHTML = "<i></i><i></i><i></i>"; sa.appendChild(loader); }
-        else if (!loading && loader) { loader.remove(); }
+        if (state === "run" || state === "done") {
+          if (!loader) { loader = document.createElement("span"); loader.className = "cc-nchan-loader"; loader.setAttribute("role", "status"); sa.appendChild(loader); }
+          if (state === "done") {
+            if (loader.getAttribute("data-cc-mode") !== "done") { loader.setAttribute("data-cc-mode", "done"); loader.classList.add("cc-nchan-check"); loader.setAttribute("aria-label", T("Fertig", "Done")); loader.innerHTML = "<svg viewBox='0 0 24 24' aria-hidden='true'><circle class='cc-ck-c' cx='12' cy='12' r='10.5'/><path class='cc-ck-p' d='M6.5 12.5l3.6 3.6L17.5 8.8'/></svg>"; }
+          } else if (loader.getAttribute("data-cc-mode") !== "run") {
+            loader.setAttribute("data-cc-mode", "run"); loader.classList.remove("cc-nchan-check"); loader.setAttribute("aria-label", T("Läuft…", "Working…")); loader.innerHTML = "<i></i><i></i><i></i>";
+          }
+        } else if (loader) { loader.remove(); }
         // #7-III (user: "nutzloser hellgrauer Balken ueber den Buttons"): the step cards are #191919 now, so an
         // EMPTY fieldset (or one with only a <legend> and no body text) renders as a stray grey bar. Hide any
         // fieldset whose BODY (text minus the legend) is blank, not just the fully-empty ones.
@@ -1026,6 +1040,29 @@
           if (!host.querySelector(":scope > .cc-toolsinfo")) { var ic = document.createElement("span"); ic.className = "cc-toolsinfo"; ic.setAttribute("data-cc-tip", txt); ic.textContent = "ⓘ"; host.appendChild(ic); }
           bq.style.display = "none";
         }
+      }
+      // #2-B (user: "Wo sind die Farbwählfelder bei Eigene Kopfzeilen-...farbe?"): Unraid's header colour
+      // fields (header / headermetacolor / background) are plain hex TEXT inputs with no picker. Give each a
+      // real colour-picker swatch (native <input type=color>) synced both ways, so a colour can be picked
+      // visually. Detected by a hex value AND a colour-ish label/name; the swatch writes the field + fires
+      // change so Unraid's Apply still works.
+      var COLNAMES = { header: 1, headermetacolor: 1, background: 1, headertext: 1 };
+      function hex6(x) { x = String(x || "").replace(/^#/, ""); if (x.length === 3) x = x[0] + x[0] + x[1] + x[1] + x[2] + x[2]; return "#" + (x || "000000").toLowerCase(); }
+      var cinp = document.querySelectorAll("#displaybox input[type=text]:not([data-cc-colpick])");
+      for (var ci = 0; ci < cinp.length; ci++) {
+        var inp = cinp[ci], v = (inp.value || "").trim();
+        if (!/^#?[0-9a-f]{3}$|^#?[0-9a-f]{6}$/i.test(v)) continue;
+        var dd0 = inp.closest("dd"), dt0 = dd0 && dd0.previousElementSibling;
+        var lbl = dt0 ? (dt0.textContent || "") : "";
+        if (!COLNAMES[inp.name] && !/farbe|colou?r/i.test(lbl + " " + inp.name)) continue;   // only genuine colour fields
+        inp.setAttribute("data-cc-colpick", "1");
+        var pk = document.createElement("input"); pk.type = "color"; pk.className = "cc-colpick"; pk.value = hex6(v);
+        pk.setAttribute("aria-label", (lbl || inp.name || "Farbe").replace(/\s*:\s*$/, "").trim());
+        inp.parentNode.insertBefore(pk, inp);
+        (function (inp2, pk2) {
+          pk2.addEventListener("input", function () { inp2.value = pk2.value.replace(/^#/, ""); inp2.dispatchEvent(new Event("input", { bubbles: true })); inp2.dispatchEvent(new Event("change", { bubbles: true })); });
+          inp2.addEventListener("input", function () { var vv = (inp2.value || "").trim(); if (/^#?[0-9a-f]{3}$|^#?[0-9a-f]{6}$/i.test(vv)) pk2.value = hex6(vv); });
+        })(inp, pk);
       }
       // #24 (user: yes/no settings -> a toggle): a two-option <select> reading Ja/Nein (or Yes/No,
       // Enabled/Disabled, An/Aus, On/Off) becomes a CC toggle. The real <select> stays in the DOM (hidden)
