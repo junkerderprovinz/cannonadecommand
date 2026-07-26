@@ -430,6 +430,41 @@
     ccReorder = false; ccDragged = null; ccMoved = false;
     navAllParts().forEach(function (it) { it.classList.remove("cc-nav-wiggle", "cc-dragging"); });
   }
+  // ── #Drag-Umbau (user): a LOCK toggle replaces long-press. Locked (default, every page load) = tabs/chips
+  // navigate normally. Click the lock -> ARRANGE mode: everything wiggles and can be dragged immediately;
+  // click again (or Esc) -> locked + the new order saved. The lock is ALWAYS visible while the header is on.
+  var CC_LOCK_SVG = "<svg viewBox='0 0 24 24' aria-hidden='true'><rect x='5' y='11' width='14' height='9' rx='2'/><path class='cc-lk-sh' d='M8 11V8a4 4 0 0 1 8 0v3'/></svg>";
+  function ccArrangeLock() {
+    try {
+      var on = document.documentElement.classList.contains("cc-header-on");
+      var lk = document.getElementById("cc-arrange-lock");
+      if (!on) { if (lk) lk.remove(); return; }
+      if (!lk) {
+        lk = document.createElement("button"); lk.id = "cc-arrange-lock"; lk.type = "button";
+        lk.innerHTML = CC_LOCK_SVG;
+        lk.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); ccToggleArrange(); });
+        document.body.appendChild(lk);
+      }
+      var arr = document.documentElement.classList.contains("cc-arrange");
+      lk.classList.toggle("cc-arrange-on", arr);
+      lk.setAttribute("aria-pressed", arr ? "true" : "false");
+      lk.setAttribute("data-cc-tip", arr ? T("Anordnen aktiv – klicken zum Sperren", "Arranging – click to lock") : T("Entsperren zum Anordnen", "Unlock to arrange"));
+    } catch (e) {}
+  }
+  function ccToggleArrange() {
+    try {
+      var arr = !document.documentElement.classList.contains("cc-arrange");
+      document.documentElement.classList.toggle("cc-arrange", arr);
+      var isle = document.getElementById("cc-island");
+      if (arr) { enterReorder(); if (isle) isle.classList.add("cc-isl-arranging"); }
+      else {
+        exitReorder(); if (isle) isle.classList.remove("cc-isl-arranging");
+        try { saveNavOrder(); } catch (e1) {}
+        try { ccIslandSaveOrder(); } catch (e2) {}
+      }
+      ccArrangeLock();
+    } catch (e) {}
+  }
   // wire ONE participant. Guard PER ITEM. POINTER-based drag (NOT HTML5): the native drag needs
   // draggable=true set BEFORE pointerdown, so arming it on a long-press made the first press do
   // nothing (user had to press 2-3x). Pointer capture + manual insertBefore has no such rule —
@@ -440,12 +475,14 @@
     var la = it.querySelectorAll("a"); for (var ai = 0; ai < la.length; ai++) la[ai].setAttribute("draggable", "false");
     it.addEventListener("pointerdown", function (e) {
       if (e.button !== 0) return;                            // left only
+      // #Drag-Umbau (user): drag is now UNLOCKED by the lock toggle, not by a long press. LOCKED (default) =
+      // pointerdown does nothing, the tab just navigates. ARRANGE mode (cc-arrange) = the SAME press drags
+      // IMMEDIATELY (no hold), and everything already wiggles. Escape/clicking the lock again re-locks.
+      if (!document.documentElement.classList.contains("cc-arrange")) return;
       cancelHold(); ccPressXY = { x: e.clientX, y: e.clientY }; ccPressItem = it; ccPressPtr = e.pointerId; ccMoved = false;
-      // shorter hold (300ms) + capture on the pressed item so the SAME gesture drags
-      ccHoldTimer = setTimeout(function () {
-        ccHoldTimer = null; enterReorder(); ccDragged = ccPressItem;
-        if (ccDragged) { ccDragged.classList.add("cc-dragging"); try { ccDragged.setPointerCapture(ccPressPtr); } catch (e2) {} }
-      }, 300);
+      enterReorder(); ccDragged = ccPressItem;
+      if (ccDragged) { ccDragged.classList.add("cc-dragging"); try { ccDragged.setPointerCapture(ccPressPtr); } catch (e2) {} }
+      e.preventDefault();
     });
   }
   // document-level pointer handlers (bound once) run the whole gesture — capture routes moves here
@@ -476,7 +513,7 @@
         document.addEventListener("pointermove", ccNavPointerMove);
         document.addEventListener("pointerup", ccNavPointerUp);
         document.addEventListener("pointercancel", ccNavPointerUp);
-        document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ccReorder) { cancelHold(); exitReorder(); } });
+        document.addEventListener("keydown", function (e) { if (e.key === "Escape" && document.documentElement.classList.contains("cc-arrange")) { cancelHold(); ccToggleArrange(); } });
         // a long-press that never became a drag must not ALSO navigate (capture phase so it beats the link)
         document.addEventListener("click", function (e) { if (ccSuppressClick) { e.preventDefault(); e.stopPropagation(); ccSuppressClick = false; } }, true);
       }
@@ -756,15 +793,14 @@
       for (var i = 0; i < chips.length; i++) {
         (function (c) {
           if (c.getAttribute("data-cc-idrag") === "1") return; c.setAttribute("data-cc-idrag", "1");
-          c.addEventListener("pointerdown", function (e) {   // long-press (300ms) arms the drag so a plain click still works
+          c.addEventListener("pointerdown", function (e) {   // #Drag-Umbau: LOCKED = click jumps to the page; ARRANGE (cc-arrange) = drag immediately
             if (e.button !== 0) return;
+            if (!document.documentElement.classList.contains("cc-arrange")) return;   // locked -> the chip click navigates
             ccIslPressXY = { x: e.clientX, y: e.clientY }; ccIslPressPtr = e.pointerId; ccIslMoved = false;
-            clearTimeout(ccIslHold);
-            ccIslHold = setTimeout(function () {
-              ccIslHold = null; ccIslDragged = c; c.classList.add("cc-isl-dragging");
-              var isle = document.getElementById("cc-island"); if (isle) isle.classList.add("cc-isl-arranging");
-              try { c.setPointerCapture(ccIslPressPtr); } catch (e2) {}
-            }, 220);   // K12: shorter hold -> easier to pick a chip up
+            ccIslDragged = c; c.classList.add("cc-isl-dragging");
+            var isle = document.getElementById("cc-island"); if (isle) isle.classList.add("cc-isl-arranging");
+            try { c.setPointerCapture(ccIslPressPtr); } catch (e2) {}
+            e.preventDefault();
           });
         })(chips[i]);
       }
@@ -1443,6 +1479,7 @@
       watchIsland();    // live footer observer so nchan status/temp updates flow into the chips
       watchProfile();   // debounced profile observer so uptime/edition/name rebuilds flow into chips + brand
       ccDockProfile();  // glue bell+burger onto the far right end of the menu icon row (re-measured every pass)
+      ccArrangeLock();  // #Drag-Umbau: the always-visible lock toggle (self-gates on cc-header-on)
       // late passes against STALE geometry (live-proven: the first pass measured the icon row
       // 160px right of its settled position and nothing re-triggered) — the row settles as
       // late-loading icons/styles arrive, so re-pin twice after the dust

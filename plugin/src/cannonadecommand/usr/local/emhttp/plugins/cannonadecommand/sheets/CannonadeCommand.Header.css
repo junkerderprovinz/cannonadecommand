@@ -849,3 +849,24 @@ html.cc-popups-on .sweet-alert.nchan fieldset:not(:has(*)):not(:has(:not(:empty)
    (left); row-reverse puts it right. */
 html.cc-popups-on .sweet-alert.nchan .sa-button-container,
 html.cc-popups-on .sweet-alert.nchan p:has(> button.confirm) { flex-direction: row-reverse !important; }
+
+/* #Drag-Umbau (user): the always-visible LOCK toggle. Locked = grey padlock; click -> ARRANGE mode (accent,
+   everything wiggles + drags immediately); click again / Esc -> locked + order saved. Floating, top-right. */
+#cc-arrange-lock {
+  position: fixed; top: 64px; right: 16px; z-index: 100001;
+  width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;
+  background: #1c1c1c; border: none; border-radius: 50%; cursor: pointer; color: #c9c9c9; padding: 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .5); transition: background .14s, color .14s, transform .12s, box-shadow .14s;
+}
+#cc-arrange-lock:hover { transform: translateY(-1px); color: #fff; }
+#cc-arrange-lock svg { width: 20px; height: 20px; display: block; }
+#cc-arrange-lock svg rect { fill: currentColor; }
+#cc-arrange-lock svg .cc-lk-sh { fill: none; stroke: currentColor; stroke-width: 2; transition: transform .18s ease; }
+#cc-arrange-lock.cc-arrange-on {
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .55), 0 0 0 3px rgba(255, 255, 255, .08);
+}
+#cc-arrange-lock.cc-arrange-on svg .cc-lk-sh { transform: translate(4px, -1px) rotate(12deg); transform-origin: 16px 11px; }   /* shackle springs open */
+/* arrange-mode cursors (the wiggle itself is the existing cc-nav-wiggle + .cc-isl-arranging animations) */
+html.cc-arrange #menu .nav-item, html.cc-arrange #cc-island .cc-isl-chip { cursor: grab; }
+html.cc-arrange #menu .nav-item.cc-dragging, html.cc-arrange #cc-island .cc-isl-chip.cc-isl-dragging { cursor: grabbing; }

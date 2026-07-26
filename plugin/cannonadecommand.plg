@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.90.0">
+  <!ENTITY version   "2.91.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,11 @@
 </ICON>
 
 <CHANGES>
+### 2.91.0
+- Anordnen per Schloss (statt Halten): Ein Schloss-Symbol (immer sichtbar, oben rechts) entsperrt das Anordnen.
+  Klick -> die Menue-Tabs und Insel-Chips zittern und lassen sich SOFORT verschieben; erneuter Klick (oder Esc)
+  sperrt wieder und speichert die Anordnung. Kein fummeliges Gedrueckt-Halten mehr; im gesperrten Zustand
+  navigieren Tabs/Chips ganz normal.
 ### 2.90.0
 - Anzeige-Einstellungen: Die drei Kopfzeilen-Farbfelder (Text/Sekundaertext/Hintergrund) haben jetzt ein echtes
   Farbwaehl-Feld (Swatch) neben dem Hex-Feld, beидseitig synchronisiert.
@@ -2055,7 +2060,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>161849fb0cc600a35d9f023b6e144371345d04091a2c1ae5f4013f3d91977848</SHA256>
+  <SHA256>c0166e82a19d8677ef40812f364c9754762d92994cf8e6e3a0a89263db359ce4</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
