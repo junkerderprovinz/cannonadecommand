@@ -627,19 +627,16 @@
   // flag) shows through. The fill % lives in the span's inline width. Runs from apply() (load + storage).
   function ccStateBars() {
     try {
-      var theming = g("cc.theming", "1") !== "0";
-      var native = g("cc.statenative", "0") === "1";
-      // #1/#2 (user): when CC is on and "native state colours" is OFF, the usage/fill bars are INTEGRATED
-      // into the colour mode — they take the rainbow/flag action colour (or the accent). ON = the native
-      // green/amber/red by fill level. Theming off = revert to Unraid's own bar entirely.
-      var rs = getComputedStyle(document.documentElement);
-      var pal = (rs.getPropertyValue("--cc-rbaccent") || "").trim() || (rs.getPropertyValue("--cc-accent") || "").trim() || "#2f6feb";
+      // #1/#2 (user): when "native state colours" is ON, the usage/fill bars show the native green/amber/red
+      // by fill level (set inline here). When OFF, we CLEAR the inline colour so the CSS rule takes over and
+      // the bars follow the colour mode (rainbow/flag/accent) — that CSS path catches late-rendered bars too.
+      var on = g("cc.statenative", "0") === "1" && g("cc.theming", "1") !== "0";
       var fills = document.querySelectorAll(".usage-disk > span:first-child");
       for (var i = 0; i < fills.length; i++) {
         var f = fills[i];
-        if (!theming) { f.style.removeProperty("background"); continue; }
-        if (native) { var w = parseFloat(f.style.width) || 0; f.style.setProperty("background", w >= 95 ? "#d9433f" : w >= 80 ? "#d6a243" : "#3fae6a", "important"); }
-        else { f.style.setProperty("background", pal, "important"); }
+        if (!on) { f.style.removeProperty("background"); continue; }
+        var w = parseFloat(f.style.width) || 0;
+        f.style.setProperty("background", w >= 95 ? "#d9433f" : w >= 80 ? "#d6a243" : "#3fae6a", "important");
       }
     } catch (e) {}
   }
@@ -648,6 +645,7 @@
   function ccToolsEnhance() {
     try {
       if (!document.documentElement.classList.contains("cc-tools-on")) return;
+      // #22: strip the trailing colon from every setting label
       var dts = document.querySelectorAll("#displaybox dl > dt:not([data-cc-nocolon])");
       for (var i = 0; i < dts.length; i++) {
         var dt = dts[i]; dt.setAttribute("data-cc-nocolon", "1");
@@ -655,6 +653,44 @@
         var tn = null;
         for (var j = walk.childNodes.length - 1; j >= 0; j--) { if (walk.childNodes[j].nodeType === 3 && (walk.childNodes[j].nodeValue || "").trim()) { tn = walk.childNodes[j]; break; } }
         if (tn) tn.nodeValue = tn.nodeValue.replace(/\s*:\s*$/, "");
+      }
+      // #23 (user: native infotexts -> a CC info bubble): Unraid's per-setting help is a
+      // blockquote.inline_help; move its text onto a small (i) icon on the label (rides the CC tip bubble)
+      // and hide the native block.
+      var helps = document.querySelectorAll("#displaybox blockquote.inline_help:not([data-cc-help]), #displaybox .inline-help:not([data-cc-help])");
+      for (var h = 0; h < helps.length; h++) {
+        var bq = helps[h]; bq.setAttribute("data-cc-help", "1");
+        var txt = (bq.textContent || "").trim(); if (!txt) { continue; }
+        var dd = bq.closest("dd"); var lab = dd ? dd.previousElementSibling : null;
+        var host = (lab && lab.tagName === "DT") ? (lab.querySelector("span") || lab) : bq.parentElement;
+        if (host && !host.querySelector(".cc-toolsinfo")) {
+          var ic = document.createElement("span"); ic.className = "cc-toolsinfo"; ic.setAttribute("data-cc-tip", txt); ic.textContent = "ⓘ";
+          host.appendChild(ic);
+        }
+        bq.style.display = "none";
+      }
+      // #24 (user: yes/no settings -> a toggle): a two-option <select> reading Ja/Nein (or Yes/No,
+      // Enabled/Disabled, An/Aus, On/Off) becomes a CC toggle. The real <select> stays in the DOM (hidden)
+      // as the form value; the toggle writes it back and fires change so Unraid's handlers still run.
+      var YES = { ja: 1, yes: 1, enabled: 1, an: 1, on: 1, aktiviert: 1 }, NO = { nein: 1, no: 1, disabled: 1, aus: 1, off: 1, deaktiviert: 1 };
+      var sels = document.querySelectorAll("#displaybox select:not([data-cc-tgl]):not([multiple])");
+      for (var s = 0; s < sels.length; s++) {
+        var sel = sels[s];
+        if (sel.options.length !== 2) continue;
+        var t0 = (sel.options[0].text || "").trim().toLowerCase(), t1 = (sel.options[1].text || "").trim().toLowerCase();
+        var yesOpt = YES[t0] ? sel.options[0] : YES[t1] ? sel.options[1] : null;
+        var noOpt = NO[t0] ? sel.options[0] : NO[t1] ? sel.options[1] : null;
+        if (!yesOpt || !noOpt) continue;
+        sel.setAttribute("data-cc-tgl", "1");
+        var tg = document.createElement("span"); tg.className = "cc-tgl" + (sel.value === yesOpt.value ? " cc-tgl-on" : ""); tg.setAttribute("role", "switch"); tg.setAttribute("tabindex", "0");
+        tg.appendChild(document.createElement("span")).className = "cc-tgl-knob";
+        (function (sel2, tg2, yv, nv) {
+          var flip = function () { var nowOn = !tg2.classList.contains("cc-tgl-on"); tg2.classList.toggle("cc-tgl-on", nowOn); sel2.value = nowOn ? yv : nv; try { sel2.dispatchEvent(new Event("change", { bubbles: true })); } catch (e2) {} };
+          tg2.addEventListener("click", flip);
+          tg2.addEventListener("keydown", function (e3) { if (e3.key === "Enter" || e3.key === " ") { e3.preventDefault(); flip(); } });
+        })(sel, tg, yesOpt.value, noOpt.value);
+        sel.style.display = "none";
+        sel.parentNode.insertBefore(tg, sel.nextSibling);
       }
     } catch (e) {}
   }

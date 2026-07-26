@@ -345,11 +345,18 @@ html.cc-shares-on.cc-on-main #displaybox .usage-disk:not(.sys):not(.mm) {
 html.cc-shares-on.cc-on-main #displaybox .usage-disk:not(.sys):not(.mm) > span:first-child {
   position: absolute; left: 0; top: 0; height: 100% !important;
   border-radius: var(--cc-b-radius, 999px) !important; box-shadow: none !important;
-  background: var(--cc-shr-accent, #2f6feb) !important;   /* fallback: usage_color() returns '' in text-display mode */
 }
-html.cc-shares-on.cc-on-main #displaybox .usage-disk:not(.sys):not(.mm) > span:first-child.greenbar  { background: #1f9d55 !important; }
-html.cc-shares-on.cc-on-main #displaybox .usage-disk:not(.sys):not(.mm) > span:first-child.orangebar { background: #e0912a !important; }
-html.cc-shares-on.cc-on-main #displaybox .usage-disk:not(.sys):not(.mm) > span:first-child.redbar    { background: #d9433f !important; }
+/* #1/#2 (user): INTEGRATED (default, no cc-state-native) -> the fill follows the COLOUR MODE (rainbow/
+   flag action colour, else the accent), overriding Unraid's usage classes. Pure CSS so late-rendered
+   bars are covered too. */
+html.cc-shares-on.cc-on-main:not(.cc-state-native) #displaybox .usage-disk:not(.sys):not(.mm) > span:first-child {
+  background: var(--cc-rbaccent, var(--cc-shr-accent, #2f6feb)) !important;
+}
+/* NATIVE state colours ON (cc-state-native) -> keep Unraid's green/amber/red by fill level. */
+html.cc-shares-on.cc-on-main.cc-state-native #displaybox .usage-disk:not(.sys):not(.mm) > span:first-child          { background: var(--cc-shr-accent, #2f6feb) !important; }
+html.cc-shares-on.cc-on-main.cc-state-native #displaybox .usage-disk:not(.sys):not(.mm) > span:first-child.greenbar  { background: #1f9d55 !important; }
+html.cc-shares-on.cc-on-main.cc-state-native #displaybox .usage-disk:not(.sys):not(.mm) > span:first-child.orangebar { background: #e0912a !important; }
+html.cc-shares-on.cc-on-main.cc-state-native #displaybox .usage-disk:not(.sys):not(.mm) > span:first-child.redbar    { background: #d9433f !important; }
 /* label: native puts it in-flow with top:-0.4rem — pin it centred-right INSIDE the 20px bar instead */
 html.cc-shares-on.cc-on-main #displaybox .usage-disk:not(.sys):not(.mm) > span:last-child {
   position: absolute; top: 0; right: 0; bottom: 0; z-index: 1;

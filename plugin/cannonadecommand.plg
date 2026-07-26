@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.68.0">
+  <!ENTITY version   "2.69.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,16 @@
 </ICON>
 
 <CHANGES>
+### 2.69.0
+- Konsistenz-Runde (Teil 3) - native Werkzeug-/Einstellungen-Subseiten:
+- Die Ueberschrift oben auf jeder Werkzeug-/Einstellungen-Subseite ist jetzt ein Badge statt eines grauen
+  Balkens.
+- Die nativen Infotexte (die beim Anklicken einer Einstellung erscheinen) sitzen jetzt hinter einem
+  kleinen (i)-Symbol an der Beschriftung und erscheinen als CannonadeCommand-Sprechblase beim Ueberfahren.
+- Einstellungen mit nur Ja/Nein bekommen jetzt einen Schalter statt einer Auswahlliste.
+- Nachtrag: die Auslastungs-/Fuellstandsbalken folgen jetzt zuverlaessig dem Farbmodus (die Loesung
+  greift auch fuer spaeter nachgeladene Balken).
+
 ### 2.68.0
 - Konsistenz-Runde (Teil 2):
 - Auslastungs-/Fuellstandsbalken folgen jetzt dem Farbmodus, wenn der Schalter "Zustandsanzeigen nativ
@@ -1851,7 +1861,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>a2071ebd39a03da159b76e773744f37184d0927c1cf639a66ffa44762d14759f</SHA256>
+  <SHA256>51206cb13b6c2c78af008ec0d847da4913a7a2a9944a682458dbaed893bf46e6</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
