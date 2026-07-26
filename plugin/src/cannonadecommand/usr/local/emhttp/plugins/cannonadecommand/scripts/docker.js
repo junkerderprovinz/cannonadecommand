@@ -771,10 +771,16 @@
           // the APPLY-UPDATE action link (top-level a.exec, NOT inside an advanced div)
           // gets its amber pill inline — some builds have no nested orange-text span,
           // so the :has() CSS never fired and only bare text showed.
+          // #5 (user: the UPDATE badge belongs to the state indicators): native state colours ON ->
+          // keep the amber "update" pill; OFF -> integrate it into the colour mode (rainbow/flag/accent).
+          var upNative = localStorage.getItem("cc.statenative") === "1";
+          var upRs = getComputedStyle(document.documentElement);
+          var upBg = upNative ? "#e0912a" : ((upRs.getPropertyValue("--cc-rbaccent") || "").trim() || (upRs.getPropertyValue("--cc-accent") || "").trim() || "#e0912a");
+          var upFg = upNative ? "#1a1a1a" : ((upRs.getPropertyValue("--cc-rbaccent-text") || "").trim() || (upRs.getPropertyValue("--cc-accent-text") || "").trim() || "#1a1a1a");
           Array.prototype.slice.call(upCell.querySelectorAll("a.exec")).forEach(function (ax) {
             if (ax.closest("div.advanced")) return;
-            ax.style.setProperty("background", "#e0912a", "important");
-            ax.style.setProperty("color", "#1a1a1a", "important");
+            ax.style.setProperty("background", upBg, "important");
+            ax.style.setProperty("color", upFg, "important");
             ax.style.setProperty("display", "inline-flex", "important");
             ax.style.setProperty("align-items", "center", "important");
           });

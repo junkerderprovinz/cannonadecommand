@@ -382,9 +382,15 @@
     // ── col 5 (sid): status badge — green "auf dem neuesten Stand", amber update.
     // The cell is REWRITTEN by the update-check ajax, so this re-runs per mutation.
     var sid = tds[4];
+    // #5 (user: the STATUS-column badges belong to the state indicators): native state colours ON ->
+    // keep green (up to date) / amber (update); OFF -> integrate into the colour mode (rainbow/flag/accent).
+    var stNative = ls("cc.statenative") === "1";
+    var pRs = getComputedStyle(document.documentElement);
+    var palC = (pRs.getPropertyValue("--cc-rbaccent") || "").trim() || (pRs.getPropertyValue("--cc-accent") || "").trim() || "#2f6feb";
+    var palT = (pRs.getPropertyValue("--cc-rbaccent-text") || "").trim() || (pRs.getPropertyValue("--cc-accent-text") || "").trim() || "#fff";
     var upA = sid.querySelector("a:not([data-ccp]), input[type=button]:not([data-ccp])");
     if (upA && /update|aktualis/i.test(upA.textContent || upA.value || "")) {
-      upA.setAttribute(MARK, "1"); pill(upA, "#e0912a", "#161616");
+      upA.setAttribute(MARK, "1"); pill(upA, stNative ? "#e0912a" : palC, stNative ? "#161616" : palT);
       upA.style.setProperty("cursor", "pointer", "important");
       upA.style.setProperty("font-weight", "600", "important");
     }
@@ -394,8 +400,8 @@
     }
     if (stEl && !stEl.getAttribute(MARK)) {
       var t2 = sid.textContent.toLowerCase();
-      if (/up.to.date|aktuell|neue?sten stand|current/.test(t2)) { pill(stEl, "#1f9d55", "#fff"); stEl.setAttribute(MARK, "1"); }
-      else if (/update|aktualis|install/.test(t2) && !/checking|prüf/.test(t2)) { pill(stEl, "#e0912a", "#161616"); stEl.setAttribute(MARK, "1"); }
+      if (/up.to.date|aktuell|neue?sten stand|current/.test(t2)) { pill(stEl, stNative ? "#1f9d55" : palC, stNative ? "#fff" : palT); stEl.setAttribute(MARK, "1"); }
+      else if (/update|aktualis|install/.test(t2) && !/checking|prüf/.test(t2)) { pill(stEl, stNative ? "#e0912a" : palC, stNative ? "#161616" : palT); stEl.setAttribute(MARK, "1"); }
     }
     var lnk = sid.querySelector("a"); if (lnk) lnk.style.setProperty("color", "inherit", "important");
     // ── col 6: the remove action — the CANONICAL delete control (standardized systemwide,

@@ -1141,6 +1141,13 @@ html.cc-docker-on.cc-on-addct #canvas #dockerAllocations .docker-allocation-row:
 html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .docker-allocation-row:nth-child(even) {
   background: rgba(255, 255, 255, .04) !important;
 }
+/* #17 (user: "Kategorien-Feld nicht richtig ausgerichtet"): the categories dropdownchecklist widget
+   (#ddcl-catSelect) sat at its own intrinsic width, out of line with the other value fields. Make it
+   fill the value column and sit flush at its left edge like every other input. */
+html.cc-docker-on.cc-on-addct #canvas #ddcl-catSelect,
+html.cc-docker-on.cc-on-addct .ui-dialog #ddcl-catSelect {
+  display: block !important; width: 100% !important; box-sizing: border-box !important; margin: 0 !important; justify-self: start;
+}
 /* #14: the container create/update OUTPUT page (docker run/create result) as a floating Carbon window,
    like the container-update dialog (docker.js bootCtOutput adds html.cc-ctout-on + the backdrop + the
    #cc-ctout-title accent badge, and hides the native grey heading). */

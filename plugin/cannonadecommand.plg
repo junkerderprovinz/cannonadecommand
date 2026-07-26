@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.69.0">
+  <!ENTITY version   "2.70.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,13 @@
 </ICON>
 
 <CHANGES>
+### 2.70.0
+- Konsistenz-Runde (Teil 4):
+- Zustandsanzeige-Umfang: Das Update-Badge auf der Docker-Seite und die Badges in der Status-Spalte des
+  Plugin-Tabs gehoeren jetzt zur Zustandsanzeige - bei "Zustandsanzeigen nativ faerben" AUS folgen sie dem
+  Farbmodus, AN bleiben sie in ihrer nativen Signalfarbe (gruen/gelb).
+- Das Kategorien-Feld im Docker-Formular fuellt jetzt die Wertespalte und sitzt buendig wie die anderen Felder.
+
 ### 2.69.0
 - Konsistenz-Runde (Teil 3) - native Werkzeug-/Einstellungen-Subseiten:
 - Die Ueberschrift oben auf jeder Werkzeug-/Einstellungen-Subseite ist jetzt ein Badge statt eines grauen
@@ -1861,7 +1868,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>51206cb13b6c2c78af008ec0d847da4913a7a2a9944a682458dbaed893bf46e6</SHA256>
+  <SHA256>2bfa24c3270ed258387ce1a2e0bcf528cac7a999bc189400b7e87df626d02c53</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
