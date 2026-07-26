@@ -46,6 +46,18 @@ html.cc-vms-on #kvm_list .cc-badge {
    take the rainbow/flag action colour when active; the kind badges (cpu/ram/ip/vol) keep their own
    rotated slots via the higher-specificity rules below. Accent when the colour mode is off. */
 html.cc-vms-on #kvm_list .cc-b { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)); }
+/* #N4 (user: VM list into the REACTIVE colour mode): reactive rainbow -> every row badge RESTS grey and
+   takes the palette colour only on row hover (matching the Docker/Shares reactive behaviour). */
+html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b,
+html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-cpu,
+html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-ram,
+html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-ip,
+html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-vol { background: #2e2e2e !important; color: #cfcfcf !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b,
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-cpu,
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-ram,
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-ip,
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-vol { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important; }
 html.cc-vms-on #kvm_list .cc-b-k { opacity: .72; font-weight: 500; }
 html.cc-vms-on #kvm_list .cc-b-v { font-family: Consolas, "SFMono-Regular", monospace; }
 /* Badge VALUE (incl. the a.vcpu-* CPU link vms.js moves into .cc-b-v) inherits the badge text colour;

@@ -224,7 +224,7 @@
       var sv = document.getElementById("cc-vm-tint-svg"); if (sv) sv.remove();
       var hh = document.getElementById("cc-vm-mono-svg"); if (hh) hh.remove();
       // grid/rainbow live-revert: drop the classes, clear the palette vars, remove the injected view toggle
-      document.documentElement.classList.remove("cc-vmgrid", "cc-vm-rainbow");
+      document.documentElement.classList.remove("cc-vmgrid", "cc-vm-rainbow", "cc-vm-rbneutral");
       RB_KINDS.forEach(function (k) { document.documentElement.style.removeProperty("--cc-rb-" + k); document.documentElement.style.removeProperty("--cc-rb-" + k + "-t"); });
       var vt = document.getElementById("cc-vm-viewtoggle"); if (vt) { var vbar = vt.closest(".cc-vm-toolbar") || vt; if (vbar.parentNode) vbar.parentNode.removeChild(vbar); }
     } catch (e) {}
@@ -539,7 +539,7 @@
       if (vbox) { if (vmSections) cardPanels(vbox); else flattenTeardown(); }
     } catch (e) {}
     try { ensureViewToggle(); applyView(); } catch (e) {}   // Grid/List view (cc.vmview)
-    try { applyRainbowPalette(); root.classList.toggle("cc-vm-rainbow", ls("cc.theming") !== "0" && ls("cc.rainbow") === "1"); } catch (e) {}
+    try { applyRainbowPalette(); var vmRb = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1"; root.classList.toggle("cc-vm-rainbow", vmRb); root.classList.toggle("cc-vm-rbneutral", vmRb && ls("cc.rbmode") === "active"); } catch (e) {}   /* #N4: reactive rainbow -> badges rest grey, colour on hover */
     // adopt-toggle ON (default) -> Docker's cc.* settings; OFF -> own ccv.* keys.
     // Stay even with adopt-off + no tint colour when the Logo-Hintergrund badge is on.
     if (ls("cc.stylevms") === "0" && !ls("ccv.iconcolor") && effK("iconbg") !== "1") return;
@@ -600,7 +600,7 @@
     try { if (mo) mo.disconnect(); mo = null; } catch (e) {}
     try { if (smo) smo.disconnect(); smo = null; } catch (e) {}
     try { if (liveTimer) clearInterval(liveTimer); liveTimer = null; } catch (e) {}
-    try { document.documentElement.classList.remove("cc-vms-on", "cc-vm-iconbg", "cc-sections-vms", "cc-vmgrid", "cc-vm-rainbow"); document.documentElement.style.removeProperty("--cc-iconbg-color"); } catch (e) {}
+    try { document.documentElement.classList.remove("cc-vms-on", "cc-vm-iconbg", "cc-sections-vms", "cc-vmgrid", "cc-vm-rainbow", "cc-vm-rbneutral"); document.documentElement.style.removeProperty("--cc-iconbg-color"); } catch (e) {}
     try { RB_KINDS.forEach(function (k) { document.documentElement.style.removeProperty("--cc-rb-" + k); document.documentElement.style.removeProperty("--cc-rb-" + k + "-t"); }); var vt = document.getElementById("cc-vm-viewtoggle"); if (vt) { var vbar = vt.closest(".cc-vm-toolbar") || vt; if (vbar.parentNode) vbar.parentNode.removeChild(vbar); } } catch (e) {}
     try { enhanceCellsTeardown(); flattenTeardown(); } catch (e) {}
     try { var imgs = vmImgs(); for (var i = 0; i < imgs.length; i++) { imgs[i].style.filter = ""; imgs[i].style.removeProperty("color"); var w = imgs[i].parentElement; if (w) { w.style.removeProperty("background"); w.style.removeProperty("border-radius"); w.style.removeProperty("width"); w.style.removeProperty("height"); w.style.removeProperty("padding"); w.style.removeProperty("display"); w.style.removeProperty("align-items"); w.style.removeProperty("justify-content"); w.style.removeProperty("box-sizing"); } } } catch (e) {}
