@@ -25,13 +25,14 @@
       // #7/#10 rainbow palette + flag colours stretch to fill the card width; the reset is the SAME
       // size as a swatch (its own equal flex cell at the end of the row), not a small right-pushed icon.
       "#cc-settings .cc-set-swatches.cc-fill{display:flex;gap:6px;align-items:center}" +
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:1 1 0;height:28px;min-width:0;box-sizing:border-box;border-radius:4px}" +   /* #5: ONE 28px height everywhere */
-      // #6 (user): the rainbow/flag RESET is a proper compact BADGE (badge-form radius + accent hover), not a full-width grey cell
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:0 0 auto;width:34px;height:28px;box-sizing:border-box;margin-left:2px;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:min(var(--cc-b-radius,999px),11px);cursor:pointer;color:#cfcfcf;transition:filter .12s,background .12s,color .12s}" +
+      // #5 (user redo): EVERY colour row is 9 equal flex cells so a swatch is the IDENTICAL size in every card.
+      // A swatch = 1 cell. The reset = 1 cell (same size as a swatch). The hex field = 2 cells (wider than a
+      // reset, as the hex code needs the room) — and the builder shows 7 presets instead of 9 in a hex row so
+      // 7 + 2 = 9. All three are the SAME 30px height (box-sizing:border-box) so the whole row lines up flush.
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;border-radius:5px}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:5px;cursor:pointer;color:#cfcfcf;font-size:14px;transition:filter .12s,background .12s,color .12s}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn:hover{background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff)}" +
-      // #18/#5 the HEX field is the rightmost cell of the swatch row: swatches flex to fill, hex a fixed
-      // compact chip on the right, SAME 28px height as the swatches so the whole row lines up.
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{flex:0 0 auto;width:104px;height:28px;box-sizing:border-box;padding:0 9px;align-self:center;font-size:12px;margin:0}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{flex:2 2 0;height:30px;min-width:0;box-sizing:border-box;padding:0 8px;align-self:center;font-size:11px;letter-spacing:0;margin:0}" +
       // #26 settings search + nuke-reset button
       "#cc-settings .cc-set-searchrow{margin:12px 0 2px}" +
       "#cc-settings .cc-set-search{box-sizing:border-box;width:100%;max-width:420px;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:9px 13px;font-size:13px;transition:background-color .12s}" +
@@ -519,14 +520,16 @@
     // smooth motion everywhere AND overrides the OS "reduce motion" preference (user wants more); OFF stills it.
     function applyAnim() { var on = get("cc.anim", "1") !== "0"; document.documentElement.classList.toggle("cc-anim-on", on); document.documentElement.classList.toggle("cc-anim-off", !on); }
     applyAnim();   // stamp immediately so the settings page itself animates per the current setting
+    // #14-Card (user: "nicht wegen jedem einzelnen Scheiss eine eigene Card"): the Animations switch lives INSIDE
+    // the Theming card now (like Density), not a standalone almost-empty card. Appended below where themingCard exists.
     (function () {
-      var c = card(T("Animationen", "Animations"), T("Sanfte Übergänge und Bewegungen in der gesamten Oberfläche. Standardmäßig an — überschreibt auch die System-Einstellung „Bewegung reduzieren“.", "Smooth transitions and motion across the whole UI. On by default — also overrides the system 'reduce motion' preference."));
+      if (!themingCard) return;
       var row = el("div", "cc-set-row cc-set-inline");
-      var lw = el("span", "cc-set-lblwrap"); lw.appendChild(el("span", null, T("Animationen aktivieren", "Enable animations")));
+      var lw = el("span", "cc-set-lblwrap"); lw.appendChild(el("span", null, T("Animationen", "Animations")));
       lw.appendChild(infoIcon(T("AN = CannonadeCommand animiert Übergänge, Hover-Effekte und Einblendungen systemweit — auch wenn das Betriebssystem „Bewegung reduzieren“ meldet. AUS = keine Animationen.", "ON = CannonadeCommand animates transitions, hovers and fades system-wide — even if the OS reports 'reduce motion'. OFF = no animations.")));
       row.appendChild(lw);
       row.appendChild(toggle(get("cc.anim", "1") !== "0", function (v) { set("cc.anim", v ? "1" : "0"); applyAnim(); }));
-      c.appendChild(row); wrapMain.appendChild(c);
+      themingCard.appendChild(row);
     })();
     // (the compact live-sync "Anzeige (Unraid, live)" card is built above; everything else lives natively)
     // ── section order = the USER'S main-menu order. header.js persists the drag-reordered
@@ -633,7 +636,7 @@
     // cell — exactly like the rainbow row's swatches + reset. Identical layout for EVERY colour picker
     // (the per-area cards use the same shape below).
     var srow = el("div", "cc-set-swatches cc-fill");
-    PRESETS.forEach(function (c) {
+    PRESETS.slice(0, 7).forEach(function (c) {   // #5: 7 presets + hex(2 cells) = 9 cells, matching the rainbow/flag rows (8 + reset)
       // a <span>, NOT a <button>: Unraid's global button CSS was bloating these into
       // big bordered rectangles. dataset.c lets syncSwOn highlight the active one.
       var sw = el("span", "cc-set-sw" + (c === accent ? " cc-set-sw-on" : "")); sw.setAttribute("data-tip", c); sw.style.background = c; sw.dataset.c = c;
@@ -1102,7 +1105,7 @@
       hx.addEventListener("input", function () { var v = normHex(hx.value); if (v) { acc = v; pk._set(v); set(P + "accent", v); useOwn(); paintPv(); } });
       pr.appendChild(pk); cA.appendChild(pr);   // #18: hex moves onto the swatch row (rightmost cell), like the top Badges card
       var sr = el("div", "cc-set-swatches cc-fill");
-      PRESETS.forEach(function (c) {
+      PRESETS.slice(0, 7).forEach(function (c) {   // #5: 7 presets + hex(2 cells) = 9 cells, matching the rainbow/flag rows (8 + reset)
         var sw = el("span", "cc-set-sw" + (c === acc ? " cc-set-sw-on" : "")); sw.setAttribute("data-tip", c); sw.style.background = c;
         sw.addEventListener("click", function () { acc = c; pk._set(c); hx.value = c; set(P + "accent", c); useOwn(); paintPv(); });
         sr.appendChild(sw);

@@ -289,6 +289,14 @@ html.cc-header-on unraid-header-os-version { display: none !important; }
    item — no DOM move, auto-mount-safe); the .nav-tile.right 84px padding-right (right-edge
    section below) reserves the room. After the hides the controls row keeps only the two
    trigger boxes. */
+/* #11 ROOT CAUSE (help icon "does nothing"): the docked #UserProfile is position:fixed, z-index above #menu,
+   and its 88px box overlaps the syslog+help icons beneath it, EATING their real mouse clicks (a synthetic
+   click bypasses hit-testing -> "worked" in tests but never for a real click). Make the container CLICK-
+   THROUGH and re-enable pointer events ONLY on the two real triggers (bell + burger spans). This is the
+   geometry-independent fix -- no matter how ccDockProfile's correction chain drifts, empty dock area now
+   passes the click through to the icon beneath. */
+html.cc-header-on #UserProfile { pointer-events: none !important; }
+html.cc-header-on #UserProfile > div:nth-child(2) > span { pointer-events: auto !important; }
 html.cc-header-on #UserProfile > div:nth-child(2) { align-items: center; gap: 6px; }   /* bell<->burger = the 6px util-icon gap (N5) */
 /* bell + burger dress EXACTLY like the utility icon boxes beside them (user call): accent
    fill + contrast glyph in normal mode, grey fill + grey glyph in the reactive sub-mode —

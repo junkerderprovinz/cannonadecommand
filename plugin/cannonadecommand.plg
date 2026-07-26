@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.84.0">
+  <!ENTITY version   "2.85.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,19 @@
 </ICON>
 
 <CHANGES>
+### 2.85.0
+- Hilfe-Symbol (ENDLICH die Wurzel): Das gedockte Benutzer-Profil (Glocke/Menue) lag als unsichtbare Flaeche
+  UEBER dem Hilfe-Icon und schluckte den echten Mausklick (ein synthetischer Testklick ging durch, daher schien
+  es zu "funktionieren"). Die Dock-Flaeche ist jetzt klick-durchlaessig; nur Glocke+Menue fangen Klicks. Zusaetzlich
+  ein treffsicherer Fallback-Handler. Der Hilfe-Klick wirkt jetzt zuverlaessig auf jeder Seite.
+- Statusinsel CPU: Unraid 7.3 hat den alten CPU-Kanal entfernt - CannonadeCommand liest die CPU-Last jetzt aus
+  Unraids GraphQL-Metriken (wie das native Dashboard). Der CPU-Chip zeigt wieder Prozente statt "--".
+- Statusinsel Temperatur: Auf diesem Server hatte das System-Temperatur-Plugin seine Sensor-Zuordnung verloren
+  (CPU/MB-Label fehlten) - wiederhergestellt, CPU- und Mainboard-Temperatur werden wieder angezeigt.
+- CannonadeCommand-Einstellungen: Farbfelder, Hex-Feld und Zuruecksetzen sind jetzt eine einheitliche Zellen-Reihe
+  (jede Zelle gleich gross; das Hex-Feld nimmt zwei Zellen, dafuer ein, zwei Farbfelder weniger in dieser Zeile) -
+  in ALLEN Cards identisch. Der Animationen-Schalter sitzt jetzt in der Theming-Card (keine eigene fast-leere Card).
+
 ### 2.84.0
 - Schwebefenster (Container-Update): Die Schritt-Karten haben WIEDER KEINE Rahmenlinien - der Karten-Look
   entsteht nur durch abgesetzte Flaeche + Schatten (CC-Stil hat nie Rahmenlinien). Regression aus 2.81.0 behoben.
@@ -2008,7 +2021,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>b7e06aa0bd6a3e1fade6e40f0ed71e9e1be87a50dc27f07619c147a7a2669afd</SHA256>
+  <SHA256>95830ee7b6365aff8ddc8629ea4e1e836717aaf286e1b7b6b965901d27d2518c</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

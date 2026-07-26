@@ -481,13 +481,7 @@
       });
       u1.start(); ccLiveSubs.push(u1);
     } catch (e) {}
-    try {
-      var cl = new window.NchanSubscriber("/sub/cpuload", { subscriber: "websocket" });
-      cl.on("message", function (m) {
-        try { var mm = String(m).match(/(\d+(?:[.,]\d+)?)\s*%/); if (mm) { var c = Math.round(parseFloat(mm[1].replace(",", "."))) + "%"; if (c !== ccLiveCpu) { ccLiveCpu = c; ccIsland(); } } } catch (e) {}
-      });
-      cl.start(); ccLiveSubs.push(cl);
-    } catch (e) {}
+    ccStartCpu();   // #13: CPU load (7.3.2 dropped /sub/cpuload -> GraphQL systemMetricsCpu; nchan fallback for older)
     try {
       // #23: /sub/dockerload publishes ONE line per RUNNING container ("<id>;<cpu%>;<mem> / <lim>") on
       // every page — the running-container count is just the number of non-empty lines.
@@ -499,6 +493,41 @@
     } catch (e) {}
   }
   function ccStopLive() { if (ccLiveSubs) { ccLiveSubs.forEach(function (s) { try { s.stop(); } catch (e) {} }); ccLiveSubs = null; } ccLiveRam = ccLiveRamUsed = ccLiveCpu = ccLiveDocker = ""; }
+  // #13 (user: CPU chip stuck on "--"): Unraid 7.3.x has NO /sub/cpuload nchan channel — the native Dashboard
+  // reads CPU load from the GraphQL subscription systemMetricsCpu{percentTotal}, served by the Connect Apollo
+  // client (window.apolloClient / window.gql) that loads on EVERY page via the same web components CC already
+  // uses for the profile. Subscribe there; if Apollo never appears (very old builds), fall back to the legacy
+  // /sub/cpuload nchan so nothing regresses on pre-7.3 boxes.
+  function ccStartCpu() {
+    var tries = 0;
+    (function waitApollo() {
+      try {
+        if (window.apolloClient && window.apolloClient.subscribe && window.gql) {
+          var q = window.gql("subscription CcCpuLoad { systemMetricsCpu { percentTotal } }");
+          var sub = window.apolloClient.subscribe({ query: q }).subscribe({
+            next: function (res) {
+              try {
+                var m = res && res.data && res.data.systemMetricsCpu;
+                if (m && m.percentTotal != null) { var c = Math.floor(m.percentTotal) + "%"; if (c !== ccLiveCpu) { ccLiveCpu = c; ccIsland(); } }
+              } catch (e) {}
+            },
+            error: function () {}
+          });
+          if (ccLiveSubs) ccLiveSubs.push({ stop: function () { try { sub.unsubscribe(); } catch (e) {} } });
+          return;
+        }
+      } catch (e) {}
+      if (++tries < 40 && ccLiveSubs) setTimeout(waitApollo, 500);   // up to ~20s for the Connect components to mount
+      else if (ccLiveSubs) ccStartCpuNchan();
+    })();
+  }
+  function ccStartCpuNchan() {   // legacy pre-7.3 fallback
+    try {
+      var cl = new window.NchanSubscriber("/sub/cpuload", { subscriber: "websocket" });
+      cl.on("message", function (m) { try { var mm = String(m).match(/(\d+(?:[.,]\d+)?)\s*%/); if (mm) { var c = Math.round(parseFloat(mm[1].replace(",", "."))) + "%"; if (c !== ccLiveCpu) { ccLiveCpu = c; ccIsland(); } } } catch (e) {} });
+      cl.start(); if (ccLiveSubs) ccLiveSubs.push(cl);
+    } catch (e) {}
+  }
   // #18: on /Main, compute the size-weighted array-disk fill % and cache it (cc.arrfill) so the island's
   // fill chip has a value on EVERY page (7.3.x dropped the cross-page menu usage-bar). Refreshes each /Main.
   function ccArrFill() {
@@ -1467,35 +1496,40 @@
     } catch (e) {}
     watchSearch();
     wireSearchToggle();
-    // #15/#11 (user: "Hilfe-Icon funktioniert immer noch nicht"): guarantee the click reaches the native
-    // HelpButton even if the nav-drag pointer wiring (or another handler) swallows the anchor's inline
-    // onclick. Capture phase + call it once ourselves; stopImmediatePropagation prevents a double-toggle.
-    // LIVE-PROVEN the toggle itself works (inline_help none->block); what looked "broken" is that on pages
-    // like the Dashboard EVERY .inline_help lives inside a collapsed tile (height 0) so nothing appears —
-    // native behaviour, but it reads as a dead button. So: after toggling ON, if no help block is actually
-    // visible, surface a CC toast instead of leaving the user staring at nothing.
-    try {
-      document.addEventListener("click", function (e) {
-        try {
-          if (!document.documentElement.classList.contains("cc-header-on")) return;
-          var h = e.target && e.target.closest ? e.target.closest("#menu .nav-item.HelpButton") : null;
-          if (!h) return;
-          e.preventDefault(); e.stopImmediatePropagation();
-          if (typeof window.HelpButton !== "function") { ccToast(T("Hilfe ist auf dieser Seite nicht verfügbar.", "Help is not available on this page.")); return; }
-          window.HelpButton();
-          var nav = document.querySelector(".nav-item.HelpButton");   // turned ON? then verify something actually became visible
-          if (nav && nav.classList.contains("active")) {
-            setTimeout(function () {
-              try {
-                var ih = document.querySelectorAll(".inline_help"), seen = false;
-                for (var q = 0; q < ih.length; q++) { if (ih[q].getBoundingClientRect().height > 2) { seen = true; break; } }
-                if (!seen) ccToast(T("Diese Seite bietet keine Inline-Hilfe.", "This page has no inline help."));
-              } catch (e2) {}
-            }, 360);
-          }
-        } catch (err) {}
-      }, true);
-    } catch (e) {}
+    // #11 ROOT CAUSE (agent-diagnosed): the docked #UserProfile (position:fixed, z above #menu) overlapped the
+    // help icon and ATE the real mouse click — a synthetic click bypasses hit-testing, which is why it "worked"
+    // in tests but never for a real click. Fix A (Header.css) makes the dock click-through. Fix B here is belt-
+    // and-suspenders: if e.target isn't the help icon (some future overlay), hit-test the pointer's element
+    // STACK for it; and bind pointerup too so the >300ms nav-drag path (where `click` may not fire after
+    // setPointerCapture) still toggles. After toggling ON with no visible .inline_help, surface a toast.
+    var ccHelpBusy = 0;
+    function ccHelpTrigger(e) {
+      try {
+        if (!document.documentElement.classList.contains("cc-header-on")) return;
+        var h = e.target && e.target.closest ? e.target.closest("#menu .nav-item.HelpButton") : null;
+        if (!h && e.clientX != null && document.elementsFromPoint) {   // overlay-proof: scan the hit stack
+          var stk = document.elementsFromPoint(e.clientX, e.clientY);
+          for (var s = 0; s < stk.length; s++) { if (stk[s].closest && stk[s].closest("#menu .nav-item.HelpButton")) { h = stk[s]; break; } }
+        }
+        if (!h) return;
+        if (ccHelpBusy && Date.now() - ccHelpBusy < 400) { e.preventDefault(); e.stopImmediatePropagation(); return; }   // debounce click+pointerup double-fire
+        ccHelpBusy = Date.now();
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (typeof window.HelpButton !== "function") { ccToast(T("Hilfe ist auf dieser Seite nicht verfügbar.", "Help is not available on this page.")); return; }
+        window.HelpButton();
+        var nav = document.querySelector(".nav-item.HelpButton");   // turned ON? then verify something actually became visible
+        if (nav && nav.classList.contains("active")) {
+          setTimeout(function () {
+            try {
+              var ih = document.querySelectorAll(".inline_help"), seen = false;
+              for (var q = 0; q < ih.length; q++) { if (ih[q].getBoundingClientRect().height > 2) { seen = true; break; } }
+              if (!seen) ccToast(T("Diese Seite bietet keine Inline-Hilfe.", "This page has no inline help."));
+            } catch (e2) {}
+          }, 360);
+        }
+      } catch (err) {}
+    }
+    try { document.addEventListener("click", ccHelpTrigger, true); document.addEventListener("pointerup", ccHelpTrigger, true); } catch (e) {}
     // the dock is position:fixed against the STICKY menu row: while #header scrolls away the icon
     // row's y shifts, so re-measure on scroll (rAF-throttled, passive) + resize (debounced)
     try {
