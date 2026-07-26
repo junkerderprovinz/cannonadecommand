@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.91.0">
+  <!ENTITY version   "2.92.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,10 @@
 </ICON>
 
 <CHANGES>
+### 2.92.0
+- Neu: Kommando-Palette mit Strg/Cmd+K - schnelles Suchen und Springen zu jeder Seite (und ein paar CC-Aktionen),
+  komplett per Tastatur bedienbar (Pfeile/Enter/Esc).
+- Anordnen-Schloss: rundes Symbol korrigiert (war zu breit).
 ### 2.91.0
 - Anordnen per Schloss (statt Halten): Ein Schloss-Symbol (immer sichtbar, oben rechts) entsperrt das Anordnen.
   Klick -> die Menue-Tabs und Insel-Chips zittern und lassen sich SOFORT verschieben; erneuter Klick (oder Esc)
@@ -2060,7 +2064,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>c0166e82a19d8677ef40812f364c9754762d92994cf8e6e3a0a89263db359ce4</SHA256>
+  <SHA256>e9034c9758e199f601ee005fcf97f4a9c9c79c37085465632d1fff36bc99dc7d</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

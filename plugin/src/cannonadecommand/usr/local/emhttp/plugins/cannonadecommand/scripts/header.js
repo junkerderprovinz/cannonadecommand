@@ -465,6 +465,67 @@
       ccArrangeLock();
     } catch (e) {}
   }
+  // ── #S6 COMMAND PALETTE (Ctrl/⌘+K) ── a quick launcher over every page tab + a few CC actions. Fuzzy-
+  // filtered, keyboard-driven (↑/↓/Enter/Esc). Built lazily on first open; one overlay reused thereafter.
+  var ccCmdEl = null, ccCmdInput = null, ccCmdList = null, ccCmdItems = [], ccCmdSel = 0;
+  function ccCmdSources() {
+    var items = [];
+    // every page tab (works on every page: #menu is always present)
+    var seen = {};
+    Array.prototype.forEach.call(document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a[href]"), function (a) {
+      var href = a.getAttribute("href") || "", label = (a.textContent || "").replace(/\s+/g, " ").trim();
+      if (!href || href === "#" || !label || seen[href]) return; seen[href] = 1;
+      items.push({ label: label, sub: href, kind: "page", go: function () { location.href = href; } });
+    });
+    // a few CC actions
+    items.push({ label: T("Anordnen ein/aus", "Toggle arranging"), sub: T("Menü & Insel umsortieren", "Rearrange menu & island"), kind: "action", go: function () { ccToggleArrange(); } });
+    items.push({ label: T("CannonadeCommand-Einstellungen", "CannonadeCommand settings"), sub: "/Settings/CannonadeCommand", kind: "action", go: function () { location.href = "/Settings/CannonadeCommand"; } });
+    return items;
+  }
+  function ccCmdRender() {
+    var q = (ccCmdInput.value || "").toLowerCase().replace(/\s+/g, "");
+    var scored = [];
+    ccCmdItems.forEach(function (it) {
+      var hay = (it.label + " " + (it.sub || "")).toLowerCase();
+      if (!q) { scored.push({ it: it, s: 0 }); return; }
+      // simple subsequence fuzzy match
+      var i = 0; for (var c = 0; c < hay.length && i < q.length; c++) { if (hay[c] === q[i]) i++; }
+      if (i === q.length) scored.push({ it: it, s: hay.indexOf(q[0]) });
+    });
+    scored.sort(function (a, b) { return a.s - b.s; });
+    ccCmdSel = 0;
+    ccCmdList.innerHTML = "";
+    scored.slice(0, 40).forEach(function (r, ix) {
+      var row = document.createElement("div"); row.className = "cc-cmd-item" + (ix === 0 ? " cc-cmd-on" : "");
+      row.innerHTML = "<span class='cc-cmd-lbl'></span><span class='cc-cmd-sub'></span>";
+      row.querySelector(".cc-cmd-lbl").textContent = r.it.label; row.querySelector(".cc-cmd-sub").textContent = r.it.sub || "";
+      row.addEventListener("mousemove", function () { ccCmdMark(ix); });
+      row.addEventListener("click", function () { ccCmdClose(); r.it.go(); });
+      ccCmdList.appendChild(row);
+    });
+  }
+  function ccCmdMark(ix) { var rows = ccCmdList.children; for (var i = 0; i < rows.length; i++) rows[i].classList.toggle("cc-cmd-on", i === ix); ccCmdSel = ix; }
+  function ccCmdOpen() {
+    if (!ccCmdEl) {
+      ccCmdEl = document.createElement("div"); ccCmdEl.id = "cc-cmd"; ccCmdEl.setAttribute("role", "dialog");
+      ccCmdEl.innerHTML = "<div class='cc-cmd-bd'></div><div class='cc-cmd-box'><input class='cc-cmd-in' type='text' spellcheck='false' placeholder='" + T("Seite oder Aktion suchen…", "Search a page or action…") + "'><div class='cc-cmd-list'></div></div>";
+      document.body.appendChild(ccCmdEl);
+      ccCmdInput = ccCmdEl.querySelector(".cc-cmd-in"); ccCmdList = ccCmdEl.querySelector(".cc-cmd-list");
+      ccCmdEl.querySelector(".cc-cmd-bd").addEventListener("click", ccCmdClose);
+      ccCmdInput.addEventListener("input", ccCmdRender);
+      ccCmdInput.addEventListener("keydown", function (e) {
+        var n = ccCmdList.children.length;
+        if (e.key === "ArrowDown") { e.preventDefault(); ccCmdMark(Math.min(ccCmdSel + 1, n - 1)); ccCmdList.children[ccCmdSel] && ccCmdList.children[ccCmdSel].scrollIntoView({ block: "nearest" }); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); ccCmdMark(Math.max(ccCmdSel - 1, 0)); ccCmdList.children[ccCmdSel] && ccCmdList.children[ccCmdSel].scrollIntoView({ block: "nearest" }); }
+        else if (e.key === "Enter") { e.preventDefault(); ccCmdList.children[ccCmdSel] && ccCmdList.children[ccCmdSel].click(); }
+        else if (e.key === "Escape") { e.preventDefault(); ccCmdClose(); }
+      });
+    }
+    ccCmdItems = ccCmdSources();
+    ccCmdEl.classList.add("cc-cmd-open"); ccCmdInput.value = ""; ccCmdRender();
+    setTimeout(function () { try { ccCmdInput.focus(); } catch (e) {} }, 20);
+  }
+  function ccCmdClose() { if (ccCmdEl) ccCmdEl.classList.remove("cc-cmd-open"); }
   // wire ONE participant. Guard PER ITEM. POINTER-based drag (NOT HTML5): the native drag needs
   // draggable=true set BEFORE pointerdown, so arming it on a long-press made the first press do
   // nothing (user had to press 2-3x). Pointer capture + manual insertBefore has no such rule —
@@ -1619,6 +1680,16 @@
       } catch (err) {}
     }
     try { document.addEventListener("click", ccHelpTrigger, true); document.addEventListener("pointerup", ccHelpTrigger, true); } catch (e) {}
+    // #S6: Ctrl/⌘+K opens the command palette (skip when typing in a field, and when CC theming is off)
+    try {
+      document.addEventListener("keydown", function (e) {
+        if (!((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === "k" || e.key === "K"))) return;
+        if (g("cc.theming", "1") === "0") return;
+        var t = e.target, tag = t && t.tagName;
+        if ((tag === "INPUT" || tag === "TEXTAREA" || (t && t.isContentEditable)) && !(t.classList && t.classList.contains("cc-cmd-in"))) return;
+        e.preventDefault(); e.stopPropagation(); ccCmdOpen();
+      }, true);
+    } catch (e) {}
     // the dock is position:fixed against the STICKY menu row: while #header scrolls away the icon
     // row's y shifts, so re-measure on scroll (rAF-throttled, passive) + resize (debounced)
     try {
