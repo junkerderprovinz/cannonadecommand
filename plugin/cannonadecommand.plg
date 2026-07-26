@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.66.2">
+  <!ENTITY version   "2.66.3">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,15 @@
 </ICON>
 
 <CHANGES>
+### 2.66.3
+- Die Farbtrennungs-Migration bereinigt jetzt AUCH den Engine-seitigen Einstellungs-Spiegel. CC
+  synchronisiert alle Farb-/Modus-Einstellungen ueber die Engine zwischen Browsern; die alten
+  Flaggenfarben steckten also nicht nur im Browser, sondern auch in diesem Spiegel und wurden beim
+  naechsten Laden immer wieder zurueckgespielt. Beim Laden der Einstellungen werden die Flaggenfarben
+  jetzt im Spiegel in den Flaggen-Speicher verschoben und aus dem Regenbogen-Speicher entfernt und die
+  bereinigte Konfiguration wird zurueckgeschrieben - sodass die Regenbogen-Farbfelder dauerhaft sauber
+  bleiben. Deckt auch Installationen ab, die 2.66.1 oder 2.66.2 schon eingespielt hatten.
+
 ### 2.66.2
 - Die in 2.66.1 eingefuehrte Migration der Farbtrennung laeuft jetzt zuverlaessig: Sie zieht die
   Flaggenfarben aus dem alten gemeinsamen Speicher DIREKT in den neuen Flaggen-Speicher (die Werte sind
@@ -1809,7 +1818,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>c3d23bb00858fc5897a2d09c22572f878f47422082c9c0c8095ac8a322420442</SHA256>
+  <SHA256>459adc14cf0e0da7c1f605160519e3e42382da0b75fcd98d8e28c74b498e17c6</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

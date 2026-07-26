@@ -86,10 +86,12 @@
   // the guard is false, so it never runs again and never touches a legit custom rainbow palette.
   (function migrateFlagPalette() {
     try {
-      if (get("cc.flag", "") && !get("cc.flagpal", "")) {
-        var old = get("cc.rbpal", "");
-        if (old) set("cc.flagpal", old);   // the contaminated rbpal IS the flag palette
-        del("cc.rbpal");                    // rainbow palette back to default
+      var rb = get("cc.rbpal", "");
+      if (get("cc.flag", "") && rb) {
+        var fp = get("cc.flagpal", "");
+        if (!fp) { set("cc.flagpal", rb); del("cc.rbpal"); }          // pre-2.66: rbpal IS the flag palette -> move it, clear rbpal
+        else if (fp === rb) { del("cc.rbpal"); }                       // 2.66.1/2.66.2: both hold the flag palette -> drop the redundant rbpal
+        // else: rbpal differs from flagpal -> it is a legit custom rainbow palette, leave it alone
       }
     } catch (e) {}
   })();
@@ -142,6 +144,19 @@
   }
   function adoptUISettings(u) {
     var changed = false;
+    // Two-way-sync migration: old builds stored the FLAG palette in the shared cc.rbpal key. The engine's
+    // ui_settings is the sync's source of truth, so if we only cleaned localStorage the very next adopt
+    // would restore cc.rbpal=flag. Move it into cc.flagpal and drop cc.rbpal IN u, clear the local copy,
+    // and flag _migrated so the loader persists the cleaned config back to the engine.
+    adoptUISettings._migrated = false;
+    try {
+      if (u && u["cc.flag"] && u["cc.rbpal"]) {
+        if (!u["cc.flagpal"]) { u["cc.flagpal"] = u["cc.rbpal"]; delete u["cc.rbpal"]; adoptUISettings._migrated = true; }        // pre-2.66: move the flag palette out of rbpal
+        else if (u["cc.flagpal"] === u["cc.rbpal"]) { delete u["cc.rbpal"]; adoptUISettings._migrated = true; }                  // 2.66.1/2.66.2: drop the redundant contaminated rbpal
+        // else: rbpal differs from flagpal -> a legit custom rainbow palette, keep it
+      }
+    } catch (e0) {}
+    if (adoptUISettings._migrated) { try { localStorage.removeItem("cc.rbpal"); } catch (e1) {} }   // u no longer carries cc.rbpal -> clear the local contaminated value explicitly
     try { Object.keys(u || {}).forEach(function (k) { if (/^cc[a-z]*\./.test(k) && k !== "cc.stateCache" && localStorage.getItem(k) !== u[k]) { (window.__ccLS || localStorage.setItem.bind(localStorage))(k, u[k]); changed = true; } }); } catch (e) {}
     return changed;
   }
@@ -1436,6 +1451,9 @@
     fullConfig = { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: c.ui_settings || undefined };
     configLoaded = true;
     adoptUISettings(c.ui_settings); // render() below shows the adopted values
+    // persist the flag/rainbow palette migration in the engine (c.ui_settings was cleaned in place) —
+    // otherwise the next load's adopt would restore the contaminated cc.rbpal from the mirror
+    if (adoptUISettings._migrated) { try { api("PUT", "config", c); } catch (e8) {} }
     if (!c.ui_settings || !Object.keys(c.ui_settings).length) { var seed9 = collectUISettings(); if (Object.keys(seed9).length) { Object.keys(seed9).forEach(function (k9) { uiPending[k9] = 1; }); pushUISettings(); } } // seed the mirror
     // keep the user's in-flight edits if they already started typing; otherwise
     // adopt the loaded values. Either way re-render to enable Save.
