@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.76.0">
+  <!ENTITY version   "2.77.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,11 @@
 </ICON>
 
 <CHANGES>
+### 2.77.0
+- Werkzeug-/Einstellungen-Subseiten: Klickt man das Hilfe-Symbol in der Menueleiste, werden die einge-
+  blendeten Hilfetexte jetzt sauber ueber die volle Breite und im CannonadeCommand-Note-Stil angezeigt
+  (statt in eine Rasterspalte gequetscht).
+
 ### 2.76.0
 - Docker-Seite: Der Ansichts-Umschalter (Einfach/Erweitert) sitzt wieder in der unteren Leiste. Der Laeuft/
   Gestoppt-Punkt sitzt jetzt UNTER dem Container-Namen und ist im reaktiven Modus integriert (ruht grau,
@@ -1941,7 +1946,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>e8aa3e313f9bb1245ee9f8d116f887469698cb1d39014abc7e87d0d0ba250761</SHA256>
+  <SHA256>6fb07029684f9d13ff20c34c36ac105145b4190fe970008af64291c1af6467ad</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

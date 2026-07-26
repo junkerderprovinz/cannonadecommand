@@ -60,6 +60,12 @@ html.cc-tools-on #displaybox table:not(.cc-enh) tr:hover td { background: rgba(2
 html.cc-tools-on #displaybox dl { margin: 0; display: grid; grid-template-columns: minmax(120px, 34%) 1fr; align-items: center; column-gap: 14px; row-gap: 6px; }
 html.cc-tools-on #displaybox dl > dt { color: #cfcfcf; font-weight: 600; float: none !important; width: auto !important; margin: 0; padding: 0; text-align: right; align-self: center; }
 html.cc-tools-on #displaybox dl > dd { color: #d6d6d6; float: none !important; width: auto !important; margin: 0; display: flex; align-items: center; min-width: 0; }
+/* #15 (user: clicking Help did nothing visible): the native HelpButton toggles the inline_help blocks (which
+   CC normally hides in favour of the (i) bubbles). When the user DOES expand them, span the full grid width
+   and give them a readable CC note look so they aren't squeezed into a single grid column. */
+html.cc-tools-on #displaybox dl > blockquote.inline_help,
+html.cc-tools-on #displaybox dl > .inline-help { grid-column: 1 / -1; }
+html.cc-tools-on #displaybox blockquote.inline_help { background: #1c1c1c !important; border: none !important; border-radius: 8px !important; color: #b8b8b8 !important; padding: 8px 12px !important; margin: 2px 0 8px !important; font-size: 12.5px !important; }
 
 /* ── INPUTS / SELECT / TEXTAREA -> dark fills, NO focus ring (focus = brightness) ── */
 html.cc-tools-on #displaybox input[type="text"],
