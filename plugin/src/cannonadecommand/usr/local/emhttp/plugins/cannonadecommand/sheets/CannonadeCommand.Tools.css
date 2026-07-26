@@ -99,14 +99,19 @@ html.cc-tools-on #displaybox a:focus-visible { outline: none !important; box-sha
 html.cc-tools-on #displaybox div.title {
   display: inline-flex !important; align-items: center; gap: 8px; width: fit-content !important;
   background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 7px 18px !important; margin: 4px 0 16px !important;
-  font-weight: 600 !important; text-transform: uppercase; letter-spacing: .6px; box-shadow: none !important; min-height: 0 !important;
+  border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 0 18px !important; margin: 4px 0 16px !important;
+  /* #10: the Tools/Settings sub-page TITLE badge = the same md tier (30px/13px) as every other section head. */
+  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase; letter-spacing: .6px;
+  box-shadow: none !important; min-height: var(--cc-md-h, 30px) !important;
 }
 /* #23 the CC info (i) icon that carries the native help text (rides the document-wide CC tip bubble) */
 html.cc-tools-on #displaybox .cc-toolsinfo {
   display: inline-flex; align-items: center; justify-content: center; margin-left: 7px;
-  width: 16px; height: 16px; border-radius: 50%; font-size: 13px; line-height: 1;
-  color: #9a9a9a; cursor: help; opacity: .85; vertical-align: middle;
+  width: 15px; height: 15px; border-radius: 50%; font-size: 13px; line-height: 0;
+  color: #9a9a9a; cursor: help; opacity: .85;
+  /* #9 (user: the (i) sits too low): vertical-align:middle centres on the x-height, which reads low next to
+     the cap-height label — pin to text-bottom + a small upward nudge so the glyph sits on the text mid-line. */
+  vertical-align: text-bottom; position: relative; top: -1px;
 }
 html.cc-tools-on #displaybox .cc-toolsinfo:hover { color: var(--cc-accent, #2f6feb); opacity: 1; }
 /* #N5 the docker status word -> a small state DOT (like the disk state dots), sitting right in the badge */
@@ -115,18 +120,23 @@ html.cc-tools-on #displaybox div.title .cc-status-dot {
   vertical-align: middle; box-shadow: 0 0 0 2px rgba(0, 0, 0, .25);
 }
 /* #24 a CC toggle standing in for a yes/no <select> (the real select stays hidden as the form value) */
+/* #8 (user: the toggles must follow the CC Badge-Form): the track + knob read the global shape vars
+   (--cc-b-radius for the track, --cc-dot-r for the knob), so pill/rounded/square/circle all carry through.
+   header.js sets both vars unconditionally on every page. min() caps the pill track so it stays a rounded
+   bar, not a full oval. */
 html.cc-tools-on #displaybox .cc-tgl {
-  display: inline-flex; flex: 0 0 auto; width: 44px; height: 24px; border-radius: 999px; background: #3a3a3a;
+  display: inline-flex; flex: 0 0 auto; width: 44px; height: 24px; border-radius: min(var(--cc-b-radius, 999px), 12px); background: #3a3a3a;
   position: relative; cursor: pointer; vertical-align: middle; transition: background .15s; box-sizing: border-box;
 }
 html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); }
-html.cc-tools-on #displaybox .cc-tgl .cc-tgl-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; }
+html.cc-tools-on #displaybox .cc-tgl .cc-tgl-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: var(--cc-dot-r, 50%); background: #fff; transition: left .15s; }
 html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on .cc-tgl-knob { left: 23px; }
 /* #8 (user): native switch tracks (e.g. Docker aktivieren) on tools/settings pages -> CC pill shape that
    follows the colour mode (rotated per toggle via --cc-rb-c). */
 html.cc-tools-on #displaybox .switch-button-background {
-  border: none !important; box-shadow: none !important; border-radius: 999px !important; background: #3a3a3a !important;
+  border: none !important; box-shadow: none !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important; background: #3a3a3a !important;
 }
+html.cc-tools-on #displaybox .switch-button-background .switch-button-button { border-radius: var(--cc-dot-r, 50%) !important; }
 html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
 
 /* links: no native blue / underline on tools pages */

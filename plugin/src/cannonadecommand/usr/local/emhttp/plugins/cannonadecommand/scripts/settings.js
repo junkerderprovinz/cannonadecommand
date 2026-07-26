@@ -36,6 +36,18 @@
       "#cc-settings .cc-set-search{box-sizing:border-box;width:100%;max-width:420px;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:9px 13px;font-size:13px;transition:background-color .12s}" +
       "#cc-settings .cc-set-search::placeholder{color:#8d8d8d}" +
       "#cc-settings .cc-set-search:focus{background:#2e2e2e}" +
+      // #13 settings search as an expandable hero badge (magnifier -> input on click)
+      "#cc-settings .cc-set-searchbadge{margin-left:auto;display:inline-flex;align-items:center;background:#232323;border-radius:999px;height:34px;overflow:hidden;transition:background-color .12s}" +
+      "#cc-settings .cc-set-searchbadge .cc-set-searchicon{flex:0 0 auto;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:#cfcfcf;cursor:pointer}" +
+      "#cc-settings .cc-set-searchbadge:hover .cc-set-searchicon,#cc-settings .cc-set-searchbadge.cc-open .cc-set-searchicon{color:#fff}" +
+      "#cc-settings .cc-set-searchbadge .cc-set-search{box-sizing:border-box;width:0;max-width:0;padding:0;background:transparent;transition:width .2s,max-width .2s,padding .2s}" +
+      "#cc-settings .cc-set-searchbadge.cc-open{background:#2e2e2e}" +
+      "#cc-settings .cc-set-searchbadge.cc-open .cc-set-search{width:220px;max-width:220px;padding:0 12px 0 2px}" +
+      // #14 version pinned to the very bottom, centred + muted
+      "#cc-settings .cc-set-version-foot{margin:28px 0 6px;text-align:center;opacity:.55;font-size:12px}" +
+      // #11 the native-display link is a proper CC accent button (not the grey chip)
+      "#cc-settings .cc-btn.cc-btn-accent{background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff)}" +
+      "#cc-settings .cc-btn.cc-btn-accent:hover{filter:brightness(1.14);background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff)}" +
       "#cc-settings .cc-set-danger{background:#5a2a2a!important;color:#ffd7d7!important}" +
       "#cc-settings .cc-set-danger:hover{filter:brightness(1.18)}" +
       "#cc-settings .cc-flag-picker{position:relative;margin-top:6px;max-width:340px}" +
@@ -292,14 +304,19 @@
     // The RUNNING engine version, always findable HERE (the Docker-tab gear was hard to
     // locate) — an old value after an update = the update didn't take / daemon not restarted.
     var CC_VER = "@@CCVER@@"; if (CC_VER.indexOf("@@") === 0) CC_VER = "dev";
-    var verLine = el("div", "cc-set-sub cc-set-version", "UI v" + CC_VER + " · " + T("Engine: verbinde…", "Engine: connecting…"));
-    hero.appendChild(verLine); // far right of the hero (user call)
+    // #14 (user): the version line moves to the very BOTTOM of the page (appended to root after all wraps, below).
+    var verLine = el("div", "cc-set-sub cc-set-version cc-set-version-foot", "UI v" + CC_VER + " · " + T("Engine: verbinde…", "Engine: connecting…"));
     api("GET", "state").then(function (s) {
       verLine.textContent = "UI v" + CC_VER + " · " + ((s && s.version) ? ("Engine " + String(s.version).replace(/^v/, "v")) + " · " + T("läuft", "running") : T("Engine läuft (Version unbekannt)", "Engine running (version unknown)"));
     }).catch(function (e) { verLine.textContent = "UI v" + CC_VER + " · " + T("Engine NICHT erreichbar", "Engine NOT reachable") + " — " + (e && e.message ? e.message : ""); verLine.style.color = "#d9433f"; });
-    // #26: quick settings search — filters cards/rows across ALL tabs (wired below, once the sections exist)
+    // #26/#13 (user): quick settings search — filters cards/rows across ALL tabs. It sits far-RIGHT in the
+    // hero (where the version used to be) as a BADGE with a magnifier that EXPANDS to the input on click.
     var setSearch = el("input", "cc-set-search"); setSearch.type = "search"; setSearch.placeholder = T("Einstellungen durchsuchen …", "Search settings …"); setSearch.spellcheck = false;
-    var searchRow = el("div", "cc-set-searchrow"); searchRow.appendChild(setSearch); head.appendChild(searchRow);
+    var searchBadge = el("div", "cc-set-searchbadge");
+    var searchIcon = el("span", "cc-set-searchicon"); searchIcon.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.6" y1="15.6" x2="21" y2="21"/></svg>'; searchIcon.setAttribute("data-cc-tip", T("Einstellungen durchsuchen", "Search settings"));
+    searchBadge.appendChild(searchIcon); searchBadge.appendChild(setSearch);
+    searchIcon.addEventListener("click", function () { var open = searchBadge.classList.toggle("cc-open"); if (open) { setSearch.focus(); } else { setSearch.value = ""; if (typeof runFilter === "function") runFilter(""); } });
+    hero.appendChild(searchBadge);
     root.appendChild(head);
 
     // the Unraid title strip between the main menu and our hero is redundant here
@@ -420,7 +437,7 @@
       var cCard = card(T("Anzeige — Kopfbereich", "Display — header"), T("Die nativen Kopfzeilen-Farben liegen jetzt auf Unraids Anzeige-Seite (im CannonadeCommand-Stil). Hier findest du den Schnellzugriff und die automatische Themen-Kopplung.", "Unraid's header colours now live on the Display Settings page (in CannonadeCommand style). Here you get the quick link and the automatic theme coupling."));
       (function () {
         var r = el("div", "cc-set-row"); r.appendChild(el("span", "cc-set-rl", T("Native Anzeige-Seite", "Native display page")));
-        var b = el("button", "cc-btn", T("Unraid-Anzeige-Einstellungen öffnen …", "Open Unraid display settings …")); b.type = "button";
+        var b = el("button", "cc-btn cc-btn-accent", T("Unraid-Anzeige-Einstellungen öffnen …", "Open Unraid display settings …")); b.type = "button";   // #11 (user): a proper CC accent button, not the grey chip
         b.addEventListener("click", function () { location.href = "/Settings/DisplaySettings"; });
         r.appendChild(b); cCard.appendChild(r);
         var ar = el("div", "cc-set-row cc-set-inline");
@@ -536,6 +553,7 @@
     root.appendChild(tabRow);
     alignSetTabs(); // indent the strip to the first main-menu tab (internally try/catch'd, can't break the build)
     root.appendChild(wrapMain); root.appendChild(wrapStart); root.appendChild(wrapHeader); root.appendChild(wrapShares); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms); root.appendChild(wrapSettings); root.appendChild(wrapFavorites);
+    root.appendChild(verLine); // #14 (user): the UI/Engine version sits at the very BOTTOM (a sibling AFTER every wrap; the cards fill the wraps above it)
 
     // ── Badges ──
     // (flag/rainbow palette split migration runs at module load — see migrateFlagPalette near the top.)
@@ -769,11 +787,8 @@
     wrapMain.appendChild(c1); // GLOBAL badge colour + rainbow -> the "Allgemein" tab (was the Docker tab)
     // ── Dichte (GLOBAL): cc.density is ONE key that every list (Docker, Start, Freigaben) reads,
     // so it belongs in Allgemein with the other global controls — not buried in the Docker tab.
-    (function () {
-      var cD = card(T("Dichte", "Density"), T("Zeilenhöhe für alle Listen (Docker, Start, Freigaben) auf einmal.", "Row height for every list (Docker, Start, Shares) at once."));
-      cD.appendChild(segRow(T("Dichte (global)", "Density (global)"), [["compact", T("Kompakt", "Compact")], ["normal", "Normal"], ["airy", T("Luftig", "Airy")]], density, function (v) { density = v; set("cc.density", v); }));
-      wrapMain.appendChild(cD);
-    })();
+    // #12 (user): the Density control lives INSIDE the Theming card now — no separate card.
+    if (themingCard) themingCard.appendChild(segRow(T("Dichte (global)", "Density (global)"), [["compact", T("Kompakt", "Compact")], ["normal", "Normal"], ["airy", T("Luftig", "Airy")]], density, function (v) { density = v; set("cc.density", v); }));
     // ── Logos & Icons (GLOBAL): edits the shared cc.iconbg / cc.iconcolor / cc.iconstrength
     // keys every adopting tab resolves through eff('icon…'). Same control set as the per-area
     // Logos cards, minus the preview (this card is the source, not a consumer).

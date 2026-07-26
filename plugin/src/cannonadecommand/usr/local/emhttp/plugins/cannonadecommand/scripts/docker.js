@@ -703,7 +703,16 @@
         var st = (c && c.state) || glyphState(glyph) || "unknown";
         var meta = el("div", "cc-namemeta"); meta.setAttribute(MARK, "1");
         var sb = stateToggle(name, st); if (showUnhealthy(c)) { sb.classList.add("cc-badge-alert"); sb.textContent = stateLabel(st) + " ✕"; sb.setAttribute("data-tip", unhealthyTip()); }
-        meta.appendChild(sb); // the start/stop state toggle is a CONTROL — always
+        // #4 (user): the running/stopped STATE becomes a small colour DOT right of the container name (like the
+        // disk state dots on /Main) — colour follows the mode / native state colour, shape via --cc-dot-r, the
+        // label rides its tooltip. Theming OFF -> the state toggle keeps its text pill in the meta row.
+        var innerEl0 = nameCell.querySelector(".inner") || nameCell, appnameEl = innerEl0.querySelector("span.appname");
+        if (themingOn() && appnameEl) {
+          sb.classList.add("cc-ct-statedot"); sb.textContent = "";
+          var nlEl = innerEl0.querySelector(".cc-ct-nameline");
+          if (!nlEl) { nlEl = el("div", "cc-ct-nameline"); nlEl.setAttribute(MARK, "1"); appnameEl.parentNode.insertBefore(nlEl, appnameEl); nlEl.appendChild(appnameEl); }
+          nlEl.appendChild(sb);
+        } else { meta.appendChild(sb); }   // the start/stop state toggle is a CONTROL — always present
         // ID / Von / Volumes are DECORATIVE info badges — theming only.
         if (themingOn()) {
           var advDiv = nameCell.querySelector(":scope > div.advanced");

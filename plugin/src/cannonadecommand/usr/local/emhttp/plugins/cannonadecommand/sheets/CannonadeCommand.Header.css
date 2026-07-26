@@ -67,10 +67,12 @@ html.cc-hideicon-log #menu .nav-tile > .nav-item.LogButton.util,
 html.cc-hideicon-help #menu .nav-tile > .nav-item.HelpButton.util { display: none !important; }
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a {
   display: inline-flex !important; align-items: center; justify-content: center;
-  line-height: 1; height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-pad, 0 20px) !important; margin: 0 3px; /* same metrics as the CC settings tabs */
+  /* #10 (user): the MAIN-MENU-BAR badges are the LARGEST tier system-wide — one step above the section/title
+     badges (which are the md tier, 30px/13px). So the nav pills use the lgb tier (36px) + 15px. */
+  line-height: 1; height: var(--cc-lgb-h, 36px) !important; padding: 0 22px !important; margin: 0 3px;
   border-radius: var(--cc-b-radius, 999px) !important;
   background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important;
+  font-size: 15px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important;
   transition: filter .12s, background .12s, color .12s;
 }
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search):hover > a { filter: brightness(1.14); }
@@ -104,7 +106,8 @@ html.cc-header-on #menu .nav-item:after, html.cc-header-on #menu .nav-user.show:
 html.cc-header-on #menu .nav-tile .nav-item.util > a {
   display: inline-flex !important; align-items: center; justify-content: center;
   box-sizing: border-box !important; flex: 0 0 auto;
-  width: var(--cc-md-ibox, var(--cc-md-h, 30px)) !important; height: var(--cc-md-ibox, var(--cc-md-h, 30px)) !important; padding: 0 !important; margin: 0 3px;
+  /* #10: the utility icon boxes match the enlarged nav-pill HEIGHT (lgb tier, 36px) so they line up. */
+  width: var(--cc-lgb-h, 36px) !important; height: var(--cc-lgb-h, 36px) !important; padding: 0 !important; margin: 0 3px;
   /* cap the radius so pill-mode gives a rounded SQUARE (like the mockup), not a full
      circle; rounded(6px)/square(0) stay untouched -> one shape family across modes */
   border-radius: min(var(--cc-b-radius, 8px), 8px) !important;
@@ -441,15 +444,14 @@ html.cc-popups-on .sweet-alert h2 {
   font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; margin: 4px auto 14px !important;
 }
-/* N1 — the streaming floating windows (plugin changelog / install / update AND the container-update
-   dialog, all .sweet-alert.nchan) get the SAME prominent TOP title badge: full width, bigger, and the
-   SAME height as the action buttons below (user: "alle Schwebefenster gleich; Badge größer, so hoch wie
-   die Buttons"). The small confirmations (favourites etc., no <pre>/not .nchan) keep the compact badge. */
+/* #N1 (user REVERSAL: the streaming windows' badge was "zu groß" — bring it back to the CC STANDARD size
+   every other dialog uses). The .nchan / changelog title badge now matches the base .sweet-alert h2 badge
+   (lgb 36px / 14px, content-width, centred) instead of the old 46px full-bleed bar. "Immer und alles!" */
 html.cc-popups-on .sweet-alert:has(pre) h2,
 html.cc-popups-on .sweet-alert.nchan h2 {
-  display: flex !important; width: 100% !important; max-width: none !important; box-sizing: border-box !important;
-  margin: 6px 0 18px !important; height: 46px !important; padding: 0 24px !important;
-  font-size: 18px !important; letter-spacing: 1px !important;
+  height: var(--cc-lgb-h, 36px) !important; font-size: var(--cc-lgb-fs, 14px) !important;
+  padding: 0 18px !important; margin: 4px auto 14px !important; letter-spacing: .6px !important;
+  width: fit-content !important; max-width: 100% !important;
 }
 /* the changelog body inside the <pre>: render the parsed markdown as blocks, turn each version
    heading into a small CC version badge, and lay the items out as a clean list (CC badge language). */
@@ -550,6 +552,18 @@ html.cc-popups-on .sweet-alert {
   background: #161616 !important; border: none !important; border-radius: 12px !important;
   box-shadow: 0 18px 50px rgba(0, 0, 0, .6) !important;
 }
+/* #N1 (user: "Kopf- und Fußleiste sind immer noch heller!"): every structural band inside the streaming
+   windows inherits the dialog's own #161616 — no lighter header/footer strip around the badge or buttons.
+   Scoped to the direct structural children so text/badges/buttons keep their own fills. */
+html.cc-popups-on .sweet-alert.nchan,
+html.cc-popups-on .sweet-alert:has(pre) { background: #161616 !important; }
+html.cc-popups-on .sweet-alert.nchan > div,
+html.cc-popups-on .sweet-alert.nchan > p,
+html.cc-popups-on .sweet-alert.nchan > pre,
+html.cc-popups-on .sweet-alert.nchan .sa-button-container,
+html.cc-popups-on .sweet-alert:has(pre) > div,
+html.cc-popups-on .sweet-alert:has(pre) > p,
+html.cc-popups-on .sweet-alert:has(pre) .sa-button-container { background: transparent !important; box-shadow: none !important; }
 /* (sweet-alert h2 badge styling above) */
 html.cc-popups-on .sweet-alert p, html.cc-popups-on .sweet-alert .sa-text { color: #bdbdbd !important; }
 html.cc-popups-on .sweet-alert hr { display: none !important; }
@@ -570,11 +584,8 @@ html.cc-popups-on .sweet-alert .sa-button-container button {
 html.cc-popups-on .sweet-alert button.confirm { background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important; }
 html.cc-popups-on .sweet-alert button.cancel { background: #2e2e2e !important; color: #e6e6e6 !important; }
 html.cc-popups-on .sweet-alert .sa-button-container button:hover { filter: brightness(1.14); }
-/* the streaming floating windows (.nchan): action buttons share the title badge's 46px height so the
-   badge is "genauso hoch wie die Buttons" and every such window looks identical (user). */
-html.cc-popups-on .sweet-alert.nchan button.confirm,
-html.cc-popups-on .sweet-alert.nchan button.cancel,
-html.cc-popups-on .sweet-alert.nchan .sa-button-container button { height: 46px !important; }
+/* #N1 (user REVERSAL): the .nchan action buttons drop back to the CC STANDARD lgb height (36px, inherited
+   from the base button rule above) — the old 46px was "zu groß". No .nchan-specific height override now. */
 
 /* ═══ t4t5 SweetAlert (.swal-modal / .swal-overlay) -> CC look ═══
    The Unassigned Devices plugin bundles a SECOND sweetalert (t4t5 v2, .swal-* classes) for its

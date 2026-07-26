@@ -111,6 +111,16 @@ html.cc-vms-on.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand {
   display: flex !important; align-items: center !important; justify-content: center !important;
 }
 html.cc-shape-circle.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand { border-radius: 50% !important; }
+/* #3 (user: "Icons und Logo/Hintergrund nicht im reaktiven Modus integriert"): non-reactive rainbow ->
+   the logo box takes the rainbow action colour (unless a custom iconbg colour is set); reactive sub-mode ->
+   it rests neutral and takes the palette colour on ROW hover, exactly like the VM value badges. */
+html.cc-vms-on.cc-vm-iconbg.cc-vm-rainbow:not(.cc-vm-rbneutral) #kvm_list td.vm-name .outer > span.hand {
+  background: var(--cc-iconbg-color, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+}
+html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list td.vm-name .outer > span.hand { background: #2e2e2e !important; }
+html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list tr:hover td.vm-name .outer > span.hand {
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
+}
 /* name column layout (docker.css:69-72): stacked, native <br> hidden, native status glyph hidden */
 html.cc-vms-on #kvm_list td.vm-name .inner { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; line-height: 1.2; min-width: 0; }
 html.cc-vms-on #kvm_list td.vm-name .inner br { display: none !important; }

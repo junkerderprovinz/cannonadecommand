@@ -627,16 +627,25 @@
   // flag) shows through. The fill % lives in the span's inline width. Runs from apply() (load + storage).
   function ccStateBars() {
     try {
-      // #1/#2 (user): when "native state colours" is ON, the usage/fill bars show the native green/amber/red
-      // by fill level (set inline here). When OFF, we CLEAR the inline colour so the CSS rule takes over and
-      // the bars follow the colour mode (rainbow/flag/accent) — that CSS path catches late-rendered bars too.
+      // #2 (user): "native state colours" ON -> the /Main usage bars keep the semantic green/amber/red by
+      // fill level; OFF (default) -> they follow the colour mode via CSS. Unraid 7.3.x no longer stamps the
+      // native greenbar/orangebar/redbar class, so we assign our OWN cc-fill-{green,amber,red} class (CSS
+      // colours it) instead of writing inline — CLASS-based + idempotent = the native table re-render can't
+      // make it flicker. CRUCIAL: BOTH the BENUTZT and the FREI bar of a row are coloured by the USED %, so a
+      // nearly-EMPTY disk (its free bar ~98% wide) stays GREEN, not red ("leere Platte = roter Balken" bug).
       var on = g("cc.statenative", "0") === "1" && g("cc.theming", "1") !== "0";
-      var fills = document.querySelectorAll(".usage-disk > span:first-child");
-      for (var i = 0; i < fills.length; i++) {
-        var f = fills[i];
-        if (!on) { f.style.removeProperty("background"); continue; }
-        var w = parseFloat(f.style.width) || 0;
-        f.style.setProperty("background", w >= 95 ? "#d9433f" : w >= 80 ? "#d6a243" : "#3fae6a", "important");
+      var allBars = document.querySelectorAll(".usage-disk:not(.sys):not(.mm) > span:first-child");
+      if (!on) {   // integrated: strip any lingering semantic class/inline -> the CSS colour mode shows through
+        for (var i = 0; i < allBars.length; i++) { var b = allBars[i]; if (b.style.background) b.style.removeProperty("background"); if (b.className && b.className.indexOf("cc-fill-") >= 0) b.className = b.className.replace(/\s*cc-fill-(green|amber|red)\b/g, ""); }
+        return;
+      }
+      var trs = document.querySelectorAll("table.unraid.disk_status tr");
+      for (var t = 0; t < trs.length; t++) {
+        var bars = trs[t].querySelectorAll(".usage-disk:not(.sys):not(.mm) > span:first-child");
+        if (!bars.length) continue;
+        var usedW = parseFloat(bars[0].style.width) || 0;   // FIRST bar in the row = BENUTZT -> its % is the disk's fill state
+        var cls = usedW >= 95 ? "cc-fill-red" : usedW >= 80 ? "cc-fill-amber" : "cc-fill-green";
+        for (var k = 0; k < bars.length; k++) { if (!bars[k].classList.contains(cls)) { bars[k].classList.remove("cc-fill-green", "cc-fill-amber", "cc-fill-red"); bars[k].classList.add(cls); } }
       }
     } catch (e) {}
   }
@@ -975,6 +984,13 @@
       // global, independent of whether the header area itself is on) — it only rounds SQUARE badges, and
       // if no area is enabled there are no badges to round, so it's harmless when everything is off.
       root.classList.toggle("cc-shape-circle", g("cc.badgeshape", "pill") === "circle");
+      // #8/#4: the badge-form radii must be present on EVERY page (the Tools/Settings sub-page toggle
+      // track/knob and the docker state dot read them) — set them UNCONDITIONALLY here, not only inside the
+      // header-area-on branch below. All areas compute the SAME shape(), so this can't disagree with them.
+      try {
+        root.style.setProperty("--cc-b-radius", shape());
+        root.style.setProperty("--cc-dot-r", ({ pill: "50%", circle: "50%", rounded: "3px", square: "0px" })[g("cc.badgeshape", "pill")] || "50%");
+      } catch (eR) {}
       // GLOBAL popup theming (user: "alle Subfenster/Popupfenster in den CC Style"): the native
       // jQuery-UI dialogs (openBox/openPlugin) + SweetAlert confirmations follow the CC look on
       // every page. Master-gated only — it is chrome, not an area of its own.
