@@ -652,7 +652,12 @@
       var BSEL = "html.cc-tools-on #displaybox input[type=button], html.cc-tools-on #displaybox input[type=submit], html.cc-tools-on #displaybox button:not([role=tab]):not(.cc-tgl), html.cc-tools-on #displaybox a.button, html.cc-shares-on #displaybox #compute-shares, html.cc-shares-on #displaybox #compute-disks, html.cc-shares-on #displaybox #cleanup-button, html.cc-shares-on #displaybox form[name=\"share_form\"] input[type=submit], html.cc-vms-on #displaybox input[type=button]:not(.cc-actbtn), html.cc-vms-on #displaybox input[type=submit]:not(.cc-actbtn)";
       var btns = document.querySelectorAll(BSEL);
       if (!on) { for (var i0 = 0; i0 < btns.length; i0++) clear(btns[i0]); }
-      else { var pars = [], cnt = []; for (var i = 0; i < btns.length; i++) { var p = btns[i].parentNode, pi = pars.indexOf(p); if (pi < 0) { pi = pars.push(p) - 1; cnt[pi] = 0; } stamp(btns[i], cnt[pi]++); } }
+      else {
+        // group by VISUAL ROW (rounded top) so buttons sitting next to each other rotate through the
+        // palette even when they live in different DOM parents (e.g. Standard vs Anwenden/Fertig).
+        var rows = {};
+        for (var i = 0; i < btns.length; i++) { var rct = btns[i].getBoundingClientRect(); if (!rct.width) { clear(btns[i]); continue; } var key = Math.round(rct.top / 6); if (rows[key] == null) rows[key] = 0; stamp(btns[i], rows[key]++); }
+      }
       // toggles on tools/settings pages -> rotate across the page so no two read the same colour
       var tgls = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tgl, html.cc-tools-on #displaybox .switch-button-background");
       for (var t = 0; t < tgls.length; t++) { if (!on) clear(tgls[t]); else stamp(tgls[t], t); }
@@ -684,6 +689,16 @@
         for (var j = walk.childNodes.length - 1; j >= 0; j--) { if (walk.childNodes[j].nodeType === 3 && (walk.childNodes[j].nodeValue || "").trim()) { tn = walk.childNodes[j]; break; } }
         if (tn) tn.nodeValue = tn.nodeValue.replace(/\s*:\s*$/, "");
       }
+      // #N5 (user: the docker "Läuft" status should be a small STATE DOT right of the badge, like the disk
+      // state dots): turn the coloured status word in the page-title status span into a dot (word kept as tip).
+      var stcolor = { green: "#1f9d55", orange: "#e0912a", red: "#d9433f", grey: "#8d8d8d", gray: "#8d8d8d", blue: "#2f6feb" };
+      var stwords = document.querySelectorAll("#displaybox div.title .status span[class]:not([data-cc-dot]), #displaybox div.title span.status span[class]:not([data-cc-dot])");
+      for (var sw = 0; sw < stwords.length; sw++) {
+        var w = stwords[sw]; var cl = (w.className || "").trim().toLowerCase(); var col = stcolor[cl];
+        if (!col) continue;
+        w.setAttribute("data-cc-dot", "1"); w.setAttribute("data-cc-tip", (w.textContent || "").trim());
+        w.textContent = ""; w.classList.add("cc-status-dot"); w.style.setProperty("background", col, "important");
+      }
       // #23 (user: native infotexts -> a CC info bubble): Unraid's per-setting help is a
       // blockquote.inline_help; move its text onto a small (i) icon on the label (rides the CC tip bubble)
       // and hide the native block.
@@ -691,13 +706,17 @@
       for (var h = 0; h < helps.length; h++) {
         var bq = helps[h]; bq.setAttribute("data-cc-help", "1");
         var txt = (bq.textContent || "").trim(); if (!txt) { continue; }
-        var dd = bq.closest("dd"); var lab = dd ? dd.previousElementSibling : null;
-        var host = (lab && lab.tagName === "DT") ? (lab.querySelector("span") || lab) : bq.parentElement;
-        if (host && !host.querySelector(".cc-toolsinfo")) {
-          var ic = document.createElement("span"); ic.className = "cc-toolsinfo"; ic.setAttribute("data-cc-tip", txt); ic.textContent = "ⓘ";
-          host.appendChild(ic);
+        // #N7 (user: bubbles deplatziert): the help block sits either INSIDE the field's dd, or (other
+        // pages) as a flat sibling AFTER the dl it describes. Resolve the real label (dt) both ways; if
+        // none is found, leave the native help visible rather than dropping a stray icon at the edge.
+        var lab = null, dd = bq.closest("dd");
+        if (dd) lab = dd.previousElementSibling;
+        else { var pv = bq.previousElementSibling; while (pv && pv.tagName !== "DL" && pv.tagName !== "DT") pv = pv.previousElementSibling; if (pv) lab = pv.tagName === "DL" ? pv.querySelector("dt") : pv; }
+        var host = (lab && lab.tagName === "DT") ? (lab.querySelector("span") || lab) : null;
+        if (host) {
+          if (!host.querySelector(".cc-toolsinfo")) { var ic = document.createElement("span"); ic.className = "cc-toolsinfo"; ic.setAttribute("data-cc-tip", txt); ic.textContent = "ⓘ"; host.appendChild(ic); }
+          bq.style.display = "none";
         }
-        bq.style.display = "none";
       }
       // #24 (user: yes/no settings -> a toggle): a two-option <select> reading Ja/Nein (or Yes/No,
       // Enabled/Disabled, An/Aus, On/Off) becomes a CC toggle. The real <select> stays in the DOM (hidden)

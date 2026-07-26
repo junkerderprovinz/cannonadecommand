@@ -109,6 +109,11 @@ html.cc-tools-on #displaybox .cc-toolsinfo {
   color: #9a9a9a; cursor: help; opacity: .85; vertical-align: middle;
 }
 html.cc-tools-on #displaybox .cc-toolsinfo:hover { color: var(--cc-accent, #2f6feb); opacity: 1; }
+/* #N5 the docker status word -> a small state DOT (like the disk state dots), sitting right in the badge */
+html.cc-tools-on #displaybox div.title .cc-status-dot {
+  display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-left: 8px;
+  vertical-align: middle; box-shadow: 0 0 0 2px rgba(0, 0, 0, .25);
+}
 /* #24 a CC toggle standing in for a yes/no <select> (the real select stays hidden as the form value) */
 html.cc-tools-on #displaybox .cc-tgl {
   display: inline-flex; flex: 0 0 auto; width: 44px; height: 24px; border-radius: 999px; background: #3a3a3a;

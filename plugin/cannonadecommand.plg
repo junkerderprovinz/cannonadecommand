@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.71.0">
+  <!ENTITY version   "2.72.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,16 @@
 </ICON>
 
 <CHANGES>
+### 2.72.0
+- Weitere Farbmodus-/Subseiten-Nachbesserungen:
+- Button-Gruppen rotieren jetzt nach VISUELLER Zeile durch die Palette (auch wenn die Buttons in
+  verschiedenen Containern liegen), sodass nebeneinanderstehende Buttons zuverlaessig unterschiedliche
+  Farben haben.
+- Die (i)-Info-Symbole sitzen jetzt zuverlaessig an ihrer Beschriftung (vorher lagen sie auf manchen
+  Subseiten am linken Rand daneben, wenn der native Hilfetext direkt im Formular stand).
+- Docker-Einstellungsseite: der Laeuft-/Gestoppt-Status ist jetzt ein kleiner Farb-Punkt im Titel-Badge
+  (wie die Zustandspunkte bei den Datentraegern) statt farbigem Text.
+
 ### 2.71.0
 - Nachbesserungen an den Farbmodi:
 - Im Regenbogen-Modus bekommen jetzt nebeneinanderstehende Buttons (z. B. auf den Werkzeug-/Einstellungen-
@@ -1878,7 +1888,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>979e9c64b333748bf17994ffcdb1e59277502ee06fdbf121eec1ff89a6223ea7</SHA256>
+  <SHA256>30ad854d0f8a5cb4716e6fa1571f343797ada21451658ee4cc4350d1ee979554</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
