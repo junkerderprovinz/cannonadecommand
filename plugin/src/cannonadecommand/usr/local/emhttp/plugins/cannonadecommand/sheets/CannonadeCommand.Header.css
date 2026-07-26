@@ -885,3 +885,16 @@ html.cc-arrange #menu .nav-item.cc-dragging, html.cc-arrange #cc-island .cc-isl-
 #cc-cmd .cc-cmd-item.cc-cmd-on .cc-cmd-lbl, #cc-cmd .cc-cmd-item.cc-cmd-on .cc-cmd-sub { color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)); }
 #cc-cmd .cc-cmd-lbl { color: #ededed; font-size: 14px; font-weight: 600; }
 #cc-cmd .cc-cmd-sub { color: #8f8f8f; font-size: 12px; margin-left: auto; white-space: nowrap; }
+
+/* #Insel-Drag (user: Anordnen-Bereich viel breiter/unbegrenzt + fluessiger): while arranging, the island rows
+   expand to a big, forgiving drop area (full available width, taller), so chips are easy to place. */
+html.cc-arrange #cc-island, html.cc-header-on #cc-island.cc-isl-arranging {
+  min-width: min(60vw, 900px);
+}
+html.cc-arrange #cc-island .cc-isl-row, html.cc-header-on #cc-island.cc-isl-arranging .cc-isl-row {
+  min-height: 40px !important; min-width: 100% !important; width: 100% !important;
+  padding: 4px !important; gap: 8px !important; border-radius: 8px;
+  background: rgba(255, 255, 255, .05); outline: 1px dashed rgba(255, 255, 255, .18); outline-offset: 1px;
+}
+/* #Drag-Umbau: the reused native lock icon glows in the accent while arranging (open/unlocked look) */
+html.cc-arrange #menu .nav-item.LockButton b, html.cc-arrange #cc-lock-item b { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }

@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.93.0">
+  <!ENTITY version   "2.94.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,16 @@
 </ICON>
 
 <CHANGES>
+### 2.94.0
+- Anordnen (Umbau): kein eigenes Schloss mehr - CannonadeCommand nutzt Unraids eigenes Anordnen-/Sperr-Icon
+  (das sonst nur im Dashboard erscheint) und zeigt es persistent auf ALLEN Tabs; ein Klick aktiviert den
+  Anordnen-Modus (Menue-Tabs + Insel-Chips zittern + sofort verschiebbar).
+- Statusinsel: Anordnen-Bereich viel groesser (grosse Drop-Zonen) fuers leichtere Verschieben.
+- CannonadeCommand-Einstellungen: alle Toggles folgen jetzt dem Farbmodus; der Favoriten-Hinweis sitzt in
+  einer (i)-Bubble statt inline; die Karte "Native Anzeige-Seite" hat jetzt Text + (i)-Bubble + kurzen "Oeffnen"-
+  Button nebeneinander; deutlich mehr Schriftarten fuer den Servernamen.
+- Werkzeug-/Einstellungs-Subseiten: native Toggle-Switches, Mehrfach-Auswahllisten und Checkboxen im CC-Style,
+  Rahmen entfernt, orange Hinweis-Cards ohne Rahmen, Abschnittsueberschriften als Akzent-Badge.
 ### 2.93.0
 - Werkzeug-/Einstellungs-Subseiten: Label und Wert stehen wieder KOMPAKT nebeneinander (wie nativ) statt ueber
   die volle Breite gespreizt - behebt "voellig deplatziert" auf Datum/Uhrzeit, Sprache u.a.
@@ -2071,7 +2081,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>4ef4a4def61f1162c0a6b3e72185b04b6bdd9179a8332bbf12e52973d569bb5d</SHA256>
+  <SHA256>6df34414c2630e22dbf040a1e2c14d828625ea1946def478df13990cff1aeadc</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

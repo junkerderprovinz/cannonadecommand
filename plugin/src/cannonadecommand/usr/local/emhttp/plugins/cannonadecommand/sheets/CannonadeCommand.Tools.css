@@ -242,3 +242,32 @@ html.cc-tools-on #displaybox input[type="checkbox"]:checked::after {
   content: ""; position: absolute; left: 5.5px; top: 1.5px; width: 4px; height: 9px;
   border: solid var(--cc-accent-text, #fff); border-width: 0 2px 2px 0; transform: rotate(45deg);
 }
+/* ── #Tools-Durchgang (user: native Toggles/Badges/Selects/Rahmen nicht im CC-Style) ── */
+/* native Unraid toggle switch -> CC pill that follows the colour mode when on */
+html.cc-tools-on #displaybox .switch-button-background { background: #3a3a3a !important; border: none !important; outline: none !important; box-shadow: none !important; }
+html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
+/* multi / list selects -> CC dark fill, borderless (they stay native selects) */
+html.cc-tools-on #displaybox select[multiple],
+html.cc-tools-on #displaybox select[size]:not([size="1"]) { background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important; border: none !important; outline: none !important; border-radius: 8px !important; padding: 4px 6px !important; }
+html.cc-tools-on #displaybox select[multiple] option:checked,
+html.cc-tools-on #displaybox select[size] option:checked { background: var(--cc-accent, #2f6feb) linear-gradient(0deg, var(--cc-accent, #2f6feb), var(--cc-accent, #2f6feb)); color: var(--cc-accent-text, #fff); }
+/* NO border lines anywhere on tools content (user: "hier ist wieder ein Rahmen ... andere Subseiten ohne Rahmen") */
+html.cc-tools-on #displaybox .Panel,
+html.cc-tools-on #displaybox .box,
+html.cc-tools-on #displaybox .content,
+html.cc-tools-on #displaybox form { border: none !important; outline: none !important; }
+/* orange hint / notice cards (user: KEEP the card but WITHOUT the border/frame) */
+html.cc-tools-on #displaybox blockquote:not(.inline_help),
+html.cc-tools-on #displaybox .notice,
+html.cc-tools-on #displaybox .callout,
+html.cc-tools-on #displaybox p.notice { border: none !important; border-left: none !important; outline: none !important; }
+/* section heading with an orange underline (e.g. BootParams "VM PASSTHROUGH") -> CC accent section badge */
+html.cc-tools-on #displaybox h2:not(.cc-done),
+html.cc-tools-on #displaybox h3.section,
+html.cc-tools-on #displaybox .section-title {
+  border: none !important; border-bottom: none !important;
+  display: inline-flex; align-items: center; width: fit-content;
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff));
+  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-md-pad, 4px 14px); font-size: var(--cc-md-fs, 13px);
+  font-weight: 600; text-transform: uppercase; letter-spacing: .8px; margin: 8px 0 12px !important;
+}

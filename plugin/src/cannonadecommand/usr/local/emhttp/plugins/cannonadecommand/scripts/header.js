@@ -433,22 +433,34 @@
   // ── #Drag-Umbau (user): a LOCK toggle replaces long-press. Locked (default, every page load) = tabs/chips
   // navigate normally. Click the lock -> ARRANGE mode: everything wiggles and can be dragged immediately;
   // click again (or Esc) -> locked + the new order saved. The lock is ALWAYS visible while the header is on.
-  var CC_LOCK_SVG = "<svg viewBox='0 0 24 24' aria-hidden='true'><rect x='5' y='11' width='14' height='9' rx='2'/><path class='cc-lk-sh' d='M8 11V8a4 4 0 0 1 8 0v3'/></svg>";
+  // #Drag-Umbau (user CORRECTION): NO separate lock button — reuse Unraid's OWN "unlock sortable" icon
+  // (.nav-item.LockButton, icon-u-lock) that natively appears only on the Dashboard. Make a lock icon PERSISTENT
+  // in the util row on EVERY page and wire it to the CC arrange mode: on Dashboard the native LockButton is
+  // wired to ALSO toggle CC arranging; on other pages CC injects a look-alike util icon.
   function ccArrangeLock() {
     try {
+      var old = document.getElementById("cc-arrange-lock"); if (old) old.remove();   // drop the previous floating button
       var on = document.documentElement.classList.contains("cc-header-on");
-      var lk = document.getElementById("cc-arrange-lock");
-      if (!on) { if (lk) lk.remove(); return; }
-      if (!lk) {
-        lk = document.createElement("button"); lk.id = "cc-arrange-lock"; lk.type = "button";
-        lk.innerHTML = CC_LOCK_SVG;
-        lk.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); ccToggleArrange(); });
-        document.body.appendChild(lk);
+      var tileR = document.querySelector("#menu .nav-tile.right");
+      var injected = document.getElementById("cc-lock-item");
+      if (!on || !tileR) { if (injected) injected.remove(); return; }
+      var native = tileR.querySelector(".nav-item.LockButton");
+      if (native) {
+        if (injected) injected.remove();   // native present -> no clone needed
+        if (!native.getAttribute("data-cc-arrwired")) {
+          native.setAttribute("data-cc-arrwired", "1");
+          var na = native.querySelector("a"); if (na) na.addEventListener("click", function () { setTimeout(ccToggleArrange, 0); });   // let the native LockButton run, then toggle CC arrange
+        }
+      } else if (!injected) {
+        injected = document.createElement("div"); injected.className = "nav-item util cc-navdrag"; injected.id = "cc-lock-item"; injected.setAttribute("data-cc-drag", "1");   // exclude from nav reorder
+        var a = document.createElement("a"); a.href = "#"; a.className = "hand"; a.setAttribute("data-cc-tip", T("Anordnen entsperren/sperren", "Unlock/lock arranging"));
+        a.innerHTML = "<b class='icon-u-lock system'></b>";
+        a.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); ccToggleArrange(); });
+        injected.appendChild(a); tileR.insertBefore(injected, tileR.firstChild);
       }
       var arr = document.documentElement.classList.contains("cc-arrange");
-      lk.classList.toggle("cc-arrange-on", arr);
-      lk.setAttribute("aria-pressed", arr ? "true" : "false");
-      lk.setAttribute("data-cc-tip", arr ? T("Anordnen aktiv – klicken zum Sperren", "Arranging – click to lock") : T("Entsperren zum Anordnen", "Unlock to arrange"));
+      if (native) native.classList.toggle("cc-lock-arranging", arr);
+      var inj2 = document.getElementById("cc-lock-item"); if (inj2) inj2.classList.toggle("cc-lock-arranging", arr);
     } catch (e) {}
   }
   function ccToggleArrange() {

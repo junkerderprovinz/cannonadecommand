@@ -452,8 +452,13 @@
       }
       var cCard = card(T("Anzeige — Kopfbereich", "Display — header"), T("Die nativen Kopfzeilen-Farben liegen jetzt auf Unraids Anzeige-Seite (im CannonadeCommand-Stil). Hier findest du den Schnellzugriff und die automatische Themen-Kopplung.", "Unraid's header colours now live on the Display Settings page (in CannonadeCommand style). Here you get the quick link and the automatic theme coupling."));
       (function () {
-        var r = el("div", "cc-set-row"); r.appendChild(el("span", "cc-set-rl", T("Native Anzeige-Seite", "Native display page")));
-        var b = el("button", "cc-btn cc-btn-accent", T("Unraid-Anzeige-Einstellungen öffnen …", "Open Unraid display settings …")); b.type = "button";   // #11 (user): a proper CC accent button, not the grey chip
+        // #Native-Card (user): label + (i) bubble on the left, a SHORT button next to it on the right (not a full-width button below).
+        var r = el("div", "cc-set-row cc-set-inline");
+        var rl = el("span", "cc-set-lblwrap");
+        rl.appendChild(el("span", null, T("Native Anzeige-Seite", "Native display page")));
+        rl.appendChild(infoIcon(T("Öffnet Unraids Anzeige-Einstellungen (im CannonadeCommand-Stil) — dort liegen u. a. die Kopfzeilen-Farben, Banner und die Favoriten-Option.", "Opens Unraid's Display Settings (in CannonadeCommand style) — home of the header colours, banner and favourites option.")));
+        r.appendChild(rl);
+        var b = el("button", "cc-btn cc-btn-accent", T("Öffnen", "Open")); b.type = "button";
         b.addEventListener("click", function () { location.href = "/Settings/DisplaySettings"; });
         r.appendChild(b); cCard.appendChild(r);
         var ar = el("div", "cc-set-row cc-set-inline");
@@ -499,12 +504,12 @@
           var favOn = !favOff && (cur == null ? true : cur !== "0");
           var favTgl = toggle(favOn, function (v) { localStorage.setItem("cc.enable.favorites", v ? "1" : "0"); refreshTabs(); }, favOff);
           row.appendChild(favTgl);
-          var hint = el("div", "cc-set-hint" + (favOff ? "" : " cc-hidden"), T("Nur verfügbar, wenn Favoriten in den Unraid-Anzeige-Einstellungen aktiviert sind.", "Only available when favourites are enabled in Unraid's display settings."));
-          lw.appendChild(hint);
+          // #3-Infotext (user: "infotext in infobubble!"): the precondition rides an (i) bubble on the label, NOT inline.
+          lw.appendChild(infoIcon(T("Nur verfügbar, wenn Favoriten in den Unraid-Anzeige-Einstellungen aktiviert sind.", "Only available when favourites are enabled in Unraid's display settings.")));
           try {
             window.ccFavGateSync = function () {
               var off = localStorage.getItem("cc.hidefavtab") === "1";
-              favTgl._setDisabled(off); hint.classList.toggle("cc-hidden", !off);
+              favTgl._setDisabled(off);
               if (off) { favTgl._setOn(false); if (localStorage.getItem("cc.enable.favorites") !== "0") { localStorage.setItem("cc.enable.favorites", "0"); refreshTabs(); } }
             };
           } catch (eF) {}
@@ -1349,7 +1354,27 @@
         ['"Courier New",Courier,monospace', "Courier New"],
         ['Consolas,"Lucida Console",monospace', "Consolas"],
         ['"Lucida Console",Monaco,monospace', "Lucida Console"],
-        ['"Comic Sans MS","Comic Sans",cursive', "Comic Sans"]
+        ['"Comic Sans MS","Comic Sans",cursive', "Comic Sans"],
+        // #Brand-Schriften (user: mehr Schriften) — more distinctive system faces (render if the CLIENT has them)
+        ['Calibri,"Segoe UI",sans-serif', "Calibri"],
+        ['Candara,"Segoe UI",sans-serif', "Candara"],
+        ['Corbel,"Segoe UI",sans-serif', "Corbel"],
+        ['Bahnschrift,"DIN",sans-serif', "Bahnschrift"],
+        ['"Franklin Gothic Medium","Arial Narrow",sans-serif', "Franklin Gothic"],
+        ['"Gill Sans","Gill Sans MT",sans-serif', "Gill Sans"],
+        ['Futura,"Trebuchet MS",sans-serif', "Futura"],
+        ['Optima,Segoe,sans-serif', "Optima"],
+        ['"Segoe UI Black","Arial Black",sans-serif', "Segoe UI Black"],
+        ['"Arial Black",Gadget,sans-serif', "Arial Black"],
+        ['Cambria,Georgia,serif', "Cambria"],
+        ['Constantia,Georgia,serif', "Constantia"],
+        ['"Book Antiqua","Palatino Linotype",serif', "Book Antiqua"],
+        ['Baskerville,"Baskerville Old Face",serif', "Baskerville"],
+        ['Rockwell,"Courier Bold",serif', "Rockwell"],
+        ['"Bodoni MT","Didot",serif', "Bodoni"],
+        ['Copperplate,"Copperplate Gothic Light",fantasy', "Copperplate"],
+        ['"Cascadia Code","Cascadia Mono",Consolas,monospace', "Cascadia"],
+        ['"Brush Script MT",cursive', "Brush Script"]
       ].map(function (f) { return [f[0], f[1], f[0]]; }); // o[2] = self-preview face
       cB.appendChild(dropRow(T("Schriftart", "Font"), FONTS, get("cc.brand.font", ""), function (v) { set("cc.brand.font", v); syncHeaderBar(); }));
       // colour picker + hex (empty = default light)

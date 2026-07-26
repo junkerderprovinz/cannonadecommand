@@ -525,7 +525,7 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 /* popover checkboxes follow the accent; the manage toggle + day toggles go rainbow too */
 .cc-pop input[type="checkbox"] { accent-color: var(--cc-accent, #2f6feb); }
 /* a toggle is ALWAYS one solid colour, even in rainbow mode (never a gradient) */
-.cc-pop.cc-rainbow .cc-set-toggle-on { background: var(--cc-btn-accent, var(--cc-accent, #2f6feb)); }
+.cc-pop.cc-rainbow .cc-set-toggle-on { background: var(--cc-rbaccent, var(--cc-btn-accent, var(--cc-accent, #2f6feb))); }   /* #Toggles-Farbmodus (user): follow the colour mode */
 .cc-pop.cc-rainbow .cc-day-on { background: #8b5cf6; border-color: #8b5cf6; color: #fff; }
 .cc-sched-x { cursor: pointer; color: #8a8a8a; padding: 0 4px; }
 .cc-sched-x:hover { color: #d9433f; }
