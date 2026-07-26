@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.66.1">
+  <!ENTITY version   "2.66.2">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,13 @@
 </ICON>
 
 <CHANGES>
+### 2.66.2
+- Die in 2.66.1 eingefuehrte Migration der Farbtrennung laeuft jetzt zuverlaessig: Sie zieht die
+  Flaggenfarben aus dem alten gemeinsamen Speicher DIREKT in den neuen Flaggen-Speicher (die Werte sind
+  identisch, es ist keine Flaggen-Datenbank noetig) und setzt die Regenbogen-Palette auf den Standard
+  zurueck. Sie laeuft schon beim Laden der Einstellungen, bevor irgendetwas gezeichnet wird, sodass die
+  Regenbogen-Farbfelder auf einer aktualisierten Installation nicht mehr die Flaggenfarben zeigen.
+
 ### 2.66.1
 - Nachtrag zur Farbtrennung: Auf einer FRISCH aktualisierten Installation, auf der vorher schon der
   Flaggen-Modus aktiv war, steckten die Flaggenfarben noch im gemeinsamen alten Speicher und faerbten die
@@ -1802,7 +1809,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>67a361ade2f486b93a37f5d70e7ddec1d48735f32128cb54fd61065b8df17fe3</SHA256>
+  <SHA256>c3d23bb00858fc5897a2d09c22572f878f47422082c9c0c8095ac8a322420442</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
