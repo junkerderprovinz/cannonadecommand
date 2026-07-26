@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.92.0">
+  <!ENTITY version   "2.93.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,13 @@
 </ICON>
 
 <CHANGES>
+### 2.93.0
+- Werkzeug-/Einstellungs-Subseiten: Label und Wert stehen wieder KOMPAKT nebeneinander (wie nativ) statt ueber
+  die volle Breite gespreizt - behebt "voellig deplatziert" auf Datum/Uhrzeit, Sprache u.a.
+- CannonadeCommand-Einstellungen: Hex-Feld ohne Rahmenlinie und exakt so hoch wie die Farbfelder; der Zuruecksetzen-
+  Button ist jetzt exakt eine Farbfeld-Zelle gross.
+- Container-Bearbeiten: die Feldlabel-Badges sind wieder schlichter Text (konsistent mit den anderen Seiten).
+- Native Checkboxen auf Tools-Seiten im CC-Style (dunkel, Akzent-Haken, randlos).
 ### 2.92.0
 - Neu: Kommando-Palette mit Strg/Cmd+K - schnelles Suchen und Springen zu jeder Seite (und ein paar CC-Aktionen),
   komplett per Tastatur bedienbar (Pfeile/Enter/Esc).
@@ -2064,7 +2071,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>e9034c9758e199f601ee005fcf97f4a9c9c79c37085465632d1fff36bc99dc7d</SHA256>
+  <SHA256>4ef4a4def61f1162c0a6b3e72185b04b6bdd9179a8332bbf12e52973d569bb5d</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
