@@ -435,6 +435,10 @@
   // parse TEXT, not structure). Chips are S-tier (~21px, 11px font) with 10px state dots
   // (radius var(--cc-dot-r)); tooltips ride the frameless CC data-cc-tip bubble, never title=.
   var ccIslandObs = null, ccIslandSig = "";
+  // #19: the 3 island row containers (rebuilt each paint) + pointer-drag state for arranging chips
+  var ccIslRows = null, ccIslDragBound = false, ccIslDragged = null, ccIslHold = null, ccIslPressXY = null, ccIslPressPtr = 0, ccIslMoved = false, ccIslSuppressClick = false;
+  // V-C: a chip click jumps to its page (array->/Main, containers->/Docker, ram/cpu/temps->/Dashboard)
+  var CC_ISL_NAV = { array: "/Main", "array-fill": "/Main", docker: "/Docker", ram: "/Dashboard", cpu: "/Dashboard" };
   function ccIslandOn() { return g("cc.enable.header", "0") !== "0" && g("cc.theming", "1") !== "0" && g("cc.island", "1") !== "0"; }
   // #13 (user: "was können wir noch sinnvolles anzeigen?"): CPU/RAM live only as Dashboard page-globals,
   // but Unraid PUBLISHES them cross-page on nchan (the same feed the footer rides). We subscribe to
@@ -501,6 +505,7 @@
       var isle = document.getElementById("cc-island");
       if (!ccIslandOn()) { if (isle && isle.parentNode) isle.parentNode.removeChild(isle); ccIslandSig = ""; ccStopLive(); return; }   // teardown: gate off = island gone (+ drop the live nchan subs)
       ccStartLive();   // #13: ensure the RAM/CPU nchan subscriptions are running while the island is on (idempotent)
+      if (ccIslDragged) return;   // #19: never rebuild the island mid-drag (it would detach the dragged chip)
       var hdr = document.getElementById("header"); if (!hdr) return;
       var foot = document.getElementById("footer"), sb = document.getElementById("statusbar");
       var raw = ((sb && sb.textContent) || "").replace(/^\s+|\s+$/g, "");
@@ -557,13 +562,19 @@
         if (prof) hdr.insertBefore(isle, prof); else hdr.appendChild(isle);
       }
       while (isle.firstChild) isle.removeChild(isle.firstChild);   // clear + refill = idempotent rebuild
+      // #19 (user): the chips live in 3 arrangeable ROWS. Build them into row 0 (staging); ccIslandArrange()
+      // then moves each into its saved row/position, new/unknown chips stay in row 0. Each chip carries a
+      // stable data-cc-chip key (its cc-isl-<key> suffix) so the saved order survives every rebuild.
+      ccIslRows = [];
+      for (var ir = 0; ir < 3; ir++) { var rw = document.createElement("span"); rw.className = "cc-isl-row"; rw.setAttribute("data-cc-row", ir); isle.appendChild(rw); ccIslRows.push(rw); }
       function chip(label, dot, tip, cls) {
         var c = document.createElement("span"); c.className = "cc-isl-chip" + (cls ? " " + cls : "");
+        if (cls) c.setAttribute("data-cc-chip", cls.replace(/^cc-isl-/, ""));
         var d = document.createElement("span"); d.className = "cc-isl-dot";
         d.style.background = dot;   // state COLOUR inline; size/shape (var(--cc-dot-r)) in the sheet
         c.appendChild(d); c.appendChild(document.createTextNode(label));
         if (tip) c.setAttribute("data-cc-tip", tip);   // frameless CC bubble (law) — no native balloon
-        isle.appendChild(c);
+        ccIslRows[0].appendChild(c);
       }
       // mini-BAR chip (fill / RAM / CPU): a short lead label + fill width = %, fill COLOUR carries the
       // state (green <80, amber <95, red above — same thresholds as the dots); non-numeric % -> grey track.
@@ -578,7 +589,8 @@
         ufill.style.width = w + "%"; ufill.style.background = col;
         ubar.appendChild(ufill); uch.appendChild(ubar); uch.appendChild(document.createTextNode(pctText));
         if (tip) uch.setAttribute("data-cc-tip", tip);
-        isle.appendChild(uch);
+        if (cls) uch.setAttribute("data-cc-chip", cls.replace(/^cc-isl-/, ""));
+        ccIslRows[0].appendChild(uch);
       }
       // FIXED render order (user: "total unsortiert" -> deterministic layout): uptime, OS,
       // array state, fill bar, temps. Each element is gated by its cc.isl.<key> toggle. Every
@@ -626,11 +638,89 @@
       if (iOn("temps")) {
         for (i = 0; i < temps.length; i++) {
           var tlab = i === 0 ? T("CPU-Temperatur", "CPU temperature") : i === 1 ? T("Mainboard-Temperatur", "Motherboard temperature") : T("Temperatur", "Temperature");
-          chip(Math.round(temps[i]) + " °C", temps[i] >= warn + 15 ? "#d9433f" : temps[i] >= warn ? "#d6a243" : "#3fae6a", tlab + ": " + temps[i] + " °C");
+          chip(Math.round(temps[i]) + " °C", temps[i] >= warn + 15 ? "#d9433f" : temps[i] >= warn ? "#d6a243" : "#3fae6a", tlab + ": " + temps[i] + " °C", "cc-isl-temp" + i);
         }
       }
       // service segments (e.g. "shiplog: started …") are deliberately NOT mirrored — that daemon
       // status stays in the (hidden) native footer (user questioned it twice)
+      ccIslandArrange(); ccWireIslandDrag();   // #19: apply the saved 3-row arrangement + make the chips draggable
+    } catch (e) {}
+  }
+  // ── #19 STATUS-ISLAND CHIP ARRANGEMENT (user: "chips per drag and drop anordenbar, drei zeilen") ──
+  // The chips are built into 3 row containers; the user long-presses a chip and drags it to any row/position.
+  // The layout is persisted as cc.isl.order = [[row0 keys],[row1 keys],[row2 keys]] and re-applied on every
+  // island rebuild (idempotent), mirroring the main-menu nav-drag persistence idiom.
+  function ccIslKey(el) { return el && el.getAttribute ? el.getAttribute("data-cc-chip") : null; }
+  function ccIslandOrderRead() { try { var o = JSON.parse(g("cc.isl.order", "null")); if (o && o.length === 3) return o; } catch (e) {} return null; }
+  function ccIslandSaveOrder() {
+    try {
+      if (!ccIslRows) return;
+      var o = [[], [], []];
+      for (var r = 0; r < 3; r++) { var ch = ccIslRows[r].querySelectorAll(":scope > .cc-isl-chip"); for (var i = 0; i < ch.length; i++) { var k = ccIslKey(ch[i]); if (k) o[r].push(k); } }
+      localStorage.setItem("cc.isl.order", JSON.stringify(o));
+    } catch (e) {}
+  }
+  function ccIslandArrange() {
+    try {
+      if (!ccIslRows) return;
+      var order = ccIslandOrderRead(); if (!order) return;   // no saved arrangement -> everything stays in row 0
+      var byKey = {}, all = ccIslRows[0].querySelectorAll(":scope > .cc-isl-chip");
+      for (var i = 0; i < all.length; i++) { var k = ccIslKey(all[i]); if (k && !byKey[k]) byKey[k] = all[i]; }
+      for (var r = 0; r < 3; r++) { var list = order[r] || []; for (var j = 0; j < list.length; j++) { var el = byKey[list[j]]; if (el) { ccIslRows[r].appendChild(el); delete byKey[list[j]]; } } }
+    } catch (e) {}   // keys not present are skipped; chips in no saved list stay in row 0
+  }
+  function ccIslandDropTarget(x, y) {
+    if (!ccIslRows) return null;
+    var row = null, best = 1e9;
+    for (var r = 0; r < 3; r++) { var rr = ccIslRows[r].getBoundingClientRect(); if (rr.height && y >= rr.top - 8 && y <= rr.bottom + 8) { row = ccIslRows[r]; break; } var mid = rr.height ? (rr.top + rr.bottom) / 2 : ccIslRows[0].getBoundingClientRect().top; var d = Math.abs(y - mid); if (d < best) { best = d; row = ccIslRows[r]; } }
+    if (!row) row = ccIslRows[0];
+    var chips = row.querySelectorAll(":scope > .cc-isl-chip"), before = null;
+    for (var i = 0; i < chips.length; i++) { if (chips[i] === ccIslDragged) continue; var cr = chips[i].getBoundingClientRect(); if (x < cr.left + cr.width / 2) { before = chips[i]; break; } }
+    return { row: row, before: before };
+  }
+  function ccWireIslandDrag() {
+    try {
+      if (!ccIslRows) return;
+      var chips = document.querySelectorAll("#cc-island .cc-isl-chip");
+      for (var i = 0; i < chips.length; i++) {
+        (function (c) {
+          if (c.getAttribute("data-cc-idrag") === "1") return; c.setAttribute("data-cc-idrag", "1");
+          c.addEventListener("pointerdown", function (e) {   // long-press (300ms) arms the drag so a plain click still works
+            if (e.button !== 0) return;
+            ccIslPressXY = { x: e.clientX, y: e.clientY }; ccIslPressPtr = e.pointerId; ccIslMoved = false;
+            clearTimeout(ccIslHold);
+            ccIslHold = setTimeout(function () {
+              ccIslHold = null; ccIslDragged = c; c.classList.add("cc-isl-dragging");
+              var isle = document.getElementById("cc-island"); if (isle) isle.classList.add("cc-isl-arranging");
+              try { c.setPointerCapture(ccIslPressPtr); } catch (e2) {}
+            }, 300);
+          });
+        })(chips[i]);
+      }
+      if (!ccIslDragBound) {
+        ccIslDragBound = true;
+        document.addEventListener("pointermove", function (e) {
+          if (ccIslPressXY && !ccIslDragged) { if (Math.abs(e.clientX - ccIslPressXY.x) > 8 || Math.abs(e.clientY - ccIslPressXY.y) > 8) { clearTimeout(ccIslHold); ccIslHold = null; ccIslPressXY = null; } return; }
+          if (!ccIslDragged) return;
+          ccIslMoved = true;
+          var t = ccIslandDropTarget(e.clientX, e.clientY);
+          if (t && t.row) { if (t.before) t.row.insertBefore(ccIslDragged, t.before); else t.row.appendChild(ccIslDragged); }
+        });
+        var up = function () {
+          clearTimeout(ccIslHold); ccIslHold = null; ccIslPressXY = null;
+          if (ccIslDragged) { try { ccIslDragged.releasePointerCapture(ccIslPressPtr); } catch (e) {} ccIslDragged.classList.remove("cc-isl-dragging"); var isle = document.getElementById("cc-island"); if (isle) isle.classList.remove("cc-isl-arranging"); if (ccIslMoved) { ccIslandSaveOrder(); ccIslSuppressClick = true; } ccIslDragged = null; }
+        };
+        document.addEventListener("pointerup", up);
+        document.addEventListener("pointercancel", up);
+        // V-C: click a chip -> jump to its page (suppressed on the click that follows a drag)
+        document.addEventListener("click", function (e) {
+          var chip = e.target && e.target.closest ? e.target.closest("#cc-island .cc-isl-chip") : null;
+          if (!chip) return;
+          if (ccIslSuppressClick) { ccIslSuppressClick = false; e.preventDefault(); e.stopPropagation(); return; }
+          var key = ccIslKey(chip), url = key ? (CC_ISL_NAV[key] || (/^temp/.test(key) ? "/Dashboard" : null)) : null;
+          if (url) location.href = url;
+        }, true);
+      }
     } catch (e) {}
   }
   // #16 (user: "Zustandsanzeigen native Zustandsfarbe ODER in den Farbmodus integriert"): the /Main

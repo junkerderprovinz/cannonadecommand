@@ -177,18 +177,31 @@ html.cc-header-on .tooltipster-base .tooltipster-arrow { display: none !importan
    S-tier chips (~21px, 11px font) + 10px state dots. NO borders/lines (law): the grey
    fill alone is the chip; the dot COLOUR is set inline per state by header.js. */
 html.cc-header-on #header { display: flex; align-items: center; }   /* flex row so margin-left:auto works + everything centres on ONE 91px line */
+/* #19 (user: "chips per drag and drop anordenbar, drei zeilen"): the island is a COLUMN of 3 explicit,
+   right-aligned rows; header.js builds the chips into them per the saved cc.isl.order and lets the user
+   long-press + drag a chip to any row/position. Empty rows collapse. */
 html.cc-header-on #cc-island {
-  display: inline-flex; align-items: center; gap: 8px; row-gap: 6px;
-  /* bell+burger left the strip (docked into the menu icon row by header.js) — the chips stay a
-     COMPACT right cluster: 430px cap breaks them into up to ~3 right-aligned rows instead of
-     stretching to mid-page (user: too wide); align-self keeps the block vertically centred in
-     the 91px strip. Bubbles come from the global #cc-tipfloat engine (viewport-clamped), so no
-     per-chip ::after rules live here any more. */
-  flex-wrap: wrap; justify-content: flex-end; max-width: 430px;
-  /* N10: the version-number chip now lives INSIDE the island (header.js), so no floating chip to
-     reserve room for — the whole set aligns right in 2-3 rows against the strip's right edge. */
-  margin-left: auto; margin-right: 16px; align-self: center;
-  order: 2;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 5px;
+  max-width: 430px; margin-left: auto; margin-right: 16px; align-self: center; order: 2;
+}
+html.cc-header-on #cc-island .cc-isl-row {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; row-gap: 6px; min-height: 0;
+}
+html.cc-header-on #cc-island .cc-isl-row:empty { display: none; }
+html.cc-header-on #cc-island .cc-isl-chip { cursor: grab; }
+/* while dragging: reveal the 3 drop zones + fade the dragged chip */
+html.cc-header-on #cc-island.cc-isl-arranging { gap: 6px; }
+html.cc-header-on #cc-island.cc-isl-arranging .cc-isl-row { min-height: 22px; min-width: 40px; outline: 1px dashed rgba(255, 255, 255, .16); outline-offset: 2px; border-radius: 6px; }
+html.cc-header-on #cc-island .cc-isl-chip.cc-isl-dragging { opacity: .4; cursor: grabbing; }
+
+/* V-B (suggestion): respect prefers-reduced-motion — kill CC's wiggle/pulse/transitions for users who ask
+   the OS to reduce motion (only bites when the setting is on). */
+@media (prefers-reduced-motion: reduce) {
+  html.cc-header-on *, html.cc-popups-on *, html.cc-tools-on *, html.cc-shares-on *, html.cc-vms-on *, html.cc-docker-on *,
+  html.cc-header-on, html.cc-popups-on {
+    animation-duration: .001ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important; scroll-behavior: auto !important;
+  }
 }
 html.cc-header-on #cc-island .cc-isl-chip {
   display: inline-flex; align-items: center; white-space: nowrap;
