@@ -1676,14 +1676,18 @@ html.cc-shares-on.cc-on-stats #displaybox > span.status {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
   margin: 22px 0 0 !important; padding-top: 16px; border: none;   /* the old top separator was a LINE (law) — spacing alone separates the strip */
 }
+/* #9 (user: "Anordnung nicht schön"): keep every control on ONE aligned baseline and push the reset
+   button to the FAR RIGHT so the strip reads as a tidy toolbar (label · interval · … | Reset). */
+html.cc-shares-on.cc-on-stats #displaybox > span.status > * { margin: 0 !important; vertical-align: middle; }
 /* the two interval selects -> CC filled boxes (flatten the native underline) */
 html.cc-shares-on.cc-on-stats #displaybox > span.status select {
   background: rgba(128, 128, 128, .12) !important; border: none !important; box-shadow: none !important;
-  border-radius: 6px !important; padding: 6px 10px !important; min-height: var(--cc-md-h, 30px); box-sizing: border-box;
+  border-radius: 6px !important; padding: 6px 10px !important; height: var(--cc-md-h, 30px); box-sizing: border-box;
 }
-/* the Reset button -> a neutral CC pill (it's an input[type=button]) */
+/* #9 the Reset button -> a CC pill that FOLLOWS THE COLOUR MODE (rainbow/flag, else accent), pushed right */
 html.cc-shares-on.cc-on-stats #displaybox > span.status input[type="button"] {
-  background: #4a4a4a !important; color: #f0f0f0 !important; border: none !important; box-shadow: none !important;
+  margin-left: auto !important;
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important; border: none !important; box-shadow: none !important;
   height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-btnpad, 0 14px) !important; min-width: 0 !important; box-sizing: border-box !important;
   border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer;
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;

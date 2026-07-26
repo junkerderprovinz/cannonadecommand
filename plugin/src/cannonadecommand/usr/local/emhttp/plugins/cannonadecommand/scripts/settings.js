@@ -395,26 +395,50 @@
       // CC-styled + one click away ("es sind noch alte Einstellungen ... in den cc settings"). We now keep
       // ONLY the 3 header COLOURS here — they affect CannonadeCommand's OWN header and were explicitly
       // wanted back (#7) — as live-sync controls; theme/tabbed-view/banner/favourites live natively.
-      var KEEP = ["header", "headermetacolor", "background"];
-      var cCard = card(T("Anzeige — Kopf-Farben (live)", "Display — header colours (live)"), T("Die nativen Kopfzeilen-Farben, hier direkt anpassbar — sie schalten live in Unraids Anzeige-Einstellungen mit um und wirken, wenn CannonadeCommands Kopfbereich AUS ist. Alle weiteren Anzeige-Optionen liegen auf der nativen Seite (jetzt im CannonadeCommand-Stil).", "Unraid's header colours, adjustable here — they live-sync into Unraid's Display Settings and apply when CannonadeCommand's header area is OFF. Every other display option lives on the native page (now in CannonadeCommand style)."));
+      // #19 (user): the native header COLOUR pickers moved BACK to Unraid's Display Settings page (now
+      // CC-styled) — this card keeps only the quick link + the auto-theme coupling (#20).
+      var postDisplayMulti = function (fields) {
+        try {
+          var fd = new URLSearchParams();
+          fd.append("#file", "dynamix/dynamix.cfg"); fd.append("#section", "display"); fd.append("csrf_token", window.csrf_token);
+          Object.keys(fields).forEach(function (k9) { fd.append(k9, fields[k9]); });
+          fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function () { location.reload(); });
+        } catch (e9) {}
+      };
+      // #20: match the native header background + text colour to Unraid's active theme (dark theme ->
+      // dark bg + light text; light theme -> light bg + dark text). Reads the theme's real body colour.
+      function applyHdrAuto() {
+        try {
+          var bg = getComputedStyle(document.body).backgroundColor || "";
+          var m = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/); if (!m) return;
+          var toHex = function (n) { return ("0" + (n & 255).toString(16)).slice(-2); };
+          var bghex = toHex(+m[1]) + toHex(+m[2]) + toHex(+m[3]);
+          var ink = idealText("#" + bghex).replace(/^#/, "");
+          postDisplayMulti({ header: ink, headermetacolor: ink, background: bghex });
+        } catch (e9) {}
+      }
+      var cCard = card(T("Anzeige — Kopfbereich", "Display — header"), T("Die nativen Kopfzeilen-Farben liegen jetzt auf Unraids Anzeige-Seite (im CannonadeCommand-Stil). Hier findest du den Schnellzugriff und die automatische Themen-Kopplung.", "Unraid's header colours now live on the Display Settings page (in CannonadeCommand style). Here you get the quick link and the automatic theme coupling."));
       (function () {
-        var b = el("button", "cc-btn", T("Alle Unraid-Anzeige-Einstellungen öffnen …", "Open all Unraid display settings …")); b.type = "button";
+        var r = el("div", "cc-set-row"); r.appendChild(el("span", "cc-set-rl", T("Native Anzeige-Seite", "Native display page")));
+        var b = el("button", "cc-btn", T("Unraid-Anzeige-Einstellungen öffnen …", "Open Unraid display settings …")); b.type = "button";
         b.addEventListener("click", function () { location.href = "/Settings/DisplaySettings"; });
-        var r = el("div", "cc-set-row"); r.appendChild(el("span", "cc-set-rl", T("Native Anzeige-Seite", "Native display page"))); r.appendChild(b); cCard.appendChild(r);
+        r.appendChild(b); cCard.appendChild(r);
+        var ar = el("div", "cc-set-row cc-set-inline");
+        var arl = el("span", "cc-set-lblwrap");
+        arl.appendChild(el("span", null, T("Kopf-Farben ans Thema koppeln", "Match header colours to the theme")));
+        arl.appendChild(infoIcon(T("AN = die Kopfzeilen-Hintergrund- und Textfarbe folgen automatisch Unraids Farbschema (dunkles Thema: dunkler Hintergrund + helle Schrift; helles Thema umgekehrt). Wirkt, wenn CannonadeCommands Kopfbereich AUS ist.", "ON = the header background + text colour follow Unraid's colour scheme automatically (dark theme: dark bg + light text; light theme reversed). Applies when CannonadeCommand's header area is OFF.")));
+        ar.appendChild(arl);
+        ar.appendChild(toggle(get("cc.hdrauto", "0") === "1", function (v) { set("cc.hdrauto", v ? "1" : "0"); if (v) applyHdrAuto(); }));
+        cCard.appendChild(ar);
       })();
       wrapMain.appendChild(cCard);
+      // keep the favourites value in sync (drives cc.hidefavtab) — no colour pickers here anymore
       fetch("/Settings/DisplaySettings", { credentials: "same-origin" }).then(function (r) { return r.text(); }).then(function (html) {
         try {
           var doc = new DOMParser().parseFromString(html, "text/html");
-          // Scope STRICTLY to the #section=display form (other forms carry stray selects disks/op/queue).
           var form = null;
           Array.prototype.forEach.call(doc.querySelectorAll("form"), function (f) { var s = f.querySelector('input[name="#section"]'); if (s && s.value === "display") form = f; });
           if (!form) return;
-          KEEP.forEach(function (nm) {
-            var c = form.querySelector('input[name="' + nm + '"][type="text"]'); if (!c) return;   // the 3 colour fields
-            cCard.appendChild(colorRow(fieldLabel(c, nm), c.value || "", function (v) { postDisplay(nm, v); }, help(nm)));   // #7 header colour
-          });
-          // the favourites CONTROL now lives natively, but its value still drives cc.hidefavtab (favorites tab)
           var fav = form.querySelector('select[name="favorites"]'); if (fav) set("cc.hidefavtab", fav.value === "no" ? "1" : "0");
           syncHeaderBar();
         } catch (e9) {}

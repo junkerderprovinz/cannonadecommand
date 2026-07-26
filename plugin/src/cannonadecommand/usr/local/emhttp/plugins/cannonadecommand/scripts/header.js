@@ -627,13 +627,34 @@
   // flag) shows through. The fill % lives in the span's inline width. Runs from apply() (load + storage).
   function ccStateBars() {
     try {
-      var on = g("cc.statenative", "0") === "1" && g("cc.theming", "1") !== "0";
+      var theming = g("cc.theming", "1") !== "0";
+      var native = g("cc.statenative", "0") === "1";
+      // #1/#2 (user): when CC is on and "native state colours" is OFF, the usage/fill bars are INTEGRATED
+      // into the colour mode — they take the rainbow/flag action colour (or the accent). ON = the native
+      // green/amber/red by fill level. Theming off = revert to Unraid's own bar entirely.
+      var rs = getComputedStyle(document.documentElement);
+      var pal = (rs.getPropertyValue("--cc-rbaccent") || "").trim() || (rs.getPropertyValue("--cc-accent") || "").trim() || "#2f6feb";
       var fills = document.querySelectorAll(".usage-disk > span:first-child");
       for (var i = 0; i < fills.length; i++) {
         var f = fills[i];
-        if (!on) { f.style.removeProperty("background"); continue; }
-        var w = parseFloat(f.style.width) || 0;
-        f.style.setProperty("background", w >= 95 ? "#d9433f" : w >= 80 ? "#d6a243" : "#3fae6a", "important");
+        if (!theming) { f.style.removeProperty("background"); continue; }
+        if (native) { var w = parseFloat(f.style.width) || 0; f.style.setProperty("background", w >= 95 ? "#d9433f" : w >= 80 ? "#d6a243" : "#3fae6a", "important"); }
+        else { f.style.setProperty("background", pal, "important"); }
+      }
+    } catch (e) {}
+  }
+  // #22 (user: "bei allen Einstellungen die Doppelpunkte weg"): on native /Tools/* and /Settings/* sub-pages
+  // (cc-tools-on) strip the trailing colon from every setting label. Visual only + idempotent (marks done).
+  function ccToolsEnhance() {
+    try {
+      if (!document.documentElement.classList.contains("cc-tools-on")) return;
+      var dts = document.querySelectorAll("#displaybox dl > dt:not([data-cc-nocolon])");
+      for (var i = 0; i < dts.length; i++) {
+        var dt = dts[i]; dt.setAttribute("data-cc-nocolon", "1");
+        var walk = dt.querySelector("span") || dt;   // the label text usually sits in the first span
+        var tn = null;
+        for (var j = walk.childNodes.length - 1; j >= 0; j--) { if (walk.childNodes[j].nodeType === 3 && (walk.childNodes[j].nodeValue || "").trim()) { tn = walk.childNodes[j]; break; } }
+        if (tn) tn.nodeValue = tn.nodeValue.replace(/\s*:\s*$/, "");
       }
     } catch (e) {}
   }
@@ -909,6 +930,7 @@
       } catch (e0) {}
       ccArrFill();      // #18: on /Main, refresh the cached array-fill % the island's fill chip reads
       ccStateBars();   // #16: usage-bar fills follow the fill-level state colour when cc.statenative, else the palette
+      ccToolsEnhance();   // #22: strip label colons on native Tools/Settings sub-pages
       ccNchanStyle(); paintPopups(); watchPopups();
       ccWireTips();     // document-wide floating-bubble delegation (bound once) — on EVERY page: docker/shares/settings anchors ride it even with the header area off
       // paintNav() with cc-header-on now removed => rb=false => it removeProperty's every

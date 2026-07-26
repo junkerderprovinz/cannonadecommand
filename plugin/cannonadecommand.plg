@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.67.0">
+  <!ENTITY version   "2.68.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,18 @@
 </ICON>
 
 <CHANGES>
+### 2.68.0
+- Konsistenz-Runde (Teil 2):
+- Auslastungs-/Fuellstandsbalken folgen jetzt dem Farbmodus, wenn der Schalter "Zustandsanzeigen nativ
+  faerben" AUS ist (AN = weiterhin nativ gruen/gelb/rot je nach Fuellstand).
+- System-Stats: die Steuerung unter den Graphen sitzt jetzt als aufgeraeumte Zeile, und der
+  Zuruecksetzen-Knopf sitzt rechts und folgt dem Farbmodus.
+- Kopfbereich-Karte: die nativen Kopf-Farben liegen jetzt auf Unraids Anzeige-Seite (im
+  CannonadeCommand-Stil), die Karte hat nur noch den Schnellzugriff; NEU: ein Schalter, der die
+  Kopf-Farben automatisch an Unraids Farbschema koppelt (dunkles Thema: dunkler Hintergrund + helle
+  Schrift; helles Thema umgekehrt).
+- Auf den Werkzeug- und Einstellungen-Subseiten werden die Doppelpunkte hinter den Beschriftungen entfernt.
+
 ### 2.67.0
 - Konsistenz-Runde quer durch die Tabs (Teil 1):
 - Farbwaehl-Zeile ueberall gleich: das Hex-Feld sitzt jetzt als rechte Zelle direkt neben den Farbfeldern
@@ -1839,7 +1851,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>be26d6746e8fb22595aa0f2df97c14fdd1828bf54d49cf7412fef1c8df55e7b5</SHA256>
+  <SHA256>a2071ebd39a03da159b76e773744f37184d0927c1cf639a66ffa44762d14759f</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
