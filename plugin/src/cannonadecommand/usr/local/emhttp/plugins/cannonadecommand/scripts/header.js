@@ -773,6 +773,9 @@
   function ccPaintRotate() {
     try {
       var on = g("cc.theming", "1") !== "0" && rbOn();
+      // #1 CORRECTION (user): in the REACTIVE sub-mode the dropdown OPTIONS must rest neutral and reveal their
+      // own colour ONLY on hover (they used to stay permanently coloured). Gate a class the Tools sheet keys off.
+      document.documentElement.classList.toggle("cc-tools-rbneutral", on && rbNeutral());
       var stamp = function (el, ix) { var c = rbColor(ix); el.style.setProperty("--cc-rb-c", c, "important"); el.style.setProperty("--cc-rb-ct", idealText(c), "important"); };
       var clear = function (el) { el.style.removeProperty("--cc-rb-c"); el.style.removeProperty("--cc-rb-ct"); };
       var BSEL = "html.cc-tools-on #displaybox input[type=button], html.cc-tools-on #displaybox input[type=submit], html.cc-tools-on #displaybox button:not([role=tab]):not(.cc-tgl), html.cc-tools-on #displaybox a.button, html.cc-shares-on #displaybox #compute-shares, html.cc-shares-on #displaybox #compute-disks, html.cc-shares-on #displaybox #cleanup-button, html.cc-shares-on #displaybox form[name=\"share_form\"] input[type=submit], html.cc-vms-on #displaybox input[type=button]:not(.cc-actbtn), html.cc-vms-on #displaybox input[type=submit]:not(.cc-actbtn)";
@@ -1193,6 +1196,17 @@
       // icon and nudge the container so it is EXACTLY 6px — matching the 6px util-icon gaps. Idempotent
       // (delta 0 once at 6px), synchronous (no flicker).
       if (bsp) { var br = bsp.getBoundingClientRect(); if (br.width > 0) { var gdx = Math.round(6 - (br.left - r.right)); if (gdx) set("left", (parseInt(up.style.getPropertyValue("left"), 10) + gdx) + "px"); } }
+      // #10 FINAL RIGHT-EDGE CAP: the gap-enforce above pins the bell 6px right of the last util icon
+      // regardless of any right boundary, so on wide rows the burger's right edge protruded a few px
+      // PAST the island strip (the other CC top-right elements — live: burger 1579 vs island 1576).
+      // Cap the LAST visible trigger's right edge to the island's right edge (fallback: 24px inset,
+      // matching the island's own inset) so bell+burger sit FLUSH with the island, never beyond it.
+      var isl = document.getElementById("cc-island");
+      var rBound = null;
+      if (isl && getComputedStyle(isl).display !== "none") { var ir = isl.getBoundingClientRect(); if (ir.width > 0) rBound = Math.round(ir.right); }
+      if (rBound == null) rBound = vw - 24;
+      var lastSp = null; for (i = sp.length - 1; i >= 0; i--) { if (getComputedStyle(sp[i]).display !== "none" && sp[i].getBoundingClientRect().width > 0) { lastSp = sp[i]; break; } }
+      if (lastSp) { var lrr = lastSp.getBoundingClientRect(); if (lrr.width > 0) { var over = Math.round(lrr.right) - rBound; if (over > 0) set("left", (parseInt(up.style.getPropertyValue("left"), 10) - over) + "px"); } }
     } catch (e) {}
   }
   function ccUndockProfile() {                                     // OFF branch: remove exactly the props we set -> fully native again
@@ -1203,6 +1217,21 @@
       for (i = 0; i < sp.length; i++) { ["width", "height", "min-width", "min-height"].forEach(function (p) { sp[i].style.removeProperty(p); }); }
     } catch (e) {}
   }
+  // ── CC TOAST ── one reusable bottom-centre notice (help feedback #11, "what's new" toast, …). A single
+  // reused node; the styling (surface, radius, colour-mode accent) lives in Header.css (.cc-toast). Auto-
+  // dismisses; reduced-motion respected via CSS. Safe no-op if the document body is not ready.
+  var ccToastEl = null, ccToastT = 0;
+  function ccToast(msg, ms) {
+    try {
+      if (!document.body) return;
+      if (!ccToastEl) { ccToastEl = document.createElement("div"); ccToastEl.id = "cc-toast"; ccToastEl.setAttribute("role", "status"); ccToastEl.setAttribute("aria-live", "polite"); document.body.appendChild(ccToastEl); }
+      ccToastEl.textContent = msg;
+      ccToastEl.classList.add("cc-toast-show");
+      if (ccToastT) clearTimeout(ccToastT);
+      ccToastT = setTimeout(function () { ccToastT = 0; if (ccToastEl) ccToastEl.classList.remove("cc-toast-show"); }, ms || 2600);
+    } catch (e) {}
+  }
+  try { window.ccToast = ccToast; } catch (e) {}   // let docker.js / settings.js reuse the same toast
   function apply() {
     try {
       var root = document.documentElement;
@@ -1395,9 +1424,13 @@
     } catch (e) {}
     watchSearch();
     wireSearchToggle();
-    // #15/K11 (user: "Hilfe-Icon funktioniert immer noch nicht"): guarantee the click reaches the native
+    // #15/#11 (user: "Hilfe-Icon funktioniert immer noch nicht"): guarantee the click reaches the native
     // HelpButton even if the nav-drag pointer wiring (or another handler) swallows the anchor's inline
     // onclick. Capture phase + call it once ourselves; stopImmediatePropagation prevents a double-toggle.
+    // LIVE-PROVEN the toggle itself works (inline_help none->block); what looked "broken" is that on pages
+    // like the Dashboard EVERY .inline_help lives inside a collapsed tile (height 0) so nothing appears —
+    // native behaviour, but it reads as a dead button. So: after toggling ON, if no help block is actually
+    // visible, surface a CC toast instead of leaving the user staring at nothing.
     try {
       document.addEventListener("click", function (e) {
         try {
@@ -1405,7 +1438,18 @@
           var h = e.target && e.target.closest ? e.target.closest("#menu .nav-item.HelpButton") : null;
           if (!h) return;
           e.preventDefault(); e.stopImmediatePropagation();
-          if (typeof window.HelpButton === "function") window.HelpButton();
+          if (typeof window.HelpButton !== "function") { ccToast(T("Hilfe ist auf dieser Seite nicht verfügbar.", "Help is not available on this page.")); return; }
+          window.HelpButton();
+          var nav = document.querySelector(".nav-item.HelpButton");   // turned ON? then verify something actually became visible
+          if (nav && nav.classList.contains("active")) {
+            setTimeout(function () {
+              try {
+                var ih = document.querySelectorAll(".inline_help"), seen = false;
+                for (var q = 0; q < ih.length; q++) { if (ih[q].getBoundingClientRect().height > 2) { seen = true; break; } }
+                if (!seen) ccToast(T("Diese Seite bietet keine Inline-Hilfe.", "This page has no inline help."));
+              } catch (e2) {}
+            }, 360);
+          }
         } catch (err) {}
       }, true);
     } catch (e) {}

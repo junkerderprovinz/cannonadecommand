@@ -195,3 +195,16 @@ html.cc-tools-on #displaybox .cc-tsel-opt {
 html.cc-tools-on #displaybox .cc-tsel-opt:hover,
 html.cc-tools-on #displaybox .cc-tsel-opt.is-selected { filter: brightness(1.18); box-shadow: none !important; }
 html.cc-tools-on #displaybox .cc-tsel-opt.is-disabled { opacity: .45; cursor: not-allowed; }
+/* #1 CORRECTION (user): in the REACTIVE sub-mode (cc.rbmode=active) the list items REST neutral and reveal
+   their OWN rotating colour ONLY on mouseover / when selected — matching every other reactive control. Full
+   rainbow keeps them permanently coloured (rule above). The per-item --cc-rb-c is still stamped, just unused
+   until hover. Higher specificity (extra .cc-tools-rbneutral class) beats the always-coloured base rule. */
+html.cc-tools-on.cc-tools-rbneutral #displaybox .cc-tsel-opt {
+  background: rgba(128, 128, 128, .16); color: #e4e4e4;
+}
+html.cc-tools-on.cc-tools-rbneutral #displaybox .cc-tsel-opt:hover,
+html.cc-tools-on.cc-tools-rbneutral #displaybox .cc-tsel-opt.is-selected {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)));
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff)));
+  filter: none;
+}

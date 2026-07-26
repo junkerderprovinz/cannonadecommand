@@ -1733,14 +1733,27 @@
   function setToCpuset(arr) { arr = arr.slice().sort(function (a, b) { return a - b; }); var parts = [], i = 0; while (i < arr.length) { var j = i; while (j + 1 < arr.length && arr[j + 1] === arr[j] + 1) j++; parts.push(i === j ? String(arr[i]) : arr[i] + "-" + arr[j]); i = j + 1; } return parts.join(","); }
   // the fill is enforced INLINE with priority: Unraid's theme CSS beats the
   // stylesheet (the gears looked hollow again on the box)
-  function gearFill(lb, set) {
+  function gearFill(lb, set, kind) {
     // #12 (user CORRECTION: the gears must be FULLY in the colour modes, INCL. reactive): in the reactive
     // sub-mode NEITHER a set NOR an idle gear paints inline — CSS rests them all neutral and colours them on
     // ROW/card hover, exactly like every other control (an inline paint would keep one gear stuck coloured).
-    if (themingOn() && localStorage.getItem("cc.rainbow") === "1" && localStorage.getItem("cc.rbmode") === "active") {
-      lb.style.removeProperty("background"); lb.style.removeProperty("color");
+    var rbOn = themingOn() && localStorage.getItem("cc.rainbow") === "1";
+    if (rbOn && localStorage.getItem("cc.rbmode") === "active") {
+      lb.style.removeProperty("background"); lb.style.removeProperty("color"); lb.style.removeProperty("--cc-rb-c"); lb.style.removeProperty("--cc-rb-ct");
       return;
     }
+    // #9 (user: "die Zahnrädchen von CPU RAM und BW sind alle orange, auch im Rainbow-Mode"): a SET gear used
+    // to inline-paint the flat accent (=orange) with !important, which beat the --cc-rb-c CSS rule so EVERY
+    // gear shared one colour. In full rainbow it must take ITS OWN KIND's rotating palette colour (cpu/ram/bw
+    // each already have --cc-rb-<kind> on :root). Stamp --cc-rb-c = that kind var, drop the inline paint, and
+    // docker.css .cc-limbtn-set { background: var(--cc-rb-c …) } renders each gear in its badge's colour.
+    if (rbOn && set && kind) {
+      lb.style.removeProperty("background"); lb.style.removeProperty("color");
+      lb.style.setProperty("--cc-rb-c", "var(--cc-rb-" + kind + ", var(--cc-accent, #2f6feb))");
+      lb.style.setProperty("--cc-rb-ct", "var(--cc-rb-" + kind + "-t, #fff)");
+      return;
+    }
+    lb.style.removeProperty("--cc-rb-c"); lb.style.removeProperty("--cc-rb-ct");   // accent / native mode: classic inline fill
     var bg = set ? (effc("accent") || "#2f6feb") : "#4a4a4a"; // active = badge accent (user call)
     var tx = "#f2f2f2";
     if (set) { var n2 = parseInt(String(bg).replace("#", ""), 16), L2 = 0.299 * (n2 >> 16 & 255) + 0.587 * (n2 >> 8 & 255) + 0.114 * (n2 & 255); tx = L2 > 150 ? "#161616" : "#fff"; }
@@ -1748,16 +1761,16 @@
     lb.style.setProperty("color", tx, "important");
   }
   function limGear(name, which, set) {
-    var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "")); lb.setAttribute(MARK, "1"); lb.textContent = "⚙";
-    gearFill(lb, set);
+    var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "") + " cc-lim-" + which); lb.setAttribute(MARK, "1"); lb.textContent = "⚙";
+    gearFill(lb, set, which);   // which = "cpu" | "ram" -> its own rainbow kind
     lb.setAttribute("data-tip", (which === "cpu" ? t("cpuLimit") : t("ramLimit")) + " · " + (set ? t("cfgSet") : t("cfgUnset")));
     lb.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openLimits(lb, name, which); });
     return lb;
   }
   // the Bandwidth gear (third resource line) — opens the egress-limit editor.
   function bwGear(name, set) {
-    var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "")); lb.setAttribute(MARK, "1"); lb.textContent = "⚙";
-    gearFill(lb, set);
+    var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "") + " cc-lim-bw"); lb.setAttribute(MARK, "1"); lb.textContent = "⚙";
+    gearFill(lb, set, "bw");
     lb.setAttribute("data-tip", t("bandwidth") + " · " + (set ? t("cfgSet") : t("cfgUnset")));
     lb.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openBandwidth(lb, name); });
     return lb;

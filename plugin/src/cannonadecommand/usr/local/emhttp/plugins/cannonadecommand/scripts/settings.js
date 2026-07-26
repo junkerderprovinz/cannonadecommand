@@ -262,13 +262,15 @@
 
   // a badge-styled on/off toggle. A <span> (NOT a <button>): Unraid's global button
   // CSS was painting an orange border and limiting the knob travel to mid-way.
-  function toggle(on, onChange) {
-    var t = el("span", "cc-set-toggle" + (on ? " cc-set-toggle-on" : ""));
-    t.setAttribute("role", "switch"); t.setAttribute("tabindex", "0"); t.setAttribute("aria-checked", on ? "true" : "false");
+  function toggle(on, onChange, disabled) {
+    var t = el("span", "cc-set-toggle" + (on ? " cc-set-toggle-on" : "") + (disabled ? " cc-set-toggle-disabled" : ""));
+    t.setAttribute("role", "switch"); t.setAttribute("tabindex", disabled ? "-1" : "0"); t.setAttribute("aria-checked", on ? "true" : "false");
+    if (disabled) t.setAttribute("aria-disabled", "true");
     t.appendChild(el("span", "cc-set-knob"));
     function paint() { t.classList.toggle("cc-set-toggle-on", on); t.setAttribute("aria-checked", on ? "true" : "false"); }
-    function flip() { on = !on; paint(); onChange(on); }
+    function flip() { if (t.classList.contains("cc-set-toggle-disabled")) return; on = !on; paint(); onChange(on); }   // #3: a gated toggle refuses to flip
     t._setOn = function (v) { if (v === on) return; on = v; paint(); }; // programmatic sync, fires NO onChange
+    t._setDisabled = function (d) { t.classList.toggle("cc-set-toggle-disabled", !!d); t.setAttribute("tabindex", d ? "-1" : "0"); if (d) t.setAttribute("aria-disabled", "true"); else t.removeAttribute("aria-disabled"); };
     t.addEventListener("click", flip);
     t.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
     return t;
@@ -474,6 +476,7 @@
           Array.prototype.forEach.call(doc.querySelectorAll("form"), function (f) { var s = f.querySelector('input[name="#section"]'); if (s && s.value === "display") form = f; });
           if (!form) return;
           var fav = form.querySelector('select[name="favorites"]'); if (fav) set("cc.hidefavtab", fav.value === "no" ? "1" : "0");
+          try { if (window.ccFavGateSync) window.ccFavGateSync(); } catch (eG) {}   // #3: re-gate the CC Favoriten toggle now that the real native state is known
           syncHeaderBar();
         } catch (e9) {}
       }).catch(function () {});
@@ -483,8 +486,30 @@
       var c = card(T("Bereiche", "Areas"), T("Aktiviere, welche Bereiche CannonadeCommand verschönert. Ein deaktivierter Bereich blendet seinen Tab hier sofort aus.", "Choose which areas CannonadeCommand enhances. Disabling an area hides its tab here immediately."));
       [["cc.enable.main", T("Start-Tab", "Start tab"), "0"], ["cc.enable.header", T("Kopfbereich", "Header area"), "0"], ["cc.enable.shares", T("Freigaben-Tab", "Shares tab"), "0"], ["cc.enable.docker", T("Docker-Tab", "Docker tab"), "1"], ["cc.enable.plugins", T("Plugin-Tab", "Plugins tab"), "1"], ["cc.enable.vms", T("VM-Tab", "VMs tab"), "1"], ["cc.enable.settings", T("Einstellungen- & Werkzeuge-Tabs", "Settings & Tools tabs"), "1"], ["cc.enable.favorites", T("Favoriten-Tab", "Favorites tab"), "1"]].forEach(function (a) {
         var row = el("div", "cc-set-row cc-set-inline");
-        row.appendChild(el("span", null, a[1]));
         var cur = localStorage.getItem(a[0]);
+        if (a[0] === "cc.enable.favorites") {
+          // #3 (user): the CC Favoriten-Tab area is only switchable ON when Unraid's OWN favorites setting is
+          // ON. cc.hidefavtab mirrors the native "favorites=no" state (synced by the fetch above + on the
+          // Display Settings page). Native off => no tab to enhance => force the area off + disable the toggle
+          // with a hint. window.ccFavGateSync re-evaluates it once the async native-state fetch resolves.
+          var lw = el("span", "cc-set-lblwrap"); lw.appendChild(el("span", null, a[1])); row.appendChild(lw);
+          var favOff = localStorage.getItem("cc.hidefavtab") === "1";
+          if (favOff && localStorage.getItem("cc.enable.favorites") !== "0") localStorage.setItem("cc.enable.favorites", "0");
+          var favOn = !favOff && (cur == null ? true : cur !== "0");
+          var favTgl = toggle(favOn, function (v) { localStorage.setItem("cc.enable.favorites", v ? "1" : "0"); refreshTabs(); }, favOff);
+          row.appendChild(favTgl);
+          var hint = el("div", "cc-set-hint" + (favOff ? "" : " cc-hidden"), T("Nur verfügbar, wenn Favoriten in den Unraid-Anzeige-Einstellungen aktiviert sind.", "Only available when favourites are enabled in Unraid's display settings."));
+          lw.appendChild(hint);
+          try {
+            window.ccFavGateSync = function () {
+              var off = localStorage.getItem("cc.hidefavtab") === "1";
+              favTgl._setDisabled(off); hint.classList.toggle("cc-hidden", !off);
+              if (off) { favTgl._setOn(false); if (localStorage.getItem("cc.enable.favorites") !== "0") { localStorage.setItem("cc.enable.favorites", "0"); refreshTabs(); } }
+            };
+          } catch (eF) {}
+          c.appendChild(row); return;
+        }
+        row.appendChild(el("span", null, a[1]));
         row.appendChild(toggle(cur == null ? a[2] !== "0" : cur !== "0", function (v) { localStorage.setItem(a[0], v ? "1" : "0"); refreshTabs(); }));
         c.appendChild(row);
       });

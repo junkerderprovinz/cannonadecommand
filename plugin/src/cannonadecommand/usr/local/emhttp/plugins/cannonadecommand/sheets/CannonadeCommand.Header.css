@@ -77,7 +77,7 @@ html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a {
 }
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search):hover > a { filter: brightness(1.14); }
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search).active > a {
-  background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important;
+  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
 }
 /* rainbow: every page tab wears its own palette colour (inline by paintNav); ring the ACTIVE one so the
    current page stays obvious once all tabs are coloured. cc-header-rb is already toggled by header.js. */
@@ -482,7 +482,7 @@ html.cc-popups-on .sweet-alert pre {
 }
 html.cc-popups-on .sweet-alert pre h3 {
   display: inline-flex !important; align-items: center;
-  background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important;
+  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
   padding: 3px 12px !important; border-radius: var(--cc-b-radius, 999px) !important;
   font-size: 13px !important; font-weight: 700 !important; margin: 16px 0 8px !important; letter-spacing: .5px;
 }
@@ -514,11 +514,11 @@ html.cc-popups-on .sweet-alert.nchan fieldset {
   /* user: "oben und unten den hellen Hintergrund auf dunkel" — the step cards were #1c1c1c, a shade
      lighter than the #161616 window, which read as light bands top and bottom. Match the window so the
      whole dialog is one continuous dark surface; the accent legend badge still marks each step. */
-  background: #0f0f0f !important; border: none !important; border-radius: 10px !important;
-  margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important;
+  background: #191919 !important; border: 1px solid #2b2b2b !important; border-radius: 10px !important;
+  margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;
 }
 html.cc-popups-on .sweet-alert.nchan fieldset > legend {
-  background: var(--cc-hdr-accent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-hdr-accent-text, #fff) !important;
+  background: var(--cc-rbaccent, var(--cc-hdr-accent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   padding: 3px 12px !important; font-size: 12px !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
 }
@@ -555,7 +555,7 @@ html.cc-popups-on .ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset { float:
 html.cc-popups-on .ui-dialog .ui-dialog-buttonpane button,
 html.cc-popups-on .ui-dialog .ui-dialog-content button:not([class*="switch"]) {
   border: none !important; border-radius: 6px !important; box-shadow: none !important;
-  background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important;
+  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
   height: var(--cc-lgb-h, 36px) !important; padding: 0 24px !important; font-size: var(--cc-lgb-fs, 14px) !important;
   font-weight: 600 !important; text-transform: uppercase !important;
   letter-spacing: .6px !important; cursor: pointer; transition: filter .12s;
@@ -567,6 +567,24 @@ html.cc-popups-on .sweet-overlay {
   background: rgba(0, 0, 0, .6) !important; opacity: 1 !important;
   backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
 }
+/* #7 (user): the window scrollbar sat flush against the rounded edge -> inset it. A transparent padding-box
+   border gaps the thumb ~3px off the border and a slimmer thumb floats it left; Firefox uses thin + colour. */
+html.cc-popups-on .sweet-alert,
+html.cc-popups-on .sweet-alert pre,
+html.cc-popups-on .sweet-alert.nchan pre,
+html.cc-popups-on .ui-dialog .ui-dialog-content { scrollbar-width: thin; scrollbar-color: #4a4a4a transparent; }
+html.cc-popups-on .sweet-alert::-webkit-scrollbar,
+html.cc-popups-on .sweet-alert pre::-webkit-scrollbar,
+html.cc-popups-on .ui-dialog .ui-dialog-content::-webkit-scrollbar { width: 12px; }
+html.cc-popups-on .sweet-alert::-webkit-scrollbar-thumb,
+html.cc-popups-on .sweet-alert pre::-webkit-scrollbar-thumb,
+html.cc-popups-on .ui-dialog .ui-dialog-content::-webkit-scrollbar-thumb {
+  background: #4a4a4a; border-radius: 8px; border: 3px solid transparent; background-clip: padding-box;
+}
+html.cc-popups-on .sweet-alert::-webkit-scrollbar-thumb:hover,
+html.cc-popups-on .sweet-alert pre::-webkit-scrollbar-thumb:hover { background: #5e5e5e; background-clip: padding-box; }
+html.cc-popups-on .sweet-alert::-webkit-scrollbar-track,
+html.cc-popups-on .sweet-alert pre::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
 /* SweetAlert confirmations (start/stop/remove dialogs) */
 html.cc-popups-on .sweet-alert {
   background: #0f0f0f !important; border: none !important; border-radius: 12px !important;
@@ -597,7 +615,7 @@ html.cc-popups-on .sweet-alert .sa-button-container button {
   font-weight: 600 !important; text-transform: uppercase !important;
   letter-spacing: .6px !important; transition: filter .12s; margin: 0 !important;   /* the flex gap spaces them — a one-sided margin would skew the centring */
 }
-html.cc-popups-on .sweet-alert button.confirm { background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important; }
+html.cc-popups-on .sweet-alert button.confirm { background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important; }
 html.cc-popups-on .sweet-alert button.cancel { background: #2e2e2e !important; color: #e6e6e6 !important; }
 html.cc-popups-on .sweet-alert .sa-button-container button:hover { filter: brightness(1.14); }
 /* #N1 (user REVERSAL): the .nchan action buttons drop back to the CC STANDARD lgb height (36px, inherited
@@ -728,7 +746,21 @@ html.cc-docker-on .cc-badge[onclick] { transition: filter .12s ease, background-
 html.cc-docker-on .sl-chiprow > *:hover,
 html.cc-docker-on a.cc-badge:hover,
 html.cc-docker-on .cc-badge[onclick]:hover { filter: brightness(1.2); }
+/* -- CC TOAST (#11 help feedback + reusable notice) -- bottom-centre pill, colour-mode accent border,
+   slides up + fades in. A single reused node (header.js ccToast). Hidden until .cc-toast-show. */
+#cc-toast {
+  position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 14px);
+  z-index: 100000; pointer-events: none; opacity: 0;
+  max-width: min(88vw, 460px); padding: 11px 18px;
+  background: #0f0f0f; color: #e8e8e8; font-size: 13px; line-height: 1.35; text-align: center;
+  border: 1px solid var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)));
+  border-radius: min(var(--cc-b-radius, 999px), 12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .55);
+  transition: opacity .18s ease, transform .22s cubic-bezier(.2, .9, .3, 1);
+}
+#cc-toast.cc-toast-show { opacity: 1; transform: translate(-50%, 0); }
 @media (prefers-reduced-motion: reduce) {
+  #cc-toast { transition: opacity .12s ease !important; transform: translate(-50%, 0) !important; }
   html.cc-popups-on .sweet-alert,
   html.cc-popups-on .swal-modal,
   html.cc-popups-on .ui-dialog { animation: none !important; }

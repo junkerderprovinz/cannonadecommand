@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.80.0">
+  <!ENTITY version   "2.81.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,19 @@
 </ICON>
 
 <CHANGES>
+### 2.81.0
+- Docker-Seite: Die CPU/RAM/BW-Zahnraeder waren im Regenbogen-Modus alle orange - jetzt traegt jedes Zahnrad
+  die eigene Palettenfarbe seines Badges (CPU/RAM/Bandbreite).
+- Dropdown-Listen: Im reaktiven Farbmodus ruhen die Listeneintraege jetzt neutral und leuchten erst beim
+  Ueberfahren in ihrer Farbe auf (vorher dauerhaft eingefaerbt).
+- CannonadeCommand-Einstellungen: Der Favoriten-Bereich laesst sich nur noch einschalten, wenn Unraids eigene
+  Favoriten-Funktion aktiv ist; sonst ist der Schalter deaktiviert und ein Hinweis erklaert warum.
+- Schwebefenster: Der Rollbalken sitzt nicht mehr direkt an der Kante (etwas nach innen gerueckt), die Abschnitte
+  (Schritt-Karten) haben wieder einen abgesetzten Karten-Look, und alle Buttons/Badges folgen dem Farbmodus.
+- Hilfe-Symbol: Wenn eine Seite keine Inline-Hilfe hat, erscheint jetzt ein kurzer Hinweis-Toast, statt dass
+  scheinbar "nichts passiert" (die Hilfe selbst funktionierte, hatte auf manchen Seiten aber nichts anzuzeigen).
+- Kopfleisten-Icons (Glocke/Menue): sitzen jetzt exakt buendig zur Statusinsel (ein paar Pixel nach links).
+
 ### 2.80.0
 - Abschnittsbadges (z. B. "ARRAY-DATENTRAEGER"): Bei aktiver "Boxed"-Anzeigebreite auf breiten Bildschirmen
   richten sie sich jetzt wieder buendig links an der Hauptmenueleiste aus (der zentrierte Inhalt wird links-
@@ -1974,7 +1987,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>e4d8b3f10ffc9fe11abd1a8211b39c6b5fcd9e445fc8655b8998bd3167127b65</SHA256>
+  <SHA256>d47e9c90c378ccad0b21597d5cda360b787ccfecb12ba219fc460fc2c5d3d350</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
