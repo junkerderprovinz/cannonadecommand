@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.66.4">
+  <!ENTITY version   "2.67.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,19 @@
 </ICON>
 
 <CHANGES>
+### 2.67.0
+- Konsistenz-Runde quer durch die Tabs (Teil 1):
+- Farbwaehl-Zeile ueberall gleich: das Hex-Feld sitzt jetzt als rechte Zelle direkt neben den Farbfeldern
+  und die Zeile fuellt sich ganz aus, wie die Regenbogen-Felder mit ihrem Reset.
+- Aktions-Buttons folgen jetzt dem Farbmodus: die Buttons im Freigaben-Tab und auf den Werkzeug- und
+  Einstellungen-Subseiten nehmen die Regenbogen-/Flaggenfarbe an, wenn ein Farbmodus aktiv ist (sonst den Akzent).
+- VM-Tab: alle Badges (auch Snapshots/Beschreibung/Grafik) und der Autostart-Schalter folgen jetzt dem Farbmodus.
+- VM-Nutzungsstatistiken: der VM-Name ist jetzt ein Badge, und die Ansicht flackert beim Aktualisieren nicht
+  mehr kurz ins native Design zurueck (Neu-Auszeichnung laeuft jetzt vor dem Neuzeichnen).
+- Docker-Zuweisungen: die Liste nutzt die volle Breite mit gleichmaessig verteilten Spalten und hat jetzt
+  abwechselnde Zeilenfarben, damit sie leichter zu lesen ist.
+- Das Vorlagen-Dropdown auf der Docker-Seite schliesst nicht mehr sofort, wenn man in der Liste scrollt.
+
 ### 2.66.4
 - Die streamenden Schwebefenster (Plugin-Installation/-Update und Container-Update) sehen jetzt alle
   gleich aus: Der Titel-Badge oben ist einheitlich breit und prominent und exakt so hoch wie die
@@ -1826,7 +1839,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>cd1e2a129e8a7ef39d092fa7cacd971a08335b5e3a7575d3f00966c201611687</SHA256>
+  <SHA256>be26d6746e8fb22595aa0f2df97c14fdd1828bf54d49cf7412fef1c8df55e7b5</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

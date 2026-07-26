@@ -79,7 +79,8 @@ html.cc-tools-on #displaybox input[type="button"],
 html.cc-tools-on #displaybox input[type="submit"],
 html.cc-tools-on #displaybox button:not([role="tab"]),
 html.cc-tools-on #displaybox a.button {
-  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+  /* #11 (user): follow the colour mode — rainbow/flag action colour when active, else the accent. */
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
   border: none !important; outline: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   height: var(--cc-md-h, 30px); padding: var(--cc-md-pad, 0 20px) !important;
   font-weight: 600; box-shadow: none !important; text-decoration: none !important;

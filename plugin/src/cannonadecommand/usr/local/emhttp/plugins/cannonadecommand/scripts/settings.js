@@ -28,6 +28,9 @@
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:1 1 0;height:22px;min-width:0;border-radius:4px}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:1 1 0;height:22px;min-width:0;margin-left:0;display:flex;align-items:center;justify-content:center;background:#232323;border-radius:4px;cursor:pointer;color:#cfcfcf;transition:filter .12s}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn:hover{filter:brightness(1.35)}" +
+      // #18 the HEX field is the rightmost cell of the swatch row: swatches flex to fill, hex a fixed
+      // compact chip on the right, same 22px height so the whole row reads like the rainbow swatches+reset.
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{flex:0 0 auto;width:104px;height:22px;padding:0 9px;align-self:center;font-size:12px;margin:0}" +
       // #26 settings search + nuke-reset button
       "#cc-settings .cc-set-searchrow{margin:12px 0 2px}" +
       "#cc-settings .cc-set-search{box-sizing:border-box;width:100%;max-width:420px;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:9px 13px;font-size:13px;transition:background-color .12s}" +
@@ -529,8 +532,10 @@
     function setAccent(v) { accent = v; pick._set(v); hexIn.value = v; set("cc.accent", accent); root.style.setProperty("--cc-accent", accent); root.style.setProperty("--cc-accent-text", idealText(accent)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); }
     hexIn.addEventListener("input", function () { var v = normHex(hexIn.value); if (v) setAccent(v); });
     prow.appendChild(pick); c1.appendChild(prow);   // #1/#2: colour field + hue slider (both live in the inline picker)
-    // #3: preset swatches, with the HEX field on the RIGHT of them (same row) — added below.
-    var srow = el("div", "cc-set-swatches");
+    // #18 (user): the preset swatches FILL the row (flex:1 each) with the HEX field as the rightmost
+    // cell — exactly like the rainbow row's swatches + reset. Identical layout for EVERY colour picker
+    // (the per-area cards use the same shape below).
+    var srow = el("div", "cc-set-swatches cc-fill");
     PRESETS.forEach(function (c) {
       // a <span>, NOT a <button>: Unraid's global button CSS was bloating these into
       // big bordered rectangles. dataset.c lets syncSwOn highlight the active one.
@@ -538,7 +543,7 @@
       sw.addEventListener("click", function () { accent = c; set("cc.accent", accent); render(); syncHeaderBar(); syncSharesBar(); });
       srow.appendChild(sw);
     });
-    var swrow = el("div", "cc-set-swrow"); swrow.appendChild(srow); swrow.appendChild(hexIn); c1.appendChild(swrow);   // #3: preset swatches + hex field on ONE row
+    srow.appendChild(hexIn); c1.appendChild(srow);   // hex field = rightmost cell of the swatch row
     // (Badge-Form was here; MOVED to #11, just above the "Zustandsanzeigen" toggle — see below)
     // #17: Rainbow-Modus and Flaggen-Modus are TWO mutually-exclusive palette modes sharing ONE colour
     // engine. cc.rainbow="1" is the master "a palette is active" flag every reader checks; cc.flagmode="1"
@@ -1001,14 +1006,14 @@
       var hx = el("input", "cc-set-hexin"); hx.type = "text"; hx.value = acc; hx.placeholder = "#2f6feb"; hx.maxLength = 7; hx.spellcheck = false;
       var pk = inlinePicker(/^#[0-9a-f]{6}$/i.test(acc) ? acc : "#2f6feb", function (v) { acc = v; hx.value = v; set(P + "accent", v); useOwn(); paintPv(); });
       hx.addEventListener("input", function () { var v = normHex(hx.value); if (v) { acc = v; pk._set(v); set(P + "accent", v); useOwn(); paintPv(); } });
-      pr.appendChild(pk); pr.appendChild(hx); cA.appendChild(pr);
-      var sr = el("div", "cc-set-swatches");
+      pr.appendChild(pk); cA.appendChild(pr);   // #18: hex moves onto the swatch row (rightmost cell), like the top Badges card
+      var sr = el("div", "cc-set-swatches cc-fill");
       PRESETS.forEach(function (c) {
         var sw = el("span", "cc-set-sw" + (c === acc ? " cc-set-sw-on" : "")); sw.setAttribute("data-tip", c); sw.style.background = c;
         sw.addEventListener("click", function () { acc = c; pk._set(c); hx.value = c; set(P + "accent", c); useOwn(); paintPv(); });
         sr.appendChild(sw);
       });
-      cA.appendChild(sr);
+      sr.appendChild(hx); cA.appendChild(sr);   // hex field = rightmost cell of the swatch row
       // Rainbow is a GLOBAL mode now (one switch + one palette in the top Badges card): when it's
       // on, EVERY enabled area rainbows, so there is NO per-area rainbow toggle/palette here — just
       // this area's single accent colour above. The preview below still reflects the global rainbow.

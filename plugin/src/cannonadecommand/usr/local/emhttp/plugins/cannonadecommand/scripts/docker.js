@@ -2562,8 +2562,11 @@
       ctMo.observe(document.body, { childList: true, subtree: true });   // config rows (#configLocation[Advanced]) + the re-filled jQuery-UI dialog land under body
       document.addEventListener("click", function () { var o = document.querySelectorAll(".cc-dsel.cc-open"); for (var i = 0; i < o.length; i++) o[i].classList.remove("cc-open"); });
       // #8: the panel is now position:fixed, so it would drift from its trigger on scroll — close any
-      // open dropdown when the page/content scrolls (capture: catches the #canvas div.content scroller).
-      window.addEventListener("scroll", function () { var o = document.querySelectorAll(".cc-dsel.cc-open"); for (var i = 0; i < o.length; i++) o[i].classList.remove("cc-open"); }, true);
+      // open dropdown when the PAGE/content scrolls (capture: catches the #canvas div.content scroller).
+      // #16 (user: "Dropdown schließt sofort beim Scrollen"): the panel has its OWN scrollable list, and
+      // that inner scroll also fired here and closed the menu immediately — ignore scrolls that originate
+      // inside the open panel so the list stays scrollable on hover.
+      window.addEventListener("scroll", function (e) { var tgt = e && e.target; if (tgt && tgt.closest && tgt.closest(".cc-dsel-panel")) return; var o = document.querySelectorAll(".cc-dsel.cc-open"); for (var i = 0; i < o.length; i++) o[i].classList.remove("cc-open"); }, true);
       window.addEventListener("storage", function (e) { try { if (e && e.key && e.key !== "cc.stateCache" && /^ccd?\./.test(e.key)) ctApply(); } catch (e2) {} });
     } catch (e) {}
   }

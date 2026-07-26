@@ -890,6 +890,14 @@
       // are handled in ccDockProfile. cc.statenative=1 lets state indicators keep their native colour.
       ["lang", "search", "logout", "terminal", "browse", "feedback", "info", "log", "help", "bell", "burger"].forEach(function (k9) { root.classList.toggle("cc-hideicon-" + k9, g("cc.hideicon." + k9, "0") === "1" && g("cc.theming", "1") !== "0"); });
       root.classList.toggle("cc-state-native", g("cc.statenative", "0") === "1" && g("cc.theming", "1") !== "0");
+      // #4/#11 (user: buttons in den Farbmodi): stamp ONE rainbow/flag "action" colour on <html> so
+      // native buttons in EVERY sheet (Freigaben, Tools/Settings sub-pages) can follow the colour mode
+      // via var(--cc-rbaccent, <accent>). Flag mode also sets cc.rainbow=1, so rbColor() already yields
+      // the flag colour here. Cleared when rainbow is off -> buttons fall back to their accent.
+      try {
+        if (on && rbOn()) { var rbA = rbColor(5); root.style.setProperty("--cc-rbaccent", rbA); root.style.setProperty("--cc-rbaccent-text", idealText(rbA)); }
+        else { root.style.removeProperty("--cc-rbaccent"); root.style.removeProperty("--cc-rbaccent-text"); }
+      } catch (e7) {}
       // #14 + #1 + Anzeige-Rework: Carbon-ify the Tools SUB-pages, the docker/plugin execution-output
       // (install-log) pages AND every native /Settings/* SUB-page (so the un-hidden Display Settings page
       // is CC-styled). cc-tools-on = a /Tools/... path OR a /Settings/<x> sub-page (NOT our own CC page,

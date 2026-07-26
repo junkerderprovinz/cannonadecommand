@@ -42,7 +42,10 @@ html.cc-vms-on #kvm_list .cc-badge {
   font-size: var(--cc-sm-fs, 11px); font-weight: 600; line-height: 1.35; white-space: nowrap;
   text-decoration: none; vertical-align: middle;
 }
-html.cc-vms-on #kvm_list .cc-b { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
+/* #7 (user: VM badges follow the colour modes): generic badges (Snapshots/Beschreibung/Grafik, no kind)
+   take the rainbow/flag action colour when active; the kind badges (cpu/ram/ip/vol) keep their own
+   rotated slots via the higher-specificity rules below. Accent when the colour mode is off. */
+html.cc-vms-on #kvm_list .cc-b { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)); }
 html.cc-vms-on #kvm_list .cc-b-k { opacity: .72; font-weight: 500; }
 html.cc-vms-on #kvm_list .cc-b-v { font-family: Consolas, "SFMono-Regular", monospace; }
 /* Badge VALUE (incl. the a.vcpu-* CPU link vms.js moves into .cc-b-v) inherits the badge text colour;
@@ -124,7 +127,7 @@ html.cc-vms-on #kvm_list .switch-button-background {
   display: inline-block; vertical-align: middle; margin: 0 12px 0 3px; cursor: pointer;
   transition: background .15s; box-sizing: border-box;
 }
-html.cc-vms-on #kvm_list .switch-button-background.checked { background: var(--cc-accent, #2f6feb) !important; }
+html.cc-vms-on #kvm_list .switch-button-background.checked { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }   /* #7: autostart toggle follows the colour mode */
 html.cc-vms-on #kvm_list .switch-button-background .switch-button-button {
   width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important;
   border-radius: 50% !important; background: #fff !important; box-shadow: none !important;
@@ -188,7 +191,14 @@ html.cc-vms-on #displaybox #vmstats tbody tr > td {
   padding-top: var(--cc-density, 9px) !important; padding-bottom: var(--cc-density, 9px) !important;
   vertical-align: middle;
 }
-html.cc-vms-on #vmstats tbody tr > td:first-child { font-size: 15px; font-weight: 600; letter-spacing: .1px; }
+html.cc-vms-on #vmstats tbody tr > td:first-child { letter-spacing: .1px; }
+/* #8 (user): the VM name is now a badge (vms.js wraps it in .cc-vmstat-name), following the colour mode. */
+html.cc-vms-on #vmstats .cc-vmstat-name {
+  display: inline-flex; align-items: center;
+  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 4px 12px);
+  font-size: var(--cc-md-fs, 13px); font-weight: 600; line-height: 1.35; white-space: nowrap;
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff));
+}
 /* Guest/Host CPU % readout (span first child of td.advanced) -> CC accent value pill */
 html.cc-vms-on #vmstats tbody td.advanced > span:first-child {
   display: inline-flex; align-items: center;

@@ -24,6 +24,13 @@
       if (!body) return;
       Array.prototype.forEach.call(body.querySelectorAll("tr"), function (tr) {
         var tds = tr.children;
+        // #8 (user): the VM NAME (col 0) becomes a badge like the main list, not plain bold text.
+        var n0 = tds[0];
+        if (n0 && n0.tagName === "TD" && !n0.querySelector(":scope > .cc-vmstat-name") && (n0.textContent || "").trim()) {
+          var nb = document.createElement("span"); nb.className = "cc-b cc-vmstat-name";
+          while (n0.firstChild) nb.appendChild(n0.firstChild);
+          n0.appendChild(nb);
+        }
         [3, 4, 5].forEach(function (ci) {
           var td = tds[ci]; if (!td || td.tagName !== "TD") return;
           if (td.querySelector(":scope > .cc-vmstat-chip")) return;     // already wrapped this render
@@ -579,7 +586,11 @@
       var dbox = document.getElementById("displaybox");
       if (dbox && !smo) {
         wrapVmStats();
-        smo = new MutationObserver(function () { if (dead || smoPending) return; smoPending = true; setTimeout(function () { smoPending = false; if (!dead) wrapVmStats(); }, 200); });
+        // #8 (user: "flippt bei jeder Aktualisierung kurz ins native Design"): re-wrap SYNCHRONOUSLY in
+        // the observer callback (MutationObserver runs as a microtask BEFORE the browser paints), so the
+        // re-badging lands before the native cells are ever shown — no flash. The already-wrapped guard in
+        // wrapVmStats makes our own DOM writes a cheap no-op on the follow-up callback (no loop).
+        smo = new MutationObserver(function () { if (dead) return; wrapVmStats(); });
         smo.observe(dbox, { childList: true, subtree: true });
       }
     } catch (e) {}

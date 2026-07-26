@@ -1126,6 +1126,21 @@ html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-filled,
 html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .cc-alloc-filled {
   color: #c8c8c8 !important; font-style: italic; opacity: .92;
 }
+/* #14 (user: "Zuweisungen rechtsbündig, wie nativ ausrichten") + #15 (zebra for readability): the
+   native rows are one big grid whose last 1fr column left a wide empty gap that read as pushed-over.
+   Give the block the full content width, spread the four columns as fractions so they fill it left-to-
+   right, and stripe alternating rows so the long list is scannable. */
+html.cc-docker-on.cc-on-addct #canvas #dockerAllocations,
+html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations { width: 100% !important; box-sizing: border-box; margin: 6px 0 0 !important; }
+html.cc-docker-on.cc-on-addct #canvas #dockerAllocations .docker-allocation-row,
+html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .docker-allocation-row {
+  grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1.6fr) !important;
+  align-items: center; padding: 5px 10px !important; border-radius: 6px; column-gap: 12px;
+}
+html.cc-docker-on.cc-on-addct #canvas #dockerAllocations .docker-allocation-row:nth-child(even),
+html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .docker-allocation-row:nth-child(even) {
+  background: rgba(255, 255, 255, .04) !important;
+}
 /* #14: the container create/update OUTPUT page (docker run/create result) as a floating Carbon window,
    like the container-update dialog (docker.js bootCtOutput adds html.cc-ctout-on + the backdrop + the
    #cc-ctout-title accent badge, and hides the native grey heading). */
