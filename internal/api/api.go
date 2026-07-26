@@ -91,6 +91,11 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/apply", s.handleApply)
 	mux.HandleFunc("POST /api/action", s.handleAction)
 	mux.HandleFunc("GET /api/stats", s.handleStats)
+	// #13: proxy-safe host CPU % for the status island (the GraphQL websocket the native
+	// Dashboard uses is often broken by reverse proxies; this HTTP poll always works).
+	mux.HandleFunc("GET /api/hostcpu", func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]int{"pct": hostcpu.Percent()})
+	})
 	mux.HandleFunc("GET /api/limits", s.handleGetLimits)
 	mux.HandleFunc("GET /api/limitlog", s.handleLimitLog)
 	mux.HandleFunc("GET /api/bwstatus", s.handleBwStatus)

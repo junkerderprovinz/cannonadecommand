@@ -208,3 +208,11 @@ html.cc-tools-on.cc-tools-rbneutral #displaybox .cc-tsel-opt.is-selected {
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff)));
   filter: none;
 }
+
+/* #3-Infotext (user: "nicht ALLE Beschreibungstexte in Infobubbles"): CC converts each inline_help into an
+   (i) bubble and hides the native block inline. BUT the native HELP button runs jQuery .show(), which sets
+   an inline display:block that beats CC's inline display:none -> the description reappears when help is
+   toggled (exactly when the user was testing the help icon). A CSS !important hide beats that inline show,
+   so a converted help block stays in its bubble regardless of the native toggle. */
+html.cc-tools-on #displaybox blockquote.inline_help[data-cc-help],
+html.cc-tools-on #displaybox .inline-help[data-cc-help] { display: none !important; }

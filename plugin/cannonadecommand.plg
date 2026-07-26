@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.86.0">
+  <!ENTITY version   "2.87.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,14 @@
 </ICON>
 
 <CHANGES>
+### 2.87.0
+- Statusinsel CPU (ENDLICH): Der Grund war, dass Unraids CPU-Wert ueber einen GraphQL-WEBSOCKET laeuft, den
+  Reverse-Proxies (z. B. der *.lol-Tunnel) nicht durchreichen (Handshake 200 statt 101) - deshalb blieb der
+  Chip leer. CannonadeCommand liest die CPU-Last jetzt ueber die EIGENE Engine per normalem HTTP (proc/stat-
+  Delta) - proxy-sicher, auf jeder Seite. Erste Anzeige 0%, dann live.
+- Anzeige-/Werkzeug-Seiten: Beschreibungstexte bleiben jetzt AUCH dann in der (i)-Bubble, wenn man den nativen
+  Hilfe-Knopf drueckt (der die Texte sonst per jQuery wieder einblendete).
+
 ### 2.86.0
 - Template-Update-Fenster ("Container aktualisieren"): sieht jetzt wie das CA-Update-Fenster aus - dunkle
   Flaeche, zentrierter Pill-Titel-Badge statt oranger Vollbreit-Balken, Schritt-Karten ohne Rahmen, Abschnitts-
@@ -2031,7 +2039,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>867a2f96cc65cb86208f8318f214d3798105b71d3bb69be5134b8838f3dc6163</SHA256>
+  <SHA256>1ffcc667f54db8849e9df04d6c761da33dd6b6983e1cc682e2d8cfd960e2599b</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

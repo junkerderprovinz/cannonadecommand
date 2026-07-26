@@ -506,40 +506,24 @@
     } catch (e) {}
   }
   function ccStopLive() { if (ccLiveSubs) { ccLiveSubs.forEach(function (s) { try { s.stop(); } catch (e) {} }); ccLiveSubs = null; } ccLiveRam = ccLiveRamUsed = ccLiveCpu = ccLiveDocker = ""; }
-  // #13 (user: CPU chip stuck on "--"): Unraid 7.3.x has NO /sub/cpuload nchan channel — the native Dashboard
-  // reads CPU load from the GraphQL subscription systemMetricsCpu{percentTotal}, served by the Connect Apollo
-  // client (window.apolloClient / window.gql) that loads on EVERY page via the same web components CC already
-  // uses for the profile. Subscribe there; if Apollo never appears (very old builds), fall back to the legacy
-  // /sub/cpuload nchan so nothing regresses on pre-7.3 boxes.
+  // #13 (user: CPU chip stuck on "--"): Unraid 7.3 dropped /sub/cpuload and moved CPU load to a GraphQL
+  // WEBSOCKET (wss://.../graphql) — which reverse proxies (the user's *.lol tunnel) fail to upgrade
+  // (handshake returns 200, not 101), so the subscription never emits and the chip stays blank. Proxy-safe
+  // fix: poll CannonadeCommand's OWN engine over plain HTTP (ccapi.php -> /api/hostcpu), which computes host
+  // CPU % from /proc/stat deltas. Works on every page, through any proxy, no websocket. First reading is 0%
+  // (baseline seed), then live.
   function ccStartCpu() {
-    var tries = 0;
-    (function waitApollo() {
-      try {
-        if (window.apolloClient && window.apolloClient.subscribe && window.gql) {
-          var q = window.gql("subscription CcCpuLoad { systemMetricsCpu { percentTotal } }");
-          var sub = window.apolloClient.subscribe({ query: q }).subscribe({
-            next: function (res) {
-              try {
-                var m = res && res.data && res.data.systemMetricsCpu;
-                if (m && m.percentTotal != null) { var c = Math.floor(m.percentTotal) + "%"; if (c !== ccLiveCpu) { ccLiveCpu = c; ccIsland(); } }
-              } catch (e) {}
-            },
-            error: function () {}
-          });
-          if (ccLiveSubs) ccLiveSubs.push({ stop: function () { try { sub.unsubscribe(); } catch (e) {} } });
-          return;
-        }
-      } catch (e) {}
-      if (++tries < 40 && ccLiveSubs) setTimeout(waitApollo, 500);   // up to ~20s for the Connect components to mount
-      else if (ccLiveSubs) ccStartCpuNchan();
-    })();
-  }
-  function ccStartCpuNchan() {   // legacy pre-7.3 fallback
-    try {
-      var cl = new window.NchanSubscriber("/sub/cpuload", { subscriber: "websocket" });
-      cl.on("message", function (m) { try { var mm = String(m).match(/(\d+(?:[.,]\d+)?)\s*%/); if (mm) { var c = Math.round(parseFloat(mm[1].replace(",", "."))) + "%"; if (c !== ccLiveCpu) { ccLiveCpu = c; ccIsland(); } } } catch (e) {} });
-      cl.start(); if (ccLiveSubs) ccLiveSubs.push(cl);
-    } catch (e) {}
+    var PROXY = "/plugins/cannonadecommand/server/ccapi.php", stopped = false;
+    function poll() {
+      if (stopped || !ccLiveSubs) return;
+      fetch(PROXY + "?path=" + encodeURIComponent("hostcpu"), { headers: { Accept: "application/json" } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { if (j && typeof j.pct === "number") { var c = Math.round(j.pct) + "%"; if (c !== ccLiveCpu) { ccLiveCpu = c; ccIsland(); } } })
+        .catch(function () {});
+    }
+    poll();
+    var iv = setInterval(poll, 3000);
+    if (ccLiveSubs) ccLiveSubs.push({ stop: function () { stopped = true; clearInterval(iv); } });
   }
   // #18: on /Main, compute the size-weighted array-disk fill % and cache it (cc.arrfill) so the island's
   // fill chip has a value on EVERY page (7.3.x dropped the cross-page menu usage-bar). Refreshes each /Main.

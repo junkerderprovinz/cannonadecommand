@@ -10,7 +10,73 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 )
+
+// ── HOST CPU UTILISATION ──────────────────────────────────────────────────────
+// The status-island CPU chip needs host CPU % on EVERY page. Unraid 7.3 dropped the
+// old /sub/cpuload nchan channel and moved CPU load to a GraphQL *websocket* — which a
+// reverse proxy (e.g. the user's *.lol tunnel) often fails to upgrade (101 -> 200), so
+// the chip stays blank. This HTTP endpoint is proxy-safe: it computes utilisation from
+// two /proc/stat samples (delta since the previous call), so a ~3s island poll yields a
+// live figure with no websocket and no per-call sleep. First call returns 0.
+var (
+	hcMu        sync.Mutex
+	hcPrevIdle  uint64
+	hcPrevTotal uint64
+	hcSeeded    bool
+)
+
+// Percent returns host CPU utilisation (0-100) since the PREVIOUS call. The first call
+// seeds the baseline and returns 0. Concurrency-safe.
+func Percent() int {
+	idle, total := readProcStatCPU()
+	hcMu.Lock()
+	defer hcMu.Unlock()
+	pct := 0
+	if hcSeeded && total > hcPrevTotal {
+		dt := total - hcPrevTotal
+		var di uint64
+		if idle > hcPrevIdle {
+			di = idle - hcPrevIdle
+		}
+		if dt > 0 {
+			busy := dt - di
+			if busy > dt {
+				busy = dt
+			}
+			pct = int((busy*100 + dt/2) / dt) // rounded
+		}
+	}
+	hcPrevIdle, hcPrevTotal, hcSeeded = idle, total, true
+	return pct
+}
+
+// readProcStatCPU sums the aggregate "cpu " line of /proc/stat into (idle+iowait, total).
+func readProcStatCPU() (idle, total uint64) {
+	data, err := os.ReadFile("/proc/stat")
+	if err != nil {
+		return 0, 0
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		if !strings.HasPrefix(line, "cpu ") {
+			continue
+		}
+		fields := strings.Fields(line)[1:] // user nice system idle iowait irq softirq steal guest guest_nice
+		for i, f := range fields {
+			n, perr := strconv.ParseUint(f, 10, 64)
+			if perr != nil {
+				continue
+			}
+			total += n
+			if i == 3 || i == 4 { // idle + iowait
+				idle += n
+			}
+		}
+		return idle, total
+	}
+	return 0, 0
+}
 
 // MemTotal is the host's total RAM in bytes (from /proc/meminfo). Docker cannot UNSET
 // a memory limit through a live update, so the editor's "remove RAM limit" sets it to
