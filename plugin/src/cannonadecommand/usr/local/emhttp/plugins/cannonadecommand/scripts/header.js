@@ -306,6 +306,19 @@
         var align = Math.round(edge - boxRect.left);
         if (align >= 0 && align < 200) { root.style.setProperty("--cc-align-left", align + "px"); root.style.setProperty("--cc-box-shift", "0px"); }  // sanity-bounded; overrides the sheets' static fallback inline
       }
+      // #4-B (user, recurring frustration): the server-name BRAND sat at x=0 while the menu tabs start at
+      // `edge` (their padded left). Nothing aligned it -> it always looked off by the pad. Self-correct it
+      // here to the SAME menu edge: measure where it landed, nudge its margin by the delta (converges, since
+      // the next pass measures ~0 delta). Runs on every apply()/resize like the content alignment.
+      var brand = document.getElementById("cc-brand");
+      if (brand) {
+        var bRect = brand.getBoundingClientRect();
+        if (bRect.width > 0) {
+          var cm = parseFloat(getComputedStyle(brand).marginLeft) || 0;
+          var bd = Math.round(edge - bRect.left);
+          if (bd && Math.abs(bd) < 200) brand.style.marginLeft = (cm + bd) + "px";
+        }
+      }
     } catch (e) {}
   }
   // ── DRAG-AND-DROP main-menu tab ordering (v2.20.0). The left menu tabs (#menu .nav-tile:not(.right)

@@ -818,3 +818,12 @@ html.cc-anim-on.cc-header-on #cc-brand { animation: cc-fade-rise .46s cubic-bezi
 html.cc-anim-on .cc-card { transition: transform .16s ease, box-shadow .18s ease, background-color .14s ease; }
 html.cc-anim-on .cc-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0, 0, 0, .45); }
 html.cc-anim-on .cc-b:hover, html.cc-anim-on .cc-navtab:hover { transition: transform .12s ease, filter .12s ease; }
+
+/* #4-B (user, RECURRING frustration): align the content column to the main menu bar on EVERY page. The per-
+   area sheets only aligned #displaybox when THEIR class (cc-tools-on / cc-on-main / cc-docker-on / ...) was
+   present, so un-classed pages -- e.g. the /Settings LANDING xmenu (native Vue) -- fell through and sat ~15px
+   left of the menu tabs. This global fallback (gated only on cc-header-on) covers them. On area pages it sets
+   the SAME --cc-align-left / --cc-box-shift the area rule already uses, so it is idempotent -- no double shift.
+   measureAlign() writes those vars (and now the brand margin) from the measured menu edge on every resize. */
+html.cc-header-on:not(.Theme--sidebar):not(.Theme--width-boxed) #displaybox { padding-left: var(--cc-align-left, 0); }
+html.cc-header-on.Theme--width-boxed:not(.Theme--sidebar) #displaybox { margin-left: var(--cc-box-shift, 0); margin-right: 0; }
