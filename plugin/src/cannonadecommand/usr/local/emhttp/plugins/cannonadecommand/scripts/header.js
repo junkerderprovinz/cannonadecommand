@@ -684,6 +684,84 @@
       ccMainObs.observe(box, { childList: true, subtree: true });
     } catch (e) {}
   }
+  // #6 (user: "die Texte in der Infobubble sind nicht in der richtigen Sprache"): Unraid's DisplaySettings
+  // help strings are server-rendered and its German language pack leaves several of them ENGLISH. CC carries
+  // a DE map for those native strings, matched on the whitespace-normalised English text and applied only
+  // when the UI language is German. Any string not in the map falls back to the native (server) text.
+  var CC_HELP_DE = {
+    "Boxed is the legacy setting which constrains the content width to maximum 1920 pixels Unlimited allows content to use all available width, which maybe useful on wide screens":
+      "Boxed ist die alte Einstellung, die die Inhaltsbreite auf maximal 1920 Pixel begrenzt. Unlimited erlaubt dem Inhalt, die gesamte verfügbare Breite zu nutzen, was auf breiten Bildschirmen nützlich sein kann.",
+    "Changes the font size of terminal windows.":
+      "Ändert die Schriftgröße von Terminalfenstern.",
+    "Changes how certain pages are displayed. In Tabbed mode different sections will be displayed in different tabs, while in Non-tabbed mode sections are displayed under each other.":
+      "Ändert, wie bestimmte Seiten dargestellt werden. Im Reiter-Modus werden verschiedene Abschnitte in verschiedenen Reitern angezeigt, im Nicht-Reiter-Modus untereinander.",
+    "The Users Menu can be part of the header or part of the Settings menu. You can move the Users Menu if insufficient space in the header is available to display all menus.":
+      "Das Benutzermenü kann Teil der Kopfzeile oder des Einstellungsmenüs sein. Du kannst das Benutzermenü verschieben, wenn in der Kopfzeile nicht genug Platz für alle Menüs ist.",
+    "Automatic : long listings are displayed as is, and the user needs to scroll the whole page to see the bottom Fixed : long listings are displayed in a window with a fixed size, user can scroll this window to see the bottom":
+      "Automatisch: Lange Listen werden vollständig angezeigt, man muss die ganze Seite scrollen, um das Ende zu sehen. Fest: Lange Listen erscheinen in einem Fenster fester Größe, das man separat scrollen kann.",
+    "Enables favorite support. If set to no, will stop heart icon showing for additions. If existing favorites are saved, favorites tab and pre-saved options will still continue to show and function until all are deleted.":
+      "Aktiviert Favoriten. Bei „Nein\" wird das Herz-Symbol nicht mehr angezeigt. Bereits gespeicherte Favoriten und der Favoriten-Reiter bleiben sichtbar und funktionsfähig, bis alle gelöscht sind."
+  };
+  function ccTransHelp(txt) {
+    try { if (LANG !== "de") return txt; var k = (txt || "").replace(/\s+/g, " ").trim(); return CC_HELP_DE[k] || txt; } catch (e) { return txt; }
+  }
+  // #7 (user: "die Dropdownlisten sind nicht im CC-Style"): on cc-tools-on pages, replace the native <select>
+  // with the SAME CC overlay dropdown the docker Add-Container form uses (docker.js/ctWrapSelect), ported here
+  // as cc-tsel with distinct names so nothing else unwraps it. The real <select> stays hidden as the form
+  // value; a click writes selectedIndex back + dispatches change so native onchange chains still fire. The
+  // panel is position:fixed (escapes overflow clipping) and flips upward when there's more room above.
+  function ccMkEl(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+  var ccTselDocBound = false;
+  function ccBindTselDoc() {
+    if (ccTselDocBound) return; ccTselDocBound = true;
+    document.addEventListener("click", function (e) {
+      var open = document.querySelectorAll(".cc-tsel.cc-open"); if (!open.length) return;
+      for (var i = 0; i < open.length; i++) { if (!open[i].contains(e.target)) open[i].classList.remove("cc-open"); }
+    });
+    window.addEventListener("scroll", function () { var o = document.querySelectorAll(".cc-tsel.cc-open"); for (var i = 0; i < o.length; i++) o[i].classList.remove("cc-open"); }, true);
+  }
+  function ccPositionTsel(trig, panel) {
+    try {
+      var r = trig.getBoundingClientRect(), gap = 4, edge = 14, ox = 0, oy = 0, cbBottom = window.innerHeight;
+      for (var pe = panel.parentElement; pe && pe.nodeType === 1 && pe !== document.documentElement; pe = pe.parentElement) {
+        var pcs = getComputedStyle(pe);
+        if (pcs.transform !== "none" || pcs.perspective !== "none" || (pcs.filter && pcs.filter !== "none")) { var pr = pe.getBoundingClientRect(); ox = pr.left; oy = pr.top; cbBottom = pr.bottom; break; }
+      }
+      var below = window.innerHeight - r.bottom - edge, above = r.top - edge;
+      panel.style.position = "fixed"; panel.style.boxSizing = "border-box";
+      panel.style.left = Math.round(r.left - ox) + "px"; panel.style.minWidth = Math.round(r.width) + "px"; panel.style.maxWidth = "min(92vw, 480px)";
+      if (below >= 200 || below >= above) { panel.style.top = Math.round(r.bottom + gap - oy) + "px"; panel.style.bottom = "auto"; panel.style.maxHeight = Math.max(140, below - gap) + "px"; }
+      else { panel.style.bottom = Math.round(cbBottom - r.top + gap) + "px"; panel.style.top = "auto"; panel.style.maxHeight = Math.max(140, above - gap) + "px"; }
+    } catch (e) {}
+  }
+  function ccToolsSyncSel(sel) {
+    var w = sel.parentNode; if (!w || !w.classList || !w.classList.contains("cc-tsel")) return;
+    w.classList.toggle("cc-tsel-disabled", !!sel.disabled);
+    var t2 = w.querySelector(".cc-tsel-trigger"), c = w.querySelectorAll(".cc-tsel-opt");
+    var label = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : "";
+    if (t2 && t2.textContent !== label) t2.textContent = label;
+    for (var k = 0; k < c.length; k++) { var o = sel.options[+c[k].getAttribute("data-i")]; if (!o) continue; if (c[k].textContent !== o.text) c[k].textContent = o.text; c[k].classList.toggle("is-selected", o.selected); c[k].classList.toggle("is-disabled", !!o.disabled); }
+  }
+  function ccToolsWrapSelect(sel) {
+    if (sel.getAttribute("data-cc-tsel") || sel.getAttribute("data-cc-tgl")) return;   // already ours / a yes-no toggle (#24)
+    if (sel.multiple || (sel.size && sel.size > 1) || sel.options.length < 1) return;   // multi / list-box stay native
+    sel.setAttribute("data-cc-tsel", "1");
+    var wrap = ccMkEl("span", "cc-tsel"); sel.parentNode.insertBefore(wrap, sel);
+    sel.style.display = "none"; wrap.appendChild(sel);
+    var trig = ccMkEl("span", "cc-tsel-trigger"); wrap.appendChild(trig);
+    var panel = ccMkEl("div", "cc-tsel-panel"); wrap.appendChild(panel);
+    var lastGroup = null;
+    for (var k = 0; k < sel.options.length; k++) {
+      var o = sel.options[k], gl = o.parentNode && o.parentNode.tagName === "OPTGROUP" ? o.parentNode.label : null;
+      if (gl && gl !== lastGroup) { panel.appendChild(ccMkEl("div", "cc-tsel-group", gl)); lastGroup = gl; }
+      var chip = ccMkEl("div", "cc-tsel-opt", o.text); chip.setAttribute("data-i", k);
+      chip.addEventListener("click", (function (idx) { return function (ev) { ev.stopPropagation(); if (sel.options[idx].disabled) return; sel.selectedIndex = idx; sel.dispatchEvent(new Event("change", { bubbles: true })); ccToolsSyncSel(sel); wrap.classList.remove("cc-open"); }; })(k));
+      panel.appendChild(chip);
+    }
+    trig.addEventListener("click", function (ev) { ev.stopPropagation(); if (sel.disabled) return; ccToolsSyncSel(sel); var open = wrap.classList.toggle("cc-open"); if (open) { var o2 = document.querySelectorAll(".cc-tsel.cc-open"); for (var j = 0; j < o2.length; j++) if (o2[j] !== wrap) o2[j].classList.remove("cc-open"); ccPositionTsel(trig, panel); } });
+    ccToolsSyncSel(sel);
+    ccBindTselDoc();
+  }
   // #22 (user: "bei allen Einstellungen die Doppelpunkte weg"): on native /Tools/* and /Settings/* sub-pages
   // (cc-tools-on) strip the trailing colon from every setting label. Visual only + idempotent (marks done).
   function ccToolsEnhance() {
@@ -714,7 +792,7 @@
       var helps = document.querySelectorAll("#displaybox blockquote.inline_help:not([data-cc-help]), #displaybox .inline-help:not([data-cc-help])");
       for (var h = 0; h < helps.length; h++) {
         var bq = helps[h]; bq.setAttribute("data-cc-help", "1");
-        var txt = (bq.textContent || "").trim(); if (!txt) { continue; }
+        var txt = ccTransHelp((bq.textContent || "").trim()); if (!txt) { continue; }   // #6: German where Unraid left the help English
         // #N7 (user: bubbles deplatziert): the help block sits either INSIDE the field's dd, or (other
         // pages) as a flat sibling AFTER the dl it describes. Resolve the real label (dt) both ways; if
         // none is found, leave the native help visible rather than dropping a stray icon at the edge.
@@ -750,6 +828,9 @@
         sel.style.display = "none";
         sel.parentNode.insertBefore(tg, sel.nextSibling);
       }
+      // #7: every REMAINING native <select> (not turned into a yes/no toggle above) becomes a CC overlay dropdown.
+      var dsels = document.querySelectorAll("#displaybox select:not([data-cc-tgl]):not([data-cc-tsel]):not([multiple])");
+      for (var ds = 0; ds < dsels.length; ds++) ccToolsWrapSelect(dsels[ds]);
     } catch (e) {}
   }
   function watchIsland() {   // nchan rewrites the (hidden) footer live — mirror every update into the island

@@ -708,11 +708,10 @@
         // label rides its tooltip. Theming OFF -> the state toggle keeps its text pill in the meta row.
         var innerEl0 = nameCell.querySelector(".inner") || nameCell, appnameEl = innerEl0.querySelector("span.appname");
         if (themingOn() && appnameEl) {
-          sb.classList.add("cc-ct-statedot"); sb.textContent = "";
           var nlEl = innerEl0.querySelector(".cc-ct-nameline");
           if (!nlEl) { nlEl = el("div", "cc-ct-nameline"); nlEl.setAttribute(MARK, "1"); appnameEl.parentNode.insertBefore(nlEl, appnameEl); nlEl.appendChild(appnameEl); }
-          nlEl.appendChild(sb);
-        } else { meta.appendChild(sb); }   // the start/stop state toggle is a CONTROL — always present
+          nlEl.appendChild(sb);   // CSS (.cc-ct-nameline > .cc-badge) renders it as a dot; the state poll re-adds the text but font-size:0 hides it
+        } else { meta.appendChild(sb); }   // theming off -> the state toggle keeps its text pill in the meta row
         // ID / Von / Volumes are DECORATIVE info badges — theming only.
         if (themingOn()) {
           var advDiv = nameCell.querySelector(":scope > div.advanced");

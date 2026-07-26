@@ -166,12 +166,15 @@ a.sl-updall { display: none !important; }
    docker.js drops it into a .cc-ct-nameline beside the name. The dot follows the colour mode by default and
    the native state colour when "native state colours" is ON; its shape follows the badge-form via --cc-dot-r. */
 .cc-enh .cc-ct-nameline { display: inline-flex; align-items: center; gap: 8px; }
-.cc-badge.cc-ct-statedot {
+/* the state DOT = the state badge sitting IN the nameline. Keyed on the PARENT (not a badge class) because
+   docker.js's state poll REASSIGNS the badge's className on every tick — the nameline is untouched, so the
+   dot look survives; font-size:0 also hides the re-added "läuft" text. */
+.cc-enh .cc-ct-nameline > .cc-badge {
   width: 13px !important; height: 13px !important; min-width: 13px !important; padding: 0 !important; margin: 0 !important;
   gap: 0 !important; border-radius: var(--cc-dot-r, 50%) !important; font-size: 0 !important; line-height: 0 !important;
-  flex: 0 0 auto; box-shadow: 0 0 0 2px rgba(0, 0, 0, .25);
+  flex: 0 0 auto; box-shadow: 0 0 0 2px rgba(0, 0, 0, .25); overflow: hidden;
 }
-html:not(.cc-state-native) .cc-enh .cc-ct-statedot.cc-badge { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+html:not(.cc-state-native) .cc-enh .cc-ct-nameline > .cc-badge { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
 /* info badges (network/IP/LAN/port/CPU/RAM/ID/Von/image tag): SOLID accent, light text */
 .cc-b,
 .cc-enh.cc-c-res #docker_list tr.sortable td.advanced span[class^='cpu-'],
