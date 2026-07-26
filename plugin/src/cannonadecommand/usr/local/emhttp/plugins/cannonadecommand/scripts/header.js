@@ -1244,6 +1244,11 @@
       // global, independent of whether the header area itself is on) — it only rounds SQUARE badges, and
       // if no area is enabled there are no badges to round, so it's harmless when everything is off.
       root.classList.toggle("cc-shape-circle", g("cc.badgeshape", "pill") === "circle");
+      // #14 (user: "systemweit mehr Animationen" + ein Toggle): GLOBAL animation master, default ON. cc-anim-on
+      // makes CC animations run even when the OS asks to reduce motion (the user explicitly wants more); cc-anim-
+      // off stills them everywhere. Set unconditionally (motion is global chrome, like the badge shape above).
+      root.classList.toggle("cc-anim-on", g("cc.anim", "1") !== "0");
+      root.classList.toggle("cc-anim-off", g("cc.anim", "1") === "0");
       // #8/#4: the badge-form radii must be present on EVERY page (the Tools/Settings sub-page toggle
       // track/knob and the docker state dot read them) — set them UNCONDITIONALLY here, not only inside the
       // header-area-on branch below. All areas compute the SAME shape(), so this can't disagree with them.

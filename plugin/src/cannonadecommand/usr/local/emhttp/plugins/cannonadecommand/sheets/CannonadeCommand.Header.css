@@ -759,13 +759,31 @@ html.cc-docker-on .cc-badge[onclick]:hover { filter: brightness(1.2); }
   transition: opacity .18s ease, transform .22s cubic-bezier(.2, .9, .3, 1);
 }
 #cc-toast.cc-toast-show { opacity: 1; transform: translate(-50%, 0); }
+/* #14: the OS "reduce motion" preference only stills CC motion when the user has NOT explicitly forced
+   animations on (cc.anim default ON -> cc-anim-on -> the user opted into motion, so we honour that). */
 @media (prefers-reduced-motion: reduce) {
-  #cc-toast { transition: opacity .12s ease !important; transform: translate(-50%, 0) !important; }
-  html.cc-popups-on .sweet-alert,
-  html.cc-popups-on .swal-modal,
-  html.cc-popups-on .ui-dialog { animation: none !important; }
-  html [class*="cc-"],
-  html #cc-island *,
-  html #cc-brand,
-  html #menu .nav-item { transition: none !important; animation: none !important; }
+  html:not(.cc-anim-on) #cc-toast { transition: opacity .12s ease !important; transform: translate(-50%, 0) !important; }
+  html:not(.cc-anim-on).cc-popups-on .sweet-alert,
+  html:not(.cc-anim-on).cc-popups-on .swal-modal,
+  html:not(.cc-anim-on).cc-popups-on .ui-dialog { animation: none !important; }
+  html:not(.cc-anim-on) [class*="cc-"],
+  html:not(.cc-anim-on) #cc-island *,
+  html:not(.cc-anim-on) #cc-brand,
+  html:not(.cc-anim-on) #menu .nav-item { transition: none !important; animation: none !important; }
 }
+/* #14: the explicit OFF switch stills ALL CannonadeCommand motion, regardless of the OS setting. */
+html.cc-anim-off [class*="cc-"],
+html.cc-anim-off #cc-island *,
+html.cc-anim-off #cc-brand,
+html.cc-anim-off #menu .nav-item,
+html.cc-anim-off .sweet-alert,
+html.cc-anim-off .ui-dialog { transition: none !important; animation: none !important; }
+html.cc-anim-off #cc-toast { transition: none !important; transform: translate(-50%, 0) !important; }
+/* #14: "systemweit mehr Animationen" when ON — a soft entrance fade for the island/brand and a gentle
+   hover lift on the Docker/Plugin/VM cards. Kept subtle so it reads as polish, not noise. */
+@keyframes cc-fade-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+html.cc-anim-on #cc-island { animation: cc-fade-rise .40s cubic-bezier(.2, .9, .3, 1) both; }
+html.cc-anim-on.cc-header-on #cc-brand { animation: cc-fade-rise .46s cubic-bezier(.2, .9, .3, 1) both; }
+html.cc-anim-on .cc-card { transition: transform .16s ease, box-shadow .18s ease, background-color .14s ease; }
+html.cc-anim-on .cc-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0, 0, 0, .45); }
+html.cc-anim-on .cc-b:hover, html.cc-anim-on .cc-navtab:hover { transition: transform .12s ease, filter .12s ease; }

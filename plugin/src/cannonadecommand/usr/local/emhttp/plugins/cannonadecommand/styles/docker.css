@@ -819,7 +819,7 @@ html.cc-plugins-iconbg .cc-plugico {
 #cc-settings .cc-seg-btn { padding: 5px 12px; }
 .cc-set-spacer { flex: 1; }
 .cc-set-swatches { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 6px; }
-.cc-set-sw { width: 22px; height: 22px; border-radius: var(--cc-dot-r, 50%); border: 2px solid transparent; cursor: pointer; padding: 0; flex: none; } /* swatches follow the badge form like the state dots (user call) */
+.cc-set-sw { width: 28px; height: 28px; box-sizing: border-box; border-radius: var(--cc-dot-r, 50%); border: 2px solid transparent; cursor: pointer; padding: 0; flex: none; } /* #5: ONE swatch size everywhere (was 22/26 mixed) */ /* swatches follow the badge form like the state dots (user call) */
 .cc-set-sw-on { transform: scale(1.18); filter: brightness(1.15); }   /* ring-free on-state — KEINE Rahmen/Ringe (Nutzer-Gesetz) */
 /* colour picker: force it VISIBLE as a real swatch. Unraid's global input CSS
    (border:none; border-bottom; transparent bg) otherwise strips it to a thin line
@@ -835,7 +835,7 @@ html.cc-plugins-iconbg .cc-plugico {
 #cc-settings input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
 .cc-set-pick { width: 40px; height: 30px; box-sizing: border-box; }
 /* hex text field beside the colour picker (override Unraid's input underline) */
-#cc-settings .cc-set-hexin { flex: none; width: 104px; font-family: ui-monospace, "Cascadia Code", monospace; text-transform: uppercase; letter-spacing: .5px; background: #1e1e1e !important; color: var(--txt); border: 1px solid var(--line2) !important; border-radius: 6px !important; padding: 8px 10px !important; font-size: 13px; box-sizing: border-box; }
+#cc-settings .cc-set-hexin { flex: none; width: 104px; height: 28px; font-family: ui-monospace, "Cascadia Code", monospace; text-transform: uppercase; letter-spacing: .5px; background: #1e1e1e !important; color: var(--txt); border: 1px solid var(--line2) !important; border-radius: 6px !important; padding: 0 10px !important; font-size: 13px; box-sizing: border-box; } /* #5: hex field = same 28px height as the swatches */
 #cc-settings .cc-set-hexin:focus { outline: none; border-color: var(--cc-accent, #2f6feb) !important; }
 /* #20: native <select> styled as a clearly-readable CC control (Servername size/weight/italic/font
    pickers). The old #232323 fill barely differed from the card, so the pickers read as underlined text
@@ -887,7 +887,7 @@ button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-t
    on the ONE 30px control line, accent fill, contrast glyph. */
 #cc-settings .cc-set-ibtn {
   display: inline-flex; align-items: center; justify-content: center;
-  width: var(--cc-md-h, 30px); height: var(--cc-md-h, 30px); flex: none; box-sizing: border-box;
+  width: 34px; height: 28px; flex: none; box-sizing: border-box; /* #5: reset = same 28px height as the swatches beside it */
   border-radius: min(var(--cc-b-radius, 8px), 8px); background: var(--cc-accent, #2f6feb);
   color: var(--cc-accent-text, #fff); font-size: 14px; cursor: pointer; transition: filter .12s;
   margin-left: 6px; align-self: center;

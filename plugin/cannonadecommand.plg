@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.81.0">
+  <!ENTITY version   "2.82.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,13 @@
 </ICON>
 
 <CHANGES>
+### 2.82.0
+- CannonadeCommand-Einstellungen: Alle Farbfelder, das Hex-Feld und der Zuruecksetzen-Button einer Farbzeile
+  sind jetzt systemweit exakt gleich hoch (28px) - auch die vorher kleinere oberste Zeile.
+- Neuer Schalter „Animationen" (Allgemein, standardmaessig AN): sanfte Uebergaenge/Bewegungen in der gesamten
+  Oberflaeche. AN ueberschreibt auch die System-Einstellung „Bewegung reduzieren"; AUS stellt alles ruhig.
+  Zusaetzlich dezente neue Bewegungen (Einblenden der Statusinsel/Marke, Hover-Anheben der Karten).
+
 ### 2.81.0
 - Docker-Seite: Die CPU/RAM/BW-Zahnraeder waren im Regenbogen-Modus alle orange - jetzt traegt jedes Zahnrad
   die eigene Palettenfarbe seines Badges (CPU/RAM/Bandbreite).
@@ -1987,7 +1994,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>d47e9c90c378ccad0b21597d5cda360b787ccfecb12ba219fc460fc2c5d3d350</SHA256>
+  <SHA256>3fb6792aa89ab21028b47c99616f2a455163774803fe8fc988616e42b4aa90b5</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
