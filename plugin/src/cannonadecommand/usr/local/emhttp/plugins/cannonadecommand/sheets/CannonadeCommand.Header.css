@@ -441,10 +441,12 @@ html.cc-popups-on .sweet-alert h2 {
   font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; margin: 4px auto 14px !important;
 }
-/* N1 — PLUGIN changelog / install / update windows (they stream output into a <pre>): the TOP title
-   badge spans the FULL WIDTH and is bigger (user: "viel größer und über die ganze Breite"). The
-   small confirmations (favourites etc., no <pre>) keep the compact centred badge above. */
-html.cc-popups-on .sweet-alert:has(pre) h2 {
+/* N1 — the streaming floating windows (plugin changelog / install / update AND the container-update
+   dialog, all .sweet-alert.nchan) get the SAME prominent TOP title badge: full width, bigger, and the
+   SAME height as the action buttons below (user: "alle Schwebefenster gleich; Badge größer, so hoch wie
+   die Buttons"). The small confirmations (favourites etc., no <pre>/not .nchan) keep the compact badge. */
+html.cc-popups-on .sweet-alert:has(pre) h2,
+html.cc-popups-on .sweet-alert.nchan h2 {
   display: flex !important; width: 100% !important; max-width: none !important; box-sizing: border-box !important;
   margin: 6px 0 18px !important; height: 46px !important; padding: 0 24px !important;
   font-size: 18px !important; letter-spacing: 1px !important;
@@ -487,8 +489,11 @@ html.cc-popups-on .sweet-alert.nchan pre:not(:has(h3)):not(:has(ul)) {
 /* #11/#14: the container-update dialog groups its steps in <fieldset>s (Lade Image / Stoppe Container …)
    -> Carbon cards with an accent legend badge, matching the Tools-page install log. */
 html.cc-popups-on .sweet-alert.nchan fieldset {
-  background: #1c1c1c !important; border: none !important; border-radius: 10px !important;
-  margin: 0 0 12px !important; padding: 12px 14px !important; text-align: left !important;
+  /* user: "oben und unten den hellen Hintergrund auf dunkel" — the step cards were #1c1c1c, a shade
+     lighter than the #161616 window, which read as light bands top and bottom. Match the window so the
+     whole dialog is one continuous dark surface; the accent legend badge still marks each step. */
+  background: #161616 !important; border: none !important; border-radius: 10px !important;
+  margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important;
 }
 html.cc-popups-on .sweet-alert.nchan fieldset > legend {
   background: var(--cc-hdr-accent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-hdr-accent-text, #fff) !important;
@@ -565,6 +570,11 @@ html.cc-popups-on .sweet-alert .sa-button-container button {
 html.cc-popups-on .sweet-alert button.confirm { background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important; }
 html.cc-popups-on .sweet-alert button.cancel { background: #2e2e2e !important; color: #e6e6e6 !important; }
 html.cc-popups-on .sweet-alert .sa-button-container button:hover { filter: brightness(1.14); }
+/* the streaming floating windows (.nchan): action buttons share the title badge's 46px height so the
+   badge is "genauso hoch wie die Buttons" and every such window looks identical (user). */
+html.cc-popups-on .sweet-alert.nchan button.confirm,
+html.cc-popups-on .sweet-alert.nchan button.cancel,
+html.cc-popups-on .sweet-alert.nchan .sa-button-container button { height: 46px !important; }
 
 /* ═══ t4t5 SweetAlert (.swal-modal / .swal-overlay) -> CC look ═══
    The Unassigned Devices plugin bundles a SECOND sweetalert (t4t5 v2, .swal-* classes) for its

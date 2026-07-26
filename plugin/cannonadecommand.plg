@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.66.3">
+  <!ENTITY version   "2.66.4">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,14 @@
 </ICON>
 
 <CHANGES>
+### 2.66.4
+- Die streamenden Schwebefenster (Plugin-Installation/-Update und Container-Update) sehen jetzt alle
+  gleich aus: Der Titel-Badge oben ist einheitlich breit und prominent und exakt so hoch wie die
+  Aktions-Buttons unten (46px). Die Schritt-Karten im Container-Update-Fenster hatten einen leicht
+  helleren Hintergrund (#1c1c1c) als das Fenster - das wirkte oben und unten wie ein heller Balken;
+  sie sind jetzt auf das Fenster-Dunkel (#161616) gesetzt, sodass das ganze Fenster eine durchgehend
+  dunkle Flaeche ist.
+
 ### 2.66.3
 - Die Farbtrennungs-Migration bereinigt jetzt AUCH den Engine-seitigen Einstellungs-Spiegel. CC
   synchronisiert alle Farb-/Modus-Einstellungen ueber die Engine zwischen Browsern; die alten
@@ -1818,7 +1826,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>459adc14cf0e0da7c1f605160519e3e42382da0b75fcd98d8e28c74b498e17c6</SHA256>
+  <SHA256>cd1e2a129e8a7ef39d092fa7cacd971a08335b5e3a7575d3f00966c201611687</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
