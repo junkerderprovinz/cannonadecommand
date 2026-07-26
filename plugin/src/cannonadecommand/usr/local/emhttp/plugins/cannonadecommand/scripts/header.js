@@ -146,7 +146,12 @@
               var st = d.createElement("style"); st.id = "cc-pop-inner";
               // 36px/14px literals: keep in sync with --cc-lgb-* in Header.css (iframes cannot read the parent's CSS vars)
               // focus law duplicated here too: the inner document cannot read the parent's focus-kill rules
-              st.textContent = "input[type=button],input[type=submit],button{height:36px !important;padding:0 24px !important;font-size:14px !important;border:0 !important;border-radius:6px !important;box-shadow:none !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important;cursor:pointer} center,.buttons{text-align:left !important} a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none !important;box-shadow:none !important;filter:brightness(1.18)}";
+              // #16/#17 (user: Systeminfo/Feedback-Fenster haben helle Kopf-/Fussleiste + Feedback ist nicht im
+              // CC-Style): darken the iframe's OWN surface (html/body + structural elements) onto #161616 so no
+              // lighter native band shows, and theme the form controls (radios keep native, text/textarea/select
+              // get the CC dark fill). Literals only — the iframe cannot read the parent's CSS vars.
+              st.textContent = "html,body{background:#161616 !important;color:#d6d6d6 !important} fieldset,table,tbody,thead,tr,td,th,.tabs,dl,dt,dd,form,center,p,section,article,div{background:transparent !important;border:none !important} legend{color:#9a9a9a !important} label,td,th{color:#d6d6d6 !important} input[type=text],input[type=password],input[type=email],input[type=search],input[type=number],input[type=url],textarea,select{background:#232323 !important;color:#eaeaea !important;border:1px solid #333 !important;border-radius:6px !important;outline:none !important;box-shadow:none !important} textarea{width:100% !important;box-sizing:border-box !important} a{color:" + acc + " !important} " +
+                "input[type=button],input[type=submit],button{height:36px !important;padding:0 24px !important;font-size:14px !important;border:0 !important;border-radius:6px !important;box-shadow:none !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important;cursor:pointer} center,.buttons{text-align:left !important} a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none !important;box-shadow:none !important;filter:brightness(1.18)}";
               d.head.appendChild(st);
             } catch (e2) {}
           }
@@ -534,7 +539,12 @@
       var verNum = "";
       var verElN = document.querySelector('unraid-header-os-version span[id^="reka-menu-trigger"]');
       if (verElN) verNum = ((verElN.textContent) || "").replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
-      var items = "u" + (iOn("uptime") ? 1 : 0) + "o" + (iOn("os") ? 1 : 0) + "v" + (iOn("version") ? 1 : 0) + "a" + (iOn("array") ? 1 : 0) + "f" + (iOn("fill") ? 1 : 0) + "r" + (iOn("ram") ? 1 : 0) + "c" + (iOn("cpu") ? 1 : 0) + "d" + (iOn("containers") ? 1 : 0) + "t" + (iOn("temps") ? 1 : 0);
+      // #18 (user): also show the count of NON-running containers. /sub/dockerload only carries RUNNING ones,
+      // so the total comes from the cross-page cc.stateCache (docker.js caches the full /api/state list).
+      var dockRun = parseInt(ccLiveDocker, 10) || 0, dockTot = 0;
+      try { var csD = JSON.parse(g("cc.stateCache", "null")); if (csD && csD.containers && csD.containers.length) dockTot = csD.containers.length; } catch (eD) {}
+      var dockStop = dockTot > dockRun ? dockTot - dockRun : 0;
+      var items = "u" + (iOn("uptime") ? 1 : 0) + "o" + (iOn("os") ? 1 : 0) + "v" + (iOn("version") ? 1 : 0) + "a" + (iOn("array") ? 1 : 0) + "f" + (iOn("fill") ? 1 : 0) + "r" + (iOn("ram") ? 1 : 0) + "c" + (iOn("cpu") ? 1 : 0) + "d" + (iOn("containers") ? 1 : 0) + "t" + (iOn("temps") ? 1 : 0) + "|dt" + dockTot;
       // idempotence guard: nchan rewrites the footer every few seconds with UNCHANGED text most
       // of the time — compare the source signature and skip the DOM rebuild when nothing moved
       // (bar width/colour + the item toggles included so a change always redraws)
@@ -599,15 +609,18 @@
       // 4) ARRAY FILL LEVEL — mini bar + % text (fill colour = state); bubble = plain sentence. Source is
       // the native menu usage-bar, which 7.3.x dropped -> usually empty here (chip hides); kept for boxes
       // that still expose it. RAM (5) is the always-available live usage bar in its place.
-      if (iOn("fill") && usage) barChip(T("Array", "Array"), usage, T("Array zu " + usage + " belegt", "Array " + usage + " used"), "cc-isl-array-fill");
+      // #20 (user: toggled-on chips that don't appear): show the chip with a "--" placeholder even when the
+      // source is momentarily empty, so an enabled toggle always produces a visible chip (fill needs a /Main
+      // visit to prime cc.arrfill on 7.3.x; the tooltip says so).
+      if (iOn("fill")) barChip(T("Array", "Array"), usage || "--", usage ? T("Array zu " + usage + " belegt", "Array " + usage + " used") : T("Array-Füllstand — auf der Startseite messbar", "Array fill — measured on the Main page"), "cc-isl-array-fill");
       // 5) RAM USAGE — live from nchan /sub/update1 (ccLiveRam="95%", ccLiveRamUsed="29.7 GiB"); mini bar,
       // works on EVERY page (the missing "fill/temps show nothing" fix + the "was noch anzeigen" expansion).
       if (iOn("ram") && ccLiveRam) barChip("RAM", ccLiveRam, T("RAM zu " + ccLiveRam + " belegt" + (ccLiveRamUsed ? " (" + ccLiveRamUsed + ")" : ""), "RAM " + ccLiveRam + " used" + (ccLiveRamUsed ? " (" + ccLiveRamUsed + ")" : "")), "cc-isl-ram");
       // 5b) CPU LOAD — live from nchan /sub/cpuload; empty on boxes that don't measure it (chip hides).
-      if (iOn("cpu") && ccLiveCpu) barChip("CPU", ccLiveCpu, T("CPU-Last " + ccLiveCpu, "CPU load " + ccLiveCpu), "cc-isl-cpu");
+      if (iOn("cpu")) barChip("CPU", ccLiveCpu || "--", ccLiveCpu ? T("CPU-Last " + ccLiveCpu, "CPU load " + ccLiveCpu) : T("CPU-Last derzeit nicht verfügbar", "CPU load currently unavailable"), "cc-isl-cpu");   // #20: placeholder so the toggle is visible
       // 5c) CONTAINERS — #23: running-container count, live from nchan /sub/dockerload (one line per running
       // container); a dotted chip, not a bar. Cross-page. Hides if none / no data.
-      if (iOn("containers") && ccLiveDocker) chip(ccLiveDocker, "#3fae6a", T(ccLiveDocker + " laufende Container", ccLiveDocker + " running containers"), "cc-isl-docker");
+      if (iOn("containers") && (ccLiveDocker || dockTot)) chip((ccLiveDocker || "0") + (dockTot ? " / " + dockStop : ""), "#3fae6a", T(dockRun + " laufend" + (dockTot ? ", " + dockStop + " gestoppt (von " + dockTot + ")" : ""), dockRun + " running" + (dockTot ? ", " + dockStop + " stopped (of " + dockTot + ")" : "")), "cc-isl-docker");   // #18: running / stopped
       // 6) TEMPS — first sensor = CPU, second = Mainboard (Unraid footer order), rest generic; the
       // dot carries the state (green below cc.tempwarn, amber at/above, red at threshold+15)
       if (iOn("temps")) {
@@ -667,8 +680,9 @@
         var rows = {};
         for (var i = 0; i < btns.length; i++) { var rct = btns[i].getBoundingClientRect(); if (!rct.width) { clear(btns[i]); continue; } var key = Math.round(rct.top / 6); if (rows[key] == null) rows[key] = 0; stamp(btns[i], rows[key]++); }
       }
-      // toggles on tools/settings pages -> rotate across the page so no two read the same colour
-      var tgls = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tgl, html.cc-tools-on #displaybox .switch-button-background");
+      // toggles AND dropdowns (#1) on tools/settings pages -> rotate across the page so no two read the same
+      // colour (the CC-tsel dropdown box + selected chip follow --cc-rb-c, inherited from the .cc-tsel wrapper).
+      var tgls = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tgl, html.cc-tools-on #displaybox .switch-button-background, html.cc-tools-on #displaybox .cc-tsel");
       for (var t = 0; t < tgls.length; t++) { if (!on) clear(tgls[t]); else stamp(tgls[t], t); }
     } catch (e) {}
   }
@@ -680,7 +694,15 @@
     try {
       if (ccMainObs) return;
       var box = document.getElementById("displaybox"); if (!box) return;
-      ccMainObs = new MutationObserver(function () { if (ccMainT) return; ccMainT = setTimeout(function () { ccMainT = null; try { ccStateBars(); ccPaintRotate(); ccToolsEnhance(); } catch (e2) {} }, 120); });
+      ccMainObs = new MutationObserver(function (recs) {
+        // #13 (user: fill bars BLINK when "native state colours" is on): Unraid WHOLESALE-replaces the /Main
+        // disk table every nchan tick, so the fresh bars briefly show the base colour until the debounced
+        // pass re-classes them = the blink. Re-class them SYNCHRONOUSLY here (a MutationObserver callback is a
+        // microtask that runs AFTER Unraid's .html() but BEFORE the next paint), so the semantic cc-fill class
+        // is on the new bars before they ever paint. ccStateBars only writes classList (no childList) -> no loop.
+        for (var i = 0; i < recs.length; i++) { var t2 = recs[i].target; if (t2 && t2.closest && t2.closest("table.unraid.disk_status")) { try { ccStateBars(); } catch (e3) {} break; } }
+        if (ccMainT) return; ccMainT = setTimeout(function () { ccMainT = null; try { ccStateBars(); ccPaintRotate(); ccToolsEnhance(); } catch (e2) {} }, 120);
+      });
       ccMainObs.observe(box, { childList: true, subtree: true });
     } catch (e) {}
   }
@@ -762,6 +784,23 @@
     ccToolsSyncSel(sel);
     ccBindTselDoc();
   }
+  // #2 (user: "Banner und Favoriten Toggle sind unwirksam"): native /Settings/* apply on FORM SUBMIT, not on
+  // `change` — so a CC toggle/dropdown flip has NO live effect until "Anwenden". Persist the single changed
+  // field the way native Apply does (POST it to /update.php with the form's #file/#section + csrf_token), then
+  // reload so the effect shows — the same mechanism CC's own settings.js already proves works for these fields.
+  function ccApplyToolsSel(sel) {
+    try {
+      if (!sel || !sel.name || typeof window.csrf_token === "undefined") return;
+      var form = sel.closest ? sel.closest("form") : null;
+      var fEl = form && form.querySelector('[name="#file"]'), sEl = form && form.querySelector('[name="#section"]');
+      var fd = new URLSearchParams();
+      fd.append("#file", (fEl && fEl.value) || "dynamix/dynamix.cfg");
+      fd.append("#section", (sEl && sEl.value) || "display");
+      fd.append("csrf_token", window.csrf_token);
+      fd.append(sel.name, sel.value);
+      fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function () { location.reload(); }).catch(function () {});
+    } catch (e) {}
+  }
   // #22 (user: "bei allen Einstellungen die Doppelpunkte weg"): on native /Tools/* and /Settings/* sub-pages
   // (cc-tools-on) strip the trailing colon from every setting label. Visual only + idempotent (marks done).
   function ccToolsEnhance() {
@@ -821,7 +860,7 @@
         var tg = document.createElement("span"); tg.className = "cc-tgl" + (sel.value === yesOpt.value ? " cc-tgl-on" : ""); tg.setAttribute("role", "switch"); tg.setAttribute("tabindex", "0");
         tg.appendChild(document.createElement("span")).className = "cc-tgl-knob";
         (function (sel2, tg2, yv, nv) {
-          var flip = function () { var nowOn = !tg2.classList.contains("cc-tgl-on"); tg2.classList.toggle("cc-tgl-on", nowOn); sel2.value = nowOn ? yv : nv; try { sel2.dispatchEvent(new Event("change", { bubbles: true })); } catch (e2) {} };
+          var flip = function () { var nowOn = !tg2.classList.contains("cc-tgl-on"); tg2.classList.toggle("cc-tgl-on", nowOn); sel2.value = nowOn ? yv : nv; try { sel2.dispatchEvent(new Event("change", { bubbles: true })); } catch (e2) {} ccApplyToolsSel(sel2); };   // #2: persist + reload so the toggle takes effect live
           tg2.addEventListener("click", flip);
           tg2.addEventListener("keydown", function (e3) { if (e3.key === "Enter" || e3.key === " ") { e3.preventDefault(); flip(); } });
         })(sel, tg, yesOpt.value, noOpt.value);
@@ -998,7 +1037,7 @@
         if (i === 0 && hideBell) ss.setProperty("display", "none", "important");
         else if (i === sp.length - 1 && hideBurger) ss.setProperty("display", "none", "important");
         else ss.removeProperty("display");
-        if (ss.getPropertyValue("min-height") !== "30px") { ss.setProperty("width", "30px", "important"); ss.setProperty("height", "30px", "important"); ss.setProperty("min-width", "30px", "important"); ss.setProperty("min-height", "30px", "important"); }
+        if (ss.getPropertyValue("min-height") !== "36px") { ss.setProperty("width", "36px", "important"); ss.setProperty("height", "36px", "important"); ss.setProperty("min-width", "36px", "important"); ss.setProperty("min-height", "36px", "important"); }   // #14: match the enlarged (lgb 36px) menu icons
         // CC bubbles instead of native balloons (the #menu sweep can't reach these — they
         // live outside #menu); i===0 = bell, the last = burger (auto-mount keeps this order)
         if (!sp[i].getAttribute("data-cc-tip")) sp[i].setAttribute("data-cc-tip", i === 0 ? T("Benachrichtigungen", "Notifications") : T("Menü", "Menu"));
@@ -1022,8 +1061,8 @@
       set("padding", "0");
       set("min-width", "0");
       set("width", "76px");                                        // container = content: its native 236px width parked the flex-end row 160px right of `left` (live-proven off-screen boxes)
-      set("top", Math.round(r.top + (r.height - 30) / 2) + "px");  // centre the 30px boxes on the icon line
-      set("height", "30px");
+      set("top", Math.round(r.top + (r.height - 36) / 2) + "px");  // centre the 36px boxes on the icon line (#14)
+      set("height", "36px");
       set("z-index", String(isFinite(mz) ? mz + 1 : 1000));        // above the sticky menu it overlaps
       set("left", target + "px");
       // MEASURED correction against the VISIBLE BELL BOX (not the container/row — inner margins

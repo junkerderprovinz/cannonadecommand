@@ -414,6 +414,9 @@ html.cc-shape-circle.cc-header-on #UserProfile > div:nth-child(2) > span { borde
 html.cc-popups-on .ui-dialog {
   background: #161616 !important; border: none !important; border-radius: 12px !important;
   box-shadow: 0 18px 50px rgba(0, 0, 0, .6) !important; padding: 0 !important; overflow: hidden;
+  /* #17 (user: the Feedback window content is too wide): cap the native inline width so the dialog reads as a
+     tidy card instead of a full-bleed sheet. min(...) keeps it responsive; content inside the iframe wraps. */
+  max-width: min(92vw, 720px) !important;
 }
 /* NO grey bar (user): the title bar is invisible — only the title BADGE floats on the surface.
    The badge follows the colour modes: base = accent vars, rainbow = painted by header.js
@@ -552,18 +555,14 @@ html.cc-popups-on .sweet-alert {
   background: #161616 !important; border: none !important; border-radius: 12px !important;
   box-shadow: 0 18px 50px rgba(0, 0, 0, .6) !important;
 }
-/* #N1 (user: "Kopf- und Fußleiste sind immer noch heller!"): every structural band inside the streaming
-   windows inherits the dialog's own #161616 — no lighter header/footer strip around the badge or buttons.
-   Scoped to the direct structural children so text/badges/buttons keep their own fills. */
+/* #N1/#9 (user: "Kopf- und Fußleiste sind immer noch heller!"): force EVERY element inside the streaming
+   windows onto the dialog's own #161616 — no lighter header/footer strip ANYWHERE (the direct-child version
+   missed grandchild wrapper divs). Content elements keep their own fills: the title/legend badges, the
+   buttons, the raw-log pre (#0f0f0f), and the step fieldsets (#161616). */
 html.cc-popups-on .sweet-alert.nchan,
 html.cc-popups-on .sweet-alert:has(pre) { background: #161616 !important; }
-html.cc-popups-on .sweet-alert.nchan > div,
-html.cc-popups-on .sweet-alert.nchan > p,
-html.cc-popups-on .sweet-alert.nchan > pre,
-html.cc-popups-on .sweet-alert.nchan .sa-button-container,
-html.cc-popups-on .sweet-alert:has(pre) > div,
-html.cc-popups-on .sweet-alert:has(pre) > p,
-html.cc-popups-on .sweet-alert:has(pre) .sa-button-container { background: transparent !important; box-shadow: none !important; }
+html.cc-popups-on .sweet-alert.nchan *:not(h2):not(button):not(pre):not(fieldset):not(legend):not(.sa-icon):not([class*="badge"]):not([class*="chip"]),
+html.cc-popups-on .sweet-alert:has(pre) *:not(h2):not(button):not(pre):not(fieldset):not(legend):not(.sa-icon):not([class*="badge"]):not([class*="chip"]) { background-color: transparent !important; box-shadow: none !important; }
 /* (sweet-alert h2 badge styling above) */
 html.cc-popups-on .sweet-alert p, html.cc-popups-on .sweet-alert .sa-text { color: #bdbdbd !important; }
 html.cc-popups-on .sweet-alert hr { display: none !important; }

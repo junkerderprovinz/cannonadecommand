@@ -26,8 +26,9 @@
       // size as a swatch (its own equal flex cell at the end of the row), not a small right-pushed icon.
       "#cc-settings .cc-set-swatches.cc-fill{display:flex;gap:6px;align-items:center}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:1 1 0;height:22px;min-width:0;border-radius:4px}" +
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:1 1 0;height:22px;min-width:0;margin-left:0;display:flex;align-items:center;justify-content:center;background:#232323;border-radius:4px;cursor:pointer;color:#cfcfcf;transition:filter .12s}" +
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn:hover{filter:brightness(1.35)}" +
+      // #6 (user): the rainbow/flag RESET is a proper compact BADGE (badge-form radius + accent hover), not a full-width grey cell
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:0 0 auto;width:30px;height:22px;margin-left:2px;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:min(var(--cc-b-radius,999px),11px);cursor:pointer;color:#cfcfcf;transition:filter .12s,background .12s,color .12s}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn:hover{background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff)}" +
       // #18 the HEX field is the rightmost cell of the swatch row: swatches flex to fill, hex a fixed
       // compact chip on the right, same 22px height so the whole row reads like the rainbow swatches+reset.
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{flex:0 0 auto;width:104px;height:22px;padding:0 9px;align-self:center;font-size:12px;margin:0}" +
@@ -37,7 +38,7 @@
       "#cc-settings .cc-set-search::placeholder{color:#8d8d8d}" +
       "#cc-settings .cc-set-search:focus{background:#2e2e2e}" +
       // #13 settings search as an expandable hero badge (magnifier -> input on click)
-      "#cc-settings .cc-set-searchbadge{margin-left:auto;display:inline-flex;align-items:center;background:#232323;border-radius:999px;height:34px;overflow:hidden;transition:background-color .12s}" +
+      "#cc-settings .cc-set-searchbadge{margin-left:auto;display:inline-flex;align-items:center;background:#232323;border-radius:min(var(--cc-b-radius,999px),17px);height:34px;overflow:hidden;transition:background-color .12s}" +
       "#cc-settings .cc-set-searchbadge .cc-set-searchicon{flex:0 0 auto;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:#cfcfcf;cursor:pointer}" +
       "#cc-settings .cc-set-searchbadge:hover .cc-set-searchicon,#cc-settings .cc-set-searchbadge.cc-open .cc-set-searchicon{color:#fff}" +
       "#cc-settings .cc-set-searchbadge .cc-set-search{box-sizing:border-box;width:0;max-width:0;padding:0;background:transparent;transition:width .2s,max-width .2s,padding .2s}" +
@@ -315,8 +316,17 @@
     var searchBadge = el("div", "cc-set-searchbadge");
     var searchIcon = el("span", "cc-set-searchicon"); searchIcon.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.6" y1="15.6" x2="21" y2="21"/></svg>'; searchIcon.setAttribute("data-cc-tip", T("Einstellungen durchsuchen", "Search settings"));
     searchBadge.appendChild(searchIcon); searchBadge.appendChild(setSearch);
-    searchIcon.addEventListener("click", function () { var open = searchBadge.classList.toggle("cc-open"); if (open) { setSearch.focus(); } else { setSearch.value = ""; if (typeof runFilter === "function") runFilter(""); } });
+    searchIcon.addEventListener("click", function (e) { e.stopPropagation(); var open = searchBadge.classList.toggle("cc-open"); if (open) { setSearch.focus(); } else { setSearch.value = ""; if (typeof runFilter === "function") runFilter(""); } });
     hero.appendChild(searchBadge);
+    // #7 (user): the search collapses again when you click BESIDE it. Bound once (render() is re-entrant);
+    // clears the query + resets the filter via a synthetic input event so the existing filter listener runs.
+    if (!window.__ccSetSearchDoc) {
+      window.__ccSetSearchDoc = true;
+      document.addEventListener("click", function (e) {
+        var sb = document.querySelector(".cc-set-searchbadge.cc-open");
+        if (sb && !sb.contains(e.target)) { sb.classList.remove("cc-open"); var si = sb.querySelector(".cc-set-search"); if (si && si.value) { si.value = ""; try { si.dispatchEvent(new Event("input", { bubbles: true })); } catch (e2) {} } }
+      });
+    }
     root.appendChild(head);
 
     // the Unraid title strip between the main menu and our hero is redundant here
@@ -445,8 +455,12 @@
         arl.appendChild(el("span", null, T("Kopf-Farben ans Thema koppeln", "Match header colours to the theme")));
         arl.appendChild(infoIcon(T("AN = die Kopfzeilen-Hintergrund- und Textfarbe folgen automatisch Unraids Farbschema (dunkles Thema: dunkler Hintergrund + helle Schrift; helles Thema umgekehrt). Wirkt, wenn CannonadeCommands Kopfbereich AUS ist.", "ON = the header background + text colour follow Unraid's colour scheme automatically (dark theme: dark bg + light text; light theme reversed). Applies when CannonadeCommand's header area is OFF.")));
         ar.appendChild(arl);
-        ar.appendChild(toggle(get("cc.hdrauto", "0") === "1", function (v) { set("cc.hdrauto", v ? "1" : "0"); if (v) applyHdrAuto(); }));
+        ar.appendChild(toggle(get("cc.hdrauto", "1") === "1", function (v) { set("cc.hdrauto", v ? "1" : "0"); if (v) applyHdrAuto(); }));   // #5 (user): default ON
         cCard.appendChild(ar);
+        // #5: apply the theme-coupling ONCE for a fresh default-on state (only bites when the CC header area
+        // is off — it just POSTs native header colours). Guarded by a one-shot flag so a reloading postDisplay
+        // can't loop; the flag is set BEFORE the call.
+        try { if (get("cc.hdrauto", "1") === "1" && get("cc.hdrauto.done", "0") !== "1") { set("cc.hdrauto.done", "1"); applyHdrAuto(); } } catch (e9) {}
       })();
       wrapMain.appendChild(cCard);
       // keep the favourites value in sync (drives cc.hidefavtab) — no colour pickers here anymore

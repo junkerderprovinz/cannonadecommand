@@ -54,10 +54,12 @@ html.cc-tools-on #displaybox table:not(.cc-enh) td {
 html.cc-tools-on #displaybox table:not(.cc-enh) thead th { color: #9a9a9a; text-transform: uppercase; font-size: 11.5px; letter-spacing: .6px; }
 html.cc-tools-on #displaybox table:not(.cc-enh) tr:hover td { background: rgba(255, 255, 255, .03) !important; }
 
-/* ── form rows (dl/dt/dd) tidy ── */
-html.cc-tools-on #displaybox dl { margin: 0; }
-html.cc-tools-on #displaybox dt { color: #cfcfcf; font-weight: 600; }
-html.cc-tools-on #displaybox dd { color: #d6d6d6; }
+/* ── form rows (dl/dt/dd): #3 (user) the label and its control sit on ONE baseline. Native dynamix rows are
+   a FLOATED dt + block dd (no shared flex parent), so vertical-align can't line them up — lay the whole <dl>
+   out as a 2-col GRID that centres each row; the native float/width on dt/dd is neutralised so grid wins. ── */
+html.cc-tools-on #displaybox dl { margin: 0; display: grid; grid-template-columns: minmax(120px, 34%) 1fr; align-items: center; column-gap: 14px; row-gap: 6px; }
+html.cc-tools-on #displaybox dl > dt { color: #cfcfcf; font-weight: 600; float: none !important; width: auto !important; margin: 0; padding: 0; text-align: right; align-self: center; }
+html.cc-tools-on #displaybox dl > dd { color: #d6d6d6; float: none !important; width: auto !important; margin: 0; display: flex; align-items: center; min-width: 0; }
 
 /* ── INPUTS / SELECT / TEXTAREA -> dark fills, NO focus ring (focus = brightness) ── */
 html.cc-tools-on #displaybox input[type="text"],
@@ -147,14 +149,19 @@ html.cc-tools-on #displaybox a:not(.button):hover { filter: brightness(1.14); te
    — chips in a floating elevated panel, accent selected + hover. Ported from the docker cc-dsel look. The
    panel is re-anchored position:fixed at open time by ccPositionTsel, so it escapes the page's overflow clip. */
 html.cc-tools-on #displaybox .cc-tsel { position: relative; display: inline-block; vertical-align: middle; }
+/* #1 (user): the dropdown trigger follows the colour mode PER ROW (rainbow -> --cc-rb-c stamped by
+   ccPaintRotate on the .cc-tsel wrapper, inherited here; else the single rainbow/accent colour), exactly
+   like the toggles beside it — no longer a uniform dark box. Text + caret take the contrast ink. */
 html.cc-tools-on #displaybox .cc-tsel-trigger {
   display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
   min-width: 240px; min-height: 34px; box-sizing: border-box;
-  background: var(--cc-tl-surface2, #232323); border-radius: 8px; padding: 4px 12px; color: #eaeaea; cursor: pointer;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); border-radius: min(var(--cc-b-radius, 8px), 12px);
+  padding: 4px 12px; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))); cursor: pointer;
 }
+html.cc-tools-on #displaybox .cc-tsel-trigger:hover { filter: brightness(1.1); }
 html.cc-tools-on #displaybox .cc-tsel-trigger::after {
   content: ""; flex: 0 0 auto; width: 0; height: 0; margin-left: 4px;
-  border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #cfcfcf;
+  border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor;
 }
 html.cc-tools-on #displaybox .cc-tsel-panel {
   display: none; position: absolute; z-index: 9999; margin-top: 4px; flex-direction: column; gap: 6px;

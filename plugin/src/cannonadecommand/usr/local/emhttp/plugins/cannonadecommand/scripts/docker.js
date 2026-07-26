@@ -708,9 +708,12 @@
         // label rides its tooltip. Theming OFF -> the state toggle keeps its text pill in the meta row.
         var innerEl0 = nameCell.querySelector(".inner") || nameCell, appnameEl = innerEl0.querySelector("span.appname");
         if (themingOn() && appnameEl) {
-          var nlEl = innerEl0.querySelector(".cc-ct-nameline");
-          if (!nlEl) { nlEl = el("div", "cc-ct-nameline"); nlEl.setAttribute(MARK, "1"); appnameEl.parentNode.insertBefore(nlEl, appnameEl); nlEl.appendChild(appnameEl); }
-          nlEl.appendChild(sb);   // CSS (.cc-ct-nameline > .cc-badge) renders it as a dot; the state poll re-adds the text but font-size:0 hides it
+          // #10 (user): the state DOT sits UNDER the name in its own row (not beside it). Keyed on the row
+          // wrapper (.cc-ct-dotrow > .cc-badge) so the state poll's className-reassign can't strip the dot
+          // look; font-size:0 hides the re-added "läuft" text. CSS also gives it the reactive grey+hover.
+          var drow = innerEl0.querySelector(".cc-ct-dotrow");
+          if (!drow) { drow = el("div", "cc-ct-dotrow"); drow.setAttribute(MARK, "1"); if (appnameEl.nextSibling) appnameEl.parentNode.insertBefore(drow, appnameEl.nextSibling); else appnameEl.parentNode.appendChild(drow); }
+          drow.appendChild(sb);
         } else { meta.appendChild(sb); }   // theming off -> the state toggle keeps its text pill in the meta row
         // ID / Von / Volumes are DECORATIVE info badges — theming only.
         if (themingOn()) {
@@ -2656,12 +2659,13 @@
       });
       // persistent re-probe (NEVER cleared by teardown): rebuild when the proxy returns
       setInterval(function () { try { if (!dead) return; fetch(PROXY + "?path=" + encodeURIComponent("state"), { headers: { Accept: "application/json" } }).then(function (r) { if (r.ok) rearm(); }).catch(function () {}); } catch (e) {} }, 8000);
-      // Clicking a container ICON no longer opens the native list — the action icons
-      // flash briefly instead, pointing the user at the actions column.
+      // Clicking a container ICON or its NAME no longer opens the native edit/template page (#11, user) —
+      // the action icons flash briefly instead, pointing the user at the actions column. The dot itself is
+      // excluded (it has its own start/stop handler), so only the logo + the name text trigger the flash.
       document.addEventListener("click", function (e) {
         try {
           if (dead || mode !== "list") return;
-          var hand = e.target && e.target.closest ? e.target.closest("td.ct-name span.hand") : null;
+          var hand = e.target && e.target.closest ? e.target.closest("td.ct-name span.hand, td.ct-name span.appname") : null;
           if (!hand) return;
           var row2 = hand.closest("tr"); var bar2 = row2 && row2.querySelector(".cc-actbar");
           if (!bar2) return;

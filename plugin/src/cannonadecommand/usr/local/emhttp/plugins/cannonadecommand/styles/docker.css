@@ -162,19 +162,21 @@ a.sl-updall { display: none !important; }
   border-radius: 999px; padding: var(--cc-sm-pad, 3px 11px); margin: 2px 4px 2px 0; font-size: var(--cc-sm-fs, 11px);
   font-weight: 600; line-height: 1.35; white-space: nowrap; text-decoration: none; vertical-align: middle;
 }
-/* #4 (user): the container STATE is a small colour DOT right of the name (like the /Main disk state dots) —
-   docker.js drops it into a .cc-ct-nameline beside the name. The dot follows the colour mode by default and
-   the native state colour when "native state colours" is ON; its shape follows the badge-form via --cc-dot-r. */
-.cc-enh .cc-ct-nameline { display: inline-flex; align-items: center; gap: 8px; }
-/* the state DOT = the state badge sitting IN the nameline. Keyed on the PARENT (not a badge class) because
-   docker.js's state poll REASSIGNS the badge's className on every tick — the nameline is untouched, so the
-   dot look survives; font-size:0 also hides the re-added "läuft" text. */
-.cc-enh .cc-ct-nameline > .cc-badge {
+/* #4/#10 (user): the container STATE is a small colour DOT UNDER the name (its own row, like the /Main disk
+   state dots). docker.js drops it into a .cc-ct-dotrow below the name. Keyed on the PARENT (not a badge
+   class) because docker.js's state poll REASSIGNS the badge's className every tick — the row wrapper is
+   untouched, so the dot look survives; font-size:0 hides the re-added "läuft" text. Shape via --cc-dot-r. */
+.cc-enh .cc-ct-dotrow { display: flex; align-items: center; margin-top: 3px; }
+.cc-enh .cc-ct-dotrow > .cc-badge {
   width: 13px !important; height: 13px !important; min-width: 13px !important; padding: 0 !important; margin: 0 !important;
   gap: 0 !important; border-radius: var(--cc-dot-r, 50%) !important; font-size: 0 !important; line-height: 0 !important;
   flex: 0 0 auto; box-shadow: 0 0 0 2px rgba(0, 0, 0, .25); overflow: hidden;
 }
-html:not(.cc-state-native) .cc-enh .cc-ct-nameline > .cc-badge { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+html:not(.cc-state-native) .cc-enh .cc-ct-dotrow > .cc-badge { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+/* #10 reactive: the dot rests neutral and takes the palette on ROW hover (keyed on the global rbmode flag
+   cc-shares-rbneutral, which is present on /Docker too), exactly like the /Main disk dots. */
+html.cc-shares-rbneutral:not(.cc-state-native) .cc-enh .cc-ct-dotrow > .cc-badge { background: #525252 !important; }
+html.cc-shares-rbneutral:not(.cc-state-native) .cc-enh #docker_list tr:hover .cc-ct-dotrow > .cc-badge { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
 /* info badges (network/IP/LAN/port/CPU/RAM/ID/Von/image tag): SOLID accent, light text */
 .cc-b,
 .cc-enh.cc-c-res #docker_list tr.sortable td.advanced span[class^='cpu-'],
@@ -279,6 +281,9 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
 .cc-limbtn:hover { background: var(--cc-accent, #2f6feb); color: #fff; }
 /* the gear is tinted green when a CPU/RAM limit IS configured (matches the "set" dot) */
 .cc-limbtn-set { color: #10321f; background: #35d07f; } /* filled green when a limit is configured */
+/* #12 (user): the CPU/RAM/BW gears follow the colour mode. statenative ON keeps the green "limit set"
+   signal; OFF -> the SET gear takes the palette (per-row --cc-rb-c) / accent, like every other control. */
+html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
 
 /* plan chip = one tappable Startplan badge (accent) */
 .cc-plan { cursor: pointer; background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
@@ -938,13 +943,9 @@ div.js-actions > * { pointer-events: auto; }
   #docker_list.js-fill-available-height { padding-bottom: var(--cc-actbar-h, 40px) !important; box-sizing: border-box; }
 }
 div.js-actions input[type=button] { flex: none !important; background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important; border: none !important; box-shadow: none !important; padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs, 13px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.6px !important; font-family: inherit !important; cursor: pointer; transition: filter .12s; }
-/* #5 (user): the Basic/Advanced view toggle is pinned to the TOP-RIGHT corner (out of the bottom action
-   bar). Fixed so it rides the viewport; the top offset clears the main menu bar. It stays a CC toggle. */
-div.js-actions .cc-bar-adv {
-  position: fixed !important; top: var(--cc-adv-top, 150px); right: 22px; z-index: 55;
-  display: inline-flex; align-items: center; gap: 8px; margin: 0 !important; flex: none;
-  background: rgba(22, 22, 22, .92); padding: 6px 13px; border-radius: 999px; box-shadow: 0 4px 14px rgba(0, 0, 0, .35);
-}
+/* #8 (user, REVERSAL of the earlier top-right pin): the Basic/Advanced view toggle STAYS in the bottom
+   action bar, right-aligned — exactly where it was ("der bleibt immer auf der unteren leiste"). */
+div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; }
 div.js-actions .cc-bar-adv-lbl { color: #cfcfcf; font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 div.js-actions input[type=button]:hover { filter: brightness(1.14); }
 

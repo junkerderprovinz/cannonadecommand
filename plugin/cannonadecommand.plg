@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.75.0">
+  <!ENTITY version   "2.76.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,25 @@
 </ICON>
 
 <CHANGES>
+### 2.76.0
+- Docker-Seite: Der Ansichts-Umschalter (Einfach/Erweitert) sitzt wieder in der unteren Leiste. Der Laeuft/
+  Gestoppt-Punkt sitzt jetzt UNTER dem Container-Namen und ist im reaktiven Modus integriert (ruht grau,
+  faerbt sich beim Zeilen-Hover). Ein Klick auf den Container-NAMEN oeffnet nicht mehr die Vorlage, sondern
+  laesst die Aktions-Icons aufblitzen (wie der Klick aufs Logo). Die CPU-/RAM-/BW-Zahnraeder folgen dem Farbmodus.
+- Schwebefenster: Die hellen Kopf-/Fussleisten sind jetzt auch im Container-Update-Fenster (tiefere Wrapper)
+  UND in den iframe-Fenstern (Systeminformation, Feedback) durchgehend dunkel; das Feedback-Fenster ist im
+  CannonadeCommand-Stil und schmaler.
+- Werkzeug-/Einstellungen-Subseiten: Die Dropdown-Listen wechseln im Regenbogen-Modus jetzt pro Zeile die Farbe
+  (sonst Akzentfarbe). Beschriftung und Feld/Toggle sitzen jetzt sauber auf einer Ebene. Die Ja/Nein-Toggles
+  (z. B. Banner anzeigen, Favoriten) wirken jetzt LIVE (sie speichern die Aenderung und laden neu).
+- Startseite: Die Fuellstandsbalken blinken nicht mehr, wenn "Zustandsanzeigen nativ faerben" an ist (sie
+  werden synchron beim Neuaufbau der Tabelle eingefaerbt).
+- Hauptmenueleiste: Die beiden rechten Icons (Glocke, Menue) haben jetzt auch die neue groessere Groesse.
+- CannonadeCommand-Einstellungen: "Kopf-Farben ans Thema koppeln" ist standardmaessig an. Der Reset-Knopf der
+  Regenbogen-/Flaggenfarben ist jetzt ein Badge. Das Suchfeld folgt der Badge-Form und schliesst beim Klick daneben.
+- Statusinsel: Der Container-Chip zeigt jetzt auch die Anzahl gestoppter Container (laufend / gestoppt). Aktivierte
+  Chips ohne aktuelle Daten (Fuellstand, CPU-Last) erscheinen jetzt mit Platzhalter, statt zu verschwinden.
+
 ### 2.75.0
 - Docker-Seite: Der Laeuft/Gestoppt-Status wird jetzt tatsaechlich als kleiner Farb-Punkt rechts neben dem
   Container-Namen angezeigt (in 2.74.0 blieb noch das Text-Badge stehen, weil der Status-Ticker es neu
@@ -1922,7 +1941,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>ed8215391eaec0e554b46a1ac12ada1b6871a0ae5cc3a698f08600caa3924361</SHA256>
+  <SHA256>e8aa3e313f9bb1245ee9f8d116f887469698cb1d39014abc7e87d0d0ba250761</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
