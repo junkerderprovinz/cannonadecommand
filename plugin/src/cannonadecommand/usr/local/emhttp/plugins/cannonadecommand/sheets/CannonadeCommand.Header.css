@@ -453,6 +453,20 @@ html.cc-popups-on .ui-dialog .ui-dialog-titlebar {
 }
 /* v2.33.1 (user): the badge spans the FULL width, its text centred — flex:1 (not width:100%) so
    the ui-dialog close X keeps its slot in the flex titlebar. */
+/* #7-IV (user: the "CONTAINER AKTUALISIEREN" template-update window must look like #7): that window is the
+   CreateDocker.php iframe inside .ui-dialog (identified by iframe#myIframe). docker.js forces its title into a
+   full-width bar; override it into the SAME centered accent pill the sweet-alert.nchan title uses. The iframe
+   BODY is themed by ccPopIframes (fieldset.docker->card, legend->pill). */
+html.cc-popups-on .ui-dialog:has(iframe#myIframe) .ui-dialog-titlebar {
+  justify-content: center !important; background: #0f0f0f !important; border: none !important; padding: 12px 0 4px !important;
+}
+html.cc-popups-on .ui-dialog:has(iframe#myIframe) .ui-dialog-title {
+  flex: 0 0 auto !important; width: fit-content !important; float: none !important; text-align: center !important;
+  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
+  height: 44px !important; display: inline-flex !important; align-items: center !important; border-radius: 999px !important;
+  padding: 0 24px !important; font-size: 16px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .7px !important; margin: 0 auto !important;
+}
+html.cc-popups-on .ui-dialog:has(iframe#myIframe) { background: #0f0f0f !important; }
 html.cc-popups-on .ui-dialog .ui-dialog-title {
   display: flex !important; align-items: center; justify-content: center !important;
   flex: 1 1 auto; float: none !important; margin: 0 !important; box-sizing: border-box !important;

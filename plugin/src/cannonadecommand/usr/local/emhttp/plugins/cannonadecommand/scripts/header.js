@@ -128,8 +128,15 @@
         var loader = sa.querySelector(":scope > .cc-nchan-loader");
         if (loading && !loader) { loader = document.createElement("span"); loader.className = "cc-nchan-loader"; loader.setAttribute("role", "status"); loader.setAttribute("aria-label", T("Läuft…", "Working…")); loader.innerHTML = "<i></i><i></i><i></i>"; sa.appendChild(loader); }
         else if (!loading && loader) { loader.remove(); }
-        var fs = sa.querySelectorAll("fieldset");   // hide the contentless grey bars, keep the ones with real steps
-        for (var j = 0; j < fs.length; j++) { fs[j].style.display = (fs[j].textContent || "").trim() ? "" : "none"; }
+        // #7-III (user: "nutzloser hellgrauer Balken ueber den Buttons"): the step cards are #191919 now, so an
+        // EMPTY fieldset (or one with only a <legend> and no body text) renders as a stray grey bar. Hide any
+        // fieldset whose BODY (text minus the legend) is blank, not just the fully-empty ones.
+        var fs = sa.querySelectorAll("fieldset");
+        for (var j = 0; j < fs.length; j++) {
+          var body = (fs[j].textContent || ""), leg = fs[j].querySelector("legend");
+          if (leg) body = body.replace(leg.textContent || "", "");
+          fs[j].style.display = body.replace(/\s+/g, "") ? "" : "none";
+        }
         if (!sa.__ccNchanObs) { sa.__ccNchanObs = new MutationObserver(function () { ccNchanStyle(); paintPopups(); }); sa.__ccNchanObs.observe(sa, { childList: true, subtree: true, characterData: true }); }
       }
     } catch (e) {}
@@ -155,7 +162,13 @@
               // lighter native band shows, and theme the form controls (radios keep native, text/textarea/select
               // get the CC dark fill). Literals only — the iframe cannot read the parent's CSS vars.
               st.textContent = "html,body{background:#0f0f0f !important;color:#d6d6d6 !important} fieldset,table,tbody,thead,tr,td,th,.tabs,dl,dt,dd,form,center,p,section,article,div{background:transparent !important;border:none !important} legend{color:#9a9a9a !important} label,td,th{color:#d6d6d6 !important} input[type=text],input[type=password],input[type=email],input[type=search],input[type=number],input[type=url],textarea,select{background:#232323 !important;color:#eaeaea !important;border:1px solid #333 !important;border-radius:6px !important;outline:none !important;box-shadow:none !important} textarea{width:100% !important;box-sizing:border-box !important} a{color:" + acc + " !important} " +
-                "input[type=button],input[type=submit],button{height:36px !important;padding:0 24px !important;font-size:14px !important;border:0 !important;border-radius:6px !important;box-shadow:none !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important;cursor:pointer} center,.buttons{text-align:left !important} a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none !important;box-shadow:none !important;filter:brightness(1.18)}";
+                "input[type=button],input[type=submit],button{height:36px !important;padding:0 24px !important;font-size:14px !important;border:0 !important;border-radius:6px !important;box-shadow:none !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important;cursor:pointer} center,.buttons{text-align:center !important} a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none !important;box-shadow:none !important;filter:brightness(1.18)} " +
+                // #7-IV (user: the "CONTAINER AKTUALISIEREN" template-update window must look like #7): its body is
+                // CreateDocker.php/log.htm INSIDE this iframe, with its OWN inline styles (orange gradient buttons,
+                // blue span.system box, bordered fieldset.docker cards). These selectors only exist in that window,
+                // so mirroring #7's look here is safe: fieldset.docker -> borderless CC card, legend -> accent pill,
+                // span.system -> neutral. (The buttons already pick up the accent rule above.)
+                "fieldset.docker{background:#191919 !important;border:none !important;border-radius:10px !important;margin:0 0 12px !important;padding:10px 12px !important;box-shadow:0 1px 4px rgba(0,0,0,.35) !important} fieldset.docker>legend{display:inline-block !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;border:none !important;border-radius:999px !important;padding:3px 12px !important;font-size:12px !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important} span.system{background:transparent !important;color:#d6d6d6 !important;box-shadow:none !important} span.label{background:rgba(255,255,255,.08) !important;color:#e6e6e6 !important;border-radius:999px !important;padding:3px 10px !important}";
               d.head.appendChild(st);
             } catch (e2) {}
           }
@@ -1007,8 +1020,13 @@
         if (dd) lab = dd.previousElementSibling;
         else { var pv = bq.previousElementSibling; while (pv && pv.tagName !== "DL" && pv.tagName !== "DT") pv = pv.previousElementSibling; if (pv) lab = pv.tagName === "DL" ? pv.querySelector("dt") : pv; }
         var host = (lab && lab.tagName === "DT") ? (lab.querySelector("span") || lab) : null;
+        // #3-Infotext (user: "nicht ALLE Beschreibungstexte in Infobubbles verlagert"): never leave a help
+        // block inline. If no label span resolves, fall back to the value cell (dd) or the label itself so
+        // EVERY description becomes an (i) bubble and the native inline text is always hidden.
+        if (!host && dd) host = dd;
+        if (!host && lab) host = lab;
         if (host) {
-          if (!host.querySelector(".cc-toolsinfo")) { var ic = document.createElement("span"); ic.className = "cc-toolsinfo"; ic.setAttribute("data-cc-tip", txt); ic.textContent = "ⓘ"; host.appendChild(ic); }
+          if (!host.querySelector(":scope > .cc-toolsinfo")) { var ic = document.createElement("span"); ic.className = "cc-toolsinfo"; ic.setAttribute("data-cc-tip", txt); ic.textContent = "ⓘ"; host.appendChild(ic); }
           bq.style.display = "none";
         }
       }
