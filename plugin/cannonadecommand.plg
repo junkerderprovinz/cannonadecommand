@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.66.0">
+  <!ENTITY version   "2.66.1">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,13 @@
 </ICON>
 
 <CHANGES>
+### 2.66.1
+- Nachtrag zur Farbtrennung: Auf einer FRISCH aktualisierten Installation, auf der vorher schon der
+  Flaggen-Modus aktiv war, steckten die Flaggenfarben noch im gemeinsamen alten Speicher und faerbten die
+  Regenbogen-Farbfelder weiter ein. Beim Oeffnen der Einstellungen laeuft jetzt eine einmalige Migration:
+  Sie legt die Flaggenpalette in ihren eigenen Speicher und setzt die Regenbogen-Palette auf den sauberen
+  Standard zurueck. Danach sind Regenbogen und Flagge auch auf Altinstallationen vollstaendig getrennt.
+
 ### 2.66.0
 - Die Badge-Einstellungskarte ist komplett neu geordnet: Farbfeld + Regler, darunter die Preset-Felder mit
   dem Hex-Feld rechts daneben, dann die drei Regenbogen-Schalter (Modus, reaktiv, Farbrotation) mit den
@@ -1795,7 +1802,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>d56cf19cb40d9a5a03e5716a254ac5443bca5629697258f8454ed91059017620</SHA256>
+  <SHA256>67a361ade2f486b93a37f5d70e7ddec1d48735f32128cb54fd61065b8df17fe3</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

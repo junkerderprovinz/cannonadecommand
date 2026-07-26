@@ -481,6 +481,26 @@
     root.appendChild(wrapMain); root.appendChild(wrapStart); root.appendChild(wrapHeader); root.appendChild(wrapShares); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms); root.appendChild(wrapSettings); root.appendChild(wrapFavorites);
 
     // ── Badges ──
+    // ONE-TIME upgrade migration: builds before 2.66 wrote the FLAG palette into cc.rbpal (the shared
+    // key). After the fix a flag lives in cc.flagpal instead. If a flag is selected but cc.flagpal is
+    // still absent, this install just upgraded and cc.rbpal is CONTAMINATED with the flag colours (that
+    // is why the rainbow swatches show the flag). Rebuild cc.flagpal from the flag, then drop the
+    // polluted cc.rbpal so the rainbow returns to its clean default (the user's original rainbow colours
+    // were already overwritten by the old bug and can't be recovered). Idempotent: once cc.flagpal is
+    // set the guard is false, so it never runs again and never touches a legit custom rainbow palette.
+    (function () {
+      try {
+        var fc0 = get("cc.flag", "");
+        if (fc0 && !get("cc.flagpal", "") && window.CC_FLAGS) {
+          var fd0 = window.CC_FLAGS.filter(function (x0) { return x0.code === fc0; })[0];
+          if (fd0 && fd0.colors && fd0.colors.length) {
+            var fp0 = []; for (var i0 = 0; i0 < 8; i0++) fp0.push(fd0.colors[i0 % fd0.colors.length]);
+            set("cc.flagpal", JSON.stringify(fp0));
+            del("cc.rbpal");
+          }
+        }
+      } catch (e0) {}
+    })();
     var c1 = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
     // The colour-picker field stays ALWAYS visible, PLUS a hex text field beside it;
     // both edit the same value and stay in sync.
