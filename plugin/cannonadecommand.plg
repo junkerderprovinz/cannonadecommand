@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.82.0">
+  <!ENTITY version   "2.83.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,13 @@
 </ICON>
 
 <CHANGES>
+### 2.83.0
+- Barrierefreiheit: Die CannonadeCommand-Dropdowns lassen sich jetzt komplett per Tastatur bedienen (Öffnen mit
+  Enter/Leertaste/Pfeil-runter, Auswahl mit Pfeiltasten, Schließen mit Esc) und melden Rollen/Zustände an
+  Screenreader (Listbox/Option, aria-expanded/aria-selected).
+- Nach einem Update begrüßt ein kurzer Hinweis-Toast mit der neuen Versionsnummer (nur nach echten Updates,
+  nicht bei der Erstinstallation).
+
 ### 2.82.0
 - CannonadeCommand-Einstellungen: Alle Farbfelder, das Hex-Feld und der Zuruecksetzen-Button einer Farbzeile
   sind jetzt systemweit exakt gleich hoch (28px) - auch die vorher kleinere oberste Zeile.
@@ -1994,7 +2001,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>3fb6792aa89ab21028b47c99616f2a455163774803fe8fc988616e42b4aa90b5</SHA256>
+  <SHA256>19a9188e9a3939a68e8643fbcb11273964fe8b0c1a57cb4a6b1871eb652c9db2</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

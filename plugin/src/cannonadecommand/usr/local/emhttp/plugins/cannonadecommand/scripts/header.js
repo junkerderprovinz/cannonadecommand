@@ -873,7 +873,7 @@
     var t2 = w.querySelector(".cc-tsel-trigger"), c = w.querySelectorAll(".cc-tsel-opt");
     var label = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : "";
     if (t2 && t2.textContent !== label) t2.textContent = label;
-    for (var k = 0; k < c.length; k++) { var o = sel.options[+c[k].getAttribute("data-i")]; if (!o) continue; if (c[k].textContent !== o.text) c[k].textContent = o.text; c[k].classList.toggle("is-selected", o.selected); c[k].classList.toggle("is-disabled", !!o.disabled); }
+    for (var k = 0; k < c.length; k++) { var o = sel.options[+c[k].getAttribute("data-i")]; if (!o) continue; if (c[k].textContent !== o.text) c[k].textContent = o.text; c[k].classList.toggle("is-selected", o.selected); c[k].classList.toggle("is-disabled", !!o.disabled); c[k].setAttribute("aria-selected", o.selected ? "true" : "false"); }
   }
   function ccToolsWrapSelect(sel) {
     if (sel.getAttribute("data-cc-tsel") || sel.getAttribute("data-cc-tgl")) return;   // already ours / a yes-no toggle (#24)
@@ -882,18 +882,39 @@
     var wrap = ccMkEl("span", "cc-tsel"); sel.parentNode.insertBefore(wrap, sel);
     sel.style.display = "none"; wrap.appendChild(sel);
     var trig = ccMkEl("span", "cc-tsel-trigger"); wrap.appendChild(trig);
+    // V-E A11y: the trigger is a listbox button; the panel is a listbox; each chip is an option
+    trig.setAttribute("role", "button"); trig.setAttribute("tabindex", "0"); trig.setAttribute("aria-haspopup", "listbox"); trig.setAttribute("aria-expanded", "false");
+    var lid = "cc-tsel-lb-" + (ccTselSeq++); trig.setAttribute("aria-controls", lid);
+    if (sel.id || sel.name) trig.setAttribute("aria-label", (function () { var lab = sel.closest && sel.closest("dd") ? (sel.closest("dd").previousElementSibling || {}).textContent : ""; return (lab || sel.name || sel.id || "").replace(/\s*:\s*$/, "").trim() || "Auswahl"; })());
     var panel = ccMkEl("div", "cc-tsel-panel"); wrap.appendChild(panel);
+    panel.setAttribute("role", "listbox"); panel.id = lid;
     var lastGroup = null;
     for (var k = 0; k < sel.options.length; k++) {
       var o = sel.options[k], gl = o.parentNode && o.parentNode.tagName === "OPTGROUP" ? o.parentNode.label : null;
-      if (gl && gl !== lastGroup) { panel.appendChild(ccMkEl("div", "cc-tsel-group", gl)); lastGroup = gl; }
+      if (gl && gl !== lastGroup) { var grp = ccMkEl("div", "cc-tsel-group", gl); grp.setAttribute("role", "presentation"); panel.appendChild(grp); lastGroup = gl; }
       var chip = ccMkEl("div", "cc-tsel-opt", o.text); chip.setAttribute("data-i", k);
-      chip.addEventListener("click", (function (idx) { return function (ev) { ev.stopPropagation(); if (sel.options[idx].disabled) return; sel.selectedIndex = idx; sel.dispatchEvent(new Event("change", { bubbles: true })); ccToolsSyncSel(sel); wrap.classList.remove("cc-open"); }; })(k));
+      chip.setAttribute("role", "option"); chip.setAttribute("aria-selected", o.selected ? "true" : "false"); chip.setAttribute("tabindex", "-1");
+      var pick = (function (idx) { return function (ev) { ev.stopPropagation(); if (sel.options[idx].disabled) return; sel.selectedIndex = idx; sel.dispatchEvent(new Event("change", { bubbles: true })); ccToolsSyncSel(sel); wrap.classList.remove("cc-open"); trig.setAttribute("aria-expanded", "false"); trig.focus(); }; })(k);
+      chip.addEventListener("click", pick);
+      chip.addEventListener("keydown", (function (fn) { return function (e2) { if (e2.key === "Enter" || e2.key === " ") { e2.preventDefault(); fn(e2); } else if (e2.key === "ArrowDown" || e2.key === "ArrowUp") { e2.preventDefault(); ccTselMove(panel, e2.target, e2.key === "ArrowDown" ? 1 : -1); } else if (e2.key === "Escape") { wrap.classList.remove("cc-open"); trig.setAttribute("aria-expanded", "false"); trig.focus(); } }; })(pick));
       panel.appendChild(chip);
     }
-    trig.addEventListener("click", function (ev) { ev.stopPropagation(); if (sel.disabled) return; ccToolsSyncSel(sel); var open = wrap.classList.toggle("cc-open"); if (open) { var o2 = document.querySelectorAll(".cc-tsel.cc-open"); for (var j = 0; j < o2.length; j++) if (o2[j] !== wrap) o2[j].classList.remove("cc-open"); ccPositionTsel(trig, panel); } });
+    function openPanel() { var o2 = document.querySelectorAll(".cc-tsel.cc-open"); for (var j = 0; j < o2.length; j++) if (o2[j] !== wrap) { o2[j].classList.remove("cc-open"); var t3 = o2[j].querySelector(".cc-tsel-trigger"); if (t3) t3.setAttribute("aria-expanded", "false"); } wrap.classList.add("cc-open"); trig.setAttribute("aria-expanded", "true"); ccPositionTsel(trig, panel); }
+    trig.addEventListener("click", function (ev) { ev.stopPropagation(); if (sel.disabled) return; ccToolsSyncSel(sel); if (wrap.classList.toggle("cc-open")) { trig.setAttribute("aria-expanded", "true"); var o2 = document.querySelectorAll(".cc-tsel.cc-open"); for (var j = 0; j < o2.length; j++) if (o2[j] !== wrap) { o2[j].classList.remove("cc-open"); var t3 = o2[j].querySelector(".cc-tsel-trigger"); if (t3) t3.setAttribute("aria-expanded", "false"); } ccPositionTsel(trig, panel); } else trig.setAttribute("aria-expanded", "false"); });
+    trig.addEventListener("keydown", function (e2) {
+      if (sel.disabled) return;
+      if (e2.key === "Enter" || e2.key === " " || e2.key === "ArrowDown") { e2.preventDefault(); ccToolsSyncSel(sel); openPanel(); var first = panel.querySelector(".cc-tsel-opt.is-selected") || panel.querySelector(".cc-tsel-opt:not(.is-disabled)"); if (first) first.focus(); }
+      else if (e2.key === "Escape") { wrap.classList.remove("cc-open"); trig.setAttribute("aria-expanded", "false"); }
+    });
     ccToolsSyncSel(sel);
     ccBindTselDoc();
+  }
+  var ccTselSeq = 0;
+  // V-E: roving focus between option chips (skips group headers + disabled)
+  function ccTselMove(panel, cur, dir) {
+    var opts = Array.prototype.filter.call(panel.querySelectorAll(".cc-tsel-opt"), function (o) { return !o.classList.contains("is-disabled"); });
+    var i = opts.indexOf(cur); if (i < 0) i = 0; else i = (i + dir + opts.length) % opts.length;
+    if (opts[i]) opts[i].focus();
   }
   // #2 (user: "Banner und Favoriten Toggle sind unwirksam"): native /Settings/* apply on FORM SUBMIT, not on
   // `change` — so a CC toggle/dropdown flip has NO live effect until "Anwenden". Persist the single changed
@@ -1413,9 +1434,22 @@
       } catch (err) {}
     }, true);
   }
+  var CC_VER = "@@CCVER@@"; if (CC_VER.indexOf("@@") === 0) CC_VER = "dev";
+  // V-D "Was ist neu?": after an update, greet with a one-shot toast naming the new version (never on the
+  // very first install — no baseline to compare — and never in dev builds). cc.lastver tracks the last seen.
+  function ccWhatsNew() {
+    try {
+      if (CC_VER === "dev") return;
+      if (g("cc.theming", "1") === "0") return;                 // CC disabled -> stay silent
+      var last = g("cc.lastver", "");
+      if (last && last !== CC_VER) { setTimeout(function () { ccToast(T("CannonadeCommand auf v" + CC_VER + " aktualisiert.", "CannonadeCommand updated to v" + CC_VER + ".")); }, 1400); }
+      if (last !== CC_VER) { try { localStorage.setItem("cc.lastver", CC_VER); } catch (e2) {} }
+    } catch (e) {}
+  }
   function boot() {
     try { window.ccHeaderApply = apply; } catch (e) {} // let the Settings page live-update this bar same-page
     apply();
+    ccWhatsNew();
     // re-settle the header geometry after fonts/layout finish + on resize (the pill edge shifts with the
     // viewport/font). #10 + #15: the brand and the docked bell can land off during the FIRST paint (a
     // load-transient) before the anchor is measured — re-run the FULL settle (anchor + brand + dock),

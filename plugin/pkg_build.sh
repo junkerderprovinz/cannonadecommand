@@ -39,7 +39,8 @@ find "$PKGROOT" -type f ! -path "*/bin/*" ! -name '*.png' -print0 \
 echo "==> stamping UI version"
 sed -i "s/@@CCVER@@/$VERSION/" \
   "$PKGROOT/usr/local/emhttp/plugins/$SLUG/scripts/docker.js" \
-  "$PKGROOT/usr/local/emhttp/plugins/$SLUG/scripts/settings.js"
+  "$PKGROOT/usr/local/emhttp/plugins/$SLUG/scripts/settings.js" \
+  "$PKGROOT/usr/local/emhttp/plugins/$SLUG/scripts/header.js"
 
 # Cache-bust: Unraid's autov() appends "?v=<filemtime>" to the injected .js/.css.
 # If installpkg restores an unchanged mtime, the browser serves a STALE script
