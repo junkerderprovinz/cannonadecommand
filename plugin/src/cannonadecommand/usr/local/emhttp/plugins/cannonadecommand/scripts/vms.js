@@ -127,7 +127,8 @@
     var rt = document.documentElement.style, on = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1";
     if (!on) { RB_KINDS.forEach(function (k) { rt.removeProperty("--cc-rb-" + k); rt.removeProperty("--cc-rb-" + k + "-t"); }); return; }
     var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
-    var pal = RB_PAL; try { var jp = JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e) {}
+    // flag mode reads cc.flagpal (own key), never cc.rbpal — no bleed between flag and rainbow palettes
+    var pal = RB_PAL; try { var fjp = ls("cc.flagmode") === "1" ? JSON.parse(ls("cc.flagpal") || "null") : null; var jp = (fjp && fjp.length) ? fjp : JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e) {}
     RB_KINDS.forEach(function (k, i) {
       var c = pal[(i + off) % pal.length], n = parseInt(String(c).slice(1), 16);
       var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255);
@@ -245,7 +246,8 @@
   function tintAct(bar) {
     var colorsOn = ls("cc.actcolors") !== "0";
     var rb = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1";
-    var pal = RB_PAL; try { var jp = JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e2) {}
+    // flag mode reads cc.flagpal (own key), never cc.rbpal — no bleed between flag and rainbow palettes
+    var pal = RB_PAL; try { var fjp = ls("cc.flagmode") === "1" ? JSON.parse(ls("cc.flagpal") || "null") : null; var jp = (fjp && fjp.length) ? fjp : JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e2) {}
     var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
     Array.prototype.slice.call(bar.querySelectorAll(".cc-actbtn")).forEach(function (b2, i2) {
       var bg = "#2e2e2e", tx = "#7a7a7a";

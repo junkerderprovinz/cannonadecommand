@@ -115,7 +115,9 @@
   // Rainbow is a GLOBAL mode: read cc.rainbow / cc.rbpal / cc.rainbowrot DIRECTLY (not the
   // adopt-gated eff()), like docker.js — one global Rainbow switch colours every enabled area.
   // accent() stays adopt-gated (eff) for the non-rainbow single colour.
-  function pal() { try { var jp = JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) return jp; } catch (e) {} return RB_PAL; }
+  // Active palette: flag mode reads cc.flagpal (its own key), never cc.rbpal — flag and rainbow
+  // palettes stay independent (no bleed either way).
+  function pal() { try { if (ls("cc.flagmode") === "1") { var f = JSON.parse(ls("cc.flagpal") || "null"); if (f && f.length) return f; } var jp = JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) return jp; } catch (e) {} return RB_PAL; }
   function idealText(bg) { var n = parseInt(String(bg).replace("#", ""), 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
   function accent() { return eff("accent") || "#2f6feb"; }
   function colorFor(i) {

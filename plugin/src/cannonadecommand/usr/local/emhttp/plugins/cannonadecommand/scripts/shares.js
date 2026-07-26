@@ -43,7 +43,9 @@
   // Rainbow is a GLOBAL mode: read cc.rainbow / cc.rbpal / cc.rainbowrot DIRECTLY (not the
   // adopt-gated eff()), like docker.js — one global Rainbow switch colours every enabled area.
   // The per-area accent (eff("accent")) stays adopt-gated for the non-rainbow single colour.
-  function pal() { try { var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
+  // Active palette: flag mode reads cc.flagpal (its own key), never cc.rbpal — so the flag and the
+  // rainbow palette stay independent (no bleed either way).
+  function pal() { try { if (g("cc.flagmode", "0") === "1") { var f = JSON.parse(g("cc.flagpal", "null")); if (f && f.length) return f; } var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
   function rbOn() { return g("cc.rainbow", "0") === "1"; }
   function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "0") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; }
   // rainbow "active only" sub-mode (cc.rbmode=active): idle badges neutral, active painted, hover colours.

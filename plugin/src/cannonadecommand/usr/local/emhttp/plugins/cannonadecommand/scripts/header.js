@@ -33,7 +33,9 @@
   // adopt-gated eff()), exactly like docker.js — so ONE global Rainbow switch colours EVERY
   // enabled area (the menu bar too), regardless of this bar's adopt state. The per-area accent
   // (eff("accent")) stays adopt-gated for the non-rainbow single-colour look.
-  function pal() { try { var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
+  // Active palette: flag mode reads its OWN key (cc.flagpal), never cc.rbpal — so the flag never
+  // repaints the rainbow swatches and rainbow colours never leak out when the flag is off.
+  function pal() { try { if (g("cc.flagmode", "0") === "1") { var f = JSON.parse(g("cc.flagpal", "null")); if (f && f.length) return f; } var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
   function rbOn() { return g("cc.rainbow", "0") === "1"; }
   function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "0") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; }
   function lumOf(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return 255; var n = parseInt(m[1], 16); return 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); }

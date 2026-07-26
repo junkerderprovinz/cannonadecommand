@@ -533,14 +533,17 @@
   var RB_KINDS = ["net", "ip", "lan", "port", "id", "von", "cpu", "ram", "bw", "version", "vol", "plan"];
   var RB_PAL = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; // REAL rainbow order (red→pink), 8 colours
   var RB_OFFSET = Math.floor(Math.random() * RB_PAL.length);
+  // Active palette resolver: in flag mode (cc.flagmode=1) read the flag's OWN key cc.flagpal — NEVER
+  // cc.rbpal — so a flag never repaints the rainbow swatches and flag colours never leak onto the
+  // Docker page when the flag is off. Every rainbow reader below goes through this.
+  function ccPalActive(def) { try { if (localStorage.getItem("cc.flagmode") === "1") { var f = JSON.parse(localStorage.getItem("cc.flagpal") || "null"); if (f && f.length) return f; } var p = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (p && p.length) return p; } catch (e) {} return def; }
   function applyRainbowPalette() {
     var rt = document.documentElement;
     if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") { rt.style.removeProperty("--cc-btn-accent"); RB_KINDS.forEach(function (k) { rt.style.removeProperty("--cc-rb-" + k); rt.style.removeProperty("--cc-rb-" + k + "-t"); }); return; }
     // rotation is TOGGLEABLE (cc.rainbowrot, default on): off = stable colours (offset 0)
     var off = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
     // user-customised palette (Settings: click a swatch to adjust) overrides the default
-    var pal = RB_PAL;
-    try { var jp = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e2) {}
+    var pal = ccPalActive(RB_PAL);
     // toggles + primary buttons take ONE palette colour in rainbow mode
     rt.style.setProperty("--cc-btn-accent", pal[(5 + off) % pal.length]);
     RB_KINDS.forEach(function (k, i) {
@@ -614,7 +617,7 @@
       var bar = document.querySelector("div.js-actions"); if (!bar) return;
       var btns = bar.querySelectorAll("input[type=button]");
       if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") { Array.prototype.slice.call(btns).forEach(function (b) { b.style.removeProperty("background"); b.style.removeProperty("color"); b.style.removeProperty("--cc-rb-c"); b.style.removeProperty("--cc-rb-ct"); }); return; }
-      var pal = RB_PAL; try { var jp = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e2) {}
+      var pal = ccPalActive(RB_PAL);
       var off = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
       // reactive sub-mode: rest grey via CSS, colour only on hover — an inline !important
       // background would beat ANY sheet rule, so neutral stamps the vars and paints nothing
@@ -902,8 +905,7 @@
   function tintAct(bar) {
     var colorsOn = localStorage.getItem("cc.actcolors") !== "0";
     var rb = themingOn() && localStorage.getItem("cc.rainbow") === "1"; // rainbow is theming; accent/legibility tint stays
-    var pal = RB_PAL;
-    try { var jp = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e2) {}
+    var pal = ccPalActive(RB_PAL);
     var off = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
     Array.prototype.slice.call(bar.querySelectorAll(".cc-actbtn")).forEach(function (b2, i2) {
       var bg = "#2e2e2e", tx = "#7a7a7a";
@@ -1336,7 +1338,7 @@
       var rbOn = localStorage.getItem("cc.rainbow") === "1";
       var bRoff = el("button", "cc-seg-btn" + (!rbOn ? " cc-seg-on" : ""), LANG === "de" ? "Rainbow aus" : "Rainbow off");
       var bRon = el("button", "cc-seg-btn" + (rbOn ? " cc-seg-on" : ""), LANG === "de" ? "Rainbow an" : "Rainbow on");
-      var setRb = function (v) { localStorage.setItem("cc.rainbow", v ? "1" : "0"); closeMenu(); applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderGrid(); };
+      var setRb = function (v) { localStorage.setItem("cc.rainbow", v ? "1" : "0"); localStorage.setItem("cc.flagmode", "0"); closeMenu(); applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderGrid(); };
       bRoff.addEventListener("click", function () { setRb(false); });
       bRon.addEventListener("click", function () { setRb(true); });
       segR.appendChild(bRoff); segR.appendChild(bRon);
@@ -2137,8 +2139,7 @@
   // ShipLog's own code is untouched — the restyle lives here in CC, and the
   // selectors only ever match when ShipLog actually rendered a bubble.
   function ccRbColor(i) {
-    var pal = RB_PAL;
-    try { var jp = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e) {}
+    var pal = ccPalActive(RB_PAL);
     var off = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
     return pal[(i + off) % pal.length];
   }
@@ -2541,7 +2542,7 @@
       // back to the accent. The neutral sub-mode greys buttons via CSS; badge + checked toggles
       // keep their stamped colour (heading/active contract).
       var rbOn2 = localStorage.getItem("cc.rainbow") === "1";
-      var pal2 = RB_PAL; try { var cp2 = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (cp2 && cp2.length) pal2 = cp2; } catch (e0) {}
+      var pal2 = ccPalActive(RB_PAL);
       var off3 = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
       var chrome = document.querySelectorAll('#displaybox div.title > span.left, .cc-pagehead, .switch-button-background, #canvas #readmore_toggle a, #canvas #allocations_toggle a, #canvas dl > dd > a, #canvas input[type="submit"], #canvas button:not([role="tab"]), .ui-dialog .ui-dialog-buttonpane button');
       for (var r3 = 0, ci3 = 0; r3 < chrome.length; r3++) {

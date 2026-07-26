@@ -22,18 +22,12 @@
       // #2 real flag image (4:3 SVG); same footprint as the stripe swatch, subtle hairline
       "#cc-settings .cc-flag-img{display:inline-block;width:22px;height:15px;flex:0 0 auto;object-fit:cover;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}" +
       "#cc-settings .cc-flag-img-lg{width:34px;height:22px}" +
-      // #3 rainbow palette + flag colours stretch to fill the card width; reset icon aligns right (toggle line)
+      // #7/#10 rainbow palette + flag colours stretch to fill the card width; the reset is the SAME
+      // size as a swatch (its own equal flex cell at the end of the row), not a small right-pushed icon.
       "#cc-settings .cc-set-swatches.cc-fill{display:flex;gap:6px;align-items:center}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:1 1 0;height:22px;min-width:0;border-radius:4px}" +
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:0 0 auto;margin-left:auto}" +
-      // #28 palette presets
-      "#cc-settings .cc-set-presets{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}" +
-      "#cc-settings .cc-preset{cursor:pointer;border-radius:8px;overflow:hidden;background:#232323;padding-bottom:5px;width:104px;transition:filter .12s,transform .12s}" +
-      "#cc-settings .cc-preset:hover{filter:brightness(1.16);transform:translateY(-1px)}" +
-      "#cc-settings .cc-preset:focus-visible{outline:none;filter:brightness(1.2)}" +
-      "#cc-settings .cc-preset-strip{display:flex;height:22px}" +
-      "#cc-settings .cc-preset-strip span{flex:1}" +
-      "#cc-settings .cc-preset-name{display:block;text-align:center;font-size:11px;font-weight:600;color:#cfcfcf;margin-top:5px}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:1 1 0;height:22px;min-width:0;margin-left:0;display:flex;align-items:center;justify-content:center;background:#232323;border-radius:4px;cursor:pointer;color:#cfcfcf;transition:filter .12s}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn:hover{filter:brightness(1.35)}" +
       // #26 settings search + nuke-reset button
       "#cc-settings .cc-set-searchrow{margin:12px 0 2px}" +
       "#cc-settings .cc-set-search{box-sizing:border-box;width:100%;max-width:420px;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:9px 13px;font-size:13px;transition:background-color .12s}" +
@@ -45,8 +39,8 @@
       "#cc-settings .cc-flag-trigger{display:flex;align-items:center;gap:9px;background:#232323;border-radius:8px;padding:7px 12px;cursor:pointer;user-select:none}" +
       "#cc-settings .cc-flag-trigger:hover{filter:brightness(1.1)}" +
       "#cc-settings .cc-flag-name{font-size:13px;color:#eaeaea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
-      "#cc-settings .cc-flag-caret{margin-left:auto;color:#9a9a9a;font-size:11px}" +
-      "#cc-settings .cc-flag-panel{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:50;background:#1c1c1c;border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.6);overflow:hidden}" +
+      // #8: the trigger reads as a button (no caret). The panel is pinned FIXED at open time (see openPanel).
+      "#cc-settings .cc-flag-panel{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:9999;background:#1c1c1c;border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.6);overflow:hidden}" +
       "#cc-settings .cc-flag-search{box-sizing:border-box;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:8px 10px;margin:8px;width:calc(100% - 16px);font-size:13px}" +
       "#cc-settings .cc-flag-list{max-height:260px;overflow-y:auto;padding:0 6px 6px}" +
       "#cc-settings .cc-flag-item{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:6px;cursor:pointer}" +
@@ -503,8 +497,8 @@
     var pick = inlinePicker(/^#[0-9a-f]{6}$/i.test(accent) ? accent : "#2f6feb", function (v) { accent = v; hexIn.value = v; set("cc.accent", v); root.style.setProperty("--cc-accent", v); root.style.setProperty("--cc-accent-text", idealText(v)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); });
     function setAccent(v) { accent = v; pick._set(v); hexIn.value = v; set("cc.accent", accent); root.style.setProperty("--cc-accent", accent); root.style.setProperty("--cc-accent-text", idealText(accent)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); }
     hexIn.addEventListener("input", function () { var v = normHex(hexIn.value); if (v) setAccent(v); });
-    prow.appendChild(pick); prow.appendChild(hexIn); c1.appendChild(prow);
-    // ...and the preset swatches sit BELOW it.
+    prow.appendChild(pick); c1.appendChild(prow);   // #1/#2: colour field + hue slider (both live in the inline picker)
+    // #3: preset swatches, with the HEX field on the RIGHT of them (same row) — added below.
     var srow = el("div", "cc-set-swatches");
     PRESETS.forEach(function (c) {
       // a <span>, NOT a <button>: Unraid's global button CSS was bloating these into
@@ -513,11 +507,8 @@
       sw.addEventListener("click", function () { accent = c; set("cc.accent", accent); render(); syncHeaderBar(); syncSharesBar(); });
       srow.appendChild(sw);
     });
-    c1.appendChild(srow);
-    // GLOBAL badge SHAPE (Form) — one control for every area, exactly like the global colour above
-    // (writes the shared cc.badgeshape). The per-area cards no longer repeat it.
-    // options sorted by ASCENDING roundness (square -> circle), keys unchanged (user call)
-    c1.appendChild(segRow(T("Badge-Form", "Badge shape"), [["square", T("eckig", "square")], ["rounded", T("abgerundet", "rounded")], ["pill", "Pills"], ["circle", T("Kreise", "Circles")]], get("cc.badgeshape", "pill"), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); }));
+    var swrow = el("div", "cc-set-swrow"); swrow.appendChild(srow); swrow.appendChild(hexIn); c1.appendChild(swrow);   // #3: preset swatches + hex field on ONE row
+    // (Badge-Form was here; MOVED to #11, just above the "Zustandsanzeigen" toggle — see below)
     // #17: Rainbow-Modus and Flaggen-Modus are TWO mutually-exclusive palette modes sharing ONE colour
     // engine. cc.rainbow="1" is the master "a palette is active" flag every reader checks; cc.flagmode="1"
     // means the ACTIVE palette is a country flag (else the rainbow palette). rbOnly = rainbow is the
@@ -527,7 +518,7 @@
     // rainbow toggle: label + switch adjacent (no parenthetical, no far-right spacer)
     var rr = el("div", "cc-set-row cc-set-inline");
     rr.appendChild(el("span", null, T("Regenbogen-Modus", "Rainbow mode")));
-    rr.appendChild(toggle(rbOnly, function (v) { set("cc.rainbow", v ? "1" : "0"); set("cc.flagmode", "0"); if (v) { del("cc.flag"); del("cc.rbpal"); } else set("cc.rainbowrot", "0"); render(); syncHeaderBar(); syncSharesBar(); }));
+    rr.appendChild(toggle(rbOnly, function (v) { set("cc.rainbow", v ? "1" : "0"); set("cc.flagmode", "0"); if (!v) set("cc.rainbowrot", "0"); render(); syncHeaderBar(); syncSharesBar(); }));
     // user: the two MASTER toggles stay clickable and flip each other — turning Rainbow on turns Flaggen-Modus
     // off (handler above sets cc.flagmode=0) and vice versa; NO greying of the master row.
     c1.appendChild(rr);
@@ -556,8 +547,7 @@
     var RBDEF = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; // real rainbow order
     var rbpal = null; try { rbpal = JSON.parse(get("cc.rbpal", "null")); } catch (e) { rbpal = null; }
     if (!rbpal || rbpal.length !== RBDEF.length) rbpal = RBDEF.slice();
-    var rbLbl = el("div", "cc-set-lbl", T("Rainbow-Farben (Feld anklicken zum Anpassen)", "Rainbow colours (click a field to adjust)"));
-    c1.appendChild(rbLbl);
+    // #7: no "Rainbow-Farben" heading — the swatches sit directly under the rotation toggle.
     var rbrow = el("div", "cc-set-swatches cc-fill");
     var rbPick = null, rbIdx = -1, rbPickWrap = el("div", "cc-set-pickrow"); rbPickWrap.style.display = "none";
     rbpal.forEach(function (cx, ix) {
@@ -565,7 +555,7 @@
       sw.addEventListener("click", function () {
         rbIdx = ix; rbPickWrap.style.display = "";
         if (!rbPick) {
-          rbPick = inlinePicker(rbpal[ix], function (v) { if (rbIdx >= 0) { rbpal[rbIdx] = v; rbrow.children[rbIdx].style.background = v; rbrow.children[rbIdx].setAttribute("data-tip", v); set("cc.rbpal", JSON.stringify(rbpal)); del("cc.flag"); syncHeaderBar(); syncSharesBar(); } });   // manual edit -> no longer a flag preset
+          rbPick = inlinePicker(rbpal[ix], function (v) { if (rbIdx >= 0) { rbpal[rbIdx] = v; rbrow.children[rbIdx].style.background = v; rbrow.children[rbIdx].setAttribute("data-tip", v); set("cc.rbpal", JSON.stringify(rbpal)); syncHeaderBar(); syncSharesBar(); } });   // rainbow palette is its own key now — editing it never touches the flag
           rbPickWrap.appendChild(rbPick);
         } else rbPick._set(rbpal[ix]);
       });
@@ -575,10 +565,10 @@
     var rbReset = el("span", "cc-set-ibtn");
     rbReset.setAttribute("data-tip", T("Farben zurücksetzen", "Reset colours"));
     var rbRi = document.createElement("i"); rbRi.className = "fa fa-undo"; rbReset.appendChild(rbRi);
-    rbReset.addEventListener("click", function () { del("cc.rbpal"); del("cc.flag"); render(); syncHeaderBar(); syncSharesBar(); });
+    rbReset.addEventListener("click", function () { del("cc.rbpal"); render(); syncHeaderBar(); syncSharesBar(); });
     rbrow.appendChild(rbReset);
     c1.appendChild(rbrow); c1.appendChild(rbPickWrap);
-    if (!rbOnly) { [rbLbl, rbrow, rbPickWrap].forEach(function (e9) { e9.style.opacity = ".4"; e9.style.pointerEvents = "none"; }); }   // rainbow palette editor belongs to rainbow mode
+    if (!rbOnly) { [rbrow, rbPickWrap].forEach(function (e9) { e9.style.opacity = ".4"; e9.style.pointerEvents = "none"; }); }   // rainbow palette editor belongs to rainbow mode
     // ── FLAGGEN-MODUS (#17): a SEPARATE mode with its OWN toggle, reactive toggle, picker and colour
     // display, mutually exclusive with Rainbow (each greys the other). A country's flag colours become
     // the active palette (cc.rbpal, cycled to 8 slots) that drives the SAME engine. The picker draws the
@@ -601,7 +591,9 @@
         s.style.background = "linear-gradient(to bottom, " + stops.join(", ") + ")"; return s;
       };
       var curFlag = function () { var c9 = get("cc.flag", ""); for (var j9 = 0; j9 < window.CC_FLAGS.length; j9++) if (window.CC_FLAGS[j9].code === c9) return window.CC_FLAGS[j9]; return null; };
-      var applyFlag = function (f9) { var pal = []; for (var k9 = 0; k9 < RBDEF.length; k9++) pal.push(f9.colors[k9 % f9.colors.length]); set("cc.flag", f9.code); set("cc.rbpal", JSON.stringify(pal)); };
+      // Flag palette is its OWN key (cc.flagpal), NEVER the rainbow cc.rbpal — so the rainbow editor
+      // keeps the rainbow colours and the engine only paints flag colours when cc.flagmode==="1".
+      var applyFlag = function (f9) { var pal = []; for (var k9 = 0; k9 < RBDEF.length; k9++) pal.push(f9.colors[k9 % f9.colors.length]); set("cc.flag", f9.code); set("cc.flagpal", JSON.stringify(pal)); };
       // flag master toggle (mutually exclusive with Rainbow)
       var fr = el("div", "cc-set-row cc-set-inline");
       fr.appendChild(el("span", null, T("Flaggen-Modus", "Flag mode")));
@@ -625,7 +617,8 @@
       // custom flag picker: real flag image + name, searchable (native <select> can't show flag images).
       var picker = el("div", "cc-flag-picker");
       var trigger = el("div", "cc-flag-trigger"); trigger.setAttribute("tabindex", "0");
-      var renderTrigger = function () { trigger.innerHTML = ""; var f0 = curFlag(); if (f0) { trigger.appendChild(flagImg(f0)); trigger.appendChild(el("span", "cc-flag-name", f0.name_de)); } else trigger.appendChild(el("span", "cc-flag-name", T("— kein Land —", "— none —"))); trigger.appendChild(el("span", "cc-flag-caret", "▾")); };
+      // #8: the picker reads as a BUTTON (no little caret arrow) — a solid CC control you click to pick a country.
+      var renderTrigger = function () { trigger.innerHTML = ""; var f0 = curFlag(); if (f0) { trigger.appendChild(flagImg(f0)); trigger.appendChild(el("span", "cc-flag-name", f0.name_de)); } else trigger.appendChild(el("span", "cc-flag-name", T("Land wählen …", "Pick a country …"))); };
       renderTrigger();
       var panel = el("div", "cc-flag-panel"); panel.style.display = "none";
       var search = el("input", "cc-flag-search"); search.type = "text"; search.placeholder = T("Suchen…", "Search…"); search.spellcheck = false; panel.appendChild(search);
@@ -644,7 +637,15 @@
       buildList(""); panel.appendChild(list);
       search.addEventListener("input", function () { buildList(search.value); });
       var openPanel = function () {
-        panel.style.display = ""; search.value = ""; buildList(""); try { search.focus(); } catch (e9) {}
+        panel.style.display = ""; search.value = ""; buildList("");
+        // #8: escape the settings-card overflow clip — pin the panel FIXED at the trigger and cap the
+        // list to the room below the trigger, so the WHOLE country list stays reachable/scrollable on hover.
+        try {
+          var r = trigger.getBoundingClientRect();
+          panel.style.position = "fixed"; panel.style.left = Math.round(r.left) + "px"; panel.style.top = Math.round(r.bottom + 4) + "px"; panel.style.right = "auto"; panel.style.width = Math.round(r.width) + "px";
+          list.style.maxHeight = Math.max(140, Math.min(300, window.innerHeight - r.bottom - 68)) + "px";
+        } catch (e8) {}
+        try { search.focus(); } catch (e9) {}
         var closer = function (e9) { if (!picker.contains(e9.target)) { panel.style.display = "none"; document.removeEventListener("click", closer, true); } };
         setTimeout(function () { document.addEventListener("click", closer, true); }, 0);   // self-removing click-outside (no leak across render)
       };
@@ -665,40 +666,22 @@
         // #3: the colour fields stretch to fill the card width (each cc-set-sw flex:1) + a reset icon
         // pushed to the far right, in line with the toggle switches. Reset clears the flag selection.
         var frow = el("div", "cc-set-swatches cc-fill");
-        f1.colors.forEach(function (c9) { var sw9 = el("span", "cc-set-sw"); sw9.style.background = c9; sw9.setAttribute("data-tip", c9); frow.appendChild(sw9); });
+        // #10: show the SAME count as the rainbow row (8), cycled from the flag's colours — matches
+        // the cc.flagpal the engine paints and keeps both rows visually consistent.
+        var fpal = []; for (var kf = 0; kf < RBDEF.length; kf++) fpal.push(f1.colors[kf % f1.colors.length]);
+        fpal.forEach(function (c9) { var sw9 = el("span", "cc-set-sw"); sw9.style.background = c9; sw9.setAttribute("data-tip", c9); frow.appendChild(sw9); });
         var fReset = el("span", "cc-set-ibtn"); fReset.setAttribute("data-tip", T("Flagge zurücksetzen", "Reset flag"));
         var fRi = document.createElement("i"); fRi.className = "fa fa-undo"; fReset.appendChild(fRi);
-        fReset.addEventListener("click", function () { del("cc.flag"); del("cc.rbpal"); render(); syncHeaderBar(); syncSharesBar(); });
+        fReset.addEventListener("click", function () { del("cc.flag"); del("cc.flagpal"); set("cc.flagmode", "0"); set("cc.rainbow", "0"); render(); syncHeaderBar(); syncSharesBar(); });
         frow.appendChild(fReset);
         c1.appendChild(frow);
       }
       if (!flagOn) { fmode.style.opacity = ".4"; fmode.style.pointerEvents = "none"; }   // the reactive-flag sub-toggle only with flag mode on; the picker stays usable (picking a flag turns the mode on)
     }
-    // #28: one-click curated PALETTE PRESETS — apply the 8 colours as cc.rbpal + turn Rainbow on (and
-    // clear any flag). A quick way to a nice look without hand-picking eight swatches.
-    (function () {
-      var PRESETS = [
-        { n: "Carbon", c: ["#393939", "#525252", "#6f6f6f", "#8d8d8d", "#a8a8a8", "#c6c6c6", "#e0e0e0", "#f4f4f4"] },
-        { n: "Nord", c: ["#bf616a", "#d08770", "#ebcb8b", "#a3be8c", "#88c0d0", "#81a1c1", "#b48ead", "#5e81ac"] },
-        { n: "Solarized", c: ["#dc322f", "#cb4b16", "#b58900", "#859900", "#2aa198", "#268bd2", "#6c71c4", "#d33682"] },
-        { n: "Dracula", c: ["#ff5555", "#ffb86c", "#f1fa8c", "#50fa7b", "#8be9fd", "#6272a4", "#bd93f9", "#ff79c6"] },
-        { n: "Sunset", c: ["#ff5e62", "#ff9966", "#ffcc70", "#ffdd94", "#fc9d9a", "#f9748f", "#c06c84", "#6c5b7b"] },
-        { n: "Forest", c: ["#1b4332", "#2d6a4f", "#40916c", "#52b788", "#74c69d", "#95d5b2", "#b7e4c7", "#d8f3dc"] }
-      ];
-      c1.appendChild(el("div", "cc-set-lbl", T("Paletten-Presets (ein Klick übernimmt)", "Palette presets (one click applies)")));
-      var prow = el("div", "cc-set-presets");
-      PRESETS.forEach(function (p) {
-        var chip = el("div", "cc-preset"); chip.setAttribute("data-tip", p.n); chip.setAttribute("tabindex", "0");
-        var strip = el("div", "cc-preset-strip");
-        p.c.forEach(function (cx) { var sw = el("span"); sw.style.background = cx; strip.appendChild(sw); });
-        chip.appendChild(strip); chip.appendChild(el("span", "cc-preset-name", p.n));
-        var apply = function () { set("cc.rbpal", JSON.stringify(p.c)); set("cc.rainbow", "1"); set("cc.flagmode", "0"); del("cc.flag"); render(); syncHeaderBar(); syncSharesBar(); };
-        chip.addEventListener("click", apply);
-        chip.addEventListener("keydown", function (e9) { if (e9.key === "Enter" || e9.key === " ") { e9.preventDefault(); apply(); } });
-        prow.appendChild(chip);
-      });
-      c1.appendChild(prow);
-    })();
+    // #11 (user): Badge-Form sits here — below the flag colours, above the state-colour toggle. segRow
+    // already puts the label + options on ONE row; options are ordered by ASCENDING roundness.
+    c1.appendChild(segRow(T("Badge-Form", "Badge shape"), [["square", T("eckig", "square")], ["rounded", T("abgerundet", "rounded")], ["pill", "Pills"], ["circle", T("Kreise", "Circles")]], get("cc.badgeshape", "pill"), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); }));
+    // (#12: the curated palette-presets block was removed per user request)
     // #16 (user): let STATE indicators keep their NATIVE state colour (green/amber/red) instead of
     // folding into the accent/rainbow/flag palette. Default OFF = integrated (current look). ON stamps
     // html.cc-state-native; the sheets then let the native semantic colours through (usage bars, dots).
@@ -711,12 +694,17 @@
     c1.appendChild(snR);
     c1.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var prev = el("div", "cc-set-prev");
-    // 2-3 mixed categories (user call): a NAME headline badge (lg), a key/value badge (sm) and a
-    // menu-style tab pill (md) — shows CC's badge range, cleaner than the old eight Docker badges.
+    // #13: a RICHER preview — eight mixed badges (name headlines, key/value pairs, a tab pill) so the
+    // full palette sweep is visible, not just three. paintPrev colours each child by index.
     var pvName = el("span", "cc-b cc-b-lg", "nextcloud");
     var pvVal = el("span", "cc-b"); pvVal.appendChild(elk("CPU")); pvVal.appendChild(elv("2/8"));
+    var pvVal2 = el("span", "cc-b"); pvVal2.appendChild(elk("RAM")); pvVal2.appendChild(elv("1.2G"));
+    var pvName2 = el("span", "cc-b cc-b-lg", "plex");
+    var pvVal3 = el("span", "cc-b"); pvVal3.appendChild(elk("IP")); pvVal3.appendChild(elv(".20.9"));
+    var pvVal4 = el("span", "cc-b"); pvVal4.appendChild(elk("Port")); pvVal4.appendChild(elv("443"));
+    var pvName3 = el("span", "cc-b cc-b-lg", "grafana");
     var pvTab = el("span", "cc-navtab cc-navtab-on", "Docker");
-    prev.appendChild(pvName); prev.appendChild(pvVal); prev.appendChild(pvTab);
+    [pvName, pvVal, pvVal2, pvName2, pvVal3, pvVal4, pvName3, pvTab].forEach(function (x9) { prev.appendChild(x9); });
     prev.id = "cc-set-prev"; c1.appendChild(prev);
     wrapMain.appendChild(c1); // GLOBAL badge colour + rainbow -> the "Allgemein" tab (was the Docker tab)
     // ── Dichte (GLOBAL): cc.density is ONE key that every list (Docker, Start, Freigaben) reads,
@@ -994,7 +982,7 @@
       // on, EVERY enabled area rainbows, so there is NO per-area rainbow toggle/palette here — just
       // this area's single accent colour above. The preview below still reflects the global rainbow.
       var RB2 = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
-      function palG() { try { var pj = JSON.parse(get("cc.rbpal", "null")); if (pj && pj.length) return pj; } catch (e2) {} return RB2; }
+      function palG() { try { if (get("cc.flagmode", "0") === "1") { var fj = JSON.parse(get("cc.flagpal", "null")); if (fj && fj.length) return fj; } var pj = JSON.parse(get("cc.rbpal", "null")); if (pj && pj.length) return pj; } catch (e2) {} return RB2; }
       // live preview — the Hauptmenueleiste (cch.) previews the MENU TABS (idle grey pill +
       // one accent-filled active pill, mirroring CannonadeCommand.Header.css); every other
       // area previews the Docker badges.
@@ -1386,7 +1374,7 @@
   function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16); var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
   // preview uses the REAL rainbow palette (identical to docker.css) so it matches
   // what the Docker tab actually shows, with auto-contrast text.
-  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; var pal = DEF; try { var j = JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
+  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; var pal = DEF; try { var fj = get("cc.flagmode", "0") === "1" ? JSON.parse(get("cc.flagpal", "null")) : null; var j = (fj && fj.length) ? fj : JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
   // live-highlight the preset swatch that matches the current accent (no re-render)
   function syncSwOn() { var a = (accent || "").toLowerCase(); Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-sw")).forEach(function (sw) { sw.classList.toggle("cc-set-sw-on", (sw.dataset.c || "").toLowerCase() === a); }); }
   function thc(t) { var e = el("th", null, t); return e; }
