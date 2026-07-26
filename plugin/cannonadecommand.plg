@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.83.0">
+  <!ENTITY version   "2.84.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,13 @@
 </ICON>
 
 <CHANGES>
+### 2.84.0
+- Schwebefenster (Container-Update): Die Schritt-Karten haben WIEDER KEINE Rahmenlinien - der Karten-Look
+  entsteht nur durch abgesetzte Flaeche + Schatten (CC-Stil hat nie Rahmenlinien). Regression aus 2.81.0 behoben.
+- Der obere Titel-Badge ist wieder deutlich groesser als die Abschnitts-Badges (klare Groessen-Hierarchie).
+- Die Ladeanimation sitzt nicht mehr oben im Badge, sondern unten links neben dem Schliessen-Button - als
+  saubere, moderne 3-Punkte-Pulsanimation in der Farbmodus-Farbe.
+
 ### 2.83.0
 - Barrierefreiheit: Die CannonadeCommand-Dropdowns lassen sich jetzt komplett per Tastatur bedienen (Öffnen mit
   Enter/Leertaste/Pfeil-runter, Auswahl mit Pfeiltasten, Schließen mit Esc) und melden Rollen/Zustände an
@@ -2001,7 +2008,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>19a9188e9a3939a68e8643fbcb11273964fe8b0c1a57cb4a6b1871eb652c9db2</SHA256>
+  <SHA256>b7e06aa0bd6a3e1fade6e40f0ed71e9e1be87a50dc27f07619c147a7a2669afd</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

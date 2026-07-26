@@ -121,9 +121,13 @@
         var sa = sas[i], h2 = sa.querySelector("h2"); if (!h2) continue;
         var loading = /in\s*progress/i.test(h2.textContent || "");
         sa.classList.toggle("cc-nchan-loading", loading);
-        var spin = h2.querySelector(".cc-nchan-spin");
-        if (loading && !spin) { spin = document.createElement("span"); spin.className = "cc-nchan-spin"; h2.insertBefore(spin, h2.firstChild); }
-        else if (!loading && spin) { spin.remove(); }
+        // user: the loader moves OUT of the title badge to the BOTTOM-LEFT (beside the Schließen button),
+        // as a clean 3-dot pulse (the same "working" look shown over a container logo). Remove any legacy
+        // in-badge spinner; the loader is a direct child of the sweet-alert, CSS-anchored bottom-left.
+        var oldspin = h2.querySelector(".cc-nchan-spin"); if (oldspin) oldspin.remove();
+        var loader = sa.querySelector(":scope > .cc-nchan-loader");
+        if (loading && !loader) { loader = document.createElement("span"); loader.className = "cc-nchan-loader"; loader.setAttribute("role", "status"); loader.setAttribute("aria-label", T("Läuft…", "Working…")); loader.innerHTML = "<i></i><i></i><i></i>"; sa.appendChild(loader); }
+        else if (!loading && loader) { loader.remove(); }
         var fs = sa.querySelectorAll("fieldset");   // hide the contentless grey bars, keep the ones with real steps
         for (var j = 0; j < fs.length; j++) { fs[j].style.display = (fs[j].textContent || "").trim() ? "" : "none"; }
         if (!sa.__ccNchanObs) { sa.__ccNchanObs = new MutationObserver(function () { ccNchanStyle(); paintPopups(); }); sa.__ccNchanObs.observe(sa, { childList: true, subtree: true, characterData: true }); }
