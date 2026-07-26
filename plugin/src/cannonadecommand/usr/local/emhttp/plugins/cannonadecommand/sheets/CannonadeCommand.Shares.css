@@ -995,8 +995,9 @@ html.cc-shares-on #displaybox #compute-shares,
 html.cc-shares-on #displaybox #compute-disks,
 html.cc-shares-on #displaybox #cleanup-button,
 html.cc-shares-on #displaybox form[name="share_form"] input[type="submit"] {
-  /* #4 (user): follow the colour mode — rainbow/flag action colour when active, else the accent. */
-  background: var(--cc-rbaccent, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-shr-accent-text, #fff)) !important;
+  /* #4/#3 (user): follow the colour mode — per-button rotated palette colour (--cc-rb-c) in a button row,
+     else the single rainbow/flag action colour, else the accent. */
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-shr-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-shr-accent-text, #fff))) !important;
   border: none !important; box-shadow: none !important;
   padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs, 13px) !important;
   height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;

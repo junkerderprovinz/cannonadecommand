@@ -79,8 +79,9 @@ html.cc-tools-on #displaybox input[type="button"],
 html.cc-tools-on #displaybox input[type="submit"],
 html.cc-tools-on #displaybox button:not([role="tab"]),
 html.cc-tools-on #displaybox a.button {
-  /* #11 (user): follow the colour mode — rainbow/flag action colour when active, else the accent. */
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  /* #11/#3 (user): follow the colour mode — per-button rotated palette colour (--cc-rb-c) in a row, else
+     the single rainbow/flag action colour, else the accent. */
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
   border: none !important; outline: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   height: var(--cc-md-h, 30px); padding: var(--cc-md-pad, 0 20px) !important;
   font-weight: 600; box-shadow: none !important; text-decoration: none !important;
@@ -113,9 +114,15 @@ html.cc-tools-on #displaybox .cc-tgl {
   display: inline-flex; flex: 0 0 auto; width: 44px; height: 24px; border-radius: 999px; background: #3a3a3a;
   position: relative; cursor: pointer; vertical-align: middle; transition: background .15s; box-sizing: border-box;
 }
-html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); }
+html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); }
 html.cc-tools-on #displaybox .cc-tgl .cc-tgl-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; }
 html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on .cc-tgl-knob { left: 23px; }
+/* #8 (user): native switch tracks (e.g. Docker aktivieren) on tools/settings pages -> CC pill shape that
+   follows the colour mode (rotated per toggle via --cc-rb-c). */
+html.cc-tools-on #displaybox .switch-button-background {
+  border: none !important; box-shadow: none !important; border-radius: 999px !important; background: #3a3a3a !important;
+}
+html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
 
 /* links: no native blue / underline on tools pages */
 html.cc-tools-on #displaybox a:not(.button) { color: var(--cc-accent, #2f6feb); text-decoration: none; }

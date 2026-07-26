@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.70.0">
+  <!ENTITY version   "2.71.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,16 @@
 </ICON>
 
 <CHANGES>
+### 2.71.0
+- Nachbesserungen an den Farbmodi:
+- Im Regenbogen-Modus bekommen jetzt nebeneinanderstehende Buttons (z. B. auf den Werkzeug-/Einstellungen-
+  Subseiten und im Freigaben-Tab) sowie die Schalter jeweils UNTERSCHIEDLICHE Palettenfarben statt einer
+  Einheitsfarbe - sie rotieren durch die Palette.
+- Die nativen Schalter auf den Einstellungen-Subseiten (z. B. "Docker aktivieren") haben jetzt die
+  CannonadeCommand-Pillen-Form und folgen dem Farbmodus.
+- Auslastungsbalken und diese Elemente werden jetzt auch dann eingefaerbt, wenn die Seite ihren Inhalt erst
+  nachlaedt (ein Beobachter faerbt spaet gerenderte Balken/Buttons nach).
+
 ### 2.70.0
 - Konsistenz-Runde (Teil 4):
 - Zustandsanzeige-Umfang: Das Update-Badge auf der Docker-Seite und die Badges in der Status-Spalte des
@@ -1868,7 +1878,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>2bfa24c3270ed258387ce1a2e0bcf528cac7a999bc189400b7e87df626d02c53</SHA256>
+  <SHA256>979e9c64b333748bf17994ffcdb1e59277502ee06fdbf121eec1ff89a6223ea7</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

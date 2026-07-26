@@ -640,6 +640,36 @@
       }
     } catch (e) {}
   }
+  // #3/#8 (user: in rainbow mode ADJACENT buttons/toggles get DIFFERENT palette colours, not one blue).
+  // Stamp a per-element rotating palette colour (--cc-rb-c) on each CC-themed native button (rotated within
+  // its own row) and each tools/settings toggle (rotated across the page). The CSS reads
+  // var(--cc-rb-c, var(--cc-rbaccent, <accent>)) so a single element still falls back to the one accent.
+  function ccPaintRotate() {
+    try {
+      var on = g("cc.theming", "1") !== "0" && rbOn();
+      var stamp = function (el, ix) { var c = rbColor(ix); el.style.setProperty("--cc-rb-c", c, "important"); el.style.setProperty("--cc-rb-ct", idealText(c), "important"); };
+      var clear = function (el) { el.style.removeProperty("--cc-rb-c"); el.style.removeProperty("--cc-rb-ct"); };
+      var BSEL = "html.cc-tools-on #displaybox input[type=button], html.cc-tools-on #displaybox input[type=submit], html.cc-tools-on #displaybox button:not([role=tab]):not(.cc-tgl), html.cc-tools-on #displaybox a.button, html.cc-shares-on #displaybox #compute-shares, html.cc-shares-on #displaybox #compute-disks, html.cc-shares-on #displaybox #cleanup-button, html.cc-shares-on #displaybox form[name=\"share_form\"] input[type=submit], html.cc-vms-on #displaybox input[type=button]:not(.cc-actbtn), html.cc-vms-on #displaybox input[type=submit]:not(.cc-actbtn)";
+      var btns = document.querySelectorAll(BSEL);
+      if (!on) { for (var i0 = 0; i0 < btns.length; i0++) clear(btns[i0]); }
+      else { var pars = [], cnt = []; for (var i = 0; i < btns.length; i++) { var p = btns[i].parentNode, pi = pars.indexOf(p); if (pi < 0) { pi = pars.push(p) - 1; cnt[pi] = 0; } stamp(btns[i], cnt[pi]++); } }
+      // toggles on tools/settings pages -> rotate across the page so no two read the same colour
+      var tgls = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tgl, html.cc-tools-on #displaybox .switch-button-background");
+      for (var t = 0; t < tgls.length; t++) { if (!on) clear(tgls[t]); else stamp(tgls[t], t); }
+    } catch (e) {}
+  }
+  // The /Main disk tables, settings forms and button rows are AJAX-rendered AFTER apply() runs, so the
+  // one-shot paint missed them (usage bars stayed uncoloured, buttons/toggles un-rotated). Watch #displaybox
+  // (childList only -> our own inline style/attr writes never re-trigger it) and re-run the paints debounced.
+  var ccMainObs = null, ccMainT = null;
+  function ccWatchMain() {
+    try {
+      if (ccMainObs) return;
+      var box = document.getElementById("displaybox"); if (!box) return;
+      ccMainObs = new MutationObserver(function () { if (ccMainT) return; ccMainT = setTimeout(function () { ccMainT = null; try { ccStateBars(); ccPaintRotate(); ccToolsEnhance(); } catch (e2) {} }, 120); });
+      ccMainObs.observe(box, { childList: true, subtree: true });
+    } catch (e) {}
+  }
   // #22 (user: "bei allen Einstellungen die Doppelpunkte weg"): on native /Tools/* and /Settings/* sub-pages
   // (cc-tools-on) strip the trailing colon from every setting label. Visual only + idempotent (marks done).
   function ccToolsEnhance() {
@@ -967,6 +997,8 @@
       ccArrFill();      // #18: on /Main, refresh the cached array-fill % the island's fill chip reads
       ccStateBars();   // #16: usage-bar fills follow the fill-level state colour when cc.statenative, else the palette
       ccToolsEnhance();   // #22: strip label colons on native Tools/Settings sub-pages
+      ccPaintRotate();    // #3/#8: per-element rotating palette colour on button rows + toggles (rainbow)
+      ccWatchMain();      // re-paint late AJAX-rendered content (usage bars, buttons, toggles)
       ccNchanStyle(); paintPopups(); watchPopups();
       ccWireTips();     // document-wide floating-bubble delegation (bound once) — on EVERY page: docker/shares/settings anchors ride it even with the header area off
       // paintNav() with cc-header-on now removed => rb=false => it removeProperty's every
