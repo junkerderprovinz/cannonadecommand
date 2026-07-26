@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.64.2">
+  <!ENTITY version   "2.65.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,12 @@
 </ICON>
 
 <CHANGES>
+### 2.65.0
+- Das Plugin-Install- und Container-Update-Fenster ist aufgeraeumt: die grellgruene "Ball-Fall"-Ladeanimation
+  ist weg, stattdessen dreht sich ein cleaner moderner Ring-Spinner LINKS am Titel-Badge, und der Badge wird
+  ausgegraut solange der Vorgang laeuft (danach faerbt er sich wieder). Die leeren grauen Fieldset-Balken oben
+  und unten (Unraids Reste) werden ausgeblendet - das Fenster ist jetzt durchgehend dunkel und ruhig.
+
 ### 2.64.2
 - #14 Wenn ein Container angelegt/angewendet wird, ist die Ausgabe (docker-run-Befehl + Ergebnis) jetzt ein
   schwebendes Fenster wie das Container-Update-Fenster: eine zentrierte dunkle Carbon-Karte ueber einem
@@ -1776,7 +1782,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>9948afea997b72a782991139ac7173e1369275e734b1ec18b84b33c40ccfc483</SHA256>
+  <SHA256>1742a796052aab5f42af52c3a79981bb0c4224e225deace0c4f72a501053b09b</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

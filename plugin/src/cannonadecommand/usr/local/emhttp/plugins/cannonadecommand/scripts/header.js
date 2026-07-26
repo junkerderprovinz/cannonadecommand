@@ -97,9 +97,34 @@
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
       var ts = document.querySelectorAll(".ui-dialog .ui-dialog-title, .sweet-alert h2");
       for (var i = 0; i < ts.length; i++) {
+        // while a streaming install/update dialog is IN PROGRESS, grey the title badge out (user) —
+        // the clean spinner (ccNchanStyle) sits bright beside it; the badge recolours when it finishes.
+        var sa0 = ts[i].closest ? ts[i].closest(".sweet-alert") : null;
+        if (sa0 && sa0.classList.contains("cc-nchan-loading")) { ts[i].style.setProperty("background", "#2e2e2e", "important"); ts[i].style.setProperty("color", "#9a9a9a", "important"); continue; }
         if (!rbOn()) { ts[i].style.removeProperty("background"); ts[i].style.removeProperty("color"); continue; }   // CSS accent vars rule
         var c = popBadge(i), t = idealText(c);
         ts[i].style.setProperty("background", c, "important"); ts[i].style.setProperty("color", t, "important");
+      }
+    } catch (e) {}
+  }
+  // #11 rework: the streaming plugin-install / container-update dialog (.sweet-alert.nchan) gets a
+  // clean modern loader. Detect the IN-PROGRESS state from the title, drop a rotating ring beside the
+  // title badge, grey the badge while it runs, and hide the empty grey <fieldset> bars Unraid leaves.
+  // A per-dialog subtree observer re-styles on every streamed line + the IN PROGRESS -> FINISHED flip.
+  function ccNchanStyle() {
+    try {
+      if (!document.documentElement.classList.contains("cc-popups-on")) return;
+      var sas = document.querySelectorAll(".sweet-alert.nchan");
+      for (var i = 0; i < sas.length; i++) {
+        var sa = sas[i], h2 = sa.querySelector("h2"); if (!h2) continue;
+        var loading = /in\s*progress/i.test(h2.textContent || "");
+        sa.classList.toggle("cc-nchan-loading", loading);
+        var spin = h2.querySelector(".cc-nchan-spin");
+        if (loading && !spin) { spin = document.createElement("span"); spin.className = "cc-nchan-spin"; h2.insertBefore(spin, h2.firstChild); }
+        else if (!loading && spin) { spin.remove(); }
+        var fs = sa.querySelectorAll("fieldset");   // hide the contentless grey bars, keep the ones with real steps
+        for (var j = 0; j < fs.length; j++) { fs[j].style.display = (fs[j].textContent || "").trim() ? "" : "none"; }
+        if (!sa.__ccNchanObs) { sa.__ccNchanObs = new MutationObserver(function () { ccNchanStyle(); paintPopups(); }); sa.__ccNchanObs.observe(sa, { childList: true, subtree: true, characterData: true }); }
       }
     } catch (e) {}
   }
@@ -153,7 +178,7 @@
   var ccPopObs = null;
   function watchPopups() {
     try {
-      if (ccPopObs) return; ccPopObs = new MutationObserver(function () { paintPopups(); ccPopIframes(); ccPopoverDim(); ccNotifActions(); });
+      if (ccPopObs) return; ccPopObs = new MutationObserver(function () { ccNchanStyle(); paintPopups(); ccPopIframes(); ccPopoverDim(); ccNotifActions(); });
       ccPopObs.observe(document.body, { childList: true });   // dialogs/sweetalerts append as direct body children — cheap, no subtree
     } catch (e) {}
   }
@@ -874,7 +899,7 @@
       } catch (e0) {}
       ccArrFill();      // #18: on /Main, refresh the cached array-fill % the island's fill chip reads
       ccStateBars();   // #16: usage-bar fills follow the fill-level state colour when cc.statenative, else the palette
-      paintPopups(); watchPopups();
+      ccNchanStyle(); paintPopups(); watchPopups();
       ccWireTips();     // document-wide floating-bubble delegation (bound once) — on EVERY page: docker/shares/settings anchors ride it even with the header area off
       // paintNav() with cc-header-on now removed => rb=false => it removeProperty's every
       // lingering rainbow inline colour, so a live theming-OFF (even with Rainbow on) fully
