@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.79.0">
+  <!ENTITY version   "2.80.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,13 @@
 </ICON>
 
 <CHANGES>
+### 2.80.0
+- Abschnittsbadges (z. B. "ARRAY-DATENTRAEGER"): Bei aktiver "Boxed"-Anzeigebreite auf breiten Bildschirmen
+  richten sie sich jetzt wieder buendig links an der Hauptmenueleiste aus (der zentrierte Inhalt wird links-
+  buendig zum vollbreiten Menue gezogen).
+- Hilfe-Symbol: Der Klick loest jetzt zuverlaessig die native Hilfe aus (robuster Handler, damit der Klick
+  nicht verschluckt wird).
+
 ### 2.79.0
 - Dropdown-Listen (Werkzeug/Einstellungen): Der Oeffnen-Button faerbt sich jetzt NUR beim Ueberfahren (nicht mehr
   dauerhaft); die Listeneintraege im geoeffneten Panel haben im Regenbogen-Modus je eine eigene Palettenfarbe.
@@ -1967,7 +1974,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>189f7c3063ad1f2f55a7ac6b75536e4aa7f5aee7aba58538d4d2b7b7848e9113</SHA256>
+  <SHA256>e4d8b3f10ffc9fe11abd1a8211b39c6b5fcd9e445fc8655b8998bd3167127b65</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

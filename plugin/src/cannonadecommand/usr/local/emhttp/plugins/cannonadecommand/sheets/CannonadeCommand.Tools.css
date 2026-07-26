@@ -15,6 +15,9 @@ html.cc-tools-on { --cc-tl-surface: #1c1c1c; --cc-tl-surface2: #232323; }
 
 /* content column lines up with the menu bar, like every other CC area */
 html.cc-tools-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 15px); }
+/* #4 (user): in BOXED display width, left-align the centred content to the full-width menu bar (header.js
+   measureAlign sets --cc-box-shift = the menu's absolute left; overrides the auto-centring margin). */
+html.cc-tools-on.Theme--width-boxed:not(.Theme--sidebar) #displaybox { margin-left: var(--cc-box-shift, 0) !important; margin-right: 0 !important; }
 
 /* ── FIELDSETS -> borderless dark cards; the <legend> becomes an accent badge ── */
 html.cc-tools-on #displaybox fieldset {

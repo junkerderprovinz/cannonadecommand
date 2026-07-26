@@ -110,6 +110,9 @@ html.cc-shares-on #displaybox table.unraid.share_status thead th {
 html.cc-shares-on { --cc-align-left: 10px; }              /* header area OFF: native menu TEXT edge (.nav-item a padding-left) */
 html.cc-shares-on.cc-header-on { --cc-align-left: 15px; } /* header area ON: CC menu PILL edge = nav-tile 12px + .nav-item>a margin 3px (border-box left) */
 html.cc-shares-on:not(.Theme--sidebar):is(.cc-on-shares, .cc-on-share-detail, .cc-on-browse, .cc-on-stats, .cc-on-main) #displaybox { padding-left: var(--cc-align-left, 10px); }
+/* #4 (user): in BOXED display width, left-align the centred content to the full-width menu bar (measureAlign
+   sets --cc-box-shift = the menu's absolute left). Section badges then start flush with the menu. */
+html.cc-shares-on.Theme--width-boxed:not(.Theme--sidebar):is(.cc-on-shares, .cc-on-share-detail, .cc-on-browse, .cc-on-stats, .cc-on-main) #displaybox { margin-left: var(--cc-box-shift, 0) !important; margin-right: 0 !important; }
 html.cc-shares-on:not(.Theme--sidebar):is(.cc-on-shares, .cc-on-share-detail, .cc-on-browse, .cc-on-stats, .cc-on-main) #displaybox div.title { padding-left: 0; }
 /* the leading NAME cell keeps a small deliberate indent (12px past the anchor) so the share name
    isn't cramped against the edge; tabs/title/buttons stay flush at the anchor. */

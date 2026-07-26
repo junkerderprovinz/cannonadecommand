@@ -273,8 +273,22 @@
         var cs = getComputedStyle(a);                         // native text menu: the visible edge is the TEXT, i.e. past the anchor's own padding/border
         edge = aRect.left + scroll + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.borderLeftWidth) || 0);
       }
-      var align = Math.round(edge - boxRect.left);
-      if (align >= 0 && align < 200) root.style.setProperty("--cc-align-left", align + "px");  // sanity-bounded; overrides the sheets' static fallback inline
+      // #4 (user: on WIDE screens the boxed content is centred while the menu is full-width, so the section
+      // badges land far right of the menu). Measure against the box's NATURAL left (subtract any shift we
+      // already applied, so it doesn't oscillate). A POSITIVE offset indents via --cc-align-left (padding,
+      // normal case); a NEGATIVE offset (boxed content sits RIGHT of the menu) pulls the whole content left
+      // via --cc-box-shift (a negative margin), so the badges line up flush with the menu bar.
+      if (root.classList.contains("Theme--width-boxed")) {
+        // BOXED display width: the content is centred (margin auto) while the menu bar is full-width, so the
+        // section badges land far right of the menu. LEFT-align the whole content to the menu by overriding
+        // the centring margin with the menu item's ABSOLUTE left (edge is independent of the box position, so
+        // it never oscillates). --cc-align-left stays 0 (the margin does the whole job here).
+        root.style.setProperty("--cc-box-shift", Math.round(edge) + "px");
+        root.style.setProperty("--cc-align-left", "0px");
+      } else {
+        var align = Math.round(edge - boxRect.left);
+        if (align >= 0 && align < 200) { root.style.setProperty("--cc-align-left", align + "px"); root.style.setProperty("--cc-box-shift", "0px"); }  // sanity-bounded; overrides the sheets' static fallback inline
+      }
     } catch (e) {}
   }
   // ── DRAG-AND-DROP main-menu tab ordering (v2.20.0). The left menu tabs (#menu .nav-tile:not(.right)
@@ -1381,6 +1395,20 @@
     } catch (e) {}
     watchSearch();
     wireSearchToggle();
+    // #15/K11 (user: "Hilfe-Icon funktioniert immer noch nicht"): guarantee the click reaches the native
+    // HelpButton even if the nav-drag pointer wiring (or another handler) swallows the anchor's inline
+    // onclick. Capture phase + call it once ourselves; stopImmediatePropagation prevents a double-toggle.
+    try {
+      document.addEventListener("click", function (e) {
+        try {
+          if (!document.documentElement.classList.contains("cc-header-on")) return;
+          var h = e.target && e.target.closest ? e.target.closest("#menu .nav-item.HelpButton") : null;
+          if (!h) return;
+          e.preventDefault(); e.stopImmediatePropagation();
+          if (typeof window.HelpButton === "function") window.HelpButton();
+        } catch (err) {}
+      }, true);
+    } catch (e) {}
     // the dock is position:fixed against the STICKY menu row: while #header scrolls away the icon
     // row's y shifts, so re-measure on scroll (rAF-throttled, passive) + resize (debounced)
     try {
