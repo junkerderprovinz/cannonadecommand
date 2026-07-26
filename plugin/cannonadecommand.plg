@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.88.0">
+  <!ENTITY version   "2.89.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,10 @@
 </ICON>
 
 <CHANGES>
+### 2.89.0
+- Docker-Zahnraeder im reaktiven Farbmodus: beim Ueberfahren einer Zeile leuchteten alle Zahnraeder orange
+  (Akzent) statt in ihrer eigenen CPU/RAM/BW-Farbe. Jetzt traegt jedes Zahnrad auch beim Hover seine Kind-Farbe.
+
 ### 2.88.0
 - Ausrichtung (endlich grundsaetzlich): Servername und Inhalt richten sich jetzt auf JEDER Seite buendig an der
   Hauptmenueleiste aus - auch auf Seiten ohne eigenen CannonadeCommand-Bereich (z. B. die Einstellungen-Uebersicht),
@@ -2044,7 +2048,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>2dce2e7a87024b332ff2e985850b45c3e3617ffcd3dae08be74cf4336962f59f</SHA256>
+  <SHA256>d92aa59406380dc8e58408a56bbe5561f22ebca6ff2f9aabcfe89c6580a5c242</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

@@ -1738,16 +1738,13 @@
     // sub-mode NEITHER a set NOR an idle gear paints inline — CSS rests them all neutral and colours them on
     // ROW/card hover, exactly like every other control (an inline paint would keep one gear stuck coloured).
     var rbOn = themingOn() && localStorage.getItem("cc.rainbow") === "1";
-    if (rbOn && localStorage.getItem("cc.rbmode") === "active") {
-      lb.style.removeProperty("background"); lb.style.removeProperty("color"); lb.style.removeProperty("--cc-rb-c"); lb.style.removeProperty("--cc-rb-ct");
-      return;
-    }
-    // #9 (user: "die Zahnrädchen von CPU RAM und BW sind alle orange, auch im Rainbow-Mode"): a SET gear used
-    // to inline-paint the flat accent (=orange) with !important, which beat the --cc-rb-c CSS rule so EVERY
-    // gear shared one colour. In full rainbow it must take ITS OWN KIND's rotating palette colour (cpu/ram/bw
-    // each already have --cc-rb-<kind> on :root). Stamp --cc-rb-c = that kind var, drop the inline paint, and
-    // docker.css .cc-limbtn-set { background: var(--cc-rb-c …) } renders each gear in its badge's colour.
-    if (rbOn && set && kind) {
+    // #9 CORRECTION (user: "Zahnrädchen immer noch alle orange, auch im reaktiven Modus"): in ANY rainbow sub-
+    // mode the gear's KIND colour (cpu/ram/bw, each --cc-rb-<kind> on :root) lives on --cc-rb-c. The REST look
+    // is decided purely by CSS — neutral grey in the reactive sub-mode (rbneutral class), always-coloured in
+    // full rainbow — while the reactive :hover rule reveals --cc-rb-c. The old reactive branch CLEARED --cc-rb-c,
+    // so hover fell back to the flat accent (=orange) for every gear. Stamping the kind var (no inline bg) fixes
+    // both sub-modes with one path.
+    if (rbOn && kind) {
       lb.style.removeProperty("background"); lb.style.removeProperty("color");
       lb.style.setProperty("--cc-rb-c", "var(--cc-rb-" + kind + ", var(--cc-accent, #2f6feb))");
       lb.style.setProperty("--cc-rb-ct", "var(--cc-rb-" + kind + "-t, #fff)");
