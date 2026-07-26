@@ -38,9 +38,12 @@
       "#cc-settings .cc-set-search::placeholder{color:#8d8d8d}" +
       "#cc-settings .cc-set-search:focus{background:#2e2e2e}" +
       // #13 settings search as an expandable hero badge (magnifier -> input on click)
-      "#cc-settings .cc-set-searchbadge{margin-left:auto;display:inline-flex;align-items:center;background:#232323;border-radius:min(var(--cc-b-radius,999px),17px);height:34px;overflow:hidden;transition:background-color .12s}" +
-      "#cc-settings .cc-set-searchbadge .cc-set-searchicon{flex:0 0 auto;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:#cfcfcf;cursor:pointer}" +
-      "#cc-settings .cc-set-searchbadge:hover .cc-set-searchicon,#cc-settings .cc-set-searchbadge.cc-open .cc-set-searchicon{color:#fff}" +
+      // #6 (user): the collapsed search badge FOLLOWS the colour mode (accent/rainbow); it turns into a dark input box only while expanded
+      "#cc-settings .cc-set-searchbadge{margin-left:auto;display:inline-flex;align-items:center;background:var(--cc-btn-accent,var(--cc-accent,#2f6feb));border-radius:min(var(--cc-b-radius,999px),17px);height:34px;overflow:hidden;transition:background-color .12s}" +
+      "#cc-settings .cc-set-searchbadge .cc-set-searchicon{flex:0 0 auto;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:var(--cc-accent-text,#fff);cursor:pointer}" +
+      "#cc-settings .cc-set-searchbadge.cc-open{background:#2e2e2e}" +
+      "#cc-settings .cc-set-searchbadge:hover{filter:brightness(1.08)}" +
+      "#cc-settings .cc-set-searchbadge.cc-open .cc-set-searchicon{color:#fff}" +
       "#cc-settings .cc-set-searchbadge .cc-set-search{box-sizing:border-box;width:0;max-width:0;padding:0;background:transparent;transition:width .2s,max-width .2s,padding .2s}" +
       "#cc-settings .cc-set-searchbadge.cc-open{background:#2e2e2e}" +
       "#cc-settings .cc-set-searchbadge.cc-open .cc-set-search{width:220px;max-width:220px;padding:0 12px 0 2px}" +

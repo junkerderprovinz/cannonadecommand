@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.78.0">
+  <!ENTITY version   "2.79.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,20 @@
 </ICON>
 
 <CHANGES>
+### 2.79.0
+- Dropdown-Listen (Werkzeug/Einstellungen): Der Oeffnen-Button faerbt sich jetzt NUR beim Ueberfahren (nicht mehr
+  dauerhaft); die Listeneintraege im geoeffneten Panel haben im Regenbogen-Modus je eine eigene Palettenfarbe.
+- Schwebefenster (Container-Update, Systeminfo, Feedback): durchgehend eine dunkle Flaeche (0f0f0f) - keine hellere
+  Kopf-/Fussleiste mehr.
+- Docker-Seite: Der Status-Punkt unter dem Container-Namen ist kein Umschalter mehr - sein Mouseover zeigt den
+  aktuellen Status, ein Klick laesst die Aktions-Icons aufblitzen. Die CPU/RAM/BW-Zahnraeder sind jetzt auch im
+  reaktiven Modus vollstaendig in die Farbmodi integriert.
+- CannonadeCommand-Einstellungen: Der Favoriten-Schalter auf der Anzeige-Seite wirkt jetzt (Unraids Favoriten-
+  Einstellung ist mit CannonadeCommands "Favoriten ausblenden" gekoppelt). Der Such-Badge folgt dem Farbmodus.
+- Hauptmenueleiste: Die beiden gedockten Icons (Glocke, Menue) sitzen wieder buendig zu den anderen Icons.
+- Statusinsel: Chips-Anordnen per Ziehen ist leichtergaengig (kuerzere Haltezeit), groessere Ablagezonen, und die
+  Chips wackeln im Anordnen-Modus.
+
 ### 2.78.0
 - Statusinsel: Die Chips lassen sich jetzt per Ziehen (kurz gedrueckt halten, dann ziehen) frei auf DREI Zeilen
   anordnen; die Anordnung wird gespeichert. Ein Klick auf einen Chip springt auf die passende Seite (Array/
@@ -1953,7 +1967,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>986968e5561586a65d5518ca2bf7b3a72545a0a717d95f02ecf89aab655384d7</SHA256>
+  <SHA256>189f7c3063ad1f2f55a7ac6b75536e4aa7f5aee7aba58538d4d2b7b7848e9113</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

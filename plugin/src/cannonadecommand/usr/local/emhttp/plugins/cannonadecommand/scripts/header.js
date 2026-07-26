@@ -150,7 +150,7 @@
               // CC-Style): darken the iframe's OWN surface (html/body + structural elements) onto #161616 so no
               // lighter native band shows, and theme the form controls (radios keep native, text/textarea/select
               // get the CC dark fill). Literals only — the iframe cannot read the parent's CSS vars.
-              st.textContent = "html,body{background:#161616 !important;color:#d6d6d6 !important} fieldset,table,tbody,thead,tr,td,th,.tabs,dl,dt,dd,form,center,p,section,article,div{background:transparent !important;border:none !important} legend{color:#9a9a9a !important} label,td,th{color:#d6d6d6 !important} input[type=text],input[type=password],input[type=email],input[type=search],input[type=number],input[type=url],textarea,select{background:#232323 !important;color:#eaeaea !important;border:1px solid #333 !important;border-radius:6px !important;outline:none !important;box-shadow:none !important} textarea{width:100% !important;box-sizing:border-box !important} a{color:" + acc + " !important} " +
+              st.textContent = "html,body{background:#0f0f0f !important;color:#d6d6d6 !important} fieldset,table,tbody,thead,tr,td,th,.tabs,dl,dt,dd,form,center,p,section,article,div{background:transparent !important;border:none !important} legend{color:#9a9a9a !important} label,td,th{color:#d6d6d6 !important} input[type=text],input[type=password],input[type=email],input[type=search],input[type=number],input[type=url],textarea,select{background:#232323 !important;color:#eaeaea !important;border:1px solid #333 !important;border-radius:6px !important;outline:none !important;box-shadow:none !important} textarea{width:100% !important;box-sizing:border-box !important} a{color:" + acc + " !important} " +
                 "input[type=button],input[type=submit],button{height:36px !important;padding:0 24px !important;font-size:14px !important;border:0 !important;border-radius:6px !important;box-shadow:none !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important;cursor:pointer} center,.buttons{text-align:left !important} a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none !important;box-shadow:none !important;filter:brightness(1.18)}";
               d.head.appendChild(st);
             } catch (e2) {}
@@ -693,7 +693,7 @@
               ccIslHold = null; ccIslDragged = c; c.classList.add("cc-isl-dragging");
               var isle = document.getElementById("cc-island"); if (isle) isle.classList.add("cc-isl-arranging");
               try { c.setPointerCapture(ccIslPressPtr); } catch (e2) {}
-            }, 300);
+            }, 220);   // K12: shorter hold -> easier to pick a chip up
           });
         })(chips[i]);
       }
@@ -774,6 +774,10 @@
       // colour (the CC-tsel dropdown box + selected chip follow --cc-rb-c, inherited from the .cc-tsel wrapper).
       var tgls = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tgl, html.cc-tools-on #displaybox .switch-button-background, html.cc-tools-on #displaybox .cc-tsel");
       for (var t = 0; t < tgls.length; t++) { if (!on) clear(tgls[t]); else stamp(tgls[t], t); }
+      // #1 (user): each dropdown OPTION gets its OWN palette slot — rotate WITHIN each panel so the open list
+      // reads as a rainbow of items (the trigger itself stays neutral until hover; see Tools.css).
+      var panels = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tsel-panel");
+      for (var pn = 0; pn < panels.length; pn++) { var opts = panels[pn].querySelectorAll(".cc-tsel-opt"); for (var oi = 0; oi < opts.length; oi++) { if (!on) clear(opts[oi]); else stamp(opts[oi], oi); } }
     } catch (e) {}
   }
   // The /Main disk tables, settings forms and button rows are AJAX-rendered AFTER apply() runs, so the
@@ -888,6 +892,9 @@
       fd.append("#section", (sEl && sEl.value) || "display");
       fd.append("csrf_token", window.csrf_token);
       fd.append(sel.name, sel.value);
+      // #3 (user): couple native settings that ALSO have a CC counterpart, so the CC side is kept in step and
+      // doesn't override the effect. favorites <-> cc.hidefavtab (native "no" = CC "hide the favourites tab").
+      try { if (sel.name === "favorites") localStorage.setItem("cc.hidefavtab", (sel.value === "no" || sel.value === "0") ? "1" : "0"); } catch (eC) {}
       fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function () { location.reload(); }).catch(function () {});
     } catch (e) {}
   }
@@ -1142,7 +1149,7 @@
       // pins the span to a fixed spot regardless of this offset (proven live: +6 AND +9 both land a
       // 3px gap), so the FINAL gap-enforce block at the very end is what actually nets 6px; this
       // offset just seeds a close-enough start. Bell<->burger gap is 6px too (Header.css).
-      var target = Math.min(Math.round(r.right + 6), vw - 84);
+      var target = Math.min(Math.round(r.right + 6), vw - 94);   // #10/#14: reserve matches the .nav-tile.right 94px padding for the two 36px icons
       set("position", "fixed");
       set("right", "auto");
       // KILL the Tailwind pl-[160px]/pl-[30%]: with border-box that padding forced the box ≥160px
@@ -1150,7 +1157,7 @@
       // ate their clicks/hovers (user #10, live-proven: box left 1944 covered LogButton at 1967).
       set("padding", "0");
       set("min-width", "0");
-      set("width", "76px");                                        // container = content: its native 236px width parked the flex-end row 160px right of `left` (live-proven off-screen boxes)
+      set("width", "88px");                                        // #10/#14: fits the two 36px icon boxes + 6px gap (was 76px for the old 30px icons); container = content, else its native 236px width parks the row off-screen
       set("top", Math.round(r.top + (r.height - 36) / 2) + "px");  // centre the 36px boxes on the icon line (#14)
       set("height", "36px");
       set("z-index", String(isFinite(mz) ? mz + 1 : 1000));        // above the sticky menu it overlaps

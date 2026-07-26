@@ -300,6 +300,7 @@
         // keep the toggle's tooltip in step with the NEW state (the click handler already
         // re-derives its action at click time).
         if (isToggle) b.setAttribute("data-tip", t(s === "running" ? "stop" : s === "paused" ? "resume" : "start"));
+        else if (b.classList.contains("cc-ct-statedot")) b.setAttribute("data-tip", unh ? unhealthyTip() : stateLabel(s));   // #8: the DOT's tooltip = current STATE (not the action)
       });
       syncActionBars(); // the action bar's start/stop/pause icons need the SAME live sync
     } catch (e) {}
@@ -702,19 +703,23 @@
         var glyph = nameCell.querySelector(".inner i[id^='load-']");
         var st = (c && c.state) || glyphState(glyph) || "unknown";
         var meta = el("div", "cc-namemeta"); meta.setAttribute(MARK, "1");
-        var sb = stateToggle(name, st); if (showUnhealthy(c)) { sb.classList.add("cc-badge-alert"); sb.textContent = stateLabel(st) + " ✕"; sb.setAttribute("data-tip", unhealthyTip()); }
-        // #4 (user): the running/stopped STATE becomes a small colour DOT right of the container name (like the
-        // disk state dots on /Main) — colour follows the mode / native state colour, shape via --cc-dot-r, the
-        // label rides its tooltip. Theming OFF -> the state toggle keeps its text pill in the meta row.
+        // #8/#10 (user): under the name sits a colour DOT in its own row — NOT a clickable toggle. Its mouseover
+        // shows the CURRENT STATE (kept live by syncStateBadges), a click flashes the action icons (the name-click
+        // flash handler also matches .cc-ct-dotrow). Keyed on .cc-ct-dotrow > .cc-badge so the state poll's
+        // className rewrite can't strip the dot look; font-size:0 hides the status text. Theming OFF -> the old
+        // clickable state-toggle text pill in the meta row.
         var innerEl0 = nameCell.querySelector(".inner") || nameCell, appnameEl = innerEl0.querySelector("span.appname");
         if (themingOn() && appnameEl) {
-          // #10 (user): the state DOT sits UNDER the name in its own row (not beside it). Keyed on the row
-          // wrapper (.cc-ct-dotrow > .cc-badge) so the state poll's className-reassign can't strip the dot
-          // look; font-size:0 hides the re-added "läuft" text. CSS also gives it the reactive grey+hover.
+          var dot = el("span", "cc-badge cc-badge-" + st + " cc-ct-statedot" + (showUnhealthy(c) ? " cc-badge-alert" : ""));
+          dot.dataset.name = name;
+          dot.setAttribute("data-tip", showUnhealthy(c) ? unhealthyTip() : stateLabel(st));
           var drow = innerEl0.querySelector(".cc-ct-dotrow");
           if (!drow) { drow = el("div", "cc-ct-dotrow"); drow.setAttribute(MARK, "1"); if (appnameEl.nextSibling) appnameEl.parentNode.insertBefore(drow, appnameEl.nextSibling); else appnameEl.parentNode.appendChild(drow); }
-          drow.appendChild(sb);
-        } else { meta.appendChild(sb); }   // theming off -> the state toggle keeps its text pill in the meta row
+          drow.appendChild(dot);
+        } else {
+          var sb = stateToggle(name, st); if (showUnhealthy(c)) { sb.classList.add("cc-badge-alert"); sb.textContent = stateLabel(st) + " ✕"; sb.setAttribute("data-tip", unhealthyTip()); }
+          meta.appendChild(sb);
+        }
         // ID / Von / Volumes are DECORATIVE info badges — theming only.
         if (themingOn()) {
           var advDiv = nameCell.querySelector(":scope > div.advanced");
@@ -1729,10 +1734,10 @@
   // the fill is enforced INLINE with priority: Unraid's theme CSS beats the
   // stylesheet (the gears looked hollow again on the box)
   function gearFill(lb, set) {
-    // reactive sub-mode: an IDLE gear paints NOTHING inline (inline !important beats every
-    // sheet rule) — CSS rests it grey and colours it on ROW/card hover. A SET gear keeps
-    // its paint (active contract).
-    if (!set && themingOn() && localStorage.getItem("cc.rainbow") === "1" && localStorage.getItem("cc.rbmode") === "active") {
+    // #12 (user CORRECTION: the gears must be FULLY in the colour modes, INCL. reactive): in the reactive
+    // sub-mode NEITHER a set NOR an idle gear paints inline — CSS rests them all neutral and colours them on
+    // ROW/card hover, exactly like every other control (an inline paint would keep one gear stuck coloured).
+    if (themingOn() && localStorage.getItem("cc.rainbow") === "1" && localStorage.getItem("cc.rbmode") === "active") {
       lb.style.removeProperty("background"); lb.style.removeProperty("color");
       return;
     }
@@ -2665,7 +2670,7 @@
       document.addEventListener("click", function (e) {
         try {
           if (dead || mode !== "list") return;
-          var hand = e.target && e.target.closest ? e.target.closest("td.ct-name span.hand, td.ct-name span.appname") : null;
+          var hand = e.target && e.target.closest ? e.target.closest("td.ct-name span.hand, td.ct-name span.appname, td.ct-name .cc-ct-dotrow") : null;
           if (!hand) return;
           var row2 = hand.closest("tr"); var bar2 = row2 && row2.querySelector(".cc-actbar");
           if (!bar2) return;

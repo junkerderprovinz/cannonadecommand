@@ -1359,9 +1359,9 @@ html.cc-shares-rbneutral.cc-docker-on nav.tabs .tabs-container > button[role=tab
 html.cc-shares-rbneutral.cc-docker-on nav.tabs .tabs-container > button[role=tab]:not([aria-selected="true"]):hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
 /* limit gears (list rows + grid cards): the idle gear rests grey (gearFill skips its inline
    paint in neutral) and joins the ROW/card hover; a SET gear keeps its paint (live state) */
-html.cc-shares-rbneutral.cc-docker-on .cc-limbtn:not(.cc-limbtn-set) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
-html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-limbtn:not(.cc-limbtn-set),
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-limbtn:not(.cc-limbtn-set) { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-limbtn { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-limbtn,
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-limbtn { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
 /* popup chrome painted by docker.js (.cc-pop editors + the .cc-menu gear menu): buttons —
    incl. the accent-filled .cc-btn-primary — rest grey; selected day chips (.cc-day-on),
    checked toggles and selected cores keep their colour (active contract). */

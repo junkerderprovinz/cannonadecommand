@@ -155,16 +155,18 @@ html.cc-tools-on #displaybox a:not(.button):hover { filter: brightness(1.14); te
    — chips in a floating elevated panel, accent selected + hover. Ported from the docker cc-dsel look. The
    panel is re-anchored position:fixed at open time by ccPositionTsel, so it escapes the page's overflow clip. */
 html.cc-tools-on #displaybox .cc-tsel { position: relative; display: inline-block; vertical-align: middle; }
-/* #1 (user): the dropdown trigger follows the colour mode PER ROW (rainbow -> --cc-rb-c stamped by
-   ccPaintRotate on the .cc-tsel wrapper, inherited here; else the single rainbow/accent colour), exactly
-   like the toggles beside it — no longer a uniform dark box. Text + caret take the contrast ink. */
+/* #1 (user CORRECTION): the OPEN button (trigger) is only REACTIVE — neutral at rest, it takes the colour
+   mode ONLY on hover (not permanently filled). The coloured list items live in the panel below. */
 html.cc-tools-on #displaybox .cc-tsel-trigger {
   display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
   min-width: 240px; min-height: 34px; box-sizing: border-box;
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); border-radius: min(var(--cc-b-radius, 8px), 12px);
-  padding: 4px 12px; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))); cursor: pointer;
+  background: var(--cc-tl-surface2, #232323); border-radius: min(var(--cc-b-radius, 8px), 12px);
+  padding: 4px 12px; color: #eaeaea; cursor: pointer; transition: background .12s, color .12s;
 }
-html.cc-tools-on #displaybox .cc-tsel-trigger:hover { filter: brightness(1.1); }
+html.cc-tools-on #displaybox .cc-tsel-trigger:hover,
+html.cc-tools-on #displaybox .cc-tsel.cc-open .cc-tsel-trigger {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff)));
+}
 html.cc-tools-on #displaybox .cc-tsel-trigger::after {
   content: ""; flex: 0 0 auto; width: 0; height: 0; margin-left: 4px;
   border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor;
@@ -178,12 +180,15 @@ html.cc-tools-on #displaybox .cc-tsel-panel {
 html.cc-tools-on #displaybox .cc-tsel.cc-open .cc-tsel-panel { display: flex; }
 html.cc-tools-on #displaybox .cc-tsel.cc-tsel-disabled .cc-tsel-trigger { opacity: .5; cursor: not-allowed; }
 html.cc-tools-on #displaybox .cc-tsel-group { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9a9a9a; padding: 4px 12px 0; }
+/* #1 (user): each list item takes a DIFFERENT palette colour in rainbow mode (per-item --cc-rb-c stamped by
+   ccPaintRotate on each panel); hover/selected just brighten. Accent mode -> the single accent colour. */
 html.cc-tools-on #displaybox .cc-tsel-opt {
   display: flex; align-items: center; gap: 8px; justify-content: flex-start;
   line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 999px);
-  background: rgba(255, 255, 255, .09); border: none; color: #ececec; white-space: nowrap;
-  transition: background .12s, color .12s;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); border: none;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))); white-space: nowrap;
+  transition: filter .12s;
 }
 html.cc-tools-on #displaybox .cc-tsel-opt:hover,
-html.cc-tools-on #displaybox .cc-tsel-opt.is-selected { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)); box-shadow: none !important; }
+html.cc-tools-on #displaybox .cc-tsel-opt.is-selected { filter: brightness(1.18); box-shadow: none !important; }
 html.cc-tools-on #displaybox .cc-tsel-opt.is-disabled { opacity: .45; cursor: not-allowed; }
