@@ -898,3 +898,20 @@ html.cc-arrange #cc-island .cc-isl-row, html.cc-header-on #cc-island.cc-isl-arra
 }
 /* #Drag-Umbau: the reused native lock icon glows in the accent while arranging (open/unlocked look) */
 html.cc-arrange #menu .nav-item.LockButton b, html.cc-arrange #cc-lock-item b { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+
+/* ── #S9 light-theme pass (Theme--white / Theme--azure) ── CannonadeCommand is dark-first (Carbon). Solid dark
+   badges/cards read fine on a light page, but elements with a FAINT/transparent background + light text vanish
+   on true white. Give those a light surface + dark text so nothing disappears. (Solid CC surfaces stay dark on
+   purpose — that's the CC look.) */
+html.Theme--white #cc-island .cc-isl-chip,
+html.Theme--azure #cc-island .cc-isl-chip { background: rgba(0, 0, 0, .07); color: #1c1c1c; }
+html.Theme--white.cc-tools-rbneutral #displaybox .cc-tsel-opt,
+html.Theme--azure.cc-tools-rbneutral #displaybox .cc-tsel-opt { background: rgba(0, 0, 0, .06); color: #1c1c1c; }
+html.Theme--white.cc-tools-on #displaybox dl > dt,
+html.Theme--azure.cc-tools-on #displaybox dl > dt { color: #303030; }
+html.Theme--white.cc-tools-on #displaybox dl > dd,
+html.Theme--azure.cc-tools-on #displaybox dl > dd { color: #303030; }
+html.Theme--white #cc-toast { background: #f4f4f4; color: #1c1c1c; }
+/* the reactive rest-grey (rgba grey .18 + light text) needs darker text on a light page */
+html.Theme--white.cc-shares-rbneutral .cc-badge,
+html.Theme--white.cc-docker-on .cc-limbtn:not(.cc-limbtn-set) { color: #303030 !important; }
