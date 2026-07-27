@@ -1155,7 +1155,7 @@ html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .cc-alloc-filled {
    Give the block the full content width, spread the four columns as fractions so they fill it left-to-
    right, and stripe alternating rows so the long list is scannable. */
 html.cc-docker-on.cc-on-addct #canvas #dockerAllocations,
-html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations { width: 100% !important; box-sizing: border-box; margin: 6px 0 0 !important; }
+html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations { width: 100% !important; max-width: min(1100px, 100%) !important; box-sizing: border-box; margin: 6px auto 0 !important; }   /* #Docker-Zuweisungen (user: wie nativ, nicht links am Rand): constrained + centred */
 html.cc-docker-on.cc-on-addct #canvas #dockerAllocations .docker-allocation-row,
 html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .docker-allocation-row {
   grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1.6fr) !important;
@@ -1476,3 +1476,10 @@ html.cc-shape-circle.cc-plugins-iconbg .cc-plugico { border-radius: 50% !importa
 /* #5 (user: reset not same size as the swatches): Unraid's global control CSS inflates it. Force it to be
    exactly one swatch cell (same height, one flex unit) with !important. Also drop any focus ring. */
 #cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn { min-width: 0 !important; max-width: none !important; height: 30px !important; box-sizing: border-box !important; padding: 0 !important; margin: 0 !important; outline: none !important; }
+/* #Kategorien-Dropdown (user: nicht ordentlich ausgerichtet): the widget's inner selector carried extra
+   left padding, so its text sat indented vs every other input. Zero the wrapper indent + give the inner
+   trigger the SAME 12px pad as the other fields so its left edge and width line up exactly. */
+html.cc-docker-on.cc-on-addct #ddcl-catSelect { padding: 0 !important; }
+html.cc-docker-on.cc-on-addct #ddcl-catSelect > a,
+html.cc-docker-on.cc-on-addct #ddcl-catSelect .ui-dropdownchecklist-selector,
+html.cc-docker-on.cc-on-addct #ddcl-catSelect .ui-dropdownchecklist-text { box-sizing: border-box !important; width: 100% !important; margin: 0 !important; padding: 0 12px !important; text-indent: 0 !important; }

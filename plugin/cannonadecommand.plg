@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.94.0">
+  <!ENTITY version   "2.95.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,9 @@
 </ICON>
 
 <CHANGES>
+### 2.95.0
+- Container-Bearbeiten: "Aktuelle Docker-Zuweisungen" wieder wie nativ ausgerichtet (begrenzt + zentriert, nicht
+  vollbreit am linken Rand); das Kategorie-Dropdown sitzt jetzt buendig auf gleicher Kante/Breite wie die anderen Felder.
 ### 2.94.0
 - Anordnen (Umbau): kein eigenes Schloss mehr - CannonadeCommand nutzt Unraids eigenes Anordnen-/Sperr-Icon
   (das sonst nur im Dashboard erscheint) und zeigt es persistent auf ALLEN Tabs; ein Klick aktiviert den
@@ -2081,7 +2084,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>6df34414c2630e22dbf040a1e2c14d828625ea1946def478df13990cff1aeadc</SHA256>
+  <SHA256>0fd6e1e50d086f7318f1cf645566164d7a820ecc948fd0513a9b6edcbb25c0fc</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
