@@ -916,3 +916,14 @@ html.Theme--azure #cc-toast { background: #f4f4f4; color: #1c1c1c; }
 /* the reactive rest-grey (rgba grey .18 + light text) needs darker text on a light page */
 html.Theme--white.cc-shares-rbneutral .cc-badge,
 html.Theme--white.cc-docker-on .cc-limbtn:not(.cc-limbtn-set) { color: #303030 !important; }
+
+/* ── #5 (user): the Unraid/Connect NOTIFICATIONS drawer (a reka-ui dialog). The single messages were only
+   line-separated (.divide-y), not cards, and the top tabs/buttons (Ungelesen/Archiviert, Alle Typen/Info/Warnung,
+   Alle archivieren/loeschen) had mismatched heights + radii. Card-ify each message and give the tabs/buttons one
+   consistent height + radius. Scoped to reka dialogs + the notification item class so nothing else is touched. */
+html.cc-popups-on [id^="reka-dialog-content"] .divide-y > * { border: 0 !important; }
+html.cc-popups-on [id^="reka-dialog-content"] [class~="group/item"] {
+  background: #1c1c1c !important; border: none !important; border-radius: 10px !important;
+  padding: 12px 14px !important; margin: 0 0 8px 0 !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;
+}
+html.cc-popups-on [id^="reka-dialog-content"] [class*="inline-flex"][class*="justify-center"] { border-radius: 8px !important; min-height: 30px !important; }

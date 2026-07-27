@@ -2299,7 +2299,7 @@
   var ctMo = null, ctPending = false;
   function ctPn() { try { return location.pathname.replace(/\/+$/, ""); } catch (e) { return ""; } }
   function onCtForm() {
-    try { return /^\/Docker\/(AddContainer|UpdateContainer)$/.test(ctPn()) && !!document.querySelector('#canvas form[onsubmit^="return prepareConfig"]'); } catch (e) { return false; }
+    try { return /^\/(Docker|Apps)\/(AddContainer|UpdateContainer)$/.test(ctPn()) && !!document.querySelector('#canvas form[onsubmit^="return prepareConfig"]'); } catch (e) { return false; }
   }
   // cc-dsel = the shares.js ccWrapSelect mechanism under DISTINCT class/marker names, so shares.js's
   // global "#displaybox .cc-sel" teardown (that script loads on every page) can never unwrap ours.
@@ -2556,6 +2556,45 @@
       // Port col: "???" -> the published ports (bridge containers) from the engine's HostConfig read
       if (/\?\?\?/.test(spans[3].textContent || "") && c.ports && c.ports.length) { spans[3].textContent = c.ports.join(" "); spans[3].classList.add("cc-alloc-filled"); }
     }
+    ccAllocSortUI(); ccAllocSortApply();   // #2 (user): keep the sort control + applied order after every (re)paint
+  }
+  // #2 (user): sort the Docker allocations by container NAME (A-Z) or by IP. The rows are native DOM
+  // (.docker-allocation-row; span[0]=name, span[2]=IP), so we reorder the nodes. Idempotent (only re-appends
+  // when the order actually changed) so the bootCtForm subtree observer can't ping-pong into a re-sort loop.
+  function ccAllocSortMode() { try { return localStorage.getItem("cc.allocsort") || ""; } catch (e) { return ""; } }
+  function ccAllocIpKey(s) { var m = String(s || "").match(/(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/); return m ? ((+m[1]) * 16777216 + (+m[2]) * 65536 + (+m[3]) * 256 + (+m[4])) : -1; }
+  function ccAllocSortUI() {
+    var tbl = document.getElementById("dockerAllocations");
+    if (!tbl || !tbl.querySelector(".docker-allocation-row") || tbl.querySelector(":scope > .cc-alloc-sortbar")) return;
+    var bar = el("div", "cc-alloc-sortbar"); bar.setAttribute(MARK, "1");
+    bar.appendChild(el("span", "cc-alloc-sortlbl", LANG === "de" ? "Sortieren:" : "Sort:"));
+    [["name", "Name A-Z"], ["ip", "IP"]].forEach(function (m) {
+      var b = el("button", "cc-alloc-sortbtn" + (ccAllocSortMode() === m[0] ? " cc-alloc-sorton" : ""), m[1]); b.type = "button";
+      b.addEventListener("click", function () {
+        var nm = ccAllocSortMode() === m[0] ? "" : m[0];   // click the active one again -> back to native order
+        try { localStorage.setItem("cc.allocsort", nm); } catch (e) {}
+        Array.prototype.forEach.call(bar.querySelectorAll(".cc-alloc-sortbtn"), function (x) { x.classList.remove("cc-alloc-sorton"); });
+        if (nm) b.classList.add("cc-alloc-sorton");
+        ccAllocSortApply();
+      });
+      bar.appendChild(b);
+    });
+    tbl.insertBefore(bar, tbl.firstChild);
+  }
+  function ccAllocSortApply() {
+    var tbl = document.getElementById("dockerAllocations"); if (!tbl) return;
+    var mode = ccAllocSortMode(); if (!mode) return;   // "" = keep native order
+    // each container is a direct-child <dl> wrapping a .docker-allocation-row (span[0]=name, span[2]=IP)
+    var dls = Array.prototype.slice.call(tbl.querySelectorAll(":scope > dl"));
+    if (dls.length < 2) return;
+    function cells(dl) { var r = dl.querySelector(".docker-allocation-row"); return r ? r.querySelectorAll(":scope > span") : []; }
+    var sorted = dls.slice().sort(function (a, b) {
+      var sa = cells(a), sb = cells(b);
+      if (mode === "ip") return ccAllocIpKey(sa[2] && sa[2].textContent) - ccAllocIpKey(sb[2] && sb[2].textContent);
+      var na = ((sa[0] && sa[0].textContent) || "").trim().toLowerCase(), nb = ((sb[0] && sb[0].textContent) || "").trim().toLowerCase();
+      return na < nb ? -1 : na > nb ? 1 : 0;
+    });
+    for (var i = 0; i < dls.length; i++) { if (dls[i] !== sorted[i]) { sorted.forEach(function (d) { tbl.appendChild(d); }); return; } }   // only reorder if order actually changed (loop guard)
   }
   function ctApply() {
     try {
@@ -2615,7 +2654,7 @@
   // like the container-update dialog. All the look lives in docker.css under html.cc-ctout-on.
   function onCtOutput() {
     try {
-      if (!/^\/Docker\/(AddContainer|UpdateContainer)$/.test(ctPn())) return false;
+      if (!/^\/(Docker|Apps)\/(AddContainer|UpdateContainer)$/.test(ctPn())) return false;
       if (document.querySelector('#canvas form[onsubmit^="return prepareConfig"]')) return false; // that's the FORM page
       var content = document.querySelector("#displaybox .content");
       return !!content && (/docker\s+(create|run)/i.test(content.textContent || "") || !!content.querySelector("pre, h2"));
@@ -2650,7 +2689,7 @@
     // form (or the run OUTPUT) can be injected into #canvas a beat AFTER boot() runs its one-shot check above, so
     // both were false and the page stayed native with no re-detection. Watch briefly for either to appear and
     // dispatch then. Scoped to that URL so the container-LIST page pays nothing.
-    if (/^\/Docker\/(AddContainer|UpdateContainer)$/.test(ctPn())) {
+    if (/^\/(Docker|Apps)\/(AddContainer|UpdateContainer)$/.test(ctPn())) {
       var ctWatch = new MutationObserver(function () {
         if (onCtForm()) { try { ctWatch.disconnect(); } catch (e) {} bootCtForm(); }
         else if (onCtOutput()) { try { ctWatch.disconnect(); } catch (e) {} bootCtOutput(); }

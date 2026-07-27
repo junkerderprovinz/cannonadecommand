@@ -1159,10 +1159,21 @@ html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .cc-alloc-filled {
    native rows are one big grid whose last 1fr column left a wide empty gap that read as pushed-over.
    Give the block the full content width, spread the four columns as fractions so they fill it left-to-
    right, and stripe alternating rows so the long list is scannable. */
+/* #3 (user: "immer noch zu weit links"): the block is a direct child of the full-width form, so centring it
+   (margin:auto) put its left edge at ~x256 while the form's VALUE fields start at ~37% (x589). Align its left edge
+   with the value column instead so it sits under the fields, not out at the far left. 37% + max 63% always fits. */
 html.cc-docker-on.cc-on-addct #canvas #dockerAllocations,
-html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations { width: 100% !important; max-width: min(1100px, 100%) !important; box-sizing: border-box; margin: 6px auto 0 !important; }   /* #Docker-Zuweisungen (user: wie nativ, nicht links am Rand): constrained + centred */
+html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations { width: auto !important; max-width: min(720px, 63%) !important; box-sizing: border-box; margin: 6px auto 6px 37% !important; }
+/* #3b (user "schlecht formatiert"): each allocation is a <dl> and the form's 35% label grid squeezed its value
+   <dd> (and the row inside) to ~252px, so the four columns huddled at the left. Since CC hides the label, make the
+   allocation dls block so the dd + row fill the full width and the fr columns spread. */
+html.cc-docker-on.cc-on-addct #dockerAllocations dl { display: block !important; margin: 0 !important; }
+html.cc-docker-on.cc-on-addct #dockerAllocations dl > dd { display: block !important; width: 100% !important; margin: 0 !important; }
 html.cc-docker-on.cc-on-addct #canvas #dockerAllocations .docker-allocation-row,
 html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .docker-allocation-row {
+  /* #3b (user "schlecht formatiert"): native gives the row a fixed width:232px, so the fr columns collapsed to
+     content and the 4 columns huddled at the left. Force the row to fill the block so the columns spread evenly. */
+  width: 100% !important; box-sizing: border-box !important;
   grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1.6fr) !important;
   align-items: center; padding: 5px 10px !important; border-radius: 6px; column-gap: 12px;
 }
@@ -1170,6 +1181,12 @@ html.cc-docker-on.cc-on-addct #canvas #dockerAllocations .docker-allocation-row:
 html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .docker-allocation-row:nth-child(even) {
   background: rgba(255, 255, 255, .04) !important;
 }
+/* #2 (user): the allocations sort bar (Name A-Z / IP) sits above the list; active button follows the colour mode */
+html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbar { display: flex; align-items: center; gap: 8px; padding: 2px 10px 10px; }
+html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortlbl { color: #9a9a9a; font-size: 12px; }
+html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbtn { background: #262626; color: #c9c9c9; border: none; border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer; transition: background .12s, color .12s; }
+html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbtn:hover { background: #303030; }
+html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbtn.cc-alloc-sorton { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-accent-text, #fff); }
 /* #17 (user: "Kategorien-Feld nicht richtig ausgerichtet"): the categories dropdownchecklist widget
    (#ddcl-catSelect) sat at its own intrinsic width, out of line with the other value fields. Make it
    fill the value column and sit flush at its left edge like every other input. */

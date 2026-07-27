@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.99.0">
+  <!ENTITY version   "3.0.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,16 @@
 </ICON>
 
 <CHANGES>
+### 3.0.0
+- Community Applications installs are finally CannonadeCommand-styled. CA opens the container template at
+  /Apps/AddContainer (not /Docker/AddContainer), where CC's script hook did not load, so the add form AND the
+  install-output window came up native/flat. The hook and the form/output detection now cover /(Docker|Apps)/, so
+  the CC form styling and the floating output window apply on the CA path too.
+- Docker allocations ("Docker-Zuweisungen"): new sort control (by container name A-Z, or by IP) above the list.
+- Docker allocations: aligned with the form's value column instead of sitting far to the left, and the rows now
+  fill the width so the four columns (name / network / IP / ports) spread evenly instead of huddling at the left.
+- Notifications drawer: each message is a proper card now (raised surface, rounded, spaced) instead of a plain
+  line-separated row, and the top tabs/buttons share one consistent height and radius.
 ### 2.99.0
 - Removed the Docker multiselect (#S7) and the container note/tag (#S8) features again (user set them aside).
 - "Add Container" / template form no longer stays completely native: the CC styling (dl grids, CC dropdowns, colon-
@@ -2129,7 +2139,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>5cce45dd7666aaa9b224b30aac55f2f35140312dbb3d65040949afd6247bf393</SHA256>
+  <SHA256>f11ae22f5a27f3d02ec821764d99e345d30d1c8ef654ae1d4c302e46d45bbc39</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
