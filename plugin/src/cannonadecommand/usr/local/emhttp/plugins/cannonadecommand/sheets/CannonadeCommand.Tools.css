@@ -62,7 +62,15 @@ html.cc-tools-on #displaybox table:not(.cc-enh) tr:hover td { background: rgba(2
    out as a 2-col GRID that centres each row; the native float/width on dt/dd is neutralised so grid wins. ── */
 html.cc-tools-on #displaybox dl { margin: 0; display: grid; grid-template-columns: minmax(150px, 38%) minmax(0, 1fr); align-items: center; column-gap: 16px; row-gap: 6px; max-width: min(760px, 100%); }   /* #3-B (user: "voellig deplatziert / wie nativ"): constrain the dl to a native-like compact width so label + value sit CLOSE together instead of spreading across the full page */
 html.cc-tools-on #displaybox dl > dt { color: #cfcfcf; font-weight: 600; float: none !important; width: auto !important; margin: 0; padding: 0; text-align: right; align-self: center; }
-html.cc-tools-on #displaybox dl > dd { color: #d6d6d6; float: none !important; width: auto !important; margin: 0; display: flex; align-items: center; justify-content: flex-start; min-width: 0; }   /* value left-aligned, right after the label */
+/* #8 (user: "alles falsch ausgerichtet -> native Anordnung"): a FLEX dd centered the read-only values AND the CC
+   yes/no toggles (.cc-tgl) in the middle of the value column while text fields filled from the left -> everything
+   misaligned. A BLOCK dd with text-align:left lines them ALL up at the value-column left, like native (verified live:
+   read-only 529->320, toggle 525->320, field stays 320/full-width). Vertical centring on the row comes from the dl
+   grid's align-items:center. */
+html.cc-tools-on #displaybox dl > dd { color: #d6d6d6; float: none !important; width: auto !important; margin: 0; display: block; text-align: left; min-width: 0; }
+html.cc-tools-on #displaybox dl > dd > .cc-tgl,
+html.cc-tools-on #displaybox dl > dd .switch-button-background { vertical-align: middle; }
+html.cc-tools-on #displaybox dl > dd:has(.advancedview) { text-align: center; }   /* the top Einfache/Erweiterte-Ansicht switch stays centred, like native */
 /* #15 (user: clicking Help did nothing visible): the native HelpButton toggles the inline_help blocks (which
    CC normally hides in favour of the (i) bubbles). When the user DOES expand them, span the full grid width
    and give them a readable CC note look so they aren't squeezed into a single grid column. */
@@ -125,11 +133,15 @@ html.cc-tools-on #displaybox .cc-toolsinfo {
   vertical-align: text-bottom; position: relative; top: -1px;
 }
 html.cc-tools-on #displaybox .cc-toolsinfo:hover { color: var(--cc-accent, #2f6feb); opacity: 1; }
-/* #N5 the docker status word -> a small state DOT (like the disk state dots), sitting right in the badge */
+/* #7 (user): the status word -> a small state DOT to the right of the section badge. Its SHAPE follows the CC
+   badge-shape setting (--cc-dot-r, set globally by header.js) and its COLOUR follows the colour modes (accent)
+   unless state-native is on, where the raw state colour (stored inline as --cc-dotstate) wins. */
 html.cc-tools-on #displaybox div.title .cc-status-dot {
-  display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-left: 8px;
+  display: inline-block; width: 12px; height: 12px; border-radius: var(--cc-dot-r, 50%); margin-left: 8px;
   vertical-align: middle; box-shadow: 0 0 0 2px rgba(0, 0, 0, .25);
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb));
 }
+html.cc-tools-on.cc-state-native #displaybox div.title .cc-status-dot { background: var(--cc-dotstate, #8d8d8d); }
 /* #24 a CC toggle standing in for a yes/no <select> (the real select stays hidden as the form value) */
 /* #8 (user: the toggles must follow the CC Badge-Form): the track + knob read the global shape vars
    (--cc-b-radius for the track, --cc-dot-r for the knob), so pill/rounded/square/circle all carry through.
@@ -241,6 +253,17 @@ html.cc-tools-on #displaybox input[type="checkbox"]:checked { background: var(--
 html.cc-tools-on #displaybox input[type="checkbox"]:checked::after {
   content: ""; position: absolute; left: 5.5px; top: 1.5px; width: 4px; height: 9px;
   border: solid var(--cc-accent-text, #fff); border-width: 0 2px 2px 0; transform: rotate(45deg);
+}
+/* #10 (user: Energiemodus native Radiobuttons -> CC-Style): dark, borderless, round, accent-filled dot on check. */
+html.cc-tools-on #displaybox input[type="radio"] {
+  -webkit-appearance: none; appearance: none; width: 18px; height: 18px; box-sizing: border-box; flex: none;
+  background: var(--cc-tl-surface2, #232323); border: none !important; outline: none !important; border-radius: 50%;
+  cursor: pointer; vertical-align: middle; position: relative; margin: 0 6px 0 0;
+}
+html.cc-tools-on #displaybox input[type="radio"]:checked { background: var(--cc-accent, #2f6feb); }
+html.cc-tools-on #displaybox input[type="radio"]:checked::after {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--cc-accent-text, #fff); transform: translate(-50%, -50%);
 }
 /* ── #Tools-Durchgang (user: native Toggles/Badges/Selects/Rahmen nicht im CC-Style) ── */
 /* native Unraid toggle switch -> CC pill that follows the colour mode when on */

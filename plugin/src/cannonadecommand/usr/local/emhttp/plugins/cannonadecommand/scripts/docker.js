@@ -700,16 +700,6 @@
 
       // ── NAME cell (col 1): start/stop badge, and BENEATH it Container-ID / Von ──
       if (nameCell) {
-        // #S7 (multiselect): a select checkbox left of the logo; selection drives the bulk-action bar.
-        if (themingOn()) {
-          var obx = nameCell.querySelector(".outer");
-          if (obx && !obx.querySelector(":scope > .cc-msel")) {
-            var cbx = el("input", "cc-msel"); cbx.type = "checkbox"; cbx.setAttribute(MARK, "1"); cbx.checked = !!ccMultiSel[name];
-            cbx.setAttribute("title", "Auswählen");
-            cbx.addEventListener("click", function (e) { e.stopPropagation(); if (cbx.checked) ccMultiSel[name] = true; else delete ccMultiSel[name]; ccBulkBar(); });
-            obx.insertBefore(cbx, obx.firstChild);
-          }
-        }
         var glyph = nameCell.querySelector(".inner i[id^='load-']");
         var st = (c && c.state) || glyphState(glyph) || "unknown";
         var meta = el("div", "cc-namemeta"); meta.setAttribute(MARK, "1");
@@ -726,24 +716,6 @@
           var drow = innerEl0.querySelector(".cc-ct-dotrow");
           if (!drow) { drow = el("div", "cc-ct-dotrow"); drow.setAttribute(MARK, "1"); if (appnameEl.nextSibling) appnameEl.parentNode.insertBefore(drow, appnameEl.nextSibling); else appnameEl.parentNode.appendChild(drow); }
           drow.appendChild(dot);
-          // #S8 (container tags/notes): a per-container note badge (stored cc.ctnote.<name>); shows "+" when empty,
-          // the note otherwise. Click -> prompt to edit. Placed beside the state dot so it rides the same row.
-          if (!drow.querySelector(":scope > .cc-cttag")) {
-            var note = ""; try { note = localStorage.getItem("cc.ctnote." + name) || ""; } catch (eN) {}
-            var tag = el("span", "cc-cttag" + (note ? " cc-cttag-set" : "")); tag.setAttribute(MARK, "1");
-            tag.textContent = note || "＋"; tag.setAttribute("data-tip", note || ("Notiz/Tag hinzufügen"));
-            tag.addEventListener("click", (function (nm, el2) {
-              return function (e) {
-                e.preventDefault(); e.stopPropagation();
-                var cur = ""; try { cur = localStorage.getItem("cc.ctnote." + nm) || ""; } catch (e2) {}
-                var v = window.prompt("Notiz / Tag für " + nm + ":", cur);
-                if (v === null) return; v = v.replace(/^\s+|\s+$/g, "");
-                try { if (v) localStorage.setItem("cc.ctnote." + nm, v); else localStorage.removeItem("cc.ctnote." + nm); } catch (e3) {}
-                el2.textContent = v || "＋"; el2.classList.toggle("cc-cttag-set", !!v); el2.setAttribute("data-tip", v || "Notiz/Tag hinzufügen");
-              };
-            })(name, tag));
-            drow.appendChild(tag);
-          }
         } else {
           var sb = stateToggle(name, st); if (showUnhealthy(c)) { sb.classList.add("cc-badge-alert"); sb.textContent = stateLabel(st) + " ✕"; sb.setAttribute("data-tip", unhealthyTip()); }
           meta.appendChild(sb);
@@ -1008,11 +980,17 @@
     if (typeof window.rmContainer === "function" && cx.id) more.appendChild(actBtn("fa-trash", LANG === "de" ? "Entfernen" : "Remove", function () { window.rmContainer(name, cx.image, cx.id); }));
     if (cx.tswebui) more.appendChild(actBtn("fa-globe", "Tailscale WebUI", function () { window.open(cx.tswebui, "_blank"); }));
     cx.links.forEach(function (l2) { more.appendChild(actBtn(l2.glyph, l2.tip, function () { window.open(l2.url, "_blank"); })); });
-    r2.appendChild(more.children.length ? actBtn("fa-ellipsis-h", LANG === "de" ? "Mehr" : "More", function () { more.classList.toggle("cc-open"); tintAct(more); })
-      : actBtnOff("fa-ellipsis-h", LANG === "de" ? "keine weiteren Links" : "no more links"));
-    // `more` lives INSIDE the grid now (display:contents when open) so the expander-loaded
-    // icons flow into the SAME 4-column grid with the same gap — no more stray flex row.
+    if (more.children.length) {
+      var moreBtn = actBtn("fa-ellipsis-h", LANG === "de" ? "Mehr" : "More", function () { bar.classList.add("cc-open"); tintAct(bar); });
+      moreBtn.classList.add("cc-acttoggle");   // #4: the "…" is the 4th icon of row 2; it hides once the bar is open
+      r2.appendChild(moreBtn);
+    } else {
+      r2.appendChild(actBtnOff("fa-ellipsis-h", LANG === "de" ? "keine weiteren Links" : "no more links"));
+    }
+    // #4 (user): r1 = 3 icons, r2 = 3 icons + the "…" toggle (as the 4th). Clicking "…" opens the bar (the
+    // harvested extras fade in, 3 per row; the "…" hides); moving the mouse off the cluster auto-collapses it.
     bar.appendChild(r1); bar.appendChild(r2); bar.appendChild(more);
+    bar.addEventListener("mouseleave", function () { if (bar.classList.contains("cc-open")) { bar.classList.remove("cc-open"); tintAct(bar); } });
     tintAct(bar);
     return { bar: bar, more: more, sig: cx.webui + "|" + cx.xml + "|" + cx.tswebui + "|" + cx.links.length };
   }
@@ -1233,22 +1211,6 @@
       .catch(function (e) { delete pendingAction[name]; flash("Error: " + e.message, true); syncStateBadges(); });
   }
   function actionBtn(label, name, action, primary) { var b = el("button", "cc-abtn" + (primary ? " cc-abtn-primary" : ""), label); b.addEventListener("click", function (e) { e.stopPropagation(); doAction(name, action); }); return b; }
-  // #S7 (multiselect + bulk actions): a floating bar shows while >=1 container is ticked; each button runs the
-  // action on every selected container via the same engine endpoint doAction uses.
-  var ccMultiSel = {};
-  function ccSyncMselChecks() { try { Array.prototype.slice.call(document.querySelectorAll(".cc-msel")).forEach(function (cb) { var tr = cb.closest ? cb.closest("tr") : null; var nm = tr ? rowName(tr) : ""; cb.checked = !!ccMultiSel[nm]; }); } catch (e) {} }
-  function ccBulkBar() {
-    try {
-      var n = Object.keys(ccMultiSel).length, bar = document.getElementById("cc-bulkbar");
-      if (!n) { if (bar) bar.remove(); return; }
-      if (!bar) { bar = el("div", "cc-bulkbar"); bar.id = "cc-bulkbar"; document.body.appendChild(bar); }
-      bar.innerHTML = "";
-      bar.appendChild(el("span", "cc-bulk-count", n + " " + (LANG === "de" ? "ausgewählt" : "selected")));
-      function run(action) { return function () { Object.keys(ccMultiSel).forEach(function (nm) { try { doAction(nm, action); } catch (e) {} }); ccMultiSel = {}; ccBulkBar(); ccSyncMselChecks(); }; }
-      [["start", t("start")], ["stop", t("stop")], ["restart", t("restart")], ["pause", t("pause")]].forEach(function (a) { var b = el("button", "cc-bulk-btn", a[1] || a[0]); b.addEventListener("click", run(a[0])); bar.appendChild(b); });
-      var clr = el("button", "cc-bulk-clear", "✕"); clr.setAttribute("title", LANG === "de" ? "Auswahl aufheben" : "Clear selection"); clr.addEventListener("click", function () { ccMultiSel = {}; ccBulkBar(); ccSyncMselChecks(); }); bar.appendChild(clr);
-    } catch (e) {}
-  }
   function lifecycle(c) {
     var box = el("span", "cc-life");
     if (c.state === "running") { box.appendChild(actionBtn(t("stop"), c.name, "stop")); box.appendChild(actionBtn(t("restart"), c.name, "restart")); box.appendChild(actionBtn(t("pause"), c.name, "pause")); }
@@ -2684,6 +2646,19 @@
     if (localStorage.getItem("cc.enable.docker") === "0") return; // area disabled in CC settings
     if (onCtForm()) { bootCtForm(); return; } // /Docker/AddContainer|UpdateContainer: form styling only — none of the list machinery, API polling or timers below
     if (onCtOutput()) { bootCtOutput(); return; } // #14: the create/update OUTPUT page (docker run result) -> floating CC window
+    // #6/#1 (user: "wieso ist die Seite wieder komplett nativ"): on the AddContainer/UpdateContainer URL the
+    // form (or the run OUTPUT) can be injected into #canvas a beat AFTER boot() runs its one-shot check above, so
+    // both were false and the page stayed native with no re-detection. Watch briefly for either to appear and
+    // dispatch then. Scoped to that URL so the container-LIST page pays nothing.
+    if (/^\/Docker\/(AddContainer|UpdateContainer)$/.test(ctPn())) {
+      var ctWatch = new MutationObserver(function () {
+        if (onCtForm()) { try { ctWatch.disconnect(); } catch (e) {} bootCtForm(); }
+        else if (onCtOutput()) { try { ctWatch.disconnect(); } catch (e) {} bootCtOutput(); }
+      });
+      try { ctWatch.observe(document.body || document.documentElement, { childList: true, subtree: true }); } catch (e) {}
+      setTimeout(function () { try { ctWatch.disconnect(); } catch (e) {} }, 15000); // never linger
+      return; // never start the container-LIST machinery on a form/output URL
+    }
     try {
       applySettings();
       // INSTANT first paint: the last known engine state seeds the badges right away;
@@ -2720,13 +2695,10 @@
       setInterval(function () { try { if (!dead) return; fetch(PROXY + "?path=" + encodeURIComponent("state"), { headers: { Accept: "application/json" } }).then(function (r) { if (r.ok) rearm(); }).catch(function () {}); } catch (e) {} }, 8000);
       // Clicking a container ICON or its NAME no longer opens the native edit/template page (#11, user) —
       // the action icons flash briefly instead, pointing the user at the actions column. The status dot-row
-      // flashes too (its click == "show me the actions", #79). The note-tag badge (#S8) and the multiselect
-      // checkbox (#S7) live INSIDE that row, so they must be excluded here or this capture-phase handler would
-      // stopPropagation() before their own click listeners run (tag editor / checkbox toggle would be dead).
+      // flashes too (its click == "show me the actions", #79).
       document.addEventListener("click", function (e) {
         try {
           if (dead || mode !== "list") return;
-          if (e.target && e.target.closest && e.target.closest(".cc-cttag, .cc-msel")) return;   // #S8/#S7: let the tag editor + checkbox own their clicks
           var hand = e.target && e.target.closest ? e.target.closest("td.ct-name span.hand, td.ct-name span.appname, td.ct-name .cc-ct-dotrow") : null;
           if (!hand) return;
           var row2 = hand.closest("tr"); var bar2 = row2 && row2.querySelector(".cc-actbar");

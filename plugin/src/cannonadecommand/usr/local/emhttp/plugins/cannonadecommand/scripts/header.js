@@ -114,9 +114,15 @@
   function ccNchanStyle() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
-      var sas = document.querySelectorAll(".sweet-alert.nchan");
+      // #12 (user, furious "schon so oft gesagt!!!"): the container-UPDATE window is a .sweet-alert that in this
+      // Unraid build does NOT carry the `nchan` class, so EVERY nchan-scoped fix (title strip, bottom-left loader,
+      // dark step cards, empty-grey-bar hide) missed it and only the broad paintPopups colour reached it. Also
+      // match any .sweet-alert that has a <pre> log and STAMP the nchan class on it, so all the existing
+      // .sweet-alert.nchan CSS + JS below apply to it at once.
+      var sas = document.querySelectorAll(".sweet-alert.nchan, .sweet-alert:has(pre)");
       for (var i = 0; i < sas.length; i++) {
         var sa = sas[i], h2 = sa.querySelector("h2"); if (!h2) continue;
+        sa.classList.add("nchan");
         // #7-II (user NEW SPEC): the TITLE badge must carry NO status text and NO loader — just the clean name.
         // The status lives BOTTOM-LEFT beside the buttons: a 3-dot loader (no text) while running, which turns
         // into a circle-with-check (no text) when finished. Because the title cycles (step names AND
@@ -1124,7 +1130,9 @@
         var w = stwords[sw]; var cl = (w.className || "").trim().toLowerCase(); var col = stcolor[cl];
         if (!col) continue;
         w.setAttribute("data-cc-dot", "1"); w.setAttribute("data-cc-tip", (w.textContent || "").trim());
-        w.textContent = ""; w.classList.add("cc-status-dot"); w.style.setProperty("background", col, "important");
+        // #7 (user): the dot follows the colour modes (accent) unless state-native is on; its shape follows the
+        // badge-shape setting (--cc-dot-r). Store the raw state colour as a var; the Tools.css rules pick which wins.
+        w.textContent = ""; w.classList.add("cc-status-dot"); w.style.setProperty("--cc-dotstate", col);
       }
       // #23 (user: native infotexts -> a CC info bubble): Unraid's per-setting help is a
       // blockquote.inline_help; move its text onto a small (i) icon on the label (rides the CC tip bubble)
@@ -1173,6 +1181,23 @@
           inp2.addEventListener("input", function () { var vv = (inp2.value || "").trim(); if (/^#?[0-9a-f]{3}$|^#?[0-9a-f]{6}$/i.test(vv)) pk2.value = hex6(vv); });
         })(inp, pk);
       }
+      // #9 (user): on the VM-Manager settings page the "Entfernen" link beside the VirtIO-ISO dropdown becomes the
+      // same trash ICON the Plugins tab uses (cc-b-del cc-b-delicon). Gated to /Settings/VM* so it can't false-match
+      // a "Remove" elsewhere; only converts a short Remove/Entfernen control that rides in the same row as a <select>.
+      // The native onclick is kept (it just clears the ISO path).
+      try {
+        if (/\/Settings\/VM/i.test(location.pathname)) {
+          var rms = document.querySelectorAll("#displaybox a, #displaybox span, #displaybox input[type=button], #displaybox button");
+          for (var rr = 0; rr < rms.length; rr++) {
+            var rme = rms[rr]; if (rme.getAttribute && rme.getAttribute("data-cc-delicon")) continue;
+            var rmt = (rme.textContent || rme.value || "").replace(/^[^0-9a-zäöüß]+/i, "").trim();   // strip a leading 🗑 glyph
+            if (!/^(entfernen|remove|löschen|delete)$/i.test(rmt)) continue;
+            var rmrow = rme.closest("dd") || rme.closest("dl") || rme.parentElement;
+            if (!rmrow || !rmrow.querySelector("select")) continue;   // only a Remove that rides beside a dropdown
+            rme.setAttribute("data-cc-delicon", "1"); rme.classList.add("cc-b-del", "cc-b-delicon"); rme.setAttribute("title", rmt);
+          }
+        }
+      } catch (eRm) {}
       // #24 (user: yes/no settings -> a toggle): a two-option <select> reading Ja/Nein (or Yes/No,
       // Enabled/Disabled, An/Aus, On/Off) becomes a CC toggle. The real <select> stays in the DOM (hidden)
       // as the form value; the toggle writes it back and fires change so Unraid's handlers still run.

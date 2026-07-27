@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.98.0">
+  <!ENTITY version   "2.99.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,160 +27,181 @@
 </ICON>
 
 <CHANGES>
+### 2.99.0
+- Removed the Docker multiselect (#S7) and the container note/tag (#S8) features again (user set them aside).
+- "Add Container" / template form no longer stays completely native: the CC styling (dl grids, CC dropdowns, colon-
+  stripped labels) failed when the form was injected into #canvas AFTER boot()'s one-shot check. A scoped re-detection
+  watcher now restyles it whenever the form (or the run OUTPUT) appears, however the page was reached.
+- Container-UPDATE window (the ".sweet-alert" progress popup) is finally restyled: in this Unraid build it lacks the
+  "nchan" class, so every nchan-scoped fix missed it. CC now also matches ".sweet-alert:has(pre)" and stamps the class,
+  so the title carries NO status text, the loader sits bottom-left (3 dots -> green circle-with-check), the empty grey
+  bar is hidden, and the title is a FULL-WIDTH bar.
+- Inline "Add Container" output is a real, centered window/card again with a full-width title bar (consistent with the
+  update window).
+- Action icons: 3 per row; the "…" expander sits as the 4th icon of row 2; clicking it hides the "…" and fades in the
+  remaining icons (3 per row); moving the mouse off the cluster auto-collapses it.
+- Status island: entering arrange mode no longer reflows all chips (v2.94's "wider drop zones" widened the island and
+  forced rows to full width). Chips stay in place now and just wiggle.
+- Settings subtabs (Docker, VM Manager, Power mode, ...): the section STATUS dot follows the badge-shape setting and the
+  colour modes; the auto-centered toggle controls are pinned left so toggles, fields and values line up like native;
+  native radio buttons are CC-styled; the VM-Manager "Remove" beside the VirtIO-ISO dropdown becomes a trash icon like
+  the Plugins tab.
+- CC settings: the "Display - header" card is merged into the Theming card; the native-settings "Open" button is now
+  right-aligned.
 ### 2.98.0
-- Bugfix-Durchgang (Changelog-QA, live nachgeprueft):
-- #S8 Container-Notiz/Tag liess sich nicht per Klick oeffnen - der Klick loeste stattdessen das Aktions-
-  Aufblitzen der Zeile aus (Tag sitzt in derselben Zeile). Tag + Mehrfachauswahl-Box fangen ihre Klicks
-  jetzt selbst ab; der Notiz-Editor oeffnet wieder.
-- Docker-Zahnraeder: im vollen Regenbogen-Modus trug ein Zahnrad beim Ueberfahren wieder den Akzent statt
-  seiner CPU/RAM/BW-Kind-Farbe - jetzt in JEDEM Farbmodus die eigene Kind-Farbe.
-- Statusinsel: seltener Fall behoben, in dem Temperatur-Chips und das Chip-Anordnen/Ziehen auf Seiten ohne
-  globale Hilfsvariable still ausfielen (nicht deklarierte Schleifenvariable unter "use strict").
-- Werkzeug-Seiten: der native Hilfe-Knopf meldete faelschlich "keine Inline-Hilfe", obwohl CC die Texte in
-  die (i)-Bubbles verschoben hat - meldet das jetzt nur noch, wenn wirklich keine Hilfe existiert.
-- Rahmenlinien (CC-Regel "keine Linien"): 1px-Zeilenlinie auf Werkzeug-Tabellen und der 1px-Rahmen der
-  Eingabefelder in den Popup-Fenstern entfernt (nur noch dunkle Flaeche).
-- Hell-Thema: der Hinweis-Toast bekommt auch im azurblauen Thema (Theme--azure) die helle Flaeche.
+- Bugfix pass (changelog QA, verified live):
+- #S8 The container note/tag could not be opened by clicking - the click instead triggered the row's
+  action flash (the tag sits in the same row). The tag and multiselect box now capture their own clicks;
+  the note editor opens again.
+- Docker gears: in full rainbow mode a gear again carried the accent instead of its CPU/RAM/BW child
+  colour on hover - now its own child colour in EVERY colour mode.
+- Status island: fixed a rare case where temperature chips and chip arranging/dragging silently failed on
+  pages without a global helper variable (undeclared loop variable under "use strict").
+- Tool pages: the native help button falsely reported "no inline help" even though CC had moved the texts
+  into the (i) bubbles - now it only reports that when there really is no help.
+- Border lines (CC rule "no lines"): removed the 1px row line on tool tables and the 1px border of the
+  input fields in the popup windows (dark surface only now).
+- Light theme: the hint toast now also gets the light surface in the azure theme (Theme--azure).
 ### 2.97.0
-- Hell-Theme (#S9, erster Durchgang): CannonadeCommand ist dunkel-first; solide dunkle Badges/Karten lesen sich
-  auch auf hellem Hintergrund gut, aber Elemente mit schwacher/transparenter Flaeche bekamen im weissen/azurblauen
-  Unraid-Thema jetzt eine helle Flaeche + dunklen Text, damit nichts verschwindet.
+- Light theme (#S9, first pass): CannonadeCommand is dark-first; solid dark badges/cards read well on a
+  light background too, but elements with a weak/transparent surface now get a light surface + dark text
+  in the white/azure Unraid theme so nothing disappears.
 ### 2.96.0
-- Neu #S7: Docker-Mehrfachauswahl - links am Container eine Auswahl-Checkbox; sind welche angehakt, erscheint
-  unten eine Sammel-Leiste (Start/Stop/Neustart/Pause fuer alle Ausgewaehlten).
-- Neu #S8: Container-Notizen/Tags - kleiner Notiz-Badge je Container (Klick zum Bearbeiten), bleibt gespeichert.
-- Fenster "Container hinzufuegen/aktualisieren" (Inline-Ausgabe): jetzt wie das andere Update-Fenster - dunkle
-  Flaeche, zentrierter Pill-Titel statt oranger Vollbreit-Balken, randlose Schritt-Karten, Buttons im Farbmodus.
+- New #S7: Docker multiselect - a selection checkbox on the left of each container; when any are ticked, a
+  batch bar appears at the bottom (start/stop/restart/pause for all selected).
+- New #S8: container notes/tags - a small note badge per container (click to edit), stays saved.
+- "Add/update container" window (inline output): now like the other update window - dark surface, a
+  centered pill title instead of an orange full-width bar, borderless step cards, buttons in colour mode.
 ### 2.95.0
-- Container-Bearbeiten: "Aktuelle Docker-Zuweisungen" wieder wie nativ ausgerichtet (begrenzt + zentriert, nicht
-  vollbreit am linken Rand); das Kategorie-Dropdown sitzt jetzt buendig auf gleicher Kante/Breite wie die anderen Felder.
+- Edit container: "Current Docker allocations" aligned like native again (constrained + centered, not
+  full-width against the left edge); the category dropdown now sits flush on the same edge/width as the
+  other fields.
 ### 2.94.0
-- Anordnen (Umbau): kein eigenes Schloss mehr - CannonadeCommand nutzt Unraids eigenes Anordnen-/Sperr-Icon
-  (das sonst nur im Dashboard erscheint) und zeigt es persistent auf ALLEN Tabs; ein Klick aktiviert den
-  Anordnen-Modus (Menue-Tabs + Insel-Chips zittern + sofort verschiebbar).
-- Statusinsel: Anordnen-Bereich viel groesser (grosse Drop-Zonen) fuers leichtere Verschieben.
-- CannonadeCommand-Einstellungen: alle Toggles folgen jetzt dem Farbmodus; der Favoriten-Hinweis sitzt in
-  einer (i)-Bubble statt inline; die Karte "Native Anzeige-Seite" hat jetzt Text + (i)-Bubble + kurzen "Oeffnen"-
-  Button nebeneinander; deutlich mehr Schriftarten fuer den Servernamen.
-- Werkzeug-/Einstellungs-Subseiten: native Toggle-Switches, Mehrfach-Auswahllisten und Checkboxen im CC-Style,
-  Rahmen entfernt, orange Hinweis-Cards ohne Rahmen, Abschnittsueberschriften als Akzent-Badge.
+- Arrange (rebuild): no more dedicated lock - CannonadeCommand uses Unraid's own arrange/lock icon (which
+  otherwise only appears on the Dashboard) and shows it persistently on ALL tabs; one click activates
+  arrange mode (menu tabs + island chips wiggle + immediately movable).
+- Status island: much larger arrange area (big drop zones) for easier moving.
+- CannonadeCommand settings: all toggles now follow the colour mode; the favourites hint sits in an (i)
+  bubble instead of inline; the "Native display page" card now has text + (i) bubble + a short "Open"
+  button side by side; many more fonts for the server name.
+- Tool/settings subpages: native toggle switches, multiselect lists and checkboxes in CC style, borders
+  removed, orange hint cards without borders, section headings as accent badges.
 ### 2.93.0
-- Werkzeug-/Einstellungs-Subseiten: Label und Wert stehen wieder KOMPAKT nebeneinander (wie nativ) statt ueber
-  die volle Breite gespreizt - behebt "voellig deplatziert" auf Datum/Uhrzeit, Sprache u.a.
-- CannonadeCommand-Einstellungen: Hex-Feld ohne Rahmenlinie und exakt so hoch wie die Farbfelder; der Zuruecksetzen-
-  Button ist jetzt exakt eine Farbfeld-Zelle gross.
-- Container-Bearbeiten: die Feldlabel-Badges sind wieder schlichter Text (konsistent mit den anderen Seiten).
-- Native Checkboxen auf Tools-Seiten im CC-Style (dunkel, Akzent-Haken, randlos).
+- Tool/settings subpages: label and value sit COMPACTLY side by side again (like native) instead of spread
+  across the full width - fixes "completely misplaced" on Date/Time, Language and others.
+- CannonadeCommand settings: the hex field has no border line and is exactly as tall as the colour fields;
+  the reset button is now exactly one colour-field cell in size.
+- Edit container: the field-label badges are plain text again (consistent with the other pages).
+- Native checkboxes on tool pages in CC style (dark, accent check, borderless).
 ### 2.92.0
-- Neu: Kommando-Palette mit Strg/Cmd+K - schnelles Suchen und Springen zu jeder Seite (und ein paar CC-Aktionen),
-  komplett per Tastatur bedienbar (Pfeile/Enter/Esc).
-- Anordnen-Schloss: rundes Symbol korrigiert (war zu breit).
+- New: command palette with Ctrl/Cmd+K - quickly search and jump to any page (and a few CC actions), fully
+  keyboard-operable (arrows/Enter/Esc).
+- Arrange lock: round icon corrected (was too wide).
 ### 2.91.0
-- Anordnen per Schloss (statt Halten): Ein Schloss-Symbol (immer sichtbar, oben rechts) entsperrt das Anordnen.
-  Klick -> die Menue-Tabs und Insel-Chips zittern und lassen sich SOFORT verschieben; erneuter Klick (oder Esc)
-  sperrt wieder und speichert die Anordnung. Kein fummeliges Gedrueckt-Halten mehr; im gesperrten Zustand
-  navigieren Tabs/Chips ganz normal.
+- Arrange via lock (instead of hold): a lock icon (always visible, top right) unlocks arranging. Click
+  -&gt; the menu tabs and island chips wiggle and can be moved IMMEDIATELY; clicking again (or Esc) locks
+  again and saves the arrangement. No more fiddly press-and-hold; while locked, tabs/chips navigate
+  normally.
 ### 2.90.0
-- Anzeige-Einstellungen: Die drei Kopfzeilen-Farbfelder (Text/Sekundaertext/Hintergrund) haben jetzt ein echtes
-  Farbwaehl-Feld (Swatch) neben dem Hex-Feld, beидseitig synchronisiert.
-- Schwebefenster: Titel-Badge zeigt jetzt KEINEN Statustext und keinen Loader mehr. Die Ladeanimation sitzt
-  unten links neben den Buttons (3-Punkte, ohne Text) und wird bei Fertig zu einem gruenen Kreis-mit-Haken.
-- Leere graue Schritt-Karten (der Balken ueber den Buttons) werden zuverlaessiger ausgeblendet; die unteren
-  Buttons sind jetzt einheitlich angeordnet (Primaerbutton rechts) wie im Template-Fenster.
+- Display settings: the three header colour fields (text/secondary text/background) now have a real
+  colour-picker field (swatch) next to the hex field, synced both ways.
+- Floating window: the title badge now shows NO status text and no loader anymore. The loading animation
+  sits bottom left next to the buttons (3 dots, no text) and turns into a green circle-with-check when done.
+- Empty grey step cards (the bar above the buttons) are hidden more reliably; the bottom buttons are now
+  arranged uniformly (primary button on the right) like in the template window.
 ### 2.89.0
-- Docker-Zahnraeder im reaktiven Farbmodus: beim Ueberfahren einer Zeile leuchteten alle Zahnraeder orange
-  (Akzent) statt in ihrer eigenen CPU/RAM/BW-Farbe. Jetzt traegt jedes Zahnrad auch beim Hover seine Kind-Farbe.
+- Docker gears in reactive colour mode: on hovering a row all gears glowed orange (accent) instead of their
+  own CPU/RAM/BW colour. Now each gear carries its child colour on hover too.
 
 ### 2.88.0
-- Ausrichtung (endlich grundsaetzlich): Servername und Inhalt richten sich jetzt auf JEDER Seite buendig an der
-  Hauptmenueleiste aus - auch auf Seiten ohne eigenen CannonadeCommand-Bereich (z. B. die Einstellungen-Uebersicht),
-  die bisher durchrutschten. Die Marke wird zusaetzlich per Messung exakt an die Menue-Kante gesetzt.
+- Alignment (finally fundamental): server name and content now align flush to the main menu bar on EVERY
+  page - even on pages without their own CannonadeCommand section (e.g. the settings overview) that slipped
+  through before. The brand is additionally placed exactly at the menu edge by measurement.
 
 ### 2.87.0
-- Statusinsel CPU (ENDLICH): Der Grund war, dass Unraids CPU-Wert ueber einen GraphQL-WEBSOCKET laeuft, den
-  Reverse-Proxies (z. B. der *.lol-Tunnel) nicht durchreichen (Handshake 200 statt 101) - deshalb blieb der
-  Chip leer. CannonadeCommand liest die CPU-Last jetzt ueber die EIGENE Engine per normalem HTTP (proc/stat-
-  Delta) - proxy-sicher, auf jeder Seite. Erste Anzeige 0%, dann live.
-- Anzeige-/Werkzeug-Seiten: Beschreibungstexte bleiben jetzt AUCH dann in der (i)-Bubble, wenn man den nativen
-  Hilfe-Knopf drueckt (der die Texte sonst per jQuery wieder einblendete).
+- Status island CPU (FINALLY): the cause was that Unraid's CPU value runs over a GraphQL WEBSOCKET that
+  reverse proxies (e.g. the *.lol tunnel) do not pass through (handshake 200 instead of 101) - so the chip
+  stayed empty. CannonadeCommand now reads CPU load via its OWN engine over normal HTTP (proc/stat delta) -
+  proxy-safe, on every page. First shows 0%, then live.
+- Display/tool pages: description texts now stay in the (i) bubble EVEN when you press the native help
+  button (which otherwise re-showed the texts via jQuery).
 
 ### 2.86.0
-- Template-Update-Fenster ("Container aktualisieren"): sieht jetzt wie das CA-Update-Fenster aus - dunkle
-  Flaeche, zentrierter Pill-Titel-Badge statt oranger Vollbreit-Balken, Schritt-Karten ohne Rahmen, Abschnitts-
-  Badges als Akzent-Pills, die blaue Status-Box neutralisiert. (Anderer Fenstertyp - CreateDocker-iframe - daher
-  bisher unberuehrt.)
-- Schwebefenster: der nutzlose hellgraue Balken ueber den Buttons ist weg (leere/nur-Legende-Schritt-Karten
-  werden jetzt zuverlaessig ausgeblendet).
-- Anzeige-/Werkzeug-Seiten: ALLE Beschreibungstexte landen jetzt in der (i)-Infobubble (bisher blieben manche
-  inline, wenn kein Label gefunden wurde - jetzt Fallback auf die Wertespalte).
+- Template update window ("Update container"): now looks like the CA update window - dark surface, a
+  centered pill title badge instead of an orange full-width bar, step cards without borders, section badges
+  as accent pills, the blue status box neutralized. (Different window type - CreateDocker iframe - hence
+  untouched until now.)
+- Floating window: the useless light-grey bar above the buttons is gone (empty/legend-only step cards are
+  now hidden reliably).
+- Display/tool pages: ALL description texts now land in the (i) info bubble (some stayed inline before when
+  no label was found - now falls back to the value column).
 
 ### 2.85.0
-- Hilfe-Symbol (ENDLICH die Wurzel): Das gedockte Benutzer-Profil (Glocke/Menue) lag als unsichtbare Flaeche
-  UEBER dem Hilfe-Icon und schluckte den echten Mausklick (ein synthetischer Testklick ging durch, daher schien
-  es zu "funktionieren"). Die Dock-Flaeche ist jetzt klick-durchlaessig; nur Glocke+Menue fangen Klicks. Zusaetzlich
-  ein treffsicherer Fallback-Handler. Der Hilfe-Klick wirkt jetzt zuverlaessig auf jeder Seite.
-- Statusinsel CPU: Unraid 7.3 hat den alten CPU-Kanal entfernt - CannonadeCommand liest die CPU-Last jetzt aus
-  Unraids GraphQL-Metriken (wie das native Dashboard). Der CPU-Chip zeigt wieder Prozente statt "--".
-- Statusinsel Temperatur: Auf diesem Server hatte das System-Temperatur-Plugin seine Sensor-Zuordnung verloren
-  (CPU/MB-Label fehlten) - wiederhergestellt, CPU- und Mainboard-Temperatur werden wieder angezeigt.
-- CannonadeCommand-Einstellungen: Farbfelder, Hex-Feld und Zuruecksetzen sind jetzt eine einheitliche Zellen-Reihe
-  (jede Zelle gleich gross; das Hex-Feld nimmt zwei Zellen, dafuer ein, zwei Farbfelder weniger in dieser Zeile) -
-  in ALLEN Cards identisch. Der Animationen-Schalter sitzt jetzt in der Theming-Card (keine eigene fast-leere Card).
+- Help icon (FINALLY the root): the docked user profile (bell/menu) sat as an invisible surface OVER the
+  help icon and swallowed the real mouse click (a synthetic test click went through, which is why it seemed
+  to "work"). The dock surface is now click-through; only bell + menu capture clicks. Plus a reliable
+  fallback handler. The help click now works reliably on every page.
+- Status island CPU: Unraid 7.3 removed the old CPU channel - CannonadeCommand now reads CPU load from
+  Unraid's GraphQL metrics (like the native Dashboard). The CPU chip shows percentages again instead of "--".
+- Status island temperature: on this server the system temperature plugin had lost its sensor assignment
+  (CPU/MB labels missing) - restored, CPU and mainboard temperature are shown again.
+- CannonadeCommand settings: colour fields, hex field and reset are now a uniform row of cells (each cell
+  the same size; the hex field takes two cells, so one or two fewer colour fields in that row) - identical
+  in ALL cards. The animations toggle now sits in the Theming card (no separate almost-empty card).
 
 ### 2.84.0
-- Schwebefenster (Container-Update): Die Schritt-Karten haben WIEDER KEINE Rahmenlinien - der Karten-Look
-  entsteht nur durch abgesetzte Flaeche + Schatten (CC-Stil hat nie Rahmenlinien). Regression aus 2.81.0 behoben.
-- Der obere Titel-Badge ist wieder deutlich groesser als die Abschnitts-Badges (klare Groessen-Hierarchie).
-- Die Ladeanimation sitzt nicht mehr oben im Badge, sondern unten links neben dem Schliessen-Button - als
-  saubere, moderne 3-Punkte-Pulsanimation in der Farbmodus-Farbe.
+- Floating window (container update): the step cards AGAIN have NO border lines - the card look comes only
+  from an offset surface + shadow (CC style never has border lines). Regression from 2.81.0 fixed.
+- The top title badge is again clearly larger than the section badges (clear size hierarchy).
+- The loading animation no longer sits at the top of the badge but bottom left next to the close button -
+  as a clean, modern 3-dot pulse animation in the colour-mode colour.
 
 ### 2.83.0
-- Barrierefreiheit: Die CannonadeCommand-Dropdowns lassen sich jetzt komplett per Tastatur bedienen (Öffnen mit
-  Enter/Leertaste/Pfeil-runter, Auswahl mit Pfeiltasten, Schließen mit Esc) und melden Rollen/Zustände an
-  Screenreader (Listbox/Option, aria-expanded/aria-selected).
-- Nach einem Update begrüßt ein kurzer Hinweis-Toast mit der neuen Versionsnummer (nur nach echten Updates,
-  nicht bei der Erstinstallation).
+- Accessibility: the CannonadeCommand dropdowns can now be operated entirely by keyboard (open with
+  Enter/Space/Arrow-down, select with arrow keys, close with Esc) and report roles/states to screen
+  readers (listbox/option, aria-expanded/aria-selected).
+- After an update a short hint toast greets you with the new version number (only after real updates, not
+  on the first install).
 
 ### 2.82.0
-- CannonadeCommand-Einstellungen: Alle Farbfelder, das Hex-Feld und der Zuruecksetzen-Button einer Farbzeile
-  sind jetzt systemweit exakt gleich hoch (28px) - auch die vorher kleinere oberste Zeile.
-- Neuer Schalter „Animationen" (Allgemein, standardmaessig AN): sanfte Uebergaenge/Bewegungen in der gesamten
-  Oberflaeche. AN ueberschreibt auch die System-Einstellung „Bewegung reduzieren"; AUS stellt alles ruhig.
-  Zusaetzlich dezente neue Bewegungen (Einblenden der Statusinsel/Marke, Hover-Anheben der Karten).
+- CannonadeCommand settings: all colour fields, the hex field and the reset button of a colour row are now
+  exactly the same height system-wide (28px) - including the previously smaller top row.
+- New "Animations" toggle (General, on by default): smooth transitions/motion across the entire interface.
+  ON also overrides the system "reduce motion" setting; OFF stills everything. Plus subtle new motions
+  (fade-in of the status island/brand, hover lift of the cards).
 
 ### 2.81.0
-- Docker-Seite: Die CPU/RAM/BW-Zahnraeder waren im Regenbogen-Modus alle orange - jetzt traegt jedes Zahnrad
-  die eigene Palettenfarbe seines Badges (CPU/RAM/Bandbreite).
-- Dropdown-Listen: Im reaktiven Farbmodus ruhen die Listeneintraege jetzt neutral und leuchten erst beim
-  Ueberfahren in ihrer Farbe auf (vorher dauerhaft eingefaerbt).
-- CannonadeCommand-Einstellungen: Der Favoriten-Bereich laesst sich nur noch einschalten, wenn Unraids eigene
-  Favoriten-Funktion aktiv ist; sonst ist der Schalter deaktiviert und ein Hinweis erklaert warum.
-- Schwebefenster: Der Rollbalken sitzt nicht mehr direkt an der Kante (etwas nach innen gerueckt), die Abschnitte
-  (Schritt-Karten) haben wieder einen abgesetzten Karten-Look, und alle Buttons/Badges folgen dem Farbmodus.
-- Hilfe-Symbol: Wenn eine Seite keine Inline-Hilfe hat, erscheint jetzt ein kurzer Hinweis-Toast, statt dass
-  scheinbar "nichts passiert" (die Hilfe selbst funktionierte, hatte auf manchen Seiten aber nichts anzuzeigen).
-- Kopfleisten-Icons (Glocke/Menue): sitzen jetzt exakt buendig zur Statusinsel (ein paar Pixel nach links).
+- Docker page: the CPU/RAM/BW gears were all orange in rainbow mode - now each gear carries its badge's own
+  palette colour (CPU/RAM/bandwidth).
+- Dropdown lists: in reactive colour mode the list entries now rest neutral and only light up in their
+  colour on hover (previously coloured permanently).
+- CannonadeCommand settings: the favourites section can only be enabled when Unraid's own favourites
+  feature is active; otherwise the toggle is disabled and a hint explains why.
+- Floating window: the scrollbar no longer sits right at the edge (moved slightly inward), the sections
+  (step cards) have an offset card look again, and all buttons/badges follow the colour mode.
+- Help icon: when a page has no inline help, a short hint toast now appears instead of seemingly "nothing
+  happening" (the help itself worked but had nothing to show on some pages).
+- Header icons (bell/menu): now sit exactly flush with the status island (a few pixels to the left).
 
 ### 2.80.0
-- Abschnittsbadges (z. B. "ARRAY-DATENTRAEGER"): Bei aktiver "Boxed"-Anzeigebreite auf breiten Bildschirmen
-  richten sie sich jetzt wieder buendig links an der Hauptmenueleiste aus (der zentrierte Inhalt wird links-
-  buendig zum vollbreiten Menue gezogen).
-- Hilfe-Symbol: Der Klick loest jetzt zuverlaessig die native Hilfe aus (robuster Handler, damit der Klick
-  nicht verschluckt wird).
+- Section badges (e.g. "ARRAY DEVICES"): with the "Boxed" display width active on wide screens they now
+  align flush left with the main menu bar again (the centered content is pulled left-flush to the
+  full-width menu).
+- Help icon: the click now reliably triggers the native help (robust handler so the click is not swallowed).
 
 ### 2.79.0
-- Dropdown-Listen (Werkzeug/Einstellungen): Der Oeffnen-Button faerbt sich jetzt NUR beim Ueberfahren (nicht mehr
-  dauerhaft); die Listeneintraege im geoeffneten Panel haben im Regenbogen-Modus je eine eigene Palettenfarbe.
-- Schwebefenster (Container-Update, Systeminfo, Feedback): durchgehend eine dunkle Flaeche (0f0f0f) - keine hellere
-  Kopf-/Fussleiste mehr.
-- Docker-Seite: Der Status-Punkt unter dem Container-Namen ist kein Umschalter mehr - sein Mouseover zeigt den
-  aktuellen Status, ein Klick laesst die Aktions-Icons aufblitzen. Die CPU/RAM/BW-Zahnraeder sind jetzt auch im
-  reaktiven Modus vollstaendig in die Farbmodi integriert.
-- CannonadeCommand-Einstellungen: Der Favoriten-Schalter auf der Anzeige-Seite wirkt jetzt (Unraids Favoriten-
-  Einstellung ist mit CannonadeCommands "Favoriten ausblenden" gekoppelt). Der Such-Badge folgt dem Farbmodus.
-- Hauptmenueleiste: Die beiden gedockten Icons (Glocke, Menue) sitzen wieder buendig zu den anderen Icons.
-- Statusinsel: Chips-Anordnen per Ziehen ist leichtergaengig (kuerzere Haltezeit), groessere Ablagezonen, und die
-  Chips wackeln im Anordnen-Modus.
+- Dropdown lists (tools/settings): the open button now colours ONLY on hover (no longer permanently); the
+  list entries in the open panel each have their own palette colour in rainbow mode.
+- Floating windows (container update, system info, feedback): a consistent dark surface throughout
+  (0f0f0f) - no lighter header/footer bar anymore.
+- Docker page: the status dot under the container name is no longer a toggle - hovering it shows the current
+  status, a click makes the action icons flash. The CPU/RAM/BW gears are now fully integrated into the
+  colour modes in reactive mode too.
+- CannonadeCommand settings: the favourites toggle on the display page now takes effect (Unraid's favourites
+  setting is coupled with CannonadeCommand's "Hide favourites"). The search badge follows the colour mode.
+- Main menu bar: the two docked icons (bell, menu) sit flush with the other icons again.
+- Status island: chip arranging by dragging is smoother (shorter hold time), larger drop zones, and the
+  chips wiggle in arrange mode.
 
 ### 2.78.0
 - Statusinsel: Die Chips lassen sich jetzt per Ziehen (kurz gedrueckt halten, dann ziehen) frei auf DREI Zeilen
@@ -2108,7 +2129,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>22d36e4e9bc77eb84647d5b58001aa6845ae029fde258a32416ca07126d5c03d</SHA256>
+  <SHA256>5cce45dd7666aaa9b224b30aac55f2f35140312dbb3d65040949afd6247bf393</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

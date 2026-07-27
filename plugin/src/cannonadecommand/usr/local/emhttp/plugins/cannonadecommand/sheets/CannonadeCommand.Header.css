@@ -191,7 +191,11 @@ html.cc-header-on #cc-island .cc-isl-row:empty { display: none; }
 html.cc-header-on #cc-island .cc-isl-chip { cursor: grab; }
 /* while dragging: reveal the 3 drop zones + fade the dragged chip */
 html.cc-header-on #cc-island.cc-isl-arranging { gap: 8px; }
-html.cc-header-on #cc-island.cc-isl-arranging .cc-isl-row { min-height: 28px; min-width: 64px; padding: 0 4px; outline: 1px dashed rgba(255, 255, 255, .22); outline-offset: 3px; border-radius: 8px; }
+/* #11 (user): while arranging, chips must STAY IN PLACE (only wiggle) -> NO reflow of any kind. Rows keep their
+   natural size (no min-width/min-height/padding); they only get a dashed drop-target outline. Empty rows stay
+   hidden - making them visible re-centred the island and shifted the chips ~8px (verified live). Reordering within
+   the visible rows still works; that is what the user needs. */
+html.cc-header-on #cc-island.cc-isl-arranging .cc-isl-row { outline: 1px dashed rgba(255, 255, 255, .22); outline-offset: 3px; border-radius: 8px; }
 html.cc-header-on #cc-island .cc-isl-chip.cc-isl-dragging { opacity: .4; cursor: grabbing; }
 /* K12 (user): the chips WIGGLE while the arrange mode is on (like the menu-drag), so it's obvious they can be moved */
 @keyframes cc-isl-wiggle { 0%{transform:rotate(-1.6deg);} 25%{transform:rotate(1.4deg) translateY(-.5px);} 50%{transform:rotate(-1.2deg);} 75%{transform:rotate(1.6deg) translateY(.5px);} 100%{transform:rotate(-1.6deg);} }
@@ -489,11 +493,13 @@ html.cc-popups-on .sweet-alert h2 {
 /* #N1 (user REVERSAL: the streaming windows' badge was "zu groß" — bring it back to the CC STANDARD size
    every other dialog uses). The .nchan / changelog title badge now matches the base .sweet-alert h2 badge
    (lgb 36px / 14px, content-width, centred) instead of the old 46px full-bleed bar. "Immer und alles!" */
+/* #12 (user: "der obere Badge soll IMMER ueber die ganze Breite gehen"): the update-window title is a FULL-WIDTH
+   bar now, not a centred pill, still clearly outranking the 12px step legends. */
 html.cc-popups-on .sweet-alert:has(pre) h2,
 html.cc-popups-on .sweet-alert.nchan h2 {
-  height: 44px !important; font-size: 16px !important;   /* user: the top badge must clearly outrank the 12px step legends */
-  padding: 0 24px !important; margin: 4px auto 16px !important; letter-spacing: .7px !important;
-  width: fit-content !important; max-width: 100% !important;
+  height: 48px !important; font-size: 16px !important;
+  padding: 0 24px !important; margin: 0 0 16px !important; letter-spacing: .7px !important;
+  width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; border-radius: var(--cc-b-radius, 10px) !important;
 }
 /* the changelog body inside the <pre>: render the parsed markdown as blocks, turn each version
    heading into a small CC version badge, and lay the items out as a clean list (CC badge language). */
@@ -886,16 +892,10 @@ html.cc-arrange #menu .nav-item.cc-dragging, html.cc-arrange #cc-island .cc-isl-
 #cc-cmd .cc-cmd-lbl { color: #ededed; font-size: 14px; font-weight: 600; }
 #cc-cmd .cc-cmd-sub { color: #8f8f8f; font-size: 12px; margin-left: auto; white-space: nowrap; }
 
-/* #Insel-Drag (user: Anordnen-Bereich viel breiter/unbegrenzt + fluessiger): while arranging, the island rows
-   expand to a big, forgiving drop area (full available width, taller), so chips are easy to place. */
-html.cc-arrange #cc-island, html.cc-header-on #cc-island.cc-isl-arranging {
-  min-width: min(60vw, 900px);
-}
-html.cc-arrange #cc-island .cc-isl-row, html.cc-header-on #cc-island.cc-isl-arranging .cc-isl-row {
-  min-height: 40px !important; min-width: 100% !important; width: 100% !important;
-  padding: 4px !important; gap: 8px !important; border-radius: 8px;
-  background: rgba(255, 255, 255, .05); outline: 1px dashed rgba(255, 255, 255, .18); outline-offset: 1px;
-}
+/* #11 (user REVERT of the v2.94 "viel breiter" drop zones): widening the island to 60vw AND forcing every row
+   to width:100% made ALL chips jump the instant arrange mode turned on ("macht das Neu-Anordnen zum Gluecksspiel").
+   The island now keeps its normal content width and the chips stay put; the no-reflow drop-target outline lives
+   with the base island-arranging rules above. */
 /* #Drag-Umbau: the reused native lock icon glows in the accent while arranging (open/unlocked look) */
 html.cc-arrange #menu .nav-item.LockButton b, html.cc-arrange #cc-lock-item b { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
 

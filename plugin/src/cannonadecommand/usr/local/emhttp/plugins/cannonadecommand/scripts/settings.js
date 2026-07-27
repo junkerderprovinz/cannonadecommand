@@ -450,7 +450,8 @@
           postDisplayMulti({ header: ink, headermetacolor: ink, background: bghex });
         } catch (e9) {}
       }
-      var cCard = card(T("Anzeige — Kopfbereich", "Display — header"), T("Die nativen Kopfzeilen-Farben liegen jetzt auf Unraids Anzeige-Seite (im CannonadeCommand-Stil). Hier findest du den Schnellzugriff und die automatische Themen-Kopplung.", "Unraid's header colours now live on the Display Settings page (in CannonadeCommand style). Here you get the quick link and the automatic theme coupling."));
+      // #2 (user): "Anzeige — Kopfbereich" is no longer its own card — its rows are merged INTO the Theming card.
+      var cCard = themingCard;
       (function () {
         // #Native-Card (user): label + (i) bubble on the left, a SHORT button next to it on the right (not a full-width button below).
         var r = el("div", "cc-set-row cc-set-inline");
@@ -459,6 +460,7 @@
         rl.appendChild(infoIcon(T("Öffnet Unraids Anzeige-Einstellungen (im CannonadeCommand-Stil) — dort liegen u. a. die Kopfzeilen-Farben, Banner und die Favoriten-Option.", "Opens Unraid's Display Settings (in CannonadeCommand style) — home of the header colours, banner and favourites option.")));
         r.appendChild(rl);
         var b = el("button", "cc-btn cc-btn-accent", T("Öffnen", "Open")); b.type = "button";
+        b.style.marginLeft = "auto";   // #3 (user): push the native-settings button flush right
         b.addEventListener("click", function () { location.href = "/Settings/DisplaySettings"; });
         r.appendChild(b); cCard.appendChild(r);
         var ar = el("div", "cc-set-row cc-set-inline");
@@ -473,7 +475,7 @@
         // can't loop; the flag is set BEFORE the call.
         try { if (get("cc.hdrauto", "1") === "1" && get("cc.hdrauto.done", "0") !== "1") { set("cc.hdrauto.done", "1"); applyHdrAuto(); } } catch (e9) {}
       })();
-      wrapMain.appendChild(cCard);
+      // #2: cCard IS themingCard now (already in the DOM) — do NOT re-append (would reorder the cards).
       // keep the favourites value in sync (drives cc.hidefavtab) — no colour pickers here anymore
       fetch("/Settings/DisplaySettings", { credentials: "same-origin" }).then(function (r) { return r.text(); }).then(function (html) {
         try {
