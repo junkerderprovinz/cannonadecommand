@@ -175,7 +175,7 @@
               // CC-Style): darken the iframe's OWN surface (html/body + structural elements) onto #161616 so no
               // lighter native band shows, and theme the form controls (radios keep native, text/textarea/select
               // get the CC dark fill). Literals only — the iframe cannot read the parent's CSS vars.
-              st.textContent = "html,body{background:#0f0f0f !important;color:#d6d6d6 !important} fieldset,table,tbody,thead,tr,td,th,.tabs,dl,dt,dd,form,center,p,section,article,div{background:transparent !important;border:none !important} legend{color:#9a9a9a !important} label,td,th{color:#d6d6d6 !important} input[type=text],input[type=password],input[type=email],input[type=search],input[type=number],input[type=url],textarea,select{background:#232323 !important;color:#eaeaea !important;border:1px solid #333 !important;border-radius:6px !important;outline:none !important;box-shadow:none !important} textarea{width:100% !important;box-sizing:border-box !important} a{color:" + acc + " !important} " +
+              st.textContent = "html,body{background:#0f0f0f !important;color:#d6d6d6 !important} fieldset,table,tbody,thead,tr,td,th,.tabs,dl,dt,dd,form,center,p,section,article,div{background:transparent !important;border:none !important} legend{color:#9a9a9a !important} label,td,th{color:#d6d6d6 !important} input[type=text],input[type=password],input[type=email],input[type=search],input[type=number],input[type=url],textarea,select{background:#232323 !important;color:#eaeaea !important;border:none !important;border-radius:6px !important;outline:none !important;box-shadow:none !important} textarea{width:100% !important;box-sizing:border-box !important} a{color:" + acc + " !important} " +
                 "input[type=button],input[type=submit],button{height:36px !important;padding:0 24px !important;font-size:14px !important;border:0 !important;border-radius:6px !important;box-shadow:none !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important;cursor:pointer} center,.buttons{text-align:center !important} a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none !important;box-shadow:none !important;filter:brightness(1.18)} " +
                 // #7-IV (user: the "CONTAINER AKTUALISIEREN" template-update window must look like #7): its body is
                 // CreateDocker.php/log.htm INSIDE this iframe, with its OWN inline styles (orange gradient buttons,
@@ -817,7 +817,7 @@
       // 6) TEMPS — first sensor = CPU, second = Mainboard (Unraid footer order), rest generic; the
       // dot carries the state (green below cc.tempwarn, amber at/above, red at threshold+15)
       if (iOn("temps")) {
-        for (i = 0; i < temps.length; i++) {
+        for (var i = 0; i < temps.length; i++) {
           var tlab = i === 0 ? T("CPU-Temperatur", "CPU temperature") : i === 1 ? T("Mainboard-Temperatur", "Motherboard temperature") : T("Temperatur", "Temperature");
           chip(Math.round(temps[i]) + " °C", temps[i] >= warn + 15 ? "#d9433f" : temps[i] >= warn ? "#d6a243" : "#3fae6a", tlab + ": " + temps[i] + " °C", "cc-isl-temp" + i);
         }
@@ -1685,6 +1685,8 @@
             try {
               var ih = document.querySelectorAll(".inline_help"), seen = false;
               for (var q = 0; q < ih.length; q++) { if (ih[q].getBoundingClientRect().height > 2) { seen = true; break; } }
+              // CC relocates page help into (i) bubbles on Tools/Settings pages -> the help exists, just moved; don't claim "no help"
+              if (!seen && document.querySelector("[data-cc-help], .cc-toolsinfo")) seen = true;
               if (!seen) ccToast(T("Diese Seite bietet keine Inline-Hilfe.", "This page has no inline help."));
             } catch (e2) {}
           }, 360);

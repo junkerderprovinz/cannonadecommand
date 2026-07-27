@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.97.0">
+  <!ENTITY version   "2.98.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,20 @@
 </ICON>
 
 <CHANGES>
+### 2.98.0
+- Bugfix-Durchgang (Changelog-QA, live nachgeprueft):
+- #S8 Container-Notiz/Tag liess sich nicht per Klick oeffnen - der Klick loeste stattdessen das Aktions-
+  Aufblitzen der Zeile aus (Tag sitzt in derselben Zeile). Tag + Mehrfachauswahl-Box fangen ihre Klicks
+  jetzt selbst ab; der Notiz-Editor oeffnet wieder.
+- Docker-Zahnraeder: im vollen Regenbogen-Modus trug ein Zahnrad beim Ueberfahren wieder den Akzent statt
+  seiner CPU/RAM/BW-Kind-Farbe - jetzt in JEDEM Farbmodus die eigene Kind-Farbe.
+- Statusinsel: seltener Fall behoben, in dem Temperatur-Chips und das Chip-Anordnen/Ziehen auf Seiten ohne
+  globale Hilfsvariable still ausfielen (nicht deklarierte Schleifenvariable unter "use strict").
+- Werkzeug-Seiten: der native Hilfe-Knopf meldete faelschlich "keine Inline-Hilfe", obwohl CC die Texte in
+  die (i)-Bubbles verschoben hat - meldet das jetzt nur noch, wenn wirklich keine Hilfe existiert.
+- Rahmenlinien (CC-Regel "keine Linien"): 1px-Zeilenlinie auf Werkzeug-Tabellen und der 1px-Rahmen der
+  Eingabefelder in den Popup-Fenstern entfernt (nur noch dunkle Flaeche).
+- Hell-Thema: der Hinweis-Toast bekommt auch im azurblauen Thema (Theme--azure) die helle Flaeche.
 ### 2.97.0
 - Hell-Theme (#S9, erster Durchgang): CannonadeCommand ist dunkel-first; solide dunkle Badges/Karten lesen sich
   auch auf hellem Hintergrund gut, aber Elemente mit schwacher/transparenter Flaeche bekamen im weissen/azurblauen
@@ -2094,7 +2108,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>2d4ce86260d4b36252908f0f1e9c0c138234acd5fece599901ab17ce24a5a351</SHA256>
+  <SHA256>22d36e4e9bc77eb84647d5b58001aa6845ae029fde258a32416ca07126d5c03d</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

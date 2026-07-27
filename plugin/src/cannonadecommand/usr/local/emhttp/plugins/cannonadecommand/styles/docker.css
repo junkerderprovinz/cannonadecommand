@@ -278,7 +278,7 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
 
 /* CPU/RAM limits editor button on the resource cell */
 .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px; background: #3a3a3a; color: #ececec; cursor: pointer; font-size: 12px; margin: 2px 0; } /* FILLED — the ghost look was easy to miss */
-.cc-limbtn:hover { background: var(--cc-accent, #2f6feb); color: #fff; }
+.cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: #fff; }  /* #9: in rainbow the per-gear kind colour (--cc-rb-c) wins; accent-mode falls through to the accent */
 /* the gear is tinted green when a CPU/RAM limit IS configured (matches the "set" dot) */
 .cc-limbtn-set { color: #10321f; background: #35d07f; } /* filled green when a limit is configured */
 /* #12 (user): the CPU/RAM/BW gears follow the colour mode. statenative ON keeps the green "limit set"

@@ -911,7 +911,8 @@ html.Theme--white.cc-tools-on #displaybox dl > dt,
 html.Theme--azure.cc-tools-on #displaybox dl > dt { color: #303030; }
 html.Theme--white.cc-tools-on #displaybox dl > dd,
 html.Theme--azure.cc-tools-on #displaybox dl > dd { color: #303030; }
-html.Theme--white #cc-toast { background: #f4f4f4; color: #1c1c1c; }
+html.Theme--white #cc-toast,
+html.Theme--azure #cc-toast { background: #f4f4f4; color: #1c1c1c; }
 /* the reactive rest-grey (rgba grey .18 + light text) needs darker text on a light page */
 html.Theme--white.cc-shares-rbneutral .cc-badge,
 html.Theme--white.cc-docker-on .cc-limbtn:not(.cc-limbtn-set) { color: #303030 !important; }

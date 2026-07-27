@@ -2719,11 +2719,14 @@
       // persistent re-probe (NEVER cleared by teardown): rebuild when the proxy returns
       setInterval(function () { try { if (!dead) return; fetch(PROXY + "?path=" + encodeURIComponent("state"), { headers: { Accept: "application/json" } }).then(function (r) { if (r.ok) rearm(); }).catch(function () {}); } catch (e) {} }, 8000);
       // Clicking a container ICON or its NAME no longer opens the native edit/template page (#11, user) —
-      // the action icons flash briefly instead, pointing the user at the actions column. The dot itself is
-      // excluded (it has its own start/stop handler), so only the logo + the name text trigger the flash.
+      // the action icons flash briefly instead, pointing the user at the actions column. The status dot-row
+      // flashes too (its click == "show me the actions", #79). The note-tag badge (#S8) and the multiselect
+      // checkbox (#S7) live INSIDE that row, so they must be excluded here or this capture-phase handler would
+      // stopPropagation() before their own click listeners run (tag editor / checkbox toggle would be dead).
       document.addEventListener("click", function (e) {
         try {
           if (dead || mode !== "list") return;
+          if (e.target && e.target.closest && e.target.closest(".cc-cttag, .cc-msel")) return;   // #S8/#S7: let the tag editor + checkbox own their clicks
           var hand = e.target && e.target.closest ? e.target.closest("td.ct-name span.hand, td.ct-name span.appname, td.ct-name .cc-ct-dotrow") : null;
           if (!hand) return;
           var row2 = hand.closest("tr"); var bar2 = row2 && row2.querySelector(".cc-actbar");
