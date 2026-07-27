@@ -1704,18 +1704,11 @@
         e.preventDefault(); e.stopImmediatePropagation();
         if (typeof window.HelpButton !== "function") { ccToast(T("Hilfe ist auf dieser Seite nicht verfügbar.", "Help is not available on this page.")); return; }
         window.HelpButton();
-        var nav = document.querySelector(".nav-item.HelpButton");   // turned ON? then verify something actually became visible
-        if (nav && nav.classList.contains("active")) {
-          setTimeout(function () {
-            try {
-              var ih = document.querySelectorAll(".inline_help"), seen = false;
-              for (var q = 0; q < ih.length; q++) { if (ih[q].getBoundingClientRect().height > 2) { seen = true; break; } }
-              // CC relocates page help into (i) bubbles on Tools/Settings pages -> the help exists, just moved; don't claim "no help"
-              if (!seen && document.querySelector("[data-cc-help], .cc-toolsinfo")) seen = true;
-              if (!seen) ccToast(T("Diese Seite bietet keine Inline-Hilfe.", "This page has no inline help."));
-            } catch (e2) {}
-          }, 360);
-        }
+        // NO "no inline help" toast (user: "der Hilfe-Button funktioniert nicht, kommt keine Inline-Hilfe"). On pages
+        // like the Docker list the native .inline_help blocks live in a display:none template container (there is
+        // genuinely nothing to show), and on Tools/Settings pages CC already moved the help into the (i) bubbles.
+        // The toast fired on exactly those pages and only annoyed. Help now behaves like native: it shows help where
+        // the page actually has it, and does nothing (silently) where it does not.
       } catch (err) {}
     }
     try { document.addEventListener("click", ccHelpTrigger, true); document.addEventListener("pointerup", ccHelpTrigger, true); } catch (e) {}

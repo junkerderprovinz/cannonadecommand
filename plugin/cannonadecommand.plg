@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.0.0">
+  <!ENTITY version   "3.0.1">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,11 @@
 </ICON>
 
 <CHANGES>
+### 3.0.1
+- Help button: removed the misleading "This page has no inline help" toast. On pages like the Docker list the
+  native help blocks live in a hidden (display:none) template container, so there is genuinely nothing to show,
+  and on Tools/Settings pages CannonadeCommand already moved the help into the (i) info bubbles. The toast fired on
+  exactly those pages and only annoyed. Help now behaves like native: it shows help where the page actually has it.
 ### 3.0.0
 - Community Applications installs are finally CannonadeCommand-styled. CA opens the container template at
   /Apps/AddContainer (not /Docker/AddContainer), where CC's script hook did not load, so the add form AND the
@@ -2139,7 +2144,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>f11ae22f5a27f3d02ec821764d99e345d30d1c8ef654ae1d4c302e46d45bbc39</SHA256>
+  <SHA256>6b8106e137d21d8551c19d9b8a0ee326030b4de51f3854d9378259b35c04bec7</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
