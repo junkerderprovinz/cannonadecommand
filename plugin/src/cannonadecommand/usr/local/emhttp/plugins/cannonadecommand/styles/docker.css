@@ -1175,23 +1175,43 @@ html.cc-docker-on.cc-on-addct .ui-dialog #ddcl-catSelect {
 /* #14: the container create/update OUTPUT page (docker run/create result) as a floating Carbon window,
    like the container-update dialog (docker.js bootCtOutput adds html.cc-ctout-on + the backdrop + the
    #cc-ctout-title accent badge, and hides the native grey heading). */
-html.cc-ctout-on #cc-ctout-bd { position: fixed; inset: 0; background: rgba(0, 0, 0, .55); z-index: 9998; }
+html.cc-ctout-on #cc-ctout-bd { position: fixed; inset: 0; background: rgba(0, 0, 0, .55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 9998; }
 html.cc-ctout-on #displaybox .content {
   position: fixed; z-index: 9999; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: min(900px, 92vw); max-height: 86vh; overflow: auto;
-  background: #1c1c1c; border-radius: 14px; box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
-  padding: 0 26px 22px; box-sizing: border-box;
+  background: #0f0f0f; border: none; border-radius: 14px; box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+  padding: 0 26px 22px; box-sizing: border-box; text-align: center;
 }
+/* #7-IV (user, 3rd time!): the "CONTAINER HINZUFUEGEN" title is the INLINE cc-ctout output (not the iframe
+   dialog 2.86 handled). Turn the full-width orange bar into the SAME centered pill badge #7 uses; dark surface,
+   left-aligned log, borderless step cards, neutral blue span.system, colour-mode buttons (primary right). */
 html.cc-ctout-on #cc-ctout-title {
-  position: sticky; top: 0; z-index: 1; margin: 0 -26px 18px; padding: 14px 26px;
-  background: var(--cc-hdr-accent, #2f6feb); color: var(--cc-hdr-accent-text, #fff);
-  font-weight: 700; font-size: 15px; letter-spacing: .6px; text-transform: uppercase; border-radius: 14px 14px 0 0;
+  position: static !important; margin: 16px auto 16px !important; padding: 0 24px !important; height: 44px;
+  display: inline-flex; align-items: center; width: fit-content; max-width: 100%;
+  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff));
+  font-weight: 600; font-size: 16px; letter-spacing: .7px; text-transform: uppercase; border-radius: 999px;
 }
 html.cc-ctout-on #displaybox .content h2 { color: #f0f0f0; }
+html.cc-ctout-on #displaybox .content #content,
+html.cc-ctout-on #displaybox .content p.logLine,
+html.cc-ctout-on #displaybox .content #logBody { text-align: left; }
+html.cc-ctout-on #displaybox .content fieldset,
+html.cc-ctout-on #displaybox .content fieldset.docker {
+  background: #191919 !important; border: none !important; border-radius: 10px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;
+  margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important;
+}
+html.cc-ctout-on #displaybox .content fieldset > legend {
+  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
+  border: none !important; border-radius: 999px !important; padding: 3px 12px !important; font-size: 12px !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
+}
+html.cc-ctout-on #displaybox .content span.system { background: transparent !important; color: #d6d6d6 !important; box-shadow: none !important; display: block; }
+html.cc-ctout-on .docker-install-blocker { background: transparent !important; }
+html.cc-ctout-on #displaybox .content .buttons,
+html.cc-ctout-on #displaybox .content center { display: flex !important; justify-content: center !important; flex-direction: row-reverse !important; gap: 10px !important; }
 html.cc-ctout-on #displaybox .content button,
 html.cc-ctout-on #displaybox .content input[type="button"],
 html.cc-ctout-on #displaybox .content input[type="submit"] {
-  background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff) !important;
+  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
   border: none !important; border-radius: 8px !important; padding: 9px 20px !important;
   font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .5px !important; box-shadow: none !important; cursor: pointer;
 }
@@ -1483,3 +1503,16 @@ html.cc-docker-on.cc-on-addct #ddcl-catSelect { padding: 0 !important; }
 html.cc-docker-on.cc-on-addct #ddcl-catSelect > a,
 html.cc-docker-on.cc-on-addct #ddcl-catSelect .ui-dropdownchecklist-selector,
 html.cc-docker-on.cc-on-addct #ddcl-catSelect .ui-dropdownchecklist-text { box-sizing: border-box !important; width: 100% !important; margin: 0 !important; padding: 0 12px !important; text-indent: 0 !important; }
+/* ── #S7 multiselect + bulk bar, #S8 container tag ── */
+.cc-msel { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin: 0 8px 0 0; flex: none; background: #2e2e2e; border: none !important; border-radius: 4px; cursor: pointer; position: relative; vertical-align: middle; }
+.cc-msel:checked { background: var(--cc-accent, #2f6feb); }
+.cc-msel:checked::after { content: ""; position: absolute; left: 5px; top: 1px; width: 4px; height: 8px; border: solid var(--cc-accent-text, #fff); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+#cc-bulkbar { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 100000; display: inline-flex; align-items: center; gap: 8px; background: #0f0f0f; border-radius: 12px; padding: 8px 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, .55); }
+#cc-bulkbar .cc-bulk-count { color: #cfcfcf; font-size: 13px; margin-right: 4px; }
+#cc-bulkbar .cc-bulk-btn { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-accent-text, #fff); border: none; border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; cursor: pointer; }
+#cc-bulkbar .cc-bulk-btn:hover { filter: brightness(1.14); }
+#cc-bulkbar .cc-bulk-clear { background: #2e2e2e; color: #ddd; border: none; border-radius: 8px; width: 30px; height: 30px; cursor: pointer; font-size: 14px; }
+.cc-cttag { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; margin-left: 6px; border-radius: 999px; background: rgba(255, 255, 255, .1); color: #c9c9c9; font-size: 11px; line-height: 1; cursor: pointer; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cc-cttag:not(.cc-cttag-set) { opacity: .45; font-weight: 700; }
+.cc-cttag.cc-cttag-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); opacity: 1; }
+.cc-cttag:hover { filter: brightness(1.14); }

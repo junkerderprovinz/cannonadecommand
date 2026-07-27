@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "2.95.0">
+  <!ENTITY version   "2.96.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,12 @@
 </ICON>
 
 <CHANGES>
+### 2.96.0
+- Neu #S7: Docker-Mehrfachauswahl - links am Container eine Auswahl-Checkbox; sind welche angehakt, erscheint
+  unten eine Sammel-Leiste (Start/Stop/Neustart/Pause fuer alle Ausgewaehlten).
+- Neu #S8: Container-Notizen/Tags - kleiner Notiz-Badge je Container (Klick zum Bearbeiten), bleibt gespeichert.
+- Fenster "Container hinzufuegen/aktualisieren" (Inline-Ausgabe): jetzt wie das andere Update-Fenster - dunkle
+  Flaeche, zentrierter Pill-Titel statt oranger Vollbreit-Balken, randlose Schritt-Karten, Buttons im Farbmodus.
 ### 2.95.0
 - Container-Bearbeiten: "Aktuelle Docker-Zuweisungen" wieder wie nativ ausgerichtet (begrenzt + zentriert, nicht
   vollbreit am linken Rand); das Kategorie-Dropdown sitzt jetzt buendig auf gleicher Kante/Breite wie die anderen Felder.
@@ -2084,7 +2090,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>0fd6e1e50d086f7318f1cf645566164d7a820ecc948fd0513a9b6edcbb25c0fc</SHA256>
+  <SHA256>42334d2e1b2c4368912cc782055a442eaababebc8032670a6cd287ebc7393ea4</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
