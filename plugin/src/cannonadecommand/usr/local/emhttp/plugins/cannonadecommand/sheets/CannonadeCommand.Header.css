@@ -1173,8 +1173,9 @@ html.cc-popups-on #cc-acctinfo-pop {
   box-shadow: 0 8px 24px rgba(0, 0, 0, .55);
 }
 /* #(user chose "entfernen"): in CC every help text lives in an (i) bubble system-wide, so the native header Help
-   ("?") button — which only toggled the raw inline help — has no job left. Hide it from the header toolbar. */
-html.cc-header-on #menu .nav-item.HelpButton { display: none !important; }
+   ("?") button — which only toggled the raw inline help — has no job left. Hide it from the header toolbar. The
+   nav-tile/util chain is needed to out-specify the base .nav-tile .nav-item.util { display:flex !important } rule. */
+html.cc-header-on #menu .nav-tile .nav-item.HelpButton.util { display: none !important; }
 /* #(user: "auf zwei Buttons ist dieses Verlinkungsicon, das kann weg"): the external-link (arrow-out-of-box) glyph
    on the two items that open unraid.net (Lizenz verwalten / Konto). Its path starts M15.75 2.25H21 — hide it via
    CSS so a reka re-render can never bring it back. */
