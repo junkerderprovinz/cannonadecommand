@@ -132,10 +132,16 @@
   //    cc.rbpal/cc.rainbowrot and stamp --cc-rb-* on <html>. Cleared when off.
   function applyRainbowPalette() {
     var rt = document.documentElement.style, on = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1";
-    if (!on) { RB_KINDS.forEach(function (k) { rt.removeProperty("--cc-rb-" + k); rt.removeProperty("--cc-rb-" + k + "-t"); }); return; }
+    if (!on) { rt.removeProperty("--cc-rbaccent"); rt.removeProperty("--cc-rbaccent-text"); RB_KINDS.forEach(function (k) { rt.removeProperty("--cc-rb-" + k); rt.removeProperty("--cc-rb-" + k + "-t"); }); return; }
     var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
     // flag mode reads cc.flagpal (own key), never cc.rbpal — no bleed between flag and rainbow palettes
     var pal = RB_PAL; try { var fjp = ls("cc.flagmode") === "1" ? JSON.parse(ls("cc.flagpal") || "null") : null; var jp = (fjp && fjp.length) ? fjp : JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e) {}
+    // SINGLE rainbow "action" colour: VmTab.css's generic .cc-b badge rule, the reactive-hover fallback,
+    // the autostart toggle and the vmstat name badge ALL read --cc-rbaccent, but nothing on /VMs stamped it
+    // (Shares-domain var) so they fell back to --cc-accent = flat blue. Stamp it (pal slot 5, like docker).
+    var acc = pal[(5 + off) % pal.length], an = parseInt(String(acc).slice(1), 16);
+    var aL = 0.299 * (an >> 16 & 255) + 0.587 * (an >> 8 & 255) + 0.114 * (an & 255);
+    rt.setProperty("--cc-rbaccent", acc); rt.setProperty("--cc-rbaccent-text", aL > 150 ? "#161616" : "#fff");
     RB_KINDS.forEach(function (k, i) {
       var c = pal[(i + off) % pal.length], n = parseInt(String(c).slice(1), 16);
       var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255);
@@ -253,6 +259,10 @@
   function tintAct(bar) {
     var colorsOn = ls("cc.actcolors") !== "0";
     var rb = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1";
+    // reactive sub-mode (cc.rbmode="active"): enabled coloured buttons REST grey and take their palette
+    // colour only on ROW hover — so skip the inline paint and stamp --cc-rb-c/--cc-rb-ct for the CSS hover
+    // rule (an inline !important background would make the sheet powerless). Matches docker.js tintAct.
+    var neutral = rb && ls("cc.rbmode") === "active";
     // flag mode reads cc.flagpal (own key), never cc.rbpal — no bleed between flag and rainbow palettes
     var pal = RB_PAL; try { var fjp = ls("cc.flagmode") === "1" ? JSON.parse(ls("cc.flagpal") || "null") : null; var jp = (fjp && fjp.length) ? fjp : JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e2) {}
     var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
@@ -262,8 +272,14 @@
         tx = "#e9e9e9";
         if (colorsOn) { bg = rb ? pal[(i2 + off) % pal.length] : ccAccent(); tx = ccIdeal(bg); }
       }
-      b2.style.setProperty("background", bg, "important");
-      b2.style.setProperty("color", tx, "important");
+      if (neutral && colorsOn && !b2.classList.contains("cc-actoff")) {
+        b2.style.setProperty("--cc-rb-c", bg); b2.style.setProperty("--cc-rb-ct", tx);
+        b2.style.removeProperty("background"); b2.style.removeProperty("color");
+      } else {
+        b2.style.removeProperty("--cc-rb-c"); b2.style.removeProperty("--cc-rb-ct");
+        b2.style.setProperty("background", bg, "important");
+        b2.style.setProperty("color", tx, "important");
+      }
       var ic2 = b2.querySelector("i"); if (ic2) ic2.style.setProperty("color", "inherit", "important");
     });
   }
@@ -540,6 +556,12 @@
     } catch (e) {}
     try { ensureViewToggle(); applyView(); } catch (e) {}   // Grid/List view (cc.vmview)
     try { applyRainbowPalette(); var vmRb = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1"; root.classList.toggle("cc-vm-rainbow", vmRb); root.classList.toggle("cc-vm-rbneutral", vmRb && ls("cc.rbmode") === "active"); } catch (e) {}   /* #N4: reactive rainbow -> badges rest grey, colour on hover */
+    // RE-TINT every visible action bar on ANY colour-mode change. injectVmActionCell's rebuild guard
+    // (data-cc-sig = state|webui|vmrcurl|log|uuid) is colour-mode-INDEPENDENT, so a rainbow/reactive/accent
+    // toggle keeps the old cell and never re-runs tintAct — the bar kept its stale inline colours. Re-tint
+    // the existing bars in place (cheaper than a rebuild); passing td.cc-actcell also catches the .cc-actmore
+    // extras (a TD sibling of .cc-actbar). tintAct() re-reads cc.rainbow / cc.rbmode / cc.actcolors / cc.accent.
+    try { Array.prototype.forEach.call(document.querySelectorAll("#kvm_list td.cc-actcell"), function (cell) { tintAct(cell); }); } catch (e) {}
     // adopt-toggle ON (default) -> Docker's cc.* settings; OFF -> own ccv.* keys.
     // Stay even with adopt-off + no tint colour when the Logo-Hintergrund badge is on.
     if (ls("cc.stylevms") === "0" && !ls("ccv.iconcolor") && effK("iconbg") !== "1") return;

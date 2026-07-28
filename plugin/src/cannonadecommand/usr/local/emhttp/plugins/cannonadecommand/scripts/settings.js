@@ -853,7 +853,7 @@
     // ── Dichte (GLOBAL): cc.density is ONE key that every list (Docker, Start, Freigaben) reads,
     // so it belongs in Allgemein with the other global controls — not buried in the Docker tab.
     // #12 (user): the Density control lives INSIDE the Theming card now — no separate card.
-    if (themingCard) themingCard.appendChild(segRow(T("Dichte (global)", "Density (global)"), [["compact", T("Kompakt", "Compact")], ["normal", "Normal"], ["airy", T("Luftig", "Airy")]], density, function (v) { density = v; set("cc.density", v); }));
+    if (themingCard) themingCard.appendChild(segRow(T("Dichte", "Density"), [["compact", T("Kompakt", "Compact")], ["normal", "Normal"], ["airy", T("Luftig", "Airy")]], density, function (v) { density = v; set("cc.density", v); }, T("Gilt global für ALLE Listen (Docker, Start, Freigaben, VMs).", "Applies globally to ALL lists (Docker, Start, Shares, VMs)."), true));
     // ── Logos & Icons (GLOBAL): edits the shared cc.iconbg / cc.iconcolor / cc.iconstrength
     // keys every adopting tab resolves through eff('icon…'). Same control set as the per-area
     // Logos cards, minus the preview (this card is the source, not a consumer).
@@ -1376,7 +1376,41 @@
         ['"Bodoni MT","Didot",serif', "Bodoni"],
         ['Copperplate,"Copperplate Gothic Light",fantasy', "Copperplate"],
         ['"Cascadia Code","Cascadia Mono",Consolas,monospace', "Cascadia"],
-        ['"Brush Script MT",cursive', "Brush Script"]
+        ['"Brush Script MT",cursive', "Brush Script"],
+        // more system/web-safe faces (user: "viel mehr Schriften") — each renders if the CLIENT has it, else falls back down its stack
+        ['"Helvetica Neue",Helvetica,Arial,sans-serif', "Helvetica Neue"],
+        ['Roboto,"Segoe UI",sans-serif', "Roboto"],
+        ['"Open Sans","Segoe UI",sans-serif', "Open Sans"],
+        ['Lato,"Segoe UI",sans-serif', "Lato"],
+        ['Montserrat,"Segoe UI",sans-serif', "Montserrat"],
+        ['"Noto Sans","Segoe UI",sans-serif', "Noto Sans"],
+        ['Ubuntu,"Segoe UI",sans-serif', "Ubuntu"],
+        ['"DejaVu Sans",Verdana,sans-serif', "DejaVu Sans"],
+        ['"PT Sans","Segoe UI",sans-serif', "PT Sans"],
+        ['"Source Sans Pro","Segoe UI",sans-serif', "Source Sans Pro"],
+        ['"Fira Sans","Segoe UI",sans-serif', "Fira Sans"],
+        ['Geneva,Verdana,sans-serif', "Geneva"],
+        ['"Segoe UI Semibold","Segoe UI",sans-serif', "Segoe UI Semibold"],
+        ['Merriweather,Georgia,serif', "Merriweather"],
+        ['"PT Serif",Georgia,serif', "PT Serif"],
+        ['"Noto Serif","Times New Roman",serif', "Noto Serif"],
+        ['"DejaVu Serif",Georgia,serif', "DejaVu Serif"],
+        ['Didot,"Bodoni MT",serif', "Didot"],
+        ['"Hoefler Text",Georgia,serif', "Hoefler Text"],
+        ['Perpetua,Georgia,serif', "Perpetua"],
+        ['Sylfaen,Georgia,serif', "Sylfaen"],
+        ['Menlo,Monaco,monospace', "Menlo"],
+        ['Monaco,"Lucida Console",monospace', "Monaco"],
+        ['"DejaVu Sans Mono",Consolas,monospace', "DejaVu Mono"],
+        ['"Fira Code","Cascadia Code",monospace', "Fira Code"],
+        ['"JetBrains Mono","Cascadia Code",monospace', "JetBrains Mono"],
+        ['"Source Code Pro",Consolas,monospace', "Source Code Pro"],
+        ['"Ubuntu Mono","Courier New",monospace', "Ubuntu Mono"],
+        ['"Roboto Mono","Courier New",monospace', "Roboto Mono"],
+        ['"Segoe Script","Brush Script MT",cursive', "Segoe Script"],
+        ['"Segoe Print","Comic Sans MS",cursive', "Segoe Print"],
+        ['"Lucida Handwriting","Comic Sans MS",cursive', "Lucida Handwriting"],
+        ['Papyrus,fantasy', "Papyrus"]
       ].map(function (f) { return [f[0], f[1], f[0]]; }); // o[2] = self-preview face
       cB.appendChild(dropRow(T("Schriftart", "Font"), FONTS, get("cc.brand.font", ""), function (v) { set("cc.brand.font", v); syncHeaderBar(); }));
       // colour picker + hex (empty = default light)
@@ -1539,15 +1573,17 @@
   function syncSwOn() { var a = (accent || "").toLowerCase(); Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-sw")).forEach(function (sw) { sw.classList.toggle("cc-set-sw-on", (sw.dataset.c || "").toLowerCase() === a); }); }
   function thc(t) { var e = el("th", null, t); return e; }
   function chkCell(key, v, color) { var td = el("td", "cc-set-chk"); var cb = el("input"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); if (rainbow && color) cb.style.accentColor = color; cb.addEventListener("change", function () { var cur = colview[key] || { s: true, a: true }; colview[key] = { s: cur.s, a: cur.a }; colview[key][v] = cb.checked; set("cc.colview2", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
-  function segRow(labelText, opts, cur, onChange, help) {
-    var row = el("div", "cc-set-row"); var rl = el("span", "cc-set-rl", labelText); if (help) rl.appendChild(infoIcon(help)); row.appendChild(rl); var seg = el("div", "cc-seg");
+  function segRow(labelText, opts, cur, onChange, help, segFirst) {
+    var row = el("div", "cc-set-row" + (segFirst ? " cc-set-row-segfirst" : "")); var rl = el("span", "cc-set-rl", labelText); if (help) rl.appendChild(infoIcon(help)); var seg = el("div", "cc-seg");
     opts.forEach(function (o) {
       // <span> not <button> (Unraid's button CSS painted orange borders on these)
       var b = el("span", "cc-seg-btn" + (cur === o[0] ? " cc-seg-on" : "")); b.textContent = o[1];
       b.addEventListener("click", function () { onChange(o[0]); Array.prototype.slice.call(seg.children).forEach(function (x) { x.classList.remove("cc-seg-on"); }); b.classList.add("cc-seg-on"); });
       seg.appendChild(b);
     });
-    row.appendChild(seg); return row;
+    // segFirst (user): switches LEFT of the label (used by the Dichte row) — append seg then label.
+    if (segFirst) { row.appendChild(seg); row.appendChild(rl); } else { row.appendChild(rl); row.appendChild(seg); }
+    return row;
   }
   // Native <select> styled as a CC control (no orange Unraid border). opts = [value, label, face?];
   // when a third element is given the option renders in that font-family (used by the font picker).

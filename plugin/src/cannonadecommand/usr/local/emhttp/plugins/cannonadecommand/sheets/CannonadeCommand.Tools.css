@@ -174,6 +174,16 @@ html.cc-tools-on #displaybox dl > dd .switch-button-background { vertical-align:
 html.cc-tools-on #displaybox dl > blockquote.inline_help,
 html.cc-tools-on #displaybox dl > .inline-help { grid-column: 1 / -1; }
 html.cc-tools-on #displaybox blockquote.inline_help { background: #1c1c1c !important; border: none !important; border-radius: 8px !important; color: #b8b8b8 !important; padding: 8px 12px !important; margin: 2px 0 8px !important; font-size: 12.5px !important; }
+/* #11/#12 (user: Mover / TRIM subtabs "durcheinander" -> "in den CC-Style, Ausrichtung nativ lassen, aber die
+   Badges richtig ausrichten"): the *-Zeitplan rows are native <dl>s with TWO <dt>s (a stray ⓘ-icon dt + the
+   label dt) + one <dd>. ccToolsEnhance only folds that stray dt on cc-diskpage, so on /Settings/* the native
+   2-col grid auto-places the three items scattered (ⓘ in col1, label in col2 pushed far-right, the field wraps
+   to col1-row2 = far left). Pin all three to ROW 1: both <dt>s right-aligned in the LABEL column (label then
+   the ⓘ), the field in the value column -> lines up exactly with the single-<dt> rows above. Native widths kept. */
+html.cc-tools-on #displaybox dl:has(> dt + dt) > * { grid-row: 1 !important; align-self: center !important; }
+html.cc-tools-on #displaybox dl:has(> dt + dt) > dt { grid-column: 1 !important; justify-self: end !important; }
+html.cc-tools-on #displaybox dl:has(> dt + dt) > dt:nth-child(2) { margin-right: 22px !important; }
+html.cc-tools-on #displaybox dl:has(> dt + dt) > dd { grid-column: 2 !important; justify-self: start !important; }
 
 /* ── INPUTS / SELECT / TEXTAREA -> dark fills, NO focus ring (focus = brightness) ── */
 html.cc-tools-on #displaybox input[type="text"],
@@ -195,9 +205,10 @@ html.cc-tools-on #displaybox input[type="button"],
 html.cc-tools-on #displaybox input[type="submit"],
 html.cc-tools-on #displaybox button:not([role="tab"]),
 html.cc-tools-on #displaybox a.button {
-  /* #11/#3 (user): follow the colour mode — per-button rotated palette colour (--cc-rb-c) in a row, else
-     the single rainbow/flag action colour, else the accent. */
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  /* #5 (user: "der Fertig-Button hat eine andere Farbe"): FORM action buttons (ANWENDEN/FERTIG/SPEICHERN)
+     read as ONE uniform action colour — the single rainbow/flag accent, else the base accent. NOT the
+     per-button --cc-rb-c rotation, which made Apply/Done/Save each a different colour. */
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
   border: none !important; outline: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   height: var(--cc-md-h, 30px); padding: var(--cc-md-pad, 0 20px) !important;
   font-weight: 600; box-shadow: none !important; text-decoration: none !important;
@@ -294,7 +305,10 @@ html.cc-tools-on #displaybox dl:has(.advancedview) {
 }
 html.cc-tools-on #displaybox dl:has(.advancedview) > dt { display: none !important; }
 html.cc-tools-on #displaybox dl:has(.advancedview) > dd { width: auto !important; margin: 0 !important; float: none !important; display: flex; align-items: center; gap: 8px; }
-html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-label { color: #cfcfcf; font-weight: 600; }
+/* #(user: "der Text ist nicht vertikal zentriert"): the on/off labels are floated block boxes that top-align with
+   the 24px toggle, so a 16px label sat ~5px above the toggle's centre. Give the label the toggle's 24px line-box so
+   its text centres against the pill. */
+html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-label { color: #cfcfcf; font-weight: 600; line-height: 24px; height: 24px; }
 html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-background {
   width: 44px !important; height: 24px !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important; flex: 0 0 auto;
 }

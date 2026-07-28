@@ -58,6 +58,13 @@ html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-cpu,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-ram,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-ip,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-vol { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important; }
+/* per-KIND reactive hover (mirrors docker.css:1435-1450): on ROW hover the cpu/ram/ip/vol badges take
+   their OWN palette colour instead of the generic --cc-rbaccent fallback above. .cc-b.cc-b-* raises the
+   specificity over the generic tr:hover .cc-b rule; source order settles the tie per kind. */
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-cpu { background: var(--cc-rb-cpu, #d9433f) !important; color: var(--cc-rb-cpu-t, #fff) !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-ram { background: var(--cc-rb-ram, #2f9d8b) !important; color: var(--cc-rb-ram-t, #fff) !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-ip  { background: var(--cc-rb-ip, #2f6feb) !important; color: var(--cc-rb-ip-t, #fff) !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-vol { background: var(--cc-rb-vol, #0891b2) !important; color: var(--cc-rb-vol-t, #fff) !important; }
 html.cc-vms-on #kvm_list .cc-b-k { opacity: .72; font-weight: 500; }
 html.cc-vms-on #kvm_list .cc-b-v { font-family: Consolas, "SFMono-Regular", monospace; }
 /* Badge VALUE (incl. the a.vcpu-* CPU link vms.js moves into .cc-b-v) inherits the badge text colour;
@@ -175,13 +182,19 @@ html.cc-vms-on .cc-actmore.cc-open { display: flex; flex-wrap: wrap; }
 html.cc-vms-on .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }
 @keyframes cc-actflash { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--cc-accent, #2f6feb); } }
 
+/* reactive rainbow (mirrors docker.css:1428-1430): tintAct() skips its inline paint and stamps
+   --cc-rb-c/--cc-rb-ct per button — enabled icons REST dark grey and take that palette colour on ROW
+   hover; disabled .cc-actoff keeps its own grey (never matched). */
+html.cc-vms-on.cc-vm-rbneutral .cc-actbtn:not(.cc-actoff) { background: #2e2e2e !important; color: #e9e9e9 !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-actbtn:not(.cc-actoff) { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
+
 /* ═══ bottom action buttons (input[type=button]) -> CC accent pills ═══ */
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart) {
   border: none !important; box-shadow: none !important;
   height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-btnpad, 0 14px) !important; min-width: 0 !important; box-sizing: border-box !important;
   border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer;
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
-  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important; transition: filter .12s;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important; transition: filter .12s;
 }
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart):hover:not(:disabled) { filter: brightness(1.14); }
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart):disabled { opacity: .45 !important; filter: grayscale(.4) !important; cursor: not-allowed !important; }

@@ -821,6 +821,9 @@ html.cc-plugins-iconbg .cc-plugico {
 .cc-set-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; flex-wrap: wrap; }
 .cc-set-card .cc-set-inline { justify-content: space-between; flex-wrap: nowrap; } /* label left, toggle flush right -> all toggles line up */
 .cc-set-rl { min-width: 110px; }
+/* segFirst rows (Dichte, user): the segmented switches sit LEFT of the label — label natural-width, a touch more gap */
+.cc-set-row-segfirst { gap: 14px; }
+.cc-set-row-segfirst .cc-set-rl { min-width: 0; }
 #cc-settings .cc-seg-btn { padding: 5px 12px; }
 .cc-set-spacer { flex: 1; }
 .cc-set-swatches { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 6px; }
@@ -840,7 +843,7 @@ html.cc-plugins-iconbg .cc-plugico {
 #cc-settings input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
 .cc-set-pick { width: 40px; height: 30px; box-sizing: border-box; }
 /* hex text field beside the colour picker (override Unraid's input underline) */
-#cc-settings .cc-set-hexin { flex: none; width: 104px; height: 30px; font-family: ui-monospace, "Cascadia Code", monospace; text-transform: uppercase; letter-spacing: .5px; background: #232323 !important; color: var(--txt); border: none !important; outline: none !important; border-radius: 6px !important; padding: 0 10px !important; font-size: 13px; box-sizing: border-box; }   /* #5: NO border line (CC law), filled bg, same 30px height as swatches */ /* #5: hex field = same 28px height as the swatches */
+#cc-settings .cc-set-hexin { flex: none; width: 104px; height: 30px; font-family: ui-monospace, "Cascadia Code", monospace; text-transform: uppercase; letter-spacing: .5px; background: var(--cc-surface-chip, #383838) !important; color: var(--txt); border: none !important; outline: none !important; border-radius: 6px !important; padding: 0 10px !important; font-size: 13px; box-sizing: border-box; }   /* #5: NO border line (CC law), filled bg, same 30px height as swatches */ /* #5: hex field = same 28px height as the swatches */
 #cc-settings .cc-set-hexin:focus { outline: none; border-color: var(--cc-accent, #2f6feb) !important; }
 /* #20: native <select> styled as a clearly-readable CC control (Servername size/weight/italic/font
    pickers). The old #232323 fill barely differed from the card, so the pickers read as underlined text
@@ -849,6 +852,9 @@ html.cc-plugins-iconbg .cc-plugico {
 #cc-settings .cc-set-sel { flex: 1; min-width: 0; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-color: #2e2e2e !important; color: #eaeaea !important; border: 0 !important; border-radius: 8px !important; padding: 8px 36px 8px 13px !important; font-size: 13px; font-weight: 600; cursor: pointer; box-sizing: border-box; min-height: var(--cc-md-h, 30px); background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" fill="none" stroke="%23cfcfcf" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>') !important; background-repeat: no-repeat !important; background-position: right 12px center !important; transition: background-color .12s, filter .12s; }
 #cc-settings .cc-set-sel:hover { background-color: #383838 !important; }
 #cc-settings .cc-set-sel:focus { outline: none; filter: brightness(1.12); }
+/* open option list -> dark to match CC (native <option> is only partly stylable: background + selected accent) */
+#cc-settings .cc-set-sel option { background: #2e2e2e; color: #eaeaea; }
+#cc-settings .cc-set-sel option:checked { background: var(--cc-accent, #2f6feb); color: #fff; }
 #cc-settings .cc-set-sel option { background: #1e1e1e; color: #f4f4f4; }
 .cc-set-prev { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; align-items: center; }
 .cc-set-prev .cc-b-lg { font-size: 15px; font-weight: 700; padding: 6px 16px; letter-spacing: .2px; } /* preview NAME headline badge — 15px / 6px 16px = the live Shares lg tier (Shares.css --cc-lg-*) */
@@ -1201,8 +1207,8 @@ html.cc-ctout-on #cc-ctout-bd { position: fixed; inset: 0; background: rgba(0, 0
 html.cc-ctout-on #displaybox .content {
   position: fixed; z-index: 9999; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: min(900px, 92vw); max-height: 86vh; overflow: auto;
-  background: #0f0f0f; border: none; border-radius: 14px;
-  box-shadow: 0 26px 80px rgba(0, 0, 0, .78), 0 0 0 1px rgba(255, 255, 255, .09);   /* same ring+shadow as the update window so all windows of this type look identical */
+  background: var(--cc-surface-window, #242424); border: none; border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .38);   /* #6 (user: install window "völlig verunstaltet -> exakt wie das Update-Fenster"): SAME #242424 surface + soft shadow as the sweet-alert.nchan update window, NO 1px ring line */
   padding: 0 26px 22px; box-sizing: border-box; text-align: center;
 }
 /* #7-IV (user, 3rd time!): the "CONTAINER HINZUFUEGEN" title is the INLINE cc-ctout output (not the iframe
@@ -1223,7 +1229,7 @@ html.cc-ctout-on #displaybox .content p.logLine,
 html.cc-ctout-on #displaybox .content #logBody { text-align: left; }
 html.cc-ctout-on #displaybox .content fieldset,
 html.cc-ctout-on #displaybox .content fieldset.docker {
-  background: #191919 !important; border: none !important; border-radius: 10px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;
+  background: var(--cc-surface-window, #242424) !important; border: none !important; border-radius: 10px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;
   margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important;
 }
 html.cc-ctout-on #displaybox .content fieldset > legend {
@@ -1320,8 +1326,9 @@ html.cc-docker-on.cc-on-addct #ddcl-catSelect,
 html.cc-docker-on.cc-on-addct span.ui-dropdownchecklist-selector-wrapper { height: auto !important; overflow: visible !important; }
 html.cc-docker-on.cc-on-addct .ui-dropdownchecklist-selector {
   background: #262626 !important; border: none !important; outline: none !important; box-shadow: none !important;
-  border-radius: min(var(--cc-b-radius, 8px), 8px) !important; padding: 5px 12px !important;
+  border-radius: min(var(--cc-b-radius, 8px), 8px) !important; padding: 0 12px !important;
   color: #e6e6e6 !important; cursor: pointer;
+  min-height: 32px !important; box-sizing: border-box !important; display: flex !important; align-items: center !important;   /* #4 (user "falsche Groesse"): match the 32px text/number value inputs, text vertically centred */
 }
 html.cc-docker-on.cc-on-addct .ui-dropdownchecklist-selector .ui-dropdownchecklist-text { color: #e6e6e6 !important; background: transparent !important; }
 html.cc-docker-on.cc-on-addct .ui-dropdownchecklist-dropcontainer-wrapper { background: transparent !important; border: none !important; box-shadow: none !important; }
@@ -1516,6 +1523,17 @@ html .cc-enh #docker_list .switch-button-background, html .ToggleViewMode .switc
 html .cc-enh #docker_list .switch-button-background .switch-button-button,
 html .ToggleViewMode .switch-button-background .switch-button-button,
 html div.js-actions input[type=button] { border-radius: var(--cc-b-radius, 999px) !important; }
+
+/* TOGGLES stay a fixed switch metaphor — a PILL track + a CIRCLE knob — never squared by the shape
+   engine above (user #14: the Docker view toggle "sieht komisch aus" — the override forced a 6px track
+   AND a 6px knob, which read as a boxy square, not a switch). This rule is AFTER the master override, so
+   it wins for toggles only; badges/buttons still follow --cc-b-radius. */
+html .cc-set-toggle,
+html .cc-enh #docker_list .switch-button-background,
+html .ToggleViewMode .switch-button-background { border-radius: 999px !important; }
+html .cc-set-knob,
+html .cc-enh #docker_list .switch-button-background .switch-button-button,
+html .ToggleViewMode .switch-button-background .switch-button-button { border-radius: 50% !important; }
 
 /* Badge-Form "circle" (v2.18.0): round the square container/plugin logo badges to full circles.
    Rectangular data/tab pills stay capsules via --cc-b-radius (999px in circle mode). */

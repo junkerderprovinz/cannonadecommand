@@ -576,7 +576,7 @@ html.cc-popups-on .sweet-alert.nchan fieldset {
   /* user: "oben und unten den hellen Hintergrund auf dunkel" — the step cards were #1c1c1c, a shade
      lighter than the #161616 window, which read as light bands top and bottom. Match the window so the
      whole dialog is one continuous dark surface; the accent legend badge still marks each step. */
-  background: #191919 !important; border: none !important; border-radius: 10px !important;
+  background: var(--cc-surface-window, #242424) !important; border: none !important; border-radius: 10px !important;
   margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;   /* borderless card: raised surface + shadow, NO border line (CC law) */
 }
 html.cc-popups-on .sweet-alert.nchan fieldset > legend {
@@ -598,7 +598,10 @@ html.cc-popups-on .sweet-alert.nchan h2 { position: relative; }
    vertically centred: "unten links neben den Buttons". */
 html.cc-popups-on .sweet-alert.nchan .sa-button-container { position: relative; width: 100% !important; box-sizing: border-box; }
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader {
-  position: absolute; left: 2px; top: 50%; transform: translateY(-50%); bottom: auto; z-index: 3;
+  /* #2 (user: "das Status-Icon soll DIREKT links der Buttons sein, mit gleichem Abstand wie die Buttons
+     zueinander"): a normal flex item in the (row-reverse, centred) button row -> it sits immediately LEFT of
+     the buttons with the row's 10px gap, no longer absolute at the far-left edge. */
+  position: static; z-index: 3; flex: none;
   display: inline-flex; gap: 5px; align-items: center; pointer-events: none;
 }
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader i {
@@ -612,9 +615,9 @@ html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader i:nth-child(3) { animation
 /* #7-II finished: the bottom-left loader morphs into a circle-with-check (no text), drawn in. Green = done. */
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader.cc-nchan-check { gap: 0; }
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg { width: 26px; height: 26px; overflow: visible; display: block; }
-html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-c { fill: none; stroke: #35d07f; stroke-width: 2; opacity: .9; }
+html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-c { fill: #1f9d55; stroke: none; opacity: 1; }   /* #2 (user: "das Status-Icon soll ein Badge sein"): a FILLED green CC badge, not a thin outline ring */
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-p {
-  fill: none; stroke: #35d07f; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
+  fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
   stroke-dasharray: 22; stroke-dashoffset: 22; animation: cc-ck-draw .34s ease .04s forwards;
 }
 @keyframes cc-ck-draw { to { stroke-dashoffset: 0; } }
@@ -675,7 +678,7 @@ html.cc-popups-on .sweet-alert::-webkit-scrollbar-track,
 html.cc-popups-on .sweet-alert pre::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
 /* SweetAlert confirmations (start/stop/remove dialogs) */
 html.cc-popups-on .sweet-alert {
-  background: var(--cc-surface-window-deep) !important; border: none !important; border-radius: 14px !important;
+  background: var(--cc-surface-window) !important; border: none !important; border-radius: 14px !important;
   /* #(user "systemweit gleich, nie Rahmenlinien" + "keine hellen Kopf-/Fußleisten"): the DEEP surface keeps the frame
      the darkest layer so the #191919 step cards stay RAISED (no lighter strip). NO ring, soft small shadow — uniform
      backdrop, no halo. */
@@ -686,9 +689,9 @@ html.cc-popups-on .sweet-alert {
    missed grandchild wrapper divs). Content elements keep their own fills: the title/legend badges, the
    buttons, the raw-log pre (#0f0f0f), and the step fieldsets (#161616). */
 html.cc-popups-on .sweet-alert.nchan,
-html.cc-popups-on .sweet-alert:has(pre) { background: var(--cc-surface-window-deep) !important; }
+html.cc-popups-on .sweet-alert:has(pre) { background: var(--cc-surface-window) !important; }
 html.cc-popups-on .sweet-alert.nchan *:not(h2):not(button):not(pre):not(fieldset):not(legend):not(.sa-icon):not([class*="badge"]):not([class*="chip"]),
-html.cc-popups-on .sweet-alert:has(pre) *:not(h2):not(button):not(pre):not(fieldset):not(legend):not(.sa-icon):not([class*="badge"]):not([class*="chip"]) { background-color: transparent !important; box-shadow: none !important; }
+html.cc-popups-on .sweet-alert:has(pre) *:not(h2):not(button):not(pre):not(fieldset):not(legend):not(.sa-icon):not([class*="badge"]):not([class*="chip"]) { background-color: transparent !important; box-shadow: none !important; border: none !important; }   /* #3 (user: "das ShipLog-Changelog-Fenster hat Rahmenlinien"): also strip stray borders from changelog/streaming-window descendants (CC no-line law) */
 /* (sweet-alert h2 badge styling above) */
 html.cc-popups-on .sweet-alert p, html.cc-popups-on .sweet-alert .sa-text { color: #bdbdbd !important; }
 html.cc-popups-on .sweet-alert hr { display: none !important; }
@@ -718,7 +721,7 @@ html.cc-popups-on .sweet-alert .sa-button-container button:hover { filter: brigh
    native WHITE with orange-outlined buttons (user). Same dark carbon surface + CC pill buttons; the
    .swal-modal prefix beats the plugin's own themed button rules. Live-verified on the UD remove dialog. */
 html.cc-popups-on .swal-overlay { background: rgba(0, 0, 0, .6) !important; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
-html.cc-popups-on .swal-modal { background: #0f0f0f !important; border: none !important; border-radius: 12px !important; box-shadow: 0 18px 50px rgba(0, 0, 0, .6) !important; }
+html.cc-popups-on .swal-modal { background: var(--cc-surface-window) !important; border: none !important; border-radius: 14px !important; box-shadow: 0 18px 50px rgba(0, 0, 0, .6) !important; }
 html.cc-popups-on .swal-modal .swal-title { color: #f2f2f2 !important; font-weight: 600 !important; }
 html.cc-popups-on .swal-modal .swal-text { color: #bdbdbd !important; text-align: center !important; }
 html.cc-popups-on .swal-modal .swal-footer { text-align: center !important; }
@@ -1180,3 +1183,41 @@ html.cc-header-on #menu .nav-tile .nav-item.HelpButton.util { display: none !imp
    on the two items that open unraid.net (Lizenz verwalten / Konto). Its path starts M15.75 2.25H21 — hide it via
    CSS so a reka re-render can never bring it back. */
 html.cc-header-on .cc-acctmenu li svg:has(path[d^="M15.75 2.25H21"]) { display: none !important; }
+
+/* ═══ USER tiles (/Users) — user #13: "schöne Kacheln für die User wie für Einstellungen/Werkzeuge, die sich
+   an die Farb- und Form-Engine halten" + "das klebt zu eng aufeinander". The native /Users grid is a .Panels
+   grid of div.user-list > a > img.picture(48) + name — no card, 10px gap. Mirror the Settings/Tools tile recipe
+   (SettingsGrid.css): turn the avatar into a big accent icon-badge (--cc-iconbg-color/--cc-accent + --cc-b-radius,
+   50% in circle mode), name below, more grid gap. Scoped to the user grid via :has(.user-list) so the
+   Settings/Tools tile grids are untouched. Gated on cc-header-on = CC theming on. ═══ */
+html.cc-header-on #displaybox .Panels:has(.user-list) { gap: 20px !important; padding-top: 6px; }
+html.cc-header-on #displaybox .user-list { display: contents; }
+html.cc-header-on #displaybox .user-list > a {
+  display: inline-flex !important; flex-direction: column; align-items: center; justify-content: flex-start; gap: 10px;
+  text-decoration: none !important; color: var(--cc-ink-dim, #cfcfcf) !important; padding: 6px !important;
+  transition: color .12s, transform .12s;
+}
+html.cc-header-on #displaybox .user-list > a:hover { transform: translateY(-2px); color: var(--cc-ink, #e8e8e8) !important; }
+html.cc-header-on #displaybox .user-list > a br { display: none; }
+html.cc-header-on #displaybox .user-list > a img.picture {
+  width: 76px !important; height: 76px !important; min-width: 76px !important; max-width: 76px !important; flex: none !important;
+  box-sizing: border-box !important; padding: 13px !important;
+  border-radius: min(var(--cc-b-radius, 14px), 16px) !important;
+  background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important;
+  object-fit: contain; transition: filter .12s; border: none !important;
+}
+html.cc-shape-circle.cc-header-on #displaybox .user-list > a img.picture { border-radius: 50% !important; }
+html.cc-header-on #displaybox .user-list > a:hover img.picture { filter: brightness(1.1); }
+/* /Users action buttons (Benutzer hinzufügen / Fertig) had the raw native orange OUTLINE (no cc-tools-on on
+   /Users) — give them the CC accent pill, uniform like the other form buttons (#5). Scoped to the Users page
+   via #displaybox:has(.user-list) so no other page's buttons are touched. */
+html.cc-header-on #displaybox:has(.user-list) input[type="button"],
+html.cc-header-on #displaybox:has(.user-list) input[type="submit"],
+html.cc-header-on #displaybox:has(.user-list) a.button {
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  border: none !important; outline: none !important; box-shadow: none !important;
+  border-radius: var(--cc-b-radius, 999px) !important; height: var(--cc-md-h, 30px); padding: 0 18px !important;
+  font-weight: 600; text-transform: uppercase; letter-spacing: .6px; cursor: pointer; transition: filter .12s;
+}
+html.cc-header-on #displaybox:has(.user-list) input[type="button"]:hover:not(:disabled),
+html.cc-header-on #displaybox:has(.user-list) input[type="submit"]:hover:not(:disabled) { filter: brightness(1.14); }

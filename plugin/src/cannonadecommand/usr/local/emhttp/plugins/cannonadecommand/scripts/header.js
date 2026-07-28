@@ -142,7 +142,12 @@
         // "-IN PROGRESS"/"-FINISHED"), the state is LATCHED on the element (dataset) so stripping the suffix
         // doesn't lose it: once seen "in progress" -> run; once "finished" -> done; step names don't reset it.
         var raw = (h2.textContent || "");
-        if (/in\s*progress/i.test(raw)) sa.dataset.ccState = "run";
+        // #2 (user: "keine Ladeanimation während das Update läuft"): the German container-update/-install titles
+        // ("… wird aktualisiert / installiert / erstellt") never match /in progress/, so state stayed "" and no
+        // loader showed. Detect RUN from the DE/EN progress verbs OR from a live raw-log <pre> (a streaming
+        // terminal log = a pre WITHOUT the changelog markdown h3/ul; only present while a docker pull/create
+        // streams). The changelog window's markdown pre HAS h3/ul, so it never trips this -> stays loader-less.
+        if (sa.dataset.ccState !== "done" && (/in\s*progress|wird\s+(aktualisiert|installiert|erstellt|neu\s*erstellt|gezogen|gestartet)|updating|installing|pulling|creating/i.test(raw) || sa.querySelector("pre:not(:has(h3)):not(:has(ul))"))) sa.dataset.ccState = "run";
         else if (/finished/i.test(raw)) sa.dataset.ccState = "done";
         // #12 robust "done" (user: the loader stayed a 3-dot spinner forever): a container UPDATE via openDocker
         // FINISHES WITHOUT ever writing "-FINISHED" into the title (the streamed log says "…erfolgreich ausgeführt"
