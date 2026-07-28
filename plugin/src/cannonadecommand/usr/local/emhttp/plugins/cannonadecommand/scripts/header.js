@@ -119,6 +119,19 @@
       // dark step cards, empty-grey-bar hide) missed it and only the broad paintPopups colour reached it. Also
       // match any .sweet-alert that has a <pre> log and STAMP the nchan class on it, so all the existing
       // .sweet-alert.nchan CSS + JS below apply to it at once.
+      // #12 ROOT FIX (user "mach es endlich!!!"): the global ccPopObs watches only document.body CHILDLIST (no
+      // subtree), so it fires when a sweet-alert first appears (the "Are you sure?" confirm — which has NO <pre>)
+      // but NEVER again while that SAME alert streams IN PLACE (pre appears, title becomes "-IN PROGRESS" then
+      // "-FINISHED"). That is why the real update window kept the status text + spinner in the badge (my earlier
+      // synthetic test inserted an already-finished alert as a fresh body child, so it "passed"). Attach a subtree
+      // observer to EVERY sweet-alert (matched or not) so any later in-place streaming re-runs this and strips it.
+      var allSa = document.querySelectorAll(".sweet-alert");
+      for (var z = 0; z < allSa.length; z++) {
+        if (!allSa[z].__ccNchanObs) {
+          allSa[z].__ccNchanObs = new MutationObserver(function () { ccNchanStyle(); paintPopups(); });
+          try { allSa[z].__ccNchanObs.observe(allSa[z], { childList: true, subtree: true, characterData: true }); } catch (e) {}
+        }
+      }
       var sas = document.querySelectorAll(".sweet-alert.nchan, .sweet-alert:has(pre)");
       for (var i = 0; i < sas.length; i++) {
         var sa = sas[i], h2 = sa.querySelector("h2"); if (!h2) continue;
@@ -131,6 +144,11 @@
         var raw = (h2.textContent || "");
         if (/in\s*progress/i.test(raw)) sa.dataset.ccState = "run";
         else if (/finished/i.test(raw)) sa.dataset.ccState = "done";
+        // #12 robust "done" (user: the loader stayed a 3-dot spinner forever): a container UPDATE via openDocker
+        // FINISHES WITHOUT ever writing "-FINISHED" into the title (the streamed log says "…erfolgreich ausgeführt"
+        // instead), so the /finished/ check above never tripped and the loader never morphed into the green check.
+        // Flip to done once the streamed log reports completion.
+        if (sa.dataset.ccState === "run" && /(erfolgreich (ausgeführt|beendet)|successfully|command (finished|completed|executed))/i.test(sa.textContent || "")) sa.dataset.ccState = "done";
         var state = sa.dataset.ccState || "";
         sa.classList.toggle("cc-nchan-loading", state === "run");
         sa.classList.toggle("cc-nchan-done", state === "done");
@@ -139,9 +157,15 @@
         if (clean && clean !== raw && h2.textContent !== clean) h2.textContent = clean;
         var oldspin = h2.querySelector(".cc-nchan-spin"); if (oldspin) oldspin.remove();   // kill any legacy in-badge spinner
         // bottom-left indicator (no text): 3-dot loader while running, circle+check when finished
-        var loader = sa.querySelector(":scope > .cc-nchan-loader");
+        var loader = sa.querySelector(".cc-nchan-loader");
         if (state === "run" || state === "done") {
-          if (!loader) { loader = document.createElement("span"); loader.className = "cc-nchan-loader"; loader.setAttribute("role", "status"); sa.appendChild(loader); }
+          if (!loader) {
+            loader = document.createElement("span"); loader.className = "cc-nchan-loader"; loader.setAttribute("role", "status");
+            // anchor the loader to the BUTTON ROW, not the sweet-alert itself: the alert is often far taller than
+            // its content, so a bottom-anchored loader landed way BELOW the buttons instead of beside them (user).
+            var _cb = sa.querySelector("button.confirm, button.cancel");
+            (sa.querySelector(".sa-button-container") || (_cb && _cb.parentElement) || sa).appendChild(loader);
+          }
           if (state === "done") {
             if (loader.getAttribute("data-cc-mode") !== "done") { loader.setAttribute("data-cc-mode", "done"); loader.classList.add("cc-nchan-check"); loader.setAttribute("aria-label", T("Fertig", "Done")); loader.innerHTML = "<svg viewBox='0 0 24 24' aria-hidden='true'><circle class='cc-ck-c' cx='12' cy='12' r='10.5'/><path class='cc-ck-p' d='M6.5 12.5l3.6 3.6L17.5 8.8'/></svg>"; }
           } else if (loader.getAttribute("data-cc-mode") !== "run") {
@@ -222,7 +246,7 @@
   var ccPopObs = null;
   function watchPopups() {
     try {
-      if (ccPopObs) return; ccPopObs = new MutationObserver(function () { ccNchanStyle(); paintPopups(); ccPopIframes(); ccPopoverDim(); ccNotifActions(); });
+      if (ccPopObs) return; ccPopObs = new MutationObserver(function () { ccNchanStyle(); paintPopups(); ccPopIframes(); ccPopoverDim(); ccNotifActions(); ccPaintRotate(); });
       ccPopObs.observe(document.body, { childList: true });   // dialogs/sweetalerts append as direct body children — cheap, no subtree
     } catch (e) {}
   }
@@ -255,9 +279,17 @@
   function ccArmDelete(del) {                                                        // first click arms + relabels, second (within 4s) clears
     if (del.getAttribute("data-armed") === "1") { ccClearNotifs(); return; }
     del.setAttribute("data-armed", "1"); del.classList.add("cc-notif-armed");
-    del.textContent = T("Wirklich löschen?", "Really delete?");
+    // icon-only bulk button (docked by the gear): keep the trash icon, signal "armed" via the red .cc-notif-armed
+    // fill + the tooltip (there's no text to relabel).
+    var iconOnly = del.classList.contains("cc-notif-iconbtn");
+    if (iconOnly) del.setAttribute("title", T("Wirklich löschen? Nochmal klicken.", "Really delete? Click again."));
+    else del.textContent = T("Wirklich löschen?", "Really delete?");
     clearTimeout(del._ccT);
-    del._ccT = setTimeout(function () { del.setAttribute("data-armed", "0"); del.classList.remove("cc-notif-armed"); del.textContent = T("Alle löschen", "Delete all"); }, 4000);
+    del._ccT = setTimeout(function () {
+      del.setAttribute("data-armed", "0"); del.classList.remove("cc-notif-armed");
+      if (iconOnly) del.setAttribute("title", T("Alle löschen", "Delete all"));
+      else del.textContent = T("Alle löschen", "Delete all");
+    }, 4000);
   }
   function ccNotifActions() {
     try {
@@ -268,19 +300,31 @@
       for (var i = 0; i < sp.length; i++) { if (/^\s*(Alle archivieren|Archive all)\s*$/i.test(sp[i].textContent || "")) { arch = sp[i]; break; } }
       if (!arch || !arch.parentElement) return;                                     // native archive-all not present (empty state / archive tab) -> nothing to attach to
       arch.parentElement.classList.add("cc-notif-actions");                         // CSS turns the column into a horizontal badge row
-      function badge(text, cls, onAct) {
+      // #5 (user): the two bulk actions become ICON-ONLY badges docked just LEFT of the type-filter gear.
+      var gear = null, glinks = host.querySelectorAll('a[href*="Notification"]');
+      for (var gi = 0; gi < glinks.length; gi++) { if (glinks[gi].querySelector("svg") && !(glinks[gi].textContent || "").trim()) { gear = glinks[gi]; break; } }
+      if (gear && !gear.getAttribute("data-cc-tip")) { gear.setAttribute("data-cc-tip", T("Benachrichtigungs-Einstellungen", "Notification settings")); gear.removeAttribute("title"); }  // same frameless CC bubble as the two bulk icons
+      var ICON_ARCH = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"></rect><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"></path><path d="M10 12h4"></path></svg>';
+      var ICON_DEL = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M6 6v14a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6"></path><path d="M10 11v6M14 11v6"></path></svg>';
+      function badge(icon, label, cls, onAct) {
         var b = arch.cloneNode(true);                                              // clone the native chrome MINUS its Vue handler
-        b.removeAttribute("id"); b.className = arch.className + " cc-notif-badge " + cls;
-        b.textContent = text; b.setAttribute("role", "button"); b.tabIndex = 0; b.style.cursor = "pointer";
+        b.removeAttribute("id"); b.className = arch.className + " cc-notif-badge cc-notif-iconbtn " + cls;
+        b.innerHTML = icon; b.setAttribute("role", "button"); b.setAttribute("aria-label", label); b.setAttribute("data-cc-tip", label); b.removeAttribute("title"); b.tabIndex = 0; b.style.cursor = "pointer";  // frameless CC bubble (like the gear), never a native title balloon
         b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); onAct(b); });
         b.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); onAct(b); } });
         return b;
       }
-      var arB = badge(T("Alle archivieren", "Archive all"), "cc-notif-arch", function () { ccArchiveNotifs(); });
-      var del = badge(T("Alle löschen", "Delete all"), "cc-notif-del", function (b) { ccArmDelete(b); });
+      var arB = badge(ICON_ARCH, T("Alle archivieren", "Archive all"), "cc-notif-arch", function () { ccArchiveNotifs(); });
+      var del = badge(ICON_DEL, T("Alle löschen", "Delete all"), "cc-notif-del", function () { ccClearNotifs(); });  // #(user): single click deletes (the two-step arming was confusing)
       arch.style.display = "none";                                                  // hide the native archive link (its click opens the off-screen confirm)
-      arch.parentNode.insertBefore(arB, arch.nextSibling);
-      arB.parentNode.insertBefore(del, arB.nextSibling);
+      if (gear && gear.parentNode) {                                                // dock LEFT of the gear (user); fall back to the native spot if it's absent
+        var anchor = gear.closest(".shrink-0") || gear;
+        anchor.parentNode.insertBefore(arB, anchor);
+        anchor.parentNode.insertBefore(del, anchor);
+      } else {
+        arch.parentNode.insertBefore(arB, arch.nextSibling);
+        arB.parentNode.insertBefore(del, arB.nextSibling);
+      }
       for (var k = 0; k < sp.length; k++) { if (sp[k] !== del && /^\s*(Alle löschen|Delete all)\s*$/i.test(sp[k].textContent || "")) sp[k].style.display = "none"; }  // hide any native delete-all (archive tab)
     } catch (e) {}
   }
@@ -361,6 +405,8 @@
   // stable key: tabs by href; utils by link signature (href, else onclick, else the localised
   // title — a language switch then just resets that one icon); the meter fixed.
   function navKeyAll(it) {
+    if (it.id === "cc-bell-proxy") return "cc-bell";              // bell/burger proxies key by id (no href to key on)
+    if (it.id === "cc-burger-proxy") return "cc-burger";
     if (it.classList.contains("usage-bar")) return "usage-bar";
     var a = it.querySelector("a"); if (!a) return null;
     return ((a.getAttribute("href") || a.getAttribute("onclick") || a.getAttribute("title") || "") + "").slice(0, 160) || null;
@@ -427,6 +473,7 @@
   var ccDragged = null, ccReorder = false, ccHoldTimer = null, ccPressXY = null, ccSuppressClick = false, ccDocBound = false;
   var ccPressItem = null, ccPressPtr = 0, ccMoved = false;   // POINTER-drag state (replaces the HTML5 drag)
   var ccNavTruce = 0, ccNavTries = 0, ccNavLast = 0;   // anti-ping-pong truce vs Unraid's Connect auto-mount observer (see applyNavOrder)
+  var ccLockCapBound = false;   // the arrange-lock document-capture toggle is bound once
   function cancelHold() { if (ccHoldTimer) { clearTimeout(ccHoldTimer); ccHoldTimer = null; } ccPressXY = null; ccPressItem = null; }
   function enterReorder() {   // long-press satisfied => EVERYTHING jiggles (one zone)
     if (ccReorder) return; ccReorder = true;
@@ -445,6 +492,21 @@
   // wired to ALSO toggle CC arranging; on other pages CC injects a look-alike util icon.
   function ccArrangeLock() {
     try {
+      // #(user: "zum Beenden muss ich zweimal aufs Schloss klicken"): a downstream CAPTURE-phase
+      // stopPropagation on the header eats lock clicks before they reach any per-element handler (proven
+      // live: a document-level capture listener fires; a .nav-item-level one does NOT, nor does the <a>'s
+      // own handler). So the lock's own click handlers were unreliable. Bind ONE toggle on the DOCUMENT
+      // in the capture phase — it fires FIRST, so one click = one reliable toggle, for BOTH the native
+      // LockButton (Dashboard) and CC's injected #cc-lock-item (other pages).
+      if (!ccLockCapBound) {
+        ccLockCapBound = true;
+        document.addEventListener("click", function (e) {
+          var lk = e.target && e.target.closest ? e.target.closest("#cc-lock-item, #menu .nav-item.LockButton") : null;
+          if (!lk) return;
+          if (lk.id === "cc-lock-item") e.preventDefault();   // CC's own #href lock: suppress navigation
+          ccToggleArrange();
+        }, true);
+      }
       var old = document.getElementById("cc-arrange-lock"); if (old) old.remove();   // drop the previous floating button
       var on = document.documentElement.classList.contains("cc-header-on");
       var tileR = document.querySelector("#menu .nav-tile.right");
@@ -452,17 +514,12 @@
       if (!on || !tileR) { if (injected) injected.remove(); return; }
       var native = tileR.querySelector(".nav-item.LockButton");
       if (native) {
-        if (injected) injected.remove();   // native present -> no clone needed
-        if (!native.getAttribute("data-cc-arrwired")) {
-          native.setAttribute("data-cc-arrwired", "1");
-          var na = native.querySelector("a"); if (na) na.addEventListener("click", function () { setTimeout(ccToggleArrange, 0); });   // let the native LockButton run, then toggle CC arrange
-        }
+        if (injected) injected.remove();   // native present -> no clone needed (the document-capture toggle drives it)
       } else if (!injected) {
         injected = document.createElement("div"); injected.className = "nav-item util cc-navdrag"; injected.id = "cc-lock-item"; injected.setAttribute("data-cc-drag", "1");   // exclude from nav reorder
         var a = document.createElement("a"); a.href = "#"; a.className = "hand"; a.setAttribute("data-cc-tip", T("Anordnen entsperren/sperren", "Unlock/lock arranging"));
         a.innerHTML = "<b class='icon-u-lock system'></b>";
-        a.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); ccToggleArrange(); });
-        injected.appendChild(a); tileR.insertBefore(injected, tileR.firstChild);
+        injected.appendChild(a); tileR.insertBefore(injected, tileR.firstChild);   // click handled by the document-capture toggle above
       }
       var arr = document.documentElement.classList.contains("cc-arrange");
       if (native) native.classList.toggle("cc-lock-arranging", arr);
@@ -481,6 +538,7 @@
         try { ccIslandSaveOrder(); } catch (e2) {}
       }
       ccArrangeLock();
+      try { ccDockProfile(); } catch (eD) {}                      // re-pin bell/burger over their proxies (arrange enter hides them, exit re-overlays at the new order)
     } catch (e) {}
   }
   // ── #S6 COMMAND PALETTE (Ctrl/⌘+K) ── a quick launcher over every page tab + a few CC actions. Fuzzy-
@@ -850,7 +908,15 @@
   function ccIslandArrange() {
     try {
       if (!ccIslRows) return;
-      var order = ccIslandOrderRead(); if (!order) return;   // no saved arrangement -> everything stays in row 0
+      var order = ccIslandOrderRead();
+      if (!order) {
+        // no saved arrangement -> a sensible DEFAULT: spread the chips evenly across the 3 rows. Now that the
+        // rows can be full-header wide (user: free arrangement), leaving everything in row 0 would collapse the
+        // island to ONE long line; an even split keeps the familiar compact 3-row block until the user arranges.
+        var chips0 = ccIslRows[0].querySelectorAll(":scope > .cc-isl-chip"), n = chips0.length;
+        if (n) { var per = Math.ceil(n / 3); for (var d = 0; d < n; d++) { var rr = Math.min(2, Math.floor(d / per)); if (rr > 0) ccIslRows[rr].appendChild(chips0[d]); } }
+        return;
+      }
       var byKey = {}, all = ccIslRows[0].querySelectorAll(":scope > .cc-isl-chip");
       for (var i = 0; i < all.length; i++) { var k = ccIslKey(all[i]); if (k && !byKey[k]) byKey[k] = all[i]; }
       for (var r = 0; r < 3; r++) { var list = order[r] || []; for (var j = 0; j < list.length; j++) { var el = byKey[list[j]]; if (el) { ccIslRows[r].appendChild(el); delete byKey[list[j]]; } } }
@@ -938,6 +1004,64 @@
       }
     } catch (e) {}
   }
+  // #(user: "das Menue in den CC-Style uebernehmen. Infotext in Infobubble"): the account popover (Lizenz
+  // verwalten / Auf Updates pruefen / Konto / Einstellungen) mounts fresh on every open. Tag it so the CC sheet
+  // styles it (elevated card + colour-mode item hover), and fold any plain description <li> (no icon/link) onto a
+  // CC (i) bubble on the item above it, hiding the inline paragraph — the bubble rides the document-wide cc-tipfloat.
+  function ccAcctMenu() {
+    try {
+      // #(user: "bei Klick auf den Hilfebutton passiert nichts"): the (i) is a CLICK button, NOT a hover tooltip.
+      // Bind ONCE a document-capture click handler: clicking a .cc-acctinfo toggles a pinned info bubble
+      // (#cc-acctinfo-pop) with its help text; clicking the same (i) again, or anywhere outside, dismisses it.
+      // stopPropagation on the (i) keeps the reka menu open and stops the row from navigating.
+      if (!document.__ccAcctInfoBound) {
+        document.__ccAcctInfoBound = true;
+        document.addEventListener("click", function (e) {
+          var icon = e.target && e.target.closest ? e.target.closest(".cc-acctinfo") : null;
+          var pop = document.getElementById("cc-acctinfo-pop");
+          if (icon) {
+            e.preventDefault(); e.stopPropagation();
+            var same = pop && pop.getAttribute("data-src") === (icon.getAttribute("data-cc-info") || "");
+            if (pop) pop.remove();
+            if (same) return;                                             // second click on the same (i) closes it
+            pop = document.createElement("div"); pop.id = "cc-acctinfo-pop";
+            pop.textContent = icon.getAttribute("data-cc-info") || "";
+            pop.setAttribute("data-src", icon.getAttribute("data-cc-info") || "");
+            document.body.appendChild(pop);
+            var r = icon.getBoundingClientRect(), w = pop.offsetWidth, vw = window.innerWidth || document.documentElement.clientWidth;
+            pop.style.left = Math.max(8, Math.min(vw - 8 - w, r.left + r.width / 2 - w / 2)) + "px";
+            pop.style.top = (r.bottom + 8) + "px";
+            return;
+          }
+          if (pop && !(e.target.closest && e.target.closest("#cc-acctinfo-pop"))) pop.remove();   // click elsewhere dismisses
+        }, true);
+      }
+      var menus = document.querySelectorAll('div[role="menu"].bg-popover');
+      for (var m = 0; m < menus.length; m++) {
+        var menu = menus[m];
+        menu.classList.add("cc-acctmenu");
+        if (menu.getAttribute("data-cc-acct") === "1") continue;
+        menu.setAttribute("data-cc-acct", "1");
+        var lis = menu.querySelectorAll("li");
+        for (var i = 0; i < lis.length; i++) {
+          var li = lis[i];
+          if (li.querySelector("svg, a, button, input")) continue;         // an action row, not a description
+          var txt = (li.textContent || "").trim();
+          if (txt.length < 12) continue;                                    // too short to be a description
+          var prev = li.previousElementSibling;
+          var host = prev ? (prev.querySelector("span, a") || prev) : null;
+          if (host && !host.querySelector(".cc-acctinfo")) {
+            var ic = document.createElement("span");
+            ic.className = "cc-acctinfo"; ic.textContent = "ⓘ";            // circled i — a CLICK help button
+            ic.setAttribute("role", "button"); ic.tabIndex = 0; ic.setAttribute("aria-label", txt);
+            ic.setAttribute("data-cc-info", txt);                          // the help text the click bubble shows
+            host.appendChild(ic);
+            li.style.display = "none";
+          }
+        }
+      }
+    } catch (e) {}
+  }
   // #3/#8 (user: in rainbow mode ADJACENT buttons/toggles get DIFFERENT palette colours, not one blue).
   // Stamp a per-element rotating palette colour (--cc-rb-c) on each CC-themed native button (rotated within
   // its own row) and each tools/settings toggle (rotated across the page). The CSS reads
@@ -961,18 +1085,62 @@
       }
       // toggles AND dropdowns (#1) on tools/settings pages -> rotate across the page so no two read the same
       // colour (the CC-tsel dropdown box + selected chip follow --cc-rb-c, inherited from the .cc-tsel wrapper).
-      var tgls = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tgl, html.cc-tools-on #displaybox .switch-button-background, html.cc-tools-on #displaybox .cc-tsel");
+      var tgls = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tgl, html.cc-tools-on #displaybox .switch-button-background, html.cc-tools-on #displaybox .cc-tsel, html.cc-tools-on #displaybox .ui-dropdownchecklist-selector-wrapper, html.cc-diskpage #displaybox h3.section-header");   // #(user: "alle Badges in die Farbmodi"): the Boot-Parameters section badges rotate too
       for (var t = 0; t < tgls.length; t++) { if (!on) clear(tgls[t]); else stamp(tgls[t], t); }
       // #1 (user): each dropdown OPTION gets its OWN palette slot — rotate WITHIN each panel so the open list
-      // reads as a rainbow of items (the trigger itself stays neutral until hover; see Tools.css).
-      var panels = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tsel-panel");
-      for (var pn = 0; pn < panels.length; pn++) { var opts = panels[pn].querySelectorAll(".cc-tsel-opt"); for (var oi = 0; oi < opts.length; oi++) { if (!on) clear(opts[oi]); else stamp(opts[oi], oi); } }
+      // reads as a rainbow of items (the trigger itself stays neutral until hover; see Tools.css). Covers the CC
+      // overlay dropdown (.cc-tsel-panel/.cc-tsel-opt) AND the jQuery dropdownchecklist (Notification-agent lists).
+      var panels = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tsel-panel, html.cc-tools-on #displaybox .ui-dropdownchecklist-dropcontainer");
+      for (var pn = 0; pn < panels.length; pn++) { var opts = panels[pn].querySelectorAll(".cc-tsel-opt, .ui-dropdownchecklist-item"); for (var oi = 0; oi < opts.length; oi++) { if (!on) clear(opts[oi]); else stamp(opts[oi], oi); } }
+      // #5 (user: "alle Badges in die Farbmodi aufnehmen"): the notification-drawer badges rotate through the palette
+      // too (tabs, type filters, gear, the bulk-action icons, and the per-card Anzeigen/Archiv buttons). The delete
+      // icon stays semantic red (handled in CSS). In the REACTIVE sub-mode the sheet keys off cc-header-rbneutral to
+      // rest neutral + reveal --cc-rb-c on hover.
+      var nd = document.querySelector(".unapi div.fixed.z-50.bg-background");
+      if (nd) {
+        var ndb = nd.querySelectorAll('[role="tab"], [role="button"][aria-pressed]:not(.cc-notif-badge), .shrink-0 > a[href*="Notification"], .cc-notif-arch, .cc-notif-del, [class~="group/item"] a[class*="text-primary"], [class~="group/item"] span[class*="rounded-md"][class*="inline-flex"]');   // #(user: "Löschen-Button viel schwächer eingefärbt"): stamp delete too so it rotates like archive
+        for (var di = 0; di < ndb.length; di++) { if (!on) clear(ndb[di]); else stamp(ndb[di], di); }
+      }
+      // #(user: "die Listen in den Disk-Subtabs mit abwechselnder Hoverfarbe im Rainbow-Modus"): a rotated palette
+      // colour per table ROW so each reveals its own colour on hover (Tools.css keys tbody tr:hover off --cc-rb-c).
+      var dtr = document.querySelectorAll("html.cc-diskpage #displaybox table.unraid tbody tr");
+      for (var dr2 = 0; dr2 < dtr.length; dr2++) { if (!on) clear(dtr[dr2]); else stamp(dtr[dr2], dr2); }
+      // #(user: "die Buttons in der Boot-Parameters-Menueansicht sind nicht in den Farbmodi"): the clickable
+      // .parameter-code chips (the kernel arg each option inserts) never got a palette slot, so they stayed flat
+      // grey while every other button rotated. Stamp them across the page like the action buttons.
+      var pcodes = document.querySelectorAll("html.cc-diskpage #displaybox .parameter-code");
+      for (var pc = 0; pc < pcodes.length; pc++) { if (!on) clear(pcodes[pc]); else stamp(pcodes[pc], pc); }
+      // #(user: "das Menue in den CC-Style"): the account popover items rotate too so each reveals its own colour on hover.
+      var amItems = document.querySelectorAll('div[role="menu"].bg-popover li > span, div[role="menu"].bg-popover li > a');
+      for (var am = 0; am < amItems.length; am++) { if (!on) clear(amItems[am]); else stamp(amItems[am], am); }
+    } catch (e) {}
+  }
+  // #(user chose "JS-Reinit"): the SMB "copy settings" dropdownchecklist widgets are built by Unraid while their
+  // reka tab is still HIDDEN (selector width 0), so the jQuery plugin sizes their drop panel to ~0 and the list
+  // never opens. Once the tab is visible, destroy + re-create each widget ONCE so it measures the real selector —
+  // then the list opens normally. Guarded per widget (data-cc-dclfixed) so it runs a single time after the tab shows.
+  function ccFixSmbDcl() {
+    try {
+      var jq = window.jQuery; if (!jq || !jq.fn || typeof jq.fn.dropdownchecklist !== "function") return;
+      var ws = document.querySelectorAll('#displaybox span.ui-dropdownchecklist[id^="ddcl-"]');
+      for (var i = 0; i < ws.length; i++) {
+        var w = ws[i];
+        if (w.getAttribute("data-cc-dclfixed") === "1") continue;
+        var selr = w.querySelector(".ui-dropdownchecklist-selector");
+        if (!selr || selr.getBoundingClientRect().width < 5) continue;   // only once the tab is really on screen
+        var selId = w.id.replace(/^ddcl-/, ""), selEl = document.getElementById(selId); if (!selEl) continue;
+        var empty = (selr.textContent || "").trim() || "...", wdt = Math.max(110, Math.round(selr.getBoundingClientRect().width));
+        var $sel = jq(selEl);
+        try { $sel.dropdownchecklist("destroy"); } catch (e1) {}
+        try { $sel.dropdownchecklist({ emptyText: empty, firstItemChecksAll: true, explicitClose: T("...schließen", "...close"), width: wdt }); } catch (e2) {}
+        var nw = document.getElementById("ddcl-" + selId); if (nw) nw.setAttribute("data-cc-dclfixed", "1");
+      }
     } catch (e) {}
   }
   // The /Main disk tables, settings forms and button rows are AJAX-rendered AFTER apply() runs, so the
   // one-shot paint missed them (usage bars stayed uncoloured, buttons/toggles un-rotated). Watch #displaybox
   // (childList only -> our own inline style/attr writes never re-trigger it) and re-run the paints debounced.
-  var ccMainObs = null, ccMainT = null;
+  var ccMainObs = null, ccMainT = null, ccTabPaintBound = false;
   function ccWatchMain() {
     try {
       if (ccMainObs) return;
@@ -987,6 +1155,20 @@
         if (ccMainT) return; ccMainT = setTimeout(function () { ccMainT = null; try { ccStateBars(); ccPaintRotate(); ccToolsEnhance(); } catch (e2) {} }, 120);
       });
       ccMainObs.observe(box, { childList: true, subtree: true });
+      // #(user: "alle Buttons und Badges in die Farbmodi"): a reka SUB-TAB switch only toggles display (an
+      // attribute change the childList observer above deliberately ignores to avoid a paint loop), so the
+      // freshly-shown panel's buttons/badges never got their rotating --cc-rb-c. Re-run the paints shortly
+      // after any sub-tab click so the now-visible controls pick up their palette slot.
+      if (!ccTabPaintBound) {
+        ccTabPaintBound = true;
+        document.addEventListener("click", function (e) {
+          var t = e.target && e.target.closest ? e.target.closest('#displaybox nav.tabs button[role="tab"], #displaybox .tabs-container button[role="tab"]') : null;
+          if (t) {
+            setTimeout(function () { try { ccPaintRotate(); ccToolsEnhance(); ccFixSmbDcl(); } catch (er) {} }, 70);
+            setTimeout(function () { try { ccFixSmbDcl(); } catch (er2) {} }, 400);   // backup once the reka tab is fully on screen
+          }
+        }, true);
+      }
     } catch (e) {}
   }
   // #6 (user: "die Texte in der Infobubble sind nicht in der richtigen Sprache"): Unraid's DisplaySettings
@@ -1156,6 +1338,19 @@
         if (host) {
           if (!host.querySelector(":scope > .cc-toolsinfo")) { var ic = document.createElement("span"); ic.className = "cc-toolsinfo"; ic.setAttribute("data-cc-tip", txt); ic.textContent = "ⓘ"; host.appendChild(ic); }
           bq.style.display = "none";
+        }
+      }
+      // disk DEVICE pages: Unraid's form has an EMPTY structural <dt> before each real label; the resolver above
+      // appended some (i) icons to THAT empty dt, leaving a stray icon-only dt that broke the CC grid (3 items on
+      // some rows). Fold each standalone icon into the following label dt so every row reads label|value.
+      if (document.documentElement.classList.contains("cc-diskpage")) {
+        var carriers = document.querySelectorAll("#displaybox dl > dt > .cc-toolsinfo");
+        for (var ck = 0; ck < carriers.length; ck++) {
+          var cic = carriers[ck], cdt = cic.parentElement;
+          if ((cdt.textContent || "").replace(/[\sⓘ]/g, "")) continue;              // dt already carries a label -> icon is fine
+          var nlab = cdt.nextElementSibling;
+          while (nlab && nlab.tagName === "DT" && (getComputedStyle(nlab).display === "none" || !(nlab.textContent || "").trim())) nlab = nlab.nextElementSibling;
+          if (nlab && nlab.tagName === "DT") { nlab.appendChild(cic); cdt.style.display = "none"; }
         }
       }
       // #2-B (user: "Wo sind die Farbwählfelder bei Eigene Kopfzeilen-...farbe?"): Unraid's header colour
@@ -1369,92 +1564,95 @@
   var ccDockProps = ["position", "left", "right", "top", "height", "width", "z-index", "padding", "min-width"];
   var ccDockRaf = 0;
   function ccDockPass() { ccDockRaf = 0; ccDockProfile(); }
+  // ── #(user: "die beiden icons (benachrichtigungen und menü) kleben aneinander, hüpfen beim Resize und
+  // lassen sich im Drag&Drop nicht anderswo anordnen"). ROOT CAUSE: the old dock pinned the WHOLE
+  // Connect-owned #UserProfile (both triggers) as ONE position:fixed box whose `left` was JS-computed from
+  // the reflowing icon row + a vw-94 cap — hence glued, jumpy on resize, and not a drag participant.
+  // NEW MODEL (user chose "voll in Drag&Drop integrieren"): inject TWO real, draggable nav-items —
+  // #cc-bell-proxy and #cc-burger-proxy — that live in the normal .nav-tile.right flow (so they reflow
+  // natively = no jump, reorder like every other icon, and can be separated). The Connect law stands: the
+  // live reka triggers are NEVER moved in the DOM; each is just OVERLAID (position:fixed) exactly on top of
+  // its proxy every pass, so clicks and popovers still hit the real trigger. In arrange mode the live
+  // triggers go pointer-events:none + hidden (CSS) and the proxy's ghost glyph shows, so you drag a visible
+  // icon and the pointer reaches the proxy underneath. ── */
+  function ccEnsureProxies(sp) {
+    var tileR = navTileR(); if (!tileR) return [null, null];
+    var defs = [["cc-bell-proxy", true, sp[0]], ["cc-burger-proxy", false, sp.length ? sp[sp.length - 1] : null]];
+    var out = [];
+    for (var d = 0; d < defs.length; d++) {
+      var id = defs[d][0], isBell = defs[d][1], span = defs[d][2];
+      var it = document.getElementById(id);
+      if (!it) {
+        it = document.createElement("div");
+        it.className = "nav-item util cc-navdrag cc-iconproxy";
+        it.id = id;
+        var a = document.createElement("a"); a.href = "#"; a.className = "hand cc-proxy-a";
+        a.setAttribute("data-cc-tip", isBell ? T("Benachrichtigungen", "Notifications") : T("Menü", "Menu"));
+        a.addEventListener("click", function (e) { e.preventDefault(); });   // the overlaid live trigger takes real clicks; this only guards a stray hit
+        var gh = document.createElement("span"); gh.className = "cc-proxy-ghost"; a.appendChild(gh);
+        it.appendChild(a);
+        tileR.appendChild(it);                                     // default = far right (burger last), matching native order
+        wireNavItem(it);                                           // make it a first-class drag participant
+      }
+      // keep the ghost glyph a faithful clone of the live trigger's icon (for the arrange-mode preview)
+      var gh2 = it.querySelector(".cc-proxy-ghost");
+      if (gh2 && span && gh2.getAttribute("data-cc-svg") !== "1") { var svg = span.querySelector("svg"); if (svg) { gh2.innerHTML = svg.outerHTML; gh2.setAttribute("data-cc-svg", "1"); } }
+      out.push(it);
+    }
+    return out;
+  }
   function ccDockProfile() {
     try {
       if (!document.documentElement.classList.contains("cc-header-on")) { ccUndockProfile(); return; }
       var up = document.getElementById("UserProfile"); if (!up) return;
-      // anchor = the VISUALLY rightmost row participant (icons + usage meter): the merged drag
-      // zone lets DOM order differ from visual order, so take the max right edge, not the last node
-      var parts = document.querySelectorAll("#menu .nav-item.util > a, #menu .usage-bar"), r = null, i, rr;
-      for (i = 0; i < parts.length; i++) { rr = parts[i].getBoundingClientRect(); if (rr.width > 0 && rr.height > 0 && (!r || rr.right > r.right)) r = rr; }
-      if (!r) return;                                              // no icon row (sidebar theme / bare pages) -> leave the native layout alone
+      var sp = up.querySelectorAll(":scope > div:nth-child(2) > span");
+      if (!sp.length) return;
+      var hideBell = g("cc.hideicon.bell", "0") === "1", hideBurger = g("cc.hideicon.burger", "0") === "1";   // #2b
+      var proxies = ccEnsureProxies(sp);                           // [bellProxy, burgerProxy]
+      // Neutralise the Connect-owned container: keep it in place (auto-mount safe) but give it ZERO
+      // footprint — its span children are each pinned over their proxy below, so the box itself must not
+      // reserve space or intercept anything (CSS already sets pointer-events:none on it).
+      function setUp(p, v) { if (up.style.getPropertyValue(p) !== v) up.style.setProperty(p, v, "important"); }   // diff-write = zero mutations once settled
+      setUp("position", "fixed"); setUp("left", "0"); setUp("top", "0"); setUp("width", "0"); setUp("height", "0"); setUp("min-width", "0"); setUp("padding", "0");
       var menuEl = document.getElementById("menu");
       var mz = menuEl ? parseInt(getComputedStyle(menuEl).zIndex, 10) : NaN;
-      function set(p, v) { if (up.style.getPropertyValue(p) !== v) up.style.setProperty(p, v, "important"); }   // "important" beats the Tailwind utilities; diff-write = zero mutations once settled
-      // the triggers carry Tailwind MIN-width/height (36px) that beat even sheet !important
-      // height rules (live-proven) — enforce the 30px icon box INLINE per span
-      var sp = up.querySelectorAll(":scope > div:nth-child(2) > span");
-      var hideBell = g("cc.hideicon.bell", "0") === "1", hideBurger = g("cc.hideicon.burger", "0") === "1";   // #2b
-      for (i = 0; i < sp.length; i++) {
-        var ss = sp[i].style;
-        // #2b: bell = first span, burger = last span (auto-mount keeps this order). Hide per cc.hideicon.
-        if (i === 0 && hideBell) ss.setProperty("display", "none", "important");
-        else if (i === sp.length - 1 && hideBurger) ss.setProperty("display", "none", "important");
-        else ss.removeProperty("display");
-        if (ss.getPropertyValue("min-height") !== "36px") { ss.setProperty("width", "36px", "important"); ss.setProperty("height", "36px", "important"); ss.setProperty("min-width", "36px", "important"); ss.setProperty("min-height", "36px", "important"); }   // #14: match the enlarged (lgb 36px) menu icons
-        // CC bubbles instead of native balloons (the #menu sweep can't reach these — they
-        // live outside #menu); i===0 = bell, the last = burger (auto-mount keeps this order)
-        if (!sp[i].getAttribute("data-cc-tip")) sp[i].setAttribute("data-cc-tip", i === 0 ? T("Benachrichtigungen", "Notifications") : T("Menü", "Menu"));
-        if (sp[i].getAttribute("title")) sp[i].removeAttribute("title");
+      var zi = String(isFinite(mz) ? mz + 1 : 1000);               // above the sticky menu it overlaps
+      for (var i = 0; i < sp.length; i++) {
+        var span = sp[i], ss = span.style;
+        var isBell = (i === 0), hidden = isBell ? hideBell : (i === sp.length - 1 ? hideBurger : false);   // #2b
+        var proxy = isBell ? proxies[0] : proxies[proxies.length - 1];
+        if (proxy) proxy.style.display = hidden ? "none" : "";     // per-icon hide toggles the proxy slot too
+        if (hidden) { ss.setProperty("display", "none", "important"); continue; }
+        ss.removeProperty("display");
+        // CC bubbles instead of native balloons (the #menu sweep can't reach these — they live outside #menu)
+        if (!span.getAttribute("data-cc-tip")) span.setAttribute("data-cc-tip", isBell ? T("Benachrichtigungen", "Notifications") : T("Menü", "Menu"));
+        if (span.getAttribute("title")) span.removeAttribute("title");
+        // the triggers carry Tailwind MIN-width/height (36px) that beat even sheet !important — enforce the 36px box inline
+        if (ss.getPropertyValue("min-height") !== "36px") { ss.setProperty("width", "36px", "important"); ss.setProperty("height", "36px", "important"); ss.setProperty("min-width", "36px", "important"); ss.setProperty("min-height", "36px", "important"); }
+        if (!proxy) continue;
+        var box = proxy.querySelector(".cc-proxy-ghost") || proxy;   // the 36px icon box (not the div, whose margins offset it)
+        var pr = box.getBoundingClientRect(); if (!pr.width) continue;
+        // OVERLAY the live trigger exactly on its proxy slot — the proxy carries the flow/reorder, the
+        // trigger carries the clicks + popover anchor. Anchoring to the in-flow proxy (not a computed
+        // vw-cap) is what kills the resize jump: the proxy reflows natively, the span just tracks it.
+        ss.setProperty("position", "fixed", "important");
+        ss.setProperty("left", Math.round(pr.left) + "px", "important");
+        ss.setProperty("top", Math.round(pr.top + (pr.height - 36) / 2) + "px", "important");
+        ss.setProperty("margin", "0", "important");
+        ss.setProperty("z-index", zi, "important");
+        // arrange mode: drop the trigger out of the hit-test so the pointer reaches the proxy below (CSS also
+        // hides it and reveals the proxy ghost, so the user drags a visible icon).
+        ss.setProperty("pointer-events", document.documentElement.classList.contains("cc-arrange") ? "none" : "auto", "important");
       }
-      // the FIRST VISIBLE span drives the dock geometry below (so hiding the bell doesn't strand the
-      // burger 30px off — #2b). Falls back to sp[0] if all are hidden (geometry is moot then).
-      var bsp = null; for (i = 0; i < sp.length; i++) { if (getComputedStyle(sp[i]).display !== "none" && sp[i].getBoundingClientRect().width > 0) { bsp = sp[i]; break; } } if (!bsp) bsp = sp[0];
-      var vw = document.documentElement.clientWidth;
-      // 6px right of the row tail so the bell sits EXACTLY one icon-gap from the last util icon —
-      // the native util icons carry 3px+3px a-margins (=6px visual gap). The axis correction below
-      // pins the span to a fixed spot regardless of this offset (proven live: +6 AND +9 both land a
-      // 3px gap), so the FINAL gap-enforce block at the very end is what actually nets 6px; this
-      // offset just seeds a close-enough start. Bell<->burger gap is 6px too (Header.css).
-      var target = Math.min(Math.round(r.right + 6), vw - 94);   // #10/#14: reserve matches the .nav-tile.right 94px padding for the two 36px icons
-      set("position", "fixed");
-      set("right", "auto");
-      // KILL the Tailwind pl-[160px]/pl-[30%]: with border-box that padding forced the box ≥160px
-      // wide, so its transparent left region OVERLAPPED the last two menu icons (syslog + help) and
-      // ate their clicks/hovers (user #10, live-proven: box left 1944 covered LogButton at 1967).
-      set("padding", "0");
-      set("min-width", "0");
-      set("width", "88px");                                        // #10/#14: fits the two 36px icon boxes + 6px gap (was 76px for the old 30px icons); container = content, else its native 236px width parks the row off-screen
-      set("top", Math.round(r.top + (r.height - 36) / 2) + "px");  // centre the 36px boxes on the icon line (#14)
-      set("height", "36px");
-      set("z-index", String(isFinite(mz) ? mz + 1 : 1000));        // above the sticky menu it overlaps
-      set("left", target + "px");
-      // MEASURED correction against the VISIBLE BELL BOX (not the container/row — inner margins
-      // offset both from it, live-proven ±4px): align the first trigger's box exactly to the
-      // icon line on both axes. v2.31.9 idiom — measure where it landed, shift by the delta.
-      if (bsp) {
-        var sr = bsp.getBoundingClientRect();
-        if (sr.width > 0) {
-          var dx = target - Math.round(sr.left);
-          if (dx) set("left", (parseInt(up.style.getPropertyValue("left"), 10) + dx) + "px");
-          var dy = Math.round(r.top) - Math.round(sr.top);   // r = the icon rect; align box top to icon top
-          if (dy) set("top", (parseInt(up.style.getPropertyValue("top"), 10) + dy) + "px");
-        }
-      }
-      // FINAL GAP ENFORCE (#2a): the axis correction above pins the span to a fixed spot that leaves a
-      // 3px util->bell gap regardless of `target` (proven live). Measure the ACTUAL gap to the last util
-      // icon and nudge the container so it is EXACTLY 6px — matching the 6px util-icon gaps. Idempotent
-      // (delta 0 once at 6px), synchronous (no flicker).
-      if (bsp) { var br = bsp.getBoundingClientRect(); if (br.width > 0) { var gdx = Math.round(6 - (br.left - r.right)); if (gdx) set("left", (parseInt(up.style.getPropertyValue("left"), 10) + gdx) + "px"); } }
-      // #10 FINAL RIGHT-EDGE CAP: the gap-enforce above pins the bell 6px right of the last util icon
-      // regardless of any right boundary, so on wide rows the burger's right edge protruded a few px
-      // PAST the island strip (the other CC top-right elements — live: burger 1579 vs island 1576).
-      // Cap the LAST visible trigger's right edge to the island's right edge (fallback: 24px inset,
-      // matching the island's own inset) so bell+burger sit FLUSH with the island, never beyond it.
-      var isl = document.getElementById("cc-island");
-      var rBound = null;
-      if (isl && getComputedStyle(isl).display !== "none") { var ir = isl.getBoundingClientRect(); if (ir.width > 0) rBound = Math.round(ir.right); }
-      if (rBound == null) rBound = vw - 24;
-      var lastSp = null; for (i = sp.length - 1; i >= 0; i--) { if (getComputedStyle(sp[i]).display !== "none" && sp[i].getBoundingClientRect().width > 0) { lastSp = sp[i]; break; } }
-      if (lastSp) { var lrr = lastSp.getBoundingClientRect(); if (lrr.width > 0) { var over = Math.round(lrr.right) - rBound; if (over > 0) set("left", (parseInt(up.style.getPropertyValue("left"), 10) - over) + "px"); } }
     } catch (e) {}
   }
-  function ccUndockProfile() {                                     // OFF branch: remove exactly the props we set -> fully native again
+  function ccUndockProfile() {                                     // OFF branch: remove exactly what we set -> fully native again
     try {
+      ["cc-bell-proxy", "cc-burger-proxy"].forEach(function (id) { var p = document.getElementById(id); if (p) p.remove(); });
       var up = document.getElementById("UserProfile"); if (!up) return;
       for (var i = 0; i < ccDockProps.length; i++) up.style.removeProperty(ccDockProps[i]);
       var sp = up.querySelectorAll(":scope > div:nth-child(2) > span");
-      for (i = 0; i < sp.length; i++) { ["width", "height", "min-width", "min-height"].forEach(function (p) { sp[i].style.removeProperty(p); }); }
+      for (i = 0; i < sp.length; i++) { ["width", "height", "min-width", "min-height", "position", "left", "top", "z-index", "margin", "pointer-events", "display"].forEach(function (p) { sp[i].style.removeProperty(p); }); }
     } catch (e) {}
   }
   // ── CC TOAST ── one reusable bottom-centre notice (help feedback #11, "what's new" toast, …). A single
@@ -1531,8 +1729,18 @@
       // which owns #cc-settings) OR the content carries a native <fieldset><legend>. Master-theming-gated.
       try {
         var p0 = location.pathname, ownPg = /^\/Settings\/CannonadeCommand/.test(p0);
-        var toolsPg = !ownPg && (/^\/Tools\//.test(p0) || /^\/Settings\/./.test(p0) || !!document.querySelector("#displaybox fieldset legend"));
+        // #(user: "alle Disk-Subseiten in den CC-Style" + "alle Subseiten des Boot-Devices in CC-Style"): the disk/pool
+        // DETAIL pages (click a disk on /Main) are /Main/Device? / /Main/Disk?, and the boot/flash device is /Main/Boot? —
+        // all reka settings forms with the SAME layout as a /Settings sub-page (section headings, toggles, selects,
+        // inputs, sub-tab bar). Match by URL (not by a fieldset probe, which races the async reka render) so the full
+        // Tools treatment applies reliably. The /Main ROOT (disk_status table) is NOT matched -> it stays native.
+        var diskPg = /^\/Main\/(Device|Disk|Boot)\b/.test(p0);
+        var toolsPg = !ownPg && (/^\/Tools\//.test(p0) || /^\/Settings\/./.test(p0) || diskPg || !!document.querySelector("#displaybox fieldset legend"));
         root.classList.toggle("cc-tools-on", toolsPg && g("cc.theming", "1") !== "0");
+        // the disk DETAIL form is a full-width native grid, so the reverted-to-native /Settings dl handling lets its
+        // labels/values spread to the screen edges. Mark disk pages so the COMPACT CC grid (kept only here) reins the
+        // form back in — /Settings pages stay native.
+        root.classList.toggle("cc-diskpage", diskPg && toolsPg && g("cc.theming", "1") !== "0");
       } catch (e0) {}
       ccArrFill();      // #18: on /Main, refresh the cached array-fill % the island's fill chip reads
       ccStateBars();   // #16: usage-bar fills follow the fill-level state colour when cc.statenative, else the palette
@@ -1722,15 +1930,14 @@
         e.preventDefault(); e.stopPropagation(); ccCmdOpen();
       }, true);
     } catch (e) {}
-    // the dock is position:fixed against the STICKY menu row: while #header scrolls away the icon
-    // row's y shifts, so re-measure on scroll (rAF-throttled, passive) + resize (debounced)
+    // each live trigger is position:fixed OVER its in-flow proxy, so re-measure on scroll AND resize —
+    // both rAF-throttled (NOT debounced): a debounce would leave the trigger frozen at its old spot for
+    // the whole drag-resize while the proxy reflows underneath (that WAS the "hüpfen"). rAF re-pins every
+    // frame so the trigger tracks its proxy smoothly, one frame behind at most.
     try {
-      var dockRz = null;
-      window.addEventListener("scroll", function () {
-        if (ccDockRaf) return;
-        ccDockRaf = window.requestAnimationFrame ? window.requestAnimationFrame(ccDockPass) : setTimeout(ccDockPass, 16);
-      }, { passive: true });
-      window.addEventListener("resize", function () { if (dockRz) clearTimeout(dockRz); dockRz = setTimeout(function () { dockRz = null; ccDockProfile(); }, 120); });
+      function dockRaf() { if (ccDockRaf) return; ccDockRaf = window.requestAnimationFrame ? window.requestAnimationFrame(ccDockPass) : setTimeout(ccDockPass, 16); }
+      window.addEventListener("scroll", dockRaf, { passive: true });
+      window.addEventListener("resize", dockRaf);
     } catch (e) {}
     // the Settings page (or the Docker tab) writes cc.* AND section-specific keys (cch./ccs./
     // ccp./ccv.) from another origin/tab — re-apply on any of them. NB: "cch.accent" does NOT
@@ -1741,7 +1948,7 @@
     // "Alle löschen" button lands as soon as the sheet appears. Idempotent, cheap (only after clicks).
     try {
       document.addEventListener("click", function (e) {
-        try { if (e.target && e.target.closest && e.target.closest("#UserProfile")) { var n = 0, t = setInterval(function () { ccNotifActions(); if (++n >= 8) clearInterval(t); }, 180); } } catch (err) {}
+        try { if (e.target && e.target.closest && e.target.closest("#UserProfile")) { var n = 0, t = setInterval(function () { ccNotifActions(); try { ccPaintRotate(); } catch (ep) {} try { ccAcctMenu(); } catch (ea) {} if (++n >= 8) clearInterval(t); }, 180); } } catch (err) {}
       }, true);
     } catch (e) {}
   }

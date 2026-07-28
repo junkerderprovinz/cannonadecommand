@@ -168,6 +168,15 @@
         if (!neutral || active) { b.style.setProperty("background", c, "important"); b.style.setProperty("color", tc, "important"); }
         else { b.style.removeProperty("background"); b.style.removeProperty("color"); }
       }
+      // #(user: "beim Sub-Tab-Wechsel bleibt der zuvor aktive eingefärbt"): the tab bar toggles aria-selected
+      // WITHOUT a childList change, so the #displaybox childList observer never re-runs paintTabs and the old active
+      // tab kept its inline colour. Watch aria-selected directly (paintTabs writes style/--cc-rb-c, never
+      // aria-selected, so this can't loop). Idempotent per tab bar.
+      var bar = document.querySelector('#displaybox nav.tabs');
+      if (bar && !bar.__ccTabObs) {
+        bar.__ccTabObs = new MutationObserver(function () { paintTabs(); });
+        try { bar.__ccTabObs.observe(bar, { attributes: true, attributeFilter: ["aria-selected"], subtree: true }); } catch (e2) {}
+      }
     } catch (e) {}
   }
   // The share DETAIL page has NO tab bar (the sub-tabs are stacked cards), so paintTabs never touches
@@ -1827,6 +1836,13 @@
     var b = el("span", "cc-b"), v = el("span", "cc-b-v");
     while (td.firstChild) v.appendChild(td.firstChild);   // disklog icon / toggle-hdd / links stay live (moved, not cloned)
     b.appendChild(v); td.appendChild(b); td.classList.add("cc-bcell");
+    // #(user: "bei den Pool-Devices sind DS und Größe nicht in der Spalte zentriert"): the wrapped value badge is
+    // centred, so centre this column's HEADER too (the native right-align left it off over the centred badge).
+    // Per-column so it works for whichever UD columns are enabled; reversible via data-cc-udth.
+    try {
+      var ci = [].indexOf.call(td.parentNode.children, td), tbl = td.closest("table"), hr = tbl && tbl.querySelector("thead tr"), h = hr && hr.children[ci];
+      if (h && !h.hasAttribute("data-cc-udth")) { h.setAttribute("data-cc-udth", "1"); h.style.textAlign = "center"; }
+    } catch (e) {}
   }
   function enhanceUD() {
     try {
@@ -1865,6 +1881,8 @@
       }
       var nn = document.querySelectorAll("#displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) a.cc-b-name");
       for (var n2 = 0; n2 < nn.length; n2++) { nn[n2].classList.remove("cc-b"); nn[n2].classList.remove("cc-b-name"); }
+      var thc = document.querySelectorAll("#displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) [data-cc-udth]");   // restore the native header alignment centred by ccUdBadgeCell
+      for (var t2 = 0; t2 < thc.length; t2++) { thc[t2].style.removeProperty("text-align"); thc[t2].removeAttribute("data-cc-udth"); }
       var mk = document.querySelectorAll("#displaybox tr[data-cc-ud]");
       for (var m2 = 0; m2 < mk.length; m2++) mk[m2].removeAttribute("data-cc-ud");
     } catch (e) {}

@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.0.1">
+  <!ENTITY version   "3.1.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,35 @@
 </ICON>
 
 <CHANGES>
+### 3.1.0
+- Boot device SMB Security: the two "copy settings" dropdown checklists finally open. The jQuery dropdownchecklist
+  sizes its drop panel once at init, and it initialised while the reka tab was still hidden (zero width), so the
+  panel collapsed to nothing. It is now re-initialised against the visible selector when the tab is shown. The
+  "read settings from" selector no longer overflows the button next to it.
+- The SMB "copy settings" checklist is a full CannonadeCommand dropdown now, identical to the other CC dropdowns:
+  the native square checkboxes are gone, each entry is a rounded chip that lights up in its own palette colour when
+  selected, and the panel matches the CC dropdowns exactly (same width, padding, row spacing and height). The close
+  row is a muted footer. Select, close and re-open all verified against the real widget.
+- Boot Parameters: every toggle is a full-size CannonadeCommand pill now (the reka editor drew them at a tiny
+  "narrow" size), and the clickable parameter-code chips (the kernel argument each option inserts) rotate through
+  the palette like every other button instead of staying flat grey.
+- Notification centre: the tabs and type filters used to all show the same single accent, because the drawer mounts
+  after the palette paint ran. The paint now re-runs when the drawer opens, so every tab and filter gets its own
+  rotating colour again. The bulk delete glyph is white (was red), and the delete button rotates with the palette
+  like the archive button (it was a weak faint-red before); the "armed" confirm state keeps its red.
+- Account menu (Manage License / Check for Updates / Account / Settings) is CannonadeCommand-styled with rotating
+  item hover. The "Manage License" description folds onto a click (i) help bubble instead of a paragraph, and the
+  two external-link glyphs on the account items are removed.
+- Floating help bubbles now render above the account menu and the notification drawer (both live in a very high
+  z-index layer that used to cover the bubble).
+- Header Help ("?") button removed: with all inline help moved into (i) bubbles system-wide it had nothing left to
+  toggle.
+- Header notification and burger icons are individually draggable in arrange mode and no longer jump or drag their
+  neighbours when the window is resized; the status-island chips arrange freely across the header with their rows
+  staying fixed.
+- Boot device: all five sub-tabs (Boot Device, Boot Device Settings, SMB Security, Boot Parameters, Boot Mode) are
+  CannonadeCommand-styled and aligned, section headings are badges, and the hairline borders are gone. The disk
+  tables end flush with the status island and their hover bars follow the badge shape.
 ### 3.0.1
 - Help button: removed the misleading "This page has no inline help" toast. On pages like the Docker list the
   native help blocks live in a hidden (display:none) template container, so there is genuinely nothing to show,
@@ -2144,7 +2173,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>6b8106e137d21d8551c19d9b8a0ee326030b4de51f3854d9378259b35c04bec7</SHA256>
+  <SHA256>4169f0816326e2d63d7462cf06327a5786613bc92487a20446a958bfec179a3c</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

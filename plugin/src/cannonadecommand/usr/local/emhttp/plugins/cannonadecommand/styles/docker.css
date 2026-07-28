@@ -1201,7 +1201,8 @@ html.cc-ctout-on #cc-ctout-bd { position: fixed; inset: 0; background: rgba(0, 0
 html.cc-ctout-on #displaybox .content {
   position: fixed; z-index: 9999; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: min(900px, 92vw); max-height: 86vh; overflow: auto;
-  background: #0f0f0f; border: none; border-radius: 14px; box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+  background: #0f0f0f; border: none; border-radius: 14px;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, .78), 0 0 0 1px rgba(255, 255, 255, .09);   /* same ring+shadow as the update window so all windows of this type look identical */
   padding: 0 26px 22px; box-sizing: border-box; text-align: center;
 }
 /* #7-IV (user, 3rd time!): the "CONTAINER HINZUFUEGEN" title is the INLINE cc-ctout output (not the iframe
@@ -1229,6 +1230,9 @@ html.cc-ctout-on #displaybox .content fieldset > legend {
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
   border: none !important; border-radius: 999px !important; padding: 3px 12px !important; font-size: 12px !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
 }
+/* same empty-step hide as the update window: no stray light bar between the last card and the buttons */
+html.cc-ctout-on #displaybox .content fieldset:empty,
+html.cc-ctout-on #displaybox .content p:empty { display: none !important; }
 html.cc-ctout-on #displaybox .content span.system { background: transparent !important; color: #d6d6d6 !important; box-shadow: none !important; display: block; }
 html.cc-ctout-on .docker-install-blocker { background: transparent !important; }
 html.cc-ctout-on #displaybox .content .buttons,

@@ -249,6 +249,14 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b {
   background: var(--cc-shr-accent, #2f6feb); color: var(--cc-shr-accent-text, #fff);
 }
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b .cc-b-v { font-family: inherit; }
+/* #(user: "bei den Pool-Devices sind DS und Größe nicht in der Spalte zentriert"): POOL rows right-align their value
+   cells natively (a colspan=4 skip, then DS/Größe/Benutzt/Frei) while the array rows centre them — so the wrapped
+   badge sat at the cell's right edge, i.e. right of the CENTRED column header. Centre every disk_status value badge
+   cell so the badge sits under its header. The name cell (a.cc-b-name, no .cc-bcell) is untouched -> stays left. */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status td.cc-bcell { text-align: center !important; }
+/* same for the Unassigned-Devices tables (their headers are centred per-column by ccUdBadgeCell); centre the value
+   badge cells too so header + badge line up. */
+html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) td.cc-bcell { text-align: center !important; }
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b a,
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b a:hover,
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b i { color: inherit; text-decoration: none; }   /* disk_status had NO .cc-b a rule, so wrapped links showed native blue + hover underline */

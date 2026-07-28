@@ -56,21 +56,118 @@ html.cc-tools-on #displaybox table:not(.cc-enh) td {
 }
 html.cc-tools-on #displaybox table:not(.cc-enh) thead th { color: #9a9a9a; text-transform: uppercase; font-size: 11.5px; letter-spacing: .6px; }
 html.cc-tools-on #displaybox table:not(.cc-enh) tr:hover td { background: rgba(255, 255, 255, .03) !important; }
+/* #(user: "die Listen in den Disk-Subtabs (Attribute/Selbsttest/Identität) MAXIMAL clean"): drop the grey 2nd-row
+   zebra AND the line under the column-title row; each row instead reveals its OWN rotated palette colour on HOVER in
+   rainbow mode (--cc-rb-c per row, stamped by header.js ccPaintRotate), accent otherwise. Any value badge is
+   flattened to plain text so nothing but the hover carries colour. */
+html.cc-diskpage #displaybox table.unraid tbody tr,
+html.cc-diskpage #displaybox table.unraid tbody tr > td { background: transparent !important; }
+html.cc-diskpage #displaybox table.unraid thead tr,
+html.cc-diskpage #displaybox table.unraid thead td,
+html.cc-diskpage #displaybox table.unraid thead th { border: none !important; box-shadow: none !important; }
+html.cc-diskpage #displaybox table.unraid td .cc-b,
+html.cc-diskpage #displaybox table.unraid td [class*="badge"] { background: transparent !important; color: inherit !important; padding: 0 !important; }
+html.cc-diskpage #displaybox table.unraid tbody tr:hover > td {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+}
+/* #(user: "die listentitelzeile und der button um zum nächsten gerät zu springen sind zu weit rechts"): the reka disk
+   page sets #displaybox to width:100% of the viewport but ALSO margin-left:15px, so the block overshoots the right edge
+   by 15px (horizontal scrollbar). Cap it flush to the viewport so the scrollbar disappears and a right gutter opens up. */
+html.cc-diskpage #displaybox { max-width: calc(100% - 15px) !important; }
+/* #(user: "orientier dich an den statusinsel chips"): the CC status-island chips sit at a 16px viewport gutter
+   (clientW - 16). Line the disk-page right edge up with them. The prev/next (next-device) button group is
+   position:absolute; right:0 anchored to <body>, and its visible button stops ~12px inside the group box, so a right:4px
+   offset lands the button's edge on the island gutter (clientW - 16). */
+html.cc-diskpage #displaybox nav.tabs .tabs-container > span { right: 4px !important; }
+/* #(user: "die Listentitelzeile schließt rechts nicht bündig mit den anderen elementen ab"): the table fills the content
+   box (clientW - 10 padding); inset it 6px more so its right edge also lands on the island gutter (clientW - 16), flush
+   with the next-device button above it. */
+html.cc-diskpage #displaybox div.TableContainer { margin-right: 6px !important; }
+/* #(user: "kannst du die hoverbalken auch an die badgeform anpassen"): round the row-hover bar to the active badge
+   shape — the outer cells pick up --cc-b-radius (square 0 / rounded 6px / pill caps), so the highlight reads as a
+   bar in the same silhouette as the badges instead of a hard rectangle. */
+html.cc-diskpage #displaybox table.unraid tbody tr:hover > td:first-child {
+  border-top-left-radius: var(--cc-b-radius, 6px) !important;
+  border-bottom-left-radius: var(--cc-b-radius, 6px) !important;
+}
+html.cc-diskpage #displaybox table.unraid tbody tr:hover > td:last-child {
+  border-top-right-radius: var(--cc-b-radius, 6px) !important;
+  border-bottom-right-radius: var(--cc-b-radius, 6px) !important;
+}
+/* #(user: "alle Subseiten des Boot-Devices in CC-Style, alles richtig ausrichten"): the Boot-Parameters tab uses
+   native .warning-box callouts that already carry an amber SHADE — the extra border line breaks the "nie
+   Rahmenlinien" law, so drop it and deepen the tint a touch to keep the callout readable. */
+html.cc-tools-on #displaybox .warning-box { border: none !important; background: rgba(240, 173, 78, .12) !important; }
+/* The SMB tab's "copy settings" reka rows hold a fixed-width flex row (select + KOPIEREN button) that overshoots
+   the container at its label offset, stranding a horizontal scrollbar. Force the dd to fill only the available
+   space and let the flex row WRAP so the two-column form fits inside the viewport. */
+/* #(user: "die dropdown listen sind nicht ordentlich" + "die unteren beiden funktionieren nicht"): the SMB
+   copy-settings rows overshot the container ONLY because the cc-tsel single-select was ~240px wide. Shrinking it to
+   the narrow ui-dropdownchecklist's width (≈123px) makes the row fit on ONE line with its button — no flex-wrap and
+   no display/width hacks on the dd (those collapsed the dropdownchecklist's jQuery panel). The dropdownchecklist is
+   left completely untouched so it still opens. Both rows now read at one width. */
+html.cc-diskpage #displaybox dd > span.flex.flex-row > .cc-tsel { width: 124px !important; max-width: 124px !important; box-sizing: border-box !important; }
+/* #(user: "die oberen Dropdowns überlagern die Buttons daneben"): the trigger has a hard min-width:240px, so
+   inside the 124px wrapper (overflow:visible) it kept its 240px and slid RIGHT under+past the LESEN/KOPIEREN
+   button, its arrow poking out as a stray ▼. Clamp the trigger to the wrapper on these narrow rows only — the
+   wide Exportieren/Sicherheit selectors sit outside this dd>flex-row structure and keep their 240px. */
+html.cc-diskpage #displaybox dd > span.flex.flex-row > .cc-tsel > .cc-tsel-trigger { min-width: 0 !important; width: 100% !important; max-width: 100% !important; }
+/* #(user: "den hellen Hintergrund in dem SMB-Subtab entfernen"): the native .shade boxes lift the SMB form onto a
+   lighter (#212121) surface — flatten them back to the page so the tab reads as one dark surface. */
+html.cc-diskpage #displaybox div.shade { background: transparent !important; }
+/* #(user: "ein Scrollbalken der gar nicht nötig ist — die Seite ist lang genug"): the reka tab panel was pinned to
+   a fixed height with an inner scrollbar. Let it grow to its content so the PAGE scrolls instead of an inner box. */
+html.cc-diskpage #displaybox section.tab-content { height: auto !important; max-height: none !important; overflow: visible !important; }
 
-/* ── form rows (dl/dt/dd): #3 (user) the label and its control sit on ONE baseline. Native dynamix rows are
-   a FLOATED dt + block dd (no shared flex parent), so vertical-align can't line them up — lay the whole <dl>
-   out as a 2-col GRID that centres each row; the native float/width on dt/dd is neutralised so grid wins. ── */
-html.cc-tools-on #displaybox dl { margin: 0; display: grid; grid-template-columns: minmax(150px, 38%) minmax(0, 1fr); align-items: center; column-gap: 16px; row-gap: 6px; max-width: min(760px, 100%); }   /* #3-B (user: "voellig deplatziert / wie nativ"): constrain the dl to a native-like compact width so label + value sit CLOSE together instead of spreading across the full page */
-html.cc-tools-on #displaybox dl > dt { color: #cfcfcf; font-weight: 600; float: none !important; width: auto !important; margin: 0; padding: 0; text-align: right; align-self: center; }
-/* #8 (user: "alles falsch ausgerichtet -> native Anordnung"): a FLEX dd centered the read-only values AND the CC
-   yes/no toggles (.cc-tgl) in the middle of the value column while text fields filled from the left -> everything
-   misaligned. A BLOCK dd with text-align:left lines them ALL up at the value-column left, like native (verified live:
-   read-only 529->320, toggle 525->320, field stays 320/full-width). Vertical centring on the row comes from the dl
-   grid's align-items:center. */
-html.cc-tools-on #displaybox dl > dd { color: #d6d6d6; float: none !important; width: auto !important; margin: 0; display: block; text-align: left; min-width: 0; }
+/* ══ Boot-Parameters reka editor (user: "die Abschnitt-Überschriften sollen Badges sein, die Toggles nicht im
+   CC-Style, im unteren Bereich viele Rahmenlinien") ══ */
+/* section headings h3.section-header (orange text + orange underline) -> CC badge that FOLLOWS the colour mode
+   (user: "alle Abschnittsbadges sind farblos"): the colour chain resolves to the reactive accent / rainbow /
+   static accent just like every other CC badge — NO grey neutral override (that made them colourless). */
+html.cc-diskpage #displaybox h3.section-header {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
+  font-weight: 600 !important; text-transform: uppercase; letter-spacing: 1.1px;
+  font-size: var(--cc-md-fs, 13px) !important; line-height: 1 !important;
+  padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px);
+  display: inline-flex !important; align-items: center; gap: 10px; width: auto !important; margin: 2px 0 14px !important;
+}
+/* the inner "Advanced" sub-badge stays readable as a dark inset chip on the accent badge */
+html.cc-diskpage #displaybox h3.section-header .section-badge { background: rgba(0, 0, 0, .22) !important; color: inherit !important; border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 2px 9px !important; font-size: 10px !important; }
+/* #(user: "alle Buttons und Badges in die Farbmodi übernehmen"): toggles + reka buttons must ROTATE with the
+   palette like every other CC control. ccPaintRotate stamps --cc-rb-c on .switch-button-background and on the
+   badges (added there); the reka buttons carry a HARD-CODED #2f6feb that ignored it -> point all three at the same
+   rotated chain, so on the page every button, badge and toggle reads its own palette slot (rainbow / reactive). */
+html.cc-diskpage #displaybox .main-content .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
+html.cc-diskpage #displaybox .main-content button:not(.switch-button-background),
+html.cc-diskpage #displaybox .main-content input[type="button"] { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important; border-color: transparent !important; }
+/* #(user: "die Buttons in der Menueansicht sind nicht in den Farbmodi"): the clickable .parameter-code chips (the
+   kernel arg each option inserts) stayed a flat grey rgba(0,0,0,.15) while every other button rotated. Give them
+   the same solid rotating fill (--cc-rb-c stamped per chip by ccPaintRotate) so they read as coloured chips too. */
+html.cc-diskpage #displaybox .parameter-code {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  border: none !important; border-radius: min(var(--cc-b-radius, 999px), 10px) !important; padding: 2px 8px !important;
+}
+/* the Raw-View / syslinux config boxes separate cards with grey border LINES -> drop them (nie Rahmenlinien);
+   spacing keeps the groups legible. */
+html.cc-diskpage #displaybox .main-content div,
+html.cc-diskpage #displaybox .main-content dl,
+html.cc-diskpage #displaybox .main-content section.section { border: none !important; box-shadow: none !important; }
+
+/* ── form rows (dl/dt/dd): #3 CORRECTION (user: "die Ausrichtung aller Texte und Felder ist zu weit links -> die
+   NATIVE Ausrichtung soll bleiben"). CC no longer re-lays-out the settings form: the native dynamix float layout
+   (right-aligned floated dt + block dd + native field widths) stands untouched. Only the label/value COLOURS are
+   nudged for readability on the dark surface, and a CC toggle inside a dd is vertically centred — NO horizontal
+   repositioning, NO width caps, NO grid. ── */
+html.cc-tools-on #displaybox dl > dt { color: #cfcfcf; }
+html.cc-tools-on #displaybox dl > dd { color: #d6d6d6; }
 html.cc-tools-on #displaybox dl > dd > .cc-tgl,
 html.cc-tools-on #displaybox dl > dd .switch-button-background { vertical-align: middle; }
-html.cc-tools-on #displaybox dl > dd:has(.advancedview) { text-align: center; }   /* the top Einfache/Erweiterte-Ansicht switch stays centred, like native */
+/* #(user: "die native Ausrichtung und Platzierung beibehalten"): the disk DETAIL form keeps its NATIVE full-width
+   grid (label at the right of col 1, value at the left of col 2). The earlier break was ONLY the stray help-icon dts
+   (now folded into their labels by ccToolsEnhance on cc-diskpage) — NOT the width — so nothing here re-lays it out. */
 /* #15 (user: clicking Help did nothing visible): the native HelpButton toggles the inline_help blocks (which
    CC normally hides in favour of the (i) bubbles). When the user DOES expand them, span the full grid width
    and give them a readable CC note look so they aren't squeezed into a single grid column. */
@@ -123,6 +220,19 @@ html.cc-tools-on #displaybox div.title {
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase; letter-spacing: .6px;
   box-shadow: none !important; min-height: var(--cc-md-h, 30px) !important;
 }
+/* #7 (user: "Status als Zustandsdot RECHTS NEBEN dem Badge, ohne Text, wie bei den Disks"): when the heading carries
+   a status (the Docker settings page), the title ROW turns transparent and the BADGE wraps ONLY the name (.left);
+   the state dot then sits OUTSIDE the badge to its right, with the native "Status:" label hidden -> reads
+   "DOCKER  <dot>", exactly like a disk chip. Other tool pages (no status) keep the whole-title badge above. */
+html.cc-tools-on #displaybox div.title:has(.cc-status-dot) {
+  background: transparent !important; padding: 0 !important; gap: 10px;
+}
+html.cc-tools-on #displaybox div.title:has(.cc-status-dot) > .left {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff));
+  border-radius: var(--cc-b-radius, 999px); padding: 0 18px; min-height: var(--cc-md-h, 30px);
+}
+html.cc-tools-on #displaybox div.title:has(.cc-status-dot) .status { font-size: 0 !important; }   /* hide the "Status:" label; the dot child keeps its own 12px box */
 /* #23 the CC info (i) icon that carries the native help text (rides the document-wide CC tip bubble) */
 html.cc-tools-on #displaybox .cc-toolsinfo {
   display: inline-flex; align-items: center; justify-content: center; margin-left: 7px;
@@ -133,15 +243,14 @@ html.cc-tools-on #displaybox .cc-toolsinfo {
   vertical-align: text-bottom; position: relative; top: -1px;
 }
 html.cc-tools-on #displaybox .cc-toolsinfo:hover { color: var(--cc-accent, #2f6feb); opacity: 1; }
-/* #7 (user): the status word -> a small state DOT to the right of the section badge. Its SHAPE follows the CC
-   badge-shape setting (--cc-dot-r, set globally by header.js) and its COLOUR follows the colour modes (accent)
-   unless state-native is on, where the raw state colour (stored inline as --cc-dotstate) wins. */
+/* #7 (user: "Zustandsdot, wie bei den Disks, ohne Text"): a clean state DOT. COLOUR = the LIVE state (green running
+   / red stopped, stored inline as --cc-dotstate) like a disk chip, independent of the accent; SHAPE follows the
+   badge-shape setting (--cc-dot-r). The native pill padding (0 5px -> 22px wide) is stripped so it reads as a dot. */
 html.cc-tools-on #displaybox div.title .cc-status-dot {
-  display: inline-block; width: 12px; height: 12px; border-radius: var(--cc-dot-r, 50%); margin-left: 8px;
-  vertical-align: middle; box-shadow: 0 0 0 2px rgba(0, 0, 0, .25);
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb));
+  display: inline-block; width: 12px; height: 12px; border-radius: var(--cc-dot-r, 50%);
+  margin: 0 !important; padding: 0 !important; vertical-align: middle; box-shadow: 0 0 0 2px rgba(0, 0, 0, .25);
+  background: var(--cc-dotstate, #8d8d8d) !important;
 }
-html.cc-tools-on.cc-state-native #displaybox div.title .cc-status-dot { background: var(--cc-dotstate, #8d8d8d); }
 /* #24 a CC toggle standing in for a yes/no <select> (the real select stays hidden as the form value) */
 /* #8 (user: the toggles must follow the CC Badge-Form): the track + knob read the global shape vars
    (--cc-b-radius for the track, --cc-dot-r for the knob), so pill/rounded/square/circle all carry through.
@@ -161,6 +270,38 @@ html.cc-tools-on #displaybox .switch-button-background {
 }
 html.cc-tools-on #displaybox .switch-button-background .switch-button-button { border-radius: var(--cc-dot-r, 50%) !important; }
 html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
+/* #(user: "die ganzen Toggles im Boot Parameters sind nicht im CC-Style"): the reka boot editor renders the
+   native switch at a tiny 25x11 "switch narrow" INLINE size, so it stayed a mini native toggle while every other
+   CC toggle is a full 44x24 pill (the .advancedview rule below already does this for the disk detail form). Force
+   the same CC geometry on every disk-page toggle — track, knob and checked-position; the inline width/height/left
+   the reka component stamps need !important to beat. */
+html.cc-diskpage #displaybox .switch-button-background {
+  width: 44px !important; height: 24px !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important;
+}
+html.cc-diskpage #displaybox .switch-button-background .switch-button-button {
+  width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important; border-radius: var(--cc-dot-r, 50%) !important;
+}
+html.cc-diskpage #displaybox .switch-button-background.checked .switch-button-button { left: 23px !important; }
+
+/* #(b) (user: "der Ansicht-Toggle ist nicht im CC-Style + soll rechts oben in die Ecke"): pin the Basic/Advanced
+   VIEW switch to the top-right corner of the content and grow its tiny native track (25x11) to the full CC pill
+   size. The knob's native inline `left` is beaten by an !important rule keyed off the .checked state, so it snaps
+   to the pill's ends instead of the native 25px geometry. */
+html.cc-tools-on #displaybox .content { position: relative; }
+html.cc-tools-on #displaybox dl:has(.advancedview) {
+  position: absolute; top: 0; right: 0; z-index: 6; margin: 0 !important; width: auto !important; max-width: none !important;
+  display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+}
+html.cc-tools-on #displaybox dl:has(.advancedview) > dt { display: none !important; }
+html.cc-tools-on #displaybox dl:has(.advancedview) > dd { width: auto !important; margin: 0 !important; float: none !important; display: flex; align-items: center; gap: 8px; }
+html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-label { color: #cfcfcf; font-weight: 600; }
+html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-background {
+  width: 44px !important; height: 24px !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important; flex: 0 0 auto;
+}
+html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-button {
+  width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important; border-radius: var(--cc-dot-r, 50%) !important;
+}
+html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-background.checked .switch-button-button { left: 23px !important; }
 
 /* links: no native blue / underline on tools pages */
 html.cc-tools-on #displaybox a:not(.button) { color: var(--cc-accent, #2f6feb); text-decoration: none; }
@@ -221,6 +362,96 @@ html.cc-tools-on.cc-tools-rbneutral #displaybox .cc-tsel-opt.is-selected {
   filter: none;
 }
 
+/* ── jQuery-UI dropdownchecklist (user: "hier sind die ganzen Dropdownlisten nicht im CC-Style"): the Notification
+   Agents page (Notification title/message = Betreff/Beschreibung) hides the native <select> and renders a
+   `ui-dropdownchecklist` widget in its place, so ccToolsWrapSelect never sees it. Restyle the widget to the CC
+   dropdown look: dark rounded trigger + CC caret (killing the native underline + gradient-arrow), and a borderless
+   elevated panel with accent hover/checked items. ── */
+html.cc-tools-on #displaybox .ui-dropdownchecklist-selector-wrapper {
+  background: none !important; border: none !important; box-shadow: none !important; overflow: visible !important;
+  border-radius: min(var(--cc-b-radius, 8px), 12px) !important; width: auto !important; height: auto !important; vertical-align: middle;
+}
+/* #(user: "die Zeile für die Dropdownliste ist viel zu hoch"): the native selector is a 22px box; the old
+   min-height:34 + 6px padding ballooned it to 45px and it OVERFLOWED the 25px row. A FIXED 30px flex-centred
+   control matches the neighbouring text inputs (also 30px) and no longer spills over. */
+html.cc-tools-on #displaybox .ui-dropdownchecklist-selector {
+  position: relative; box-sizing: border-box !important; display: inline-flex !important; align-items: center;
+  background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important;
+  border: none !important; box-shadow: none !important; border-radius: min(var(--cc-b-radius, 8px), 12px) !important;
+  min-height: 0 !important; height: 30px !important; line-height: 1 !important; padding: 0 30px 0 12px !important; transition: background .12s, color .12s;
+}
+html.cc-tools-on #displaybox .ui-dropdownchecklist-selector.ui-state-hover,
+html.cc-tools-on #displaybox .ui-dropdownchecklist-selector:hover,
+html.cc-tools-on #displaybox .ui-dropdownchecklist-selector:focus {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+}
+html.cc-tools-on #displaybox .ui-dropdownchecklist-selector .ui-dropdownchecklist-text { color: inherit !important; }
+/* CC caret replaces the widget's gradient-drawn arrow */
+html.cc-tools-on #displaybox .ui-dropdownchecklist-selector::after {
+  content: ""; position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor;
+}
+html.cc-tools-on #displaybox .ui-dropdownchecklist-selector .ui-icon { display: none !important; }
+/* the drop panel + its items. #(user: "die Dropdownliste ist viel komprimierter, sie sollen ueberall gleich
+   aussehen"): match the .cc-tsel-panel dimensions EXACTLY — 8px padding, 180px min-width, flex-column with 6px
+   gaps. The widget hard-sets inline overflow-y:auto + a fixed height at init; override to height:auto so the
+   roomier CC spacing fits with no scrollbar. min-width makes the panel wider than its 123px selector, just like
+   the cc-tsel panels are wider than their trigger. */
+html.cc-tools-on #displaybox .ui-dropdownchecklist-dropcontainer {
+  background: #303030 !important; border: none !important; border-radius: 10px !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .6) !important;
+  display: flex !important; flex-direction: column !important; gap: 6px !important;
+  padding: 8px !important; min-width: 180px !important; max-width: min(92vw, 460px) !important;
+  height: auto !important; max-height: 50vh !important; overflow-y: auto !important; overflow-x: hidden !important;
+}
+/* #(user: "nicht im cc style"): make each row an identical twin of .cc-tsel-opt — a CC chip. Full-rainbow =
+   permanent per-item colour (--cc-rb-c already stamped on each item by ccPaintRotate); reactive-neutral = a
+   neutral pill that reveals its colour on hover / when checked. The native square checkbox is HIDDEN — the chip
+   colour itself is the checked marker (:has(input:checked)), exactly like cc-tsel's is-selected chips.
+   The widget's toggle handler sits on the ITEM div (not the label, whose native for= is broken by a trailing
+   slash), so the label gets pointer-events:none — every click falls through to the item div and toggles cleanly. */
+html.cc-tools-on #displaybox .ui-dropdownchecklist-item {
+  display: flex !important; align-items: center; gap: 8px; justify-content: flex-start;
+  line-height: 1.3; margin: 0 !important; padding: 6px 12px !important; cursor: pointer; white-space: nowrap;
+  /* #(user: "die Dropdown-Einträge sind noch zu klein, gleich groß wie überall sonst"): a native rule pins the
+     item to a 22px border-box height, so the 6px padding was swallowed and the row was shorter than a cc-tsel
+     option. height:auto lets each row grow to text + padding (~29px), matching the cc-tsel options exactly. */
+  height: auto !important; min-height: 0 !important; box-sizing: border-box !important;
+  border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  transition: filter .12s, background .12s, color .12s;
+}
+html.cc-tools-on #displaybox .ui-dropdownchecklist-item input[type="checkbox"] { display: none !important; }
+html.cc-tools-on #displaybox .ui-dropdownchecklist-item .ui-dropdownchecklist-text { color: inherit !important; }
+/* only the CHECKBOX rows get pointer-events:none so clicks fall through to the item div's toggle handler. The
+   "...schließen" close row KEEPS its native handler — this widget has no outside-click close, that row is the
+   only way to shut the panel, so it must stay clickable. */
+html.cc-tools-on #displaybox .ui-dropdownchecklist-item:not(.ui-dropdownchecklist-close) .ui-dropdownchecklist-text { pointer-events: none !important; }
+html.cc-tools-on #displaybox .ui-dropdownchecklist-item.ui-state-hover,
+html.cc-tools-on #displaybox .ui-dropdownchecklist-item:hover,
+html.cc-tools-on #displaybox .ui-dropdownchecklist-item.ui-state-active,
+html.cc-tools-on #displaybox .ui-dropdownchecklist-item:has(input:checked) { filter: brightness(1.18); box-shadow: none !important; }
+/* reactive-neutral sub-mode: rest neutral, colour ONLY on hover / when checked (mirror .cc-tsel-opt reactive rules) */
+html.cc-tools-on.cc-tools-rbneutral #displaybox .ui-dropdownchecklist-item {
+  background: rgba(128, 128, 128, .16) !important; color: #e4e4e4 !important;
+}
+html.cc-tools-on.cc-tools-rbneutral #displaybox .ui-dropdownchecklist-item:hover,
+html.cc-tools-on.cc-tools-rbneutral #displaybox .ui-dropdownchecklist-item.ui-state-hover,
+html.cc-tools-on.cc-tools-rbneutral #displaybox .ui-dropdownchecklist-item:has(input:checked) {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important; filter: none;
+}
+/* the explicitClose "...schließen" row carries no checkbox -> a muted, centred footer link, never a coloured chip */
+html.cc-tools-on #displaybox .ui-dropdownchecklist-item:not(:has(input[type="checkbox"])) {
+  background: transparent !important; color: #9a9a9a !important; justify-content: center;
+  border-radius: 8px !important; font-size: 12px; margin-top: 4px !important; filter: none !important;
+}
+html.cc-tools-on #displaybox .ui-dropdownchecklist-item:not(:has(input[type="checkbox"])):hover {
+  background: rgba(128, 128, 128, .16) !important; color: #e4e4e4 !important;
+}
+
 /* #3-Infotext (user: "nicht ALLE Beschreibungstexte in Infobubbles"): CC converts each inline_help into an
    (i) bubble and hides the native block inline. BUT the native HELP button runs jQuery .show(), which sets
    an inline display:block that beats CC's inline display:none -> the description reappears when help is
@@ -238,11 +469,8 @@ html.cc-tools-on #displaybox .cc-colpick {
 html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch-wrapper { padding: 0; }
 html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch { border: none; border-radius: 4px; }
 
-/* #3-B: native form fields fill the value column so every row's control lines up on the same left edge + width */
-html.cc-tools-on #displaybox dl > dd > select,
-html.cc-tools-on #displaybox dl > dd > input[type="text"],
-html.cc-tools-on #displaybox dl > dd > input[type="number"],
-html.cc-tools-on #displaybox dl > dd > input[type="password"] { width: 100%; max-width: 100%; box-sizing: border-box; }
+/* #3-B REVERTED (user: "native Ausrichtung soll bleiben"): the native field widths stand — CC no longer stretches
+   selects/inputs to fill the value column, so the form keeps its native proportions. */
 /* #Tools-Checkboxen (user: native Checkboxen nicht im CC-Style): dark accent checkbox, no border. */
 html.cc-tools-on #displaybox input[type="checkbox"] {
   -webkit-appearance: none; appearance: none; width: 18px; height: 18px; box-sizing: border-box; flex: none;
