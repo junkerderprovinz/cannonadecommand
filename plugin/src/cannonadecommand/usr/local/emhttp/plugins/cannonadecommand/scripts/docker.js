@@ -2150,6 +2150,7 @@
         moTimer = setTimeout(function () {
           moTimer = null;
           if (dead) { moPending = false; return; } // a teardown may have fired during the debounce window
+          try { mo.disconnect(); } catch (e) {}   // stop observing our OWN writes for this pass (badges + #cc-names datalist) so they can't re-fire the observer
           try { applyEnhanceClasses(); injectAllRowBadges(); } catch (e) {}
           // A native-list rebuild usually means Unraid just FINISHED a container action
           // (stop/start via ITS buttons/menu) — our state map is stale until the next 9s
@@ -2158,6 +2159,8 @@
           // re-injects can't turn this into a request loop.
           try { refresh(); } catch (e) {} // instant: inject with the data already in memory
           try { if (Date.now() - lastObsLoad > 2000) { lastObsLoad = Date.now(); load(); } } catch (e) {}
+          // re-arm on the CURRENT #docker_list AFTER our synchronous writes flushed, so they don't re-fire us
+          try { var b2 = document.getElementById("docker_list"); if (b2) mo.observe(b2, { childList: true }); } catch (e) {}
           // release the guard AFTER our own DOM writes flush (defence vs a re-inject loop)
           Promise.resolve().then(function () { moPending = false; });
         }, 250);
@@ -2166,8 +2169,17 @@
       // wholesale every 3-5s (which we must re-tag), but subtree:false keeps the
       // per-second nchan CPU/RAM text ticks — and our own deep badge appends — from
       // waking the observer, so there is no tick-storm and no double sweep.
-      var body = document.getElementById("docker_list");
-      if (body) mo.observe(body, { childList: true }); else mo.observe(nativeTable() || document.body, { childList: true, subtree: true });
+      // Observe ONLY #docker_list's direct <tr> children (subtree:false) — so CC's own deep
+      // badge/datalist writes and nchan's per-second text ticks can NEVER re-wake the observer.
+      // If the list hasn't been AJAX-rendered yet, RETRY until it exists; do NOT fall back to
+      // <table>/<body>+subtree — that watches our own .cc-b-v appends and self-triggers a rebuild
+      // loop (the /Docker freeze after a container update, user 2026-07-28).
+      (function armList() {
+        var body = document.getElementById("docker_list");
+        if (body) { try { mo.observe(body, { childList: true }); } catch (e) {} return; }
+        if (dead) return;
+        setTimeout(armList, 250);
+      })();
     } catch (e) {}
   }
   // ── ShipLog integration (only when BOTH CC and ShipLog are installed) ──
@@ -2442,7 +2454,13 @@
     try {
       var dd = dt && dt.nextElementSibling;
       while (dd && dd.tagName !== "DD") dd = dd.nextElementSibling;
-      badge.classList.toggle("cc-req", !!(dd && dd.querySelector("input[required],select[required],textarea[required]")));
+      // required = Unraid stamped the label span class="required" (AUTHORITATIVE — from the template's
+      // Required flag; covers dropdown/select fields that Unraid does NOT give the [required] attr, so the
+      // native " *" from CreateDocker.css `.required:after` showed while the CC dot did not) OR the field
+      // itself carries [required]. Marking .cc-req makes the CC red DOT (::after, higher specificity) WIN over
+      // the native " *" on the SAME element — so EVERY required field shows the dot, none the asterisk (user).
+      var req = (badge && badge.classList.contains("required")) || !!(dd && dd.querySelector("input[required],select[required],textarea[required]"));
+      badge.classList.toggle("cc-req", req);
     } catch (e) {}
   }
   function ctVarLabels() {
@@ -2679,6 +2697,26 @@
       // hide the native grey heading(s) the badge stands in for (never our own badge)
       var heads = box.querySelectorAll(".title, span.left");
       for (var i = 0; i < heads.length; i++) { if (heads[i].id !== "cc-ctout-title" && /container/i.test(heads[i].textContent || "")) heads[i].style.display = "none"; }
+      // #(user 2026-07-29): the install/recreate window had NO loading animation. Add a status badge directly
+      // under the title — a spinning fa-refresh while the create STREAMS, a green check when it reports done —
+      // the SAME badge the update-window (sweet-alert) shows, so every "process running" window matches. The
+      // completion phrase (Helpers.php: "The command finished successfully!") drives the flip; a MutationObserver
+      // on the streaming .content re-checks on every appended log line.
+      var tbEl = document.getElementById("cc-ctout-title");
+      var sb = document.getElementById("cc-ctout-status");
+      if (!sb && tbEl) { sb = el("div"); sb.id = "cc-ctout-status"; sb.setAttribute("role", "status"); tbEl.insertAdjacentElement("afterend", sb); }
+      if (sb) {
+        var ctOutStatus = function () {
+          try {
+            var log = content.textContent || "";
+            var done = /(erfolgreich\s+(ausgeführt|beendet)|finished successfully|command (finished|completed|executed)|befehl.*fehlgeschlagen|the command failed)/i.test(log);
+            if (done) { sb.classList.add("cc-ctout-done"); if (sb.getAttribute("data-m") !== "done") { sb.setAttribute("data-m", "done"); sb.setAttribute("aria-label", "Fertig"); sb.innerHTML = "<i class='fa fa-check cc-ctout-fa' aria-hidden='true'></i>"; } }
+            else { sb.classList.remove("cc-ctout-done"); if (sb.getAttribute("data-m") !== "run") { sb.setAttribute("data-m", "run"); sb.setAttribute("aria-label", "Läuft"); sb.innerHTML = "<i class='fa fa-refresh fa-spin cc-ctout-fa' aria-hidden='true'></i>"; } }
+          } catch (e) {}
+        };
+        ctOutStatus();
+        if (!sb.__ccObs) { sb.__ccObs = new MutationObserver(ctOutStatus); try { sb.__ccObs.observe(content, { childList: true, subtree: true, characterData: true }); } catch (e) {} }
+      }
     } catch (e) {}
   }
   function boot() {

@@ -111,6 +111,27 @@
   // clean modern loader. Detect the IN-PROGRESS state from the title, drop a rotating ring beside the
   // title badge, grey the badge while it runs, and hide the empty grey <fieldset> bars Unraid leaves.
   // A per-dialog subtree observer re-styles on every streamed line + the IN PROGRESS -> FINISHED flip.
+  // FREEZE FIX: those per-dialog subtree+characterData observers (and the body ccPopObs) used to run
+  // ccNchanStyle()+paintPopups() SYNCHRONOUSLY on every mutation. During a container update/install the
+  // nchan <pre> log streams hundreds of lines/sec -> hundreds of full re-styles/sec saturated the main
+  // thread and froze the whole UI until a page reload (user: "wenn man das zweite schließt reagiert die
+  // ganze ui nicht mehr"). Coalesce every observer wake into ONE restyle per animation frame: at most one
+  // run per debounce window can never outrun a streaming flood, so the page can no longer lock. A short
+  // setTimeout debounce (NOT requestAnimationFrame — rAF is paused/throttled on a non-painting or
+  // background tab, which would starve the restyle and leave the dialog unstyled) coalesces a burst of
+  // streamed lines into ONE restyle per ~60ms (≤~16/s), matching the debounce docker.js already uses.
+  var _ccPopT = 0, _ccPopFull = false;
+  function ccPopRestyleSoon(full) {
+    if (full) _ccPopFull = true;
+    if (_ccPopT) return;
+    _ccPopT = setTimeout(function () {
+      _ccPopT = 0;
+      var doFull = _ccPopFull; _ccPopFull = false;
+      try { ccNchanStyle(); } catch (e) {}
+      try { paintPopups(); } catch (e) {}
+      if (doFull) { try { ccPopIframes(); } catch (e) {} try { ccPopoverDim(); } catch (e) {} try { ccNotifActions(); } catch (e) {} try { ccPaintRotate(); } catch (e) {} }
+    }, 60);
+  }
   function ccNchanStyle() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
@@ -128,7 +149,7 @@
       var allSa = document.querySelectorAll(".sweet-alert");
       for (var z = 0; z < allSa.length; z++) {
         if (!allSa[z].__ccNchanObs) {
-          allSa[z].__ccNchanObs = new MutationObserver(function () { ccNchanStyle(); paintPopups(); });
+          allSa[z].__ccNchanObs = new MutationObserver(function () { ccPopRestyleSoon(false); });
           try { allSa[z].__ccNchanObs.observe(allSa[z], { childList: true, subtree: true, characterData: true }); } catch (e) {}
         }
       }
@@ -142,18 +163,31 @@
         // "-IN PROGRESS"/"-FINISHED"), the state is LATCHED on the element (dataset) so stripping the suffix
         // doesn't lose it: once seen "in progress" -> run; once "finished" -> done; step names don't reset it.
         var raw = (h2.textContent || "");
-        // #2 (user: "keine Ladeanimation während das Update läuft"): the German container-update/-install titles
-        // ("… wird aktualisiert / installiert / erstellt") never match /in progress/, so state stayed "" and no
-        // loader showed. Detect RUN from the DE/EN progress verbs OR from a live raw-log <pre> (a streaming
-        // terminal log = a pre WITHOUT the changelog markdown h3/ul; only present while a docker pull/create
-        // streams). The changelog window's markdown pre HAS h3/ul, so it never trips this -> stays loader-less.
-        if (sa.dataset.ccState !== "done" && (/in\s*progress|wird\s+(aktualisiert|installiert|erstellt|neu\s*erstellt|gezogen|gestartet)|updating|installing|pulling|creating/i.test(raw) || sa.querySelector("pre:not(:has(h3)):not(:has(ul))"))) sa.dataset.ccState = "run";
-        else if (/finished/i.test(raw)) sa.dataset.ccState = "done";
-        // #12 robust "done" (user: the loader stayed a 3-dot spinner forever): a container UPDATE via openDocker
-        // FINISHES WITHOUT ever writing "-FINISHED" into the title (the streamed log says "…erfolgreich ausgeführt"
-        // instead), so the /finished/ check above never tripped and the loader never morphed into the green check.
-        // Flip to done once the streamed log reports completion.
-        if (sa.dataset.ccState === "run" && /(erfolgreich (ausgeführt|beendet)|successfully|command (finished|completed|executed))/i.test(sa.textContent || "")) sa.dataset.ccState = "done";
+        // ── bottom-left run/done STATUS BADGE ──
+        // Only ACTUAL install/update STREAMS get the indicator — NOT the System Information or ShipLog changelog
+        // windows (they ALSO carry a <pre>, but are static). A stream is marked by a progress-verb title OR by
+        // the step <fieldset>s Unraid emits. (user, "unzählige Male drauf hingewiesen": the green check showed
+        // CONSTANTLY because the old code LATCHED dataset.ccState="done" and NEVER reset it on the REUSED
+        // SweetAlert node — so every later window inherited "done"; and the static System-Info <pre> falsely
+        // qualified as a running stream.)
+        // A real STREAM = a progress-verb title OR Unraid's exec step cards (fieldset.CMD/.docker from
+        // Helpers.php addLog). The old `fieldset` match was too broad: the System Information window ALSO wraps
+        // its `table.info` in a plain <fieldset>, so it falsely qualified and showed the loader (user: "im
+        // Systeminfofenster ist die Ladeanimation immer noch"). Scope to the exec fieldsets AND hard-exclude any
+        // window carrying a `table.info` (System Info) — that never runs a process.
+        var isStream = (/in\s*progress|wird\s+(aktualisiert|installiert|erstellt|neu\s*erstellt|gezogen|gestartet)|updating|installing|pulling|creating/i.test(raw) || !!sa.querySelector("fieldset.CMD, fieldset.docker")) && !sa.querySelector("table.info");
+        if (isStream) {
+          // Recompute STATELESSLY each pass so a fresh window ALWAYS starts as RUN (loader) and never inherits a
+          // stale "done". Flip to DONE only when the log reports completion AND the stream has SETTLED (no new
+          // output for ~700ms) — so the check never appears mid-run (e.g. right after "erfolgreich ausgeführt"
+          // while an orphaned image is still being removed). No mutations fire once the stream stops, so arm a
+          // one-shot re-check to let the check appear after the tail settles.
+          var finishTxt = /(erfolgreich (ausgeführt|beendet)|successfully|command (finished|completed|executed)|finished)/i.test(sa.textContent || "");
+          var len = (sa.textContent || "").length;
+          if (sa.__ccLen !== len) { sa.__ccLen = len; sa.__ccGrow = Date.now(); }
+          if (finishTxt && (Date.now() - (sa.__ccGrow || 0)) > 700) { sa.dataset.ccState = "done"; }
+          else { sa.dataset.ccState = "run"; if (finishTxt) { clearTimeout(sa.__ccSettleT); sa.__ccSettleT = setTimeout(function () { try { ccNchanStyle(); paintPopups(); } catch (e) {} }, 750); } }
+        } else { sa.dataset.ccState = ""; }
         var state = sa.dataset.ccState || "";
         sa.classList.toggle("cc-nchan-loading", state === "run");
         sa.classList.toggle("cc-nchan-done", state === "done");
@@ -161,7 +195,7 @@
         var clean = raw.replace(/\s*[-–—]\s*(IN\s*PROGRESS|FINISHED)\b[\s\S]*$/i, "").replace(/\s+$/, "");
         if (clean && clean !== raw && h2.textContent !== clean) h2.textContent = clean;
         var oldspin = h2.querySelector(".cc-nchan-spin"); if (oldspin) oldspin.remove();   // kill any legacy in-badge spinner
-        // bottom-left indicator (no text): 3-dot loader while running, circle+check when finished
+        // bottom-left STATUS BADGE (no text): a spinning ring while RUNNING, a green circle-check when DONE
         var loader = sa.querySelector(".cc-nchan-loader");
         if (state === "run" || state === "done") {
           if (!loader) {
@@ -174,7 +208,7 @@
           if (state === "done") {
             if (loader.getAttribute("data-cc-mode") !== "done") { loader.setAttribute("data-cc-mode", "done"); loader.classList.add("cc-nchan-check"); loader.setAttribute("aria-label", T("Fertig", "Done")); loader.innerHTML = "<svg viewBox='0 0 24 24' aria-hidden='true'><circle class='cc-ck-c' cx='12' cy='12' r='10.5'/><path class='cc-ck-p' d='M6.5 12.5l3.6 3.6L17.5 8.8'/></svg>"; }
           } else if (loader.getAttribute("data-cc-mode") !== "run") {
-            loader.setAttribute("data-cc-mode", "run"); loader.classList.remove("cc-nchan-check"); loader.setAttribute("aria-label", T("Läuft…", "Working…")); loader.innerHTML = "<i></i><i></i><i></i>";
+            loader.setAttribute("data-cc-mode", "run"); loader.classList.remove("cc-nchan-check"); loader.setAttribute("aria-label", T("Läuft…", "Working…")); loader.innerHTML = "<i class='fa fa-refresh fa-spin cc-nchan-fa' aria-hidden='true'></i>";  // RUN = white spinning fa-refresh, IDENTICAL to the fa-refresh fa-spin Unraid puts on a busy/updating container logo (user: align the two)
           }
         } else if (loader) { loader.remove(); }
         // #7-III (user: "nutzloser hellgrauer Balken ueber den Buttons"): the step cards are #191919 now, so an
@@ -186,7 +220,7 @@
           if (leg) body = body.replace(leg.textContent || "", "");
           fs[j].style.display = body.replace(/\s+/g, "") ? "" : "none";
         }
-        if (!sa.__ccNchanObs) { sa.__ccNchanObs = new MutationObserver(function () { ccNchanStyle(); paintPopups(); }); sa.__ccNchanObs.observe(sa, { childList: true, subtree: true, characterData: true }); }
+        if (!sa.__ccNchanObs) { sa.__ccNchanObs = new MutationObserver(function () { ccPopRestyleSoon(false); }); sa.__ccNchanObs.observe(sa, { childList: true, subtree: true, characterData: true }); }
       }
     } catch (e) {}
   }
@@ -251,7 +285,7 @@
   var ccPopObs = null;
   function watchPopups() {
     try {
-      if (ccPopObs) return; ccPopObs = new MutationObserver(function () { ccNchanStyle(); paintPopups(); ccPopIframes(); ccPopoverDim(); ccNotifActions(); ccPaintRotate(); });
+      if (ccPopObs) return; ccPopObs = new MutationObserver(function () { ccPopRestyleSoon(true); });
       ccPopObs.observe(document.body, { childList: true });   // dialogs/sweetalerts append as direct body children — cheap, no subtree
     } catch (e) {}
   }

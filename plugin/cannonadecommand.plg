@@ -33,11 +33,20 @@
   (#242424) and clearly lifts off the backdrop; the raw streaming log keeps its deep terminal inset.
 - Container update window: no loading animation showed while an update ran, because the German title
   ("... wird aktualisiert") never matched the English "in progress" the loader looked for. The running state is
-  now detected from the localized progress verbs and from the live streaming log, so the 3-dot loader shows
-  during the run and turns into a filled green status badge when it finishes. The status badge sits directly to
-  the LEFT of the buttons, with the same gap as between the buttons.
-- Container install window ("Add container"): matched exactly to the update window now (same lighter surface,
-  same soft shadow and radius, no hairline ring, step cards on the window surface).
+  now detected from the localized progress verbs and from the live streaming log, so a spinning update-arrow
+  badge shows during the run (the same spinner Unraid shows on a container's logo while it updates) and turns
+  into a filled green check badge when it finishes. The status badge sits directly to the LEFT of the buttons,
+  with the same gap as between the buttons.
+- Container install / recreate output window ("Add container"): matched exactly to the update window (same
+  surface, soft shadow and radius, no hairline ring, borderless step cards) AND fully reworked from real
+  measurements: a stray accent square under the title (a leftover native heading streamed back into the window)
+  is gone; long log lines (image URLs, volume paths) now wrap instead of forcing a horizontal scrollbar; a long
+  pull log scrolls inside its own card instead of scrolling the whole window; and the same spinning update-arrow
+  badge (green check when done) now shows while the install or recreate runs.
+- Required container fields: the red "required" dot is shown consistently on every required field now, including
+  dropdown fields (e.g. "Behind reverse proxy"), which previously still showed the native asterisk.
+- Loading animation: it only appears where a process actually runs now. The System Information window no longer
+  shows a spinner (it was mistaken for a running stream because its content sits in a plain fieldset).
 - ShipLog changelog window: stray border lines on the version blocks are removed (CC never draws lines, it
   separates by shade).
 - Add-container form: the Categories field is the same height as the other value fields now (it was slightly

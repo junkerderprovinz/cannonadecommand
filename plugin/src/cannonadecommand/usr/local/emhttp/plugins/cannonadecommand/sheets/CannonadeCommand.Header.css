@@ -475,8 +475,8 @@ html.cc-shape-circle.cc-header-on #UserProfile > div:nth-child(2) > span { borde
    The dialog CONTENT is often an iframe (its inner document is out of reach) — this styles the
    window chrome: surface, title bar, buttons. Separation via fill + shadow, never a line. */
 html.cc-popups-on .ui-dialog {
-  background: var(--cc-surface-window-deep) !important; border: none !important; border-radius: 14px !important;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, .38) !important; padding: 0 !important; overflow: hidden;   /* #(user "systemweit gleich, nie Rahmenlinien"): DEEP surface (darkest, no lighter header/footer strip), NO ring, soft shadow — uniform backdrop, no halo */
+  background: #1a1a1a !important; border: none !important; border-radius: 14px !important;   /* #(user 2026-07-29: "exakt wie das Update-Fenster"): DARK frame #1a1a1a to match the locked update-window template (content sits in a LIGHT #2e2e2e card below) */
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .38) !important; padding: 0 !important; overflow: hidden;
   /* #17 (user: the Feedback window content is too wide): cap the native inline width so the dialog reads as a
      tidy card instead of a full-bleed sheet. min(...) keeps it responsive; content inside the iframe wraps. */
   max-width: min(92vw, 720px) !important;
@@ -486,7 +486,7 @@ html.cc-popups-on .ui-dialog {
    paintPopups() with the palette. */
 html.cc-popups-on .ui-dialog .ui-dialog-titlebar {
   background: transparent !important; border: none !important; border-radius: 0 !important;
-  padding: 16px 18px 8px !important;
+  padding: 18px 18px 14px !important;   /* #(user 2026-07-29): frame inset + 14px gap to the content card, like the update window */
   display: flex !important; align-items: center !important; justify-content: flex-start !important;
 }
 /* v2.33.1 (user): the badge spans the FULL width, its text centred — flex:1 (not width:100%) so
@@ -506,34 +506,36 @@ html.cc-popups-on .ui-dialog:has(iframe#myIframe) .ui-dialog-title {
 }
 html.cc-popups-on .ui-dialog:has(iframe#myIframe) { background: #0f0f0f !important; }
 html.cc-popups-on .ui-dialog .ui-dialog-title {
+  /* #(user 2026-07-29): FULL-WIDTH title bar, 40px — identical to the locked update-window title (was a 36px pill). */
   display: flex !important; align-items: center; justify-content: center !important;
   flex: 1 1 auto; float: none !important; margin: 0 !important; box-sizing: border-box !important;
-  height: var(--cc-lgb-h, 36px); padding: 0 20px; border-radius: var(--cc-b-radius, 999px);   /* lg tier (user: "zu klein") */
-  background: var(--cc-hdr-accent, #2f6feb); color: var(--cc-hdr-accent-text, #fff) !important;
+  height: 40px !important; padding: 0 18px; border-radius: var(--cc-b-radius, 10px);
+  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
   font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
-  text-transform: uppercase !important; letter-spacing: .8px !important;
+  text-transform: uppercase !important; letter-spacing: .6px !important;
 }
 html.cc-popups-on .sweet-alert { text-align: center !important; }
 html.cc-popups-on .sweet-alert h2 {
-  /* v2.44.2 (user: "nicht schön formatiert"): a CENTRED, content-width badge — the old
-     width:100% made it a jarring full-bleed bar. */
-  display: inline-flex !important; align-items: center; justify-content: center !important; float: none !important;
-  width: fit-content !important; max-width: 100% !important; box-sizing: border-box !important;
-  height: var(--cc-lgb-h, 36px); padding: 0 18px !important; border-radius: var(--cc-b-radius, 999px);
+  /* #(user 2026-07-29: "alle Fenster exakt wie das Update-Fenster"): FULL-WIDTH title bar (40px) for EVERY
+     sweet-alert incl. the plain start/stop/remove CONFIRMS — no more centred pill. Uniform across all windows. */
+  display: flex !important; align-items: center; justify-content: center !important; float: none !important;
+  width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
+  height: 40px !important; padding: 0 18px !important; border-radius: var(--cc-b-radius, 10px);
   background: var(--cc-hdr-accent, #2f6feb); color: var(--cc-hdr-accent-text, #fff) !important;
   font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
-  text-transform: uppercase !important; letter-spacing: .6px !important; margin: 4px auto 14px !important;
+  text-transform: uppercase !important; letter-spacing: .6px !important; margin: 0 0 14px !important;
 }
 /* #N1 (user REVERSAL: the streaming windows' badge was "zu groß" — bring it back to the CC STANDARD size
    every other dialog uses). The .nchan / changelog title badge now matches the base .sweet-alert h2 badge
    (lgb 36px / 14px, content-width, centred) instead of the old 46px full-bleed bar. "Immer und alles!" */
-/* #12 (user: "der obere Badge soll IMMER ueber die ganze Breite gehen"): the update-window title is a FULL-WIDTH
-   bar now, not a centred pill, still clearly outranking the 12px step legends. */
+/* #(user 2026-07-28: "Titel-Badge zu gross, ueber alle Fenster einheitlich"): the streaming/changelog title
+   badge now MATCHES the base .sweet-alert h2 badge exactly (lgb 36px / 14px, content-width, centred pill) —
+   no more 48px full-width bar. Uniform title across every dialog. (Overrides the earlier "#12 always full-width".) */
 html.cc-popups-on .sweet-alert:has(pre) h2,
 html.cc-popups-on .sweet-alert.nchan h2 {
-  height: 48px !important; font-size: 16px !important;
-  padding: 0 24px !important; margin: 0 0 16px !important; letter-spacing: .7px !important;
-  width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; border-radius: var(--cc-b-radius, 10px) !important;
+  height: 40px !important; font-size: var(--cc-lgb-fs, 14px) !important;
+  width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
+  padding: 0 18px !important; margin: 0 0 14px !important; letter-spacing: .6px !important; border-radius: var(--cc-b-radius, 10px) !important;
 }
 /* the changelog body inside the <pre>: render the parsed markdown as blocks, turn each version
    heading into a small CC version badge, and lay the items out as a clean list (CC badge language). */
@@ -567,17 +569,51 @@ html.cc-popups-on .sweet-alert.nchan pre:not(:has(h3)):not(:has(ul)) {
   white-space: pre !important; text-align: left !important;
   font-family: Consolas, "SFMono-Regular", ui-monospace, monospace !important;
   font-size: 12px !important; line-height: 1.35 !important; color: #d6d6d6 !important;
-  background: #0f0f0f !important; border: none !important; border-radius: 8px !important;
+  background: #2e2e2e !important; border: none !important; border-radius: 8px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;   /* #(user 2026-07-28): the log TEXT sits in a LIGHT card raised on the dark frame */
   padding: 12px 14px !important; max-height: 60vh; overflow: auto;
 }
+/* CARD-SIZE FIX (user 2026-07-28: "das Systeminfo-Fenster — die Card ist viel zu groß. Das Fenster soll immer
+   gleich groß bleiben, nur die Card, die den Text hinterlegt, passt sich an die Textgröße an"): CC stamps .nchan
+   on ANY .sweet-alert with a <pre> (System Information, changelog, container-update) to reuse the streaming look.
+   Unraid's own jquery.sweetalert.css sizes those for a long streaming log: `.sweet-alert.nchan{height:95vh}` (the
+   WINDOW — correct, KEEP it, it is the template) + `pre#swalbody{height:100%}` (the light card FILLS the window).
+   On SHORT content (System Information's ~336px info table) that filled card became a huge #2e2e2e sheet with
+   ~349px empty. So the WINDOW stays 95vh; only the CARD hugs its text. The <p> holding the <pre> is flex-COLUMN,
+   so the card flex-GREW to fill — pin it with `flex:0 0 auto` + `height:auto` so it hugs its content instead.
+   `max-height:100%` caps a LONG streaming log at the available window space (so the update window's log still
+   FILLS like before — only short content shrinks). ID-specificity (#swalbody) + !important is REQUIRED to beat
+   Unraid's `pre#swalbody{height:100%}`. */
+html.cc-popups-on .sweet-alert.nchan pre#swalbody,
+html.cc-popups-on .sweet-alert.nchan pre#swaltext { flex: 0 0 auto !important; height: auto !important; max-height: 100% !important; overflow: auto !important; }
+/* Changelog (ShipLog): the version-<h3>-badges + <ul>-lists markdown pre sits in the SAME light #2e2e2e content
+   card as every other window (user 2026-07-29: "Changelog auch in #2e2e2e-Card"). The card-size rule above
+   already hugs it; here it just gets the light fill (the raw streaming-log pre keeps its own rule below). */
+html.cc-popups-on .sweet-alert.nchan pre#swalbody:has(h3),
+html.cc-popups-on .sweet-alert.nchan pre#swalbody:has(ul) {
+  background: #2e2e2e !important; border-radius: 10px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important; padding: 12px 14px !important;
+}
+/* (a) Title-Badge must NOT shrink (user 2026-07-28: "im Update-Fenster ist der Titelbadge zu niedrig"): in the
+   fixed-height (95vh) streaming window a LONG log overflows, and the h2 (a flex item that could shrink) got
+   squished from 40px down to ~25px. Pin it. (b) The content column sits at the TITLE-BADGE width, not
+   edge-to-edge: SweetAlert's `p { margin: 0 -20px }` cancels the window's 20px padding, so the gray content
+   card ran the full window width and looked too wide — align it with the title (user: "die Cards sollen so
+   breit sein wie der Titel-Badge"). */
+html.cc-popups-on .sweet-alert.nchan h2 { flex: 0 0 auto !important; min-height: 40px !important; }
+html.cc-popups-on .sweet-alert.nchan > p { margin-left: 0 !important; margin-right: 0 !important; }
+/* Update/Install stream: the step <fieldset>s ARE the cards. The OUTER pre#swaltext WRAPS them and must NOT
+   also carry the #2e2e2e card fill (that stacked a wide gray container behind the inset step cards; user:
+   "die Cards ... grauer Hintergrund ... zu breit / zu schmal"). Make it a transparent, padding-less wrapper so
+   ONLY the fieldsets show as cards, at the full title-badge width. (System Information uses pre#swalbody with a
+   TABLE and keeps its single #2e2e2e card.) ID-specificity beats the base `pre:not(:has(h3)):not(:has(ul))`. */
+html.cc-popups-on .sweet-alert.nchan pre#swaltext { background: transparent !important; padding: 0 !important; box-shadow: none !important; }
 /* #11/#14: the container-update dialog groups its steps in <fieldset>s (Lade Image / Stoppe Container …)
    -> Carbon cards with an accent legend badge, matching the Tools-page install log. */
 html.cc-popups-on .sweet-alert.nchan fieldset {
   /* user: "oben und unten den hellen Hintergrund auf dunkel" — the step cards were #1c1c1c, a shade
      lighter than the #161616 window, which read as light bands top and bottom. Match the window so the
      whole dialog is one continuous dark surface; the accent legend badge still marks each step. */
-  background: var(--cc-surface-window, #242424) !important; border: none !important; border-radius: 10px !important;
-  margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;   /* borderless card: raised surface + shadow, NO border line (CC law) */
+  background: #2e2e2e !important; border: none !important; border-radius: 10px !important;
+  margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;   /* #(user 2026-07-28): LIGHT step card raised on the dark frame */
 }
 html.cc-popups-on .sweet-alert.nchan fieldset > legend {
   background: var(--cc-rbaccent, var(--cc-hdr-accent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
@@ -598,20 +634,22 @@ html.cc-popups-on .sweet-alert.nchan h2 { position: relative; }
    vertically centred: "unten links neben den Buttons". */
 html.cc-popups-on .sweet-alert.nchan .sa-button-container { position: relative; width: 100% !important; box-sizing: border-box; }
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader {
-  /* #2 (user: "das Status-Icon soll DIREKT links der Buttons sein, mit gleichem Abstand wie die Buttons
-     zueinander"): a normal flex item in the (row-reverse, centred) button row -> it sits immediately LEFT of
-     the buttons with the row's 10px gap, no longer absolute at the far-left edge. */
-  position: static; z-index: 3; flex: none;
-  display: inline-flex; gap: 5px; align-items: center; pointer-events: none;
+  /* (user 2026-07-28: "die Statusanzeige unten soll auch in Badge-Form sein") the indicator is a filled CIRCLE
+     BADGE sitting immediately LEFT of the buttons in the (row-reverse, centred) button row: accent while running
+     (with a white spinning ring), a green circle-check when done. Same 26px footprint in both states. */
+  position: static; z-index: 3; flex: none; box-sizing: border-box;
+  width: 26px; height: 26px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center; pointer-events: none;
+  background: var(--cc-rbaccent, var(--cc-hdr-accent, var(--cc-accent, #2f6feb)));   /* RUNNING = accent badge */
 }
-html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader i {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--cc-rbaccent, var(--cc-hdr-accent, var(--cc-accent, #2f6feb)));
-  animation: cc-nchan-dot 1s ease-in-out infinite;
+html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader.cc-nchan-check { background: transparent !important; }  /* DONE: the SVG green circle IS the badge */
+/* RUNNING badge holds a white spinning fa-refresh — the EXACT icon + native 2s-linear fa-spin cadence Unraid
+   shows over a busy/updating container logo, so the dialog status badge and the container-row logo animate
+   IDENTICALLY (user 2026-07-29: "die Ladeanimation mit der auf dem Containerlogo abgleichen"). fa-spin comes
+   from FontAwesome (loaded globally), so no local @keyframes are needed. */
+html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader .cc-nchan-fa {
+  color: #fff; font-size: 14px; line-height: 1;
 }
-html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader i:nth-child(2) { animation-delay: .16s; }
-html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader i:nth-child(3) { animation-delay: .32s; }
-@keyframes cc-nchan-dot { 0%, 80%, 100% { transform: scale(.45); opacity: .38; } 40% { transform: scale(1); opacity: 1; } }
 /* #7-II finished: the bottom-left loader morphs into a circle-with-check (no text), drawn in. Green = done. */
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader.cc-nchan-check { gap: 0; }
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg { width: 26px; height: 26px; overflow: visible; display: block; }
@@ -622,24 +660,32 @@ html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-p {
 }
 @keyframes cc-ck-draw { to { stroke-dashoffset: 0; } }
 html.cc-anim-off .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-p { animation: none !important; stroke-dashoffset: 0 !important; }
-html.cc-anim-off .sweet-alert.nchan .cc-nchan-loader i { animation: none !important; opacity: .8; }
+html.cc-anim-off .sweet-alert.nchan .cc-nchan-loader .cc-nchan-fa { animation: none !important; }
 html.cc-popups-on .sweet-alert.nchan fieldset:empty,
 html.cc-popups-on .sweet-alert.nchan p:empty,
 html.cc-popups-on .sweet-alert.nchan > div:empty,
 html.cc-popups-on .sweet-alert:has(pre) fieldset:empty { display: none !important; }
 /* the native success/error/warning icon rings sit calmer on the dark surface */
-html.cc-popups-on .sweet-alert .sa-icon { margin-top: 6px !important; }
+html.cc-popups-on .sweet-alert .sa-icon { display: none !important; }   /* #(user 2026-07-29): no native icon ring — the accent title bar carries the identity, exactly like the update window (same as .swal-icon) */
 html.cc-popups-on .ui-dialog .ui-dialog-titlebar-close {
   border: none !important; background: transparent !important; box-shadow: none !important; opacity: .7;
 }
 html.cc-popups-on .ui-dialog .ui-dialog-titlebar-close:hover { opacity: 1; }
 html.cc-popups-on .ui-dialog .ui-widget-content,
 html.cc-popups-on .ui-dialog .ui-dialog-content {
-  background: #0f0f0f !important; border: none !important; color: #d6d6d6 !important;
+  background: #1a1a1a !important; border: none !important; color: #d6d6d6 !important;   /* frame colour by default (iframe windows: the iframe body is the content, themed by ccPopIframes) */
+}
+/* #(user 2026-07-29: "exakt wie das Update-Fenster"): NON-iframe, NON-form content (info table, plugin log,
+   allocations, Browse tree) sits in a LIGHT #2e2e2e CARD, inset to the title width, borderless + soft shadow.
+   FORM dialogs (the "Konfiguration hinzufügen" Add-Config popup with input/select/textarea) get NO card —
+   the fields carry their own structure and a grey card behind a form looks wrong (user: "hier kann die Card weg"). */
+html.cc-popups-on .ui-dialog:not(:has(iframe)):not(:has(input)):not(:has(select)):not(:has(textarea)) .ui-dialog-content {
+  background: #2e2e2e !important; border-radius: 10px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;
+  margin: 0 18px 6px !important; padding: 12px 14px !important;
 }
 /* dialog buttons: LARGE (lg tier), horizontally CENTRED (user, v2.33.1) */
 html.cc-popups-on .ui-dialog .ui-dialog-buttonpane {
-  background: #0f0f0f !important; border: none !important; margin: 0 !important; padding: 10px 18px 16px !important;
+  background: #1a1a1a !important; border: none !important; margin: 0 !important; padding: 10px 18px 16px !important;
   text-align: center !important; display: flex !important; justify-content: center !important; gap: 10px;
 }
 html.cc-popups-on .ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset { float: none !important; margin: 0 !important; display: inline-flex; gap: 10px; }
@@ -678,7 +724,7 @@ html.cc-popups-on .sweet-alert::-webkit-scrollbar-track,
 html.cc-popups-on .sweet-alert pre::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
 /* SweetAlert confirmations (start/stop/remove dialogs) */
 html.cc-popups-on .sweet-alert {
-  background: var(--cc-surface-window) !important; border: none !important; border-radius: 14px !important;
+  background: #1a1a1a !important; border: none !important; border-radius: 14px !important;   /* #(user 2026-07-28): DARK frame; the content sits in a LIGHT raised card (System-Info "dunkler + Text in heller Card") */
   /* #(user "systemweit gleich, nie Rahmenlinien" + "keine hellen Kopf-/Fußleisten"): the DEEP surface keeps the frame
      the darkest layer so the #191919 step cards stay RAISED (no lighter strip). NO ring, soft small shadow — uniform
      backdrop, no halo. */
@@ -689,9 +735,9 @@ html.cc-popups-on .sweet-alert {
    missed grandchild wrapper divs). Content elements keep their own fills: the title/legend badges, the
    buttons, the raw-log pre (#0f0f0f), and the step fieldsets (#161616). */
 html.cc-popups-on .sweet-alert.nchan,
-html.cc-popups-on .sweet-alert:has(pre) { background: var(--cc-surface-window) !important; }
-html.cc-popups-on .sweet-alert.nchan *:not(h2):not(button):not(pre):not(fieldset):not(legend):not(.sa-icon):not([class*="badge"]):not([class*="chip"]),
-html.cc-popups-on .sweet-alert:has(pre) *:not(h2):not(button):not(pre):not(fieldset):not(legend):not(.sa-icon):not([class*="badge"]):not([class*="chip"]) { background-color: transparent !important; box-shadow: none !important; border: none !important; }   /* #3 (user: "das ShipLog-Changelog-Fenster hat Rahmenlinien"): also strip stray borders from changelog/streaming-window descendants (CC no-line law) */
+html.cc-popups-on .sweet-alert:has(pre) { background: #1a1a1a !important; }
+html.cc-popups-on .sweet-alert.nchan *:not(h2):not(button):not(pre):not(fieldset):not(legend):not(.sa-icon):not([class*="badge"]):not([class*="chip"]):not([class*="cc-nchan"]),
+html.cc-popups-on .sweet-alert:has(pre) *:not(h2):not(button):not(pre):not(fieldset):not(legend):not(.sa-icon):not([class*="badge"]):not([class*="chip"]):not([class*="cc-nchan"]) { background-color: transparent !important; box-shadow: none !important; border: none !important; }   /* :not([class*="cc-nchan"]) keeps the status BADGE (loader/spinner ring) from being stripped */   /* #3 (user: "das ShipLog-Changelog-Fenster hat Rahmenlinien"): also strip stray borders from changelog/streaming-window descendants (CC no-line law) */
 /* (sweet-alert h2 badge styling above) */
 html.cc-popups-on .sweet-alert p, html.cc-popups-on .sweet-alert .sa-text { color: #bdbdbd !important; }
 html.cc-popups-on .sweet-alert hr { display: none !important; }
@@ -715,16 +761,44 @@ html.cc-popups-on .sweet-alert .sa-button-container button:hover { filter: brigh
 /* #N1 (user REVERSAL): the .nchan action buttons drop back to the CC STANDARD lgb height (36px, inherited
    from the base button rule above) — the old 46px was "zu groß". No .nchan-specific height override now. */
 
+/* ═══ FREEZE FIX — a CLOSED sweet-alert must never linger as an invisible click-blocker ═══
+   User live-diagnosed 2026-07-28 ("sichtbar aber Klicks tot" + "Fenster erscheinen nach dem Schließen
+   erneut"): SweetAlert shows the alert as display:flex and closes it by removing .visible / adding
+   .hideSweetAlert plus a JS timeout that sets display:none. On the STREAMING container-update window that
+   final display:none did not stick, so the closed alert lingered as display:flex, opacity:0,
+   pointer-events:auto at z-index 99999 covering ~81% of the viewport — an invisible sheet that swallowed
+   EVERY click until a full page reload. Force any closing/closed alert fully gone + click-through so a
+   stuck dialog can never trap the UI again. Scoped to .hideSweetAlert = only the closing/closed state, so
+   an OPEN dialog (.showSweetAlert/.visible, no .hideSweetAlert) is untouched. */
+html.cc-popups-on .sweet-alert.hideSweetAlert {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 /* ═══ t4t5 SweetAlert (.swal-modal / .swal-overlay) -> CC look ═══
    The Unassigned Devices plugin bundles a SECOND sweetalert (t4t5 v2, .swal-* classes) for its
    "remove saved configuration" confirm — CC's .sweet-alert rules above never reached it, so it stayed
    native WHITE with orange-outlined buttons (user). Same dark carbon surface + CC pill buttons; the
    .swal-modal prefix beats the plugin's own themed button rules. Live-verified on the UD remove dialog. */
 html.cc-popups-on .swal-overlay { background: rgba(0, 0, 0, .6) !important; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
-html.cc-popups-on .swal-modal { background: var(--cc-surface-window) !important; border: none !important; border-radius: 14px !important; box-shadow: 0 18px 50px rgba(0, 0, 0, .6) !important; }
-html.cc-popups-on .swal-modal .swal-title { color: #f2f2f2 !important; font-weight: 600 !important; }
-html.cc-popups-on .swal-modal .swal-text { color: #bdbdbd !important; text-align: center !important; }
-html.cc-popups-on .swal-modal .swal-footer { text-align: center !important; }
+html.cc-popups-on .swal-modal { background: #1a1a1a !important; border: none !important; border-radius: 14px !important; box-shadow: 0 10px 28px rgba(0, 0, 0, .38) !important; padding: 18px !important; }   /* #(user 2026-07-29): frame + soft shadow identical to the update window */
+html.cc-popups-on .swal-modal .swal-icon { display: none !important; }   /* the template has no native icon ring; the accent title bar carries the identity */
+/* FULL-WIDTH accent title bar, 40px — identical to the update window */
+html.cc-popups-on .swal-modal .swal-title {
+  display: flex !important; align-items: center; justify-content: center !important;
+  height: 40px !important; margin: 0 0 14px !important; padding: 0 18px !important; border: none !important;
+  border-radius: var(--cc-b-radius, 10px) !important;
+  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
+  font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
+}
+/* body TEXT sits in a LIGHT #2e2e2e card */
+html.cc-popups-on .swal-modal .swal-text {
+  color: #d6d6d6 !important; text-align: center !important;
+  background: #2e2e2e !important; border-radius: 10px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;
+  padding: 12px 14px !important; margin: 0 0 14px !important;
+}
+html.cc-popups-on .swal-modal .swal-footer { text-align: center !important; margin: 0 !important; padding: 0 !important; }
 html.cc-popups-on .swal-modal .swal-button {
   border: none !important; box-shadow: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   height: var(--cc-lgb-h, 36px); padding: 0 24px !important; font-size: var(--cc-lgb-fs, 14px) !important;

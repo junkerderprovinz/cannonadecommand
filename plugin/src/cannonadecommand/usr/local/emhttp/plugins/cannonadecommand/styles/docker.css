@@ -1045,8 +1045,8 @@ html.cc-docker-on.cc-on-addct .ui-dialog .ui-dialog-buttonpane button:hover { fi
 html.cc-docker-on.cc-on-addct #canvas pre,
 html.cc-docker-on.cc-on-addct #template-editor pre,
 html.cc-docker-on.cc-on-addct pre.text {
-  background: #0e0e0e !important; border: none !important; border-radius: 10px !important;
-  color: #d6d6d6 !important; padding: 14px 16px !important; box-shadow: none !important;
+  background: #2e2e2e !important; border: none !important; border-radius: 10px !important;   /* #(user 2026-07-28): log text in a LIGHT card raised on the dark frame */
+  color: #d6d6d6 !important; padding: 14px 16px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;
   line-height: 1.5 !important; margin: 12px 0 !important;
   font-family: ui-monospace, "Cascadia Code", "Consolas", monospace !important;
 }
@@ -1207,9 +1207,9 @@ html.cc-ctout-on #cc-ctout-bd { position: fixed; inset: 0; background: rgba(0, 0
 html.cc-ctout-on #displaybox .content {
   position: fixed; z-index: 9999; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: min(900px, 92vw); max-height: 86vh; overflow: auto;
-  background: var(--cc-surface-window, #242424); border: none; border-radius: 14px;
+  background: #1a1a1a; border: none; border-radius: 14px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, .38);   /* #6 (user: install window "völlig verunstaltet -> exakt wie das Update-Fenster"): SAME #242424 surface + soft shadow as the sweet-alert.nchan update window, NO 1px ring line */
-  padding: 0 26px 22px; box-sizing: border-box; text-align: center;
+  padding: 20px 22px 20px; box-sizing: border-box; text-align: center;   /* #(user 2026-07-29): 20px TOP gap so the title bar isn't flush to the top edge — like the update window */
 }
 /* #7-IV (user, 3rd time!): the "CONTAINER HINZUFUEGEN" title is the INLINE cc-ctout output (not the iframe
    dialog 2.86 handled). Turn the full-width orange bar into the SAME centered pill badge #7 uses; dark surface,
@@ -1217,11 +1217,14 @@ html.cc-ctout-on #displaybox .content {
 /* #1 (user): the title is now a FULL-WIDTH title bar (consistent with the update-window title #12), not a small
    centered pill. Negative side margins break it out of the .content padding so it spans edge to edge; top corners
    rounded to match the window. */
+/* #(user 2026-07-28: "Titel-Badge zu gross, ueber alle Fenster einheitlich"): back to a centred content-width
+   pill (lgb 36px / 14px) that matches the sweet-alert title badge exactly. The .content is text-align:center,
+   so the inline-flex title centres. (Overrides the earlier "#1 full-width bar".) */
 html.cc-ctout-on #cc-ctout-title {
-  position: static !important; margin: 0 -26px 18px !important; padding: 0 24px !important; height: 48px;
-  display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+  position: static !important; margin: 0 0 16px !important; padding: 0 18px !important; height: 40px;
+  display: flex; width: 100%; max-width: 100%; align-items: center; justify-content: center; box-sizing: border-box;
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff));
-  font-weight: 600; font-size: 16px; letter-spacing: .7px; text-transform: uppercase; border-radius: 14px 14px 0 0;
+  font-weight: 600; font-size: var(--cc-lgb-fs, 14px); letter-spacing: .6px; text-transform: uppercase; border-radius: var(--cc-b-radius, 10px);
 }
 html.cc-ctout-on #displaybox .content h2 { color: #f0f0f0; }
 html.cc-ctout-on #displaybox .content #content,
@@ -1229,16 +1232,42 @@ html.cc-ctout-on #displaybox .content p.logLine,
 html.cc-ctout-on #displaybox .content #logBody { text-align: left; }
 html.cc-ctout-on #displaybox .content fieldset,
 html.cc-ctout-on #displaybox .content fieldset.docker {
-  background: var(--cc-surface-window, #242424) !important; border: none !important; border-radius: 10px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;
+  background: #2e2e2e !important; border: none !important; border-radius: 10px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;
   margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important;
 }
 html.cc-ctout-on #displaybox .content fieldset > legend {
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
-  border: none !important; border-radius: 999px !important; padding: 3px 12px !important; font-size: 12px !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
+  border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 3px 12px !important; font-size: 12px !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;   /* #(user 2026-07-29): follow the badge shape like the update-window legends, not a hard pill */
 }
 /* same empty-step hide as the update window: no stray light bar between the last card and the buttons */
 html.cc-ctout-on #displaybox .content fieldset:empty,
 html.cc-ctout-on #displaybox .content p:empty { display: none !important; }
+/* #(user 2026-07-29, LIVE-verified via a QDirStat recreate): three real cc-ctout bugs found by measuring the
+   actual window — (1) a leftover native ".title" heading ("Container aktualisieren") is streamed back INTO
+   .content AFTER bootCtOutput ran once, so it shows as a stray accent SQUARE under the title badge; (2) long
+   log tokens (icon URLs, -v volume paths) had word-break:normal and never wrapped -> a horizontal scrollbar;
+   (3) a long pull log grew the window past its cap -> a second (vertical) scrollbar. */
+html.cc-ctout-on #displaybox .content .title,
+html.cc-ctout-on #displaybox .content span.left { display: none !important; }   /* kill the stray accent square (never our #cc-ctout-title/#cc-ctout-status, those are IDs) */
+html.cc-ctout-on #displaybox .content { overflow-x: hidden !important; }   /* NEVER a horizontal scrollbar */
+html.cc-ctout-on #displaybox .content .logLine,
+html.cc-ctout-on #displaybox .content fieldset,
+html.cc-ctout-on #displaybox .content fieldset > * { overflow-wrap: anywhere !important; word-break: break-word !important; }   /* wrap every long token instead of scrolling */
+/* cap the streamed log body so a long pull log scrolls INSIDE its card (exactly like the update window's log
+   card) instead of growing the whole window into a vertical scrollbar. */
+html.cc-ctout-on #displaybox .content fieldset > p.logLine { max-height: 40vh; overflow-y: auto; overflow-x: hidden; margin: 0 !important; }
+html.cc-ctout-on #displaybox .content > p.logLine { text-align: left !important; margin: 0 !important; }   /* orphan top-level log text (not inside a card) stays left-aligned, not centred on the dark frame */
+/* status badge — a spinning fa-refresh while the install/recreate STREAMS, a green check when it finishes:
+   the SAME look + native 2s-linear fa-spin as the update-window status badge, so every "process running"
+   window animates identically (user: "keine Ladeanimation" + "mit der auf dem Containerlogo abgleichen"). */
+html.cc-ctout-on #cc-ctout-status {
+  margin: 0 auto 16px !important; width: 26px; height: 26px; border-radius: 50%; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb));
+}
+html.cc-ctout-on #cc-ctout-status.cc-ctout-done { background: #1f9d55; }   /* DONE = green badge + white check */
+html.cc-ctout-on #cc-ctout-status .cc-ctout-fa { color: #fff; font-size: 14px; line-height: 1; }
+html.cc-anim-off #cc-ctout-status .cc-ctout-fa { animation: none !important; }
 html.cc-ctout-on #displaybox .content span.system { background: transparent !important; color: #d6d6d6 !important; box-shadow: none !important; display: block; }
 html.cc-ctout-on .docker-install-blocker { background: transparent !important; }
 html.cc-ctout-on #displaybox .content .buttons,
@@ -1247,8 +1276,12 @@ html.cc-ctout-on #displaybox .content button,
 html.cc-ctout-on #displaybox .content input[type="button"],
 html.cc-ctout-on #displaybox .content input[type="submit"] {
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
-  border: none !important; border-radius: 8px !important; padding: 9px 20px !important;
-  font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .5px !important; box-shadow: none !important; cursor: pointer;
+  border: none !important; border-radius: 6px !important; box-shadow: none !important; cursor: pointer;
+  /* #(user 2026-07-29): match the update-window buttons exactly — fixed 36px height, inline-flex CENTRED text,
+     no more uneven padding:9px. */
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  height: var(--cc-lgb-h, 36px) !important; padding: 0 24px !important; line-height: 1 !important;
+  font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
 }
 /* FIELD LABELS as badges — docker.js ctVarLabels adds .cc-varlab (ENV var <span>) OR .cc-dtlab
    (top-level bare <dt>) and strips the trailing colon. The tint FOLLOWS the colour mode: the
