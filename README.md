@@ -12,7 +12,7 @@
   <a href="https://github.com/junkerderprovinz/cannonadecommand/releases"><img src="https://img.shields.io/github/downloads/junkerderprovinz/cannonadecommand/total?style=for-the-badge&logo=github&logoColor=white&label=Downloads&color=1d99f3" alt="Downloads" height="36"></a>&nbsp;
   <a href="https://go.dev"><img src="https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go" height="36"></a>&nbsp;
   <a href="https://unraid.net"><img src="https://img.shields.io/badge/Unraid-Plugin-f15a2c?style=for-the-badge&logo=unraid&logoColor=white" alt="Unraid Plugin" height="36"></a>&nbsp;
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="License" height="36"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue?style=for-the-badge&logo=gnu&logoColor=white" alt="License: AGPL-3.0" height="36"></a>
 </p>
 
 <br>
@@ -229,7 +229,11 @@ measurement through the rule.
 
 ## 10. License
 
-[MIT](LICENSE) — do what you like, no warranty.
+**Copyright (C) 2026 Junker der Provinz.**
+
+CannonadeCommand is free software under the **GNU Affero General Public License v3.0** (AGPL-3.0); see [LICENSE](LICENSE). You may run, study, share and modify it. If you distribute it, or run a modified version as a network service, you must release your source under the same AGPL-3.0 terms and keep the existing copyright and attribution notices intact.
+
+**Name and branding are not licensed.** The AGPL covers the source code only. "CannonadeCommand", its logo and its branding remain reserved: a fork or derivative must use its own distinct name and branding, and may not present itself as CannonadeCommand. This keeps it unambiguous which project is the original.
 
 <br>
 
