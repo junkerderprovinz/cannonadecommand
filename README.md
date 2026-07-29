@@ -102,7 +102,9 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
   shows either the applied state or the exact failure — a silent no-op is
   impossible.
 
-**UI**
+<details>
+<summary><b>UI</b></summary>
+
 - Actions column: WebUI, log, edit, restart, pause, stop/start and a "…" menu
   with the container's project/support/donate links — harvested from Unraid's
   own page data.
@@ -128,6 +130,8 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
 - Logo background (per area, in the View card): put the container / plugin / VM /
   category logo on a coloured accent badge and recolour it monochrome black or white
   for contrast, or leave it natural.
+
+</details>
 
 <br>
 
