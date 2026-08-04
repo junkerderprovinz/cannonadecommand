@@ -152,7 +152,7 @@ html.cc-vms-on #kvm_list td.vm-name .inner > a:first-child:hover { text-decorati
 html.cc-vms-on #kvm_list .switch-button-background {
   width: 44px !important; height: 24px !important; border-radius: 999px !important;   /* slim toggle (30px reverted: "zu gross und klobig") */
   border: none !important; outline: none !important; box-shadow: none !important;
-  background: #3a3a3a !important; transform: none !important; position: relative !important;
+  background: var(--cc-toggle-track-off, #3a3a3a) !important; transform: none !important; position: relative !important;
   display: inline-block; vertical-align: middle; margin: 0 12px 0 3px; cursor: pointer;
   transition: background .15s; box-sizing: border-box;
 }

@@ -268,7 +268,7 @@ html.cc-tools-on #displaybox div.title .cc-status-dot {
    header.js sets both vars unconditionally on every page. min() caps the pill track so it stays a rounded
    bar, not a full oval. */
 html.cc-tools-on #displaybox .cc-tgl {
-  display: inline-flex; flex: 0 0 auto; width: 44px; height: 24px; border-radius: min(var(--cc-b-radius, 999px), 12px); background: #3a3a3a;
+  display: inline-flex; flex: 0 0 auto; width: 44px; height: 24px; border-radius: min(var(--cc-b-radius, 999px), 12px); background: var(--cc-toggle-track-off, #3a3a3a);
   position: relative; cursor: pointer; vertical-align: middle; transition: background .15s; box-sizing: border-box;
 }
 html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); }
@@ -277,7 +277,7 @@ html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on .cc-tgl-knob { left: 23px; }
 /* #8 (user): native switch tracks (e.g. Docker aktivieren) on tools/settings pages -> CC pill shape that
    follows the colour mode (rotated per toggle via --cc-rb-c). */
 html.cc-tools-on #displaybox .switch-button-background {
-  border: none !important; box-shadow: none !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important; background: #3a3a3a !important;
+  border: none !important; box-shadow: none !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important; background: var(--cc-toggle-track-off, #3a3a3a) !important;
 }
 html.cc-tools-on #displaybox .switch-button-background .switch-button-button { border-radius: var(--cc-dot-r, 50%) !important; }
 html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
@@ -509,7 +509,7 @@ html.cc-tools-on #displaybox input[type="radio"]:checked::after {
 }
 /* ── #Tools-Durchgang (user: native Toggles/Badges/Selects/Rahmen nicht im CC-Style) ── */
 /* native Unraid toggle switch -> CC pill that follows the colour mode when on */
-html.cc-tools-on #displaybox .switch-button-background { background: #3a3a3a !important; border: none !important; outline: none !important; box-shadow: none !important; }
+html.cc-tools-on #displaybox .switch-button-background { background: var(--cc-toggle-track-off, #3a3a3a) !important; border: none !important; outline: none !important; box-shadow: none !important; }
 html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
 /* multi / list selects -> CC dark fill, borderless (they stay native selects) */
 html.cc-tools-on #displaybox select[multiple],

@@ -1,0 +1,79 @@
+/* CannonadeCommand - THEME TOKENS (the system-wide theme engine, stage A).
+ *
+ * ONE canonical place for every SEMANTIC colour + the size canon, loaded GLOBALLY
+ * (CannonadeCommand.Tokens.page, Menu="Buttons:94") so every CC sheet on every page
+ * inherits it. Before this, ~1000 colour literals were re-typed per component and the
+ * size tokens were mirrored across 6 sheets by hand - so a new badge/toggle never
+ * carried over into the other Unraid themes or the accent/rainbow modes. Now a
+ * component reads a token and adapts everywhere.
+ *
+ * DARK default below matches the CURRENT rendered values (byte-identical: black + gray
+ * Unraid themes already look like this). The single light override (white + azure)
+ * redefines only the surface/text/track tokens - no per-component edits.
+ *
+ * Accent + rainbow stay JS-driven on documentElement (docker.js/header.js); this sheet
+ * only NAMES them and adds the missing THEME axis underneath.
+ *
+ * Defined on <html> unconditionally (harmless custom properties; only consumed where a
+ * gated CC sheet is active). Only the light override keys on the real Unraid theme class.
+ */
+
+html {
+  /* ── SURFACE LADDER (differentiate by SHADE, never a border-line) ── */
+  --cc-surface-1:      #1e1e1e;   /* card / grid-holder base (== legacy --cc-bg2)   */
+  --cc-surface-2:      #222222;   /* raised inset card (.cc-set-card)               */
+  --cc-surface-3:      #2e2e2e;   /* field fill / popup / step card                 */
+  --cc-surface-base:   #161616;   /* page base (== legacy --cc-bg)                  */
+  --cc-surface-4:      #262626;   /* deep inset (== legacy --cc-bg3)                */
+  --cc-surface-window: #242424;   /* floating sheet over dimmed backdrop            */
+  --cc-surface-deep:   #0f0f0f;   /* darkest: streaming-log frame                   */
+
+  /* ── NEUTRAL TINT - the theme-agnostic grey that already works light + dark ── */
+  --cc-chip:        rgba(128,128,128,.18);   /* idle chip / icon-btn fill          */
+  --cc-chip-hover:  rgba(128,128,128,.30);
+  --cc-shade-line:  rgba(128,128,128,.14);   /* faux separator = a SHADE, not a border */
+
+  /* ── TEXT ── */
+  --cc-text:       #e6e6e6;
+  --cc-text-dim:   #8a8a8a;   /* (== legacy --cc-dim) */
+  --cc-text-dim2:  #6f6f6f;
+  --cc-text-chip:  #cfcfcf;
+
+  /* ── ACCENT (JS overrides --cc-accent on documentElement; ONE default here) ── */
+  --cc-accent:     #2f6feb;
+  --cc-accent-fg:  var(--cc-accent-text, #fff);
+
+  /* ── STATE - one canonical each (collapses the 6/6/4 literal drift) + derived fg ── */
+  --cc-ok:   #1f9d55;  --cc-ok-fg:   #fff;
+  --cc-warn: #e0912a;  --cc-warn-fg: #1a1a1a;
+  --cc-err:  #d9433f;  --cc-err-fg:  #fff;
+
+  /* ── COMPONENT ROLES - a new component reads ONE name and auto-adapts everywhere ── */
+  --cc-toggle-track-off: #3a3a3a;              /* dark default = current value (byte-identical) */
+  --cc-toggle-track-on:  var(--cc-accent);
+  --cc-toggle-knob:      #fff;
+  --cc-badge-bg:         var(--cc-accent);   --cc-badge-fg: var(--cc-accent-fg);
+  --cc-card-bg:          var(--cc-surface-1);
+  --cc-card-inset:       var(--cc-surface-2);
+  --cc-field-bg:         var(--cc-surface-3);
+}
+
+/* ── ONE light override, shared by the two LIGHT Unraid themes (white + azure) ──
+   Only the surface/text/track tokens flip; --cc-chip/--cc-shade-line (rgba grey) already
+   read fine on a light page, and --cc-accent + its contrast (idealText) stay JS-driven. */
+html.Theme--white,
+html.Theme--azure {
+  --cc-surface-1:      #ffffff;
+  --cc-surface-2:      #f4f4f4;
+  --cc-surface-3:      #ececec;
+  --cc-surface-base:   #f2f2f2;
+  --cc-surface-4:      #e6e6e6;
+  --cc-surface-window: #ffffff;
+  --cc-surface-deep:   #f4f4f4;
+  --cc-text:       #1c1c1c;
+  --cc-text-dim:   #545454;
+  --cc-text-dim2:  #6f6f6f;
+  --cc-text-chip:  #303030;
+  --cc-toggle-track-off: #cfcfcf;   /* light track on a light page (was a near-black bar) */
+  --cc-toggle-knob:      #ffffff;
+}
