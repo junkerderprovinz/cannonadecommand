@@ -36,15 +36,16 @@ const NAME_B = "Command";
 const CLAIM1 = "Firepower and finish for your whole";
 const CLAIM2 = "Unraid dashboard. Fire when ready.";
 const W = 1600, H = 500;
-const maxTextW = 900; // wordmark + claim must fit between textX and the right margin
-const logoBox = 400;                 // rendered logo size (square)
-const logoX = 120, logoY = (H - logoBox) / 2;
-const textX = 590;                   // left edge of wordmark + claim
-const D1 = 85, D2 = 65;              // baseline steps: name -> claim line 1, claim line 1 -> 2
+const logoBox = 300;                 // rendered logo size (square, house standard)
+const logoX = 165, logoY = (H - logoBox) / 2;      // left-anchor (house standard)
+const textX = logoX + logoBox + 70;  // left edge of wordmark + claim (gap 70)
+const maxTextW = W - textX - 80;     // wordmark + claim fit between textX and the right margin
+// D1/D2 (baseline steps: name -> claim line 1, then claim line 1 -> 2) are derived
+// from the final font sizes below for a tight, house-standard name/claim gap.
 
 // Each theme embeds the logo variant that reads on its background (no recolour).
 const THEMES = [
-  { suffix: "", bg: "#ffffff", name: "#242626", claim: "#5a5d5e", logo: "cannonadecommand-dunkel.svg" },
+  { suffix: "", bg: "#ffffff", name: "#1f2328", claim: "#5a5d5e", logo: "cannonadecommand-dunkel.svg" },
   { suffix: "-dark", bg: "#0d1117", name: "#e6edf3", claim: "#9aa4ad", logo: "cannonadecommand-hell.svg" },
 ];
 // ---------------------------------------------------------------------------
@@ -76,9 +77,9 @@ function cleanPaths(fnt, runs, size) {
   throw new Error("no NaN-free size found");
 }
 const nameFit = cleanPaths(bree, [[NAME_A + NAME_B, textX, 0]],
-  Math.floor(100 * maxTextW / bree.getAdvanceWidth(NAME_A + NAME_B, 100)));
+  Math.min(132, Math.floor(100 * maxTextW / bree.getAdvanceWidth(NAME_A + NAME_B, 100))));
 const claimFit = cleanPaths(lato, [[CLAIM1, textX + 4, 0], [CLAIM2, textX + 4, 0]],
-  Math.min(52, Math.floor(100 * maxTextW / Math.max(lato.getAdvanceWidth(CLAIM1, 100), lato.getAdvanceWidth(CLAIM2, 100)))));
+  Math.min(44, Math.floor(100 * maxTextW / Math.max(lato.getAdvanceWidth(CLAIM1, 100), lato.getAdvanceWidth(CLAIM2, 100)))));
 const nameSize = nameFit.size, claimSize = claimFit.size;
 
 // Vertically CENTRE the whole text block (wordmark + 2 claim lines) on H/2 so it always
@@ -86,14 +87,24 @@ const nameSize = nameFit.size, claimSize = claimFit.size;
 // real font metrics + line steps, then regenerate the final paths at those baselines.
 const sc = (fnt, s) => s / fnt.unitsPerEm;
 const nameAsc = bree.ascender * sc(bree, nameSize);
+const nameDesc = -bree.descender * sc(bree, nameSize);
+const claimAsc = lato.ascender * sc(lato, claimSize);
 const claimDesc = -lato.descender * sc(lato, claimSize);
+const D1 = Math.round(nameDesc + 8 + claimAsc);                            // tight name -> claim line 1 (house gap 8)
+const D2 = Math.round((lato.ascender - lato.descender) * sc(lato, claimSize) * 1.15); // claim line spacing
 const blockH = nameAsc + D1 + D2 + claimDesc;
 const nameBaseline = Math.round(H / 2 - blockH / 2 + nameAsc);
 const claim1Baseline = nameBaseline + D1;
 const claim2Baseline = claim1Baseline + D2;
-const namePath = bree.getPath(NAME_A + NAME_B, textX, nameBaseline, nameSize).toPathData(2);
-const claim1Path = lato.getPath(CLAIM1, textX + 4, claim1Baseline, claimSize).toPathData(2);
-const claim2Path = lato.getPath(CLAIM2, textX + 4, claim2Baseline, claimSize).toPathData(2);
+// Render text as ONE <path> PER GLYPH, not a single merged path: resvg's tessellator
+// can silently abort a merged multi-subpath path partway through for certain
+// glyph/coordinate combinations, and per-glyph paths sidestep that entirely.
+const glyphD = (fnt, text, x, baseline, size) =>
+  fnt.getPaths(text, x, baseline, size).map((p) => p.toPathData(2)).filter(Boolean);
+const nameD = glyphD(bree, NAME_A + NAME_B, textX, nameBaseline, nameSize);
+const claim1D = glyphD(lato, CLAIM1, textX + 4, claim1Baseline, claimSize);
+const claim2D = glyphD(lato, CLAIM2, textX + 4, claim2Baseline, claimSize);
+const paths = (ds, fill) => ds.map((d) => `<path d="${d}" fill="${fill}"/>`).join("");
 
 // read a logo master VERBATIM -> inner markup + scale factor for its own viewBox
 function embed(logoFile) {
@@ -113,9 +124,9 @@ for (const t of THEMES) {
   <g transform="translate(${logoX},${logoY}) scale(${scale.toFixed(6)})">
 ${inner}
   </g>
-  <path d="${namePath}" fill="${t.name}"/>
-  <path d="${claim1Path}" fill="${t.claim}"/>
-  <path d="${claim2Path}" fill="${t.claim}"/>
+  ${paths(nameD, t.name)}
+  ${paths(claim1D, t.claim)}
+  ${paths(claim2D, t.claim)}
 </svg>
 `;
   writeFileSync(join(__dir, `cannonadecommand-banner${t.suffix}.svg`), svg);
