@@ -13,9 +13,15 @@
   // So the registration now happens before ANY other top-level statement can throw.
   function plugPinTick() {
     try {
+      var db = document.getElementById("displaybox");
+      if (!db || !document.querySelector("#plugin_table, table.cc-plug")) {
+        // Not the Plugins page. Once the DOM is fully loaded and there is still no plugin table,
+        // this page never will — stop the perpetual 600 ms wakeup instead of spinning forever on
+        // every Unraid page. The Plugins page keeps the loop (its layout keeps shifting).
+        if (_pinIv && document.readyState === "complete") { clearInterval(_pinIv); _pinIv = null; }
+        return;
+      }
       if (localStorage.getItem("cc.theming") === "0" || localStorage.getItem("cc.enable.plugins") === "0") return;
-      var db = document.getElementById("displaybox"); if (!db) return;
-      if (!document.querySelector("#plugin_table, table.cc-plug")) return;   // not the Plugins page
       // THE ANCHOR (v2.31.6): the Plugins page uses Unraid's OLD radio+label tab markup —
       // paint()'s own comment says these tabs are styled via "input:checked + label". There is
       // NO button[role=tab] and NO .tabs-container on this page, so every earlier pass (and this
@@ -97,7 +103,7 @@
       if (Math.abs(need - cur) > 1) host.style.setProperty("top", need + "px", "important");
     } catch (e) {}
   }
-  try { setInterval(plugPinTick, 600); } catch (e) {}
+  var _pinIv = null; try { _pinIv = setInterval(plugPinTick, 600); } catch (e) {}
   try { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", plugPinTick); else plugPinTick(); } catch (e) {}
   // ═══ end pin loop — everything below may fail without taking the loop down with it. ═══
   var PROXY = "/plugins/cannonadecommand/server/ccapi.php";

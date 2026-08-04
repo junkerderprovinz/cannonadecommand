@@ -34,7 +34,9 @@
   var mo = null;
   function boot() {
     if (!onFavorites()) return;                          // inert on every other page
-    if (g("cc.enable.favorites", "1") === "0") return;   // area disabled in CC settings
+    // No disabled early-return: apply() is enabled-aware (live gates on cc.enable.favorites and
+    // removes the class when off). Setting up the observer + storage listener below UNCONDITIONALLY
+    // is what makes a re-enable written from the CC settings page take effect LIVE, not on reload.
     apply();
     try {
       var host = document.querySelector(".Panels") || document.getElementById("displaybox");

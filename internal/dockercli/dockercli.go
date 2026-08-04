@@ -600,8 +600,11 @@ func (c *Client) Exec(ctx context.Context, ref string, cmd []string) (int, error
 	if err != nil {
 		return -1, err
 	}
-	_, _ = io.Copy(io.Discard, io.LimitReader(startResp.Body, 1<<16))
-	_ = startResp.Body.Close()
+	defer startResp.Body.Close()
+	if startResp.StatusCode != http.StatusOK && startResp.StatusCode != http.StatusCreated {
+		return -1, apiError(startResp) // a failed exec-start must not later read as a clean exit 0 ("ready")
+	}
+	_, _ = io.Copy(io.Discard, startResp.Body) // drain to EOF so the exec completes, not a truncated 64 KiB
 	insResp, err := c.do(ctx, "GET", "/exec/"+url.PathEscape(created.ID)+"/json")
 	if err != nil {
 		return -1, err

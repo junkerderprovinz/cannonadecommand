@@ -107,7 +107,10 @@ var (
 
 func rateFactor() int {
 	rfOnce.Do(func() {
-		out, err := exec.Command("iptables", "--version").CombinedOutput()
+		// Bound the probe: a hung iptables must not block the caller forever behind sync.Once.
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		out, err := exec.CommandContext(ctx, "iptables", "--version").CombinedOutput()
 		if err != nil {
 			return
 		}

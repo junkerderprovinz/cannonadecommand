@@ -212,9 +212,30 @@ func tokenize(s string) [][2]int {
 func isSpace(c byte) bool { return c == ' ' || c == '\t' || c == '\n' || c == '\r' }
 
 func writeAtomic(path string, data []byte) error {
-	tmp := path + ".cc.tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
-		_ = os.Remove(tmp) // don't leave a partial file on the flash
+	// Unique temp (not a fixed ".cc.tmp") so two writers to the same path can't clobber each
+	// other's partial file, and fsync BEFORE the rename so the bytes are durable on the USB
+	// flash even if the box loses power right after — a bare rename does not flush the data.
+	f, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".cc-*.tmp")
+	if err != nil {
+		return err
+	}
+	tmp := f.Name()
+	if _, err := f.Write(data); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmp)
+		return err
+	}
+	if err := f.Sync(); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmp)
+		return err
+	}
+	if err := f.Close(); err != nil {
+		_ = os.Remove(tmp)
+		return err
+	}
+	if err := os.Chmod(tmp, 0o644); err != nil { // CreateTemp makes 0600; the synced share needs 0644
+		_ = os.Remove(tmp)
 		return err
 	}
 	if err := os.Rename(tmp, path); err != nil {

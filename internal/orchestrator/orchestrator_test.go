@@ -141,6 +141,43 @@ func TestRun_HealthGatedOrder(t *testing.T) {
 	}
 }
 
+// TestRun_OutOfPlanDepIsRunAndReported locks the HIGH fix: byName and the final
+// report are built from the AUGMENTED plan. A dependency on a container outside
+// the plan ("ext") becomes an implicit node that is started + probed + reported —
+// never a zero-value node that starts an empty container name and then vanishes
+// from the result.
+func TestRun_OutOfPlanDepIsRunAndReported(t *testing.T) {
+	plan := model.Plan{Nodes: []model.Node{node("app", "ext")}}
+	fs := &fakeStarter{}
+	o := Orchestrator{Starter: fs, Ready: fakeReady{}}
+
+	res := o.Run(context.Background(), plan)
+	if res.Error != "" {
+		t.Fatalf("unexpected plan error: %s", res.Error)
+	}
+	if fs.index("") != -1 {
+		t.Fatalf("started a zero-value (empty-name) node: %v", fs.started)
+	}
+	if fs.index("ext") == -1 {
+		t.Fatalf("implicit out-of-plan dep 'ext' was never started: %v", fs.started)
+	}
+	if fs.index("ext") >= fs.index("app") {
+		t.Fatalf("app started before its implicit dep 'ext' was ready: %v", fs.started)
+	}
+	var extResult *model.NodeResult
+	for i := range res.Nodes {
+		if res.Nodes[i].Name == "ext" {
+			extResult = &res.Nodes[i]
+		}
+	}
+	if extResult == nil {
+		t.Fatalf("implicit dep 'ext' missing from the run report: %+v", res.Nodes)
+	}
+	if extResult.State != model.StateReady {
+		t.Fatalf("implicit dep 'ext' state = %s, want ready", extResult.State)
+	}
+}
+
 func TestRun_AbortSkipsDependents(t *testing.T) {
 	plan := model.Plan{Nodes: []model.Node{
 		node("gluetun"),                // will fail readiness, policy abort

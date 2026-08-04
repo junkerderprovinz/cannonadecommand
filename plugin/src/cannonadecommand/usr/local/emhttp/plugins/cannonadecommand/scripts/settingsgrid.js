@@ -257,7 +257,9 @@
     } catch (e) {}
   }
   function boot() {
-    if (g("cc.enable.settings", "1") === "0") return; // area disabled in CC settings
+    // No disabled early-return: apply() is enabled-aware (live gates on cc.enable.settings and
+    // removes the classes when off). Registering watch() + the storage listener UNCONDITIONALLY
+    // makes a re-enable written from the CC settings page take effect LIVE, not only after a reload.
     apply();
     watch();
     // the CC settings page writes cc.*/ccs.* keys from another origin/tab

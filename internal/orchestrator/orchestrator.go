@@ -111,6 +111,11 @@ type Orchestrator struct {
 // captured in the result, never returned as an error. Only a structurally
 // invalid plan (cycle / unknown dep / duplicate) is reported via RunResult.Error.
 func (o *Orchestrator) Run(ctx context.Context, plan model.Plan) model.RunResult {
+	// Augment BEFORE anything reads plan.Nodes. TopoStages augments internally, but byName
+	// and the final report below iterate plan.Nodes directly, so an out-of-plan implicit dep
+	// would be dropped from both (never started, never reported). withImplicitDeps is
+	// idempotent — the second call inside TopoStages sees the ghost as already known.
+	plan = withImplicitDeps(plan)
 	stages, err := TopoStages(plan)
 	if err != nil {
 		return model.RunResult{Error: err.Error()}
