@@ -39,7 +39,7 @@
   // adopt toggle is off, so --cc-b-radius would flip between pages (see header.js).
   function shape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[g("cc.badgeshape", "pill")] || "999px"; }
   var RB = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
-  var RB_OFF = Math.floor(Math.random() * RB.length);
+  var RB_OFF = window.CCTheme ? window.CCTheme.rbSeed(RB.length) : Math.floor(Math.random() * RB.length); // shared persisted seed: aligns + stabilises the rainbow across areas (was random per load)
   // Rainbow is a GLOBAL mode: read cc.rainbow / cc.rbpal / cc.rainbowrot DIRECTLY (not the
   // adopt-gated eff()), like docker.js — one global Rainbow switch colours every enabled area.
   // The per-area accent (eff("accent")) stays adopt-gated for the non-rainbow single colour.

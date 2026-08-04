@@ -52,7 +52,7 @@
   // l = 96/46. favorites.js mirrors the SAME key so /Favorites always matches.
   function sgSize() { return ({ s: ["64px", "32px"], m: ["78px", "38px"], l: ["96px", "46px"] })[g("cc.sgsize", "m")] || ["78px", "38px"]; }
   var RB = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
-  var RB_OFF = Math.floor(Math.random() * RB.length);
+  var RB_OFF = window.CCTheme ? window.CCTheme.rbSeed(RB.length) : Math.floor(Math.random() * RB.length); // shared persisted seed: aligns + stabilises the rainbow across areas (was random per load)
   // Rainbow is a GLOBAL mode: read cc.rainbow / cc.rbpal / cc.rainbowrot DIRECTLY (not the
   // adopt-gated eff()), like docker.js — one global Rainbow switch colours every enabled area.
   // The per-area accent (eff("accent")) stays adopt-gated for the non-rainbow single colour.

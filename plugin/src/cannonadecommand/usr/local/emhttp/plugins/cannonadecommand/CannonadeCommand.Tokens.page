@@ -11,5 +11,10 @@ Link="cc-tokens-hook"
    auto-adapts to all Unraid themes (the light override keys on Theme--white/azure) and the
    accent/rainbow modes. Loaded at :94, BEFORE the area sheets at :95+, so the tokens are
    defined first. The sheet is only custom-property definitions - inert until a gated CC
-   sheet reads a token. Link="cc-tokens-hook" renders a bare <div>, no visible icon. */
+   sheet reads a token. Link="cc-tokens-hook" renders a bare <div>, no visible icon.
+
+   It ALSO loads the shared theme MODULE (scripts/cc-theme.js) synchronously — not defer — so
+   window.CCTheme (idealText + the ONE persisted rainbow seed + palette/rbColor) exists before
+   the deferred area scripts (header at :95, docker/settings/shares/...) run. */
 ?>
+<script src="<?autov('/plugins/cannonadecommand/scripts/cc-theme.js')?>"></script>
