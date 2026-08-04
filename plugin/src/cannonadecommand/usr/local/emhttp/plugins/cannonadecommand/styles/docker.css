@@ -26,8 +26,8 @@
    bar must stay. On uninstall the stylesheet is gone, so the bar returns. */
 #displaybox > .content:has(#docker_containers) > div.title { display: none !important; }
 .cc-root, .cc-grid-holder {
-  --cc-bg: #161616; --cc-bg2: #1e1e1e; --cc-bg3: #262626; --cc-line: #2a2a2a;
-  --cc-txt: #e6e6e6; --cc-dim: #8a8a8a;
+  --cc-bg: var(--cc-surface-base, #161616); --cc-bg2: var(--cc-surface-1, #1e1e1e); --cc-bg3: var(--cc-surface-4, #262626); --cc-line: var(--cc-line-solid, #2a2a2a);
+  --cc-txt: var(--cc-text, #e6e6e6); --cc-dim: var(--cc-text-dim, #8a8a8a);
   color: var(--cc-txt); font: 13px/1.45 "Segoe UI", system-ui, sans-serif;
 }
 .cc-grid-holder { position: relative; margin: 6px 0 14px; }
@@ -195,7 +195,7 @@ html.cc-shares-rbneutral:not(.cc-state-native) .cc-enh #docker_list tr:hover .cc
    copy is detail-page-scoped, and .cc-cb-del uses --cc-shr-accent). Semantic red — never accent/rainbow. */
 .cc-b-del {
   display: inline-flex !important; align-items: center; justify-content: center;
-  background: #d9433f !important; color: #fff !important; border: none !important; box-shadow: none !important;
+  background: var(--cc-err, #d9433f) !important; color: #fff !important; border: none !important; box-shadow: none !important;
   border-radius: var(--cc-b-radius, 999px) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1.5;
   text-transform: uppercase; letter-spacing: .6px; cursor: pointer; text-decoration: none;
@@ -214,7 +214,7 @@ html.cc-on-plugins .cc-b-del.cc-b-delicon,
 html.cc-tools-on .cc-b-del.cc-b-delicon {
   width: 32px !important; min-width: 32px !important; height: 30px !important; padding: 0 !important;
   font-size: 0 !important; letter-spacing: 0 !important; text-transform: none !important;
-  background-color: #d9433f !important;   /* filled red (user: "mit ausgefuellter farbe") — matches the .cc-b-del badge */
+  background-color: var(--cc-err, #d9433f) !important;   /* filled red (user: "mit ausgefuellter farbe") — matches the .cc-b-del badge */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3Cline x1='10' y1='11' x2='10' y2='17'/%3E%3Cline x1='14' y1='11' x2='14' y2='17'/%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important; background-position: center !important; background-size: 15px !important;
   border: none !important; box-shadow: none !important;
@@ -233,8 +233,8 @@ html.cc-on-plugins .cc-b-del.cc-b-delicon:hover { filter: brightness(1.12) !impo
 .cc-enh.cc-c-ip #docker_list tr.sortable > td:nth-child(5) span.docker_readmore span.advanced { display: none !important; }
 
 /* update status keeps meaning: up-to-date = green, update-ready = amber, force = accent */
-.cc-enh.cc-c-update #docker_list tr.sortable td.updatecolumn > span.green-text { background: #1f9d55; color: #fff !important; }
-.cc-enh.cc-c-update #docker_list tr.sortable td.updatecolumn span.orange-text { background: #e0912a; color: #1a1a1a !important; }
+.cc-enh.cc-c-update #docker_list tr.sortable td.updatecolumn > span.green-text { background: var(--cc-ok, #1f9d55); color: #fff !important; }
+.cc-enh.cc-c-update #docker_list tr.sortable td.updatecolumn span.orange-text { background: var(--cc-warn, #e0912a); color: #1a1a1a !important; }
 .cc-enh.cc-c-force  #docker_list tr.sortable td.updatecolumn a.exec { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff) !important; }
 .cc-enh.cc-c-force  #docker_list tr.sortable td.updatecolumn a.exec:hover { filter: brightness(1.12); }
 .cc-enh #docker_list tr.sortable td.updatecolumn i { color: inherit !important; }
@@ -258,15 +258,15 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
    must NEVER be hidden: the force-update toggle above only scopes to the advanced block's
    force link now, and this override keeps the apply link + its "update ready" text visible
    even with the update-status column off — an actionable button may not vanish. */
-.cc-enh #docker_list tr.sortable td.updatecolumn a.exec:has(span.orange-text) { display: inline-flex !important; background: #e0912a; color: #1a1a1a !important; }
+.cc-enh #docker_list tr.sortable td.updatecolumn a.exec:has(span.orange-text) { display: inline-flex !important; background: var(--cc-warn, #e0912a); color: #1a1a1a !important; }
 .cc-enh #docker_list tr.sortable td.updatecolumn a.exec:has(span.orange-text):hover { filter: brightness(1.1); }
 .cc-enh #docker_list tr.sortable td.updatecolumn a.exec > span.orange-text { display: inline !important; background: transparent !important; color: inherit !important; padding: 0; margin: 0; }
 
 /* ShipLog "Changelog" chip → a solid badge coloured by its risk dot */
 .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip { color: #fff !important; background: #4a4a4a; }
-.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-low)  { background: #1f9d55; }
-.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-mid)  { background: #e0912a; color: #1a1a1a !important; }
-.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-high) { background: #d9433f; }
+.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-low)  { background: var(--cc-ok, #1f9d55); }
+.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-mid)  { background: var(--cc-warn, #e0912a); color: #1a1a1a !important; }
+.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #d9433f); }
 .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip .sl-amp { display: none; }
 .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip .sl-ico { opacity: .85; }
 
@@ -314,15 +314,15 @@ html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb
 #docker_list span.cc-grp { display: flex; width: fit-content; margin: 0 0 5px 0; }
 
 /* state badges (semantic solid, start/stop switch) */
-.cc-badge-running    { background: #1f9d55; color: #fff; }
+.cc-badge-running    { background: var(--cc-ok, #1f9d55); color: #fff; }
 .cc-badge-exited     { background: #3c3c3c; color: #cfcfcf; }
 .cc-badge-created    { background: #3c3c3c; color: #cfcfcf; } /* reads as "stopped" — same grey as exited */
-.cc-badge-paused     { background: #e0912a; color: #1a1a1a; }
-.cc-badge-restarting { background: #e0912a; color: #1a1a1a; }
-.cc-badge-removing   { background: #e0912a; color: #1a1a1a; }
-.cc-badge-dead       { background: #d9433f; color: #fff; }
+.cc-badge-paused     { background: var(--cc-warn, #e0912a); color: #1a1a1a; }
+.cc-badge-restarting { background: var(--cc-warn, #e0912a); color: #1a1a1a; }
+.cc-badge-removing   { background: var(--cc-warn, #e0912a); color: #1a1a1a; }
+.cc-badge-dead       { background: var(--cc-err, #d9433f); color: #fff; }
 .cc-badge-unknown    { background: #4a4a4a; color: #dcdcdc; }
-.cc-badge-alert      { background: #d9433f; color: #fff; }
+.cc-badge-alert      { background: var(--cc-err, #d9433f); color: #fff; }
 /* optimistic in-transition state (shown the moment stop/restart is clicked, until reload) */
 .cc-badge-transient  { background: #8a6d1f; color: #ffe6a8; animation: cc-badge-pulse 1s ease-in-out infinite; }
 @keyframes cc-badge-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
@@ -350,8 +350,8 @@ html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb
 .cc-stat-lbl { color: var(--cc-dim); width: 30px; flex: none; }
 .cc-stat-val { color: var(--cc-dim); margin-left: auto; white-space: nowrap; }
 .cc-gauge { flex: 1; height: 6px; background: var(--cc-bg3); border-radius: 999px; overflow: hidden; }
-.cc-gauge-fill { height: 100%; background: #1f9d55; border-radius: 999px; transition: width .4s; }
-.cc-gauge-fill.cc-hot { background: #d9433f; }
+.cc-gauge-fill { height: 100%; background: var(--cc-ok, #1f9d55); border-radius: 999px; transition: width .4s; }
+.cc-gauge-fill.cc-hot { background: var(--cc-err, #d9433f); }
 .cc-dim { color: var(--cc-dim); }
 .cc-card-badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .cc-card-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -418,19 +418,19 @@ html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb
 .cc-pop-err { display: none; margin: 8px 14px 2px; padding: 7px 9px; border-radius: 6px; background: rgba(220,53,69,.13); border: none; color: #ff7a7a; font-size: 12px; line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
 /* ROTATING rainbow: colours come from --cc-rb-* vars set by docker.js — a random
    rotation offset per page load walks every badge kind through a 14-colour palette. */
-.cc-enh.cc-rainbow .cc-b-net, .cc-grid-holder.cc-rainbow .cc-b-net { background: var(--cc-rb-net, #1f9d55); color: var(--cc-rb-net-t, #fff); }
+.cc-enh.cc-rainbow .cc-b-net, .cc-grid-holder.cc-rainbow .cc-b-net { background: var(--cc-rb-net, var(--cc-ok, #1f9d55)); color: var(--cc-rb-net-t, #fff); }
 .cc-enh.cc-rainbow .cc-b-ip, .cc-grid-holder.cc-rainbow .cc-b-ip { background: var(--cc-rb-ip, #2f6feb); color: var(--cc-rb-ip-t, #fff); }
-.cc-enh.cc-rainbow .cc-b-lan, .cc-grid-holder.cc-rainbow .cc-b-lan { background: var(--cc-rb-lan, #e0912a); color: var(--cc-rb-lan-t, #161616); }
+.cc-enh.cc-rainbow .cc-b-lan, .cc-grid-holder.cc-rainbow .cc-b-lan { background: var(--cc-rb-lan, var(--cc-warn, #e0912a)); color: var(--cc-rb-lan-t, #161616); }
 .cc-enh.cc-rainbow .cc-b-port, .cc-grid-holder.cc-rainbow .cc-b-port { background: var(--cc-rb-port, #8b5cf6); color: var(--cc-rb-port-t, #fff); }
 .cc-enh.cc-rainbow .cc-b-id, .cc-grid-holder.cc-rainbow .cc-b-id { background: var(--cc-rb-id, #0ea5a4); color: var(--cc-rb-id-t, #fff); }
 .cc-enh.cc-rainbow .cc-b-von, .cc-grid-holder.cc-rainbow .cc-b-von { background: var(--cc-rb-von, #e05299); color: var(--cc-rb-von-t, #fff); }
-.cc-enh.cc-rainbow .cc-b-cpu, .cc-grid-holder.cc-rainbow .cc-b-cpu { background: var(--cc-rb-cpu, #d9433f); color: var(--cc-rb-cpu-t, #fff); }
+.cc-enh.cc-rainbow .cc-b-cpu, .cc-grid-holder.cc-rainbow .cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-err, #d9433f)); color: var(--cc-rb-cpu-t, #fff); }
 .cc-enh.cc-rainbow .cc-b-ram, .cc-grid-holder.cc-rainbow .cc-b-ram { background: var(--cc-rb-ram, #2f9d8b); color: var(--cc-rb-ram-t, #fff); }
-.cc-enh.cc-rainbow .cc-b-bw, .cc-grid-holder.cc-rainbow .cc-b-bw { background: var(--cc-rb-bw, #e0912a); color: var(--cc-rb-bw-t, #161616); }
+.cc-enh.cc-rainbow .cc-b-bw, .cc-grid-holder.cc-rainbow .cc-b-bw { background: var(--cc-rb-bw, var(--cc-warn, #e0912a)); color: var(--cc-rb-bw-t, #161616); }
 .cc-enh.cc-rainbow .cc-b-version, .cc-grid-holder.cc-rainbow .cc-b-version { background: var(--cc-rb-version, #6b7280); color: var(--cc-rb-version-t, #fff); }
 .cc-enh.cc-rainbow .cc-b-vol, .cc-grid-holder.cc-rainbow .cc-b-vol { background: var(--cc-rb-vol, #0891b2); color: var(--cc-rb-vol-t, #fff); }
 .cc-enh.cc-rainbow .cc-plan, .cc-grid-holder.cc-rainbow .cc-plan { background: var(--cc-rb-plan, #6366f1); color: var(--cc-rb-plan-t, #fff); }
-.cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='cpu-'] { background: var(--cc-rb-cpu, #d9433f); }
+.cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='cpu-'] { background: var(--cc-rb-cpu, var(--cc-err, #d9433f)); }
 .cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='mem-'] { background: var(--cc-rb-ram, #2f9d8b); }
 /* the same slot in green: the VERIFIED applied values after a successful save */
 .cc-pop-err.cc-pop-ok { background: rgba(31,157,85,.14); color: #4bd58a; }
@@ -453,8 +453,8 @@ html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb
    on hover exactly like the ⓘ bubbles. */
 .cc-statdot { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 999px; flex: none; font-size: 10px; font-weight: 700; color: #fff; cursor: help; }   /* NOT .cc-stat — that is the grid-card stat ROW above */
 .cc-stat-slot { visibility: hidden; }   /* pre-reserved slot: geometry constant, fields never shrink when the result lands */
-.cc-stat-ok { background: #1f9d55; }
-.cc-stat-bad { background: #d9433f; }
+.cc-stat-ok { background: var(--cc-ok, #1f9d55); }
+.cc-stat-bad { background: var(--cc-err, #d9433f); }
 /* the stat windows are sized so field + unit + dot fit WITHOUT squeezing (user) */
 .cc-pop.cc-pop-stat { width: 372px; }
 .cc-pop.cc-pop-wide.cc-pop-stat { width: 462px; }
@@ -514,16 +514,16 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-corebox { display: inline-flex; flex-direction: column; gap: 3px; padding: 4px; background: #1e1e1e; border: none; border-radius: 7px; align-items: stretch; }
 .cc-corebox-tag { text-align: center; font-size: 9px; line-height: 1; color: #8a8a8a; letter-spacing: .5px; user-select: none; }
 .cc-corebox-p .cc-corebox-tag { color: var(--cc-accent, #6ea0ff); }   /* P/E stays readable via the coloured TAG, not a border line */
-.cc-corebox-e .cc-corebox-tag { color: #e0912a; }
+.cc-corebox-e .cc-corebox-tag { color: var(--cc-warn, #e0912a); }
 .cc-core { width: 34px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: #2e2e2e; color: #9a9a9a; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; user-select: none; box-sizing: border-box; transition: background .1s, color .1s; }
 .cc-core:hover { background: #3a3a3a; color: #e6e6e6; }
 .cc-core-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
 /* rainbow mode: selected cores wear their physical-core group's colour */
-.cc-pop.cc-rainbow .cc-core-on.cc-rb-0 { background: #1f9d55; border-color: #1f9d55; color: #fff; }
+.cc-pop.cc-rainbow .cc-core-on.cc-rb-0 { background: var(--cc-ok, #1f9d55); border-color: var(--cc-ok, #1f9d55); color: #fff; }
 .cc-pop.cc-rainbow .cc-core-on.cc-rb-1 { background: #2f6feb; border-color: #2f6feb; color: #fff; }
 .cc-pop.cc-rainbow .cc-core-on.cc-rb-2 { background: #8b5cf6; border-color: #8b5cf6; color: #fff; }
-.cc-pop.cc-rainbow .cc-core-on.cc-rb-3 { background: #e0912a; border-color: #e0912a; color: #161616; }
-.cc-pop.cc-rainbow .cc-core-on.cc-rb-4 { background: #d9433f; border-color: #d9433f; color: #fff; }
+.cc-pop.cc-rainbow .cc-core-on.cc-rb-3 { background: var(--cc-warn, #e0912a); border-color: var(--cc-warn, #e0912a); color: #161616; }
+.cc-pop.cc-rainbow .cc-core-on.cc-rb-4 { background: var(--cc-err, #d9433f); border-color: var(--cc-err, #d9433f); color: #fff; }
 .cc-pop.cc-rainbow .cc-core-on.cc-rb-5 { background: #0ea5a4; border-color: #0ea5a4; color: #fff; }
 .cc-pop.cc-rainbow .cc-core-on.cc-rb-6 { background: #e05299; border-color: #e05299; color: #fff; }
 .cc-pop.cc-rainbow .cc-core-on.cc-rb-7 { background: #6366f1; border-color: #6366f1; color: #fff; }
@@ -533,7 +533,7 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-pop.cc-rainbow .cc-set-toggle-on { background: var(--cc-rbaccent, var(--cc-btn-accent, var(--cc-accent, #2f6feb))); }   /* #Toggles-Farbmodus (user): follow the colour mode */
 .cc-pop.cc-rainbow .cc-day-on { background: #8b5cf6; border-color: #8b5cf6; color: #fff; }
 .cc-sched-x { cursor: pointer; color: #8a8a8a; padding: 0 4px; }
-.cc-sched-x:hover { color: #d9433f; }
+.cc-sched-x:hover { color: var(--cc-err, #d9433f); }
 .cc-plan-mark { margin-left: 5px; opacity: .85; font-size: 10px; }
 .cc-plan-auto .cc-b-k { position: relative; }
 
@@ -1265,7 +1265,7 @@ html.cc-ctout-on #cc-ctout-status {
   display: flex; align-items: center; justify-content: center;
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb));
 }
-html.cc-ctout-on #cc-ctout-status.cc-ctout-done { background: #1f9d55; }   /* DONE = green badge + white check */
+html.cc-ctout-on #cc-ctout-status.cc-ctout-done { background: var(--cc-ok, #1f9d55); }   /* DONE = green badge + white check */
 html.cc-ctout-on #cc-ctout-status .cc-ctout-fa { color: #fff; font-size: 14px; line-height: 1; }
 html.cc-anim-off #cc-ctout-status .cc-ctout-fa { animation: none !important; }
 html.cc-ctout-on #displaybox .content span.system { background: transparent !important; color: #d6d6d6 !important; box-shadow: none !important; display: block; }
@@ -1473,21 +1473,21 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-actbtn:
    colour instead of the generic accent fallback. .cc-b.cc-b-* ties the generic row-hover rule's
    :not() specificity; source order AFTER it resolves the tie per kind. */
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-net,
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-net { background: var(--cc-rb-net, #1f9d55) !important; color: var(--cc-rb-net-t, #fff) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-net { background: var(--cc-rb-net, var(--cc-ok, #1f9d55)) !important; color: var(--cc-rb-net-t, #fff) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-ip,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-ip { background: var(--cc-rb-ip, #2f6feb) !important; color: var(--cc-rb-ip-t, #fff) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-lan,
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-lan { background: var(--cc-rb-lan, #e0912a) !important; color: var(--cc-rb-lan-t, #161616) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-lan { background: var(--cc-rb-lan, var(--cc-warn, #e0912a)) !important; color: var(--cc-rb-lan-t, #161616) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-port,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-port { background: var(--cc-rb-port, #8b5cf6) !important; color: var(--cc-rb-port-t, #fff) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-vol,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-vol { background: var(--cc-rb-vol, #0891b2) !important; color: var(--cc-rb-vol-t, #fff) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-cpu,
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-cpu { background: var(--cc-rb-cpu, #d9433f) !important; color: var(--cc-rb-cpu-t, #fff) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-err, #d9433f)) !important; color: var(--cc-rb-cpu-t, #fff) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-ram,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-ram { background: var(--cc-rb-ram, #2f9d8b) !important; color: var(--cc-rb-ram-t, #fff) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-bw,
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-bw { background: var(--cc-rb-bw, #e0912a) !important; color: var(--cc-rb-bw-t, #161616) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-bw { background: var(--cc-rb-bw, var(--cc-warn, #e0912a)) !important; color: var(--cc-rb-bw-t, #161616) !important; }
 /* LOGO TILE joins the row: in neutral the tile rests grey like the badges and returns to its
    configured tile colour on ROW/card hover. Gated on the iconbg mode class — the list stamps it
    on the native table (applyEnhanceClasses), the grid holder gets the SAME class from renderGrid.
@@ -1505,12 +1505,12 @@ html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.update
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip {
   background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important;
 }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn > span.green-text { background: #1f9d55 !important; color: #fff !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn span.orange-text { background: #e0912a !important; color: #1a1a1a !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn > span.green-text { background: var(--cc-ok, #1f9d55) !important; color: #fff !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn span.orange-text { background: var(--cc-warn, #e0912a) !important; color: #1a1a1a !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip { background: #4a4a4a !important; color: #fff !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-low) { background: #1f9d55 !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-mid) { background: #e0912a !important; color: #1a1a1a !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-high) { background: #d9433f !important; color: #fff !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-low) { background: var(--cc-ok, #1f9d55) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-mid) { background: var(--cc-warn, #e0912a) !important; color: #1a1a1a !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #d9433f) !important; color: #fff !important; }
 /* FLASH FIX (user: "wenn ich über die unterste Buttonleiste fahre blitzt die Docker-Zeile
    dahinter auf"): the fixed bottom action bar does NOT hit-test across its right region (proven:
    z-index 3000 still leaves the row topmost there), so the pointer passing the bar's right zone

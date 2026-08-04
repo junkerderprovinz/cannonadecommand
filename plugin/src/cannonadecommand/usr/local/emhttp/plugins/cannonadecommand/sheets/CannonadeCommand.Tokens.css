@@ -32,6 +32,7 @@ html {
   --cc-chip:        rgba(128,128,128,.18);   /* idle chip / icon-btn fill          */
   --cc-chip-hover:  rgba(128,128,128,.30);
   --cc-shade-line:  rgba(128,128,128,.14);   /* faux separator = a SHADE, not a border */
+  --cc-line-solid:  #2a2a2a;                   /* solid separator/input line (legacy --cc-line) */
 
   /* ── TEXT ── */
   --cc-text:       #e6e6e6;
@@ -44,9 +45,9 @@ html {
   --cc-accent-fg:  var(--cc-accent-text, #fff);
 
   /* ── STATE - one canonical each (collapses the 6/6/4 literal drift) + derived fg ── */
-  --cc-ok:   #1f9d55;  --cc-ok-fg:   #fff;
-  --cc-warn: #e0912a;  --cc-warn-fg: #1a1a1a;
-  --cc-err:  #d9433f;  --cc-err-fg:  #fff;
+  --cc-ok:   var(--cc-ok, #1f9d55);  --cc-ok-fg:   #fff;
+  --cc-warn: var(--cc-warn, #e0912a);  --cc-warn-fg: #1a1a1a;
+  --cc-err:  var(--cc-err, #d9433f);  --cc-err-fg:  #fff;
 
   /* ── COMPONENT ROLES - a new component reads ONE name and auto-adapts everywhere ── */
   --cc-toggle-track-off: #3a3a3a;              /* dark default = current value (byte-identical) */
@@ -76,4 +77,5 @@ html.Theme--azure {
   --cc-text-chip:  #303030;
   --cc-toggle-track-off: #cfcfcf;   /* light track on a light page (was a near-black bar) */
   --cc-toggle-knob:      #ffffff;
+  --cc-line-solid:  #d0d0d0;
 }

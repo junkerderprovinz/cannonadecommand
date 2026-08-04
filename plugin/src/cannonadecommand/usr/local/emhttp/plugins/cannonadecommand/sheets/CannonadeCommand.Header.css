@@ -653,7 +653,7 @@ html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader .cc-nchan-fa {
 /* #7-II finished: the bottom-left loader morphs into a circle-with-check (no text), drawn in. Green = done. */
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader.cc-nchan-check { gap: 0; }
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg { width: 26px; height: 26px; overflow: visible; display: block; }
-html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-c { fill: #1f9d55; stroke: none; opacity: 1; }   /* #2 (user: "das Status-Icon soll ein Badge sein"): a FILLED green CC badge, not a thin outline ring */
+html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-c { fill: var(--cc-ok, #1f9d55); stroke: none; opacity: 1; }   /* #2 (user: "das Status-Icon soll ein Badge sein"): a FILLED green CC badge, not a thin outline ring */
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-p {
   fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
   stroke-dasharray: 22; stroke-dashoffset: 22; animation: cc-ck-draw .34s ease .04s forwards;

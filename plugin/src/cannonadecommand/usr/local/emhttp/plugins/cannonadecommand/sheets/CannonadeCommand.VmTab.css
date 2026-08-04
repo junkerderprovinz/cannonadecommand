@@ -61,7 +61,7 @@ html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-vol { background: var(--
 /* per-KIND reactive hover (mirrors docker.css:1435-1450): on ROW hover the cpu/ram/ip/vol badges take
    their OWN palette colour instead of the generic --cc-rbaccent fallback above. .cc-b.cc-b-* raises the
    specificity over the generic tr:hover .cc-b rule; source order settles the tie per kind. */
-html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-cpu { background: var(--cc-rb-cpu, #d9433f) !important; color: var(--cc-rb-cpu-t, #fff) !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-err, #d9433f)) !important; color: var(--cc-rb-cpu-t, #fff) !important; }
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-ram { background: var(--cc-rb-ram, #2f9d8b) !important; color: var(--cc-rb-ram-t, #fff) !important; }
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-ip  { background: var(--cc-rb-ip, #2f6feb) !important; color: var(--cc-rb-ip-t, #fff) !important; }
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-vol { background: var(--cc-rb-vol, #0891b2) !important; color: var(--cc-rb-vol-t, #fff) !important; }
@@ -75,11 +75,11 @@ html.cc-vms-on #kvm_list .cc-b .cc-b-v a { color: inherit !important; text-decor
 html.cc-vms-on #kvm_list .cc-b-copy { cursor: pointer; transition: filter .12s, transform .12s; }
 html.cc-vms-on #kvm_list .cc-b-copy:hover { filter: brightness(1.18); transform: translateY(-1px); }
 /* state badge colours (docker.css:250-262) — VM started->running, paused->paused, stopped->exited */
-html.cc-vms-on #kvm_list .cc-badge-running { background: #1f9d55; color: #fff; }
-html.cc-vms-on #kvm_list .cc-badge-paused  { background: #e0912a; color: #1a1a1a; }
+html.cc-vms-on #kvm_list .cc-badge-running { background: var(--cc-ok, #1f9d55); color: #fff; }
+html.cc-vms-on #kvm_list .cc-badge-paused  { background: var(--cc-warn, #e0912a); color: #1a1a1a; }
 html.cc-vms-on #kvm_list .cc-badge-exited,
 html.cc-vms-on #kvm_list .cc-badge-created { background: #3c3c3c; color: #cfcfcf; }
-html.cc-vms-on #kvm_list .cc-badge-dead    { background: #d9433f; color: #fff; }
+html.cc-vms-on #kvm_list .cc-badge-dead    { background: var(--cc-err, #d9433f); color: #fff; }
 /* group stacks (docker.css:225-231): IP pills + disk badges stacked one per line */
 html.cc-vms-on #kvm_list .cc-namemeta,
 html.cc-vms-on #kvm_list .cc-vmb-ips,
@@ -316,7 +316,7 @@ html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable > td {
 /* ═══ RAINBOW mode (html.cc-vm-rainbow) — reads the SAME global cc.rainbow + --cc-rb-* palette vms.js
    stamps on <html>. Only the info badges (CPU/RAM/IP) recolour; the state badge keeps its semantic
    colour, exactly like Docker. Applies in BOTH list and grid view. ═══ */
-html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-cpu { background: var(--cc-rb-cpu, #d9433f); color: var(--cc-rb-cpu-t, #fff); }
+html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-err, #d9433f)); color: var(--cc-rb-cpu-t, #fff); }
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ram { background: var(--cc-rb-ram, #2f9d8b); color: var(--cc-rb-ram-t, #fff); }
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ip  { background: var(--cc-rb-ip, #2f6feb); color: var(--cc-rb-ip-t, #fff); }
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-vol { background: var(--cc-rb-vol, #8b5cf6); color: var(--cc-rb-vol-t, #fff); }
