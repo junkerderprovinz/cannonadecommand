@@ -36,7 +36,7 @@ const NAME_B = "Command";
 const CLAIM1 = "Firepower and finish for your whole";
 const CLAIM2 = "Unraid dashboard. Fire when ready.";
 const W = 1600, H = 500;
-const logoBox = 300;                 // rendered logo size (square, house standard)
+const logoBox = 400;                 // rendered logo size (square, house standard)
 const logoX = 165, logoY = (H - logoBox) / 2;      // left-anchor (house standard)
 const textX = logoX + logoBox + 70;  // left edge of wordmark + claim (gap 70)
 const maxTextW = W - textX - 80;     // wordmark + claim fit between textX and the right margin
