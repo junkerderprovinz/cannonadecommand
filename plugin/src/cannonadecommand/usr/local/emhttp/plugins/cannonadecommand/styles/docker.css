@@ -309,14 +309,14 @@ html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb
 #docker_list span.cc-grp {
   display: inline-flex; align-items: center; gap: 6px; padding: var(--cc-sm-pad, 3px 11px);
   border-radius: var(--cc-b-radius, 999px); background: rgba(128, 128, 128, .18);
-  color: #cfcfcf; font-weight: 600;
+  color: var(--cc-text-chip, #cfcfcf); font-weight: 600;
 }
 #docker_list span.cc-grp { display: flex; width: fit-content; margin: 0 0 5px 0; }
 
 /* state badges (semantic solid, start/stop switch) */
 .cc-badge-running    { background: var(--cc-ok, #1f9d55); color: #fff; }
-.cc-badge-exited     { background: #3c3c3c; color: #cfcfcf; }
-.cc-badge-created    { background: #3c3c3c; color: #cfcfcf; } /* reads as "stopped" — same grey as exited */
+.cc-badge-exited     { background: var(--cc-badge-neutral, #3c3c3c); color: var(--cc-text-chip, #cfcfcf); }
+.cc-badge-created    { background: var(--cc-badge-neutral, #3c3c3c); color: var(--cc-text-chip, #cfcfcf); } /* reads as "stopped" — same grey as exited */
 .cc-badge-paused     { background: var(--cc-warn, #e0912a); color: #1a1a1a; }
 .cc-badge-restarting { background: var(--cc-warn, #e0912a); color: #1a1a1a; }
 .cc-badge-removing   { background: var(--cc-warn, #e0912a); color: #1a1a1a; }
@@ -445,7 +445,7 @@ html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb
    .cc-info-pop = the POPOVER circle variant (docker.js infoBubble), renamed from .cc-info:
    the settings SVG variant below owns .cc-info — the two designs collided in this file. */
 .cc-lbl-info { display: inline-flex; align-items: center; gap: 6px; }
-.cc-info-pop { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 999px; background: rgba(255,255,255,.14); color: #cfcfcf; font-size: 10px; font-style: normal; cursor: help; flex: none; }
+.cc-info-pop { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 999px; background: rgba(255,255,255,.14); color: var(--cc-text-chip, #cfcfcf); font-size: 10px; font-style: normal; cursor: help; flex: none; }
 .cc-info-pop:hover, .cc-info-pop:focus { background: var(--cc-accent, #2f6feb); color: #fff; outline: none; }
 .cc-tip { display: none; position: absolute; top: 21px; left: 0; z-index: 100000; width: 235px; max-width: 78vw; background: #0f0f0f; border: none; border-radius: 8px; padding: 8px 10px; box-shadow: 0 12px 30px rgba(0,0,0,.55); color: #d6d6d6; font-size: 11.5px; font-weight: 400; line-height: 1.5; white-space: normal; text-align: left; cursor: default; }
 .cc-info-pop:hover .cc-tip, .cc-info-pop:focus .cc-tip { display: block; }
@@ -862,7 +862,7 @@ html.cc-plugins-iconbg .cc-plugico {
    active pill, mirroring CannonadeCommand.Header.css). The active tab's colour is set inline
    by settings.js paintPv(); idle tabs keep the grey pill below. */
 .cc-set-navprev { gap: 6px; align-items: center; }
-.cc-navtab { display: inline-flex; align-items: center; justify-content: center; height: var(--cc-md-h, 30px); padding: 0 16px; line-height: 1; border-radius: var(--cc-b-radius, 999px); background: rgba(128,128,128,.18); color: #cfcfcf; font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; white-space: nowrap; }   /* pad stays 0 16px, NOT --cc-md-pad: the preview strip is narrow */
+.cc-navtab { display: inline-flex; align-items: center; justify-content: center; height: var(--cc-md-h, 30px); padding: 0 16px; line-height: 1; border-radius: var(--cc-b-radius, 999px); background: rgba(128,128,128,.18); color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; white-space: nowrap; }   /* pad stays 0 16px, NOT --cc-md-pad: the preview strip is narrow */
 /* ═══ systemwide INFO ICON ═══ a clean SVG "i" glyph; hides long explanations behind a small
    icon so the cards stay uncluttered. settings.js infoIcon(tip) emits
    <span class="cc-info" data-tip="…"><svg>…</svg></span>. Neutral colour (var(--dim)), never accent.
@@ -961,7 +961,7 @@ div.js-actions input[type=button] { flex: none !important; background: var(--cc-
 /* #8 (user, REVERSAL of the earlier top-right pin): the Basic/Advanced view toggle STAYS in the bottom
    action bar, right-aligned — exactly where it was ("der bleibt immer auf der unteren leiste"). */
 div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; }
-div.js-actions .cc-bar-adv-lbl { color: #cfcfcf; font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+div.js-actions .cc-bar-adv-lbl { color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 div.js-actions input[type=button]:hover { filter: brightness(1.14); }
 
 /* ___ ShipLog integration: when its changelog bubble is on the Docker tab,
@@ -1028,7 +1028,7 @@ html.cc-docker-on.cc-on-addct #canvas input[type="button"] { background: #4a4a4a
 html.cc-shares-rbneutral.cc-docker-on.cc-on-addct #canvas input[type="submit"]:not(:disabled),
 html.cc-shares-rbneutral.cc-docker-on.cc-on-addct #canvas button:not([role="tab"]):not(:disabled),
 html.cc-shares-rbneutral.cc-docker-on.cc-on-addct .ui-dialog .ui-dialog-buttonpane button {
-  background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important;
+  background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
 html.cc-shares-rbneutral.cc-docker-on.cc-on-addct #canvas input[type="submit"]:hover:not(:disabled),
 html.cc-shares-rbneutral.cc-docker-on.cc-on-addct #canvas button:not([role="tab"]):hover:not(:disabled),
@@ -1059,7 +1059,7 @@ html.cc-docker-on.cc-on-addct #canvas dl > dd > a:has(> i.fa-plus),
 html.cc-docker-on.cc-on-addct #canvas a[href="javascript:addConfigPopup()"] {
   display: inline-flex; align-items: center; gap: 8px;
   padding: var(--cc-bmd-pad, 4px 12px); border-radius: var(--cc-b-radius, 999px);
-  background: rgba(128, 128, 128, .18); color: #cfcfcf !important;
+  background: rgba(128, 128, 128, .18); color: var(--cc-text-chip, #cfcfcf) !important;
   font-size: 13px; font-weight: 600; text-decoration: none !important;
   transition: background .12s, color .12s;
 }
@@ -1293,7 +1293,7 @@ html.cc-docker-on.cc-on-addct #canvas dl > dt.cc-dtlab,
 html.cc-docker-on.cc-on-addct .ui-dialog dl > dt.cc-dtlab {
   display: inline-flex !important; align-items: center; gap: 6px; justify-self: end; width: fit-content; max-width: 100%;
   padding: 0 !important; border-radius: 0 !important; background: transparent !important;   /* #Container-Feldlabels (user): back to PLAIN TEXT, no badge -> consistent with every other page */
-  color: #cfcfcf; font-weight: 600; line-height: 1.3;
+  color: var(--cc-text-chip, #cfcfcf); font-weight: 600; line-height: 1.3;
 }
 /* Alignment: the form is ~104 SEPARATE <dl> grids that share no column widths. A `max-content` label
    column sized EACH row on its own -> fields started at different x (misaligned), and a narrow fixed
@@ -1344,7 +1344,7 @@ html.cc-docker-on.cc-on-addct div.title .cc-pagehead i.fa { color: inherit !impo
 /* title-bar toggle labels ("ERWEITERTE ANSICHT"): muted uppercase, never link-blue; the label
    and its track self-centre on ONE line (user: "text nicht vertikal zentriert mit toggle"). */
 html.cc-docker-on.cc-on-addct div.title span.right,
-html.cc-docker-on.cc-on-addct div.title span.right .switch-button-label { color: #cfcfcf !important; font-size: 13px; font-weight: 600; text-transform: uppercase; }
+html.cc-docker-on.cc-on-addct div.title span.right .switch-button-label { color: var(--cc-text-chip, #cfcfcf) !important; font-size: 13px; font-weight: 600; text-transform: uppercase; }
 html.cc-docker-on.cc-on-addct div.title span.right span.status,
 html.cc-docker-on.cc-on-addct #canvas span.status { display: inline-flex !important; align-items: center; gap: 8px; vertical-align: middle; }
 
@@ -1437,29 +1437,29 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* value badges rest grey in BOTH views (list rows + grid cards; incl. the idle Startplan chip;
    .cc-plan-on = active, keeps colour) */
 html.cc-shares-rbneutral.cc-docker-on #docker_list .cc-b:not(.cc-plan-on),
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-b:not(.cc-plan-on) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-b:not(.cc-plan-on) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 /* ROW hover, generic fallback for kind-less badges (ID/Von/Tag, idle plan chip):
    the stamped --cc-rb-c, else the accent. The per-KIND rules further down override this. */
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b:not(.cc-plan-on),
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b:not(.cc-plan-on) { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
 /* bottom action bar: the docked .js-actions buttons rest grey, palette colour on hover */
-html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:not(:disabled) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:not(:disabled) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:hover:not(:disabled) { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
 /* page tabs: NON-active tabs rest grey (paintTabs stamps --cc-rb-c per tab for the hover);
    the [aria-selected=true] tab stays painted */
-html.cc-shares-rbneutral.cc-docker-on nav.tabs .tabs-container > button[role=tab]:not([aria-selected="true"]) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on nav.tabs .tabs-container > button[role=tab]:not([aria-selected="true"]) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-docker-on nav.tabs .tabs-container > button[role=tab]:not([aria-selected="true"]):hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
 /* limit gears (list rows + grid cards): the idle gear rests grey (gearFill skips its inline
    paint in neutral) and joins the ROW/card hover; a SET gear keeps its paint (live state) */
-html.cc-shares-rbneutral.cc-docker-on .cc-limbtn { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-limbtn { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-limbtn,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-limbtn { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
 /* popup chrome painted by docker.js (.cc-pop editors + the .cc-menu gear menu): buttons —
    incl. the accent-filled .cc-btn-primary — rest grey; selected day chips (.cc-day-on),
    checked toggles and selected cores keep their colour (active contract). */
-html.cc-shares-rbneutral.cc-docker-on :is(.cc-pop, .cc-menu) .cc-btn { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on :is(.cc-pop, .cc-menu) .cc-btn { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-docker-on :is(.cc-pop, .cc-menu) .cc-btn:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-pop .cc-day:not(.cc-day-on) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-pop .cc-day:not(.cc-day-on) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-pop .cc-day:not(.cc-day-on):hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
 /* action icons: tintAct() skips its inline paint in neutral and stamps --cc-rb-c instead —
    enabled icons rest DARK grey (their own base, not the translucent chip grey) and take the
@@ -1503,7 +1503,7 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card:
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn > span.green-text,
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn span.orange-text,
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip {
-  background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important;
+  background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn > span.green-text { background: var(--cc-ok, #1f9d55) !important; color: #fff !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn span.orange-text { background: var(--cc-warn, #e0912a) !important; color: #1a1a1a !important; }
@@ -1521,7 +1521,7 @@ html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hov
 html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover td.updatecolumn > span.green-text,
 html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover td.updatecolumn span.orange-text,
 html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover td.updatecolumn .sl-chip,
-html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-actbtn:not(.cc-actoff) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-actbtn:not(.cc-actoff) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 /* PLUGINS tab logo tiles (their background rule lives above: html.cc-plugins-iconbg .cc-plugico):
    same reactive contract — rest grey, the ROW hover restores the configured tile colour.
    cc-plugins-iconbg is only ever stamped on /Plugins, so nothing can leak elsewhere. */

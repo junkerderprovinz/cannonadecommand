@@ -52,7 +52,7 @@ html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-cpu,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-ram,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-ip,
-html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-vol { background: #2e2e2e !important; color: #cfcfcf !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-vol { background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-cpu,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-ram,
@@ -78,7 +78,7 @@ html.cc-vms-on #kvm_list .cc-b-copy:hover { filter: brightness(1.18); transform:
 html.cc-vms-on #kvm_list .cc-badge-running { background: var(--cc-ok, #1f9d55); color: #fff; }
 html.cc-vms-on #kvm_list .cc-badge-paused  { background: var(--cc-warn, #e0912a); color: #1a1a1a; }
 html.cc-vms-on #kvm_list .cc-badge-exited,
-html.cc-vms-on #kvm_list .cc-badge-created { background: #3c3c3c; color: #cfcfcf; }
+html.cc-vms-on #kvm_list .cc-badge-created { background: var(--cc-badge-neutral, #3c3c3c); color: var(--cc-text-chip, #cfcfcf); }
 html.cc-vms-on #kvm_list .cc-badge-dead    { background: var(--cc-err, #d9433f); color: #fff; }
 /* group stacks (docker.css:225-231): IP pills + disk badges stacked one per line */
 html.cc-vms-on #kvm_list .cc-namemeta,

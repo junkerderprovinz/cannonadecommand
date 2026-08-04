@@ -54,6 +54,7 @@ html {
   --cc-toggle-track-on:  var(--cc-accent);
   --cc-toggle-knob:      #fff;
   --cc-badge-bg:         var(--cc-accent);   --cc-badge-fg: var(--cc-accent-fg);
+  --cc-badge-neutral:    #3c3c3c;              /* exited/created/stopped state badge (neutral, not accent) */
   --cc-card-bg:          var(--cc-surface-1);
   --cc-card-inset:       var(--cc-surface-2);
   --cc-field-bg:         var(--cc-surface-3);
@@ -78,4 +79,5 @@ html.Theme--azure {
   --cc-toggle-track-off: #cfcfcf;   /* light track on a light page (was a near-black bar) */
   --cc-toggle-knob:      #ffffff;
   --cc-line-solid:  #d0d0d0;
+  --cc-badge-neutral: #d8d8d8;      /* light neutral badge so the now-dark chip text stays legible */
 }

@@ -161,7 +161,7 @@ html.cc-diskpage #displaybox .main-content section.section { border: none !impor
    (right-aligned floated dt + block dd + native field widths) stands untouched. Only the label/value COLOURS are
    nudged for readability on the dark surface, and a CC toggle inside a dd is vertically centred — NO horizontal
    repositioning, NO width caps, NO grid. ── */
-html.cc-tools-on #displaybox dl > dt { color: #cfcfcf; }
+html.cc-tools-on #displaybox dl > dt { color: var(--cc-text-chip, #cfcfcf); }
 html.cc-tools-on #displaybox dl > dd { color: #d6d6d6; }
 html.cc-tools-on #displaybox dl > dd > .cc-tgl,
 html.cc-tools-on #displaybox dl > dd .switch-button-background { vertical-align: middle; }
@@ -308,7 +308,7 @@ html.cc-tools-on #displaybox dl:has(.advancedview) > dd { width: auto !important
 /* #(user: "der Text ist nicht vertikal zentriert"): the on/off labels are floated block boxes that top-align with
    the 24px toggle, so a 16px label sat ~5px above the toggle's centre. Give the label the toggle's 24px line-box so
    its text centres against the pill. */
-html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-label { color: #cfcfcf; font-weight: 600; line-height: 24px; height: 24px; }
+html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-label { color: var(--cc-text-chip, #cfcfcf); font-weight: 600; line-height: 24px; height: 24px; }
 html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-background {
   width: 44px !important; height: 24px !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important; flex: 0 0 auto;
 }

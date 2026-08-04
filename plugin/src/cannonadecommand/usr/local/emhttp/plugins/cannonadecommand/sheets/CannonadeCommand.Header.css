@@ -71,7 +71,7 @@ html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a {
      badges (which are the md tier, 30px/13px). So the nav pills use the lgb tier (36px) + 15px. */
   line-height: 1; height: var(--cc-lgb-h, 36px) !important; padding: 0 22px !important; margin: 0 3px;
   border-radius: var(--cc-b-radius, 999px) !important;
-  background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important;
+  background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   font-size: 15px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important;
   transition: filter .12s, background .12s, color .12s;
 }
@@ -91,7 +91,7 @@ html.cc-header-on.cc-header-rb #menu .nav-tile .nav-item.active > a {
 html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util > a,
 html.cc-header-on.cc-header-rbneutral #menu .usage-bar > span { background: rgba(128, 128, 128, .18) !important; }
 html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util b.system,
-html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util img.system { color: #cfcfcf !important; }
+html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util img.system { color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item:not(.util):not(.active) > a:hover,
 html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util > a:hover,
 html.cc-header-on.cc-header-rbneutral #menu .usage-bar > span:hover {
@@ -284,7 +284,7 @@ html.cc-header-on #cc-brand {
 /* the native version dropdown trigger stays FUNCTIONAL, dressed as an S-tier chip */
 html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"] {
   display: inline-flex; align-items: center; white-space: nowrap; line-height: 1.4;
-  background: rgba(128, 128, 128, .18); color: #cfcfcf;
+  background: rgba(128, 128, 128, .18); color: var(--cc-text-chip, #cfcfcf);
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 3px 11px);
   font-size: 11px; font-weight: 600;
   /* its Tailwind ring-offset/underline visuals are lines — never (law) */
@@ -326,7 +326,7 @@ html.cc-header-on #UserProfile > div:nth-child(2) > span {
   color: var(--cc-hdr-accent-text, #fff); transition: color .12s, filter .12s;
 }
 html.cc-header-on #UserProfile > div:nth-child(2) > span:hover { filter: brightness(1.14); }
-html.cc-header-on.cc-header-rbneutral #UserProfile > div:nth-child(2) > span { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf; }
+html.cc-header-on.cc-header-rbneutral #UserProfile > div:nth-child(2) > span { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf); }
 html.cc-header-on.cc-header-rbneutral #UserProfile > div:nth-child(2) > span:hover { background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff); }
 /* glyphs at 16px — the 14px icon token +2px, these two glyphs read better a notch larger;
    color FORCED onto the svg so the native state tints (yellow/red) cannot leak through */
@@ -410,7 +410,7 @@ html.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost {
   background: var(--cc-hdr-accent, #2f6feb); border-radius: min(var(--cc-b-radius, 8px), 8px);
   color: var(--cc-hdr-accent-text, #fff); visibility: hidden;
 }
-html.cc-header-on.cc-header-rbneutral #menu .nav-item.cc-iconproxy .cc-proxy-ghost { background: rgba(128, 128, 128, .18); color: #cfcfcf; }
+html.cc-header-on.cc-header-rbneutral #menu .nav-item.cc-iconproxy .cc-proxy-ghost { background: rgba(128, 128, 128, .18); color: var(--cc-text-chip, #cfcfcf); }
 html.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost svg { width: 16px; height: 16px; color: inherit; fill: currentColor; }
 html.cc-shape-circle.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost { border-radius: 50%; }
 /* arrange mode: swap live trigger <-> ghost */

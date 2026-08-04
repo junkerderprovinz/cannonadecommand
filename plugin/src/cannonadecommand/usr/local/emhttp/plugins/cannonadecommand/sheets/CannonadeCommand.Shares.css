@@ -34,7 +34,7 @@
 html.cc-shares-on #displaybox nav.tabs .tabs-container { gap: 6px; }
 html.cc-shares-on #displaybox nav.tabs button[role="tab"] {
   background: rgba(128, 128, 128, .18);
-  color: #cfcfcf;
+  color: var(--cc-text-chip, #cfcfcf);
   border: none;
   border-radius: var(--cc-b-radius, 999px);
   opacity: 1;
@@ -976,7 +976,7 @@ html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) 
    OUTSIDE table.array_status and the table-scoped look fell away — naked text with the orb dot. */
 html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-aop-status.cc-aop-ok   { background: var(--cc-ok, #1f9d55); color: #fff; }
 html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-aop-status.cc-aop-warn { background: var(--cc-warn, #e0912a); color: #1a1a1a; }
-html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-aop-status.cc-aop-off  { background: #3c3c3c; color: #cfcfcf; }
+html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-aop-status.cc-aop-off  { background: var(--cc-badge-neutral, #3c3c3c); color: var(--cc-text-chip, #cfcfcf); }
 html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-aop-status a.info { display: none !important; }   /* user: Badge OHNE Statuspunkt — the pill's colour already IS the state, the orb dot is redundant (its a.info tooltip goes with it) */
 /* §9 (i) info-icon — MIRRORED from styles/docker.css (not loaded on /Main). Neutral (currentColor,
    NEVER accent). ICON ONLY: the bubble itself is NOT CSS any more — header.js renders every
@@ -1437,8 +1437,8 @@ html.cc-shares-rb #displaybox nav.tabs button[role="tab"][aria-selected="true"] 
 /* name/value badge: base .cc-b is non-!important, so this !important grey wins. Browse pill: its base
    (html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-browse) IS !important, so the neutral
    rule must MATCH its selector prefix + add the two rbneutral/on-shares classes to out-specify it. */
-html.cc-shares-rbneutral.cc-on-shares #displaybox .cc-b { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
-html.cc-shares-on.cc-shares-rbneutral.cc-on-shares #displaybox table.unraid.share_status a.cc-b-browse { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-on-shares #displaybox .cc-b { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
+html.cc-shares-on.cc-shares-rbneutral.cc-on-shares #displaybox table.unraid.share_status a.cc-b-browse { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-on-shares #displaybox tr:hover .cc-b,
 html.cc-shares-on.cc-shares-rbneutral.cc-on-shares #displaybox table.unraid.share_status tr:hover a.cc-b-browse {
   background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
@@ -1453,8 +1453,8 @@ html.cc-shares-rbneutral.cc-on-shares #displaybox nav.tabs button[role="tab"]:no
    (table.array_status) and the Reboot/Shutdown danger buttons are untouched. The Browse pill's base
    rule is !important, so its neutral rule matches that prefix + adds the two gate classes to
    out-specify it; the whole ROW recolours on hover via the tr-stamped --cc-rb-c/--cc-rb-ct. */
-html.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_status .cc-b { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
-html.cc-shares-on.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_status a.cc-b-browse { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_status .cc-b { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
+html.cc-shares-on.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_status a.cc-b-browse { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_status tr:hover .cc-b,
 html.cc-shares-on.cc-shares-rbneutral.cc-on-main #displaybox table.unraid.disk_status tr:hover a.cc-b-browse {
   background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
@@ -1481,7 +1481,7 @@ html.cc-shares-on.cc-on-main:not(.cc-sections-main) #displaybox .cc-aop-pills { 
    pills (user: "gestartet und paritaetspruefung ... sollen nicht reaktiv sein und immer ihre
    zustandsfarbe haben"): those keep their state colours and never recolour. */
 html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status .cc-b:not(.cc-aop-status),
-html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status .cc-aop-link { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status .cc-aop-link { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status tr:hover .cc-b:not(.cc-aop-status),
 html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status tr:hover .cc-aop-link {
   background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
@@ -1494,7 +1494,7 @@ html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status input[type="b
 html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status input[type="reset"]:not(:disabled),
 html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status button:not([role="tab"]):not(:disabled),
 html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status a.button {
-  background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important;
+  background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
 html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status input[type="submit"]:hover:not(:disabled),
 html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status input[type="button"]:hover:not(:disabled),
@@ -1508,14 +1508,14 @@ html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status a.button:hove
 /* v2.29.0: the sub-mode reaches BELOW Unassigned Devices too (user: "ab unassigned devices abwaerts
    ist nicht alles ... inbegriffen") — the UD tables' value badges follow the same contract: neutral
    grey at rest, whole-row recolour on hover via the tr-stamped vars (now stamped by the UD loop). */
-html.cc-shares-rbneutral.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) .cc-b { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) .cc-b { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) tr:hover .cc-b {
   background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
 }
 /* outside-the-tables buttons (paintMain stamps .cc-xbtn: the ADD-SHARE trio + friends) follow the
    neutral contract too — grey at rest, stamped palette colour on hover (user: "drei schaltflächen
    nebeneinander orange, kann auch nicht sein"). */
-html.cc-shares-rbneutral.cc-on-main #displaybox .cc-xbtn:not(:disabled) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-on-main #displaybox .cc-xbtn:not(:disabled) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-on-main #displaybox .cc-xbtn:hover:not(:disabled) {
   background: var(--cc-rb-c, var(--cc-shr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #fff)) !important;
 }
@@ -1540,7 +1540,7 @@ html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ud-icon:not(:hover),
 html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ud-icon:not(:hover) *,
 html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ibtn:not(:hover),
 html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ibtn:not(:hover) *,
-html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status a.cc-aop-link:not(:hover) { color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status a.cc-aop-link:not(:hover) { color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ud-icon:hover,
 html.cc-shares-rbneutral.cc-on-main #displaybox a.cc-ibtn:hover,
 html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status a.cc-aop-link:hover {
