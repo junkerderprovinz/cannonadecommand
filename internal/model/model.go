@@ -161,6 +161,16 @@ type Bandwidth struct {
 	IngressKbit int    `json:"ingress_kbit,omitempty"` // download cap (kbit/s)
 }
 
+// VMBandwidth caps a libvirt VM's network rate. Like Bandwidth for containers, but there is
+// no container netns to shape inside — the monitor applies it host-side via an iptables
+// physdev hashlimit on the VM's bridged tap (this Unraid kernel lacks the qdiscs libvirt's
+// own domiftune QoS needs). Re-applied while the VM runs, cleared when the entry is removed.
+type VMBandwidth struct {
+	Name    string `json:"name"`
+	InKbit  int    `json:"in_kbit,omitempty"`  // download cap (kbit/s)
+	OutKbit int    `json:"out_kbit,omitempty"` // upload cap (kbit/s)
+}
+
 // IdleStop stops a container after it has stayed idle (instantaneous CPU at or
 // below the threshold) for IdleMinutes — CC's take on ContainerNursery's
 // sleep-on-idle, driven by CPU LIVENESS instead of an HTTP proxy. A container
@@ -178,10 +188,11 @@ type IdleStop struct {
 // Config is the automation configuration the daemon acts on, persisted alongside
 // the plan on the flash. Empty = nothing scheduled/watched, no notifications.
 type Config struct {
-	Schedules  []Schedule  `json:"schedules"`
-	Watchdogs  []Watchdog  `json:"watchdogs"`
-	Bandwidths []Bandwidth `json:"bandwidths,omitempty"`
-	IdleStops  []IdleStop  `json:"idle_stops,omitempty"`
+	Schedules    []Schedule    `json:"schedules"`
+	Watchdogs    []Watchdog    `json:"watchdogs"`
+	Bandwidths   []Bandwidth   `json:"bandwidths,omitempty"`
+	VMBandwidths []VMBandwidth `json:"vm_bandwidths,omitempty"`
+	IdleStops    []IdleStop    `json:"idle_stops,omitempty"`
 	// ShapeIface is the in-container interface egress shaping is applied to (Settings).
 	// Blank means the netshape default (eth0). Same for every shaped container.
 	ShapeIface string `json:"shape_iface,omitempty"`

@@ -106,7 +106,8 @@ func serve() {
 	st := store.New(filepath.Join(dataDir, "plan.json"))
 	prober := readiness.Prober{Inspector: inspectorAdapter{docker}, ExecCheck: docker.Exec, GetLogs: docker.Logs}
 	orch := &orchestrator.Orchestrator{Starter: docker, Ready: prober}
-	srv := &api.Server{Docker: docker, Store: st, Runner: orch, Pidder: docker, VMs: vmctl.New(), TemplatesDir: env("CC_TEMPLATES_DIR", unraidtmpl.DefaultDir), Version: version}
+	vmc := vmctl.New() // shared by the API (list/apply CPU-RAM) and the monitor (VM bandwidth reapply)
+	srv := &api.Server{Docker: docker, Store: st, Runner: orch, Pidder: docker, VMs: vmc, TemplatesDir: env("CC_TEMPLATES_DIR", unraidtmpl.DefaultDir), Version: version}
 
 	if err := os.MkdirAll(dataDir, 0o755); err != nil {
 		log.Fatalf("cannonadecommand: mkdir %s: %v", dataDir, err)
@@ -132,7 +133,7 @@ func serve() {
 	}()
 
 	// The always-on automation loop: scheduled actions, the watchdog, idle-stop, notifications.
-	mon := &monitor.Monitor{Docker: docker, Config: st, Notifier: monitor.SysNotifier{}, Pidder: docker, Shaper: shaperAdapter{}, Statter: docker}
+	mon := &monitor.Monitor{Docker: docker, Config: st, Notifier: monitor.SysNotifier{}, Pidder: docker, Shaper: shaperAdapter{}, Statter: docker, VMShaper: vmc}
 	srv.BwLast = mon // the bandwidth editor shows the monitor's last apply attempt
 	srv.Kicker = mon // config saves apply immediately (no 30s tick wait)
 	go mon.Run(ctx)

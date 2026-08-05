@@ -19,14 +19,8 @@ func TestParsers(t *testing.T) {
 	if got := firstMAC(" Interface   Type     Source   Model        MAC\n---------\n -           bridge   br0      virtio-net   52:54:00:e4:52:5a"); got != "52:54:00:e4:52:5a" {
 		t.Errorf("firstMAC = %q", got)
 	}
-	if in, out := ifKiBps("inbound.average: 1000\ninbound.peak   : 0\noutbound.average: 500"); in != 1000 || out != 500 {
-		t.Errorf("ifKiBps = %d/%d, want 1000/500", in, out)
-	}
-	if got := bwTriple(8000); got != "1000,1000,2000" {
-		t.Errorf("bwTriple(8000) = %q, want 1000,1000,2000", got)
-	}
-	if got := bwTriple(0); got != "0" {
-		t.Errorf("bwTriple(0) = %q, want 0", got)
+	if got := hName("d", "vnet3"); got != "ccvmd3" {
+		t.Errorf("hName(d,vnet3) = %q, want ccvmd3", got)
 	}
 }
 
@@ -51,29 +45,22 @@ func fakeVirsh(calls *[][]string, state string) runner {
 	}
 }
 
-func TestApply_RunningSetsLiveConfigCapAndBandwidth(t *testing.T) {
+func TestApply_RunningSetsLiveConfigCap(t *testing.T) {
 	var calls [][]string
 	c := &Controller{run: fakeVirsh(&calls, "running")}
 	cap := 50
-	in := 16000
-	if err := c.Apply(context.Background(), "UbuntuTest", Limits{CPUCap: &cap, InKbit: &in}); err != nil {
+	if err := c.Apply(context.Background(), "UbuntuTest", Limits{CPUCap: &cap}); err != nil {
 		t.Fatalf("Apply: %v", err)
 	}
-	var sched, tune []string
+	var sched []string
 	for _, a := range calls {
 		if a[0] == "schedinfo" && len(a) > 2 {
 			sched = a
 		}
-		if a[0] == "domiftune" && len(a) > 2 {
-			tune = a
-		}
 	}
+	// cap 50% of one core -> quota 50000 at the 100000 period, applied to both --config + --live.
 	if sched == nil || !contains(sched, "vcpu_quota=50000") || !contains(sched, "--live") || !contains(sched, "--config") {
 		t.Fatalf("schedinfo argv wrong: %v", sched)
-	}
-	// 16000 kbit -> 2000 KiB/s average
-	if tune == nil || !contains(tune, "--inbound") || !contains(tune, "2000,2000,4000") || !contains(tune, "52:54:00:aa:bb:cc") {
-		t.Fatalf("domiftune argv wrong: %v", tune)
 	}
 }
 

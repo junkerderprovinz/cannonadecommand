@@ -6,6 +6,7 @@ package monitor
 
 import (
 	"context"
+	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -54,6 +55,13 @@ type Statter interface {
 	StatsLive(ctx context.Context, name string) (model.Stats, error)
 }
 
+// VMShaper applies a libvirt VM's bandwidth caps (kbit) host-side. Optional: nil disables VM
+// bandwidth. ApplyBandwidth resolves/tracks the VM's tap internally and is idempotent, so the
+// monitor just re-asserts every tick; (0,0) clears + forgets the VM.
+type VMShaper interface {
+	ApplyBandwidth(ctx context.Context, name string, inKbit, outKbit int) error
+}
+
 // Monitor runs the schedule + watchdog loop.
 type Monitor struct {
 	Docker   Docker
@@ -62,6 +70,7 @@ type Monitor struct {
 	Pidder   Pidder           // optional: container PID for bandwidth shaping
 	Shaper   Shaper           // optional: applies the egress rate limit
 	Statter  Statter          // optional: live CPU sampling for idle-stop
+	VMShaper VMShaper         // optional: applies VM bandwidth caps host-side (iptables physdev)
 	Interval time.Duration    // default 30s
 	Now      func() time.Time // injectable clock (tests)
 
@@ -70,6 +79,7 @@ type Monitor struct {
 	restarts   map[string][]time.Time // watchdog restart timestamps per container (per-hour cap)
 	notifiedAt map[string]time.Time   // notify-throttle key → last time it was sent
 	shaped     map[string]string      // container name → the iface we shaped it on (clear on removal / iface change)
+	vmShaped   map[string]bool        // VM names we've applied a bandwidth cap to (clear on removal)
 	bwLast     map[string]string      // last shaping attempt per container (formatted), surfaced by /api/bwstatus
 	idle       map[string]*idleTrack  // idle-stop: per-container idle clock + last network sample
 	kickCh     chan struct{}          // nudge from the API: run a tick NOW (config just changed)
@@ -144,7 +154,51 @@ func (m *Monitor) Tick(ctx context.Context) {
 	m.tickSchedules(ctx, cfg)
 	m.tickWatchdogs(ctx, cfg)
 	m.tickBandwidths(ctx, cfg)
+	m.tickVMBandwidths(ctx, cfg)
 	m.tickIdleStop(ctx, cfg)
+}
+
+// tickVMBandwidths (re-)applies each configured VM bandwidth cap and clears one whose entry
+// was removed. Like container shaping, the host-side iptables rules are keyed to the VM's tap
+// and are lost/renamed when the VM restarts onto a new tap, so we re-assert every tick — the
+// shaper tracks the tap and clears the old one. A not-running VM is a no-op until it comes up.
+func (m *Monitor) tickVMBandwidths(ctx context.Context, cfg model.Config) {
+	if m.VMShaper == nil {
+		return
+	}
+	desired := make(map[string]model.VMBandwidth, len(cfg.VMBandwidths))
+	for _, b := range cfg.VMBandwidths {
+		if b.InKbit > 0 || b.OutKbit > 0 {
+			desired[b.Name] = b
+		}
+	}
+	m.mu.Lock()
+	if m.vmShaped == nil {
+		m.vmShaped = map[string]bool{}
+	}
+	prev := make([]string, 0, len(m.vmShaped))
+	for n := range m.vmShaped {
+		prev = append(prev, n)
+	}
+	m.mu.Unlock()
+	// Clear caps we applied before but are no longer desired.
+	for _, name := range prev {
+		if _, want := desired[name]; !want {
+			_ = m.VMShaper.ApplyBandwidth(ctx, name, 0, 0)
+			m.mu.Lock()
+			delete(m.vmShaped, name)
+			m.mu.Unlock()
+		}
+	}
+	// Re-assert every desired cap (idempotent; the shaper handles a restarted tap).
+	for name, b := range desired {
+		if err := m.VMShaper.ApplyBandwidth(ctx, name, b.InKbit, b.OutKbit); err != nil {
+			log.Printf("vm bandwidth: %s: %v", name, err)
+		}
+		m.mu.Lock()
+		m.vmShaped[name] = true
+		m.mu.Unlock()
+	}
 }
 
 // defaultIdleCPUPct is the "idle" threshold used when an IdleStop leaves

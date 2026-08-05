@@ -129,7 +129,64 @@ func (s *Server) handleGetVMs(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, []vmctl.VM{})
 		return
 	}
+	s.overlayVMBandwidths(vms)
 	writeJSON(w, http.StatusOK, vms)
+}
+
+// overlayVMBandwidths fills each VM's InKbit/OutKbit from the stored config — VM bandwidth
+// can't live in libvirt on this kernel, so it is the config, applied host-side by the monitor.
+func (s *Server) overlayVMBandwidths(vms []vmctl.VM) {
+	cfg, err := s.Store.LoadConfig()
+	if err != nil {
+		return
+	}
+	by := make(map[string]model.VMBandwidth, len(cfg.VMBandwidths))
+	for _, b := range cfg.VMBandwidths {
+		by[b.Name] = b
+	}
+	for i := range vms {
+		if b, ok := by[vms[i].Name]; ok {
+			vms[i].InKbit = b.InKbit
+			vms[i].OutKbit = b.OutKbit
+		}
+	}
+}
+
+// saveVMBandwidth stores (or clears) a VM's bandwidth cap. A nil direction is left unchanged;
+// 0 clears it; an entry with both directions clear is dropped.
+func (s *Server) saveVMBandwidth(name string, inKbit, outKbit *int) error {
+	cfg, err := s.Store.LoadConfig()
+	if err != nil {
+		return err
+	}
+	idx := -1
+	for i := range cfg.VMBandwidths {
+		if cfg.VMBandwidths[i].Name == name {
+			idx = i
+			break
+		}
+	}
+	cur := model.VMBandwidth{Name: name}
+	if idx >= 0 {
+		cur = cfg.VMBandwidths[idx]
+	}
+	if inKbit != nil {
+		cur.InKbit = *inKbit
+	}
+	if outKbit != nil {
+		cur.OutKbit = *outKbit
+	}
+	switch {
+	case cur.InKbit <= 0 && cur.OutKbit <= 0 && idx >= 0:
+		cfg.VMBandwidths = append(cfg.VMBandwidths[:idx], cfg.VMBandwidths[idx+1:]...)
+	case cur.InKbit <= 0 && cur.OutKbit <= 0:
+		// nothing to store
+	case idx >= 0:
+		cfg.VMBandwidths[idx] = cur
+	default:
+		cfg.VMBandwidths = append(cfg.VMBandwidths, cur)
+	}
+	return s.Store.SaveConfig(cfg)
 }
 
 // handleSetVMLimits applies CPU-pin / CPU-cap / RAM / bandwidth to ONE domain. The name
@@ -177,14 +234,28 @@ func (s *Server) handleSetVMLimits(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bad cpuset (want a cpu list like 0-3,6): " + *req.CPUCores})
 		return
 	}
-	lim := vmctl.Limits{CPUCores: req.CPUCores, CPUCap: req.CPUCap, MemMiB: req.MemMiB, InKbit: req.InKbit, OutKbit: req.OutKbit}
-	if err := s.VMs.Apply(r.Context(), req.Name, lim); err != nil {
-		log.Printf("vmlimits: %s: %v", req.Name, err)
-		writeErr(w, http.StatusInternalServerError, err)
-		return
+	// CPU/RAM go straight to libvirt (persisted in the domain XML, applied live if running).
+	if req.CPUCores != nil || req.CPUCap != nil || req.MemMiB != nil {
+		lim := vmctl.Limits{CPUCores: req.CPUCores, CPUCap: req.CPUCap, MemMiB: req.MemMiB}
+		if err := s.VMs.Apply(r.Context(), req.Name, lim); err != nil {
+			log.Printf("vmlimits: %s: %v", req.Name, err)
+			writeErr(w, http.StatusInternalServerError, err)
+			return
+		}
+	}
+	// Bandwidth is stored in the config and (re-)applied host-side by the monitor's VM tick.
+	if req.InKbit != nil || req.OutKbit != nil {
+		if err := s.saveVMBandwidth(req.Name, req.InKbit, req.OutKbit); err != nil {
+			writeErr(w, http.StatusInternalServerError, err)
+			return
+		}
+		if s.Kicker != nil {
+			s.Kicker.Kick() // apply the new cap now, not up to a monitor tick later
+		}
 	}
 	log.Printf("vmlimits: %s applied", req.Name)
 	fresh, _ := s.VMs.List(r.Context())
+	s.overlayVMBandwidths(fresh)
 	var out *vmctl.VM
 	for i := range fresh {
 		if fresh[i].Name == req.Name {

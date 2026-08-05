@@ -129,6 +129,13 @@ func rateFactor() int {
 	return byteRateFactor
 }
 
+// DLRateBytes, DLBurstBytes and RateFactor expose the download-policing byte-rate math
+// (incl. the legacy-iptables x8 compensation) so the VM shaper in package vmctl can build
+// the SAME hashlimit rule host-side on a VM's bridged tap.
+func DLRateBytes(kbit int) int  { return dlRateBytes(kbit) }
+func DLBurstBytes(kbit int) int { return dlBurstBytes(kbit) }
+func RateFactor() int           { return rateFactor() }
+
 // dlRuleSpec is the hashlimit rule body (everything after the chain name). Split out so
 // the -C check and the -A add use the EXACT same spec, and for unit tests. The rate is
 // multiplied by rateFactor() (see above) — on an affected legacy build the rule TEXT
