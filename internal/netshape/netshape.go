@@ -1,8 +1,10 @@
 // Package netshape applies per-container bandwidth caps inside the container's own network
 // namespace (entered via nsenter using the container PID). It never touches the host uplink.
 //
-// UPLOAD (egress) is shaped with a plain tbf root qdisc (sch_tbf) on the container's
-// interface.
+// BOTH directions are POLICED with netfilter (an iptables hashlimit DROP), never a tc qdisc:
+// this Unraid kernel ships NO sch_tbf/sch_htb, so the old tc-tbf egress shaper silently
+// no-op'd (a failure = "no shaping"). UPLOAD now drops packets above the byte rate on OUTPUT,
+// DOWNLOAD on INPUT; TCP backs off to the cap either way.
 //
 // DOWNLOAD (ingress) is POLICED with netfilter: an iptables hashlimit rule on the
 // container's INPUT chain drops packets above the byte rate, and TCP backs off to the cap.
@@ -38,6 +40,11 @@ const DefaultIface = "eth0"
 // an own chain makes apply/remove surgical and visible (`iptables -S CC_DL`).
 const dlChain = "CC_DL"
 
+// ulChain is the UPLOAD (egress) equivalent. This kernel has no sch_tbf, so the old tc-tbf
+// egress shaper silently no-op'd — CC now polices upload with a hashlimit DROP on OUTPUT,
+// exactly like the download policing on INPUT.
+const ulChain = "CC_UL"
+
 // ifaceOr returns the chosen interface, or DefaultIface when the (Settings-configured)
 // name is blank. The iface is threaded through every call rather than held in a mutable
 // global so a config change can never race with an in-flight tick.
@@ -46,28 +53,6 @@ func ifaceOr(iface string) string {
 		return iface
 	}
 	return DefaultIface
-}
-
-// burstBytes ≈ 0.1s of data at the given rate, with a sane floor so small rates still
-// pass traffic.
-func burstBytes(kbit int) int {
-	b := kbit * 1000 / 80
-	if b < 4000 {
-		b = 4000
-	}
-	return b
-}
-
-// egressArgs builds the nsenter argv that sets (kbit>0) or clears (kbit<=0) the EGRESS tbf
-// rate limit on `iface`'s root qdisc inside the netns of `pid`. Split out for unit tests.
-func egressArgs(iface string, pid, kbit int) []string {
-	dev := ifaceOr(iface)
-	base := []string{"-t", strconv.Itoa(pid), "-n", "tc", "qdisc"}
-	if kbit <= 0 {
-		return append(base, "del", "dev", dev, "root")
-	}
-	return append(base, "replace", "dev", dev, "root", "tbf",
-		"rate", strconv.Itoa(kbit)+"kbit", "burst", strconv.Itoa(burstBytes(kbit)), "latency", "50ms")
 }
 
 // dlRateBytes converts kbit/s to bytes/s (kbit × 125), min 125. The rule uses the
@@ -179,6 +164,46 @@ func clearIngressPolicing(iface string, pid int) error {
 	return ignoreMissing(run(iptArgs(pid, "-X", dlChain)))
 }
 
+// ulRuleSpec is the upload hashlimit body — same byte-rate math as download (incl. the legacy
+// x8 factor) on its OWN hashlimit table + chain.
+func ulRuleSpec(kbit int) []string {
+	f := rateFactor()
+	return []string{"-m", "hashlimit",
+		"--hashlimit-above", strconv.Itoa(dlRateBytes(kbit)*f) + "b/s",
+		"--hashlimit-burst", strconv.Itoa(dlBurstBytes(kbit)*f) + "b",
+		"--hashlimit-name", "ccul", "-j", "DROP"}
+}
+
+// applyEgressPolicing installs (or re-asserts) the UPLOAD cap as a hashlimit DROP on OUTPUT
+// inside the container netns (no tc/tbf — unavailable on this kernel). Fast path: when the
+// rule + the OUTPUT jump already exist, nothing runs. Mirrors applyIngressPolicing.
+func applyEgressPolicing(iface string, pid, kbit int) error {
+	dev := ifaceOr(iface)
+	if run(iptArgs(pid, append([]string{"-C", ulChain}, ulRuleSpec(kbit)...)...)) == nil &&
+		run(iptArgs(pid, "-C", "OUTPUT", "-o", dev, "-j", ulChain)) == nil {
+		return nil
+	}
+	_ = run(iptArgs(pid, "-N", ulChain)) // "chain exists" is fine
+	if err := run(iptArgs(pid, "-F", ulChain)); err != nil {
+		return err
+	}
+	if err := run(iptArgs(pid, append([]string{"-A", ulChain}, ulRuleSpec(kbit)...)...)); err != nil {
+		return err
+	}
+	if run(iptArgs(pid, "-C", "OUTPUT", "-o", dev, "-j", ulChain)) != nil {
+		return run(iptArgs(pid, "-I", "OUTPUT", "-o", dev, "-j", ulChain))
+	}
+	return nil
+}
+
+// clearEgressPolicing removes the upload cap (jump, rules, chain). Best-effort.
+func clearEgressPolicing(iface string, pid int) error {
+	dev := ifaceOr(iface)
+	_ = ignoreMissing(run(iptArgs(pid, "-D", "OUTPUT", "-o", dev, "-j", ulChain)))
+	_ = ignoreMissing(run(iptArgs(pid, "-F", ulChain)))
+	return ignoreMissing(run(iptArgs(pid, "-X", ulChain)))
+}
+
 // Apply sets the UPLOAD (egress tbf) and DOWNLOAD (netfilter policing) caps on `iface`
 // inside the container whose main process is `pid`. A value <=0 clears that direction;
 // Apply(iface,pid,0,0) is the monitor's "unshape" call. Both paths are idempotent, and
@@ -193,10 +218,10 @@ func Apply(iface string, pid, egressKbit, ingressKbit int) error {
 	// limit whenever no upload cap was set: the noqueue root-delete errored first).
 	var errs []error
 	if egressKbit > 0 {
-		if err := run(egressArgs(iface, pid, egressKbit)); err != nil {
-			errs = append(errs, fmt.Errorf("netshape: egress: %w", err))
+		if err := applyEgressPolicing(iface, pid, egressKbit); err != nil {
+			errs = append(errs, fmt.Errorf("netshape: egress policing: %w", err))
 		}
-	} else if err := clearEgress(iface, pid); err != nil {
+	} else if err := clearEgressPolicing(iface, pid); err != nil {
 		errs = append(errs, fmt.Errorf("netshape: egress clear: %w", err))
 	}
 	if ingressKbit > 0 {
@@ -214,15 +239,10 @@ func Clear(iface string, pid int) error {
 	if pid <= 0 {
 		return nil
 	}
-	if err := clearEgress(iface, pid); err != nil {
+	if err := clearEgressPolicing(iface, pid); err != nil {
 		return err
 	}
 	return clearIngressPolicing(iface, pid)
-}
-
-// clearEgress deletes the root tbf (ignoring "nothing to delete").
-func clearEgress(iface string, pid int) error {
-	return ignoreMissing(run(egressArgs(iface, pid, 0)))
 }
 
 // ignoreMissing swallows tc/iptables "nothing to delete" errors.
@@ -253,6 +273,9 @@ func Show(iface string, pid int) (qdisc, filter string) {
 	f, fe := output(iptArgs(pid, "-S", dlChain))
 	if fe != nil {
 		f = fe.Error()
+	}
+	if uf, ue := output(iptArgs(pid, "-S", ulChain)); ue == nil {
+		f = strings.TrimSpace(f) + "\n" + strings.TrimSpace(uf)
 	}
 	return strings.TrimSpace(q), strings.TrimSpace(f)
 }
