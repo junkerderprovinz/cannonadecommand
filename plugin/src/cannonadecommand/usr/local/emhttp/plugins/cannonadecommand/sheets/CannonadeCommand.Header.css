@@ -1192,8 +1192,13 @@ html.cc-arrange #menu .nav-item.LockButton b, html.cc-arrange #cc-lock-item b { 
    badges/cards read fine on a light page, but elements with a FAINT/transparent background + light text vanish
    on true white. Give those a light surface + dark text so nothing disappears. (Solid CC surfaces stay dark on
    purpose — that's the CC look.) */
+/* The island lives in the CC brand header, which stays DARK in every theme (cc-header-on). So it
+   must keep LIGHT-on-dark chips in white/azure too — the earlier light pass gave it dark text on the
+   dark header = invisible. Force light text on the whole island + a subtle light fill on the chips. */
+html.Theme--white #cc-island,
+html.Theme--azure #cc-island { color: #e8e8e8; }
 html.Theme--white #cc-island .cc-isl-chip,
-html.Theme--azure #cc-island .cc-isl-chip { background: rgba(0, 0, 0, .07); color: #1c1c1c; }
+html.Theme--azure #cc-island .cc-isl-chip { background: rgba(255, 255, 255, .12); color: #e8e8e8; }
 html.Theme--white.cc-tools-rbneutral #displaybox .cc-tsel-opt,
 html.Theme--azure.cc-tools-rbneutral #displaybox .cc-tsel-opt { background: rgba(0, 0, 0, .06); color: #1c1c1c; }
 html.Theme--white.cc-tools-on #displaybox dl > dt,

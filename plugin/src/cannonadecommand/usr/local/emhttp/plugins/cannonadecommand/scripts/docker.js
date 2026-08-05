@@ -533,6 +533,7 @@
   // chosen once per page load — every tab reload deals fresh colours across all badges.
   var RB_KINDS = ["net", "ip", "lan", "port", "id", "von", "cpu", "ram", "bw", "version", "vol", "plan"];
   var RB_PAL = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; // REAL rainbow order (red→pink), 8 colours
+  if (window.CCTheme) { idealText = window.CCTheme.idealText; RB_PAL = window.CCTheme.RB; }  /* single source: shared palette/contrast when CCTheme is loaded (global+sync); local copies stay as the fallback */
   var RB_OFFSET = window.CCTheme ? window.CCTheme.rbSeed(RB_PAL.length) : Math.floor(Math.random() * RB_PAL.length); // shared persisted seed (aligns with the 7 shared hues; docker keeps its 8th pink)
   // Active palette resolver: in flag mode (cc.flagmode=1) read the flag's OWN key cc.flagpal — NEVER
   // cc.rbpal — so a flag never repaints the rainbow swatches and flag colours never leak onto the

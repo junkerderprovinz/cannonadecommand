@@ -49,6 +49,7 @@
   // VM info badges carry kinds cpu/ram/ip, so only those recolour.
   var RB_KINDS = ["net", "ip", "lan", "port", "id", "von", "cpu", "ram", "bw", "version", "vol", "plan"];
   var RB_PAL = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
+  if (window.CCTheme) { RB_PAL = window.CCTheme.RB; }  /* single source: shared palette when CCTheme is loaded (global+sync); local copy stays as the fallback */
   var RB_OFFSET = Math.floor(Math.random() * RB_PAL.length);
 
   function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
