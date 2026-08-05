@@ -28,7 +28,7 @@
    SAME size — while docker.css's own list keeps its sm tier. --cc-md-pad (0 20px) is the
    30px tab-pill metric, NOT for table pills. The lg tier is the share/disk-NAME headline
    badge (~15px, taller pill) above the uniform value pills. */
-:root { --cc-sm-fs: 11px; --cc-sm-pad: 3px 11px; --cc-md-fs: 13px; --cc-md-h: 30px; --cc-md-pad: 0 20px; --cc-md-btnpad: 0 14px; --cc-bmd-pad: 4px 12px; --cc-lg-fs: 15px; --cc-lg-pad: 6px 16px; --cc-lgb-h: 36px; --cc-lgb-fs: 14px; --cc-lgb-w: 200px; --cc-head-fs: 15px; --cc-head-pad: 9px 18px; --cc-aop-c1: 380px; --cc-aop-c2: 560px; }   /* --cc-md-btnpad = the 30px BUTTON pad (all md action pills); --cc-head-fs/-pad = the .cc-card-head badge metrics */
+:root { --cc-lgb-w: 200px; --cc-aop-c1: 380px; --cc-aop-c2: 560px; }   /* #4 badge engine: Shares keeps ONLY its area-specific metrics (large-button width + accordion breakpoints); the shared badge tiers sm/md/bmd/lg/lgb/head now live centrally in CannonadeCommand.Tokens.css */
 
 /* ═══ sub-page tabs -> badges ═══ */
 html.cc-shares-on #displaybox nav.tabs .tabs-container { gap: 6px; }

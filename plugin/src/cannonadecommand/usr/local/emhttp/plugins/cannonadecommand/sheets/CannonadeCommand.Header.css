@@ -25,10 +25,11 @@
      boxes now ALL share ONE height (--cc-md-h) so the three groups line up at exactly the same
      height across the whole bar (user: "die drei Gruppen auf dieselbe Höhe bringen"). The icon
      boxes were 26px (deliberately smaller); they are now --cc-md-h too, i.e. square 30×30. */
-  --cc-md-fs: 13px; --cc-md-h: 30px; --cc-md-pad: 0 20px; --cc-md-icon: 14px; --cc-md-ibox: var(--cc-md-h, 30px);
-  /* lg tier for popup chrome (title badges + dialog buttons). header.js ccPopIframes()
-     duplicates these as literals (iframes can't read parent vars) — keep in sync. */
-  --cc-lgb-h: 36px; --cc-lgb-fs: 14px;
+  /* #4 badge engine: shared badge tiers (--cc-md-fs/-h/-pad, --cc-lgb-h/-fs) now central in Tokens.css;
+     Header keeps ONLY its own icon metrics. */
+  --cc-md-icon: 14px; --cc-md-ibox: var(--cc-md-h, 30px);
+  /* NOTE: header.js ccPopIframes() still duplicates the lg-tier values as LITERALS for popup iframes
+     (iframes can't read the parent's vars) - if the central --cc-lgb-h/-fs ever change, update those too. */
 }
 
 /* ═══ page tabs -> badges. Selectors are TILE-AGNOSTIC (v2.30.0 merged drag zone: any item may

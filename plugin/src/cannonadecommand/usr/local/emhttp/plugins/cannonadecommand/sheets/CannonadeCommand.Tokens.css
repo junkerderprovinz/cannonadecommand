@@ -44,6 +44,23 @@ html {
   --cc-accent:     #2f6feb;
   --cc-accent-fg:  var(--cc-accent-text, #fff);
 
+  /* ── BADGE SIZE ENGINE (#4) - the systemwide badge box metrics, ONE canonical source, exactly like
+       --cc-b-radius is the SHAPE engine and --cc-accent/--cc-rb-* are the COLOUR engine. These were
+       mirrored BY HAND across docker/vms/shares/header/settingsgrid (see the header note above); now a
+       badge anywhere reads the same tier. Every .cc-b/.cc-navtab/.cc-card-head consumes them via var().
+         sm  = data pills (Docker + Plugin rows)
+         md  = tab / action badges (menu bar, plugin-page tabs, CC-settings tabs, view toggles)
+         bmd = medium block pill · lg / lgb = large text / large button · head = section-head badge
+       Per-area sheets keep ONLY their area-specific metrics (Header --cc-md-icon/-ibox, Shares
+       --cc-lgb-w/--cc-aop-*, SettingsGrid --cc-sg-*); the shared tiers live here. */
+  --cc-sm-fs: 11px;  --cc-sm-pad: 3px 11px;
+  --cc-md-fs: 13px;  --cc-md-h: 30px;  --cc-md-pad: 0 20px;  --cc-md-btnpad: 0 14px;
+  --cc-bmd-pad: 4px 12px;
+  --cc-lg-fs: 15px;  --cc-lg-pad: 6px 16px;
+  --cc-lgb-h: 36px;  --cc-lgb-fs: 14px;
+  --cc-head-fs: 15px;  --cc-head-pad: 9px 18px;
+  --cc-density: 9px;
+
   /* ── STATE - one canonical each (collapses the 6/6/4 literal drift) + derived fg ── */
   --cc-ok:   var(--cc-ok, #1f9d55);  --cc-ok-fg:   #fff;
   --cc-warn: var(--cc-warn, #e0912a);  --cc-warn-fg: #1a1a1a;

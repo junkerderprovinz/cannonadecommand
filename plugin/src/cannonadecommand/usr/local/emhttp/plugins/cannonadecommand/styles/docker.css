@@ -8,16 +8,10 @@
  * the stylesheet is removed and everything reappears. */
 
 :root {
-  --cc-accent: #2f6feb; --cc-density: 9px;
-  /* ── CC badge size system: two standard tiers, used everywhere for a
-     consistent look. sm = data pills (Docker + Plugin rows) · md = tab badges
-     (menu bar, plugin-page tabs, CC-settings tabs, view toggles). The md tokens
-     are mirrored in sheets/CannonadeCommand.Header.css — keep the two copies in
-     sync. --cc-md-btnpad = the 30px BUTTON pad (all md action pills);
-     --cc-head-fs/-pad = the .cc-card-head badge metrics. */
-  --cc-sm-fs: 11px; --cc-sm-pad: 3px 11px;
-  --cc-md-fs: 13px; --cc-md-h: 30px; --cc-md-pad: 0 20px; --cc-md-btnpad: 0 14px;
-  --cc-head-fs: 15px; --cc-head-pad: 9px 18px;
+  /* #4 badge engine: the shared badge SIZE metrics (--cc-sm/md/bmd/lg/lgb/head-*, --cc-density) now live
+     centrally in CannonadeCommand.Tokens.css and are consumed here via var(). Only --cc-accent stays as a
+     local fallback for the (theoretical) case the global Tokens sheet is absent. */
+  --cc-accent: #2f6feb;
 }
 
 /* hide Unraid's native "Docker Containers" section-title bar (a div.title emitted by

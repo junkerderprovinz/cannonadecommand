@@ -10,7 +10,8 @@
  *   · td[desc] · td[a.vcpu-*] · td[mem] · td[disks] · td[span.vmgraphics=graphics] · td[ip] · td[autostart]
  */
 
-html.cc-vms-on { --cc-sm-fs: 11px; --cc-sm-pad: 3px 11px; --cc-md-fs: 13px; --cc-md-h: 30px; --cc-md-pad: 0 20px; --cc-md-btnpad: 0 14px; --cc-head-fs: 15px; --cc-head-pad: 9px 18px; --cc-lgb-h: 36px; --cc-density: 9px; } /* --cc-lgb-h: per-sheet copy (house rule) */
+/* #4 badge engine: the shared badge SIZE tiers (sm/md/lgb/head + --cc-density) now live centrally in
+   CannonadeCommand.Tokens.css; this sheet has no VM-specific badge metric, so no local :root copy remains. */
 
 /* ═══ align the VM content with the MAIN MENU BAR (self-measured --cc-align-left; header.js sets it) ═══ */
 html.cc-vms-on.cc-header-on { --cc-align-left: 15px; }

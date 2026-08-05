@@ -21,7 +21,7 @@
 /* --cc-sg-size/-glyph: DEFAULTS for the cc.sgsize=m step (78px = Docker's logo-tile box, 62px
    content + 8px pad); settingsgrid.js paintGrid stamps s(64/32)|m(78/38)|l(96/46) live.
    --cc-lgb-h: per-sheet copy (house rule). */
-:root { --cc-sg-size: 78px; --cc-sg-glyph: 38px; --cc-sg-rmax: 16px; --cc-lgb-h: 36px; }
+:root { --cc-sg-size: 78px; --cc-sg-glyph: 38px; --cc-sg-rmax: 16px; }   /* #4 badge engine: --cc-lgb-h now central (Tokens.css); only the SettingsGrid tile metrics stay here */
 
 /* ═══ align the Settings/Tools content with the MAIN MENU BAR (v2.16.0) ═══
    --cc-align-left is the geometry token every other CC area wires — but each globally-injected sheet

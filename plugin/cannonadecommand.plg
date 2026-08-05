@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.4.0">
+  <!ENTITY version   "3.4.1">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,13 @@
 </ICON>
 
 <CHANGES>
+### 3.4.1
+- System-wide badge engine: the badge box size metrics (data pills, tab and action badges, section
+  heads) now live in ONE central place (the Tokens sheet), exactly like the colour engine and the badge
+  shape engine already do. They were mirrored by hand across five sheets, so a badge could drift out of
+  step; now a badge anywhere reads the same tier and a change lands everywhere at once. Pure consolidation,
+  no visual change.
+
 ### 3.4.0
 - Rainbow mode is now consistent across every tab. The Plugins and VMs tabs used a different, brighter palette
   and reshuffled their colours on every reload; they now share the one jewel palette and the same persisted
@@ -2281,7 +2288,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>094585036b604560525cc0f9b685cff6e67375c63817f0b909b4a4c3eb223625</SHA256>
+  <SHA256>5677254825297825e0a20f502fc590322f2190a90aea7894e0464f69a55e5aed</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
