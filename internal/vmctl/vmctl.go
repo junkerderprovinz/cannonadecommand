@@ -1,21 +1,24 @@
-// Package vmctl gives CannonadeCommand the same per-workload limits for libvirt/KVM
-// VMs that dockercli+netshape give for containers — CPU pinning, a CPU cap, a RAM
-// (balloon) allocation, and up/down bandwidth — but done the NATIVE libvirt way via
-// virsh, never by hand-rolling tc/iptables:
+// Package vmctl gives CannonadeCommand the same per-workload limits for libvirt/KVM VMs
+// that dockercli+netshape give for containers — CPU pinning, a CPU cap, a RAM (balloon)
+// allocation, and up/down bandwidth.
 //
-//   - CPU cores (pin):  virsh vcpupin  (each vcpu) + emulatorpin  -> <cputune><vcpupin>
+// CPU + RAM are done the NATIVE libvirt way, so they persist in the domain XML and Unraid
+// reads them back:
+//   - CPU cores (pin):  virsh vcpupin (each vcpu) + emulatorpin  -> <cputune><vcpupin>
 //   - CPU cap:          virsh schedinfo --set vcpu_quota/vcpu_period -> <cputune>
-//   - RAM:              virsh setmem   (balloon, <= max memory)
-//   - Bandwidth:        virsh domiftune --inbound/--outbound -> <interface><bandwidth>
+//   - RAM:              virsh setmem (balloon, <= max memory)
 //
-// The bandwidth path is why this is a libvirt job and not a netshape job: libvirt's
-// interface QoS polices INBOUND through an ifb device, NOT sch_ingress — so it carries
-// none of the kernel-crash risk that killed the container-side tc-ingress experiment
-// (see the netshape package header). Everything is applied with --config (persists in
-// the domain XML across a VM restart) plus --live when the domain is running.
+// Each is applied with --config (persists across a VM restart) plus --live when running.
 //
-// stdlib-only, like the rest of the engine. Every virsh call is bounded by a context
-// timeout so a wedged libvirtd can never stall the caller.
+// BANDWIDTH can't go through libvirt on Unraid: domiftune's QoS needs sch_htb, which this
+// kernel doesn't have (and sch_ingress crashes it). So ApplyBandwidth polices it host-side
+// with an iptables hashlimit on the FORWARD chain, matched to the VM's bridged tap via
+// -m physdev — the same DROP-above mechanism netshape uses for container download, in BOTH
+// directions. It is NOT persisted in libvirt; the caps live in the CC config and the monitor
+// re-asserts them every tick (the tap changes on restart), clearing the old tap.
+//
+// stdlib-only, like the rest of the engine. Every virsh/iptables call is bounded by a
+// context timeout so a wedged libvirtd/xtables lock can never stall the caller.
 package vmctl
 
 import (
