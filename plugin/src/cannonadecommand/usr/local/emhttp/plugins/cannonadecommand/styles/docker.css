@@ -473,14 +473,14 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-pop-act .cc-btn { flex: 1; text-align: center; font-size: 11.5px; padding: 7px 6px; white-space: normal; line-height: 1.2; }
 /* Plan editor: each section is a CARD (like the schedule rows) — plan fields, watchdog and
    schedules get their own bordered block, rows sit tight instead of drifting apart. */
-.cc-pop-body { background: #1a1a1a; border: none; border-radius: 8px; margin: 10px 14px 6px; padding: 3px 0; }   /* fill separates, no line */
+.cc-pop-body { background: transparent; border: none; border-radius: 8px; margin: 10px 14px 6px; padding: 3px 0; }   /* flat: no card fill in the CPU/RAM/BW limit popups (user) — spacing only */
 /* Unraid's theme gives inputs/labels chunky margins+min-heights that pushed the editor rows
    far apart — force them flat (!important: Unraid's sheet can load after ours). */
 .cc-pop-body .cc-pop-row, .cc-pop-auto .cc-pop-row { padding: 3px 10px !important; } /* rows really tight ("Hängt ab von" → "Startverzögerung" → "Bereit wenn") */
 .cc-pop .cc-pop-row { margin: 0 !important; }
 .cc-pop .cc-pop-row > *, .cc-pop .cc-pop-row .cc-in { margin-top: 0 !important; margin-bottom: 0 !important; min-height: 0 !important; }
 .cc-pop .cc-in { padding-top: 5px !important; padding-bottom: 5px !important; line-height: 1.35 !important; }
-.cc-pop-auto { background: #1a1a1a; border: none; border-radius: 8px; margin: 6px 14px; padding: 5px 0 7px; }
+.cc-pop-auto { background: transparent; border: none; border-radius: 8px; margin: 6px 14px; padding: 5px 0 7px; }   /* flat, matches cc-pop-body (user: keine hellen Cards) */
 .cc-pop-auto .cc-pop-row { padding: 5px 10px; }
 .cc-pop-auto .cc-pop-lbl { width: 90px; }
 .cc-pop-foot { border-top: none; padding-top: 0; }
