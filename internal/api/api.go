@@ -66,6 +66,8 @@ type Runner interface {
 type VMController interface {
 	List(ctx context.Context) ([]vmctl.VM, error)
 	Apply(ctx context.Context, name string, lim vmctl.Limits) error
+	Disks(ctx context.Context, name string) ([]vmctl.Disk, error)
+	ResizeDisk(ctx context.Context, name, target string, newBytes int64) error
 }
 
 // Server wires the read/orchestrate handlers.
@@ -112,6 +114,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("PUT /api/config", s.handlePutConfig)
 	mux.HandleFunc("GET /api/vms", s.handleGetVMs)
 	mux.HandleFunc("POST /api/vmlimits", s.handleSetVMLimits)
+	mux.HandleFunc("GET /api/vmdisks", s.handleGetVMDisks)
+	mux.HandleFunc("POST /api/vmdiskresize", s.handleResizeVMDisk)
 	return mux
 }
 
@@ -274,6 +278,103 @@ func (s *Server) handleSetVMLimits(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "vm": out})
+}
+
+// vmKnown reports whether name is a domain libvirt actually knows — the same guard the
+// limit handlers use before any virsh call touches a caller-supplied name.
+func (s *Server) vmKnown(ctx context.Context, name string) (bool, error) {
+	vms, err := s.VMs.List(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, v := range vms {
+		if v.Name == name {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// handleGetVMDisks lists one domain's resizable disks (target + source + current capacity), for
+// the VM tab's disk-resize editor. Unknown/absent backend -> a clean error, never a 500.
+func (s *Server) handleGetVMDisks(w http.ResponseWriter, r *http.Request) {
+	if s.VMs == nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "vm backend disabled"})
+		return
+	}
+	name := strings.TrimSpace(r.URL.Query().Get("name"))
+	if name == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "name required"})
+		return
+	}
+	ok, err := s.vmKnown(r.Context(), name)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unknown vm: " + name})
+		return
+	}
+	disks, err := s.VMs.Disks(r.Context(), name)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	if disks == nil {
+		disks = []vmctl.Disk{}
+	}
+	writeJSON(w, http.StatusOK, disks)
+}
+
+// handleResizeVMDisk grows one disk of a domain. The name is validated against the live domain
+// list and the size is taken in GiB; vmctl enforces grow-only and picks the live (blockresize)
+// vs shut-off (qemu-img) path. Returns the refreshed disk list so the UI can show the new size.
+func (s *Server) handleResizeVMDisk(w http.ResponseWriter, r *http.Request) {
+	if s.VMs == nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "vm backend disabled"})
+		return
+	}
+	var req struct {
+		Name    string  `json:"name"`
+		Target  string  `json:"target"`
+		SizeGiB float64 `json:"size_gib"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	req.Name = strings.TrimSpace(req.Name)
+	req.Target = strings.TrimSpace(req.Target)
+	if req.Name == "" || req.Target == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "name and target required"})
+		return
+	}
+	if req.SizeGiB <= 0 {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "size_gib must be > 0"})
+		return
+	}
+	ok, err := s.vmKnown(r.Context(), req.Name)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unknown vm: " + req.Name})
+		return
+	}
+	newBytes := int64(req.SizeGiB * 1024 * 1024 * 1024)
+	if err := s.VMs.ResizeDisk(r.Context(), req.Name, req.Target, newBytes); err != nil {
+		log.Printf("vmdiskresize: %s %s: %v", req.Name, req.Target, err)
+		writeErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	log.Printf("vmdiskresize: %s %s -> %.1f GiB", req.Name, req.Target, req.SizeGiB)
+	disks, _ := s.VMs.Disks(r.Context(), req.Name)
+	if disks == nil {
+		disks = []vmctl.Disk{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "disks": disks})
 }
 
 // known reports whether name is a live container (guards every write verb).

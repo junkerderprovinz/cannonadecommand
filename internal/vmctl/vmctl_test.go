@@ -2,6 +2,7 @@ package vmctl
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 )
@@ -89,4 +90,102 @@ func contains(s []string, want string) bool {
 		}
 	}
 	return false
+}
+
+func TestBlkCapacity(t *testing.T) {
+	info := "Capacity:       53687091200\nAllocation:     14336000000\nPhysical:       53687091200"
+	if got := blkCapacity(info); got != 53687091200 {
+		t.Errorf("blkCapacity = %d, want 53687091200", got)
+	}
+	if got := blkCapacity("no capacity here"); got != 0 {
+		t.Errorf("blkCapacity(garbage) = %d, want 0", got)
+	}
+}
+
+// fakeDisk answers Get()'s probes plus domblklist/domblkinfo (one 50 GiB disk "hdc", one cdrom),
+// and records blockresize so a live grow can be asserted on the byte-exact size it sends.
+func fakeDisk(calls *[][]string, state string) runner {
+	return func(_ context.Context, args ...string) (string, error) {
+		*calls = append(*calls, args)
+		switch args[0] {
+		case "dominfo":
+			return "State:          " + state + "\nCPU(s):         2\nMax memory:     4194304 KiB\nUsed memory:    4194304 KiB", nil
+		case "vcpupin":
+			return " 0      0-7", nil
+		case "schedinfo":
+			return "vcpu_quota     : 0\nvcpu_period    : 0", nil
+		case "domiflist":
+			return " - bridge br0 virtio-net 52:54:00:aa:bb:cc", nil
+		case "domblklist":
+			return " Type   Device   Target   Source\n----------------------------\n" +
+				" file   disk     hdc      /mnt/user/domains/VM/vdisk1.img\n" +
+				" file   cdrom    hda      /mnt/user/isos/x.iso", nil
+		case "domblkinfo":
+			return "Capacity:       53687091200\nAllocation:     14336000000\nPhysical:       53687091200", nil
+		}
+		return "", nil
+	}
+}
+
+func TestDisks_SkipsCdromParsesCapacity(t *testing.T) {
+	var calls [][]string
+	c := &Controller{run: fakeDisk(&calls, "running")}
+	disks, err := c.Disks(context.Background(), "VM")
+	if err != nil {
+		t.Fatalf("Disks: %v", err)
+	}
+	if len(disks) != 1 {
+		t.Fatalf("Disks = %d entries, want 1 (cdrom skipped): %+v", len(disks), disks)
+	}
+	if disks[0].Target != "hdc" || disks[0].Source != "/mnt/user/domains/VM/vdisk1.img" || disks[0].CapacityBytes != 53687091200 {
+		t.Fatalf("disk parsed wrong: %+v", disks[0])
+	}
+}
+
+func TestResizeDisk_GrowOnly(t *testing.T) {
+	var calls [][]string
+	c := &Controller{run: fakeDisk(&calls, "running")}
+	// current capacity is 53687091200 (50 GiB); a smaller/equal target must be refused before any call.
+	if err := c.ResizeDisk(context.Background(), "VM", "hdc", 40*1024*1024*1024); err == nil {
+		t.Fatal("ResizeDisk to a smaller size must fail (grow-only)")
+	}
+	if err := c.ResizeDisk(context.Background(), "VM", "nope", 60*1024*1024*1024); err == nil {
+		t.Fatal("ResizeDisk of an unknown target must fail")
+	}
+	// An unreadable source reports capacity 0 -> we can't prove a grow, so a resize must be refused
+	// (never risk truncating a disk that is actually larger than the 0 we read).
+	var c2calls [][]string
+	unknownCap := func(ctx context.Context, args ...string) (string, error) {
+		c2calls = append(c2calls, args)
+		if args[0] == "domblklist" {
+			return " Type Device Target Source\n----\n file disk vda /mnt/gone.img", nil
+		}
+		if args[0] == "domblkinfo" {
+			return "", errors.New("Failed to open file: No such file or directory")
+		}
+		return "State: shut off\nCPU(s): 2", nil
+	}
+	c2 := &Controller{run: unknownCap}
+	if err := c2.ResizeDisk(context.Background(), "VM", "vda", 99*1024*1024*1024); err == nil {
+		t.Fatal("ResizeDisk with unknown current size must be refused")
+	}
+}
+
+func TestResizeDisk_LiveBlockresize(t *testing.T) {
+	var calls [][]string
+	c := &Controller{run: fakeDisk(&calls, "running")}
+	want := int64(60) * 1024 * 1024 * 1024 // grow 50 -> 60 GiB
+	if err := c.ResizeDisk(context.Background(), "VM", "hdc", want); err != nil {
+		t.Fatalf("ResizeDisk: %v", err)
+	}
+	var br []string
+	for _, a := range calls {
+		if a[0] == "blockresize" {
+			br = a
+		}
+	}
+	// a RUNNING domain resizes live via blockresize with a byte-exact ('B' suffix) size, never qemu-img.
+	if br == nil || !contains(br, "hdc") || !contains(br, "64424509440B") {
+		t.Fatalf("blockresize argv wrong: %v", br)
+	}
 }

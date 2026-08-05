@@ -51,11 +51,13 @@ html.cc-vms-on #kvm_list .cc-b { background: var(--cc-rbaccent, var(--cc-accent,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-cpu,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-ram,
+html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-bw,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-ip,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-vol { background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-cpu,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-ram,
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-bw,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-ip,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-vol { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important; }
 /* per-KIND reactive hover (mirrors docker.css:1435-1450): on ROW hover the cpu/ram/ip/vol badges take
@@ -63,6 +65,7 @@ html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-vol { background: var(--
    specificity over the generic tr:hover .cc-b rule; source order settles the tie per kind. */
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-err, #d9433f)) !important; color: var(--cc-rb-cpu-t, #fff) !important; }
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-ram { background: var(--cc-rb-ram, #2f9d8b) !important; color: var(--cc-rb-ram-t, #fff) !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-bw  { background: var(--cc-rb-bw, #8b5cf6) !important; color: var(--cc-rb-bw-t, #fff) !important; }
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-ip  { background: var(--cc-rb-ip, #2f6feb) !important; color: var(--cc-rb-ip-t, #fff) !important; }
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-vol { background: var(--cc-rb-vol, #0891b2) !important; color: var(--cc-rb-vol-t, #fff) !important; }
 html.cc-vms-on #kvm_list .cc-b-k { opacity: .72; font-weight: 500; }
@@ -87,6 +90,13 @@ html.cc-vms-on #kvm_list .cc-vmb-disks { display: flex; flex-direction: column; 
 /* CPU + RAM merged into ONE stacked column (docker.css:229-231 .cc-resgroup/.cc-resline) */
 html.cc-vms-on #kvm_list .cc-resgroup { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 html.cc-vms-on #kvm_list .cc-resline { display: inline-flex; align-items: center; gap: 5px; }
+/* the limit GEAR behind each res badge — Docker-identical (docker.css:285-291), retargeted to #kvm_list.
+   vms.js's vmGearFill fills it INLINE with priority in accent/native mode and stamps --cc-rb-c (the kind
+   colour) in rainbow mode; these rules provide the idle/hover/set look the inline fill sits on top of. */
+html.cc-vms-on #kvm_list .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px; background: #3a3a3a; color: #ececec; cursor: pointer; font-size: 12px; margin: 2px 0; }
+html.cc-vms-on #kvm_list .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: #fff; }
+html.cc-vms-on #kvm_list .cc-limbtn-set { color: #10321f; background: #35d07f; }   /* filled when a limit is configured */
+html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-limbtn-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
 /* keep the cloned native ISO-picker link (a.hand) legible inside the CD badge */
 html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand,
 html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand i { color: inherit !important; text-decoration: none !important; }
@@ -318,6 +328,7 @@ html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable > td {
    colour, exactly like Docker. Applies in BOTH list and grid view. ═══ */
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-err, #d9433f)); color: var(--cc-rb-cpu-t, #fff); }
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ram { background: var(--cc-rb-ram, #2f9d8b); color: var(--cc-rb-ram-t, #fff); }
+html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-bw  { background: var(--cc-rb-bw, #8b5cf6); color: var(--cc-rb-bw-t, #fff); }
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ip  { background: var(--cc-rb-ip, #2f6feb); color: var(--cc-rb-ip-t, #fff); }
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-vol { background: var(--cc-rb-vol, #8b5cf6); color: var(--cc-rb-vol-t, #fff); }
 

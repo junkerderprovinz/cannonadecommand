@@ -14,7 +14,8 @@ $sock  = getenv('CC_SOCK') ?: '/var/run/cannonadecommand.sock';
 // virsh --config/--live for CPU/RAM and host-side iptables physdev hashlimit for bandwidth,
 // and never virsh-defines/undefines/creates a domain).
 $allow = ['state' => ['GET'], 'stats' => ['GET'], 'hostcpu' => ['GET'], 'action' => ['POST'], 'limits' => ['GET', 'POST'], 'limitlog' => ['GET'],
-    'bwstatus' => ['GET'], 'plan' => ['GET', 'PUT'], 'apply' => ['POST'], 'config' => ['GET', 'PUT'], 'vms' => ['GET'], 'vmlimits' => ['POST']];
+    'bwstatus' => ['GET'], 'plan' => ['GET', 'PUT'], 'apply' => ['POST'], 'config' => ['GET', 'PUT'], 'vms' => ['GET'], 'vmlimits' => ['POST'],
+    'vmdisks' => ['GET'], 'vmdiskresize' => ['POST']];
 
 $path   = isset($_GET['path']) ? preg_replace('/[^a-z]/', '', $_GET['path']) : '';
 $method = $_SERVER['REQUEST_METHOD'];
@@ -29,7 +30,7 @@ if (!isset($allow[$path]) || !in_array($method, $allow[$path], true)) {
 
 // Forward only the query params each path explicitly needs (allowlist, like
 // $allow) so no attacker-supplied param ever reaches the engine unfiltered.
-$qallow = ['limits' => ['name'], 'bwstatus' => ['name']];
+$qallow = ['limits' => ['name'], 'bwstatus' => ['name'], 'vmdisks' => ['name']];
 $extra = [];
 if (isset($qallow[$path])) {
     foreach ($qallow[$path] as $k) {

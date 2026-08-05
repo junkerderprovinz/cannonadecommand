@@ -259,7 +259,7 @@
     } catch (e) {}
     return "";
   }
-  function vmApi(method, path, body) {
+  function vmApi(method, path, body, query) {
     var o = { method: method, headers: { Accept: "application/json" } };
     if (method !== "GET") {
       // emhttp only accepts a POST whose csrf_token is a FORM-BODY field; ccapi.php unwraps
@@ -268,7 +268,9 @@
       o.headers["Content-Type"] = "application/x-www-form-urlencoded";
       o.body = (tk ? "csrf_token=" + encodeURIComponent(tk) + "&" : "") + "data=" + encodeURIComponent(JSON.stringify(body || {}));
     }
-    return fetch(CCPROXY + "?path=" + encodeURIComponent(path), o).then(function (r) {
+    // extra query (e.g. name=… for vmdisks) rides ALONGSIDE ?path=… — ccapi.php sanitises
+    // path to [a-z] and forwards only the params on its own per-path $qallow list.
+    return fetch(CCPROXY + "?path=" + encodeURIComponent(path) + (query ? "&" + query : ""), o).then(function (r) {
       return r.text().then(function (t) {
         var j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
         if (!r.ok) throw new Error((j && j.error) || ("HTTP " + r.status));
@@ -294,51 +296,164 @@
     if (hint) { var hh = el("div", null, hint); hh.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a)"; wrap.appendChild(hh); }
     return { wrap: wrap, input: inp };
   }
-  function openVmEditor(name) {
+  // BW badge VALUE: the CONFIGURED cap per direction (↓ download / ↑ upload), mirroring Docker's
+  // live BW badge shape. "–" when uncapped; k/M formatting like the container BW pills.
+  function vmBwText(lim) {
+    var d = lim && lim.inKbit > 0, u = lim && lim.outKbit > 0;
+    if (!d && !u) return "–";
+    function fmt(k) { return k >= 1000 ? (Math.round(k / 100) / 10) + "M" : k + "k"; }
+    return "↓" + (d ? fmt(lim.inKbit) : "∞") + " ↑" + (u ? fmt(lim.outKbit) : "∞");
+  }
+  // Gear colour — VERBATIM method from docker.js gearFill so the VM gears read the SAME palette:
+  // rainbow stamps the kind var (--cc-rb-<kind>) and lets CSS decide the rest; accent/native mode
+  // fills inline with priority (Unraid's theme CSS would otherwise beat the stylesheet).
+  function vmGearFill(lb, set, kind) {
+    var rbOn = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1";
+    if (rbOn && kind) {
+      lb.style.removeProperty("background"); lb.style.removeProperty("color");
+      lb.style.setProperty("--cc-rb-c", "var(--cc-rb-" + kind + ", var(--cc-accent, #2f6feb))");
+      lb.style.setProperty("--cc-rb-ct", "var(--cc-rb-" + kind + "-t, #fff)");
+      return;
+    }
+    lb.style.removeProperty("--cc-rb-c"); lb.style.removeProperty("--cc-rb-ct");
+    var bg = set ? ccAccent() : "#4a4a4a", tx = "#f2f2f2";
+    if (set) tx = ccIdeal(bg);
+    lb.style.setProperty("background", bg, "important");
+    lb.style.setProperty("color", tx, "important");
+  }
+  var GEAR_TIP = {
+    cpu: VMDE ? "CPU (Pin + Limit)" : "CPU (pin + limit)", ram: VMDE ? "RAM (Balloon)" : "RAM (balloon)",
+    bw: VMDE ? "Bandbreite" : "Bandwidth", disk: VMDE ? "vDisk live vergrößern" : "grow vDisk live"
+  };
+  // One cc-limbtn gear (Docker-identical class + look), coloured per kind, opening the focused
+  // editor for that resource. The disk gear colours as "vol" (matching the vDisks badge) but keeps
+  // its own cc-lim-disk class + editor target.
+  function vmGear(name, which, set) {
+    var colorKind = which === "disk" ? "vol" : which;
+    var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "") + " cc-lim-" + which); lb.textContent = "⚙";
+    vmGearFill(lb, set, colorKind);
+    lb.title = GEAR_TIP[which] + " · " + (set ? (VMDE ? "gesetzt" : "set") : (VMDE ? "Standard" : "default"));
+    lb.addEventListener("click", function (e) {
+      e.preventDefault(); e.stopPropagation();
+      if (vmLims[name]) openVmEd(name, which); else loadVmLims().then(function () { openVmEd(name, which); });
+    });
+    return lb;
+  }
+  // After the async limits load (or an editor Apply) update each built resource group's gears
+  // (set-state + colour) and BW badge text IN PLACE — #kvm_list rows are stable and won't rebuild.
+  function syncGear(g, set, kind) { if (!g) return; g.classList.toggle("cc-limbtn-set", set); vmGearFill(g, set, kind); }
+  function limSet(lim) {
+    return {
+      cpu: !!(lim.cpuCap > 0 || (lim.cpuCores && lim.cpuCores !== "" && lim.cpuCores !== "0-127")),
+      ram: !!(lim.memMiB > 0 && lim.maxMemMiB > 0 && lim.memMiB < lim.maxMemMiB),
+      bw: !!(lim.inKbit > 0 || lim.outKbit > 0)
+    };
+  }
+  function refreshResGroup(group) {
+    var name = group.getAttribute("data-cc-vm"); if (!name) return;
+    var lim = vmLims[name] || {}, s = limSet(lim);
+    syncGear(group.querySelector(".cc-lim-cpu"), s.cpu, "cpu");
+    syncGear(group.querySelector(".cc-lim-ram"), s.ram, "ram");
+    syncGear(group.querySelector(".cc-lim-bw"), s.bw, "bw");
+    var bwv = group.querySelector(".cc-b-bw .cc-b-v"); if (bwv) bwv.textContent = vmBwText(lim);
+  }
+  function refreshAllRes() { try { Array.prototype.forEach.call(document.querySelectorAll("#kvm_list .cc-resgroup[data-cc-vm]"), refreshResGroup); } catch (e) {} }
+  // one resource line: badge + its gear, side by side (docker.js resLine). Gear optional.
+  function vmResLine(badge, gear) { var l = el("div", "cc-resline"); l.appendChild(badge); if (gear) l.appendChild(gear); return l; }
+  // vDISK live-resize rows: one per resizable disk, grow-only (the engine rejects a shrink).
+  function diskRow(name, d, statusEl) {
+    var known = d.capacityBytes > 0;
+    var curG = known ? (Math.round(d.capacityBytes / 1073741824 * 100) / 100) : 0;
+    var row = el("div"); row.style.cssText = "display:flex;align-items:center;gap:8px;margin:0 0 7px 0";
+    var lab = el("div"); lab.style.cssText = "flex:1;min-width:0;font-size:12px;color:var(--cc-text,#e6e6e6)";
+    var tgt = el("span", null, d.target); tgt.style.cssText = "font-weight:600";
+    var cur = el("span", null, "  " + (known ? curG + " GiB" : (VMDE ? "Größe unbekannt" : "size unknown"))); cur.style.cssText = "color:var(--cc-text-dim,#8a8a8a);font-family:Consolas,monospace";
+    lab.appendChild(tgt); lab.appendChild(cur);
+    if (!known) { row.appendChild(lab); return row; }   // source missing -> no size to grow from; label only
+    var inp = el("input"); inp.type = "number"; inp.min = String(curG); inp.step = "1"; inp.value = String(Math.max(1, Math.ceil(curG)));
+    inp.style.cssText = "width:74px;background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:6px 8px;font-size:13px;outline:none";
+    var unit = el("span", null, "GiB"); unit.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a)";
+    var btn = el("button", null, VMDE ? "Vergrößern" : "Grow"); btn.style.cssText = "background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff);border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer";
+    btn.onclick = function () {
+      var g = parseFloat(String(inp.value).replace(",", "."));
+      if (isNaN(g) || g <= curG) { statusEl.style.color = "var(--cc-err,#d9433f)"; statusEl.textContent = (VMDE ? "nur vergrößern — > " : "grow only — > ") + curG + " GiB"; return; }
+      btn.disabled = true; statusEl.style.color = "var(--cc-text-dim,#8a8a8a)"; statusEl.textContent = VMDE ? "Vergrößern läuft…" : "resizing…";
+      vmApi("POST", "vmdiskresize", { name: name, target: d.target, size_gib: g }).then(function () {
+        btn.disabled = false; statusEl.style.color = "var(--cc-ok,#1f9d55)"; statusEl.textContent = (VMDE ? "vergrößert auf " : "grown to ") + g + " GiB" + (VMDE ? " · Gast muss Partition/FS erweitern" : " · guest must extend partition/FS");
+        curG = g; cur.textContent = "  " + g + " GiB"; d.capacityBytes = g * 1073741824; inp.min = String(g);
+      }).catch(function (e) { btn.disabled = false; statusEl.style.color = "var(--cc-err,#d9433f)"; statusEl.textContent = String(e.message || e).slice(0, 70); });
+    };
+    row.appendChild(lab); row.appendChild(inp); row.appendChild(unit); row.appendChild(btn);
+    return row;
+  }
+  function loadDisks(name, host, statusEl) {
+    host.textContent = VMDE ? "lädt…" : "loading…";
+    vmApi("GET", "vmdisks", null, "name=" + encodeURIComponent(name)).then(function (disks) {
+      host.textContent = "";
+      if (!disks || !disks.length) { host.textContent = VMDE ? "keine resizbaren Disks" : "no resizable disks"; return; }
+      disks.forEach(function (d) { host.appendChild(diskRow(name, d, statusEl)); });
+    }).catch(function (e) { host.textContent = String(e.message || e).slice(0, 70); });
+  }
+  // Focused limits editor. `which` = "cpu" | "ram" | "bw" | "disk" | "all" — a gear opens only its
+  // own section (Docker opens one popup per kind); "all"/absent shows everything. CPU/RAM/BW commit
+  // via POST vmlimits; the disk section resizes per-disk via POST vmdiskresize.
+  function openVmEd(name, which) {
+    which = which || "all";
     var v = vmLims[name] || {};
+    var showCpu = which === "all" || which === "cpu", showRam = which === "all" || which === "ram";
+    var showBw = which === "all" || which === "bw", showDisk = which === "all" || which === "disk";
+    var hasLimFields = showCpu || showRam || showBw;
     var ov = el("div"); ov.id = "cc-vmlim-ov";
     ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center";
-    var card = el("div"); card.style.cssText = "background:var(--cc-surface-window,#242424);color:var(--cc-text,#e6e6e6);border-radius:12px;padding:18px 20px;width:360px;max-width:92vw;box-shadow:0 16px 44px rgba(0,0,0,.5);font-family:inherit";
-    var head = el("div", null, (VMDE ? "VM-Limits: " : "VM limits: ") + name); head.style.cssText = "font-size:15px;font-weight:700;margin:0 0 4px 0"; card.appendChild(head);
+    var card = el("div"); card.style.cssText = "background:var(--cc-surface-window,#242424);color:var(--cc-text,#e6e6e6);border-radius:12px;padding:18px 20px;width:420px;max-width:92vw;box-shadow:0 16px 44px rgba(0,0,0,.5);font-family:inherit";
+    var titleMap = { cpu: VMDE ? "CPU-Limit" : "CPU limit", ram: VMDE ? "RAM-Limit" : "RAM limit", bw: VMDE ? "Bandbreite" : "Bandwidth", disk: VMDE ? "vDisk-Größe" : "vDisk size", all: VMDE ? "VM-Limits" : "VM limits" };
+    var head = el("div", null, titleMap[which] + ": " + name); head.style.cssText = "font-size:15px;font-weight:700;margin:0 0 4px 0"; card.appendChild(head);
     var sub = el("div", null, (v.vcpus || 0) + " vCPUs · " + (v.maxMemMiB || 0) + " MiB max" + (v.running ? (VMDE ? " · läuft" : " · running") : (VMDE ? " · gestoppt" : " · stopped")));
     sub.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a);margin:0 0 14px 0"; card.appendChild(sub);
     var cores = (v.cpuCores && v.cpuCores !== "0-127") ? v.cpuCores : "";
-    var f = {
-      cores: vmFld(VMDE ? "CPU-Kerne (Pin)" : "CPU cores (pin)", VMDE ? "z. B. 6-15 · leer = alle" : "e.g. 6-15 · empty = all", cores, "6-15"),
-      cap: vmFld(VMDE ? "CPU-Limit (Kerne)" : "CPU limit (cores)", VMDE ? "0 = unbegrenzt · z. B. 1.5" : "0 = unlimited · e.g. 1.5", v.cpuCap > 0 ? (v.cpuCap / 100) : "", "0"),
-      ram: vmFld("RAM (MiB)", "max " + (v.maxMemMiB || 0) + " MiB", v.memMiB || "", String(v.maxMemMiB || 0)),
-      dn: vmFld("Download (kbit/s)", VMDE ? "0 = unbegrenzt" : "0 = unlimited", v.inKbit || "", "0"),
-      up: vmFld("Upload (kbit/s)", VMDE ? "0 = unbegrenzt" : "0 = unlimited", v.outKbit || "", "0")
-    };
-    [f.cores, f.cap, f.ram, f.dn, f.up].forEach(function (x) { card.appendChild(x.wrap); });
+    var f = {};
+    if (showCpu) {
+      f.cores = vmFld(VMDE ? "CPU-Kerne (Pin)" : "CPU cores (pin)", VMDE ? "z. B. 6-15 · leer = alle" : "e.g. 6-15 · empty = all", cores, "6-15");
+      f.cap = vmFld(VMDE ? "CPU-Limit (Kerne)" : "CPU limit (cores)", VMDE ? "0 = unbegrenzt · z. B. 1.5" : "0 = unlimited · e.g. 1.5", v.cpuCap > 0 ? (v.cpuCap / 100) : "", "0");
+      card.appendChild(f.cores.wrap); card.appendChild(f.cap.wrap);
+    }
+    if (showRam) { f.ram = vmFld("RAM (MiB)", "max " + (v.maxMemMiB || 0) + " MiB", v.memMiB || "", String(v.maxMemMiB || 0)); card.appendChild(f.ram.wrap); }
+    if (showBw) {
+      f.dn = vmFld("Download (kbit/s)", VMDE ? "0 = unbegrenzt" : "0 = unlimited", v.inKbit || "", "0");
+      f.up = vmFld("Upload (kbit/s)", VMDE ? "0 = unbegrenzt" : "0 = unlimited", v.outKbit || "", "0");
+      card.appendChild(f.dn.wrap); card.appendChild(f.up.wrap);
+    }
+    if (showDisk) {
+      var dsec = el("div"); dsec.style.cssText = "margin:2px 0 6px 0";
+      var dlbl = el("div", null, VMDE ? "vDisks — Live-Resize (nur vergrößern)" : "vDisks — live resize (grow only)"); dlbl.style.cssText = "font-size:12px;font-weight:600;margin:0 0 8px 0;color:var(--cc-text,#e6e6e6)";
+      var dlist = el("div"); dlist.style.cssText = "font-size:12px;color:var(--cc-text-dim,#8a8a8a)";
+      var dstat = el("div"); dstat.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a);margin-top:2px";
+      dsec.appendChild(dlbl); dsec.appendChild(dlist); dsec.appendChild(dstat); card.appendChild(dsec);
+      loadDisks(name, dlist, dstat);
+    }
     var foot = el("div"); foot.style.cssText = "display:flex;gap:8px;align-items:center;margin-top:6px";
     var msg = el("div"); msg.style.cssText = "flex:1;font-size:11px;color:var(--cc-text-dim,#8a8a8a)";
-    var cancel = el("button", null, VMDE ? "Abbrechen" : "Cancel"); cancel.style.cssText = "background:var(--cc-chip,rgba(128,128,128,.18));color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer";
-    var apply = el("button", null, VMDE ? "Anwenden" : "Apply"); apply.style.cssText = "background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff);border:none;border-radius:6px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer";
-    foot.appendChild(msg); foot.appendChild(cancel); foot.appendChild(apply); card.appendChild(foot);
+    var cancel = el("button", null, VMDE ? "Schließen" : "Close"); cancel.style.cssText = "background:var(--cc-chip,rgba(128,128,128,.18));color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer";
+    foot.appendChild(msg); foot.appendChild(cancel);
+    var apply = null;
+    if (hasLimFields) { apply = el("button", null, VMDE ? "Anwenden" : "Apply"); apply.style.cssText = "background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff);border:none;border-radius:6px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer"; foot.appendChild(apply); }
+    card.appendChild(foot);
     ov.appendChild(card); document.body.appendChild(ov);
     function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
     cancel.onclick = close; ov.onclick = function (e) { if (e.target === ov) close(); };
     function intOr(s) { s = (s || "").trim(); if (s === "") return null; var n = parseInt(s, 10); return isNaN(n) ? null : n; }
-    apply.onclick = function () {
+    if (apply) apply.onclick = function () {
       var body = { name: name };
-      body.cpu_cores = f.cores.input.value.trim(); // "" clears the pin
-      var capRaw = f.cap.input.value.trim(); if (capRaw !== "") { var cf = parseFloat(capRaw); if (!isNaN(cf)) body.cpu_cap = Math.max(0, Math.round(cf * 100)); }
-      var ramN = intOr(f.ram.input.value); if (ramN != null && ramN > 0) body.mem_mib = ramN;
-      var dnN = intOr(f.dn.input.value); if (dnN != null) body.in_kbit = Math.max(0, dnN);
-      var upN = intOr(f.up.input.value); if (upN != null) body.out_kbit = Math.max(0, upN);
+      if (f.cores) body.cpu_cores = f.cores.input.value.trim(); // "" clears the pin
+      if (f.cap) { var capRaw = f.cap.input.value.trim(); if (capRaw === "") body.cpu_cap = 0; else { var cf = parseFloat(capRaw.replace(",", ".")); if (!isNaN(cf)) body.cpu_cap = Math.max(0, Math.round(cf * 100)); } }
+      if (f.ram) { var ramN = intOr(f.ram.input.value); if (ramN != null && ramN > 0) body.mem_mib = ramN; }
+      if (f.dn) { var dnN = intOr(f.dn.input.value); if (dnN != null) body.in_kbit = Math.max(0, dnN); }
+      if (f.up) { var upN = intOr(f.up.input.value); if (upN != null) body.out_kbit = Math.max(0, upN); }
       apply.disabled = true; msg.style.color = "var(--cc-text-dim,#8a8a8a)"; msg.textContent = VMDE ? "wird angewendet…" : "applying…";
-      vmApi("POST", "vmlimits", body).then(function (res) { if (res && res.vm) vmLims[name] = res.vm; close(); })
+      vmApi("POST", "vmlimits", body).then(function (res) { if (res && res.vm) vmLims[name] = res.vm; try { refreshAllRes(); } catch (e) {} close(); })
         .catch(function (e) { apply.disabled = false; msg.style.color = "var(--cc-err,#d9433f)"; msg.textContent = String(e.message || e).slice(0, 44); });
     };
-    f.cores.input.focus();
-  }
-  function vmLimGear(name) {
-    var g = el("span", "cc-vmlim-gear"); g.title = VMDE ? "Limits (CPU/RAM/Bandbreite)" : "Limits (CPU/RAM/bandwidth)";
-    g.style.cssText = "display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:999px;background:var(--cc-chip,rgba(128,128,128,.18));color:var(--cc-text-chip,#cfcfcf);cursor:pointer;font-size:11px;margin-top:2px";
-    g.appendChild(el("i", "fa fa-sliders"));
-    g.addEventListener("click", function (e) { e.stopPropagation(); if (vmLims[name]) openVmEditor(name); else loadVmLims().then(function () { openVmEditor(name); }); });
-    return g;
+    if (f.cores) f.cores.input.focus(); else if (f.ram) f.ram.input.focus(); else if (f.dn) f.dn.input.focus();
   }
   // ACTIONS column — Docker-VERBATIM action bar (docker.js actBtn/actBtnOff/tintAct/actionBars/
   // injectActionCell). Each icon is wired to the SAME native global the VM context menu calls
@@ -479,24 +594,28 @@
   // badge in the CPU cell and HIDE the native RAM cell + header. Live children are MOVED (not cloned).
   function vmResCell(cpuTd, ramTd) {
     if (!cpuTd || cpuTd.classList.contains("cc-vmb-cell")) return;
-    var group = el("div", "cc-resgroup");
-    var cpuTxt = (cpuTd.textContent || "").trim();
-    if (cpuTxt && cpuTxt !== "-") {
-      var cb = el("span", "cc-b cc-b-info cc-b-cpu"); cb.appendChild(el("span", "cc-b-k", "CPU"));
-      var cv = el("span", "cc-b-v"); while (cpuTd.firstChild) cv.appendChild(cpuTd.firstChild); cb.appendChild(cv);
-      var cl = el("div", "cc-resline"); cl.appendChild(cb); group.appendChild(cl);
-    }
+    var vmn = vmNameOf(cpuTd.closest("tr"));
+    var lim = (vmn && vmLims[vmn]) || {}, s = limSet(lim);
+    var group = el("div", "cc-resgroup"); if (vmn) group.setAttribute("data-cc-vm", vmn);
+    // CPU line — badge + its own rainbow-kind gear (Docker-identical: docker.js resLine + limGear)
+    var cb = el("span", "cc-b cc-b-info cc-b-cpu"); cb.appendChild(el("span", "cc-b-k", "CPU"));
+    var cv = el("span", "cc-b-v"); var cpuTxt = (cpuTd.textContent || "").trim();
+    if (cpuTxt && cpuTxt !== "-") { while (cpuTd.firstChild) cv.appendChild(cpuTd.firstChild); } else cv.textContent = "–";
+    cb.appendChild(cv);
+    group.appendChild(vmResLine(cb, vmn ? vmGear(vmn, "cpu", s.cpu) : null));
+    // RAM line
     if (ramTd) {
-      var ramTxt = (ramTd.textContent || "").trim();
-      if (ramTxt && ramTxt !== "-") {
-        var rb = el("span", "cc-b cc-b-info cc-b-ram"); rb.appendChild(el("span", "cc-b-k", "RAM"));
-        var rv = el("span", "cc-b-v"); while (ramTd.firstChild) rv.appendChild(ramTd.firstChild); rb.appendChild(rv);
-        var rl = el("div", "cc-resline"); rl.appendChild(rb); group.appendChild(rl);
-      }
+      var rb = el("span", "cc-b cc-b-info cc-b-ram"); rb.appendChild(el("span", "cc-b-k", "RAM"));
+      var rv = el("span", "cc-b-v"); var ramTxt = (ramTd.textContent || "").trim();
+      if (ramTxt && ramTxt !== "-") { while (ramTd.firstChild) rv.appendChild(ramTd.firstChild); } else rv.textContent = "–";
+      rb.appendChild(rv);
+      group.appendChild(vmResLine(rb, vmn ? vmGear(vmn, "ram", s.ram) : null));
       ramTd.style.display = "none"; ramTd.classList.add("cc-vmb-ramcell");   // hidden, reverted in teardown
     }
-    var vmn = vmNameOf(cpuTd.closest("tr"));
-    if (vmn) { var gline = el("div", "cc-resline cc-vmlim-line"); gline.appendChild(vmLimGear(vmn)); group.appendChild(gline); }
+    // BW line — VMs have no native BW cell; the badge shows the CONFIGURED cap (↓/↑), Docker-shaped.
+    var bwB = el("span", "cc-b cc-b-info cc-b-bw"); bwB.appendChild(el("span", "cc-b-k", "BW"));
+    bwB.appendChild(el("span", "cc-b-v", vmBwText(lim)));
+    group.appendChild(vmResLine(bwB, vmn ? vmGear(vmn, "bw", s.bw) : null));
     cpuTd.appendChild(group); cpuTd.classList.add("cc-vmb-cell", "cc-vmb-rescell");
     hideResHeader();
   }
@@ -562,7 +681,12 @@
       var v = el("span", "cc-b-v"); v.textContent = value; b.appendChild(v); return b;
     };
     var wrap = el("span", "cc-vmb-disks");
-    if (disksVal && disksVal !== "-") wrap.appendChild(mk("vDisks", disksVal, "vol"));
+    if (disksVal && disksVal !== "-") {
+      // vDisks badge gets a gear behind it (Docker-style) that opens the live-resize editor.
+      var vmn = vmNameOf(td.closest("tr"));
+      var vdB = mk("vDisks", disksVal, "vol");
+      wrap.appendChild(vmn ? vmResLine(vdB, vmGear(vmn, "disk", false)) : vdB);
+    }
     if (cdsVal) {
       var cdB = mk("CD", cdsVal, "vol");
       if (link) { var cl = link.cloneNode(true); cl.style.marginLeft = "6px"; cdB.querySelector(".cc-b-v").appendChild(cl); }
@@ -663,6 +787,10 @@
     // the existing bars in place (cheaper than a rebuild); passing td.cc-actcell also catches the .cc-actmore
     // extras (a TD sibling of .cc-actbar). tintAct() re-reads cc.rainbow / cc.rbmode / cc.actcolors / cc.accent.
     try { Array.prototype.forEach.call(document.querySelectorAll("#kvm_list td.cc-actcell"), function (cell) { tintAct(cell); }); } catch (e) {}
+    // RE-COLOUR the limit gears on any colour-mode change too: enhanceCells is idempotent (won't
+    // rebuild a built res cell), so a rainbow/accent toggle would otherwise leave the gears' inline
+    // fill stale. refreshAllRes re-runs vmGearFill per gear (cheap; reads the current mode).
+    try { refreshAllRes(); } catch (e) {}
     // adopt-toggle ON (default) -> Docker's cc.* settings; OFF -> own ccv.* keys.
     // Stay even with adopt-off + no tint colour when the Logo-Hintergrund badge is on.
     if (ls("cc.stylevms") === "0" && !ls("ccv.iconcolor") && effK("iconbg") !== "1") return;
@@ -760,7 +888,9 @@
     try { if (location.pathname.replace(/\/+$/, "") !== "/VMs") return; } catch (e) { return; }
     try { window.ccVmsApply = apply; } catch (e) {} // same-tab live toggle hook for the CC Settings page (only set on /VMs, never on the Settings page -> no VmTab.css bleed)
     if (localStorage.getItem("cc.enable.vms") === "0") return; // area disabled in CC settings
-    loadVmLims(); // prime the VM limits for the row gears (refreshed on demand when a gear is clicked)
+    // prime the limits, then colour the gears + fill the BW badges once they land (the first
+    // enhanceCells runs before this async load resolves, so the rows build "unset" and this fixes them).
+    loadVmLims().then(function () { try { refreshAllRes(); } catch (e) {} });
     try {
       arm();
       // Clicking a VM ICON no longer opens the native dropdown — the action icons FLASH instead, pointing

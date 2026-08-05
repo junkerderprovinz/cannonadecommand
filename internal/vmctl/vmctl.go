@@ -61,6 +61,14 @@ type Limits struct {
 	MemMiB   *int    `json:"memMiB,omitempty"`   // balloon target
 }
 
+// Disk is one of a domain's writable block devices (a real disk, never a cdrom). CapacityBytes
+// is the virtual size the guest sees — the number a live-resize grows.
+type Disk struct {
+	Target        string `json:"target"`        // guest-side target dev, e.g. "hdc" / "vda" (the blockresize path)
+	Source        string `json:"source"`        // host-side backing file/volume path
+	CapacityBytes int64  `json:"capacityBytes"` // current virtual size (bytes)
+}
+
 // runner is the virsh shell-out, swappable in tests.
 type runner func(ctx context.Context, args ...string) (string, error)
 
@@ -238,7 +246,109 @@ func (c *Controller) SetCPUCap(ctx context.Context, name string, capPct int) err
 	return err
 }
 
+// ── vDISK LIVE RESIZE ────────────────────────────────────────────────────────────────────
+// Grow a domain's virtual disk without a reboot. A RUNNING domain resizes live via
+// virsh blockresize (QMP tells QEMU to grow the block device — the guest sees the new size
+// after a rescan); a SHUT-OFF domain has no QEMU to talk to, so the backing image file is
+// grown directly with qemu-img resize. GROW ONLY: shrinking a virtual disk truncates it and
+// loses data, so a target at or below the current capacity is refused.
+
+// Disks lists a domain's resizable disk devices (real disks only — cdroms and empty slots are
+// skipped). Each carries its current virtual capacity so the UI can offer a grow-only field.
+func (c *Controller) Disks(ctx context.Context, name string) ([]Disk, error) {
+	out, err := c.run(ctx, "domblklist", name, "--details")
+	if err != nil {
+		return nil, err
+	}
+	var disks []Disk
+	for _, ln := range strings.Split(out, "\n") {
+		f := strings.Fields(ln)
+		// columns: Type Device Target Source (a header + a "---" rule precede the rows)
+		if len(f) < 4 {
+			continue
+		}
+		if (f[0] != "file" && f[0] != "block" && f[0] != "network") || f[1] != "disk" {
+			continue // skip the header, the rule, and cdrom/floppy devices
+		}
+		source := f[3]
+		if source == "-" || source == "" {
+			continue // an empty disk slot has nothing to resize
+		}
+		d := Disk{Target: f[2], Source: source}
+		// domblkinfo prints Capacity/Allocation/Physical as raw BYTES by default (the --human flag is
+		// the opt-in for readable units; --bytes isn't accepted on every libvirt build, e.g. 12.2.0).
+		if bi, e := c.run(ctx, "domblkinfo", name, d.Target); e == nil {
+			d.CapacityBytes = blkCapacity(bi)
+		}
+		disks = append(disks, d)
+	}
+	return disks, nil
+}
+
+// ResizeDisk grows one of a domain's disks (identified by its guest target, e.g. "vda") to
+// newBytes. It refuses a target that is not larger than the disk's current capacity (grow-only).
+func (c *Controller) ResizeDisk(ctx context.Context, name, target string, newBytes int64) error {
+	if newBytes <= 0 {
+		return fmt.Errorf("resize: bad size %d", newBytes)
+	}
+	disks, err := c.Disks(ctx, name)
+	if err != nil {
+		return err
+	}
+	var disk *Disk
+	for i := range disks {
+		if disks[i].Target == target {
+			disk = &disks[i]
+			break
+		}
+	}
+	if disk == nil {
+		return fmt.Errorf("resize: %s has no disk %q", name, target)
+	}
+	// Unknown current size (a missing/unreadable source) means we CAN'T prove the target is a grow —
+	// refuse rather than risk a qemu-img/blockresize that could truncate a disk that is actually larger.
+	if disk.CapacityBytes <= 0 {
+		return fmt.Errorf("resize: current size of %q is unknown (source missing/unreadable) — refusing", target)
+	}
+	if newBytes <= disk.CapacityBytes {
+		return fmt.Errorf("resize is grow-only: %d bytes is not larger than the current %d bytes", newBytes, disk.CapacityBytes)
+	}
+	vm, err := c.Get(ctx, name)
+	if err != nil {
+		return err
+	}
+	if vm.Running {
+		// Live: QMP grows the running block device. The 'B' suffix makes the size byte-exact
+		// (virsh blockresize defaults to KiB otherwise).
+		_, e := c.run(ctx, "blockresize", name, disk.Target, strconv.FormatInt(newBytes, 10)+"B")
+		return e
+	}
+	// Shut off: no QEMU to talk to — grow the backing image file itself.
+	cctx, cancel := context.WithTimeout(ctx, callTimeout)
+	defer cancel()
+	out, e := exec.CommandContext(cctx, "qemu-img", "resize", disk.Source, strconv.FormatInt(newBytes, 10)).CombinedOutput()
+	if e != nil {
+		return fmt.Errorf("qemu-img resize %s: %w: %s", disk.Source, e, strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
 // ── parse helpers (all defensive: a missing/odd field yields the zero value) ──
+
+// blkCapacity reads the byte Capacity out of a `domblkinfo --bytes` block.
+func blkCapacity(info string) int64 {
+	for _, ln := range strings.Split(info, "\n") {
+		if k, v, ok := splitKV(ln); ok && k == "Capacity" {
+			f := strings.Fields(v)
+			if len(f) == 0 {
+				return 0
+			}
+			n, _ := strconv.ParseInt(f[0], 10, 64)
+			return n
+		}
+	}
+	return 0
+}
 
 func splitKV(ln string) (string, string, bool) {
 	i := strings.Index(ln, ":")
