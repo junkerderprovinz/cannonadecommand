@@ -28,7 +28,6 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -80,51 +79,26 @@ func iptArgs(pid int, args ...string) []string {
 	return append([]string{"-t", strconv.Itoa(pid), "-n", "iptables", "-w"}, args...)
 }
 
-// byteRateFactor compensates a legacy-iptables byte-rate bug: legacy builds
-// >= 1.8.12 APPLY a byte rate as BITS — the box (v1.8.13 legacy) enforced
-// exactly 1/8 of the configured cap (30 Mbit set → 3.45 Mbit measured, twice),
-// while the nf_tables build enforces bytes correctly (CI measures 105% of cap).
-// Detected once from `iptables --version`; 8 = compensate, 1 = correct build.
-var (
-	rfOnce         sync.Once
-	byteRateFactor = 1
-)
-
-func rateFactor() int {
-	rfOnce.Do(func() {
-		// Bound the probe: a hung iptables must not block the caller forever behind sync.Once.
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		out, err := exec.CommandContext(ctx, "iptables", "--version").CombinedOutput()
-		if err != nil {
-			return
-		}
-		v := strings.TrimSpace(string(out))
-		if !strings.Contains(v, "(legacy)") {
-			return
-		}
-		var maj, min, patch int
-		if _, err := fmt.Sscanf(v, "iptables v%d.%d.%d", &maj, &min, &patch); err != nil {
-			return
-		}
-		if maj > 1 || min > 8 || (min == 8 && patch >= 12) {
-			byteRateFactor = 8
-		}
-	})
-	return byteRateFactor
-}
+// rateFactor was historically 8 on legacy iptables >= 1.8.12 to compensate a
+// byte-rate bug (the box appeared to enforce ~1/8 of a byte-mode cap). Re-measured
+// on Unraid 7.3.2 (kernel 6.18.38, iptables v1.8.13 legacy) in an isolated netns:
+// a byte-mode hashlimit enforces the configured byte rate CORRECTLY (1,000,000 b/s
+// delivered ~8 Mbit/s; the old compensated 8,000,000 b/s over-delivered ~10x). So
+// that under-enforcement was a transient KERNEL bug, not tied to the iptables
+// version — multiplying by 8 off the version over-limited downloads ~8x on current
+// kernels. No compensation is applied; the byte-mode rule is used as-is.
+func rateFactor() int { return 1 }
 
 // DLRateBytes, DLBurstBytes and RateFactor expose the download-policing byte-rate math
-// (incl. the legacy-iptables x8 compensation) so the VM shaper in package vmctl can build
-// the SAME hashlimit rule host-side on a VM's bridged tap.
+// so the VM shaper in package vmctl can build the SAME hashlimit rule host-side on a
+// VM's bridged tap.
 func DLRateBytes(kbit int) int  { return dlRateBytes(kbit) }
 func DLBurstBytes(kbit int) int { return dlBurstBytes(kbit) }
 func RateFactor() int           { return rateFactor() }
 
 // dlRuleSpec is the hashlimit rule body (everything after the chain name). Split out so
-// the -C check and the -A add use the EXACT same spec, and for unit tests. The rate is
-// multiplied by rateFactor() (see above) — on an affected legacy build the rule TEXT
-// shows 8x the target, but the kernel then enforces the intended byte rate.
+// the -C check and the -A add use the EXACT same spec, and for unit tests. The byte
+// rate is used as-is (rateFactor() is 1; see above).
 func dlRuleSpec(kbit int) []string {
 	f := rateFactor()
 	return []string{"-m", "hashlimit",
