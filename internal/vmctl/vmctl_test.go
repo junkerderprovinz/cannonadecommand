@@ -29,16 +29,16 @@ func TestParsers(t *testing.T) {
 func fakeVirsh(calls *[][]string, state string) runner {
 	return func(_ context.Context, args ...string) (string, error) {
 		*calls = append(*calls, args)
-		switch {
-		case args[0] == "dominfo":
+		switch args[0] {
+		case "dominfo":
 			return "State:          " + state + "\nCPU(s):         2\nMax memory:     4194304 KiB\nUsed memory:    4194304 KiB", nil
-		case args[0] == "vcpupin":
+		case "vcpupin":
 			return " VCPU   CPU Affinity\n 0      0-7\n 1      0-7", nil
-		case args[0] == "schedinfo":
+		case "schedinfo":
 			return "vcpu_period    : 0\nvcpu_quota     : 0", nil
-		case args[0] == "domiflist":
+		case "domiflist":
 			return " Interface Type Source Model MAC\n - bridge br0 virtio-net 52:54:00:aa:bb:cc", nil
-		case args[0] == "domiftune":
+		case "domiftune":
 			return "inbound.average: 0\noutbound.average: 0", nil
 		}
 		return "", nil

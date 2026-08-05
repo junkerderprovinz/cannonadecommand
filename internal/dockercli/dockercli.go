@@ -600,7 +600,7 @@ func (c *Client) Exec(ctx context.Context, ref string, cmd []string) (int, error
 	if err != nil {
 		return -1, err
 	}
-	defer startResp.Body.Close()
+	defer func() { _ = startResp.Body.Close() }()
 	if startResp.StatusCode != http.StatusOK && startResp.StatusCode != http.StatusCreated {
 		return -1, apiError(startResp) // a failed exec-start must not later read as a clean exit 0 ("ready")
 	}
