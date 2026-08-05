@@ -961,7 +961,7 @@ div.js-actions input[type=button] { flex: none !important; background: var(--cc-
 /* #8 (user, REVERSAL of the earlier top-right pin): the Basic/Advanced view toggle STAYS in the bottom
    action bar, right-aligned — exactly where it was ("der bleibt immer auf der unteren leiste"). */
 div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; }
-div.js-actions .cc-bar-adv-lbl { color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+div.js-actions .cc-bar-adv-lbl { color: #cfcfcf; font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 div.js-actions input[type=button]:hover { filter: brightness(1.14); }
 
 /* ___ ShipLog integration: when its changelog bubble is on the Docker tab,
@@ -1114,6 +1114,12 @@ html.cc-docker-on.cc-on-addct .cc-dsel-trigger {
   min-width: 260px; min-height: 32px; box-sizing: border-box;
   background: rgba(255, 255, 255, .07); border-radius: 6px; padding: 4px 10px; color: #eaeaea; cursor: pointer;
 }
+/* light themes: the inline trigger sits on the light FORM (the panel it opens stays a dark overlay),
+   so it needs a dark-on-light fill + dark text/caret — the faint white overlay + light text vanishes. */
+html.Theme--white.cc-docker-on.cc-on-addct .cc-dsel-trigger,
+html.Theme--azure.cc-docker-on.cc-on-addct .cc-dsel-trigger { background: rgba(0, 0, 0, .06); color: #1c1c1c; }
+html.Theme--white.cc-docker-on.cc-on-addct .cc-dsel-trigger::after,
+html.Theme--azure.cc-docker-on.cc-on-addct .cc-dsel-trigger::after { border-top-color: #555; }
 html.cc-docker-on.cc-on-addct .cc-dsel-trigger::after {
   content: ""; flex: 0 0 auto; width: 0; height: 0; margin-left: 4px;
   border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #cfcfcf;   /* dropdown caret */
@@ -1443,7 +1449,7 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-b:not(.cc-plan-on) { b
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b:not(.cc-plan-on),
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b:not(.cc-plan-on) { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
 /* bottom action bar: the docked .js-actions buttons rest grey, palette colour on hover */
-html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:not(:disabled) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
+html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:not(:disabled) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
 html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:hover:not(:disabled) { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
 /* page tabs: NON-active tabs rest grey (paintTabs stamps --cc-rb-c per tab for the hover);
    the [aria-selected=true] tab stays painted */
