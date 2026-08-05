@@ -93,3 +93,11 @@ html.Theme--azure {
 /* Tracked small-caps micro-labels — the signature of premium data UIs (Carbon/Linear); the keys were
    untracked shrunk caps before. */
 .cc-b-k { text-transform: uppercase; letter-spacing: .4px; }
+/* State encoded in FORM as well as colour: a small leading glyph per state badge, so running vs stopped
+   reads even in the light theme, in greyscale and for colour-blind users (where green vs red collapse). */
+.cc-badge-running::before { content: "\25B8"; }   /* ▸ */
+.cc-badge-paused::before  { content: "\2016"; }   /* ‖ */
+.cc-badge-exited::before, .cc-badge-created::before { content: "\25A0"; }   /* ■ */
+.cc-badge-dead::before    { content: "\2715"; }   /* ✕ */
+.cc-badge-running::before, .cc-badge-paused::before, .cc-badge-exited::before,
+.cc-badge-created::before, .cc-badge-dead::before { margin-right: 5px; font-size: .82em; opacity: .92; }
