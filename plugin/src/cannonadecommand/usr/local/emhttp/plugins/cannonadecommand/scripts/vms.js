@@ -242,6 +242,104 @@
   // cells (they carry live markup) or the autostart cell (styled purely by CSS).
   // el() + badgeInfo() ported from docker.js so the VM badges use Docker's EXACT classes/structure.
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
+
+  // ── CC VM LIMITS ─ a gear per VM row opens an editor for CPU pin/cap, RAM (balloon) and
+  //    up/down bandwidth; the engine applies CPU/RAM via virsh (domain XML) and bandwidth
+  //    host-side (iptables physdev hashlimit, re-asserted by the monitor). Proxy = the same
+  //    ccapi.php the Docker tab uses. Self-contained + theme-aware via the global CC tokens
+  //    (docker.css's cc-pop styling isn't loaded on /VMs).
+  var VMDE = (function () { try { return /de/i.test(document.documentElement.lang || "") || (localStorage.getItem("locale") || "").indexOf("de") === 0; } catch (e) { return false; } })();
+  var CCPROXY = "/plugins/cannonadecommand/server/ccapi.php";
+  var vmLims = {}; // name -> the VM's current limits from /api/vms
+  function vmCsrf() {
+    try {
+      if (typeof window.csrf_token !== "undefined" && window.csrf_token) return window.csrf_token;
+      var fe = document.querySelector('input[name="csrf_token"]'); if (fe && fe.value) return fe.value;
+      var m = (document.cookie || "").match(/csrf_token=([0-9A-Za-z]+)/); if (m) return m[1];
+    } catch (e) {}
+    return "";
+  }
+  function vmApi(method, path, body) {
+    var o = { method: method, headers: { Accept: "application/json" } };
+    if (method !== "GET") {
+      // emhttp only accepts a POST whose csrf_token is a FORM-BODY field; ccapi.php unwraps
+      // `data` back into the JSON body for the engine (an empty 200 = the token was dropped).
+      var tk = vmCsrf();
+      o.headers["Content-Type"] = "application/x-www-form-urlencoded";
+      o.body = (tk ? "csrf_token=" + encodeURIComponent(tk) + "&" : "") + "data=" + encodeURIComponent(JSON.stringify(body || {}));
+    }
+    return fetch(CCPROXY + "?path=" + encodeURIComponent(path), o).then(function (r) {
+      return r.text().then(function (t) {
+        var j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
+        if (!r.ok) throw new Error((j && j.error) || ("HTTP " + r.status));
+        if (method !== "GET" && j == null) throw new Error(VMDE ? "leere Antwort (csrf verworfen?)" : "empty response (csrf dropped?)");
+        return j;
+      });
+    });
+  }
+  function loadVmLims() {
+    return vmApi("GET", "vms").then(function (list) { vmLims = {}; if (Array.isArray(list)) list.forEach(function (v) { vmLims[v.name] = v; }); }).catch(function () {});
+  }
+  function vmNameOf(tr) {
+    var h = tr && tr.querySelector("td.vm-name [onclick*='addVMContext']");
+    var m = /addVMContext\('([^']+)'/.exec(h ? (h.getAttribute("onclick") || "") : "");
+    return m ? m[1] : null;
+  }
+  function vmFld(label, hint, value, ph) {
+    var wrap = el("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:3px;margin:0 0 10px 0";
+    var l = el("label", null, label); l.style.cssText = "font-size:12px;font-weight:600;color:var(--cc-text,#e6e6e6)";
+    var inp = el("input"); inp.type = "text"; inp.value = (value == null ? "" : String(value)); if (ph != null) inp.placeholder = String(ph);
+    inp.style.cssText = "background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:6px 10px;font-size:13px;outline:none";
+    wrap.appendChild(l); wrap.appendChild(inp);
+    if (hint) { var hh = el("div", null, hint); hh.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a)"; wrap.appendChild(hh); }
+    return { wrap: wrap, input: inp };
+  }
+  function openVmEditor(name) {
+    var v = vmLims[name] || {};
+    var ov = el("div"); ov.id = "cc-vmlim-ov";
+    ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center";
+    var card = el("div"); card.style.cssText = "background:var(--cc-surface-window,#242424);color:var(--cc-text,#e6e6e6);border-radius:12px;padding:18px 20px;width:360px;max-width:92vw;box-shadow:0 16px 44px rgba(0,0,0,.5);font-family:inherit";
+    var head = el("div", null, (VMDE ? "VM-Limits: " : "VM limits: ") + name); head.style.cssText = "font-size:15px;font-weight:700;margin:0 0 4px 0"; card.appendChild(head);
+    var sub = el("div", null, (v.vcpus || 0) + " vCPUs · " + (v.maxMemMiB || 0) + " MiB max" + (v.running ? (VMDE ? " · läuft" : " · running") : (VMDE ? " · gestoppt" : " · stopped")));
+    sub.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a);margin:0 0 14px 0"; card.appendChild(sub);
+    var cores = (v.cpuCores && v.cpuCores !== "0-127") ? v.cpuCores : "";
+    var f = {
+      cores: vmFld(VMDE ? "CPU-Kerne (Pin)" : "CPU cores (pin)", VMDE ? "z. B. 6-15 · leer = alle" : "e.g. 6-15 · empty = all", cores, "6-15"),
+      cap: vmFld(VMDE ? "CPU-Limit (Kerne)" : "CPU limit (cores)", VMDE ? "0 = unbegrenzt · z. B. 1.5" : "0 = unlimited · e.g. 1.5", v.cpuCap > 0 ? (v.cpuCap / 100) : "", "0"),
+      ram: vmFld("RAM (MiB)", "max " + (v.maxMemMiB || 0) + " MiB", v.memMiB || "", String(v.maxMemMiB || 0)),
+      dn: vmFld("Download (kbit/s)", VMDE ? "0 = unbegrenzt" : "0 = unlimited", v.inKbit || "", "0"),
+      up: vmFld("Upload (kbit/s)", VMDE ? "0 = unbegrenzt" : "0 = unlimited", v.outKbit || "", "0")
+    };
+    [f.cores, f.cap, f.ram, f.dn, f.up].forEach(function (x) { card.appendChild(x.wrap); });
+    var foot = el("div"); foot.style.cssText = "display:flex;gap:8px;align-items:center;margin-top:6px";
+    var msg = el("div"); msg.style.cssText = "flex:1;font-size:11px;color:var(--cc-text-dim,#8a8a8a)";
+    var cancel = el("button", null, VMDE ? "Abbrechen" : "Cancel"); cancel.style.cssText = "background:var(--cc-chip,rgba(128,128,128,.18));color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer";
+    var apply = el("button", null, VMDE ? "Anwenden" : "Apply"); apply.style.cssText = "background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff);border:none;border-radius:6px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer";
+    foot.appendChild(msg); foot.appendChild(cancel); foot.appendChild(apply); card.appendChild(foot);
+    ov.appendChild(card); document.body.appendChild(ov);
+    function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
+    cancel.onclick = close; ov.onclick = function (e) { if (e.target === ov) close(); };
+    function intOr(s) { s = (s || "").trim(); if (s === "") return null; var n = parseInt(s, 10); return isNaN(n) ? null : n; }
+    apply.onclick = function () {
+      var body = { name: name };
+      body.cpu_cores = f.cores.input.value.trim(); // "" clears the pin
+      var capRaw = f.cap.input.value.trim(); if (capRaw !== "") { var cf = parseFloat(capRaw); if (!isNaN(cf)) body.cpu_cap = Math.max(0, Math.round(cf * 100)); }
+      var ramN = intOr(f.ram.input.value); if (ramN != null && ramN > 0) body.mem_mib = ramN;
+      var dnN = intOr(f.dn.input.value); if (dnN != null) body.in_kbit = Math.max(0, dnN);
+      var upN = intOr(f.up.input.value); if (upN != null) body.out_kbit = Math.max(0, upN);
+      apply.disabled = true; msg.style.color = "var(--cc-text-dim,#8a8a8a)"; msg.textContent = VMDE ? "wird angewendet…" : "applying…";
+      vmApi("POST", "vmlimits", body).then(function (res) { if (res && res.vm) vmLims[name] = res.vm; close(); })
+        .catch(function (e) { apply.disabled = false; msg.style.color = "var(--cc-err,#d9433f)"; msg.textContent = String(e.message || e).slice(0, 44); });
+    };
+    f.cores.input.focus();
+  }
+  function vmLimGear(name) {
+    var g = el("span", "cc-vmlim-gear"); g.title = VMDE ? "Limits (CPU/RAM/Bandbreite)" : "Limits (CPU/RAM/bandwidth)";
+    g.style.cssText = "display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:999px;background:var(--cc-chip,rgba(128,128,128,.18));color:var(--cc-text-chip,#cfcfcf);cursor:pointer;font-size:11px;margin-top:2px";
+    g.appendChild(el("i", "fa fa-sliders"));
+    g.addEventListener("click", function (e) { e.stopPropagation(); if (vmLims[name]) openVmEditor(name); else loadVmLims().then(function () { openVmEditor(name); }); });
+    return g;
+  }
   // ACTIONS column — Docker-VERBATIM action bar (docker.js actBtn/actBtnOff/tintAct/actionBars/
   // injectActionCell). Each icon is wired to the SAME native global the VM context menu calls
   // (vmmanager.js addVMContext). Per-VM context is read from the logo span#vm-<uuid> id + its
@@ -397,6 +495,8 @@
       }
       ramTd.style.display = "none"; ramTd.classList.add("cc-vmb-ramcell");   // hidden, reverted in teardown
     }
+    var vmn = vmNameOf(cpuTd.closest("tr"));
+    if (vmn) { var gline = el("div", "cc-resline cc-vmlim-line"); gline.appendChild(vmLimGear(vmn)); group.appendChild(gline); }
     cpuTd.appendChild(group); cpuTd.classList.add("cc-vmb-cell", "cc-vmb-rescell");
     hideResHeader();
   }
@@ -660,6 +760,7 @@
     try { if (location.pathname.replace(/\/+$/, "") !== "/VMs") return; } catch (e) { return; }
     try { window.ccVmsApply = apply; } catch (e) {} // same-tab live toggle hook for the CC Settings page (only set on /VMs, never on the Settings page -> no VmTab.css bleed)
     if (localStorage.getItem("cc.enable.vms") === "0") return; // area disabled in CC settings
+    loadVmLims(); // prime the VM limits for the row gears (refreshed on demand when a gear is clicked)
     try {
       arm();
       // Clicking a VM ICON no longer opens the native dropdown — the action icons FLASH instead, pointing

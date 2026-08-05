@@ -9,8 +9,12 @@ $sock  = getenv('CC_SOCK') ?: '/var/run/cannonadecommand.sock';
 // state/stats: read-only; action: start|stop|restart|pause|unpause (the engine
 // validates the container name against the live list and never exposes
 // create/exec/build); plan/apply: the start-order plan. Nothing else is forwarded.
+// vms: read-only VM list + current limits; vmlimits: apply CPU-pin/cap, RAM, bandwidth to
+// ONE VM (the engine validates the name against the live libvirt domain list, uses only
+// virsh --config/--live for CPU/RAM and host-side iptables physdev hashlimit for bandwidth,
+// and never virsh-defines/undefines/creates a domain).
 $allow = ['state' => ['GET'], 'stats' => ['GET'], 'hostcpu' => ['GET'], 'action' => ['POST'], 'limits' => ['GET', 'POST'], 'limitlog' => ['GET'],
-    'bwstatus' => ['GET'], 'plan' => ['GET', 'PUT'], 'apply' => ['POST'], 'config' => ['GET', 'PUT']];
+    'bwstatus' => ['GET'], 'plan' => ['GET', 'PUT'], 'apply' => ['POST'], 'config' => ['GET', 'PUT'], 'vms' => ['GET'], 'vmlimits' => ['POST']];
 
 $path   = isset($_GET['path']) ? preg_replace('/[^a-z]/', '', $_GET['path']) : '';
 $method = $_SERVER['REQUEST_METHOD'];
