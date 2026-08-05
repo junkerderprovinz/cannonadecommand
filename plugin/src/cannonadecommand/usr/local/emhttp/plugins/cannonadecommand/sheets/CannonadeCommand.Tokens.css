@@ -81,3 +81,8 @@ html.Theme--azure {
   --cc-line-solid:  #d0d0d0;
   --cc-badge-neutral: #d8d8d8;      /* light neutral badge so the now-dark chip text stays legible */
 }
+
+/* Edel polish: lock the digit advance-width on every live badge value so a value ticking 9 -> 100%
+   can't twitch the pill (and the whole row column) wider. The values are already monospace; this pins
+   proportional-digit fonts too. Global, both themes. */
+.cc-b-v, .cc-vmstat-chip, .cc-isl-val { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }

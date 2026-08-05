@@ -392,7 +392,12 @@ html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb
 .cc-toast { position: fixed; right: 18px; bottom: 18px; z-index: 100000; background: #161616; color: #e6e6e6; border: none; border-radius: 8px; padding: 9px 14px; font: 12px/1.4 "Segoe UI", system-ui, sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,.5); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .2s, transform .2s; max-width: 60vw; }
 .cc-toast-show { opacity: 1; transform: translateY(0); }
 
-.cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: 92vw; background: var(--cc-bg, #161616); color: var(--cc-txt, #e6e6e6); border: none; border-radius: 10px; box-shadow: 0 14px 40px rgba(0,0,0,.55); font: 13px/1.5 "Segoe UI", system-ui, sans-serif; }
+/* Elevation ramp (tight key shadow + soft wide ambient + a hairline inner top-highlight) so the popover
+   reads as a raised, top-lit surface instead of a flat box on a flat page — separation by LIGHT, no border
+   line. A quick fade-and-rise entrance replaces the blink-on (respecting prefers-reduced-motion below). */
+.cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: 92vw; background: var(--cc-bg, #161616); color: var(--cc-txt, #e6e6e6); border: none; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,.38), 0 14px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05); font: 13px/1.5 "Segoe UI", system-ui, sans-serif; animation: cc-pop-in .14s cubic-bezier(.2,.7,.3,1); }
+@keyframes cc-pop-in { from { opacity: 0; transform: translateY(6px) scale(.985); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cc-pop { animation: none; } }
 /* Neutralise Unraid's global button/input/select theming INSIDE our popover — it
    lives on document.body, OUTSIDE #cc-settings, so without this it inherits the
    orange borders, the uppercasing that clipped our button labels, and the stray
