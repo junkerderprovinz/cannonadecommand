@@ -827,12 +827,16 @@ html.cc-plugins-iconbg .cc-plugico {
 .cc-set-card .cc-set-inline { justify-content: space-between; flex-wrap: nowrap; } /* label left, toggle flush right -> all toggles line up */
 .cc-set-rl { min-width: 110px; }
 /* segFirst rows (Dichte, user): the segmented switches sit LEFT of the label — label natural-width, a touch more gap */
-.cc-set-row-segfirst { gap: 14px; }
-.cc-set-row-segfirst .cc-set-rl { min-width: 0; }
+/* Density row: the "Dichte" label was RIGHT of the segmented control (seg-first) while every other row is
+   label-left / control-right — it read as misaligned (user). Put the label back on the LEFT (order:-1) and
+   push the segments to the right edge (margin-left:auto, mirroring the spacer that pushes the toggles). */
+.cc-set-row-segfirst { gap: 10px; }
+.cc-set-row-segfirst .cc-set-rl { min-width: 0; order: -1; }
+.cc-set-row-segfirst .cc-seg { margin-left: auto; }
 #cc-settings .cc-seg-btn { padding: 5px 12px; }
 .cc-set-spacer { flex: 1; }
 .cc-set-swatches { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 6px; }
-.cc-set-sw { width: 30px; height: 30px; box-sizing: border-box; border-radius: var(--cc-dot-r, 50%); border: 2px solid transparent; cursor: pointer; padding: 0; flex: none; } /* #5: ONE swatch size everywhere (was 22/26 mixed) */ /* swatches follow the badge form like the state dots (user call) */
+.cc-set-sw { width: 30px; height: 30px; box-sizing: border-box; border-radius: var(--cc-b-radius, 50%); border: 2px solid transparent; cursor: pointer; padding: 0; flex: none; } /* #5: ONE swatch size everywhere */ /* colour swatches follow the BADGE SHAPE token like the badges (user: sollen der Badge-Form folgen) */
 .cc-set-sw-on { transform: scale(1.18); filter: brightness(1.15); }   /* ring-free on-state — KEINE Rahmen/Ringe (Nutzer-Gesetz) */
 /* colour picker: force it VISIBLE as a real swatch. Unraid's global input CSS
    (border:none; border-bottom; transparent bg) otherwise strips it to a thin line
@@ -1568,16 +1572,14 @@ html .cc-enh #docker_list .switch-button-background .switch-button-button,
 html .ToggleViewMode .switch-button-background .switch-button-button,
 html div.js-actions input[type=button] { border-radius: var(--cc-b-radius, 999px) !important; }
 
-/* TOGGLES stay a fixed switch metaphor — a PILL track + a CIRCLE knob — never squared by the shape
-   engine above (user #14: the Docker view toggle "sieht komisch aus" — the override forced a 6px track
-   AND a 6px knob, which read as a boxy square, not a switch). This rule is AFTER the master override, so
-   it wins for toggles only; badges/buttons still follow --cc-b-radius. */
-html .cc-set-toggle,
-html .cc-enh #docker_list .switch-button-background,
-html .ToggleViewMode .switch-button-background { border-radius: 999px !important; }
-html .cc-set-knob,
-html .cc-enh #docker_list .switch-button-background .switch-button-button,
-html .ToggleViewMode .switch-button-background .switch-button-button { border-radius: 50% !important; }
+/* TOGGLES now FOLLOW the badge-shape engine too — a system-wide shape engine like the colour one (user,
+   reversing the old #14 pill+circle exemption: "die toggles ... sollen der badge form folgen"). The master
+   override above already lists .cc-set-toggle / .cc-set-knob AND the native view toggle, so dropping the
+   exemption is enough: track + knob now read --cc-b-radius like every other chip. Pill/circle shapes keep
+   the classic switch look; only an explicit rounded/square choice squares them, which is the user's call.
+   The knob still stays round WHENEVER the track is a pill (999px) so the default switch never looks boxy. */
+html .cc-set-toggle.cc-set-toggle { border-radius: var(--cc-b-radius, 999px) !important; }
+html .cc-set-knob.cc-set-knob { border-radius: var(--cc-b-radius, 50%) !important; }
 
 /* Badge-Form "circle" (v2.18.0): round the square container/plugin logo badges to full circles.
    Rectangular data/tab pills stay capsules via --cc-b-radius (999px in circle mode). */
