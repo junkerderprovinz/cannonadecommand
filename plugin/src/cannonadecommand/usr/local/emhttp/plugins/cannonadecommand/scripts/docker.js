@@ -28,6 +28,9 @@
   var SHIPLOG = "/plugins/shiplog/server/status.php";
   var VIEW_KEY = "cc.view", COLS_KEY = "cc.colview2"; // colview2 (v2.22.0): reset the map corrupted by the shared-reference aliasing bug (one checkbox flipped every aliased column -> Simple view lost all network badges)
   var MARK = "data-cc", ROWMARK = "data-cc-row";
+  // A mono, stroked gear (lucide "settings") for the limit buttons — inherits currentColor, so it finally
+  // obeys the accent/rainbow tint like every other control instead of being a multicolour OS emoji ⚙.
+  var CC_GEAR_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
   var PROBES = ["health", "running", "tcp", "http", "exec", "log"], POLICIES = ["abort", "continue", "degrade"];
   var SCHED_ACTIONS = ["start", "stop", "restart"];
   // Docker's badge ACCENT is now adopt-gated like every other area: follow the GLOBAL cc.accent
@@ -350,7 +353,7 @@
       b.addEventListener("click", function (e) {
         e.preventDefault(); e.stopPropagation();
         var txt = String(value).trim();
-        var done = function () { flash((LANG === "de" ? "kopiert: " : "copied: ") + txt); };
+        var done = function () { b.classList.add("cc-copied"); setTimeout(function () { try { b.classList.remove("cc-copied"); } catch (x) {} }, 600); flash((LANG === "de" ? "kopiert: " : "copied: ") + txt); }; // in-place pulse on the copied pill + toast
         try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt).then(done, function () { fallbackCopy(txt); done(); }); return; } } catch (e2) {}
         fallbackCopy(txt); done();
       });
@@ -1765,7 +1768,7 @@
     lb.style.setProperty("color", tx, "important");
   }
   function limGear(name, which, set) {
-    var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "") + " cc-lim-" + which); lb.setAttribute(MARK, "1"); lb.textContent = "⚙";
+    var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "") + " cc-lim-" + which); lb.setAttribute(MARK, "1"); lb.innerHTML = CC_GEAR_SVG;
     gearFill(lb, set, which);   // which = "cpu" | "ram" -> its own rainbow kind
     lb.setAttribute("data-tip", (which === "cpu" ? t("cpuLimit") : t("ramLimit")) + " · " + (set ? t("cfgSet") : t("cfgUnset")));
     lb.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openLimits(lb, name, which); });
@@ -1773,7 +1776,7 @@
   }
   // the Bandwidth gear (third resource line) — opens the egress-limit editor.
   function bwGear(name, set) {
-    var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "") + " cc-lim-bw"); lb.setAttribute(MARK, "1"); lb.textContent = "⚙";
+    var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "") + " cc-lim-bw"); lb.setAttribute(MARK, "1"); lb.innerHTML = CC_GEAR_SVG;
     gearFill(lb, set, "bw");
     lb.setAttribute("data-tip", t("bandwidth") + " · " + (set ? t("cfgSet") : t("cfgUnset")));
     lb.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openBandwidth(lb, name); });

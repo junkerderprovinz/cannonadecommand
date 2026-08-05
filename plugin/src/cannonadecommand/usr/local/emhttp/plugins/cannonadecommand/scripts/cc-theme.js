@@ -25,10 +25,22 @@
   function g(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   function s(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
-  // The canonical 8-hue rainbow (red→pink), byte-identical to the array every area script
-  // (docker/header/settingsgrid/shares) carries verbatim today. One source of truth now; each
-  // area passes its own palette length to rbSeed, so the shared seed rotates them all in step.
-  var RB = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
+  // The canonical 8-hue rainbow (red→pink). JEWEL-CLAMPED (design panel): every hue is generated at ONE
+  // fixed saturation + lightness, so the eight read as a matched set of gemstones instead of eight
+  // max-saturation crayons — the single biggest "toy → edel" move, and it stabilises idealText because the
+  // luminance no longer swings hue to hue. Only the HUE spins; S/L are pinned.
+  function hsl2hex(h, s, l) {
+    h /= 360; var r, g2, b2;
+    if (s === 0) { r = g2 = b2 = l; } else {
+      var hue2rgb = function (p, q, t) { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q; if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p; };
+      var q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1 / 3); g2 = hue2rgb(p, q, h); b2 = hue2rgb(p, q, h - 1 / 3);
+    }
+    var hx = function (x) { var v = Math.round(x * 255).toString(16); return v.length === 1 ? "0" + v : v; };
+    return "#" + hx(r) + hx(g2) + hx(b2);
+  }
+  // hues kept close to the old red/orange/gold/green/teal/blue/violet/pink so the palette stays recognisable
+  var RB = [0, 26, 45, 142, 176, 216, 262, 330].map(function (h) { return hsl2hex(h, 0.50, 0.58); });
 
   // Auto text-contrast: dark ink on light accents, white on dark. Byte-identical to the copy
   // every area script carried (threshold 150 on Rec-601 luma).

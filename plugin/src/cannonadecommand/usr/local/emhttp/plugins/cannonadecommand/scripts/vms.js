@@ -13,6 +13,9 @@
 (function () {
   "use strict";
   var PROXY = "/plugins/cannonadecommand/server/ccapi.php";
+  // mono stroked gear (lucide "settings"), currentColor — same as docker.js, so the VM gears obey the
+  // accent/rainbow tint like a crafted toolset instead of a multicolour OS emoji ⚙.
+  var CC_GEAR_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
   var dead = false, mo = null, liveTimer = null, moPending = false, moTimer = null, moTrail = false, smo = null, smoPending = false, vmBwTimer = null;
   // #22: wrap the memory / disk-IO / network-IO readouts (cols 4-6) of the VM-usage-stats table into
   // CC chips so every cell reads as a badge like the CPU pills. Re-render-safe: guarded by an
@@ -398,7 +401,7 @@
   // its own cc-lim-disk class + editor target.
   function vmGear(name, which, set) {
     var colorKind = which === "disk" ? "vol" : which;
-    var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "") + " cc-lim-" + which); lb.textContent = "⚙";
+    var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "") + " cc-lim-" + which); lb.innerHTML = CC_GEAR_SVG;
     vmGearFill(lb, set, colorKind);
     lb.title = GEAR_TIP[which] + " · " + (set ? (VMDE ? "gesetzt" : "set") : (VMDE ? "Standard" : "default"));
     lb.addEventListener("click", function (e) {
@@ -481,9 +484,17 @@
     var hasLimFields = showCpu || showRam || showBw;
     var ov = el("div"); ov.id = "cc-vmlim-ov";
     ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center";
-    var card = el("div"); card.style.cssText = "background:var(--cc-surface-window,#242424);color:var(--cc-text,#e6e6e6);border-radius:12px;padding:18px 20px;width:420px;max-width:92vw;box-shadow:0 16px 44px rgba(0,0,0,.5);font-family:inherit";
+    // Match the Docker CPU/RAM/BW popover's chrome exactly (user: "gleich machen"): same #161616 surface,
+    // 10px radius, elevation ramp (key + ambient shadow + inner top-highlight) and Segoe stack as .cc-pop.
+    var card = el("div", "cc-rainbow"); card.style.cssText = "background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:10px;padding:14px 16px;width:420px;max-width:92vw;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font:13px/1.5 \"Segoe UI\",system-ui,sans-serif";
     var titleMap = { cpu: VMDE ? "CPU-Limit" : "CPU limit", ram: VMDE ? "RAM-Limit" : "RAM limit", bw: VMDE ? "Bandbreite" : "Bandwidth", disk: VMDE ? "vDisk-Größe" : "vDisk size", all: VMDE ? "VM-Limits" : "VM limits" };
-    var head = el("div", null, titleMap[which] + ": " + name); head.style.cssText = "font-size:15px;font-weight:700;margin:0 0 4px 0"; card.appendChild(head);
+    var head = el("div"); head.style.cssText = "display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:700;margin:0 0 4px 0";
+    head.appendChild(el("span", null, titleMap[which] + ": " + name));
+    var hx = el("span", null, "✕"); hx.style.cssText = "cursor:pointer;color:#8a8a8a;font-weight:400;font-size:14px;line-height:1;transition:color .12s";
+    hx.addEventListener("mouseenter", function () { hx.style.color = "var(--cc-txt,#e6e6e6)"; });
+    hx.addEventListener("mouseleave", function () { hx.style.color = "#8a8a8a"; });
+    hx.addEventListener("click", function () { close(); });
+    head.appendChild(hx); card.appendChild(head);
     var sub = el("div", null, (v.vcpus || 0) + " vCPUs · " + (v.maxMemMiB || 0) + " MiB max" + (v.running ? (VMDE ? " · läuft" : " · running") : (VMDE ? " · gestoppt" : " · stopped")));
     sub.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a);margin:0 0 14px 0"; card.appendChild(sub);
     var cores = (v.cpuCores && v.cpuCores !== "0-127") ? v.cpuCores : "";
@@ -741,7 +752,7 @@
     ips.forEach(function (ip) {
       var b = el("span", "cc-b cc-b-info cc-b-ip cc-b-copy"); b.appendChild(el("span", "cc-b-k", "IP")); b.appendChild(el("span", "cc-b-v", ip));
       b.title = "Klicken zum Kopieren";
-      b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ip); } catch (_) {} });
+      b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ip); } catch (_) {} b.classList.add("cc-copied"); setTimeout(function () { try { b.classList.remove("cc-copied"); } catch (x) {} }, 600); });
       wrap.appendChild(b);
     });
     for (var c = td.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) c.style.display = "none"; }  // hide native, don't destroy -> reversible teardown

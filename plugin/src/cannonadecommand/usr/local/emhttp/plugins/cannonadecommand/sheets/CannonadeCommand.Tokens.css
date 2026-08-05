@@ -101,3 +101,17 @@ html.Theme--azure {
 .cc-badge-dead::before    { content: "\2715"; }   /* ✕ */
 .cc-badge-running::before, .cc-badge-paused::before, .cc-badge-exited::before,
 .cc-badge-created::before, .cc-badge-dead::before { margin-right: 5px; font-size: .82em; opacity: .92; }
+/* Radius canon: three nesting radii so inner and outer corners relate instead of curving at random. */
+html { --cc-r-1: 6px; --cc-r-2: 10px; --cc-r-3: 14px; }
+/* Soft accent focus HALO on keyboard focus (distinct from hover) — a glow, not a border line. color-mix
+   supplies the alpha; the fixed-accent line above it is the fallback for engines without color-mix. */
+:is(.cc-b, .cc-actbtn, .cc-limbtn, .cc-btn, .cc-seg-btn, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core):focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(47, 111, 235, .42);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #2f6feb) 45%, transparent);
+}
+/* In-place copy-flash: the copied pill pulses in its own colour rather than yanking the eye to a corner toast. */
+@keyframes cc-copyflash { 0% { filter: brightness(1); transform: scale(1); } 35% { filter: brightness(1.4); transform: scale(1.06); } 100% { filter: brightness(1); transform: scale(1); } }
+.cc-copied { animation: cc-copyflash .55s ease; }
+/* the mono-SVG gear inside a limit button: centred block, inherits the button's colour via currentColor */
+.cc-limbtn svg { display: block; pointer-events: none; }
