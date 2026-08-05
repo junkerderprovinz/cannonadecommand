@@ -1338,80 +1338,56 @@
       cB.appendChild(dropRow(T("Stärke", "Weight"), [["300", T("Dünn", "Thin")], ["400", "Normal"], ["500", "Medium"], ["650", T("Halbfett", "Semibold")], ["800", T("Fett", "Bold")]], get("cc.brand.weight", "650"), function (v) { set("cc.brand.weight", v); syncHeaderBar(); }));
       // italic (dropdown, not a lone toggle — keep the control set uniform)
       cB.appendChild(dropRow(T("Kursiv", "Italic"), [["0", T("Normal", "Normal")], ["1", T("Kursiv", "Italic")]], get("cc.brand.italic", "0"), function (v) { set("cc.brand.italic", v); syncHeaderBar(); }));
-      // font family (system / web-safe stacks — each option renders in its own face)
-      var FONTS = [
-        ["", T("Standard", "Default")],
-        ['system-ui,-apple-system,"Segoe UI",sans-serif', "System"],
+      // Font family for the wordmark. Genuinely-system faces (render if the client has them) — the old
+      // cursive/fantasy junk (Comic Sans, Papyrus, Brush Script, Lucida Handwriting, Segoe Print/Script,
+      // Copperplate, Rockwell, Sylfaen) is dropped (user: "teilweise echt alt und furchtbar"), and the
+      // web-only families that never rendered without a download come back below as PROPER Google fonts.
+      var SYS = [
         ['Arial,Helvetica,sans-serif', "Arial"],
-        ['"Segoe UI",system-ui,sans-serif', "Segoe UI"],
-        ['Verdana,Geneva,sans-serif', "Verdana"],
-        ['Tahoma,Geneva,sans-serif', "Tahoma"],
-        ['"Trebuchet MS",Helvetica,sans-serif', "Trebuchet MS"],
-        ['"Century Gothic","Apple Gothic",sans-serif', "Century Gothic"],
-        ['Impact,Charcoal,sans-serif', "Impact"],
-        ['Georgia,"Times New Roman",serif', "Georgia"],
-        ['"Times New Roman",Times,serif', "Times New Roman"],
-        ['"Palatino Linotype","Book Antiqua",Palatino,serif', "Palatino"],
-        ['Garamond,"Times New Roman",serif', "Garamond"],
-        ['"Courier New",Courier,monospace', "Courier New"],
-        ['Consolas,"Lucida Console",monospace', "Consolas"],
-        ['"Lucida Console",Monaco,monospace', "Lucida Console"],
-        ['"Comic Sans MS","Comic Sans",cursive', "Comic Sans"],
-        // #Brand-Schriften (user: mehr Schriften) — more distinctive system faces (render if the CLIENT has them)
-        ['Calibri,"Segoe UI",sans-serif', "Calibri"],
-        ['Candara,"Segoe UI",sans-serif', "Candara"],
-        ['Corbel,"Segoe UI",sans-serif', "Corbel"],
-        ['Bahnschrift,"DIN",sans-serif', "Bahnschrift"],
-        ['"Franklin Gothic Medium","Arial Narrow",sans-serif', "Franklin Gothic"],
-        ['"Gill Sans","Gill Sans MT",sans-serif', "Gill Sans"],
-        ['Futura,"Trebuchet MS",sans-serif', "Futura"],
-        ['Optima,Segoe,sans-serif', "Optima"],
-        ['"Segoe UI Black","Arial Black",sans-serif', "Segoe UI Black"],
         ['"Arial Black",Gadget,sans-serif', "Arial Black"],
-        ['Cambria,Georgia,serif', "Cambria"],
-        ['Constantia,Georgia,serif', "Constantia"],
-        ['"Book Antiqua","Palatino Linotype",serif', "Book Antiqua"],
+        ['Bahnschrift,"DIN",sans-serif', "Bahnschrift"],
         ['Baskerville,"Baskerville Old Face",serif', "Baskerville"],
-        ['Rockwell,"Courier Bold",serif', "Rockwell"],
         ['"Bodoni MT","Didot",serif', "Bodoni"],
-        ['Copperplate,"Copperplate Gothic Light",fantasy', "Copperplate"],
+        ['"Book Antiqua","Palatino Linotype",serif', "Book Antiqua"],
+        ['Calibri,"Segoe UI",sans-serif', "Calibri"],
+        ['Cambria,Georgia,serif', "Cambria"],
+        ['Candara,"Segoe UI",sans-serif', "Candara"],
         ['"Cascadia Code","Cascadia Mono",Consolas,monospace', "Cascadia"],
-        ['"Brush Script MT",cursive', "Brush Script"],
-        // more system/web-safe faces (user: "viel mehr Schriften") — each renders if the CLIENT has it, else falls back down its stack
-        ['"Helvetica Neue",Helvetica,Arial,sans-serif', "Helvetica Neue"],
-        ['Roboto,"Segoe UI",sans-serif', "Roboto"],
-        ['"Open Sans","Segoe UI",sans-serif', "Open Sans"],
-        ['Lato,"Segoe UI",sans-serif', "Lato"],
-        ['Montserrat,"Segoe UI",sans-serif', "Montserrat"],
-        ['"Noto Sans","Segoe UI",sans-serif', "Noto Sans"],
-        ['Ubuntu,"Segoe UI",sans-serif', "Ubuntu"],
-        ['"DejaVu Sans",Verdana,sans-serif', "DejaVu Sans"],
-        ['"PT Sans","Segoe UI",sans-serif', "PT Sans"],
-        ['"Source Sans Pro","Segoe UI",sans-serif', "Source Sans Pro"],
-        ['"Fira Sans","Segoe UI",sans-serif', "Fira Sans"],
-        ['Geneva,Verdana,sans-serif', "Geneva"],
-        ['"Segoe UI Semibold","Segoe UI",sans-serif', "Segoe UI Semibold"],
-        ['Merriweather,Georgia,serif', "Merriweather"],
-        ['"PT Serif",Georgia,serif', "PT Serif"],
-        ['"Noto Serif","Times New Roman",serif', "Noto Serif"],
-        ['"DejaVu Serif",Georgia,serif', "DejaVu Serif"],
+        ['"Century Gothic","Apple Gothic",sans-serif', "Century Gothic"],
+        ['Consolas,"Lucida Console",monospace', "Consolas"],
+        ['Constantia,Georgia,serif', "Constantia"],
+        ['Corbel,"Segoe UI",sans-serif', "Corbel"],
+        ['"Courier New",Courier,monospace', "Courier New"],
         ['Didot,"Bodoni MT",serif', "Didot"],
+        ['"Franklin Gothic Medium","Arial Narrow",sans-serif', "Franklin Gothic"],
+        ['Futura,"Trebuchet MS",sans-serif', "Futura"],
+        ['Garamond,"Times New Roman",serif', "Garamond"],
+        ['Geneva,Verdana,sans-serif', "Geneva"],
+        ['Georgia,"Times New Roman",serif', "Georgia"],
+        ['"Gill Sans","Gill Sans MT",sans-serif', "Gill Sans"],
+        ['"Helvetica Neue",Helvetica,Arial,sans-serif', "Helvetica Neue"],
         ['"Hoefler Text",Georgia,serif', "Hoefler Text"],
-        ['Perpetua,Georgia,serif', "Perpetua"],
-        ['Sylfaen,Georgia,serif', "Sylfaen"],
+        ['Impact,Charcoal,sans-serif', "Impact"],
+        ['"Lucida Console",Monaco,monospace', "Lucida Console"],
         ['Menlo,Monaco,monospace', "Menlo"],
         ['Monaco,"Lucida Console",monospace', "Monaco"],
-        ['"DejaVu Sans Mono",Consolas,monospace', "DejaVu Mono"],
-        ['"Fira Code","Cascadia Code",monospace', "Fira Code"],
-        ['"JetBrains Mono","Cascadia Code",monospace', "JetBrains Mono"],
-        ['"Source Code Pro",Consolas,monospace', "Source Code Pro"],
-        ['"Ubuntu Mono","Courier New",monospace', "Ubuntu Mono"],
-        ['"Roboto Mono","Courier New",monospace', "Roboto Mono"],
-        ['"Segoe Script","Brush Script MT",cursive', "Segoe Script"],
-        ['"Segoe Print","Comic Sans MS",cursive', "Segoe Print"],
-        ['"Lucida Handwriting","Comic Sans MS",cursive', "Lucida Handwriting"],
-        ['Papyrus,fantasy', "Papyrus"]
-      ].map(function (f) { return [f[0], f[1], f[0]]; }); // o[2] = self-preview face
+        ['Optima,Segoe,sans-serif', "Optima"],
+        ['"Palatino Linotype","Book Antiqua",Palatino,serif', "Palatino"],
+        ['Perpetua,Georgia,serif', "Perpetua"],
+        ['"Segoe UI",system-ui,sans-serif', "Segoe UI"],
+        ['Tahoma,Geneva,sans-serif', "Tahoma"],
+        ['"Times New Roman",Times,serif', "Times New Roman"],
+        ['"Trebuchet MS",Helvetica,sans-serif', "Trebuchet MS"],
+        ['Verdana,Geneva,sans-serif', "Verdana"]
+      ];
+      var GF = (window.CCTheme && window.CCTheme.gfonts) ? window.CCTheme.gfonts : [];
+      var rest = SYS.slice();
+      GF.forEach(function (gf) { var val = '"' + gf[0] + '",' + gf[1]; rest.push([val, gf[0], val]); }); // Google faces (always render)
+      rest.sort(function (a, b) { return a[1].localeCompare(b[1]); });   // the WHOLE list alphabetical (user)
+      var FONTS = [["", T("Standard", "Default")], ['system-ui,-apple-system,"Segoe UI",sans-serif', "System"]]
+        .concat(rest).map(function (f) { return [f[0], f[1], f[2] || f[0]]; }); // o[2] = self-preview face
+      // load the Google faces so their dropdown previews (and any chosen one on this page) actually render
+      try { if (window.CCTheme && window.CCTheme.loadGFonts) window.CCTheme.loadGFonts(GF.map(function (gf) { return gf[0]; })); } catch (e) {}
       cB.appendChild(dropRow(T("Schriftart", "Font"), FONTS, get("cc.brand.font", ""), function (v) { set("cc.brand.font", v); syncHeaderBar(); }));
       // colour picker + hex (empty = default light)
       var col = get("cc.brand.color", "");
@@ -1429,7 +1405,10 @@
     // docked bell/burger spans. Keys map to the native #menu button classes.
     (function () {
       var cIc = card(T("Kopf-Icons", "Header icons"), T("Blende einzelne Icons oben rechts aus. Aus = versteckt.", "Hide individual icons in the top-right. Off = hidden."));
-      [["lang", T("Sprache", "Language")], ["search", T("Suche", "Search")], ["logout", T("Abmelden", "Logout")], ["terminal", T("Terminal", "Terminal")], ["browse", T("Datei-Verwaltung", "File manager")], ["feedback", T("Feedback", "Feedback")], ["info", T("Info", "Info")], ["log", T("Protokoll", "Log")], ["help", T("Hilfe", "Help")], ["bell", T("Benachrichtigungen", "Notifications")], ["burger", T("Menü", "Menu")]].forEach(function (ic) {
+      // NOTE: "help" is intentionally ABSENT — CC removed the native Help button entirely (its inline help
+      // moved into the ⓘ bubbles), so a hide-toggle for it was dead UI (user: "man kann das hilfeicon noch
+      // ein/ausschalten obwohl wir es gänzlich entfernt haben").
+      [["lang", T("Sprache", "Language")], ["search", T("Suche", "Search")], ["logout", T("Abmelden", "Logout")], ["terminal", T("Terminal", "Terminal")], ["browse", T("Datei-Verwaltung", "File manager")], ["feedback", T("Feedback", "Feedback")], ["info", T("Info", "Info")], ["log", T("Protokoll", "Log")], ["bell", T("Benachrichtigungen", "Notifications")], ["burger", T("Menü", "Menu")]].forEach(function (ic) {
         cIc.appendChild(toggleRow(ic[1], get("cc.hideicon." + ic[0], "0") === "0", function (v) { set("cc.hideicon." + ic[0], v ? "0" : "1"); syncHeaderBar(); }));
       });
       wrapHeader.appendChild(cIc);

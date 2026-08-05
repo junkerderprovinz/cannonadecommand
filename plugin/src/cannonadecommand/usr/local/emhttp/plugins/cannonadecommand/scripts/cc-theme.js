@@ -65,5 +65,36 @@
     return p[((i % p.length) + off) % p.length];
   }
 
-  window.CCTheme = { RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor };
+  // ── Web fonts for the server-name wordmark (user: "schönere schriften z.B. von google fonts"). A curated
+  //    set of beautiful Google families [family, genericFallback], loaded on demand so they render for
+  //    EVERYONE regardless of what the client has installed (the old list only rendered if the client
+  //    happened to have the face). loadGFonts merges families into ONE <link> so the header (the one
+  //    selected family) and the settings dropdown (all, for the previews) never clobber each other.
+  var GFONTS = [
+    ["Anton", "sans-serif"], ["Archivo Black", "sans-serif"], ["Audiowide", "sans-serif"], ["Bebas Neue", "sans-serif"],
+    ["Bitter", "serif"], ["Comfortaa", "sans-serif"], ["Cormorant Garamond", "serif"], ["Fredoka", "sans-serif"],
+    ["Inter", "sans-serif"], ["Lato", "sans-serif"], ["Lobster", "cursive"], ["Merriweather", "serif"],
+    ["Montserrat", "sans-serif"], ["Nunito", "sans-serif"], ["Orbitron", "sans-serif"], ["Oswald", "sans-serif"],
+    ["Outfit", "sans-serif"], ["Pacifico", "cursive"], ["Playfair Display", "serif"], ["Poppins", "sans-serif"],
+    ["Quicksand", "sans-serif"], ["Righteous", "sans-serif"], ["Roboto", "sans-serif"], ["Rubik", "sans-serif"],
+    ["Russo One", "sans-serif"], ["Sora", "sans-serif"], ["Teko", "sans-serif"], ["Work Sans", "sans-serif"]
+  ];
+  function loadGFonts(fams) {
+    try {
+      if (!fams || !fams.length) return;
+      var link = document.getElementById("cc-gfonts");
+      var have = (link && link.dataset.fams) ? link.dataset.fams.split("|") : [];
+      fams.forEach(function (f) { if (f && have.indexOf(f) < 0) have.push(f); });
+      if (!have.length) return;
+      have.sort();
+      var href = "https://fonts.googleapis.com/css2?" + have.map(function (f) { return "family=" + f.replace(/ /g, "+") + ":wght@400;700"; }).join("&") + "&display=swap";
+      if (!link) { link = document.createElement("link"); link.id = "cc-gfonts"; link.rel = "stylesheet"; (document.head || document.documentElement).appendChild(link); }
+      if (link.getAttribute("href") !== href) link.setAttribute("href", href);
+      link.dataset.fams = have.join("|");
+    } catch (e) {}
+  }
+  // primaryFamily("\"Montserrat\",sans-serif") -> "Montserrat"; used to tell if a chosen brand font is a GFONT.
+  function primaryFamily(css) { var m = /^\s*(?:"([^"]+)"|'([^']+)'|([^,]+))/.exec(String(css || "")); return (m ? (m[1] || m[2] || m[3] || "") : "").trim(); }
+
+  window.CCTheme = { RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor, gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily };
 })();

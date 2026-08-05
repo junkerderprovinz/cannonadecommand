@@ -1502,7 +1502,17 @@
       if (/^\d{1,3}$/.test(bSize)) nm.style.fontSize = bSize + "px";
       if (bWeight) nm.style.fontWeight = bWeight;
       nm.style.fontStyle = bItalic === "1" ? "italic" : "normal";
-      if (bFont) nm.style.fontFamily = bFont;
+      if (bFont) {
+        nm.style.fontFamily = bFont;
+        // if the chosen face is one of the curated Google families, load the web font so the wordmark
+        // renders for EVERYONE, not just clients that happen to have it installed.
+        try {
+          if (window.CCTheme && window.CCTheme.loadGFonts && window.CCTheme.gfonts) {
+            var fam = window.CCTheme.primaryFamily(bFont);
+            if (window.CCTheme.gfonts.some(function (gf) { return gf[0] === fam; })) window.CCTheme.loadGFonts([fam]);
+          }
+        } catch (e) {}
+      }
       if (/^#[0-9a-f]{6}$/i.test(bColor)) nm.style.color = bColor;
       nm.appendChild(document.createTextNode(name));
       br.appendChild(nm);
