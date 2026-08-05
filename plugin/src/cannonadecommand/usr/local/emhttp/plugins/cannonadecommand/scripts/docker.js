@@ -544,7 +544,7 @@
   function ccPalActive(def) { try { if (localStorage.getItem("cc.flagmode") === "1") { var f = JSON.parse(localStorage.getItem("cc.flagpal") || "null"); if (f && f.length) return f; } var p = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (p && p.length) return p; } catch (e) {} return def; }
   function applyRainbowPalette() {
     var rt = document.documentElement;
-    if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") { rt.style.removeProperty("--cc-btn-accent"); RB_KINDS.forEach(function (k) { rt.style.removeProperty("--cc-rb-" + k); rt.style.removeProperty("--cc-rb-" + k + "-t"); }); return; }
+    if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") { rt.style.removeProperty("--cc-btn-accent"); RB_KINDS.forEach(function (k) { rt.style.removeProperty("--cc-rb-" + k); rt.style.removeProperty("--cc-rb-" + k + "-t"); }); try { document.querySelectorAll("#docker_list tr.sortable").forEach(function (tr) { tr.style.removeProperty("--cc-rb-c"); tr.style.removeProperty("--cc-rb-ct"); }); } catch (e0) {} return; }
     // rotation is TOGGLEABLE (cc.rainbowrot, default on): off = stable colours (offset 0)
     var off = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
     // user-customised palette (Settings: click a swatch to adjust) overrides the default
@@ -557,6 +557,17 @@
       rt.style.setProperty("--cc-rb-" + k, c);
       rt.style.setProperty("--cc-rb-" + k + "-t", L > 150 ? "#161616" : "#fff"); // auto text contrast
     });
+    // #13: docker rows are coloured per KIND (above), so a row carries no single colour for its logo TILE.
+    // Stamp a per-row rotating --cc-rb-c so the tile can join the rainbow (docker.css gates the tile on
+    // .cc-docker-iconbg.cc-rainbow). Mirrors the Plugins tab (plugins.js stamps --cc-rb-c per row).
+    try {
+      var rows2 = document.querySelectorAll("#docker_list tr.sortable");
+      for (var ri = 0; ri < rows2.length; ri++) {
+        var rc = pal[(ri + off) % pal.length], rn = parseInt(rc.slice(1), 16);
+        var rL = 0.299 * (rn >> 16 & 255) + 0.587 * (rn >> 8 & 255) + 0.114 * (rn & 255);
+        rows2[ri].style.setProperty("--cc-rb-c", rc); rows2[ri].style.setProperty("--cc-rb-ct", rL > 150 ? "#161616" : "#fff");
+      }
+    } catch (e1) {}
   }
   function applySettings() {
     applyRainbowPalette();
@@ -678,6 +689,17 @@
     try {
       if (tr.getAttribute(ROWMARK)) return;
       tr.setAttribute(ROWMARK, "1");
+      // #13: per-row rotating palette colour so the logo TILE can join the rainbow (docker badges are coloured
+      // per KIND, so a row carries no single colour otherwise). Runs here = after the row exists AND on every
+      // reinject (rainbow toggle clears ROWMARK). Cleared when rainbow off. Index = row position.
+      try {
+        if (themingOn() && localStorage.getItem("cc.rainbow") === "1") {
+          var _pp = tr.parentNode, _ix = _pp ? Array.prototype.indexOf.call(_pp.querySelectorAll("tr.sortable"), tr) : 0; if (_ix < 0) _ix = 0;
+          var _of = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET, _pl = ccPalActive(RB_PAL);
+          var _c = _pl[(_ix + _of) % _pl.length], _n = parseInt(_c.slice(1), 16), _L = 0.299 * (_n >> 16 & 255) + 0.587 * (_n >> 8 & 255) + 0.114 * (_n & 255);
+          tr.style.setProperty("--cc-rb-c", _c); tr.style.setProperty("--cc-rb-ct", _L > 150 ? "#161616" : "#fff");
+        } else { tr.style.removeProperty("--cc-rb-c"); tr.style.removeProperty("--cc-rb-ct"); }
+      } catch (_eR) {}
       var name = rowName(tr);
       if (filterText) tr.style.display = (norm(name).indexOf(filterText) >= 0) ? "" : "none";
       var nameCell = tr.querySelector("td.ct-name"), upCell = tr.querySelector("td.updatecolumn");
@@ -1042,9 +1064,16 @@
         var lr = lst && lst.getBoundingClientRect();
         if (lr && lr.width > 0) {
           bar.style.setProperty("left", Math.round(lr.left) + "px", "important");
-          bar.style.setProperty("right", Math.round(document.documentElement.clientWidth - lr.right) + "px", "important");
+          // #17: the native red scroll arrows sit fixed in the bottom-right ~72px zone, but ONLY when the page
+          // scrolls. Normally pin the bar's right edge to the list edge; when arrows are present, CLAMP the
+          // right inset to >=72px so the right-pinned "Einfache Ansicht" toggle stays LEFT of them. (Padding
+          // back to 16px — an earlier 72px padding just narrowed the content and pushed the toggle off-screen.)
+          var arrowsLikely = (document.documentElement.scrollHeight - document.documentElement.clientHeight) > 8;
+          var rightInset = Math.round(document.documentElement.clientWidth - lr.right);
+          if (arrowsLikely) rightInset = Math.max(rightInset, 72);
+          bar.style.setProperty("right", rightInset + "px", "important");
           bar.style.setProperty("width", "auto", "important");
-          bar.style.setProperty("padding-right", "16px", "important");   // fill the inset (native reserved 88px would gap the toggle)
+          bar.style.setProperty("padding-right", "16px", "important");
         }
       }
       colorBarButtons(); // rainbow-tint the native bar buttons (accent handled by CSS)

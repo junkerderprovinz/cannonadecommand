@@ -48,7 +48,7 @@
   // rainbow palette stay independent (no bleed either way).
   function pal() { try { if (g("cc.flagmode", "0") === "1") { var f = JSON.parse(g("cc.flagpal", "null")); if (f && f.length) return f; } var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
   function rbOn() { return g("cc.rainbow", "0") === "1"; }
-  function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "0") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; }
+  function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "1") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; } /* rainbowrot default ON (matches cc-theme.js + docker/plugins/vms); was "0" -> this area sat one rotation off from the rest */
   // rainbow "active only" sub-mode (cc.rbmode=active): idle badges neutral, active painted, hover colours.
   function rbNeutral() { return g("cc.rbmode", "all") === "active"; }
   // /Shares editor is /Shares/Share?name=... -> a strict, trailing-slash-normalised
@@ -159,7 +159,7 @@
     try {
       ccHideSmokeTab();
       var rb = rbOn(), neutral = rb && rbNeutral(), btns = document.querySelectorAll('#displaybox nav.tabs button[role="tab"]');
-      document.documentElement.classList.toggle("cc-shares-rbneutral", neutral); // also set by paintRows; needed here for the /Docker tab bar where paintRows never runs
+      document.documentElement.classList.toggle("cc-shares-rbneutral", rbNeutral()); // also set by paintRows; needed here for the /Docker tab bar where paintRows never runs
       for (var i = 0; i < btns.length; i++) {
         var b = btns[i], active = b.getAttribute("aria-selected") === "true";
         if (!rb) { b.style.removeProperty("background"); b.style.removeProperty("color"); b.style.removeProperty("--cc-rb-c"); b.style.removeProperty("--cc-rb-ct"); continue; }
@@ -349,7 +349,7 @@
       if (g("cc.enable.shares", "0") === "0") return;
       if (pn() !== "/Shares") return;
       var rb = rbOn(), neutral = rb && rbNeutral(), ids = ["shareslist", "disk_list"];
-      document.documentElement.classList.toggle("cc-shares-rbneutral", neutral); // "active only": rows neutral, whole row colours on hover
+      document.documentElement.classList.toggle("cc-shares-rbneutral", rbNeutral()); // "active only": rows neutral, whole row colours on hover
       for (var j = 0; j < ids.length; j++) {
         var tb = document.getElementById(ids[j]); if (!tb) continue;
         var rows = tb.children, ri = 0;
@@ -386,7 +386,7 @@
       if (g("cc.enable.main", "0") === "0") return;
       if (!onMain()) return;
       var rb = rbOn(), neutral = rb && rbNeutral();
-      document.documentElement.classList.toggle("cc-shares-rbneutral", neutral);
+      document.documentElement.classList.toggle("cc-shares-rbneutral", rbNeutral());
       var tbs = document.querySelectorAll("#displaybox table.unraid.disk_status");
       for (var j = 0; j < tbs.length; j++) {
         var rows = tbs[j].querySelectorAll("tbody > tr"), ri = 0;

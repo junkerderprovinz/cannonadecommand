@@ -38,7 +38,7 @@
   // repaints the rainbow swatches and rainbow colours never leak out when the flag is off.
   function pal() { try { if (g("cc.flagmode", "0") === "1") { var f = JSON.parse(g("cc.flagpal", "null")); if (f && f.length) return f; } var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
   function rbOn() { return g("cc.rainbow", "0") === "1"; }
-  function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "0") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; }
+  function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "1") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; } /* rainbowrot default ON (matches cc-theme.js + docker/plugins/vms); was "0" -> the menu bar sat one rotation off from the row badges */
   function lumOf(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return 255; var n = parseInt(m[1], 16); return 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); }
   // #15: a popup TITLE badge sits on the dark (#161616) modal. A near-black palette slot — e.g. the
   // German flag's black stripe — paints an INVISIBLE badge ("oberster Badge zu klein / nicht ordentlich").
@@ -64,7 +64,7 @@
       // removeProperty's, so a disabled area (even with Rainbow ON) never paints and any lingering
       // inline colours are cleared. paintNav runs from apply() + the always-on search observer.
       var rb = rbOn() && document.documentElement.classList.contains("cc-header-on"), neutral = rb && rbNeutral(), n = 0;
-      document.documentElement.classList.toggle("cc-header-rbneutral", neutral);
+      document.documentElement.classList.toggle("cc-header-rbneutral", rbNeutral() && document.documentElement.classList.contains("cc-header-on"));   // #2: reactive class also in Normal mode (rbmode default "all" -> off by default, so this can't change the default look); the paint `neutral` above stays rainbow-keyed
       // each item ALWAYS carries its rotated colour as --cc-rb-c/--cc-rb-ct (for the CSS :hover);
       // the DIRECT background is painted only when NOT neutral, or on the ACTIVE left tab.
       function stamp(elm, c, t) { elm.style.setProperty("--cc-rb-c", c); elm.style.setProperty("--cc-rb-ct", t); }
@@ -693,6 +693,22 @@
         document.addEventListener("keydown", function (e) { if (e.key === "Escape" && document.documentElement.classList.contains("cc-arrange")) { cancelHold(); ccToggleArrange(); } });
         // a long-press that never became a drag must not ALSO navigate (capture phase so it beats the link)
         document.addEventListener("click", function (e) { if (ccSuppressClick) { e.preventDefault(); e.stopPropagation(); ccSuppressClick = false; } }, true);
+        // #8 (user: "um den VM-Tab zu öffnen muss ich immer zweimal klicken"): /VMs is a Tabs="true" inline-eval
+        // page, and a Connect auto-mount / nav-reorder that re-inserts the <a> between mousedown and mouseup can
+        // swallow the FIRST click. This delegated handler lives on document (survives node reinsertion) and forces
+        // a reliable full navigation on the first click. Skipped while dragging (arrange) or already on /VMs.
+        if (!window.__ccVmsClickFix) {
+          window.__ccVmsClickFix = true;
+          document.addEventListener("click", function (e) {
+            try {
+              if (ccSuppressClick || document.documentElement.classList.contains("cc-arrange")) return;
+              var a = e.target && e.target.closest ? e.target.closest('#menu .nav-item:not(.util) a[href="/VMs"]') : null;
+              if (!a) return;
+              if (location.pathname.replace(/\/+$/, "") === "/VMs") return;
+              location.href = "/VMs";
+            } catch (e2) {}
+          }, false);
+        }
       }
     } catch (e) {}
   }
@@ -1681,6 +1697,12 @@
         if (ss.getPropertyValue("min-height") !== "36px") { ss.setProperty("width", "36px", "important"); ss.setProperty("height", "36px", "important"); ss.setProperty("min-width", "36px", "important"); ss.setProperty("min-height", "36px", "important"); }
         if (!proxy) continue;
         var box = proxy.querySelector(".cc-proxy-ghost") || proxy;   // the 36px icon box (not the div, whose margins offset it)
+        // #15 colour modes: mirror this proxy slot's rainbow colour onto the visible trigger so the bell +
+        // burger follow rainbow/flag exactly like the util icons. paintNav() stamps --cc-rb-c on the proxy's
+        // <a> (it matches the util selector); we copy it here. Normal mode -> cleared -> CSS --cc-hdr-accent wins.
+        var pxa = proxy.querySelector("a"), rbc = (rbOn() && pxa) ? pxa.style.getPropertyValue("--cc-rb-c") : "";
+        if (rbc) { ss.setProperty("--cc-rb-c", rbc); ss.setProperty("--cc-rb-ct", pxa.style.getPropertyValue("--cc-rb-ct") || idealText(rbc)); }
+        else { ss.removeProperty("--cc-rb-c"); ss.removeProperty("--cc-rb-ct"); }
         var pr = box.getBoundingClientRect(); if (!pr.width) continue;
         // OVERLAY the live trigger exactly on its proxy slot — the proxy carries the flow/reorder, the
         // trigger carries the clicks + popover anchor. Anchoring to the in-flow proxy (not a computed
@@ -1766,6 +1788,9 @@
       // are handled in ccDockProfile. cc.statenative=1 lets state indicators keep their native colour.
       ["lang", "search", "logout", "terminal", "browse", "feedback", "info", "log", "help", "bell", "burger"].forEach(function (k9) { root.classList.toggle("cc-hideicon-" + k9, g("cc.hideicon." + k9, "0") === "1" && g("cc.theming", "1") !== "0"); });
       root.classList.toggle("cc-state-native", g("cc.statenative", "0") === "1" && g("cc.theming", "1") !== "0");
+      // #10: global rainbow flag on <html> so the unified loader (.cc-nchan-loader) can cycle its colour
+      // once per spin revolution while rainbow is on. Independent of the header AREA being enabled.
+      root.classList.toggle("cc-rb-on", rbOn() && g("cc.theming", "1") !== "0");
       // #4/#11 (user: buttons in den Farbmodi): stamp ONE rainbow/flag "action" colour on <html> so
       // native buttons in EVERY sheet (Freigaben, Tools/Settings sub-pages) can follow the colour mode
       // via var(--cc-rbaccent, <accent>). Flag mode also sets cc.rainbow=1, so rbColor() already yields

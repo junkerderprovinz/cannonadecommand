@@ -53,7 +53,7 @@
   var RB_KINDS = ["net", "ip", "lan", "port", "id", "von", "cpu", "ram", "bw", "version", "vol", "plan"];
   var RB_PAL = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
   if (window.CCTheme) { RB_PAL = window.CCTheme.RB; }  /* single source: shared palette when CCTheme is loaded (global+sync); local copy stays as the fallback */
-  var RB_OFFSET = Math.floor(Math.random() * RB_PAL.length);
+  var RB_OFFSET = window.CCTheme ? window.CCTheme.rbSeed(RB_PAL.length) : Math.floor(Math.random() * RB_PAL.length); // shared PERSISTED seed, aligned with header/docker/shares (was Math.random per reload -> the VM palette reshuffled every load and never matched)
 
   function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   // EXACT-colour tint via an inline SVG feColorMatrix (identical recipe to
@@ -406,7 +406,7 @@
     lb.title = GEAR_TIP[which] + " · " + (set ? (VMDE ? "gesetzt" : "set") : (VMDE ? "Standard" : "default"));
     lb.addEventListener("click", function (e) {
       e.preventDefault(); e.stopPropagation();
-      if (vmLims[name]) openVmEd(name, which); else loadVmLims().then(function () { openVmEd(name, which); });
+      if (vmLims[name]) openVmEd(name, which, lb); else loadVmLims().then(function () { openVmEd(name, which, lb); });
     });
     return lb;
   }
@@ -476,17 +476,19 @@
   // Focused limits editor. `which` = "cpu" | "ram" | "bw" | "disk" | "all" — a gear opens only its
   // own section (Docker opens one popup per kind); "all"/absent shows everything. CPU/RAM/BW commit
   // via POST vmlimits; the disk section resizes per-disk via POST vmdiskresize.
-  function openVmEd(name, which) {
+  function openVmEd(name, which, anchor) {
     which = which || "all";
     var v = vmLims[name] || {};
     var showCpu = which === "all" || which === "cpu", showRam = which === "all" || which === "ram";
     var showBw = which === "all" || which === "bw", showDisk = which === "all" || which === "disk";
     var hasLimFields = showCpu || showRam || showBw;
+    // ANCHORED popover (user: "erscheinen mitten im Fenster statt am Zahnrädchen"): a transparent full-screen
+    // click-catcher (click outside = close) with the card positioned right at the gear, exactly like Docker.
     var ov = el("div"); ov.id = "cc-vmlim-ov";
-    ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center";
+    ov.style.cssText = "position:fixed;inset:0;z-index:99999";
     // Match the Docker CPU/RAM/BW popover's chrome exactly (user: "gleich machen"): same #161616 surface,
     // 10px radius, elevation ramp (key + ambient shadow + inner top-highlight) and Segoe stack as .cc-pop.
-    var card = el("div", "cc-rainbow"); card.style.cssText = "background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:10px;padding:14px 16px;width:420px;max-width:92vw;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font:13px/1.5 \"Segoe UI\",system-ui,sans-serif";
+    var card = el("div", "cc-rainbow"); card.style.cssText = "position:absolute;background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:10px;padding:14px 16px;width:420px;max-width:92vw;max-height:88vh;overflow:auto;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font:13px/1.5 \"Segoe UI\",system-ui,sans-serif";
     var titleMap = { cpu: VMDE ? "CPU-Limit" : "CPU limit", ram: VMDE ? "RAM-Limit" : "RAM limit", bw: VMDE ? "Bandbreite" : "Bandwidth", disk: VMDE ? "vDisk-Größe" : "vDisk size", all: VMDE ? "VM-Limits" : "VM limits" };
     var head = el("div"); head.style.cssText = "display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:700;margin:0 0 4px 0";
     head.appendChild(el("span", null, titleMap[which] + ": " + name));
@@ -516,7 +518,7 @@
       f.cap = vmFld(VMDE ? "CPU-Limit (Kerne)" : "CPU limit (cores)", VMDE ? "0 = unbegrenzt · z. B. 1.5" : "0 = unlimited · e.g. 1.5", v.cpuCap > 0 ? (v.cpuCap / 100) : "", "0");
       card.appendChild(f.cap.wrap);
     }
-    if (showRam) { f.ram = vmFld("RAM (MiB)", "max " + (v.maxMemMiB || 0) + " MiB", v.memMiB || "", String(v.maxMemMiB || 0)); card.appendChild(f.ram.wrap); }
+    if (showRam) { f.ram = vmFld("RAM (MiB)", (VMDE ? "aktuelles Max " : "current max ") + (v.maxMemMiB || 0) + (VMDE ? " MiB · höher = auch das Max wird angehoben (greift beim nächsten VM-Start)" : " MiB · higher also raises the max (takes effect on the next VM start)"), v.memMiB || "", String(v.maxMemMiB || 0)); card.appendChild(f.ram.wrap); }
     if (showBw) {
       f.dn = vmFld("Download (kbit/s)", VMDE ? "0 = unbegrenzt" : "0 = unlimited", v.inKbit || "", "0");
       f.up = vmFld("Upload (kbit/s)", VMDE ? "0 = unbegrenzt" : "0 = unlimited", v.outKbit || "", "0");
@@ -538,6 +540,15 @@
     if (hasLimFields) { apply = el("button", null, VMDE ? "Anwenden" : "Apply"); apply.style.cssText = "background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff);border:none;border-radius:6px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer"; foot.appendChild(apply); }
     card.appendChild(foot);
     ov.appendChild(card); document.body.appendChild(ov);
+    // place the card at the gear (clamped into the viewport; flips above if it would overflow the bottom)
+    try {
+      var r = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null, cw = card.offsetWidth || 420, ch = card.offsetHeight || 300;
+      if (r && (r.width || r.height)) {
+        var left = Math.max(8, Math.min(r.left, window.innerWidth - cw - 12));
+        var top = r.bottom + 6; if (top + ch > window.innerHeight - 8) top = Math.max(8, r.top - ch - 6);
+        card.style.left = (window.scrollX + left) + "px"; card.style.top = (window.scrollY + top) + "px";
+      } else { card.style.left = "50%"; card.style.top = "12vh"; card.style.transform = "translateX(-50%)"; }
+    } catch (e) { card.style.left = "50%"; card.style.top = "12vh"; card.style.transform = "translateX(-50%)"; }
     function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
     cancel.onclick = close; ov.onclick = function (e) { if (e.target === ov) close(); };
     function intOr(s) { s = (s || "").trim(); if (s === "") return null; var n = parseInt(s, 10); return isNaN(n) ? null : n; }
@@ -879,7 +890,7 @@
       if (vbox) { if (vmSections) cardPanels(vbox); else flattenTeardown(); }
     } catch (e) {}
     try { ensureViewToggle(); applyView(); } catch (e) {}   // Grid/List view (cc.vmview)
-    try { applyRainbowPalette(); var vmRb = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1"; root.classList.toggle("cc-vm-rainbow", vmRb); root.classList.toggle("cc-vm-rbneutral", vmRb && ls("cc.rbmode") === "active"); } catch (e) {}   /* #N4: reactive rainbow -> badges rest grey, colour on hover */
+    try { applyRainbowPalette(); var vmRb = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1"; root.classList.toggle("cc-vm-rainbow", vmRb); root.classList.toggle("cc-vm-rbneutral", ls("cc.theming") !== "0" && ls("cc.rbmode") === "active"); } catch (e) {}   /* #N4/#2: reactive -> badges rest grey, colour on hover; also in Normal mode (rbmode default "all" -> off by default) */
     // RE-TINT every visible action bar on ANY colour-mode change. injectVmActionCell's rebuild guard
     // (data-cc-sig = state|webui|vmrcurl|log|uuid) is colour-mode-INDEPENDENT, so a rainbow/reactive/accent
     // toggle keeps the old cell and never re-runs tintAct — the bar kept its stale inline colours. Re-tint

@@ -115,3 +115,52 @@ html { --cc-r-1: 6px; --cc-r-2: 10px; --cc-r-3: 14px; }
 .cc-copied { animation: cc-copyflash .55s ease; }
 /* the mono-SVG gear inside a limit button: centred block, inherits the button's colour via currentColor */
 .cc-limbtn svg { display: block; pointer-events: none; }
+
+/* ═══ SECTION TITLE BARS — global CC treatment (#19) ═══════════════════════════════════════════════
+   Unraid renders section headers two ways: <div class="title"> (tabless/tree view) and the
+   <nav class="tabs"><button role="tab">…</button></nav> pills (tabbed view). The only stock orange is the
+   active-tab border (--brand-orange #ff8c2f). docker.css restyled these on the Docker + Plugins pages only;
+   this rule lives in the always-loaded Tokens sheet (gated on cc-popups-on = theming on) so it closes the
+   gap on EVERY page — Main, Shares, Settings, Tools, Users, … The higher specificity (html.cc-popups-on …)
+   plus !important wins over both the stock sheet and the page-scoped docker.css copy.
+   A SHADE block, never a border line (house rule) — sections read clearly without hairlines. */
+html.cc-popups-on div.title {
+  background: var(--cc-surface-4, #262626) !important;
+  border: none !important; box-shadow: none !important;
+  border-radius: var(--cc-r-1, 6px) !important;
+  padding: 8px 14px !important;
+}
+html.cc-popups-on div.title > span.left, html.cc-popups-on div.title > span.right {
+  text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; font-weight: 600;
+  color: var(--cc-text, #e6e6e6) !important;
+}
+html.cc-popups-on div.title span.left i.title,
+html.cc-popups-on div.title span.left i[class*="icon-"],
+html.cc-popups-on div.title span.left i.fa { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+/* tabbed view: the pill row — idle pills a grey shade, the active/hover pill takes the CC accent (rainbow-aware),
+   which replaces the stock --brand-orange outline entirely. */
+html.cc-popups-on nav.tabs, html.cc-popups-on nav.tabs .tabs-container { background: transparent !important; border: none !important; box-shadow: none !important; }
+html.cc-popups-on nav.tabs .tabs-container > button[role="tab"] {
+  background: var(--cc-surface-4, #262626) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+  border: none !important; border-radius: min(var(--cc-b-radius, 8px), var(--cc-r-2, 10px)) !important;
+}
+html.cc-popups-on nav.tabs .tabs-container > button[role="tab"]:hover,
+html.cc-popups-on nav.tabs .tabs-container > button[role="tab"][aria-selected="true"] {
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  border-color: transparent !important;
+}
+
+/* ═══ #10: unify the LOAD SPINNER everywhere ═══════════════════════════════════════════════════════════
+   Unraid's native tab-load spinner is `div.spinner.fixed > i.fa.fa-spin.fa-circle-o-notch` — a garish green
+   ring. Recolour its glyph to the CC accent (rainbow-aware) so every "loading" indicator matches the docker-
+   update badge; in RAINBOW it cycles hue once per 2s revolution (step-end), exactly like .cc-nchan-loader. */
+@keyframes cc-spin-rot { to { transform: rotate(360deg); } }
+@keyframes cc-spin-huefg { 0%{color:#c95e5e} 12.5%{color:#c98d5e} 25%{color:#c9af5e} 37.5%{color:#5ec986} 50%{color:#5ec9c2} 62.5%{color:#5e89c9} 75%{color:#865ec9} 87.5%{color:#c95e94} }
+html.cc-popups-on div.spinner i.fa-spin, html.cc-popups-on div.spinner i[class*="fa-circle-o-notch"] { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+html.cc-rb-on.cc-popups-on div.spinner i.fa-spin { animation: cc-spin-rot 2s linear infinite, cc-spin-huefg 16s step-end infinite !important; }
+
+/* #17: recolour Unraid's native "move to start/end" quick-scroll arrows (a.move_to_end / a.move_to_top …,
+   fixed bottom-right, stock red #e22828) into the CC accent (rainbow-aware) so they match the theme instead
+   of clashing red next to the "Einfache Ansicht" toggle. */
+html.cc-popups-on a[class*="move_to"], html.cc-popups-on a[class*="move_to"] > i { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }

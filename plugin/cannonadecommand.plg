@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.3.0">
+  <!ENTITY version   "3.4.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,32 @@
 </ICON>
 
 <CHANGES>
+### 3.4.0
+- Rainbow mode is now consistent across every tab. The Plugins and VMs tabs used a different, brighter palette
+  and reshuffled their colours on every reload; they now share the one jewel palette and the same persisted
+  rotation as the Docker, header and shares areas, so every badge lines up.
+- The rainbow swatches and previews in the CC settings now default to the same jewel palette the live UI uses,
+  so what you pick matches what you see.
+- Reactive mode (rest grey, colour on hover, active stays lit) now works in Normal mode too, not only under
+  rainbow or flag.
+- The logo tiles in the Docker and Plugins tabs join the colour modes: in rainbow each tile takes its row's
+  palette colour instead of one flat colour.
+- The notification bell and the hamburger menu (the two rightmost header icons) now follow the colour modes
+  like every other header icon.
+- The orange Unraid section title bars are restyled in CC style on every page (Main, Shares, Settings, Tools,
+  Users and so on), not only the Docker and Plugins tabs. The VM and Plugins section heads are rainbow aware.
+- The Plugins list now spans the full window width when the tab view is off (it was capped to the left half).
+- The CC settings cards and search field close flush with the right edge.
+- The combined "Settings and Tools tabs" section in the CC settings is split into two separate tabs, and the
+  CC settings tab order now strictly and live follows your main menu order.
+- VM RAM can now be raised above the VM's current maximum; the extra headroom applies on the next VM start.
+- The CPU, RAM and bandwidth popups on the VM tab now open right at their gear instead of centred in the window.
+- The Docker "Einfache Ansicht" toggle no longer overlaps the native scroll arrows, and those arrows are
+  recoloured into the CC accent.
+- WILD animation mode no longer clips the bouncing menu tabs at the top.
+- The tab-load spinner is unified with the update-window spinner, and in rainbow it changes colour each turn.
+- The VMs main tab now opens on the first click.
+
 ### 3.3.0
 - VM tab: full per-VM resource control, matched exactly to the Docker tab. CPU, RAM and bandwidth each get
   their own badge with a gear behind it, coloured per kind. The CPU editor has the same graphical core-picker
@@ -2255,7 +2281,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>ebb292bc803c7844fb3548ec76f85f2b07bbd1779431ebe493d05e4e47c0086a</SHA256>
+  <SHA256>094585036b604560525cc0f9b685cff6e67375c63817f0b909b4a4c3eb223625</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

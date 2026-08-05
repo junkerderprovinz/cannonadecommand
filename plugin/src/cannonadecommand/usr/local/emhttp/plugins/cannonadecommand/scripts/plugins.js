@@ -117,7 +117,8 @@
   function el(t, c, x) { var n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; }
 
   var RB_PAL = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
-  var RB_OFFSET = Math.floor(Math.random() * RB_PAL.length); // fresh deal per reload, like the Docker tab
+  if (window.CCTheme) { RB_PAL = window.CCTheme.RB; }  /* single source: adopt the shared jewel-clamped palette so the Plugins tab matches every other area (was raw crayon hexes -> visibly brighter/different hues) */
+  var RB_OFFSET = window.CCTheme ? window.CCTheme.rbSeed(RB_PAL.length) : Math.floor(Math.random() * RB_PAL.length); // shared PERSISTED seed, aligned with header/docker/shares (was Math.random per reload -> reshuffled every load and never lined up)
   // Rainbow is a GLOBAL mode: read cc.rainbow / cc.rbpal / cc.rainbowrot DIRECTLY (not the
   // adopt-gated eff()), like docker.js — one global Rainbow switch colours every enabled area.
   // accent() stays adopt-gated (eff) for the non-rainbow single colour.
@@ -134,7 +135,7 @@
   // reactive rainbow sub-mode (cc.rbmode==="active"): row chrome RESTS grey and takes the row's
   // palette colour only on hover — so the WHOLE plugin row reacts, not just the logo (N2). restBg
   // returns grey at rest in that mode; otherwise the normal accent/rainbow colour.
-  function reactive() { return ls("cc.rainbow") === "1" && ls("cc.rbmode") === "active"; }
+  function reactive() { return ls("cc.rbmode") === "active"; }   /* #2: reactive works in Normal mode too (rbmode default "all" -> off by default, so the default look is unchanged) */
   function restBg(i) { return reactive() ? "#2e2e2e" : colorFor(i); }
   // #17/#27: a CC confirmation for the per-row plugin uninstall — same shape as the container
   // remove (a themed swal), so deleting a plugin is a single trash icon + an "are you sure?"
@@ -564,6 +565,8 @@
       // logo-background badge: scope the docker.css .cc-plugico box on/off from the
       // adopt-aware key (honours "Adopt Docker style" via eff()), same as the Docker tab
       document.documentElement.classList.toggle("cc-plugins-iconbg", eff("iconbg") === "1");
+      // #13: in rainbow/flag mode the logo tile adopts the row palette (docker.css gates the tile rule on this)
+      document.documentElement.classList.toggle("cc-plugins-rainbow", ls("cc.rainbow") === "1");
       // reactive rainbow: rows rest grey and colour on hover (docker.css hover rules gated here)
       document.documentElement.classList.toggle("cc-shares-rbneutral", reactive());
       var pIcon = eff("iconcolor");

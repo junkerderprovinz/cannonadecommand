@@ -61,7 +61,7 @@
   // palettes stay independent (no bleed either way).
   function pal() { try { if (g("cc.flagmode", "0") === "1") { var f = JSON.parse(g("cc.flagpal", "null")); if (f && f.length) return f; } var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
   function rbOn() { return g("cc.rainbow", "0") === "1"; }
-  function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "0") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; }
+  function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "1") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; } /* rainbowrot default ON (matches cc-theme.js + docker/plugins/vms); was "0" -> this area sat one rotation off from the rest */
   // rainbow "active only" sub-mode (cc.rbmode=active): tiles have no active item -> neutral idle + hover.
   function rbNeutral() { return g("cc.rbmode", "all") === "active"; }
   // Category-grid LANDING pages: /Settings AND /Tools both render the identical
@@ -76,7 +76,7 @@
   function paintGrid() {
     try {
       var rb = rbOn(), neutral = rb && rbNeutral();
-      document.documentElement.classList.toggle("cc-settingsgrid-rbneutral", neutral); // "active only": tiles neutral, colour on hover
+      document.documentElement.classList.toggle("cc-settingsgrid-rbneutral", rbNeutral()); // #2: "active only" works in Normal mode too (rbmode default "all" -> off by default)
       var sz = sgSize(); // cc.sgsize s|m|l -> box + glyph tokens the sheet sizes the badges with
       document.documentElement.style.setProperty("--cc-sg-size", sz[0]);
       document.documentElement.style.setProperty("--cc-sg-glyph", sz[1]);

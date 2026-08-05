@@ -227,7 +227,19 @@ func (c *Controller) Apply(ctx context.Context, name string, lim Limits) error {
 		}
 	}
 	if lim.MemMiB != nil && *lim.MemMiB > 0 {
-		if _, e := c.run(ctx, append([]string{"setmem", name, strconv.Itoa(*lim.MemMiB*1024) + "KiB"}, sc...)...); e != nil {
+		kib := strconv.Itoa(*lim.MemMiB*1024) + "KiB"
+		if vm.MaxMemMiB > 0 && *lim.MemMiB > vm.MaxMemMiB {
+			// Above the domain's MAX memory: raise the ceiling first (setmem cannot exceed it). setmaxmem
+			// takes effect only from the domain XML, so do BOTH setmaxmem and setmem with --config; a running
+			// VM will pick up the larger RAM on its next start (a live bump past max needs memory-hotplug
+			// slots the Unraid form does not create).
+			if _, e := c.run(ctx, "setmaxmem", name, kib, "--config"); e != nil {
+				return e
+			}
+			if _, e := c.run(ctx, "setmem", name, kib, "--config"); e != nil {
+				return e
+			}
+		} else if _, e := c.run(ctx, append([]string{"setmem", name, kib}, sc...)...); e != nil {
 			return e
 		}
 	}

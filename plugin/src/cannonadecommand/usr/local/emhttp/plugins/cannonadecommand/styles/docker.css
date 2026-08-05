@@ -70,6 +70,14 @@
   padding: calc((var(--cc-logo-box, 78px) - var(--cc-logo-img, 62px)) / 2) !important; box-sizing: border-box !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
 }
+/* #13: in RAINBOW/FLAG mode the logo tile joins the palette — it adopts the row's stamped --cc-rb-c
+   (inherited down to the tile) instead of the single static iconbg colour. Gated on .cc-rainbow so
+   NORMAL mode keeps the user's chosen Logo-Hintergrund colour untouched. */
+.cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr.sortable td.ct-name .outer > span.hand { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
+.cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card-ico { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
+/* reactive + rainbow: the tile rests grey (rules further down) and takes the ROW's palette colour on hover */
+html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr.sortable:hover td.ct-name .outer > span.hand { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card:hover .cc-card-ico { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
 .cc-enh #docker_list tr.sortable td.ct-name .inner { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; line-height: 1.2; min-width: 0; }
 .cc-enh #docker_list tr.sortable td.ct-name .inner br { display: none; }
 .cc-enh #docker_list tr.sortable td.ct-name .inner > i[id^='load-'],
@@ -725,17 +733,19 @@ nav.tabs .tabs-container { flex-wrap: nowrap !important; }
    Hide the tab BUTTONS only (never nav.tabs itself — it holds the Check/Update/Remove span.status buttons). ── */
 html.cc-on-plugins.cc-sections-plugins #displaybox section[role="tabpanel"] {
   display: block !important;                 /* beats the inline display:none Unraid's tab JS sets */
-  max-width: 960px; margin: 0 0 28px;
+  max-width: none; width: 100%; margin: 0 0 28px;   /* #18: full window width (was capped at 960px -> left the list in the left half on wide screens) */
   background: none; border-radius: 0; padding: 0; box-shadow: none;
   overflow: visible !important;
 }
+/* #18: the plugin table/list fills its panel in every plugins layout (native or stacked) */
+html.cc-on-plugins #displaybox #plugin_table, html.cc-on-plugins #displaybox #plugin_list, html.cc-on-plugins #displaybox table.tablesorter { width: 100% !important; max-width: none !important; }
 html.cc-on-plugins.cc-sections-plugins #displaybox section[role="tabpanel"]:last-child { margin-bottom: 0; }
 html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs button[role="tab"] { display: none !important; }
 html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs { border: none; min-height: 0; }
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head {
   display: inline-flex; align-items: center; gap: 8px;
   font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-head-fs, 15px); line-height: 1;
-  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;   /* #19: rainbow-aware (jewel in rainbow, not the static accent) */
   border: none; border-radius: var(--cc-b-radius, 999px);
   padding: var(--cc-head-pad, 9px 18px); margin: 0 0 16px;
 }
@@ -758,6 +768,10 @@ html.cc-plugins-iconbg .cc-plugico {
   /* pad = (box - img) / 2 — same cc.sgsize-driven tile as Docker/VM (m: 8px) */
   box-sizing: border-box !important; padding: calc((var(--cc-logo-box, 78px) - var(--cc-logo-img, 62px)) / 2) !important;
 }
+/* #13: RAINBOW/FLAG mode -> the plugin logo tile adopts the row's stamped --cc-rb-c (plugins.js stamps it
+   per row); .cc-plugins-rainbow is toggled on <html> alongside cc-plugins-iconbg. NORMAL mode keeps the
+   user's Logo-Hintergrund colour. Reactive+rainbow hover already lands on --cc-rb-c (rule ~line 1560). */
+html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
 /* Unraid emits the col-1 icon as ONE of three element types — <img class=list>,
    <i class="fa … list">, or <i class="icon-… list"> (its own glyph font) — none
    with an inline size, so they render at wildly different sizes. Force ALL of
@@ -818,7 +832,7 @@ html.cc-plugins-iconbg .cc-plugico {
 .cc-set-tab-on { background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important; }
 .cc-set-brand { font-size: 24px; letter-spacing: .2px; } .cc-set-brand b { font-weight: 700; } .cc-set-brand span { font-weight: 400; color: var(--dim); }
 .cc-set-sub { color: var(--dim2); font-size: 12.5px; }
-.cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; } /* auto-fill: identical arrangement on every tab */
+.cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; } /* auto-fit: cards stretch to the RIGHT edge (auto-fill left phantom trailing tracks that stopped the cards short of the right) */
 .cc-set-card { background: #222222; border: none; border-radius: 12px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.45); } /* borderless but clearly a card */
 .cc-set-h { font-size: 15px; font-weight: 600; margin-bottom: 3px; display: flex; align-items: center; gap: 7px; } /* flex: heading text + ⓘ info bubble side by side */
 .cc-set-card .cc-set-sub { margin-bottom: 12px; }

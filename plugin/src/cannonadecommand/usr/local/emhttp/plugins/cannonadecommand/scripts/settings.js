@@ -342,6 +342,7 @@
     var wrap = el("div", "cc-set-wrap");
     var wrapPlugin = el("div", "cc-set-wrap"), wrapVms = el("div", "cc-set-wrap"), wrapHeader = el("div", "cc-set-wrap"), wrapShares = el("div", "cc-set-wrap");
     var wrapSettings = el("div", "cc-set-wrap");
+    var wrapTools = el("div", "cc-set-wrap");   // #6: Werkzeuge is its own sub-tab now (shares the /Settings grid config — Unraid renders both landing pages identically)
     var wrapFavorites = el("div", "cc-set-wrap");
     var wrapStart = el("div", "cc-set-wrap");   // Start (/Main) area — its own CC-settings section
     var wrapMain = el("div", "cc-set-wrap");    // Allgemein — also hosts the export/import card (last)
@@ -545,6 +546,16 @@
     var NAVDEF = ["Start", "Favorites", "Freigaben", "Einstellungen", "Docker", "Plugins", "VMs", "Werkzeuge", "Stats", "Apps"];
     var navOrder = NAVDEF;
     try { var no9 = JSON.parse(get("cc.navorder.all", "null")); var arr9 = no9 && no9.left ? no9.left : no9; if (arr9 && arr9.length && typeof arr9.forEach === "function") navOrder = arr9; } catch (e9b) {}
+    // #7 STRICT + LIVE: read the ACTUAL on-screen menu order first (the user's live drag result), so the CC
+    // sub-tabs always mirror the main tabs exactly — persisted snapshot / hardcoded default are only fallbacks.
+    try {
+      var liveToks9 = [];
+      Array.prototype.forEach.call(document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a[href]"), function (a9) {
+        var h9 = (a9.getAttribute("href") || "").replace(/^\//, "").split(/[/?#]/)[0].toLowerCase();
+        if (h9 && liveToks9.indexOf(h9) < 0) liveToks9.push(h9);
+      });
+      if (liveToks9.length >= 2) navOrder = liveToks9;   // trust the live menu whenever it yields a real ordering
+    } catch (e9x) {}
     // one normalised token per entry: "/Docker" == "Docker" == "docker" (hrefs, labels alike)
     var navToks = [];
     navOrder.forEach(function (k9) { navToks.push(String(k9).replace(/^\//, "").split(/[/?#]/)[0].toLowerCase()); });
@@ -562,7 +573,8 @@
       { id: "docker", t: T("Docker-Tab", "Docker tab"), w: wrap, key: "cc.enable.docker", tabs: ["docker"] },
       { id: "plugins", t: T("Plugin-Tab", "Plugins tab"), w: wrapPlugin, key: "cc.enable.plugins", tabs: ["plugins"] },
       { id: "vms", t: T("VM-Tab", "VMs tab"), w: wrapVms, key: "cc.enable.vms", tabs: ["vms"] },
-      { id: "settings", t: T("Einstellungen- & Werkzeuge-Tabs", "Settings & Tools tabs"), w: wrapSettings, key: "cc.enable.settings", tabs: ["einstellungen", "settings", "werkzeuge", "tools"] },
+      { id: "settings", t: T("Einstellungen-Tab", "Settings tab"), w: wrapSettings, key: "cc.enable.settings", tabs: ["einstellungen", "settings"] },
+      { id: "tools", t: T("Werkzeuge-Tab", "Tools tab"), w: wrapTools, key: "cc.enable.settings", tabs: ["werkzeuge", "tools"] },
       { id: "favorites", t: T("Favoriten-Tab", "Favorites tab"), w: wrapFavorites, key: "cc.enable.favorites", tabs: ["favorites", "favoriten"] }
     ].map(function (s9, i9) { return { s: s9, i: i9, r: navRank(s9.tabs) }; })
       .sort(function (a9, b9) { return (a9.r < 0 ? 1e9 + a9.i : a9.r) - (b9.r < 0 ? 1e9 + b9.i : b9.r) || a9.i - b9.i; })
@@ -584,7 +596,7 @@
       // the ACTIVE tab keeps its direct colour.
       var reactive = rb && get("cc.rbmode", "all") === "active";
       // palG() is scoped inside buildStyleCards, not reachable here -> read the palette directly.
-      var DEF = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"], p = DEF;
+      var DEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"], p = DEF;   /* #1: jewel palette (shared) so the tab strip matches the live UI when cc.rbpal is unset */
       try { var j = JSON.parse(get("cc.rbpal", "null")); if (j && j.length) p = j; } catch (e) {}
       tabBtns.forEach(function (b, i) {
         if (rb) {
@@ -617,7 +629,7 @@
     });
     root.appendChild(tabRow);
     alignSetTabs(); // indent the strip to the first main-menu tab (internally try/catch'd, can't break the build)
-    root.appendChild(wrapMain); root.appendChild(wrapStart); root.appendChild(wrapHeader); root.appendChild(wrapShares); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms); root.appendChild(wrapSettings); root.appendChild(wrapFavorites);
+    root.appendChild(wrapMain); root.appendChild(wrapStart); root.appendChild(wrapHeader); root.appendChild(wrapShares); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms); root.appendChild(wrapSettings); root.appendChild(wrapTools); root.appendChild(wrapFavorites);
     root.appendChild(verLine); // #14 (user): the UI/Engine version sits at the very BOTTOM (a sibling AFTER every wrap; the cards fill the wraps above it)
 
     // ── Badges ──
@@ -670,11 +682,10 @@
     // rainbow master switch (user call). Live-applied via the sync + the settings tab strip.
     var rmode = el("div", "cc-set-row cc-set-inline");
     var rmodeL = el("span", "cc-set-lblwrap");
-    rmodeL.appendChild(el("span", null, T("Reaktiver Regenbogen-Modus", "Reactive rainbow mode")));
-    rmodeL.appendChild(infoIcon(T("AN = alles ruht grau und färbt sich beim Überfahren; Aktives bleibt farbig. Gilt global für alle Bereiche inklusive Logo-Hintergründen.", "ON = everything rests grey and colours on hover; active stays coloured. Global, including logo backgrounds.")));
+    rmodeL.appendChild(el("span", null, T("Reaktiver Modus", "Reactive mode")));
+    rmodeL.appendChild(infoIcon(T("AN = alles ruht grau und färbt sich beim Überfahren; Aktives bleibt farbig. Gilt global für alle Farbmodi (auch Normal) und alle Bereiche inklusive Logo-Hintergründen.", "ON = everything rests grey and colours on hover; active stays coloured. Global across every colour mode (including Normal) and every area, logo backgrounds included.")));
     rmode.appendChild(rmodeL);
-    rmode.appendChild(toggle(get("cc.rbmode", "all") === "active", function (v) { set("cc.rbmode", v ? "active" : "all"); paintSetTabs(); syncHeaderBar(); syncSharesBar(); }));
-    if (!rbOnly) { rmode.style.opacity = ".4"; rmode.style.pointerEvents = "none"; } // only with rainbow mode (also greyed under flag mode)
+    rmode.appendChild(toggle(get("cc.rbmode", "all") === "active", function (v) { set("cc.rbmode", v ? "active" : "all"); paintSetTabs(); syncHeaderBar(); syncSharesBar(); }));   // #2: reactive is no longer gated on rainbow — it works in Normal mode too (rests grey, accent on hover)
     c1.appendChild(rmode);
     // rotation toggle: on = every tab reload deals a fresh colour mapping; off = stable colours
     var rrot = el("div", "cc-set-row cc-set-inline");
@@ -687,7 +698,7 @@
     c1.appendChild(rrot);
     // EVERY rainbow palette colour is editable: click a swatch, adjust it in the
     // embedded picker below; stored as cc.rbpal (JSON), read live by the Docker tab.
-    var RBDEF = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; // real rainbow order
+    var RBDEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; // #1: the editable swatches DEFAULT to the shared jewel palette (was crayon -> the swatches/preview disagreed with the live UI, and any edit persisted the crayon set to cc.rbpal, flipping the whole UI to crayon)
     var rbpal = null; try { rbpal = JSON.parse(get("cc.rbpal", "null")); } catch (e) { rbpal = null; }
     if (!rbpal || rbpal.length !== RBDEF.length) rbpal = RBDEF.slice();
     // #7: no "Rainbow-Farben" heading — the swatches sit directly under the rotation toggle.
@@ -1121,7 +1132,7 @@
       // Rainbow is a GLOBAL mode now (one switch + one palette in the top Badges card): when it's
       // on, EVERY enabled area rainbows, so there is NO per-area rainbow toggle/palette here — just
       // this area's single accent colour above. The preview below still reflects the global rainbow.
-      var RB2 = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
+      var RB2 = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];   /* #1: jewel default so every area's preview matches the live UI */
       function palG() { try { if (get("cc.flagmode", "0") === "1") { var fj = JSON.parse(get("cc.flagpal", "null")); if (fj && fj.length) return fj; } var pj = JSON.parse(get("cc.rbpal", "null")); if (pj && pj.length) return pj; } catch (e2) {} return RB2; }
       // live preview — the Hauptmenueleiste (cch.) previews the MENU TABS (idle grey pill +
       // one accent-filled active pill, mirroring CannonadeCommand.Header.css); every other
@@ -1307,6 +1318,11 @@
     cStart.appendChild(styleToggle("cc.stylemain", null));
     cStart.appendChild(tabviewRow("main", syncSharesBar));
     wrapHeader.appendChild(cH); wrapShares.appendChild(cSh); wrapPlugin.appendChild(cP); wrapVms.appendChild(cV); wrapSettings.appendChild(cSet); wrapFavorites.appendChild(cFav); wrapStart.appendChild(cStart);
+    // #6: the Werkzeuge sub-tab. Unraid renders /Settings and /Tools with the IDENTICAL category-tile grid,
+    // so one shared config styles both; this tab makes that explicit and keeps the CC sub-tabs 1:1 with the
+    // main menu (which lists Einstellungen and Werkzeuge separately -> also fixes the ordering in #7).
+    var cTools = card(T("Werkzeuge-Tab", "Tools tab"), T("Die Seite /Werkzeuge nutzt dasselbe Kategorie-Raster wie /Einstellungen und wird vom Stil im Einstellungen-Tab mitgestaltet (Unraid rendert beide Seiten identisch).", "The /Tools page uses the same category grid as /Settings and is styled together with it via the Settings tab (Unraid renders both pages identically)."));
+    wrapTools.appendChild(cTools);
     // (the per-area Tabansicht toggle lives IN each Stil card now — see tabviewRow above)
     function syncPluginsBar() { try { if (typeof window.ccPluginsApply === "function") window.ccPluginsApply(); } catch (e) {} }
     function syncVmsBar() { try { if (typeof window.ccVmsApply === "function") window.ccVmsApply(); } catch (e) {} }
@@ -1547,7 +1563,7 @@
   function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16); var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
   // preview uses the REAL rainbow palette (identical to docker.css) so it matches
   // what the Docker tab actually shows, with auto-contrast text.
-  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; var pal = DEF; try { var fj = get("cc.flagmode", "0") === "1" ? JSON.parse(get("cc.flagpal", "null")) : null; var j = (fj && fj.length) ? fj : JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
+  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; var pal = DEF;   /* #1: jewel default so the preview matches the live UI */ try { var fj = get("cc.flagmode", "0") === "1" ? JSON.parse(get("cc.flagpal", "null")) : null; var j = (fj && fj.length) ? fj : JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
   // live-highlight the preset swatch that matches the current accent (no re-render)
   function syncSwOn() { var a = (accent || "").toLowerCase(); Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-sw")).forEach(function (sw) { sw.classList.toggle("cc-set-sw-on", (sw.dataset.c || "").toLowerCase() === a); }); }
   function thc(t) { var e = el("th", null, t); return e; }
@@ -1584,6 +1600,27 @@
   }
   var alignT = null; // ONE debounced resize listener for the page's lifetime (module scope, added once)
   window.addEventListener("resize", function () { clearTimeout(alignT); alignT = setTimeout(alignSetTabs, 150); });
+
+  // #7: re-sort the CC sub-tabs LIVE when the main menu order changes (drag-reorder / Connect auto-mount).
+  // A menu childList mutation re-runs render(), which re-reads the live #menu order and rebuilds the strip,
+  // preserving the active tab via cc.settab. Debounced + gated on the ACTUAL order string so unrelated menu
+  // mutations (badge stamps, auto-mount attribute writes) never trigger a rebuild. Added once per page.
+  if (!window.__ccSetNavObs) {
+    window.__ccSetNavObs = true;
+    var menuEl9 = document.getElementById("menu");
+    if (menuEl9 && window.MutationObserver) {
+      var navT9 = null, lastOrd9 = "";
+      new MutationObserver(function () {
+        clearTimeout(navT9);
+        navT9 = setTimeout(function () {
+          try {
+            var ord9 = Array.prototype.map.call(document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a[href]"), function (a9) { return a9.getAttribute("href"); }).join("|");
+            if (ord9 && ord9 !== lastOrd9) { lastOrd9 = ord9; render(); }
+          } catch (e9o) {}
+        }, 200);
+      }).observe(menuEl9, { childList: true, subtree: true });
+    }
+  }
 
   render();
   // Pull the engine-side config so the Notifications card reflects what is saved,

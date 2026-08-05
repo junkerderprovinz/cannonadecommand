@@ -321,13 +321,13 @@ html.cc-header-on #UserProfile > div:nth-child(2) { align-items: center; gap: 6p
 html.cc-header-on #UserProfile > div:nth-child(2) > span {
   display: inline-flex; align-items: center; justify-content: center;
   box-sizing: border-box; width: var(--cc-md-ibox, 30px); height: var(--cc-md-ibox, 30px); padding: 0;
-  background: var(--cc-hdr-accent, #2f6feb) !important;
+  background: var(--cc-rb-c, var(--cc-hdr-accent, #2f6feb)) !important;   /* #15: rainbow slot colour (JS-stamped) with the single-accent fallback */
   border-radius: min(var(--cc-b-radius, 8px), 8px);
-  color: var(--cc-hdr-accent-text, #fff); transition: color .12s, filter .12s;
+  color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)); transition: color .12s, filter .12s;
 }
 html.cc-header-on #UserProfile > div:nth-child(2) > span:hover { filter: brightness(1.14); }
 html.cc-header-on.cc-header-rbneutral #UserProfile > div:nth-child(2) > span { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf); }
-html.cc-header-on.cc-header-rbneutral #UserProfile > div:nth-child(2) > span:hover { background: var(--cc-hdr-accent, #2f6feb) !important; color: var(--cc-hdr-accent-text, #fff); }
+html.cc-header-on.cc-header-rbneutral #UserProfile > div:nth-child(2) > span:hover { background: var(--cc-rb-c, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)); }
 /* glyphs at 16px — the 14px icon token +2px, these two glyphs read better a notch larger;
    color FORCED onto the svg so the native state tints (yellow/red) cannot leak through */
 html.cc-header-on #UserProfile > div:nth-child(2) > span svg { width: 16px !important; height: 16px !important; color: inherit !important; fill: currentColor; }
@@ -659,6 +659,12 @@ html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader.cc-nchan-check { backgroun
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader .cc-nchan-fa {
   color: #fff; font-size: 14px; line-height: 1;
 }
+/* #10 (user): in RAINBOW the running badge cycles its colour once per spin revolution — the fa-spin glyph
+   turns every 2s, so the 8-hue palette steps every 2s (16s total, step-end = a clean jump synced to each
+   turn): "im rainbowmode soll bei jeder umdrehung die farbe gewechselt werden". Glyph stays white; the DONE
+   (check) badge is transparent and excluded. Jewel hues = the shared CCTheme.RB palette. */
+@keyframes cc-spin-huebg { 0%{background:#c95e5e} 12.5%{background:#c98d5e} 25%{background:#c9af5e} 37.5%{background:#5ec986} 50%{background:#5ec9c2} 62.5%{background:#5e89c9} 75%{background:#865ec9} 87.5%{background:#c95e94} }
+html.cc-rb-on.cc-popups-on .sweet-alert.nchan .cc-nchan-loader:not(.cc-nchan-check) { animation: cc-spin-huebg 16s step-end infinite; }
 /* #7-II finished: the bottom-left loader morphs into a circle-with-check (no text), drawn in. Green = done. */
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader.cc-nchan-check { gap: 0; }
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg { width: 26px; height: 26px; overflow: visible; display: block; }
@@ -1338,6 +1344,11 @@ html.cc-header-on .cc-isl-fill { transition: width .5s ease, background-color .4
 @keyframes cc-wild-bounce { 0%{transform:translateY(0)} 28%{transform:translateY(-7px)} 52%{transform:translateY(3px)} 72%{transform:translateY(-3px)} 88%{transform:translateY(1px)} 100%{transform:translateY(0)} }
 /* the main-menu tabs HOP when the pointer enters them */
 html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item:hover { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
+/* the -7px hop peaks ABOVE the header band; without this the bar (and its tiles) clip the tab at the top.
+   Let the whole nav chain overflow visibly only while WILD is armed, so the bounce is fully seen. */
+html.cc-anim-wild #menu,
+html.cc-anim-wild #menu .nav-tile,
+html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item { overflow: visible !important; }
 /* springy lift on any CC pill / action icon; the limit gear also spins a quarter-turn */
 html.cc-anim-wild .cc-b:hover,
 html.cc-anim-wild .cc-actbtn:hover { transform: translateY(-2px) scale(1.06); transition: transform .18s cubic-bezier(.34,1.56,.64,1) !important; }
