@@ -28,6 +28,7 @@ import (
 	"github.com/junkerderprovinz/cannonadecommand/internal/readiness"
 	"github.com/junkerderprovinz/cannonadecommand/internal/store"
 	"github.com/junkerderprovinz/cannonadecommand/internal/unraidtmpl"
+	"github.com/junkerderprovinz/cannonadecommand/internal/vmctl"
 )
 
 // version is overridden at build time with -ldflags "-X main.version=vX.Y.Z".
@@ -105,7 +106,7 @@ func serve() {
 	st := store.New(filepath.Join(dataDir, "plan.json"))
 	prober := readiness.Prober{Inspector: inspectorAdapter{docker}, ExecCheck: docker.Exec, GetLogs: docker.Logs}
 	orch := &orchestrator.Orchestrator{Starter: docker, Ready: prober}
-	srv := &api.Server{Docker: docker, Store: st, Runner: orch, Pidder: docker, TemplatesDir: env("CC_TEMPLATES_DIR", unraidtmpl.DefaultDir), Version: version}
+	srv := &api.Server{Docker: docker, Store: st, Runner: orch, Pidder: docker, VMs: vmctl.New(), TemplatesDir: env("CC_TEMPLATES_DIR", unraidtmpl.DefaultDir), Version: version}
 
 	if err := os.MkdirAll(dataDir, 0o755); err != nil {
 		log.Fatalf("cannonadecommand: mkdir %s: %v", dataDir, err)

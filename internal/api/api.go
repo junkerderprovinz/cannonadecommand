@@ -19,6 +19,7 @@ import (
 	"github.com/junkerderprovinz/cannonadecommand/internal/netshape"
 	"github.com/junkerderprovinz/cannonadecommand/internal/orchestrator"
 	"github.com/junkerderprovinz/cannonadecommand/internal/unraidtmpl"
+	"github.com/junkerderprovinz/cannonadecommand/internal/vmctl"
 )
 
 // Docker is the read + lifecycle surface the card panel needs. It stays small on
@@ -61,11 +62,18 @@ type Runner interface {
 	Run(ctx context.Context, plan model.Plan) model.RunResult
 }
 
+// VMController manages libvirt VM limits (optional; nil disables the VM-tab backend).
+type VMController interface {
+	List(ctx context.Context) ([]vmctl.VM, error)
+	Apply(ctx context.Context, name string, lim vmctl.Limits) error
+}
+
 // Server wires the read/orchestrate handlers.
 type Server struct {
 	Docker       Docker
 	Store        Store
 	Runner       Runner
+	VMs          VMController // optional: libvirt VM limits backend (CPU/RAM/bandwidth)
 	Pidder       Pidder   // resolves a container's main PID for the bandwidth diagnostics
 	BwLast       BwLaster // optional: the monitor's last shaping attempt per container
 	Kicker       Kicker   // optional: nudges the monitor to apply a saved config immediately
@@ -102,7 +110,88 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/limits", s.handleSetLimits)
 	mux.HandleFunc("GET /api/config", s.handleGetConfig)
 	mux.HandleFunc("PUT /api/config", s.handlePutConfig)
+	mux.HandleFunc("GET /api/vms", s.handleGetVMs)
+	mux.HandleFunc("POST /api/vmlimits", s.handleSetVMLimits)
 	return mux
+}
+
+// handleGetVMs lists every libvirt domain with its current CPU/RAM/bandwidth limits.
+// A box without libvirt (or a wedged libvirtd) yields an empty list, never a 500, so
+// the VM tab simply shows no CC controls there.
+func (s *Server) handleGetVMs(w http.ResponseWriter, r *http.Request) {
+	if s.VMs == nil {
+		writeJSON(w, http.StatusOK, []vmctl.VM{})
+		return
+	}
+	vms, err := s.VMs.List(r.Context())
+	if err != nil {
+		log.Printf("vms: list: %v", err)
+		writeJSON(w, http.StatusOK, []vmctl.VM{})
+		return
+	}
+	writeJSON(w, http.StatusOK, vms)
+}
+
+// handleSetVMLimits applies CPU-pin / CPU-cap / RAM / bandwidth to ONE domain. The name
+// must be one libvirt actually knows (never an arbitrary or flag-like string), and a
+// cpuset is validated to a cpu-list before it reaches virsh.
+func (s *Server) handleSetVMLimits(w http.ResponseWriter, r *http.Request) {
+	if s.VMs == nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "vm backend disabled"})
+		return
+	}
+	var req struct {
+		Name     string  `json:"name"`
+		CPUCores *string `json:"cpu_cores,omitempty"`
+		CPUCap   *int    `json:"cpu_cap,omitempty"`
+		MemMiB   *int    `json:"mem_mib,omitempty"`
+		InKbit   *int    `json:"in_kbit,omitempty"`
+		OutKbit  *int    `json:"out_kbit,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	req.Name = strings.TrimSpace(req.Name)
+	if req.Name == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "name required"})
+		return
+	}
+	vms, err := s.VMs.List(r.Context())
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	known := false
+	for _, v := range vms {
+		if v.Name == req.Name {
+			known = true
+			break
+		}
+	}
+	if !known {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unknown vm: " + req.Name})
+		return
+	}
+	if req.CPUCores != nil && *req.CPUCores != "" && !validCpuset(*req.CPUCores) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bad cpuset (want a cpu list like 0-3,6): " + *req.CPUCores})
+		return
+	}
+	lim := vmctl.Limits{CPUCores: req.CPUCores, CPUCap: req.CPUCap, MemMiB: req.MemMiB, InKbit: req.InKbit, OutKbit: req.OutKbit}
+	if err := s.VMs.Apply(r.Context(), req.Name, lim); err != nil {
+		log.Printf("vmlimits: %s: %v", req.Name, err)
+		writeErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	log.Printf("vmlimits: %s applied", req.Name)
+	fresh, _ := s.VMs.List(r.Context())
+	var out *vmctl.VM
+	for i := range fresh {
+		if fresh[i].Name == req.Name {
+			out = &fresh[i]
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "vm": out})
 }
 
 // known reports whether name is a live container (guards every write verb).
