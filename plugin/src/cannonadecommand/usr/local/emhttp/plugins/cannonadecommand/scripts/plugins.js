@@ -641,14 +641,27 @@
   function boot() {
     try { window.ccPluginsApply = paint; } catch (e) {} // let the CC Settings page live-update the Tab-Ansicht toggle (parity with ccSharesApply)
     if (localStorage.getItem("cc.enable.plugins") === "0" || localStorage.getItem("cc.theming") === "0") return; // area disabled, or master theming off
-    adopt(function () {
-      paint();
-      var host = document.getElementById("displaybox") || document.body; // whole page: tab switches + ajax rewrites
-      var t3 = null;
-      new MutationObserver(function () { clearTimeout(t3); t3 = setTimeout(paint, 250); }).observe(host, { childList: true, subtree: true, characterData: true });
-      document.addEventListener("change", function () { setTimeout(paint, 50); }); // tab switches repaint the pills
-      [600, 1500, 3500].forEach(function (ms) { setTimeout(paint, ms); });
-    });
+    // PAINT FIRST from the mirrored cc.* localStorage — do NOT gate the first coat on the /api/config
+    // round-trip (the old order left /Plugins native until the fetch resolved). adopt() below only
+    // RE-paints if it actually pulled a changed setting.
+    paint();
+    var host = document.getElementById("displaybox") || document.body; // whole page: tab switches + ajax rewrites
+    // LEADING-EDGE + coalesce (was a 250ms trailing debounce = the visible render lag): paint in the SAME
+    // frame the DOM changes. childList/subtree only — drop characterData so a per-second status-text tick
+    // can't force a full re-skin. Disconnect during our own paint so it can't self-trigger.
+    var pObs = null, pBusy = false, pTrail = false, pT = null;
+    function pSweep() {
+      pBusy = true; pTrail = false;
+      try { if (pObs) pObs.disconnect(); } catch (e) {}
+      try { paint(); } catch (e) {}
+      try { if (pObs) pObs.observe(host, { childList: true, subtree: true }); } catch (e) {}
+      pT = setTimeout(function () { pT = null; pBusy = false; if (pTrail) pSweep(); }, 250);
+    }
+    pObs = new MutationObserver(function () { if (pBusy) { pTrail = true; return; } pSweep(); });
+    pObs.observe(host, { childList: true, subtree: true });
+    document.addEventListener("change", function () { setTimeout(paint, 50); }); // tab switches repaint the pills
+    [600, 1500, 3500].forEach(function (ms) { setTimeout(paint, ms); });          // late-render safety net (idempotent)
+    adopt(function () { paint(); });   // hydrate mirrored settings, re-paint only if something changed
     // the CC Settings page writes cc.*/ccp.* keys from another origin/tab -> repaint live, so an
     // accent / adopt-toggle change is reflected without a manual reload. Exclude cc.stateCache (the
     // Docker tab rewrites it every 9s; matching it would repaint the plugins table on every poll —

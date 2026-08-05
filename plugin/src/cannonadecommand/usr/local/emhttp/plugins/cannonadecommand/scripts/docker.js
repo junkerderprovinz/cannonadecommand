@@ -81,7 +81,7 @@
   var hostCpus = 0, hostCoreOf = [], hostMem = 0; // the HOST's logical-CPU count + HT grouping + total RAM (from the engine)
   var hostPCores = [], hostECores = []; // Intel hybrid P/E-core CPU lists (empty on non-hybrid CPUs)
   var filterText = "", gridHolder = null, openPop = null, openPopAnchor = null, menu = null, menuAnchor = null, menuStatusEl = null, toastEl = null, toastTimer = null;
-  var mo = null, dead = false, lastAdv = false, timers = [], moPending = false, moTimer = null, lastObsLoad = 0;
+  var mo = null, dead = false, lastAdv = false, timers = [], moPending = false, moTimer = null, lastObsLoad = 0, moTrail = false;
 
   // ───────────────────────── api + helpers
   // csrf_token, robustly: the JS global, else any form field, else the cookie.
@@ -2145,26 +2145,30 @@
   // ───────────────────────── observer + timers (factored so re-arm can restart them)
   function connectObserver() {
     try {
-      if (!mo) mo = new MutationObserver(function () {
-        if (dead || mode !== "list" || moPending) return;
-        moPending = true;
+      // LEADING-EDGE sweep: paint the reskin in the SAME FRAME the rows appear (a MutationObserver
+      // callback runs BEFORE the browser paints) instead of 250ms later — that trailing debounce was the
+      // dominant "the theme renders slowly after a tab switch" delay. A burst is still COALESCED: any
+      // mutation that lands while a sweep's 250ms cooldown is active folds into ONE trailing sweep.
+      function moSweep() {
+        moPending = true; moTrail = false;
+        try { mo.disconnect(); } catch (e) {}   // stop observing our OWN writes for this pass (badges + #cc-names datalist) so they can't re-fire the observer
+        try { applyEnhanceClasses(); injectAllRowBadges(); } catch (e) {}
+        // A native-list rebuild usually means Unraid just FINISHED a container action (stop/start via ITS
+        // buttons/menu) — our state map is stale until the next 9s poll, so pull fresh state now, throttled
+        // so our own idempotent re-injects can't turn this into a request loop.
+        try { refresh(); } catch (e) {} // instant: inject with the data already in memory
+        try { if (Date.now() - lastObsLoad > 2000) { lastObsLoad = Date.now(); load(); } } catch (e) {}
+        // re-arm on the CURRENT #docker_list AFTER our synchronous writes flushed, so they don't re-fire us
+        try { var b2 = document.getElementById("docker_list"); if (b2) mo.observe(b2, { childList: true }); } catch (e) {}
         moTimer = setTimeout(function () {
-          moTimer = null;
-          if (dead) { moPending = false; return; } // a teardown may have fired during the debounce window
-          try { mo.disconnect(); } catch (e) {}   // stop observing our OWN writes for this pass (badges + #cc-names datalist) so they can't re-fire the observer
-          try { applyEnhanceClasses(); injectAllRowBadges(); } catch (e) {}
-          // A native-list rebuild usually means Unraid just FINISHED a container action
-          // (stop/start via ITS buttons/menu) — our state map is stale until the next 9s
-          // poll, so the re-injected badge showed the OLD state ("only switches after the
-          // page refreshes"). Pull fresh state now, throttled so our own idempotent
-          // re-injects can't turn this into a request loop.
-          try { refresh(); } catch (e) {} // instant: inject with the data already in memory
-          try { if (Date.now() - lastObsLoad > 2000) { lastObsLoad = Date.now(); load(); } } catch (e) {}
-          // re-arm on the CURRENT #docker_list AFTER our synchronous writes flushed, so they don't re-fire us
-          try { var b2 = document.getElementById("docker_list"); if (b2) mo.observe(b2, { childList: true }); } catch (e) {}
-          // release the guard AFTER our own DOM writes flush (defence vs a re-inject loop)
-          Promise.resolve().then(function () { moPending = false; });
+          moTimer = null; moPending = false;
+          if (moTrail && !dead && mode === "list") moSweep();   // a mutation landed mid-cooldown -> one coalesced trailing pass
         }, 250);
+      }
+      if (!mo) mo = new MutationObserver(function () {
+        if (dead || mode !== "list") return;
+        if (moPending) { moTrail = true; return; }   // a sweep is in its cooldown -> fold into the trailing pass
+        moSweep();                                    // otherwise paint NOW (leading edge)
       });
       // Observe ONLY #docker_list's direct children: Unraid replaces the tbody
       // wholesale every 3-5s (which we must re-tag), but subtree:false keeps the
@@ -2177,7 +2181,13 @@
       // loop (the /Docker freeze after a container update, user 2026-07-28).
       (function armList() {
         var body = document.getElementById("docker_list");
-        if (body) { try { mo.observe(body, { childList: true }); } catch (e) {} return; }
+        if (body) {
+          try { mo.observe(body, { childList: true }); } catch (e) {}
+          // If rows are ALREADY present (a re-arm, or a server-fast render) the observer won't fire
+          // without a future mutation — paint once NOW so the reskin never waits on the next tbody replace.
+          try { if (!moPending && mode === "list" && body.querySelector("tr")) moSweep(); } catch (e) {}
+          return;
+        }
         if (dead) return;
         setTimeout(armList, 250);
       })();

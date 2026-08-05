@@ -13,7 +13,7 @@
 (function () {
   "use strict";
   var PROXY = "/plugins/cannonadecommand/server/ccapi.php";
-  var dead = false, mo = null, liveTimer = null, moPending = false, smo = null, smoPending = false;
+  var dead = false, mo = null, liveTimer = null, moPending = false, moTimer = null, moTrail = false, smo = null, smoPending = false;
   // #22: wrap the memory / disk-IO / network-IO readouts (cols 4-6) of the VM-usage-stats table into
   // CC chips so every cell reads as a badge like the CPU pills. Re-render-safe: guarded by an
   // already-wrapped check (the tbody is replaced ~every 3s via the vm_usage websocket).
@@ -823,12 +823,27 @@
     // debounced: the VM list re-renders in bursts; re-apply at most every ~300ms.
     // (childList only — we never observe attributes, so our own style writes can't
     // re-trigger this into a loop.)
+    // LEADING-EDGE: paint the reskin in the SAME frame the VM rows appear (a MutationObserver callback
+    // runs before the browser paints) instead of 300ms later — the trailing debounce was the visible
+    // "theme renders slowly after a tab switch" delay. A burst still coalesces into one trailing pass.
+    function vmSweep() {
+      moPending = true; moTrail = false;
+      try { mo.disconnect(); } catch (e) {}   // our own badge writes (subtree) must not re-fire us during the pass
+      if (!dead) { try { apply(); } catch (e) {} }
+      try { mo.observe(host, { childList: true, subtree: true }); } catch (e) {}
+      moTimer = setTimeout(function () {
+        moTimer = null; moPending = false;
+        if (moTrail && !dead) vmSweep();
+      }, 300);
+    }
     mo = new MutationObserver(function () {
-      if (dead || moPending) return;
-      moPending = true;
-      setTimeout(function () { moPending = false; if (!dead) apply(); }, 300);
+      if (dead) return;
+      if (moPending) { moTrail = true; return; }
+      vmSweep();
     });
     mo.observe(host, { childList: true, subtree: true });
+    // paint immediately if the list is already populated (observer won't fire without a future mutation)
+    try { if (!moPending && host.querySelector("tr")) vmSweep(); } catch (e) {}
     // #22: the VM-usage-stats table (#vmstats) is LAZILY rendered when its subtab is first opened, so an
     // observer bound to #vmstats here would miss it. Bind to the STABLE #displaybox instead (always present
     // on /VMs) and re-wrap the readout cells whenever anything under it changes. Debounced; the
@@ -849,6 +864,7 @@
   function teardown() {
     if (dead) return; dead = true;
     try { if (mo) mo.disconnect(); mo = null; } catch (e) {}
+    try { if (moTimer) { clearTimeout(moTimer); moTimer = null; } } catch (e) {}
     try { if (smo) smo.disconnect(); smo = null; } catch (e) {}
     try { if (liveTimer) clearInterval(liveTimer); liveTimer = null; } catch (e) {}
     try { document.documentElement.classList.remove("cc-vms-on", "cc-vm-iconbg", "cc-sections-vms", "cc-vmgrid", "cc-vm-rainbow", "cc-vm-rbneutral"); document.documentElement.style.removeProperty("--cc-iconbg-color"); } catch (e) {}
