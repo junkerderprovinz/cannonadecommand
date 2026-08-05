@@ -523,21 +523,21 @@
       });
       wrapMain.appendChild(c);
     })();
-    // #14 (user: "systemweit mehr Animationen" + ein Toggle dafuer): master animation switch, default ON. ON =
-    // smooth motion everywhere AND overrides the OS "reduce motion" preference (user wants more); OFF stills it.
-    function applyAnim() { var on = get("cc.anim", "1") !== "0"; document.documentElement.classList.toggle("cc-anim-on", on); document.documentElement.classList.toggle("cc-anim-off", !on); }
+    // Animation master, now THREE-WAY (user: "aus, normal, wild"). cc.anim = "0" off / "1" normal (subtle,
+    // default) / "2" WILD (very present). cc-anim-on covers normal AND wild (the normal motion keeps running
+    // in wild); cc-anim-wild layers the exuberant extras (bouncing main-tab pills on hover, springier moves).
+    // Overrides the OS "reduce motion" preference (the user explicitly wants motion).
+    function applyAnim() { var v = get("cc.anim", "1"); var r = document.documentElement.classList; r.toggle("cc-anim-off", v === "0"); r.toggle("cc-anim-on", v !== "0"); r.toggle("cc-anim-wild", v === "2"); }
     applyAnim();   // stamp immediately so the settings page itself animates per the current setting
-    // #14-Card (user: "nicht wegen jedem einzelnen Scheiss eine eigene Card"): the Animations switch lives INSIDE
-    // the Theming card now (like Density), not a standalone almost-empty card. Appended below where themingCard exists.
-    (function () {
-      if (!themingCard) return;
-      var row = el("div", "cc-set-row cc-set-inline");
-      var lw = el("span", "cc-set-lblwrap"); lw.appendChild(el("span", null, T("Animationen", "Animations")));
-      lw.appendChild(infoIcon(T("AN = CannonadeCommand animiert Übergänge, Hover-Effekte und Einblendungen systemweit — auch wenn das Betriebssystem „Bewegung reduzieren“ meldet. AUS = keine Animationen.", "ON = CannonadeCommand animates transitions, hovers and fades system-wide — even if the OS reports 'reduce motion'. OFF = no animations.")));
-      row.appendChild(lw);
-      row.appendChild(toggle(get("cc.anim", "1") !== "0", function (v) { set("cc.anim", v ? "1" : "0"); applyAnim(); }));
-      themingCard.appendChild(row);
-    })();
+    // Lives inside the Theming card (like Density), as a 3-way segmented control.
+    if (themingCard) {
+      themingCard.appendChild(segRow(T("Animationen", "Animations"),
+        [["0", T("Aus", "Off")], ["1", T("Normal", "Normal")], ["2", T("Wild", "Wild")]],
+        get("cc.anim", "1"),
+        function (v) { set("cc.anim", v); applyAnim(); },
+        T("Aus = keine Animationen. Normal = dezente Übergänge, Hover-Effekte und Einblendungen (überschreibt das OS-„Bewegung reduzieren“). Wild = sehr präsente Effekte, z. B. hüpfende Hauptleisten-Tabs beim Überfahren.", "Off = no animations. Normal = subtle transitions, hovers and fades (overrides the OS 'reduce motion'). Wild = very present effects, e.g. bouncing main-tab pills on hover."),
+        true));
+    }
     // (the compact live-sync "Anzeige (Unraid, live)" card is built above; everything else lives natively)
     // ── section order = the USER'S main-menu order. header.js persists the drag-reordered
     // menu as cc.navorder.all {left:[href keys],right:[...]}; read DEFENSIVELY (accept .left

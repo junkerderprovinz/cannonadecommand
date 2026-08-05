@@ -1328,3 +1328,23 @@ html.cc-header-on #kvm_table > thead > tr > th {
 /* a hairline top inner-highlight + soft inset bottom shade turns the bar into a lit title strip without a
    border line (the elevation language, applied per-cell since box-shadow on <thead> is unreliable) */
 html.cc-header-on .tablesorter > thead > tr > th { box-shadow: inset 0 1px 0 rgba(255,255,255,.05), inset 0 -6px 8px -6px rgba(0,0,0,.35); }
+
+/* Gliding telemetry (edel): the header status-island fill bars tween instead of jumping on each nchan tick. */
+html.cc-header-on .cc-isl-fill { transition: width .5s ease, background-color .4s ease; }
+
+/* ═══ WILD animation mode (cc.anim="2") — very present motion the user explicitly asked for, layered ON TOP
+   of the normal transitions and gated on cc-anim-wild. It deliberately ignores the OS reduce-motion hint
+   (like the whole cc.anim master), because it is an opt-in choice. ═══ */
+@keyframes cc-wild-bounce { 0%{transform:translateY(0)} 28%{transform:translateY(-7px)} 52%{transform:translateY(3px)} 72%{transform:translateY(-3px)} 88%{transform:translateY(1px)} 100%{transform:translateY(0)} }
+/* the main-menu tabs HOP when the pointer enters them */
+html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item:hover { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
+/* springy lift on any CC pill / action icon; the limit gear also spins a quarter-turn */
+html.cc-anim-wild .cc-b:hover,
+html.cc-anim-wild .cc-actbtn:hover { transform: translateY(-2px) scale(1.06); transition: transform .18s cubic-bezier(.34,1.56,.64,1) !important; }
+html.cc-anim-wild .cc-limbtn:hover { transform: translateY(-2px) scale(1.08) rotate(90deg); transition: transform .22s cubic-bezier(.34,1.56,.64,1) !important; }
+/* a bouncier popover/menu/dropdown entrance */
+@keyframes cc-wild-pop { 0%{opacity:0;transform:translateY(12px) scale(.9)} 60%{transform:translateY(-4px) scale(1.02)} 100%{opacity:1;transform:none} }
+html.cc-anim-wild .cc-pop, html.cc-anim-wild .cc-menu, html.cc-anim-wild .cc-drop { animation: cc-wild-pop .32s cubic-bezier(.34,1.56,.64,1) !important; }
+/* the brand wordmark gives a little wobble on hover */
+@keyframes cc-wild-wobble { 0%{transform:rotate(0)} 25%{transform:rotate(-2.5deg)} 50%{transform:rotate(2deg)} 75%{transform:rotate(-1deg)} 100%{transform:rotate(0)} }
+html.cc-anim-wild #cc-brand:hover .cc-brand-name { display:inline-block; animation: cc-wild-wobble .5s ease; }
