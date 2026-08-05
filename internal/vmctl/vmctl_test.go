@@ -23,6 +23,9 @@ func TestParsers(t *testing.T) {
 	if got := hName("d", "vnet3"); got != "ccvmd3" {
 		t.Errorf("hName(d,vnet3) = %q, want ccvmd3", got)
 	}
+	if got := firstTap(" Interface Type Source Model MAC\n - bridge br0 virtio-net 52:54:00:aa:bb:cc\n vnet6 bridge br0.20 virtio-net 52:54:00:6f:63:25"); got != "vnet6" {
+		t.Errorf("firstTap = %q, want vnet6", got)
+	}
 }
 
 // fakeVirsh answers the Get() probes with canned output and records every call so an

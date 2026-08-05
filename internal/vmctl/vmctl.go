@@ -25,6 +25,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -50,6 +51,8 @@ type VM struct {
 	CPUCap    int    `json:"cpuCap"`    // vcpu_quota as a percentage of ONE core (0 = uncapped)
 	InKbit    int    `json:"inKbit"`    // download cap kbit (0 = unlimited)
 	OutKbit   int    `json:"outKbit"`   // upload cap kbit (0 = unlimited)
+	DownBytes int64  `json:"downBytes"` // cumulative bytes host->VM (VM download), for the UI to diff into a live rate; running only
+	UpBytes   int64  `json:"upBytes"`   // cumulative bytes VM->host (VM upload); running only
 }
 
 // Limits is a requested CPU/RAM change (persisted natively in the domain XML). A nil pointer
@@ -171,8 +174,18 @@ func (c *Controller) Get(ctx context.Context, name string) (VM, error) {
 	// MAC of the first bridged NIC (informational). Bandwidth is NOT read from libvirt: this
 	// kernel can't run domiftune's HTB QoS, so CC polices it host-side (see ApplyBandwidth) and
 	// the configured caps are overlaid from the store by the API.
-	if mac, iErr := c.run(ctx, "domiflist", name); iErr == nil {
-		vm.MAC = firstMAC(mac)
+	if iflist, iErr := c.run(ctx, "domiflist", name); iErr == nil {
+		vm.MAC = firstMAC(iflist)
+		if vm.Running {
+			// Live throughput: read the VM's bridged tap's byte counters. From the HOST tap's POV,
+			// tx = host->VM = the VM's DOWNLOAD, rx = VM->host = the VM's UPLOAD. The UI diffs two
+			// samples into a live rate (there is no libvirt counter that survives this kernel's missing
+			// QoS, so /sys is the source, same tap the bandwidth shaping polices).
+			if tap := firstTap(iflist); tap != "" {
+				vm.DownBytes = readCounter("/sys/class/net/" + tap + "/statistics/tx_bytes")
+				vm.UpBytes = readCounter("/sys/class/net/" + tap + "/statistics/rx_bytes")
+			}
+		}
 	}
 	return vm, nil
 }
@@ -407,6 +420,27 @@ func firstMAC(table string) string {
 		}
 	}
 	return ""
+}
+
+// firstTap returns the first bridged tap device (vnetX) from a domiflist table ("" if none).
+func firstTap(table string) string {
+	for _, ln := range strings.Split(table, "\n") {
+		f := strings.Fields(ln)
+		if len(f) >= 1 && strings.HasPrefix(f[0], "vnet") {
+			return f[0]
+		}
+	}
+	return ""
+}
+
+// readCounter reads a single integer out of a /sys counter file (0 on any error).
+func readCounter(path string) int64 {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return 0
+	}
+	n, _ := strconv.ParseInt(strings.TrimSpace(string(b)), 10, 64)
+	return n
 }
 
 // allCores returns a cpuset spanning every host core, used to clear a pin.

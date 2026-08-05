@@ -13,7 +13,7 @@
 (function () {
   "use strict";
   var PROXY = "/plugins/cannonadecommand/server/ccapi.php";
-  var dead = false, mo = null, liveTimer = null, moPending = false, moTimer = null, moTrail = false, smo = null, smoPending = false;
+  var dead = false, mo = null, liveTimer = null, moPending = false, moTimer = null, moTrail = false, smo = null, smoPending = false, vmBwTimer = null;
   // #22: wrap the memory / disk-IO / network-IO readouts (cols 4-6) of the VM-usage-stats table into
   // CC chips so every cell reads as a badge like the CPU pills. Re-render-safe: guarded by an
   // already-wrapped check (the tbody is replaced ~every 3s via the vm_usage websocket).
@@ -334,13 +334,43 @@
     if (hint) { var hh = el("div", null, hint); hh.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a)"; wrap.appendChild(hh); }
     return { wrap: wrap, input: inp };
   }
-  // BW badge VALUE: the CONFIGURED cap per direction (↓ download / ↑ upload), mirroring Docker's
-  // live BW badge shape. "–" when uncapped; k/M formatting like the container BW pills.
+  // BW badge VALUE, mirroring the Docker BW badge: a RUNNING VM shows its LIVE throughput (↓ down / ↑ up,
+  // diffed from the tap byte counters by pollVmBw); a stopped/idle VM shows the CONFIGURED cap, or "–".
+  var vmBwPrev = {}, vmRate = {}; // name -> {down,up,t} sample ; name -> {down,up} bytes/s
+  function rateFmt(bps) {
+    var bits = (bps || 0) * 8;
+    if (bits >= 1e9) return (bits / 1e9).toFixed(1) + "G";
+    if (bits >= 1e6) return (bits / 1e6).toFixed(1) + "M";
+    if (bits >= 1e3) return Math.round(bits / 1e3) + "k";
+    return "0";
+  }
   function vmBwText(lim) {
+    if (lim && lim.running && lim.name && vmRate[lim.name]) {
+      var r = vmRate[lim.name];
+      return "↓" + rateFmt(r.down) + " ↑" + rateFmt(r.up);
+    }
     var d = lim && lim.inKbit > 0, u = lim && lim.outKbit > 0;
     if (!d && !u) return "–";
     function fmt(k) { return k >= 1000 ? (Math.round(k / 100) / 10) + "M" : k + "k"; }
     return "↓" + (d ? fmt(lim.inKbit) : "∞") + " ↑" + (u ? fmt(lim.outKbit) : "∞");
+  }
+  // Live-BW poll: re-fetch /api/vms and diff each running VM's tap byte counters into a bytes/s rate, then
+  // recolour/refill the BW badges. Gated in arm() so the heavy virsh List() only runs while a VM RUNS.
+  function pollVmBw() {
+    return loadVmLims().then(function () {
+      var now = Date.now();
+      Object.keys(vmLims).forEach(function (n) {
+        var v = vmLims[n];
+        if (!v || !v.running) { delete vmBwPrev[n]; delete vmRate[n]; return; }
+        var prev = vmBwPrev[n];
+        if (prev && now > prev.t) {
+          var dt = (now - prev.t) / 1000;
+          vmRate[n] = { down: Math.max(0, Math.round(((v.downBytes || 0) - prev.down) / dt)), up: Math.max(0, Math.round(((v.upBytes || 0) - prev.up) / dt)) };
+        }
+        vmBwPrev[n] = { down: v.downBytes || 0, up: v.upBytes || 0, t: now };
+      });
+      try { refreshAllRes(); } catch (e) {}
+    });
   }
   // Gear colour — VERBATIM method from docker.js gearFill so the VM gears read the SAME palette:
   // rainbow stamps the kind var (--cc-rb-<kind>) and lets CSS decide the rest; accent/native mode
@@ -925,6 +955,7 @@
     try { if (moTimer) { clearTimeout(moTimer); moTimer = null; } } catch (e) {}
     try { if (smo) smo.disconnect(); smo = null; } catch (e) {}
     try { if (liveTimer) clearInterval(liveTimer); liveTimer = null; } catch (e) {}
+    try { if (vmBwTimer) { clearInterval(vmBwTimer); vmBwTimer = null; } } catch (e) {}
     try { document.documentElement.classList.remove("cc-vms-on", "cc-vm-iconbg", "cc-sections-vms", "cc-vmgrid", "cc-vm-rainbow", "cc-vm-rbneutral"); document.documentElement.style.removeProperty("--cc-iconbg-color"); } catch (e) {}
     try { RB_KINDS.forEach(function (k) { document.documentElement.style.removeProperty("--cc-rb-" + k); document.documentElement.style.removeProperty("--cc-rb-" + k + "-t"); }); var vt = document.getElementById("cc-vm-viewtoggle"); if (vt) { var vbar = vt.closest(".cc-vm-toolbar") || vt; if (vbar.parentNode) vbar.parentNode.removeChild(vbar); } } catch (e) {}
     try { enhanceCellsTeardown(); flattenTeardown(); } catch (e) {}
@@ -953,6 +984,11 @@
     liveTimer = setInterval(function () {
       try { fetch(PROXY + "?path=state", { headers: { Accept: "application/json" } }).then(function (r) { if (r.status === 404 || r.status === 410) teardown(); }).catch(function () {}); } catch (e) {}
     }, 8000);
+    // live BW rate: only spend the (heavy) /api/vms round-trip while a VM is actually RUNNING — when all
+    // are stopped the badges show the configured cap and this is a cheap DOM check, no virsh load.
+    if (!vmBwTimer) vmBwTimer = setInterval(function () {
+      try { if (dead) return; if (!document.querySelector("#kvm_list .cc-badge-running")) { vmRate = {}; return; } pollVmBw(); } catch (e) {}
+    }, 4000);
   }
   function boot() {
     // vms.js now loads GLOBALLY via the Buttons hook (CannonadeCommand.VmTab.page) so it reliably runs
