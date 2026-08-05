@@ -126,8 +126,9 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
   choose per tab whether the sub-tabs render as stacked CC sections or as native
   Unraid sub-tabs (native by default).
 - VM tab: full Docker-tab parity — logo badge, state/CPU/RAM/IP badges, an actions
-  column, per-VM CPU/RAM/bandwidth limit gears (pin, cap, up/down caps) and a live
-  vDisk grow, the accent autostart switch, a list/grid (card) view and rainbow mode.
+  column, per-VM CPU/RAM/bandwidth limit gears (a graphical P/E-aware CPU core-picker,
+  a CPU cap, RAM and up/down caps, a live bandwidth rate) and a live vDisk grow, the
+  accent autostart switch, a list/grid (card) view and rainbow mode.
 - Logo background (per area, in the View card): put the container / plugin / VM /
   category logo on a coloured accent badge and recolour it monochrome black or white
   for contrast, or leave it natural.
