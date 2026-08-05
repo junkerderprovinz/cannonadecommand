@@ -74,11 +74,11 @@ type Server struct {
 	Store        Store
 	Runner       Runner
 	VMs          VMController // optional: libvirt VM limits backend (CPU/RAM/bandwidth)
-	Pidder       Pidder   // resolves a container's main PID for the bandwidth diagnostics
-	BwLast       BwLaster // optional: the monitor's last shaping attempt per container
-	Kicker       Kicker   // optional: nudges the monitor to apply a saved config immediately
-	TemplatesDir string   // Unraid dockerMan templates dir; "" disables the apply-fest template write
-	Version      string   // the running daemon's build version, surfaced in /api/state so the UI can show which backend is live
+	Pidder       Pidder       // resolves a container's main PID for the bandwidth diagnostics
+	BwLast       BwLaster     // optional: the monitor's last shaping attempt per container
+	Kicker       Kicker       // optional: nudges the monitor to apply a saved config immediately
+	TemplatesDir string       // Unraid dockerMan templates dir; "" disables the apply-fest template write
+	Version      string       // the running daemon's build version, surfaced in /api/state so the UI can show which backend is live
 
 	mu      sync.Mutex
 	lastRun model.RunResult

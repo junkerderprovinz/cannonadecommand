@@ -198,7 +198,7 @@ func (c *Controller) Apply(ctx context.Context, name string, lim Limits) error {
 		}
 	}
 	if lim.MemMiB != nil && *lim.MemMiB > 0 {
-		if _, e := c.run(ctx, append([]string{"setmem", name, strconv.Itoa(*lim.MemMiB * 1024) + "KiB"}, sc...)...); e != nil {
+		if _, e := c.run(ctx, append([]string{"setmem", name, strconv.Itoa(*lim.MemMiB*1024) + "KiB"}, sc...)...); e != nil {
 			return e
 		}
 	}
