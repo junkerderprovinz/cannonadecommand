@@ -97,6 +97,25 @@ html.cc-vms-on #kvm_list .cc-limbtn { display: inline-flex; align-items: center;
 html.cc-vms-on #kvm_list .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: #fff; }
 html.cc-vms-on #kvm_list .cc-limbtn-set { color: #10321f; background: #35d07f; }   /* filled when a limit is configured */
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-limbtn-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
+/* Graphical CPU core-picker in the VM limits editor (Docker-identical, docker.css:508-529). Scoped to the
+   editor overlay #cc-vmlim-ov since the modal lives on document.body, not #kvm_list. */
+#cc-vmlim-ov .cc-cores { display: flex; flex-wrap: wrap; gap: 5px; }
+#cc-vmlim-ov .cc-corebox { display: inline-flex; flex-direction: column; gap: 3px; padding: 4px; background: var(--cc-surface-2, #1e1e1e); border: none; border-radius: 7px; align-items: stretch; }
+#cc-vmlim-ov .cc-corebox-tag { text-align: center; font-size: 9px; line-height: 1; color: var(--cc-text-dim, #8a8a8a); letter-spacing: .5px; user-select: none; }
+#cc-vmlim-ov .cc-corebox-p .cc-corebox-tag { color: var(--cc-accent, #6ea0ff); }
+#cc-vmlim-ov .cc-corebox-e .cc-corebox-tag { color: var(--cc-warn, #e0912a); }
+#cc-vmlim-ov .cc-core { width: 34px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-dim, #9a9a9a); border: none; border-radius: 5px; font-size: 12px; cursor: pointer; user-select: none; box-sizing: border-box; transition: background .1s, color .1s; }
+#cc-vmlim-ov .cc-core:hover { background: #3a3a3a; color: var(--cc-text, #e6e6e6); }
+#cc-vmlim-ov .cc-core-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
+/* rainbow: colour each selected core by its physical-core group (mirrors docker.css:522-529) */
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-0 { background: var(--cc-ok, #1f9d55); color: #fff; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-1 { background: #2f6feb; color: #fff; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-2 { background: #8b5cf6; color: #fff; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-3 { background: var(--cc-warn, #e0912a); color: #161616; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-4 { background: var(--cc-err, #d9433f); color: #fff; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-5 { background: #0ea5a4; color: #fff; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-6 { background: #e05299; color: #fff; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-7 { background: #6366f1; color: #fff; }
 /* keep the cloned native ISO-picker link (a.hand) legible inside the CD badge */
 html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand,
 html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand i { color: inherit !important; text-decoration: none !important; }

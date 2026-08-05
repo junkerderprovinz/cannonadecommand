@@ -282,6 +282,44 @@
   function loadVmLims() {
     return vmApi("GET", "vms").then(function (list) { vmLims = {}; if (Array.isArray(list)) list.forEach(function (v) { vmLims[v.name] = v; }); }).catch(function () {});
   }
+  // HOST CPU topology for the graphical core-picker (Docker-identical): /api/state already exposes the
+  // host's logical-CPU count + HT grouping + Intel P/E lists (docker.js reads the SAME keys). Loaded once.
+  var vmHost = { cpus: 0, coreOf: null, pcores: [], ecores: [] };
+  function loadVmHost() {
+    return vmApi("GET", "state", null).then(function (st) {
+      if (st) vmHost = { cpus: st.host_cpus || 0, coreOf: st.host_core_of || null, pcores: st.host_pcores || [], ecores: st.host_ecores || [] };
+    }).catch(function () {});
+  }
+  // cpuset <-> set helpers (verbatim from docker.js) for the core-picker prefill/read.
+  function cpusetToSet(str) { var out = []; String(str || "").split(",").forEach(function (p) { p = p.trim(); var m = /^(\d+)-(\d+)$/.exec(p); if (m) { for (var i = +m[1]; i <= +m[2]; i++) out.push(i); } else if (/^\d+$/.test(p)) out.push(+p); }); return out; }
+  function setToCpuset(arr) { arr = arr.slice().sort(function (a, b) { return a - b; }); var parts = [], i = 0; while (i < arr.length) { var j = i; while (j + 1 < arr.length && arr[j + 1] === arr[j] + 1) j++; parts.push(i === j ? String(arr[i]) : arr[i] + "-" + arr[j]); i = j + 1; } return parts.join(","); }
+  // Build the Docker-style core grid: one BOX per physical core, its hyperthreads stacked vertically,
+  // wrapping into rows. Intel hybrid CPUs get a P/E tag. Returns { node, read } or null (unknown topology
+  // -> caller falls back to a text cpuset field). Prefills the current pin.
+  function buildCoreGrid(cur) {
+    var ncpu = vmHost.cpus || 0;
+    if (!(ncpu > 0 && ncpu <= 512)) return null;
+    var coreOf = (vmHost.coreOf && vmHost.coreOf.length === ncpu) ? vmHost.coreOf : null;
+    var isE = {}; (vmHost.ecores || []).forEach(function (n) { isE[n] = true; });
+    var hybrid = (vmHost.pcores || []).length > 0 && (vmHost.ecores || []).length > 0;
+    var grid = el("div", "cc-cores");
+    var groups = {}, order = [];
+    for (var ci = 0; ci < ncpu; ci++) { var g = coreOf ? coreOf[ci] : ci; if (!groups[g]) { groups[g] = []; order.push(g); } groups[g].push(ci); }
+    order.forEach(function (g) {
+      var box = el("span", "cc-corebox");
+      if (hybrid) { var isEcore = groups[g].every(function (n) { return isE[n]; }); box.classList.add(isEcore ? "cc-corebox-e" : "cc-corebox-p"); box.appendChild(el("span", "cc-corebox-tag", isEcore ? "E" : "P")); }
+      groups[g].forEach(function (cpu2) {
+        var core = el("span", "cc-core cc-rb-" + (g % 8), String(cpu2)); core.dataset.core = cpu2;
+        core.title = "CPU " + cpu2 + (coreOf ? " · core " + g : "") + (hybrid ? (isE[cpu2] ? " · E-core" : " · P-core") : "");
+        core.addEventListener("click", function () { this.classList.toggle("cc-core-on"); });
+        box.appendChild(core);
+      });
+      grid.appendChild(box);
+    });
+    var s = cpusetToSet(cur);
+    Array.prototype.forEach.call(grid.querySelectorAll(".cc-core"), function (c) { if (s.indexOf(parseInt(c.dataset.core, 10)) >= 0) c.classList.add("cc-core-on"); });
+    return { node: grid, read: function () { var sel = []; Array.prototype.forEach.call(grid.querySelectorAll(".cc-core-on"), function (c) { sel.push(parseInt(c.dataset.core, 10)); }); return setToCpuset(sel); } };
+  }
   function vmNameOf(tr) {
     var h = tr && tr.querySelector("td.vm-name [onclick*='addVMContext']");
     var m = /addVMContext\('([^']+)'/.exec(h ? (h.getAttribute("onclick") || "") : "");
@@ -377,11 +415,19 @@
     btn.onclick = function () {
       var g = parseFloat(String(inp.value).replace(",", "."));
       if (isNaN(g) || g <= curG) { statusEl.style.color = "var(--cc-err,#d9433f)"; statusEl.textContent = (VMDE ? "nur vergrößern — > " : "grow only — > ") + curG + " GiB"; return; }
-      btn.disabled = true; statusEl.style.color = "var(--cc-text-dim,#8a8a8a)"; statusEl.textContent = VMDE ? "Vergrößern läuft…" : "resizing…";
-      vmApi("POST", "vmdiskresize", { name: name, target: d.target, size_gib: g }).then(function () {
-        btn.disabled = false; statusEl.style.color = "var(--cc-ok,#1f9d55)"; statusEl.textContent = (VMDE ? "vergrößert auf " : "grown to ") + g + " GiB" + (VMDE ? " · Gast muss Partition/FS erweitern" : " · guest must extend partition/FS");
-        curG = g; cur.textContent = "  " + g + " GiB"; d.capacityBytes = g * 1073741824; inp.min = String(g);
-      }).catch(function (e) { btn.disabled = false; statusEl.style.color = "var(--cc-err,#d9433f)"; statusEl.textContent = String(e.message || e).slice(0, 70); });
+      function doResize() {
+        btn.disabled = true; statusEl.style.color = "var(--cc-text-dim,#8a8a8a)"; statusEl.textContent = VMDE ? "Vergrößern läuft…" : "resizing…";
+        vmApi("POST", "vmdiskresize", { name: name, target: d.target, size_gib: g }).then(function () {
+          btn.disabled = false; statusEl.style.color = "var(--cc-ok,#1f9d55)"; statusEl.textContent = (VMDE ? "vergrößert auf " : "grown to ") + g + " GiB" + (VMDE ? " · Gast muss Partition/FS erweitern" : " · guest must extend partition/FS");
+          curG = g; cur.textContent = "  " + g + " GiB"; d.capacityBytes = g * 1073741824; inp.min = String(g);
+        }).catch(function (e) { btn.disabled = false; statusEl.style.color = "var(--cc-err,#d9433f)"; statusEl.textContent = String(e.message || e).slice(0, 70); });
+      }
+      // a grow is IRREVERSIBLE (a vDisk can't be shrunk back without data loss) — confirm first, using the
+      // same swal dialog the VM-remove uses, with a native confirm() fallback.
+      var q = "vDisk " + d.target + ": " + curG + " GiB → " + g + " GiB. " + (VMDE ? "Das lässt sich NICHT rückgängig machen." : "This can NOT be undone.");
+      if (typeof window.swal === "function") {
+        window.swal({ title: VMDE ? "Sicher?" : "Are you sure?", text: q, type: "warning", showCancelButton: true, confirmButtonText: VMDE ? "Vergrößern" : "Grow", cancelButtonText: VMDE ? "Abbrechen" : "Cancel" }, function (ok) { if (ok) doResize(); });
+      } else if (window.confirm(q)) { doResize(); }
     };
     row.appendChild(lab); row.appendChild(inp); row.appendChild(unit); row.appendChild(btn);
     return row;
@@ -411,11 +457,23 @@
     var sub = el("div", null, (v.vcpus || 0) + " vCPUs · " + (v.maxMemMiB || 0) + " MiB max" + (v.running ? (VMDE ? " · läuft" : " · running") : (VMDE ? " · gestoppt" : " · stopped")));
     sub.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a);margin:0 0 14px 0"; card.appendChild(sub);
     var cores = (v.cpuCores && v.cpuCores !== "0-127") ? v.cpuCores : "";
-    var f = {};
+    var f = {}, readCpuset = null;   // readCpuset() yields the pin cpuset (grid selection or text field)
     if (showCpu) {
-      f.cores = vmFld(VMDE ? "CPU-Kerne (Pin)" : "CPU cores (pin)", VMDE ? "z. B. 6-15 · leer = alle" : "e.g. 6-15 · empty = all", cores, "6-15");
+      // CPU pin: the SAME graphical core-picker the Docker tab uses when the host topology is known,
+      // else a plain cpuset text field.
+      var grid = buildCoreGrid(cores);
+      if (grid) {
+        var pinWrap = el("div"); pinWrap.style.cssText = "display:flex;flex-direction:column;gap:5px;margin:0 0 10px 0";
+        var pinLbl = el("label", null, VMDE ? "CPU-Kerne (Pin)" : "CPU cores (pin)"); pinLbl.style.cssText = "font-size:12px;font-weight:600;color:var(--cc-text,#e6e6e6)";
+        var pinHint = el("div", null, VMDE ? "Kerne anklicken · nichts gewählt = alle" : "click cores · none = all"); pinHint.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a)";
+        pinWrap.appendChild(pinLbl); pinWrap.appendChild(grid.node); pinWrap.appendChild(pinHint); card.appendChild(pinWrap);
+        readCpuset = grid.read;
+      } else {
+        f.cores = vmFld(VMDE ? "CPU-Kerne (Pin)" : "CPU cores (pin)", VMDE ? "z. B. 6-15 · leer = alle" : "e.g. 6-15 · empty = all", cores, "6-15");
+        card.appendChild(f.cores.wrap); readCpuset = function () { return f.cores.input.value.trim(); };
+      }
       f.cap = vmFld(VMDE ? "CPU-Limit (Kerne)" : "CPU limit (cores)", VMDE ? "0 = unbegrenzt · z. B. 1.5" : "0 = unlimited · e.g. 1.5", v.cpuCap > 0 ? (v.cpuCap / 100) : "", "0");
-      card.appendChild(f.cores.wrap); card.appendChild(f.cap.wrap);
+      card.appendChild(f.cap.wrap);
     }
     if (showRam) { f.ram = vmFld("RAM (MiB)", "max " + (v.maxMemMiB || 0) + " MiB", v.memMiB || "", String(v.maxMemMiB || 0)); card.appendChild(f.ram.wrap); }
     if (showBw) {
@@ -444,7 +502,7 @@
     function intOr(s) { s = (s || "").trim(); if (s === "") return null; var n = parseInt(s, 10); return isNaN(n) ? null : n; }
     if (apply) apply.onclick = function () {
       var body = { name: name };
-      if (f.cores) body.cpu_cores = f.cores.input.value.trim(); // "" clears the pin
+      if (readCpuset) body.cpu_cores = readCpuset(); // "" (no cores selected) clears the pin
       if (f.cap) { var capRaw = f.cap.input.value.trim(); if (capRaw === "") body.cpu_cap = 0; else { var cf = parseFloat(capRaw.replace(",", ".")); if (!isNaN(cf)) body.cpu_cap = Math.max(0, Math.round(cf * 100)); } }
       if (f.ram) { var ramN = intOr(f.ram.input.value); if (ramN != null && ramN > 0) body.mem_mib = ramN; }
       if (f.dn) { var dnN = intOr(f.dn.input.value); if (dnN != null) body.in_kbit = Math.max(0, dnN); }
@@ -907,6 +965,7 @@
     // prime the limits, then colour the gears + fill the BW badges once they land (the first
     // enhanceCells runs before this async load resolves, so the rows build "unset" and this fixes them).
     loadVmLims().then(function () { try { refreshAllRes(); } catch (e) {} });
+    loadVmHost(); // prime the host CPU topology for the editor's graphical core-picker (static, once)
     try {
       arm();
       // Clicking a VM ICON no longer opens the native dropdown — the action icons FLASH instead, pointing
