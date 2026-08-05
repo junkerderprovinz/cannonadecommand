@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.2.1">
+  <!ENTITY version   "3.3.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,38 @@
 </ICON>
 
 <CHANGES>
+### 3.3.0
+- VM tab: full per-VM resource control, matched exactly to the Docker tab. CPU, RAM and bandwidth each get
+  their own badge with a gear behind it, coloured per kind. The CPU editor has the same graphical core-picker
+  the Docker tab uses (one box per physical core, Intel P and E cores tagged), plus a CPU cap; RAM sets the
+  balloon size; bandwidth caps upload and download and the badge shows the live throughput while a VM runs.
+  The CPU pin and cap are applied with virsh and re-asserted every tick, so an Unraid VM-form Apply can no
+  longer silently drop the cap; bandwidth is policed host-side because this kernel lacks the qdiscs libvirt
+  would otherwise need.
+- VM tab: live vDisk grow. A gear on the vDisks badge opens a resize editor; the disk grows live via
+  blockresize while the VM runs, or via qemu-img while it is off. It is grow-only and refuses any size it
+  cannot verify as larger, so a disk can never be truncated.
+- The CPU, RAM and bandwidth limit editors are now identical between the Docker and VM tabs: the same dark
+  surface, radius, elevation, header with a close button and controls. The lighter inner cards behind the
+  fields are gone, so an editor reads as one flat, lit surface.
+- Speed: the reskin now paints as soon as the rows appear instead of after a fixed pause, so switching tabs no
+  longer flashes the plain Unraid list before the badges and gears land.
+- Header: the notification bell's unread indicator is a small corner dot again instead of a blob that
+  half-covered the bell.
+- Table title bars: every list's column-header row is now in the CannonadeCommand style (quiet tracked
+  small-caps on a subtle bar), consistent across pages and both themes.
+- The badge-shape setting is now system-wide: pill, rounded, square or circle also drives the gears, the
+  toggles and their knobs, and the colour swatches, not just the badges.
+- Settings: the server-name font list is sorted alphabetically, the old ugly faces are gone, and a curated set
+  of Google fonts (Montserrat, Poppins, Oswald, Bebas Neue, Playfair Display and more) was added; they load on
+  demand and render for everyone. The dead Help-icon toggle was removed (the Help button is long gone), and the
+  density row is aligned like every other row.
+- Animations are now a three-way choice: off, normal, or wild. Wild adds very present motion (the main-menu
+  tabs hop on hover, pills and gears spring, popovers bounce in, the wordmark wobbles).
+- Finish: a lit elevation and a soft entrance on the popovers; a convex sheen and tracked small-caps on every
+  badge; tabular figures so live numbers do not jitter the columns; a jewel-toned rainbow palette; crisp line
+  gears in place of the emoji cog; a soft focus ring; an in-place copy flash; and a state glyph on the running,
+  paused and stopped badges so state reads without relying on colour alone.
 ### 3.2.1
 - Required container fields: the red "required" dot is shown consistently on every required field now, including
   dropdown fields (e.g. "Behind reverse proxy"), which previously still showed the native asterisk.
@@ -2223,7 +2255,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>02f9e41db5f5e3cabe90b23540879b841e2d922073ff223072d206be89367c92</SHA256>
+  <SHA256>ebb292bc803c7844fb3548ec76f85f2b07bbd1779431ebe493d05e4e47c0086a</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
