@@ -331,6 +331,15 @@ html.cc-header-on.cc-header-rbneutral #UserProfile > div:nth-child(2) > span:hov
 /* glyphs at 16px — the 14px icon token +2px, these two glyphs read better a notch larger;
    color FORCED onto the svg so the native state tints (yellow/red) cannot leak through */
 html.cc-header-on #UserProfile > div:nth-child(2) > span svg { width: 16px !important; height: 16px !important; color: inherit !important; fill: currentColor; }
+/* UNREAD indicator: the bell shows a SECOND svg (svg.absolute -top-1 -right-1 size-4) only when
+   notifications exist. The blanket rule above sized it to 16px = the bell's own size AND forced it to the
+   bell's colour, so an unread state HALF-COVERED the glyph with a same-colour blob (user report). Shrink it
+   to a small amber corner dot that reads as a proper badge and clears the glyph. */
+html.cc-header-on #UserProfile > div:nth-child(2) > span svg[class*="absolute"] {
+  width: 8px !important; height: 8px !important;
+  top: -5px !important; right: -5px !important;
+  color: var(--cc-warn, #e0912a) !important; fill: currentColor !important;
+}
 /* the burger's SECOND svg is a dropdown chevron — visual noise inside a 30px box */
 html.cc-header-on #UserProfile > div:nth-child(2) > span[id^="reka-menu-trigger"] svg:nth-of-type(2) { display: none !important; }
 /* their Tailwind ring-offset classes may paint focus rings — kill on every focusable (law) */
