@@ -93,7 +93,7 @@ html.cc-vms-on #kvm_list .cc-resline { display: inline-flex; align-items: center
 /* the limit GEAR behind each res badge — Docker-identical (docker.css:285-291), retargeted to #kvm_list.
    vms.js's vmGearFill fills it INLINE with priority in accent/native mode and stamps --cc-rb-c (the kind
    colour) in rainbow mode; these rules provide the idle/hover/set look the inline fill sits on top of. */
-html.cc-vms-on #kvm_list .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 999px; background: #3a3a3a; color: #ececec; cursor: pointer; font-size: 12px; margin: 2px 0; }
+html.cc-vms-on #kvm_list .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--cc-b-radius, 999px); background: #3a3a3a; color: #ececec; cursor: pointer; font-size: 12px; margin: 2px 0; }   /* radius FOLLOWS the badge shape, like Docker (user) */
 html.cc-vms-on #kvm_list .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: #fff; }
 html.cc-vms-on #kvm_list .cc-limbtn-set { color: #10321f; background: #35d07f; }   /* filled when a limit is configured */
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-limbtn-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
