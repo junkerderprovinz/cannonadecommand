@@ -151,22 +151,26 @@ type Notify struct {
 }
 
 // Bandwidth caps a container's network rate. Docker has no native bandwidth API, so the
-// monitor applies it inside the container's network namespace with tc: EGRESS (upload) via
-// a tbf shaper on the interface root, INGRESS (download) via an ingress-policing filter.
-// Re-applied while the container runs, lost on restart until re-applied. A field <= 0 means
-// "no cap" for that direction.
+// monitor applies it inside the container's network namespace with an iptables hashlimit DROP:
+// UPLOAD (egress) on OUTPUT, DOWNLOAD (ingress) on INPUT — no tc qdisc (this kernel ships no
+// sch_tbf, and sch_ingress crashes it). Re-applied while the container runs, lost on restart
+// until re-applied. A field <= 0 means "no cap" for that direction.
 type Bandwidth struct {
 	Name        string `json:"name"`
 	EgressKbit  int    `json:"egress_kbit"`            // upload cap (kbit/s)
 	IngressKbit int    `json:"ingress_kbit,omitempty"` // download cap (kbit/s)
 }
 
-// VMBandwidth caps a libvirt VM's network rate. Like Bandwidth for containers, but there is
-// no container netns to shape inside — the monitor applies it host-side via an iptables
-// physdev hashlimit on the VM's bridged tap (this Unraid kernel lacks the qdiscs libvirt's
-// own domiftune QoS needs). Re-applied while the VM runs, cleared when the entry is removed.
-type VMBandwidth struct {
+// VMLimit is the CC-owned, config-stored part of a VM's limits — the ones the monitor must
+// re-assert every tick so they survive an Unraid VM-form "Apply" (which regenerates the domain
+// XML) and a VM restart. CPUCap is the CPU quota (% of one core): the Unraid form has no field
+// for it, so a form-Apply silently drops it. Bandwidth has no container netns to shape inside
+// either, so the monitor applies it host-side via an iptables physdev hashlimit on the VM's tap
+// (this kernel lacks the qdiscs libvirt's own domiftune QoS needs). CPU pin + RAM are NOT here:
+// the Unraid form manages them, so CC applies them once (virsh --config) and never fights the form.
+type VMLimit struct {
 	Name    string `json:"name"`
+	CPUCap  int    `json:"cpu_cap,omitempty"`  // % of one core (0 = uncapped)
 	InKbit  int    `json:"in_kbit,omitempty"`  // download cap (kbit/s)
 	OutKbit int    `json:"out_kbit,omitempty"` // upload cap (kbit/s)
 }
@@ -188,11 +192,11 @@ type IdleStop struct {
 // Config is the automation configuration the daemon acts on, persisted alongside
 // the plan on the flash. Empty = nothing scheduled/watched, no notifications.
 type Config struct {
-	Schedules    []Schedule    `json:"schedules"`
-	Watchdogs    []Watchdog    `json:"watchdogs"`
-	Bandwidths   []Bandwidth   `json:"bandwidths,omitempty"`
-	VMBandwidths []VMBandwidth `json:"vm_bandwidths,omitempty"`
-	IdleStops    []IdleStop    `json:"idle_stops,omitempty"`
+	Schedules  []Schedule  `json:"schedules"`
+	Watchdogs  []Watchdog  `json:"watchdogs"`
+	Bandwidths []Bandwidth `json:"bandwidths,omitempty"`
+	VMLimits   []VMLimit   `json:"vm_limits,omitempty"`
+	IdleStops  []IdleStop  `json:"idle_stops,omitempty"`
 	// ShapeIface is the in-container interface egress shaping is applied to (Settings).
 	// Blank means the netshape default (eth0). Same for every shaped container.
 	ShapeIface string `json:"shape_iface,omitempty"`

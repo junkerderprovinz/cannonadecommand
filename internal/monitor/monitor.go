@@ -60,6 +60,7 @@ type Statter interface {
 // monitor just re-asserts every tick; (0,0) clears + forgets the VM.
 type VMShaper interface {
 	ApplyBandwidth(ctx context.Context, name string, inKbit, outKbit int) error
+	SetCPUCap(ctx context.Context, name string, capPct int) error
 }
 
 // Monitor runs the schedule + watchdog loop.
@@ -154,22 +155,23 @@ func (m *Monitor) Tick(ctx context.Context) {
 	m.tickSchedules(ctx, cfg)
 	m.tickWatchdogs(ctx, cfg)
 	m.tickBandwidths(ctx, cfg)
-	m.tickVMBandwidths(ctx, cfg)
+	m.tickVMLimits(ctx, cfg)
 	m.tickIdleStop(ctx, cfg)
 }
 
-// tickVMBandwidths (re-)applies each configured VM bandwidth cap and clears one whose entry
-// was removed. Like container shaping, the host-side iptables rules are keyed to the VM's tap
-// and are lost/renamed when the VM restarts onto a new tap, so we re-assert every tick — the
-// shaper tracks the tap and clears the old one. A not-running VM is a no-op until it comes up.
-func (m *Monitor) tickVMBandwidths(ctx context.Context, cfg model.Config) {
+// tickVMLimits (re-)asserts each configured VM's CC-owned limits — CPU cap + bandwidth — and
+// clears them from a VM whose entry was removed. Both need re-asserting every tick: the CPU cap
+// (in the domain XML) is wiped by an Unraid VM-form "Apply" that regenerates the XML, and the
+// bandwidth iptables rules are keyed to the VM's tap, which changes when it restarts. A
+// not-running VM is a no-op until it comes up.
+func (m *Monitor) tickVMLimits(ctx context.Context, cfg model.Config) {
 	if m.VMShaper == nil {
 		return
 	}
-	desired := make(map[string]model.VMBandwidth, len(cfg.VMBandwidths))
-	for _, b := range cfg.VMBandwidths {
-		if b.InKbit > 0 || b.OutKbit > 0 {
-			desired[b.Name] = b
+	desired := make(map[string]model.VMLimit, len(cfg.VMLimits))
+	for _, l := range cfg.VMLimits {
+		if l.CPUCap > 0 || l.InKbit > 0 || l.OutKbit > 0 {
+			desired[l.Name] = l
 		}
 	}
 	m.mu.Lock()
@@ -181,19 +183,25 @@ func (m *Monitor) tickVMBandwidths(ctx context.Context, cfg model.Config) {
 		prev = append(prev, n)
 	}
 	m.mu.Unlock()
-	// Clear caps we applied before but are no longer desired.
+	// Clear limits we asserted before but are no longer desired.
 	for _, name := range prev {
 		if _, want := desired[name]; !want {
 			_ = m.VMShaper.ApplyBandwidth(ctx, name, 0, 0)
+			_ = m.VMShaper.SetCPUCap(ctx, name, 0)
 			m.mu.Lock()
 			delete(m.vmShaped, name)
 			m.mu.Unlock()
 		}
 	}
-	// Re-assert every desired cap (idempotent; the shaper handles a restarted tap).
-	for name, b := range desired {
-		if err := m.VMShaper.ApplyBandwidth(ctx, name, b.InKbit, b.OutKbit); err != nil {
+	// Re-assert every desired limit (idempotent; the shaper handles a restarted tap).
+	for name, l := range desired {
+		if err := m.VMShaper.ApplyBandwidth(ctx, name, l.InKbit, l.OutKbit); err != nil {
 			log.Printf("vm bandwidth: %s: %v", name, err)
+		}
+		if l.CPUCap > 0 {
+			if err := m.VMShaper.SetCPUCap(ctx, name, l.CPUCap); err != nil {
+				log.Printf("vm cpu-cap: %s: %v", name, err)
+			}
 		}
 		m.mu.Lock()
 		m.vmShaped[name] = true

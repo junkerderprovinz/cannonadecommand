@@ -213,6 +213,31 @@ func (c *Controller) Apply(ctx context.Context, name string, lim Limits) error {
 	return nil
 }
 
+// SetCPUCap re-asserts JUST the CPU quota (% of one core; <=0 uncaps) via schedinfo — a lean
+// path (one dominfo + one schedinfo, no full Get) for the monitor to reassert the cap every
+// tick, so it survives an Unraid VM-form "Apply" that regenerates the domain XML without it.
+func (c *Controller) SetCPUCap(ctx context.Context, name string, capPct int) error {
+	info, err := c.run(ctx, "dominfo", name)
+	if err != nil {
+		return err
+	}
+	var state string
+	for _, ln := range strings.Split(info, "\n") {
+		if k, v, ok := splitKV(ln); ok && k == "State" {
+			state = v
+			break
+		}
+	}
+	quota := "-1" // uncapped
+	if capPct > 0 {
+		quota = strconv.Itoa(capPct * vcpuPeriod / 100)
+	}
+	args := append([]string{"schedinfo", name}, scope(running(state))...)
+	args = append(args, "--set", "vcpu_period="+strconv.Itoa(vcpuPeriod), "--set", "vcpu_quota="+quota)
+	_, err = c.run(ctx, args...)
+	return err
+}
+
 // ── parse helpers (all defensive: a missing/odd field yields the zero value) ──
 
 func splitKV(ln string) (string, string, bool) {

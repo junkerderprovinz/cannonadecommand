@@ -129,46 +129,53 @@ func (s *Server) handleGetVMs(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, []vmctl.VM{})
 		return
 	}
-	s.overlayVMBandwidths(vms)
+	s.overlayVMLimits(vms)
 	writeJSON(w, http.StatusOK, vms)
 }
 
-// overlayVMBandwidths fills each VM's InKbit/OutKbit from the stored config — VM bandwidth
-// can't live in libvirt on this kernel, so it is the config, applied host-side by the monitor.
-func (s *Server) overlayVMBandwidths(vms []vmctl.VM) {
+// overlayVMLimits fills each VM's CPU cap + bandwidth from the stored config — these are the
+// CC-owned limits the monitor re-asserts, so the config is their source of truth (the live cap
+// can be transiently wiped by an Unraid VM-form apply; bandwidth never lives in libvirt).
+func (s *Server) overlayVMLimits(vms []vmctl.VM) {
 	cfg, err := s.Store.LoadConfig()
 	if err != nil {
 		return
 	}
-	by := make(map[string]model.VMBandwidth, len(cfg.VMBandwidths))
-	for _, b := range cfg.VMBandwidths {
-		by[b.Name] = b
+	by := make(map[string]model.VMLimit, len(cfg.VMLimits))
+	for _, l := range cfg.VMLimits {
+		by[l.Name] = l
 	}
 	for i := range vms {
-		if b, ok := by[vms[i].Name]; ok {
-			vms[i].InKbit = b.InKbit
-			vms[i].OutKbit = b.OutKbit
+		if l, ok := by[vms[i].Name]; ok {
+			if l.CPUCap > 0 {
+				vms[i].CPUCap = l.CPUCap
+			}
+			vms[i].InKbit = l.InKbit
+			vms[i].OutKbit = l.OutKbit
 		}
 	}
 }
 
-// saveVMBandwidth stores (or clears) a VM's bandwidth cap. A nil direction is left unchanged;
-// 0 clears it; an entry with both directions clear is dropped.
-func (s *Server) saveVMBandwidth(name string, inKbit, outKbit *int) error {
+// saveVMLimit stores (or clears) a VM's CPU cap + bandwidth in the config. A nil field is left
+// unchanged; 0 clears it; an entry with everything clear is dropped.
+func (s *Server) saveVMLimit(name string, cpuCap, inKbit, outKbit *int) error {
 	cfg, err := s.Store.LoadConfig()
 	if err != nil {
 		return err
 	}
 	idx := -1
-	for i := range cfg.VMBandwidths {
-		if cfg.VMBandwidths[i].Name == name {
+	for i := range cfg.VMLimits {
+		if cfg.VMLimits[i].Name == name {
 			idx = i
 			break
 		}
 	}
-	cur := model.VMBandwidth{Name: name}
+	cur := model.VMLimit{Name: name}
 	if idx >= 0 {
-		cur = cfg.VMBandwidths[idx]
+		cur = cfg.VMLimits[idx]
+	}
+	if cpuCap != nil {
+		cur.CPUCap = *cpuCap
 	}
 	if inKbit != nil {
 		cur.InKbit = *inKbit
@@ -176,15 +183,16 @@ func (s *Server) saveVMBandwidth(name string, inKbit, outKbit *int) error {
 	if outKbit != nil {
 		cur.OutKbit = *outKbit
 	}
+	empty := cur.CPUCap <= 0 && cur.InKbit <= 0 && cur.OutKbit <= 0
 	switch {
-	case cur.InKbit <= 0 && cur.OutKbit <= 0 && idx >= 0:
-		cfg.VMBandwidths = append(cfg.VMBandwidths[:idx], cfg.VMBandwidths[idx+1:]...)
-	case cur.InKbit <= 0 && cur.OutKbit <= 0:
+	case empty && idx >= 0:
+		cfg.VMLimits = append(cfg.VMLimits[:idx], cfg.VMLimits[idx+1:]...)
+	case empty:
 		// nothing to store
 	case idx >= 0:
-		cfg.VMBandwidths[idx] = cur
+		cfg.VMLimits[idx] = cur
 	default:
-		cfg.VMBandwidths = append(cfg.VMBandwidths, cur)
+		cfg.VMLimits = append(cfg.VMLimits, cur)
 	}
 	return s.Store.SaveConfig(cfg)
 }
@@ -243,19 +251,22 @@ func (s *Server) handleSetVMLimits(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	// Bandwidth is stored in the config and (re-)applied host-side by the monitor's VM tick.
-	if req.InKbit != nil || req.OutKbit != nil {
-		if err := s.saveVMBandwidth(req.Name, req.InKbit, req.OutKbit); err != nil {
+	// The CPU cap + bandwidth are ALSO stored in the config so the monitor re-asserts them every
+	// tick — that is what makes the cap survive an Unraid VM-form "Apply" (which regenerates the
+	// XML without it) and the bandwidth survive a VM restart onto a new tap. CPU pin + RAM stay
+	// form-managed (applied once above), so CC never fights the Unraid form on those.
+	if req.CPUCap != nil || req.InKbit != nil || req.OutKbit != nil {
+		if err := s.saveVMLimit(req.Name, req.CPUCap, req.InKbit, req.OutKbit); err != nil {
 			writeErr(w, http.StatusInternalServerError, err)
 			return
 		}
 		if s.Kicker != nil {
-			s.Kicker.Kick() // apply the new cap now, not up to a monitor tick later
+			s.Kicker.Kick() // apply/re-assert now, not up to a monitor tick later
 		}
 	}
 	log.Printf("vmlimits: %s applied", req.Name)
 	fresh, _ := s.VMs.List(r.Context())
-	s.overlayVMBandwidths(fresh)
+	s.overlayVMLimits(fresh)
 	var out *vmctl.VM
 	for i := range fresh {
 		if fresh[i].Name == req.Name {
