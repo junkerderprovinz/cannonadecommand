@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.4.2">
+  <!ENTITY version   "3.4.3">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,11 @@
 </ICON>
 
 <CHANGES>
+### 3.4.3
+- Fix: the main-menu search text no longer slides underneath the magnifier icon. The 3.4.2 field-height
+  change had replaced the input's left padding, which the native search box uses to keep the text clear of
+  the magnifier glyph; restored it (and tinted the magnifier to the CC dim tone).
+
 ### 3.4.2
 - The reactive-mode toggle is now ONE toggle for every colour mode (it was duplicated per mode), placed
   directly above the "Native state colours" toggle.
@@ -2305,7 +2310,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>d413ca08471a9a85cc3cb83925fd06fa5b3fe8bf9abdc7af88eb1ba9223529b9</SHA256>
+  <SHA256>3277053246855e99a8f94b1093c240729fe809d746b48261c9442d66fa03079f</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

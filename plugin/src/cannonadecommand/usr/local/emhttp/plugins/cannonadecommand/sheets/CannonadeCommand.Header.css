@@ -455,11 +455,13 @@ html.cc-header-on #menu .usage-bar > span {
   /* CC look + MODERATE width (overrides the native 40rem and the top-nav full-bar stretch) */
   html.cc-header-on:not(.Theme--sidebar) #guiSearchBox {
     width: 22rem !important; max-width: 40vw !important;
-    height: 36px !important; padding: 0 14px !important;   /* T7: match the util-icon box height (36px), not the 30px badge height */
+    height: 36px !important; padding: 0 14px 0 2.4rem !important;   /* T7: 36px = util-icon height; KEEP the native 2.4rem LEFT pad — the magnifier glyph (#guiSearchBoxSpan:after, left:1.5rem) sits there, and my earlier 0-14px override slid the text UNDER it (user: "suchtext wird von der lupe überlagert") */
     border: none !important; border-radius: var(--cc-b-radius, 999px) !important;   /* the accent outline was a LINE (law) — the filled box alone is the field */
     background: rgba(128, 128, 128, .18) !important; color: #eaeaea !important; font-size: var(--cc-md-fs, 13px) !important;
     box-shadow: none !important; outline: none !important;
   }
+  /* the magnifier glyph (span:after) in a subtle CC dim tone so it matches the field */
+  html.cc-header-on:not(.Theme--sidebar) #guiSearchBoxSpan:after { color: var(--cc-text-dim, #8a8a8a) !important; }
   /* neutralise the .Theme--black/.Theme--white rule that stretches the span to width:100% */
   html.cc-header-on:not(.Theme--sidebar) #guiSearchBoxSpan { width: auto !important; min-width: 0 !important; margin: 0 6px !important; }
   html.cc-header-on:not(.Theme--sidebar) #guiSearchBoxSpan .awesomplete { width: auto !important; }
