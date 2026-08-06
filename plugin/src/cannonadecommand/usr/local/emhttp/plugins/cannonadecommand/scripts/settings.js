@@ -677,16 +677,8 @@
     // user: the two MASTER toggles stay clickable and flip each other — turning Rainbow on turns Flaggen-Modus
     // off (handler above sets cc.flagmode=0) and vice versa; NO greying of the master row.
     c1.appendChild(rr);
-    // rainbow sub-mode: REACTIVE — everything rests neutral grey, colours on hover, the ACTIVE
-    // one keeps its colour. Global like cc.rainbow (key cc.rbmode); sits DIRECTLY under the
-    // rainbow master switch (user call). Live-applied via the sync + the settings tab strip.
-    var rmode = el("div", "cc-set-row cc-set-inline");
-    var rmodeL = el("span", "cc-set-lblwrap");
-    rmodeL.appendChild(el("span", null, T("Reaktiver Modus", "Reactive mode")));
-    rmodeL.appendChild(infoIcon(T("AN = alles ruht grau und färbt sich beim Überfahren; Aktives bleibt farbig. Gilt global für alle Farbmodi (auch Normal) und alle Bereiche inklusive Logo-Hintergründen.", "ON = everything rests grey and colours on hover; active stays coloured. Global across every colour mode (including Normal) and every area, logo backgrounds included.")));
-    rmode.appendChild(rmodeL);
-    rmode.appendChild(toggle(get("cc.rbmode", "all") === "active", function (v) { set("cc.rbmode", v ? "active" : "all"); paintSetTabs(); syncHeaderBar(); syncSharesBar(); }));   // #2: reactive is no longer gated on rainbow — it works in Normal mode too (rests grey, accent on hover)
-    c1.appendChild(rmode);
+    // (T1: the single "Reaktiver Modus" toggle now lives directly ABOVE the "Zustandsanzeigen nativ
+    //  färben" toggle below — one toggle for ALL colour modes, not a per-mode duplicate.)
     // rotation toggle: on = every tab reload deals a fresh colour mapping; off = stable colours
     var rrot = el("div", "cc-set-row cc-set-inline");
     var rrotL = el("span", "cc-set-lblwrap");
@@ -759,13 +751,8 @@
       // NOT greyed while Rainbow is active — the master toggle stays clickable; turning Flaggen-Modus on
       // sets cc.flagmode=1 (+cc.rainbow=1 for the engine) so Rainbow-only display flips off, and vice versa.
       c1.appendChild(fr);
-      // reactive flag toggle — shares cc.rbmode (only one mode is active at a time)
-      var fmode = el("div", "cc-set-row cc-set-inline");
-      var fmodeL = el("span", "cc-set-lblwrap");
-      fmodeL.appendChild(el("span", null, T("Reaktiver Flaggen-Modus", "Reactive flag mode")));
-      fmodeL.appendChild(infoIcon(T("AN = alles ruht grau und färbt sich beim Überfahren in den Flaggenfarben; Aktives bleibt farbig.", "ON = everything rests grey and colours in the flag colours on hover; active stays coloured.")));
-      fmode.appendChild(fmodeL);
-      fmode.appendChild(toggle(get("cc.rbmode", "all") === "active", function (v) { set("cc.rbmode", v ? "active" : "all"); paintSetTabs(); syncHeaderBar(); syncSharesBar(); }));
+      // (T1: no separate reactive-flag toggle any more — the ONE "Reaktiver Modus" toggle above the
+      //  "Zustandsanzeigen nativ färben" toggle governs every colour mode, flag included.)
       // #4: the picker sits DIRECTLY under the Flaggen-Modus toggle — NO "Land wählen" heading — and the
       // reactive-flag toggle (fmode, built above) is appended AFTER the picker (see below).
       // custom flag picker: real flag image + name, searchable (native <select> can't show flag images).
@@ -812,7 +799,7 @@
       search.addEventListener("keydown", function (e9) { if (e9.key === "ArrowDown") { e9.preventDefault(); moveSel(1); } else if (e9.key === "ArrowUp") { e9.preventDefault(); moveSel(-1); } else if (e9.key === "Enter") { e9.preventDefault(); var sel = list.querySelector(".cc-flag-item.cc-sel") || list.querySelector(".cc-flag-item"); if (sel) sel.click(); } else if (e9.key === "Escape") { e9.preventDefault(); closePanel(); } });
       picker.appendChild(trigger); picker.appendChild(panel);
       fr.insertBefore(picker, fr.lastChild);   // user: the flag picker sits BETWEEN the "Flaggen-Modus" label and its toggle
-      c1.appendChild(fmode);   // reactive-flag toggle below
+      // (T1: reactive-flag toggle removed — see the single Reaktiver Modus toggle above statenative)
       // the selected flag's COLOURS, shown separately (not the rainbow editor)
       var f1 = curFlag();
       if (f1) {
@@ -830,7 +817,8 @@
         frow.appendChild(fReset);
         c1.appendChild(frow);
       }
-      if (!flagOn) { fmode.style.opacity = ".4"; fmode.style.pointerEvents = "none"; }   // the reactive-flag sub-toggle only with flag mode on; the picker stays usable (picking a flag turns the mode on)
+      // (T1: the reactive-flag sub-toggle was removed — the single Reaktiver Modus toggle above statenative
+      //  covers flag mode too, so there is nothing to grey out here any more.)
     }
     // #11 (user): Badge-Form sits here — below the flag colours, above the state-colour toggle. segRow
     // already puts the label + options on ONE row; options are ordered by ASCENDING roundness.
@@ -839,6 +827,15 @@
     // #16 (user): let STATE indicators keep their NATIVE state colour (green/amber/red) instead of
     // folding into the accent/rainbow/flag palette. Default OFF = integrated (current look). ON stamps
     // html.cc-state-native; the sheets then let the native semantic colours through (usage bars, dots).
+    // T1: the ONE reactive-mode toggle for ALL colour modes (rainbow / flag / normal). Rests everything
+    // grey, colours on hover, the active one stays lit. Sits directly ABOVE the state-native toggle (user).
+    var rmode = el("div", "cc-set-row cc-set-inline");
+    var rmodeL = el("span", "cc-set-lblwrap");
+    rmodeL.appendChild(el("span", null, T("Reaktiver Modus", "Reactive mode")));
+    rmodeL.appendChild(infoIcon(T("AN = alles ruht grau und färbt sich beim Überfahren; Aktives bleibt farbig. Gilt global für ALLE Farbmodi (Regenbogen, Flagge und Normal) und alle Bereiche inklusive Logo-Hintergründen.", "ON = everything rests grey and colours on hover; active stays coloured. Global across EVERY colour mode (rainbow, flag and normal) and every area, logo backgrounds included.")));
+    rmode.appendChild(rmodeL);
+    rmode.appendChild(toggle(get("cc.rbmode", "all") === "active", function (v) { set("cc.rbmode", v ? "active" : "all"); paintSetTabs(); syncHeaderBar(); syncSharesBar(); }));
+    c1.appendChild(rmode);
     var snR = el("div", "cc-set-row cc-set-inline");
     var snL = el("span", "cc-set-lblwrap");
     snL.appendChild(el("span", null, T("Zustandsanzeigen nativ färben", "Native state colours")));
@@ -1424,7 +1421,9 @@
       // NOTE: "help" is intentionally ABSENT — CC removed the native Help button entirely (its inline help
       // moved into the ⓘ bubbles), so a hide-toggle for it was dead UI (user: "man kann das hilfeicon noch
       // ein/ausschalten obwohl wir es gänzlich entfernt haben").
-      [["lang", T("Sprache", "Language")], ["search", T("Suche", "Search")], ["logout", T("Abmelden", "Logout")], ["terminal", T("Terminal", "Terminal")], ["browse", T("Datei-Verwaltung", "File manager")], ["feedback", T("Feedback", "Feedback")], ["info", T("Info", "Info")], ["log", T("Protokoll", "Log")], ["bell", T("Benachrichtigungen", "Notifications")], ["burger", T("Menü", "Menu")]].forEach(function (ic) {
+      // T3 (user): bell + burger are integral parts of the system (hiding them left the badge without its
+      // icon), so they are NOT listed here any more — they can no longer be hidden.
+      [["lang", T("Sprache", "Language")], ["search", T("Suche", "Search")], ["logout", T("Abmelden", "Logout")], ["terminal", T("Terminal", "Terminal")], ["browse", T("Datei-Verwaltung", "File manager")], ["feedback", T("Feedback", "Feedback")], ["info", T("Info", "Info")], ["log", T("Protokoll", "Log")]].forEach(function (ic) {
         cIc.appendChild(toggleRow(ic[1], get("cc.hideicon." + ic[0], "0") === "0", function (v) { set("cc.hideicon." + ic[0], v ? "0" : "1"); syncHeaderBar(); }));
       });
       wrapHeader.appendChild(cIc);
@@ -1594,8 +1593,16 @@
   // root is idempotent — the root's border edge doesn't move with its own padding.
   function alignSetTabs() {
     try {
-      var need = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cc-align-left")) || 15) - root.getBoundingClientRect().left;
+      var al = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cc-align-left")) || 15;
+      var rr = root.getBoundingClientRect();
+      var need = al - rr.left;
       if (need > 0 && need < 60) root.style.paddingLeft = need + "px"; else root.style.paddingLeft = "";
+      // T2 (user: "cc settings sind rechts nicht bündig und zu weit rechts. auch das suchicon"): Unraid's
+      // #displaybox is a few px WIDER than the viewport, so the panel (and the right-pinned search icon)
+      // spilled past the right edge. Mirror the left inset: pad the right so the content + search icon end
+      // at a symmetric inset INSIDE the viewport.
+      var padR = Math.round(rr.right - (document.documentElement.clientWidth - al));
+      if (padR > 0 && padR < 80) root.style.paddingRight = padR + "px"; else root.style.paddingRight = "";
     } catch (e) {}
   }
   var alignT = null; // ONE debounced resize listener for the page's lifetime (module scope, added once)

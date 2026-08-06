@@ -1786,7 +1786,9 @@
       // #2b per-icon hide (top-right utility icons) + #16 native state colours — global chrome toggles,
       // master-theming-gated. cc.hideicon.<key>=1 hides that icon (Header.css); the docked bell/burger
       // are handled in ccDockProfile. cc.statenative=1 lets state indicators keep their native colour.
-      ["lang", "search", "logout", "terminal", "browse", "feedback", "info", "log", "help", "bell", "burger"].forEach(function (k9) { root.classList.toggle("cc-hideicon-" + k9, g("cc.hideicon." + k9, "0") === "1" && g("cc.theming", "1") !== "0"); });
+      // T3: bell + burger are integral (never hidden) — dropped from this list so a stale cc.hideicon.bell/
+      // burger can no longer blank the icon while leaving its badge; the settings toggles were removed too.
+      ["lang", "search", "logout", "terminal", "browse", "feedback", "info", "log", "help"].forEach(function (k9) { root.classList.toggle("cc-hideicon-" + k9, g("cc.hideicon." + k9, "0") === "1" && g("cc.theming", "1") !== "0"); });
       root.classList.toggle("cc-state-native", g("cc.statenative", "0") === "1" && g("cc.theming", "1") !== "0");
       // #10: global rainbow flag on <html> so the unified loader (.cc-nchan-loader) can cycle its colour
       // once per spin revolution while rainbow is on. Independent of the header AREA being enabled.
@@ -1924,19 +1926,40 @@
   // Delegated capture-phase listener runs BEFORE the toggle's inline onclick="gui_search()",
   // so when the box is already open we close it and stop the event from re-opening it.
   function wireSearchToggle() {
+    // ROOT CAUSE of "2nd click doesn't close" (user): a REAL click on the magnifier first BLURS the search
+    // input, whose onfocusout closes the box — so by click-time the box is already gone, a click-time "is it
+    // open?" check reads false, and the inline gui_search() then RE-opens it. Fix: remember whether the box was
+    // open at MOUSEDOWN (before the blur), and on the following click block the re-open + force it closed.
+    var searchWasOpen = false;
+    function onToggle(e) { return e.target && e.target.closest ? e.target.closest(".nav-item.gui_search, [onclick*='gui_search']") : null; }
+    function closeSearch(ev) {
+      try { if (typeof window.closeSearchBox === "function") window.closeSearchBox(ev); } catch (e3) {}
+      var s = document.getElementById("guiSearchBoxSpan"); if (s && s.parentNode) s.parentNode.removeChild(s);
+      var hid = document.querySelectorAll(".nav-item.util, .nav-user.show");
+      for (var i = 0; i < hid.length; i++) hid[i].style.removeProperty("display"); // restore what gui_search hid
+      document.documentElement.classList.remove("cc-search-open");
+    }
+    document.addEventListener("mousedown", function (e) {
+      try {
+        if (!document.documentElement.classList.contains("cc-header-on")) { searchWasOpen = false; return; }
+        if (onToggle(e)) { searchWasOpen = !!document.getElementById("guiSearchBoxSpan"); return; }
+        searchWasOpen = false;
+        // click OUTSIDE the search span while it is open -> close it too
+        var span = document.getElementById("guiSearchBoxSpan");
+        if (span && !(e.target && e.target.closest && e.target.closest("#guiSearchBoxSpan"))) closeSearch(e);
+      } catch (err) {}
+    }, true);
     document.addEventListener("click", function (e) {
       try {
         if (!document.documentElement.classList.contains("cc-header-on")) return;
-        if (!document.getElementById("guiSearchBoxSpan")) return; // not open -> let native open it
-        var tgt = e.target && e.target.closest ? e.target.closest(".nav-item.gui_search, [onclick*='gui_search']") : null;
-        if (!tgt) return; // click wasn't on the search toggle
+        if (!onToggle(e)) return;
+        if (!searchWasOpen && !document.getElementById("guiSearchBoxSpan")) return; // was closed -> let native OPEN it
+        searchWasOpen = false;
         e.preventDefault(); e.stopImmediatePropagation(); // block the inline gui_search() re-open
-        if (typeof window.closeSearchBox === "function") { window.closeSearchBox(); return; }
-        var s = document.getElementById("guiSearchBoxSpan"); if (s) s.parentNode.removeChild(s);
-        var hid = document.querySelectorAll(".nav-item.util, .nav-user.show");
-        for (var i = 0; i < hid.length; i++) hid[i].style.removeProperty("display"); // restore what gui_search hid
+        closeSearch(e);
       } catch (err) {}
     }, true);
+    document.addEventListener("keydown", function (e) { try { if (e.key === "Escape" && document.getElementById("guiSearchBoxSpan")) closeSearch(e); } catch (err) {} });
   }
   var CC_VER = "@@CCVER@@"; if (CC_VER.indexOf("@@") === 0) CC_VER = "dev";
   // V-D "Was ist neu?": after an update, greet with a one-shot toast naming the new version (never on the

@@ -131,18 +131,19 @@ html.cc-vms-on #kvm_list td.vm-name .outer > span.hand { flex: none; display: fl
    inline <i class="fa fa-… img"> glyph, not an <img>. So the earlier display:contents on span[id^="vm-"]
    collapsed the very box the accent square is drawn on (why it did nothing). Fix: the img is a block 62px;
    the glyph <i> is an explicitly CENTERED flex box (font 44px fits inside the 62px square). */
-html.cc-vms-on #kvm_list td.vm-name .outer > span.hand img { display: block !important; width: 62px !important; height: 62px !important; object-fit: contain !important; margin: 0 !important; }
+html.cc-vms-on #kvm_list td.vm-name .outer > span.hand img { display: block !important; width: var(--cc-logo-img, 62px) !important; height: var(--cc-logo-img, 62px) !important; object-fit: contain !important; margin: 0 !important; }
 html.cc-vms-on #kvm_list td.vm-name .outer > span.hand i.img {
   display: flex !important; align-items: center !important; justify-content: center !important;
-  width: 62px !important; height: 62px !important; font-size: 44px !important; line-height: 1 !important; text-align: center !important; margin: 0 !important;
+  width: var(--cc-logo-img, 62px) !important; height: var(--cc-logo-img, 62px) !important; font-size: 44px !important; line-height: 1 !important; text-align: center !important; margin: 0 !important;
 }
 /* iconbg accent box pinned to a FIXED 78x78 square (62 icon + 2*8 pad, border-box) so it is ALWAYS a
    perfect centred square regardless of whether the child is an <img> or a glyph <i> — instead of shrink-
    wrapping the child (which made it non-square for glyph VMs). */
 html.cc-vms-on.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand {
   flex: none !important;
-  width: 78px !important; height: 78px !important; min-width: 78px !important; max-width: 78px !important;
-  padding: 8px !important; box-sizing: border-box !important; overflow: hidden !important;
+  /* T5: use the SAME --cc-logo-box token as Docker/Plugin so all three tabs' tiles are pixel-identical */
+  width: var(--cc-logo-box, 78px) !important; height: var(--cc-logo-box, 78px) !important; min-width: var(--cc-logo-box, 78px) !important; max-width: var(--cc-logo-box, 78px) !important;
+  padding: calc((var(--cc-logo-box, 78px) - var(--cc-logo-img, 62px)) / 2) !important; box-sizing: border-box !important; overflow: hidden !important;
   background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important;
   border-radius: min(var(--cc-b-radius, 14px), 16px) !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
@@ -152,11 +153,11 @@ html.cc-shape-circle.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand { bord
    the logo box takes the rainbow action colour (unless a custom iconbg colour is set); reactive sub-mode ->
    it rests neutral and takes the palette colour on ROW hover, exactly like the VM value badges. */
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rainbow:not(.cc-vm-rbneutral) #kvm_list td.vm-name .outer > span.hand {
-  background: var(--cc-iconbg-color, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-rbaccent, var(--cc-accent, #2f6feb)))) !important;   /* T5: per-row rainbow colour (vms.js stamps it) wins over the static custom colour, like Docker/Plugin */
 }
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list td.vm-name .outer > span.hand { background: #2e2e2e !important; }
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list tr:hover td.vm-name .outer > span.hand {
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;   /* T5: reactive hover -> the row's per-row palette colour */
 }
 /* name column layout (docker.css:69-72): stacked, native <br> hidden, native status glyph hidden */
 html.cc-vms-on #kvm_list td.vm-name .inner { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; line-height: 1.2; min-width: 0; }

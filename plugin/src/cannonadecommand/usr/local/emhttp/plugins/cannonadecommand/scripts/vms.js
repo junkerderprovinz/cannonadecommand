@@ -200,6 +200,11 @@
     try {
       var a = ccAccent(), rad = ccShape(), root = document.documentElement.style;
       root.setProperty("--cc-accent", a); root.setProperty("--cc-accent-text", ccIdeal(a)); root.setProperty("--cc-b-radius", rad);
+      // T5: stamp the logo tile size from the ONE global cc.sgsize key (verbatim from docker.js) so the VM
+      // logo + tile track the SAME size as Docker/Plugin (they stamp it too) — was fixed at the CSS default,
+      // so at any non-default sgsize the VM tiles were a different size than the other tabs.
+      var lg = ({ s: ["48px", "62px"], m: ["62px", "78px"], l: ["76px", "94px"] })[ls("cc.sgsize") || "m"] || ["62px", "78px"];
+      root.setProperty("--cc-logo-img", lg[0]); root.setProperty("--cc-logo-box", lg[1]);
       // VM state -> a Docker-IDENTICAL cc-badge (class-driven, colours from VmTab.css). Read the native
       // status from the sibling <i.fa> class (started/paused/stopped + green-/orange-/red-text), NOT the
       // translated label \u2014 the old text match never matched German "GESTARTET". Map to Docker's state
@@ -812,6 +817,17 @@
       var rows = document.querySelectorAll("#kvm_list tr.sortable");
       for (var i = 0; i < rows.length; i++) {
         var row = rows[i];
+        // T5: per-row rotating palette colour so the VM logo TILE joins the rainbow (VM badges are coloured
+        // per KIND, so a row has no single colour). Cleared when rainbow off; the tile rule prefers this over
+        // the custom iconbg colour, exactly like the Docker + Plugin tabs.
+        try {
+          if (ls("cc.theming") !== "0" && ls("cc.rainbow") === "1") {
+            var _off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET, _pal = RB_PAL;
+            try { if (ls("cc.flagmode") === "1") { var _f = JSON.parse(ls("cc.flagpal") || "null"); if (_f && _f.length) _pal = _f; } else { var _r = JSON.parse(ls("cc.rbpal") || "null"); if (_r && _r.length) _pal = _r; } } catch (_e) {}
+            var _c = _pal[(i + _off) % _pal.length], _n = parseInt(String(_c).replace("#", ""), 16), _L = 0.299 * (_n >> 16 & 255) + 0.587 * (_n >> 8 & 255) + 0.114 * (_n & 255);
+            row.style.setProperty("--cc-rb-c", _c); row.style.setProperty("--cc-rb-ct", _L > 150 ? "#161616" : "#fff");
+          } else { row.style.removeProperty("--cc-rb-c"); row.style.removeProperty("--cc-rb-ct"); }
+        } catch (_eR) {}
         // CONTENT-ANCHORED cell lookup (ground truth: dynamix.vm.manager VMMachines.php L217-229). Fixed
         // tds[] indices are fragile (a row transiently missing its injected Actions TD shifts everything);
         // anchor every cell by class/content so it always maps to the right column, description or not.

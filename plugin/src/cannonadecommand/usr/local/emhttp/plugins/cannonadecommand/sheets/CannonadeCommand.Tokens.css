@@ -174,8 +174,24 @@ html.cc-popups-on nav.tabs .tabs-container > button[role="tab"][aria-selected="t
    update badge; in RAINBOW it cycles hue once per 2s revolution (step-end), exactly like .cc-nchan-loader. */
 @keyframes cc-spin-rot { to { transform: rotate(360deg); } }
 @keyframes cc-spin-huefg { 0%{color:#c95e5e} 12.5%{color:#c98d5e} 25%{color:#c9af5e} 37.5%{color:#5ec986} 50%{color:#5ec9c2} 62.5%{color:#5e89c9} 75%{color:#865ec9} 87.5%{color:#c95e94} }
-html.cc-popups-on div.spinner i.fa-spin, html.cc-popups-on div.spinner i[class*="fa-circle-o-notch"] { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
-html.cc-rb-on.cc-popups-on div.spinner i.fa-spin { animation: cc-spin-rot 2s linear infinite, cc-spin-huefg 16s step-end infinite !important; }
+/* The real full-screen tab-load overlay is `div.spinner.fixed` holding the stock RED Unraid logo mark
+   (svg.unraid_mark). Hide that and center the CC loader in its place: an accent circle badge (rainbow-aware,
+   hue-cycling in rainbow) with a white ring spinner on top — the same look as the docker-update window. */
+html.cc-popups-on div.spinner.fixed { background: rgba(0, 0, 0, .22) !important; }
+html.cc-popups-on div.spinner.fixed svg.unraid_mark, html.cc-popups-on div.spinner.fixed > svg { display: none !important; }
+html.cc-popups-on div.spinner.fixed::before {   /* accent circle badge */
+  content: ""; position: fixed; top: calc(50% - 30px); left: calc(50% - 30px); width: 60px; height: 60px;
+  border-radius: 50%; background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+}
+html.cc-popups-on div.spinner.fixed::after {    /* white ring spinner on top */
+  content: ""; position: fixed; top: calc(50% - 14px); left: calc(50% - 14px); width: 28px; height: 28px;
+  border: 3px solid rgba(255, 255, 255, .28); border-top-color: #fff; border-radius: 50%;
+  animation: cc-spin-rot .8s linear infinite;
+}
+html.cc-rb-on.cc-popups-on div.spinner.fixed::before { animation: cc-spin-huebg 16s step-end infinite; }   /* rainbow: badge cycles hue per turn */
+/* also recolour any inline fa-spin loader (container-logo busy state) to the accent, rainbow hue-cycling */
+html.cc-popups-on i.fa-spin.fa-circle-o-notch, html.cc-popups-on .cc-ct-busy i.fa-spin { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+html.cc-rb-on.cc-popups-on i.fa-spin.fa-circle-o-notch { animation: cc-spin-rot 2s linear infinite, cc-spin-huefg 16s step-end infinite !important; }
 
 /* #17: recolour Unraid's native "move to start/end" quick-scroll arrows (a.move_to_end / a.move_to_top …,
    fixed bottom-right, stock red #e22828) into the CC accent (rainbow-aware) so they match the theme instead

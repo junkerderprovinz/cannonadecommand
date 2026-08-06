@@ -455,7 +455,7 @@ html.cc-header-on #menu .usage-bar > span {
   /* CC look + MODERATE width (overrides the native 40rem and the top-nav full-bar stretch) */
   html.cc-header-on:not(.Theme--sidebar) #guiSearchBox {
     width: 22rem !important; max-width: 40vw !important;
-    height: var(--cc-md-h, 30px) !important; padding: 0 14px !important;
+    height: 36px !important; padding: 0 14px !important;   /* T7: match the util-icon box height (36px), not the 30px badge height */
     border: none !important; border-radius: var(--cc-b-radius, 999px) !important;   /* the accent outline was a LINE (law) — the filled box alone is the field */
     background: rgba(128, 128, 128, .18) !important; color: #eaeaea !important; font-size: var(--cc-md-fs, 13px) !important;
     box-shadow: none !important; outline: none !important;
@@ -470,6 +470,25 @@ html.cc-header-on #menu .usage-bar > span {
   /* the right group holds the box + all icons on one line; the left page tabs shrink/scroll aside */
   html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-tile:not(.right) { min-width: 0 !important; overflow-x: auto !important; }
   html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-tile.right { min-width: 0 !important; flex-wrap: nowrap !important; }
+}
+/* T7 (user: "die liste die bei der suche erscheint ist nicht im cc style"): the gui_search results are an
+   Awesomplete dropdown (.awesomplete > ul). Give it the CC popover look — dark surface, no border line, CC
+   radius, elevation — and colour the active/hover item + the matched-text <mark> in the colour mode. */
+html.cc-header-on .awesomplete > ul {
+  background: var(--cc-surface-window, #242424) !important; border: none !important; box-shadow: 0 14px 40px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .4) !important;
+  border-radius: var(--cc-r-2, 10px) !important; margin-top: 6px !important; padding: 4px !important; color: var(--cc-text, #e6e6e6) !important;
+}
+html.cc-header-on .awesomplete > ul::before { display: none !important; }   /* kill the little pointer triangle (a border-line artefact) */
+html.cc-header-on .awesomplete > ul > li {
+  color: var(--cc-text, #e6e6e6) !important; background: transparent !important; padding: 8px 12px !important;
+  border-radius: var(--cc-r-1, 6px) !important; border: none !important;
+}
+html.cc-header-on .awesomplete > ul > li:hover,
+html.cc-header-on .awesomplete > ul > li[aria-selected="true"] {
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+}
+html.cc-header-on .awesomplete mark, html.cc-header-on .awesomplete > ul > li mark {
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important; border-radius: 3px;
 }
 
 /* Badge-Form "circle" (v2.18.0): round the SQUARE utility icon boxes to full circles. Only square/
@@ -1350,6 +1369,11 @@ html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item:hover { animation: cc-
 html.cc-anim-wild #menu,
 html.cc-anim-wild #menu .nav-tile,
 html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item { overflow: visible !important; }
+/* ROOT CAUSE of the clip (live-measured): nothing overflows — the sticky #header (z-index 102, solid dark
+   background) sits ABOVE #menu (z-index 101) and PAINTS OVER the zone the tab hops into (above the bar). While
+   a main tab is hovered (= bouncing), lift the whole #menu stacking context above #header so the hop shows in
+   full. :has scopes the lift to the bounce moment, so the header keeps its normal stacking the rest of the time. */
+html.cc-anim-wild #menu:has(.nav-tile:not(.right) > .nav-item:hover) { z-index: 103 !important; }
 /* springy lift on any CC pill / action icon; the limit gear also spins a quarter-turn */
 html.cc-anim-wild .cc-b:hover,
 html.cc-anim-wild .cc-actbtn:hover { transform: translateY(-2px) scale(1.06); transition: transform .18s cubic-bezier(.34,1.56,.64,1) !important; }
