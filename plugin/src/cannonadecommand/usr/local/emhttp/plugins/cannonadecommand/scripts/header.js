@@ -2073,10 +2073,82 @@
       if (sp && !sp.querySelector(".cc-loader")) sp.appendChild(ccMakeLoader());
     } catch (e) {}
   }
+
+  /* #2: the CA "Updating Content" dialog (Apps.page → myAlert, content carries a unique `.updateContent-swal`
+     marker span) is a SweetAlert1 `.sweet-alert` appended as a DIRECT child of <body>. Drop the CC loader in
+     and hide the stock swal info-icon. Detection keys on the marker span, so it never fires on any OTHER swal. */
+  function ccUpdatingSwal() {
+    try {
+      if (!document.documentElement.classList.contains("cc-popups-on")) return;
+      var mark = document.querySelector(".updateContent-swal");
+      if (!mark) return;
+      var box = (mark.closest && mark.closest(".sweet-alert")) || mark.parentElement;
+      if (!box || box.querySelector(".cc-loader")) return;
+      var icon = box.querySelector(".sa-icon"); if (icon) icon.style.display = "none";
+      var l = ccMakeLoader(); l.style.setProperty("--cc-load-sz", "48px");
+      l.style.display = "block"; l.style.margin = "6px auto 14px";
+      mark.parentNode.insertBefore(l, mark);   // loader sits directly above the "Please Wait" line
+    } catch (e) {}
+  }
+
+  /* #3: the plugin install / update / downgrade dialog (openPlugin/openBox in Unraid's shared layout) is a
+     SweetAlert1 whose title carries a unique `#pluginProgressTitle` span with a stock `fa-refresh fa-spin`.
+     Swap that spin for a small inline CC loader. On completion Unraid calls $('#pluginProgressTitle').text(...)
+     ("Finished"/"Error"), which REPLACES the span content — so the injected loader is auto-removed, no cleanup
+     observer needed. Keyed on the unique id, so it only ever touches the install/update dialog. */
+  function ccPluginSwal() {
+    try {
+      if (!document.documentElement.classList.contains("cc-popups-on")) return;
+      var t = document.getElementById("pluginProgressTitle");
+      if (!t || t.querySelector(".cc-loader")) return;
+      var fa = t.querySelector("i.fa"); if (fa) fa.style.display = "none";
+      var l = ccMakeLoader(); l.style.setProperty("--cc-load-sz", "18px");
+      l.style.display = "inline-block"; l.style.verticalAlign = "middle"; l.style.marginLeft = "8px";
+      t.appendChild(l);
+    } catch (e) {}
+  }
+
+  function ccSwalScan() { ccUpdatingSwal(); ccPluginSwal(); }
+
+  /* Attach a SCOPED observer to the SweetAlert1 shell. SweetAlert1 creates `.sweet-alert` ONCE and REUSES it
+     (toggling a `visible`/`show-sweet-alert` CLASS to open) instead of re-adding it — so a body-childList
+     observer only catches the FIRST dialog, not repeat shows. Watching the small `.sweet-alert` element's
+     `class` attribute catches EVERY open, and content (marker span / #pluginProgressTitle) is already in place
+     when the class flips. This element is tiny (title/text/buttons) — nothing like the app-card tree that froze
+     the tab under a body subtree observer, and we deliberately watch attributes ONLY (no childList/subtree), so a
+     streaming install log never generates mutation noise here. */
+  function ccAttachSwalObs() {
+    try {
+      var shells = document.querySelectorAll(".sweet-alert, .swal-modal, .swal2-popup");
+      for (var i = 0; i < shells.length; i++) {
+        var sa = shells[i];
+        if (sa.__ccSwalObs) continue;
+        sa.__ccSwalObs = new MutationObserver(ccSwalScan);
+        sa.__ccSwalObs.observe(sa, { attributes: true, attributeFilter: ["class"] });
+      }
+    } catch (e) {}
+  }
+
+  var ccBodyObs = null;
+  function ccWatchBodyForSwal() {
+    // FREEZE-PROOF: observe ONLY <body>'s DIRECT children (subtree:false), purely to notice the FIRST time a swal
+    // shell is added so we can attach the scoped observer above. NEVER add subtree here — that fires on the
+    // thousands of deep app-card mutations that froze the CA tab in an earlier attempt.
+    try {
+      if (ccBodyObs || !document.body) return;
+      ccBodyObs = new MutationObserver(function () { ccAttachSwalObs(); ccSwalScan(); });
+      ccBodyObs.observe(document.body, { childList: true, subtree: false });
+    } catch (e) {}
+  }
+
   function ccLoaderBoot() {
     ccInjectSpinner();
-    // div.spinner.fixed is created by Unraid's template; if it isn't there yet, retry briefly (cheap, bounded).
-    var n = 0, t = setInterval(function () { ccInjectSpinner(); if (++n >= 12) clearInterval(t); }, 350);
+    ccAttachSwalObs();
+    ccSwalScan();          // in case a dialog is already open on load
+    ccWatchBodyForSwal();
+    // The swal shell + div.spinner.fixed are created by Unraid's template; if not there yet, retry briefly
+    // (cheap, bounded) so the scoped observer gets attached even when the shell predates this script.
+    var n = 0, t = setInterval(function () { ccInjectSpinner(); ccAttachSwalObs(); if (++n >= 12) clearInterval(t); }, 350);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ccLoaderBoot); else ccLoaderBoot();
 })();

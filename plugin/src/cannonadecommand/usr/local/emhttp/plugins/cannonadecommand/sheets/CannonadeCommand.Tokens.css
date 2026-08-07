@@ -273,3 +273,28 @@ html.cc-popups-on a[class*="move_to"] > i,
 html.cc-popups-on a[class*="back_to"] > i { color: inherit !important; }
 html.cc-popups-on a[class*="move_to"]:hover,
 html.cc-popups-on a[class*="back_to"]:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; }
+
+/* ═══ #12: Apps (Community Applications) tab in CC style ═══════════════════════════════════════════════
+   Visual only (colour / shade / radius — no layout changes) so CA's dynamic, multi-state grid keeps working.
+   CA selectors (#searchBox, .caMenuItem, .ca_holder) only exist on /Apps, so cc-popups-on scoping is enough.
+   Search field like the CC-settings search, category sidebar as CC chips, cards without a border line. */
+html.cc-popups-on #searchBox {
+  background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text, #e6e6e6) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 8px) !important; height: 36px !important;
+  box-sizing: border-box !important; padding: 0 12px !important;
+}
+html.cc-popups-on #searchBox:focus { outline: none !important; box-shadow: 0 0 0 2px var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+html.cc-popups-on .caMenuItem {
+  border-radius: var(--cc-b-radius, 8px) !important; margin: 2px 6px !important; padding: 5px 10px !important;
+  background: transparent !important; color: var(--cc-text-chip, #cfcfcf) !important; transition: background .12s, color .12s;
+}
+/* enabled entries read as soft badges at rest; disabled/greyed ones stay flat so the group structure holds */
+html.cc-popups-on .caMenuItem.caMenuEnabled { background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; }
+html.cc-popups-on .caMenuItem.caMenuEnabled:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; color: var(--cc-text, #e6e6e6) !important; }
+html.cc-popups-on .caMenuItem.selected, html.cc-popups-on .caMenuItem.caMenuItemSelected, html.cc-popups-on .caMenuItem.active {
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, #fff) !important;
+}
+html.cc-popups-on .ca_holder {
+  background: var(--cc-surface-1, #1e1e1e) !important; border: none !important;
+  border-radius: var(--cc-b-radius, 12px) !important; box-shadow: 0 2px 12px rgba(0, 0, 0, .3) !important;
+}
