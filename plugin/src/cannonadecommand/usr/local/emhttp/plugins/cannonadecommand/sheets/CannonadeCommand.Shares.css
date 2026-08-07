@@ -1784,3 +1784,33 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status.cc-dens-airy td:not(
 html.cc-shares-on :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: none !important; box-shadow: none !important; filter: brightness(1.18);
 }
+
+/* ═══ #9 (user 2026-08-07): the share-detail "Einstellungen lesen/kopieren" panel overflowed the viewport ═══
+   The native .clone-settings is position:absolute; right:0; width:40rem (=400px), but its <dl> is a FIXED
+   140px + 336px two-column grid (~486px incl. gap) → the select + clone button spill past the panel's right
+   edge (which sits at the viewport edge) → a page-wide horizontal scrollbar and the controls stand past the
+   edge (not flush). Let the VALUE column take the remaining panel width so the select + button fit INSIDE the
+   panel; clip any residual x-overflow on the page box (a native <select> popup is an OS layer, unaffected). */
+html.cc-shares-on.cc-on-share-detail #displaybox { overflow-x: clip; }
+html.cc-shares-on.cc-on-share-detail #displaybox .clone-settings dl { grid-template-columns: 140px minmax(0, 1fr) !important; }
+html.cc-shares-on.cc-on-share-detail #displaybox .clone-settings dd { min-width: 0 !important; }
+html.cc-shares-on.cc-on-share-detail #displaybox .clone-settings dd > *,
+html.cc-shares-on.cc-on-share-detail #displaybox .clone-settings dd select,
+html.cc-shares-on.cc-on-share-detail #displaybox .clone-settings dd input.clone { max-width: 100% !important; min-width: 0 !important; box-sizing: border-box; }
+/* residual: the clone panel + the tab-bar nav arrows sit at the very edge and a ~15px page scrollbar remained
+   (the overflow escapes via a #displaybox sibling = the tabbed nav bar). Pull both flush and clip the page's
+   horizontal overflow ON THIS PAGE ONLY (gated cc-on-share-detail; Unraid's header is position:fixed, so a
+   page-box x-clip can't break it). Shrink the label column to its content so the value column has more room. */
+html.cc-shares-on.cc-on-share-detail .clone-settings { right: 14px !important; }
+html.cc-shares-on.cc-on-share-detail .clone-settings dl { grid-template-columns: max-content minmax(0, 1fr) !important; }
+html.cc-shares-on.cc-on-share-detail .menuNavButtonsTabbed { margin-right: 14px !important; }
+html.cc-shares-on.cc-on-share-detail,
+html.cc-shares-on.cc-on-share-detail body { overflow-x: clip !important; }
+/* final: STACK each clone row (label above its select+button) so every control gets the panel's full width →
+   both LESEN and SCHREIBEN buttons show in full; clip the native tab-content's own residual x-scrollbar. */
+html.cc-shares-on.cc-on-share-detail .clone-settings dl { grid-template-columns: minmax(0, 1fr) !important; row-gap: 4px !important; }
+html.cc-shares-on.cc-on-share-detail .clone-settings dt { text-align: left !important; }
+html.cc-shares-on.cc-on-share-detail section.tab-content { overflow-x: clip !important; }
+/* CC's own custom select (.cc-sel) is a fixed 240px with min-width:auto → it doesn't shrink and pushes the
+   clone action button (LESEN/SCHREIBEN) past the panel. Let it shrink so BOTH buttons stay fully visible. */
+html.cc-shares-on.cc-on-share-detail .clone-settings .cc-sel { min-width: 0 !important; max-width: 160px !important; width: auto !important; flex: 1 1 auto !important; }

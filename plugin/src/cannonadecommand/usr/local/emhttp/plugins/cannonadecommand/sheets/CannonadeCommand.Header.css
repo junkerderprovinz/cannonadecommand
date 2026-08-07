@@ -674,7 +674,7 @@ html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader {
   position: static; z-index: 3; flex: none; box-sizing: border-box;
   width: 26px; height: 26px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center; pointer-events: none;
-  background: var(--cc-rbaccent, var(--cc-hdr-accent, var(--cc-accent, #2f6feb)));   /* RUNNING = accent badge */
+  background: transparent;   /* RUNNING = transparent; the .cc-loader double ring supplies the accent colour */
 }
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader.cc-nchan-check { background: transparent !important; }  /* DONE: the SVG green circle IS the badge */
 /* RUNNING badge holds a white spinning fa-refresh — the EXACT icon + native 2s-linear fa-spin cadence Unraid
@@ -689,7 +689,8 @@ html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader .cc-nchan-fa {
    turn): "im rainbowmode soll bei jeder umdrehung die farbe gewechselt werden". Glyph stays white; the DONE
    (check) badge is transparent and excluded. Jewel hues = the shared CCTheme.RB palette. */
 @keyframes cc-spin-huebg { 0%{background:#c95e5e} 12.5%{background:#c98d5e} 25%{background:#c9af5e} 37.5%{background:#5ec986} 50%{background:#5ec9c2} 62.5%{background:#5e89c9} 75%{background:#865ec9} 87.5%{background:#c95e94} }
-html.cc-rb-on.cc-popups-on .sweet-alert.nchan .cc-nchan-loader:not(.cc-nchan-check) { animation: cc-spin-huebg 16s step-end infinite; }
+/* (removed: the RUN badge is now transparent and the .cc-loader ring cycles its own rainbow via
+   html.cc-rb-on .cc-loader — a solid cycling square behind the ring would be wrong.) */
 /* #7-II finished: the bottom-left loader morphs into a circle-with-check (no text), drawn in. Green = done. */
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader.cc-nchan-check { gap: 0; }
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg { width: 26px; height: 26px; overflow: visible; display: block; }
@@ -771,6 +772,16 @@ html.cc-popups-on .sweet-alert {
      backdrop, no halo. */
   box-shadow: 0 10px 28px rgba(0, 0, 0, .38) !important;
 }
+/* #10 (user: "das Update-Fenster plopt viel zu weit oben auf"): SweetAlert1 positions the dialog with a
+   JS-computed margin-top = HALF ITS HEIGHT AT OPEN TIME; when the content grows after open (e.g. the OS
+   update-check result populates late) the box ends up too high, its top clipped above the viewport. Center it
+   with a transform instead — correct for ANY content height — and cap the height so a tall dialog scrolls
+   inside rather than overflowing. Overrides SweetAlert1's inline margin-top/left. Uniform for every swal. */
+html.cc-popups-on .sweet-alert {
+  top: 50% !important; left: 50% !important; right: auto !important; bottom: auto !important;
+  margin: 0 !important; transform: translate(-50%, -50%) !important;
+  max-height: 92vh !important; overflow-y: auto !important;
+}
 /* #N1/#9 (user: "Kopf- und Fußleiste sind immer noch heller!"): force EVERY element inside the streaming
    windows onto the dialog's own #161616 — no lighter header/footer strip ANYWHERE (the direct-child version
    missed grandchild wrapper divs). Content elements keep their own fills: the title/legend badges, the
@@ -801,6 +812,21 @@ html.cc-popups-on .sweet-alert button.cancel { background: #2e2e2e !important; c
 html.cc-popups-on .sweet-alert .sa-button-container button:hover { filter: brightness(1.14); }
 /* #N1 (user REVERSAL): the .nchan action buttons drop back to the CC STANDARD lgb height (36px, inherited
    from the base button rule above) — the old 46px was "zu groß". No .nchan-specific height override now. */
+
+/* ═══ #3 (user): the CA "UPDATING CONTENT" dialog shows ONLY the centred CC loader over the blurred backdrop —
+   no title bar, no "Please Wait" line, no buttons, no box. header.js stamps .cc-only-loader on the SHARED
+   .sweet-alert node ONLY while the .updateContent-swal marker is up (and strips it when the node is reused for
+   any other dialog), so these rules never bleed into a normal confirm. The .sweet-overlay backdrop is untouched. */
+html.cc-popups-on .sweet-alert.cc-only-loader {
+  background: transparent !important; border: none !important; box-shadow: none !important;
+  display: flex !important; align-items: center !important; justify-content: center !important; padding: 0 !important;
+}
+/* keep ONLY the element that carries the loader (the <p>); hide title, icons, fieldset, button row, all else */
+html.cc-popups-on .sweet-alert.cc-only-loader > *:not(:has(.cc-loader)) { display: none !important; }
+/* inside that <p>, drop the "Please Wait" marker so ONLY the spinner shows */
+html.cc-popups-on .sweet-alert.cc-only-loader .updateContent-swal { display: none !important; }
+/* the loader now stands alone — clear the JS inline margins that assumed a text line beneath it */
+html.cc-popups-on .sweet-alert.cc-only-loader .cc-loader { margin: 0 !important; }
 
 /* ═══ FREEZE FIX — a CLOSED sweet-alert must never linger as an invisible click-blocker ═══
    User live-diagnosed 2026-07-28 ("sichtbar aber Klicks tot" + "Fenster erscheinen nach dem Schließen
@@ -1211,7 +1237,7 @@ html.cc-arrange #menu .nav-item.cc-dragging, html.cc-arrange #cc-island .cc-isl-
 /* #S6 command palette (Ctrl/Cmd+K) — dark launcher, accent-highlighted selection. */
 #cc-cmd { position: fixed; inset: 0; z-index: 100002; display: none; }
 #cc-cmd.cc-cmd-open { display: block; }
-#cc-cmd .cc-cmd-bd { position: absolute; inset: 0; background: rgba(0, 0, 0, .55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+#cc-cmd .cc-cmd-bd { position: absolute; inset: 0; background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)); backdrop-filter: var(--cc-backdrop-blur, blur(5px)); -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)); }
 #cc-cmd .cc-cmd-box { position: absolute; left: 50%; top: 84px; transform: translateX(-50%); width: min(92vw, 560px); background: #0f0f0f; border-radius: 14px; box-shadow: 0 24px 60px rgba(0, 0, 0, .6); overflow: hidden; }
 #cc-cmd .cc-cmd-in { width: 100%; box-sizing: border-box; background: #171717 !important; color: #eaeaea !important; border: none !important; outline: none !important; padding: 16px 20px !important; font-size: 16px !important; border-radius: 0 !important; }
 #cc-cmd .cc-cmd-in::placeholder { color: #8a8a8a; }

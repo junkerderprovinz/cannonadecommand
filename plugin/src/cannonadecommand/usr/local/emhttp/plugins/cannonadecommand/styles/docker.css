@@ -1244,7 +1244,7 @@ html.cc-docker-on.cc-on-addct .ui-dialog #ddcl-catSelect {
 /* #14: the container create/update OUTPUT page (docker run/create result) as a floating Carbon window,
    like the container-update dialog (docker.js bootCtOutput adds html.cc-ctout-on + the backdrop + the
    #cc-ctout-title accent badge, and hides the native grey heading). */
-html.cc-ctout-on #cc-ctout-bd { position: fixed; inset: 0; background: rgba(0, 0, 0, .55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 9998; }
+html.cc-ctout-on #cc-ctout-bd { position: fixed; inset: 0; background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)); backdrop-filter: var(--cc-backdrop-blur, blur(5px)); -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)); z-index: 9998; }
 html.cc-ctout-on #displaybox .content {
   position: fixed; z-index: 9999; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: min(900px, 92vw); max-height: 86vh; overflow: auto;
@@ -1304,7 +1304,7 @@ html.cc-ctout-on #displaybox .content > p.logLine { text-align: left !important;
 html.cc-ctout-on #cc-ctout-status {
   margin: 0 auto 16px !important; width: 26px; height: 26px; border-radius: 50%; box-sizing: border-box;
   display: flex; align-items: center; justify-content: center;
-  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb));
+  background: transparent;   /* RUNNING = transparent; the .cc-loader ring supplies the colour. DONE override below paints the green check badge */
 }
 html.cc-ctout-on #cc-ctout-status.cc-ctout-done { background: var(--cc-ok, #1f9d55); }   /* DONE = green badge + white check */
 html.cc-ctout-on #cc-ctout-status .cc-ctout-fa { color: #fff; font-size: 14px; line-height: 1; }

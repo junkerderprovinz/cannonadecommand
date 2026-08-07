@@ -176,7 +176,7 @@
         // its `table.info` in a plain <fieldset>, so it falsely qualified and showed the loader (user: "im
         // Systeminfofenster ist die Ladeanimation immer noch"). Scope to the exec fieldsets AND hard-exclude any
         // window carrying a `table.info` (System Info) — that never runs a process.
-        var isStream = (/in\s*progress|wird\s+(aktualisiert|installiert|erstellt|neu\s*erstellt|gezogen|gestartet)|updating|installing|pulling|creating/i.test(raw) || !!sa.querySelector("fieldset.CMD, fieldset.docker")) && !sa.querySelector("table.info");
+        var isStream = (/in\s*progress|wird\s+(aktualisiert|installiert|erstellt|neu\s*erstellt|gezogen|gestartet)|updating|installing|pulling|creating/i.test(raw) || !!sa.querySelector("fieldset.CMD, fieldset.docker") || !!sa.querySelector("#swaltext")) && !sa.querySelector("table.info");
         if (isStream) {
           // Recompute STATELESSLY each pass so a fresh window ALWAYS starts as RUN (loader) and never inherits a
           // stale "done". Flip to DONE only when the log reports completion AND the stream has SETTLED (no new
@@ -209,7 +209,7 @@
           if (state === "done") {
             if (loader.getAttribute("data-cc-mode") !== "done") { loader.setAttribute("data-cc-mode", "done"); loader.classList.add("cc-nchan-check"); loader.setAttribute("aria-label", T("Fertig", "Done")); loader.innerHTML = "<svg viewBox='0 0 24 24' aria-hidden='true'><circle class='cc-ck-c' cx='12' cy='12' r='10.5'/><path class='cc-ck-p' d='M6.5 12.5l3.6 3.6L17.5 8.8'/></svg>"; }
           } else if (loader.getAttribute("data-cc-mode") !== "run") {
-            loader.setAttribute("data-cc-mode", "run"); loader.classList.remove("cc-nchan-check"); loader.setAttribute("aria-label", T("Läuft…", "Working…")); loader.innerHTML = "<i class='fa fa-refresh fa-spin cc-nchan-fa' aria-hidden='true'></i>";  // RUN = white spinning fa-refresh, IDENTICAL to the fa-refresh fa-spin Unraid puts on a busy/updating container logo (user: align the two)
+            loader.setAttribute("data-cc-mode", "run"); loader.classList.remove("cc-nchan-check"); loader.setAttribute("aria-label", T("Läuft…", "Working…")); loader.innerHTML = "<span class='cc-loader' style='--cc-load-sz:22px'><span class='o'><i></i></span><span class='in'><i></i></span></span>";  // RUN = CC double counter-rotating ring (ccMakeLoader markup)
           }
         } else if (loader) { loader.remove(); }
         // #7-III (user: "nutzloser hellgrauer Balken ueber den Buttons"): the step cards are #191919 now, so an
@@ -2081,9 +2081,12 @@
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
       var mark = document.querySelector(".updateContent-swal");
-      if (!mark) return;
-      var box = (mark.closest && mark.closest(".sweet-alert")) || mark.parentElement;
-      if (!box || box.querySelector(".cc-loader")) return;
+      var box  = mark ? ((mark.closest && mark.closest(".sweet-alert")) || mark.parentElement)
+                      : document.querySelector(".sweet-alert.cc-only-loader");
+      // SweetAlert1 REUSES one .sweet-alert node for every dialog: stamp cc-only-loader ONLY while the
+      // update-content marker is present, and strip it the moment the node is reused for anything else.
+      if (box) box.classList.toggle("cc-only-loader", !!mark);
+      if (!mark || !box || box.querySelector(".cc-loader")) return;
       var icon = box.querySelector(".sa-icon"); if (icon) icon.style.display = "none";
       var l = ccMakeLoader(); l.style.setProperty("--cc-load-sz", "48px");
       l.style.display = "block"; l.style.margin = "6px auto 14px";

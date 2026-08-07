@@ -866,6 +866,9 @@
     // so it belongs in Allgemein with the other global controls — not buried in the Docker tab.
     // #12 (user): the Density control lives INSIDE the Theming card now — no separate card.
     if (themingCard) themingCard.appendChild(segRow(T("Dichte", "Density"), [["compact", T("Kompakt", "Compact")], ["normal", "Normal"], ["airy", T("Luftig", "Airy")]], density, function (v) { density = v; set("cc.density", v); }, T("Gilt global für ALLE Listen (Docker, Start, Freigaben, VMs).", "Applies globally to ALL lists (Docker, Start, Shares, VMs)."), true));
+    // ── Kachelgröße (GLOBAL): cc.sgsize is ONE key read by docker.js/plugins.js/vms.js/favorites.js/settingsgrid.js.
+    // It belongs here in Allgemein next to Density — NOT duplicated per tab (user: "global einstellbar, nicht per tab").
+    if (themingCard) themingCard.appendChild(tileSizeRow());   // hoisted (defined below); onChange still live-resizes the Docker preview
     // ── Logos & Icons (GLOBAL): edits the shared cc.iconbg / cc.iconcolor / cc.iconstrength
     // keys every adopting tab resolves through eff('icon…'). Same control set as the per-area
     // Logos cards, minus the preview (this card is the source, not a consumer).
@@ -928,15 +931,15 @@
     strow.appendChild(sl);
     c2.appendChild(strow);
     // (the VM-icons toggle is obsolete — the VM tab has its own style section)
-    // cc.sgsize is GLOBAL (one key): the SAME row closes the Docker "Logos" card and the
-    // Einstellungen/Werkzeuge "Stil" card — normalised slot: always the LAST row of its card.
+    // cc.sgsize is GLOBAL (one key). The CONTROL now lives ONCE in Allgemein (Theming card, next to Density;
+    // user: "global einstellbar, nicht per tab"). This Docker card keeps only the LIVE PREVIEW below, which
+    // sizePrev() resizes whenever the global control changes.
     function tileSizeRow() {
-      var r = segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small")], ["m", T("Mittel", "Medium")], ["l", T("Groß", "Large")]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); try { sizePrev(); } catch (e) {} });   /* #5: resize the preview LIVE */
+      var r = segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small")], ["m", T("Mittel", "Medium")], ["l", T("Groß", "Large")]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); try { sizePrev(); } catch (e) {} });   /* live-resize the Docker preview */
       r.insertBefore(infoIcon(T("Gilt global – dieselbe Größe steuert das Einstellungen-/Werkzeuge-Raster und die Docker-/Plugin-Logos.", "Global – the same size drives the Settings/Tools grid and the Docker/Plugin logos.")), r.lastChild);
       return r;
     }
-    c2.appendChild(tileSizeRow());   // #5 (user: "die kachelgröße muss über die vorschau"): tile size ABOVE
-    c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));   // ...and the preview stays the LAST block
+    c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));   // preview stays the Docker card's last block
     var tprevWrap = el("div", "cc-set-prev");
     var tprevImgs = [];
     // #5 (user: "die vorschau soll auch die kachelgröße live anzeigen"): the preview logos take the size the
@@ -1314,9 +1317,7 @@
     cSh.appendChild(tabviewRow("shares", syncSharesBar));
     var cSet = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
     cSet.appendChild(styleToggle("cc.stylesettings", null));
-    // tile size of the /Settings + /Tools category grid (cc.sgsize s/m/l, default m; settingsgrid.js
-    // reads it) — the SAME shared row as the Docker Logos card, always the card's LAST row
-    cSet.appendChild(tileSizeRow());
+    // tile size of the /Settings + /Tools grid is the GLOBAL cc.sgsize control in Allgemein (no per-tab copy).
     var cFav = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
     cFav.appendChild(styleToggle("cc.stylefavorites", null));
     var cStart = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));

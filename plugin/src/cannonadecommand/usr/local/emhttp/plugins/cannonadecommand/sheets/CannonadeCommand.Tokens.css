@@ -244,17 +244,52 @@ html.cc-popups-on #cc-pop-dim {
    "Badge-Stil" setting). Glass layers a glossy sheen on top of EACH badge's own colour so it works on any
    accent/rainbow/flag: a top-light gradient overlay + an inner top-edge highlight + a soft drop + a light
    backdrop blur. Flat leaves badges solid. Applies to every badge base (.cc-b) system-wide. */
-html.cc-badge-glass .cc-b {
+/* Glass now covers the FULL family (user: "nicht alle badges/icons sind im glass"): state badges (.cc-badge)
+   and pills (.cc-pill) carry NO .cc-b; chips/nav-tabs/island/buttons/gears/toggles/logo-tiles never did. */
+html.cc-badge-glass .cc-b,
+html.cc-badge-glass .cc-badge,
+html.cc-badge-glass .cc-pill,
+html.cc-badge-glass .cc-navtab,
+html.cc-badge-glass #cc-island .cc-isl-chip,
+html.cc-badge-glass .cc-btn,
+html.cc-badge-glass .cc-actbtn,
+html.cc-badge-glass .cc-limbtn,
+html.cc-badge-glass .cc-set-toggle,
+html.cc-badge-glass.cc-docker-iconbg #docker_list td.ct-name .outer > span.hand,
+html.cc-badge-glass.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand,
+html.cc-badge-glass.cc-plugins-iconbg .cc-plugico {
   position: relative;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.12), 0 2px 5px rgba(0,0,0,.22) !important;
 }
-/* the gloss overlay rides ABOVE the badge's own colour (a background-image loses to the per-area
-   `background:` rules; a pseudo-overlay wins regardless of what paints the badge). */
-html.cc-badge-glass .cc-b::after {
+/* the gloss overlay rides ABOVE each surface's own colour (a pseudo-overlay wins regardless of what paints it). */
+html.cc-badge-glass .cc-b::after,
+html.cc-badge-glass .cc-badge::after,
+html.cc-badge-glass .cc-pill::after,
+html.cc-badge-glass .cc-navtab::after,
+html.cc-badge-glass #cc-island .cc-isl-chip::after,
+html.cc-badge-glass .cc-btn::after,
+html.cc-badge-glass .cc-actbtn::after,
+html.cc-badge-glass .cc-limbtn::after,
+html.cc-badge-glass .cc-set-toggle::after,
+html.cc-badge-glass.cc-docker-iconbg #docker_list td.ct-name .outer > span.hand::after,
+html.cc-badge-glass.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand::after,
+html.cc-badge-glass.cc-plugins-iconbg .cc-plugico::after {
   content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 1;
   background: linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.04) 55%, rgba(0,0,0,.07));
 }
-html.cc-badge-glass .cc-b > * { position: relative; z-index: 2; }   /* keep badge text above the gloss */
+/* keep the real content (badge text, tile logo, toggle knob, gear glyph) above the gloss */
+html.cc-badge-glass .cc-b > *,
+html.cc-badge-glass .cc-badge > *,
+html.cc-badge-glass .cc-pill > *,
+html.cc-badge-glass .cc-navtab > *,
+html.cc-badge-glass #cc-island .cc-isl-chip > *,
+html.cc-badge-glass .cc-btn > *,
+html.cc-badge-glass .cc-actbtn > *,
+html.cc-badge-glass .cc-limbtn > *,
+html.cc-badge-glass .cc-set-toggle > *,
+html.cc-badge-glass.cc-docker-iconbg #docker_list td.ct-name .outer > span.hand > *,
+html.cc-badge-glass.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand > *,
+html.cc-badge-glass.cc-plugins-iconbg .cc-plugico > * { position: relative; z-index: 2; }
 
 /* #1/#17: the native "move to start/end" quick-scroll arrows (a.move_to_end / a.move_to_top …, fixed
    bottom-right, stock red #e22828). (a) COLOUR → CC accent (rainbow-aware). (b) RAISE them above the docked
@@ -263,12 +298,23 @@ html.cc-badge-glass .cc-b > * { position: relative; z-index: 2; }   /* keep badg
 html.cc-popups-on a[class*="move_to"],
 html.cc-popups-on a.back_to_top,
 html.cc-popups-on a[class*="back_to"] {
+  right: 16px !important;                         /* single column — override native 12px/40px split */
   color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
   transform: translateY(calc(-1 * (var(--cc-footer-h, 0px) + var(--cc-actbar-h, 44px) + 14px))) !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important;
-  border-radius: var(--cc-b-radius, 999px) !important;
-  padding: 6px !important;
+  border-radius: var(--cc-b-radius, 999px) !important;   /* chip corners follow the badge SHAPE */
+  width: 40px !important; height: 40px !important;        /* fixed square chip (predictable size) */
+  padding: 0 !important;
+  display: flex !important; align-items: center; justify-content: center;
+  font-size: 1.35rem !important; line-height: 1 !important;
 }
+/* NO OVERLAP: native puts BOTH at bottom:24px — stack them into a vertical pair (40px chip + 10px gap). */
+html.cc-popups-on a.move_to_end { bottom: 24px !important; }   /* down → lower  */
+html.cc-popups-on a.back_to_top { bottom: 74px !important; }   /* up   → higher */
+/* KILL THE CIRCLE: the round shape is the fa-arrow-CIRCLE glyph, not the chip box, so a border-radius alone
+   can't square it. Swap to the plain (non-circular) arrow glyph. */
+html.cc-popups-on a.move_to_end > i.fa::before { content: "\f063" !important; }  /* fa-arrow-down */
+html.cc-popups-on a.back_to_top > i.fa::before { content: "\f062" !important; }  /* fa-arrow-up   */
 html.cc-popups-on a[class*="move_to"] > i,
 html.cc-popups-on a[class*="back_to"] > i { color: inherit !important; }
 html.cc-popups-on a[class*="move_to"]:hover,
@@ -278,23 +324,92 @@ html.cc-popups-on a[class*="back_to"]:hover { background: var(--cc-chip-hover, r
    Visual only (colour / shade / radius — no layout changes) so CA's dynamic, multi-state grid keeps working.
    CA selectors (#searchBox, .caMenuItem, .ca_holder) only exist on /Apps, so cc-popups-on scoping is enough.
    Search field like the CC-settings search, category sidebar as CC chips, cards without a border line. */
-html.cc-popups-on #searchBox {
-  background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text, #e6e6e6) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 8px) !important; height: 36px !important;
-  box-sizing: border-box !important; padding: 0 12px !important;
+/* #12a REMAP CA THEME VARS → CC TOKENS: CA cards read --template-background for base fill, hover fill AND the
+   .cardDesc::after "…" fade — remap so the whole card interior follows CC surfaces on both themes. */
+html.cc-popups-on {
+  --template-background: var(--cc-surface-1, #1e1e1e);
+  --template-hover-background: var(--cc-surface-2, #222222);
+  --border-color: transparent;
 }
-html.cc-popups-on #searchBox:focus { outline: none !important; box-shadow: 0 0 0 2px var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+/* #12b SECTION-HEAD BADGES ("Recently Added", "Spotlight Apps", …): title → CC section-head chip (accent ▸ lead,
+   tracked caps, a SHAPE not a line), subtitle → dim caption, SHOW MORE → accent. */
+html.cc-popups-on .ca_homeTemplatesHeader {
+  display: inline-block !important;
+  background: var(--cc-surface-4, #262626) !important; color: var(--cc-text, #e6e6e6) !important;
+  font-size: var(--cc-head-fs, 15px) !important; font-weight: 600 !important;
+  text-transform: uppercase !important; letter-spacing: 1.5px !important;
+  padding: var(--cc-head-pad, 9px 18px) !important;
+  border-radius: var(--cc-b-radius, 8px) !important; margin: 20px 0 10px !important;
+}
+html.cc-popups-on .ca_homeTemplatesHeader::before {
+  content: "\25B8"; margin-right: 9px; font-size: .82em;
+  color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
+}
+html.cc-popups-on .ca_homeTemplatesLine2 { color: var(--cc-text-dim, #8a8a8a) !important; font-size: 13px !important; margin: 0 0 12px !important; }
+html.cc-popups-on .homeMore { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; }
+
+/* #12c SEARCH — fold input + submit icon into ONE CC pill (like the CC-settings search); kill CA's stray
+   left/top offsets; :not(.menuShowing) so the mobile menu can still hide it. */
+html.cc-popups-on .searchArea { align-items: center !important; }
+html.cc-popups-on #searchFilter {
+  background: var(--cc-field-bg, #2e2e2e) !important; border-radius: var(--cc-b-radius, 8px) !important;
+  padding: 0 10px !important; height: 36px !important; box-sizing: border-box !important; left: 0 !important; top: 0 !important;
+}
+html.cc-popups-on #searchFilter:not(.menuShowing) { display: inline-flex !important; align-items: center !important; }
+html.cc-popups-on #searchFilter:focus-within { box-shadow: 0 0 0 2px var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+html.cc-popups-on #searchFilter .awesomplete { flex: 1 1 auto !important; display: flex !important; }
+html.cc-popups-on #searchBox {
+  background: transparent !important; color: var(--cc-text, #e6e6e6) !important;
+  border: none !important; border-radius: 0 !important; box-shadow: none !important;
+  height: 34px !important; width: 300px !important; box-sizing: border-box !important;
+  padding: 0 4px !important; margin: 0 !important; left: 0 !important; top: 0 !important;
+}
+html.cc-popups-on #searchBox:focus { outline: none !important; box-shadow: none !important; }
+html.cc-popups-on .searchSubmit {
+  background: transparent !important; border: none !important; left: 0 !important;
+  padding: 0 !important; width: auto !important; min-width: 0 !important; height: auto !important;
+  color: var(--cc-text-dim, #8a8a8a) !important;
+}
+html.cc-popups-on #searchButton { color: inherit !important; }
+
+/* #12d category chips (enabled = soft badge, disabled flat, active = accent) */
 html.cc-popups-on .caMenuItem {
   border-radius: var(--cc-b-radius, 8px) !important; margin: 2px 6px !important; padding: 5px 10px !important;
   background: transparent !important; color: var(--cc-text-chip, #cfcfcf) !important; transition: background .12s, color .12s;
 }
-/* enabled entries read as soft badges at rest; disabled/greyed ones stay flat so the group structure holds */
 html.cc-popups-on .caMenuItem.caMenuEnabled { background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; }
 html.cc-popups-on .caMenuItem.caMenuEnabled:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .caMenuItem.selected, html.cc-popups-on .caMenuItem.caMenuItemSelected, html.cc-popups-on .caMenuItem.active {
   background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, #fff) !important;
 }
+
+/* #12e APP CARD — surface + radius + no border line + matching hover (visual only; no size/position changes). */
 html.cc-popups-on .ca_holder {
   background: var(--cc-surface-1, #1e1e1e) !important; border: none !important;
   border-radius: var(--cc-b-radius, 12px) !important; box-shadow: 0 2px 12px rgba(0, 0, 0, .3) !important;
 }
+html.cc-popups-on .ca_holder:hover { background: var(--cc-surface-2, #222222) !important; box-shadow: 0 4px 18px rgba(0, 0, 0, .42) !important; }
+html.cc-popups-on .ca_iconArea img.ca_displayIcon,
+html.cc-popups-on .ca_iconArea i.displayIcon {
+  background: var(--cc-surface-2, #222222) !important; border-radius: var(--cc-r-2, 10px) !important;
+  padding: 6px !important; box-sizing: border-box !important;
+}
+html.cc-popups-on .ca_iconArea i.displayIcon { display: inline-flex !important; align-items: center !important; justify-content: center !important; color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+html.cc-popups-on .ca_applicationName { color: var(--cc-text, #e6e6e6) !important; }
+html.cc-popups-on .ca_author, html.cc-popups-on a.ca_author { color: var(--cc-text-dim, #8a8a8a) !important; }
+html.cc-popups-on .cardCategory { color: var(--cc-text-dim2, #6f6f6f) !important; text-transform: uppercase; letter-spacing: .4px; }
+html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--cc-text-chip, #cfcfcf) !important; }
+
+/* #12f CARD BUTTONS — Info/Support = neutral chip; Install/Actions = accent-filled; kill CA's gradient+mask. */
+html.cc-popups-on .ca_bottomLine .caButton {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
+  border-radius: var(--cc-b-radius, 8px) !important; -webkit-mask-image: none !important; mask-image: none !important;
+}
+html.cc-popups-on .ca_bottomLine .caButton:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; color: var(--cc-text, #e6e6e6) !important; }
+html.cc-popups-on .ca_bottomLine .actionsButton { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important; }
+html.cc-popups-on .ca_bottomLine .actionsButton:hover { filter: brightness(1.08) !important; }
+html.cc-popups-on .searchArea .caButton {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
+  border-radius: var(--cc-b-radius, 8px) !important; -webkit-mask-image: none !important; mask-image: none !important;
+}
+html.cc-popups-on .searchArea .caButton:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; }
