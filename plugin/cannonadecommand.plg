@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.5.1">
+  <!ENTITY version   "3.5.2">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,25 @@
 </ICON>
 
 <CHANGES>
+### 3.5.2
+- The two right-most header icons no longer flicker or disappear: each toolbar link now keys off its real
+  target, so buttons that share a placeholder href stop colliding.
+- Every option row in the settings (animations, density, badge shape, badge style, tile size and the rest)
+  is now one unified dropdown instead of mixed segmented pills.
+- The info bubbles next to each setting label sit correctly beside their label again.
+- Flat vs Glass badge style is reflected live in the settings preview.
+- In a color mode every settings toggle now shows its own color instead of a single flat accent.
+- The Apps tab gets its own search control on the far right, matching the settings search.
+- The Apps-tab badges follow the color modes like everything else.
+- The Apps-tab section badges are smaller, drop the leading arrow, and move their description into an
+  info bubble.
+- App cards hide the transparent app background so the icons read cleanly.
+- The Apps-tab sidebar is reworked into proper CannonadeCommand chips with a colored selection.
+- The container-install window loses the grey title bar and the view toggle sits flush right.
+- The Apps tab no longer renders a duplicated, overlapping panel when it opens.
+- In every process window (update, install, create) the spinner turns into a green check when the job
+  finishes instead of spinning forever.
+
 ### 3.5.1
 - Footer quick-scroll arrows follow the badge shape instead of a fixed circle (the round shape was the
   fa-arrow-circle glyph, not the chip), and they no longer overlap each other.
@@ -2355,7 +2374,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>e673b385c5b60861bb6c7b9341ed351117085f74d25905309769ac6bd35ffd53</SHA256>
+  <SHA256>bda77599d2814c7d26e49f2a0cbf63d246bd8931bc95cc95eb8119396f579099</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

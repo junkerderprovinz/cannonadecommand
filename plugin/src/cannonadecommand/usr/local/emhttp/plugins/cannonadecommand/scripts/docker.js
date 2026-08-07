@@ -2760,7 +2760,8 @@
         var ctOutStatus = function () {
           try {
             var log = content.textContent || "";
-            var done = /(erfolgreich\s+(ausgeführt|beendet)|finished successfully|command (finished|completed|executed)|befehl.*fehlgeschlagen|the command failed)/i.test(log);
+            var done = /(erfolgreich\s+(ausgeführt|beendet)|finished successfully|command (finished|completed|executed)|befehl.*fehlgeschlagen|the command failed)/i.test(log)
+                       || (/docker\s+(create|run)/i.test(log) && !content.querySelector(".fa-spin, .spinner"));   /* #14: phrase-less end (spinner gone) also counts as done */
             if (done) { sb.classList.add("cc-ctout-done"); if (sb.getAttribute("data-m") !== "done") { sb.setAttribute("data-m", "done"); sb.setAttribute("aria-label", "Fertig"); sb.innerHTML = "<i class='fa fa-check cc-ctout-fa' aria-hidden='true'></i>"; } }
             else { sb.classList.remove("cc-ctout-done"); if (sb.getAttribute("data-m") !== "run") { sb.setAttribute("data-m", "run"); sb.setAttribute("aria-label", "Läuft"); sb.innerHTML = "<span class='cc-loader' style='--cc-load-sz:22px'><span class='o'><i></i></span><span class='in'><i></i></span></span>"; } }
           } catch (e) {}

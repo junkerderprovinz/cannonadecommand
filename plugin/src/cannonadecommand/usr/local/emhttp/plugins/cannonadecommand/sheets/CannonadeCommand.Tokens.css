@@ -331,57 +331,95 @@ html.cc-popups-on {
   --template-hover-background: var(--cc-surface-2, #222222);
   --border-color: transparent;
 }
-/* #12b SECTION-HEAD BADGES ("Recently Added", "Spotlight Apps", …): title → CC section-head chip (accent ▸ lead,
-   tracked caps, a SHAPE not a line), subtitle → dim caption, SHOW MORE → accent. */
+/* #12b SECTION-HEAD BADGES — smaller (#9), NO leading icon (#9), COLOUR-MODE filled per element (#8).
+   Subtitle rides the (i) bubble + SHOW MORE rides inside the badge (both moved in by header.js ccApps). */
 html.cc-popups-on .ca_homeTemplatesHeader {
-  display: inline-block !important;
-  background: var(--cc-surface-4, #262626) !important; color: var(--cc-text, #e6e6e6) !important;
-  font-size: var(--cc-head-fs, 15px) !important; font-weight: 600 !important;
-  text-transform: uppercase !important; letter-spacing: 1.5px !important;
-  padding: var(--cc-head-pad, 9px 18px) !important;
-  border-radius: var(--cc-b-radius, 8px) !important; margin: 20px 0 10px !important;
+  display: inline-flex !important; align-items: center !important; gap: 8px !important;
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  font-size: 12px !important; font-weight: 600 !important;
+  text-transform: uppercase !important; letter-spacing: 1px !important;
+  padding: 5px 12px !important;
+  border-radius: var(--cc-b-radius, 8px) !important; margin: 18px 0 12px !important;
 }
-html.cc-popups-on .ca_homeTemplatesHeader::before {
-  content: "\25B8"; margin-right: 9px; font-size: .82em;
-  color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
+html.cc-popups-on .ca_homeTemplatesHeader::before { content: none !important; }   /* #9 kill the ▸ */
+html.cc-popups-on .ca_homeTemplatesHeader .cc-info {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  width: 15px !important; height: 15px !important; flex: none !important; cursor: help !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; opacity: .85 !important;
 }
+html.cc-popups-on .ca_homeTemplatesHeader .cc-info svg { width: 15px !important; height: 15px !important; display: block !important; }
+html.cc-popups-on .ca_homeTemplatesHeader .cc-info:hover, html.cc-popups-on .ca_homeTemplatesHeader .cc-info:focus { opacity: 1 !important; outline: none !important; }
+html.cc-popups-on .ca_homeTemplatesHeader .homeMore {
+  margin-left: 2px !important; font-size: 11px !important; font-weight: 600 !important;
+  text-transform: uppercase !important; letter-spacing: .4px !important; cursor: pointer !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; opacity: .9 !important;
+}
+/* fallback only (before ccApps runs): keep line2 as dim body text so SHOW MORE never vanishes */
 html.cc-popups-on .ca_homeTemplatesLine2 { color: var(--cc-text-dim, #8a8a8a) !important; font-size: 13px !important; margin: 0 0 12px !important; }
-html.cc-popups-on .homeMore { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; }
+html.cc-popups-on .ca_homeTemplatesLine2 .homeMore { color: var(--cc-accent, #2f6feb) !important; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; }
 
-/* #12c SEARCH — fold input + submit icon into ONE CC pill (like the CC-settings search); kill CA's stray
-   left/top offsets; :not(.menuShowing) so the mobile menu can still hide it. */
-html.cc-popups-on .searchArea { align-items: center !important; }
+/* #12c SEARCH (#7) — field with the magnifier as a COLOUR-MODE BUTTON on the FAR RIGHT of the bar (mirrors
+   the CC-settings search: margin-left:auto pushes it right; the icon is an accent chip flush at the field end). */
+html.cc-popups-on .searchArea { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 8px !important; }
 html.cc-popups-on #searchFilter {
+  margin-left: auto !important;
   background: var(--cc-field-bg, #2e2e2e) !important; border-radius: var(--cc-b-radius, 8px) !important;
-  padding: 0 10px !important; height: 36px !important; box-sizing: border-box !important; left: 0 !important; top: 0 !important;
+  padding: 0 0 0 12px !important; height: 36px !important; box-sizing: border-box !important;
+  overflow: hidden !important; left: 0 !important; top: 0 !important;
 }
 html.cc-popups-on #searchFilter:not(.menuShowing) { display: inline-flex !important; align-items: center !important; }
-html.cc-popups-on #searchFilter:focus-within { box-shadow: 0 0 0 2px var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+html.cc-popups-on #searchFilter:focus-within { box-shadow: 0 0 0 2px var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; }
 html.cc-popups-on #searchFilter .awesomplete { flex: 1 1 auto !important; display: flex !important; }
 html.cc-popups-on #searchBox {
   background: transparent !important; color: var(--cc-text, #e6e6e6) !important;
   border: none !important; border-radius: 0 !important; box-shadow: none !important;
-  height: 34px !important; width: 300px !important; box-sizing: border-box !important;
-  padding: 0 4px !important; margin: 0 !important; left: 0 !important; top: 0 !important;
+  height: 34px !important; width: 220px !important; box-sizing: border-box !important;
+  padding: 0 8px 0 0 !important; margin: 0 !important; left: 0 !important; top: 0 !important;
 }
 html.cc-popups-on #searchBox:focus { outline: none !important; box-shadow: none !important; }
 html.cc-popups-on .searchSubmit {
-  background: transparent !important; border: none !important; left: 0 !important;
-  padding: 0 !important; width: auto !important; min-width: 0 !important; height: auto !important;
-  color: var(--cc-text-dim, #8a8a8a) !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  width: 40px !important; height: 36px !important; min-width: 40px !important; margin: 0 !important; padding: 0 !important;
+  left: 0 !important; top: 0 !important; cursor: pointer !important; border: none !important;
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  border-radius: 0 var(--cc-b-radius, 8px) var(--cc-b-radius, 8px) 0 !important;
 }
+html.cc-popups-on .searchSubmit:hover { filter: brightness(1.08) !important; }
 html.cc-popups-on #searchButton { color: inherit !important; }
 
-/* #12d category chips (enabled = soft badge, disabled flat, active = accent) */
+/* #12d CATEGORY SIDEBAR (#11) — clean CC treatment: chips, grouping, shade separators (never a line),
+   correct ACTIVE class (.selectedMenu — CA's real class), colour-mode active fill. */
+html.cc-popups-on .caMenu { padding: 4px !important; margin: 0 !important; }
 html.cc-popups-on .caMenuItem {
-  border-radius: var(--cc-b-radius, 8px) !important; margin: 2px 6px !important; padding: 5px 10px !important;
-  background: transparent !important; color: var(--cc-text-chip, #cfcfcf) !important; transition: background .12s, color .12s;
+  display: block !important; border-radius: var(--cc-b-radius, 8px) !important;
+  margin: 1px 4px !important; padding: 6px 12px !important; line-height: 1.3 !important;
+  background: transparent !important; color: var(--cc-text-chip, #cfcfcf) !important;
+  cursor: pointer !important; transition: background .12s, color .12s !important;
 }
-html.cc-popups-on .caMenuItem.caMenuEnabled { background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; }
-html.cc-popups-on .caMenuItem.caMenuEnabled:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; color: var(--cc-text, #e6e6e6) !important; }
-html.cc-popups-on .caMenuItem.selected, html.cc-popups-on .caMenuItem.caMenuItemSelected, html.cc-popups-on .caMenuItem.active {
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, #fff) !important;
+html.cc-popups-on .caMenuItem:hover { background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important; }
+html.cc-popups-on .caMenuItem.sectionMenu {
+  text-transform: uppercase !important; letter-spacing: .6px !important;
+  font-size: 12px !important; font-weight: 600 !important; color: var(--cc-text, #e6e6e6) !important;
 }
+html.cc-popups-on .subCategory { margin: 0 !important; padding: 0 0 0 10px !important; list-style: none !important; }
+html.cc-popups-on .subCategory .caMenuItem { font-size: 12.5px !important; text-transform: none !important; letter-spacing: normal !important; font-weight: 400 !important; }
+html.cc-popups-on .caMenuItem.selectedMenu,
+html.cc-popups-on .caMenuItem.selectedMenu:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+html.cc-popups-on .caMenuItem.selectedMenu:hover { filter: brightness(1.06) !important; }
+html.cc-popups-on a.caMenuItem, html.cc-popups-on .caMenuItem a.caMenuItem {
+  color: inherit !important; text-decoration: none !important; display: inline !important; padding: 0 !important; margin: 0 !important;
+}
+html.cc-popups-on .caMenu hr, html.cc-popups-on hr.category_hr {
+  border: none !important; height: 1px !important; margin: 8px 12px !important;
+  background: var(--cc-shade-line, rgba(128, 128, 128, .14)) !important;
+}
+html.cc-popups-on li.caMenuItem:has(> hr) { background: transparent !important; padding: 0 !important; margin: 0 !important; cursor: default !important; }
+html.cc-popups-on .caMenu > li:not(.caMenuItem) { color: var(--cc-text-dim2, #6f6f6f) !important; padding: 2px 12px !important; font-size: 12px !important; }
 
 /* #12e APP CARD — surface + radius + no border line + matching hover (visual only; no size/position changes). */
 html.cc-popups-on .ca_holder {
@@ -389,10 +427,17 @@ html.cc-popups-on .ca_holder {
   border-radius: var(--cc-b-radius, 12px) !important; box-shadow: 0 2px 12px rgba(0, 0, 0, .3) !important;
 }
 html.cc-popups-on .ca_holder:hover { background: var(--cc-surface-2, #222222) !important; box-shadow: 0 4px 18px rgba(0, 0, 0, .42) !important; }
+/* #10 HIDE the app-icon tile (the grey/"transparent" box behind each icon — CA Issue #135). Drop CC's tile AND
+   neutralise the native one; replicate the upstream drop-shadow halo so transparent PNGs + font icons float on
+   the card with NO box (halo = shade/glow, not a border line). Covers card icons AND the app-popup icon. */
 html.cc-popups-on .ca_iconArea img.ca_displayIcon,
+html.cc-popups-on img.ca_displayIcon,
+html.cc-popups-on img.popupIcon,
+html.cc-popups-on i.displayIcon.popupIcon,
 html.cc-popups-on .ca_iconArea i.displayIcon {
-  background: var(--cc-surface-2, #222222) !important; border-radius: var(--cc-r-2, 10px) !important;
-  padding: 6px !important; box-sizing: border-box !important;
+  background: transparent !important; background-color: transparent !important;
+  padding: 0 !important; border-radius: 0 !important;
+  filter: drop-shadow(0 0 1px var(--cc-text, #e6e6e6)) drop-shadow(0 0 1px var(--cc-text, #e6e6e6));
 }
 html.cc-popups-on .ca_iconArea i.displayIcon { display: inline-flex !important; align-items: center !important; justify-content: center !important; color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
 html.cc-popups-on .ca_applicationName { color: var(--cc-text, #e6e6e6) !important; }
@@ -400,16 +445,28 @@ html.cc-popups-on .ca_author, html.cc-popups-on a.ca_author { color: var(--cc-te
 html.cc-popups-on .cardCategory { color: var(--cc-text-dim2, #6f6f6f) !important; text-transform: uppercase; letter-spacing: .4px; }
 html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--cc-text-chip, #cfcfcf) !important; }
 
-/* #12f CARD BUTTONS — Info/Support = neutral chip; Install/Actions = accent-filled; kill CA's gradient+mask. */
+/* #12f CARD BUTTONS (#8) — Install/Actions = colour-mode filled (per-element --cc-rb-c). Info/Support = neutral
+   in accent mode, colour-mode filled in RAINBOW (every badge follows the mode). Colours from header.js ccApps. */
 html.cc-popups-on .ca_bottomLine .caButton {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
   border-radius: var(--cc-b-radius, 8px) !important; -webkit-mask-image: none !important; mask-image: none !important;
 }
 html.cc-popups-on .ca_bottomLine .caButton:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; color: var(--cc-text, #e6e6e6) !important; }
-html.cc-popups-on .ca_bottomLine .actionsButton { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important; }
+html.cc-popups-on .ca_bottomLine .actionsButton {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
 html.cc-popups-on .ca_bottomLine .actionsButton:hover { filter: brightness(1.08) !important; }
+html.cc-rb-on.cc-popups-on .ca_bottomLine .caButton {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important;
+}
+html.cc-rb-on.cc-popups-on .ca_bottomLine .caButton:hover { filter: brightness(1.08) !important; background: var(--cc-rb-c, var(--cc-accent)) !important; }
 html.cc-popups-on .searchArea .caButton {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
   border-radius: var(--cc-b-radius, 8px) !important; -webkit-mask-image: none !important; mask-image: none !important;
 }
 html.cc-popups-on .searchArea .caButton:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; }
+
+/* #13: don't stack the fullscreen tab-load loader UNDER an open swal loader (CA "Updating Content" on /Apps
+   open) — the swal already dims the backdrop, so div.spinner.fixed would be a second overlapping ring. */
+html.cc-popups-on:has(.sweet-alert.visible, .sweet-alert.show-sweet-alert, .swal-overlay--show-modal) div.spinner.fixed { display: none !important; }

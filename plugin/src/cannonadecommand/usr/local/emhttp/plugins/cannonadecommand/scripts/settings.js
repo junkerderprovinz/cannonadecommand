@@ -826,7 +826,7 @@
     // #9 (user: "eine Auswahl für flat und glass … damit man es ein und abschalten kann"): ONE global badge
     // STYLE. Glass adds a glossy sheen (top highlight + inner edge + backdrop blur) to EVERY badge at once
     // (html.cc-badge-glass); flat is the solid look. Sits right under Badge-Form (both are badge-look axes).
-    c1.appendChild(segRow(T("Badge-Stil", "Badge style"), [["flat", "Flat"], ["glass", "Glass"]], get("cc.badgeglass", "0") === "1" ? "glass" : "flat", function (v) { set("cc.badgeglass", v === "glass" ? "1" : "0"); root.classList.toggle("cc-badge-glass", v === "glass"); syncHeaderBar(); syncSharesBar(); }));
+    c1.appendChild(segRow(T("Badge-Stil", "Badge style"), [["flat", "Flat"], ["glass", "Glass"]], get("cc.badgeglass", "0") === "1" ? "glass" : "flat", function (v) { set("cc.badgeglass", v === "glass" ? "1" : "0"); document.documentElement.classList.toggle("cc-badge-glass", v === "glass" && get("cc.theming", "1") !== "0"); syncHeaderBar(); syncSharesBar(); }));
     // (#12: the curated palette-presets block was removed per user request)
     // #16 (user): let STATE indicators keep their NATIVE state colour (green/amber/red) instead of
     // folding into the accent/rainbow/flag palette. Default OFF = integrated (current look). ON stamps
@@ -935,9 +935,8 @@
     // user: "global einstellbar, nicht per tab"). This Docker card keeps only the LIVE PREVIEW below, which
     // sizePrev() resizes whenever the global control changes.
     function tileSizeRow() {
-      var r = segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small")], ["m", T("Mittel", "Medium")], ["l", T("Groß", "Large")]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); try { sizePrev(); } catch (e) {} });   /* live-resize the Docker preview */
-      r.insertBefore(infoIcon(T("Gilt global – dieselbe Größe steuert das Einstellungen-/Werkzeuge-Raster und die Docker-/Plugin-Logos.", "Global – the same size drives the Settings/Tools grid and the Docker/Plugin logos.")), r.lastChild);
-      return r;
+      // #5: pass the tip through `help` so the ⓘ lands INSIDE the label, consistent with every other row.
+      return segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small")], ["m", T("Mittel", "Medium")], ["l", T("Groß", "Large")]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); try { sizePrev(); } catch (e) {} }, T("Gilt global – dieselbe Größe steuert das Einstellungen-/Werkzeuge-Raster und die Docker-/Plugin-Logos.", "Global – the same size drives the Settings/Tools grid and the Docker/Plugin logos."));   /* live-resize the Docker preview */
     }
     c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));   // preview stays the Docker card's last block
     var tprevWrap = el("div", "cc-set-prev");
@@ -1536,7 +1535,7 @@
       }
       setSearch.addEventListener("input", function () { runFilter(setSearch.value); });
     })();
-    paintPrev();
+    paintPrev(); paintToggles();
   }
   function saveNotify(btn) {
     btn.textContent = T("Speichere…", "Saving…"); btn.classList.add("cc-set-disabled");
@@ -1572,21 +1571,31 @@
   // preview uses the REAL rainbow palette (identical to docker.css) so it matches
   // what the Docker tab actually shows, with auto-contrast text.
   function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; var pal = DEF;   /* #1: jewel default so the preview matches the live UI */ try { var fj = get("cc.flagmode", "0") === "1" ? JSON.parse(get("cc.flagpal", "null")) : null; var j = (fj && fj.length) ? fj : JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
+  // #6 (user): every CC-settings toggle follows the colour engine. In rainbow each toggle takes a DIFFERENT
+  // jewel from the shared seed (CCTheme.rbColor honours cc.rbseed + rotation), exactly like the Docker/VM/grid
+  // badges stamp --cc-rb-c; in accent (or flag-off) the stamp is cleared so the track CSS falls back through
+  // --cc-rbaccent to --cc-accent. Track reads var(--cc-rb-c, …) (docker.css); knob stays white.
+  function paintToggles() {
+    if (!root) return;
+    var rbC = (window.CCTheme && window.CCTheme.rbColor) || function (i, a) { return a; };
+    var tgls = root.querySelectorAll(".cc-set-toggle");
+    for (var i = 0; i < tgls.length; i++) {
+      var t = tgls[i];
+      if (rainbow) { var c = rbC(i, accent); t.style.setProperty("--cc-rb-c", c); t.style.setProperty("--cc-rb-ct", idealText(c)); }
+      else { t.style.removeProperty("--cc-rb-c"); t.style.removeProperty("--cc-rb-ct"); }
+    }
+  }
   // live-highlight the preset swatch that matches the current accent (no re-render)
   function syncSwOn() { var a = (accent || "").toLowerCase(); Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-sw")).forEach(function (sw) { sw.classList.toggle("cc-set-sw-on", (sw.dataset.c || "").toLowerCase() === a); }); }
   function thc(t) { var e = el("th", null, t); return e; }
   function chkCell(key, v, color) { var td = el("td", "cc-set-chk"); var cb = el("input"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); if (rainbow && color) cb.style.accentColor = color; cb.addEventListener("change", function () { var cur = colview[key] || { s: true, a: true }; colview[key] = { s: cur.s, a: cur.a }; colview[key][v] = cb.checked; set("cc.colview2", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
-  function segRow(labelText, opts, cur, onChange, help, segFirst) {
-    var row = el("div", "cc-set-row" + (segFirst ? " cc-set-row-segfirst" : "")); var rl = el("span", "cc-set-rl", labelText); if (help) rl.appendChild(infoIcon(help)); var seg = el("div", "cc-seg");
-    opts.forEach(function (o) {
-      // <span> not <button> (Unraid's button CSS painted orange borders on these)
-      var b = el("span", "cc-seg-btn" + (cur === o[0] ? " cc-seg-on" : "")); b.textContent = o[1];
-      b.addEventListener("click", function () { onChange(o[0]); Array.prototype.slice.call(seg.children).forEach(function (x) { x.classList.remove("cc-seg-on"); }); b.classList.add("cc-seg-on"); });
-      seg.appendChild(b);
-    });
-    // segFirst (user): switches LEFT of the label (used by the Dichte row) — append seg then label.
-    if (segFirst) { row.appendChild(seg); row.appendChild(rl); } else { row.appendChild(rl); row.appendChild(seg); }
-    return row;
+  // #4 (user): every segmented option row is now a UNIFIED CC dropdown. segRow() delegates to dropRow()
+  // (defined below, hoisted) so ALL callers (Animationen, Dichte, Badge-Form, Badge-Stil, Kachelgröße,
+  // Ansicht, Temperatur-Warnschwelle) convert at once with the SAME (value,label) opts + the SAME onChange —
+  // the native <select> fires `change`, so the live effects (applyAnim/sizePrev/glass toggle/…) still run.
+  // The old `segFirst` seg-left layout is obsolete (dropdowns are uniformly label-left); the arg is ignored.
+  function segRow(labelText, opts, cur, onChange, help /*, segFirst (obsolete) */) {
+    return dropRow(labelText, opts, cur, onChange, help);
   }
   // Native <select> styled as a CC control (no orange Unraid border). opts = [value, label, face?];
   // when a third element is given the option renders in that font-family (used by the font picker).

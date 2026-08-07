@@ -183,18 +183,46 @@
           // output for ~700ms) — so the check never appears mid-run (e.g. right after "erfolgreich ausgeführt"
           // while an orphaned image is still being removed). No mutations fire once the stream stops, so arm a
           // one-shot re-check to let the check appear after the tail settles.
-          var finishTxt = /(erfolgreich (ausgeführt|beendet)|successfully|command (finished|completed|executed)|finished)/i.test(sa.textContent || "");
-          var len = (sa.textContent || "").length;
-          if (sa.__ccLen !== len) { sa.__ccLen = len; sa.__ccGrow = Date.now(); }
-          if (finishTxt && (Date.now() - (sa.__ccGrow || 0)) > 700) { sa.dataset.ccState = "done"; }
-          else { sa.dataset.ccState = "run"; if (finishTxt) { clearTimeout(sa.__ccSettleT); sa.__ccSettleT = setTimeout(function () { try { ccNchanStyle(); paintPopups(); } catch (e) {} }, 750); } }
-        } else { sa.dataset.ccState = ""; }
+          // #14 (user, de_DE box): completion is Unraid's OWN signal, not a log-phrase guess. openPlugin/
+          // openDocker/openVMAction render `<span id="pluginProgressTitle">In Progress <i class="fa fa-refresh
+          // fa-spin"></i></span>` while running; on the nchan _DONE_/_ERROR_ message openDone()/openError()
+          // REPLACE that span with plain "Finished"/"Fertig" | "Error"/"Fehler" (spinner GONE) and enable the
+          // confirm button. That flip is instant + locale-independent — a plugin install log never contains
+          // "finished/erfolgreich", which is why the old finishTxt regex left the ring spinning forever.
+          var progT = h2.querySelector("#pluginProgressTitle");
+          var spinning = progT ? !!progT.querySelector(".fa-spin, .fa-refresh, i.fa") : false;
+          var cb0 = sa.querySelector("button.confirm");
+          var btnDone = !!(cb0 && !cb0.disabled && cb0.offsetParent !== null && !/close|schlie|abbrech|cancel/i.test(cb0.textContent || ""));
+          var done;
+          if (progT) { done = !spinning; }               // native span present: spinner removed == finished/error
+          else if (btnDone) { done = true; }             // no span, but the Done/Fertig button went live
+          else {                                         // last resort: the old settled log-phrase heuristic
+            var finishTxt = /(erfolgreich (ausgeführt|beendet)|successfully|command (finished|completed|executed)|finished)/i.test(sa.textContent || "");
+            var len = (sa.textContent || "").length;
+            if (sa.__ccLen !== len) { sa.__ccLen = len; sa.__ccGrow = Date.now(); }
+            done = finishTxt && (Date.now() - (sa.__ccGrow || 0)) > 700;
+            if (!done && finishTxt) { clearTimeout(sa.__ccSettleT); sa.__ccSettleT = setTimeout(function () { try { ccNchanStyle(); paintPopups(); } catch (e) {} }, 750); }
+          }
+          if (done) sa.__ccDone = true;                  // latch: never revert to run once finished
+          sa.dataset.ccState = (done || sa.__ccDone) ? "done" : "run";
+          sa.classList.toggle("cc-nchan-err", (done || sa.__ccDone) && /error|fehler/i.test((progT ? progT.textContent : (cb0 && cb0.textContent)) || ""));
+        } else { sa.dataset.ccState = ""; sa.__ccDone = false; }
         var state = sa.dataset.ccState || "";
         sa.classList.toggle("cc-nchan-loading", state === "run");
         sa.classList.toggle("cc-nchan-done", state === "done");
-        // strip the status suffix from the title so the badge shows only the clean name
-        var clean = raw.replace(/\s*[-–—]\s*(IN\s*PROGRESS|FINISHED)\b[\s\S]*$/i, "").replace(/\s+$/, "");
-        if (clean && clean !== raw && h2.textContent !== clean) h2.textContent = clean;
+        // #14: strip the status suffix from the title — but do NOT rewrite h2.textContent: that DESTROYS
+        // #pluginProgressTitle, the only reliable completion signal (later passes could then never see "done").
+        // Hide the native progress span in place + trim the trailing separator; keep text-clean only as the
+        // fallback for alerts that have no progress span.
+        var progH = h2.querySelector("#pluginProgressTitle");
+        if (progH) {
+          progH.style.display = "none";
+          var pv = progH.previousSibling;
+          if (pv && pv.nodeType === 3 && /[-–—]\s*$/.test(pv.nodeValue || "")) pv.nodeValue = pv.nodeValue.replace(/\s*[-–—]\s*$/, "");
+        } else {
+          var clean = raw.replace(/\s*[-–—]\s*(IN\s*PROGRESS|FINISHED)\b[\s\S]*$/i, "").replace(/\s+$/, "");
+          if (clean && clean !== raw && h2.textContent !== clean) h2.textContent = clean;
+        }
         var oldspin = h2.querySelector(".cc-nchan-spin"); if (oldspin) oldspin.remove();   // kill any legacy in-badge spinner
         // bottom-left STATUS BADGE (no text): a spinning ring while RUNNING, a green circle-check when DONE
         var loader = sa.querySelector(".cc-nchan-loader");
@@ -449,7 +477,13 @@
     if (it.id === "cc-burger-proxy") return "cc-burger";
     if (it.classList.contains("usage-bar")) return "usage-bar";
     var a = it.querySelector("a"); if (!a) return null;
-    return ((a.getAttribute("href") || a.getAttribute("onclick") || a.getAttribute("title") || "") + "").slice(0, 160) || null;
+    // #2 (user: "die beiden Icons ganz rechts flackern"): every native util <a> is href="#" (the real
+    // discriminator is in onclick, e.g. "InfoButton();return false;"). href-first collapsed ALL util icons
+    // to the single key "#", which broke applyNavOrder's idempotence gate → place()/the #menu observer
+    // looped into an endless right-tile re-shuffle = Info/Log flickering. Drop the shared "#" and key by onclick.
+    var href = (a.getAttribute("href") || "").trim();
+    if (href === "#") href = "";                                  // href="#" is shared by every util button -> not a key
+    return ((href || a.getAttribute("onclick") || a.getAttribute("title") || "") + "").slice(0, 160) || null;
   }
   // storage: cc.navorder.all = {left:[keys], right:[keys]} — each tile's own sequence INCLUDING
   // items dragged over from the other side. One-time fallback-migration from the old zone keys.
@@ -1827,6 +1861,7 @@
       ccWatchMain();      // re-paint late AJAX-rendered content (usage bars, buttons, toggles)
       ccNchanStyle(); paintPopups(); watchPopups();
       ccWireTips();     // document-wide floating-bubble delegation (bound once) — on EVERY page: docker/shares/settings anchors ride it even with the header area off
+      try { ccApps(); } catch (e) {}   // #8: repaint /Apps colour-mode badges on every apply (live rainbow/accent toggle)
       // paintNav() with cc-header-on now removed => rb=false => it removeProperty's every
       // lingering rainbow inline colour, so a live theming-OFF (even with Rainbow on) fully
       // reverts the menu bar instead of leaving the coloured tabs behind.
@@ -1973,6 +2008,68 @@
       if (last !== CC_VER) { try { localStorage.setItem("cc.lastver", CC_VER); } catch (e2) {} }
     } catch (e) {}
   }
+  // ═══ #7/#8/#9/#11 Apps (Community Applications) tab — colour-mode stamping + subtitle→(i) bubble ═══════
+  // header.js is the ONLY CC script on /Apps (docker/plugins/vms are page-scoped), and --cc-accent /
+  // --cc-rbaccent are NOT stamped on root here — so CA badges fell back to the default blue in BOTH modes.
+  // This self-contained pass stamps --cc-rb-c/--cc-rb-ct per element (like docker.js injectRowBadges):
+  // rbColor(i) returns the user's accent when rainbow is off, or a rotating jewel when on. It also moves
+  // each home-section subtitle into the shared (i) bubble (#9). FREEZE-SAFE: NO subtree observer on the card
+  // tree (that froze the tab); a childList(subtree:false) observer on #templates_content catches CA's view
+  // swaps, plus a re-stamp on the CA nav clicks.
+  function ccMakeInfo(tip) {
+    var s = document.createElement("span"); s.className = "cc-info";
+    s.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.1" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="4.7" r="1.05" fill="currentColor"/><rect x="7.05" y="6.8" width="1.9" height="5" rx=".95" fill="currentColor"/></svg>';
+    s.setAttribute("data-tip", tip); s.setAttribute("aria-label", tip); s.setAttribute("tabindex", "0");
+    return s;   // rides the document-wide #cc-tipfloat engine (ccWireTips)
+  }
+  function ccAppsStamp(sel) {
+    var els = document.querySelectorAll(sel);
+    for (var i = 0; i < els.length; i++) {
+      var c = rbColor(i);                                  // accent when rainbow off, jewel[i] when on
+      els[i].style.setProperty("--cc-rb-c", c);
+      els[i].style.setProperty("--cc-rb-ct", idealText(c));
+    }
+  }
+  function ccApps() {
+    try {
+      if (!/^\/Apps(\/|$)/.test(location.pathname)) return;
+      if (!document.documentElement.classList.contains("cc-popups-on")) return;
+      ccAppsStamp(".ca_homeTemplatesHeader");
+      ccAppsStamp(".caMenuItem.selectedMenu");
+      ccAppsStamp(".searchArea .searchSubmit");
+      ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton");
+      // (#9) subtitle -> (i) bubble on the header, keep SHOW MORE inline, retire the body-text line.
+      var heads = document.querySelectorAll(".ca_homeTemplatesHeader:not([data-cc-info])");
+      for (var h = 0; h < heads.length; h++) {
+        var head = heads[h]; head.setAttribute("data-cc-info", "1");
+        var line2 = head.nextElementSibling;
+        if (!line2 || !/\bca_homeTemplatesLine2\b/.test(line2.className || "")) continue;
+        var more = line2.querySelector(".homeMore"), sub = "";
+        for (var n = 0; n < line2.childNodes.length; n++) { var nd = line2.childNodes[n]; if (nd.nodeType === 3) sub += nd.textContent; }
+        sub = sub.trim();
+        if (sub) head.appendChild(ccMakeInfo(sub));
+        if (more) head.appendChild(more);     // SHOW MORE now rides inside the section badge
+        line2.style.display = "none";
+      }
+    } catch (e) {}
+  }
+  var ccAppsObs = null, ccAppsT = 0;
+  function ccAppsSoon() { if (ccAppsT) return; ccAppsT = setTimeout(function () { ccAppsT = 0; ccApps(); }, 60); }
+  function ccAppsBoot() {
+    try {
+      if (!/^\/Apps(\/|$)/.test(location.pathname)) return;
+      ccApps();
+      document.addEventListener("click", function (e) {
+        if (e.target && e.target.closest && e.target.closest(".caMenuItem, .homeMore, .sortIcons, .searchSubmit, #searchButton")) ccAppsSoon();
+      }, true);
+      var k = 0, t = setInterval(function () {
+        var tc = document.getElementById("templates_content");
+        if (tc && !ccAppsObs) { ccAppsObs = new MutationObserver(ccAppsSoon); ccAppsObs.observe(tc, { childList: true, subtree: false }); ccApps(); }
+        if (++k >= 15) clearInterval(t);
+      }, 300);
+    } catch (e) {}
+  }
+
   function boot() {
     try { window.ccHeaderApply = apply; } catch (e) {} // let the Settings page live-update this bar same-page
     apply();
@@ -1990,6 +2087,7 @@
     } catch (e) {}
     watchSearch();
     wireSearchToggle();
+    ccAppsBoot();     // #7/#8/#9/#11: /Apps colour-mode stamping + subtitle bubble (self-gated to /Apps)
     // #11 ROOT CAUSE (agent-diagnosed): the docked #UserProfile (position:fixed, z above #menu) overlapped the
     // help icon and ATE the real mouse click — a synthetic click bypasses hit-testing, which is why it "worked"
     // in tests but never for a real click. Fix A (Header.css) makes the dock click-through. Fix B here is belt-

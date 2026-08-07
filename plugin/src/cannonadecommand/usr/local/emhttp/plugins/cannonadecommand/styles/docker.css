@@ -851,7 +851,9 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-rb-
 .cc-set-card .cc-set-row, .cc-set-card .cc-set-swatches, .cc-set-card .cc-set-lbl { margin-top: 12px; } /* airier cards */
 .cc-set-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; flex-wrap: wrap; }
 .cc-set-card .cc-set-inline { justify-content: space-between; flex-wrap: nowrap; } /* label left, toggle flush right -> all toggles line up */
-.cc-set-rl { min-width: 110px; }
+/* #5: the row label is a flex box so an appended ⓘ (.cc-info) sits vertically centered right after the label
+   text (was riding the text baseline). Repairs segRow/dropRow/colorRow rows in one place. */
+.cc-set-rl { min-width: 110px; display: inline-flex; align-items: center; gap: 6px; }
 /* segFirst rows (Dichte, user): the segmented switches sit LEFT of the label — label natural-width, a touch more gap */
 /* Density row: the "Dichte" label was RIGHT of the segmented control (seg-first) while every other row is
    label-left / control-right — it read as misaligned (user). Put the label back on the LEFT (order:-1) and
@@ -941,9 +943,9 @@ button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-t
 #cc-settings .cc-set-ibtn:hover { filter: brightness(1.14); }
 html.cc-shape-circle #cc-settings .cc-set-ibtn { border-radius: 50%; }
 .cc-set-toggle { width: 44px; height: 24px; border-radius: 999px; border: none !important; padding: 0 !important; background: var(--cc-toggle-track-off, #3a3a3a); position: relative; cursor: pointer; transition: background .15s; flex: none; box-sizing: border-box; }   /* slim toggle (30px reverted: "zu gross und klobig") */
-.cc-set-toggle-on { background: var(--cc-rbaccent, var(--cc-btn-accent, var(--cc-accent, #2f6feb))); }   /* T6: follow the colour mode */
+.cc-set-toggle-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-btn-accent, var(--cc-accent, #2f6feb)))); }   /* #6: per-toggle jewel (settings.js paintToggles) -> rbaccent -> accent */
 /* in rainbow mode the ON toggles wear the rainbow, matching the badge scheme */
-#cc-settings.cc-rainbow .cc-set-toggle-on { background: var(--cc-rbaccent, var(--cc-btn-accent, var(--cc-accent, #2f6feb))); }   /* T6: follow the colour mode */
+#cc-settings.cc-rainbow .cc-set-toggle-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-btn-accent, var(--cc-accent, #2f6feb)))); }   /* #6: per-toggle jewel (settings.js paintToggles) -> rbaccent -> accent */
 .cc-set-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; }
 .cc-set-toggle-on .cc-set-knob { left: 21px; }
 /* #3: a gated toggle (e.g. Favoriten when native favourites are off) reads clearly non-interactive */
@@ -1368,7 +1370,15 @@ html.cc-docker-on.cc-on-addct dd:has(> .cc-colorvar),
 html.cc-docker-on.cc-on-addct td:has(> .cc-colorvar) { display: flex; align-items: center; }
 html.cc-docker-on.cc-on-addct dd:has(> .cc-colorvar) input[type="text"],
 html.cc-docker-on.cc-on-addct td:has(> .cc-colorvar) input[type="text"] { flex: 1 1 auto; width: auto !important; min-width: 0; }
-html.cc-docker-on.cc-on-addct div.title { border: none !important; padding-left: 0; }
+/* #12 (user): the Add/Update-Container FORM title bar must NOT be the global grey section-block
+   (Tokens.css html.cc-popups-on div.title paints it --cc-surface-4). On THIS page the title is the accent
+   head-badge on a flat bar (span.left below); kill the leaked surface so no grey bar shows, and zero the
+   padding so span.right (the Basic/Advanced ToggleViewMode) sits FLUSH at the content edge (div.title is
+   flex + space-between). Selector 0,3,2 outranks the global 0,2,2 — other pages keep their grey bars. */
+html.cc-docker-on.cc-on-addct div.title {
+  background: transparent !important; box-shadow: none !important;
+  border: none !important; border-radius: 0 !important; padding: 0 !important;
+}
 /* the form page joins the house left edge: #displaybox aligns with the main menu bar
    (--cc-align-left, set by header.js) — the badge sat 10px vs the menu's 15px (user). */
 html.cc-docker-on.cc-on-addct:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 15px); }
