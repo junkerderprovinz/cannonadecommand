@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.4.3">
+  <!ENTITY version   "3.5.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,30 @@
 </ICON>
 
 <CHANGES>
+### 3.5.0
+- New: per-container start order. Give any container a start number in its CannonadeCommand row; within a
+  start stage the plan runs lower numbers first and unnumbered containers last, and dependencies still take
+  precedence over the number.
+- A system-wide loader replaces the stock spinner everywhere CannonadeCommand themes a page (the tab-load
+  overlay, the Community Applications "Updating Content" dialog and the plugin install/update dialog). It is a
+  flat double ring that counter-rotates, its end caps follow the badge shape, and it steps through the rainbow
+  palette in a colour mode.
+- One backdrop behind every popup: a single, consistent dim plus blur now sits behind swal dialogs, the
+  jQuery-UI menus, the notification centre and the CannonadeCommand popups.
+- New: a Flat/Glass badge toggle. Glass adds a soft top sheen to every pill; flat keeps them matte.
+- The Community Applications (Apps) tab now follows the CannonadeCommand look: the search field matches the
+  settings search, the category sidebar reads as chips, and the app cards drop their border for a shaded,
+  softly shadowed card.
+- The list title bars (table headers) across the pages use the calm CannonadeCommand shade instead of the
+  loud native bar.
+- The Docker footer quick-scroll arrows no longer shorten the toolbar; they are raised, take the badge shape
+  and follow the colour modes.
+- Settings: the tile-size control now sits above the preview, the preview moved to the bottom, and resizing
+  updates the preview live.
+- The status island shows the grab cursor only in edit mode.
+- The "Updating Content" and plugin install/update dialogs now carry the CannonadeCommand loader; the swap is
+  freeze-proof (it never observes the Apps grid, which previously froze the tab).
+
 ### 3.4.3
 - Fix: the main-menu search text no longer slides underneath the magnifier icon. The 3.4.2 field-height
   change had replaced the input's left padding, which the native search box uses to keep the text clear of
@@ -2310,7 +2334,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>3277053246855e99a8f94b1093c240729fe809d746b48261c9442d66fa03079f</SHA256>
+  <SHA256>b01170586849291a7854c898d31b4de452dfe16d2a6f997d0f942f7196915f9c</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
