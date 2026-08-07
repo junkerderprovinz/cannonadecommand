@@ -2053,3 +2053,30 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();
+
+/* ═══ #4: SYSTEM-WIDE LOADER injection ═══════════════════════════════════════════════════════════════════
+   Inject the CC loader markup (.cc-loader, styled in Tokens.css) into Unraid's full-screen tab-load spinner
+   (div.spinner.fixed), replacing the stock red Unraid mark. Exposes window.ccMakeLoader so the app-tab
+   "UPDATING CONTENT" dialog (#2) and the plugin-install view (#3) can drop in the SAME loader. Appended as a
+   separate IIFE so it is fully isolated from the main header logic above. */
+(function () {
+  function ccMakeLoader() {
+    var w = document.createElement("span"); w.className = "cc-loader";
+    w.innerHTML = '<span class="o"><i></i></span><span class="in"><i></i></span>';
+    return w;
+  }
+  try { window.ccMakeLoader = ccMakeLoader; } catch (e) {}
+  function ccInjectSpinner() {
+    try {
+      if (!document.documentElement.classList.contains("cc-popups-on")) return;
+      var sp = document.querySelector("div.spinner.fixed");
+      if (sp && !sp.querySelector(".cc-loader")) sp.appendChild(ccMakeLoader());
+    } catch (e) {}
+  }
+  function ccLoaderBoot() {
+    ccInjectSpinner();
+    // div.spinner.fixed is created by Unraid's template; if it isn't there yet, retry briefly (cheap, bounded).
+    var n = 0, t = setInterval(function () { ccInjectSpinner(); if (++n >= 12) clearInterval(t); }, 350);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ccLoaderBoot); else ccLoaderBoot();
+})();

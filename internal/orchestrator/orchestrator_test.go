@@ -113,6 +113,45 @@ func TestTopoStages(t *testing.T) {
 	}
 }
 
+// #11: within a stage, StartOrder orders the peers — lower positive first, 0 last (keeping plan order),
+// ties broken by plan order.
+func TestTopoStages_StartOrder(t *testing.T) {
+	p := model.Plan{Nodes: []model.Node{
+		{Name: "a", Policy: model.PolicyAbort},                   // unnumbered
+		{Name: "b", StartOrder: 20, Policy: model.PolicyAbort},   // numbered 20
+		{Name: "c", StartOrder: 10, Policy: model.PolicyAbort},   // numbered 10
+		{Name: "d", Policy: model.PolicyAbort},                   // unnumbered
+		{Name: "e", StartOrder: 10, Policy: model.PolicyAbort},   // same as c → plan order breaks the tie
+	}}
+	stages, err := TopoStages(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stages) != 1 {
+		t.Fatalf("no deps → 1 stage, got %d: %v", len(stages), stages)
+	}
+	want := []string{"c", "e", "b", "a", "d"} // 10,10,20 then the two unnumbered in plan order
+	if !reflect.DeepEqual(stages[0], want) {
+		t.Errorf("StartOrder within stage = %v, want %v", stages[0], want)
+	}
+}
+
+// #11: StartOrder must NEVER override a dependency — a low-numbered node that depends on an unnumbered one
+// still starts in a later stage than its dependency.
+func TestTopoStages_StartOrderRespectsDeps(t *testing.T) {
+	p := model.Plan{Nodes: []model.Node{
+		{Name: "app", StartOrder: 1, After: []string{"db"}, Policy: model.PolicyAbort},
+		{Name: "db", Policy: model.PolicyAbort}, // unnumbered dependency
+	}}
+	stages, err := TopoStages(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stages) != 2 || len(stages[0]) != 1 || stages[0][0] != "db" || stages[1][0] != "app" {
+		t.Errorf("deps must bound StartOrder: stages = %v, want [[db] [app]]", stages)
+	}
+}
+
 func TestRun_HealthGatedOrder(t *testing.T) {
 	// gluetun -> qbittorrent, postgres -> nextcloud
 	plan := model.Plan{Nodes: []model.Node{

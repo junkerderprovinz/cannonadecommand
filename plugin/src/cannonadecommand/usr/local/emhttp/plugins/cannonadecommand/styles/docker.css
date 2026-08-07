@@ -115,6 +115,21 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbo
 /* ACTIONS column: icon buttons, name as tooltip; "…" opens the native menu */
 .cc-actcell { white-space: nowrap; }
 .cc-act-th { font-size: 11px; }
+/* #10 (user: "listentitelleisten in den cc style"): the native tablesorter column headers were a flat grey
+   strip with a hard 1px separator line + an orange sort caret. CC treatment: a clean surface-shade strip,
+   dim chip text, uppercase/tracked type, NO border line (differentiate by SHADE), and the orange sort caret
+   recoloured to the CC accent (rainbow-aware). Scoped to the enhanced docker table. */
+html.cc-docker-on table.cc-enh thead th {
+  background: var(--cc-surface-3, #2e2e2e) !important;
+  color: var(--cc-text-chip, #cfcfcf) !important;
+  border: none !important; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600;
+}
+html.cc-docker-on table.cc-enh thead tr { border: none !important; box-shadow: none !important; }
+/* tablesorter sort indicator (the orange caret on the sorted column) → CC accent */
+html.cc-docker-on table.cc-enh thead th.tablesorter-headerAsc,
+html.cc-docker-on table.cc-enh thead th.tablesorter-headerDesc { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+html.cc-docker-on table.cc-enh thead th.tablesorter-headerAsc::after,
+html.cc-docker-on table.cc-enh thead th.tablesorter-headerDesc::after { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; border-bottom-color: var(--cc-rbaccent, var(--cc-accent)) !important; border-top-color: var(--cc-rbaccent, var(--cc-accent)) !important; }
 /* #4 (user): 3 icons per row, and the "…" expander sits as the 4TH icon of row 2. So the two semantic
    rows (r1, r2) are real flex rows (r1=3 icons, r2=3 icons + the toggle), and the harvested extras wrap
    3-per-row on expand. */

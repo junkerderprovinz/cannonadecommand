@@ -79,6 +79,13 @@ type Node struct {
 	DelaySeconds int      `json:"delay_seconds,omitempty"` // wait this long before starting it (the start delay)
 	Probe        Probe    `json:"probe"`                   // how to decide it's ready
 	Policy       Policy   `json:"policy"`                  // what to do if it never becomes ready
+	// StartOrder is the user's coarse ordering priority: among containers that are
+	// startable at the same moment (dependencies satisfied), a LOWER positive number
+	// starts first; 0 means "unnumbered" and starts last, keeping the plan (list)
+	// order. It is a PRIORITY, not a strict permutation — duplicates are fine and
+	// break by list order. Dependencies/health-gates still bound it (a node is only
+	// ordered against others once its deps are ready), so it never races a dependency.
+	StartOrder int `json:"start_order,omitempty"`
 }
 
 // Plan is the user's saved orchestration: which containers the engine manages

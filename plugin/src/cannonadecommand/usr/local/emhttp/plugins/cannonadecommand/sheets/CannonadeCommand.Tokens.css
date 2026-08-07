@@ -34,6 +34,11 @@ html {
   --cc-shade-line:  rgba(128,128,128,.14);   /* faux separator = a SHADE, not a border */
   --cc-line-solid:  #2a2a2a;                   /* solid separator/input line (legacy --cc-line) */
 
+  /* ── #6 BACKDROP ENGINE — ONE dim + blur behind EVERY popup (swal, jQuery-UI dialog, bell/burger
+     menu, nchan centre, CC popups). Before this each popup dimmed differently or not at all. ── */
+  --cc-backdrop-dim:  rgba(0, 0, 0, .55);
+  --cc-backdrop-blur: blur(5px);
+
   /* ── TEXT ── */
   --cc-text:       #e6e6e6;
   --cc-text-dim:   #8a8a8a;   /* (== legacy --cc-dim) */
@@ -168,32 +173,103 @@ html.cc-popups-on nav.tabs .tabs-container > button[role="tab"][aria-selected="t
   border-color: transparent !important;
 }
 
-/* ═══ #10: unify the LOAD SPINNER everywhere ═══════════════════════════════════════════════════════════
-   Unraid's native tab-load spinner is `div.spinner.fixed > i.fa.fa-spin.fa-circle-o-notch` — a garish green
-   ring. Recolour its glyph to the CC accent (rainbow-aware) so every "loading" indicator matches the docker-
-   update badge; in RAINBOW it cycles hue once per 2s revolution (step-end), exactly like .cc-nchan-loader. */
-@keyframes cc-spin-rot { to { transform: rotate(360deg); } }
-@keyframes cc-spin-huefg { 0%{color:#c95e5e} 12.5%{color:#c98d5e} 25%{color:#c9af5e} 37.5%{color:#5ec986} 50%{color:#5ec9c2} 62.5%{color:#5e89c9} 75%{color:#865ec9} 87.5%{color:#c95e94} }
-/* The real full-screen tab-load overlay is `div.spinner.fixed` holding the stock RED Unraid logo mark
-   (svg.unraid_mark). Hide that and center the CC loader in its place: an accent circle badge (rainbow-aware,
-   hue-cycling in rainbow) with a white ring spinner on top — the same look as the docker-update window. */
-html.cc-popups-on div.spinner.fixed { background: rgba(0, 0, 0, .22) !important; }
-html.cc-popups-on div.spinner.fixed svg.unraid_mark, html.cc-popups-on div.spinner.fixed > svg { display: none !important; }
-html.cc-popups-on div.spinner.fixed::before {   /* accent circle badge */
-  content: ""; position: fixed; top: calc(50% - 30px); left: calc(50% - 30px); width: 60px; height: 60px;
-  border-radius: 50%; background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+/* ═══ #4: SYSTEM-WIDE LOADER ═══════════════════════════════════════════════════════════════════════════
+   The chosen CC spinner: two flat, SOLID (no gradient) counter-rotating arcs with form-following end caps.
+   Same period → they meet regularly (top/bottom); in RAINBOW the colour steps to the next jewel at each
+   meeting. header.js injects `.cc-loader` markup wherever Unraid shows a spinner (tab-load div.spinner.fixed,
+   plugin install, app-tab dialog). Size via --cc-load-sz; colour = accent, or the jewel step in rainbow. */
+@keyframes cc-spin-rot  { to { transform: rotate(360deg); } }   /* kept: legacy small ring spinners */
+@keyframes cc-load-cw   { to { transform: rotate(1turn); } }
+@keyframes cc-load-ccw  { to { transform: rotate(-1turn); } }
+@keyframes cc-load-rb {
+  0%,12.4%{--cc-lc:#c95e5e} 12.5%,24.9%{--cc-lc:#c98d5e} 25%,37.4%{--cc-lc:#c9af5e} 37.5%,49.9%{--cc-lc:#5ec986}
+  50%,62.4%{--cc-lc:#5ec9c2} 62.5%,74.9%{--cc-lc:#5e89c9} 75%,87.4%{--cc-lc:#865ec9} 87.5%,100%{--cc-lc:#c95e94}
 }
-html.cc-popups-on div.spinner.fixed::after {    /* white ring spinner on top */
-  content: ""; position: fixed; top: calc(50% - 14px); left: calc(50% - 14px); width: 28px; height: 28px;
-  border: 3px solid rgba(255, 255, 255, .28); border-top-color: #fff; border-radius: 50%;
-  animation: cc-spin-rot .8s linear infinite;
+.cc-loader {
+  --sz: var(--cc-load-sz, 40px); --acc: var(--cc-rbaccent, var(--cc-accent, #2f6feb));
+  --th: calc(var(--sz) / 10); --arc: 155deg;
+  position: relative; width: var(--sz); height: var(--sz); display: inline-block; flex: none; vertical-align: -.15em;
 }
-html.cc-rb-on.cc-popups-on div.spinner.fixed::before { animation: cc-spin-huebg 16s step-end infinite; }   /* rainbow: badge cycles hue per turn */
-/* also recolour any inline fa-spin loader (container-logo busy state) to the accent, rainbow hue-cycling */
-html.cc-popups-on i.fa-spin.fa-circle-o-notch, html.cc-popups-on .cc-ct-busy i.fa-spin { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
-html.cc-rb-on.cc-popups-on i.fa-spin.fa-circle-o-notch { animation: cc-spin-rot 2s linear infinite, cc-spin-huefg 16s step-end infinite !important; }
+.cc-loader > span { position: absolute; border-radius: 50%; }
+.cc-loader > span.o  { inset: 0; animation: cc-load-cw 1.5s linear infinite; }
+.cc-loader > span.in { inset: calc(var(--th) * 2.6); animation: cc-load-ccw 1.5s linear infinite; }
+.cc-loader > span::before {   /* solid arc (hard conic stop = no gradient), masked to a ring */
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--cc-lc, var(--acc)) 0deg var(--arc), transparent var(--arc) 360deg);
+  -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - var(--th)), #000 0);
+          mask: radial-gradient(farthest-side, #0000 calc(100% - var(--th)), #000 0);
+}
+.cc-loader > span::after {    /* head cap — follows the badge shape (--cc-b-radius) */
+  content: ""; position: absolute; top: 0; left: 50%; width: var(--th); height: var(--th);
+  margin-left: calc(var(--th) / -2); border-radius: var(--cc-b-radius, 50%); background: var(--cc-lc, var(--acc));
+}
+.cc-loader > span > i { position: absolute; inset: 0; transform: rotate(var(--arc)); }
+.cc-loader > span > i::before {   /* tail cap — also follows the badge shape */
+  content: ""; position: absolute; top: 0; left: 50%; width: var(--th); height: var(--th);
+  margin-left: calc(var(--th) / -2); border-radius: var(--cc-b-radius, 50%); background: var(--cc-lc, var(--acc));
+}
+html.cc-shape-circle .cc-loader > span::after, html.cc-shape-circle .cc-loader > span > i::before { border-radius: 50%; }
+html.cc-rb-on .cc-loader { animation: cc-load-rb 6s linear infinite; }   /* rainbow: step colour at each meeting */
+@media (prefers-reduced-motion: reduce) {
+  .cc-loader > span { animation: none; }
+  .cc-loader > span.in { transform: rotate(-.4turn); }
+  html.cc-rb-on .cc-loader { animation: none; --cc-lc: #5ec9c2; }
+}
 
-/* #17: recolour Unraid's native "move to start/end" quick-scroll arrows (a.move_to_end / a.move_to_top …,
-   fixed bottom-right, stock red #e22828) into the CC accent (rainbow-aware) so they match the theme instead
-   of clashing red next to the "Einfache Ansicht" toggle. */
-html.cc-popups-on a[class*="move_to"], html.cc-popups-on a[class*="move_to"] > i { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+/* Tab-load overlay: hide the stock red Unraid mark + any fa-spin, dim the backdrop; header.js injects .cc-loader. */
+html.cc-popups-on div.spinner.fixed { background: rgba(0, 0, 0, .28) !important; }
+html.cc-popups-on div.spinner.fixed svg.unraid_mark,
+html.cc-popups-on div.spinner.fixed > svg,
+html.cc-popups-on div.spinner.fixed > i.fa-spin { display: none !important; }
+html.cc-popups-on div.spinner.fixed .cc-loader { --cc-load-sz: 58px; position: fixed; top: calc(50% - 29px); left: calc(50% - 29px); }
+/* inline busy loaders (container-logo) recolour to accent as a lightweight fallback where markup isn't injected */
+html.cc-popups-on i.fa-spin.fa-circle-o-notch, html.cc-popups-on .cc-ct-busy i.fa-spin { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+
+
+/* #6: the ONE backdrop — dim + blur behind every popup overlay, from the central tokens. Covers swal
+   (.sweet-overlay), jQuery-UI dialogs (.ui-widget-overlay) and the bell/burger menu dim (#cc-pop-dim,
+   positioned in Header.css but re-based on the tokens here). !important beats each plugin's native dim;
+   opacity is pinned so swal's opacity fade doesn't wash the dim out to an inconsistent level. */
+html.cc-popups-on .sweet-overlay,
+html.cc-popups-on .swal-overlay,
+html.cc-popups-on .ui-widget-overlay,
+html.cc-popups-on #cc-pop-dim {
+  background: var(--cc-backdrop-dim) !important;
+  -webkit-backdrop-filter: var(--cc-backdrop-blur) !important;
+          backdrop-filter: var(--cc-backdrop-blur) !important;
+  opacity: 1 !important;
+}
+
+/* #9 BADGE STYLE ENGINE — flat (default) vs glass, one global toggle (html.cc-badge-glass, set from the
+   "Badge-Stil" setting). Glass layers a glossy sheen on top of EACH badge's own colour so it works on any
+   accent/rainbow/flag: a top-light gradient overlay + an inner top-edge highlight + a soft drop + a light
+   backdrop blur. Flat leaves badges solid. Applies to every badge base (.cc-b) system-wide. */
+html.cc-badge-glass .cc-b {
+  position: relative;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.12), 0 2px 5px rgba(0,0,0,.22) !important;
+}
+/* the gloss overlay rides ABOVE the badge's own colour (a background-image loses to the per-area
+   `background:` rules; a pseudo-overlay wins regardless of what paints the badge). */
+html.cc-badge-glass .cc-b::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 1;
+  background: linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.04) 55%, rgba(0,0,0,.07));
+}
+html.cc-badge-glass .cc-b > * { position: relative; z-index: 2; }   /* keep badge text above the gloss */
+
+/* #1/#17: the native "move to start/end" quick-scroll arrows (a.move_to_end / a.move_to_top …, fixed
+   bottom-right, stock red #e22828). (a) COLOUR → CC accent (rainbow-aware). (b) RAISE them above the docked
+   action bar + footer with a transform (keeps their relative up/down stack) so they clear the "Einfache
+   Ansicht" toggle WITHOUT narrowing the bar. (c) give them a badge-shaped chip that follows --cc-b-radius. */
+html.cc-popups-on a[class*="move_to"],
+html.cc-popups-on a.back_to_top,
+html.cc-popups-on a[class*="back_to"] {
+  color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
+  transform: translateY(calc(-1 * (var(--cc-footer-h, 0px) + var(--cc-actbar-h, 44px) + 14px))) !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important;
+  border-radius: var(--cc-b-radius, 999px) !important;
+  padding: 6px !important;
+}
+html.cc-popups-on a[class*="move_to"] > i,
+html.cc-popups-on a[class*="back_to"] > i { color: inherit !important; }
+html.cc-popups-on a[class*="move_to"]:hover,
+html.cc-popups-on a[class*="back_to"]:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; }

@@ -7,6 +7,7 @@ package orchestrator
 import (
 	"context"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -64,16 +65,31 @@ func TopoStages(plan model.Plan) ([][]string, error) {
 		}
 	}
 
+	// #11: StartOrder priority. Among nodes startable in the SAME stage (all deps satisfied), a lower
+	// positive StartOrder starts first; 0 = unnumbered = last, keeping plan order. Dependencies still decide
+	// the STAGE, so a numbered node never jumps ahead of a dependency — StartOrder only reorders peers.
+	const unordered = 1 << 30
+	orderOf := make(map[string]int, len(plan.Nodes))
+	for _, n := range plan.Nodes {
+		if n.StartOrder > 0 {
+			orderOf[n.Name] = n.StartOrder
+		} else {
+			orderOf[n.Name] = unordered
+		}
+	}
+
 	done := make(map[string]bool, len(plan.Nodes))
 	remaining := len(plan.Nodes)
 	var stages [][]string
 	for remaining > 0 {
 		var stage []string
-		for _, n := range plan.Nodes { // plan order → stable within a stage
+		for _, n := range plan.Nodes { // plan order → stable base order within a stage
 			if !done[n.Name] && indeg[n.Name] == 0 {
 				stage = append(stage, n.Name)
 			}
 		}
+		// #11: reorder the stage by StartOrder priority; stable so plan order breaks ties and orders the unnumbered
+		sort.SliceStable(stage, func(i, j int) bool { return orderOf[stage[i]] < orderOf[stage[j]] })
 		if len(stage) == 0 {
 			return nil, fmt.Errorf("dependency cycle detected among %d remaining node(s)", remaining)
 		}

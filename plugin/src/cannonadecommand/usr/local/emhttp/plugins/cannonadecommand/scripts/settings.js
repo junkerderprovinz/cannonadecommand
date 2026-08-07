@@ -823,6 +823,10 @@
     // #11 (user): Badge-Form sits here — below the flag colours, above the state-colour toggle. segRow
     // already puts the label + options on ONE row; options are ordered by ASCENDING roundness.
     c1.appendChild(segRow(T("Badge-Form", "Badge shape"), [["square", T("eckig", "square")], ["rounded", T("abgerundet", "rounded")], ["pill", "Pills"], ["circle", T("Kreise", "Circles")]], get("cc.badgeshape", "pill"), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); }));
+    // #9 (user: "eine Auswahl für flat und glass … damit man es ein und abschalten kann"): ONE global badge
+    // STYLE. Glass adds a glossy sheen (top highlight + inner edge + backdrop blur) to EVERY badge at once
+    // (html.cc-badge-glass); flat is the solid look. Sits right under Badge-Form (both are badge-look axes).
+    c1.appendChild(segRow(T("Badge-Stil", "Badge style"), [["flat", "Flat"], ["glass", "Glass"]], get("cc.badgeglass", "0") === "1" ? "glass" : "flat", function (v) { set("cc.badgeglass", v === "glass" ? "1" : "0"); root.classList.toggle("cc-badge-glass", v === "glass"); syncHeaderBar(); syncSharesBar(); }));
     // (#12: the curated palette-presets block was removed per user request)
     // #16 (user): let STATE indicators keep their NATIVE state colour (green/amber/red) instead of
     // folding into the accent/rainbow/flag palette. Default OFF = integrated (current look). ON stamps
@@ -927,16 +931,21 @@
     // cc.sgsize is GLOBAL (one key): the SAME row closes the Docker "Logos" card and the
     // Einstellungen/Werkzeuge "Stil" card — normalised slot: always the LAST row of its card.
     function tileSizeRow() {
-      var r = segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small")], ["m", T("Mittel", "Medium")], ["l", T("Groß", "Large")]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); });
+      var r = segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small")], ["m", T("Mittel", "Medium")], ["l", T("Groß", "Large")]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); try { sizePrev(); } catch (e) {} });   /* #5: resize the preview LIVE */
       r.insertBefore(infoIcon(T("Gilt global – dieselbe Größe steuert das Einstellungen-/Werkzeuge-Raster und die Docker-/Plugin-Logos.", "Global – the same size drives the Settings/Tools grid and the Docker/Plugin logos.")), r.lastChild);
       return r;
     }
-    c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
+    c2.appendChild(tileSizeRow());   // #5 (user: "die kachelgröße muss über die vorschau"): tile size ABOVE
+    c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));   // ...and the preview stays the LAST block
     var tprevWrap = el("div", "cc-set-prev");
     var tprevImgs = [];
+    // #5 (user: "die vorschau soll auch die kachelgröße live anzeigen"): the preview logos take the size the
+    // tile-size control selects, so Klein/Mittel/Groß is reflected in the preview immediately.
+    function curTileSz() { return ({ s: "48px", m: "62px", l: "76px" })[get("cc.sgsize", "m")] || "62px"; }
+    function sizePrev() { var w = curTileSz(); tprevImgs.forEach(function (im9) { im9.style.width = w; im9.style.height = w; }); }
     function addPrevImg(src9) {
       var im9 = el("img"); im9.src = src9; im9.alt = "";
-      im9.style.width = "48px"; im9.style.height = "48px"; im9.style.objectFit = "contain";
+      im9.style.width = im9.style.height = curTileSz(); im9.style.objectFit = "contain";
       im9.onerror = function () { this.style.display = "none"; };
       tprevImgs.push(im9); tprevWrap.appendChild(im9);
     }
@@ -979,8 +988,7 @@
       host9.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-set-tint" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + row9(r9, 0) + " " + row9(g9, 1) + " " + row9(b9, 2) + ' 0 0 0 1 0"/></filter></svg>';
       tprevImgs.forEach(function (im9) { im9.style.filter = "url(#cc-set-tint)"; im9.style.background = ""; im9.style.padding = ""; im9.style.borderRadius = ""; });
     }
-    c2.appendChild(tprevWrap); tintPrev(); applyBgMode(iconbg);
-    c2.appendChild(tileSizeRow()); // tile size is ALWAYS the card's last row (same slot as the Settings/Tools card)
+    c2.appendChild(tprevWrap); tintPrev(); applyBgMode(iconbg); sizePrev();   // #5: preview is the card's LAST block now, sized to the tile-size control
     wrap.appendChild(c2);
 
     // (The CPU/RAM diagnostics card is built right before the Bandwidth card below,

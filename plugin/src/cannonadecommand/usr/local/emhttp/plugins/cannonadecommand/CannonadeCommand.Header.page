@@ -29,6 +29,7 @@ Link="cc-hdr-hook"
     var on = g("cc.enable.header", "0") !== "0" && theming;
     r.classList.toggle("cc-header-on", on);
     r.classList.toggle("cc-shape-circle", g("cc.badgeshape", "pill") === "circle");
+    r.classList.toggle("cc-badge-glass", g("cc.badgeglass", "0") === "1" && theming);
     r.classList.toggle("cc-popups-on", theming);
     r.classList.toggle("cc-footer-off", g("cc.footer", "1") === "1" && theming);
     r.classList.toggle("cc-hide-favtab", g("cc.hidefavtab", "0") === "1" && theming);

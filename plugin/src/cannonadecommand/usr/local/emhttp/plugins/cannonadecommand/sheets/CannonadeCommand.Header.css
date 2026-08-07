@@ -200,7 +200,10 @@ html.cc-header-on #cc-island .cc-isl-row:empty { display: flex; }   /* keep the 
 /* #(user: "nur die drei Zeilen fest, Chips frei verteilbar"): in ARRANGE mode the empty rows must become
    real drop targets (a Y-band + a landing area), else you could never move a chip INTO an emptied row. */
 html.cc-header-on.cc-arrange #cc-island .cc-isl-row:empty { display: flex !important; min-height: 24px; min-width: 52px; }
-html.cc-header-on #cc-island .cc-isl-chip { cursor: grab; }
+/* #7 (user): the grab "hand" cursor should show ONLY in edit/arrange mode, not on every hover. Outside
+   arrange the island is a passive status display, so the chip keeps the default cursor. */
+html.cc-header-on #cc-island .cc-isl-chip { cursor: default; }
+html.cc-header-on.cc-arrange #cc-island .cc-isl-chip { cursor: grab; }
 /* while dragging: reveal the 3 drop zones + fade the dragged chip */
 html.cc-header-on.cc-arrange #cc-island { gap: 8px; }
 /* #11 (user): while arranging, chips must STAY IN PLACE (only wiggle) -> NO reflow of any kind. Rows keep their
@@ -357,7 +360,7 @@ html.cc-popups-on .bg-popover {
   box-shadow: 0 18px 50px rgba(0, 0, 0, .6) !important;
 }
 /* dim + blur backdrop behind the bell/burger menu (header.js ccPopoverDim injects #cc-pop-dim) */
-#cc-pop-dim { position: fixed; inset: 0; background: rgba(0, 0, 0, .5); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+#cc-pop-dim { position: fixed; inset: 0; background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)); backdrop-filter: var(--cc-backdrop-blur, blur(5px)); -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)); }
 /* highlighted/active menu items -> CC accent SOLID (kills the native orange gradient). The gradient
    can sit on the item OR a child, and reka-ui marks the active item several ways, so cover them all
    (N6: the old rule missed data-state / the child gradient node). */
@@ -735,11 +738,12 @@ html.cc-popups-on .ui-dialog .ui-dialog-content button:not([class*="switch"]) {
   letter-spacing: .6px !important; cursor: pointer; transition: filter .12s;
 }
 html.cc-popups-on .ui-dialog .ui-dialog-buttonpane button:hover { filter: brightness(1.14); }
-/* the page behind a popup dims AND blurs so the window clearly lifts off (user) */
+/* #6: the page behind a popup dims AND blurs so the window clearly lifts off — now from the ONE
+   backdrop token (was blur(3px)/.6 here, blur(4px)/.5 on the bell menu = the inconsistency the user saw). */
 html.cc-popups-on .ui-widget-overlay,
 html.cc-popups-on .sweet-overlay {
-  background: rgba(0, 0, 0, .6) !important; opacity: 1 !important;
-  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)) !important; opacity: 1 !important;
+  backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important; -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important;
 }
 /* #7 (user): the window scrollbar sat flush against the rounded edge -> inset it. A transparent padding-box
    border gaps the thumb ~3px off the border and a slimmer thumb floats it left; Firefox uses thin + colour. */
@@ -818,7 +822,7 @@ html.cc-popups-on .sweet-alert.hideSweetAlert {
    "remove saved configuration" confirm — CC's .sweet-alert rules above never reached it, so it stayed
    native WHITE with orange-outlined buttons (user). Same dark carbon surface + CC pill buttons; the
    .swal-modal prefix beats the plugin's own themed button rules. Live-verified on the UD remove dialog. */
-html.cc-popups-on .swal-overlay { background: rgba(0, 0, 0, .6) !important; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+html.cc-popups-on .swal-overlay { background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)) !important; backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important; -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important; }
 html.cc-popups-on .swal-modal { background: #1a1a1a !important; border: none !important; border-radius: 14px !important; box-shadow: 0 10px 28px rgba(0, 0, 0, .38) !important; padding: 18px !important; }   /* #(user 2026-07-29): frame + soft shadow identical to the update window */
 html.cc-popups-on .swal-modal .swal-icon { display: none !important; }   /* the template has no native icon ring; the accent title bar carries the identity */
 /* FULL-WIDTH accent title bar, 40px — identical to the update window */
@@ -1368,7 +1372,12 @@ html.cc-header-on .cc-isl-fill { transition: width .5s ease, background-color .4
 html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item:hover { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
 /* the -7px hop peaks ABOVE the header band; without this the bar (and its tiles) clip the tab at the top.
    Let the whole nav chain overflow visibly only while WILD is armed, so the bounce is fully seen. */
-html.cc-anim-wild #menu,
+/* #menu: keep VERTICAL overflow visible so the -7px hop shows above the header band, but CLIP the HORIZONTAL
+   axis — otherwise nav tiles wider than the viewport (many tabs) escape and stretch the PAGE, giving a
+   horizontal scrollbar + dead space on the right (live-measured: scrollWidth 1689 vs 1100). `clip` (unlike
+   `hidden`) does NOT coerce the other axis to `auto`, so overflow-y stays truly visible. The tiles/items
+   themselves keep full `visible` for their own bounce. */
+html.cc-anim-wild #menu { overflow-x: clip !important; overflow-y: visible !important; }
 html.cc-anim-wild #menu .nav-tile,
 html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item { overflow: visible !important; }
 /* ROOT CAUSE of the clip (live-measured): nothing overflows — the sticky #header (z-index 102, solid dark
