@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.5.0">
+  <!ENTITY version   "3.5.1">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,27 @@
 </ICON>
 
 <CHANGES>
+### 3.5.1
+- Footer quick-scroll arrows follow the badge shape instead of a fixed circle (the round shape was the
+  fa-arrow-circle glyph, not the chip), and they no longer overlap each other.
+- The Community Applications (Apps) tab goes deeper into the CannonadeCommand look: section headers become
+  section badges, the search field folds into one pill, and the app cards plus their Info/Support/Install
+  buttons are fully restyled.
+- The "Updating Content" dialog shows only the centered loader now, with no title bar, text or buttons.
+- The plugin update, container update and install windows carry the double-ring loader (the plugin update
+  window previously showed no spinner at all).
+- One consistent dim plus blur behind every popup: the container-create and command-palette backdrops were
+  slightly sharper than the rest and now match.
+- The Flat/Glass badge style covers every badge, chip, tab, button, gear, toggle and logo tile, not just the
+  data pills.
+- Tile size is one global control (in the General section) instead of a copy per tab.
+- The share settings page no longer overflows sideways: the read/copy-settings panel stays inside the window
+  with both buttons visible.
+- Every popup is centered reliably, so a dialog whose content loads late (the OS update check) is no longer
+  clipped off the top of the screen.
+- The ShipLog changelog window corner radius is capped so it no longer renders as a lozenge at the pill shape
+  (fixed in ShipLog).
+
 ### 3.5.0
 - New: per-container start order. Give any container a start number in its CannonadeCommand row; within a
   start stage the plan runs lower numbers first and unnumbered containers last, and dependencies still take
@@ -2334,7 +2355,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>b01170586849291a7854c898d31b4de452dfe16d2a6f997d0f942f7196915f9c</SHA256>
+  <SHA256>e673b385c5b60861bb6c7b9341ed351117085f74d25905309769ac6bd35ffd53</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
