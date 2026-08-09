@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.6.0">
+  <!ENTITY version   "3.6.1">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,23 @@
 </ICON>
 
 <CHANGES>
+### 3.6.1
+**🎨 Design**
+- The Apps search now sits in the left sidebar as a badge directly under Home, instead of the top right corner.
+- Page, section and sub-navigation badges are a clearly smaller step below the main menu tabs.
+- App-tab scrollbars are thicker and easier to grab.
+
+**⚡ Improved**
+- On a wide window the status island, the header icons, the footer arrows and the view toggle stay lined up with
+  the content edge instead of drifting off to the far right as the window grows.
+- Badges respond to hover with a colour change in both colour modes, never a plain underline.
+
+**🐛 Fixed**
+- Scrollbars show the CannonadeCommand styled bar again on Chromium and Brave, without the stray end arrows.
+  A recent browser change had been quietly disabling the custom scrollbar styling.
+- Container-update window: the streamed style block no longer appears as raw text under the title, and the
+  buttons and spinner stay pinned to the bottom of the window instead of being overlaid by the log.
+
 ### 3.6.0
 **✨ Added**
 - Network status island: a live download and upload throughput chip in the header. Click it to switch between
@@ -2444,7 +2461,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>439593bab366dd7fdbe0e816e45e55406bdd36dcf7a1aef9fa39c270b7d3e3e0</SHA256>
+  <SHA256>e09c230fc6dcd9e1c045d50552b263541bb79ab9a3ab295a02e2207a7e76dab1</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
