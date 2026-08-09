@@ -237,8 +237,11 @@ html.cc-popups-on div.spinner.fixed {
 html.cc-popups-on div.spinner svg.unraid_mark,
 html.cc-popups-on div.spinner > svg,
 html.cc-popups-on div.spinner > i.fa-spin { display: none !important; }
-/* #13 while the full-screen overlay is up, suppress CA's redundant in-page spinner so only ONE loader shows */
-html.cc-popups-on:has(div.spinner.fixed) div.spinner:not(.fixed) { display: none !important; }
+/* #6 (user, v3.6.2 — "erst überlagert der große den kleinen"): suppress the redundant in-page spinner ONLY while
+   the overlay is TRULY on screen. The old :has(div.spinner.fixed) matched even when the .fixed overlay sits idle at
+   display:none (it always exists in the DOM), so it also hid the in-page loader in phase 2. header.js now marks the
+   redundant one .cc-spin-dupe keyed on the overlay's REAL display, so exactly one loader shows in each phase. */
+html.cc-popups-on div.spinner.cc-spin-dupe { display: none !important; }
 /* #13 MUCH bigger CC ring in any spinner; centre the full-screen one on its new size */
 html.cc-popups-on div.spinner .cc-loader { --cc-load-sz: 110px; }
 html.cc-popups-on div.spinner.fixed .cc-loader { position: fixed; top: calc(50% - 55px); left: calc(50% - 55px); }
@@ -523,13 +526,39 @@ html.cc-popups-on .searchSubmit {
 html.cc-popups-on #searchFilter.cc-open .searchSubmit { color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .searchSubmit:hover { filter: brightness(1.08) !important; }
 html.cc-popups-on #searchButton { color: inherit !important; }
-/* #4: search relocated into the left sidebar under Home (header.js wireCaSearch DOM-move). In the sidebar it is
-   NOT flex-pushed right; it sits as an accent badge under Home and its input expands to the sidebar width. */
+/* #4 (user, v3.6.2): the sidebar search is a FULL-WIDTH "Suche" field like every other category badge — always
+   a dark field with the input visible (placeholder "Suche") and the magnifier on the right, NOT a 36px icon that
+   has to be expanded. (header.js wireCaSearch keeps it permanently .cc-open in the sidebar.) */
 html.cc-popups-on li.cc-ca-search-li { list-style: none !important; margin: 8px 0 0 0 !important; padding: 0 !important; background: transparent !important; }
-html.cc-popups-on li.cc-ca-search-li #searchFilter { margin: 0 !important; order: 0 !important; align-self: stretch !important; }
-html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open { width: 100% !important; }
-html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open .awesomplete { width: 100% !important; max-width: 100% !important; }
-html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open #searchBox { width: 100% !important; }
+html.cc-popups-on li.cc-ca-search-li #searchFilter {
+  margin: 0 !important; order: 0 !important; align-self: stretch !important;
+  width: 100% !important; background: var(--cc-field-bg, #2e2e2e) !important; overflow: visible !important;
+}
+html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete { width: 100% !important; max-width: 100% !important; overflow: visible !important; }
+html.cc-popups-on li.cc-ca-search-li #searchBox { width: 100% !important; color: var(--cc-text, #e6e6e6) !important; }
+html.cc-popups-on li.cc-ca-search-li .searchSubmit { color: var(--cc-text, #e6e6e6) !important; }   /* dark field -> the icon reads */
+/* #4: while typing (html.cc-ca-searching, toggled by wireCaSearch), the suggestion popup grows well past the
+   narrow sidebar and the page dims + blurs behind it so the results stand out. The <ul> is anchored fixed to the
+   right of the field by JS (ccPositionCaResults) so the 140px sidebar can't clip it. */
+html.cc-popups-on.cc-ca-searching::before {
+  content: "" !important; position: fixed !important; inset: 0 !important;
+  background: rgba(0, 0, 0, .40) !important; backdrop-filter: blur(4px) !important; -webkit-backdrop-filter: blur(4px) !important;
+  z-index: 10040 !important; pointer-events: none !important;
+}
+html.cc-popups-on.cc-ca-searching li.cc-ca-search-li { position: relative !important; z-index: 10060 !important; }   /* keep the field itself above the dim */
+html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul {
+  width: min(460px, 60vw) !important; max-width: 60vw !important; min-width: 300px !important;
+  max-height: 62vh !important; overflow-y: auto !important; overflow-x: hidden !important;
+  background: #242424 !important; border: none !important; border-radius: 12px !important;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, .6) !important; z-index: 2147483000 !important; padding: 8px !important;
+}
+html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li {
+  padding: 8px 12px !important; border-radius: 8px !important; font-size: 13.5px !important; white-space: normal !important;
+}
+html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li:hover,
+html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li[aria-selected="true"] {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
 
 /* #12d CATEGORY SIDEBAR (#11) — clean CC treatment: chips, grouping, shade separators (never a line),
    correct ACTIVE class (.selectedMenu — CA's real class), colour-mode active fill. */

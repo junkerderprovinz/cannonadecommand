@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.6.1">
+  <!ENTITY version   "3.6.2">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,24 @@
 </ICON>
 
 <CHANGES>
+### 3.6.2
+**🎨 Design**
+- The Apps search is now a full width "Suche" field in the left sidebar; typing opens a larger results list and blurs the page behind it.
+- The start plan editor dropdowns now use the CannonadeCommand dropdown style, matching every other select.
+- The Plugins section badge is now the same size as the "Check for updates" button.
+- Unraid's own scrollbars are a little thicker and follow the badge shape; the browser's native page scrollbar is left untouched.
+
+**⚡ Improved**
+- On a wide window the advanced view toggle lines up exactly with the right content edge.
+- The tab loading spinner shows a single clean ring instead of a large one overlapping a small one.
+
+**🐛 Fixed**
+- Narrowing the window no longer pushes the container and plugin lists too far to the right.
+- The container update window no longer shows raw stylesheet text under the title, and its buttons stay pinned at the bottom.
+- The "Startnummer" info bubble now shows its explanation instead of being empty.
+- The container move arrows now disappear again when you leave edit mode.
+- Badges react to hover with a colour change, never an underline.
+
 ### 3.6.1
 **🎨 Design**
 - The Apps search now sits in the left sidebar as a badge directly under Home, instead of the top right corner.
@@ -2461,7 +2479,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>e09c230fc6dcd9e1c045d50552b263541bb79ab9a3ab295a02e2207a7e76dab1</SHA256>
+  <SHA256>49766c52df5627770b71dd090bd7fbed4c663020aaac9fc2e0ae7a0137baff92</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

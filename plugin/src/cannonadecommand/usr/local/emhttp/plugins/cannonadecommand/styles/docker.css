@@ -326,6 +326,16 @@ html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb
 /* badges are <a>/<span> chips — never show Unraid's global a:hover underline (the Startplan
    chip must react like the "läuft" badge: colour only, no line). */
 .cc-b, .cc-b:hover, .cc-b:focus, .cc-plan, .cc-plan:hover, .cc-plan:focus { text-decoration: none !important; }
+/* #10 (user, v3.6.2 — "badges bei mouseover nicht eingefärbt, es erscheint ein Unterstrich"): harden the
+   no-underline law for the cases the class-only rule above misses — a nested <a> INSIDE a pill (the <a>,
+   not the .cc-b span itself) and every CC chip/menu link — AND give an interactive badge a COLOUR reaction
+   (brightness, like the plan chip) instead of a line. Scoped to badge classes so intentional link
+   underlines (a container/VM name) stay untouched. */
+.cc-b a, .cc-b a:hover, .cc-b a:focus,
+.cc-rowbadges a, .cc-rowbadges a:hover,
+.sl-chip, .sl-chip:hover, .sl-chip:focus,
+.cc-menu-link a, .cc-menu-link a:hover { text-decoration: none !important; }
+a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:hover { filter: brightness(1.12); }
 .cc-plan-on { box-shadow: none; } /* Null-Rahmen-Gesetz: no inset ring — the chip already says "aktiv" */
 
 /* third-party markers as badges (user): the version column's "Drittanbieter" span (paw icon +
@@ -787,11 +797,11 @@ html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs button[role="tab"] {
 html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs { border: none; min-height: 0; }
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head {
   display: inline-flex; align-items: center; gap: 8px;
-  min-height: var(--cc-lgb-h, 36px); box-sizing: border-box;   /* #8: full section head like the VM tab — the plugins SECTION badge is NOT the shrunk page-badge tier; only .cc-plugauth (author) stays small */
-  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-head-fs, 15px); line-height: 1;
+  min-height: 30px; height: 30px; box-sizing: border-box;   /* #8 (user, v3.6.2): the plugins SECTION badge must match the "Nach Aktualisierungen suchen" button (h30/fs13), NOT the 36px full section head */
+  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-pagebadge-fs, 13px); line-height: 1;
   background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;   /* #19: rainbow-aware (jewel in rainbow, not the static accent) */
   border: none; border-radius: var(--cc-b-radius, 999px);
-  padding: var(--cc-head-pad, 9px 18px); margin: 0 0 16px;
+  padding: 0 16px; margin: 0 0 16px;
 }
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head i,
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
@@ -1072,7 +1082,10 @@ div.js-actions input[type=button] { flex: none !important; background: var(--cc-
    would scroll off-screen. position:sticky keeps it visible flush at the content right edge (edge-gutter)
    at every width, buttons scroll behind it. A matching background so the scrolled buttons don't bleed
    through — same footer-strip colour as the bar, so it reads as part of the bar, not a chip. */
-div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; position: sticky; right: var(--cc-edge-gutter, 8px); z-index: 2; padding-left: 10px; background: var(--footer-background-color, var(--mild-background-color, #1c1c1c)); }
+/* #5 (user: "toggle ist nicht richtig rechtsbündig"): sticky right is relative to the bar's CONTENT box, but
+   div.js-actions has padding-right:16px, so right:8px stranded the toggle ~24px INSIDE the row/content edge.
+   right:-16px pins its right edge to the bar's OUTER right = the row edge (flush with the header icons). */
+div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; position: sticky; right: -16px; z-index: 2; padding-left: 10px; padding-right: 8px; background: var(--footer-background-color, var(--mild-background-color, #1c1c1c)); }
 div.js-actions .cc-bar-adv-lbl { color: #cfcfcf; font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 div.js-actions input[type=button]:hover { filter: brightness(1.14); }
 
@@ -1259,6 +1272,42 @@ html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-selected {
 }
 html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-selected:hover { filter: brightness(1.12); }
 html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-disabled { opacity: .4; pointer-events: none; }
+
+/* #17 (user: die Dropdown-Listen im Startplan sind nicht im CC-Style): the plan-node editor (.cc-pop) now
+   wraps its probe/policy/restart/schedule <select>s with the SAME cc-dsel panel, but the styling above is
+   scoped to the Add-Container form / Settings only. Mirror the dark dsel look inside .cc-pop (rainbow-aware,
+   trigger fills the row like the sibling .cc-in inputs) so the editor dropdowns match every other CC select. */
+.cc-pop .cc-dsel { position: relative; display: inline-flex; flex: 1; min-width: 0; }
+.cc-pop .cc-dsel-trigger {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
+  width: 100%; min-height: 30px; box-sizing: border-box;
+  background: rgba(255, 255, 255, .07); border-radius: 6px; padding: 4px 10px; color: #eaeaea; cursor: pointer;
+}
+.cc-pop .cc-dsel-trigger:hover { filter: brightness(1.12); }
+.cc-pop .cc-dsel.cc-open .cc-dsel-trigger { background: rgba(255, 255, 255, .12); }
+.cc-pop .cc-dsel-trigger::after {
+  content: ""; flex: 0 0 auto; width: 0; height: 0; margin-left: 4px;
+  border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #cfcfcf;   /* caret */
+}
+.cc-pop .cc-dsel-panel {
+  display: none; position: absolute; z-index: 20; margin-top: 4px; flex-direction: column; gap: 6px;
+  padding: 8px; width: max-content; min-width: 160px; max-width: min(92vw, 420px);
+  max-height: 50vh; overflow-y: auto; overflow-x: hidden;
+  background: #303030; border: none; border-radius: 10px; box-shadow: 0 12px 30px rgba(0, 0, 0, .6);   /* NO border line */
+}
+.cc-pop .cc-dsel.cc-open .cc-dsel-panel { display: flex; }
+.cc-pop .cc-dsel.cc-dsel-disabled .cc-dsel-trigger { opacity: .5; cursor: not-allowed; }
+.cc-pop .cc-dsel-group { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9a9a9a; padding: 4px 12px 0; }
+.cc-pop .cc-dsel-opt {
+  display: flex; align-items: center; gap: 8px; justify-content: flex-start;
+  line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 999px);
+  background: rgba(255, 255, 255, .09); border: none; color: #ececec; white-space: nowrap;
+  transition: background .12s, color .12s, box-shadow .12s;
+}
+.cc-pop .cc-dsel-opt:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
+.cc-pop .cc-dsel-opt.is-selected { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); box-shadow: none !important; }
+.cc-pop .cc-dsel-opt.is-selected:hover { filter: brightness(1.12); }
+.cc-pop .cc-dsel-opt.is-disabled { opacity: .4; pointer-events: none; }
 
 /* ── PAGE TITLE as a CC head badge. Unraid 7.3 puts icon + text in div.title > span.left
    (live-diagnosed — NOT a bare text node, so the ctTitleWrap path never fires there; it stays

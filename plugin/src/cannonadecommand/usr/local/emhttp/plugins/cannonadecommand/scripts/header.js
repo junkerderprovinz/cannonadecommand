@@ -158,6 +158,17 @@
       for (var i = 0; i < sas.length; i++) {
         var sa = sas[i], h2 = sa.querySelector("h2"); if (!h2) continue;
         sa.classList.add("nchan");
+        // #15 (user, LIVE-verified: this window is .sweet-alert.nchan): the update stream carries a Fonts/log
+        // <style> block whose content ALSO lands in a bare <p>/text node and renders as raw CSS text under the
+        // title. The CSS hides the <style> element; here we blank the text-rendered variant (leaf elements + text
+        // nodes carrying a CSS signature). Idempotent (once blanked it no longer matches).
+        try {
+          var CSS_SIG = /font-family\s*:|@font-face|\.logLine\s*\{/i;
+          var leafs = sa.querySelectorAll("p, div, font, pre, span");
+          for (var cq = 0; cq < leafs.length; cq++) { var le = leafs[cq]; if (!le.children.length && !(le.id && le.id.indexOf("cc-") === 0) && !le.className && CSS_SIG.test(le.textContent || "") && (le.textContent || "").indexOf("{") !== -1) le.style.display = "none"; }
+          var tw = document.createTreeWalker(sa, NodeFilter.SHOW_TEXT, null);
+          var tn; while ((tn = tw.nextNode())) { if (CSS_SIG.test(tn.nodeValue || "") && (tn.nodeValue || "").indexOf("{") !== -1) tn.nodeValue = ""; }
+        } catch (eCss) {}
         // #7-II (user NEW SPEC): the TITLE badge must carry NO status text and NO loader — just the clean name.
         // The status lives BOTTOM-LEFT beside the buttons: a 3-dot loader (no text) while running, which turns
         // into a circle-with-check (no text) when finished. Because the title cycles (step names AND
@@ -639,6 +650,21 @@
       }
       ccArrangeLock();
       try { ccDockProfile(); } catch (eD) {}                      // re-pin bell/burger over their proxies (arrange enter hides them, exit re-overlays at the new order)
+      // #19 (user: move arrows stay after closing arrange on the Docker tab): the docker "move" arrows are
+      // Unraid's own i.mover, driven ONLY by the native LockButton onclick — which the header's capture-phase
+      // stopPropagation eats on a real (trusted) click (see line ~606), so arrange exits but the arrows persist.
+      // Reconcile AFTER the native handler had its turn (setTimeout 0): on the Docker page, if the lockbutton
+      // cookie doesn't match our arrange state, flip Unraid's LockButton once so cookie+arrows+sortable follow.
+      if (document.getElementById("docker_list")) {
+        var wantArr = arr;
+        setTimeout(function () {
+          try {
+            if (typeof LockButton !== "function") return;
+            var cookieOn = /(^|;\s*)lockbutton=/.test(document.cookie);
+            if (cookieOn !== wantArr) LockButton();
+          } catch (e3) {}
+        }, 0);
+      }
     } catch (e) {}
   }
   // ── #S6 COMMAND PALETTE (Ctrl/⌘+K) ── a quick launcher over every page tab + a few CC actions. Fuzzy-
@@ -2151,24 +2177,42 @@
         if (home) { if (home.nextElementSibling !== li) caMenu.insertBefore(li, home.nextElementSibling); }
         else if (li.parentElement !== caMenu) caMenu.insertBefore(li, caMenu.firstChild);
       }
+      filter.classList.add("cc-open");   // #4 (user, v3.6.2): in the sidebar the search is a PERMANENT full-width "Suche" field, never an icon-only collapse
       if (filter.getAttribute("data-cc-search") === "1") return;
       filter.setAttribute("data-cc-search", "1");
       var icon = filter.querySelector(".searchSubmit, #searchButton");
       var box = document.getElementById("searchBox");
-      if (!icon) return;
-      icon.addEventListener("click", function (e) {
-        e.preventDefault(); e.stopPropagation();               // block CA's native submit; just toggle
-        var open = filter.classList.toggle("cc-open");
-        if (open) { try { box && box.focus(); } catch (e2) {} }
-        else if (box && box.value) { box.value = ""; try { box.dispatchEvent(new Event("keyup", { bubbles: true })); } catch (e3) {} }
-      }, true);
-      if (!window.__ccCaSearchDoc) {                            // click BESIDE it -> collapse (bound once)
-        window.__ccCaSearchDoc = true;
-        document.addEventListener("click", function (e) {
-          var f = document.querySelector("#searchFilter.cc-open");
-          if (f && !f.contains(e.target)) f.classList.remove("cc-open");
-        });
+      // #4: while typing, flag <html> so the suggestion popup grows past the narrow sidebar and the page dims +
+      // blurs behind it. The awesomplete <ul> is re-anchored fixed (right of the field) so the sidebar can't clip it.
+      if (box) {
+        var caFlag = function () {
+          var on = !!(box.value && box.value.trim());
+          document.documentElement.classList.toggle("cc-ca-searching", on);
+          if (on) { ccPositionCaResults(filter); requestAnimationFrame(function () { ccPositionCaResults(filter); }); }
+        };
+        box.addEventListener("input", caFlag);
+        box.addEventListener("keyup", caFlag);
+        box.addEventListener("focus", caFlag);
+        box.addEventListener("blur", function () { setTimeout(function () { document.documentElement.classList.remove("cc-ca-searching"); }, 200); });
       }
+      if (icon) icon.addEventListener("click", function (e) {
+        e.preventDefault(); e.stopPropagation();               // magnifier = focus the field, never collapse/clear
+        filter.classList.add("cc-open"); try { box && box.focus(); } catch (e2) {}
+      }, true);
+    } catch (e) {}
+  }
+  // #4: anchor the CA app-suggestion popup as position:fixed to the RIGHT of the sidebar search field, so the
+  // 140px sidebar (overflow) can't clip it and it can grow wide + tall. Re-applied on every keystroke because
+  // awesomplete rewrites the <ul> and its inline top/left each render.
+  function ccPositionCaResults(filter) {
+    try {
+      var ul = filter.querySelector(".awesomplete > ul"); if (!ul || ul.hasAttribute("hidden")) return;
+      var r = filter.getBoundingClientRect();
+      ul.style.setProperty("position", "fixed", "important");
+      ul.style.setProperty("left", Math.round(r.right + 12) + "px", "important");
+      ul.style.setProperty("top", Math.round(r.top) + "px", "important");
+      ul.style.setProperty("bottom", "auto", "important");
+      ul.style.setProperty("right", "auto", "important");
     } catch (e) {}
   }
   function ccApps() {
@@ -2349,10 +2393,25 @@
   function ccInjectSpinner() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
-      // inject into EVERY spinner (full-screen tab-load div.spinner.fixed AND CA's in-page div.spinner)
-      // so the SAME CC ring shows in whichever survives; bounded node list -> freeze-safe.
       var sps = document.querySelectorAll("div.spinner");
-      for (var i = 0; i < sps.length; i++) { if (!sps[i].querySelector(".cc-loader")) sps[i].appendChild(ccMakeLoader()); }
+      // #6 (user: "erst überlagert der große Spinner den kleinen, dann bleibt der kleine mit Scrollbar sichtbar"):
+      // the full-screen tab-load overlay (div.spinner.fixed) and CA's in-page div.spinner both got the ring and
+      // OVERLAPPED. Show the CC ring in exactly ONE spinner: while the fixed overlay is on screen, hide the in-page
+      // spinner(s); when it toggles off, un-hide. A per-fixed attribute observer (style/class only -> freeze-safe)
+      // re-runs this on the overlay's display flip, so the in-page spinner reappears the instant the overlay leaves.
+      var fixedUp = null;
+      for (var i = 0; i < sps.length; i++) {
+        var s = sps[i];
+        if (!s.classList.contains("fixed")) continue;
+        if (!s.__ccSpinObs) { s.__ccSpinObs = new MutationObserver(function () { ccInjectSpinner(); }); s.__ccSpinObs.observe(s, { attributes: true, attributeFilter: ["style", "class"] }); }
+        if (!fixedUp && getComputedStyle(s).display !== "none") fixedUp = s;
+      }
+      for (var j = 0; j < sps.length; j++) {
+        var sp = sps[j];
+        if (fixedUp && sp !== fixedUp) { sp.classList.add("cc-spin-dupe"); continue; }   // redundant while the overlay is up
+        sp.classList.remove("cc-spin-dupe");
+        if (!sp.querySelector(".cc-loader")) sp.appendChild(ccMakeLoader());
+      }
     } catch (e) {}
   }
 

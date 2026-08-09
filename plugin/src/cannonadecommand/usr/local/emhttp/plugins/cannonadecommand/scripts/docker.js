@@ -1689,7 +1689,7 @@
     // #11 (user): per-container START ORDER. A lower positive number starts earlier; empty/0 = unnumbered =
     // last, in list order. It is a PRIORITY (duplicates allowed, ties break by list order); dependencies +
     // health-gates still bound it in the engine, so it never races a dependency.
-    var sorow = el("div", "cc-pop-row"); sorow.appendChild(lblInfo(t("startOrder"), [t("startOrderInfo")]));
+    var sorow = el("div", "cc-pop-row"); sorow.appendChild(lblInfo(t("startOrder"), t("startOrderInfo")));   // #18 (user: Startnummer-Bubble leer): pass the prose STRING — infoBubble wraps it; an array of one string made it[0]/it[1] the first two CHARS
     var sorder = el("input", "cc-in cc-port"); sorder.type = "number"; sorder.min = "0"; sorder.step = "1"; sorder.placeholder = t("startOrderPh"); sorder.value = node.start_order ? node.start_order : "";
     sorow.appendChild(sorder); body.appendChild(sorow);
     var prow = el("div", "cc-pop-row"); prow.appendChild(lblInfo(t("readyWhen"), probeItems()));
@@ -1779,6 +1779,7 @@
       DAYS.forEach(function (d) { var b = el("span", "cc-day" + (sel[d[1]] ? " cc-day-on" : ""), d[0]); b.dataset.day = d[1]; b.addEventListener("click", function (e) { e.preventDefault(); b.classList.toggle("cc-day-on"); }); days.appendChild(b); });
       var rm = el("span", "cc-sched-x", "✕"); rm.setAttribute("data-tip", t("remove")); rm.addEventListener("click", function () { row.remove(); });
       row.appendChild(act2); row.appendChild(time); row.appendChild(days); row.appendChild(rm);
+      ctWrapSelect(act2);   // #17 (user: Startplan-Dropdowns im CC-Style): the schedule action <select> gets the CC dsel panel too — dispatches a native change, so row._read still reads act2.value
       // empty days = every day; only rows with a valid HH:MM time are saved
       row._read = function () { if (!/^\d{2}:\d{2}$/.test(time.value)) return null; var ds = []; Array.prototype.slice.call(days.children).forEach(function (x) { if (x.classList.contains("cc-day-on")) ds.push(parseInt(x.dataset.day, 10)); }); var o = { name: name, action: act2.value, time: time.value, enabled: true }; if (ds.length) o.days = ds; return o; };
       return row;
@@ -1831,6 +1832,11 @@
       Array.prototype.slice.call(pop.querySelectorAll("input[type=checkbox]")).forEach(function (cb, i) { cb.style.accentColor = rbc[i % rbc.length]; });
     }
     document.body.appendChild(pop); hardenPop(pop);
+    // #17 (user: die Dropdown-Listen im Startplan sind nicht im CC-Style): give the editor's native
+    // <select>s (Bereitschaft/probe, Bei Fehler/policy, Neustart-Policy) the CC dsel panel — the schedule
+    // action selects are already wrapped inside schedRow. ctWrapSelect keeps the <select> as source of
+    // truth and dispatches a native change, so every commit()/API listener above still fires.
+    Array.prototype.slice.call(pop.querySelectorAll("select:not([data-cc-dsel])")).forEach(function (s) { try { ctWrapSelect(s); } catch (e) {} });
     var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || 320;
     pop.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 12)) + "px";
     pop.style.top = (window.scrollY + r.bottom + 6) + "px"; openPop = pop; openPopAnchor = anchor;
