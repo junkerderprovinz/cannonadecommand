@@ -302,6 +302,11 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
 .cc-resline { display: inline-flex; align-items: center; gap: 5px; }
 #docker_list td.updatecolumn .cc-rowbadges { margin-top: 4px; }
 .cc-planholder { margin-top: 5px; } /* same gap as between the CPU and RAM badges (resgroup gap) */
+/* restart-policy warning badge (restart=no -> no auto-start after a host reboot). SEMANTIC
+   amber, always — never accent/rainbow, like the always-red .cc-b-del delete control. */
+.cc-restwarn { margin-top: 5px; }
+.cc-b.cc-b-warn { background: var(--cc-warn, #e0912a) !important; color: #1a1a1a !important; }
+.cc-b.cc-b-warn .cc-b-k, .cc-b.cc-b-warn .cc-b-v { opacity: 1 !important; color: inherit; }
 
 /* CPU/RAM limits editor button on the resource cell */
 .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--cc-b-radius, 999px); background: #3a3a3a; color: #ececec; cursor: pointer; font-size: 12px; margin: 2px 0; } /* FILLED — the ghost look was easy to miss. Radius FOLLOWS the badge shape (pill->circle, rounded, square) so the gear matches its badge (user). */

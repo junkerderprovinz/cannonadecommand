@@ -33,6 +33,8 @@
   var CC_GEAR_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
   var PROBES = ["health", "running", "tcp", "http", "exec", "log"], POLICIES = ["abort", "continue", "degrade"];
   var SCHED_ACTIONS = ["start", "stop", "restart"];
+  // Docker's four restart-policy names, in the order they appear in the editor dropdown.
+  var RESTART_POLICIES = ["no", "unless-stopped", "always", "on-failure"];
   // Docker's badge ACCENT is now adopt-gated like every other area: follow the GLOBAL cc.accent
   // while the "Adopt the global badge colour" toggle is on (cc.styledocker, default on = no visible
   // change for existing installs), else use the Docker tab's OWN ccd.accent. Rainbow stays global
@@ -56,8 +58,8 @@
     : [["Mo", 1], ["Tu", 2], ["We", 3], ["Th", 4], ["Fr", 5], ["Sa", 6], ["Su", 0]];
 
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge — Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container — kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn CPU UND Netzwerk für die eingestellte Zeit niedrig bleiben. Ein ausgelasteter Container wird nie gestoppt; CC startet ihn nicht automatisch wieder." },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order — duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container — no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container when CPU AND network stay low for the set time. A busy container is never stopped; CC does not start it again automatically." },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge — Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container — kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn CPU UND Netzwerk für die eingestellte Zeit niedrig bleiben. Ein ausgelasteter Container wird nie gestoppt; CC startet ihn nicht automatisch wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“ — dieser Container startet nach einem Host-Neustart nicht automatisch." },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order — duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container — no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container when CPU AND network stay low for the set time. A busy container is never stopped; CC does not start it again automatically.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no” — this container will not auto-start after a host reboot." },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -410,6 +412,7 @@
     { key: "von", label: { de: "Von / Quelle", en: "From / source" } },
     { key: "vol", label: { de: "Volumes", en: "Volumes" } },
     { key: "plan", label: { de: "Startplan", en: "Plan" } },
+    { key: "restart", label: { de: "Restart-Policy", en: "Restart policy" } },
   ];
   // Per-view visibility matrix: each column can show in the Simple and/or Advanced
   // view (set in the Settings page). {s,a} = show in simple / advanced. Defaults:
@@ -421,7 +424,7 @@
     // area — the "no badges in Simple view" bug). res (CPU/RAM) defaults ON in both views; force/version/
     // id/von/vol default advanced-only; net/ip/lan/port (the split of the old single "net") default both.
     var adv = function () { return { s: false, a: true }; }, both = function () { return { s: true, a: true }; };
-    return { update: both(), force: adv(), version: adv(), net: both(), ip: both(), lan: both(), port: both(), res: both(), id: adv(), von: adv(), vol: adv(), plan: both() };
+    return { update: both(), force: adv(), version: adv(), net: both(), ip: both(), lan: both(), port: both(), res: both(), id: adv(), von: adv(), vol: adv(), plan: both(), restart: adv() };
   }
   function loadColview() {
     try { var j = JSON.parse(localStorage.getItem(COLS_KEY) || "null"); if (j && typeof j === "object") { var d = defaultColview(); Object.keys(d).forEach(function (k) { if (j[k]) d[k] = { s: !!j[k].s, a: !!j[k].a }; }); return d; } } catch (e) {}
@@ -875,6 +878,22 @@
           ph.style.setProperty("margin", "5px 0 0 0", "important");
           Array.prototype.slice.call(c9.querySelectorAll("br")).forEach(function (b2) { b2.style.setProperty("display", "none", "important"); });
           c9.appendChild(ph);
+        }
+      }
+
+      // ── RESTART-POLICY warning badge → autostart cell (col 10): a container whose Docker
+      // restart policy is "no" will NOT auto-start after a host reboot. Shown as a semantic
+      // warning badge next to the plan chip, toggleable via the "restart" column. ──
+      if (colOn("restart")) {
+        var lmR = limits[name];
+        if (lmR && lmR.restart_policy === "no") {
+          var c9r = tr.querySelector(":scope > td:nth-child(10)"); // +1: actions column
+          if (c9r && !c9r.querySelector(".cc-restwarn")) {
+            var rwh = el("div", "cc-rowbadges cc-restwarn"); rwh.setAttribute(MARK, "1");
+            rwh.appendChild(restartWarnBadge());
+            rwh.style.setProperty("margin", "5px 0 0 0", "important");
+            c9r.appendChild(rwh);
+          }
         }
       }
 
@@ -1589,6 +1608,27 @@
       ? [["abort", "Kette anhalten, Abhängige nicht starten"], ["continue", "trotzdem weiter, Abhängige starten"], ["degrade", "weiter, aber als degraded markieren"]]
       : [["abort", "stop the chain, don't start dependents"], ["continue", "carry on, start dependents anyway"], ["degrade", "carry on but mark as degraded"]];
   }
+  // ── Docker restart policy (live, no recreate) ──
+  // A container's restart policy is read with the CPU/RAM limits (model.Limits.restart_policy)
+  // and set through POST /api/restartpolicy, which also mirrors --restart into the Unraid
+  // template so an Apply/recreate keeps it.
+  function restartPolicyLabel(p) { return t(p === "unless-stopped" ? "rpUnlessStopped" : p === "always" ? "rpAlways" : p === "on-failure" ? "rpOnFailure" : "rpNo"); }
+  function restartPolicyItems() {
+    return LANG === "de"
+      ? [["no", "kein automatischer Neustart (startet nach Host-Neustart nicht)"], ["unless-stopped", "immer neu starten, außer der Container wurde manuell gestoppt"], ["always", "immer neu starten, auch nach Host-Neustart"], ["on-failure", "nur nach einem Absturz (Exit-Code ≠ 0) neu starten"]]
+      : [["no", "no automatic restart (will not come up after a host reboot)"], ["unless-stopped", "always restart unless the container was stopped manually"], ["always", "always restart, including after a host reboot"], ["on-failure", "restart only after a crash (non-zero exit)"]];
+  }
+  // The restart-policy dropdown, prefilled to `cur`. Factored out so a DOM test can pin its shape.
+  function restartPolicySelect(cur) {
+    var sel = el("select", "cc-in cc-rp-sel");
+    RESTART_POLICIES.forEach(function (p) { var o = el("option", null, restartPolicyLabel(p)); o.value = p; if (p === cur) o.selected = true; sel.appendChild(o); });
+    return sel;
+  }
+  // The per-row warning badge for a container whose restart policy is "no" (it will not
+  // auto-start after a host reboot). Semantic amber — never rainbow/accent — like cc-b-del.
+  function restartWarnBadge() {
+    var b = badgeInfo("⚠", t("rpWarn"), "restart"); b.classList.add("cc-b-warn"); b.setAttribute("data-tip", t("rpWarnTip")); return b;
+  }
   function openEditor(anchor, name) {
     if (togglePop(anchor)) return;
     closePop();
@@ -1663,6 +1703,31 @@
     var polrow = el("div", "cc-pop-row"); polrow.appendChild(lblInfo(t("onFail"), policyItems().concat([["", t("failhint")]])));   // failhint lives IN the bubble now (user: kein loser Infotext im Fenster)
     var pol = el("select", "cc-in"); POLICIES.forEach(function (p) { var o = el("option", null, p); o.value = p; if (node.policy === p) o.selected = true; pol.appendChild(o); });
     polrow.appendChild(pol); body.appendChild(polrow); pop.appendChild(body);
+
+    // ── Restart policy (live Docker restart-policy) — independent of plan membership ──
+    // Applies IMMEDIATELY on change via POST /api/restartpolicy (no recreate) and is
+    // mirrored into the template so an Apply keeps it — the fix for a container stuck on
+    // restart=no. Prefilled from the limits cache, then refined by a fresh per-name read.
+    var rpSec = el("div", "cc-pop-auto");
+    var rpRow = el("div", "cc-pop-row"); rpRow.appendChild(lblInfo(t("restartPolicy"), restartPolicyItems()));
+    var rpSel = restartPolicySelect((limits[name] && limits[name].restart_policy) || "no");
+    rpRow.appendChild(rpSel); rpSec.appendChild(rpRow); pop.appendChild(rpSec);
+    function setRpCache(p) { if (limits[name]) limits[name].restart_policy = p; else limits[name] = { restart_policy: p }; }
+    rpSel.addEventListener("change", function () {
+      popClearError(); flash(t("saving"));
+      api("POST", "restartpolicy", { name: name, policy: rpSel.value })
+        .then(function (resp) {
+          var applied = (resp && resp.after_policy) ? resp.after_policy : rpSel.value;
+          rpSel.value = applied; setRpCache(applied);
+          flash(t("done"));
+          if (mode === "list") reinjectRowBadges(); else renderGrid();
+        })
+        .catch(function (e) { flash("Error: " + e.message, true); });
+    });
+    // authoritative prefill — the bulk limits map can be stale after another edit
+    api("GET", "limits", null, "name=" + encodeURIComponent(name)).then(function (l) {
+      if (l && l.restart_policy) { rpSel.value = l.restart_policy; setRpCache(l.restart_policy); }
+    }).catch(function () {});
 
     // ── Watchdog (auto-restart) — independent of plan membership ──
     var wd = watchdogFor(name);

@@ -34,6 +34,7 @@ type Docker interface {
 	Stats(ctx context.Context, name string) (model.Stats, error)
 	Limits(ctx context.Context, name string) (model.Limits, error)
 	UpdateResources(ctx context.Context, name string, l model.Limits) error
+	SetRestartPolicy(ctx context.Context, name, policy string) error
 	HostMemTotal(ctx context.Context) int64
 }
 
@@ -110,6 +111,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/limitlog", s.handleLimitLog)
 	mux.HandleFunc("GET /api/bwstatus", s.handleBwStatus)
 	mux.HandleFunc("POST /api/limits", s.handleSetLimits)
+	mux.HandleFunc("POST /api/restartpolicy", s.handleSetRestartPolicy)
 	mux.HandleFunc("GET /api/config", s.handleGetConfig)
 	mux.HandleFunc("PUT /api/config", s.handlePutConfig)
 	mux.HandleFunc("GET /api/vms", s.handleGetVMs)
@@ -738,6 +740,83 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 	}
 	s.recordOp(req.Name, reqTxt, "ok", afterTxt+" · "+tmplResult)
 	writeJSON(w, http.StatusOK, after)
+}
+
+// handleSetRestartPolicy sets a container's Docker restart policy live (container
+// update, no recreate) and mirrors it into the Unraid container template so it
+// survives an "Apply"/recreate — the whole point for a container stuck on
+// restart=no permanently. The policy must be one of Docker's four exact values,
+// and the name is validated against the live list before anything reaches the
+// socket. It mirrors handleSetLimits: template first (best-effort, regardless of
+// the live result), then the live update, then a verify re-read + recordOp.
+func (s *Server) handleSetRestartPolicy(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Name   string `json:"name"`
+		Policy string `json:"policy"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	req.Name = strings.TrimSpace(req.Name)
+	req.Policy = strings.TrimSpace(req.Policy)
+	if !validRestartPolicy(req.Policy) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bad restart policy (want no|unless-stopped|always|on-failure): " + req.Policy})
+		return
+	}
+	ok, err := s.known(r.Context(), req.Name)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unknown container: " + req.Name})
+		return
+	}
+	// Mirror --restart into the Unraid template BEFORE the live update and REGARDLESS of
+	// its result, exactly like handleSetLimits: a later Apply/recreate then keeps the new
+	// policy instead of resurrecting the old one. Best-effort; the diagnostics log records
+	// the outcome. SetExtraParams upserts --restart cleanly (strips any prior --restart
+	// token, re-adds ours) and leaves every other flag — including CC's own CPU/RAM caps —
+	// untouched, so the two mirrors never fight.
+	tmplResult := "template: no change"
+	if s.TemplatesDir != "" {
+		if merr := unraidtmpl.SetExtraParams(s.TemplatesDir, req.Name, map[string]string{"--restart": req.Policy}); merr != nil {
+			tmplResult = "template FAILED: " + merr.Error()
+		} else {
+			tmplResult = "template ok"
+		}
+	}
+	reqTxt := "restart=" + req.Policy
+	if err := s.Docker.SetRestartPolicy(r.Context(), req.Name, req.Policy); err != nil {
+		s.recordOp(req.Name, reqTxt, err.Error(), tmplResult)
+		writeErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	// Verify by re-reading the live policy, so "did it actually apply?" is answerable
+	// from the Settings diagnostics card, and the UI can echo the confirmed value.
+	after := map[string]any{"status": "ok", "template": tmplResult}
+	afterTxt := ""
+	if l, e := s.Docker.Limits(r.Context(), req.Name); e == nil {
+		after["after_policy"] = l.RestartPolicy
+		afterTxt = "restart=" + l.RestartPolicy
+	} else {
+		after["after_error"] = e.Error()
+		afterTxt = "verify FAILED: " + e.Error()
+	}
+	s.recordOp(req.Name, reqTxt, "ok", afterTxt+" · "+tmplResult)
+	writeJSON(w, http.StatusOK, after)
+}
+
+// validRestartPolicy accepts only Docker's four exact restart-policy names. The
+// value is passed verbatim to the container-update endpoint and written into the
+// template's --restart flag, so keep it strict.
+func validRestartPolicy(p string) bool {
+	switch p {
+	case "no", "unless-stopped", "always", "on-failure":
+		return true
+	}
+	return false
 }
 
 // limitOp is one recorded limit change (for the Settings diagnostics card).

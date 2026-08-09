@@ -84,17 +84,18 @@
     { key: "von", label: T("Von / Quelle", "From / source") },
     { key: "vol", label: T("Volumes", "Volumes") },
     { key: "plan", label: T("Startplan", "Plan") },
+    { key: "restart", label: T("Restart-Policy", "Restart policy") },
   ];
   var PRESETS = ["#2f6feb", "#1f9d55", "#ff8c2f", "#8b5cf6", "#e0912a", "#d9433f", "#0ea5a4", "#e05299", "#525252"];
   // rainbow-mode colour per column (same order as COLS): the matrix checkboxes take
   // these when rainbow mode is on, so the settings echo the Docker-tab badge colours.
   // net/ip/lan/port share a network-ish family (net kept its old purple; ip/lan/port added after it).
-  var RB = ["#1f9d55", "#2f6feb", "#6b7280", "#8b5cf6", "#7c6df0", "#5b8def", "#4aa3c7", "#d9433f", "#0ea5a4", "#e05299", "#0891b2", "#6366f1"];
+  var RB = ["#1f9d55", "#2f6feb", "#6b7280", "#8b5cf6", "#7c6df0", "#5b8def", "#4aa3c7", "#d9433f", "#0ea5a4", "#e05299", "#0891b2", "#6366f1", "#e0912a"];
 
   // Each column gets its OWN object via a factory call — chkCell mutates colview[key][v] IN PLACE, so a
   // SHARED `both`/`adv` reference let one checkbox flip every aliased column (net/ip/lan/port all aliased
   // `both`, blanking the whole Simple-view network area). Must stay in lock-step with docker.js defaultColview().
-  function defColview() { var adv = function () { return { s: false, a: true }; }, both = function () { return { s: true, a: true }; }; return { update: both(), force: adv(), version: adv(), net: both(), ip: both(), lan: both(), port: both(), res: both(), id: adv(), von: adv(), vol: adv(), plan: both() }; }
+  function defColview() { var adv = function () { return { s: false, a: true }; }, both = function () { return { s: true, a: true }; }; return { update: both(), force: adv(), version: adv(), net: both(), ip: both(), lan: both(), port: both(), res: both(), id: adv(), von: adv(), vol: adv(), plan: both(), restart: adv() }; }
   function get(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function del(k) { try { localStorage.removeItem(k); } catch (e) {} }

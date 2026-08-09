@@ -398,11 +398,14 @@ func (c *Client) Limits(ctx context.Context, ref string) (model.Limits, error) {
 	}
 	var raw struct {
 		HostConfig struct {
-			Memory     int64  `json:"Memory"`
-			NanoCpus   int64  `json:"NanoCpus"`
-			CpuQuota   int64  `json:"CpuQuota"`
-			CpuPeriod  int64  `json:"CpuPeriod"`
-			CpusetCpus string `json:"CpusetCpus"`
+			Memory        int64  `json:"Memory"`
+			NanoCpus      int64  `json:"NanoCpus"`
+			CpuQuota      int64  `json:"CpuQuota"`
+			CpuPeriod     int64  `json:"CpuPeriod"`
+			CpusetCpus    string `json:"CpusetCpus"`
+			RestartPolicy struct {
+				Name string `json:"Name"`
+			} `json:"RestartPolicy"`
 		} `json:"HostConfig"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
@@ -414,7 +417,15 @@ func (c *Client) Limits(ctx context.Context, ref string) (model.Limits, error) {
 	if nano == 0 && raw.HostConfig.CpuQuota > 0 && raw.HostConfig.CpuPeriod > 0 {
 		nano = raw.HostConfig.CpuQuota * 1_000_000_000 / raw.HostConfig.CpuPeriod
 	}
-	return model.Limits{MemBytes: raw.HostConfig.Memory, NanoCPUs: nano, CpusetCPUs: raw.HostConfig.CpusetCpus}, nil
+	// Docker reports an unset restart policy as either "no" or "" depending on the
+	// engine version; both mean "does not auto-restart". Normalise "" -> "no" so the
+	// frontend always sees one of the four canonical values (its dropdown prefill and
+	// the "no auto-start" warning badge then behave deterministically across versions).
+	policy := raw.HostConfig.RestartPolicy.Name
+	if policy == "" {
+		policy = "no"
+	}
+	return model.Limits{MemBytes: raw.HostConfig.Memory, NanoCPUs: nano, CpusetCPUs: raw.HostConfig.CpusetCpus, RestartPolicy: policy}, nil
 }
 
 // HostMemTotal returns the host's total RAM in bytes as the Docker daemon reports it
@@ -520,6 +531,15 @@ func (c *Client) UpdateResources(ctx context.Context, ref string, l model.Limits
 		err = c.postUpdate(ctx, ref, body)
 	}
 	return err
+}
+
+// SetRestartPolicy sets a container's Docker restart policy live via the
+// container-update endpoint: applied without recreating the container and
+// persisted by Docker across restarts. MaximumRetryCount is left unset (0):
+// Docker requires it to be 0 for "no"/"always"/"unless-stopped", and 0 means
+// "retry forever" for "on-failure". The caller validates the policy string.
+func (c *Client) SetRestartPolicy(ctx context.Context, ref, policy string) error {
+	return c.postUpdate(ctx, ref, map[string]any{"RestartPolicy": map[string]any{"Name": policy}})
 }
 
 // postUpdate POSTs one container-update body.

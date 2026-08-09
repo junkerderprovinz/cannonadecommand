@@ -30,11 +30,14 @@ type Mount struct {
 // Limits are a container's CONFIGURED resource caps (from HostConfig, 0 = no
 // limit). Read on demand (List() does not carry HostConfig) and edited through
 // Docker's container-update — applied live, no restart, and persisted by Docker
-// across restarts. NanoCPUs is CPUs*1e9 (1.5 CPUs = 1_500_000_000).
+// across restarts. NanoCPUs is CPUs*1e9 (1.5 CPUs = 1_500_000_000). RestartPolicy
+// is also live-read from HostConfig (Docker's restart policy, one of
+// "no"/"unless-stopped"/"always"/"on-failure") and live-set the same way.
 type Limits struct {
-	MemBytes   int64  `json:"mem_bytes"`
-	NanoCPUs   int64  `json:"nano_cpus"`
-	CpusetCPUs string `json:"cpuset_cpus,omitempty"` // CPU pinning, e.g. "0-3,6" (empty = all cores)
+	MemBytes      int64  `json:"mem_bytes"`
+	NanoCPUs      int64  `json:"nano_cpus"`
+	CpusetCPUs    string `json:"cpuset_cpus,omitempty"`    // CPU pinning, e.g. "0-3,6" (empty = all cores)
+	RestartPolicy string `json:"restart_policy,omitempty"` // Docker restart policy: no | unless-stopped | always | on-failure
 }
 
 // ProbeKind is how the engine decides a container is "ready" so the next stage

@@ -58,6 +58,11 @@ func (f *fakeDocker) UpdateResources(_ context.Context, n string, l model.Limits
 	f.limits = l
 	return nil
 }
+func (f *fakeDocker) SetRestartPolicy(_ context.Context, n, policy string) error {
+	f.actions = append(f.actions, "restart:"+n+":"+policy)
+	f.limits.RestartPolicy = policy // so the handler's verify re-read reflects the change
+	return nil
+}
 
 type memStore struct {
 	plan model.Plan
@@ -315,6 +320,67 @@ func TestLimitsBulk(t *testing.T) {
 	g, ok := all["gluetun"]
 	if !ok || g.MemBytes != 2147483648 || g.CpusetCPUs != "0-1" {
 		t.Fatalf("bulk limits map wrong: %+v", all)
+	}
+}
+
+// handleSetRestartPolicy applies a valid policy live, verifies it back in the reply,
+// upserts --restart into the template (replacing the old value, keeping other flags),
+// and rejects an invalid policy (400) and an unknown container (known() guard) before
+// anything reaches the socket.
+func TestRestartPolicySetValidateAndTemplate(t *testing.T) {
+	s, h := newServer()
+	dir := t.TempDir()
+	s.TemplatesDir = dir
+	f := filepath.Join(dir, "my-gluetun.xml")
+	tmpl := `<Container><Name>gluetun</Name><ExtraParams>--restart=no --memory=1073741824</ExtraParams></Container>`
+	if err := os.WriteFile(f, []byte(tmpl), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// a valid policy applies live and is verified back in the reply
+	body, _ := json.Marshal(map[string]any{"name": "gluetun", "policy": "unless-stopped"})
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("POST", "/api/restartpolicy", bytes.NewReader(body)))
+	if rec.Code != 200 {
+		t.Fatalf("set restart policy code = %d: %s", rec.Code, rec.Body)
+	}
+	var resp map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp["after_policy"] != "unless-stopped" {
+		t.Fatalf("verify re-read wrong: %+v", resp)
+	}
+	fd := s.Docker.(*fakeDocker)
+	if len(fd.actions) != 1 || fd.actions[0] != "restart:gluetun:unless-stopped" {
+		t.Fatalf("live update not recorded: %v", fd.actions)
+	}
+	// --restart is upserted (old value gone) and unrelated flags survive
+	got, _ := os.ReadFile(f)
+	if strings.Contains(string(got), "--restart=no") {
+		t.Fatalf("old --restart must be replaced:\n%s", got)
+	}
+	for _, want := range []string{"--restart=unless-stopped", "--memory=1073741824"} {
+		if !strings.Contains(string(got), want) {
+			t.Fatalf("missing %q in rewritten template:\n%s", want, got)
+		}
+	}
+	// an invalid policy is rejected before touching the socket
+	bad, _ := json.Marshal(map[string]any{"name": "gluetun", "policy": "sometimes"})
+	rec2 := httptest.NewRecorder()
+	h.ServeHTTP(rec2, httptest.NewRequest("POST", "/api/restartpolicy", bytes.NewReader(bad)))
+	if rec2.Code != 400 {
+		t.Fatalf("invalid policy must be 400, got %d", rec2.Code)
+	}
+	// an unknown container is rejected by the known() guard
+	ghost, _ := json.Marshal(map[string]any{"name": "ghost", "policy": "always"})
+	rec3 := httptest.NewRecorder()
+	h.ServeHTTP(rec3, httptest.NewRequest("POST", "/api/restartpolicy", bytes.NewReader(ghost)))
+	if rec3.Code != 400 {
+		t.Fatalf("unknown container must be 400, got %d", rec3.Code)
+	}
+	// neither the invalid policy nor the unknown container reached the socket
+	if len(fd.actions) != 1 {
+		t.Fatalf("invalid/unknown must not touch the socket: %v", fd.actions)
 	}
 }
 

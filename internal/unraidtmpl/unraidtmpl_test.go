@@ -33,6 +33,28 @@ func TestApplyExtraParams_UpsertPreservesOthers(t *testing.T) {
 	}
 }
 
+// The restart-policy mirror upserts --restart cleanly: a prior value is replaced (not
+// duplicated) and every unrelated flag — including CC's own CPU/RAM caps — is preserved,
+// so the restart-policy write and the limits write never fight over ExtraParams.
+func TestApplyExtraParams_RestartUpsert(t *testing.T) {
+	doc := `<Container><Name>gluetun</Name><ExtraParams>--restart=no --memory=1073741824 --cpus=2</ExtraParams></Container>`
+	out, ok := applyExtraParams(doc, "gluetun", map[string]string{"--restart": "unless-stopped"})
+	if !ok {
+		t.Fatal("should have matched <Name>gluetun")
+	}
+	if strings.Contains(out, "--restart=no") {
+		t.Fatalf("old --restart must be replaced:\n%s", out)
+	}
+	if strings.Count(out, "--restart=") != 1 {
+		t.Fatalf("expected exactly one --restart=, got %d:\n%s", strings.Count(out, "--restart="), out)
+	}
+	for _, want := range []string{"--restart=unless-stopped", "--memory=1073741824", "--cpus=2"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("missing %q in:\n%s", want, out)
+		}
+	}
+}
+
 func TestApplyExtraParams_MemoryNotConfusedWithSwap(t *testing.T) {
 	doc := `<Container><Name>x</Name><ExtraParams>--memory-swap=8G --memory=2G</ExtraParams></Container>`
 	out, _ := applyExtraParams(doc, "x", map[string]string{"--memory": "1073741824"})
