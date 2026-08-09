@@ -49,6 +49,11 @@ html {
   --cc-accent:     #2f6feb;
   --cc-accent-fg:  var(--cc-accent-text, #fff);
 
+  /* #4/#5/#10/#11 CONTENT RIGHT-EDGE GUTTER — the ONE canonical inset that pulls every right-flush element
+     (search badge, SHOW MORE, view toggle, footer arrows, list rows) in to the #displaybox content edge
+     instead of the scrollbar/viewport edge. Defined once here (global, reaches VMs too); consume via var(). */
+  --cc-edge-gutter: 8px;
+
   /* ── BADGE SIZE ENGINE (#4) - the systemwide badge box metrics, ONE canonical source, exactly like
        --cc-b-radius is the SHAPE engine and --cc-accent/--cc-rb-* are the COLOUR engine. These were
        mirrored BY HAND across docker/vms/shares/header/settingsgrid (see the header note above); now a
@@ -67,7 +72,7 @@ html {
   /* #19 SYSTEM-WIDE PAGE-BADGE SIZE — page-title (div.title span.left/.cc-pagehead), section-head
      (.ca_homeTemplatesHeader) and author (plugins "Von") badges live UNDER the main-menu bar and must be
      ONE step SMALLER than its 15px tab badges (the lg/head tier). One step down = the md tier (13px). */
-  --cc-pagebadge-fs: var(--cc-md-fs, 13px);
+  --cc-pagebadge-fs: 14px;  /* #7: fixed in-between step — one below 15px main-menu tabs, one above 13px md */
   --cc-density: 9px;
 
   /* ── STATE - one canonical each (collapses the 6/6/4 literal drift) + derived fg ── */
@@ -115,7 +120,8 @@ html.Theme--azure {
 /* Convex enamel: a hairline top inner-highlight (+ a whisper of bottom shade) so every pill reads as a
    slightly domed, top-lit lozenge (cloisonné) rather than a flat sticker. INNER shadow only, so it rides any
    accent/rainbow background and never fights a `background:` shorthand. */
-.cc-b { box-shadow: inset 0 1px 0 rgba(255,255,255,.13), inset 0 -2px 3px -2px rgba(0,0,0,.16); }
+/* #1 Flat is the default and truly solid: NO sheen on .cc-b. The domed top-light "enamel" belongs to the
+   GLASS engine only (html.cc-badge-glass, below), so grey/neutral badges never read glassy in flat mode. */
 /* Tracked small-caps micro-labels — the signature of premium data UIs (Carbon/Linear); the keys were
    untracked shrunk caps before. */
 .cc-b-k { text-transform: uppercase; letter-spacing: .4px; }
@@ -221,7 +227,11 @@ html.cc-rb-on .cc-loader { animation: cc-load-rb 6s linear infinite; }   /* rain
 }
 
 /* Tab-load overlay: hide the stock red Unraid mark + any fa-spin, dim the backdrop; header.js injects .cc-loader. */
-html.cc-popups-on div.spinner.fixed { background: rgba(0, 0, 0, .28) !important; }
+html.cc-popups-on div.spinner.fixed {
+  background: var(--cc-backdrop-dim) !important;
+  -webkit-backdrop-filter: var(--cc-backdrop-blur) !important;
+          backdrop-filter: var(--cc-backdrop-blur) !important;
+}
 /* hide the stock red Unraid mark / fa-spin in EVERY spinner: the full-screen tab-load overlay AND CA's
    in-page /Apps loader (div.spinner, no .fixed) — the old .fixed-only scope left CA's native mark showing. */
 html.cc-popups-on div.spinner svg.unraid_mark,
@@ -235,10 +245,16 @@ html.cc-popups-on div.spinner.fixed .cc-loader { position: fixed; top: calc(50% 
 /* #13 phase 2: CA's in-page loader (div.spinner, no .fixed) lives in a size-constrained box, so the 110px ring
    overflowed it (the scrollbar the user saw) and got clipped so it read as a SMALLER spinner. Clip the overflow
    (kills the scrollbar) and flex-centre the ring at full size so phase 2 matches the full-screen phase. */
+/* #6 phase 2: promote CA's in-page loader (div.spinner, no .fixed) to a FULL-viewport fixed overlay carrying the
+   SAME dim+blur backdrop and the same flex-centred 110px ring as the full-screen tab-load phase — so the two
+   phases read as ONE continuous, dimmed+blurred spinner instead of two different loaders in sequence. */
 html.cc-popups-on div.spinner:not(.fixed) {
+  position: fixed !important; inset: 0 !important; z-index: 9999 !important;
   overflow: hidden !important;
   display: flex !important; align-items: center; justify-content: center;
-  min-height: 150px;
+  background: var(--cc-backdrop-dim) !important;
+  -webkit-backdrop-filter: var(--cc-backdrop-blur) !important;
+          backdrop-filter: var(--cc-backdrop-blur) !important;
 }
 /* inline busy loaders (container-logo) recolour to accent as a lightweight fallback where markup isn't injected */
 html.cc-popups-on i.fa-spin.fa-circle-o-notch, html.cc-popups-on .cc-ct-busy i.fa-spin { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
@@ -318,9 +334,10 @@ html.cc-badge-glass.cc-plugins-iconbg .cc-plugico > * { position: relative; z-in
 html.cc-popups-on a[class*="move_to"],
 html.cc-popups-on a.back_to_top,
 html.cc-popups-on a[class*="back_to"] {
-  right: 16px !important;                         /* single column — override native 12px/40px split */
+  right: var(--cc-edge-gutter, 8px) !important;   /* base: content right edge (scrollbar gutter); per-arrow overrides set the horizontal pair */
+  z-index: 9990 !important;                       /* topmost page chrome (STARTPLAN badge, js-actions z998); stays BELOW popup backdrops (9998+) */
   color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
-  transform: translateY(calc(-1 * (var(--cc-footer-h, 0px) + var(--cc-actbar-h, 44px) + 14px))) !important;
+  transform: translateY(calc(-1 * (var(--cc-footer-h, 0px) + var(--cc-actbar-h, 44px) + 8px))) !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important;
   border-radius: var(--cc-b-radius, 999px) !important;   /* chip corners follow the badge SHAPE */
   width: 40px !important; height: 40px !important;        /* fixed square chip (predictable size) */
@@ -328,9 +345,12 @@ html.cc-popups-on a[class*="back_to"] {
   display: flex !important; align-items: center; justify-content: center;
   font-size: 1.35rem !important; line-height: 1 !important;
 }
-/* NO OVERLAP: native puts BOTH at bottom:24px — stack them into a vertical pair (40px chip + 10px gap). */
-html.cc-popups-on a.move_to_end { bottom: 24px !important; }   /* down → lower  */
-html.cc-popups-on a.back_to_top { bottom: 74px !important; }   /* up   → higher */
+/* #10 SIDE BY SIDE (was a vertical stack): both chips share one bottom row; down chip flush at the content
+   right edge, up chip 50px to its left (40px chip + 10px gap). Right edge = --cc-edge-gutter. */
+html.cc-popups-on a.move_to_end,
+html.cc-popups-on a.back_to_top { bottom: 24px !important; }
+html.cc-popups-on a.move_to_end { right: var(--cc-edge-gutter, 8px) !important; }               /* down: content right edge  */
+html.cc-popups-on a.back_to_top { right: calc(var(--cc-edge-gutter, 8px) + 50px) !important; }  /* up: left of the down chip */
 /* KILL THE CIRCLE: the round shape is the fa-arrow-CIRCLE glyph, not the chip box, so a border-radius alone
    can't square it. Swap to the plain (non-circular) arrow glyph. */
 html.cc-popups-on a.move_to_end > i.fa::before { content: "\f063" !important; }  /* fa-arrow-down */
@@ -364,7 +384,7 @@ html.cc-popups-on .ca_homeTemplatesHeader {
   display: flex !important; align-items: center !important; gap: 8px !important;
   width: 100% !important; box-sizing: border-box !important;
   background: transparent !important;
-  padding: 0 !important; margin: 18px 0 12px !important;
+  padding: 0 var(--cc-edge-gutter, 8px) 0 0 !important; margin: 18px 0 12px !important;
 }
 /* #9 title = SMALL fill BADGE — fill follows the colour mode (--cc-rb-c stamped by ccAppsStamp),
    size via the #19 page-badge token (one step below the menu tabs), shape via --cc-b-radius. No border/ring. */
@@ -424,11 +444,47 @@ html.cc-popups-on .ca_homeTemplates:hover::-webkit-scrollbar-thumb {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
 }
 
+/* #3 SYSTEM-WIDE SCROLLBARS — visible by default, brighten to accent on hover; shade only, no border/ring.
+   Scoped to html.cc-popups-on: page viewport (html/body) AND every descendant overflow pane. The
+   .ca_homeTemplates rules above are class-specific and keep their hover-only reveal. 12px = taller than
+   the stock thin bar; end buttons removed; radius --cc-b-radius; Firefox scrollbar-width/color. */
+html.cc-popups-on,
+html.cc-popups-on * {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(130,130,130,.55) transparent !important;
+  scrollbar-color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent) transparent !important;
+}
+html.cc-popups-on:hover,
+html.cc-popups-on *:hover {
+  scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important;
+}
+html.cc-popups-on::-webkit-scrollbar,
+html.cc-popups-on ::-webkit-scrollbar { width: 12px !important; height: 12px !important; background: transparent !important; }
+html.cc-popups-on::-webkit-scrollbar-button,
+html.cc-popups-on ::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; }
+html.cc-popups-on::-webkit-scrollbar-track,
+html.cc-popups-on ::-webkit-scrollbar-track { background: transparent !important; border: 0 !important; }
+html.cc-popups-on::-webkit-scrollbar-corner,
+html.cc-popups-on ::-webkit-scrollbar-corner { background: transparent !important; }
+html.cc-popups-on::-webkit-scrollbar-thumb,
+html.cc-popups-on ::-webkit-scrollbar-thumb {
+  border: 0 !important; background-clip: padding-box !important;
+  border-radius: var(--cc-b-radius, 8px) !important;
+  background: rgba(130,130,130,.55) !important;
+  background: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent) !important;
+}
+html.cc-popups-on::-webkit-scrollbar-thumb:hover,
+html.cc-popups-on ::-webkit-scrollbar-thumb:hover,
+html.cc-popups-on:hover::-webkit-scrollbar-thumb,
+html.cc-popups-on *:hover::-webkit-scrollbar-thumb {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+}
+
 /* #7 SEARCH — collapsible far-right badge: the magnifier is a COLOUR-MODE BUTTON that expands into an input
    on click (mirrors CC-settings .cc-set-searchbadge / wireSearchToggle, wired in header.js wireCaSearch).
    Collapsed = accent chip (icon only); open = dark field, the input grows to the LEFT of the icon so it never
    spills past the viewport. Shape via --cc-b-radius, colour via --cc-rb-c/--cc-rb-ct, no border line. */
-html.cc-popups-on .searchArea { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 8px !important; padding-right: 0 !important; }
+html.cc-popups-on .searchArea { display: flex !important; flex-wrap: nowrap !important; align-items: center !important; gap: 8px !important; padding-right: var(--cc-edge-gutter, 8px) !important; }
 html.cc-popups-on #searchFilter {
   margin-left: auto !important; margin-right: 0 !important; align-self: center !important; order: 99 !important;
   display: inline-flex !important; align-items: center !important;

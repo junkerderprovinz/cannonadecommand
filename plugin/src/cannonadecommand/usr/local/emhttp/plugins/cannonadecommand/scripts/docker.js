@@ -2736,23 +2736,13 @@
   // full-width stretch fields) and pad div.title's right by (title-right - field-right) so
   // flex/space-between lands the toggle flush with the inputs at any width. Writing a CSS var on
   // <html> mutates no childList -> the body observer cannot loop (freeze-safe).
+  // #5 (user "der toggle ist immer noch in der mitte der seite"): the fragile FIELD-measurement is REMOVED.
+  // docker.css now right-pads div.title by the fixed content gutter (--cc-edge-gutter) so span.right sits
+  // FLUSH at the #displaybox content right edge (like the menu bar / Plugins-Update button), not the form-
+  // field right edge (~page middle). Kept as a no-op that clears any stale --cc-ct-toggle-pad from an older
+  // build (mutates no childList -> freeze-safe).
   function ctAlignToggle() {
-    try {
-      var root = document.documentElement;
-      var title = null, titles = document.querySelectorAll("#displaybox div.title, #canvas div.title");
-      for (var t = 0; t < titles.length; t++) { if (titles[t].querySelector(":scope > span.right")) { title = titles[t]; break; } }
-      if (!title) { root.style.removeProperty("--cc-ct-toggle-pad"); return; }
-      var fields = document.querySelectorAll('#canvas form dd input[type="text"], #canvas form dd input[type="number"], #canvas form dd .cc-dsel-trigger, #canvas form dd select:not([data-cc-dsel])');
-      var fieldRight = 0;
-      for (var i = 0; i < fields.length; i++) {
-        var fr = fields[i].getBoundingClientRect();
-        if (!fr.width || fr.width > 720) continue;   // skip display:none (0) + full-width stretch fields
-        if (fr.right > fieldRight) fieldRight = fr.right;
-      }
-      if (!fieldRight) { root.style.removeProperty("--cc-ct-toggle-pad"); return; }
-      var pad = Math.round(title.getBoundingClientRect().right - fieldRight);
-      root.style.setProperty("--cc-ct-toggle-pad", (pad > 0 ? pad : 0) + "px");
-    } catch (e) {}
+    try { document.documentElement.style.removeProperty("--cc-ct-toggle-pad"); } catch (e) {}
   }
   function ctApply() {
     try {

@@ -16,7 +16,7 @@
 /* ═══ align the VM content with the MAIN MENU BAR (self-measured --cc-align-left; header.js sets it) ═══ */
 html.cc-vms-on.cc-header-on { --cc-align-left: 15px; }
 html.cc-vms-on:not(.cc-header-on) { --cc-align-left: 10px; }
-html.cc-vms-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 10px); }
+html.cc-vms-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 10px); padding-right: var(--cc-edge-gutter, 8px); }  /* #11: rechte Content-Kante; --cc-edge-gutter aus Tokens.css (global) */
 html.cc-vms-on:not(.Theme--sidebar) #displaybox div.title { padding-left: 0; }
 
 /* ═══ sub-tab vertical gap (BUG C): /VMs is NOT covered by the Shares.css 12px gap rule (that one is gated

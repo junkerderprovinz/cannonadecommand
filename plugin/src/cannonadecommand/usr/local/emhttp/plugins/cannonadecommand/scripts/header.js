@@ -310,10 +310,18 @@
         dim.addEventListener("pointerdown", function () { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); });
         document.body.appendChild(dim);
       }
-      // sit just under the popover's stacking context so the menu stays crisp above the blur
-      var wrap = pop.closest("[data-reka-popper-content-wrapper]") || pop;
-      var pz = parseInt(getComputedStyle(wrap).zIndex, 10); if (!isFinite(pz)) pz = 50;
-      dim.style.zIndex = String(Math.max(1, pz - 1));
+      // #9 Sit ABOVE #header (z102)/#menu (z101) so the blur covers the header band too, but BELOW the
+      // popup's OWN root-level stacking context so the menu/sheet stays crisp. The bell sheet paints inside
+      // .unapi (z999999) and the burger inside its reka popper wrapper; the inner node is only z50 RELATIVE to
+      // that context. Walk up, take the HIGHEST z-index ancestor (= the real root layer the popup lives in),
+      // base the dim one step under it. Floor at 103 so it always clears the header/menu.
+      var topZ = 0;
+      for (var an = pop; an && an !== document.body && an !== document.documentElement; an = an.parentElement) {
+        var az = parseInt(getComputedStyle(an).zIndex, 10);
+        if (isFinite(az) && az > topZ) topZ = az;
+      }
+      if (!topZ) topZ = 50;
+      dim.style.zIndex = String(topZ - 1 > 102 ? topZ - 1 : 103);
       dim.style.display = "block";
       // #21 the Connect Sheet/menu closes ASYNC (animation) — none of the open-time triggers fire again on
       // close, so the dim stayed stuck. While shown, poll (bounded, self-clearing) and hide the instant the
@@ -787,6 +795,7 @@
   // lightweight websocket each, started when the island is on, torn down when it goes off; every message
   // repaints the island (sig-guarded, so unchanged values are no-ops). Never loops: we write #header only.
   var ccLiveRam = "", ccLiveRamUsed = "", ccLiveCpu = "", ccLiveDocker = "", ccLiveSubs = null;
+  var ccLiveNetRx = 0, ccLiveNetTx = 0, ccLiveNetOk = false;   // #12: live Down(rx)/Up(tx) rate in bytes/s
   function ccStartLive() {
     if (ccLiveSubs || typeof window.NchanSubscriber !== "function") return;
     ccLiveSubs = [];
@@ -804,6 +813,7 @@
       u1.start(); ccLiveSubs.push(u1);
     } catch (e) {}
     ccStartCpu();   // #13: CPU load (7.3.2 dropped /sub/cpuload -> GraphQL systemMetricsCpu; nchan fallback for older)
+    ccStartNet();   // #12: network Up/Down rate (engine /api/hostnet -> /proc/net/dev; frontend deltas the cumulative counters)
     try {
       // #23: /sub/dockerload publishes ONE line per RUNNING container ("<id>;<cpu%>;<mem> / <lim>") on
       // every page — the running-container count is just the number of non-empty lines.
@@ -814,7 +824,7 @@
       dk.start(); ccLiveSubs.push(dk);
     } catch (e) {}
   }
-  function ccStopLive() { if (ccLiveSubs) { ccLiveSubs.forEach(function (s) { try { s.stop(); } catch (e) {} }); ccLiveSubs = null; } ccLiveRam = ccLiveRamUsed = ccLiveCpu = ccLiveDocker = ""; }
+  function ccStopLive() { if (ccLiveSubs) { ccLiveSubs.forEach(function (s) { try { s.stop(); } catch (e) {} }); ccLiveSubs = null; } ccLiveRam = ccLiveRamUsed = ccLiveCpu = ccLiveDocker = ""; ccLiveNetRx = ccLiveNetTx = 0; ccLiveNetOk = false; }
   // #13 (user: CPU chip stuck on "--"): Unraid 7.3 dropped /sub/cpuload and moved CPU load to a GraphQL
   // WEBSOCKET (wss://.../graphql) — which reverse proxies (the user's *.lol tunnel) fail to upgrade
   // (handshake returns 200, not 101), so the subscription never emits and the chip stays blank. Proxy-safe
@@ -828,6 +838,30 @@
       fetch(PROXY + "?path=" + encodeURIComponent("hostcpu"), { headers: { Accept: "application/json" } })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (j) { if (j && typeof j.pct === "number") { var c = Math.round(j.pct) + "%"; if (c !== ccLiveCpu) { ccLiveCpu = c; ccIsland(); } } })
+        .catch(function () {});
+    }
+    poll();
+    var iv = setInterval(poll, 3000);
+    if (ccLiveSubs) ccLiveSubs.push({ stop: function () { stopped = true; clearInterval(iv); } });
+  }
+  // #12: network Up/Down — poll the engine's /api/hostnet (cumulative rx/tx bytes from /proc/net/dev,
+  // primary-uplink summed) over plain HTTP (proxy-safe, same idiom as ccStartCpu), delta successive
+  // readings into a per-second rate. Counter reset / first sample -> no rate yet (chip shows "--").
+  function ccStartNet() {
+    var PROXY = "/plugins/cannonadecommand/server/ccapi.php", stopped = false, prev = null;
+    function poll() {
+      if (stopped || !ccLiveSubs) return;
+      fetch(PROXY + "?path=" + encodeURIComponent("hostnet"), { headers: { Accept: "application/json" } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          if (!j || typeof j.rx !== "number" || typeof j.tx !== "number") return;
+          var now = Date.now();
+          if (prev && now > prev.t && j.rx >= prev.rx && j.tx >= prev.tx) {
+            var dt = (now - prev.t) / 1000, rx = (j.rx - prev.rx) / dt, tx = (j.tx - prev.tx) / dt;
+            if (rx !== ccLiveNetRx || tx !== ccLiveNetTx || !ccLiveNetOk) { ccLiveNetRx = rx; ccLiveNetTx = tx; ccLiveNetOk = true; ccIsland(); }
+          }
+          prev = { rx: j.rx, tx: j.tx, t: now };
+        })
         .catch(function () {});
     }
     poll();
@@ -894,6 +928,7 @@
       // per-element visibility (user: an/abhaken welche Chips die Insel zeigt) — cc.isl.<key>,
       // default ON; a fixed render order gives the island a deterministic, tidy layout
       function iOn(k) { return g("cc.isl." + k, "1") !== "0"; }
+      var netUnit = g("cc.isl.net.unit", "bit") === "byte" ? "byte" : "bit";   // #12: Bit/Byte toggle, persisted
       var verNum = "";
       var verElN = document.querySelector('unraid-header-os-version span[id^="reka-menu-trigger"]');
       if (verElN) verNum = ((verElN.textContent) || "").replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
@@ -902,11 +937,11 @@
       var dockRun = parseInt(ccLiveDocker, 10) || 0, dockTot = 0;
       try { var csD = JSON.parse(g("cc.stateCache", "null")); if (csD && csD.containers && csD.containers.length) dockTot = csD.containers.length; } catch (eD) {}
       var dockStop = dockTot > dockRun ? dockTot - dockRun : 0;
-      var items = "u" + (iOn("uptime") ? 1 : 0) + "o" + (iOn("os") ? 1 : 0) + "v" + (iOn("version") ? 1 : 0) + "a" + (iOn("array") ? 1 : 0) + "f" + (iOn("fill") ? 1 : 0) + "r" + (iOn("ram") ? 1 : 0) + "c" + (iOn("cpu") ? 1 : 0) + "d" + (iOn("containers") ? 1 : 0) + "t" + (iOn("temps") ? 1 : 0) + "|dt" + dockTot;
+      var items = "u" + (iOn("uptime") ? 1 : 0) + "o" + (iOn("os") ? 1 : 0) + "v" + (iOn("version") ? 1 : 0) + "a" + (iOn("array") ? 1 : 0) + "f" + (iOn("fill") ? 1 : 0) + "r" + (iOn("ram") ? 1 : 0) + "c" + (iOn("cpu") ? 1 : 0) + "d" + (iOn("containers") ? 1 : 0) + "t" + (iOn("temps") ? 1 : 0) + "n" + (iOn("net") ? 1 : 0) + "|dt" + dockTot + "|nu" + netUnit;
       // idempotence guard: nchan rewrites the footer every few seconds with UNCHANGED text most
       // of the time — compare the source signature and skip the DOM rebuild when nothing moved
       // (bar width/colour + the item toggles included so a change always redraws)
-      var sig = upTxt + "|" + upTitle + "|" + osLabel + "|" + verNum + "|" + raw + "|" + temps.join(",") + "|" + warn + "|" + usage + "|" + uw + uc + "|" + (par ? par[0] : "") + "|" + ccLiveRam + "/" + ccLiveRamUsed + "/" + ccLiveCpu + "/" + ccLiveDocker + "|" + items;
+      var sig = upTxt + "|" + upTitle + "|" + osLabel + "|" + verNum + "|" + raw + "|" + temps.join(",") + "|" + warn + "|" + usage + "|" + uw + uc + "|" + (par ? par[0] : "") + "|" + ccLiveRam + "/" + ccLiveRamUsed + "/" + ccLiveCpu + "/" + ccLiveDocker + "|net" + (ccLiveNetOk ? Math.round(ccLiveNetRx) + "/" + Math.round(ccLiveNetTx) : "") + "|" + items;
       if (isle && sig === ccIslandSig) return;
       ccIslandSig = sig;
       if (!isle) {
@@ -986,6 +1021,23 @@
       // 5c) CONTAINERS — #23: running-container count, live from nchan /sub/dockerload (one line per running
       // container); a dotted chip, not a bar. Cross-page. Hides if none / no data.
       if (iOn("containers") && (ccLiveDocker || dockTot)) chip((ccLiveDocker || "0") + (dockTot ? " / " + dockStop : ""), "#3fae6a", T(dockRun + " laufend" + (dockTot ? ", " + dockStop + " gestoppt (von " + dockTot + ")" : ""), dockRun + " running" + (dockTot ? ", " + dockStop + " stopped (of " + dockTot + ")" : "")), "cc-isl-docker");   // #18: running / stopped
+      // 5d) NET — #12 (user): live Down(rx)/Up(tx) throughput as ONE chip with two segments (↓ / ↑),
+      // fed by ccStartNet() -> engine /api/hostnet. Click toggles the unit Bit <-> Byte (persisted,
+      // handled in the island click delegate). Shows "--" until the /api/hostnet backend ships.
+      if (iOn("net")) {
+        var fmtRate = function (bps) {
+          if (!ccLiveNetOk || !isFinite(bps) || bps < 0) return "--";
+          var v = netUnit === "bit" ? bps * 8 : bps, base = netUnit === "bit" ? 1000 : 1024;
+          var u = netUnit === "bit" ? ["bit/s", "Kbit/s", "Mbit/s", "Gbit/s"] : ["B/s", "KB/s", "MB/s", "GB/s"], i = 0;
+          while (v >= base && i < u.length - 1) { v /= base; i++; }
+          return (i === 0 || v >= 100 ? Math.round(v) : Math.round(v * 10) / 10) + " " + u[i];
+        };
+        var nc = document.createElement("span"); nc.className = "cc-isl-chip cc-isl-net"; nc.setAttribute("data-cc-chip", "net");
+        nc.setAttribute("data-cc-tip", T("Netzwerk-Traffic — Klick: Bit/Byte", "Network traffic — click: bit/byte"));
+        var segD = document.createElement("span"); segD.className = "cc-isl-net-seg"; segD.textContent = "↓ " + fmtRate(ccLiveNetRx);
+        var segU = document.createElement("span"); segU.className = "cc-isl-net-seg"; segU.textContent = "↑ " + fmtRate(ccLiveNetTx);
+        nc.appendChild(segD); nc.appendChild(segU); ccIslRows[0].appendChild(nc);
+      }
       // 6) TEMPS — first sensor = CPU, second = Mainboard (Unraid footer order), rest generic; the
       // dot carries the state (green below cc.tempwarn, amber at/above, red at threshold+15)
       if (iOn("temps")) {
@@ -1077,7 +1129,10 @@
           var chip = e.target && e.target.closest ? e.target.closest("#cc-island .cc-isl-chip") : null;
           if (!chip) return;
           if (ccIslSuppressClick) { ccIslSuppressClick = false; e.preventDefault(); e.stopPropagation(); return; }
-          var key = ccIslKey(chip), url = key ? (CC_ISL_NAV[key] || (/^temp/.test(key) ? "/Dashboard" : null)) : null;
+          var key = ccIslKey(chip);
+          // #12: the net chip is a unit toggle, not a nav target — flip Bit<->Byte, persist, repaint in place
+          if (key === "net") { localStorage.setItem("cc.isl.net.unit", g("cc.isl.net.unit", "bit") === "bit" ? "byte" : "bit"); ccIslandSig = ""; ccIsland(); e.preventDefault(); e.stopPropagation(); return; }
+          var url = key ? (CC_ISL_NAV[key] || (/^temp/.test(key) ? "/Dashboard" : null)) : null;
           if (url) location.href = url;
         }, true);
       }

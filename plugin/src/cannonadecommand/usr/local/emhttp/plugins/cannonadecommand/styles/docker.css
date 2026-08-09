@@ -704,6 +704,9 @@ html { --cc-align-left: 10px; }
 html.cc-header-on { --cc-align-left: 15px; }
 html:not(.Theme--sidebar) #displaybox:has(#plugin_list),
 html:not(.Theme--sidebar) #displaybox:has(#docker_list) { padding-left: var(--cc-align-left, 10px); }
+/* #11: gleiche Content-Rechtskante fuer Docker-/Plugins-Liste + Start(Autostart)-Ansicht (deckt STARTPLAN/3rd-Party/Toggles); :has(#docker_list) matcht auch bei ausgeblendeter Liste. Ein Token (--cc-edge-gutter, Tokens.css). */
+html:not(.Theme--sidebar) #displaybox:has(#plugin_list),
+html:not(.Theme--sidebar) #displaybox:has(#docker_list) { padding-right: var(--cc-edge-gutter, 8px); }
 .tabs, #tabs { background: transparent !important; border: 0 !important; }
 .tabs .tab, #tabs .tab { background: transparent !important; border: 0 !important; text-transform: uppercase; letter-spacing: 1.5px; }
 
@@ -763,10 +766,11 @@ html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs button[role="tab"] {
 html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs { border: none; min-height: 0; }
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head {
   display: inline-flex; align-items: center; gap: 8px;
-  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-pagebadge-fs, 13px); line-height: 1;   /* #15/#19: one step below the 15px main-menu tabs */
+  min-height: var(--cc-lgb-h, 36px); box-sizing: border-box;   /* #8: full section head like the VM tab — the plugins SECTION badge is NOT the shrunk page-badge tier; only .cc-plugauth (author) stays small */
+  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-head-fs, 15px); line-height: 1;
   background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;   /* #19: rainbow-aware (jewel in rainbow, not the static accent) */
   border: none; border-radius: var(--cc-b-radius, 999px);
-  padding: var(--cc-md-pad, 0 20px); margin: 0 0 16px;
+  padding: var(--cc-head-pad, 9px 18px); margin: 0 0 16px;
 }
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head i,
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
@@ -903,6 +907,41 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-rb-
    set (the old duplicate #2e2e2e/#1e1e1e lines fought each other). */
 #cc-settings .cc-set-sel option { background: var(--cc-surface, #1e1e1e); color: var(--cc-text, #f4f4f4); }
 #cc-settings .cc-set-sel option:checked, #cc-settings .cc-set-sel option:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, #ffffff); }
+/* #2: settings dropdowns now use the SAME cc-dsel custom widget as the Docker network dropdown
+   (settings.js ccDsel) — the native <select> stays display:none as source of truth. No border/ring;
+   selected chip = rainbow/accent SHADE only (house law). */
+#cc-settings .cc-dsel { position: relative; display: inline-flex; flex: 1; min-width: 0; }
+#cc-settings .cc-dsel-trigger {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
+  flex: 1; min-width: 0; height: 36px; box-sizing: border-box;
+  background-color: var(--cc-surface-chip, #383838); color: var(--txt, #eaeaea);
+  border: 0; border-radius: var(--cc-b-radius, 8px); padding: 0 13px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background-color .12s, filter .12s;
+}
+#cc-settings .cc-dsel-trigger:hover { filter: brightness(1.12); }
+#cc-settings .cc-dsel.cc-open .cc-dsel-trigger { background-color: var(--cc-surface-chip-hi, color-mix(in srgb, var(--cc-surface-chip, #383838) 82%, #ffffff)); }
+#cc-settings .cc-dsel-trigger::after {
+  content: ""; flex: 0 0 auto; width: 0; height: 0; margin-left: 8px;
+  border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--txt, #eaeaea);
+}
+#cc-settings .cc-dsel-panel {
+  display: none; position: absolute; z-index: 30; margin-top: 4px; flex-direction: column; gap: 6px;
+  padding: 8px; width: max-content; min-width: 160px; max-width: min(92vw, 420px);
+  max-height: 50vh; overflow-y: auto; overflow-x: hidden;
+  background: var(--cc-surface, #303030); border: none; border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .6);
+}
+#cc-settings .cc-dsel.cc-open .cc-dsel-panel { display: flex; }
+#cc-settings .cc-dsel-opt {
+  display: flex; align-items: center; gap: 8px; justify-content: flex-start;
+  line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 8px);
+  background: rgba(255, 255, 255, .09); border: none; color: var(--cc-text, #ececec); white-space: nowrap;
+  transition: background .12s, color .12s;
+}
+#cc-settings .cc-dsel-opt:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
+#cc-settings .cc-dsel-opt.is-selected { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); box-shadow: none !important; }
+#cc-settings .cc-dsel-opt.is-selected:hover { filter: brightness(1.12); }
+#cc-settings .cc-dsel-opt.is-disabled { opacity: .4; pointer-events: none; }
 .cc-set-prev { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; align-items: center; }
 .cc-set-prev .cc-b-lg { font-size: 15px; font-weight: 700; padding: 6px 16px; letter-spacing: .2px; } /* preview NAME headline badge — 15px / 6px 16px = the live Shares lg tier (Shares.css --cc-lg-*) */
 /* Hauptmenueleiste preview: mock of the top nav TABS (idle grey pill + one accent-filled
@@ -1006,8 +1045,13 @@ div.js-actions > * { pointer-events: auto; }
 }
 div.js-actions input[type=button] { flex: none !important; background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important; border: none !important; box-shadow: none !important; padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs, 13px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.6px !important; font-family: inherit !important; cursor: pointer; transition: filter .12s; }
 /* #8 (user, REVERSAL of the earlier top-right pin): the Basic/Advanced view toggle STAYS in the bottom
-   action bar, right-aligned — exactly where it was ("der bleibt immer auf der unteren leiste"). */
-div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; }
+   action bar, right-aligned — exactly where it was ("der bleibt immer auf der unteren leiste").
+   #5 (user: "toggle immer noch in der mitte" → flush an den Content-Rand): margin-left:auto pins it
+   right; on a NARROW window the many native buttons overflow this overflow-x:auto bar and the toggle
+   would scroll off-screen. position:sticky keeps it visible flush at the content right edge (edge-gutter)
+   at every width, buttons scroll behind it. A matching background so the scrolled buttons don't bleed
+   through — same footer-strip colour as the bar, so it reads as part of the bar, not a chip. */
+div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; position: sticky; right: var(--cc-edge-gutter, 8px); z-index: 2; padding-left: 10px; background: var(--footer-background-color, var(--mild-background-color, #1c1c1c)); }
 div.js-actions .cc-bar-adv-lbl { color: #cfcfcf; font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 div.js-actions input[type=button]:hover { filter: brightness(1.14); }
 
@@ -1407,7 +1451,7 @@ html.cc-docker-on.cc-on-addct div.title {
      starts at 35% and native inputs are ~400px wide, so the field right edge = ~35% + 400px.
      Right-pad = 65% - field width lands the toggle flush with the inputs/cards instead of the
      viewport. --cc-ct-field-w tunable if native input width differs. */
-  padding: 0 var(--cc-ct-toggle-pad, calc(64% - var(--cc-ct-field-w, 400px))) 0 0 !important;   /* D2: docker.js ctAlignToggle() misst die echte Feld-Rechtskante -> exakte px; der calc ist nur der Pre-Measure-Fallback */
+  padding: 0 var(--cc-edge-gutter, 8px) 0 0 !important;   /* #5: Feldmessung ENTFERNT — Toggle (span.right) flush an die #displaybox-Content-Rechtskante, nur der Scrollbar-Gutter als Rechts-Padding (nicht mehr die Formularfeld-Rechtskante/Seitenmitte) */
 }
 /* the form page joins the house left edge: #displaybox aligns with the main menu bar
    (--cc-align-left, set by header.js) — the badge sat 10px vs the menu's 15px (user). */

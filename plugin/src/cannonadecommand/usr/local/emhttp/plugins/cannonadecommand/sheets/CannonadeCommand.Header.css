@@ -256,6 +256,10 @@ html.cc-header-on #cc-island .cc-isl-lead {
   flex: 0 0 auto; margin-right: 6px; font-size: 10px; font-weight: 700;
   letter-spacing: .4px; opacity: .72; text-transform: uppercase;
 }
+/* #12: network Up/Down chip — clickable (toggles Bit/Byte); the two arrow segments sit side by side.
+   Shade-only, radius from --cc-b-radius via the shared .cc-isl-chip rule; no dot, no border, no ring. */
+html.cc-header-on #cc-island .cc-isl-net { cursor: pointer; }
+html.cc-header-on #cc-island .cc-isl-net .cc-isl-net-seg + .cc-isl-net-seg { margin-left: 8px; }
 
 /* ═══ TOP HEADER TAKEOVER: brand + version chip + bell/burger in CC style ═══
    The Connect components render LIGHT DOM, so outside CSS matches and survives the

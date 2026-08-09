@@ -13,7 +13,7 @@ $sock  = getenv('CC_SOCK') ?: '/var/run/cannonadecommand.sock';
 // ONE VM (the engine validates the name against the live libvirt domain list, uses only
 // virsh --config/--live for CPU/RAM and host-side iptables physdev hashlimit for bandwidth,
 // and never virsh-defines/undefines/creates a domain).
-$allow = ['state' => ['GET'], 'stats' => ['GET'], 'hostcpu' => ['GET'], 'action' => ['POST'], 'limits' => ['GET', 'POST'], 'restartpolicy' => ['POST'], 'limitlog' => ['GET'],
+$allow = ['state' => ['GET'], 'stats' => ['GET'], 'hostcpu' => ['GET'], 'hostnet' => ['GET'], 'action' => ['POST'], 'limits' => ['GET', 'POST'], 'restartpolicy' => ['POST'], 'limitlog' => ['GET'],
     'bwstatus' => ['GET'], 'plan' => ['GET', 'PUT'], 'apply' => ['POST'], 'config' => ['GET', 'PUT'], 'vms' => ['GET'], 'vmlimits' => ['POST'],
     'vmdisks' => ['GET'], 'vmdiskresize' => ['POST']];
 

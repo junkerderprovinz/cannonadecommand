@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/junkerderprovinz/cannonadecommand/internal/hostcpu"
+	"github.com/junkerderprovinz/cannonadecommand/internal/hostnet"
 	"github.com/junkerderprovinz/cannonadecommand/internal/model"
 	"github.com/junkerderprovinz/cannonadecommand/internal/netshape"
 	"github.com/junkerderprovinz/cannonadecommand/internal/orchestrator"
@@ -106,6 +107,12 @@ func (s *Server) Handler() http.Handler {
 	// Dashboard uses is often broken by reverse proxies; this HTTP poll always works).
 	mux.HandleFunc("GET /api/hostcpu", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]int{"pct": hostcpu.Percent()})
+	})
+	// #12: proxy-safe host network throughput for the status island. Returns the primary
+	// uplink's cumulative rx/tx byte counters; the browser deltas two polls into a rate.
+	mux.HandleFunc("GET /api/hostnet", func(w http.ResponseWriter, _ *http.Request) {
+		rx, tx := hostnet.Rate()
+		writeJSON(w, http.StatusOK, map[string]uint64{"rx": rx, "tx": tx})
 	})
 	mux.HandleFunc("GET /api/limits", s.handleGetLimits)
 	mux.HandleFunc("GET /api/limitlog", s.handleLimitLog)

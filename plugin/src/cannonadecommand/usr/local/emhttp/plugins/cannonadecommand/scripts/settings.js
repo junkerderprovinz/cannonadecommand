@@ -1341,7 +1341,7 @@
       // per-element checklist (user: an/abhaken welche Chips die Insel zeigt); header.js renders
       // them in a FIXED order and reads cc.isl.<key> live. Default all on.
       cI.appendChild(el("div", "cc-set-lbl", T("Angezeigte Elemente", "Shown elements")));
-      [["uptime", T("Betriebszeit", "Uptime")], ["os", T("Unraid-Edition", "Unraid edition")], ["version", T("Unraid-Version", "Unraid version")], ["array", T("Array-Zustand", "Array state")], ["fill", T("Array-Füllstand", "Array usage")], ["ram", T("RAM-Auslastung", "RAM usage")], ["cpu", T("CPU-Last", "CPU load")], ["containers", T("Laufende Container", "Running containers")], ["temps", T("Temperaturen", "Temperatures")]].forEach(function (it) {
+      [["uptime", T("Betriebszeit", "Uptime")], ["os", T("Unraid-Edition", "Unraid edition")], ["version", T("Unraid-Version", "Unraid version")], ["array", T("Array-Zustand", "Array state")], ["fill", T("Array-Füllstand", "Array usage")], ["ram", T("RAM-Auslastung", "RAM usage")], ["cpu", T("CPU-Last", "CPU load")], ["containers", T("Laufende Container", "Running containers")], ["net", T("Netzwerk-Traffic", "Network traffic")], ["temps", T("Temperaturen", "Temperatures")]].forEach(function (it) {
         cI.appendChild(toggleRow(it[1], get("cc.isl." + it[0], "1") !== "0", function (v) { set("cc.isl." + it[0], v ? "1" : "0"); syncHeaderBar(); }));
       });
       cI.appendChild(segRow(T("Temperatur-Warnschwelle", "Temperature warning threshold"), [["50", "50 °C"], ["60", "60 °C"], ["70", "70 °C"]], get("cc.tempwarn", "60"), function (v) { set("cc.tempwarn", v); syncHeaderBar(); }));
@@ -1605,7 +1605,63 @@
     var sel = el("select", "cc-set-sel");
     opts.forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; if (o[0] === cur) op.selected = true; if (o[2]) op.style.fontFamily = o[2]; sel.appendChild(op); });
     sel.addEventListener("change", function () { onChange(sel.value); });
-    row.appendChild(sel); return row;
+    row.appendChild(ccDsel(sel)); return row;   // #2: native <select> hidden, wrapped in the cc-dsel custom widget
+  }
+  // #2 (user, 2 screenshots): the settings dropdowns must use the SAME custom CC widget as the Docker
+  // network dropdown (.cc-dsel), not a native <select> whose opened list is browser-black. Mirror
+  // docker.js ctWrapSelect: keep the native <select> as the display:none source of truth (its `change`
+  // still fires onChange -> the live effects run), render a trigger + floating chip panel. No
+  // border/ring; selected chip = rainbow/accent SHADE only (house law).
+  function ccDsel(sel) {
+    var wrap = el("span", "cc-dsel"); sel.style.display = "none"; wrap.appendChild(sel);
+    var trig = el("span", "cc-dsel-trigger"); wrap.appendChild(trig);
+    var panel = el("div", "cc-dsel-panel"); wrap.appendChild(panel);
+    for (var k = 0; k < sel.options.length; k++) {
+      var o = sel.options[k];
+      var chip = el("div", "cc-dsel-opt", o.text); chip.setAttribute("data-i", k);
+      if (o.style.fontFamily) chip.style.fontFamily = o.style.fontFamily;   // font picker: chip previews in its own face
+      chip.addEventListener("click", (function (idx) {
+        return function (ev) {
+          ev.stopPropagation();
+          if (sel.options[idx].disabled) return;
+          sel.selectedIndex = idx;
+          sel.dispatchEvent(new Event("change", { bubbles: true }));
+          ccDselSync(sel); wrap.classList.remove("cc-open");
+        };
+      })(k));
+      panel.appendChild(chip);
+    }
+    trig.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      ccDselSync(sel);
+      var open = wrap.classList.toggle("cc-open");
+      if (open) { var o2 = document.querySelectorAll("#cc-settings .cc-dsel.cc-open"); for (var j = 0; j < o2.length; j++) if (o2[j] !== wrap) o2[j].classList.remove("cc-open"); ccDselPosition(trig, panel); }
+    });
+    ccDselSync(sel); return wrap;
+  }
+  function ccDselSync(sel) {
+    var w = sel.parentNode; if (!w || !w.classList || !w.classList.contains("cc-dsel")) return;
+    var t2 = w.querySelector(".cc-dsel-trigger"), c = w.querySelectorAll(".cc-dsel-opt");
+    var label = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : "";
+    if (t2 && t2.textContent !== label) t2.textContent = label;   // GUARDED writes: no childList churn
+    for (var k = 0; k < c.length; k++) { var o = sel.options[+c[k].getAttribute("data-i")]; if (!o) continue; c[k].classList.toggle("is-selected", o.selected); c[k].classList.toggle("is-disabled", !!o.disabled); }
+  }
+  // panel is position:fixed on open so the #canvas overflow can't clip a long list; flips up when there
+  // is more room above (no transform-ancestor math needed — settings has no jQuery-UI dialog).
+  function ccDselPosition(trig, panel) {
+    try {
+      var r = trig.getBoundingClientRect(), gap = 4, edge = 14;
+      var below = window.innerHeight - r.bottom - edge, above = r.top - edge;
+      panel.style.position = "fixed"; panel.style.boxSizing = "border-box";
+      panel.style.left = Math.round(r.left) + "px"; panel.style.minWidth = Math.round(r.width) + "px"; panel.style.maxWidth = "min(92vw, 420px)";
+      if (below >= 200 || below >= above) { panel.style.top = Math.round(r.bottom + gap) + "px"; panel.style.bottom = "auto"; panel.style.maxHeight = Math.max(140, below - gap) + "px"; }
+      else { panel.style.bottom = Math.round(window.innerHeight - r.top + gap) + "px"; panel.style.top = "auto"; panel.style.maxHeight = Math.max(140, above - gap) + "px"; }
+    } catch (e) {}
+  }
+  if (!window.__ccSetDsel) {   // ONE document-level close handler for the page lifetime (no body observer)
+    window.__ccSetDsel = true;
+    document.addEventListener("click", function () { var o = document.querySelectorAll("#cc-settings .cc-dsel.cc-open"); for (var i = 0; i < o.length; i++) o[i].classList.remove("cc-open"); });
+    window.addEventListener("scroll", function (e) { var tgt = e && e.target; if (tgt && tgt.closest && tgt.closest(".cc-dsel-panel")) return; var o = document.querySelectorAll("#cc-settings .cc-dsel.cc-open"); for (var i = 0; i < o.length; i++) o[i].classList.remove("cc-open"); }, true);
   }
   // indent the WHOLE panel (logo/hero, tab strip AND cards) so it starts at the first
   // main-menu tab: --cc-align-left is stamped by header.js (fallback 15px). Padding the
