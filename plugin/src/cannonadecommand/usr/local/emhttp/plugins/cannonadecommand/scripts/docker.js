@@ -2359,7 +2359,7 @@
   // (makeConfig); the Add/Edit-Config popup is a jQuery-UI dialog whose #dialogAddConfig content is
   // re-set on every open — hence the body-level observer; its selects stay native-filled (the dialog
   // would clip an overlay panel).
-  var ctMo = null, ctPending = false;
+  var ctMo = null, ctPending = false, ctRz = 0;
   function ctPn() { try { return location.pathname.replace(/\/+$/, ""); } catch (e) { return ""; } }
   function onCtForm() {
     try { return /^\/(Docker|Apps)\/(AddContainer|UpdateContainer)$/.test(ctPn()) && !!document.querySelector('#canvas form[onsubmit^="return prepareConfig"]'); } catch (e) { return false; }
@@ -2665,6 +2665,30 @@
     });
     for (var i = 0; i < dls.length; i++) { if (dls[i] !== sorted[i]) { sorted.forEach(function (d) { tbl.appendChild(d); }); return; } }   // only reorder if order actually changed (loop guard)
   }
+  // #12/D2: right-align the Add/Update-Container form's Basic/Advanced view toggle (div.title >
+  // span.right) to the ACTUAL value-field right edge, replacing the fragile calc(64% - 400px) that
+  // only lined up at one viewport/field width. Measure the widest fixed-width field (skip hidden +
+  // full-width stretch fields) and pad div.title's right by (title-right - field-right) so
+  // flex/space-between lands the toggle flush with the inputs at any width. Writing a CSS var on
+  // <html> mutates no childList -> the body observer cannot loop (freeze-safe).
+  function ctAlignToggle() {
+    try {
+      var root = document.documentElement;
+      var title = null, titles = document.querySelectorAll("#displaybox div.title, #canvas div.title");
+      for (var t = 0; t < titles.length; t++) { if (titles[t].querySelector(":scope > span.right")) { title = titles[t]; break; } }
+      if (!title) { root.style.removeProperty("--cc-ct-toggle-pad"); return; }
+      var fields = document.querySelectorAll('#canvas form dd input[type="text"], #canvas form dd input[type="number"], #canvas form dd .cc-dsel-trigger, #canvas form dd select:not([data-cc-dsel])');
+      var fieldRight = 0;
+      for (var i = 0; i < fields.length; i++) {
+        var fr = fields[i].getBoundingClientRect();
+        if (!fr.width || fr.width > 720) continue;   // skip display:none (0) + full-width stretch fields
+        if (fr.right > fieldRight) fieldRight = fr.right;
+      }
+      if (!fieldRight) { root.style.removeProperty("--cc-ct-toggle-pad"); return; }
+      var pad = Math.round(title.getBoundingClientRect().right - fieldRight);
+      root.style.setProperty("--cc-ct-toggle-pad", (pad > 0 ? pad : 0) + "px");
+    } catch (e) {}
+  }
   function ctApply() {
     try {
       var root = document.documentElement;
@@ -2699,6 +2723,7 @@
         ce.style.setProperty("--cc-rb-c", cc0); ce.style.setProperty("--cc-rb-ct", L0 > 150 ? "#161616" : "#fff");
       }
       ccAllocFill();   // #10: fill stopped-container IP/ports in the Docker-Zuweisungen table when it's open
+      ctAlignToggle();   // #12/D2: right-align the Basic/Advanced view toggle to the measured field right edge
     } catch (e) {}
   }
   function bootCtForm() {
@@ -2706,6 +2731,7 @@
       ctApply();
       ctMo = new MutationObserver(function () { if (ctPending) return; ctPending = true; setTimeout(function () { ctPending = false; ctApply(); }, 150); });
       ctMo.observe(document.body, { childList: true, subtree: true });   // config rows (#configLocation[Advanced]) + the re-filled jQuery-UI dialog land under body
+      window.addEventListener("resize", function () { if (ctRz) return; ctRz = requestAnimationFrame(function () { ctRz = 0; ctAlignToggle(); }); });   // #12/D2: re-measure toggle alignment on resize
       document.addEventListener("click", function () { var o = document.querySelectorAll(".cc-dsel.cc-open"); for (var i = 0; i < o.length; i++) o[i].classList.remove("cc-open"); });
       // #8: the panel is now position:fixed, so it would drift from its trigger on scroll — close any
       // open dropdown when the PAGE/content scrolls (capture: catches the #canvas div.content scroller).

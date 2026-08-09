@@ -29,7 +29,15 @@
       // variants as fallbacks.
       var tab = null, cands = db.querySelectorAll("div.tab input[type=radio] + label, .tabbed input[type=radio] + label, div.tab label, .tabbed label, div.tabs label, .tabs label, button[role='tab'], .tabs-container > *");   // div.tab (SINGULAR) + .tabbed = the REAL wrapper classes our own docker.css styles (576-585) — v2.31.6 searched div.tabS and missed again
       for (var i = 0; i < cands.length; i++) { var cr0 = cands[i].getBoundingClientRect(); if (cands[i].offsetHeight && cr0.width) { tab = cands[i]; break; } }
-      if (!tab) return;
+      var _ccNoTab = false;
+      if (!tab) {
+        // native NON-tabbed plugin view has NO radio/label tab strip -> the loop used to bail here,
+        // stranding #checkall/#updateall/#removeall mid-list. Fall back to the plugin table's TOP edge
+        // as the vertical anchor so the button still pins top/right above the list.
+        tab = document.querySelector("#plugin_table, table.cc-plug, #plugin_list");
+        if (!tab) return;
+        _ccNoTab = true;
+      }
       var host = document.getElementById("cc-plugbtns");
       if (!host) { host = document.createElement("div"); host.id = "cc-plugbtns"; }
       if (host.parentNode !== db) db.appendChild(host);
@@ -69,6 +77,8 @@
         inn[n2].style.setProperty("margin-left", "0", "important"); inn[n2].style.setProperty("margin-right", "0", "important");
       }
       var tr0 = tab.getBoundingClientRect(), dr = db.getBoundingClientRect();
+      // non-tabbed view: sit the button just ABOVE the list top; tabbed view: on the tab-row centre.
+      var anchorY = _ccNoTab ? (tr0.top - (host.offsetHeight || 30) / 2 - 6) : (tr0.top + tr0.height / 2);
       // flush RIGHT with the MENU BAR's icon edge (house rule "alles richtet sich an der
       // Menueleiste aus" — user measurement 2026-07-19: icons end at 1414, table at 1417, the
       // 3px offset read as "nicht rechtsbuendig"). Fallbacks: table edge, then page padding.
@@ -98,8 +108,8 @@
       var btn = null, cand2 = host.querySelectorAll("input, button");
       for (var c2 = 0; c2 < cand2.length; c2++) { if (cand2[c2].offsetHeight) { btn = cand2[c2]; break; } }
       var refEl = btn || host, rr = refEl.getBoundingClientRect();
-      var cur = parseInt(host.style.top, 10); if (isNaN(cur)) { cur = Math.round((tr0.top + tr0.height / 2) - dr.top - (host.offsetHeight || 30) / 2); host.style.setProperty("top", cur + "px", "important"); rr = refEl.getBoundingClientRect(); }
-      var need = Math.round(cur + ((tr0.top + tr0.height / 2) - (rr.top + rr.height / 2)));
+      var cur = parseInt(host.style.top, 10); if (isNaN(cur)) { cur = Math.round(anchorY - dr.top - (host.offsetHeight || 30) / 2); host.style.setProperty("top", cur + "px", "important"); rr = refEl.getBoundingClientRect(); }
+      var need = Math.round(cur + (anchorY - (rr.top + rr.height / 2)));
       if (Math.abs(need - cur) > 1) host.style.setProperty("top", need + "px", "important");
     } catch (e) {}
   }
@@ -347,7 +357,7 @@
     var au = tds[2];
     if (!au.querySelector(".cc-b")) {
       var name = au.textContent.trim();
-      if (name) { au.textContent = ""; au.appendChild(badge("Von", name, idx)); }
+      if (name) { au.textContent = ""; var ab = badge("Von", name, idx); ab.classList.add("cc-b-von", "cc-b-pauthor", "cc-plugauth"); au.appendChild(ab); }
     }
     // ── col 4 (vid): version badge with the CHANGELOG badge stacked underneath
     // (Docker-tab style); the native info-circle keeps its delegated handler —

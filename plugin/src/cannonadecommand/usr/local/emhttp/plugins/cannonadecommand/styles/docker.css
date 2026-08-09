@@ -208,6 +208,9 @@ html.cc-shares-rbneutral:not(.cc-state-native) .cc-enh #docker_list tr:hover .cc
 .cc-b-k { opacity: .72; font-weight: 500; }
 .cc-b-v { font-family: Consolas, "SFMono-Regular", monospace; }
 .cc-b-von .cc-b-v { font-family: inherit; }
+/* #15/#19: the Plugins-tab "Von <author>" badge follows the systemwide page-badge scale (one step under the
+   main-menu tabs), uniform in tab + list view. Plugins-scoped so nothing else shifts. */
+.cc-plug .cc-plugauth, .cc-plug-lite .cc-plugauth { font-size: var(--cc-pagebadge-fs, 13px) !important; }
 /* ── canonical DELETE control, standardized systemwide (plugin list + Shares detail): the badge
    hugs its own text and is ALWAYS danger-red; the confirm checkbox is a SEPARATE accent-tinted
    sibling BESIDE it, never inside the pill. Same visual in CannonadeCommand.Shares.css (there the
@@ -755,10 +758,10 @@ html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs button[role="tab"] {
 html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs { border: none; min-height: 0; }
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head {
   display: inline-flex; align-items: center; gap: 8px;
-  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-head-fs, 15px); line-height: 1;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-pagebadge-fs, 13px); line-height: 1;   /* #15/#19: one step below the 15px main-menu tabs */
   background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;   /* #19: rainbow-aware (jewel in rainbow, not the static accent) */
   border: none; border-radius: var(--cc-b-radius, 999px);
-  padding: var(--cc-head-pad, 9px 18px); margin: 0 0 16px;
+  padding: var(--cc-md-pad, 0 20px); margin: 0 0 16px;
 }
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head i,
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
@@ -888,11 +891,13 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-rb-
    brighter caret in its own chip so it unmistakably reads as a dropdown. No border/ring (house law). */
 #cc-settings .cc-set-sel { flex: 1; min-width: 0; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-color: var(--cc-surface-chip, #383838) !important; color: var(--txt, #eaeaea) !important; border: 0 !important; border-radius: var(--cc-b-radius, 8px) !important; padding: 0 36px 0 13px !important; font-size: 13px; font-weight: 600; cursor: pointer; box-sizing: border-box; height: 36px; min-height: 36px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" fill="none" stroke="%23eaeaea" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>') !important; background-repeat: no-repeat !important; background-position: right 12px center !important; transition: background-color .12s, filter .12s; }
 #cc-settings .cc-set-sel:hover { background-color: var(--cc-surface-chip, #383838) !important; filter: brightness(1.12); }
-#cc-settings .cc-set-sel:focus { outline: none; box-shadow: 0 0 0 3px rgba(47, 111, 235, .42) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 45%, transparent) !important; }
-/* open option list -> dark to match CC (native <option> is only partly stylable: background + selected accent) */
-#cc-settings .cc-set-sel option { background: #2e2e2e; color: #eaeaea; }
-#cc-settings .cc-set-sel option:checked { background: var(--cc-accent, #2f6feb); color: #fff; }
-#cc-settings .cc-set-sel option { background: #1e1e1e; color: #f4f4f4; }
+/* #4: focus by SHADE only (brighter surface), NO ring/box-shadow (house law). */
+#cc-settings .cc-set-sel:focus, #cc-settings .cc-set-sel:focus-visible { outline: none !important; box-shadow: none !important; background-color: var(--cc-surface-chip-hi, color-mix(in srgb, var(--cc-surface-chip, #383838) 82%, #ffffff)) !important; filter: brightness(1.18); }
+/* #4: open option list on CC surface; selected = accent/rainbow. Native <option> is only
+   partly stylable (background + color) and cannot take radius/ring — that's fine. Single rule
+   set (the old duplicate #2e2e2e/#1e1e1e lines fought each other). */
+#cc-settings .cc-set-sel option { background: var(--cc-surface, #1e1e1e); color: var(--cc-text, #f4f4f4); }
+#cc-settings .cc-set-sel option:checked, #cc-settings .cc-set-sel option:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, #ffffff); }
 .cc-set-prev { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; align-items: center; }
 .cc-set-prev .cc-b-lg { font-size: 15px; font-weight: 700; padding: 6px 16px; letter-spacing: .2px; } /* preview NAME headline badge — 15px / 6px 16px = the live Shares lg tier (Shares.css --cc-lg-*) */
 /* Hauptmenueleiste preview: mock of the top nav TABS (idle grey pill + one accent-filled
@@ -1397,7 +1402,7 @@ html.cc-docker-on.cc-on-addct div.title {
      starts at 35% and native inputs are ~400px wide, so the field right edge = ~35% + 400px.
      Right-pad = 65% - field width lands the toggle flush with the inputs/cards instead of the
      viewport. --cc-ct-field-w tunable if native input width differs. */
-  padding: 0 calc(64% - var(--cc-ct-field-w, 400px)) 0 0 !important;
+  padding: 0 var(--cc-ct-toggle-pad, calc(64% - var(--cc-ct-field-w, 400px))) 0 0 !important;   /* D2: docker.js ctAlignToggle() misst die echte Feld-Rechtskante -> exakte px; der calc ist nur der Pre-Measure-Fallback */
 }
 /* the form page joins the house left edge: #displaybox aligns with the main menu bar
    (--cc-align-left, set by header.js) — the badge sat 10px vs the menu's 15px (user). */
@@ -1405,8 +1410,8 @@ html.cc-docker-on.cc-on-addct:not(.Theme--sidebar) #displaybox { padding-left: v
 html.cc-docker-on.cc-on-addct #displaybox div.title > span.left,
 html.cc-docker-on.cc-on-addct div.title .cc-pagehead {
   display: inline-flex !important; align-items: center; gap: 8px;
-  font-size: var(--cc-head-fs, 15px) !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
-  padding: var(--cc-head-pad, 9px 18px); min-height: var(--cc-lgb-h, 36px); box-sizing: border-box;
+  font-size: var(--cc-pagebadge-fs, 13px) !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;   /* #19: one step below the 15px main-menu tabs */
+  padding: var(--cc-md-pad, 0 20px); min-height: var(--cc-md-h, 30px); box-sizing: border-box;
   border-radius: var(--cc-b-radius, 999px); line-height: 1;
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;   /* rainbow: ctApply stamps per element; unstamped = accent */
 }

@@ -299,7 +299,10 @@
   function ccPopoverDim() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) { var d0 = document.getElementById("cc-pop-dim"); if (d0) d0.style.display = "none"; return; }
-      var pop = document.querySelector(".bg-popover");
+      // the burger MENU teleports to body as .bg-popover; the bell NOTIFICATION centre is a Sheet
+      // rendered INSIDE the Connect root (.unapi div.fixed.z-50.bg-background) which the body observer
+      // misses. Cover BOTH open states so both get the one #cc-pop-dim backdrop (#21).
+      var pop = document.querySelector(".bg-popover") || document.querySelector(".unapi div.fixed.z-50.bg-background");
       var dim = document.getElementById("cc-pop-dim");
       if (!pop) { if (dim) dim.style.display = "none"; return; }
       if (!dim) {
@@ -312,8 +315,20 @@
       var pz = parseInt(getComputedStyle(wrap).zIndex, 10); if (!isFinite(pz)) pz = 50;
       dim.style.zIndex = String(Math.max(1, pz - 1));
       dim.style.display = "block";
+      // #21 the Connect Sheet/menu closes ASYNC (animation) — none of the open-time triggers fire again on
+      // close, so the dim stayed stuck. While shown, poll (bounded, self-clearing) and hide the instant the
+      // popover is gone. No observer, terminates itself -> freeze-safe.
+      if (!ccDimWatch) {
+        ccDimWatch = setInterval(function () {
+          if (!document.querySelector(".bg-popover") && !document.querySelector(".unapi div.fixed.z-50.bg-background")) {
+            var d = document.getElementById("cc-pop-dim"); if (d) d.style.display = "none";
+            clearInterval(ccDimWatch); ccDimWatch = 0;
+          }
+        }, 200);
+      }
     } catch (e) {}
   }
+  var ccDimWatch = 0;
   var ccPopObs = null;
   function watchPopups() {
     try {
@@ -2100,6 +2115,13 @@
       var heads = document.querySelectorAll(".ca_homeTemplatesHeader:not([data-cc-info])");
       for (var h = 0; h < heads.length; h++) {
         var head = heads[h]; head.setAttribute("data-cc-info", "1");
+        // #9 wrap the bare title text in its own element so it can carry a fill BADGE (an anonymous flex
+        // text-run is unstylable); the (i) bubble + SHOW MORE stay siblings in the transparent flex row.
+        if (!head.querySelector(".cc-sechead-badge")) {
+          var tb = document.createElement("span"); tb.className = "cc-sechead-badge";
+          while (head.firstChild) tb.appendChild(head.firstChild);
+          head.appendChild(tb);
+        }
         var line2 = head.nextElementSibling;
         if (!line2 || !/\bca_homeTemplatesLine2\b/.test(line2.className || "")) continue;
         var more = line2.querySelector(".homeMore"), sub = "";
@@ -2203,8 +2225,17 @@
     // "Alle löschen" button lands as soon as the sheet appears. Idempotent, cheap (only after clicks).
     try {
       document.addEventListener("click", function (e) {
-        try { if (e.target && e.target.closest && e.target.closest("#UserProfile")) { var n = 0, t = setInterval(function () { ccNotifActions(); try { ccPaintRotate(); } catch (ep) {} try { ccAcctMenu(); } catch (ea) {} if (++n >= 8) clearInterval(t); }, 180); } } catch (err) {}
+        try { if (e.target && e.target.closest && e.target.closest("#UserProfile")) { var n = 0, t = setInterval(function () { ccNotifActions(); try { ccPopoverDim(); } catch (ed) {} try { ccPaintRotate(); } catch (ep) {} try { ccAcctMenu(); } catch (ea) {} if (++n >= 8) clearInterval(t); }, 180); } } catch (err) {}
       }, true);
+    } catch (e) {}
+    // #21 backdrop sync: the bell Sheet mounts inside .unapi (not a body child), so the body popup
+    // observer misses its OPEN and CLOSE. Re-evaluate #cc-pop-dim after any click or Escape: ccPopoverDim()
+    // shows it while a popover is open and self-hides when none is. A few deferred passes cover the Sheet's
+    // mount delay. Cheap + freeze-safe: no persistent polling, no new observers.
+    try {
+      var ccDimSync = function () { [0, 100, 300, 600].forEach(function (ms) { setTimeout(function () { try { ccPopoverDim(); } catch (e) {} }, ms); }); };
+      document.addEventListener("click", ccDimSync, true);
+      document.addEventListener("keydown", function (e) { if (e && e.key === "Escape") ccDimSync(); }, true);
     } catch (e) {}
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
@@ -2312,4 +2343,45 @@
     var n = 0, t = setInterval(function () { ccInjectSpinner(); ccAttachSwalObs(); if (++n >= 12) clearInterval(t); }, 350);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ccLoaderBoot); else ccLoaderBoot();
+})();
+
+/* #5: RMB-hold + wheel = horizontal scroll (system-wide). Hold the right mouse button and spin the wheel to
+   scroll ANY horizontal overflow container sideways (deltaY -> scrollLeft), e.g. the .ca_homeTemplates app rows.
+   The context menu is swallowed only for that gesture (once the wheel actually moved a row), so a plain
+   right-click still opens the browser menu elsewhere. Shift+wheel is wired as a bonus. Capture-phase listeners
+   only, ZERO observers -> freeze-safe. */
+(function () {
+  "use strict";
+  var rmbDown = false, rmbUsed = false, clearT = 0;
+  function hScroller(node) {
+    for (var el = node; el && el !== document.documentElement; el = el.parentElement) {
+      if (el.scrollWidth - el.clientWidth > 2) {
+        var ov = "";
+        try { ov = getComputedStyle(el).overflowX; } catch (e) {}
+        if (ov === "auto" || ov === "scroll") return el;
+      }
+    }
+    return null;
+  }
+  document.addEventListener("mousedown", function (e) {
+    if (e.button === 2) { rmbDown = true; rmbUsed = false; if (clearT) { clearTimeout(clearT); clearT = 0; } }
+  }, true);
+  document.addEventListener("mouseup", function (e) {
+    if (e.button === 2) {
+      rmbDown = false;
+      if (rmbUsed) { if (clearT) clearTimeout(clearT); clearT = setTimeout(function () { rmbUsed = false; clearT = 0; }, 350); }
+    }
+  }, true);
+  document.addEventListener("wheel", function (e) {
+    if (e.ctrlKey) return;                       // leave pinch/zoom alone
+    if (!rmbDown && !e.shiftKey) return;         // only our two gestures
+    var d = e.deltaY || e.deltaX; if (!d) return;
+    var sc = hScroller(e.target); if (!sc) return;
+    sc.scrollLeft += d;
+    e.preventDefault();
+    if (rmbDown) rmbUsed = true;
+  }, { capture: true, passive: false });
+  document.addEventListener("contextmenu", function (e) {
+    if (rmbDown || rmbUsed) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
 })();

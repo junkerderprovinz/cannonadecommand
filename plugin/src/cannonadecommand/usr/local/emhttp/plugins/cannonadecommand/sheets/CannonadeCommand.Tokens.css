@@ -64,6 +64,10 @@ html {
   --cc-lg-fs: 15px;  --cc-lg-pad: 6px 16px;
   --cc-lgb-h: 36px;  --cc-lgb-fs: 14px;
   --cc-head-fs: 15px;  --cc-head-pad: 9px 18px;
+  /* #19 SYSTEM-WIDE PAGE-BADGE SIZE — page-title (div.title span.left/.cc-pagehead), section-head
+     (.ca_homeTemplatesHeader) and author (plugins "Von") badges live UNDER the main-menu bar and must be
+     ONE step SMALLER than its 15px tab badges (the lg/head tier). One step down = the md tier (13px). */
+  --cc-pagebadge-fs: var(--cc-md-fs, 13px);
   --cc-density: 9px;
 
   /* ── STATE - one canonical each (collapses the 6/6/4 literal drift) + derived fg ── */
@@ -228,6 +232,14 @@ html.cc-popups-on:has(div.spinner.fixed) div.spinner:not(.fixed) { display: none
 /* #13 MUCH bigger CC ring in any spinner; centre the full-screen one on its new size */
 html.cc-popups-on div.spinner .cc-loader { --cc-load-sz: 110px; }
 html.cc-popups-on div.spinner.fixed .cc-loader { position: fixed; top: calc(50% - 55px); left: calc(50% - 55px); }
+/* #13 phase 2: CA's in-page loader (div.spinner, no .fixed) lives in a size-constrained box, so the 110px ring
+   overflowed it (the scrollbar the user saw) and got clipped so it read as a SMALLER spinner. Clip the overflow
+   (kills the scrollbar) and flex-centre the ring at full size so phase 2 matches the full-screen phase. */
+html.cc-popups-on div.spinner:not(.fixed) {
+  overflow: hidden !important;
+  display: flex !important; align-items: center; justify-content: center;
+  min-height: 150px;
+}
 /* inline busy loaders (container-logo) recolour to accent as a lightweight fallback where markup isn't injected */
 html.cc-popups-on i.fa-spin.fa-circle-o-notch, html.cc-popups-on .cc-ct-busy i.fa-spin { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
 
@@ -346,20 +358,29 @@ html.cc-popups-on:has(.ca_homeTemplates),
 html.cc-popups-on:has(.ca_homeTemplates) body { overflow-x: clip !important; }
 /* #12b SECTION-HEAD BADGES — smaller (#9), NO leading icon (#9), COLOUR-MODE filled per element (#8).
    Subtitle rides the (i) bubble + SHOW MORE rides inside the badge (both moved in by header.js ccApps). */
+/* #9 the header ROW is a transparent flex container only — the title text is wrapped in .cc-sechead-badge
+   (header.js ccApps) so it can carry a fill BADGE. SHOW MORE stays right-flush. */
 html.cc-popups-on .ca_homeTemplatesHeader {
   display: flex !important; align-items: center !important; gap: 8px !important;
   width: 100% !important; box-sizing: border-box !important;
   background: transparent !important;
-  color: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  font-size: 13px !important; font-weight: 700 !important;
-  text-transform: uppercase !important; letter-spacing: 1px !important;
   padding: 0 !important; margin: 18px 0 12px !important;
+}
+/* #9 title = SMALL fill BADGE — fill follows the colour mode (--cc-rb-c stamped by ccAppsStamp),
+   size via the #19 page-badge token (one step below the menu tabs), shape via --cc-b-radius. No border/ring. */
+html.cc-popups-on .ca_homeTemplatesHeader .cc-sechead-badge {
+  display: inline-flex !important; align-items: center !important;
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  font-size: var(--cc-pagebadge-fs, 13px) !important; font-weight: 700 !important;
+  text-transform: uppercase !important; letter-spacing: 1px !important;
+  padding: var(--cc-sm-pad, 3px 11px) !important; border-radius: var(--cc-b-radius, 8px) !important;
 }
 html.cc-popups-on .ca_homeTemplatesHeader::before { content: none !important; }   /* #9 kill the ▸ */
 html.cc-popups-on .ca_homeTemplatesHeader .cc-info {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   width: 15px !important; height: 15px !important; flex: none !important; cursor: help !important;
-  color: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; opacity: .85 !important;
+  color: var(--cc-text, #e6e6e6) !important; opacity: .8 !important;   /* #9 NEUTRAL — uniform with the canonical .cc-info (settings/docker), never colour-mode */
 }
 html.cc-popups-on .ca_homeTemplatesHeader .cc-info svg { width: 15px !important; height: 15px !important; display: block !important; }
 html.cc-popups-on .ca_homeTemplatesHeader .cc-info:hover, html.cc-popups-on .ca_homeTemplatesHeader .cc-info:focus { opacity: 1 !important; outline: none !important; }
@@ -392,7 +413,8 @@ html.cc-popups-on .ca_homeTemplates {
 html.cc-popups-on .ca_homeTemplates:hover {
   scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important;
 }
-html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar { height: 8px !important; background: transparent !important; }
+html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar { height: 14px !important; background: transparent !important; }
+html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; }
 html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-track { background: transparent !important; border: 0 !important; }
 html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-thumb {
   background: transparent !important; border: 0 !important;
@@ -406,9 +428,9 @@ html.cc-popups-on .ca_homeTemplates:hover::-webkit-scrollbar-thumb {
    on click (mirrors CC-settings .cc-set-searchbadge / wireSearchToggle, wired in header.js wireCaSearch).
    Collapsed = accent chip (icon only); open = dark field, the input grows to the LEFT of the icon so it never
    spills past the viewport. Shape via --cc-b-radius, colour via --cc-rb-c/--cc-rb-ct, no border line. */
-html.cc-popups-on .searchArea { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 8px !important; }
+html.cc-popups-on .searchArea { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 8px !important; padding-right: 0 !important; }
 html.cc-popups-on #searchFilter {
-  margin-left: auto !important; order: 99 !important;
+  margin-left: auto !important; margin-right: 0 !important; align-self: center !important; order: 99 !important;
   display: inline-flex !important; align-items: center !important;
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
   border-radius: var(--cc-b-radius, 8px) !important;
@@ -418,7 +440,7 @@ html.cc-popups-on #searchFilter {
 }
 html.cc-popups-on #searchFilter.menuShowing { display: none !important; }
 html.cc-popups-on #searchFilter.cc-open { background: var(--cc-field-bg, #2e2e2e) !important; overflow: visible !important; }
-html.cc-popups-on #searchFilter.cc-open:focus-within { box-shadow: 0 0 0 2px var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; }
+html.cc-popups-on #searchFilter.cc-open:focus-within { filter: brightness(1.08) !important; }  /* #7 focus = shade only, never a ring/border */
 html.cc-popups-on #searchFilter .awesomplete {
   order: 1 !important; display: flex !important;
   width: 0 !important; max-width: 0 !important; overflow: hidden !important;
@@ -449,7 +471,8 @@ html.cc-popups-on #searchButton { color: inherit !important; }
 html.cc-popups-on .caMenu { padding: 4px !important; margin: 0 !important; }
 html.cc-popups-on .caMenuItem {
   display: block !important; border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
-  margin: 3px 4px !important; padding: 7px 12px !important; line-height: 1.3 !important;
+  margin: 3px 0 !important; padding: 7px 12px !important; line-height: 1.3 !important;
+  box-sizing: border-box !important; width: auto !important;
   background: var(--cc-surface-2, rgba(128, 128, 128, .10)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   cursor: pointer !important; transition: background .12s, color .12s, filter .12s !important;
 }
@@ -460,7 +483,7 @@ html.cc-popups-on .caMenuItem:hover {
 html.cc-popups-on .caMenuItem.sectionMenu {
   text-transform: uppercase !important; letter-spacing: .6px !important;
   font-size: 12px !important; font-weight: 600 !important; color: var(--cc-text, #e6e6e6) !important;
-  background: transparent !important; margin: 8px 4px 2px !important; padding: 2px 8px !important; cursor: default !important;
+  background: transparent !important; margin: 22px 0 6px !important; padding: 2px 8px !important; cursor: default !important;
 }
 html.cc-popups-on .caMenuItem.sectionMenu:hover { background: transparent !important; color: var(--cc-text, #e6e6e6) !important; filter: none !important; }
 html.cc-popups-on .subCategory { margin: 0 !important; padding: 0 0 0 10px !important; list-style: none !important; }
@@ -471,15 +494,23 @@ html.cc-popups-on .caMenuItem.selectedMenu:hover {
   color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
 html.cc-popups-on .caMenuItem.selectedMenu:hover { filter: brightness(1.06) !important; }
-html.cc-popups-on a.caMenuItem, html.cc-popups-on .caMenuItem a.caMenuItem {
+html.cc-popups-on .caMenuItem a.caMenuItem {
   color: inherit !important; text-decoration: none !important; display: inline !important; padding: 0 !important; margin: 0 !important;
 }
+html.cc-popups-on a.caMenuItem { color: inherit !important; text-decoration: none !important; }
 html.cc-popups-on .caMenu hr, html.cc-popups-on hr.category_hr {
   border: none !important; height: 0 !important; margin: 4px 0 !important;
   background: transparent !important;
 }
 html.cc-popups-on li.caMenuItem:has(> hr) { background: transparent !important; padding: 0 !important; margin: 0 !important; cursor: default !important; }
-html.cc-popups-on .caMenu > li:not(.caMenuItem) { color: var(--cc-text-dim2, #6f6f6f) !important; padding: 2px 12px !important; font-size: 12px !important; }
+html.cc-popups-on .caMenu > li:not(.caMenuItem):not(:has(> hr)) {
+  display: block !important; box-sizing: border-box !important; width: auto !important;
+  margin: 3px 0 !important; padding: 7px 12px !important;
+  background: var(--cc-surface-2, rgba(128, 128, 128, .10)) !important;
+  color: var(--cc-text-chip, #cfcfcf) !important;
+  border-radius: var(--cc-b-radius, 8px) !important; font-size: 12.5px !important;
+}
+html.cc-popups-on .caMenuItem.sectionMenu:first-child { margin-top: 4px !important; }
 
 /* #12e APP CARD — surface + radius + no border line + matching hover (visual only; no size/position changes). */
 html.cc-popups-on .ca_holder {

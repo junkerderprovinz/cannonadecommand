@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.5.3">
+  <!ENTITY version   "3.5.4">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,29 @@
 </ICON>
 
 <CHANGES>
+### 3.5.4
+**Added**
+- Horizontal scrolling in the Apps rows by holding the right mouse button (or Shift) and turning the wheel.
+
+**Design**
+- The Apps section headers are proper badges again, one size smaller than the main menu, with SHOW MORE as its
+  own badge on the far right and a neutral info bubble that matches the rest.
+- Page-title badges under the main menu bar (like "Add Container") are one size smaller than the menu, systemwide.
+- The Apps category sidebar is a set of equal-width cards with clearer spacing between the sections.
+- The Apps horizontal scrollbar is taller, follows the badge shape and the color mode, and drops its end arrows.
+
+**Improved**
+- The notification center and the menu now dim and blur the page behind them like every other popup.
+- The container-form view toggle lines up with the form fields at any window width.
+
+**Fixed**
+- Focus no longer draws a border around the settings dropdowns or the Apps search field: it shades instead,
+  per the house style (no border lines, no rings).
+- The settings dropdown option list uses the CannonadeCommand surface and accent colors.
+- The Apps tab no longer flashes a second, smaller spinner with a scrollbar on open: one big loader, no scrollbar.
+- The Plugins tab with the tab view off: the author badges are smaller and the check-for-updates button sits at
+  the top right instead of in the middle of the list.
+
 ### 3.5.3
 - The two right-most header icons (notifications and menu) no longer flicker or vanish: they are re-pinned
   the instant the Connect panel re-renders, so there is no gap where they jump away.
@@ -2395,7 +2418,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>1b579485604dab6766bab2f51f5f7f39f8e4ba7f3393112f715a23f7c8afb08f</SHA256>
+  <SHA256>0bda548d4e2c016cf9502984fb5dabac655f1dfd7bac44baebb03d144f9567e2</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
