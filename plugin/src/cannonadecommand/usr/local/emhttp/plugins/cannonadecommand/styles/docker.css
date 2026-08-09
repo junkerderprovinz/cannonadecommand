@@ -413,8 +413,10 @@ html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb
 .cc-menu-plain .cc-filter { width: 100%; }
 .cc-menu-plain .cc-btn { flex: 1; text-align: center; }
 .cc-menu-sep { height: 6px; background: transparent; margin: 0; }   /* spacing, not a line (user: keine Linien) */
-.cc-menu-link { color: var(--cc-accent); font-size: 12px; padding: 6px 8px; display: block; text-decoration: none; }
-.cc-menu-link:hover { text-decoration: underline; }
+.cc-menu-link { color: var(--cc-accent); font-size: 12px; padding: 6px 8px; display: block; text-decoration: none; border-radius: 6px; transition: background .12s, color .12s; }
+/* #10 (user: "badges werden bei mouseover nicht eingefärbt, es erscheint ein unterstrich"): colour-mode fill
+   on hover, no underline (both modes, per [[always-integrate-new-elements-into-color-modes]]). */
+.cc-menu-link:hover { text-decoration: none; background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
 
 .cc-toast { position: fixed; right: 18px; bottom: 18px; z-index: 100000; background: #161616; color: #e6e6e6; border: none; border-radius: 8px; padding: 9px 14px; font: 12px/1.4 "Segoe UI", system-ui, sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,.5); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .2s, transform .2s; max-width: 60vw; }
 .cc-toast-show { opacity: 1; transform: translateY(0); }
@@ -686,6 +688,13 @@ div.tab input[type=radio]:checked + label,
 .tabbed input[type=radio]:checked + label {
   background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
 }
+/* #8 (user, emphatic: "gleich groß wie die hauptleiste, MÜSSEN eine größe kleiner"): the sub-nav pills sat at
+   the md tier (13px/30px), only a hair below the 15px/36px MAIN menu tabs directly above them, so they read
+   as the same size. Cut the HEIGHT a clear step (26px) — a visibly shorter pill at a still-readable 13px, so
+   the sub-level is unmistakable without going "too small". */
+nav.tabs .tabs-container > button[role=tab],
+div.tab input[type=radio] + label,
+.tabbed input[type=radio] + label { height: 26px !important; letter-spacing: 1px !important; }
 
 /* ── minimal, clean page chrome on OUR pages (this stylesheet only loads there):
    Unraid's title bars / tab strips go flat — no background block, a thin base
@@ -1380,6 +1389,28 @@ html.cc-ctout-on #displaybox .content input[type="submit"] {
   height: var(--cc-lgb-h, 36px) !important; padding: 0 24px !important; line-height: 1 !important;
   font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
 }
+/* #15 (user: "wieso kommt da ein freier text unter dem titelbadge?"): Unraid streams a <style> block
+   (.logLine{…}fieldset.docker{…}legend{…}) into the update log; in this window it shows as RAW CSS text under
+   the title and overflows. Hide any <style> the content carries (docker.js also blanks a text-node variant). */
+html.cc-ctout-on #displaybox .content style { display: none !important; }
+/* #16 (user: "die button und der spinner bleiben nicht ganz unten, werden vom log überlagert"): in a multi-step
+   update Unraid appends the button row after the FIRST phase, then streams more cards BELOW it, stranding it
+   mid-window and letting the log overlay it. STICKY-pin the button row to the window bottom (opaque, above the
+   log) so it is always at the bottom and never overlaid — no flex restructure, so the simple single-step window
+   is untouched. Only the LAST button row survives (earlier phases' rows collapse). */
+html.cc-ctout-on #displaybox .content .buttons,
+html.cc-ctout-on #displaybox .content > center {
+  position: sticky !important; bottom: -20px !important; z-index: 4 !important;
+  margin: 10px -22px -20px !important; padding: 12px 22px !important;
+  background: #1a1a1a !important; box-shadow: 0 -8px 14px rgba(0, 0, 0, .4) !important;
+}
+html.cc-ctout-on #displaybox .content > center:not(:last-of-type) { display: none !important; }
+/* #6: the in-window loader ring must never be clipped into a tiny arc by an overflow box (that was the
+   "second spinner too small + scrollbar"). Give the loader room; the scrollbar arrows themselves are gone
+   via the system-wide webkit fix (Tokens.css #3). */
+html.cc-ctout-on #cc-ctout-status,
+html.cc-ctout-on #displaybox .content .cc-loader,
+html.cc-ctout-on #displaybox .content div.spinner { overflow: visible !important; }
 /* FIELD LABELS as badges — docker.js ctVarLabels adds .cc-varlab (ENV var <span>) OR .cc-dtlab
    (top-level bare <dt>) and strips the trailing colon. The tint FOLLOWS the colour mode: the
    accent normally, the rainbow-primary (--cc-btn-accent) in rainbow mode. Required fields get a

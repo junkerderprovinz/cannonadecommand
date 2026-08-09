@@ -72,7 +72,7 @@ html {
   /* #19 SYSTEM-WIDE PAGE-BADGE SIZE — page-title (div.title span.left/.cc-pagehead), section-head
      (.ca_homeTemplatesHeader) and author (plugins "Von") badges live UNDER the main-menu bar and must be
      ONE step SMALLER than its 15px tab badges (the lg/head tier). One step down = the md tier (13px). */
-  --cc-pagebadge-fs: 14px;  /* #7: fixed in-between step — one below 15px main-menu tabs, one above 13px md */
+  --cc-pagebadge-fs: 13px;  /* #8: 14px read as "same size as the main bar" — drop to a clear md step below the 15px tabs */
   --cc-density: 9px;
 
   /* ── STATE - one canonical each (collapses the 6/6/4 literal drift) + derived fg ── */
@@ -334,7 +334,7 @@ html.cc-badge-glass.cc-plugins-iconbg .cc-plugico > * { position: relative; z-in
 html.cc-popups-on a[class*="move_to"],
 html.cc-popups-on a.back_to_top,
 html.cc-popups-on a[class*="back_to"] {
-  right: var(--cc-edge-gutter, 8px) !important;   /* base: content right edge (scrollbar gutter); per-arrow overrides set the horizontal pair */
+  right: calc(var(--cc-content-rgap, 0px) + var(--cc-edge-gutter, 8px)) !important;   /* #14: content right edge = viewport gutter + boxed-mode right gap (per-arrow overrides set the pair) */
   z-index: 9990 !important;                       /* topmost page chrome (STARTPLAN badge, js-actions z998); stays BELOW popup backdrops (9998+) */
   color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
   transform: translateY(calc(-1 * (var(--cc-footer-h, 0px) + var(--cc-actbar-h, 44px) + 8px))) !important;
@@ -349,8 +349,8 @@ html.cc-popups-on a[class*="back_to"] {
    right edge, up chip 50px to its left (40px chip + 10px gap). Right edge = --cc-edge-gutter. */
 html.cc-popups-on a.move_to_end,
 html.cc-popups-on a.back_to_top { bottom: 24px !important; }
-html.cc-popups-on a.move_to_end { right: var(--cc-edge-gutter, 8px) !important; }               /* down: content right edge  */
-html.cc-popups-on a.back_to_top { right: calc(var(--cc-edge-gutter, 8px) + 50px) !important; }  /* up: left of the down chip */
+html.cc-popups-on a.move_to_end { right: calc(var(--cc-content-rgap, 0px) + var(--cc-edge-gutter, 8px)) !important; }               /* down: content right edge  */
+html.cc-popups-on a.back_to_top { right: calc(var(--cc-content-rgap, 0px) + var(--cc-edge-gutter, 8px) + 50px) !important; }       /* up: left of the down chip */
 /* KILL THE CIRCLE: the round shape is the fa-arrow-CIRCLE glyph, not the chip box, so a border-radius alone
    can't square it. Swap to the plain (non-circular) arrow glyph. */
 html.cc-popups-on a.move_to_end > i.fa::before { content: "\f063" !important; }  /* fa-arrow-down */
@@ -359,6 +359,13 @@ html.cc-popups-on a[class*="move_to"] > i,
 html.cc-popups-on a[class*="back_to"] > i { color: inherit !important; }
 html.cc-popups-on a[class*="move_to"]:hover,
 html.cc-popups-on a[class*="back_to"]:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; }
+
+/* #14: on a wide screen with Theme--width-boxed the content is left-capped, so pull the header island
+   (#header, right group) and the top-nav util icons (#menu, right group) in to the content edge by the same
+   --cc-content-rgap header.js measures. border-box padding on the LIGHT-DOM nav containers only — the
+   os-version/profile web components stay untouched. Fluid width -> rgap 0 -> zero padding -> no change. */
+html.cc-popups-on #header { box-sizing: border-box !important; padding-right: var(--cc-content-rgap, 0px) !important; }
+html.cc-popups-on #menu   { box-sizing: border-box !important; padding-right: var(--cc-content-rgap, 0px) !important; }
 
 /* ═══ #12: Apps (Community Applications) tab in CC style ═══════════════════════════════════════════════
    Visual only (colour / shade / radius — no layout changes) so CA's dynamic, multi-state grid keeps working.
@@ -371,6 +378,14 @@ html.cc-popups-on {
   --template-hover-background: var(--cc-surface-2, #222222);
   --border-color: transparent;
 }
+/* #10 (user: "die badges werden bei mouseover nicht eingefärbt, es erscheint ein unterstrich"): CA underlines
+   every link on hover (incl. the coloured Info/Support/Install action badges). Kill the underline and give a
+   colour response instead — the already-coloured action badges brighten, matching the house hover feel. Scoped
+   to /Apps via :has(.ca_homeTemplates) so no other tab's links are touched. */
+html.cc-popups-on:has(.ca_homeTemplates) #displaybox a,
+html.cc-popups-on:has(.ca_homeTemplates) #displaybox a:hover,
+html.cc-popups-on:has(.ca_homeTemplates) #displaybox .caMenuItem { text-decoration: none !important; }
+html.cc-popups-on:has(.ca_homeTemplates) #displaybox a:hover { filter: brightness(1.16) !important; }
 /* #13 kill the horizontal BODY scrollbar on /Apps: the .ca_homeTemplates carousels self-scroll but leak
    their 2333px content width to <body>. Clip body-x (freeze-safe, scoped to /Apps via :has; clip keeps
    sticky/position working, unlike hidden). The rows keep their own overflow-x:auto. */
@@ -426,38 +441,21 @@ html.cc-popups-on .ca_homeTemplatesLine2 .homeMore { color: var(--cc-accent, #2f
 /* #5 HORIZONTAL SCROLLBAR — colour-mode thumb, revealed ONLY on row hover.
    The 6x .ca_homeTemplates rows scroll overflow-x:auto; the thumb rides the colour engine
    (--cc-rb-c -> --cc-rbaccent -> --cc-accent), track transparent, thumb hidden until the row is hovered. */
-html.cc-popups-on .ca_homeTemplates {
-  scrollbar-width: thin !important;                                  /* Firefox */
-  scrollbar-color: transparent transparent !important;               /* Firefox: thumb track, both hidden */
-}
-html.cc-popups-on .ca_homeTemplates:hover {
-  scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important;
-}
-html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar { height: 14px !important; background: transparent !important; }
+/* ROOT-CAUSE GOTCHA (the recurring "arrows still there / native thin bar" on Chromium/Brave): modern Chromium
+   (121+) IGNORES ALL ::-webkit-scrollbar rules the moment `scrollbar-width` OR `scrollbar-color` is set on the
+   element. The old code set BOTH on `html.cc-popups-on *`, so CC's custom bars NEVER rendered on Chromium —
+   the browser drew its native thin bar (with end arrows). Fix: the webkit pseudo-elements stay BARE (no
+   scrollbar-width/color here) so Chromium honours them; the standard props are quarantined into the Firefox-
+   only @supports block at the bottom. #3: app-tab carousels bumped to 16px (thicker, easy to grab). */
+
+/* App-tab horizontal carousels: 16px, thumb rides the colour engine, revealed on row hover, no end arrows. */
+html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar { height: 16px !important; background: transparent !important; }
 html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; }
 html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-track { background: transparent !important; border: 0 !important; }
-html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-thumb {
-  background: transparent !important; border: 0 !important;
-  border-radius: var(--cc-b-radius, 8px) !important;
-}
-html.cc-popups-on .ca_homeTemplates:hover::-webkit-scrollbar-thumb {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
-}
+html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-thumb { background: transparent !important; border: 0 !important; border-radius: var(--cc-b-radius, 8px) !important; }
+html.cc-popups-on .ca_homeTemplates:hover::-webkit-scrollbar-thumb { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
 
-/* #3 SYSTEM-WIDE SCROLLBARS — visible by default, brighten to accent on hover; shade only, no border/ring.
-   Scoped to html.cc-popups-on: page viewport (html/body) AND every descendant overflow pane. The
-   .ca_homeTemplates rules above are class-specific and keep their hover-only reveal. 12px = taller than
-   the stock thin bar; end buttons removed; radius --cc-b-radius; Firefox scrollbar-width/color. */
-html.cc-popups-on,
-html.cc-popups-on * {
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(130,130,130,.55) transparent !important;
-  scrollbar-color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent) transparent !important;
-}
-html.cc-popups-on:hover,
-html.cc-popups-on *:hover {
-  scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important;
-}
+/* #3 SYSTEM-WIDE bars: 12px, accent-tinted thumb, brighten on hover; shade only, no border/ring, no arrows. */
 html.cc-popups-on::-webkit-scrollbar,
 html.cc-popups-on ::-webkit-scrollbar { width: 12px !important; height: 12px !important; background: transparent !important; }
 html.cc-popups-on::-webkit-scrollbar-button,
@@ -478,6 +476,16 @@ html.cc-popups-on ::-webkit-scrollbar-thumb:hover,
 html.cc-popups-on:hover::-webkit-scrollbar-thumb,
 html.cc-popups-on *:hover::-webkit-scrollbar-thumb {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+}
+/* Firefox (and any engine that does NOT parse ::-webkit-scrollbar): use the standard properties. On Chromium
+   these DISABLE the webkit rules above, so they live ONLY here where Chromium never matches. */
+@supports not selector(::-webkit-scrollbar) {
+  html.cc-popups-on,
+  html.cc-popups-on * { scrollbar-width: thin !important; scrollbar-color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent) transparent !important; }
+  html.cc-popups-on:hover,
+  html.cc-popups-on *:hover { scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important; }
+  html.cc-popups-on .ca_homeTemplates { scrollbar-color: transparent transparent !important; }
+  html.cc-popups-on .ca_homeTemplates:hover { scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important; }
 }
 
 /* #7 SEARCH — collapsible far-right badge: the magnifier is a COLOUR-MODE BUTTON that expands into an input
@@ -521,6 +529,13 @@ html.cc-popups-on .searchSubmit {
 html.cc-popups-on #searchFilter.cc-open .searchSubmit { color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .searchSubmit:hover { filter: brightness(1.08) !important; }
 html.cc-popups-on #searchButton { color: inherit !important; }
+/* #4: search relocated into the left sidebar under Home (header.js wireCaSearch DOM-move). In the sidebar it is
+   NOT flex-pushed right; it sits as an accent badge under Home and its input expands to the sidebar width. */
+html.cc-popups-on li.cc-ca-search-li { list-style: none !important; margin: 8px 0 0 0 !important; padding: 0 !important; background: transparent !important; }
+html.cc-popups-on li.cc-ca-search-li #searchFilter { margin: 0 !important; order: 0 !important; align-self: stretch !important; }
+html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open { width: 100% !important; }
+html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open .awesomplete { width: 100% !important; max-width: 100% !important; }
+html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open #searchBox { width: 100% !important; }
 
 /* #12d CATEGORY SIDEBAR (#11) — clean CC treatment: chips, grouping, shade separators (never a line),
    correct ACTIVE class (.selectedMenu — CA's real class), colour-mode active fill. */

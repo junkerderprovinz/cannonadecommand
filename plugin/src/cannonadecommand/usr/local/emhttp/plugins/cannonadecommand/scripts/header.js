@@ -2137,7 +2137,21 @@
   function wireCaSearch() {
     try {
       var filter = document.getElementById("searchFilter");
-      if (!filter || filter.getAttribute("data-cc-search") === "1") return;
+      if (!filter) return;
+      // #4 (user: "die suche als badge links unter dem Home badge platzieren, oben rechts passt nicht"): move
+      // the collapsible search badge out of the top-right search bar into the LEFT category sidebar, directly
+      // under the Home item. Guarded so it only mutates when NOT already placed -> idempotent, no observer loop
+      // (CA rebuilds the sidebar on view swaps, so this re-homes it on the next ccApps pass).
+      var caMenu = document.querySelector("ul.caMenu");
+      if (caMenu) {
+        var home = caMenu.querySelector("li.startupButton") || caMenu.querySelector("li.caMenuItem");
+        var li = document.getElementById("cc-ca-search-li");
+        if (!li) { li = document.createElement("li"); li.id = "cc-ca-search-li"; li.className = "caMenuItem cc-ca-search-li"; }
+        if (filter.parentElement !== li) li.appendChild(filter);
+        if (home) { if (home.nextElementSibling !== li) caMenu.insertBefore(li, home.nextElementSibling); }
+        else if (li.parentElement !== caMenu) caMenu.insertBefore(li, caMenu.firstChild);
+      }
+      if (filter.getAttribute("data-cc-search") === "1") return;
       filter.setAttribute("data-cc-search", "1");
       var icon = filter.querySelector(".searchSubmit, #searchButton");
       var box = document.getElementById("searchBox");
@@ -2270,6 +2284,30 @@
       function dockRaf() { if (ccDockRaf) return; ccDockRaf = window.requestAnimationFrame ? window.requestAnimationFrame(ccDockPass) : setTimeout(ccDockPass, 16); }
       window.addEventListener("scroll", dockRaf, { passive: true });
       window.addEventListener("resize", dockRaf);
+    } catch (e) {}
+    // #14 (user: "wenn man das fenster breiter zieht, ziehen Insel/Icons/Pfeile nach rechts weg"): with
+    // Theme--width-boxed the CONTENT is capped (~1920px) and LEFT-aligned, but the full-width header island,
+    // the #menu util icons and the fixed footer arrows ride to the VIEWPORT edge → a gap that GROWS with the
+    // window. Publish the content-right gap (viewport - #displaybox.right) as --cc-content-rgap; the sheet pulls
+    // those three back to the content edge via calc(). rAF-throttled, sets ONLY a CSS var (no DOM mutation →
+    // freeze-safe, no observer loop). Fluid width -> gap 0 -> no-op.
+    try {
+      var ccGapRaf = 0;
+      function ccContentGap() {
+        ccGapRaf = 0;
+        try {
+          var db = document.getElementById("displaybox");
+          var vw = document.documentElement.clientWidth;   // layout width EXCLUDING the vertical scrollbar (innerWidth would over-count by ~scrollbar)
+          var r = db ? db.getBoundingClientRect().right : vw;
+          var gap = Math.max(0, Math.round(vw - r));
+          document.documentElement.style.setProperty("--cc-content-rgap", gap + "px");
+        } catch (e) {}
+      }
+      function ccGapSchedule() { if (ccGapRaf) return; ccGapRaf = window.requestAnimationFrame ? window.requestAnimationFrame(ccContentGap) : setTimeout(ccContentGap, 16); }
+      window.addEventListener("resize", ccGapSchedule, { passive: true });
+      window.addEventListener("load", ccContentGap);
+      ccContentGap();
+      setTimeout(ccContentGap, 300);   // once more after the boxed layout settles
     } catch (e) {}
     // the Settings page (or the Docker tab) writes cc.* AND section-specific keys (cch./ccs./
     // ccp./ccv.) from another origin/tab — re-apply on any of them. NB: "cch.accent" does NOT

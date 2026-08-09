@@ -2840,6 +2840,18 @@
       if (sb) {
         var ctOutStatus = function () {
           try {
+            // #15 (user: "wieso kommt da ein freier text unter dem titelbadge?"): Unraid streams a <style> block
+            // (.logLine{…}fieldset.docker{…}legend{…}) that renders as RAW CSS text under the title. A real
+            // <style> is hidden by CSS; a TEXT-node variant (streamed as plain text) needs blanking here.
+            try {
+              var st = content.querySelectorAll("style"); for (var si = 0; si < st.length; si++) st[si].style.display = "none";
+              var kids = content.childNodes;
+              for (var ki = 0; ki < kids.length; ki++) {
+                var kn = kids[ki];
+                if (kn.nodeType === 3 && /^\s*\.logLine\s*\{/.test(kn.nodeValue || "")) kn.nodeValue = "";
+                else if (kn.nodeType === 1 && kn.tagName !== "STYLE" && !kn.children.length && /^\s*\.logLine\s*\{/.test(kn.textContent || "")) kn.style.display = "none";
+              }
+            } catch (e15) {}
             var log = content.textContent || "";
             var done = /(erfolgreich\s+(ausgeführt|beendet)|finished successfully|command (finished|completed|executed)|befehl.*fehlgeschlagen|the command failed)/i.test(log)
                        || (/docker\s+(create|run)/i.test(log) && !content.querySelector(".fa-spin, .spinner"));   /* #14: phrase-less end (spinner gone) also counts as done */
