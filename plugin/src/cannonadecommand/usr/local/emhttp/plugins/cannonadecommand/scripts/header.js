@@ -2397,13 +2397,17 @@
       // #6 (user: "erst überlagert der große Spinner den kleinen, dann bleibt der kleine mit Scrollbar sichtbar"):
       // the full-screen tab-load overlay (div.spinner.fixed) and CA's in-page div.spinner both got the ring and
       // OVERLAPPED. Show the CC ring in exactly ONE spinner: while the fixed overlay is on screen, hide the in-page
-      // spinner(s); when it toggles off, un-hide. A per-fixed attribute observer (style/class only -> freeze-safe)
-      // re-runs this on the overlay's display flip, so the in-page spinner reappears the instant the overlay leaves.
+      // spinner(s); when it toggles off, un-hide.
+      // #freeze (live-reported, v3.6.5): the earlier version attached a MutationObserver to the .fixed overlay
+      // itself (attributeFilter style/class) to re-run this the instant its display flips. If Unraid's OWN native
+      // code touches that same element's style/class repeatedly (e.g. rapid polling/animation), each touch
+      // retriggers this function, which is not provably loop-free and pegs the CPU under load -> a frozen tab.
+      // Dropped entirely: this function is already called periodically (ccLoaderBoot's bounded interval + the
+      // swal/body observers below), which is reactive enough without an unbounded self-observing feedback path.
       var fixedUp = null;
       for (var i = 0; i < sps.length; i++) {
         var s = sps[i];
         if (!s.classList.contains("fixed")) continue;
-        if (!s.__ccSpinObs) { s.__ccSpinObs = new MutationObserver(function () { ccInjectSpinner(); }); s.__ccSpinObs.observe(s, { attributes: true, attributeFilter: ["style", "class"] }); }
         if (!fixedUp && getComputedStyle(s).display !== "none") fixedUp = s;
       }
       for (var j = 0; j < sps.length; j++) {
