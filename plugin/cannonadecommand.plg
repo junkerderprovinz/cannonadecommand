@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.6.2">
+  <!ENTITY version   "3.6.3">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,10 @@
 </ICON>
 
 <CHANGES>
+### 3.6.3
+**🐛 Fixed**
+- The scroll to top and scroll to bottom arrows in the bottom right corner no longer show an underline when you hover them.
+
 ### 3.6.2
 **🎨 Design**
 - The Apps search is now a full width "Suche" field in the left sidebar; typing opens a larger results list and blurs the page behind it.
@@ -2479,7 +2483,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>49766c52df5627770b71dd090bd7fbed4c663020aaac9fc2e0ae7a0137baff92</SHA256>
+  <SHA256>391f2f18739fe1d31dee6ecb633085d876490f13f189f9ab4c42d9fb943732ab</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

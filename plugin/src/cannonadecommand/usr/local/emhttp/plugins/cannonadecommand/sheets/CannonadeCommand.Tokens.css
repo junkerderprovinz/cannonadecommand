@@ -347,7 +347,14 @@ html.cc-popups-on a[class*="back_to"] {
   padding: 0 !important;
   display: flex !important; align-items: center; justify-content: center;
   font-size: 1.35rem !important; line-height: 1 !important;
+  text-decoration: none !important;   /* #10 (user, v3.6.2): the arrow chip is an <a> -> never Unraid's a:hover underline */
 }
+/* #10 (user, v3.6.2 — "der Hover-Unterstrich ist bei den Footer-Pfeilen"): the arrow chip is an <a>, so
+   Unraid's base a:hover added an underline. The base rule's `text-decoration: none !important` (above) already
+   kills it in EVERY state incl. hover; the chip's own shade reaction (--cc-chip-hover, below) stays and the
+   accent glyph keeps its colour (`> i { color: inherit }`) → no underline, colour-by-shade like every other CC
+   chip, legible in both themes. (An accent-FILL hover was rejected: a later same-specificity !important rule
+   overrode the fill and left a white glyph on grey = invisible in the light theme.) */
 /* #10 SIDE BY SIDE (was a vertical stack): both chips share one bottom row; down chip flush at the content
    right edge, up chip 50px to its left (40px chip + 10px gap). Right edge = --cc-edge-gutter. */
 html.cc-popups-on a.move_to_end,
