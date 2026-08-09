@@ -2844,13 +2844,18 @@
             // (.logLine{…}fieldset.docker{…}legend{…}) that renders as RAW CSS text under the title. A real
             // <style> is hidden by CSS; a TEXT-node variant (streamed as plain text) needs blanking here.
             try {
+              // Live-DOM (whoami create): the CSS lands in a bare <p> that STARTS with a "/*** Fonts ***/"
+              // comment (an anchored .logLine{ regex missed it). Match any leaf element / text node whose text
+              // carries a CSS signature AND a rule brace. Never touch our own #cc-ctout-* nodes.
+              var CSS_SIG = /font-family\s*:|@font-face|\.logLine\s*\{/i;
               var st = content.querySelectorAll("style"); for (var si = 0; si < st.length; si++) st[si].style.display = "none";
-              var kids = content.childNodes;
-              for (var ki = 0; ki < kids.length; ki++) {
-                var kn = kids[ki];
-                if (kn.nodeType === 3 && /^\s*\.logLine\s*\{/.test(kn.nodeValue || "")) kn.nodeValue = "";
-                else if (kn.nodeType === 1 && kn.tagName !== "STYLE" && !kn.children.length && /^\s*\.logLine\s*\{/.test(kn.textContent || "")) kn.style.display = "none";
+              var leafs = content.querySelectorAll("p, div, font, pre, span");
+              for (var li = 0; li < leafs.length; li++) {
+                var le = leafs[li];
+                if (!le.children.length && !(le.id && le.id.indexOf("cc-ctout") === 0) && CSS_SIG.test(le.textContent || "") && (le.textContent || "").indexOf("{") !== -1) le.style.display = "none";
               }
+              var kids = content.childNodes;
+              for (var ki = 0; ki < kids.length; ki++) { var kn = kids[ki]; if (kn.nodeType === 3 && CSS_SIG.test(kn.nodeValue || "") && (kn.nodeValue || "").indexOf("{") !== -1) kn.nodeValue = ""; }
             } catch (e15) {}
             var log = content.textContent || "";
             var done = /(erfolgreich\s+(ausgeführt|beendet)|finished successfully|command (finished|completed|executed)|befehl.*fehlgeschlagen|the command failed)/i.test(log)

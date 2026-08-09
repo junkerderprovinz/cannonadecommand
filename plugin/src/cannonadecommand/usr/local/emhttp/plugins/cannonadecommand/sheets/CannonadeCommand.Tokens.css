@@ -455,34 +455,28 @@ html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-track { background: trans
 html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-thumb { background: transparent !important; border: 0 !important; border-radius: var(--cc-b-radius, 8px) !important; }
 html.cc-popups-on .ca_homeTemplates:hover::-webkit-scrollbar-thumb { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
 
-/* #3 SYSTEM-WIDE bars: 12px, accent-tinted thumb, brighten on hover; shade only, no border/ring, no arrows. */
-html.cc-popups-on::-webkit-scrollbar,
-html.cc-popups-on ::-webkit-scrollbar { width: 12px !important; height: 12px !important; background: transparent !important; }
-html.cc-popups-on::-webkit-scrollbar-button,
-html.cc-popups-on ::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; }
-html.cc-popups-on::-webkit-scrollbar-track,
-html.cc-popups-on ::-webkit-scrollbar-track { background: transparent !important; border: 0 !important; }
-html.cc-popups-on::-webkit-scrollbar-corner,
-html.cc-popups-on ::-webkit-scrollbar-corner { background: transparent !important; }
-html.cc-popups-on::-webkit-scrollbar-thumb,
-html.cc-popups-on ::-webkit-scrollbar-thumb {
+/* #3 (user: "nur die scrollbars IN Unraid dicker, der badge form folgen; die browser nativen unverändert"):
+   style ONLY the inner Unraid panes = DESCENDANT scrollbars (note the SPACE: `html.cc-popups-on ::-webkit-…`,
+   never the no-space `html.cc-popups-on::…` which is the html element's OWN = the main page/window scrollbar).
+   The main page scrollbar is deliberately LEFT NATIVE. Inner bars: 14px (thicker), thumb radius follows the
+   badge shape (--cc-b-radius), accent-tinted, brighten on hover, no arrows/border. */
+html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar { width: 14px !important; height: 14px !important; background: transparent !important; }
+html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; }
+html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-track { background: transparent !important; border: 0 !important; }
+html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-corner { background: transparent !important; }
+html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-thumb {
   border: 0 !important; background-clip: padding-box !important;
-  border-radius: var(--cc-b-radius, 8px) !important;
+  border-radius: var(--cc-b-radius, 8px) !important;   /* thumb follows the badge shape */
   background: rgba(130,130,130,.55) !important;
   background: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent) !important;
 }
-html.cc-popups-on::-webkit-scrollbar-thumb:hover,
-html.cc-popups-on ::-webkit-scrollbar-thumb:hover,
-html.cc-popups-on:hover::-webkit-scrollbar-thumb,
+html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-thumb:hover,
 html.cc-popups-on *:hover::-webkit-scrollbar-thumb {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
 }
-/* Firefox (and any engine that does NOT parse ::-webkit-scrollbar): use the standard properties. On Chromium
-   these DISABLE the webkit rules above, so they live ONLY here where Chromium never matches. */
+/* Firefox (no ::-webkit-scrollbar): standard props on DESCENDANTS only so the main page scrollbar stays native. */
 @supports not selector(::-webkit-scrollbar) {
-  html.cc-popups-on,
   html.cc-popups-on * { scrollbar-width: thin !important; scrollbar-color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent) transparent !important; }
-  html.cc-popups-on:hover,
   html.cc-popups-on *:hover { scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important; }
   html.cc-popups-on .ca_homeTemplates { scrollbar-color: transparent transparent !important; }
   html.cc-popups-on .ca_homeTemplates:hover { scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important; }

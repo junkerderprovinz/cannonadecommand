@@ -770,6 +770,18 @@ html.cc-on-plugins.cc-sections-plugins #displaybox section[role="tabpanel"] {
 }
 /* #18: the plugin table/list fills its panel in every plugins layout (native or stacked) */
 html.cc-on-plugins #displaybox #plugin_table, html.cc-on-plugins #displaybox #plugin_list, html.cc-on-plugins #displaybox table.tablesorter { width: 100% !important; max-width: none !important; }
+/* #14 (user: "bei SCHMALEM Fenster gehen die Listen zu weit nach rechts; bei breit passt es"): two causes at
+   narrow widths — (a) #displaybox is width:100% + margin-left:15px, so its right edge overshoots the client
+   area by 15px → a stray horizontal PAGE scrollbar; (b) the Docker table keeps its intrinsic ~1488px width and
+   runs off the viewport. Media-query-scoped (so the boxed 1920 cap at WIDE widths is untouched, where it
+   already "passt"): cap #displaybox to (100% - 15px), and let the Docker table fill 100% so its columns
+   compress to fit instead of overflowing right. */
+@media (max-width: 1935px) {
+  html.cc-docker-on #displaybox,
+  html.cc-on-plugins #displaybox,
+  html.cc-vms-on #displaybox { max-width: calc(100% - 15px) !important; }
+  html.cc-docker-on #displaybox table:has(#docker_list) { width: 100% !important; max-width: 100% !important; }
+}
 html.cc-on-plugins.cc-sections-plugins #displaybox section[role="tabpanel"]:last-child { margin-bottom: 0; }
 html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs button[role="tab"] { display: none !important; }
 html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs { border: none; min-height: 0; }
@@ -1399,7 +1411,8 @@ html.cc-ctout-on #displaybox .content style { display: none !important; }
    log) so it is always at the bottom and never overlaid — no flex restructure, so the simple single-step window
    is untouched. Only the LAST button row survives (earlier phases' rows collapse). */
 html.cc-ctout-on #displaybox .content .buttons,
-html.cc-ctout-on #displaybox .content > center {
+html.cc-ctout-on #displaybox .content > center,
+html.cc-ctout-on #displaybox .content > div:has(> button) {   /* live-DOM: the button row is a BARE <div> child of .content (no .buttons/center class) */
   position: sticky !important; bottom: -20px !important; z-index: 4 !important;
   margin: 10px -22px -20px !important; padding: 12px 22px !important;
   background: #1a1a1a !important; box-shadow: 0 -8px 14px rgba(0, 0, 0, .4) !important;

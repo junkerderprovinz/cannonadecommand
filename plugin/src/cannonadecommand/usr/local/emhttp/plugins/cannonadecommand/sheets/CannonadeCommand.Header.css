@@ -623,6 +623,24 @@ html.cc-popups-on .sweet-alert.nchan pre:not(:has(h3)):not(:has(ul)) {
    Unraid's `pre#swalbody{height:100%}`. */
 html.cc-popups-on .sweet-alert.nchan pre#swalbody,
 html.cc-popups-on .sweet-alert.nchan pre#swaltext { flex: 0 0 auto !important; height: auto !important; max-height: 100% !important; overflow: auto !important; }
+/* #15 (user, LIVE-verified on a real update: the window is .sweet-alert.nchan, NOT the cc-ctout page my earlier
+   fix targeted): the update stream carries a <style> block (.logLine{font-family:bitstream…}) that renders as
+   VISIBLE raw CSS text under the title. A <style> is display:none by default; here it shows — force it hidden. */
+html.cc-popups-on .sweet-alert style { display: none !important; }
+/* #16 (user: "die button und der spinner bleiben nicht ganz unten, werden vom log überlagert"): the
+   .sa-button-container (which also carries the cc-nchan-loader spinner) flows right after the log, so in a
+   multi-step update it strands mid-window. The window is a fixed-height (95vh) flex column, so push the button
+   row to the BOTTOM with margin-top:auto, opaque + above the log so a long stream can never overlay it. */
+html.cc-popups-on .sweet-alert.nchan { display: flex !important; flex-direction: column !important; }
+html.cc-popups-on .sweet-alert.nchan .sa-button-container {
+  order: 999 !important;   /* force LAST in the flex column even when Unraid streams more step-cards after it */
+  margin-top: auto !important; position: relative; z-index: 3 !important;
+  background: #202020 !important; padding: 12px 0 2px !important;
+}
+/* the streaming step-cards / log <pre> must NEVER order after the button row */
+html.cc-popups-on .sweet-alert.nchan > p,
+html.cc-popups-on .sweet-alert.nchan > pre,
+html.cc-popups-on .sweet-alert.nchan > fieldset { order: 1 !important; }
 /* Changelog (ShipLog): the version-<h3>-badges + <ul>-lists markdown pre sits in the SAME light #2e2e2e content
    card as every other window (user 2026-07-29: "Changelog auch in #2e2e2e-Card"). The card-size rule above
    already hugs it; here it just gets the light fill (the raw streaming-log pre keeps its own rule below). */
