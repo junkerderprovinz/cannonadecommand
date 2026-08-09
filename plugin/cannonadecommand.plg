@@ -28,14 +28,14 @@
 
 <CHANGES>
 ### 3.6.0
-**Added**
+**✨ Added**
 - Network status island: a live download and upload throughput chip in the header. Click it to switch between
   bits (Kbit/s, Mbit/s) and bytes (KB/s, MB/s); the choice is remembered.
 - Per-container restart policy in the start-plan editor: no, unless-stopped, always or on-failure. It applies
   live without recreating the container and is written into the template so it survives Apply. A warning badge
   marks any container left on "no".
 
-**Design**
+**🎨 Design**
 - Everything on the right edge lines up now: the Apps search and SHOW MORE badges, the container view toggle,
   the footer scroll arrows, and the Docker, Plugins, VM and Start-plan list rows all finish flush at the content edge.
 - The settings dropdowns are the CannonadeCommand widget, with an accent-highlighted option list and no native
@@ -43,13 +43,13 @@
 - Page and section badges use a middle size between the small badges and the main menu.
 - Styled scrollbars system-wide: they follow the badge shape and the accent colour and drop their end arrows.
 
-**Improved**
+**⚡ Improved**
 - The container view toggle stays flush right and visible even on a narrow window where the action bar overflows.
 - One continuous loader with the page dimmed and blurred behind it, so the spinner is easy to see.
 - Popups dim and blur the whole page including the header, the same way everywhere.
 - The footer scroll arrows sit on top, side by side, tight above the bottom bar, and right aligned.
 
-**Fixed**
+**🐛 Fixed**
 - The flat badge style no longer leaves a glass sheen on grey badges anywhere.
 - The plugin section headers keep their full size; only the author badges are smaller.
 
