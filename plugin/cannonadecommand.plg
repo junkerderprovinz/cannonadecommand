@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.5.2">
+  <!ENTITY version   "3.5.3">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,27 @@
 </ICON>
 
 <CHANGES>
+### 3.5.3
+- The two right-most header icons (notifications and menu) no longer flicker or vanish: they are re-pinned
+  the instant the Connect panel re-renders, so there is no gap where they jump away.
+- The settings dropdowns now match the other CannonadeCommand controls: the shape-engine radius, the same
+  height, a surface fill and an accent focus ring.
+- The Apps-tab search is now a collapsible button on the far right that expands into a field on click, like
+  the settings search.
+- The Apps-tab section headers keep the description in the info bubble and move SHOW MORE to its own badge
+  flush at the right end of the row.
+- The Apps-tab category sidebar is now a set of cards without separator lines that colour on hover with the
+  active colour mode.
+- The horizontal scrollbar on the Apps rows follows the colour mode and only appears while you hover a row;
+  the stray page-level horizontal scrollbar is gone.
+- The Apps tab no longer flashes a second spinner on open, and the loader is much bigger.
+- The container-install window: the status check sits by the buttons instead of floating at the top, the
+  pull-progress bar no longer overlaps the step cards, and the nested inner scrollbars are gone.
+- The container form keeps its layout in Simple view: hidden advanced fields no longer reappear as orphan
+  badges.
+- The container form view toggle now lines up with the form fields instead of the window edge.
+- Every popup now shares one backdrop blur so they all look the same.
+
 ### 3.5.2
 - The two right-most header icons no longer flicker or disappear: each toolbar link now keys off its real
   target, so buttons that share a placeholder href stop colliding.
@@ -2374,7 +2395,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>bda77599d2814c7d26e49f2a0cbf63d246bd8931bc95cc95eb8119396f579099</SHA256>
+  <SHA256>1b579485604dab6766bab2f51f5f7f39f8e4ba7f3393112f715a23f7c8afb08f</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the

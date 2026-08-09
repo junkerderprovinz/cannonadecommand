@@ -229,11 +229,14 @@
         if (state === "run" || state === "done") {
           if (!loader) {
             loader = document.createElement("span"); loader.className = "cc-nchan-loader"; loader.setAttribute("role", "status");
-            // anchor the loader to the BUTTON ROW, not the sweet-alert itself: the alert is often far taller than
-            // its content, so a bottom-anchored loader landed way BELOW the buttons instead of beside them (user).
-            var _cb = sa.querySelector("button.confirm, button.cancel");
-            (sa.querySelector(".sa-button-container") || (_cb && _cb.parentElement) || sa).appendChild(loader);
           }
+          // D11: anchor to the BUTTON ROW and RE-HOME every pass. The docker-CREATE window streams with NO
+          // buttons (the loader would fall back to `sa` and land top-centre), then renders VIEW LOG / FERTIG
+          // only when done -> re-parent as soon as the real row appears. Match ANY button (the docker buttons
+          // carry no .confirm/.cancel class); with no row yet land on `sa` (CSS then pins that case bottom-left).
+          var _btns = sa.querySelectorAll("button");
+          var _row = sa.querySelector(".sa-button-container") || (_btns.length ? _btns[_btns.length - 1].parentElement : sa);
+          if (loader.parentElement !== _row) _row.appendChild(loader);
           if (state === "done") {
             if (loader.getAttribute("data-cc-mode") !== "done") { loader.setAttribute("data-cc-mode", "done"); loader.classList.add("cc-nchan-check"); loader.setAttribute("aria-label", T("Fertig", "Done")); loader.innerHTML = "<svg viewBox='0 0 24 24' aria-hidden='true'><circle class='cc-ck-c' cx='12' cy='12' r='10.5'/><path class='cc-ck-p' d='M6.5 12.5l3.6 3.6L17.5 8.8'/></svg>"; }
           } else if (loader.getAttribute("data-cc-mode") !== "run") {
@@ -1568,7 +1571,7 @@
       br.appendChild(nm);
     } catch (e) {}
   }
-  var ccProfObs = null, ccProfT = null;
+  var ccProfObs = null, ccProfT = null, ccDockObs = null;
   function watchProfile() {   // uptime/edition/name live inside the Connect profile — auto-mount rebuilds it at will
     try {
       if (ccProfObs) return;
@@ -1586,6 +1589,13 @@
         }, 120);
       });
       ccProfObs.observe(p, { childList: true, subtree: true, characterData: true });
+      // #2 Header-Flacker: a SECOND, dedicated observer watches ONLY the trigger spans' style attribute and
+      // re-pins the instant Vue wipes it — SYNCHRONOUS (no 120ms debounce), so the wiped 0px-box frame never
+      // paints = no flicker. ccDockDirty() gates the re-pin to an ACTUAL wipe; ccDockProfile() cleans that
+      // state, so our own re-pin writes wake this observer exactly once more, see a clean diff, and stop (the
+      // gate is self-correcting -> no infinite observer loop). subtree keeps covering spans re-added on rebuild.
+      ccDockObs = new MutationObserver(function () { if (ccDockDirty()) { try { ccDockProfile(); } catch (e2) {} } });
+      ccDockObs.observe(p, { attributes: true, attributeFilter: ["style"], subtree: true });
     } catch (e) {}
   }
   // ── GLOBAL FLOATING hover bubble (user: "im Start-Tab passen viele Mouseover-Bubbles nicht …
@@ -1664,6 +1674,27 @@
   var ccDockProps = ["position", "left", "right", "top", "height", "width", "z-index", "padding", "min-width"];
   var ccDockRaf = 0;
   function ccDockPass() { ccDockRaf = 0; ccDockProfile(); }
+  // #2 Header-Flacker: Connect's Vue re-renders the bell/burger trigger spans and WIPES the inline
+  // position:fixed we pin on them -> each span snaps into #UserProfile's neutralised 0px box (left:0/
+  // top:0) = the icon vanishes/flashes until the next scheduled dock pass. Detect that wipe from a STATE
+  // DIFF (a visible trigger that lost its pin, or a hidden one that lost its display:none) so the attribute
+  // observer below can re-pin SYNCHRONOUSLY before paint. The diff is self-correcting: ccDockProfile() re-
+  // pins every span, so a re-pin can never leave it dirty -> the observer wakes once more, sees it clean,
+  // and stops. No re-entrancy flag needed (a sync flag can't straddle the async observer delivery).
+  function ccDockDirty() {
+    try {
+      if (!document.documentElement.classList.contains("cc-header-on")) return false;
+      var up = document.getElementById("UserProfile"); if (!up) return false;
+      var sp = up.querySelectorAll(":scope > div:nth-child(2) > span"); if (!sp.length) return false;
+      var hideBell = g("cc.hideicon.bell", "0") === "1", hideBurger = g("cc.hideicon.burger", "0") === "1";
+      for (var i = 0; i < sp.length; i++) {
+        var isBell = (i === 0), hidden = isBell ? hideBell : (i === sp.length - 1 ? hideBurger : false);
+        if (hidden) { if (sp[i].style.getPropertyValue("display") !== "none") return true; }   // wipe un-hid it
+        else if (sp[i].style.getPropertyValue("position") !== "fixed") return true;            // wipe removed our pin
+      }
+    } catch (e) {}
+    return false;
+  }
   // ── #(user: "die beiden icons (benachrichtigungen und menü) kleben aneinander, hüpfen beim Resize und
   // lassen sich im Drag&Drop nicht anderswo anordnen"). ROOT CAUSE: the old dock pinned the WHOLE
   // Connect-owned #UserProfile (both triggers) as ONE position:fixed box whose `left` was JS-computed from
@@ -2030,13 +2061,40 @@
       els[i].style.setProperty("--cc-rb-ct", idealText(c));
     }
   }
+  // #7: turn CA's full-width search into a collapsible far-right badge — the magnifier is a colour-mode
+  // BUTTON that expands into an input on click (mirrors CC-settings wireSearchToggle / .cc-set-searchbadge).
+  // Idempotent via data-cc-search so it re-wires after CA view swaps; re-open block runs in capture phase.
+  function wireCaSearch() {
+    try {
+      var filter = document.getElementById("searchFilter");
+      if (!filter || filter.getAttribute("data-cc-search") === "1") return;
+      filter.setAttribute("data-cc-search", "1");
+      var icon = filter.querySelector(".searchSubmit, #searchButton");
+      var box = document.getElementById("searchBox");
+      if (!icon) return;
+      icon.addEventListener("click", function (e) {
+        e.preventDefault(); e.stopPropagation();               // block CA's native submit; just toggle
+        var open = filter.classList.toggle("cc-open");
+        if (open) { try { box && box.focus(); } catch (e2) {} }
+        else if (box && box.value) { box.value = ""; try { box.dispatchEvent(new Event("keyup", { bubbles: true })); } catch (e3) {} }
+      }, true);
+      if (!window.__ccCaSearchDoc) {                            // click BESIDE it -> collapse (bound once)
+        window.__ccCaSearchDoc = true;
+        document.addEventListener("click", function (e) {
+          var f = document.querySelector("#searchFilter.cc-open");
+          if (f && !f.contains(e.target)) f.classList.remove("cc-open");
+        });
+      }
+    } catch (e) {}
+  }
   function ccApps() {
     try {
       if (!/^\/Apps(\/|$)/.test(location.pathname)) return;
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
       ccAppsStamp(".ca_homeTemplatesHeader");
       ccAppsStamp(".caMenuItem.selectedMenu");
-      ccAppsStamp(".searchArea .searchSubmit");
+      ccAppsStamp("#searchFilter");                          // #7: stamp the collapsible badge (bg + icon colour follow the mode)
+      wireCaSearch();
       ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton");
       // (#9) subtitle -> (i) bubble on the header, keep SHOW MORE inline, retire the body-text line.
       var heads = document.querySelectorAll(".ca_homeTemplatesHeader:not([data-cc-info])");
@@ -2167,8 +2225,10 @@
   function ccInjectSpinner() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
-      var sp = document.querySelector("div.spinner.fixed");
-      if (sp && !sp.querySelector(".cc-loader")) sp.appendChild(ccMakeLoader());
+      // inject into EVERY spinner (full-screen tab-load div.spinner.fixed AND CA's in-page div.spinner)
+      // so the SAME CC ring shows in whichever survives; bounded node list -> freeze-safe.
+      var sps = document.querySelectorAll("div.spinner");
+      for (var i = 0; i < sps.length; i++) { if (!sps[i].querySelector(".cc-loader")) sps[i].appendChild(ccMakeLoader()); }
     } catch (e) {}
   }
 

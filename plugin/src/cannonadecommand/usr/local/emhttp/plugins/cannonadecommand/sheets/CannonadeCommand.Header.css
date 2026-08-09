@@ -702,6 +702,27 @@ html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-p {
 @keyframes cc-ck-draw { to { stroke-dashoffset: 0; } }
 html.cc-anim-off .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-p { animation: none !important; stroke-dashoffset: 0 !important; }
 html.cc-anim-off .sweet-alert.nchan .cc-nchan-loader .cc-nchan-fa { animation: none !important; }
+/* ── D11 (docker-CREATE sweet-alert: different inner structure than the plugin-install window) ── */
+/* (a) LOADER FALLBACK: while it STREAMS there is no button row yet, so ccNchanStyle appends the status
+   loader to the .sweet-alert itself (a DIRECT child). Pin THAT case bottom-left — never top-centre — where the
+   VIEW LOG / FERTIG buttons appear (once they exist the JS re-homes the loader into the real row). */
+html.cc-popups-on .sweet-alert.nchan > .cc-nchan-loader {
+  position: absolute !important; left: 20px !important; bottom: 20px !important;
+  top: auto !important; right: auto !important; margin: 0 !important;
+}
+/* (b) NO OVERLAP + NO NESTED SCROLLBARS: Unraid streams the `docker pull` progress (a floated "Pull complete"
+   bar) + the step cards into pre#swaltext; the float overlapped the cards and the inner pre/fieldset each grew
+   their OWN scrollbar inside the already-scrollable 92vh dialog. Force a plain static block column and let ONLY
+   the outer dialog scroll. Scoped to #swaltext so System Info's pre#swalbody card is untouched. */
+html.cc-popups-on .sweet-alert.nchan pre#swaltext,
+html.cc-popups-on .sweet-alert.nchan pre#swaltext fieldset { max-height: none !important; overflow: visible !important; }
+html.cc-popups-on .sweet-alert.nchan pre#swaltext > *,
+html.cc-popups-on .sweet-alert.nchan pre#swaltext progress,
+html.cc-popups-on .sweet-alert.nchan pre#swaltext .progress,
+html.cc-popups-on .sweet-alert.nchan pre#swaltext span.system {
+  position: static !important; float: none !important; display: block !important;
+  width: 100% !important; box-sizing: border-box !important; margin: 0 0 12px !important;
+}
 html.cc-popups-on .sweet-alert.nchan fieldset:empty,
 html.cc-popups-on .sweet-alert.nchan p:empty,
 html.cc-popups-on .sweet-alert.nchan > div:empty,

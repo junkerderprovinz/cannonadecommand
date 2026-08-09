@@ -886,9 +886,9 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-rb-
    pickers). The old #232323 fill barely differed from the card, so the pickers read as underlined text
    rather than dropdowns. Distinct lighter fill + a max-width so they don't stretch full-width + a bolder,
    brighter caret in its own chip so it unmistakably reads as a dropdown. No border/ring (house law). */
-#cc-settings .cc-set-sel { flex: 1; min-width: 0; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-color: #2e2e2e !important; color: #eaeaea !important; border: 0 !important; border-radius: 8px !important; padding: 8px 36px 8px 13px !important; font-size: 13px; font-weight: 600; cursor: pointer; box-sizing: border-box; min-height: var(--cc-md-h, 30px); background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" fill="none" stroke="%23cfcfcf" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>') !important; background-repeat: no-repeat !important; background-position: right 12px center !important; transition: background-color .12s, filter .12s; }
-#cc-settings .cc-set-sel:hover { background-color: #383838 !important; }
-#cc-settings .cc-set-sel:focus { outline: none; filter: brightness(1.12); }
+#cc-settings .cc-set-sel { flex: 1; min-width: 0; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-color: var(--cc-surface-chip, #383838) !important; color: var(--txt, #eaeaea) !important; border: 0 !important; border-radius: var(--cc-b-radius, 8px) !important; padding: 0 36px 0 13px !important; font-size: 13px; font-weight: 600; cursor: pointer; box-sizing: border-box; height: 36px; min-height: 36px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" fill="none" stroke="%23eaeaea" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>') !important; background-repeat: no-repeat !important; background-position: right 12px center !important; transition: background-color .12s, filter .12s; }
+#cc-settings .cc-set-sel:hover { background-color: var(--cc-surface-chip, #383838) !important; filter: brightness(1.12); }
+#cc-settings .cc-set-sel:focus { outline: none; box-shadow: 0 0 0 3px rgba(47, 111, 235, .42) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 45%, transparent) !important; }
 /* open option list -> dark to match CC (native <option> is only partly stylable: background + selected accent) */
 #cc-settings .cc-set-sel option { background: #2e2e2e; color: #eaeaea; }
 #cc-settings .cc-set-sel option:checked { background: var(--cc-accent, #2f6feb); color: #fff; }
@@ -1246,7 +1246,7 @@ html.cc-docker-on.cc-on-addct .ui-dialog #ddcl-catSelect {
 /* #14: the container create/update OUTPUT page (docker run/create result) as a floating Carbon window,
    like the container-update dialog (docker.js bootCtOutput adds html.cc-ctout-on + the backdrop + the
    #cc-ctout-title accent badge, and hides the native grey heading). */
-html.cc-ctout-on #cc-ctout-bd { position: fixed; inset: 0; background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)); backdrop-filter: var(--cc-backdrop-blur, blur(5px)); -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)); z-index: 9998; }
+html.cc-ctout-on #cc-ctout-bd { position: fixed; inset: 0; background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)); z-index: 9998; } /* dim stays; blur is single-sourced from the ONE central backdrop rule (Tokens.css) so it can never diverge */
 html.cc-ctout-on #displaybox .content {
   position: fixed; z-index: 9999; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: min(900px, 92vw); max-height: 86vh; overflow: auto;
@@ -1346,6 +1346,20 @@ html.cc-docker-on.cc-on-addct .ui-dialog dl > dt.cc-dtlab {
    look while keeping the CC badge sitting right beside its input. */
 html.cc-docker-on.cc-on-addct #canvas dl,
 html.cc-docker-on.cc-on-addct .ui-dialog dl { grid-template-columns: 35% minmax(0, 1fr) !important; }
+/* #12 basic-view: Unraid's Basic/Advanced toggle hides .advanced fields via jQuery, which
+   writes an INLINE style="display:none" on the row (docker.js: "global .advanced/.basic
+   toggle, no body class"). CC's label rules above force display:*!important, which BEATS a
+   non-important inline style and resurrects hidden advanced labels as orphan badges (broken
+   layout in Simple view). Re-assert the hide at higher weight so any field Unraid hid stays
+   hidden; CC only ever lays out the VISIBLE fields, and Basic + Advanced both render clean. */
+html.cc-docker-on.cc-on-addct #canvas .advanced[style*="display: none"],
+html.cc-docker-on.cc-on-addct #canvas .advanced[style*="display:none"],
+html.cc-docker-on.cc-on-addct #canvas .basic[style*="display: none"],
+html.cc-docker-on.cc-on-addct #canvas .basic[style*="display:none"],
+html.cc-docker-on.cc-on-addct .ui-dialog .advanced[style*="display: none"],
+html.cc-docker-on.cc-on-addct .ui-dialog .advanced[style*="display:none"],
+html.cc-docker-on.cc-on-addct .ui-dialog .basic[style*="display: none"],
+html.cc-docker-on.cc-on-addct .ui-dialog .basic[style*="display:none"] { display: none !important; }
 html.cc-docker-on.cc-on-addct #canvas dl > dt > span.cc-varlab i.fa,
 html.cc-docker-on.cc-on-addct .ui-dialog dl > dt > span.cc-varlab i.fa,
 html.cc-docker-on.cc-on-addct #canvas dl > dt.cc-dtlab i.fa,
@@ -1377,7 +1391,13 @@ html.cc-docker-on.cc-on-addct td:has(> .cc-colorvar) input[type="text"] { flex: 
    flex + space-between). Selector 0,3,2 outranks the global 0,2,2 — other pages keep their grey bars. */
 html.cc-docker-on.cc-on-addct div.title {
   background: transparent !important; box-shadow: none !important;
-  border: none !important; border-radius: 0 !important; padding: 0 !important;
+  border: none !important; border-radius: 0 !important;
+  /* D2: pull the Basic/Advanced toggle (span.right) off the viewport edge so its right edge lines
+     up with the form fields. div.title is full-width flex + space-between; the dl value column
+     starts at 35% and native inputs are ~400px wide, so the field right edge = ~35% + 400px.
+     Right-pad = 65% - field width lands the toggle flush with the inputs/cards instead of the
+     viewport. --cc-ct-field-w tunable if native input width differs. */
+  padding: 0 calc(64% - var(--cc-ct-field-w, 400px)) 0 0 !important;
 }
 /* the form page joins the house left edge: #displaybox aligns with the main menu bar
    (--cc-align-left, set by header.js) — the badge sat 10px vs the menu's 15px (user). */
