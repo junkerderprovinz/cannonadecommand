@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.5.4">
+  <!ENTITY version   "3.6.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,32 @@
 </ICON>
 
 <CHANGES>
+### 3.6.0
+**Added**
+- Network status island: a live download and upload throughput chip in the header. Click it to switch between
+  bits (Kbit/s, Mbit/s) and bytes (KB/s, MB/s); the choice is remembered.
+- Per-container restart policy in the start-plan editor: no, unless-stopped, always or on-failure. It applies
+  live without recreating the container and is written into the template so it survives Apply. A warning badge
+  marks any container left on "no".
+
+**Design**
+- Everything on the right edge lines up now: the Apps search and SHOW MORE badges, the container view toggle,
+  the footer scroll arrows, and the Docker, Plugins, VM and Start-plan list rows all finish flush at the content edge.
+- The settings dropdowns are the CannonadeCommand widget, with an accent-highlighted option list and no native
+  browser list.
+- Page and section badges use a middle size between the small badges and the main menu.
+- Styled scrollbars system-wide: they follow the badge shape and the accent colour and drop their end arrows.
+
+**Improved**
+- The container view toggle stays flush right and visible even on a narrow window where the action bar overflows.
+- One continuous loader with the page dimmed and blurred behind it, so the spinner is easy to see.
+- Popups dim and blur the whole page including the header, the same way everywhere.
+- The footer scroll arrows sit on top, side by side, tight above the bottom bar, and right aligned.
+
+**Fixed**
+- The flat badge style no longer leaves a glass sheen on grey badges anywhere.
+- The plugin section headers keep their full size; only the author badges are smaller.
+
 ### 3.5.4
 **Added**
 - Horizontal scrolling in the Apps rows by holding the right mouse button (or Shift) and turning the wheel.
@@ -2418,7 +2444,7 @@ rm -f &plgPath;/*.txz
 -->
 <FILE Name="&plgPath;/&txz;" Run="/sbin/upgradepkg --install-new --reinstall">
   <URL>&pkgURL;/&txz;</URL>
-  <SHA256>0bda548d4e2c016cf9502984fb5dabac655f1dfd7bac44baebb03d144f9567e2</SHA256>
+  <SHA256>439593bab366dd7fdbe0e816e45e55406bdd36dcf7a1aef9fa39c270b7d3e3e0</SHA256>
 </FILE>
 
 <!-- Post-install: enforce exec bits (NTFS/CI builds drop them) and (re)start the
