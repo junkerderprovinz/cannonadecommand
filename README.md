@@ -86,6 +86,9 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
   them implicitly, nothing is written into your plan.
 - Watchdog (auto-restart on crash or unhealthy, rate-capped per hour) and time
   schedules (start/stop/restart at fixed times, per weekday).
+- Per-container restart policy (no, unless-stopped, always, on-failure) set from
+  the plan editor, applied live with a Docker update and mirrored into the
+  template so it survives Apply.
 - Idle auto-stop (ContainerNursery-style): stop a container after it stays idle —
   low CPU **and** low network — for a set number of minutes. A busy container is
   never stopped, and a host/container-network container (whose per-container idle
@@ -110,6 +113,9 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
   own page data.
 - Clean badges for state, network, IPs (click to copy), ports, volumes, update
   status; live CPU/RAM/bandwidth values with their limit editors attached.
+- Header status island: at-a-glance array fill, CPU, RAM, temperatures, running
+  containers and a live network throughput chip (down/up, click to switch between
+  bits and bytes); each chip is toggleable and re-arrangeable.
 - List view and a card (grid) view with the same controls.
 - Theming: one accent colour for everything, or rainbow mode with an editable
   palette; icon colours toggleable; settings sync across origins (IP, hostname,
