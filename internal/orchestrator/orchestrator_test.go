@@ -117,11 +117,11 @@ func TestTopoStages(t *testing.T) {
 // ties broken by plan order.
 func TestTopoStages_StartOrder(t *testing.T) {
 	p := model.Plan{Nodes: []model.Node{
-		{Name: "a", Policy: model.PolicyAbort},                   // unnumbered
-		{Name: "b", StartOrder: 20, Policy: model.PolicyAbort},   // numbered 20
-		{Name: "c", StartOrder: 10, Policy: model.PolicyAbort},   // numbered 10
-		{Name: "d", Policy: model.PolicyAbort},                   // unnumbered
-		{Name: "e", StartOrder: 10, Policy: model.PolicyAbort},   // same as c → plan order breaks the tie
+		{Name: "a", Policy: model.PolicyAbort},                 // unnumbered
+		{Name: "b", StartOrder: 20, Policy: model.PolicyAbort}, // numbered 20
+		{Name: "c", StartOrder: 10, Policy: model.PolicyAbort}, // numbered 10
+		{Name: "d", Policy: model.PolicyAbort},                 // unnumbered
+		{Name: "e", StartOrder: 10, Policy: model.PolicyAbort}, // same as c → plan order breaks the tie
 	}}
 	stages, err := TopoStages(p)
 	if err != nil {
