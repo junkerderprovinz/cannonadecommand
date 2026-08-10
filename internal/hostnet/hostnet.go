@@ -104,15 +104,6 @@ func parseDefaultIface(data string) string {
 	return ""
 }
 
-// ifaceBytes reads the rx/tx byte counters for one interface from /proc/net/dev.
-func ifaceBytes(iface string) (rx, tx uint64) {
-	data, err := os.ReadFile("/proc/net/dev")
-	if err != nil {
-		return 0, 0
-	}
-	return parseIfaceBytes(string(data), iface)
-}
-
 // parseIfaceBytes returns (rx, tx) for iface from /proc/net/dev content. Each data
 // row is "  name: rxbytes rxpkts … (8 rx cols) txbytes txpkts …", so rx = field 0
 // and tx = field 8 after the colon. Split out so it is unit-testable without /proc.
