@@ -2633,6 +2633,13 @@
       ccAppsStamp(".searchArea .caButton.maxPerPage, .searchArea .dockerSearch, .cc-ca-search-extras .caButton.maxPerPage, .cc-ca-search-extras .dockerSearch");
       ccAppsStamp(".pageNavigation .pageNumber");
       ccAppsStamp("a.sortIcons");
+      // #13 (user: "bitte in alle Farbmodi integrieren"): the card corner ribbons (OFFICIAL/LIMITED TIME/
+      // INSTALLED/BETA) and the Spotlight badges are already wired to --cc-rb-c on the CSS side (reactive-
+      // neutral, colour on .ca_holder:hover — Tokens.css ~1220) but were never stamped, so they only ever
+      // fell back to the flat shared accent instead of each card's own rotating jewel — the same gap #10
+      // above already documents for the search-results header. Re-runs every tick like the others, so cards
+      // that arrive later (SHOW MORE / infinite scroll) get stamped too.
+      ccAppsStamp(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground, .homespotlightIconArea");
       ccMoveSearchAreaBadges();                              // #15: relocate under the search badge
       wireCaSearch();
       ccWireCaSearchCollapse();

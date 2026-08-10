@@ -788,12 +788,17 @@ html.cc-apps-rbneutral.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-ope
 html.cc-popups-on .cc-ca-search-extras {
   display: flex !important; flex-direction: column !important; gap: 4px !important; margin: 4px 0 0 !important;
 }
-/* #11 lesson (a hidden control must STAY hidden): CA ships .dockerSearch with .ca_hide by default and only
-   drops it for a DockerHub-backed feed — :not(.ca_hide) means this rule never has to fight that with a
-   counter-guard, and the relocation cannot accidentally resurrect a control CA meant to stay hidden. */
-html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:not(.ca_hide),
-html.cc-popups-on .cc-ca-search-extras .dockerSearch:not(.ca_hide) {
-  display: flex !important; align-items: center !important; justify-content: center !important;
+/* #11 lesson revisited (a hidden control must STAY hidden) — #15 (user: "Dockerhub ist nicht in einem
+   richtigen GLS badge"): the :not(.ca_hide) guard assumed .ca_hide reliably means "CA wants this hidden
+   right now", but live in an active search .dockerSearch carries .ca_hide WHILE actually shown (computed
+   display:block, not none) — native's own `.ca_hide{display:none}` and `.caButton{display:inline-block}`
+   are equal specificity (one class each), so which one wins depends on source order, not intent; the class
+   alone isn't a trustworthy signal. Style unconditionally instead, but — to keep the #11 guarantee — don't
+   force `display` at all: when native genuinely hides the control (any mechanism), no forced display here
+   can undo it; when native shows it, it renders as a plain block with the same colour/padding/radius/centred
+   text, just without a flex box (harmless — align-items/justify-content are no-ops without display:flex). */
+html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage,
+html.cc-popups-on .cc-ca-search-extras .dockerSearch {
   width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
   height: auto !important; min-height: 0 !important; padding: 7px 12px !important; margin: 0 !important;
   /* #15 (user: "gleiche Badge-Größe für alle Elemente in der Sidebar"): the sm-tier size below matched
@@ -807,15 +812,15 @@ html.cc-popups-on .cc-ca-search-extras .dockerSearch:not(.ca_hide) {
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
 }
-html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:not(.ca_hide):hover,
-html.cc-popups-on .cc-ca-search-extras .dockerSearch:not(.ca_hide):hover { filter: brightness(1.12) !important; }
+html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:hover,
+html.cc-popups-on .cc-ca-search-extras .dockerSearch:hover { filter: brightness(1.12) !important; }
 /* REACTIVE: matches the search chip right above it — neutral at rest, colour on hover. */
-html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:not(.ca_hide),
-html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .dockerSearch:not(.ca_hide) {
+html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage,
+html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .dockerSearch {
   background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
-html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:not(.ca_hide):hover,
-html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .dockerSearch:not(.ca_hide):hover {
+html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:hover,
+html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .dockerSearch:hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
 }
 /* ── EXPANDED: leaves the 140px sidebar column and opens to the RIGHT, in exactly the geometry of the
