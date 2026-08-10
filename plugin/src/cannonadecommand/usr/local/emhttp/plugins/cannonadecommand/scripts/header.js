@@ -2120,6 +2120,15 @@
       // 160px right of its settled position and nothing re-triggered) — the row settles as
       // late-loading icons/styles arrive, so re-pin twice after the dust
       setTimeout(ccDockProfile, 300); setTimeout(ccDockProfile, 1200);
+      // #16 (user: "die icons werden immer wieder ausgeblendet"): the two observers (attribute-only
+      // instant re-pin + debounced childList re-pin) cover every wipe shape I could reproduce live
+      // (idle, arrange-mode toggle, resize, 3+ minutes of rAF-level position sampling — all stable),
+      // but Connect's auto-mount is a black box and a childList replacement whose new nodes never
+      // receive a subsequent style mutation would slip past both observers with no bound on how long
+      // it stays wiped. A cheap, permanent safety-net pass closes that gap regardless of the exact
+      // trigger — ccDockProfile() diff-writes, so this is a zero-op once settled (mirrors the loader
+      // engine's ccLoaderBoot interval).
+      setInterval(function () { if (!document.hidden) ccDockProfile(); }, 1000);
     } catch (e) {}
   }
   // gui_search() prepends #guiSearchBoxSpan at the FAR-LEFT of .nav-tile.right, focuses
