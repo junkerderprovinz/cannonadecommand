@@ -1444,19 +1444,39 @@
       // one shared indent can't work: measured live they started at 767 and 626 while the toggle column
       // starts at 847. Measure the control edge once and push each row to it individually — self-correcting,
       // so it survives a language change, another font size or a longer label.
-      var ctrl = box.querySelector("dd .cc-tgl, dd .cc-tsel, dd input, dd select");
+      // A yes/no <select> that ccToolsWrapSelect turned into a .cc-tgl pill stays in the DOM (display:none)
+      // right where it was, i.e. BEFORE its own pill in document order — so a plain querySelector() over
+      // ".cc-tgl, .cc-tsel, input, select" can land on that hidden select first (zero rect, cx=0), which
+      // silently breaks the whole measurement (verified live: 0 vs the real column at 1107px). Skip anything
+      // with no rendered box and take the first control that's actually visible.
+      var ctrlCands = box.querySelectorAll("dd .cc-tgl, dd .cc-tsel, dd input, dd select"), ctrl = null;
+      for (var cc = 0; cc < ctrlCands.length; cc++) {
+        var ccRect = ctrlCands[cc].getBoundingClientRect();
+        if (ccRect.width > 0 || ccRect.height > 0) { ctrl = ctrlCands[cc]; break; }
+      }
       if (ctrl) {
         var cx = ctrl.getBoundingClientRect().left;
         var rows = [];
         var sub = box.querySelector('form span:has(> input[type="submit"])'); if (sub) rows.push(sub);
         if (host) rows.push(host);
+        // Probe, don't assume 1:1: the "Anwenden/Fertig" span sits inside a shrink-wrapped ancestor
+        // that keeps ITSELF centred, so growing the span via padding-left also widens that ancestor,
+        // which re-centres and eats HALF of every pixel of padding (measured live: 100px of padding
+        // only ever moved the button 50px — the CA "DOWNLOAD LOG" row has no such ancestor and takes
+        // padding 1:1). Rather than hard-code which row is which, measure the real px-of-content-shift
+        // per px-of-padding with a small probe write and solve for the padding that closes the exact
+        // remaining gap — correct for either layout, and for any future CC/CA markup change too.
         for (var r = 0; r < rows.length; r++) {
           var row = rows[r];
-          var cur = parseFloat(row.style.paddingLeft) || 0;
-          var delta = cx - row.getBoundingClientRect().left;      // distance still to go
-          if (Math.abs(delta) < 0.5) continue;                     // already aligned -> no write
-          var pad = Math.round(cur + delta);
-          if (pad >= 0 && pad < 1200) row.style.setProperty("padding-left", pad + "px", "important");
+          row.style.setProperty("padding-left", "0px", "important");
+          var c0 = row.getBoundingClientRect().left;
+          var PROBE = 100;
+          row.style.setProperty("padding-left", PROBE + "px", "important");
+          var cP = row.getBoundingClientRect().left + PROBE;
+          var slope = (cP - c0) / PROBE;                    // px of actual shift per px of padding
+          var pad = slope > 0.05 ? Math.round((cx - c0) / slope) : 0;
+          if (pad > 0 && pad < 2400) row.style.setProperty("padding-left", pad + "px", "important");
+          else row.style.removeProperty("padding-left");
         }
       }
     } catch (e) {}
