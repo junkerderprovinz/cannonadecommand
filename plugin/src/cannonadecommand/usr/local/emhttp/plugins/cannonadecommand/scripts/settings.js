@@ -1324,10 +1324,16 @@
     cStart.appendChild(styleToggle("cc.stylemain", null));
     cStart.appendChild(tabviewRow("main", syncSharesBar));
     wrapHeader.appendChild(cH); wrapShares.appendChild(cSh); wrapPlugin.appendChild(cP); wrapVms.appendChild(cV); wrapSettings.appendChild(cSet); wrapFavorites.appendChild(cFav); wrapStart.appendChild(cStart);
-    // #6: the Werkzeuge sub-tab. Unraid renders /Settings and /Tools with the IDENTICAL category-tile grid,
-    // so one shared config styles both; this tab makes that explicit and keeps the CC sub-tabs 1:1 with the
-    // main menu (which lists Einstellungen and Werkzeuge separately -> also fixes the ordering in #7).
-    var cTools = card(T("Werkzeuge-Tab", "Tools tab"), T("Die Seite /Werkzeuge nutzt dasselbe Kategorie-Raster wie /Einstellungen und wird vom Stil im Einstellungen-Tab mitgestaltet (Unraid rendert beide Seiten identisch).", "The /Tools page uses the same category grid as /Settings and is styled together with it via the Settings tab (Unraid renders both pages identically)."));
+    // #6/#20 (user: "der werkzeugtab soll nicht nur verweisen, das soll den gleichen funktionsumfang wie
+    // beim einstellungstab haben. die tabs sind ja baugleich"): Unraid renders /Settings and /Tools with
+    // the IDENTICAL category-tile grid, so they always share ONE underlying flag (cc.stylesettings) - that
+    // part of the architecture is real and correct, a per-tab COPY of the flag would silently do nothing
+    // on one of the two pages. What was wrong is that this tab only ever showed a sentence about that
+    // fact instead of the actual control: same "Stil" card + toggle as the Einstellungen-Tab, wired to the
+    // SAME key, so either tab can flip it and both stay in sync (honest duplication - real control, shared
+    // state - not a second, disconnected copy).
+    var cTools = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt. Wirkt auf /Einstellungen UND /Werkzeuge zugleich (Unraid rendert beide Seiten identisch).", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies. Affects /Settings AND /Tools at once (Unraid renders both pages identically)."));
+    cTools.appendChild(styleToggle("cc.stylesettings", null));
     wrapTools.appendChild(cTools);
     // (the per-area Tabansicht toggle lives IN each Stil card now — see tabviewRow above)
     function syncPluginsBar() { try { if (typeof window.ccPluginsApply === "function") window.ccPluginsApply(); } catch (e) {} }
