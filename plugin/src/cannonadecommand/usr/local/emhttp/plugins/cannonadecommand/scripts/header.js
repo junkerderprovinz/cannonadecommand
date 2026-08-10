@@ -2376,6 +2376,14 @@
       filter.addEventListener("click", function (e) {
         try {
           if (caWasOpen || filter.classList.contains("cc-open")) return;   // already open -> leave CA's own submit alone
+          // #26 (user: "wenn man aufs X klickt um die Suche zurückzusetzen öffnet sich das Suchfenster —
+          // es soll aber die Suche gleich zurücksetzen"): CA swaps the magnifier icon to fa-remove ("X")
+          // once a query is active — clicking it then means "clear", not "open" (confirmed live: the badge
+          // stays collapsed, #searchButton carries fa-remove, box.value is the old query). This capture-
+          // phase handler ran unconditionally and stopPropagation()'d every click, which ate CA's own
+          // clear-button handling right along with the open-badge one it was meant to intercept.
+          var btn = filter.querySelector("#searchButton");
+          if (btn && btn.classList.contains("fa-remove")) return;   // let CA's own clear/reset run untouched
           e.preventDefault(); e.stopPropagation();
           filter.classList.add("cc-open");
           // the expanded field leaves the sidebar column and overlays the app grid, so lift the sidebar's
