@@ -89,14 +89,31 @@ There is no release workflow — releasing is a manual, ordered flow:
 
 1. Bump `<!ENTITY version>` in `plugin/cannonadecommand.plg` and prepend a `### X.Y.Z`
    block to `<CHANGES>` (Unraid renders CHANGES as **markdown** — use `- ` list items,
-   no raw `<`/`&`, no leading `#`, or the install aborts / headings explode).
+   no raw `<`/`&`, no leading `#` at the START of a bullet line, or the install aborts /
+   headings explode; the `### X.Y.Z` version headers themselves are the established
+   exception and already used throughout the existing CHANGES block).
 2. Build the asset: `bash plugin/pkg_build.sh X.Y.Z` → the `.txz` (+ `.sha256`).
-3. Create the GitHub release tagged `vX.Y.Z`, attach the `.txz`, and set the plg's
-   `<SHA256>` to the package hash. **The `<SHA256>` in the plg MUST match the attached
-   `.txz`** — a stale hash aborts the install. Verify plg == published == local.
-4. Asset FIRST, confirm the download returns 200, flip the version LAST.
+3. Embed it: `bash plugin/embed_txz.sh X.Y.Z` — splices the `.txz` (base64) into the
+   `<FILE Name="&plgPath;/&txz;" Type="base64"><INLINE>` stanza and self-verifies by
+   decoding it back out and comparing sha256. **Do not skip this** — the plg has no
+   separate `<SHA256>`/`<URL>` download path any more (that was the pre-v3.6.5 design);
+   install AND update AND the network-free boot-time reinstall all run from this one
+   embedded blob. A version bump without re-running this step ships the OLD binary/webgui
+   under the NEW version number.
+4. Create the GitHub release tagged `vX.Y.Z` and attach the `.txz` too (kept for manual
+   download/inspection per the comment above the FILE stanza — it is not what installs
+   read). Commit + push the tag once locally (embed_txz.sh already rewrote the plg).
+5. Asset FIRST, confirm the release download returns 200 (and its sha256 matches the
+   local build), flip the version LAST — i.e. don't push `main` (which is what
+   `raw.githubusercontent.com/main/...` and every box's update-check actually reads)
+   until the tagged release + asset are confirmed live. Never delete/recreate a tag
+   after its GitHub Release already exists — the release detaches into an orphaned
+   `untagged-*` draft and needs `gh release edit <tag> --tag <tag> --draft=false` to
+   reattach; get the plg fully correct (steps 1-3) before tagging instead.
 
-The plg pulls the package from `releases/download/vX.Y.Z/cannonadecommand-X.Y.Z-x86_64-1.txz`.
+The plg pulls the package from `releases/download/vX.Y.Z/cannonadecommand-X.Y.Z-x86_64-1.txz`
+for the release asset; the box itself installs/updates from the embedded blob (step 3),
+never over the network. See the comment above the txz `<FILE>` stanza in the plg for why.
 
 ## Repo-specific gotchas
 
