@@ -1390,6 +1390,30 @@ html.cc-popups-on .sweet-alert.nchan p:has(> button.confirm) { flex-direction: r
 html.cc-arrange #menu .nav-item, html.cc-arrange #cc-island .cc-isl-chip { cursor: grab; }
 html.cc-arrange #menu .nav-item.cc-dragging, html.cc-arrange #cc-island .cc-isl-chip.cc-isl-dragging { cursor: grabbing; }
 
+/* ═══ #17 SYSTEM NOTICE BANNER (user: "können wir diese Banner auch in GLS aufnehmen. Global. egal was
+   für eine Meldung im Banner kommt") — Unraid's own top-of-page notices (.upgrade_notice: boot-parameter
+   changes, plugin-update banners; .ca_element_notice: CA's own element notices) render in raw native
+   yellow/cream on every page, borderless GLS elsewhere in the plugin. Semantic, NOT accent/rainbow — a
+   warning must always read as a warning regardless of colour mode, same rule as the destructive-red delete
+   button and the restart-policy warn badge. .alert/.done are Unraid's own state classes on the same element
+   (error / success), reusing the --cc-warn/--cc-err/--cc-ok tokens every other status pill already uses. */
+html.cc-popups-on .upgrade_notice,
+html.cc-popups-on .ca_element_notice {
+  background: var(--cc-warn, #e0912a) !important; color: var(--cc-warn-fg, #1a1a1a) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 8px) !important; box-shadow: none !important;
+}
+html.cc-popups-on .upgrade_notice.alert,
+html.cc-popups-on .ca_element_notice.alert {
+  background: var(--cc-err, #d9433f) !important; color: var(--cc-err-fg, #fff) !important;
+}
+html.cc-popups-on .upgrade_notice.done,
+html.cc-popups-on .ca_element_notice.done {
+  background: var(--cc-ok, #1f9d55) !important; color: var(--cc-ok-fg, #fff) !important;
+}
+/* the fa-warning glyph rides the same colour so it never mismatches the banner it sits in */
+html.cc-popups-on .upgrade_notice i, html.cc-popups-on .ca_element_notice i { color: inherit !important; }
+html.cc-popups-on .upgrade_notice a, html.cc-popups-on .ca_element_notice a { color: inherit !important; text-decoration: underline !important; }
+
 /* #S6 command palette (Ctrl/Cmd+K) — dark launcher, accent-highlighted selection. */
 #cc-cmd { position: fixed; inset: 0; z-index: 100002; display: none; }
 #cc-cmd.cc-cmd-open { display: block; }
