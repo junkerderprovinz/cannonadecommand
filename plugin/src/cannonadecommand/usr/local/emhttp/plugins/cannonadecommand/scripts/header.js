@@ -2704,6 +2704,14 @@
       // above already documents for the search-results header. Re-runs every tick like the others, so cards
       // that arrive later (SHOW MORE / infinite scroll) get stamped too.
       ccAppsStamp(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground, .homespotlightIconArea");
+      // #24 (user: "im action centre wird ueber den header badges auch action centre text angezeigt, bitte
+      // weg machen"): CA's .category.categoryLine label reuses the same slot for "Search for X" (useful —
+      // tells you what you searched) and the plain section name (redundant here — the sidebar's own
+      // ACTION CENTRE button is already highlighted). Hide only the latter for Action Centre specifically;
+      // every other use of the label (search, a real category name) stays untouched.
+      Array.prototype.slice.call(document.querySelectorAll(".category.categoryLine")).forEach(function (cl) {
+        if ((cl.textContent || "").trim() === "Action Centre") cl.style.setProperty("display", "none", "important");
+      });
       ccMoveSearchAreaBadges();                              // #15: relocate under the search badge
       wireCaSearch();
       ccWireCaSearchCollapse();
