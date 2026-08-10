@@ -543,7 +543,7 @@ html.cc-shares-on.cc-on-main #displaybox a.button {
 }
 /* No grey secondaries (user: "ALLE buttons in den cc style"). Reboot + Shutdown are the two consequential
    power-off actions -> CC danger-red (var(--cc-err, #d9433f), semantic per style guide §12); everything else keeps the
-   accent pill. Targeted BY NAME so CC's own Smokesignal/Sleep in the same form stay accent. */
+   accent pill. Targeted BY NAME so CC's own FireSquire/Sleep in the same form stay accent. */
 html.cc-shares-on.cc-on-main #displaybox form[name="shutdownOps"] input[name="reboot"],
 html.cc-shares-on.cc-on-main #displaybox form[name="shutdownOps"] input[name="shutdown"] {
   background: var(--cc-err, #d9433f) !important; color: #fff !important;
@@ -696,7 +696,7 @@ html.cc-shape-circle.cc-shares-on:is(.cc-on-main, .cc-on-shares) #displaybox a.c
    position:relative SECTION (like the diskio switch), NOT the .cc-card-head — the head IS the badge
    pill (fit-content), so right:0 of the head landed ON the badge text (the v2.27.0 overlap). The head
    sits at the section top, so a small fixed top puts the cluster on the badge row. */
-/* SmokeSignal sub-tab excluded from /Main (user #17): shares.js marks its tab button + panel.
+/* FireSquire sub-tab excluded from /Main (user #17): shares.js marks its tab button + panel.
    The sections-mode reveal rule forces section[role=tabpanel] to display:block !important, so the
    panel selector must out-specify it — add .cc-smoke-hidden on top of the same section match. */
 html.cc-shares-on.cc-on-main.cc-sections-main #displaybox section[role="tabpanel"].cc-smoke-hidden,
@@ -839,7 +839,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="checkbox
    untereinander mit gleichem Abstand, keine Linien, alle Infotexte in I-Bubbles". ═══ */
 /* GRID rows: the array_status tables are STATIC markup (only #mover-text/#stop-text inner text
    changes at runtime), so every <tr> becomes one shared 3-track grid — identical column geometry across
-   ALL tables (main/keyfile/spin/mover/shutdown/s3-sleep/Smokesignal), immune to table-layout, native
+   ALL tables (main/keyfile/spin/mover/shutdown/s3-sleep/FireSquire), immune to table-layout, native
    33%/22% widths, colspans, wrapper indents, whitespace nodes and inline button margins. */
 html.cc-shares-on.cc-on-main #displaybox table.array_status { display: block; width: 100%; margin: 0 !important; }
 html.cc-shares-on.cc-on-main #displaybox table.array_status :is(tbody, thead) { display: contents; }
@@ -854,7 +854,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status tr > td:first-child 
    padding-left 0 UNCONDITIONALLY (no :has() gate to miss) => every control/value starts EXACTLY at c1 */
 html.cc-shares-on.cc-on-main #displaybox table.array_status tr > td:nth-child(2) { display: flex; align-items: center; padding-left: 0 !important; min-height: var(--cc-lgb-h, 36px); white-space: nowrap; }
 html.cc-shares-on.cc-on-main #displaybox table.array_status tr > td:nth-child(2) .buttons-spaced { display: inline-flex; flex-direction: column; flex-wrap: nowrap; align-items: flex-start; gap: 16px; }
-/* margin kill: Smokesignal injects style="margin-left:8px" INLINE (reboot.after injection) and
+/* margin kill: FireSquire injects style="margin-left:8px" INLINE (reboot.after injection) and
    default-base.css gives loose buttons vertical margins — !important beats both */
 html.cc-shares-on.cc-on-main #displaybox table.array_status :is(input[type="submit"], input[type="button"], a.button, button:not([role="tab"])) { margin: 0 !important; }
 /* ANIMATION KILL: Unraid/jQuery .show('slow')/.hide('slow') animate INLINE height/margins on these

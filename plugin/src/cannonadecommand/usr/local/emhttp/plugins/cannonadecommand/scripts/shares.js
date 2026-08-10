@@ -135,7 +135,8 @@
   // rainbow: paint the ACTIVE tab button a rotated palette colour; accent mode = clear
   // our overrides so the sheet's --cc-accent shows through. Inline style writes are
   // attribute changes, so they never re-trigger the childList observer.
-  // hide the SmokeSignal sub-tab on /Main (user #17) in NATIVE-tab mode too: hide the button + its
+  // hide the FireSquire (formerly SmokeSignal - match both, either plugin version may be
+  // installed) sub-tab on /Main (user #17) in NATIVE-tab mode too: hide the button + its
   // panel; if it was the active tab, activate the first real tab so no dead panel shows. Only on
   // /Main (onMain), idempotent, teardown restores. Sections mode is handled in cardPanels.
   function ccHideSmokeTab() {
@@ -145,7 +146,7 @@
       var panels = document.querySelectorAll('#displaybox section[role="tabpanel"]');
       for (var i = 0; i < btns.length; i++) {
         var b = btns[i];
-        if (!/smokesignal/i.test(b.textContent || "")) continue;
+        if (!/smokesignal|firesquire/i.test(b.textContent || "")) continue;
         if (b.classList.contains("cc-smoke-hidden")) return;   // already handled
         var wasActive = b.getAttribute("aria-selected") === "true";
         b.classList.add("cc-smoke-hidden");
@@ -671,9 +672,10 @@
   // numbers buttons and panels in two loops with different skip logic, so a panel's aria-labelledby can
   // point to a missing button id. Iterate the FULL list + skip carded ones BY ATTRIBUTE so i stays the
   // real DOM index that lines up with tabBtns[i]. Idempotent via data-cc-card.
-  // the SmokeSignal plugin injects its OWN sub-tab into the /Main tab bar; the user does not want
-  // it as a separate tab/section here (it has its own page). Match by the tab button's text.
-  function ccIsSmokeTab(btn) { return !!btn && /smokesignal/i.test(btn.textContent || ""); }
+  // the FireSquire plugin (formerly SmokeSignal - match both) injects its OWN sub-tab into the
+  // /Main tab bar; the user does not want it as a separate tab/section here (it has its own
+  // page). Match by the tab button's text.
+  function ccIsSmokeTab(btn) { return !!btn && /smokesignal|firesquire/i.test(btn.textContent || ""); }
   function cardPanels(box) {
     var tablist = box.querySelector('nav.tabs, [role="tablist"]');
     var tabBtns = tablist ? tablist.querySelectorAll('button[role="tab"]') : [];
@@ -1477,7 +1479,7 @@
     // pair rows: N>1 buttons in span.buttons-spaced -> one .cc-aop-brow per button, each with ITS
     // OWN sentence bubble. Sentence i maps to NATIVE button i (ids/names from ArrayOperation.page:
     // spinup/spindown, pause/cancel, reboot/shutdown) in DOM order — language-independent and immune to
-    // Smokesignal's reboot.after() injection landing BETWEEN reboot and shutdown; foreign buttons get a
+    // FireSquire's reboot.after() injection landing BETWEEN reboot and shutdown; foreign buttons get a
     // brow (column stays) but no bubble. Leftover segments (the Cancel WARNING) join the last native tip.
     var span0 = btnCell.querySelector(":scope > span.buttons-spaced");
     var pair = span0 ? span0.querySelectorAll('input[type="button"], input[type="submit"], button:not([role="tab"]), a.button') : [];
@@ -1486,7 +1488,7 @@
       for (var p0 = 0; p0 < pair.length; p0++) { var pb = pair[p0]; if (KID.indexOf(pb.id) > -1 || KNM.indexOf((pb.getAttribute("name") || "").toLowerCase()) > -1) natives.push(pb); }
       if (!natives.length) natives = Array.prototype.slice.call(pair);   // future pair rows: DOM order = segment order
       for (var p1 = 0; p1 < pair.length; p1++) {
-        // brow OWNERSHIP: a brow belongs to its FIRST button. SmokeSignal injects itself via
+        // brow OWNERSHIP: a brow belongs to its FIRST button. FireSquire injects itself via
         // reboot.after(...) AFTER our wrap -> it lands INSIDE the reboot brow (side-by-side bug);
         // such a stowaway gets its OWN brow inserted right after the host brow = clean stack.
         var bt2 = pair[p1], pn2 = bt2.parentNode, brow = null;
