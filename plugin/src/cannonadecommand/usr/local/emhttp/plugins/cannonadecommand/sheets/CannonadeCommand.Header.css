@@ -85,6 +85,12 @@ html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a {
   transition: filter .12s, background .12s, color .12s;
 }
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search):hover > a { filter: brightness(1.14); }
+/* main-tab icons (header.js ccTabIcons(), Tabler MIT) — the pill above is ALREADY inline-flex/centered,
+   so the icon just joins the flex row; stroke inherits the pill's own colour (accent/neutral/rainbow,
+   whatever paintNav() already stamped) via currentColor, no separate colour wiring needed. */
+html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a svg.cc-tab-ico {
+  width: 16px; height: 16px; flex-shrink: 0; margin-right: 7px; color: inherit;
+}
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search).active > a {
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
 }

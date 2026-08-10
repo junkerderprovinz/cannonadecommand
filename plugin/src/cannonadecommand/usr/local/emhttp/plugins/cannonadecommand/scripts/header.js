@@ -105,6 +105,48 @@
       });
     } catch (e) {}
   }
+  // ── MAIN-TAB ICONS (user: "das icon feature für die Haupttabs gefällt mir", pointing at
+  // github.com/benjaminmue/unraid-themer's icon-set swapper) — that plugin repaints EXISTING native
+  // icon-font glyphs; CC's own page tabs never carried an icon at all (native <a href="/Docker"> is a
+  // bare text node, confirmed live), so this is additive, not a swap. One curated set (Tabler, MIT
+  // licensed, github.com/tabler/tabler-icons) rather than the 9-set picker unraid-themer offers — the
+  // reasoning (user, live): "reicht nicht ein Set wie Tabler? Das enthält doch tausenden icons" — for
+  // ~11 fixed tab slots a single well-stocked set has zero coverage gaps, so the 9-set machinery (per-
+  // set licensing review, 22-51% cross-set fallback rate) buys nothing here. Inline SVG + currentColor,
+  // matching the bell/burger proxy ghost's own icon-cloning approach elsewhere in this file — the tab's
+  // EXISTING --cc-rb-c-driven text colour (paintNav() above) already becomes the icon colour for free,
+  // no separate colour wiring. Path data verbatim from tabler-icons (MIT) icons/outline/<name>.svg.
+  var CC_TAB_ICONS = {
+    "/Dashboard": '<path d="M5 4h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1" /><path d="M5 16h4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1" /><path d="M15 12h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1" /><path d="M15 4h4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1" />',   // layout-dashboard
+    "/Main": '<path d="M3 7a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v2a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-2" /><path d="M3 15a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v2a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -2" /><path d="M7 8l0 .01" /><path d="M7 16l0 .01" /><path d="M11 8h6" /><path d="M11 16h6" />',   // server-2
+    "/Favorites": '<path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873l-6.158 -3.245" />',   // star
+    "/Shares": '<path d="M13 19h-8a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2h4l3 3h7a2 2 0 0 1 2 2v4" /><path d="M16 22l5 -5" /><path d="M21 21.5v-4.5h-4.5" />',   // folder-share
+    "/Settings": '<path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />',   // settings
+    "/Docker": '<path d="M22 12.54c-1.804 -.345 -2.701 -1.08 -3.523 -2.94c-.487 .696 -1.102 1.568 -.92 2.4c.028 .238 -.32 1 -.557 1h-14c0 5.208 3.164 7 6.196 7c4.124 .022 7.828 -1.376 9.854 -5c1.146 -.101 2.296 -1.505 2.95 -2.46" /><path d="M5 10h3v3h-3l0 -3" /><path d="M8 10h3v3h-3l0 -3" /><path d="M11 10h3v3h-3l0 -3" /><path d="M8 7h3v3h-3l0 -3" /><path d="M11 7h3v3h-3l0 -3" /><path d="M11 4h3v3h-3l0 -3" /><path d="M4.571 18c1.5 0 2.047 -.074 2.958 -.78" /><path d="M10 16l0 .01" />',   // brand-docker
+    "/Plugins": '<path d="M4 7h3a1 1 0 0 0 1 -1v-1a2 2 0 0 1 4 0v1a1 1 0 0 0 1 1h3a1 1 0 0 1 1 1v3a1 1 0 0 0 1 1h1a2 2 0 0 1 0 4h-1a1 1 0 0 0 -1 1v3a1 1 0 0 1 -1 1h-3a1 1 0 0 1 -1 -1v-1a2 2 0 0 0 -4 0v1a1 1 0 0 1 -1 1h-3a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h1a2 2 0 0 0 0 -4h-1a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1" />',   // puzzle
+    "/VMs": '<path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10" /><path d="M7 20h10" /><path d="M9 16v4" /><path d="M15 16v4" />',   // device-desktop
+    "/Tools": '<path d="M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5" />',   // tool
+    "/Stats": '<path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" /><path d="M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -10" /><path d="M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -14" /><path d="M4 20h14" />',   // chart-bar
+    "/Apps": '<path d="M4 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /><path d="M4 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /><path d="M14 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /><path d="M14 7l6 0" /><path d="M17 4l0 6" />'   // apps
+  };
+  function ccTabIcons() {
+    try {
+      var items = document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a[href]");
+      for (var i = 0; i < items.length; i++) {
+        var a = items[i];
+        if (a.querySelector(":scope > svg.cc-tab-ico")) continue;   // idempotent
+        var href = "/" + (a.getAttribute("href") || "").replace(/^\/+|\/+$/g, "").split("/")[0];
+        var d = CC_TAB_ICONS[href]; if (!d) continue;
+        var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("class", "cc-tab-ico");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("fill", "none"); svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "2"); svg.setAttribute("stroke-linecap", "round"); svg.setAttribute("stroke-linejoin", "round");
+        svg.innerHTML = d;
+        a.insertBefore(svg, a.firstChild);
+      }
+    } catch (e) {}
+  }
   // popup title badges follow the COLOUR MODES (user): accent by default (CSS vars), palette in
   // rainbow — painted here because dialogs appear as direct BODY children at any time.
   function paintPopups() {
@@ -2109,6 +2151,7 @@
       applyNavOrder();  // restore the user's saved tab order BEFORE painting/measuring (it reorders the DOM)
       setupNavDrag();   // make the tabs draggable (idempotent per tile)
       paintNav();
+      ccTabIcons();     // main-tab icons (idempotent; insertBefore changes tab width, so it must run before measureAlign)
       measureAlign();   // after the pill geometry is live -> measure the real left edge
       ccIsland();       // status island in the top strip (self-gated on cc.island, default on)
       ccBrand();        // server-name brand, first child of the top strip (header+theming gated, NOT cc.island)
