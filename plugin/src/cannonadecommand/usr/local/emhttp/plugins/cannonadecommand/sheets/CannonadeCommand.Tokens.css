@@ -39,6 +39,28 @@ html {
   --cc-backdrop-dim:  rgba(0, 0, 0, .55);
   --cc-backdrop-blur: blur(5px);
 
+  /* ── LOADER ENGINE — one size canon + one motion switch for every ring in the product (tab-load overlay,
+     CA "Updating Content", plugin install, nchan status badge, VM/Docker/Plugins inline spin icons). Before
+     this each call site picked its own --cc-load-sz by hand and the ring's own colour/duration were private,
+     disconnected from the colour and motion engines. header.js ccLoader(tier) reads ONLY these tiers — no
+     call site writes --cc-load-sz inline any more. ── */
+  --cc-load-full:  110px;  /* fullscreen: the Unraid tab-load overlay AND the CA loader-only dialog (the
+                               dialog REPLACES the overlay, so it is the same phase and carries the same size) */
+  --cc-load-dlg:   48px;   /* a ring inside a real dialog that still shows its own title/text */
+  --cc-load-sm:    22px;   /* status-badge ring: nchan button row, #cc-ctout-status, in-table placeholders */
+  --cc-load-xs:    18px;   /* inline ring replacing a glyph in a title/text line (plugin install progress) */
+  --cc-load-dur:   1.5s;   /* one period for every loader — matches Unraid's own stock mark's timing */
+  --cc-load-play:  running;  /* the motion switch; cc.anim=off / prefers-reduced-motion sets this to paused */
+  --cc-load-z:     9998;   /* the one backdrop layer: under div.spinner.fixed (99999) and under .sweet-overlay */
+}
+/* every backdrop-filter this stylesheet writes is a full-viewport blur — the single heaviest paint CC
+   does, run behind every popup with no opt-out before this. One override disarms all 9 rules at once
+   because they all read the token; a user who asked the OS/browser for less transparency gets it. */
+@media (prefers-reduced-transparency: reduce) {
+  html.cc-popups-on { --cc-backdrop-blur: none; }
+}
+html {
+
   /* ── TEXT ── */
   --cc-text:       #e6e6e6;
   --cc-text-dim:   #8a8a8a;   /* (== legacy --cc-dim) */
@@ -65,6 +87,17 @@ html {
        --cc-lgb-w/--cc-aop-*, SettingsGrid --cc-sg-*); the shared tiers live here. */
   --cc-sm-fs: 11px;  --cc-sm-pad: 3px 11px;
   --cc-md-fs: 13px;  --cc-md-h: 30px;  --cc-md-pad: 0 20px;  --cc-md-btnpad: 0 14px;
+  /* #6: THERE IS NO TIER BELOW md, and the sub-nav row must not invent one. "Eine Größe kleiner als die
+     Hauptleiste" IS md: the main bar is lgb (36px/15px), md is the documented step under it — stated in
+     Header.css ("one step above the section/title badges, which are the md tier, 30px/13px"), twice in
+     Shares.css ("section/heading badges are the md tier system-wide … Uniform 30px/13px so every section
+     head matches") and by --cc-pagebadge-fs below ("One step down = the md tier").
+     A short-lived --cc-subnav-h: 26px was a lone HEIGHT with no -fs, no -pad and no letter-spacing
+     partner, so every element on the row kept md TYPE and md PADDING inside a shrunken box: 13px text
+     with 20px side padding in a 26px border-box is a squashed md, not a smaller tier — which is exactly
+     what "zu klein / nicht im Größensystem integriert" describes. CC had already abandoned 26px twice
+     (the header icon boxes were moved off it onto --cc-md-h for this same "gleiche Höhe" reason).
+     The step below the bar is expressed by letter-spacing, not by shrinking the box. */
   --cc-bmd-pad: 4px 12px;
   --cc-lg-fs: 15px;  --cc-lg-pad: 6px 16px;
   --cc-lgb-h: 36px;  --cc-lgb-fs: 14px;
@@ -89,6 +122,19 @@ html {
   --cc-card-bg:          var(--cc-surface-1);
   --cc-card-inset:       var(--cc-surface-2);
   --cc-field-bg:         var(--cc-surface-3);
+
+  /* ── ELEVATION — the surface ladder's missing partner. 76 box-shadow declarations existed in 44 distinct
+     spellings for roughly three intents before this (resting card, raised panel/menu, modal/popup), plus
+     129 hand-typed `box-shadow: none` resets — one unnamed intent ("this sits flat") re-typed 129 times.
+     Deliberately NOT a cc.* setting: depth is a design constant that must differ PER THEME, not per taste —
+     a user-facing control here would let someone reproduce the exact bug this token fixes (a shadow authored
+     for a black page, worn on a white one). Dark values below are the measured DOMINANT spelling for each
+     tier (byte-identical to today's most common cases), so migrating a site to the token changes nothing
+     until the light-theme override two blocks down applies. ── */
+  --cc-elev-flat: none;
+  --cc-elev-1: 0 1px 4px rgba(0, 0, 0, .35);    /* resting card */
+  --cc-elev-2: 0 10px 28px rgba(0, 0, 0, .38);  /* raised panel / menu */
+  --cc-elev-3: 0 12px 30px rgba(0, 0, 0, .6);   /* modal / popup */
 }
 
 /* ── ONE light override, shared by the two LIGHT Unraid themes (white + azure) ──
@@ -111,6 +157,17 @@ html.Theme--azure {
   --cc-toggle-knob:      #ffffff;
   --cc-line-solid:  #d0d0d0;
   --cc-badge-neutral: #d8d8d8;      /* light neutral badge so the now-dark chip text stays legible */
+  /* the backdrop constant never had a light value — every popup on Theme--white/azure dimmed with the
+     SAME black .55 authored for a black page, sitting oddly on a light one. Lighter, less opaque dim;
+     the blur radius itself has nothing to do with theme, so it stays shared. */
+  --cc-backdrop-dim: rgba(20, 20, 20, .35);
+  /* the SAME gap for depth: zero box-shadow declarations existed inside this block before — every card,
+     panel and popup wore a shadow tuned for a black page's contrast, verbatim, on white. Lighter + tighter
+     (smaller spread, lower alpha), so raised surfaces still read as raised without smudging like charcoal
+     smoke on a bright page. */
+  --cc-elev-1: 0 1px 3px rgba(0, 0, 0, .12);
+  --cc-elev-2: 0 8px 20px rgba(0, 0, 0, .14);
+  --cc-elev-3: 0 10px 24px rgba(0, 0, 0, .18);
 }
 
 /* Edel polish: lock the digit advance-width on every live badge value so a value ticking 9 -> 100%
@@ -169,6 +226,20 @@ html.cc-popups-on div.title > span.left, html.cc-popups-on div.title > span.righ
 html.cc-popups-on div.title span.left i.title,
 html.cc-popups-on div.title span.left i[class*="icon-"],
 html.cc-popups-on div.title span.left i.fa { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+/* The section badge and the page's action control share one line, so they must share one HEIGHT (user, on
+   /Plugins: "der Abschnittsbadge und der Nach-Aktualisierungen-suchen-Badge sind nicht auf gleicher Höhe").
+   Both are the md tier — --cc-md-h + --cc-md-pad + --cc-md-fs — the same tier every other section badge
+   in CC rides (Shares.css, SettingsGrid.css, Tools.css, docker.css all read --cc-md-h). An earlier pass
+   levelled the pair DOWN to a hand-written 26px instead; that made them equal but too small, because the
+   type and the padding stayed md inside a shorter box.
+   NOTE: plugins.js stamps this same button INLINE with !important, which outranks this rule — the two
+   must stay on the same token or this rule paints nothing. */
+html.cc-popups-on #displaybox input[type="button"][value*="ktualisierung" i],
+html.cc-popups-on #displaybox input[type="button"][value*="update" i] {
+  height: var(--cc-md-h, 30px) !important; min-height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-pad, 0 20px) !important;
+  font-size: var(--cc-md-fs, 13px) !important;
+  display: inline-flex !important; align-items: center !important; box-sizing: border-box !important;
+}
 /* tabbed view: the pill row — idle pills a grey shade, the active/hover pill takes the CC accent (rainbow-aware),
    which replaces the stock --brand-orange outline entirely. */
 html.cc-popups-on nav.tabs, html.cc-popups-on nav.tabs .tabs-container { background: transparent !important; border: none !important; box-shadow: none !important; }
@@ -195,14 +266,26 @@ html.cc-popups-on nav.tabs .tabs-container > button[role="tab"][aria-selected="t
   0%,12.4%{--cc-lc:#c95e5e} 12.5%,24.9%{--cc-lc:#c98d5e} 25%,37.4%{--cc-lc:#c9af5e} 37.5%,49.9%{--cc-lc:#5ec986}
   50%,62.4%{--cc-lc:#5ec9c2} 62.5%,74.9%{--cc-lc:#5e89c9} 75%,87.4%{--cc-lc:#865ec9} 87.5%,100%{--cc-lc:#c95e94}
 }
+/* SIZE, ONE SOURCE: --cc-load-sz is now set ONLY by a tier class (.cc-load-full/-dlg/-sm/-xs, applied by
+   header.js ccLoader(tier)/ccMountLoader) — no call site writes it inline any more. The old bare --cc-load-sz
+   default (40px) stays as the fallback for any ring markup created outside header.js's factory.
+   COLOUR, ONE SOURCE: --acc reads --cc-rb-c FIRST — the SAME per-element rainbow slot every other badge
+   uses — so a loader that header.js has stamped (e.g. inside a coloured card) takes its own jewel position
+   instead of the one shared --cc-rbaccent; unstamped loaders (the common case) fall through to it unchanged. */
 .cc-loader {
-  --sz: var(--cc-load-sz, 40px); --acc: var(--cc-rbaccent, var(--cc-accent, #2f6feb));
+  --sz: var(--cc-load-sz, 40px); --acc: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)));
   --th: calc(var(--sz) / 10); --arc: 155deg;
   position: relative; width: var(--sz); height: var(--sz); display: inline-block; flex: none; vertical-align: -.15em;
 }
+.cc-load-full { --cc-load-sz: var(--cc-load-full, 110px); }
+.cc-load-dlg  { --cc-load-sz: var(--cc-load-dlg, 48px); }
+.cc-load-sm   { --cc-load-sz: var(--cc-load-sm, 22px); }
+.cc-load-xs   { --cc-load-sz: var(--cc-load-xs, 18px); }
 .cc-loader > span { position: absolute; border-radius: 50%; }
-.cc-loader > span.o  { inset: 0; animation: cc-load-cw 1.5s linear infinite; }
-.cc-loader > span.in { inset: calc(var(--th) * 2.6); animation: cc-load-ccw 1.5s linear infinite; }
+/* MOTION AXIS: duration from the one token, and animation-play-state reads --cc-load-play so cc.anim=off
+   pauses every ring the same way it already pauses every other CC animation, instead of ticking forever. */
+.cc-loader > span.o  { inset: 0; animation: cc-load-cw var(--cc-load-dur, 1.5s) linear infinite; animation-play-state: var(--cc-load-play, running); }
+.cc-loader > span.in { inset: calc(var(--th) * 2.6); animation: cc-load-ccw var(--cc-load-dur, 1.5s) linear infinite; animation-play-state: var(--cc-load-play, running); }
 .cc-loader > span::before {   /* solid arc (hard conic stop = no gradient), masked to a ring */
   content: ""; position: absolute; inset: 0; border-radius: 50%;
   background: conic-gradient(from 0deg, var(--cc-lc, var(--acc)) 0deg var(--arc), transparent var(--arc) 360deg);
@@ -220,8 +303,14 @@ html.cc-popups-on nav.tabs .tabs-container > button[role="tab"][aria-selected="t
 }
 html.cc-shape-circle .cc-loader > span::after, html.cc-shape-circle .cc-loader > span > i::before { border-radius: 50%; }
 html.cc-rb-on .cc-loader { animation: cc-load-rb 6s linear infinite; }   /* rainbow: step colour at each meeting */
+/* MOTION AXIS: the same switch every other CC animation already obeys (html.cc-anim-off, set from cc.anim),
+   now covers the loader ring too — via the token so span.o/span.in/the ring's own rb-cycle all pause in one
+   place instead of three separate `animation:none` overrides drifting out of sync. */
+html.cc-anim-off { --cc-load-play: paused; }
+html.cc-anim-off .cc-loader { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) {
-  .cc-loader > span { animation: none; }
+  html:not(.cc-anim-on) { --cc-load-play: paused; }
+  html:not(.cc-anim-on) .cc-loader > span { animation: none; }
   .cc-loader > span.in { transform: rotate(-.4turn); }
   html.cc-rb-on .cc-loader { animation: none; --cc-lc: #5ec9c2; }
 }
@@ -242,6 +331,20 @@ html.cc-popups-on div.spinner > i.fa-spin { display: none !important; }
    display:none (it always exists in the DOM), so it also hid the in-page loader in phase 2. header.js now marks the
    redundant one .cc-spin-dupe keyed on the overlay's REAL display, so exactly one loader shows in each phase. */
 html.cc-popups-on div.spinner.cc-spin-dupe { display: none !important; }
+/* …but the JS marker alone was not enough (user, still open: "der Spinner beim Apps-Tab ist immer noch
+   doppelt und der zweite mit Scrollbar"). ccInjectSpinner only runs inside a BOUNDED window (12 × 350ms
+   after boot, deliberately — an unbounded self-observing MutationObserver here once froze the tab), so a
+   spinner CA raises later is never marked and both overlays end up on screen at once.
+   Decide it in CSS instead, from the REAL state: Unraid toggles the tab-load overlay with an inline
+   `display`, so `:not([style*="display: none"])` reads whether it is genuinely up — unlike a bare
+   `:has(div.spinner.fixed)`, which is always true because the node exists permanently (that exact trap is
+   documented above). While the fixed overlay is really showing, the in-page one stays hidden. */
+html.cc-popups-on body:has(div.spinner.fixed:not([style*="display: none"])) div.spinner:not(.fixed) {
+  display: none !important;
+}
+/* the in-page loader is promoted to a fixed overlay; make sure it can never scroll itself or the page —
+   the second scrollbar the user sees comes from this element still being a sized in-flow box. */
+html.cc-popups-on div.spinner:not(.fixed) { overflow: hidden !important; max-width: 100vw !important; max-height: 100vh !important; }
 /* #13 MUCH bigger CC ring in any spinner; centre the full-screen one on its new size */
 html.cc-popups-on div.spinner .cc-loader { --cc-load-sz: 110px; }
 html.cc-popups-on div.spinner.fixed .cc-loader { position: fixed; top: calc(50% - 55px); left: calc(50% - 55px); }
@@ -250,8 +353,19 @@ html.cc-popups-on div.spinner.fixed .cc-loader { position: fixed; top: calc(50% 
    (kills the scrollbar) and flex-centre the ring at full size so phase 2 matches the full-screen phase. */
 /* #6 phase 2: promote CA's in-page loader (div.spinner, no .fixed) to a FULL-viewport fixed overlay carrying the
    SAME dim+blur backdrop and the same flex-centred 110px ring as the full-screen tab-load phase — so the two
-   phases read as ONE continuous, dimmed+blurred spinner instead of two different loaders in sequence. */
-html.cc-popups-on div.spinner:not(.fixed) {
+   phases read as ONE continuous, dimmed+blurred spinner instead of two different loaders in sequence.
+   SEVERE BUG FIXED HERE (found chasing #4's spinner-engine audit): this rule used to apply UNCONDITIONALLY —
+   `display: flex !important` on EVERY div.spinner:not(.fixed) that exists ANYWHERE, with no check on whether
+   Unraid actually meant it to be visible. On Settings > System Temperature (and any other page carrying a
+   dormant div.spinner Unraid toggles via jQuery .show()/.hide()), that forced flex WON over Unraid's own
+   inline display:none, permanently, breaking the exact house rule "never force display on a host-controlled
+   container": a full-viewport dimmed+blurred overlay that never went away, blocking the whole page. A CSS
+   substring guard (:not([style*="display: none"])) is NOT safe here either — on first load, before Unraid's
+   JS ever runs a show/hide, the element carries NO inline style attribute at all, so that guard reads as
+   "currently shown" and fires the exact same false positive. The decision now lives in JS only (ccLoadState,
+   via getComputedStyle, which resolves the REAL state from any source): it adds cc-spin-active ONLY when the
+   spinner is genuinely visible, and this rule does nothing unless that class is present. */
+html.cc-popups-on div.spinner:not(.fixed).cc-spin-active {
   position: fixed !important; inset: 0 !important; z-index: 9999 !important;
   overflow: hidden !important;
   display: flex !important; align-items: center; justify-content: center;
@@ -281,8 +395,11 @@ html.cc-popups-on #cc-ctout-bd {
 
 /* #9 BADGE STYLE ENGINE — flat (default) vs glass, one global toggle (html.cc-badge-glass, set from the
    "Badge-Stil" setting). Glass layers a glossy sheen on top of EACH badge's own colour so it works on any
-   accent/rainbow/flag: a top-light gradient overlay + an inner top-edge highlight + a soft drop + a light
-   backdrop blur. Flat leaves badges solid. Applies to every badge base (.cc-b) system-wide. */
+   accent/rainbow/flag: a top-light gradient overlay + an inner top-edge highlight + a soft drop shadow.
+   Deliberately NO backdrop-filter: every badge keeps a fully OPAQUE background (only the ::after gradient
+   overlay carries alpha, layered ON it, not behind it), so a blur would have nothing translucent to show
+   through — pure wasted paint across every badge on screen. Flat leaves badges solid. Applies to every
+   badge base (.cc-b) system-wide. */
 /* Glass now covers the FULL family (user: "nicht alle badges/icons sind im glass"): state badges (.cc-badge)
    and pills (.cc-pill) carry NO .cc-b; chips/nav-tabs/island/buttons/gears/toggles/logo-tiles never did. */
 html.cc-badge-glass .cc-b,
@@ -339,9 +456,11 @@ html.cc-popups-on a.back_to_top,
 html.cc-popups-on a[class*="back_to"] {
   right: calc(var(--cc-content-rgap, 0px) + var(--cc-edge-gutter, 8px)) !important;   /* #14: content right edge = viewport gutter + boxed-mode right gap (per-arrow overrides set the pair) */
   z-index: 9990 !important;                       /* topmost page chrome (STARTPLAN badge, js-actions z998); stays BELOW popup backdrops (9998+) */
-  color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
+  /* the BADGE carries the colour, the glyph reads on top of it (user: "die Badges sollen eingefärbt werden,
+     nicht die Pfeilsymbole") — same way every other CC badge works, and it joins the shape engine below. */
+  color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
   transform: translateY(calc(-1 * (var(--cc-footer-h, 0px) + var(--cc-actbar-h, 44px) + 8px))) !important;
-  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;   /* the badge is the coloured surface */
   border-radius: var(--cc-b-radius, 999px) !important;   /* chip corners follow the badge SHAPE */
   width: 40px !important; height: 40px !important;        /* fixed square chip (predictable size) */
   padding: 0 !important;
@@ -367,8 +486,13 @@ html.cc-popups-on a.move_to_end > i.fa::before { content: "\f063" !important; } 
 html.cc-popups-on a.back_to_top > i.fa::before { content: "\f062" !important; }  /* fa-arrow-up   */
 html.cc-popups-on a[class*="move_to"] > i,
 html.cc-popups-on a[class*="back_to"] > i { color: inherit !important; }
-html.cc-popups-on a[class*="move_to"]:hover,
-html.cc-popups-on a[class*="back_to"]:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; }
+/* colour, hover and the reactive rest/hover swap for these chips live ONCE, in the "#12 FOOTER ARROWS"
+   block further down (a.back_to_top / a.move_to_end). This block above stays GEOMETRY-only (position,
+   size, glyph swap). Two competing colour rule sets for the same element — non-identical fallbacks,
+   different border-radius defaults, different hover brightness — was the actual reason an edit to one
+   of them silently appeared to do nothing: whichever block sat later in the file painted, regardless of
+   which one had just been changed. Traced live chasing a false "3.5s timing bug" that turned out to be
+   exactly this: two sources of truth for one element's colour. */
 
 /* #14: on a wide screen with Theme--width-boxed the content is left-capped, so pull the header island
    (#header, right group) and the top-nav util icons (#menu, right group) in to the content edge by the same
@@ -409,7 +533,14 @@ html.cc-popups-on .ca_homeTemplatesHeader {
   display: flex !important; align-items: center !important; gap: 8px !important;
   width: 100% !important; box-sizing: border-box !important;
   background: transparent !important;
-  padding: 0 var(--cc-edge-gutter, 8px) 0 0 !important; margin: 18px 0 12px !important;
+  /* user (v3.6.6, aktiver Sammelmodus): "die show more buttons sind zu weit rechts, die muessen rechts
+     buendig abschliessen" / "das menue und der badge sind rechts nicht buendig". The reference the user
+     compares against is the HEADER's icon gutter (icons + status island agree on it), not .menuAdjust's own
+     edge — those two differ by a viewport/scrollbar/font-dependent amount (21px at a 1400px viewport), which
+     is why a static inset never held. header.js measures the delta each pass and publishes it as
+     is why a static inset never held. header.js (ccAppsAlignRight) measures each row against its own
+     container every pass and writes the exact padding-right inline, which beats this declaration. */
+  padding: 0 !important; margin: 18px 0 12px !important;
 }
 /* #9 title = SMALL fill BADGE — fill follows the colour mode (--cc-rb-c stamped by ccAppsStamp),
    size via the #19 page-badge token (one step below the menu tabs), shape via --cc-b-radius. No border/ring. */
@@ -419,7 +550,11 @@ html.cc-popups-on .ca_homeTemplatesHeader .cc-sechead-badge {
   color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
   font-size: var(--cc-pagebadge-fs, 13px) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: 1px !important;
-  padding: var(--cc-sm-pad, 3px 11px) !important; border-radius: var(--cc-b-radius, 8px) !important;
+  /* user (v3.6.6, aktiver Sammelmodus): "die Abschnittsbadges im App-Tab sind zu klein" - was mixing the md
+     font-size (13px, correct) with the SM tier's padding (3px 11px -> 24px tall), well under the md tier's own
+     30px (--cc-md-h) that the Plugins section badge (#8) already uses. Match that: md padding + explicit height. */
+  padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px) !important;
+  border-radius: var(--cc-b-radius, 8px) !important;
 }
 html.cc-popups-on .ca_homeTemplatesHeader::before { content: none !important; }   /* #9 kill the ▸ */
 html.cc-popups-on .ca_homeTemplatesHeader .cc-info {
@@ -458,12 +593,44 @@ html.cc-popups-on .ca_homeTemplatesLine2 .homeMore { color: var(--cc-accent, #2f
    scrollbar-width/color here) so Chromium honours them; the standard props are quarantined into the Firefox-
    only @supports block at the bottom. #3: app-tab carousels bumped to 16px (thicker, easy to grab). */
 
-/* App-tab horizontal carousels: 16px, thumb rides the colour engine, revealed on row hover, no end arrows. */
-html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar { height: 16px !important; background: transparent !important; }
-html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; }
-html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-track { background: transparent !important; border: 0 !important; }
-html.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-thumb { background: transparent !important; border: 0 !important; border-radius: var(--cc-b-radius, 8px) !important; }
-html.cc-popups-on .ca_homeTemplates:hover::-webkit-scrollbar-thumb { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
+/* App-tab horizontal carousels (user: "die horizontalen Scrollbars sollen erscheinen sobald man in den
+   Abschnitt hovert und verschwinden sobald man aus dem Abschnitt raushovert").
+   The bar's 16px HEIGHT stays reserved at all times and only its ink is toggled. Collapsing the height to 0
+   at rest would look tidier but shifts the row: .ca_homeTemplates has a fixed 279px content height and the
+   bar sits OUTSIDE it (measured live: offsetHeight 295 = 279 + 16), so a height swap moves everything below
+   by 16px on every hover — a jumping page is worse than a reserved strip you cannot see.
+   SPECIFICITY, not source order: the generic inner-pane rules further down include `*:hover::-webkit-
+   scrollbar-thumb` at (0,2,1) — the same score as a plain `.ca_homeTemplates:hover::…` — and they are
+   written LATER, so they would win the tie and paint this thumb whenever the cursor sits anywhere inside the
+   row. Carrying .cc-popups-on twice puts these at (0,3,1) and settles it regardless of order. */
+html.cc-popups-on.cc-popups-on .ca_homeTemplates::-webkit-scrollbar { height: 16px !important; background: transparent !important; }
+html.cc-popups-on.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; }
+html.cc-popups-on.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-track { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+html.cc-popups-on.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-corner { background: transparent !important; }
+html.cc-popups-on.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-thumb {
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+  border-radius: var(--cc-b-radius, 8px) !important;
+}
+/* Visible only while the pointer is on an actual APP CARD in that row (user: "sobald man auf eine App-Card
+   im entsprechenden Abschnitt hovert soll sie erscheinen, beim Verlassen sofort wieder verschwinden").
+   A plain :hover on the row was too eager: the row spans the full content width and keeps a 16px scrollbar
+   strip plus the gaps between cards, so merely passing the cursor through empty space lit the bar up. Keying
+   on :has(.ca_holder:hover) makes card and bar appear/disappear together — and it flips back the instant the
+   pointer leaves a card, which is the "sofort" the user asked for. */
+html.cc-popups-on.cc-popups-on .ca_homeTemplates:has(.ca_holder:hover)::-webkit-scrollbar-thumb,
+/* …and while the pointer is on the BAR ITSELF — otherwise it vanishes the instant you reach for it, which
+   makes a hover-revealed control impossible to grab (Style Guide regel 6). The row's own :hover covers the
+   bar strip, and the thumb's :hover covers the drag. */
+html.cc-popups-on.cc-popups-on .ca_homeTemplates:hover::-webkit-scrollbar-thumb:hover,
+html.cc-popups-on.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-thumb:hover {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+}
+/* no-:has() fallback (older engines): behave as before rather than never showing the bar at all */
+@supports not selector(:has(*)) {
+  html.cc-popups-on.cc-popups-on .ca_homeTemplates:hover::-webkit-scrollbar-thumb {
+    background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  }
+}
 
 /* #3 (user: "nur die scrollbars IN Unraid dicker, der badge form folgen; die browser nativen unverändert"):
    style ONLY the inner Unraid panes = DESCENDANT scrollbars (note the SPACE: `html.cc-popups-on ::-webkit-…`,
@@ -488,8 +655,10 @@ html.cc-popups-on *:hover::-webkit-scrollbar-thumb {
 @supports not selector(::-webkit-scrollbar) {
   html.cc-popups-on * { scrollbar-width: thin !important; scrollbar-color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent) transparent !important; }
   html.cc-popups-on *:hover { scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important; }
-  html.cc-popups-on .ca_homeTemplates { scrollbar-color: transparent transparent !important; }
-  html.cc-popups-on .ca_homeTemplates:hover { scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important; }
+  /* same tie as the webkit block above: `*:hover` scores (0,2,1) and is written earlier here, so a plain
+     `.ca_homeTemplates` at (0,2,1) would lose the rest state on any hover inside the row. Double the class. */
+  html.cc-popups-on.cc-popups-on .ca_homeTemplates { scrollbar-color: transparent transparent !important; }
+  html.cc-popups-on.cc-popups-on .ca_homeTemplates:has(.ca_holder:hover) { scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important; }
 }
 
 /* #7 SEARCH — collapsible far-right badge: the magnifier is a COLOUR-MODE BUTTON that expands into an input
@@ -508,7 +677,13 @@ html.cc-popups-on #searchFilter {
 }
 html.cc-popups-on #searchFilter.menuShowing { display: none !important; }
 html.cc-popups-on #searchFilter.cc-open { background: var(--cc-field-bg, #2e2e2e) !important; overflow: visible !important; }
-html.cc-popups-on #searchFilter.cc-open:focus-within { filter: brightness(1.08) !important; }  /* #7 focus = shade only, never a ring/border */
+/* #7 focus = shade only, never a ring/border. NOT via `filter:` — an element with filter != none becomes the
+   CONTAINING BLOCK for its position:fixed descendants AND opens a stacking context. The CA suggestion <ul> is
+   position:fixed and JS-anchored in VIEWPORT coordinates (ccPositionCaResults), so the filter silently
+   re-based it onto the field's own box: measured live at a 1400px viewport, the list rendered at y=420
+   instead of the intended y=207, i.e. exactly the field's own offset added twice — the user's "die
+   Ergebnisliste ist zu weit unten". A background swap achieves the same focus shade with neither side effect. */
+html.cc-popups-on #searchFilter.cc-open:focus-within { background: var(--cc-surface-3, #2e2e2e) !important; filter: none !important; }
 html.cc-popups-on #searchFilter .awesomplete {
   order: 1 !important; display: flex !important;
   width: 0 !important; max-width: 0 !important; overflow: hidden !important;
@@ -533,26 +708,149 @@ html.cc-popups-on .searchSubmit {
 html.cc-popups-on #searchFilter.cc-open .searchSubmit { color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .searchSubmit:hover { filter: brightness(1.08) !important; }
 html.cc-popups-on #searchButton { color: inherit !important; }
-/* #4 (user, v3.6.2): the sidebar search is a FULL-WIDTH "Suche" field like every other category badge — always
-   a dark field with the input visible (placeholder "Suche") and the magnifier on the right, NOT a 36px icon that
-   has to be expanded. (header.js wireCaSearch keeps it permanently .cc-open in the sidebar.) */
-html.cc-popups-on li.cc-ca-search-li { list-style: none !important; margin: 8px 0 0 0 !important; padding: 0 !important; background: transparent !important; }
-html.cc-popups-on li.cc-ca-search-li #searchFilter {
-  margin: 0 !important; order: 0 !important; align-self: stretch !important;
-  width: 100% !important; background: var(--cc-field-bg, #2e2e2e) !important; overflow: visible !important;
+/* SIDEBAR SEARCH = COLLAPSIBLE BADGE (user, v3.6.6: "das Suchfeld im CA-Tab soll ein Badge sein mit Icon und
+   Text; wenn man drauf klickt soll das Suchfeld kommen"). This replaces the v3.6.2 "permanent full-width
+   field" decision. The collapsed/expanded engine already exists for the top-bar variant further up (#7); the
+   sidebar block below used to defeat it by setting width/background with NO state qualifier at a higher
+   specificity, so .cc-open had no effect here. Both states are now mutually exclusive (.cc-open vs
+   :not(.cc-open)), so source order never decides — and the collapsed state inherits the top-bar rules'
+   width transition, which gives the expand animation for free. */
+html.cc-popups-on li.cc-ca-search-li {
+  list-style: none !important; margin: 3px 0 !important; padding: 0 !important; background: transparent !important;
+  position: relative !important;   /* anchor for the expanded field, which leaves the flow (see below) */
 }
-html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete { width: 100% !important; max-width: 100% !important; overflow: visible !important; }
-html.cc-popups-on li.cc-ca-search-li #searchBox { width: 100% !important; color: var(--cc-text, #e6e6e6) !important; }
-html.cc-popups-on li.cc-ca-search-li .searchSubmit { color: var(--cc-text, #e6e6e6) !important; }   /* dark field -> the icon reads */
+/* the li also carries .caMenuItem, so CA's category-hover would otherwise paint its own bar BEHIND the
+   badge. Feedback belongs on the badge itself. */
+html.cc-popups-on li.cc-ca-search-li:hover { background: transparent !important; filter: none !important; }
+/* ── COLLAPSED = A NORMAL SIDEBAR BADGE (user, v3.6.6: "der Suchbutton soll ein normaler Badge sein, nicht
+   wie jetzt ein Suchfeld"): same box as every sibling .caMenuItem chip — full column width, 7px/12px pad,
+   the shared radius, neutral surface at rest, colour on hover — just carrying a magnifier + "Suche". ── */
+html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open) {
+  display: flex !important; align-items: center !important; justify-content: flex-start !important;
+  width: 100% !important; max-width: 100% !important; margin: 0 !important; order: 0 !important;
+  height: auto !important; min-height: 0 !important; padding: 7px 12px !important;
+  background: var(--cc-surface-2, #222222) !important;
+  color: var(--cc-text-chip, #cfcfcf) !important;
+  border-radius: var(--cc-b-radius, 8px) !important;
+  box-sizing: border-box !important; overflow: hidden !important; cursor: pointer !important;
+  box-shadow: none !important;
+}
+html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open):hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+}
+/* the hidden input still drives the chip's HEIGHT: at width 0 it is invisible but its 34px box (base rule)
+   plus the chip's 7px/7px padding made the badge 48px tall next to 34px siblings. Collapse its box too. */
+html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open) #searchBox {
+  width: 0 !important; min-width: 0 !important; padding: 0 !important; height: 20px !important;
+}
+html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open) .awesomplete { height: 20px !important; }
+html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open) .searchSubmit {
+  color: inherit !important;
+  width: auto !important; min-width: 0 !important; height: auto !important; padding: 0 !important; flex: 0 0 auto !important;
+}
+html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open):hover .searchSubmit { color: inherit !important; }
+/* the label rides AFTER the icon: #searchFilter is a flex row whose existing children carry explicit order
+   (.awesomplete 1, .searchSubmit 2), so an appended span would default to order 0 and render FIRST — i.e.
+   "Suche [magnifier]" instead of "[magnifier] Suche". pointer-events:none keeps the click on the chip. */
+html.cc-popups-on li.cc-ca-search-li #searchFilter .cc-ca-search-label {
+  order: 3 !important; display: inline-flex !important; align-items: center !important;
+  margin-left: 6px !important; font-size: 12.5px !important; font-weight: 400 !important;
+  line-height: 1.3 !important; white-space: nowrap !important; color: inherit !important; pointer-events: none !important;
+}
+html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open .cc-ca-search-label { display: none !important; }
+/* REACTIVE MODE: the user's own "Reaktiver Modus" rests every badge grey and colours it on hover — the chip
+   must follow it like every other badge on /Apps, not be the one exception. Carries .cc-popups-on for the
+   same specificity reason documented at the ribbon/button block below. */
+html.cc-apps-rbneutral.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open) {
+  background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open):hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+}
+/* ═══ #15 RESULTS PER PAGE / DOCKERHUB, RELOCATED UNDER THE SEARCH BADGE ═════════════════════════════
+   header.js ccMoveSearchAreaBadges() moves the REAL .maxPerPage/.dockerSearch nodes (their click handlers
+   must survive) into this host, appended as a sibling of #searchFilter inside li.cc-ca-search-li. The
+   column is ~132px, so the wide horizontal md-tier box from their old home (.searchArea, a full-width
+   header row) has to become a narrow full-width STACK — same sm-tier language the sidebar cards already
+   use, not a new one. */
+html.cc-popups-on .cc-ca-search-extras {
+  display: flex !important; flex-direction: column !important; gap: 4px !important; margin: 4px 0 0 !important;
+}
+/* #11 lesson (a hidden control must STAY hidden): CA ships .dockerSearch with .ca_hide by default and only
+   drops it for a DockerHub-backed feed — :not(.ca_hide) means this rule never has to fight that with a
+   counter-guard, and the relocation cannot accidentally resurrect a control CA meant to stay hidden. */
+html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:not(.ca_hide),
+html.cc-popups-on .cc-ca-search-extras .dockerSearch:not(.ca_hide) {
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
+  height: auto !important; min-height: 0 !important; padding: 5px 10px !important; margin: 0 !important;
+  font-size: var(--cc-sm-fs, 11px) !important; font-weight: 600 !important; line-height: 1.25 !important;
+  text-align: center !important; text-transform: none !important; letter-spacing: normal !important;
+  white-space: normal !important;   /* "Results Per Page: 12" wraps in a 132px column, unlike its old row */
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
+  transition: background .12s ease, color .12s ease, filter .12s ease !important;
+}
+html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:not(.ca_hide):hover,
+html.cc-popups-on .cc-ca-search-extras .dockerSearch:not(.ca_hide):hover { filter: brightness(1.12) !important; }
+/* REACTIVE: matches the search chip right above it — neutral at rest, colour on hover. */
+html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:not(.ca_hide),
+html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .dockerSearch:not(.ca_hide) {
+  background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:not(.ca_hide):hover,
+html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .dockerSearch:not(.ca_hide):hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+}
+/* ── EXPANDED: leaves the 140px sidebar column and opens to the RIGHT, in exactly the geometry of the
+   header's own search panel (user: "das Suchfeld soll nach rechts aufklappen und gleich groß sein wie das
+   Suchfeld des Suchicons in der Hauptmenüleiste"): same min(92vw,360px) width, same 40px height, same
+   surface, radius and elevation as the #guiSearchBoxSpan panel in Header.css. Absolute against the li
+   (which is position:relative above) so nothing in the sidebar reflows when it opens. ── */
+html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open {
+  position: absolute !important; left: 0 !important; top: 0 !important; right: auto !important;
+  margin: 0 !important; order: 0 !important;
+  width: min(92vw, 360px) !important; max-width: 92vw !important;
+  height: 40px !important; min-height: 40px !important; box-sizing: border-box !important;
+  padding: 0 !important; overflow: visible !important;
+  background: var(--cc-surface-3, #2e2e2e) !important;
+  border-radius: var(--cc-b-radius, 8px) !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .4) !important;
+  z-index: 10070 !important;
+}
+html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open .awesomplete { width: 100% !important; max-width: 100% !important; overflow: visible !important; }
+html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open #searchBox {
+  width: 100% !important; height: 38px !important; color: var(--cc-text, #e6e6e6) !important;
+  padding: 0 4px 0 12px !important;
+}
+html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open .searchSubmit {
+  color: var(--cc-text, #e6e6e6) !important; width: 40px !important; min-width: 40px !important; height: 40px !important;
+}
+/* the expanded field overlays the app grid, so the sidebar's stacking context has to clear the page content
+   AND the dim the moment it opens — not only once the user starts typing (html.cc-ca-searching). */
+html.cc-popups-on.cc-ca-searchopen .menuItems { z-index: 10060 !important; }
+html.cc-popups-on.cc-ca-searchopen li.cc-ca-search-li { z-index: 10060 !important; }
 /* #4: while typing (html.cc-ca-searching, toggled by wireCaSearch), the suggestion popup grows well past the
    narrow sidebar and the page dims + blurs behind it so the results stand out. The <ul> is anchored fixed to the
    right of the field by JS (ccPositionCaResults) so the 140px sidebar can't clip it. */
 html.cc-popups-on.cc-ca-searching::before {
   content: "" !important; position: fixed !important; inset: 0 !important;
-  background: rgba(0, 0, 0, .40) !important; backdrop-filter: blur(4px) !important; -webkit-backdrop-filter: blur(4px) !important;
+  /* was a hand-typed blur(4px)/rgba(0,0,0,.40) — the one bypass of the single backdrop constant
+     (--cc-backdrop-dim/--cc-backdrop-blur), the rest of CC's popups all read it. Same dim everywhere. */
+  background: var(--cc-backdrop-dim) !important;
+  backdrop-filter: var(--cc-backdrop-blur) !important; -webkit-backdrop-filter: var(--cc-backdrop-blur) !important;
   z-index: 10040 !important; pointer-events: none !important;
 }
 html.cc-popups-on.cc-ca-searching li.cc-ca-search-li { position: relative !important; z-index: 10060 !important; }   /* keep the field itself above the dim */
+/* …which on its own was NOT enough (user: "die Ergebnisliste ist hinter dem Blur"). CA wraps the whole
+   sidebar in `.menuItems.menuAdjust`, which carries position:relative + z-index:2 and therefore opens its own
+   STACKING CONTEXT. Every descendant is then painted inside that context: the li's 10060 and the <ul>'s
+   2147483000 are only sorted against each other, while the whole subtree competes with the ::before dim
+   (z 10040) as a single layer at z=2 — so the dim always covered them, no matter how large the inner z-index
+   grew. Raise the context itself while searching; the inner values keep their relative order. */
+html.cc-popups-on.cc-ca-searching .menuItems { z-index: 10060 !important; }
 html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul {
   width: min(460px, 60vw) !important; max-width: 60vw !important; min-width: 300px !important;
   max-height: 62vh !important; overflow-y: auto !important; overflow-x: hidden !important;
@@ -613,6 +911,95 @@ html.cc-popups-on .caMenu > li:not(.caMenuItem):not(:has(> hr)) {
 }
 html.cc-popups-on .caMenuItem.sectionMenu:first-child { margin-top: 4px !important; }
 
+/* ═══ #12g SIDEBAR CARDS (user, v3.6.6) ═══════════════════════════════════════════════════════════════
+   header.js ccAppsCards() wraps CA's flat <li> groups in li.cc-ca-card > ul.cc-ca-cardlist. The card is a
+   SHADE block (surface-1 on the page base) — never a border line, per the house rule — so the sections read
+   as grouped panels while Home, the search badge, All Apps and Repositories stay loose chips outside them.
+   header.js ccAppsCards() only MARKS the members (cc-card-in + cc-card-top/-bot); it never re-parents, because
+   moving CA's <li> broke CA's own show/hide of the Installed/Previous sub-lists. The card is therefore drawn
+   here: one continuous surface across the run, rounded only at its outer edges. */
+html.cc-popups-on li.cc-card-in {
+  background: var(--cc-surface-1, #1e1e1e) !important;
+  border: none !important; border-radius: 0 !important;
+  margin: 0 !important; padding: 4px 6px !important; box-sizing: border-box !important;
+  list-style: none !important;
+}
+/* the card's own corner sits one step OUTSIDE the chips it holds (radius nesting canon), but capped so a
+   pill-shaped --cc-b-radius (999px) can't turn a tall box into a lozenge. */
+html.cc-popups-on li.cc-card-top {
+  border-top-left-radius: min(calc(var(--cc-b-radius, 8px) * 1.6), 14px) !important;
+  border-top-right-radius: min(calc(var(--cc-b-radius, 8px) * 1.6), 14px) !important;
+  margin-top: 10px !important; padding-top: 8px !important;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, .18) !important;   /* keeps the card readable in the LIGHT theme, where #fff on #f2f2f2 is a very quiet step */
+}
+html.cc-popups-on li.cc-card-bot {
+  border-bottom-left-radius: min(calc(var(--cc-b-radius, 8px) * 1.6), 14px) !important;
+  border-bottom-right-radius: min(calc(var(--cc-b-radius, 8px) * 1.6), 14px) !important;
+  margin-bottom: 10px !important; padding-bottom: 8px !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .22) !important;
+}
+/* the class-less rows CA emits (VERSION and the version number) are not .caMenuItem, so the generic
+   ".caMenu > li:not(.caMenuItem)" fallback chip rule further down would paint them as standalone chips
+   inside the card. Inside a card they are plain text lines. */
+html.cc-popups-on li.cc-card-in:not(.caMenuItem):not(.cc-ca-cardtitle) {
+  padding: 2px 8px !important; margin: 0 !important;
+  color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11.5px !important;
+  border-radius: 0 !important;
+}
+html.cc-popups-on li.cc-card-in:hover { filter: none !important; }
+/* the section heading is the card TITLE — it must stop reading as another chip inside its own card */
+html.cc-popups-on li.cc-ca-cardtitle,
+html.cc-popups-on li.cc-card-in.sectionMenu {
+  background: var(--cc-surface-1, #1e1e1e) !important;
+  color: var(--cc-text, #e6e6e6) !important;
+  text-transform: uppercase !important; letter-spacing: .6px !important;
+  font-size: 12px !important; font-weight: 600 !important; cursor: default !important;
+}
+html.cc-popups-on li.cc-card-in.sectionMenu:hover { background: var(--cc-surface-1, #1e1e1e) !important; filter: none !important; }
+/* chips sitting ON the card surface lift one step so they stay readable against it */
+html.cc-popups-on li.cc-card-in .caMenuItem { background: var(--cc-surface-3, #2e2e2e) !important; }
+html.cc-popups-on li.cc-card-in .caMenuItem:hover,
+html.cc-popups-on li.cc-card-in .caMenuItem.selectedMenu {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+/* a loose chip that is itself a card member (Favourite Repo, Einstellungen, Statistics …) */
+html.cc-popups-on li.cc-card-in.caMenuItem:not(.sectionMenu):not(.cc-ca-cardtitle) {
+  background: var(--cc-surface-1, #1e1e1e) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-popups-on li.cc-card-in.caMenuItem:not(.sectionMenu):not(.cc-ca-cardtitle):hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+
+/* ── ACTION CENTRE = a standalone coloured BADGE that PULSES when it appears (user: "Action Centre ist immer
+   ein Badge der gefaerbt ist und das Leuchten pulsiert sobald er erscheint"). It carries .sectionMenu, which
+   CC otherwise paints as a transparent heading — override that here. The glow pulse is FINITE (6 cycles,
+   ~1.4s each): an endless pulse in a sidebar is a permanent distraction, and CA re-renders this entry when
+   its state changes, which restarts the animation — exactly the "sobald er erscheint" trigger, with no
+   MutationObserver (this file forbids new observers after the tab-freeze incident). */
+@keyframes cc-ac-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--cc-ac-glow, rgba(47, 111, 235, .55)); }
+  50%      { box-shadow: 0 0 14px 4px var(--cc-ac-glow, rgba(47, 111, 235, .55)); }
+}
+html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre {
+  display: block !important; box-sizing: border-box !important;
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  text-transform: uppercase !important; letter-spacing: .6px !important;
+  font-size: 12px !important; font-weight: 700 !important;
+  margin: 10px 0 !important; padding: 7px 12px !important;
+  border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
+  --cc-ac-glow: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent);
+  animation: cc-ac-pulse 1.4s ease-in-out 6 !important;
+}
+html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre:hover { filter: brightness(1.08) !important; }
+/* Deliberately NOT muted by the reactive mode. Reaktiver Modus is a COLOUR contract (idle badges rest
+   neutral, colour on hover), not a motion one — and the user runs it permanently, so muting the pulse there
+   would switch this feature off for exactly the person who asked for it ("Action Centre ist IMMER ein Badge
+   der gefaerbt ist und das Leuchten pulsiert"). It stays coloured AND it stays pulsing. */
+@media (prefers-reduced-motion: reduce) {
+  html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre { animation: none !important; }
+}
+
 /* #12e APP CARD — surface + radius + no border line + matching hover (visual only; no size/position changes). */
 html.cc-popups-on .ca_holder {
   background: var(--cc-surface-1, #1e1e1e) !important; border: none !important;
@@ -639,14 +1026,70 @@ html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--c
 
 /* #12f CARD BUTTONS (#8) — Install/Actions = colour-mode filled (per-element --cc-rb-c). Info/Support = neutral
    in accent mode, colour-mode filled in RAINBOW (every badge follows the mode). Colours from header.js ccApps. */
+/* #14 (user: "kannst du die info, support und installieren badges gleich groß machen? … all diese buttons
+   sollen in einer zeile sein"): a FIXED min-width was the wrong tool — CA lays this row out as plain
+   inline-block flow, sized differently per card (measured as low as ~300px on a plugin card vs 360px on
+   an app card), so any guessed px floor eventually exceeds SOME card's real width and silently wraps to
+   a second line — which then rode up into the category text above it (.ca_bottomLine's `top: 150px` is a
+   CA-fixed offset calibrated for a ONE-LINE row). FLEX with equal shares adapts to whatever width the
+   card actually has, so the row can never wrap: three EQUAL boxes that divide the real available space,
+   never a static guess. min-width:0 is required on a flex item with text content — without it a flex
+   child refuses to shrink below its own text's natural width, defeating the whole point. */
+html.cc-popups-on .ca_bottomLine {
+  display: flex !important; align-items: center !important; flex-wrap: nowrap !important; gap: 4px !important;
+}
 html.cc-popups-on .ca_bottomLine .caButton {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
   border-radius: var(--cc-b-radius, 8px) !important; -webkit-mask-image: none !important; mask-image: none !important;
+  flex: 1 1 0 !important; min-width: 0 !important; text-align: center !important;
+  overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important;
+  /* #13 (user: "alle gleich hoch machen, der Dockerbadge ist höher"): height was left IMPLICIT (padding +
+     line-height), landing at 22px, while the docker badge was an explicit 26px — 4px taller. Both now
+     read the SAME explicit height, box-sizing:border-box so padding never re-inflates it. */
+  box-sizing: border-box !important; height: var(--cc-bottomline-h, 26px) !important;
 }
 html.cc-popups-on .ca_bottomLine .caButton:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .ca_bottomLine .actionsButton {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+/* #14 (user: "das docker/plugin symbol auch in ein quadratisches badge machen"): .appDocker/.appPlugin/
+   .appLanguage/.appDriver/.appRepository render a single Unraid-font glyph via ::before with NO box at
+   all (CA: float:right, font-size:2rem, opacity:.7) — the one unbadged control on the row. Square chip
+   matching the row's own height; the glyph itself (font-family + content) is untouched, only its box. */
+html.cc-popups-on .ca_bottomLine .appDocker,
+html.cc-popups-on .ca_bottomLine .appPlugin,
+html.cc-popups-on .ca_bottomLine .appLanguage,
+html.cc-popups-on .ca_bottomLine .appDriver,
+html.cc-popups-on .ca_bottomLine .appRepository {
+  float: none !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  flex: 0 0 auto !important;   /* fixed square — never grows or shrinks with the three text buttons */
+  box-sizing: border-box !important; width: var(--cc-bottomline-h, 26px) !important; height: var(--cc-bottomline-h, 26px) !important; margin: 0 0 0 6px !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-b-radius, 8px) !important;
+  font-size: 15px !important; opacity: 1 !important;
+  color: var(--cc-text-chip, #cfcfcf) !important; transition: background .12s ease, color .12s ease !important;
+}
+html.cc-popups-on .ca_bottomLine .appDocker:hover,
+html.cc-popups-on .ca_bottomLine .appPlugin:hover,
+html.cc-popups-on .ca_bottomLine .appLanguage:hover,
+html.cc-popups-on .ca_bottomLine .appDriver:hover,
+html.cc-popups-on .ca_bottomLine .appRepository:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+/* REACTIVE MODE for both — same rest/hover swap as every other Apps badge */
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appDocker,
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appPlugin,
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appLanguage,
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appDriver,
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appRepository {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appDocker:hover,
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appPlugin:hover,
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appLanguage:hover,
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appDriver:hover,
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appRepository:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
 html.cc-popups-on .ca_bottomLine .actionsButton:hover { filter: brightness(1.08) !important; }
 html.cc-rb-on.cc-popups-on .ca_bottomLine .caButton {
@@ -659,6 +1102,676 @@ html.cc-popups-on .searchArea .caButton {
 }
 html.cc-popups-on .searchArea .caButton:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; }
 
+/* ═══ #12l CARD CORNER MARKS -> REAL CC BADGES (user: "können wir die Ribbons auch in CC-Badges umwandeln?
+   und auch das Monthly Spotlight in ein Badge? wenn beide vorhanden sind sollen sie rechts in der Card
+   untereinander angeordnet sein") ══════════════════════════════════════════════════════════════════════
+   CA draws these as clip-path triangles wedged into the corner (OFFICIAL / LIMITED TIME / INSTALLED / BETA)
+   and the spotlight as a round stamp. Both become ordinary CC badges, stacked at the card's top right.
+   The stack is built with absolute positioning on the card, so the two never overlap and a card with only
+   one of them looks identical to a card with both. */
+/* Anchor on the card SLOT, not the card: CA puts the ribbon in the slot div NEXT TO .ca_holder (measured
+   live — the ribbon's closest('.ca_holder') is null), while the spotlight sits inside the card. Making both
+   the slot and the card positioned gives each mark a sane containing block, and both land on the same right
+   edge because the slot and the card share it. */
+html.cc-popups-on .ca_homeTemplates > div { position: relative !important; }
+html.cc-popups-on .ca_holder { position: relative !important; }
+html.cc-popups-on .officialCardBackground,
+html.cc-popups-on .LTOfficialCardBackground,
+html.cc-popups-on .installedCardBackground,
+html.cc-popups-on .betaCardBackground,
+html.cc-popups-on .homespotlightIconArea {
+  position: absolute !important; right: 10px !important; left: auto !important;
+  width: auto !important; height: auto !important;
+  clip-path: none !important;                       /* kill the triangle wedge — it IS the ribbon shape */
+  /* #2 (live-measured): CA hangs a NEGATIVE right margin on the ribbon (margin: 0 -90px 0 0) so the classic
+     wedge can stick out past the card corner. `right: 10px` is measured to the MARGIN edge, so the badge
+     landed at 10 - 90 = 80px OUTSIDE the card — on top of the neighbouring card, which is why "official"
+     looked missing. Every geometry escape hatch of the ribbon shape has to be neutralised, not just the
+     three visual ones: margin belongs with clip-path/transform/width/height. */
+  margin: 0 !important;
+  transform: none !important; overflow: visible !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  min-height: var(--cc-md-h, 30px) !important; padding: 0 12px !important;
+  /* #13 (user: "kannst du hier alle badges gleich groß machen"): OFFICIAL/INSTALLED/BETA sized to their
+     own text (69-88px depending on the word), sitting above a spotlight column sized to ITS own widest
+     child — a ragged stack. One shared floor makes every corner badge the SAME width regardless of label
+     length; anything longer still grows past it, nothing shrinks below it. */
+  min-width: var(--cc-corner-badge-w, 92px) !important;
+  border-radius: var(--cc-b-radius, 8px) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  font-size: var(--cc-sm-fs, 11px) !important; font-weight: 700 !important;
+  text-transform: uppercase !important; letter-spacing: .6px !important; white-space: nowrap !important;
+  z-index: 3 !important; box-shadow: 0 2px 6px rgba(0, 0, 0, .3) !important;
+}
+/* the stack: the ribbon takes the top slot, the spotlight the one below — when only one exists it simply
+   occupies the top slot, so no card needs a different rule. */
+html.cc-popups-on .officialCardBackground,
+html.cc-popups-on .LTOfficialCardBackground,
+html.cc-popups-on .installedCardBackground,
+html.cc-popups-on .betaCardBackground { top: 10px !important; bottom: auto !important; }
+/* the stack is decided on the SLOT, because that is what holds both marks (ribbon directly, spotlight via
+   the card). With a ribbon present the spotlight drops one badge height + 6px; alone it takes the top slot. */
+html.cc-popups-on .ca_holder:has(.officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground) .homespotlightIconArea {
+  top: calc(10px + var(--cc-md-h, 30px) + 6px) !important; bottom: auto !important;
+}
+html.cc-popups-on .ca_holder:not(:has(.officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground)) .homespotlightIconArea {
+  top: 10px !important; bottom: auto !important;
+}
+/* the ribbon label loses its rotation and absolute placement — it is just the badge's text now */
+html.cc-popups-on .installedCardText {
+  position: static !important; transform: none !important; width: auto !important; height: auto !important;
+  color: inherit !important; font-size: inherit !important; font-weight: inherit !important;
+  letter-spacing: inherit !important; line-height: 1 !important; white-space: nowrap !important;
+}
+/* #2: the spotlight becomes TWO stacked badges — the word, then the month underneath (user: "der Badge
+   Spotlight soll direkt darunter sein wenn vorhanden und der Monat des Spotlight wieder da drunter"). The
+   area itself is the column; its label comes from ::before because CA ships only the image + the date. */
+html.cc-popups-on .homespotlightIconArea {
+  flex-direction: column !important; align-items: stretch !important; gap: 4px !important;
+  padding: 0 !important; background: transparent !important; box-shadow: none !important;
+  min-height: 0 !important;
+}
+html.cc-popups-on .homespotlightIconArea .spotlightIcon { display: none !important; }
+html.cc-popups-on .homespotlightIconArea::before,
+html.cc-popups-on .homespotlightIconArea .spotlightDate {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  min-height: var(--cc-md-h, 30px) !important; padding: 0 12px !important; margin: 0 !important;
+  border-radius: var(--cc-b-radius, 8px) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  font-size: var(--cc-sm-fs, 11px) !important; font-weight: 700 !important;
+  text-transform: uppercase !important; letter-spacing: .6px !important; white-space: nowrap !important;
+  width: auto !important; height: auto !important; line-height: 1 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .3) !important;
+}
+html.cc-popups-on .homespotlightIconArea::before { content: "Spotlight" !important; }
+html.cc-apps-rbneutral.cc-popups-on .homespotlightIconArea::before,
+html.cc-apps-rbneutral.cc-popups-on .homespotlightIconArea .spotlightDate {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .homespotlightIconArea::before,
+html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .homespotlightIconArea .spotlightDate {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+/* REACTIVE MODE — these are labels on a card, so they follow the badge contract like everything else.
+   #13 (user: "der spotlight und der monatsbadge haben einen zusätzlichen hintergrund, der soll weg"):
+   .homespotlightIconArea used to ride in THIS SAME selector list. It is the COLUMN WRAPPER around the two
+   real pills (::before "Spotlight" and .spotlightDate), not a pill itself — its own background is set to
+   transparent a few rules above (line ~985) precisely so only the two children paint. Because this
+   reactive block sits AFTER that transparent rule in source order, with equal specificity, it re-painted
+   the wrapper grey/accent on every card that had a spotlight mark — a second, larger rounded rect behind
+   the two pills. The wrapper never needed colour here; --cc-chip/--cc-rb-c already reach the pills
+   themselves via the dedicated ::before/.spotlightDate reactive rule above. */
+html.cc-apps-rbneutral.cc-popups-on .officialCardBackground,
+html.cc-apps-rbneutral.cc-popups-on .LTOfficialCardBackground,
+html.cc-apps-rbneutral.cc-popups-on .installedCardBackground,
+html.cc-apps-rbneutral.cc-popups-on .betaCardBackground {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .officialCardBackground,
+html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .LTOfficialCardBackground,
+html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .installedCardBackground,
+html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .betaCardBackground {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+/* the wrapper's own background/shadow already comes from the base rule near line 1071 (never depends on
+   colour mode) — a duplicate "belt-and-braces" restatement lived here until a stylelint pass flagged it. */
+
+/* #12h REAKTIVER MODUS (user, v3.6.6, aktiver Sammelmodus: "die badges auf den app cards sind nicht im
+   reaktive modus der derzeit eingeschaltet ist" -> clarified to mean Info/Support/Installieren specifically,
+   NOT the corner ribbons — an earlier ribbon-recolour pass here was reverted per direct user request, "die
+   wollte ich aber gar nicht einfaerben") — cc.rbmode=active rests every badge grey and reveals its colour
+   only on hover/focus (house pattern: html.cc-header-rbneutral in Header.css). Apps never had its own
+   -rbneutral class (header.js now toggles html.cc-apps-rbneutral); mirror the same rest/hover swap for the
+   card buttons so the toggle's own "gilt ... fuer alle Bereiche" promise holds here too. */
+/* SPECIFICITY (live-proven with the user's real settings, rainbow ON + rbmode active): the rainbow rule
+   `html.cc-rb-on.cc-popups-on .ca_bottomLine .caButton` above scores (0,4,1). A plain
+   `html.cc-apps-rbneutral .ca_bottomLine …` is only (0,3,1) and LOSES to it, so the reactive grey never
+   appeared for anyone running rainbow — it only "worked" in a test profile with rainbow off. Carry
+   .cc-popups-on here too for (0,4,1) and let source order (this block sits after the rainbow rule) win. */
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .actionsButton,
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .caButton {
+  background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .actionsButton:hover,
+html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .caButton:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+
+/* ═══ #12i ACTION-CENTRE BUTTON BAR (user: "im Action Centre unten bitte die Buttons in Badges") ══════
+   The bar lives in .multi_installDiv and its controls are bare <input type=button|submit> carrying CA's own
+   classes — plain orange/grey text links with no box. Give them the house badge box. The primary action
+   (multi_install) takes the colour mode; the secondary ones rest on the neutral chip fill, so the bar has
+   one obvious primary rather than three equal shouts. */
+html.cc-popups-on .multi_installDiv { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 10px !important; }
+/* #11 (root cause, not the symptom): `:not(.ca_hide)` on every branch means this rule never fights CA's
+   own `.ca_hide { display: none }` for the second Löschen button in the first place — no counter-guard
+   needed. The earlier fix (a doubled `.ca_hide.ca_hide` rule elsewhere in this file) is now redundant but
+   left in place as a second line of defence; it costs nothing and the specificity story it documents is
+   a real lesson (input[type=…] is (0,·,2), not (0,·,1) — a TYPE selector counts too). */
+html.cc-popups-on .multi_installDiv input[type="button"]:not(.ca_hide),
+html.cc-popups-on .multi_installDiv input[type="submit"]:not(.ca_hide),
+html.cc-popups-on .multi_installDiv .multi_installAll:not(.ca_hide),
+html.cc-popups-on .multi_installDiv .multi_installClear:not(.ca_hide),
+html.cc-popups-on .multi_installDiv .multi_deleteButton:not(.ca_hide) {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  width: auto !important; height: auto !important; min-height: var(--cc-md-h, 30px) !important;
+  padding: var(--cc-md-btnpad, 0 14px) !important; margin: 0 !important;
+  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  text-transform: uppercase !important; letter-spacing: .4px !important;
+  /* #8 (user: "auch die buttons ganz unten sind nicht in die farbmodi integriert"): the REST state carries
+     the colour mode, like every other badge in CC. The previous version rested on the neutral chip in ALL
+     modes and only revealed the colour on hover — that is the REACTIVE behaviour, and applying it
+     unconditionally is exactly what "nicht in die Farbmodi integriert" means. header.js stamps these
+     inputs, so in Rainbow each one takes its own jewel position instead of four identical shouts. */
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  box-shadow: none !important; outline: none !important; cursor: pointer !important;
+  transition: background .12s ease, color .12s ease, filter .12s ease !important;
+}
+html.cc-popups-on .multi_installDiv input[type="button"]:hover,
+html.cc-popups-on .multi_installDiv input[type="submit"]:hover,
+html.cc-popups-on .multi_installDiv .multi_installAll:hover,
+html.cc-popups-on .multi_installDiv .multi_installClear:hover { filter: brightness(1.12) !important; }
+/* REACTIVE MODE: neutral at rest, mode colour on hover. Carries .cc-popups-on for (0,4,1) so it beats the
+   rainbow rule above — the specificity trap that already cost two rounds on the card buttons. */
+/* #8a: :not(.multi_deleteButton) on EVERY branch, not just its own — the delete button IS an
+   <input type="button">, so the GENERIC input[type="button"] branch here ALSO matches it at (0,4,2),
+   which STILL out-specifies the semantic red below ((0,3,1)) even after dropping the named-class branch
+   alone. Excluding it from every branch is the only way this reactive rest rule leaves it alone; the one
+   badge that must never follow the colour mode, reactive or not. */
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="button"]:not(.multi_deleteButton),
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="submit"]:not(.multi_deleteButton),
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installAll,
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installClear {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="button"]:hover,
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="submit"]:hover,
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installAll:hover,
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installClear:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+}
+/* the primary action carries the colour mode */
+html.cc-popups-on .multi_installDiv .multi_install,
+html.cc-popups-on .multi_installDiv .multi_installButton {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+html.cc-popups-on .multi_installDiv .multi_install:hover,
+html.cc-popups-on .multi_installDiv .multi_installButton:hover { filter: brightness(1.08) !important; background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; }
+/* destructive stays semantic — a delete must not read like any other chip */
+html.cc-popups-on .multi_installDiv .multi_deleteButton { background: var(--cc-err, #d9433f) !important; color: var(--cc-err-fg, #fff) !important; }
+html.cc-popups-on .multi_installDiv .multi_deleteButton:hover { filter: brightness(1.08) !important; }
+/* reactive mode: the primary rests neutral like every other badge and colours on hover */
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_install,
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installButton {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_install:hover,
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installButton:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+
+/* ═══ #12j CA SUB-VIEWS: Statistics / Credits / Change Log (user: "Changelog, Credits, Statistics … in CC
+   Style uebernehmen") ══════════════════════════════════════════════════════════════════════════════════
+   All three share ONE container, #alternateView — a fixed, opaque-black full-screen box with the content
+   loose inside it and a bare "CLOSE" text at the top left. Give it the CC popup language instead: the shared
+   dim+blur backdrop (#6 BACKDROP ENGINE) plus a centred surface panel, and make CLOSE a real badge. */
+/* NEVER touch `display` here. #alternateView is always present in the DOM and CA hides it from its OWN
+   stylesheet; a `display:flex !important` therefore un-hid it permanently — the whole /Apps page came up
+   dimmed and blurred behind a dead CLOSE button (user, live: "die ganze Apps Seite ist geblurrt und oben
+   rechts ein Close Button der nicht reagiert"). The panel is centred with plain auto margins instead, which
+   needs no display override and so leaves CA's show/hide entirely alone. */
+html.cc-popups-on #alternateView {
+  background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)) !important;
+  -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important;
+          backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important;
+  overflow: auto !important; padding: 64px 16px 32px !important; box-sizing: border-box !important;
+  /* ROOT CAUSE of "die Popupfenster von Changelog etc. haben einen halbtransparenten Hintergrund": CA ships
+     opacity:.9 on this container (measured live). Opacity on an ANCESTOR composites the whole subtree, so the
+     panel showed the page through it no matter which opaque hex its own background carried — a background
+     colour can never win that fight. The dim belongs to the background-color above, not to opacity. */
+  opacity: 1 !important;
+}
+/* Same surface language as every other CC popup (.sweet-alert): the container-update window the user pointed
+   at is #1a1a1a / 14px / the same soft elevation, so the CA sub-views use those exact values rather than a
+   second, slightly different popup look. */
+html.cc-popups-on #alternateView .alternateViewContent {
+  background: #1a1a1a !important;
+  color: var(--cc-text, #e6e6e6) !important;
+  border: none !important; border-radius: 14px !important;
+  box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
+  padding: 24px 28px !important; margin: 0 auto !important;   /* auto = centred, no flex needed on the parent */
+  width: fit-content !important; max-width: min(900px, 92vw) !important; box-sizing: border-box !important;
+  font-weight: 400 !important;   /* CA sets inline font-weight:bold on the whole panel */
+}
+/* TITLE BADGE, identical to .sweet-alert h2 in the other popups (user: "diese Fenster sollen im Stil der
+   anderen Popupfenster wie z.B. das Container-Update-Fenster sein"). CA emits the heading as a bare <font>
+   inside a .ca_center wrapper, so there is no h2 to hook — style that pair instead. Sticky, because the
+   changelog panel is ~59000px tall and the title would otherwise scroll away immediately. */
+html.cc-popups-on #alternateView .alternateViewContent .ca_center:has(> font) {
+  position: sticky !important; top: 0 !important; z-index: 3 !important;
+  background: #1a1a1a !important; padding: 0 0 14px !important; margin: 0 !important;
+}
+html.cc-popups-on #alternateView .alternateViewContent .ca_center > font {
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  width: 100% !important; box-sizing: border-box !important;
+  height: 40px !important; padding: 0 18px !important;
+  border-radius: var(--cc-b-radius, 10px) !important;
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
+  text-transform: uppercase !important; letter-spacing: .6px !important;
+}
+/* the changelog's version headings become the same small badges the ShipLog changelog popup uses */
+html.cc-popups-on #alternateView .alternateViewContent h3 {
+  display: inline-flex !important; align-items: center !important;
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  padding: 3px 12px !important; border-radius: var(--cc-b-radius, 999px) !important;
+  font-size: 13px !important; font-weight: 700 !important; margin: 16px 0 8px !important; letter-spacing: .5px !important;
+}
+html.cc-popups-on #alternateView .alternateViewContent ul { margin: 0 0 6px !important; padding-left: 20px !important; }
+html.cc-popups-on #alternateView .alternateViewContent li { color: var(--cc-text-chip, #d6d6d6) !important; margin: 3px 0 !important; line-height: 1.5 !important; }
+/* CLOSE is a DESTRUCTIVE-looking, always-red control (user: "der Close Button all dieser Popupfenster im
+   CA-Tab ist kaum sichtbar, soll immer eine rote Farbe haben"). Semantic red, so it deliberately does NOT
+   follow the colour mode — same reasoning as the delete button in the action bar. */
+html.cc-popups-on #alternateView .alternateViewClose {
+  position: fixed !important; top: 18px !important; right: 18px !important; left: auto !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  min-height: var(--cc-lgb-h, 36px) !important; padding: 0 20px !important;
+  font-size: var(--cc-md-fs, 13px) !important; font-weight: 700 !important;
+  text-transform: uppercase !important; letter-spacing: .5px !important;
+  background: var(--cc-err, #d9433f) !important; color: var(--cc-err-fg, #fff) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .45) !important; z-index: 10 !important;
+}
+html.cc-popups-on #alternateView .alternateViewClose:hover { filter: brightness(1.1) !important; background: var(--cc-err, #d9433f) !important; }
+/* the stats/credits table: rows separated by SHADE, never a rule; the value column reads as the accent */
+/* CA paints the stats table pure black, which sits as a hard slab inside the #1a1a1a frame (user: "das
+   Statistics Popupfenster ist nicht im CC Style"). Nothing inside the panel carries its own fill — the frame
+   is the only surface, exactly like the other popups' "no lighter/darker strips anywhere" rule. The title
+   badge and the CLOSE button are the deliberate exceptions. */
+html.cc-popups-on #alternateView .alternateViewContent *:not(.alternateViewClose):not(font):not(h3) {
+  background-color: transparent !important;
+}
+html.cc-popups-on #alternateView table { border-collapse: collapse !important; width: 100% !important; }
+html.cc-popups-on #alternateView td { border: none !important; padding: 8px 12px !important; vertical-align: middle !important; }
+html.cc-popups-on #alternateView tr + tr td { box-shadow: inset 0 1px 0 var(--cc-shade-line, rgba(128, 128, 128, .14)) !important; }
+html.cc-popups-on #alternateView td.ca_table { color: var(--cc-text-chip, #cfcfcf) !important; font-weight: 500 !important; }
+html.cc-popups-on #alternateView td.ca_stat { color: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; font-weight: 700 !important; font-variant-numeric: tabular-nums !important; text-align: right !important; }
+html.cc-popups-on #alternateView i.fa { color: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; }
+html.cc-popups-on #alternateView a { color: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; text-decoration: none !important; }
+html.cc-popups-on #alternateView a:hover { filter: brightness(1.16) !important; }
+/* the scroll wrapper CA sets inline (overflow:scroll) draws a permanent bar around the panel */
+html.cc-popups-on #alternateView .alternateViewContent > div[style*="overflow"] { overflow: auto !important; width: 100% !important; }
+
+/* ═══ #12k CA SETTINGS SUB-PAGE (/Apps/ca_settings) — a real Unraid form page (dl/dt/dd + selects + bare
+   input buttons), not an overlay, gated by html.cc-ca-settings (stamped from the URL in header.js).
+   The form gets the house card treatment: one surface panel, label/control rhythm, filled fields with the
+   shared radius and NO border line, buttons as badges. */
+/* NO card fill here (user: "heller Hintergrund kann weg"). The page has exactly one group, so a raised
+   surface adds a shade step that separates nothing — Style Guide regel 4. Only the measure is capped. */
+html.cc-popups-on.cc-ca-settings #displaybox form {
+  background: transparent !important;
+  border: none !important; padding: 8px 24px 20px !important; margin: 6px auto !important;
+  max-width: 900px !important; box-sizing: border-box !important;
+}
+/* the page's title bar is a SECTION BADGE, not a full-width strip (Style Guide regel 2) */
+html.cc-popups-on.cc-ca-settings #displaybox div.title {
+  display: inline-flex !important; align-items: center !important; gap: 8px !important;
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  border-radius: var(--cc-b-radius, 8px) !important;
+  padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px) !important;
+  font-size: var(--cc-pagebadge-fs, 13px) !important; font-weight: 700 !important;
+  text-transform: uppercase !important; letter-spacing: 1px !important;
+  /* FLUSH WITH THE MAIN MENU BAR (user: "der Abschnittsbadge muss links bündig mit der Hauptleiste
+     abschließen"). Not with the form column and not with the viewport: the reference is the nav bar's own
+     left edge, which header.js already MEASURES for exactly this purpose and publishes as --cc-align-left
+     (measureAlign; --cc-box-shift carries it in boxed mode). Reusing that value keeps the badge aligned
+     across themes, font sizes and boxed/fluid widths instead of guessing a padding. */
+  width: fit-content !important;
+  /* SAME VERTICAL POSITION AS EVERY OTHER TOP SECTION BADGE. Measured: on /Plugins the top badge sits at
+     y=143, here it sat at 155 — 12px lower, which is exactly what reads as "nicht auf gleicher Höhe wie
+     sonst der oberste Abschnittsbadge". The top badge position is standardised; see the Style Guide. */
+  margin: 2px 0 6px !important; box-shadow: none !important;
+  margin-left: var(--cc-align-left, 0px) !important;
+}
+html.cc-popups-on.cc-ca-settings #displaybox div.title > span.left,
+html.cc-popups-on.cc-ca-settings #displaybox div.title i { color: inherit !important; font-size: inherit !important; }
+/* A SECTION BADGE IS ALWAYS COLOURED — it is a heading, not an interactive chip, so the reactive mode's
+   "rest neutral, colour on hover" does NOT apply to it (user: "ein Abschnittsbadge ist immer linksbündig
+   und immer eingefärbt"). Greying it out here was the mistake; no rbneutral variant belongs on a heading. */
+/* dt/dd rhythm: the label column stops hugging the control and both share one baseline */
+html.cc-popups-on.cc-ca-settings #displaybox dl { margin: 0 !important; }
+/* label and control share one centre line (user: "die Toggles und der dazugehörige Text sind nicht vertikal
+   zentriert, die Texte sind zu weit unten"). Measured 8px off: the label's own box is 37px tall against the
+   24px toggle, so its text baseline sank. Making both a centred flex box lines them up whatever their
+   heights are, instead of nudging a padding that breaks again on a two-line label. */
+html.cc-popups-on.cc-ca-settings #displaybox dt {
+  display: flex !important; align-items: center !important; justify-content: flex-end !important;
+  color: var(--cc-text-chip, #cfcfcf) !important; font-weight: 500 !important;
+  padding: 4px 14px 4px 0 !important; box-sizing: border-box !important;
+  min-height: var(--cc-lgb-h, 36px) !important; line-height: 1.35 !important;
+}
+html.cc-popups-on.cc-ca-settings #displaybox dd {
+  display: flex !important; align-items: center !important;
+  padding: 4px 0 !important; margin: 0 !important; min-height: var(--cc-lgb-h, 36px) !important;
+}
+/* fields: a FILL, never Unraid's 1px #d3d3d3 underline (no border lines is the house law) */
+/* Fields are NOT styled here any more. /Apps/ca_settings now carries cc-tools-on (header.js), so the
+   Tools sheet owns every native widget on it: ccToolsEnhance() replaces each <select> with the .cc-tsel
+   overlay - a real CC panel that stays CC when OPEN, which an OS-rendered option list never can - and the
+   Tools rules bring the colour-mode variants with them. A second set of field rules here only fought them. */
+/* the help link is a BADGE, not bare blue text — every actionable thing on a CC page is a badge.
+   (Its box comes from the shared button rule below; only the odd bits live here.) */
+html.cc-popups-on.cc-ca-settings #displaybox a {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  min-height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-btnpad, 0 14px) !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  text-transform: uppercase !important; letter-spacing: .4px !important; text-decoration: none !important;
+  /* sits in the SAME row rhythm as the button bar above it (user: "Badge des Hilfeforum parallel zu den
+     anderen ausrichten") — same 6px side margin, so all four badges share one grid. */
+  margin: 10px 6px !important;
+}
+html.cc-popups-on.cc-ca-settings #displaybox a:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+}
+/* ALL badges on this page share ONE box: same height (lgb 36px), same radius, same type — buttons and the
+   help link alike (user: "die Badges sollen die gleiche Höhe haben"). */
+html.cc-popups-on.cc-ca-settings #displaybox input[type="button"],
+html.cc-popups-on.cc-ca-settings #displaybox input[type="submit"],
+html.cc-popups-on.cc-ca-settings #displaybox a {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  height: var(--cc-lgb-h, 36px) !important; min-height: var(--cc-lgb-h, 36px) !important;
+  padding: 0 18px !important; margin: 0 !important;
+  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  text-transform: uppercase !important; letter-spacing: .4px !important; text-decoration: none !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  box-shadow: none !important; outline: none !important; cursor: pointer !important;
+}
+/* TWO ROWS (user: "Anwenden und Fertig in eine Zeile, Download Log und Hilfeforen-Badge in eine zweite"):
+   the form's own button row keeps ANWENDEN + FERTIG; DOWNLOAD LOG is pulled onto the second row where the
+   help link already lives. Flex order does it without touching CA's markup — the row is a flex line, so a
+   100% flex-basis forces a wrap and the two land together underneath. */
+/* CA wraps the buttons in a <span> (not a div — an earlier div:has() selector matched nothing). Row 1 is
+   this span: ANWENDEN + FERTIG. Row 2 is CA's own <center> holding the help link; header.js moves
+   DOWNLOAD LOG in there, because two elements in different parents can never share one flex line. */
+html.cc-popups-on.cc-ca-settings #displaybox form span:has(> input[type="submit"]) {
+  /* LEFT-ALIGNED WITH THE CONTROLS (user: "die Buttons unten sollen linksbündig mit den Toggles
+     abschließen") — the toggles start at the dd column, so the button rows start there too instead of
+     being centred under the form. */
+  display: flex !important; flex-wrap: wrap !important; justify-content: flex-start !important;
+  align-items: center !important; gap: 10px !important;
+}
+/* row 2 starts on the SAME left edge as row 1 and the controls above it. CA centres this <center>, so the
+   indent has to be reproduced here: the dd column starts where the label column ends. */
+html.cc-popups-on.cc-ca-settings #displaybox center:has(> a),
+html.cc-popups-on.cc-ca-settings #displaybox center:has(> input) {
+  display: flex !important; flex-wrap: wrap !important; justify-content: flex-start !important;
+  align-items: center !important; gap: 10px !important; margin: 10px 0 0 !important;
+  text-align: left !important;   /* the indent is measured and written inline by header.js (ccCaSettingsRows) — a !important here would overwrite it and make each pass add up */
+}
+html.cc-popups-on.cc-ca-settings #displaybox center:has(> a) a,
+html.cc-popups-on.cc-ca-settings #displaybox center:has(> input) a { margin: 0 !important; }
+/* COLOUR MODES — every one of them, all three states. The submit is the primary action, so it carries the
+   mode; the rest rest neutral and reveal it on hover. In reactive mode the primary rests neutral too. */
+html.cc-popups-on.cc-ca-settings #displaybox input[type="submit"] {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+html.cc-popups-on.cc-ca-settings #displaybox input[type="button"]:hover,
+html.cc-popups-on.cc-ca-settings #displaybox a:hover,
+html.cc-popups-on.cc-ca-settings #displaybox input[type="submit"]:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+}
+html.cc-popups-on.cc-ca-settings #displaybox input:disabled { opacity: .5 !important; cursor: default !important; }
+html.cc-apps-rbneutral.cc-popups-on.cc-ca-settings #displaybox input[type="submit"] {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on.cc-ca-settings #displaybox input[type="submit"]:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+}
+
 /* #13: don't stack the fullscreen tab-load loader UNDER an open swal loader (CA "Updating Content" on /Apps
-   open) — the swal already dims the backdrop, so div.spinner.fixed would be a second overlapping ring. */
-html.cc-popups-on:has(.sweet-alert.visible, .sweet-alert.show-sweet-alert, .swal-overlay--show-modal) div.spinner.fixed { display: none !important; }
+   open) — the swal already dims the backdrop, so div.spinner.fixed would be a second overlapping ring.
+
+   #4 (live-recorded, /Apps cold open): this rule existed but NEVER FIRED during the window that matters.
+   SweetAlert1 opens in three steps — `showSweetAlert` → `+ triggerClassChange` → `+ visible` — and only the
+   LAST one carried a class this selector knew. The overlay appears ~200ms into that sequence, so for ~300ms
+   BOTH rings were on screen: the 110px ring in div.spinner.fixed over the 48px ring in the swal. That is
+   exactly the "doppelter Spinner". `show-sweet-alert` (kebab) is a SweetAlert2 class and never matches here.
+   Keyed on `showSweetAlert` (the class SweetAlert1 sets FIRST) so the guard covers the whole open sequence.
+   The `:not([style*="display: none"])` wache matters: `showSweetAlert` is swapped for `hideSweetAlert` on
+   close, but the swal node LIVES ON in the DOM (verified: it keeps cc-only-loader + inline display:none), so
+   a class-only selector risks killing the tab-load overlay permanently. Same idiom as the dupe rule above. */
+html.cc-popups-on:has(.sweet-alert.showSweetAlert:not([style*="display: none"]),
+                      .sweet-alert.visible, .swal-overlay--show-modal) div.spinner.fixed { display: none !important; }
+/* #4/#15h LOADER ENGINE — ONE scroll lock for every fullscreen phase, driven by html.cc-loading (set by
+   header.js ccLoadState(), never by a CSS :has() guess). Superseded two narrower attempts written earlier
+   the same session: first one covered only the CA "Updating Content" dialog (user, still open afterward:
+   "der scrollbalken rechts ist immer noch da" — the plain Unraid tab-load overlay, which is what MOST page
+   loads actually show, had no lock at all); the second added a :has(div.spinner.fixed …) guess but the
+   :not([style*="display: none"]) substring idiom reads a MISSING style attribute (the state before Unraid's
+   JS has ever toggled the node — i.e. on a fresh page load) as "currently shown", a false positive the CSS
+   layer cannot see past. ccLoadState() decides from getComputedStyle, which resolves the real state
+   regardless of source, and only THEN stamps the flag — so this rule is a pure reflection, never a guess.
+   The target is <html>, not <body>: Tokens.css puts overflow-x: clip on body for /Apps, which propagates
+   the viewport's own scrolling box to the root, so a lock written on body would be a no-op there. */
+html.cc-loading { overflow: hidden !important; }
+/* one dim + blur behind whichever phase is up; the CA dialog and the Docker update window already bring
+   their own overlay (.sweet-overlay / #cc-ctout-bd, both covered by the block above), so this stays off
+   for those two data-cc-load values and only paints for the bare tab-load/in-page phase ("fixed"). */
+html.cc-loading[data-cc-load="fixed"]::after {
+  content: ""; position: fixed; inset: 0; z-index: var(--cc-load-z, 9998); pointer-events: none;
+  background: var(--cc-backdrop-dim); -webkit-backdrop-filter: var(--cc-backdrop-blur); backdrop-filter: var(--cc-backdrop-blur);
+}
+
+/* ═══ #7 CA PAGE NAVIGATION (user: "in CA ist das Seitenverzeichnis nicht im GlimStone Style") ═════════
+   CA ships the pager as bare coloured text: .pageNumber links in its own cyan, the current page in its
+   own orange, both 15px with no box, plus .pageLeft/.pageRight whose arrows are FontAwesome glyphs in
+   ::after and .pageDots whose "..." is also ::after content. Two house rules were broken at once — every
+   clickable thing is a badge, and nothing paints a colour outside the colour engine.
+   The ::after glyphs are left alone and simply inherit the badge's text colour; overriding content or
+   font-family here would blank the arrows. Numbers become square md badges (min-width = the tier height)
+   so a 1-digit and a 3-digit page look like the same control. */
+html.cc-popups-on .pageNavigation {
+  display: flex !important; flex-wrap: wrap !important; align-items: center !important;
+  justify-content: center !important; gap: 6px !important;
+}
+html.cc-popups-on .pageNavigation .pageNumber,
+html.cc-popups-on .pageNavigation .pageDots {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  box-sizing: border-box !important;
+  min-width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important;
+  padding: 0 8px !important; margin: 0 !important;
+  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1 !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  text-decoration: none !important; cursor: pointer !important;
+  transition: background .12s ease, color .12s ease !important;
+}
+/* the dots are a separator, not a control: no box, no pointer */
+html.cc-popups-on .pageNavigation .pageDots {
+  background: transparent !important; color: var(--cc-text-dim2, #6f6f6f) !important;
+  cursor: default !important; min-width: 0 !important; padding: 0 2px !important;
+}
+/* current page and hover carry the colour mode. --cc-rb-c FIRST (user: "nicht im regenbogenmodus") — it
+   was missing from the chain entirely, so Rainbow could only ever show the one shared --cc-rbaccent
+   jewel, never each pager control's own stamped position (header.js ccAppsStamp(".pageNavigation
+   .pageNumber")). Rest stays neutral on purpose: colouring every page number at once would bury the
+   ONE thing this control needs to say — which page you're on — under a rainbow strip. */
+html.cc-popups-on .pageNavigation .pageSelected,
+html.cc-popups-on .pageNavigation a.pageNumber:hover,
+html.cc-popups-on .pageNavigation .pageLeft:not(.pageNavNoClick):hover,
+html.cc-popups-on .pageNavigation .pageRight:not(.pageNavNoClick):hover {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+}
+/* an arrow with nowhere to go is dimmed, never hidden — the row must not change width on page 1 */
+html.cc-popups-on .pageNavigation .pageNavNoClick {
+  opacity: .38 !important; cursor: default !important;
+}
+/* REACTIVE MODE: the pager rests neutral and reveals the colour on hover; the CURRENT page keeps its fill
+   because it is a state, not a hover — losing it would leave the user without a "you are here".
+   .cc-popups-on is carried for (0,4,1) so this beats the rainbow rule above (the specificity trap). */
+html.cc-apps-rbneutral.cc-popups-on .pageNavigation a.pageNumber {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .pageNavigation a.pageNumber:hover,
+html.cc-apps-rbneutral.cc-popups-on .pageNavigation .pageSelected {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+}
+/* the "Displaying 1 - 12 (of 56)" line above the pager: quiet caption, tabular digits so the count does
+   not jiggle as pages change */
+html.cc-popups-on .navigationArea {
+  color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-sm-fs, 11px) !important;
+  letter-spacing: .4px !important; font-variant-numeric: tabular-nums !important;
+}
+
+/* ═══ #11 REGRESSION FIX: a hidden control must STAY hidden ════════════════════════════════════════════
+   The action-bar rule above sets `display: inline-flex !important` on .multi_deleteButton, which overran
+   CA's own `.ca_hide { display: none }` — so a SECOND "Löschen" appeared that CA had deliberately hidden
+   (user: "im CA tab sind unten jetzt zwei löschen button"). House rule, learned the hard way: never write
+   `display: … !important` onto a host-controlled element without re-asserting its hide class immediately —
+   the box-styling half and the visibility half of a rule are two separate guards. */
+/* SPECIFICITY (live-proven): the base rule's `input[type="button"]` branch is (0,3,2) — a TYPE selector
+   plus an ATTRIBUTE selector both count, not just the one class most people mentally tally. A bare
+   `.multi_installDiv .ca_hide` is only (0,3,1) and LOSES regardless of source order, because higher
+   specificity always beats source order — this is not the file-order tie the rest of this stylesheet's
+   "double a class" idiom exists for; it is a genuine specificity gap that needs one extra class to close.
+   Doubling `.ca_hide` reaches (0,4,1), safely above (0,3,2). */
+html.cc-popups-on .multi_installDiv .ca_hide.ca_hide,
+html.cc-popups-on .multi_installDiv [style*="display: none"][style*="display: none"] { display: none !important; }
+
+/* ═══ #12 FOOTER ARROWS IN ALL THREE COLOUR MODES ═════════════════════════════════════════════════════
+   .back_to_top / .move_to_end are 40px badges carrying a FontAwesome glyph. They already had the badge
+   box but rested on the neutral chip in EVERY mode, so they never showed the accent or the rainbow —
+   the same "not integrated into the colour modes" the action bar had. Per the earlier decision the BADGE
+   carries the colour and the GLYPH takes the contrast colour, never the other way round. */
+html.cc-popups-on a.back_to_top,
+html.cc-popups-on a.move_to_end {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  transition: background .12s ease, color .12s ease, filter .12s ease !important;
+}
+html.cc-popups-on a.back_to_top > i,
+html.cc-popups-on a.move_to_end > i { color: inherit !important; }
+html.cc-popups-on a.back_to_top:hover,
+html.cc-popups-on a.move_to_end:hover { filter: brightness(1.12) !important; }
+/* REACTIVE: neutral at rest, colour on hover. .cc-popups-on carried for (0,4,1) so it beats the rule
+   above — written together with it, not bolted on after the next complaint. */
+html.cc-header-rbneutral.cc-popups-on a.back_to_top,
+html.cc-header-rbneutral.cc-popups-on a.move_to_end {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-header-rbneutral.cc-popups-on a.back_to_top:hover,
+html.cc-header-rbneutral.cc-popups-on a.move_to_end:hover {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important; filter: none !important;
+}
+
+/* ═══ #10 CA SEARCH-RESULTS HEADER (user: "auf der suchergenisseite obern noch punkte nicht im GLS.
+   können wir die auch schön anordnen?") ═══════════════════════════════════════════════════════════════
+   .searchArea carries three bare CA controls (Results Per Page, DockerHub) plus an italic caption, and
+   .menuAdjust below it carries the four sort links as plain coloured text (CA's own orange for the
+   active one). Same treatment as the pager: every clickable thing becomes a badge, the caption stays
+   quiet prose, and the row is laid out instead of left to CA's own float/inline flow. */
+html.cc-popups-on .searchArea {
+  display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 8px !important;
+}
+/* #10 (user: "nicht im regenbogenmodus, bitte in alle Farbmodi aufnehmen"): these are standalone action
+   badges (not a repeating set like the pager), so they follow the #8 pattern — COLOURED AT REST, each its
+   own stamped --cc-rb-c position in Rainbow, not just on hover. header.js ccAppsStamp(".searchArea
+   .caButton.maxPerPage, .searchArea .dockerSearch") supplies it. */
+html.cc-popups-on .searchArea .caButton.maxPerPage,
+html.cc-popups-on .searchArea .dockerSearch {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  box-sizing: border-box !important; height: var(--cc-md-h, 30px) !important;
+  padding: var(--cc-md-pad, 0 20px) !important; margin: 0 !important;
+  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1 !important;
+  text-transform: none !important; letter-spacing: normal !important;
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
+  transition: background .12s ease, color .12s ease, filter .12s ease !important;
+}
+html.cc-popups-on .searchArea .caButton.maxPerPage:hover,
+html.cc-popups-on .searchArea .dockerSearch:hover { filter: brightness(1.12) !important; }
+/* the "Search for X" caption: quiet prose, not a badge — it states a fact, it isn't clickable */
+html.cc-popups-on .searchArea .category.categoryLine {
+  background: transparent !important; color: var(--cc-text-dim, #8a8a8a) !important;
+  font-style: italic !important; font-size: var(--cc-sm-fs, 11px) !important; padding: 0 !important;
+}
+/* Sort By row: same badge box, the ACTIVE sort takes the colour mode instead of CA's own orange */
+html.cc-popups-on a.sortIcons {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  box-sizing: border-box !important; height: var(--cc-md-h, 30px) !important;
+  padding: var(--cc-md-pad, 0 20px) !important; margin: 0 6px 0 0 !important;
+  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1 !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  text-decoration: none !important; cursor: pointer !important;
+  transition: background .12s ease, color .12s ease !important;
+}
+html.cc-popups-on a.sortIcons:hover,
+html.cc-popups-on a.sortIcons.enabledIcon {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+}
+/* REACTIVE: maxPerPage/dockerSearch drop back to neutral-at-rest here (their #8-style coloured rest
+   above is the NORMAL/Rainbow behaviour); sortIcons rests neutral in every mode, matching the pager.
+   .cc-popups-on carried for (0,4,1). */
+html.cc-apps-rbneutral.cc-popups-on .searchArea .caButton.maxPerPage,
+html.cc-apps-rbneutral.cc-popups-on .searchArea .dockerSearch,
+html.cc-apps-rbneutral.cc-popups-on a.sortIcons {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .searchArea .caButton.maxPerPage:hover,
+html.cc-apps-rbneutral.cc-popups-on .searchArea .dockerSearch:hover,
+html.cc-apps-rbneutral.cc-popups-on a.sortIcons:hover,
+html.cc-apps-rbneutral.cc-popups-on a.sortIcons.enabledIcon {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+}
+
+/* ═══ #15 RESULTS-PER-PAGE DROPDOWN IN GLS ═══════════════════════════════════════════════════════════
+   #dropdown-maxPerPage is CA's own dropdown-context <ul>: white-on-dark native list, a checkmark icon for
+   the active row, a hardcoded green span. Scoped to the ID (not the generic .dropdown-context class) so
+   this never touches CA's OTHER context menus (right-click app actions) the user never asked about. */
+html.cc-popups-on #dropdown-maxPerPage.dropdown-menu {
+  background: var(--cc-surface-window, #242424) !important; border: none !important;
+  border-radius: var(--cc-r-2, 10px) !important; box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
+  padding: 6px !important; min-width: 180px !important;
+}
+html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li { margin: 0 !important; }
+html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a {
+  display: flex !important; align-items: center !important; gap: 8px !important;
+  padding: 8px 10px !important; border-radius: var(--cc-r-1, 6px) !important;
+  font-size: var(--cc-sm-fs, 11px) !important; font-weight: 600 !important;
+  color: var(--cc-text, #e6e6e6) !important; background: transparent !important;
+  text-decoration: none !important; white-space: nowrap !important;
+  transition: background .12s ease, color .12s ease !important;
+}
+html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a:hover {
+  background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; color: var(--cc-text, #e6e6e6) !important;
+}
+/* the active row: CA's own green span + checkmark icon both take the colour mode instead of a hardcoded
+   green — a stray hue outside the accent/rainbow/reactive system is exactly what the colour engine exists
+   to remove. The icon SLOT stays reserved for non-active rows (fa-fw = fixed width) so labels stay aligned. */
+html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a .ca_green,
+html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a i.ca_fa-checkmark {
+  color: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+}
+html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a i { color: var(--cc-text-dim2, #6f6f6f) !important; width: 16px !important; }
+/* REACTIVE: the active row's colour is a STATE (which page size is on), not a hover — it stays coloured
+   in every mode, matching the house rule that a selection indicator must never grey out. */

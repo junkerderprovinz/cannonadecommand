@@ -57,15 +57,23 @@ html.cc-hide-favtab #menu .nav-tile > .nav-item:has(> a[href="/Favorites"]) { di
 /* .nav-tile > .nav-item.<Class>.util = specificity (1,5,1), which BEATS the util force-show
    `html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile > .nav-item{display:inline-flex!important}`
    at (1,4,1) — otherwise the icons stay visible (live-proven: class stamped but display:flex won). */
-html.cc-hideicon-lang #menu .nav-tile > .nav-item.LanguageButton.util,
-html.cc-hideicon-search #menu .nav-tile > .nav-item.gui_search.util,
-html.cc-hideicon-logout #menu .nav-tile > .nav-item.LogoutButton.util,
-html.cc-hideicon-terminal #menu .nav-tile > .nav-item.TerminalButton.util,
-html.cc-hideicon-browse #menu .nav-tile > .nav-item.BrowseButton.util,
-html.cc-hideicon-feedback #menu .nav-tile > .nav-item.FeedbackButton.util,
-html.cc-hideicon-info #menu .nav-tile > .nav-item.InfoButton.util,
-html.cc-hideicon-log #menu .nav-tile > .nav-item.LogButton.util,
-html.cc-hideicon-help #menu .nav-tile > .nav-item.HelpButton.util { display: none !important; }
+/* …but that only settled the BASE force-show. The SEARCH-OPEN force-show further down
+   (`html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-item.util{display:flex!important}`,
+   which exists so gui_search's inline display:none can't blank the row) also scores exactly (1,5,1) — a
+   TIE, and on a tie the LATER rule wins, so opening the search resurrected every icon the user had
+   switched off (user, v3.6.6: "wenn man auf das Suchicon klickt wird das Sprachen-Icon angezeigt obwohl ich
+   es deaktiviert habe" — live-confirmed: display flips none -> flex the moment cc-search-open lands).
+   The user's choice must outrank a transient UI state, so anchor these one class higher by repeating the
+   html gate: (1,6,1) beats both force-shows regardless of source order. */
+html.cc-hideicon-lang.cc-hideicon-lang #menu .nav-tile > .nav-item.LanguageButton.util,
+html.cc-hideicon-search.cc-hideicon-search #menu .nav-tile > .nav-item.gui_search.util,
+html.cc-hideicon-logout.cc-hideicon-logout #menu .nav-tile > .nav-item.LogoutButton.util,
+html.cc-hideicon-terminal.cc-hideicon-terminal #menu .nav-tile > .nav-item.TerminalButton.util,
+html.cc-hideicon-browse.cc-hideicon-browse #menu .nav-tile > .nav-item.BrowseButton.util,
+html.cc-hideicon-feedback.cc-hideicon-feedback #menu .nav-tile > .nav-item.FeedbackButton.util,
+html.cc-hideicon-info.cc-hideicon-info #menu .nav-tile > .nav-item.InfoButton.util,
+html.cc-hideicon-log.cc-hideicon-log #menu .nav-tile > .nav-item.LogButton.util,
+html.cc-hideicon-help.cc-hideicon-help #menu .nav-tile > .nav-item.HelpButton.util { display: none !important; }
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a {
   display: inline-flex !important; align-items: center; justify-content: center;
   /* #10 (user): the MAIN-MENU-BAR badges are the LARGEST tier system-wide — one step above the section/title
@@ -408,6 +416,22 @@ html.cc-popups-on .bg-popover [role="alert"] :is([class*="bg-red"], [class*="bg-
    (clientW-16). The trailing item's right margin is zeroed so the row tail is the icon box itself.
    Sidebar theme is a vertical menu (padding-left:8rem) — excluded, like the search rules. */
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right { padding-right: 16px !important; }
+/* ROOT CAUSE of "das menue und der badge sind rechts nicht buendig" (user, v3.6.6): #menu is a 2-column
+   grid (left page-tabs tile + .nav-tile.right icon group). The left tile defaults to min-width:auto, so it
+   refuses to shrink below its tabs' intrinsic width; once the tabs get long enough the grid overflows and
+   pushes the WHOLE right group past the viewport (measured live at 1400px viewport with the user's real
+   settings: #menu scrollWidth 1689 vs clientWidth 1392 — the trailing icons, hamburger included, sat 289px
+   off-screen). Then the hamburger is simply nowhere near the content edge that SHOW MORE aligns to, which
+   is exactly the "not flush" the user kept seeing while a narrower window made it worse. The identical
+   min-width:0 + overflow-x:auto pair already existed BELOW, but only while the search box was open
+   (cc-search-open) — the overflow is not search-specific, so it belongs on the tile unconditionally. */
+html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile:not(.right) { min-width: 0 !important; overflow-x: auto !important; }
+html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right { min-width: 0 !important; flex-wrap: nowrap !important; }
+/* …but WITHOUT the scrollbar the overflow would otherwise draw: a full-width native bar across the menu bar
+   is louder than the tabs it serves (and CC's own thumb styling doesn't rescue it there). The row still
+   scrolls by wheel/trackpad/drag; only the bar is hidden. */
+html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile:not(.right) { scrollbar-width: none !important; }
+html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile:not(.right)::-webkit-scrollbar { height: 0 !important; width: 0 !important; display: none !important; }
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right > *:last-child { margin-right: 0 !important; }
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right .nav-item.util:last-child > a { margin-right: 0 !important; }
 /* ── bell/burger PROXIES: real draggable nav-items that hold each icon's slot in the flow. In NORMAL
@@ -458,27 +482,43 @@ html.cc-header-on #menu .usage-bar > span {
    array-usage meter STAY VISIBLE and simply shift aside; nothing is covered. The box
    gets a MODERATE width (not stretched across the bar) plus the CC look, and the left
    page tabs shrink/scroll to make room. Scoped to >=768px and NOT the sidebar theme. */
+/* SEARCH AS A DROP-DOWN PANEL, EVERY WIDTH (user, v3.6.6 aktiver Sammelmodus: "koennen wir die suche nach
+   unten aufploppen lassen, jetzt verschiebt das die icons und der verfuegbare platz ist zu klein, daher
+   kommt ein scrollbalken"). gui_search injects #guiSearchBoxSpan INLINE as a flex child of .nav-tile.right,
+   so the field's width is taken out of the icon row: the icons shift and, once the row no longer fits, the
+   bar scrolls. The old moderate-width treatment (22rem, formerly in a >=768px block) only made the theft
+   smaller, never stopped it — and an earlier attempt scoped the real fix to <768px, which never fired at
+   the user's actual desktop width. Take the field OUT of the flex flow at ALL widths instead: anchor it
+   absolutely to the icon row and drop it BELOW as a floating panel, so no sibling ever moves.
+   Gated on cc-popups-on (the master theming switch), NOT the optional cc-header-on sub-toggle — this closes
+   a layout defect, not a re-skin. */
+html.cc-popups-on:not(.Theme--sidebar) #menu .nav-tile.right { position: relative !important; }
+html.cc-popups-on:not(.Theme--sidebar) #guiSearchBoxSpan {
+  position: absolute !important; top: calc(100% + 8px) !important; right: 0 !important; left: auto !important;
+  width: min(92vw, 360px) !important; max-width: 92vw !important; margin: 0 !important;
+  z-index: 10050 !important;
+}
+html.cc-popups-on:not(.Theme--sidebar) #guiSearchBox {
+  width: 100% !important; max-width: 100% !important;
+  height: 40px !important; padding: 0 14px 0 2.4rem !important;   /* KEEP the native 2.4rem LEFT pad — the magnifier glyph (#guiSearchBoxSpan:after, left:1.5rem) sits there; a 0-14px override once slid the text UNDER it */
+  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  background: var(--cc-surface-3, #2e2e2e) !important; color: #eaeaea !important; font-size: var(--cc-md-fs, 13px) !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .4) !important; outline: none !important;
+}
+html.cc-popups-on:not(.Theme--sidebar) #guiSearchBoxSpan:after { color: var(--cc-text-dim, #8a8a8a) !important; }
+html.cc-popups-on:not(.Theme--sidebar) #guiSearchBoxSpan .awesomplete { width: 100% !important; }
 @media (min-width: 768px) {
-  /* CC look + MODERATE width (overrides the native 40rem and the top-nav full-bar stretch) */
-  html.cc-header-on:not(.Theme--sidebar) #guiSearchBox {
-    width: 22rem !important; max-width: 40vw !important;
-    height: 36px !important; padding: 0 14px 0 2.4rem !important;   /* T7: 36px = util-icon height; KEEP the native 2.4rem LEFT pad — the magnifier glyph (#guiSearchBoxSpan:after, left:1.5rem) sits there, and my earlier 0-14px override slid the text UNDER it (user: "suchtext wird von der lupe überlagert") */
-    border: none !important; border-radius: var(--cc-b-radius, 999px) !important;   /* the accent outline was a LINE (law) — the filled box alone is the field */
-    background: rgba(128, 128, 128, .18) !important; color: #eaeaea !important; font-size: var(--cc-md-fs, 13px) !important;
-    box-shadow: none !important; outline: none !important;
-  }
-  /* the magnifier glyph (span:after) in a subtle CC dim tone so it matches the field */
-  html.cc-header-on:not(.Theme--sidebar) #guiSearchBoxSpan:after { color: var(--cc-text-dim, #8a8a8a) !important; }
-  /* neutralise the .Theme--black/.Theme--white rule that stretches the span to width:100% */
-  html.cc-header-on:not(.Theme--sidebar) #guiSearchBoxSpan { width: auto !important; min-width: 0 !important; margin: 0 6px !important; }
-  html.cc-header-on:not(.Theme--sidebar) #guiSearchBoxSpan .awesomplete { width: auto !important; }
   /* KEEP every util icon + the user menu visible while searching — an external !important
      beats gui_search's normal inline display:none (importance outranks inline origin) */
   html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-item.util { display: flex !important; }
   html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-user.show { display: flex !important; }
-  /* the right group holds the box + all icons on one line; the left page tabs shrink/scroll aside */
-  html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-tile:not(.right) { min-width: 0 !important; overflow-x: auto !important; }
-  html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-tile.right { min-width: 0 !important; flex-wrap: nowrap !important; }
+}
+@media (max-width: 767.98px) {
+  /* the field floats ABOVE content now instead of squeezing the row, so the icons never need to
+     shrink/scroll while searching — the >=768px "keep everything visible + shrink the tabs" trick above
+     is unnecessary here (nothing shrinks), but harmless if it still matches. */
+  html.cc-popups-on.cc-search-open:not(.Theme--sidebar) #menu .nav-item.util { display: flex !important; }
+  html.cc-popups-on.cc-search-open:not(.Theme--sidebar) #menu .nav-user.show { display: flex !important; }
 }
 /* T7 (user: "die liste die bei der suche erscheint ist nicht im cc style"): the gui_search results are an
    Awesomplete dropdown (.awesomplete > ul). Give it the CC popover look — dark surface, no border line, CC
@@ -514,7 +554,7 @@ html.cc-shape-circle.cc-header-on #UserProfile > div:nth-child(2) > span { borde
    window chrome: surface, title bar, buttons. Separation via fill + shadow, never a line. */
 html.cc-popups-on .ui-dialog {
   background: #1a1a1a !important; border: none !important; border-radius: 14px !important;   /* #(user 2026-07-29: "exakt wie das Update-Fenster"): DARK frame #1a1a1a to match the locked update-window template (content sits in a LIGHT #2e2e2e card below) */
-  box-shadow: 0 10px 28px rgba(0, 0, 0, .38) !important; padding: 0 !important; overflow: hidden;
+  box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important; padding: 0 !important; overflow: hidden;
   /* #17 (user: the Feedback window content is too wide): cap the native inline width so the dialog reads as a
      tidy card instead of a full-bleed sheet. min(...) keeps it responsive; content inside the iframe wraps. */
   max-width: min(92vw, 720px) !important;
@@ -607,7 +647,7 @@ html.cc-popups-on .sweet-alert.nchan pre:not(:has(h3)):not(:has(ul)) {
   white-space: pre !important; text-align: left !important;
   font-family: Consolas, "SFMono-Regular", ui-monospace, monospace !important;
   font-size: 12px !important; line-height: 1.35 !important; color: #d6d6d6 !important;
-  background: #2e2e2e !important; border: none !important; border-radius: 8px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;   /* #(user 2026-07-28): the log TEXT sits in a LIGHT card raised on the dark frame */
+  background: #2e2e2e !important; border: none !important; border-radius: 8px !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;   /* #(user 2026-07-28): the log TEXT sits in a LIGHT card raised on the dark frame */
   padding: 12px 14px !important; max-height: 60vh; overflow: auto;
 }
 /* CARD-SIZE FIX (user 2026-07-28: "das Systeminfo-Fenster — die Card ist viel zu groß. Das Fenster soll immer
@@ -632,10 +672,55 @@ html.cc-popups-on .sweet-alert style { display: none !important; }
    multi-step update it strands mid-window. The window is a fixed-height (95vh) flex column, so push the button
    row to the BOTTOM with margin-top:auto, opaque + above the log so a long stream can never overlay it. */
 html.cc-popups-on .sweet-alert.nchan { display: flex !important; flex-direction: column !important; }
+/* #(user, v3.6.6): "die unteren Buttons inkl. Spinner sind nicht an Ort und Stelle verankert und werden
+   verschoben wenn der Log laenger ist als das Fenster … das scrollbare Bereich soll nur zwischen Titelbadge
+   und den unteren Buttons sein."
+   margin-top:auto alone only pins the row while the content is SHORTER than the window. Once the stream
+   outgrows it, the base `.sweet-alert { max-height:92vh; overflow-y:auto }` scrolls the ENTIRE dialog, so the
+   title scrolls away at the top and the button row rides down past the bottom edge with the log.
+   The fix pins the title and the button row with position:sticky against the dialog's own scroll box, so
+   the scrolling region ends up being exactly the space between them.
+   Deliberately NOT done by switching the dialog to overflow:hidden and flexing one log element: the stream's
+   markup varies (a single pre#swaltext on some updates, a run of step <fieldset> siblings on others), and if
+   the guess is wrong, clipping the dialog makes the tail of the log unreachable — strictly worse than today.
+   Sticky needs no assumption about how many siblings the log spans and cannot hide content. */
 html.cc-popups-on .sweet-alert.nchan .sa-button-container {
   order: 999 !important;   /* force LAST in the flex column even when Unraid streams more step-cards after it */
   margin-top: auto !important; position: relative; z-index: 3 !important;
   background: #202020 !important; padding: 12px 0 2px !important;
+}
+/* ── the actual lock, scoped to the STREAMING windows only ──────────────────────────────────────────────
+   `.nchan` alone is too broad: header.js stamps it on any .sweet-alert that owns a <pre>, which also covers
+   System Information and the ShipLog changelog, and those deliberately hug their content. The update/install
+   stream is identified by its own markup marker #swaltext, plus header.js's stream flags as a second route.
+   Carrying an id inside :has() also lifts every rule here to id-level specificity, which matters twice:
+     - two existing pre#swaltext rules already contradict each other at equal weight (the later one wins with
+       overflow:visible), so a same-weight rule would be a coin flip on source order;
+     - the .nchan background stripper scores (0,7,6) and would otherwise turn the pinned button row
+       transparent, letting the log scroll through it. */
+html.cc-popups-on .sweet-alert.nchan:is(:has(#swaltext), .cc-nchan-loading, .cc-nchan-done):not(.hideSweetAlert) > p {
+  /* THE fix: a flex item's min-height defaults to auto, i.e. its min-content height — a 4000px log carries a
+     4000px floor that flex:1 can never shrink. The column then overflows the fixed-height window, auto
+     margins get no positive free space to distribute, and the button row rides down with the log. Zeroing the
+     floor (both min-height and overflow, either of which removes the automatic minimum) makes this band the
+     scroller; the column then fits exactly and the window's own scrollbar never appears. */
+  flex: 1 1 auto !important; min-height: 0 !important; overflow: auto !important;
+}
+html.cc-popups-on .sweet-alert.nchan:is(:has(#swaltext), .cc-nchan-loading, .cc-nchan-done):not(.hideSweetAlert) h2 {
+  position: sticky !important; top: 0 !important; z-index: 4 !important;
+  /* the badge is opaque, its 14px bottom margin is not — extend the window colour across the gap without
+     touching the badge's own accent fill */
+  box-shadow: 0 14px 0 #1a1a1a !important;
+}
+html.cc-popups-on .sweet-alert.nchan:is(:has(#swaltext), .cc-nchan-loading, .cc-nchan-done):not(.hideSweetAlert) .sa-button-container {
+  flex: 0 0 auto !important; margin-top: 0 !important;
+  position: sticky !important; bottom: 0 !important;
+  background: #1a1a1a !important;   /* same shade as the frame -> reads as no footer bar at all (no light strips) */
+  align-items: center !important; flex-wrap: nowrap !important; min-height: var(--cc-lgb-h, 36px) !important;
+}
+/* the spinner rides in that row; keep it in flow and vertically centred so it can never wrap to its own line */
+html.cc-popups-on .sweet-alert.nchan:is(:has(#swaltext), .cc-nchan-loading, .cc-nchan-done) .sa-button-container .cc-nchan-loader {
+  flex: 0 0 auto !important; align-self: center !important; position: static !important; margin: 0 !important;
 }
 /* the streaming step-cards / log <pre> must NEVER order after the button row */
 html.cc-popups-on .sweet-alert.nchan > p,
@@ -646,7 +731,7 @@ html.cc-popups-on .sweet-alert.nchan > fieldset { order: 1 !important; }
    already hugs it; here it just gets the light fill (the raw streaming-log pre keeps its own rule below). */
 html.cc-popups-on .sweet-alert.nchan pre#swalbody:has(h3),
 html.cc-popups-on .sweet-alert.nchan pre#swalbody:has(ul) {
-  background: #2e2e2e !important; border-radius: 10px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important; padding: 12px 14px !important;
+  background: #2e2e2e !important; border-radius: 10px !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important; padding: 12px 14px !important;
 }
 /* (a) Title-Badge must NOT shrink (user 2026-07-28: "im Update-Fenster ist der Titelbadge zu niedrig"): in the
    fixed-height (95vh) streaming window a LONG log overflows, and the h2 (a flex item that could shrink) got
@@ -669,7 +754,7 @@ html.cc-popups-on .sweet-alert.nchan fieldset {
      lighter than the #161616 window, which read as light bands top and bottom. Match the window so the
      whole dialog is one continuous dark surface; the accent legend badge still marks each step. */
   background: #2e2e2e !important; border: none !important; border-radius: 10px !important;
-  margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;   /* #(user 2026-07-28): LIGHT step card raised on the dark frame */
+  margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;   /* #(user 2026-07-28): LIGHT step card raised on the dark frame */
 }
 html.cc-popups-on .sweet-alert.nchan fieldset > legend {
   background: var(--cc-rbaccent, var(--cc-hdr-accent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
@@ -764,7 +849,7 @@ html.cc-popups-on .ui-dialog .ui-dialog-content {
    FORM dialogs (the "Konfiguration hinzufügen" Add-Config popup with input/select/textarea) get NO card —
    the fields carry their own structure and a grey card behind a form looks wrong (user: "hier kann die Card weg"). */
 html.cc-popups-on .ui-dialog:not(:has(iframe)):not(:has(input)):not(:has(select)):not(:has(textarea)) .ui-dialog-content {
-  background: #2e2e2e !important; border-radius: 10px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;
+  background: #2e2e2e !important; border-radius: 10px !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
   margin: 0 18px 6px !important; padding: 12px 14px !important;
 }
 /* dialog buttons: LARGE (lg tier), horizontally CENTRED (user, v2.33.1) */
@@ -813,7 +898,7 @@ html.cc-popups-on .sweet-alert {
   /* #(user "systemweit gleich, nie Rahmenlinien" + "keine hellen Kopf-/Fußleisten"): the DEEP surface keeps the frame
      the darkest layer so the #191919 step cards stay RAISED (no lighter strip). NO ring, soft small shadow — uniform
      backdrop, no halo. */
-  box-shadow: 0 10px 28px rgba(0, 0, 0, .38) !important;
+  box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
 }
 /* #10 (user: "das Update-Fenster plopt viel zu weit oben auf"): SweetAlert1 positions the dialog with a
    JS-computed margin-top = HALF ITS HEIGHT AT OPEN TIME; when the content grows after open (e.g. the OS
@@ -868,8 +953,13 @@ html.cc-popups-on .sweet-alert.cc-only-loader {
 html.cc-popups-on .sweet-alert.cc-only-loader > *:not(:has(.cc-loader)) { display: none !important; }
 /* inside that <p>, drop the "Please Wait" marker so ONLY the spinner shows */
 html.cc-popups-on .sweet-alert.cc-only-loader .updateContent-swal { display: none !important; }
-/* the loader now stands alone — clear the JS inline margins that assumed a text line beneath it */
-html.cc-popups-on .sweet-alert.cc-only-loader .cc-loader { margin: 0 !important; }
+/* the loader now stands alone — clear the JS inline margins that assumed a text line beneath it.
+   #4 (follow-up): it is also the ONLY ring on screen now that the fullscreen tab-load overlay is
+   suppressed while this dialog is up, so it must carry the full tab-load size (110px, the same number
+   div.spinner.fixed uses). 48px was chosen back when it sat as a small ring above a "Please Wait" line;
+   alone on a dark page it read as a stray dot. The sheet wins over the JS inline value because that
+   inline write carries no !important. */
+html.cc-popups-on .sweet-alert.cc-only-loader .cc-loader { margin: 0 !important; --cc-load-sz: 110px !important; }
 
 /* ═══ FREEZE FIX — a CLOSED sweet-alert must never linger as an invisible click-blocker ═══
    User live-diagnosed 2026-07-28 ("sichtbar aber Klicks tot" + "Fenster erscheinen nach dem Schließen
@@ -892,7 +982,7 @@ html.cc-popups-on .sweet-alert.hideSweetAlert {
    native WHITE with orange-outlined buttons (user). Same dark carbon surface + CC pill buttons; the
    .swal-modal prefix beats the plugin's own themed button rules. Live-verified on the UD remove dialog. */
 html.cc-popups-on .swal-overlay { background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)) !important; backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important; -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important; }
-html.cc-popups-on .swal-modal { background: #1a1a1a !important; border: none !important; border-radius: 14px !important; box-shadow: 0 10px 28px rgba(0, 0, 0, .38) !important; padding: 18px !important; }   /* #(user 2026-07-29): frame + soft shadow identical to the update window */
+html.cc-popups-on .swal-modal { background: #1a1a1a !important; border: none !important; border-radius: 14px !important; box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important; padding: 18px !important; }   /* #(user 2026-07-29): frame + soft shadow identical to the update window */
 html.cc-popups-on .swal-modal .swal-icon { display: none !important; }   /* the template has no native icon ring; the accent title bar carries the identity */
 /* FULL-WIDTH accent title bar, 40px — identical to the update window */
 html.cc-popups-on .swal-modal .swal-title {
@@ -905,7 +995,7 @@ html.cc-popups-on .swal-modal .swal-title {
 /* body TEXT sits in a LIGHT #2e2e2e card */
 html.cc-popups-on .swal-modal .swal-text {
   color: #d6d6d6 !important; text-align: center !important;
-  background: #2e2e2e !important; border-radius: 10px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;
+  background: #2e2e2e !important; border-radius: 10px !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
   padding: 12px 14px !important; margin: 0 0 14px !important;
 }
 html.cc-popups-on .swal-modal .swal-footer { text-align: center !important; margin: 0 !important; padding: 0 !important; }
@@ -950,7 +1040,7 @@ html.cc-popups-on .unapi div.fixed.z-50.bg-background {
   /* #(user: "nie Rahmenlinien" + "Hintergrund gleichmäßig abdunkeln, nicht nur ums Fenster"): NO ring and only a
      SOFT shadow (the old 80px/.82 shadow drew a dark halo AROUND the window on top of the uniform reka overlay). The
      window now lifts purely by its lighter surface against the evenly-dimmed backdrop. */
-  box-shadow: 0 10px 28px rgba(0, 0, 0, .38) !important;
+  box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
   background-color: var(--cc-surface-window) !important;
   overflow: hidden !important;
 }
@@ -1207,23 +1297,46 @@ html.cc-docker-on .cc-badge[onclick]:hover { filter: brightness(1.2); }
 #cc-toast.cc-toast-show { opacity: 1; transform: translate(-50%, 0); }
 /* #14: the OS "reduce motion" preference only stills CC motion when the user has NOT explicitly forced
    animations on (cc.anim default ON -> cc-anim-on -> the user opted into motion, so we honour that). */
+/* MOTION ENGINE COVERAGE GAP (found auditing cc.anim for the loader engine): [class*="cc-"] only reaches
+   elements CC put its OWN class on. Roughly half of everything CC animates is a NATIVE Unraid/CA element
+   restyled in place — a.back_to_top, .caButton, input[type=button|submit], .switch-button-background, the
+   pager's .pageNumber, i.fa-trash, plain <a>/<button>/<span> — none of which ever carry a cc- class, so
+   the "off" switch and prefers-reduced-motion silently missed ~130 transition/animation sites across every
+   sheet (docker.css, Shares.css, Tools.css, VmTab.css, SettingsGrid.css, Tokens.css, Header.css). Listing
+   130 individual selectors here would be unmaintainable and drift the moment a new badge is added — cover
+   the STRUCTURAL CONTAINERS CC actually touches instead (#displaybox holds virtually every area sheet's
+   content; #header/#menu the chrome; the two footer arrows are direct <body> children, outside all of
+   them, so they still need to be named). Popups get their own descendant sweep too, not just the shell. */
 @media (prefers-reduced-motion: reduce) {
   html:not(.cc-anim-on) #cc-toast { transition: opacity .12s ease !important; transform: translate(-50%, 0) !important; }
   html:not(.cc-anim-on).cc-popups-on .sweet-alert,
+  html:not(.cc-anim-on).cc-popups-on .sweet-alert *,
   html:not(.cc-anim-on).cc-popups-on .swal-modal,
-  html:not(.cc-anim-on).cc-popups-on .ui-dialog { animation: none !important; }
+  html:not(.cc-anim-on).cc-popups-on .swal-modal *,
+  html:not(.cc-anim-on).cc-popups-on .ui-dialog,
+  html:not(.cc-anim-on).cc-popups-on .ui-dialog * { animation: none !important; }
   html:not(.cc-anim-on) [class*="cc-"],
-  html:not(.cc-anim-on) #cc-island *,
-  html:not(.cc-anim-on) #cc-brand,
-  html:not(.cc-anim-on) #menu .nav-item { transition: none !important; animation: none !important; }
+  html:not(.cc-anim-on) #displaybox *,
+  html:not(.cc-anim-on) #header *,
+  html:not(.cc-anim-on) #menu *,
+  html:not(.cc-anim-on) #footer *,
+  html:not(.cc-anim-on) a.back_to_top,
+  html:not(.cc-anim-on) a.move_to_end { transition: none !important; animation: none !important; }
 }
 /* #14: the explicit OFF switch stills ALL CannonadeCommand motion, regardless of the OS setting. */
 html.cc-anim-off [class*="cc-"],
-html.cc-anim-off #cc-island *,
-html.cc-anim-off #cc-brand,
-html.cc-anim-off #menu .nav-item,
+html.cc-anim-off #displaybox *,
+html.cc-anim-off #header *,
+html.cc-anim-off #menu *,
+html.cc-anim-off #footer *,
+html.cc-anim-off a.back_to_top,
+html.cc-anim-off a.move_to_end,
 html.cc-anim-off .sweet-alert,
-html.cc-anim-off .ui-dialog { transition: none !important; animation: none !important; }
+html.cc-anim-off .sweet-alert *,
+html.cc-anim-off .swal-modal,
+html.cc-anim-off .swal-modal *,
+html.cc-anim-off .ui-dialog,
+html.cc-anim-off .ui-dialog * { transition: none !important; animation: none !important; }
 html.cc-anim-off #cc-toast { transition: none !important; transform: translate(-50%, 0) !important; }
 /* #14: "systemweit mehr Animationen" when ON — a soft entrance fade for the island/brand and a gentle
    hover lift on the Docker/Plugin/VM cards. Kept subtle so it reads as polish, not noise. */
@@ -1328,7 +1441,7 @@ html.Theme--white.cc-docker-on .cc-limbtn:not(.cc-limbtn-set) { color: #303030 !
 html.cc-popups-on [id^="reka-dialog-content"] .divide-y > * { border: 0 !important; }
 html.cc-popups-on [id^="reka-dialog-content"] [class~="group/item"] {
   background: var(--cc-surface-card) !important; border: none !important; border-radius: 10px !important;
-  padding: 12px 14px !important; margin: 0 0 8px 0 !important; box-shadow: 0 1px 4px rgba(0, 0, 0, .35) !important;
+  padding: 12px 14px !important; margin: 0 0 8px 0 !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
 }
 /* #(user: "der Hover-Text soll bei allen drei gleich aussehen"): reka-ui renders its OWN tooltip for the gear
    (a portal div), which looks different from the CC bubble the archive/delete icons use. Hide it so all three ride
@@ -1439,6 +1552,11 @@ html.cc-header-on .cc-isl-fill { transition: width .5s ease, background-color .4
 @keyframes cc-wild-bounce { 0%{transform:translateY(0)} 28%{transform:translateY(-7px)} 52%{transform:translateY(3px)} 72%{transform:translateY(-3px)} 88%{transform:translateY(1px)} 100%{transform:translateY(0)} }
 /* the main-menu tabs HOP when the pointer enters them */
 html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item:hover { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
+/* the RIGHT group bounces too (user: "die Icons der Hauptleiste hüpfen nicht im wilden Modus") — the rule
+   above only ever covered the left page tabs, so every util icon, the usage meter and the bell/burger
+   proxies stayed still while the tabs jumped. */
+html.cc-anim-wild #menu .nav-tile.right > .nav-item:hover,
+html.cc-anim-wild #menu .nav-tile.right > .nav-item.util:hover > a { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
 /* the -7px hop peaks ABOVE the header band; without this the bar (and its tiles) clip the tab at the top.
    Let the whole nav chain overflow visibly only while WILD is armed, so the bounce is fully seen. */
 /* #menu: keep VERTICAL overflow visible so the -7px hop shows above the header band, but CLIP the HORIZONTAL
@@ -1449,11 +1567,30 @@ html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item:hover { animation: cc-
 html.cc-anim-wild #menu { overflow-x: clip !important; overflow-y: visible !important; }
 html.cc-anim-wild #menu .nav-tile,
 html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item { overflow: visible !important; }
+/* …but the tab strip also carries `overflow-x: auto` so it can shrink instead of pushing the right group
+   off screen (the SHOW MORE alignment fix). That rule scores (1,4,2) and beat the (0,2,2) above, so the
+   bounce got CLIPPED at the top (user: "die Badges in der Hauptleiste werden beim Hüpfen oben wieder
+   abgeschnitten"). Note `overflow-x: auto` alone is enough to clip vertically: once one axis is not
+   visible, the other resolves to auto too.
+   Release the clip only WHILE something is actually bouncing — the strip stays scrollable the rest of the
+   time. Doubling the class lifts this to (1,5,1), which outranks the scroll rule's (1,4,2) on class count. */
+html.cc-anim-wild.cc-anim-wild #menu .nav-tile:has(> .nav-item:hover) {
+  overflow: visible !important;
+}
 /* ROOT CAUSE of the clip (live-measured): nothing overflows — the sticky #header (z-index 102, solid dark
    background) sits ABOVE #menu (z-index 101) and PAINTS OVER the zone the tab hops into (above the bar). While
    a main tab is hovered (= bouncing), lift the whole #menu stacking context above #header so the hop shows in
    full. :has scopes the lift to the bounce moment, so the header keeps its normal stacking the rest of the time. */
+/* #1: …and for the RIGHT group too. Every ancestor already has overflow-y:visible, so the icon was never
+   CLIPPED — it was COVERED: the bounce lifts it above the bar and the layer above #menu painted over it,
+   which looks exactly like a cut-off top edge. Raising #menu while any of its items bounces fixes both
+   groups; the previous selector only ever matched the left page tabs. */
+html.cc-anim-wild #menu:has(.nav-tile > .nav-item:hover),
+html.cc-anim-wild #menu:has(.nav-tile.right > .nav-item.util:hover),
 html.cc-anim-wild #menu:has(.nav-tile:not(.right) > .nav-item:hover) { z-index: 103 !important; }
+/* the bounce needs room above the bar: the icon box is 36px in a 40px row, so a lift of a few px lands on
+   the header strip. position:relative + a raised z-index keeps the moving item over its neighbours. */
+html.cc-anim-wild #menu .nav-tile > .nav-item:hover { position: relative !important; z-index: 4 !important; }
 /* springy lift on any CC pill / action icon; the limit gear also spins a quarter-turn */
 html.cc-anim-wild .cc-b:hover,
 html.cc-anim-wild .cc-actbtn:hover { transform: translateY(-2px) scale(1.06); transition: transform .18s cubic-bezier(.34,1.56,.64,1) !important; }

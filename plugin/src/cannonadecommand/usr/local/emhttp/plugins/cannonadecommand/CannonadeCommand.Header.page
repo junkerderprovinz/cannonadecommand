@@ -34,6 +34,18 @@ Link="cc-hdr-hook"
     r.classList.toggle("cc-footer-off", g("cc.footer", "1") === "1" && theming);
     r.classList.toggle("cc-hide-favtab", g("cc.hidefavtab", "0") === "1" && theming);
     r.classList.toggle("cc-usage-isl", on && g("cc.island", "1") !== "0");
+    // #timing (found chasing #8/#11/#12): every REACTIVE gating class is stamped only by the deferred
+    // header.js — cc-popups-on above ships synchronously, so from first paint until header.js reaches
+    // apply()/paintNav() every reactive-mode badge on the page briefly renders in its NORMAL/accent
+    // colour, then snaps to neutral chip the instant the deferred script lands. That looked exactly like
+    // "the rule is present and matching but doesn't apply for ~3s" and cost real time chasing a
+    // non-existent cascade bug. Mirror the SAME condition apply()'s deferred writers use, so the reactive
+    // look is correct from the very first frame; apply() re-stamps all of these idempotently afterward.
+    var react = theming && g("cc.rbmode", "all") === "active";
+    r.classList.toggle("cc-header-rbneutral", react && on);
+    r.classList.toggle("cc-apps-rbneutral", react && /^\/Apps(\/|$)/.test(location.pathname));
+    r.classList.toggle("cc-shares-rbneutral", react);
+    r.classList.toggle("cc-settingsgrid-rbneutral", react);
   } catch (e) {}
 })();
 </script>

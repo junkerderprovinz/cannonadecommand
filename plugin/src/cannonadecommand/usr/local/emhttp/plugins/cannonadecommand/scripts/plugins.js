@@ -27,7 +27,14 @@
       // NO button[role=tab] and NO .tabs-container on this page, so every earlier pass (and this
       // loop's first version) bailed out silently at this exact line. Labels first, modern
       // variants as fallbacks.
-      var tab = null, cands = db.querySelectorAll("div.tab input[type=radio] + label, .tabbed input[type=radio] + label, div.tab label, .tabbed label, div.tabs label, .tabs label, button[role='tab'], .tabs-container > *");   // div.tab (SINGULAR) + .tabbed = the REAL wrapper classes our own docker.css styles (576-585) — v2.31.6 searched div.tabS and missed again
+      // #6 (the reason this kept "not being fixed"): in TAB-ANSICHT docker.css hides every
+      // button[role=tab] with display:none, so each candidate below has offsetHeight 0, `tab` stays
+      // null, _ccNoTab flips true and the anchor silently becomes the TABLE's top edge — while the
+      // badge the user actually sees on that row is .cc-card-head, which this loop never measured.
+      // With sections OFF (a default test profile) the very same code aligns perfectly, which is why
+      // every measurement said 0px while the screenshot showed the button sitting low. .cc-card-head
+      // goes FIRST: it only exists in Tab-Ansicht, so the normal view is unaffected.
+      var tab = null, cands = db.querySelectorAll(".cc-card-head, div.tab input[type=radio] + label, .tabbed input[type=radio] + label, div.tab label, .tabbed label, div.tabs label, .tabs label, button[role='tab'], .tabs-container > *");   // div.tab (SINGULAR) + .tabbed = the REAL wrapper classes our own docker.css styles (576-585) — v2.31.6 searched div.tabS and missed again
       for (var i = 0; i < cands.length; i++) { var cr0 = cands[i].getBoundingClientRect(); if (cands[i].offsetHeight && cr0.width) { tab = cands[i]; break; } }
       var _ccNoTab = false;
       if (!tab) {
@@ -78,7 +85,7 @@
       }
       var tr0 = tab.getBoundingClientRect(), dr = db.getBoundingClientRect();
       // non-tabbed view: sit the button just ABOVE the list top; tabbed view: on the tab-row centre.
-      var anchorY = _ccNoTab ? (tr0.top - (host.offsetHeight || 30) / 2 - 6) : (tr0.top + tr0.height / 2);
+      var anchorY = _ccNoTab ? (tr0.top - (host.offsetHeight || 30) / 2 - 6) : (tr0.top + tr0.height / 2);   // #6: 30 = --cc-md-h, the row's tier
       // flush RIGHT with the MENU BAR's icon edge (house rule "alles richtet sich an der
       // Menueleiste aus" — user measurement 2026-07-19: icons end at 1414, table at 1417, the
       // 3px offset read as "nicht rechtsbuendig"). Fallbacks: table edge, then page padding.
@@ -623,7 +630,11 @@
         if (!b2.getAttribute(MARK)) {
           pill(b2, colorFor(i2 + 6));
           // EXACT same box as the tab pills: fixed height + centered (pill()'s
-          // line-height:1.5 had made these ~4px taller than the tabs)
+          // line-height:1.5 had made these ~4px taller than the tabs).
+          // #6: the md tier, like the pills, the wrapper and the section badge. This line once held a bare
+          // "26px" beside md padding and md font-size on the next two lines — a squashed md, and the reason
+          // the badges read "zu klein". An INLINE !important outranks every sheet, so this write is the one
+          // that decides: it must never carry a literal the token table does not know.
           b2.style.setProperty("height", "var(--cc-md-h, 30px)", "important");
           b2.style.setProperty("padding", "var(--cc-md-pad, 0 20px)", "important");
           b2.style.setProperty("line-height", "1", "important");

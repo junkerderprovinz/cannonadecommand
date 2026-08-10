@@ -91,6 +91,18 @@
         if (!rb) { clear(u); }
         else { var cu = rbColor(n), tu = idealText(cu); stamp(u, cu, tu); if (!neutral) { u.style.setProperty("background", cu, "important"); u.style.setProperty("color", tu, "important"); } else { u.style.removeProperty("background"); u.style.removeProperty("color"); } }
       }
+      // #12 (user: "nicht im regenbogenmodus, bitte in alle Farbmodi aufnehmen"): the footer scroll arrows
+      // never got their own --cc-rb-c/--cc-rb-ct, so in Rainbow they fell through the var() chain straight
+      // to --cc-rbaccent (one SHARED jewel), never their own rotating position like the menu icons above.
+      // CSS already owns background/rest-vs-hover for these (Tokens.css "#12 FOOTER ARROWS"); this call only
+      // supplies the colour the CSS reads. Deliberately NOT gated on cc-header-on like the loops above —
+      // the arrows are shown whenever html.cc-popups-on is on (CSS gate), independent of whether the user
+      // has the Hauptmenüleiste area itself enabled, so their rainbow stamp must not depend on it either.
+      // A fresh index (100) rather than continuing `n`, so disabling the header area doesn't shift them.
+      Array.prototype.slice.call(document.querySelectorAll("a.back_to_top, a.move_to_end")).forEach(function (aEl, ai) {
+        if (!rbOn()) { aEl.style.removeProperty("--cc-rb-c"); aEl.style.removeProperty("--cc-rb-ct"); return; }
+        var ca = rbColor(100 + ai), ta = idealText(ca); stamp(aEl, ca, ta);
+      });
     } catch (e) {}
   }
   // popup title badges follow the COLOUR MODES (user): accent by default (CSS vars), palette in
@@ -251,7 +263,7 @@
           if (state === "done") {
             if (loader.getAttribute("data-cc-mode") !== "done") { loader.setAttribute("data-cc-mode", "done"); loader.classList.add("cc-nchan-check"); loader.setAttribute("aria-label", T("Fertig", "Done")); loader.innerHTML = "<svg viewBox='0 0 24 24' aria-hidden='true'><circle class='cc-ck-c' cx='12' cy='12' r='10.5'/><path class='cc-ck-p' d='M6.5 12.5l3.6 3.6L17.5 8.8'/></svg>"; }
           } else if (loader.getAttribute("data-cc-mode") !== "run") {
-            loader.setAttribute("data-cc-mode", "run"); loader.classList.remove("cc-nchan-check"); loader.setAttribute("aria-label", T("Läuft…", "Working…")); loader.innerHTML = "<span class='cc-loader' style='--cc-load-sz:22px'><span class='o'><i></i></span><span class='in'><i></i></span></span>";  // RUN = CC double counter-rotating ring (ccMakeLoader markup)
+            loader.setAttribute("data-cc-mode", "run"); loader.classList.remove("cc-nchan-check"); loader.setAttribute("aria-label", T("Läuft…", "Working…")); loader.innerHTML = "<span class='cc-loader cc-load-sm'><span class='o'><i></i></span><span class='in'><i></i></span></span>";  // RUN = CC double counter-rotating ring, sm tier (status-badge ring)
           }
         } else if (loader) { loader.remove(); }
         // #7-III (user: "nutzloser hellgrauer Balken ueber den Buttons"): the step cards are #191919 now, so an
@@ -1410,6 +1422,45 @@
       else { panel.style.bottom = Math.round(cbBottom - r.top + gap) + "px"; panel.style.top = "auto"; panel.style.maxHeight = Math.max(140, above - gap) + "px"; }
     } catch (e) {}
   }
+  // /Apps/ca_settings button rows (user: "Anwenden und Fertig in eine Zeile, Download Log und
+  // Hilfeforen-Badge in eine zweite Zeile"). CA emits ANWENDEN/FERTIG/DOWNLOAD LOG inside one <span> and the
+  // help link in a separate <center>; two elements in different parents can never share a flex line, so the
+  // one that has to change rows is MOVED. Idempotent: it only acts while the button is still in the span,
+  // and this page is a plain form render — nothing rebuilds it underneath us.
+  function ccCaSettingsRows() {
+    try {
+      if (!/^\/Apps\/ca_settings/i.test(location.pathname)) return;
+      var box = document.getElementById("displaybox"); if (!box) return;
+      var host = box.querySelector("center"); if (!host) return;
+      var btns = box.querySelectorAll('span > input[type="button"]');
+      for (var i = 0; i < btns.length; i++) {
+        var b = btns[i], v = (b.value || "").toUpperCase();
+        if (v.indexOf("LOG") < 0) continue;              // only DOWNLOAD LOG joins the help link
+        if (b.parentElement === host) continue;           // already moved -> no-op
+        host.insertBefore(b, host.firstChild);
+      }
+      // #3: both button rows line up with the TOGGLES (user: "die Buttons unten an den Toggles ausrichten").
+      // The two rows sit in different parents (a <span> inside the form, a <center> outside the dl grid), so
+      // one shared indent can't work: measured live they started at 767 and 626 while the toggle column
+      // starts at 847. Measure the control edge once and push each row to it individually — self-correcting,
+      // so it survives a language change, another font size or a longer label.
+      var ctrl = box.querySelector("dd .cc-tgl, dd .cc-tsel, dd input, dd select");
+      if (ctrl) {
+        var cx = ctrl.getBoundingClientRect().left;
+        var rows = [];
+        var sub = box.querySelector('form span:has(> input[type="submit"])'); if (sub) rows.push(sub);
+        if (host) rows.push(host);
+        for (var r = 0; r < rows.length; r++) {
+          var row = rows[r];
+          var cur = parseFloat(row.style.paddingLeft) || 0;
+          var delta = cx - row.getBoundingClientRect().left;      // distance still to go
+          if (Math.abs(delta) < 0.5) continue;                     // already aligned -> no write
+          var pad = Math.round(cur + delta);
+          if (pad >= 0 && pad < 1200) row.style.setProperty("padding-left", pad + "px", "important");
+        }
+      }
+    } catch (e) {}
+  }
   function ccToolsSyncSel(sel) {
     var w = sel.parentNode; if (!w || !w.classList || !w.classList.contains("cc-tsel")) return;
     w.classList.toggle("cc-tsel-disabled", !!sel.disabled);
@@ -1932,6 +1983,17 @@
       // jQuery-UI dialogs (openBox/openPlugin) + SweetAlert confirmations follow the CC look on
       // every page. Master-gated only — it is chrome, not an area of its own.
       root.classList.toggle("cc-popups-on", g("cc.theming", "1") !== "0");
+      // CA's settings sub-page (/Apps/ca_settings) is a REAL Unraid form page, not one of CA's overlays, and
+      // nothing in its markup identifies it: its <form> posts to /update.php like every other Unraid setting
+      // page, so a :has(form[action*="ca_settings"]) hook matched nothing (verified live). Stamp the page
+      // identity from the URL instead — the same trick the sheet already relies on for the other CA states.
+      root.classList.toggle("cc-ca-settings", /^\/Apps\/ca_settings/i.test(location.pathname));
+      // Two passes: writing the padding moves the row, so one measurement only gets part of the way there
+      // (live: 767 -> 797 against a target of 843). The function is self-correcting, so a second pass after
+      // layout has settled lands it exactly; both are strict no-ops once aligned.
+      ccCaSettingsRows();
+      setTimeout(ccCaSettingsRows, 60);
+      setTimeout(ccCaSettingsRows, 400);
       // GLOBAL footer hide (user: "die native Leiste wo Array gestartet steht ... komplett
       // ausblenden"): footer#footer = the fixed 28px strip (#statusraid/#statusbar + temps +
       // copyright). DEFAULT HIDDEN — cc.footer="0" (settings toggle) brings it back. Same
@@ -1974,7 +2036,15 @@
         // inputs, sub-tab bar). Match by URL (not by a fieldset probe, which races the async reka render) so the full
         // Tools treatment applies reliably. The /Main ROOT (disk_status table) is NOT matched -> it stays native.
         var diskPg = /^\/Main\/(Device|Disk|Boot)\b/.test(p0);
-        var toolsPg = !ownPg && (/^\/Tools\//.test(p0) || /^\/Settings\/./.test(p0) || diskPg || !!document.querySelector("#displaybox fieldset legend"));
+        // CA's settings sub-page (/Apps/ca_settings) is a NATIVE Unraid settings form — same dl/dt/dd layout,
+        // same selects, same bare input buttons — so it gets the SAME treatment instead of a second, thinner
+        // one of its own. That is what finally puts its dropdowns in the CC style: ccToolsEnhance() replaces
+        // every native <select> with the .cc-tsel overlay (a real CC panel that CAN be styled when open,
+        // unlike an OS-rendered option list), turns yes/no pairs into CC toggles, and the Tools sheet already
+        // carries the colour-mode variants for all of it. Maintaining a parallel half-solution here is what
+        // kept the page looking un-CC through several rounds.
+        var caSettingsPg = /^\/Apps\/ca_settings/i.test(p0);
+        var toolsPg = !ownPg && (/^\/Tools\//.test(p0) || /^\/Settings\/./.test(p0) || diskPg || caSettingsPg || !!document.querySelector("#displaybox fieldset legend"));
         root.classList.toggle("cc-tools-on", toolsPg && g("cc.theming", "1") !== "0");
         // the disk DETAIL form is a full-width native grid, so the reverted-to-native /Settings dl handling lets its
         // labels/values spread to the screen edges. Mark disk pages so the COMPACT CC grid (kept only here) reins the
@@ -2170,17 +2240,33 @@
       // (CA rebuilds the sidebar on view swaps, so this re-homes it on the next ccApps pass).
       var caMenu = document.querySelector("ul.caMenu");
       if (caMenu) {
-        var home = caMenu.querySelector("li.startupButton") || caMenu.querySelector("li.caMenuItem");
         var li = document.getElementById("cc-ca-search-li");
         if (!li) { li = document.createElement("li"); li.id = "cc-ca-search-li"; li.className = "caMenuItem cc-ca-search-li"; }
+        // EXCLUDE our own node when resolving the anchor: our li also carries .caMenuItem, so on a menu with no
+        // li.startupButton the querySelector below could return the li ITSELF once it has been inserted first.
+        // `home.nextElementSibling !== li` is then trivially true and every pass re-runs insertBefore — which
+        // removes + re-inserts the node, blurring whatever is focused inside it. With the search now interactive
+        // that would tear the input out mid-typing on any ccApps pass (they fire on every category click).
+        var home = caMenu.querySelector("li.startupButton") || caMenu.querySelector("li.caMenuItem:not(#cc-ca-search-li)");
         if (filter.parentElement !== li) li.appendChild(filter);
-        if (home) { if (home.nextElementSibling !== li) caMenu.insertBefore(li, home.nextElementSibling); }
+        if (home && home !== li) { if (home.nextElementSibling !== li) caMenu.insertBefore(li, home.nextElementSibling); }
         else if (li.parentElement !== caMenu) caMenu.insertBefore(li, caMenu.firstChild);
       }
-      filter.classList.add("cc-open");   // #4 (user, v3.6.2): in the sidebar the search is a PERMANENT full-width "Suche" field, never an icon-only collapse
+      // user (v3.6.6): "das Suchfeld im CA-Tab soll ein Badge sein mit Icon und Text; wenn man drauf klickt
+      // soll das Suchfeld kommen" — so cc-open is now RUNTIME STATE owned by the handlers below, not a
+      // permanent stamp. (v3.6.2 forced it on here on every pass, which no collapse handler could survive:
+      // ccApps re-runs on every category/magnifier click, so the badge would silently re-open ~60ms later.)
+      // CA's markup has no label text, so inject one. ABOVE the idempotency guard: the guard is right for
+      // event listeners (bind once per node) but wrong for DOM content, which must be repairable if CA
+      // rewrites the container's children while keeping the node.
+      if (!filter.querySelector(".cc-ca-search-label")) {
+        var lb = document.createElement("span");
+        lb.className = "cc-ca-search-label";
+        lb.textContent = T("Suche", "Search");
+        filter.appendChild(lb);
+      }
       if (filter.getAttribute("data-cc-search") === "1") return;
       filter.setAttribute("data-cc-search", "1");
-      var icon = filter.querySelector(".searchSubmit, #searchButton");
       var box = document.getElementById("searchBox");
       // #4: while typing, flag <html> so the suggestion popup grows past the narrow sidebar and the page dims +
       // blurs behind it. The awesomplete <ul> is re-anchored fixed (right of the field) so the sidebar can't clip it.
@@ -2195,10 +2281,84 @@
         box.addEventListener("focus", caFlag);
         box.addEventListener("blur", function () { setTimeout(function () { document.documentElement.classList.remove("cc-ca-searching"); }, 200); });
       }
-      if (icon) icon.addEventListener("click", function (e) {
-        e.preventDefault(); e.stopPropagation();               // magnifier = focus the field, never collapse/clear
-        filter.classList.add("cc-open"); try { box && box.focus(); } catch (e2) {}
+      // EXPAND: delegated on #searchFilter (not on the magnifier node) so a click anywhere in the chip —
+      // icon OR the "Suche" label — opens it, and so a CA re-render of the inner icon can't orphan the
+      // handler. The open-state is latched at MOUSEDOWN because a real click on the magnifier blurs the
+      // input first, so a click-time read would already say "closed" (the same trap the top-bar search
+      // documents in wireSearchToggle above).
+      var caWasOpen = false;
+      filter.addEventListener("mousedown", function () { caWasOpen = filter.classList.contains("cc-open"); }, true);
+      filter.addEventListener("click", function (e) {
+        try {
+          if (caWasOpen || filter.classList.contains("cc-open")) return;   // already open -> leave CA's own submit alone
+          e.preventDefault(); e.stopPropagation();
+          filter.classList.add("cc-open");
+          // the expanded field leaves the sidebar column and overlays the app grid, so lift the sidebar's
+          // stacking context immediately — waiting for cc-ca-searching (set on the first keystroke) would
+          // paint the panel UNDER the cards for the moment between opening and typing.
+          document.documentElement.classList.add("cc-ca-searchopen");
+          if (box) box.focus();
+        } catch (e2) {}
       }, true);
+    } catch (e) {}
+  }
+  // COLLAPSE, bound ONCE per document (mirrors the CC-settings search badge). Never on blur/focusout: the
+  // suggestion list is position:fixed and visually outside the field but still a DOM descendant, so a
+  // focusout collapse would fire on pointer-down over a suggestion and destroy the list before its own click
+  // lands. BUBBLE phase and no stopPropagation — a capture-phase document listener that stops the event
+  // swallows the real click for every CA control underneath.
+  function ccWireCaSearchCollapse() {
+    try {
+      if (window.__ccCaSearchDoc) return;
+      window.__ccCaSearchDoc = 1;
+      function collapse() {
+        var f = document.getElementById("searchFilter");
+        if (!f || !f.classList.contains("cc-open")) return;
+        if (!f.closest("li.cc-ca-search-li")) return;      // top-bar variant keeps its own behaviour
+        f.classList.remove("cc-open");
+        var b = document.getElementById("searchBox");
+        if (b && b.value) {                                 // reset CA's own filter through its own listeners
+          b.value = "";
+          b.dispatchEvent(new Event("input", { bubbles: true }));
+          b.dispatchEvent(new Event("keyup", { bubbles: true }));
+        }
+        try { b && b.blur(); } catch (e) {}
+        document.documentElement.classList.remove("cc-ca-searching");   // else the dim would outlive the field
+        document.documentElement.classList.remove("cc-ca-searchopen");
+      }
+      document.addEventListener("click", function (e) {
+        var f = document.getElementById("searchFilter");
+        if (!f || !f.contains(e.target)) collapse();        // contains() counts the fixed suggestion list as inside
+      });
+      // CAPTURE for Escape: awesomplete binds its own Escape handler to close the suggestion list and the
+      // event never reached a bubble-phase document listener (live-proven: the value cleared but the field
+      // stayed expanded). Capture only LISTENS here — it must never stopPropagation, or it would swallow
+      // Escape for every control underneath.
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape") collapse(); }, true);
+      // #9 (user: "wenn man was sucht und enter drückt oder auf ein suchvorschlag klickt bleibt das
+      // suchfenster offen und der blur da bis man escape drückt"): collapse() above is CANCEL — it clears
+      // the term, which is correct for "dismiss" but WRONG for "I just searched", since it would wipe out
+      // the very query CA is about to filter by. Awesomplete's own library fires "awesomplete-selectcomplete"
+      // on #searchBox for BOTH a click on an <li> AND Enter-with-a-highlighted-item (verified in
+      // libraries.js: select() always ends with `i.fire(this.input,"awesomplete-selectcomplete",…)`; CA
+      // itself listens to the identical event at Apps.page:1349 to run its own search). Plain Enter with
+      // NOTHING highlighted reaches neither path — awesomplete only intercepts keyCode 13 when
+      // `s.selected`, so an un-highlighted Enter falls through as an ordinary keydown on the input. A
+      // direct Enter listener on the box covers that case without depending on awesomplete's internal state.
+      function submitCollapse() {
+        var f = document.getElementById("searchFilter");
+        if (!f || !f.classList.contains("cc-open")) return;
+        if (!f.closest("li.cc-ca-search-li")) return;
+        f.classList.remove("cc-open");
+        document.documentElement.classList.remove("cc-ca-searching");
+        document.documentElement.classList.remove("cc-ca-searchopen");
+        try { box && box.blur(); } catch (e2) {}
+      }
+      var box = document.getElementById("searchBox");
+      if (box) {
+        box.addEventListener("awesomplete-selectcomplete", submitCollapse);
+        box.addEventListener("keydown", function (e) { if (e.key === "Enter") submitCollapse(); });
+      }
     } catch (e) {}
   }
   // #4: anchor the CA app-suggestion popup as position:fixed to the RIGHT of the sidebar search field, so the
@@ -2209,21 +2369,252 @@
       var ul = filter.querySelector(".awesomplete > ul"); if (!ul || ul.hasAttribute("hidden")) return;
       var r = filter.getBoundingClientRect();
       ul.style.setProperty("position", "fixed", "important");
-      ul.style.setProperty("left", Math.round(r.right + 12) + "px", "important");
-      ul.style.setProperty("top", Math.round(r.top) + "px", "important");
+      // user (v3.6.6): "das Dropdown soll dann direkt unter der Suchleiste sein". It used to sit to the RIGHT
+      // of the field (left = r.right + 12) because the field was a 140px sidebar box the list had to escape;
+      // now the field itself opens to the right at the header panel's own width, so the list belongs directly
+      // beneath it, left-aligned and exactly as wide — i.e. one panel, not two adjacent boxes.
+      ul.style.setProperty("left", Math.round(r.left) + "px", "important");
+      ul.style.setProperty("top", Math.round(r.bottom + 6) + "px", "important");
+      ul.style.setProperty("width", Math.round(r.width) + "px", "important");
+      ul.style.setProperty("min-width", "0", "important");
+      ul.style.setProperty("max-width", "none", "important");
       ul.style.setProperty("bottom", "auto", "important");
       ul.style.setProperty("right", "auto", "important");
+    } catch (e) {}
+  }
+  // user (v3.6.6): "das menue und der badge sind rechts nicht buendig" / "die show more buttons sind zu weit
+  // rechts". The gutter the user compares SHOW MORE against is the HEADER's icon row (icons + status island
+  // agree on it: .nav-tile.right's right edge minus its padding). The section-header row lives in a DIFFERENT
+  // container (.menuAdjust), whose right edge sits some viewport-, scrollbar- and font-dependent distance
+  // further out (21px at a 1400px viewport) — no static padding can track that, and measuring against
+  // #displaybox instead of the row's real parent overshot by 10px. So measure each row against ITS OWN
+  // offsetParent and pad by exactly the delta; a later pass re-measures ~0 delta, so it converges.
+  // ── SIDEBAR CARDS (user, v3.6.6: "in der Seitenleiste machen wir Cards fuer die Abschnitte … Card fuer
+  // Installed Apps, fuer Previous Apps, Pinned Apps … Card fuer die Kategorien … dann All Apps und
+  // Repositories bleiben einzeln, alles darunter kommt wieder in eine Card"). CA renders the sidebar as
+  // FLAT <li> siblings across THREE separate ul.caMenu lists, so a card is not reachable in CSS alone
+  // (there is no "group of siblings" selector) — the group needs a real wrapper. We MOVE CA's own <li>
+  // nodes into it rather than cloning, so their click handlers survive untouched (same technique the
+  // search field already uses).
+  // Idempotency is the whole game here: ccApps re-runs on every category click and CA rebuilds this menu on
+  // view swaps. Each pass therefore checks whether the group's first node is ALREADY inside its card and
+  // bails out before touching the DOM — a re-parent would otherwise blur focus and fire needless mutations.
+  // MARK-ONLY, never re-parent. The first attempt wrapped each group in a real <li><ul> and MOVED CA's <li>
+  // into it; that broke CA outright — the "Installed/Previous Apps" sub-lists came back display:none, because
+  // CA's own show/hide logic addresses them through their original sibling relationship. So the card is drawn
+  // PURELY in CSS: every member of a group gets cc-card-in plus an edge marker (cc-card-top / cc-card-bot),
+  // and the sheet paints one continuous surface with the radius only on the outer edges. Nothing moves, CA's
+  // logic keeps working, and a class write is a cheap no-op on repeat passes.
+  function ccMark(items, title) {
+    try {
+      if (!items.length) return;
+      for (var i = 0; i < items.length; i++) {
+        var el = items[i], first = i === 0, last = i === items.length - 1;
+        el.classList.add("cc-card-in");
+        el.classList.toggle("cc-card-top", first);
+        el.classList.toggle("cc-card-bot", last);
+      }
+      // CA ships no heading for the categories, so CC supplies one ("Ueberschrift 'Kategorien'").
+      if (title) {
+        var host = items[0].parentElement; if (!host) return;
+        var h = host.querySelector(":scope > .cc-ca-cardtitle");
+        if (!h) { h = document.createElement("li"); h.className = "cc-ca-cardtitle cc-card-in cc-card-top"; h.textContent = title; }
+        if (h.nextElementSibling !== items[0]) host.insertBefore(h, items[0]);
+        items[0].classList.remove("cc-card-top");   // the title is the card's top edge now
+      }
+    } catch (e) {}
+  }
+  // #15 (user: "results per page und dockerhub badge bitte unter dem such-badge platzieren"): the two
+  // controls live in .searchArea, a MAIN-CONTENT-area container, while the search chip is in the SIDEBAR
+  // (li.cc-ca-search-li under ul.caMenu) — different DOM regions entirely, so no CSS selector can place one
+  // under the other. Moves the REAL nodes (never clones — same reason ccAppsCards below does: a clone would
+  // carry no click handler). Idempotent: bails the moment the host already holds them, so a re-run on every
+  // ccApps() pass (CA rebuilds .searchArea on every category/search change) is a cheap no-op.
+  function ccMoveSearchAreaBadges() {
+    try {
+      var searchLi = document.querySelector("li.cc-ca-search-li");
+      var filter = document.getElementById("searchFilter");
+      if (!searchLi || !filter) return;
+      var host = searchLi.querySelector(":scope > .cc-ca-search-extras");
+      if (!host) {
+        host = document.createElement("div");
+        host.className = "cc-ca-search-extras";
+        filter.parentNode === searchLi ? searchLi.insertBefore(host, filter.nextSibling) : searchLi.appendChild(host);
+      }
+      var mpp = document.querySelector(".searchArea .caButton.maxPerPage");
+      var dh = document.querySelector(".searchArea .dockerSearch");
+      if (mpp && mpp.parentNode !== host) host.appendChild(mpp);
+      if (dh && dh.parentNode !== host) host.appendChild(dh);
+      // #15 follow-up (live-measured): #dropdown-maxPerPage is appended directly to <body> and CA positions
+      // it with inline top/left computed for the control's OLD home — after the move it opened pinned near
+      // the page's top-left corner instead of under the relocated button. Forcing the fix ONCE (or even
+      // twice, at 0ms/60ms) was proven live to lose: opacity was still mid-fade at that point (CA runs a
+      // jQuery-style fade/slide that keeps re-touching the node's style across several frames), so CA's own
+      // next frame overwrote the single corrective write. Same idea as ccPositionCaResults below, but
+      // fighting an ANIMATION means covering the animation's whole duration, not one or two beats —
+      // matches the codebase's own 8x180ms convention for a similarly animated popover (ccNotifActions).
+      if (mpp && !mpp.getAttribute("data-cc-dd-wired")) {
+        mpp.setAttribute("data-cc-dd-wired", "1");
+        mpp.addEventListener("click", function () {
+          function place() {
+            var dd = document.getElementById("dropdown-maxPerPage");
+            if (!dd || getComputedStyle(dd).display === "none") return;
+            var r = mpp.getBoundingClientRect();
+            dd.style.setProperty("position", "fixed", "important");
+            dd.style.setProperty("left", Math.round(r.left) + "px", "important");
+            dd.style.setProperty("top", Math.round(r.bottom + 6) + "px", "important");
+            dd.style.setProperty("right", "auto", "important"); dd.style.setProperty("bottom", "auto", "important");
+          }
+          [0, 20, 40, 60, 90, 120, 160, 210, 270, 340, 420, 500].forEach(function (ms) { setTimeout(place, ms); });
+        });
+      }
+    } catch (e) {}
+  }
+  function ccAppsCards() {
+    try {
+      var menus = [].slice.call(document.querySelectorAll("ul.caMenu"));
+      if (!menus.length) return;
+      // Identify the three lists by CONTENT, never by index: CA fills them asynchronously, so on an early
+      // pass the category list may not exist yet and index 1 silently pointed at the meta list — which is
+      // how the first build ended up filing "All Apps/Einstellungen/…" under a card titled "Kategorien".
+      var mMain = null, mCats = null, mMeta = null;
+      for (var mi = 0; mi < menus.length; mi++) {
+        var m = menus[mi];
+        if (m.querySelector(".allApps, .caRepositoryMenu")) mMeta = m;
+        else if (m.querySelector("li.startupButton") || m.querySelector("#cc-ca-search-li")) mMain = m;
+        else if (m.querySelector("li.categoryMenu")) mCats = m;
+      }
+      // ---- MAIN: Home + search stay loose; each sectionMenu heading opens a group that runs to the next
+      //      heading. Action Centre is deliberately excluded — it becomes a standalone badge.
+      if (mMain) {
+        var kids = [].slice.call(mMain.children), group = null, groups = [];
+        for (var i = 0; i < kids.length; i++) {
+          var li = kids[i];
+          var isHead = li.classList && li.classList.contains("sectionMenu");
+          if (isHead && li.classList.contains("actionCentre")) { group = null; continue; }
+          if (isHead) { group = [li]; groups.push(group); continue; }
+          if (!group) continue;                                                       // Home / search / rules before any heading
+          if (li.querySelector && li.querySelector("hr")) { group = null; continue; }  // a rule ends the group
+          group.push(li);
+        }
+        for (var g = 0; g < groups.length; g++) ccMark(groups[g], null);
+      }
+      // ---- CATEGORIES: their own list, no heading at all -> one card, titled by CC.
+      if (mCats) {
+        var cats = [].slice.call(mCats.children).filter(function (n) { return !n.classList || !n.classList.contains("cc-ca-cardtitle"); });
+        if (cats.length) ccMark(cats, T("Kategorien", "Categories"));
+      }
+      // ---- META: All Apps + Repositories stay loose (they are categoryMenu entries); everything after them
+      //      ("Einstellungen" … "Debugging", including the VERSION lines) forms one card.
+      if (mMeta) {
+        var k2 = [].slice.call(mMeta.children), tail = [], seenCat = false;
+        for (var j = 0; j < k2.length; j++) {
+          var n = k2[j];
+          if (n.classList && n.classList.contains("categoryMenu")) { seenCat = true; tail = []; continue; }
+          if (!seenCat) continue;
+          if (n.querySelector && n.querySelector("hr")) continue;      // rules are hidden inside a card anyway
+          if (!(n.textContent || "").trim()) continue;
+          tail.push(n);
+        }
+        if (tail.length) ccMark(tail, null);
+      }
+    } catch (e) {}
+  }
+  function ccAppsAlignRight() {
+    try {
+      var rTile = document.querySelector("#menu .nav-tile.right");
+      if (!rTile) return;
+      var gutter = rTile.getBoundingClientRect().right - (parseFloat(getComputedStyle(rTile).paddingRight) || 0);
+      var heads = document.querySelectorAll(".ca_homeTemplatesHeader");
+      for (var i = 0; i < heads.length; i++) {
+        var more = heads[i].querySelector(".homeMore"); if (!more) continue;
+        // SELF-CORRECTING, not computed-from-container: derive the new padding from where SHOW MORE ACTUALLY
+        // landed vs the gutter, and nudge by that delta. Deriving it from the parent's rect instead was wrong
+        // twice over (the parent's border-box right includes its own padding, and #displaybox is a different
+        // box again) — this form needs no assumption about the container at all and converges to 0 delta.
+        var cur = parseFloat(heads[i].style.paddingRight) || 0;
+        var delta = more.getBoundingClientRect().right - gutter;
+        if (Math.abs(delta) < 0.5) continue;                       // already flush -> no write (keeps it a no-op)
+        var pad = Math.round(cur + delta);
+        if (pad >= 0 && pad < 200) heads[i].style.setProperty("padding-right", pad + "px", "important");
+      }
+    } catch (e) {}
+  }
+  // user (v3.6.6): "kannst du es so machen, dass der Abschnittsbadge horizontal buendig ist mit dem Home
+  // badge? also alles weiter hochruecken" — the first section row sat 11px below the sidebar's Home chip.
+  // The two badges are different heights (34 vs 30), so align their vertical CENTRES, not their tops, and
+  // measure it: a static margin would drift with the font size, the badge tier and the theme. Only the FIRST
+  // row is nudged (its margin-top collapses out of .menuAdjust, which is what pulls the whole column up);
+  // the rows below keep their own rhythm.
+  function ccAppsAlignTop() {
+    try {
+      var caMenu = document.querySelector("ul.caMenu"); if (!caMenu) return;
+      var home = caMenu.querySelector("li.startupButton") || caMenu.querySelector("li.caMenuItem:not(#cc-ca-search-li)");
+      var head = document.querySelector(".ca_homeTemplatesHeader"); if (!home || !head) return;
+      var badge = head.querySelector(".cc-sechead-badge") || head;
+      var hr = home.getBoundingClientRect(), br = badge.getBoundingClientRect();
+      if (!hr.height || !br.height) return;
+      var delta = (hr.top + hr.height / 2) - (br.top + br.height / 2);
+      if (Math.abs(delta) < 0.5) return;                       // already level -> no write (stays a no-op)
+      var cur = parseFloat(head.style.marginTop);
+      if (isNaN(cur)) cur = parseFloat(getComputedStyle(head).marginTop) || 0;
+      var mt = Math.round(cur + delta);
+      if (mt > -80 && mt < 80) head.style.setProperty("margin-top", mt + "px", "important");   // sanity-bounded
+    } catch (e) {}
+  }
+  // The corner marks become badges stacked at the card's top right (user: "können wir die Ribbons auch in
+  // CC-Badges umwandeln? und auch das Monthly Spotlight … wenn beide vorhanden sind sollen sie rechts in der
+  // Card untereinander angeordnet sein"). CA emits the ribbon as a SIBLING of the card (its
+  // closest('.ca_holder') is null) and positions it with its own left/right, which kept winning against a
+  // pure CSS re-anchor. Moving it INTO the card puts both marks in the same containing block — the card —
+  // so one rule stacks them. Idempotent: it only moves a ribbon that is not already inside its card.
+  function ccAppsCornerMarks() {
+    try {
+      var marks = document.querySelectorAll(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground");
+      for (var i = 0; i < marks.length; i++) {
+        var m = marks[i];
+        if (m.closest(".ca_holder")) continue;                 // already inside -> no-op
+        var slot = m.parentElement; if (!slot) continue;
+        var card = slot.querySelector(".ca_holder"); if (!card) continue;
+        card.appendChild(m);
+      }
     } catch (e) {}
   }
   function ccApps() {
     try {
       if (!/^\/Apps(\/|$)/.test(location.pathname)) return;
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
+      // user (v3.6.6, aktiver Sammelmodus: "die badges auf den app cards sind nicht im reaktive modus der
+      // derzeit eingeschaltet ist"): "Reaktiver Modus" (cc.rbmode=active) is a GLOBAL settings-page toggle
+      // ("gilt global fuer ALLE Farbmodi ... und alle Bereiche") but was only ever wired to two areas
+      // (cc-header-rbneutral, cc-tools-rbneutral) — Apps never got its own class, so its badges could only
+      // ever render fully coloured, same as header.js's own "reactive class also in Normal mode" comment
+      // above documents for the header case. Mirror that here for the Apps tab.
+      document.documentElement.classList.toggle("cc-apps-rbneutral", rbNeutral());
       ccAppsStamp(".ca_homeTemplatesHeader");
       ccAppsStamp(".caMenuItem.selectedMenu");
       ccAppsStamp("#searchFilter");                          // #7: stamp the collapsible badge (bg + icon colour follow the mode)
+      // #10 (user: "nicht im regenbogenmodus, bitte in alle Farbmodi aufnehmen"): the search-results header
+      // (Results Per Page, DockerHub, the pager numbers, the Sort By links) was styled as badges but never
+      // STAMPED, so --cc-rb-c never reached them and Rainbow could only ever show the shared --cc-rbaccent
+      // fallback, never each control's own jewel — same gap the bottom-line card buttons had (#8).
+      // #15: BOTH locations in one selector — before ccMoveSearchAreaBadges() runs (or on a page where the
+      // move host doesn't exist yet) they're still under .searchArea; afterwards they're under
+      // .cc-ca-search-extras. Covering both means restamping keeps working across every re-run either way.
+      ccAppsStamp(".searchArea .caButton.maxPerPage, .searchArea .dockerSearch, .cc-ca-search-extras .caButton.maxPerPage, .cc-ca-search-extras .dockerSearch");
+      ccAppsStamp(".pageNavigation .pageNumber");
+      ccAppsStamp("a.sortIcons");
+      ccMoveSearchAreaBadges();                              // #15: relocate under the search badge
       wireCaSearch();
+      ccWireCaSearchCollapse();
+      ccAppsCards();                                         // group the flat sidebar <li>s into cards
       ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton");
+      // #8 (user: "die buttons ganz unten sind nicht in die farbmodi integriert"): the bottom action bar
+      // (.multi_installDiv) was styled as a badge row but never STAMPED, so --cc-rb-c never reached it and
+      // it could only ever paint the neutral chip. Stamped like every other Apps badge, it takes the accent
+      // in Normal mode and its own jewel position in Rainbow; the reactive rule then handles the rest state.
+      ccAppsStamp(".multi_installDiv input[type='button'], .multi_installDiv input[type='submit']");
+      ccAppsCornerMarks();
       // (#9) subtitle -> (i) bubble on the header, keep SHOW MORE inline, retire the body-text line.
       var heads = document.querySelectorAll(".ca_homeTemplatesHeader:not([data-cc-info])");
       for (var h = 0; h < heads.length; h++) {
@@ -2240,10 +2631,18 @@
         var more = line2.querySelector(".homeMore"), sub = "";
         for (var n = 0; n < line2.childNodes.length; n++) { var nd = line2.childNodes[n]; if (nd.nodeType === 3) sub += nd.textContent; }
         sub = sub.trim();
+        // #5: the horizontal-scroll hint. Corrected — it works ONLY with the right mouse button held down,
+        // not with the wheel, and it gets its own paragraph so it doesn't drown in the section text.
+        if (sub) sub += "\n\n" + T("Tipp: seitlich scrollen mit gedrückter rechter Maustaste.",
+                                   "Tip: scroll sideways with the right mouse button held down.");
         if (sub) head.appendChild(ccMakeInfo(sub));
         if (more) head.appendChild(more);     // SHOW MORE now rides inside the section badge
         line2.style.display = "none";
       }
+      // AFTER the loop: the alignment passes read each row's SHOW MORE / title badge, which only exist inside
+      // the header once the loop above has built them. Calling them earlier made them silent no-ops on first paint.
+      ccAppsAlignRight();
+      ccAppsAlignTop();
     } catch (e) {}
   }
   var ccAppsObs = null, ccAppsT = 0;
@@ -2255,9 +2654,28 @@
       document.addEventListener("click", function (e) {
         if (e.target && e.target.closest && e.target.closest(".caMenuItem, .homeMore, .sortIcons, .searchSubmit, #searchButton")) ccAppsSoon();
       }, true);
+      // the measured right gutter moves with the viewport, so re-measure on resize — without this the padding
+      // stays frozen at whatever the last pass computed and SHOW MORE drifts off the icon gutter again (seen
+      // live: exact at the measured width, 15px off after a resize). rAF-throttled, writes one style prop.
+      var arRaf = 0;
+      window.addEventListener("resize", function () {
+        if (arRaf) return;
+        function pass() { arRaf = 0; ccAppsAlignRight(); ccAppsAlignTop(); setTimeout(function () { ccAppsAlignRight(); ccAppsAlignTop(); }, 120); }
+        arRaf = window.requestAnimationFrame ? window.requestAnimationFrame(pass) : setTimeout(pass, 16);
+      }, { passive: true });
+      // #15 (found chasing the "Results Per Page/DockerHub never relocate on cold load" bug): this used to
+      // call ccApps() only on the FIRST tick where #templates_content exists (`!ccAppsObs` guards it to
+      // once) — every later tick just counted down. That is fine for anything the #templates_content
+      // observer already covers, but .searchArea (Results Per Page, DockerHub, the pager, Sort By) lives
+      // OUTSIDE #templates_content entirely (verified live: templatesContent.contains(searchArea) === false)
+      // and often finishes rendering LATER than the first tick, since CA's feed load is async — so its own
+      // late appearance was invisible to both the one-shot call and the observer. ccApps() is already
+      // idempotent (its own comment says it "re-runs on every category/click"), so calling it every tick
+      // for the same bounded 4.5s window is cheap and closes the gap without a second observer.
       var k = 0, t = setInterval(function () {
         var tc = document.getElementById("templates_content");
-        if (tc && !ccAppsObs) { ccAppsObs = new MutationObserver(ccAppsSoon); ccAppsObs.observe(tc, { childList: true, subtree: false }); ccApps(); }
+        if (tc && !ccAppsObs) { ccAppsObs = new MutationObserver(ccAppsSoon); ccAppsObs.observe(tc, { childList: true, subtree: false }); }
+        ccApps();
         if (++k >= 15) clearInterval(t);
       }, 300);
     } catch (e) {}
@@ -2384,44 +2802,109 @@
    "UPDATING CONTENT" dialog (#2) and the plugin-install view (#3) can drop in the SAME loader. Appended as a
    separate IIFE so it is fully isolated from the main header logic above. */
 (function () {
-  function ccMakeLoader() {
-    var w = document.createElement("span"); w.className = "cc-loader";
+  // ONE factory. tier is "full" | "dlg" | "sm" | "xs" (Tokens.css .cc-load-* classes); every size lives in
+  // the CSS tokens, nothing here ever writes --cc-load-sz inline, so no sheet has to out-!important a call
+  // site and no call site can invent a number the tier system does not know.
+  function ccLoader(tier) {
+    var w = document.createElement("span"); w.className = "cc-loader cc-load-" + (tier || "dlg");
+    w.setAttribute("role", "status"); w.setAttribute("aria-live", "polite");
     w.innerHTML = '<span class="o"><i></i></span><span class="in"><i></i></span>';
     return w;
   }
-  try { window.ccMakeLoader = ccMakeLoader; } catch (e) {}
-  function ccInjectSpinner() {
+  // idempotent: at most one ring per host, ever — re-tiers an existing ring instead of appending a second.
+  function ccMountLoader(host, tier) {
+    try {
+      if (!host) return null;
+      var l = host.querySelector(".cc-loader");
+      if (l) { l.className = "cc-loader cc-load-" + (tier || "dlg"); return l; }
+      l = ccLoader(tier); host.appendChild(l); return l;
+    } catch (e) { return null; }
+  }
+  function ccUnmountLoader(host) {
+    try { var l = host && host.querySelector(".cc-loader"); if (l && l.parentNode) l.parentNode.removeChild(l); } catch (e) {}
+  }
+  try {
+    window.ccLoader = ccLoader; window.ccMountLoader = ccMountLoader; window.ccUnmountLoader = ccUnmountLoader;
+    window.ccMakeLoader = function () { return ccLoader("dlg"); };   // back-compat shim for any external caller
+  } catch (e) {}
+
+  // #4/#15h THE ARBITER — decides from REAL computed state which fullscreen loader (if any) is genuinely on
+  // screen, mounts exactly one ring there, dedupes every other div.spinner, and stamps html.cc-loading
+  // (+ data-cc-load) so ONE scroll-lock rule (Tokens.css) covers every phase: the Unraid tab-load overlay,
+  // the CA "Updating Content" dialog, and the Docker container-update window (#cc-ctout-bd) alike — closing
+  // the gap where only the CA dialog was locked and a plain tab load still left the page scrollable behind
+  // the ring (user, still open after the dialog-only fix: "der scrollbalken rechts ist immer noch da").
+  // #freeze (live-reported, v3.6.5): an earlier version attached a MutationObserver to the .fixed overlay
+  // itself (attributeFilter style/class) to re-run this the instant its display flips. If Unraid's OWN native
+  // code touches that same element's style/class repeatedly, each touch retriggers this function, which is
+  // not provably loop-free and pegs the CPU under load -> a frozen tab. This function is READ-ONLY
+  // (getComputedStyle) plus idempotent diff-writes, called from a plain bounded-nowhere setInterval below —
+  // a timer callback cannot recursively re-trigger itself the way a self-observing attribute observer can.
+  function ccLoadState() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
+      var root = document.documentElement;
+      var swal = document.querySelector(".sweet-alert.cc-only-loader");
+      var swalOn = !!(swal && getComputedStyle(swal).display !== "none");
+      var ctout = document.getElementById("cc-ctout-bd");
+      var ctoutOn = !!(ctout && getComputedStyle(ctout).display !== "none");
+
       var sps = document.querySelectorAll("div.spinner");
-      // #6 (user: "erst überlagert der große Spinner den kleinen, dann bleibt der kleine mit Scrollbar sichtbar"):
-      // the full-screen tab-load overlay (div.spinner.fixed) and CA's in-page div.spinner both got the ring and
-      // OVERLAPPED. Show the CC ring in exactly ONE spinner: while the fixed overlay is on screen, hide the in-page
-      // spinner(s); when it toggles off, un-hide.
-      // #freeze (live-reported, v3.6.5): the earlier version attached a MutationObserver to the .fixed overlay
-      // itself (attributeFilter style/class) to re-run this the instant its display flips. If Unraid's OWN native
-      // code touches that same element's style/class repeatedly (e.g. rapid polling/animation), each touch
-      // retriggers this function, which is not provably loop-free and pegs the CPU under load -> a frozen tab.
-      // Dropped entirely: this function is already called periodically (ccLoaderBoot's bounded interval + the
-      // swal/body observers below), which is reactive enough without an unbounded self-observing feedback path.
-      var fixedUp = null;
+      var fixedUp = null, inPageUp = null;
       for (var i = 0; i < sps.length; i++) {
         var s = sps[i];
-        if (!s.classList.contains("fixed")) continue;
-        if (!fixedUp && getComputedStyle(s).display !== "none") fixedUp = s;
+        if (getComputedStyle(s).display === "none") continue;
+        if (s.classList.contains("fixed")) { if (!fixedUp) fixedUp = s; }
+        else if (!inPageUp) inPageUp = s;
+      }
+      // cc-spin-active is the ONLY thing that lets an in-page spinner become a fullscreen overlay
+      // (Tokens.css) — never forced blind on every div.spinner:not(.fixed) that merely EXISTS, which is
+      // what stranded Settings > System Temperature under a permanent dimmed overlay before this pass: that
+      // rule fired on ANY such element regardless of whether Unraid meant it visible, because
+      // :not([style*="display: none"]) reads "shown" for a node that has never had an inline style written
+      // yet — exactly the state at page load.
+
+      // ONE ring, ONE elected host, in PRIORITY order: swal > ctout > fixed > in-page div.spinner. LIVE
+      // PROOF this priority is not optional: on /Apps the tab-load overlay (div.spinner.fixed) and CA's own
+      // "Updating Content" dialog (.sweet-alert.cc-only-loader) are BOTH genuinely showing on almost every
+      // real load — CA opens that dialog itself while its feed refreshes. ccUpdatingSwal() used to mount its
+      // OWN ring into the dialog's <p> independently of whatever this div.spinner loop decided, so the two
+      // systems never knew about each other and painted two rings at once — reproducing the exact "doppelter
+      // Spinner" bug this engine exists to prevent, just from a second, uncoordinated mounting path instead
+      // of the original's. ccUpdatingSwal() now only does its non-ring housekeeping (hiding the swal's own
+      // icon, tagging cc-only-loader); this is the ONE place that ever calls ccMountLoader/ccUnmountLoader.
+      var swalMark = swal ? swal.querySelector(".updateContent-swal") : null;
+      var swalHost = swalMark ? swalMark.parentNode : null;   // the <p> the ring sits above (insertBefore, not append)
+      var elected = swalOn ? swalHost : ctoutOn ? null : (fixedUp || inPageUp);
+
+      if (swalHost) {
+        if (elected === swalHost) { if (!swalHost.querySelector(".cc-loader")) { var sl = ccLoader("full"); sl.style.display = "block"; sl.style.margin = "6px auto 14px"; swalHost.insertBefore(sl, swalMark); } }
+        else ccUnmountLoader(swalHost);
       }
       for (var j = 0; j < sps.length; j++) {
         var sp = sps[j];
-        if (fixedUp && sp !== fixedUp) { sp.classList.add("cc-spin-dupe"); continue; }   // redundant while the overlay is up
-        sp.classList.remove("cc-spin-dupe");
-        if (!sp.querySelector(".cc-loader")) sp.appendChild(ccMakeLoader());
+        var spElected = (elected === sp);
+        sp.classList.toggle("cc-spin-dupe", !spElected && !!(fixedUp || inPageUp) && !swalOn);
+        sp.classList.toggle("cc-spin-active", !!(spElected && !sp.classList.contains("fixed")));
+        if (spElected) ccMountLoader(sp, "full"); else ccUnmountLoader(sp);
       }
+
+      var mode = swalOn ? "swal" : ctoutOn ? "ctout" : (fixedUp || inPageUp) ? "fixed" : null;
+      root.classList.toggle("cc-loading", !!mode);
+      if (mode) root.setAttribute("data-cc-load", mode); else root.removeAttribute("data-cc-load");
     } catch (e) {}
   }
+  try { window.ccLoadState = ccLoadState; } catch (e) {}
 
   /* #2: the CA "Updating Content" dialog (Apps.page → myAlert, content carries a unique `.updateContent-swal`
-     marker span) is a SweetAlert1 `.sweet-alert` appended as a DIRECT child of <body>. Drop the CC loader in
-     and hide the stock swal info-icon. Detection keys on the marker span, so it never fires on any OTHER swal. */
+     marker span) is a SweetAlert1 `.sweet-alert` appended as a DIRECT child of <body>. Hide the stock swal
+     info-icon and tag the shell so CSS/ccLoadState know a loader-only dialog is up. Detection keys on the
+     marker span, so it never fires on any OTHER swal.
+     RING PLACEMENT LIVES IN ccLoadState() NOW, NOT HERE (found live: on /Apps the tab-load overlay and this
+     very dialog are BOTH genuinely showing on almost every real load, and this function used to mount its
+     OWN ring independently of whatever the div.spinner arbiter decided — two uncoordinated mounting paths,
+     two rings at once, the exact "doppelter Spinner" bug this engine exists to prevent). This function only
+     does the housekeeping ccLoadState needs already done before IT decides where the one ring goes. */
   function ccUpdatingSwal() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
@@ -2431,11 +2914,8 @@
       // SweetAlert1 REUSES one .sweet-alert node for every dialog: stamp cc-only-loader ONLY while the
       // update-content marker is present, and strip it the moment the node is reused for anything else.
       if (box) box.classList.toggle("cc-only-loader", !!mark);
-      if (!mark || !box || box.querySelector(".cc-loader")) return;
+      if (!mark || !box) return;
       var icon = box.querySelector(".sa-icon"); if (icon) icon.style.display = "none";
-      var l = ccMakeLoader(); l.style.setProperty("--cc-load-sz", "48px");
-      l.style.display = "block"; l.style.margin = "6px auto 14px";
-      mark.parentNode.insertBefore(l, mark);   // loader sits directly above the "Please Wait" line
     } catch (e) {}
   }
 
@@ -2450,7 +2930,7 @@
       var t = document.getElementById("pluginProgressTitle");
       if (!t || t.querySelector(".cc-loader")) return;
       var fa = t.querySelector("i.fa"); if (fa) fa.style.display = "none";
-      var l = ccMakeLoader(); l.style.setProperty("--cc-load-sz", "18px");
+      var l = ccLoader("xs");   // inline ring replacing a glyph in a title line
       l.style.display = "inline-block"; l.style.verticalAlign = "middle"; l.style.marginLeft = "8px";
       t.appendChild(l);
     } catch (e) {}
@@ -2490,13 +2970,21 @@
   }
 
   function ccLoaderBoot() {
-    ccInjectSpinner();
+    ccLoadState();
     ccAttachSwalObs();
     ccSwalScan();          // in case a dialog is already open on load
     ccWatchBodyForSwal();
-    // The swal shell + div.spinner.fixed are created by Unraid's template; if not there yet, retry briefly
-    // (cheap, bounded) so the scoped observer gets attached even when the shell predates this script.
-    var n = 0, t = setInterval(function () { ccInjectSpinner(); ccAttachSwalObs(); if (++n >= 12) clearInterval(t); }, 350);
+    // #4 (found chasing "der scrollbalken rechts ist immer noch da"): this used to be a BOUNDED 12x350ms
+    // retry (4.2s), which could only ever repair the first few seconds of a page's life — any loader that
+    // opened later (a plugin install triggered minutes into a session, a Docker update window) never got
+    // ccLoadState's scroll-lock applied at all. A PERMANENT heartbeat closes that, and is safe where the old
+    // documented freeze (#freeze above) was not: that freeze came from a MutationObserver whose callback
+    // could be RE-ENTERED by the very DOM writes it was watching (self-observing attributeFilter on a node
+    // Unraid's own code churns). A plain setInterval callback cannot re-enter itself — each tick is a fresh,
+    // browser-scheduled call — and ccLoadState() only ever calls getComputedStyle (read) plus idempotent
+    // class/attribute diffs (writes only when the value actually changes), so there is no path back into
+    // itself. Paused via document.hidden so a backgrounded tab does no work at all.
+    setInterval(function () { if (!document.hidden) { ccLoadState(); ccAttachSwalObs(); } }, 200);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ccLoaderBoot); else ccLoaderBoot();
 })();

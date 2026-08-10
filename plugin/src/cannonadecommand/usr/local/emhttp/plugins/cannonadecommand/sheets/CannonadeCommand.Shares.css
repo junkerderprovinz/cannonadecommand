@@ -1215,7 +1215,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-dropconta
   width: max-content !important; min-width: 160px !important; max-width: min(92vw, 420px) !important;  /* panel hugs the widest pill, not the widget's inline 300px */
   height: auto !important; max-height: 50vh !important; overflow-y: auto !important; overflow-x: hidden !important;  /* the list is the ONLY scroll container */
   background: #303030 !important; border: none !important; border-radius: 10px !important;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, .6) !important;   /* NO border line (user: "Keine Rahmenlinien!"); depth = fill + shadow off the #222 card */
+  box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .6)) !important;   /* NO border line (user: "Keine Rahmenlinien!"); depth = fill + shadow off the #222 card */
 }
 /* the widget writes a stale inline px height + width:300 onto the OUTER wrapper -> free height/width/
    overflow ONLY (never its widget-managed position/top/left/z-index) so the list hugs its content and
@@ -1410,7 +1410,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-panel {
   padding: 8px; width: max-content; min-width: 160px; max-width: min(92vw, 420px);
   max-height: 50vh; overflow-y: auto; overflow-x: hidden;
   background: #303030; border: none; border-radius: 10px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, .6);   /* NO border line (user: "Keine Rahmenlinien!") */
+  box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .6));   /* NO border line (user: "Keine Rahmenlinien!") */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel.cc-open .cc-sel-panel { display: flex; }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel.cc-sel-disabled .cc-sel-trigger { opacity: .5; cursor: not-allowed; }
@@ -1577,7 +1577,7 @@ html.cc-shares-rbneutral.cc-on-main #displaybox table.array_status a.cc-aop-link
    at ~1:1 contrast on Theme--white. So we tint translucently and let the theme's own backdrop show
    through, exactly like every other surface rule in this sheet. */
 html.cc-shares-on.cc-on-browse #displaybox .TableContainer {
-  background-color: rgba(128, 128, 128, .07); border: none; box-shadow: 0 1px 4px rgba(0, 0, 0, .35);
+  background-color: rgba(128, 128, 128, .07); border: none; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35));
 }
 /* background-COLOR, not the shorthand: `background` would reset background-image and wipe the native
    tablesorter sort-arrow artwork off the sorted column header. */

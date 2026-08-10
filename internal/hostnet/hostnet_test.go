@@ -20,6 +20,39 @@ func TestParseDefaultIface(t *testing.T) {
 	}
 }
 
+// The island reported "a few Kbit" during a 100 Mbit transfer because the counters came
+// from the default-route BRIDGE, which only sees host-terminated traffic. These figures
+// are the real ones measured on the live box (eth0 526.9 GB vs br0 3.1 GB) and pin the
+// rule: sum the physical NICs, never a bridge, and never a VLAN child on top of one.
+func TestSumPhysical(t *testing.T) {
+	dev := "Inter-|   Receive                                                |  Transmit\n" +
+		" face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n" +
+		"    lo: 100 1 0 0 0 0 0 0 200 2 0 0 0 0 0 0\n" +
+		"  eth0: 526909322213 10 0 0 0 0 0 0 225368183653 5 0 0 0 0 0 0\n" +
+		"eth0.20: 504924029598 10 0 0 0 0 0 0 171322925565 5 0 0 0 0 0 0\n" +
+		"   br0: 3075104700 10 0 0 0 0 0 0 53875600401 5 0 0 0 0 0 0\n" +
+		"br0.20: 504921626538 10 0 0 0 0 0 0 171322924839 5 0 0 0 0 0 0\n" +
+		"shim-br0: 3141176203 10 0 0 0 0 0 0 53875086588 5 0 0 0 0 0 0\n"
+	rx, tx, found := sumPhysical(dev)
+	if !found {
+		t.Fatal("found = false, want true (eth0 is present)")
+	}
+	// exactly eth0 — the VLAN child, both bridges and the shim must not be added
+	if rx != 526909322213 || tx != 225368183653 {
+		t.Fatalf("sum = (%d,%d), want eth0 only (526909322213,225368183653)", rx, tx)
+	}
+	// two physical NICs add up
+	two := "  eth0: 10 1 0 0 0 0 0 0 20 2 0 0 0 0 0 0\n" +
+		"  eth1: 5 1 0 0 0 0 0 0 7 2 0 0 0 0 0 0\n"
+	if rx, tx, _ := sumPhysical(two); rx != 15 || tx != 27 {
+		t.Fatalf("two NICs = (%d,%d), want (15,27)", rx, tx)
+	}
+	// no eth* at all → found=false so Rate() falls back to the default-route interface
+	if _, _, found := sumPhysical("  br0: 1 2 3 4 5 6 7 8 9 10\n"); found {
+		t.Fatal("found = true for a host with no eth*, want false")
+	}
+}
+
 func TestParseIfaceBytes(t *testing.T) {
 	// /proc/net/dev: rx bytes = 1st field after colon, tx bytes = 9th (index 8).
 	dev := "Inter-|   Receive                                                |  Transmit\n" +

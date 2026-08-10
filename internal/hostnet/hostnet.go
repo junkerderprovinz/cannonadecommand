@@ -7,22 +7,72 @@ package hostnet
 
 import (
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
-// Rate returns the cumulative bytes received (rx) and transmitted (tx) on the host's
-// PRIMARY uplink — the interface that carries the default route. Reporting ONE
-// interface (not the sum of all) avoids double-counting a bridge and its member
-// (br0 + eth0 + veth*). The frontend deltas successive calls; a counter reset or an
-// interface change just skips one sample (its rx>=prev guard). Both 0 when /proc
-// can't be read (e.g. non-Linux dev host) — the chip then shows "--".
+// physRe matches a PHYSICAL NIC as Unraid names them: eth0, eth1, … A VLAN child
+// (eth0.20) carries a dot and is deliberately excluded — its traffic already crosses
+// its parent, so counting both would double it.
+var physRe = regexp.MustCompile(`^eth\d+$`)
+
+// Rate returns the host's cumulative rx/tx bytes, summed over the PHYSICAL NICs.
+//
+// It used to report the single interface carrying the default route, on the theory
+// that one interface avoids double-counting a bridge and its member. That measured the
+// wrong layer: on Unraid the default route is a bridge (and /proc/net/route lists
+// shim-br0 first, so that is what actually got measured), and a Linux bridge only
+// counts frames the HOST stack itself terminates — not frames it forwards between
+// ports, and nothing on a different netdev. With containers on a VLAN bridge (br0.20)
+// and VMs on tap ports, only WebGUI traffic was left, so a 100 Mbit/s transfer showed
+// as a few Kbit/s. Measured on the live box: eth0 rx=526.9 GB vs br0 rx=3.1 GB, a
+// factor of ~170 — exactly the reported symptom.
+//
+// Summing the physical NICs is both complete and free of double counting: every frame
+// crosses exactly one hardware NIC, whatever rides on top of it (br0, br0.20, a bond,
+// docker0, an ipvlan child inside a container netns, a VM tap).
+//
+// Falls back to the default-route interface when no eth* exists (an unusual naming
+// scheme), so an odd host degrades to the previous behaviour instead of reporting
+// nothing. The frontend deltas successive calls; a counter reset just skips one sample
+// (its rx>=prev guard). Both 0 when /proc can't be read (e.g. a non-Linux dev host) —
+// the chip then shows "--".
 func Rate() (rx, tx uint64) {
+	data, err := os.ReadFile("/proc/net/dev")
+	if err != nil {
+		return 0, 0
+	}
+	if rx, tx, found := sumPhysical(string(data)); found {
+		return rx, tx
+	}
 	iface := defaultIface()
 	if iface == "" {
 		return 0, 0
 	}
-	return ifaceBytes(iface)
+	return parseIfaceBytes(string(data), iface)
+}
+
+// sumPhysical adds up the rx/tx byte counters of every physical NIC in /proc/net/dev
+// content. found is false when the host names its NICs differently, which tells Rate
+// to fall back. Split out so it is unit-testable without /proc.
+func sumPhysical(data string) (rx, tx uint64, found bool) {
+	for _, line := range strings.Split(data, "\n") {
+		name, rest, ok := strings.Cut(line, ":")
+		if !ok || !physRe.MatchString(strings.TrimSpace(name)) {
+			continue
+		}
+		f := strings.Fields(rest)
+		if len(f) < 9 {
+			continue
+		}
+		r, _ := strconv.ParseUint(f[0], 10, 64)
+		t, _ := strconv.ParseUint(f[8], 10, 64)
+		rx += r
+		tx += t
+		found = true
+	}
+	return rx, tx, found
 }
 
 // defaultIface reads the name of the default-route interface from /proc/net/route

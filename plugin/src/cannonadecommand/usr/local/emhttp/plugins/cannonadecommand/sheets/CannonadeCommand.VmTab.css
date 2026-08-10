@@ -233,7 +233,7 @@ html.cc-vms-on #displaybox input[type="button"]:not(.autostart):disabled { opaci
 /* ═══ VM-logo context menu (addVMContext -> ul.dropdown-menu.dropdown-context, appended to <body>) ═══ */
 html.cc-vms-on ul.dropdown-menu.dropdown-context {
   background: #303030 !important; border: none !important; border-radius: var(--cc-b-radius, 10px) !important;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, .6) !important; padding: 6px !important;
+  box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .6)) !important; padding: 6px !important;
 }
 html.cc-vms-on ul.dropdown-menu.dropdown-context > li > a,
 html.cc-vms-on ul.dropdown-menu.dropdown-context > li > span {
