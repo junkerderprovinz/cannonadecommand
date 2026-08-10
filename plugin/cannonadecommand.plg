@@ -3,7 +3,7 @@
   <!ENTITY name      "cannonadecommand">
   <!ENTITY slug      "cannonadecommand">
   <!ENTITY author    "Junker der Provinz">
-  <!ENTITY version   "3.6.6">
+  <!ENTITY version   "3.7.0">
   <!ENTITY gitURL    "https://raw.githubusercontent.com/junkerderprovinz/cannonadecommand/main/plugin">
   <!ENTITY pluginURL "&gitURL;/&slug;.plg">
   <!ENTITY pkgURL    "https://github.com/junkerderprovinz/cannonadecommand/releases/download/v&version;">
@@ -27,6 +27,33 @@
 </ICON>
 
 <CHANGES>
+### 3.7.0
+**✨ Added**
+- A unified loading-spinner engine: every spinner in the plugin (tab switches, container/plugin dialogs, the Apps update overlay) now shares one set of size and speed tokens instead of several separate hand-built rings.
+- Card shadows now follow a shared depth system with dedicated values for the light theme, instead of every card reusing shadows tuned for the dark theme.
+
+**🎨 Design**
+- The "results per page" and DockerHub search badges now sit in the sidebar next to the Apps search, instead of the top of the main content area.
+- Pagination numbers and the sort-order arrows now follow the active colour mode.
+- The footer's scroll-to-top and scroll-to-bottom arrows now follow the active colour mode.
+
+**⚡ Improved**
+- Turning animations off now also reaches Community Applications' own buttons, dialogs and the footer arrows, not just CannonadeCommand's own elements.
+- App-card badges (the corner ribbon and the top-right badge) share one consistent size across every card.
+- App-card action buttons now wrap onto a single row instead of breaking across two lines on narrower cards.
+
+**🐛 Fixed**
+- CA's own settings page ("ca_settings"): the Anwenden/Fertig and Download-Log/Hilfe button rows now correctly line up with the toggle column above them.
+- The Community Applications tab no longer shows a second, unwanted "delete" button next to the real one.
+- Search no longer clears what you typed when you press Enter or pick a result.
+- The footer arrows no longer have two competing colour rules fighting each other depending on load order.
+- The Plugins sub-navigation badge is back to its correct size.
+- The "results per page" dropdown no longer opens in the wrong position after being moved into the sidebar.
+- The container/plugin update dialog no longer shows two loading rings at once.
+- Settings > System Temperature no longer gets stuck under a dimmed overlay after certain dialogs open.
+- Colour-mode badges no longer flash their accent colour for an instant before settling on neutral when a page first loads.
+- Network throughput on the Overview page now reflects true total traffic; it previously counted only one network interface and undercounted usage significantly on multi-NIC systems.
+
 ### 3.6.6
 **🐛 Fixed**
 - Fixed a bug from 3.6.2 that could freeze a browser tab on the Docker page under heavy system load: a self-observing watcher on the tab-load spinner could keep re-triggering itself. It now runs on a simple, time-limited check instead.
@@ -1005,11 +1032,11 @@
 - #12 Start-Tab: Spalten-Zuruecksetzen und der Umschalter stehen nebeneinander statt uebereinander.
 
 ### 2.46.2
-- #1 Nachbesserung zu #1 aus 2.46.1: In der Abschnitts-Ansicht blieb der SmokeSignal-Abschnitt
+- #1 Nachbesserung zu #1 aus 2.46.1: In der Abschnitts-Ansicht blieb der FireSquire-Abschnitt
   sichtbar (eine Anzeige-Regel gewann per Spezifitaet) -- jetzt zuverlaessig ausgeblendet.
 
 ### 2.46.1
-- #1 Start-Tab: Der SmokeSignal-Unterreiter wird nicht mehr als eigener Tab/Abschnitt
+- #1 Start-Tab: Der FireSquire-Unterreiter wird nicht mehr als eigener Tab/Abschnitt
   angezeigt (er hat seine eigene Seite) -- in beiden Ansichten (Tabs und Abschnitte).
 
 ### 2.46.0
@@ -1609,7 +1636,7 @@
 - #3 Unassigned Devices: Zahnrad und Aktualisieren sind jetzt FARBIGE Icons im CC-Style --
    dauerhaft in der Akzentfarbe, 22px, beim Hover leicht aufgehellt.
 - #4 Array-Vorgang: "Paritaetspruefung laeuft." steht jetzt einzeilig in der Status-Pille.
-- #5 Alle Buttons in derselben Groesse korrekt untereinander -- auch der SmokeSignal-Button:
+- #5 Alle Buttons in derselben Groesse korrekt untereinander -- auch der FireSquire-Button:
    er wird nach dem CC-Umbau in die Reboot-Zeile injiziert und bekommt jetzt eine eigene Zeile.
 - #6 Fortschrittsbalken: sitzt jetzt am UNTEREN Ende der Card, laeuft staendig (diagonale
    Streifen-Animation INNERHALB der Fuellung -- geht nie ueber den echten Prozentwert hinaus)
@@ -1661,7 +1688,7 @@
    die wahre Ursache war Unraids eigenes Update.css, das den Button per margin-top 13px nach unten
    schob; die Buttons ziehen jetzt aus dem scrollenden Reiter-Streifen in eine feste rechte Gruppe um.
 - #2 Array-Vorgang: Die Zeilen sind jetzt ein echtes CSS-Raster ueber ALLE Tabellen -- auch Ruhezustand
-   und Smokesignal stehen exakt buendig; Fremd-Raender und Tabellen-Eigenheiten koennen nichts mehr
+   und FireSquire stehen exakt buendig; Fremd-Raender und Tabellen-Eigenheiten koennen nichts mehr
    verschieben.
 - #3 Hochfahren/Herunterfahren (und andere Button-Paare): JEDER Button hat jetzt seine EIGENE
    Info-Bubble mit seinem eigenen Satz.
@@ -1689,7 +1716,7 @@
    nur (Planung) bleibt als kleiner Badge.
 - #2 Array-Vorgang: Alle Buttons haben jetzt EINE feste Breite -- Info-Bubbles, Planung-Badges und
    Schalter sitzen dadurch in jeder Zeile exakt auf derselben Position; auch Ruhezustand und
-   Smokesignal stehen buendig (Fremd-Tabellen-Versatz neutralisiert).
+   FireSquire stehen buendig (Fremd-Tabellen-Versatz neutralisiert).
 - #3 Array-Vorgang: Die Bubble-Texte folgen jetzt immer der UI-Sprache (englische Reststrings wie die
    Ruhezustand-Beschreibung werden uebersetzt).
 - #4 Array-Vorgang: Die beiden Checkboxen (Korrekturen auf Paritaet schreiben, Neustart im abgesicherten
