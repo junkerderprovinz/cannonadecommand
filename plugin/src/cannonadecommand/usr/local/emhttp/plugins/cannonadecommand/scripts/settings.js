@@ -1353,6 +1353,17 @@
       cI.appendChild(segRow(T("Temperatur-Warnschwelle", "Temperature warning threshold"), [["50", "50 °C"], ["60", "60 °C"], ["70", "70 °C"]], get("cc.tempwarn", "60"), function (v) { set("cc.tempwarn", v); syncHeaderBar(); }));
       wrapHeader.appendChild(cI);
     })();
+    // #18 (user: "ich wollte die icon funktion übernehmen. nicht nur die icons einbauen. wo sind die
+    // einstellungen dafür?"): the main-tab icons (Tabler, one curated set — see header.js ccTabIcons())
+    // are additive markup CC inserts, not a native toggle, so they need their own on/off like every other
+    // CC-added element. header.js reads cc.tabicons live and both inserts AND removes the icons on flip
+    // (unlike most toggles here, which only gate future paints — nothing else in ccTabIcons() clears
+    // already-inserted svg.cc-tab-ico, so turning this off has to be as real as turning it on).
+    (function () {
+      var cT = card(T("Haupttab-Icons", "Main tab icons"), T("Zeigt ein Icon (Tabler, MIT-lizenziert) vor jedem Haupttab-Namen (Übersicht, Docker, VMs, …).", "Shows an icon (Tabler, MIT licensed) in front of every main tab label (Dashboard, Docker, VMs, …)."));
+      cT.appendChild(toggleRow(T("Icons anzeigen", "Show icons"), get("cc.tabicons", "1") !== "0", function (v) { set("cc.tabicons", v ? "1" : "0"); try { window.ccTabIcons && window.ccTabIcons(); } catch (e) {} }));
+      wrapHeader.appendChild(cT);
+    })();
     // ── SERVERNAME card (user: size/weight/italic/font/colour customisable). header.js reads the
     // cc.brand.* keys live and inlines them on span.cc-brand-name — the REAL header is the preview
     // (no card preview). Controls are all dropdowns (stringent, no lone slider/toggle); colour

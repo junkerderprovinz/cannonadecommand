@@ -131,10 +131,16 @@
   };
   function ccTabIcons() {
     try {
+      // #18 (user: "wo sind die einstellungen dafür?"): additive markup needs a real off-switch, not just
+      // a gate on future paints — CC_TAB_ICONS is the only place that puts these <svg>s in the DOM, so
+      // this is also the only place that can take them back out again when the setting flips off.
+      var on = g("cc.tabicons", "1") !== "0";
       var items = document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a[href]");
       for (var i = 0; i < items.length; i++) {
         var a = items[i];
-        if (a.querySelector(":scope > svg.cc-tab-ico")) continue;   // idempotent
+        var existing = a.querySelector(":scope > svg.cc-tab-ico");
+        if (!on) { if (existing) existing.remove(); continue; }
+        if (existing) continue;   // idempotent
         var href = "/" + (a.getAttribute("href") || "").replace(/^\/+|\/+$/g, "").split("/")[0];
         var d = CC_TAB_ICONS[href]; if (!d) continue;
         var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -147,6 +153,7 @@
       }
     } catch (e) {}
   }
+  try { window.ccTabIcons = ccTabIcons; } catch (eTI) {}   // same-page live toggle hook for the CC Settings page (the nav bar is on every page, Settings included)
   // popup title badges follow the COLOUR MODES (user): accent by default (CSS vars), palette in
   // rainbow — painted here because dialogs appear as direct BODY children at any time.
   function paintPopups() {
