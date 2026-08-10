@@ -683,7 +683,7 @@
     for (var i = 0; i < panels.length; i++) {
       var section = panels[i];
       if (section.getAttribute("data-cc-card")) continue;   // idempotent; keeps i == real DOM index
-      if (ccIsSmokeTab(tabBtns[i])) { section.setAttribute("data-cc-card", "1"); section.classList.add("cc-smoke-hidden"); continue; }   // skip SmokeSignal: no card head, hidden (user #17)
+      if (ccIsSmokeTab(tabBtns[i])) { section.setAttribute("data-cc-card", "1"); section.classList.add("cc-smoke-hidden"); continue; }   // skip FireSquire: no card head, hidden (user #17)
       section.setAttribute("data-cc-card", "1");
       ccCards(section);   // clone-settings block(s) -> Nebencard beside their Hauptcard (all 3 Unraid variants; /Main has none, so no-op)
       var head = document.createElement("div");
