@@ -1805,6 +1805,19 @@
       // gate is self-correcting -> no infinite observer loop). subtree keeps covering spans re-added on rebuild.
       ccDockObs = new MutationObserver(function () { if (ccDockDirty()) { try { ccDockProfile(); } catch (e2) {} } });
       ccDockObs.observe(p, { attributes: true, attributeFilter: ["style"], subtree: true });
+      // #16 (user, live-confirmed trigger: "die werden ständig als Gruppe ausgeblendet wenn man per Maus
+      // drüber hoovert" — hovering IS the trigger). Both observers above assume the wipe shows up as either
+      // a childList replacement (120ms debounce) or a style-attribute mutation on the EXISTING node
+      // (instant) — but Connect's own hover reaction (e.g. an unread-state highlight) plausibly SWAPS the
+      // icon subtree rather than mutating it in place, which the style-attribute observer can't see and the
+      // childList one only catches after its debounce. Re-pin directly off the hover event itself, capture
+      // phase so it fires before Connect's own handler can act on it, plus two quick follow-ups (a bare
+      // requestAnimationFrame call is too early — the swap hasn't happened yet) to catch a slightly delayed
+      // re-render, mirroring the #15 dropdown-reposition retry cascade elsewhere in this file.
+      p.addEventListener("mouseover", function () {
+        try { ccDockProfile(); } catch (e3) {}
+        [30, 90, 200].forEach(function (ms) { setTimeout(function () { try { ccDockProfile(); } catch (e4) {} }, ms); });
+      }, true);
     } catch (e) {}
   }
   // ── GLOBAL FLOATING hover bubble (user: "im Start-Tab passen viele Mouseover-Bubbles nicht …
