@@ -812,6 +812,16 @@ html.cc-popups-on .cc-ca-search-extras .dockerSearch {
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
 }
+/* #25 (user: "wo ist der results per page badge hin? ich seh ihn nicht mehr"): CA hides .maxPerPage with
+   an INLINE (non-!important) display:none on the un-paginated home grid (Recently Added/Spotlight/...)
+   and only shows it on a real paginated list (category/All Apps/search) — confirmed live (inline style
+   attribute differs between the two: present on /Apps, absent on a category view). Dropping the forced
+   display above (the #15/#11 fix) now correctly leaves it hidden there too, which is exactly where the
+   user is used to seeing and using it. Unlike .dockerSearch (genuinely only meaningful mid-search), the
+   maxPerPage control is a plain preference toggle — clicking it off the paginated view is a harmless
+   no-op (it just sets the preference for the next paginated view), so force it visible everywhere, the
+   same guarantee .dockerSearch does NOT get. */
+html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage { display: flex !important; }
 html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:hover,
 html.cc-popups-on .cc-ca-search-extras .dockerSearch:hover { filter: brightness(1.12) !important; }
 /* REACTIVE: matches the search chip right above it — neutral at rest, colour on hover. */
