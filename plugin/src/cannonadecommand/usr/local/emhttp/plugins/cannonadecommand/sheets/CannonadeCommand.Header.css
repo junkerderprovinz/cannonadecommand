@@ -373,6 +373,10 @@ html.cc-header-on #UserProfile > div:nth-child(2) { align-items: center; gap: 6p
 html.cc-header-on [data-cc-trig] {
   display: inline-flex; align-items: center; justify-content: center;
   box-sizing: border-box; width: var(--cc-md-ibox, 30px); height: var(--cc-md-ibox, 30px); padding: 0;
+  /* #34-followup: a plain util icon's spacing comes from `margin: 0 3px` on its <a> (Header.css ~line
+     142) - the adopted trigger is a <span>, never matches that selector, so without its own margin it
+     sits flush (0px) against its neighbour instead of the same 3px+3px = 6px gap. Match it explicitly. */
+  margin: 0 3px;
   background: var(--cc-rb-c, var(--cc-hdr-accent, #2f6feb)) !important;   /* #15: rainbow slot colour (JS-stamped) with the single-accent fallback */
   border-radius: min(var(--cc-b-radius, 8px), 8px);
   color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)); transition: color .12s, filter .12s;
