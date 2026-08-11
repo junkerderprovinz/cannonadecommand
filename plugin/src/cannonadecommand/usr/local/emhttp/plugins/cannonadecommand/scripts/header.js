@@ -1822,15 +1822,19 @@
       ccDockObs = new MutationObserver(function () { if (ccDockDirty()) { try { ccDockProfile(); } catch (e2) {} } });
       ccDockObs.observe(p, { attributes: true, attributeFilter: ["style"], subtree: true });
       // #16 (user, live-confirmed trigger: "die werden ständig als Gruppe ausgeblendet wenn man per Maus
-      // drüber hoovert" — hovering IS the trigger). Both observers above assume the wipe shows up as either
-      // a childList replacement (120ms debounce) or a style-attribute mutation on the EXISTING node
-      // (instant) — but Connect's own hover reaction (e.g. an unread-state highlight) plausibly SWAPS the
-      // icon subtree rather than mutating it in place, which the style-attribute observer can't see and the
-      // childList one only catches after its debounce. Re-pin directly off the hover event itself, capture
-      // phase so it fires before Connect's own handler can act on it, plus two quick follow-ups (a bare
-      // requestAnimationFrame call is too early — the swap hasn't happened yet) to catch a slightly delayed
-      // re-render, mirroring the #15 dropdown-reposition retry cascade elsewhere in this file.
-      p.addEventListener("mouseover", function () {
+      // drüber hoovert" — hovering IS the trigger). ROUND 2 (user: "immer noch Probleme... auch wenn man
+      // über die Haupttabs hoovert werden sie ausgeblendet"): hovering the MAIN TABS — nowhere near
+      // #UserProfile, a completely different part of the DOM — ALSO triggers it, so the first attempt
+      // (a listener scoped to #UserProfile) could never have caught this; the trigger is not "Connect
+      // reacts to being hovered", it is something page-wide that runs on every hover (the leading
+      // suspect: ccTipShow()/ccWireTips() below runs on EVERY [data-cc-tip]/[title] hover anywhere on the
+      // page, including the tabs, and forces a synchronous layout read — if that shifts the page enough to
+      // change the scrollbar, every position:fixed element's stored coordinates go stale until re-pinned).
+      // Move the listener from #UserProfile to document (capture, so it fires before Connect's own
+      // handler either way) so it re-pins on ANY hover on the page, not only a hover of the icons
+      // themselves — this can no longer miss a trigger location by construction, whatever the exact
+      // upstream mechanism turns out to be. Same quick-follow-up cascade as before.
+      document.addEventListener("mouseover", function () {
         try { ccDockProfile(); } catch (e3) {}
         [30, 90, 200].forEach(function (ms) { setTimeout(function () { try { ccDockProfile(); } catch (e4) {} }, ms); });
       }, true);
