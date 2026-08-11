@@ -3145,11 +3145,32 @@
     } catch (e) {}
   }
 
+  // #29 (user: "die footer pfeile werden wenn man ganz unten ist nicht entsprechend ausgeblendet"):
+  // dynamix.js natively fades a.back_to_top OUT at the TOP of the page via jQuery fadeIn/fadeOut, but ships
+  // no equivalent for a.move_to_end at the BOTTOM. Tried mirroring that exact jQuery mechanism first —
+  // dropped it after live-tracing: something (unclear what, possibly this animation engine's own rAF-tick
+  // cleanup fighting a scroll/resize-driven re-trigger, reproduced even with a same-state guard in place and
+  // .stop(true) before every call) kept resetting a completed fadeOut's display:none back to an opacity
+  // value within ~50ms, so the arrow never actually stayed hidden. A CSS class + opacity/pointer-events
+  // transition sidesteps the whole animation-queue class of problem: no display toggling, no JS per-frame
+  // ticks to fight, just one idempotent class flip Tokens.css reacts to.
+  var ccFooterBottomState = null;
+  function ccFooterArrowsBottom() {
+    try {
+      var atBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 2);
+      if (atBottom === ccFooterBottomState) return;
+      ccFooterBottomState = atBottom;
+      document.documentElement.classList.toggle("cc-footer-at-bottom", atBottom);
+    } catch (e) {}
+  }
   function ccLoaderBoot() {
     ccLoadState();
     ccAttachSwalObs();
     ccSwalScan();          // in case a dialog is already open on load
     ccWatchBodyForSwal();
+    ccFooterArrowsBottom();                                                 // correct initial state (e.g. a page shorter than the viewport)
+    window.addEventListener("scroll", ccFooterArrowsBottom, { passive: true });
+    window.addEventListener("resize", ccFooterArrowsBottom);
     // #4 (found chasing "der scrollbalken rechts ist immer noch da"): this used to be a BOUNDED 12x350ms
     // retry (4.2s), which could only ever repair the first few seconds of a page's life — any loader that
     // opened later (a plugin install triggered minutes into a session, a Docker update window) never got

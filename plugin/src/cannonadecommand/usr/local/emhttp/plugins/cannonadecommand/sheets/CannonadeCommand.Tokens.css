@@ -464,10 +464,23 @@ html.cc-popups-on a[class*="back_to"] {
   border-radius: var(--cc-b-radius, 999px) !important;   /* chip corners follow the badge SHAPE */
   width: 40px !important; height: 40px !important;        /* fixed square chip (predictable size) */
   padding: 0 !important;
-  display: flex !important; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
   font-size: 1.35rem !important; line-height: 1 !important;
   text-decoration: none !important;   /* #10 (user, v3.6.2): the arrow chip is an <a> -> never Unraid's a:hover underline */
 }
+/* #29 (user: "die footer pfeile werden wenn man ganz oben oder ganz unten einer seite ist nicht entsprechend
+   ausgeblendet"): dynamix.js natively fades .back_to_top out at scrollTop 0 via jQuery, which ends the
+   animation with a plain (non-!important) inline display:none — the unconditional display:flex !important
+   above outranked that every time, so the arrow never actually left the screen at the top of a page. Scope
+   it to when native hasn't hidden the element, so its own inline display:none (no !important) shows through
+   unmasked; .move_to_end has no native equivalent (add — CC's own scroll-position hide, wired in header.js). */
+html.cc-popups-on a.back_to_top:not([style*="display: none"]),
+html.cc-popups-on a.move_to_end:not([style*="display: none"]) { display: flex !important; }
+/* #29 continued: a.move_to_end's own bottom-of-page hide (header.js ccFooterArrowsBottom, no jQuery
+   involved — see its comment for why). opacity + pointer-events only, no display toggling, so there is no
+   inline style for any other rule to race or fight; transition lives here since the JS never animates. */
+html.cc-popups-on a.move_to_end { transition: opacity .3s ease, background .12s ease, color .12s ease, filter .12s ease !important; }
+html.cc-popups-on.cc-footer-at-bottom a.move_to_end { opacity: 0 !important; pointer-events: none !important; }
 /* #10 (user, v3.6.2 — "der Hover-Unterstrich ist bei den Footer-Pfeilen"): the arrow chip is an <a>, so
    Unraid's base a:hover added an underline. The base rule's `text-decoration: none !important` (above) already
    kills it in EVERY state incl. hover; the chip's own shade reaction (--cc-chip-hover, below) stays and the
@@ -1757,10 +1770,17 @@ html.cc-popups-on a.move_to_end > i { color: inherit !important; }
 html.cc-popups-on a.back_to_top:hover,
 html.cc-popups-on a.move_to_end:hover { filter: brightness(1.12) !important; }
 /* REACTIVE: neutral at rest, colour on hover. .cc-popups-on carried for (0,4,1) so it beats the rule
-   above — written together with it, not bolted on after the next complaint. */
+   above — written together with it, not bolted on after the next complaint.
+   #29 (user: "die footer pfeile haben einen zu transparenten hintergrund, wenn text dahinter ist sieht man
+   sie kaum"): the shared --cc-chip translucent fill (18% grey) works everywhere else it's used because
+   those badges sit on a KNOWN solid panel/sidebar surface — these two float over ARBITRARY, SCROLLING page
+   content instead (text, images, card grids), so 18% opacity reads as barely-there against anything light
+   or busy. A solid surface (matching the raised on-card chip elsewhere, plus its own drop shadow) stays
+   legible regardless of what happens to be underneath, unlike every other neutral chip in this file. */
 html.cc-header-rbneutral.cc-popups-on a.back_to_top,
 html.cc-header-rbneutral.cc-popups-on a.move_to_end {
-  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+  background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .4) !important;
 }
 html.cc-header-rbneutral.cc-popups-on a.back_to_top:hover,
 html.cc-header-rbneutral.cc-popups-on a.move_to_end:hover {
