@@ -101,6 +101,13 @@ html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a svg.
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a span.cc-tab-label { display: inline; }
 html.cc-tabtext-off #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a span.cc-tab-label { display: none; }
 html.cc-tabtext-off #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a svg.cc-tab-ico { margin-right: 0; }
+/* #18 (user: "können wir die tabs wenn sie kein text haben genauso groß machen wie die hauptleisten icons?"):
+   with the label gone the pill kept its text-sized padding (0 22px), so a 16px icon sat in a 60px-wide box —
+   match the utility icons' own box exactly instead (36x36, --cc-lgb-h, zero padding, same tier both already
+   share) rather than just trimming the existing padding to an arbitrary smaller number. */
+html.cc-tabtext-off #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a {
+  width: var(--cc-lgb-h, 36px) !important; padding: 0 !important;
+}
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search).active > a {
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
 }
