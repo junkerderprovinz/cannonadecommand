@@ -587,6 +587,52 @@
       localStorage.setItem("cc.settab", SECS[i].id); // stable id, NOT the index — a menu reorder must never restore the wrong tab
       SECS.forEach(function (sc, j) { sc.w.style.display = j === i ? "" : "none"; tabBtns[j].classList.toggle("cc-set-tab-on", j === i); });
       paintSetTabs();
+      ccSetAlignSearch();
+    }
+    // #28 (user: "in den cc settings ist der suchbutton bei breitem browserfenster zu weit rechts"): the
+    // hero row (icon/title left, search badge right via margin-left:auto) spans the FULL settings width,
+    // but .cc-set-wrap is a FIXED-340px-column grid that does NOT stretch on a wide window (T2, by design —
+    // packed from the left) — so on a wide window the badge sits far past wherever the cards actually end,
+    // and by how much depends on which tab is active (different tabs have different card counts) and the
+    // viewport width. Self-correcting, same idea as header.js ccAppsAlignRight(), but on the BADGE's own
+    // margin-right, not the hero's padding: .cc-set-hero is box-sizing:content-box with flex-shrink:1, so
+    // padding-right there gets silently absorbed into the content width instead of moving the border-box
+    // edge (proved live: adding it never changed hero's own getBoundingClientRect().right at all) — a
+    // cur+delta correction against that non-moving reference compounds larger every call instead of
+    // converging. Reset-then-remeasure avoids that entirely: clear any earlier correction, measure the
+    // badge's now-natural position, then pull it in by exactly the one delta needed this time.
+    function ccSetAlignSearch() {
+      try {
+        var badge = document.querySelector(".cc-set-searchbadge");
+        if (!badge) return;
+        var activeWrap = null;
+        for (var ai = 0; ai < SECS.length; ai++) { if (SECS[ai].w.style.display !== "none") { activeWrap = SECS[ai].w; break; } }
+        if (!activeWrap) return;
+        var cards = activeWrap.querySelectorAll(".cc-set-card");
+        var contentRight = 0;
+        for (var ci = 0; ci < cards.length; ci++) {
+          var r = cards[ci].getBoundingClientRect();
+          if (r.width > 0 && r.right > contentRight) contentRight = r.right;
+        }
+        if (!contentRight) return;
+        badge.style.removeProperty("margin-right");
+        var natural = badge.getBoundingClientRect().right;
+        var delta = Math.round(natural - contentRight);
+        if (delta > 0.5 && delta < 900) badge.style.setProperty("margin-right", delta + "px", "important");
+      } catch (e) {}
+    }
+    // render() re-runs on every settings change (root.innerHTML = "" at the top rebuilds .cc-set-hero/
+    // -searchbadge/-card from scratch each time), so a resize listener bound straight to THIS call's
+    // ccSetAlignSearch goes stale the moment render() runs again — proved live: it kept calling the FIRST
+    // render's closure, whose SECS entries pointed at already-removed wrap elements (0 cards found,
+    // contentRight stayed 0, the early-return made it a silent no-op), while tab clicks stayed correct only
+    // because their onclick is rebound fresh every render(). Route through a window-level pointer that
+    // every render() call reassigns, so whichever listener fired always calls the CURRENT version.
+    window.__ccSetAlignSearch = ccSetAlignSearch;
+    if (!window.__ccSetAlignResize) {
+      window.__ccSetAlignResize = true;
+      var alignTimer = null;
+      window.addEventListener("resize", function () { clearTimeout(alignTimer); alignTimer = setTimeout(function () { window.__ccSetAlignSearch(); }, 120); });
     }
     // rainbow: colour EVERY settings tab per palette index (was: only the accent-filled active tab, so
     // rainbow never reached the CC tab bar). palG() is the shared rainbow palette; idealText is hoisted.
