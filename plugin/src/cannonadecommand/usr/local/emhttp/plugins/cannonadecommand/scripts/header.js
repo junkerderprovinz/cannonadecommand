@@ -626,12 +626,20 @@
   // storage: cc.navorder.all = {left:[keys], right:[keys]} — each tile's own sequence INCLUDING
   // items dragged over from the other side. One-time fallback-migration from the old zone keys.
   function navReadAll() {
-    try { var o = JSON.parse(g("cc.navorder.all", "null")); if (o && o.left && o.right) return o; } catch (e) {}
-    try {
-      var l = JSON.parse(g("cc.navorder", "null")) || [], r = JSON.parse(g("cc.navorder.right", "null")) || [];
-      if (l.length || r.length) return { left: l, right: r };
-    } catch (e2) {}
-    return null;
+    var o = null;
+    try { o = JSON.parse(g("cc.navorder.all", "null")); if (!(o && o.left && o.right)) o = null; } catch (e) {}
+    if (!o) {
+      try {
+        var l = JSON.parse(g("cc.navorder", "null")) || [], r = JSON.parse(g("cc.navorder.right", "null")) || [];
+        if (l.length || r.length) o = { left: l, right: r };
+      } catch (e2) {}
+    }
+    if (!o) return null;
+    // #34: bell/burger proxies host a LIVE adopted Vue trigger, not a plain link — they only
+    // render correctly among the other utility icons. A stray drag (or a leftover save from
+    // testing the merged reorder zone) must never leave them parked among the page tabs.
+    if (o.left && o.left.length) o.left = o.left.filter(function (k) { return k !== "cc-bell" && k !== "cc-burger"; });
+    return o;
   }
   function applyNavOrder() {
     try {
