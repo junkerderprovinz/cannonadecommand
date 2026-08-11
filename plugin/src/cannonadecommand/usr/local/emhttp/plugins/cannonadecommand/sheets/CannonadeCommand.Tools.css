@@ -174,16 +174,17 @@ html.cc-tools-on #displaybox dl > dd .switch-button-background { vertical-align:
 html.cc-tools-on #displaybox dl > blockquote.inline_help,
 html.cc-tools-on #displaybox dl > .inline-help { grid-column: 1 / -1; }
 html.cc-tools-on #displaybox blockquote.inline_help { background: #1c1c1c !important; border: none !important; border-radius: 8px !important; color: #b8b8b8 !important; padding: 8px 12px !important; margin: 2px 0 8px !important; font-size: 12.5px !important; }
-/* #11/#12 (user: Mover / TRIM subtabs "durcheinander" -> "in den CC-Style, Ausrichtung nativ lassen, aber die
-   Badges richtig ausrichten"): the *-Zeitplan rows are native <dl>s with TWO <dt>s (a stray ⓘ-icon dt + the
-   label dt) + one <dd>. ccToolsEnhance only folds that stray dt on cc-diskpage, so on /Settings/* the native
-   2-col grid auto-places the three items scattered (ⓘ in col1, label in col2 pushed far-right, the field wraps
-   to col1-row2 = far left). Pin all three to ROW 1: both <dt>s right-aligned in the LABEL column (label then
-   the ⓘ), the field in the value column -> lines up exactly with the single-<dt> rows above. Native widths kept. */
-html.cc-tools-on #displaybox dl:has(> dt + dt) > * { grid-row: 1 !important; align-self: center !important; }
-html.cc-tools-on #displaybox dl:has(> dt + dt) > dt { grid-column: 1 !important; justify-self: end !important; }
-html.cc-tools-on #displaybox dl:has(> dt + dt) > dt:nth-child(2) { margin-right: 22px !important; }
-html.cc-tools-on #displaybox dl:has(> dt + dt) > dd { grid-column: 2 !important; justify-self: start !important; }
+/* #11/#12 (user: Mover / TRIM subtabs "durcheinander") + #32 (user: Boot-Datenträger flyout on /Main —
+   "einige Texte... werden überlagert"): a stray <dt> (Mover/TRIM's carries only a help (i)-icon; the
+   Boot-Datenträger dl's are completely empty structural placeholders) breaks the dl's native 2-column grid
+   auto-flow. The fix used to live HERE as a blanket "dl:has(a stray dt anywhere) -> pin EVERY child to
+   grid-row:1" rule — correct for Mover/TRIM's single stray-dt row, but #32's dl has TWO separate label/value
+   rows each with their OWN stray dt, and :has()/adjacent-sibling matching doesn't care about display, so the
+   blanket rule matched the whole dl and flattened BOTH rows onto row 1, overlapping "Active GUID" directly on
+   top of "GUID Type". Moved to header.js ccToolsEnhance() instead: every stray <dt> (icon-carrying or fully
+   empty) is now display:none'd there, for ANY number of occurrences per dl, so the grid never sees them and
+   plain native auto-flow places every real row correctly on its own — no grid-row/-column overrides needed
+   here at all. */
 
 /* ── INPUTS / SELECT / TEXTAREA -> dark fills, NO focus ring (focus = brightness) ── */
 html.cc-tools-on #displaybox input[type="text"],

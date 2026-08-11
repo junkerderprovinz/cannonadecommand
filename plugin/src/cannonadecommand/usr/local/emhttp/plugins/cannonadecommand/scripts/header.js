@@ -1689,18 +1689,31 @@
           bq.style.display = "none";
         }
       }
-      // disk DEVICE pages: Unraid's form has an EMPTY structural <dt> before each real label; the resolver above
-      // appended some (i) icons to THAT empty dt, leaving a stray icon-only dt that broke the CC grid (3 items on
-      // some rows). Fold each standalone icon into the following label dt so every row reads label|value.
-      if (document.documentElement.classList.contains("cc-diskpage")) {
-        var carriers = document.querySelectorAll("#displaybox dl > dt > .cc-toolsinfo");
-        for (var ck = 0; ck < carriers.length; ck++) {
-          var cic = carriers[ck], cdt = cic.parentElement;
-          if ((cdt.textContent || "").replace(/[\sⓘ]/g, "")) continue;              // dt already carries a label -> icon is fine
-          var nlab = cdt.nextElementSibling;
-          while (nlab && nlab.tagName === "DT" && (getComputedStyle(nlab).display === "none" || !(nlab.textContent || "").trim())) nlab = nlab.nextElementSibling;
-          if (nlab && nlab.tagName === "DT") { nlab.appendChild(cic); cdt.style.display = "none"; }
-        }
+      // Unraid's form dl's carry EMPTY structural <dt>s before some real labels (a leftover placeholder from
+      // the native markup). Two sub-cases, both handled the same way — hide the stray dt so it drops out of
+      // the dl's grid layout entirely and native auto-flow places every real dt/dd row correctly on its own
+      // (#11/#12 Mover/TRIM, #32 Boot-Datenträger flyout on /Main — see Tools.css for why this moved out of a
+      // blanket CSS rule: :has()/adjacent-sibling matching can't tell "one stray row" from "several", so a
+      // single CSS rule flattened multi-row dl's onto each other). Was cc-diskpage-only; broadened to every
+      // cc-tools-on page since Mover/TRIM's stray dt lives on plain /Settings/*, not a disk page.
+      // (a) the resolver above sometimes appended a (i) icon to the WRONG (empty) dt instead of the real
+      //     label — fold that icon into the following label dt, then hide the now-empty carrier.
+      var carriers = document.querySelectorAll("#displaybox dl > dt > .cc-toolsinfo");
+      for (var ck = 0; ck < carriers.length; ck++) {
+        var cic = carriers[ck], cdt = cic.parentElement;
+        if ((cdt.textContent || "").replace(/[\sⓘ]/g, "")) continue;              // dt already carries a label -> icon is fine
+        var nlab = cdt.nextElementSibling;
+        while (nlab && nlab.tagName === "DT" && (getComputedStyle(nlab).display === "none" || !(nlab.textContent || "").trim())) nlab = nlab.nextElementSibling;
+        if (nlab && nlab.tagName === "DT") { nlab.appendChild(cic); cdt.style.display = "none"; }
+      }
+      // (b) a stray dt with NOTHING in it at all (no icon, no text — #32's Boot-Datenträger case) has no
+      //     content to relocate; just hide it.
+      var bareDts = document.querySelectorAll("#displaybox dl > dt:not([data-cc-barehid])");
+      for (var bd = 0; bd < bareDts.length; bd++) {
+        var bdt = bareDts[bd];
+        bdt.setAttribute("data-cc-barehid", "1");
+        if (getComputedStyle(bdt).display === "none") continue;
+        if (!(bdt.textContent || "").trim() && !bdt.querySelector("*")) bdt.style.display = "none";
       }
       // #2-B (user: "Wo sind die Farbwählfelder bei Eigene Kopfzeilen-...farbe?"): Unraid's header colour
       // fields (header / headermetacolor / background) are plain hex TEXT inputs with no picker. Give each a
