@@ -718,7 +718,11 @@ html.cc-popups-on .searchSubmit {
 }
 html.cc-popups-on #searchFilter.cc-open .searchSubmit { color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .searchSubmit:hover { filter: brightness(1.08) !important; }
-html.cc-popups-on #searchButton { color: inherit !important; }
+/* #26 (user: "X und Text ist nicht vertikal zentriert"): the icon's own box is dead-centre in .searchSubmit
+   (confirmed live — identical box centre to the label/input beside it), but the FontAwesome glyph itself
+   (both fa-search and fa-remove) sits high within that box, so it reads visually above the text mid-line.
+   Same fix as .cc-toolsinfo elsewhere in this plugin (Tools.css): a small position nudge, not a box change. */
+html.cc-popups-on #searchButton { color: inherit !important; position: relative !important; top: 2px !important; }
 /* SIDEBAR SEARCH = COLLAPSIBLE BADGE (user, v3.6.6: "das Suchfeld im CA-Tab soll ein Badge sein mit Icon und
    Text; wenn man drauf klickt soll das Suchfeld kommen"). This replaces the v3.6.2 "permanent full-width
    field" decision. The collapsed/expanded engine already exists for the top-bar variant further up (#7); the
