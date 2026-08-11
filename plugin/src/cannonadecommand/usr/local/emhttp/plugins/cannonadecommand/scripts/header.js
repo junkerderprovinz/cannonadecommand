@@ -750,7 +750,7 @@
         try { ccIslandSaveOrder(); } catch (e2) {}
       }
       ccArrangeLock();
-      try { ccDockProfile(); } catch (eD) {}                      // re-pin bell/burger over their proxies (arrange enter hides them, exit re-overlays at the new order)
+      try { ccDockProfile(); } catch (eD) {}                      // re-adopt bell/burger into their proxies at the new order (arrange enter/exit swaps ghost<->trigger)
       // #19 (user: move arrows stay after closing arrange on the Docker tab): the docker "move" arrows are
       // Unraid's own i.mover, driven ONLY by the native LockButton onclick — which the header's capture-phase
       // stopPropagation eats on a real (trusted) click (see line ~606), so arrange exits but the arrows persist.
@@ -1436,6 +1436,15 @@
       if (ccMainObs) return;
       var box = document.getElementById("displaybox"); if (!box) return;
       ccMainObs = new MutationObserver(function (recs) {
+        // #33 (user: "Docker/VM/Plugin-Tab lädt drastisch langsam"): this observer's own work
+        // (ccStateBars/ccPaintRotate/ccToolsEnhance) is only ever relevant on /Main's disk table or a
+        // cc-tools-on settings form — but it was armed unconditionally on EVERY page via apply(), so
+        // Docker's/VMs'/Plugins' own heavy per-row DOM churn (badge stamping, action-cell rebuilds, up to
+        // 100+ mutations per native table refresh) woke this callback too, adding a synchronous
+        // closest()-per-record scan plus a batch of document-wide querySelectorAll calls on top of work
+        // that was already the bottleneck. None of that page's mutations could ever match, so bail before
+        // touching a single record — cheap on every page, and a true no-op exactly where it matters most.
+        if (!document.querySelector("table.unraid.disk_status") && !document.documentElement.classList.contains("cc-tools-on")) return;
         // #13 (user: fill bars BLINK when "native state colours" is on): Unraid WHOLESALE-replaces the /Main
         // disk table every nchan tick, so the fresh bars briefly show the base colour until the debounced
         // pass re-classes them = the blink. Re-class them SYNCHRONOUSLY here (a MutationObserver callback is a
@@ -2021,7 +2030,14 @@
       // (living inside a proxy now) keep their data-cc-trig and are found via the document query.
       if (container) {
         var freshSp = container.querySelectorAll(":scope > span:not([data-cc-trig])");
-        if (freshSp.length) {
+        if (freshSp.length === 1) {
+          // exactly one un-adopted span: id-based classification needs a SECOND span to disambiguate
+          // against, so if exactly one role is currently missing document-wide, it must be this one —
+          // safer than falling through ccClassifyTrig's position fallback, which would otherwise (with
+          // only one candidate) tag the SAME node as both bell and burger.
+          var needBell1 = !document.querySelector('[data-cc-trig="bell"]'), needBurger1 = !document.querySelector('[data-cc-trig="burger"]');
+          if (needBell1 !== needBurger1) freshSp[0].setAttribute("data-cc-trig", needBurger1 ? "burger" : "bell");
+        } else if (freshSp.length >= 2) {
           var cls = ccClassifyTrig(freshSp);
           if (cls.bell && !document.querySelector('[data-cc-trig="bell"]')) cls.bell.setAttribute("data-cc-trig", "bell");
           if (cls.burger && !document.querySelector('[data-cc-trig="burger"]')) cls.burger.setAttribute("data-cc-trig", "burger");
@@ -2995,15 +3011,13 @@
         e.preventDefault(); e.stopPropagation(); ccCmdOpen();
       }, true);
     } catch (e) {}
-    // each live trigger is position:fixed OVER its in-flow proxy, so re-measure on scroll AND resize —
-    // both rAF-throttled (NOT debounced): a debounce would leave the trigger frozen at its old spot for
-    // the whole drag-resize while the proxy reflows underneath (that WAS the "hüpfen"). rAF re-pins every
-    // frame so the trigger tracks its proxy smoothly, one frame behind at most.
-    try {
-      function dockRaf() { if (ccDockRaf) return; ccDockRaf = window.requestAnimationFrame ? window.requestAnimationFrame(ccDockPass) : setTimeout(ccDockPass, 16); }
-      window.addEventListener("scroll", dockRaf, { passive: true });
-      window.addEventListener("resize", dockRaf);
-    } catch (e) {}
+    // #16 ROUND 5: each trigger is now a REAL CHILD of its in-flow proxy (reparent model, see the dock
+    // code) — it reflows with the row natively, no JS position tracking needed, so no scroll listener at
+    // all any more (that was the source of the scroll-lag complaint: JS mirroring a compositor-positioned
+    // sticky element is always at least one frame behind). Keep only a cheap, idempotent resize pass —
+    // covers a genuine DOM change (icons appearing/disappearing/reordering across a breakpoint), not a
+    // per-frame position fix.
+    try { window.addEventListener("resize", function () { try { ccDockProfile(); } catch (e2) {} }); } catch (e) {}
     // #14 (user: "wenn man das fenster breiter zieht, ziehen Insel/Icons/Pfeile nach rechts weg"): with
     // Theme--width-boxed the CONTENT is capped (~1920px) and LEFT-aligned, but the full-width header island,
     // the #menu util icons and the fixed footer arrows ride to the VIEWPORT edge → a gap that GROWS with the
@@ -3037,7 +3051,7 @@
     // "Alle löschen" button lands as soon as the sheet appears. Idempotent, cheap (only after clicks).
     try {
       document.addEventListener("click", function (e) {
-        try { if (e.target && e.target.closest && e.target.closest("#UserProfile")) { var n = 0, t = setInterval(function () { ccNotifActions(); try { ccPopoverDim(); } catch (ed) {} try { ccPaintRotate(); } catch (ep) {} try { ccAcctMenu(); } catch (ea) {} if (++n >= 8) clearInterval(t); }, 180); } } catch (err) {}
+        try { if (e.target && e.target.closest && e.target.closest("#UserProfile, [data-cc-trig]")) { var n = 0, t = setInterval(function () { ccNotifActions(); try { ccPopoverDim(); } catch (ed) {} try { ccPaintRotate(); } catch (ep) {} try { ccAcctMenu(); } catch (ea) {} if (++n >= 8) clearInterval(t); }, 180); } } catch (err) {}
       }, true);
     } catch (e) {}
     // #21 backdrop sync: the bell Sheet mounts inside .unapi (not a body child), so the body popup

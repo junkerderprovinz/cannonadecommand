@@ -71,7 +71,7 @@
   function stateLabel(s) { var m = STATE_LABELS[LANG] || STATE_LABELS.en; return m[s] || s || "?"; }
 
   var mode = (localStorage.getItem(VIEW_KEY) === "grid" && themingOn()) ? "grid" : "list"; // grid is a theming view; never start in grid with theming off
-  var containers = [], containerNames = [], stats = {}, shiplog = {}, workingPlan = {}, lastRun = {}, iconCache = {};
+  var containers = [], containerNames = [], containersByName = {}, stats = {}, shiplog = {}, workingPlan = {}, lastRun = {}, iconCache = {};
   var netPrev = {}; // name → {rx,tx,t} previous cumulative net counters, to derive the live down/up RATE
   var daemonVersion = ""; // the RUNNING daemon's version (from /api/state) — shown in the gear menu so it's obvious which backend is live after an update
   // Did the LAST /api/state reach the host daemon? CPU/RAM/BW ALL need the daemon; the VM
@@ -159,6 +159,11 @@
     if (state && state.host_mem) hostMem = state.host_mem;
     if (state && state.version) daemonVersion = state.version;
     containerNames = containers.map(function (c) { return c.name; }).sort();
+    // #33: containerByName() used to linear-scan `containers` on every call — cheap once, but it's called
+    // per-row from syncStateBadges (every badge)/syncActionBars (every row)/refreshStats (every resource
+    // group), the last of which fires every 3.5s forever. Index once here (O(n)), O(1) lookups everywhere.
+    containersByName = {};
+    containers.forEach(function (c) { containersByName[norm(c.name)] = c; });
     workingPlan = {};
     if (state && state.plan && state.plan.nodes) state.plan.nodes.forEach(function (n) { workingPlan[n.name] = n; });
     lastRun = {};
@@ -244,7 +249,7 @@
   // configured UPLOAD cap for the badge tooltip: "↑ 5 Mbit". Download shaping was removed
   function bwTitle(bw) { return "↑ " + bwKbitLabel(bw && bw.egress_kbit) + " · ↓ " + bwKbitLabel(bw && bw.ingress_kbit); }
   function bwHasLimit(bw) { return !!(bw && (bw.egress_kbit > 0 || bw.ingress_kbit > 0)); }
-  function containerByName(name) { var k = norm(name); for (var i = 0; i < containers.length; i++) if (norm(containers[i].name) === k) return containers[i]; return null; }
+  function containerByName(name) { var v = containersByName[norm(name)]; return v === undefined ? null : v; }
   // The plan badge's LABEL already says "Startplan"; a managed container shows the plain word
   // "aktiv" and NOTHING else (user: "soll einfach dort aktiv stehen, keine zusaetzlichen symbole") —
   // the dependency list + automation details live in the tooltip and the editor.
@@ -921,11 +926,19 @@
   // It is a plain DOM attribute — nothing executes at render time (which is why
   // wrapping the function harvested NOTHING until the icon was clicked, and we
   // block that click ourselves). Parse the quoted tokens positionally instead.
-  function ctxFor(name) {
+  // #33 (user: "Docker/VM/Plugin-Tab lädt drastisch langsam"): ctxFor used to ALWAYS re-find its row by
+  // calling findRows() (a table-wide query + a per-row isFolderHeader/querySelector filter) and then
+  // linearly scanning the result for a name match — but every list-view caller (injectActionCell, via
+  // injectRowBadges) already HAS the exact row in hand. That made building the actions column an O(rows²)
+  // pass: with 103 containers, ~103 calls × an O(103) re-scan each ≈ 10,000+ DOM operations for one pass,
+  // and — since Unraid wholesale-replaces the tbody every 3-5s (fresh rows, no ROWMARK) — this reran
+  // continuously, not just once at load. Optional `tr` skips the re-find entirely (O(1)); the by-name
+  // fallback stays for card() (grid mode has no row to hand in).
+  function ctxFor(name, tr) {
     var out = { webui: "", tswebui: "", xml: "", shell: "", image: "", id: "", links: [] };
     try {
-      var rows = findRows(), row = null;
-      for (var i2 = 0; i2 < rows.length; i2++) { if (rowName(rows[i2]) === name) { row = rows[i2]; break; } }
+      var row = tr || null;
+      if (!row) { var rows = findRows(); for (var i2 = 0; i2 < rows.length; i2++) { if (rowName(rows[i2]) === name) { row = rows[i2]; break; } } }
       var hand = row ? row.querySelector("td.ct-name span.hand[onclick]") : null;
       var oc = hand ? (hand.getAttribute("onclick") || "") : "";
       var m3 = oc.match(/addDockerContainerContext\s*\(([\s\S]*)\)/);
@@ -1001,8 +1014,8 @@
   }
   // Both views share the same action block: row 1 = WebUI/Konsole/Bearbeiten,
   // row 2 = Neustart/Pause/Stopp/"…" (expands the harvested extra links).
-  function actionBars(name, c) {
-    var cx = ctxFor(name);
+  function actionBars(name, c, tr) {
+    var cx = ctxFor(name, tr);
     var bar = el("div", "cc-actbar");
     var running = c && c.state === "running", paused = c && c.state === "paused";
     var r1 = el("div", "cc-actrow");
@@ -1043,7 +1056,7 @@
     try {
       var hr2 = headerRow();
       if (hr2 && !hr2.querySelector(".cc-act-th")) { var th2 = el("th", "cc-act-th", LANG === "de" ? "Aktionen" : "Actions"); hr2.insertBefore(th2, hr2.children[1] || null); }
-      var ab = actionBars(name, c);
+      var ab = actionBars(name, c, tr);
       var old2 = tr.querySelector(".cc-actcell");
       if (old2) { if (old2.dataset.ccSig === ab.sig) return; old2.remove(); } // rebuild when the data changed
       var tda = el("td", "cc-actcell"); tda.setAttribute(MARK, "1"); tda.dataset.ccSig = ab.sig;
