@@ -1852,23 +1852,9 @@
       // gate is self-correcting -> no infinite observer loop). subtree keeps covering spans re-added on rebuild.
       ccDockObs = new MutationObserver(function () { if (ccDockDirty()) { try { ccDockProfile(); } catch (e2) {} } });
       ccDockObs.observe(p, { attributes: true, attributeFilter: ["style"], subtree: true });
-      // #16 (user, live-confirmed trigger: "die werden ständig als Gruppe ausgeblendet wenn man per Maus
-      // drüber hoovert" — hovering IS the trigger). ROUND 2 (user: "immer noch Probleme... auch wenn man
-      // über die Haupttabs hoovert werden sie ausgeblendet"): hovering the MAIN TABS — nowhere near
-      // #UserProfile, a completely different part of the DOM — ALSO triggers it, so the first attempt
-      // (a listener scoped to #UserProfile) could never have caught this; the trigger is not "Connect
-      // reacts to being hovered", it is something page-wide that runs on every hover (the leading
-      // suspect: ccTipShow()/ccWireTips() below runs on EVERY [data-cc-tip]/[title] hover anywhere on the
-      // page, including the tabs, and forces a synchronous layout read — if that shifts the page enough to
-      // change the scrollbar, every position:fixed element's stored coordinates go stale until re-pinned).
-      // Move the listener from #UserProfile to document (capture, so it fires before Connect's own
-      // handler either way) so it re-pins on ANY hover on the page, not only a hover of the icons
-      // themselves — this can no longer miss a trigger location by construction, whatever the exact
-      // upstream mechanism turns out to be. Same quick-follow-up cascade as before.
-      document.addEventListener("mouseover", function () {
-        try { ccDockProfile(); } catch (e3) {}
-        [30, 90, 200].forEach(function (ms) { setTimeout(function () { try { ccDockProfile(); } catch (e4) {} }, ms); });
-      }, true);
+      // #16 rounds 2/3 (hover-triggered re-pin, scoped first to #UserProfile then widened to document) are
+      // gone: superseded by the continuous per-frame rAF loop in ccDockPass/ccDockSchedule, which re-pins
+      // regardless of what moved the proxy instead of chasing which hover/event triggers it.
     } catch (e) {}
   }
   // ── GLOBAL FLOATING hover bubble (user: "im Start-Tab passen viele Mouseover-Bubbles nicht …
@@ -1946,7 +1932,25 @@
   // ignores -> no loop. Re-measured on apply()/scroll/resize/menu+profile passes.
   var ccDockProps = ["position", "left", "right", "top", "height", "width", "z-index", "padding", "min-width"];
   var ccDockRaf = 0;
-  function ccDockPass() { ccDockRaf = 0; ccDockProfile(); }
+  // #16 ROUND 4 (user, after 3 trigger-scoped fixes: "problematik unverändert"): a temporary on-screen
+  // diagnostic (built per systematic-debugging's "3+ fixes failed -> stop guessing triggers, observe the
+  // symptom" guidance) caught the actual failure mode live — the trigger span sat at its LAST-PINNED
+  // coordinates while the proxy had already drifted a few px, with no scroll/resize/hover between the two
+  // measurements. So SOMETHING in the icon row (a stat/notification re-render, a sibling icon changing
+  // width, a scrollbar appearing/disappearing — Round 2's own comment above already suspected exactly this
+  // class of cause) keeps moving the proxy without waking any of the three trigger mechanisms tried so far
+  // (interval, #UserProfile hover, document-wide hover). Rather than hunt for trigger #4, stop relying on
+  // triggers at all: ccDockPass now RESCHEDULES ITSELF every animation frame for as long as the header is
+  // on, so the trigger can never drift for longer than one frame (~16ms) regardless of what moved it — cheap
+  // (two getBoundingClientRect() reads/frame, and the writes inside ccDockProfile() are already diff-gated
+  // no-ops once settled). Paused while the tab is hidden (rAF doesn't fire anyway) and restarted on
+  // visibilitychange; stops itself the frame after cc-header-on turns off, no explicit teardown needed.
+  function ccDockPass() { ccDockRaf = 0; ccDockProfile(); ccDockSchedule(); }
+  function ccDockSchedule() {
+    if (ccDockRaf || document.hidden) return;
+    if (!document.documentElement.classList.contains("cc-header-on")) return;
+    ccDockRaf = window.requestAnimationFrame ? window.requestAnimationFrame(ccDockPass) : setTimeout(ccDockPass, 16);
+  }
   // #2 Header-Flacker: Connect's Vue re-renders the bell/burger trigger spans and WIPES the inline
   // position:fixed we pin on them -> each span snaps into #UserProfile's neutralised 0px box (left:0/
   // top:0) = the icon vanishes/flashes until the next scheduled dock pass. Detect that wipe from a STATE
@@ -2227,15 +2231,13 @@
       // 160px right of its settled position and nothing re-triggered) — the row settles as
       // late-loading icons/styles arrive, so re-pin twice after the dust
       setTimeout(ccDockProfile, 300); setTimeout(ccDockProfile, 1200);
-      // #16 (user: "die icons werden immer wieder ausgeblendet"): the two observers (attribute-only
-      // instant re-pin + debounced childList re-pin) cover every wipe shape I could reproduce live
-      // (idle, arrange-mode toggle, resize, 3+ minutes of rAF-level position sampling — all stable),
-      // but Connect's auto-mount is a black box and a childList replacement whose new nodes never
-      // receive a subsequent style mutation would slip past both observers with no bound on how long
-      // it stays wiped. A cheap, permanent safety-net pass closes that gap regardless of the exact
-      // trigger — ccDockProfile() diff-writes, so this is a zero-op once settled (mirrors the loader
-      // engine's ccLoaderBoot interval).
-      setInterval(function () { if (!document.hidden) ccDockProfile(); }, 1000);
+      // #16 ROUND 4: a 1s safety-net interval used to live here (rounds 1-3's history); replaced by the
+      // continuous per-frame rAF loop (see ccDockPass/ccDockSchedule) — at most one frame of drift instead
+      // of up to a full second, and it covers every wipe/drift shape (Connect auto-mount, hover-adjacent
+      // layout shifts, whatever else) without needing to know which one is happening. rAF doesn't fire on a
+      // hidden tab, so kick it back off on visibilitychange.
+      ccDockSchedule();
+      document.addEventListener("visibilitychange", function () { if (!document.hidden) ccDockSchedule(); });
     } catch (e) {}
   }
   // gui_search() prepends #guiSearchBoxSpan at the FAR-LEFT of .nav-tile.right, focuses
