@@ -564,20 +564,31 @@ html.cc-popups-on .ca_homeTemplatesHeader .cc-info {
 }
 html.cc-popups-on .ca_homeTemplatesHeader .cc-info svg { width: 15px !important; height: 15px !important; display: block !important; }
 html.cc-popups-on .ca_homeTemplatesHeader .cc-info:hover, html.cc-popups-on .ca_homeTemplatesHeader .cc-info:focus { opacity: 1 !important; outline: none !important; }
+/* #27 (user: "die show more badges sind zu dunkel, faerb die wie die badges auf den app cards"): used to sit
+   at a flat --cc-surface-2 always, unlike every other Apps badge (maxPerPage/dockerSearch/sortIcons/the
+   ribbons), which are all COLOURED AT REST with a brightness hover and only drop to the neutral chip under
+   active-only rainbow (.cc-apps-rbneutral). Match that shared contract instead of a one-off dark fill. */
 html.cc-popups-on .ca_homeTemplatesHeader .homeMore {
   margin-left: auto !important;
   display: inline-flex !important; align-items: center !important;
   padding: 4px 10px !important; font-size: 11px !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .4px !important; cursor: pointer !important;
-  background: var(--cc-surface-2, #222222) !important;
-  color: var(--cc-text, #eaeaea) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
   border-radius: var(--cc-b-radius, 8px) !important; opacity: 1 !important;
-  transition: background .15s ease, color .15s ease !important;
+  transition: background .15s ease, color .15s ease, filter .12s ease !important;
 }
 html.cc-popups-on .ca_homeTemplatesHeader .homeMore:hover,
 html.cc-popups-on .ca_homeTemplatesHeader .homeMore:focus {
+  filter: brightness(1.12) !important; outline: none !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .ca_homeTemplatesHeader .homeMore {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .ca_homeTemplatesHeader .homeMore:hover,
+html.cc-apps-rbneutral.cc-popups-on .ca_homeTemplatesHeader .homeMore:focus {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; outline: none !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
 }
 /* fallback only (before ccApps runs): keep line2 as dim body text so SHOW MORE never vanishes */
 html.cc-popups-on .ca_homeTemplatesLine2 { color: var(--cc-text-dim, #8a8a8a) !important; font-size: 13px !important; margin: 0 0 12px !important; }
