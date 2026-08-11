@@ -678,12 +678,16 @@ html.cc-popups-on.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-thumb:hover 
   }
 }
 
-/* #3 (user: "nur die scrollbars IN Unraid dicker, der badge form folgen; die browser nativen unverändert"):
-   style ONLY the inner Unraid panes = DESCENDANT scrollbars (note the SPACE: `html.cc-popups-on ::-webkit-…`,
-   never the no-space `html.cc-popups-on::…` which is the html element's OWN = the main page/window scrollbar).
-   The main page scrollbar is deliberately LEFT NATIVE. Inner bars: 14px (thicker), thumb radius follows the
-   badge shape (--cc-b-radius), accent-tinted, brighten on hover, no arrows/border. */
-html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar { width: 14px !important; height: 14px !important; background: transparent !important; }
+/* #3-followup (user correction: "ich wollte lediglich die horizontalen scrollbars im app tab breiter, alle
+   anderen sollen größentechnisch bleiben wie sie waren, nur die form soll sich an die badge form anpassen"):
+   the original #3 pass forced width+height to 14px on EVERY inner scrollbar, everywhere html.cc-popups-on is
+   on — far broader than "just the App-tab horizontal ones" (that's .ca_homeTemplates above, 16px height only).
+   No explicit width/height here any more, so every OTHER inner scrollbar keeps its native OS/browser
+   thickness; only its SHAPE follows CC (thumb radius = the badge shape, accent-tinted, brighten on hover, no
+   arrows/border). Style ONLY the inner Unraid panes = DESCENDANT scrollbars (note the SPACE: `html.cc-popups-on
+   ::-webkit-…`, never the no-space `html.cc-popups-on::…` which is the html element's OWN = the main page/
+   window scrollbar, deliberately left native). */
+html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar { background: transparent !important; }
 html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; }
 html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-track { background: transparent !important; border: 0 !important; }
 html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-corner { background: transparent !important; }
@@ -697,9 +701,11 @@ html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-thumb:hover,
 html.cc-popups-on *:hover::-webkit-scrollbar-thumb {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
 }
-/* Firefox (no ::-webkit-scrollbar): standard props on DESCENDANTS only so the main page scrollbar stays native. */
+/* Firefox (no ::-webkit-scrollbar): colour only, no scrollbar-width - Firefox's width keywords (thin/none)
+   have no numeric equivalent to "native", so leaving the property alone is what keeps the native thickness
+   the #3-followup above asks for; scrollbar-color alone still tints the existing native-width bar. */
 @supports not selector(::-webkit-scrollbar) {
-  html.cc-popups-on * { scrollbar-width: thin !important; scrollbar-color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent) transparent !important; }
+  html.cc-popups-on * { scrollbar-color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent) transparent !important; }
   html.cc-popups-on *:hover { scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important; }
   /* same tie as the webkit block above: `*:hover` scores (0,2,1) and is written earlier here, so a plain
      `.ca_homeTemplates` at (0,2,1) would lose the rest state on any hover inside the row. Double the class. */
