@@ -2729,8 +2729,14 @@
       // tells you what you searched) and the plain section name (redundant here — the sidebar's own
       // ACTION CENTRE button is already highlighted). Hide only the latter for Action Centre specifically;
       // every other use of the label (search, a real category name) stays untouched.
+      // REGRESSION (user: "text ist weg aber dafuer sind jetzt die header badges zu weit oben, bitte auf
+      // allen seiten auf gleicher hoehe wie der homebutton"): display:none collapses the slot's own ~15px,
+      // which every OTHER page still reserves (the Home page renders this same element with EMPTY text,
+      // still taking up its height) — so only the Action Centre page lost that space and everything below
+      // it (Suche, Results Per Page, ...) crept up. visibility:hidden removes the text without collapsing
+      // the box, so Home/Suche land on the same line on every page again.
       Array.prototype.slice.call(document.querySelectorAll(".category.categoryLine")).forEach(function (cl) {
-        if ((cl.textContent || "").trim() === "Action Centre") cl.style.setProperty("display", "none", "important");
+        cl.style.setProperty("visibility", (cl.textContent || "").trim() === "Action Centre" ? "hidden" : "", "important");
       });
       ccMoveSearchAreaBadges();                              // #15: relocate under the search badge
       wireCaSearch();
