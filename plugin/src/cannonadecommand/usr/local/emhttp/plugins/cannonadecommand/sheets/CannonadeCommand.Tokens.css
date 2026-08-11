@@ -846,10 +846,10 @@ html.cc-popups-on .cc-ca-search-extras .dockerSearch {
   /* #15 (user: "gleiche Badge-Größe für alle Elemente in der Sidebar"): the sm-tier size below matched
      the ORIGINAL header-row home, not the sidebar's own .caMenuItem chips (Home, categories) — 15px/
      7px-12px, the same box every other top-level sidebar entry uses.
-     #30 (user: "den badge so breit machen, dass der text einzeilig ist"): can't widen the badge itself
-     (every sidebar badge shares one column width now), so "Results Per Page" — the longest label in the
-     sidebar, and the only one that ever wraps — drops one size to fit on its one line instead; DockerHub
-     is short enough to stay at 15px. */
+     #30 (user: "es soll nur zwei größen geben: für badge und subbadge"): a one-off 13px/nowrap exception
+     used to live here so "Results Per Page" stayed on one line — that was itself an EXTRA size the sidebar
+     otherwise never uses, so it's gone; the badge tier (15px) applies everywhere, no exceptions, and this
+     label wraps to two lines like any other badge tier text that doesn't fit its 132px column. */
   font-size: 15px !important; font-weight: 600 !important; line-height: 1.25 !important;
   text-align: center !important; text-transform: none !important; letter-spacing: normal !important;
   white-space: normal !important;   /* "Results Per Page: 12" wraps in a 132px column, unlike its old row */
@@ -858,7 +858,6 @@ html.cc-popups-on .cc-ca-search-extras .dockerSearch {
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
 }
-html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage { font-size: 13px !important; white-space: nowrap !important; }
 /* #25 (user: "wo ist der results per page badge hin? ich seh ihn nicht mehr"): CA hides .maxPerPage with
    an INLINE (non-!important) display:none on the un-paginated home grid (Recently Added/Spotlight/...)
    and only shows it on a real paginated list (category/All Apps/search) — confirmed live (inline style
@@ -955,12 +954,15 @@ html.cc-popups-on .caMenuItem:hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
-html.cc-popups-on .caMenuItem.sectionMenu {
+/* :not(.cc-card-in) — this heading-margin is for a LOOSE section break (Action Centre is the only one left
+   outside a card); a card-nested title (Installed/Previous/Pinned) must take its spacing from the card-top/
+   -bot edge system below instead, or the two fight over margin-top with only source order to break the tie. */
+html.cc-popups-on .caMenuItem.sectionMenu:not(.cc-card-in) {
   text-transform: uppercase !important; letter-spacing: .6px !important;
-  font-size: 12px !important; font-weight: 600 !important; color: var(--cc-text, #e6e6e6) !important;
+  font-size: 15px !important; font-weight: 600 !important; color: var(--cc-text, #e6e6e6) !important;
   background: transparent !important; margin: 22px 0 6px !important; padding: 2px 8px !important; cursor: default !important;
 }
-html.cc-popups-on .caMenuItem.sectionMenu:hover { background: transparent !important; color: var(--cc-text, #e6e6e6) !important; filter: none !important; }
+html.cc-popups-on .caMenuItem.sectionMenu:not(.cc-card-in):hover { background: transparent !important; color: var(--cc-text, #e6e6e6) !important; filter: none !important; }
 /* #30 (user: "einzelne Punkte sollen ein einzelner badge sein... alle badges sollen die gleiche breite
    haben"): standalone entries (Home, Suche, All Apps, Repositories, Einstellungen...Debugging) sat only
    3px apart — the same tight rhythm a CARD's own members use on purpose (they share one background) — so
@@ -1011,9 +1013,19 @@ html.cc-popups-on .caMenu hr, html.cc-popups-on hr.category_hr {
   background: transparent !important;
 }
 html.cc-popups-on li.caMenuItem:has(> hr) { background: transparent !important; padding: 0 !important; margin: 0 !important; cursor: default !important; }
-html.cc-popups-on .caMenu > li:not(.caMenuItem):not(:has(> hr)) {
+/* #30b/#30e (user: card backgrounds + gaps read inconsistent): :not(.cc-card-in) matters more than it looks —
+   without it, this generic "loose class-less row" rule was ALSO matching card-nested class-less rows
+   (li.cc-ca-cardtitle, the subCategory wrapper), and its :not(:has(> hr)) clause quietly out-specifies the
+   dedicated card rules on the TYPE tier (an extra implicit `hr` reference) even though both sit at the same
+   class-tier — so Kategorien's title (only .cc-ca-cardtitle, no other CA class) silently lost its card
+   styling to this fallback while Installed/Previous/Pinned's titles (which also carry real CA classes) did
+   not. Card-nested rows must come ONLY from the card system below, never from this loose-row fallback. */
+/* margin deliberately NOT set here (any value written here now ties in specificity with the loose-badge
+   6px gap rule further up, and — being later in the file — would silently win the tie): that rule is the
+   one true owner of loose-row margin, this one only supplies the rest of the chip's box. */
+html.cc-popups-on .caMenu > li:not(.caMenuItem):not(:has(> hr)):not(.cc-card-in) {
   display: block !important; box-sizing: border-box !important; width: auto !important;
-  margin: 3px 0 !important; padding: 7px 12px !important;
+  padding: 7px 12px !important;
   background: var(--cc-surface-2, rgba(128, 128, 128, .10)) !important;
   color: var(--cc-text-chip, #cfcfcf) !important;
   border-radius: var(--cc-b-radius, 8px) !important; font-size: 12.5px !important;
@@ -1035,16 +1047,20 @@ html.cc-popups-on li.cc-card-in {
 }
 /* the card's own corner sits one step OUTSIDE the chips it holds (radius nesting canon), but capped so a
    pill-shaped --cc-b-radius (999px) can't turn a tall box into a lozenge. */
+/* #30e (user: "die abstände zwischen den badges sind sehr unterschiedlich"): was 10px, one value nowhere
+   else in the sidebar — the gap around a card must read the same as the gap between two loose badges
+   (.caMenu > li.caMenuItem:not(.cc-card-in), 6px, further up), so a card is just another block in the same
+   rhythm, not a specially-spaced one. */
 html.cc-popups-on li.cc-card-top {
   border-top-left-radius: min(calc(var(--cc-b-radius, 8px) * 1.6), 14px) !important;
   border-top-right-radius: min(calc(var(--cc-b-radius, 8px) * 1.6), 14px) !important;
-  margin-top: 10px !important; padding-top: 8px !important;
+  margin-top: 6px !important; padding-top: 8px !important;
   box-shadow: 0 -1px 3px rgba(0, 0, 0, .18) !important;   /* keeps the card readable in the LIGHT theme, where #fff on #f2f2f2 is a very quiet step */
 }
 html.cc-popups-on li.cc-card-bot {
   border-bottom-left-radius: min(calc(var(--cc-b-radius, 8px) * 1.6), 14px) !important;
   border-bottom-right-radius: min(calc(var(--cc-b-radius, 8px) * 1.6), 14px) !important;
-  margin-bottom: 10px !important; padding-bottom: 8px !important;
+  margin-bottom: 6px !important; padding-bottom: 8px !important;
   box-shadow: 0 2px 5px rgba(0, 0, 0, .22) !important;
 }
 /* the class-less rows CA emits (VERSION and the version number) are not .caMenuItem, so the generic
@@ -1052,7 +1068,7 @@ html.cc-popups-on li.cc-card-bot {
    inside the card. Inside a card they are plain text lines. */
 html.cc-popups-on li.cc-card-in:not(.caMenuItem):not(.cc-ca-cardtitle) {
   padding: 2px 8px !important; margin: 0 !important;
-  color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11.5px !important;
+  color: var(--cc-text-dim, #8a8a8a) !important; font-size: 12.5px !important;
   border-radius: 0 !important;
 }
 html.cc-popups-on li.cc-card-in:hover { filter: none !important; }
@@ -1065,7 +1081,7 @@ html.cc-popups-on li.cc-card-in.sectionMenu {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
   text-transform: uppercase !important; letter-spacing: .6px !important;
-  font-size: 12px !important; font-weight: 700 !important; cursor: default !important;
+  font-size: 15px !important; font-weight: 700 !important; cursor: default !important;
 }
 html.cc-popups-on li.cc-card-in.sectionMenu:hover { filter: none !important; }
 html.cc-apps-rbneutral.cc-popups-on li.cc-ca-cardtitle,
@@ -1074,15 +1090,22 @@ html.cc-apps-rbneutral.cc-popups-on li.cc-card-in.sectionMenu {
 }
 /* chips sitting ON the card surface lift one step so they stay readable against it */
 html.cc-popups-on li.cc-card-in .caMenuItem { background: var(--cc-surface-3, #2e2e2e) !important; }
-html.cc-popups-on li.cc-card-in .caMenuItem:hover,
-html.cc-popups-on li.cc-card-in .caMenuItem.selectedMenu {
+/* #30c (user: "die punkte werden nur bei mouseover eingefärbt auf den cards. sind jetzt teilweise
+   eingefärbt, teilweise nicht"): this used to ALSO fire on .selectedMenu (CA's own "currently active
+   category" bookkeeping) — so whichever category the user had open stayed permanently accent-filled while
+   every other card member only coloured on hover, which is exactly the "some are, some aren't" the user
+   saw. :hover only, no exception, matches every other card member in the sidebar. */
+html.cc-popups-on li.cc-card-in .caMenuItem:hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
-/* a loose chip that is itself a card member (Favourite Repo is the only one left — Einstellungen/
-   Statistics/Credits/Support/Change Log/Debugging used to live in an untitled card here too, #30 moved
-   them out to be standalone badges like Home/Action Centre) */
+/* a card member that carries .caMenuItem on the SAME element rather than a wrapping <li> (Favourite Repo,
+   and every Kategorien category chip) — matched here instead of by the descendant ".cc-card-in .caMenuItem"
+   rule above, since that combinator needs a separate ancestor/descendant pair. #30b (user: "cardhintergrund
+   überall gleich machen"): was --cc-surface-1, blending flush into the card body — the ONLY card members
+   with no visible chip shape at rest, while Docker/Plugins chips (a true descendant, caught above) sat one
+   step lighter at --cc-surface-3. Same tier as every other card member now. */
 html.cc-popups-on li.cc-card-in.caMenuItem:not(.sectionMenu):not(.cc-ca-cardtitle) {
-  background: var(--cc-surface-1, #1e1e1e) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+  background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
 html.cc-popups-on li.cc-card-in.caMenuItem:not(.sectionMenu):not(.cc-ca-cardtitle):hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
@@ -1103,8 +1126,8 @@ html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
   text-transform: uppercase !important; letter-spacing: .6px !important;
-  font-size: 12px !important; font-weight: 700 !important;
-  margin: 10px 0 !important; padding: 7px 12px !important;
+  font-size: 15px !important; font-weight: 700 !important;
+  margin: 6px 0 !important; padding: 7px 12px !important;
   border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
   --cc-ac-glow: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent);
   animation: cc-ac-pulse 1.4s ease-in-out 6 !important;

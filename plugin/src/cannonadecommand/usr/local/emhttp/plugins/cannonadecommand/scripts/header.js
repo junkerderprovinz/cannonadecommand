@@ -2667,6 +2667,28 @@
         for (var jt = 0; jt < tail.length; jt++) {
           tail[jt].classList.remove("cc-card-in", "cc-card-top", "cc-card-bot");
         }
+        // #30d (user: explicit sidebar order has VERSION after Change Log and Debugging; CA natively
+        // renders it between Support and Change Log instead). VERSION + its number are a plain text pair
+        // (classless <li>, no click handler), so moving them is safe. Found INDEPENDENTLY — VERSION by its
+        // exact text, the number via CA's own #caInstalledVersion id — never by tail-array adjacency: CA
+        // re-injects a fresh <hr> between the two on some renders (e.g. update-check state changes), which
+        // once left them non-adjacent and a position-based pairing paired VERSION with the wrong neighbour,
+        // scrambling the tail further on every subsequent pass instead of converging. Guarded on "already
+        // last, in order" so a pass where the order already matches is a strict no-op — this whole block
+        // reruns on every ccApps() pass (category clicks, view swaps).
+        var verLabel = null, verNumEl = mMeta.querySelector("#caInstalledVersion");
+        var verNum = verNumEl ? verNumEl.closest("li") : null;
+        for (var vi = 0; vi < tail.length; vi++) {
+          if ((tail[vi].textContent || "").trim().toUpperCase() === "VERSION") { verLabel = tail[vi]; break; }
+        }
+        if (verLabel && verNum) {
+          var kids = mMeta.children, lastIdx = kids.length - 1;
+          var alreadyLast = lastIdx >= 1 && kids[lastIdx - 1] === verLabel && kids[lastIdx] === verNum;
+          if (!alreadyLast) {
+            mMeta.appendChild(verLabel);
+            mMeta.appendChild(verNum);
+          }
+        }
       }
     } catch (e) {}
   }
