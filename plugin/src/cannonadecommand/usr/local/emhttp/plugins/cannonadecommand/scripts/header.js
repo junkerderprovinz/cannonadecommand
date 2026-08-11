@@ -239,15 +239,6 @@
       for (var i = 0; i < sas.length; i++) {
         var sa = sas[i], h2 = sa.querySelector("h2"); if (!h2) continue;
         sa.classList.add("nchan");
-        // #23 (user: "update oder installationsfenster scrollen nicht automatisch nach unten"): the
-        // streamed log keeps growing but nothing follows it to the new bottom line — whichever element
-        // in this dialog actually scrolls (varies: #swaltext, a fieldset, the dialog box itself, or the
-        // page behind it, depending on Unraid build/dialog type) gets pinned to its own bottom on every
-        // restyle pass, i.e. at most once per ~60ms debounce window, not per streamed line.
-        var scrollers = sa.querySelectorAll("*");
-        for (var sc = 0; sc < scrollers.length; sc++) { var sn = scrollers[sc]; if (sn.scrollHeight - sn.clientHeight > 2) sn.scrollTop = sn.scrollHeight; }
-        if (sa.scrollHeight - sa.clientHeight > 2) sa.scrollTop = sa.scrollHeight;
-        if (document.documentElement.scrollHeight - document.documentElement.clientHeight > 2) window.scrollTo(0, document.documentElement.scrollHeight);
         // #15 (user, LIVE-verified: this window is .sweet-alert.nchan): the update stream carries a Fonts/log
         // <style> block whose content ALSO lands in a bare <p>/text node and renders as raw CSS text under the
         // title. The CSS hides the <style> element; here we blank the text-rendered variant (leaf elements + text
@@ -311,6 +302,26 @@
         var state = sa.dataset.ccState || "";
         sa.classList.toggle("cc-nchan-loading", state === "run");
         sa.classList.toggle("cc-nchan-done", state === "done");
+        // #23 (user: "update oder installationsfenster scrollen nicht automatisch nach unten"): the
+        // streamed log keeps growing but nothing follows it to the new bottom line — whichever element
+        // in this dialog actually scrolls (varies: #swaltext, a fieldset, the dialog box itself, or the
+        // page behind it, depending on Unraid build/dialog type) gets pinned to its own bottom on every
+        // restyle pass, i.e. at most once per ~60ms debounce window, not per streamed line.
+        // #31 (user: "immer wenn ich den changelog eines containers öffne springt die Seite ans Ende"):
+        // this used to run for EVERY .sweet-alert:has(pre) match unconditionally, `isStream` above already
+        // exists specifically to tell a real update/install stream apart from a static <pre> dialog (System
+        // Information, a plugin/ShipLog changelog viewer) — but this block ran BEFORE that check and ignored
+        // it. ShipLog's own changelog bubble isn't even a sweet-alert (watchPopups' body-childList observer
+        // just restyles on ANY body mutation, sweet-alert or not), so opening it re-ran this loop over the
+        // WHOLE document and blind-scrolled the page for any matching static dialog left over from earlier
+        // in the session (System Info, a changelog view) — nothing to do with what was actually opened.
+        // state === "run" only: follow while genuinely streaming, stop once finished, never for static text.
+        if (state === "run") {
+          var scrollers = sa.querySelectorAll("*");
+          for (var sc = 0; sc < scrollers.length; sc++) { var sn = scrollers[sc]; if (sn.scrollHeight - sn.clientHeight > 2) sn.scrollTop = sn.scrollHeight; }
+          if (sa.scrollHeight - sa.clientHeight > 2) sa.scrollTop = sa.scrollHeight;
+          if (document.documentElement.scrollHeight - document.documentElement.clientHeight > 2) window.scrollTo(0, document.documentElement.scrollHeight);
+        }
         // #14: strip the status suffix from the title — but do NOT rewrite h2.textContent: that DESTROYS
         // #pluginProgressTitle, the only reliable completion signal (later passes could then never see "done").
         // Hide the native progress span in place + trim the trailing separator; keep text-clean only as the
