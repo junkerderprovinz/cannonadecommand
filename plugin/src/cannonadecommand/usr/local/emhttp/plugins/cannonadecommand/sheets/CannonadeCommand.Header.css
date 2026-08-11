@@ -91,6 +91,11 @@ html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search):hover > 
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a svg.cc-tab-ico {
   width: 16px; height: 16px; flex-shrink: 0; margin-right: 7px; color: inherit;
 }
+/* #18 (user, extension: "auch toggle um den text auszublenden") — icon-only mode. The label is wrapped in
+   its own span by ccTabIcons() specifically so this can hide just the text; the icon's right margin only
+   existed to space it from that text, so it collapses too, leaving the icon centred in the pill alone. */
+html.cc-tabtext-off #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a span.cc-tab-label { display: none; }
+html.cc-tabtext-off #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a svg.cc-tab-ico { margin-right: 0; }
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search).active > a {
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
 }

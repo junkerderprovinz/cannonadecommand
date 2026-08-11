@@ -1360,8 +1360,11 @@
     // (unlike most toggles here, which only gate future paints — nothing else in ccTabIcons() clears
     // already-inserted svg.cc-tab-ico, so turning this off has to be as real as turning it on).
     (function () {
-      var cT = card(T("Haupttab-Icons", "Main tab icons"), T("Zeigt ein Icon (Tabler, MIT-lizenziert) vor jedem Haupttab-Namen (Übersicht, Docker, VMs, …).", "Shows an icon (Tabler, MIT licensed) in front of every main tab label (Dashboard, Docker, VMs, …)."));
+      var cT = card(T("Haupttabs", "Main tabs"), T("Icon (Tabler, MIT-lizenziert) und/oder Text vor jedem Haupttab-Namen (Übersicht, Docker, VMs, …). Beides aus ist möglich, zeigt dann eine leere Pille.", "Icon (Tabler, MIT licensed) and/or text for every main tab label (Dashboard, Docker, VMs, …). Turning both off is possible and shows an empty pill."));
       cT.appendChild(toggleRow(T("Icons anzeigen", "Show icons"), get("cc.tabicons", "1") !== "0", function (v) { set("cc.tabicons", v ? "1" : "0"); try { window.ccTabIcons && window.ccTabIcons(); } catch (e) {} }));
+      // #18 (user, extension: "auch toggle um den text auszublenden") — icon-only mode alongside the
+      // existing icon switch, same card since both control the same tab pill's contents.
+      cT.appendChild(toggleRow(T("Text anzeigen", "Show text"), get("cc.tabtext", "1") !== "0", function (v) { set("cc.tabtext", v ? "1" : "0"); try { window.ccTabIcons && window.ccTabIcons(); } catch (e) {} }));
       wrapHeader.appendChild(cT);
     })();
     // ── SERVERNAME card (user: size/weight/italic/font/colour customisable). header.js reads the

@@ -135,22 +135,42 @@
       // a gate on future paints — CC_TAB_ICONS is the only place that puts these <svg>s in the DOM, so
       // this is also the only place that can take them back out again when the setting flips off.
       var on = g("cc.tabicons", "1") !== "0";
+      // #18 (user, extension: "auch toggle um den text auszublenden" — icon-only mode). The label has no
+      // element of its own (CA/Unraid renders it as a bare text node next to the icon), so wrap it in a
+      // span ONCE per tab; hiding is then a plain CSS class toggle, independent of the icon switch above —
+      // wrapping always runs regardless of `on` so text-only mode still works with icons off.
+      var textOff = g("cc.tabtext", "1") === "0";
       var items = document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a[href]");
       for (var i = 0; i < items.length; i++) {
         var a = items[i];
         var existing = a.querySelector(":scope > svg.cc-tab-ico");
-        if (!on) { if (existing) existing.remove(); continue; }
-        if (existing) continue;   // idempotent
-        var href = "/" + (a.getAttribute("href") || "").replace(/^\/+|\/+$/g, "").split("/")[0];
-        var d = CC_TAB_ICONS[href]; if (!d) continue;
-        var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("class", "cc-tab-ico");
-        svg.setAttribute("viewBox", "0 0 24 24");
-        svg.setAttribute("fill", "none"); svg.setAttribute("stroke", "currentColor");
-        svg.setAttribute("stroke-width", "2"); svg.setAttribute("stroke-linecap", "round"); svg.setAttribute("stroke-linejoin", "round");
-        svg.innerHTML = d;
-        a.insertBefore(svg, a.firstChild);
+        if (!on) { if (existing) existing.remove(); } else if (!existing) {
+          var href = "/" + (a.getAttribute("href") || "").replace(/^\/+|\/+$/g, "").split("/")[0];
+          var d = CC_TAB_ICONS[href];
+          if (d) {
+            var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("class", "cc-tab-ico");
+            svg.setAttribute("viewBox", "0 0 24 24");
+            svg.setAttribute("fill", "none"); svg.setAttribute("stroke", "currentColor");
+            svg.setAttribute("stroke-width", "2"); svg.setAttribute("stroke-linecap", "round"); svg.setAttribute("stroke-linejoin", "round");
+            svg.innerHTML = d;
+            a.insertBefore(svg, a.firstChild);
+          }
+        }
+        if (!a.querySelector(":scope > span.cc-tab-label")) {
+          for (var n = a.childNodes.length - 1; n >= 0; n--) {
+            var node = a.childNodes[n];
+            if (node.nodeType === 3 && node.textContent.trim()) {
+              var lbl = document.createElement("span");
+              lbl.className = "cc-tab-label";
+              a.replaceChild(lbl, node);
+              lbl.appendChild(node);
+              break;
+            }
+          }
+        }
       }
+      document.documentElement.classList.toggle("cc-tabtext-off", textOff);
     } catch (e) {}
   }
   try { window.ccTabIcons = ccTabIcons; } catch (eTI) {}   // same-page live toggle hook for the CC Settings page (the nav bar is on every page, Settings included)
