@@ -340,50 +340,64 @@ html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"]:focus-v
    one chip floating apart in the corner. CSS-only, no DOM moves — law. */
 html.cc-header-on unraid-header-os-version { display: none !important; }
 
-/* 3) bell + burger: div#UserProfile is DOCKED at the FAR RIGHT END of the MENU icon row by
-   header.js ccDockProfile() (inline position:fixed, left = 8px right of the row's last visible
-   item — no DOM move, auto-mount-safe); the .nav-tile.right 84px padding-right (right-edge
-   section below) reserves the room. After the hides the controls row keeps only the two
-   trigger boxes. */
-/* #11 ROOT CAUSE (help icon "does nothing"): the docked #UserProfile is position:fixed, z-index above #menu,
-   and its 88px box overlaps the syslog+help icons beneath it, EATING their real mouse clicks (a synthetic
-   click bypasses hit-testing -> "worked" in tests but never for a real click). Make the container CLICK-
-   THROUGH and re-enable pointer events ONLY on the two real triggers (bell + burger spans). This is the
-   geometry-independent fix -- no matter how ccDockProfile's correction chain drifts, empty dock area now
-   passes the click through to the icon beneath. */
+/* 3) bell + burger: #16 ROUND 5 (reparent model). Rounds 1-4 all tried to keep a position:fixed
+   OVERLAY in sync with the position:sticky menu row from JS (a 1s interval, a hover listener, then a
+   per-frame rAF loop) — structurally unfixable, since no "stickychange" event exists and a poll is
+   always at least one frame behind during the sticky scroll transition. Worse, a fixed span pinned OVER
+   #menu is still visually a CHILD of #header's own stacking context, so `html.cc-anim-wild #menu:has(
+   .nav-tile > .nav-item:hover) { z-index: 103 }` (below) lifted #menu's opaque .nav-tile.right background
+   straight over both triggers on ANY nav-item hover — the actual cause of "hidden on hover elsewhere,
+   still a group" (they are siblings inside the same Connect container, so they vanish together). FIX:
+   header.js's dock code physically ADOPTS the two live trigger <span>s as real DOM children of their
+   proxy divs (#cc-bell-proxy / #cc-burger-proxy, already living in the native .nav-tile.right flow for
+   drag & drop). Adopted, they reflow NATIVELY with the row (zero JS-tracking lag) and paint INSIDE
+   .nav-tile.right's own stacking context, where that tile's background can never cover them again. */
+/* #11 ROOT CAUSE (help icon "does nothing", still relevant post-reparent): the leftover, zero-footprint
+   #UserProfile container must stay CLICK-THROUGH so it can never eat a click meant for whatever now sits
+   at its old on-screen spot. */
 html.cc-header-on #UserProfile { pointer-events: none !important; }
 html.cc-header-on #UserProfile > div:nth-child(2) > span { pointer-events: auto !important; }
-html.cc-header-on #UserProfile > div:nth-child(2) { align-items: center; gap: 6px; }   /* bell<->burger = the 6px util-icon gap (N5) */
+/* SAFETY NET, independent of JS timing: a trigger span still (or again, mid-rebuild) inside the Connect
+   container is by definition NOT YET ADOPTED — hide it. An ADOPTED span no longer matches this selector
+   (it lives inside its proxy now, see `[data-cc-trig]` below) and is unaffected. visibility, not
+   display:none, so Connect's own layout measurement of the row stays undisturbed. This is what makes the
+   "flash at the parked anchor on a Vue rebuild" failure mode structurally impossible, independent of how
+   fast header.js's ccWatchAdopt() observer reacts. */
+html.cc-header-on #UserProfile > div:nth-child(2) > span { visibility: hidden !important; }
+html.cc-header-on #UserProfile > div:nth-child(2) { align-items: center; gap: 6px; }   /* leftover container spacing; harmless once its children are hidden/adopted */
 /* bell + burger dress EXACTLY like the utility icon boxes beside them (user call): accent
    fill + contrast glyph in normal mode, grey fill + grey glyph in the reactive sub-mode —
-   the native glyph STATE colours (yellow bell, red warning) are overridden for consistency */
-html.cc-header-on #UserProfile > div:nth-child(2) > span {
+   the native glyph STATE colours (yellow bell, red warning) are overridden for consistency.
+   [data-cc-trig] is the marker header.js stamps on each trigger the moment it adopts it — this now
+   targets the ADOPTED span wherever it lives (inside its proxy), not its old #UserProfile position. */
+html.cc-header-on [data-cc-trig] {
   display: inline-flex; align-items: center; justify-content: center;
   box-sizing: border-box; width: var(--cc-md-ibox, 30px); height: var(--cc-md-ibox, 30px); padding: 0;
   background: var(--cc-rb-c, var(--cc-hdr-accent, #2f6feb)) !important;   /* #15: rainbow slot colour (JS-stamped) with the single-accent fallback */
   border-radius: min(var(--cc-b-radius, 8px), 8px);
   color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)); transition: color .12s, filter .12s;
 }
-html.cc-header-on #UserProfile > div:nth-child(2) > span:hover { filter: brightness(1.14); }
-html.cc-header-on.cc-header-rbneutral #UserProfile > div:nth-child(2) > span { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf); }
-html.cc-header-on.cc-header-rbneutral #UserProfile > div:nth-child(2) > span:hover { background: var(--cc-rb-c, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)); }
+html.cc-header-on [data-cc-trig]:hover { filter: brightness(1.14); }
+html.cc-header-on.cc-header-rbneutral [data-cc-trig] { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf); }
+html.cc-header-on.cc-header-rbneutral [data-cc-trig]:hover { background: var(--cc-rb-c, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)); }
 /* glyphs at 16px — the 14px icon token +2px, these two glyphs read better a notch larger;
    color FORCED onto the svg so the native state tints (yellow/red) cannot leak through */
-html.cc-header-on #UserProfile > div:nth-child(2) > span svg { width: 16px !important; height: 16px !important; color: inherit !important; fill: currentColor; }
+html.cc-header-on [data-cc-trig] svg { width: 16px !important; height: 16px !important; color: inherit !important; fill: currentColor; }
 /* UNREAD indicator: the bell shows a SECOND svg (svg.absolute -top-1 -right-1 size-4) only when
    notifications exist. The blanket rule above sized it to 16px = the bell's own size AND forced it to the
    bell's colour, so an unread state HALF-COVERED the glyph with a same-colour blob (user report). Shrink it
    to a small amber corner dot that reads as a proper badge and clears the glyph. */
-html.cc-header-on #UserProfile > div:nth-child(2) > span svg[class*="absolute"] {
+html.cc-header-on [data-cc-trig] svg[class*="absolute"] {
   width: 8px !important; height: 8px !important;
   top: -5px !important; right: -5px !important;
   color: var(--cc-warn, #e0912a) !important; fill: currentColor !important;
 }
 /* the burger's SECOND svg is a dropdown chevron — visual noise inside a 30px box */
-html.cc-header-on #UserProfile > div:nth-child(2) > span[id^="reka-menu-trigger"] svg:nth-of-type(2) { display: none !important; }
+html.cc-header-on [data-cc-trig="burger"] svg:nth-of-type(2) { display: none !important; }
 /* their Tailwind ring-offset classes may paint focus rings — kill on every focusable (law) */
-html.cc-header-on #UserProfile > div:nth-child(2) :is(span, button, a):focus,
-html.cc-header-on #UserProfile > div:nth-child(2) :is(span, button, a):focus-visible {
+html.cc-header-on [data-cc-trig]:is(:focus, :focus-visible),
+html.cc-header-on [data-cc-trig] :is(span, button, a):focus,
+html.cc-header-on [data-cc-trig] :is(span, button, a):focus-visible {
   outline: none !important; box-shadow: none !important;
 }
 /* the burger's dropdown MENU (Connect popover, appended to body as .bg-popover) in CC style:
@@ -458,9 +472,12 @@ html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile:not(.right)::-webkit-scro
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right > *:last-child { margin-right: 0 !important; }
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right .nav-item.util:last-child > a { margin-right: 0 !important; }
 /* ── bell/burger PROXIES: real draggable nav-items that hold each icon's slot in the flow. In NORMAL
-   mode the live reka trigger is overlaid on top (JS position:fixed) and the ghost is hidden. In ARRANGE
-   mode the live triggers go pointer-events:none + hidden and the ghost shows, so you drag a visible,
-   correctly-dressed icon and the pointer reaches the proxy underneath. Ghost mirrors the trigger box. */
+   mode the live reka trigger is ADOPTED as a real child of the proxy (header.js) and the proxy's own
+   <a>/ghost is hidden (JS sets display:none on it — two 36px boxes must not sit side by side). In ARRANGE
+   mode header.js swaps it: the adopted trigger goes visibility:hidden (CSS below) and the ghost's <a>
+   comes back (display:'' -> the CSS rule below applies again), so you drag a visible, correctly-dressed
+   ghost icon and the pointer lands on the proxy DIV itself (the real click target is safely tucked away
+   invisible, not able to intercept the drag). Ghost mirrors the trigger box for a faithful preview. */
 html.cc-header-on #menu .nav-item.cc-iconproxy > a { display: inline-flex; align-items: center; justify-content: center; padding: 0; width: 36px; height: 36px; }
 /* transparent: the overlaid live trigger (or the ghost) supplies the fill — else two .18 layers stack lighter than
    the sibling icons. Specificity must top the util-fill rules (accent 142 / rbneutral 152), so qualify fully. */
@@ -477,8 +494,9 @@ html.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost {
 html.cc-header-on.cc-header-rbneutral #menu .nav-item.cc-iconproxy .cc-proxy-ghost { background: rgba(128, 128, 128, .18); color: var(--cc-text-chip, #cfcfcf); }
 html.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost svg { width: 16px; height: 16px; color: inherit; fill: currentColor; }
 html.cc-shape-circle.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost { border-radius: 50%; }
-/* arrange mode: swap live trigger <-> ghost */
-html.cc-arrange.cc-header-on #UserProfile > div:nth-child(2) > span { visibility: hidden !important; }
+/* arrange mode: swap live (adopted) trigger <-> ghost. [data-cc-trig] (not the old #UserProfile path) —
+   the adopted span now lives inside the proxy itself. */
+html.cc-arrange.cc-header-on [data-cc-trig] { visibility: hidden !important; }
 html.cc-arrange.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost { visibility: visible; }
 
 /* ═══ array-usage meter -> clean, minimal accent pill ═══ */
@@ -567,7 +585,7 @@ html.cc-header-on .awesomplete mark, html.cc-header-on .awesomplete > ul > li ma
    near-square objects get this — rectangular text pills stay capsules (--cc-b-radius 999px).
    The docked bell/burger are the same square box family, so they follow. */
 html.cc-shape-circle.cc-header-on #menu .nav-tile .nav-item.util > a { border-radius: 50% !important; }
-html.cc-shape-circle.cc-header-on #UserProfile > div:nth-child(2) > span { border-radius: 50%; }
+html.cc-shape-circle.cc-header-on [data-cc-trig] { border-radius: 50%; }
 
 /* ═══ NATIVE POPUP WINDOWS -> CC look (v2.32.0, user: "alle Subfenster/Popupfenster in den CC
    Style — keine Rahmen, Linien, super clean, modern, minimalistisch"). Gated on html.cc-popups-on

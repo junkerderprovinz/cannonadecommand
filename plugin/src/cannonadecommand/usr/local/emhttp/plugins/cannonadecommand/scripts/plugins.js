@@ -99,11 +99,13 @@
         var mr2 = mi[m2].getBoundingClientRect().right;
         if (ref == null || mr2 > ref) ref = mr2;
       }
-      // the docked bell/burger (header.js ccDockProfile, header area on) extend the visual row
-      // ~84px past the last icon — include their rects so the button aligns with the TRUE row
-      // end. Guarded: only while docked (cc-header-on) and actually visible.
+      // the docked bell/burger (header.js #16 round 5: adopted as real children of their proxy slots,
+      // so they're now PART of the row) — the primary query above (.nav-item.util > a) misses them
+      // since the adopted trigger is a <span> sibling of that <a>, not the <a> itself, so include their
+      // rects too. [data-cc-trig] covers the adopted (normal) state; the plain #UserProfile selector is
+      // a harmless fallback for the moment before adoption runs and for theming-off.
       if (document.documentElement.classList.contains("cc-header-on")) {
-        var dk = document.querySelectorAll("#UserProfile > div:nth-child(2) > span");
+        var dk = document.querySelectorAll("#menu .nav-tile.right [data-cc-trig], #UserProfile > div:nth-child(2) > span");
         for (var d2 = 0; d2 < dk.length; d2++) {
           var dr2 = dk[d2].getBoundingClientRect();
           if (dr2.width > 0 && dr2.height > 0 && (ref == null || dr2.right > ref)) ref = dr2.right;
