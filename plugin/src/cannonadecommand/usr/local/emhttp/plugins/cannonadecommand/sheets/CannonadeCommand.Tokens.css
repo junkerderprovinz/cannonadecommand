@@ -989,12 +989,19 @@ html.cc-popups-on .subCategory:not(.onlyShowWithFeed) .caMenuItem { font-size: 1
    margin CA's markup carries) is irrelevant — force the same content-box width every other badge in the
    sidebar gets, whatever produced the old number. */
 html.cc-popups-on .subCategory .caMenuItem { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; margin: 2px 0 !important; }
-html.cc-popups-on .caMenuItem.selectedMenu,
-html.cc-popups-on .caMenuItem.selectedMenu:hover {
+/* #27/#28 (user: "sobald man draufklickt verschmilzt er mit dem suchenbadge"): #searchFilter's own LI is
+   li.cc-ca-search-li, which now ALSO hosts the relocated Results Per Page / DockerHub badges (#15,
+   ccMoveSearchAreaBadges). Clicking either of those descendants makes CA mark this SAME li .selectedMenu —
+   its own "which sidebar item is active" bookkeeping, never meant to fire for a control that merely lives
+   inside the search chip's box — so the full accent fill below painted Suche AND Results Per Page as one
+   continuous red block the instant the dropdown opened. Excluded: this li never had a "selected" LOOK of
+   its own (the search badge and the relocated badges already carry their own colour treatment). */
+html.cc-popups-on .caMenuItem.selectedMenu:not(.cc-ca-search-li),
+html.cc-popups-on .caMenuItem.selectedMenu:not(.cc-ca-search-li):hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
-html.cc-popups-on .caMenuItem.selectedMenu:hover { filter: brightness(1.06) !important; }
+html.cc-popups-on .caMenuItem.selectedMenu:not(.cc-ca-search-li):hover { filter: brightness(1.06) !important; }
 html.cc-popups-on .caMenuItem a.caMenuItem {
   color: inherit !important; text-decoration: none !important; display: inline !important; padding: 0 !important; margin: 0 !important;
 }
