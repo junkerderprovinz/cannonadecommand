@@ -93,7 +93,12 @@ html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a svg.
 }
 /* #18 (user, extension: "auch toggle um den text auszublenden") — icon-only mode. The label is wrapped in
    its own span by ccTabIcons() specifically so this can hide just the text; the icon's right margin only
-   existed to space it from that text, so it collapses too, leaving the icon centred in the pill alone. */
+   existed to space it from that text, so it collapses too, leaving the icon centred in the pill alone.
+   REGRESSION caught live: Unraid's own default-base.css carries a blanket ".nav-item a span { display:
+   none }" (unrelated to this plugin) that the raw text node never matched before it was wrapped — so
+   wrapping it accidentally hid the label for EVERYONE, toggle or not, until this default-visible rule
+   claws it back; the .cc-tabtext-off rule right below then has one extra class and wins when it applies. */
+html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a span.cc-tab-label { display: inline; }
 html.cc-tabtext-off #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a span.cc-tab-label { display: none; }
 html.cc-tabtext-off #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a svg.cc-tab-ico { margin-right: 0; }
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search).active > a {
