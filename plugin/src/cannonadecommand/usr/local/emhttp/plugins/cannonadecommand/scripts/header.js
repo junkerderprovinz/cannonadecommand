@@ -2085,8 +2085,17 @@
         if (span.parentElement !== proxy) proxy.appendChild(span);
         // the proxy's OWN <a>/ghost is only the arrange-mode drag handle now; hide it whenever the
         // real adopted trigger is doing the showing, so the two 36px boxes don't sit side by side.
+        // #34-followup: the general ".nav-item.util > a" rule forces display:inline-flex !important
+        // (it doesn't know about the iconproxy's own ghost handle) - a plain inline style can never
+        // beat that, so the hide silently no-op'd and the ghost sat there, transparent but full-width,
+        // widening the gap before bell/burger. Match its !important instead of losing to it.
         var ghostA = proxy.querySelector(".cc-proxy-a");
-        if (ghostA) { var wantGhost = arranging ? "" : "none"; if (ghostA.style.display !== wantGhost) ghostA.style.display = wantGhost; }
+        if (ghostA) {
+          if (arranging) { if (ghostA.style.display) ghostA.style.removeProperty("display"); }
+          else if (ghostA.style.display !== "none" || ghostA.style.getPropertyPriority("display") !== "important") {
+            ghostA.style.setProperty("display", "none", "important");
+          }
+        }
       });
       ccArmAdoptObs();   // (re)arm the narrow style-attribute watch on the two now-adopted spans
     } catch (e) {}
