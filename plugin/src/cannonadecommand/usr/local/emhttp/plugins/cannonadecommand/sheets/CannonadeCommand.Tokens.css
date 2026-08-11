@@ -262,6 +262,15 @@ html.cc-popups-on nav.tabs .tabs-container > button[role="tab"][aria-selected="t
 @keyframes cc-spin-rot  { to { transform: rotate(360deg); } }   /* kept: legacy small ring spinners */
 @keyframes cc-load-cw   { to { transform: rotate(1turn); } }
 @keyframes cc-load-ccw  { to { transform: rotate(-1turn); } }
+/* #36 (user video evidence: the VM-tab full-screen ring visibly starts tiny at the viewport's top-left
+   corner and jumps/grows to its centred 110px size over ~150ms before settling — frame-by-frame centroid
+   tracking confirmed a real, not imagined, position+size jump, not just a slow fade). Root mechanism not
+   pinned down with certainty (likely a paint/compositing race between div.spinner.fixed picking up its
+   .fixed class + backdrop-filter layer promotion and .cc-loader's position:fixed centering rule actually
+   committing) - rather than chase an exact race with a 3rd guess, mask the mount transition itself: every
+   .cc-loader fades in instead of appearing pre-positioned, so whatever transitional frame(s) exist during
+   mount are invisible instead of a visible jump. */
+@keyframes cc-load-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes cc-load-rb {
   0%,12.4%{--cc-lc:#c95e5e} 12.5%,24.9%{--cc-lc:#c98d5e} 25%,37.4%{--cc-lc:#c9af5e} 37.5%,49.9%{--cc-lc:#5ec986}
   50%,62.4%{--cc-lc:#5ec9c2} 62.5%,74.9%{--cc-lc:#5e89c9} 75%,87.4%{--cc-lc:#865ec9} 87.5%,100%{--cc-lc:#c95e94}
@@ -276,6 +285,7 @@ html.cc-popups-on nav.tabs .tabs-container > button[role="tab"][aria-selected="t
   --sz: var(--cc-load-sz, 40px); --acc: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)));
   --th: calc(var(--sz) / 10); --arc: 155deg;
   position: relative; width: var(--sz); height: var(--sz); display: inline-block; flex: none; vertical-align: -.15em;
+  animation: cc-load-in .15s ease both;
 }
 .cc-load-full { --cc-load-sz: var(--cc-load-full, 110px); }
 .cc-load-dlg  { --cc-load-sz: var(--cc-load-dlg, 48px); }
@@ -302,12 +312,16 @@ html.cc-popups-on nav.tabs .tabs-container > button[role="tab"][aria-selected="t
   margin-left: calc(var(--th) / -2); border-radius: var(--cc-b-radius, 50%); background: var(--cc-lc, var(--acc));
 }
 html.cc-shape-circle .cc-loader > span::after, html.cc-shape-circle .cc-loader > span > i::before { border-radius: 50%; }
-html.cc-rb-on .cc-loader { animation: cc-load-rb 6s linear infinite; }   /* rainbow: step colour at each meeting */
+html.cc-rb-on .cc-loader { animation: cc-load-in .15s ease both, cc-load-rb 6s linear infinite; }   /* rainbow: step colour at each meeting, plus the same one-shot mount fade */
 /* MOTION AXIS: the same switch every other CC animation already obeys (html.cc-anim-off, set from cc.anim),
    now covers the loader ring too — via the token so span.o/span.in/the ring's own rb-cycle all pause in one
    place instead of three separate `animation:none` overrides drifting out of sync. */
 html.cc-anim-off { --cc-load-play: paused; }
-html.cc-anim-off .cc-loader { animation-play-state: paused; }
+/* animation:none (not animation-play-state:paused) - the mount fade-in above is one-shot, and pausing
+   mid-way would freeze it at opacity:0 (permanently invisible) instead of letting it settle at opacity:1;
+   this also drops the rainbow cycle to its plain --acc fallback instead of freezing on an arbitrary
+   mid-cycle colour, which is the more predictable "no animation" result anyway. */
+html.cc-anim-off .cc-loader { animation: none; }
 @media (prefers-reduced-motion: reduce) {
   html:not(.cc-anim-on) { --cc-load-play: paused; }
   html:not(.cc-anim-on) .cc-loader > span { animation: none; }
