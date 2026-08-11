@@ -289,6 +289,7 @@ table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span
 .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-low)  { background: var(--cc-ok, #1f9d55); }
 .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-mid)  { background: var(--cc-warn, #e0912a); color: #1a1a1a !important; }
 .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #d9433f); }
+.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-crit) { background: var(--cc-err, #d9433f); }
 .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip .sl-amp { display: none; }
 .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip .sl-ico { opacity: .85; }
 
@@ -1752,6 +1753,7 @@ html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-low) { background: var(--cc-ok, #1f9d55) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-mid) { background: var(--cc-warn, #e0912a) !important; color: #1a1a1a !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #d9433f) !important; color: #fff !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-crit) { background: var(--cc-err, #d9433f) !important; color: #fff !important; }
 /* FLASH FIX (user: "wenn ich über die unterste Buttonleiste fahre blitzt die Docker-Zeile
    dahinter auf"): the fixed bottom action bar does NOT hit-test across its right region (proven:
    z-index 3000 still leaves the row topmost there), so the pointer passing the bar's right zone
