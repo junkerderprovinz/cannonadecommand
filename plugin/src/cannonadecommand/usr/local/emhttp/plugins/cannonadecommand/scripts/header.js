@@ -3216,7 +3216,13 @@
     // browser-scheduled call — and ccLoadState() only ever calls getComputedStyle (read) plus idempotent
     // class/attribute diffs (writes only when the value actually changes), so there is no path back into
     // itself. Paused via document.hidden so a backgrounded tab does no work at all.
-    setInterval(function () { if (!document.hidden) { ccLoadState(); ccAttachSwalObs(); } }, 200);
+    // 60ms (was 200ms) — matches the nchan restyle debounce elsewhere in this file. #22 (user screenshot: a
+    // vertical scrollbar next to the spinner "hüpft die ganze Zeit"): CA's catalog fetch toggles its loading
+    // indicators through several phases, and every poll gap around a toggle was a moment html.cc-loading's
+    // scroll-lock sat off while content height was still changing. The Tokens.css scrollbar-gutter fix is the
+    // real fix (timing-independent), this just shrinks the worst-case lock-latency for every cc-loading
+    // consumer, at the same getComputedStyle-read-only cost that made the 200ms interval provably freeze-safe.
+    setInterval(function () { if (!document.hidden) { ccLoadState(); ccAttachSwalObs(); } }, 60);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ccLoaderBoot); else ccLoaderBoot();
 })();

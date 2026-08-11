@@ -972,6 +972,14 @@ html.cc-popups-on .sweet-alert.cc-only-loader {
   background: transparent !important; border: none !important; box-shadow: none !important;
   display: flex !important; align-items: center !important; justify-content: center !important; padding: 0 !important;
 }
+/* #22 (user, live-diagnosed via a targeted overflow scan — TWO earlier attempts fixed html/body, the wrong
+   element entirely): this dialog is SweetAlert1's own base .sweet-alert, which ships overflow-y:auto for
+   normal dialogs with long confirm text. That was never overridden for the loader-only variant, so once the
+   110px ring's carrying <p> needed a few px more than this box's own height, the native rule did exactly
+   what it was designed to do elsewhere — auto-scroll — which is exactly the scrollbar next to the spinner.
+   Nothing in this dialog is meant to scroll once every OTHER child is hidden above; let the box grow to fit
+   instead of clipping or scrolling it. */
+html.cc-popups-on .sweet-alert.cc-only-loader { overflow: visible !important; }
 /* keep ONLY the element that carries the loader (the <p>); hide title, icons, fieldset, button row, all else */
 html.cc-popups-on .sweet-alert.cc-only-loader > *:not(:has(.cc-loader)) { display: none !important; }
 /* inside that <p>, drop the "Please Wait" marker so ONLY the spinner shows */

@@ -548,6 +548,18 @@ html.cc-popups-on:has(.ca_homeTemplates),
 html.cc-popups-on:has(.ca_homeTemplates) body,
 html.cc-popups-on:has(link[href*="/community.applications/"]),
 html.cc-popups-on:has(link[href*="/community.applications/"]) body { overflow-x: clip !important; }
+/* #22 continued (user screenshot: the spinner has a VERTICAL scrollbar next to it that "hüpft die ganze
+   Zeit" — bounces the whole time): the fix above only ever touched overflow-x. html.cc-loading{overflow:
+   hidden} (further down) DOES lock both axes, but only while ccLoadState()'s 200ms poll has actually caught
+   the native spinner as up — CA's own catalog fetch toggles its loading indicators through several phases,
+   and each poll gap around a toggle is a moment the lock is off while content height is still changing, so
+   the vertical scrollbar's track/thumb visibly resizes right then. Fighting that timing race harder (a
+   tighter poll, an observer) either still races or reintroduces the self-observing-attribute-observer freeze
+   risk documented elsewhere in this file. `scrollbar-gutter: stable` sidesteps the race entirely: the
+   gutter's width never changes, so a scrollbar toggling on/off during the load can no longer shift anything
+   — same structural, always-on gate as the overflow-x fix, not tied to the loading-state class at all. */
+html.cc-popups-on:has(.ca_homeTemplates),
+html.cc-popups-on:has(link[href*="/community.applications/"]) { scrollbar-gutter: stable !important; }
 /* #12b SECTION-HEAD BADGES — smaller (#9), NO leading icon (#9), COLOUR-MODE filled per element (#8).
    Subtitle rides the (i) bubble + SHOW MORE rides inside the badge (both moved in by header.js ccApps). */
 /* #9 the header ROW is a transparent flex container only — the title text is wrapped in .cc-sechead-badge
