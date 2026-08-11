@@ -1202,17 +1202,27 @@
   function centerNameCells() {
     try {
       if (mode !== "list") return;
-      findRows().forEach(function (tr) {
-        var td = tr.querySelector("td.ct-name"), outer = td && td.querySelector(".outer");
-        if (!td || !outer) return;
+      // #33-followup: read ALL rows' rects first, THEN write ALL transforms - interleaving
+      // getBoundingClientRect (read) with style.setProperty (write) per row forces a synchronous
+      // layout recalc on every single iteration (classic layout thrash), 103 times per pass, twice
+      // per native table rebuild (rAF + the 800ms follow-up below). Batched, the browser computes
+      // layout once for the whole read phase and once more for the whole write phase.
+      var rows = findRows(), pending = [];
+      for (var i = 0; i < rows.length; i++) {
+        var td = rows[i].querySelector("td.ct-name"), outer = td && td.querySelector(".outer");
+        if (!td || !outer) continue;
         var tdR = td.getBoundingClientRect(), oR = outer.getBoundingClientRect();
-        if (!tdR.height || !oR.height) return;
-        var prev = parseFloat(outer.dataset.ccDy || "0");
-        var dy = Math.round(prev + ((tdR.bottom - oR.bottom) - (oR.top - tdR.top)) / 2);
-        if (Math.abs(dy - prev) < 2) return;
-        outer.dataset.ccDy = String(dy);
-        outer.style.setProperty("transform", "translateY(" + dy + "px)", "important");
-      });
+        if (!tdR.height || !oR.height) continue;
+        pending.push({ outer: outer, tdR: tdR, oR: oR });
+      }
+      for (var j = 0; j < pending.length; j++) {
+        var p = pending[j];
+        var prev = parseFloat(p.outer.dataset.ccDy || "0");
+        var dy = Math.round(prev + ((p.tdR.bottom - p.oR.bottom) - (p.oR.top - p.tdR.top)) / 2);
+        if (Math.abs(dy - prev) < 2) continue;
+        p.outer.dataset.ccDy = String(dy);
+        p.outer.style.setProperty("transform", "translateY(" + dy + "px)", "important");
+      }
     } catch (e) {}
   }
   function clearRowBadges() {
