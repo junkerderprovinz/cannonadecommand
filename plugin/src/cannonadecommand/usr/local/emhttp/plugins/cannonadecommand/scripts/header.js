@@ -1708,12 +1708,22 @@
       }
       // (b) a stray dt with NOTHING in it at all (no icon, no text — #32's Boot-Datenträger case) has no
       //     content to relocate; just hide it.
+      // #32 REGRESSION (user: "die Anwenden/Fertig-Buttons sind in allen Subtabs nach links verschoben"):
+      // hiding the dt with display:none also removes it as a GRID ITEM, so it no longer occupies column 1 —
+      // when a bare dt sits directly before a <dd> with no real <dt> between them (e.g. the ANWENDEN/FERTIG
+      // button row, term(empty) -> definition(buttons), no label needed), that dd lost its column-1 anchor
+      // and auto-flowed into column 1 itself instead of column 2. Force it back onto column 2 explicitly the
+      // moment its anchor disappears, rather than leaning on auto-flow to land the same place by accident.
       var bareDts = document.querySelectorAll("#displaybox dl > dt:not([data-cc-barehid])");
       for (var bd = 0; bd < bareDts.length; bd++) {
         var bdt = bareDts[bd];
         bdt.setAttribute("data-cc-barehid", "1");
         if (getComputedStyle(bdt).display === "none") continue;
-        if (!(bdt.textContent || "").trim() && !bdt.querySelector("*")) bdt.style.display = "none";
+        if (!(bdt.textContent || "").trim() && !bdt.querySelector("*")) {
+          bdt.style.display = "none";
+          var afterBare = bdt.nextElementSibling;
+          if (afterBare && afterBare.tagName === "DD") afterBare.style.gridColumn = "2";
+        }
       }
       // #2-B (user: "Wo sind die Farbwählfelder bei Eigene Kopfzeilen-...farbe?"): Unraid's header colour
       // fields (header / headermetacolor / background) are plain hex TEXT inputs with no picker. Give each a
@@ -1840,7 +1850,7 @@
       br.appendChild(nm);
     } catch (e) {}
   }
-  var ccProfObs = null, ccProfT = null, ccDockObs = null;
+  var ccProfObs = null, ccProfT = null;
   function watchProfile() {   // uptime/edition/name live inside the Connect profile — auto-mount rebuilds it at will
     try {
       if (ccProfObs) return;
@@ -1854,20 +1864,17 @@
         ccProfT = setTimeout(function () {
           ccProfT = null;
           ccIsland(); ccBrand();   // both are sig-guarded no-ops when nothing changed; we never write inside the component, so no loop is possible — the debounce stays anyway
-          ccDockProfile();         // auto-mount replaced div#UserProfile -> the fresh node needs its dock styles again (diff-written, attribute-only: this observer ignores them)
+          ccDockProfile();         // slow net: catches anything the fast net (ccWatchAdopt) missed
         }, 120);
       });
       ccProfObs.observe(p, { childList: true, subtree: true, characterData: true });
-      // #2 Header-Flacker: a SECOND, dedicated observer watches ONLY the trigger spans' style attribute and
-      // re-pins the instant Vue wipes it — SYNCHRONOUS (no 120ms debounce), so the wiped 0px-box frame never
-      // paints = no flicker. ccDockDirty() gates the re-pin to an ACTUAL wipe; ccDockProfile() cleans that
-      // state, so our own re-pin writes wake this observer exactly once more, see a clean diff, and stop (the
-      // gate is self-correcting -> no infinite observer loop). subtree keeps covering spans re-added on rebuild.
-      ccDockObs = new MutationObserver(function () { if (ccDockDirty()) { try { ccDockProfile(); } catch (e2) {} } });
-      ccDockObs.observe(p, { attributes: true, attributeFilter: ["style"], subtree: true });
-      // #16 rounds 2/3 (hover-triggered re-pin, scoped first to #UserProfile then widened to document) are
-      // gone: superseded by the continuous per-frame rAF loop in ccDockPass/ccDockSchedule, which re-pins
-      // regardless of what moved the proxy instead of chasing which hover/event triggers it.
+      // #16 ROUND 5: the bell/burger dock is REPARENTED, not overlaid — ccWatchAdopt() (declared with
+      // the rest of the dock code) is the FAST/synchronous net that re-adopts the instant Connect's
+      // auto-mount inserts a fresh (un-adopted) trigger span, straight off the childList mutation, no
+      // debounce, so the CSS visibility-hidden safety net never has to cover more than one frame. This
+      // 120ms-debounced observer above is the slow net for the rest of the profile chips + a fallback
+      // re-adopt in case ccWatchAdopt's own observe() target wasn't mounted yet on first call.
+      ccWatchAdopt();
     } catch (e) {}
   }
   // ── GLOBAL FLOATING hover bubble (user: "im Start-Tab passen viele Mouseover-Bubbles nicht …
@@ -1935,70 +1942,53 @@
       window.addEventListener("scroll", ccTipHide, true);          // any scroll de-anchors the fixed bubble -> hide (capture catches inner-container scrolls too)
     } catch (e) {}
   }
-  // ── BELL + BURGER DOCK (user call: the two profile triggers join the MENU icon row at its FAR
-  // RIGHT END, freeing the whole top strip for the island). div#UserProfile lives INSIDE the
-  // Connect component, so it is never MOVED in the DOM (law — auto-mount rebuilds would wipe it);
-  // it is PINNED with inline styles instead: position:fixed, left = 8px RIGHT of the row's last
-  // visible item — the .nav-tile.right 84px padding-right (Header.css) reserves the room, and the
-  // Plugins-button pin (plugins.js) includes the docked pair in its right-edge measurement.
-  // Diff-written styles are attribute-only mutations, which the childList-only profile observer
-  // ignores -> no loop. Re-measured on apply()/scroll/resize/menu+profile passes.
+  // ── BELL + BURGER DOCK — REPARENT MODEL (#16 ROUND 5). Rounds 1-4 (a 1s safety-net interval, a
+  // hover listener scoped to #UserProfile, one widened to the whole document, then a continuous
+  // per-frame rAF re-pin loop) all tried to make a position:fixed OVERLAY track a position:sticky
+  // proxy from JS. That is structurally unfixable: sticky recompute is resolved natively by the
+  // compositor with no synchronous JS hook, so a rAF poll is always at least one frame behind
+  // during the sticky transition (measured live: 30px trailing during the scroll handoff) — and,
+  // separately and more importantly, `html.cc-anim-wild #menu:has(.nav-tile > .nav-item:hover) {
+  // z-index: 103 }` lifts #menu above #header (102) on hover of ANY nav item; since the fixed
+  // trigger spans are still visually children of #header's OWN stacking context, .nav-tile.right's
+  // opaque background then paints straight over BOTH of them (they are siblings inside the SAME
+  // re-rendered Connect container, hence "still a group") for as long as the hover lasts. Four
+  // rounds of re-pin timing fixes could never have touched that: it is a stacking-context bug, not
+  // a timing bug.
+  // FIX: physically ADOPT the two live Connect trigger <span>s as children of their existing proxy
+  // <div>s (#cc-bell-proxy / #cc-burger-proxy — already first-class, draggable nav-items living in
+  // the native .nav-tile.right flow, added for drag & drop reordering). Adopted, the spans reflow
+  // NATIVELY with the row (zero scroll lag, no JS tracking needed) and paint INSIDE .nav-tile.right's
+  // own stacking context (structurally impossible for that tile's own background to cover them).
+  // The old "the live triggers are NEVER moved in the DOM" law (asserted v3.1.0, commit 1ae6664,
+  // on the theory that Connect's Vue framework requires it) was never actually tested and is
+  // EMPIRICALLY FALSIFIED this round: a moved span still takes real clicks, still flips its own
+  // data-state, and the real .bg-popover / notification Sheet still render correctly anchored
+  // under it. The real constraint was only ever that Connect periodically REBUILDS the profile row
+  // (auto-mount) — ccWatchAdopt() below re-adopts synchronously, before paint, the instant that
+  // happens, and a CSS safety net (Header.css) hides any leftover un-adopted span regardless of
+  // JS timing, so a rebuild can never flash the icons at the parked zero-footprint anchor.
   var ccDockProps = ["position", "left", "right", "top", "height", "width", "z-index", "padding", "min-width"];
-  var ccDockRaf = 0;
-  // #16 ROUND 4 (user, after 3 trigger-scoped fixes: "problematik unverändert"): a temporary on-screen
-  // diagnostic (built per systematic-debugging's "3+ fixes failed -> stop guessing triggers, observe the
-  // symptom" guidance) caught the actual failure mode live — the trigger span sat at its LAST-PINNED
-  // coordinates while the proxy had already drifted a few px, with no scroll/resize/hover between the two
-  // measurements. So SOMETHING in the icon row (a stat/notification re-render, a sibling icon changing
-  // width, a scrollbar appearing/disappearing — Round 2's own comment above already suspected exactly this
-  // class of cause) keeps moving the proxy without waking any of the three trigger mechanisms tried so far
-  // (interval, #UserProfile hover, document-wide hover). Rather than hunt for trigger #4, stop relying on
-  // triggers at all: ccDockPass now RESCHEDULES ITSELF every animation frame for as long as the header is
-  // on, so the trigger can never drift for longer than one frame (~16ms) regardless of what moved it — cheap
-  // (two getBoundingClientRect() reads/frame, and the writes inside ccDockProfile() are already diff-gated
-  // no-ops once settled). Paused while the tab is hidden (rAF doesn't fire anyway) and restarted on
-  // visibilitychange; stops itself the frame after cc-header-on turns off, no explicit teardown needed.
-  function ccDockPass() { ccDockRaf = 0; ccDockProfile(); ccDockSchedule(); }
-  function ccDockSchedule() {
-    if (ccDockRaf || document.hidden) return;
-    if (!document.documentElement.classList.contains("cc-header-on")) return;
-    ccDockRaf = window.requestAnimationFrame ? window.requestAnimationFrame(ccDockPass) : setTimeout(ccDockPass, 16);
+  // classify the two trigger spans by IDENTITY, not DOM position (position was fine while both
+  // stayed put; once adopted, order in the DOM changes) — the burger's live id starts with
+  // "reka-menu-trigger" (verified live, e.g. "reka-menu-trigger-v-0-0"); first/last-of-the-rest is
+  // the fallback so this still degrades safely if Connect's naming ever changes.
+  function ccClassifyTrig(sp) {
+    var burger = null, i;
+    for (i = 0; i < sp.length; i++) { if (/^reka-menu-trigger/.test(sp[i].id || "")) { burger = sp[i]; break; } }
+    if (!burger) burger = sp.length ? sp[sp.length - 1] : null;
+    var bell = null;
+    for (i = 0; i < sp.length; i++) { if (sp[i] !== burger) { bell = sp[i]; break; } }
+    if (!bell) bell = sp.length ? sp[0] : null;
+    return { bell: bell, burger: burger };
   }
-  // #2 Header-Flacker: Connect's Vue re-renders the bell/burger trigger spans and WIPES the inline
-  // position:fixed we pin on them -> each span snaps into #UserProfile's neutralised 0px box (left:0/
-  // top:0) = the icon vanishes/flashes until the next scheduled dock pass. Detect that wipe from a STATE
-  // DIFF (a visible trigger that lost its pin, or a hidden one that lost its display:none) so the attribute
-  // observer below can re-pin SYNCHRONOUSLY before paint. The diff is self-correcting: ccDockProfile() re-
-  // pins every span, so a re-pin can never leave it dirty -> the observer wakes once more, sees it clean,
-  // and stops. No re-entrancy flag needed (a sync flag can't straddle the async observer delivery).
-  function ccDockDirty() {
-    try {
-      if (!document.documentElement.classList.contains("cc-header-on")) return false;
-      var up = document.getElementById("UserProfile"); if (!up) return false;
-      var sp = up.querySelectorAll(":scope > div:nth-child(2) > span"); if (!sp.length) return false;
-      var hideBell = g("cc.hideicon.bell", "0") === "1", hideBurger = g("cc.hideicon.burger", "0") === "1";
-      for (var i = 0; i < sp.length; i++) {
-        var isBell = (i === 0), hidden = isBell ? hideBell : (i === sp.length - 1 ? hideBurger : false);
-        if (hidden) { if (sp[i].style.getPropertyValue("display") !== "none") return true; }   // wipe un-hid it
-        else if (sp[i].style.getPropertyValue("position") !== "fixed") return true;            // wipe removed our pin
-      }
-    } catch (e) {}
-    return false;
-  }
-  // ── #(user: "die beiden icons (benachrichtigungen und menü) kleben aneinander, hüpfen beim Resize und
-  // lassen sich im Drag&Drop nicht anderswo anordnen"). ROOT CAUSE: the old dock pinned the WHOLE
-  // Connect-owned #UserProfile (both triggers) as ONE position:fixed box whose `left` was JS-computed from
-  // the reflowing icon row + a vw-94 cap — hence glued, jumpy on resize, and not a drag participant.
-  // NEW MODEL (user chose "voll in Drag&Drop integrieren"): inject TWO real, draggable nav-items —
-  // #cc-bell-proxy and #cc-burger-proxy — that live in the normal .nav-tile.right flow (so they reflow
-  // natively = no jump, reorder like every other icon, and can be separated). The Connect law stands: the
-  // live reka triggers are NEVER moved in the DOM; each is just OVERLAID (position:fixed) exactly on top of
-  // its proxy every pass, so clicks and popovers still hit the real trigger. In arrange mode the live
-  // triggers go pointer-events:none + hidden (CSS) and the proxy's ghost glyph shows, so you drag a visible
-  // icon and the pointer reaches the proxy underneath. ── */
-  function ccEnsureProxies(sp) {
+  // ── proxies: TWO real, draggable nav-items (#cc-bell-proxy / #cc-burger-proxy) that live in the
+  // normal .nav-tile.right flow, so they reflow/reorder like every other icon. Each now HOSTS its
+  // live trigger as a real DOM child (ccDockProfile below); the proxy's own <a>/ghost glyph is only
+  // needed as the drag handle while arrange mode is active (JS toggles its display — see below). ──
+  function ccEnsureProxies(bellSpan, burgerSpan) {
     var tileR = navTileR(); if (!tileR) return [null, null];
-    var defs = [["cc-bell-proxy", true, sp[0]], ["cc-burger-proxy", false, sp.length ? sp[sp.length - 1] : null]];
+    var defs = [["cc-bell-proxy", true, bellSpan], ["cc-burger-proxy", false, burgerSpan]];
     var out = [];
     for (var d = 0; d < defs.length; d++) {
       var id = defs[d][0], isBell = defs[d][1], span = defs[d][2];
@@ -2009,7 +1999,7 @@
         it.id = id;
         var a = document.createElement("a"); a.href = "#"; a.className = "hand cc-proxy-a";
         a.setAttribute("data-cc-tip", isBell ? T("Benachrichtigungen", "Notifications") : T("Menü", "Menu"));
-        a.addEventListener("click", function (e) { e.preventDefault(); });   // the overlaid live trigger takes real clicks; this only guards a stray hit
+        a.addEventListener("click", function (e) { e.preventDefault(); });   // arrange-mode ghost handle only; normal-mode clicks land on the adopted span beside it
         var gh = document.createElement("span"); gh.className = "cc-proxy-ghost"; a.appendChild(gh);
         it.appendChild(a);
         tileR.appendChild(it);                                     // default = far right (burger last), matching native order
@@ -2026,61 +2016,110 @@
     try {
       if (!document.documentElement.classList.contains("cc-header-on")) { ccUndockProfile(); return; }
       var up = document.getElementById("UserProfile"); if (!up) return;
-      var sp = up.querySelectorAll(":scope > div:nth-child(2) > span");
-      if (!sp.length) return;
+      var container = up.querySelector(":scope > div:nth-child(2)");
+      // classify + stamp any FRESH (un-adopted) span Connect just rebuilt; already-adopted spans
+      // (living inside a proxy now) keep their data-cc-trig and are found via the document query.
+      if (container) {
+        var freshSp = container.querySelectorAll(":scope > span:not([data-cc-trig])");
+        if (freshSp.length) {
+          var cls = ccClassifyTrig(freshSp);
+          if (cls.bell && !document.querySelector('[data-cc-trig="bell"]')) cls.bell.setAttribute("data-cc-trig", "bell");
+          if (cls.burger && !document.querySelector('[data-cc-trig="burger"]')) cls.burger.setAttribute("data-cc-trig", "burger");
+        }
+      }
+      var bellSpan = document.querySelector('[data-cc-trig="bell"]');
+      var burgerSpan = document.querySelector('[data-cc-trig="burger"]');
+      if (!bellSpan && !burgerSpan) return;                        // profile not mounted yet -> next pass retries
       var hideBell = g("cc.hideicon.bell", "0") === "1", hideBurger = g("cc.hideicon.burger", "0") === "1";   // #2b
-      var proxies = ccEnsureProxies(sp);                           // [bellProxy, burgerProxy]
-      // Neutralise the Connect-owned container: keep it in place (auto-mount safe) but give it ZERO
-      // footprint — its span children are each pinned over their proxy below, so the box itself must not
-      // reserve space or intercept anything (CSS already sets pointer-events:none on it).
+      var proxies = ccEnsureProxies(bellSpan, burgerSpan);          // [bellProxy, burgerProxy]
+      var arranging = document.documentElement.classList.contains("cc-arrange");
+      // Neutralise the leftover Connect container (auto-mount-safe: never removed from the DOM,
+      // just zero footprint — CSS already sets pointer-events:none on it).
       function setUp(p, v) { if (up.style.getPropertyValue(p) !== v) up.style.setProperty(p, v, "important"); }   // diff-write = zero mutations once settled
       setUp("position", "fixed"); setUp("left", "0"); setUp("top", "0"); setUp("width", "0"); setUp("height", "0"); setUp("min-width", "0"); setUp("padding", "0");
-      var menuEl = document.getElementById("menu");
-      var mz = menuEl ? parseInt(getComputedStyle(menuEl).zIndex, 10) : NaN;
-      var zi = String(isFinite(mz) ? mz + 1 : 1000);               // above the sticky menu it overlaps
-      for (var i = 0; i < sp.length; i++) {
-        var span = sp[i], ss = span.style;
-        var isBell = (i === 0), hidden = isBell ? hideBell : (i === sp.length - 1 ? hideBurger : false);   // #2b
-        var proxy = isBell ? proxies[0] : proxies[proxies.length - 1];
-        if (proxy) proxy.style.display = hidden ? "none" : "";     // per-icon hide toggles the proxy slot too
-        if (hidden) { ss.setProperty("display", "none", "important"); continue; }
-        ss.removeProperty("display");
-        // CC bubbles instead of native balloons (the #menu sweep can't reach these — they live outside #menu)
+      [[bellSpan, proxies[0], hideBell, true], [burgerSpan, proxies[1], hideBurger, false]].forEach(function (row) {
+        var span = row[0], proxy = row[1], hidden = row[2], isBell = row[3];
+        if (!span || !proxy) return;
+        var wantDisp = hidden ? "none" : "";
+        if (proxy.style.display !== wantDisp) proxy.style.display = wantDisp;   // per-icon hide collapses the whole slot
+        var ss = span.style;
+        if (hidden) { if (ss.getPropertyValue("display") !== "none") ss.setProperty("display", "none", "important"); return; }
+        if (ss.getPropertyValue("display")) ss.removeProperty("display");
+        // CC bubbles instead of native balloons (the #menu sweep can't reach these once adopted either, they live outside #menu proper -> tip binding is document-wide, see ccWireTips)
         if (!span.getAttribute("data-cc-tip")) span.setAttribute("data-cc-tip", isBell ? T("Benachrichtigungen", "Notifications") : T("Menü", "Menu"));
         if (span.getAttribute("title")) span.removeAttribute("title");
         // the triggers carry Tailwind MIN-width/height (36px) that beat even sheet !important — enforce the 36px box inline
         if (ss.getPropertyValue("min-height") !== "36px") { ss.setProperty("width", "36px", "important"); ss.setProperty("height", "36px", "important"); ss.setProperty("min-width", "36px", "important"); ss.setProperty("min-height", "36px", "important"); }
-        if (!proxy) continue;
-        var box = proxy.querySelector(".cc-proxy-ghost") || proxy;   // the 36px icon box (not the div, whose margins offset it)
-        // #15 colour modes: mirror this proxy slot's rainbow colour onto the visible trigger so the bell +
-        // burger follow rainbow/flag exactly like the util icons. paintNav() stamps --cc-rb-c on the proxy's
-        // <a> (it matches the util selector); we copy it here. Normal mode -> cleared -> CSS --cc-hdr-accent wins.
-        var pxa = proxy.querySelector("a"), rbc = (rbOn() && pxa) ? pxa.style.getPropertyValue("--cc-rb-c") : "";
+        // #15 colour modes: mirror the proxy slot's rainbow colour onto the adopted trigger so bell +
+        // burger follow rainbow/flag exactly like the util icons. paintNav() stamps --cc-rb-c on the
+        // proxy's <a> (it matches the util selector); copy it here. Normal mode -> cleared -> CSS wins.
+        var pxa = proxy.querySelector(".cc-proxy-a"), rbc = (rbOn() && pxa) ? pxa.style.getPropertyValue("--cc-rb-c") : "";
         if (rbc) { ss.setProperty("--cc-rb-c", rbc); ss.setProperty("--cc-rb-ct", pxa.style.getPropertyValue("--cc-rb-ct") || idealText(rbc)); }
         else { ss.removeProperty("--cc-rb-c"); ss.removeProperty("--cc-rb-ct"); }
-        var pr = box.getBoundingClientRect(); if (!pr.width) continue;
-        // OVERLAY the live trigger exactly on its proxy slot — the proxy carries the flow/reorder, the
-        // trigger carries the clicks + popover anchor. Anchoring to the in-flow proxy (not a computed
-        // vw-cap) is what kills the resize jump: the proxy reflows natively, the span just tracks it.
-        ss.setProperty("position", "fixed", "important");
-        ss.setProperty("left", Math.round(pr.left) + "px", "important");
-        ss.setProperty("top", Math.round(pr.top + (pr.height - 36) / 2) + "px", "important");
-        ss.setProperty("margin", "0", "important");
-        ss.setProperty("z-index", zi, "important");
-        // arrange mode: drop the trigger out of the hit-test so the pointer reaches the proxy below (CSS also
-        // hides it and reveals the proxy ghost, so the user drags a visible icon).
-        ss.setProperty("pointer-events", document.documentElement.classList.contains("cc-arrange") ? "none" : "auto", "important");
-      }
+        // idempotent ADOPTION: the actual fix. appendChild is a no-op once the span already sits
+        // last inside the proxy — this branch then never fires again until Vue rebuilds a fresh span.
+        if (span.parentElement !== proxy) proxy.appendChild(span);
+        // the proxy's OWN <a>/ghost is only the arrange-mode drag handle now; hide it whenever the
+        // real adopted trigger is doing the showing, so the two 36px boxes don't sit side by side.
+        var ghostA = proxy.querySelector(".cc-proxy-a");
+        if (ghostA) { var wantGhost = arranging ? "" : "none"; if (ghostA.style.display !== wantGhost) ghostA.style.display = wantGhost; }
+      });
+      ccArmAdoptObs();   // (re)arm the narrow style-attribute watch on the two now-adopted spans
     } catch (e) {}
   }
-  function ccUndockProfile() {                                     // OFF branch: remove exactly what we set -> fully native again
+  function ccUndockProfile() {                                     // OFF branch: move the spans back, drop the proxies, fully native again
     try {
+      ccDisarmAdoptObs();
+      var bell = document.querySelector('[data-cc-trig="bell"]'), burger = document.querySelector('[data-cc-trig="burger"]');
+      var up = document.getElementById("UserProfile");
+      var container = up ? up.querySelector(":scope > div:nth-child(2)") : null;
+      if (container) { if (bell) container.appendChild(bell); if (burger) container.appendChild(burger); }   // native order: bell then burger
+      [bell, burger].forEach(function (s) {
+        if (!s) return;
+        s.removeAttribute("data-cc-trig");
+        ["width", "height", "min-width", "min-height", "position", "left", "top", "z-index", "margin", "pointer-events", "display", "--cc-rb-c", "--cc-rb-ct"].forEach(function (p) { s.style.removeProperty(p); });
+      });
       ["cc-bell-proxy", "cc-burger-proxy"].forEach(function (id) { var p = document.getElementById(id); if (p) p.remove(); });
-      var up = document.getElementById("UserProfile"); if (!up) return;
-      for (var i = 0; i < ccDockProps.length; i++) up.style.removeProperty(ccDockProps[i]);
-      var sp = up.querySelectorAll(":scope > div:nth-child(2) > span");
-      for (i = 0; i < sp.length; i++) { ["width", "height", "min-width", "min-height", "position", "left", "top", "z-index", "margin", "pointer-events", "display"].forEach(function (p) { sp[i].style.removeProperty(p); }); }
+      if (up) for (var i = 0; i < ccDockProps.length; i++) up.style.removeProperty(ccDockProps[i]);
     } catch (e) {}
+  }
+  // ── auto-mount re-adoption. Two nets, same non-reentrancy argument for both: their only DOM
+  // writes land on the two trigger spans (attributes) or inside a PROXY div under #menu, and
+  // neither of those is inside the subtree either observer watches — so a write can wake the OTHER
+  // net at most once, see a clean/empty diff, and stop. Circuit breaker on the childList net is the
+  // hard backstop against the v3.6.5 self-observing-MutationObserver freeze class if Connect ever
+  // fights back harder than expected (a real tug-of-war, not just a rebuild). ──
+  var ccAdoptObs = null, ccTrigStyleObs = null, ccAdoptHits = 0, ccAdoptWinT = 0, ccAdoptOffT = 0;
+  function ccArmAdoptObs() {   // narrow net: re-writes the 36px sizing on the two ADOPTED spans only, on a real wipe
+    try {
+      if (ccTrigStyleObs) { ccTrigStyleObs.disconnect(); ccTrigStyleObs = null; }
+      var trig = document.querySelectorAll("[data-cc-trig]"); if (!trig.length) return;
+      ccTrigStyleObs = new MutationObserver(function () {
+        for (var i = 0; i < trig.length; i++) {
+          var ss = trig[i].style;
+          if (ss.getPropertyValue("min-height") !== "36px") { ss.setProperty("width", "36px", "important"); ss.setProperty("height", "36px", "important"); ss.setProperty("min-width", "36px", "important"); ss.setProperty("min-height", "36px", "important"); }
+        }
+      });
+      for (var i = 0; i < trig.length; i++) ccTrigStyleObs.observe(trig[i], { attributes: true, attributeFilter: ["style"] });
+    } catch (e) {}
+  }
+  function ccWatchAdopt() {   // wide net: catches Connect inserting a FRESH (un-adopted) trigger span on rebuild
+    try {
+      if (ccAdoptObs) return;
+      var p = document.querySelector("unraid-user-profile"); if (!p) return;
+      ccAdoptObs = new MutationObserver(function () {
+        if (Date.now() < ccAdoptOffT) return;                                                                 // breaker tripped -> stand down
+        if (!document.querySelector("#UserProfile > div:nth-child(2) > span:not([data-cc-trig])")) return;    // gate: nothing un-adopted -> no-op, chain terminates here
+        var now = Date.now();
+        if (now - ccAdoptWinT > 1000) { ccAdoptWinT = now; ccAdoptHits = 0; }
+        if (++ccAdoptHits > 30) { ccAdoptOffT = now + 5000; return; }                                          // >30 re-adoptions/second -> Connect tug-of-war, disarm 5s (v3.6.5 freeze law)
+        try { ccDockProfile(); } catch (e2) {}
+      });
+      ccAdoptObs.observe(p, { childList: true, subtree: true });
+    } catch (e) {}
+  }
+  function ccDisarmAdoptObs() {
+    try { if (ccAdoptObs) { ccAdoptObs.disconnect(); ccAdoptObs = null; } if (ccTrigStyleObs) { ccTrigStyleObs.disconnect(); ccTrigStyleObs = null; } } catch (e) {}
   }
   // ── CC TOAST ── one reusable bottom-centre notice (help feedback #11, "what's new" toast, …). A single
   // reused node; the styling (surface, radius, colour-mode accent) lives in Header.css (.cc-toast). Auto-
@@ -2238,19 +2277,13 @@
       ccBrand();        // server-name brand, first child of the top strip (header+theming gated, NOT cc.island)
       watchIsland();    // live footer observer so nchan status/temp updates flow into the chips
       watchProfile();   // debounced profile observer so uptime/edition/name rebuilds flow into chips + brand
-      ccDockProfile();  // glue bell+burger onto the far right end of the menu icon row (re-measured every pass)
+      ccDockProfile();  // adopt bell+burger into their proxy slots at the far right end of the menu icon row (idempotent, self-gated)
       ccArrangeLock();  // #Drag-Umbau: the always-visible lock toggle (self-gates on cc-header-on)
-      // late passes against STALE geometry (live-proven: the first pass measured the icon row
-      // 160px right of its settled position and nothing re-triggered) — the row settles as
-      // late-loading icons/styles arrive, so re-pin twice after the dust
+      // #16 ROUND 5: late passes against a settling layout (live-proven: the first pass can run before
+      // late-loading icons/styles have finished shifting the row) — re-adopt twice after the dust settles.
+      // No continuous rAF loop needed any more (rounds 1-4's history): adoption makes the trigger part of
+      // the native flow, so once adopted it needs no further per-frame tracking at all.
       setTimeout(ccDockProfile, 300); setTimeout(ccDockProfile, 1200);
-      // #16 ROUND 4: a 1s safety-net interval used to live here (rounds 1-3's history); replaced by the
-      // continuous per-frame rAF loop (see ccDockPass/ccDockSchedule) — at most one frame of drift instead
-      // of up to a full second, and it covers every wipe/drift shape (Connect auto-mount, hover-adjacent
-      // layout shifts, whatever else) without needing to know which one is happening. rAF doesn't fire on a
-      // hidden tab, so kick it back off on visibilitychange.
-      ccDockSchedule();
-      document.addEventListener("visibilitychange", function () { if (!document.hidden) ccDockSchedule(); });
     } catch (e) {}
   }
   // gui_search() prepends #guiSearchBoxSpan at the FAR-LEFT of .nav-tile.right, focuses
