@@ -2603,6 +2603,17 @@
       }
     } catch (e) {}
   }
+  // #30 (user: "results per page (ohne die Zahl)"): CA appends the live count to its own label ("Results
+  // Per Page: 12"), which is also why the badge needed multi-line wrapping to fit — strips the ": N" tail
+  // on every pass so it stays gone even after the user picks a different per-page value from CA's dropdown.
+  function ccAppsStripCount() {
+    try {
+      var mpp = document.querySelector(".cc-ca-search-extras .caButton.maxPerPage");
+      if (!mpp) return;
+      var m = /^(.*?):\s*[\d,]+\s*$/.exec((mpp.textContent || "").trim());
+      if (m) mpp.textContent = m[1];
+    } catch (e) {}
+  }
   function ccAppsCards() {
     try {
       var menus = [].slice.call(document.querySelectorAll("ul.caMenu"));
@@ -2637,8 +2648,12 @@
         var cats = [].slice.call(mCats.children).filter(function (n) { return !n.classList || !n.classList.contains("cc-ca-cardtitle"); });
         if (cats.length) ccMark(cats, T("Kategorien", "Categories"));
       }
-      // ---- META: All Apps + Repositories stay loose (they are categoryMenu entries); everything after them
-      //      ("Einstellungen" … "Debugging", including the VERSION lines) forms one card.
+      // ---- META: All Apps + Repositories stay loose (they are categoryMenu entries). #30 (user: "einzelne
+      // Punkte sollen ein einzelner badge sein" — Einstellungen/Statistics/Credits/Support/Version/Change
+      // Log/Debugging are each their own top-level list entry in the user's spec, not a shared card): used
+      // to be grouped into one untitled card here; now left loose like Home/Action Centre/All Apps, so they
+      // fall through to the same standalone-badge rule those already use. Strip the OLD card marks so a box
+      // that still carries them from before this change (no full DOM rebuild happened yet) drops them too.
       if (mMeta) {
         var k2 = [].slice.call(mMeta.children), tail = [], seenCat = false;
         for (var j = 0; j < k2.length; j++) {
@@ -2649,7 +2664,9 @@
           if (!(n.textContent || "").trim()) continue;
           tail.push(n);
         }
-        if (tail.length) ccMark(tail, null);
+        for (var jt = 0; jt < tail.length; jt++) {
+          tail[jt].classList.remove("cc-card-in", "cc-card-top", "cc-card-bot");
+        }
       }
     } catch (e) {}
   }
@@ -2759,9 +2776,14 @@
         cl.style.setProperty("visibility", (cl.textContent || "").trim() === "Action Centre" ? "hidden" : "", "important");
       });
       ccMoveSearchAreaBadges();                              // #15: relocate under the search badge
+      ccAppsStripCount();                                    // #30: "Results Per Page: 12" -> "Results Per Page"
       wireCaSearch();
       ccWireCaSearchCollapse();
       ccAppsCards();                                         // group the flat sidebar <li>s into cards
+      // #30 (user: "die cards sollen einen titelbadge haben"): the card heading used to sit on the same flat
+      // surface as the card body (plain uppercase text, no fill) — stamp it like every other badge so it
+      // reads as its own coloured pill instead of blending into the shade behind it (CSS side: Tokens.css).
+      ccAppsStamp(".cc-ca-cardtitle, li.cc-card-in.sectionMenu");
       ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton");
       // #8 (user: "die buttons ganz unten sind nicht in die farbmodi integriert"): the bottom action bar
       // (.multi_installDiv) was styled as a badge row but never STAMPED, so --cc-rb-c never reached it and
