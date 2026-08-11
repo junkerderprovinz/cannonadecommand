@@ -533,11 +533,21 @@ html.cc-popups-on:has(.ca_homeTemplates) #displaybox a,
 html.cc-popups-on:has(.ca_homeTemplates) #displaybox a:hover,
 html.cc-popups-on:has(.ca_homeTemplates) #displaybox .caMenuItem { text-decoration: none !important; }
 html.cc-popups-on:has(.ca_homeTemplates) #displaybox a:hover { filter: brightness(1.16) !important; }
-/* #13 kill the horizontal BODY scrollbar on /Apps: the .ca_homeTemplates carousels self-scroll but leak
-   their 2333px content width to <body>. Clip body-x (freeze-safe, scoped to /Apps via :has; clip keeps
-   sticky/position working, unlike hidden). The rows keep their own overflow-x:auto. */
+/* #13/#22 (user, recurring: "der spinner beim öffnen des app tabs hat immer noch eine scrollbar" — original
+   live diagnosis, found chasing an earlier session's transcript: this is a HORIZONTAL body scrollbar, not
+   the spinner's own box — the .ca_homeTemplates carousels self-scroll but leak their ~2333px content width
+   to <body> during the load transition (measured live: scrollWidth 2333 / clientWidth 1287). Clip body-x
+   (freeze-safe, clip keeps sticky/position working, unlike hidden); the rows keep their own overflow-x:auto.
+   THE GAP THIS MISSED FOR MULTIPLE ROUNDS: gating solely on :has(.ca_homeTemplates) can't apply until CA has
+   actually rendered an app row — i.e. not until AFTER the loading window it's meant to cover, so the exact
+   scrollbar the report describes could still flash during that window. /Apps ships its own stylesheet <link>
+   in the STATIC, server-rendered HTML before any AJAX content exists (confirmed live: present from the raw
+   HTTP response, matches :has() from first paint) — gate on that instead so the clip is active immediately,
+   with the original selector kept as a harmless belt-and-braces once the rows do exist. */
 html.cc-popups-on:has(.ca_homeTemplates),
-html.cc-popups-on:has(.ca_homeTemplates) body { overflow-x: clip !important; }
+html.cc-popups-on:has(.ca_homeTemplates) body,
+html.cc-popups-on:has(link[href*="/community.applications/"]),
+html.cc-popups-on:has(link[href*="/community.applications/"]) body { overflow-x: clip !important; }
 /* #12b SECTION-HEAD BADGES — smaller (#9), NO leading icon (#9), COLOUR-MODE filled per element (#8).
    Subtitle rides the (i) bubble + SHOW MORE rides inside the badge (both moved in by header.js ccApps). */
 /* #9 the header ROW is a transparent flex container only — the title text is wrapped in .cc-sechead-badge
