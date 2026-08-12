@@ -88,6 +88,7 @@
   var filterText = "", gridHolder = null, openPop = null, openPopAnchor = null, menu = null, menuAnchor = null, menuStatusEl = null, toastEl = null, toastTimer = null;
   var mo = null, dead = false, lastAdv = false, timers = [], moPending = false, moTimer = null, lastObsLoad = 0, moTrail = false;
   var ccFirstPaintDone = false;   // #33 (user: "lassen den spinner anzeigen solange es lädt") — cleared once, in moSweep()
+  var ccEnhBusyStart = 0;   // #33-followup: timestamp cc-enh-busy was set, so the clear can enforce a minimum visible time
 
   // ───────────────────────── api + helpers
   // csrf_token, robustly: the JS global, else any form field, else the cookie.
@@ -2291,7 +2292,19 @@
         // #33: the FIRST real pass is what the tab-load spinner was covering for; every later native
         // rebuild (container start/stop, the 3-5s poll) is fast and invisible already and must NOT
         // re-arm the overlay, so this only ever fires once per page load.
-        if (!ccFirstPaintDone) { ccFirstPaintDone = true; document.documentElement.classList.remove("cc-enh-busy"); }
+        // #33-followup (root cause, live-traced): when the table already has rows at boot (the common
+        // case — Unraid server-renders it, there is no client AJAX fetch to wait on), the "paint once NOW"
+        // fast path below calls moSweep() SYNCHRONOUSLY inside connectObserver(), itself called
+        // synchronously right after cc-enh-busy is set — so the flag used to live for a single JS turn,
+        // never surviving to even ONE tick of ccLoadState()'s 60ms poll. No spinner ever had a chance to
+        // paint. Enforce a minimum visible time from when the flag was actually set, instead of clearing
+        // the instant the (often near-instant) enhancement work finishes.
+        if (!ccFirstPaintDone) {
+          ccFirstPaintDone = true;
+          var ccEnhMinMs = 400, ccEnhElapsed = Date.now() - ccEnhBusyStart;
+          if (ccEnhElapsed >= ccEnhMinMs) document.documentElement.classList.remove("cc-enh-busy");
+          else setTimeout(function () { document.documentElement.classList.remove("cc-enh-busy"); }, ccEnhMinMs - ccEnhElapsed);
+        }
         // A native-list rebuild usually means Unraid just FINISHED a container action (stop/start via ITS
         // buttons/menu) — our state map is stale until the next 9s poll, so pull fresh state now, throttled
         // so our own idempotent re-injects can't turn this into a request loop.
@@ -2935,6 +2948,7 @@
       // clears it after the FIRST real enhancement pass paints (not every later native rebuild, which is
       // fast enough not to need a spinner).
       document.documentElement.classList.add("cc-enh-busy");
+      ccEnhBusyStart = Date.now();
       // safety net: moSweep() only ever fires for list-mode's MutationObserver, so a grid-mode boot (or any
       // path that never reaches it) would otherwise hold the overlay open forever — bounded, same law as
       // ccInjectSpinner's own 12x350ms window elsewhere in this codebase (an unbounded busy-flag is worse
