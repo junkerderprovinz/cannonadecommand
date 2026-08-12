@@ -1429,11 +1429,17 @@ html.cc-popups-on .multi_installDiv { display: flex !important; flex-wrap: wrap 
    needed. The earlier fix (a doubled `.ca_hide.ca_hide` rule elsewhere in this file) is now redundant but
    left in place as a second line of defence; it costs nothing and the specificity story it documents is
    a real lesson (input[type=…] is (0,·,2), not (0,·,1) — a TYPE selector counts too). */
-html.cc-popups-on .multi_installDiv input[type="button"]:not(.ca_hide),
+/* #57 (found live: the NEW Previous Apps delete button, first real use of .multi_deleteButton in Normal/
+   Rainbow mode, rendered rainbow-jewel green instead of red): :not(.multi_deleteButton) was only ever
+   added to the REACTIVE variant below (#8a's comment already names this exact trap for that rule) - the
+   base rest-state rule here never got the same exclusion, so input[type="button"] still out-specified
+   the semantic red at (0,4,2) vs (0,3,1) whenever this rule (not the reactive one) was the active mode.
+   Shape (display/padding/etc.) still needs to reach .multi_deleteButton, so its OWN rule below (next to
+   the red) now repeats those properties instead - self-contained rather than split across two rules. */
+html.cc-popups-on .multi_installDiv input[type="button"]:not(.ca_hide):not(.multi_deleteButton),
 html.cc-popups-on .multi_installDiv input[type="submit"]:not(.ca_hide),
 html.cc-popups-on .multi_installDiv .multi_installAll:not(.ca_hide),
-html.cc-popups-on .multi_installDiv .multi_installClear:not(.ca_hide),
-html.cc-popups-on .multi_installDiv .multi_deleteButton:not(.ca_hide) {
+html.cc-popups-on .multi_installDiv .multi_installClear:not(.ca_hide) {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   width: auto !important; height: auto !important; min-height: var(--cc-md-h, 30px) !important;
   padding: var(--cc-md-btnpad, 0 14px) !important; margin: 0 !important;
@@ -1482,9 +1488,26 @@ html.cc-popups-on .multi_installDiv .multi_installButton {
 }
 html.cc-popups-on .multi_installDiv .multi_install:hover,
 html.cc-popups-on .multi_installDiv .multi_installButton:hover { filter: brightness(1.08) !important; background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; }
-/* destructive stays semantic — a delete must not read like any other chip */
-html.cc-popups-on .multi_installDiv .multi_deleteButton { background: var(--cc-err, #d9433f) !important; color: var(--cc-err-fg, #fff) !important; }
+/* destructive stays semantic — a delete must not read like any other chip. Self-contained (shape AND
+   colour together, see the comment above): it can no longer rely on the shared input[type="button"]
+   rule for its box shape now that that rule excludes it, so it repeats those properties here. */
+html.cc-popups-on .multi_installDiv .multi_deleteButton:not(.ca_hide) {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  width: auto !important; height: auto !important; min-height: var(--cc-md-h, 30px) !important;
+  padding: var(--cc-md-btnpad, 0 14px) !important; margin: 0 !important;
+  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  text-transform: uppercase !important; letter-spacing: .4px !important;
+  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  box-shadow: none !important; outline: none !important; cursor: pointer !important;
+  transition: background .12s ease, color .12s ease, filter .12s ease !important;
+  background: var(--cc-err, #d9433f) !important; color: var(--cc-err-fg, #fff) !important;
+}
 html.cc-popups-on .multi_installDiv .multi_deleteButton:hover { filter: brightness(1.08) !important; }
+/* #57 (user: "der Löschen button soll erst aktiv werden wenn etwas ausgewählt wurde"): the Previous Apps
+   bulk-delete button (header.js) starts disabled and only enables once a card is checked - dim it and
+   drop the hover brighten so its inactive state actually reads as inactive, not just inert. */
+html.cc-popups-on .multi_installDiv .cc-prevapps-delbtn:disabled { opacity: .45 !important; cursor: default !important; }
+html.cc-popups-on .multi_installDiv .cc-prevapps-delbtn:disabled:hover { filter: none !important; }
 /* reactive mode: the primary rests neutral like every other badge and colours on hover */
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_install,
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installButton {

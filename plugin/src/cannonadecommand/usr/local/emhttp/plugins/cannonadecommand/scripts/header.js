@@ -2937,8 +2937,11 @@
       // The native German string "Löschen" reads as a destructive delete, not a selection reset, so the button
       // looked like the "real" delete when it isn't one. Relabel only the exact stale string, so an already-
       // correct or already-translated label (a future CA/locale update) is left alone.
+      // #57 follow-up (user: "Auswahl löschen soll Auswahl zurücksetzen heißen"): "löschen" (delete) still
+      // read as destructive even after the first relabel - migrate BOTH the original native string and the
+      // earlier "Auswahl löschen" relabel forward, so nobody gets stuck on either stale wording.
       var clearBtn = document.querySelector("input.multi_installClear");
-      if (clearBtn && clearBtn.value === "Löschen") clearBtn.value = "Auswahl löschen";
+      if (clearBtn && (clearBtn.value === "Löschen" || clearBtn.value === "Auswahl löschen")) clearBtn.value = "Auswahl zurücksetzen";
       // #57 (user: "wir brauchen auch einen Löschen button der die Previous Docker und Plugins dann auch
       // löscht"): a REAL bulk remove, reusing CA's own removeApp()/post({action:'remove_application'})
       // plumbing per app instead of reimplementing it - each checked card's .ca_holder ancestor already
@@ -2954,8 +2957,20 @@
         // shared that class (live-caught: the confirm dialog never rendered - CA's own handler ran too and
         // raced it). Styling doesn't need the class anyway - ccAppsStamp() above already matches ANY
         // input[type=button] inside .multi_installDiv, class-agnostic.
-        delBtn.className = "cc-prevapps-delbtn";
-        delBtn.value = T("Ausgewählte entfernen", "Remove selected");
+        // multi_deleteButton: CA's OWN "this is a destructive action" class, already carved out of the
+        // generic accent/rainbow treatment in Tokens.css (`:not(.multi_deleteButton)` on every rest-state
+        // branch) and painted --cc-err red instead - reuse it rather than inventing a second red. Keep
+        // cc-prevapps-delbtn too, only as a stable hook for the disabled-state rule below.
+        delBtn.className = "cc-prevapps-delbtn multi_deleteButton";
+        // #57 follow-up (user: "Ausgewählte entfernen soll einfach nur Löschen heißen; der Löschen button
+        // soll erst aktiv werden wenn etwas ausgewählt wurde"): shorter label, and disabled until at least
+        // one card is checked - delegated "change" listener below keeps it in sync without needing its own
+        // render pass, since CA's own checkbox toggling never touches this button otherwise.
+        delBtn.value = T("Löschen", "Delete");
+        delBtn.disabled = true;
+        var ccSyncDelBtn = function () { delBtn.disabled = !document.querySelector(".ca_multiselect:checked"); };
+        document.addEventListener("change", function (e) { if (e.target && e.target.classList && e.target.classList.contains("ca_multiselect")) ccSyncDelBtn(); });
+        ccSyncDelBtn();
         delBtn.addEventListener("click", function () {
           var boxes = document.querySelectorAll(".ca_multiselect:checked");
           var apps = [];
@@ -2966,6 +2981,12 @@
           if (!apps.length) return;
           var names = apps.map(function (a) { return a.name; }).join(", ");
           var go = function () {
+            // #57 follow-up (user: "sobald was gelöscht wurde springt die seite ganz nach unten"): CA's own
+            // previousApps() refresh scrolls the page itself as a side effect (native behaviour, not ours to
+            // edit) - pin the pre-delete scroll position back across the few ticks that refresh spans, the
+            // same "fight a native async scroll" shape as the #40 fix elsewhere in this file.
+            var savedScroll = window.scrollY;
+            var restoreScroll = function () { window.scrollTo(0, savedScroll); };
             var done = 0;
             apps.forEach(function (a) {
               try {
@@ -2975,6 +2996,10 @@
                     var menuItem = document.querySelector(".caMenuItem[data-category='previous_apps']");
                     if (menuItem) menuItem.classList.add("selectedMenu");
                     if (typeof previousApps === "function") previousApps(false, true, (window.data && data.previousAppsSection) || undefined);
+                    restoreScroll();
+                    requestAnimationFrame(restoreScroll);
+                    setTimeout(restoreScroll, 50);
+                    setTimeout(restoreScroll, 300);
                   }
                 });
               } catch (e) { done++; }

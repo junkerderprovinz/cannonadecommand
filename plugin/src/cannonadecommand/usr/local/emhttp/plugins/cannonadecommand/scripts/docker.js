@@ -2359,7 +2359,11 @@
   function enhanceShipLogBubble(bub) {
     try {
       if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") return; // accent + shape are pure CSS; rainbow is theming
-      Array.prototype.slice.call(bub.querySelectorAll(".sl-upd:not(.sl-upd-off), .sl-gh")).forEach(function (bn, i) {
+      // #45 (user, twice: "die beiden Button UND der Schließen-Button" / "unverändert, fixen"): the
+      // close button was left out of the rotation entirely - .sl-upd/.sl-gh already got a colour here,
+      // .sl-x stayed on its plain neutral chip fill regardless of rainbow mode. Same treatment, same
+      // index sequence, so all three read as one consistently-themed set instead of two-plus-a-leftover.
+      Array.prototype.slice.call(bub.querySelectorAll(".sl-upd:not(.sl-upd-off), .sl-gh, .sl-x")).forEach(function (bn, i) {
         var c = ccRbColor(i);
         bn.style.setProperty("background", c, "important");
         bn.style.setProperty("color", idealText(c), "important");

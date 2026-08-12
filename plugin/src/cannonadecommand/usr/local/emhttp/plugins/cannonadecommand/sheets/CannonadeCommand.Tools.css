@@ -223,6 +223,39 @@ html.cc-tools-on #displaybox input[type="button"]:focus-visible,
 html.cc-tools-on #displaybox button:focus-visible,
 html.cc-tools-on #displaybox a:focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
 
+/* #56 (user: "vieles ist noch nicht im GLS: toggles, buttons, Feld mit Rahmen" - Settings > Management
+   Access): that page's form (native name="SSLSettings") never sits inside #displaybox at all - proven
+   live (its <input class="switch"> ancestor chain runs straight to #joel-start-defaults, no #displaybox
+   in between) - so none of the #displaybox-scoped rules above ever reached it. Same treatment, mirrored
+   onto its own actual container instead of assuming every Settings sub-page shares one wrapper. */
+html.cc-tools-on form[name="SSLSettings"] input[type="text"],
+html.cc-tools-on form[name="SSLSettings"] input[type="number"],
+html.cc-tools-on form[name="SSLSettings"] input[type="password"],
+html.cc-tools-on form[name="SSLSettings"] select {
+  background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important;
+  border: none !important; outline: none !important; border-radius: 8px !important;
+  box-shadow: none !important;
+}
+html.cc-tools-on form[name="SSLSettings"] input:focus,
+html.cc-tools-on form[name="SSLSettings"] select:focus { outline: none !important; box-shadow: none !important; background: rgba(255, 255, 255, .11) !important; }
+/* the toggle checkboxes themselves (TELNET/SSH/UPnP) live OUTSIDE the form entirely (live-verified:
+   input[name=-s].closest('form') is null) - #joel-start-defaults is their real, stable ancestor. */
+html.cc-tools-on #joel-start-defaults input[type="checkbox"] {
+  accent-color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); cursor: pointer;
+}
+html.cc-tools-on form[name="SSLSettings"] input[type="button"],
+html.cc-tools-on form[name="SSLSettings"] input[type="submit"] {
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  border: none !important; outline: none !important; border-radius: var(--cc-b-radius, 999px) !important;
+  height: var(--cc-md-h, 30px); padding: var(--cc-md-pad, 0 20px) !important;
+  font-weight: 600; box-shadow: none !important; text-decoration: none !important;
+  transition: filter .12s;
+}
+html.cc-tools-on form[name="SSLSettings"] input[type="button"]:hover:not(:disabled),
+html.cc-tools-on form[name="SSLSettings"] input[type="submit"]:hover:not(:disabled) { filter: brightness(1.14); }
+html.cc-tools-on form[name="SSLSettings"] input[type="button"]:focus-visible,
+html.cc-tools-on form[name="SSLSettings"] input[type="submit"]:focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
+
 /* #10 (user): the page heading BAR on Tools/Settings sub-pages -> a colour-mode badge like every other CC heading. */
 html.cc-tools-on #displaybox div.title {
   display: inline-flex !important; align-items: center; gap: 8px; width: fit-content !important;
