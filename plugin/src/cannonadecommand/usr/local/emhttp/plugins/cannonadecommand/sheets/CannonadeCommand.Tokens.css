@@ -326,9 +326,17 @@ html.cc-anim-off .cc-loader { animation: none; }
    own fixed-position compositing layer at the same moment this element's backdrop-filter promotes ITS OWN
    layer - the likely source of the visible corner-to-centre jump a fade-in only masked rather than fixed.
    Centre with flex on the (already fixed, full-viewport) parent instead, so the ring stays a plain in-flow
-   child (like the App-tab ring) with nothing of its own left to race. */
+   child (like the App-tab ring) with nothing of its own left to race.
+   #33-followup CAUGHT LIVE (own regression, same visit): display:flex!important here is a blind guess at
+   visibility, same trap the JS-only-decision comment on .cc-spin-active already warned about a few screens
+   down - UNRAID hides this element via a plain (non-important) inline style:none, which can never beat an
+   !important stylesheet rule, so the very first pass PERMANENTLY forced the dimmed/blurred overlay on for
+   the rest of the page's life, on every page, regardless of Unraid's own state. align-items/justify-content
+   stay (harmless when display isn't flex); display itself moves to a JS-set inline style in ccLoadState(),
+   applied ONLY the instant it already knows (via getComputedStyle) that this is genuinely the elected
+   spinner - the exact same "JS decides, CSS just paints" split .cc-spin-active already uses. */
 html.cc-popups-on div.spinner.fixed {
-  display: flex !important; align-items: center !important; justify-content: center !important;
+  align-items: center !important; justify-content: center !important;
   background: var(--cc-backdrop-dim) !important;
   -webkit-backdrop-filter: var(--cc-backdrop-blur) !important;
           backdrop-filter: var(--cc-backdrop-blur) !important;

@@ -3145,6 +3145,19 @@
         if (s.classList.contains("fixed")) { if (!fixedUp) fixedUp = s; }
         else if (!inPageUp) inPageUp = s;
       }
+      // #33 (user: "lassen den spinner anzeigen solange es lädt"): UNRAID hides its own tab-load overlay the
+      // moment ITS AJAX populates the table — well before a tab enhancer (docker.js et al.) has painted its
+      // badges/actions/gauges over the now-visible-but-still-native rows. If that enhancer says it is still
+      // busy (html.cc-enh-busy, bounded — see docker.js), hold the SAME native overlay open a little longer
+      // instead of letting it close: force it back to visible so every branch below treats it exactly like
+      // a genuinely-showing native spinner, no parallel code path to keep in sync. data-cc-held marks OUR
+      // hold specifically, so the release branch never fights some unrelated reason the element is shown.
+      var heldFixed = document.querySelector("div.spinner.fixed");
+      if (!fixedUp && !swalOn && !ctoutOn && root.classList.contains("cc-enh-busy")) {
+        if (heldFixed) { heldFixed.setAttribute("data-cc-held", "1"); fixedUp = heldFixed; }   // display itself is set below, in the election loop, same as any other genuinely-elected .fixed
+      } else if (heldFixed && heldFixed.getAttribute("data-cc-held") === "1") {
+        heldFixed.removeAttribute("data-cc-held");   // release: the loop below drops the forced display since it's no longer elected
+      }
       // cc-spin-active is the ONLY thing that lets an in-page spinner become a fullscreen overlay
       // (Tokens.css) — never forced blind on every div.spinner:not(.fixed) that merely EXISTS, which is
       // what stranded Settings > System Temperature under a permanent dimmed overlay before this pass: that
@@ -3174,6 +3187,15 @@
         var spElected = (elected === sp);
         sp.classList.toggle("cc-spin-dupe", !spElected && !!(fixedUp || inPageUp) && !swalOn);
         sp.classList.toggle("cc-spin-active", !!(spElected && !sp.classList.contains("fixed")));
+        // #33-followup (own regression, caught live): flex-centering .fixed used to be an unconditional
+        // CSS !important, which can never lose to UNRAID's own (non-important) inline display:none - it
+        // forced the dimmed/blurred overlay permanently on, on every page. JS already knows the TRUE
+        // elected state right here, so set/clear the inline override only at the exact moment it changes,
+        // same "JS decides, CSS just paints" split cc-spin-active already uses two lines up.
+        if (sp.classList.contains("fixed")) {
+          if (spElected) sp.style.setProperty("display", "flex", "important");
+          else if (sp.style.getPropertyValue("display") === "flex") sp.style.removeProperty("display");
+        }
         if (spElected) ccMountLoader(sp, "full"); else ccUnmountLoader(sp);
       }
 
