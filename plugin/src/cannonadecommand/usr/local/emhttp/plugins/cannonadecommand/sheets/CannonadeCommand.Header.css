@@ -1082,8 +1082,14 @@ html.cc-popups-on .swal-modal .swal-button:focus { box-shadow: none !important; 
    .unapi host, LIGHT DOM so outside CSS reaches it). User: make it a FLOATING window in CC style.
    Detach it from the edges into a rounded top-right card with the CC surface + shadow, no border-line
    (law). Fragile Tailwind-class hook — if Connect renames these utilities the rule fails SOFT (the
-   native full-height sheet returns). Live-verified: floats top-right, content reflows in-bounds. */
-html.cc-popups-on .unapi div.fixed.z-50.bg-background {
+   native full-height sheet returns). Live-verified: floats top-right, content reflows in-bounds.
+   #41 (root cause, live-traced): the same div.fixed.z-50.bg-background recipe is ALSO what every
+   CENTERED reka dialog uses (e.g. the API-key creation modal) - :not(.top-1\/2) excludes those (a
+   centered dialog carries the top-1/2/left-1/2 self-centering utilities; this edge-anchored sheet never
+   does), so its own inset:74px/16px/auto/auto stops hijacking a modal that was trying to center itself.
+   Without this exclusion this rule's higher specificity silently won over any centering fix, no matter
+   what that fix set top/left/transform/inset to - hours were lost to that before spotting this rule. */
+html.cc-popups-on .unapi div.fixed.z-50.bg-background:not(.top-1\/2) {
   inset: 74px 16px auto auto !important;
   /* #(user: "ohne Benachrichtigungen ist das Fenster zu kurz, wirkt abgeschnitten"): a floor keeps the empty state
      (check + "keine Benachrichtigungen") from collapsing into a stub; capped by 82vh when full. */
@@ -1563,6 +1569,45 @@ html.cc-header-on #menu .nav-tile .nav-item.HelpButton.util { display: none !imp
    CSS so a reka re-render can never bring it back. */
 html.cc-header-on .cc-acctmenu li svg:has(path[d^="M15.75 2.25H21"]) { display: none !important; }
 
+/* #41 (root cause, live-traced): a reka/shadcn DialogContent centers itself via the standard
+   position:fixed;top-1/2;left-1/2;-translate-x-1/2;-translate-y-1/2 utility recipe - but on this box the
+   -translate-x/y-1/2 utility RULES themselves are missing from Unraid Connect's own bundled CSS (confirmed
+   live: document.styleSheets has zero rules matching those two classes at all, a native build/purge gap, not
+   anything CC's stylesheet touches - toggling cc-header-on/cc-popups-on off left the broken position
+   unchanged). computed transform reads "none", so the dialog sits at its raw top:50%/left:50% box origin
+   instead of being pulled back by half its own size - hundreds of px too high/right depending on its content
+   height (user: "das Fenster erscheint zu weit oben ... und ist abgeschnitten"). Same fix this codebase
+   already applies to .sweet-alert's own JS-computed centering bug: force the transform directly rather than
+   depend on the (here, absent) utility classes. Scoped to the exact fixed+top-1/2+left-1/2 recipe, not just
+   .fixed alone, so this can't catch an unrelated fixed-position element that was never meant to self-center. */
+/* ACTUAL root cause (found after the inset:0/margin:auto rule above still measured off-screen even with
+   computed top/bottom/margin all individually correct - 54px/54px on a 972px box in a 1080px viewport):
+   Tailwind's -translate-x-1\/2/-translate-y-1\/2 utilities here compile to the STANDALONE CSS `translate`
+   property (--tw-translate-x/y feeding `translate: var(...) var(...)`), not `transform: translate(...)`.
+   `translate` and `transform` are independent CSS properties that both apply to the final render - zeroing
+   transform (above) left `translate: -50% -50%` fully in effect, still yanking the centered box by half its
+   own size on top of the inset:0/margin:auto centering that already produced the right box. Neutralise it
+   explicitly; transform:none stays in case some other build ever routes centering through transform instead. */
+html.cc-header-on .fixed.top-1\/2.left-1\/2 {
+  inset: 0 !important;
+  margin: auto !important;
+  transform: none !important;
+  translate: none !important;
+}
+
+/* #41 (user: "der create api key button ist zu groß und nicht in den farbmodi. der soll diesn nach unten
+   zeigenden pfeil nicht haben"): native reka trigger - bg-primary/h-10 read Unraid's own orange accent
+   and a 40px height, both off CC's own accent + --cc-lgb-h button-height convention every other CC-styled
+   action button uses. The dropdown itself (Create New / Create from Template) is real and stays working -
+   only the chevron GLYPH is hidden, matching "keine Rahmen/Icons, die nicht zum Stil passen" elsewhere. */
+html.cc-apikeyspage [aria-haspopup="menu"][role="button"] {
+  background: var(--cc-rbaccent, var(--cc-hdr-accent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, var(--cc-accent-text, #fff))) !important;
+  height: var(--cc-lgb-h, 36px) !important; padding: 0 16px !important;
+}
+html.cc-apikeyspage [aria-haspopup="menu"][role="button"]:hover { filter: brightness(1.14); }
+html.cc-apikeyspage [aria-haspopup="menu"][role="button"] svg { display: none !important; }
+
 /* ═══ USER tiles (/Users) — user #13: "schöne Kacheln für die User wie für Einstellungen/Werkzeuge, die sich
    an die Farb- und Form-Engine halten" + "das klebt zu eng aufeinander". The native /Users grid is a .Panels
    grid of div.user-list > a > img.picture(48) + name — no card, 10px gap. Mirror the Settings/Tools tile recipe
@@ -1631,9 +1676,16 @@ html.cc-header-on .cc-isl-fill { transition: width .5s ease, background-color .4
 html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item:hover { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
 /* the RIGHT group bounces too (user: "die Icons der Hauptleiste hüpfen nicht im wilden Modus") — the rule
    above only ever covered the left page tabs, so every util icon, the usage meter and the bell/burger
-   proxies stayed still while the tabs jumped. */
-html.cc-anim-wild #menu .nav-tile.right > .nav-item:hover,
-html.cc-anim-wild #menu .nav-tile.right > .nav-item.util:hover > a { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
+   proxies stayed still while the tabs jumped.
+   #39 (user: "alle Icons hüpfen zu hoch, außer Bell/Menü"): this rule used to ALSO re-target the child <a>
+   of every .util icon on a second selector. For a normal icon (its <a> IS the visible glyph) that meant
+   TWO cc-wild-bounce instances ran at once — one on the .nav-item div, another on the <a> inside it — and
+   nested transforms stack, so the glyph moved at roughly double amplitude. Bell/burger never showed the
+   bug because their visible trigger is an adopted <span> sibling of the ghost <a>, not an <a> itself, so
+   only the single div-level rule ever matched them — live-confirmed via getComputedStyle().animationName
+   during a real hover: a util <a> reads "cc-wild-bounce" same as its parent div, the bell <span> reads
+   "none". One rule on the .nav-item is enough — its transform already carries every child along. */
+html.cc-anim-wild #menu .nav-tile.right > .nav-item:hover { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
 /* the -7px hop peaks ABOVE the header band; without this the bar (and its tiles) clip the tab at the top.
    Let the whole nav chain overflow visibly only while WILD is armed, so the bounce is fully seen. */
 /* #menu: keep VERTICAL overflow visible so the -7px hop shows above the header band, but CLIP the HORIZONTAL

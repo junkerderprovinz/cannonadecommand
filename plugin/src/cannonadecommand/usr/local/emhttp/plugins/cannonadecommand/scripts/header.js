@@ -316,11 +316,17 @@
         // WHOLE document and blind-scrolled the page for any matching static dialog left over from earlier
         // in the session (System Info, a changelog view) — nothing to do with what was actually opened.
         // state === "run" only: follow while genuinely streaming, stop once finished, never for static text.
+        // #40 (user: "wenn ich ein Update auslöse springt es ans Ende der Seite"): this used to ALSO scroll
+        // document.documentElement to its bottom. Every .sweet-alert here is forced position:fixed + centered
+        // with its own overflow-y:auto (see the #10/#22 rules above) - the dialog never moves or needs more
+        // room when the PAGE scrolls, so that call only ever dragged the container list behind it out from
+        // under the user, with zero benefit to the dialog's own readability. The two calls below (the
+        // dialog's internal scrollers + the dialog box itself) are what actually follows the growing log;
+        // keep those, drop the page-level one.
         if (state === "run") {
           var scrollers = sa.querySelectorAll("*");
           for (var sc = 0; sc < scrollers.length; sc++) { var sn = scrollers[sc]; if (sn.scrollHeight - sn.clientHeight > 2) sn.scrollTop = sn.scrollHeight; }
           if (sa.scrollHeight - sa.clientHeight > 2) sa.scrollTop = sa.scrollHeight;
-          if (document.documentElement.scrollHeight - document.documentElement.clientHeight > 2) window.scrollTo(0, document.documentElement.scrollHeight);
         }
         // #14: strip the status suffix from the title — but do NOT rewrite h2.textContent: that DESTROYS
         // #pluginProgressTitle, the only reliable completion signal (later passes could then never see "done").
@@ -2250,7 +2256,13 @@
         // all reka settings forms with the SAME layout as a /Settings sub-page (section headings, toggles, selects,
         // inputs, sub-tab bar). Match by URL (not by a fieldset probe, which races the async reka render) so the full
         // Tools treatment applies reliably. The /Main ROOT (disk_status table) is NOT matched -> it stays native.
-        var diskPg = /^\/Main\/(Device|Disk|Boot)\b/.test(p0);
+        // #37 (root cause, live-traced): /Main/Boot is the flash DEVICE detail page (health, partition, share) - a
+        // DIFFERENT page from the actual "Boot Parameters" kernel-arguments editor the user meant, which lives at
+        // /Settings/BootParameters. Only the device page ever matched, so every .warning-box/.section-header/
+        // toggle rule already written for Boot Parameters (Tools.css, this file's rainbow rotation below) sat
+        // dormant - cc-tools-on fired (it matches any /Settings/. sub-page) but cc-diskpage never did, and the
+        // compact grid + section badges are gated on cc-diskpage specifically.
+        var diskPg = /^\/Main\/(Device|Disk|Boot)\b/.test(p0) || /^\/Settings\/BootParameters\b/.test(p0);
         // CA's settings sub-page (/Apps/ca_settings) is a NATIVE Unraid settings form — same dl/dt/dd layout,
         // same selects, same bare input buttons — so it gets the SAME treatment instead of a second, thinner
         // one of its own. That is what finally puts its dropdowns in the CC style: ccToolsEnhance() replaces
@@ -2265,6 +2277,11 @@
         // labels/values spread to the screen edges. Mark disk pages so the COMPACT CC grid (kept only here) reins the
         // form back in — /Settings pages stay native.
         root.classList.toggle("cc-diskpage", diskPg && toolsPg && g("cc.theming", "1") !== "0");
+        // #41 (user: "der create api key button ist zu groß und nicht in den farbmodi"): the "Create API Key"
+        // trigger + its own reka dropdown menu live only on this one settings sub-page — scope narrowly rather
+        // than restyling every [aria-haspopup="menu"] trigger CC has never audited on other /Settings pages.
+        var apiKeysPg = /^\/Settings\/ApiKeys\b/.test(p0);
+        root.classList.toggle("cc-apikeyspage", apiKeysPg && toolsPg && g("cc.theming", "1") !== "0");
       } catch (e0) {}
       ccArrFill();      // #18: on /Main, refresh the cached array-fill % the island's fill chip reads
       ccStateBars();   // #16: usage-bar fills follow the fill-level state colour when cc.statenative, else the palette
@@ -2877,9 +2894,13 @@
       ccAppsStamp(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground, .homespotlightIconArea");
       // #24 (user: "im action centre wird ueber den header badges auch action centre text angezeigt, bitte
       // weg machen"): CA's .category.categoryLine label reuses the same slot for "Search for X" (useful —
-      // tells you what you searched) and the plain section name (redundant here — the sidebar's own
-      // ACTION CENTRE button is already highlighted). Hide only the latter for Action Centre specifically;
-      // every other use of the label (search, a real category name) stays untouched.
+      // tells you what you searched) and the plain section name (redundant — the sidebar's own entry for
+      // that section, e.g. ACTION CENTRE, is already highlighted). Originally hid Action Centre only by
+      // exact text; #43 (user: "bei previous apps wird wieder der Text 'previous apps' angezeigt, bitte in
+      // ALLEN App-Tab-Subseiten ausblenden") is the SAME redundant-label pattern for every other plain
+      // section name (Previous Apps, Installed Apps, Pinned Apps, a category) — CA itself already marks
+      // every one of these (but never the "Search for X" case) with its own hideWithMenu class, so key off
+      // that instead of hardcoding one more literal string each time a new section repeats the report.
       // REGRESSION (user: "text ist weg aber dafuer sind jetzt die header badges zu weit oben, bitte auf
       // allen seiten auf gleicher hoehe wie der homebutton"): display:none collapses the slot's own ~15px,
       // which every OTHER page still reserves (the Home page renders this same element with EMPTY text,
@@ -2887,7 +2908,7 @@
       // it (Suche, Results Per Page, ...) crept up. visibility:hidden removes the text without collapsing
       // the box, so Home/Suche land on the same line on every page again.
       Array.prototype.slice.call(document.querySelectorAll(".category.categoryLine")).forEach(function (cl) {
-        cl.style.setProperty("visibility", (cl.textContent || "").trim() === "Action Centre" ? "hidden" : "", "important");
+        cl.style.setProperty("visibility", cl.classList.contains("hideWithMenu") ? "hidden" : "", "important");
       });
       ccMoveSearchAreaBadges();                              // #15: relocate under the search badge
       ccAppsStripCount();                                    // #30: "Results Per Page: 12" -> "Results Per Page"
@@ -2904,6 +2925,14 @@
       // it could only ever paint the neutral chip. Stamped like every other Apps badge, it takes the accent
       // in Normal mode and its own jewel position in Rainbow; the reactive rule then handles the rest state.
       ccAppsStamp(".multi_installDiv input[type='button'], .multi_installDiv input[type='submit']");
+      // #42 (user: "der Löschen-Button der nur die Auswahl löscht ... soll Auswahl löschen heißen"): CA's own
+      // class name (multi_installClear) confirms the button only clears the selection checkmarks - it never
+      // touches the app list itself (that's the separate, per-card "Actions -> Remove from Previous Apps" menu).
+      // The native German string "Löschen" reads as a destructive delete, not a selection reset, so the button
+      // looked like the "real" delete when it isn't one. Relabel only the exact stale string, so an already-
+      // correct or already-translated label (a future CA/locale update) is left alone.
+      var clearBtn = document.querySelector("input.multi_installClear");
+      if (clearBtn && clearBtn.value === "Löschen") clearBtn.value = "Auswahl löschen";
       ccAppsCornerMarks();
       // (#9) subtitle -> (i) bubble on the header, keep SHOW MORE inline, retire the body-text line.
       var heads = document.querySelectorAll(".ca_homeTemplatesHeader:not([data-cc-info])");
