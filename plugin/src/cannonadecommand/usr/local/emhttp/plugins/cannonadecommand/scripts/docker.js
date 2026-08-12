@@ -2363,8 +2363,17 @@
       // close button was left out of the rotation entirely - .sl-upd/.sl-gh already got a colour here,
       // .sl-x stayed on its plain neutral chip fill regardless of rainbow mode. Same treatment, same
       // index sequence, so all three read as one consistently-themed set instead of two-plus-a-leftover.
+      // #66 (user: "reaktiver Modus ist an und sie sind immer eingefärbt"): this used to inline-paint the
+      // colour unconditionally, which beats ANY CSS rest-state rule (inline style always wins) - every
+      // OTHER Docker-tab control instead stays neutral at rest under html.cc-shares-rbneutral and only
+      // takes its stamped colour on :hover (docker.css's own :hover rules read --cc-rb-c). Match that:
+      // always stamp the custom properties, but only force the direct colours when NOT in that mode.
+      var neutral = document.documentElement.classList.contains("cc-shares-rbneutral");
       Array.prototype.slice.call(bub.querySelectorAll(".sl-upd:not(.sl-upd-off), .sl-gh, .sl-x")).forEach(function (bn, i) {
         var c = ccRbColor(i);
+        bn.style.setProperty("--cc-rb-c", c);
+        bn.style.setProperty("--cc-rb-ct", idealText(c));
+        if (neutral) { bn.style.removeProperty("background"); bn.style.removeProperty("color"); bn.style.removeProperty("border-color"); return; }
         bn.style.setProperty("background", c, "important");
         bn.style.setProperty("color", idealText(c), "important");
         bn.style.setProperty("border-color", c, "important");

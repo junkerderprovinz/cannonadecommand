@@ -1128,6 +1128,19 @@ div.js-actions input[type=button]:hover { filter: brightness(1.14); }
 .sl-bubble .sl-upd.sl-upd-off { background: transparent !important; color: var(--sl-dim) !important; border: 1px solid var(--sl-line2) !important; filter: none !important; }
 .sl-bubble .sl-pill { border-radius: var(--cc-b-radius, 999px) !important; }
 .sl-bubble .sl-x { border-radius: var(--cc-b-radius, 7px) !important; }
+/* #66 (user: "reaktiver Modus ist an und sie sind immer eingefärbt"): the rest rule above has no
+   reactive/neutral variant at all, and docker.js's enhanceShipLogBubble() inline-paints the same solid
+   colour on TOP of it regardless of mode - unlike every other Docker-tab control (.cc-limbtn-set,
+   .cc-actbtn, the plugin logo tile, ...), which all rest neutral under html.cc-shares-rbneutral and only
+   take --cc-rb-c on :hover. Give ShipLog's buttons the same rest/hover split; docker.js now skips its
+   own direct paint in this mode and only stamps --cc-rb-c/--cc-rb-ct for the hover rule to read. */
+html.cc-shares-rbneutral .sl-bubble .sl-upd:not(.sl-upd-off), html.cc-shares-rbneutral .sl-bubble .sl-gh {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-shares-rbneutral .sl-bubble .sl-upd:not(.sl-upd-off):hover, html.cc-shares-rbneutral .sl-bubble .sl-gh:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  filter: none !important;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
    /Docker/AddContainer + /Docker/UpdateContainer ("Container hinzufügen" / Edit) — gate
