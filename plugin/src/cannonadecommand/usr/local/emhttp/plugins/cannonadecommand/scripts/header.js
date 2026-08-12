@@ -3137,6 +3137,16 @@
       var ctout = document.getElementById("cc-ctout-bd");
       var ctoutOn = !!(ctout && getComputedStyle(ctout).display !== "none");
 
+      // Release any forced-flex override THIS function applied on a previous tick before reading
+      // "genuine" visibility below — otherwise our own last write reads back as Unraid still
+      // showing it, so a held-then-released spinner (#33 below) could never actually leave: the
+      // exact stuck-overlay shape the #36 !important removal exists to prevent, just self-inflicted
+      // one tick later instead of by the stylesheet. Caught live by spinner-election.test.js.
+      var prevFixed = document.querySelectorAll("div.spinner.fixed");
+      for (var p = 0; p < prevFixed.length; p++) {
+        if (prevFixed[p].style.getPropertyValue("display") === "flex") prevFixed[p].style.removeProperty("display");
+      }
+
       var sps = document.querySelectorAll("div.spinner");
       var fixedUp = null, inPageUp = null;
       for (var i = 0; i < sps.length; i++) {
