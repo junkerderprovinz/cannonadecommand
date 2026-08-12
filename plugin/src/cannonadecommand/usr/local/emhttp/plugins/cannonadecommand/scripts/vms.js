@@ -17,6 +17,7 @@
   // accent/rainbow tint like a crafted toolset instead of a multicolour OS emoji ⚙.
   var CC_GEAR_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
   var dead = false, mo = null, liveTimer = null, moPending = false, moTimer = null, moTrail = false, smo = null, smoPending = false, vmBwTimer = null;
+  var ccFirstPaintDone = false, ccEnhBusyStart = 0;   // #54: same minimum-visible-spinner pattern as docker.js's #33
   // #22: wrap the memory / disk-IO / network-IO readouts (cols 4-6) of the VM-usage-stats table into
   // CC chips so every cell reads as a badge like the CPU pills. Re-render-safe: guarded by an
   // already-wrapped check (the tbody is replaced ~every 3s via the vm_usage websocket).
@@ -956,6 +957,16 @@
       moPending = true; moTrail = false;
       try { mo.disconnect(); } catch (e) {}   // our own badge writes (subtree) must not re-fire us during the pass
       if (!dead) { try { apply(); } catch (e) {} }
+      // #54: the FIRST real pass is what the tab-load spinner was covering for; later native rebuilds
+      // (polling, a VM action) are fast/invisible already and must not re-arm the overlay. Same minimum-
+      // visible-time guard as docker.js's #33 (moSweep) - clearing the instant a fast pass finishes never
+      // gave the spinner a chance to actually paint a frame.
+      if (!ccFirstPaintDone) {
+        ccFirstPaintDone = true;
+        var ccEnhMinMs = 400, ccEnhElapsed = Date.now() - ccEnhBusyStart;
+        if (ccEnhElapsed >= ccEnhMinMs) document.documentElement.classList.remove("cc-enh-busy");
+        else setTimeout(function () { document.documentElement.classList.remove("cc-enh-busy"); }, ccEnhMinMs - ccEnhElapsed);
+      }
       try { mo.observe(host, { childList: true, subtree: true }); } catch (e) {}
       moTimer = setTimeout(function () {
         moTimer = null; moPending = false;
@@ -1003,6 +1014,16 @@
   }
   function arm() {
     dead = false;
+    // #54 (user: "der vm tab dauert ewig bis er geöffnet wird ... spinner anzeigen solange es lädt"): same
+    // mechanism as docker.js's #33 - header.js's ccLoadState() holds the native tab-load overlay open while
+    // html.cc-enh-busy is set, with a minimum visible time so a fast enhancement pass still gets a chance to
+    // paint at least one frame. The VM tab never had this at all (unlike Docker, pre-#33). This does NOT
+    // touch the real bottleneck (VMMachines.php itself takes ~700ms server-side for the libvirt query,
+    // before the browser even starts rendering - not CC's code, not fixable client-side) - it only closes
+    // the gap AFTER the page starts arriving, same as #33 did for Docker.
+    document.documentElement.classList.add("cc-enh-busy");
+    ccEnhBusyStart = Date.now();
+    setTimeout(function () { document.documentElement.classList.remove("cc-enh-busy"); }, 5000);
     apply();
     connectObserver();
     // The VM list tbody (#kvm_list) is usually populated by an AJAX loadlist() AFTER this

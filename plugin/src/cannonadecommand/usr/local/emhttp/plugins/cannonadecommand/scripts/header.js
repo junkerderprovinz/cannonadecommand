@@ -1356,9 +1356,15 @@
           var host = prev ? (prev.querySelector("span, a") || prev) : null;
           if (host && !host.querySelector(".cc-acctinfo")) {
             var ic = document.createElement("span");
-            ic.className = "cc-acctinfo"; ic.textContent = "ⓘ";            // circled i — a CLICK help button
+            ic.className = "cc-acctinfo"; ic.textContent = "ⓘ";            // circled i — click AND hover
             ic.setAttribute("role", "button"); ic.tabIndex = 0; ic.setAttribute("aria-label", txt);
             ic.setAttribute("data-cc-info", txt);                          // the help text the click bubble shows
+            // #38 (user: "info erscheint erst bei klick, soll schon bei hoover angezeigt werden"): additive,
+            // not a replacement — data-cc-tip rides the SAME document-wide #cc-tipfloat hover engine every
+            // other CC icon already uses (ccWireTips()), so hovering previews the text instantly. The click
+            // handler below is untouched: a pinned copy still opens on click for anyone who can't hover
+            // reliably (touch/keyboard), so nothing that already worked stops working.
+            ic.setAttribute("data-cc-tip", txt);
             host.appendChild(ic);
             li.style.display = "none";
           }
@@ -2933,6 +2939,58 @@
       // correct or already-translated label (a future CA/locale update) is left alone.
       var clearBtn = document.querySelector("input.multi_installClear");
       if (clearBtn && clearBtn.value === "Löschen") clearBtn.value = "Auswahl löschen";
+      // #57 (user: "wir brauchen auch einen Löschen button der die Previous Docker und Plugins dann auch
+      // löscht"): a REAL bulk remove, reusing CA's own removeApp()/post({action:'remove_application'})
+      // plumbing per app instead of reimplementing it - each checked card's .ca_holder ancestor already
+      // carries data-apppath/data-appname (the exact two args removeApp() takes), so this just drives the
+      // same native call once per selection instead of forcing one-at-a-time through the Actions menu.
+      // Inserted as a sibling INSIDE .multi_installDiv so the existing ccAppsStamp() call above (which
+      // already runs every pass) colour-integrates it automatically - no separate CSS needed.
+      if (clearBtn && !document.getElementById("cc-prevapps-del")) {
+        var delBtn = document.createElement("input");
+        delBtn.type = "button"; delBtn.id = "cc-prevapps-del";
+        // NOT clearBtn.className: CA binds its own delegated "clear the selection" click handler to
+        // .multi_installClear specifically, which fired ALONGSIDE this button's own listener the moment it
+        // shared that class (live-caught: the confirm dialog never rendered - CA's own handler ran too and
+        // raced it). Styling doesn't need the class anyway - ccAppsStamp() above already matches ANY
+        // input[type=button] inside .multi_installDiv, class-agnostic.
+        delBtn.className = "cc-prevapps-delbtn";
+        delBtn.value = T("Ausgewählte entfernen", "Remove selected");
+        delBtn.addEventListener("click", function () {
+          var boxes = document.querySelectorAll(".ca_multiselect:checked");
+          var apps = [];
+          for (var i = 0; i < boxes.length; i++) {
+            var holder = boxes[i].closest(".ca_holder");
+            if (holder && holder.getAttribute("data-apppath")) apps.push({ path: holder.getAttribute("data-apppath"), name: holder.getAttribute("data-appname") || "" });
+          }
+          if (!apps.length) return;
+          var names = apps.map(function (a) { return a.name; }).join(", ");
+          var go = function () {
+            var done = 0;
+            apps.forEach(function (a) {
+              try {
+                window.post({ action: "remove_application", application: a.path }, function () {
+                  if (++done === apps.length) {
+                    document.querySelectorAll(".caMenuItem").forEach(function (m) { m.classList.remove("selectedMenu"); });
+                    var menuItem = document.querySelector(".caMenuItem[data-category='previous_apps']");
+                    if (menuItem) menuItem.classList.add("selectedMenu");
+                    if (typeof previousApps === "function") previousApps(false, true, (window.data && data.previousAppsSection) || undefined);
+                  }
+                });
+              } catch (e) { done++; }
+            });
+          };
+          if (typeof swal === "function") {
+            swal({
+              title: T("Ausgewählte Apps entfernen?", "Remove selected apps?"),
+              text: T(apps.length + " App(s) endgültig aus Previous Apps entfernen: ", "Permanently remove " + apps.length + " app(s) from Previous Apps: ") + names,
+              type: "warning", confirmButtonText: T("Ja, entfernen!", "Yes, remove them!"), cancelButtonText: T("Abbrechen", "Cancel"),
+              showCancelButton: true, showConfirmButton: true, allowOutsideClick: true
+            }, function (isConfirm) { if (isConfirm) go(); });
+          } else if (confirm(names)) { go(); }
+        });
+        clearBtn.parentNode.insertBefore(delBtn, clearBtn.nextSibling);
+      }
       ccAppsCornerMarks();
       // (#9) subtitle -> (i) bubble on the header, keep SHOW MORE inline, retire the body-text line.
       var heads = document.querySelectorAll(".ca_homeTemplatesHeader:not([data-cc-info])");

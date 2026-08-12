@@ -1754,6 +1754,20 @@ html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-mid) { background: var(--cc-warn, #e0912a) !important; color: #1a1a1a !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #d9433f) !important; color: #fff !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-crit) { background: var(--cc-err, #d9433f) !important; color: #fff !important; }
+/* #45/#50 (user, live-verified via getComputedStyle: measured rgba(128,128,128,.18), the plain rest-
+   grey fallback, on a live "Nicht gepflegt" row): ShipLog's Not-maintained/CADeprecated chips carry
+   no .sl-amp risk dot, so none of the :has() rules above ever match them - they fall through to the
+   REST-GREY base like a routine update chip, even though they're a PERSISTENT problem state that
+   must always read red/amber, never neutral, hover or not. More specific (adds the sl-unmaint/sl-dep
+   class) than the plain .sl-chip rules above, so it wins regardless of source order. */
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip.sl-unmaint,
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip.sl-unmaint {
+  background: var(--cc-err, #d9433f) !important; color: #fff !important;
+}
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip.sl-dep,
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip.sl-dep {
+  background: var(--cc-warn, #e0912a) !important; color: #1a1a1a !important;
+}
 /* FLASH FIX (user: "wenn ich über die unterste Buttonleiste fahre blitzt die Docker-Zeile
    dahinter auf"): the fixed bottom action bar does NOT hit-test across its right region (proven:
    z-index 3000 still leaves the row topmost there), so the pointer passing the bar's right zone

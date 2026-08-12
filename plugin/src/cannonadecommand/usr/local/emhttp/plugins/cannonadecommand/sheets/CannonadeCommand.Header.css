@@ -1608,6 +1608,29 @@ html.cc-apikeyspage [aria-haspopup="menu"][role="button"] {
 html.cc-apikeyspage [aria-haspopup="menu"][role="button"]:hover { filter: brightness(1.14); }
 html.cc-apikeyspage [aria-haspopup="menu"][role="button"] svg { display: none !important; }
 
+/* #56 (user: "Management Access > Unraid API Status/Settings nicht sauber im GLS. Rahmenlinien, falsche
+   Farben, Buttons nicht als GLS-Badges, Farbmodi"): the same reka/Tailwind card recipe as the API-key
+   dialog (#41) - border.rounded-lg.border-muted is this component family's card signature wherever it
+   shows up, not just on one page, so this catches every card in the Unraid-API settings tabs at once. */
+html.cc-tools-on .unapi .border.rounded-lg.border-muted {
+  border: none !important;
+  background: var(--cc-surface-card, #191919) !important;
+  box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
+}
+/* the "View the current status..." footnote sits behind its own border-t divider line - shade only, law. */
+html.cc-tools-on .unapi .border-muted.border-t { border-top: none !important; }
+/* #56: Refresh Status / Restart API (and any sibling native <button> in this component family) read
+   Tailwind's own bg-secondary/bg-destructive, ignoring CC entirely - even though header.js's ccPaintRotate()
+   already stamps --cc-rb-c/-ct onto every button in a cc-tools-on #displaybox row (rainbow mode), nothing
+   here ever consumed it, so the stamp was a no-op and every OTHER colour mode left them fully native too.
+   Same accent/rainbow fallback chain as every other CC action button; brightness-only hover, never a swap. */
+html.cc-tools-on .unapi button:not([role="tab"]) {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  border: none !important; border-radius: var(--cc-b-radius, 6px) !important;
+}
+html.cc-tools-on .unapi button:not([role="tab"]):hover { filter: brightness(1.14); }
+
 /* ═══ USER tiles (/Users) — user #13: "schöne Kacheln für die User wie für Einstellungen/Werkzeuge, die sich
    an die Farb- und Form-Engine halten" + "das klebt zu eng aufeinander". The native /Users grid is a .Panels
    grid of div.user-list > a > img.picture(48) + name — no card, 10px gap. Mirror the Settings/Tools tile recipe
