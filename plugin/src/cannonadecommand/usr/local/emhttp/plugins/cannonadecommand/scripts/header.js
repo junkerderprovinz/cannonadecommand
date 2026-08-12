@@ -2181,6 +2181,53 @@
     } catch (e) {}
   }
   try { window.ccToast = ccToast; } catch (e) {}   // let docker.js / settings.js reuse the same toast
+  // #56 (user, Settings > Verwaltungszugriff > Unraid API Settings / API Keys: "toggle nicht im GLS,
+  // Farben passen nicht"): those subtabs are NOT the classic PHP form the rest of Verwaltungszugriff is
+  // (already GLS'd in Tools.css) - each is its OWN Vue/Tailwind custom element Unraid ships (confirmed
+  // live: <unraid-connect-settings> on "Unraid API Settings", a DIFFERENT <unraid-api-key-manager> on
+  // "API Keys" - do not assume a single tag name covers every subtab). All of them share class="unapi
+  // dark" though, confirmed on both, so that's the one stable anchor - light-DOM (no shadow root), styled
+  // entirely through shadcn/Tailwind's own CSS-variable convention: every colour utility reads
+  // `hsl(var(--primary))` etc, with the triplet (not a hex, not wrapped in hsl()) defined locally on the
+  // element. Overriding the TRIPLET is the one hook point that reaches every one of its buttons/toggles/
+  // rings/focus states at once, without chasing each Tailwind class combination individually.
+  function ccHexToHslTriplet(hex) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "220 91% 55%";
+    var n = parseInt(m[1], 16), r = (n >> 16 & 255) / 255, gC = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+    var max = Math.max(r, gC, b), min = Math.min(r, gC, b), l = (max + min) / 2, hDeg = 0, s = 0;
+    if (max !== min) {
+      var d = max - min; s = l > .5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) hDeg = (gC - b) / d + (gC < b ? 6 : 0); else if (max === gC) hDeg = (b - r) / d + 2; else hDeg = (r - gC) / d + 4;
+      hDeg *= 60;
+    }
+    return Math.round(hDeg) + " " + Math.round(s * 100) + "% " + Math.round(l * 100) + "%";
+  }
+  function ccSyncApiTheme() {
+    try {
+      var hosts = document.querySelectorAll(".unapi");
+      if (!hosts.length) return;
+      // live-caught: rbColor(0) is palette SLOT ZERO (red in the default palette), not "the" rainbow
+      // colour - painted the whole subtab red the moment Rainbow was on, clashing with every other area
+      // on the same page. --cc-rbaccent (set a few hundred lines down, ONLY while Rainbow + the header
+      // area are both on) is the house's actual "one representative colour under Rainbow" value - it's
+      // rbColor(5), deliberately the same palette index as the default accent, so it stays continuous
+      // with the plain-accent look instead of landing on an arbitrary slot. Read that computed value
+      // (falling back to the plain accent exactly like every var(--cc-rb-c, var(--cc-rbaccent, <accent>))
+      // chain elsewhere in this file) instead of recomputing a second, differently-indexed rainbow colour.
+      var rbaVar = getComputedStyle(document.documentElement).getPropertyValue("--cc-rbaccent").trim();
+      var hex = /^#[0-9a-f]{6}$/i.test(rbaVar) ? rbaVar : accent();
+      var triplet = ccHexToHslTriplet(hex), fg = idealText(hex) === "#fff" ? "0 0% 98%" : "0 0% 9%";
+      for (var i = 0; i < hosts.length; i++) {
+        var s = hosts[i].style;
+        // --primary/--ring drive the toggle-checked fill, focus rings and primary buttons; --accent/
+        // --accent-foreground drive the neutral :hover states (bg-accent) - mapping both to the SAME
+        // colour matches the rest of CC, where hover always resolves to the accent (.caButton:hover etc).
+        s.setProperty("--primary", triplet); s.setProperty("--primary-foreground", fg);
+        s.setProperty("--ring", triplet);
+        s.setProperty("--accent", triplet); s.setProperty("--accent-foreground", fg);
+      }
+    } catch (e) {}
+  }
   function apply() {
     try {
       var root = document.documentElement;
@@ -2221,6 +2268,16 @@
       ccCaSettingsRows();
       setTimeout(ccCaSettingsRows, 60);
       setTimeout(ccCaSettingsRows, 400);
+      // #56: same async-mount problem as ccCaSettingsRows above (Vue custom element, not present at the
+      // moment apply() first runs) - same immediate + staggered-retry shape, plus a bounded interval since
+      // switching between the Unraid API Settings / API Keys sub-tabs re-mounts the element without a full
+      // page navigation (apply() itself is not re-triggered by a tab click, only by boot()/storage events).
+      ccSyncApiTheme();
+      setTimeout(ccSyncApiTheme, 60);
+      setTimeout(ccSyncApiTheme, 400);
+      if (/^\/Settings\/ManagementAccess/i.test(location.pathname)) {
+        var ccApiTick = 0, ccApiIv = setInterval(function () { ccSyncApiTheme(); if (++ccApiTick >= 20) clearInterval(ccApiIv); }, 500);
+      }
       // GLOBAL footer hide (user: "die native Leiste wo Array gestartet steht ... komplett
       // ausblenden"): footer#footer = the fixed 28px strip (#statusraid/#statusbar + temps +
       // copyright). DEFAULT HIDDEN — cc.footer="0" (settings toggle) brings it back. Same
@@ -2878,6 +2935,17 @@
       // ever render fully coloured, same as header.js's own "reactive class also in Normal mode" comment
       // above documents for the header case. Mirror that here for the Apps tab.
       document.documentElement.classList.toggle("cc-apps-rbneutral", rbNeutral());
+      // #61 (user: "wenn man installed apps löscht sind die unteren buttons nutzlos, man kann ja gar nichts
+      // auswählen und löschen. ist das nativ auch so? dann blenden wir die buttons aus" - confirmed live on
+      // the Apps home page too: "die ganzen buttons ... sollen auf der seite gar nicht angezeigt werden"):
+      // CA renders the .multi_installDiv bulk-action bar (Install Selected / Select all on page / reset /
+      // delete) UNCONDITIONALLY on every Apps sub-view, but only Previous Apps actually renders the
+      // per-card .ca_multiselect checkboxes it acts on - confirmed live via DOM inspection, and genuinely
+      // native (none of CC's own code creates either the bar or the checkboxes). On the home page, category
+      // browsing and Installed Apps there is nothing to check, so the bar just sits there permanently
+      // disabled. Gate on the actual signal (checkbox presence) rather than a URL/category name so this
+      // keeps working correctly if CA ever wires multi-select into another view.
+      document.documentElement.classList.toggle("cc-apps-noselect", !document.querySelector(".ca_multiselect"));
       ccAppsStamp(".ca_homeTemplatesHeader");
       ccAppsStamp(".caMenuItem.selectedMenu");
       ccAppsStamp("#searchFilter");                          // #7: stamp the collapsible badge (bg + icon colour follow the mode)
@@ -2926,6 +2994,10 @@
       // reads as its own coloured pill instead of blending into the shade behind it (CSS side: Tokens.css).
       ccAppsStamp(".cc-ca-cardtitle, li.cc-card-in.sectionMenu");
       ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton");
+      // #63: the Info drawer's own Installieren/Support/Pin App row (.popupInfo) is the same badge recipe
+      // as the card's .ca_bottomLine row above and needs the same per-button rainbow jewel, not one flat
+      // shared colour — stamp it every pass since the drawer's content is (re)built fresh on each open.
+      ccAppsStamp(".popupInfo .actionsPopup, .popupInfo .caButton");
       // #8 (user: "die buttons ganz unten sind nicht in die farbmodi integriert"): the bottom action bar
       // (.multi_installDiv) was styled as a badge row but never STAMPED, so --cc-rb-c never reached it and
       // it could only ever paint the neutral chip. Stamped like every other Apps badge, it takes the accent
@@ -2957,11 +3029,22 @@
         // shared that class (live-caught: the confirm dialog never rendered - CA's own handler ran too and
         // raced it). Styling doesn't need the class anyway - ccAppsStamp() above already matches ANY
         // input[type=button] inside .multi_installDiv, class-agnostic.
-        // multi_deleteButton: CA's OWN "this is a destructive action" class, already carved out of the
-        // generic accent/rainbow treatment in Tokens.css (`:not(.multi_deleteButton)` on every rest-state
-        // branch) and painted --cc-err red instead - reuse it rather than inventing a second red. Keep
-        // cc-prevapps-delbtn too, only as a stable hook for the disabled-state rule below.
-        delBtn.className = "cc-prevapps-delbtn multi_deleteButton";
+        // #57 regression (live-caught): the ORIGINAL fix here reused CA's OWN "multi_deleteButton" class
+        // purely for its red Tokens.css styling hook, reasoning it was just a paint class. It is not - CA
+        // ALSO delegates its native bulk-remove click handler off that exact class (matching the real,
+        // permanently-hidden `.multi_deleteButton.ca_hide` button CA ships), same trap as the
+        // .multi_installClear one two lines up, just missed because that button's own confirm dialog LOOKS
+        // like a real dialog ("DELETE TEMPLATE? Are you sure you want to delete N applications...") instead
+        // of silently no-opping. Whichever handler's swal() call lost the race never showed, and the one
+        // that "won" ran against CA's own (button-specific, not selection-generic) delete plumbing, which
+        // did nothing for a button it never created - net effect: sometimes no dialog, sometimes native's
+        // inert one, and the previousApps() refresh this button's own go() triggers never ran at all, which
+        // is what actually explains "springt unter das Seitenende" - the real refresh (and this file's own
+        // scroll-restore below) simply never fired, so whatever scroll CA's own half-run handler left behind
+        // stuck. Fix: do NOT carry .multi_deleteButton at all - Tokens.css now targets .cc-prevapps-delbtn
+        // directly for both the red paint and the rest-state exclusions, so this button gets the exact same
+        // look with zero shared classes for CA's delegation to match on.
+        delBtn.className = "cc-prevapps-delbtn";
         // #57 follow-up (user: "Ausgewählte entfernen soll einfach nur Löschen heißen; der Löschen button
         // soll erst aktiv werden wenn etwas ausgewählt wurde"): shorter label, and disabled until at least
         // one card is checked - delegated "change" listener below keeps it in sync without needing its own
@@ -3055,6 +3138,12 @@
       ccApps();
       document.addEventListener("click", function (e) {
         if (e.target && e.target.closest && e.target.closest(".caMenuItem, .homeMore, .sortIcons, .searchSubmit, #searchButton")) ccAppsSoon();
+        // #63: .ca_appPopup marks every entry point into the Info drawer (the card itself, its icon, its
+        // name/description, and the explicit Info button) - none of those match the selectors above, so
+        // without this the drawer's own .popupInfo buttons only got their rainbow stamp on some LATER,
+        // unrelated pass instead of the moment they actually appear. A capture-phase listener sees the
+        // click before CA's own handler swaps in the drawer content, so the delay is intentional (below).
+        if (e.target && e.target.closest && e.target.closest(".ca_appPopup")) setTimeout(ccAppsSoon, 80);
       }, true);
       // the measured right gutter moves with the viewport, so re-measure on resize — without this the padding
       // stays frozen at whatever the last pass computed and SHOW MORE drifts off the icon gutter again (seen

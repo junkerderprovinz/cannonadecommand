@@ -256,6 +256,60 @@ html.cc-tools-on form[name="SSLSettings"] input[type="submit"]:hover:not(:disabl
 html.cc-tools-on form[name="SSLSettings"] input[type="button"]:focus-visible,
 html.cc-tools-on form[name="SSLSettings"] input[type="submit"]:focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
 
+/* #56 follow-up (user: "Unraid API Settings" + "API Keys" subtabs — "Add item buttons nicht im GLS,
+   unterster Button 'Bist du sicher' auch nicht im GLS, unterste card mit Rahmen und falscher Farbe, toggle
+   nicht im GLS, Farben passen nicht"): these two subtabs (and "Unraid API Status") are not the classic
+   PHP form the rest of Verwaltungszugriff already got — Unraid ships EACH as its own Vue/Tailwind custom
+   element (confirmed live: <unraid-connect-settings> on Settings, a DIFFERENT <unraid-api-key-manager> on
+   API Keys — do not assume one tag name covers every subtab). All of them share class="unapi dark" though
+   (confirmed on both), so .unapi below is the one stable anchor across every current AND future subtab —
+   light DOM, no shadow root, so it IS reachable from a plain stylesheet, just built entirely from
+   shadcn/Tailwind utility classes instead of plain inputs. header.js (ccSyncApiTheme) remaps its
+   --primary/--ring/--accent CSS variables to the user's configured CC accent so every colour utility that
+   already reads those vars (the toggle's checked fill, focus rings, the built-in "Unraid.net" provider
+   pill) follows CC automatically; the rules below give the generic shadcn button/input/card recipes CC's
+   own shape (radius, height, weight) the same way every other native form in this file already gets it. */
+html.cc-tools-on .unapi [class*="border-input"][class*="bg-background"] {
+  border-radius: var(--cc-b-radius, 8px) !important;
+}
+html.cc-tools-on .unapi span[class*="cursor-pointer"][class*="border-input"],
+html.cc-tools-on .unapi span[class*="inline-flex"][class*="border-input"][class*="bg-background"] {
+  background: var(--cc-tl-surface2, #232323) !important; border-color: transparent !important;
+}
+/* buttons: shadcn's "default"/"outline"/"secondary"/"destructive" variants all share this base recipe —
+   match on the invariant utility trio rather than a specific variant class, so a future Add/Remove/Save
+   button anywhere in the tree gets the same pill without needing its own selector. Height/padding pinned
+   to the SAME --cc-md-h/--cc-md-btnpad tokens the bottom action bar and card buttons use elsewhere (user:
+   "API Keys badge und button nicht in standardisierter Größe") — shadcn's own h-10/h-9/h-8 utilities vary
+   per component, which is exactly what read as "not standardised" next to CC's one consistent badge size. */
+html.cc-tools-on .unapi [class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="font-medium"] {
+  height: auto !important; min-height: var(--cc-md-h, 30px) !important;
+  padding: var(--cc-md-btnpad, 0 14px) !important; box-sizing: border-box !important;
+  border-radius: var(--cc-b-radius, 999px) !important; font-weight: 600 !important;
+  transition: filter .12s !important;
+}
+html.cc-tools-on .unapi [class*="border-input"][class*="bg-background"][class*="hover:bg-accent"] {
+  background: var(--cc-tl-surface2, #232323) !important; border-color: rgba(255, 255, 255, .14) !important;
+  color: var(--cc-text, #eaeaea) !important;
+}
+html.cc-tools-on .unapi [class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="font-medium"]:hover {
+  filter: brightness(1.14) !important;
+}
+/* destructive (Remove/Delete + the "Bist du sicher" confirm) keeps semantic red, same convention as the
+   Previous-Apps delete button in Tokens.css — a destructive action must not read like any other pill. */
+html.cc-tools-on .unapi [class*="bg-destructive"] {
+  background: var(--cc-err, #d9433f) !important; color: #fff !important; border-color: transparent !important;
+}
+/* cards / list rows (the OIDC provider list, the built-in Unraid.net pill's own row, rule cards) — CA and
+   the classic Settings pages never use a flat 1px grey border for a card edge (GlimStone: shade, not
+   lines), so replace the border with the same surface-tier shading used everywhere else in this file. */
+html.cc-tools-on .unapi [class*="rounded-lg"][class*="border"]:not([class*="bg-warning"]):not([class*="bg-destructive"]) {
+  border-color: transparent !important; background: var(--cc-tl-surface, #1c1c1c) !important;
+}
+html.cc-tools-on .unapi [class*="rounded-md"][class*="border"][class*="px-3"] {
+  border-color: rgba(255, 255, 255, .14) !important;
+}
+
 /* #10 (user): the page heading BAR on Tools/Settings sub-pages -> a colour-mode badge like every other CC heading. */
 html.cc-tools-on #displaybox div.title {
   display: inline-flex !important; align-items: center; gap: 8px; width: fit-content !important;

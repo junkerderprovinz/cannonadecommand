@@ -783,7 +783,11 @@ html.cc-popups-on .searchSubmit:hover { filter: brightness(1.08) !important; }
    (confirmed live — identical box centre to the label/input beside it), but the FontAwesome glyph itself
    (both fa-search and fa-remove) sits high within that box, so it reads visually above the text mid-line.
    Same fix as .cc-toolsinfo elsewhere in this plugin (Tools.css): a small position nudge, not a box change. */
-html.cc-popups-on #searchButton { color: inherit !important; position: relative !important; top: 2px !important; }
+/* #64 regression (live-measured, both the collapsed sidebar badge AND the expanded/typing state): the #26
+   nudge overshot — the glyph now sits 2px BELOW the box centre (icon centre 224.5/227.5 vs box centre
+   222.5/225.5 in each state respectively), not above it. top:0 measures exactly on-centre in both states;
+   whatever font/rendering prompted the original +2px is no longer the case. */
+html.cc-popups-on #searchButton { color: inherit !important; position: relative !important; top: 0 !important; }
 /* SIDEBAR SEARCH = COLLAPSIBLE BADGE (user, v3.6.6: "das Suchfeld im CA-Tab soll ein Badge sein mit Icon und
    Text; wenn man drauf klickt soll das Suchfeld kommen"). This replaces the v3.6.2 "permanent full-width
    field" decision. The collapsed/expanded engine already exists for the top-bar variant further up (#7); the
@@ -1226,6 +1230,13 @@ html.cc-popups-on .ca_bottomLine .caButton {
      line-height), landing at 22px, while the docker badge was an explicit 26px — 4px taller. Both now
      read the SAME explicit height, box-sizing:border-box so padding never re-inflates it. */
   box-sizing: border-box !important; height: var(--cc-bottomline-h, 26px) !important;
+  /* #62 (user: "im apps tab sind in der App cards die texte in den badges nicht vertikal zentriert"):
+     native's own line-height (20px) is shorter than the box this rule gives it (26px height minus native's
+     2px vertical padding = 24px content box) - in block flow that 4px slack sits BELOW the text instead of
+     splitting around it, so the label reads too high (measured live: text baseline ~4px above box centre).
+     The square icon badges below (.appDocker etc.) already avoid exactly this by using flex centring;
+     match that here instead of depending on line-height/padding arithmetic lining up. */
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
 }
 html.cc-popups-on .ca_bottomLine .caButton:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .ca_bottomLine .actionsButton {
@@ -1280,6 +1291,108 @@ html.cc-popups-on .searchArea .caButton {
   border-radius: var(--cc-b-radius, 8px) !important; -webkit-mask-image: none !important; mask-image: none !important;
 }
 html.cc-popups-on .searchArea .caButton:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; }
+
+/* ═══ #63 APP INFO PANEL -> GLS (user: "kannst du die App Infocard auch in GLS übernehmen? die card die
+   sich öffnet wenn man auf der App card auf info klickt") ═══════════════════════════════════════════════
+   CA renders this drawer (.sidenav.sidenavShow > #sidenavContent > .popup) as pure black (rgb(0,0,0), not
+   a house token) holding a WHITE rgb(255,255,255) description/changelog card with black text, plain
+   unstyled pill buttons and a bare key-value table — none of it reads as CC. Reskin every piece with the
+   same tokens and .caButton chip recipe already used for the card's own Info/Support/Installieren row
+   (.ca_bottomLine above), so opening a card's Info view feels like staying inside CC rather than dropping
+   into native CA. The drawer keeps CA's own fixed/700px positioning untouched - only colour, spacing and
+   the interior components change. */
+html.cc-popups-on .sidenav.sidenavShow {
+  background: var(--cc-surface-window, #242424) !important;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, .45) !important;
+}
+html.cc-popups-on #sidenavContent { padding: 18px 22px 26px !important; box-sizing: border-box !important; }
+/* live-caught: CA positions this bar `position:fixed;width:1272px;left:594px` — a full-VIEWPORT close bar
+   meant to float above a CENTRED modal. Inside this side drawer that rendered as a pure-black strip
+   spanning edge-to-edge, floating over the app grid above the panel's own top edge instead of sitting
+   inside it. Pull it back into normal flow as the drawer's own first child. */
+html.cc-popups-on .popupCloseArea {
+  position: relative !important; width: auto !important; height: auto !important;
+  left: auto !important; right: auto !important; top: auto !important; background: transparent !important;
+  display: flex !important; justify-content: flex-end !important; margin-bottom: 12px !important;
+}
+html.cc-popups-on .popupCloseArea .popUpClose {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
+  border-radius: var(--cc-b-radius, 8px) !important; padding: 0 14px !important; height: 30px !important;
+  font-size: 12px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .4px !important;
+  cursor: pointer !important; transition: background .12s ease, color .12s ease !important;
+}
+html.cc-popups-on .popupCloseArea .popUpClose:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+html.cc-popups-on .popupIcon img { border-radius: var(--cc-b-radius, 8px) !important; }
+html.cc-popups-on .popupName { color: var(--cc-text, #e6e6e6) !important; }
+html.cc-popups-on .popupAuthorMain { color: var(--cc-text-dim, #8a8a8a) !important; }
+/* Installieren/Support/Pin App: same primary-accent / neutral-chip split as the card's own bottom row.
+   header.js ccAppsStamp()s these too, so Rainbow gives each its own jewel instead of one flat colour. */
+html.cc-popups-on .popupInfo .caButton {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  height: 28px !important; padding: 0 12px !important; margin: 8px 6px 0 0 !important; box-sizing: border-box !important;
+  border-radius: var(--cc-b-radius, 8px) !important; font-size: 12px !important; font-weight: 600 !important;
+  text-transform: uppercase !important; letter-spacing: .3px !important; cursor: pointer !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
+  transition: background .12s ease, color .12s ease, filter .12s ease !important;
+}
+html.cc-popups-on .popupInfo .actionsPopup {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+html.cc-popups-on .popupInfo .caButton:hover { filter: brightness(1.1) !important; }
+html.cc-apps-rbneutral.cc-popups-on .popupInfo .actionsPopup {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .popupInfo .actionsPopup:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+/* description / additional-requirements / changelog: three near-identical CA "readmore" text blocks, all
+   hardcoded white-card-on-black - one dark-card recipe replaces all three. */
+html.cc-popups-on .popupDescription,
+html.cc-popups-on .additionalRequirements,
+html.cc-popups-on .changelog {
+  background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text, #e6e6e6) !important;
+  border-radius: var(--cc-b-radius, 8px) !important; padding: 14px 16px !important; margin: 14px 0 !important;
+  box-sizing: border-box !important;
+}
+html.cc-popups-on .additionalRequirements { border-left: none !important; box-shadow: inset 3px 0 0 var(--cc-warn, #d6a243) !important; }
+/* section labels: Details / Maintainer / Change Log read as small caps captions, not bare bold text */
+html.cc-popups-on .rightTitle,
+html.cc-popups-on .popupAuthorTitle,
+html.cc-popups-on .changelogTitle,
+html.cc-popups-on .additionalRequirementsHeader {
+  color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11px !important; font-weight: 700 !important;
+  text-transform: uppercase !important; letter-spacing: .6px !important; margin: 0 0 8px !important;
+}
+html.cc-popups-on .additionalRequirementsHeader { margin-bottom: 4px !important; }
+html.cc-popups-on .popupInfoSection { display: flex !important; gap: 24px !important; flex-wrap: wrap !important; }
+html.cc-popups-on .popupTable { border-collapse: collapse !important; width: 100% !important; }
+html.cc-popups-on .popupTable td { padding: 4px 0 !important; font-size: 13px !important; }
+html.cc-popups-on .popupTableLeft { color: var(--cc-text-dim, #8a8a8a) !important; padding-right: 14px !important; white-space: nowrap !important; }
+html.cc-popups-on .popupTableRight { color: var(--cc-text, #e6e6e6) !important; }
+html.cc-popups-on .popupAuthorIcon img { border-radius: 50% !important; width: 28px !important; height: 28px !important; object-fit: cover !important; }
+html.cc-popups-on .popupAuthor { color: var(--cc-text, #e6e6e6) !important; font-weight: 600 !important; margin-bottom: 6px !important; }
+html.cc-popups-on .popupProfile,
+html.cc-popups-on .repoPopup,
+html.cc-popups-on .ca_favouriteRepo {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  height: 26px !important; padding: 0 10px !important; margin: 6px 6px 0 0 !important; box-sizing: border-box !important;
+  border-radius: var(--cc-b-radius, 8px) !important; font-size: 11px !important; font-weight: 600 !important;
+  text-transform: uppercase !important; letter-spacing: .3px !important; cursor: pointer !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+  transition: background .12s ease, color .12s ease !important;
+}
+html.cc-popups-on .popupProfile:hover,
+html.cc-popups-on .repoPopup:hover,
+html.cc-popups-on .ca_favouriteRepo:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+html.cc-popups-on .changelogMessage,
+html.cc-popups-on .ca_note {
+  color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11px !important;
+}
 
 /* ═══ #12l CARD CORNER MARKS -> REAL CC BADGES (user: "können wir die Ribbons auch in CC-Badges umwandeln?
    und auch das Monthly Spotlight in ein Badge? wenn beide vorhanden sind sollen sie rechts in der Card
@@ -1424,6 +1537,11 @@ html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .caButton:hover {
    (multi_install) takes the colour mode; the secondary ones rest on the neutral chip fill, so the bar has
    one obvious primary rather than three equal shouts. */
 html.cc-popups-on .multi_installDiv { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 10px !important; }
+/* #61: on a view with no .ca_multiselect checkboxes (Apps home, category browsing, Installed Apps) this
+   bar is permanently disabled and non-functional - genuinely native CA behaviour, not ours to leave
+   showing just because we already gave it a nice box. header.js toggles cc-apps-noselect off the live
+   presence of .ca_multiselect, so this stays correct if CA ever adds selection to another view. */
+html.cc-apps-noselect .multi_installDiv { display: none !important; }
 /* #11 (root cause, not the symptom): `:not(.ca_hide)` on every branch means this rule never fights CA's
    own `.ca_hide { display: none }` for the second Löschen button in the first place — no counter-guard
    needed. The earlier fix (a doubled `.ca_hide.ca_hide` rule elsewhere in this file) is now redundant but
@@ -1436,7 +1554,13 @@ html.cc-popups-on .multi_installDiv { display: flex !important; flex-wrap: wrap 
    the semantic red at (0,4,2) vs (0,3,1) whenever this rule (not the reactive one) was the active mode.
    Shape (display/padding/etc.) still needs to reach .multi_deleteButton, so its OWN rule below (next to
    the red) now repeats those properties instead - self-contained rather than split across two rules. */
-html.cc-popups-on .multi_installDiv input[type="button"]:not(.ca_hide):not(.multi_deleteButton),
+/* #57 regression fix: header.js no longer puts .multi_deleteButton on the Previous-Apps delete button at
+   all (that class is ALSO how CA delegates its own native bulk-remove click handler, which intercepted
+   clicks meant for ours - see the comment at delBtn.className in header.js). It now carries ONLY
+   .cc-prevapps-delbtn, so every branch that used to exclude/target .multi_deleteButton needs the same
+   exclusion/target added for .cc-prevapps-delbtn, or this button would silently fall back into the
+   generic accent treatment instead of staying the semantic red it was already correctly styled as. */
+html.cc-popups-on .multi_installDiv input[type="button"]:not(.ca_hide):not(.multi_deleteButton):not(.cc-prevapps-delbtn),
 html.cc-popups-on .multi_installDiv input[type="submit"]:not(.ca_hide),
 html.cc-popups-on .multi_installDiv .multi_installAll:not(.ca_hide),
 html.cc-popups-on .multi_installDiv .multi_installClear:not(.ca_hide) {
@@ -1467,8 +1591,8 @@ html.cc-popups-on .multi_installDiv .multi_installClear:hover { filter: brightne
    which STILL out-specifies the semantic red below ((0,3,1)) even after dropping the named-class branch
    alone. Excluding it from every branch is the only way this reactive rest rule leaves it alone; the one
    badge that must never follow the colour mode, reactive or not. */
-html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="button"]:not(.multi_deleteButton),
-html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="submit"]:not(.multi_deleteButton),
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="button"]:not(.multi_deleteButton):not(.cc-prevapps-delbtn),
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="submit"]:not(.multi_deleteButton):not(.cc-prevapps-delbtn),
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installAll,
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installClear {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
@@ -1491,7 +1615,8 @@ html.cc-popups-on .multi_installDiv .multi_installButton:hover { filter: brightn
 /* destructive stays semantic — a delete must not read like any other chip. Self-contained (shape AND
    colour together, see the comment above): it can no longer rely on the shared input[type="button"]
    rule for its box shape now that that rule excludes it, so it repeats those properties here. */
-html.cc-popups-on .multi_installDiv .multi_deleteButton:not(.ca_hide) {
+html.cc-popups-on .multi_installDiv .multi_deleteButton:not(.ca_hide),
+html.cc-popups-on .multi_installDiv .cc-prevapps-delbtn {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   width: auto !important; height: auto !important; min-height: var(--cc-md-h, 30px) !important;
   padding: var(--cc-md-btnpad, 0 14px) !important; margin: 0 !important;
@@ -1502,7 +1627,8 @@ html.cc-popups-on .multi_installDiv .multi_deleteButton:not(.ca_hide) {
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
   background: var(--cc-err, #d9433f) !important; color: var(--cc-err-fg, #fff) !important;
 }
-html.cc-popups-on .multi_installDiv .multi_deleteButton:hover { filter: brightness(1.08) !important; }
+html.cc-popups-on .multi_installDiv .multi_deleteButton:hover,
+html.cc-popups-on .multi_installDiv .cc-prevapps-delbtn:hover { filter: brightness(1.08) !important; }
 /* #57 (user: "der Löschen button soll erst aktiv werden wenn etwas ausgewählt wurde"): the Previous Apps
    bulk-delete button (header.js) starts disabled and only enables once a card is checked - dim it and
    drop the hover brighten so its inactive state actually reads as inactive, not just inert. */
