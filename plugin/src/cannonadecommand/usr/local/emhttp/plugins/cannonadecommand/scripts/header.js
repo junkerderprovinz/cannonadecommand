@@ -2971,11 +2971,16 @@
       row.appendChild(document.createElement("span")).className = "cc-cs-u";
       holder.appendChild(row);
     }
+    // #68 second follow-up (user: "diese sollen ebenfalls badges sein. ohne beschreibenden text.") — bare
+    // number / bare date now, the "Downloads"/"Aktualisiert" words are gone; each span is its own small
+    // badge (Tokens.css), a title attribute keeps the meaning available on hover/for a11y instead of inline.
     var dSpan = row.querySelector(".cc-cs-d"), uSpan = row.querySelector(".cc-cs-u");
-    var dTxt = (rec && rec.d != null) ? ccFmtCompact(rec.d) + " " + T("Downloads", "downloads") : "";
-    var uTxt = (rec && rec.u != null) ? T("Aktualisiert ", "Updated ") + ccFmtMonth(rec.u) : "";
+    var dTxt = (rec && rec.d != null) ? ccFmtCompact(rec.d) : "";
+    var uTxt = (rec && rec.u != null) ? ccFmtMonth(rec.u) : "";
     if (dSpan.textContent !== dTxt) dSpan.textContent = dTxt;   // change-guarded write — no DOM churn on a no-op pass
     if (uSpan.textContent !== uTxt) uSpan.textContent = uTxt;
+    dSpan.title = dTxt ? T("Downloads", "Downloads") : "";
+    uSpan.title = uTxt ? T("Aktualisiert", "Updated") : "";
     dSpan.style.display = dTxt ? "" : "none";
     uSpan.style.display = uTxt ? "" : "none";
     if (installBtn && installBtn.parentElement !== row) row.appendChild(installBtn);
@@ -3045,6 +3050,25 @@
       ccCaMenuOpen = menu;
     });
     holder.appendChild(btn);
+  }
+  // #68 third follow-up (user: "das hamburger menü soll rechts oben ins eck"): the hamburger's `right`
+  // always stays flush with the true corner now — it used to shift LEFT by a fixed guessed amount whenever
+  // a status ribbon (OFFICIAL/INSTALLED/BETA/Spotlight) was present, so it landed nowhere near the corner
+  // on any featured card (live-measured: 112px in from the edge, roughly a third of the way across a card
+  // with an Official+Spotlight double-stack). Measuring the ribbon stack's OWN real rendered bottom edge
+  // and stacking the hamburger just below it (same right edge) is exact for any combination CA ever
+  // renders, rather than hardcoding every ribbon/spotlight height combination in CSS.
+  function ccAppsMenuPos(holder) {
+    var btn = holder.querySelector(".cc-ca-menu-btn"); if (!btn) return;
+    var marks = holder.querySelectorAll(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground, .homespotlightIconArea");
+    var holderTop = holder.getBoundingClientRect().top, maxBottom = 0;
+    for (var i = 0; i < marks.length; i++) {
+      if (!marks[i].offsetParent) continue;   // not actually rendered (e.g. display:none)
+      var b = marks[i].getBoundingClientRect().bottom - holderTop;
+      if (b > maxBottom) maxBottom = b;
+    }
+    var top = maxBottom > 0 ? Math.round(maxBottom + 6) : 10;
+    if (btn.style.top !== top + "px") btn.style.top = top + "px";
   }
   document.addEventListener("click", ccCaMenuClose);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") ccCaMenuClose(); });
@@ -3230,6 +3254,7 @@
       var holders = document.querySelectorAll(".ca_holder");
       for (var ci = 0; ci < holders.length; ci++) {
         ccAppsCardMenu(holders[ci]);   // build the hamburger BEFORE moving the install button out of .ca_bottomLine
+        ccAppsMenuPos(holders[ci]);
         ccAppsStatRow(holders[ci]);
         ccAppsDescScroll(holders[ci]);
       }
