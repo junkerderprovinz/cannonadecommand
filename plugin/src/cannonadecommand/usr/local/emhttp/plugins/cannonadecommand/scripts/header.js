@@ -2948,12 +2948,23 @@
     var d = new Date(ts * 1000);
     return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0");
   }
+  // #68 follow-up (user, after the first pass read as barely-changed: "Der Name und der Maintainer sollen
+  // rechts des Logos sein. Die kategoriebadges lassen wir weg. Darunter der Text der bei mouse over nach
+  // oben fließen soll. Darunter dann die downloads. aktualisiert und der installieren button, Actions
+  // sollen rechts oben in ein Hamburger menü"): the stats row now also HOSTS the primary CTA button — for
+  // a not-yet-installed app that is the real "Installieren" button (a plain .actionsButton, moved in here
+  // so it sits next to the download/update line instead of in the old three-button row); for an
+  // already-installed app that slot is "Actions" (.actionsButtonContext, an Edit/Uninstall dropdown), which
+  // is NOT a primary action any more and instead folds into ccAppsCardMenu()'s hamburger below. The row
+  // still exists whenever EITHER stats OR that CTA button is present, so a brand-new app with no download
+  // history yet still gets its Install button placed correctly.
   function ccAppsStatRow(holder) {
-    if (!ccCaStats) return;
     var name = holder.getAttribute("data-appname"), repo = holder.getAttribute("data-repository");
-    var rec = (name && repo) ? ccCaStats[name + "|" + repo] : null;
+    var rec = (ccCaStats && name && repo) ? ccCaStats[name + "|" + repo] : null;
+    var installBtn = holder.querySelector(".ca_bottomLine .actionsButton:not(.actionsButtonContext)");
     var row = holder.querySelector(".cc-castats");
-    if (!rec || (rec.d == null && rec.u == null)) { if (row) row.remove(); return; }
+    var needed = !!(rec && (rec.d != null || rec.u != null)) || !!installBtn;
+    if (!needed) { if (row) row.remove(); return; }
     if (!row) {
       row = document.createElement("div"); row.className = "cc-castats";
       row.appendChild(document.createElement("span")).className = "cc-cs-d";
@@ -2961,13 +2972,84 @@
       holder.appendChild(row);
     }
     var dSpan = row.querySelector(".cc-cs-d"), uSpan = row.querySelector(".cc-cs-u");
-    var dTxt = rec.d != null ? ccFmtCompact(rec.d) + " " + T("Downloads", "downloads") : "";
-    var uTxt = rec.u != null ? T("Aktualisiert ", "Updated ") + ccFmtMonth(rec.u) : "";
+    var dTxt = (rec && rec.d != null) ? ccFmtCompact(rec.d) + " " + T("Downloads", "downloads") : "";
+    var uTxt = (rec && rec.u != null) ? T("Aktualisiert ", "Updated ") + ccFmtMonth(rec.u) : "";
     if (dSpan.textContent !== dTxt) dSpan.textContent = dTxt;   // change-guarded write — no DOM churn on a no-op pass
     if (uSpan.textContent !== uTxt) uSpan.textContent = uTxt;
     dSpan.style.display = dTxt ? "" : "none";
     uSpan.style.display = uTxt ? "" : "none";
+    if (installBtn && installBtn.parentElement !== row) row.appendChild(installBtn);
   }
+  // The description's own box is a fixed height (CA's card is a fixed 240px, overflow:hidden — see the
+  // #67 note in Tokens.css); "flows upward on hover" reveals whatever text is clipped below that box by
+  // sliding the text UP inside it while the pointer is over the card, without the card itself growing.
+  // Measured per-card (text length varies wildly) so short descriptions never scroll past their own end.
+  function ccAppsDescScroll(holder) {
+    var box = holder.querySelector(".cardDescription"), txt = box && box.querySelector(".cardDesc");
+    if (!box || !txt) return;
+    var over = Math.max(0, txt.scrollHeight - box.clientHeight);
+    var cur = parseFloat(box.style.getPropertyValue("--cc-desc-scroll")) || 0;
+    if (Math.abs(cur - over) > 0.5) box.style.setProperty("--cc-desc-scroll", over + "px");
+  }
+  // Info + Support + an already-installed app's Actions (Edit/Uninstall) all fold into one hamburger menu
+  // top-right, matching the reference's "..." corner menu. Built entirely from data CA itself already
+  // computed (Support's and Actions' own data-context JSON — the exact same array CA's native dropdown
+  // would render) plus a direct trigger of the untouched native Info button, so the underlying behaviour
+  // stays 100% native (a Support link still opens the same URL, an Actions entry still runs CA's own
+  // Edit/Uninstall call) — only the presentation is CC's. Built once per card instance (idempotent).
+  var ccCaMenuOpen = null;
+  function ccCaMenuClose() { if (ccCaMenuOpen) { ccCaMenuOpen.remove(); ccCaMenuOpen = null; } }
+  function ccAppsCardMenu(holder) {
+    if (holder.querySelector(".cc-ca-menu-btn")) return;
+    var infoBtn = holder.querySelector(".infoButton");
+    var supportBtn = holder.querySelector(".supportButtonCardContext, .supportButton");
+    var actionsCtx = holder.querySelector(".actionsButtonContext");
+    if (!infoBtn && !supportBtn && !actionsCtx) return;
+    var items = [];
+    if (infoBtn) items.push({ text: T("Info", "Info"), run: function () { infoBtn.click(); } });
+    function pushContext(btn) {
+      if (!btn) return;
+      var raw = btn.getAttribute("data-context"); if (!raw) return;
+      var arr; try { arr = JSON.parse(raw); } catch (e) { return; }
+      if (!Array.isArray(arr)) return;
+      arr.forEach(function (it) {
+        if (it.divider) { items.push({ divider: true }); return; }
+        if (it.link) { items.push({ text: it.text || it.link, run: function () { window.open(it.link, "_blank"); } }); return; }
+        // CA's own dropdown runs this exact string via inline onclick for the non-context Actions button
+        // (skin.php: onclick={$actionsContext[0]['action']}) — same trust boundary, just deferred to a click here.
+        if (it.action) { items.push({ text: it.text || "", run: function () { try { (new Function(it.action))(); } catch (e) {} } }); return; }
+      });
+    }
+    pushContext(supportBtn);
+    pushContext(actionsCtx);
+    if (!items.length) return;
+    var btn = document.createElement("button");
+    btn.type = "button"; btn.className = "cc-ca-menu-btn"; btn.setAttribute("aria-label", T("Mehr", "More"));
+    btn.innerHTML = "<span></span><span></span><span></span>";
+    btn.addEventListener("click", function (e) {
+      e.preventDefault(); e.stopPropagation();
+      if (ccCaMenuOpen) { ccCaMenuClose(); return; }
+      // rendered into <body>, position:fixed and measured off the button — .ca_holder clips overflow, so a
+      // child-positioned dropdown would be cut off; same "escape the clipped host" pattern as the info bubble.
+      var menu = document.createElement("div"); menu.className = "cc-ca-menu";
+      items.forEach(function (it) {
+        if (it.divider) { menu.appendChild(document.createElement("hr")); return; }
+        var row = document.createElement("div"); row.className = "cc-ca-menu-item"; row.textContent = it.text;
+        row.addEventListener("click", function (e2) { e2.preventDefault(); e2.stopPropagation(); ccCaMenuClose(); it.run(); });
+        menu.appendChild(row);
+      });
+      document.body.appendChild(menu);
+      var r = btn.getBoundingClientRect(), mr = menu.getBoundingClientRect();
+      menu.style.left = Math.max(8, Math.min(r.right - mr.width, window.innerWidth - mr.width - 8)) + "px";
+      menu.style.top = (r.bottom + 4) + "px";
+      ccCaMenuOpen = menu;
+    });
+    holder.appendChild(btn);
+  }
+  document.addEventListener("click", ccCaMenuClose);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") ccCaMenuClose(); });
+  window.addEventListener("scroll", ccCaMenuClose, true);
+  window.addEventListener("resize", ccCaMenuClose);
   function ccApps() {
     try {
       if (!/^\/Apps(\/|$)/.test(location.pathname)) return;
@@ -3038,7 +3120,7 @@
       // surface as the card body (plain uppercase text, no fill) — stamp it like every other badge so it
       // reads as its own coloured pill instead of blending into the shade behind it (CSS side: Tokens.css).
       ccAppsStamp(".cc-ca-cardtitle, li.cc-card-in.sectionMenu");
-      ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton");
+      ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton, .cc-castats .actionsButton, .cc-ca-menu-btn");
       // #63: the Info drawer's own Installieren/Support/Pin App row (.popupInfo) is the same badge recipe
       // as the card's .ca_bottomLine row above and needs the same per-button rainbow jewel, not one flat
       // shared colour — stamp it every pass since the drawer's content is (re)built fresh on each open.
@@ -3146,7 +3228,11 @@
       }
       ccAppsCornerMarks();
       var holders = document.querySelectorAll(".ca_holder");
-      for (var ci = 0; ci < holders.length; ci++) ccAppsStatRow(holders[ci]);
+      for (var ci = 0; ci < holders.length; ci++) {
+        ccAppsCardMenu(holders[ci]);   // build the hamburger BEFORE moving the install button out of .ca_bottomLine
+        ccAppsStatRow(holders[ci]);
+        ccAppsDescScroll(holders[ci]);
+      }
       // (#9) subtitle -> (i) bubble on the header, keep SHOW MORE inline, retire the body-text line.
       var heads = document.querySelectorAll(".ca_homeTemplatesHeader:not([data-cc-info])");
       for (var h = 0; h < heads.length; h++) {

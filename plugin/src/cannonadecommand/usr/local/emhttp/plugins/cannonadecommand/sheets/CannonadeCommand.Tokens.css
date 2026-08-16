@@ -1217,20 +1217,37 @@ html.cc-popups-on .ca_iconArea i.displayIcon {
 html.cc-popups-on .ca_iconArea i.displayIcon { display: inline-flex !important; align-items: center !important; justify-content: center !important; color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
 html.cc-popups-on .ca_applicationName { color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .ca_author, html.cc-popups-on a.ca_author { color: var(--cc-text-dim, #8a8a8a) !important; }
-/* #67 (user: "können wir die Cards im Apps Tab so gestalten wie im CA auf der Unraid Seite? das würde
-   perfekt in den GLS passen"): a filled tag pill instead of bare uppercase text, matching ca.unraid.net's
-   card layout and Rule 13's badge treatment for anything that reads as a label. */
-html.cc-popups-on .cardCategory {
-  display: inline-block !important; background: var(--cc-chip, rgba(128, 128, 128, .18)) !important;
-  color: var(--cc-text-chip, #cfcfcf) !important; border-radius: var(--cc-b-radius, 999px) !important;
-  /* kept deliberately tight (no margin, minimal padding): .ca_bottomLine sits at a CA-fixed top:150px
-     regardless of what is above it (see the #14 note further down), so this pill's rendered box must stay
-     within whatever the plain text it replaces already occupied, or it collides with the button row below
-     it — live-measured, a taller pill here pushed straight into .ca_bottomLine on every card. */
-  padding: 0 8px !important; font-size: 10px !important; line-height: 15px !important; font-weight: 600 !important;
-  text-transform: uppercase !important; letter-spacing: .4px !important;
-}
+/* #68 (user follow-up: "die kategoriebadges lassen wir weg") — the #67 pill attempt is dropped again;
+   category never shows on the card face any more (it is still visible inside the Info popup's own
+   Kategorien row, untouched). */
+html.cc-popups-on .cardCategory { display: none !important; }
+/* #68: icon left, name + maintainer to its right (user: "Der Name und der Maintainer sollen rechts des
+   Logos sein") — a plain CSS float, not a JS DOM move: .ca_iconArea is the first child inside the
+   icon/name/author wrapper, so floating it left lets the two text lines that already follow it in the DOM
+   wrap naturally beside it with zero markup changes. Icon size/halo (the #10 rule above) is untouched.
+   Live-measured regression: .ca_iconArea's OWN native width is 360px (near the full card — CA centres the
+   80x80 icon inside a much wider box for its old vertical-stack layout), so a bare `float:left` left NO
+   room beside it and name/author kept stacking below, not beside, despite the float applying correctly.
+   Capping the wrapper to the icon's own 80x80 is what actually frees the space. */
+html.cc-popups-on .ca_iconArea { float: left !important; width: 80px !important; height: 80px !important; margin: 0 12px 0 0 !important; }
+html.cc-popups-on .ca_applicationName { margin-top: 2px !important; }
 html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--cc-text-chip, #cfcfcf) !important; }
+/* #68: "der Text der bei mouse over nach oben fließen soll" — the description sits in a fixed-height,
+   overflow:hidden box (CA's own card is a fixed 240px — see the #67 note further down for why this file
+   never grows it), so on hover the text itself slides up inside that box to reveal what is clipped below,
+   instead of the card growing or a "…more" link. --cc-desc-scroll is measured per card by
+   ccAppsDescScroll() (header.js) — text length varies too much for one shared distance, and a short
+   description that already fits must never scroll past its own end. */
+html.cc-popups-on .cardDesc {
+  display: block !important; transition: transform .35s ease !important;
+  transform: translateY(0) !important;
+}
+html.cc-popups-on .cardDescription:hover .cardDesc {
+  transform: translateY(calc(-1 * var(--cc-desc-scroll, 0px))) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html.cc-popups-on .cardDesc { transition: none !important; }
+}
 
 /* #12f CARD BUTTONS (#8) — Install/Actions = colour-mode filled (per-element --cc-rb-c). Info/Support = neutral
    in accent mode, colour-mode filled in RAINBOW (every badge follows the mode). Colours from header.js ccApps. */
@@ -1267,6 +1284,17 @@ html.cc-popups-on .ca_bottomLine .caButton:hover { background: var(--cc-chip-hov
 html.cc-popups-on .ca_bottomLine .actionsButton {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+/* #68 (user: "Actions sollen rechts oben in ein Hamburger menü"): Info/Support/an already-installed app's
+   Actions dropdown all move into ccAppsCardMenu()'s hamburger (header.js) — hidden here rather than
+   removed, so the native buttons (and their data-context JSON the menu reads from) stay exactly as CA
+   built them. A NOT-yet-installed app's plain .actionsButton ("Installieren") is the one exception: it is
+   not hidden, because header.js physically MOVES it out of this row into .cc-castats instead, so hiding it
+   here would just hide it again after the move for no reason. */
+html.cc-popups-on .ca_bottomLine .infoButton,
+html.cc-popups-on .ca_bottomLine .supportButton,
+html.cc-popups-on .ca_bottomLine .actionsButtonContext {
+  display: none !important;
 }
 /* #14 (user: "das docker/plugin symbol auch in ein quadratisches badge machen"): .appDocker/.appPlugin/
    .appLanguage/.appDriver/.appRepository render a single Unraid-font glyph via ::before with NO box at
@@ -1317,27 +1345,84 @@ html.cc-popups-on .searchArea .caButton {
 }
 html.cc-popups-on .searchArea .caButton:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; }
 
-/* ═══ #67 CARD DOWNLOAD/UPDATE STATS (user: "können wir die Cards im Apps Tab so gestalten wie im CA auf
-   der Unraid Seite? ... das würde perfekt in den GLS passen") ═══════════════════════════════════════════
-   CA's own card never shows this (only its Info popup does, one app at a time on demand) — header.js's
-   ccAppsStatRow() fetches the whole catalog's download/update data ONCE (server/castats.php) and injects a
-   small dim footer row on any card that has it. Small dim TEXT, not a badge: Rule 13 only requires a badge
-   for something CLICKABLE, and this row does nothing on click (pointer-events:none confirms it, so it can
-   never sit on top of the card's own click target). This file stays visual-only and never touches CA's own
-   grid layout (see the #12 note at the top of this file), so this had to fit inside space CA's own layout
-   already leaves unused rather than growing the card. Live-measured: .ca_bottomLine (the Info/Support/
-   Installieren row, fixed at top:150px regardless of content — see the #14 note above) ends at 188.5px, and
-   .cardDescription's own box does not start until 208.5px — a real ~20px gap already sitting empty between
-   them on every card, wide enough for one compact line right below the button row. */
+/* ═══ #67/#68 CARD DOWNLOAD/UPDATE STATS + PRIMARY CTA (user: "können wir die Cards im Apps Tab so
+   gestalten wie im CA auf der Unraid Seite? ... darunter dann die downloads. aktualisiert und der
+   installieren button") ═══════════════════════════════════════════════════════════════════════════════
+   CA's own card never shows the download/update line (only its Info popup does, one app at a time) —
+   header.js's ccAppsStatRow() fetches the whole catalog's data ONCE (server/castats.php) and injects a
+   small dim row on any card that has it. It also HOSTS the primary CTA: for a not-yet-installed app that
+   is CA's own "Installieren" button, physically moved in here (see the #14/#68 notes above — Info/Support/
+   an installed app's Actions dropdown all go to the hamburger instead, they never land here). Text itself
+   stays plain, non-badge dim text (Rule 13 only requires a badge for something clickable), pointer-events
+   is re-enabled only on the button that actually needs it. This file stays visual-only and never grows
+   CA's own fixed-height card (see the #12 note at the top of this file): live-measured, .ca_bottomLine
+   (fixed at top:150px regardless of content) ends at 188.5px and .cardDescription's own box does not start
+   until 208.5px, a real ~20px gap CA's native layout already leaves unused, wide enough for one line. */
 html.cc-popups-on .cc-castats {
   position: absolute !important; left: 0 !important; right: 0 !important; top: 190px !important;
-  display: flex !important; align-items: center !important; justify-content: space-between !important;
+  display: flex !important; align-items: center !important; gap: 8px !important;
   padding: 0 6px !important; box-sizing: border-box !important;
   font-size: var(--cc-sm-fs, 11px) !important; color: var(--cc-text-dim2, #6f6f6f) !important;
   font-variant-numeric: tabular-nums !important; pointer-events: none !important; white-space: nowrap !important;
 }
 html.cc-popups-on .cc-castats .cc-cs-d { overflow: hidden !important; text-overflow: ellipsis !important; }
-html.cc-popups-on .cc-castats .cc-cs-u { flex: 0 0 auto !important; margin-left: 8px !important; }
+html.cc-popups-on .cc-castats .cc-cs-u { flex: 0 0 auto !important; }
+/* the moved-in Installieren button: small enough to sit in this thin row, accent-filled like every other
+   primary action; margin-left:auto pins it to the row's right edge regardless of how much stat text
+   precedes it (including none, when a brand-new app has no download history yet). */
+html.cc-popups-on .cc-castats .actionsButton {
+  pointer-events: auto !important; margin-left: auto !important; flex: 0 0 auto !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  box-sizing: border-box !important; height: 22px !important; padding: 0 12px !important;
+  border-radius: var(--cc-b-radius, 8px) !important; font-size: 10px !important; font-weight: 700 !important;
+  text-transform: uppercase !important; letter-spacing: .3px !important; white-space: nowrap !important;
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+html.cc-popups-on .cc-castats .actionsButton:hover { filter: brightness(1.08) !important; }
+
+/* ═══ #68 CARD MENU (Info/Support/Actions) — user: "Actions sollen rechts oben in ein Hamburger menü" ═══
+   ccAppsCardMenu() (header.js) builds this once per card: a small hamburger icon, and on click a dropdown
+   rendered into <body> (position:fixed, measured off the button) rather than as a card child — .ca_holder
+   clips overflow (the #67 note above), so a child-positioned dropdown would be cut off, same reasoning as
+   the info bubble's own "render into body" rule. Offset LEFT when a status ribbon (OFFICIAL/INSTALLED/
+   BETA/Spotlight) already occupies the top-right corner, same :has() idiom the ribbon stack itself uses
+   below, so the two badge families never overlap. */
+html.cc-popups-on .cc-ca-menu-btn {
+  position: absolute !important; top: 10px !important; right: 10px !important; z-index: 4 !important;
+  width: 26px !important; height: 26px !important; box-sizing: border-box !important;
+  border: none !important; padding: 0 !important; border-radius: var(--cc-b-radius, 8px) !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; cursor: pointer !important;
+  display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 3px !important;
+  transition: background .12s ease !important;
+}
+html.cc-popups-on .ca_holder:has(.officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground, .homespotlightIconArea) .cc-ca-menu-btn {
+  right: calc(10px + var(--cc-corner-badge-w, 92px) + 10px) !important;
+}
+html.cc-popups-on .cc-ca-menu-btn span { width: 14px !important; height: 2px !important; border-radius: 1px !important; background: var(--cc-text-chip, #cfcfcf) !important; }
+html.cc-popups-on .cc-ca-menu-btn:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; }
+html.cc-popups-on .cc-ca-menu-btn:hover span { background: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
+html.cc-popups-on .cc-ca-menu {
+  position: fixed !important; z-index: 10000 !important; min-width: 150px !important;
+  background: var(--cc-surface-2, #222222) !important; border-radius: var(--cc-b-radius, 8px) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .4) !important; padding: 6px !important; box-sizing: border-box !important;
+}
+html.cc-popups-on .cc-ca-menu-item {
+  padding: 7px 10px !important; border-radius: var(--cc-b-radius, 6px) !important; cursor: pointer !important;
+  font-size: 12px !important; color: var(--cc-text, #e6e6e6) !important; white-space: nowrap !important;
+  overflow: hidden !important; text-overflow: ellipsis !important;
+}
+html.cc-popups-on .cc-ca-menu-item:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
+html.cc-popups-on .cc-ca-menu hr { border: none !important; border-top: 1px solid var(--cc-shade-line, rgba(128, 128, 128, .14)) !important; margin: 4px 2px !important; }
+/* REACTIVE MODE — only .actionsButton needs it: it is the one element here that is ALWAYS accent-filled
+   in Normal/Rainbow mode (a primary CTA, Rule 3's "activity"), so Reactive rests it neutral and colours it
+   only when the whole card is hovered. The hamburger itself is already neutral-rest/accent-on-its-own-hover
+   in every mode (a passive utility icon, not "activity"), so it needs no separate reactive rule at all. */
+html.cc-apps-rbneutral.cc-popups-on .cc-castats .actionsButton {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .cc-castats .actionsButton {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
 
 /* ═══ #63 APP INFO PANEL -> GLS (user: "kannst du die App Infocard auch in GLS übernehmen? die card die
    sich öffnet wenn man auf der App card auf info klickt") ═══════════════════════════════════════════════
