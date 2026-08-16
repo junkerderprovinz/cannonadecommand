@@ -335,11 +335,21 @@ html.cc-anim-off .cc-loader { animation: none; }
    stay (harmless when display isn't flex); display itself moves to a JS-set inline style in ccLoadState(),
    applied ONLY the instant it already knows (via getComputedStyle) that this is genuinely the elected
    spinner - the exact same "JS decides, CSS just paints" split .cc-spin-active already uses. */
+/* FREEZE FIX (user, live-traced: "friert der ganze Dockertab... man kann gar nirgendns etwas
+   anklicken" after a ShipLog-triggered update): this overlay is purely decorative — Unraid's own
+   list-refresh AJAX normally completes in well under a second, so the overlay is barely visible and
+   nobody notices it blocks clicks underneath. Right after a container recreate, dockerd itself can
+   still be busy for 10-30+ seconds finishing cleanup (removing the old container/image layers), and
+   Unraid's native DockerContainers.php refresh blocks on that — live-measured at 18s in one run.
+   Unraid's own spinner already tolerates that wait fine (it just keeps showing); the only thing that
+   turns "the list looks stale for a while" into "the whole tab is frozen" is THIS overlay eating every
+   click for as long as it's up. Nothing inside it is interactive, so there is no reason it should. */
 html.cc-popups-on div.spinner.fixed {
   align-items: center !important; justify-content: center !important;
   background: var(--cc-backdrop-dim) !important;
   -webkit-backdrop-filter: var(--cc-backdrop-blur) !important;
           backdrop-filter: var(--cc-backdrop-blur) !important;
+  pointer-events: none !important;
 }
 /* hide the stock red Unraid mark / fa-spin in EVERY spinner: the full-screen tab-load overlay AND CA's
    in-page /Apps loader (div.spinner, no .fixed) — the old .fixed-only scope left CA's native mark showing. */
@@ -385,6 +395,8 @@ html.cc-popups-on div.spinner .cc-loader { --cc-load-sz: 110px; }
    "currently shown" and fires the exact same false positive. The decision now lives in JS only (ccLoadState,
    via getComputedStyle, which resolves the REAL state from any source): it adds cc-spin-active ONLY when the
    spinner is genuinely visible, and this rule does nothing unless that class is present. */
+/* Same FREEZE FIX as div.spinner.fixed above — this is the in-page loader promoted to a full-viewport
+   overlay; a slow native list refresh must not turn it into a click-blocker either. */
 html.cc-popups-on div.spinner:not(.fixed).cc-spin-active {
   position: fixed !important; inset: 0 !important; z-index: 9999 !important;
   overflow: hidden !important;
@@ -392,6 +404,7 @@ html.cc-popups-on div.spinner:not(.fixed).cc-spin-active {
   background: var(--cc-backdrop-dim) !important;
   -webkit-backdrop-filter: var(--cc-backdrop-blur) !important;
           backdrop-filter: var(--cc-backdrop-blur) !important;
+  pointer-events: none !important;
 }
 /* inline busy loaders (container-logo) recolour to accent as a lightweight fallback where markup isn't injected */
 html.cc-popups-on i.fa-spin.fa-circle-o-notch, html.cc-popups-on .cc-ct-busy i.fa-spin { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }

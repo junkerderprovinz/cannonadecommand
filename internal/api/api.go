@@ -526,6 +526,15 @@ func (s *Server) handleAction(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+// perCallTimeout bounds a single container's Docker call inside a fan-out (handleStats,
+// handleGetLimits). A container that was JUST recreated (image pull/update in progress or
+// just finished) can leave dockerd slow to answer for that ONE container specifically —
+// without this, wg.Wait() blocks the WHOLE response (and every other container's already-
+// ready result) on that single straggler, which starves the panel's poll loop for as long
+// as dockerd takes to settle (observed live: one straggler held handleStats open 30+
+// seconds right after a container update, freezing the whole Docker tab's polling).
+const perCallTimeout = 8 * time.Second
+
 // handleStats returns a one-shot resource snapshot for every running container,
 // keyed by name. Snapshots are fetched concurrently but capped so a big host
 // doesn't hammer the socket.
@@ -548,7 +557,9 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 		go func(name string) {
 			defer wg.Done()
 			defer func() { <-sem }()
-			st, serr := s.Docker.Stats(r.Context(), name)
+			cctx, cancel := context.WithTimeout(r.Context(), perCallTimeout)
+			defer cancel()
+			st, serr := s.Docker.Stats(cctx, name)
 			if serr != nil {
 				return
 			}
@@ -583,7 +594,9 @@ func (s *Server) handleGetLimits(w http.ResponseWriter, r *http.Request) {
 			go func(nm string) {
 				defer wg.Done()
 				defer func() { <-sem }()
-				lim, lerr := s.Docker.Limits(r.Context(), nm)
+				cctx, cancel := context.WithTimeout(r.Context(), perCallTimeout)
+				defer cancel()
+				lim, lerr := s.Docker.Limits(cctx, nm)
 				if lerr != nil {
 					return
 				}
