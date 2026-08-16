@@ -3168,7 +3168,11 @@
       // surface as the card body (plain uppercase text, no fill) — stamp it like every other badge so it
       // reads as its own coloured pill instead of blending into the shade behind it (CSS side: Tokens.css).
       ccAppsStamp(".cc-ca-cardtitle, li.cc-card-in.sectionMenu");
-      ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton, .cc-castats .actionsButton, .cc-ca-menu-btn");
+      // #71 (user: "alle badges in die farbmodi integrieren"): the type-glyph badge and the Update/
+      // Installiert CTA were both missing from this call — same gap #8 below already documents for a
+      // different row, now closed here too. .cc-cs-cta-installed stays deliberately unstamped: it is a
+      // resting status (Rule 4 neutral), never accent-filled in any mode, so it has nothing to stamp.
+      ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton, .cc-castats .actionsButton, .cc-ca-menu-btn, .appDocker, .appPlugin, .appLanguage, .appDriver, .appRepository, .cc-cs-cta.cc-cs-cta-update");
       // #63: the Info drawer's own Installieren/Support/Pin App row (.popupInfo) is the same badge recipe
       // as the card's .ca_bottomLine row above and needs the same per-button rainbow jewel, not one flat
       // shared colour — stamp it every pass since the drawer's content is (re)built fresh on each open.
