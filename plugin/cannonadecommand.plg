@@ -29,7 +29,7 @@
 <CHANGES>
 ### 4.0.0
 **✨ Added**
-- Apps-tab cards now show a download count and last-updated month, matching the layout of ca.unraid.net/apps — data Community Applications' own card never renders (only its Info popup does, one app at a time). Read once from CA's own local catalog cache, so no extra load per card.
+- Apps-tab cards now show a download count and last-updated month, matching the layout of ca.unraid.net/apps. Community Applications' own card never renders this itself (only its Info popup does, one app at a time); read once from CA's own local catalog cache, so no extra load per card.
 
 **🎨 Design**
 - The category label on each Apps-tab card is now a filled tag pill instead of bare uppercase text.
