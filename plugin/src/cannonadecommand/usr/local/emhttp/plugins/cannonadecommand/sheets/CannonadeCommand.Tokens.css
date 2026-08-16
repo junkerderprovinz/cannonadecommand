@@ -1217,7 +1217,19 @@ html.cc-popups-on .ca_iconArea i.displayIcon {
 html.cc-popups-on .ca_iconArea i.displayIcon { display: inline-flex !important; align-items: center !important; justify-content: center !important; color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
 html.cc-popups-on .ca_applicationName { color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .ca_author, html.cc-popups-on a.ca_author { color: var(--cc-text-dim, #8a8a8a) !important; }
-html.cc-popups-on .cardCategory { color: var(--cc-text-dim2, #6f6f6f) !important; text-transform: uppercase; letter-spacing: .4px; }
+/* #67 (user: "können wir die Cards im Apps Tab so gestalten wie im CA auf der Unraid Seite? das würde
+   perfekt in den GLS passen"): a filled tag pill instead of bare uppercase text, matching ca.unraid.net's
+   card layout and Rule 13's badge treatment for anything that reads as a label. */
+html.cc-popups-on .cardCategory {
+  display: inline-block !important; background: var(--cc-chip, rgba(128, 128, 128, .18)) !important;
+  color: var(--cc-text-chip, #cfcfcf) !important; border-radius: var(--cc-b-radius, 999px) !important;
+  /* kept deliberately tight (no margin, minimal padding): .ca_bottomLine sits at a CA-fixed top:150px
+     regardless of what is above it (see the #14 note further down), so this pill's rendered box must stay
+     within whatever the plain text it replaces already occupied, or it collides with the button row below
+     it — live-measured, a taller pill here pushed straight into .ca_bottomLine on every card. */
+  padding: 0 8px !important; font-size: 10px !important; line-height: 15px !important; font-weight: 600 !important;
+  text-transform: uppercase !important; letter-spacing: .4px !important;
+}
 html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--cc-text-chip, #cfcfcf) !important; }
 
 /* #12f CARD BUTTONS (#8) — Install/Actions = colour-mode filled (per-element --cc-rb-c). Info/Support = neutral
@@ -1304,6 +1316,28 @@ html.cc-popups-on .searchArea .caButton {
   border-radius: var(--cc-b-radius, 8px) !important; -webkit-mask-image: none !important; mask-image: none !important;
 }
 html.cc-popups-on .searchArea .caButton:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; }
+
+/* ═══ #67 CARD DOWNLOAD/UPDATE STATS (user: "können wir die Cards im Apps Tab so gestalten wie im CA auf
+   der Unraid Seite? ... das würde perfekt in den GLS passen") ═══════════════════════════════════════════
+   CA's own card never shows this (only its Info popup does, one app at a time on demand) — header.js's
+   ccAppsStatRow() fetches the whole catalog's download/update data ONCE (server/castats.php) and injects a
+   small dim footer row on any card that has it. Small dim TEXT, not a badge: Rule 13 only requires a badge
+   for something CLICKABLE, and this row does nothing on click (pointer-events:none confirms it, so it can
+   never sit on top of the card's own click target). This file stays visual-only and never touches CA's own
+   grid layout (see the #12 note at the top of this file), so this had to fit inside space CA's own layout
+   already leaves unused rather than growing the card. Live-measured: .ca_bottomLine (the Info/Support/
+   Installieren row, fixed at top:150px regardless of content — see the #14 note above) ends at 188.5px, and
+   .cardDescription's own box does not start until 208.5px — a real ~20px gap already sitting empty between
+   them on every card, wide enough for one compact line right below the button row. */
+html.cc-popups-on .cc-castats {
+  position: absolute !important; left: 0 !important; right: 0 !important; top: 190px !important;
+  display: flex !important; align-items: center !important; justify-content: space-between !important;
+  padding: 0 6px !important; box-sizing: border-box !important;
+  font-size: var(--cc-sm-fs, 11px) !important; color: var(--cc-text-dim2, #6f6f6f) !important;
+  font-variant-numeric: tabular-nums !important; pointer-events: none !important; white-space: nowrap !important;
+}
+html.cc-popups-on .cc-castats .cc-cs-d { overflow: hidden !important; text-overflow: ellipsis !important; }
+html.cc-popups-on .cc-castats .cc-cs-u { flex: 0 0 auto !important; margin-left: 8px !important; }
 
 /* ═══ #63 APP INFO PANEL -> GLS (user: "kannst du die App Infocard auch in GLS übernehmen? die card die
    sich öffnet wenn man auf der App card auf info klickt") ═══════════════════════════════════════════════

@@ -2924,9 +2924,54 @@
       }
     } catch (e) {}
   }
+  // Download count / last-updated month on each card face, matching the look of ca.unraid.net/apps (user:
+  // "können wir die Cards im Apps Tab so gestalten wie im CA auf der Unraid Seite"). CA's own on-box card
+  // never shows this — it is only ever fetched per-app when the Info popup opens — but CA already caches
+  // the WHOLE catalog's downloads/LastUpdate locally for its own use; server/castats.php reads that same
+  // cache once and returns a "Name|RepoName" -> {d,u} map instead of one round trip per card. Fetched ONCE
+  // per page load, applied on every ccApps() pass so cards that render later (search, pagination, SHOW
+  // MORE) get it too. Fails silently to "no stat line" — never a broken card — if CA isn't installed, its
+  // cache is missing, or a future CA update changes its internal format.
+  var ccCaStats = null, ccCaStatsWanted = false;
+  function ccCaStatsFetch() {
+    if (ccCaStats || ccCaStatsWanted) return;
+    ccCaStatsWanted = true;
+    fetch("/plugins/cannonadecommand/server/castats.php").then(function (r) { return r.json(); })
+      .then(function (d) { ccCaStats = (d && typeof d === "object") ? d : {}; ccApps(); })
+      .catch(function () { ccCaStats = {}; });
+  }
+  function ccFmtCompact(n) {
+    try { return new Intl.NumberFormat(LANG === "de" ? "de-DE" : "en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n); }
+    catch (e) { return String(n); }
+  }
+  function ccFmtMonth(ts) {
+    var d = new Date(ts * 1000);
+    return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0");
+  }
+  function ccAppsStatRow(holder) {
+    if (!ccCaStats) return;
+    var name = holder.getAttribute("data-appname"), repo = holder.getAttribute("data-repository");
+    var rec = (name && repo) ? ccCaStats[name + "|" + repo] : null;
+    var row = holder.querySelector(".cc-castats");
+    if (!rec || (rec.d == null && rec.u == null)) { if (row) row.remove(); return; }
+    if (!row) {
+      row = document.createElement("div"); row.className = "cc-castats";
+      row.appendChild(document.createElement("span")).className = "cc-cs-d";
+      row.appendChild(document.createElement("span")).className = "cc-cs-u";
+      holder.appendChild(row);
+    }
+    var dSpan = row.querySelector(".cc-cs-d"), uSpan = row.querySelector(".cc-cs-u");
+    var dTxt = rec.d != null ? ccFmtCompact(rec.d) + " " + T("Downloads", "downloads") : "";
+    var uTxt = rec.u != null ? T("Aktualisiert ", "Updated ") + ccFmtMonth(rec.u) : "";
+    if (dSpan.textContent !== dTxt) dSpan.textContent = dTxt;   // change-guarded write — no DOM churn on a no-op pass
+    if (uSpan.textContent !== uTxt) uSpan.textContent = uTxt;
+    dSpan.style.display = dTxt ? "" : "none";
+    uSpan.style.display = uTxt ? "" : "none";
+  }
   function ccApps() {
     try {
       if (!/^\/Apps(\/|$)/.test(location.pathname)) return;
+      ccCaStatsFetch();
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
       // user (v3.6.6, aktiver Sammelmodus: "die badges auf den app cards sind nicht im reaktive modus der
       // derzeit eingeschaltet ist"): "Reaktiver Modus" (cc.rbmode=active) is a GLOBAL settings-page toggle
@@ -3100,6 +3145,8 @@
         clearBtn.parentNode.insertBefore(delBtn, clearBtn.nextSibling);
       }
       ccAppsCornerMarks();
+      var holders = document.querySelectorAll(".ca_holder");
+      for (var ci = 0; ci < holders.length; ci++) ccAppsStatRow(holders[ci]);
       // (#9) subtitle -> (i) bubble on the header, keep SHOW MORE inline, retire the body-text line.
       var heads = document.querySelectorAll(".ca_homeTemplatesHeader:not([data-cc-info])");
       for (var h = 0; h < heads.length; h++) {
