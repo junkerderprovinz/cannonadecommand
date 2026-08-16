@@ -300,6 +300,19 @@ html.cc-tools-on .unapi [class*="inline-flex"][class*="items-center"][class*="ju
 html.cc-tools-on .unapi [class*="bg-destructive"] {
   background: var(--cc-err, #d9433f) !important; color: #fff !important; border-color: transparent !important;
 }
+/* #56 follow-up (user: "unterster Button 'Bist du sicher' auch nicht im GLS" — this is the Developer
+   Sandbox enable confirmation, a DIFFERENT native button recipe than the shadcn Button matched above: its
+   own background/border are both transparent, and the visible red/orange ring comes entirely from a
+   sibling `.from-unraid-red.to-orange` div absolutely-positioned 2px outside its edges - a gradient
+   BORDER implemented as a decorative layer rather than a real border property, so `border-color:
+   transparent` overrides alone could never touch it. GlimStone is shade, never a ring around an edge, so
+   the glow layer is hidden and the button gets the same solid semantic-red fill as every other
+   destructive control instead. */
+html.cc-tools-on .unapi span:has(> .from-unraid-red) {
+  background: var(--cc-err, #d9433f) !important; border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+}
+html.cc-tools-on .unapi span:has(> .from-unraid-red) > .from-unraid-red { display: none !important; }
+html.cc-tools-on .unapi span:has(> .from-unraid-red):hover { filter: brightness(1.1) !important; box-shadow: none !important; }
 /* cards / list rows (the OIDC provider list, the built-in Unraid.net pill's own row, rule cards) — CA and
    the classic Settings pages never use a flat 1px grey border for a card edge (GlimStone: shade, not
    lines), so replace the border with the same surface-tier shading used everywhere else in this file. */

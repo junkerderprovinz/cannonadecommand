@@ -393,17 +393,29 @@
   function depStateDot(name) {
     var node = workingPlan[name], deps = (node && node.after) || [];
     if (!deps.length) return null;
-    var bad = deps.filter(function (d) { var lr = lastRun[d]; return !lr || lr.state !== "ready"; });
+    // live-caught (user: "jetzt steht bei allen Abhängigkeiten nicht geprüft obwohl alles läuft"):
+    // the orchestrator only runs the plan on its own triggers (array start etc.), NOT on every daemon
+    // restart — after a plain restart last_run is empty for a while, and treating "no last_run yet" as
+    // an alert painted every dependency red even though the containers were plainly running. The
+    // engine's OWN readiness probe already accepts a running-with-no-healthcheck container as "ready"
+    // (seen live: reason "running (no healthcheck)") — mirror that here: only fall through to the
+    // container's LIVE run state when there is no last_run verdict yet, and only flag it bad if that
+    // live state isn't "running" either. A real failed/degraded/skipped verdict from last_run is always
+    // authoritative and still wins over the live state.
+    var bad = [];
+    deps.forEach(function (d) {
+      var lr = lastRun[d];
+      if (lr) { if (lr.state !== "ready") bad.push(d + " (" + lr.state + (lr.reason ? ": " + lr.reason : "") + ")"); return; }
+      var c = containerByName(d);
+      if (!c || c.state !== "running") bad.push(d + " (" + (c ? stateLabel(c.state) : t("depNotRun")) + ")");
+    });
     // NOT dataset.name — syncStateBadges() sweeps EVERY ".cc-badge[data-name]" on a live poll and
     // unconditionally overwrites its class/text/tooltip with that container's OWN run state (live-
     // caught: this dot briefly showed CCWB's "gestoppt" instead of the dependency summary the moment
     // the sync tick ran). This dot summarises OTHER containers' readiness, not its own row's state,
     // so it must stay outside that sweep entirely.
     var dot = el("span", "cc-badge " + (bad.length ? "cc-badge-alert" : "cc-badge-running") + " cc-ct-statedot");
-    var tip = bad.length
-      ? t("depsBad") + " " + bad.map(function (d) { var lr = lastRun[d]; return d + " (" + (lr ? lr.state + (lr.reason ? ": " + lr.reason : "") : t("depNotRun")) + ")"; }).join(", ")
-      : t("depsOk");
-    dot.setAttribute("data-tip", tip);
+    dot.setAttribute("data-tip", bad.length ? t("depsBad") + " " + bad.join(", ") : t("depsOk"));
     return dot;
   }
   // a little status dot on a badge: filled = a value is configured here, hollow = not.
