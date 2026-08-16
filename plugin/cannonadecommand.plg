@@ -29,7 +29,7 @@
 <CHANGES>
 ### 3.9.4
 **🐛 Fixed**
-- Triggering a container update from ShipLog's changelog bubble and closing the update window afterward could freeze the whole Docker tab for several seconds with nothing clickable. Live-traced to our own decorative loading overlay: Unraid's native list refresh blocks on dockerd, which can stay busy well past the usual instant response right after a container recreate — and our overlay, painted on top of Unraid's own loading spinner for that whole wait, had no pointer-events rule, so it silently swallowed every click on the page for as long as it was up. It no longer blocks interaction.
+- Triggering a container update from ShipLog's changelog bubble and closing the update window afterward could freeze the whole Docker tab for several seconds with nothing clickable. Live-traced to our own decorative loading overlay: Unraid's native list refresh blocks on dockerd, which can stay busy well past the usual instant response right after a container recreate, and our overlay, painted on top of Unraid's own loading spinner for that whole wait, had no pointer-events rule, so it silently swallowed every click on the page for as long as it was up. It no longer blocks interaction.
 - Hardened the engine's per-container stats/limits calls with their own timeout, so one slow-to-respond container (e.g. one that was just recreated) can no longer stall the response for every other container.
 
 ### 3.9.3
