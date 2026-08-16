@@ -1221,45 +1221,39 @@ html.cc-popups-on .ca_author, html.cc-popups-on a.ca_author { color: var(--cc-te
    category never shows on the card face any more (it is still visible inside the Info popup's own
    Kategorien row, untouched). */
 html.cc-popups-on .cardCategory { display: none !important; }
-/* #68: icon left, name + maintainer to its right (user: "Der Name und der Maintainer sollen rechts des
-   Logos sein") — a plain CSS float, not a JS DOM move: .ca_iconArea is the first child inside the
-   icon/name/author wrapper, so floating it left lets the two text lines that already follow it in the DOM
-   wrap naturally beside it with zero markup changes. Icon size/halo (the #10 rule above) is untouched.
-   Live-measured regression: .ca_iconArea's OWN native width is 360px (near the full card — CA centres the
-   80x80 icon inside a much wider box for its old vertical-stack layout), so a bare `float:left` left NO
-   room beside it and name/author kept stacking below, not beside, despite the float applying correctly.
-   Capping the wrapper to the icon's own 80x80 is what actually frees the space. */
-html.cc-popups-on .ca_iconArea { float: left !important; width: 80px !important; height: 80px !important; margin: 0 12px 0 0 !important; }
-html.cc-popups-on .ca_applicationName { margin-top: 2px !important; }
+/* #68/#69 (user, final precision pass: "App logo und name weiter nach oben") — icon left, name + maintainer
+   to its right, both moved up further (was top:41, native CA offset). A plain CSS float, not a JS DOM move:
+   .ca_iconArea is the first child inside the icon/name/author wrapper, so floating it left lets the two text
+   lines that already follow it in the DOM wrap naturally beside it with zero markup changes. Icon size/halo
+   (the #10 rule above) is untouched. Live-measured regression from an earlier pass: .ca_iconArea's OWN
+   native width is 360px (near the full card — CA centres the 80x80 icon inside a much wider box for its old
+   vertical-stack layout), so a bare `float:left` left NO room beside it; capping the wrapper to the icon's
+   own 80x80 is what actually frees the space. */
+html.cc-popups-on .ca_iconArea { float: left !important; width: 80px !important; height: 80px !important; margin: 0 12px 0 0 !important; position: relative !important; top: -27px !important; }
+/* max-width reserves room for the type-glyph + hamburger badges now sitting in the top-right corner (#69).
+   CA gives this a fixed native width:250px, own-ellipsis-truncated at ITS box edge, not adjusted for what
+   sits behind it — live-measured, that box edge landed 16px INSIDE the hamburger's own left edge, so a
+   long enough name's "…" would render partway under the badges instead of stopping cleanly before them. */
+html.cc-popups-on .ca_applicationName { margin-top: -25px !important; max-width: 220px !important; }
 html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--cc-text-chip, #cfcfcf) !important; }
-/* #68 third follow-up (user: "Der Beschreibungstext soll unter dem logo und über den downloadbagde sein"):
-   CA's own `.cardDescription` positioning is native relative-flow (`top:5px` from wherever it naturally
-   falls after the icon/name/author wrapper) — with name/author now floated beside the icon instead of
-   stacked below it, that native flow position no longer reads as "right under the logo" at all (live-
-   measured after the float change: it now starts at 231px, past even the button row). Taking it fully
-   out of flow (absolute, anchored on .ca_holder like every other card element already is) is what
-   actually lets it sit precisely between the icon/name/author block (ends ~121px) and the bottom badge
-   row (.cc-castats, starts 206px below) instead of chasing native flow through every future change. */
+/* #68/#69: "Der Beschreibungstext soll unter dem logo und über den downloadbagde sein" + "kein Fließtext
+   sondern scrollbar wenn man drüber hovert. Der gesamte beschreibungstext soll man durchscollen können."
+   CA's own `.cardDescription` positioning is native relative-flow, which shifted unpredictably once name/
+   author floated beside the icon instead of stacking below it (live-measured: 231px in one pass, 208.5px in
+   an earlier one) — taken fully out of flow (absolute, anchored on .ca_holder, which already carries
+   position:relative) so it reliably sits between the icon/name/author block and the badge rows at the
+   bottom regardless of what else on the card changes. A real overflow:hidden->auto swap on hover replaces
+   the earlier hover-triggered slide: the whole text becomes genuinely scrollable (mouse wheel / trackpad),
+   not just a single fixed-distance reveal, so text of any length can be read completely. */
 html.cc-popups-on .cardDescription {
-  position: absolute !important; left: 0 !important; right: 0 !important; top: 124px !important; bottom: auto !important;
+  position: absolute !important; left: 0 !important; right: 0 !important; top: 78px !important; bottom: auto !important;
   height: 78px !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 6px !important;
 }
-/* #68: "der Text der bei mouse over nach oben fließen soll" — the description sits in a fixed-height,
-   overflow:hidden box (CA's own card is a fixed 240px — see the #67 note further down for why this file
-   never grows it), so on hover the text itself slides up inside that box to reveal what is clipped below,
-   instead of the card growing or a "…more" link. --cc-desc-scroll is measured per card by
-   ccAppsDescScroll() (header.js) — text length varies too much for one shared distance, and a short
-   description that already fits must never scroll past its own end. */
-html.cc-popups-on .cardDesc {
-  display: block !important; transition: transform .35s ease !important;
-  transform: translateY(0) !important;
-}
-html.cc-popups-on .cardDescription:hover .cardDesc {
-  transform: translateY(calc(-1 * var(--cc-desc-scroll, 0px))) !important;
-}
-@media (prefers-reduced-motion: reduce) {
-  html.cc-popups-on .cardDesc { transition: none !important; }
-}
+html.cc-popups-on .cardDescription:hover { overflow-y: auto !important; }
+html.cc-popups-on .cardDesc { display: block !important; }
+html.cc-popups-on .cardDescription::-webkit-scrollbar { width: 5px !important; }
+html.cc-popups-on .cardDescription::-webkit-scrollbar-track { background: transparent !important; }
+html.cc-popups-on .cardDescription::-webkit-scrollbar-thumb { background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: 3px !important; }
 
 /* #12f CARD BUTTONS (#8) — Install/Actions = colour-mode filled (per-element --cc-rb-c). Info/Support = neutral
    in accent mode, colour-mode filled in RAINBOW (every badge follows the mode). Colours from header.js ccApps. */
@@ -1308,42 +1302,44 @@ html.cc-popups-on .ca_bottomLine .supportButton,
 html.cc-popups-on .ca_bottomLine .actionsButtonContext {
   display: none !important;
 }
-/* #14 (user: "das docker/plugin symbol auch in ein quadratisches badge machen"): .appDocker/.appPlugin/
-   .appLanguage/.appDriver/.appRepository render a single Unraid-font glyph via ::before with NO box at
-   all (CA: float:right, font-size:2rem, opacity:.7) — the one unbadged control on the row. Square chip
-   matching the row's own height; the glyph itself (font-family + content) is untouched, only its box. */
-html.cc-popups-on .ca_bottomLine .appDocker,
-html.cc-popups-on .ca_bottomLine .appPlugin,
-html.cc-popups-on .ca_bottomLine .appLanguage,
-html.cc-popups-on .ca_bottomLine .appDriver,
-html.cc-popups-on .ca_bottomLine .appRepository {
+/* #69 (user: "links vom menü soll der docker oder plugin badge angezeigt werden") — ccAppsTypeBadge()
+   (header.js) moves whichever ONE of these exists (they're mutually exclusive — a template is Docker OR
+   Plugin OR Language pack OR driver OR a repository entry, never more than one) out of the old bottom row
+   and into .ca_holder directly, so it can sit beside the hamburger in the top-right corner instead. Same
+   square-chip recipe as before (#14), now at the shared badge height and positioned like every other
+   card-level badge. */
+html.cc-popups-on .appDocker,
+html.cc-popups-on .appPlugin,
+html.cc-popups-on .appLanguage,
+html.cc-popups-on .appDriver,
+html.cc-popups-on .appRepository {
+  position: absolute !important; top: 14px !important; right: 46px !important; z-index: 4 !important;
   float: none !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  flex: 0 0 auto !important;   /* fixed square — never grows or shrinks with the three text buttons */
-  box-sizing: border-box !important; width: var(--cc-bottomline-h, 26px) !important; height: var(--cc-bottomline-h, 26px) !important; margin: 0 0 0 6px !important;
+  box-sizing: border-box !important; width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important; margin: 0 !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-b-radius, 8px) !important;
   font-size: 15px !important; opacity: 1 !important;
   color: var(--cc-text-chip, #cfcfcf) !important; transition: background .12s ease, color .12s ease !important;
 }
-html.cc-popups-on .ca_bottomLine .appDocker:hover,
-html.cc-popups-on .ca_bottomLine .appPlugin:hover,
-html.cc-popups-on .ca_bottomLine .appLanguage:hover,
-html.cc-popups-on .ca_bottomLine .appDriver:hover,
-html.cc-popups-on .ca_bottomLine .appRepository:hover {
+html.cc-popups-on .appDocker:hover,
+html.cc-popups-on .appPlugin:hover,
+html.cc-popups-on .appLanguage:hover,
+html.cc-popups-on .appDriver:hover,
+html.cc-popups-on .appRepository:hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
 /* REACTIVE MODE for both — same rest/hover swap as every other Apps badge */
-html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appDocker,
-html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appPlugin,
-html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appLanguage,
-html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appDriver,
-html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appRepository {
+html.cc-apps-rbneutral.cc-popups-on .appDocker,
+html.cc-apps-rbneutral.cc-popups-on .appPlugin,
+html.cc-apps-rbneutral.cc-popups-on .appLanguage,
+html.cc-apps-rbneutral.cc-popups-on .appDriver,
+html.cc-apps-rbneutral.cc-popups-on .appRepository {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
-html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appDocker:hover,
-html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appPlugin:hover,
-html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appLanguage:hover,
-html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appDriver:hover,
-html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .appRepository:hover {
+html.cc-apps-rbneutral.cc-popups-on .appDocker:hover,
+html.cc-apps-rbneutral.cc-popups-on .appPlugin:hover,
+html.cc-apps-rbneutral.cc-popups-on .appLanguage:hover,
+html.cc-apps-rbneutral.cc-popups-on .appDriver:hover,
+html.cc-apps-rbneutral.cc-popups-on .appRepository:hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
 html.cc-popups-on .ca_bottomLine .actionsButton:hover { filter: brightness(1.08) !important; }
@@ -1357,64 +1353,87 @@ html.cc-popups-on .searchArea .caButton {
 }
 html.cc-popups-on .searchArea .caButton:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; }
 
-/* ═══ #67/#68 CARD DOWNLOAD/UPDATE BADGES + PRIMARY CTA (user, final pass: "der installieren badge soll am
-   unteren Ende rechts in der Card sein. links davon die downloadzahl und das aktualisierugsdatum. diese
-   sollen ebenfals badges sein. ohne beschreibenden text.") ═════════════════════════════════════════════
-   CA's own card never shows the download/update data at all (only its Info popup does, one app at a time)
-   — header.js's ccAppsStatRow() fetches the whole catalog's data ONCE (server/castats.php) and injects
-   bare-number/bare-date badges plus the primary CTA on any card that has them. The whole group sits
-   bottom-right as one cluster (flex-end, gap between each), not spread across the row — "downloads/date
-   to the LEFT of Install" is a neighbour relationship, not "far left vs far right". This file stays
-   visual-only and never grows CA's own fixed-height card (see the #12 note at the top of this file): the
-   icon/name/author block ends around 121px and .cardDescription (the #68 note above) is given 124-202px,
-   so this row sits in the remaining space near the card's true bottom edge. */
+/* ═══ #67/#68/#69 CARD DOWNLOAD/UPDATE BADGES + PRIMARY CTA — final precision pass (user: "der installieren
+   und die badges daneben sollen ganz unten an der card sein. die badges sollen immer gleich breit sein.
+   wenn zb keine aktualisierugsdatum zur verfügung ist so ein n/a angezeigt werden" + "installieren button
+   soll zu installiert werden wenn die app schon installiert ist oder Update wenn ... ein update verfügbar
+   ist" + "Alle Badges ... sollen die gleiche höhe haben") ═══════════════════════════════════════════════
+   CA's own card never shows download/update data at all (only its Info popup does, one app at a time) —
+   header.js's ccAppsStatRow() fetches the whole catalog's data ONCE (server/castats.php) and ALWAYS shows
+   a badge for both (falls back to "N/A" rather than hiding, so every card's row looks the same shape). The
+   primary CTA is tri-state, driven by CA's own data: "Installieren" (the real native button, not yet
+   installed), "Update" (installed + CA's own Actions dropdown carries an update-available entry — reuses
+   that exact action), or "Installiert" (installed, no update, inert status badge). Anchored on the card's
+   bottom edge (not a `top` guess) so it stays put regardless of how tall the description or the ribbon row
+   above it turn out to be. */
 html.cc-popups-on .cc-castats {
-  position: absolute !important; left: 0 !important; right: 0 !important; top: 206px !important;
+  position: absolute !important; left: 0 !important; right: 0 !important; bottom: 8px !important; top: auto !important;
   display: flex !important; align-items: center !important; justify-content: flex-end !important; gap: 6px !important;
   padding: 0 6px !important; box-sizing: border-box !important; pointer-events: none !important;
 }
-/* downloads / last-updated: real badges now (were plain dim text), bare value only — no "Downloads"/
-   "Aktualisiert" word (the meaning still lives in the title= attribute header.js sets, for hover/a11y). */
+/* downloads / last-updated: bare value only (no "Downloads"/"Aktualisiert" word — meaning lives in title=
+   for hover/a11y), fixed EQUAL width regardless of digit/date length, same height as every other card badge. */
 html.cc-popups-on .cc-castats .cc-cs-d,
 html.cc-popups-on .cc-castats .cc-cs-u {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  pointer-events: auto !important; box-sizing: border-box !important; height: 22px !important; padding: 0 10px !important;
+  pointer-events: auto !important; box-sizing: border-box !important;
+  width: 58px !important; flex: 0 0 auto !important; height: var(--cc-md-h, 30px) !important;
   border-radius: min(var(--cc-b-radius, 8px), 999px) !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   font-size: var(--cc-sm-fs, 11px) !important; font-variant-numeric: tabular-nums !important;
-  white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; flex: 0 0 auto !important;
+  white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
 }
-/* the moved-in Installieren button: small enough to sit in this thin row, accent-filled like every other
-   primary action, right-most in the cluster. */
+/* the moved-in Installieren button (not-yet-installed state: CA's own real button, untouched behaviour). */
 html.cc-popups-on .cc-castats .actionsButton {
   pointer-events: auto !important; flex: 0 0 auto !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  box-sizing: border-box !important; height: 22px !important; padding: 0 12px !important;
+  box-sizing: border-box !important; height: var(--cc-md-h, 30px) !important; padding: 0 14px !important;
   border-radius: var(--cc-b-radius, 8px) !important; font-size: 10px !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .3px !important; white-space: nowrap !important;
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
 html.cc-popups-on .cc-castats .actionsButton:hover { filter: brightness(1.08) !important; }
+/* the synthetic CTA badge (installed states: "Update" or "Installiert") — same box as .actionsButton so
+   swapping between the three states never changes the row's height or rhythm. */
+html.cc-popups-on .cc-castats .cc-cs-cta {
+  pointer-events: auto !important; flex: 0 0 auto !important; cursor: pointer !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  box-sizing: border-box !important; height: var(--cc-md-h, 30px) !important; padding: 0 14px !important;
+  border-radius: var(--cc-b-radius, 8px) !important; font-size: 10px !important; font-weight: 700 !important;
+  text-transform: uppercase !important; letter-spacing: .3px !important; white-space: nowrap !important;
+}
+/* "Update" — an action, so it takes the accent like every other CTA (Rule 3: accent marks activity). */
+html.cc-popups-on .cc-cs-cta.cc-cs-cta-update {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+html.cc-popups-on .cc-cs-cta.cc-cs-cta-update:hover { filter: brightness(1.08) !important; }
+/* "Installiert" — a resting status, not an action, so it stays a plain neutral chip and is never clickable. */
+html.cc-popups-on .cc-cs-cta.cc-cs-cta-installed {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important; cursor: default !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .cc-cs-cta.cc-cs-cta-update {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .cc-cs-cta.cc-cs-cta-update {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
 
-/* ═══ #68 CARD MENU (Info/Support/Actions) — user: "Actions sollen rechts oben in ein Hamburger menü" ═══
+/* ═══ #68/#69 CARD MENU (Info/Support/Actions) — user: "Actions sollen rechts oben in ein Hamburger menü"
+   + "das hamburger menü soll rechts oben ins eck" + "Alle Badges ... sollen die gleiche höhe haben" ═══
    ccAppsCardMenu() (header.js) builds this once per card: a small hamburger icon, and on click a dropdown
    rendered into <body> (position:fixed, measured off the button) rather than as a card child — .ca_holder
    clips overflow (the #67 note above), so a child-positioned dropdown would be cut off, same reasoning as
-   the info bubble's own "render into body" rule. Offset LEFT when a status ribbon (OFFICIAL/INSTALLED/
-   BETA/Spotlight) already occupies the top-right corner, same :has() idiom the ribbon stack itself uses
-   below, so the two badge families never overlap. */
+   the info bubble's own "render into body" rule. `top` is a plain fixed 14px now — it used to be JS-owned
+   to dodge status ribbons in this same corner, but those moved into their own horizontal row above the
+   stats badges instead (#69), so the corner is free and the extra positioning logic is gone. */
 html.cc-popups-on .cc-ca-menu-btn {
-  position: absolute !important; right: 10px !important; z-index: 4 !important;
-  /* #68 third follow-up (user: "das hamburger menü soll rechts oben ins eck"): `top` is JS-owned
-     (ccAppsMenuPos, header.js) — deliberately NOT !important, so its inline style wins. It always stacks
-     just below any status ribbon rather than shifting sideways (the old CSS-only :has() offset guessed a
-     fixed 112px shift for every card with ANY ribbon, which put it nowhere near the actual corner on a
-     card with an Official+Spotlight double-stack — live-measured). No ribbon -> top:10px, flush corner. */
-  top: 10px;
+  position: absolute !important; top: 14px !important; right: 10px !important; z-index: 4 !important;
   /* min-width matters here: Unraid's own native `button[type=button]` reset sets min-width:86px, which an
      explicit `width` alone cannot shrink below (min-width is a separate floor, not a specificity contest —
-     live-caught: even a forced inline !important width was still overridden by it until this was added). */
-  width: 26px !important; min-width: 26px !important; height: 26px !important; box-sizing: border-box !important;
+     live-caught: even a forced inline !important width was still overridden by it until this was added).
+     Sized to --cc-md-h (30px) now, not a bespoke 26px, so it matches every other card badge's height while
+     staying square — a taller, still-square hamburger doubles as satisfying both asks at once. */
+  width: var(--cc-md-h, 30px) !important; min-width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
   border: none !important; padding: 0 !important;
   /* #68: "es soll ein quadratischer badge sein" — capped with the Deckel-Idiom so it stays square-cornered
      even when the badge-shape setting is pill/circle; other shape settings (rounded/square) already fall
@@ -1422,7 +1441,7 @@ html.cc-popups-on .cc-ca-menu-btn {
   border-radius: min(var(--cc-b-radius, 8px), 8px) !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; cursor: pointer !important;
   display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 3px !important;
-  transition: background .12s ease, top .12s ease !important;
+  transition: background .12s ease !important;
 }
 html.cc-popups-on .cc-ca-menu-btn span { width: 14px !important; height: 2px !important; border-radius: 1px !important; background: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-popups-on .cc-ca-menu-btn:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; }
@@ -1552,61 +1571,48 @@ html.cc-popups-on .ca_note {
   color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11px !important;
 }
 
-/* ═══ #12l CARD CORNER MARKS -> REAL CC BADGES (user: "können wir die Ribbons auch in CC-Badges umwandeln?
-   und auch das Monthly Spotlight in ein Badge? wenn beide vorhanden sind sollen sie rechts in der Card
-   untereinander angeordnet sein") ══════════════════════════════════════════════════════════════════════
+/* ═══ #12l/#69 CARD CORNER MARKS -> REAL CC BADGES, HORIZONTAL ROW (user, final pass: "Wenn badges wie
+   spotlight, official, beta, etc vorhanden sind sollen die in einer zeile über dem downloadbadge angeordnet
+   sein") ═══════════════════════════════════════════════════════════════════════════════════════════════
    CA draws these as clip-path triangles wedged into the corner (OFFICIAL / LIMITED TIME / INSTALLED / BETA)
-   and the spotlight as a round stamp. Both become ordinary CC badges, stacked at the card's top right.
-   The stack is built with absolute positioning on the card, so the two never overlap and a card with only
-   one of them looks identical to a card with both. */
-/* Anchor on the card SLOT, not the card: CA puts the ribbon in the slot div NEXT TO .ca_holder (measured
-   live — the ribbon's closest('.ca_holder') is null), while the spotlight sits inside the card. Making both
-   the slot and the card positioned gives each mark a sane containing block, and both land on the same right
-   edge because the slot and the card share it. */
+   and the spotlight as a round stamp. Both become ordinary CC badges. Used to stack vertically pinned to
+   the top-right corner (and needed extra hamburger-avoidance logic because of it — removed, see the #68/#69
+   note on .cc-ca-menu-btn above); ccAppsRibbonRow() (header.js) now moves whichever of these exist into one
+   flex-row wrapper (.cc-ribbonrow) positioned directly above .cc-castats instead, so a card with only one,
+   both, or neither mark looks correct with no extra rule needed per combination. */
 html.cc-popups-on .ca_homeTemplates > div { position: relative !important; }
 html.cc-popups-on .ca_holder { position: relative !important; }
+html.cc-popups-on .cc-ribbonrow {
+  position: absolute !important; left: 0 !important; right: 0 !important; bottom: calc(8px + var(--cc-md-h, 30px) + 6px) !important;
+  display: flex !important; align-items: center !important; justify-content: flex-end !important; gap: 6px !important;
+  padding: 0 6px !important; box-sizing: border-box !important; pointer-events: none !important;
+}
 html.cc-popups-on .officialCardBackground,
 html.cc-popups-on .LTOfficialCardBackground,
 html.cc-popups-on .installedCardBackground,
 html.cc-popups-on .betaCardBackground,
 html.cc-popups-on .homespotlightIconArea {
-  position: absolute !important; right: 10px !important; left: auto !important;
-  width: auto !important; height: auto !important;
+  position: static !important;                      /* was absolute (corner stack) — a normal flex row lays these out now */
   clip-path: none !important;                       /* kill the triangle wedge — it IS the ribbon shape */
   /* #2 (live-measured): CA hangs a NEGATIVE right margin on the ribbon (margin: 0 -90px 0 0) so the classic
-     wedge can stick out past the card corner. `right: 10px` is measured to the MARGIN edge, so the badge
-     landed at 10 - 90 = 80px OUTSIDE the card — on top of the neighbouring card, which is why "official"
-     looked missing. Every geometry escape hatch of the ribbon shape has to be neutralised, not just the
-     three visual ones: margin belongs with clip-path/transform/width/height. */
-  margin: 0 !important;
+     wedge can stick out past the card corner. Every geometry escape hatch of the ribbon shape has to be
+     neutralised, not just the visual ones: margin belongs with clip-path/transform/width/height. */
+  margin: 0 !important; width: auto !important; height: auto !important;
   transform: none !important; overflow: visible !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  min-height: var(--cc-md-h, 30px) !important; padding: 0 12px !important;
+  /* #69: all badges share ONE height now (--cc-md-h, "die höhe die jetzt zb der official badge hat") — was
+     already the case for these specifically, so nothing changes here, only elsewhere gets pulled up to it. */
+  height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; padding: 0 12px !important;
   /* #13 (user: "kannst du hier alle badges gleich groß machen"): OFFICIAL/INSTALLED/BETA sized to their
-     own text (69-88px depending on the word), sitting above a spotlight column sized to ITS own widest
-     child — a ragged stack. One shared floor makes every corner badge the SAME width regardless of label
-     length; anything longer still grows past it, nothing shrinks below it. */
+     own text (69-88px depending on the word) otherwise — one shared floor makes every corner badge the SAME
+     width regardless of label length; anything longer still grows past it, nothing shrinks below it. */
   min-width: var(--cc-corner-badge-w, 92px) !important;
   border-radius: var(--cc-b-radius, 8px) !important;
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
   font-size: var(--cc-sm-fs, 11px) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; white-space: nowrap !important;
-  z-index: 3 !important; box-shadow: 0 2px 6px rgba(0, 0, 0, .3) !important;
-}
-/* the stack: the ribbon takes the top slot, the spotlight the one below — when only one exists it simply
-   occupies the top slot, so no card needs a different rule. */
-html.cc-popups-on .officialCardBackground,
-html.cc-popups-on .LTOfficialCardBackground,
-html.cc-popups-on .installedCardBackground,
-html.cc-popups-on .betaCardBackground { top: 10px !important; bottom: auto !important; }
-/* the stack is decided on the SLOT, because that is what holds both marks (ribbon directly, spotlight via
-   the card). With a ribbon present the spotlight drops one badge height + 6px; alone it takes the top slot. */
-html.cc-popups-on .ca_holder:has(.officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground) .homespotlightIconArea {
-  top: calc(10px + var(--cc-md-h, 30px) + 6px) !important; bottom: auto !important;
-}
-html.cc-popups-on .ca_holder:not(:has(.officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground)) .homespotlightIconArea {
-  top: 10px !important; bottom: auto !important;
+  z-index: 3 !important; box-shadow: 0 2px 6px rgba(0, 0, 0, .3) !important; pointer-events: auto !important; flex: 0 0 auto !important;
 }
 /* the ribbon label loses its rotation and absolute placement — it is just the badge's text now */
 html.cc-popups-on .installedCardText {
@@ -1614,25 +1620,27 @@ html.cc-popups-on .installedCardText {
   color: inherit !important; font-size: inherit !important; font-weight: inherit !important;
   letter-spacing: inherit !important; line-height: 1 !important; white-space: nowrap !important;
 }
-/* #2: the spotlight becomes TWO stacked badges — the word, then the month underneath (user: "der Badge
-   Spotlight soll direkt darunter sein wenn vorhanden und der Monat des Spotlight wieder da drunter"). The
-   area itself is the column; its label comes from ::before because CA ships only the image + the date. */
+/* #69: the spotlight's own two pills (word + month) now sit SIDE BY SIDE as one row entry (was
+   flex-direction:column, stacked, back when this was its own vertical corner stack — ::before-generated
+   content can't be pulled out as a separate flex item by JS, so the area itself stays one unit and lays
+   its children out horizontally instead). */
 html.cc-popups-on .homespotlightIconArea {
-  flex-direction: column !important; align-items: stretch !important; gap: 4px !important;
+  flex-direction: row !important; gap: 6px !important;
   padding: 0 !important; background: transparent !important; box-shadow: none !important;
-  min-height: 0 !important;
+  min-width: 0 !important; height: auto !important;
 }
 html.cc-popups-on .homespotlightIconArea .spotlightIcon { display: none !important; }
 html.cc-popups-on .homespotlightIconArea::before,
 html.cc-popups-on .homespotlightIconArea .spotlightDate {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  min-height: var(--cc-md-h, 30px) !important; padding: 0 12px !important; margin: 0 !important;
+  height: var(--cc-md-h, 30px) !important; padding: 0 12px !important; margin: 0 !important; box-sizing: border-box !important;
+  min-width: var(--cc-corner-badge-w, 92px) !important;
   border-radius: var(--cc-b-radius, 8px) !important;
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
   font-size: var(--cc-sm-fs, 11px) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; white-space: nowrap !important;
-  width: auto !important; height: auto !important; line-height: 1 !important;
+  width: auto !important; line-height: 1 !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, .3) !important;
 }
 html.cc-popups-on .homespotlightIconArea::before { content: "Spotlight" !important; }
