@@ -1221,20 +1221,35 @@ html.cc-popups-on .ca_author, html.cc-popups-on a.ca_author { color: var(--cc-te
    category never shows on the card face any more (it is still visible inside the Info popup's own
    Kategorien row, untouched). */
 html.cc-popups-on .cardCategory { display: none !important; }
-/* #68/#69 (user, final precision pass: "App logo und name weiter nach oben") — icon left, name + maintainer
-   to its right, both moved up further (was top:41, native CA offset). A plain CSS float, not a JS DOM move:
-   .ca_iconArea is the first child inside the icon/name/author wrapper, so floating it left lets the two text
-   lines that already follow it in the DOM wrap naturally beside it with zero markup changes. Icon size/halo
-   (the #10 rule above) is untouched. Live-measured regression from an earlier pass: .ca_iconArea's OWN
-   native width is 360px (near the full card — CA centres the 80x80 icon inside a much wider box for its old
-   vertical-stack layout), so a bare `float:left` left NO room beside it; capping the wrapper to the icon's
-   own 80x80 is what actually frees the space. */
-html.cc-popups-on .ca_iconArea { float: left !important; width: 80px !important; height: 80px !important; margin: 0 12px 0 0 !important; position: relative !important; top: -27px !important; }
-/* max-width reserves room for the type-glyph + hamburger badges now sitting in the top-right corner (#69).
-   CA gives this a fixed native width:250px, own-ellipsis-truncated at ITS box edge, not adjusted for what
-   sits behind it — live-measured, that box edge landed 16px INSIDE the hamburger's own left edge, so a
-   long enough name's "…" would render partway under the badges instead of stopping cleanly before them. */
-html.cc-popups-on .ca_applicationName { margin-top: -25px !important; max-width: 220px !important; }
+/* #68/#69/#70 (user: "App logo und name weiter nach oben", then "das ganze ausrichten ist völlig in die
+   hose gegangen") — icon left, name + maintainer to its right. The float + relative-offset approach
+   (`position:relative; top:-27px`) from the previous pass is GONE: it depended on the icon/name's own
+   native STATIC flow position, which turned out to be a moving target (live-measured after that change:
+   the icon rendered at top:-39px, name at top:-12px — both partially clipped above the card's own top edge
+   by .ca_holder's overflow:hidden, exactly what looked broken in the screenshot). Every other card element
+   already learned this lesson (description, ribbon row, stats, hamburger, type badge are all
+   position:absolute anchored on .ca_holder, which is the only reliably known reference frame on this
+   card) — icon/name/author now follow the same rule instead of being the one exception still guessing at
+   native flow. .ca_appPopup (their DOM parent) stays position:static, so the absolute children skip past
+   it and anchor on .ca_holder directly, same as everything else already does. */
+html.cc-popups-on .ca_iconArea {
+  position: absolute !important; top: 14px !important; left: 13px !important; right: auto !important; bottom: auto !important;
+  float: none !important; width: 80px !important; height: 80px !important; margin: 0 !important;
+}
+/* max-width reserves room for the type-glyph + hamburger badges in the top-right corner (#69). CA gives
+   this a fixed native width:250px, own-ellipsis-truncated at ITS box edge, not adjusted for what sits
+   behind it — live-measured, that box edge landed 16px INSIDE the hamburger's own left edge, so a long
+   enough name's "…" would render partway under the badges instead of stopping cleanly before them. CA also
+   carries its own native left-margin (7.5px) and max-height (30px) on this element — margin:0 neutralises
+   the first so `left` below is exact; the second is harmless (matches the box's own real content height). */
+html.cc-popups-on .ca_applicationName {
+  position: absolute !important; top: 14px !important; left: 105px !important; right: auto !important; bottom: auto !important;
+  max-width: 220px !important; margin: 0 !important;
+}
+html.cc-popups-on .ca_author {
+  position: absolute !important; top: 52px !important; left: 105px !important; right: auto !important; bottom: auto !important;
+  max-width: 220px !important; margin: 0 !important;
+}
 html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--cc-text-chip, #cfcfcf) !important; }
 /* #68/#69: "Der Beschreibungstext soll unter dem logo und über den downloadbagde sein" + "kein Fließtext
    sondern scrollbar wenn man drüber hovert. Der gesamte beschreibungstext soll man durchscollen können."
@@ -1244,13 +1259,16 @@ html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--c
    position:relative) so it reliably sits between the icon/name/author block and the badge rows at the
    bottom regardless of what else on the card changes. A real overflow:hidden->auto swap on hover replaces
    the earlier hover-triggered slide: the whole text becomes genuinely scrollable (mouse wheel / trackpad),
-   not just a single fixed-distance reveal, so text of any length can be read completely. */
+   not just a single fixed-distance reveal, so text of any length can be read completely.
+   #70: CA also carries a native max-height:65px here that silently capped the intended 78px box below it —
+   the same "a min/max-* property is separate from its base property" trap already hit on the hamburger's
+   min-width and the CTA badge's !important display; max-height needs its own explicit override too. */
 html.cc-popups-on .cardDescription {
-  position: absolute !important; left: 0 !important; right: 0 !important; top: 78px !important; bottom: auto !important;
-  height: 78px !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 6px !important;
+  position: absolute !important; left: 0 !important; right: 0 !important; top: 100px !important; bottom: auto !important;
+  height: 60px !important; max-height: 60px !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 6px !important;
 }
 html.cc-popups-on .cardDescription:hover { overflow-y: auto !important; }
-html.cc-popups-on .cardDesc { display: block !important; }
+html.cc-popups-on .cardDesc { display: block !important; max-height: none !important; }
 html.cc-popups-on .cardDescription::-webkit-scrollbar { width: 5px !important; }
 html.cc-popups-on .cardDescription::-webkit-scrollbar-track { background: transparent !important; }
 html.cc-popups-on .cardDescription::-webkit-scrollbar-thumb { background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: 3px !important; }
