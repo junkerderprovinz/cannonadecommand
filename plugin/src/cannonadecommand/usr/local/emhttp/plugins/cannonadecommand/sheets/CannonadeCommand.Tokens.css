@@ -1666,6 +1666,107 @@ html.cc-popups-on .ca_note {
   color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11px !important;
 }
 
+/* ═══ #94 INFO-CARD REDESIGN (user: "die Infocard... bitte im gleichen Stil wie das Benachrichtigungsfenster
+   machen. zudem sollen beide Fenster im Animationsstil wild eine coole Animation bekommen wenn sie
+   einfliegen. alle badges in die farb und form engines übernehmen. der closebutton soll ein quadratischer
+   badge mit x sein. der detailsabschnitt soll auch mit badges sein... cards wie zb. im updatefenster mit
+   abschnittsbadges die halb auf der card liegen") ═══════════════════════════════════════════════════════
+   Matches the "P14" floating-window recipe already established for the notification centre + the t4t5
+   sweet-alert update window above (--cc-surface-window, no border line, soft elevation only). This drawer
+   keeps CA's own fixed/700px positioning (per #63 above) but now READS as one of those floating windows.
+   Numbered section badges sit HALF on top of their card via position:absolute + a negative top offset —
+   the same visual idea as a <fieldset><legend>, without needing real fieldset markup (the DOM here is
+   plain divs; see ccInfoCardEnhance() in header.js, which builds .cc-ic-card/.cc-ic-legend around CA's
+   existing section elements — .popupDescription, .additionalRequirements, the two .popupInfoLeft blocks,
+   the .charts trend block — rather than replacing them). */
+html.cc-popups-on .sidenav.sidenavShow {
+  border-radius: 14px 0 0 14px !important;
+}
+/* close button -> a SQUARE badge with an X. Deliberately NOT var(--cc-b-radius) — user, explicit: a close
+   control should read the same regardless of the active badge-shape mode, unlike every other badge here. */
+html.cc-popups-on .popupCloseArea .popUpClose.cc-ic-close {
+  width: 30px !important; height: 30px !important; padding: 0 !important; border-radius: 8px !important;
+  font-size: 14px !important; margin: 0 !important;
+}
+/* spotlight star inline with the app name — the same 1:1 square-chip recipe the card's OWN spotlight
+   badge uses (#73 above), just sized to sit beside a text line instead of a card corner. Base = neutral
+   chip, hover/rainbow-jewel = coloured; mirrors .homespotlightIconArea's own four rules exactly so the
+   two stars behave identically in every colour mode. */
+html.cc-popups-on .cc-ic-spot {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  width: 22px !important; height: 22px !important; margin-left: 8px !important; vertical-align: middle !important;
+  box-sizing: border-box !important; border-radius: var(--cc-b-radius, 8px) !important; font-size: 11px !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+  transition: background .12s ease, color .12s ease !important;
+}
+html.cc-popups-on .cc-ic-spot:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .cc-ic-spot {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .cc-ic-spot:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+/* the numbered badge-card itself: --cc-surface-card (#191919) against the drawer's --cc-surface-window
+   (#242424), one visible step darker — same two-tier depth the notification centre's cards use against
+   their own window. Extra top padding + top margin leave room for the legend badge to hang half above it. */
+html.cc-popups-on #sidenavContent .cc-ic-card {
+  position: relative !important; background: var(--cc-surface-card, #191919) !important;
+  border-radius: var(--cc-b-radius, 10px) !important; padding: 18px 16px 14px !important;
+  margin: 22px 0 16px !important; box-sizing: border-box !important;
+}
+/* 1.1 Zusätzliche Anforderungen nests visually under 1. Infotext instead of reading as its own top-level
+   section — smaller left inset, tighter top gap. */
+html.cc-popups-on #sidenavContent .cc-ic-card.cc-ic-nested { margin: 10px 0 16px 20px !important; }
+html.cc-popups-on #sidenavContent .cc-ic-legend {
+  position: absolute !important; top: -13px !important; left: 16px !important; z-index: 1 !important;
+  display: inline-flex !important; align-items: center !important; box-sizing: border-box !important;
+  height: 26px !important; padding: 0 14px !important; white-space: nowrap !important;
+  border-radius: var(--cc-b-radius, 999px) !important;
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: .5px !important;
+  box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
+}
+/* 1.1's legend takes the SAME amber "needs attention" tone .additionalRequirements used to signal via its
+   left border stripe — a fill, never a border line (GLS), same idea #86 already established elsewhere. */
+html.cc-popups-on #sidenavContent .cc-ic-legend.cc-ic-warn {
+  background: var(--cc-warn, #d6a243) !important; color: #1a1400 !important;
+}
+/* the section content itself now lives INSIDE .cc-ic-card, which already supplies background/padding/
+   spacing — strip each piece's own standalone card styling so it blends into the wrapper instead of
+   boxing twice. The old small-caps text labels (Details/Maintainer/Zusätzliche Anforderungen/Trends) are
+   redundant with the legend badge sitting on top of the same card now, so they're hidden, not just restyled. */
+html.cc-popups-on #sidenavContent .cc-ic-card .popupDescription,
+html.cc-popups-on #sidenavContent .cc-ic-card .additionalRequirements,
+html.cc-popups-on #sidenavContent .cc-ic-card .changelog {
+  background: transparent !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important;
+}
+html.cc-popups-on #sidenavContent .cc-ic-card .rightTitle,
+html.cc-popups-on #sidenavContent .cc-ic-card .popupAuthorTitle,
+html.cc-popups-on #sidenavContent .cc-ic-card .additionalRequirementsHeader,
+html.cc-popups-on #sidenavContent .cc-ic-card .charts.chartTitle {
+  display: none !important;
+}
+/* the spotlight "why we picked it" block now lives inside the Infotext card too — drop its own dark
+   background/padding for the same reason, keep the icon+text readable on the card's surface. */
+html.cc-popups-on #sidenavContent .cc-ic-card .spotlightPopup {
+  background: transparent !important; padding: 0 !important; margin: 14px 0 0 !important; display: flex !important; gap: 12px !important;
+}
+html.cc-popups-on #sidenavContent .cc-ic-card .spotlightIconArea img { width: 32px !important; height: 32px !important; border-radius: var(--cc-b-radius, 8px) !important; }
+html.cc-popups-on #sidenavContent .cc-ic-card .spotlightDate { display: none !important; } /* the star badge's own title= already carries this */
+html.cc-popups-on #sidenavContent .cc-ic-card .spotlightWhy { color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11px !important; text-transform: uppercase !important; letter-spacing: .5px !important; font-weight: 700 !important; }
+html.cc-popups-on #sidenavContent .cc-ic-card .spotlightMessage { color: var(--cc-text, #e6e6e6) !important; font-style: italic; }
+html.cc-popups-on #sidenavContent .cc-ic-card .spotlightWho { color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11px !important; }
+
+/* ═══ WILD entrance for BOTH the App-Info drawer AND the notification centre (user: "beide Fenster sollen
+   im Animationsstil wild eine coole Animation bekommen wenn sie einfliegen") — reuses the house wild-
+   animation vocabulary (cc-wild-pop, Header.css) for the notification centre's floating card, and a new
+   matching slide-bounce for the Info drawer since it is edge-anchored (slides in from the right, "fliegt
+   ein" from that direction) rather than popping up from a point like a small popover. ═══ */
+@keyframes cc-wild-slidein { 0% { transform: translateX(28px); opacity: 0; } 55% { transform: translateX(-6px); opacity: 1; } 100% { transform: translateX(0); } }
+html.cc-anim-wild .sidenav.sidenavShow { animation: cc-wild-slidein .34s cubic-bezier(.34, 1.56, .64, 1); }
+
 /* ═══ #12l/#69 CARD CORNER MARKS -> REAL CC BADGES, HORIZONTAL ROW (user, final pass: "Wenn badges wie
    spotlight, official, beta, etc vorhanden sind sollen die in einer zeile über dem downloadbadge angeordnet
    sein") ═══════════════════════════════════════════════════════════════════════════════════════════════

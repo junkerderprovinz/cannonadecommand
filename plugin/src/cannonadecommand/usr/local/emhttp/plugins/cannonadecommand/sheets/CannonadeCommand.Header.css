@@ -1750,6 +1750,12 @@ html.cc-anim-wild .cc-limbtn:hover { transform: translateY(-2px) scale(1.08) rot
 /* a bouncier popover/menu/dropdown entrance */
 @keyframes cc-wild-pop { 0%{opacity:0;transform:translateY(12px) scale(.9)} 60%{transform:translateY(-4px) scale(1.02)} 100%{opacity:1;transform:none} }
 html.cc-anim-wild .cc-pop, html.cc-anim-wild .cc-menu, html.cc-anim-wild .cc-drop { animation: cc-wild-pop .32s cubic-bezier(.34,1.56,.64,1) !important; }
+/* #94 (user: "beide Fenster sollen im Animationsstil wild eine coole Animation bekommen wenn sie
+   einfliegen" — "beide" = the App-Info drawer (Tokens.css: cc-wild-slidein, edge-anchored so it slides)
+   AND this notification centre, a floating card that suits the SAME bouncy pop-in every other CC popover/
+   menu/dropdown already uses above. Fragile Tailwind hook, same one Header.css's P14 section already
+   depends on for this panel — fails soft (native transition) if Connect ever renames it. */
+html.cc-anim-wild .unapi div.fixed.z-50.bg-background:not(.top-1\/2) { animation: cc-wild-pop .32s cubic-bezier(.34,1.56,.64,1) !important; }
 /* the brand wordmark gives a little wobble on hover */
 @keyframes cc-wild-wobble { 0%{transform:rotate(0)} 25%{transform:rotate(-2.5deg)} 50%{transform:rotate(2deg)} 75%{transform:rotate(-1deg)} 100%{transform:rotate(0)} }
 html.cc-anim-wild #cc-brand:hover .cc-brand-name { display:inline-block; animation: cc-wild-wobble .5s ease; }

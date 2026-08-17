@@ -3276,6 +3276,93 @@
     var star = document.createElement("i"); star.className = "fa fa-star"; area.appendChild(star);
     if (dateTxt) area.title = dateTxt;
   }
+  // #94 (user: "die Infocard... im gleichen Stil wie das Benachrichtigungsfenster machen... abschnittbadges
+  // die halb auf der card liegen... closebutton ein quadratischer Badge mit X... Wenn spotlight soll wieder
+  // der Sternbadge neben dem Appname stehen"): the App-Info side drawer (.sidenav > #sidenavContent >
+  // .popup, CA's own native markup) is restructured into the SAME numbered badge-card system already used
+  // for the notification centre / update window (the "P14" floating-window recipe, Tokens.css).
+  // Live-caught (root cause of "works for the first app opened, silently does nothing for every app after
+  // that"): CA does NOT recreate `.popup` fresh per app — it reuses the SAME node and swaps its inner
+  // content. A plain presence-flag guard on `.popup` (set once, never cleared) therefore only ever fired
+  // for the FIRST app opened all session; every later app hit the guard and bailed while still showing the
+  // previous app's now-stale enhancement (or none at all if the first app opened before ccApps() ever got
+  // a stable tick). Keying the guard's VALUE to the currently-shown app's name fixes this: a different app
+  // is a different key, so the enhancement re-runs, while the SAME app re-rendering (e.g. a chart refresh)
+  // still correctly no-ops.
+  function ccInfoCardEnhance() {
+    var sc = document.getElementById("sidenavContent");
+    var popup = sc && sc.querySelector(".popup");
+    if (!popup) return;
+    var nameEl0 = sc.querySelector(".popupName");
+    // live-caught (root cause of "only ever worked in the first few seconds after a page load"): CA opens
+    // the drawer and THEN fills .popup's content in ASYNCHRONOUSLY — the single 80ms-delayed retry the
+    // click handler below schedules is very often too early, and NOTHING else re-triggers ccApps() for
+    // this drawer afterward once the page's own 4.5s boot-interval window has elapsed (traced live via a
+    // logging build: the retry fired at +161ms and still found no .popup at all). Bail (guard NOT written)
+    // until the name is genuinely there; the MutationObserver on #sidenavContent (ccAppsBoot) is what
+    // actually re-triggers ccApps() reliably now, the MOMENT CA's own render finishes, however long that
+    // takes — the click-triggered retry is just a (now harmless) head start for the common fast case.
+    if (!nameEl0 || !nameEl0.textContent.trim()) return;
+    var key = nameEl0.textContent.trim();
+    if (popup.getAttribute("data-cc-ic") === key) return;
+    if (!sc.querySelector(".popupDescription")) return; // same early-render race, for the description block specifically
+    popup.setAttribute("data-cc-ic", key);
+    // close button -> square X badge. CSS keeps it a fixed square regardless of the user's badge-shape
+    // setting — a close control should read the same in every mode. Native onclick stays untouched; only
+    // the visible content changes.
+    var closeBtn = sc.querySelector(".popUpClose");
+    if (closeBtn) {
+      closeBtn.textContent = ""; closeBtn.classList.add("cc-ic-close");
+      closeBtn.appendChild(ccMkEl("i", "fa fa-times"));
+      closeBtn.title = T("Schließen", "Close"); closeBtn.setAttribute("aria-label", closeBtn.title);
+    }
+    // spotlight -> inline star next to the app name (matching the CARD's own spotlight badge, #73),
+    // instead of only the big icon+date block CA renders further down — that block's "why we picked it"
+    // text is genuinely useful, so it stays, just folded into the Infotext card below rather than removed.
+    var spotBlock = sc.querySelector(".spotlightPopup");
+    var nameEl = sc.querySelector(".popupName");
+    if (spotBlock && nameEl && !nameEl.querySelector(".cc-ic-spot")) {
+      var star = ccMkEl("span", "cc-ic-spot");
+      star.appendChild(ccMkEl("i", "fa fa-star"));
+      star.title = T("Spotlight-App", "Spotlight app");
+      nameEl.appendChild(star);
+    }
+    // wraps `els` (already-live DOM elements; the first one anchors the insertion point) in a new numbered
+    // badge-card — the same visual idea as a <fieldset><legend> (the legend badge sits half ON the card via
+    // CSS position:absolute), built from plain divs since that is what CA's own markup already is. `warn`
+    // reuses the amber "needs attention" tone the #86 border-fix established elsewhere in this file, for
+    // 1.1 Zusätzliche Anforderungen — a background tint, never a border line (GLS).
+    function cardify(els, num, title, warn) {
+      els = els.filter(Boolean);
+      if (!els.length) return;
+      var card = ccMkEl("div", "cc-ic-card" + (num === "1.1." ? " cc-ic-nested" : ""));
+      var legend = ccMkEl("span", "cc-ic-legend" + (warn ? " cc-ic-warn" : ""), num + " " + title);
+      els[0].parentNode.insertBefore(card, els[0]);
+      card.appendChild(legend);
+      els.forEach(function (el) { card.appendChild(el); });
+    }
+    // gather every section BEFORE the first cardify() call moves anything — an element reference stays
+    // valid once reparented, but a querySelector run AFTER an earlier move could miss something already
+    // relocated into a previous card.
+    var desc = sc.querySelector(".popupDescription");
+    var video = sc.querySelector(".videoPlayOverlay");
+    var videoWrap = video ? video.parentElement : null;
+    var addReq = sc.querySelector(".additionalRequirements");
+    var infoLefts = sc.querySelectorAll(".popupInfoLeft");
+    var detailsBlock = infoLefts[0], maintBlock = infoLefts[1];
+    var trendsHead = sc.querySelector(".charts.chartTitle");
+    var trendEls = [];
+    if (trendsHead) {
+      trendEls.push(trendsHead);
+      var sib = trendsHead.nextElementSibling;
+      for (var ti = 0; ti < 2 && sib; ti++) { trendEls.push(sib); sib = sib.nextElementSibling; }
+    }
+    cardify([desc, spotBlock, videoWrap], "1.", T("Infotext", "Info text"));
+    cardify([addReq], "1.1.", T("Zusätzliche Anforderungen", "Additional requirements"), true);
+    cardify([detailsBlock], "2.", T("Details", "Details"));
+    cardify([maintBlock], "3.", T("Maintainer", "Maintainer"));
+    cardify(trendEls, "4.", T("Trends", "Trends"));
+  }
   // #76 (user: "der DVDCompress Container hat eine gelbe Sprechblase. Können wir das in ein weiteren
   // quadratischen badge umwandeln der links des Dockerbadges sitzt. Als symbol soll ein Achtung icon
   // drauf."): CA's own inline .cardWarning glyph (a small comment-bubble icon INSIDE .ca_applicationName,
@@ -3504,6 +3591,13 @@
       // as the card's .ca_bottomLine row above and needs the same per-button rainbow jewel, not one flat
       // shared colour — stamp it every pass since the drawer's content is (re)built fresh on each open.
       ccAppsStamp(".popupInfo .actionsPopup, .popupInfo .caButton");
+      // #94 (user: "die Infocard... im gleichen Stil wie das Benachrichtigungsfenster... abschnittbadges
+      // die halb auf der card liegen... closebutton ein quadratischer Badge mit X... Wenn spotlight soll
+      // wieder der Sternbadge neben dem Appname stehen"): restructure the fixed sections into numbered
+      // badge-cards (CSS: Tokens.css #94), close button -> square X, spotlight -> inline star. Rainbow
+      // needs these freshly-built elements in the SAME stamp pass or they'd stay flat-accent forever.
+      ccInfoCardEnhance();
+      ccAppsStamp(".cc-ic-legend, .cc-ic-close, .cc-ic-spot");
       // #8 (user: "die buttons ganz unten sind nicht in die farbmodi integriert"): the bottom action bar
       // (.multi_installDiv) was styled as a badge row but never STAMPED, so --cc-rb-c never reached it and
       // it could only ever paint the neutral chip. Stamped like every other Apps badge, it takes the accent
@@ -3651,12 +3745,29 @@
       ccAppsAlignTop();
     } catch (e) {}
   }
-  var ccAppsObs = null, ccAppsT = 0;
+  var ccAppsObs = null, ccInfoObs = null, ccAppsT = 0;
   function ccAppsSoon() { if (ccAppsT) return; ccAppsT = setTimeout(function () { ccAppsT = 0; ccApps(); }, 60); }
+  // #94 (live-traced, root cause of "the Info-Card redesign only ever worked in the first few seconds
+  // after a page load"): #sidenavContent does NOT exist at boot — confirmed live (a boot-time
+  // getElementById returned null on a page where the drawer had never been opened yet). CA creates it
+  // lazily, apparently as a side effect of the FIRST .ca_appPopup click itself, so attaching its
+  // MutationObserver only needs to happen once — but only from AFTER that first click, not at boot. A
+  // short bounded retry (#sidenavContent may take a few ms to appear after the click that creates it)
+  // finds it once and attaches for the rest of the page's life; ccAppsSoon() is also called immediately
+  // once attached, so the click that triggered this doesn't itself need to wait for a later mutation.
+  function ccInfoObsAttach(tries) {
+    if (ccInfoObs) return;
+    var sc1 = document.getElementById("sidenavContent");
+    if (sc1) { ccInfoObs = new MutationObserver(ccAppsSoon); ccInfoObs.observe(sc1, { childList: true, subtree: true }); ccAppsSoon(); return; }
+    if ((tries || 0) < 20) setTimeout(function () { ccInfoObsAttach((tries || 0) + 1); }, 100);
+  }
   function ccAppsBoot() {
     try {
       if (!/^\/Apps(\/|$)/.test(location.pathname)) return;
       ccApps();
+      // #94: harmless no-op if #sidenavContent already exists from an earlier session/navigation state;
+      // otherwise this is a bounded no-op poll (2s) until the first real click creates it (see below).
+      ccInfoObsAttach(0);
       document.addEventListener("click", function (e) {
         if (e.target && e.target.closest && e.target.closest(".caMenuItem, .homeMore, .sortIcons, .searchSubmit, #searchButton")) ccAppsSoon();
         // #63: .ca_appPopup marks every entry point into the Info drawer (the card itself, its icon, its
@@ -3664,7 +3775,11 @@
         // without this the drawer's own .popupInfo buttons only got their rainbow stamp on some LATER,
         // unrelated pass instead of the moment they actually appear. A capture-phase listener sees the
         // click before CA's own handler swaps in the drawer content, so the delay is intentional (below).
-        if (e.target && e.target.closest && e.target.closest(".ca_appPopup")) setTimeout(ccAppsSoon, 80);
+        // #94: the single 80ms retry is a harmless head start for when #sidenavContent already exists
+        // (the common case, every open after the first) — ccInfoObsAttach is what reliably catches the
+        // very FIRST open of the whole session, when #sidenavContent doesn't exist until this exact click
+        // creates it, and every open after that via the MutationObserver it sets up once found.
+        if (e.target && e.target.closest && e.target.closest(".ca_appPopup")) { setTimeout(ccAppsSoon, 80); ccInfoObsAttach(0); }
       }, true);
       // the measured right gutter moves with the viewport, so re-measure on resize — without this the padding
       // stays frozen at whatever the last pass computed and SHOW MORE drifts off the icon gutter again (seen
