@@ -497,6 +497,17 @@ html.cc-popups-on #displaybox .cc-tsel-opt-avail:hover {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important; filter: none !important;
 }
 html.cc-popups-on #displaybox .cc-tsel-avail-dl { opacity: .7; font-size: 11px; }
+/* #92 (user, real root cause of 3x "flags not showing" reports): the locale dropdown's flag is now a
+   real bundled SVG (images/flags/<iso>.svg), not a Unicode emoji pair — Windows renders the emoji pair
+   as two separate letter glyphs instead of ligating them into a flag (confirmed via a screenshot from
+   the user's own browser). Same sizing convention as settings.js's Flaggen-Modus .cc-flag-img, so the
+   flag reads consistently everywhere in the plugin. */
+html.cc-tools-on #displaybox .cc-lang-flag,
+html.cc-popups-on #displaybox .cc-lang-flag {
+  display: inline-block; width: 20px; height: 14px; flex: 0 0 auto; object-fit: cover;
+  border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12);
+}
+html.cc-popups-on #displaybox .cc-tsel-avail-flag { display: inline-flex; flex: 0 0 auto; }
 /* #1 CORRECTION (user): in the REACTIVE sub-mode (cc.rbmode=active) the list items REST neutral and reveal
    their OWN rotating colour ONLY on mouseover / when selected — matching every other reactive control. Full
    rainbow keeps them permanently coloured (rule above). The per-item --cc-rb-c is still stamped, just unused

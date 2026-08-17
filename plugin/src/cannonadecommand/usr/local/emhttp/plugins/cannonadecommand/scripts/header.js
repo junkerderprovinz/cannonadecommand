@@ -1604,16 +1604,49 @@
     } catch (e) {}
   }
   // #22 (user forum feature request): the Display-Settings "Sprache/Language" dropdown gets a
-  // flag per option. The flag is DERIVED from the locale's country suffix (Unraid's own values
-  // are "" for English and "xx_XX" for every installed language pack, e.g. "de_DE"), not a
-  // hardcoded per-language table — a 2-letter ISO country code maps to its flag emoji by a fixed
-  // arithmetic offset (each letter -> one Unicode regional-indicator symbol), so this covers every
-  // language pack Unraid ships or ever adds, with zero image assets and zero licensing concerns.
-  function ccLocaleFlag(val) {
-    var m = /_([A-Za-z]{2})$/.exec(val || "");
-    var cc2 = m ? m[1].toUpperCase() : "GB"; // Unraid's blank/default locale = English, no country suffix
-    if (!/^[A-Z]{2}$/.test(cc2)) return "";
-    try { return String.fromCodePoint(0x1F1E6 + (cc2.charCodeAt(0) - 65), 0x1F1E6 + (cc2.charCodeAt(1) - 65)); } catch (e) { return ""; }
+  // flag per option.
+  // #92 (user, real root cause behind three separate "flags not showing" reports — proven with a
+  // screenshot from the user's own Windows browser): the ORIGINAL arithmetic approach here built a
+  // Unicode regional-indicator-symbol PAIR and relied on the OS emoji font to ligature it into a
+  // single flag glyph. Windows' Segoe UI Emoji does not do that — it shows the two letters as two
+  // separate boxes ("DE", "GB", ...), which is exactly what the user's screenshot showed. This is
+  // the SAME gap settings.js's Flaggen-Modus picker already worked around by switching to the
+  // plugin's own bundled flag SVGs (images/flags/<iso>.svg, window.CC_FLAGS) instead of emoji —
+  // ccLangFlagImg below applies that same fix here.
+  // A second, independent bug rides along: several of Unraid's OWN locale codes are NOT real ISO
+  // country codes — da_DA/hu_HU/no_NO/ja_JA/ko_KO/ar_AR/bn_BN duplicate the LANGUAGE code as a fake
+  // "country" suffix. Naively uppercasing that suffix either hit no real territory (da/ja/ko — no
+  // flag could ever render, on any platform) or a real but WRONG one by coincidence (ar_AR ->
+  // Argentina, bn_BN -> Brunei — neither has anything to do with Arabic or Bengali). Explicit map,
+  // built from the full official pack list (github.com/unraid/language-templates), fixes both at
+  // once; the old suffix-arithmetic still runs as a fallback for any future pack not yet listed here.
+  var CC_LOCALE_COUNTRY = {
+    "": "gb", "en_US": "us", "de_DE": "de", "da_DA": "dk", "hu_HU": "hu", "nl_NL": "nl", "no_NO": "no",
+    "it_IT": "it", "fr_FR": "fr", "pt_BR": "br", "pt_PT": "pt", "pl_PL": "pl", "es_ES": "es", "sv_SE": "se",
+    "ru_RU": "ru", "uk_UA": "ua", "ar_AR": "sa", "bn_BN": "bd", "ja_JA": "jp", "zh_CN": "cn", "zh_TW": "tw",
+    "ko_KO": "kr"
+  };
+  function ccLocaleCountry(val) {
+    val = val || "";
+    if (CC_LOCALE_COUNTRY.hasOwnProperty(val)) return CC_LOCALE_COUNTRY[val];
+    var m = /_([A-Za-z]{2})$/.exec(val);
+    return m ? m[1].toLowerCase() : "gb"; // no suffix at all -> Unraid's blank/default locale = English
+  }
+  // Writes/refreshes the flag <img> as the FIRST child of `container` (a trigger or an option chip),
+  // never touching its text — ccToolsSyncSel below still owns `container.textContent` for the name,
+  // and a plain `.textContent =` write removes every child, so the image must be (re)inserted AFTER
+  // that write runs, not folded into the text itself the way the old emoji prefix was.
+  function ccLangFlagImg(container, val) {
+    var iso = ccLocaleCountry(val);
+    var img = container.firstElementChild && container.firstElementChild.classList.contains("cc-lang-flag") ? container.firstElementChild : null;
+    if (!iso) { if (img) img.remove(); return; }
+    if (!img) {
+      img = document.createElement("img"); img.className = "cc-lang-flag"; img.loading = "lazy"; img.draggable = false; img.alt = "";
+      img.onerror = function () { img.style.display = "none"; };
+      container.insertBefore(img, container.firstChild);
+    }
+    var src = "/plugins/cannonadecommand/images/flags/" + iso + ".svg";
+    if (img.getAttribute("src") !== src) { img.style.display = ""; img.src = src; }
   }
   // scoped to name="locale" only — every OTHER <select> on the site goes through this same
   // generic ccToolsWrapSelect/ccToolsSyncSel pair and must render unchanged.
@@ -1623,9 +1656,9 @@
   // single-name style now applies to it too for consistency across the whole dropdown.
   function ccLangLabel(sel, o) {
     if (sel.name !== "locale") return o.text;
-    var flag = ccLocaleFlag(o.value);
-    var text = o.text.replace(/\s*\([^)]*\)\s*$/, "");
-    return flag ? flag + " " + text : text;
+    // #92: no more emoji prefix here — the flag is now a real <img> ccLangFlagImg inserts alongside
+    // this text (see ccToolsSyncSel), not baked into the string.
+    return o.text.replace(/\s*\([^)]*\)\s*$/, "");
   }
   // #77 (user: "alle verfügbaren Sprachen anzeigen und auf klick runterladen und installieren"): Unraid's
   // official language packs (github.com/unraid/language-templates) are ordinary Community-Applications
@@ -1657,8 +1690,9 @@
           // of these and stomped its text on the very next sync. data-i="-1" makes sel.options[-1]
           // genuinely undefined, so the loop's existing "if (!o) continue" skips it as originally intended.
           chip.setAttribute("data-i", "-1");
-          var flag = ccLocaleFlag(p.code);
-          chip.appendChild(ccMkEl("span", "cc-tsel-avail-flag", flag || "🌐"));
+          var flagWrap = ccMkEl("span", "cc-tsel-avail-flag");
+          chip.appendChild(flagWrap);
+          ccLangFlagImg(flagWrap, p.code); // #92 — same real-SVG fix as the installed entries, not emoji
           chip.appendChild(ccMkEl("span", "cc-tsel-avail-name", p.local || p.name || p.code)); // #81 (user: "den Text in der Klammer kann weg") — just the native name, no English clarification
           chip.appendChild(ccMkEl("i", "fa fa-download cc-tsel-avail-dl"));
           chip.setAttribute("role", "option"); chip.setAttribute("tabindex", "-1");
@@ -1700,7 +1734,16 @@
     var t2 = w.querySelector(".cc-tsel-trigger"), c = w.querySelectorAll(".cc-tsel-opt");
     var label = sel.selectedIndex >= 0 ? ccLangLabel(sel, sel.options[sel.selectedIndex]) : "";
     if (t2 && t2.textContent !== label) t2.textContent = label;
-    for (var k = 0; k < c.length; k++) { var o = sel.options[+c[k].getAttribute("data-i")]; if (!o) continue; var lbl = ccLangLabel(sel, o); if (c[k].textContent !== lbl) c[k].textContent = lbl; c[k].classList.toggle("is-selected", o.selected); c[k].classList.toggle("is-disabled", !!o.disabled); c[k].setAttribute("aria-selected", o.selected ? "true" : "false"); }
+    // #92: the flag <img> must be (re)inserted AFTER the textContent write above, every sync — that
+    // write wipes all children whenever the label actually changed, and is a no-op (children left
+    // alone) when it didn't, so calling this unconditionally is what makes it self-heal either way.
+    if (sel.name === "locale" && t2) ccLangFlagImg(t2, sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].value : "");
+    for (var k = 0; k < c.length; k++) {
+      var o = sel.options[+c[k].getAttribute("data-i")]; if (!o) continue;
+      var lbl = ccLangLabel(sel, o); if (c[k].textContent !== lbl) c[k].textContent = lbl;
+      if (sel.name === "locale") ccLangFlagImg(c[k], o.value);
+      c[k].classList.toggle("is-selected", o.selected); c[k].classList.toggle("is-disabled", !!o.disabled); c[k].setAttribute("aria-selected", o.selected ? "true" : "false");
+    }
   }
   function ccToolsWrapSelect(sel) {
     if (sel.getAttribute("data-cc-tsel") || sel.getAttribute("data-cc-tgl")) return;   // already ours / a yes-no toggle (#24)
@@ -2400,7 +2443,19 @@
       // native buttons in EVERY sheet (Freigaben, Tools/Settings sub-pages) can follow the colour mode
       // via var(--cc-rbaccent, <accent>). Flag mode also sets cc.rainbow=1, so rbColor() already yields
       // the flag colour here. Cleared when rainbow is off -> buttons fall back to their accent.
+      // #93 (user: "im anzeige einstellungstab sind die unteren buttons nicht in den farbmodi"): that
+      // "fall back to their accent" never actually happened — nothing ever set the --cc-accent side of
+      // the CSS fallback chain (var(--cc-rbaccent, var(--cc-accent, #2f6feb))) on a GENERIC native page.
+      // The 6 area-specific scripts (docker/plugins/vms/settingsgrid/settings/favorites.js) each stamp
+      // it on their OWN page, but a plain /Settings/* sub-page like Display Settings has none of those —
+      // its buttons silently fell all the way through to the CSS-hardcoded #2f6feb default instead of
+      // the user's actual configured accent the instant rainbow/flag mode was off (or the moment
+      // rbColor(5) legitimately isn't a fitting colour for that spot). accent() is the SAME function
+      // rbColor()'s own non-rainbow fallback already calls internally, so this is the accent this exact
+      // block already treats as canonical for generic pages — just applying it directly too.
       try {
+        if (on) { var accA = accent(); root.style.setProperty("--cc-accent", accA); root.style.setProperty("--cc-accent-text", idealText(accA)); }
+        else { root.style.removeProperty("--cc-accent"); root.style.removeProperty("--cc-accent-text"); }
         if (on && rbOn()) { var rbA = rbColor(5); root.style.setProperty("--cc-rbaccent", rbA); root.style.setProperty("--cc-rbaccent-text", idealText(rbA)); }
         else { root.style.removeProperty("--cc-rbaccent"); root.style.removeProperty("--cc-rbaccent-text"); }
       } catch (e7) {}
