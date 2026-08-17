@@ -218,17 +218,33 @@
   }
   function shapeRadius() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
   function pill(node, bg, tx) {
-    node.style.setProperty("font-size", "11px", "important"); // same metrics as Docker row pills
+    // sm tier — same tokens as every other small badge system-wide (--cc-sm-fs/--cc-sm-pad,
+    // defined once in CannonadeCommand.Tokens.css), not hand-picked numbers local to this file.
+    node.style.setProperty("font-size", "var(--cc-sm-fs, 11px)", "important");
     node.style.setProperty("vertical-align", "middle", "important");
     node.style.setProperty("background", bg, "important");
     node.style.setProperty("color", tx || idealText(bg), "important");
     node.style.setProperty("border-radius", "var(--cc-b-radius, 999px)", "important"); // shape follows the badge var
-    node.style.setProperty("padding", "3px 11px", "important");
+    node.style.setProperty("padding", "var(--cc-sm-pad, 3px 11px)", "important");
     node.style.setProperty("border", "none", "important");
     node.style.setProperty("box-shadow", "none", "important");
     node.style.setProperty("display", "inline-block", "important");
     node.style.setProperty("line-height", "1.5", "important");
     node.style.setProperty("text-decoration", "none", "important");
+    // #badgesize (user: "die beiden badges sind unterschiedlich groß"): this fires on BOTH a
+    // plain <span> ("Auf dem neuesten Stand") and a native <input type=button> ("Aktualisierung")
+    // — the input carries its own browser button chrome (-webkit-appearance) AND, live-traced,
+    // an unrelated md-tier height/min-height/box-sizing rule in Tokens.css meant for the page-level
+    // "search for updates" button (same [value*="update"] selector also matches every per-row
+    // button). Neither touches the span, so the two rendered ~30px vs ~22.5px tall. Claim the whole
+    // box model here so this ALWAYS wins, on any element, regardless of what else targets it.
+    node.style.setProperty("box-sizing", "border-box", "important");
+    node.style.setProperty("height", "auto", "important");
+    node.style.setProperty("min-height", "0", "important");
+    node.style.setProperty("max-height", "none", "important");
+    node.style.setProperty("margin", "0", "important");
+    node.style.setProperty("appearance", "none", "important");
+    node.style.setProperty("-webkit-appearance", "none", "important");
   }
   function badge(label, value, i) {
     var b = el("span", "cc-b cc-b-info"); b.setAttribute(MARK, "1");
