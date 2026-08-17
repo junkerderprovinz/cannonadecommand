@@ -1654,7 +1654,7 @@
           chip.setAttribute("data-i", "-1");
           var flag = ccLocaleFlag(p.code);
           chip.appendChild(ccMkEl("span", "cc-tsel-avail-flag", flag || "🌐"));
-          chip.appendChild(ccMkEl("span", "cc-tsel-avail-name", (p.local || p.name || p.code) + (p.local && p.name && p.local !== p.name ? " (" + p.name + ")" : "")));
+          chip.appendChild(ccMkEl("span", "cc-tsel-avail-name", p.local || p.name || p.code)); // #81 (user: "den Text in der Klammer kann weg") — just the native name, no English clarification
           chip.appendChild(ccMkEl("i", "fa fa-download cc-tsel-avail-dl"));
           chip.setAttribute("role", "option"); chip.setAttribute("tabindex", "-1");
           chip.title = LANG === "de" ? "Nicht installiert — klicken, um es in Community Applications zu finden" : "Not installed — click to find it in Community Applications";
@@ -3258,6 +3258,13 @@
   }
   // Once truncated by ccAppsPositionTopBadges above, a hover reveals the full name via the SAME
   // scroll-back-and-forth technique docker.js's setupVolMarquee already uses for long volume paths.
+  // #80 (user: "lauftext funktioniert nicht richtig. der text wird einfach nach links über das logo
+  // geschoben und der fehlende text erscheint nicht"): the FIRST version transformed .ca_applicationName
+  // itself — but that element is CA's own position:absolute box. Translating it moves the WHOLE box
+  // (including its overflow:hidden clip boundary) left across the card, sliding it out from under the
+  // badges and over the icon, instead of scrolling text within a box that stays put. setupVolMarquee
+  // avoids exactly this by animating an INNER element while the outer stays fixed — do the same here:
+  // wrap the name's existing content in one inner span, transform ONLY that.
   function ccAppsNameMarquee(holder) {
     var nameEl = holder.querySelector(".ca_applicationName");
     if (!nameEl || nameEl.getAttribute("data-cc-marq")) return;
@@ -3265,17 +3272,56 @@
     nameEl.style.setProperty("overflow", "hidden", "important");
     nameEl.style.setProperty("white-space", "nowrap", "important");
     nameEl.style.setProperty("text-overflow", "clip", "important");
+    var inner = document.createElement("span"); inner.className = "cc-name-inner"; inner.style.display = "inline-block";
+    while (nameEl.firstChild) inner.appendChild(nameEl.firstChild);
+    nameEl.appendChild(inner);
     var iv = null;
     nameEl.addEventListener("mouseenter", function () {
-      var over = nameEl.scrollWidth - nameEl.clientWidth; if (over <= 2) return;
+      var over = inner.scrollWidth - nameEl.clientWidth; if (over <= 2) return;
       var dur = Math.max(1000, Math.round(over / 55 * 1000)), toEnd = true;
-      nameEl.style.transition = "transform " + (dur / 1000) + "s linear"; nameEl.style.transform = "translateX(-" + over + "px)";
-      iv = setInterval(function () { if (!nameEl.isConnected) { clearInterval(iv); return; } toEnd = !toEnd; nameEl.style.transform = "translateX(" + (toEnd ? -over : 0) + "px)"; }, dur + 700);
+      inner.style.transition = "transform " + (dur / 1000) + "s linear"; inner.style.transform = "translateX(-" + over + "px)";
+      iv = setInterval(function () { if (!inner.isConnected) { clearInterval(iv); return; } toEnd = !toEnd; inner.style.transform = "translateX(" + (toEnd ? -over : 0) + "px)"; }, dur + 700);
     });
     nameEl.addEventListener("mouseleave", function () {
       if (iv) { clearInterval(iv); iv = null; }
-      nameEl.style.transition = "transform .3s ease"; nameEl.style.transform = "translateX(0)";
+      inner.style.transition = "transform .3s ease"; inner.style.transform = "translateX(0)";
     });
+  }
+  // #82 (user: "Die abschnittsbadges, der infotext dazu, show more badges, vieles ist nicht in der
+  // richtigen sprache. alles soll in der eingestellten sprache angezeigt werden. auch in der side
+  // bar"): Community Applications ships a fair amount of its own sidebar/toolbar text only in
+  // English, even with Unraid's display language set to German (live-confirmed: document.
+  // documentElement.lang is "de", these strings still show English — a CA i18n gap, not something CC
+  // introduced). CC already translates other native CA/Unraid text it restyles (the Installieren/
+  // Update button states), so the same treatment applies here: an exact-match dictionary swapped in
+  // place on the section sidebar (category labels, "Show more", results-per-page, sort options).
+  // Anything not in this list is left untouched rather than guessed at — flag anything still missed
+  // with the exact English text and it's a one-line addition to this table.
+  var CC_APPS_XLATE_DE = {
+    "Home": "Start", "Installed Apps": "Installierte Apps", "Previous Apps": "Bisherige Apps",
+    "Pinned Apps": "Angeheftete Apps", "Favourite Repo": "Bevorzugtes Repository", "Action Centre": "Aktionszentrale",
+    "SHOW MORE": "MEHR ANZEIGEN", "Results Per Page": "Ergebnisse pro Seite", "Sort By:": "Sortieren nach:",
+    "Name Ascending": "Name aufsteigend", "Name Descending": "Name absteigend", "Date Added": "Hinzugefügt am"
+  };
+  function ccAppsTranslateNative() {
+    if (LANG !== "de") return;
+    // leaf elements whose ENTIRE text is one dictionary entry — child ELEMENTS (icons etc) mean a
+    // blind textContent overwrite could destroy markup, so those are skipped rather than risked.
+    Array.prototype.slice.call(document.querySelectorAll(".caMenuItem, .homeMore, .maxPerPage, .sortIcons")).forEach(function (el) {
+      if (el.children.length) return;
+      var xl = CC_APPS_XLATE_DE[el.textContent.trim()];
+      if (xl && el.textContent !== xl) el.textContent = xl;
+    });
+    // "Sort By:" is a bare text NODE among #sortIconArea's children (siblings with the .sortIcons
+    // links), not its own element — walk child nodes instead of querying for it.
+    var sortArea = document.getElementById("sortIconArea");
+    if (sortArea) {
+      Array.prototype.slice.call(sortArea.childNodes).forEach(function (n) {
+        if (n.nodeType !== 3) return;
+        var t = n.textContent.trim(), xl = CC_APPS_XLATE_DE[t];
+        if (xl) n.textContent = n.textContent.replace(t, xl);
+      });
+    }
   }
   function ccAppsRibbonRow(holder) {
     var marks = holder.querySelectorAll(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground");
@@ -3294,6 +3340,7 @@
       if (!/^\/Apps(\/|$)/.test(location.pathname)) return;
       ccCaStatsFetch();
       ccAppsAutoSearch(); // #77 — idempotent (clears its own sessionStorage flag once applied), safe to call every tick until #searchBox exists
+      ccAppsTranslateNative(); // #82 — idempotent (keyed off the ENGLISH source text, self-skips once already translated)
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
       // user (v3.6.6, aktiver Sammelmodus: "die badges auf den app cards sind nicht im reaktive modus der
       // derzeit eingeschaltet ist"): "Reaktiver Modus" (cc.rbmode=active) is a GLOBAL settings-page toggle
@@ -3364,7 +3411,7 @@
       // Installiert CTA were both missing from this call — same gap #8 below already documents for a
       // different row, now closed here too. .cc-cs-cta-installed stays deliberately unstamped: it is a
       // resting status (Rule 4 neutral), never accent-filled in any mode, so it has nothing to stamp.
-      ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton, .cc-castats .actionsButton, .cc-ca-menu-btn, .appDocker, .appPlugin, .appLanguage, .appDriver, .appRepository, .cc-cs-cta.cc-cs-cta-update");
+      ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton, .cc-castats .actionsButton, .cc-ca-menu-btn, .appDocker, .appPlugin, .appLanguage, .appDriver, .appRepository, .cc-cs-cta.cc-cs-cta-update, .cc-warn-badge");
       // #63: the Info drawer's own Installieren/Support/Pin App row (.popupInfo) is the same badge recipe
       // as the card's .ca_bottomLine row above and needs the same per-button rainbow jewel, not one flat
       // shared colour — stamp it every pass since the drawer's content is (re)built fresh on each open.

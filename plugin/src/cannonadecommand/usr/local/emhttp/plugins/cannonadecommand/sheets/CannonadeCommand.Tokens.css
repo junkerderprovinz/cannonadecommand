@@ -1251,8 +1251,10 @@ html.cc-popups-on .ca_applicationName {
   position: absolute !important; top: 14px !important; left: 105px !important; right: auto !important; bottom: auto !important;
   max-width: 220px !important; margin: 0 !important; padding-top: 0 !important;
 }
+/* #78 (user: "der name des repository/maintainers weiter nach unten") — a bit more clearance from the
+   app name above it (was 42px, effectively almost touching the name's own 14-43px band). */
 html.cc-popups-on .ca_author {
-  position: absolute !important; top: 42px !important; left: 105px !important; right: auto !important; bottom: auto !important;
+  position: absolute !important; top: 48px !important; left: 105px !important; right: auto !important; bottom: auto !important;
   max-width: 220px !important; margin: 0 !important;
 }
 html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--cc-text-chip, #cfcfcf) !important; }
@@ -1268,14 +1270,17 @@ html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--c
    #70: CA also carries a native max-height:65px here that silently capped the intended 78px box below it —
    the same "a min/max-* property is separate from its base property" trap already hit on the hamburger's
    min-width and the CTA badge's !important display; max-height needs its own explicit override too. */
-/* #75 (user repeated the #74 ask — this time with a visibly bigger correction): symmetric 18px gaps
-   now — above (from the icon/name/author block, which ends at 94px) AND below (to .cc-castats, whose
-   own top edge is 240-8-30=202 given its bottom:8px + height 30px anchor). Available band is fixed
-   (94 to 202 = 108px), so 18+18 gap leaves a 72px box — noticeably more breathing room than the
-   previous 14/14, still symmetric top/bottom as explicitly requested both times. */
+/* #79 (user: "das textfeld geht zu wenig weit nach unten. wir haben unten nur noch eine zeile an
+   badges"): every earlier pass on this box (#72/#74/#75) worked off .ca_holder's CONTENT height as
+   240px - wrong. Live-measured (getBoundingClientRect on a real card): the holder is 265px tall, so
+   .cc-castats' real top edge is 265-8-30=227, not 202 - every previous version of this box was 25px
+   short of the space that was genuinely available the whole time, no matter how the gap was tuned
+   within the wrong 108px band. Real band is 94 (icon/name/author end) to 227 = 133px; symmetric 12px
+   gaps (a bit more than the original 10px, per #74) leave a 109px box - visibly taller than any
+   earlier version, not just a different split of the same wrong space. */
 html.cc-popups-on .cardDescription {
-  position: absolute !important; left: 0 !important; right: 0 !important; top: 112px !important; bottom: auto !important;
-  height: 72px !important; max-height: 72px !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 6px !important;
+  position: absolute !important; left: 0 !important; right: 0 !important; top: 106px !important; bottom: auto !important;
+  height: 109px !important; max-height: 109px !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 6px !important;
 }
 html.cc-popups-on .cardDescription:hover { overflow-y: auto !important; }
 html.cc-popups-on .cardDesc { display: block !important; max-height: none !important; }
@@ -1378,19 +1383,31 @@ html.cc-apps-rbneutral.cc-popups-on .appDriver:hover,
 html.cc-apps-rbneutral.cc-popups-on .appRepository:hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
-/* #76 (user: "DVDCompress...gelbe Sprechblase...ein weiteren quadratischen badge...Achtung icon"): same
-   square-chip recipe as the type badge above, but semantic amber ALWAYS — a warning is never accent or
-   rainbow-coloured (GLS rule 4, matches .cc-b-warn elsewhere on this card). Position is set per-card by
-   ccAppsPositionTopBadges (header.js), not a fixed `right` here — it compacts around whichever of
-   type/warning/spotlight actually exist. */
+/* #76/#81 (user: "DVDCompress...gelbe Sprechblase...ein weiteren quadratischen badge...Achtung icon" +
+   later correction "auch den neuen Hinweis badge in alle farbmodi aufnehmen"): same square-chip recipe
+   as the type badge, and now the SAME colour contract too — accent in Normal mode, rotating palette
+   slot in Rainbow (stamped by ccAppsStamp, header.js, alongside the type/spotlight badges), reactive
+   rest/hover swap in Reactive mode. The original "always amber, never accent/rainbow" choice is
+   superseded by this explicit correction. Position is set per-card by ccAppsPositionTopBadges
+   (header.js), not a fixed `right` here — it compacts around whichever of type/warning/spotlight
+   actually exist. */
 html.cc-popups-on .cc-warn-badge {
   position: absolute !important; top: 14px !important; z-index: 4 !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important; margin: 0 !important;
-  background: var(--cc-warn, #e0912a) !important; border-radius: var(--cc-b-radius, 8px) !important;
-  font-size: 14px !important; color: #1a1a1a !important; cursor: pointer !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-b-radius, 8px) !important;
+  font-size: 14px !important; color: var(--cc-text-chip, #cfcfcf) !important; cursor: pointer !important;
+  transition: background .12s ease, color .12s ease !important;
 }
-html.cc-popups-on .cc-warn-badge:hover { filter: brightness(1.1) !important; }
+html.cc-popups-on .cc-warn-badge:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .cc-warn-badge {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+html.cc-apps-rbneutral.cc-popups-on .cc-warn-badge:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
 html.cc-popups-on .ca_bottomLine .actionsButton:hover { filter: brightness(1.08) !important; }
 html.cc-rb-on.cc-popups-on .ca_bottomLine .caButton {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important;
