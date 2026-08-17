@@ -1599,13 +1599,32 @@
       }
     } catch (e) {}
   }
+  // #22 (user forum feature request): the Display-Settings "Sprache/Language" dropdown gets a
+  // flag per option. The flag is DERIVED from the locale's country suffix (Unraid's own values
+  // are "" for English and "xx_XX" for every installed language pack, e.g. "de_DE"), not a
+  // hardcoded per-language table — a 2-letter ISO country code maps to its flag emoji by a fixed
+  // arithmetic offset (each letter -> one Unicode regional-indicator symbol), so this covers every
+  // language pack Unraid ships or ever adds, with zero image assets and zero licensing concerns.
+  function ccLocaleFlag(val) {
+    var m = /_([A-Za-z]{2})$/.exec(val || "");
+    var cc2 = m ? m[1].toUpperCase() : "GB"; // Unraid's blank/default locale = English, no country suffix
+    if (!/^[A-Z]{2}$/.test(cc2)) return "";
+    try { return String.fromCodePoint(0x1F1E6 + (cc2.charCodeAt(0) - 65), 0x1F1E6 + (cc2.charCodeAt(1) - 65)); } catch (e) { return ""; }
+  }
+  // scoped to name="locale" only — every OTHER <select> on the site goes through this same
+  // generic ccToolsWrapSelect/ccToolsSyncSel pair and must render unchanged.
+  function ccLangLabel(sel, o) {
+    if (sel.name !== "locale") return o.text;
+    var flag = ccLocaleFlag(o.value);
+    return flag ? flag + " " + o.text : o.text;
+  }
   function ccToolsSyncSel(sel) {
     var w = sel.parentNode; if (!w || !w.classList || !w.classList.contains("cc-tsel")) return;
     w.classList.toggle("cc-tsel-disabled", !!sel.disabled);
     var t2 = w.querySelector(".cc-tsel-trigger"), c = w.querySelectorAll(".cc-tsel-opt");
-    var label = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : "";
+    var label = sel.selectedIndex >= 0 ? ccLangLabel(sel, sel.options[sel.selectedIndex]) : "";
     if (t2 && t2.textContent !== label) t2.textContent = label;
-    for (var k = 0; k < c.length; k++) { var o = sel.options[+c[k].getAttribute("data-i")]; if (!o) continue; if (c[k].textContent !== o.text) c[k].textContent = o.text; c[k].classList.toggle("is-selected", o.selected); c[k].classList.toggle("is-disabled", !!o.disabled); c[k].setAttribute("aria-selected", o.selected ? "true" : "false"); }
+    for (var k = 0; k < c.length; k++) { var o = sel.options[+c[k].getAttribute("data-i")]; if (!o) continue; var lbl = ccLangLabel(sel, o); if (c[k].textContent !== lbl) c[k].textContent = lbl; c[k].classList.toggle("is-selected", o.selected); c[k].classList.toggle("is-disabled", !!o.disabled); c[k].setAttribute("aria-selected", o.selected ? "true" : "false"); }
   }
   function ccToolsWrapSelect(sel) {
     if (sel.getAttribute("data-cc-tsel") || sel.getAttribute("data-cc-tgl")) return;   // already ours / a yes-no toggle (#24)
@@ -1624,7 +1643,7 @@
     for (var k = 0; k < sel.options.length; k++) {
       var o = sel.options[k], gl = o.parentNode && o.parentNode.tagName === "OPTGROUP" ? o.parentNode.label : null;
       if (gl && gl !== lastGroup) { var grp = ccMkEl("div", "cc-tsel-group", gl); grp.setAttribute("role", "presentation"); panel.appendChild(grp); lastGroup = gl; }
-      var chip = ccMkEl("div", "cc-tsel-opt", o.text); chip.setAttribute("data-i", k);
+      var chip = ccMkEl("div", "cc-tsel-opt", ccLangLabel(sel, o)); chip.setAttribute("data-i", k);
       chip.setAttribute("role", "option"); chip.setAttribute("aria-selected", o.selected ? "true" : "false"); chip.setAttribute("tabindex", "-1");
       var pick = (function (idx) { return function (ev) { ev.stopPropagation(); if (sel.options[idx].disabled) return; sel.selectedIndex = idx; sel.dispatchEvent(new Event("change", { bubbles: true })); ccToolsSyncSel(sel); wrap.classList.remove("cc-open"); trig.setAttribute("aria-expanded", "false"); trig.focus(); }; })(k);
       chip.addEventListener("click", pick);

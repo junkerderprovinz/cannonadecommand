@@ -90,6 +90,7 @@
   var ccFirstPaintDone = false;   // #33 (user: "lassen den spinner anzeigen solange es lädt") — cleared once, in moSweep()
   var ccUpBg = "", ccUpFg = "";   // #freeze (see injectAllRowBadges) — the update-pill colours, computed ONCE per pass, not per row
   var ccAdvCache = null;          // #freeze2 (see isAdvancedView) — Advanced/Basic view, cached for one pass, not per call
+  var ccBulkSel = {};             // bulk-select: name -> {id, image}, cleared after every bulk action or explicit clear
   var ccEnhBusyStart = 0;   // #33-followup: timestamp cc-enh-busy was set, so the clear can enforce a minimum visible time
 
   // ───────────────────────── api + helpers
@@ -762,6 +763,23 @@
       var name = rowName(tr);
       if (filterText) tr.style.display = (norm(name).indexOf(filterText) >= 0) ? "" : "none";
       var nameCell = tr.querySelector("td.ct-name"), upCell = tr.querySelector("td.updatecolumn");
+      // ── bulk-select checkbox (user forum feature request: select several containers,
+      // start/stop/remove together). Lives BEFORE the theming gate — works with theming off
+      // too, since it's functional, not cosmetic. Sits as the first flex child of .outer so
+      // it just pushes the icon right, no absolute positioning and no new <td>/column that
+      // would shift every nth-child offset used later in this function.
+      var outerEl = nameCell && nameCell.querySelector(".outer");
+      if (outerEl && !outerEl.querySelector(".cc-bulk-cb")) {
+        var bcb = el("input", "cc-bulk-cb"); bcb.type = "checkbox"; bcb.setAttribute(MARK, "1");
+        bcb.checked = !!ccBulkSel[name];
+        bcb.addEventListener("click", function (e) { e.stopPropagation(); });
+        bcb.addEventListener("change", function () {
+          if (bcb.checked) { var cx0 = ctxFor(name, tr); ccBulkSel[name] = { id: cx0.id, image: cx0.image }; }
+          else delete ccBulkSel[name];
+          ccBulkBarSync();
+        });
+        outerEl.insertBefore(bcb, outerEl.firstChild);
+      }
       // COSMETIC row centring — theming only. Native cells keep their native alignment
       // when theming is off; the orchestration controls below still inject.
       if (themingOn()) {
@@ -1359,6 +1377,71 @@
       .catch(function (e) { delete pendingAction[name]; flash("Error: " + e.message, true); syncStateBadges(); });
   }
   function actionBtn(label, name, action, primary) { var b = el("button", "cc-abtn" + (primary ? " cc-abtn-primary" : ""), label); b.addEventListener("click", function (e) { e.stopPropagation(); doAction(name, action); }); return b; }
+
+  // ───────────────────────── bulk-select action bar (user forum feature request: select
+  // several containers, start/stop/remove together). Start/stop/restart go through CC's OWN
+  // engine API (same doAction/api() path every single-container button already uses) — one
+  // request per container, in parallel, ONE load() at the end instead of one per container.
+  // Remove is different: the engine deliberately never does destructive removal (CLAUDE.md:
+  // "list/start/stop/update only"), so bulk-remove drives Unraid's OWN native docker-manager
+  // endpoint directly (the same Events.php + remove_container action rmContainer() uses,
+  // confirmed live via ajax instrumentation during the freeze investigation), behind ONE
+  // combined native-style swal() confirm instead of one dialog per container.
+  var ccBulkBarEl = null;
+  function ccBulkBarSync() {
+    var names = Object.keys(ccBulkSel);
+    if (!names.length) { if (ccBulkBarEl) ccBulkBarEl.style.setProperty("display", "none", "important"); return; }
+    var de = LANG === "de";
+    if (!ccBulkBarEl) {
+      var bar = el("div", "cc-bulkbar");
+      var count = el("span", "cc-bulkbar-count"); bar.appendChild(count);
+      var startB = el("span", "cc-b cc-bulkbtn", de ? "Starten" : "Start"); startB.addEventListener("click", function () { ccBulkRun("start"); }); bar.appendChild(startB);
+      var stopB = el("span", "cc-b cc-bulkbtn", de ? "Stoppen" : "Stop"); stopB.addEventListener("click", function () { ccBulkRun("stop"); }); bar.appendChild(stopB);
+      var rmB = el("span", "cc-b cc-bulkbtn cc-bulkbtn-danger", de ? "Entfernen" : "Remove"); rmB.addEventListener("click", ccBulkRemove); bar.appendChild(rmB);
+      var clearB = el("span", "cc-b cc-bulkbtn cc-bulkbtn-clear", de ? "Aufheben" : "Clear"); clearB.addEventListener("click", function () { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); }); bar.appendChild(clearB);
+      document.body.appendChild(bar);
+      ccBulkBarEl = bar;
+    }
+    ccBulkBarEl.style.removeProperty("display");
+    ccBulkBarEl.querySelector(".cc-bulkbar-count").textContent = names.length + " " + (de ? "ausgewählt" : "selected");
+  }
+  // after a bulk action / clear, every checkbox must un-tick — rows keep ROWMARK across a
+  // wholesale tbody replace only within the SAME dataset, so this also has to survive the
+  // fresh <tr>s a native replace creates (those start unchecked already, nothing to do there).
+  function ccBulkSyncCheckboxes() {
+    Array.prototype.slice.call(document.querySelectorAll(".cc-bulk-cb")).forEach(function (cb) { cb.checked = false; });
+  }
+  function ccBulkRun(action) {
+    var names = Object.keys(ccBulkSel);
+    if (!names.length) return;
+    flash((action === "start" ? (LANG === "de" ? "Starte " : "Starting ") : (LANG === "de" ? "Stoppe " : "Stopping ")) + names.length + "…");
+    Promise.all(names.map(function (n) { return api("POST", "action", { name: n, action: action }).catch(function () {}); }))
+      .then(function () { return load(); })
+      .then(function () { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); flash(t("done")); });
+  }
+  function ccBulkRemove() {
+    var names = Object.keys(ccBulkSel);
+    if (!names.length || typeof window.swal !== "function") return;
+    var de = LANG === "de";
+    window.swal({
+      title: de ? "Sicher?" : "Are you sure?",
+      text: (de ? names.length + " Container entfernen: " : "Remove " + names.length + " containers: ") + names.join(", "),
+      type: "warning", showCancelButton: true,
+      confirmButtonText: de ? "Ja, entfernen" : "Yes, remove", cancelButtonText: de ? "Abbrechen" : "Cancel"
+    }, function (ok) {
+      if (!ok) return;
+      var tok = csrfToken();
+      var reqs = names.map(function (n) {
+        var info = ccBulkSel[n] || {};
+        var body = "action=remove_container&container=" + encodeURIComponent(info.id || "") + "&name=" + encodeURIComponent(n) + "&image=" + encodeURIComponent(info.image || "") + (tok ? "&csrf_token=" + encodeURIComponent(tok) : "");
+        return fetch("/plugins/dynamix.docker.manager/include/Events.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body }).catch(function () {});
+      });
+      Promise.all(reqs).then(function () {
+        ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync();
+        if (typeof window.loadlist === "function") window.loadlist();
+      });
+    });
+  }
   function lifecycle(c) {
     var box = el("span", "cc-life");
     if (c.state === "running") { box.appendChild(actionBtn(t("stop"), c.name, "stop")); box.appendChild(actionBtn(t("restart"), c.name, "restart")); box.appendChild(actionBtn(t("pause"), c.name, "pause")); }
@@ -2515,6 +2598,7 @@
       clearRowBadges();
       try { var rs = document.documentElement.style; ["--cc-icon-color", "--cc-icon-strength", "--cc-accent", "--cc-density"].forEach(function (p) { rs.removeProperty(p); }); } catch (e) {}
       Array.prototype.slice.call(document.querySelectorAll(".cc-hgear, .cc-grid-holder, .cc-menu, .cc-toast, .cc-pop, #cc-names")).forEach(function (n) { n.remove(); });
+      if (ccBulkBarEl) { ccBulkBarEl.remove(); ccBulkBarEl = null; } ccBulkSel = {};
       hideNative(false);
     } catch (e) {}
   }

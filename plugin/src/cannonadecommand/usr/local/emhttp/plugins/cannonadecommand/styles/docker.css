@@ -225,6 +225,30 @@ html.cc-shares-rbneutral:not(.cc-state-native) .cc-enh #docker_list tr:hover .cc
 }
 .cc-b-del:hover { filter: brightness(1.12); }
 .cc-cb-del { accent-color: var(--cc-accent, #2f6feb); width: 16px; height: 16px; margin: 0 8px 0 0; cursor: pointer; vertical-align: middle; }
+/* ── bulk-select toolbar (user forum feature request): a per-row checkbox (first flex child
+   of .outer, see docker.js) plus a floating toolbar that appears once 1+ rows are checked.
+   The toolbar's buttons ride the SAME md tier as the canonical .cc-b-del delete control above,
+   so Start/Stop/Remove/Clear read as one consistent cluster, not mismatched sizes. */
+.cc-bulk-cb { accent-color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); width: 16px; height: 16px; margin: 0 8px 0 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; }
+.cc-bulkbar {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(var(--cc-footer-h, 0px) + var(--cc-actbar-h, 40px) + 10px);
+  z-index: 999; display: flex; align-items: center; gap: 8px;
+  background: var(--cc-bg, #161616); border-radius: var(--cc-b-radius, 999px);
+  padding: 6px 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+}
+.cc-bulkbar-count { font-size: var(--cc-md-fs, 13px); font-weight: 600; color: var(--cc-text, #e6e6e6); padding: 0 6px; white-space: nowrap; }
+.cc-bulkbtn {
+  display: inline-flex !important; align-items: center; justify-content: center; cursor: pointer;
+  border-radius: var(--cc-b-radius, 999px) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
+  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1.5;
+  text-transform: uppercase; letter-spacing: .6px; text-decoration: none; vertical-align: middle;
+  transition: filter .12s; border: none !important; box-shadow: none !important; white-space: nowrap;
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+}
+.cc-bulkbtn:hover { filter: brightness(1.14); }
+.cc-bulkbtn-clear { background: rgba(128, 128, 128, .28) !important; color: #cfcfcf !important; } /* dismiss, never accent/rainbow — GLS rule 4: neutral resting state */
+.cc-bulkbtn-danger { background: var(--cc-err, #d9433f) !important; color: #fff !important; } /* remove is destructive — semantic red, never accent/rainbow, matches .cc-b-del */
 /* #17/#27: on the Plugins page the per-row uninstall becomes a single trash ICON with a CC
    confirmation (plugins.js gates its native openInstall behind ccPluginConfirm), so Unraid's
    separate confirm checkbox is redundant — hide it — and the red text badge collapses to an
