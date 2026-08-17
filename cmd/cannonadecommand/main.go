@@ -139,7 +139,11 @@ func serve() {
 	go mon.Run(ctx)
 
 	log.Print("\n" + bannerArt)
-	log.Printf("CANNONADECOMMAND %s IS READY — api %s · data %s · docker %s", version, apiSock, dataDir, dockerSock)
+	// Plain text, no ANSI color: this goes to /var/log/cannonadecommand.log
+	// (see rc.cannonadecommand), a flat file viewed through Unraid's generic
+	// log UI, not an ANSI-aware terminal like the docker log viewer the
+	// container images use.
+	log.Printf("✓ CANNONADECOMMAND %s IS READY - api %s · data %s · docker %s", version, apiSock, dataDir, dockerSock)
 
 	if err := httpSrv.Serve(ln); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("cannonadecommand: serve: %v", err)
