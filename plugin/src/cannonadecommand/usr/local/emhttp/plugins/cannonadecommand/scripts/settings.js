@@ -312,11 +312,14 @@
     // The RUNNING engine version, always findable HERE (the Docker-tab gear was hard to
     // locate) — an old value after an update = the update didn't take / daemon not restarted.
     var CC_VER = "@@CCVER@@"; if (CC_VER.indexOf("@@") === 0) CC_VER = "dev";
+    // GlimStone version this UI is built against — bump by hand whenever tokens.css /
+    // appearance.ts are re-copied from a newer github.com/junkerderprovinz/glimstone release.
+    var GLS_VER = "1.5.0";
     // #14 (user): the version line moves to the very BOTTOM of the page (appended to root after all wraps, below).
-    var verLine = el("div", "cc-set-sub cc-set-version cc-set-version-foot", "UI v" + CC_VER + " · " + T("Engine: verbinde…", "Engine: connecting…"));
+    var verLine = el("div", "cc-set-sub cc-set-version cc-set-version-foot", "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + T("Engine: verbinde…", "Engine: connecting…"));
     api("GET", "state").then(function (s) {
-      verLine.textContent = "UI v" + CC_VER + " · " + ((s && s.version) ? ("Engine " + String(s.version).replace(/^v/, "v")) + " · " + T("läuft", "running") : T("Engine läuft (Version unbekannt)", "Engine running (version unknown)"));
-    }).catch(function (e) { verLine.textContent = "UI v" + CC_VER + " · " + T("Engine NICHT erreichbar", "Engine NOT reachable") + " — " + (e && e.message ? e.message : ""); verLine.style.color = "#d9433f"; });
+      verLine.textContent = "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + ((s && s.version) ? ("Engine " + String(s.version).replace(/^v/, "v")) + " · " + T("läuft", "running") : T("Engine läuft (Version unbekannt)", "Engine running (version unknown)"));
+    }).catch(function (e) { verLine.textContent = "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + T("Engine NICHT erreichbar", "Engine NOT reachable") + " — " + (e && e.message ? e.message : ""); verLine.style.color = "#d9433f"; });
     // #26/#13 (user): quick settings search — filters cards/rows across ALL tabs. It sits far-RIGHT in the
     // hero (where the version used to be) as a BADGE with a magnifier that EXPANDS to the input on click.
     var setSearch = el("input", "cc-set-search"); setSearch.type = "search"; setSearch.placeholder = T("Einstellungen durchsuchen …", "Search settings …"); setSearch.spellcheck = false;
