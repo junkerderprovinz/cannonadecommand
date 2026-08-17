@@ -36,8 +36,11 @@ console.log('\nccLangLabel only touches the locale <select> — every other <sel
   const otherSel = { name: 'colview' };
   const deOpt = { value: 'de_DE', text: 'Deutsch (German)' };
   const plainOpt = { value: 'x', text: 'Some other option' };
-  ok('locale select: label gets the flag prefixed', api.ccLangLabel(localeSel, deOpt) === '🇩🇪 Deutsch (German)', api.ccLangLabel(localeSel, deOpt));
-  ok('non-locale select: label passes through unchanged', api.ccLangLabel(otherSel, plainOpt) === 'Some other option', api.ccLangLabel(otherSel, plainOpt));
+  // #83 (user: "Bei deutsch steht der text in der klammer noch da"): ccLangLabel now strips a
+  // trailing "(...)" from the NATIVE option text too, not just CC's own "available" entries —
+  // Unraid's own "Deutsch (German)" becomes just "Deutsch", matching the clean single-name style.
+  ok('locale select: label gets the flag prefixed and the trailing parenthetical stripped', api.ccLangLabel(localeSel, deOpt) === '🇩🇪 Deutsch', api.ccLangLabel(localeSel, deOpt));
+  ok('non-locale select: label passes through unchanged, parenthetical untouched', api.ccLangLabel(otherSel, plainOpt) === 'Some other option', api.ccLangLabel(otherSel, plainOpt));
 }
 
 console.log(fail ? '\nFAIL  ' + fail + ' of ' + (pass + fail) : '\nOK  ' + pass + ' passed');

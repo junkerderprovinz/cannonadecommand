@@ -1617,10 +1617,15 @@
   }
   // scoped to name="locale" only — every OTHER <select> on the site goes through this same
   // generic ccToolsWrapSelect/ccToolsSyncSel pair and must render unchanged.
+  // #83 (user: "Bei deutsch steht der text in der klammer noch da"): the earlier #81 fix only
+  // stripped the parenthetical CC itself added to the "available, not installed" entries — this
+  // native <option>'s own text ("Deutsch (German)") is Unraid's, not CC's, but the same clean
+  // single-name style now applies to it too for consistency across the whole dropdown.
   function ccLangLabel(sel, o) {
     if (sel.name !== "locale") return o.text;
     var flag = ccLocaleFlag(o.value);
-    return flag ? flag + " " + o.text : o.text;
+    var text = o.text.replace(/\s*\([^)]*\)\s*$/, "");
+    return flag ? flag + " " + text : text;
   }
   // #77 (user: "alle verfügbaren Sprachen anzeigen und auf klick runterladen und installieren"): Unraid's
   // official language packs (github.com/unraid/language-templates) are ordinary Community-Applications
@@ -1642,10 +1647,10 @@
       .then(function (r) { return r.ok ? r.json() : []; })
       .then(function (packs) {
         if (!Array.isArray(packs) || !panel.isConnected) return;
-        var added = false;
+        // #83 (user: "am unteren ende der liste steht verfügbar (nicht installiert) -> das kann weg")
+        // — no group label; the download glyph on each entry already signals "not installed" on its own.
         packs.forEach(function (p) {
           if (!p || !p.code || installed[p.code]) return;
-          added = true;
           var chip = ccMkEl("div", "cc-tsel-opt cc-tsel-opt-avail");
           // ccToolsSyncSel's resync loop reads +c[k].getAttribute("data-i") — a MISSING attribute gives
           // null, and +null === 0 (not NaN), which resolved to sel.options[0] ("English") for every one
@@ -1665,7 +1670,6 @@
           });
           panel.appendChild(chip);
         });
-        if (added) { var grp = ccMkEl("div", "cc-tsel-group", LANG === "de" ? "Verfügbar (nicht installiert)" : "Available (not installed)"); grp.setAttribute("role", "presentation"); panel.insertBefore(grp, null); }
       })
       .catch(function () {});
   }
@@ -3171,6 +3175,12 @@
         menu.appendChild(row);
       });
       document.body.appendChild(menu);
+      // #84 (user: "das actions menü in der appcard: die dropdownliste ist nicht in die farbmodi
+      // integriert"): the hamburger BUTTON was already in ccAppsStamp's sweep (--cc-rb-c on
+      // .cc-ca-menu-btn), but the menu itself renders into document.body fresh on every open — a
+      // separate DOM branch the page-wide sweep's timing can't reliably catch before/after each
+      // open/close cycle. Stamp its items directly here, at creation, every time it opens.
+      ccAppsStamp(".cc-ca-menu-item");
       var r = btn.getBoundingClientRect(), mr = menu.getBoundingClientRect();
       menu.style.left = Math.max(8, Math.min(r.right - mr.width, window.innerWidth - mr.width - 8)) + "px";
       menu.style.top = (r.bottom + 4) + "px";
@@ -3301,7 +3311,30 @@
     "Home": "Start", "Installed Apps": "Installierte Apps", "Previous Apps": "Bisherige Apps",
     "Pinned Apps": "Angeheftete Apps", "Favourite Repo": "Bevorzugtes Repository", "Action Centre": "Aktionszentrale",
     "SHOW MORE": "MEHR ANZEIGEN", "Results Per Page": "Ergebnisse pro Seite", "Sort By:": "Sortieren nach:",
-    "Name Ascending": "Name aufsteigend", "Name Descending": "Name absteigend", "Date Added": "Hinzugefügt am"
+    "Name Ascending": "Name aufsteigend", "Name Descending": "Name absteigend", "Date Added": "Hinzugefügt am",
+    // #85 (user, repeated: "die abschnittbadges fehlen noch in der übersetzung") — the first pass only
+    // covered what was visible without opening every category; the full sidebar sweep turned up plenty
+    // more section names still English.
+    "Language": "Sprache", "Media Applications": "Medienanwendungen", "Media Servers": "Medienserver",
+    "Network Services": "Netzwerkdienste", "Tools / Utilities": "Werkzeuge", "Utilities": "Dienstprogramme",
+    "All Apps": "Alle Apps", "Statistics": "Statistiken", "Change Log": "Änderungsprotokoll", "Debugging": "Fehlersuche",
+    // #85-B (user, 3rd report, verbatim: "die abschnittbadges fehlen noch in der übersetzung") — the PREVIOUS
+    // #85 pass only covered the sidebar (.caMenuItem etc); the actual "Abschnittbadges" the user meant are CC's
+    // own .cc-sechead-badge pills above each horizontal app row (RECENTLY ADDED, SPOTLIGHT APPS, ...) plus their
+    // info-bubble subtitle sentences — both built from CA's exec.php $startupTypes text1/text2, which CA's own
+    // tr() leaves in English for this locale (same native-CA i18n gap #82 already diagnosed, just a spot #82
+    // missed). Title strings, keyed exactly as CA emits them (source-cased, .cc-sechead-badge applies its own
+    // uppercase via CSS):
+    "Featured Applications": "Empfohlene Anwendungen", "Recently Added": "Kürzlich hinzugefügt",
+    "Spotlight Apps": "Spotlight-Apps", "Top Trending Apps": "Angesagte Apps", "Top New Installs": "Top-Neuinstallationen",
+    "Most Popular Plugins": "Beliebteste Plugins", "Random Apps": "Zufällige Apps",
+    // ...and their text2 subtitle sentences (shown inside the (i) info bubble):
+    "Check out these newly added applications from our awesome community": "Entdecke diese neu hinzugefügten Anwendungen aus unserer großartigen Community",
+    "Each month we highlight some of the amazing work from our community": "Jeden Monat heben wir einige der großartigen Arbeiten aus unserer Community hervor",
+    "Check out these up and coming apps": "Entdecke diese aufstrebenden Apps",
+    "These apps have the highest percentage of new installs": "Diese Apps haben den höchsten Anteil an Neuinstallationen",
+    "The most popular plugins installed by other Unraid users": "Die beliebtesten Plugins, die von anderen Unraid-Nutzern installiert wurden",
+    "An assortment of randomly chosen apps": "Eine Auswahl zufällig ausgewählter Apps"
   };
   function ccAppsTranslateNative() {
     if (LANG !== "de") return;
@@ -3538,6 +3571,9 @@
         if (!head.querySelector(".cc-sechead-badge")) {
           var tb = document.createElement("span"); tb.className = "cc-sechead-badge";
           while (head.firstChild) tb.appendChild(head.firstChild);
+          // #85-B: translate the badge's own moved-in native text (see CC_APPS_XLATE_DE above) — safe as a
+          // wholesale textContent overwrite because every source header here is plain text, no child elements.
+          if (LANG === "de") { var xlB = CC_APPS_XLATE_DE[tb.textContent.trim()]; if (xlB) tb.textContent = xlB; }
           head.appendChild(tb);
         }
         var line2 = head.nextElementSibling;
@@ -3545,6 +3581,7 @@
         var more = line2.querySelector(".homeMore"), sub = "";
         for (var n = 0; n < line2.childNodes.length; n++) { var nd = line2.childNodes[n]; if (nd.nodeType === 3) sub += nd.textContent; }
         sub = sub.trim();
+        if (LANG === "de" && CC_APPS_XLATE_DE[sub]) sub = CC_APPS_XLATE_DE[sub];   // #85-B: text2 subtitle
         // #5: the horizontal-scroll hint. Corrected — it works ONLY with the right mouse button held down,
         // not with the wheel, and it gets its own paragraph so it doesn't drown in the section text.
         if (sub) sub += "\n\n" + T("Tipp: seitlich scrollen mit gedrückter rechter Maustaste.",

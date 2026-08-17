@@ -483,17 +483,18 @@ html.cc-popups-on #displaybox .cc-tsel-opt:hover,
 html.cc-popups-on #displaybox .cc-tsel-opt.is-selected { filter: brightness(1.18); box-shadow: none !important; }
 html.cc-tools-on #displaybox .cc-tsel-opt.is-disabled,
 html.cc-popups-on #displaybox .cc-tsel-opt.is-disabled { opacity: .45; cursor: not-allowed; }
-/* #77 (user: "alle verfügbaren Sprachen anzeigen und auf klick runterladen und installieren"): the
-   Sprache/Language dropdown's own extra "available but not installed" entries (ccLangAugmentPanel,
-   header.js) — visually distinct from a real, selectable option: outlined instead of filled, no rainbow
-   stamping (these carry no data-i so ccPaintRotate/ccToolsSyncSel never touch them), a trailing download
-   glyph makes the "this installs something" affordance explicit rather than reading as a normal pick. */
+/* #77/#83 (user: "die nicht installierten sprachen haben einen button mit rahmenlinie. das darf
+   nicht sein. entspricht nicht dem GLS"): a border was the wrong tool — GLS never uses border lines,
+   only background shade differences. Distinct from a real, selectable option via a DIMMER fill
+   instead (no rainbow stamping either, since these carry no data-i so ccPaintRotate/ccToolsSyncSel
+   never touch them) — the trailing download glyph is what actually signals "this installs
+   something", the shade is just a secondary/lower-emphasis cue. */
 html.cc-popups-on #displaybox .cc-tsel-opt-avail {
-  background: transparent !important; border: 1px dashed var(--cc-shade-line, rgba(128, 128, 128, .3)) !important;
-  color: var(--cc-text-chip, #cfcfcf) !important; justify-content: space-between !important;
+  background: var(--cc-surface-1, rgba(255, 255, 255, .04)) !important;
+  color: var(--cc-text-dim, #8a8a8a) !important; justify-content: space-between !important;
 }
 html.cc-popups-on #displaybox .cc-tsel-opt-avail:hover {
-  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; filter: none !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important; filter: none !important;
 }
 html.cc-popups-on #displaybox .cc-tsel-avail-dl { opacity: .7; font-size: 11px; }
 /* #1 CORRECTION (user): in the REACTIVE sub-mode (cc.rbmode=active) the list items REST neutral and reveal
@@ -616,6 +617,16 @@ html.cc-tools-on #displaybox .cc-colpick {
 }
 html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch-wrapper { padding: 0; }
 html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch { border: none; border-radius: 4px; }
+/* #86-B (user: "die Farbwählfelder und das Hexfeld in eine Zeile. Das Hexfeld soll so breit sein, dass es
+   rechts bündig mit den ganzen Dropdownlisten abschließt"): this dd inherits Unraid's native
+   dd{flex-direction:column}, stacking the swatch above the hex text on separate lines. It also has no
+   sibling field in its grid row (Eigene Kopfzeilen-...farbe rows run alone), so left alone it stretches
+   across the whole remaining grid width instead of matching a normal field's width. Row the two children
+   and cap the row at 240px — the SAME min-width every themed dropdown trigger on this page already uses
+   (html.cc-popups-on #displaybox .cc-tsel-trigger below) — so the hex field's right edge lands exactly
+   where every dropdown's right edge already does. */
+html.cc-tools-on #displaybox dd:has(> .cc-colpick) { flex-direction: row !important; align-items: center; max-width: 240px; }
+html.cc-tools-on #displaybox dd:has(> .cc-colpick) input[type="text"][data-cc-colpick] { flex: 1 1 auto; width: auto; min-width: 0; }
 
 /* #3-B REVERTED (user: "native Ausrichtung soll bleiben"): the native field widths stand — CC no longer stretches
    selects/inputs to fill the value column, so the form keeps its native proportions. */

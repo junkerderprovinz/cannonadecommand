@@ -966,7 +966,14 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-rb-
 .cc-set-row-segfirst .cc-seg { margin-left: auto; }
 #cc-settings .cc-seg-btn { padding: 5px 12px; }
 .cc-set-spacer { flex: 1; }
-.cc-set-swatches { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 6px; }
+/* #86 (user: "die Farbwählfelder und das Hexfeld in eine Zeile. Das Hexfeld soll so breit sein,
+   dass es rechts bündig mit den ganzen Dropdownlisten abschließt"): flex-wrap let the row break
+   onto two lines once enough swatches were present, dropping the hex field below them instead of
+   beside them — nowrap keeps them on one line; the swatches stay fixed-size (.cc-set-sw's own
+   flex:none), so the hex field (below, now flex:1 1 auto instead of a fixed 104px) is what absorbs
+   the remaining width, growing out to the row's own right edge — the same edge every dropdown-
+   carrying row in this settings card already reaches, since they share one container width. */
+.cc-set-swatches { display: flex; align-items: center; gap: 9px; flex-wrap: nowrap; margin-bottom: 6px; }
 .cc-set-sw { width: 30px; height: 30px; box-sizing: border-box; border-radius: var(--cc-b-radius, 50%); border: 2px solid transparent; cursor: pointer; padding: 0; flex: none; } /* #5: ONE swatch size everywhere */ /* colour swatches follow the BADGE SHAPE token like the badges (user: sollen der Badge-Form folgen) */
 .cc-set-sw-on { transform: scale(1.18); filter: brightness(1.15); }   /* ring-free on-state — KEINE Rahmen/Ringe (Nutzer-Gesetz) */
 /* colour picker: force it VISIBLE as a real swatch. Unraid's global input CSS
@@ -983,7 +990,7 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-rb-
 #cc-settings input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
 .cc-set-pick { width: 40px; height: 30px; box-sizing: border-box; }
 /* hex text field beside the colour picker (override Unraid's input underline) */
-#cc-settings .cc-set-hexin { flex: none; width: 104px; height: 30px; font-family: ui-monospace, "Cascadia Code", monospace; text-transform: uppercase; letter-spacing: .5px; background: var(--cc-surface-chip, #383838) !important; color: var(--txt); border: none !important; outline: none !important; border-radius: 6px !important; padding: 0 10px !important; font-size: 13px; box-sizing: border-box; }   /* #5: NO border line (CC law), filled bg, same 30px height as swatches */ /* #5: hex field = same 28px height as the swatches */
+#cc-settings .cc-set-hexin { flex: 1 1 auto; min-width: 90px; height: 30px; font-family: ui-monospace, "Cascadia Code", monospace; text-transform: uppercase; letter-spacing: .5px; background: var(--cc-surface-chip, #383838) !important; color: var(--txt); border: none !important; outline: none !important; border-radius: 6px !important; padding: 0 10px !important; font-size: 13px; box-sizing: border-box; }   /* #5: NO border line (CC law), filled bg, same 30px height as swatches */ /* #86: flex:1 (was a fixed 104px) so it grows to the row's own right edge, matching every dropdown row */
 #cc-settings .cc-set-hexin:focus { outline: none; border-color: var(--cc-accent, #2f6feb) !important; }
 /* #20: native <select> styled as a clearly-readable CC control (Servername size/weight/italic/font
    pickers). The old #232323 fill barely differed from the card, so the pickers read as underlined text
