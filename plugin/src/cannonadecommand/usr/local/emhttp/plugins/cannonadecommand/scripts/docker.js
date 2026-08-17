@@ -88,6 +88,8 @@
   var filterText = "", gridHolder = null, openPop = null, openPopAnchor = null, menu = null, menuAnchor = null, menuStatusEl = null, toastEl = null, toastTimer = null;
   var mo = null, dead = false, lastAdv = false, timers = [], moPending = false, moTimer = null, lastObsLoad = 0, moTrail = false;
   var ccFirstPaintDone = false;   // #33 (user: "lassen den spinner anzeigen solange es lädt") — cleared once, in moSweep()
+  var ccUpBg = "", ccUpFg = "";   // #freeze (see injectAllRowBadges) — the update-pill colours, computed ONCE per pass, not per row
+  var ccAdvCache = null;          // #freeze2 (see isAdvancedView) — Advanced/Basic view, cached for one pass, not per call
   var ccEnhBusyStart = 0;   // #33-followup: timestamp cc-enh-busy was set, so the clear can enforce a minimum visible time
 
   // ───────────────────────── api + helpers
@@ -146,7 +148,19 @@
   // container state from the native glyph <i id='load-..' class='fa fa-play|pause|square ..'>
   function glyphState(g) { if (!g) return ""; var c = " " + (g.className || "") + " "; if (/\bfa-play\b/.test(c)) return "running"; if (/\bfa-pause\b/.test(c)) return "paused"; if (/\bfa-square\b/.test(c)) return "exited"; return ""; }
   // Unraid's Advanced/Basic view is a cookie + global .advanced/.basic toggle (no body class).
-  function isAdvancedView() {
+  // #freeze2 (live-profiled with a CDP CPU sampling profile, container-remove freeze): on a host
+  // with no docker_listview_mode cookie set (confirmed live — the cookie plainly doesn't exist on
+  // this box), EVERY call falls through to the slow path: a table-wide querySelector() PLUS a
+  // getComputedStyle() that forces a synchronous style recalc. colOn() alone calls this once per
+  // COLUMN (~10x) on top of injectRowBadges' own direct call, so one native full-tbody replace (any
+  // remove/start/stop/update) meant ~11 calls x every row, each an O(rows) scan + a forced recalc —
+  // the profiler showed this single function eating ~13 of the ~27 blocked seconds on a 54-container
+  // host. The result cannot change mid-pass (nothing here mutates the view toggle while rows are
+  // being enhanced), so isAdvancedViewReal() is now cached for the duration of one pass by
+  // injectAllRowBadges() instead of re-derived on every call (ccAdvCache is declared with the
+  // other pass-scoped state near the top of this file).
+  function isAdvancedView() { return ccAdvCache !== null ? ccAdvCache : isAdvancedViewReal(); }
+  function isAdvancedViewReal() {
     try { var m = document.cookie.match(/(?:^|;\s*)docker_listview_mode=([^;]+)/); if (m) return decodeURIComponent(m[1]) === "advanced"; var a = document.querySelector("#docker_list .advanced"); return a ? getComputedStyle(a).display !== "none" : false; } catch (e) { return false; }
   }
   function readContainerId(advDiv) { try { var m = /container id[:\s]+([0-9a-f]{6,})/i.exec(advDiv.textContent || ""); return m ? m[1] : ""; } catch (e) { return ""; } }
@@ -860,14 +874,11 @@
           // so the :has() CSS never fired and only bare text showed.
           // #5 (user: the UPDATE badge belongs to the state indicators): native state colours ON ->
           // keep the amber "update" pill; OFF -> integrate it into the colour mode (rainbow/flag/accent).
-          var upNative = localStorage.getItem("cc.statenative") === "1";
-          var upRs = getComputedStyle(document.documentElement);
-          var upBg = upNative ? "#e0912a" : ((upRs.getPropertyValue("--cc-rbaccent") || "").trim() || (upRs.getPropertyValue("--cc-accent") || "").trim() || "#e0912a");
-          var upFg = upNative ? "#1a1a1a" : ((upRs.getPropertyValue("--cc-rbaccent-text") || "").trim() || (upRs.getPropertyValue("--cc-accent-text") || "").trim() || "#1a1a1a");
+          // ccUpBg/ccUpFg are computed ONCE per pass in injectAllRowBadges — see the #freeze comment there.
           Array.prototype.slice.call(upCell.querySelectorAll("a.exec")).forEach(function (ax) {
             if (ax.closest("div.advanced")) return;
-            ax.style.setProperty("background", upBg, "important");
-            ax.style.setProperty("color", upFg, "important");
+            ax.style.setProperty("background", ccUpBg, "important");
+            ax.style.setProperty("color", ccUpFg, "important");
             ax.style.setProperty("display", "inline-flex", "important");
             ax.style.setProperty("align-items", "center", "important");
           });
@@ -1224,19 +1235,38 @@
     } catch (e) {}
   }
   function injectAllRowBadges() {
-    relocateTopBar(); findRows().forEach(injectRowBadges);
-    if (themingOn()) { // centring is cosmetic — native rows keep native alignment when theming off
-      requestAnimationFrame(centerNameCells);
-      setTimeout(centerNameCells, 800); // late-loading icon images change the row height
-      // TIPIFY: whatever still carries a native title in the list (ShipLog's .sl-chip,
-      // Unraid's wait-seconds inputs, future strays) becomes a CC bubble — the native
-      // balloon look is outlawed. nchan rebuilds rows with the title back, so this runs
-      // per pass; teardown is free (native rows return on their own).
-      try {
-        var tl = document.querySelectorAll("#docker_list [title]");
-        for (var ti = 0; ti < tl.length; ti++) { var tt = tl[ti].getAttribute("title"); if (tt) { tl[ti].removeAttribute("title"); tl[ti].setAttribute("data-tip", tt); } }
-      } catch (e9) {}
-    }
+    relocateTopBar();
+    // #freeze (live-reported, container remove — same shape as the earlier update freeze): this used
+    // to be read with getComputedStyle(document.documentElement) INSIDE injectRowBadges, once per row,
+    // sandwiched between that row's own style.setProperty writes — every call forced a synchronous
+    // style recalc of the whole document. Unraid wholesale-replaces #docker_list's tbody after any
+    // remove/start/stop/update (fresh <tr>s, no ROWMARK), so on a host with 100+ containers (#33) this
+    // was 100+ forced recalcs back-to-back in ONE blocking task — a multi-second tab freeze. The value
+    // is page-global (only --cc-rbaccent/--cc-accent + the cc.statenative flag, never per-row), so
+    // compute it ONCE here before the per-row pass instead.
+    var upNative = localStorage.getItem("cc.statenative") === "1";
+    var upRs = getComputedStyle(document.documentElement);
+    ccUpBg = upNative ? "#e0912a" : ((upRs.getPropertyValue("--cc-rbaccent") || "").trim() || (upRs.getPropertyValue("--cc-accent") || "").trim() || "#e0912a");
+    ccUpFg = upNative ? "#1a1a1a" : ((upRs.getPropertyValue("--cc-rbaccent-text") || "").trim() || (upRs.getPropertyValue("--cc-accent-text") || "").trim() || "#1a1a1a");
+    // #freeze2 (see isAdvancedView above): cache the Advanced/Basic read for this whole pass —
+    // finally-reset so a mid-pass exception can never leave later ad-hoc calls (the settings-menu
+    // toggle, the 1500ms view-change poll) reading a stale cached value.
+    ccAdvCache = isAdvancedViewReal();
+    try {
+      findRows().forEach(injectRowBadges);
+      if (themingOn()) { // centring is cosmetic — native rows keep native alignment when theming off
+        requestAnimationFrame(centerNameCells);
+        setTimeout(centerNameCells, 800); // late-loading icon images change the row height
+        // TIPIFY: whatever still carries a native title in the list (ShipLog's .sl-chip,
+        // Unraid's wait-seconds inputs, future strays) becomes a CC bubble — the native
+        // balloon look is outlawed. nchan rebuilds rows with the title back, so this runs
+        // per pass; teardown is free (native rows return on their own).
+        try {
+          var tl = document.querySelectorAll("#docker_list [title]");
+          for (var ti = 0; ti < tl.length; ti++) { var tt = tl[ti].getAttribute("title"); if (tt) { tl[ti].removeAttribute("title"); tl[ti].setAttribute("data-tip", tt); } }
+        } catch (e9) {}
+      }
+    } finally { ccAdvCache = null; }
   }
   // EVIDENCE-BASED centring: measure where .outer actually sits inside td.ct-name and
   // compensate with translateY. CSS-only attempts kept failing because Unraid's own
