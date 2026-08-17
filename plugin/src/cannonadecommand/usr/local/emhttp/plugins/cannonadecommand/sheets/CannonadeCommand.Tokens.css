@@ -1268,14 +1268,14 @@ html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--c
    #70: CA also carries a native max-height:65px here that silently capped the intended 78px box below it —
    the same "a min/max-* property is separate from its base property" trap already hit on the hamburger's
    min-width and the CTA badge's !important display; max-height needs its own explicit override too. */
-/* #74 (user: "die textbox soll noch ein bischen weiter nach unten. Abstand zum logo ein bischen
-   größer und soll nach unten zum installieren badge den gleichen abstand haben"): symmetric 14px
-   gaps now — above (from the icon/name/author block, which ends at 94px) AND below (to .cc-castats,
-   whose own top edge is 240-8-30=202 given its bottom:8px + height 30px anchor), a bit more than the
-   old top-only 10px. Available band is fixed (94 to 202 = 108px), so 14+14 gap leaves an 80px box. */
+/* #75 (user repeated the #74 ask — this time with a visibly bigger correction): symmetric 18px gaps
+   now — above (from the icon/name/author block, which ends at 94px) AND below (to .cc-castats, whose
+   own top edge is 240-8-30=202 given its bottom:8px + height 30px anchor). Available band is fixed
+   (94 to 202 = 108px), so 18+18 gap leaves a 72px box — noticeably more breathing room than the
+   previous 14/14, still symmetric top/bottom as explicitly requested both times. */
 html.cc-popups-on .cardDescription {
-  position: absolute !important; left: 0 !important; right: 0 !important; top: 108px !important; bottom: auto !important;
-  height: 80px !important; max-height: 80px !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 6px !important;
+  position: absolute !important; left: 0 !important; right: 0 !important; top: 112px !important; bottom: auto !important;
+  height: 72px !important; max-height: 72px !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 6px !important;
 }
 html.cc-popups-on .cardDescription:hover { overflow-y: auto !important; }
 html.cc-popups-on .cardDesc { display: block !important; max-height: none !important; }
@@ -1378,6 +1378,19 @@ html.cc-apps-rbneutral.cc-popups-on .appDriver:hover,
 html.cc-apps-rbneutral.cc-popups-on .appRepository:hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
+/* #76 (user: "DVDCompress...gelbe Sprechblase...ein weiteren quadratischen badge...Achtung icon"): same
+   square-chip recipe as the type badge above, but semantic amber ALWAYS — a warning is never accent or
+   rainbow-coloured (GLS rule 4, matches .cc-b-warn elsewhere on this card). Position is set per-card by
+   ccAppsPositionTopBadges (header.js), not a fixed `right` here — it compacts around whichever of
+   type/warning/spotlight actually exist. */
+html.cc-popups-on .cc-warn-badge {
+  position: absolute !important; top: 14px !important; z-index: 4 !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  box-sizing: border-box !important; width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important; margin: 0 !important;
+  background: var(--cc-warn, #e0912a) !important; border-radius: var(--cc-b-radius, 8px) !important;
+  font-size: 14px !important; color: #1a1a1a !important; cursor: pointer !important;
+}
+html.cc-popups-on .cc-warn-badge:hover { filter: brightness(1.1) !important; }
 html.cc-popups-on .ca_bottomLine .actionsButton:hover { filter: brightness(1.08) !important; }
 html.cc-rb-on.cc-popups-on .ca_bottomLine .caButton {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important;
@@ -1467,7 +1480,11 @@ html.cc-popups-on .cc-cs-cta.cc-cs-cta-installed {
 html.cc-apps-rbneutral.cc-popups-on .cc-cs-cta.cc-cs-cta-update {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
-html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .cc-cs-cta.cc-cs-cta-update {
+/* #75 (user: "alle badges sollen im reaktiven modus separat reaktiv sein. jetzt leuchten mehrere wenn man
+   auf die card hovert"): was keyed on .ca_holder:hover — hovering ANYWHERE on the card lit this badge up
+   together with every other .ca_holder:hover-keyed badge below. .appDocker/.appPlugin etc already got this
+   right (their own :hover, not the card's). Match that: this badge reveals its colour only on ITS OWN hover. */
+html.cc-apps-rbneutral.cc-popups-on .cc-cs-cta.cc-cs-cta-update:hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
 
@@ -1515,14 +1532,18 @@ html.cc-popups-on .cc-ca-menu-item {
 }
 html.cc-popups-on .cc-ca-menu-item:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
 html.cc-popups-on .cc-ca-menu hr { border: none !important; border-top: 1px solid var(--cc-shade-line, rgba(128, 128, 128, .14)) !important; margin: 4px 2px !important; }
-/* REACTIVE MODE — only .actionsButton needs it: it is the one element here that is ALWAYS accent-filled
-   in Normal/Rainbow mode (a primary CTA, Rule 3's "activity"), so Reactive rests it neutral and colours it
-   only when the whole card is hovered. The hamburger itself is already neutral-rest/accent-on-its-own-hover
-   in every mode (a passive utility icon, not "activity"), so it needs no separate reactive rule at all. */
+/* REACTIVE MODE — .actionsButton is the one element here that is ALWAYS accent-filled in Normal/Rainbow
+   mode (a primary CTA, Rule 3's "activity"), so Reactive rests it neutral until hovered. The hamburger
+   itself is already neutral-rest/accent-on-its-own-hover in every mode (a passive utility icon, not
+   "activity"), so it needs no separate reactive rule at all.
+   #75 (user: "alle badges sollen im reaktiven modus separat reaktiv sein. jetzt leuchten mehrere wenn man
+   auf die card hovert"): this used to key off .ca_holder:hover — colouring on ANY card hover, together
+   with every other badge doing the same. Corrected to its OWN :hover, matching every other badge on the
+   card (the earlier "colour on whole-card hover" design is superseded by this explicit correction). */
 html.cc-apps-rbneutral.cc-popups-on .cc-castats .actionsButton {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
-html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .cc-castats .actionsButton {
+html.cc-apps-rbneutral.cc-popups-on .cc-castats .actionsButton:hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
 
@@ -1708,7 +1729,10 @@ html.cc-popups-on .homespotlightIconArea:hover {
 html.cc-apps-rbneutral.cc-popups-on .homespotlightIconArea {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
-html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .homespotlightIconArea {
+/* #75 (user: "alle badges sollen im reaktiven modus separat reaktiv sein. jetzt leuchten mehrere wenn man
+   auf die card hovert"): was .ca_holder:hover — every reactive-mode badge on the card lit up together on
+   ANY card hover. Own :hover now, matching the badge contract every other card badge already follows. */
+html.cc-apps-rbneutral.cc-popups-on .homespotlightIconArea:hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
 /* REACTIVE MODE — these are labels on a card, so they follow the badge contract like everything else.
@@ -1719,9 +1743,9 @@ html.cc-apps-rbneutral.cc-popups-on .LTOfficialCardBackground,
 html.cc-apps-rbneutral.cc-popups-on .betaCardBackground {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
-html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .officialCardBackground,
-html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .LTOfficialCardBackground,
-html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .betaCardBackground {
+html.cc-apps-rbneutral.cc-popups-on .officialCardBackground:hover,
+html.cc-apps-rbneutral.cc-popups-on .LTOfficialCardBackground:hover,
+html.cc-apps-rbneutral.cc-popups-on .betaCardBackground:hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
 /* the wrapper's own background/shadow already comes from the base rule near line 1071 (never depends on

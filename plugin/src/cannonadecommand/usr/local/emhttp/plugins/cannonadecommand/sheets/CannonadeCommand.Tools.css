@@ -483,6 +483,19 @@ html.cc-popups-on #displaybox .cc-tsel-opt:hover,
 html.cc-popups-on #displaybox .cc-tsel-opt.is-selected { filter: brightness(1.18); box-shadow: none !important; }
 html.cc-tools-on #displaybox .cc-tsel-opt.is-disabled,
 html.cc-popups-on #displaybox .cc-tsel-opt.is-disabled { opacity: .45; cursor: not-allowed; }
+/* #77 (user: "alle verfügbaren Sprachen anzeigen und auf klick runterladen und installieren"): the
+   Sprache/Language dropdown's own extra "available but not installed" entries (ccLangAugmentPanel,
+   header.js) — visually distinct from a real, selectable option: outlined instead of filled, no rainbow
+   stamping (these carry no data-i so ccPaintRotate/ccToolsSyncSel never touch them), a trailing download
+   glyph makes the "this installs something" affordance explicit rather than reading as a normal pick. */
+html.cc-popups-on #displaybox .cc-tsel-opt-avail {
+  background: transparent !important; border: 1px dashed var(--cc-shade-line, rgba(128, 128, 128, .3)) !important;
+  color: var(--cc-text-chip, #cfcfcf) !important; justify-content: space-between !important;
+}
+html.cc-popups-on #displaybox .cc-tsel-opt-avail:hover {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; filter: none !important;
+}
+html.cc-popups-on #displaybox .cc-tsel-avail-dl { opacity: .7; font-size: 11px; }
 /* #1 CORRECTION (user): in the REACTIVE sub-mode (cc.rbmode=active) the list items REST neutral and reveal
    their OWN rotating colour ONLY on mouseover / when selected — matching every other reactive control. Full
    rainbow keeps them permanently coloured (rule above). The per-item --cc-rb-c is still stamped, just unused

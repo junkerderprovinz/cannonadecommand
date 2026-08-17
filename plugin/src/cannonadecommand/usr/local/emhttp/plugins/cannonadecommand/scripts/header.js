@@ -1622,6 +1622,74 @@
     var flag = ccLocaleFlag(o.value);
     return flag ? flag + " " + o.text : o.text;
   }
+  // #77 (user: "alle verfügbaren Sprachen anzeigen und auf klick runterladen und installieren"): Unraid's
+  // official language packs (github.com/unraid/language-templates) are ordinary Community-Applications
+  // catalog entries with Category "Language:" — server/langpacks.php reads the SAME local CA cache
+  // castats.php already reads and lists every one, installed or not (the native <select> only ever lists
+  // installed ones — that's Unraid's own behaviour, not something to patch). Every pack NOT already among
+  // this select's own option values gets an extra entry appended to the panel, styled with a download
+  // glyph instead of a flag. It carries no data-i, so ccToolsSyncSel's resync loop (which reads
+  // sel.options[+c[k].getAttribute("data-i")] and skips anything that resolves to no option) already
+  // ignores it safely — no fight with the generic widget's own refresh cycle.
+  // Clicking one does not attempt a custom install: CA's own per-template Install button is the proven,
+  // safe path for an actual system-plugin install (a language pack downloads+extracts a zip, not a
+  // docker pull), so this navigates to /Apps with the pack's name queued for ccAppsAutoSearch (below) to
+  // drop into CA's own native search box — landing the user directly on CA's real Install button instead
+  // of reimplementing CA's own install flow.
+  function ccLangAugmentPanel(sel, panel) {
+    var installed = {}; for (var i = 0; i < sel.options.length; i++) installed[sel.options[i].value] = true;
+    fetch("/plugins/cannonadecommand/server/langpacks.php", { headers: { Accept: "application/json" } })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (packs) {
+        if (!Array.isArray(packs) || !panel.isConnected) return;
+        var added = false;
+        packs.forEach(function (p) {
+          if (!p || !p.code || installed[p.code]) return;
+          added = true;
+          var chip = ccMkEl("div", "cc-tsel-opt cc-tsel-opt-avail");
+          // ccToolsSyncSel's resync loop reads +c[k].getAttribute("data-i") — a MISSING attribute gives
+          // null, and +null === 0 (not NaN), which resolved to sel.options[0] ("English") for every one
+          // of these and stomped its text on the very next sync. data-i="-1" makes sel.options[-1]
+          // genuinely undefined, so the loop's existing "if (!o) continue" skips it as originally intended.
+          chip.setAttribute("data-i", "-1");
+          var flag = ccLocaleFlag(p.code);
+          chip.appendChild(ccMkEl("span", "cc-tsel-avail-flag", flag || "🌐"));
+          chip.appendChild(ccMkEl("span", "cc-tsel-avail-name", (p.local || p.name || p.code) + (p.local && p.name && p.local !== p.name ? " (" + p.name + ")" : "")));
+          chip.appendChild(ccMkEl("i", "fa fa-download cc-tsel-avail-dl"));
+          chip.setAttribute("role", "option"); chip.setAttribute("tabindex", "-1");
+          chip.title = LANG === "de" ? "Nicht installiert — klicken, um es in Community Applications zu finden" : "Not installed — click to find it in Community Applications";
+          chip.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+            try { sessionStorage.setItem("cc.appsSearch", p.name || p.local || p.code); } catch (e) {}
+            location.href = "/Apps";
+          });
+          panel.appendChild(chip);
+        });
+        if (added) { var grp = ccMkEl("div", "cc-tsel-group", LANG === "de" ? "Verfügbar (nicht installiert)" : "Available (not installed)"); grp.setAttribute("role", "presentation"); panel.insertBefore(grp, null); }
+      })
+      .catch(function () {});
+  }
+  // The other half of #77: if a language chip's click above stashed a pending search term, run it
+  // through CA's own #searchBox once the Apps tab has actually rendered it. ccApps() calls this on
+  // EVERY tick while the page settles (same idempotent-retry shape as the rest of this file) — the flag
+  // is only cleared once #searchBox is genuinely found and the search is applied, not on the first tick
+  // that merely sees the flag, or an early tick (before CA's own async feed load finishes) would consume
+  // it and never actually search (live-caught: the flag vanished with the box still unset).
+  function ccAppsAutoSearch() {
+    var term; try { term = sessionStorage.getItem("cc.appsSearch"); } catch (e) { return; }
+    if (!term) return;
+    // live-traced: #searchBox's own "input" handler only swaps the search/clear icon — the actual
+    // filter runs inside CA's global doSearch(button, newSearch), which the searchSubmit button's click
+    // handler calls directly (doSearch(true)). Calling it the same way is the real, proven trigger;
+    // synthetic input/keyup events on the box itself never reach it.
+    // Also live-traced: calling doSearch before CA's OWN initial catalog render finished ran the search
+    // against an empty/not-yet-loaded grid and was silently overwritten the instant CA's async first
+    // render landed right after — waiting for at least one real .ca_holder card is a simple, reliable
+    // "the initial render already happened" signal (retried on the next tick until that's true).
+    if (typeof window.doSearch !== "function" || !document.getElementById("searchBox") || !document.querySelector(".ca_holder")) return; // flag stays — retried on the next tick
+    try { sessionStorage.removeItem("cc.appsSearch"); } catch (e) {}
+    window.doSearch(true, term);
+  }
   function ccToolsSyncSel(sel) {
     var w = sel.parentNode; if (!w || !w.classList || !w.classList.contains("cc-tsel")) return;
     w.classList.toggle("cc-tsel-disabled", !!sel.disabled);
@@ -1654,6 +1722,7 @@
       chip.addEventListener("keydown", (function (fn) { return function (e2) { if (e2.key === "Enter" || e2.key === " ") { e2.preventDefault(); fn(e2); } else if (e2.key === "ArrowDown" || e2.key === "ArrowUp") { e2.preventDefault(); ccTselMove(panel, e2.target, e2.key === "ArrowDown" ? 1 : -1); } else if (e2.key === "Escape") { wrap.classList.remove("cc-open"); trig.setAttribute("aria-expanded", "false"); trig.focus(); } }; })(pick));
       panel.appendChild(chip);
     }
+    if (sel.name === "locale") ccLangAugmentPanel(sel, panel);
     function openPanel() { var o2 = document.querySelectorAll(".cc-tsel.cc-open"); for (var j = 0; j < o2.length; j++) if (o2[j] !== wrap) { o2[j].classList.remove("cc-open"); var t3 = o2[j].querySelector(".cc-tsel-trigger"); if (t3) t3.setAttribute("aria-expanded", "false"); } wrap.classList.add("cc-open"); trig.setAttribute("aria-expanded", "true"); ccPositionTsel(trig, panel); }
     trig.addEventListener("click", function (ev) { ev.stopPropagation(); if (sel.disabled) return; ccToolsSyncSel(sel); if (wrap.classList.toggle("cc-open")) { trig.setAttribute("aria-expanded", "true"); var o2 = document.querySelectorAll(".cc-tsel.cc-open"); for (var j = 0; j < o2.length; j++) if (o2[j] !== wrap) { o2[j].classList.remove("cc-open"); var t3 = o2[j].querySelector(".cc-tsel-trigger"); if (t3) t3.setAttribute("aria-expanded", "false"); } ccPositionTsel(trig, panel); } else trig.setAttribute("aria-expanded", "false"); });
     trig.addEventListener("keydown", function (e2) {
@@ -3142,6 +3211,72 @@
     var star = document.createElement("i"); star.className = "fa fa-star"; area.appendChild(star);
     if (dateTxt) area.title = dateTxt;
   }
+  // #76 (user: "der DVDCompress Container hat eine gelbe Sprechblase. Können wir das in ein weiteren
+  // quadratischen badge umwandeln der links des Dockerbadges sitzt. Als symbol soll ein Achtung icon
+  // drauf."): CA's own inline .cardWarning glyph (a small comment-bubble icon INSIDE .ca_applicationName,
+  // title "Click info to see the notes regarding this application") becomes a square badge matching the
+  // type/spotlight recipe. Clicking it does what the native title already instructs — opens the Info
+  // popup (same infoButton.click() delegation ccAppsCardMenu's own Info item uses). Position is handled
+  // by ccAppsPositionTopBadges below, which compacts around whichever badges actually exist per card.
+  function ccAppsWarnBadge(holder) {
+    var native = holder.querySelector(".cardWarning");
+    if (!native) return;
+    native.style.setProperty("display", "none", "important"); // the inline glyph inside the name text — replaced by the badge
+    if (holder.querySelector(".cc-warn-badge")) return;
+    var badge = document.createElement("span"); badge.className = "cc-warn-badge";
+    badge.appendChild(document.createElement("i")).className = "fa fa-exclamation-triangle";
+    badge.title = native.getAttribute("title") || (LANG === "de" ? "Hinweis vorhanden" : "Note available");
+    badge.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); var infoBtn = holder.querySelector(".infoButton"); if (infoBtn) infoBtn.click(); });
+    holder.appendChild(badge);
+  }
+  // #69/#76 (user: "wenn der appname zu lang ist soll er nicht von den badges überlagert werden sondern
+  // vorher aufhören" + "zu lange appnamen sollen sich in der angezeigten länge auch automatisch anpassen
+  // je nachdem wie viele badges vorhanden sind"): the top-right badges (hamburger/type/warning/spotlight)
+  // are each independently optional per card — a fixed CSS `right` per badge type left gaps when one was
+  // missing and gave the name a single fixed max-width regardless of how many badges actually claim
+  // space. This computes real slots dynamically per card: only badges that EXIST get positioned,
+  // back-to-back with no gaps, and the name's own right boundary stops exactly where the leftmost
+  // present badge begins — measured against the card's REAL width, not a guessed constant.
+  function ccAppsPositionTopBadges(holder) {
+    var GAP = 6, W = 30, RIGHT0 = 10;
+    // right-to-left priority: hamburger nearest the corner, then type, then warning, then spotlight
+    var order = [
+      holder.querySelector(".cc-ca-menu-btn"),
+      holder.querySelector(".appDocker, .appPlugin, .appLanguage, .appDriver, .appRepository"),
+      holder.querySelector(".cc-warn-badge"),
+      holder.querySelector(".homespotlightIconArea")
+    ].filter(Boolean);
+    var right = RIGHT0;
+    order.forEach(function (b) { b.style.setProperty("right", right + "px", "important"); right += W + GAP; });
+    var reservedFromRight = order.length ? (right - GAP + 10) : 16; // + a small clearance past the leftmost badge
+    var nameEl = holder.querySelector(".ca_applicationName");
+    if (!nameEl) return;
+    var holderW = holder.getBoundingClientRect().width || 378;
+    var nameLeft = 105; // .ca_applicationName's own fixed left anchor (Tokens.css)
+    var maxW = Math.max(40, Math.round(holderW - nameLeft - reservedFromRight));
+    nameEl.style.setProperty("max-width", maxW + "px", "important");
+  }
+  // Once truncated by ccAppsPositionTopBadges above, a hover reveals the full name via the SAME
+  // scroll-back-and-forth technique docker.js's setupVolMarquee already uses for long volume paths.
+  function ccAppsNameMarquee(holder) {
+    var nameEl = holder.querySelector(".ca_applicationName");
+    if (!nameEl || nameEl.getAttribute("data-cc-marq")) return;
+    nameEl.setAttribute("data-cc-marq", "1");
+    nameEl.style.setProperty("overflow", "hidden", "important");
+    nameEl.style.setProperty("white-space", "nowrap", "important");
+    nameEl.style.setProperty("text-overflow", "clip", "important");
+    var iv = null;
+    nameEl.addEventListener("mouseenter", function () {
+      var over = nameEl.scrollWidth - nameEl.clientWidth; if (over <= 2) return;
+      var dur = Math.max(1000, Math.round(over / 55 * 1000)), toEnd = true;
+      nameEl.style.transition = "transform " + (dur / 1000) + "s linear"; nameEl.style.transform = "translateX(-" + over + "px)";
+      iv = setInterval(function () { if (!nameEl.isConnected) { clearInterval(iv); return; } toEnd = !toEnd; nameEl.style.transform = "translateX(" + (toEnd ? -over : 0) + "px)"; }, dur + 700);
+    });
+    nameEl.addEventListener("mouseleave", function () {
+      if (iv) { clearInterval(iv); iv = null; }
+      nameEl.style.transition = "transform .3s ease"; nameEl.style.transform = "translateX(0)";
+    });
+  }
   function ccAppsRibbonRow(holder) {
     var marks = holder.querySelectorAll(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground");
     if (!marks.length) return;
@@ -3158,6 +3293,7 @@
     try {
       if (!/^\/Apps(\/|$)/.test(location.pathname)) return;
       ccCaStatsFetch();
+      ccAppsAutoSearch(); // #77 — idempotent (clears its own sessionStorage flag once applied), safe to call every tick until #searchBox exists
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
       // user (v3.6.6, aktiver Sammelmodus: "die badges auf den app cards sind nicht im reaktive modus der
       // derzeit eingeschaltet ist"): "Reaktiver Modus" (cc.rbmode=active) is a GLOBAL settings-page toggle
@@ -3339,7 +3475,10 @@
       for (var ci = 0; ci < holders.length; ci++) {
         ccAppsCardMenu(holders[ci]);   // build the hamburger BEFORE moving the install button out of .ca_bottomLine
         ccAppsTypeBadge(holders[ci]);
+        ccAppsWarnBadge(holders[ci]);
         ccAppsSpotlightBadge(holders[ci]);
+        ccAppsPositionTopBadges(holders[ci]); // needs every top-right badge above to already exist — compacts them + sizes the name
+        ccAppsNameMarquee(holders[ci]);
         ccAppsStatRow(holders[ci]);    // builds .cc-castats + its .cc-cs-right sub-group — ribbon row below nests into it
         ccAppsRibbonRow(holders[ci]);  // relies on ccAppsCornerMarks() above having already moved the ribbon in
       }
