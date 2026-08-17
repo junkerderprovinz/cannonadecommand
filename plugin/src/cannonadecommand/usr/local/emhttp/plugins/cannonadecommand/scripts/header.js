@@ -2980,12 +2980,18 @@
       var cta = document.createElement("span"); cta.className = "cc-cs-cta"; row.appendChild(cta);
       holder.appendChild(row);
     }
+    // #71 second follow-up (user reversed the earlier N/A ask: "wenn die daten dafür nicht vorhanden sind
+    // sollen die badges nicht angezeigt werden anstatt n/a anzuzeigen") — back to hide-when-missing. The
+    // display toggle needs setProperty(..., "important"): .cc-cs-d/.cc-cs-u are display:inline-flex
+    // !important in Tokens.css (so they were flush with .cc-cs-cta's own !important box), and a bare
+    // style.display assignment cannot beat that (same trap already hit on the CTA badge and the hamburger).
     var dSpan = row.querySelector(".cc-cs-d"), uSpan = row.querySelector(".cc-cs-u"), ctaEl = row.querySelector(".cc-cs-cta");
-    var NA = "N/A";   // user's own wording, verbatim ("...so ein n/a angezeigt werden") — same in both languages
-    var dTxt = (rec && rec.d != null) ? ccFmtCompact(rec.d) : NA;
-    var uTxt = (rec && rec.u != null) ? ccFmtMonth(rec.u) : NA;
+    var dTxt = (rec && rec.d != null) ? ccFmtCompact(rec.d) : "";
+    var uTxt = (rec && rec.u != null) ? ccFmtMonth(rec.u) : "";
     if (dSpan.textContent !== dTxt) dSpan.textContent = dTxt;   // change-guarded write — no DOM churn on a no-op pass
     if (uSpan.textContent !== uTxt) uSpan.textContent = uTxt;
+    if (dTxt) dSpan.style.removeProperty("display"); else dSpan.style.setProperty("display", "none", "important");
+    if (uTxt) uSpan.style.removeProperty("display"); else uSpan.style.setProperty("display", "none", "important");
     dSpan.title = T("Downloads", "Downloads");
     uSpan.title = T("Aktualisiert", "Updated");
 

@@ -1268,15 +1268,24 @@ html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--c
    #70: CA also carries a native max-height:65px here that silently capped the intended 78px box below it —
    the same "a min/max-* property is separate from its base property" trap already hit on the hamburger's
    min-width and the CTA badge's !important display; max-height needs its own explicit override too. */
-/* #71 (user: "Das textfeld darf ein wenig weiter nah unten gehen. bis kurz vor die zweite zeile an
-   badges"): stretched from 60px to 85px — .cc-ribbonrow sits at bottom:calc(8+30+6)=44px, i.e. its own top
-   edge is 240-44-30=166px from the content top, so this now ends 6px above it (100+85+6=191, matching). */
+/* #72 (user: ribbons moved above (#72 note there) freed the space below them; "der abstand vom text unter
+   dem logo soll etwas größer sein" — the gap above this box is deliberately more generous than the 6px used
+   elsewhere on this card; "textfeld... bis kurz vor die zweite zeile an badges" — extends down to just
+   above .cc-castats, which stays bottom:8px anchored (unmoved), i.e. its own top edge is at 240-8-30=202. */
 html.cc-popups-on .cardDescription {
-  position: absolute !important; left: 0 !important; right: 0 !important; top: 100px !important; bottom: auto !important;
-  height: 85px !important; max-height: 85px !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 6px !important;
+  position: absolute !important; left: 0 !important; right: 0 !important; top: 146px !important; bottom: auto !important;
+  height: 47px !important; max-height: 47px !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 6px !important;
 }
 html.cc-popups-on .cardDescription:hover { overflow-y: auto !important; }
 html.cc-popups-on .cardDesc { display: block !important; max-height: none !important; }
+/* #72 (user: "im textfeld ist ein kleiner Bereich abgedunkelt. Ich vermute da wo vorher das 'see more'
+   war"): correct guess — CA fades the last line of a truncated description into --template-background via
+   a `.cardDesc::after` overlay (the #12a remap note near the top of this file). It was sized/positioned for
+   CA's own original box height; after this box's height changed twice above, the fade no longer lines up
+   with the box's real bottom edge and shows as a stray dark patch mid-text instead. The hover-scroll
+   already gives its own affordance for "there is more text", so the native fade is redundant now — killed
+   outright rather than fought pixel-for-pixel. */
+html.cc-popups-on .cardDesc::after { content: none !important; display: none !important; }
 html.cc-popups-on .cardDescription::-webkit-scrollbar { width: 5px !important; }
 html.cc-popups-on .cardDescription::-webkit-scrollbar-track { background: transparent !important; }
 html.cc-popups-on .cardDescription::-webkit-scrollbar-thumb { background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: 3px !important; }
@@ -1403,7 +1412,7 @@ html.cc-popups-on .cc-castats .cc-cs-d,
 html.cc-popups-on .cc-castats .cc-cs-u {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   pointer-events: auto !important; box-sizing: border-box !important;
-  width: 58px !important; flex: 0 0 auto !important; height: var(--cc-md-h, 30px) !important;
+  width: 70px !important; flex: 0 0 auto !important; height: var(--cc-md-h, 30px) !important;
   border-radius: min(var(--cc-b-radius, 8px), 999px) !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   font-size: var(--cc-sm-fs, 11px) !important; font-variant-numeric: tabular-nums !important;
@@ -1615,8 +1624,15 @@ html.cc-popups-on .ca_note {
    both, or neither mark looks correct with no extra rule needed per combination. */
 html.cc-popups-on .ca_homeTemplates > div { position: relative !important; }
 html.cc-popups-on .ca_holder { position: relative !important; }
+/* #72 (user: "die badges wie official, beta, spotlight etc finden unter dem repository platz. damit kann
+   das textfeld weiter nach unten gehen") — moved from a bottom-anchored row (right above .cc-castats) to a
+   top-anchored one, directly below the icon/name/author block (which ends at 94px: icon is the tallest
+   element there, 14+80). Kept full-width + right-aligned rather than confined under the author column
+   specifically, matching the row's other instances. Reserves this space whether or not a given card
+   actually has any ribbon (same "every card lines up the same" reasoning as everywhere else on this card),
+   so .cardDescription below can safely assume a fixed start regardless of content. */
 html.cc-popups-on .cc-ribbonrow {
-  position: absolute !important; left: 0 !important; right: 0 !important; bottom: calc(8px + var(--cc-md-h, 30px) + 6px) !important;
+  position: absolute !important; left: 0 !important; right: 0 !important; top: 104px !important; bottom: auto !important;
   display: flex !important; align-items: center !important; justify-content: flex-end !important; gap: 6px !important;
   padding: 0 6px !important; box-sizing: border-box !important; pointer-events: none !important;
 }
