@@ -1268,13 +1268,15 @@ html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--c
    #70: CA also carries a native max-height:65px here that silently capped the intended 78px box below it —
    the same "a min/max-* property is separate from its base property" trap already hit on the hamburger's
    min-width and the CTA badge's !important display; max-height needs its own explicit override too. */
-/* #72 (user: ribbons moved above (#72 note there) freed the space below them; "der abstand vom text unter
-   dem logo soll etwas größer sein" — the gap above this box is deliberately more generous than the 6px used
-   elsewhere on this card; "textfeld... bis kurz vor die zweite zeile an badges" — extends down to just
-   above .cc-castats, which stays bottom:8px anchored (unmoved), i.e. its own top edge is at 240-8-30=202. */
+/* #73 (user: "der Offiziell, beta, etc badge kommt in die zeile vom installieren badge... Das textfeld
+   kann dann wieder größer sein"): the ribbon row no longer reserves its own band above this box (it nests
+   into .cc-castats at the bottom instead — see #73 there), so this box reclaims that space: starts right
+   where the ribbon row used to start (104px — keeps the "der abstand vom text unter dem logo soll etwas
+   größer sein" gap below the icon/name/author block, which ends at 94px), and extends down to just above
+   .cc-castats, which stays bottom:8px + height 30px anchored, i.e. its own top edge is at 240-8-30=202. */
 html.cc-popups-on .cardDescription {
-  position: absolute !important; left: 0 !important; right: 0 !important; top: 146px !important; bottom: auto !important;
-  height: 47px !important; max-height: 47px !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 6px !important;
+  position: absolute !important; left: 0 !important; right: 0 !important; top: 104px !important; bottom: auto !important;
+  height: 94px !important; max-height: 94px !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 6px !important;
 }
 html.cc-popups-on .cardDescription:hover { overflow-y: auto !important; }
 html.cc-popups-on .cardDesc { display: block !important; max-height: none !important; }
@@ -1401,10 +1403,16 @@ html.cc-popups-on .searchArea .caButton:hover { background: var(--cc-chip-hover,
    that exact action), or "Installiert" (installed, no update, inert status badge). Anchored on the card's
    bottom edge (not a `top` guess) so it stays put regardless of how tall the description or the ribbon row
    above it turn out to be. */
+/* #73: two groups sharing one row now — .cc-ribbonrow (official/beta/LT, left) and .cc-cs-right
+   (download/updated/install, right). space-between with an empty (zero-width) ribbon row on a card with
+   no marks still parks .cc-cs-right flush against the right edge, same as the old flex-end-only layout. */
 html.cc-popups-on .cc-castats {
   position: absolute !important; left: 0 !important; right: 0 !important; bottom: 8px !important; top: auto !important;
-  display: flex !important; align-items: center !important; justify-content: flex-end !important; gap: 6px !important;
+  display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 6px !important;
   padding: 0 6px !important; box-sizing: border-box !important; pointer-events: none !important;
+}
+html.cc-popups-on .cc-cs-right {
+  display: flex !important; align-items: center !important; gap: 6px !important; flex: 0 0 auto !important;
 }
 /* downloads / last-updated: bare value only (no "Downloads"/"Aktualisiert" word — meaning lives in title=
    for hover/a11y), fixed EQUAL width regardless of digit/date length, same height as every other card badge. */
@@ -1624,17 +1632,16 @@ html.cc-popups-on .ca_note {
    both, or neither mark looks correct with no extra rule needed per combination. */
 html.cc-popups-on .ca_homeTemplates > div { position: relative !important; }
 html.cc-popups-on .ca_holder { position: relative !important; }
-/* #72 (user: "die badges wie official, beta, spotlight etc finden unter dem repository platz. damit kann
-   das textfeld weiter nach unten gehen") — moved from a bottom-anchored row (right above .cc-castats) to a
-   top-anchored one, directly below the icon/name/author block (which ends at 94px: icon is the tallest
-   element there, 14+80). Kept full-width + right-aligned rather than confined under the author column
-   specifically, matching the row's other instances. Reserves this space whether or not a given card
-   actually has any ribbon (same "every card lines up the same" reasoning as everywhere else on this card),
-   so .cardDescription below can safely assume a fixed start regardless of content. */
+/* #73 (user: "der Offiziell, beta, etc badge kommt in die zeile vom installieren badge nur linksbündig.
+   Das textfeld kann dann wieder größer sein"): the ribbon row leaves the top-of-card band entirely and
+   nests INSIDE .cc-castats instead (ccAppsRibbonRow, header.js, inserts it as the row's first child) —
+   plain in-flow flex now, no absolute positioning of its own; .cc-castats' own space-between (below) pins
+   this group to the LEFT edge while .cc-cs-right (download/updated/install) stays pinned right. An EMPTY
+   ribbon row (no official/beta/LT mark on this card) collapses to zero width, so space-between still
+   parks .cc-cs-right flush right with nothing left over — no reserved band needed either way, unlike the
+   old top-anchored version. */
 html.cc-popups-on .cc-ribbonrow {
-  position: absolute !important; left: 0 !important; right: 0 !important; top: 104px !important; bottom: auto !important;
-  display: flex !important; align-items: center !important; justify-content: flex-end !important; gap: 6px !important;
-  padding: 0 6px !important; box-sizing: border-box !important; pointer-events: none !important;
+  display: flex !important; align-items: center !important; gap: 6px !important; flex: 0 1 auto !important; min-width: 0 !important;
 }
 /* #71 (user: "wenn eine app installiert ist steht über dem installieren badge nochmal ein installiert
    badge"): CA's native INSTALLED ribbon duplicated the .cc-cs-cta "Installiert" status badge below it —
@@ -1645,8 +1652,7 @@ html.cc-popups-on .cc-ribbonrow {
 html.cc-popups-on .installedCardBackground { display: none !important; }
 html.cc-popups-on .officialCardBackground,
 html.cc-popups-on .LTOfficialCardBackground,
-html.cc-popups-on .betaCardBackground,
-html.cc-popups-on .homespotlightIconArea {
+html.cc-popups-on .betaCardBackground {
   position: static !important;                      /* was absolute (corner stack) — a normal flex row lays these out now */
   clip-path: none !important;                       /* kill the triangle wedge — it IS the ribbon shape */
   /* #2 (live-measured): CA hangs a NEGATIVE right margin on the ribbon (margin: 0 -90px 0 0) so the classic
@@ -1675,47 +1681,37 @@ html.cc-popups-on .installedCardText {
   color: inherit !important; font-size: inherit !important; font-weight: inherit !important;
   letter-spacing: inherit !important; line-height: 1 !important; white-space: nowrap !important;
 }
-/* #69: the spotlight's own two pills (word + month) now sit SIDE BY SIDE as one row entry (was
-   flex-direction:column, stacked, back when this was its own vertical corner stack — ::before-generated
-   content can't be pulled out as a separate flex item by JS, so the area itself stays one unit and lays
-   its children out horizontally instead). */
+/* #73 (user: "das Spotlight badge kommt als quadratisches Badge links neben den Dockerbadge und soll
+   ein Sternsymbol haben. bei mouseover wird das datum ... angezeigt"): the spotlight mark leaves the
+   ribbon row entirely and becomes a square icon-only badge beside the type glyph (ccAppsSpotlightBadge,
+   header.js, moves it to a direct .ca_holder child and swaps its content for one <i class="fa fa-star">).
+   Same square-chip recipe as .appDocker etc, one slot further left (30px badge + 6px gap beyond the type
+   glyph's own right:46px). The month CA used to show in its OWN pill now lives in this element's `title`
+   (mouseover) instead of a second visible pill — killing the ::before "Spotlight" word + .spotlightDate
+   pill along with it. */
 html.cc-popups-on .homespotlightIconArea {
-  flex-direction: row !important; gap: 6px !important;
-  padding: 0 !important; background: transparent !important; box-shadow: none !important;
-  min-width: 0 !important; height: auto !important;
+  position: absolute !important; top: 14px !important; right: 82px !important; z-index: 4 !important;
+  float: none !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  box-sizing: border-box !important; width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important; margin: 0 !important;
+  padding: 0 !important; background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-b-radius, 8px) !important;
+  font-size: 15px !important; opacity: 1 !important; box-shadow: none !important;
+  color: var(--cc-text-chip, #cfcfcf) !important; transition: background .12s ease, color .12s ease !important;
 }
-html.cc-popups-on .homespotlightIconArea .spotlightIcon { display: none !important; }
-html.cc-popups-on .homespotlightIconArea::before,
-html.cc-popups-on .homespotlightIconArea .spotlightDate {
-  display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  height: var(--cc-md-h, 30px) !important; padding: 0 12px !important; margin: 0 !important; box-sizing: border-box !important;
-  min-width: var(--cc-corner-badge-w, 92px) !important;
-  border-radius: var(--cc-b-radius, 8px) !important;
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
-  font-size: var(--cc-sm-fs, 11px) !important; font-weight: 700 !important;
-  text-transform: uppercase !important; letter-spacing: .6px !important; white-space: nowrap !important;
-  width: auto !important; line-height: 1 !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, .3) !important;
+html.cc-popups-on .homespotlightIconArea::before { content: none !important; } /* CA's/earlier "Spotlight" word — the star glyph replaces it */
+html.cc-popups-on .homespotlightIconArea .spotlightIcon,
+html.cc-popups-on .homespotlightIconArea .spotlightDate { display: none !important; } /* content cleared by JS anyway; belt and suspenders */
+html.cc-popups-on .homespotlightIconArea:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
-html.cc-popups-on .homespotlightIconArea::before { content: "Spotlight" !important; }
-html.cc-apps-rbneutral.cc-popups-on .homespotlightIconArea::before,
-html.cc-apps-rbneutral.cc-popups-on .homespotlightIconArea .spotlightDate {
+html.cc-apps-rbneutral.cc-popups-on .homespotlightIconArea {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
-html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .homespotlightIconArea::before,
-html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .homespotlightIconArea .spotlightDate {
+html.cc-apps-rbneutral.cc-popups-on .ca_holder:hover .homespotlightIconArea {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
 /* REACTIVE MODE — these are labels on a card, so they follow the badge contract like everything else.
-   #13 (user: "der spotlight und der monatsbadge haben einen zusätzlichen hintergrund, der soll weg"):
-   .homespotlightIconArea used to ride in THIS SAME selector list. It is the COLUMN WRAPPER around the two
-   real pills (::before "Spotlight" and .spotlightDate), not a pill itself — its own background is set to
-   transparent a few rules above (line ~985) precisely so only the two children paint. Because this
-   reactive block sits AFTER that transparent rule in source order, with equal specificity, it re-painted
-   the wrapper grey/accent on every card that had a spotlight mark — a second, larger rounded rect behind
-   the two pills. The wrapper never needed colour here; --cc-chip/--cc-rb-c already reach the pills
-   themselves via the dedicated ::before/.spotlightDate reactive rule above. */
+   .homespotlightIconArea is handled in its OWN reactive rule just above (#73: it's a real single square
+   badge again now, not a two-pill column wrapper — see the base rule for the history of that distinction). */
 html.cc-apps-rbneutral.cc-popups-on .officialCardBackground,
 html.cc-apps-rbneutral.cc-popups-on .LTOfficialCardBackground,
 html.cc-apps-rbneutral.cc-popups-on .betaCardBackground {

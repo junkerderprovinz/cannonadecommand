@@ -2992,19 +2992,26 @@
     var name = holder.getAttribute("data-appname"), repo = holder.getAttribute("data-repository");
     var rec = (ccCaStats && name && repo) ? ccCaStats[name + "|" + repo] : null;
     var row = holder.querySelector(".cc-castats");
-    if (!row) {
-      row = document.createElement("div"); row.className = "cc-castats";
-      row.appendChild(document.createElement("span")).className = "cc-cs-d";
-      row.appendChild(document.createElement("span")).className = "cc-cs-u";
-      var cta = document.createElement("span"); cta.className = "cc-cs-cta"; row.appendChild(cta);
-      holder.appendChild(row);
+    if (!row) { row = document.createElement("div"); row.className = "cc-castats"; holder.appendChild(row); }
+    // #73 (user: "der Offiziell, beta, etc badge kommt in die zeile vom installieren badge nur
+    // linksbündig"): the official/beta/etc ribbons now share THIS row (ccAppsRibbonRow, below), aligned
+    // left, while download/updated/install stay right-aligned — .cc-castats went from one flush-right
+    // group to two groups (space-between in Tokens.css), so the download/updated/install triplet needs
+    // its OWN sub-wrapper to keep behaving as one right-aligned cluster instead of spreading out.
+    var right = row.querySelector(".cc-cs-right");
+    if (!right) {
+      right = document.createElement("div"); right.className = "cc-cs-right";
+      right.appendChild(document.createElement("span")).className = "cc-cs-d";
+      right.appendChild(document.createElement("span")).className = "cc-cs-u";
+      var cta = document.createElement("span"); cta.className = "cc-cs-cta"; right.appendChild(cta);
+      row.appendChild(right);
     }
     // #71 second follow-up (user reversed the earlier N/A ask: "wenn die daten dafür nicht vorhanden sind
     // sollen die badges nicht angezeigt werden anstatt n/a anzuzeigen") — back to hide-when-missing. The
     // display toggle needs setProperty(..., "important"): .cc-cs-d/.cc-cs-u are display:inline-flex
     // !important in Tokens.css (so they were flush with .cc-cs-cta's own !important box), and a bare
     // style.display assignment cannot beat that (same trap already hit on the CTA badge and the hamburger).
-    var dSpan = row.querySelector(".cc-cs-d"), uSpan = row.querySelector(".cc-cs-u"), ctaEl = row.querySelector(".cc-cs-cta");
+    var dSpan = right.querySelector(".cc-cs-d"), uSpan = right.querySelector(".cc-cs-u"), ctaEl = right.querySelector(".cc-cs-cta");
     var dTxt = (rec && rec.d != null) ? ccFmtCompact(rec.d) : "";
     var uTxt = (rec && rec.u != null) ? ccFmtMonth(rec.u) : "";
     if (dSpan.textContent !== dTxt) dSpan.textContent = dTxt;   // change-guarded write — no DOM churn on a no-op pass
@@ -3023,7 +3030,7 @@
     var installed = !!holder.querySelector(".actionsButtonContext");
     if (plainInstall) {
       ctaEl.style.setProperty("display", "none", "important");
-      if (plainInstall.parentElement !== row) row.appendChild(plainInstall);
+      if (plainInstall.parentElement !== right) right.appendChild(plainInstall);
     } else if (updateAction) {
       ctaEl.style.removeProperty("display");
       ctaEl.classList.add("cc-cs-cta-update"); ctaEl.classList.remove("cc-cs-cta-installed");
@@ -3112,11 +3119,31 @@
     var glyph = holder.querySelector(".appDocker, .appPlugin, .appLanguage, .appDriver, .appRepository");
     if (glyph && glyph.parentElement !== holder) holder.appendChild(glyph);
   }
+  // #73 (user: "das Spotlight badge kommt als quadratisches Badge links neben den Dockerbadge und soll
+  // ein Sternsymbol haben. bei mouseover wird das datum ... angezeigt"): the spotlight mark splits off
+  // from the other ribbons entirely — it becomes a square icon-only badge next to the type glyph
+  // (ccAppsTypeBadge, same row, same recipe), a real Font-Awesome star (not emoji — inherits colour,
+  // matches every other glyph badge on this card), with the month CA already rendered in .spotlightDate
+  // moved into the native `title` tooltip instead of staying a second visible pill (same tooltip
+  // mechanism ccAppsStatRow already uses for the download/updated badges just above).
+  function ccAppsSpotlightBadge(holder) {
+    var area = holder.querySelector(".homespotlightIconArea");
+    if (!area) return;
+    if (area.parentElement !== holder) holder.appendChild(area);
+    if (area.getAttribute("data-cc-spot")) return; // idempotent — the star + tooltip only need building once
+    area.setAttribute("data-cc-spot", "1");
+    var dateEl = area.querySelector(".spotlightDate");
+    var dateTxt = dateEl ? dateEl.textContent.trim() : "";
+    area.textContent = ""; // drop CA's own children (icon, date pill) — replaced by one star glyph below
+    var star = document.createElement("i"); star.className = "fa fa-star"; area.appendChild(star);
+    if (dateTxt) area.title = dateTxt;
+  }
   function ccAppsRibbonRow(holder) {
-    var marks = holder.querySelectorAll(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground, .homespotlightIconArea");
+    var marks = holder.querySelectorAll(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground");
     if (!marks.length) return;
-    var row = holder.querySelector(".cc-ribbonrow");
-    if (!row) { row = document.createElement("div"); row.className = "cc-ribbonrow"; holder.appendChild(row); }
+    var stats = holder.querySelector(".cc-castats"); if (!stats) return; // built by ccAppsStatRow just before this runs
+    var row = stats.querySelector(".cc-ribbonrow");
+    if (!row) { row = document.createElement("div"); row.className = "cc-ribbonrow"; stats.insertBefore(row, stats.firstChild); }
     for (var i = 0; i < marks.length; i++) { if (marks[i].parentElement !== row) row.appendChild(marks[i]); }
   }
   document.addEventListener("click", ccCaMenuClose);
@@ -3308,8 +3335,9 @@
       for (var ci = 0; ci < holders.length; ci++) {
         ccAppsCardMenu(holders[ci]);   // build the hamburger BEFORE moving the install button out of .ca_bottomLine
         ccAppsTypeBadge(holders[ci]);
+        ccAppsSpotlightBadge(holders[ci]);
+        ccAppsStatRow(holders[ci]);    // builds .cc-castats + its .cc-cs-right sub-group — ribbon row below nests into it
         ccAppsRibbonRow(holders[ci]);  // relies on ccAppsCornerMarks() above having already moved the ribbon in
-        ccAppsStatRow(holders[ci]);
       }
       // (#9) subtitle -> (i) bubble on the header, keep SHOW MORE inline, retire the body-text line.
       var heads = document.querySelectorAll(".ca_homeTemplatesHeader:not([data-cc-info])");
