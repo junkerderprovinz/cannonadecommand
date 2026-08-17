@@ -424,36 +424,53 @@ html.cc-tools-on #displaybox a:not(.button):hover { filter: brightness(1.14); te
 
 /* #7 (user: "die Dropdownlisten sind nicht im CC-Style"): the CC overlay dropdown (header.js ccToolsWrapSelect)
    — chips in a floating elevated panel, accent selected + hover. Ported from the docker cc-dsel look. The
-   panel is re-anchored position:fixed at open time by ccPositionTsel, so it escapes the page's overflow clip. */
-html.cc-tools-on #displaybox .cc-tsel { position: relative; display: inline-block; vertical-align: middle; }
+   panel is re-anchored position:fixed at open time by ccPositionTsel, so it escapes the page's overflow clip.
+   #74 (user, re: the Display-Settings Sprache dropdown: "die dropdownliste ... in die farb und form engine
+   aufnehmen"): ccToolsWrapSelect() runs on EVERY native <select> site-wide (originally built for the Tools
+   page, later reused generically), but this styling was gated ONLY behind html.cc-tools-on — so any select
+   on a page outside the Tools area (Display Settings' own locale dropdown included) got the .cc-tsel DOM
+   structure with none of its theming, rendering unstyled. Added html.cc-popups-on (the GLOBAL "theming is
+   on" gate, true whenever CC theming is enabled regardless of which specific area toggle) as a second
+   qualifying condition, so any select anywhere themes correctly, not just ones on Tools pages. */
+html.cc-tools-on #displaybox .cc-tsel,
+html.cc-popups-on #displaybox .cc-tsel { position: relative; display: inline-block; vertical-align: middle; }
 /* #1 (user CORRECTION): the OPEN button (trigger) is only REACTIVE — neutral at rest, it takes the colour
    mode ONLY on hover (not permanently filled). The coloured list items live in the panel below. */
-html.cc-tools-on #displaybox .cc-tsel-trigger {
+html.cc-tools-on #displaybox .cc-tsel-trigger,
+html.cc-popups-on #displaybox .cc-tsel-trigger {
   display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
   min-width: 240px; min-height: 34px; box-sizing: border-box;
   background: var(--cc-tl-surface2, #232323); border-radius: min(var(--cc-b-radius, 8px), 12px);
   padding: 4px 12px; color: #eaeaea; cursor: pointer; transition: background .12s, color .12s;
 }
 html.cc-tools-on #displaybox .cc-tsel-trigger:hover,
-html.cc-tools-on #displaybox .cc-tsel.cc-open .cc-tsel-trigger {
+html.cc-tools-on #displaybox .cc-tsel.cc-open .cc-tsel-trigger,
+html.cc-popups-on #displaybox .cc-tsel-trigger:hover,
+html.cc-popups-on #displaybox .cc-tsel.cc-open .cc-tsel-trigger {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff)));
 }
-html.cc-tools-on #displaybox .cc-tsel-trigger::after {
+html.cc-tools-on #displaybox .cc-tsel-trigger::after,
+html.cc-popups-on #displaybox .cc-tsel-trigger::after {
   content: ""; flex: 0 0 auto; width: 0; height: 0; margin-left: 4px;
   border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor;
 }
-html.cc-tools-on #displaybox .cc-tsel-panel {
+html.cc-tools-on #displaybox .cc-tsel-panel,
+html.cc-popups-on #displaybox .cc-tsel-panel {
   display: none; position: absolute; z-index: 9999; margin-top: 4px; flex-direction: column; gap: 6px;
   padding: 8px; width: max-content; min-width: 180px; max-width: min(92vw, 460px);
   max-height: 50vh; overflow-y: auto; overflow-x: hidden;
   background: #303030; border: none; border-radius: 10px; box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .6));
 }
-html.cc-tools-on #displaybox .cc-tsel.cc-open .cc-tsel-panel { display: flex; }
-html.cc-tools-on #displaybox .cc-tsel.cc-tsel-disabled .cc-tsel-trigger { opacity: .5; cursor: not-allowed; }
-html.cc-tools-on #displaybox .cc-tsel-group { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9a9a9a; padding: 4px 12px 0; }
+html.cc-tools-on #displaybox .cc-tsel.cc-open .cc-tsel-panel,
+html.cc-popups-on #displaybox .cc-tsel.cc-open .cc-tsel-panel { display: flex; }
+html.cc-tools-on #displaybox .cc-tsel.cc-tsel-disabled .cc-tsel-trigger,
+html.cc-popups-on #displaybox .cc-tsel.cc-tsel-disabled .cc-tsel-trigger { opacity: .5; cursor: not-allowed; }
+html.cc-tools-on #displaybox .cc-tsel-group,
+html.cc-popups-on #displaybox .cc-tsel-group { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9a9a9a; padding: 4px 12px 0; }
 /* #1 (user): each list item takes a DIFFERENT palette colour in rainbow mode (per-item --cc-rb-c stamped by
    ccPaintRotate on each panel); hover/selected just brighten. Accent mode -> the single accent colour. */
-html.cc-tools-on #displaybox .cc-tsel-opt {
+html.cc-tools-on #displaybox .cc-tsel-opt,
+html.cc-popups-on #displaybox .cc-tsel-opt {
   display: flex; align-items: center; gap: 8px; justify-content: flex-start;
   line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 999px);
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); border: none;
@@ -461,8 +478,11 @@ html.cc-tools-on #displaybox .cc-tsel-opt {
   transition: filter .12s;
 }
 html.cc-tools-on #displaybox .cc-tsel-opt:hover,
-html.cc-tools-on #displaybox .cc-tsel-opt.is-selected { filter: brightness(1.18); box-shadow: none !important; }
-html.cc-tools-on #displaybox .cc-tsel-opt.is-disabled { opacity: .45; cursor: not-allowed; }
+html.cc-tools-on #displaybox .cc-tsel-opt.is-selected,
+html.cc-popups-on #displaybox .cc-tsel-opt:hover,
+html.cc-popups-on #displaybox .cc-tsel-opt.is-selected { filter: brightness(1.18); box-shadow: none !important; }
+html.cc-tools-on #displaybox .cc-tsel-opt.is-disabled,
+html.cc-popups-on #displaybox .cc-tsel-opt.is-disabled { opacity: .45; cursor: not-allowed; }
 /* #1 CORRECTION (user): in the REACTIVE sub-mode (cc.rbmode=active) the list items REST neutral and reveal
    their OWN rotating colour ONLY on mouseover / when selected — matching every other reactive control. Full
    rainbow keeps them permanently coloured (rule above). The per-item --cc-rb-c is still stamped, just unused

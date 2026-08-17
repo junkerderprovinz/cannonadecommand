@@ -1214,6 +1214,27 @@
     tg.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
     wrap.appendChild(tg); bar.appendChild(wrap);
   }
+  // #74 (user: "bitte ein badge in der bottom leiste einbauen mit namen 'Mehrfachauswahl', wenn
+  // der geklickt wird erscheinen die checkboxen erst"): the per-row checkboxes used to be always
+  // visible; now they're hidden by default (html.cc-bulkmode-on gates .cc-bulk-cb's display, see
+  // docker.css) and this badge in the floating action bar toggles that class. Turning bulk mode
+  // OFF also clears any current selection — a hidden checkbox with a lingering "N ausgewählt" bar
+  // would be a confusing state to leave behind.
+  var ccBulkModeOn = false;
+  function ccBulkModeToggle() {
+    ccBulkModeOn = !ccBulkModeOn;
+    document.documentElement.classList.toggle("cc-bulkmode-on", ccBulkModeOn);
+    var btn = document.querySelector(".cc-bulkmode-badge"); if (btn) btn.classList.toggle("cc-bulkmode-badge-on", ccBulkModeOn);
+    if (!ccBulkModeOn) { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); }
+  }
+  function ensureBulkModeBadge(bar) {
+    if (bar.querySelector(".cc-bulkmode-badge")) return;
+    var btn = el("span", "cc-b cc-bulkmode-badge" + (ccBulkModeOn ? " cc-bulkmode-badge-on" : ""), LANG === "de" ? "Mehrfachauswahl" : "Multi-select");
+    btn.setAttribute(MARK, "1"); btn.setAttribute("role", "button"); btn.setAttribute("tabindex", "0");
+    btn.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); ccBulkModeToggle(); });
+    btn.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); ccBulkModeToggle(); } });
+    bar.appendChild(btn);
+  }
   function relocateTopBar() {
     try {
       syncFooterDock();
@@ -1242,6 +1263,7 @@
         Array.prototype.slice.call(document.querySelectorAll(".cc-hgear:not(.cc-hgear-grid)")).forEach(function (x9) { x9.remove(); });
         var hc = document.querySelector(".cc-headctl"); if (hc) hc.remove(); // old overlay
         ensureBarToggle(jsa);
+        ensureBulkModeBadge(jsa);
       } else {
         // our own pages (Plugins/VMs enhancer) have a tab strip, not js-actions
         var tc9 = document.querySelector("nav.tabs .tabs-container");

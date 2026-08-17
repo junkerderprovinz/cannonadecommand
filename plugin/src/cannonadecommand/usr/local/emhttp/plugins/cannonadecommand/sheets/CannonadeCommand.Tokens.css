@@ -1268,15 +1268,14 @@ html.cc-popups-on .cardDescription, html.cc-popups-on .cardDesc { color: var(--c
    #70: CA also carries a native max-height:65px here that silently capped the intended 78px box below it —
    the same "a min/max-* property is separate from its base property" trap already hit on the hamburger's
    min-width and the CTA badge's !important display; max-height needs its own explicit override too. */
-/* #73 (user: "der Offiziell, beta, etc badge kommt in die zeile vom installieren badge... Das textfeld
-   kann dann wieder größer sein"): the ribbon row no longer reserves its own band above this box (it nests
-   into .cc-castats at the bottom instead — see #73 there), so this box reclaims that space: starts right
-   where the ribbon row used to start (104px — keeps the "der abstand vom text unter dem logo soll etwas
-   größer sein" gap below the icon/name/author block, which ends at 94px), and extends down to just above
-   .cc-castats, which stays bottom:8px + height 30px anchored, i.e. its own top edge is at 240-8-30=202. */
+/* #74 (user: "die textbox soll noch ein bischen weiter nach unten. Abstand zum logo ein bischen
+   größer und soll nach unten zum installieren badge den gleichen abstand haben"): symmetric 14px
+   gaps now — above (from the icon/name/author block, which ends at 94px) AND below (to .cc-castats,
+   whose own top edge is 240-8-30=202 given its bottom:8px + height 30px anchor), a bit more than the
+   old top-only 10px. Available band is fixed (94 to 202 = 108px), so 14+14 gap leaves an 80px box. */
 html.cc-popups-on .cardDescription {
-  position: absolute !important; left: 0 !important; right: 0 !important; top: 104px !important; bottom: auto !important;
-  height: 94px !important; max-height: 94px !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 6px !important;
+  position: absolute !important; left: 0 !important; right: 0 !important; top: 108px !important; bottom: auto !important;
+  height: 80px !important; max-height: 80px !important; overflow: hidden !important; box-sizing: border-box !important; padding: 0 6px !important;
 }
 html.cc-popups-on .cardDescription:hover { overflow-y: auto !important; }
 html.cc-popups-on .cardDesc { display: block !important; max-height: none !important; }
@@ -1403,16 +1402,24 @@ html.cc-popups-on .searchArea .caButton:hover { background: var(--cc-chip-hover,
    that exact action), or "Installiert" (installed, no update, inert status badge). Anchored on the card's
    bottom edge (not a `top` guess) so it stays put regardless of how tall the description or the ribbon row
    above it turn out to be. */
-/* #73: two groups sharing one row now — .cc-ribbonrow (official/beta/LT, left) and .cc-cs-right
-   (download/updated/install, right). space-between with an empty (zero-width) ribbon row on a card with
-   no marks still parks .cc-cs-right flush against the right edge, same as the old flex-end-only layout. */
+/* #73/#74 (user: "Der Installierenbadge ist nicht fixiert in der Position. manchmal ist er weiter
+   links. ebenso der download und aktualisierungsbadge"): a flex space-between made .cc-cs-right's
+   LEFT edge move with .cc-ribbonrow's width (0/92/184px depending on how many ribbon marks a card
+   has) — its right edge stayed pinned, but the whole group visibly "danced" card to card. Both
+   groups are now independently absolute-positioned within .cc-castats instead of flex-distributed
+   against each other, so .cc-cs-right sits at a FIXED right:6px on every card regardless of
+   whether/how many ribbons exist, and .cc-ribbonrow sits at a fixed left:6px the same way. */
 html.cc-popups-on .cc-castats {
   position: absolute !important; left: 0 !important; right: 0 !important; bottom: 8px !important; top: auto !important;
-  display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 6px !important;
-  padding: 0 6px !important; box-sizing: border-box !important; pointer-events: none !important;
+  height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; pointer-events: none !important;
+}
+html.cc-popups-on .cc-ribbonrow {
+  position: absolute !important; left: 6px !important; right: auto !important; top: 0 !important; bottom: 0 !important;
+  display: flex !important; align-items: center !important; gap: 6px !important;
 }
 html.cc-popups-on .cc-cs-right {
-  display: flex !important; align-items: center !important; gap: 6px !important; flex: 0 0 auto !important;
+  position: absolute !important; right: 6px !important; left: auto !important; top: 0 !important; bottom: 0 !important;
+  display: flex !important; align-items: center !important; gap: 6px !important;
 }
 /* downloads / last-updated: bare value only (no "Downloads"/"Aktualisiert" word — meaning lives in title=
    for hover/a11y), fixed EQUAL width regardless of digit/date length, same height as every other card badge. */
@@ -1632,17 +1639,6 @@ html.cc-popups-on .ca_note {
    both, or neither mark looks correct with no extra rule needed per combination. */
 html.cc-popups-on .ca_homeTemplates > div { position: relative !important; }
 html.cc-popups-on .ca_holder { position: relative !important; }
-/* #73 (user: "der Offiziell, beta, etc badge kommt in die zeile vom installieren badge nur linksbündig.
-   Das textfeld kann dann wieder größer sein"): the ribbon row leaves the top-of-card band entirely and
-   nests INSIDE .cc-castats instead (ccAppsRibbonRow, header.js, inserts it as the row's first child) —
-   plain in-flow flex now, no absolute positioning of its own; .cc-castats' own space-between (below) pins
-   this group to the LEFT edge while .cc-cs-right (download/updated/install) stays pinned right. An EMPTY
-   ribbon row (no official/beta/LT mark on this card) collapses to zero width, so space-between still
-   parks .cc-cs-right flush right with nothing left over — no reserved band needed either way, unlike the
-   old top-anchored version. */
-html.cc-popups-on .cc-ribbonrow {
-  display: flex !important; align-items: center !important; gap: 6px !important; flex: 0 1 auto !important; min-width: 0 !important;
-}
 /* #71 (user: "wenn eine app installiert ist steht über dem installieren badge nochmal ein installiert
    badge"): CA's native INSTALLED ribbon duplicated the .cc-cs-cta "Installiert" status badge below it —
    the same information shown twice on one card. header.js still moves it into .cc-ribbonrow like the other
@@ -1690,7 +1686,13 @@ html.cc-popups-on .installedCardText {
    (mouseover) instead of a second visible pill — killing the ::before "Spotlight" word + .spotlightDate
    pill along with it. */
 html.cc-popups-on .homespotlightIconArea {
-  position: absolute !important; top: 14px !important; right: 82px !important; z-index: 4 !important;
+  /* live-measured: this element carries CA's own native .ca_center class, which sets its OWN `left`
+     (a fixed px value, not the type badge's problem — .appDocker etc never carry .ca_center). With
+     left/right/width all non-auto, `right` gets ignored by the box-model resolution and the badge
+     rendered ~27px further from the type badge than intended ("zu weit vom dockerbadge entfernt") —
+     the same "a property from the other axis wasn't neutralised" trap hit repeatedly on this card
+     already (min-width vs width, padding vs height); this time it's left vs right. */
+  position: absolute !important; top: 14px !important; left: auto !important; right: 82px !important; z-index: 4 !important;
   float: none !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important; margin: 0 !important;
   padding: 0 !important; background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-b-radius, 8px) !important;

@@ -1395,12 +1395,16 @@
       }
       // toggles AND dropdowns (#1) on tools/settings pages -> rotate across the page so no two read the same
       // colour (the CC-tsel dropdown box + selected chip follow --cc-rb-c, inherited from the .cc-tsel wrapper).
-      var tgls = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tgl, html.cc-tools-on #displaybox .switch-button-background, html.cc-tools-on #displaybox .cc-tsel, html.cc-tools-on #displaybox .ui-dropdownchecklist-selector-wrapper, html.cc-diskpage #displaybox h3.section-header");   // #(user: "alle Badges in die Farbmodi"): the Boot-Parameters section badges rotate too
+      // #74 (user, re: the Display-Settings Sprache dropdown: "die dropdownliste ... in die farb und form
+      // engine aufnehmen"): html.cc-popups-on added alongside cc-tools-on — the JS-side stamping was gated
+      // the same way the CSS was (Tools.css, same #74 note there), so a .cc-tsel outside the Tools area never
+      // got --cc-rb-c set at all and could never show rainbow rotation regardless of the CSS fix.
+      var tgls = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tgl, html.cc-tools-on #displaybox .switch-button-background, html.cc-tools-on #displaybox .cc-tsel, html.cc-tools-on #displaybox .ui-dropdownchecklist-selector-wrapper, html.cc-diskpage #displaybox h3.section-header, html.cc-popups-on #displaybox .cc-tsel");   // #(user: "alle Badges in die Farbmodi"): the Boot-Parameters section badges rotate too
       for (var t = 0; t < tgls.length; t++) { if (!on) clear(tgls[t]); else stamp(tgls[t], t); }
       // #1 (user): each dropdown OPTION gets its OWN palette slot — rotate WITHIN each panel so the open list
       // reads as a rainbow of items (the trigger itself stays neutral until hover; see Tools.css). Covers the CC
       // overlay dropdown (.cc-tsel-panel/.cc-tsel-opt) AND the jQuery dropdownchecklist (Notification-agent lists).
-      var panels = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tsel-panel, html.cc-tools-on #displaybox .ui-dropdownchecklist-dropcontainer");
+      var panels = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tsel-panel, html.cc-tools-on #displaybox .ui-dropdownchecklist-dropcontainer, html.cc-popups-on #displaybox .cc-tsel-panel");
       for (var pn = 0; pn < panels.length; pn++) { var opts = panels[pn].querySelectorAll(".cc-tsel-opt, .ui-dropdownchecklist-item"); for (var oi = 0; oi < opts.length; oi++) { if (!on) clear(opts[oi]); else stamp(opts[oi], oi); } }
       // #5 (user: "alle Badges in die Farbmodi aufnehmen"): the notification-drawer badges rotate through the palette
       // too (tabs, type filters, gear, the bulk-action icons, and the per-card Anzeigen/Archiv buttons). The delete

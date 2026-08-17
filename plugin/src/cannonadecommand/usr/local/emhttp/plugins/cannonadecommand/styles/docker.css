@@ -228,8 +228,20 @@ html.cc-shares-rbneutral:not(.cc-state-native) .cc-enh #docker_list tr:hover .cc
 /* ── bulk-select toolbar (user forum feature request): a per-row checkbox (first flex child
    of .outer, see docker.js) plus a floating toolbar that appears once 1+ rows are checked.
    The toolbar's buttons ride the SAME md tier as the canonical .cc-b-del delete control above,
-   so Start/Stop/Remove/Clear read as one consistent cluster, not mismatched sizes. */
-.cc-bulk-cb { accent-color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); width: 16px; height: 16px; margin: 0 8px 0 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; }
+   so Start/Stop/Remove/Clear read as one consistent cluster, not mismatched sizes.
+   #74 (user: "bitte ein badge in der bottom leiste einbauen mit namen 'Mehrfachauswahl', wenn
+   der geklickt wird erscheinen die checkboxen erst"): hidden by default, revealed only once the
+   Mehrfachauswahl badge in the floating action bar is toggled on. */
+.cc-bulk-cb { display: none !important; accent-color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); width: 16px; height: 16px; margin: 0 8px 0 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; }
+html.cc-bulkmode-on .cc-bulk-cb { display: inline-block !important; }
+div.js-actions .cc-bulkmode-badge {
+  cursor: pointer; user-select: none; margin-left: 8px;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
+div.js-actions .cc-bulkmode-badge:hover { filter: brightness(1.14); }
+div.js-actions .cc-bulkmode-badge-on {
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+}
 .cc-bulkbar {
   position: fixed; left: 50%; transform: translateX(-50%);
   bottom: calc(var(--cc-footer-h, 0px) + var(--cc-actbar-h, 40px) + 10px);

@@ -937,7 +937,14 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
-	if len(cfg.UISettings) > 64 {
+	// #74 (live-caught, real box): CC's own cc.* localStorage surface easily exceeds 64 distinct
+	// keys once per-area prefix variants are counted (cc./ccp./ccv./cch./ccs./ccf./ccd. — the same
+	// base setting name repeated per area), and this cap being hit made every settings push fail
+	// SILENTLY (the browser-side sync callers swallow PUT errors) with no visible symptom beyond
+	// "settings don't stay synced across browsers" — confirmed live at exactly 64 stored keys. Each
+	// entry is still capped at 64+4096 bytes below, so even 512 entries is a ~2MB worst case for one
+	// atomically-written JSON file, negligible for an infrequent (800ms-debounced) write.
+	if len(cfg.UISettings) > 512 {
 		writeErr(w, http.StatusBadRequest, fmt.Errorf("too many ui settings"))
 		return
 	}

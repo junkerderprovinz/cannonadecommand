@@ -109,4 +109,78 @@
   function primaryFamily(css) { var m = /^\s*(?:"([^"]+)"|'([^']+)'|([^,]+))/.exec(String(css || "")); return (m ? (m[1] || m[2] || m[3] || "") : "").trim(); }
 
   window.CCTheme = { RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor, gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily };
+
+  // ── cross-origin/cross-browser UI-settings sync (user: "wenn CC aktiviert ist sieht es in
+  // unterschiedlichen Browsern unterschiedlich aus... können wir das persistent machen?").
+  // localStorage is per-ORIGIN and per-BROWSER: every cc.* toggle only ever lived in the one
+  // browser/origin it was set in. docker.js and settings.js already mirror every cc.* write
+  // into the engine's config.ui_settings and adopt it back on load ("cross-origin settings
+  // sync" in docker.js) — but that mechanism only ever ran on /Docker and
+  // /Settings/CannonadeCommand, the only two pages those files load on. Every OTHER page
+  // (Apps, Plugins, VMs, Shares, Unraid's own Settings pages, ...) never synced at all, which
+  // is the actual root cause of "looks different per browser" for anything configured or
+  // viewed outside those two pages. This file loads globally+synchronously on EVERY page, so
+  // it is the one place that can close that gap. docker.js/settings.js's own copies are left
+  // untouched (their extra migration/export logic stays there) — skipped here on the two pages
+  // that already sync, so localStorage.setItem is never double-wrapped.
+  (function () {
+    if (/^\/Docker(\/|$)/.test(location.pathname) || /^\/Settings\/CannonadeCommand(\/|$)/.test(location.pathname)) return;
+    var PROXY = "/plugins/cannonadecommand/server/ccapi.php";
+    function apiGet(path) {
+      return fetch(PROXY + "?path=" + encodeURIComponent(path), { headers: { Accept: "application/json" } })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    }
+    function csrfToken() {
+      try {
+        if (typeof window.csrf_token === "string" && window.csrf_token) return window.csrf_token;
+        var f = document.querySelector('input[name="csrf_token"]'); if (f && f.value) return f.value;
+        var m = (document.cookie || "").match(/csrf_token=([0-9A-Za-z]+)/); if (m) return m[1];
+      } catch (e) {}
+      return "";
+    }
+    function apiPut(path, body) {
+      var tok = csrfToken();
+      return fetch(PROXY + "?path=" + encodeURIComponent(path), {
+        method: "PUT", headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+        body: (tok ? "csrf_token=" + encodeURIComponent(tok) + "&" : "") + "data=" + encodeURIComponent(JSON.stringify(body || {}))
+      }).catch(function () {});
+    }
+    var pending = {}, syncT = null;
+    try {
+      if (!window.__ccLS) {
+        var orig = localStorage.setItem.bind(localStorage);
+        window.__ccLS = orig;
+        localStorage.setItem = function (k, v) {
+          orig(k, v);
+          try { if (/^cc[a-z]*\./.test(String(k)) && k !== "cc.stateCache") { pending[k] = 1; clearTimeout(syncT); syncT = setTimeout(push, 800); } } catch (e) {}
+        };
+      }
+    } catch (e) {}
+    function push() {
+      var keys = Object.keys(pending); if (!keys.length) return;
+      apiGet("config").then(function (c) {
+        if (!c || typeof c !== "object") return;
+        var u = c.ui_settings || {};
+        keys.forEach(function (k) { var v = localStorage.getItem(k); if (v === null) delete u[k]; else u[k] = v; });
+        pending = {};
+        return apiPut("config", { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], idle_stops: c.idle_stops || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: u });
+      });
+    }
+    function adopt(u) {
+      var changed = false;
+      try { Object.keys(u || {}).forEach(function (k) { if (/^cc[a-z]*\./.test(k) && k !== "cc.stateCache" && localStorage.getItem(k) !== u[k]) { (window.__ccLS || localStorage.setItem.bind(localStorage))(k, u[k]); changed = true; } }); } catch (e) {}
+      return changed;
+    }
+    apiGet("config").then(function (c) {
+      if (!c || typeof c !== "object") return;
+      // silently corrects localStorage now; already-painted classes catch up on the next
+      // natural navigation/reload — no forced reload here, this file has no re-render hook.
+      adopt(c.ui_settings);
+      if (!c.ui_settings || !Object.keys(c.ui_settings).length) {
+        var seed = {};
+        try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && /^cc[a-z]*\./.test(k) && k !== "cc.stateCache") seed[k] = localStorage.getItem(k); } } catch (e) {}
+        if (Object.keys(seed).length) { Object.keys(seed).forEach(function (k) { pending[k] = 1; }); push(); }
+      }
+    });
+  })();
 })();
