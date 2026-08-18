@@ -3316,9 +3316,11 @@
       closeBtn.appendChild(ccMkEl("i", "fa fa-times"));
       closeBtn.title = T("Schließen", "Close"); closeBtn.setAttribute("aria-label", closeBtn.title);
     }
-    // spotlight -> inline star next to the app name (matching the CARD's own spotlight badge, #73),
-    // instead of only the big icon+date block CA renders further down — that block's "why we picked it"
-    // text is genuinely useful, so it stays, just folded into the Infotext card below rather than removed.
+    // spotlight -> inline star next to the app name (matching the CARD's own spotlight badge, #73), plus
+    // an (i) info bubble carrying "why we picked it" beside it. #94-B (user: "den runden orangen kreis
+    // ausblenden. Why we picked it soll in eine infobubble neben dem sternbadge"): the icon+date block is
+    // just hidden outright (CSS); its "why" text is extracted here BEFORE that hide takes effect on
+    // anything relying on layout, though display:none doesn't affect textContent either way.
     var spotBlock = sc.querySelector(".spotlightPopup");
     var nameEl = sc.querySelector(".popupName");
     if (spotBlock && nameEl && !nameEl.querySelector(".cc-ic-spot")) {
@@ -3326,17 +3328,25 @@
       star.appendChild(ccMkEl("i", "fa fa-star"));
       star.title = T("Spotlight-App", "Spotlight app");
       nameEl.appendChild(star);
+      var msgEl = spotBlock.querySelector(".spotlightMessage"), whoEl = spotBlock.querySelector(".spotlightWho");
+      // live-caught: .spotlightWho already carries its OWN leading "- " ("- SpaceInvader One"), so joining
+      // with " — " doubled up into "...enjoying. — - SpaceInvader One" — strip that native prefix first.
+      var tipParts = [msgEl, whoEl].map(function (e) { return e ? e.textContent.trim().replace(/^-\s*/, "") : ""; }).filter(Boolean);
+      if (tipParts.length) nameEl.appendChild(ccMakeInfo(tipParts.join(" — ")));
     }
-    // wraps `els` (already-live DOM elements; the first one anchors the insertion point) in a new numbered
-    // badge-card — the same visual idea as a <fieldset><legend> (the legend badge sits half ON the card via
-    // CSS position:absolute), built from plain divs since that is what CA's own markup already is. `warn`
-    // reuses the amber "needs attention" tone the #86 border-fix established elsewhere in this file, for
-    // 1.1 Zusätzliche Anforderungen — a background tint, never a border line (GLS).
-    function cardify(els, num, title, warn) {
+    // wraps `els` (already-live DOM elements; the first one anchors the insertion point) in a new badge-
+    // card — the same visual idea as a <fieldset><legend> (the legend badge sits half ON the card via CSS
+    // position:absolute), built from plain divs since that is what CA's own markup already is. #94-B
+    // (user: "die abschnittbadges sollen nicht nummeriert sein. die war nur für dich"): the earlier 1./1.1./
+    // 2./3./4. prefixes were only ever meant to communicate the intended structure while building this, not
+    // to actually ship — plain titles now. `warn` reuses the amber "needs attention" tone the #86 border-
+    // fix established elsewhere in this file, for Zusätzliche Anforderungen — a background tint, never a
+    // border line (GLS). `nested` visually indents it under the card immediately above (Infotext).
+    function cardify(els, title, warn, nested) {
       els = els.filter(Boolean);
       if (!els.length) return;
-      var card = ccMkEl("div", "cc-ic-card" + (num === "1.1." ? " cc-ic-nested" : ""));
-      var legend = ccMkEl("span", "cc-ic-legend" + (warn ? " cc-ic-warn" : ""), num + " " + title);
+      var card = ccMkEl("div", "cc-ic-card" + (nested ? " cc-ic-nested" : ""));
+      var legend = ccMkEl("span", "cc-ic-legend" + (warn ? " cc-ic-warn" : ""), title);
       els[0].parentNode.insertBefore(card, els[0]);
       card.appendChild(legend);
       els.forEach(function (el) { card.appendChild(el); });
@@ -3347,6 +3357,12 @@
     var desc = sc.querySelector(".popupDescription");
     var video = sc.querySelector(".videoPlayOverlay");
     var videoWrap = video ? video.parentElement : null;
+    // #94-C (user, root cause of "card ist verschoben und der titeltext ist zweimal da"): .additionalRequirementsHeader
+    // is a SIBLING immediately before .additionalRequirements in CA's markup, not nested inside it — the
+    // earlier version only ever moved .additionalRequirements itself, leaving this header orphaned in its
+    // original spot (unhidden, since the CSS hide rule only ever reached INSIDE a .cc-ic-card). Grabbing it
+    // here too means it travels into the same card and the existing hide rule finally reaches it.
+    var addReqHeader = sc.querySelector(".additionalRequirementsHeader");
     var addReq = sc.querySelector(".additionalRequirements");
     var infoLefts = sc.querySelectorAll(".popupInfoLeft");
     var detailsBlock = infoLefts[0], maintBlock = infoLefts[1];
@@ -3357,11 +3373,33 @@
       var sib = trendsHead.nextElementSibling;
       for (var ti = 0; ti < 2 && sib; ti++) { trendEls.push(sib); sib = sib.nextElementSibling; }
     }
-    cardify([desc, spotBlock, videoWrap], "1.", T("Infotext", "Info text"));
-    cardify([addReq], "1.1.", T("Zusätzliche Anforderungen", "Additional requirements"), true);
-    cardify([detailsBlock], "2.", T("Details", "Details"));
-    cardify([maintBlock], "3.", T("Maintainer", "Maintainer"));
-    cardify(trendEls, "4.", T("Trends", "Trends"));
+    // #94-C (user: "der changelog soll auch in eine badge card"): .changelogTitle + .changelogMessage +
+    // the actual .changelog body are flat siblings in CA's markup; readmore.js appends its own "SHOW MORE"
+    // toggle (.ca_readmore) as the very next sibling after .changelog, ONLY when the content is genuinely
+    // long enough to collapse — absent (null) on shorter changelogs, cardify()'s own .filter(Boolean)
+    // already handles that safely.
+    var changelogTitle = sc.querySelector(".changelogTitle");
+    var changelogMsg = sc.querySelector(".changelogMessage");
+    var changelogBody = sc.querySelector(".changelog");
+    var changelogMore = changelogBody ? changelogBody.nextElementSibling : null;
+    if (changelogMore && !changelogMore.classList.contains("ca_readmore")) changelogMore = null;
+    // #94-C (user: "das steht bei manchen ganz unten: Template Errors / ... / das auch in eine card"):
+    // .templateErrors (a heading) is followed by one or more bare <li class="templateErrorsList"> siblings
+    // — CA's own markup emits them outside any <ul>, kept as-is rather than "fixed" into valid list markup.
+    var templateErrHead = sc.querySelector(".templateErrors");
+    var templateErrEls = [];
+    if (templateErrHead) {
+      templateErrEls.push(templateErrHead);
+      var teSib = templateErrHead.nextElementSibling;
+      while (teSib && teSib.classList.contains("templateErrorsList")) { templateErrEls.push(teSib); teSib = teSib.nextElementSibling; }
+    }
+    cardify([desc, videoWrap], T("Infotext", "Info text"));
+    cardify([addReqHeader, addReq], T("Zusätzliche Anforderungen", "Additional requirements"), true, true);
+    cardify([detailsBlock], T("Details", "Details"));
+    cardify([maintBlock], T("Maintainer", "Maintainer"));
+    cardify(trendEls, T("Trends", "Trends"));
+    cardify([changelogTitle, changelogMsg, changelogBody, changelogMore], T("Änderungsprotokoll", "Changelog"));
+    cardify(templateErrEls, T("Vorlagenfehler", "Template Errors"));
   }
   // #76 (user: "der DVDCompress Container hat eine gelbe Sprechblase. Können wir das in ein weiteren
   // quadratischen badge umwandeln der links des Dockerbadges sitzt. Als symbol soll ein Achtung icon
@@ -3597,7 +3635,10 @@
       // badge-cards (CSS: Tokens.css #94), close button -> square X, spotlight -> inline star. Rainbow
       // needs these freshly-built elements in the SAME stamp pass or they'd stay flat-accent forever.
       ccInfoCardEnhance();
-      ccAppsStamp(".cc-ic-legend, .cc-ic-close, .cc-ic-spot");
+      // #94-C: the "SHOW MORE" toggle and the Donate badge are new badge-recipe elements too, added to the
+      // same per-tick stamp pass as the rest of the Info-Card badges (rainbow needs the pass to reach them
+      // in the tick they first render, same reasoning as the comment above).
+      ccAppsStamp(".cc-ic-legend, .cc-ic-close, .cc-ic-spot, .cc-ic-card .ca_readmore, .cc-ic-card .donateDiv .caButton.donate");
       // #8 (user: "die buttons ganz unten sind nicht in die farbmodi integriert"): the bottom action bar
       // (.multi_installDiv) was styled as a badge row but never STAMPED, so --cc-rb-c never reached it and
       // it could only ever paint the neutral chip. Stamped like every other Apps badge, it takes the accent

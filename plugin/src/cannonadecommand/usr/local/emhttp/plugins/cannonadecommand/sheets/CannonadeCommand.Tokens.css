@@ -1639,7 +1639,12 @@ html.cc-popups-on .additionalRequirementsHeader {
   text-transform: uppercase !important; letter-spacing: .6px !important; margin: 0 0 8px !important;
 }
 html.cc-popups-on .additionalRequirementsHeader { margin-bottom: 4px !important; }
-html.cc-popups-on .popupInfoSection { display: flex !important; gap: 24px !important; flex-wrap: wrap !important; }
+/* #94-B (user: "Die Badge karten sollen alle gleich breit sein und über die ganze breite gehen"): this
+   used to be a flex row (Details + Maintainer side by side, each only as wide as its own content) — at
+   most drawer widths that meant two DIFFERENTLY-sized cards instead of matching the full-width cards
+   everywhere else in the drawer. Block stacking makes every .cc-ic-card inside it 100% wide via normal
+   block flow, same as the top-level cards, with no dependency on viewport width. */
+html.cc-popups-on .popupInfoSection { display: block !important; }
 html.cc-popups-on .popupTable { border-collapse: collapse !important; width: 100% !important; }
 html.cc-popups-on .popupTable td { padding: 4px 0 !important; font-size: 13px !important; }
 html.cc-popups-on .popupTableLeft { color: var(--cc-text-dim, #8a8a8a) !important; padding-right: 14px !important; white-space: nowrap !important; }
@@ -1679,8 +1684,14 @@ html.cc-popups-on .ca_note {
    plain divs; see ccInfoCardEnhance() in header.js, which builds .cc-ic-card/.cc-ic-legend around CA's
    existing section elements — .popupDescription, .additionalRequirements, the two .popupInfoLeft blocks,
    the .charts trend block — rather than replacing them). */
+/* #94-B (user: "die info card geht oben bis an den fenster rand. soll wie das benachrichtigungsfenster
+   frei schwebend sein. mit gleichen abständen oben, unten, rechts"): CA's own native positioning is
+   `position:fixed;top:0;right:0` (live-measured) — flush to both edges, only the bottom already carried
+   a margin. Detach it on all three sides with the SAME top/right insets the notification centre already
+   floats at (Header.css: `inset: 74px 16px auto auto`), so both floating windows read as one family. */
 html.cc-popups-on .sidenav.sidenavShow {
-  border-radius: 14px 0 0 14px !important;
+  top: 74px !important; right: 16px !important; bottom: 16px !important; left: auto !important;
+  height: auto !important; border-radius: 14px !important;
 }
 /* close button -> a SQUARE badge with an X. Deliberately NOT var(--cc-b-radius) — user, explicit: a close
    control should read the same regardless of the active badge-shape mode, unlike every other badge here. */
@@ -1716,9 +1727,13 @@ html.cc-popups-on #sidenavContent .cc-ic-card {
   border-radius: var(--cc-b-radius, 10px) !important; padding: 18px 16px 14px !important;
   margin: 22px 0 16px !important; box-sizing: border-box !important;
 }
-/* 1.1 Zusätzliche Anforderungen nests visually under 1. Infotext instead of reading as its own top-level
+/* Zusätzliche Anforderungen nests visually under Infotext instead of reading as its own top-level
    section — smaller left inset, tighter top gap. */
 html.cc-popups-on #sidenavContent .cc-ic-card.cc-ic-nested { margin: 10px 0 16px 20px !important; }
+/* #94-B (user: "die abschnittbadges sollen nicht nummeriert sein. die war nur für dich"): the "1." / "1.1."
+   / "2." prefixes were only ever meant to communicate the intended STRUCTURE while building this, never
+   to ship — header.js's cardify() no longer writes them into the legend text at all now, so no CSS change
+   was needed here, just noting why an obvious `content: "1. "` counter-based approach was never added. */
 html.cc-popups-on #sidenavContent .cc-ic-legend {
   position: absolute !important; top: -13px !important; left: 16px !important; z-index: 1 !important;
   display: inline-flex !important; align-items: center !important; box-sizing: border-box !important;
@@ -1728,36 +1743,90 @@ html.cc-popups-on #sidenavContent .cc-ic-legend {
   font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: .5px !important;
   box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
 }
-/* 1.1's legend takes the SAME amber "needs attention" tone .additionalRequirements used to signal via its
-   left border stripe — a fill, never a border line (GLS), same idea #86 already established elsewhere. */
+/* Zusätzliche Anforderungen's legend takes the SAME amber "needs attention" tone .additionalRequirements
+   used to signal via its left border stripe — a fill, never a border line (GLS), same idea #86 already
+   established elsewhere. */
 html.cc-popups-on #sidenavContent .cc-ic-legend.cc-ic-warn {
   background: var(--cc-warn, #d6a243) !important; color: #1a1400 !important;
 }
 /* the section content itself now lives INSIDE .cc-ic-card, which already supplies background/padding/
    spacing — strip each piece's own standalone card styling so it blends into the wrapper instead of
-   boxing twice. The old small-caps text labels (Details/Maintainer/Zusätzliche Anforderungen/Trends) are
-   redundant with the legend badge sitting on top of the same card now, so they're hidden, not just restyled. */
+   boxing twice. */
 html.cc-popups-on #sidenavContent .cc-ic-card .popupDescription,
 html.cc-popups-on #sidenavContent .cc-ic-card .additionalRequirements,
 html.cc-popups-on #sidenavContent .cc-ic-card .changelog {
   background: transparent !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important;
 }
+/* the old small-caps text labels (Details/Maintainer/Zusätzliche Anforderungen/Trends/Changelog/Template
+   Errors) are redundant with the legend badge sitting on top of the same card now, so they're hidden, not
+   just restyled. #94-C (user, root cause of "card ist verschoben und der titeltext ist zweimal da"):
+   .additionalRequirementsHeader is a SIBLING before .additionalRequirements in CA's markup, not nested
+   inside it — header.js now moves it into the card too (instead of leaving it orphaned in its original
+   spot), so this same descendant selector correctly reaches and hides it. */
 html.cc-popups-on #sidenavContent .cc-ic-card .rightTitle,
 html.cc-popups-on #sidenavContent .cc-ic-card .popupAuthorTitle,
 html.cc-popups-on #sidenavContent .cc-ic-card .additionalRequirementsHeader,
-html.cc-popups-on #sidenavContent .cc-ic-card .charts.chartTitle {
+html.cc-popups-on #sidenavContent .cc-ic-card .charts.chartTitle,
+html.cc-popups-on #sidenavContent .cc-ic-card .changelogTitle,
+html.cc-popups-on #sidenavContent .cc-ic-card .templateErrors {
   display: none !important;
 }
-/* the spotlight "why we picked it" block now lives inside the Infotext card too — drop its own dark
-   background/padding for the same reason, keep the icon+text readable on the card's surface. */
-html.cc-popups-on #sidenavContent .cc-ic-card .spotlightPopup {
-  background: transparent !important; padding: 0 !important; margin: 14px 0 0 !important; display: flex !important; gap: 12px !important;
+/* #94-B (user: "Bei spotlight apps bitte den runden orangen kreis ausblenden. Why we picked it soll in
+   eine infobubble neben dem sternbadge"): the icon+date+why-block no longer goes into a card at all —
+   header.js extracts the "why we picked it" text into an (i) bubble beside .cc-ic-spot and leaves this
+   native block exactly where CA rendered it, just hidden outright. */
+html.cc-popups-on #sidenavContent .spotlightPopup { display: none !important; }
+/* the (i) bubble beside the Spotlight star — same ccMakeInfo() component used elsewhere in the plugin,
+   sized/coloured per its established per-context convention (Tokens.css already does this once per area
+   it appears in; this is the App-Info-popup instance of that same pattern). */
+html.cc-popups-on #sidenavContent .popupName .cc-info {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  width: 15px !important; height: 15px !important; flex: none !important; cursor: help !important;
+  margin-left: 6px !important; vertical-align: middle !important;
+  color: var(--cc-text-dim, #8a8a8a) !important; opacity: .8 !important;
 }
-html.cc-popups-on #sidenavContent .cc-ic-card .spotlightIconArea img { width: 32px !important; height: 32px !important; border-radius: var(--cc-b-radius, 8px) !important; }
-html.cc-popups-on #sidenavContent .cc-ic-card .spotlightDate { display: none !important; } /* the star badge's own title= already carries this */
-html.cc-popups-on #sidenavContent .cc-ic-card .spotlightWhy { color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11px !important; text-transform: uppercase !important; letter-spacing: .5px !important; font-weight: 700 !important; }
-html.cc-popups-on #sidenavContent .cc-ic-card .spotlightMessage { color: var(--cc-text, #e6e6e6) !important; font-style: italic; }
-html.cc-popups-on #sidenavContent .cc-ic-card .spotlightWho { color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11px !important; }
+html.cc-popups-on #sidenavContent .popupName .cc-info svg { width: 15px !important; height: 15px !important; display: block !important; }
+html.cc-popups-on #sidenavContent .popupName .cc-info:hover,
+html.cc-popups-on #sidenavContent .popupName .cc-info:focus { opacity: 1 !important; outline: none !important; }
+/* #94-C (user: "die show more dinger sollen auch in ein badge"): readmore.js's own toggle (the changelog's
+   "▾ SHOW MORE", occasionally the description's too) — a bare italic <i>, unstyled. Small neutral pill,
+   centred under the (collapsed) text it expands, colour-mode reactive like every other interactive badge. */
+html.cc-popups-on #sidenavContent .cc-ic-card .ca_readmore {
+  display: flex !important; align-items: center !important; justify-content: center !important; gap: 6px !important;
+  width: fit-content !important; margin: 10px auto 0 !important; height: 26px !important; padding: 0 14px !important;
+  border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer !important; font-style: normal !important;
+  font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: .5px !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+  transition: background .12s ease, color .12s ease !important;
+}
+html.cc-popups-on #sidenavContent .cc-ic-card .ca_readmore:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+/* #94-C (user: "der Donate button bei maintainer soll auch ein badge im GLs sein"): CA nests .donateText +
+   .donateDiv > .caButton.donate DIRECTLY inside .popupInfoLeft, right after the Favourite button — already
+   INSIDE the Maintainer card once that's cardified, no separate wrapping needed, just GLS styling (the
+   generic `.popupInfo .caButton` rule doesn't reach here — .popupInfoLeft is a different area). */
+html.cc-popups-on #sidenavContent .cc-ic-card .donateText { color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11px !important; margin: 10px 0 6px !important; }
+html.cc-popups-on #sidenavContent .cc-ic-card .donateDiv { margin: 0 !important; }
+html.cc-popups-on #sidenavContent .cc-ic-card .donateDiv .caButton.donate {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  height: 26px !important; padding: 0 12px !important; box-sizing: border-box !important;
+  border-radius: var(--cc-b-radius, 8px) !important; font-size: 11px !important; font-weight: 600 !important;
+  text-transform: uppercase !important; letter-spacing: .3px !important; cursor: pointer !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+  transition: background .12s ease, color .12s ease, filter .12s ease !important;
+}
+html.cc-popups-on #sidenavContent .cc-ic-card .donateDiv .caButton.donate a { color: inherit !important; text-decoration: none !important; }
+html.cc-popups-on #sidenavContent .cc-ic-card .donateDiv .caButton.donate:hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+/* #94-C (user: "das steht bei manchen ganz unten: Template Errors / ... / das auch in eine card"): the
+   error text itself (CA emits it as a bare <li>, not inside a <ul> — kept as-is, just styled to read). */
+html.cc-popups-on #sidenavContent .cc-ic-card .templateErrorsList {
+  list-style: none !important; margin: 0 0 6px !important; padding: 0 !important;
+  color: var(--cc-text-dim, #8a8a8a) !important; font-size: 12px !important; line-height: 1.5 !important;
+}
+html.cc-popups-on #sidenavContent .cc-ic-card .templateErrorsList:last-child { margin-bottom: 0 !important; }
 
 /* ═══ WILD entrance for BOTH the App-Info drawer AND the notification centre (user: "beide Fenster sollen
    im Animationsstil wild eine coole Animation bekommen wenn sie einfliegen") — reuses the house wild-
