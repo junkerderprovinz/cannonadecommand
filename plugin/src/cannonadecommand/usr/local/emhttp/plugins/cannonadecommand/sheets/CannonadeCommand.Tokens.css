@@ -995,6 +995,14 @@ html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li[aria-s
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
 
+/* #95 (user: "kannst du in der side bar alle badges so breit machen, dass alle nur einzeilig sind?"):
+   CA's own `.menuItems{width:14rem}` (community.applications.css) is too narrow for several of the
+   uppercase, letter-spaced section badges (Installierte Apps, Bisherige Apps, Angeheftete Apps,
+   Bevorzugtes Repository all wrapped to two lines at 14rem, live-measured) — the plain Kategorien chips
+   below use a smaller font and already fit. `.ca_display_area`'s flex layout gives the app grid whatever
+   width remains automatically, so widening this is a one-line change with no separate margin to update. */
+html.cc-popups-on .ca_display_area .menuItems { width: 18rem !important; }
+
 /* #12d CATEGORY SIDEBAR (#11) — clean CC treatment: chips, grouping, shade separators (never a line),
    correct ACTIVE class (.selectedMenu — CA's real class), colour-mode active fill. */
 html.cc-popups-on .caMenu { padding: 4px !important; margin: 0 !important; }
@@ -1691,10 +1699,15 @@ html.cc-popups-on .ca_note {
    frei schwebend sein. mit gleichen abständen oben, unten, rechts"): CA's own native positioning is
    `position:fixed;top:0;right:0` (live-measured) — flush to both edges, only the bottom already carried
    a margin. Detach it on all three sides with the SAME top/right insets the notification centre already
-   floats at (Header.css: `inset: 74px 16px auto auto`), so both floating windows read as one family. */
+   floats at (Header.css: `inset: 74px 16px auto auto`), so both floating windows read as one family.
+   #94-E (user, after v4.19.0 still shipped a gap: "oben ist ein großer Leerraum"): CA's OWN base rule
+   (community.applications.css, `.sidenav{padding-top:4rem}`) reserves 40px above everything ELSE in the
+   drawer, on top of #sidenavContent's own 18px — a second, separate padding layer the v4.19.0 fix (which
+   only touched .popupCloseArea's own internal padding) never reached. Zeroed here; nothing still needs
+   that reserved space since the close button already lives in normal flow (#63 above). */
 html.cc-popups-on .sidenav.sidenavShow {
   top: 74px !important; right: 16px !important; bottom: 16px !important; left: auto !important;
-  height: auto !important; border-radius: 14px !important;
+  height: auto !important; border-radius: 14px !important; padding-top: 0 !important;
 }
 /* close button -> a SQUARE badge with an X. Deliberately NOT var(--cc-b-radius) — user, explicit: a close
    control should read the same regardless of the active badge-shape mode, unlike every other badge here. */
@@ -1735,25 +1748,39 @@ html.cc-popups-on #sidenavContent .cc-ic-card {
   border-radius: var(--cc-b-radius, 10px) !important; padding: 18px 16px 14px !important;
   margin: 30px 0 !important; box-sizing: border-box !important;
 }
-/* Zusätzliche Anforderungen nests visually under Infotext instead of reading as its own top-level
-   section — smaller left inset, tighter top gap. */
-html.cc-popups-on #sidenavContent .cc-ic-card.cc-ic-nested { margin: 10px 0 16px 20px !important; }
+/* #94-E (user: "die card zusätzliche anforderungen ist nicht richtig ausgerichtet"): this card used to get
+   a `.cc-ic-nested` modifier (20px left inset, tighter margins) to read as a sub-section of Infotext — that
+   broke the "every card is the same width, full width" rule the very first refinement round asked for,
+   which is exactly what read as misaligned. header.js's cardify() no longer applies the class at all;
+   nothing here targets it any more either. */
 /* #94-B (user: "die abschnittbadges sollen nicht nummeriert sein. die war nur für dich"): the "1." / "1.1."
    / "2." prefixes were only ever meant to communicate the intended STRUCTURE while building this, never
    to ship — header.js's cardify() no longer writes them into the legend text at all now, so no CSS change
    was needed here, just noting why an obvious `content: "1. "` counter-based approach was never added. */
+/* #94-F (user, verbatim, after this shipped colourless: "die ganzen badges sind nicht in den farbmodi...
+   das musst du jetzt endlich wissen!!!!"): this fell back straight to the SHARED --cc-rbaccent, skipping
+   the per-badge --cc-rb-c tier ccAppsStamp() actually stamps onto each legend (a different jewel colour
+   per section) — every legend rendered the same flat accent blue regardless of section OR of the Apps-tab
+   colour-mode setting. Matches li.cc-ca-cardtitle's own three-tier chain (--cc-rb-c -> --cc-rbaccent ->
+   --cc-accent) and, same as that element, needs the explicit .cc-apps-rbneutral override below — a plain
+   `var(--cc-rb-c, ...)` fallback chain does NOT, by itself, respect Reaktiver Modus. */
 html.cc-popups-on #sidenavContent .cc-ic-legend {
   position: absolute !important; top: -13px !important; left: 16px !important; z-index: 1 !important;
   display: inline-flex !important; align-items: center !important; box-sizing: border-box !important;
   height: 26px !important; padding: 0 14px !important; white-space: nowrap !important;
   border-radius: var(--cc-b-radius, 999px) !important;
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
   font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: .5px !important;
   box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
 }
+html.cc-apps-rbneutral.cc-popups-on #sidenavContent .cc-ic-legend:not(.cc-ic-warn) {
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
+}
 /* Zusätzliche Anforderungen's legend takes the SAME amber "needs attention" tone .additionalRequirements
    used to signal via its left border stripe — a fill, never a border line (GLS), same idea #86 already
-   established elsewhere. */
+   established elsewhere. Deliberately excluded from the .cc-apps-rbneutral override above: warn is a
+   semantic status colour, not a rotating accent, and stays amber in every colour mode. */
 html.cc-popups-on #sidenavContent .cc-ic-legend.cc-ic-warn {
   background: var(--cc-warn, #d6a243) !important; color: #1a1400 !important;
 }

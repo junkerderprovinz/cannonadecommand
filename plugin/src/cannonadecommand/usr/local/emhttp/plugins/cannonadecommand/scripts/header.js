@@ -3341,11 +3341,14 @@
     // 2./3./4. prefixes were only ever meant to communicate the intended structure while building this, not
     // to actually ship — plain titles now. `warn` reuses the amber "needs attention" tone the #86 border-
     // fix established elsewhere in this file, for Zusätzliche Anforderungen — a background tint, never a
-    // border line (GLS). `nested` visually indents it under the card immediately above (Infotext).
-    function cardify(els, title, warn, nested) {
+    // border line (GLS). #94-E (user: "die card zusätzliche anforderungen ist nicht richtig ausgerichtet"):
+    // this used to take a `nested` flag that indented the card 20px under Infotext — that broke the "every
+    // card is the same width, full width" rule from the very first refinement round, which is exactly what
+    // read as misaligned. Every card is a plain top-level sibling now, no nesting concept left.
+    function cardify(els, title, warn) {
       els = els.filter(Boolean);
       if (!els.length) return;
-      var card = ccMkEl("div", "cc-ic-card" + (nested ? " cc-ic-nested" : ""));
+      var card = ccMkEl("div", "cc-ic-card");
       var legend = ccMkEl("span", "cc-ic-legend" + (warn ? " cc-ic-warn" : ""), title);
       els[0].parentNode.insertBefore(card, els[0]);
       card.appendChild(legend);
@@ -3406,7 +3409,7 @@
     }
     cardify([desc, descMore, videoWrap], T("Infotext", "Info text"));
     cardify([modComment], T("Achtung", "Attention"), true);
-    cardify([addReqHeader, addReq], T("Zusätzliche Anforderungen", "Additional requirements"), true, true);
+    cardify([addReqHeader, addReq], T("Zusätzliche Anforderungen", "Additional requirements"), true);
     cardify([detailsBlock], T("Details", "Details"));
     cardify([maintBlock], T("Maintainer", "Maintainer"));
     cardify(trendEls, T("Trends", "Trends"));
