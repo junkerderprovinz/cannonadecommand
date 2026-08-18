@@ -314,7 +314,7 @@
     var CC_VER = "@@CCVER@@"; if (CC_VER.indexOf("@@") === 0) CC_VER = "dev";
     // GlimStone version this UI is built against — bump by hand whenever tokens.css /
     // appearance.ts are re-copied from a newer github.com/junkerderprovinz/glimstone release.
-    var GLS_VER = "1.5.0";
+    var GLS_VER = "1.0.0";
     // #14 (user): the version line moves to the very BOTTOM of the page (appended to root after all wraps, below).
     var verLine = el("div", "cc-set-sub cc-set-version cc-set-version-foot", "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + T("Engine: verbinde…", "Engine: connecting…"));
     api("GET", "state").then(function (s) {
