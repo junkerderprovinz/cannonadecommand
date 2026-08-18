@@ -3355,8 +3355,19 @@
     // valid once reparented, but a querySelector run AFTER an earlier move could miss something already
     // relocated into a previous card.
     var desc = sc.querySelector(".popupDescription");
+    // #94-D (user: "die show more dinger sollen auch in ein badge" — the description's OWN toggle, missed
+    // the first time): .popupDescription carries the same "popup_readmore" class as .changelog, so CA's
+    // `$('.popup_readmore').readmore(...)` call (Apps.page) truncates it and appends the identical
+    // ".ca_readmore" toggle as its very next sibling too — only present when the text is long enough to
+    // collapse, exactly like changelogMore below.
+    var descMore = desc && desc.nextElementSibling && desc.nextElementSibling.classList.contains("ca_readmore") ? desc.nextElementSibling : null;
     var video = sc.querySelector(".videoPlayOverlay");
     var videoWrap = video ? video.parentElement : null;
+    // #94-D (user: "die rote Meldung soll auch eine card werden"): CA's own "Attention:" box — blacklist /
+    // incompatible-OS / custom-network notices all land here (skin.php displayPopup(), $ModeratorComment) —
+    // rendered as a plain sibling in .popupContent with a hardcoded red border, never wrapped by the earlier
+    // version at all.
+    var modComment = sc.querySelector(".modComment");
     // #94-C (user, root cause of "card ist verschoben und der titeltext ist zweimal da"): .additionalRequirementsHeader
     // is a SIBLING immediately before .additionalRequirements in CA's markup, not nested inside it — the
     // earlier version only ever moved .additionalRequirements itself, leaving this header orphaned in its
@@ -3393,7 +3404,8 @@
       var teSib = templateErrHead.nextElementSibling;
       while (teSib && teSib.classList.contains("templateErrorsList")) { templateErrEls.push(teSib); teSib = teSib.nextElementSibling; }
     }
-    cardify([desc, videoWrap], T("Infotext", "Info text"));
+    cardify([desc, descMore, videoWrap], T("Infotext", "Info text"));
+    cardify([modComment], T("Achtung", "Attention"), true);
     cardify([addReqHeader, addReq], T("Zusätzliche Anforderungen", "Additional requirements"), true, true);
     cardify([detailsBlock], T("Details", "Details"));
     cardify([maintBlock], T("Maintainer", "Maintainer"));

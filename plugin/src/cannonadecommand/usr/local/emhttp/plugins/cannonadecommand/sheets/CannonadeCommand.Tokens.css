@@ -1581,11 +1581,14 @@ html.cc-popups-on #sidenavContent { padding: 18px 22px 26px !important; box-sizi
 /* live-caught: CA positions this bar `position:fixed;width:1272px;left:594px` — a full-VIEWPORT close bar
    meant to float above a CENTRED modal. Inside this side drawer that rendered as a pure-black strip
    spanning edge-to-edge, floating over the app grid above the panel's own top edge instead of sitting
-   inside it. Pull it back into normal flow as the drawer's own first child. */
+   inside it. Pull it back into normal flow as the drawer's own first child. #94-D (user: "oben ist ein
+   großer leerer Bereich" — root cause): CA's own rule also carries `padding:20px 0 10px` and a `-20px`
+   top margin (community.applications.css) that this block never neutralised, only margin-bottom — the
+   30px of invisible padding around the close button was the empty space. Reset the full box explicitly. */
 html.cc-popups-on .popupCloseArea {
   position: relative !important; width: auto !important; height: auto !important;
   left: auto !important; right: auto !important; top: auto !important; background: transparent !important;
-  display: flex !important; justify-content: flex-end !important; margin-bottom: 12px !important;
+  display: flex !important; justify-content: flex-end !important; margin: 0 0 12px !important; padding: 0 !important;
 }
 html.cc-popups-on .popupCloseArea .popUpClose {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
@@ -1721,11 +1724,16 @@ html.cc-apps-rbneutral.cc-popups-on .cc-ic-spot:hover {
 }
 /* the numbered badge-card itself: --cc-surface-card (#191919) against the drawer's --cc-surface-window
    (#242424), one visible step darker — same two-tier depth the notification centre's cards use against
-   their own window. Extra top padding + top margin leave room for the legend badge to hang half above it. */
+   their own window. Extra top padding + top margin leave room for the legend badge to hang half above it.
+   #94-D (user: "Kannst du die cards in der infocard weiter auseinander machen? Die sind sehr nah
+   untereinander angeordnet"): adjoining block siblings collapse their touching margins to the LARGER of
+   the two, not their sum — the old 22px-top/16px-bottom pair was collapsing down to a bare 22px visible
+   gap, most of it already eaten by the legend badge's own -13px overlap. Equal, bigger top/bottom margins
+   raise that collapsed gap outright instead of fighting the collapse. */
 html.cc-popups-on #sidenavContent .cc-ic-card {
   position: relative !important; background: var(--cc-surface-card, #191919) !important;
   border-radius: var(--cc-b-radius, 10px) !important; padding: 18px 16px 14px !important;
-  margin: 22px 0 16px !important; box-sizing: border-box !important;
+  margin: 30px 0 !important; box-sizing: border-box !important;
 }
 /* Zusätzliche Anforderungen nests visually under Infotext instead of reading as its own top-level
    section — smaller left inset, tighter top gap. */
@@ -1754,8 +1762,16 @@ html.cc-popups-on #sidenavContent .cc-ic-legend.cc-ic-warn {
    boxing twice. */
 html.cc-popups-on #sidenavContent .cc-ic-card .popupDescription,
 html.cc-popups-on #sidenavContent .cc-ic-card .additionalRequirements,
-html.cc-popups-on #sidenavContent .cc-ic-card .changelog {
-  background: transparent !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important;
+html.cc-popups-on #sidenavContent .cc-ic-card .changelog,
+html.cc-popups-on #sidenavContent .cc-ic-card .modComment {
+  background: transparent !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important; border: none !important;
+}
+/* #94-D (user: "die rote Meldung soll auch eine card werden"): CA's own .modComment carries a real 4-side
+   `border:1px solid` (community.applications.css), not a box-shadow like .additionalRequirements — the
+   rule above already strips it (border:none added there too); this just brings its body text in line with
+   every other card's copy instead of CA's native italic 1.2rem. */
+html.cc-popups-on #sidenavContent .cc-ic-card .moderatorComment {
+  color: var(--cc-text, #e6e6e6) !important; font-style: normal !important; font-size: 13px !important; line-height: 1.5 !important;
 }
 /* the old small-caps text labels (Details/Maintainer/Zusätzliche Anforderungen/Trends/Changelog/Template
    Errors) are redundant with the legend badge sitting on top of the same card now, so they're hidden, not
@@ -1768,7 +1784,8 @@ html.cc-popups-on #sidenavContent .cc-ic-card .popupAuthorTitle,
 html.cc-popups-on #sidenavContent .cc-ic-card .additionalRequirementsHeader,
 html.cc-popups-on #sidenavContent .cc-ic-card .charts.chartTitle,
 html.cc-popups-on #sidenavContent .cc-ic-card .changelogTitle,
-html.cc-popups-on #sidenavContent .cc-ic-card .templateErrors {
+html.cc-popups-on #sidenavContent .cc-ic-card .templateErrors,
+html.cc-popups-on #sidenavContent .cc-ic-card .moderatorCommentHeader {
   display: none !important;
 }
 /* #94-B (user: "Bei spotlight apps bitte den runden orangen kreis ausblenden. Why we picked it soll in
@@ -1827,6 +1844,13 @@ html.cc-popups-on #sidenavContent .cc-ic-card .templateErrorsList {
   color: var(--cc-text-dim, #8a8a8a) !important; font-size: 12px !important; line-height: 1.5 !important;
 }
 html.cc-popups-on #sidenavContent .cc-ic-card .templateErrorsList:last-child { margin-bottom: 0 !important; }
+/* #94-D (user: "Wenn eine infocard geöffnet wird soll der apptab im hintergrund nicht scrollbar sein"):
+   CA already toggles `body.body_sidebarScroll` open/close (Apps.page) and its own
+   `body.body_sidebarScroll{overflow:hidden}` rule (community.applications.css) — it just targets the wrong
+   box. live-measured: `<html>`, not `<body>`, is the element that actually scrolls here (`document.body`'s
+   own scrollHeight already equals its clientHeight), so body's overflow:hidden never had anything to
+   clip. Mirror CA's own class onto the real scroller instead of adding separate open/close tracking. */
+html.cc-popups-on:has(body.body_sidebarScroll) { overflow: hidden !important; }
 
 /* ═══ WILD entrance for BOTH the App-Info drawer AND the notification centre (user: "beide Fenster sollen
    im Animationsstil wild eine coole Animation bekommen wenn sie einfliegen") — reuses the house wild-
