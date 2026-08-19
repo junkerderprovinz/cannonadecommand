@@ -3316,23 +3316,24 @@
       closeBtn.appendChild(ccMkEl("i", "fa fa-times"));
       closeBtn.title = T("Schließen", "Close"); closeBtn.setAttribute("aria-label", closeBtn.title);
     }
-    // spotlight -> inline star next to the app name (matching the CARD's own spotlight badge, #73), plus
-    // an (i) info bubble carrying "why we picked it" beside it. #94-B (user: "den runden orangen kreis
-    // ausblenden. Why we picked it soll in eine infobubble neben dem sternbadge"): the icon+date block is
-    // just hidden outright (CSS); its "why" text is extracted here BEFORE that hide takes effect on
-    // anything relying on layout, though display:none doesn't affect textContent either way.
+    // spotlight -> inline star next to the app name (matching the CARD's own spotlight badge, #73). #96
+    // (user: "bei spotlight apps soll der text der infobubble in die mouseoverblase des spotlight badges"):
+    // the "why we picked it" text used to live in a SEPARATE (i) bubble next to the star (#94-B) — now it
+    // rides the star's OWN hover tooltip instead, via the same [data-tip] attributes ccMakeInfo() itself
+    // sets (ccWireTips, header.js, watches document-wide for data-cc-tip/data-tip/title — it isn't tied to
+    // the .cc-info element specifically). One hoverable control instead of two.
     var spotBlock = sc.querySelector(".spotlightPopup");
     var nameEl = sc.querySelector(".popupName");
     if (spotBlock && nameEl && !nameEl.querySelector(".cc-ic-spot")) {
       var star = ccMkEl("span", "cc-ic-spot");
       star.appendChild(ccMkEl("i", "fa fa-star"));
-      star.title = T("Spotlight-App", "Spotlight app");
-      nameEl.appendChild(star);
       var msgEl = spotBlock.querySelector(".spotlightMessage"), whoEl = spotBlock.querySelector(".spotlightWho");
       // live-caught: .spotlightWho already carries its OWN leading "- " ("- SpaceInvader One"), so joining
       // with " — " doubled up into "...enjoying. — - SpaceInvader One" — strip that native prefix first.
       var tipParts = [msgEl, whoEl].map(function (e) { return e ? e.textContent.trim().replace(/^-\s*/, "") : ""; }).filter(Boolean);
-      if (tipParts.length) nameEl.appendChild(ccMakeInfo(tipParts.join(" — ")));
+      var spotTip = tipParts.length ? tipParts.join(" — ") : T("Spotlight-App", "Spotlight app");
+      star.setAttribute("data-tip", spotTip); star.setAttribute("aria-label", spotTip); star.setAttribute("tabindex", "0");
+      nameEl.appendChild(star);
     }
     // wraps `els` (already-live DOM elements; the first one anchors the insertion point) in a new badge-
     // card — the same visual idea as a <fieldset><legend> (the legend badge sits half ON the card via CSS

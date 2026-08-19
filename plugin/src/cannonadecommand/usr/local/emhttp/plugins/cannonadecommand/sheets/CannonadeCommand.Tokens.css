@@ -1624,12 +1624,38 @@ html.cc-popups-on .popupInfo .caButton {
 html.cc-popups-on .popupInfo .actionsPopup {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
-html.cc-popups-on .popupInfo .caButton:hover { filter: brightness(1.1) !important; }
+/* #96 (user: "der support badge ist nicht in den farbmodi"): Installieren (.actionsPopup) already cycles
+   through the colour engine below — Support and Pin App only ever brightened their own flat neutral grey
+   on hover, never actually reading the per-badge --cc-rb-c jewel ccAppsStamp() stamps on them. Same
+   neutral-rest/coloured-hover secondary-button recipe already used elsewhere in this file (.cc-ic-spot,
+   .ca_readmore, the Donate button) — identical in both colour modes, so no separate .cc-apps-rbneutral
+   variant is needed here the way .actionsPopup needs one. */
+html.cc-popups-on .popupInfo .caButton:not(.actionsPopup):hover {
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  filter: none !important;
+}
+html.cc-popups-on .popupInfo .actionsPopup:hover { filter: brightness(1.1) !important; }
 html.cc-apps-rbneutral.cc-popups-on .popupInfo .actionsPopup {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
 }
 html.cc-apps-rbneutral.cc-popups-on .popupInfo .actionsPopup:hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+}
+/* #96 (user: "der badge soll kein symbol im badge haben"): CA renders the Support glyph as a plain
+   ::before on the SAME <span> as its text (skin.php: `<span class='ca_fa-support'> Support</span>`,
+   community.applications.css: `.ca_fa-support::before{content:"\f059"}`) — killing the glyph here only,
+   scoped to that exact span, leaves the dropdown's OWN "Support Forum" list item icon (an <i>, not a
+   <span>) untouched. */
+html.cc-popups-on .popupInfo .caButton span.ca_fa-support::before { content: none !important; }
+/* #96 (user: "der pin badge soll ein nadel symbol statt text haben"): CA's own click handler still owns
+   the "Pin App"/"Unpin App" text swap (data-pinnedalt) — rather than fight that in JS, the text is just
+   hidden and a pin glyph takes its place via ::before, robust to whatever CA sets the text to next. The
+   native `title` (Click to (un)pin this application) still explains the icon via the document-wide tip
+   engine (ccWireTips converts any bare `title` into a CC bubble on hover), so no label is lost. */
+html.cc-popups-on .popupInfo .pinPopup { width: 28px !important; padding: 0 !important; position: relative !important; }
+html.cc-popups-on .popupInfo .pinPopup > span { display: none !important; }
+html.cc-popups-on .popupInfo .pinPopup::before {
+  font-family: fontAwesome !important; content: "\f08d" !important; font-size: 13px !important;
 }
 /* description / additional-requirements / changelog: three near-identical CA "readmore" text blocks, all
    hardcoded white-card-on-black - one dark-card recipe replaces all three. */
@@ -1761,9 +1787,14 @@ html.cc-popups-on #sidenavContent .cc-ic-card {
    das musst du jetzt endlich wissen!!!!"): this fell back straight to the SHARED --cc-rbaccent, skipping
    the per-badge --cc-rb-c tier ccAppsStamp() actually stamps onto each legend (a different jewel colour
    per section) — every legend rendered the same flat accent blue regardless of section OR of the Apps-tab
-   colour-mode setting. Matches li.cc-ca-cardtitle's own three-tier chain (--cc-rb-c -> --cc-rbaccent ->
-   --cc-accent) and, same as that element, needs the explicit .cc-apps-rbneutral override below — a plain
-   `var(--cc-rb-c, ...)` fallback chain does NOT, by itself, respect Reaktiver Modus. */
+   colour-mode setting. Fixed with the same three-tier chain li.cc-ca-cardtitle uses (--cc-rb-c ->
+   --cc-rbaccent -> --cc-accent). #96 (user, next round: "die abschnittsbadges sind jetzt halbtransparent
+   und nicht in den farbmodi"): the FIRST fix also copied li.cc-ca-cardtitle's .cc-apps-rbneutral override
+   (neutral-until-hover) — but Reaktiver Modus is a hover contract, and a legend is a plain non-interactive
+   <span> with no hover state at all, so "until hover" never arrives: it just stays the translucent
+   --cc-chip fallback forever, reading as "half-transparent, no colour" rather than "reactive". Same
+   reasoning the Action Centre badge is already exempted for (further down this file) — dropped the
+   override entirely so the legend always shows its jewel colour, in every mode. */
 html.cc-popups-on #sidenavContent .cc-ic-legend {
   position: absolute !important; top: -13px !important; left: 16px !important; z-index: 1 !important;
   display: inline-flex !important; align-items: center !important; box-sizing: border-box !important;
@@ -1773,9 +1804,6 @@ html.cc-popups-on #sidenavContent .cc-ic-legend {
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
   font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: .5px !important;
   box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
-}
-html.cc-apps-rbneutral.cc-popups-on #sidenavContent .cc-ic-legend:not(.cc-ic-warn) {
-  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
 /* Zusätzliche Anforderungen's legend takes the SAME amber "needs attention" tone .additionalRequirements
    used to signal via its left border stripe — a fill, never a border line (GLS), same idea #86 already
@@ -1815,23 +1843,15 @@ html.cc-popups-on #sidenavContent .cc-ic-card .templateErrors,
 html.cc-popups-on #sidenavContent .cc-ic-card .moderatorCommentHeader {
   display: none !important;
 }
-/* #94-B (user: "Bei spotlight apps bitte den runden orangen kreis ausblenden. Why we picked it soll in
-   eine infobubble neben dem sternbadge"): the icon+date+why-block no longer goes into a card at all —
-   header.js extracts the "why we picked it" text into an (i) bubble beside .cc-ic-spot and leaves this
-   native block exactly where CA rendered it, just hidden outright. */
+/* #94-B (user: "Bei spotlight apps bitte den runden orangen kreis ausblenden..."): the icon+date+why-block
+   no longer goes into a card at all — its "why we picked it" text is extracted into the star's own hover
+   tooltip (#96, header.js) and this native block is left exactly where CA rendered it, just hidden. */
 html.cc-popups-on #sidenavContent .spotlightPopup { display: none !important; }
-/* the (i) bubble beside the Spotlight star — same ccMakeInfo() component used elsewhere in the plugin,
-   sized/coloured per its established per-context convention (Tokens.css already does this once per area
-   it appears in; this is the App-Info-popup instance of that same pattern). */
-html.cc-popups-on #sidenavContent .popupName .cc-info {
-  display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  width: 15px !important; height: 15px !important; flex: none !important; cursor: help !important;
-  margin-left: 6px !important; vertical-align: middle !important;
-  color: var(--cc-text-dim, #8a8a8a) !important; opacity: .8 !important;
-}
-html.cc-popups-on #sidenavContent .popupName .cc-info svg { width: 15px !important; height: 15px !important; display: block !important; }
-html.cc-popups-on #sidenavContent .popupName .cc-info:hover,
-html.cc-popups-on #sidenavContent .popupName .cc-info:focus { opacity: 1 !important; outline: none !important; }
+/* #96 (user: "bei spotlight apps soll der text der infobubble in die mouseoverblase des spotlight badges
+   [wandern]"): the separate (i) bubble that used to sit beside the star is gone — the star itself now
+   carries the [data-tip] the document-wide tip engine (ccWireTips) reads, so it needs the SAME "this is
+   hoverable" affordance the (i) bubble used to signal. */
+html.cc-popups-on #sidenavContent .cc-ic-spot { cursor: help !important; }
 /* #94-C (user: "die show more dinger sollen auch in ein badge"): readmore.js's own toggle (the changelog's
    "▾ SHOW MORE", occasionally the description's too) — a bare italic <i>, unstyled. Small neutral pill,
    centred under the (collapsed) text it expands, colour-mode reactive like every other interactive badge. */
@@ -2589,3 +2609,27 @@ html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a i.ca_fa-checkmark {
 html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a i { color: var(--cc-text-dim2, #6f6f6f) !important; width: 16px !important; }
 /* REACTIVE: the active row's colour is a STATE (which page size is on), not a hover — it stays coloured
    in every mode, matching the house rule that a selection indicator must never grey out. */
+
+/* #96 (user: "das dropdownliste [vom support badge] nicht im GLS"): the App-Info popup's Support dropdown
+   (setupContext(), same context.js library as #dropdown-maxPerPage above) is CA's stable, always-present
+   `#supportPopup` target — so its menu ID never varies per app ("#dropdown-supportPopup", unlike the app-
+   grid's OWN per-card support dropdowns which carry a name+number suffix and are out of scope here). Same
+   recipe as #dropdown-maxPerPage, minus the active-row state this menu doesn't have. */
+html.cc-popups-on #dropdown-supportPopup.dropdown-menu {
+  background: var(--cc-surface-window, #242424) !important; border: none !important;
+  border-radius: var(--cc-r-2, 10px) !important; box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
+  padding: 6px !important; min-width: 180px !important;
+}
+html.cc-popups-on #dropdown-supportPopup.dropdown-menu li { margin: 0 !important; }
+html.cc-popups-on #dropdown-supportPopup.dropdown-menu li > a {
+  display: flex !important; align-items: center !important; gap: 8px !important;
+  padding: 8px 10px !important; border-radius: var(--cc-r-1, 6px) !important;
+  font-size: var(--cc-sm-fs, 11px) !important; font-weight: 600 !important;
+  color: var(--cc-text, #e6e6e6) !important; background: transparent !important;
+  text-decoration: none !important; white-space: nowrap !important;
+  transition: background .12s ease, color .12s ease !important;
+}
+html.cc-popups-on #dropdown-supportPopup.dropdown-menu li > a:hover {
+  background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; color: var(--cc-text, #e6e6e6) !important;
+}
+html.cc-popups-on #dropdown-supportPopup.dropdown-menu li > a i { color: var(--cc-text-dim2, #6f6f6f) !important; width: 16px !important; }
