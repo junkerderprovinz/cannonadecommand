@@ -816,7 +816,54 @@
   // that link .cc-b.cc-b-name (href/onclick intact). This is why the disk name was never badged before.
   function enhanceMainName(tr) {
     var nl = tr.querySelector('a[href*="/Main/Device?name="], a[href*="/Main/Boot?name="]') || tr.querySelector(':scope > td.desc a[href]');
-    if (nl && !nl.classList.contains("cc-b-name")) { nl.classList.add("cc-b"); nl.classList.add("cc-b-name"); }
+    if (nl) { if (!nl.classList.contains("cc-b-name")) { nl.classList.add("cc-b"); nl.classList.add("cc-b-name"); } return; }
+    // ARRAY STOPPED (user: "Die disk namen sind nicht alle in badges"): device_list/device_info only
+    // wraps the slot label in an <a> when the slot HOLDS a device — an EMPTY slot (DISK_NP, and a
+    // never-assigned second parity: DISK_NP_DSBL) renders its name as a BARE TEXT NODE in the Device
+    // cell, and the stopped rows carry no td.desc either, so both selectors above found nothing and
+    // exactly the unassigned half of the list stayed unbadged. Wrap that text node in the same lg
+    // headline badge. Stop at the first <br>: DISK_NP_MISSING/DISK_WRONG append "<br><span
+    // class='diskinfo'><em>Missing</em></span>", which must NOT end up inside the name pill.
+    var cell = tr.children[0]; if (!cell || cell.querySelector(":scope > .cc-b-name")) return;
+    for (var n = cell.firstChild; n; n = n.nextSibling) {
+      if (n.nodeType === 1 && n.tagName === "BR") return;
+      if (n.nodeType !== 3) continue;
+      var txt = (n.textContent || "").replace(new RegExp(String.fromCharCode(160), "g"), " ").trim();
+      if (!txt) continue;
+      cell.replaceChild(el("span", "cc-b cc-b-name", txt), n);
+      return;
+    }
+  }
+  // ARRAY STOPPED: the Identification cell holds device_list's assignment <form><select class='slot'>.
+  // Native CSS pins that select to min/max-width 44rem (440px at Unraid's 10px root) while the column
+  // is a fraction of that — at rest `table.unraid tr>td{overflow:hidden}` clips it, but the native
+  // `tr>td:hover{overflow:visible}` releases the full 440px box straight ACROSS the Temp column (user:
+  // "die diskliste überlagert sich auch"). Shares.css clamps the select to its cell instead; the full
+  // device string would then be unreachable, so mirror it into a title — ccTipSweep converts every
+  // remaining [title] in the enhanced area into the floating CC bubble, so hovering the truncated
+  // control shows the whole "MODEL_SERIAL - 16 TB (sdb)" line with nothing overlapping anything.
+  function ccSlotTip(tr) {
+    try {
+      var s = tr.querySelector("select.slot"); if (!s) return;
+      var o = s.options[s.selectedIndex], txt = ((o && o.text) || "").trim();
+      if (txt && !s.getAttribute("data-cc-tip") && s.getAttribute("title") !== txt) s.setAttribute("title", txt);
+    } catch (e) {}
+  }
+  // The array-STOPPED device list separates the Parity block from the Data block with a CONTENT-FREE
+  // <tr class='tr_last'><td colspan='10'></td></tr> (device_list, fsState=Stopped). tr_last is also the
+  // TOTALS bar class, which Shares.css paints with the header tint — so that bare spacer rendered as an
+  // unstyled grey slab across the whole table. Stamp the empty ones (same idiom as ccVoidBars) and let
+  // CSS turn them into a clean GlimStone section gap; tr_last rows WITH content (totals bar, the
+  // "Slots:" control row) keep the bar.
+  function ccVoidRow(tr) {
+    try {
+      var cells = tr.children, empty = true;
+      for (var i = 0; i < cells.length; i++) {
+        if (cells[i].querySelector("*")) { empty = false; break; }
+        if (((cells[i].textContent || "").replace(new RegExp(String.fromCharCode(160), "g"), " ").trim())) { empty = false; break; }
+      }
+      tr.classList.toggle("cc-tr-void", empty);
+    } catch (e) {}
   }
   function enhanceMainHead(table) {
     var h = table && table.querySelector("thead tr"); if (!h || h.getAttribute("data-cc-main")) return;
@@ -845,6 +892,7 @@
       else tr.insertBefore(el("td", "cc-browse-col"), first.nextSibling);
       ccFill11(tr);
       ccVoidBars(tr);
+      ccVoidRow(tr);   // content-free tr_last (the stopped-array Parity/Data separator) -> section gap, not a grey slab
       // POOL/BOOT summary rows (tr.pool_header, native pool_function_row): badge them too (user: "es ist
       // noch nicht alles in badges"). Name link is picked from td:first-child ONLY — td.desc can carry a
       // pool_status_html "(ONLINE)" link (/Main/Device?name=X#poolsummary) that must NOT become the lg
@@ -879,6 +927,7 @@
     enhanceMainName(tr);                                          // disk name link -> lg headline badge (wherever it is in the row)
     var tds = Array.prototype.slice.call(tr.children);
     for (var i = 2; i < tds.length; i++) mainBadgeCell(tds[i]);   // badge EVERY value cell (usage-disk/select/name-link self-skip)
+    ccSlotTip(tr);   // array-stopped assignment dropdown: full device string -> CC bubble (the cell itself is clamped, see Shares.css)
     ccFill11(tr);
     ccVoidBars(tr);
   }
@@ -2163,6 +2212,12 @@
           // strip the lg disk-name badge classes off the device link.
           var mname = document.querySelectorAll("#displaybox table.unraid.disk_status a.cc-b-name");
           for (var mn = 0; mn < mname.length; mn++) { mname[mn].classList.remove("cc-b"); mname[mn].classList.remove("cc-b-name"); }
+          // …and UNWRAP the span variant (array-stopped empty slots have no <a> to declass — enhanceMainName
+          // wraps their bare text node instead), plus the empty-separator stamp.
+          var msname = document.querySelectorAll("#displaybox table.unraid.disk_status span.cc-b-name");
+          for (var ms = 0; ms < msname.length; ms++) msname[ms].parentNode.replaceChild(document.createTextNode(msname[ms].textContent || ""), msname[ms]);
+          var mvoid = document.querySelectorAll("#displaybox table.unraid.disk_status tr.cc-tr-void");
+          for (var mv = 0; mv < mvoid.length; mv++) mvoid[mv].classList.remove("cc-tr-void");
           ccMainCols.teardown();   // drag-resize: grips + colgroups + cc-colfix + inline widths out (cc.main.colpx storage kept for a re-enable)
           ccShareCols.teardown();  // same for the /Shares lists (cc.shares.colpx storage kept)
           aopTeardown();   // Array-Vorgang: pull (i) info-bubbles, un-hide description cells, drop markers

@@ -1956,6 +1956,15 @@
         var s = sels[i];
         if (s.options.length < 2) continue;
         if (s.closest(".cc-dsel") || s.closest(".cc-tsel")) continue;
+        // …and NEVER the /Main array-device table. Its tbody is WHOLESALE-replaced by Unraid's
+        // device_list nchan tick every second, so a wrapper cannot survive a single tick: with the
+        // array STOPPED the Identifikation column flickered between the .cc-tsel trigger and the
+        // native control, and since a slot with no free device left to offer has exactly ONE option
+        // (skipped above) the two looks sat in the same column at the same time. The real hazard is
+        // worse than the look: an OPEN panel is destroyed mid-click on the one control that ASSIGNS
+        // DISKS. Shares.css gives that native select the CC filled-pill look instead, and its popup
+        // is OS-rendered, so it cannot be torn out from under the pointer.
+        if (s.closest("table.unraid.disk_status")) continue;
         var r = s.getBoundingClientRect(); if (!r.width || !r.height) continue;
         ccToolsWrapSelect(s);
       }

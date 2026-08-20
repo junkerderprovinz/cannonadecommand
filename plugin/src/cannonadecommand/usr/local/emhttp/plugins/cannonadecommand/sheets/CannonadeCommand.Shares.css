@@ -475,6 +475,67 @@ html.cc-shares-on.cc-on-main #displaybox .TableContainer { background: transpare
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tbody tr.tr_last > td {
   background: rgba(128, 128, 128, .14) !important; border: none !important;
 }
+/* ═══ ARRAY STOPPED (/Main "Array-Datenträger" in its editable slot form). Three defects the started
+   array never shows, all reported off one screen recording. ═══ */
+/* (1) the Parity/Data SEPARATOR. device_list emits a CONTENT-FREE <tr class='tr_last'><td colspan=10>
+   between the two blocks — and tr_last is also the TOTALS-bar class, so the tint above painted that
+   spacer as a bare grey slab across the table (user: "die disk liste ... [balken]"). shares.js/ccVoidRow
+   stamps the empty ones (a class, not :has() — the stamp survives every nchan refill and needs no
+   selector support); they become a clean GlimStone section gap. tr_last rows WITH content (the totals
+   bar, the "Slots:" control row) are never stamped and keep their bar. */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tbody tr.tr_last.cc-tr-void,
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tbody tr.tr_last.cc-tr-void > td {
+  background: transparent !important; border: none !important; box-shadow: none !important;
+  height: 16px !important; line-height: 16px !important; padding: 0 !important;
+}
+/* (2) the IDENTIFICATION/TEMP COLLISION (user: "die diskliste überlagert sich auch"). The assignment
+   control is native `select.slot`, pinned by default-base.css to `min-width:44rem !important;
+   max-width:44rem !important` = 440px at Unraid's 10px root — several times its column. At rest
+   `table.unraid tr>td{overflow:hidden}` clips it, but the native `tr>td:hover{overflow:visible}`
+   releases the whole 440px box on hover, so the tail of the serial plus the "(sdb)" device suffix and
+   the select's underline+caret paint straight ACROSS the Temp badge and out of the table. Clamp the
+   control to its own cell (the !important above must be out-!important-ed) and keep the stopped rows
+   clipped on hover too; shares.js/ccSlotTip mirrors the full device string into the floating CC bubble,
+   so nothing is lost — it is just no longer painted on top of the neighbour column. */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status select.slot {
+  min-width: 0 !important; max-width: 100% !important; width: 100% !important; box-sizing: border-box !important;
+  text-overflow: ellipsis;
+}
+/* !important beats the native `tr>td:hover{overflow:visible}` at any specificity, so ONE rule closes
+   the hover-reveal for the whole stopped row (the <em>idSb</em> a MISSING/WRONG slot prints after the
+   select would bleed the same way). The CC bubble replaces the reveal. */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tbody tr.offline > td { overflow: hidden !important; }
+/* …and give the clamped control the CC look instead of Unraid's underline: a theme-neutral filled box
+   following the global Badge-Form (--cc-b-radius), no line. background-COLOR only — the shorthand would
+   also wipe the native caret, which is a background-image pair painted in the theme's own border colour
+   (so it stays correct in every colour mode). FOCUS LAW: no ring, just a stronger fill. */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status select.slot {
+  background-color: rgba(128, 128, 128, .16) !important;
+  border: none !important; box-shadow: none !important;
+  border-radius: var(--cc-b-radius, 999px) !important;
+  padding: 5px 16px 5px 12px !important;
+  font-size: var(--cc-md-fs, 13px); font-weight: 600;
+}
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status select.slot:focus {
+  outline: none !important; background-color: rgba(128, 128, 128, .26) !important;
+}
+/* the assignment <form> is a block wrapper around the select — it must not add its own box */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tbody tr.offline form { margin: 0; padding: 0; }
+/* header.js no longer wraps anything in this table (see ccWrapPageSelects), but a wrapper that reaches
+   it by any other route must obey the column too — its trigger sizes to the LONGEST option, which on a
+   stopped array is the full model+serial+size+device line: measured 364px inside a 246px cell. GUARD,
+   not decoration: the whole class of bug here is a control that sizes to its content in a fixed grid. */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-tsel,
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-tsel > .cc-tsel-trigger {
+  min-width: 0 !important; max-width: 100% !important; width: 100% !important; box-sizing: border-box !important;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* (3) the disk-NAME badge on EMPTY slots is a <span> (an unassigned slot has no <a> to tag — see
+   shares.js/enhanceMainName), so it must read as a LABEL, not a link: the a.cc-b-name brightness lift
+   above is keyed on the shared .cc-b.cc-b-name pair and would otherwise promise a click that does not
+   exist. Same pill, same size, no interactive affordance. */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status span.cc-b.cc-b-name { cursor: default; }
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status span.cc-b.cc-b-name:hover { filter: none; }
 /* THE REAL FLECK (round 6) + the resize "Huepfen" share one cause: the container's HORIZONTAL
    SCROLLBAR. A table a few px wider than its container spawns a dark scrollbar track under the
    rows (the stripe at the right end), and during a column drag it pops in/out per pixel — the
