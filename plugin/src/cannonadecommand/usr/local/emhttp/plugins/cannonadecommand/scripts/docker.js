@@ -719,7 +719,10 @@
   function colorBarButtons() {
     try {
       var bar = document.querySelector("div.js-actions"); if (!bar) return;
-      var btns = bar.querySelectorAll("input[type=button]");
+      // #(user: "genauso aussehen wie die anderen buttons"): the Mehrfachauswahl badge joins the rotation.
+      // querySelectorAll returns DOM order, and ensureBulkModeBadge parks it right after Containergröße, so
+      // it simply takes the next slot in the sequence instead of being the one button left out of it.
+      var btns = bar.querySelectorAll("input[type=button], .cc-bulkmode-badge");
       if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") { Array.prototype.slice.call(btns).forEach(function (b) { b.style.removeProperty("background"); b.style.removeProperty("color"); b.style.removeProperty("--cc-rb-c"); b.style.removeProperty("--cc-rb-ct"); }); return; }
       var pal = ccPalActive(RB_PAL);
       var off = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
@@ -729,7 +732,11 @@
       Array.prototype.slice.call(btns).forEach(function (b, i) {
         var c = pal[(i + off) % pal.length];
         b.style.setProperty("--cc-rb-c", c); b.style.setProperty("--cc-rb-ct", idealText(c));
-        if (neutral) { b.style.removeProperty("background"); b.style.removeProperty("color"); }
+        // a PRESSED Mehrfachauswahl badge never takes the inline paint: an inline !important background beats
+        // every sheet rule, so in the non-reactive sub-modes it would bury .cc-bulkmode-badge-on and the
+        // toggle would look identical on and off. Stamping the vars (above) still happens, so the CSS on-state
+        // resolves --cc-rb-c to this button's own slot rather than falling back to the shared accent.
+        if (neutral || b.classList.contains("cc-bulkmode-badge-on")) { b.style.removeProperty("background"); b.style.removeProperty("color"); }
         else { b.style.setProperty("background", c, "important"); b.style.setProperty("color", idealText(c), "important"); }
       });
     } catch (e) {}
@@ -1253,15 +1260,30 @@
     ccBulkModeOn = !ccBulkModeOn;
     document.documentElement.classList.toggle("cc-bulkmode-on", ccBulkModeOn);
     var btn = document.querySelector(".cc-bulkmode-badge"); if (btn) btn.classList.toggle("cc-bulkmode-badge-on", ccBulkModeOn);
+    try { colorBarButtons(); } catch (e) {}   // the pressed badge drops its inline paint (and gets it back on release) in the same tick as the class flip
     if (!ccBulkModeOn) { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); }
   }
   function ensureBulkModeBadge(bar) {
-    if (bar.querySelector(".cc-bulkmode-badge")) return;
-    var btn = el("span", "cc-b cc-bulkmode-badge" + (ccBulkModeOn ? " cc-bulkmode-badge-on" : ""), LANG === "de" ? "Mehrfachauswahl" : "Multi-select");
-    btn.setAttribute(MARK, "1"); btn.setAttribute("role", "button"); btn.setAttribute("tabindex", "0");
-    btn.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); ccBulkModeToggle(); });
-    btn.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); ccBulkModeToggle(); } });
-    bar.appendChild(btn);
+    var btn = bar.querySelector(".cc-bulkmode-badge");
+    if (!btn) {
+      // #(user: "genauso aussehen wie die anderen buttons"): NOT .cc-b any more — that class is the sm-tier
+      // chip recipe (11px text, 3px 11px padding, mixed case), which is exactly what made it read as a
+      // different species next to the 30px uppercase bar buttons. The look now comes wholly from
+      // `div.js-actions .cc-bulkmode-badge` in docker.css, which shares the native buttons' own rules.
+      btn = el("span", "cc-bulkmode-badge" + (ccBulkModeOn ? " cc-bulkmode-badge-on" : ""), LANG === "de" ? "Mehrfachauswahl" : "Multi-select");
+      btn.setAttribute(MARK, "1"); btn.setAttribute("role", "button"); btn.setAttribute("tabindex", "0");
+      btn.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); ccBulkModeToggle(); });
+      btn.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); ccBulkModeToggle(); } });
+    }
+    // #(user: "soll rechts des buttons containergröße sein"): a plain appendChild put it AFTER .cc-bar-adv,
+    // and that wrapper carries margin-left:auto — so everything behind it is flung to the far right end of
+    // the bar too (measured: CONTAINERGRÖSSE ended at x=1475, the badge started at x=2389). Anchor it to the
+    // Containergröße button itself via its onclick (language-independent; the button carries no id/class),
+    // falling back to "just before the right-pinned toggle" and finally to append. Idempotent: relocateTopBar
+    // runs this on every badge pass, so it only touches the DOM when the position is actually wrong.
+    var anchor = bar.querySelector('input[type=button][onclick*="contSizes"]'), adv = bar.querySelector(".cc-bar-adv");
+    var placed = btn.parentElement === bar && (anchor ? btn.previousElementSibling === anchor : (!adv || btn.nextElementSibling === adv));
+    if (!placed) bar.insertBefore(btn, anchor ? anchor.nextSibling : (adv || null));
   }
   function relocateTopBar() {
     try {

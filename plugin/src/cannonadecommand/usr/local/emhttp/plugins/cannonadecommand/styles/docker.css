@@ -195,10 +195,30 @@ a.sl-updall { display: none !important; }
   flex: 0 0 auto; box-shadow: 0 0 0 2px rgba(0, 0, 0, .25); overflow: hidden;
 }
 html:not(.cc-state-native) .cc-enh .cc-ct-dotrow > .cc-badge { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
-/* #10 reactive: the dot rests neutral and takes the palette on ROW hover (keyed on the global rbmode flag
-   cc-shares-rbneutral, which is present on /Docker too), exactly like the /Main disk dots. */
-html.cc-shares-rbneutral:not(.cc-state-native) .cc-enh .cc-ct-dotrow > .cc-badge { background: #525252 !important; }
-html.cc-shares-rbneutral:not(.cc-state-native) .cc-enh #docker_list tr:hover .cc-ct-dotrow > .cc-badge { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+/* #(user: "die beiden status anzeigen im dockertab zeigen keine farbe mehr an") — "die beiden" are the two
+   Zustandsanzeigen this tab has, and the code already treats them as one pair: the container läuft/gestoppt
+   dot under the name, and its twin beside the Startplan badge (docker.js depStateDot, built on the user's own
+   "die gleich aussehen soll wie die Container läuft/stopped Anzeige"). Both are .cc-ct-dotrow > .cc-badge, so
+   #10's reactive rest state below caught both at once: they sat on a flat #525252 and only took a colour while
+   the pointer happened to be on their ROW.
+   LIVE-MEASURED on the Docker tab before this fix: all 58 dots computed rgb(82,82,82), and a page-wide sweep
+   of #displaybox + div.js-actions found #525252 on NOTHING else — these two were the only colourless things
+   left in the whole list. (Also checked and RULED OUT as the culprit: the two process-window Statusanzeigen,
+   .cc-nchan-loader and #cc-ctout-status. Sampled through a real DiskSpeed update they cycle the full jewel
+   ring — c95e5e → c98d5e → c9af5e → 5ec986 → 5ec9c2 → 5e89c9 — and land on #1f9d55 when done. Those are fine.)
+   Why they are EXEMPT from the reactive rest state instead of just re-tinted: reactive-neutral is a rule for
+   CONTROLS (data badges, bar buttons, gears, tabs). A control carries no information while it is idle, so
+   holding its colour back until you reach for it costs nothing. A STATE indicator is the exact opposite — the
+   colour IS the payload, so "neutral until hover" empties it of meaning for as long as the pointer is
+   anywhere else, which is essentially always. Same reasoning as #96 (a legend has no hover state of its own,
+   so neutral-until-hover never resolved and just read as permanently colourless); here it does technically
+   resolve on row hover, but a status light you have to go and touch to read is not a status light.
+   The "Zustandsanzeigen nativ färben" toggle is where the choice actually lives: ON (html.cc-state-native)
+   keeps the semantic green/grey/red, OFF — the user's setting — means "follow the colour mode", not
+   "disappear inside it". So the rule above is now the only one that paints them, in every sub-mode.
+   NOTE (deliberately NOT changed here, flag it before touching it): /Main's disk orb and disk-usage fill
+   (CannonadeCommand.Shares.css) still carry the same #525252 reactive rest state. Same pattern, different
+   tab — the request was Docker-scoped, so that stays as-is until the user asks. */
 /* info badges (network/IP/LAN/port/CPU/RAM/ID/Von/image tag): SOLID accent, light text */
 .cc-b,
 .cc-enh.cc-c-res #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='cpu-'],
@@ -234,14 +254,10 @@ html.cc-shares-rbneutral:not(.cc-state-native) .cc-enh #docker_list tr:hover .cc
    Mehrfachauswahl badge in the floating action bar is toggled on. */
 .cc-bulk-cb { display: none !important; accent-color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); width: 16px; height: 16px; margin: 0 8px 0 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; }
 html.cc-bulkmode-on .cc-bulk-cb { display: inline-block !important; }
-div.js-actions .cc-bulkmode-badge {
-  cursor: pointer; user-select: none; margin-left: 8px;
-  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
-}
-div.js-actions .cc-bulkmode-badge:hover { filter: brightness(1.14); }
-div.js-actions .cc-bulkmode-badge-on {
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
-}
+/* #(user: "der mehrfachauswahl button soll ... genauso aussehen wie die anderen buttons"): the badge's whole
+   look now comes from the SAME rules as the native bar buttons — see the `div.js-actions input[type=button],
+   div.js-actions .cc-bulkmode-badge` block further down (search "js-actions input[type=button]"). Nothing
+   size-, shape- or colour-related lives up here any more, or the sm-tier .cc-b chip look would come back. */
 .cc-bulkbar {
   position: fixed; left: 50%; transform: translateX(-50%);
   bottom: calc(var(--cc-footer-h, 0px) + var(--cc-actbar-h, 40px) + 10px);
@@ -1181,7 +1197,40 @@ div.js-actions > * { pointer-events: auto; }
   #displaybox { padding-bottom: calc(var(--cc-footer-h, 0px) + var(--cc-actbar-h, 40px) + 12px) !important; }
   #docker_list.js-fill-available-height { padding-bottom: var(--cc-actbar-h, 40px) !important; box-sizing: border-box; }
 }
-div.js-actions input[type=button] { flex: none !important; background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important; border: none !important; box-shadow: none !important; padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs, 13px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.6px !important; font-family: inherit !important; cursor: pointer; transition: filter .12s; }
+/* #(user: "der mehrfachauswahl button soll rechts des buttons containergröße sein und genauso aussehen wie
+   die anderen buttons"): the Mehrfachauswahl badge is listed here so it takes the native bar button's look
+   from the ONE source instead of a private copy that drifts. It was a .cc-b sm-tier chip before — measured
+   against CONTAINERGRÖSSE on the live bar: 21px vs 30px high, 11px vs 13px text, mixed case vs uppercase,
+   letter-spacing normal vs .6px, padding 3px 11px vs 0 14px. docker.js also re-homes it to sit directly
+   right of CONTAINERGRÖSSE (it used to be appended after the right-pinned Einfache-Ansicht toggle, i.e.
+   ~900px away at the far end of the bar). */
+div.js-actions input[type=button],
+div.js-actions .cc-bulkmode-badge { flex: none !important; background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important; border: none !important; box-shadow: none !important; padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs, 13px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.6px !important; font-family: inherit !important; cursor: pointer; transition: filter .12s; }
+/* the badge is a <span> (docker.js ensureBulkModeBadge), so the few things an <input type=button> gets for
+   free have to be spelled out: a centred single-line text box, and the native input margin — MEASURED off
+   the live bar as 10px 12px 10px 0 (that margin plus the bar's 5px flex gap is the 17px the buttons sit
+   apart). gap:0 kills the .cc-b flex gap, which would otherwise pad the label. */
+div.js-actions .cc-bulkmode-badge {
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+  gap: 0 !important; line-height: normal !important; margin: 10px 12px 10px 0 !important;
+  white-space: nowrap; user-select: none; vertical-align: baseline;
+}
+/* ON state: the badge is a toggle, so it must still read as pressed — and now that it wears the same clothes
+   as its neighbours, that can no longer ride on hue alone. Before this change it rested on a grey chip in
+   EVERY mode, so "ON = accent" was always a visible jump; once it rests like the other buttons, accent-vs-
+   accent is a no-op in the plain accent mode and jewel-vs-jewel is one in full rainbow (measured: OFF and ON
+   both computed rgb(201,94,94) there). So the pressed state is carried by a hue-INDEPENDENT lightening
+   shade — a full-coverage inset, i.e. a shade and not an outline — on top of whatever fill the mode gives
+   it. In the reactive sub-mode the colour-mode fill lands on top of the grey rest state as well, which is
+   the same "this one is live" language the neighbours use for hover.
+   colorBarButtons() (docker.js) skips its inline paint while the badge is ON, so the background below is
+   never outranked by an inline !important; --cc-rb-c is still stamped, so it resolves to this button's own
+   slot rather than the shared accent. */
+div.js-actions .cc-bulkmode-badge-on {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  box-shadow: inset 0 0 0 999px rgba(255, 255, 255, .22) !important;
+}
 /* #8 (user, REVERSAL of the earlier top-right pin): the Basic/Advanced view toggle STAYS in the bottom
    action bar, right-aligned — exactly where it was ("der bleibt immer auf der unteren leiste").
    #5 (user: "toggle immer noch in der mitte" → flush an den Content-Rand): margin-left:auto pins it
@@ -1194,7 +1243,8 @@ div.js-actions input[type=button] { flex: none !important; background: var(--cc-
    right:-16px pins its right edge to the bar's OUTER right = the row edge (flush with the header icons). */
 div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; position: sticky; right: -16px; z-index: 2; padding-left: 10px; padding-right: 8px; background: var(--footer-background-color, var(--mild-background-color, #1c1c1c)); }
 div.js-actions .cc-bar-adv-lbl { color: #cfcfcf; font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-div.js-actions input[type=button]:hover { filter: brightness(1.14); }
+div.js-actions input[type=button]:hover,
+div.js-actions .cc-bulkmode-badge:hover { filter: brightness(1.14); }
 
 /* ___ ShipLog integration: when its changelog bubble is on the Docker tab,
    CannonadeCommand re-skins ShipLog's buttons + severity pill to the CC theme.
@@ -1856,9 +1906,13 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-b:not(.cc-plan-on) { b
    the stamped --cc-rb-c, else the accent. The per-KIND rules further down override this. */
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b:not(.cc-plan-on),
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b:not(.cc-plan-on) { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
-/* bottom action bar: the docked .js-actions buttons rest grey, palette colour on hover */
-html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:not(:disabled) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
-html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:hover:not(:disabled) { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
+/* bottom action bar: the docked .js-actions buttons rest grey, palette colour on hover — the Mehrfachauswahl
+   badge rides along (user: "genauso aussehen wie die anderen buttons"), except while it is ON: a pressed
+   toggle keeps its fill, so :not(.cc-bulkmode-badge-on) holds the rest state off it. */
+html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:not(:disabled),
+html.cc-shares-rbneutral.cc-docker-on div.js-actions .cc-bulkmode-badge:not(.cc-bulkmode-badge-on) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:hover:not(:disabled),
+html.cc-shares-rbneutral.cc-docker-on div.js-actions .cc-bulkmode-badge:not(.cc-bulkmode-badge-on):hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
 /* page tabs: NON-active tabs rest grey (paintTabs stamps --cc-rb-c per tab for the hover);
    the [aria-selected=true] tab stays painted */
 html.cc-shares-rbneutral.cc-docker-on nav.tabs .tabs-container > button[role=tab]:not([aria-selected="true"]) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
@@ -1984,7 +2038,8 @@ html .cc-enh td.updatecolumn a, html .cc-enh td.updatecolumn div.advanced span,
 html .cc-enh #docker_list .switch-button-background, html .ToggleViewMode .switch-button-background,
 html .cc-enh #docker_list .switch-button-background .switch-button-button,
 html .ToggleViewMode .switch-button-background .switch-button-button,
-html div.js-actions input[type=button] { border-radius: var(--cc-b-radius, 999px) !important; }
+html div.js-actions input[type=button],
+html div.js-actions .cc-bulkmode-badge { border-radius: var(--cc-b-radius, 999px) !important; }
 
 /* TOGGLES now FOLLOW the badge-shape engine too — a system-wide shape engine like the colour one (user,
    reversing the old #14 pill+circle exemption: "die toggles ... sollen der badge form folgen"). The master
