@@ -1061,7 +1061,12 @@
     // (Dichte is ONE GLOBAL key and lives in the Allgemein tab now — see the global density
     //  card added to wrapMain below, so the user finds it with the other global controls.)
     var c4 = card(T("Ansicht", "View"), null);
-    c4.appendChild(segRow(T("Standard-Ansicht", "Default view"), [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")]], view, function (v) { view = v; set("cc.view", v); }));
+    // "folder" always offered here (unlike the Docker-tab's own gear menu, which hides the
+    // Folder toggle until real organizer folders exist — spec decision 4, a DIFFERENT, ambient
+    // control surface): setMode() on the Docker tab itself already falls back to an ungrouped
+    // flat Grid-look if the organizer has no folders yet, so picking "Folder" here as a deliberate
+    // default preference never shows anything broken, just an unremarkable Grid until you add one.
+    c4.appendChild(segRow(T("Standard-Ansicht", "Default view"), [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")], ["folder", T("Ordner", "Folder")]], view, function (v) { view = v; set("cc.view", v); }));
     function applyShape() { var m9 = { pill: "999px", rounded: "6px", square: "0px", circle: "999px" }; var sh9 = get("cc.badgeshape", "pill"); var r9 = m9[sh9] || "999px"; root.style.setProperty("--cc-b-radius", r9); document.documentElement.style.setProperty("--cc-b-radius", r9); document.documentElement.classList.toggle("cc-shape-circle", sh9 === "circle"); var d9 = { pill: "50%", rounded: "3px", square: "0px", circle: "50%" }[sh9] || "50%"; document.documentElement.style.setProperty("--cc-dot-r", d9); /* dot token: the preset swatches follow the badge form too (user call) */ }
     wrap.appendChild(c4);
     // Badge-Form (shape) is a single GLOBAL control in the Allgemein "Badges" card now — not per

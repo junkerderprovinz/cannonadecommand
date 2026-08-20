@@ -46,18 +46,18 @@
 
 /* NAME cell (col 1): a BIGGER logo, the name vertically centred beside it, column
    ~1/4 narrower. Under the name: the start/stop badge, then ID + Von beneath it. */
-.cc-enh #docker_list tr.sortable td.ct-name { width: 225px !important; vertical-align: middle; }
-.cc-enh #docker_list tr.sortable td.ct-name .outer { display: flex; align-items: center; gap: 12px; }
-.cc-enh #docker_list tr.sortable td.ct-name .outer > span.hand { flex: none; display: flex; align-items: center; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name { width: 225px !important; vertical-align: middle; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer { display: flex; align-items: center; gap: 12px; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer > span.hand { flex: none; display: flex; align-items: center; }
 /* object-fit:contain so a NON-square logo keeps its aspect ratio instead of being squashed
    into the 48x48 box ("verzogene Icons"); the glyph <i> keeps font-size, not object-fit. */
 /* logo tile tokens: --cc-logo-img/-box stamped by docker.js applySettings from the ONE
    global cc.sgsize key (s 48/62 · m 62/78 · l 76/94); 62/78 = the m defaults. */
-.cc-enh #docker_list tr.sortable td.ct-name .outer > span.hand img { width: var(--cc-logo-img, 62px) !important; height: var(--cc-logo-img, 62px) !important; object-fit: contain !important; }
-.cc-enh #docker_list tr.sortable td.ct-name .outer > span.hand i.img { width: var(--cc-logo-img, 62px) !important; height: var(--cc-logo-img, 62px) !important; font-size: var(--cc-logo-img, 62px) !important; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer > span.hand img { width: var(--cc-logo-img, 62px) !important; height: var(--cc-logo-img, 62px) !important; object-fit: contain !important; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer > span.hand i.img { width: var(--cc-logo-img, 62px) !important; height: var(--cc-logo-img, 62px) !important; font-size: var(--cc-logo-img, 62px) !important; }
 /* Logo-Hintergrund (cc.iconbg): the container icon sits on an accent badge, the logo
    recoloured monochrome (docker.js applies the mono filter / contrast glyph colour). */
-.cc-enh.cc-docker-iconbg #docker_list tr.sortable td.ct-name .outer > span.hand {
+.cc-enh.cc-docker-iconbg #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer > span.hand {
   background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important;
   border-radius: min(var(--cc-b-radius, 14px), 16px) !important;
   /* T5: EXPLICIT square box (== VM/Plugin) so all three tabs' tiles are pixel-identical, not shrink-wrapped */
@@ -69,17 +69,17 @@
 /* #13: in RAINBOW/FLAG mode the logo tile joins the palette — it adopts the row's stamped --cc-rb-c
    (inherited down to the tile) instead of the single static iconbg colour. Gated on .cc-rainbow so
    NORMAL mode keeps the user's chosen Logo-Hintergrund colour untouched. */
-.cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr.sortable td.ct-name .outer > span.hand { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
+.cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer > span.hand { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
 .cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card-ico { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
 /* reactive + rainbow: the tile rests grey (rules further down) and takes the ROW's palette colour on hover */
-html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr.sortable:hover td.ct-name .outer > span.hand { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card:hover .cc-card-ico { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
-.cc-enh #docker_list tr.sortable td.ct-name .inner { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; line-height: 1.2; min-width: 0; }
-.cc-enh #docker_list tr.sortable td.ct-name .inner br { display: none; }
-.cc-enh #docker_list tr.sortable td.ct-name .inner > i[id^='load-'],
-.cc-enh #docker_list tr.sortable td.ct-name .inner > span.state { display: none !important; }
-.cc-enh #docker_list tr.sortable td.ct-name .appname { font-size: 15px !important; font-weight: 600 !important; letter-spacing: .1px; }
-.cc-enh #docker_list tr.sortable > td { padding-top: var(--cc-density) !important; padding-bottom: var(--cc-density) !important; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .inner { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; line-height: 1.2; min-width: 0; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .inner br { display: none; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .inner > i[id^='load-'],
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .inner > span.state { display: none !important; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .appname { font-size: 15px !important; font-weight: 600 !important; letter-spacing: .1px; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) > td { padding-top: var(--cc-density) !important; padding-bottom: var(--cc-density) !important; }
 /* Row density: the row height is mostly the BADGE content, so the --cc-density td padding
    alone was barely visible ("does nothing"). compact/airy also tighten/loosen the badge
    groups + name meta so the density is actually felt. */
@@ -93,21 +93,21 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbo
 /* consolidated network column: hide each separate native cell (IP=5 / Port=6 / LAN=7) only when ITS
    own CC badge column is on — net/ip/lan/port are now independent columns (user split), so a native
    cell must survive when the user turned its badge OFF for the current view (else the datum vanishes). */
-.cc-enh.cc-c-ip thead tr:last-child th:nth-child(5), .cc-enh.cc-c-ip #docker_list tr.sortable > td:nth-child(5),
+.cc-enh.cc-c-ip thead tr:last-child th:nth-child(5), .cc-enh.cc-c-ip #docker_list tr:is(.sortable, .folder-element) > td:nth-child(5),
 /* the native CONTAINER-PORT column hides UNCONDITIONALLY under the enhance (user call: "die Spalte
    soll nicht da sein") — with the CC PORT badge column off it showed a 580px "all" monster that
    squeezed every other column. Port info stays available via the PORT badge (gear column menu). */
-.cc-enh thead tr:last-child th:nth-child(6), .cc-enh #docker_list tr.sortable > td:nth-child(6),
-.cc-enh.cc-c-lan thead tr:last-child th:nth-child(7), .cc-enh.cc-c-lan #docker_list tr.sortable > td:nth-child(7) { display: none !important; }
+.cc-enh thead tr:last-child th:nth-child(6), .cc-enh #docker_list tr:is(.sortable, .folder-element) > td:nth-child(6),
+.cc-enh.cc-c-lan thead tr:last-child th:nth-child(7), .cc-enh.cc-c-lan #docker_list tr:is(.sortable, .folder-element) > td:nth-child(7) { display: none !important; }
 /* NARROW version + network columns → more room for volumes (actions col = position 2) */
 .cc-enh thead tr:last-child th:nth-child(3) { width: 165px; }
-.cc-enh #docker_list tr.sortable > td:nth-child(3) { max-width: 165px; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) > td:nth-child(3) { max-width: 165px; }
 .cc-enh thead tr:last-child th:nth-child(4) { width: 185px; }
-.cc-enh #docker_list tr.sortable > td:nth-child(4) { max-width: 185px; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) > td:nth-child(4) { max-width: 185px; }
 
 /* volumes (col 7): NARROW column; long paths scroll as a marquee on mouseover */
 .cc-enh thead tr:last-child th:nth-child(8) { width: 260px; }
-.cc-enh #docker_list tr.sortable > td:nth-child(8) { max-width: 260px; overflow: hidden; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) > td:nth-child(8) { max-width: 260px; overflow: hidden; }
 .cc-volmarq { display: block; max-width: 260px; }
 .cc-vline { display: block; overflow: hidden; white-space: nowrap !important; word-break: normal !important; max-width: 260px; padding: 1px 0; }
 .cc-vtext { display: inline-block; white-space: nowrap !important; will-change: transform; }
@@ -136,7 +136,7 @@ html.cc-docker-on table.cc-enh thead th.tablesorter-headerDesc::after { color: v
 .cc-actbar { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
 /* the ACTIONS column only needs its two icon rows — 4×27px + gaps */
 .cc-enh thead tr:last-child th:nth-child(2) { width: 122px; }
-.cc-enh #docker_list tr.sortable > td:nth-child(2) { max-width: 122px; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) > td:nth-child(2) { max-width: 122px; }
 .cc-actbtn i.fa { font-size: 13px; line-height: 1; color: inherit !important; } /* theme CSS colours .fa directly */
 /* gear inside the header strip (last th) — absolute overlays got clipped */
 .cc-hgear-th2 { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: #9a9a9a !important; }
@@ -168,17 +168,17 @@ a.sl-updall { display: none !important; }
 
 /* Betriebszeit (col 10): advanced-view only */
 .cc-enh:not(.cc-adv) thead tr:last-child th:nth-child(11),
-.cc-enh:not(.cc-adv) #docker_list tr.sortable > td:nth-child(11) { display: none !important; }
+.cc-enh:not(.cc-adv) #docker_list tr:is(.sortable, .folder-element) > td:nth-child(11) { display: none !important; }
 
 /* the ONE badge shape (padding/radius/font) shared by every pill, native + ours */
 .cc-b,
-.cc-enh #docker_list tr.sortable td.updatecolumn > span.green-text,
-.cc-enh #docker_list tr.sortable td.updatecolumn span.orange-text,
-.cc-enh #docker_list tr.sortable td.updatecolumn a.exec,
-.cc-enh #docker_list tr.sortable td.updatecolumn > div.advanced:last-of-type,
-.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip,
-.cc-enh #docker_list tr.sortable td.advanced span[class^='cpu-'],
-.cc-enh #docker_list tr.sortable td.advanced span[class^='mem-'],
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn > span.green-text,
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn span.orange-text,
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn a.exec,
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn > div.advanced:last-of-type,
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip,
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='cpu-'],
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='mem-'],
 .cc-badge, .cc-pill {
   display: inline-flex; align-items: center; gap: 5px; border: none !important;
   border-radius: 999px; padding: var(--cc-sm-pad, 3px 11px); margin: 2px 4px 2px 0; font-size: var(--cc-sm-fs, 11px);
@@ -201,8 +201,8 @@ html.cc-shares-rbneutral:not(.cc-state-native) .cc-enh .cc-ct-dotrow > .cc-badge
 html.cc-shares-rbneutral:not(.cc-state-native) .cc-enh #docker_list tr:hover .cc-ct-dotrow > .cc-badge { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
 /* info badges (network/IP/LAN/port/CPU/RAM/ID/Von/image tag): SOLID accent, light text */
 .cc-b,
-.cc-enh.cc-c-res #docker_list tr.sortable td.advanced span[class^='cpu-'],
-.cc-enh.cc-c-res #docker_list tr.sortable td.advanced span[class^='mem-'] {
+.cc-enh.cc-c-res #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='cpu-'],
+.cc-enh.cc-c-res #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='mem-'] {
   background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff);
 }
 .cc-b-k { opacity: .72; font-weight: 500; }
@@ -284,50 +284,50 @@ html.cc-on-plugins .cc-b-del.cc-b-delicon:hover { filter: brightness(1.12) !impo
 .cc-cfg { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 6px; vertical-align: middle; box-sizing: border-box; }
 .cc-cfg-on { background: #35d07f; box-shadow: 0 0 0 1px rgba(0, 0, 0, .28); }
 .cc-cfg-off { background: transparent; border: 1px solid currentColor; opacity: .5; }
-.cc-enh.cc-c-res #docker_list tr.sortable td.advanced span[class^='cpu-']::before { content: "CPU"; opacity: .72; font-weight: 500; margin-right: 4px; }
-.cc-enh.cc-c-res #docker_list tr.sortable td.advanced span[class^='mem-']::before { content: "RAM"; opacity: .72; font-weight: 500; margin-right: 4px; }
-.cc-enh.cc-c-res #docker_list tr.sortable td.advanced { white-space: normal; }
-.cc-enh.cc-c-res #docker_list tr.sortable td.advanced .usage-disk { display: none; }
-.cc-enh.cc-c-ip #docker_list tr.sortable > td:nth-child(5) span.docker_readmore span.advanced { display: none !important; }
+.cc-enh.cc-c-res #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='cpu-']::before { content: "CPU"; opacity: .72; font-weight: 500; margin-right: 4px; }
+.cc-enh.cc-c-res #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='mem-']::before { content: "RAM"; opacity: .72; font-weight: 500; margin-right: 4px; }
+.cc-enh.cc-c-res #docker_list tr:is(.sortable, .folder-element) td.advanced { white-space: normal; }
+.cc-enh.cc-c-res #docker_list tr:is(.sortable, .folder-element) td.advanced .usage-disk { display: none; }
+.cc-enh.cc-c-ip #docker_list tr:is(.sortable, .folder-element) > td:nth-child(5) span.docker_readmore span.advanced { display: none !important; }
 
 /* update status keeps meaning: up-to-date = green, update-ready = amber, force = accent */
-.cc-enh.cc-c-update #docker_list tr.sortable td.updatecolumn > span.green-text { background: var(--cc-ok, #1f9d55); color: #fff !important; }
-.cc-enh.cc-c-update #docker_list tr.sortable td.updatecolumn span.orange-text { background: var(--cc-warn, #e0912a); color: #1a1a1a !important; }
-.cc-enh.cc-c-force  #docker_list tr.sortable td.updatecolumn a.exec { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff) !important; }
-.cc-enh.cc-c-force  #docker_list tr.sortable td.updatecolumn a.exec:hover { filter: brightness(1.12); }
-.cc-enh #docker_list tr.sortable td.updatecolumn i { color: inherit !important; }
+.cc-enh.cc-c-update #docker_list tr:is(.sortable, .folder-element) td.updatecolumn > span.green-text { background: var(--cc-ok, #1f9d55); color: #fff !important; }
+.cc-enh.cc-c-update #docker_list tr:is(.sortable, .folder-element) td.updatecolumn span.orange-text { background: var(--cc-warn, #e0912a); color: #1a1a1a !important; }
+.cc-enh.cc-c-force  #docker_list tr:is(.sortable, .folder-element) td.updatecolumn a.exec { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff) !important; }
+.cc-enh.cc-c-force  #docker_list tr:is(.sortable, .folder-element) td.updatecolumn a.exec:hover { filter: brightness(1.12); }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn i { color: inherit !important; }
 
 /* the column toggle must HIDE the datum, not just drop its colour: when a
    CSS-restyled native column is off for the current view, hide it outright.
    (Also keeps advanced-only pills out of the Simple view, since their class is
    absent there — no reliance on how Unraid hides .advanced.) */
-.cc-enh:not(.cc-c-update)  #docker_list tr.sortable td.updatecolumn > span.green-text,
-.cc-enh:not(.cc-c-update)  #docker_list tr.sortable td.updatecolumn span.orange-text,
-.cc-enh:not(.cc-c-force)   #docker_list tr.sortable td.updatecolumn div.advanced a.exec,
-.cc-enh:not(.cc-c-res)     #docker_list tr.sortable td.advanced span[class^='cpu-'],
-.cc-enh:not(.cc-c-res)     #docker_list tr.sortable td.advanced span[class^='mem-'] { display: none !important; }
+.cc-enh:not(.cc-c-update)  #docker_list tr:is(.sortable, .folder-element) td.updatecolumn > span.green-text,
+.cc-enh:not(.cc-c-update)  #docker_list tr:is(.sortable, .folder-element) td.updatecolumn span.orange-text,
+.cc-enh:not(.cc-c-force)   #docker_list tr:is(.sortable, .folder-element) td.updatecolumn div.advanced a.exec,
+.cc-enh:not(.cc-c-res)     #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='cpu-'],
+.cc-enh:not(.cc-c-res)     #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='mem-'] { display: none !important; }
 /* MASTER THEMING off (table without .cc-enh): the injected CC resgroup already shows CPU/RAM
    plus the limit/bandwidth gears, so hide the duplicate NATIVE cpu/mem text in the same cell.
    Scoped to :not(.cc-enh) so theming ON — which instead restyles those native spans into the
    badges (rules above) — is unaffected. */
-table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span[class^='cpu-'],
-table:not(.cc-enh) #docker_list tr.sortable td.advanced:has(> .cc-resgroup) span[class^='mem-'] { display: none !important; }
+table:not(.cc-enh) #docker_list tr:is(.sortable, .folder-element) td.advanced:has(> .cc-resgroup) span[class^='cpu-'],
+table:not(.cc-enh) #docker_list tr:is(.sortable, .folder-element) td.advanced:has(> .cc-resgroup) span[class^='mem-'] { display: none !important; }
 /* The APPLY-UPDATE action ("Aktualisierung anwenden", an a.exec wrapping span.orange-text)
    must NEVER be hidden: the force-update toggle above only scopes to the advanced block's
    force link now, and this override keeps the apply link + its "update ready" text visible
    even with the update-status column off — an actionable button may not vanish. */
-.cc-enh #docker_list tr.sortable td.updatecolumn a.exec:has(span.orange-text) { display: inline-flex !important; background: var(--cc-warn, #e0912a); color: #1a1a1a !important; }
-.cc-enh #docker_list tr.sortable td.updatecolumn a.exec:has(span.orange-text):hover { filter: brightness(1.1); }
-.cc-enh #docker_list tr.sortable td.updatecolumn a.exec > span.orange-text { display: inline !important; background: transparent !important; color: inherit !important; padding: 0; margin: 0; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn a.exec:has(span.orange-text) { display: inline-flex !important; background: var(--cc-warn, #e0912a); color: #1a1a1a !important; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn a.exec:has(span.orange-text):hover { filter: brightness(1.1); }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn a.exec > span.orange-text { display: inline !important; background: transparent !important; color: inherit !important; padding: 0; margin: 0; }
 
 /* ShipLog "Changelog" chip → a solid badge coloured by its risk dot */
-.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip { color: #fff !important; background: #4a4a4a; }
-.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-low)  { background: var(--cc-ok, #1f9d55); }
-.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-mid)  { background: var(--cc-warn, #e0912a); color: #1a1a1a !important; }
-.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #d9433f); }
-.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip:has(.sl-crit) { background: var(--cc-err, #d9433f); }
-.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip .sl-amp { display: none; }
-.cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip .sl-ico { opacity: .85; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip { color: #fff !important; background: #4a4a4a; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-low)  { background: var(--cc-ok, #1f9d55); }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-mid)  { background: var(--cc-warn, #e0912a); color: #1a1a1a !important; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #d9433f); }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-crit) { background: var(--cc-err, #d9433f); }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip .sl-amp { display: none; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip .sl-ico { opacity: .85; }
 
 /* injected per-row holders */
 .cc-namemeta { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
@@ -411,6 +411,18 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 
 /* ════════════════ GRID mode + gear menu + toast + editor ════════════════ */
 .cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; padding-top: 30px; } /* room for the grid gear pinned top-right */
+/* Folder View (structural grouping only, spec decision 5 — no aggregated stats per folder).
+   Same auto-fill rhythm as Grid so loose top-level containers + the gear tile size like
+   cards; a folder group breaks out to the full row width and holds its own nested .cc-grid. */
+.cc-folderview { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; padding-top: 30px; }
+.cc-folder-group { grid-column: 1 / -1; background: var(--cc-bg2); border-radius: 10px; padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+.cc-folder-group-head { background: var(--cc-bg3); border-radius: 7px; padding: 6px 8px 6px 12px; font-size: 14px; font-weight: 600; color: var(--cc-txt); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cc-folder-group-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cc-folder-group-actions { display: flex; align-items: center; gap: 2px; flex: none; }
+/* Task 6 write actions — only rendered for folders CC itself created (own-registry). */
+.cc-folder-act { -webkit-appearance: none; appearance: none; background: transparent; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 4px 6px; border-radius: 6px; transition: background .12s, color .12s; }
+.cc-folder-act:hover { background: rgba(128, 128, 128, .18); color: var(--cc-txt); }
+.cc-folder-group-body { padding-top: 0; } /* nested body has no corner gear to clear, unlike the outer grid/folderview */
 .cc-card { background: var(--cc-bg2); border: none; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; transition: transform .12s, box-shadow .12s; }
 .cc-card:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0,0,0,.35); } /* elevation only — resting borders and hover border tints are LINES (law); bg contrast separates the card */
 .cc-card-head { display: flex; align-items: center; gap: 10px; }
@@ -511,8 +523,8 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 .cc-enh.cc-rainbow .cc-b-version, .cc-grid-holder.cc-rainbow .cc-b-version { background: var(--cc-rb-version, #6b7280); color: var(--cc-rb-version-t, #fff); }
 .cc-enh.cc-rainbow .cc-b-vol, .cc-grid-holder.cc-rainbow .cc-b-vol { background: var(--cc-rb-vol, #0891b2); color: var(--cc-rb-vol-t, #fff); }
 .cc-enh.cc-rainbow .cc-plan, .cc-grid-holder.cc-rainbow .cc-plan { background: var(--cc-rb-plan, #6366f1); color: var(--cc-rb-plan-t, #fff); }
-.cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='cpu-'] { background: var(--cc-rb-cpu, var(--cc-err, #d9433f)); }
-.cc-enh.cc-rainbow.cc-c-res #docker_list tr.sortable td.advanced span[class^='mem-'] { background: var(--cc-rb-ram, #2f9d8b); }
+.cc-enh.cc-rainbow.cc-c-res #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='cpu-'] { background: var(--cc-rb-cpu, var(--cc-err, #d9433f)); }
+.cc-enh.cc-rainbow.cc-c-res #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='mem-'] { background: var(--cc-rb-ram, #2f9d8b); }
 /* the same slot in green: the VERIFIED applied values after a successful save */
 .cc-pop-err.cc-pop-ok { background: rgba(31,157,85,.14); color: #4bd58a; }
 /* multi-select dropdown under "Hängt ab von": stays open, every click toggles a container */
@@ -637,14 +649,14 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 /* force the resource cell (8th) visible in BOTH views so our injected CPU/RAM badge
    shows even in Simple view (Unraid marks the cell .advanced and hides it there). */
 .cc-enh.cc-c-res thead tr:last-child th:nth-child(9),
-.cc-enh.cc-c-res #docker_list tr.sortable > td:nth-child(9) { display: table-cell !important; } /* +1: actions column */
+.cc-enh.cc-c-res #docker_list tr:is(.sortable, .folder-element) > td:nth-child(9) { display: table-cell !important; } /* +1: actions column */
 /* the CPU/RAM values come from our engine badge (.cc-resgroup), so hide Unraid's
    native cpu/mem spans in the resource cell to avoid a duplicate. */
-.cc-enh.cc-c-res #docker_list tr.sortable td span[class^='cpu-'],
-.cc-enh.cc-c-res #docker_list tr.sortable td span[class^='mem-'] { display: none !important; }
+.cc-enh.cc-c-res #docker_list tr:is(.sortable, .folder-element) td span[class^='cpu-'],
+.cc-enh.cc-c-res #docker_list tr:is(.sortable, .folder-element) td span[class^='mem-'] { display: none !important; }
 /* force-show the force-update link when its column is enabled for Simple view, so the
    column checkbox actually reveals it (the image tag is handled in JS as a badge). */
-.cc-enh.cc-c-force #docker_list tr.sortable td.updatecolumn a.exec { display: inline-flex !important; }
+.cc-enh.cc-c-force #docker_list tr:is(.sortable, .folder-element) td.updatecolumn a.exec { display: inline-flex !important; }
 
 /* native Unraid switchButtons (the per-row AUTOSTART toggle, and the Basic/Advanced
    view toggle) restyled to a clean accent pill. Unraid's JS positions the knob via
@@ -1724,7 +1736,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
    by shares.js on every page — same contract as /Main, see CannonadeCommand.Shares.css): ALL
    CC-painted chrome rests GREY and takes its stamped palette colour (--cc-rb-c/--cc-rb-ct per
    element, accent fallback) on hover — ROW-LEVEL on the container list/grid (user: "pro ganzer
-   Container-Zeile inkl. Logo/Hintergrund"): hovering ANYWHERE on a tr.sortable row / .cc-card
+   Container-Zeile inkl. Logo/Hintergrund"): hovering ANYWHERE on a tr.sortable/tr.folder-element row / .cc-card
    lights up the WHOLE container at once — badges, logo tile, limit gears, action icons.
    ACTIVE/checked/selected chrome keeps its colour:
    [aria-selected=true] tabs, .cc-plan-on (Startplan aktiv), checked switch tracks (.checked —
@@ -1738,7 +1750,7 @@ html.cc-shares-rbneutral.cc-docker-on #docker_list .cc-b:not(.cc-plan-on),
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-b:not(.cc-plan-on) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 /* ROW hover, generic fallback for kind-less badges (ID/Von/Tag, idle plan chip):
    the stamped --cc-rb-c, else the accent. The per-KIND rules further down override this. */
-html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b:not(.cc-plan-on),
+html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b:not(.cc-plan-on),
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b:not(.cc-plan-on) { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
 /* bottom action bar: the docked .js-actions buttons rest grey, palette colour on hover */
 html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:not(:disabled) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
@@ -1750,7 +1762,7 @@ html.cc-shares-rbneutral.cc-docker-on nav.tabs .tabs-container > button[role=tab
 /* limit gears (list rows + grid cards): the idle gear rests grey (gearFill skips its inline
    paint in neutral) and joins the ROW/card hover; a SET gear keeps its paint (live state) */
 html.cc-shares-rbneutral.cc-docker-on .cc-limbtn { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
-html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-limbtn,
+html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-limbtn,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-limbtn { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
 /* popup chrome painted by docker.js (.cc-pop editors + the .cc-menu gear menu): buttons —
    incl. the accent-filled .cc-btn-primary — rest grey; selected day chips (.cc-day-on),
@@ -1764,64 +1776,64 @@ html.cc-shares-rbneutral.cc-docker-on .cc-pop .cc-day:not(.cc-day-on):hover { ba
    stamped palette colour on ROW/card hover; disabled .cc-actoff keeps its inline grey (never
    matched). */
 html.cc-shares-rbneutral.cc-docker-on .cc-actbtn:not(.cc-actoff) { background: #2e2e2e !important; color: #e9e9e9 !important; }
-html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-actbtn:not(.cc-actoff),
+html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-actbtn:not(.cc-actoff),
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-actbtn:not(.cc-actoff) { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
 /* value badges carry per-KIND colours (--cc-rb-net/ip/lan/port/vol/cpu/ram/bw, stamped on the
    container, see the .cc-rainbow kind rules above) — the ROW hover restores the badge's OWN kind
    colour instead of the generic accent fallback. .cc-b.cc-b-* ties the generic row-hover rule's
    :not() specificity; source order AFTER it resolves the tie per kind. */
-html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-net,
+html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-net,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-net { background: var(--cc-rb-net, var(--cc-ok, #1f9d55)) !important; color: var(--cc-rb-net-t, #fff) !important; }
-html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-ip,
+html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-ip,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-ip { background: var(--cc-rb-ip, #2f6feb) !important; color: var(--cc-rb-ip-t, #fff) !important; }
-html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-lan,
+html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-lan,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-lan { background: var(--cc-rb-lan, var(--cc-warn, #e0912a)) !important; color: var(--cc-rb-lan-t, #161616) !important; }
-html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-port,
+html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-port,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-port { background: var(--cc-rb-port, #8b5cf6) !important; color: var(--cc-rb-port-t, #fff) !important; }
-html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-vol,
+html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-vol,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-vol { background: var(--cc-rb-vol, #0891b2) !important; color: var(--cc-rb-vol-t, #fff) !important; }
-html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-cpu,
+html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-cpu,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-err, #d9433f)) !important; color: var(--cc-rb-cpu-t, #fff) !important; }
-html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-ram,
+html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-ram,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-ram { background: var(--cc-rb-ram, #2f9d8b) !important; color: var(--cc-rb-ram-t, #fff) !important; }
-html.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b.cc-b-bw,
+html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-bw,
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-bw { background: var(--cc-rb-bw, var(--cc-warn, #e0912a)) !important; color: var(--cc-rb-bw-t, #161616) !important; }
 /* LOGO TILE joins the row: in neutral the tile rests grey like the badges and returns to its
    configured tile colour on ROW/card hover. Gated on the iconbg mode class — the list stamps it
    on the native table (applyEnhanceClasses), the grid holder gets the SAME class from renderGrid.
    The mono ink the JS applies to the logo itself stays untouched. */
 html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list td.ct-name .outer > span.hand { background: rgba(128, 128, 128, .18) !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list tr.sortable:hover td.ct-name .outer > span.hand { background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand { background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card-ico { background: rgba(128, 128, 128, .18) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card:hover .cc-card-ico { background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important; }
 /* UPDATE-column badges join the row too (user: "changelog und auf aktuellem Stand nur farbig
    wenn aktiv/mouseover"): the "auf dem neusten Stand" green / "Aktualisierung" orange chips and
    the ShipLog changelog chip rest GREY in neutral and take their state colour on ROW hover.
    Placed AFTER the .cc-c-update colour rules so equal-importance ties resolve by order. */
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn > span.green-text,
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn span.orange-text,
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip {
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn > span.green-text,
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn span.orange-text,
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip {
   background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn > span.green-text { background: var(--cc-ok, #1f9d55) !important; color: #fff !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn span.orange-text { background: var(--cc-warn, #e0912a) !important; color: #1a1a1a !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip { background: #4a4a4a !important; color: #fff !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-low) { background: var(--cc-ok, #1f9d55) !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-mid) { background: var(--cc-warn, #e0912a) !important; color: #1a1a1a !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #d9433f) !important; color: #fff !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip:has(.sl-crit) { background: var(--cc-err, #d9433f) !important; color: #fff !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn > span.green-text { background: var(--cc-ok, #1f9d55) !important; color: #fff !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn span.orange-text { background: var(--cc-warn, #e0912a) !important; color: #1a1a1a !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip { background: #4a4a4a !important; color: #fff !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-low) { background: var(--cc-ok, #1f9d55) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-mid) { background: var(--cc-warn, #e0912a) !important; color: #1a1a1a !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #d9433f) !important; color: #fff !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-crit) { background: var(--cc-err, #d9433f) !important; color: #fff !important; }
 /* #45/#50 (user, live-verified via getComputedStyle: measured rgba(128,128,128,.18), the plain rest-
    grey fallback, on a live "Nicht gepflegt" row): ShipLog's Not-maintained/CADeprecated chips carry
    no .sl-amp risk dot, so none of the :has() rules above ever match them - they fall through to the
    REST-GREY base like a routine update chip, even though they're a PERSISTENT problem state that
    must always read red/amber, never neutral, hover or not. More specific (adds the sl-unmaint/sl-dep
    class) than the plain .sl-chip rules above, so it wins regardless of source order. */
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip.sl-unmaint,
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip.sl-unmaint {
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip.sl-unmaint,
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip.sl-unmaint {
   background: var(--cc-err, #d9433f) !important; color: #fff !important;
 }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable td.updatecolumn .sl-chip.sl-dep,
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.updatecolumn .sl-chip.sl-dep {
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip.sl-dep,
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip.sl-dep {
   background: var(--cc-warn, #e0912a) !important; color: #1a1a1a !important;
 }
 /* FLASH FIX (user: "wenn ich über die unterste Buttonleiste fahre blitzt die Docker-Zeile
@@ -1829,12 +1841,12 @@ html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr.sortable:hover td.
    z-index 3000 still leaves the row topmost there), so the pointer passing the bar's right zone
    :hover'd the row underneath and fired the reactive colouring. docker.js stamps html.cc-actbar-hot
    while the pointer is in the bar's Y-band; suppress the row-hover colouring back to grey then. */
-html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover td.ct-name .outer > span.hand { background: rgba(128, 128, 128, .18) !important; }
-html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-b:not(.cc-plan-on),
-html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover td.updatecolumn > span.green-text,
-html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover td.updatecolumn span.orange-text,
-html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover td.updatecolumn .sl-chip,
-html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr.sortable:hover .cc-actbtn:not(.cc-actoff) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand { background: rgba(128, 128, 128, .18) !important; }
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b:not(.cc-plan-on),
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn > span.green-text,
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn span.orange-text,
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip,
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-actbtn:not(.cc-actoff) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 /* PLUGINS tab logo tiles (their background rule lives above: html.cc-plugins-iconbg .cc-plugico):
    same reactive contract — rest grey, the ROW hover restores the configured tile colour.
    cc-plugins-iconbg is only ever stamped on /Plugins, so nothing can leak elsewhere. */
@@ -1881,7 +1893,7 @@ html .cc-set-knob.cc-set-knob { border-radius: var(--cc-b-radius, 50%) !importan
 
 /* Badge-Form "circle" (v2.18.0): round the square container/plugin logo badges to full circles.
    Rectangular data/tab pills stay capsules via --cc-b-radius (999px in circle mode). */
-html.cc-shape-circle .cc-enh.cc-docker-iconbg #docker_list tr.sortable td.ct-name .outer > span.hand { border-radius: 50% !important; }
+html.cc-shape-circle .cc-enh.cc-docker-iconbg #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer > span.hand { border-radius: 50% !important; }
 html.cc-shape-circle.cc-plugins-iconbg .cc-plugico { border-radius: 50% !important; }
 
 /* #5 (user: reset not same size as the swatches): Unraid's global control CSS inflates it. Force it to be

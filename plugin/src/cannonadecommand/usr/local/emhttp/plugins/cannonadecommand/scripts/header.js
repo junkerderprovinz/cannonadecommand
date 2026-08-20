@@ -472,11 +472,12 @@
   // way to refresh the cached list (mutation / tab-switch / close+reopen all failed live; reload is also
   // CC's existing pattern for the display settings). Archive sweeps unread into the archive; delete
   // archives-then-deletes-archived, guarded by a two-step armed click. Idempotent per sheet open.
-  function ccGql(q) {
+  function ccGql(q, variables) {
     return fetch("/graphql", { method: "POST", credentials: "same-origin",
       headers: { "Content-Type": "application/json", "x-csrf-token": (window.csrf_token || "") },
-      body: JSON.stringify({ query: q }) });
+      body: JSON.stringify(variables ? { query: q, variables: variables } : { query: q }) });
   }
+  try { window.ccGql = ccGql; } catch (e) {} // let docker.js's organizer/Folder-View code (ccOrgQuery/ccOrgMutate) reuse the same GraphQL transport
   function ccArchiveNotifs() {
     try { ccGql("mutation { archiveAll { archive { total } } }").then(function () { location.reload(); }).catch(function () {}); } catch (e) {}
   }

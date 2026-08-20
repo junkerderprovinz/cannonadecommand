@@ -58,8 +58,8 @@
     : [["Mo", 1], ["Tu", 2], ["We", 3], ["Th", 4], ["Fr", 5], ["Sa", 6], ["Su", 0]];
 
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge — Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container — kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn CPU UND Netzwerk für die eingestellte Zeit niedrig bleiben. Ein ausgelasteter Container wird nie gestoppt; CC startet ihn nicht automatisch wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“ — dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft" },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order — duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container — no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container when CPU AND network stay low for the set time. A busy container is never stopped; CC does not start it again automatically.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no” — this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet" },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge — Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container — kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn CPU UND Netzwerk für die eingestellte Zeit niedrig bleiben. Ein ausgelasteter Container wird nie gestoppt; CC startet ihn nicht automatisch wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“ — dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner…", newFolderPrompt: "Name des neuen Ordners:", renameFolder: "Ordner umbenennen", renameFolderPrompt: "Neuer Name:", deleteFolder: "Ordner löschen", deleteFolderConfirm: "Diesen Ordner löschen? Enthaltene Container werden eine Ebene höher verschoben, nicht gelöscht." },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order — duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container — no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container when CPU AND network stay low for the set time. A busy container is never stopped; CC does not start it again automatically.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no” — this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder…", newFolderPrompt: "Name of the new folder:", renameFolder: "Rename folder", renameFolderPrompt: "New name:", deleteFolder: "Delete folder", deleteFolderConfirm: "Delete this folder? Containers inside it move up one level, they are not deleted." },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -71,6 +71,7 @@
   function stateLabel(s) { var m = STATE_LABELS[LANG] || STATE_LABELS.en; return m[s] || s || "?"; }
 
   var mode = (localStorage.getItem(VIEW_KEY) === "grid" && themingOn()) ? "grid" : "list"; // grid is a theming view; never start in grid with theming off
+  var ccOrgView = null, ccOrgAvailable = false; // cached docker.organizer GraphQL result; null = not loaded/unreachable yet
   var containers = [], containerNames = [], containersByName = {}, stats = {}, shiplog = {}, workingPlan = {}, lastRun = {}, iconCache = {};
   var netPrev = {}; // name → {rx,tx,t} previous cumulative net counters, to derive the live down/up RATE
   var daemonVersion = ""; // the RUNNING daemon's version (from /api/state) — shown in the gear menu so it's obvious which backend is live after an update
@@ -1548,6 +1549,62 @@
     if (menu && menuAnchor && !menuAnchor.isConnected) { menuAnchor = hg; positionMenu(); }
     applyIconTint();
   }
+  // Structural only (spec decision 5 — no aggregated CPU/RAM per folder). flatEntries already
+  // carries depth/parentId/position, so grouping is one bucket-by-parentId pass, no recursive
+  // tree-parser needed. Reuses card() 1:1 — same look as Grid, just grouped under folder headers.
+  function renderFolderView() {
+    ensureGridHolder(); gridHolder.innerHTML = "";
+    relocateTopBar();
+    gridHolder.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
+    gridHolder.classList.toggle("cc-tint-icons", !!localStorage.getItem("cc.iconcolor"));
+    gridHolder.classList.toggle("cc-docker-iconbg", localStorage.getItem("cc.iconbg") === "1");
+    if (!ccOrgView) { removeGridHolder(); return; } // setMode() already guards this, but stay defensive
+    var byParent = {};
+    ccOrgView.flatEntries.forEach(function (e) { (byParent[e.parentId] = byParent[e.parentId] || []).push(e); });
+    Object.keys(byParent).forEach(function (pid) { byParent[pid].sort(function (a, b) { return a.position - b.position; }); });
+
+    var hg = makeGear("cc-hgear-grid");
+    var root = el("div", "cc-folderview");
+
+    function renderEntries(parentId, container) {
+      (byParent[parentId] || []).forEach(function (e) {
+        if (e.type === "folder" || e.type === "group") {
+          var grp = el("div", "cc-folder-group");
+          var head = el("div", "cc-folder-group-head");
+          head.appendChild(el("span", "cc-folder-group-label", e.name + " (" + (byParent[e.id] || []).length + ")"));
+          // rename/delete only for folders CC itself created (own-registry coexistence, spec/Task 6) —
+          // a folder made by FolderView3/Plus or a future native UI stays read-only here
+          if (ccOrgIsOwned(e.id)) {
+            var acts = el("span", "cc-folder-group-actions");
+            var renBtn = el("button", "cc-folder-act", "✎"); renBtn.type = "button"; renBtn.title = t("renameFolder");
+            renBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccOrgRenameFolder(e.id, e.name); });
+            var delBtn = el("button", "cc-folder-act", "🗑"); delBtn.type = "button"; delBtn.title = t("deleteFolder");
+            delBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccOrgDeleteFolder(e.id); });
+            acts.appendChild(renBtn); acts.appendChild(delBtn);
+            head.appendChild(acts);
+          }
+          grp.appendChild(head);
+          var kids = el("div", "cc-grid cc-folder-group-body");
+          grp.appendChild(kids);
+          container.appendChild(grp);
+          renderEntries(e.id, kids); // nested folders render inside their own group's body
+        } else {
+          var name = e.name.replace(/^\//, ""); // organizer container names are docker-style ("/JDownloader")
+          // containerByName() applies norm() (lowercases) — containersByName is keyed lowercase
+          // (see indexState()), a bare containersByName[name] silently dropped every mixed-case
+          // container name (live-caught: only "homarr"/"n8n" etc., already-lowercase by luck, rendered)
+          var c = containerByName(name);
+          if (c) container.appendChild(card(c)); // unknown-to-CC container (edge case) — skip rather than crash on a partial object
+        }
+      });
+    }
+    renderEntries(ccOrgView.rootId, root);
+
+    var gtile = el("div", "cc-card cc-gear-tile"); gtile.appendChild(hg); root.appendChild(gtile);
+    gridHolder.appendChild(root);
+    if (menu && menuAnchor && !menuAnchor.isConnected) { menuAnchor = hg; positionMenu(); }
+    applyIconTint();
+  }
 
   // ───────────────────────── gear + menu (the only global control surface)
   function makeGear(extra) { var g = el("button", "cc-hgear" + (extra ? " " + extra : "") + (daemonUp === false ? " cc-hgear-down" : ""), "⚙"); g.type = "button"; g.setAttribute("data-tip", daemonUp === false ? "CannonadeCommand — daemon not reachable" : "CannonadeCommand"); g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g); }); return g; }
@@ -1596,7 +1653,22 @@
       var bG = el("button", "cc-seg-btn" + (mode === "grid" ? " cc-seg-on" : ""), t("grid"));
       bL.addEventListener("click", function () { closeMenu(); setMode("list"); }); bG.addEventListener("click", function () { closeMenu(); setMode("grid"); });
       seg.appendChild(bL); seg.appendChild(bG);
+      // Folder is a THIRD theming view, but only offered once the organizer actually has
+      // real folders — showing an always-empty third tab would just be confusing (spec decision 4).
+      if (ccOrgAvailable && ccOrgHasFolders()) {
+        var bF = el("button", "cc-seg-btn" + (mode === "folder" ? " cc-seg-on" : ""), LANG === "de" ? "Ordner" : "Folder");
+        bF.addEventListener("click", function () { closeMenu(); setMode("folder"); });
+        seg.appendChild(bF);
+      }
       var vrow = el("div", "cc-menu-row cc-menu-plain"); vrow.appendChild(seg); m.appendChild(vrow);
+      // "New folder…" bootstraps the FIRST folder (before that, the Folder toggle above is
+      // hidden per spec decision 4 — this is how a user gets from zero folders to one).
+      if (ccOrgAvailable) {
+        var nf = el("div", "cc-menu-link", "+ " + t("newFolder"));
+        nf.style.cursor = "pointer";
+        nf.addEventListener("click", function () { closeMenu(); ccOrgCreateFolder(); });
+        m.appendChild(nf);
+      }
     }
     // Basic/Advanced lives HERE now (the native switch row above the table is
     // hidden): flip Unraid's own hidden checkbox so cookie + re-render stay native.
@@ -1659,8 +1731,119 @@
   function closeMenu() { if (menu) { menu.remove(); menu = null; menuStatusEl = null; } }
   function toggleMenu(anchor) { if (menu) closeMenu(); else openMenu(anchor); }
 
+  // ───────────────────────── organizer (Folder View, GraphQL — ccGql lives in header.js)
+  // live-verified 2026-08-20 (Bottich introspection against a real 7.3.2 host, unraid/api's
+  // Mutation/ResolvedOrganizerV1 types): every organizer write mutation returns the SAME
+  // ResolvedOrganizerV1! wrapper ({ version, views }) as the read query — one shared shape.
+  var ORG_VIEW_SHAPE = 'id name rootId prefs flatEntries { id type name parentId depth position path hasChildren childrenIds }';
+  var ORG_QUERY = '{ docker { organizer { views { ' + ORG_VIEW_SHAPE + ' } } } }';
+  // "version" is the cheapest subfield that proves a write-only call (prefs) succeeded without
+  // re-fetching views/flatEntries we already have locally and don't need refreshed.
+  var ORG_SETPREFS_MUT = 'mutation($viewId: String, $prefs: JSON!) { updateDockerViewPreferences(viewId: $viewId, prefs: $prefs) { version } }';
+  // the four write mutations DO re-fetch views (folder structure just changed) so the caller can
+  // adopt the fresh state in one round trip instead of a second ccOrgQuery().
+  var ORG_CREATE_MUT = 'mutation($name: String!, $parentId: String) { createDockerFolder(name: $name, parentId: $parentId) { views { ' + ORG_VIEW_SHAPE + ' } } }';
+  var ORG_RENAME_MUT = 'mutation($folderId: String!, $newName: String!) { renameDockerFolder(folderId: $folderId, newName: $newName) { views { ' + ORG_VIEW_SHAPE + ' } } }';
+  var ORG_DELETE_MUT = 'mutation($entryIds: [String!]!) { deleteDockerEntries(entryIds: $entryIds) { views { ' + ORG_VIEW_SHAPE + ' } } }';
+  var ORG_MOVE_MUT = 'mutation($sourceEntryIds: [String!]!, $destinationFolderId: String!) { moveDockerEntriesToFolder(sourceEntryIds: $sourceEntryIds, destinationFolderId: $destinationFolderId) { views { ' + ORG_VIEW_SHAPE + ' } } }';
+  function ccOrgQuery() {
+    return ccGql(ORG_QUERY)
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j.errors) throw new Error(j.errors[0].message);
+        var views = j.data && j.data.docker && j.data.docker.organizer && j.data.docker.organizer.views;
+        return (views && views[0]) || null;
+      });
+  }
+  function ccOrgMutate(mutation, variables) {
+    return ccGql(mutation, variables)
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (j.errors) throw new Error(j.errors[0].message); return j.data; });
+  }
+  // "has the user actually created folders?" — more than just the root itself. FolderView3's
+  // live code treats both "folder" and "group" as folder-like organizer entry types, so match both.
+  function ccOrgHasFolders() {
+    if (!ccOrgView) return false;
+    return ccOrgView.flatEntries.filter(function (e) { return e.type === "folder" || e.type === "group"; }).length > 1;
+  }
+  function ccOrgInit() {
+    return ccOrgQuery().then(function (v) { ccOrgView = v; ccOrgAvailable = !!v; })
+      .catch(function () { ccOrgView = null; ccOrgAvailable = false; }); // feature flag off / API unreachable → degrade silently
+  }
+  // Task 7 (spec decision 6): persist CC's own view-mode server-side via updateDockerViewPreferences,
+  // NOT only localStorage. `prefs` is a free-form JSON blob shared with Unraid's own (future) native
+  // frontend, so CC's value lives under its own namespaced key and this MERGES into whatever prefs
+  // already exist rather than clobbering them wholesale (the mutation replaces the whole blob).
+  function ccOrgSavePrefs(patch) {
+    if (!ccOrgAvailable || !ccOrgView) return; // fire-and-forget, only when the organizer is actually reachable
+    var merged = {}; var cur = ccOrgView.prefs;
+    if (cur && typeof cur === "object") for (var k in cur) if (Object.prototype.hasOwnProperty.call(cur, k)) merged[k] = cur[k];
+    for (var k2 in patch) if (Object.prototype.hasOwnProperty.call(patch, k2)) merged[k2] = patch[k2];
+    ccOrgMutate(ORG_SETPREFS_MUT, { viewId: ccOrgView.id, prefs: merged })
+      .then(function () { ccOrgView.prefs = merged; })
+      .catch(function () {}); // never let a prefs-save failure surface — localStorage already has the value
+  }
+
+  // Task 6 — write actions. Own-registry coexistence pattern mirrored from FolderView3's live
+  // code (spec finding): CC remembers which folders IT created and only ever renames/deletes
+  // THOSE — a folder made by FolderView3/Plus, or Unraid's own future native UI, is read-only
+  // to CC, exactly like FV3 never touches folders it didn't create itself.
+  var ORG_OWNED_KEY = "cc.orgOwned";
+  function ccOrgOwnedIds() { try { var a = JSON.parse(localStorage.getItem(ORG_OWNED_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function ccOrgIsOwned(id) { return ccOrgOwnedIds().indexOf(id) >= 0; }
+  function ccOrgMarkOwned(id) { var a = ccOrgOwnedIds(); if (a.indexOf(id) < 0) { a.push(id); localStorage.setItem(ORG_OWNED_KEY, JSON.stringify(a)); } }
+  function ccOrgUnmarkOwned(id) { localStorage.setItem(ORG_OWNED_KEY, JSON.stringify(ccOrgOwnedIds().filter(function (x) { return x !== id; }))); }
+  // every write mutation returns the FULL fresh organizer state (see ORG_VIEW_SHAPE note above) —
+  // adopt it in place instead of a second round trip, then re-paint if Folder view is on screen.
+  function ccOrgAdopt(data, mutName) {
+    var views = data && data[mutName] && data[mutName].views, v = views && views[0];
+    if (!v) return; ccOrgView = v; ccOrgAvailable = true;
+    if (mode === "folder") renderFolderView();
+  }
+  function ccOrgCreateFolder() {
+    if (!ccOrgAvailable || !ccOrgView) return;
+    var name = window.prompt(t("newFolderPrompt"), ""); if (!name) return; name = name.trim(); if (!name) return;
+    var beforeIds = ccOrgView.flatEntries.filter(function (e2) { return e2.parentId === ccOrgView.rootId; }).map(function (e2) { return e2.id; });
+    ccOrgMutate(ORG_CREATE_MUT, { name: name, parentId: ccOrgView.rootId })
+      .then(function (data) {
+        ccOrgAdopt(data, "createDockerFolder");
+        // identify the just-created folder by set-difference (its id format isn't documented,
+        // so diffing root's children before/after is the only reliable way to find it)
+        var created = ccOrgView.flatEntries.filter(function (e2) { return e2.parentId === ccOrgView.rootId && beforeIds.indexOf(e2.id) < 0; })[0];
+        if (created) ccOrgMarkOwned(created.id);
+        setMode("folder"); // jump straight to the result so the user sees what they just made
+      })
+      .catch(function () { flash(t("invalid"), true); });
+  }
+  function ccOrgRenameFolder(id, oldName) {
+    if (!ccOrgIsOwned(id)) return; // never rename a folder CC didn't create
+    var name = window.prompt(t("renameFolderPrompt"), oldName || ""); if (!name) return; name = name.trim();
+    if (!name || name === oldName) return;
+    ccOrgMutate(ORG_RENAME_MUT, { folderId: id, newName: name })
+      .then(function (data) { ccOrgAdopt(data, "renameDockerFolder"); })
+      .catch(function () { flash(t("invalid"), true); });
+  }
+  function ccOrgDeleteFolder(id) {
+    if (!ccOrgIsOwned(id) || !ccOrgView) return; // never delete a folder CC didn't create
+    if (!window.confirm(t("deleteFolderConfirm"))) return;
+    var kids = ccOrgView.flatEntries.filter(function (e2) { return e2.parentId === id; }).map(function (e2) { return e2.id; });
+    var self2 = ccOrgView.flatEntries.filter(function (e2) { return e2.id === id; })[0];
+    var parentId = (self2 && self2.parentId) || ccOrgView.rootId;
+    // rescue the folder's contents up to its own parent BEFORE deleting it — deleteDockerEntries
+    // has no cascade option, an unrescued delete would silently orphan/lose every container inside
+    var rescue = kids.length ? ccOrgMutate(ORG_MOVE_MUT, { sourceEntryIds: kids, destinationFolderId: parentId }) : Promise.resolve(null);
+    rescue.then(function () { return ccOrgMutate(ORG_DELETE_MUT, { entryIds: [id] }); })
+      .then(function (data) { ccOrgUnmarkOwned(id); ccOrgAdopt(data, "deleteDockerEntries"); })
+      .catch(function () { flash(t("invalid"), true); });
+  }
+
   // ───────────────────────── mode
-  function setMode(m) { if (!themingOn() && m === "grid") m = "list"; mode = m; localStorage.setItem(VIEW_KEY, m); refresh(); } // grid is a theming view → coerce to list when theming off
+  function setMode(m) {
+    if (!themingOn() && m !== "list") m = "list"; // grid AND folder are theming views
+    if (m === "folder" && !ccOrgAvailable) m = "list"; // never enter folder mode without real organizer data
+    mode = m; localStorage.setItem(VIEW_KEY, m); refresh();
+    ccOrgSavePrefs({ ccViewMode: m });
+  }
   function refresh() { applyMode(); if (mode === "grid" || (mode === "list" && colOn("res"))) refreshStats(); }
   // update one CPU/RAM engine-badge group in place (values only).
   function updateResGroup(rg, s, state) {
@@ -1682,6 +1865,7 @@
       // injectAllRowBadges(), whose decorative blocks self-gate on themingOn().
       if (!themingOn()) { hideNative(false); removeGridHolder(); removeEnhanceClasses(); injectAllRowBadges(); return; }
       if (mode === "grid") { removeEnhanceClasses(); clearRowBadges(); hideNative(true); renderGrid(); }
+      else if (mode === "folder") { removeEnhanceClasses(); clearRowBadges(); hideNative(true); renderFolderView(); }
       else { hideNative(false); removeGridHolder(); applyEnhanceClasses(); injectAllRowBadges(); }
     } catch (e) { try { hideNative(false); } catch (e2) {} } // never leave the native list hidden or broken
   }
@@ -3125,6 +3309,14 @@
     }
     try {
       applySettings();
+      // organizer probe: fires in parallel with everything else below, never blocks first
+      // paint. If the user was last in folder mode AND real folders still exist once the
+      // probe resolves, restore it — otherwise setMode()'s own guard already left `mode`
+      // at "list" (folder can never be the synchronous initial value, see var mode above).
+      ccOrgInit().then(function () {
+        if (dead) return;
+        if (ccOrgAvailable && mode !== "folder" && localStorage.getItem(VIEW_KEY) === "folder" && ccOrgHasFolders()) setMode("folder");
+      });
       // INSTANT first paint: the last known engine state seeds the badges right away;
       // the live fetch corrects them moments later.
       try { var cs9 = JSON.parse(localStorage.getItem("cc.stateCache") || "null"); if (cs9) { indexState(cs9); ensureNames(); refresh(); } } catch (e9) {}
