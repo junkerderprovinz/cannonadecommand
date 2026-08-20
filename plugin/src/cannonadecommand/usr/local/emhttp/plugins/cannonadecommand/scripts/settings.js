@@ -1638,8 +1638,13 @@
       }
       setSearch.addEventListener("input", function () { runFilter(setSearch.value); });
     })();
-    paintPrev(); paintToggles();
+    paintPrev(); paintToggles(); paintSelects();
   }
+  // #(user: "Alle drop down listen sind nicht in den farbmodi"): this page's own eleven .cc-dsel
+  // dropdowns were built but never stamped, so in rainbow/flag mode every option showed the flat
+  // accent. Same shared painter every area now uses (cc-theme.js), called from the same render
+  // chokepoint as paintToggles() so the two can never drift apart.
+  function paintSelects() { try { if (window.CCTheme && window.CCTheme.paintSelects) window.CCTheme.paintSelects(root || document); } catch (e) {} }
   function saveNotify(btn) {
     btn.textContent = T("Speichere…", "Saving…"); btn.classList.add("cc-set-disabled");
     function reset(txt) { btn.textContent = txt; setTimeout(function () { btn.textContent = T("Speichern", "Save"); btn.classList.remove("cc-set-disabled"); }, 1800); }

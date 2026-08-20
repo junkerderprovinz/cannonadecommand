@@ -662,8 +662,14 @@
       }
     } catch (e1) {}
   }
+  // The shared dropdown painter (cc-theme.js paintSelects): stamps the rotating --cc-rb-c/--cc-rb-ct on
+  // every .cc-dsel/.cc-sel/.cc-drop option so the sheets' colour-mode chains have something to read.
+  // Local no-op fallback in the house style — a missed load order degrades to the old flat-accent
+  // dropdown rather than throwing inside applySettings().
+  function paintSelects(root) { try { if (window.CCTheme && window.CCTheme.paintSelects) window.CCTheme.paintSelects(root); } catch (e) {} }
   function applySettings() {
     applyRainbowPalette();
+    paintSelects();   // dropdowns are painted from the SAME chokepoint as every other themed control
     try {
       // page gate for docker.css list rules (rbneutral block etc.): ctApply stamps this only on
       // the Add/UpdateContainer form — the LIST page must stamp it too, or html.cc-docker-on
@@ -2171,27 +2177,57 @@
   // ONE placement routine for all three .cc-pop windows (plan editor, bandwidth, CPU/RAM limits) — they had
   // three byte-identical copies of these three lines, so the clamp below would otherwise have to be written
   // three times and would rot in two of them.
+  // With the page pinned, a window opened off a row near the bottom edge could no longer be scrolled INTO
+  // view — the lock would hide its own content. So the top is clamped into the viewport: preferred spot is
+  // under the anchor, but it slides up as far as needed (never past 8px from the top) to sit fully on
+  // screen. Together with .cc-pop's max-height + the scrolling .cc-pop-mid, every window is reachable at
+  // any viewport height without the page moving.
+  //
+  // Split out of placePop and RE-RUN on every size change (user: "wenn ich ein zeitplan erstellen möchte
+  // rutscht das Fenster aus dem Browserfenster hinaus und ich kann den speichern button nicht mehr
+  // erreichen"). The clamp used to run exactly ONCE, at open time, but the plan editor's content grows
+  // afterwards: "+ Zeitplan" appends a row, a probe switch reveals a field. The box then grew DOWNWARD from
+  // a top that was only right for the old height — live-measured on a 760px viewport: 615px tall at open,
+  // 744px (the max-height cap) after one added row, bottom at 812 against a 760 viewport, with the whole
+  // .cc-pop-act button row below the fold and the page pinned, i.e. the Save button unreachable by any
+  // means. Answering the user's own question ("sollen wir das scrollen aktiviert lassen?"): no — unpinning
+  // the page would hand back the exact bug 4.26.0 fixed and contradicts Rule 15, which says the window
+  // stays put and only the region between title and button row moves. So the window is re-clamped instead,
+  // and the INTERNAL .cc-pop-mid absorbs the extra height (its flex-min-0 + the max-height cap already do
+  // that on their own once the outer box is where it belongs).
+  // The preferred (anchor-relative) top is remembered so removing a row lets the window slide back DOWN to
+  // its natural spot instead of staying pinned to the top edge.
+  function clampPop(pop) {
+    try {
+      if (!pop || !pop.parentNode) return;
+      var vh = document.documentElement.clientHeight || window.innerHeight;
+      var h = pop.offsetHeight || 0, top = parseFloat(pop.getAttribute("data-cc-top") || "0");
+      if (top + h + 8 > vh) top = Math.max(8, vh - h - 8);
+      pop.style.top = (window.scrollY + top) + "px";
+    } catch (e) {}
+  }
   function placePop(pop, anchor, minW) {
     popAnchorParts(pop);
+    paintSelects();   // the window's own .cc-dsel lists join the colour modes (cc-theme.js) — document-wide so the wrapper rotation stays in one stable sequence
     var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || minW || 320;
-    var vh = document.documentElement.clientHeight || window.innerHeight;
     pop.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 12)) + "px";
-    // With the page pinned, a window opened off a row near the bottom edge could no longer be scrolled INTO
-    // view — the lock would hide its own content. So the top is clamped into the viewport: preferred spot is
-    // under the anchor, but it slides up as far as needed (never past 8px from the top) to sit fully on
-    // screen. Together with .cc-pop's max-height + the scrolling .cc-pop-mid, every window is reachable at
-    // any viewport height without the page moving.
-    var h = pop.offsetHeight || 0;
-    var top = r.bottom + 6;
-    if (top + h + 8 > vh) top = Math.max(8, vh - h - 8);
-    pop.style.top = (window.scrollY + top) + "px";
+    pop.setAttribute("data-cc-top", String(r.bottom + 6));
+    clampPop(pop);
     openPop = pop; openPopAnchor = anchor;
     ccScrollLock(true);
+    // A ResizeObserver rather than patching every growth site: the editor has several (add/remove a
+    // schedule row, the probe switch, an error strip appearing), and a guard wired at one of them is a
+    // guard missing at the others. clampPop only writes `top`, never a size, so it cannot feed itself.
+    try { if (popRo) { popRo.disconnect(); popRo = null; } if (window.ResizeObserver) { popRo = new ResizeObserver(function () { clampPop(pop); }); popRo.observe(pop); } } catch (e) {}
   }
+  var popRo = null, popRz = 0;
+  // …and the viewport itself can change under a standing window (browser resize, devtools, a rotated
+  // tablet). Same clamp, one listener for the life of the page.
+  try { window.addEventListener("resize", function () { if (!openPop || popRz) return; popRz = requestAnimationFrame(function () { popRz = 0; clampPop(openPop); }); }); } catch (e) {}
   // EVERY dismiss path funnels through here — the ✕, a click outside, Escape, re-clicking the same badge,
   // a successful save, and the page teardown — which is exactly why the unlock lives here and nowhere else.
   // A lock released on only one of six exits is the regression waiting to happen.
-  function closePop() { if (openPop) { openPop.remove(); openPop = null; openPopAnchor = null; } Array.prototype.slice.call(document.querySelectorAll(".cc-drop")).forEach(function (n) { n.remove(); }); ccScrollLock(false); }
+  function closePop() { try { if (popRo) { popRo.disconnect(); popRo = null; } } catch (e) {} if (openPop) { openPop.remove(); openPop = null; openPopAnchor = null; } Array.prototype.slice.call(document.querySelectorAll(".cc-drop")).forEach(function (n) { n.remove(); }); ccScrollLock(false); }
   // clicking the SAME badge again closes its popover (toggle). Returns true if it closed.
   function togglePop(anchor) { if (openPop && openPopAnchor === anchor) { closePop(); return true; } return false; }
   function refreshChip(chip, name) { var node = workingPlan[name]; chip.classList.toggle("cc-plan-on", !!node); var v = chip.querySelector(".cc-b-v"); if (v) v.textContent = depsTxt(node); }
@@ -2300,6 +2336,7 @@
         var r2 = after.getBoundingClientRect();
         panel.style.left = (window.scrollX + r2.left) + "px"; panel.style.top = (window.scrollY + r2.bottom + 3) + "px"; panel.style.minWidth = r2.width + "px";
         document.body.appendChild(panel);
+        paintSelects();   // the "Hängt ab von" list joins the colour modes like every other CC dropdown
         document.addEventListener("mousedown", onDoc, true);
       });
     })();
@@ -2399,7 +2436,11 @@
       var time = el("input", "cc-in cc-sched-time"); time.type = "time"; time.value = (s && s.time) || "";
       var days = el("div", "cc-days"), sel = {}; ((s && s.days) || []).forEach(function (d) { sel[d] = true; });
       DAYS.forEach(function (d) { var b = el("span", "cc-day" + (sel[d[1]] ? " cc-day-on" : ""), d[0]); b.dataset.day = d[1]; b.addEventListener("click", function (e) { e.preventDefault(); b.classList.toggle("cc-day-on"); }); days.appendChild(b); });
-      var rm = el("span", "cc-sched-x", "✕"); rm.setAttribute("data-tip", t("remove")); rm.addEventListener("click", function () { row.remove(); });
+      // stopPropagation is LOAD-BEARING, not tidiness: the document-level "click outside closes the
+      // window" guard tests openPop.contains(e.target), and this handler DETACHES e.target from the
+      // window before that test runs — so removing one schedule row read as a click outside and shut the
+      // whole editor, throwing away every other unsaved edit in it. Caught while verifying the re-clamp.
+      var rm = el("span", "cc-sched-x", "✕"); rm.setAttribute("data-tip", t("remove")); rm.addEventListener("click", function (ev) { ev.stopPropagation(); row.remove(); });
       row.appendChild(act2); row.appendChild(time); row.appendChild(days); row.appendChild(rm);
       ctWrapSelect(act2);   // #17 (user: Startplan-Dropdowns im CC-Style): the schedule action <select> gets the CC dsel panel too — dispatches a native change, so row._read still reads act2.value
       // empty days = every day; only rows with a valid HH:MM time are saved
@@ -2408,7 +2449,7 @@
     }
     var sSec = el("div", "cc-pop-auto"); sSec.appendChild(el("div", "cc-pop-sech cc-pop-sech-lone", t("schedules")));
     var sList = el("div", "cc-sched-list"); schedulesFor(name).forEach(function (s) { sList.appendChild(schedRow(s)); }); sSec.appendChild(sList);
-    var addB = el("span", "cc-btn cc-btn-sm", t("addsched")); addB.addEventListener("click", function () { sList.appendChild(schedRow(null)); }); sSec.appendChild(addB);
+    var addB = el("span", "cc-btn cc-btn-sm", t("addsched")); addB.addEventListener("click", function () { var nr = schedRow(null); sList.appendChild(nr); paintSelects(); }); sSec.appendChild(addB);   // a row added AFTER the window opened still gets its dropdown painted (and the ResizeObserver in placePop re-clamps the window)
     pop.appendChild(sSec);
     function readSchedules() { var out = []; Array.prototype.slice.call(sList.children).forEach(function (r) { if (r._read) { var v = r._read(); if (v) out.push(v); } }); return out; }
 

@@ -77,6 +77,53 @@
     return p[((i % p.length) + off) % p.length];
   }
 
+  // ── COLOUR MODES FOR EVERY CC DROPDOWN (user: "Alle drop down listen sind nicht in den farbmodi").
+  // CC grew FOUR dropdown replacements, one per area, and only ONE of them was ever wired into the
+  // colour modes: header.js's .cc-tsel, which ccPaintRotate() stamps. The other three were never
+  // stamped at all, so in rainbow/flag mode every option in them fell through to the flat accent and
+  // nothing rotated (live-measured: 7 .cc-dsel in the Startplan window, 11 on the CC settings page,
+  // 16 on the share-detail page, all with no --cc-rb-c anywhere):
+  //   · .cc-dsel  — the Docker add-container form, the CC settings page, and every .cc-pop window
+  //                 (Startplan editor, CPU/RAM limits, bandwidth);
+  //   · .cc-sel   — the share-detail page;
+  //   · .cc-drop  — the Startplan editor's "Hängt ab von" multi-select (user: "das hängt ab von drop
+  //                 down ist nicht im GlimStone") — the one that was not even chip-shaped.
+  // One painter for all three, and it lives HERE because this is the only file that loads on every
+  // page, so no area can be given the guard and no area be missed.
+  // .cc-tsel is DELIBERATELY absent from these selectors: ccPaintRotate() rotates it inside the same
+  // page-wide sequence as the toggles it sits among (so a dropdown never repeats its neighbour's
+  // colour), and a second painter stamping the same element would fight it on every pass.
+  var CC_SEL_WRAPS = ".cc-dsel, .cc-sel";
+  var CC_SEL_PANELS = ".cc-dsel-panel, .cc-sel-panel, .cc-drop";
+  var CC_SEL_OPTS = ".cc-dsel-opt, .cc-sel-opt, .cc-drop-it";
+  function paintSelects(root) {
+    try {
+      var scope = (root && root.querySelectorAll) ? root : document;
+      // Rainbow OFF (or theming off) un-stamps rather than painting: the sheets' own
+      // var(--cc-rb-c, var(--cc-rbaccent, <area accent>)) chain then resolves to the accent, which is
+      // exactly what accent mode is supposed to look like. Flag mode rides rbColor()'s palette().
+      var on = g("cc.theming", "1") !== "0" && g("cc.rainbow", "0") === "1";
+      var i, n, c;
+      var wraps = scope.querySelectorAll(CC_SEL_WRAPS);
+      for (i = 0; i < wraps.length; i++) {
+        if (!on) { wraps[i].style.removeProperty("--cc-rb-c"); wraps[i].style.removeProperty("--cc-rb-ct"); continue; }
+        c = rbColor(i, null);   // guarded by `on`, so this never returns the null accent
+        wraps[i].style.setProperty("--cc-rb-c", c); wraps[i].style.setProperty("--cc-rb-ct", idealText(c));
+      }
+      // rotate WITHIN each panel, like ccPaintRotate does for .cc-tsel-panel: an open list reads as a
+      // rainbow of items rather than one flat colour repeated down the column.
+      var panels = scope.querySelectorAll(CC_SEL_PANELS);
+      for (var p = 0; p < panels.length; p++) {
+        var opts = panels[p].querySelectorAll(CC_SEL_OPTS);
+        for (n = 0; n < opts.length; n++) {
+          if (!on) { opts[n].style.removeProperty("--cc-rb-c"); opts[n].style.removeProperty("--cc-rb-ct"); continue; }
+          c = rbColor(n, null);
+          opts[n].style.setProperty("--cc-rb-c", c); opts[n].style.setProperty("--cc-rb-ct", idealText(c));
+        }
+      }
+    } catch (e) {}
+  }
+
   // ── Web fonts for the server-name wordmark (user: "schönere schriften z.B. von google fonts"). A curated
   //    set of beautiful Google families [family, genericFallback], loaded on demand so they render for
   //    EVERYONE regardless of what the client has installed (the old list only rendered if the client
@@ -129,7 +176,7 @@
     return s;
   }
 
-  window.CCTheme = { RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor, gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily, CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon };
+  window.CCTheme = { RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects, gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily, CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon };
 
   // ── cross-origin/cross-browser UI-settings sync (user: "wenn CC aktiviert ist sieht es in
   // unterschiedlichen Browsern unterschiedlich aus... können wir das persistent machen?").

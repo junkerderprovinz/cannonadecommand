@@ -514,6 +514,12 @@
       // ccSyncOne is guarded (it only writes when the text actually differs), so this cannot loop.
       var done = box.querySelectorAll("select[data-cc-sel]");
       for (var j = 0; j < done.length; j++) ccSyncOne(done[j]);
+      // #(user: "Alle drop down listen sind nicht in den farbmodi"): the sixteen .cc-sel dropdowns on
+      // this page were built but never stamped, so every option resolved to the flat --cc-shr-accent
+      // regardless of rainbow/flag. The shared painter (cc-theme.js) stamps the rotating --cc-rb-c the
+      // sheet already reads. Called right here, the one place this page (re)builds its selects, so a
+      // list rebuilt by an Unraid re-render is painted in the same pass.
+      try { if (window.CCTheme && window.CCTheme.paintSelects) window.CCTheme.paintSelects(document); } catch (e2) {}
     } catch (e) {}
   }
   function ccWrapSelect(sel) {

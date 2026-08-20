@@ -577,11 +577,10 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* give back ex
 /* the same slot in green: the VERIFIED applied values after a successful save */
 .cc-pop-err.cc-pop-ok { background: rgba(31,157,85,.14); color: #4bd58a; }
 /* multi-select dropdown under "Hängt ab von": stays open, every click toggles a container */
-.cc-drop { position: absolute; z-index: 100001; background: #1c1c1c; border: none; border-radius: 8px; box-shadow: 0 12px 30px rgba(0,0,0,.55); max-height: 220px; overflow: auto; padding: 4px; }
-.cc-drop-it { padding: 5px 11px; border-radius: 5px; font-size: 12px; color: #c9c9c9; cursor: pointer; white-space: nowrap; }
-.cc-drop-it:hover { background: #2a2a2a; color: #fff; }
-.cc-drop-on { color: var(--cc-accent, #6ea0ff); font-weight: 600; }
-.cc-drop-on::after { content: " ✓"; }
+/* .cc-drop = the plan editor's "Hängt ab von" multi-select. POSITION only here; its whole look (panel +
+   chips + colour modes) lives with the other .cc-pop dropdowns further down, so all four CC dropdown
+   widgets are defined against the same contract in one place. */
+.cc-drop { position: absolute; z-index: 100001; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
 /* (i) info bubble beside a dropdown label - hover/focus reveals a short explainer of what each option
    (health/running/... · abort/continue/degrade) actually does.
    RETIRED (user: "die i infobubles entsprechen auch nicht dem standardisierten look"): .cc-info-pop was a
@@ -1109,16 +1108,30 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-rb-
   box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .6));
 }
 #cc-settings .cc-dsel.cc-open .cc-dsel-panel { display: flex; }
+/* #(user: "Alle drop down listen sind nicht in den farbmodi"): identical contract to .cc-tsel-opt
+   (Tools.css) so every CC dropdown in the plugin reads the same in every colour mode — each item takes
+   its OWN rotating palette slot (cc-theme.js paintSelects stamps --cc-rb-c per item), accent mode falls
+   through the chain to the one accent, and hover/selected just brighten. This block used to hard-code a
+   neutral rest fill and hop straight to var(--cc-accent) — no --cc-rbaccent link, no per-item stamp — so
+   in rainbow/flag mode all eleven of this page's dropdowns showed one flat accent colour. */
 #cc-settings .cc-dsel-opt {
   display: flex; align-items: center; gap: 8px; justify-content: flex-start;
   line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 8px);
-  background: rgba(255, 255, 255, .09); border: none; color: var(--cc-text, #ececec); white-space: nowrap;
-  transition: background .12s, color .12s;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); border: none;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))); white-space: nowrap;
+  transition: background .12s, color .12s, filter .12s;
 }
-#cc-settings .cc-dsel-opt:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
-#cc-settings .cc-dsel-opt.is-selected { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); box-shadow: none !important; }
-#cc-settings .cc-dsel-opt.is-selected:hover { filter: brightness(1.12); }
+#cc-settings .cc-dsel-opt:hover, #cc-settings .cc-dsel-opt.is-selected { filter: brightness(1.18); box-shadow: none !important; }
 #cc-settings .cc-dsel-opt.is-disabled { opacity: .4; pointer-events: none; }
+/* reactive sub-mode (cc.rbmode=active, gate stamped by header.js — the SAME gate .cc-tsel-opt uses, which
+   is correctly tied to rainbow being on, unlike the shares-side one): items rest neutral and reveal their
+   own stamped colour on hover / when selected, exactly like every other reactive control. */
+html.cc-tools-rbneutral #cc-settings .cc-dsel-opt { background: rgba(128, 128, 128, .16); color: var(--cc-text, #e4e4e4); }
+html.cc-tools-rbneutral #cc-settings .cc-dsel-opt:hover,
+html.cc-tools-rbneutral #cc-settings .cc-dsel-opt.is-selected {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)));
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))); filter: none;
+}
 .cc-set-prev { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; align-items: center; }
 .cc-set-prev .cc-b-lg { font-size: 15px; font-weight: 700; padding: 6px 16px; letter-spacing: .2px; } /* preview NAME headline badge — 15px / 6px 16px = the live Shares lg tier (Shares.css --cc-lg-*) */
 /* Hauptmenueleiste preview: mock of the top nav TABS (idle grey pill + one accent-filled
@@ -1452,19 +1465,29 @@ html.cc-docker-on.cc-on-addct .cc-dsel-panel {
 html.cc-docker-on.cc-on-addct .cc-dsel.cc-open .cc-dsel-panel { display: flex; }
 html.cc-docker-on.cc-on-addct .cc-dsel.cc-dsel-disabled .cc-dsel-trigger { opacity: .5; cursor: not-allowed; }
 html.cc-docker-on.cc-on-addct .cc-dsel-group { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9a9a9a; padding: 4px 12px 0; }
+/* #(user: "Alle drop down listen sind nicht in den farbmodi"): same .cc-tsel-opt contract as the settings
+   block above — per-item rotating colour, accent mode via the full chain, hover/selected brighten. The old
+   rules named var(--cc-accent) DIRECTLY, with no --cc-rb-c slot and no --cc-rbaccent link, so the whole
+   Vorlage/Netzwerk list stayed one flat accent no matter which colour mode was on. */
 html.cc-docker-on.cc-on-addct .cc-dsel-opt {
   display: flex; align-items: center; gap: 8px; justify-content: flex-start;
   line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 999px);
-  background: rgba(255, 255, 255, .09); border: none; color: #ececec; white-space: nowrap;
-  transition: background .12s, color .12s, box-shadow .12s;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); border: none;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))); white-space: nowrap;
+  transition: background .12s, color .12s, filter .12s;
 }
-html.cc-docker-on.cc-on-addct .cc-dsel-opt:hover { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
+html.cc-docker-on.cc-on-addct .cc-dsel-opt:hover,
 html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-selected {
-  background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff);
+  filter: brightness(1.18);
   box-shadow: none !important;   /* KEINE Rahmen/Ringe — Nutzer-Gesetz, gilt auch fuer aktive/selektierte Badges */
 }
-html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-selected:hover { filter: brightness(1.12); }
 html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-disabled { opacity: .4; pointer-events: none; }
+html.cc-tools-rbneutral.cc-docker-on.cc-on-addct .cc-dsel-opt { background: rgba(128, 128, 128, .16); color: #e4e4e4; }
+html.cc-tools-rbneutral.cc-docker-on.cc-on-addct .cc-dsel-opt:hover,
+html.cc-tools-rbneutral.cc-docker-on.cc-on-addct .cc-dsel-opt.is-selected {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)));
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))); filter: none;
+}
 
 /* #17 (user: die Dropdown-Listen im Startplan sind nicht im CC-Style): the plan-node editor (.cc-pop) now
    wraps its probe/policy/restart/schedule <select>s with the SAME cc-dsel panel, but the styling above is
@@ -1476,8 +1499,16 @@ html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-disabled { opacity: .4; pointer-ev
   width: 100%; min-height: 30px; box-sizing: border-box;
   background: rgba(255, 255, 255, .07); border-radius: 6px; padding: 4px 10px; color: #eaeaea; cursor: pointer;
 }
-.cc-pop .cc-dsel-trigger:hover { filter: brightness(1.12); }
-.cc-pop .cc-dsel.cc-open .cc-dsel-trigger { background: rgba(255, 255, 255, .12); }
+/* #(user: "Alle drop down listen sind nicht in den farbmodi"): the trigger is REACTIVE, exactly like
+   .cc-tsel-trigger — neutral while it sits there, the colour mode's own colour on hover and while its list
+   is open. It used to brighten a flat white overlay, which looks identical in every colour mode. */
+.cc-pop .cc-dsel-trigger:hover,
+.cc-pop .cc-dsel.cc-open .cc-dsel-trigger {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)));
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff)));
+}
+.cc-pop .cc-dsel-trigger:hover::after,
+.cc-pop .cc-dsel.cc-open .cc-dsel-trigger::after { border-top-color: currentColor; }
 .cc-pop .cc-dsel-trigger::after {
   content: ""; flex: 0 0 auto; width: 0; height: 0; margin-left: 4px;
   border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #cfcfcf;   /* caret */
@@ -1494,13 +1525,48 @@ html.cc-docker-on.cc-on-addct .cc-dsel-opt.is-disabled { opacity: .4; pointer-ev
 .cc-pop .cc-dsel-opt {
   display: flex; align-items: center; gap: 8px; justify-content: flex-start;
   line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 999px);
-  background: rgba(255, 255, 255, .09); border: none; color: #ececec; white-space: nowrap;
-  transition: background .12s, color .12s, box-shadow .12s;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); border: none;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))); white-space: nowrap;
+  transition: background .12s, color .12s, filter .12s;
 }
-.cc-pop .cc-dsel-opt:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
-.cc-pop .cc-dsel-opt.is-selected { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); box-shadow: none !important; }
-.cc-pop .cc-dsel-opt.is-selected:hover { filter: brightness(1.12); }
+.cc-pop .cc-dsel-opt:hover, .cc-pop .cc-dsel-opt.is-selected { filter: brightness(1.18); box-shadow: none !important; }
 .cc-pop .cc-dsel-opt.is-disabled { opacity: .4; pointer-events: none; }
+
+/* ── "HÄNGT AB VON" (user: "das hängt ab von drop down ist nicht im GlimStone"). The plan editor's
+   dependency picker is CC's fourth dropdown widget: a MULTI-select, so it is hand-built (.cc-drop /
+   .cc-drop-it) rather than wrapping a <select>, and it was the one that never got the CC look at all —
+   bare 12px text rows on a flat #1c1c1c slab, a #2a2a2a grey hover, an accent-coloured TEXT tick for the
+   picked ones, and a hard-coded 5px corner that ignored the Badge-Form. Give it the same elevated panel
+   and the same chips as every other CC dropdown, and put it in the colour modes with them: one rotating
+   palette slot per entry (cc-theme.js paintSelects), brightened when it is in the list, dimmed-neutral in
+   the reactive sub-mode until hover. */
+.cc-drop {
+  padding: 8px; display: flex; flex-direction: column; gap: 6px; min-width: 160px; max-width: min(92vw, 420px);
+  max-height: min(50vh, 260px); background: #303030; border-radius: 10px;
+  box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .55));   /* NO border line */
+}
+.cc-drop-it {
+  display: flex; align-items: center; gap: 8px; justify-content: flex-start;
+  line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 999px);
+  font-size: 12px; white-space: nowrap; border: none;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)));
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff)));
+  transition: background .12s, color .12s, filter .12s;
+}
+.cc-drop-it:hover, .cc-drop-on { filter: brightness(1.18); }
+.cc-drop-on { font-weight: 600; }
+.cc-drop-on::after { content: " ✓"; margin-left: auto; padding-left: 8px; }   /* the tick still marks membership, now inside a chip */
+html.cc-tools-rbneutral .cc-drop-it { background: rgba(128, 128, 128, .16); color: #e4e4e4; }
+html.cc-tools-rbneutral .cc-drop-it:hover, html.cc-tools-rbneutral .cc-drop-on {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)));
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))); filter: none;
+}
+html.cc-tools-rbneutral .cc-pop .cc-dsel-opt { background: rgba(128, 128, 128, .16); color: #e4e4e4; }
+html.cc-tools-rbneutral .cc-pop .cc-dsel-opt:hover,
+html.cc-tools-rbneutral .cc-pop .cc-dsel-opt.is-selected {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)));
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))); filter: none;
+}
 
 /* ── PAGE TITLE as a CC head badge. Unraid 7.3 puts icon + text in div.title > span.left
    (live-diagnosed — NOT a bare text node, so the ctTitleWrap path never fires there; it stays
