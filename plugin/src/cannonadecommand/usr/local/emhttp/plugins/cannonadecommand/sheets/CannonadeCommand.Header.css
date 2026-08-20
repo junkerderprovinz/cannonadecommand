@@ -689,7 +689,16 @@ html.cc-popups-on .sweet-alert pre li { color: #d6d6d6 !important; margin: 3px 0
    a markdown <pre> keeps the clean changelog rendering. */
 html.cc-popups-on .sweet-alert.nchan p { text-align: left !important; }
 html.cc-popups-on .sweet-alert.nchan pre:not(:has(h3)):not(:has(ul)) {
-  white-space: pre !important; text-align: left !important;
+  /* #(user: "beim Update blitzt eine horizontale Scrollbar auf"): Unraid's own docker-pull
+     progress can land as ONE unbroken line thousands of characters long (same native pattern
+     documented for `plugin install` output — not CC-specific). Plain `white-space:pre` never
+     wraps ANY line, so that one line forced the whole <pre> wider than the dialog -> a
+     horizontal scrollbar. `pre-wrap` still preserves newlines/whitespace runs exactly like
+     `pre` (the ASCII READY banner's short lines never need to wrap, so it renders unchanged) —
+     it only kicks in for a line that's actually too wide, which is exactly the case that broke.
+     overflow-wrap is the backstop for a single unbroken WORD (a hash/digest) longer than the
+     dialog even after wrapping is allowed. */
+  white-space: pre-wrap !important; overflow-wrap: anywhere !important; text-align: left !important;
   font-family: Consolas, "SFMono-Regular", ui-monospace, monospace !important;
   font-size: 12px !important; line-height: 1.35 !important; color: #d6d6d6 !important;
   background: #2e2e2e !important; border: none !important; border-radius: 8px !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;   /* #(user 2026-07-28): the log TEXT sits in a LIGHT card raised on the dark frame */
