@@ -698,6 +698,24 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 /* hide the AN/AUS text next to the PER-ROW autostart switch only. The Basic/Advanced
    view toggle (div.ToggleViewMode, OUTSIDE the table) keeps its label. */
 .cc-enh #docker_list .switch-button-label { display: none !important; }
+/* Perf fast-path (docker.js patches jQuery's switchButton() to skip the widget for .autostart
+   and stamp .cc-noswitch instead — see the comment there). Zero-extra-DOM CSS toggle switch on
+   the bare checkbox, styled to look PIXEL-IDENTICAL to the widget-based version above (same
+   44x24 track / 18x18 knob / 3px inset / 21px checked-offset / colours) so switching this path
+   on is visually invisible to the user. */
+.cc-enh #docker_list input.autostart.cc-noswitch {
+  -webkit-appearance: none !important; appearance: none !important; display: inline-block !important;
+  width: 44px !important; height: 24px !important; border-radius: 999px !important;
+  border: none !important; outline: none !important; box-shadow: none !important;
+  background: var(--cc-toggle-track-off, #3a3a3a) !important; margin: 0 12px 0 3px; vertical-align: middle;
+  position: relative; cursor: pointer; transition: background .15s; box-sizing: border-box; flex: none;
+}
+.cc-enh #docker_list input.autostart.cc-noswitch:checked { background: var(--cc-accent, #2f6feb) !important; }
+.cc-enh #docker_list input.autostart.cc-noswitch::before {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+  border-radius: 50%; background: #fff; transition: left .15s;
+}
+.cc-enh #docker_list input.autostart.cc-noswitch:checked::before { left: 21px; }
 /* The Basic/Advanced view-toggle row is NATIVELY display:flex; justify-content:flex-end;
    align-items:center (full-width, right-aligned). Restate it so it stays right-aligned
    even after other CSS touches it — the whole group (incl. ShipLog's "update all" button,

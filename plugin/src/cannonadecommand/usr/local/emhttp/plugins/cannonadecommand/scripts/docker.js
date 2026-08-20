@@ -47,6 +47,33 @@
   // gears, the plan chip + its editor, Save-plan/Start-in-order, the engine heartbeat.
   // Read it ONLY at the presentational chokepoints below; never near boot()/timers/api.
   function themingOn() { return localStorage.getItem("cc.theming") !== "0"; }
+  // ── perf: skip jQuery's switchButton() widget for the per-row autostart toggle ──
+  // (user: "Docker-Tab friert nach jedem Update/Start/Stop mehrere Sekunden ein"). Root cause
+  // (live-profiled, see c566afc + a direct main-thread-blocking measurement): Unraid's OWN
+  // native loadlist() replaces the WHOLE #docker_list wholesale after every action, then runs
+  // $('.autostart').switchButton({...}) — a jQuery UI widget that builds 4 fresh DOM nodes
+  // (background/knob/two label spans) PER ROW and wires its own event layer — across 50+
+  // containers on a big host. CC already reskins the widget's own generated
+  // .switch-button-background/-button beyond recognition via CSS (see docker.css), so once
+  // theming is on, that construction work is pure waste: nothing of the widget's real output is
+  // even visible. Style the bare <input class=autostart> directly instead (a standard zero-JS
+  // CSS toggle-switch, see docker.css .cc-noswitch) and skip building the widget's DOM.
+  // Functionally inert otherwise: loadlist()'s OWN separate $('.autostart').change(...) binding
+  // (right after this call, in native docker.js) attaches to the checkbox's native change event
+  // either way — a bare checkbox already fires `change` on click, no synthetic trigger needed —
+  // so autostart-saving keeps working completely unchanged. Patched once, top-level (before
+  // boot() and before the page's own first loadlist() call), scoped to ONLY `.autostart` so the
+  // Basic/Advanced view toggle (a single, one-off control, not a per-row perf concern) keeps
+  // using the real widget untouched.
+  (function () {
+    if (!window.jQuery || !jQuery.fn.switchButton || jQuery.fn.switchButton.__ccPatched) return;
+    var realSwitchButton = jQuery.fn.switchButton;
+    jQuery.fn.switchButton = function (opts) {
+      if (themingOn() && this.length && this.hasClass("autostart")) { this.addClass("cc-noswitch"); return this; }
+      return realSwitchButton.apply(this, arguments);
+    };
+    jQuery.fn.switchButton.__ccPatched = true;
+  })();
   // The FRONTEND version, stamped by pkg_build.sh at package time. Shown next to the
   // engine version so a stale browser/plugin frontend is instantly distinguishable from
   // a stale daemon (repeated "it still doesn't work" turned out to be old UIs under test).
