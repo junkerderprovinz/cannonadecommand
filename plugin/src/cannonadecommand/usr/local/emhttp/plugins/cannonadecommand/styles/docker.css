@@ -1504,14 +1504,23 @@ html.cc-ctout-on #displaybox .content {
 /* #1 (user): the title is now a FULL-WIDTH title bar (consistent with the update-window title #12), not a small
    centered pill. Negative side margins break it out of the .content padding so it spans edge to edge; top corners
    rounded to match the window. */
-/* #(user 2026-07-28: "Titel-Badge zu gross, ueber alle Fenster einheitlich"): back to a centred content-width
-   pill (lgb 36px / 14px) that matches the sweet-alert title badge exactly. The .content is text-align:center,
-   so the inline-flex title centres. (Overrides the earlier "#1 full-width bar".) */
+/* #(user: "soll exakt so aussehen wie das Update-Fenster" — live screenshot diff against the real
+   .sweet-alert.nchan window): that comment above was stale/wrong. .sweet-alert has NO top-level
+   padding, so its h2 (width:100% !important, see Header.css) sits flush against the window's own
+   top edge, its corners COINCIDING with the window's rounded corners — confirmed by direct
+   screenshot comparison, not by re-reading old comments. #cc-ctout-title, in contrast, is a child
+   of #displaybox .content, which DOES have its own padding (20px 22px 20px, see above) — a plain
+   width:100% there stays INSET inside that padding, rendering as a smaller pill with visible dark
+   margin on all four sides instead of the full-bleed bar the update window has. Negative margins
+   matching .content's own padding exactly break it out flush to the window edges; only the TOP
+   corners stay rounded (to match the window's own top corners) since it's now flush left/right/top
+   and content continues directly below it. */
 html.cc-ctout-on #cc-ctout-title {
-  position: static !important; margin: 0 0 16px !important; padding: 0 18px !important; height: 40px;
-  display: flex; width: 100%; max-width: 100%; align-items: center; justify-content: center; box-sizing: border-box;
+  position: static !important; margin: -20px -22px 16px !important; padding: 0 18px !important; height: 40px;
+  display: flex; width: auto; max-width: none; align-items: center; justify-content: center; box-sizing: border-box;
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff));
-  font-weight: 600; font-size: var(--cc-lgb-fs, 14px); letter-spacing: .6px; text-transform: uppercase; border-radius: var(--cc-b-radius, 10px);
+  font-weight: 600; font-size: var(--cc-lgb-fs, 14px); letter-spacing: .6px; text-transform: uppercase;
+  border-radius: var(--cc-b-radius, 10px) var(--cc-b-radius, 10px) 0 0;
 }
 html.cc-ctout-on #displaybox .content h2 { color: #f0f0f0; }
 html.cc-ctout-on #displaybox .content #content,
