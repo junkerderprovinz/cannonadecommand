@@ -2486,7 +2486,15 @@
         // carries the colour-mode variants for all of it. Maintaining a parallel half-solution here is what
         // kept the page looking un-CC through several rounds.
         var caSettingsPg = /^\/Apps\/ca_settings/i.test(p0);
-        var toolsPg = !ownPg && (/^\/Tools\//.test(p0) || /^\/Settings\/./.test(p0) || diskPg || caSettingsPg || !!document.querySelector("#displaybox fieldset legend"));
+        // #(user: "abschnittsbadges zu groß" on the container-recreate window, measured live): the
+        // fieldset+legend fallback below exists for the Tools plugin-install log, but /Docker/(AddContainer|
+        // UpdateContainer) ALSO renders a native fieldset+legend once it streams (docker.js's dedicated
+        // html.cc-ctout-on already restyles that exact page) — so cc-tools-on fired there TOO and its own
+        // generic Tools.css legend rule (display:inline-flex, min-height:30px, margin-bottom:12px) fought
+        // cc-ctout-on's legend rule on the SAME elements, inflating the badges past what either rule alone
+        // specified. Exclude the ctout URL so only cc-ctout-on styles that page.
+        var ctOutPg = /^\/(Docker|Apps)\/(AddContainer|UpdateContainer)$/.test(p0);
+        var toolsPg = !ownPg && !ctOutPg && (/^\/Tools\//.test(p0) || /^\/Settings\/./.test(p0) || diskPg || caSettingsPg || !!document.querySelector("#displaybox fieldset legend"));
         root.classList.toggle("cc-tools-on", toolsPg && g("cc.theming", "1") !== "0");
         // the disk DETAIL form is a full-width native grid, so the reverted-to-native /Settings dl handling lets its
         // labels/values spread to the screen edges. Mark disk pages so the COMPACT CC grid (kept only here) reins the

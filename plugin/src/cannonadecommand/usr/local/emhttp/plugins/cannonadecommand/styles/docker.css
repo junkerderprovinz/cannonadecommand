@@ -1491,36 +1491,38 @@ html.cc-docker-on.cc-on-addct .ui-dialog #ddcl-catSelect {
    like the container-update dialog (docker.js bootCtOutput adds html.cc-ctout-on + the backdrop + the
    #cc-ctout-title accent badge, and hides the native grey heading). */
 html.cc-ctout-on #cc-ctout-bd { position: fixed; inset: 0; background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)); z-index: 9998; } /* dim stays; blur is single-sourced from the ONE central backdrop rule (Tokens.css) so it can never diverge */
+/* #(user: "passt immer noch nicht, überhaupt nicht" — this whole block was rebuilt from LIVE
+   getComputedStyle()/getBoundingClientRect() measurements taken on a real .sweet-alert.nchan
+   update window side-by-side with this ctout window, not from re-reading old comments (several
+   of which turned out to state the OPPOSITE of what the real update window actually does — the
+   single biggest lesson of this pass: screenshot + measure, don't infer from prose). Native
+   SweetAlert1 itself (jquery.sweetalert.css) sizes the window as `width:90vw; max-width:60rem`
+   — but this ctout page (/Docker/UpdateContainer?xmlTemplate=edit:...) has `html{font-size:10px}`
+   while the page the real swal renders on uses 20px, so `60rem` silently resolved to 600px here
+   vs the swal's measured 1200px — SAME rule text, HALF the size, purely from the two pages
+   disagreeing on the root font-size. Hardcoded to the measured 1200px so it can't drift with
+   either page's rem base again. Measured padding on the live window: 20px 20px 40px (NOT the
+   20px 22px 20px this rule had). */
 html.cc-ctout-on #displaybox .content {
   position: fixed; z-index: 9999; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: min(900px, 92vw); max-height: 86vh; overflow: auto;
+  width: 90vw; max-width: 1200px; max-height: 92vh; overflow: auto;
   background: #1a1a1a; border: none; border-radius: 14px;
-  box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38));   /* #6 (user: install window "völlig verunstaltet -> exakt wie das Update-Fenster"): SAME #242424 surface + soft shadow as the sweet-alert.nchan update window, NO 1px ring line */
-  padding: 20px 22px 20px; box-sizing: border-box; text-align: center;   /* #(user 2026-07-29): 20px TOP gap so the title bar isn't flush to the top edge — like the update window */
+  box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38));
+  padding: 20px 20px 40px; box-sizing: border-box; text-align: center;
 }
-/* #7-IV (user, 3rd time!): the "CONTAINER HINZUFUEGEN" title is the INLINE cc-ctout output (not the iframe
-   dialog 2.86 handled). Turn the full-width orange bar into the SAME centered pill badge #7 uses; dark surface,
-   left-aligned log, borderless step cards, neutral blue span.system, colour-mode buttons (primary right). */
-/* #1 (user): the title is now a FULL-WIDTH title bar (consistent with the update-window title #12), not a small
-   centered pill. Negative side margins break it out of the .content padding so it spans edge to edge; top corners
-   rounded to match the window. */
-/* #(user: "soll exakt so aussehen wie das Update-Fenster" — live screenshot diff against the real
-   .sweet-alert.nchan window): that comment above was stale/wrong. .sweet-alert has NO top-level
-   padding, so its h2 (width:100% !important, see Header.css) sits flush against the window's own
-   top edge, its corners COINCIDING with the window's rounded corners — confirmed by direct
-   screenshot comparison, not by re-reading old comments. #cc-ctout-title, in contrast, is a child
-   of #displaybox .content, which DOES have its own padding (20px 22px 20px, see above) — a plain
-   width:100% there stays INSET inside that padding, rendering as a smaller pill with visible dark
-   margin on all four sides instead of the full-bleed bar the update window has. Negative margins
-   matching .content's own padding exactly break it out flush to the window edges; only the TOP
-   corners stay rounded (to match the window's own top corners) since it's now flush left/right/top
-   and content continues directly below it. */
+/* Measured on the real update window: h2 is NOT flush/edge-to-edge (an earlier pass here
+   assumed it was, purely from eyeballing a screenshot, and made this rule break the title out
+   with negative margins — WRONG, confirmed by measuring the real window's h2 rect: it sits
+   exactly 20px in from the window's left/right/top, i.e. plainly inside the padding above, no
+   special treatment at all). Uniform border-radius (not top-corners-only) — the real h2's
+   radius matches its own badge shape, unrelated to the window's corners since it never touches
+   them. */
 html.cc-ctout-on #cc-ctout-title {
-  position: static !important; margin: -20px -22px 16px !important; padding: 0 18px !important; height: 40px;
-  display: flex; width: auto; max-width: none; align-items: center; justify-content: center; box-sizing: border-box;
+  position: static !important; margin: 0 0 14px !important; padding: 0 18px !important; height: 40px;
+  display: flex; width: 100%; max-width: 100%; align-items: center; justify-content: center; box-sizing: border-box;
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff));
   font-weight: 600; font-size: var(--cc-lgb-fs, 14px); letter-spacing: .6px; text-transform: uppercase;
-  border-radius: var(--cc-b-radius, 10px) var(--cc-b-radius, 10px) 0 0;
+  border-radius: var(--cc-b-radius, 10px);
 }
 html.cc-ctout-on #displaybox .content h2 { color: #f0f0f0; }
 html.cc-ctout-on #displaybox .content #content,
@@ -1549,17 +1551,37 @@ html.cc-ctout-on #displaybox .content { overflow-x: hidden !important; }   /* NE
 html.cc-ctout-on #displaybox .content .logLine,
 html.cc-ctout-on #displaybox .content fieldset,
 html.cc-ctout-on #displaybox .content fieldset > * { overflow-wrap: anywhere !important; word-break: break-word !important; }   /* wrap every long token instead of scrolling */
-/* cap the streamed log body so a long pull log scrolls INSIDE its card (exactly like the update window's log
-   card) instead of growing the whole window into a vertical scrollbar. */
-html.cc-ctout-on #displaybox .content fieldset > p.logLine { max-height: 40vh; overflow-y: auto; overflow-x: hidden; margin: 0 !important; }
+/* #(user: "scrollbars in den cards" — measured, not assumed): this per-card max-height+overflow-y:auto
+   was meant to cap a long pull log INSIDE its own card "like the update window" — but the real update
+   window does NO SUCH THING (its fieldsets are overflow:visible; only the WHOLE window scrolls, via
+   #displaybox .content's own overflow:auto above). Confirmed live why this rule actively broke SHORT
+   one-line cards too: getBoundingClientRect() showed scrollHeight (17px) exactly 1px over clientHeight
+   (16px) on ordinary single-line content — a sub-pixel line-height rounding artifact, not real
+   overflow — which is enough for overflow-y:auto to paint a permanent scrollbar thumb on content that
+   never needed to scroll at all. Dropped entirely; the outer window's own scroll now does the same job
+   the real update window relies on, with no per-card false positives. overflow-wrap/word-break above
+   still prevent a long UNBROKEN token from forcing horizontal scroll either way. */
+html.cc-ctout-on #displaybox .content fieldset > p.logLine { margin: 0 !important; }
 html.cc-ctout-on #displaybox .content > p.logLine { text-align: left !important; margin: 0 !important; }   /* orphan top-level log text (not inside a card) stays left-aligned, not centred on the dark frame */
 /* status badge — a spinning fa-refresh while the install/recreate STREAMS, a green check when it finishes:
    the SAME look + native 2s-linear fa-spin as the update-window status badge, so every "process running"
-   window animates identically (user: "keine Ladeanimation" + "mit der auf dem Containerlogo abgleichen"). */
+   window animates identically (user: "keine Ladeanimation" + "mit der auf dem Containerlogo abgleichen").
+   #(user: "status anzeige ist oben statt ganz unten") — docker.js now re-homes this badge exactly like the
+   real update window's own loader: INTO the button row once it exists (this rule no longer centres it under
+   the title with its own margin; the row's own flex handles placement), or pinned bottom-left of the window
+   as a direct .content child while still streaming with no button row rendered yet. */
 html.cc-ctout-on #cc-ctout-status {
-  margin: 0 auto 16px !important; width: 26px; height: 26px; border-radius: 50%; box-sizing: border-box;
+  width: 26px; height: 26px; border-radius: 50%; box-sizing: border-box;
   display: flex; align-items: center; justify-content: center;
   background: transparent;   /* RUNNING = transparent; the .cc-loader ring supplies the colour. DONE override below paints the green check badge */
+}
+html.cc-ctout-on #displaybox .content > #cc-ctout-status {
+  position: absolute !important; left: 20px !important; bottom: 20px !important; top: auto !important; right: auto !important; margin: 0 !important;
+}
+html.cc-ctout-on #displaybox .content .buttons > #cc-ctout-status,
+html.cc-ctout-on #displaybox .content center > #cc-ctout-status,
+html.cc-ctout-on #displaybox .content > div:has(> button) > #cc-ctout-status {
+  position: static !important; flex: none !important; margin: 0 !important;
 }
 html.cc-ctout-on #cc-ctout-status.cc-ctout-done { background: var(--cc-ok, #1f9d55); }   /* DONE = green badge + white check */
 html.cc-ctout-on #cc-ctout-status .cc-ctout-fa { color: #fff; font-size: 14px; line-height: 1; }
@@ -1567,7 +1589,10 @@ html.cc-anim-off #cc-ctout-status .cc-ctout-fa { animation: none !important; }
 html.cc-ctout-on #displaybox .content span.system { background: transparent !important; color: #d6d6d6 !important; box-shadow: none !important; display: block; }
 html.cc-ctout-on .docker-install-blocker { background: transparent !important; }
 html.cc-ctout-on #displaybox .content .buttons,
-html.cc-ctout-on #displaybox .content center { display: flex !important; justify-content: center !important; flex-direction: row-reverse !important; gap: 10px !important; }
+html.cc-ctout-on #displaybox .content center,
+html.cc-ctout-on #displaybox .content > div:has(> button) {   /* live-DOM: the button row is a BARE <div>, no .buttons/center class — verified via getComputedStyle (was `display:block`, so this rule never actually applied to the real row and the status badge would just stack as its own block instead of sitting beside the buttons) */
+  display: flex !important; align-items: center !important; justify-content: center !important; flex-direction: row-reverse !important; gap: 10px !important;
+}
 html.cc-ctout-on #displaybox .content button,
 html.cc-ctout-on #displaybox .content input[type="button"],
 html.cc-ctout-on #displaybox .content input[type="submit"] {
@@ -1591,9 +1616,16 @@ html.cc-ctout-on #displaybox .content style { display: none !important; }
 html.cc-ctout-on #displaybox .content .buttons,
 html.cc-ctout-on #displaybox .content > center,
 html.cc-ctout-on #displaybox .content > div:has(> button) {   /* live-DOM: the button row is a BARE <div> child of .content (no .buttons/center class) */
-  position: sticky !important; bottom: -20px !important; z-index: 4 !important;
-  margin: 10px -22px -20px !important; padding: 12px 22px !important;
-  background: #1a1a1a !important; box-shadow: 0 -8px 14px rgba(0, 0, 0, .4) !important;
+  /* #(user: "Schlagschatten über den Buttons ganz unten") — the real update window's own button
+     row (measured: position:relative, box-shadow:none, background:transparent) has none of this.
+     Keep sticky positioning (the #16 multi-step case above is still real and untested here — a
+     sticky row that's visually IDENTICAL to plain content is the safe middle ground: functions
+     the same, but nothing to see when it doesn't need to catch anything) — drop only the opaque
+     background + shadow that made it look like a distinct bar. Margins updated to the .content
+     padding fixed above (20px sides / 40px bottom, not the old 22px/20px). */
+  position: sticky !important; bottom: -40px !important; z-index: 4 !important;
+  margin: 10px -20px -40px !important; padding: 12px 20px !important;
+  background: transparent !important; box-shadow: none !important;
 }
 html.cc-ctout-on #displaybox .content > center:not(:last-of-type) { display: none !important; }
 /* #6: the in-window loader ring must never be clipped into a tiny arc by an overflow box (that was the

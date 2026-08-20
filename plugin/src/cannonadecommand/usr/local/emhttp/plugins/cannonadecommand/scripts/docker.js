@@ -3388,44 +3388,50 @@
       // hide the native grey heading(s) the badge stands in for (never our own badge)
       var heads = box.querySelectorAll(".title, span.left");
       for (var i = 0; i < heads.length; i++) { if (heads[i].id !== "cc-ctout-title" && /container/i.test(heads[i].textContent || "")) heads[i].style.display = "none"; }
-      // #(user 2026-07-29): the install/recreate window had NO loading animation. Add a status badge directly
-      // under the title — a spinning fa-refresh while the create STREAMS, a green check when it reports done —
-      // the SAME badge the update-window (sweet-alert) shows, so every "process running" window matches. The
-      // completion phrase (Helpers.php: "The command finished successfully!") drives the flip; a MutationObserver
-      // on the streaming .content re-checks on every appended log line.
-      var tbEl = document.getElementById("cc-ctout-title");
-      var sb = document.getElementById("cc-ctout-status");
-      if (!sb && tbEl) { sb = el("div"); sb.id = "cc-ctout-status"; sb.setAttribute("role", "status"); tbEl.insertAdjacentElement("afterend", sb); }
-      if (sb) {
-        var ctOutStatus = function () {
+      // #(user: "status anzeige ist oben statt ganz unten" — measured on the real .sweet-alert.nchan update
+      // window (header.js ~L346-357): its own status loader lives INSIDE the button row, re-homed there the
+      // instant the row exists (before that it falls back to a direct child of the dialog, pinned bottom-left
+      // by CSS) — never a standalone badge under the title. Mirror that placement here instead of the earlier
+      // "insert right after the title badge" approach. A spinning ring while the create STREAMS, a green check
+      // when it reports done; the completion phrase (Helpers.php: "The command finished successfully!") drives
+      // the flip. A MutationObserver on the streaming .content re-checks AND re-homes on every appended log
+      // line / newly-rendered button row.
+      var ctOutStatus = function () {
+        try {
+          // #15 (user: "wieso kommt da ein freier text unter dem titelbadge?"): Unraid streams a <style> block
+          // (.logLine{…}fieldset.docker{…}legend{…}) that renders as RAW CSS text under the title. A real
+          // <style> is hidden by CSS; a TEXT-node variant (streamed as plain text) needs blanking here.
           try {
-            // #15 (user: "wieso kommt da ein freier text unter dem titelbadge?"): Unraid streams a <style> block
-            // (.logLine{…}fieldset.docker{…}legend{…}) that renders as RAW CSS text under the title. A real
-            // <style> is hidden by CSS; a TEXT-node variant (streamed as plain text) needs blanking here.
-            try {
-              // Live-DOM (whoami create): the CSS lands in a bare <p> that STARTS with a "/*** Fonts ***/"
-              // comment (an anchored .logLine{ regex missed it). Match any leaf element / text node whose text
-              // carries a CSS signature AND a rule brace. Never touch our own #cc-ctout-* nodes.
-              var CSS_SIG = /font-family\s*:|@font-face|\.logLine\s*\{/i;
-              var st = content.querySelectorAll("style"); for (var si = 0; si < st.length; si++) st[si].style.display = "none";
-              var leafs = content.querySelectorAll("p, div, font, pre, span");
-              for (var li = 0; li < leafs.length; li++) {
-                var le = leafs[li];
-                if (!le.children.length && !(le.id && le.id.indexOf("cc-ctout") === 0) && CSS_SIG.test(le.textContent || "") && (le.textContent || "").indexOf("{") !== -1) le.style.display = "none";
-              }
-              var kids = content.childNodes;
-              for (var ki = 0; ki < kids.length; ki++) { var kn = kids[ki]; if (kn.nodeType === 3 && CSS_SIG.test(kn.nodeValue || "") && (kn.nodeValue || "").indexOf("{") !== -1) kn.nodeValue = ""; }
-            } catch (e15) {}
-            var log = content.textContent || "";
-            var done = /(erfolgreich\s+(ausgeführt|beendet)|finished successfully|command (finished|completed|executed)|befehl.*fehlgeschlagen|the command failed)/i.test(log)
-                       || (/docker\s+(create|run)/i.test(log) && !content.querySelector(".fa-spin, .spinner"));   /* #14: phrase-less end (spinner gone) also counts as done */
-            if (done) { sb.classList.add("cc-ctout-done"); if (sb.getAttribute("data-m") !== "done") { sb.setAttribute("data-m", "done"); sb.setAttribute("aria-label", "Fertig"); sb.innerHTML = "<i class='fa fa-check cc-ctout-fa' aria-hidden='true'></i>"; } }
-            else { sb.classList.remove("cc-ctout-done"); if (sb.getAttribute("data-m") !== "run") { sb.setAttribute("data-m", "run"); sb.setAttribute("aria-label", "Läuft"); sb.innerHTML = "<span class='cc-loader cc-load-sm'><span class='o'><i></i></span><span class='in'><i></i></span></span>"; } }   // sm tier (status-badge ring), one size source with the loader engine in header.js
-          } catch (e) {}
-        };
-        ctOutStatus();
-        if (!sb.__ccObs) { sb.__ccObs = new MutationObserver(ctOutStatus); try { sb.__ccObs.observe(content, { childList: true, subtree: true, characterData: true }); } catch (e) {} }
-      }
+            // Live-DOM (whoami create): the CSS lands in a bare <p> that STARTS with a "/*** Fonts ***/"
+            // comment (an anchored .logLine{ regex missed it). Match any leaf element / text node whose text
+            // carries a CSS signature AND a rule brace. Never touch our own #cc-ctout-* nodes.
+            var CSS_SIG = /font-family\s*:|@font-face|\.logLine\s*\{/i;
+            var st = content.querySelectorAll("style"); for (var si = 0; si < st.length; si++) st[si].style.display = "none";
+            var leafs = content.querySelectorAll("p, div, font, pre, span");
+            for (var li = 0; li < leafs.length; li++) {
+              var le = leafs[li];
+              if (!le.children.length && !(le.id && le.id.indexOf("cc-ctout") === 0) && CSS_SIG.test(le.textContent || "") && (le.textContent || "").indexOf("{") !== -1) le.style.display = "none";
+            }
+            var kids = content.childNodes;
+            for (var ki = 0; ki < kids.length; ki++) { var kn = kids[ki]; if (kn.nodeType === 3 && CSS_SIG.test(kn.nodeValue || "") && (kn.nodeValue || "").indexOf("{") !== -1) kn.nodeValue = ""; }
+          } catch (e15) {}
+          var log = content.textContent || "";
+          var done = /(erfolgreich\s+(ausgeführt|beendet)|finished successfully|command (finished|completed|executed)|befehl.*fehlgeschlagen|the command failed)/i.test(log)
+                     || (/docker\s+(create|run)/i.test(log) && !content.querySelector(".fa-spin, .spinner"));   /* #14: phrase-less end (spinner gone) also counts as done */
+          var sb = document.getElementById("cc-ctout-status");
+          if (!sb) { sb = el("div"); sb.id = "cc-ctout-status"; sb.setAttribute("role", "status"); }
+          // same re-home logic as header.js's real-window loader: last button's parent IS the button row;
+          // no buttons yet (still streaming, no Fertig/View Log row rendered) -> stays a direct child of
+          // .content, where CSS pins it bottom-left until the row appears and it gets re-parented.
+          var btns = content.querySelectorAll("button, input[type=button], input[type=submit]");
+          var row = btns.length ? btns[btns.length - 1].parentElement : content;
+          if (sb.parentElement !== row) row.appendChild(sb);
+          if (done) { sb.classList.add("cc-ctout-done"); if (sb.getAttribute("data-m") !== "done") { sb.setAttribute("data-m", "done"); sb.setAttribute("aria-label", "Fertig"); sb.innerHTML = "<i class='fa fa-check cc-ctout-fa' aria-hidden='true'></i>"; } }
+          else { sb.classList.remove("cc-ctout-done"); if (sb.getAttribute("data-m") !== "run") { sb.setAttribute("data-m", "run"); sb.setAttribute("aria-label", "Läuft"); sb.innerHTML = "<span class='cc-loader cc-load-sm'><span class='o'><i></i></span><span class='in'><i></i></span></span>"; } }   // sm tier (status-badge ring), one size source with the loader engine in header.js
+        } catch (e) {}
+      };
+      ctOutStatus();
+      if (!content.__ccStatusObs) { content.__ccStatusObs = new MutationObserver(ctOutStatus); try { content.__ccStatusObs.observe(content, { childList: true, subtree: true, characterData: true }); } catch (e) {} }
     } catch (e) {}
   }
   function boot() {
