@@ -901,7 +901,13 @@
     // (#12: the curated palette-presets block was removed per user request)
     // #16 (user): let STATE indicators keep their NATIVE state colour (green/amber/red) instead of
     // folding into the accent/rainbow/flag palette. Default OFF = integrated (current look). ON stamps
-    // html.cc-state-native; the sheets then let the native semantic colours through (usage bars, dots).
+    // html.cc-state-native; the sheets then let the native semantic colours through.
+    // SCOPE (narrowed by the state-dot law — see the long comment in styles/docker.css): this governs the
+    // indicators where colour is a REDUNDANT second channel and can be spent on decoration — usage bars
+    // (value = fill LENGTH), plugin status badges and container update badges (value = TEXT). The state
+    // DOTS are no longer in it: a font-size:0 dot has no text and no length, so folding its colour into the
+    // palette doesn't integrate it, it erases it (live-measured: 38 running and 20 stopped containers all
+    // on the same rgb(94,137,201)). Dots are unconditionally native now, in every colour mode.
     // T1: the ONE reactive-mode toggle for ALL colour modes (rainbow / flag / normal). Rests everything
     // grey, colours on hover, the active one stays lit. Sits directly ABOVE the state-native toggle (user).
     var rmode = el("div", "cc-set-row cc-set-inline");
@@ -914,7 +920,7 @@
     var snR = el("div", "cc-set-row cc-set-inline");
     var snL = el("span", "cc-set-lblwrap");
     snL.appendChild(el("span", null, T("Zustandsanzeigen nativ färben", "Native state colours")));
-    snL.appendChild(infoIcon(T("AN = Auslastungsbalken und Zustands-Punkte behalten ihre native Zustandsfarbe (grün/gelb/rot). AUS = sie werden in den aktuellen Farbmodus (Akzent/Regenbogen/Flagge) integriert.", "ON = usage bars and state dots keep their native state colour (green/amber/red). OFF = they fold into the current colour mode (accent/rainbow/flag).")));
+    snL.appendChild(infoIcon(T("AN = Auslastungsbalken und Status-Badges behalten ihre native Zustandsfarbe (grün/gelb/rot). AUS = sie werden in den aktuellen Farbmodus (Akzent/Regenbogen/Flagge) integriert. Zustands-Punkte (Container, Laufwerke) sind immer nativ — bei ihnen ist die Farbe die einzige Information.", "ON = usage bars and status badges keep their native state colour (green/amber/red). OFF = they fold into the current colour mode (accent/rainbow/flag). State dots (containers, drives) are always native — for them the colour is the only information there is.")));
     snR.appendChild(snL);
     snR.appendChild(toggle(get("cc.statenative", "0") === "1", function (v) { set("cc.statenative", v ? "1" : "0"); syncHeaderBar(); syncSharesBar(); }));
     c1.appendChild(snR);

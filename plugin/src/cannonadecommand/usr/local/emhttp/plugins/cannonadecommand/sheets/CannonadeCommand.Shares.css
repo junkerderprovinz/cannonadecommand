@@ -202,18 +202,19 @@ html.cc-shares-on #displaybox i.fa-circle.orb {
   display: inline-block !important; background: currentColor !important;
   border-radius: var(--cc-dot-r, 50%) !important; vertical-align: middle !important;
 }
-/* #2 (user: "die Zustandsanzeigen werden gar nicht eingefärbt"): INTEGRATED (default, no cc-state-native)
-   -> the disk state orb follows the COLOUR MODE like every other indicator; NATIVE colours ON keeps the
-   native green/grey/red above (its a.info tooltip still carries the health text). */
-html.cc-shares-on.cc-on-main:not(.cc-state-native) #displaybox i.fa-circle.orb {
-  background: var(--cc-rbaccent, var(--cc-shr-accent, #2f6feb)) !important;
-}
-/* reactive sub-mode: the orb rests neutral and takes the row's palette colour on hover (whole-row recolour,
-   same idiom as the value badges) — via --cc-rb-c stamped per row by paintMain, else the global rbaccent. */
-html.cc-shares-rbneutral.cc-on-main:not(.cc-state-native) #displaybox i.fa-circle.orb { background: #525252 !important; }
-html.cc-shares-rbneutral.cc-on-main:not(.cc-state-native) #displaybox tr:hover i.fa-circle.orb {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-shr-accent, #2f6feb))) !important;
-}
+/* THE STATE-DOT LAW (user: "die status anzeigen sollen grün sein wenn alles passt nicht blau") — see the
+   long rationale over the matching block in styles/docker.css. The disk orb is the /Main member of the same
+   family as the Docker container dot: font-size:0, no text, no length, no shape difference, so its colour is
+   its ENTIRE vocabulary and cannot be spent on decoration. It therefore keeps its native state colour in
+   every colour mode — the currentColor rule above is the only thing that paints it, driven by Unraid's own
+   green-orb/grey-orb/red-orb class.
+   Three rules used to sit here and all three had to go: an INTEGRATED rule that flattened every orb to the
+   one page-global --cc-rbaccent, plus a reactive rest-neutral pair that flattened them to #525252 until the
+   pointer reached the row. LIVE-MEASURED on /Main before this fix, user's own settings: 10 green-orb (healthy
+   disks) and 7 grey-orb ALL computed rgb(82,82,82) — "alles passt" rendered as a dead grey dot. With the
+   native path reached instead: green-orb rgb(51,204,51), grey-orb rgb(204,204,204).
+   The disk-usage FILL below is deliberately NOT part of this — a bar carries its value in its LENGTH, so its
+   colour is a redundant second channel and stays under "Zustandsanzeigen nativ färben" where it belongs. */
 
 /* ═══ browse column -> a text-only Browse badge ═══
    shares.js lifts the a.view browse link out of the Name cell into its own column, STRIPS its

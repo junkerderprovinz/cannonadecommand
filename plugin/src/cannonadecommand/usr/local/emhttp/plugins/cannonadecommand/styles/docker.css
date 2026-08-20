@@ -194,31 +194,41 @@ a.sl-updall { display: none !important; }
   gap: 0 !important; border-radius: var(--cc-dot-r, 50%) !important; font-size: 0 !important; line-height: 0 !important;
   flex: 0 0 auto; box-shadow: 0 0 0 2px rgba(0, 0, 0, .25); overflow: hidden;
 }
-html:not(.cc-state-native) .cc-enh .cc-ct-dotrow > .cc-badge { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
-/* #(user: "die beiden status anzeigen im dockertab zeigen keine farbe mehr an") — "die beiden" are the two
-   Zustandsanzeigen this tab has, and the code already treats them as one pair: the container läuft/gestoppt
-   dot under the name, and its twin beside the Startplan badge (docker.js depStateDot, built on the user's own
-   "die gleich aussehen soll wie die Container läuft/stopped Anzeige"). Both are .cc-ct-dotrow > .cc-badge, so
-   #10's reactive rest state below caught both at once: they sat on a flat #525252 and only took a colour while
-   the pointer happened to be on their ROW.
-   LIVE-MEASURED on the Docker tab before this fix: all 58 dots computed rgb(82,82,82), and a page-wide sweep
-   of #displaybox + div.js-actions found #525252 on NOTHING else — these two were the only colourless things
-   left in the whole list. (Also checked and RULED OUT as the culprit: the two process-window Statusanzeigen,
-   .cc-nchan-loader and #cc-ctout-status. Sampled through a real DiskSpeed update they cycle the full jewel
-   ring — c95e5e → c98d5e → c9af5e → 5ec986 → 5ec9c2 → 5e89c9 — and land on #1f9d55 when done. Those are fine.)
-   Why they are EXEMPT from the reactive rest state instead of just re-tinted: reactive-neutral is a rule for
-   CONTROLS (data badges, bar buttons, gears, tabs). A control carries no information while it is idle, so
-   holding its colour back until you reach for it costs nothing. A STATE indicator is the exact opposite — the
-   colour IS the payload, so "neutral until hover" empties it of meaning for as long as the pointer is
-   anywhere else, which is essentially always. Same reasoning as #96 (a legend has no hover state of its own,
-   so neutral-until-hover never resolved and just read as permanently colourless); here it does technically
-   resolve on row hover, but a status light you have to go and touch to read is not a status light.
-   The "Zustandsanzeigen nativ färben" toggle is where the choice actually lives: ON (html.cc-state-native)
-   keeps the semantic green/grey/red, OFF — the user's setting — means "follow the colour mode", not
-   "disappear inside it". So the rule above is now the only one that paints them, in every sub-mode.
-   NOTE (deliberately NOT changed here, flag it before touching it): /Main's disk orb and disk-usage fill
-   (CannonadeCommand.Shares.css) still carry the same #525252 reactive rest state. Same pattern, different
-   tab — the request was Docker-scoped, so that stays as-is until the user asks. */
+/* ═══ THE STATE-DOT LAW (user: "die status anzeigen sollen grün sein wenn alles passt nicht blau") ═══
+   A state DOT always wears its NATIVE semantic colour — green running, grey stopped, amber paused, red
+   dead/unhealthy — in EVERY colour mode and every sub-mode. No rule here paints it any more; the
+   .cc-badge-<state> table further down (search "state badges") is the only thing that colours it, exactly
+   as it already did whenever "Zustandsanzeigen nativ färben" was ON.
+
+   Two rules used to sit here and both had to go:
+     html:not(.cc-state-native) ... { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+     html.cc-shares-rbneutral:not(.cc-state-native) ... { background: #525252 !important; }   (removed in 4.25.1)
+   The second one flattened every dot to grey; the FIRST one flattened every dot to ONE shared hue.
+
+   LIVE-MEASURED on the Docker tab, user's own settings (rainbow on, rbmode active, statenative OFF), 58 dots
+   in three genuinely different states:
+        cc-badge-running  × 38  ->  rgb(94,137,201)
+        cc-badge-exited   × 11  ->  rgb(94,137,201)
+        cc-badge-created  ×  9  ->  rgb(94,137,201)
+   All three identical, because --cc-rbaccent is ONE page-global value (docker.js injectAllRowBadges says so
+   in as many words: "page-global ... never per-row"). Proved per-container too: DiskSpeed was stopped live
+   and its dot stayed rgb(94,137,201), indistinguishable from running TrickWork beside it. A status light
+   that reads the same for 38 running and 20 stopped containers is not a status light — the colour was not
+   "integrated into the colour mode", it was ERASED by it.
+   The same measurement with the toggle ON: running rgb(31,157,85), exited/created rgb(60,60,60). The native
+   machinery was never broken. Only the default hid it.
+
+   Why the dots are pulled OUT of "Zustandsanzeigen nativ färben" rather than having its default flipped:
+   that toggle covers a family, and the dots are the one member with no second channel. A usage bar carries
+   its value in its FILL LENGTH, a plugin status badge and a container update badge carry theirs in TEXT —
+   for those, colour is a redundant second voice and folding it into the palette costs no information, which
+   is exactly what the toggle is for. The dot is font-size:0 (see the rule above): it has no text, no length,
+   no shape difference. Colour is its ENTIRE vocabulary. So it is not a colour-mode decision at all, any more
+   than "text should be readable" is — same reasoning as 4.25.1's exemption from reactive rest-neutral, just
+   carried the one step further that fix stopped short of. The toggle keeps governing the rest of the family;
+   its info bubble in settings.js was reworded to match.
+   Sibling fixed in the same pass (it was flagged here in 4.25.1 as "same pattern, different tab"): /Main's
+   disk orb, CannonadeCommand.Shares.css — measured 10 green-orb + 7 grey-orb ALL on rgb(82,82,82). */
 /* info badges (network/IP/LAN/port/CPU/RAM/ID/Von/image tag): SOLID accent, light text */
 .cc-b,
 .cc-enh.cc-c-res #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='cpu-'],
