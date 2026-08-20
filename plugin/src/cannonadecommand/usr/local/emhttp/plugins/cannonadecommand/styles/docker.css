@@ -1518,7 +1518,11 @@ html.cc-ctout-on #displaybox .content {
    radius matches its own badge shape, unrelated to the window's corners since it never touches
    them. */
 html.cc-ctout-on #cc-ctout-title {
-  position: static !important; margin: 0 0 14px !important; padding: 0 18px !important; height: 40px;
+  /* #(user: "Abstand vom Titelbadge zum ersten Abschnittsbadge ist noch zu klein") — measured live on the
+     real update window: h2.bottom to the first fieldset.top is 26px (its own `margin-bottom:14px` PLUS
+     the wrapping `<p>` SweetAlert streams the fieldsets into), not just the 14px this badge had on its
+     own. Matched to the same 26px total gap. */
+  position: static !important; margin: 0 0 26px !important; padding: 0 18px !important; height: 40px;
   display: flex; width: 100%; max-width: 100%; align-items: center; justify-content: center; box-sizing: border-box;
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff));
   font-weight: 600; font-size: var(--cc-lgb-fs, 14px); letter-spacing: .6px; text-transform: uppercase;

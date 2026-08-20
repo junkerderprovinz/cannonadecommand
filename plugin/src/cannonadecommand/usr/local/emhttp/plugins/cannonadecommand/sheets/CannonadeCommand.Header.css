@@ -992,6 +992,15 @@ html.cc-popups-on .sweet-alert .sa-button-container button {
 html.cc-popups-on .sweet-alert button.confirm { background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important; }
 html.cc-popups-on .sweet-alert button.cancel { background: #2e2e2e !important; color: #e6e6e6 !important; }
 html.cc-popups-on .sweet-alert .sa-button-container button:hover { filter: brightness(1.14); }
+/* #(user: "die Buttons ganz unten sind verschieden angeordnet"): a leftover `button.cancel` from the
+   "Bist du sicher?" confirm step (SweetAlert1 reuses ONE dialog node across its whole lifecycle) stays in
+   the DOM once the stream finishes, and Unraid itself hides it inline (`style="display:none"`) — but the
+   generic `display:inline-flex !important` two rules up outranks that plain inline style, so a stray
+   Cancel button popped back into the row between the status badge and Fertig, breaking the intended
+   status -> Fertig -> other-button order on live-measured real update windows. Higher-specificity
+   (adds the attribute selector) restores the native hide regardless of source order. */
+html.cc-popups-on .sweet-alert button.cancel[style*="display: none"],
+html.cc-popups-on .sweet-alert button.cancel[style*="display:none"] { display: none !important; }
 /* #N1 (user REVERSAL): the .nchan action buttons drop back to the CC STANDARD lgb height (36px, inherited
    from the base button rule above) — the old 46px was "zu groß". No .nchan-specific height override now. */
 

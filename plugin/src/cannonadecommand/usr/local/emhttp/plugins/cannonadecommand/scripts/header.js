@@ -179,7 +179,15 @@
   function paintPopups() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
-      var ts = document.querySelectorAll(".ui-dialog .ui-dialog-title, .sweet-alert h2");
+      // #(user: "die ganzen abschnittsbadges und titelbadges sind nicht in den farbmodi integriert"):
+      // #cc-ctout-title (docker.js bootCtOutput, the template-edit recreate window) only ever read the
+      // flat var(--cc-rbaccent,...) CSS chain — the SAME single value its own fieldset legends read, so
+      // in Rainbow it always matched the legends exactly instead of getting its own distinct colour like
+      // the real .sweet-alert h2 title does here (live-measured: title #c95e5e vs legend #5e89c9 on the
+      // same open window), and it never got popBadge()'s dark-slot swap (a near-black palette slot makes
+      // an unreadable badge, see popBadge's own comment). Folded into the same loop so it now goes
+      // through the identical code path as every other popup title.
+      var ts = document.querySelectorAll(".ui-dialog .ui-dialog-title, .sweet-alert h2, #cc-ctout-title");
       for (var i = 0; i < ts.length; i++) {
         // #7-II (user NEW SPEC): the title badge must carry NO status indication — it stays its normal accent/
         // colour-mode colour the whole time. (The running/done state now lives in the bottom-left indicator.)
@@ -189,6 +197,10 @@
       }
     } catch (e) {}
   }
+  // docker.js's ctout window (a completely separate page navigation, not a sweet-alert) has no reason to
+  // pull in this whole file's mutation-observer machinery just to get its title painted — expose the one
+  // function it needs, the same way window.ccGql is already shared the other direction.
+  try { window.paintPopups = paintPopups; } catch (ePP) {}
   // #11 rework: the streaming plugin-install / container-update dialog (.sweet-alert.nchan) gets a
   // clean modern loader. Detect the IN-PROGRESS state from the title, drop a rotating ring beside the
   // title badge, grey the badge while it runs, and hide the empty grey <fieldset> bars Unraid leaves.

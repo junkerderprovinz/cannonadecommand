@@ -3428,6 +3428,13 @@
           if (sb.parentElement !== row) row.appendChild(sb);
           if (done) { sb.classList.add("cc-ctout-done"); if (sb.getAttribute("data-m") !== "done") { sb.setAttribute("data-m", "done"); sb.setAttribute("aria-label", "Fertig"); sb.innerHTML = "<i class='fa fa-check cc-ctout-fa' aria-hidden='true'></i>"; } }
           else { sb.classList.remove("cc-ctout-done"); if (sb.getAttribute("data-m") !== "run") { sb.setAttribute("data-m", "run"); sb.setAttribute("aria-label", "Läuft"); sb.innerHTML = "<span class='cc-loader cc-load-sm'><span class='o'><i></i></span><span class='in'><i></i></span></span>"; } }   // sm tier (status-badge ring), one size source with the loader engine in header.js
+          // #(user: "titelbadges sind nicht in den farbmodi integriert"): #cc-ctout-title only ever had the
+          // plain CSS var(--cc-rbaccent,...) fallback, so it flatly matched the legend badges below it in
+          // Rainbow instead of getting its OWN colour like the real update window's title does. header.js's
+          // paintPopups() now includes #cc-ctout-title in its loop, but nothing on THIS page ever calls it
+          // (this window is a plain navigation, not a .sweet-alert header.js's own observers watch) — call
+          // it here so the title gets painted the instant it exists and again on every streamed line.
+          try { if (window.paintPopups) window.paintPopups(); } catch (ePP) {}
         } catch (e) {}
       };
       ctOutStatus();
