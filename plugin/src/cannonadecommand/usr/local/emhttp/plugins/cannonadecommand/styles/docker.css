@@ -423,6 +423,16 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 .cc-folder-act { -webkit-appearance: none; appearance: none; background: transparent; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 4px 6px; border-radius: 6px; transition: background .12s, color .12s; }
 .cc-folder-act:hover { background: rgba(128, 128, 128, .18); color: var(--cc-txt); }
 .cc-folder-group-body { padding-top: 0; } /* nested body has no corner gear to clear, unlike the outer grid/folderview */
+/* Drag-and-drop reordering (Folder view). Shade only, never a border line (house law) —
+   an accent-tinted background marks both the dragged source (faded) and the hovered target. */
+.cc-dragging { opacity: .4; }
+.cc-drop-target { background: color-mix(in srgb, var(--cc-accent, #2f6feb) 16%, transparent) !important; border-radius: 10px; }
+.cc-folder-group-head.cc-drop-target { border-radius: 7px; }
+/* per-card "move to folder" click menu — the accessible equivalent of dragging (touch,
+   keyboard, or just faster than a long drag); sits at the end of the card's head row. */
+.cc-card-movebtn { -webkit-appearance: none; appearance: none; background: transparent; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 3px 5px; border-radius: 6px; flex: none; transition: background .12s, color .12s; }
+.cc-card-movebtn:hover { background: rgba(128, 128, 128, .18); color: var(--cc-txt); }
+.cc-menu-link-current { background: rgba(128, 128, 128, .18); }
 .cc-card { background: var(--cc-bg2); border: none; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; transition: transform .12s, box-shadow .12s; }
 .cc-card:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0,0,0,.35); } /* elevation only — resting borders and hover border tints are LINES (law); bg contrast separates the card */
 .cc-card-head { display: flex; align-items: center; gap: 10px; }

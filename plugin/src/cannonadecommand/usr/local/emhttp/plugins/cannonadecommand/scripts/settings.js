@@ -99,6 +99,27 @@
   function get(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  // The "Standard-Ansicht" picker below only ever wrote localStorage — the Docker tab's own
+  // organizer-probe reconcile (docker.js boot()) treats the SERVER's saved ccViewMode as
+  // authoritative and silently overwrites a local-only pick on the next load (live-caught:
+  // picking Grid here never survived a reload once the server remembered a different mode).
+  // window.ccGql is header.js's shared GraphQL transport (exposed globally since docker.js's
+  // organizer code needs it too) — read-then-merge-then-write so an unrelated prefs key some
+  // other feature adds later never gets clobbered by this picker.
+  function syncViewModeServer(v) {
+    if (typeof window.ccGql !== "function") return; // header.js missing/too old — degrade silently, localStorage still has the value
+    window.ccGql("{ docker { organizer { views { id prefs } } } }")
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var view = j.data && j.data.docker && j.data.docker.organizer && j.data.docker.organizer.views && j.data.docker.organizer.views[0];
+        if (!view) return;
+        var merged = {}, cur = view.prefs;
+        if (cur && typeof cur === "object") for (var k in cur) if (Object.prototype.hasOwnProperty.call(cur, k)) merged[k] = cur[k];
+        merged.ccViewMode = v;
+        return window.ccGql("mutation($v: String, $p: JSON!) { updateDockerViewPreferences(viewId: $v, prefs: $p) { version } }", { v: view.id, p: merged });
+      })
+      .catch(function () {}); // best-effort — the picker already reflects the choice either way
+  }
   // ONE-TIME upgrade migration (runs at module load, BEFORE any render/applyFlag): builds before 2.66
   // stored the FLAG palette in the shared cc.rbpal key. If a flag is selected but cc.flagpal is still
   // absent, cc.rbpal currently HOLDS exactly those flag colours — so move them into cc.flagpal and clear
@@ -1066,7 +1087,7 @@
     // control surface): setMode() on the Docker tab itself already falls back to an ungrouped
     // flat Grid-look if the organizer has no folders yet, so picking "Folder" here as a deliberate
     // default preference never shows anything broken, just an unremarkable Grid until you add one.
-    c4.appendChild(segRow(T("Standard-Ansicht", "Default view"), [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")], ["folder", T("Ordner", "Folder")]], view, function (v) { view = v; set("cc.view", v); }));
+    c4.appendChild(segRow(T("Standard-Ansicht", "Default view"), [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")], ["folder", T("Ordner", "Folder")]], view, function (v) { view = v; set("cc.view", v); syncViewModeServer(v); }));
     function applyShape() { var m9 = { pill: "999px", rounded: "6px", square: "0px", circle: "999px" }; var sh9 = get("cc.badgeshape", "pill"); var r9 = m9[sh9] || "999px"; root.style.setProperty("--cc-b-radius", r9); document.documentElement.style.setProperty("--cc-b-radius", r9); document.documentElement.classList.toggle("cc-shape-circle", sh9 === "circle"); var d9 = { pill: "50%", rounded: "3px", square: "0px", circle: "50%" }[sh9] || "50%"; document.documentElement.style.setProperty("--cc-dot-r", d9); /* dot token: the preset swatches follow the badge form too (user call) */ }
     wrap.appendChild(c4);
     // Badge-Form (shape) is a single GLOBAL control in the Allgemein "Badges" card now — not per

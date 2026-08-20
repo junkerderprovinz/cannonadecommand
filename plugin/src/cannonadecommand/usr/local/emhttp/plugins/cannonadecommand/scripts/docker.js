@@ -58,8 +58,8 @@
     : [["Mo", 1], ["Tu", 2], ["We", 3], ["Th", 4], ["Fr", 5], ["Sa", 6], ["Su", 0]];
 
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge — Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container — kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn CPU UND Netzwerk für die eingestellte Zeit niedrig bleiben. Ein ausgelasteter Container wird nie gestoppt; CC startet ihn nicht automatisch wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“ — dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner…", newFolderPrompt: "Name des neuen Ordners:", renameFolder: "Ordner umbenennen", renameFolderPrompt: "Neuer Name:", deleteFolder: "Ordner löschen", deleteFolderConfirm: "Diesen Ordner löschen? Enthaltene Container werden eine Ebene höher verschoben, nicht gelöscht." },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order — duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container — no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container when CPU AND network stay low for the set time. A busy container is never stopped; CC does not start it again automatically.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no” — this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder…", newFolderPrompt: "Name of the new folder:", renameFolder: "Rename folder", renameFolderPrompt: "New name:", deleteFolder: "Delete folder", deleteFolderConfirm: "Delete this folder? Containers inside it move up one level, they are not deleted." },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge — Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container — kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn CPU UND Netzwerk für die eingestellte Zeit niedrig bleiben. Ein ausgelasteter Container wird nie gestoppt; CC startet ihn nicht automatisch wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“ — dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner…", newFolderPrompt: "Name des neuen Ordners:", renameFolder: "Ordner umbenennen", renameFolderPrompt: "Neuer Name:", deleteFolder: "Ordner löschen", deleteFolderConfirm: "Diesen Ordner löschen? Enthaltene Container werden eine Ebene höher verschoben, nicht gelöscht.", moveToFolder: "In Ordner verschieben…", rootLevel: "— Wurzelebene —" },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order — duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container — no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container when CPU AND network stay low for the set time. A busy container is never stopped; CC does not start it again automatically.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no” — this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder…", newFolderPrompt: "Name of the new folder:", renameFolder: "Rename folder", renameFolderPrompt: "New name:", deleteFolder: "Delete folder", deleteFolderConfirm: "Delete this folder? Containers inside it move up one level, they are not deleted.", moveToFolder: "Move to folder…", rootLevel: "— Root level —" },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -1566,6 +1566,37 @@
     var hg = makeGear("cc-hgear-grid");
     var root = el("div", "cc-folderview");
 
+    // Drag-and-drop reordering. `dragEntry` is the flatEntries object being dragged, scoped
+    // to this one render pass — a successful move always triggers a fresh render anyway, so
+    // nothing here needs to survive across renders. The click-based "move to folder" button
+    // (buildMoveMenu, below) is the accessible equivalent of the same underlying action for
+    // touch/keyboard users or anyone who'd rather not drag.
+    var dragEntry = null;
+    function clearDropHighlights() { Array.prototype.slice.call(gridHolder.querySelectorAll(".cc-drop-target")).forEach(function (n) { n.classList.remove("cc-drop-target"); }); }
+    function wireDragSource(el2, entry) {
+      el2.draggable = true;
+      el2.addEventListener("dragstart", function (ev) { dragEntry = entry; el2.classList.add("cc-dragging"); try { ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", entry.id); } catch (e2) {} });
+      el2.addEventListener("dragend", function () { el2.classList.remove("cc-dragging"); dragEntry = null; clearDropHighlights(); });
+    }
+    // stopPropagation on dragover/drop so only the DEEPEST matching target under the cursor
+    // reacts — without it, a drop over a card would also fire its parent folder's and the
+    // root's handlers (dragover/drop both bubble), highlighting three nested targets at once.
+    function wireDropTarget(el2, onDrop) {
+      el2.addEventListener("dragover", function (ev) { if (!dragEntry) return; ev.preventDefault(); ev.stopPropagation(); ev.dataTransfer.dropEffect = "move"; clearDropHighlights(); el2.classList.add("cc-drop-target"); });
+      el2.addEventListener("dragleave", function () { el2.classList.remove("cc-drop-target"); });
+      el2.addEventListener("drop", function (ev) {
+        ev.preventDefault(); ev.stopPropagation(); clearDropHighlights();
+        if (!dragEntry) return;
+        var src = dragEntry; dragEntry = null;
+        onDrop(src);
+      });
+    }
+    function attachMoveButton(cardEl, entry) {
+      var btn = el("button", "cc-card-movebtn", "📁"); btn.type = "button"; btn.title = t("moveToFolder");
+      btn.addEventListener("click", function (ev) { ev.stopPropagation(); ev.preventDefault(); toggleMenu(btn, function () { return buildMoveMenu(entry); }); });
+      var head2 = cardEl.querySelector(".cc-card-head"); (head2 || cardEl).appendChild(btn);
+    }
+
     function renderEntries(parentId, container) {
       (byParent[parentId] || []).forEach(function (e) {
         if (e.type === "folder" || e.type === "group") {
@@ -1582,11 +1613,22 @@
             delBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccOrgDeleteFolder(e.id); });
             acts.appendChild(renBtn); acts.appendChild(delBtn);
             head.appendChild(acts);
+            // folders only reorder among each other when CC owns them — never restructure a
+            // folder another tool manages. The head is the drag handle; the whole group moves.
+            wireDragSource(head, e);
           }
           grp.appendChild(head);
           var kids = el("div", "cc-grid cc-folder-group-body");
           grp.appendChild(kids);
           container.appendChild(grp);
+          // dropping a CONTAINER on this folder (its head or its empty body) files it in here,
+          // appended at the end; dropping a FOLDER on the head reorders it next to this one
+          // (folders currently only ever live at root, so this is a same-level reorder).
+          wireDropTarget(head, function (src) {
+            if (src.type === "container") ccOrgMoveToFolder(src.id, e.id);
+            else if (src.id !== e.id) ccOrgMoveToPosition(src.id, e.parentId, e.position);
+          });
+          wireDropTarget(kids, function (src) { if (src.type === "container" && src.id !== e.id) ccOrgMoveToFolder(src.id, e.id); });
           renderEntries(e.id, kids); // nested folders render inside their own group's body
         } else {
           var name = e.name.replace(/^\//, ""); // organizer container names are docker-style ("/JDownloader")
@@ -1594,11 +1636,25 @@
           // (see indexState()), a bare containersByName[name] silently dropped every mixed-case
           // container name (live-caught: only "homarr"/"n8n" etc., already-lowercase by luck, rendered)
           var c = containerByName(name);
-          if (c) container.appendChild(card(c)); // unknown-to-CC container (edge case) — skip rather than crash on a partial object
+          if (c) {
+            var cd = card(c);
+            wireDragSource(cd, e);
+            // dropping ON another container moves the dragged item to THIS one's own
+            // (folder, position) — doubles as same-folder reorder or cross-folder move+place.
+            wireDropTarget(cd, function (src) { if (src.id !== e.id) ccOrgMoveToPosition(src.id, e.parentId, e.position); });
+            attachMoveButton(cd, e);
+            container.appendChild(cd); // unknown-to-CC container (edge case) — skip rather than crash on a partial object
+          }
         }
       });
     }
     renderEntries(ccOrgView.rootId, root);
+    // dropping on the open background (not on any card/folder) files/reorders to the END of root
+    wireDropTarget(root, function (src) {
+      var rootKids = byParent[ccOrgView.rootId] || [];
+      var lastPos = rootKids.length ? rootKids[rootKids.length - 1].position + 1 : 0;
+      if (src.type === "container" || src.parentId !== ccOrgView.rootId) ccOrgMoveToPosition(src.id, ccOrgView.rootId, lastPos);
+    });
 
     var gtile = el("div", "cc-card cc-gear-tile"); gtile.appendChild(hg); root.appendChild(gtile);
     gridHolder.appendChild(root);
@@ -1727,9 +1783,12 @@
     menu.style.left = Math.max(window.scrollX + 8, left) + "px";
     menu.style.top = (window.scrollY + r.bottom + 6) + "px";
   }
-  function openMenu(anchor) { closeMenu(); menuAnchor = anchor; menu = buildMenu(); document.body.appendChild(menu); positionMenu(); }
+  // optional `builder` lets a different caller (the per-card "move to folder" button)
+  // reuse this same menu/positioning/outside-click machinery for a different panel
+  // instead of the gear's buildMenu() — one open-menu system, not two.
+  function openMenu(anchor, builder) { closeMenu(); menuAnchor = anchor; menu = (builder || buildMenu)(); document.body.appendChild(menu); positionMenu(); }
   function closeMenu() { if (menu) { menu.remove(); menu = null; menuStatusEl = null; } }
-  function toggleMenu(anchor) { if (menu) closeMenu(); else openMenu(anchor); }
+  function toggleMenu(anchor, builder) { if (menu) closeMenu(); else openMenu(anchor, builder); }
 
   // ───────────────────────── organizer (Folder View, GraphQL — ccGql lives in header.js)
   // live-verified 2026-08-20 (Bottich introspection against a real 7.3.2 host, unraid/api's
@@ -1746,6 +1805,9 @@
   var ORG_RENAME_MUT = 'mutation($folderId: String!, $newName: String!) { renameDockerFolder(folderId: $folderId, newName: $newName) { views { ' + ORG_VIEW_SHAPE + ' } } }';
   var ORG_DELETE_MUT = 'mutation($entryIds: [String!]!) { deleteDockerEntries(entryIds: $entryIds) { views { ' + ORG_VIEW_SHAPE + ' } } }';
   var ORG_MOVE_MUT = 'mutation($sourceEntryIds: [String!]!, $destinationFolderId: String!) { moveDockerEntriesToFolder(sourceEntryIds: $sourceEntryIds, destinationFolderId: $destinationFolderId) { views { ' + ORG_VIEW_SHAPE + ' } } }';
+  // position-aware move (drag-and-drop reordering + "insert near this item") — combines a
+  // folder move with an explicit position in one call, unlike ORG_MOVE_MUT which just appends.
+  var ORG_MOVEPOS_MUT = 'mutation($sourceEntryIds: [String!]!, $destinationFolderId: String!, $position: Float!) { moveDockerItemsToPosition(sourceEntryIds: $sourceEntryIds, destinationFolderId: $destinationFolderId, position: $position) { views { ' + ORG_VIEW_SHAPE + ' } } }';
   function ccOrgQuery() {
     return ccGql(ORG_QUERY)
       .then(function (r) { return r.json(); })
@@ -1807,9 +1869,14 @@
     ccOrgMutate(ORG_CREATE_MUT, { name: name, parentId: ccOrgView.rootId })
       .then(function (data) {
         ccOrgAdopt(data, "createDockerFolder");
-        // identify the just-created folder by set-difference (its id format isn't documented,
-        // so diffing root's children before/after is the only reliable way to find it)
-        var created = ccOrgView.flatEntries.filter(function (e2) { return e2.parentId === ccOrgView.rootId && beforeIds.indexOf(e2.id) < 0; })[0];
+        // Match by name+type FIRST, not a bare set-difference against beforeIds — root can gain
+        // an unrelated new entry (e.g. someone starts a plain container) in the moment between
+        // the before/after snapshots, and a pure diff would just as happily grab THAT instead of
+        // the real new folder (live-caught: a freshly-started container got marked "owned" and
+        // treated as a CC-made folder). The beforeIds check is now only a tiebreaker for the rare
+        // case a same-named folder already existed before this call.
+        var candidates = ccOrgView.flatEntries.filter(function (e2) { return e2.parentId === ccOrgView.rootId && e2.type === "folder" && e2.name === name; });
+        var created = candidates.filter(function (e2) { return beforeIds.indexOf(e2.id) < 0; })[0] || candidates[0];
         if (created) ccOrgMarkOwned(created.id);
         setMode("folder"); // jump straight to the result so the user sees what they just made
       })
@@ -1835,6 +1902,50 @@
     rescue.then(function () { return ccOrgMutate(ORG_DELETE_MUT, { entryIds: [id] }); })
       .then(function (data) { ccOrgUnmarkOwned(id); ccOrgAdopt(data, "deleteDockerEntries"); })
       .catch(function () { flash(t("invalid"), true); });
+  }
+  // Move a container/folder to a DIFFERENT folder, appended at the end (no explicit
+  // position) — the click-menu path (buildMoveMenu) and the "drop on a folder head" DnD
+  // path both funnel through this. No own-registry check here on purpose: filing a
+  // container into (or out of) a folder isn't restructuring the folder itself, so this
+  // is allowed into ANY folder, CC-owned or not — only rename/delete stay registry-gated.
+  function ccOrgMoveToFolder(entryId, destFolderId) {
+    if (!ccOrgAvailable || !ccOrgView) return;
+    ccOrgMutate(ORG_MOVE_MUT, { sourceEntryIds: [entryId], destinationFolderId: destFolderId })
+      .then(function (data) { ccOrgAdopt(data, "moveDockerEntriesToFolder"); })
+      .catch(function () { flash(t("invalid"), true); });
+  }
+  // Move to a specific folder AND position — the drag-and-drop reorder path. Dropping an
+  // item on another item moves it to that item's own (folderId, position), which doubles
+  // as a same-folder reorder when the destination folder is unchanged.
+  function ccOrgMoveToPosition(entryId, destFolderId, position) {
+    if (!ccOrgAvailable || !ccOrgView) return;
+    ccOrgMutate(ORG_MOVEPOS_MUT, { sourceEntryIds: [entryId], destinationFolderId: destFolderId, position: position })
+      .then(function (data) { ccOrgAdopt(data, "moveDockerItemsToPosition"); })
+      .catch(function () { flash(t("invalid"), true); });
+  }
+  // The click-menu equivalent of dragging a card onto a folder — the accessible path (touch,
+  // keyboard, or just faster than a long drag) for the SAME underlying action.
+  function buildMoveMenu(entry) {
+    var m = el("div", "cc-menu");
+    m.addEventListener("click", function (e) { e.stopPropagation(); });
+    m.appendChild(menuHead(t("moveToFolder")));
+    var rootLink = el("div", "cc-menu-link" + (entry.parentId === ccOrgView.rootId ? " cc-menu-link-current" : ""), t("rootLevel"));
+    rootLink.style.cursor = "pointer";
+    rootLink.addEventListener("click", function () { closeMenu(); ccOrgMoveToFolder(entry.id, ccOrgView.rootId); });
+    m.appendChild(rootLink);
+    ccOrgView.flatEntries
+      // exclude the root entry itself (id === ccOrgView.rootId) — it's type:"folder" too (its
+      // own name is literally "Root"), and the dedicated rootLink above already covers it;
+      // without this it showed up a second time as a bogus destination (live-caught).
+      .filter(function (f) { return (f.type === "folder" || f.type === "group") && f.id !== entry.id && f.id !== ccOrgView.rootId; })
+      .forEach(function (f) {
+        var indent = new Array(Math.max(0, f.depth - 1) + 1).join("　"); // full-width space per nesting level under root
+        var link = el("div", "cc-menu-link" + (entry.parentId === f.id ? " cc-menu-link-current" : ""), indent + f.name);
+        link.style.cursor = "pointer";
+        link.addEventListener("click", function () { closeMenu(); ccOrgMoveToFolder(entry.id, f.id); });
+        m.appendChild(link);
+      });
+    return m;
   }
 
   // ───────────────────────── mode
