@@ -45,11 +45,21 @@
   // For the title we swap any too-dark slot for the BRIGHTEST palette slot (stays on-theme, e.g. the
   // flag's gold), falling back to the accent if the whole palette is dark — so every window's title
   // badge is readable and uniform across the UI.
+  // THRESHOLD (was 64, lowered to 28): 64 was tuned when popBadge only ever coloured the ONE title badge, so
+  // an over-eager swap was invisible. Now that every section badge and bottom button in a window rotates
+  // through popBadge too, the threshold decides whether a FLAG still reads as its flag. Live-measured with
+  // the Algerian palette (cc.flag=dz, ["#006233","#FFFFFF","#D21034"] repeated): #006233 scores 63.3 — a hair
+  // under 64 — so every green slot was swapped for the brightest one and the window rendered white/white/red/
+  // white/white/red instead of the flag's green/white/red cycle, i.e. adjacent duplicates and no green at all.
+  // A flagpal is deliberately the flag repeated, so the repeat IS the intended pattern and must survive.
+  // 28 still catches what this guard was actually written for (the German flag's #000000 black stripe, which
+  // is genuinely invisible on the #1a1a1a window) while keeping legitimately dark FLAG colours that are
+  // perfectly legible as a badge with white text — #006233 (63.3) and e.g. navy #002868 (35.4).
   function popBadge(i) {
-    var c = rbColor(i); if (lumOf(c) >= 64) return c;
+    var c = rbColor(i); if (lumOf(c) >= 28) return c;
     var p = pal(), best = null, bl = -1;
     for (var k = 0; k < p.length; k++) { var L = lumOf(p[k]); if (L > bl) { bl = L; best = p[k]; } }
-    return (best && bl >= 64) ? best : accent();
+    return (best && bl >= 28) ? best : accent();
   }
   // rainbow: colour the active tab, each utility icon box and the usage fill with a
   // rotated palette colour (in accent mode the CSS handles it via --cc-accent, so we
@@ -187,14 +197,65 @@
       // same open window), and it never got popBadge()'s dark-slot swap (a near-black palette slot makes
       // an unreadable badge, see popBadge's own comment). Folded into the same loop so it now goes
       // through the identical code path as every other popup title.
-      var ts = document.querySelectorAll(".ui-dialog .ui-dialog-title, .sweet-alert h2, #cc-ctout-title");
-      for (var i = 0; i < ts.length; i++) {
-        // #7-II (user NEW SPEC): the title badge must carry NO status indication — it stays its normal accent/
-        // colour-mode colour the whole time. (The running/done state now lives in the bottom-left indicator.)
-        if (!rbOn()) { ts[i].style.removeProperty("background"); ts[i].style.removeProperty("color"); continue; }   // CSS accent vars rule
-        var c = popBadge(i), t = idealText(c);
-        ts[i].style.setProperty("background", c, "important"); ts[i].style.setProperty("color", t, "important");
+      // #(user, THIS round: "die abschnittsbadges, titelbadges und unteren buttons sind in allen fenstern
+      // nicht in den farbmodi"). Root cause, LIVE-measured on a real DiskSpeed container update before the
+      // fix (Rainbow, accent #1f9d55): title #c95e5e — but ALL FOUR step legends AND the Fertig button
+      // identically #5e89c9. Only the TITLE was ever painted here; every other badge/button in every popup
+      // window read the flat `var(--cc-rbaccent, …)` chain, i.e. ONE shared jewel (rbColor(5)) for the whole
+      // window, so a 4-step update window rendered as a single flat colour while the rest of the UI rotated.
+      // This is the SAME failure #94-F already diagnosed and fixed for the /Apps info popup (user, verbatim
+      // there: "die ganzen badges sind nicht in den farbmodi ... das musst du jetzt endlich wissen!!!!",
+      // see Tokens.css .cc-ic-legend) — it was simply never carried over to the SweetAlert / jQuery-UI /
+      // ctout windows. Fix mirrors that one exactly: stamp the per-element --cc-rb-c/--cc-rb-ct jewel and
+      // give the CSS the same three-tier chain var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, …))).
+      // Rotation is CONTINUOUS PER WINDOW (title, then each section badge, then each bottom button) rather
+      // than per selector, so no two badges inside one window can land on the same slot — that adjacency is
+      // the whole point (#3/#8: "in rainbow mode ADJACENT buttons/toggles get DIFFERENT palette colours").
+      // Deliberately NOT given the reactive-neutral (cc.rbmode=active) treatment: #96 established that a
+      // legend is a non-interactive element, so "neutral until hover" never resolves and just reads as
+      // permanently colourless. popBadge() rather than raw rbColor() for every slot — these all sit on the
+      // dark modal, where a near-black palette slot (the German flag's black stripe) paints an invisible
+      // badge; popBadge swaps such a slot for the brightest one, exactly as the title already did.
+      var scopes = [];
+      Array.prototype.forEach.call(document.querySelectorAll(".sweet-alert"), function (w) {
+        scopes.push({ root: w, title: w.querySelector("h2"), btns: "button.confirm, .sa-button-container button:not(.cancel)" });
+      });
+      Array.prototype.forEach.call(document.querySelectorAll(".ui-dialog"), function (w) {
+        scopes.push({ root: w, title: w.querySelector(".ui-dialog-title"), btns: ".ui-dialog-buttonpane button" });
+      });
+      // the ctout recreate window is a PAGE, not a dialog node — its window box is #displaybox .content.
+      var ctT = document.getElementById("cc-ctout-title");
+      if (ctT) {
+        var ctRoot = ctT.closest(".content") || document.querySelector("#displaybox .content");
+        if (ctRoot) scopes.push({ root: ctRoot, title: ctT, btns: "button, input[type=button], input[type=submit]" });
       }
+      var rb = rbOn();
+      scopes.forEach(function (sc) {
+        var n = 0;
+        // #7-II (user NEW SPEC): the title badge carries NO status indication — it keeps its normal
+        // colour-mode colour the whole time. (Running/done lives in the bottom-left indicator.)
+        function stamp(el, legacy) {
+          if (!el) return;
+          // earlier releases painted the TITLE with an inline background/color; a stale one would outrank
+          // the var() chain forever after a live mode switch or a hot-swapped script, so always clear it.
+          if (legacy) { el.style.removeProperty("background"); el.style.removeProperty("color"); }
+          if (!rb) { el.style.removeProperty("--cc-rb-c"); el.style.removeProperty("--cc-rb-ct"); return; }   // Normal: CSS falls through to the plain accent (never popBadge's swap, which would override a deliberately dark accent)
+          var c = popBadge(n++), t = idealText(c);
+          el.style.setProperty("--cc-rb-c", c); el.style.setProperty("--cc-rb-ct", t);
+        }
+        stamp(sc.title, true);
+        Array.prototype.forEach.call(sc.root.querySelectorAll("fieldset > legend"), function (l) { stamp(l, false); });
+        Array.prototype.forEach.call(sc.root.querySelectorAll(sc.btns), function (b) {
+          // a leftover hidden Cancel (SweetAlert1 reuses ONE node for its whole lifecycle) must not eat a
+          // palette slot, or the visible buttons would shift colour depending on invisible siblings.
+          if (b.offsetParent === null && getComputedStyle(b).display === "none") return;
+          stamp(b, false);
+        });
+      });
+      // the iframe dialog (CreateDocker/log.htm) paints its own badges from the parent — it can't read our
+      // CSS vars, so it must be repainted on the SAME cadence, or a live colour-mode switch (apply() ->
+      // paintPopups()) would leave it on the previous mode's colours. Idempotent + self-guarded.
+      try { ccPopIframes(); } catch (ePI) {}
     } catch (e) {}
   }
   // docker.js's ctout window (a completely separate page navigation, not a sweet-alert) has no reason to
@@ -417,8 +478,30 @@
               d.head.appendChild(st);
             } catch (e2) {}
           }
-          inject();
-          try { f.addEventListener("load", inject); } catch (e3) {}
+          // #(user: "die abschnittsbadges, titelbadges und unteren buttons sind in ALLEN fenstern nicht in
+          // den farbmodi"): the injected sheet above bakes in ONE colour (`acc`, read from --cc-hdr-accent
+          // ONLY — it never looked at --cc-rbaccent at all), so this window's section badges and buttons sat
+          // on the plain accent even in Rainbow/Flag: not one shared jewel like the other windows, but
+          // completely OUTSIDE the colour modes. An iframe cannot read the parent's CSS vars, so there is no
+          // var() chain to fix here — paint the rotation in directly instead. Inline + "important" outranks
+          // the injected sheet's own !important, and re-running is idempotent, so streamed-in cards get their
+          // slot as they arrive. Same continuous per-window sequence as paintPopups(): the window title is
+          // slot 0, so the badges start at 1 and the buttons carry on after the last badge.
+          function paintInner() {
+            try {
+              var d = f.contentDocument; if (!d || !d.body) return;
+              var n = 1;
+              function put(el) {
+                if (!rbOn()) { el.style.removeProperty("background"); el.style.removeProperty("color"); return; }
+                var c = popBadge(n++), t = idealText(c);
+                el.style.setProperty("background", c, "important"); el.style.setProperty("color", t, "important");
+              }
+              Array.prototype.forEach.call(d.querySelectorAll("fieldset.docker > legend"), put);
+              Array.prototype.forEach.call(d.querySelectorAll("input[type=button], input[type=submit], button"), put);
+            } catch (e4) {}
+          }
+          inject(); paintInner();
+          try { f.addEventListener("load", function () { inject(); paintInner(); }); } catch (e3) {}
         })(ifr[i]);
       }
     } catch (e) {}

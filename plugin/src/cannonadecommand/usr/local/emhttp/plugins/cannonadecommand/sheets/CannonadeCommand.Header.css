@@ -623,7 +623,7 @@ html.cc-popups-on .ui-dialog:has(iframe#myIframe) .ui-dialog-titlebar {
 }
 html.cc-popups-on .ui-dialog:has(iframe#myIframe) .ui-dialog-title {
   flex: 0 0 auto !important; width: fit-content !important; float: none !important; text-align: center !important;
-  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff))) !important;
   height: 44px !important; display: inline-flex !important; align-items: center !important; border-radius: 999px !important;
   padding: 0 24px !important; font-size: 16px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .7px !important; margin: 0 auto !important;
 }
@@ -633,7 +633,7 @@ html.cc-popups-on .ui-dialog .ui-dialog-title {
   display: flex !important; align-items: center; justify-content: center !important;
   flex: 1 1 auto; float: none !important; margin: 0 !important; box-sizing: border-box !important;
   height: 40px !important; padding: 0 18px; border-radius: var(--cc-b-radius, 10px);
-  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff))) !important;
   font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important;
 }
@@ -644,7 +644,9 @@ html.cc-popups-on .sweet-alert h2 {
   display: flex !important; align-items: center; justify-content: center !important; float: none !important;
   width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
   height: 40px !important; padding: 0 18px !important; border-radius: var(--cc-b-radius, 10px);
-  background: var(--cc-hdr-accent, #2f6feb); color: var(--cc-hdr-accent-text, #fff) !important;
+  /* #(user: "titelbadges ... in allen fenstern nicht in den farbmodi"): three-tier chain — the per-window
+     --cc-rb-c jewel (header.js paintPopups) first, then the shared rainbow accent, then the plain accent. */
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff))) !important;
   font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; margin: 0 0 14px !important;
 }
@@ -811,7 +813,10 @@ html.cc-popups-on .sweet-alert.nchan fieldset {
   margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;   /* #(user 2026-07-28): LIGHT step card raised on the dark frame */
 }
 html.cc-popups-on .sweet-alert.nchan fieldset > legend {
-  background: var(--cc-rbaccent, var(--cc-hdr-accent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
+  /* #(user: "die abschnittsbadges ... in allen fenstern nicht in den farbmodi"): this fell straight through
+     to the SHARED --cc-rbaccent, so EVERY step badge in a window rendered the same flat colour (measured:
+     4x #5e89c9 on a real update). --cc-rb-c is the per-badge jewel header.js paintPopups() now stamps. */
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, var(--cc-accent, #2f6feb)))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff))) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   padding: 3px 12px !important; font-size: 12px !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
 }
@@ -915,7 +920,7 @@ html.cc-popups-on .ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset { float:
 html.cc-popups-on .ui-dialog .ui-dialog-buttonpane button,
 html.cc-popups-on .ui-dialog .ui-dialog-content button:not([class*="switch"]) {
   border: none !important; border-radius: 6px !important; box-shadow: none !important;
-  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff))) !important;
   height: var(--cc-lgb-h, 36px) !important; padding: 0 24px !important; font-size: var(--cc-lgb-fs, 14px) !important;
   font-weight: 600 !important; text-transform: uppercase !important;
   letter-spacing: .6px !important; cursor: pointer; transition: filter .12s;
@@ -989,7 +994,7 @@ html.cc-popups-on .sweet-alert .sa-button-container button {
   font-weight: 600 !important; text-transform: uppercase !important;
   letter-spacing: .6px !important; transition: filter .12s; margin: 0 !important;   /* the flex gap spaces them — a one-sided margin would skew the centring */
 }
-html.cc-popups-on .sweet-alert button.confirm { background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important; }
+html.cc-popups-on .sweet-alert button.confirm { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff))) !important; }   /* #(user: "unteren buttons ... nicht in den farbmodi"): --cc-rb-c = this window's own rotating slot, stamped by paintPopups() */
 html.cc-popups-on .sweet-alert button.cancel { background: #2e2e2e !important; color: #e6e6e6 !important; }
 html.cc-popups-on .sweet-alert .sa-button-container button:hover { filter: brightness(1.14); }
 /* #(user: "die Buttons ganz unten sind verschieden angeordnet"): a leftover `button.cancel` from the

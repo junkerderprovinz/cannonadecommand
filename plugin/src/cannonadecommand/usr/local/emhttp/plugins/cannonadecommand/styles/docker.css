@@ -1503,13 +1503,32 @@ html.cc-ctout-on #cc-ctout-bd { position: fixed; inset: 0; background: var(--cc-
    disagreeing on the root font-size. Hardcoded to the measured 1200px so it can't drift with
    either page's rem base again. Measured padding on the live window: 20px 20px 40px (NOT the
    20px 22px 20px this rule had). */
+/* #(user: "Die Fenster sollen immer gleich groß sein und sich nicht dem inhalt anpassen. egal wie viele
+   cards kommen ... aber wenn weniger cards kommen soll das fenster nicht kleiner sein"): this was a
+   max-height CAP, so the window shrank to whatever the recreate happened to stream — LIVE-measured at
+   735px on a 3-card DiskSpeed recreate against the real update window's 1219px on the same 1325px
+   viewport, a 484px mismatch between two windows that are supposed to be identical. The real window is
+   already a FIXED height (Unraid's own jquery.sweetalert.css gives .sweet-alert.nchan `height:95vh`,
+   which CC deliberately keeps and clamps to this same 92vh) — so promote the cap to a true `height` and
+   the two finally match at every content length. 92vh (not 100vh) keeps the backdrop visible around the
+   window and leaves room on short viewports; box-sizing:border-box is already set above, so the
+   20px/20px/40px padding is INSIDE the 92vh and nothing clips. overflow:auto is unchanged: more cards
+   than fit simply scroll, exactly as asked.
+   The window is also a flex COLUMN now, purely so the button row can take `margin-top:auto` (below) and
+   sit at the bottom edge instead of floating mid-window over the empty space a fixed height creates on
+   short content — the same margin-top:auto the real update window's .sa-button-container already uses. */
 html.cc-ctout-on #displaybox .content {
   position: fixed; z-index: 9999; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: 90vw; max-width: 1200px; max-height: 92vh; overflow: auto;
+  width: 90vw; max-width: 1200px; height: 92vh; overflow: auto;
+  display: flex; flex-direction: column;
   background: #1a1a1a; border: none; border-radius: 14px;
   box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38));
   padding: 20px 20px 40px; box-sizing: border-box; text-align: center;
 }
+/* a flex column stretches its items to the cross axis, so the streamed cards/log keep full width; but a
+   flex item's min-height defaults to its content, which is what lets a long log overflow into the
+   window's own scroll (overflow:auto above) rather than being squashed. */
+html.cc-ctout-on #displaybox .content > * { flex: 0 0 auto; }
 /* Measured on the real update window: h2 is NOT flush/edge-to-edge (an earlier pass here
    assumed it was, purely from eyeballing a screenshot, and made this rule break the title out
    with negative margins — WRONG, confirmed by measuring the real window's h2 rect: it sits
@@ -1528,6 +1547,11 @@ html.cc-ctout-on #cc-ctout-title {
   font-weight: 600; font-size: var(--cc-lgb-fs, 14px); letter-spacing: .6px; text-transform: uppercase;
   border-radius: var(--cc-b-radius, 10px);
 }
+/* three-tier chain, identical to the real update window's h2 (Header.css): the per-window --cc-rb-c jewel
+   header.js paintPopups() stamps, then the shared rainbow accent, then the plain accent. */
+html.cc-ctout-on #cc-ctout-title {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)));
+}
 html.cc-ctout-on #displaybox .content h2 { color: #f0f0f0; }
 html.cc-ctout-on #displaybox .content #content,
 html.cc-ctout-on #displaybox .content p.logLine,
@@ -1538,7 +1562,9 @@ html.cc-ctout-on #displaybox .content fieldset.docker {
   margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important;
 }
 html.cc-ctout-on #displaybox .content fieldset > legend {
-  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
+  /* #(user: "die abschnittsbadges ... in allen fenstern nicht in den farbmodi"): same flat-jewel bug the
+     real update window's legends had — --cc-rb-c is this badge's own rotating slot (header.js paintPopups). */
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff))) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 3px 12px !important; font-size: 12px !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;   /* #(user 2026-07-29): follow the badge shape like the update-window legends, not a hard pill */
 }
 /* same empty-step hide as the update window: no stray light bar between the last card and the buttons */
@@ -1600,7 +1626,7 @@ html.cc-ctout-on #displaybox .content > div:has(> button) {   /* live-DOM: the b
 html.cc-ctout-on #displaybox .content button,
 html.cc-ctout-on #displaybox .content input[type="button"],
 html.cc-ctout-on #displaybox .content input[type="submit"] {
-  background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff))) !important;
   border: none !important; border-radius: 6px !important; box-shadow: none !important; cursor: pointer;
   /* #(user 2026-07-29): match the update-window buttons exactly — fixed 36px height, inline-flex CENTRED text,
      no more uneven padding:9px. */
@@ -1628,7 +1654,12 @@ html.cc-ctout-on #displaybox .content > div:has(> button) {   /* live-DOM: the b
      background + shadow that made it look like a distinct bar. Margins updated to the .content
      padding fixed above (20px sides / 40px bottom, not the old 22px/20px). */
   position: sticky !important; bottom: -40px !important; z-index: 4 !important;
-  margin: 10px -20px -40px !important; padding: 12px 20px !important;
+  /* margin-TOP is `auto` now (was a flat 10px): with the window promoted to a FIXED 92vh height above, a
+     short recreate leaves real free space in the flex column, and an auto top margin absorbs all of it so
+     the row rests on the bottom edge instead of floating mid-window. When the log outgrows the window the
+     free space is negative, auto resolves to 0, and the sticky pin below takes over exactly as before —
+     same two-case behaviour the real update window gets from .sa-button-container's own margin-top:auto. */
+  margin: auto -20px -40px !important; padding: 12px 20px !important;
   background: transparent !important; box-shadow: none !important;
 }
 html.cc-ctout-on #displaybox .content > center:not(:last-of-type) { display: none !important; }
