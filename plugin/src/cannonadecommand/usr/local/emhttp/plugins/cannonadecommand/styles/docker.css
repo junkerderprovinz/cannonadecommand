@@ -705,7 +705,7 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
    widget still works and clicks are still Unraid's — only the look changes. */
 .cc-enh #docker_list .switch-button-background,
 .ToggleViewMode .switch-button-background {
-  width: 44px !important; height: 24px !important; border-radius: 999px !important;   /* slim toggle (30px reverted: "zu gross und klobig") */
+  width: 44px !important; height: 24px !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important;   /* slim toggle (30px reverted: "zu gross und klobig"); radius FOLLOWS the badge form (12px cap = half the track) */
   border: none !important; outline: none !important; box-shadow: none !important;
   background: var(--cc-toggle-track-off, #3a3a3a) !important; transform: none !important; position: relative !important;
   display: inline-block; vertical-align: middle; margin: 0 12px 0 3px; cursor: pointer;
@@ -716,7 +716,7 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-enh #docker_list .switch-button-background .switch-button-button,
 .ToggleViewMode .switch-button-background .switch-button-button {
   width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important;
-  border-radius: 50% !important; background: #fff !important; box-shadow: none !important;
+  border-radius: min(var(--cc-b-radius, 999px), 9px) !important; background: #fff !important; box-shadow: none !important;   /* knob follows the badge form too (9px cap = half the knob) */
   border: none !important; transition: left .15s;
 }
 .cc-enh #docker_list .switch-button-background.checked .switch-button-button,
@@ -728,10 +728,12 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
    and stamp .cc-noswitch instead — see the comment there). Zero-extra-DOM CSS toggle switch on
    the bare checkbox, styled to look PIXEL-IDENTICAL to the widget-based version above (same
    44x24 track / 18x18 knob / 3px inset / 21px checked-offset / colours) so switching this path
-   on is visually invisible to the user. */
+   on is visually invisible to the user. That INCLUDES the badge form: the widget path is rounded by
+   the master override at the end of this file, so the bare-checkbox path must read --cc-b-radius as
+   well — the first cut hardcoded the pill and the autostart toggle stopped following the Badge-Form. */
 .cc-enh #docker_list input.autostart.cc-noswitch {
   -webkit-appearance: none !important; appearance: none !important; display: inline-block !important;
-  width: 44px !important; height: 24px !important; border-radius: 999px !important;
+  width: 44px !important; height: 24px !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important;   /* 12px cap = half the track; ECKIG goes square */
   border: none !important; outline: none !important; box-shadow: none !important;
   background: var(--cc-toggle-track-off, #3a3a3a) !important; margin: 0 12px 0 3px; vertical-align: middle;
   position: relative; cursor: pointer; transition: background .15s; box-sizing: border-box; flex: none;
@@ -739,7 +741,7 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-enh #docker_list input.autostart.cc-noswitch:checked { background: var(--cc-accent, #2f6feb) !important; }
 .cc-enh #docker_list input.autostart.cc-noswitch::before {
   content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
-  border-radius: 50%; background: #fff; transition: left .15s;
+  border-radius: min(var(--cc-b-radius, 999px), 9px); background: #fff; transition: left .15s;   /* 9px cap = half the knob */
 }
 .cc-enh #docker_list input.autostart.cc-noswitch:checked::before { left: 21px; }
 /* The Basic/Advanced view-toggle row is NATIVELY display:flex; justify-content:flex-end;
@@ -2036,7 +2038,10 @@ html.cc-shares-rbneutral #cc-settings .cc-set-tab:hover:not(.cc-set-tab-on) { ba
 /* ___ badge-shape MASTER overrides: these must remain the LAST rules in this
    file, because any later rule with the same !important radius would win
    (exactly what broke the settings tabs). Covers badges, state badges, action
-   icons, all toggles incl. the native autostart switch, segments, tab pills,
+   icons, all toggles incl. BOTH autostart-switch paths (the native widget AND
+   the perf fast-path's bare .cc-noswitch checkbox + its ::before knob — the
+   fast-path was added without this line and the toggle stopped following the
+   Badge-Form, so any new toggle path MUST be added here), segments, tab pills,
    the tab-strip gear, ShipLog chips, the native update-column badges, limit
    gears, day chips, popup buttons and the bottom action bar. ___ */
 html .cc-b, html .cc-badge, html .cc-pill,
@@ -2048,6 +2053,8 @@ html .cc-enh td.updatecolumn a, html .cc-enh td.updatecolumn div.advanced span,
 html .cc-enh #docker_list .switch-button-background, html .ToggleViewMode .switch-button-background,
 html .cc-enh #docker_list .switch-button-background .switch-button-button,
 html .ToggleViewMode .switch-button-background .switch-button-button,
+html .cc-enh #docker_list input.autostart.cc-noswitch,
+html .cc-enh #docker_list input.autostart.cc-noswitch::before,
 html div.js-actions input[type=button],
 html div.js-actions .cc-bulkmode-badge { border-radius: var(--cc-b-radius, 999px) !important; }
 
