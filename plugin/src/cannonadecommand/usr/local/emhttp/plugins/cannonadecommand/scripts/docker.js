@@ -28,9 +28,14 @@
   var SHIPLOG = "/plugins/shiplog/server/status.php";
   var VIEW_KEY = "cc.view", COLS_KEY = "cc.colview2"; // colview2 (v2.22.0): reset the map corrupted by the shared-reference aliasing bug (one checkbox flipped every aliased column -> Simple view lost all network badges)
   var MARK = "data-cc", ROWMARK = "data-cc-row";
-  // A mono, stroked gear (lucide "settings") for the limit buttons — inherits currentColor, so it finally
-  // obeys the accent/rainbow tint like every other control instead of being a multicolour OS emoji ⚙.
-  var CC_GEAR_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+  // GlimStone Rule 20 (user: "auch das zahnradicon bei CPU, RAM, BW"): a FILLED gear (tabler-icons MIT,
+  // icons/filled/settings.svg), inheriting currentColor so it still obeys the accent/rainbow tint like every
+  // other control. Was lucide's STROKED "settings" — an outline ring reads as a border around a shape, which
+  // is exactly what Rule 5 already forbids on boxes. Deliberately Tabler, not a filled lucide equivalent
+  // (lucide ships no filled set): with the main nav bar on Tabler filled too, every filled glyph in CC now
+  // comes from ONE source. The centre hole is a reverse-wound subpath, so plain fill-rule:nonzero knocks it
+  // out — verified legible at the 12px this button actually renders (rendered 12/13/14/16px before landing).
+  var CC_GEAR_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="none" aria-hidden="true"><path d="M14.647 4.081a.724 .724 0 0 0 1.08 .448c2.439 -1.485 5.23 1.305 3.745 3.744a.724 .724 0 0 0 .447 1.08c2.775 .673 2.775 4.62 0 5.294a.724 .724 0 0 0 -.448 1.08c1.485 2.439 -1.305 5.23 -3.744 3.745a.724 .724 0 0 0 -1.08 .447c-.673 2.775 -4.62 2.775 -5.294 0a.724 .724 0 0 0 -1.08 -.448c-2.439 1.485 -5.23 -1.305 -3.745 -3.744a.724 .724 0 0 0 -.447 -1.08c-2.775 -.673 -2.775 -4.62 0 -5.294a.724 .724 0 0 0 .448 -1.08c-1.485 -2.439 1.305 -5.23 3.744 -3.745a.722 .722 0 0 0 1.08 -.447c.673 -2.775 4.62 -2.775 5.294 0zm-2.647 4.919a3 3 0 1 0 0 6a3 3 0 0 0 0 -6" /></svg>';
   var PROBES = ["health", "running", "tcp", "http", "exec", "log"], POLICIES = ["abort", "continue", "degrade"];
   var SCHED_ACTIONS = ["start", "stop", "restart"];
   // Docker's four restart-policy names, in the order they appear in the editor dropdown.
@@ -2126,21 +2131,93 @@
       });
     } catch (e) {}
   }
-  function closePop() { if (openPop) { openPop.remove(); openPop = null; openPopAnchor = null; } Array.prototype.slice.call(document.querySelectorAll(".cc-drop")).forEach(function (n) { n.remove(); }); }
+  // ── BACKGROUND SCROLL LOCK (user: "startplan: wenn das fenster auf geht soll der docker tab nicht mehr
+  // scrollbar sein"). GlimStone Rule 15 — a window is a window: while one stands, the page behind it does
+  // not move, and if the window itself is too tall, "nur der Bereich dazwischen scrollt", not the page.
+  // Deliberately `overflow:hidden` on html+body rather than the `position:fixed; top:-scrollY` trick: the
+  // popups are `position:absolute` at DOCUMENT coordinates, so re-basing the body would tear them off their
+  // anchor. overflow:hidden keeps the scroll offset exactly where it was, it only stops it changing.
+  // The scrollbar's own width is measured and handed back as body padding — without that, taking the bar
+  // away widens the viewport by ~15px and the whole page (including the row the window is anchored to)
+  // jumps sideways at the moment of opening, which reads as a bug even though the lock is correct.
+  function ccScrollLock(on) {
+    try {
+      var de = document.documentElement;
+      if (on) {
+        if (de.classList.contains("cc-scrolllock")) return;
+        var sbw = window.innerWidth - de.clientWidth;
+        if (sbw > 0) de.style.setProperty("--cc-sbw", sbw + "px");
+        de.classList.add("cc-scrolllock");
+      } else {
+        de.classList.remove("cc-scrolllock");
+        de.style.removeProperty("--cc-sbw");
+      }
+    } catch (e) {}
+  }
+  // Rule 15: title and button row anchored, only the region between them scrolls. The three .cc-pop windows
+  // build their content as a flat list of children, so rather than restructuring each builder, everything
+  // between the head and the action row is moved into ONE .cc-pop-mid wrapper here — one place, all three
+  // windows, and any future .cc-pop gets it for free. Runs BEFORE positioning so offsetHeight below already
+  // measures the capped window.
+  function popAnchorParts(pop) {
+    var head = pop.querySelector(":scope > .cc-pop-head"), act = pop.querySelector(":scope > .cc-pop-act");
+    if (!head || pop.querySelector(":scope > .cc-pop-mid")) return;
+    var mid = el("div", "cc-pop-mid"), n = head.nextSibling, kids = [];
+    while (n && n !== act) { kids.push(n); n = n.nextSibling; }
+    if (!kids.length) return;
+    pop.insertBefore(mid, act || null);
+    kids.forEach(function (k) { mid.appendChild(k); });
+  }
+  // ONE placement routine for all three .cc-pop windows (plan editor, bandwidth, CPU/RAM limits) — they had
+  // three byte-identical copies of these three lines, so the clamp below would otherwise have to be written
+  // three times and would rot in two of them.
+  function placePop(pop, anchor, minW) {
+    popAnchorParts(pop);
+    var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || minW || 320;
+    var vh = document.documentElement.clientHeight || window.innerHeight;
+    pop.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 12)) + "px";
+    // With the page pinned, a window opened off a row near the bottom edge could no longer be scrolled INTO
+    // view — the lock would hide its own content. So the top is clamped into the viewport: preferred spot is
+    // under the anchor, but it slides up as far as needed (never past 8px from the top) to sit fully on
+    // screen. Together with .cc-pop's max-height + the scrolling .cc-pop-mid, every window is reachable at
+    // any viewport height without the page moving.
+    var h = pop.offsetHeight || 0;
+    var top = r.bottom + 6;
+    if (top + h + 8 > vh) top = Math.max(8, vh - h - 8);
+    pop.style.top = (window.scrollY + top) + "px";
+    openPop = pop; openPopAnchor = anchor;
+    ccScrollLock(true);
+  }
+  // EVERY dismiss path funnels through here — the ✕, a click outside, Escape, re-clicking the same badge,
+  // a successful save, and the page teardown — which is exactly why the unlock lives here and nowhere else.
+  // A lock released on only one of six exits is the regression waiting to happen.
+  function closePop() { if (openPop) { openPop.remove(); openPop = null; openPopAnchor = null; } Array.prototype.slice.call(document.querySelectorAll(".cc-drop")).forEach(function (n) { n.remove(); }); ccScrollLock(false); }
   // clicking the SAME badge again closes its popover (toggle). Returns true if it closed.
   function togglePop(anchor) { if (openPop && openPopAnchor === anchor) { closePop(); return true; } return false; }
   function refreshChip(chip, name) { var node = workingPlan[name]; chip.classList.toggle("cc-plan-on", !!node); var v = chip.querySelector(".cc-b-v"); if (v) v.textContent = depsTxt(node); }
-  // A small ⓘ next to a label; hovering (or focusing) it shows a tidy explainer of the
+  // A small (i) next to a label; hovering (or focusing) it shows a tidy explainer of the
   // dropdown's options, so "Bereit wenn" / "Bei Fehlschlag" no longer need prior knowledge.
-  // Class is cc-info-pop (renamed from cc-info): the settings SVG variant owns .cc-info now.
+  //
+  // (user: "die i infobubles entsprechen auch nicht dem standardisierten look") — this was the ONE (i) in
+  // CC that was a different component, not just a differently-drawn glyph. It was `.cc-info-pop`: a text
+  // "ⓘ" on a grey disc that turned ACCENT on hover, with the explainer as a `position:absolute` CHILD
+  // (`.cc-tip`). Four ways that broke GlimStone Rule 8 at once, all live-visible inside the Startplan window:
+  //   · accent on hover — Rule 8 says the (i) is furniture and stays NEUTRAL, the accent means activity;
+  //   · the bubble was a local child, so any overflow ancestor clips it and it can never flip or clamp at
+  //     the viewport edge the way the shared engine does (Rule 8: rendered into body, position measured);
+  //   · no Escape, no focus-out close — CSS `:hover/:focus { display:block }` has no key handling at all;
+  //   · the bubble was NOT `pointer-events:none`, so it could eat a click aimed at the row underneath.
+  // Now it is the same `.cc-info` every other area builds (cc-theme.js) riding the same body-level
+  // #cc-tipfloat. The [k, text] pairs flatten to "k · text" lines; the bubble already renders `pre-line`.
   function infoBubble(items) {
-    var b = el("span", "cc-info-pop", "ⓘ"); b.setAttribute("tabindex", "0"); b.setAttribute("aria-label", "info");
-    // inside a <label> the ⓘ must not toggle the label's checkbox (section-header bubbles)
-    b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); });
-    var tip = el("span", "cc-tip");
     if (typeof items === "string") items = [["", items]];   // plain prose bubble (user: Infotext -> Infobubble)
-    items.forEach(function (it) { var r = el("span", "cc-tip-row"); if (it[0]) r.appendChild(el("b", "cc-tip-k", it[0])); r.appendChild(document.createTextNode(it[1])); tip.appendChild(r); });
-    b.appendChild(tip); return b;
+    var txt = items.map(function (it) { return it[0] ? it[0] + " · " + it[1] : it[1]; }).join("\n");
+    var b = (window.CCTheme && window.CCTheme.infoIcon) ? window.CCTheme.infoIcon(txt) : (function () {
+      var s = el("span", "cc-info"); s.setAttribute("data-tip", txt); s.setAttribute("aria-label", txt); s.setAttribute("tabindex", "0"); return s;
+    })();
+    // inside a <label> the (i) must not toggle the label's checkbox (section-header bubbles)
+    b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); });
+    return b;
   }
   function lblInfo(text, items) { var l = el("label", "cc-pop-lbl cc-lbl-info"); l.appendChild(document.createTextNode(text)); l.appendChild(infoBubble(items)); return l; }
   function probeItems() {
@@ -2382,9 +2459,7 @@
     // action selects are already wrapped inside schedRow. ctWrapSelect keeps the <select> as source of
     // truth and dispatches a native change, so every commit()/API listener above still fires.
     Array.prototype.slice.call(pop.querySelectorAll("select:not([data-cc-dsel])")).forEach(function (s) { try { ctWrapSelect(s); } catch (e) {} });
-    var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || 320;
-    pop.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 12)) + "px";
-    pop.style.top = (window.scrollY + r.bottom + 6) + "px"; openPop = pop; openPopAnchor = anchor;
+    placePop(pop, anchor, 320);   // Rule 15: anchors head/foot, clamps into the viewport, locks the page behind it
   }
 
   // ───────────────────────── CPU/RAM limits editor (Docker container-update)
@@ -2474,9 +2549,7 @@
     var save = el("span", "cc-btn cc-btn-primary", t("saveShort")); save.addEventListener("click", function () { saveBandwidth(name, readKbit(upIn), readKbit(dnIn)); });
     srow.appendChild(rem); srow.appendChild(save); pop.appendChild(srow);
     document.body.appendChild(pop); hardenPop(pop);
-    var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || 300;
-    pop.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 12)) + "px";
-    pop.style.top = (window.scrollY + r.bottom + 6) + "px"; openPop = pop; openPopAnchor = anchor;
+    placePop(pop, anchor, 300);   // Rule 15: anchors head/foot, clamps into the viewport, locks the page behind it
     checkBwStatus(pop, name); // LIVE diagnosis: does the limit ACTUALLY exist right now?
   }
   function checkBwStatus(pop, name) {
@@ -2502,21 +2575,24 @@
     }).catch(function () {});
   }
   // Round apply-status dot BEHIND a field (user): green check = verified applied, red cross =
-  // failed; the detail text opens on hover exactly like the ⓘ info bubbles. One dot per row,
+  // failed; the detail text opens on hover exactly like the (i) info bubbles. One dot per row,
   // replaced in place on every re-check.
+  // It said "exactly like the (i) bubbles" and then did NOT do what they do: the detail hung off a local
+  // `.cc-tip` child, the same locally-anchored construction infoBubble() above just left behind. It rides
+  // the shared body-level bubble now too, so every hover explainer inside a CC window is ONE mechanism.
   function statDot(row, ok, text) {
     if (!row) return;
     var d = row.querySelector(":scope > .cc-statdot");
     if (!d) { d = el("span", "cc-statdot"); row.appendChild(d); }
     d.className = "cc-statdot " + (ok ? "cc-stat-ok" : "cc-stat-bad");
     d.textContent = ok ? "✓" : "✕";
-    d.appendChild(el("span", "cc-tip", text || ""));
+    if (text) { d.setAttribute("data-tip", text); d.setAttribute("aria-label", text); } else { d.removeAttribute("data-tip"); d.removeAttribute("aria-label"); }
     return d;
   }
   // reserve the dot's slot from the start (user: "das feld schrumpft wenn er erscheint") — an
   // invisible placeholder keeps the row geometry constant; statDot just makes it visible.
   function statSlot(row) { if (row && !row.querySelector(":scope > .cc-statdot")) row.appendChild(el("span", "cc-statdot cc-stat-slot")); }
-  function statClear(row) { var d = row && row.querySelector(":scope > .cc-statdot"); if (d) { d.className = "cc-statdot cc-stat-slot"; d.textContent = ""; } }
+  function statClear(row) { var d = row && row.querySelector(":scope > .cc-statdot"); if (d) { d.className = "cc-statdot cc-stat-slot"; d.textContent = ""; d.removeAttribute("data-tip"); d.removeAttribute("aria-label"); } }   // data-tip must go too now that the text is an attribute — an invisible slot with a live tip would pop a bubble over nothing
   // Show the EXACT backend/Docker rejection INSIDE the open popup and keep it there (a
   // 2.6s toast is unreadable) so the user can read back why `docker update` refused — the
   // only way to diagnose a set/remove failure once a stale install is ruled out. Also logs it.
@@ -2718,9 +2794,7 @@
     });
     srow.appendChild(rem); srow.appendChild(save); pop.appendChild(srow);
     document.body.appendChild(pop); hardenPop(pop);
-    var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || 340;
-    pop.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 12)) + "px";
-    pop.style.top = (window.scrollY + r.bottom + 6) + "px"; openPop = pop; openPopAnchor = anchor;
+    placePop(pop, anchor, 340);   // Rule 15: anchors head/foot, clamps into the viewport, locks the page behind it
     // Prefill IMMEDIATELY from the cached bulk map: the fresh per-name GET can queue
     // SECONDS behind the save-triggered bulk inspect sweep, and an editor that renders
     // empty in that window reads as "wird nicht gespeichert" although the limit IS saved

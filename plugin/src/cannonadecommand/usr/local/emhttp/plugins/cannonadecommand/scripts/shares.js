@@ -1405,12 +1405,14 @@
   //    hiding those would break Start/Format/the links. data-cc-aop is set at the END (not first-pass) so the
   //    async #mover-text re-folds on the observer tick. Idempotent + reversible (aopTeardown un-hides/unwraps).
   function svgEl(tag, attrs) { var n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (var k in attrs) if (attrs.hasOwnProperty(k)) n.setAttribute(k, attrs[k]); return n; }
-  function ccInfoIcon(tip) {   // §9: span > inline-SVG (circle + top dot + rounded stem), all currentColor, NEVER accent
+  // §9/Rule 8: ONE (i) for the whole plugin — glyph + markup live in cc-theme.js (window.CCTheme.infoIcon).
+  // This file used to draw its own ring at r=7/stroke-width=1.4 while header.js and settings.js drew theirs
+  // at r=7.1/1.2 — three near-identical bubbles, exactly the drift the shared module exists to stop.
+  function ccInfoIcon(tip) {
+    if (window.CCTheme && window.CCTheme.infoIcon) return window.CCTheme.infoIcon(tip);
     var s = el("span", "cc-info"); s.setAttribute("data-tip", tip); s.setAttribute("aria-label", tip); s.setAttribute("tabindex", "0");
-    var svg = svgEl("svg", { viewBox: "0 0 16 16", width: "15", height: "15", "aria-hidden": "true" });
-    svg.appendChild(svgEl("circle", { cx: "8", cy: "8", r: "7", fill: "none", stroke: "currentColor", "stroke-width": "1.4" }));
-    svg.appendChild(svgEl("circle", { cx: "8", cy: "4.4", r: "1.05", fill: "currentColor" }));
-    svg.appendChild(svgEl("rect", { x: "7.1", y: "6.5", width: "1.8", height: "5.3", rx: ".9", fill: "currentColor" }));
+    var svg = svgEl("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "currentColor", stroke: "none", "aria-hidden": "true" });
+    svg.appendChild(svgEl("path", { d: "M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 9h-1l-.117 .007a1 1 0 0 0 0 1.986l.117 .007v3l.007 .117a1 1 0 0 0 .876 .876l.117 .007h1l.117 -.007a1 1 0 0 0 .876 -.876l.007 -.117l-.007 -.117a1 1 0 0 0 -.764 -.857l-.112 -.02l-.117 -.006v-3l-.007 -.117a1 1 0 0 0 -.876 -.876l-.117 -.007zm.01 -3l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007z" }));
     s.appendChild(svg); return s;
   }
   function ccIsCtrl(n) { if (n.nodeType !== 1) return false; var t = n.tagName; return t === "INPUT" || t === "SELECT" || t === "A" || t === "LABEL" || t === "BUTTON"; }

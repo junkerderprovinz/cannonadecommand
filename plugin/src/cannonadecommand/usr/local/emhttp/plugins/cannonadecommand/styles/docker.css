@@ -521,6 +521,19 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
    line. A quick fade-and-rise entrance replaces the blink-on (respecting prefers-reduced-motion below). */
 .cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: 92vw; background: var(--cc-bg, #161616); color: var(--cc-txt, #e6e6e6); border: none; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,.38), 0 14px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05); font: 13px/1.5 "Segoe UI", system-ui, sans-serif; animation: cc-pop-in .14s cubic-bezier(.2,.7,.3,1); }
 @keyframes cc-pop-in { from { opacity: 0; transform: translateY(6px) scale(.985); } to { opacity: 1; transform: none; } }
+/* ── A WINDOW IS A WINDOW (GlimStone Rule 15) — user: "startplan: wenn das fenster auf geht soll der docker
+   tab nicht mehr scrollbar sein". Two halves of one behaviour:
+   1. the page behind is pinned (html.cc-scrolllock, set by docker.js ccScrollLock while any .cc-pop stands
+      and released in closePop(), the single funnel every dismiss path already went through);
+   2. because the page can no longer be scrolled to reach a window that runs past the fold, the window
+      itself is capped to the viewport and scrolls INTERNALLY — head (title/✕) and the .cc-pop-act button
+      row stay put as flex ends, only .cc-pop-mid between them moves. Locking without this half would trade
+      one bug for a worse one: content you cannot reach at all.
+   overscroll-behavior:contain stops a finished inner scroll from chaining out to the pinned page. */
+html.cc-scrolllock, html.cc-scrolllock body { overflow: hidden !important; }
+html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* give back exactly the width the vanished scrollbar held, or the page jumps sideways on open */
+.cc-pop { display: flex; flex-direction: column; max-height: calc(100vh - 16px); }
+.cc-pop-mid { overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
 @media (prefers-reduced-motion: reduce) { .cc-pop { animation: none; } }
 /* Neutralise Unraid's global button/input/select theming INSIDE our popover — it
    lives on document.body, OUTSIDE #cc-settings, so without this it inherits the
@@ -569,15 +582,17 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 .cc-drop-it:hover { background: #2a2a2a; color: #fff; }
 .cc-drop-on { color: var(--cc-accent, #6ea0ff); font-weight: 600; }
 .cc-drop-on::after { content: " ✓"; }
-/* ⓘ info bubble beside a dropdown label — hover/focus reveals a small explainer card that
-   lists what each option (health/running/… · abort/continue/degrade) actually does.
-   .cc-info-pop = the POPOVER circle variant (docker.js infoBubble), renamed from .cc-info:
-   the settings SVG variant below owns .cc-info — the two designs collided in this file. */
+/* (i) info bubble beside a dropdown label - hover/focus reveals a short explainer of what each option
+   (health/running/... · abort/continue/degrade) actually does.
+   RETIRED (user: "die i infobubles entsprechen auch nicht dem standardisierten look"): .cc-info-pop was a
+   SECOND info-bubble design living in this very sheet, right next to the canonical .cc-info - a disc that
+   went ACCENT on hover (Rule 8 says the (i) stays neutral, the accent means activity) whose explainer was
+   a locally-anchored .cc-tip CHILD (Rule 8 says body-rendered, position measured at the icon), with no
+   Escape, no focus-out close and no pointer-events:none. docker.js infoBubble() now returns the very same
+   .cc-info every other area builds, riding the one #cc-tipfloat - so .cc-info-pop, .cc-tip-row and
+   .cc-tip-k have no callers left and are deleted rather than left lying around for the next explainer to
+   re-adopt. .cc-statdot moved to the shared bubble in the same pass, so .cc-tip goes with them. */
 .cc-lbl-info { display: inline-flex; align-items: center; gap: 6px; }
-.cc-info-pop { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 999px; background: rgba(255,255,255,.14); color: var(--cc-text-chip, #cfcfcf); font-size: 10px; font-style: normal; cursor: help; flex: none; }
-.cc-info-pop:hover, .cc-info-pop:focus { background: var(--cc-accent, #2f6feb); color: #fff; outline: none; }
-.cc-tip { display: none; position: absolute; top: 21px; left: 0; z-index: 100000; width: 235px; max-width: 78vw; background: #0f0f0f; border: none; border-radius: 8px; padding: 8px 10px; box-shadow: 0 12px 30px rgba(0,0,0,.55); color: #d6d6d6; font-size: 11.5px; font-weight: 400; line-height: 1.5; white-space: normal; text-align: left; cursor: default; }
-.cc-info-pop:hover .cc-tip, .cc-info-pop:focus .cc-tip { display: block; }
 /* apply-status dot behind a field (user): round green check / red cross, the detail text opens
    on hover exactly like the ⓘ bubbles. */
 .cc-statdot { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 999px; flex: none; font-size: 10px; font-weight: 700; color: #fff; cursor: help; }   /* NOT .cc-stat — that is the grid-card stat ROW above */
@@ -587,10 +602,6 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 /* the stat windows are sized so field + unit + dot fit WITHOUT squeezing (user) */
 .cc-pop.cc-pop-stat { width: 372px; }
 .cc-pop.cc-pop-wide.cc-pop-stat { width: 462px; }
-.cc-statdot > .cc-tip { top: 23px; left: auto; right: 0; }
-.cc-statdot:hover > .cc-tip { display: block; }
-.cc-tip-row { display: block; margin: 3px 0; }
-.cc-tip-k { color: var(--cc-accent, #6ea0ff); font-weight: 600; margin-right: 6px; }
 /* every editor field the SAME clean box: NO border, just a lighter background */
 .cc-in { flex: 1; background: #2e2e2e; color: #e6e6e6; border: none !important; border-radius: 6px; padding: 5px 8px; font-size: 12px; }
 .cc-in:focus { background: #383838; outline: none !important; box-shadow: 0 0 0 1px var(--cc-accent, #2f6feb); }

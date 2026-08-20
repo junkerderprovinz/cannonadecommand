@@ -443,6 +443,17 @@ html.cc-popups-on #displaybox .cc-tsel-trigger {
   background: var(--cc-tl-surface2, #232323); border-radius: min(var(--cc-b-radius, 8px), 12px);
   padding: 4px 12px; color: #eaeaea; cursor: pointer; transition: background .12s, color .12s;
 }
+/* #(user: "nicht alle dropdonlisten sind vollends in glimstone") — the DASHBOARD tiles. The 240px min-width
+   above is right for a settings FORM, where the dropdown owns the value column of a dl grid. The Dashboard's
+   four (CPU timescale, network interface/view/timescale) are INLINE controls in a tile header, and the native
+   ones they replace are 38-119px wide: forcing 240px made a "1 m" picker six times wider than what it stood
+   in for and, on a narrower viewport than the one it was first measured on, pushes the header past its own
+   cell. Size to content here, with a floor that keeps the trigger a comfortable target. Scoped exactly like
+   the cc-diskpage width override further up this file — same problem, same shape of answer. */
+html.cc-popups-on #displaybox table.dashboard .cc-tsel-trigger {
+  min-width: 76px; width: max-content; max-width: 100%;
+}
+html.cc-popups-on #displaybox table.dashboard .cc-tsel { max-width: 100%; }
 html.cc-tools-on #displaybox .cc-tsel-trigger:hover,
 html.cc-tools-on #displaybox .cc-tsel.cc-open .cc-tsel-trigger,
 html.cc-popups-on #displaybox .cc-tsel-trigger:hover,

@@ -108,7 +108,28 @@
   // primaryFamily("\"Montserrat\",sans-serif") -> "Montserrat"; used to tell if a chosen brand font is a GFONT.
   function primaryFamily(css) { var m = /^\s*(?:"([^"]+)"|'([^']+)'|([^,]+))/.exec(String(css || "")); return (m ? (m[1] || m[2] || m[3] || "") : "").trim(); }
 
-  window.CCTheme = { RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor, gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily };
+  // ── THE (i) INFO BUBBLE — one glyph, one builder, for every area script.
+  // GlimStone Rule 8 names CC's `cc-info` as the reference implementation of the info bubble, so CC of all
+  // apps may not carry FOUR of them. It did: header.js ccMakeInfo, settings.js infoIcon and shares.js
+  // ccInfoIcon each hand-rolled the same ring-plus-stem SVG with slightly different radii/stroke widths
+  // (r=7.1/sw=1.2 twice, r=7/sw=1.4 once), and docker.js infoBubble was a different component altogether
+  // (a text "ⓘ" on a disc, with its own locally-anchored .cc-tip child). They now all call this.
+  // Rule 20 on top: the glyph is tabler-icons (MIT) icons/filled/info-circle.svg — a FILLED disc with the
+  // "i" knocked out, not the hand-drawn outline ring, which was literally a border around a shape.
+  // NEUTRAL, never accent (Rule 8): the colour comes from .cc-info in the sheets, which reads var(--txt).
+  // The TEXT is carried as data-tip and rendered by header.js's ONE body-level #cc-tipfloat — never a
+  // local child, which any overflow:hidden ancestor clips.
+  var CC_INFO_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><path d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 9h-1l-.117 .007a1 1 0 0 0 0 1.986l.117 .007v3l.007 .117a1 1 0 0 0 .876 .876l.117 .007h1l.117 -.007a1 1 0 0 0 .876 -.876l.007 -.117l-.007 -.117a1 1 0 0 0 -.764 -.857l-.112 -.02l-.117 -.006v-3l-.007 -.117a1 1 0 0 0 -.876 -.876l-.117 -.007zm.01 -3l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007z" /></svg>';
+  function infoIcon(tip) {
+    var s = document.createElement("span");
+    s.className = "cc-info";
+    s.innerHTML = CC_INFO_SVG;
+    if (tip) { s.setAttribute("data-tip", tip); s.setAttribute("aria-label", tip); }
+    s.setAttribute("tabindex", "0");   // Rule 8: reachable by keyboard, so focus opens it like hover does
+    return s;
+  }
+
+  window.CCTheme = { RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor, gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily, CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon };
 
   // ── cross-origin/cross-browser UI-settings sync (user: "wenn CC aktiviert ist sieht es in
   // unterschiedlichen Browsern unterschiedlich aus... können wir das persistent machen?").

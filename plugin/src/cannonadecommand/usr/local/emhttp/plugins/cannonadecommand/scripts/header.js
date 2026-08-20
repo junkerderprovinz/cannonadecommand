@@ -125,19 +125,30 @@
   // set licensing review, 22-51% cross-set fallback rate) buys nothing here. Inline SVG + currentColor,
   // matching the bell/burger proxy ghost's own icon-cloning approach elsewhere in this file — the tab's
   // EXISTING --cc-rb-c-driven text colour (paintNav() above) already becomes the icon colour for free,
-  // no separate colour wiring. Path data verbatim from tabler-icons (MIT) icons/outline/<name>.svg.
+  // no separate colour wiring. Path data verbatim from tabler-icons (MIT) icons/FILLED/<name>.svg.
+  // ── GlimStone Rule 20 (user: "kannst du auf der hauptmenüleiste bitte vollflächige icons verwenden …
+  // also keine Icons mit Rahmenlinien"): every glyph here moved from Tabler's `outline` set to its
+  // `filled` set. NOT by flipping fill/stroke on the old path data — outline data is open, thin line-art
+  // and fills into a smear; screenshot-proven on brand-docker below, which rendered as an unreadable blob.
+  // Six tabs had a same-name filled twin (layout-dashboard, star, settings, puzzle, device-desktop, apps)
+  // and simply swapped. Five had NONE in the filled set and take the nearest filled glyph FROM THE SAME
+  // SET, reason noted per line: /Main, /Shares, /Docker, /Tools, /Stats. Every candidate was rendered at
+  // 16/20/24/40px before picking — "technically filled" is not the bar, legible at the 16px this bar
+  // actually paints is. Two rejects worth recording so they are not re-tried: Tabler's filled `container`
+  // (its corner rivets are r=1 dots in a 24 viewBox — invisible sub-pixel noise at 16px) and `stack-2`/
+  // `stack-3` for /Docker (a stack of layers is too close to /Main's `database` stack one tab over).
   var CC_TAB_ICONS = {
-    "/Dashboard": '<path d="M5 4h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1" /><path d="M5 16h4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1" /><path d="M15 12h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1" /><path d="M15 4h4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1" />',   // layout-dashboard
-    "/Main": '<path d="M3 7a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v2a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-2" /><path d="M3 15a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v2a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3l0 -2" /><path d="M7 8l0 .01" /><path d="M7 16l0 .01" /><path d="M11 8h6" /><path d="M11 16h6" />',   // server-2
-    "/Favorites": '<path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873l-6.158 -3.245" />',   // star
-    "/Shares": '<path d="M13 19h-8a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2h4l3 3h7a2 2 0 0 1 2 2v4" /><path d="M16 22l5 -5" /><path d="M21 21.5v-4.5h-4.5" />',   // folder-share
-    "/Settings": '<path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />',   // settings
-    "/Docker": '<path d="M22 12.54c-1.804 -.345 -2.701 -1.08 -3.523 -2.94c-.487 .696 -1.102 1.568 -.92 2.4c.028 .238 -.32 1 -.557 1h-14c0 5.208 3.164 7 6.196 7c4.124 .022 7.828 -1.376 9.854 -5c1.146 -.101 2.296 -1.505 2.95 -2.46" /><path d="M5 10h3v3h-3l0 -3" /><path d="M8 10h3v3h-3l0 -3" /><path d="M11 10h3v3h-3l0 -3" /><path d="M8 7h3v3h-3l0 -3" /><path d="M11 7h3v3h-3l0 -3" /><path d="M11 4h3v3h-3l0 -3" /><path d="M4.571 18c1.5 0 2.047 -.074 2.958 -.78" /><path d="M10 16l0 .01" />',   // brand-docker
-    "/Plugins": '<path d="M4 7h3a1 1 0 0 0 1 -1v-1a2 2 0 0 1 4 0v1a1 1 0 0 0 1 1h3a1 1 0 0 1 1 1v3a1 1 0 0 0 1 1h1a2 2 0 0 1 0 4h-1a1 1 0 0 0 -1 1v3a1 1 0 0 1 -1 1h-3a1 1 0 0 1 -1 -1v-1a2 2 0 0 0 -4 0v1a1 1 0 0 1 -1 1h-3a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1h1a2 2 0 0 0 0 -4h-1a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1" />',   // puzzle
-    "/VMs": '<path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10" /><path d="M7 20h10" /><path d="M9 16v4" /><path d="M15 16v4" />',   // device-desktop
-    "/Tools": '<path d="M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5" />',   // tool
-    "/Stats": '<path d="M3 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6" /><path d="M15 9a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -10" /><path d="M9 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -14" /><path d="M4 20h14" />',   // chart-bar
-    "/Apps": '<path d="M4 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /><path d="M4 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /><path d="M14 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /><path d="M14 7l6 0" /><path d="M17 4l0 6" />'   // apps
+    "/Dashboard": '<path d="M9 3a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2zm0 12a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-2a2 2 0 0 1 2 -2zm10 -4a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2zm0 -8a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-2a2 2 0 0 1 2 -2z" />',   // layout-dashboard
+    "/Main": '<path d="M3 15.731c1.968 1.507 5.234 2.269 9 2.269c3.76 0 7.025 -.76 9 -2.252v2.252c0 2.425 -3.895 3.936 -8.693 3.998l-.307 .002c-4.938 0 -9 -1.523 -9 -4z" /><path d="M3 9.731c1.968 1.507 5.234 2.269 9 2.269c3.76 0 7.025 -.76 9 -2.252v2.252c0 2.477 -4.062 4 -9 4c-4.798 0 -8.77 -1.438 -8.979 -3.795l-.016 -.101l-.005 -.104z" /><path d="M12 2c1.041 0 2.044 .068 2.977 .198l.469 .071q .84 .14 1.586 .348l.44 .131l.075 .024a11 11 0 0 1 .805 .3l.199 .086q .535 .242 .967 .53q .165 .11 .313 .225a3.8 3.8 0 0 1 .669 .668l.091 .128q .07 .105 .129 .211l.07 .139q .163 .35 .2 .73l.01 .211c0 2.477 -4.062 4 -9 4c-4.798 0 -8.77 -1.438 -8.979 -3.795a1 1 0 0 1 -.021 -.205l.005 -.104l.016 -.1c.205 -2.306 4.01 -3.733 8.667 -3.794z" />',   // database — NO filled server/server-2 in Tabler -> stacked discs = the array itself
+    "/Favorites": '<path d="M8.243 7.34l-6.38 .925l-.113 .023a1 1 0 0 0 -.44 1.684l4.622 4.499l-1.09 6.355l-.013 .11a1 1 0 0 0 1.464 .944l5.706 -3l5.693 3l.1 .046a1 1 0 0 0 1.352 -1.1l-1.091 -6.355l4.624 -4.5l.078 -.085a1 1 0 0 0 -.633 -1.62l-6.38 -.926l-2.852 -5.78a1 1 0 0 0 -1.794 0l-2.853 5.78z" />',   // star
+    "/Shares": '<path d="M12 2a1 1 0 0 1 .707 .293l1.708 1.707h4.585a3 3 0 0 1 2.995 2.824l.005 .176v7a3 3 0 0 1 -3 3h-1v1a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-9a3 3 0 0 1 3 -3h1v-1a3 3 0 0 1 3 -3zm-6 6h-1a1 1 0 0 0 -1 1v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1 -1v-1h-7a3 3 0 0 1 -3 -3z" />',   // folders — NO filled folder-share -> plural folders keeps the several-shares reading
+    "/Settings": '<path d="M14.647 4.081a.724 .724 0 0 0 1.08 .448c2.439 -1.485 5.23 1.305 3.745 3.744a.724 .724 0 0 0 .447 1.08c2.775 .673 2.775 4.62 0 5.294a.724 .724 0 0 0 -.448 1.08c1.485 2.439 -1.305 5.23 -3.744 3.745a.724 .724 0 0 0 -1.08 .447c-.673 2.775 -4.62 2.775 -5.294 0a.724 .724 0 0 0 -1.08 -.448c-2.439 1.485 -5.23 -1.305 -3.745 -3.744a.724 .724 0 0 0 -.447 -1.08c-2.775 -.673 -2.775 -4.62 0 -5.294a.724 .724 0 0 0 .448 -1.08c-1.485 -2.439 1.305 -5.23 3.744 -3.745a.722 .722 0 0 0 1.08 -.447c.673 -2.775 4.62 -2.775 5.294 0zm-2.647 4.919a3 3 0 1 0 0 6a3 3 0 0 0 0 -6" />',   // settings
+    "/Docker": '<path d="M6 5.667a3.667 3.667 0 0 1 3.667 -3.667h8.666a3.667 3.667 0 0 1 3.667 3.667v8.666a3.667 3.667 0 0 1 -3.667 3.667h-8.666a3.667 3.667 0 0 1 -3.667 -3.667z" /><path d="M2 9c0 -1.094 .533 -1.828 1.514 -2.374a1 1 0 1 1 .972 1.748c-.398 .221 -.486 .342 -.486 .626v10c0 .548 .452 1 1 1h9.998c.32 0 .618 -.154 .805 -.407l.065 -.1a1 1 0 1 1 1.738 .99a3 3 0 0 1 -2.606 1.517h-10c-1.652 0 -3 -1.348 -3 -3z" />',   // box-multiple — NO filled brand-docker (Tabler ships no filled brand-* for it) -> several boxes = containers
+    "/Plugins": '<path d="M10 2a3 3 0 0 1 2.995 2.824l.005 .176v1h3a2 2 0 0 1 1.995 1.85l.005 .15v3h1a3 3 0 0 1 .176 5.995l-.176 .005h-1v3a2 2 0 0 1 -1.85 1.995l-.15 .005h-3a2 2 0 0 1 -1.995 -1.85l-.005 -.15v-1a1 1 0 0 0 -1.993 -.117l-.007 .117v1a2 2 0 0 1 -1.85 1.995l-.15 .005h-3a2 2 0 0 1 -1.995 -1.85l-.005 -.15v-3a2 2 0 0 1 1.85 -1.995l.15 -.005h1a1 1 0 0 0 .117 -1.993l-.117 -.007h-1a2 2 0 0 1 -1.995 -1.85l-.005 -.15v-3a2 2 0 0 1 1.85 -1.995l.15 -.005h3v-1a3 3 0 0 1 3 -3z" />',   // puzzle
+    "/VMs": '<path d="M7 21a1 1 0 0 1 0 -2h1v-2h-4a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-4v2h1a1 1 0 0 1 0 2zm7 -4h-4v2h4z" />',   // device-desktop
+    "/Tools": '<path d="M6 3a1 1 0 0 1 .993 .883l.007 .117v3.171a3.001 3.001 0 0 1 0 5.658v7.171a1 1 0 0 1 -1.993 .117l-.007 -.117v-7.17a3.002 3.002 0 0 1 -1.995 -2.654l-.005 -.176l.005 -.176a3.002 3.002 0 0 1 1.995 -2.654v-3.17a1 1 0 0 1 1 -1z" /><path d="M12 3a1 1 0 0 1 .993 .883l.007 .117v9.171a3.001 3.001 0 0 1 0 5.658v1.171a1 1 0 0 1 -1.993 .117l-.007 -.117v-1.17a3.002 3.002 0 0 1 -1.995 -2.654l-.005 -.176l.005 -.176a3.002 3.002 0 0 1 1.995 -2.654v-9.17a1 1 0 0 1 1 -1z" /><path d="M18 3a1 1 0 0 1 .993 .883l.007 .117v.171a3.001 3.001 0 0 1 0 5.658v10.171a1 1 0 0 1 -1.993 .117l-.007 -.117v-10.17a3.002 3.002 0 0 1 -1.995 -2.654l-.005 -.176l.005 -.176a3.002 3.002 0 0 1 1.995 -2.654v-.17a1 1 0 0 1 1 -1z" />',   // adjustments — NO filled tool/wrench -> sliders, the standard utilities glyph, stays distinct from /Settings' gear
+    "/Stats": '<path d="M20 18a1 1 0 0 1 .117 1.993l-.117 .007h-16a1 1 0 0 1 -.117 -1.993l.117 -.007h16z" /><path d="M15.22 5.375a1 1 0 0 1 1.393 -.165l.094 .083l4 4a1 1 0 0 1 .284 .576l.009 .131v5a1 1 0 0 1 -.883 .993l-.117 .007h-16.022l-.11 -.009l-.11 -.02l-.107 -.034l-.105 -.046l-.1 -.059l-.094 -.07l-.06 -.055l-.072 -.082l-.064 -.089l-.054 -.096l-.016 -.035l-.04 -.103l-.027 -.106l-.015 -.108l-.004 -.11l.009 -.11l.019 -.105c.01 -.04 .022 -.077 .035 -.112l.046 -.105l.059 -.1l4 -6a1 1 0 0 1 1.165 -.39l.114 .05l3.277 1.638l3.495 -4.369z" />',   // chart-area — NO filled chart-bar -> a solid area chart, the only filled chart glyph still legible at 16px
+    "/Apps": '<path d="M9 3h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" /><path d="M9 13h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" /><path d="M19 13h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" /><path d="M17 3a1 1 0 0 1 .993 .883l.007 .117v2h2a1 1 0 0 1 .117 1.993l-.117 .007h-2v2a1 1 0 0 1 -1.993 .117l-.007 -.117v-2h-2a1 1 0 0 1 -.117 -1.993l.117 -.007h2v-2a1 1 0 0 1 1 -1z" />'   // apps
   };
   function ccTabIcons() {
     try {
@@ -161,8 +172,10 @@
             var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             svg.setAttribute("class", "cc-tab-ico");
             svg.setAttribute("viewBox", "0 0 24 24");
-            svg.setAttribute("fill", "none"); svg.setAttribute("stroke", "currentColor");
-            svg.setAttribute("stroke-width", "2"); svg.setAttribute("stroke-linecap", "round"); svg.setAttribute("stroke-linejoin", "round");
+            // Rule 20: FILLED, no stroke. The stroke-* attributes are removed rather than left at their
+            // old values — a leftover stroke-width:2 on a filled path paints a 2px skin around the shape
+            // and fattens every glyph by a third at 16px.
+            svg.setAttribute("fill", "currentColor"); svg.setAttribute("stroke", "none");
             svg.innerHTML = d;
             a.insertBefore(svg, a.firstChild);
           }
@@ -612,8 +625,8 @@
       var gear = null, glinks = host.querySelectorAll('a[href*="Notification"]');
       for (var gi = 0; gi < glinks.length; gi++) { if (glinks[gi].querySelector("svg") && !(glinks[gi].textContent || "").trim()) { gear = glinks[gi]; break; } }
       if (gear && !gear.getAttribute("data-cc-tip")) { gear.setAttribute("data-cc-tip", T("Benachrichtigungs-Einstellungen", "Notification settings")); gear.removeAttribute("title"); }  // same frameless CC bubble as the two bulk icons
-      var ICON_ARCH = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"></rect><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"></path><path d="M10 12h4"></path></svg>';
-      var ICON_DEL = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path><path d="M6 6v14a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6"></path><path d="M10 11v6M14 11v6"></path></svg>';
+      var ICON_ARCH = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><path d="M2 5a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2z" /><path d="M19 9c.513 0 .936 .463 .993 1.06l.007 .14v7.2c0 1.917 -1.249 3.484 -2.824 3.594l-.176 .006h-10c-1.598 0 -2.904 -1.499 -2.995 -3.388l-.005 -.212v-7.2c0 -.663 .448 -1.2 1 -1.2h14zm-5 2h-4l-.117 .007a1 1 0 0 0 0 1.986l.117 .007h4l.117 -.007a1 1 0 0 0 0 -1.986l-.117 -.007z" /></svg>';   // tabler filled/archive (Rule 20)
+      var ICON_DEL = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><path d="M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007zm-10 4a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1m4 0a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1" /><path d="M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005z" /></svg>';   // tabler filled/trash (Rule 20)
       function badge(icon, label, cls, onAct) {
         var b = arch.cloneNode(true);                                              // clone the native chrome MINUS its Vue handler
         b.removeAttribute("id"); b.className = arch.className + " cc-notif-badge cc-notif-iconbtn " + cls;
@@ -1834,12 +1847,35 @@
     // write wipes all children whenever the label actually changed, and is a no-op (children left
     // alone) when it didn't, so calling this unconditionally is what makes it self-heal either way.
     if (sel.name === "locale" && t2) ccLangFlagImg(t2, sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].value : "");
+    // A host script that REFILLS a wrapped <select> (a preclear dialog's disk list, a locale list that grows)
+    // changes its option COUNT — the loop below only re-reads TEXT for chips that already exist, so the panel
+    // would keep offering yesterday's list forever, silently. Detect the mismatch and rebuild by unwrapping +
+    // re-wrapping, i.e. through the one existing builder rather than a second copy of it that can drift.
+    // Only chips with a real index count: the language panel deliberately appends "available, not installed"
+    // chips carrying data-i="-1" (see ccLangAugmentPanel), and counting those would make every pass rebuild.
+    // Never while the panel is OPEN — rebuilding under the user's cursor would drop the click they are aiming.
+    if (!w.classList.contains("cc-open")) {
+      var real = 0;
+      for (var q = 0; q < c.length; q++) if (+c[q].getAttribute("data-i") >= 0) real++;
+      if (real !== sel.options.length) { ccToolsRewrap(sel); return; }
+    }
     for (var k = 0; k < c.length; k++) {
       var o = sel.options[+c[k].getAttribute("data-i")]; if (!o) continue;
       var lbl = ccLangLabel(sel, o); if (c[k].textContent !== lbl) c[k].textContent = lbl;
       if (sel.name === "locale") ccLangFlagImg(c[k], o.value);
       c[k].classList.toggle("is-selected", o.selected); c[k].classList.toggle("is-disabled", !!o.disabled); c[k].setAttribute("aria-selected", o.selected ? "true" : "false");
     }
+  }
+  // Put the native <select> back where it was and wrap it again from scratch. Used only by the count-mismatch
+  // branch above; the <select> itself is never recreated, so every host handler bound to it survives.
+  function ccToolsRewrap(sel) {
+    try {
+      var w = sel.parentNode;
+      if (!w || !w.classList || !w.classList.contains("cc-tsel")) return;
+      w.parentNode.insertBefore(sel, w); w.parentNode.removeChild(w);
+      sel.style.display = ""; sel.removeAttribute("data-cc-tsel");
+      ccToolsWrapSelect(sel);
+    } catch (e) {}
   }
   function ccToolsWrapSelect(sel) {
     if (sel.getAttribute("data-cc-tsel") || sel.getAttribute("data-cc-tgl")) return;   // already ours / a yes-no toggle (#24)
@@ -1877,6 +1913,57 @@
     ccBindTselDoc();
   }
   var ccTselSeq = 0;
+  // ── #(user: "nicht alle dropdonlisten sind vollends in glimstone") — GlimStone Rule 18: a native control is
+  // REPLACED, not talked round, and the replacement is the one the app already has (.cc-tsel). CC has wrapped
+  // every native <select> it could reach for a long time, but ONLY from ccToolsEnhance(), which returns early
+  // unless html.cc-tools-on is set — i.e. only on /Tools and /Settings sub-pages.
+  // Live-measured across every CC area (Docker, VMs, Shares, Main, Plugins, Apps, Settings, Dashboard): the
+  // ONLY on-screen native <select>s left in the whole UI were the FOUR on the DASHBOARD — the CPU tile's
+  // timescale (#cpuline) and the network tile's interface / view / timescale (port_select, enter_view,
+  // #netline). They sit inside #displaybox, so the existing sweep SELECTOR already matched them; only the
+  // area gate kept it away. Exactly the same shape of gap as the one recorded once before, when the .cc-tsel
+  // THEMING was bound to cc-tools-on while the widget ran on other pages too — that fix extended the CSS and
+  // the rainbow stamping to cc-popups-on and stopped there. This is the third leg: the wrapping itself.
+  // Three conditions, each earning its place from a measured case on this box:
+  //   · RENDERED (non-zero box): /Main carries 13 <select>s belonging to a third-party preclear dialog that is
+  //     display:none until opened, and /VMs two option-less template selects. Wrapping a control nobody can
+  //     see buys nothing and risks fighting whatever builds it; when such a dialog does open, the next pass
+  //     picks it up, and the count-resync above keeps it honest if the host refills it afterwards.
+  //   · at least TWO options: a one-option select is a placeholder, not a choice.
+  //   · not already inside another CC widget: CC's OWN settings page wraps its 11 selects with settings.js's
+  //     .cc-dsel, which sets no marker attribute — without this guard the sweep would nest a .cc-tsel INSIDE
+  //     a .cc-dsel and the user would get two triggers stacked on one field.
+  function ccWrapPageSelects() {
+    try {
+      if (!document.documentElement.classList.contains("cc-popups-on")) return;
+      var sels = document.querySelectorAll("#displaybox select:not([data-cc-tgl]):not([data-cc-tsel]):not([data-cc-dsel]):not([multiple])");
+      for (var i = 0; i < sels.length; i++) {
+        var s = sels[i];
+        if (s.options.length < 2) continue;
+        if (s.closest(".cc-dsel") || s.closest(".cc-tsel")) continue;
+        var r = s.getBoundingClientRect(); if (!r.width || !r.height) continue;
+        ccToolsWrapSelect(s);
+      }
+    } catch (e) {}
+  }
+  // apply() runs ONCE at boot, and on the Dashboard that is too early: dynamix renders the tiles itself, so at
+  // that moment the four <select>s have a zero box and the "RENDERED" test above correctly skips them (measured:
+  // 0 wrapped after a full load with the sweep in apply() alone). Two cheap, bounded follow-ups, both idempotent
+  // because the sweep's own :not([data-cc-tsel]) filter makes a repeat pass a no-op:
+  //   · a 300ms x 15 settle interval, the same shape ccAppsBoot() already uses for CA's late card render;
+  //   · a debounced re-sweep after any click, which is what catches a control that only exists once something
+  //     is OPENED (a plugin's modal, a tile the user switches on) — without it "the next pass picks it up"
+  //     would be a claim with no pass behind it.
+  var ccSelSweepT = null;
+  function ccWrapSelectsBoot() {
+    try {
+      var n = 0, iv = setInterval(function () { ccWrapPageSelects(); if (++n >= 15) clearInterval(iv); }, 300);
+      document.addEventListener("click", function () {
+        if (ccSelSweepT) return;
+        ccSelSweepT = setTimeout(function () { ccSelSweepT = null; ccWrapPageSelects(); }, 250);
+      }, true);
+    } catch (e) {}
+  }
   // V-E: roving focus between option chips (skips group headers + disabled)
   function ccTselMove(panel, cur, dir) {
     var opts = Array.prototype.filter.call(panel.querySelectorAll(".cc-tsel-opt"), function (o) { return !o.classList.contains("is-disabled"); });
@@ -2204,6 +2291,11 @@
       document.addEventListener("focusout", out);
       document.addEventListener("pointerdown", ccTipHide, true);   // a press means action, not reading -> hide
       window.addEventListener("scroll", ccTipHide, true);          // any scroll de-anchors the fixed bubble -> hide (capture catches inner-container scrolls too)
+      // GlimStone Rule 8 spells out "Hover UND Fokus, Escape schliesst" — the focus half was here from the
+      // start (focusin/focusout above), Escape never was. A keyboard user who tabbed onto an (i) had no way
+      // to dismiss the bubble except tabbing away again. Capture phase so it fires before any window/dialog
+      // Escape handler that stops propagation; it only hides a tooltip, so it never swallows the key.
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape") ccTipHide(); }, true);
     } catch (e) {}
   }
   // ── BELL + BURGER DOCK — REPARENT MODEL (#16 ROUND 5). Rounds 1-4 (a 1s safety-net interval, a
@@ -2604,6 +2696,7 @@
       ccArrFill();      // #18: on /Main, refresh the cached array-fill % the island's fill chip reads
       ccStateBars();   // #16: usage-bar fills follow the fill-level state colour when cc.statenative, else the palette
       ccToolsEnhance();   // #22: strip label colons on native Tools/Settings sub-pages
+      ccWrapPageSelects();   // Rule 18: the remaining native <select>s OUTSIDE the Tools area (the Dashboard tiles) get the CC dropdown too
       ccPaintRotate();    // #3/#8: per-element rotating palette colour on button rows + toggles (rainbow)
       ccWatchMain();      // re-paint late AJAX-rendered content (usage bars, buttons, toggles)
       ccNchanStyle(); paintPopups(); watchPopups();
@@ -2765,9 +2858,13 @@
   // each home-section subtitle into the shared (i) bubble (#9). FREEZE-SAFE: NO subtree observer on the card
   // tree (that froze the tab); a childList(subtree:false) observer on #templates_content catches CA's view
   // swaps, plus a re-stamp on the CA nav clicks.
+  // ONE (i) for the whole plugin — cc-theme.js owns the glyph and the markup now (see the block there:
+  // four separate hand-rolled versions of this had drifted apart). Local fallback kept byte-compatible
+  // per this file's own convention, in case cc-theme.js ever fails to load first.
   function ccMakeInfo(tip) {
+    if (window.CCTheme && window.CCTheme.infoIcon) return window.CCTheme.infoIcon(tip);
     var s = document.createElement("span"); s.className = "cc-info";
-    s.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.1" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="4.7" r="1.05" fill="currentColor"/><rect x="7.05" y="6.8" width="1.9" height="5" rx=".95" fill="currentColor"/></svg>';
+    s.innerHTML = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><path d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 9h-1l-.117 .007a1 1 0 0 0 0 1.986l.117 .007v3l.007 .117a1 1 0 0 0 .876 .876l.117 .007h1l.117 -.007a1 1 0 0 0 .876 -.876l.007 -.117l-.007 -.117a1 1 0 0 0 -.764 -.857l-.112 -.02l-.117 -.006v-3l-.007 -.117a1 1 0 0 0 -.876 -.876l-.117 -.007zm.01 -3l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007z" /></svg>';
     s.setAttribute("data-tip", tip); s.setAttribute("aria-label", tip); s.setAttribute("tabindex", "0");
     return s;   // rides the document-wide #cc-tipfloat engine (ccWireTips)
   }
@@ -3987,6 +4084,7 @@
     watchSearch();
     wireSearchToggle();
     ccAppsBoot();     // #7/#8/#9/#11: /Apps colour-mode stamping + subtitle bubble (self-gated to /Apps)
+    ccWrapSelectsBoot();   // Rule 18: catch native <select>s that only exist after the host finishes rendering (Dashboard tiles) or after something is opened
     // #11 ROOT CAUSE (agent-diagnosed): the docked #UserProfile (position:fixed, z above #menu) overlapped the
     // help icon and ATE the real mouse click — a synthetic click bypasses hit-testing, which is why it "worked"
     // in tests but never for a real click. Fix A (Header.css) makes the dock click-through. Fix B here is belt-
