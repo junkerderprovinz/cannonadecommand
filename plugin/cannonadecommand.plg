@@ -30,7 +30,7 @@
 ### 4.25.3
 **🐛 Fixed**
 - The per-row Autostart toggles in the Docker tab follow the Badge-Form again. With the form set to **Abgerundet**, every other element on the page sat at a 6px radius while the 52 Autostart switches stayed hard pills, and **Eckig** did not square them either.
-- The cause was the previous version's speed-up. Skipping Unraid's switch widget and styling the bare checkbox instead was the right call for the freeze it removed, but the replacement was drawn with a fixed pill radius baked in. The widget it replaced had been reading the shape setting all along, so the shape simply stopped arriving the moment the faster path took over.
+- The cause was the speed-up that shipped in 4.24.0. Skipping Unraid's switch widget and styling the bare checkbox instead was the right call for the freeze it removed, but the replacement was drawn with a fixed pill radius baked in. The widget it replaced had been reading the shape setting all along, so the shape simply stopped arriving the moment the faster path took over.
 - Track and knob now both read the shape setting, capped at half their own size so the switch can go the whole way from pill through rounded to a clean square without the knob ever outgrowing its track. Measured live at all four settings: Pille and Kreis give 999px, Abgerundet 6px, Eckig 0px, matching the badges beside them exactly.
 - The old widget path was given the same treatment. It is unreachable while theming is on, but leaving a hardcoded radius sitting in a rule that still matches is how this came back the first time.
 
