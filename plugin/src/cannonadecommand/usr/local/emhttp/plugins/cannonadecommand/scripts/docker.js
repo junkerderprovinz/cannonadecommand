@@ -3310,11 +3310,18 @@
     try {
       applySettings();
       // organizer probe: fires in parallel with everything else below, never blocks first
-      // paint. If the user was last in folder mode AND real folders still exist once the
-      // probe resolves, restore it — otherwise setMode()'s own guard already left `mode`
-      // at "list" (folder can never be the synchronous initial value, see var mode above).
+      // paint. Reconcile against the SERVER's saved view-mode (Task 7 decision 6) once it
+      // resolves — this is the actual restore path: the synchronous initial `mode` (var mode
+      // above) only ever reads localStorage, which is per-browser and can't know the
+      // server-persisted choice on a fresh browser/device. Server wins when it differs from
+      // the local guess; setMode() itself re-applies every normal guard (theming off, no
+      // folders yet) so this can never land in a broken state.
       ccOrgInit().then(function () {
         if (dead) return;
+        var serverMode = ccOrgView && ccOrgView.prefs && ccOrgView.prefs.ccViewMode;
+        if (ccOrgAvailable && serverMode && serverMode !== mode) { setMode(serverMode); return; }
+        // no server prefs saved yet (e.g. first run of this feature) — fall back to the old
+        // local-only signal so an existing "folder" choice in THIS browser still restores.
         if (ccOrgAvailable && mode !== "folder" && localStorage.getItem(VIEW_KEY) === "folder" && ccOrgHasFolders()) setMode("folder");
       });
       // INSTANT first paint: the last known engine state seeds the badges right away;
