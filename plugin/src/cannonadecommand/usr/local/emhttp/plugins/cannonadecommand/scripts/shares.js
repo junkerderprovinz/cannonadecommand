@@ -1466,8 +1466,10 @@
   function ccInfoIcon(tip) {
     if (window.CCTheme && window.CCTheme.infoIcon) return window.CCTheme.infoIcon(tip);
     var s = el("span", "cc-info"); s.setAttribute("data-tip", tip); s.setAttribute("aria-label", tip); s.setAttribute("tabindex", "0");
-    var svg = svgEl("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "currentColor", stroke: "none", "aria-hidden": "true" });
-    svg.appendChild(svgEl("path", { d: "M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 9h-1l-.117 .007a1 1 0 0 0 0 1.986l.117 .007v3l.007 .117a1 1 0 0 0 .876 .876l.117 .007h1l.117 -.007a1 1 0 0 0 .876 -.876l.007 -.117l-.007 -.117a1 1 0 0 0 -.764 -.857l-.112 -.02l-.117 -.006v-3l-.007 -.117a1 1 0 0 0 -.876 -.876l-.117 -.007zm.01 -3l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007z" }));
+    var svg = svgEl("svg", { viewBox: "0 0 16 16", width: "15", height: "15", fill: "none", "aria-hidden": "true" });
+    svg.appendChild(svgEl("circle", { cx: "8", cy: "8", r: "7", stroke: "currentColor", "stroke-width": "1.3" }));
+    svg.appendChild(svgEl("circle", { cx: "8", cy: "4.6", r: "0.9", fill: "currentColor" }));
+    svg.appendChild(svgEl("path", { d: "M8 7v4.4", stroke: "currentColor", "stroke-width": "1.3", "stroke-linecap": "round" }));
     s.appendChild(svg); return s;
   }
   function ccIsCtrl(n) { if (n.nodeType !== 1) return false; var t = n.tagName; return t === "INPUT" || t === "SELECT" || t === "A" || t === "LABEL" || t === "BUTTON"; }

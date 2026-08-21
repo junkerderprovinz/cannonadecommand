@@ -36,6 +36,9 @@
   // comes from ONE source. The centre hole is a reverse-wound subpath, so plain fill-rule:nonzero knocks it
   // out — verified legible at the 12px this button actually renders (rendered 12/13/14/16px before landing).
   var CC_GEAR_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="none" aria-hidden="true"><path d="M14.647 4.081a.724 .724 0 0 0 1.08 .448c2.439 -1.485 5.23 1.305 3.745 3.744a.724 .724 0 0 0 .447 1.08c2.775 .673 2.775 4.62 0 5.294a.724 .724 0 0 0 -.448 1.08c1.485 2.439 -1.305 5.23 -3.744 3.745a.724 .724 0 0 0 -1.08 .447c-.673 2.775 -4.62 2.775 -5.294 0a.724 .724 0 0 0 -1.08 -.448c-2.439 1.485 -5.23 -1.305 -3.745 -3.744a.724 .724 0 0 0 -.447 -1.08c-2.775 -.673 -2.775 -4.62 0 -5.294a.724 .724 0 0 0 .448 -1.08c-1.485 -2.439 1.305 -5.23 3.744 -3.745a.722 .722 0 0 0 1.08 -.447c.673 -2.775 4.62 -2.775 5.294 0zm-2.647 4.919a3 3 0 1 0 0 6a3 3 0 0 0 0 -6" /></svg>';
+  // The filled trash can, owned by cc-theme.js (same "one glyph, one source" rule as the (i) bubble there).
+  // Local fallback kept byte-compatible per this file's convention, for the case cc-theme.js is late/absent.
+  var CC_TRASH_SVG = (window.CCTheme && window.CCTheme.CC_TRASH_SVG) || '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007zm-10 4a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1m4 0a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1" /><path d="M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005z" /></svg>';
   var PROBES = ["health", "running", "tcp", "http", "exec", "log"], POLICIES = ["abort", "continue", "degrade"];
   var SCHED_ACTIONS = ["start", "stop", "restart"];
   // Docker's four restart-policy names, in the order they appear in the editor dropdown.
@@ -2246,28 +2249,47 @@
   // that on their own once the outer box is where it belongs).
   // The preferred (anchor-relative) top is remembered so removing a row lets the window slide back DOWN to
   // its natural spot instead of staying pinned to the top edge.
+  //
+  // BOTH AXES, and the horizontal one is the guard that was missing: 4.27.0 split the vertical clamp out of
+  // placePop and re-ran it, but `left` stayed a one-shot write inside placePop, so a standing window kept
+  // the left it was given while the viewport shrank under it. Caught measuring the widened Startplan editor
+  // (548px, see .cc-pop-plan) — at a 560px viewport the box hangs off the right edge, page pinned, exactly
+  // the shape of the bug 4.27.0 fixed vertically. This file's own note two comments up says it: a guard
+  // wired at one site is a guard missing at the others. Same remembered-preference pattern as the top:
+  // data-cc-left keeps the anchor-relative spot, so widening the viewport again slides the window back.
+  // Neither write can feed the ResizeObserver — position never changes the box's size.
   function clampPop(pop) {
     try {
       if (!pop || !pop.parentNode) return;
-      var vh = document.documentElement.clientHeight || window.innerHeight;
+      var de = document.documentElement;
+      var vh = de.clientHeight || window.innerHeight, vw = de.clientWidth || window.innerWidth;
       var h = pop.offsetHeight || 0, top = parseFloat(pop.getAttribute("data-cc-top") || "0");
       if (top + h + 8 > vh) top = Math.max(8, vh - h - 8);
       pop.style.top = (window.scrollY + top) + "px";
+      var lAttr = pop.getAttribute("data-cc-left");
+      if (lAttr !== null) {
+        var w = pop.offsetWidth || parseFloat(pop.getAttribute("data-cc-minw") || "0") || 320, left = parseFloat(lAttr);
+        if (left + w + 12 > vw) left = vw - w - 12;
+        pop.style.left = (window.scrollX + Math.max(8, left)) + "px";
+      }
     } catch (e) {}
   }
   function placePop(pop, anchor, minW) {
     popAnchorParts(pop);
     paintSelects();   // the window's own .cc-dsel lists join the colour modes (cc-theme.js) — document-wide so the wrapper rotation stays in one stable sequence
     paintPopChrome(pop);   // …and so does every OTHER control in it (toggles, checkboxes, day chips, buttons, the time field, the ✕). One chokepoint for all three .cc-pop windows, so a new window can never be the one that was forgotten.
-    var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || minW || 320;
-    pop.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 12)) + "px";
+    var r = anchor.getBoundingClientRect();
+    // preferred spot only — clampPop owns BOTH the first placement and every later re-clamp, so the two
+    // can never disagree (they used to: one formula here, a different one on resize).
     pop.setAttribute("data-cc-top", String(r.bottom + 6));
+    pop.setAttribute("data-cc-left", String(r.left));
+    if (minW) pop.setAttribute("data-cc-minw", String(minW));   // the caller's fallback width, for the case offsetWidth reads 0
     clampPop(pop);
     openPop = pop; openPopAnchor = anchor;
     ccScrollLock(true);
     // A ResizeObserver rather than patching every growth site: the editor has several (add/remove a
     // schedule row, the probe switch, an error strip appearing), and a guard wired at one of them is a
-    // guard missing at the others. clampPop only writes `top`, never a size, so it cannot feed itself.
+    // guard missing at the others. clampPop only writes `top`/`left`, never a size, so it cannot feed itself.
     try { if (popRo) { popRo.disconnect(); popRo = null; } if (window.ResizeObserver) { popRo = new ResizeObserver(function () { clampPop(pop); }); popRo.observe(pop); } } catch (e) {}
   }
   var popRo = null, popRz = 0;
@@ -2406,7 +2428,11 @@
     if (togglePop(anchor)) return;
     closePop();
     var existing = workingPlan[name], node = existing || { name: name, after: [], probe: { kind: "health" }, policy: "abort" };
-    var pop = el("div", "cc-pop"); if (localStorage.getItem("cc.rainbow") === "1") pop.classList.add("cc-rainbow");
+    // cc-pop-plan: this window is WIDER than the other two .cc-pop editors, because one schedule row is
+    // action + time + seven day chips + the delete badge and at the shared 340px that row wrapped onto two
+    // lines every single time (user: "mach das startplan fenster breiter so das alles immer in eine zeile
+    // passt"). The measured budget lives with the rule in docker.css.
+    var pop = el("div", "cc-pop cc-pop-plan"); if (localStorage.getItem("cc.rainbow") === "1") pop.classList.add("cc-rainbow");
     // NO container name and NO separator line in the head (explicit user call) — just the
     // close ✕, slim and borderless.
     var head = el("div", "cc-pop-head");
@@ -2558,7 +2584,12 @@
       // window" guard tests openPop.contains(e.target), and this handler DETACHES e.target from the
       // window before that test runs — so removing one schedule row read as a click outside and shut the
       // whole editor, throwing away every other unsaved edit in it. Caught while verifying the re-clamp.
-      var rm = el("span", "cc-sched-x", "✕"); rm.setAttribute("data-tip", t("remove")); rm.addEventListener("click", function (ev) { ev.stopPropagation(); row.remove(); });
+      // (user: "statt dem x ein badge mit mülleimer glyph. der badge soll gleich groß sein wie die tage
+      // daneben") — a bare "✕" character was the last unbadged control in this window: no box, no fill, a
+      // glyph typed rather than drawn. It is a real badge now, box-for-box the .cc-day chip beside it
+      // (26×26, same shape-engine radius), filled semantic red because deleting is destructive (Rule 4,
+      // like .cc-b-del) — which is also why it stays OUT of POP_PAINT_SEL and never takes a palette jewel.
+      var rm = el("span", "cc-sched-x"); rm.innerHTML = CC_TRASH_SVG; rm.setAttribute("data-tip", t("remove")); rm.setAttribute("aria-label", t("remove")); rm.addEventListener("click", function (ev) { ev.stopPropagation(); row.remove(); });
       row.appendChild(act2); row.appendChild(time); row.appendChild(days); row.appendChild(rm);
       ctWrapSelect(act2);   // #17 (user: Startplan-Dropdowns im CC-Style): the schedule action <select> gets the CC dsel panel too — dispatches a native change, so row._read still reads act2.value
       // empty days = every day; only rows with a valid HH:MM time are saved

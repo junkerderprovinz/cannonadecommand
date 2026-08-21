@@ -169,5 +169,64 @@ ok(/\.cc-day-on \{ background: var\(--cc-rb-c/.test(css), 'a selected day chip r
 ok(/\.cc-pop\.cc-rainbow \.cc-set-toggle-on \{ background: var\(--cc-rb-c/.test(css), 'the activation toggle reads --cc-rb-c before the shared --cc-rbaccent');
 ok(/\.cc-btn-primary \{ font-weight: 600; background: var\(--cc-rb-c/.test(css), 'the Save button reads --cc-rb-c before the shared accent');
 
+/* ── 6. the (i) bubble is an OUTLINE RING, in every builder ─────────────────── */
+// 4.26.0 unified four hand-rolled info icons into one builder (good) and, in the same commit, swapped the
+// ring for tabler's FILLED info-circle on the reasoning that GlimStone Rule 20 applied (wrong — Rule 20
+// names the (i) as its ONE exception, because the ring IS the "i" in a circle). The filled path is what a
+// well-meaning "Rule 20 sweep" would put back, so its ABSENCE is pinned here, in the shared builder and in
+// all three byte-compatible fallbacks at once.
+console.log('\nPart 6 — the info bubble is a circle outline, never a filled disc');
+const SCRIPTS = path.dirname(DOCKER);
+const FILLED_INFO = 'M12 2c5.523 0 10 4.477 10 10';                    // tabler icons/filled/info-circle.svg
+const RING = /viewBox="0 0 16 16"[^>]*fill="none"/;                    // the GlimStone reference glyph
+[['cc-theme.js', 'the ONE shared builder'], ['header.js', 'the header.js fallback'],
+ ['settings.js', 'the settings.js fallback'], ['shares.js', 'the shares.js fallback']].forEach(([f, what]) => {
+  const s = fs.readFileSync(path.join(SCRIPTS, f), 'utf8');
+  ok(s.indexOf(FILLED_INFO) < 0, f + ': the filled info-circle disc is gone — ' + what);
+});
+const theme = fs.readFileSync(path.join(SCRIPTS, 'cc-theme.js'), 'utf8');
+ok(RING.test(theme), 'cc-theme.js draws the 16x16 fill="none" ring');
+ok(/<circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1\.3"/.test(theme), 'ring: r=7, stroke-width 1.3, currentColor (GlimStone reference values)');
+ok(/<circle cx="8" cy="4\.6" r="0\.9" fill="currentColor"/.test(theme), 'the dot of the "i": r=0.9 at cy=4.6');
+ok(/<path d="M8 7v4\.4" stroke="currentColor" stroke-width="1\.3" stroke-linecap="round"/.test(theme), 'the stem is a <path> with round caps, NOT a <rect> (a rect rounds its ends differently)');
+// stroke/fill both resolve through currentColor -> .cc-info's var(--txt): neutral, never accent (Rule 8)
+ok(/\.cc-info \{[^}]*color: var\(--txt/.test(css), '.cc-info still resolves currentColor to the neutral text colour');
+ok(/\.cc-info \{[^}]*background: none/.test(css), '.cc-info keeps background:none — with an outline glyph that reset is what stops an inherited chip fill painting a disc behind the ring');
+
+/* ── 7. the schedule row: one line, one delete BADGE the size of a day chip ─── */
+console.log('\nPart 7 — the schedule row fits on one line and its delete control is a badge');
+ok(/el\("span", "cc-sched-x"\); rm\.innerHTML = CC_TRASH_SVG/.test(src), 'the delete control carries the trash SVG, not a typed "✕" character');
+ok(!/el\("span", "cc-sched-x", "✕"\)/.test(src), 'the bare ✕ character is gone from docker.js');
+ok(/CC_TRASH_SVG = \(window\.CCTheme && window\.CCTheme\.CC_TRASH_SVG\)/.test(src), 'docker.js takes the glyph from cc-theme.js, with a local fallback — one source, like the (i)');
+const TRASH = 'M20 6a1 1 0 0 1 .117 1.993';                            // tabler icons/filled/trash.svg
+ok(theme.indexOf(TRASH) >= 0, 'cc-theme.js carries the FILLED tabler trash (Rule 20), verbatim from the set');
+ok(css.indexOf(TRASH) >= 0, 'the Plugins-page delete button uses the SAME can — no second trash design in CC');
+ok(!/polyline points='3 6 5 6 21 6'/.test(css), 'and the old stroke-drawn outline trash is gone from docker.css');
+// "gleich gross wie die tage daneben" is only true if it cannot drift — so the box is ONE declaration
+const shared = /\.cc-day, \.cc-sched-x \{[^}]*\}/.exec(css);
+ok(!!shared, '.cc-day and .cc-sched-x share ONE geometry rule, so the two boxes cannot drift apart');
+if (shared) {
+  ['width: 26px', 'height: 26px', 'padding: 0', 'border: none', 'box-sizing: border-box', 'flex: none'].forEach(d =>
+    ok(shared[0].indexOf(d) >= 0, 'the shared box declares ' + d));
+}
+ok(/html \.cc-limbtn, html \.cc-day, html \.cc-sched-x,/.test(css), 'both are swept by the shape engine together, so a Badge-Form change moves the badge and the chips as one');
+ok(/\.cc-sched-x \{ margin-left: auto; background: var\(--cc-err/.test(css), 'the badge is semantic red (Rule 4) — destructive, so never accent/rainbow');
+ok(!/cc-shares-rbneutral[^\n]*\.cc-sched-x/.test(css) && POP_PAINT_SEL.indexOf('.cc-sched-x') < 0, 'and it is in no colour-mode sweep at all, so nothing can repaint it');
+// the window itself
+ok(/el\("div", "cc-pop cc-pop-plan"\)/.test(src), 'the Startplan editor opens with .cc-pop-plan');
+ok(/\.cc-pop\.cc-pop-plan \{ width: 548px; \}/.test(css), 'which is 548px wide — measured: 454 content + 18 row + 28 list + 28 section = 528 is the wrap threshold');
+ok(/\.cc-pop \.cc-sched-row \.cc-dsel \{ flex: none; width: 104px; \}/.test(css), 'the action dropdown is pinned to its content width (a flex:1 basis:0 wrapper contributes ~0 to the line break and then swallows the leftover)');
+ok(/\.cc-sched-row \{[^}]*flex-wrap: wrap/.test(css), 'flex-wrap stays as the sub-528px fallback — the 92vw cap can still take the window below that');
+
+/* ── 8. the viewport clamp covers BOTH axes ─────────────────────────────────── */
+console.log('\nPart 8 — a standing window is re-clamped on both axes');
+const clamp = grabFn('clampPop');
+ok(/data-cc-top/.test(clamp), 'clampPop still remembers the preferred top');
+ok(/data-cc-left/.test(clamp), 'and the preferred left — a wider window hangs off the RIGHT edge when the viewport shrinks, the same bug 4.27.0 fixed vertically');
+ok(/style\.left =/.test(clamp), 'clampPop is what writes left now');
+const place = grabFn('placePop');
+ok(!/style\.left =/.test(place), 'placePop no longer writes left itself — one formula for the first placement and every re-clamp, so they cannot disagree');
+ok(/data-cc-left/.test(place), 'placePop records the anchor-relative left as the preference');
+
 console.log('\n' + (fail ? 'FAILED ' + fail + ' of ' + (pass + fail) : 'OK  ' + pass + ' passed'));
 process.exit(fail ? 1 : 0);

@@ -299,7 +299,10 @@ html.cc-tools-on .cc-b-del.cc-b-delicon {
   width: 32px !important; min-width: 32px !important; height: 30px !important; padding: 0 !important;
   font-size: 0 !important; letter-spacing: 0 !important; text-transform: none !important;
   background-color: var(--cc-err, #d9433f) !important;   /* filled red (user: "mit ausgefuellter farbe") — matches the .cc-b-del badge */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'/%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'/%3E%3Cline x1='10' y1='11' x2='10' y2='17'/%3E%3Cline x1='14' y1='11' x2='14' y2='17'/%3E%3C/svg%3E") !important;
+  /* the SAME can as the Startplan row's delete badge — tabler-icons (MIT) icons/filled/trash.svg. This was
+     the last stroke-drawn trash left in CC (fill:none + stroke-width:2), i.e. an outline icon under Rule
+     20, and a second trash design next to the filled one. One glyph, both mechanisms. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007zm-10 4a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1m4 0a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1'/%3E%3Cpath d='M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005z'/%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important; background-position: center !important; background-size: 15px !important;
   border: none !important; box-shadow: none !important;
   border-radius: var(--cc-b-radius, 6px) !important; cursor: pointer;
@@ -627,6 +630,22 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* give back ex
 /* the stat windows are sized so field + unit + dot fit WITHOUT squeezing (user) */
 .cc-pop.cc-pop-stat { width: 372px; }
 .cc-pop.cc-pop-wide.cc-pop-stat { width: 462px; }
+/* The Startplan editor, the widest of the three .cc-pop windows — and it has to be, because a schedule row
+   is the widest single row CC renders in a popup. Measured on the box (offsetWidth, not during the
+   cc-pop-in scale animation, which reads ~1.5% short and is how a "wide enough" number gets picked wrong):
+     104 dropdown + 100 time field + 200 day chips (7 x 26 + 6 x 3 gap) + 26 delete badge + 3 x 8 gap = 454
+     + 2 x  9  .cc-sched-row padding      = 472
+     + 2 x 14  .cc-sched-list padding     = 500
+     + 2 x 14  .cc-pop-auto MARGIN        = 528  -> the exact wrap threshold
+   That last inset is the one worth writing down: the section wrapper's margin is easy to miss, and a window
+   sized to 500 still wrapped by exactly 8px. 548 leaves 20px of slack rather than parking the row ON the
+   threshold, where a scrollbar in .cc-pop-mid or a pixel of font drift puts the badge back on line two.
+   `flex-wrap: wrap` STAYS on the row on purpose: the `max-width: 92vw` cap can still take the window below
+   528px on a phone-width viewport, and wrapping is the right answer there — it is simply never reached at
+   any desktop width.
+   The extra width is height-neutral, so v4.27.0's ResizeObserver re-clamp is untouched; the same
+   `clientWidth - w - 12` clamp in placePop keeps the wider box inside the viewport horizontally. */
+.cc-pop.cc-pop-plan { width: 548px; }
 /* every editor field the SAME clean box: NO border, just a lighter background */
 .cc-in { flex: 1; background: #2e2e2e; color: #e6e6e6; border: none !important; border-radius: 6px; padding: 5px 8px; font-size: 12px; }
 /* Focus = a BRIGHTNESS STEP, never a ring (GlimStone Rule 14, and the user's "keine Rahmen/Linien" law).
@@ -680,7 +699,19 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { filter
 .cc-sched-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 14px 2px; }
 /* each schedule on its OWN tidy card so action / time / days don't run together */
 .cc-sched-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #1e1e1e; border: none; border-radius: 7px; padding: 8px 9px; }
-.cc-sched-act { flex: none; width: 92px; }
+.cc-sched-act { flex: none; width: 104px; }
+/* ── THE ROW MUST FIT ON ONE LINE (user: "mach das startplan fenster breiter so das alles immer in eine
+   zeile passt"). Two things had to change together, and only widening the window would NOT have been
+   enough: the action dropdown is wrapped by ctWrapSelect into a .cc-dsel, and `.cc-pop .cc-dsel` sets
+   `flex: 1; min-width: 0` — flex-basis 0 with the automatic minimum size switched off, so the wrapper
+   contributes ~0 to the line-break decision and then absorbs whatever is left over. At 340px that meant the
+   day chips and the delete badge wrapped to a second line while the dropdown sat half-empty on the first.
+   Pinned to its content width instead, so a row's width is deterministic and every row lines up:
+   20px trigger padding + 50px for the widest label ("Neustart", measured at the trigger's own 13px) + 8px
+   gap + 4px caret margin + 8px caret = 90, rounded up to 104 so English/longer labels keep breathing room.
+   Specificity note: `.cc-pop .cc-dsel` (0,2,0) sits LATER in this sheet, so a plain `.cc-sched-row .cc-dsel`
+   would lose the tie — hence the three-class selector. */
+.cc-pop .cc-sched-row .cc-dsel { flex: none; width: 104px; }
 /* ── THE TIME FIELD (user: "der uhrzeitwähler ist nicht im Glimstone! Das ist auch noch hell").
    Two separate problems lived here, and only the second one was ever addressed:
    1. the field's OWN chrome — the hour/minute segments and the selected-segment highlight are drawn by
@@ -728,13 +759,36 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { filter
 .cc-tp-col .cc-drop-it { justify-content: center; padding: 4px 12px; min-width: 44px; }
 .cc-timepick .cc-drop-on::after { content: none; }   /* a 2-character chip has no room for the ✓ — weight + fill already say "picked" */
 .cc-days { display: flex; gap: 3px; flex-wrap: wrap; }
-.cc-day { background: #2e2e2e; color: #9a9a9a; border: none; border-radius: 5px; width: 26px; height: 26px; font-size: 11px; line-height: 1; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; transition: background .12s, color .12s; }
+/* ── ONE BOX, TWO CHIPS. The day chip and the row's delete badge share their whole geometry in a single
+   declaration, because the user's requirement is literally that they are the same size ("der badge soll
+   gleich gross sein wie die tage daneben") — and two separate 26x26 declarations are equal only until
+   somebody edits one of them. Everything that decides the box lives here; only colour, glyph and the
+   badge's `margin-left: auto` are declared per chip below. They are also listed TOGETHER in the shape
+   engine's border-radius sweep further down, so a Badge-Form change moves both (the 5px is the
+   pre-engine fallback). `flex: none` on both: a chip that shrinks is a chip that stopped being 26px. */
+.cc-day, .cc-sched-x {
+  box-sizing: border-box; flex: none; width: 26px; height: 26px; padding: 0;
+  border: none; border-radius: 5px; line-height: 1; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.cc-day { background: #2e2e2e; color: #9a9a9a; font-size: 11px; transition: background .12s, color .12s; }
 /* #Startplan-Audit (user: "im zeitplan die tage nicht in den farbmodi"): both states read the standard
    three-tier chain now. The hover used to be a flat #3a3a3a and the selected day a flat --cc-accent —
    neither could ever rotate, and the rainbow rule further down hard-coded ONE violet for every chip. */
 .cc-day:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
 .cc-day-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
-.cc-sched-x { margin-left: auto; }
+/* ── the row's DELETE control (user: "statt dem x ein badge mit mülleimer glyph. der badge soll gleich
+   gross sein wie die tage daneben"). It was a bare "✕" CHARACTER — the last control in this window with no
+   box at all, a glyph typed rather than drawn. Its BOX comes from the shared `.cc-day, .cc-sched-x` rule
+   above; all that is left here is what genuinely differs. And what differs is the colour, deliberately:
+   deleting is destructive, so the badge wears semantic red and never joins accent/rainbow (Rule 4, like
+   .cc-b-del) — which is also why .cc-sched-x is absent from POP_PAINT_SEL and gets no --cc-rb-c jewel.
+   `margin-left: auto` pushes it to the row's right edge, away from the day chips it must not be mistaken
+   for. The glyph is the filled Tabler can from cc-theme.js (CC_TRASH_SVG), 15px inside the 26px box —
+   the same ratio the .cc-b-delicon button on the Plugins page uses. */
+.cc-sched-x { margin-left: auto; background: var(--cc-err, #d9433f); color: #fff; transition: filter .12s; }
+.cc-sched-x svg { width: 15px; height: 15px; display: block; }
+.cc-sched-x:hover { filter: brightness(1.12); }
 /* CPU-pinning core grid (like the VM settings): one clickable cell per logical core */
 .cc-pin-row { align-items: flex-start; }
 /* VM-manager-style core picker: one BOX per physical core, its hyperthreads stacked
@@ -767,8 +821,8 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { filter
 /* (the hard-coded violet .cc-pop.cc-rainbow .cc-day-on is GONE — it painted every selected day one fixed
    #8b5cf6 in rainbow AND in flag mode, i.e. a colour that appears in no user palette at all. .cc-day-on
    above now carries the standard chain for all three modes.) */
-.cc-sched-x { cursor: pointer; color: #8a8a8a; padding: 0 4px; }
-.cc-sched-x:hover { color: var(--cc-err, #d9433f); }   /* SEMANTIC red (Rule 4) — a destructive control never joins the palette, like .cc-b-del */
+/* (the second, grey-text .cc-sched-x block that used to sit here is GONE — the badge is declared ONCE,
+   next to .cc-day above, so "same size as the day chips" is verifiable in one place instead of two.) */
 .cc-plan-mark { margin-left: 5px; opacity: .85; font-size: 10px; }
 .cc-plan-auto .cc-b-k { position: relative; }
 
@@ -2226,7 +2280,7 @@ html.cc-shares-rbneutral #cc-settings .cc-set-tab:hover:not(.cc-set-tab-on) { ba
 html .cc-b, html .cc-badge, html .cc-pill,
 html .cc-actbtn, html .cc-seg-btn, html .cc-set-tab, html nav.tabs .tabs-container > button[role=tab],
 html .cc-set-toggle, html .cc-set-knob,
-html .cc-limbtn, html .cc-day, html .cc-btn, html .cc-hgear-home, html .sl-chip,
+html .cc-limbtn, html .cc-day, html .cc-sched-x, html .cc-btn, html .cc-hgear-home, html .sl-chip,
 html .cc-enh td.updatecolumn span.green-text, html .cc-enh td.updatecolumn span.orange-text,
 html .cc-enh td.updatecolumn a, html .cc-enh td.updatecolumn div.advanced span,
 html .cc-enh #docker_list .switch-button-background, html .ToggleViewMode .switch-button-background,

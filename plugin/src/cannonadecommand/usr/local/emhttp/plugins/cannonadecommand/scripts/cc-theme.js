@@ -161,12 +161,19 @@
   // ccInfoIcon each hand-rolled the same ring-plus-stem SVG with slightly different radii/stroke widths
   // (r=7.1/sw=1.2 twice, r=7/sw=1.4 once), and docker.js infoBubble was a different component altogether
   // (a text "ⓘ" on a disc, with its own locally-anchored .cc-tip child). They now all call this.
-  // Rule 20 on top: the glyph is tabler-icons (MIT) icons/filled/info-circle.svg — a FILLED disc with the
-  // "i" knocked out, not the hand-drawn outline ring, which was literally a border around a shape.
-  // NEUTRAL, never accent (Rule 8): the colour comes from .cc-info in the sheets, which reads var(--txt).
+  // THE GLYPH IS AN OUTLINE RING, and that is deliberate — it is the ONE exception to Rule 20 (icons are
+  // filled) and to Rule 5 (no border lines), spelled out in GlimStone's Rule 20 and its "Die Infoblase"
+  // section. 4.26.0 got this WRONG: unifying the four builders was right, but it also swapped the ring for
+  // tabler icons/filled/info-circle.svg on the reasoning that Rule 20 applied. It does not. The ring IS the
+  // letter "i" set in a circle — filling it turns the glyph into a meaningless disc rather than a cleaner
+  // "i", and the circle is a meaning-bearing line, not decorative box chrome. Byte-for-byte the reference
+  // markup from GlimStone (BombVault's InfoBubble.tsx): r=7, stroke-width=1.3, dot r=0.9, and the stem is a
+  // <path> with stroke-linecap="round" — NOT a <rect>, whose rx rounds the ends visibly differently.
+  // NEUTRAL, never accent (Rule 8): stroke and fill are both currentColor, and .cc-info in the sheets
+  // resolves that to var(--txt) at ~.8 opacity (full on hover/focus).
   // The TEXT is carried as data-tip and rendered by header.js's ONE body-level #cc-tipfloat — never a
   // local child, which any overflow:hidden ancestor clips.
-  var CC_INFO_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><path d="M12 2c5.523 0 10 4.477 10 10a10 10 0 0 1 -19.995 .324l-.005 -.324l.004 -.28c.148 -5.393 4.566 -9.72 9.996 -9.72zm0 9h-1l-.117 .007a1 1 0 0 0 0 1.986l.117 .007v3l.007 .117a1 1 0 0 0 .876 .876l.117 .007h1l.117 -.007a1 1 0 0 0 .876 -.876l.007 -.117l-.007 -.117a1 1 0 0 0 -.764 -.857l-.112 -.02l-.117 -.006v-3l-.007 -.117a1 1 0 0 0 -.876 -.876l-.117 -.007zm.01 -3l-.127 .007a1 1 0 0 0 0 1.986l.117 .007l.127 -.007a1 1 0 0 0 0 -1.986l-.117 -.007z" /></svg>';
+  var CC_INFO_SVG = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3" /><circle cx="8" cy="4.6" r="0.9" fill="currentColor" /><path d="M8 7v4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>';
   function infoIcon(tip) {
     var s = document.createElement("span");
     s.className = "cc-info";
@@ -176,7 +183,13 @@
     return s;
   }
 
-  window.CCTheme = { RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects, gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily, CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon };
+  // ── THE TRASH GLYPH — one filled can for every icon-only destructive control, same reasoning as the
+  // (i) above: a second hand-drawn version is how the four info bubbles drifted apart in the first place.
+  // tabler-icons (MIT) icons/filled/trash.svg, copied verbatim from the set's own FILLED variant per Rule
+  // 20 — NOT the outline path with fill/stroke swapped, which turns open stroke geometry into a scribble.
+  var CC_TRASH_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007zm-10 4a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1m4 0a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1" /><path d="M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005z" /></svg>';
+
+  window.CCTheme = { RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects, gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily, CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG };
 
   // ── cross-origin/cross-browser UI-settings sync (user: "wenn CC aktiviert ist sieht es in
   // unterschiedlichen Browsern unterschiedlich aus... können wir das persistent machen?").
