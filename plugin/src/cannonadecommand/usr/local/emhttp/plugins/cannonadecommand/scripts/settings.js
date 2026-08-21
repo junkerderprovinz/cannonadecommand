@@ -1696,7 +1696,13 @@
   // live-highlight the preset swatch that matches the current accent (no re-render)
   function syncSwOn() { var a = (accent || "").toLowerCase(); Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-sw")).forEach(function (sw) { sw.classList.toggle("cc-set-sw-on", (sw.dataset.c || "").toLowerCase() === a); }); }
   function thc(t) { var e = el("th", null, t); return e; }
-  function chkCell(key, v, color) { var td = el("td", "cc-set-chk"); var cb = el("input"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); if (rainbow && color) cb.style.accentColor = color; cb.addEventListener("change", function () { var cur = colview[key] || { s: true, a: true }; colview[key] = { s: cur.s, a: cur.a }; colview[key][v] = cb.checked; set("cc.colview2", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
+  // The badge-visibility matrix is the ONE place this page builds checkboxes, and it was still handing the
+  // operating system's box a tint via accent-color. It now uses CC's own .cc-cb widget (docker.css), which
+  // the Startplan editor's audit turned into a shared class — the per-badge colour it already carried moves
+  // onto --cc-rb-c, so each cell keeps wearing its OWN badge's colour instead of one flat accent, and the
+  // tick gets the matching contrast ink (a white tick is invisible on a light badge colour).
+  function ccTick(c) { return "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='" + encodeURIComponent(c) + "' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>\")"; }
+  function chkCell(key, v, color) { var td = el("td", "cc-set-chk"); var cb = el("input", "cc-cb"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); if (rainbow && color) { cb.style.setProperty("--cc-rb-c", color); cb.style.setProperty("--cc-rb-ct", idealText(color)); cb.style.setProperty("--cc-cb-tick", ccTick(idealText(color))); } else { cb.style.setProperty("--cc-cb-tick", ccTick(idealText(accent))); } cb.addEventListener("change", function () { var cur = colview[key] || { s: true, a: true }; colview[key] = { s: cur.s, a: cur.a }; colview[key][v] = cb.checked; set("cc.colview2", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
   // #4 (user): every segmented option row is now a UNIFIED CC dropdown. segRow() delegates to dropRow()
   // (defined below, hoisted) so ALL callers (Animationen, Dichte, Badge-Form, Badge-Stil, Kachelgröße,
   // Ansicht, Temperatur-Warnschwelle) convert at once with the SAME (value,label) opts + the SAME onChange —

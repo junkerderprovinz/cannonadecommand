@@ -2104,12 +2104,18 @@
       });
       // FILLED buttons in every popup (match the badge look): primary = accent fill,
       // secondary = solid grey fill — no more outline style.
+      // #Startplan-Audit: the FILL and the hover are no longer written here. An inline
+      // `background: … !important` beats Unraid's theme, but it also beats CC's own rules — so the
+      // popup buttons could never take a per-button --cc-rb-c jewel (the Save button sat on the single
+      // shared --cc-btn-accent for a whole window) and the reactive sub-mode's rest-grey never reached
+      // them either. docker.css now carries the same weight via `html .cc-pop .cc-btn`, where the
+      // colour-mode chain and :hover still resolve. Only the border stays inline — Unraid really does
+      // put a border on these and there is nothing mode-dependent about removing it.
       Array.prototype.slice.call(root.querySelectorAll(".cc-btn")).forEach(function (b) {
-        var prim = b.classList.contains("cc-btn-primary");
-        b.style.setProperty("background", prim ? "var(--cc-btn-accent, var(--cc-accent, #2f6feb))" : "#3a3a3a", "important");
-        b.style.setProperty("color", prim ? "var(--cc-accent-text, #fff)" : "#e6e6e6", "important");
+        b.style.removeProperty("background");   // clear the stamp older releases left behind (a hot-swapped script keeps the DOM)
+        b.style.removeProperty("color");
+        b.style.removeProperty("filter");
         b.style.setProperty("border", "none", "important");
-        if (!b._ccHov) { b._ccHov = 1; b.addEventListener("mouseenter", function () { b.style.setProperty("filter", "brightness(1.18)", "important"); }); b.addEventListener("mouseleave", function () { b.style.removeProperty("filter"); }); }
       });
       // uniform popup style everywhere, applied automatically: no head/foot separator lines
       var hh = root.querySelector(".cc-pop-head"); if (hh) hh.style.setProperty("border-bottom", "none", "important");
@@ -2125,15 +2131,58 @@
         i.style.setProperty("min-width", "0", "important");
         i.style.setProperty("max-width", "100%", "important");
         i.style.setProperty("box-sizing", "border-box", "important");
-        i.style.setProperty("background", "#2e2e2e", "important");
+        // The FILL is no longer stamped here. Two reasons, both live-measured: the `background` shorthand
+        // also reset background-image, which is where the field affordances live (the select caret, and
+        // the clock glyph on .cc-sched-time — it vanished the moment this ran); and an inline !important
+        // rest colour cannot be beaten by :focus, so the focus brightness step never appeared on any field
+        // in any CC window. `html .cc-pop .cc-in` in docker.css carries the same weight against Unraid and
+        // leaves :focus working. removeProperty clears what older releases stamped (hot-swap keeps the DOM).
+        i.style.removeProperty("background");
+        i.style.removeProperty("background-color");
         i.style.setProperty("border", "none", "important");
         i.style.setProperty("box-shadow", "none", "important");
         i.style.setProperty("margin", "0", "important");
         i.style.setProperty("min-height", "0", "important");
         i.style.setProperty("height", "auto", "important");
-        i.style.setProperty("padding", "5px 8px", "important");
+        // the time field keeps room on the right for its clock glyph (docker.css asks for 24px there;
+        // this inline padding would otherwise win and sit the text under the icon).
+        i.style.setProperty("padding", i.classList.contains("cc-sched-time") ? "5px 24px 5px 8px" : "5px 8px", "important");
         i.style.setProperty("border-radius", "6px", "important");
         i.style.setProperty("line-height", "1.35", "important");
+      });
+    } catch (e) {}
+  }
+  // ── ONE PAINTER FOR EVERY CONTROL IN A CC WINDOW (user, verbatim: "bitte immer alles unaufgefordert in GS
+  // und die farbmodi intergrieren! MErken! Für immmer!"). Before this, each control class in the Startplan
+  // editor reached the colour modes through a DIFFERENT mechanism, or through none:
+  //   · the dropdowns  -> cc-theme.js paintSelects()            (correct, rotating per element);
+  //   · popup titles   -> header.js paintPopups()               (correct, rotating per element);
+  //   · the checkboxes -> a HARD-CODED six-colour array inside openEditor, so they showed rainbow hues even
+  //                       in FLAG mode and ignored a custom palette completely;
+  //   · the manage toggle, the day chips, the buttons, the ✕ and the time field -> never stamped at all, so
+  //     their var() chains fell through to the ONE shared --cc-rbaccent (and the selected day to a
+  //     hard-coded violet that exists in no palette).
+  // This is the missing chokepoint: ONE continuous DOM-order sequence per window, so adjacent controls can
+  // never land on the same slot, and every control reads the same var chain in the sheets.
+  // Reactive sub-mode is honoured the way enhanceShipLogBubble established it: ALWAYS stamp the custom
+  // properties, never force a rest colour — the sheets decide whether a control rests neutral until hover.
+  var POP_PAINT_SEL = ".cc-set-toggle, input[type=checkbox], .cc-day, .cc-btn, .cc-sched-time, .cc-pop-x";
+  // The checkbox tick carries its own contrast colour: a white tick vanishes on a light palette slot (a
+  // white flag stripe, a pale accent). `#` must be percent-escaped or it truncates the data URI.
+  function ccTickURL(c) {
+    return "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='" + encodeURIComponent(c) + "' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>\")";
+  }
+  function paintPopChrome(root) {
+    try {
+      if (!root) return;
+      var rb = themingOn() && localStorage.getItem("cc.rainbow") === "1";
+      Array.prototype.slice.call(root.querySelectorAll(POP_PAINT_SEL)).forEach(function (e, i) {
+        // Normal mode: un-stamp so the sheets resolve to the plain accent — but still work out the tick
+        // colour, because a user accent can be light too and the CSS default tick is white.
+        var c = rb ? ccRbColor(i) : (effc("accent") || "#2f6feb"), tx = idealText(c);
+        if (rb) { e.style.setProperty("--cc-rb-c", c); e.style.setProperty("--cc-rb-ct", tx); }
+        else { e.style.removeProperty("--cc-rb-c"); e.style.removeProperty("--cc-rb-ct"); }
+        if (e.type === "checkbox") e.style.setProperty("--cc-cb-tick", ccTickURL(tx));
       });
     } catch (e) {}
   }
@@ -2209,6 +2258,7 @@
   function placePop(pop, anchor, minW) {
     popAnchorParts(pop);
     paintSelects();   // the window's own .cc-dsel lists join the colour modes (cc-theme.js) — document-wide so the wrapper rotation stays in one stable sequence
+    paintPopChrome(pop);   // …and so does every OTHER control in it (toggles, checkboxes, day chips, buttons, the time field, the ✕). One chokepoint for all three .cc-pop windows, so a new window can never be the one that was forgotten.
     var r = anchor.getBoundingClientRect(), w = pop.offsetWidth || minW || 320;
     pop.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - w - 12)) + "px";
     pop.setAttribute("data-cc-top", String(r.bottom + 6));
@@ -2286,6 +2336,71 @@
   // auto-start after a host reboot). Semantic amber — never rainbow/accent — like cc-b-del.
   function restartWarnBadge() {
     var b = badgeInfo("⚠", t("rpWarn"), "restart"); b.classList.add("cc-b-warn"); b.setAttribute("data-tip", t("rpWarnTip")); return b;
+  }
+  // ── THE TIME PICKER (user: "Auch der uhrzeitwähler ist nicht im Glimstone! Das ist auch noch hell.")
+  // A native <input type=time> expands into the BROWSER's own drop-down, which CSS cannot reach past a
+  // couple of vendor pseudo-elements — so it opened as a light panel over CC's dark window. GlimStone
+  // Rule 18 has one answer for that: a native control is REPLACED, not talked round, using the widget the
+  // app already has. This window already builds exactly such a panel for "Hängt ab von" (.cc-drop), so the
+  // picker is that same panel with two columns — hours 00-23, minutes 00-59, no loss of precision. Same
+  // class, same lifecycle (closePop() already sweeps .cc-drop), and cc-theme.js paintSelects() therefore
+  // puts it in Normal/Rainbow/Flag for free, with no painter of its own.
+  // The <input> stays the source of truth: typing HH:MM works exactly as before and row._read is untouched.
+  // docker.css hides the native indicator and still sets `color-scheme: dark`, so the browser's own picker
+  // is dark too for anyone who reaches it by keyboard.
+  function ccTimePicker(input) {
+    var panel = null, chips = [[], []];
+    function closePanel() { if (panel) { panel.remove(); panel = null; document.removeEventListener("mousedown", onDoc, true); } }
+    function onDoc(e) { if (panel && !panel.contains(e.target) && e.target !== input) closePanel(); }
+    function two(n) { return (n < 10 ? "0" : "") + n; }
+    function parts() { var m = /^(\d{1,2}):(\d{1,2})$/.exec(input.value || ""); return m ? [Math.min(23, +m[1]), Math.min(59, +m[2])] : [null, null]; }
+    function write(h, mi) {
+      var p = parts();
+      input.value = two(h == null ? (p[0] == null ? 0 : p[0]) : h) + ":" + two(mi == null ? (p[1] == null ? 0 : p[1]) : mi);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    function open() {
+      if (panel) return;
+      panel = el("div", "cc-drop cc-timepick");
+      chips = [[], []];
+      var cur = parts();
+      [{ n: 24, on: cur[0], set: function (v) { write(v, null); } }, { n: 60, on: cur[1], set: function (v) { write(null, v); } }].forEach(function (col, ci) {
+        var c = el("div", "cc-tp-col");
+        for (var v = 0; v < col.n; v++) {
+          var it = el("div", "cc-drop-it" + (v === col.on ? " cc-drop-on" : ""), two(v));
+          // mousedown + preventDefault, exactly like the dependency list: the field keeps focus and the
+          // panel stays open, so hour and minute are picked in one visit instead of two.
+          it.addEventListener("mousedown", (function (set, ci2, it2, v2) {
+            return function (ev) {
+              ev.preventDefault(); ev.stopPropagation();
+              set(v2);
+              chips[ci2].forEach(function (o) { o.classList.remove("cc-drop-on"); });
+              it2.classList.add("cc-drop-on");
+            };
+          })(col.set, ci, it, v));
+          chips[ci].push(it); c.appendChild(it);
+        }
+        panel.appendChild(c);
+      });
+      document.body.appendChild(panel);
+      // place it under the field, or ABOVE when a schedule row sits near the bottom edge — the page behind
+      // is scroll-locked while a window stands (Rule 15), so a panel off the fold would be unreachable.
+      var r = input.getBoundingClientRect(), ph = panel.offsetHeight, pw = panel.offsetWidth;
+      var vh = document.documentElement.clientHeight || window.innerHeight, vw = document.documentElement.clientWidth || window.innerWidth;
+      var top = (r.bottom + 3 + ph > vh && r.top - 3 - ph > 0) ? r.top - 3 - ph : r.bottom + 3;
+      // clamp BOTH edges: a schedule row sits at the right-hand end of a window that is itself clamped to
+      // the viewport, so left-only clamping let the panel run off the right edge (measured: right 1514 in a
+      // 1500px viewport). Same reasoning as clampPop — with the page pinned, off-screen is unreachable.
+      panel.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + vw - pw - 8)) + "px";
+      panel.style.top = (window.scrollY + Math.max(8, Math.min(top, vh - ph - 8))) + "px";
+      // open ON the current value: 22:45 must not show 00 at the top of both columns
+      chips.forEach(function (cs) { for (var i = 0; i < cs.length; i++) if (cs[i].classList.contains("cc-drop-on")) { cs[i].parentNode.scrollTop = Math.max(0, cs[i].offsetTop - 64); break; } });
+      paintSelects();   // the picker joins the colour modes like every other CC dropdown
+      document.addEventListener("mousedown", onDoc, true);
+    }
+    input.addEventListener("focus", open);
+    input.addEventListener("click", function (ev) { ev.stopPropagation(); open(); });
   }
   function openEditor(anchor, name) {
     if (togglePop(anchor)) return;
@@ -2391,12 +2506,14 @@
     // ── Watchdog (auto-restart) — independent of plan membership ──
     var wd = watchdogFor(name);
     var wSec = el("div", "cc-pop-auto");
-    var wHead = el("label", "cc-pop-row cc-pop-toggle"), wEn = el("input"); wEn.type = "checkbox"; wEn.checked = !!(wd && wd.enabled);
+    // cc-cb = CC's OWN checkbox (docker.css), not the operating system's box tinted with accent-color —
+    // GlimStone Rule 18, and the last native control class left in this window.
+    var wHead = el("label", "cc-pop-row cc-pop-toggle"), wEn = el("input", "cc-cb"); wEn.type = "checkbox"; wEn.checked = !!(wd && wd.enabled);
     wHead.appendChild(wEn); wHead.appendChild(el("span", "cc-pop-sech", t("watchdog"))); wSec.appendChild(wHead);
     var wBody = el("div", "cc-pop-sub" + (wEn.checked ? "" : " cc-dis"));
-    var wUrow = el("label", "cc-pop-row"), wU = el("input"); wU.type = "checkbox"; wU.checked = wd ? !!wd.on_unhealthy : true;
+    var wUrow = el("label", "cc-pop-row"), wU = el("input", "cc-cb"); wU.type = "checkbox"; wU.checked = wd ? !!wd.on_unhealthy : true;
     wUrow.appendChild(wU); wUrow.appendChild(el("span", null, " " + t("wUnhealthy"))); wBody.appendChild(wUrow);
-    var wXrow = el("label", "cc-pop-row"), wX = el("input"); wX.type = "checkbox"; wX.checked = wd ? !!wd.on_exit : false;
+    var wXrow = el("label", "cc-pop-row"), wX = el("input", "cc-cb"); wX.type = "checkbox"; wX.checked = wd ? !!wd.on_exit : false;
     wXrow.appendChild(wX); wXrow.appendChild(el("span", null, " " + t("wExit"))); wBody.appendChild(wXrow);
     var wMrow = el("div", "cc-pop-row"); wMrow.appendChild(el("label", "cc-pop-lbl", t("wMax")));
     // Default a NEW watchdog to a sane per-hour cap (not unlimited), so a flapping
@@ -2412,7 +2529,7 @@
     // Kept to ONE collapsed line-group (a toggle + two inputs) so the editor stays übersichtlich.
     var ni = idleStopFor(name);
     var nSec = el("div", "cc-pop-auto");
-    var nHead = el("label", "cc-pop-row cc-pop-toggle"), nEn = el("input"); nEn.type = "checkbox"; nEn.checked = !!(ni && ni.enabled);
+    var nHead = el("label", "cc-pop-row cc-pop-toggle"), nEn = el("input", "cc-cb"); nEn.type = "checkbox"; nEn.checked = !!(ni && ni.enabled);
     nHead.appendChild(nEn); nHead.appendChild(el("span", "cc-pop-sech", t("idleStop"))); nHead.appendChild(infoBubble(t("idleFoot"))); nSec.appendChild(nHead);   // idleFoot as bubble on the header, no loose foot text (user)
     var nBody = el("div", "cc-pop-sub" + (nEn.checked ? "" : " cc-dis"));
     var nMrow = el("div", "cc-pop-row"); nMrow.appendChild(el("label", "cc-pop-lbl", t("idleMin")));
@@ -2434,6 +2551,7 @@
       var row = el("div", "cc-sched-row");
       var act2 = el("select", "cc-in cc-sched-act"); SCHED_ACTIONS.forEach(function (a) { var o = el("option", null, t(a)); o.value = a; if (s && s.action === a) o.selected = true; act2.appendChild(o); });
       var time = el("input", "cc-in cc-sched-time"); time.type = "time"; time.value = (s && s.time) || "";
+      ccTimePicker(time);   // Rule 18: CC's own two-column panel instead of the browser's light drop-down
       var days = el("div", "cc-days"), sel = {}; ((s && s.days) || []).forEach(function (d) { sel[d] = true; });
       DAYS.forEach(function (d) { var b = el("span", "cc-day" + (sel[d[1]] ? " cc-day-on" : ""), d[0]); b.dataset.day = d[1]; b.addEventListener("click", function (e) { e.preventDefault(); b.classList.toggle("cc-day-on"); }); days.appendChild(b); });
       // stopPropagation is LOAD-BEARING, not tidiness: the document-level "click outside closes the
@@ -2449,7 +2567,15 @@
     }
     var sSec = el("div", "cc-pop-auto"); sSec.appendChild(el("div", "cc-pop-sech cc-pop-sech-lone", t("schedules")));
     var sList = el("div", "cc-sched-list"); schedulesFor(name).forEach(function (s) { sList.appendChild(schedRow(s)); }); sSec.appendChild(sList);
-    var addB = el("span", "cc-btn cc-btn-sm", t("addsched")); addB.addEventListener("click", function () { var nr = schedRow(null); sList.appendChild(nr); paintSelects(); }); sSec.appendChild(addB);   // a row added AFTER the window opened still gets its dropdown painted (and the ResizeObserver in placePop re-clamps the window)
+    // A row added AFTER the window opened has to go through the SAME two passes the window itself got, or
+    // it is the one row that misses them. It only ever got paintSelects(): live-measured on the box, a
+    // freshly added row's time field carried no hardenPop stamp at all (116px instead of the 100px every
+    // other row has, Unraid's theme margins back on it) and none of its controls had a --cc-rb-c jewel.
+    // hardenPop is scoped to the new row; paintPopChrome re-runs over the whole window so the rotation
+    // stays ONE continuous sequence rather than restarting at slot 0 inside the new row.
+    var addB = el("span", "cc-btn cc-btn-sm", t("addsched"));
+    addB.addEventListener("click", function () { var nr = schedRow(null); sList.appendChild(nr); hardenPop(nr); paintSelects(); paintPopChrome(pop); });
+    sSec.appendChild(addB);
     pop.appendChild(sSec);
     function readSchedules() { var out = []; Array.prototype.slice.call(sList.children).forEach(function (r) { if (r._read) { var v = r._read(); if (v) out.push(v); } }); return out; }
 
@@ -2488,12 +2614,10 @@
       n.addEventListener("input", function () { arm2(); commit(); });
     });
     probe.addEventListener("change", syncPort);
-    // in rainbow mode, colour the editor's checkboxes too (the manage toggle + day
-    // toggles are handled in CSS via .cc-pop.cc-rainbow).
-    if (localStorage.getItem("cc.rainbow") === "1") {
-      var rbc = ["#1f9d55", "#2f6feb", "#8b5cf6", "#e0912a", "#d9433f", "#0ea5a4"];
-      Array.prototype.slice.call(pop.querySelectorAll("input[type=checkbox]")).forEach(function (cb, i) { cb.style.accentColor = rbc[i % rbc.length]; });
-    }
+    // (the old per-checkbox `accentColor` paint used to live here: a HARD-CODED six-colour list that was
+    // neither the user's rainbow palette nor the flag palette, applied to a native OS box. Both halves are
+    // gone — the boxes are CC's own .cc-cb now, and paintPopChrome stamps the real palette on them from
+    // placePop, together with every other control in the window.)
     document.body.appendChild(pop); hardenPop(pop);
     // #17 (user: die Dropdown-Listen im Startplan sind nicht im CC-Style): give the editor's native
     // <select>s (Bereitschaft/probe, Bei Fehler/policy, Neustart-Policy) the CC dsel panel — the schedule
@@ -3673,7 +3797,14 @@
         } catch (e2) {}
       }, true);
       window.addEventListener("scroll", function () { try { if (menu) positionMenu(); } catch (e) {} }, true);
-      document.addEventListener("click", function (e) { try { if (openPop && !openPop.contains(e.target) && !e.target.closest(".cc-plan")) closePop(); if (menu && !menu.contains(e.target) && !e.target.closest(".cc-hgear")) closeMenu(); } catch (e2) {} });
+      // "Click outside closes the window" — but a panel that BELONGS to the window is not outside it.
+      // .cc-drop is rendered as a direct body child (it has to be: any overflow ancestor would clip it), so
+      // openPop.contains() is false for it and picking an entry read as a click outside. Live-measured with
+      // a real trusted click before the fix: choosing one container in "Hängt ab von" tore down the whole
+      // Startplan editor and threw away every other unsaved edit in it — the same failure mode the ✕ on a
+      // schedule row already had to be guarded against (see schedRow's stopPropagation). The time picker
+      // rides the same class, so both are covered by naming the panel here rather than per widget.
+      document.addEventListener("click", function (e) { try { if (openPop && !openPop.contains(e.target) && !e.target.closest(".cc-plan, .cc-drop")) closePop(); if (menu && !menu.contains(e.target) && !e.target.closest(".cc-hgear")) closeMenu(); } catch (e2) {} });
       document.addEventListener("keydown", function (e) { if (e.key === "Escape") { try { closePop(); closeMenu(); } catch (e2) {} } });
     } catch (e) { /* a failure here must never break Unraid's page */ }
   }

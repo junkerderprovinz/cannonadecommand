@@ -489,8 +489,12 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 /* CC style, NO borders anywhere (user: "keine rahmen oder linien"): buttons are FILLED —
    secondary = neutral fill, primary = accent fill; separation comes from fills + shadows. */
 .cc-btn { background: #2e2e2e; color: #e6e6e6; border: none; border-radius: 5px; padding: 5px 12px; font-size: 12px; cursor: pointer; transition: background .12s, color .12s, filter .12s; }
-.cc-btn:hover { background: var(--cc-accent); color: var(--cc-accent-text, #fff); }
-.cc-btn-primary { font-weight: 600; background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
+/* #Startplan-Audit (user: "der speicher button ... nicht in den farbmodi"): every CC button reads the SAME
+   three-tier colour chain as the badges — its OWN stamped jewel first (paintPopChrome), then the one shared
+   rainbow accent, then the plain accent. Before this both rules went straight to --cc-accent, so a window's
+   buttons could only ever show one flat colour instead of their own rotating slot. */
+.cc-btn:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
+.cc-btn-primary { font-weight: 600; background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
 .cc-btn-primary:hover { filter: brightness(1.14); }
 .cc-seg { display: inline-flex; border: none; border-radius: 6px; overflow: hidden; }
 .cc-seg-btn { background: var(--cc-bg2); color: var(--cc-dim); border: none; padding: 5px 14px; font-size: 12px; cursor: pointer; }
@@ -538,20 +542,42 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* give back ex
 /* Neutralise Unraid's global button/input/select theming INSIDE our popover — it
    lives on document.body, OUTSIDE #cc-settings, so without this it inherits the
    orange borders, the uppercasing that clipped our button labels, and the stray
-   input underlines the user reported. Checkboxes keep the native box but recolour
-   to the chosen accent. */
+   input underlines the user reported. */
 .cc-pop button, .cc-pop input, .cc-pop select, .cc-pop textarea {
   -webkit-appearance: none; appearance: none; outline: none; box-shadow: none !important;
   font-family: inherit; text-transform: none !important; letter-spacing: normal; min-width: 0;
 }
-.cc-pop input[type="checkbox"] {
-  -webkit-appearance: auto; appearance: auto; accent-color: var(--cc-accent, #2f6feb);
-  width: 16px; height: 16px; flex: none; cursor: pointer; margin: 0;   /* 16px = the systemwide checkbox size (.cc-cb-del) */
+/* ── THE CC CHECKBOX (.cc-cb) — GlimStone Rule 18, "ein natives Bedienelement wird ersetzt, nicht
+   überredet". Every checkbox in a CC window was still `appearance: auto` + `accent-color`, i.e. the
+   operating system's own box painted in our accent — the ONE control class in the Startplan editor that
+   never left native chrome (user: "die checkboxen ... nicht in den farbmodi"). CC already draws its own
+   checkbox for the Categories dropdown on the add-container form; that widget is hoisted here into one
+   class so there is a single implementation instead of a second hand-rolled one.
+   Colour is the standard three-tier chain, so it joins Normal/Rainbow/Flag with everything else, and the
+   TICK carries its own contrast colour per element (--cc-cb-tick, stamped by paintPopChrome from
+   idealText) — a white tick would disappear on a light palette slot (a white flag stripe). */
+.cc-cb, .cc-pop input[type="checkbox"] {
+  -webkit-appearance: none !important; appearance: none !important;
+  width: 16px; height: 16px; box-sizing: border-box; flex: none;   /* 16px = the systemwide checkbox size (.cc-cb-del) */
+  border: none !important; outline: none !important; box-shadow: none !important;
+  background-color: rgba(255, 255, 255, .14); background-repeat: no-repeat;
+  background-position: center; background-size: 12px 12px;
+  margin: 0; cursor: pointer; transition: background-color .12s, filter .12s;
 }
+.cc-cb:hover, .cc-pop input[type="checkbox"]:hover { background-color: rgba(255, 255, 255, .24); }
+.cc-cb:checked, .cc-pop input[type="checkbox"]:checked {
+  background-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)));
+  background-image: var(--cc-cb-tick, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"));
+}
+.cc-cb:checked:hover, .cc-pop input[type="checkbox"]:checked:hover { filter: brightness(1.14); }
 .cc-pop-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: none; }   /* no separator line (user: keine Linien) */
 .cc-pop-ttl { display: inline-flex; align-items: center; gap: 8px; }   /* window title + its ONE info bubble (user: aller Infotext oben neben der Ueberschrift) */
-.cc-pop-x { cursor: pointer; color: #8a8a8a; }
-.cc-pop-x:hover { color: #e6e6e6; }
+.cc-pop-x { cursor: pointer; color: #8a8a8a; padding: 1px 6px; border-radius: min(var(--cc-b-radius, 6px), 9px); transition: background .12s, color .12s; }
+/* the window ✕ is a CONTROL, not furniture, so it joins the rotation like ShipLog's .sl-x already does
+   (#45) — it was the last plain-grey-to-plain-white hover left in the editor. A FILLED chip rather than a
+   tinted glyph: colour-as-text would disappear whenever the palette slot (or a user accent) is dark, while
+   a fill always carries its own --cc-rb-ct contrast — the same reason every CC badge is filled. */
+.cc-pop-x:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
 .cc-pop-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }
 .cc-pop-lbl { color: #8a8a8a; font-size: 12px; width: 100px; flex: none; }
 .cc-pop-body.cc-dis { opacity: .4; pointer-events: none; }
@@ -603,13 +629,34 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* give back ex
 .cc-pop.cc-pop-wide.cc-pop-stat { width: 462px; }
 /* every editor field the SAME clean box: NO border, just a lighter background */
 .cc-in { flex: 1; background: #2e2e2e; color: #e6e6e6; border: none !important; border-radius: 6px; padding: 5px 8px; font-size: 12px; }
-.cc-in:focus { background: #383838; outline: none !important; box-shadow: 0 0 0 1px var(--cc-accent, #2f6feb); }
+/* Focus = a BRIGHTNESS STEP, never a ring (GlimStone Rule 14, and the user's "keine Rahmen/Linien" law).
+   The old rule asked for a 1px accent ring that hardenPop's inline `box-shadow: none` silently swallowed —
+   dead code that read as a rule violation. It also used the `background` SHORTHAND, which resets
+   background-image: that is what blanked the clock glyph on .cc-sched-time the moment the field was
+   focused (live-measured: background-image `none` while focused, the icon back on blur). And the step
+   itself never showed either, because hardenPop stamped the rest colour inline with !important — so the
+   field fill now lives in the `html .cc-pop .cc-in` pair below, where :focus can still win. */
+.cc-in:focus { background-color: #383838; outline: none !important; box-shadow: none !important; }
+html .cc-pop .cc-in { background-color: #2e2e2e !important; }
+html .cc-pop .cc-in:focus { background-color: #383838 !important; }
 /* selects lost their native arrow to appearance:none — give them a caret back */
 select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repeat; background-position: right 8px center; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%238a8a8a' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); }
 .cc-port { flex: none; width: 80px; margin-left: 6px; }   /* 80px = the inline popup enforcement in docker.js — keep agreeing */
 .cc-unit { flex: none; width: 68px; margin-left: 6px; }
 .cc-pop-act { gap: 8px; padding: 10px 14px 12px; border-top: none; }
 .cc-pop-act .cc-btn { flex: 1; text-align: center; font-size: 11.5px; padding: 7px 6px; white-space: normal; line-height: 1.2; }
+/* #Startplan-Audit — the buttons in a CC window are styled HERE, not inline from hardenPop().
+   hardenPop() used to stamp `background: … !important` on every .cc-btn so Unraid's theme could not beat
+   it. Inline+important also beats OUR OWN rules though, which is why the Save button sat on the one shared
+   --cc-btn-accent for the whole window (live-measured #5e89c9, no rotation), why "+ Zeitplan" was frozen at
+   a flat #3a3a3a that no hover rule could reach, and why the reactive sub-mode's rest-grey never applied in
+   a popup at all. `html` + the window class gives the same "beats Unraid" weight in a stylesheet, where the
+   colour-mode chain and the :hover state still work. The reactive-neutral block later in this file is more
+   specific again, so it keeps overriding these — that ordering is deliberate. */
+html .cc-pop .cc-btn, html .cc-menu .cc-btn { background: #2e2e2e !important; color: #e6e6e6 !important; border: none !important; }
+html .cc-pop .cc-btn:hover, html .cc-menu .cc-btn:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
+html .cc-pop .cc-btn-primary, html .cc-menu .cc-btn-primary { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
+html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { filter: brightness(1.14); }
 /* Plan editor: each section is a CARD (like the schedule rows) — plan fields, watchdog and
    schedules get their own bordered block, rows sit tight instead of drifting apart. */
 .cc-pop-body { background: transparent; border: none; border-radius: 8px; margin: 10px 14px 6px; padding: 3px 0; }   /* flat: no card fill in the CPU/RAM/BW limit popups (user) — spacing only */
@@ -634,14 +681,59 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 /* each schedule on its OWN tidy card so action / time / days don't run together */
 .cc-sched-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #1e1e1e; border: none; border-radius: 7px; padding: 8px 9px; }
 .cc-sched-act { flex: none; width: 92px; }
-.cc-sched-time { flex: none; width: 100px; }
-/* the native dark clock glyph of <input type=time> is nearly invisible on our dark field —
-   invert it so the picker button is clearly readable ("Uhrsymbol kaum erkennbar"). */
-.cc-sched-time::-webkit-calendar-picker-indicator { filter: invert(0.85); opacity: .9; cursor: pointer; }
+/* ── THE TIME FIELD (user: "der uhrzeitwähler ist nicht im Glimstone! Das ist auch noch hell").
+   Two separate problems lived here, and only the second one was ever addressed:
+   1. the field's OWN chrome — the hour/minute segments and the selected-segment highlight are drawn by
+      the browser against the page's `color-scheme`, which is `normal` on Unraid, so they were painted for
+      a LIGHT UI on our dark field. `color-scheme: dark` on the field is what actually flips that (and it
+      also darkens the browser's own fallback picker for anyone reaching it by keyboard);
+   2. the expanded PICKER — that used to be the operating system's light drop-down. Rule 18: a native
+      control is replaced, not talked round, so the picker is now CC's own .cc-timepick panel (built on
+      the very .cc-drop widget the "Hängt ab von" list in this same window already uses), and the native
+      indicator is hidden. Typing HH:MM in the field keeps working exactly as before.
+   The clock glyph is drawn by us and stays NEUTRAL grey, matching the select caret above — an affordance
+   is furniture (Rule 8), the accent means activity. */
+.cc-sched-time {
+  flex: none; width: 100px; color-scheme: dark;
+  background-repeat: no-repeat; background-position: right 7px center; background-size: 13px 13px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8a8a' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 2'/></svg>");
+  padding-right: 24px !important; cursor: pointer;
+}
+.cc-sched-time:hover { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e6e6e6' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 2'/></svg>"); }
+.cc-sched-time::-webkit-calendar-picker-indicator { display: none !important; }   /* replaced by .cc-timepick */
+.cc-sched-time::-webkit-datetime-edit { padding: 0; color: inherit; }
+.cc-sched-time::-webkit-datetime-edit-fields-wrapper { padding: 0; }
+/* The SELECTED hour/minute segment: Chromium's UA sheet paints it with the platform `Highlight` system
+   colour, which on our dark field arrived as a pale blue block with near-black digits — the last piece of
+   foreign light chrome in this window. Two live experiments on the box settled how to reach it:
+     · `…::-webkit-datetime-edit-hour-field { background-color: … !important }` DOES apply (a test fill
+       painted the segment red/green), because an author !important outranks a normal UA declaration;
+     · the same rule with `:focus` on the pseudo-element does NOT — this Chromium does not match it, so
+       the selected segment cannot be addressed on its own.
+   So the foreign block is suppressed rather than left standing, and the "this field is active" feedback
+   moves to the field itself as a brightness step, which is what GlimStone Rule 14 asks for anyway.
+   NAMED COMPROMISE, not sold as "in style": WHICH of the two segments is selected is drawn by Chromium
+   and stays unreachable — the visible result is a clean dark field, and picking a time is done in CC's
+   own .cc-timepick panel. */
+.cc-sched-time::-webkit-datetime-edit-hour-field,
+.cc-sched-time::-webkit-datetime-edit-minute-field,
+.cc-sched-time::-webkit-datetime-edit-ampm-field {
+  background-color: transparent !important; color: inherit !important;
+  border-radius: min(var(--cc-b-radius, 4px), 6px); outline: none !important;
+}
+/* the CC picker panel: two columns of the SAME chips as every other CC dropdown, so paintSelects()
+   colours it in Normal/Rainbow/Flag with no extra painter. */
+.cc-timepick { flex-direction: row !important; gap: 8px !important; max-height: min(46vh, 232px); }
+.cc-tp-col { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+.cc-tp-col .cc-drop-it { justify-content: center; padding: 4px 12px; min-width: 44px; }
+.cc-timepick .cc-drop-on::after { content: none; }   /* a 2-character chip has no room for the ✓ — weight + fill already say "picked" */
 .cc-days { display: flex; gap: 3px; flex-wrap: wrap; }
 .cc-day { background: #2e2e2e; color: #9a9a9a; border: none; border-radius: 5px; width: 26px; height: 26px; font-size: 11px; line-height: 1; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; transition: background .12s, color .12s; }
-.cc-day:hover { background: #3a3a3a; color: #e6e6e6; }
-.cc-day-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
+/* #Startplan-Audit (user: "im zeitplan die tage nicht in den farbmodi"): both states read the standard
+   three-tier chain now. The hover used to be a flat #3a3a3a and the selected day a flat --cc-accent —
+   neither could ever rotate, and the rainbow rule further down hard-coded ONE violet for every chip. */
+.cc-day:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
+.cc-day-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
 .cc-sched-x { margin-left: auto; }
 /* CPU-pinning core grid (like the VM settings): one clickable cell per logical core */
 .cc-pin-row { align-items: flex-start; }
@@ -666,13 +758,17 @@ select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repea
 .cc-pop.cc-rainbow .cc-core-on.cc-rb-5 { background: #0ea5a4; border-color: #0ea5a4; color: #fff; }
 .cc-pop.cc-rainbow .cc-core-on.cc-rb-6 { background: #e05299; border-color: #e05299; color: #fff; }
 .cc-pop.cc-rainbow .cc-core-on.cc-rb-7 { background: #6366f1; border-color: #6366f1; color: #fff; }
-/* popover checkboxes follow the accent; the manage toggle + day toggles go rainbow too */
-.cc-pop input[type="checkbox"] { accent-color: var(--cc-accent, #2f6feb); }
-/* a toggle is ALWAYS one solid colour, even in rainbow mode (never a gradient) */
-.cc-pop.cc-rainbow .cc-set-toggle-on { background: var(--cc-rbaccent, var(--cc-btn-accent, var(--cc-accent, #2f6feb))); }   /* #Toggles-Farbmodus (user): follow the colour mode */
-.cc-pop.cc-rainbow .cc-day-on { background: #8b5cf6; border-color: #8b5cf6; color: #fff; }
+/* a toggle is ALWAYS one solid colour, even in rainbow mode (never a gradient).
+   #Startplan-Audit (user: "der aktivierungstoggle ... nicht in den farbmodi"): this rule is MORE SPECIFIC
+   than the generic .cc-set-toggle-on further down, which already reads --cc-rb-c — so in a .cc-pop it
+   overrode the per-toggle jewel with the ONE shared rainbow accent and the toggle could never rotate.
+   Same chain here, and paintPopChrome stamps the jewel that feeds it. */
+.cc-pop.cc-rainbow .cc-set-toggle-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-btn-accent, var(--cc-accent, #2f6feb)))); }
+/* (the hard-coded violet .cc-pop.cc-rainbow .cc-day-on is GONE — it painted every selected day one fixed
+   #8b5cf6 in rainbow AND in flag mode, i.e. a colour that appears in no user palette at all. .cc-day-on
+   above now carries the standard chain for all three modes.) */
 .cc-sched-x { cursor: pointer; color: #8a8a8a; padding: 0 4px; }
-.cc-sched-x:hover { color: var(--cc-err, #d9433f); }
+.cc-sched-x:hover { color: var(--cc-err, #d9433f); }   /* SEMANTIC red (Rule 4) — a destructive control never joins the palette, like .cc-b-del */
 .cc-plan-mark { margin-left: 5px; opacity: .85; font-size: 10px; }
 .cc-plan-auto .cc-b-k { position: relative; }
 
@@ -1186,7 +1282,12 @@ html.cc-shape-circle #cc-settings .cc-set-ibtn { border-radius: 50%; }
 /* in rainbow mode the ON toggles wear the rainbow, matching the badge scheme */
 #cc-settings.cc-rainbow .cc-set-toggle-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-btn-accent, var(--cc-accent, #2f6feb)))); }   /* #6: per-toggle jewel (settings.js paintToggles) -> rbaccent -> accent */
 .cc-set-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; }
-.cc-set-toggle-on .cc-set-knob { left: 21px; }
+/* The knob takes the track's own CONTRAST colour, not a hard white. Caught the moment the plan editor's
+   toggle started rotating for real: with a flag palette that contains white (Algeria, Japan, Poland, …) the
+   ON track went #FFFFFF and a white knob simply disappeared — the toggle read as a blank capsule. Same
+   latent case on the settings page, whose paintToggles() stamps --cc-rb-ct as well, so it is fixed there
+   too. Falls back to #fff, i.e. nothing changes for any dark slot. */
+.cc-set-toggle-on .cc-set-knob { left: 21px; background: var(--cc-rb-ct, #fff); }
 /* #3: a gated toggle (e.g. Favoriten when native favourites are off) reads clearly non-interactive */
 .cc-set-toggle-disabled { opacity: .4; cursor: not-allowed; filter: grayscale(1); }
 /* #3: sub-label hint under a gated toggle explaining the precondition */
@@ -1202,7 +1303,8 @@ html.cc-shape-circle #cc-settings .cc-set-ibtn { border-radius: 50%; }
 #cc-settings .cc-set-save { margin-top: 12px; padding: 6px 16px; border-radius: 6px; }
 #cc-settings .cc-set-save[disabled] { opacity: .6; cursor: default; }
 /* checkboxes (column matrix, etc.) recolour to the chosen accent */
-#cc-settings input[type="checkbox"] { accent-color: var(--cc-accent, #2f6feb); width: 16px; height: 16px; cursor: pointer; }   /* 16px = the systemwide checkbox size (.cc-cb-del) */
+/* (the CC settings page's own checkboxes are .cc-cb now — same widget as the popup windows, defined once
+   further up — so the old `accent-color` on a native box is gone from here too.) */
 /* the accent-colour picker: always-visible field on top, preset swatches below */
 .cc-set-lbl { font-size: 12.5px; color: var(--dim); margin: 2px 0 7px; }
 .cc-set-pickrow { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
@@ -2134,6 +2236,10 @@ html .cc-enh #docker_list input.autostart.cc-noswitch,
 html .cc-enh #docker_list input.autostart.cc-noswitch::before,
 html div.js-actions input[type=button],
 html div.js-actions .cc-bulkmode-badge { border-radius: var(--cc-b-radius, 999px) !important; }
+/* the CC checkbox follows the shape engine too, but CLAMPED: it is a 16px box, so an unclamped 999px
+   (Badge-Form "pill"/"circle") is simply a circle and a 0 is a hard square — min(x, 8px) keeps both ends
+   sensible while still moving with every shape the user picks. */
+html .cc-cb, html .cc-pop input[type="checkbox"] { border-radius: min(var(--cc-b-radius, 4px), 8px) !important; }
 
 /* TOGGLES now FOLLOW the badge-shape engine too — a system-wide shape engine like the colour one (user,
    reversing the old #14 pill+circle exemption: "die toggles ... sollen der badge form folgen"). The master
