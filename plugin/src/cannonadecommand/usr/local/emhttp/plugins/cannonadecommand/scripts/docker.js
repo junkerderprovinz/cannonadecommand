@@ -82,6 +82,35 @@
     };
     jQuery.fn.switchButton.__ccPatched = true;
   })();
+  // ── perf: skip readmore.js for the per-cell Docker "read more" spans ──
+  // (user: "der erweiterte/einfache Ansicht Toggle im Dockertab: das Umschalten dauert lange und
+  // der Tab friert ein"). Root cause, live-profiled with a CDP CPU sampling profile across a real
+  // click on the toggle (55 containers / 223 .docker_readmore spans on the reporting host): ONE
+  // blocking main-thread task of 7.2-7.6s, and 7.3s of it sat inside readmore.js's init() called
+  // from Unraid's own listview(). readmore's init runs, per element,
+  //   css("max-height") -> css("max-height","none") -> css({height:"auto",overflow:"visible"})
+  //   -> outerHeight(true)
+  // i.e. a WRITE, then a READ, then a WRITE, then a READ, and every one of those reads forces a
+  // synchronous style+layout recalc of the whole 55-row table. 223 spans x that dance = textbook
+  // layout thrash; the profile's two hottest self-time frames were getPropertyValue (4.3s) and
+  // jQuery's curCSS (3.7s), both underneath it. It is also pure waste under CC: CC reads those
+  // cells only as a TEXT SOURCE (readmoreText) and then hides them (.cc-hidden) or replaces the
+  // cell outright with its own badges, so readmore's collapse-with-a-chevron UI is never visible —
+  // measured on the box, it produced ZERO .readmore-js-section and ZERO .readmore-js-toggle nodes
+  // for all its seconds of work. Same contract as the switchButton patch above: only while CC
+  // theming is on, and scoped to ONLY `.docker_readmore` — the Apps page's `.popup_readmore` and
+  // the Plugins page's `.desc_readmore` keep the real plugin, untouched.
+  // This is NOT only the view toggle: listview() runs at the end of EVERY loadlist(), so the same
+  // seconds were also being burned on the first page load and after every container action.
+  (function () {
+    if (!window.jQuery || !jQuery.fn.readmore || jQuery.fn.readmore.__ccPatched) return;
+    var realReadmore = jQuery.fn.readmore;
+    jQuery.fn.readmore = function () {
+      if (themingOn() && this.length && this.hasClass("docker_readmore")) return this;
+      return realReadmore.apply(this, arguments);
+    };
+    jQuery.fn.readmore.__ccPatched = true;
+  })();
   // The FRONTEND version, stamped by pkg_build.sh at package time. Shown next to the
   // engine version so a stale browser/plugin frontend is instantly distinguishable from
   // a stale daemon (repeated "it still doesn't work" turned out to be old UIs under test).
@@ -93,8 +122,8 @@
     : [["Mo", 1], ["Tu", 2], ["We", 3], ["Th", 4], ["Fr", 5], ["Sa", 6], ["Su", 0]];
 
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge — Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container — kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn CPU UND Netzwerk für die eingestellte Zeit niedrig bleiben. Ein ausgelasteter Container wird nie gestoppt; CC startet ihn nicht automatisch wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“ — dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner…", newFolderPrompt: "Name des neuen Ordners:", renameFolder: "Ordner umbenennen", renameFolderPrompt: "Neuer Name:", deleteFolder: "Ordner löschen", deleteFolderConfirm: "Diesen Ordner löschen? Enthaltene Container werden eine Ebene höher verschoben, nicht gelöscht.", moveToFolder: "In Ordner verschieben…", rootLevel: "— Wurzelebene —" },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order — duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container — no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container when CPU AND network stay low for the set time. A busy container is never stopped; CC does not start it again automatically.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no” — this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder…", newFolderPrompt: "Name of the new folder:", renameFolder: "Rename folder", renameFolderPrompt: "New name:", deleteFolder: "Delete folder", deleteFolderConfirm: "Delete this folder? Containers inside it move up one level, they are not deleted.", moveToFolder: "Move to folder…", rootLevel: "— Root level —" },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CC startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge — Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container — kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle UND kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CC stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CC startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“ — dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner…", newFolderPrompt: "Name des neuen Ordners:", renameFolder: "Ordner umbenennen", renameFolderPrompt: "Neuer Name:", deleteFolder: "Ordner löschen", deleteFolderConfirm: "Diesen Ordner löschen? Enthaltene Container werden eine Ebene höher verschoben, nicht gelöscht.", moveToFolder: "In Ordner verschieben…", rootLevel: "— Wurzelebene —" },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CC starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order — duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container — no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold AND barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CC stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CC does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no” — this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder…", newFolderPrompt: "Name of the new folder:", renameFolder: "Rename folder", renameFolderPrompt: "New name:", deleteFolder: "Delete folder", deleteFolderConfirm: "Delete this folder? Containers inside it move up one level, they are not deleted.", moveToFolder: "Move to folder…", rootLevel: "— Root level —" },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -128,6 +157,8 @@
   var ccAdvCache = null;          // #freeze2 (see isAdvancedView) — Advanced/Basic view, cached for one pass, not per call
   var ccBulkSel = {};             // bulk-select: name -> {id, image}, cleared after every bulk action or explicit clear
   var ccEnhBusyStart = 0;   // #33-followup: timestamp cc-enh-busy was set, so the clear can enforce a minimum visible time
+  var ccEnhanceAt = 0;      // #freeze3 (see ensureBarToggle's flip): when the last full row-enhancement pass ran, so a
+                            // scheduled fallback repaint can tell "the observer already did this" from "nobody did it"
 
   // ───────────────────────── api + helpers
   // csrf_token, robustly: the JS global, else any form field, else the cookie.
@@ -1256,8 +1287,28 @@
       lbl.textContent = next ? (LANG === "de" ? "ERWEITERTE ANSICHT" : "ADVANCED VIEW") : (LANG === "de" ? "EINFACHE ANSICHT" : "BASIC VIEW");
       try { document.cookie = "docker_listview_mode=" + (next ? "advanced" : "basic") + "; path=/"; } catch (e9) {}
       try { var inp9 = document.querySelector("input.advancedview"); if (inp9) inp9.checked = next; } catch (e9) {}
+      // #freeze3: ONE full re-enhancement per flip, not three. loadlist() replaces #docker_list
+      // wholesale, which wakes CC's MutationObserver, and its sweep already runs
+      // applyEnhanceClasses() + injectAllRowBadges() against the FRESH rows (MutationObserver
+      // callbacks are delivered as microtasks AFTER loadlist's whole $.get callback has run, so
+      // that sweep always sees the finished advanced/basic state). The unconditional repaint that
+      // used to fire here 300ms later was therefore a second identical pass over every row, and the
+      // 1500ms Advanced/Basic poll below noticed the same flip and fired a third. Claim the flip for
+      // the poll, then keep the repaint only as a FALLBACK for when the observer never sweeps
+      // (theming off, a failed/blocked loadlist, a detached observer) — checked late enough that a
+      // slow round trip can't make the fallback beat the fresh DOM it is supposed to paint.
+      lastAdv = next;
+      var flipAt = Date.now();
       if (typeof window.loadlist === "function") { try { window.loadlist(); } catch (e9) {} }
-      setTimeout(function () { try { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } catch (e9) {} }, 300);
+      // theming OFF keeps its old timing: the observer's sweep re-adds the enhancement classes on
+      // every native rebuild, so that state has to be stripped back promptly, exactly as before.
+      setTimeout(function () { try { if (!themingOn()) { removeEnhanceClasses(); reinjectRowBadges(); } } catch (e9) {} }, 300);
+      setTimeout(function () {
+        try {
+          if (!themingOn() || ccEnhanceAt > flipAt) return;   // the observer's own sweep already repainted the fresh list
+          applyEnhanceClasses(); reinjectRowBadges();
+        } catch (e9) {}
+      }, 1200);
     }
     tg.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); flip(); });
     tg.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
@@ -1356,6 +1407,7 @@
     // finally-reset so a mid-pass exception can never leave later ad-hoc calls (the settings-menu
     // toggle, the 1500ms view-change poll) reading a stale cached value.
     ccAdvCache = isAdvancedViewReal();
+    ccEnhanceAt = Date.now();   // #freeze3: stamp every full pass, whoever started it (observer sweep, poll, view flip)
     try {
       findRows().forEach(injectRowBadges);
       if (themingOn()) { // centring is cosmetic — native rows keep native alignment when theming off
@@ -2099,6 +2151,21 @@
           ch.style.setProperty("margin", "0", "important");
           ch.style.setProperty("line-height", "1.4", "important");
           ch.style.setProperty("min-height", "0", "important");
+          // THE LABEL COLUMN IS THE ONE EXCEPTION, and getting it wrong is what kept this window
+          // reporting two-line rows. docker.css now sizes .cc-pop-lbl with a min-width FLOOR plus
+          // white-space:nowrap instead of a hard width (a hard width cannot grow, so a label wider than the
+          // box wraps inside it and doubles the row) — and a blanket `min-width: 0 !important` here would
+          // erase exactly that floor, collapsing the column back to ragged per-row widths. Stamped inline
+          // with the same numbers the sheet uses, per the standing "keep agreeing" rule for .cc-port, so
+          // Unraid's own label rules cannot beat it either. .cc-pop-plan carries the long labels and takes
+          // the wider floor; every other CC window keeps 100px and is visually unchanged.
+          if (ch.classList.contains("cc-pop-lbl")) {
+            ch.style.setProperty("flex", "0 0 auto", "important");
+            ch.style.setProperty("width", "auto", "important");
+            ch.style.setProperty("min-width", (ch.closest && ch.closest(".cc-pop-plan")) ? "120px" : "100px", "important");
+            ch.style.setProperty("white-space", "nowrap", "important");
+            return;
+          }
           // flex children default to min-width:auto — an <input>'s intrinsic width then
           // refuses to shrink and pokes out of the popup ("Textfelder schießen über den
           // Rand"). min-width:0 lets every child shrink to fit the nowrap row.
@@ -2127,7 +2194,14 @@
         // narrow fields (delay, max/h, port, unit, schedule) keep their SHORT width —
         // enforced inline, since the stylesheet width loses to Unraid's input rules
         // ("Startverzögerung und max./Std. sind zu lang").
-        if (i.classList.contains("cc-port")) { i.style.setProperty("width", "80px", "important"); i.style.setProperty("flex", "0 0 auto", "important"); }
+        // …EXCEPT in the plan window, where every field shares ONE width (user: "alle eingabefelder gleich
+        // breit"). This inline 80px was half of why they did not: the sheet could be changed all day and
+        // this stamp put the stub back. Both halves move together — see .cc-pop-plan .cc-port in docker.css
+        // for why the CPU/RAM window keeps its 80px (there .cc-port is one half of a value + unit pair).
+        if (i.classList.contains("cc-port")) {
+          if (i.closest && i.closest(".cc-pop-plan")) { i.style.setProperty("width", "auto", "important"); i.style.setProperty("flex", "1 1 0", "important"); }
+          else { i.style.setProperty("width", "80px", "important"); i.style.setProperty("flex", "0 0 auto", "important"); }
+        }
         else if (i.classList.contains("cc-unit")) { i.style.setProperty("width", "68px", "important"); i.style.setProperty("flex", "0 0 auto", "important"); }
         else if (i.classList.contains("cc-sched-act")) { i.style.setProperty("width", "92px", "important"); i.style.setProperty("flex", "0 0 auto", "important"); }
         else if (i.classList.contains("cc-sched-time")) { i.style.setProperty("width", "100px", "important"); i.style.setProperty("flex", "0 0 auto", "important"); }
@@ -2148,8 +2222,10 @@
         i.style.setProperty("min-height", "0", "important");
         i.style.setProperty("height", "auto", "important");
         // the time field keeps room on the right for its clock glyph (docker.css asks for 24px there;
-        // this inline padding would otherwise win and sit the text under the icon).
-        i.style.setProperty("padding", i.classList.contains("cc-sched-time") ? "5px 24px 5px 8px" : "5px 8px", "important");
+        // this inline padding would otherwise win and sit the text under the icon). .cc-dropin — the
+        // "Hängt ab von" multi-select — needs the identical exemption for its new caret, and would
+        // otherwise have run its text straight under the arrow.
+        i.style.setProperty("padding", (i.classList.contains("cc-sched-time") || i.classList.contains("cc-dropin")) ? "5px 24px 5px 8px" : "5px 8px", "important");
         i.style.setProperty("border-radius", "6px", "important");
         i.style.setProperty("line-height", "1.35", "important");
       });
@@ -2343,10 +2419,25 @@
   // and set through POST /api/restartpolicy, which also mirrors --restart into the Unraid
   // template so an Apply/recreate keeps it.
   function restartPolicyLabel(p) { return t(p === "unless-stopped" ? "rpUnlessStopped" : p === "always" ? "rpAlways" : p === "on-failure" ? "rpOnFailure" : "rpNo"); }
+  // (user: "bitte die infotexte überarbeiten") — the old bubble was four bare option glosses and assumed you
+  // already knew what a restart policy IS, who applies it, and how it relates to CC's own Auto-Start
+  // watchdog two rows below (it does not: this one is Docker's, it survives a reboot, and it runs with CC
+  // stopped). It also leaned on "Exit-Code ≠ 0", which is the one phrase in the window a non-developer
+  // cannot act on. A lead line now says what the control does and that it takes effect straight away, and
+  // each option says what actually happens in the two situations anyone is choosing between: you stopped
+  // it, or it fell over. The empty key renders as a plain line, no "k · " prefix (see infoBubble).
   function restartPolicyItems() {
     return LANG === "de"
-      ? [["no", "kein automatischer Neustart (startet nach Host-Neustart nicht)"], ["unless-stopped", "immer neu starten, außer der Container wurde manuell gestoppt"], ["always", "immer neu starten, auch nach Host-Neustart"], ["on-failure", "nur nach einem Absturz (Exit-Code ≠ 0) neu starten"]]
-      : [["no", "no automatic restart (will not come up after a host reboot)"], ["unless-stopped", "always restart unless the container was stopped manually"], ["always", "always restart, including after a host reboot"], ["on-failure", "restart only after a crash (non-zero exit)"]];
+      ? [["", "Dockers eigener Auto-Start: er entscheidet, ob Docker den Container von selbst wieder hochfährt, nachdem er abgestürzt ist oder nachdem der Server neu gestartet wurde. Gilt sofort, der Container wird dafür nicht neu erstellt, und es läuft auch dann, wenn CannonadeCommand gerade nicht läuft."],
+          ["Nein", "Nie von selbst. Nach einem Server-Neustart bleibt der Container aus, bis du ihn startest."],
+          ["Außer wenn gestoppt", "Kommt nach einem Absturz und nach einem Server-Neustart wieder hoch, aber nicht, wenn du ihn selbst gestoppt hast. Für die meisten Container die richtige Wahl."],
+          ["Immer", "Kommt in jedem Fall wieder hoch, auch wenn du ihn gerade selbst gestoppt hast."],
+          ["Bei Fehler", "Nur nach einem Absturz, also wenn der Container sich mit einem Fehler beendet hat. Nach einem sauberen Stopp bleibt er aus."]]
+      : [["", "Docker's own auto-start: it decides whether Docker brings the container back up by itself after it has crashed, and after the server has rebooted. Takes effect straight away, the container is not recreated for it, and it works even while CannonadeCommand is not running."],
+          ["No", "Never by itself. After a server reboot the container stays down until you start it."],
+          ["Unless stopped", "Comes back after a crash and after a server reboot, but not if you stopped it yourself. The right choice for most containers."],
+          ["Always", "Comes back in every case, even if you stopped it yourself a moment ago."],
+          ["On failure", "Only after a crash, meaning the container exited with an error. After a clean stop it stays down."]];
   }
   // The restart-policy dropdown, prefilled to `cur`. Factored out so a DOM test can pin its shape.
   function restartPolicySelect(cur) {
@@ -2448,8 +2539,12 @@
     manageTog.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flipManage(); } });
     var mrow = el("div", "cc-pop-row cc-pop-toggle"); mrow.appendChild(el("span", "cc-pop-sech", t("manage"))); mrow.appendChild(el("span", "cc-set-spacer")); mrow.appendChild(manageTog); pop.appendChild(mrow);
     var body = el("div", "cc-pop-body" + (existing ? "" : " cc-dis"));
-    var arow = el("div", "cc-pop-row"); arow.appendChild(el("label", "cc-pop-lbl", t("dependsOn")));
-    var after = el("input", "cc-in"); after.type = "text"; after.placeholder = t("commaSep"); after.value = (node.after || []).join(", "); arow.appendChild(after); body.appendChild(arow);
+    // (user: "hängt ab von infotext") — the row had no (i) at all, next to five neighbours that do, and it
+    // is the one field in the window whose behaviour you cannot guess from the control: a text box holding
+    // a comma list that is really a click-to-toggle multi-select, feeding an ordering engine that also
+    // WAITS on the "Bereit wenn" probe of everything named in it. cc-dropin gives it the missing arrow.
+    var arow = el("div", "cc-pop-row"); arow.appendChild(lblInfo(t("dependsOn"), t("dependsOnInfo")));
+    var after = el("input", "cc-in cc-dropin"); after.type = "text"; after.placeholder = t("commaSep"); after.value = (node.after || []).join(", "); arow.appendChild(after); body.appendChild(arow);
     // MULTI-select dropdown (a native datalist replaces the whole value = only ONE
     // container pickable): our own list opens on focus, every click TOGGLES a container
     // in the comma list, and it stays open for picking several.

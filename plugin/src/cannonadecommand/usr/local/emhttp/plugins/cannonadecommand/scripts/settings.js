@@ -36,7 +36,12 @@
       // #26 settings search + nuke-reset button
       "#cc-settings .cc-set-searchrow{margin:12px 0 2px}" +
       "#cc-settings .cc-set-search{box-sizing:border-box;width:100%;max-width:420px;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:9px 13px;font-size:13px;transition:background-color .12s}" +
-      "#cc-settings .cc-set-search::placeholder{color:#8d8d8d}" +
+      // Unraid's default-base.css paints EVERY placeholder in the theme's link colour
+      // (`input::-webkit-input-placeholder{color:var(--link-text-color)}`), i.e. blue on Theme--black — a
+      // hint that reads as a link, or worse as an already-filled value. This used to be guarded for the
+      // search box ALONE, which left the hex fields, the webhook URL and the interface name blue; the
+      // Docker/popup half of the same guard lives in docker.css. One rule per sheet, every field.
+      "#cc-settings input::placeholder{color:#8d8d8d;opacity:1}" +
       "#cc-settings .cc-set-search:focus{background:#2e2e2e}" +
       // #13 settings search as an expandable hero badge (magnifier -> input on click)
       // #6 (user): the collapsed search badge FOLLOWS the colour mode (accent/rainbow); it turns into a dark input box only while expanded

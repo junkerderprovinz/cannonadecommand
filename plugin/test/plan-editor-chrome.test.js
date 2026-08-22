@@ -228,5 +228,64 @@ const place = grabFn('placePop');
 ok(!/style\.left =/.test(place), 'placePop no longer writes left itself — one formula for the first placement and every re-clamp, so they cannot disagree');
 ok(/data-cc-left/.test(place), 'placePop records the anchor-relative left as the preference');
 
+/* ── 9. the label column: a FLOOR, so no row can go two-line again ──────────── */
+// Three separate user reports ("Restart policy ist immer noch zweizeilig", "leerlauf minuten ist auch
+// zweizeilig", and the schedule row before them) came from ONE declaration: .cc-pop-lbl was a hard `width`,
+// which a longer label cannot widen — it wraps inside the box and doubles the row. Worse, .cc-pop-auto
+// NARROWED that same column to 90px for exactly the sections holding the longest labels (Restart-Policy
+// 92.9px and Leerlauf-Minuten 91.1px measured on the box). What is pinned here is the SHAPE of the fix,
+// because a hard width is what anyone tidying this rule would naturally write back.
+console.log('\nPart 9 — the label column cannot wrap, and every field is one width');
+const lblRule = /\.cc-pop-lbl \{([^}]*)\}/.exec(css);
+ok(!!lblRule, '.cc-pop-lbl is declared');
+if (lblRule) {
+  ok(/min-width:/.test(lblRule[1]), 'the column is a min-width FLOOR (a box that can grow), not a fixed width');
+  ok(!/[^-]width: \d/.test(lblRule[1]), 'and carries no hard width — that is what wrapped the long labels inside the box');
+  ok(/white-space: nowrap/.test(lblRule[1]), 'nowrap makes a two-line label structurally impossible rather than merely unlikely');
+  ok(/flex: 0 0 auto/.test(lblRule[1]), 'flex:0 0 auto so a long value cannot squeeze the column back under the floor');
+  ok(/padding-right/.test(lblRule[1]), 'the "etwas mehr Abstand zum Text" is PADDING — hardenPop stamps margin:0 !important on every row child, so a margin here would do nothing');
+}
+// comment-stripped: the deleted rule is QUOTED in the comment that replaced it, so the raw sheet still
+// contains that text on purpose. Only a live declaration counts.
+const cssLive = css.replace(/\/\*[\s\S]*?\*\//g, '');
+ok(!/\.cc-pop-auto \.cc-pop-lbl \{ width: 90px/.test(cssLive), 'the second, narrower 90px label column for half the window is gone — one column per window');
+ok(/\.cc-pop\.cc-pop-plan \.cc-pop-lbl \{ min-width: 120px; \}/.test(css), 'the plan window raises its own floor to 120px (longest label measured 95.7px with its (i))');
+// hardenPop must not erase the floor it does not know about
+const harden = grabFn('hardenPop');
+ok(/cc-pop-lbl/.test(harden), 'hardenPop knows about the label column');
+ok(/classList\.contains\("cc-pop-lbl"\)[\s\S]*?white-space[\s\S]*?nowrap/.test(harden), 'and stamps nowrap + the same floor inline, so Unraid theme rules cannot beat it');
+ok(/cc-pop-lbl[\s\S]{0,400}?return;/.test(harden), 'the label RETURNS before the blanket min-width:0 — that stamp would otherwise collapse the floor back to ragged per-row widths');
+// one value column
+ok(/\.cc-pop\.cc-pop-plan \.cc-pop-row \.cc-port \{ flex: 1 1 0 !important/.test(css), 'in the plan window every .cc-port joins the shared value column instead of being an 80px stub');
+ok(/\.cc-pop\.cc-pop-plan \.cc-pop-row \.cc-dsel \{ flex: 1 1 16px; \}/.test(css), 'the dropdown wrapper takes a 16px basis to match a border-box .cc-in, whose flex-basis:0 is floored at its own 2x8px padding');
+ok(/\.cc-port \{ flex: none; width: 80px/.test(css), 'and the CPU/RAM window keeps its 80px, where .cc-port is one half of a value + unit pair');
+ok(/i\.closest\("\.cc-pop-plan"\)[\s\S]{0,120}?"flex", "1 1 0"/.test(harden), 'hardenPop agrees with the sheet instead of stamping the 80px stub back');
+
+/* ── 10. no field hint renders in the theme's LINK blue ─────────────────────── */
+// Unraid's default-base.css: `input::-webkit-input-placeholder { color: var(--link-text-color) }`, so every
+// CC placeholder was blue (live-measured rgb(72,109,186) on Theme--black) and read as a link or as an
+// already-filled value. CC had the guard on exactly two hand-picked fields; a guard that has to be repeated
+// per field is a guard missing everywhere it was not typed.
+console.log('\nPart 10 — placeholders are hints, not links');
+ok(/\.cc-in::placeholder[^{]*\{[^}]*color: #8a8a8a/.test(css), 'every .cc-in placeholder is overridden to the neutral hint grey');
+ok(/\.cc-pop input::placeholder/.test(css), 'the guard covers every input in a CC window, not one class at a time');
+ok(/\.cc-in::placeholder[^{]*\{[^}]*opacity: 1/.test(css), 'opacity:1 too — Firefox dims placeholders on top of the colour');
+const setjs = fs.readFileSync(path.join(SCRIPTS, 'settings.js'), 'utf8');
+ok(/#cc-settings input::placeholder\{color:#8d8d8d/.test(setjs), 'and the settings panel guards every input, not just its search box');
+
+/* ── 11. "Hängt ab von" looks like the dropdown it is ───────────────────────── */
+console.log('\nPart 11 — the dependency picker has an arrow and an explainer');
+ok(/el\("input", "cc-in cc-dropin"\)/.test(src), 'the dependency field carries .cc-dropin');
+ok(/lblInfo\(t\("dependsOn"\), t\("dependsOnInfo"\)\)/.test(src), 'and an (i) — it was the one row in the window with no explainer at all');
+['de', 'en'].forEach(l => ok(new RegExp('dependsOnInfo: "').test(src), 'dependsOnInfo exists for ' + l));
+const caret = /select\.cc-in, \.cc-in\.cc-dropin \{([\s\S]*?)\}/.exec(css);
+ok(!!caret, 'the native select and the .cc-dropin field share ONE caret declaration');
+if (caret) {
+  ok(/%23cfcfcf/.test(caret[1]), 'drawn in the same #cfcfcf as .cc-pop .cc-dsel-trigger::after — one arrow, not three');
+  ok(/width='8' height='5'/.test(caret[1]), 'and the same 8x5 geometry the trigger builds from borders');
+  ok(/padding-right: 24px/.test(caret[1]), 'with room reserved so the value never runs under the glyph');
+}
+ok(/cc-dropin"\)\) \? "5px 24px 5px 8px"/.test(harden), 'hardenPop exempts it from the flat 5px 8px padding stamp, which would otherwise win and undo that room');
+
 console.log('\n' + (fail ? 'FAILED ' + fail + ' of ' + (pass + fail) : 'OK  ' + pass + ' passed'));
 process.exit(fail ? 1 : 0);

@@ -582,7 +582,30 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* give back ex
    a fill always carries its own --cc-rb-ct contrast — the same reason every CC badge is filled. */
 .cc-pop-x:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
 .cc-pop-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }
-.cc-pop-lbl { color: #8a8a8a; font-size: 12px; width: 100px; flex: none; }
+/* ══ THE LABEL COLUMN — and the reason rows in this window kept "still" wrapping onto two lines ══
+   This ONE declaration is the shared cause behind three separate user reports ("Restart policy ist immer
+   noch zweizeilig", "leerlauf minuten ist auch zweizeilig", and the Startplan row before them). The column
+   was a HARD `width`, so a label whose own text is wider than the box does not widen the box: it wraps
+   inside it and doubles the row height. Nothing about that is per-row, which is why fixing one row never
+   stopped the next one doing it.
+   And it was worse than one number: `.cc-pop-auto .cc-pop-lbl` (further down, now deleted) NARROWED the
+   very same column to 90px for the Restart-Policy / Watchdog / Idle-stop sections — the sections holding
+   the longest labels in the window. Live-measured on the box at their natural nowrap width, 12px:
+     Bei Fehlschlag + (i)  95.7      Restart-Policy + (i)  92.9      Startverzögerung   91.2
+     Leerlauf-Minuten      91.1      Startnummer    + (i)  90.1      CPU-Schwelle %     86.0
+   Everything in the 100px .cc-pop-body fitted; exactly the two labels over 90 — Restart-Policy (92.9) and
+   Leerlauf-Minuten (91.1) — sat in the 90px sections and wrapped. Two numbers, both too small, one of them
+   applied only to half the window, and no nowrap anywhere to make the failure impossible.
+   The fix is a FLOOR, not a width: `min-width` + `white-space: nowrap`. A label can never wrap again (the
+   box grows instead), and while every label stays under the floor the column is still one straight edge, so
+   every field starts at the same x. `flex: 0 0 auto` keeps the column from being squeezed by a long value.
+   100px is the floor for the stat windows (their longest label is ~75px, so nothing moves there);
+   .cc-pop-plan raises its own floor below, because its labels are the long ones.
+   The 6px padding-right is the user's "etwas mehr Abstand zum Text" — deliberately PADDING and not margin,
+   because hardenPop() stamps `margin: 0 !important` on every row child and a margin here would silently do
+   nothing. It also sits on the label rather than the row's `gap`, so the checkbox rows keep their tight
+   16px-box-to-text spacing instead of drifting apart with it. */
+.cc-pop-lbl { color: #8a8a8a; font-size: 12px; flex: 0 0 auto; box-sizing: content-box; min-width: 100px; padding-right: 6px; white-space: nowrap; }
 .cc-pop-body.cc-dis { opacity: .4; pointer-events: none; }
 .cc-pop-foot { padding: 9px 14px; border-top: none; color: #8a8a8a; font-size: 11px; }
 /* backend/Docker rejection — stays on screen (not a 2.6s toast) so the exact reason is readable, and wraps long messages */
@@ -646,6 +669,34 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* give back ex
    The extra width is height-neutral, so v4.27.0's ResizeObserver re-clamp is untouched; the same
    `clientWidth - w - 12` clamp in placePop keeps the wider box inside the viewport horizontally. */
 .cc-pop.cc-pop-plan { width: 548px; }
+/* This window's own label-column floor. Its longest label is "Bei Fehlschlag" + the (i) at 95.7px measured
+   (see .cc-pop-lbl for the full table), so 120 clears the longest German label by 24px — enough for the (i)
+   this release adds to "Hängt ab von", for a longer translation, and for a theme whose font metrics differ
+   a point or two. Deliberately generous: parking the floor ON the longest measurement is how a window ends
+   up back in a two-line report after the next string edit. */
+.cc-pop.cc-pop-plan .cc-pop-lbl { min-width: 120px; }
+/* ══ ONE VALUE COLUMN, ONE FIELD WIDTH (user: "alle eingabefelder gleich breit") ══
+   Every control in this window sat on `flex: 1` and filled the row — except .cc-port, pinned to 80px, so
+   Startverzögerung / Startnummer / max. per Std. / Leerlauf-Minuten / CPU-Schwelle were 80px stubs next to
+   392px dropdowns, and the 90px-vs-100px label split above shifted the dropdowns' left edge by another 10px
+   between sections. Live-measured before: 392 / 80 / 402 across nine rows, starting at two different x.
+   With one label column and `flex: 1 1 0` on everything, "same width" stops being a number to keep in sync
+   and becomes structural: single-control rows all measure row minus column, and the multi-control row
+   ("Bereit wenn" = probe + port + path) splits that same column into equal parts. Nothing to re-measure
+   when a label or a window width changes.
+   Scoped to .cc-pop-plan on purpose: in the CPU/RAM window .cc-port pairs with a .cc-unit MB/GB dropdown as
+   ONE value ("2" + "GB"), where a half-and-half split is the correct look and a stretched number field is
+   not. The 80px there stays. */
+.cc-pop.cc-pop-plan .cc-pop-row .cc-port { flex: 1 1 0 !important; width: auto !important; margin-left: 0; }
+/* …and the one row that shares its column between THREE controls ("Bereit wenn" on tcp/http = probe
+   dropdown + port + path) needs 16px of it back, because identical `flex: 1 1 0` did NOT produce identical
+   widths there. Live-measured 106 / 122 / 122 in a 350px column: hardenPop stamps `box-sizing: border-box`
+   on every .cc-in, and for a border-box box a flex-basis of 0 is FLOORED at padding + border — 2 x 8px of
+   the field's own padding. So each input entered the distribution with a 16px head start and the dropdown,
+   whose wrapper carries no padding of its own (it sits on the trigger inside), entered with none. Handing
+   the wrapper the same 16px basis makes all three land on one width, and the other rows are unaffected: a
+   basis only decides anything when a row has more than one control to split. */
+.cc-pop.cc-pop-plan .cc-pop-row .cc-dsel { flex: 1 1 16px; }
 /* every editor field the SAME clean box: NO border, just a lighter background */
 .cc-in { flex: 1; background: #2e2e2e; color: #e6e6e6; border: none !important; border-radius: 6px; padding: 5px 8px; font-size: 12px; }
 /* Focus = a BRIGHTNESS STEP, never a ring (GlimStone Rule 14, and the user's "keine Rahmen/Linien" law).
@@ -658,9 +709,38 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* give back ex
 .cc-in:focus { background-color: #383838; outline: none !important; box-shadow: none !important; }
 html .cc-pop .cc-in { background-color: #2e2e2e !important; }
 html .cc-pop .cc-in:focus { background-color: #383838 !important; }
-/* selects lost their native arrow to appearance:none — give them a caret back */
-select.cc-in { cursor: pointer; padding-right: 22px; background-repeat: no-repeat; background-position: right 8px center; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%238a8a8a' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); }
-.cc-port { flex: none; width: 80px; margin-left: 6px; }   /* 80px = the inline popup enforcement in docker.js — keep agreeing */
+/* ══ THE FIELD TEXT IS NOT BLUE (user: "die texte in den feldern nicht blau") ══
+   Not CC's text — the PLACEHOLDER. Unraid's default-base.css ships
+       input::-webkit-input-placeholder { color: var(--link-text-color); }
+   so on Theme--black every hint in every CC field rendered in the theme's LINK blue (live-measured
+   rgb(72,109,186) on "kommagetrennt", "30", "5", "sec", "port", "/health", "0 = ∞" …). It reads as a link
+   or as filled-in data rather than as a hint, which is exactly what the user saw.
+   CC had this guard already — in TWO places, `#cc-cmd .cc-cmd-in` and `#cc-settings .cc-set-search`, i.e.
+   the two single fields somebody happened to notice. A guard that has to be re-applied per field is a guard
+   that is missing everywhere it was not typed (the same lesson as the search box before it), so it is
+   written once here for every field CC draws on these pages. Same #8a8a8a as .cc-pop-lbl: a hint is
+   furniture, it sits at label brightness, below the field's own #e6e6e6 value text.
+   `opacity: 1` because Firefox dims placeholders by default on top of the colour. */
+html .cc-in::placeholder, html .cc-filter::placeholder,
+html .cc-pop input::placeholder, html .cc-menu input::placeholder { color: #8a8a8a !important; opacity: 1 !important; }
+/* selects lost their native arrow to appearance:none — give them a caret back.
+   ONE caret for every CC dropdown affordance: the same 8x5 triangle in the same #cfcfcf that
+   `.cc-pop .cc-dsel-trigger::after` draws with borders, so a native select, a wrapped .cc-dsel and the
+   .cc-dropin field below cannot drift into three slightly different arrows (Rule 14 asks for the arrow
+   back; it does not ask for a new one each time). Drawn as a background-image rather than ::after because
+   an <input>/<select> is a replaced element and has no pseudo-element to hang it on. */
+select.cc-in, .cc-in.cc-dropin {
+  padding-right: 24px; background-repeat: no-repeat; background-position: right 10px center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath fill='%23cfcfcf' d='M0 0l4 5 4-5z'/%3E%3C/svg%3E");
+}
+select.cc-in { cursor: pointer; }
+/* ── "Hängt ab von" IS a dropdown and must look like one (user: "das feld ist auch ein dropdown aber kein
+   pfeil im Feld"). It is CC's one MULTI-select, so it is an <input> carrying a .cc-drop panel rather than a
+   wrapped <select> — and being neither a <select> nor a .cc-dsel, it fell through both arrow rules and was
+   the only dropdown in CC with no arrow at all. Nothing in its look said "there is a list in here"; it read
+   as a free-text field, which is why it needed explaining. Same glyph, same 10px inset as every other CC
+   dropdown. The text caret stays (the field is genuinely typable, comma-separated), so no cursor override. */
+.cc-port { flex: none; width: 80px; margin-left: 6px; }   /* 80px = the inline popup enforcement in docker.js — keep agreeing (the plan window overrides both, see .cc-pop-plan .cc-port) */
 .cc-unit { flex: none; width: 68px; margin-left: 6px; }
 .cc-pop-act { gap: 8px; padding: 10px 14px 12px; border-top: none; }
 .cc-pop-act .cc-btn { flex: 1; text-align: center; font-size: 11.5px; padding: 7px 6px; white-space: normal; line-height: 1.2; }
@@ -687,7 +767,11 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { filter
 .cc-pop .cc-in { padding-top: 5px !important; padding-bottom: 5px !important; line-height: 1.35 !important; }
 .cc-pop-auto { background: transparent; border: none; border-radius: 8px; margin: 6px 14px; padding: 5px 0 7px; }   /* flat, matches cc-pop-body (user: keine hellen Cards) */
 .cc-pop-auto .cc-pop-row { padding: 5px 10px; }
-.cc-pop-auto .cc-pop-lbl { width: 90px; }
+/* (`.cc-pop-auto .cc-pop-lbl { width: 90px }` used to sit here and is GONE. It was a SECOND, narrower label
+   column for half of one window — 10px less than the same window's other half, applied to precisely the
+   sections that hold the longest labels. That is what made Restart-Policy and Leerlauf-Minuten two-line
+   while the identical construction in .cc-pop-body stayed on one. One column per window now; see
+   .cc-pop-lbl above for the measurements and .cc-pop-plan .cc-pop-lbl below for this window's floor.) */
 .cc-pop-foot { border-top: none; padding-top: 0; }
 .cc-pop-sech-lone { padding-top: 6px; }
 .cc-pop-toggle { cursor: pointer; }
