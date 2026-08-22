@@ -1229,36 +1229,47 @@
   // the var lets the CSS media query keep the bar in flow there.
   function syncFooterDock() {
     try {
+      // #freeze3 (live-profiled): READ EVERYTHING FIRST, THEN WRITE — the same batching
+      // centerNameCells already got in #33-followup. This used to interleave
+      //   getComputedStyle -> offsetHeight -> setProperty -> getBoundingClientRect -> setProperty
+      //   -> getBoundingClientRect -> setProperty -> clientWidth -> setProperty
+      // and every read after a write forces a fresh synchronous layout of the whole container
+      // table. That is four to five full layouts per call, and relocateTopBar() calls this on
+      // EVERY badge pass — it was the single hottest CC-owned frame left in the view-toggle
+      // profile once readmore was gone (155ms of self time in one flip). One read phase and one
+      // write phase costs the browser a single layout instead.
       var f = document.getElementById("footer");
+      var bar = document.querySelector("div.js-actions");
+      var lst = document.querySelector("#docker_list") || document.querySelector("table.cc-enh");
+      // ── read phase ──
       var fixed = f && getComputedStyle(f).position === "fixed";
       // ALWAYS stamp the var: offsetHeight is 0 when the footer is display:none, a
       // missing #footer counts as 0, non-fixed = 0 (bar flows below 768px anyway).
       // Leaving the var UNSET let the old 30px CSS fallback float the bar.
       var h = fixed && f ? f.offsetHeight : 0;
       if (!(h > 0 && h < 160)) h = 0;
+      var bh = bar ? Math.round(bar.getBoundingClientRect().height) : 0;
+      var lr = bar && lst ? lst.getBoundingClientRect() : null;
+      var vw = document.documentElement.clientWidth;
+      // ── write phase ──
       document.documentElement.style.setProperty("--cc-footer-h", h + "px");
       // the docked bar's own height feeds the scroll clearance (CSS padding-bottom)
-      var bar = document.querySelector("div.js-actions");
-      if (bar) { var bh = Math.round(bar.getBoundingClientRect().height); if (bh > 0 && bh < 200) document.documentElement.style.setProperty("--cc-actbar-h", bh + "px"); }
+      if (bh > 0 && bh < 200) document.documentElement.style.setProperty("--cc-actbar-h", bh + "px");
       // #12: match the docked bar's WIDTH to the container list (user: "so breit wie die Dockerliste").
       // The native bar is position:fixed full-viewport-width; measure the list's left/right and inset the
       // bar to the same edges (width:auto so left+right win). Re-measured here (apply/resize/scroll).
-      if (bar) {
-        var lst = document.querySelector("#docker_list") || document.querySelector("table.cc-enh");
-        var lr = lst && lst.getBoundingClientRect();
-        if (lr && lr.width > 0) {
-          bar.style.setProperty("left", Math.round(lr.left) + "px", "important");
-          // #1 (user: "die untere leiste nicht verkürzen"): DON'T clamp the bar narrower for the scroll arrows.
-          // Pin its right edge to the list edge like the left. The native scroll arrows are instead RAISED
-          // above the bar in CSS (Tokens.css a[class*="move_to"] transform), so they no longer overlap the
-          // right-pinned "Einfache Ansicht" toggle — the bar keeps its full width. Clamp the inset to >=0 so
-          // a horizontally-overflowing list (right edge past the viewport) can't push the bar off-screen; 0 =
-          // flush to the viewport's right edge (full width, not the old 72px narrowing).
-          var rightInset = Math.max(0, Math.round(document.documentElement.clientWidth - lr.right));
-          bar.style.setProperty("right", rightInset + "px", "important");
-          bar.style.setProperty("width", "auto", "important");
-          bar.style.setProperty("padding-right", "16px", "important");
-        }
+      if (lr && lr.width > 0) {
+        bar.style.setProperty("left", Math.round(lr.left) + "px", "important");
+        // #1 (user: "die untere leiste nicht verkürzen"): DON'T clamp the bar narrower for the scroll arrows.
+        // Pin its right edge to the list edge like the left. The native scroll arrows are instead RAISED
+        // above the bar in CSS (Tokens.css a[class*="move_to"] transform), so they no longer overlap the
+        // right-pinned "Einfache Ansicht" toggle — the bar keeps its full width. Clamp the inset to >=0 so
+        // a horizontally-overflowing list (right edge past the viewport) can't push the bar off-screen; 0 =
+        // flush to the viewport's right edge (full width, not the old 72px narrowing).
+        var rightInset = Math.max(0, Math.round(vw - lr.right));
+        bar.style.setProperty("right", rightInset + "px", "important");
+        bar.style.setProperty("width", "auto", "important");
+        bar.style.setProperty("padding-right", "16px", "important");
       }
       colorBarButtons(); // rainbow-tint the native bar buttons (accent handled by CSS)
     } catch (e) {}
