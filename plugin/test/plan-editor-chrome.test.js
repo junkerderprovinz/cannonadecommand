@@ -287,5 +287,77 @@ if (caret) {
 }
 ok(/cc-dropin"\)\) \? "5px 24px 5px 8px"/.test(harden), 'hardenPop exempts it from the flat 5px 8px padding stamp, which would otherwise win and undo that room');
 
+/* ── 12. ONE side inset per window, so nothing stands proud of the fields ────── */
+// user: "der startplan toggle ist nicht bündig zu den ganzen eingabefeldern". Live-measured in the 548px
+// window as the distance from the window edge to each element's own box, BEFORE the fix:
+//   ✕ 10 · "Im Startplan verwalten" + its toggle 10 · labels 24 · fields 24 · "ZEITPLÄNE" 28 ·
+//   schedule card 28 · "+ Zeitplan" 28 · Speichern 14
+// Five edges in one window. The cause is structural, not per-element: a row inside .cc-pop-body /
+// .cc-pop-auto / .cc-pop-sub already sits on that wrapper's 14px margin and needs only 10 of its own to
+// reach 24, while a block placed straight into the window has no margin under it and needs the whole 24.
+// Every unwrapped block was carrying the wrapped number. Pinned as the SHAPE of the fix, because "make
+// them all 14 like the card" is exactly what a later tidy-up would write back.
+console.log('\nPart 12 — one 24px side inset for the whole window');
+ok(/\.cc-pop-row \{[^}]*padding: 8px 24px/.test(css), 'an unwrapped .cc-pop-row (the manage-toggle line) takes the full 24px itself');
+ok(/\.cc-pop-body \.cc-pop-row, \.cc-pop-auto \.cc-pop-row \{ padding: 3px 10px !important/.test(css), 'a wrapped row keeps 10 and lets its wrapper margin supply the other 14');
+ok(/\.cc-pop-body \{[^}]*margin: 10px 14px 6px/.test(css) && /\.cc-pop-auto \{[^}]*margin: 6px 14px/.test(css), 'both wrappers still carry exactly that 14px margin — the two halves of 24 have to keep agreeing');
+ok(/\.cc-pop-head \{[^}]*padding: 10px 24px/.test(css), 'the head shares the column, so the ✕ sits on the same right edge as the toggle under it');
+ok(/\.cc-pop-act \{[^}]*padding: 10px 24px 12px/.test(css), 'and so does the button row — Speichern used to be 10px wider than every field above it');
+ok(/\.cc-pop-sech-lone \{[^}]*padding: 10px 10px 5px/.test(css), '"ZEITPLÄNE" drops to 10 inside its .cc-pop-auto (it was 14 on top of the margin = 28)');
+ok(/\.cc-sched-list \{[^}]*padding: 4px 10px 2px/.test(css), 'the schedule cards line up with the fields instead of sitting 4px right of them');
+ok(/\.cc-btn-sm \{ margin: 4px 10px 6px/.test(css), 'and "+ Zeitplan" with them');
+// hardenPop stamps row padding inline with !important, so the sheet alone can never win this
+ok(/closest\("\.cc-pop-body, \.cc-pop-auto, \.cc-pop-sub"\)/.test(harden), 'hardenPop asks whether the row is wrapped rather than stamping one number on every row');
+ok(/wrapped \? "3px 10px" : "3px 24px"/.test(harden), 'and stamps the matching half — its blanket "3px 10px" is what re-flattened the unwrapped row to 10');
+ok(/"padding", "10px 24px 18px"/.test(harden), 'the action row keeps its roomier 18px bottom gap but joins the 24px column');
+ok(/"6px 24px 0 24px"/.test(src), 'the plan window\'s own head stamp agrees too — it used to hard-code 10px and pull the ✕ out of line');
+
+/* ── 13. the product is spelled out for users, never abbreviated to "CC" ─────── */
+// user: "in den infobubbles nicht die abkürzung CC verwenden. Da weiß keiner was damit gemeint ist.
+// ausschreiben". Standing rule (CLAUDE.md). The distinction this test has to respect is the whole point:
+// "CC" is everywhere in this codebase as a source-code prefix (cc- classes, CC_* constants, cc.* keys,
+// --cc-* properties, comments) and must stay. Only STRING LITERALS are user-facing, so that is all this
+// scans — a line-based grep would flag the class names and a blind replace would break the plugin.
+console.log('\nPart 13 — user-facing prose says "CannonadeCommand", not "CC"');
+function proseStrings(source) {
+  const BS = String.fromCharCode(92);
+  const out = [];
+  let i = 0, line = 1;
+  while (i < source.length) {
+    const c = source[i];
+    if (c === '\n') { line++; i++; continue; }
+    if (c === '/' && source[i + 1] === '/') { while (i < source.length && source[i] !== '\n') i++; continue; }
+    if (c === '/' && source[i + 1] === '*') { i += 2; while (i < source.length && !(source[i] === '*' && source[i + 1] === '/')) { if (source[i] === '\n') line++; i++; } i += 2; continue; }
+    if (c === '"' || c === "'" || c === '`') {
+      const q = c, at = line; i++; let buf = '';
+      while (i < source.length) {
+        if (source[i] === BS) { buf += source[i] + source[i + 1]; i += 2; continue; }
+        if (source[i] === q) break;
+        if (source[i] === '\n') { line++; if (q !== '`') break; }
+        buf += source[i]; i++;
+      }
+      i++; out.push({ line: at, s: buf });
+      continue;
+    }
+    i++;
+  }
+  return out;
+}
+// "CC" standing alone, or leading a hyphenated compound a user would read ("CC-Kopfbereich"). The cc-
+// class prefix is lower-case and never matches; CC_TRASH_SVG and friends end in "_" and never match.
+const BARE_CC = /(^|[^A-Za-z0-9_])CC(-[A-Za-zÄÖÜäöü]|[^A-Za-z0-9_-]|$)/;
+[['docker.js', src], ['settings.js', setjs], ['header.js', fs.readFileSync(path.join(SCRIPTS, 'header.js'), 'utf8')],
+ ['shares.js', fs.readFileSync(path.join(SCRIPTS, 'shares.js'), 'utf8')], ['vms.js', fs.readFileSync(path.join(SCRIPTS, 'vms.js'), 'utf8')],
+ ['plugins.js', fs.readFileSync(path.join(SCRIPTS, 'plugins.js'), 'utf8')], ['cc-theme.js', theme]].forEach(([name, source]) => {
+  const hits = proseStrings(source).filter(o => BARE_CC.test(o.s));
+  ok(hits.length === 0, name + ' has no bare "CC" in any string a user can read'
+    + (hits.length ? ' — ' + hits.map(h => 'L' + h.line + ': …' + h.s.slice(Math.max(0, h.s.search(BARE_CC) - 24), h.s.search(BARE_CC) + 40) + '…').join(' | ') : ''));
+});
+// and the strings the user actually reported are spelled out, in BOTH locales
+ok(/CannonadeCommand startet sie zuerst/.test(src) && /CannonadeCommand starts them first/.test(src), '"Hängt ab von" names the product in full, de and en');
+ok(/bevor CannonadeCommand stoppt/.test(src) && /before CannonadeCommand stops it/.test(src), 'so does the idle-stop bubble, de and en');
+// the source-code prefix is untouched — this is the half a blind find-and-replace would have destroyed
+ok(/cc-pop-lbl/.test(css) && /CC_VER/.test(src) && /"cc\.rainbow"/.test(src), 'the cc- class namespace, the CC_* constants and the cc.* keys are code, and stay exactly as they are');
+
 console.log('\n' + (fail ? 'FAILED ' + fail + ' of ' + (pass + fail) : 'OK  ' + pass + ' passed'));
 process.exit(fail ? 1 : 0);

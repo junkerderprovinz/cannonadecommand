@@ -98,7 +98,7 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
 - Idle auto-stop (ContainerNursery-style): stop a container after it stays idle —
   low CPU **and** low network — for a set number of minutes. A busy container is
   never stopped, and a host/container-network container (whose per-container idle
-  can't be measured) is skipped. CC does not wake it back up — a schedule, the
+  can't be measured) is skipped. CannonadeCommand does not wake it back up — a schedule, the
   plan, or Unraid's autostart does.
 
 **Resource limits**
@@ -135,7 +135,7 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
   tab is styled to match the Docker tab exactly (logo badge, state/CPU/RAM/IP badges,
   autostart switch); the Favorites tab reuses the category-icon badges.
 - Tab view: on every tab with sub-tabs (Shares detail, Start/Main, Plugins, VMs)
-  choose per tab whether the sub-tabs render as stacked CC sections or as native
+  choose per tab whether the sub-tabs render as stacked CannonadeCommand sections or as native
   Unraid sub-tabs (native by default).
 - VM tab: full Docker-tab parity — logo badge, state/CPU/RAM/IP badges, an actions
   column, per-VM CPU/RAM/bandwidth limit gears (a graphical P/E-aware CPU core-picker,

@@ -142,5 +142,15 @@ never over the network. See the comment above the txz `<FILE>` stanza in the plg
 
 - Repo content (code, comments, README, commit messages, CHANGES-in-repo) is **English**.
   Chat and the Obsidian vault are German.
+- **Never write "CC" in user-facing text.** In anything a user reads in the running UI —
+  info-bubble `data-tip`/`aria-label` strings, visible `<label>`s, settings descriptions,
+  toasts, the README — the product is called **CannonadeCommand**, spelled out, in both the
+  `de` and the `en` half of every string pair. "CC" means nothing to a user (user: "Da weiß
+  keiner was damit gemeint ist"). If the product is ever renamed, these strings are renamed
+  with it. Code identifiers are the opposite and stay as they are: the `cc-` class prefix,
+  `ccMakeInfo`/`ccTheme`, `CC_*` constants, `cc.*` localStorage keys, HTML ids, `--cc-*`
+  custom properties, and source comments are all developer-facing. Audit with a string-literal
+  scan, never a blanket find-and-replace — that would rewrite every class name and break the
+  plugin.
 - **No AI / assistant attribution** anywhere — commits, code, or docs.
 - Keep the README current when behaviour changes.

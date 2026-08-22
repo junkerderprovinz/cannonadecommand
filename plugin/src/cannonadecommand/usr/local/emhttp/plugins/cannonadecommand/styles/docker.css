@@ -573,7 +573,23 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* give back ex
   background-image: var(--cc-cb-tick, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"));
 }
 .cc-cb:checked:hover, .cc-pop input[type="checkbox"]:checked:hover { filter: brightness(1.14); }
-.cc-pop-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: none; }   /* no separator line (user: keine Linien) */
+/* ══ ONE WINDOW, ONE SIDE INSET: 24px ══ (user: "der startplan toggle ist nicht bündig zu den ganzen
+   eingabefeldern")
+   Every .cc-pop window is built from two kinds of block: rows that sit INSIDE a section wrapper
+   (.cc-pop-body / .cc-pop-auto / .cc-pop-sub, all of which carry a 14px side MARGIN) and blocks that sit
+   directly in the window with no wrapper at all. The wrapped rows add their own 10px padding on top of that
+   margin and land on 14 + 10 = 24. Everything unwrapped only ever got the raw 14 — or, once hardenPop
+   flattened it, a raw 10. Live-measured in the 548px Startplan window before this change, as the distance
+   from the window edge to the element's own box:
+     ✕ 10 · "Im Startplan verwalten" + its toggle 10 · field labels 24 · fields/dropdowns 24 ·
+     "ZEITPLÄNE" 28 · schedule card 28 · "+ Zeitplan" 28 · Speichern button 14
+   Five different edges in one window, and the toggle — the widest-travelling of them, pinned to the right by
+   .cc-set-spacer — stood a full 14px proud of every field beneath it, which is what the user saw.
+   So 24 is now THE number for a .cc-pop, and it is reached the same way everywhere: unwrapped blocks take
+   the whole 24 themselves, wrapped rows keep 10 and let their wrapper's margin make up the rest. The
+   numbers repeat in hardenPop() (which stamps row padding inline, where no sheet rule can reach it) — the
+   same "keep agreeing" contract .cc-port already has with it. */
+.cc-pop-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; border-bottom: none; }   /* no separator line (user: keine Linien) */
 .cc-pop-ttl { display: inline-flex; align-items: center; gap: 8px; }   /* window title + its ONE info bubble (user: aller Infotext oben neben der Ueberschrift) */
 .cc-pop-x { cursor: pointer; color: #8a8a8a; padding: 1px 6px; border-radius: min(var(--cc-b-radius, 6px), 9px); transition: background .12s, color .12s; }
 /* the window ✕ is a CONTROL, not furniture, so it joins the rotation like ShipLog's .sl-x already does
@@ -581,7 +597,7 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* give back ex
    tinted glyph: colour-as-text would disappear whenever the palette slot (or a user accent) is dark, while
    a fill always carries its own --cc-rb-ct contrast — the same reason every CC badge is filled. */
 .cc-pop-x:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-accent-text, #fff)); }
-.cc-pop-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }
+.cc-pop-row { display: flex; align-items: center; gap: 8px; padding: 8px 24px; }   /* unwrapped row (the manage-toggle line) — the full inset, see the block above */
 /* ══ THE LABEL COLUMN — and the reason rows in this window kept "still" wrapping onto two lines ══
    This ONE declaration is the shared cause behind three separate user reports ("Restart policy ist immer
    noch zweizeilig", "leerlauf minuten ist auch zweizeilig", and the Startplan row before them). The column
@@ -607,9 +623,9 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* give back ex
    16px-box-to-text spacing instead of drifting apart with it. */
 .cc-pop-lbl { color: #8a8a8a; font-size: 12px; flex: 0 0 auto; box-sizing: content-box; min-width: 100px; padding-right: 6px; white-space: nowrap; }
 .cc-pop-body.cc-dis { opacity: .4; pointer-events: none; }
-.cc-pop-foot { padding: 9px 14px; border-top: none; color: #8a8a8a; font-size: 11px; }
+.cc-pop-foot { padding: 9px 24px; border-top: none; color: #8a8a8a; font-size: 11px; }
 /* backend/Docker rejection — stays on screen (not a 2.6s toast) so the exact reason is readable, and wraps long messages */
-.cc-pop-err { display: none; margin: 8px 14px 2px; padding: 7px 9px; border-radius: 6px; background: rgba(220,53,69,.13); border: none; color: #ff7a7a; font-size: 12px; line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
+.cc-pop-err { display: none; margin: 8px 24px 2px; padding: 7px 9px; border-radius: 6px; background: rgba(220,53,69,.13); border: none; color: #ff7a7a; font-size: 12px; line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
 /* ROTATING rainbow: colours come from --cc-rb-* vars set by docker.js — a random
    rotation offset per page load walks every badge kind through a 14-colour palette. */
 .cc-enh.cc-rainbow .cc-b-net, .cc-grid-holder.cc-rainbow .cc-b-net { background: var(--cc-rb-net, var(--cc-ok, #1f9d55)); color: var(--cc-rb-net-t, #fff); }
@@ -658,11 +674,13 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* give back ex
    cc-pop-in scale animation, which reads ~1.5% short and is how a "wide enough" number gets picked wrong):
      104 dropdown + 100 time field + 200 day chips (7 x 26 + 6 x 3 gap) + 26 delete badge + 3 x 8 gap = 454
      + 2 x  9  .cc-sched-row padding      = 472
-     + 2 x 14  .cc-sched-list padding     = 500
-     + 2 x 14  .cc-pop-auto MARGIN        = 528  -> the exact wrap threshold
+     + 2 x 10  .cc-sched-list padding     = 492
+     + 2 x 14  .cc-pop-auto MARGIN        = 520  -> the exact wrap threshold
    That last inset is the one worth writing down: the section wrapper's margin is easy to miss, and a window
-   sized to 500 still wrapped by exactly 8px. 548 leaves 20px of slack rather than parking the row ON the
-   threshold, where a scrollbar in .cc-pop-mid or a pixel of font drift puts the badge back on line two.
+   sized to 500 still wrapped. 548 leaves 28px of slack rather than parking the row ON the threshold, where a
+   scrollbar in .cc-pop-mid or a pixel of font drift puts the badge back on line two. (The list padding came
+   down from 14 to 10 when the window was given ONE 24px side inset — see .cc-pop-head — so the threshold
+   moved 8px further away and the slack grew from 20 to 28. The window width itself does not move.)
    `flex-wrap: wrap` STAYS on the row on purpose: the `max-width: 92vw` cap can still take the window below
    528px on a phone-width viewport, and wrapping is the right answer there — it is simply never reached at
    any desktop width.
@@ -742,7 +760,7 @@ select.cc-in { cursor: pointer; }
    dropdown. The text caret stays (the field is genuinely typable, comma-separated), so no cursor override. */
 .cc-port { flex: none; width: 80px; margin-left: 6px; }   /* 80px = the inline popup enforcement in docker.js — keep agreeing (the plan window overrides both, see .cc-pop-plan .cc-port) */
 .cc-unit { flex: none; width: 68px; margin-left: 6px; }
-.cc-pop-act { gap: 8px; padding: 10px 14px 12px; border-top: none; }
+.cc-pop-act { gap: 8px; padding: 10px 24px 12px; border-top: none; }   /* unwrapped: Speichern lines up with the fields above it, not 10px wider than all of them */
 .cc-pop-act .cc-btn { flex: 1; text-align: center; font-size: 11.5px; padding: 7px 6px; white-space: normal; line-height: 1.2; }
 /* #Startplan-Audit — the buttons in a CC window are styled HERE, not inline from hardenPop().
    hardenPop() used to stamp `background: … !important` on every .cc-btn so Unraid's theme could not beat
@@ -776,11 +794,14 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { filter
 .cc-pop-sech-lone { padding-top: 6px; }
 .cc-pop-toggle { cursor: pointer; }
 .cc-pop-sech { font-weight: 600; font-size: 12.5px; }
-.cc-pop-sech-lone { display: block; color: #9a9a9a; padding: 10px 14px 5px; text-transform: uppercase; letter-spacing: .5px; font-size: 10.5px; }
+/* the three blocks below all live INSIDE a .cc-pop-auto, so 10px is their whole share of the 24px column —
+   their wrapper's 14px margin supplies the rest. They used to carry 14 of their own on top of it (28) and
+   sat 4px right of every label in the window. */
+.cc-pop-sech-lone { display: block; color: #9a9a9a; padding: 10px 10px 5px; text-transform: uppercase; letter-spacing: .5px; font-size: 10.5px; }
 .cc-pop-sub { padding-bottom: 4px; }
 .cc-pop-sub.cc-dis { opacity: .4; pointer-events: none; }
-.cc-btn-sm { margin: 4px 14px 6px; padding: 3px 10px; font-size: 11.5px; }
-.cc-sched-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 14px 2px; }
+.cc-btn-sm { margin: 4px 10px 6px; padding: 3px 10px; font-size: 11.5px; }
+.cc-sched-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 10px 2px; }
 /* each schedule on its OWN tidy card so action / time / days don't run together */
 .cc-sched-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #1e1e1e; border: none; border-radius: 7px; padding: 8px 9px; }
 .cc-sched-act { flex: none; width: 104px; }

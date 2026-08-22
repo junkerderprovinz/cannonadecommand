@@ -431,9 +431,9 @@
         banner: ["Eigenes Kopf-Banner ein-/ausblenden (Bild unten hochladen).", "Show/hide a custom header banner (upload the image below)."],
         showBannerGradient: ["Weichen Farbverlauf über dem Banner anzeigen.", "Show a soft gradient over the banner."],
         favorites: ["Favoriten-Funktion aktivieren; Nein blendet den Favoriten-Tab aus.", "Enable favourites; No hides the Favorites tab."],
-        header: ["Native Kopfzeilen-Textfarbe. Sichtbar nur, wenn CannonadeCommands Kopfbereich AUS ist (sonst übermalt CC den Kopf).", "Native header text colour. Visible only when CannonadeCommand's header area is OFF (otherwise CC overpaints the header)."],
-        headermetacolor: ["Native Kopfzeilen-Sekundärtextfarbe. Wirkt nur bei ausgeschaltetem CC-Kopfbereich.", "Native header secondary text colour. Only when CC's header area is off."],
-        background: ["Native Kopf-Hintergrundfarbe. Wirkt nur bei ausgeschaltetem CC-Kopfbereich.", "Native header background colour. Only when CC's header area is off."]
+        header: ["Native Kopfzeilen-Textfarbe. Sichtbar nur, wenn CannonadeCommands Kopfbereich AUS ist (sonst übermalt CannonadeCommand den Kopf).", "Native header text colour. Visible only when CannonadeCommand's header area is OFF (otherwise CannonadeCommand overpaints the header)."],
+        headermetacolor: ["Native Kopfzeilen-Sekundärtextfarbe. Wirkt nur bei ausgeschaltetem CannonadeCommand-Kopfbereich.", "Native header secondary text colour. Only when CannonadeCommand's header area is off."],
+        background: ["Native Kopf-Hintergrundfarbe. Wirkt nur bei ausgeschaltetem CannonadeCommand-Kopfbereich.", "Native header background colour. Only when CannonadeCommand's header area is off."]
       };
       function help(nm) { var h = H[nm]; return h ? T(h[0], h[1]) : ""; }
       function fieldLabel(c, nm) { var dd = c.closest("dd"), dt = dd ? dd.previousElementSibling : null; return (dt && dt.tagName === "DT") ? (dt.textContent || "").replace(/\s*:\s*$/, "").trim() : nm; }
@@ -1180,7 +1180,7 @@
       var row = el("div", "cc-set-row cc-set-inline");
       var lw = el("span", "cc-set-lblwrap");
       lw.appendChild(el("span", null, T("Tabansicht", "Tabbed view")));
-      lw.appendChild(infoIcon(T("AUS = Unterreiter dieses Tabs werden als CC-Abschnitte untereinander gestapelt. Unraids globale Tabansicht (Theming-Karte) ist der Master: steht sie auf 'Ohne Tabs', rendert Unraid überall Abschnitte und dieser Schalter wirkt nicht.", "OFF = this tab's sub-tabs stack as CC sections. Unraid's global tabbed view (Theming card) is the master: set to non-tabbed, Unraid renders sections everywhere and this switch has no effect.")));
+      lw.appendChild(infoIcon(T("AUS = Unterreiter dieses Tabs werden als CannonadeCommand-Abschnitte untereinander gestapelt. Unraids globale Tabansicht (Theming-Karte) ist der Master: steht sie auf 'Ohne Tabs', rendert Unraid überall Abschnitte und dieser Schalter wirkt nicht.", "OFF = this tab's sub-tabs stack as CannonadeCommand sections. Unraid's global tabbed view (Theming card) is the master: set to non-tabbed, Unraid renders sections everywhere and this switch has no effect.")));
       row.appendChild(lw);
       row.appendChild(toggle(get("cc.sections." + area, "0") === "0", function (v) { set("cc.sections." + area, v ? "0" : "1"); if (applyFn) applyFn(); }));
       return row;
@@ -1556,7 +1556,7 @@
       var cX = themingCard;
       var lblw = el("div", "cc-set-lbl cc-set-lblwrap");
       lblw.appendChild(el("span", null, T("Sichern & Übertragen", "Backup & transfer")));
-      lblw.appendChild(infoIcon(T("Exportiert alle CC-Einstellungen (cc.*-Schlüssel) als JSON-Datei. Der Import schreibt sie zurück und lädt die Seite neu.", "Exports every CC setting (cc.* keys) as a JSON file. Import writes them back and reloads the page.")));
+      lblw.appendChild(infoIcon(T("Exportiert alle CannonadeCommand-Einstellungen (cc.*-Schlüssel) als JSON-Datei. Der Import schreibt sie zurück und lädt die Seite neu.", "Exports every CannonadeCommand setting (cc.* keys) as a JSON file. Import writes them back and reloads the page.")));
       cX.appendChild(lblw);
       var note = el("div", "cc-set-xnote"); // inline notice — this page has no toast mechanism
       function say(msg, bad) { note.textContent = msg || ""; note.style.color = bad ? "#d9433f" : ""; }
