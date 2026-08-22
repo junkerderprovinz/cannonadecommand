@@ -456,29 +456,92 @@
   }
 
   // ── REAL sample icons per area, for the previews ─────────────────────────────────────
-  // Docker has an engine endpoint (GET state). The VM and Plugin tabs do NOT have one — both
-  // enhancers read their icons straight out of their own page's table (vms.js vmImgs(),
-  // plugins.js #plugin_table), so the honest way to get REAL icons here is to fetch that same
-  // page same-origin and read the same selectors out of it. This file already does exactly
-  // that for /Settings/DisplaySettings, so it is this page's established pattern, not a new
-  // mechanism. Everything is best-effort: a disabled tab, no VMs or a slow box just yields an
-  // empty list and the caller shows its "nothing to show" line instead of a broken row.
-  function scrapeIcons(url, sels, max) {
-    return fetch(url, { credentials: "same-origin" }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (html) {
+  // What 4.32.0 did — fetch("/VMs") / fetch("/Plugins") and parse the answer — CANNOT work, on any
+  // box, ever. All three native list pages ship an EMPTY table body and fill it from their own
+  // jQuery AFTER load:
+  //     Plugins.page          initlist() -> $.get('/plugins/dynamix.plugin.manager/include/ShowPlugins.php')
+  //     VMMachines.page       loadlist() -> $.get('/plugins/dynamix.vm.manager/include/VMMachines.php')
+  //     DockerContainers.page loadlist() -> $.get('/plugins/dynamix.docker.manager/include/DockerContainers.php')
+  // fetch() never executes a page's <script>, so parsing the page shell can only ever see that
+  // pre-population skeleton — literally `<tbody id="plugin_list"><tr><td colspan="6"></td></tr></tbody>`,
+  // zero <img>, always, no matter how long you wait. Not a selector bug and not a race: the bytes
+  // fetch() gets simply never contain an icon. Verified live on a real box.
+  // So we call the SAME row-fragment endpoints the native pages call. They are plain
+  // server-rendered <tr> HTML with the real icons already in them — no JS execution required,
+  // and by construction identical to what the live tab ends up showing.
+  //
+  // Three parsing details that are NOT optional:
+  //  · VMMachines.php answers "rows \0 script" — only the FIRST NUL-separated part is markup.
+  //  · A bare "<tr>…" string handed to DOMParser is DISCARDED (the HTML parser foster-parents a
+  //    <tr> that has no table around it), so the fragment must be wrapped in <table><tbody> first.
+  //  · Only the DIRECT <tr> children of that wrapper are rows; a plugin's rendered README can
+  //    contain its own nested tables and images, which must never be mistaken for a logo.
+  // ShowPlugins.php is called with init=1 (server-rendered icon markup) and check=1 (no remote
+  // version check — the network path lives exclusively in the non-init branch).
+  var ICON_SRC = {
+    // Docker used to build its own "/state/.../<name>-icon.png" URL out of the engine's container
+    // list. That is a GUESS, and it is wrong for every container Unraid has no cached icon for:
+    // the file 404s, the preview's onerror hides the tile, and the row comes out as a hole. The
+    // fragment carries the src the Docker tab itself renders, including Unraid's question.png
+    // stand-in — so what the preview shows is what the tab shows, gap-free.
+    docker: {
+      url: "/plugins/dynamix.docker.manager/include/DockerContainers.php",
+      cell: "td.ct-name",
+      sels: ["span[id] > .img", "img.img", "img", "i.img"],
+      name: function (cell) {
+        var h = cell.querySelector("[onclick*='addDockerContainerContext']");
+        var m = /addDockerContainerContext\('([^']+)'/.exec(h ? (h.getAttribute("onclick") || "") : "");
+        return m ? m[1] : "";
+      }
+    },
+    vm: {
+      url: "/plugins/dynamix.vm.manager/include/VMMachines.php",
+      cell: "td.vm-name",                                                     // detail/disk rows have no such cell and are skipped
+      sels: ["span[id^='vm-'] > .img", "img.img", "img", "i.img"],            // same order vms.js vmImgs() uses
+      // mirrors vms.js vmNameOf(): a row's VM name is the 1st argument of its addVMContext(…) handler
+      name: function (cell) {
+        var h = cell.querySelector("[onclick*='addVMContext']");
+        var m = /addVMContext\('([^']+)'/.exec(h ? (h.getAttribute("onclick") || "") : "");
+        return m ? m[1] : "";
+      }
+    },
+    plugin: {
+      url: "/plugins/dynamix.plugin.manager/include/ShowPlugins.php?init=1&check=1",
+      cell: "td",
+      sels: ["img.list", "i.list", "img", "i"],
+      // mirrors plugins.js paintRow(): the display name is the README heading in the description
+      // cell, with the version cell's vid-<name> id as the fallback.
+      name: function (cell, row) {
+        var tds = row.children; if (!tds || tds.length < 4) return "";
+        var h = tds[1].querySelector("h1, h2, h3") || tds[1].querySelector("strong, b");
+        return (h ? (h.textContent || "").trim() : String(tds[3].id || "").replace(/^vid-/, "")) || "";
+      }
+    }
+  };
+  // Best-effort throughout: a disabled tab, no VMs or a slow box just yields an empty list and
+  // the caller shows its "nothing to show" line instead of a broken row.
+  function rowIcons(kind, max) {
+    var cfg = ICON_SRC[kind];
+    if (!cfg) return Promise.resolve([]);
+    return fetch(cfg.url, { credentials: "same-origin" }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (raw) {
       var out = [];
-      if (!html) return out;
+      if (!raw) return out;
       try {
-        var doc = new DOMParser().parseFromString(html, "text/html");
-        for (var i = 0; i < sels.length && !out.length; i++) {
-          Array.prototype.slice.call(doc.querySelectorAll(sels[i])).forEach(function (n) {
-            if (out.length >= (max || 4)) return;
-            var row = n.closest ? n.closest("tr") : null;
-            var nm = "";
-            try { nm = ((row && (row.querySelector("td.vm-name a, td a.hand, td a") || {})).textContent || "").trim(); } catch (e2) {}
-            if (n.tagName === "IMG") { var s = n.getAttribute("src") || ""; if (s) out.push({ src: s, name: nm }); }
-            else { var cls = (n.getAttribute("class") || "").split(/\s+/).filter(function (c) { return /^(fa-|icon-)/.test(c); })[0]; if (cls) out.push({ src: cls, name: nm }); }
-          });
-        }
+        var rows = String(raw).split("\0")[0];
+        var doc = new DOMParser().parseFromString("<table><tbody>" + rows + "</tbody></table>", "text/html");
+        var tb = doc.querySelector("tbody");
+        var lim = max || 4;
+        Array.prototype.slice.call(tb ? tb.children : []).forEach(function (row) {
+          if (out.length >= lim || row.tagName !== "TR") return;
+          var cell = row.children && row.children[0];
+          if (!cell || !cell.matches || !cell.matches(cfg.cell)) return;
+          var n = null;
+          for (var i = 0; i < cfg.sels.length && !n; i++) n = cell.querySelector(cfg.sels[i]);
+          if (!n) return;
+          var nm = ""; try { nm = cfg.name(cell, row) || ""; } catch (e2) {}
+          if (n.tagName === "IMG") { var s = n.getAttribute("src") || ""; if (s) out.push({ src: s, name: nm }); }
+          else { var cls = (n.getAttribute("class") || "").split(/\s+/).filter(function (c) { return /^(fa-|icon-)/.test(c); })[0]; if (cls) out.push({ src: cls, name: nm }); }
+        });
       } catch (e) {}
       return out;
     }).catch(function () { return []; });
@@ -1223,18 +1286,10 @@
           if (!p9.count()) empty9.style.display = "";
           gpaint();
         };
-        // Docker has an engine endpoint. The VM and Plugin tabs do not — their enhancers read icons out
-        // of their own page's table, so we fetch that page same-origin and read the SAME selectors
-        // (vms.js vmImgs(), plugins.js #plugin_table). Best-effort: an empty answer just shows the line.
-        if (sec9[0] === "docker") {
-          api("GET", "state").then(function (s9) {
-            fill9(((s9 && s9.containers) || []).map(function (c9) { return { src: "/state/plugins/dynamix.docker.manager/images/" + encodeURIComponent(c9.name || "") + "-icon.png", name: c9.name || "" }; }).filter(function (x9) { return !!x9.name; }));
-          }).catch(function () { fill9([]); });
-        } else if (sec9[0] === "vm") {
-          scrapeIcons("/VMs", ["#kvm_list td.vm-name span[id^='vm-'] > .img", "#kvm_list td.vm-name img.img", "#kvm_list td.vm-name img", "#kvm_list td.vm-name i"], 4).then(fill9);
-        } else {
-          scrapeIcons("/Plugins", ["#plugin_table td img", "#plugin_table td i", "table.tablesorter td img"], 4).then(fill9);
-        }
+        // ONE mechanism for all three: ask the very same row-fragment endpoint that area's own
+        // page asks (see rowIcons above — fetching /Docker, /VMs or /Plugins themselves can only
+        // ever return the empty pre-JS skeleton). Best-effort: an empty answer just shows the line.
+        rowIcons(sec9[0], 4).then(fill9);
       });
       gApplyBg(gbg);
       gpaint();
@@ -1293,13 +1348,15 @@
     // #5 (user: "die vorschau soll auch die kachelgröße live anzeigen"): the preview logos take the size the
     // tile-size control selects, so Klein/Mittel/Groß is reflected in the preview immediately.
     function sizePrev() { tintPrev(); }
-    // REAL container logos (up to four) — Unraid stores every container icon under
-    // this path; our own logo is only the fallback when none load. The NAME goes with it: the
-    // pipeline needs it to look a glyph up and to honour a per-container pin.
-    api("GET", "state").then(function (st9) {
-      var cs9 = (st9 && st9.containers) || [];
-      cs9.slice(0, 4).forEach(function (c9) { if (c9 && c9.name) dockPrev.add("/state/plugins/dynamix.docker.manager/images/" + encodeURIComponent(c9.name) + "-icon.png", c9.name); });
-      if (!cs9.length) dockPrev.add("/plugins/cannonadecommand/images/cannonadecommand.png", "");
+    // REAL container logos (up to four), from the Docker tab's OWN row fragment (rowIcons) — our
+    // own logo is only the fallback when the tab has nothing to show. This used to build the icon
+    // URL itself out of the engine's container names ("/state/…/<name>-icon.png"), which is a guess
+    // and 404s for every container Unraid has no cached icon for; the tile then hid itself and the
+    // row came out with holes in it. The NAME rides along: the pipeline needs it to look a glyph up
+    // and to honour a per-container pin.
+    rowIcons("docker", 4).then(function (l9) {
+      (l9 || []).forEach(function (it9) { dockPrev.add(it9.src, it9.name || ""); });
+      if (!dockPrev.count()) dockPrev.add("/plugins/cannonadecommand/images/cannonadecommand.png", "");
       tintPrev();
     }).catch(function () { dockPrev.add("/plugins/cannonadecommand/images/cannonadecommand.png", ""); tintPrev(); });
     function tintPrev() { dockPrev.set({ bg: iconbg, color: iconcolor, strength: iconstrength, accent: accent }); }
@@ -1563,14 +1620,29 @@
       cB.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
       // the pipeline SCOPE this area's items live under, so a per-item pin set in a row's own window
       // shows up in the preview too (the same scope strings docker.js/vms.js/plugins.js pass)
-      var PSCOPE = { "ccd.": "docker", "ccv.": "vm", "ccp.": "plugin" }[P] || "docker";
+      var PAREA = { "ccd.": "docker", "ccv.": "vm", "ccp.": "plugin" }[P];   // areas whose rows carry REAL per-item logos
+      var PSCOPE = PAREA || "docker";
       var pvl = logoPreview(PSCOPE, "cc-set-tint-" + P.replace(/[^a-z]/g, ""));
       var tpw = pvl.el;
       // A sample beginning with "fa-"/"icon-" is a FONT GLYPH (the Settings/Tools tiles use FA/Unraid
       // font icons, not raster PNGs) — logoPreview renders it as an <i> coloured via CSS. Anything else
       // is a raster logo. This is why ccs. showed no preview: its samples were empty because there are
       // no PNGs; it passes glyph classes instead.
-      (samples || []).forEach(function (s9) { pvl.add(s9, ""); });
+      var addSamples = function () { (samples || []).forEach(function (s9) { pvl.add(s9, ""); }); };
+      // Docker/VMs/Plugins show REAL per-item logos, so the preview shows this box's own — same
+      // row fragments the global Logos card uses (rowIcons). The canned sample list stays as the
+      // fallback for a box with no containers/VMs/plugins. It could never be more than a stand-in
+      // anyway: two of the three plugin samples are paths that exist on no Unraid box at all, so
+      // they 404, the tile hides itself, and that preview rendered as a single lonely logo.
+      if (PAREA && !noLogos) {
+        rowIcons(PAREA, 4).then(function (l9) {
+          (l9 || []).forEach(function (it9) { pvl.add(it9.src, it9.name || ""); });
+          if (!pvl.count()) addSamples();
+          tp();
+        }).catch(function () { addSamples(); tp(); });
+      } else {
+        addSamples();
+      }
       function tp() { pvl.set({ bg: ibg, color: icol, strength: parseInt(get(P + "iconstrength", "100"), 10) || 100, accent: acc, size: "48px" }); }
       cB.appendChild(tpw); tp(); applyBg2(ibg);
       // initial paint = the EFFECTIVE values (cA already initialises via effAcc(); run the
