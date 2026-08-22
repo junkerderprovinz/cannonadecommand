@@ -1313,8 +1313,27 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-rb-
    the remaining width, growing out to the row's own right edge — the same edge every dropdown-
    carrying row in this settings card already reaches, since they share one container width. */
 .cc-set-swatches { display: flex; align-items: center; gap: 9px; flex-wrap: nowrap; margin-bottom: 6px; }
-.cc-set-sw { width: 30px; height: 30px; box-sizing: border-box; border-radius: var(--cc-b-radius, 50%); border: 2px solid transparent; cursor: pointer; padding: 0; flex: none; } /* #5: ONE swatch size everywhere */ /* colour swatches follow the BADGE SHAPE token like the badges (user: sollen der Badge-Form folgen) */
-.cc-set-sw-on { transform: scale(1.18); filter: brightness(1.15); }   /* ring-free on-state — KEINE Rahmen/Ringe (Nutzer-Gesetz) */
+.cc-set-sw { position: relative; width: 30px; height: 30px; box-sizing: border-box; border-radius: var(--cc-b-radius, 50%); border: 2px solid transparent; cursor: pointer; padding: 0; flex: none; } /* #5: ONE swatch size everywhere */ /* colour swatches follow the BADGE SHAPE token like the badges (user: sollen der Badge-Form folgen) */
+/* THE SELECTED SWATCH IS A MARK, NOT A SIZE (user: "das aktive ist größer als die anderen").
+   The previous on-state was `transform: scale(1.18)`, written as a ring-free selection cue because
+   Rule 5 forbids a border/ring. It obeyed that rule and broke a different one: measured live, the
+   selected swatch rendered 33x35 while its neighbours rendered 28x30, so a row that is supposed to
+   be one repeated shape had one odd cell in it — and in the `.cc-fill` rows (flex: 1 1 0) the scale
+   also lifted the swatch out of the shared grid it was sized into.
+   So the on-state now changes NOTHING about the box: same width, same height, same flex. It is a
+   brightness step (the colour reads as "lit") PLUS a tick drawn INSIDE the swatch — Rule 5's
+   "ausgewählt wird gefüllt", the tick sitting on the fill rather than a line drawn around it.
+   The tick is the app's ONE existing tick, the same data-URI geometry settings.js ccTick() feeds the
+   badge-visibility checkboxes; a second check glyph is exactly how CC once ended up with four
+   different info bubbles. Its INK has to contrast with the swatch's own colour (a white tick is
+   invisible on a light preset), so settings.js stamps --cc-sw-tick with the idealText ink when it
+   marks a swatch; the fallback below keeps a class-only toggle visible. */
+.cc-set-sw-on { filter: brightness(1.15); }   /* ring-free on-state — KEINE Rahmen/Ringe (Nutzer-Gesetz) */
+.cc-set-sw-on::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: var(--cc-sw-tick, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"));
+  background-repeat: no-repeat; background-position: center; background-size: 64% 64%;
+}
 /* colour picker: force it VISIBLE as a real swatch. Unraid's global input CSS
    (border:none; border-bottom; transparent bg) otherwise strips it to a thin line
    so the picker looks missing — appearance:none + swatch pseudo-elements fix it.

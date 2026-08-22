@@ -3622,6 +3622,9 @@
       c[k].classList.toggle("is-disabled", !!o.disabled);
     }
   }
+  // GlimStone Rule 21 (wheel over the CLOSED field): the shared handler is in cc-theme.js; this hands it
+  // the repaint the chip-click path already uses, so a wheel step and a click leave the widget identical.
+  try { if (window.CCTheme && window.CCTheme.registerSelectSync) window.CCTheme.registerSelectSync(function (sel, wrap) { if (!wrap || !wrap.classList || !wrap.classList.contains("cc-dsel")) return false; ctSyncOne(sel); return true; }); } catch (e) {}
   function ctSelectsTeardown() {
     try {
       var wraps = document.querySelectorAll(".cc-dsel");

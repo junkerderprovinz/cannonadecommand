@@ -1887,6 +1887,10 @@
       c[k].classList.toggle("is-selected", o.selected); c[k].classList.toggle("is-disabled", !!o.disabled); c[k].setAttribute("aria-selected", o.selected ? "true" : "false");
     }
   }
+  // GlimStone Rule 21 (wheel over the CLOSED field): the shared handler lives in cc-theme.js, but the
+  // REPAINT has to be this family's own — ccToolsSyncSel re-inserts the locale flag image and rebuilds
+  // the panel when the host refilled the <select>, neither of which a generic mirror knows about.
+  try { if (window.CCTheme && window.CCTheme.registerSelectSync) window.CCTheme.registerSelectSync(function (sel, wrap) { if (!wrap || !wrap.classList || !wrap.classList.contains("cc-tsel")) return false; ccToolsSyncSel(sel); return true; }); } catch (e) {}
   // Put the native <select> back where it was and wrap it again from scratch. Used only by the count-mismatch
   // branch above; the <select> itself is never recreated, so every host handler bound to it survives.
   function ccToolsRewrap(sel) {

@@ -69,7 +69,20 @@
       "#cc-settings .cc-flag-search{box-sizing:border-box;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:8px 10px;margin:8px;width:calc(100% - 16px);font-size:13px}" +
       "#cc-settings .cc-flag-list{max-height:260px;overflow-y:auto;padding:0 6px 6px}" +
       "#cc-settings .cc-flag-item{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:6px;cursor:pointer}" +
-      "#cc-settings .cc-flag-item:hover,#cc-settings .cc-flag-item.cc-sel{background:rgba(255,255,255,.09)}";   // #25 keyboard highlight
+      "#cc-settings .cc-flag-item:hover,#cc-settings .cc-flag-item.cc-sel{background:rgba(255,255,255,.09)}" +   // #25 keyboard highlight
+      // ── the LOGO PREVIEW TILE (logoPreview below). The coloured badge is THIS BOX — a real element with a
+      // real border-radius and overflow:hidden — never an feFlood baked into the filter: an feFlood fills the
+      // whole filter region, so the "badge" ignored border-radius and rendered a hard square where the live
+      // tab shows a rounded tile. Same split the real tabs use (docker/vms span.hand, plugins .cc-plugico):
+      // the TILE carries the badge, the child carries the pixels.
+      "#cc-settings .cc-set-tile{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;overflow:hidden;flex:0 0 auto;transition:background-color .12s}" +
+      "#cc-settings .cc-set-tile>img{width:100%;height:100%;object-fit:contain;display:block;box-sizing:border-box}" +
+      "#cc-settings .cc-set-tile>i{display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;box-sizing:border-box}" +
+      "#cc-settings .cc-set-tile-bg>img,#cc-settings .cc-set-tile-bg>i{padding:14%}" +
+      // per-area sub-heading inside ONE card (the global Logos card's Docker/VM/Plugin sections) — a plain
+      // muted caption, not a second card (Rule 1: one raised surface, never a card inside a card)
+      "#cc-settings .cc-set-sublbl{margin:12px 0 0;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;opacity:.55}" +
+      "#cc-settings .cc-set-prev-empty{margin:6px 0 0;font-size:12px;opacity:.5}";
     document.head.appendChild(st);
   })();
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
@@ -307,6 +320,168 @@
   function toggleRow(labelText, on, onChange) {
     var row = el("div", "cc-set-row"); row.appendChild(el("span", null, labelText)); var sp = el("span", "cc-set-spacer"); row.appendChild(sp);
     row.appendChild(toggle(on, onChange)); return row;
+  }
+
+  // ── THE SELECTED SWATCH, in ONE place ────────────────────────────────────────────────
+  // Every colour row on this page draws the same swatch, so "which one is picked" has to be
+  // marked the same way in every one of them. It used to be a CSS-only `transform: scale()`,
+  // which made the picked swatch a DIFFERENT SIZE from its neighbours (measured live: 33x35
+  // against 28x30) — see the long note on .cc-set-sw-on in docker.css. The box never changes
+  // now; the mark is a tick drawn on the fill, and the tick needs an ink that contrasts with
+  // THIS swatch's colour, so the class and the ink are always set together. Going through one
+  // helper is what keeps the global card, every area card and syncSwOn() from drifting apart.
+  function swMark(sw, on, colour) {
+    if (!sw) return;
+    sw.classList.toggle("cc-set-sw-on", !!on);
+    if (on) sw.style.setProperty("--cc-sw-tick", ccTick(idealText(colour || sw.dataset.c || "")));
+    else sw.style.removeProperty("--cc-sw-tick");
+  }
+  // Mark exactly the swatch whose colour is `colour` inside `row` (and unmark the rest).
+  // dataset.c is the swatch's own colour — the ONE attribute every preset swatch carries.
+  function swMarkRow(row, colour) {
+    if (!row) return;
+    var want = String(colour || "").toLowerCase();
+    Array.prototype.slice.call(row.querySelectorAll(".cc-set-sw")).forEach(function (sw) {
+      var c = (sw.dataset.c || "").toLowerCase();
+      swMark(sw, !!c && c === want, sw.dataset.c);
+    });
+  }
+
+  // ── ONE LOGO PREVIEW FOR EVERY CARD THAT HAS ONE ─────────────────────────────────────
+  // There were THREE private copies of this (the Docker tab's Logos card, every area's own
+  // Logos card, and nothing at all in the global card), and all three painted something the
+  // real tabs never paint. Two concrete faults, both reported as "the preview doesn't work":
+  //   · they applied a RAW luminance tint / ink flatten and never once looked at cc.iconmode,
+  //     so with the global Icon-Färbung on anything but the raw treatment the preview showed a
+  //     different picture from the tab it is a preview OF;
+  //   · the coloured badge was an feFlood INSIDE the SVG filter. An feFlood fills the whole
+  //     filter region, which is the element's border box — so the badge ignored border-radius
+  //     and came out a hard square while the live tab shows a rounded tile.
+  // This runs the tabs' OWN pipeline instead: CCTheme.icons.plan() picks native/flat/tint and
+  // may swap in a curated glyph, exactly as docker.js/plugins.js/vms.js do it, and the badge is
+  // a real CSS box (.cc-set-tile) behind the image. `scope` is the pipeline's per-item scope
+  // ("docker"/"vm"/"plugin"), so a per-item pin set in a row's own window shows up here too.
+  function logoPreview(scope, fid) {
+    var wrap = el("div", "cc-set-prev");
+    var items = [];                                   // {tile, node, name, glyph, src}
+    var st = { bg: false, color: "", strength: 100, accent: "#2f6feb", size: null };
+    var bound = false;
+    function C() { return window.CCTheme && window.CCTheme.icons; }
+    function hex6(c) { c = String(c == null ? "" : c).trim(); return /^#[0-9a-f]{3}$/i.test(c) ? "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c; }
+    function badgeBg() { return /^#[0-9a-f]{6}$/i.test(st.color) ? st.color : st.accent; }
+    // Same ink contract as docker.js iconInk()/plugins.js plugIconInk(): on the badge the ink must
+    // contrast with the BADGE, otherwise it is the picked colour lifted out of the dark end. A
+    // luminance tint outputs about half the target's luma, so the tint path doubles the floor.
+    function ink(forTint) {
+      if (st.bg) return hex6(idealText(badgeBg()));
+      if (!/^#[0-9a-f]{6}$/i.test(st.color)) return "";
+      var T = window.CCTheme;
+      return (T && T.liftDark) ? hex6(T.liftDark(st.color, st.accent, T.LUM_FLOOR * (forTint ? 2 : 1))) : st.color;
+    }
+    function host(id) {
+      var h = document.getElementById(id);
+      if (!h) { h = document.createElement("div"); h.id = id; h.setAttribute("aria-hidden", "true"); h.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(h); }
+      return h;
+    }
+    function flatFilter() {
+      var m = /^#?([0-9a-f]{6})$/i.exec(ink(false) || ""); if (!m) return "";
+      var n = parseInt(m[1], 16), r = ((n >> 16 & 255) / 255).toFixed(4), g = ((n >> 8 & 255) / 255).toFixed(4), b = ((n & 255) / 255).toFixed(4);
+      var id = fid + "-flat";
+      host(id + "-svg").innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + id + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="0 0 0 0 ' + r + ' 0 0 0 0 ' + g + ' 0 0 0 0 ' + b + ' 0 0 0 1 0"/></filter></svg>';
+      return "url(#" + id + ")";
+    }
+    function tintFilter() {
+      var m = /^#?([0-9a-f]{6})$/i.exec(ink(true) || ""); if (!m) return "";
+      var n = parseInt(m[1], 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+      var s = Math.max(10, st.strength || 100) / 100, i = 1 - s;
+      function row(c, ix) { var v = [0.2126 * c * s, 0.7152 * c * s, 0.0722 * c * s, 0, 0]; v[ix] += i; return v.join(" "); }
+      var id = fid + "-tint";
+      host(id + "-svg").innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + id + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + row(r, 0) + " " + row(g, 1) + " " + row(b, 2) + ' 0 0 0 1 0"/></filter></svg>';
+      return "url(#" + id + ")";
+    }
+    function radius() {
+      var sh = get("cc.badgeshape", "pill");
+      return sh === "circle" ? "50%" : "min(" + ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" }[sh] || "999px") + ", 16px)";
+    }
+    function size() { return st.size || ({ s: "48px", m: "62px", l: "76px" })[get("cc.sgsize", "m")] || "62px"; }
+    // A sample starting with "fa-"/"icon-" is a FONT GLYPH (the Settings/Tools tiles, most VM rows),
+    // which is monochrome by construction: it inks via CSS colour and has no raster to matrix.
+    function add(src, name) {
+      var tile = el("span", "cc-set-tile"), node;
+      if (/^(fa-|icon-)/.test(src)) { node = el("i", (/^fa-/.test(src) ? "fa " : "") + src); }
+      else { node = el("img"); node.alt = ""; node.src = src; node.onerror = function () { tile.style.display = "none"; }; }
+      tile.appendChild(node); wrap.appendChild(tile);
+      items.push({ tile: tile, node: node, name: name || "", glyph: node.tagName !== "IMG", src: src });
+    }
+    function paint() {
+      var Ci = C(), bg = badgeBg(), rad = radius(), sz = size(), flat = flatFilter(), tint = tintFilter();
+      if (Ci) { var names = []; items.forEach(function (it) { if (it.name) names.push(it.name); }); if (names.length) Ci.want(names); }
+      items.forEach(function (it) {
+        it.tile.style.width = it.tile.style.height = sz;
+        it.tile.style.borderRadius = rad;
+        it.tile.style.background = st.bg ? bg : "";
+        it.tile.classList.toggle("cc-set-tile-bg", !!st.bg);
+        // The plan is the pipeline's, never a local guess: an unmeasured/unknown icon falls through
+        // to the safe treatment exactly as it does on the real tab.
+        var plan = { treat: "tint", url: "" };
+        if (Ci) {
+          var res = it.name ? Ci.result(it.name) : null, kind = (res && res.kind !== "pending") ? res.kind : "";
+          var spread = it.glyph ? 0 : Ci.spread(it.src);
+          var p = Ci.plan(it.name ? Ci.mode(scope, it.name) : Ci.globalMode(), kind, spread);
+          plan = { treat: p.treat, url: (!it.glyph && it.name && (p.src === "glyph" || p.src === "color")) ? Ci.svgUrl(it.name) : "" };
+        }
+        var want = plan.treat === "native" ? "none" : (plan.treat === "flat" ? (flat || tint || "none") : (tint || "none"));
+        if (it.glyph) {
+          it.node.style.fontSize = "calc(" + sz + " * .46)";
+          it.node.style.color = plan.treat === "native" ? "" : (st.bg ? idealText(bg) : (ink(false) || ""));
+          it.node.style.filter = "none";
+        } else {
+          var src = plan.url || it.src;
+          if (it.node.getAttribute("src") !== src) it.node.src = src;
+          it.node.style.filter = want;
+        }
+      });
+    }
+    // A "pending" name is still being looked up by the engine's workers; the pipeline calls back
+    // when an answer lands, so the preview upgrades itself exactly like a real tab row does.
+    function bind() { if (bound) return; var Ci = C(); if (Ci && Ci.onResolved) { Ci.onResolved(paint); bound = true; } }
+    return {
+      el: wrap,
+      add: function (src, name) { add(src, name); },
+      clear: function () { items = []; wrap.innerHTML = ""; },
+      count: function () { return items.length; },
+      set: function (o) { for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) st[k] = o[k]; bind(); paint(); },
+      paint: paint
+    };
+  }
+
+  // ── REAL sample icons per area, for the previews ─────────────────────────────────────
+  // Docker has an engine endpoint (GET state). The VM and Plugin tabs do NOT have one — both
+  // enhancers read their icons straight out of their own page's table (vms.js vmImgs(),
+  // plugins.js #plugin_table), so the honest way to get REAL icons here is to fetch that same
+  // page same-origin and read the same selectors out of it. This file already does exactly
+  // that for /Settings/DisplaySettings, so it is this page's established pattern, not a new
+  // mechanism. Everything is best-effort: a disabled tab, no VMs or a slow box just yields an
+  // empty list and the caller shows its "nothing to show" line instead of a broken row.
+  function scrapeIcons(url, sels, max) {
+    return fetch(url, { credentials: "same-origin" }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (html) {
+      var out = [];
+      if (!html) return out;
+      try {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        for (var i = 0; i < sels.length && !out.length; i++) {
+          Array.prototype.slice.call(doc.querySelectorAll(sels[i])).forEach(function (n) {
+            if (out.length >= (max || 4)) return;
+            var row = n.closest ? n.closest("tr") : null;
+            var nm = "";
+            try { nm = ((row && (row.querySelector("td.vm-name a, td a.hand, td a") || {})).textContent || "").trim(); } catch (e2) {}
+            if (n.tagName === "IMG") { var s = n.getAttribute("src") || ""; if (s) out.push({ src: s, name: nm }); }
+            else { var cls = (n.getAttribute("class") || "").split(/\s+/).filter(function (c) { return /^(fa-|icon-)/.test(c); })[0]; if (cls) out.push({ src: cls, name: nm }); }
+          });
+        }
+      } catch (e) {}
+      return out;
+    }).catch(function () { return []; });
   }
 
   function render() {
@@ -731,11 +906,16 @@
     // #18 (user): the preset swatches FILL the row (flex:1 each) with the HEX field as the rightmost
     // cell — exactly like the rainbow row's swatches + reset. Identical layout for EVERY colour picker
     // (the per-area cards use the same shape below).
-    var srow = el("div", "cc-set-swatches cc-fill");
+    // cc-set-swrow-global marks THE global accent row. syncSwOn() used to sweep every .cc-set-sw on
+    // the page and re-mark it against the GLOBAL accent, which silently un-marked every AREA card's
+    // own picked swatch the moment the global colour changed (an area on its own colour was then
+    // showing no selection at all). One class, one scope, and the area cards mark their own rows.
+    var srow = el("div", "cc-set-swatches cc-fill cc-set-swrow-global");
     PRESETS.slice(0, 7).forEach(function (c) {   // #5: 7 presets + hex(2 cells) = 9 cells, matching the rainbow/flag rows (8 + reset)
       // a <span>, NOT a <button>: Unraid's global button CSS was bloating these into
       // big bordered rectangles. dataset.c lets syncSwOn highlight the active one.
-      var sw = el("span", "cc-set-sw" + (c === accent ? " cc-set-sw-on" : "")); sw.setAttribute("data-tip", c); sw.style.background = c; sw.dataset.c = c;
+      var sw = el("span", "cc-set-sw"); sw.setAttribute("data-tip", c); sw.style.background = c; sw.dataset.c = c;
+      swMark(sw, c === accent, c);   // ONE selected-mark helper (tick + ink), never a size change
       sw.addEventListener("click", function () { accent = c; set("cc.accent", accent); render(); syncHeaderBar(); syncSharesBar(); });
       srow.appendChild(sw);
     });
@@ -869,6 +1049,29 @@
       };
       var closePanel = function () { panel.style.display = "none"; try { trigger.focus(); } catch (e9) {} };
       trigger.addEventListener("click", function () { if (panel.style.display !== "none") panel.style.display = "none"; else openPanel(); });
+      // GlimStone Rule 21, this page's FOURTH selection-field variant. The country picker is a closed
+      // field standing for exactly one value, so it wheel-steps like every other one — it just isn't
+      // <select>-backed, so cc-theme.js's shared handler (which reads a real <select>) cannot serve it
+      // and the step is spelled out here against the same CC_FLAGS list the panel is built from.
+      // Clamped at both ends, like the shared handler and like the panel's own arrow keys.
+      // The commit is the click path's commit — same keys, same applyFlag, same syncs — but the full
+      // render() is DEBOUNCED: render() rebuilds this whole page, which would tear the element out from
+      // under the cursor on every notch of a gesture that is meant to be a continuous browse.
+      var flagRenderT = null;
+      trigger.addEventListener("wheel", function (e9) {
+        if (e9.ctrlKey || e9.metaKey || e9.altKey) return;
+        if (panel.style.display !== "none") return;                 // an open panel scrolls its own list
+        var d9 = e9.deltaY || e9.deltaX; if (!d9) return;
+        var list9 = window.CC_FLAGS, cur9 = get("cc.flag", ""), ix9 = -1;
+        for (var j9 = 0; j9 < list9.length; j9++) if (list9[j9].code === cur9) { ix9 = j9; break; }
+        var nx9 = ix9 < 0 ? (d9 > 0 ? 0 : list9.length - 1) : ix9 + (d9 > 0 ? 1 : -1);
+        if (nx9 < 0 || nx9 >= list9.length) return;                 // clamped: let the page scroll instead
+        e9.preventDefault();
+        set("cc.flagmode", "1"); set("cc.rainbow", "1"); applyFlag(list9[nx9]);
+        renderTrigger();                                            // the field repaints exactly as a pick would
+        syncHeaderBar(); syncSharesBar();
+        clearTimeout(flagRenderT); flagRenderT = setTimeout(function () { render(); }, 450);
+      }, { passive: false });
       // #25: keyboard-operable — Enter/Space/ArrowDown on the trigger opens; then arrows move the
       // highlight, Enter picks, Escape closes. The search already matches name_de / English name / code.
       trigger.addEventListener("keydown", function (e9) { if (e9.key === "Enter" || e9.key === " " || e9.key === "ArrowDown") { e9.preventDefault(); openPanel(); } });
@@ -954,12 +1157,23 @@
     if (themingCard) themingCard.appendChild(tileSizeRow());   // hoisted (defined below); onChange still live-resizes the Docker preview
     // ── Logos & Icons (GLOBAL): edits the shared cc.iconbg / cc.iconcolor / cc.iconstrength
     // keys every adopting tab resolves through eff('icon…'). Same control set as the per-area
-    // Logos cards, minus the preview (this card is the source, not a consumer).
+    // Logos cards — and, since 4.32.0, the same PREVIEW. It used to have none on the reasoning
+    // that "this card is the source, not a consumer", which is true of the DATA and false of the
+    // user: this is where Icon-Färbung lives, so the one card that decides how every logo in the
+    // whole plugin is treated was the one card that showed no logo at all. Three sections, one per
+    // area, each with that area's REAL icons.
     (function () {
       var cLI = card(T("Logos & Icons", "Logos & icons"), T("Globale Logo-/Icon-Farben. Tabs mit aktivem 'Globale Badge-Farbe übernehmen' folgen auch hier.", "Global logo/icon colours. Tabs adopting the global colour follow these too."));
       var gcol = get("cc.iconcolor", ""), gbg = get("cc.iconbg", "0") === "1";
       var gstrow; // strength row — dimmed in background mode (same rule as the area cards)
-      function gsync() { syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); } // adopt-ON area cards repaint with the new globals
+      // the three live previews (built at the bottom of this card); repainted by every control here
+      var gPrevs = [];
+      function gpaint() {
+        var acc9 = get("cc.accent", "#2f6feb");
+        var strn = parseInt(get("cc.iconstrength", "100"), 10) || 100;
+        gPrevs.forEach(function (p9) { try { p9.set({ bg: get("cc.iconbg", "0") === "1", color: get("cc.iconcolor", ""), strength: strn, accent: acc9, size: "48px" }); } catch (e9) {} });
+      }
+      function gsync() { gpaint(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); } // adopt-ON area cards repaint with the new globals
       function gApplyBg(v) { gbg = v; gstrow.style.opacity = v ? ".4" : ""; gstrow.style.pointerEvents = v ? "none" : ""; }
       cLI.appendChild(toggleRow(T("Hintergrund", "Background"), gbg, function (v) { set("cc.iconbg", v ? "1" : "0"); gApplyBg(v); gsync(); }));
       var ghx = el("input", "cc-set-hexin"); ghx.type = "text"; ghx.value = gcol || ""; ghx.placeholder = "#1f9d55"; ghx.maxLength = 7; ghx.spellcheck = false;
@@ -984,9 +1198,46 @@
         [["auto", T("Automatisch", "Automatic")], ["native", T("Natives Icon", "Native icon")], ["flat", T("Ink-Flatten", "Ink flatten")], ["tint", T("Luminanz-Tint", "Luminance tint")]],
         get("cc.iconmode", "auto"),
         function (v) { set("cc.iconmode", v); gsync(); },
-        T("Automatisch: einfarbige Logos werden zu sauberer Tinte geglättet, für bekannte Programme holt CannonadeCommand ein echtes Glyph-Logo, alles andere wird getönt und behält seine Zeichnung. Natives Icon: keine Einfärbung. Ink-Flatten und Luminanz-Tint erzwingen jeweils eine der beiden Behandlungen. Einzelne Container, VMs und Plugins können in ihrem eigenen Fenster davon abweichen.",
-          "Automatic: single-tone logos are flattened to clean ink, known apps get a real glyph logo fetched for them, everything else is tinted and keeps its drawing. Native icon: no colouring. Ink flatten and Luminance tint each force one of the two treatments. Individual containers, VMs and plugins can differ in their own window.")));
+        // #(user: "der infotext ist unverständlich"). The old text named the two treatments and their
+        // internal labels without ever saying WHY there are two, so it read as jargon. This one starts
+        // from the problem: a logo is either one solid shape or a little picture, and the two need
+        // opposite handling. Short enough for a bubble (Rule 8) — no wall of text.
+        T("Ein Logo ist entweder eine einzelne durchgehende Form oder ein kleines mehrfarbiges Bild. Eine Form kann man komplett in deiner Farbe nachzeichnen und sie bleibt erkennbar; ein Bild würde dabei zum Farbklecks, weil Hintergrund und Motiv dieselbe Farbe bekämen. Darum zwei Behandlungen:\n\nAutomatisch (empfohlen) — CannonadeCommand sieht sich jedes Logo an: Formen werden nachgezeichnet (für bekannte Programme wird dafür sogar ein echtes Marken-Logo geholt), Bilder nur eingefärbt.\nNatives Icon — nichts einfärben, jedes Logo bleibt wie geliefert.\nInk-Flatten — alles nachzeichnen, auch Bilder.\nLuminanz-Tint — alles nur einfärben, auch Formen.\n\nEinzelne Container, VMs und Plugins kannst du in ihrem eigenen Fenster abweichend einstellen; diese Einzelwahl gewinnt immer gegen die Einstellung hier.",
+          "A logo is either one solid shape or a small multi-colour picture. A shape can be redrawn entirely in your colour and stays recognisable; a picture would turn into a blob, because its background and its mark would end up the same colour. Hence two treatments:\n\nAutomatic (recommended) — CannonadeCommand looks at each logo: shapes are redrawn (for well-known apps a real brand logo is even fetched to redraw), pictures are only tinted.\nNative icon — no colouring, every logo stays as shipped.\nInk flatten — redraw everything, pictures included.\nLuminance tint — only tint everything, shapes included.\n\nIndividual containers, VMs and plugins can be set differently in their own window; that per-item choice always wins over the setting here.")));
+      // ── the three PREVIEW sections: Docker · VMs · Plugins, each with that area's REAL icons.
+      // Every one of them runs the SAME pipeline the real tab runs, so switching Icon-Färbung above
+      // is visible right here without leaving the Allgemein tab.
+      [
+        ["docker", T("Docker-Container", "Docker containers")],
+        ["vm", T("VMs", "VMs")],
+        ["plugin", T("Plugins", "Plugins")]
+      ].forEach(function (sec9) {
+        cLI.appendChild(el("div", "cc-set-sublbl", sec9[1]));
+        var p9 = logoPreview(sec9[0], "cc-set-gprev-" + sec9[0]);
+        var empty9 = el("div", "cc-set-prev-empty", T("Keine Symbole gefunden.", "No icons found."));
+        empty9.style.display = "none";
+        cLI.appendChild(p9.el); cLI.appendChild(empty9);
+        gPrevs.push(p9);
+        var fill9 = function (list9) {
+          (list9 || []).slice(0, 4).forEach(function (it9) { p9.add(it9.src, it9.name || ""); });
+          if (!p9.count()) empty9.style.display = "";
+          gpaint();
+        };
+        // Docker has an engine endpoint. The VM and Plugin tabs do not — their enhancers read icons out
+        // of their own page's table, so we fetch that page same-origin and read the SAME selectors
+        // (vms.js vmImgs(), plugins.js #plugin_table). Best-effort: an empty answer just shows the line.
+        if (sec9[0] === "docker") {
+          api("GET", "state").then(function (s9) {
+            fill9(((s9 && s9.containers) || []).map(function (c9) { return { src: "/state/plugins/dynamix.docker.manager/images/" + encodeURIComponent(c9.name || "") + "-icon.png", name: c9.name || "" }; }).filter(function (x9) { return !!x9.name; }));
+          }).catch(function () { fill9([]); });
+        } else if (sec9[0] === "vm") {
+          scrapeIcons("/VMs", ["#kvm_list td.vm-name span[id^='vm-'] > .img", "#kvm_list td.vm-name img.img", "#kvm_list td.vm-name img", "#kvm_list td.vm-name i"], 4).then(fill9);
+        } else {
+          scrapeIcons("/Plugins", ["#plugin_table td img", "#plugin_table td i", "table.tablesorter td img"], 4).then(fill9);
+        }
+      });
       gApplyBg(gbg);
+      gpaint();
       wrapMain.appendChild(cLI);
     })();
     // Docker is now a normal area like the others: a "Stil" adopt card + its OWN Badges (accent)
@@ -1032,57 +1283,26 @@
       return segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small")], ["m", T("Mittel", "Medium")], ["l", T("Groß", "Large")]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); try { sizePrev(); } catch (e) {} }, T("Gilt global – dieselbe Größe steuert das Einstellungen-/Werkzeuge-Raster und die Docker-/Plugin-Logos.", "Global – the same size drives the Settings/Tools grid and the Docker/Plugin logos."));   /* live-resize the Docker preview */
     }
     c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));   // preview stays the Docker card's last block
-    var tprevWrap = el("div", "cc-set-prev");
-    var tprevImgs = [];
+    // ONE shared preview (logoPreview) — the tabs' own icon pipeline, and the coloured badge on a real
+    // CSS tile. The private recipe that used to sit here composited the badge with an feFlood INSIDE
+    // the filter; an feFlood fills the whole filter region, so the badge came out a hard square that
+    // ignored the Badge-Form, and the whole thing painted a raw tint with no regard for cc.iconmode —
+    // i.e. a preview of something the Docker tab never renders.
+    var dockPrev = logoPreview("docker", "cc-set-dockprev");
+    var tprevWrap = dockPrev.el;
     // #5 (user: "die vorschau soll auch die kachelgröße live anzeigen"): the preview logos take the size the
     // tile-size control selects, so Klein/Mittel/Groß is reflected in the preview immediately.
-    function curTileSz() { return ({ s: "48px", m: "62px", l: "76px" })[get("cc.sgsize", "m")] || "62px"; }
-    function sizePrev() { var w = curTileSz(); tprevImgs.forEach(function (im9) { im9.style.width = w; im9.style.height = w; }); }
-    function addPrevImg(src9) {
-      var im9 = el("img"); im9.src = src9; im9.alt = "";
-      im9.style.width = im9.style.height = curTileSz(); im9.style.objectFit = "contain";
-      im9.onerror = function () { this.style.display = "none"; };
-      tprevImgs.push(im9); tprevWrap.appendChild(im9);
-    }
+    function sizePrev() { tintPrev(); }
     // REAL container logos (up to four) — Unraid stores every container icon under
-    // this path; our own logo is only the fallback when none load
+    // this path; our own logo is only the fallback when none load. The NAME goes with it: the
+    // pipeline needs it to look a glyph up and to honour a per-container pin.
     api("GET", "state").then(function (st9) {
       var cs9 = (st9 && st9.containers) || [];
-      cs9.slice(0, 4).forEach(function (c9) { if (c9 && c9.name) addPrevImg("/state/plugins/dynamix.docker.manager/images/" + encodeURIComponent(c9.name) + "-icon.png"); });
-      if (!cs9.length) addPrevImg("/plugins/cannonadecommand/images/cannonadecommand.png");
+      cs9.slice(0, 4).forEach(function (c9) { if (c9 && c9.name) dockPrev.add("/state/plugins/dynamix.docker.manager/images/" + encodeURIComponent(c9.name) + "-icon.png", c9.name); });
+      if (!cs9.length) dockPrev.add("/plugins/cannonadecommand/images/cannonadecommand.png", "");
       tintPrev();
-    }).catch(function () { addPrevImg("/plugins/cannonadecommand/images/cannonadecommand.png"); tintPrev(); });
-    function tintPrev() {
-      if (iconbg) {
-        var bg8 = /^#[0-9a-f]{6}$/i.test(iconcolor) ? iconcolor : accent;
-        // Logo on a coloured badge. The badge colour AND the mono-inked logo are
-        // composited INSIDE one SVG filter (feColorMatrix ink → feFlood badge →
-        // feComposite over). The badge must NOT be the <img>'s own background: a CSS
-        // `filter` recolours the element's background too, so any mono matrix (or the
-        // old grayscale/brightness(0)/invert chain) turned the whole box opaque ink and
-        // hid the badge — that was the "background preview doesn't work" bug. The ink is
-        // idealText(bg8) → dark logo on a light badge, white logo on a dark one.
-        var ink8 = idealText(bg8); if (ink8.length === 4) ink8 = "#" + ink8[1] + ink8[1] + ink8[2] + ink8[2] + ink8[3] + ink8[3];
-        var im8 = parseInt(ink8.slice(1), 16), ir8 = (im8 >> 16 & 255) / 255, ig8 = (im8 >> 8 & 255) / 255, ib8 = (im8 & 255) / 255;
-        var mhost8 = document.getElementById("cc-set-monosvg");
-        if (!mhost8) { mhost8 = document.createElement("div"); mhost8.id = "cc-set-monosvg"; mhost8.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(mhost8); }
-        mhost8.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-set-mono" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 ' + ir8 + ' 0 0 0 0 ' + ig8 + ' 0 0 0 0 ' + ib8 + ' 0 0 0 1 0" result="ink"/><feFlood flood-color="' + bg8 + '" result="bg"/><feComposite in="ink" in2="bg" operator="over"/></filter></svg>';
-        // same min-capped tile radius as the glyph preview (badgeshape family, CIRCLE bypasses the 16px cap)
-        var sh8 = get("cc.badgeshape", "pill");
-        var br8 = sh8 === "circle" ? "50%" : "min(" + ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" }[sh8] || "999px") + ", 16px)";
-        tprevImgs.forEach(function (im9) { im9.style.filter = "url(#cc-set-mono)"; im9.style.background = ""; im9.style.borderRadius = br8; im9.style.padding = "6px"; });
-        return;
-      }
-      var hx9 = /^#?([0-9a-f]{6})$/i.exec(iconcolor || "");
-      if (!hx9) { tprevImgs.forEach(function (im9) { im9.style.filter = "none"; im9.style.background = ""; im9.style.padding = ""; im9.style.borderRadius = ""; }); return; }
-      var n9 = parseInt(hx9[1], 16), r9 = (n9 >> 16 & 255) / 255, g9 = (n9 >> 8 & 255) / 255, b9 = (n9 & 255) / 255;
-      var st9 = Math.max(10, iconstrength || 100) / 100, i9 = 1 - st9;
-      function row9(c9, ix9) { var v9 = [0.2126 * c9 * st9, 0.7152 * c9 * st9, 0.0722 * c9 * st9, 0, 0]; v9[ix9] += i9; return v9.join(" "); }
-      var host9 = document.getElementById("cc-set-tintsvg");
-      if (!host9) { host9 = document.createElement("div"); host9.id = "cc-set-tintsvg"; host9.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host9); }
-      host9.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-set-tint" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + row9(r9, 0) + " " + row9(g9, 1) + " " + row9(b9, 2) + ' 0 0 0 1 0"/></filter></svg>';
-      tprevImgs.forEach(function (im9) { im9.style.filter = "url(#cc-set-tint)"; im9.style.background = ""; im9.style.padding = ""; im9.style.borderRadius = ""; });
-    }
+    }).catch(function () { dockPrev.add("/plugins/cannonadecommand/images/cannonadecommand.png", ""); tintPrev(); });
+    function tintPrev() { dockPrev.set({ bg: iconbg, color: iconcolor, strength: iconstrength, accent: accent }); }
     c2.appendChild(tprevWrap); tintPrev(); applyBgMode(iconbg); sizePrev();   // #5: preview is the card's LAST block now, sized to the tile-size control
     wrap.appendChild(c2);
 
@@ -1229,7 +1449,11 @@
       pr.appendChild(pk); cA.appendChild(pr);   // #18: hex moves onto the swatch row (rightmost cell), like the top Badges card
       var sr = el("div", "cc-set-swatches cc-fill");
       PRESETS.slice(0, 7).forEach(function (c) {   // #5: 7 presets + hex(2 cells) = 9 cells, matching the rainbow/flag rows (8 + reset)
-        var sw = el("span", "cc-set-sw" + (c === acc ? " cc-set-sw-on" : "")); sw.setAttribute("data-tip", c); sw.style.background = c;
+        var sw = el("span", "cc-set-sw"); sw.setAttribute("data-tip", c); sw.style.background = c; sw.dataset.c = c;   // dataset.c = the ONE attribute swMarkRow reads
+        // Clicking a preset here USED to recolour the preview and leave the tick sitting on whatever
+        // swatch was picked at build time, so the card claimed one colour and previewed another
+        // (measured: pick violet -> preview violet, mark still on blue). Every colour change in this
+        // card now re-marks the row, exactly like the global card does.
         sw.addEventListener("click", function () { acc = c; pk._set(c); hx.value = c; set(P + "accent", c); useOwn(); paintPv(); });
         sr.appendChild(sw);
       });
@@ -1257,11 +1481,20 @@
           var t9 = el("span", "cc-navtab" + (i9 === activeIx ? " cc-navtab-on" : ""), nm9); pv.appendChild(t9); return t9;
         });
       } else {
-        // 2-3 mixed categories (same as the Allgemein preview): NAME headline (lg) + key/value (sm) + tab pill (md)
-        var pvName9 = el("span", "cc-b cc-b-lg", "nextcloud"); pv.appendChild(pvName9);
-        var pvVal9 = el("span", "cc-b"); pvVal9.appendChild(el("span", "cc-b-k", "CPU")); pvVal9.appendChild(el("span", "cc-b-v", "2/8")); pv.appendChild(pvVal9);
-        var pvTab9 = el("span", "cc-navtab cc-navtab-on", "Docker"); pv.appendChild(pvTab9);
-        pvBadges = [pvName9, pvVal9, pvTab9];
+        // THE SAME EIGHT SAMPLES THE GLOBAL BADGES CARD SHOWS (user: the area preview "doesn't work").
+        // It showed THREE badges: one name headline, one key/value pair and a tab pill. With a rainbow
+        // or flag palette of eight that is a third of the palette, so the preview could not show what
+        // the tab does — the sweep it is there to demonstrate was cut off after three hues, and two of
+        // the three badge TIERS the tab actually paints (the second name headline, the further
+        // key/value pairs) never appeared at all. Same mix, same order, same paint-by-index rule as the
+        // Allgemein card, so the two previews finally agree.
+        var mkName = function (t9) { return el("span", "cc-b cc-b-lg", t9); };
+        var mkVal = function (k9, v9) { var b8 = el("span", "cc-b"); b8.appendChild(elk(k9)); b8.appendChild(elv(v9)); return b8; };
+        pvBadges = [
+          mkName("nextcloud"), mkVal("CPU", "2/8"), mkVal("RAM", "1.2G"), mkName("plex"),
+          mkVal("IP", ".20.9"), mkVal("Port", "443"), mkName("grafana"), el("span", "cc-navtab cc-navtab-on", "Docker")
+        ];
+        pvBadges.forEach(function (b9) { pv.appendChild(b9); });
       }
       function paintPv() {
         var rbOn9 = get("cc.rainbow", "0") === "1", p9 = palG();
@@ -1274,6 +1507,7 @@
           if (isTabs && i9 !== activeIx) { b9.style.removeProperty("background"); b9.style.removeProperty("color"); return; } // accent: idle tab keeps its grey CSS pill
           b9.style.setProperty("background", acc, "important"); b9.style.setProperty("color", idealText(acc), "important");
         });
+        swMarkRow(sr, acc);   // the preset row's tick follows the colour the preview is showing
       }
       paintPv();
       cA.appendChild(pv);
@@ -1286,8 +1520,7 @@
         acc = effAcc();
         try { pk._set(/^#[0-9a-f]{6}$/i.test(acc) ? acc : "#2f6feb"); } catch (e9) {}
         hx.value = acc;
-        Array.prototype.slice.call(sr.querySelectorAll(".cc-set-sw")).forEach(function (sw9) { sw9.classList.toggle("cc-set-sw-on", sw9.getAttribute("data-tip") === acc); });
-        paintPv();
+        paintPv();   // repaints the sample badges AND re-marks the preset row (swMarkRow) in one place
         var ga = localStorage.getItem(adoptKey) !== "0";
         icol = ga ? get("cc.iconcolor", "") : get(P + "iconcolor", "");
         try { ipk._set(/^#[0-9a-f]{6}$/i.test(icol) ? icol : "#1f9d55"); } catch (e9) {}
@@ -1322,71 +1555,23 @@
       var sl2 = el("input"); sl2.type = "range"; sl2.min = "10"; sl2.max = "100"; sl2.value = String(istr); sl2.style.flex = "1";
       sl2.addEventListener("input", function () { set(P + "iconstrength", sl2.value); useOwn(); try { tp(); } catch (e9) {} });
       st2.appendChild(sl2); cB.appendChild(st2);
-      // live logo preview with real icons of this tab
+      // live logo preview with real icons of this tab — ONE shared preview (logoPreview), which runs
+      // the SAME icon pipeline the real tab runs (CCTheme.icons.plan) and puts the coloured badge on a
+      // real CSS tile instead of an feFlood. The private copy that used to live here recoloured the
+      // pixels with a raw tint/mono matrix and never looked at cc.iconmode, so with Icon-Färbung on
+      // anything but "auto"'s raw treatment it previewed a picture the tab does not paint.
       cB.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
-      var tpw = el("div", "cc-set-prev"); var tpImgs = [], tpGlyphs = [];
+      // the pipeline SCOPE this area's items live under, so a per-item pin set in a row's own window
+      // shows up in the preview too (the same scope strings docker.js/vms.js/plugins.js pass)
+      var PSCOPE = { "ccd.": "docker", "ccv.": "vm", "ccp.": "plugin" }[P] || "docker";
+      var pvl = logoPreview(PSCOPE, "cc-set-tint-" + P.replace(/[^a-z]/g, ""));
+      var tpw = pvl.el;
       // A sample beginning with "fa-"/"icon-" is a FONT GLYPH (the Settings/Tools tiles use FA/Unraid
-      // font icons, not raster PNGs) — render it as an <i> coloured via CSS. Anything else is a raster
-      // logo <img> tinted via the SVG feColorMatrix filter below. This is why ccs. showed no preview:
-      // its samples were empty because there are no PNGs; now it passes glyph classes instead.
-      (samples || []).forEach(function (s9) {
-        if (/^(fa-|icon-)/.test(s9)) {
-          var gi9 = el("i", "fa " + s9);
-          gi9.style.cssText = "width:48px;height:48px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;box-sizing:border-box";
-          tpGlyphs.push(gi9); tpw.appendChild(gi9);
-        } else {
-          var im9 = el("img"); im9.src = s9; im9.alt = "";
-          im9.style.width = "48px"; im9.style.height = "48px"; im9.style.objectFit = "contain";
-          im9.onerror = function () { this.style.display = "none"; };
-          tpImgs.push(im9); tpw.appendChild(im9);
-        }
-      });
-      var fid = "cc-set-tint-" + P.replace(/[^a-z]/g, "");
-      function tp() {
-        // FONT-GLYPH samples (Settings/Tools): recolour via CSS (color/background), NOT the SVG filter
-        // — a font glyph has no raster to matrix. Mirrors the tile treatment: background ON => a filled
-        // accent badge with contrast glyph; colourise ON => tinted glyph; neither => native.
-        tpGlyphs.forEach(function (gi9) {
-          if (ibg) {
-            var gbg9 = /^#[0-9a-f]{6}$/i.test(icol) ? icol : acc;
-            gi9.style.background = gbg9; gi9.style.color = idealText(gbg9);
-            // same square-badge radius family as the real tiles: rounded-square, except CIRCLE mode
-            // which makes the square glyph a full circle (the 16px cap must be bypassed there).
-            var sh9b = get("cc.badgeshape", "pill");
-            var brm9 = { pill: "999px", rounded: "6px", square: "0px", circle: "999px" }[sh9b] || "999px";
-            gi9.style.borderRadius = sh9b === "circle" ? "50%" : "min(" + brm9 + ", 16px)"; gi9.style.padding = "";
-          } else if (/^#[0-9a-f]{6}$/i.test(icol)) {
-            gi9.style.background = "none"; gi9.style.color = icol; gi9.style.borderRadius = "";
-          } else {
-            gi9.style.background = "none"; gi9.style.color = ""; gi9.style.borderRadius = "";
-          }
-        });
-        if (ibg) {
-          var bg8 = /^#[0-9a-f]{6}$/i.test(icol) ? icol : acc;
-          // badge colour + mono-inked logo composited inside ONE filter (feColorMatrix
-          // ink → feFlood badge → feComposite over). The badge must NOT be the <img>'s
-          // background — a CSS filter recolours that too — see the Docker-card note.
-          var ink8 = idealText(bg8); if (ink8.length === 4) ink8 = "#" + ink8[1] + ink8[1] + ink8[2] + ink8[2] + ink8[3] + ink8[3];
-          var mi8 = parseInt(ink8.slice(1), 16), ir8 = (mi8 >> 16 & 255) / 255, ig8 = (mi8 >> 8 & 255) / 255, ib8 = (mi8 & 255) / 255;
-          var mid8 = fid + "-mono", mhost8 = document.getElementById(mid8 + "-svg");
-          if (!mhost8) { mhost8 = document.createElement("div"); mhost8.id = mid8 + "-svg"; mhost8.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(mhost8); }
-          mhost8.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + mid8 + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 ' + ir8 + ' 0 0 0 0 ' + ig8 + ' 0 0 0 0 ' + ib8 + ' 0 0 0 1 0" result="ink"/><feFlood flood-color="' + bg8 + '" result="bg"/><feComposite in="ink" in2="bg" operator="over"/></filter></svg>';
-          // same min-capped tile radius as the glyph branch above (badgeshape family, CIRCLE bypasses the 16px cap)
-          var sh8 = get("cc.badgeshape", "pill");
-          var br8 = sh8 === "circle" ? "50%" : "min(" + ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" }[sh8] || "999px") + ", 16px)";
-          tpImgs.forEach(function (im9) { im9.style.filter = "url(#" + mid8 + ")"; im9.style.background = ""; im9.style.borderRadius = br8; im9.style.padding = "6px"; });
-          return;
-        }
-        var hx9 = /^#?([0-9a-f]{6})$/i.exec(icol || "");
-        if (!hx9) { tpImgs.forEach(function (im9) { im9.style.filter = "none"; im9.style.background = ""; im9.style.padding = ""; im9.style.borderRadius = ""; }); return; }
-        var n9 = parseInt(hx9[1], 16), r9 = (n9 >> 16 & 255) / 255, g9 = (n9 >> 8 & 255) / 255, b9 = (n9 & 255) / 255;
-        var st9 = Math.max(10, parseInt(get(P + "iconstrength", "100"), 10) || 100) / 100, i9 = 1 - st9;
-        function row9(c9, ix9) { var v9 = [0.2126 * c9 * st9, 0.7152 * c9 * st9, 0.0722 * c9 * st9, 0, 0]; v9[ix9] += i9; return v9.join(" "); }
-        var host9 = document.getElementById(fid + "-svg");
-        if (!host9) { host9 = document.createElement("div"); host9.id = fid + "-svg"; host9.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host9); }
-        host9.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + fid + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + row9(r9, 0) + " " + row9(g9, 1) + " " + row9(b9, 2) + ' 0 0 0 1 0"/></filter></svg>';
-        tpImgs.forEach(function (im9) { im9.style.filter = "url(#" + fid + ")"; im9.style.background = ""; im9.style.padding = ""; im9.style.borderRadius = ""; });
-      }
+      // font icons, not raster PNGs) — logoPreview renders it as an <i> coloured via CSS. Anything else
+      // is a raster logo. This is why ccs. showed no preview: its samples were empty because there are
+      // no PNGs; it passes glyph classes instead.
+      (samples || []).forEach(function (s9) { pvl.add(s9, ""); });
+      function tp() { pvl.set({ bg: ibg, color: icol, strength: parseInt(get(P + "iconstrength", "100"), 10) || 100, accent: acc, size: "48px" }); }
       cB.appendChild(tpw); tp(); applyBg2(ibg);
       // initial paint = the EFFECTIVE values (cA already initialises via effAcc(); run the
       // refresher once so cB starts on the global icon values while adopt is ON, own while OFF)
@@ -1401,14 +1586,20 @@
     cV.appendChild(tabviewRow("vms", syncVmsBar));
     var cH = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
     cH.appendChild(styleToggle("cc.styleheader", null));
-    // footer visibility (cc.footer, "1" hidden = DEFAULT): header.js applies it; same-page live via syncHeaderBar
-    var cHf = el("div", "cc-set-row cc-set-inline");
-    var cHfL = el("span", "cc-set-lblwrap");
-    cHfL.appendChild(el("span", null, T("Fußleiste ausblenden", "Hide footer bar")));
-    cHfL.appendChild(infoIcon(T("Blendet die untere Statusleiste komplett aus.", "Hides the bottom status bar completely.")));
-    cHf.appendChild(cHfL);
-    cHf.appendChild(toggle(get("cc.footer", "1") !== "0", function (v) { set("cc.footer", v ? "1" : "0"); syncHeaderBar(); }));
-    cH.appendChild(cHf);
+    // footer visibility (cc.footer, "1" hidden = DEFAULT): header.js applies it; same-page live via syncHeaderBar.
+    // MOVED into the Allgemein Theming card (user): the footer bar is not part of the Kopfbereich AREA — it is
+    // one global on/off for a page element, exactly like Dichte and Kachelgröße, which were moved there for the
+    // same reason ("global settings belong together"). Behaviour is untouched: same key, same handler, same live
+    // sync; only the card it is built into changed.
+    if (themingCard) {
+      var cHf = el("div", "cc-set-row cc-set-inline");
+      var cHfL = el("span", "cc-set-lblwrap");
+      cHfL.appendChild(el("span", null, T("Fußleiste ausblenden", "Hide footer bar")));
+      cHfL.appendChild(infoIcon(T("Blendet die untere Statusleiste komplett aus.", "Hides the bottom status bar completely.")));
+      cHf.appendChild(cHfL);
+      cHf.appendChild(toggle(get("cc.footer", "1") !== "0", function (v) { set("cc.footer", v ? "1" : "0"); syncHeaderBar(); }));
+      themingCard.appendChild(cHf);
+    }
     var cSh = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
     cSh.appendChild(styleToggle("cc.styleshares", null));
     cSh.appendChild(tabviewRow("shares", syncSharesBar));
@@ -1709,7 +1900,7 @@
     }
   }
   // live-highlight the preset swatch that matches the current accent (no re-render)
-  function syncSwOn() { var a = (accent || "").toLowerCase(); Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-sw")).forEach(function (sw) { sw.classList.toggle("cc-set-sw-on", (sw.dataset.c || "").toLowerCase() === a); }); }
+  function syncSwOn() { Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-swrow-global")).forEach(function (row) { swMarkRow(row, accent); }); }
   function thc(t) { var e = el("th", null, t); return e; }
   // The badge-visibility matrix is the ONE place this page builds checkboxes, and it was still handing the
   // operating system's box a tint via accent-color. It now uses CC's own .cc-cb widget (docker.css), which
@@ -1774,6 +1965,11 @@
     if (t2 && t2.textContent !== label) t2.textContent = label;   // GUARDED writes: no childList churn
     for (var k = 0; k < c.length; k++) { var o = sel.options[+c[k].getAttribute("data-i")]; if (!o) continue; c[k].classList.toggle("is-selected", o.selected); c[k].classList.toggle("is-disabled", !!o.disabled); }
   }
+  // GlimStone Rule 21 (wheel over the CLOSED field): the shared handler is in cc-theme.js; this settings
+  // page builds its OWN .cc-dsel widgets (ccDsel above), so it hands over its own repaint. docker.js
+  // registers the same shape for its copy — the two never load on the same page, and both syncs are
+  // guarded no-ops on a wrapper that is not theirs.
+  try { if (window.CCTheme && window.CCTheme.registerSelectSync) window.CCTheme.registerSelectSync(function (sel, wrap) { if (!wrap || !wrap.classList || !wrap.classList.contains("cc-dsel")) return false; ccDselSync(sel); return true; }); } catch (e) {}
   // panel is position:fixed on open so the #canvas overflow can't clip a long list; flips up when there
   // is more room above (no transform-ancestor math needed — settings has no jQuery-UI dialog).
   function ccDselPosition(trig, panel) {

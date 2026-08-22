@@ -582,6 +582,10 @@
     }
   }
   function ccSyncGroup(f) { if (!f) return; var s = f.querySelectorAll("select[data-cc-sel]"); for (var i = 0; i < s.length; i++) ccSyncOne(s[i]); }
+  // GlimStone Rule 21 (wheel over the CLOSED field): the shared handler is in cc-theme.js. This page needs
+  // BOTH halves of its click path — the picked select AND its siblings, because updateScreen() re-points
+  // #primary/#secondary/#direction by property writes that no observer sees.
+  try { if (window.CCTheme && window.CCTheme.registerSelectSync) window.CCTheme.registerSelectSync(function (sel, wrap) { if (!wrap || !wrap.classList || !wrap.classList.contains("cc-sel")) return false; ccSyncOne(sel); ccSyncGroup(sel.form); return true; }); } catch (e) {}
   function ccSelectsTeardown() {
     try {
       var wraps = document.querySelectorAll("#displaybox .cc-sel");

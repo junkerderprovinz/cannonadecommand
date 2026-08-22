@@ -135,7 +135,12 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
   the colour artwork); the engine fetches and caches them on the flash in the
   background, so the browser never waits on a CDN and a box with no internet simply
   keeps the icons it shipped with. Choose the treatment globally under **Logos &
-  Icons**, or pin it per container / VM / plugin in that item's own window.
+  Icons**, or pin it per container / VM / plugin in that item's own window. That card
+  previews the choice on real Docker, VM and Plugin icons from this box, through the
+  same pipeline the tabs themselves run.
+- Dropdowns take the scroll wheel: hover a **closed** selection field and the wheel
+  steps through its values without opening the panel, the way a native `<select>`
+  does. It clamps at the first and last entry; an open panel keeps its own scrolling.
 - Master theming switch: one toggle turns **all** visual theming off and keeps
   only the orchestration functions (start plan, limits, bandwidth, watchdog,
   schedules, idle-stop), leaving a native-looking Docker tab.

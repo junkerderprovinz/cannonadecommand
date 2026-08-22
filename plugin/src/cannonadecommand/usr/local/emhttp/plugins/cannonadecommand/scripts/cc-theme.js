@@ -160,6 +160,107 @@
     } catch (e) {}
   }
 
+  // ── GLIMSTONE RULE 21: A CLOSED SELECT FIELD IS OPERABLE WITH THE SCROLL WHEEL ─────────
+  // A native <select> lets you hover the collapsed field and wheel straight through its values in
+  // most browsers. CC replaces native selects wherever the host UI puts one (Rule 18), and every
+  // one of those replacements silently dropped that convenience — a replacement that is worse than
+  // the control it replaced. Rule 21 makes it a house law, and "every variant, not just the one
+  // reported" is part of the rule, so this lives HERE: cc-theme.js is the only file that loads on
+  // every page, and it already owns the shared selectors for all the select-replacement families.
+  //
+  // The FOUR dropdown families, and what each gets:
+  //   · .cc-tsel  (header.js — Tools/Settings/Dashboard)   ] all three are <select>-BACKED: the real
+  //   · .cc-dsel  (docker.js form, CC settings, .cc-pop)   ] control is still there, display:none, as
+  //   · .cc-sel   (shares.js share detail)                 ] the value. Wheel = change selectedIndex.
+  //   · .cc-drop  (the Startplan editor's "Hängt ab von" multi-select and the time picker) — NOT
+  //     wheel-cycled, and that is not an omission: .cc-drop has no closed field at all. It is created
+  //     on focus, lives as a body child while open and is removed on close, and it holds a MANY
+  //     selection (a comma list) with no "next value" to step to. Rule 21 governs a closed field
+  //     standing for ONE value; the thing you hover there is a text input, and stepping a text input
+  //     would delete the user's other picks. Its open panel keeps its own normal scrolling.
+  //
+  // Deliberately conservative, because a wheel handler on a document is easy to get wrong:
+  //   · ONLY when the pointer is over a CLOSED widget. An OPEN panel keeps its own list scrolling
+  //     (that is what .cc-open and the panel test below are for), and anywhere else the page scrolls
+  //     exactly as before.
+  //   · preventDefault ONLY when a value actually changed, so a wheel over a disabled or
+  //     single-option field still scrolls the page instead of silently swallowing the gesture.
+  //   · CLAMPING, not wrapping, at the ends — the same as this app's own segmented pickers, whose
+  //     panels move the highlight with ArrowUp/ArrowDown and stop at the first/last item
+  //     (settings.js moveSel, header.js ccTselMove). Wrapping would also make a fast wheel over a
+  //     two-option field flip-flop unpredictably.
+  //   · It goes through the SAME commit path a real option click uses — write selectedIndex, dispatch
+  //     a bubbling `change`, then re-sync the widget — so every inline onchange the host page hangs
+  //     on that <select> fires exactly as it would have.
+  var CC_SEL_WHEEL = ".cc-tsel, .cc-dsel, .cc-sel";
+  var selSyncFns = [];
+  // Each family registers its OWN sync (the one its click handler calls), because they are not
+  // interchangeable: .cc-tsel re-inserts a locale flag image and rebuilds on an option-count change,
+  // which a generic mirror would quietly drop. A family that registers nothing falls back to
+  // ccSelMirror below, so a new widget is never left unpainted.
+  function registerSelectSync(fn) { if (typeof fn === "function" && selSyncFns.indexOf(fn) < 0) selSyncFns.push(fn); }
+  // The lowest-common-denominator repaint: trigger label + per-chip selected/disabled state. All
+  // three families share this shape (.cc-X-trigger, .cc-X-opt[data-i]).
+  function ccSelMirror(wrap, sel) {
+    try {
+      var t = wrap.querySelector(".cc-tsel-trigger, .cc-dsel-trigger, .cc-sel-trigger");
+      var label = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : "";
+      if (t && t.textContent !== label) t.textContent = label;
+      var opts = wrap.querySelectorAll(".cc-tsel-opt, .cc-dsel-opt, .cc-sel-opt");
+      for (var i = 0; i < opts.length; i++) {
+        var o = sel.options[+opts[i].getAttribute("data-i")]; if (!o) continue;
+        opts[i].classList.toggle("is-selected", o.selected);
+        opts[i].classList.toggle("is-disabled", !!o.disabled);
+        opts[i].setAttribute("aria-selected", o.selected ? "true" : "false");
+      }
+    } catch (e) {}
+  }
+  // Next selectable index in `dir`, skipping disabled options, clamped at both ends.
+  // Returns the SAME index when there is nowhere to go — the caller reads that as "no change".
+  function nextSelIndex(sel, dir) {
+    var n = sel.options.length, i = sel.selectedIndex;
+    if (n < 2) return i;
+    if (i < 0) return dir > 0 ? 0 : n - 1;
+    for (var k = i + dir; k >= 0 && k < n; k += dir) { if (!sel.options[k].disabled) return k; }
+    return i;
+  }
+  function wheelStepSelect(wrap, dir) {
+    var sel = wrap.querySelector("select");
+    if (!sel || sel.disabled || sel.multiple) return false;
+    var i = nextSelIndex(sel, dir);
+    if (i === sel.selectedIndex) return false;
+    sel.selectedIndex = i;
+    sel.dispatchEvent(new Event("change", { bubbles: true }));   // the host's inline onchange chain
+    var painted = false;
+    for (var k = 0; k < selSyncFns.length; k++) { try { if (selSyncFns[k](sel, wrap) === true) painted = true; } catch (e) {} }
+    if (!painted) ccSelMirror(wrap, sel);
+    // the freshly-selected chip has to wear the mode colour like every other one (Rule 9)
+    try { paintSelects(wrap); } catch (e2) {}
+    return true;
+  }
+  function bindSelectWheel() {
+    if (window.__ccSelWheel || !document || typeof document.addEventListener !== "function") return;
+    window.__ccSelWheel = true;
+    // passive:false — a handled step must be able to stop the page from scrolling underneath it
+    document.addEventListener("wheel", function (e) {
+      try {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;               // browser zoom / OS gestures stay theirs
+        var t = e.target;
+        if (!t || !t.closest) return;
+        // an OPEN panel scrolls its own list, unchanged — this is only for the collapsed field
+        if (t.closest(".cc-tsel-panel, .cc-dsel-panel, .cc-sel-panel, .cc-drop")) return;
+        var wrap = t.closest(CC_SEL_WHEEL);
+        if (!wrap || wrap.classList.contains("cc-open")) return;
+        if (wrap.classList.contains("cc-tsel-disabled") || wrap.classList.contains("cc-dsel-disabled") || wrap.classList.contains("cc-sel-disabled")) return;
+        var dy = e.deltaY || 0, dx = e.deltaX || 0;
+        var d = Math.abs(dy) >= Math.abs(dx) ? dy : dx;
+        if (!d) return;
+        if (wheelStepSelect(wrap, d > 0 ? 1 : -1)) e.preventDefault();  // ONLY when something changed
+      } catch (e3) {}
+    }, { passive: false, capture: true });
+  }
+  bindSelectWheel();
+
   // ── Web fonts for the server-name wordmark (user: "schönere schriften z.B. von google fonts"). A curated
   //    set of beautiful Google families [family, genericFallback], loaded on demand so they render for
   //    EVERYONE regardless of what the client has installed (the old list only rendered if the client
@@ -492,6 +593,7 @@
 
   window.CCTheme = {
     RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects,
+    registerSelectSync: registerSelectSync, nextSelIndex: nextSelIndex, wheelStepSelect: wheelStepSelect,
     gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily,
     CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG,
     lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark,
