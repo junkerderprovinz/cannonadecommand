@@ -16,6 +16,7 @@ import (
 
 	"github.com/junkerderprovinz/cannonadecommand/internal/hostcpu"
 	"github.com/junkerderprovinz/cannonadecommand/internal/hostnet"
+	"github.com/junkerderprovinz/cannonadecommand/internal/iconsrc"
 	"github.com/junkerderprovinz/cannonadecommand/internal/model"
 	"github.com/junkerderprovinz/cannonadecommand/internal/netshape"
 	"github.com/junkerderprovinz/cannonadecommand/internal/orchestrator"
@@ -64,6 +65,16 @@ type Runner interface {
 	Run(ctx context.Context, plan model.Plan) model.RunResult
 }
 
+// IconSource is the icon pipeline's cache (optional; nil = the UI only ever sees
+// the icon the container/plugin/VM itself ships). Kept as an interface so the API
+// package stays free of the HTTP-fetching machinery and a test can stub it.
+type IconSource interface {
+	// Resolve answers from cache only and must never block on the network.
+	Resolve(names []string) map[string]iconsrc.Result
+	// SVG returns the cached artwork for a name, its kind, and whether it exists.
+	SVG(name string) ([]byte, string, bool)
+}
+
 // VMController manages libvirt VM limits (optional; nil disables the VM-tab backend).
 type VMController interface {
 	List(ctx context.Context) ([]vmctl.VM, error)
@@ -81,6 +92,7 @@ type Server struct {
 	Pidder       Pidder       // resolves a container's main PID for the bandwidth diagnostics
 	BwLast       BwLaster     // optional: the monitor's last shaping attempt per container
 	Kicker       Kicker       // optional: nudges the monitor to apply a saved config immediately
+	Icons        IconSource   // optional: external icon lookup + cache for the icon pipeline (nil = native icons only)
 	TemplatesDir string       // Unraid dockerMan templates dir; "" disables the apply-fest template write
 	Version      string       // the running daemon's build version, surfaced in /api/state so the UI can show which backend is live
 
@@ -125,7 +137,55 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/vmlimits", s.handleSetVMLimits)
 	mux.HandleFunc("GET /api/vmdisks", s.handleGetVMDisks)
 	mux.HandleFunc("POST /api/vmdiskresize", s.handleResizeVMDisk)
+	// Icon pipeline: a batch name→icon-source lookup and the cached SVG itself.
+	mux.HandleFunc("POST /api/icons", s.handleIcons)
+	mux.HandleFunc("GET /api/iconsvg", s.handleIconSVG)
 	return mux
+}
+
+// handleIcons answers a batch "what have you got for these names?" from the icon
+// cache. It NEVER performs a network fetch on the request path — unknown names
+// come back as "pending" and are looked up by the resolver's background workers,
+// so a slow or unreachable CDN can never delay (or hang) a Docker-tab render.
+// No resolver configured (or an older engine) yields an empty map, which the
+// frontend reads as "no external sources" and falls back to the native icon.
+func (s *Server) handleIcons(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Names []string `json:"names"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	if s.Icons == nil {
+		writeJSON(w, http.StatusOK, map[string]iconsrc.Result{})
+		return
+	}
+	// Bound the batch: the Docker tab asks for every row at once, and a hostile
+	// or buggy caller must not be able to make one request queue thousands.
+	if len(req.Names) > 512 {
+		req.Names = req.Names[:512]
+	}
+	writeJSON(w, http.StatusOK, s.Icons.Resolve(req.Names))
+}
+
+// handleIconSVG serves one cached icon as real image/svg+xml, so the browser can
+// point an <img> straight at it (same-origin through the PHP proxy, which means
+// the complexity heuristic's canvas read is not tainted). Only bytes already on
+// the flash are served; a cache miss is a 404, never a live fetch.
+func (s *Server) handleIconSVG(w http.ResponseWriter, r *http.Request) {
+	if s.Icons == nil {
+		http.NotFound(w, r)
+		return
+	}
+	body, _, ok := s.Icons.SVG(r.URL.Query().Get("name"))
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	_, _ = w.Write(body)
 }
 
 // handleGetVMs lists every libvirt domain with its current CPU/RAM/bandwidth limits.

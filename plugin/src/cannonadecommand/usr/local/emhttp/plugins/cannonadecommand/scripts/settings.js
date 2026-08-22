@@ -976,6 +976,16 @@
       var gsl = el("input"); gsl.type = "range"; gsl.min = "10"; gsl.max = "100"; gsl.value = String(parseInt(get("cc.iconstrength", "100"), 10) || 100); gsl.style.flex = "1";
       gsl.addEventListener("input", function () { set("cc.iconstrength", gsl.value); gsync(); });
       gstrow.appendChild(gsl); cLI.appendChild(gstrow);
+      // ── Icon-Färbung (GLOBAL): how the two icon treatments are CHOSEN, as opposed to the
+      // colour they use (that is the picker above). See cc-theme.js for the chain itself.
+      // The default is "auto"; the other three are manual overrides and are respected even
+      // where the automatic choice would have picked differently.
+      cLI.appendChild(segRow(T("Icon-Färbung", "Icon colouring"),
+        [["auto", T("Automatisch", "Automatic")], ["native", T("Natives Icon", "Native icon")], ["flat", T("Ink-Flatten", "Ink flatten")], ["tint", T("Luminanz-Tint", "Luminance tint")]],
+        get("cc.iconmode", "auto"),
+        function (v) { set("cc.iconmode", v); gsync(); },
+        T("Automatisch: einfarbige Logos werden zu sauberer Tinte geglättet, für bekannte Programme holt CannonadeCommand ein echtes Glyph-Logo, alles andere wird getönt und behält seine Zeichnung. Natives Icon: keine Einfärbung. Ink-Flatten und Luminanz-Tint erzwingen jeweils eine der beiden Behandlungen. Einzelne Container, VMs und Plugins können in ihrem eigenen Fenster davon abweichen.",
+          "Automatic: single-tone logos are flattened to clean ink, known apps get a real glyph logo fetched for them, everything else is tinted and keeps its drawing. Native icon: no colouring. Ink flatten and Luminance tint each force one of the two treatments. Individual containers, VMs and plugins can differ in their own window.")));
       gApplyBg(gbg);
       wrapMain.appendChild(cLI);
     })();

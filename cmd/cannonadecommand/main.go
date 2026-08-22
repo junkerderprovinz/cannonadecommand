@@ -22,6 +22,7 @@ import (
 
 	"github.com/junkerderprovinz/cannonadecommand/internal/api"
 	"github.com/junkerderprovinz/cannonadecommand/internal/dockercli"
+	"github.com/junkerderprovinz/cannonadecommand/internal/iconsrc"
 	"github.com/junkerderprovinz/cannonadecommand/internal/monitor"
 	"github.com/junkerderprovinz/cannonadecommand/internal/netshape"
 	"github.com/junkerderprovinz/cannonadecommand/internal/orchestrator"
@@ -107,7 +108,11 @@ func serve() {
 	prober := readiness.Prober{Inspector: inspectorAdapter{docker}, ExecCheck: docker.Exec, GetLogs: docker.Logs}
 	orch := &orchestrator.Orchestrator{Starter: docker, Ready: prober}
 	vmc := vmctl.New() // shared by the API (list/apply CPU-RAM) and the monitor (VM bandwidth reapply)
-	srv := &api.Server{Docker: docker, Store: st, Runner: orch, Pidder: docker, VMs: vmc, TemplatesDir: env("CC_TEMPLATES_DIR", unraidtmpl.DefaultDir), Version: version}
+	// The icon pipeline's cache. It only ever fetches on its own background workers,
+	// so a missing/broken internet connection costs the WebGUI nothing.
+	icons := iconsrc.New(dataDir)
+	defer icons.Close()
+	srv := &api.Server{Docker: docker, Store: st, Runner: orch, Pidder: docker, VMs: vmc, Icons: icons, TemplatesDir: env("CC_TEMPLATES_DIR", unraidtmpl.DefaultDir), Version: version}
 
 	if err := os.MkdirAll(dataDir, 0o755); err != nil {
 		log.Fatalf("cannonadecommand: mkdir %s: %v", dataDir, err)

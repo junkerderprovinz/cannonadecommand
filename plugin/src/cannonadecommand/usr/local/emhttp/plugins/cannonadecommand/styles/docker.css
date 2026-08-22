@@ -1236,6 +1236,11 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-rb-
 }
 .cc-plugsup { transition: filter .12s, transform .12s; }
 .cc-plugsup:hover { filter: brightness(1.18); transform: translateY(-1px); }
+/* The per-plugin icon-mode pin. The Plugins tab has no per-item settings window, so the
+   choice lives on this small badge next to the name and opens the shared picker popover.
+   Same rest/hover behaviour as the support badge above — one badge system, no new look. */
+.cc-plugicm { transition: filter .12s, transform .12s; }
+.cc-plugicm:hover { filter: brightness(1.18); transform: translateY(-1px); }
 /* the other tabs' tables (install errors etc.): same clean look */
 .cc-plug-lite thead th { text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; }
 .cc-desc { display: block; max-height: 5em; overflow-y: auto; padding-right: 6px; width: 100%; box-sizing: border-box; margin: 0; scrollbar-gutter: stable; }
@@ -1249,6 +1254,7 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-rb-
 .cc-plugtxt { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .cc-plugtitle { font-size: 16px; font-weight: 600; } /* the Docker-tab container-name look */
 .cc-plugsup { font-size: 11px; }
+.cc-plugicm { font-size: 11px; }
 .cc-plugver { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .cc-plug thead th { text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; }
 .cc-plug .cc-b { display: inline-flex; gap: 5px; align-items: center; border-radius: 999px; padding: var(--cc-sm-pad, 3px 11px); font-size: var(--cc-sm-fs, 11px); }

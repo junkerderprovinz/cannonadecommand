@@ -126,6 +126,16 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
 - Theming: one accent colour for everything, or rainbow mode with an editable
   palette; icon colours toggleable; settings sync across origins (IP, hostname,
   domain) via the engine — and they survive cleared browser data.
+- Icon pipeline: each logo gets the treatment it can actually take. A logo whose
+  visible pixels are already one tone is flattened to clean ink; for a known app a
+  real monochrome glyph is fetched and flattened instead; anything else is tinted so
+  the drawing inside the image survives. The two icon sets used are
+  [Simple Icons](https://github.com/simple-icons/simple-icons) (CC0-1.0, the glyph)
+  and [dashboard-icons](https://github.com/homarr-labs/dashboard-icons) (Apache-2.0,
+  the colour artwork); the engine fetches and caches them on the flash in the
+  background, so the browser never waits on a CDN and a box with no internet simply
+  keeps the icons it shipped with. Choose the treatment globally under **Logos &
+  Icons**, or pin it per container / VM / plugin in that item's own window.
 - Master theming switch: one toggle turns **all** visual theming off and keeps
   only the orchestration functions (start plan, limits, bandwidth, watchdog,
   schedules, idle-stop), leaving a native-looking Docker tab.

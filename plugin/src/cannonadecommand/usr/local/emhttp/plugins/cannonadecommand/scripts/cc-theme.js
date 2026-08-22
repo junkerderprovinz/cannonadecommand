@@ -77,6 +77,42 @@
     return p[((i % p.length) + off) % p.length];
   }
 
+  // Rec-601 luma of a hex colour, 0-255. The ONE copy: header.js's popBadge, the icon
+  // pipeline's darkness guard and idealText all measure brightness the same way.
+  function lumOf(hex) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return 255;
+    var n = parseInt(m[1], 16);
+    return 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255);
+  }
+
+  // ── THE DARKNESS GUARD (canonical home; header.js's popBadge delegates here).
+  // A near-black palette slot — the German flag's black stripe, a hand-picked #2a2a2a —
+  // paints an INVISIBLE badge on CC's #161616/#1e1e1e surfaces. Swap any slot below the
+  // floor for the palette's BRIGHTEST slot (stays on-theme: the flag's gold rather than
+  // some invented colour), and fall back to the plain accent when the whole palette is dark.
+  //
+  // FLOOR = 28, and that number was measured, not guessed: 64 was the original value from
+  // when this only ever coloured the ONE popup title badge; once every section badge and
+  // button rotated through it, 64 swapped the Algerian flag's #006233 (luma 63.3) for the
+  // brightest slot and the window rendered white/white/red instead of the flag's cycle. 28
+  // still catches #000000 (genuinely invisible) while keeping legitimately dark FLAG colours
+  // that read perfectly with white text — #006233 and e.g. navy #002868 (35.4).
+  //
+  // `floor` is an argument because a luminance TINT is not a solid fill: its output is
+  // pixelLuminance x target, so a mid-bright icon lands at roughly HALF the target's luma
+  // and a target that clears the badge floor can still tint darker than the card behind it.
+  // The tint path therefore passes LUM_FLOOR * 2 — same algorithm, same constant, one
+  // implementation, just measured against what the eye actually receives.
+  var LUM_FLOOR = 28;
+  function liftDark(hex, accent, floor) {
+    if (floor == null) floor = LUM_FLOOR;
+    if (!hex) return hex;
+    if (lumOf(hex) >= floor) return hex;
+    var p = palette(), best = null, bl = -1;
+    for (var k = 0; k < p.length; k++) { var L = lumOf(p[k]); if (L > bl) { bl = L; best = p[k]; } }
+    return (best && bl >= floor) ? best : (accent || hex);
+  }
+
   // ── COLOUR MODES FOR EVERY CC DROPDOWN (user: "Alle drop down listen sind nicht in den farbmodi").
   // CC grew FOUR dropdown replacements, one per area, and only ONE of them was ever wired into the
   // colour modes: header.js's .cc-tsel, which ccPaintRotate() stamps. The other three were never
@@ -189,7 +225,283 @@
   // 20 — NOT the outline path with fill/stroke swapped, which turns open stroke geometry into a scribble.
   var CC_TRASH_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007zm-10 4a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1m4 0a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1" /><path d="M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005z" /></svg>';
 
-  window.CCTheme = { RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects, gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily, CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG };
+  // ── THE ICON PIPELINE ───────────────────────────────────────────────────────────────
+  // THE PROBLEM IT SOLVES. CC used to have exactly two icon treatments and no way to tell
+  // which one an icon wanted:
+  //   · ink-FLATTEN (feColorMatrix -> one flat colour): gorgeous on a real glyph — a mostly
+  //     transparent image whose opaque pixels are all one tone — and catastrophic on anything
+  //     else. Most icons a Docker image or a CA template ships are full-opacity, full-colour
+  //     art with a coloured BACKGROUND and a differently-coloured MARK on top. Flatten one of
+  //     those and background and mark become the same colour: an illegible black blob
+  //     (confirmed live on OpenCloud's shipped icon).
+  //   · luminance-TINT (channel = pixel luminance x target): safe on anything, but it never
+  //     has the crisp badge-ink look a true glyph gets.
+  // So the answer is not a better filter, it is knowing WHICH KIND OF PICTURE this is — and,
+  // when it is the wrong kind, going and finding a better one.
+  //
+  // THE CHAIN, cheapest check first, and every step degrades into the next:
+  //   1. IS IT ALREADY SIMPLE? Sample the icon on a canvas and take the standard deviation of
+  //      per-pixel luminance across the opaque pixels. Low spread = the artwork is already one
+  //      tone = flattening loses nothing. Free, local, no network, so it runs first, always.
+  //   2. IS THERE A GLYPH FOR THIS APP? simple-icons (CC0-1.0) is monochrome single-path art
+  //      by construction, so a hit there IS a glyph and flattens beautifully.
+  //   3. OTHERWISE TINT THE BEST COLOUR SOURCE. dashboard-icons (Apache-2.0, 1800+ icons)
+  //      before the container's own shipped icon, then luminance-tint whichever we got.
+  // Steps 2 and 3 are answered by the engine, which caches both the verdict and the artwork on
+  // the flash and only ever fetches on its own background workers — see internal/iconsrc. The
+  // browser therefore never waits on a CDN, and an unreachable one costs nothing but a
+  // "pending" that quietly stays native.
+  //
+  // MODES. cc.iconmode is the global default and cc.iconov holds per-item pins:
+  //   auto   — the chain above (default)
+  //   native — no recolouring; still prefers a curated colour icon over a poor shipped one
+  //   flat   — always ink-flatten, heuristic overruled (a manual override is not a suggestion)
+  //   tint   — always luminance-tint
+  var ICON_PROXY = "/plugins/cannonadecommand/server/ccapi.php";
+  var ICON_MODES = ["auto", "native", "flat", "tint"];
+  // THE THRESHOLD, on a 0-255 luminance scale. Measured across all 55 containers of a real
+  // box rather than picked: the spread is sharply BIMODAL. Genuine flat glyphs — the ones
+  // that flatten beautifully — all land at 0.0-3.4 (Plex 0.53, Immich 0.57, Nginx 0.79,
+  // FileBot 0.47, CCWB 3.4). The moment an icon has ANY internal structure the number jumps
+  // to 17.3 and up (CrowdSec 17.3, Stirling-PDF 18.1, Unraid's own question.png placeholder
+  // 19.8, Palworld 33.0, OpenCloud 39.0, BombVault 45.9, featherdrop 60.8). Nothing at all
+  // lands between 3.4 and 17.3, so 12 sits in the middle of an empty gap.
+  //
+  // Why the CONSERVATIVE end of that gap and not the permissive one: the two mistakes are
+  // not equally bad. Tinting an icon that would have flattened nicely costs a little
+  // crispness. Flattening an icon that should have been tinted DESTROYS it — a plate with a
+  // mark on it becomes one solid blob, which is the whole bug this feature exists to fix.
+  // A first pass at 32 was live-tested and did exactly that to question.png: the "?" vanished
+  // and the row showed a solid white disc. And no cheap pixel statistic tells that case apart
+  // from CrowdSec, which flattens fine at 17.3 — measured, including an Otsu-style bimodality
+  // split, which scores the two within 0.2 of each other. So the borderline band goes to the
+  // treatment that can never destroy anything.
+  var ICON_SIMPLE_MAX = 12;
+  var ICON_ALPHA_MIN = 20;    // a pixel counts as "content" above this alpha
+  var icoRes = {};            // normalised name -> {kind, source, slug}
+  var icoWant = {};           // names asked for but not yet answered
+  var icoInflight = false, icoTimer = null, icoLast = 0;
+  var icoListeners = [];
+  var icoSimple = {};         // icon URL -> luminance stddev, or -1 when unmeasurable
+  var icoMeasuring = {};
+
+  function icoNorm(n) { return String(n == null ? "" : n).trim().toLowerCase(); }
+  function icoValidMode(m) { return ICON_MODES.indexOf(m) >= 0 ? m : null; }
+  // The global default. Anything unrecognised (or unset) is "auto".
+  function iconGlobalMode() { return icoValidMode(g("cc.iconmode", "auto")) || "auto"; }
+  // Per-item pins live in ONE cc.* key, so they ride the existing cross-origin settings sync
+  // and need no storage mechanism of their own. Key = "<scope>:<lowercased name>".
+  function iconOverrides() { try { var j = JSON.parse(g("cc.iconov", "null")); return (j && typeof j === "object") ? j : {}; } catch (e) { return {}; } }
+  function iconOverride(scope, name) { return icoValidMode(iconOverrides()[scope + ":" + icoNorm(name)]) || ""; }
+  function setIconOverride(scope, name, mode) {
+    var all = iconOverrides(), k = scope + ":" + icoNorm(name);
+    if (icoValidMode(mode)) all[k] = mode; else delete all[k];
+    s("cc.iconov", JSON.stringify(all));
+  }
+  // The mode actually in force for one item: its own pin, else the global default.
+  function iconMode(scope, name) { return iconOverride(scope, name) || iconGlobalMode(); }
+
+  // ── step 2/3: ask the engine what it has. ONE batched POST for the whole page, answered
+  // from its cache, so this is a local round trip and never a CDN one. Names still being
+  // looked up come back "pending"; we simply ask again on the next pass.
+  function iconWant(names) {
+    var fresh = false;
+    for (var i = 0; i < (names || []).length; i++) {
+      var k = icoNorm(names[i]);
+      if (!k || icoRes[k] || icoWant[k]) continue;
+      icoWant[k] = 1; fresh = true;
+    }
+    // Re-ask for anything still pending, but at most every 6s — a page full of unresolved
+    // names must not turn into a poll storm while the workers warm the cache.
+    var pending = false, kk;
+    for (kk in icoRes) { if (icoRes[kk] && icoRes[kk].kind === "pending") { pending = true; break; } }
+    if (fresh || (pending && Date.now() - icoLast > 6000)) icoFlush();
+  }
+  function icoFlush() {
+    if (icoInflight) return;
+    var names = [], k;
+    for (k in icoWant) names.push(k);
+    for (k in icoRes) { if (icoRes[k] && icoRes[k].kind === "pending") names.push(k); }
+    if (!names.length) return;
+    icoInflight = true; icoLast = Date.now();
+    var tok = "";
+    try {
+      if (typeof window.csrf_token === "string" && window.csrf_token) tok = window.csrf_token;
+      else { var f = document.querySelector('input[name="csrf_token"]'); if (f && f.value) tok = f.value; else { var m = (document.cookie || "").match(/csrf_token=([0-9A-Za-z]+)/); if (m) tok = m[1]; } }
+    } catch (e) {}
+    fetch(ICON_PROXY + "?path=icons", {
+      method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+      body: (tok ? "csrf_token=" + encodeURIComponent(tok) + "&" : "") + "data=" + encodeURIComponent(JSON.stringify({ names: names }))
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      icoInflight = false;
+      // A 502 from the proxy (engine stopped) or an older engine with no icons endpoint:
+      // settle every asked-for name on a definite "none" so the page uses native icons and
+      // stops asking. Live-verified with the daemon stopped: the batch is attempted ONCE and
+      // never again, while the tab renders at its normal speed. A reload retries.
+      if (!j || typeof j !== "object") { icoSettleNone(); return; }
+      var changed = false;
+      Object.keys(j).forEach(function (n) {
+        var key = icoNorm(n), v = j[n] || {};
+        var was = icoRes[key];
+        if (!was || was.kind !== v.kind) changed = true;
+        icoRes[key] = { kind: v.kind || "none", source: v.source || "", slug: v.slug || "" };
+        delete icoWant[key];
+      });
+      if (changed) { icoPolls = 0; icoNotify(); }
+      icoDrain();
+    }).catch(function () { icoInflight = false; icoSettleNone(); icoDrain(); });
+  }
+  // Names asked for WHILE a batch was in flight were dropped on the floor: icoFlush bails on
+  // icoInflight, and nothing re-armed it afterwards. That is not theoretical — the Plugins tab
+  // asks row by row, so exactly one plugin out of 23 ever got looked up (caught live). Drain
+  // whatever queued up behind the request that just finished, then keep asking while anything
+  // is still "pending".
+  function icoDrain() {
+    if (Object.keys(icoWant).length) { setTimeout(icoFlush, 0); return; }
+    icoPoll();
+  }
+  // A "pending" name means the engine's workers are still out looking. The first design only
+  // re-asked when the page happened to repaint — fine on the Docker tab with its 9s cycle,
+  // but the Plugins and VM tabs can sit perfectly still, and their icons stayed unresolved
+  // until something else moved (caught live: 22 of 23 plugins stuck on "pending" forever).
+  // So the pipeline drives its own follow-up, BOUNDED: it stops the moment nothing is pending
+  // and after icoPollMax tries either way, so a name the engine can never resolve cannot turn
+  // into a permanent poll.
+  var icoPollT = null, icoPolls = 0, icoPollMax = 10;
+  function icoPoll() {
+    if (icoPollT || icoPolls >= icoPollMax) return;
+    var pending = false;
+    for (var k in icoRes) { if (icoRes[k] && icoRes[k].kind === "pending") { pending = true; break; } }
+    if (!pending) return;
+    icoPollT = setTimeout(function () { icoPollT = null; icoPolls++; icoFlush(); }, 4000);
+  }
+  // The ONE failure landing: every name we were waiting on becomes a definite "none", which
+  // the decision function reads as "no external source" — i.e. the native icon, exactly what
+  // the page showed before this feature existed.
+  function icoSettleNone() {
+    var changed = false;
+    Object.keys(icoWant).forEach(function (key) { if (!icoRes[key]) { icoRes[key] = { kind: "none", source: "", slug: "" }; changed = true; } delete icoWant[key]; });
+    if (changed) icoNotify();
+  }
+  function icoNotify() {
+    clearTimeout(icoTimer);
+    icoTimer = setTimeout(function () { icoListeners.forEach(function (fn) { try { fn(); } catch (e) {} }); }, 30);
+  }
+  // An area script registers ONE repaint callback; it fires only when an answer actually
+  // changed, so this can never become a render loop.
+  function onIconsResolved(fn) { if (typeof fn === "function" && icoListeners.indexOf(fn) < 0) icoListeners.push(fn); }
+  function iconResult(name) { return icoRes[icoNorm(name)] || null; }
+  // The engine serves its cached artwork as real image/svg+xml through the same-origin
+  // proxy — so an <img> can point straight at it AND the canvas heuristic above can still
+  // read it back without tainting.
+  function iconSvgUrl(name) { return ICON_PROXY + "?path=iconsvg&name=" + encodeURIComponent(icoNorm(name)); }
+
+  // ── step 1: the complexity heuristic. Draw the icon small, take the standard deviation of
+  // luminance over the pixels that are actually opaque, and cache it per URL. Async by
+  // design: until a measurement lands the caller uses the safe treatment (tint), and the
+  // repaint callback upgrades it afterwards — nothing on the render path ever waits.
+  function iconSpread(url) {
+    if (!url) return null;
+    if (icoSimple[url] != null) return icoSimple[url] < 0 ? null : icoSimple[url];
+    try { var c = sessionStorage.getItem("ccico:" + url); if (c != null) { icoSimple[url] = parseFloat(c); return icoSimple[url] < 0 ? null : icoSimple[url]; } } catch (e) {}
+    if (icoMeasuring[url]) return null;
+    icoMeasuring[url] = 1;
+    var probe = new Image();
+    var done = function (v) {
+      icoSimple[url] = v; delete icoMeasuring[url];
+      try { sessionStorage.setItem("ccico:" + url, String(v)); } catch (e2) {}
+      icoNotify();
+    };
+    probe.onerror = function () { done(-1); };
+    probe.onload = function () {
+      try {
+        var W = 48, cv = document.createElement("canvas"); cv.width = cv.height = W;
+        var cx = cv.getContext("2d", { willReadFrequently: true });
+        var nw = probe.naturalWidth || W, nh = probe.naturalHeight || W;
+        var sc = Math.min(W / nw, W / nh), dw = nw * sc, dh = nh * sc;
+        cx.drawImage(probe, (W - dw) / 2, (W - dh) / 2, dw, dh);
+        var d = cx.getImageData(0, 0, W, W).data, n = 0, sum = 0, sq = 0;
+        for (var i = 0; i < d.length; i += 4) {
+          if (d[i + 3] <= ICON_ALPHA_MIN) continue;
+          var L = 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+          n++; sum += L; sq += L * L;
+        }
+        if (n < 16) { done(-1); return; }   // too little content to judge: leave it alone
+        var mean = sum / n, varc = Math.max(0, sq / n - mean * mean);
+        done(Math.round(Math.sqrt(varc) * 100) / 100);
+      } catch (e3) { done(-1); }            // a tainted canvas (cross-origin icon) lands here
+    };
+    probe.src = url;
+    return null;
+  }
+
+  // ── the decision. Pure, so a DOM test can pin every branch without a browser.
+  //   treat: "flat" | "tint" | "native"      what to do to the pixels
+  //   src:   "native" | "glyph" | "color"    which picture to do it to
+  // A glyph is only ever chosen when we are going to INK it — an un-inked monochrome glyph
+  // on a dark card would be a black square, which is the very bug this feature exists to kill.
+  function iconPlan(mode, kind, spread) {
+    if (mode === "native") return { treat: "native", src: kind === "color" ? "color" : "native", why: "mode:native" };
+    if (mode === "flat") return { treat: "flat", src: kind === "glyph" ? "glyph" : "native", why: "mode:flat" };
+    if (mode === "tint") return { treat: "tint", src: kind === "color" ? "color" : "native", why: "mode:tint" };
+    if (spread != null && spread < ICON_SIMPLE_MAX) return { treat: "flat", src: "native", why: "simple:" + spread };
+    if (kind === "glyph") return { treat: "flat", src: "glyph", why: "glyph" };
+    if (kind === "color") return { treat: "tint", src: "color", why: "color" };
+    return { treat: "tint", src: "native", why: spread == null ? "unmeasured" : "complex:" + spread };
+  }
+
+  // ── The per-item mode picker, as an anchored popover. It lives HERE because the Plugins
+  // tab has no per-item settings window of its own to hang the choice in, and a second
+  // hand-rolled copy of a five-option list is exactly how CC ended up with four different
+  // info bubbles. Docker puts the same five options in its Startplan window and the VM tab
+  // in its limits editor; this is the surface for anything that has neither.
+  function iconPopover(anchor, scope, name, onChange) {
+    var de = false;
+    try { de = /de/i.test(document.documentElement.lang || "") || (localStorage.getItem("locale") || "").indexOf("de") === 0; } catch (e) {}
+    var old = document.getElementById("cc-icm-pop"); if (old) old.remove();
+    var ov = document.createElement("div"); ov.id = "cc-icm-pop";
+    ov.style.cssText = "position:fixed;inset:0;z-index:99999";
+    var card = document.createElement("div");
+    card.style.cssText = "position:absolute;background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:10px;padding:12px 14px;width:250px;max-width:92vw;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font:13px/1.5 \"Segoe UI\",system-ui,sans-serif";
+    var h = document.createElement("div");
+    h.textContent = (de ? "Icon-Färbung" : "Icon colouring") + ": " + name;
+    h.style.cssText = "font-size:13px;font-weight:700;margin:0 0 8px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+    card.appendChild(h);
+    var opts = de
+      ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Ink-Flatten"], ["tint", "Luminanz-Tint"]]
+      : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Ink flatten"], ["tint", "Luminance tint"]];
+    var sel = document.createElement("select");
+    sel.style.cssText = "width:100%;background:var(--cc-surface-3,#2e2e2e);color:var(--cc-txt,#e6e6e6);border:none;border-radius:6px;padding:6px 10px;font-size:13px;outline:none";
+    var cur = iconOverride(scope, name);
+    opts.forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; if (o[0] === cur) op.selected = true; sel.appendChild(op); });
+    sel.addEventListener("change", function () { setIconOverride(scope, name, sel.value); if (typeof onChange === "function") { try { onChange(); } catch (e2) {} } });
+    card.appendChild(sel);
+    ov.appendChild(card); document.body.appendChild(ov);
+    try {
+      var r = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null;
+      var cw = card.offsetWidth || 250, ch = card.offsetHeight || 90;
+      if (r && (r.width || r.height)) {
+        var left = Math.max(8, Math.min(r.left, window.innerWidth - cw - 12));
+        var top = r.bottom + 6; if (top + ch > window.innerHeight - 8) top = Math.max(8, r.top - ch - 6);
+        card.style.left = left + "px"; card.style.top = top + "px";
+      } else { card.style.left = "50%"; card.style.top = "20vh"; card.style.transform = "translateX(-50%)"; }
+    } catch (e3) { card.style.left = "50%"; card.style.top = "20vh"; }
+    ov.addEventListener("click", function (ev) { if (ev.target === ov) ov.remove(); });
+    return ov;
+  }
+
+  window.CCTheme = {
+    RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects,
+    gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily,
+    CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG,
+    lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark,
+    icons: {
+      MODES: ICON_MODES, SIMPLE_MAX: ICON_SIMPLE_MAX,
+      globalMode: iconGlobalMode, mode: iconMode, override: iconOverride, setOverride: setIconOverride,
+      want: iconWant, result: iconResult, svgUrl: iconSvgUrl, spread: iconSpread,
+      plan: iconPlan, onResolved: onIconsResolved, popover: iconPopover
+    }
+  };
 
   // ── cross-origin/cross-browser UI-settings sync (user: "wenn CC aktiviert ist sieht es in
   // unterschiedlichen Browsern unterschiedlich aus... können wir das persistent machen?").

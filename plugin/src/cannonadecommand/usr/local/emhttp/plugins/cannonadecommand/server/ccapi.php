@@ -13,14 +13,24 @@ $sock  = getenv('CC_SOCK') ?: '/var/run/cannonadecommand.sock';
 // ONE VM (the engine validates the name against the live libvirt domain list, uses only
 // virsh --config/--live for CPU/RAM and host-side iptables physdev hashlimit for bandwidth,
 // and never virsh-defines/undefines/creates a domain).
+// icons: batch name -> icon-source lookup, answered from the engine's cache only
+// (it never fetches on the request path); iconsvg: the cached SVG itself, served
+// as real image/svg+xml so an <img> can point straight at it, same-origin.
 $allow = ['state' => ['GET'], 'stats' => ['GET'], 'hostcpu' => ['GET'], 'hostnet' => ['GET'], 'action' => ['POST'], 'limits' => ['GET', 'POST'], 'restartpolicy' => ['POST'], 'limitlog' => ['GET'],
     'bwstatus' => ['GET'], 'plan' => ['GET', 'PUT'], 'apply' => ['POST'], 'config' => ['GET', 'PUT'], 'vms' => ['GET'], 'vmlimits' => ['POST'],
-    'vmdisks' => ['GET'], 'vmdiskresize' => ['POST']];
+    'vmdisks' => ['GET'], 'vmdiskresize' => ['POST'], 'icons' => ['POST'], 'iconsvg' => ['GET']];
 
 $path   = isset($_GET['path']) ? preg_replace('/[^a-z]/', '', $_GET['path']) : '';
 $method = $_SERVER['REQUEST_METHOD'];
 
-header('Content-Type: application/json');
+// iconsvg is the ONE path that does not answer JSON — it hands back SVG artwork,
+// cached hard by the browser so 50 rows cost 50 requests once and none after that.
+if ($path === 'iconsvg') {
+    header('Content-Type: image/svg+xml');
+    header('Cache-Control: public, max-age=86400');
+} else {
+    header('Content-Type: application/json');
+}
 
 if (!isset($allow[$path]) || !in_array($method, $allow[$path], true)) {
     http_response_code(400);
@@ -30,7 +40,7 @@ if (!isset($allow[$path]) || !in_array($method, $allow[$path], true)) {
 
 // Forward only the query params each path explicitly needs (allowlist, like
 // $allow) so no attacker-supplied param ever reaches the engine unfiltered.
-$qallow = ['limits' => ['name'], 'bwstatus' => ['name'], 'vmdisks' => ['name']];
+$qallow = ['limits' => ['name'], 'bwstatus' => ['name'], 'vmdisks' => ['name'], 'iconsvg' => ['name']];
 $extra = [];
 if (isset($qallow[$path])) {
     foreach ($qallow[$path] as $k) {

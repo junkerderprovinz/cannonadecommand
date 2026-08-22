@@ -55,8 +55,14 @@
   // 28 still catches what this guard was actually written for (the German flag's #000000 black stripe, which
   // is genuinely invisible on the #1a1a1a window) while keeping legitimately dark FLAG colours that are
   // perfectly legible as a badge with white text — #006233 (63.3) and e.g. navy #002868 (35.4).
+  // The swap itself now lives ONCE in cc-theme.js (CCTheme.liftDark), because the icon
+  // pipeline needs exactly this guard for its tint/flatten target and a second copy is how
+  // the four info bubbles drifted apart. The local branch below stays byte-identical as the
+  // load-order fallback, per this file's convention.
   function popBadge(i) {
-    var c = rbColor(i); if (lumOf(c) >= 28) return c;
+    var c = rbColor(i);
+    if (window.CCTheme && window.CCTheme.liftDark) return window.CCTheme.liftDark(c, accent());
+    if (lumOf(c) >= 28) return c;
     var p = pal(), best = null, bl = -1;
     for (var k = 0; k < p.length; k++) { var L = lumOf(p[k]); if (L > bl) { bl = L; best = p[k]; } }
     return (best && bl >= 28) ? best : accent();

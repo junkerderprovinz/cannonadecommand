@@ -34,6 +34,7 @@ Module: `github.com/junkerderprovinz/cannonadecommand`, Go **1.26**.
 | `internal/readiness/` | readiness probes (running / TCP / HTTP / log-match / exec) |
 | `internal/monitor/` | always-on loop: schedules, watchdog, idle-stop, notifications |
 | `internal/netshape/` | egress tbf shaper + netfilter download policing (never a tc ingress qdisc) |
+| `internal/iconsrc/` | icon-source cache: name → Simple Icons glyph / dashboard-icons artwork, fetched on background workers only, cached on the flash |
 | `internal/{store,model,hostcpu,unraidtmpl}/` | plan/config store, model types, CPU topology, Unraid template parsing |
 | `plugin/pkg_build.sh` | builds the `.txz` package (Go binary + WebGUI files) |
 | `plugin/cannonadecommand.plg` | Unraid plugin manifest (version, CHANGES, install/remove logic, `<SHA256>`) |
@@ -130,7 +131,12 @@ never over the network. See the comment above the txz `<FILE>` stanza in the plg
   command. Legacy iptables (≥ 1.8.12) applies byte rates as bits — compensated ×8.
 - **Proxy allowlist must match the frontend.** The PHP proxy exposes only an explicit
   path allowlist; every `/api/*` endpoint the JS calls must be listed. Writes carry
-  Unraid's csrf token.
+  Unraid's csrf token. `iconsvg` is the one path that answers `image/svg+xml` instead
+  of JSON — that content-type branch is in `ccapi.php` and must stay.
+- **The icon pipeline never blocks a render.** `/api/icons` answers from the engine's
+  cache ONLY; unknown names come back `pending` and are looked up by background
+  workers. Nothing on the browser's render path may ever wait on a CDN — a dead
+  network must cost the Docker tab nothing but native icons.
 - **WebGUI tests pin the DOM.** Every release-costing bug here came from ASSUMING a DOM
   shape. Add/keep a `plugin/test/*.test.js` that replays the real markup rather than
   trusting a selector.

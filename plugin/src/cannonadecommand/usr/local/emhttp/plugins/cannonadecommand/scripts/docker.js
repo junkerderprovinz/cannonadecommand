@@ -128,8 +128,8 @@
   // so it carries the full name, in the de half and the en half alike. Standing rule, see CLAUDE.md; it
   // applies to every new string added below, and if the product is renamed these strings move with it.
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge — Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container — kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle UND kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“ — dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner…", newFolderPrompt: "Name des neuen Ordners:", renameFolder: "Ordner umbenennen", renameFolderPrompt: "Neuer Name:", deleteFolder: "Ordner löschen", deleteFolderConfirm: "Diesen Ordner löschen? Enthaltene Container werden eine Ebene höher verschoben, nicht gelöscht.", moveToFolder: "In Ordner verschieben…", rootLevel: "— Wurzelebene —" },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order — duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container — no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold AND barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no” — this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder…", newFolderPrompt: "Name of the new folder:", renameFolder: "Rename folder", renameFolderPrompt: "New name:", deleteFolder: "Delete folder", deleteFolderConfirm: "Delete this folder? Containers inside it move up one level, they are not deleted.", moveToFolder: "Move to folder…", rootLevel: "— Root level —" },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge — Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container — kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle UND kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“ — dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner…", newFolderPrompt: "Name des neuen Ordners:", renameFolder: "Ordner umbenennen", renameFolderPrompt: "Neuer Name:", deleteFolder: "Ordner löschen", deleteFolderConfirm: "Diesen Ordner löschen? Enthaltene Container werden eine Ebene höher verschoben, nicht gelöscht.", moveToFolder: "In Ordner verschieben…", rootLevel: "— Wurzelebene —", iconMode: "Icon-Färbung", iconInherit: "folgt globaler Einstellung", iconAuto: "Automatisch", iconNative: "Natives Icon", iconFlat: "Ink-Flatten", iconTint: "Luminanz-Tint" },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order — duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container — no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold AND barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no” — this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder…", newFolderPrompt: "Name of the new folder:", renameFolder: "Rename folder", renameFolderPrompt: "New name:", deleteFolder: "Delete folder", deleteFolderConfirm: "Delete this folder? Containers inside it move up one level, they are not deleted.", moveToFolder: "Move to folder…", rootLevel: "— Root level —", iconMode: "Icon colouring", iconInherit: "follows the global setting", iconAuto: "Automatic", iconNative: "Native icon", iconFlat: "Ink flatten", iconTint: "Luminance tint" },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -574,8 +574,31 @@
   // APPROXIMATED the hue, which is why the colour was wrong. The icon becomes a flat
   // silhouette in the chosen colour; the strength slider blends it back toward the
   // original for detail. Ground truth: the icon is `td.ct-name span.hand > .img`.
+  // ── THE ICON PIPELINE'S TARGET COLOUR ───────────────────────────────────────────────
+  // iconInk() is the ONE colour both icon treatments paint with, and it answers "" when CC
+  // is not colouring icons at all (no icon colour picked, no Logo-Hintergrund) — which is
+  // what makes the whole pipeline degrade to plain native icons for anyone who never turned
+  // the tint on.
+  //   · Logo-Hintergrund ON: the icon sits ON an accent-coloured box, so the ink has to
+  //     contrast with the BOX — idealText of it, exactly as before. That also fixes tinting
+  //     inside the box: a luminance tint toward the box's own colour would be invisible,
+  //     toward its ideal text colour it is a readable monochrome shading.
+  //   · Logo-Hintergrund OFF: the picked icon colour, lifted out of the dark end by the
+  //     shared darkness guard so it can't sink into the #161616/#1e1e1e card.
+  // `forTint` doubles the floor: see CCTheme.liftDark — a luminance tint outputs roughly
+  // half the target's luma on mid-bright artwork, so the badge floor alone is not enough
+  // (live-measured: a #2a2a2a target renders "schwer erkennbar" against the card).
+  function iconInk(forTint) {
+    var pick = localStorage.getItem("cc.iconcolor");
+    var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
+    if (localStorage.getItem("cc.iconbg") === "1") return ccHex6(idealText(valid ? pick : (effc("accent") || "#2f6feb")));
+    if (!valid) return "";
+    if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
+    var floor = window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1);
+    return ccHex6(window.CCTheme.liftDark(pick, effc("accent") || "#2f6feb", floor));
+  }
   function ensureTintFilter() {
-    var ic = localStorage.getItem("cc.iconcolor"), m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ic || "");
+    var ic = iconInk(true), m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ic || "");
     var host = document.getElementById("cc-tint-svg");
     if (!m) { if (host) host.remove(); return false; }
     var tr = parseInt(m[1], 16) / 255, tg = parseInt(m[2], 16) / 255, tb = parseInt(m[3], 16) / 255;
@@ -590,37 +613,87 @@
     // edges (semi-transparent tint over a bright source edge) — use the pure matrix then.
     var mid = '<feColorMatrix in="SourceGraphic" type="matrix" result="flat" values="' + lum(tr) + ' 0 0 ' + lum(tg) + ' 0 0 ' + lum(tb) + ' 0 0 0 0 0 1 0"/>';
     if (parseFloat(s) < 0.999) mid += '<feComponentTransfer in="flat" result="faded"><feFuncA type="linear" slope="' + s + '"/></feComponentTransfer><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="faded"/></feMerge>';
-    host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-icon-tint" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">' + mid + '</filter></svg>';
+    // Signature-guarded like the flat filter below: applyIconTint now runs on every icon
+    // resolution/measurement too, and a blind innerHTML write per pass is a DOM mutation
+    // waiting to feed an observer loop.
+    var sig = "tint|" + tr + "|" + tg + "|" + tb + "|" + s;
+    if (host.dataset.sig !== sig) {
+      host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-icon-tint" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">' + mid + '</filter></svg>';
+      host.dataset.sig = sig;
+    }
     return true;
   }
-  // Logo-Hintergrund: when the icon sits on an accent-coloured badge box, the icon
-  // is flattened to a single INK colour (black or white, whichever idealText picks for
-  // the accent) so it reads cleanly on the box. Signature-guarded on host.dataset.sig
-  // so the MutationObserver can't loop-rebuild the identical <filter>.
-  function ensureMonoFilter(hostId, filtId, accentHex) {
+  // Ink-FLATTEN: every opaque pixel becomes ONE flat colour, alpha untouched — the crisp
+  // "badge ink" silhouette. Used on a real glyph (or an icon the heuristic proved is
+  // already one tone); never on full-colour artwork, where it would merge background and
+  // mark into a single blob. Signature-guarded on host.dataset.sig so the MutationObserver
+  // can't loop-rebuild the identical <filter>.
+  // Expand a #rgb shorthand to #rrggbb. idealText answers "#fff", every filter builder and
+  // every colour regex here wants six digits — this is the one place that bridges the two.
+  function ccHex6(c) {
+    c = String(c == null ? "" : c).trim();
+    return /^#[0-9a-f]{3}$/i.test(c) ? "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c;
+  }
+  function ensureFlatFilter(hostId, filtId, hex) {
     var host = document.getElementById(hostId);
-    var m = /^#?([0-9a-f]{6})$/i.exec(accentHex || "");
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ccHex6(hex) || "");
     if (!m) { if (host) host.remove(); return ""; }
-    var ink = idealText("#" + m[1]);
-    var hx = ink.length === 4 ? ink[1] + ink[1] + ink[2] + ink[2] + ink[3] + ink[3] : ink.slice(1);
-    var c = ((parseInt(hx, 16) >> 16 & 255) / 255).toFixed(4);
+    var r = (parseInt(m[1], 16) / 255).toFixed(4), g2 = (parseInt(m[2], 16) / 255).toFixed(4), b = (parseInt(m[3], 16) / 255).toFixed(4);
     if (!host) { host = document.createElement("div"); host.id = hostId; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
-    var sig = filtId + "|" + c;
+    var sig = filtId + "|" + r + "|" + g2 + "|" + b;
     if (host.dataset.sig !== sig) {
-      var vals = "0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 1 0";
+      var vals = "0 0 0 0 " + r + " 0 0 0 0 " + g2 + " 0 0 0 0 " + b + " 0 0 0 1 0";
       host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>';
       host.dataset.sig = sig;
     }
     return "url(#" + filtId + ")";
   }
+  // Kept as the Logo-Hintergrund spelling of the same filter: flatten to whatever ink
+  // reads on the accent box (black on light, white on dark).
+  function ensureMonoFilter(hostId, filtId, accentHex) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(accentHex || "");
+    if (!m) return ensureFlatFilter(hostId, filtId, "");
+    return ensureFlatFilter(hostId, filtId, idealText("#" + m[1]));
+  }
   function iconFilter() { return ensureTintFilter() ? "url(#cc-icon-tint)" : ""; }
-  function tintTargets() {
+  // Every row's icon element PLUS the container name behind it — the pipeline needs the
+  // name to look the app up and to find its per-item pin.
+  function tintTargetsNamed() {
     var out = [], rows = findRows();
     for (var i = 0; i < rows.length; i++) {
       var img = rows[i].querySelector("td.ct-name span.hand > .img") || rows[i].querySelector("td.ct-name img") || rows[i].querySelector("td.ct-name i.img");
-      if (img) out.push(img);
+      if (img) out.push({ el: img, name: rowName(rows[i]) });
     }
     return out;
+  }
+  function tintTargets() { return tintTargetsNamed().map(function (t) { return t.el; }); }
+  // Swap an <img>'s source to a resolved icon (or back to the one it shipped with).
+  // The native src is remembered ONCE, and the write is guarded on data-cc-isrc so a
+  // repaint that changes nothing writes no attribute at all.
+  function setIconSrc(img, url) {
+    if (!img.getAttribute("data-cc-osrc")) img.setAttribute("data-cc-osrc", img.getAttribute("src") || "");
+    var want = url || img.getAttribute("data-cc-osrc") || "";
+    if (!want || img.getAttribute("data-cc-isrc") === want) return;
+    img.setAttribute("data-cc-isrc", want);
+    if (img.getAttribute("src") !== want) img.setAttribute("src", want);
+  }
+  function nativeIconSrc(img) { return img.getAttribute("data-cc-osrc") || img.getAttribute("src") || ""; }
+  // Resolve ONE item to {filter, srcUrl}. `scope` namespaces the per-item pins so a
+  // container and a VM of the same name keep separate settings.
+  //  · a font glyph (<i>) is a glyph already: it inks, and it has no src to swap.
+  //  · treat "flat"/"tint" fall back to native when there is no ink colour at all, which
+  //    is how a user who never enabled the tint keeps untouched icons.
+  function iconTreatment(scope, name, isGlyphEl, nativeSrc) {
+    var CI = window.CCTheme && window.CCTheme.icons;
+    if (!CI) return { treat: "tint", url: "" };
+    var res = CI.result(name), kind = res ? res.kind : "";
+    var mode = CI.mode(scope, name);
+    // A font glyph is monochrome by construction: measure nothing, fetch nothing, ink it.
+    var spread = isGlyphEl ? 0 : CI.spread(nativeSrc);
+    var plan = CI.plan(mode, kind === "pending" ? "" : kind, spread);
+    var url = "";
+    if (!isGlyphEl && (plan.src === "glyph" || plan.src === "color")) url = CI.svgUrl(name);
+    return { treat: plan.treat, url: url, why: plan.why };
   }
   function applyIconTint() {
     try {
@@ -632,6 +705,7 @@
           var z = tt0[q];
           ["filter", "width", "height", "vertical-align", "margin", "object-fit", "font-size", "color"].forEach(function (p) { z.style.removeProperty(p); });
           if (z.parentNode && z.parentNode.style) ["display", "align-items", "align-self", "margin"].forEach(function (p) { z.parentNode.style.removeProperty(p); });
+          if (z.tagName === "IMG") setIconSrc(z, "");   // back to the icon it shipped with
         }
         document.documentElement.style.removeProperty("--cc-iconbg-color");
         var s0 = document.getElementById("cc-tint-svg"); if (s0) s0.remove();
@@ -639,19 +713,32 @@
         return;
       }
       var f = iconFilter();
-      var imgs = tintTargets();
+      var named = tintTargetsNamed(), imgs = named.map(function (x) { return x.el; });
       // Logo-Hintergrund (cc.iconbg): the icon sits on an accent-coloured badge box, so
       // flatten it to mono ink (dark/white per the accent). IMGs get the filter; glyphs
       // (font-icon <i>) also take an !important text colour so the glyph itself inks.
       var ibgIcon = localStorage.getItem("cc.iconcolor");
       var ibgAcc = (ibgIcon && /^#?[0-9a-f]{6}$/i.test(ibgIcon)) ? ibgIcon : (effc("accent") || "#2f6feb");
       var ibgOn = localStorage.getItem("cc.iconbg") === "1";
-      var ibgMono = ibgOn ? ensureMonoFilter("cc-mono-svg", "cc-mono-tint", ibgAcc) : "";
       if (ibgOn) document.documentElement.style.setProperty("--cc-iconbg-color", ibgAcc); else document.documentElement.style.removeProperty("--cc-iconbg-color");
+      // ONE flat filter for the whole page (the ink colour is global), built from the same
+      // iconInk() the tint uses — so flatten and tint always agree on the colour.
+      var ink = iconInk(false);
+      var flat = ink ? ensureFlatFilter("cc-mono-svg", "cc-mono-tint", ink) : ensureFlatFilter("cc-mono-svg", "cc-mono-tint", "");
+      // Feed the engine every name on the page in ONE batch; it answers from its cache and
+      // never blocks. Anything it hasn't looked up yet stays native this pass and repaints
+      // through the resolved-callback wired in init().
+      var CI = window.CCTheme && window.CCTheme.icons;
+      if (CI) CI.want(named.map(function (x) { return x.name; }));
       for (var i = 0; i < imgs.length; i++) {
         var n = imgs[i];
-        if (n.tagName === "IMG") { n.style.filter = ibgMono || f; }
-        else { if (ibgOn) n.style.setProperty("color", idealText(ibgAcc), "important"); else n.style.removeProperty("color"); n.style.filter = ibgMono || f; }
+        var isGlyphEl = n.tagName !== "IMG";
+        var plan = CI ? iconTreatment("docker", named[i].name, isGlyphEl, isGlyphEl ? "" : nativeIconSrc(n)) : { treat: "tint", url: "" };
+        if (!isGlyphEl) setIconSrc(n, plan.url);
+        // "native" (or no ink colour at all) means: hands off the pixels.
+        var want = plan.treat === "native" ? "" : (plan.treat === "flat" ? flat : f);
+        if (n.tagName === "IMG") { n.style.filter = want; }
+        else { if (ibgOn) n.style.setProperty("color", idealText(ibgAcc), "important"); else if (ink && plan.treat !== "native") n.style.setProperty("color", ink, "important"); else n.style.removeProperty("color"); n.style.filter = want; }
         // Size hardened INLINE (+30% per user call: 48 → 62px): Unraid's theme kept
         // beating our stylesheet on the real page and the icons "shrank back".
         n.style.setProperty("width", "62px", "important");
@@ -662,7 +749,19 @@
         if (n.tagName === "IMG") n.style.setProperty("object-fit", "contain", "important");
         else n.style.setProperty("font-size", "62px", "important");
       }
-      if (gridHolder) { var g = gridHolder.querySelectorAll("img.cc-card-ico"); for (var j = 0; j < g.length; j++) g[j].style.filter = f; }
+      // Grid/card view runs the SAME pipeline as the rows — one decision, both layouts.
+      if (gridHolder) {
+        var g = gridHolder.querySelectorAll("img.cc-card-ico");
+        var gnames = [];
+        for (var j = 0; j < g.length; j++) {
+          var gn = g[j].getAttribute("data-cc-name") || "";
+          gnames.push(gn);
+          var gp = CI ? iconTreatment("docker", gn, false, nativeIconSrc(g[j])) : { treat: "tint", url: "" };
+          setIconSrc(g[j], gp.url);
+          g[j].style.filter = gp.treat === "native" ? "" : (gp.treat === "flat" ? flat : f);
+        }
+        if (CI && gnames.length) CI.want(gnames);
+      }
     } catch (e) {}
   }
   // ROTATING rainbow: 14 colours, and the kind→colour mapping shifts by a RANDOM offset
@@ -750,7 +849,7 @@
       applyIconTint();
     } catch (e) {}
   }
-  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh", "cc-adv", "cc-rainbow", "cc-tint-icons", "cc-docker-iconbg", "cc-dens-compact", "cc-dens-normal", "cc-dens-airy"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); var t2 = tintTargets(); for (var i = 0; i < t2.length; i++) t2[i].style.filter = ""; if (gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll("img.cc-card-ico")).forEach(function (n) { n.style.filter = ""; }); Array.prototype.slice.call(document.querySelectorAll(".cc-ico-tint")).forEach(function (n) { n.remove(); }); var sv = document.getElementById("cc-tint-svg"); if (sv) sv.remove(); var h = document.getElementById("cc-mono-svg"); if (h) h.remove(); } catch (e) {} }
+  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh", "cc-adv", "cc-rainbow", "cc-tint-icons", "cc-docker-iconbg", "cc-dens-compact", "cc-dens-normal", "cc-dens-airy"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); var t2 = tintTargets(); for (var i = 0; i < t2.length; i++) { t2[i].style.filter = ""; if (t2[i].tagName === "IMG") setIconSrc(t2[i], ""); } if (gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll("img.cc-card-ico")).forEach(function (n) { n.style.filter = ""; setIconSrc(n, ""); }); Array.prototype.slice.call(document.querySelectorAll(".cc-ico-tint")).forEach(function (n) { n.remove(); }); var sv = document.getElementById("cc-tint-svg"); if (sv) sv.remove(); var h = document.getElementById("cc-mono-svg"); if (h) h.remove(); } catch (e) {} }
 
   // read a positional cell's value (docker_readmore), stripping nested advanced
   // (MAC) + Tailscale tooltip, collapsed to one short line.
@@ -1610,7 +1709,7 @@
     var wrap = el("div", "cc-card"); wrap.dataset.name = c.name;
     var head = el("div", "cc-card-head");
     var ico = iconFor(c.name);
-    if (ico) { var im = el("img", "cc-card-ico"); im.src = ico; im.onerror = function () { this.style.visibility = "hidden"; }; head.appendChild(im); } else head.appendChild(el("div", "cc-card-ico cc-card-ico-ph"));
+    if (ico) { var im = el("img", "cc-card-ico"); im.src = ico; im.setAttribute("data-cc-name", c.name); im.onerror = function () { this.style.visibility = "hidden"; }; head.appendChild(im); } else head.appendChild(el("div", "cc-card-ico cc-card-ico-ph"));
     var nb = el("div", "cc-card-name"); nb.appendChild(el("div", "cc-card-title", c.name)); nb.appendChild(el("div", "cc-card-img", c.image || "")); head.appendChild(nb);
     head.appendChild(stateBadge(c)); wrap.appendChild(head);
     var ab2 = actionBars(c.name, c);
@@ -2471,6 +2570,38 @@
     RESTART_POLICIES.forEach(function (p) { var o = el("option", null, restartPolicyLabel(p)); o.value = p; if (p === cur) o.selected = true; sel.appendChild(o); });
     return sel;
   }
+  // ── Per-item icon mode ──
+  // The same four choices the Settings page offers globally, plus an explicit "follows the
+  // global setting" that is the DEFAULT — nothing is pinned until the user says so. Stored
+  // in the shared cc.iconov map (cc-theme.js), which rides the normal settings sync.
+  function iconModeItems() {
+    return LANG === "de"
+      ? [["", "Wie CannonadeCommand das Logo dieses Eintrags einfärbt. Ohne eigene Wahl gilt, was in den Einstellungen unter „Icon-Färbung“ steht."],
+          ["Automatisch", "CannonadeCommand entscheidet selbst: einfarbige Logos werden zu sauberer Tinte geglättet, für bekannte Programme wird ein echtes Glyph-Logo geholt, alles andere bekommt eine Tönung, die die Zeichnung im Bild erhält."],
+          ["Natives Icon", "Keine Einfärbung. Das Logo bleibt in seinen echten Farben; nur ein deutlich besseres Logo aus der gepflegten Sammlung wird noch bevorzugt."],
+          ["Ink-Flatten", "Immer zu einer flachen Tinte glätten. Bei bunten Logos mit Hintergrund kann dabei die Zeichnung verloren gehen — das ist die bewusste Wahl."],
+          ["Luminanz-Tint", "Immer tönen. Helle Stellen bleiben hell, dunkle dunkel, das Logo behält seine Zeichnung."]]
+      : [["", "How CannonadeCommand colours this entry's logo. With no choice of its own, the Settings page's “Icon colouring” applies."],
+          ["Automatic", "CannonadeCommand decides: single-tone logos are flattened to clean ink, known apps get a real glyph logo fetched for them, everything else is tinted in a way that keeps the drawing inside the image."],
+          ["Native icon", "No colouring. The logo keeps its real colours; only a markedly better logo from the curated set is still preferred."],
+          ["Ink flatten", "Always flatten to one flat ink. On colourful logos with a background this can lose the drawing — that is the deliberate choice."],
+          ["Luminance tint", "Always tint. Bright stays bright, dark stays dark, the logo keeps its drawing."]];
+  }
+  function iconModeSelect(scope, name) {
+    var CI = window.CCTheme && window.CCTheme.icons;
+    var sel = el("select", "cc-in cc-icm-sel");
+    var cur = CI ? CI.override(scope, name) : "";
+    [["", t("iconInherit")], ["auto", t("iconAuto")], ["native", t("iconNative")], ["flat", t("iconFlat")], ["tint", t("iconTint")]].forEach(function (o) {
+      var op = el("option", null, o[1]); op.value = o[0]; if (o[0] === cur) op.selected = true; sel.appendChild(op);
+    });
+    sel.addEventListener("change", function () {
+      if (!CI) return;
+      CI.setOverride(scope, name, sel.value);
+      applyIconTint();               // this row repaints at once; every other row keeps the global default
+      if (mode !== "list") renderGrid();
+    });
+    return sel;
+  }
   // The per-row warning badge for a container whose restart policy is "no" (it will not
   // auto-start after a host reboot). Semantic amber — never rainbow/accent — like cc-b-del.
   function restartWarnBadge() {
@@ -2649,6 +2780,11 @@
     api("GET", "limits", null, "name=" + encodeURIComponent(name)).then(function (l) {
       if (l && l.restart_policy) { rpSel.value = l.restart_policy; setRpCache(l.restart_policy); }
     }).catch(function () {});
+
+    // ── Icon colouring — this container's own pin, independent of everything else ──
+    var icSec = el("div", "cc-pop-auto");
+    var icRow = el("div", "cc-pop-row"); icRow.appendChild(lblInfo(t("iconMode"), iconModeItems()));
+    icRow.appendChild(iconModeSelect("docker", name)); icSec.appendChild(icRow); pop.appendChild(icSec);
 
     // ── Watchdog (auto-restart) — independent of plan membership ──
     var wd = watchdogFor(name);
@@ -3873,6 +4009,10 @@
     }
     try {
       applySettings();
+      // Icon pipeline: repaint when an engine lookup or a complexity measurement lands.
+      // The callback fires only on an actual CHANGE (see cc-theme.js icoNotify), so this
+      // settles after a handful of passes and can never become a repaint loop.
+      try { if (window.CCTheme && window.CCTheme.icons) window.CCTheme.icons.onResolved(function () { if (!dead) applyIconTint(); }); } catch (e8) {}
       // organizer probe: fires in parallel with everything else below, never blocks first
       // paint. Reconcile against the SERVER's saved view-mode (Task 7 decision 6) once it
       // resolves — this is the actual restore path: the synchronous initial `mode` (var mode

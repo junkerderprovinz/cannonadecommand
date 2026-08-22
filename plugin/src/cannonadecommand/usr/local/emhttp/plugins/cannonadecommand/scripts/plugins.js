@@ -183,8 +183,20 @@
 
   // the Docker-tab icon tint, standalone: luminance x target colour via an SVG
   // feColorMatrix, blended by cc.iconstrength; imgs get filter: url(#cc-plug-tint)
+  // The icon pipeline's target colour for this tab — same contract as docker.js iconInk():
+  // on the Logo-Hintergrund box the ink must contrast with the BOX, otherwise it is the
+  // picked icon colour lifted out of the dark end. `forTint` doubles the floor because a
+  // luminance tint outputs roughly half the target's luma (see CCTheme.liftDark).
+  function plugIconInk(forTint) {
+    var pick = eff("iconcolor");
+    var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
+    if (document.documentElement.classList.contains("cc-plugins-iconbg")) return ccHex6(idealText(valid ? pick : accent()));
+    if (!valid) return "";
+    if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
+    return ccHex6(window.CCTheme.liftDark(pick, accent(), window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1)));
+  }
   function ensureTint() {
-    var hex = /^#?([0-9a-f]{6})$/i.exec(eff("iconcolor") || "");
+    var hex = /^#?([0-9a-f]{6})$/i.exec(plugIconInk(true) || "");
     if (!hex) return "";
     var n = parseInt(hex[1], 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
     var st = Math.max(10, parseInt(eff("iconstrength") || "100", 10)) / 100;
@@ -200,21 +212,30 @@
   // ideal-contrast text colour for the accent badge box) via an SVG feColorMatrix
   // that keeps alpha but maps RGB to one grey. Signature-guarded so the shared
   // MutationObserver never re-writes identical SVG in a repaint loop.
-  function ensureMonoFilter(hostId, filtId, accentHex) {
+  // Ink-FLATTEN to ANY colour (docker.js ensureFlatFilter, verbatim contract).
+  // Expand a #rgb shorthand to #rrggbb. idealText answers "#fff", every filter builder and
+  // every colour regex here wants six digits — this is the one place that bridges the two.
+  function ccHex6(c) {
+    c = String(c == null ? "" : c).trim();
+    return /^#[0-9a-f]{3}$/i.test(c) ? "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c;
+  }
+  function ensureFlatFilter(hostId, filtId, hex) {
     var host = document.getElementById(hostId);
-    var m = /^#?([0-9a-f]{6})$/i.exec(accentHex || "");
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ccHex6(hex) || "");
     if (!m) { if (host) host.remove(); return ""; }
-    var ink = idealText("#" + m[1]);
-    var hx = ink.length === 4 ? ink[1] + ink[1] + ink[2] + ink[2] + ink[3] + ink[3] : ink.slice(1);
-    var c = ((parseInt(hx, 16) >> 16 & 255) / 255).toFixed(4);
+    var r = (parseInt(m[1], 16) / 255).toFixed(4), g2 = (parseInt(m[2], 16) / 255).toFixed(4), b = (parseInt(m[3], 16) / 255).toFixed(4);
     if (!host) { host = document.createElement("div"); host.id = hostId; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
-    var sig = filtId + "|" + c;
+    var sig = filtId + "|" + r + "|" + g2 + "|" + b;
     if (host.dataset.sig !== sig) {
-      var vals = "0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 1 0";
+      var vals = "0 0 0 0 " + r + " 0 0 0 0 " + g2 + " 0 0 0 0 " + b + " 0 0 0 1 0";
       host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>';
       host.dataset.sig = sig;
     }
     return "url(#" + filtId + ")";
+  }
+  function ensureMonoFilter(hostId, filtId, accentHex) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(accentHex || "");
+    return ensureFlatFilter(hostId, filtId, m ? idealText("#" + m[1]) : "");
   }
   function shapeRadius() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
   function pill(node, bg, tx) {
@@ -269,6 +290,19 @@
   // SAME visual size regardless of its baked-in padding or source resolution.
   //
   var normCache = {};
+  var plugWantNames = [];   // every plugin name of the current paint pass, asked for in one batch
+  // Source swap for the icon pipeline. Same contract as docker.js setIconSrc, plus one
+  // extra: clearing data-cc-normed, because reverting to the native icon has to let
+  // normalizeIcon re-apply its crop (its own guard would otherwise short-circuit and
+  // leave the raw, un-normalised source showing).
+  function plugSetIconSrc(img, url) {
+    if (!img.getAttribute("data-cc-osrc")) img.setAttribute("data-cc-osrc", img.getAttribute("src") || "");
+    var want = url || img.getAttribute("data-cc-osrc") || "";
+    if (!want || img.getAttribute("data-cc-isrc") === want) return;
+    img.setAttribute("data-cc-isrc", want);
+    img.removeAttribute("data-cc-normed");
+    if (img.getAttribute("src") !== want) img.setAttribute("src", want);
+  }
   function applyNorm(img, url) {
     if (img.getAttribute("data-cc-normed") === url) return; // already swapped
     if (!img.getAttribute("data-cc-osrc")) img.setAttribute("data-cc-osrc", img.src);
@@ -341,6 +375,27 @@
         sup.remove();
         txt.appendChild(sb);
       }
+      // The plugin's name has to survive into later passes (this block is MARK-guarded and
+      // runs once) — the icon pipeline needs it for the lookup and for the per-plugin pin.
+      tds[0].setAttribute("data-cc-pname", nm || "");
+      // The Plugins tab has no per-item settings window at all, so the icon pin gets its
+      // own small control right next to the name, opening the SHARED five-option popover
+      // (cc-theme.js) that the Docker and VM windows show as a row.
+      if (window.CCTheme && window.CCTheme.icons && nm) {
+        var icb = el("span", "cc-b cc-plugicm", LANG === "de" ? "Icon" : "Icon");
+        icb.setAttribute(MARK, "1");
+        icb.title = LANG === "de" ? "Icon-Färbung für dieses Plugin" : "Icon colouring for this plugin";
+        icb.style.setProperty("cursor", "pointer", "important");
+        icb.style.setProperty("text-decoration", "none", "important");
+        var ibg2 = restBg(idx + 4);
+        icb.style.setProperty("background", ibg2, "important");
+        icb.style.setProperty("color", idealText(ibg2), "important");
+        icb.addEventListener("click", function (ev) {
+          ev.preventDefault(); ev.stopPropagation();
+          window.CCTheme.icons.popover(icb, "plugin", nm, function () { try { paint(); } catch (e3) {} });
+        });
+        txt.appendChild(icb);
+      }
       box.appendChild(icoWrap); box.appendChild(txt);
       tds[0].appendChild(box);
     }
@@ -357,25 +412,42 @@
     // the accent box (mono filter overrides the iconcolor tint f2 when active)
     var ibgOn = document.documentElement.classList.contains("cc-plugins-iconbg");
     var ibgIcon = eff("iconcolor"); var ibgBg = (ibgIcon && /^#?[0-9a-f]{6}$/i.test(ibgIcon)) ? ibgIcon : accent();
-    var ibgMono = ibgOn ? ensureMonoFilter("cc-plug-mono-svg", "cc-plug-mono-tint", ibgBg) : "";
+    var pInk = plugIconInk(false);
+    var pFlat = ibgOn ? ensureMonoFilter("cc-plug-mono-svg", "cc-plug-mono-tint", ibgBg) : (pInk ? ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", pInk) : "");
     var LOGO = logoSize(); // cc.sgsize step = Docker/VM logo size (m default 62px)
+    var pName = tds[0].getAttribute("data-cc-pname") || "";
+    var PCI = window.CCTheme && window.CCTheme.icons;
+    if (PCI && pName) plugWantNames.push(pName);   // collected here, asked ONCE per paint() (see paint)
     Array.prototype.slice.call(tds[0].querySelectorAll("img, i")).forEach(function (el2) {
       el2.style.setProperty("width", LOGO, "important");
       el2.style.setProperty("height", LOGO, "important");
       el2.style.setProperty("vertical-align", "middle", "important");
-      if (el2.tagName === "IMG") {
+      var isGlyphEl = el2.tagName !== "IMG";
+      // A font glyph is monochrome by construction: nothing to measure, nothing to fetch.
+      var plan = { treat: "tint", url: "" };
+      if (PCI && pName) {
+        var pres = PCI.result(pName), pkind = (pres && pres.kind !== "pending") ? pres.kind : "";
+        var pspread = isGlyphEl ? 0 : PCI.spread(el2.getAttribute("data-cc-osrc") || el2.getAttribute("src") || "");
+        var pp = PCI.plan(PCI.mode("plugin", pName), pkind, pspread);
+        plan = { treat: pp.treat, url: (!isGlyphEl && (pp.src === "glyph" || pp.src === "color")) ? PCI.svgUrl(pName) : "" };
+      }
+      var want = plan.treat === "native" ? "none" : (plan.treat === "flat" ? (pFlat || f2 || "none") : (f2 || "none"));
+      if (!isGlyphEl) {
         el2.style.setProperty("object-fit", "contain", "important");
         el2.style.removeProperty("transform"); // superseded by content normalization
-        normalizeIcon(el2); // crop to content bbox -> uniform visual size
-        el2.style.setProperty("filter", ibgMono || f2 || "none", "important");
+        if (plan.url) plugSetIconSrc(el2, plan.url);   // a curated icon is already uniformly framed
+        else { plugSetIconSrc(el2, ""); normalizeIcon(el2); }   // crop to content bbox -> uniform visual size
+        el2.style.setProperty("filter", want, "important");
       } else {
         // font glyph (fa- or icon-): size + center to visually match the images
         el2.style.setProperty("font-size", LOGO, "important");
         el2.style.setProperty("line-height", LOGO, "important");
         el2.style.setProperty("text-align", "center", "important");
         el2.style.setProperty("display", "inline-block", "important");
-        if (ibgOn) el2.style.setProperty("color", idealText(ibgBg), "important");
-        el2.style.setProperty("filter", ibgMono || f2 || "none", "important");
+        if (plan.treat === "native") el2.style.removeProperty("color");
+        else if (ibgOn) el2.style.setProperty("color", idealText(ibgBg), "important");
+        else if (pInk) el2.style.setProperty("color", pInk, "important");
+        el2.style.setProperty("filter", want, "important");
       }
     });
     // col 3: author as a badge
@@ -592,7 +664,10 @@
         ths[1].textContent = LANG === "de" ? "Beschreibung" : "Description";
       }
       var rows = document.querySelectorAll("#plugin_list > tr");
+      plugWantNames = [];
       Array.prototype.slice.call(rows).forEach(function (tr, i) { try { paintRow(tr, i); } catch (e) {} });
+      // ONE batched lookup for the whole table, not one call per row.
+      try { if (window.CCTheme && window.CCTheme.icons && plugWantNames.length) window.CCTheme.icons.want(plugWantNames); } catch (e) {}
       // the page TABS are styled by pure CSS (input:checked + label in docker.css)
       // — the accent lives in :root vars so the CSS follows the configured colour
       document.documentElement.style.setProperty("--cc-accent", accent());
@@ -687,6 +762,9 @@
     // round-trip (the old order left /Plugins native until the fetch resolved). adopt() below only
     // RE-paints if it actually pulled a changed setting.
     paint();
+    // Icon pipeline: repaint once an engine lookup or a complexity measurement lands. Fires
+    // only on a real change (cc-theme.js), so it settles instead of looping.
+    try { if (window.CCTheme && window.CCTheme.icons) window.CCTheme.icons.onResolved(function () { try { paint(); } catch (e) {} }); } catch (e) {}
     var host = document.getElementById("displaybox") || document.body; // whole page: tab switches + ajax rewrites
     // LEADING-EDGE + coalesce (was a 250ms trailing debounce = the visible render lag): paint in the SAME
     // frame the DOM changes. childList/subtree only — drop characterData so a per-second status-text tick

@@ -66,8 +66,20 @@
   // is an opt-OUT: only the literal "0" disables it). Requiring a separate "1" opt-in was
   // an easy-to-miss toggle that made VMs look like they "never tinted".
   function vmTintOff() { return ls("cc.vmicons") === "0"; }
+  // The icon pipeline's target colour for this tab — same contract as docker.js iconInk():
+  // on the Logo-Hintergrund box it is the box's ideal text colour, otherwise the picked
+  // icon colour lifted out of the dark end by the shared darkness guard. `forTint` doubles
+  // the floor because a luminance tint outputs roughly half the target's luma.
+  function vmIconInk(forTint) {
+    var pick = ls("cc.stylevms") !== "0" ? ls("cc.iconcolor") : ls("ccv.iconcolor");
+    var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
+    if (effK("iconbg") === "1") return ccHex6(ccIdeal(valid ? pick : ccAccent()));
+    if (!valid) return "";
+    if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
+    return ccHex6(window.CCTheme.liftDark(pick, ccAccent(), window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1)));
+  }
   function ensureTintFilter() {
-    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec((ls("cc.stylevms") !== "0" ? ls("cc.iconcolor") : ls("ccv.iconcolor")) || "");
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(vmIconInk(true) || "");
     var host = document.getElementById("cc-vm-tint-svg");
     if (dead || vmTintOff() || !m) { if (host) host.remove(); return false; }
     var tr = parseInt(m[1], 16) / 255, tg = parseInt(m[2], 16) / 255, tb = parseInt(m[3], 16) / 255;
@@ -94,7 +106,7 @@
   // comes from CSS `color:`, NOT from an image filter — so a glyph never tinted
   // before. Real `.png` icons render as `<img class="img">` and DO take the filter.
   function tintColor() {
-    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec((ls("cc.stylevms") !== "0" ? ls("cc.iconcolor") : ls("ccv.iconcolor")) || "");
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(vmIconInk(false) || "");
     if (dead || vmTintOff() || !m) return "";
     return "#" + m[1] + m[2] + m[3];
   }
@@ -107,6 +119,27 @@
     for (var i = 0; i < sels.length; i++) { var n = document.querySelectorAll(sels[i]); if (n.length) return n; }
     return [];
   }
+  // The VM behind one icon element, for the icon pipeline's lookup + per-VM pin.
+  function vmIconName(n) { var tr = n && n.closest ? n.closest("tr") : null; return (tr && vmNameOf(tr)) || ""; }
+  // Source swap + native-source memory, identical contract to docker.js setIconSrc.
+  function vmSetIconSrc(img, url) {
+    if (!img.getAttribute("data-cc-osrc")) img.setAttribute("data-cc-osrc", img.getAttribute("src") || "");
+    var want = url || img.getAttribute("data-cc-osrc") || "";
+    if (!want || img.getAttribute("data-cc-isrc") === want) return;
+    img.setAttribute("data-cc-isrc", want);
+    if (img.getAttribute("src") !== want) img.setAttribute("src", want);
+  }
+  // Unraid renders MOST VM icons as a font glyph (<i class="fa … img">), which is already
+  // monochrome — it inks, and there is no src to swap. Real .png icons run the full chain.
+  function vmIconPlan(n, name) {
+    var CI = window.CCTheme && window.CCTheme.icons;
+    if (!CI) return { treat: "tint", url: "" };
+    var isGlyphEl = n.tagName !== "IMG";
+    var res = CI.result(name), kind = res && res.kind !== "pending" ? res.kind : "";
+    var spread = isGlyphEl ? 0 : CI.spread(n.getAttribute("data-cc-osrc") || n.getAttribute("src") || "");
+    var plan = CI.plan(CI.mode("vm", name), kind, spread);
+    return { treat: plan.treat, url: (!isGlyphEl && (plan.src === "glyph" || plan.src === "color")) ? CI.svgUrl(name) : "" };
+  }
   // ── CC treatment for the VM rows: a state badge (green/amber/grey, shape-aware)
   //    on td.vm-name, mirroring the Docker-tab state badge, plus the accent vars on
   //    the document root. Self-contained + idempotent; the tint stays separate below.
@@ -117,21 +150,32 @@
   // to a single ink (black on a light accent, white on a dark accent), so a coloured
   // glyph/png reads cleanly on the accent-filled badge box. Signature-guarded like
   // ensureTintFilter so a blind innerHTML write can't feed a MutationObserver loop.
-  function ensureMonoFilter(hostId, filtId, accentHex) {
+  // Ink-FLATTEN to ANY colour (docker.js ensureFlatFilter, verbatim contract): every opaque
+  // pixel becomes one flat colour, alpha untouched. Only ever aimed at a real glyph or an
+  // icon the complexity heuristic proved is already one tone.
+  // Expand a #rgb shorthand to #rrggbb. idealText answers "#fff", every filter builder and
+  // every colour regex here wants six digits — this is the one place that bridges the two.
+  function ccHex6(c) {
+    c = String(c == null ? "" : c).trim();
+    return /^#[0-9a-f]{3}$/i.test(c) ? "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c;
+  }
+  function ensureFlatFilter(hostId, filtId, hex) {
     var host = document.getElementById(hostId);
-    var m = /^#?([0-9a-f]{6})$/i.exec(accentHex || "");
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ccHex6(hex) || "");
     if (!m) { if (host) host.remove(); return ""; }
-    var ink = ccIdeal("#" + m[1]);
-    var hx = ink.length === 4 ? ink[1] + ink[1] + ink[2] + ink[2] + ink[3] + ink[3] : ink.slice(1);
-    var c = ((parseInt(hx, 16) >> 16 & 255) / 255).toFixed(4);
+    var r = (parseInt(m[1], 16) / 255).toFixed(4), g2 = (parseInt(m[2], 16) / 255).toFixed(4), b = (parseInt(m[3], 16) / 255).toFixed(4);
     if (!host) { host = document.createElement("div"); host.id = hostId; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
-    var sig = filtId + "|" + c;
+    var sig = filtId + "|" + r + "|" + g2 + "|" + b;
     if (host.dataset.sig !== sig) {
-      var vals = "0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 1 0";
+      var vals = "0 0 0 0 " + r + " 0 0 0 0 " + g2 + " 0 0 0 0 " + b + " 0 0 0 1 0";
       host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>';
       host.dataset.sig = sig;
     }
     return "url(#" + filtId + ")";
+  }
+  function ensureMonoFilter(hostId, filtId, accentHex) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(accentHex || "");
+    return ensureFlatFilter(hostId, filtId, m ? ccIdeal("#" + m[1]) : "");
   }
   function ccShape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
   // ── Rainbow palette (verbatim port of docker.js applyRainbowPalette): read the GLOBAL cc.rainbow +
@@ -539,6 +583,23 @@
       dsec.appendChild(dlbl); dsec.appendChild(dlist); dsec.appendChild(dstat); card.appendChild(dsec);
       loadDisks(name, dlist, dstat);
     }
+    // ── Icon colouring for THIS VM. Present in every variant of the editor (whichever gear
+    // you opened), because the VM tab has no other per-item settings surface and a control
+    // reachable from only one of four gears is a control nobody finds. Applies instantly —
+    // it is a display choice, so it does not belong behind the Apply button.
+    (function () {
+      var CI = window.CCTheme && window.CCTheme.icons; if (!CI) return;
+      var wrap = el("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:3px;margin:8px 0 10px 0";
+      var l = el("label", null, VMDE ? "Icon-Färbung" : "Icon colouring"); l.style.cssText = "font-size:12px;font-weight:600;color:var(--cc-text,#e6e6e6)";
+      var sel = el("select"); sel.style.cssText = "background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:6px 10px;font-size:13px;outline:none";
+      var opts = VMDE
+        ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Ink-Flatten"], ["tint", "Luminanz-Tint"]]
+        : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Ink flatten"], ["tint", "Luminance tint"]];
+      var cur = CI.override("vm", name);
+      opts.forEach(function (o) { var op = el("option", null, o[1]); op.value = o[0]; if (o[0] === cur) op.selected = true; sel.appendChild(op); });
+      sel.addEventListener("change", function () { CI.setOverride("vm", name, sel.value); paintVmIcons(); });   // NOT apply() — `apply` is this function's own Apply button (see paintVmIcons)
+      wrap.appendChild(l); wrap.appendChild(sel); card.appendChild(wrap);
+    })();
     var foot = el("div"); foot.style.cssText = "display:flex;gap:8px;align-items:center;margin-top:6px";
     var msg = el("div"); msg.style.cssText = "flex:1;font-size:11px;color:var(--cc-text-dim,#8a8a8a)";
     var cancel = el("button", null, VMDE ? "Schließen" : "Close"); cancel.style.cssText = "background:var(--cc-chip,rgba(128,128,128,.18));color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer";
@@ -922,6 +983,14 @@
     // adopt-toggle ON (default) -> Docker's cc.* settings; OFF -> own ccv.* keys.
     // Stay even with adopt-off + no tint colour when the Logo-Hintergrund badge is on.
     if (ls("cc.stylevms") === "0" && !ls("ccv.iconcolor") && effK("iconbg") !== "1") return;
+    paintVmIcons();
+  }
+  // The icon pass, factored OUT of apply() so the per-VM Icon-Färbung dropdown can repaint
+  // straight away. It has to be its own function: openVmEd declares `var apply = null` for
+  // its Apply BUTTON, which shadows the page-level apply() for that whole function — calling
+  // apply() from inside the editor threw "not a function" into a swallowing catch and the
+  // pinned VM only repainted on the next native list rebuild. Caught live on the box.
+  function paintVmIcons() {
     try {
       var f = filterVal(), c = tintColor(), imgs = vmImgs();
       var ibgOn = effK("iconbg") === "1"; var vIcon = effK("iconcolor"); var ibgAcc = (vIcon && /^#[0-9a-f]{6}$/i.test(vIcon)) ? vIcon : ccAccent();
@@ -931,15 +1000,23 @@
       var root2 = document.documentElement;
       root2.classList.toggle("cc-vm-iconbg", ibgOn);
       if (ibgOn) root2.style.setProperty("--cc-iconbg-color", ibgAcc); else root2.style.removeProperty("--cc-iconbg-color");
-      var ibgMono = ibgOn ? ensureMonoFilter("cc-vm-mono-svg", "cc-vm-mono-tint", ibgAcc) : "";
+      // ONE flat filter for the page, from the same ink the tint uses. ensureMonoFilter is
+      // the Logo-Hintergrund spelling of it (flatten to whatever reads on the box).
+      var vmInk = vmIconInk(false);
+      var flat = ibgOn ? ensureMonoFilter("cc-vm-mono-svg", "cc-vm-mono-tint", ibgAcc) : (vmInk ? ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", vmInk) : ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", ""));
+      var CI = window.CCTheme && window.CCTheme.icons, vmNames = [];
       for (var i = 0; i < imgs.length; i++) {
-        var n = imgs[i];
-        if (n.tagName === "IMG") { n.style.filter = ibgMono || f; if (ibgOn) n.style.removeProperty("color"); }
+        var n = imgs[i], vname = vmIconName(n);
+        if (vname) vmNames.push(vname);
+        var plan = vmIconPlan(n, vname);
+        var want = plan.treat === "native" ? "" : (plan.treat === "flat" ? flat : f);
+        if (n.tagName === "IMG") { vmSetIconSrc(n, plan.url); n.style.filter = want; if (ibgOn) n.style.removeProperty("color"); }
         // font-glyph: `color` is the reliable exact tint. Set it with PRIORITY — Unraid's VM CSS colours
         // these glyphs via a class rule, which a plain inline colour can lose to; `!important` wins. With
         // the badge on, the ink is the accent's ideal text colour (b/w contrast).
-        else { n.style.setProperty("color", ibgOn ? ccIdeal(ibgAcc) : (c || ""), "important"); n.style.filter = ibgMono || f; }
+        else { n.style.setProperty("color", plan.treat === "native" ? "" : (ibgOn ? ccIdeal(ibgAcc) : (vmInk || c || "")), "important"); n.style.filter = want; }
       }
+      if (CI && vmNames.length) CI.want(vmNames);
     } catch (e) {}
   }
   function connectObserver() {
@@ -948,6 +1025,9 @@
     // present there is nothing to tint (the tbody is server-rendered on the real page).
     var host = document.getElementById("kvm_list") || document.getElementById("kvm_table");
     if (!host) return;
+    // Icon pipeline: repaint once an engine lookup or a complexity measurement lands. Fires
+    // only on a real change (cc-theme.js), so it settles instead of looping.
+    try { if (window.CCTheme && window.CCTheme.icons) window.CCTheme.icons.onResolved(function () { if (!dead) paintVmIcons(); }); } catch (e) {}
     // debounced: the VM list re-renders in bursts; re-apply at most every ~300ms.
     // (childList only — we never observe attributes, so our own style writes can't
     // re-trigger this into a loop.)
