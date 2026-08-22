@@ -153,15 +153,18 @@ html.cc-vms-on.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand {
   display: flex !important; align-items: center !important; justify-content: center !important;
 }
 html.cc-shape-circle.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand { border-radius: 50% !important; }
-/* #3 (user: "Icons und Logo/Hintergrund nicht im reaktiven Modus integriert"): non-reactive rainbow ->
-   the logo box takes the rainbow action colour (unless a custom iconbg colour is set); reactive sub-mode ->
-   it rests neutral and takes the palette colour on ROW hover, exactly like the VM value badges. */
+/* #3/#T6 (user: "Icons und Logo/Hintergrund nicht im reaktiven Modus integriert"; decided fix,
+   live-tested and confirmed with the user): the logo box is the icon's OWN badge, not a rotating
+   value indicator — a configured Logo-Hintergrund colour must win over the rainbow palette in
+   BOTH rainbow sub-modes, with --cc-rb-c only as the fallback for rows with no icon colour set.
+   Reactive sub-mode still rests neutral grey and only reveals colour on ROW hover, exactly like
+   the VM value badges — only the WINNING colour source on hover changed. */
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rainbow:not(.cc-vm-rbneutral) #kvm_list td.vm-name .outer > span.hand {
-  background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-rbaccent, var(--cc-accent, #2f6feb)))) !important;   /* T5: per-row rainbow colour (vms.js stamps it) wins over the static custom colour, like Docker/Plugin */
+  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)))) !important;   /* T5/T6: the configured icon colour wins over the per-row rainbow colour, like Docker/Plugin */
 }
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list td.vm-name .outer > span.hand { background: #2e2e2e !important; }
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list tr:hover td.vm-name .outer > span.hand {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;   /* T5: reactive hover -> the row's per-row palette colour */
+  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)))) !important;   /* T6: reactive hover -> the configured icon colour wins, --cc-rb-c is the no-icon-colour fallback */
 }
 /* name column layout (docker.css:69-72): stacked, native <br> hidden, native status glyph hidden */
 html.cc-vms-on #kvm_list td.vm-name .inner { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; line-height: 1.2; min-width: 0; }

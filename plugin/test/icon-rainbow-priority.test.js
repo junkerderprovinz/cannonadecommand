@@ -1,0 +1,87 @@
+// Static regression test: icon logo badge colour vs Rainbow mode priority (#T6).
+//
+// The bug (live-tested on a real box, confirmed with the user): with Rainbow mode on and
+// Reactive mode on, hovering a Docker/Plugin/VM row's icon logo badge showed the rotating
+// rainbow colour instead of the colour the user picked in the "Logos & Icons" settings card.
+// Traced to every CSS rule painting that badge's background putting --cc-rb-c (the per-row
+// rainbow rotation colour, stamped inline by JS) BEFORE --cc-iconbg-color (the configured icon
+// colour) in the var() fallback chain, so rainbow always won whenever it was on.
+//
+// Decided fix: an icon logo's OWN background badge represents the app's identity, not a rotating
+// value indicator, so --cc-iconbg-color must come first, with --cc-rb-c only as the fallback for
+// rows/tabs that have no icon colour configured. This is scoped ONLY to the icon logo badge —
+// every OTHER rainbow-coloured element (CPU/RAM/value badges, tab pills, buttons, ...) keeps
+// rainbow-first behaviour unchanged, which this file also pins so the two paths can't be
+// conflated by a future edit.
+//
+// Reuses settings-chrome.test.js's ruleBody()/declares() helpers verbatim (same comment-stripping
+// regex) — this is a static/string-level pin, appropriate for a CSS file with no CSS engine
+// available in the bare-Node test runner.
+const fs = require('fs');
+const path = require('path');
+const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand');
+const CSS = process.argv[2] || path.join(DIR, 'styles', 'docker.css');
+
+let pass = 0, fail = 0;
+const ok = (name, cond, extra) => { cond ? (pass++, console.log('  PASS  ' + name)) : (fail++, console.log('  FAIL  ' + name + (extra ? '  -> ' + extra : ''))); };
+
+const css = fs.readFileSync(CSS, 'utf8');
+
+// Verbatim from settings-chrome.test.js.
+function ruleBody(sheet, selector) {
+  const clean = sheet.replace(/\/\*[\s\S]*?\*\//g, '');
+  const re = new RegExp('(^|[};])\\s*' + selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{([^}]*)\\}', 'm');
+  const m = re.exec(clean);
+  return m ? m[2] : null;
+}
+function iconbgFirst(body) { return /background:\s*var\(--cc-iconbg-color,\s*var\(--cc-rb-c,/.test(body || ''); }
+
+console.log('\nDocker icon logo badge: a configured icon colour wins over the rainbow palette');
+{
+  const listSel = '.cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer > span.hand';
+  const gridSel = '.cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card-ico';
+  const listHoverSel = 'html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand';
+  const gridHoverSel = 'html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card:hover .cc-card-ico';
+  [
+    ['list-mode tile (non-reactive rainbow)', listSel],
+    ['grid-mode tile (non-reactive rainbow)', gridSel],
+    ['list-mode tile (reactive hover)', listHoverSel],
+    ['grid-mode tile (reactive hover)', gridHoverSel],
+  ].forEach(([label, sel]) => {
+    const body = ruleBody(css, sel);
+    ok(label + ' rule exists', body != null);
+    ok(label + ': --cc-iconbg-color comes before --cc-rb-c', iconbgFirst(body), body);
+  });
+}
+
+console.log('\nPlugins icon logo badge: a configured icon colour wins over the rainbow palette');
+{
+  const tileSel = 'html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico';
+  const hoverSel = 'html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-plugico';
+  [
+    ['tile (non-reactive rainbow)', tileSel],
+    ['tile (reactive hover)', hoverSel],
+  ].forEach(([label, sel]) => {
+    const body = ruleBody(css, sel);
+    ok(label + ' rule exists', body != null);
+    ok(label + ': --cc-iconbg-color comes before --cc-rb-c', iconbgFirst(body), body);
+  });
+}
+
+console.log('\nGeneric (non-icon) rainbow badges stay rainbow-first — this fix must NOT touch them');
+{
+  // CPU/RAM value badges and the generic plugin row-badge hover path are NOT icon logo tiles;
+  // they must keep --cc-rb-c as the FIRST colour source, exactly as before this fix.
+  const cpuSel = '.cc-enh.cc-rainbow .cc-b-cpu, .cc-grid-holder.cc-rainbow .cc-b-cpu';
+  const cpuBody = ruleBody(css, cpuSel);
+  ok('CPU badge rule exists', cpuBody != null);
+  ok('CPU badge: --cc-rb-c is still FIRST (untouched by this fix)', /background:\s*var\(--cc-rb-cpu,/.test(cpuBody || ''), cpuBody);
+
+  const genericPluginHoverSel = 'html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b:not(.cc-b-del),\nhtml.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-plugsup';
+  const genBody = ruleBody(css, genericPluginHoverSel);
+  ok('generic plugin value-badge hover rule exists', genBody != null);
+  ok('generic plugin value badge: --cc-rb-c is still FIRST (untouched by this fix)', /background:\s*var\(--cc-rb-c,\s*var\(--cc-accent,/.test(genBody || ''), genBody);
+}
+
+console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
+process.exit(fail ? 1 : 0);

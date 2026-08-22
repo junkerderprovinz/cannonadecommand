@@ -44,5 +44,26 @@ console.log('\nThe VM-row glyph icon rule ties font-size to --cc-logo-img, never
   ok('width/height stay tied to the same token (unchanged by this fix)', /width:\s*var\(--cc-logo-img/.test(body || '') && /height:\s*var\(--cc-logo-img/.test(body || ''), body);
 }
 
+console.log('\nVM icon logo badge: a configured icon colour wins over the rainbow palette (#T6)');
+{
+  // The bug: both the non-reactive-rainbow rule and the reactive-hover rule put --cc-rb-c (the
+  // per-row rainbow rotation colour) BEFORE --cc-iconbg-color (the user's picked Logo-Hintergrund
+  // colour) in the var() fallback chain, so Rainbow mode always outran a configured icon colour.
+  // Decided fix, live-tested and confirmed with the user: the icon logo's OWN badge represents the
+  // app's identity, not a rotating value indicator, so --cc-iconbg-color must be first, --cc-rb-c
+  // only the fallback for rows with no icon colour configured.
+  const nonReactiveSel = 'html.cc-vms-on.cc-vm-iconbg.cc-vm-rainbow:not(.cc-vm-rbneutral) #kvm_list td.vm-name .outer > span.hand';
+  const reactiveHoverSel = 'html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list tr:hover td.vm-name .outer > span.hand';
+  const reactiveRestSel = 'html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list td.vm-name .outer > span.hand';
+  const nrBody = ruleBody(css, nonReactiveSel);
+  const rhBody = ruleBody(css, reactiveHoverSel);
+  const rrBody = ruleBody(css, reactiveRestSel);
+  ok('non-reactive rainbow rule exists', nrBody != null);
+  ok('non-reactive: --cc-iconbg-color comes before --cc-rb-c', /background:\s*var\(--cc-iconbg-color,\s*var\(--cc-rb-c,/.test(nrBody || ''), nrBody);
+  ok('reactive hover rule exists', rhBody != null);
+  ok('reactive hover: --cc-iconbg-color comes before --cc-rb-c', /background:\s*var\(--cc-iconbg-color,\s*var\(--cc-rb-c,/.test(rhBody || ''), rhBody);
+  ok('reactive REST state is still flat grey, untouched by this fix', /background:\s*#2e2e2e/.test(rrBody || ''), rrBody);
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

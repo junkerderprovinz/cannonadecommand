@@ -66,14 +66,18 @@
   padding: calc((var(--cc-logo-box, 78px) - var(--cc-logo-img, 62px)) / 2) !important; box-sizing: border-box !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
 }
-/* #13: in RAINBOW/FLAG mode the logo tile joins the palette — it adopts the row's stamped --cc-rb-c
-   (inherited down to the tile) instead of the single static iconbg colour. Gated on .cc-rainbow so
-   NORMAL mode keeps the user's chosen Logo-Hintergrund colour untouched. */
-.cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer > span.hand { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
-.cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card-ico { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
-/* reactive + rainbow: the tile rests grey (rules further down) and takes the ROW's palette colour on hover */
-html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card:hover .cc-card-ico { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
+/* #13/#T6: in RAINBOW/FLAG mode the logo tile used to join the palette, adopting the row's
+   stamped --cc-rb-c over any configured Logo-Hintergrund colour. Decided fix (live-tested,
+   confirmed with the user): an icon logo's OWN badge represents the app's identity, not a
+   rotating value indicator — so a configured --cc-iconbg-color must win here, with --cc-rb-c
+   only as the fallback for rows that have no icon colour configured at all. Gated on
+   .cc-rainbow so NORMAL (non-rainbow) mode is untouched either way. */
+.cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer > span.hand { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; }
+.cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card-ico { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; }
+/* reactive + rainbow: the tile rests grey (rules further down) and takes the ROW's palette colour
+   on hover — UNLESS an icon colour is configured, in which case the icon colour wins (see above). */
+html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card:hover .cc-card-ico { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .inner { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; line-height: 1.2; min-width: 0; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .inner br { display: none; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .inner > i[id^='load-'],
@@ -1216,10 +1220,12 @@ html.cc-plugins-iconbg .cc-plugico {
   width: var(--cc-logo-box, 78px) !important; height: var(--cc-logo-box, 78px) !important; flex: none !important;
   box-sizing: border-box !important; padding: calc((var(--cc-logo-box, 78px) - var(--cc-logo-img, 62px)) / 2) !important;
 }
-/* #13: RAINBOW/FLAG mode -> the plugin logo tile adopts the row's stamped --cc-rb-c (plugins.js stamps it
-   per row); .cc-plugins-rainbow is toggled on <html> alongside cc-plugins-iconbg. NORMAL mode keeps the
-   user's Logo-Hintergrund colour. Reactive+rainbow hover already lands on --cc-rb-c (rule ~line 1560). */
-html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; }
+/* #13/#T6: RAINBOW/FLAG mode -> the plugin logo tile used to adopt the row's stamped --cc-rb-c
+   (plugins.js stamps it per row) over the configured Logo-Hintergrund colour; .cc-plugins-rainbow
+   is toggled on <html> alongside cc-plugins-iconbg. Decided fix, same as Docker/VMs: the icon's
+   OWN colour wins, --cc-rb-c only fills in when no icon colour is configured. Reactive+rainbow
+   hover is fixed the same way at line ~2395. */
+html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; }
 /* Unraid emits the col-1 icon as ONE of three element types — <img class=list>,
    <i class="fa … list">, or <i class="icon-… list"> (its own glyph font) — none
    with an inline size, so they render at wildly different sizes. Force ALL of
@@ -2387,12 +2393,17 @@ html.cc-shares-rbneutral.cc-plugins-iconbg .cc-plugico { background: rgba(128, 1
 html.cc-shares-rbneutral.cc-plugins-iconbg #plugin_list tr:hover .cc-plugico { background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important; }
 /* N2 — reactive rainbow on the WHOLE plugin row (not just the logo): CC badges rest grey
    (plugins.js restBg) and take the row's stamped palette colour (--cc-rb-c) on hover, like the
-   Docker rows. Semantic status/update pills keep their own colour and are excluded. */
+   Docker rows. Semantic status/update pills keep their own colour and are excluded. This stays
+   rainbow-first — it is the GENERIC value-badge path, not the icon logo tile. */
 html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b:not(.cc-b-del),
 html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-plugsup {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
 }
-html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-plugico { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; }
+/* #T6: the logo tile is the ICON badge, not a generic value badge — this rule has the same
+   specificity as (and sits AFTER, so wins over) the line-2387 rest/hover pair, and it used to skip
+   --cc-iconbg-color entirely, so reactive+rainbow hover always showed the rotating rainbow colour
+   even with an icon colour configured. Fixed to match the non-reactive rule above: icon colour wins. */
+html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-plugico { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; }
 /* CC-SETTINGS tab strip (companion to the settings.js --cc-rb-c stamping): idle tabs already
    rest on their grey base rule and take the stamped palette colour on hover; the ACTIVE tab is
    excluded so its painted colour (inline, settings.js) can never lose to this !important. */
