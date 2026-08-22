@@ -190,10 +190,20 @@
   function plugIconInk(forTint) {
     var pick = eff("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
-    if (document.documentElement.classList.contains("cc-plugins-iconbg")) return ccHex6(idealText(valid ? pick : accent()));
+    if (eff("iconbg") === "1") return ccHex6(idealText(valid ? pick : accent()));
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
     return ccHex6(window.CCTheme.liftDark(pick, accent(), window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1)));
+  }
+  // A font glyph's colour and the luminance-tint filter are mutually exclusive (mirrors the
+  // docker.js/vms.js fix — see glyphInkAndFilter() there): once a glyph gets a direct css
+  // colour, the filter must never ALSO run on top of it. Extracted so the invariant is
+  // unit-testable without a full render pass.
+  function plugGlyphInkAndFilter(plan, ibgOn, ibgBg, pInk, want) {
+    if (plan.treat === "native") return { color: "", filter: "none" };
+    if (ibgOn) return { color: idealText(ibgBg), filter: "none" };
+    if (pInk) return { color: pInk, filter: "none" };
+    return { color: "", filter: want };
   }
   function ensureTint() {
     var hex = /^#?([0-9a-f]{6})$/i.exec(plugIconInk(true) || "");
@@ -410,7 +420,7 @@
     var f2 = ensureTint();
     // logo-background badge on: flatten every logo to one ink tone so it reads on
     // the accent box (mono filter overrides the iconcolor tint f2 when active)
-    var ibgOn = document.documentElement.classList.contains("cc-plugins-iconbg");
+    var ibgOn = eff("iconbg") === "1";
     var ibgIcon = eff("iconcolor"); var ibgBg = (ibgIcon && /^#?[0-9a-f]{6}$/i.test(ibgIcon)) ? ibgIcon : accent();
     var pInk = plugIconInk(false);
     var pFlat = ibgOn ? ensureMonoFilter("cc-plug-mono-svg", "cc-plug-mono-tint", ibgBg) : (pInk ? ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", pInk) : "");
@@ -444,10 +454,9 @@
         el2.style.setProperty("line-height", LOGO, "important");
         el2.style.setProperty("text-align", "center", "important");
         el2.style.setProperty("display", "inline-block", "important");
-        if (plan.treat === "native") el2.style.removeProperty("color");
-        else if (ibgOn) el2.style.setProperty("color", idealText(ibgBg), "important");
-        else if (pInk) el2.style.setProperty("color", pInk, "important");
-        el2.style.setProperty("filter", want, "important");
+        var pgif = plugGlyphInkAndFilter(plan, ibgOn, ibgBg, pInk, want);
+        if (pgif.color) el2.style.setProperty("color", pgif.color, "important"); else el2.style.removeProperty("color");
+        el2.style.setProperty("filter", pgif.filter, "important");
       }
     });
     // col 3: author as a badge

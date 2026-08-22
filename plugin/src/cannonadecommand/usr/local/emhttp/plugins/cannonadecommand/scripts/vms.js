@@ -71,7 +71,7 @@
   // icon colour lifted out of the dark end by the shared darkness guard. `forTint` doubles
   // the floor because a luminance tint outputs roughly half the target's luma.
   function vmIconInk(forTint) {
-    var pick = ls("cc.stylevms") !== "0" ? ls("cc.iconcolor") : ls("ccv.iconcolor");
+    var pick = effK("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (effK("iconbg") === "1") return ccHex6(ccIdeal(valid ? pick : ccAccent()));
     if (!valid) return "";
@@ -83,7 +83,7 @@
     var host = document.getElementById("cc-vm-tint-svg");
     if (dead || vmTintOff() || !m) { if (host) host.remove(); return false; }
     var tr = parseInt(m[1], 16) / 255, tg = parseInt(m[2], 16) / 255, tb = parseInt(m[3], 16) / 255;
-    var s = (Math.max(10, parseInt((ls("cc.stylevms") !== "0" ? ls("cc.iconstrength") : ls("ccv.iconstrength")) || "100", 10)) / 100).toFixed(3);
+    var s = (Math.max(10, parseInt(effK("iconstrength") || "100", 10)) / 100).toFixed(3);
     // shading-preserving: channel = luminance × target colour (matches docker.js)
     var lum = function (c) { return (0.2126 * c).toFixed(4) + " " + (0.7152 * c).toFixed(4) + " " + (0.0722 * c).toFixed(4); };
     if (!host) { host = document.createElement("div"); host.id = "cc-vm-tint-svg"; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
@@ -121,6 +121,14 @@
   }
   // The VM behind one icon element, for the icon pipeline's lookup + per-VM pin.
   function vmIconName(n) { var tr = n && n.closest ? n.closest("tr") : null; return (tr && vmNameOf(tr)) || ""; }
+  // A font glyph's colour and the luminance-tint filter are mutually exclusive (mirrors the
+  // docker.js fix — see glyphInkAndFilter() there): once a glyph gets a direct css colour, the
+  // filter must never ALSO run on top of it, or a forced "tint" mode double-tints/dims the same
+  // hue. Extracted so the invariant is unit-testable without a full render pass.
+  function glyphInkAndFilter(plan, ibgOn, ibgAcc, ink) {
+    if (plan.treat === "native") return { color: "", filter: "" };
+    return { color: ibgOn ? ccIdeal(ibgAcc) : ink, filter: "" };
+  }
   // Source swap + native-source memory, identical contract to docker.js setIconSrc.
   function vmSetIconSrc(img, url) {
     if (!img.getAttribute("data-cc-osrc")) img.setAttribute("data-cc-osrc", img.getAttribute("src") || "");
@@ -242,6 +250,10 @@
       for (var m = 0; m < marked.length; m++) marked[m].removeAttribute("data-cc-card");
     } catch (e) {}
   }
+  // ONE size map, byte-identical to docker.js's ccLogoSizes()/plugins.js's logoSize() map — see
+  // the fix-plan note on cc.sgsize drift: three independent copies of this literal map is exactly
+  // how the docker.js list-mode 62px hardcode regression happened in the first place.
+  function vmLogoSizes() { return ({ s: ["48px", "62px"], m: ["62px", "78px"], l: ["76px", "94px"] })[ls("cc.sgsize") || "m"] || ["62px", "78px"]; }
   function enhanceRows() {
     try {
       var a = ccAccent(), rad = ccShape(), root = document.documentElement.style;
@@ -249,7 +261,7 @@
       // T5: stamp the logo tile size from the ONE global cc.sgsize key (verbatim from docker.js) so the VM
       // logo + tile track the SAME size as Docker/Plugin (they stamp it too) — was fixed at the CSS default,
       // so at any non-default sgsize the VM tiles were a different size than the other tabs.
-      var lg = ({ s: ["48px", "62px"], m: ["62px", "78px"], l: ["76px", "94px"] })[ls("cc.sgsize") || "m"] || ["62px", "78px"];
+      var lg = vmLogoSizes();
       root.setProperty("--cc-logo-img", lg[0]); root.setProperty("--cc-logo-box", lg[1]);
       // VM state -> a Docker-IDENTICAL cc-badge (class-driven, colours from VmTab.css). Read the native
       // status from the sibling <i.fa> class (started/paused/stopped + green-/orange-/red-text), NOT the
@@ -1014,7 +1026,11 @@
         // font-glyph: `color` is the reliable exact tint. Set it with PRIORITY — Unraid's VM CSS colours
         // these glyphs via a class rule, which a plain inline colour can lose to; `!important` wins. With
         // the badge on, the ink is the accent's ideal text colour (b/w contrast).
-        else { n.style.setProperty("color", plan.treat === "native" ? "" : (ibgOn ? ccIdeal(ibgAcc) : (vmInk || c || "")), "important"); n.style.filter = want; }
+        else {
+          var gif = glyphInkAndFilter(plan, ibgOn, ibgAcc, vmInk || c || "");
+          if (gif.color) n.style.setProperty("color", gif.color, "important"); else n.style.removeProperty("color");
+          n.style.filter = gif.filter;
+        }
       }
       if (CI && vmNames.length) CI.want(vmNames);
     } catch (e) {}

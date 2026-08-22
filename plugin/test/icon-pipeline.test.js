@@ -90,9 +90,9 @@ function grabFn(name) {
   throw new Error('unbalanced function: ' + name);
 }
 const dockerApi = new Function('document', 'localStorage', 'window',
-  'function effc(){ return "#2f6feb"; }\n' +
-  grabFn('idealText') + '\n' + grabFn('ccHex6') + '\n' + grabFn('iconInk') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' +
-  'return { iconInk: iconInk, ensureFlatFilter: ensureFlatFilter, ensureMonoFilter: ensureMonoFilter, idealText: idealText };'
+  grabFn('effc') + '\n' +
+  grabFn('idealText') + '\n' + grabFn('ccHex6') + '\n' + grabFn('iconInk') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('ccLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
+  'return { iconInk: iconInk, ensureFlatFilter: ensureFlatFilter, ensureMonoFilter: ensureMonoFilter, ensureTintFilter: ensureTintFilter, ccLogoSizes: ccLogoSizes, glyphInkAndFilter: glyphInkAndFilter, idealText: idealText, effc: effc };'
 )(document, global.localStorage, global.window);
 
 /* ── tests ───────────────────────────────────────────────────────────────── */
@@ -247,6 +247,48 @@ console.log('\ndocker.js iconInk(): the ONE target colour both treatments paint 
   ok('on a LIGHT badge box the ink flips to dark', dockerApi.iconInk(false) === '#161616', dockerApi.iconInk(false));
   ok('and the tint on a box aims at the same contrasting ink, never at the box colour itself', dockerApi.iconInk(true) === dockerApi.iconInk(false));
   reset();
+}
+
+console.log('\ndocker.js honours its OWN adopt toggle (cc.styledocker) for iconcolor/iconbg/iconstrength');
+{
+  // The confirmed bypass bug: docker.js used to read cc.iconcolor/cc.iconbg/cc.iconstrength
+  // directly, completely ignoring effc()/cc.styledocker — so turning Docker's OWN "Adopt the
+  // global icon style" toggle off had ZERO visible effect on the real page, even though
+  // settings.js's Docker "Stil" card wrote perfectly good ccd.* values that nothing ever read.
+  reset();
+  localStorage.setItem('cc.iconcolor', '#e5a00d'); localStorage.setItem('cc.iconbg', '0'); localStorage.setItem('cc.iconstrength', '100');
+  localStorage.setItem('ccd.iconcolor', '#00aa00'); localStorage.setItem('ccd.iconbg', '1'); localStorage.setItem('ccd.iconstrength', '40');
+
+  ok('adopt ON (cc.styledocker unset): iconInk() follows the GLOBAL colour', dockerApi.iconInk(false) === '#e5a00d', dockerApi.iconInk(false));
+  dockerApi.ensureTintFilter();
+  var sigAdoptOn = document.getElementById('cc-tint-svg').dataset.sig;
+
+  localStorage.setItem('cc.styledocker', '0');
+  ok('adopt OFF: iconInk() now follows DOCKER-LOCAL ccd.iconbg (badge-mode ink), not the global colour', dockerApi.iconInk(false) !== '#e5a00d', dockerApi.iconInk(false));
+  dockerApi.ensureTintFilter();
+  var sigAdoptOff = document.getElementById('cc-tint-svg').dataset.sig;
+  ok('and the tint STRENGTH differs between the two toggle states too (ccd.iconstrength=40 vs cc.iconstrength=100)', sigAdoptOff !== sigAdoptOn, sigAdoptOn + ' vs ' + sigAdoptOff);
+  reset();
+}
+
+console.log('\nccLogoSizes(): the ONE cc.sgsize -> [--cc-logo-img, --cc-logo-box] map');
+{
+  reset();
+  localStorage.setItem('cc.sgsize', 's'); ok('s -> [48px, 62px]', JSON.stringify(dockerApi.ccLogoSizes()) === JSON.stringify(['48px', '62px']), JSON.stringify(dockerApi.ccLogoSizes()));
+  localStorage.setItem('cc.sgsize', 'm'); ok('m -> [62px, 78px]', JSON.stringify(dockerApi.ccLogoSizes()) === JSON.stringify(['62px', '78px']), JSON.stringify(dockerApi.ccLogoSizes()));
+  localStorage.setItem('cc.sgsize', 'l'); ok('l -> [76px, 94px]', JSON.stringify(dockerApi.ccLogoSizes()) === JSON.stringify(['76px', '94px']), JSON.stringify(dockerApi.ccLogoSizes()));
+  localStorage.removeItem('cc.sgsize'); ok('unset defaults to m -> [62px, 78px]', JSON.stringify(dockerApi.ccLogoSizes()) === JSON.stringify(['62px', '78px']));
+  localStorage.setItem('cc.sgsize', 'nonsense'); ok('a garbage value falls back to [62px, 78px]', JSON.stringify(dockerApi.ccLogoSizes()) === JSON.stringify(['62px', '78px']));
+  reset();
+}
+
+console.log('\nA glyph never ends up with BOTH a direct colour AND the luminance-tint filter (double-tint regression pin)');
+{
+  var w = 'url(#cc-icon-tint)';
+  ok('native treat: hands off entirely, no colour AND no filter', (function () { var r = dockerApi.glyphInkAndFilter({ treat: 'native' }, false, '#2f6feb', '#e5a00d', w); return !r.color && !r.filter; })());
+  ok('Logo-Hintergrund on: colour is set, filter is cleared even when forced "tint"', (function () { var r = dockerApi.glyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', '#e5a00d', w); return !!r.color && !r.filter; })());
+  ok('an ink colour is available: colour is set, filter is cleared even when forced "tint"', (function () { var r = dockerApi.glyphInkAndFilter({ treat: 'tint' }, false, '#2f6feb', '#e5a00d', w); return !!r.color && !r.filter; })());
+  ok('no ink at all: filter is the only thing that can carry the treatment, colour stays empty', (function () { var r = dockerApi.glyphInkAndFilter({ treat: 'tint' }, false, '#2f6feb', '', w); return !r.color && r.filter === w; })());
 }
 
 console.log('\nThe flat filter flattens to ONE colour and keeps alpha');

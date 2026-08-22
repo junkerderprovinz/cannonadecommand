@@ -48,6 +48,12 @@
   // change for existing installs), else use the Docker tab's OWN ccd.accent. Rainbow stays global
   // (cc.rainbow), and the icon-tint / density stay Docker-owned (cc.iconcolor / cc.density) as before.
   function effc(k) { return localStorage.getItem("cc.styledocker") !== "0" ? localStorage.getItem("cc." + k) : localStorage.getItem("ccd." + k); }
+  // ONE size map for the whole file (vms.js/plugins.js keep their own copy of this exact
+  // map — see the fix-plan note on cc.sgsize drift): cc.sgsize -> [--cc-logo-img, --cc-logo-box].
+  // Used by BOTH applySettings() (custom-property plumbing) and applyIconTint()'s list-mode
+  // inline writes, so the two can never silently disagree again (the old bug: applyIconTint
+  // hardcoded "62px" here instead of reading this same map).
+  function ccLogoSizes() { return ({ s: ["48px", "62px"], m: ["62px", "78px"], l: ["76px", "94px"] })[localStorage.getItem("cc.sgsize") || "m"] || ["62px", "78px"]; }
   // MASTER THEMING SWITCH. cc.theming defaults to "1" (ON) so existing installs are
   // unchanged; "0" strips the VISUAL layer only (native-cell restyle, decorative row
   // badges, icon tint, rainbow, grid/card view, theming menu rows) while EVERY
@@ -589,9 +595,9 @@
   // half the target's luma on mid-bright artwork, so the badge floor alone is not enough
   // (live-measured: a #2a2a2a target renders "schwer erkennbar" against the card).
   function iconInk(forTint) {
-    var pick = localStorage.getItem("cc.iconcolor");
+    var pick = effc("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
-    if (localStorage.getItem("cc.iconbg") === "1") return ccHex6(idealText(valid ? pick : (effc("accent") || "#2f6feb")));
+    if (effc("iconbg") === "1") return ccHex6(idealText(valid ? pick : (effc("accent") || "#2f6feb")));
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
     var floor = window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1);
@@ -602,7 +608,7 @@
     var host = document.getElementById("cc-tint-svg");
     if (!m) { if (host) host.remove(); return false; }
     var tr = parseInt(m[1], 16) / 255, tg = parseInt(m[2], 16) / 255, tb = parseInt(m[3], 16) / 255;
-    var s = (Math.max(10, parseInt(localStorage.getItem("cc.iconstrength") || "100", 10)) / 100).toFixed(3);
+    var s = (Math.max(10, parseInt(effc("iconstrength") || "100", 10)) / 100).toFixed(3);
     if (!host) { host = document.createElement("div"); host.id = "cc-tint-svg"; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
     // SHADING-PRESERVING tint: each output channel = the pixel's LUMINANCE × the target
     // colour, so shadows stay dark and highlights stay bright in the chosen hue (the old
@@ -678,6 +684,17 @@
     if (img.getAttribute("src") !== want) img.setAttribute("src", want);
   }
   function nativeIconSrc(img) { return img.getAttribute("data-cc-osrc") || img.getAttribute("src") || ""; }
+  // A font glyph's colour and the luminance-tint filter are MUTUALLY EXCLUSIVE: once a glyph
+  // gets a direct css colour (native/iconbg/flat ink), the tint filter must never ALSO run on
+  // top of it, or a forced "tint" mode double-processes/dims the same hue (glyphs always plan
+  // as isGlyphEl, and iconPlan() returns treat:"tint" unconditionally in that mode). Extracted
+  // to its own function so the invariant is unit-testable without a full render pass.
+  function glyphInkAndFilter(plan, ibgOn, ibgAcc, ink, want) {
+    if (plan.treat === "native") return { color: "", filter: "" };
+    if (ibgOn) return { color: idealText(ibgAcc), filter: "" };
+    if (ink) return { color: ink, filter: "" };
+    return { color: "", filter: want };
+  }
   // Resolve ONE item to {filter, srcUrl}. `scope` namespaces the per-item pins so a
   // container and a VM of the same name keep separate settings.
   //  · a font glyph (<i>) is a glyph already: it inks, and it has no src to swap.
@@ -717,9 +734,9 @@
       // Logo-Hintergrund (cc.iconbg): the icon sits on an accent-coloured badge box, so
       // flatten it to mono ink (dark/white per the accent). IMGs get the filter; glyphs
       // (font-icon <i>) also take an !important text colour so the glyph itself inks.
-      var ibgIcon = localStorage.getItem("cc.iconcolor");
+      var ibgIcon = effc("iconcolor");
       var ibgAcc = (ibgIcon && /^#?[0-9a-f]{6}$/i.test(ibgIcon)) ? ibgIcon : (effc("accent") || "#2f6feb");
-      var ibgOn = localStorage.getItem("cc.iconbg") === "1";
+      var ibgOn = effc("iconbg") === "1";
       if (ibgOn) document.documentElement.style.setProperty("--cc-iconbg-color", ibgAcc); else document.documentElement.style.removeProperty("--cc-iconbg-color");
       // ONE flat filter for the whole page (the ink colour is global), built from the same
       // iconInk() the tint uses — so flatten and tint always agree on the colour.
@@ -730,6 +747,10 @@
       // through the resolved-callback wired in init().
       var CI = window.CCTheme && window.CCTheme.icons;
       if (CI) CI.want(named.map(function (x) { return x.name; }));
+      // Same size contract as applySettings()'s --cc-logo-img/--cc-logo-box: read cc.sgsize
+      // through the ONE shared map instead of a hardcoded literal (the old bug — this inline
+      // !important write shadowed docker.css's own --cc-logo-img-driven rules).
+      var lgImg = ccLogoSizes()[0];
       for (var i = 0; i < imgs.length; i++) {
         var n = imgs[i];
         var isGlyphEl = n.tagName !== "IMG";
@@ -738,16 +759,22 @@
         // "native" (or no ink colour at all) means: hands off the pixels.
         var want = plan.treat === "native" ? "" : (plan.treat === "flat" ? flat : f);
         if (n.tagName === "IMG") { n.style.filter = want; }
-        else { if (ibgOn) n.style.setProperty("color", idealText(ibgAcc), "important"); else if (ink && plan.treat !== "native") n.style.setProperty("color", ink, "important"); else n.style.removeProperty("color"); n.style.filter = want; }
+        else {
+          var gif = glyphInkAndFilter(plan, ibgOn, ibgAcc, ink, want);
+          if (gif.color) n.style.setProperty("color", gif.color, "important"); else n.style.removeProperty("color");
+          n.style.filter = gif.filter;
+        }
         // Size hardened INLINE (+30% per user call: 48 → 62px): Unraid's theme kept
-        // beating our stylesheet on the real page and the icons "shrank back".
-        n.style.setProperty("width", "62px", "important");
-        n.style.setProperty("height", "62px", "important");
+        // beating our stylesheet on the real page and the icons "shrank back". Driven by
+        // cc.sgsize via ccLogoSizes() (see above) — not a literal — so list-mode tracks
+        // Kachelgröße exactly like grid-mode, vms.js and plugins.js already do.
+        n.style.setProperty("width", lgImg, "important");
+        n.style.setProperty("height", lgImg, "important");
         n.style.setProperty("vertical-align", "middle", "important");
         n.style.setProperty("margin", "0", "important");
         if (n.parentNode && n.parentNode.style) { n.parentNode.style.setProperty("display", "flex", "important"); n.parentNode.style.setProperty("align-items", "center", "important"); n.parentNode.style.setProperty("align-self", "center", "important"); n.parentNode.style.setProperty("margin", "0", "important"); }
         if (n.tagName === "IMG") n.style.setProperty("object-fit", "contain", "important");
-        else n.style.setProperty("font-size", "62px", "important");
+        else n.style.setProperty("font-size", lgImg, "important");
       }
       // Grid/card view runs the SAME pipeline as the rows — one decision, both layouts.
       if (gridHolder) {
@@ -820,7 +847,7 @@
       var dens = localStorage.getItem("cc.density"); root.setProperty("--cc-density", { compact: "5px", normal: "9px", airy: "14px" }[dens] || "9px");
       // ONE global tile-size key (cc.sgsize, same as the Settings grid) drives the
       // Docker/Plugins logo tile: [img, box] per step; box - img = 2x tile padding.
-      var lg = ({ s: ["48px", "62px"], m: ["62px", "78px"], l: ["76px", "94px"] })[localStorage.getItem("cc.sgsize") || "m"] || ["62px", "78px"];
+      var lg = ccLogoSizes();
       root.setProperty("--cc-logo-img", lg[0]); root.setProperty("--cc-logo-box", lg[1]);
       // Colour for ShipLog's "update all" button (which we restyle to match our badges,
       // in the toggle row). documentElement so it reaches .ToggleViewMode, which lives
@@ -839,8 +866,8 @@
       var tb = nativeTable(); if (!tb || tb.tagName !== "TABLE") return;
       tb.classList.add("cc-enh"); tb.classList.toggle("cc-adv", isAdvancedView());
       tb.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
-      tb.classList.toggle("cc-tint-icons", !!localStorage.getItem("cc.iconcolor"));
-      tb.classList.toggle("cc-docker-iconbg", localStorage.getItem("cc.iconbg") === "1");
+      tb.classList.toggle("cc-tint-icons", !!effc("iconcolor"));
+      tb.classList.toggle("cc-docker-iconbg", effc("iconbg") === "1");
       // row density as a CLASS too (not only the --cc-density padding var): the row height
       // is mostly the badge content, so compact/airy also tighten/loosen the badge spacing.
       var dens = localStorage.getItem("cc.density") || "normal";
@@ -1761,10 +1788,10 @@
     ensureGridHolder(); gridHolder.innerHTML = "";
     relocateTopBar(); // collapse the ToggleViewMode row in card view too
     gridHolder.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
-    gridHolder.classList.toggle("cc-tint-icons", !!localStorage.getItem("cc.iconcolor"));
+    gridHolder.classList.toggle("cc-tint-icons", !!effc("iconcolor"));
     // grid twin of the table's iconbg gate (applyEnhanceClasses) — the reactive
     // logo-tile rest/hover rules key on it, so card view matches the list
-    gridHolder.classList.toggle("cc-docker-iconbg", localStorage.getItem("cc.iconbg") === "1");
+    gridHolder.classList.toggle("cc-docker-iconbg", effc("iconbg") === "1");
     // The grid needs its OWN gear: the list-toolbar gear lives in/near the native table
     // area, which is not a reliable anchor in card view ("which gear menu?"). This one is
     // pinned to the grid holder's top-right corner. A rebuild detaches the old gear — if
@@ -1787,8 +1814,8 @@
     ensureGridHolder(); gridHolder.innerHTML = "";
     relocateTopBar();
     gridHolder.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
-    gridHolder.classList.toggle("cc-tint-icons", !!localStorage.getItem("cc.iconcolor"));
-    gridHolder.classList.toggle("cc-docker-iconbg", localStorage.getItem("cc.iconbg") === "1");
+    gridHolder.classList.toggle("cc-tint-icons", !!effc("iconcolor"));
+    gridHolder.classList.toggle("cc-docker-iconbg", effc("iconbg") === "1");
     if (!ccOrgView) { removeGridHolder(); return; } // setMode() already guards this, but stay defensive
     var byParent = {};
     ccOrgView.flatEntries.forEach(function (e) { (byParent[e.parentId] = byParent[e.parentId] || []).push(e); });

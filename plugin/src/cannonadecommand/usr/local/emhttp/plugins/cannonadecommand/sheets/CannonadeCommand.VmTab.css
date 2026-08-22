@@ -130,11 +130,15 @@ html.cc-vms-on #kvm_list td.vm-name .outer > span.hand { flex: none; display: fl
 /* Ground truth (VMMachines.php): span[id^="vm-"] IS span.hand (same element), and the icon is USUALLY an
    inline <i class="fa fa-… img"> glyph, not an <img>. So the earlier display:contents on span[id^="vm-"]
    collapsed the very box the accent square is drawn on (why it did nothing). Fix: the img is a block 62px;
-   the glyph <i> is an explicitly CENTERED flex box (font 44px fits inside the 62px square). */
+   the glyph <i> is an explicitly CENTERED flex box, its font-size tied 1:1 to --cc-logo-img — same
+   contract as docker.css's own i.img rule and plugins.js's logoSize() (both also unscaled). A bare
+   pixel literal here (the old "44px fits inside the 62px square" ratio) froze the GLYPH ITSELF at a
+   fixed size while only its invisible bounding box tracked Kachelgröße — since most VM rows render as
+   a glyph, not an <img>, that made "automatic"/size changes look broken specifically on this tab. */
 html.cc-vms-on #kvm_list td.vm-name .outer > span.hand img { display: block !important; width: var(--cc-logo-img, 62px) !important; height: var(--cc-logo-img, 62px) !important; object-fit: contain !important; margin: 0 !important; }
 html.cc-vms-on #kvm_list td.vm-name .outer > span.hand i.img {
   display: flex !important; align-items: center !important; justify-content: center !important;
-  width: var(--cc-logo-img, 62px) !important; height: var(--cc-logo-img, 62px) !important; font-size: 44px !important; line-height: 1 !important; text-align: center !important; margin: 0 !important;
+  width: var(--cc-logo-img, 62px) !important; height: var(--cc-logo-img, 62px) !important; font-size: var(--cc-logo-img, 62px) !important; line-height: 1 !important; text-align: center !important; margin: 0 !important;
 }
 /* iconbg accent box pinned to a FIXED 78x78 square (62 icon + 2*8 pad, border-box) so it is ALWAYS a
    perfect centred square regardless of whether the child is an <img> or a glyph <i> — instead of shrink-
