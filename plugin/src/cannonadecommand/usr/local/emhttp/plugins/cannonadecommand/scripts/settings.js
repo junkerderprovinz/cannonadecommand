@@ -188,6 +188,21 @@
         try { if (/^cc[a-z]*\./.test(String(k)) && k !== "cc.stateCache") { uiPending[k] = 1; clearTimeout(uiSyncT); uiSyncT = setTimeout(pushUISettings, 800); } } catch (e) {}
       };
     } catch (e) {}
+    // removeItem was never intercepted (only setItem was) — a key cleared via del()/
+    // localStorage.removeItem() (this file's own del(), the cc.rbpal migration cleanup below,
+    // the kill.forEach cleanup further down) never got queued into uiPending, so the deletion
+    // never reached the engine's ui_settings mirror and adoptUISettings() resurrected the old
+    // value on the next load. pushUISettings() already treats a null local read as "delete the
+    // server key" — this was the missing half that queues the key at all. Mirrors the same
+    // patch in docker.js/cc-theme.js (each page runs exactly one of the three, never doubled).
+    try {
+      var origRm = localStorage.removeItem.bind(localStorage);
+      window.__ccLSRemove = origRm;
+      localStorage.removeItem = function (k) {
+        origRm(k);
+        try { if (/^cc[a-z]*\./.test(String(k)) && k !== "cc.stateCache") { uiPending[k] = 1; clearTimeout(uiSyncT); uiSyncT = setTimeout(pushUISettings, 800); } } catch (e) {}
+      };
+    } catch (e) {}
   })();
   function collectUISettings() { var o = {}; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && /^cc[a-z]*\./.test(k) && k !== "cc.stateCache") o[k] = localStorage.getItem(k); } return o; }
   // merge ONLY the changed keys into the server map (never replace it wholesale)

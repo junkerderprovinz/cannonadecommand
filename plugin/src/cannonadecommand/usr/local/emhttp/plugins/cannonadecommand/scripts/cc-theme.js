@@ -651,6 +651,22 @@
         };
       }
     } catch (e) {}
+    // Same gap as docker.js/settings.js: only setItem was ever intercepted, so a key cleared
+    // via removeItem() on any page OTHER than /Docker or /Settings/CannonadeCommand (this file
+    // is the one that covers every one of those) never got queued for the server-side delete,
+    // and the stale value came right back on the next adopt(). push() above already deletes
+    // the server key when the local read comes back null — only the missing queue-on-removal
+    // needed adding.
+    try {
+      if (!window.__ccLSRemove) {
+        var origRm = localStorage.removeItem.bind(localStorage);
+        window.__ccLSRemove = origRm;
+        localStorage.removeItem = function (k) {
+          origRm(k);
+          try { if (/^cc[a-z]*\./.test(String(k)) && k !== "cc.stateCache") { pending[k] = 1; clearTimeout(syncT); syncT = setTimeout(push, 800); } } catch (e) {}
+        };
+      }
+    } catch (e) {}
     function push() {
       var keys = Object.keys(pending); if (!keys.length) return;
       apiGet("config").then(function (c) {

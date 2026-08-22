@@ -286,6 +286,21 @@
         try { if (/^cc[a-z]*\./.test(String(k)) && k !== "cc.stateCache") { uiPending[k] = 1; clearTimeout(uiSyncT); uiSyncT = setTimeout(pushUISettings, 800); } } catch (e) {}
       };
     } catch (e) {}
+    // #bug: removeItem was NEVER intercepted, only setItem — a toggle turned OFF via
+    // localStorage.removeItem()/del() (settings.js, shares.js drag-reorder cleanup, ...)
+    // never reached uiPending, so pushUISettings() never learned the key was gone and the
+    // stale value stayed in the engine's ui_settings mirror forever, silently resurrected by
+    // adoptUISettings() on the next reload/origin switch. pushUISettings() already deletes a
+    // server key when the LOCAL value is null (`if (v === null) delete u[k]`) — the missing
+    // piece was purely getting a removed key queued into uiPending in the first place.
+    try {
+      var origRm = localStorage.removeItem.bind(localStorage);
+      window.__ccLSRemove = origRm;
+      localStorage.removeItem = function (k) {
+        origRm(k);
+        try { if (/^cc[a-z]*\./.test(String(k)) && k !== "cc.stateCache") { uiPending[k] = 1; clearTimeout(uiSyncT); uiSyncT = setTimeout(pushUISettings, 800); } } catch (e) {}
+      };
+    } catch (e) {}
   })();
   function collectUISettings() { var o = {}; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && /^cc[a-z]*\./.test(k) && k !== "cc.stateCache") o[k] = localStorage.getItem(k); } return o; }
   // merge ONLY the changed keys into the server map (never replace it wholesale)
