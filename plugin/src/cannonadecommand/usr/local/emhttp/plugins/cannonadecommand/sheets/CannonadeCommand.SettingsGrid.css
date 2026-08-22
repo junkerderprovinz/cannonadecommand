@@ -107,16 +107,21 @@ html.cc-settingsgrid-on #displaybox .Panel > a { color: var(--cc-text-chip, #cfc
    appended last, so it wins once paintGrid clears the inline background. Covers /Settings AND /Tools.
    ALSO gated on .cc-settingsgrid-on (the badge-mode class): paintGrid only toggles -rbneutral in the
    badge branch and never clears it when badge/theming/area turns off, so pairing with -on stops the
-   neutral rules the instant -on is removed (else grey badges leak onto native tiles until a reload). */
+   neutral rules the instant -on is removed (else grey badges leak onto native tiles until a reload).
+   #T6-follow-up: the hover var() chain used to try --cc-rb-c BEFORE --cc-iconbg-color, so a
+   configured Logo-Hintergrund colour lost to the rotating rainbow colour on hover — the same bug
+   v4.32.4 fixed for Docker/VMs/Plugins, missed here. Icon colour now resolves first, rainbow only
+   fills in when no icon colour is configured; the paired glyph-ink rule below is swapped the same
+   way so the badge's background and its glyph colour always agree. */
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a > span { background: rgba(128, 128, 128, .18) !important; }
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a > span > i.PanelIcon,
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a > span { color: var(--cc-text-chip, #cfcfcf) !important; }   /* span = tailscale-mask ink twin */
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a:hover > span {
-  background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; filter: none !important;
+  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; filter: none !important;
 }
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a:hover > span > i.PanelIcon,
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a:hover > span {   /* span = tailscale-mask ink twin */
-  color: var(--cc-rb-ct, var(--cc-iconbg-text, var(--cc-accent-text, #fff))) !important;
+  color: var(--cc-iconbg-text, var(--cc-rb-ct, var(--cc-accent-text, #fff))) !important;
 }
 
 /* GLOBAL reactive signal (cc.rbmode=active → shares.js stamps html.cc-shares-rbneutral on EVERY
@@ -124,16 +129,18 @@ html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a:hover >
    above, keyed on the global class so the /Settings + /Tools tile badges react even when only
    the global signal is present. Both blocks agree visually when both classes are set. Gated on
    .cc-settingsgrid-on exactly like above — absent ⇒ zero effect anywhere. Category-group
-   HEADINGS stay exempt (house law: section heads ALWAYS keep their colour). */
+   HEADINGS stay exempt (house law: section heads ALWAYS keep their colour).
+   #T6-follow-up: same var()-order fix as the local block above — icon colour wins over the
+   rotating rainbow colour on hover, in both directions of the background/glyph-ink pair. */
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a > span { background: rgba(128, 128, 128, .18) !important; }
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a > span > i.PanelIcon,
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a > span { color: var(--cc-text-chip, #cfcfcf) !important; }   /* span = tailscale-mask ink twin */
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a:hover > span {
-  background: var(--cc-rb-c, var(--cc-iconbg-color, var(--cc-accent, #2f6feb))) !important; filter: none !important;
+  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; filter: none !important;
 }
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a:hover > span > i.PanelIcon,
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a:hover > span {   /* span = tailscale-mask ink twin */
-  color: var(--cc-rb-ct, var(--cc-iconbg-text, var(--cc-accent-text, #fff))) !important;
+  color: var(--cc-iconbg-text, var(--cc-rb-ct, var(--cc-accent-text, #fff))) !important;
 }
 
 /* ═══ category-group HEADINGS (/Settings + /Tools) -> filled accent badges ═══

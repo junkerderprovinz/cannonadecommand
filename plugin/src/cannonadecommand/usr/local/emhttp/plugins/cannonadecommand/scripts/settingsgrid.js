@@ -93,9 +93,19 @@
         var c = rbColor(i), tc = idealText(c);
         s.style.setProperty("--cc-rb-c", c); s.style.setProperty("--cc-rb-ct", tc); // per-tile colour for the neutral-mode :hover
         if (!neutral) {
-          s.style.setProperty("background", c, "important");
-          if (gl) gl.style.setProperty("color", tc, "important");
-          if (im) im.style.setProperty("filter", ensureMonoFilter(tc), "important"); // raster logo -> badge ink tone
+          // #T6: a configured Logo-Hintergrund colour (ccs.iconcolor) must win over the rotating
+          // rainbow colour here — the same fix v4.32.4 applied to Docker/VMs/Plugins via the CSS
+          // var() order, missed on this area because paintGrid() paints the background with a
+          // hard inline write instead of a var() chain. accBg (== badgeBg(), computed once above
+          // the loop) already resolves to the configured icon colour when one is valid, else the
+          // accent — so painting with it here instead of the raw rainbow colour c gives the icon
+          // colour priority, and the tile only takes the rainbow rotation when NO icon colour is
+          // configured at all.
+          var iconSet = /^#[0-9a-f]{6}$/i.test(g("ccs.iconcolor", ""));
+          var bg = iconSet ? accBg : c, btc = iconSet ? idealText(accBg) : tc;
+          s.style.setProperty("background", bg, "important");
+          if (gl) gl.style.setProperty("color", btc, "important");
+          if (im) im.style.setProperty("filter", ensureMonoFilter(btc), "important"); // raster logo -> badge ink tone
         } else {
           s.style.removeProperty("background");          // CSS neutral-idle grey shows; hover recolours via --cc-rb-c
           if (gl) gl.style.removeProperty("color");
