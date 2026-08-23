@@ -451,11 +451,27 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 .cc-folder-group { grid-column: 1 / -1; background: var(--cc-bg2); border-radius: 10px; padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
 .cc-folder-group-head { background: var(--cc-bg3); border-radius: 7px; padding: 6px 8px 6px 12px; font-size: 14px; font-weight: 600; color: var(--cc-txt); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .cc-folder-group-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* v4.34.0: chevron + label share one flex item so head's own justify-content:space-between
+   (label vs. .cc-folder-group-actions) is unchanged — adding the chevron as a THIRD top-level
+   flex child would have pulled the label away from the left edge instead of just prefixing it. */
+.cc-folder-group-title { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
+.cc-folder-chev { flex: none; font-size: 10px; width: 10px; text-align: center; color: var(--cc-dim, #8a8a8a); }
 .cc-folder-group-actions { display: flex; align-items: center; gap: 2px; flex: none; }
-/* Task 6 write actions — only rendered for folders CC itself created (own-registry). */
+/* Task 6 write actions — only rendered for folders CC itself created (own-registry). Collapse,
+   hide-stopped and bulk start/stop (v4.34.0) are NOT registry-gated — they're per-folder VIEW
+   state / bulk container actions, not folder restructuring, so they apply to any folder. */
 .cc-folder-act { -webkit-appearance: none; appearance: none; background: transparent; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 4px 6px; border-radius: 6px; transition: background .12s, color .12s; }
 .cc-folder-act:hover { background: rgba(128, 128, 128, .18); color: var(--cc-txt); }
+/* "Gestoppte ausblenden" active state — shade only (house law: never a border line). */
+.cc-folder-act-on { background: rgba(128, 128, 128, .18); color: var(--cc-rb-c, var(--cc-accent, #2f6feb)); }
 .cc-folder-group-body { padding-top: 0; } /* nested body has no corner gear to clear, unlike the outer grid/folderview */
+/* Collapse/expand (v4.34.0, adopted from Docker Folders, persisted via cc.folderCollapsed) —
+   collapsed folders show just the header + child count, exactly per spec. */
+.cc-folder-collapsed .cc-folder-group-body { display: none; }
+/* "Kompakt" folder-content density (v4.34.0) — a single column of full-width rows instead of
+   the auto-fill card grid, for BOTH the unfoldered/root section and every folder body. */
+.cc-folderview-mini { display: flex; flex-direction: column; gap: 8px; }
+.cc-folder-group-body-mini { display: flex; flex-direction: column; gap: 4px; }
 /* Drag-and-drop reordering (Folder view). Shade only, never a border line (house law) —
    an accent-tinted background marks both the dragged source (faded) and the hovered target. */
 .cc-dragging { opacity: .4; }
@@ -491,6 +507,15 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 .cc-abtn { background: var(--cc-bg3); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; transition: background .12s; }
 .cc-abtn:hover { background: #333; }
 .cc-abtn-primary { color: #52c17a; border-color: rgba(63,174,106,.4); }
+/* "Kompakt" folder row (v4.34.0): icon + name + state + ONE action, nothing else. Deliberately
+   keeps the .cc-card base class (see minimalRow() in docker.js) so rainbow stamping, iconbg and
+   every rbneutral reactive-hover rule that targets .cc-card/.cc-card-ico apply here unchanged —
+   only the layout (row instead of column) and the icon size are overridden below. */
+.cc-card.cc-mrow { flex-direction: row; align-items: center; padding: 8px 12px; gap: 10px; }
+.cc-mrow .cc-card-ico { width: 26px; height: 26px; }
+.cc-mrow-name { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-mrow .cc-badge { flex: none; }
+.cc-mrow-act { flex: none; display: flex; }
 
 .cc-filter { background: var(--cc-bg2); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: 6px; padding: 5px 10px; font-size: 12px; }
 /* CC style, NO borders anywhere (user: "keine rahmen oder linien"): buttons are FILLED —

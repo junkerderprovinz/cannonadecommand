@@ -122,7 +122,12 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
 - Header status island: at-a-glance array fill, CPU, RAM, temperatures, running
   containers and a live network throughput chip (down/up, click to switch between
   bits and bytes); each chip is toggleable and re-arrangeable.
-- List view and a card (grid) view with the same controls.
+- List view, a card (grid) view, and a Folder view (grouped by Unraid's own
+  organizer) with the same controls. Folder view has its own content density —
+  full detail cards, or a compact row (icon, name, state, one action) — plus
+  per-folder collapse/expand, a per-folder "hide stopped" toggle, per-folder
+  bulk start/stop, and live search that auto-expands any folder containing a
+  match.
 - Theming: one accent colour for everything, or rainbow mode with an editable
   palette; icon colours toggleable; settings sync across origins (IP, hostname,
   domain) via the engine — and they survive cleared browser data.
@@ -188,7 +193,8 @@ restarted automatically.
   schedules — one save button stores it all.
 - The **bandwidth gear** opens the up/down limit editor. After saving, the popup
   stays open and verifies the applied rule live inside the container.
-- The gear in the table header opens the global menu: list/grid view,
+- The gear in the table header opens the global menu: list/grid/folder view
+  (Folder view adds its own detailed/compact content-density toggle),
   basic/advanced view, rainbow and icon-colour toggles, filter, badge selection,
   and the running UI + engine versions.
 

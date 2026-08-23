@@ -134,8 +134,8 @@
   // so it carries the full name, in the de half and the en half alike. Standing rule, see CLAUDE.md; it
   // applies to every new string added below, and if the product is renamed these strings move with it.
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge — Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container — kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle UND kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“ — dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner…", newFolderPrompt: "Name des neuen Ordners:", renameFolder: "Ordner umbenennen", renameFolderPrompt: "Neuer Name:", deleteFolder: "Ordner löschen", deleteFolderConfirm: "Diesen Ordner löschen? Enthaltene Container werden eine Ebene höher verschoben, nicht gelöscht.", moveToFolder: "In Ordner verschieben…", rootLevel: "— Wurzelebene —", iconMode: "Icon-Färbung", iconInherit: "folgt globaler Einstellung", iconAuto: "Automatisch", iconNative: "Natives Icon", iconFlat: "Ink-Flatten", iconTint: "Luminanz-Tint" },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order — duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container — no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold AND barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no” — this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder…", newFolderPrompt: "Name of the new folder:", renameFolder: "Rename folder", renameFolderPrompt: "New name:", deleteFolder: "Delete folder", deleteFolderConfirm: "Delete this folder? Containers inside it move up one level, they are not deleted.", moveToFolder: "Move to folder…", rootLevel: "— Root level —", iconMode: "Icon colouring", iconInherit: "follows the global setting", iconAuto: "Automatic", iconNative: "Native icon", iconFlat: "Ink flatten", iconTint: "Luminance tint" },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Plan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge — Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen — restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container — kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle UND kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“ — dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner…", newFolderPrompt: "Name des neuen Ordners:", renameFolder: "Ordner umbenennen", renameFolderPrompt: "Neuer Name:", deleteFolder: "Ordner löschen", deleteFolderConfirm: "Diesen Ordner löschen? Enthaltene Container werden eine Ebene höher verschoben, nicht gelöscht.", moveToFolder: "In Ordner verschieben…", rootLevel: "— Wurzelebene —", iconMode: "Icon-Färbung", iconInherit: "folgt globaler Einstellung", iconAuto: "Automatisch", iconNative: "Natives Icon", iconFlat: "Ink-Flatten", iconTint: "Luminanz-Tint", folderContent: "Ordnerinhalt", detailed: "Detailliert", compact: "Kompakt", hideStopped: "Gestoppte ausblenden", bulkStartAll: "Alle starten", bulkStopAll: "Alle stoppen" },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save plan", startorder: "Start in order", filter: "filter…", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order — duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live — gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container — no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold AND barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no” — this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder…", newFolderPrompt: "Name of the new folder:", renameFolder: "Rename folder", renameFolderPrompt: "New name:", deleteFolder: "Delete folder", deleteFolderConfirm: "Delete this folder? Containers inside it move up one level, they are not deleted.", moveToFolder: "Move to folder…", rootLevel: "— Root level —", iconMode: "Icon colouring", iconInherit: "follows the global setting", iconAuto: "Automatic", iconNative: "Native icon", iconFlat: "Ink flatten", iconTint: "Luminance tint", folderContent: "Folder contents", detailed: "Detailed", compact: "Compact", hideStopped: "Hide stopped", bulkStartAll: "Start all", bulkStopAll: "Stop all" },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -335,7 +335,7 @@
         // — not just when adoptUISettings() happened to change something — so nothing painted
         // before this promise resolved can ever survive it uncorrected.
         var forceFirst = ccConfigFirstLoad; ccConfigFirstLoad = false;
-        if (adoptUISettings(c.ui_settings) || forceFirst) { applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderGrid(); }
+        if (adoptUISettings(c.ui_settings) || forceFirst) { applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderCurrentView(); }
         // first run against this engine: SEED the server mirror from this browser's
         // settings, so they survive origin switches and cleared browser data
         if (!uiSeeded && (!c.ui_settings || !Object.keys(c.ui_settings).length)) { uiSeeded = true; var seed9 = collectUISettings(); if (Object.keys(seed9).length) { Object.keys(seed9).forEach(function (k9) { uiPending[k9] = 1; }); pushUISettings(); } }
@@ -1844,13 +1844,18 @@
   function ccBulkSyncCheckboxes() {
     Array.prototype.slice.call(document.querySelectorAll(".cc-bulk-cb")).forEach(function (cb) { cb.checked = false; });
   }
-  function ccBulkRun(action) {
-    var names = Object.keys(ccBulkSel);
-    if (!names.length) return;
+  // Shared by the bottom bulk-select bar AND the per-folder "alle starten/stoppen" buttons
+  // (Folder view, adopted recommendation) — ONE start/stop-in-parallel-then-reload mechanism,
+  // not two independently maintained ones.
+  function runBulkAction(names, action, onDone) {
+    if (!names.length) return Promise.resolve();
     flash((action === "start" ? (LANG === "de" ? "Starte " : "Starting ") : (LANG === "de" ? "Stoppe " : "Stopping ")) + names.length + "…");
-    Promise.all(names.map(function (n) { return api("POST", "action", { name: n, action: action }).catch(function () {}); }))
+    return Promise.all(names.map(function (n) { return api("POST", "action", { name: n, action: action }).catch(function () {}); }))
       .then(function () { return load(); })
-      .then(function () { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); flash(t("done")); });
+      .then(function () { flash(t("done")); if (onDone) onDone(); });
+  }
+  function ccBulkRun(action) {
+    runBulkAction(Object.keys(ccBulkSel), action, function () { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); });
   }
   function ccBulkRemove() {
     var names = Object.keys(ccBulkSel);
@@ -1988,6 +1993,85 @@
     if (menu && menuAnchor && !menuAnchor.isConnected) { menuAnchor = hg; positionMenu(); }
     applyIconTint();
   }
+  // ───────────────────────── Folder view: "Kompakt" row density (v4.34.0)
+  // A genuinely NEW, minimal per-container tile — icon + name + running/stopped state + the
+  // single most essential action (start/stop/resume) — NOT card() reused in a list layout.
+  // User, verbatim: "das sollen quasi nur die icons und das nötigste pro container zu sehen
+  // sein". This is a second, independent axis WITHIN Folder view: folders are always grouped
+  // (unchanged); only their CONTENTS (and the unfoldered/root section, mirroring Docker
+  // Folders' own grid/list split) switch between this and the full card().
+  //   Deliberately rides card()'s own colour-mode plumbing instead of re-implementing it: the
+  //   wrapper keeps the "cc-card" class (so rainbow stamping via stampCardRainbow(), the
+  //   rbneutral reactive-hover rules, and every iconbg/shape-circle selector that targets
+  //   .cc-card / .cc-card-ico apply here for free) and the icon reuses .cc-card-ico outright,
+  //   only resized smaller by .cc-mrow's own rule. The action button reuses actBtn()/tintAct()
+  //   (the exact icon-button machinery actionBars() already uses), so it gets the same accent/
+  //   rainbow tinting as every other action icon in the app, with NO new bordered element (the
+  //   house law: shade only, never a border line).
+  var FOLDER_DENSITY_KEY = "cc.folderDensity"; // "full" (default) | "minimal"
+  function folderDensity() { return localStorage.getItem(FOLDER_DENSITY_KEY) === "minimal" ? "minimal" : "full"; }
+  function setFolderDensity(v) { localStorage.setItem(FOLDER_DENSITY_KEY, v === "minimal" ? "minimal" : "full"); if (mode === "folder") renderFolderView(); }
+  function minimalRow(c) {
+    var wrap = el("div", "cc-card cc-mrow"); wrap.dataset.name = c.name;
+    stampCardRainbow(wrap, c.name);
+    var ico = iconFor(c.name);
+    if (ico) { var im = el("img", "cc-card-ico"); im.src = ico; im.setAttribute("data-cc-name", c.name); im.onerror = function () { this.style.visibility = "hidden"; }; wrap.appendChild(im); }
+    else wrap.appendChild(el("div", "cc-card-ico cc-card-ico-ph"));
+    wrap.appendChild(el("div", "cc-mrow-name", c.name));
+    wrap.appendChild(stateBadge(c));
+    var running = c && c.state === "running", paused = c && c.state === "paused";
+    var actWrap = el("span", "cc-mrow-act");
+    actWrap.appendChild(paused ? actBtn("fa-play", t("resume"), function () { doAction(c.name, "unpause"); })
+      : (running ? actBtn("fa-stop", t("stop"), function () { doAction(c.name, "stop"); })
+        : actBtn("fa-play", t("start"), function () { doAction(c.name, "start"); })));
+    tintAct(actWrap); // same accent/rainbow tinting the full action bars use — no bespoke colour logic here
+    wrap.appendChild(actWrap);
+    if (filterText && norm(c.name).indexOf(filterText) < 0) wrap.style.display = "none";
+    return wrap;
+  }
+  // ───────────────────────── Folder view: per-folder collapse + hide-stopped state
+  // Persisted the SAME way every other cc.* preference already is (localStorage, mirrored
+  // cross-origin via the setItem/removeItem interceptor near the top of this file — any key
+  // matching /^cc[a-z]*\./ is swept into ui_settings automatically, no extra plumbing needed).
+  // Keyed by the organizer's folder id, so it survives renames (folder id, not name).
+  var FOLDER_COLLAPSED_KEY = "cc.folderCollapsed", FOLDER_HIDESTOPPED_KEY = "cc.folderHideStopped";
+  function readIdMap(key) { try { var o = JSON.parse(localStorage.getItem(key) || "{}"); return (o && typeof o === "object") ? o : {}; } catch (e) { return {}; } }
+  function writeIdMapFlag(key, id, on) { var m = readIdMap(key); if (on) m[id] = true; else delete m[id]; localStorage.setItem(key, JSON.stringify(m)); }
+  function isFolderCollapsed(id) { return !!readIdMap(FOLDER_COLLAPSED_KEY)[id]; }
+  function setFolderCollapsed(id, on) { writeIdMapFlag(FOLDER_COLLAPSED_KEY, id, on); }
+  function folderHidesStopped(id) { return !!readIdMap(FOLDER_HIDESTOPPED_KEY)[id]; }
+  function setFolderHideStopped(id, on) { writeIdMapFlag(FOLDER_HIDESTOPPED_KEY, id, on); }
+  // per-folder "Gestoppte ausblenden": a container is hidden when ITS OWN parent folder has the
+  // toggle on and it isn't running. A pure predicate (not a renderFolderView closure) so it's
+  // independently testable and can never silently diverge from what actually gets filtered.
+  function ccFolderHidesContainer(parentId, c) { return folderHidesStopped(parentId) && !!c && c.state !== "running"; }
+  // Live-search matching, as a pure function of an explicit byParent tree (not a renderFolderView
+  // closure over module state) — independently testable, and the exact same rule renderFolderView
+  // uses for both auto-expand and hide/show. A folder MATCHES when its own name matches, or any
+  // descendant (recursively, through nested folders) does; a container matches on its own name.
+  function ccEntryMatches(byParent, filterText, entry) {
+    if (!filterText) return true;
+    if (entry.type === "container") return norm(entry.name.replace(/^\//, "")).indexOf(filterText) >= 0;
+    if (norm(entry.name).indexOf(filterText) >= 0) return true;
+    var kids = byParent[entry.id] || [];
+    for (var i = 0; i < kids.length; i++) if (ccEntryMatches(byParent, filterText, kids[i])) return true;
+    return false;
+  }
+  // Auto-expand (adopted recommendation): persisted collapse state, overridden OPEN (never
+  // overridden shut) while a live search matches inside it — this IS the auto-expand behaviour,
+  // and it stops applying the instant the filter is cleared, without needing its own saved state.
+  function ccEffectiveCollapsed(byParent, filterText, entry) { return (filterText && ccEntryMatches(byParent, filterText, entry)) ? false : isFolderCollapsed(entry.id); }
+  // Bulk start/stop target list (adopted recommendation), as a pure function of an explicit
+  // byParent tree + an "does this container exist" lookup — independently testable, and every
+  // CONTAINER descendant recursively through nested folders (not just direct children).
+  function ccCollectFolderContainerNames(byParent, fid, existsFn) {
+    var out = [];
+    (byParent[fid] || []).forEach(function (k) {
+      if (k.type === "container") { var nm = k.name.replace(/^\//, ""); if (existsFn(nm)) out.push(nm); }
+      else out = out.concat(ccCollectFolderContainerNames(byParent, k.id, existsFn));
+    });
+    return out;
+  }
   // Structural only (spec decision 5 — no aggregated CPU/RAM per folder). flatEntries already
   // carries depth/parentId/position, so grouping is one bucket-by-parentId pass, no recursive
   // tree-parser needed. Reuses card() 1:1 — same look as Grid, just grouped under folder headers.
@@ -2002,8 +2086,19 @@
     ccOrgView.flatEntries.forEach(function (e) { (byParent[e.parentId] = byParent[e.parentId] || []).push(e); });
     Object.keys(byParent).forEach(function (pid) { byParent[pid].sort(function (a, b) { return a.position - b.position; }); });
 
+    // Live-search-with-auto-expand (bug #1 fix + adopted recommendation) — thin closures over the
+    // pure ccEntryMatches()/ccEffectiveCollapsed() so this render pass's byParent/filterText don't
+    // have to be threaded through every call site by hand.
+    function entryMatches(entry) { return ccEntryMatches(byParent, filterText, entry); }
+    function effectiveCollapsed(entry) { return ccEffectiveCollapsed(byParent, filterText, entry); }
+    // Bulk actions per folder (adopted recommendation): every CONTAINER descendant, recursively
+    // through nested folders — reuses runBulkAction(), the exact same start/stop machinery the
+    // bottom bulk-select action bar already uses for multiple containers at once.
+    function ccFolderBulk(fid, action) { runBulkAction(ccCollectFolderContainerNames(byParent, fid, containerByName), action); }
+
+    var mini = folderDensity() === "minimal"; // "Kompakt" — applies to folder contents AND the unfoldered/root section
     var hg = makeGear("cc-hgear-grid");
-    var root = el("div", "cc-folderview");
+    var root = el("div", mini ? "cc-folderview cc-folderview-mini" : "cc-folderview");
 
     // Drag-and-drop reordering. `dragEntry` is the flatEntries object being dragged, scoped
     // to this one render pass — a successful move always triggers a fresh render anyway, so
@@ -2039,25 +2134,46 @@
     function renderEntries(parentId, container) {
       (byParent[parentId] || []).forEach(function (e) {
         if (e.type === "folder" || e.type === "group") {
-          var grp = el("div", "cc-folder-group");
+          if (filterText && !entryMatches(e)) return; // live search: a folder with no match anywhere inside it (and no name match itself) is hidden outright
+          var collapsed = effectiveCollapsed(e);
+          var grp = el("div", "cc-folder-group" + (collapsed ? " cc-folder-collapsed" : ""));
           var head = el("div", "cc-folder-group-head");
-          head.appendChild(el("span", "cc-folder-group-label", e.name + " (" + (byParent[e.id] || []).length + ")"));
+          var titleWrap = el("span", "cc-folder-group-title");
+          var chev = el("span", "cc-folder-chev", collapsed ? "▸" : "▾"); chev.setAttribute("aria-hidden", "true");
+          titleWrap.appendChild(chev);
+          titleWrap.appendChild(el("span", "cc-folder-group-label", e.name + " (" + (byParent[e.id] || []).length + ")"));
+          head.appendChild(titleWrap);
+          head.style.cursor = "pointer";
+          // Collapse/expand (adopted recommendation), persisted via setFolderCollapsed. Ignores
+          // clicks that landed on one of the action buttons below — those all stopPropagation().
+          head.addEventListener("click", function () { setFolderCollapsed(e.id, !effectiveCollapsed(e)); renderFolderView(); });
+          var acts = el("span", "cc-folder-group-actions");
+          // "Gestoppte ausblenden" (adopted recommendation) — independent per folder, not global.
+          var hsOn = folderHidesStopped(e.id);
+          var hsBtn = el("button", "cc-folder-act" + (hsOn ? " cc-folder-act-on" : ""), "👁"); hsBtn.type = "button"; hsBtn.title = t("hideStopped");
+          hsBtn.addEventListener("click", function (ev) { ev.stopPropagation(); setFolderHideStopped(e.id, !folderHidesStopped(e.id)); renderFolderView(); });
+          acts.appendChild(hsBtn);
+          // Bulk start/stop for this folder's contents (adopted recommendation).
+          var startAllBtn = el("button", "cc-folder-act", "▶"); startAllBtn.type = "button"; startAllBtn.title = t("bulkStartAll");
+          startAllBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccFolderBulk(e.id, "start"); });
+          var stopAllBtn = el("button", "cc-folder-act", "■"); stopAllBtn.type = "button"; stopAllBtn.title = t("bulkStopAll");
+          stopAllBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccFolderBulk(e.id, "stop"); });
+          acts.appendChild(startAllBtn); acts.appendChild(stopAllBtn);
           // rename/delete only for folders CC itself created (own-registry coexistence, spec/Task 6) —
           // a folder made by FolderView3/Plus or a future native UI stays read-only here
           if (ccOrgIsOwned(e.id)) {
-            var acts = el("span", "cc-folder-group-actions");
             var renBtn = el("button", "cc-folder-act", "✎"); renBtn.type = "button"; renBtn.title = t("renameFolder");
             renBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccOrgRenameFolder(e.id, e.name); });
             var delBtn = el("button", "cc-folder-act", "🗑"); delBtn.type = "button"; delBtn.title = t("deleteFolder");
             delBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccOrgDeleteFolder(e.id); });
             acts.appendChild(renBtn); acts.appendChild(delBtn);
-            head.appendChild(acts);
             // folders only reorder among each other when CC owns them — never restructure a
             // folder another tool manages. The head is the drag handle; the whole group moves.
             wireDragSource(head, e);
           }
+          head.appendChild(acts);
           grp.appendChild(head);
-          var kids = el("div", "cc-grid cc-folder-group-body");
+          var kids = el("div", (mini ? "cc-folder-group-body cc-folder-group-body-mini" : "cc-grid cc-folder-group-body"));
           grp.appendChild(kids);
           container.appendChild(grp);
           // dropping a CONTAINER on this folder (its head or its empty body) files it in here,
@@ -2068,7 +2184,7 @@
             else if (src.id !== e.id) ccOrgMoveToPosition(src.id, e.parentId, e.position);
           });
           wireDropTarget(kids, function (src) { if (src.type === "container" && src.id !== e.id) ccOrgMoveToFolder(src.id, e.id); });
-          renderEntries(e.id, kids); // nested folders render inside their own group's body
+          renderEntries(e.id, kids); // nested folders render inside their own group's body — always rendered (even collapsed), so nested auto-expand still finds matches
         } else {
           var name = e.name.replace(/^\//, ""); // organizer container names are docker-style ("/JDownloader")
           // containerByName() applies norm() (lowercases) — containersByName is keyed lowercase
@@ -2076,7 +2192,9 @@
           // container name (live-caught: only "homarr"/"n8n" etc., already-lowercase by luck, rendered)
           var c = containerByName(name);
           if (c) {
-            var cd = card(c);
+            if (filterText && !entryMatches(e)) return; // live search: bug #1 fix — folder mode now actually filters
+            if (ccFolderHidesContainer(parentId, c)) return; // per-folder "Gestoppte ausblenden"
+            var cd = mini ? minimalRow(c) : card(c);
             wireDragSource(cd, e);
             // dropping ON another container moves the dragged item to THIS one's own
             // (folder, position) — doubles as same-folder reorder or cross-folder move+place.
@@ -2100,6 +2218,13 @@
     if (menu && menuAnchor && !menuAnchor.isConnected) { menuAnchor = hg; positionMenu(); }
     applyIconTint();
   }
+  // Bug fix (v4.34.0): the single chokepoint for "re-render whichever non-list theming view is
+  // active". Every call site that used to hardcode a bare renderGrid() as its "not list mode"
+  // fallback silently replaced Folder view's grouping with the flat grid the moment its trigger
+  // fired (an icon-mode change, a settings adopt-toggle flip, a saved limit, …) — confirmed by
+  // grepping every renderGrid() call site in this file. Routed through here instead, so a fix
+  // (or a future third view) only ever has to be made in ONE place.
+  function renderCurrentView() { if (mode === "folder") renderFolderView(); else renderGrid(); }
 
   // ───────────────────────── gear + menu (the only global control surface)
   function makeGear(extra) { var g = el("button", "cc-hgear" + (extra ? " " + extra : "") + (daemonUp === false ? " cc-hgear-down" : ""), "⚙"); g.type = "button"; g.setAttribute("data-tip", daemonUp === false ? "CannonadeCommand — daemon not reachable" : "CannonadeCommand"); g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g); }); return g; }
@@ -2156,6 +2281,22 @@
         seg.appendChild(bF);
       }
       var vrow = el("div", "cc-menu-row cc-menu-plain"); vrow.appendChild(seg); m.appendChild(vrow);
+      // Folder-content density (adopted recommendation — the core of this feature): a SECOND,
+      // independent axis WITHIN Folder view. Folders are always grouped; only their contents
+      // (and the unfoldered/root section) switch between full detail cards and the new
+      // icon+name+state-only "Kompakt" row. Only shown while Folder view is actually active —
+      // it has no effect in List/Grid, so offering it there would just be confusing.
+      if (mode === "folder") {
+        m.appendChild(menuHead(t("folderContent")));
+        var segD = el("div", "cc-seg");
+        var dense = folderDensity();
+        var bFull = el("button", "cc-seg-btn" + (dense === "full" ? " cc-seg-on" : ""), t("detailed"));
+        var bMin = el("button", "cc-seg-btn" + (dense === "minimal" ? " cc-seg-on" : ""), t("compact"));
+        bFull.addEventListener("click", function () { closeMenu(); setFolderDensity("full"); });
+        bMin.addEventListener("click", function () { closeMenu(); setFolderDensity("minimal"); });
+        segD.appendChild(bFull); segD.appendChild(bMin);
+        var drow = el("div", "cc-menu-row cc-menu-plain"); drow.appendChild(segD); m.appendChild(drow);
+      }
       // "New folder…" bootstraps the FIRST folder (before that, the Folder toggle above is
       // hidden per spec decision 4 — this is how a user gets from zero folders to one).
       if (ccOrgAvailable) {
@@ -2186,7 +2327,7 @@
       var rbOn = localStorage.getItem("cc.rainbow") === "1";
       var bRoff = el("button", "cc-seg-btn" + (!rbOn ? " cc-seg-on" : ""), LANG === "de" ? "Rainbow aus" : "Rainbow off");
       var bRon = el("button", "cc-seg-btn" + (rbOn ? " cc-seg-on" : ""), LANG === "de" ? "Rainbow an" : "Rainbow on");
-      var setRb = function (v) { localStorage.setItem("cc.rainbow", v ? "1" : "0"); localStorage.setItem("cc.flagmode", "0"); closeMenu(); applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderGrid(); };
+      var setRb = function (v) { localStorage.setItem("cc.rainbow", v ? "1" : "0"); localStorage.setItem("cc.flagmode", "0"); closeMenu(); applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderCurrentView(); };
       bRoff.addEventListener("click", function () { setRb(false); });
       bRon.addEventListener("click", function () { setRb(true); });
       segR.appendChild(bRoff); segR.appendChild(bRon);
@@ -2196,7 +2337,7 @@
       var acOn = localStorage.getItem("cc.actcolors") !== "0";
       var bCoff = el("button", "cc-seg-btn" + (!acOn ? " cc-seg-on" : ""), LANG === "de" ? "Icons grau" : "Icons grey");
       var bCon = el("button", "cc-seg-btn" + (acOn ? " cc-seg-on" : ""), LANG === "de" ? "Icons farbig" : "Icons coloured");
-      var setAc = function (v) { localStorage.setItem("cc.actcolors", v ? "1" : "0"); closeMenu(); applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderGrid(); };
+      var setAc = function (v) { localStorage.setItem("cc.actcolors", v ? "1" : "0"); closeMenu(); applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderCurrentView(); };
       bCoff.addEventListener("click", function () { setAc(false); });
       bCon.addEventListener("click", function () { setAc(true); });
       segC.appendChild(bCoff); segC.appendChild(bCon);
@@ -2394,7 +2535,14 @@
     mode = m; localStorage.setItem(VIEW_KEY, m); refresh();
     ccOrgSavePrefs({ ccViewMode: m });
   }
-  function refresh() { applyMode(); if (mode === "grid" || (mode === "list" && colOn("res"))) refreshStats(); }
+  // Bug fix (v4.34.0): this used to gate on mode === "grid" only, so Folder view's CPU/RAM/NET
+  // readouts (on any folder rendered at "full" — detailed-card — density) never polled and went
+  // stale forever. Folder mode now participates in the SAME 3.5s stats tick grid mode gets;
+  // refreshStats() already updates every ".cc-resgroup" in the document regardless of which view
+  // built it, and a folder rendered at "Kompakt" density has no .cc-resgroup at all (minimalRow()
+  // never builds one), so the extra tick is simply a harmless no-op for that density — moot, not
+  // broken, exactly as the task called for.
+  function refresh() { applyMode(); if (mode === "grid" || mode === "folder" || (mode === "list" && colOn("res"))) refreshStats(); }
   // update one CPU/RAM engine-badge group in place (values only).
   function updateResGroup(rg, s, state) {
     // Target the live values BY KIND (not by index). The BW badge now shows the live
@@ -2419,8 +2567,18 @@
       else { hideNative(false); removeGridHolder(); applyEnhanceClasses(); injectAllRowBadges(); }
     } catch (e) { try { hideNative(false); } catch (e2) {} } // never leave the native list hidden or broken
   }
+  // Bug fix (v4.34.0): this only ever handled "grid" explicitly; every other mode (folder
+  // INCLUDED) fell through to findRows() over the hidden native table — which folder mode's
+  // rendering never drove, so typing in the filter box had no visible effect there until an
+  // unrelated re-render happened to occur. Folder view now gets its own branch: a full
+  // re-render, which recomputes per-card visibility AND per-folder auto-expand/hide together
+  // (see entryMatches()/effectiveCollapsed() inside renderFolderView) — cheap (structural
+  // grouping only, no aggregated stats to recompute) and the filter input itself lives in the
+  // open gear menu, not inside gridHolder, so rebuilding gridHolder underneath it never touches
+  // the input the user is actively typing into.
   function applyFilter() {
     if (mode === "grid") { if (gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll(".cc-card")).forEach(function (cd) { cd.style.display = (!filterText || norm(cd.dataset.name).indexOf(filterText) >= 0) ? "" : "none"; }); }
+    else if (mode === "folder") { if (ccOrgView) renderFolderView(); }
     else findRows().forEach(function (tr) { tr.style.display = (!filterText || norm(rowName(tr)).indexOf(filterText) >= 0) ? "" : "none"; });
   }
   function refreshStats() {
@@ -2806,7 +2964,7 @@
       if (!CI) return;
       CI.setOverride(scope, name, sel.value);
       applyIconTint();               // this row repaints at once; every other row keeps the global default
-      if (mode !== "list") renderGrid();
+      if (mode !== "list") renderCurrentView();
     });
     return sel;
   }
@@ -2980,7 +3138,7 @@
           var applied = (resp && resp.after_policy) ? resp.after_policy : rpSel.value;
           rpSel.value = applied; setRpCache(applied);
           flash(t("done"));
-          if (mode === "list") reinjectRowBadges(); else renderGrid();
+          if (mode === "list") reinjectRowBadges(); else renderCurrentView();
         })
         .catch(function (e) { flash("Error: " + e.message, true); });
     });
@@ -3286,7 +3444,7 @@
       })
       .then(function () {
         flash(t("done"));
-        if (mode === "list") reinjectRowBadges(); else renderGrid();
+        if (mode === "list") reinjectRowBadges(); else renderCurrentView();
         // stay OPEN and verify: the save kicks the monitor server-side, so the rule
         // should exist within moments — show the proof (or failure) right here
         var pop0 = openPop;
@@ -3395,7 +3553,7 @@
           flash(t("done")); return loadLimits();
         })
         .then(function () {
-          if (mode === "list") reinjectRowBadges(); else renderGrid();
+          if (mode === "list") reinjectRowBadges(); else renderCurrentView();
           // NO auto-close anymore: the result dot lives in the window; the user closes via ✕.
         })
         .catch(function (e) {
@@ -3513,7 +3671,7 @@
         return api("PUT", "config", config);
       })
       .then(function () { return api("PUT", "plan", collectPlan()); })
-      .then(function () { closePop(); if (mode === "list") reinjectRowBadges(); else renderGrid(); if (thenApply) return apply(); flash(t("saved")); })
+      .then(function () { closePop(); if (mode === "list") reinjectRowBadges(); else renderCurrentView(); if (thenApply) return apply(); flash(t("saved")); })
       .catch(function (e) { flash("Error: " + e.message, true); });
   }
   function apply() { flash(t("startorder") + "…"); return api("POST", "apply").then(function () { return load(); }).then(function () { flash(t("done")); }).catch(function (e) { flash("Error: " + e.message, true); }); }
@@ -3678,7 +3836,10 @@
     // UI down — within ~4s, and NOT blocked by an open menu/popover like the 9s
     // poll. This is what makes an uninstall visibly clean up the open tab quickly.
     timers.push(setInterval(function () { try { if (dead) return; fetch(PROXY + "?path=" + encodeURIComponent("state"), { headers: { Accept: "application/json" } }).then(function (r) { if (r.status === 404 || r.status === 410) teardown(); }).catch(function () {}); } catch (e) {} }, 4000));
-    timers.push(setInterval(function () { try { if (!dead && !openPop && (mode === "grid" || (mode === "list" && colOn("res")))) refreshStats(); } catch (e) {} }, 3500));
+    // Bug fix (v4.34.0): Folder view used to be excluded from this gate exactly like refresh()
+    // was (see refresh()'s comment) — its CPU/RAM/NET readouts never ticked. Same fix, same
+    // reasoning: harmless no-op at "Kompakt" density, keeps live values fresh at "Vollständig".
+    timers.push(setInterval(function () { try { if (!dead && !openPop && (mode === "grid" || mode === "folder" || (mode === "list" && colOn("res")))) refreshStats(); } catch (e) {} }, 3500));
     timers.push(setInterval(function () { try { if (!dead && !openPop && !menu) load(); } catch (e) {} }, 9000));
   }
 
@@ -4279,7 +4440,7 @@
           }
           applySettings();
           if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); }
-          else if (mode === "grid") renderGrid();
+          else if (mode === "grid" || mode === "folder") renderCurrentView();
         } catch (e2) {}
       });
       // persistent re-probe (NEVER cleared by teardown): rebuild when the proxy returns
