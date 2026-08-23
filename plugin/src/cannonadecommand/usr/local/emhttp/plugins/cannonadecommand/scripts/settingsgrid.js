@@ -41,7 +41,15 @@
   // key below now goes through eff(), the SAME adopt-gated per-area -> global fallback
   // docker.js/vms.js/plugins.js already use (see eff() above): with adopt on it reads cc.<key>,
   // with adopt off it reads ccs.<key> — exactly matching the other three areas' contract.
+  // ADOPT RAINBOW/ACCENT (v4.33.0, mirrors docker.js iconAdoptTint()): Hintergrund/Einfärben can
+  // each independently step aside from their own picked colour and defer to whatever a
+  // generic tile already shows — Rainbow's rotating per-tile colour when Rainbow is on, the
+  // plain accent otherwise. bgAdopting() gates bgColorEff() to "" so paintGrid()'s own
+  // iconSet check (bgColorIsCustom()) falls through to its EXISTING rotating-colour branch
+  // (`c = rbColor(i)`) — no new colour math for the badge, genuine per-tile rotation for free.
+  function bgAdopting() { return eff("iconbgrainbow", "0") === "1"; }
   function bgColorEff() {
+    if (bgAdopting()) return "";
     var bg = eff("iconbgcolor", ""); if (/^#[0-9a-f]{6}$/i.test(bg)) return bg;
     var ic = eff("iconcolor", ""); if (/^#[0-9a-f]{6}$/i.test(ic)) return ic;
     return accent();
@@ -49,8 +57,16 @@
   function badgeBg() { return bgColorEff(); }
   // whether the badge is showing a genuinely CONFIGURED colour (either key), as opposed to the
   // plain accent fallback — used by the rainbow-priority block below to decide whether an
-  // explicit pick should outrank the rotating rainbow colour.
-  function bgColorIsCustom() { return /^#[0-9a-f]{6}$/i.test(eff("iconbgcolor", "")) || /^#[0-9a-f]{6}$/i.test(eff("iconcolor", "")); }
+  // explicit pick should outrank the rotating rainbow colour. Adopting counts as "no configured
+  // colour" so the rotating branch always wins while it's on.
+  function bgColorIsCustom() { return !bgAdopting() && (/^#[0-9a-f]{6}$/i.test(eff("iconbgcolor", "")) || /^#[0-9a-f]{6}$/i.test(eff("iconcolor", ""))); }
+  // Einfärben's adopt-rainbow colour: the tile grid tints EVERY icon with one flat filter (never
+  // per-tile), so it takes the same live rotating-or-accent single value docker.js/vms.js/
+  // plugins.js use for their tint's adopt state — here reusing this area's OWN rbColor()/rbOn().
+  function tintColorEff() {
+    if (eff("icontintrainbow", "0") === "1") return rbOn() ? rbColor(5) : accent();
+    return eff("iconcolor", "");
+  }
   // Einfärben (tint) on/off (v4.32.5, mirrors cc.icontint): unset falls back to the pre-4.32.5
   // reading (a valid iconcolor implicitly meant "tint on"), so an untouched install's tint
   // toggle keeps behaving exactly as it did before this key existed.
@@ -111,13 +127,14 @@
       document.documentElement.style.setProperty("--cc-sg-size", sz[0]);
       document.documentElement.style.setProperty("--cc-sg-glyph", sz[1]);
       var spans = document.querySelectorAll("#displaybox .Panel > a > span");
-      var accBg = badgeBg();
+      var accBg = badgeBg();               // "" while Hintergrund adopts rainbow/accent (see bgAdopting())
+      var accBgInk = accBg || accent();    // always a valid hex for CONTRAST purposes, adopting or not
       for (var i = 0; i < spans.length; i++) {
         var s = spans[i], gl = s.querySelector("i.PanelIcon"), im = s.querySelector("img");
         if (!rb) {
           s.style.removeProperty("background"); s.style.removeProperty("--cc-rb-c"); s.style.removeProperty("--cc-rb-ct");
           if (gl) gl.style.removeProperty("color");      // glyph colour comes from CSS --cc-iconbg-text
-          if (im) im.style.setProperty("filter", ensureMonoFilter(idealText(accBg)), "important");
+          if (im) im.style.setProperty("filter", ensureMonoFilter(idealText(accBgInk)), "important");
           continue;
         }
         var c = rbColor(i), tc = idealText(c);
@@ -203,7 +220,7 @@
   // glyphs (a flat colour has no shading to keep). Read via eff() (adopt-gated per-area ->
   // global fallback), not raw g("ccs.*") — see the bgColorEff() comment above for why.
   function ensureTintFilter() {
-    var ic = eff("iconcolor", ""), m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ic || "");
+    var ic = tintColorEff(), m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ic || "");
     var host = document.getElementById("cc-sg-tint-svg");
     if (!m) { if (host) host.remove(); return false; }
     var tr = parseInt(m[1], 16) / 255, tg = parseInt(m[2], 16) / 255, tb = parseInt(m[3], 16) / 255;
@@ -219,7 +236,7 @@
   // rainbow badge background the span may carry from a previous badge-mode render.
   function paintTint() {
     try {
-      var ic = eff("iconcolor", ""), f = ensureTintFilter() ? "url(#cc-sg-icon-tint)" : "";
+      var ic = tintColorEff(), f = ensureTintFilter() ? "url(#cc-sg-icon-tint)" : "";
       var spans = document.querySelectorAll("#displaybox .Panel > a > span");
       for (var i = 0; i < spans.length; i++) {
         var s = spans[i], gl = s.querySelector("i.PanelIcon"), im = s.querySelector("img");
@@ -259,7 +276,9 @@
       // silently override the picked tint colour — that override cannot happen here because tint
       // never even RUNS while the badge is showing, so there is nothing analogous to fix.
       // eff()-gated (adopt -> falls through to the global cc.* keys), not raw g("ccs.*").
-      var tint = live && !badge && tintOnEff() && /^#[0-9a-f]{6}$/i.test(eff("iconcolor", ""));
+      // tintColorEff() (v4.33.0) already answers a valid hex while Einfärben adopts rainbow/accent
+      // even with no cc.iconcolor picked, so adopting alone is enough to light this tile up.
+      var tint = live && !badge && tintOnEff() && /^#[0-9a-f]{6}$/i.test(tintColorEff());
       var a = accent();
       root.classList.toggle("cc-settingsgrid-on", badge);
       root.classList.toggle("cc-settingsgrid-tint", tint);
@@ -280,9 +299,9 @@
       }
       if (badge) {
         clearTint(); // badge takes precedence — drop any tint from a previous render
-        var sgBg = bgColorEff();
-        root.style.setProperty("--cc-iconbg-color", sgBg);
-        root.style.setProperty("--cc-iconbg-text", idealText(sgBg));
+        var sgBg = bgColorEff();   // "" while Hintergrund adopts rainbow/accent (v4.33.0)
+        if (sgBg) { root.style.setProperty("--cc-iconbg-color", sgBg); root.style.setProperty("--cc-iconbg-text", idealText(sgBg)); }
+        else { root.style.removeProperty("--cc-iconbg-color"); root.style.removeProperty("--cc-iconbg-text"); }
         paintGrid();
       } else if (tint) {
         paintTint();

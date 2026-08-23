@@ -624,7 +624,30 @@
     var v = effc("icontint");
     return v == null ? !!effc("iconcolor") : v === "1";
   }
+  // ── ADOPT RAINBOW/ACCENT (v4.33.0) ──────────────────────────────────────────────────
+  // A per-control opt-in (cc.iconbgrainbow / cc.icontintrainbow) that lets Hintergrund or
+  // Einfärben step ASIDE from its own picked colour and defer to whatever a generic badge
+  // (CPU/RAM/…) already shows — Rainbow's rotating palette when Rainbow is on, the plain
+  // accent otherwise. v4.32.4-v4.32.7 deliberately made the icon's OWN colour always win —
+  // correct as the default, but it removed the "icon follows the colour mode" behaviour some
+  // installs relied on (user-confirmed regression). This restores it as an explicit choice.
+  //   · Hintergrund adopting: bgColor() answers "" so applyIconTint() never stamps
+  //     --cc-iconbg-color; docker.css's OWN var() chain
+  //     (var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent)))) then falls through to
+  //     --cc-rb-c — the SAME per-row rotating colour the tile already takes whenever no icon
+  //     colour is configured at all, reactive-hover included. No new colour math, no CSS edit.
+  //   · Einfärben adopting: the tint is ONE flat SVG filter shared by every icon on the page
+  //     (never per-row, even before this feature — see ensureTintFilter()), so its natural
+  //     analogue is the single "action" rainbow slot already stamped for buttons/toggles
+  //     (--cc-btn-accent = pal[(5+off) % pal.length]) rather than a per-row value. iconAdoptTint()
+  //     reuses the exact same ccPalActive()/RB_OFFSET machinery via ccRbColor(), recomputed live
+  //     on every repaint — never a colour frozen at toggle time.
+  function iconAdoptTint() {
+    if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") return effc("accent") || "#2f6feb";
+    return ccRbColor(5);
+  }
   function bgColor() {
+    if (effc("iconbgrainbow") === "1") return "";   // adopting: defer to the CSS rainbow/accent chain
     var c = effc("iconbgcolor");
     if (c && /^#?[0-9a-f]{6}$/i.test(c)) return ccHex6(c);
     var ic = effc("iconcolor");
@@ -651,7 +674,7 @@
   // (live-measured: a #2a2a2a target renders "schwer erkennbar" against the card).
   function iconInk(forTint) {
     if (!tintOn()) return "";
-    var pick = effc("iconcolor");
+    var pick = effc("icontintrainbow") === "1" ? iconAdoptTint() : effc("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
@@ -798,7 +821,7 @@
       // (font-icon <i>) also take an !important text colour so the glyph itself inks.
       var ibgAcc = bgColor();
       var ibgOn = effc("iconbg") === "1";
-      if (ibgOn) document.documentElement.style.setProperty("--cc-iconbg-color", ibgAcc); else document.documentElement.style.removeProperty("--cc-iconbg-color");
+      if (ibgOn && ibgAcc) document.documentElement.style.setProperty("--cc-iconbg-color", ibgAcc); else document.documentElement.style.removeProperty("--cc-iconbg-color");
       // ONE flat filter for the whole page (the ink colour is global), built from the same
       // iconInk() the tint uses — so flatten and tint always agree on the colour.
       var ink = iconInk(false);

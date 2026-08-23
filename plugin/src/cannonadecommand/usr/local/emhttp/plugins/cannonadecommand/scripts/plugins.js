@@ -195,7 +195,17 @@
     var v = eff("icontint");
     return v == null ? !!eff("iconcolor") : v === "1";
   }
+  // ADOPT RAINBOW/ACCENT (v4.33.0, mirrors docker.js iconAdoptTint()): Hintergrund/Einfärben can
+  // each independently step aside from their own picked colour and defer to whatever a generic
+  // plugin-row badge already shows. Hintergrund adopting: plugBgColor() answers "" so
+  // paintRow() never stamps --cc-iconbg-color; docker.css's own var() chain
+  // (var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent)))) then falls through to --cc-rb-c,
+  // the per-row rotating colour paintRow() already stamps (colorFor(i)). Einfärben adopting: the
+  // tint is one flat filter for the whole page (never per-row), so it takes colorFor(5) — the
+  // SAME single "action" rainbow slot docker.js/vms.js already use for buttons/toggles, live and
+  // recomputed every repaint via the existing colorFor()/pal()/RB_OFFSET machinery.
   function plugBgColor() {
+    if (eff("iconbgrainbow") === "1") return "";   // adopting: defer to the CSS rainbow/accent chain
     var c = eff("iconbgcolor");
     if (c && /^#?[0-9a-f]{6}$/i.test(c)) return ccHex6(c);
     var ic = eff("iconcolor");
@@ -212,7 +222,7 @@
   // target's luma (see CCTheme.liftDark).
   function plugIconInk(forTint) {
     if (!plugTintOn()) return "";
-    var pick = eff("iconcolor");
+    var pick = eff("icontintrainbow") === "1" ? colorFor(5) : eff("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
@@ -725,7 +735,8 @@
       // the box's OWN colour (plugBgColor(), new cc.iconbgcolor key with a fallback chain to
       // the legacy cc.iconcolor and then the accent) — independent of whether Einfärben is on,
       // exactly like the badge itself is independent of it.
-      if (eff("iconbg") === "1") document.documentElement.style.setProperty("--cc-iconbg-color", plugBgColor());
+      var pIbgAcc = plugBgColor();
+      if (eff("iconbg") === "1" && pIbgAcc) document.documentElement.style.setProperty("--cc-iconbg-color", pIbgAcc);
       else document.documentElement.style.removeProperty("--cc-iconbg-color");
       // Tab-Ansicht (cc.sections.plugins, default OFF = native sub-tabs): opt in to stacked CC sections.
       // cc-on-plugins marks the page; the CSS flatten block (docker.css) is gated

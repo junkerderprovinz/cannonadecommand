@@ -89,10 +89,15 @@ function grabFn(name) {
   for (let k = src.indexOf('{', i); k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}') { d--; if (!d) return src.slice(i, k + 1); } }
   throw new Error('unbalanced function: ' + name);
 }
+// RB_PAL/RB_OFFSET stand in for docker.js's module-level rainbow-palette vars (normally
+// window.CCTheme.RB / a persisted random seed) — pinned to the shipped default palette and
+// offset 0 so ccRbColor(i)/iconAdoptTint() are deterministic here.
 const dockerApi = new Function('document', 'localStorage', 'window',
-  grabFn('effc') + '\n' +
-  grabFn('idealText') + '\n' + grabFn('ccHex6') + '\n' + grabFn('tintOn') + '\n' + grabFn('bgColor') + '\n' + grabFn('iconInk') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('ccLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
-  'return { iconInk: iconInk, tintOn: tintOn, bgColor: bgColor, ensureFlatFilter: ensureFlatFilter, ensureMonoFilter: ensureMonoFilter, ensureTintFilter: ensureTintFilter, ccLogoSizes: ccLogoSizes, glyphInkAndFilter: glyphInkAndFilter, idealText: idealText, effc: effc };'
+  'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
+  'var RB_OFFSET = 0;\n' +
+  grabFn('effc') + '\n' + grabFn('themingOn') + '\n' +
+  grabFn('idealText') + '\n' + grabFn('ccHex6') + '\n' + grabFn('tintOn') + '\n' + grabFn('ccPalActive') + '\n' + grabFn('ccRbColor') + '\n' + grabFn('iconAdoptTint') + '\n' + grabFn('bgColor') + '\n' + grabFn('iconInk') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('ccLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
+  'return { iconInk: iconInk, tintOn: tintOn, bgColor: bgColor, ensureFlatFilter: ensureFlatFilter, ensureMonoFilter: ensureMonoFilter, ensureTintFilter: ensureTintFilter, ccLogoSizes: ccLogoSizes, glyphInkAndFilter: glyphInkAndFilter, idealText: idealText, effc: effc, iconAdoptTint: iconAdoptTint, ccRbColor: ccRbColor };'
 )(document, global.localStorage, global.window);
 
 /* ── tests ───────────────────────────────────────────────────────────────── */
@@ -309,6 +314,37 @@ console.log('\ndocker.js honours its OWN adopt toggle (cc.styledocker) for iconc
   dockerApi.ensureTintFilter();
   var sigAdoptOff = document.getElementById('cc-tint-svg').dataset.sig;
   ok('and the tint STRENGTH differs between the two toggle states too (ccd.iconstrength=40 vs cc.iconstrength=100)', sigAdoptOff !== sigAdoptOn, sigAdoptOn + ' vs ' + sigAdoptOff);
+  reset();
+}
+
+console.log('\ncc.iconbgrainbow / cc.icontintrainbow (v4.33.0): Badge-Einstellungen übernehmen — regression pin');
+{
+  // Regression pin for the exact user-reported capability gap: v4.32.4-v4.32.7 made Hintergrund/
+  // Einfärben's OWN colour win unconditionally, with no way back to "follow Rainbow/accent like
+  // every other badge". These two adopt keys restore that as an explicit, independently-toggled
+  // choice per control.
+  reset();
+  localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#e5a00d');
+  localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#00aa00');
+  localStorage.setItem('cc.accent', '#2f6feb');
+
+  ok('adopt OFF (default): bgColor() is the independently picked background colour', dockerApi.bgColor() === '#e5a00d', dockerApi.bgColor());
+  ok('adopt OFF (default): iconInk() is the independently picked tint colour', dockerApi.iconInk(false) === '#00aa00', dockerApi.iconInk(false));
+
+  localStorage.setItem('cc.iconbgrainbow', '1');
+  ok('Hintergrund adopting: bgColor() answers "" so the caller never stamps --cc-iconbg-color, letting the CSS var() chain fall through to --cc-rb-c/--cc-accent — the SAME source every generic badge already uses', dockerApi.bgColor() === '', JSON.stringify(dockerApi.bgColor()));
+  ok('Einfärben untouched: still the independently picked tint colour (the two controls are independent)', dockerApi.iconInk(false) === '#00aa00', dockerApi.iconInk(false));
+
+  localStorage.setItem('cc.icontintrainbow', '1');
+  localStorage.setItem('cc.rainbow', '0');
+  ok('Einfärben adopting, Rainbow OFF: iconInk() matches iconAdoptTint() (the plain accent) — not the own picked colour', dockerApi.iconInk(false) === '#2f6feb', dockerApi.iconInk(false));
+
+  localStorage.setItem('cc.rainbow', '1');
+  ok('Einfärben adopting, Rainbow ON: iconInk() matches the SAME ccRbColor(5) a generic badge (--cc-btn-accent) resolves to, not a frozen accent snapshot', dockerApi.iconInk(false) === dockerApi.ccRbColor(5), dockerApi.iconInk(false) + ' vs ' + dockerApi.ccRbColor(5));
+  ok('and that is NOT the own picked colour either', dockerApi.iconInk(false) !== '#00aa00');
+
+  localStorage.setItem('cc.icontintrainbow', '0');
+  ok('turning Einfärben adopt back off restores the own picked colour immediately', dockerApi.iconInk(false) === '#00aa00', dockerApi.iconInk(false));
   reset();
 }
 

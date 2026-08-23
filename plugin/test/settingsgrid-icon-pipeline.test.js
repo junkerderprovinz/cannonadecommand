@@ -43,10 +43,16 @@ function grabFn(name) {
   for (let k = src.indexOf('{', i); k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}') { d--; if (!d) return src.slice(i, k + 1); } }
   throw new Error('unbalanced function: ' + name);
 }
+// RB/RB_OFF stand in for settingsgrid.js's module-level palette vars (normally window.CCTheme.RB
+// / a persisted random seed) — pinned to the shipped default palette and offset 0 so rbColor(i)
+// is deterministic here, exactly like docker.js/vms.js/plugins.js's own isolated-function tests.
 const sgApi = new Function('localStorage',
+  'var RB = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
+  'var RB_OFF = 0;\n' +
   grabFn('g') + '\n' + grabFn('eff') + '\n' + grabFn('accent') + '\n' +
-  grabFn('bgColorEff') + '\n' + grabFn('badgeBg') + '\n' + grabFn('bgColorIsCustom') + '\n' + grabFn('tintOnEff') + '\n' +
-  'return { g: g, eff: eff, accent: accent, bgColorEff: bgColorEff, badgeBg: badgeBg, bgColorIsCustom: bgColorIsCustom, tintOnEff: tintOnEff };'
+  grabFn('bgAdopting') + '\n' + grabFn('bgColorEff') + '\n' + grabFn('badgeBg') + '\n' + grabFn('bgColorIsCustom') + '\n' + grabFn('tintOnEff') + '\n' +
+  grabFn('rbOn') + '\n' + grabFn('rbNeutral') + '\n' + grabFn('pal') + '\n' + grabFn('rbColor') + '\n' + grabFn('tintColorEff') + '\n' +
+  'return { g: g, eff: eff, accent: accent, bgAdopting: bgAdopting, bgColorEff: bgColorEff, badgeBg: badgeBg, bgColorIsCustom: bgColorIsCustom, tintOnEff: tintOnEff, rbColor: rbColor, tintColorEff: tintColorEff };'
 )(global.localStorage);
 
 /* ── tests ───────────────────────────────────────────────────────────────── */
@@ -99,6 +105,35 @@ console.log('\nHintergrund and Einfärben are INDEPENDENT on this area too (v4.3
   // ...but the background colour must still resolve independently of Einfärben being off.
   localStorage.setItem('cc.iconbgcolor', '#161616');
   ok('background colour resolves even with Einfärben off (independent controls)', sgApi.bgColorEff() === '#161616', sgApi.bgColorEff());
+  reset();
+}
+
+console.log('\ncc.iconbgrainbow / cc.icontintrainbow (v4.33.0): Badge-Einstellungen übernehmen — regression pin');
+{
+  reset();
+  localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#e5a00d');
+  localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#00aa00');
+  localStorage.setItem('cc.accent', '#2f6feb');
+
+  ok('adopt OFF (default): bgColorEff() is the independently picked background colour', sgApi.bgColorEff() === '#e5a00d', sgApi.bgColorEff());
+  ok('adopt OFF (default): bgColorIsCustom() is true', sgApi.bgColorIsCustom() === true);
+  ok('adopt OFF (default): tintColorEff() is the independently picked tint colour', sgApi.tintColorEff() === '#00aa00', sgApi.tintColorEff());
+
+  localStorage.setItem('cc.iconbgrainbow', '1');
+  ok('Hintergrund adopting: bgColorEff() answers "" so apply() never stamps --cc-iconbg-color', sgApi.bgColorEff() === '', JSON.stringify(sgApi.bgColorEff()));
+  ok('Hintergrund adopting: bgColorIsCustom() is now false, so paintGrid()\'s existing iconSet branch falls through to its OWN rotating-colour paint (c = rbColor(i)) — genuine per-tile rotation, no new colour math', sgApi.bgColorIsCustom() === false);
+  ok('Einfärben untouched: still the independently picked tint colour (the two controls are independent)', sgApi.tintColorEff() === '#00aa00', sgApi.tintColorEff());
+
+  localStorage.setItem('cc.icontintrainbow', '1');
+  localStorage.setItem('cc.rainbow', '0');
+  ok('Einfärben adopting, Rainbow OFF: tintColorEff() is the plain accent — not the own picked colour', sgApi.tintColorEff() === '#2f6feb', sgApi.tintColorEff());
+
+  localStorage.setItem('cc.rainbow', '1');
+  ok('Einfärben adopting, Rainbow ON: tintColorEff() matches the SAME rbColor(5) a generic rotating tile resolves to, not a frozen accent snapshot', sgApi.tintColorEff() === sgApi.rbColor(5), sgApi.tintColorEff() + ' vs ' + sgApi.rbColor(5));
+  ok('and that is NOT the own picked colour either', sgApi.tintColorEff() !== '#00aa00');
+
+  localStorage.setItem('cc.icontintrainbow', '0');
+  ok('turning Einfärben adopt back off restores the own picked colour immediately', sgApi.tintColorEff() === '#00aa00', sgApi.tintColorEff());
   reset();
 }
 

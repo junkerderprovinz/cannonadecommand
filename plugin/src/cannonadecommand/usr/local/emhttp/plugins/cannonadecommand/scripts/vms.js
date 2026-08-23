@@ -77,7 +77,22 @@
     var v = effK("icontint");
     return v == null ? !!effK("iconcolor") : v === "1";
   }
+  // ADOPT RAINBOW/ACCENT (v4.33.0, mirrors docker.js iconAdoptTint()): Hintergrund/Einfärben can
+  // each independently step aside from their own picked colour and defer to whatever a generic
+  // VM badge (CPU/RAM/…) already shows. Hintergrund adopting: vmBgColor() answers "" so
+  // paintVmIcons() never stamps --cc-iconbg-color; VmTab.css's own var() chain
+  // (var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent))))) then falls
+  // through to --cc-rb-c, the per-row rotating colour the tile already takes with no icon colour
+  // configured at all. Einfärben adopting: the tint is one flat filter for the whole page (never
+  // per-row, even before this feature), so it takes the SAME single "action" rainbow slot
+  // VmTab.css already stamps for buttons/badges (--cc-rbaccent = pal[(5+off) % pal.length]), via
+  // vmRbColor(5) — live, recomputed every repaint, never a snapshot frozen at toggle time.
+  function vmAdoptTint() {
+    if (ls("cc.theming") === "0" || ls("cc.rainbow") !== "1") return ccAccent();
+    return vmRbColor(5);
+  }
   function vmBgColor() {
+    if (effK("iconbgrainbow") === "1") return "";   // adopting: defer to the CSS rainbow/accent chain
     var c = effK("iconbgcolor");
     if (c && /^#?[0-9a-f]{6}$/i.test(c)) return ccHex6(c);
     var ic = effK("iconcolor");
@@ -94,7 +109,7 @@
   // roughly half the target's luma.
   function vmIconInk(forTint) {
     if (!vmTintOn()) return "";
-    var pick = effK("iconcolor");
+    var pick = effK("icontintrainbow") === "1" ? vmAdoptTint() : effK("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
@@ -217,12 +232,23 @@
   function ccShape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
   // ── Rainbow palette (verbatim port of docker.js applyRainbowPalette): read the GLOBAL cc.rainbow +
   //    cc.rbpal/cc.rainbowrot and stamp --cc-rb-* on <html>. Cleared when off.
+  // Active palette resolver (docker.js's ccPalActive() mirror): flag mode reads its own cc.flagpal
+  // key, never cc.rbpal — no bleed between flag and rainbow palettes. Factored out so
+  // applyRainbowPalette() and vmRbColor() (v4.33.0's adopt-rainbow tint) share ONE resolver
+  // instead of two copies of the same try/catch.
+  function vmPalActive() {
+    var pal = RB_PAL;
+    try { var fjp = ls("cc.flagmode") === "1" ? JSON.parse(ls("cc.flagpal") || "null") : null; var jp = (fjp && fjp.length) ? fjp : JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e) {}
+    return pal;
+  }
+  // A single palette slot by index — same rotation math applyRainbowPalette() uses per KIND,
+  // exposed standalone for v4.33.0's Einfärben adopt-rainbow (see vmAdoptTint()).
+  function vmRbColor(i) { var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET; return vmPalActive()[(i + off) % vmPalActive().length]; }
   function applyRainbowPalette() {
     var rt = document.documentElement.style, on = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1";
     if (!on) { rt.removeProperty("--cc-rbaccent"); rt.removeProperty("--cc-rbaccent-text"); RB_KINDS.forEach(function (k) { rt.removeProperty("--cc-rb-" + k); rt.removeProperty("--cc-rb-" + k + "-t"); }); return; }
     var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
-    // flag mode reads cc.flagpal (own key), never cc.rbpal — no bleed between flag and rainbow palettes
-    var pal = RB_PAL; try { var fjp = ls("cc.flagmode") === "1" ? JSON.parse(ls("cc.flagpal") || "null") : null; var jp = (fjp && fjp.length) ? fjp : JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e) {}
+    var pal = vmPalActive();
     // SINGLE rainbow "action" colour: VmTab.css's generic .cc-b badge rule, the reactive-hover fallback,
     // the autostart toggle and the vmstat name badge ALL read --cc-rbaccent, but nothing on /VMs stamped it
     // (Shares-domain var) so they fell back to --cc-accent = flat blue. Stamp it (pal slot 5, like docker).
@@ -1040,7 +1066,7 @@
       // tint colour; the monochrome ink flatten still has to be an INLINE filter on each logo image.
       var root2 = document.documentElement;
       root2.classList.toggle("cc-vm-iconbg", ibgOn);
-      if (ibgOn) root2.style.setProperty("--cc-iconbg-color", ibgAcc); else root2.style.removeProperty("--cc-iconbg-color");
+      if (ibgOn && ibgAcc) root2.style.setProperty("--cc-iconbg-color", ibgAcc); else root2.style.removeProperty("--cc-iconbg-color");
       // ONE flat filter for the page, from the SAME ink the tint uses (vmIconInk(), which already
       // answers "" whenever Einfärben is off, badge or not) — branching on ibgOn directly here
       // instead (as this used to) reintroduces the background-forces-tint bug: it would flatten

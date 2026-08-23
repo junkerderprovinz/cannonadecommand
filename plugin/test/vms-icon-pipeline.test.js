@@ -66,13 +66,19 @@ function grabFn(name) {
   for (let k = src.indexOf('{', i); k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}') { d--; if (!d) return src.slice(i, k + 1); } }
   throw new Error('unbalanced function: ' + name);
 }
+// RB_PAL/RB_OFFSET stand in for vms.js's module-level rainbow-palette vars (normally
+// window.CCTheme.RB / a persisted random seed) — pinned to the shipped default palette and
+// offset 0 so vmRbColor(i)/vmAdoptTint() are deterministic here.
 const vmsApi = new Function('document', 'localStorage', 'window',
   'var dead = false;\n' +
+  'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
+  'var RB_OFFSET = 0;\n' +
   grabFn('ls') + '\n' + grabFn('vmTintOff') + '\n' + grabFn('effK') + '\n' + grabFn('ccIdeal') + '\n' + grabFn('ccAccent') + '\n' +
   grabFn('ccHex6') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' +
+  grabFn('vmPalActive') + '\n' + grabFn('vmRbColor') + '\n' + grabFn('vmAdoptTint') + '\n' +
   grabFn('vmTintOn') + '\n' + grabFn('vmBgColor') + '\n' + grabFn('vmIconInk') + '\n' +
   grabFn('ensureTintFilter') + '\n' + grabFn('vmLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
-  'return { effK: effK, vmTintOn: vmTintOn, vmBgColor: vmBgColor, vmIconInk: vmIconInk, ensureTintFilter: ensureTintFilter, vmLogoSizes: vmLogoSizes, glyphInkAndFilter: glyphInkAndFilter, ccIdeal: ccIdeal, ccAccent: ccAccent };'
+  'return { effK: effK, vmTintOn: vmTintOn, vmBgColor: vmBgColor, vmIconInk: vmIconInk, ensureTintFilter: ensureTintFilter, vmLogoSizes: vmLogoSizes, glyphInkAndFilter: glyphInkAndFilter, ccIdeal: ccIdeal, ccAccent: ccAccent, vmRbColor: vmRbColor, vmAdoptTint: vmAdoptTint };'
 )(document, global.localStorage, global.window);
 
 /* ── tests ───────────────────────────────────────────────────────────────── */
@@ -132,6 +138,33 @@ console.log('\nHintergrund and Einfärben are INDEPENDENT (v4.32.5 fix): the bad
   localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#e5a00d');
   ok('once both are on, the ink is the TINT colour, never a contrast colour derived from the (different) badge colour', vmsApi.vmIconInk(false) === '#e5a00d', vmsApi.vmIconInk(false));
   ok('and the badge box itself is still exactly its own configured colour, unaffected by the tint pick', vmsApi.vmBgColor() === '#161616', vmsApi.vmBgColor());
+  reset();
+}
+
+console.log('\ncc.iconbgrainbow / cc.icontintrainbow (v4.33.0): Badge-Einstellungen übernehmen — regression pin');
+{
+  reset();
+  localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#e5a00d');
+  localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#00aa00');
+  localStorage.setItem('cc.accent', '#2f6feb');
+
+  ok('adopt OFF (default): vmBgColor() is the independently picked background colour', vmsApi.vmBgColor() === '#e5a00d', vmsApi.vmBgColor());
+  ok('adopt OFF (default): vmIconInk() is the independently picked tint colour', vmsApi.vmIconInk(false) === '#00aa00', vmsApi.vmIconInk(false));
+
+  localStorage.setItem('cc.iconbgrainbow', '1');
+  ok('Hintergrund adopting: vmBgColor() answers "" so the caller never stamps --cc-iconbg-color, letting VmTab.css\'s var() chain fall through to --cc-rb-c/--cc-rbaccent — the SAME source every generic VM badge already uses', vmsApi.vmBgColor() === '', JSON.stringify(vmsApi.vmBgColor()));
+  ok('Einfärben untouched: still the independently picked tint colour (the two controls are independent)', vmsApi.vmIconInk(false) === '#00aa00', vmsApi.vmIconInk(false));
+
+  localStorage.setItem('cc.icontintrainbow', '1');
+  localStorage.setItem('cc.rainbow', '0');
+  ok('Einfärben adopting, Rainbow OFF: vmIconInk() matches vmAdoptTint() (the plain accent) — not the own picked colour', vmsApi.vmIconInk(false) === '#2f6feb', vmsApi.vmIconInk(false));
+
+  localStorage.setItem('cc.rainbow', '1');
+  ok('Einfärben adopting, Rainbow ON: vmIconInk() matches the SAME vmRbColor(5) a generic VM badge (--cc-rbaccent) resolves to, not a frozen accent snapshot', vmsApi.vmIconInk(false) === vmsApi.vmRbColor(5), vmsApi.vmIconInk(false) + ' vs ' + vmsApi.vmRbColor(5));
+  ok('and that is NOT the own picked colour either', vmsApi.vmIconInk(false) !== '#00aa00');
+
+  localStorage.setItem('cc.icontintrainbow', '0');
+  ok('turning Einfärben adopt back off restores the own picked colour immediately', vmsApi.vmIconInk(false) === '#00aa00', vmsApi.vmIconInk(false));
   reset();
 }
 
