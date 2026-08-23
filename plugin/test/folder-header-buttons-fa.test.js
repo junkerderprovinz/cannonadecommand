@@ -96,7 +96,7 @@ console.log('\ndocker.css: the icon follows .cc-folder-act\'s own colour (grey a
   ok('it sets color: inherit (follows the button, not a fixed colour)', /color:\s*inherit/.test(body), body);
 }
 
-console.log('\nv4.35.1 fix: .cc-folder-act/.cc-card-movebtn background is !important — clears Unraid\'s native button:where() gradient background-image');
+console.log('\nv4.35.1 fix: .cc-folder-act/.cc-card-movebtn background-image is !important — clears Unraid\'s native button:where() gradient background-image');
 {
   // Root cause (live-confirmed via CDP CSS.getMatchedStylesForNode on the real box, v4.35.1): the
   // FA-icon fix above was real, but each button STILL rendered as a solid red/orange boxed swatch —
@@ -108,18 +108,72 @@ console.log('\nv4.35.1 fix: .cc-folder-act/.cc-card-movebtn background is !impor
   // background-image, not border/box-shadow (those were never affected). Source-level pin (this
   // harness has no real browser cascade to assert getComputedStyle against directly) — asserts the
   // actual mechanism, not just presence of the word "important" anywhere in the rule.
+  //
+  // v4.35.2 fix: v4.35.1 put that !important on the `background` SHORTHAND (which also covers
+  // background-color), so it silently beat :hover/.cc-folder-act-on's plain `background` below —
+  // !important always wins over non-!important regardless of :hover's higher specificity.
+  // Live-confirmed via getComputedStyle: hovering a folder action button changed the icon colour
+  // but backgroundColor stayed stuck at rgba(0,0,0,0). Fixed by splitting the shorthand: only
+  // background-image (the actual sub-property Unraid's gradient bleeds through on) keeps
+  // !important; background-color goes back to a plain declaration so :hover/.cc-folder-act-on can
+  // win it back through normal cascade rules.
   const folderAct = css.match(/\.cc-folder-act\s*\{([^}]*)\}/);
   const moveBtn = css.match(/\.cc-card-movebtn\s*\{([^}]*)\}/);
   ok('.cc-folder-act rule exists', !!folderAct);
   ok('.cc-card-movebtn rule exists', !!moveBtn);
   const faBody = folderAct ? folderAct[1] : '';
   const mbBody = moveBtn ? moveBtn[1] : '';
-  ok('.cc-folder-act: background is transparent WITH !important (the actual fix)', /background:\s*transparent\s*!important/.test(faBody), faBody);
-  ok('.cc-card-movebtn: background is transparent WITH !important (same latent bug, same fix)', /background:\s*transparent\s*!important/.test(mbBody), mbBody);
+  ok('.cc-folder-act: background-image is none WITH !important (clears the native gradient)', /background-image:\s*none\s*!important/.test(faBody), faBody);
+  ok('.cc-card-movebtn: background-image is none WITH !important (same fix)', /background-image:\s*none\s*!important/.test(mbBody), mbBody);
+  ok('.cc-folder-act: background-color is transparent WITHOUT !important (so :hover can win it back)', /background-color:\s*transparent\s*;/.test(faBody) && !/background-color:\s*transparent\s*!important/.test(faBody), faBody);
+  ok('.cc-card-movebtn: background-color is transparent WITHOUT !important (so :hover can win it back)', /background-color:\s*transparent\s*;/.test(mbBody) && !/background-color:\s*transparent\s*!important/.test(mbBody), mbBody);
+  ok('.cc-folder-act: no bare `background:` shorthand left (would re-shadow background-color)', !/(^|[^-])background:\s*transparent/.test(faBody), faBody);
+  ok('.cc-card-movebtn: no bare `background:` shorthand left (would re-shadow background-color)', !/(^|[^-])background:\s*transparent/.test(mbBody), mbBody);
   // box-shadow/border were never the bug — pin they stay untouched, so a future edit can't
   // "fix" background again by accidentally weakening these instead.
   ok('.cc-folder-act: box-shadow stays none !important (unrelated to this fix, unchanged)', /box-shadow:\s*none\s*!important/.test(faBody));
   ok('.cc-card-movebtn: box-shadow stays none !important (unrelated to this fix, unchanged)', /box-shadow:\s*none\s*!important/.test(mbBody));
+}
+
+console.log('\nv4.35.2 fix: hover/active backgrounds are no longer permanently shadowed by the base rule\'s !important');
+{
+  // Regression test for the bug this release fixes: v4.35.1's `background: transparent !important`
+  // shorthand on .cc-folder-act/.cc-card-movebtn beat their OWN :hover rule (and .cc-folder-act's
+  // OWN .cc-folder-act-on active-state rule) no matter what, because !important always wins over
+  // non-!important regardless of selector specificity or pseudo-class — live-confirmed via
+  // getComputedStyle on the real box: hovering changed the icon colour but backgroundColor stayed
+  // stuck at rgba(0,0,0,0). Rather than re-implementing a generic CSS cascade engine (its own
+  // source of bugs), this pins the exact three facts that TOGETHER guarantee a real browser
+  // resolves hover/active to the shaded colour, not transparent — each fact independently
+  // verifiable by reading the rule:
+  //   1. the base rule's background-color has NO !important (so a later/more-specific rule CAN
+  //      override it — this is the actual regression fix)
+  //   2. the hover/active rule's background has NO !important either (so it's a fair, non-!important
+  //      vs non-!important contest, decided by rule 3)
+  //   3. for :hover, normal CSS specificity (a pseudo-class adds to specificity) makes it win over
+  //      the base rule regardless of source order; for .cc-folder-act-on, which has the SAME
+  //      specificity as .cc-folder-act (both single class selectors), it must appear AFTER
+  //      .cc-folder-act in the file so source order breaks the tie in its favour
+  // If v4.35.1's bug ever came back (an !important re-added to any base background-color, or to the
+  // shorthand `background:`), fact 1 (or the "no bare `background:` shorthand" check above) fails
+  // first and this whole section goes red before facts 2/3 are even relevant.
+  var faIdx = css.indexOf('.cc-folder-act {');
+  var faHoverIdx = css.indexOf('.cc-folder-act:hover {');
+  var faOnIdx = css.indexOf('.cc-folder-act-on {');
+  var mbIdx = css.indexOf('.cc-card-movebtn {');
+  var mbHoverIdx = css.indexOf('.cc-card-movebtn:hover {');
+  ok('.cc-folder-act, :hover and -on rules all found', faIdx >= 0 && faHoverIdx >= 0 && faOnIdx >= 0);
+  ok('.cc-card-movebtn and :hover rules both found', mbIdx >= 0 && mbHoverIdx >= 0);
+
+  var faHoverBody = (css.match(/\.cc-folder-act:hover\s*\{([^}]*)\}/) || [, ''])[1];
+  var faOnBody = (css.match(/\.cc-folder-act-on\s*\{([^}]*)\}/) || [, ''])[1];
+  var mbHoverBody = (css.match(/\.cc-card-movebtn:hover\s*\{([^}]*)\}/) || [, ''])[1];
+  ok('.cc-folder-act:hover sets the shade background, no !important', /background:\s*rgba\(128, 128, 128, \.18\)\s*;/.test(faHoverBody), faHoverBody);
+  ok('.cc-folder-act-on sets the shade background, no !important', /background:\s*rgba\(128, 128, 128, \.18\)/.test(faOnBody) && !/!important/.test(faOnBody), faOnBody);
+  ok('.cc-card-movebtn:hover sets the shade background, no !important', /background:\s*rgba\(128, 128, 128, \.18\)\s*;/.test(mbHoverBody), mbHoverBody);
+  // Fact 3, the source-order tie-break for the equal-specificity case (.cc-folder-act-on vs.
+  // .cc-folder-act): .cc-folder-act-on must come AFTER .cc-folder-act in the file.
+  ok('.cc-folder-act-on appears after .cc-folder-act in source order (breaks the equal-specificity tie in its favour)', faOnIdx > faIdx);
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

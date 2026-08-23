@@ -488,8 +488,17 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
    below is what actually clears it (border/box-shadow were never affected, only background-image
    was silently overridden). Compare .cc-hgear above, which already had !important here and never
    showed the bug — this is the SAME fix, just extended to the two folder-view buttons that never
-   got it. */
-.cc-folder-act { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 4px 6px; border-radius: 6px; transition: background .12s, color .12s; }
+   got it.
+   v4.35.2 fix: that !important sat on the `background` SHORTHAND, which also covers
+   background-color — so it beat .cc-folder-act:hover's plain (non-!important) `background`
+   below regardless of :hover's higher specificity, since !important always wins over
+   non-!important first. Live-confirmed via getComputedStyle: hovering a folder action button
+   changed the icon colour but backgroundColor stayed stuck at rgba(0,0,0,0). Only
+   background-image ever needed the !important (that's the sub-property Unraid's native gradient
+   was bleeding through on, per the paragraph above) — background-color was never the problem, so
+   splitting the shorthand lets background-color fall back to the cascade's normal specificity/
+   order rules again, and :hover (and .cc-folder-act-on below) win it back. */
+.cc-folder-act { -webkit-appearance: none; appearance: none; background-color: transparent; background-image: none !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 4px 6px; border-radius: 6px; transition: background .12s, color .12s; }
 .cc-folder-act:hover { background: rgba(128, 128, 128, .18); color: var(--cc-txt); }
 /* Item 3 fix (v4.35.0): the button used to hold raw EMOJI text (👁 ▶ ■ ✎ 🗑) — glyphs that ignore
    `color` and, worse, some of them (🗑 in particular, live-confirmed with a Playwright screenshot
@@ -522,8 +531,10 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 /* per-card "move to folder" click menu — the accessible equivalent of dragging (touch,
    keyboard, or just faster than a long drag); sits at the end of the card's head row. */
 /* v4.35.1 fix (item A): same latent bug as .cc-folder-act above (same "transparent" background
-   without !important, same real <button>) — see that rule's comment for the root cause. */
-.cc-card-movebtn { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 3px 5px; border-radius: 6px; flex: none; transition: background .12s, color .12s; }
+   without !important, same real <button>) — see that rule's comment for the root cause.
+   v4.35.2 fix: same shorthand-vs-:hover regression as .cc-folder-act above, same split fix —
+   see that rule's v4.35.2 comment. */
+.cc-card-movebtn { -webkit-appearance: none; appearance: none; background-color: transparent; background-image: none !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 3px 5px; border-radius: 6px; flex: none; transition: background .12s, color .12s; }
 .cc-card-movebtn:hover { background: rgba(128, 128, 128, .18); color: var(--cc-txt); }
 .cc-menu-link-current { background: rgba(128, 128, 128, .18); }
 .cc-card { background: var(--cc-bg2); border: none; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; transition: transform .12s, box-shadow .12s; }
