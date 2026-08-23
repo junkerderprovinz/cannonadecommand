@@ -96,5 +96,31 @@ console.log('\ndocker.css: the icon follows .cc-folder-act\'s own colour (grey a
   ok('it sets color: inherit (follows the button, not a fixed colour)', /color:\s*inherit/.test(body), body);
 }
 
+console.log('\nv4.35.1 fix: .cc-folder-act/.cc-card-movebtn background is !important — clears Unraid\'s native button:where() gradient background-image');
+{
+  // Root cause (live-confirmed via CDP CSS.getMatchedStylesForNode on the real box, v4.35.1): the
+  // FA-icon fix above was real, but each button STILL rendered as a solid red/orange boxed swatch —
+  // Unraid's own `button:where(:not(.unapi *))` rule (webGui/styles/default-base.css) paints a
+  // 4-layer edge gradient through `background: transparent` whenever that declaration lacks
+  // !important, even though .cc-folder-act/.cc-card-movebtn have a higher-specificity class
+  // selector against that :where()-wrapped (zero-specificity) native rule — .cc-hgear already had
+  // !important here and never showed the bug; empirically confirmed adding it is what clears
+  // background-image, not border/box-shadow (those were never affected). Source-level pin (this
+  // harness has no real browser cascade to assert getComputedStyle against directly) — asserts the
+  // actual mechanism, not just presence of the word "important" anywhere in the rule.
+  const folderAct = css.match(/\.cc-folder-act\s*\{([^}]*)\}/);
+  const moveBtn = css.match(/\.cc-card-movebtn\s*\{([^}]*)\}/);
+  ok('.cc-folder-act rule exists', !!folderAct);
+  ok('.cc-card-movebtn rule exists', !!moveBtn);
+  const faBody = folderAct ? folderAct[1] : '';
+  const mbBody = moveBtn ? moveBtn[1] : '';
+  ok('.cc-folder-act: background is transparent WITH !important (the actual fix)', /background:\s*transparent\s*!important/.test(faBody), faBody);
+  ok('.cc-card-movebtn: background is transparent WITH !important (same latent bug, same fix)', /background:\s*transparent\s*!important/.test(mbBody), mbBody);
+  // box-shadow/border were never the bug — pin they stay untouched, so a future edit can't
+  // "fix" background again by accidentally weakening these instead.
+  ok('.cc-folder-act: box-shadow stays none !important (unrelated to this fix, unchanged)', /box-shadow:\s*none\s*!important/.test(faBody));
+  ok('.cc-card-movebtn: box-shadow stays none !important (unrelated to this fix, unchanged)', /box-shadow:\s*none\s*!important/.test(mbBody));
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

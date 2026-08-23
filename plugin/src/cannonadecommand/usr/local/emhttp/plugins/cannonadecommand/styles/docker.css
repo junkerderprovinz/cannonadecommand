@@ -73,6 +73,19 @@
    only as the fallback for rows that have no icon colour configured at all. Gated on
    .cc-rainbow so NORMAL (non-rainbow) mode is untouched either way. */
 .cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer > span.hand { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; }
+/* v4.35.1 fix (item B): the grid-card icon (.cc-card-ico — classic Grid AND every folder-view
+   density, all reuse card()/folderChip()/folderListRow()) never had the table-view row's
+   equivalent of line 60 above — a BASE rule that applies the configured/adopted colour
+   regardless of Rainbow. Only the .cc-rainbow-gated refinement below existed, so with Rainbow
+   OFF (plain accent mode) a configured Hintergrund colour silently never painted — .cc-card-ico
+   fell through to its unconditional grey default (line ~506) forever, live-confirmed via
+   getComputedStyle/--cc-iconbg-color inspection. Mirrors line 60's own base+refinement split
+   exactly: this rule is the unconditional base (falls back to --cc-accent, no --cc-rb-c step —
+   that variable is only ever stamped per-card while Rainbow is actually on), the .cc-rainbow
+   rule right after it is the higher-specificity refinement that adds the --cc-rb-c fallback step
+   once Rainbow is genuinely active. Reactive mode's own rest/hover pair (html.cc-shares-rbneutral
+   further down) has higher specificity again and continues to override both unchanged. */
+.cc-grid-holder.cc-docker-iconbg .cc-card-ico { background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important; }
 .cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card-ico { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; }
 /* reactive + rainbow: the tile rests grey (rules further down) and takes the ROW's palette colour
    on hover — UNLESS an icon colour is configured, in which case the icon colour wins (see above). */
@@ -465,7 +478,18 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 /* Task 6 write actions — only rendered for folders CC itself created (own-registry). Collapse,
    hide-stopped and bulk start/stop (v4.34.0) are NOT registry-gated — they're per-folder VIEW
    state / bulk container actions, not folder restructuring, so they apply to any folder. */
-.cc-folder-act { -webkit-appearance: none; appearance: none; background: transparent; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 4px 6px; border-radius: 6px; transition: background .12s, color .12s; }
+/* v4.35.1 fix (item A): `background: transparent` WITHOUT !important lost to Unraid's own native
+   `button:where(:not(.unapi *))` rule (webGui/styles/default-base.css) on the background-image
+   sub-property specifically — that native rule paints a 4-layer red/orange gradient (the same
+   skeuomorphic "BrowseButton" edge-gradient used elsewhere in Unraid's own chrome) THROUGH a
+   plain, non-!important `background: transparent`, even though `.cc-folder-act` has higher
+   specificity (class vs. bare `button:where()`, whose :where() wrapper is zero-specificity) —
+   live-confirmed via CDP CSS.getMatchedStylesForNode, and empirically confirmed the !important
+   below is what actually clears it (border/box-shadow were never affected, only background-image
+   was silently overridden). Compare .cc-hgear above, which already had !important here and never
+   showed the bug — this is the SAME fix, just extended to the two folder-view buttons that never
+   got it. */
+.cc-folder-act { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 4px 6px; border-radius: 6px; transition: background .12s, color .12s; }
 .cc-folder-act:hover { background: rgba(128, 128, 128, .18); color: var(--cc-txt); }
 /* Item 3 fix (v4.35.0): the button used to hold raw EMOJI text (👁 ▶ ■ ✎ 🗑) — glyphs that ignore
    `color` and, worse, some of them (🗑 in particular, live-confirmed with a Playwright screenshot
@@ -497,7 +521,9 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 .cc-folder-group-head.cc-drop-target { border-radius: 7px; }
 /* per-card "move to folder" click menu — the accessible equivalent of dragging (touch,
    keyboard, or just faster than a long drag); sits at the end of the card's head row. */
-.cc-card-movebtn { -webkit-appearance: none; appearance: none; background: transparent; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 3px 5px; border-radius: 6px; flex: none; transition: background .12s, color .12s; }
+/* v4.35.1 fix (item A): same latent bug as .cc-folder-act above (same "transparent" background
+   without !important, same real <button>) — see that rule's comment for the root cause. */
+.cc-card-movebtn { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 3px 5px; border-radius: 6px; flex: none; transition: background .12s, color .12s; }
 .cc-card-movebtn:hover { background: rgba(128, 128, 128, .18); color: var(--cc-txt); }
 .cc-menu-link-current { background: rgba(128, 128, 128, .18); }
 .cc-card { background: var(--cc-bg2); border: none; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; transition: transform .12s, box-shadow .12s; }

@@ -74,6 +74,7 @@ function run(entries, density, opts) {
     'el', 'window', 'localStorage', 'gridHolder', 'ccOrgView', 'filterText', 'mode', 'menu', 'menuAnchor',
     'ensureGridHolder', 'removeGridHolder', 'relocateTopBar', 'effc', 'makeGear', 'applyIconTint',
     'folderDensity', 'card', 'folderChip', 'folderListRow', 'containerByName', 'ccFolderHidesContainer', 't',
+    'iconBgOn',
     grabFn('renderFolderView') + '\nreturn renderFolderView;'
   )(
     el, fakeWindow, { getItem: () => null }, fakeGridHolder, ccOrgView, '', 'folder', null, null,
@@ -84,7 +85,11 @@ function run(entries, density, opts) {
     () => el('div', 'cc-card cc-frow cc-frow-marker'),
     (name) => containers[String(name).toLowerCase()] || null,
     () => false,
-    (k) => k
+    (k) => k,
+    // v4.35.1: renderFolderView() now gates .cc-docker-iconbg via the shared iconBgOn() helper
+    // (effc("iconbg")==="1" || iconBgAdopts()) instead of inlining the effc() check — stub it the
+    // same way every other free-variable collaborator here is stubbed.
+    () => false
   );
   fn();
   return { gridHolder: fakeGridHolder, scrollCalls: scrollCalls, removed: removed };

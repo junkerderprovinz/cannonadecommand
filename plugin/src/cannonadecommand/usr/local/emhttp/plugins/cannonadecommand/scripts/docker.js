@@ -56,6 +56,18 @@
   // fallback on purpose: an area using its OWN Hintergrund/Einfärben colours can still follow
   // rainbow or not, exactly like an area adopting the global colours.
   function iconBgAdopts() { return localStorage.getItem("cc.iconbgrainbow") === "1"; }
+  // v4.35.1 fix (item B): the three .cc-docker-iconbg class-gating call sites below (list/table,
+  // classic Grid, Folder view) used to test the raw per-area toggle alone (`effc("iconbg")==="1"`)
+  // — but bgColor()/iconInk() above already treat the master ADOPT toggle (iconBgAdopts()) as
+  // implicitly turning Hintergrund on, exactly like the Settings page's own "Badge-Einstellungen
+  // übernehmen" switch description promises ("AN: Hintergrund UND Icons folgen zusammen …").
+  // With adopt ON but the area's own toggle never separately flipped on (its own default/last
+  // value, "0"), .cc-docker-iconbg never got added to gridHolder/tb AT ALL — so neither the
+  // rainbow-gated nor the reactive-hover CSS rule could ever fire, and the badge stayed the plain
+  // unconfigured grey in every render path, live-confirmed (--cc-iconbg-color was correctly being
+  // computed by bgColor()/applyIconTint(), the class gate never let it reach the DOM). Single
+  // helper so the same fix can't drift out of sync between the three call sites again.
+  function iconBgOn() { return effc("iconbg") === "1" || iconBgAdopts(); }
   // ONE size map for the whole file (vms.js/plugins.js keep their own copy of this exact
   // map — see the fix-plan note on cc.sgsize drift): cc.sgsize -> [--cc-logo-img, --cc-logo-box].
   // Used by BOTH applySettings() (custom-property plumbing) and applyIconTint()'s list-mode
@@ -1027,7 +1039,7 @@
       tb.classList.add("cc-enh"); tb.classList.toggle("cc-adv", isAdvancedView());
       tb.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
       tb.classList.toggle("cc-tint-icons", !!effc("iconcolor"));
-      tb.classList.toggle("cc-docker-iconbg", effc("iconbg") === "1");
+      tb.classList.toggle("cc-docker-iconbg", iconBgOn());
       // row density as a CLASS too (not only the --cc-density padding var): the row height
       // is mostly the badge content, so compact/airy also tighten/loosen the badge spacing.
       var dens = localStorage.getItem("cc.density") || "normal";
@@ -1985,7 +1997,7 @@
     gridHolder.classList.toggle("cc-tint-icons", !!effc("iconcolor"));
     // grid twin of the table's iconbg gate (applyEnhanceClasses) — the reactive
     // logo-tile rest/hover rules key on it, so card view matches the list
-    gridHolder.classList.toggle("cc-docker-iconbg", effc("iconbg") === "1");
+    gridHolder.classList.toggle("cc-docker-iconbg", iconBgOn());
     // The grid needs its OWN gear: the list-toolbar gear lives in/near the native table
     // area, which is not a reliable anchor in card view ("which gear menu?"). This one is
     // pinned to the grid holder's top-right corner. A rebuild detaches the old gear — if
@@ -2173,7 +2185,7 @@
     relocateTopBar();
     gridHolder.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
     gridHolder.classList.toggle("cc-tint-icons", !!effc("iconcolor"));
-    gridHolder.classList.toggle("cc-docker-iconbg", effc("iconbg") === "1");
+    gridHolder.classList.toggle("cc-docker-iconbg", iconBgOn());
     if (!ccOrgView) { removeGridHolder(); window.scrollTo(0, savedScroll); return; } // setMode() already guards this, but stay defensive
     var byParent = {};
     ccOrgView.flatEntries.forEach(function (e) { (byParent[e.parentId] = byParent[e.parentId] || []).push(e); });
