@@ -319,12 +319,23 @@
     try { Object.keys(u || {}).forEach(function (k) { if (/^cc[a-z]*\./.test(k) && k !== "cc.stateCache" && localStorage.getItem(k) !== u[k]) { (window.__ccLS || localStorage.setItem.bind(localStorage))(k, u[k]); changed = true; } }); } catch (e) {}
     return changed;
   }
+  var ccConfigFirstLoad = true; // see loadConfig()'s forced first repaint below
   function loadConfig() {
     return api("GET", "config").then(function (c) {
       if (c && typeof c === "object") {
         config = { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], idle_stops: c.idle_stops || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: c.ui_settings || undefined };
-        // cross-origin settings: adopt the server-side cc.* mirror, then re-render
-        if (adoptUISettings(c.ui_settings)) { applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderGrid(); }
+        // cross-origin settings: adopt the server-side cc.* mirror, then re-render.
+        // #(investigated for the "badges stuck in rainbow" report): adoptUISettings() only
+        // returns true when it actually WROTE a differing key, so the very FIRST call ever
+        // fires this repaint purely by luck of timing — colorBarButtons()/applyIconTint() etc.
+        // may already have run once, synchronously, off whatever localStorage held BEFORE this
+        // promise resolved (page boot doesn't wait on it). On a slow connection that first,
+        // stale-value paint can be visible for a beat before this callback's normal repaint
+        // catches up. Force the SAME full repaint on the first loadConfig() ever, unconditionally
+        // — not just when adoptUISettings() happened to change something — so nothing painted
+        // before this promise resolved can ever survive it uncorrected.
+        var forceFirst = ccConfigFirstLoad; ccConfigFirstLoad = false;
+        if (adoptUISettings(c.ui_settings) || forceFirst) { applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderGrid(); }
         // first run against this engine: SEED the server mirror from this browser's
         // settings, so they survive origin switches and cleared browser data
         if (!uiSeeded && (!c.ui_settings || !Object.keys(c.ui_settings).length)) { uiSeeded = true; var seed9 = collectUISettings(); if (Object.keys(seed9).length) { Object.keys(seed9).forEach(function (k9) { uiPending[k9] = 1; }); pushUISettings(); } }

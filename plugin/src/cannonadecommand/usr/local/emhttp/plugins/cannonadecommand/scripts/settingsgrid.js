@@ -311,6 +311,12 @@
     // makes a re-enable written from the CC settings page take effect LIVE, not only after a reload.
     apply();
     watch();
+    // same well-known-global convention every other area script carries (ccHeaderApply/ccSharesApply/
+    // ccVmsApply/ccPluginsApply): the Settings page's own live toggle AND cc-theme.js's cross-browser
+    // config adoption both call this by name when it exists. This area never exposed it before, so a
+    // Rainbow correction landing from a different browser/device silently fixed localStorage but left
+    // the tile grid painted stale until the next reload — the same gap fixed for VMs/Plugins.
+    try { window.ccSettingsGridApply = apply; } catch (e) {}
     // the CC settings page writes cc.*/ccs.* keys from another origin/tab
     try { window.addEventListener("storage", function (e) { if (e && e.key && e.key !== "cc.stateCache" && /^cc[a-z]*\./.test(e.key)) apply(); }); } catch (e) {} // cc.stateCache EXCLUDED: docker.js rewrites it every 9s, which would repaint this area on a 9s loop in every other open tab
   }

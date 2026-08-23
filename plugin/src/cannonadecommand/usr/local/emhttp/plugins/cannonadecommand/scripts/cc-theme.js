@@ -682,11 +682,30 @@
       try { Object.keys(u || {}).forEach(function (k) { if (/^cc[a-z]*\./.test(k) && k !== "cc.stateCache" && localStorage.getItem(k) !== u[k]) { (window.__ccLS || localStorage.setItem.bind(localStorage))(k, u[k]); changed = true; } }); } catch (e) {}
       return changed;
     }
+    // #(user, repeat report: "im docker und vm tab sind einige badges noch im regenbogenmodus
+    // obwohl er deaktiviert ist"): confirmed root cause for VMs/Plugins/SettingsGrid/Header/Shares
+    // — this comment used to read "no forced reload here, this file has no re-render hook" and
+    // meant it literally: adopt() below silently corrects localStorage from the server's
+    // ui_settings mirror, but NOTHING ever repainted the page that already drew itself with the
+    // stale value. Live-confirmed (Playwright + a wiped localStorage to fake a second browser):
+    // the FIRST load after a Rainbow toggle on a DIFFERENT browser/device shows the OLD colours
+    // and never self-corrects until the user reloads/navigates AGAIN — by which point localStorage
+    // is already fixed from the first load's silent adopt, so a retest right afterwards finds
+    // "everything clean" and the bug looks unreproducible. Every area script that repaints itself
+    // for a SAME-BROWSER live toggle already exposes ONE well-known global hook for exactly this
+    // purpose (window.ccHeaderApply/ccSharesApply/ccVmsApply/ccPluginsApply/ccSettingsGridApply —
+    // the Settings page's own toggle calls these directly). Call whichever of them exist on THIS
+    // page after a real adoption, so a cross-browser correction repaints immediately instead of
+    // only "catching up on the next natural navigation".
+    var CC_AREA_APPLY_HOOKS = ["ccHeaderApply", "ccSharesApply", "ccVmsApply", "ccPluginsApply", "ccFavoritesApply", "ccSettingsGridApply"];
+    function rerenderAdoptedAreas() {
+      CC_AREA_APPLY_HOOKS.forEach(function (fnName) {
+        try { if (typeof window[fnName] === "function") window[fnName](); } catch (e) {}
+      });
+    }
     apiGet("config").then(function (c) {
       if (!c || typeof c !== "object") return;
-      // silently corrects localStorage now; already-painted classes catch up on the next
-      // natural navigation/reload — no forced reload here, this file has no re-render hook.
-      adopt(c.ui_settings);
+      if (adopt(c.ui_settings)) rerenderAdoptedAreas();
       if (!c.ui_settings || !Object.keys(c.ui_settings).length) {
         var seed = {};
         try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && /^cc[a-z]*\./.test(k) && k !== "cc.stateCache") seed[k] = localStorage.getItem(k); } } catch (e) {}
