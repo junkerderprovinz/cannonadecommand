@@ -2322,21 +2322,21 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-actbtn:
    colour instead of the generic accent fallback. .cc-b.cc-b-* ties the generic row-hover rule's
    :not() specificity; source order AFTER it resolves the tie per kind. */
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-net,
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-net { background: var(--cc-rb-net, var(--cc-ok, #1f9d55)) !important; color: var(--cc-rb-net-t, #fff) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-net { background: var(--cc-rb-net, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-net-t, #fff) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-ip,
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-ip { background: var(--cc-rb-ip, #2f6feb) !important; color: var(--cc-rb-ip-t, #fff) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-ip { background: var(--cc-rb-ip, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ip-t, #fff) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-lan,
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-lan { background: var(--cc-rb-lan, var(--cc-warn, #e0912a)) !important; color: var(--cc-rb-lan-t, #161616) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-lan { background: var(--cc-rb-lan, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-lan-t, #fff) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-port,
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-port { background: var(--cc-rb-port, #8b5cf6) !important; color: var(--cc-rb-port-t, #fff) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-port { background: var(--cc-rb-port, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-port-t, #fff) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-vol,
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-vol { background: var(--cc-rb-vol, #0891b2) !important; color: var(--cc-rb-vol-t, #fff) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-vol { background: var(--cc-rb-vol, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-vol-t, #fff) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-cpu,
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-err, #d9433f)) !important; color: var(--cc-rb-cpu-t, #fff) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-cpu-t, #fff) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-ram,
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-ram { background: var(--cc-rb-ram, #2f9d8b) !important; color: var(--cc-rb-ram-t, #fff) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-ram { background: var(--cc-rb-ram, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ram-t, #fff) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b.cc-b-bw,
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-bw { background: var(--cc-rb-bw, var(--cc-warn, #e0912a)) !important; color: var(--cc-rb-bw-t, #161616) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-bw { background: var(--cc-rb-bw, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-bw-t, #fff) !important; }
 /* LOGO TILE joins the row: in neutral the tile rests grey like the badges and returns to its
    configured tile colour on ROW/card hover. Gated on the iconbg mode class — the list stamps it
    on the native table (applyEnhanceClasses), the grid holder gets the SAME class from renderGrid.
