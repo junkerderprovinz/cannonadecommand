@@ -57,7 +57,9 @@
   // below still uses the master toggle too, for the OTHER mode (badge off, Einfärben on): there
   // is no badge to contrast against there, so it keeps resolving a rotating/accent HUE rather
   // than a black/white contrast, same as v4.33.0 — only the storage key is now shared.
-  function bgAdopting() { return eff("iconbgrainbow", "0") === "1"; }
+  // v4.35.0 (item 5): adopt-rainbow is now a PURELY GLOBAL decision (see docker.js's
+  // iconBgAdopts() for the full writeup) — bypasses eff()'s own/adopted-STYLE fallback on purpose.
+  function bgAdopting() { return g("cc.iconbgrainbow", "0") === "1"; }
   function bgColorEff() {
     if (bgAdopting()) return "";
     var bg = eff("iconbgcolor", ""); if (/^#[0-9a-f]{6}$/i.test(bg)) return bg;
@@ -77,7 +79,7 @@
   // plugins.js use for THEIR tint's adopt-representative colour — here reusing this area's OWN
   // rbColor()/rbOn(). Reads the SAME single master key as bgAdopting() now (v4.33.1).
   function tintColorEff() {
-    if (eff("iconbgrainbow", "0") === "1") return rbOn() ? rbColor(5) : accent();
+    if (bgAdopting()) return rbOn() ? rbColor(5) : accent();
     return eff("iconcolor", "");
   }
   // Einfärben (tint) on/off (v4.32.5, mirrors cc.icontint): unset falls back to the pre-4.32.5

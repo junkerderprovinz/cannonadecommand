@@ -96,7 +96,7 @@
     return vmRbColor(5);
   }
   function vmBgColor() {
-    if (effK("iconbgrainbow") === "1") return "";   // adopting: defer to the CSS rainbow/accent chain
+    if (iconBgAdoptsV()) return "";   // adopting: defer to the CSS rainbow/accent chain
     var c = effK("iconbgcolor");
     if (c && /^#?[0-9a-f]{6}$/i.test(c)) return ccHex6(c);
     var ic = effK("iconcolor");
@@ -115,7 +115,7 @@
   // `forTint` doubles the floor because a luminance tint outputs roughly half the target's luma;
   // the auto contrast branch skips the guard — idealText() only ever answers #fff/#161616.
   function vmIconInk(forTint) {
-    if (effK("iconbgrainbow") === "1") return ccIdeal(vmAdoptTint());
+    if (iconBgAdoptsV()) return ccIdeal(vmAdoptTint());
     if (!vmTintOn()) return "";
     var pick = effK("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
@@ -220,6 +220,9 @@
   //    on td.vm-name, mirroring the Docker-tab state badge, plus the accent vars on
   //    the document root. Self-contained + idempotent; the tint stays separate below.
   function effK(k) { return ls("cc.stylevms") !== "0" ? ls("cc." + k) : ls("ccv." + k); }
+  // v4.35.0 (item 5): adopt-rainbow is now a PURELY GLOBAL decision (see docker.js's
+  // iconBgAdopts() for the full writeup) — bypasses effK()'s own/adopted-STYLE fallback on purpose.
+  function iconBgAdoptsV() { return ls("cc.iconbgrainbow") === "1"; }
   function ccIdeal(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
   function ccAccent() { var a = effK("accent") || "#2f6feb"; return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
   // Logo-Hintergrund read-side: a monochrome b/w feColorMatrix that flattens any icon
@@ -1095,7 +1098,7 @@
       // matches ITS OWN resolved background instead of every row sharing ONE filter built
       // from a single representative colour (the v4.33.1 bug — see vmItemAdoptInk()).
       var f, flat, c, fBlk, fWht, flatBlk, flatWht, vmInk;
-      var adopt = effK("iconbgrainbow") === "1";
+      var adopt = iconBgAdoptsV();
       if (adopt) {
         flatBlk = ensureFlatFilter("cc-vm-mono-svg-blk", "cc-vm-mono-tint-blk", "#161616");
         flatWht = ensureFlatFilter("cc-vm-mono-svg-wht", "cc-vm-mono-tint-wht", "#fff");

@@ -133,6 +133,9 @@
   // effective setting: adopt the Docker tab's cc.* while the takeover toggle is
   // on (default), otherwise this tab's own ccp.* keys
   function eff(name) { return ls("cc.styleplugin") !== "0" ? ls("cc." + name) : ls("ccp." + name); }
+  // v4.35.0 (item 5): adopt-rainbow is now a PURELY GLOBAL decision (see docker.js's
+  // iconBgAdopts() for the full writeup) — bypasses eff()'s own/adopted-STYLE fallback on purpose.
+  function iconBgAdoptsP() { return ls("cc.iconbgrainbow") === "1"; }
   function el(t, c, x) { var n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; }
 
   var RB_PAL = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
@@ -208,7 +211,7 @@
   // single "action" rainbow slot docker.js/vms.js use for buttons/toggles, live and recomputed
   // every repaint via the existing colorFor()/pal()/RB_OFFSET machinery).
   function plugBgColor() {
-    if (eff("iconbgrainbow") === "1") return "";   // adopting: defer to the CSS rainbow/accent chain
+    if (iconBgAdoptsP()) return "";   // adopting: defer to the CSS rainbow/accent chain
     var c = eff("iconbgcolor");
     if (c && /^#?[0-9a-f]{6}$/i.test(c)) return ccHex6(c);
     var ic = eff("iconcolor");
@@ -228,7 +231,7 @@
   // (see CCTheme.liftDark); the auto contrast branch skips the guard — idealText() only ever
   // answers #fff/#161616.
   function plugIconInk(forTint) {
-    if (eff("iconbgrainbow") === "1") return idealText(colorFor(5));
+    if (iconBgAdoptsP()) return idealText(colorFor(5));
     if (!plugTintOn()) return "";
     var pick = eff("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
@@ -487,7 +490,7 @@
     // every row sharing ONE filter built from a single representative colour (the v4.33.1
     // bug: plugIconInk()'s old idealText(colorFor(5)) answer, identical for every row).
     var f2, pFlat, pInk;
-    if (eff("iconbgrainbow") === "1") {
+    if (iconBgAdoptsP()) {
       var rowBlk = rowInk !== "#fff";
       pFlat = rowBlk ? ensureFlatFilter("cc-plug-mono-svg-blk", "cc-plug-mono-tint-blk", "#161616") : ensureFlatFilter("cc-plug-mono-svg-wht", "cc-plug-mono-tint-wht", "#fff");
       f2 = rowBlk ? ensureTintAs("cc-plug-tint-svg-blk", "cc-plug-tint-blk", "#161616") : ensureTintAs("cc-plug-tint-svg-wht", "cc-plug-tint-wht", "#fff");

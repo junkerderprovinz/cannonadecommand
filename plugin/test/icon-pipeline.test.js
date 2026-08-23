@@ -95,7 +95,7 @@ function grabFn(name) {
 const dockerApi = new Function('document', 'localStorage', 'window',
   'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
-  grabFn('effc') + '\n' + grabFn('themingOn') + '\n' +
+  grabFn('effc') + '\n' + grabFn('iconBgAdopts') + '\n' + grabFn('themingOn') + '\n' +
   grabFn('idealText') + '\n' + grabFn('ccHex6') + '\n' + grabFn('tintOn') + '\n' + grabFn('ccPalActive') + '\n' + grabFn('ccRbColor') + '\n' + grabFn('iconAdoptTint') + '\n' + grabFn('bgColor') + '\n' + grabFn('iconInk') + '\n' + grabFn('itemAdoptInk') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' + grabFn('ensureTintFilterAs') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('ccLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
   'return { iconInk: iconInk, itemAdoptInk: itemAdoptInk, tintOn: tintOn, bgColor: bgColor, ensureFlatFilter: ensureFlatFilter, ensureMonoFilter: ensureMonoFilter, ensureTintFilter: ensureTintFilter, ensureTintFilterAs: ensureTintFilterAs, ccLogoSizes: ccLogoSizes, glyphInkAndFilter: glyphInkAndFilter, idealText: idealText, effc: effc, iconAdoptTint: iconAdoptTint, ccRbColor: ccRbColor };'
 )(document, global.localStorage, global.window);

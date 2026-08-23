@@ -536,12 +536,24 @@
       var ic = io.getColor(); if (/^#[0-9a-f]{6}$/i.test(ic)) return ic;
       return /^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#1f9d55";
     }
-    // the ONE master toggle — first thing in the card, above every other row.
-    var adoptTg = toggle(io.getAdopt(), function (v) { io.setAdopt(v); sync(); io.onChange(); });
-    var adoptRow = el("div", "cc-set-row cc-set-inline");
-    var adoptLbl = el("span", "cc-set-lblwrap"); adoptLbl.appendChild(el("span", null, T("Badge-Einstellungen übernehmen", "Adopt badge settings")));
-    adoptLbl.appendChild(infoIcon(T("AN: Hintergrund UND Einfärben folgen zusammen Regenbogen (rotierend, pro Symbol) bzw. der Akzentfarbe, wenn Regenbogen aus ist — genau wie jedes andere Badge. Das Symbol selbst wird dabei automatisch schwarz oder weiß eingefärbt, je nachdem was auf dem Hintergrund lesbar ist. Die beiden Farbwähler unten werden dabei ignoriert.", "ON: Background AND Colourise together follow Rainbow mode (rotating, per icon) or the plain accent when Rainbow is off — exactly like every other badge. The icon itself is then automatically inked black or white, whichever reads on the resolved background. Both colour pickers below are ignored while this is on.")));
-    adoptRow.appendChild(adoptLbl); adoptRow.appendChild(adoptTg);
+    // v4.35.0 (item 5, jdp: "den kann man von den Docker/Plugins/VMs tabs weg lassen... man muss
+    // ihn eh nur global an/aus machen, sonst ist er redundant"): the master toggle now lives on the
+    // GLOBAL "Logos & Icons" card ONLY — every area card (Docker/Plugins/VMs/Settings…) still needs
+    // io.getAdopt() internally (sync() below dims the colour pickers exactly as before, now purely
+    // reading whatever the caller's getAdopt() resolves to — see the "always global" getAdopt()s at
+    // the area call sites), it just never gets its OWN visible row/switch to flip. Skips building
+    // adoptTg/adoptRow at all when set, rather than building-then-hiding — nothing to leak inert
+    // DOM for a control this card can never show.
+    var hideAdopt = !!io.hideAdoptRow;
+    var adoptTg = null, adoptRow = null;
+    if (!hideAdopt) {
+      // the ONE master toggle — first thing in the card, above every other row.
+      adoptTg = toggle(io.getAdopt(), function (v) { io.setAdopt(v); sync(); io.onChange(); });
+      adoptRow = el("div", "cc-set-row cc-set-inline");
+      var adoptLbl = el("span", "cc-set-lblwrap"); adoptLbl.appendChild(el("span", null, T("Badge-Einstellungen übernehmen", "Adopt badge settings")));
+      adoptLbl.appendChild(infoIcon(T("AN: Hintergrund UND Icons folgen zusammen Regenbogen (rotierend, pro Symbol) bzw. der Akzentfarbe, wenn Regenbogen aus ist — genau wie jedes andere Badge. Das Symbol selbst wird dabei automatisch schwarz oder weiß eingefärbt, je nachdem was auf dem Hintergrund lesbar ist. Die beiden Farbwähler unten werden dabei ignoriert.", "ON: Background AND Icons together follow Rainbow mode (rotating, per icon) or the plain accent when Rainbow is off — exactly like every other badge. The icon itself is then automatically inked black or white, whichever reads on the resolved background. Both colour pickers below are ignored while this is on.")));
+      adoptRow.appendChild(adoptLbl); adoptRow.appendChild(adoptTg);
+    }
 
     var bgTg = toggle(io.getBg(), function (v) {
       io.setBg(v);
@@ -559,7 +571,10 @@
       if (v && !/^#[0-9a-f]{6}$/i.test(io.getColor())) { var seed2 = tintPk._get(); io.setColor(seed2); tintHx.value = seed2; }
       sync(); io.onChange();
     });
-    var tintRow = el("div", "cc-set-row cc-set-inline"); tintRow.appendChild(el("span", null, T("Einfärben", "Colourise"))); tintRow.appendChild(tintTg);
+    // v4.35.0 (item 4, jdp: "Einfärben soll eigentlich Icons heißen"): display label only — the
+    // storage key (cc.icontint/P+icontint), the getter/setter names (getTint/setTint/io.getTint())
+    // and every internal variable (tintTg, tintRow, tintOn, …) keep their existing names unchanged.
+    var tintRow = el("div", "cc-set-row cc-set-inline"); tintRow.appendChild(el("span", null, T("Icons", "Icons"))); tintRow.appendChild(tintTg);
     var tintHx = el("input", "cc-set-hexin"); tintHx.type = "text"; tintHx.value = io.getColor() || ""; tintHx.placeholder = "#1f9d55"; tintHx.maxLength = 7; tintHx.spellcheck = false;
     var tintPk = inlinePicker(/^#[0-9a-f]{6}$/i.test(io.getColor()) ? io.getColor() : (/^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#1f9d55"), function (v) { io.setColor(v); tintHx.value = v; sync(); io.onChange(); });
     tintHx.addEventListener("input", function () { var v = normHex(tintHx.value); if (v) { io.setColor(v); tintPk._set(v); sync(); io.onChange(); } });
@@ -569,7 +584,7 @@
     var strInput = el("input"); strInput.type = "range"; strInput.min = "10"; strInput.max = "100"; strInput.style.flex = "1"; strRow.appendChild(strInput);
 
     function sync() {
-      adoptTg._setOn(io.getAdopt());
+      if (adoptTg) adoptTg._setOn(io.getAdopt());
       var adopting = io.getAdopt();
       // NEITHER picker is consulted while the master toggle adopts — dim + inert both, the same
       // convention the Intensität row below already uses for "this control is not currently in
@@ -577,6 +592,14 @@
       bgTg._setOn(io.getBg());
       bgHx.value = io.getBgColor() || ""; try { bgPk._set(bgColorEff()); } catch (e9) {}
       bgPickRow.style.opacity = adopting ? ".4" : ""; bgPickRow.style.pointerEvents = adopting ? "none" : "";
+      // v4.35.0 (item 4, jdp: the switches themselves — not just their colour pickers — must grey
+      // out and refuse clicks while adopting). toggle()'s own disabled state (_setDisabled) already
+      // does exactly that: opacity .4 + grayscale + cursor:not-allowed (see .cc-set-toggle-disabled
+      // in docker.css) AND flip() refuses to fire onChange while it's set — so this is the SAME
+      // mechanism the Intensität row's opacity/pointerEvents convention approximates by hand,
+      // applied to the switch itself instead of a wrapping row.
+      bgTg._setDisabled(adopting);
+      tintTg._setDisabled(adopting);
       tintTg._setOn(io.getTint());
       tintHx.value = io.getColor() || ""; try { if (/^#[0-9a-f]{6}$/i.test(io.getColor())) tintPk._set(io.getColor()); } catch (e9) {}
       tintPickRow.style.opacity = adopting ? ".4" : ""; tintPickRow.style.pointerEvents = adopting ? "none" : "";
@@ -588,7 +611,7 @@
       var dim = !io.getTint() || adopting;
       strRow.style.opacity = dim ? ".4" : ""; strRow.style.pointerEvents = dim ? "none" : "";
     }
-    into.appendChild(adoptRow);
+    if (adoptRow) into.appendChild(adoptRow);
     into.appendChild(bgRow); into.appendChild(bgPickRow);
     into.appendChild(tintRow); into.appendChild(tintPickRow);
     into.appendChild(strRow);
@@ -1452,7 +1475,7 @@
     buildStyleCards("ccd.", wrap, [], true);
 
     // ── Logos (background + tint, two INDEPENDENT controls — see logoToggles()) ──
-    var c2 = card(T("Logos", "Logos"), T("Die Schalter aktivieren Hintergrund und Einfärben unabhängig voneinander — jeder hat seine eigene Farbe.", "The switches turn Background and Colourise on independently — each has its own colour."));
+    var c2 = card(T("Logos", "Logos"), T("Die Schalter aktivieren Hintergrund und Icons unabhängig voneinander — jeder hat seine eigene Farbe.", "The switches turn Background and Icons on independently — each has its own colour."));
     // Einfärben on/off, unset falling back to the pre-4.32.5 reading (a valid cc.iconcolor
     // implicitly meant "tint on") — mirrors gTintOnEff() in the global Logos & Icons card
     // (this Docker card edits the SAME global cc.* keys, not a ccd.-scoped copy).
@@ -1473,10 +1496,14 @@
       setTint: function (v) { set("cc.icontint", v ? "1" : "0"); },
       getColor: function () { return get("cc.iconcolor", ""); },
       setColor: function (v) { set("cc.iconcolor", v); },
+      // v4.35.0 (item 5, jdp: the adopt toggle is redundant per-area — only need it globally):
+      // already read/wrote the GLOBAL key unconditionally, so getAdopt/setAdopt need no change —
+      // only hideAdoptRow, so the Docker card no longer shows its OWN copy of this switch.
       getAdopt: function () { return get("cc.iconbgrainbow", "0") === "1"; },
       setAdopt: function (v) { set("cc.iconbgrainbow", v ? "1" : "0"); },
       getAccent: function () { return get("cc.accent", "#2f6feb"); },
-      onChange: c2OnChange
+      onChange: c2OnChange,
+      hideAdoptRow: true
     });
     c2LT.strInput.value = String(iconstrength);
     c2LT.strInput.addEventListener("input", function () { iconstrength = parseInt(c2LT.strInput.value, 10); set("cc.iconstrength", c2LT.strInput.value); try { tintPrev(); } catch (e9) {} syncAllStyleCards(); });
@@ -1743,7 +1770,7 @@
       into.appendChild(cA);
       // Badge-Form (shape) is now a single GLOBAL control in the Allgemein "Badges" card, so it is
       // no longer repeated per area here.
-      var cB = card(T("Logos", "Logos"), T("Die Schalter aktivieren Hintergrund und Einfärben unabhängig voneinander — jeder hat seine eigene Farbe.", "The switches turn Background and Colourise on independently — each has its own colour."));
+      var cB = card(T("Logos", "Logos"), T("Die Schalter aktivieren Hintergrund und Icons unabhängig voneinander — jeder hat seine eigene Farbe.", "The switches turn Background and Icons on independently — each has its own colour."));
       // ga(): adopt ON -> read/preview the GLOBAL cc.icon* values; adopt OFF -> this area's own
       // P+icon* values. Every value change here means "this area uses its OWN style" (useOwn(),
       // exactly like the Badges card handlers above), so the six io setters below always WRITE
@@ -1767,10 +1794,19 @@
         setTint: function (v) { set(P + "icontint", v ? "1" : "0"); useOwn(); },
         getColor: function () { return ga() ? get("cc.iconcolor", "") : get(P + "iconcolor", ""); },
         setColor: function (v) { set(P + "iconcolor", v); useOwn(); },
-        getAdopt: function () { return (ga() ? get("cc.iconbgrainbow", "0") : get(P + "iconbgrainbow", "0")) === "1"; },
-        setAdopt: function (v) { set(P + "iconbgrainbow", v ? "1" : "0"); useOwn(); },
+        // v4.35.0 (item 5): adopt-rainbow is no longer area-gated at all — this card no longer
+        // shows the switch (hideAdoptRow below), and the ONE global "Logos & Icons" card is the
+        // only place it can be flipped, so getAdopt() always answers the global key regardless of
+        // ga() (own vs. adopted STYLE is unrelated now — Hintergrund/Icons colours can still be
+        // this area's own; whether they follow rainbow is a purely global decision). setAdopt is
+        // unreachable dead code (logoToggles() never builds/wires a switch to call it while
+        // hideAdoptRow is set) — kept as a harmless no-op rather than deleted outright, in case a
+        // future caller re-enables the row for this card.
+        getAdopt: function () { return get("cc.iconbgrainbow", "0") === "1"; },
+        setAdopt: function () {},
         getAccent: function () { return acc; },
-        onChange: function () { applyBgClasses(); try { tp(); } catch (e9) {} }
+        onChange: function () { applyBgClasses(); try { tp(); } catch (e9) {} },
+        hideAdoptRow: true
       });
       cBLT.strInput.value = String(istr);
       cBLT.strInput.addEventListener("input", function () { set(P + "iconstrength", cBLT.strInput.value); useOwn(); try { tp(); } catch (e9) {} });
@@ -1811,7 +1847,9 @@
         // gpaint()'s comment in the global Logos & Icons card for why (the preview never simulated
         // Rainbow rotation) — and ink with its automatic black/white contrast, forced on regardless
         // of Einfärben's own on/off while adopting.
-        var adopt9 = (ga9 ? get("cc.iconbgrainbow", "0") : get(P + "iconbgrainbow", "0")) === "1";
+        // v4.35.0 (item 5): purely global now, same as cBLT's getAdopt() above — no longer gated by
+        // ga() (own vs. adopted STYLE), so the preview never disagrees with what getAdopt() answers.
+        var adopt9 = get("cc.iconbgrainbow", "0") === "1";
         pvl.set({
           bg: effIconBg(), bgColor: adopt9 ? acc : (ga9 ? get("cc.iconbgcolor", "") : get(P + "iconbgcolor", "")),
           tint: adopt9 ? true : (ga9 ? tintOnAt("cc.") : tintOnAt(P)), color: adopt9 ? idealText(acc) : (ga9 ? get("cc.iconcolor", "") : get(P + "iconcolor", "")),

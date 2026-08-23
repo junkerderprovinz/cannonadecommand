@@ -79,7 +79,7 @@ function grabFn(name) {
 const pluginsApi = new Function('document', 'localStorage', 'window',
   'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
-  grabFn('ls') + '\n' + grabFn('eff') + '\n' + grabFn('idealText') + '\n' + grabFn('accent') + '\n' +
+  grabFn('ls') + '\n' + grabFn('eff') + '\n' + grabFn('iconBgAdoptsP') + '\n' + grabFn('idealText') + '\n' + grabFn('accent') + '\n' +
   grabFn('pal') + '\n' + grabFn('colorFor') + '\n' +
   grabFn('ccHex6') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' +
   grabFn('plugTintOn') + '\n' + grabFn('plugBgColor') + '\n' +

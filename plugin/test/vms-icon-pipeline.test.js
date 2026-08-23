@@ -74,7 +74,7 @@ const vmsApi = new Function('document', 'localStorage', 'window',
   'var dead = false;\n' +
   'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
-  grabFn('ls') + '\n' + grabFn('vmTintOff') + '\n' + grabFn('effK') + '\n' + grabFn('ccIdeal') + '\n' + grabFn('ccAccent') + '\n' +
+  grabFn('ls') + '\n' + grabFn('vmTintOff') + '\n' + grabFn('effK') + '\n' + grabFn('iconBgAdoptsV') + '\n' + grabFn('ccIdeal') + '\n' + grabFn('ccAccent') + '\n' +
   grabFn('ccHex6') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' +
   grabFn('vmPalActive') + '\n' + grabFn('vmRbColor') + '\n' + grabFn('vmAdoptTint') + '\n' +
   grabFn('vmTintOn') + '\n' + grabFn('vmBgColor') + '\n' + grabFn('vmIconInk') + '\n' + grabFn('vmItemAdoptInk') + '\n' +

@@ -448,7 +448,12 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
    Same auto-fill rhythm as Grid so loose top-level containers + the gear tile size like
    cards; a folder group breaks out to the full row width and holds its own nested .cc-grid. */
 .cc-folderview { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; padding-top: 30px; }
-.cc-folder-group { grid-column: 1 / -1; background: var(--cc-bg2); border-radius: 10px; padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+/* grid-column spans a CSS-grid parent (Detailliert's .cc-folderview/.cc-grid); flex-basis/width
+   spans a FLEX parent (Grid/Liste's .cc-folderview-grid/-list, both flex containers) — a folder
+   group must always break out to the full row width regardless of which density it sits in, so
+   its own children wrap/stack INSIDE its box instead of interleaving with sibling top-level
+   chips/rows on the same flex line. */
+.cc-folder-group { grid-column: 1 / -1; flex: 1 1 100%; width: 100%; background: var(--cc-bg2); border-radius: 10px; padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
 .cc-folder-group-head { background: var(--cc-bg3); border-radius: 7px; padding: 6px 8px 6px 12px; font-size: 14px; font-weight: 600; color: var(--cc-txt); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .cc-folder-group-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* v4.34.0: chevron + label share one flex item so head's own justify-content:space-between
@@ -462,16 +467,29 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
    state / bulk container actions, not folder restructuring, so they apply to any folder. */
 .cc-folder-act { -webkit-appearance: none; appearance: none; background: transparent; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 4px 6px; border-radius: 6px; transition: background .12s, color .12s; }
 .cc-folder-act:hover { background: rgba(128, 128, 128, .18); color: var(--cc-txt); }
+/* Item 3 fix (v4.35.0): the button used to hold raw EMOJI text (👁 ▶ ■ ✎ 🗑) — glyphs that ignore
+   `color` and, worse, some of them (🗑 in particular, live-confirmed with a Playwright screenshot
+   + getComputedStyle) render as a solid filled shape on this stack, reading as a bordered swatch
+   sitting on the button rather than the app's thin FA outline-icon language. Now a real FA <i>
+   (see folderActBtn() in docker.js) — `color: inherit` makes it follow the SAME grey-at-rest,
+   accent-on-hover treatment .cc-folder-act itself already had right, exactly like every other
+   icon-only button in the app (Unraid's theme otherwise styles .fa glyphs directly, which beats
+   plain inheritance — same reasoning as .cc-actbtn i.fa just below in this file). */
+.cc-folder-act i.fa { color: inherit; font-size: 12px; line-height: 1; }
 /* "Gestoppte ausblenden" active state — shade only (house law: never a border line). */
 .cc-folder-act-on { background: rgba(128, 128, 128, .18); color: var(--cc-rb-c, var(--cc-accent, #2f6feb)); }
 .cc-folder-group-body { padding-top: 0; } /* nested body has no corner gear to clear, unlike the outer grid/folderview */
 /* Collapse/expand (v4.34.0, adopted from Docker Folders, persisted via cc.folderCollapsed) —
    collapsed folders show just the header + child count, exactly per spec. */
 .cc-folder-collapsed .cc-folder-group-body { display: none; }
-/* "Kompakt" folder-content density (v4.34.0) — a single column of full-width rows instead of
-   the auto-fill card grid, for BOTH the unfoldered/root section and every folder body. */
-.cc-folderview-mini { display: flex; flex-direction: column; gap: 8px; }
-.cc-folder-group-body-mini { display: flex; flex-direction: column; gap: 4px; }
+/* Folder-content density (v4.34.0's "Kompakt" toggle, redesigned + extended to a real 3-way
+   switch in v4.35.0 — jdp: "Wie die native Dockerliste aber abgespeckter. die grid ansicht soll
+   so sein wie in Folderview 3. total abgespeckt"), for BOTH the unfoldered/root section and every
+   folder body. "Grid" flex-WRAPS tight chips left-to-right (FolderView Plus style, see .cc-chip
+   below) instead of Detailliert's auto-fill card grid; "Liste" stacks full-width rows one per
+   line (native-list-style, see .cc-frow below). */
+.cc-folderview-grid, .cc-folder-group-body-grid { display: flex; flex-flow: row wrap; align-items: flex-start; gap: 6px; }
+.cc-folderview-list, .cc-folder-group-body-list { display: flex; flex-direction: column; gap: 4px; }
 /* Drag-and-drop reordering (Folder view). Shade only, never a border line (house law) —
    an accent-tinted background marks both the dragged source (faded) and the hovered target. */
 .cc-dragging { opacity: .4; }
@@ -507,15 +525,42 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 .cc-abtn { background: var(--cc-bg3); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; transition: background .12s; }
 .cc-abtn:hover { background: #333; }
 .cc-abtn-primary { color: #52c17a; border-color: rgba(63,174,106,.4); }
-/* "Kompakt" folder row (v4.34.0): icon + name + state + ONE action, nothing else. Deliberately
-   keeps the .cc-card base class (see minimalRow() in docker.js) so rainbow stamping, iconbg and
-   every rbneutral reactive-hover rule that targets .cc-card/.cc-card-ico apply here unchanged —
-   only the layout (row instead of column) and the icon size are overridden below. */
-.cc-card.cc-mrow { flex-direction: row; align-items: center; padding: 8px 12px; gap: 10px; }
-.cc-mrow .cc-card-ico { width: 26px; height: 26px; }
-.cc-mrow-name { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cc-mrow .cc-badge { flex: none; }
+/* shared single-action wrapper both new folder densities' item builders reuse (folderChip()/
+   folderListRow() in docker.js) — the ACTION itself is always the real actBtn()/.cc-actbtn. */
 .cc-mrow-act { flex: none; display: flex; }
+
+/* "Grid" folder-content density (v4.35.0 — redesigned from v4.34.0's "Kompakt"/minimalRow()):
+   the FolderView Plus chip style (user reference screenshot, github.com/alexphillips-dev/
+   FolderView-Plus) — a SMALL inline pill per container, icon + name + a coloured status DOT +
+   short status text + ONE tiny action button, all on one line. Deliberately keeps the .cc-card
+   base class (see folderChip() in docker.js) so rainbow stamping, iconbg and every rbneutral
+   reactive-hover rule that targets .cc-card/.cc-card-ico apply here unchanged — only the layout
+   (a tight inline row instead of a column) and every size below are overridden. At most a very
+   subtle fill, never a border line (house law) — chips flow/wrap left-to-right via the flex
+   parent above, packed tightly, NOT one-per-row and NOT a large-tile grid. */
+.cc-card.cc-chip { flex-direction: row; align-items: center; padding: 4px 10px 4px 4px; gap: 6px; background: rgba(128, 128, 128, .12); border-radius: 999px; width: auto; }
+.cc-chip:hover { transform: none; box-shadow: none; background: rgba(128, 128, 128, .2); } /* the .cc-card hover elevation reads as too heavy on a pill this small — a plain shade step instead */
+.cc-chip-ico { width: 24px; height: 24px; border-radius: 999px; }
+.cc-chip-name { font-size: 12px; font-weight: 500; color: var(--cc-txt); max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-chip-dot { width: 8px !important; height: 8px !important; min-width: 8px !important; padding: 0 !important; margin: 0 !important; gap: 0 !important; border-radius: 50% !important; font-size: 0 !important; line-height: 0 !important; flex: 0 0 auto; box-shadow: 0 0 0 1px rgba(0, 0, 0, .25); }
+.cc-chip-status { font-size: 11px; color: var(--cc-dim); white-space: nowrap; }
+.cc-chip-act { flex: none; display: flex; }
+.cc-chip .cc-actbtn { width: 20px; height: 20px; font-size: 11px; border-radius: 5px; } /* a "tiny" action button, per spec — smaller than the 27x26 the full action bars use */
+
+/* "Liste" folder-content density (v4.35.0, item 1 — the layout jdp originally asked for):
+   full-width table-style rows reusing the native Docker List view's own visual language (icon,
+   bold name, status badge) — but stripped of every column except icon + name + status + ONE
+   action button (jdp: no CPU/RAM/NET/port here). Same .cc-card base-class reuse as .cc-chip
+   above, for the identical reason (folderListRow() in docker.js). */
+.cc-card.cc-frow { flex-direction: row; align-items: center; padding: 8px 14px; gap: 12px; }
+.cc-frow .cc-card-ico { width: 40px; height: 40px; }
+.cc-frow-name { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-frow-status { flex: none; }
+.cc-frow-act { flex: none; display: flex; }
+
+/* the folder-body gear tile takes on whichever density is active (docker.js) so it doesn't sit
+   as an oversized 90px-tall dashed square among tiny chips or slim rows. */
+.cc-gear-tile.cc-chip, .cc-gear-tile.cc-frow { min-height: auto; }
 
 .cc-filter { background: var(--cc-bg2); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: 6px; padding: 5px 10px; font-size: 12px; }
 /* CC style, NO borders anywhere (user: "keine rahmen oder linien"): buttons are FILLED —
