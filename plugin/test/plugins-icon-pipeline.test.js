@@ -76,8 +76,9 @@ function grabFn(name) {
 const pluginsApi = new Function('document', 'localStorage', 'window',
   grabFn('ls') + '\n' + grabFn('eff') + '\n' + grabFn('idealText') + '\n' + grabFn('accent') + '\n' +
   grabFn('ccHex6') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' +
+  grabFn('plugTintOn') + '\n' + grabFn('plugBgColor') + '\n' +
   grabFn('plugIconInk') + '\n' + grabFn('logoSize') + '\n' + grabFn('plugGlyphInkAndFilter') + '\n' +
-  'return { eff: eff, plugIconInk: plugIconInk, logoSize: logoSize, plugGlyphInkAndFilter: plugGlyphInkAndFilter, idealText: idealText, accent: accent };'
+  'return { eff: eff, plugTintOn: plugTintOn, plugBgColor: plugBgColor, plugIconInk: plugIconInk, logoSize: logoSize, plugGlyphInkAndFilter: plugGlyphInkAndFilter, idealText: idealText, accent: accent };'
 )(document, global.localStorage, global.window);
 
 /* ── tests ───────────────────────────────────────────────────────────────── */
@@ -103,6 +104,37 @@ console.log('\nTHE KEY REGRESSION PIN: plugIconInk() must resolve from eff("icon
   reset();
 }
 
+console.log('\nHintergrund and Einfärben are INDEPENDENT (v4.32.5 fix): the badge alone must not force the tint on');
+{
+  reset();
+  ok('nothing configured at all: no ink', pluginsApi.plugIconInk(false) === '');
+
+  // the CONFIRMED bug: Logo-Hintergrund on, Einfärben never touched (no cc.icontint, no
+  // cc.iconcolor) used to still tint every plugin icon via the accent fallback
+  localStorage.setItem('cc.iconbg', '1');
+  ok('background ON, Einfärben untouched, no colour picked ANYWHERE: still no ink', pluginsApi.plugIconInk(false) === '');
+
+  localStorage.setItem('cc.icontint', '0');
+  ok('background ON, Einfärben EXPLICITLY off: still no ink even with the badge showing', pluginsApi.plugIconInk(false) === '');
+
+  localStorage.setItem('cc.icontint', '1');
+  ok('background ON, Einfärben explicitly ON: NOW it inks (contrast against the badge box)', pluginsApi.plugIconInk(false) !== '');
+  reset();
+
+  // pre-4.32.5 installs: only cc.iconbg + cc.iconcolor were ever set, and iconcolor's mere
+  // presence WAS the tint's on-signal — plugTintOn()'s fallback keeps that reading intact.
+  localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconcolor', '#1f9d55');
+  ok('pre-existing install (no cc.icontint key at all): behaves exactly as it always did — inked', pluginsApi.plugTintOn() === true && pluginsApi.plugIconInk(false) !== '');
+  reset();
+
+  // the background's OWN colour is independent of the tint's colour once both are configured
+  localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#161616'); localStorage.setItem('cc.icontint', '0');
+  ok('background colour applies even with Einfärben off (plugBgColor reads cc.iconbgcolor)', pluginsApi.plugBgColor() === '#161616');
+  localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#e5a00d');
+  ok('once both are on, the badge ink contrasts with the BADGE colour, not the (different) tint colour', pluginsApi.plugIconInk(false) === '#ffffff', pluginsApi.plugIconInk(false));
+  reset();
+}
+
 console.log('\nlogoSize(): the SAME cc.sgsize map as docker.js\'s ccLogoSizes() / vms.js\'s vmLogoSizes()');
 {
   reset();
@@ -118,9 +150,16 @@ console.log('\nA glyph never ends up with BOTH a direct colour AND the luminance
 {
   const w = 'url(#cc-plug-tint)';
   ok('native treat: no colour, filter forced to "none"', (function () { const r = pluginsApi.plugGlyphInkAndFilter({ treat: 'native' }, false, '#2f6feb', '#e5a00d', w); return !r.color && r.filter === 'none'; })());
-  ok('Logo-Hintergrund on, forced "tint": colour is the ideal-text ink, filter is "none"', (function () { const r = pluginsApi.plugGlyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', '#e5a00d', w); return r.color === pluginsApi.idealText('#2f6feb') && r.filter === 'none'; })());
+  // v4.32.5: ibgOn/ibgBg are no longer consulted directly — the caller already resolves the
+  // badge-contrast ink into pInk before calling, so ibgOn=true changes nothing here by itself;
+  // this is now identical in shape to the next assertion (pInk truthy always wins verbatim).
+  ok('Logo-Hintergrund on, forced "tint": colour is the resolved ink verbatim (caller already box-contrasted it), filter is "none"', (function () { const r = pluginsApi.plugGlyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', '#e5a00d', w); return r.color === '#e5a00d' && r.filter === 'none'; })());
   ok('an ink colour is available, forced "tint": colour is set, filter is "none"', (function () { const r = pluginsApi.plugGlyphInkAndFilter({ treat: 'tint' }, false, '#2f6feb', '#e5a00d', w); return r.color === '#e5a00d' && r.filter === 'none'; })());
   ok('no ink at all: filter is the only thing that can carry the treatment, colour stays empty', (function () { const r = pluginsApi.plugGlyphInkAndFilter({ treat: 'tint' }, false, '#2f6feb', '', w); return !r.color && r.filter === w; })());
+  // v4.32.5 regression pin: the badge alone must NEVER force a colour onto a glyph — `pInk` (the
+  // 4th arg) already answers "" whenever Einfärben is off, badge or not, so ibgOn must not be
+  // consulted on its own any more.
+  ok('Logo-Hintergrund on but NO ink (Einfärben off): no colour is forced onto the glyph', (function () { const r = pluginsApi.plugGlyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', '', w); return !r.color; })());
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

@@ -25,9 +25,39 @@
   // adopt toggle: cc.stylesettings on -> shared cc.* keys, else this area's own ccs.* keys
   function eff(k, d) { return g("cc.stylesettings", "1") !== "0" ? g("cc." + k, d) : g("ccs." + k, d); }
   function accent() { var a = eff("accent", "#2f6feb"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
-  // accent-mode badge background: the ccs.iconcolor override if valid, else the accent
-  // (identical to what apply() writes into --cc-iconbg-color).
-  function badgeBg() { var sg = g("ccs.iconcolor", ""); return /^#[0-9a-f]{6}$/i.test(sg) ? sg : accent(); }
+  // accent-mode badge background: the badge's OWN colour (eff("iconbgcolor"), v4.32.5 — mirrors
+  // docker.js/vms.js/plugins.js's cc.iconbgcolor) if valid, else the legacy eff("iconcolor")
+  // (the pre-4.32.5 badge/tint shared key) if THAT is valid, else the accent. (identical
+  // fallback chain to what apply() writes into --cc-iconbg-color.)
+  //
+  // CONFIRMED LIVE BUG (v4.32.5, fixed here): every one of these reads used to go straight
+  // through g("ccs.<key>", d) — the area-LOCAL key only, bypassing eff() entirely. Since a user
+  // configures colour/tint/background on the GLOBAL "Logos & Icons" card (cc.*), not a
+  // Settings-page-specific override (ccs.*), ccs.iconcolor/ccs.iconbgcolor/ccs.iconbg/
+  // ccs.icontint/ccs.iconstrength were essentially ALWAYS unset even with a valid global colour
+  // and cc.stylesettings (adopt) ON — so bgColorEff() always fell through to accent(), the
+  // rainbow-priority check in paintGrid() always read "no icon colour configured", and the tile
+  // grid rendered pure accent/rainbow with zero trace of the configured global icon colour. Every
+  // key below now goes through eff(), the SAME adopt-gated per-area -> global fallback
+  // docker.js/vms.js/plugins.js already use (see eff() above): with adopt on it reads cc.<key>,
+  // with adopt off it reads ccs.<key> — exactly matching the other three areas' contract.
+  function bgColorEff() {
+    var bg = eff("iconbgcolor", ""); if (/^#[0-9a-f]{6}$/i.test(bg)) return bg;
+    var ic = eff("iconcolor", ""); if (/^#[0-9a-f]{6}$/i.test(ic)) return ic;
+    return accent();
+  }
+  function badgeBg() { return bgColorEff(); }
+  // whether the badge is showing a genuinely CONFIGURED colour (either key), as opposed to the
+  // plain accent fallback — used by the rainbow-priority block below to decide whether an
+  // explicit pick should outrank the rotating rainbow colour.
+  function bgColorIsCustom() { return /^#[0-9a-f]{6}$/i.test(eff("iconbgcolor", "")) || /^#[0-9a-f]{6}$/i.test(eff("iconcolor", "")); }
+  // Einfärben (tint) on/off (v4.32.5, mirrors cc.icontint): unset falls back to the pre-4.32.5
+  // reading (a valid iconcolor implicitly meant "tint on"), so an untouched install's tint
+  // toggle keeps behaving exactly as it did before this key existed.
+  function tintOnEff() {
+    var v = eff("icontint", null);
+    return v == null ? /^#[0-9a-f]{6}$/i.test(eff("iconcolor", "")) : v === "1";
+  }
   // BADGE mode: flatten a raster logo (img.PanelImg) to the badge's ink tone so it reads on
   // the accent/rainbow box — the SAME trick docker.js/plugins.js use. idealText() yields only
   // #161616 or #fff, so at most two filters ever coexist (rainbow tiles can need both); each
@@ -101,7 +131,7 @@
           // accent — so painting with it here instead of the raw rainbow colour c gives the icon
           // colour priority, and the tile only takes the rainbow rotation when NO icon colour is
           // configured at all.
-          var iconSet = /^#[0-9a-f]{6}$/i.test(g("ccs.iconcolor", ""));
+          var iconSet = bgColorIsCustom();
           var bg = iconSet ? accBg : c, btc = iconSet ? idealText(accBg) : tc;
           s.style.setProperty("background", bg, "important");
           if (gl) gl.style.setProperty("color", btc, "important");
@@ -166,17 +196,18 @@
     } catch (e) {}
   }
   // COLOUR-TINT mode (mutually exclusive with the accent badge): when the badge is OFF
-  // (ccs.iconbg="0") and a colour is chosen (ccs.iconcolor), recolour each tile icon to
-  // that colour instead. Font glyphs get an !important text colour; raster img.PanelImg
+  // (iconbg="0") and Einfärben is on with a colour chosen (iconcolor), recolour each tile
+  // icon to that colour instead. Font glyphs get an !important text colour; raster img.PanelImg
   // get the SAME shading-preserving feColorMatrix the Docker tab uses (own host+filter id
-  // here). ccs.iconstrength blends the RASTER tint back over the original; it does not
-  // affect font glyphs (a flat colour has no shading to keep). ccs.* read directly via g().
+  // here). iconstrength blends the RASTER tint back over the original; it does not affect font
+  // glyphs (a flat colour has no shading to keep). Read via eff() (adopt-gated per-area ->
+  // global fallback), not raw g("ccs.*") — see the bgColorEff() comment above for why.
   function ensureTintFilter() {
-    var ic = g("ccs.iconcolor", ""), m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ic || "");
+    var ic = eff("iconcolor", ""), m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ic || "");
     var host = document.getElementById("cc-sg-tint-svg");
     if (!m) { if (host) host.remove(); return false; }
     var tr = parseInt(m[1], 16) / 255, tg = parseInt(m[2], 16) / 255, tb = parseInt(m[3], 16) / 255;
-    var s = (Math.max(10, parseInt(g("ccs.iconstrength", "100"), 10)) / 100).toFixed(3);
+    var s = (Math.max(10, parseInt(eff("iconstrength", "100"), 10)) / 100).toFixed(3);
     if (!host) { host = document.createElement("div"); host.id = "cc-sg-tint-svg"; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
     var lum = function (c) { return (0.2126 * c).toFixed(4) + " " + (0.7152 * c).toFixed(4) + " " + (0.0722 * c).toFixed(4); };
     var mid = '<feColorMatrix in="SourceGraphic" type="matrix" result="flat" values="' + lum(tr) + ' 0 0 ' + lum(tg) + ' 0 0 ' + lum(tb) + ' 0 0 0 0 0 1 0"/>';
@@ -188,7 +219,7 @@
   // rainbow badge background the span may carry from a previous badge-mode render.
   function paintTint() {
     try {
-      var ic = g("ccs.iconcolor", ""), f = ensureTintFilter() ? "url(#cc-sg-icon-tint)" : "";
+      var ic = eff("iconcolor", ""), f = ensureTintFilter() ? "url(#cc-sg-icon-tint)" : "";
       var spans = document.querySelectorAll("#displaybox .Panel > a > span");
       for (var i = 0; i < spans.length; i++) {
         var s = spans[i], gl = s.querySelector("i.PanelIcon"), im = s.querySelector("img");
@@ -218,9 +249,13 @@
       var root = document.documentElement;
       // MASTER THEMING off behaves like the area being disabled (purely presentational).
       var live = g("cc.enable.settings", "1") !== "0" && g("cc.theming", "1") !== "0" && onGrid();
-      var badge = live && g("ccs.iconbg", "1") !== "0";
-      // tint only when the badge is OFF and a valid colour is set (mutually exclusive UI)
-      var tint = live && !badge && /^#[0-9a-f]{6}$/i.test(g("ccs.iconcolor", ""));
+      var badge = live && eff("iconbg", "1") !== "0";
+      // tint only when the badge is OFF, Einfärben is on (v4.32.5: its own icontint key,
+      // independent of the badge — see tintOnEff()) and a valid tint colour is set. Badge and
+      // tint stay mutually exclusive in THIS area by design (one square icon can only show one
+      // treatment) — Einfärben's on/off no longer being tied to the badge is the only change.
+      // eff()-gated (adopt -> falls through to the global cc.* keys), not raw g("ccs.*").
+      var tint = live && !badge && tintOnEff() && /^#[0-9a-f]{6}$/i.test(eff("iconcolor", ""));
       var a = accent();
       root.classList.toggle("cc-settingsgrid-on", badge);
       root.classList.toggle("cc-settingsgrid-tint", tint);
@@ -241,8 +276,7 @@
       }
       if (badge) {
         clearTint(); // badge takes precedence — drop any tint from a previous render
-        var sgIcon = g("ccs.iconcolor", "");
-        var sgBg = /^#[0-9a-f]{6}$/i.test(sgIcon) ? sgIcon : a;
+        var sgBg = bgColorEff();
         root.style.setProperty("--cc-iconbg-color", sgBg);
         root.style.setProperty("--cc-iconbg-text", idealText(sgBg));
         paintGrid();

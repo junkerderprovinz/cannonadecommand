@@ -69,9 +69,10 @@ function grabFn(name) {
 const vmsApi = new Function('document', 'localStorage', 'window',
   'var dead = false;\n' +
   grabFn('ls') + '\n' + grabFn('vmTintOff') + '\n' + grabFn('effK') + '\n' + grabFn('ccIdeal') + '\n' + grabFn('ccAccent') + '\n' +
-  grabFn('ccHex6') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' + grabFn('vmIconInk') + '\n' +
+  grabFn('ccHex6') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' +
+  grabFn('vmTintOn') + '\n' + grabFn('vmBgColor') + '\n' + grabFn('vmIconInk') + '\n' +
   grabFn('ensureTintFilter') + '\n' + grabFn('vmLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
-  'return { effK: effK, vmIconInk: vmIconInk, ensureTintFilter: ensureTintFilter, vmLogoSizes: vmLogoSizes, glyphInkAndFilter: glyphInkAndFilter, ccIdeal: ccIdeal, ccAccent: ccAccent };'
+  'return { effK: effK, vmTintOn: vmTintOn, vmBgColor: vmBgColor, vmIconInk: vmIconInk, ensureTintFilter: ensureTintFilter, vmLogoSizes: vmLogoSizes, glyphInkAndFilter: glyphInkAndFilter, ccIdeal: ccIdeal, ccAccent: ccAccent };'
 )(document, global.localStorage, global.window);
 
 /* ── tests ───────────────────────────────────────────────────────────────── */
@@ -97,6 +98,37 @@ console.log('\neffK() adopt-gating for iconcolor/iconbg/iconstrength (regression
   reset();
 }
 
+console.log('\nHintergrund and Einfärben are INDEPENDENT (v4.32.5 fix): the badge alone must not force the tint on');
+{
+  reset();
+  ok('nothing configured at all: no ink', vmsApi.vmIconInk(false) === '');
+
+  // the CONFIRMED bug: Logo-Hintergrund on, Einfärben never touched (no cc.icontint, no
+  // cc.iconcolor) used to still tint every VM icon via the accent fallback
+  localStorage.setItem('cc.iconbg', '1');
+  ok('background ON, Einfärben untouched, no colour picked ANYWHERE: still no ink', vmsApi.vmIconInk(false) === '');
+
+  localStorage.setItem('cc.icontint', '0');
+  ok('background ON, Einfärben EXPLICITLY off: still no ink even with the badge showing', vmsApi.vmIconInk(false) === '');
+
+  localStorage.setItem('cc.icontint', '1');
+  ok('background ON, Einfärben explicitly ON: NOW it inks (contrast against the badge box)', vmsApi.vmIconInk(false) !== '');
+  reset();
+
+  // pre-4.32.5 installs: only cc.iconbg + cc.iconcolor were ever set, and iconcolor's mere
+  // presence WAS the tint's on-signal — vmTintOn()'s fallback keeps that reading intact.
+  localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconcolor', '#1f9d55');
+  ok('pre-existing install (no cc.icontint key at all): behaves exactly as it always did — inked', vmsApi.vmTintOn() === true && vmsApi.vmIconInk(false) !== '');
+  reset();
+
+  // the background's OWN colour is independent of the tint's colour once both are configured
+  localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#161616'); localStorage.setItem('cc.icontint', '0');
+  ok('background colour applies even with Einfärben off (vmBgColor reads cc.iconbgcolor)', vmsApi.vmBgColor() === '#161616');
+  localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#e5a00d');
+  ok('once both are on, the badge ink contrasts with the BADGE colour, not the (different) tint colour', vmsApi.vmIconInk(false) === '#ffffff', vmsApi.vmIconInk(false));
+  reset();
+}
+
 console.log('\nvmLogoSizes(): the SAME cc.sgsize map as docker.js\'s ccLogoSizes() / plugins.js\'s logoSize()');
 {
   reset();
@@ -113,6 +145,11 @@ console.log('\nA glyph never ends up with BOTH a direct colour AND the luminance
   ok('native treat: no colour AND no filter', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'native' }, false, '#2f6feb', '#e5a00d'); return !r.color && !r.filter; })());
   ok('Logo-Hintergrund on, forced "tint": colour is the ideal-text ink, filter stays empty', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', '#e5a00d'); return !!r.color && !r.filter; })());
   ok('an ink colour is available, forced "tint": colour is set, filter stays empty', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'tint' }, false, '#2f6feb', '#e5a00d'); return r.color === '#e5a00d' && !r.filter; })());
+  // v4.32.5 regression pin: the badge alone must NEVER force a colour onto a glyph — `ink` (the
+  // 4th arg) already answers "" whenever Einfärben is off, badge or not, so ibgOn must not be
+  // consulted on its own any more (the old `if (ibgOn) return {color: idealText(ibgAcc), ...}`
+  // branch ignored an empty `ink` and forced one anyway).
+  ok('Logo-Hintergrund on but NO ink (Einfärben off): no colour is forced onto the glyph', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', ''); return !r.color; })());
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

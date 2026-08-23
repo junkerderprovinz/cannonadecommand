@@ -595,24 +595,49 @@
   // APPROXIMATED the hue, which is why the colour was wrong. The icon becomes a flat
   // silhouette in the chosen colour; the strength slider blends it back toward the
   // original for detail. Ground truth: the icon is `td.ct-name span.hand > .img`.
+  // ── HINTERGRUND (background) AND EINFÄRBEN (tint) ARE TWO INDEPENDENT CONTROLS ──────
+  // Confirmed bug (v4.32.5): turning the background badge on used to switch icon tinting on
+  // too, because both read/wrote the SAME cc.iconcolor — its mere PRESENCE doubled as "tint is
+  // on" (see settings.js's old gOn()/iconOn()), and iconInk() used it as the badge's own colour
+  // as well. Two new keys give each control its OWN on/off + colour:
+  //   cc.iconbgcolor — the background badge box's OWN colour (cc.iconbg stays the box's
+  //                    existing on/off key, unchanged).
+  //   cc.icontint    — the tint's OWN on/off (cc.iconcolor stays the tint's existing colour
+  //                    key, unchanged — only ONE colour ever needed a new key, not two).
+  // Pre-4.32.5 installs only ever had cc.iconbg + cc.iconcolor set, with iconcolor implicitly
+  // meaning "tint on" (present) and doubling as the badge's colour. tintOn()/bgColor() below
+  // fall back to that exact reading whenever the new key was never touched, so an existing
+  // install looks IDENTICAL after the update — the two controls only actually diverge once the
+  // user opens one of them independently (no destructive one-time rewrite needed).
+  function tintOn() {
+    var v = effc("icontint");
+    return v == null ? !!effc("iconcolor") : v === "1";
+  }
+  function bgColor() {
+    var c = effc("iconbgcolor");
+    if (c && /^#?[0-9a-f]{6}$/i.test(c)) return ccHex6(c);
+    var ic = effc("iconcolor");
+    if (ic && /^#?[0-9a-f]{6}$/i.test(ic)) return ccHex6(ic);
+    return effc("accent") || "#2f6feb";
+  }
   // ── THE ICON PIPELINE'S TARGET COLOUR ───────────────────────────────────────────────
-  // iconInk() is the ONE colour both icon treatments paint with, and it answers "" when CC
-  // is not colouring icons at all (no icon colour picked, no Logo-Hintergrund) — which is
-  // what makes the whole pipeline degrade to plain native icons for anyone who never turned
-  // the tint on.
-  //   · Logo-Hintergrund ON: the icon sits ON an accent-coloured box, so the ink has to
-  //     contrast with the BOX — idealText of it, exactly as before. That also fixes tinting
-  //     inside the box: a luminance tint toward the box's own colour would be invisible,
-  //     toward its ideal text colour it is a readable monochrome shading.
-  //   · Logo-Hintergrund OFF: the picked icon colour, lifted out of the dark end by the
-  //     shared darkness guard so it can't sink into the #161616/#1e1e1e card.
+  // iconInk() is the ONE colour both icon treatments paint with, and it answers "" whenever
+  // Einfärben (tint) is OFF — regardless of the background badge — which is what makes the
+  // whole pipeline degrade to plain native icons sitting on (or off) the badge box.
+  //   · Einfärben OFF: never any ink, full stop — a background badge alone must not recolour
+  //     the icon (the bug this fixes).
+  //   · Einfärben ON + Logo-Hintergrund ON: the icon sits ON the badge box, so the ink has to
+  //     contrast with the BOX — idealText of the box's OWN colour (bgColor()), not the tint's.
+  //   · Einfärben ON + Logo-Hintergrund OFF: the picked TINT colour, lifted out of the dark end
+  //     by the shared darkness guard so it can't sink into the #161616/#1e1e1e card.
   // `forTint` doubles the floor: see CCTheme.liftDark — a luminance tint outputs roughly
   // half the target's luma on mid-bright artwork, so the badge floor alone is not enough
   // (live-measured: a #2a2a2a target renders "schwer erkennbar" against the card).
   function iconInk(forTint) {
+    if (!tintOn()) return "";
+    if (effc("iconbg") === "1") return ccHex6(idealText(bgColor()));
     var pick = effc("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
-    if (effc("iconbg") === "1") return ccHex6(idealText(valid ? pick : (effc("accent") || "#2f6feb")));
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
     var floor = window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1);
@@ -704,9 +729,16 @@
   // top of it, or a forced "tint" mode double-processes/dims the same hue (glyphs always plan
   // as isGlyphEl, and iconPlan() returns treat:"tint" unconditionally in that mode). Extracted
   // to its own function so the invariant is unit-testable without a full render pass.
+  //
+  // `ibgOn`/`ibgAcc` are kept as parameters for call-site/signature stability, but are no
+  // longer consulted directly: `ink` (iconInk()'s result) ALREADY resolves to the box-contrast
+  // colour whenever the background badge is on AND Einfärben (tint) is on, and to "" whenever
+  // Einfärben is off — including with the badge on. The old `if (ibgOn) return
+  // {color: idealText(ibgAcc), ...}` branch ignored that and forced a colour onto every glyph
+  // the moment the badge was on, even with Einfärben off — the same background-forces-tint bug
+  // as iconInk(), just for font glyphs specifically (v4.32.5 fix).
   function glyphInkAndFilter(plan, ibgOn, ibgAcc, ink, want) {
     if (plan.treat === "native") return { color: "", filter: "" };
-    if (ibgOn) return { color: idealText(ibgAcc), filter: "" };
     if (ink) return { color: ink, filter: "" };
     return { color: "", filter: want };
   }
@@ -749,8 +781,7 @@
       // Logo-Hintergrund (cc.iconbg): the icon sits on an accent-coloured badge box, so
       // flatten it to mono ink (dark/white per the accent). IMGs get the filter; glyphs
       // (font-icon <i>) also take an !important text colour so the glyph itself inks.
-      var ibgIcon = effc("iconcolor");
-      var ibgAcc = (ibgIcon && /^#?[0-9a-f]{6}$/i.test(ibgIcon)) ? ibgIcon : (effc("accent") || "#2f6feb");
+      var ibgAcc = bgColor();
       var ibgOn = effc("iconbg") === "1";
       if (ibgOn) document.documentElement.style.setProperty("--cc-iconbg-color", ibgAcc); else document.documentElement.style.removeProperty("--cc-iconbg-color");
       // ONE flat filter for the whole page (the ink colour is global), built from the same

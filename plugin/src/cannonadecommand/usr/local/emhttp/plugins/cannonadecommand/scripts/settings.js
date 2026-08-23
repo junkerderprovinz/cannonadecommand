@@ -379,15 +379,25 @@
   function logoPreview(scope, fid) {
     var wrap = el("div", "cc-set-prev");
     var items = [];                                   // {tile, node, name, glyph, src}
-    var st = { bg: false, color: "", strength: 100, accent: "#2f6feb", size: null };
+    // bg/bgColor and tint/color are two INDEPENDENT pairs (v4.32.5): bg draws the badge box (in
+    // ITS OWN bgColor, falling back to `color` then `accent` — same chain as bgColor() in
+    // docker.js/vms.js/plugins.js), tint recolours the icon itself (in `color`) and is gated by
+    // its OWN on/off — a background badge alone no longer forces the icon to be recoloured.
+    var st = { bg: false, bgColor: "", tint: false, color: "", strength: 100, accent: "#2f6feb", size: null };
     var bound = false;
     function C() { return window.CCTheme && window.CCTheme.icons; }
     function hex6(c) { c = String(c == null ? "" : c).trim(); return /^#[0-9a-f]{3}$/i.test(c) ? "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c; }
-    function badgeBg() { return /^#[0-9a-f]{6}$/i.test(st.color) ? st.color : st.accent; }
-    // Same ink contract as docker.js iconInk()/plugins.js plugIconInk(): on the badge the ink must
-    // contrast with the BADGE, otherwise it is the picked colour lifted out of the dark end. A
-    // luminance tint outputs about half the target's luma, so the tint path doubles the floor.
+    function badgeBg() {
+      if (/^#[0-9a-f]{6}$/i.test(st.bgColor)) return st.bgColor;
+      if (/^#[0-9a-f]{6}$/i.test(st.color)) return st.color;
+      return st.accent;
+    }
+    // Same ink contract as docker.js iconInk()/plugins.js plugIconInk(): "" whenever tint is off
+    // (regardless of the badge); on the badge the ink must contrast with the BADGE'S OWN colour,
+    // otherwise it is the picked TINT colour lifted out of the dark end. A luminance tint outputs
+    // about half the target's luma, so the tint path doubles the floor.
     function ink(forTint) {
+      if (!st.tint) return "";
       if (st.bg) return hex6(idealText(badgeBg()));
       if (!/^#[0-9a-f]{6}$/i.test(st.color)) return "";
       var T = window.CCTheme;
@@ -448,7 +458,10 @@
         var want = plan.treat === "native" ? "none" : (plan.treat === "flat" ? (flat || tint || "none") : (tint || "none"));
         if (it.glyph) {
           it.node.style.fontSize = "calc(" + sz + " * .46)";
-          it.node.style.color = plan.treat === "native" ? "" : (st.bg ? idealText(bg) : (ink(false) || ""));
+          // ink(false) already answers the badge-contrast colour when bg+tint are both on, and
+          // "" whenever tint is off (badge or not) — branching on st.bg directly here instead (as
+          // this used to) would force a colour onto the glyph even with tint off.
+          it.node.style.color = plan.treat === "native" ? "" : (ink(false) || "");
           it.node.style.filter = "none";
         } else {
           var src = plan.url || it.src;
@@ -468,6 +481,71 @@
       set: function (o) { for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) st[k] = o[k]; bind(); paint(); },
       paint: paint
     };
+  }
+
+  // ── ONE "Hintergrund" (background) + "Einfärben" (tint) control pair, for every card that
+  // has one — the global "Logos & Icons" card, the Docker tab's own Logos card and every other
+  // area's Logos card (buildStyleCards' cB). Before 4.32.5 there were THREE hand-rolled copies
+  // of "a toggle whose on/off state IS a colour key's presence" (gOn/iconOn/on2 further down in
+  // this file), and the confirmed bug — turning Hintergrund on silently switched icon tinting on
+  // too — was exactly that BOTH controls read and wrote the SAME cc.iconcolor key. This gives
+  // each control its own on/off key AND its own colour key, and builds the DOM for both exactly
+  // once, so a future change to the row's shape (or another conflation bug) only has to be fixed
+  // in one place instead of three.
+  //   io.getBg()/setBg(bool)             — background on/off
+  //   io.getBgColor()/setBgColor(hex)    — background's OWN colour ("" = unset -> falls back)
+  //   io.getTint()/setTint(bool)         — tint on/off
+  //   io.getColor()/setColor(hex)        — tint's OWN colour (the pre-existing *iconcolor key)
+  //   io.getAccent()                     — this scope's effective accent, for the colour fallback
+  //   io.onChange()                      — called after ANY of the six writes above (repaint hook)
+  // Returns the toggle/picker handles a caller may still need (e.g. the strength slider) plus a
+  // sync() that repaints every row from the CURRENT stored values (an adopt-toggle flip on an
+  // area card needs this to jump to the newly-effective values).
+  function logoToggles(into, io) {
+    function bgColorEff() {
+      var c = io.getBgColor(); if (/^#[0-9a-f]{6}$/i.test(c)) return c;
+      var ic = io.getColor(); if (/^#[0-9a-f]{6}$/i.test(ic)) return ic;
+      return /^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#1f9d55";
+    }
+    var bgTg = toggle(io.getBg(), function (v) {
+      io.setBg(v);
+      if (v && !/^#[0-9a-f]{6}$/i.test(io.getBgColor())) { var seed = bgColorEff(); io.setBgColor(seed); bgPk._set(seed); bgHx.value = seed; }
+      sync(); io.onChange();
+    });
+    var bgRow = el("div", "cc-set-row cc-set-inline"); bgRow.appendChild(el("span", null, T("Hintergrund", "Background"))); bgRow.appendChild(bgTg);
+    var bgHx = el("input", "cc-set-hexin"); bgHx.type = "text"; bgHx.value = io.getBgColor() || ""; bgHx.placeholder = "#1f9d55"; bgHx.maxLength = 7; bgHx.spellcheck = false;
+    var bgPk = inlinePicker(bgColorEff(), function (v) { io.setBgColor(v); bgHx.value = v; sync(); io.onChange(); });
+    bgHx.addEventListener("input", function () { var v = normHex(bgHx.value); if (v) { io.setBgColor(v); bgPk._set(v); sync(); io.onChange(); } });
+    var bgPickRow = el("div", "cc-set-pickrow"); bgPickRow.appendChild(bgPk); bgPickRow.appendChild(bgHx);
+
+    var tintTg = toggle(io.getTint(), function (v) {
+      io.setTint(v);
+      if (v && !/^#[0-9a-f]{6}$/i.test(io.getColor())) { var seed2 = tintPk._get(); io.setColor(seed2); tintHx.value = seed2; }
+      sync(); io.onChange();
+    });
+    var tintRow = el("div", "cc-set-row cc-set-inline"); tintRow.appendChild(el("span", null, T("Einfärben", "Colourise"))); tintRow.appendChild(tintTg);
+    var tintHx = el("input", "cc-set-hexin"); tintHx.type = "text"; tintHx.value = io.getColor() || ""; tintHx.placeholder = "#1f9d55"; tintHx.maxLength = 7; tintHx.spellcheck = false;
+    var tintPk = inlinePicker(/^#[0-9a-f]{6}$/i.test(io.getColor()) ? io.getColor() : (/^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#1f9d55"), function (v) { io.setColor(v); tintHx.value = v; sync(); io.onChange(); });
+    tintHx.addEventListener("input", function () { var v = normHex(tintHx.value); if (v) { io.setColor(v); tintPk._set(v); sync(); io.onChange(); } });
+    var tintPickRow = el("div", "cc-set-pickrow"); tintPickRow.appendChild(tintPk); tintPickRow.appendChild(tintHx);
+
+    var strRow = el("div", "cc-set-row"); strRow.appendChild(el("span", "cc-set-rl", T("Intensität", "Strength")));
+    var strInput = el("input"); strInput.type = "range"; strInput.min = "10"; strInput.max = "100"; strInput.style.flex = "1"; strRow.appendChild(strInput);
+
+    function sync() {
+      bgTg._setOn(io.getBg());
+      bgHx.value = io.getBgColor() || ""; try { bgPk._set(bgColorEff()); } catch (e9) {}
+      tintTg._setOn(io.getTint());
+      tintHx.value = io.getColor() || ""; try { if (/^#[0-9a-f]{6}$/i.test(io.getColor())) tintPk._set(io.getColor()); } catch (e9) {}
+      // Intensität only ever means anything for the LUMINANCE tint, which only runs when tint is
+      // on AND the background badge is off (the badge always flattens to a contrast ink instead —
+      // see iconInk()/vmIconInk()/plugIconInk()) — so it dims whenever either condition fails.
+      var dim = io.getBg() || !io.getTint();
+      strRow.style.opacity = dim ? ".4" : ""; strRow.style.pointerEvents = dim ? "none" : "";
+    }
+    into.appendChild(bgRow); into.appendChild(bgPickRow); into.appendChild(tintRow); into.appendChild(tintPickRow); into.appendChild(strRow);
+    sync();
+    return { sync: sync, strInput: strInput, bgToggle: bgTg, tintToggle: tintTg };
   }
 
   // ── REAL sample icons per area, for the previews ─────────────────────────────────────
@@ -1242,32 +1320,31 @@
     // area, each with that area's REAL icons.
     (function () {
       var cLI = card(T("Logos & Icons", "Logos & icons"), T("Globale Logo-/Icon-Farben. Tabs mit aktivem 'Globale Badge-Farbe übernehmen' folgen auch hier.", "Global logo/icon colours. Tabs adopting the global colour follow these too."));
-      var gcol = get("cc.iconcolor", ""), gbg = get("cc.iconbg", "0") === "1";
-      var gstrow; // strength row — dimmed in background mode (same rule as the area cards)
       // the three live previews (built at the bottom of this card); repainted by every control here
       var gPrevs = [];
       function gpaint() {
         var acc9 = get("cc.accent", "#2f6feb");
         var strn = parseInt(get("cc.iconstrength", "100"), 10) || 100;
-        gPrevs.forEach(function (p9) { try { p9.set({ bg: get("cc.iconbg", "0") === "1", color: get("cc.iconcolor", ""), strength: strn, accent: acc9, size: "48px" }); } catch (e9) {} });
+        gPrevs.forEach(function (p9) { try { p9.set({ bg: get("cc.iconbg", "0") === "1", bgColor: get("cc.iconbgcolor", ""), tint: gTintOnEff(), color: get("cc.iconcolor", ""), strength: strn, accent: acc9, size: "48px" }); } catch (e9) {} });
       }
       function gsync() { gpaint(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); } // adopt-ON area cards repaint with the new globals
-      function gApplyBg(v) { gbg = v; gstrow.style.opacity = v ? ".4" : ""; gstrow.style.pointerEvents = v ? "none" : ""; }
-      cLI.appendChild(toggleRow(T("Hintergrund", "Background"), gbg, function (v) { set("cc.iconbg", v ? "1" : "0"); gApplyBg(v); gsync(); }));
-      var ghx = el("input", "cc-set-hexin"); ghx.type = "text"; ghx.value = gcol || ""; ghx.placeholder = "#1f9d55"; ghx.maxLength = 7; ghx.spellcheck = false;
-      var gpk = inlinePicker(/^#[0-9a-f]{6}$/i.test(gcol) ? gcol : "#1f9d55", function (v) { gcol = v; ghx.value = v; set("cc.iconcolor", v); gsy(); });
-      function gOn() { return !!gcol; }
-      var gtg = el("span", "cc-set-toggle" + (gOn() ? " cc-set-toggle-on" : "")); gtg.setAttribute("role", "switch"); gtg.setAttribute("tabindex", "0"); gtg.setAttribute("aria-checked", gOn() ? "true" : "false"); gtg.appendChild(el("span", "cc-set-knob"));
-      function gsy() { gtg.classList.toggle("cc-set-toggle-on", gOn()); gtg.setAttribute("aria-checked", gOn() ? "true" : "false"); gsync(); }
-      gtg.addEventListener("click", function () { if (gOn()) { gcol = ""; del("cc.iconcolor"); ghx.value = ""; } else { gcol = gpk._get(); ghx.value = gcol; set("cc.iconcolor", gcol); } gsy(); });
-      gtg.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); gtg.click(); } });
-      ghx.addEventListener("input", function () { var v = normHex(ghx.value); if (v) { gcol = v; gpk._set(v); set("cc.iconcolor", v); gsy(); } });
-      var gir = el("div", "cc-set-pickrow"); gir.appendChild(gpk); gir.appendChild(ghx); cLI.appendChild(gir);
-      var gtr = el("div", "cc-set-row cc-set-inline"); gtr.appendChild(el("span", null, T("Einfärben", "Colourise"))); gtr.appendChild(gtg); cLI.appendChild(gtr);
-      gstrow = el("div", "cc-set-row"); gstrow.appendChild(el("span", "cc-set-rl", T("Intensität", "Strength")));
-      var gsl = el("input"); gsl.type = "range"; gsl.min = "10"; gsl.max = "100"; gsl.value = String(parseInt(get("cc.iconstrength", "100"), 10) || 100); gsl.style.flex = "1";
-      gsl.addEventListener("input", function () { set("cc.iconstrength", gsl.value); gsync(); });
-      gstrow.appendChild(gsl); cLI.appendChild(gstrow);
+      // Einfärben on/off, unset falling back to the pre-4.32.5 reading (a valid cc.iconcolor
+      // implicitly meant "tint on") — see cc.icontint's doc comment in docker.js's iconInk().
+      function gTintOnEff() { var v = get("cc.icontint", null); return v == null ? !!get("cc.iconcolor", "") : v === "1"; }
+      var gLT = logoToggles(cLI, {
+        getBg: function () { return get("cc.iconbg", "0") === "1"; },
+        setBg: function (v) { set("cc.iconbg", v ? "1" : "0"); },
+        getBgColor: function () { return get("cc.iconbgcolor", ""); },
+        setBgColor: function (v) { set("cc.iconbgcolor", v); },
+        getTint: gTintOnEff,
+        setTint: function (v) { set("cc.icontint", v ? "1" : "0"); },
+        getColor: function () { return get("cc.iconcolor", ""); },
+        setColor: function (v) { set("cc.iconcolor", v); },
+        getAccent: function () { return get("cc.accent", "#2f6feb"); },
+        onChange: gsync
+      });
+      gLT.strInput.value = String(parseInt(get("cc.iconstrength", "100"), 10) || 100);
+      gLT.strInput.addEventListener("input", function () { set("cc.iconstrength", gLT.strInput.value); gsync(); });
       // ── Icon-Färbung (GLOBAL): how the two icon treatments are CHOSEN, as opposed to the
       // colour they use (that is the picker above). See cc-theme.js for the chain itself.
       // The default is "auto"; the other three are manual overrides and are respected even
@@ -1306,7 +1383,6 @@
         // ever return the empty pre-JS skeleton). Best-effort: an empty answer just shows the line.
         rowIcons(sec9[0], 4).then(fill9);
       });
-      gApplyBg(gbg);
       gpaint();
       wrapMain.appendChild(cLI);
     })();
@@ -1318,32 +1394,33 @@
     wrap.appendChild(cD);
     buildStyleCards("ccd.", wrap, [], true);
 
-    // ── Logos (one card: tint OR background) ──
-    var c2 = card(T("Logos", "Logos"), T("Der Schalter aktiviert die Färbung.", "The switch turns the tint on."));
-    var iconbg = get("cc.iconbg", "0") === "1";
-    function applyBgMode(v) { iconbg = v; c2.classList.toggle("cc-bg-mode", v); strow.style.opacity = v ? ".4" : ""; strow.style.pointerEvents = v ? "none" : ""; tprevWrap.classList.toggle("cc-prev-bg", v); try { tintPrev(); } catch (e9) {} }
-    c2.appendChild(toggleRow(T("Hintergrund", "Background"), iconbg, function (v) { set("cc.iconbg", v ? "1" : "0"); applyBgMode(v); syncAllStyleCards(); }));
-    var ihexIn = el("input", "cc-set-hexin"); ihexIn.type = "text"; ihexIn.value = iconcolor || ""; ihexIn.placeholder = "#1f9d55"; ihexIn.maxLength = 7; ihexIn.spellcheck = false;
-    var ipick = inlinePicker(/^#[0-9a-f]{6}$/i.test(iconcolor) ? iconcolor : (/^#[0-9a-f]{6}$/i.test(accent) ? accent : "#1f9d55"), function (v) { iconcolor = v; ihexIn.value = v; set("cc.iconcolor", v); syncIconTog(); });
-    // A real ON/OFF toggle drives the tint (empty cc.iconcolor = off). The picker/hex
-    // set WHICH colour; changing either also switches the tint on.
-    function iconOn() { return !!iconcolor; }
-    var iconTog = el("span", "cc-set-toggle" + (iconOn() ? " cc-set-toggle-on" : "")); iconTog.setAttribute("role", "switch"); iconTog.setAttribute("tabindex", "0"); iconTog.setAttribute("aria-checked", iconOn() ? "true" : "false"); iconTog.appendChild(el("span", "cc-set-knob"));
-    function syncIconTog() { var on = iconOn(); iconTog.classList.toggle("cc-set-toggle-on", on); iconTog.setAttribute("aria-checked", on ? "true" : "false"); try { tintPrev(); } catch (e9) {} syncAllStyleCards(); /* global cc.iconcolor changed -> adopt-ON area cards follow */ }
-    function setIcon(v) { iconcolor = v; ipick._set(v); ihexIn.value = v; set("cc.iconcolor", iconcolor); syncIconTog(); }
-    function setIconOn(on) { if (on) { setIcon(ipick._get()); } else { iconcolor = ""; del("cc.iconcolor"); ihexIn.value = ""; syncIconTog(); } }
-    iconTog.addEventListener("click", function () { setIconOn(!iconOn()); });
-    iconTog.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setIconOn(!iconOn()); } });
-    ihexIn.addEventListener("input", function () { var v = normHex(ihexIn.value); if (v) setIcon(v); });
-    // picker FIRST (same position/height as the Badges card's picker), toggle below
-    var irow = el("div", "cc-set-pickrow"); irow.appendChild(ipick); irow.appendChild(ihexIn); c2.appendChild(irow);
-    var togRow = el("div", "cc-set-row cc-set-inline"); togRow.appendChild(el("span", null, T("Einfärben", "Colourise"))); togRow.appendChild(iconTog); c2.appendChild(togRow);
-    var strow = el("div", "cc-set-row");
-    strow.appendChild(el("span", "cc-set-rl", T("Intensität", "Strength")));
-    var sl = el("input"); sl.type = "range"; sl.min = "10"; sl.max = "100"; sl.value = String(iconstrength); sl.style.flex = "1";
-    sl.addEventListener("input", function () { iconstrength = parseInt(sl.value, 10); set("cc.iconstrength", sl.value); try { tintPrev(); } catch (e9) {} syncAllStyleCards(); });
-    strow.appendChild(sl);
-    c2.appendChild(strow);
+    // ── Logos (background + tint, two INDEPENDENT controls — see logoToggles()) ──
+    var c2 = card(T("Logos", "Logos"), T("Die Schalter aktivieren Hintergrund und Einfärben unabhängig voneinander — jeder hat seine eigene Farbe.", "The switches turn Background and Colourise on independently — each has its own colour."));
+    // Einfärben on/off, unset falling back to the pre-4.32.5 reading (a valid cc.iconcolor
+    // implicitly meant "tint on") — mirrors gTintOnEff() in the global Logos & Icons card
+    // (this Docker card edits the SAME global cc.* keys, not a ccd.-scoped copy).
+    function c2TintOnEff() { var v = get("cc.icontint", null); return v == null ? !!get("cc.iconcolor", "") : v === "1"; }
+    function c2OnChange() {
+      var on = get("cc.iconbg", "0") === "1";
+      c2.classList.toggle("cc-bg-mode", on);
+      tprevWrap.classList.toggle("cc-prev-bg", on);
+      try { tintPrev(); } catch (e9) {}
+      syncAllStyleCards(); // global cc.icon* changed -> adopt-ON area cards follow
+    }
+    var c2LT = logoToggles(c2, {
+      getBg: function () { return get("cc.iconbg", "0") === "1"; },
+      setBg: function (v) { set("cc.iconbg", v ? "1" : "0"); },
+      getBgColor: function () { return get("cc.iconbgcolor", ""); },
+      setBgColor: function (v) { set("cc.iconbgcolor", v); },
+      getTint: c2TintOnEff,
+      setTint: function (v) { set("cc.icontint", v ? "1" : "0"); },
+      getColor: function () { return get("cc.iconcolor", ""); },
+      setColor: function (v) { set("cc.iconcolor", v); },
+      getAccent: function () { return get("cc.accent", "#2f6feb"); },
+      onChange: c2OnChange
+    });
+    c2LT.strInput.value = String(iconstrength);
+    c2LT.strInput.addEventListener("input", function () { iconstrength = parseInt(c2LT.strInput.value, 10); set("cc.iconstrength", c2LT.strInput.value); try { tintPrev(); } catch (e9) {} syncAllStyleCards(); });
     // (the VM-icons toggle is obsolete — the VM tab has its own style section)
     // cc.sgsize is GLOBAL (one key). The CONTROL now lives ONCE in Allgemein (Theming card, next to Density;
     // user: "global einstellbar, nicht per tab"). This Docker card keeps only the LIVE PREVIEW below, which
@@ -1374,8 +1451,8 @@
       if (!dockPrev.count()) dockPrev.add("/plugins/cannonadecommand/images/cannonadecommand.png", "");
       tintPrev();
     }).catch(function () { dockPrev.add("/plugins/cannonadecommand/images/cannonadecommand.png", ""); tintPrev(); });
-    function tintPrev() { dockPrev.set({ bg: iconbg, color: iconcolor, strength: iconstrength, accent: accent }); }
-    c2.appendChild(tprevWrap); tintPrev(); applyBgMode(iconbg); sizePrev();   // #5: preview is the card's LAST block now, sized to the tile-size control
+    function tintPrev() { dockPrev.set({ bg: get("cc.iconbg", "0") === "1", bgColor: get("cc.iconbgcolor", ""), tint: c2TintOnEff(), color: get("cc.iconcolor", ""), strength: parseInt(get("cc.iconstrength", "100"), 10) || 100, accent: get("cc.accent", "#2f6feb") }); }
+    c2.appendChild(tprevWrap); tintPrev(); c2OnChange(); sizePrev();   // #5: preview is the card's LAST block now, sized to the tile-size control
     wrap.appendChild(c2);
 
     // (The CPU/RAM diagnostics card is built right before the Bandwidth card below,
@@ -1505,7 +1582,7 @@
       // the card always shows the EFFECTIVE colour: the global accent while adopt is ON,
       // the area's own accent while OFF (user call: the fields must "jump" on adopt)
       function effAcc() { return (adoptKey && localStorage.getItem(adoptKey) !== "0") ? get("cc.accent", "#2f6feb") : get(P + "accent", "#2f6feb"); }
-      var acc = effAcc(), icol = get(P + "iconcolor", ""), istr = parseInt(get(P + "iconstrength", "100"), 10) || 100;
+      var acc = effAcc(), istr = parseInt(get(P + "iconstrength", "100"), 10) || 100;
       function useOwn() {
         if (adoptKey && localStorage.getItem(adoptKey) !== "0") {
           localStorage.setItem(adoptKey, "0");
@@ -1585,48 +1662,50 @@
       cA.appendChild(pv);
       // adopt flip / global edit → this card repaints with the effective colour. ALSO repaints
       // the Logos card below with the EFFECTIVE icon values (adopt ON -> global cc.icon*, OFF ->
-      // this area's own P+icon*) — same effAcc() pattern, reusing sy()/applyBg2 for the paint.
-      // The cB handles (bgTg/ipk/ihx/sl2) are vars assigned below; the refresher only ever runs
-      // after buildStyleCards finished, so they are live by then.
+      // this area's own P+icon*) via cBLT.sync(), reusing applyBgClasses()/tp() for the paint.
+      // cBLT/applyBgClasses/tp are assigned below; the refresher only ever runs after
+      // buildStyleCards finished, so they are live by then.
       if (adoptKey) styleCardSync[adoptKey] = function () {
         acc = effAcc();
         try { pk._set(/^#[0-9a-f]{6}$/i.test(acc) ? acc : "#2f6feb"); } catch (e9) {}
         hx.value = acc;
         paintPv();   // repaints the sample badges AND re-marks the preset row (swMarkRow) in one place
-        var ga = localStorage.getItem(adoptKey) !== "0";
-        icol = ga ? get("cc.iconcolor", "") : get(P + "iconcolor", "");
-        try { ipk._set(/^#[0-9a-f]{6}$/i.test(icol) ? icol : "#1f9d55"); } catch (e9) {}
-        ihx.value = icol || "";
-        sl2.value = String(parseInt(ga ? get("cc.iconstrength", "100") : get(P + "iconstrength", "100"), 10) || 100);
-        sy(); // Einfärben knob + preview follow icol
-        var ebg = (ga ? get("cc.iconbg", "0") : get(P + "iconbg", P === "ccs." ? "1" : "0")) === "1";
-        bgTg._setOn(ebg); applyBg2(ebg);
+        cBLT.sync(); // Hintergrund/Einfärben toggles + pickers follow the now-effective values
+        cBLT.strInput.value = String(effIconStrength());
+        applyBgClasses(); tp();
       };
       into.appendChild(cA);
       // Badge-Form (shape) is now a single GLOBAL control in the Allgemein "Badges" card, so it is
       // no longer repeated per area here.
-      var cB = card(T("Logos", "Logos"), T("Der Schalter aktiviert die Färbung.", "The switch turns the tint on."));
-      var ibg = get(P + "iconbg", P === "ccs." ? "1" : "0") === "1";
-      function applyBg2(v) { ibg = v; cB.classList.toggle("cc-bg-mode", v); st2.style.opacity = v ? ".4" : ""; st2.style.pointerEvents = v ? "none" : ""; tpw.classList.toggle("cc-prev-bg", v); try { tp(); } catch (e9) {} }
-      // every value change = "this area uses its OWN style" -> useOwn() flips the adopt toggle
-      // off, exactly like the Badges card handlers (own key set FIRST so the bar sync reads it).
-      // bgTg is kept as a handle: the adopt-sync refresher below repaints it with the EFFECTIVE state.
-      var bgTg = toggle(ibg, function (v) { set(P + "iconbg", v ? "1" : "0"); useOwn(); applyBg2(v); });
-      var bgRow = el("div", "cc-set-row"); bgRow.appendChild(el("span", null, T("Hintergrund", "Background"))); bgRow.appendChild(el("span", "cc-set-spacer")); bgRow.appendChild(bgTg);
-      cB.appendChild(bgRow);
-      var ihx = el("input", "cc-set-hexin"); ihx.type = "text"; ihx.value = icol || ""; ihx.placeholder = "#1f9d55"; ihx.maxLength = 7; ihx.spellcheck = false;
-      var ipk = inlinePicker(/^#[0-9a-f]{6}$/i.test(icol) ? icol : "#1f9d55", function (v) { icol = v; ihx.value = v; set(P + "iconcolor", v); useOwn(); sy(); });
-      function on2() { return !!icol; }
-      var tg2 = el("span", "cc-set-toggle" + (on2() ? " cc-set-toggle-on" : "")); tg2.setAttribute("role", "switch"); tg2.setAttribute("tabindex", "0"); tg2.appendChild(el("span", "cc-set-knob"));
-      function sy() { tg2.classList.toggle("cc-set-toggle-on", on2()); tg2.setAttribute("aria-checked", on2() ? "true" : "false"); try { tp(); } catch (e9) {} }
-      tg2.addEventListener("click", function () { if (on2()) { icol = ""; del(P + "iconcolor"); ihx.value = ""; } else { icol = ipk._get(); ihx.value = icol; set(P + "iconcolor", icol); } useOwn(); sy(); });
-      ihx.addEventListener("input", function () { var v = normHex(ihx.value); if (v) { icol = v; ipk._set(v); set(P + "iconcolor", v); useOwn(); sy(); } });
-      var ir2 = el("div", "cc-set-pickrow"); ir2.appendChild(ipk); ir2.appendChild(ihx); cB.appendChild(ir2);
-      var tr2 = el("div", "cc-set-row cc-set-inline"); tr2.appendChild(el("span", null, T("Einfärben", "Colourise"))); tr2.appendChild(tg2); cB.appendChild(tr2);
-      var st2 = el("div", "cc-set-row"); st2.appendChild(el("span", "cc-set-rl", T("Intensität", "Strength")));
-      var sl2 = el("input"); sl2.type = "range"; sl2.min = "10"; sl2.max = "100"; sl2.value = String(istr); sl2.style.flex = "1";
-      sl2.addEventListener("input", function () { set(P + "iconstrength", sl2.value); useOwn(); try { tp(); } catch (e9) {} });
-      st2.appendChild(sl2); cB.appendChild(st2);
+      var cB = card(T("Logos", "Logos"), T("Die Schalter aktivieren Hintergrund und Einfärben unabhängig voneinander — jeder hat seine eigene Farbe.", "The switches turn Background and Colourise on independently — each has its own colour."));
+      // ga(): adopt ON -> read/preview the GLOBAL cc.icon* values; adopt OFF -> this area's own
+      // P+icon* values. Every value change here means "this area uses its OWN style" (useOwn(),
+      // exactly like the Badges card handlers above), so the six io setters below always WRITE
+      // the area's own P+ key regardless of the current adopt state.
+      function ga() { return !!adoptKey && localStorage.getItem(adoptKey) !== "0"; }
+      function tintOnAt(prefix) { var v = get(prefix + "icontint", null); return v == null ? !!get(prefix + "iconcolor", "") : v === "1"; }
+      function bgColorAt(prefix) {
+        var c = get(prefix + "iconbgcolor", ""); if (/^#[0-9a-f]{6}$/i.test(c)) return c;
+        var ic = get(prefix + "iconcolor", ""); if (/^#[0-9a-f]{6}$/i.test(ic)) return ic;
+        return acc;
+      }
+      function effIconBg() { return (ga() ? get("cc.iconbg", "0") : get(P + "iconbg", P === "ccs." ? "1" : "0")) === "1"; }
+      function effIconStrength() { return parseInt(ga() ? get("cc.iconstrength", "100") : get(P + "iconstrength", "100"), 10) || 100; }
+      function applyBgClasses() { var on = effIconBg(); cB.classList.toggle("cc-bg-mode", on); tpw.classList.toggle("cc-prev-bg", on); }
+      var cBLT = logoToggles(cB, {
+        getBg: effIconBg,
+        setBg: function (v) { set(P + "iconbg", v ? "1" : "0"); useOwn(); },
+        getBgColor: function () { return ga() ? bgColorAt("cc.") : bgColorAt(P); },
+        setBgColor: function (v) { set(P + "iconbgcolor", v); useOwn(); },
+        getTint: function () { return ga() ? tintOnAt("cc.") : tintOnAt(P); },
+        setTint: function (v) { set(P + "icontint", v ? "1" : "0"); useOwn(); },
+        getColor: function () { return ga() ? get("cc.iconcolor", "") : get(P + "iconcolor", ""); },
+        setColor: function (v) { set(P + "iconcolor", v); useOwn(); },
+        getAccent: function () { return acc; },
+        onChange: function () { applyBgClasses(); try { tp(); } catch (e9) {} }
+      });
+      cBLT.strInput.value = String(istr);
+      cBLT.strInput.addEventListener("input", function () { set(P + "iconstrength", cBLT.strInput.value); useOwn(); try { tp(); } catch (e9) {} });
       // live logo preview with real icons of this tab — ONE shared preview (logoPreview), which runs
       // the SAME icon pipeline the real tab runs (CCTheme.icons.plan) and puts the coloured badge on a
       // real CSS tile instead of an feFlood. The private copy that used to live here recoloured the
@@ -1658,8 +1737,15 @@
       } else {
         addSamples();
       }
-      function tp() { pvl.set({ bg: ibg, color: icol, strength: parseInt(get(P + "iconstrength", "100"), 10) || 100, accent: acc, size: "48px" }); }
-      cB.appendChild(tpw); tp(); applyBg2(ibg);
+      function tp() {
+        var ga9 = ga();
+        pvl.set({
+          bg: effIconBg(), bgColor: ga9 ? get("cc.iconbgcolor", "") : get(P + "iconbgcolor", ""),
+          tint: ga9 ? tintOnAt("cc.") : tintOnAt(P), color: ga9 ? get("cc.iconcolor", "") : get(P + "iconcolor", ""),
+          strength: effIconStrength(), accent: acc, size: "48px"
+        });
+      }
+      cB.appendChild(tpw); tp(); applyBgClasses();
       // initial paint = the EFFECTIVE values (cA already initialises via effAcc(); run the
       // refresher once so cB starts on the global icon values while adopt is ON, own while OFF)
       if (adoptKey) { try { styleCardSync[adoptKey](); } catch (e9) {} }

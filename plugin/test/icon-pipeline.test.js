@@ -91,8 +91,8 @@ function grabFn(name) {
 }
 const dockerApi = new Function('document', 'localStorage', 'window',
   grabFn('effc') + '\n' +
-  grabFn('idealText') + '\n' + grabFn('ccHex6') + '\n' + grabFn('iconInk') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('ccLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
-  'return { iconInk: iconInk, ensureFlatFilter: ensureFlatFilter, ensureMonoFilter: ensureMonoFilter, ensureTintFilter: ensureTintFilter, ccLogoSizes: ccLogoSizes, glyphInkAndFilter: glyphInkAndFilter, idealText: idealText, effc: effc };'
+  grabFn('idealText') + '\n' + grabFn('ccHex6') + '\n' + grabFn('tintOn') + '\n' + grabFn('bgColor') + '\n' + grabFn('iconInk') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('ccLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
+  'return { iconInk: iconInk, tintOn: tintOn, bgColor: bgColor, ensureFlatFilter: ensureFlatFilter, ensureMonoFilter: ensureMonoFilter, ensureTintFilter: ensureTintFilter, ccLogoSizes: ccLogoSizes, glyphInkAndFilter: glyphInkAndFilter, idealText: idealText, effc: effc };'
 )(document, global.localStorage, global.window);
 
 /* ── tests ───────────────────────────────────────────────────────────────── */
@@ -249,6 +249,37 @@ console.log('\ndocker.js iconInk(): the ONE target colour both treatments paint 
   reset();
 }
 
+console.log('\nHintergrund and Einfärben are INDEPENDENT (v4.32.5 fix): the badge alone must not force the tint on');
+{
+  reset();
+  ok('nothing configured at all: no ink', dockerApi.iconInk(false) === '');
+
+  // the CONFIRMED bug: Logo-Hintergrund on, Einfärben never touched (no cc.icontint, no
+  // cc.iconcolor) used to still tint every Docker icon via the accent fallback
+  localStorage.setItem('cc.iconbg', '1');
+  ok('background ON, Einfärben untouched, no colour picked ANYWHERE: still no ink', dockerApi.iconInk(false) === '');
+
+  localStorage.setItem('cc.icontint', '0');
+  ok('background ON, Einfärben EXPLICITLY off: still no ink even with the badge showing', dockerApi.iconInk(false) === '');
+
+  localStorage.setItem('cc.icontint', '1');
+  ok('background ON, Einfärben explicitly ON: NOW it inks (contrast against the badge box)', dockerApi.iconInk(false) !== '');
+  reset();
+
+  // pre-4.32.5 installs: only cc.iconbg + cc.iconcolor were ever set, and iconcolor's mere
+  // presence WAS the tint's on-signal — tintOn()'s fallback keeps that reading intact.
+  localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconcolor', '#1f9d55');
+  ok('pre-existing install (no cc.icontint key at all): behaves exactly as it always did — inked', dockerApi.tintOn() === true && dockerApi.iconInk(false) !== '');
+  reset();
+
+  // the background's OWN colour is independent of the tint's colour once both are configured
+  localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#161616'); localStorage.setItem('cc.icontint', '0');
+  ok('background colour applies even with Einfärben off (bgColor reads cc.iconbgcolor)', dockerApi.bgColor() === '#161616');
+  localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#e5a00d');
+  ok('once both are on, the badge ink contrasts with the BADGE colour, not the (different) tint colour', dockerApi.iconInk(false) === '#ffffff', dockerApi.iconInk(false));
+  reset();
+}
+
 console.log('\ndocker.js honours its OWN adopt toggle (cc.styledocker) for iconcolor/iconbg/iconstrength');
 {
   // The confirmed bypass bug: docker.js used to read cc.iconcolor/cc.iconbg/cc.iconstrength
@@ -289,6 +320,11 @@ console.log('\nA glyph never ends up with BOTH a direct colour AND the luminance
   ok('Logo-Hintergrund on: colour is set, filter is cleared even when forced "tint"', (function () { var r = dockerApi.glyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', '#e5a00d', w); return !!r.color && !r.filter; })());
   ok('an ink colour is available: colour is set, filter is cleared even when forced "tint"', (function () { var r = dockerApi.glyphInkAndFilter({ treat: 'tint' }, false, '#2f6feb', '#e5a00d', w); return !!r.color && !r.filter; })());
   ok('no ink at all: filter is the only thing that can carry the treatment, colour stays empty', (function () { var r = dockerApi.glyphInkAndFilter({ treat: 'tint' }, false, '#2f6feb', '', w); return !r.color && r.filter === w; })());
+  // v4.32.5 regression pin: the badge alone must NEVER force a colour onto a glyph — `ink` (the
+  // 4th arg) already answers "" whenever Einfärben is off, badge or not, so ibgOn must not be
+  // consulted on its own any more (the old `if (ibgOn) return {color: idealText(ibgAcc), ...}`
+  // branch ignored an empty `ink` and forced one anyway).
+  ok('Logo-Hintergrund on but NO ink (Einfärben off): no colour is forced onto the glyph', (function () { var r = dockerApi.glyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', '', w); return !r.color; })());
 }
 
 console.log('\nThe flat filter flattens to ONE colour and keeps alpha');

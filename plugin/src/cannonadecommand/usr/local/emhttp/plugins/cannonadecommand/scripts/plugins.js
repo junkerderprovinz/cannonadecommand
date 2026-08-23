@@ -183,14 +183,35 @@
 
   // the Docker-tab icon tint, standalone: luminance x target colour via an SVG
   // feColorMatrix, blended by cc.iconstrength; imgs get filter: url(#cc-plug-tint)
+  // ── Hintergrund (background) and Einfärben (tint) are two INDEPENDENT controls (v4.32.5
+  // fix, mirrored from docker.js): eff("iconbg") stays the background badge's on/off key, and
+  // eff("iconbgcolor") (new) is its OWN colour; eff("icontint") (new) is the tint's OWN on/off,
+  // and eff("iconcolor") stays its existing colour key. Before this, iconcolor's mere presence
+  // WAS the tint's on-signal and doubled as the badge's colour too, so switching Hintergrund on
+  // forced icon tinting on as a side effect. plugTintOn()/plugBgColor() fall back to that exact
+  // pre-4.32.5 reading whenever the new keys were never touched, so an untouched install looks
+  // unchanged.
+  function plugTintOn() {
+    var v = eff("icontint");
+    return v == null ? !!eff("iconcolor") : v === "1";
+  }
+  function plugBgColor() {
+    var c = eff("iconbgcolor");
+    if (c && /^#?[0-9a-f]{6}$/i.test(c)) return ccHex6(c);
+    var ic = eff("iconcolor");
+    if (ic && /^#?[0-9a-f]{6}$/i.test(ic)) return ccHex6(ic);
+    return accent();
+  }
   // The icon pipeline's target colour for this tab — same contract as docker.js iconInk():
-  // on the Logo-Hintergrund box the ink must contrast with the BOX, otherwise it is the
-  // picked icon colour lifted out of the dark end. `forTint` doubles the floor because a
-  // luminance tint outputs roughly half the target's luma (see CCTheme.liftDark).
+  // "" whenever Einfärben (tint) is off, regardless of the badge; on the Logo-Hintergrund box
+  // the ink must contrast with the BOX's OWN colour, otherwise it is the picked TINT colour
+  // lifted out of the dark end. `forTint` doubles the floor because a luminance tint outputs
+  // roughly half the target's luma (see CCTheme.liftDark).
   function plugIconInk(forTint) {
+    if (!plugTintOn()) return "";
+    if (eff("iconbg") === "1") return ccHex6(idealText(plugBgColor()));
     var pick = eff("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
-    if (eff("iconbg") === "1") return ccHex6(idealText(valid ? pick : accent()));
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
     return ccHex6(window.CCTheme.liftDark(pick, accent(), window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1)));
@@ -199,9 +220,15 @@
   // docker.js/vms.js fix — see glyphInkAndFilter() there): once a glyph gets a direct css
   // colour, the filter must never ALSO run on top of it. Extracted so the invariant is
   // unit-testable without a full render pass.
+  //
+  // `ibgOn`/`ibgBg` are kept as parameters for call-site stability but are no longer consulted
+  // directly: `pInk` (plugIconInk()'s result) already resolves to the box-contrast colour
+  // whenever the badge is on AND Einfärben is on, and to "" whenever Einfärben is off — the old
+  // `if (ibgOn) return {color: idealText(ibgBg), ...}` branch forced a colour onto every plugin
+  // glyph the moment the badge was on, even with Einfärben off (the same background-forces-tint
+  // bug as plugIconInk(), for font/Unraid-icon glyphs specifically — v4.32.5 fix).
   function plugGlyphInkAndFilter(plan, ibgOn, ibgBg, pInk, want) {
     if (plan.treat === "native") return { color: "", filter: "none" };
-    if (ibgOn) return { color: idealText(ibgBg), filter: "none" };
     if (pInk) return { color: pInk, filter: "none" };
     return { color: "", filter: want };
   }
@@ -421,9 +448,13 @@
     // logo-background badge on: flatten every logo to one ink tone so it reads on
     // the accent box (mono filter overrides the iconcolor tint f2 when active)
     var ibgOn = eff("iconbg") === "1";
-    var ibgIcon = eff("iconcolor"); var ibgBg = (ibgIcon && /^#?[0-9a-f]{6}$/i.test(ibgIcon)) ? ibgIcon : accent();
+    var ibgBg = plugBgColor();
     var pInk = plugIconInk(false);
-    var pFlat = ibgOn ? ensureMonoFilter("cc-plug-mono-svg", "cc-plug-mono-tint", ibgBg) : (pInk ? ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", pInk) : "");
+    // branch on pInk alone (which already answers "" whenever Einfärben is off, badge or not) —
+    // branching on ibgOn directly here instead (as this used to) reintroduces the
+    // background-forces-tint bug: it would flatten every icon to the box's ink even with
+    // Einfärben off.
+    var pFlat = pInk ? ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", pInk) : ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", "");
     var LOGO = logoSize(); // cc.sgsize step = Docker/VM logo size (m default 62px)
     var pName = tds[0].getAttribute("data-cc-pname") || "";
     var PCI = window.CCTheme && window.CCTheme.icons;
@@ -688,8 +719,10 @@
       document.documentElement.classList.toggle("cc-plugins-rainbow", ls("cc.rainbow") === "1");
       // reactive rainbow: rows rest grey and colour on hover (docker.css hover rules gated here)
       document.documentElement.classList.toggle("cc-shares-rbneutral", reactive());
-      var pIcon = eff("iconcolor");
-      if (eff("iconbg") === "1" && pIcon && /^#?[0-9a-f]{6}$/i.test(pIcon)) document.documentElement.style.setProperty("--cc-iconbg-color", pIcon);
+      // the box's OWN colour (plugBgColor(), new cc.iconbgcolor key with a fallback chain to
+      // the legacy cc.iconcolor and then the accent) — independent of whether Einfärben is on,
+      // exactly like the badge itself is independent of it.
+      if (eff("iconbg") === "1") document.documentElement.style.setProperty("--cc-iconbg-color", plugBgColor());
       else document.documentElement.style.removeProperty("--cc-iconbg-color");
       // Tab-Ansicht (cc.sections.plugins, default OFF = native sub-tabs): opt in to stacked CC sections.
       // cc-on-plugins marks the page; the CSS flatten block (docker.css) is gated

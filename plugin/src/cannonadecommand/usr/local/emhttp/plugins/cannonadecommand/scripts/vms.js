@@ -66,14 +66,34 @@
   // is an opt-OUT: only the literal "0" disables it). Requiring a separate "1" opt-in was
   // an easy-to-miss toggle that made VMs look like they "never tinted".
   function vmTintOff() { return ls("cc.vmicons") === "0"; }
+  // ── Hintergrund (background) and Einfärben (tint) are two INDEPENDENT controls (v4.32.5
+  // fix, mirrored from docker.js): cc.iconbg stays the background badge's on/off key, and
+  // cc.iconbgcolor (new) is its OWN colour; cc.icontint (new) is the tint's OWN on/off, and
+  // cc.iconcolor stays its existing colour key. Before this, iconcolor's mere presence WAS the
+  // tint's on-signal and doubled as the badge's colour too, so switching Hintergrund on forced
+  // icon tinting on as a side effect. vmTintOn()/vmBgColor() fall back to that exact pre-4.32.5
+  // reading whenever the new keys were never touched, so an untouched install looks unchanged.
+  function vmTintOn() {
+    var v = effK("icontint");
+    return v == null ? !!effK("iconcolor") : v === "1";
+  }
+  function vmBgColor() {
+    var c = effK("iconbgcolor");
+    if (c && /^#?[0-9a-f]{6}$/i.test(c)) return ccHex6(c);
+    var ic = effK("iconcolor");
+    if (ic && /^#?[0-9a-f]{6}$/i.test(ic)) return ccHex6(ic);
+    return ccAccent();
+  }
   // The icon pipeline's target colour for this tab — same contract as docker.js iconInk():
-  // on the Logo-Hintergrund box it is the box's ideal text colour, otherwise the picked
-  // icon colour lifted out of the dark end by the shared darkness guard. `forTint` doubles
-  // the floor because a luminance tint outputs roughly half the target's luma.
+  // "" whenever Einfärben (tint) is off, regardless of the badge; on the Logo-Hintergrund box
+  // it is the BOX's OWN colour's ideal text colour, otherwise the picked TINT colour lifted out
+  // of the dark end by the shared darkness guard. `forTint` doubles the floor because a
+  // luminance tint outputs roughly half the target's luma.
   function vmIconInk(forTint) {
+    if (!vmTintOn()) return "";
+    if (effK("iconbg") === "1") return ccHex6(ccIdeal(vmBgColor()));
     var pick = effK("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
-    if (effK("iconbg") === "1") return ccHex6(ccIdeal(valid ? pick : ccAccent()));
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
     return ccHex6(window.CCTheme.liftDark(pick, ccAccent(), window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1)));
@@ -125,9 +145,16 @@
   // docker.js fix — see glyphInkAndFilter() there): once a glyph gets a direct css colour, the
   // filter must never ALSO run on top of it, or a forced "tint" mode double-tints/dims the same
   // hue. Extracted so the invariant is unit-testable without a full render pass.
+  //
+  // `ibgOn`/`ibgAcc` are kept as parameters for call-site stability but are no longer consulted
+  // directly: `ink` (vmIconInk()'s result) already resolves to the box-contrast colour whenever
+  // the badge is on AND Einfärben is on, and to "" whenever Einfärben is off — the old
+  // `ibgOn ? ccIdeal(ibgAcc) : ink` forced a colour onto every VM glyph the moment the badge was
+  // on, even with Einfärben off (the same background-forces-tint bug as vmIconInk(), for font
+  // glyphs specifically — v4.32.5 fix).
   function glyphInkAndFilter(plan, ibgOn, ibgAcc, ink) {
     if (plan.treat === "native") return { color: "", filter: "" };
-    return { color: ibgOn ? ccIdeal(ibgAcc) : ink, filter: "" };
+    return { color: ink, filter: "" };
   }
   // Source swap + native-source memory, identical contract to docker.js setIconSrc.
   function vmSetIconSrc(img, url) {
@@ -1005,17 +1032,19 @@
   function paintVmIcons() {
     try {
       var f = filterVal(), c = tintColor(), imgs = vmImgs();
-      var ibgOn = effK("iconbg") === "1"; var vIcon = effK("iconcolor"); var ibgAcc = (vIcon && /^#[0-9a-f]{6}$/i.test(vIcon)) ? vIcon : ccAccent();
+      var ibgOn = effK("iconbg") === "1"; var ibgAcc = vmBgColor();
       // Logo-Hintergrund badge box is now drawn by VmTab.css via html.cc-vm-iconbg (mirroring Docker's
       // cc-docker-iconbg) — the box shape/size/circle live in CSS. We only toggle the class + hand it the
       // tint colour; the monochrome ink flatten still has to be an INLINE filter on each logo image.
       var root2 = document.documentElement;
       root2.classList.toggle("cc-vm-iconbg", ibgOn);
       if (ibgOn) root2.style.setProperty("--cc-iconbg-color", ibgAcc); else root2.style.removeProperty("--cc-iconbg-color");
-      // ONE flat filter for the page, from the same ink the tint uses. ensureMonoFilter is
-      // the Logo-Hintergrund spelling of it (flatten to whatever reads on the box).
+      // ONE flat filter for the page, from the SAME ink the tint uses (vmIconInk(), which already
+      // answers "" whenever Einfärben is off, badge or not) — branching on ibgOn directly here
+      // instead (as this used to) reintroduces the background-forces-tint bug: it would flatten
+      // every icon to the box's ink even with Einfärben off, since it never checked vmInk at all.
       var vmInk = vmIconInk(false);
-      var flat = ibgOn ? ensureMonoFilter("cc-vm-mono-svg", "cc-vm-mono-tint", ibgAcc) : (vmInk ? ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", vmInk) : ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", ""));
+      var flat = vmInk ? ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", vmInk) : ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", "");
       var CI = window.CCTheme && window.CCTheme.icons, vmNames = [];
       for (var i = 0; i < imgs.length; i++) {
         var n = imgs[i], vname = vmIconName(n);
