@@ -28,6 +28,7 @@ class N {
       _s: {},
       setProperty: function (k, v) { this._s[k] = v; },
       removeProperty: function (k) { delete this._s[k]; },
+      getPropertyValue: function (k) { return this._s[k] || ''; },
       cssText: ''
     };
   }
@@ -76,9 +77,9 @@ const vmsApi = new Function('document', 'localStorage', 'window',
   grabFn('ls') + '\n' + grabFn('vmTintOff') + '\n' + grabFn('effK') + '\n' + grabFn('ccIdeal') + '\n' + grabFn('ccAccent') + '\n' +
   grabFn('ccHex6') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' +
   grabFn('vmPalActive') + '\n' + grabFn('vmRbColor') + '\n' + grabFn('vmAdoptTint') + '\n' +
-  grabFn('vmTintOn') + '\n' + grabFn('vmBgColor') + '\n' + grabFn('vmIconInk') + '\n' +
-  grabFn('ensureTintFilter') + '\n' + grabFn('vmLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
-  'return { effK: effK, vmTintOn: vmTintOn, vmBgColor: vmBgColor, vmIconInk: vmIconInk, ensureTintFilter: ensureTintFilter, vmLogoSizes: vmLogoSizes, glyphInkAndFilter: glyphInkAndFilter, ccIdeal: ccIdeal, ccAccent: ccAccent, vmRbColor: vmRbColor, vmAdoptTint: vmAdoptTint };'
+  grabFn('vmTintOn') + '\n' + grabFn('vmBgColor') + '\n' + grabFn('vmIconInk') + '\n' + grabFn('vmItemAdoptInk') + '\n' +
+  grabFn('ensureTintFilterAs') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('vmLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
+  'return { effK: effK, vmTintOn: vmTintOn, vmBgColor: vmBgColor, vmIconInk: vmIconInk, vmItemAdoptInk: vmItemAdoptInk, ensureTintFilter: ensureTintFilter, ensureTintFilterAs: ensureTintFilterAs, vmLogoSizes: vmLogoSizes, glyphInkAndFilter: glyphInkAndFilter, ccIdeal: ccIdeal, ccAccent: ccAccent, vmRbColor: vmRbColor, vmAdoptTint: vmAdoptTint };'
 )(document, global.localStorage, global.window);
 
 /* ── tests ───────────────────────────────────────────────────────────────── */
@@ -169,6 +170,48 @@ console.log('\ncc.iconbgrainbow (v4.33.1): Badge-Einstellungen übernehmen — O
 
   localStorage.setItem('cc.iconbgrainbow', '0');
   ok('turning the master toggle back off restores the own picked colour immediately', vmsApi.vmIconInk(false) === '#00aa00', vmsApi.vmIconInk(false));
+  reset();
+}
+
+console.log('\nvmItemAdoptInk() (v4.33.2 fix): PER-ROW contrast ink — mirrors docker.js itemAdoptInk(), the exact regression an independent reviewer found in v4.33.1');
+{
+  // THE CONFIRMED BUG: under the master adopt toggle, vmIconInk() answered ONE representative
+  // colour for every VM row (idealText(vmRbColor(5)) — always palette slot 5), even though
+  // enhanceCells() already stamps a genuinely rotating --cc-rb-c/--cc-rb-ct per row. Slot 2
+  // (#eab308, yellow) is the one slot in the default 8-colour palette needing BLACK ink instead
+  // of slot 5's white — whichever VM row's own rotation landed there got illegible white-on-
+  // yellow. vmItemAdoptInk() fixes this by reusing THAT row's own already-stamped --cc-rb-ct.
+  reset();
+  localStorage.setItem('cc.iconbgrainbow', '1');
+  localStorage.setItem('cc.rainbow', '1');
+  localStorage.setItem('cc.accent', '#2f6feb');
+
+  function fakeRow() {
+    var s = {};
+    return { style: { setProperty: function (k, v) { s[k] = v; }, getPropertyValue: function (k) { return s[k] || ''; } } };
+  }
+
+  ok('slot 5 (vmRbColor(5)) really is #2f6feb, needing WHITE ink', vmsApi.vmRbColor(5) === '#2f6feb' && vmsApi.ccIdeal(vmsApi.vmRbColor(5)) === '#fff');
+  ok('slot 2 (vmRbColor(2)) really is the yellow #eab308, needing BLACK ink', vmsApi.vmRbColor(2) === '#eab308' && vmsApi.ccIdeal(vmsApi.vmRbColor(2)) === '#161616');
+
+  var yellowRow = fakeRow();
+  yellowRow.style.setProperty('--cc-rb-c', vmsApi.vmRbColor(2));
+  yellowRow.style.setProperty('--cc-rb-ct', vmsApi.ccIdeal(vmsApi.vmRbColor(2)));
+
+  ok('THE REGRESSION PIN: a VM row on the yellow slot gets BLACK ink from vmItemAdoptInk(), not the representative white', vmsApi.vmItemAdoptInk(yellowRow) === '#161616', vmsApi.vmItemAdoptInk(yellowRow));
+  ok('…which genuinely DIFFERS from the old page-wide vmIconInk() answer for the SAME settings (the confirmed bug)', vmsApi.vmItemAdoptInk(yellowRow) !== vmsApi.vmIconInk(false), vmsApi.vmItemAdoptInk(yellowRow) + ' vs ' + vmsApi.vmIconInk(false));
+
+  var blueRow = fakeRow();
+  blueRow.style.setProperty('--cc-rb-c', vmsApi.vmRbColor(5));
+  blueRow.style.setProperty('--cc-rb-ct', vmsApi.ccIdeal(vmsApi.vmRbColor(5)));
+  ok('a row on the representative slot still gets white ink', vmsApi.vmItemAdoptInk(blueRow) === '#fff', vmsApi.vmItemAdoptInk(blueRow));
+
+  localStorage.setItem('cc.rainbow', '0');
+  ok('Rainbow OFF: vmItemAdoptInk() ignores a stale --cc-rb-ct stamp and falls back to the uniform accent-derived ink', vmsApi.vmItemAdoptInk(yellowRow) === vmsApi.vmIconInk(false), vmsApi.vmItemAdoptInk(yellowRow));
+  localStorage.setItem('cc.rainbow', '1');
+
+  ok('no row element at all: degrades to the uniform fallback, never throws', vmsApi.vmItemAdoptInk(null) === vmsApi.vmIconInk(false));
+  ok('a row with no --cc-rb-ct stamp yet: same safe fallback', vmsApi.vmItemAdoptInk(fakeRow()) === vmsApi.vmIconInk(false));
   reset();
 }
 

@@ -96,8 +96,8 @@ const dockerApi = new Function('document', 'localStorage', 'window',
   'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
   grabFn('effc') + '\n' + grabFn('themingOn') + '\n' +
-  grabFn('idealText') + '\n' + grabFn('ccHex6') + '\n' + grabFn('tintOn') + '\n' + grabFn('ccPalActive') + '\n' + grabFn('ccRbColor') + '\n' + grabFn('iconAdoptTint') + '\n' + grabFn('bgColor') + '\n' + grabFn('iconInk') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('ccLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
-  'return { iconInk: iconInk, tintOn: tintOn, bgColor: bgColor, ensureFlatFilter: ensureFlatFilter, ensureMonoFilter: ensureMonoFilter, ensureTintFilter: ensureTintFilter, ccLogoSizes: ccLogoSizes, glyphInkAndFilter: glyphInkAndFilter, idealText: idealText, effc: effc, iconAdoptTint: iconAdoptTint, ccRbColor: ccRbColor };'
+  grabFn('idealText') + '\n' + grabFn('ccHex6') + '\n' + grabFn('tintOn') + '\n' + grabFn('ccPalActive') + '\n' + grabFn('ccRbColor') + '\n' + grabFn('iconAdoptTint') + '\n' + grabFn('bgColor') + '\n' + grabFn('iconInk') + '\n' + grabFn('itemAdoptInk') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' + grabFn('ensureTintFilterAs') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('ccLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
+  'return { iconInk: iconInk, itemAdoptInk: itemAdoptInk, tintOn: tintOn, bgColor: bgColor, ensureFlatFilter: ensureFlatFilter, ensureMonoFilter: ensureMonoFilter, ensureTintFilter: ensureTintFilter, ensureTintFilterAs: ensureTintFilterAs, ccLogoSizes: ccLogoSizes, glyphInkAndFilter: glyphInkAndFilter, idealText: idealText, effc: effc, iconAdoptTint: iconAdoptTint, ccRbColor: ccRbColor };'
 )(document, global.localStorage, global.window);
 
 /* ── tests ───────────────────────────────────────────────────────────────── */
@@ -352,6 +352,64 @@ console.log('\ncc.iconbgrainbow (v4.33.1): Badge-Einstellungen übernehmen — O
 
   localStorage.setItem('cc.iconbgrainbow', '0');
   ok('turning the master toggle back off restores the own picked colour immediately', dockerApi.iconInk(false) === '#00aa00', dockerApi.iconInk(false));
+  reset();
+}
+
+console.log('\nitemAdoptInk() (v4.33.2 fix): PER-ITEM contrast ink, the exact regression the independent reviewer found in v4.33.1');
+{
+  // THE CONFIRMED BUG: under the master adopt toggle, iconInk() answers ONE representative
+  // colour for the WHOLE page (idealText(iconAdoptTint()) === idealText(ccRbColor(5)) — always
+  // palette slot 5), even though the badge each item ACTUALLY sits on genuinely rotates per
+  // item once Rainbow is on (stampCardRainbow()/applyRainbowPalette() stamp a real per-item
+  // --cc-rb-c/--cc-rb-ct). Slot 5 (#2f6feb, blue) needs WHITE ink; slot 2 (#eab308, yellow) is
+  // the ONE slot in the default 8-colour palette bright enough to need BLACK ink instead — so
+  // whichever item's own rotation happened to land on yellow got white-on-yellow: illegible,
+  // and the exact opposite of the "automatisch schwarz oder weiß, je nachdem was auf dem
+  // Hintergrund lesbar ist" tooltip promise. itemAdoptInk() fixes this by reusing THAT item's
+  // own already-stamped --cc-rb-ct instead of the fixed representative slot.
+  reset();
+  localStorage.setItem('cc.iconbgrainbow', '1');
+  localStorage.setItem('cc.rainbow', '1');
+  localStorage.setItem('cc.accent', '#2f6feb');
+
+  // A fake owning element (card/row) carrying only what itemAdoptInk() actually reads —
+  // exactly what stampCardRainbow()/applyRainbowPalette() stamp on the real DOM node.
+  function fakeOwner() {
+    var s = {};
+    return { style: { setProperty: function (k, v) { s[k] = v; }, getPropertyValue: function (k) { return s[k] || ''; } } };
+  }
+
+  ok('slot 5 (the representative slot, ccRbColor(5)) really is #2f6feb', dockerApi.ccRbColor(5) === '#2f6feb', dockerApi.ccRbColor(5));
+  ok('and its own ink is WHITE', dockerApi.idealText(dockerApi.ccRbColor(5)) === '#fff');
+  ok('slot 2 (ccRbColor(2)) really is the yellow #eab308', dockerApi.ccRbColor(2) === '#eab308', dockerApi.ccRbColor(2));
+  ok('and yellow is the ONE slot needing BLACK ink', dockerApi.idealText(dockerApi.ccRbColor(2)) === '#161616', dockerApi.idealText(dockerApi.ccRbColor(2)));
+
+  // THE PRECISE FAILURE MODE: a card/row whose OWN rotated colour is the yellow slot, stamped
+  // exactly the way stampCardRainbow()/applyRainbowPalette() stamp the real DOM.
+  var yellowOwner = fakeOwner();
+  yellowOwner.style.setProperty('--cc-rb-c', dockerApi.ccRbColor(2));
+  yellowOwner.style.setProperty('--cc-rb-ct', dockerApi.idealText(dockerApi.ccRbColor(2)));
+
+  ok('THE REGRESSION PIN: a card on the yellow slot gets BLACK ink from itemAdoptInk(), not the representative white', dockerApi.itemAdoptInk(yellowOwner) === '#161616', dockerApi.itemAdoptInk(yellowOwner));
+  ok('…which genuinely DIFFERS from the old page-wide iconInk() answer for the SAME settings (the confirmed bug)', dockerApi.itemAdoptInk(yellowOwner) !== dockerApi.iconInk(false), dockerApi.itemAdoptInk(yellowOwner) + ' vs ' + dockerApi.iconInk(false));
+
+  // A card on the representative slot itself still gets the expected white — the fix does not
+  // break the (already-correct-by-coincidence) majority case.
+  var blueOwner = fakeOwner();
+  blueOwner.style.setProperty('--cc-rb-c', dockerApi.ccRbColor(5));
+  blueOwner.style.setProperty('--cc-rb-ct', dockerApi.idealText(dockerApi.ccRbColor(5)));
+  ok('a card on the representative slot still gets white ink', dockerApi.itemAdoptInk(blueOwner) === '#fff', dockerApi.itemAdoptInk(blueOwner));
+
+  // Rainbow OFF: every badge genuinely IS the one flat accent colour, so falling back to the
+  // uniform representative ink is correct — not a bug in that mode.
+  localStorage.setItem('cc.rainbow', '0');
+  ok('Rainbow OFF: itemAdoptInk() ignores a stale --cc-rb-ct stamp and falls back to the uniform accent-derived ink', dockerApi.itemAdoptInk(yellowOwner) === dockerApi.iconInk(false), dockerApi.itemAdoptInk(yellowOwner));
+  localStorage.setItem('cc.rainbow', '1');
+
+  // No owning element (or an un-stamped one): degrades to the same uniform fallback instead of
+  // throwing — a repaint that outran the last rainbow pass self-heals on the next one.
+  ok('no owner element at all: degrades to the uniform fallback, never throws', dockerApi.itemAdoptInk(null) === dockerApi.iconInk(false));
+  ok('an owner with no --cc-rb-ct stamp yet: same safe fallback', dockerApi.itemAdoptInk(fakeOwner()) === dockerApi.iconInk(false));
   reset();
 }
 

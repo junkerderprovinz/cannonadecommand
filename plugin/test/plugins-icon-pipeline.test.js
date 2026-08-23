@@ -178,6 +178,44 @@ console.log('\ncc.iconbgrainbow (v4.33.1): Badge-Einstellungen übernehmen — O
   reset();
 }
 
+console.log('\nPER-ROW contrast ink (v4.33.2 fix): the exact regression an independent reviewer found in v4.33.1');
+{
+  // THE CONFIRMED BUG: plugIconInk() under the master adopt toggle answers ONE representative
+  // colour for the WHOLE page (idealText(colorFor(5)) — always palette slot 5), even though
+  // paintRow() already stamps a genuinely per-row rotating colour via colorFor(idx) (the SAME
+  // value it uses for --cc-rb-c/--cc-rb-ct on every row, one row-index-idx pair below).
+  // Slot 2 (#eab308, yellow) is the ONE slot in the default 8-colour palette needing BLACK ink
+  // instead of slot 5's white — whichever row's OWN index landed there got illegible
+  // white-on-yellow. The fix (paintRow(), plugins.js): the per-row ink is idealText(colorFor(idx))
+  // — this row's OWN index — reused verbatim as `rowInk`, never plugIconInk()'s fixed slot 5.
+  reset();
+  localStorage.setItem('cc.iconbgrainbow', '1');
+  localStorage.setItem('cc.rainbow', '1');
+  localStorage.setItem('cc.accent', '#2f6feb');
+
+  ok('slot 5 (colorFor(5), the representative slot plugIconInk() is fixed to) really is #2f6feb, needing WHITE ink', pluginsApi.colorFor(5) === '#2f6feb' && pluginsApi.idealText(pluginsApi.colorFor(5)) === '#fff');
+  ok('slot 2 (colorFor(2)) really is the yellow #eab308, needing BLACK ink', pluginsApi.colorFor(2) === '#eab308' && pluginsApi.idealText(pluginsApi.colorFor(2)) === '#161616');
+
+  // THE REGRESSION PIN: a plugin row at index 2 (whose OWN rotated colour — the SAME colorFor(idx)
+  // paintRow() stamps as --cc-rb-c on that exact row — is the yellow slot) must resolve to BLACK
+  // ink, not the fixed page-wide plugIconInk() answer (white, slot 5).
+  var rowInkAtIdx2 = pluginsApi.idealText(pluginsApi.colorFor(2));
+  ok('THE REGRESSION PIN: row index 2 (its own colorFor(2) is yellow) resolves to BLACK ink', rowInkAtIdx2 === '#161616', rowInkAtIdx2);
+  ok('…which genuinely DIFFERS from the old page-wide plugIconInk() answer for the SAME settings (the confirmed bug)', rowInkAtIdx2 !== pluginsApi.plugIconInk(false), rowInkAtIdx2 + ' vs ' + pluginsApi.plugIconInk(false));
+
+  // A row that DOES land on the representative slot still gets white — the fix does not break
+  // the (already-correct-by-coincidence) majority case.
+  var rowInkAtIdx5 = pluginsApi.idealText(pluginsApi.colorFor(5));
+  ok('row index 5 (its own colorFor(5) IS the representative slot) still gets white ink', rowInkAtIdx5 === '#fff', rowInkAtIdx5);
+
+  // Rainbow OFF: colorFor(i) is the SAME flat accent for every index, so every row genuinely IS
+  // one flat colour — the uniform plugIconInk() answer is correct in that mode, not a bug.
+  localStorage.setItem('cc.rainbow', '0');
+  ok('Rainbow OFF: colorFor(2) collapses to the SAME flat accent as colorFor(5) — no per-row divergence to lose', pluginsApi.colorFor(2) === pluginsApi.colorFor(5));
+  ok('…so the per-row ink and plugIconInk()\'s uniform answer agree', pluginsApi.idealText(pluginsApi.colorFor(2)) === pluginsApi.plugIconInk(false));
+  reset();
+}
+
 console.log('\nlogoSize(): the SAME cc.sgsize map as docker.js\'s ccLogoSizes() / vms.js\'s vmLogoSizes()');
 {
   reset();

@@ -690,13 +690,40 @@
     var floor = window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1);
     return ccHex6(window.CCTheme.liftDark(pick, effc("accent") || "#2f6feb", floor));
   }
-  function ensureTintFilter() {
-    var ic = iconInk(true), m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ic || "");
-    var host = document.getElementById("cc-tint-svg");
+  // Generalised so TWO independent luminance-tint filters can coexist (v4.33.2 fix — see
+  // itemAdoptInk() below): every call site used to hardcode hostId "cc-tint-svg"/filtId
+  // "cc-icon-tint", so building a second filter for a different ink would have clobbered the
+  // first the moment both were needed on the same page. ensureTintFilter() below stays the
+  // single-filter spelling every pre-existing caller still uses.
+  // ── PER-ITEM adopt ink (v4.33.2 fix) ────────────────────────────────────────────────
+  // Confirmed bug: iconInk() under the master adopt toggle answered ONE representative
+  // colour (idealText(iconAdoptTint()) — always the SAME fixed palette slot 5) for every
+  // icon on the page, even though the badge each icon actually sits on genuinely rotates
+  // per item once Rainbow is on (stampCardRainbow() per card, applyRainbowPalette() per
+  // row). Whichever item's OWN rotated badge landed on the one palette colour needing the
+  // OPPOSITE ink from slot 5 (yellow, index 2 — every other slot happens to share slot 5's
+  // luminance bucket) got illegible ink stamped on top of it — live-confirmed.
+  // itemAdoptInk() answers THAT item's own contrast ink instead, by reusing the EXACT
+  // --cc-rb-ct value stampCardRainbow()/applyRainbowPalette() already computed and stamped
+  // on its owning card/row — not recomputed a different way, so the two can never drift
+  // apart. Falls back to the uniform representative ink whenever Rainbow itself is off (the
+  // badge genuinely IS one flat colour then, so a single ink value is correct) or the
+  // owning element/its stamp is unavailable (a repaint that outran the last rainbow pass —
+  // self-heals on the next one).
+  function itemAdoptInk(ownerEl) {
+    if (ownerEl && ownerEl.style && themingOn() && localStorage.getItem("cc.rainbow") === "1") {
+      var v = ownerEl.style.getPropertyValue ? ownerEl.style.getPropertyValue("--cc-rb-ct") : "";
+      if (v) return v.trim();
+    }
+    return idealText(iconAdoptTint());
+  }
+  function ensureTintFilterAs(hostId, filtId, ic) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ic || "");
+    var host = document.getElementById(hostId);
     if (!m) { if (host) host.remove(); return false; }
     var tr = parseInt(m[1], 16) / 255, tg = parseInt(m[2], 16) / 255, tb = parseInt(m[3], 16) / 255;
     var s = (Math.max(10, parseInt(effc("iconstrength") || "100", 10)) / 100).toFixed(3);
-    if (!host) { host = document.createElement("div"); host.id = "cc-tint-svg"; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
+    if (!host) { host = document.createElement("div"); host.id = hostId; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
     // SHADING-PRESERVING tint: each output channel = the pixel's LUMINANCE × the target
     // colour, so shadows stay dark and highlights stay bright in the chosen hue (the old
     // matrix mapped every opaque pixel to ONE flat colour, losing all shading). The
@@ -709,13 +736,14 @@
     // Signature-guarded like the flat filter below: applyIconTint now runs on every icon
     // resolution/measurement too, and a blind innerHTML write per pass is a DOM mutation
     // waiting to feed an observer loop.
-    var sig = "tint|" + tr + "|" + tg + "|" + tb + "|" + s;
+    var sig = "tint|" + filtId + "|" + tr + "|" + tg + "|" + tb + "|" + s;
     if (host.dataset.sig !== sig) {
-      host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-icon-tint" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">' + mid + '</filter></svg>';
+      host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">' + mid + '</filter></svg>';
       host.dataset.sig = sig;
     }
     return true;
   }
+  function ensureTintFilter() { return ensureTintFilterAs("cc-tint-svg", "cc-icon-tint", iconInk(true)); }
   // Ink-FLATTEN: every opaque pixel becomes ONE flat colour, alpha untouched — the crisp
   // "badge ink" silhouette. Used on a real glyph (or an icon the heuristic proved is
   // already one tone); never on full-colour artwork, where it would merge background and
@@ -819,11 +847,9 @@
           if (z.tagName === "IMG") setIconSrc(z, "");   // back to the icon it shipped with
         }
         document.documentElement.style.removeProperty("--cc-iconbg-color");
-        var s0 = document.getElementById("cc-tint-svg"); if (s0) s0.remove();
-        var m0 = document.getElementById("cc-mono-svg"); if (m0) m0.remove();
+        ["cc-tint-svg", "cc-mono-svg", "cc-tint-svg-blk", "cc-tint-svg-wht", "cc-mono-svg-blk", "cc-mono-svg-wht"].forEach(function (id) { var h = document.getElementById(id); if (h) h.remove(); });
         return;
       }
-      var f = iconFilter();
       var named = tintTargetsNamed(), imgs = named.map(function (x) { return x.el; });
       // Logo-Hintergrund (cc.iconbg): the icon sits on an accent-coloured badge box, so
       // flatten it to mono ink (dark/white per the accent). IMGs get the filter; glyphs
@@ -831,10 +857,27 @@
       var ibgAcc = bgColor();
       var ibgOn = effc("iconbg") === "1";
       if (ibgOn && ibgAcc) document.documentElement.style.setProperty("--cc-iconbg-color", ibgAcc); else document.documentElement.style.removeProperty("--cc-iconbg-color");
-      // ONE flat filter for the whole page (the ink colour is global), built from the same
-      // iconInk() the tint uses — so flatten and tint always agree on the colour.
-      var ink = iconInk(false);
-      var flat = ink ? ensureFlatFilter("cc-mono-svg", "cc-mono-tint", ink) : ensureFlatFilter("cc-mono-svg", "cc-mono-tint", "");
+      // ── Filters ──────────────────────────────────────────────────────────────────────
+      // Master ADOPT toggle (cc.iconbgrainbow) ON: idealText() only ever answers "#161616"
+      // or "#fff", so instead of ONE page-wide filter built from a single representative
+      // colour (the v4.33.1 bug — every icon inked for palette slot 5 alone, illegible
+      // wherever an item's OWN rotated badge landed on the opposite-luminance slot), build
+      // BOTH possible ink filters ONCE — genuinely shared/page-wide, never per-item — and let
+      // each icon below pick whichever of the two matches THAT item's own resolved
+      // background (itemAdoptInk(), reusing stampCardRainbow()/applyRainbowPalette()'s
+      // already-stamped --cc-rb-ct). Adopt OFF: unchanged, single filter built from
+      // iconInk()'s own (possibly custom, non-black/white) picked colour.
+      var f, flat, fBlk, fWht, flatBlk, flatWht, adopt = effc("iconbgrainbow") === "1";
+      if (adopt) {
+        flatBlk = ensureFlatFilter("cc-mono-svg-blk", "cc-mono-tint-blk", "#161616");
+        flatWht = ensureFlatFilter("cc-mono-svg-wht", "cc-mono-tint-wht", "#fff");
+        fBlk = ensureTintFilterAs("cc-tint-svg-blk", "cc-icon-tint-blk", "#161616") ? "url(#cc-icon-tint-blk)" : "";
+        fWht = ensureTintFilterAs("cc-tint-svg-wht", "cc-icon-tint-wht", "#fff") ? "url(#cc-icon-tint-wht)" : "";
+      } else {
+        f = iconFilter();
+        var ink = iconInk(false);
+        flat = ink ? ensureFlatFilter("cc-mono-svg", "cc-mono-tint", ink) : ensureFlatFilter("cc-mono-svg", "cc-mono-tint", "");
+      }
       // Feed the engine every name on the page in ONE batch; it answers from its cache and
       // never blocks. Anything it hasn't looked up yet stays native this pass and repaints
       // through the resolved-callback wired in init().
@@ -849,11 +892,21 @@
         var isGlyphEl = n.tagName !== "IMG";
         var plan = CI ? iconTreatment("docker", named[i].name, isGlyphEl, isGlyphEl ? "" : nativeIconSrc(n)) : { treat: "tint", url: "" };
         if (!isGlyphEl) setIconSrc(n, plan.url);
+        // Adopting: resolve THIS row's own ink/filters (see the block above); everything
+        // else: the single page-wide values, unchanged.
+        var thisFlat = flat, thisTint = f, thisInk = ink;
+        if (adopt) {
+          var rowInk = itemAdoptInk(n.closest("tr"));
+          var rowBlk = rowInk !== "#fff";
+          thisFlat = rowBlk ? flatBlk : flatWht;
+          thisTint = rowBlk ? fBlk : fWht;
+          thisInk = rowInk;
+        }
         // "native" (or no ink colour at all) means: hands off the pixels.
-        var want = plan.treat === "native" ? "" : (plan.treat === "flat" ? flat : f);
+        var want = plan.treat === "native" ? "" : (plan.treat === "flat" ? thisFlat : thisTint);
         if (n.tagName === "IMG") { n.style.filter = want; }
         else {
-          var gif = glyphInkAndFilter(plan, ibgOn, ibgAcc, ink, want);
+          var gif = glyphInkAndFilter(plan, ibgOn, ibgAcc, thisInk, want);
           if (gif.color) n.style.setProperty("color", gif.color, "important"); else n.style.removeProperty("color");
           n.style.filter = gif.filter;
         }
@@ -878,7 +931,13 @@
           gnames.push(gn);
           var gp = CI ? iconTreatment("docker", gn, false, nativeIconSrc(g[j])) : { treat: "tint", url: "" };
           setIconSrc(g[j], gp.url);
-          g[j].style.filter = gp.treat === "native" ? "" : (gp.treat === "flat" ? flat : f);
+          var gFlat = flat, gTint = f;
+          if (adopt) {
+            var cardBlk = itemAdoptInk(g[j].closest(".cc-card")) !== "#fff";
+            gFlat = cardBlk ? flatBlk : flatWht;
+            gTint = cardBlk ? fBlk : fWht;
+          }
+          g[j].style.filter = gp.treat === "native" ? "" : (gp.treat === "flat" ? gFlat : gTint);
         }
         if (CI && gnames.length) CI.want(gnames);
       }
@@ -969,7 +1028,7 @@
       applyIconTint();
     } catch (e) {}
   }
-  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh", "cc-adv", "cc-rainbow", "cc-tint-icons", "cc-docker-iconbg", "cc-dens-compact", "cc-dens-normal", "cc-dens-airy"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); var t2 = tintTargets(); for (var i = 0; i < t2.length; i++) { t2[i].style.filter = ""; if (t2[i].tagName === "IMG") setIconSrc(t2[i], ""); } if (gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll("img.cc-card-ico")).forEach(function (n) { n.style.filter = ""; setIconSrc(n, ""); }); Array.prototype.slice.call(document.querySelectorAll(".cc-ico-tint")).forEach(function (n) { n.remove(); }); var sv = document.getElementById("cc-tint-svg"); if (sv) sv.remove(); var h = document.getElementById("cc-mono-svg"); if (h) h.remove(); } catch (e) {} }
+  function removeEnhanceClasses() { try { var tb = nativeTable(); if (!tb) return; tb.classList.remove("cc-enh", "cc-adv", "cc-rainbow", "cc-tint-icons", "cc-docker-iconbg", "cc-dens-compact", "cc-dens-normal", "cc-dens-airy"); COLS.forEach(function (c) { tb.classList.remove("cc-c-" + c.key); }); var t2 = tintTargets(); for (var i = 0; i < t2.length; i++) { t2[i].style.filter = ""; if (t2[i].tagName === "IMG") setIconSrc(t2[i], ""); } if (gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll("img.cc-card-ico")).forEach(function (n) { n.style.filter = ""; setIconSrc(n, ""); }); Array.prototype.slice.call(document.querySelectorAll(".cc-ico-tint")).forEach(function (n) { n.remove(); }); ["cc-tint-svg", "cc-mono-svg", "cc-tint-svg-blk", "cc-tint-svg-wht", "cc-mono-svg-blk", "cc-mono-svg-wht"].forEach(function (id) { var h2 = document.getElementById(id); if (h2) h2.remove(); }); } catch (e) {} }
 
   // read a positional cell's value (docker_readmore), stripping nested advanced
   // (MAC) + Tailscale tooltip, collapsed to one short line.

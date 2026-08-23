@@ -123,29 +123,45 @@
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
     return ccHex6(window.CCTheme.liftDark(pick, ccAccent(), window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1)));
   }
-  function ensureTintFilter() {
-    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(vmIconInk(true) || "");
-    var host = document.getElementById("cc-vm-tint-svg");
+  // Generalised so TWO independent luminance-tint filters can coexist (v4.33.2 fix — see
+  // vmItemAdoptInk() below): every pre-existing caller hardcoded hostId "cc-vm-tint-svg"/
+  // filtId "cc-vm-icon-tint" — ensureTintFilter() below stays that single-filter spelling.
+  function ensureTintFilterAs(hostId, filtId, ic) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ic || "");
+    var host = document.getElementById(hostId);
     if (dead || vmTintOff() || !m) { if (host) host.remove(); return false; }
     var tr = parseInt(m[1], 16) / 255, tg = parseInt(m[2], 16) / 255, tb = parseInt(m[3], 16) / 255;
     var s = (Math.max(10, parseInt(effK("iconstrength") || "100", 10)) / 100).toFixed(3);
     // shading-preserving: channel = luminance × target colour (matches docker.js)
     var lum = function (c) { return (0.2126 * c).toFixed(4) + " " + (0.7152 * c).toFixed(4) + " " + (0.0722 * c).toFixed(4); };
-    if (!host) { host = document.createElement("div"); host.id = "cc-vm-tint-svg"; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
+    if (!host) { host = document.createElement("div"); host.id = hostId; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
     // IDEMPOTENT: only rewrite the SVG when the colour/strength actually changed. The host
     // lives on document.body; a blind innerHTML write on every apply() would be a DOM
     // mutation that — if an observer ever watched body — re-triggers apply() into a
     // ~300ms CPU-pegging loop (the classic non-idempotent-inject + MutationObserver trap).
-    var sig = tr + "|" + tg + "|" + tb + "|" + s + "|lum";
+    var sig = filtId + "|" + tr + "|" + tg + "|" + tb + "|" + s + "|lum";
     if (host.dataset.sig !== sig) {
       var mid = '<feColorMatrix in="SourceGraphic" type="matrix" result="flat" values="' + lum(tr) + ' 0 0 ' + lum(tg) + ' 0 0 ' + lum(tb) + ' 0 0 0 0 0 1 0"/>';
       if (parseFloat(s) < 0.999) mid += '<feComponentTransfer in="flat" result="faded"><feFuncA type="linear" slope="' + s + '"/></feComponentTransfer><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="faded"/></feMerge>';
-      host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-vm-icon-tint" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">' + mid + '</filter></svg>';
+      host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">' + mid + '</filter></svg>';
       host.dataset.sig = sig;
     }
     return true;
   }
+  function ensureTintFilter() { return ensureTintFilterAs("cc-vm-tint-svg", "cc-vm-icon-tint", vmIconInk(true)); }
   function filterVal() { return ensureTintFilter() ? "url(#cc-vm-icon-tint)" : ""; }
+  // ── PER-ROW adopt ink (v4.33.2 fix) — mirrors docker.js itemAdoptInk() exactly: reuses
+  // the EXACT --cc-rb-ct enhanceCells() already stamped on THIS row's own rotated badge
+  // colour, instead of vmIconInk()'s single page-wide representative-slot answer. Falls
+  // back to that representative answer whenever Rainbow itself is off (genuinely uniform
+  // then) or the row/its stamp is unavailable.
+  function vmItemAdoptInk(rowEl) {
+    if (rowEl && rowEl.style && ls("cc.theming") !== "0" && ls("cc.rainbow") === "1") {
+      var v = rowEl.style.getPropertyValue ? rowEl.style.getPropertyValue("--cc-rb-ct") : "";
+      if (v) return v.trim();
+    }
+    return ccIdeal(vmAdoptTint());
+  }
   // The chosen colour as a plain hex, gated the same way. Unraid renders MOST VM
   // icons as a FontAwesome/icon-font glyph (`<i class="fa fa-… img">`), whose colour
   // comes from CSS `color:`, NOT from an image filter — so a glyph never tinted
@@ -357,8 +373,7 @@
         imgs[i].style.filter = ""; imgs[i].style.removeProperty("color");
         var w = imgs[i].parentElement; if (w) ["background", "border-radius", "width", "height", "padding", "display", "align-items", "justify-content", "box-sizing"].forEach(function (p) { w.style.removeProperty(p); });
       }
-      var sv = document.getElementById("cc-vm-tint-svg"); if (sv) sv.remove();
-      var hh = document.getElementById("cc-vm-mono-svg"); if (hh) hh.remove();
+      ["cc-vm-tint-svg", "cc-vm-mono-svg", "cc-vm-tint-svg-blk", "cc-vm-tint-svg-wht", "cc-vm-mono-svg-blk", "cc-vm-mono-svg-wht"].forEach(function (id) { var h = document.getElementById(id); if (h) h.remove(); });
       // grid/rainbow live-revert: drop the classes, clear the palette vars, remove the injected view toggle
       document.documentElement.classList.remove("cc-vmgrid", "cc-vm-rainbow", "cc-vm-rbneutral");
       RB_KINDS.forEach(function (k) { document.documentElement.style.removeProperty("--cc-rb-" + k); document.documentElement.style.removeProperty("--cc-rb-" + k + "-t"); });
@@ -1067,7 +1082,7 @@
   // pinned VM only repainted on the next native list rebuild. Caught live on the box.
   function paintVmIcons() {
     try {
-      var f = filterVal(), c = tintColor(), imgs = vmImgs();
+      var imgs = vmImgs();
       var ibgOn = effK("iconbg") === "1"; var ibgAcc = vmBgColor();
       // Logo-Hintergrund badge box is now drawn by VmTab.css via html.cc-vm-iconbg (mirroring Docker's
       // cc-docker-iconbg) — the box shape/size/circle live in CSS. We only toggle the class + hand it the
@@ -1075,24 +1090,47 @@
       var root2 = document.documentElement;
       root2.classList.toggle("cc-vm-iconbg", ibgOn);
       if (ibgOn && ibgAcc) root2.style.setProperty("--cc-iconbg-color", ibgAcc); else root2.style.removeProperty("--cc-iconbg-color");
-      // ONE flat filter for the page, from the SAME ink the tint uses (vmIconInk(), which already
-      // answers "" whenever Einfärben is off, badge or not) — branching on ibgOn directly here
-      // instead (as this used to) reintroduces the background-forces-tint bug: it would flatten
-      // every icon to the box's ink even with Einfärben off, since it never checked vmInk at all.
-      var vmInk = vmIconInk(false);
-      var flat = vmInk ? ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", vmInk) : ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", "");
+      // Master ADOPT toggle ON: TWO shared filters (black ink, white ink — idealText() only
+      // ever answers one of the two) built ONCE, page-wide; each row below picks whichever
+      // matches ITS OWN resolved background instead of every row sharing ONE filter built
+      // from a single representative colour (the v4.33.1 bug — see vmItemAdoptInk()).
+      var f, flat, c, fBlk, fWht, flatBlk, flatWht, vmInk;
+      var adopt = effK("iconbgrainbow") === "1";
+      if (adopt) {
+        flatBlk = ensureFlatFilter("cc-vm-mono-svg-blk", "cc-vm-mono-tint-blk", "#161616");
+        flatWht = ensureFlatFilter("cc-vm-mono-svg-wht", "cc-vm-mono-tint-wht", "#fff");
+        fBlk = ensureTintFilterAs("cc-vm-tint-svg-blk", "cc-vm-icon-tint-blk", "#161616") ? "url(#cc-vm-icon-tint-blk)" : "";
+        fWht = ensureTintFilterAs("cc-vm-tint-svg-wht", "cc-vm-icon-tint-wht", "#fff") ? "url(#cc-vm-icon-tint-wht)" : "";
+      } else {
+        f = filterVal(); c = tintColor();
+        // ONE flat filter for the page, from the SAME ink the tint uses (vmIconInk(), which already
+        // answers "" whenever Einfärben is off, badge or not) — branching on ibgOn directly here
+        // instead (as this used to) reintroduces the background-forces-tint bug: it would flatten
+        // every icon to the box's ink even with Einfärben off, since it never checked vmInk at all.
+        vmInk = vmIconInk(false);
+        flat = vmInk ? ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", vmInk) : ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", "");
+      }
       var CI = window.CCTheme && window.CCTheme.icons, vmNames = [];
       for (var i = 0; i < imgs.length; i++) {
         var n = imgs[i], vname = vmIconName(n);
         if (vname) vmNames.push(vname);
         var plan = vmIconPlan(n, vname);
-        var want = plan.treat === "native" ? "" : (plan.treat === "flat" ? flat : f);
+        // Adopting: this ROW's own ink/filters (see block above); everything else: the
+        // single page-wide values, unchanged.
+        var thisFlat = flat, thisTint = f, thisInk = vmInk;
+        if (adopt) {
+          var rowInk = vmItemAdoptInk(n.closest("tr")), rowBlk = rowInk !== "#fff";
+          thisFlat = rowBlk ? flatBlk : flatWht;
+          thisTint = rowBlk ? fBlk : fWht;
+          thisInk = rowInk;
+        }
+        var want = plan.treat === "native" ? "" : (plan.treat === "flat" ? thisFlat : thisTint);
         if (n.tagName === "IMG") { vmSetIconSrc(n, plan.url); n.style.filter = want; if (ibgOn) n.style.removeProperty("color"); }
         // font-glyph: `color` is the reliable exact tint. Set it with PRIORITY — Unraid's VM CSS colours
         // these glyphs via a class rule, which a plain inline colour can lose to; `!important` wins. With
         // the badge on, the ink is the accent's ideal text colour (b/w contrast).
         else {
-          var gif = glyphInkAndFilter(plan, ibgOn, ibgAcc, vmInk || c || "");
+          var gif = glyphInkAndFilter(plan, ibgOn, ibgAcc, thisInk || c || "");
           if (gif.color) n.style.setProperty("color", gif.color, "important"); else n.style.removeProperty("color");
           n.style.filter = gif.filter;
         }
@@ -1171,8 +1209,7 @@
     try { RB_KINDS.forEach(function (k) { document.documentElement.style.removeProperty("--cc-rb-" + k); document.documentElement.style.removeProperty("--cc-rb-" + k + "-t"); }); var vt = document.getElementById("cc-vm-viewtoggle"); if (vt) { var vbar = vt.closest(".cc-vm-toolbar") || vt; if (vbar.parentNode) vbar.parentNode.removeChild(vbar); } } catch (e) {}
     try { enhanceCellsTeardown(); flattenTeardown(); } catch (e) {}
     try { var imgs = vmImgs(); for (var i = 0; i < imgs.length; i++) { imgs[i].style.filter = ""; imgs[i].style.removeProperty("color"); var w = imgs[i].parentElement; if (w) { w.style.removeProperty("background"); w.style.removeProperty("border-radius"); w.style.removeProperty("width"); w.style.removeProperty("height"); w.style.removeProperty("padding"); w.style.removeProperty("display"); w.style.removeProperty("align-items"); w.style.removeProperty("justify-content"); w.style.removeProperty("box-sizing"); } } } catch (e) {}
-    try { var sv = document.getElementById("cc-vm-tint-svg"); if (sv) sv.remove(); } catch (e) {}
-    try { var hh = document.getElementById("cc-vm-mono-svg"); if (hh) hh.remove(); } catch (e) {}
+    try { ["cc-vm-tint-svg", "cc-vm-mono-svg", "cc-vm-tint-svg-blk", "cc-vm-tint-svg-wht", "cc-vm-mono-svg-blk", "cc-vm-mono-svg-wht"].forEach(function (id) { var h = document.getElementById(id); if (h) h.remove(); }); } catch (e) {}
   }
   function arm() {
     dead = false;

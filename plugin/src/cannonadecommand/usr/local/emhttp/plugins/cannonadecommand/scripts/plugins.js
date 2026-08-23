@@ -253,19 +253,27 @@
     if (pInk) return { color: pInk, filter: "none" };
     return { color: "", filter: want };
   }
-  function ensureTint() {
-    var hex = /^#?([0-9a-f]{6})$/i.exec(plugIconInk(true) || "");
-    if (!hex) return "";
+  // Generalised so TWO independent tint filters can coexist (v4.33.2 fix — see the
+  // master-adopt block in paintRow() below): every pre-existing caller hardcoded hostId
+  // "cc-plug-tint-svg"/filtId "cc-plug-tint" — ensureTint() below stays that spelling.
+  function ensureTintAs(hostId, filtId, ic) {
+    var hex = /^#?([0-9a-f]{6})$/i.exec(ic || "");
+    var host = document.getElementById(hostId);
+    if (!hex) { if (host) host.remove(); return ""; }
     var n = parseInt(hex[1], 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
     var st = Math.max(10, parseInt(eff("iconstrength") || "100", 10)) / 100;
     var lr = 0.2126, lg = 0.7152, lb = 0.0722, i2 = 1 - st;
     function row(c, idx) { var v = [lr * c * st, lg * c * st, lb * c * st, 0, 0]; v[idx] += i2; return v.join(" "); }
     var vals = row(r, 0) + " " + row(g, 1) + " " + row(b, 2) + " 0 0 0 1 0";
-    var host = document.getElementById("cc-plug-tint-svg");
-    if (!host) { host = document.createElement("div"); host.id = "cc-plug-tint-svg"; host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
-    host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="cc-plug-tint" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>';
-    return "url(#cc-plug-tint)";
+    if (!host) { host = document.createElement("div"); host.id = hostId; host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
+    var sig = filtId + "|" + vals;
+    if (host.dataset.sig !== sig) {
+      host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>';
+      host.dataset.sig = sig;
+    }
+    return "url(#" + filtId + ")";
   }
+  function ensureTint() { return ensureTintAs("cc-plug-tint-svg", "cc-plug-tint", plugIconInk(true)); }
   // logo-background monochrome tint: flatten the logo to a single ink tone (the
   // ideal-contrast text colour for the accent badge box) via an SVG feColorMatrix
   // that keeps alpha but maps RGB to one grey. Signature-guarded so the shared
@@ -404,8 +412,11 @@
     var tds = tr.children;
     if (!tds || tds.length < 6) return;
     // stamp the row's palette colour so the reactive hover rules (docker.css) can colour the whole
-    // row on hover; harmless at rest (the CSS only reads it under :hover in reactive mode).
-    try { var rc = colorFor(idx); tr.style.setProperty("--cc-rb-c", rc); tr.style.setProperty("--cc-rb-ct", idealText(rc)); } catch (e0) {}
+    // row on hover; harmless at rest (the CSS only reads it under :hover in reactive mode). ALSO
+    // this row's own contrast ink (v4.33.2 fix): the icon pipeline below reuses THIS exact value
+    // for the master-adopt toggle instead of a single page-wide representative colour.
+    var rowInk = "";
+    try { var rc = colorFor(idx); rowInk = idealText(rc); tr.style.setProperty("--cc-rb-c", rc); tr.style.setProperty("--cc-rb-ct", rowInk); } catch (e0) {}
     for (var i = 0; i < tds.length; i++) tds[i].style.setProperty("vertical-align", "middle", "important");
     // ── col 1 becomes the PLUGIN cell, Docker-ct-name style: logo at container
     // size + the name in the container font, support-thread badge underneath.
@@ -465,17 +476,31 @@
     // (FontAwesome) AND <i class="icon-… list"> (Unraid's own glyph font). The old
     // "img, i.fa" selector missed the icon-* glyphs entirely and sized fa (46px) vs
     // img (62px) differently — exactly why the logos came out different sizes.
-    var f2 = ensureTint();
     // logo-background badge on: flatten every logo to one ink tone so it reads on
     // the accent box (mono filter overrides the iconcolor tint f2 when active)
     var ibgOn = eff("iconbg") === "1";
     var ibgBg = plugBgColor();
-    var pInk = plugIconInk(false);
-    // branch on pInk alone (which already answers "" whenever Einfärben is off, badge or not) —
-    // branching on ibgOn directly here instead (as this used to) reintroduces the
-    // background-forces-tint bug: it would flatten every icon to the box's ink even with
-    // Einfärben off.
-    var pFlat = pInk ? ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", pInk) : ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", "");
+    // Master ADOPT toggle ON: TWO shared filters (black ink, white ink — idealText() only
+    // ever answers one of the two), built idempotently (constant hex -> no-op after the
+    // first row); THIS row picks whichever matches its OWN resolved background — reusing
+    // `rowInk`, the EXACT value already stamped as this row's --cc-rb-ct above — instead of
+    // every row sharing ONE filter built from a single representative colour (the v4.33.1
+    // bug: plugIconInk()'s old idealText(colorFor(5)) answer, identical for every row).
+    var f2, pFlat, pInk;
+    if (eff("iconbgrainbow") === "1") {
+      var rowBlk = rowInk !== "#fff";
+      pFlat = rowBlk ? ensureFlatFilter("cc-plug-mono-svg-blk", "cc-plug-mono-tint-blk", "#161616") : ensureFlatFilter("cc-plug-mono-svg-wht", "cc-plug-mono-tint-wht", "#fff");
+      f2 = rowBlk ? ensureTintAs("cc-plug-tint-svg-blk", "cc-plug-tint-blk", "#161616") : ensureTintAs("cc-plug-tint-svg-wht", "cc-plug-tint-wht", "#fff");
+      pInk = rowInk;
+    } else {
+      f2 = ensureTint();
+      pInk = plugIconInk(false);
+      // branch on pInk alone (which already answers "" whenever Einfärben is off, badge or not) —
+      // branching on ibgOn directly here instead (as this used to) reintroduces the
+      // background-forces-tint bug: it would flatten every icon to the box's ink even with
+      // Einfärben off.
+      pFlat = pInk ? ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", pInk) : ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", "");
+    }
     var LOGO = logoSize(); // cc.sgsize step = Docker/VM logo size (m default 62px)
     var pName = tds[0].getAttribute("data-cc-pname") || "";
     var PCI = window.CCTheme && window.CCTheme.icons;
