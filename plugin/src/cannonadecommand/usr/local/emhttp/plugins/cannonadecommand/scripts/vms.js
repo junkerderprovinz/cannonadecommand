@@ -85,13 +85,15 @@
     return ccAccent();
   }
   // The icon pipeline's target colour for this tab — same contract as docker.js iconInk():
-  // "" whenever Einfärben (tint) is off, regardless of the badge; on the Logo-Hintergrund box
-  // it is the BOX's OWN colour's ideal text colour, otherwise the picked TINT colour lifted out
-  // of the dark end by the shared darkness guard. `forTint` doubles the floor because a
-  // luminance tint outputs roughly half the target's luma.
+  // "" whenever Einfärben (tint) is off, regardless of the badge; ALWAYS the picked TINT colour,
+  // lifted out of the dark end by the shared darkness guard — regardless of whether the
+  // Logo-Hintergrund badge is also on (v4.32.6 fix: this used to return ccIdeal(vmBgColor())
+  // whenever the badge was on, discarding the user's own picked tint colour — see docker.js
+  // iconInk() for the full writeup). vmBgColor()/effK("iconbg") stay the badge box's OWN
+  // colour, never the icon's ink. `forTint` doubles the floor because a luminance tint outputs
+  // roughly half the target's luma.
   function vmIconInk(forTint) {
     if (!vmTintOn()) return "";
-    if (effK("iconbg") === "1") return ccHex6(ccIdeal(vmBgColor()));
     var pick = effK("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
@@ -147,8 +149,8 @@
   // hue. Extracted so the invariant is unit-testable without a full render pass.
   //
   // `ibgOn`/`ibgAcc` are kept as parameters for call-site stability but are no longer consulted
-  // directly: `ink` (vmIconInk()'s result) already resolves to the box-contrast colour whenever
-  // the badge is on AND Einfärben is on, and to "" whenever Einfärben is off — the old
+  // directly: `ink` (vmIconInk()'s result) already resolves to the picked tint colour whenever
+  // Einfärben is on — badge or not (v4.32.6 fix) — and to "" whenever Einfärben is off — the old
   // `ibgOn ? ccIdeal(ibgAcc) : ink` forced a colour onto every VM glyph the moment the badge was
   // on, even with Einfärben off (the same background-forces-tint bug as vmIconInk(), for font
   // glyphs specifically — v4.32.5 fix).

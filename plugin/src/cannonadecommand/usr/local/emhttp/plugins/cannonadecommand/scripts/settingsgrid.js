@@ -254,6 +254,10 @@
       // independent of the badge — see tintOnEff()) and a valid tint colour is set. Badge and
       // tint stay mutually exclusive in THIS area by design (one square icon can only show one
       // treatment) — Einfärben's on/off no longer being tied to the badge is the only change.
+      // NOT the same bug as docker.js/vms.js/plugins.js/settings.js's iconInk()-equivalents
+      // (v4.32.6/4.32.7): those four let badge and tint be ON TOGETHER and used to let the badge
+      // silently override the picked tint colour — that override cannot happen here because tint
+      // never even RUNS while the badge is showing, so there is nothing analogous to fix.
       // eff()-gated (adopt -> falls through to the global cc.* keys), not raw g("ccs.*").
       var tint = live && !badge && tintOnEff() && /^#[0-9a-f]{6}$/i.test(eff("iconcolor", ""));
       var a = accent();

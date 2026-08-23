@@ -625,17 +625,21 @@
   // Einfärben (tint) is OFF — regardless of the background badge — which is what makes the
   // whole pipeline degrade to plain native icons sitting on (or off) the badge box.
   //   · Einfärben OFF: never any ink, full stop — a background badge alone must not recolour
-  //     the icon (the bug this fixes).
-  //   · Einfärben ON + Logo-Hintergrund ON: the icon sits ON the badge box, so the ink has to
-  //     contrast with the BOX — idealText of the box's OWN colour (bgColor()), not the tint's.
-  //   · Einfärben ON + Logo-Hintergrund OFF: the picked TINT colour, lifted out of the dark end
-  //     by the shared darkness guard so it can't sink into the #161616/#1e1e1e card.
+  //     the icon (the v4.32.6 fix).
+  //   · Einfärben ON: ALWAYS the picked TINT colour (effc("iconcolor")), lifted out of the dark
+  //     end by the shared darkness guard — regardless of whether Logo-Hintergrund is also on.
+  //     Confirmed bug (v4.32.6, fixed here): this branch used to return
+  //     ccHex6(idealText(bgColor())) whenever the badge was on, discarding the user's own picked
+  //     tint colour completely and painting a flat black-or-white contrast colour instead — so
+  //     Einfärben's own colour picker only ever did anything when the badge happened to be off,
+  //     even though the two controls are otherwise fully independent. Hintergrund/iconbg/
+  //     bgColor() still governs ONLY the badge box's OWN background — it must never again feed
+  //     the icon's ink.
   // `forTint` doubles the floor: see CCTheme.liftDark — a luminance tint outputs roughly
   // half the target's luma on mid-bright artwork, so the badge floor alone is not enough
   // (live-measured: a #2a2a2a target renders "schwer erkennbar" against the card).
   function iconInk(forTint) {
     if (!tintOn()) return "";
-    if (effc("iconbg") === "1") return ccHex6(idealText(bgColor()));
     var pick = effc("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
@@ -731,8 +735,8 @@
   // to its own function so the invariant is unit-testable without a full render pass.
   //
   // `ibgOn`/`ibgAcc` are kept as parameters for call-site/signature stability, but are no
-  // longer consulted directly: `ink` (iconInk()'s result) ALREADY resolves to the box-contrast
-  // colour whenever the background badge is on AND Einfärben (tint) is on, and to "" whenever
+  // longer consulted directly: `ink` (iconInk()'s result) ALREADY resolves to the picked tint
+  // colour whenever Einfärben (tint) is on — badge or not (v4.32.6 fix) — and to "" whenever
   // Einfärben is off — including with the badge on. The old `if (ibgOn) return
   // {color: idealText(ibgAcc), ...}` branch ignored that and forced a colour onto every glyph
   // the moment the badge was on, even with Einfärben off — the same background-forces-tint bug

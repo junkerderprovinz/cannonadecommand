@@ -393,12 +393,14 @@
       return st.accent;
     }
     // Same ink contract as docker.js iconInk()/plugins.js plugIconInk(): "" whenever tint is off
-    // (regardless of the badge); on the badge the ink must contrast with the BADGE'S OWN colour,
-    // otherwise it is the picked TINT colour lifted out of the dark end. A luminance tint outputs
-    // about half the target's luma, so the tint path doubles the floor.
+    // (regardless of the badge); ALWAYS the picked TINT colour, lifted out of the dark end —
+    // regardless of whether the badge is also on (v4.32.6 fix: this used to return
+    // hex6(idealText(badgeBg())) whenever the badge was on, discarding the user's own picked
+    // tint colour — see docker.js iconInk() for the full writeup). badgeBg() stays the badge
+    // box's OWN colour, never the icon's ink. A luminance tint outputs about half the target's
+    // luma, so the tint path doubles the floor.
     function ink(forTint) {
       if (!st.tint) return "";
-      if (st.bg) return hex6(idealText(badgeBg()));
       if (!/^#[0-9a-f]{6}$/i.test(st.color)) return "";
       var T = window.CCTheme;
       return (T && T.liftDark) ? hex6(T.liftDark(st.color, st.accent, T.LUM_FLOOR * (forTint ? 2 : 1))) : st.color;
@@ -458,9 +460,9 @@
         var want = plan.treat === "native" ? "none" : (plan.treat === "flat" ? (flat || tint || "none") : (tint || "none"));
         if (it.glyph) {
           it.node.style.fontSize = "calc(" + sz + " * .46)";
-          // ink(false) already answers the badge-contrast colour when bg+tint are both on, and
-          // "" whenever tint is off (badge or not) — branching on st.bg directly here instead (as
-          // this used to) would force a colour onto the glyph even with tint off.
+          // ink(false) already answers the picked tint colour whenever tint is on (badge or not),
+          // and "" whenever tint is off (badge or not) — branching on st.bg directly here instead
+          // (as this used to) would force a colour onto the glyph even with tint off.
           it.node.style.color = plan.treat === "native" ? "" : (ink(false) || "");
           it.node.style.filter = "none";
         } else {
@@ -538,9 +540,10 @@
       tintTg._setOn(io.getTint());
       tintHx.value = io.getColor() || ""; try { if (/^#[0-9a-f]{6}$/i.test(io.getColor())) tintPk._set(io.getColor()); } catch (e9) {}
       // Intensität only ever means anything for the LUMINANCE tint, which only runs when tint is
-      // on AND the background badge is off (the badge always flattens to a contrast ink instead —
-      // see iconInk()/vmIconInk()/plugIconInk()) — so it dims whenever either condition fails.
-      var dim = io.getBg() || !io.getTint();
+      // on — the badge box no longer affects the icon's ink at all (v4.32.6 fix: iconInk() and
+      // its mirrors now always tint in the picked colour, badge or not — see iconInk()/
+      // vmIconInk()/plugIconInk()) — so it only dims when tint itself is off.
+      var dim = !io.getTint();
       strRow.style.opacity = dim ? ".4" : ""; strRow.style.pointerEvents = dim ? "none" : "";
     }
     into.appendChild(bgRow); into.appendChild(bgPickRow); into.appendChild(tintRow); into.appendChild(tintPickRow); into.appendChild(strRow);

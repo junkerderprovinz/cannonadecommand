@@ -112,7 +112,9 @@ console.log('\nHintergrund and Einfärben are INDEPENDENT (v4.32.5 fix): the bad
   ok('background ON, Einfärben EXPLICITLY off: still no ink even with the badge showing', vmsApi.vmIconInk(false) === '');
 
   localStorage.setItem('cc.icontint', '1');
-  ok('background ON, Einfärben explicitly ON: NOW it inks (contrast against the badge box)', vmsApi.vmIconInk(false) !== '');
+  ok('background ON, Einfärben explicitly ON but still no colour ever picked: still no ink (no pick to lift)', vmsApi.vmIconInk(false) === '');
+  localStorage.setItem('cc.iconcolor', '#e5a00d');
+  ok('background ON, Einfärben ON, colour NOW picked: inks in that picked colour', vmsApi.vmIconInk(false) === '#e5a00d', vmsApi.vmIconInk(false));
   reset();
 
   // pre-4.32.5 installs: only cc.iconbg + cc.iconcolor were ever set, and iconcolor's mere
@@ -121,11 +123,15 @@ console.log('\nHintergrund and Einfärben are INDEPENDENT (v4.32.5 fix): the bad
   ok('pre-existing install (no cc.icontint key at all): behaves exactly as it always did — inked', vmsApi.vmTintOn() === true && vmsApi.vmIconInk(false) !== '');
   reset();
 
-  // the background's OWN colour is independent of the tint's colour once both are configured
+  // CONFIRMED BUG (v4.32.6, fixed here): with both controls on and given DELIBERATELY different
+  // colours, the icon's ink must be the TINT's own colour, never a contrast colour derived from
+  // the (different) badge box colour — live-tested: tint #e5a00d rendered as plain white
+  // (#ffffff) once the badge was also on, discarding the picked colour entirely.
   localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#161616'); localStorage.setItem('cc.icontint', '0');
   ok('background colour applies even with Einfärben off (vmBgColor reads cc.iconbgcolor)', vmsApi.vmBgColor() === '#161616');
   localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#e5a00d');
-  ok('once both are on, the badge ink contrasts with the BADGE colour, not the (different) tint colour', vmsApi.vmIconInk(false) === '#ffffff', vmsApi.vmIconInk(false));
+  ok('once both are on, the ink is the TINT colour, never a contrast colour derived from the (different) badge colour', vmsApi.vmIconInk(false) === '#e5a00d', vmsApi.vmIconInk(false));
+  ok('and the badge box itself is still exactly its own configured colour, unaffected by the tint pick', vmsApi.vmBgColor() === '#161616', vmsApi.vmBgColor());
   reset();
 }
 
@@ -143,7 +149,7 @@ console.log('\nvmLogoSizes(): the SAME cc.sgsize map as docker.js\'s ccLogoSizes
 console.log('\nA glyph never ends up with BOTH a direct colour AND the luminance-tint filter (double-tint regression pin)');
 {
   ok('native treat: no colour AND no filter', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'native' }, false, '#2f6feb', '#e5a00d'); return !r.color && !r.filter; })());
-  ok('Logo-Hintergrund on, forced "tint": colour is the ideal-text ink, filter stays empty', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', '#e5a00d'); return !!r.color && !r.filter; })());
+  ok('Logo-Hintergrund on, forced "tint": colour is the resolved ink verbatim (caller already resolved it), filter stays empty', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', '#e5a00d'); return !!r.color && !r.filter; })());
   ok('an ink colour is available, forced "tint": colour is set, filter stays empty', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'tint' }, false, '#2f6feb', '#e5a00d'); return r.color === '#e5a00d' && !r.filter; })());
   // v4.32.5 regression pin: the badge alone must NEVER force a colour onto a glyph — `ink` (the
   // 4th arg) already answers "" whenever Einfärben is off, badge or not, so ibgOn must not be

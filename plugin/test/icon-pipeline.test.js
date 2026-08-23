@@ -239,13 +239,17 @@ console.log('\ndocker.js iconInk(): the ONE target colour both treatments paint 
   ok('a near-black pick survives the FLAT floor (a flat fill IS its target luminance)', dockerApi.iconInk(false) === '#2a2a2a');
   ok('but is lifted for the TINT, which would render darker still', dockerApi.iconInk(true) !== '#2a2a2a');
 
+  // Badge and tint are independent controls (v4.32.6 fix): the badge box's OWN colour must
+  // never leak into the icon's ink — deliberately different colours so a future regression
+  // that swaps them back can't hide.
   localStorage.setItem('cc.iconbg', '1');
-  localStorage.setItem('cc.iconcolor', '#161616');
-  ok('on a DARK badge box the ink is white, so the icon reads on the box', dockerApi.iconInk(false) === '#ffffff', dockerApi.iconInk(false));
+  localStorage.setItem('cc.iconbgcolor', '#1030a0'); // badge box: dark blue
+  localStorage.setItem('cc.iconcolor', '#e5a00d');   // tint pick: bright orange
+  ok('Logo-Hintergrund on: ink is the picked TINT colour, never the badge box colour', dockerApi.iconInk(false) === '#e5a00d', dockerApi.iconInk(false));
   ok('and it is a SIX-digit hex, which every filter regex requires', /^#[0-9a-f]{6}$/i.test(dockerApi.iconInk(false)), dockerApi.iconInk(false));
-  localStorage.setItem('cc.iconcolor', '#ffcc00');
-  ok('on a LIGHT badge box the ink flips to dark', dockerApi.iconInk(false) === '#161616', dockerApi.iconInk(false));
-  ok('and the tint on a box aims at the same contrasting ink, never at the box colour itself', dockerApi.iconInk(true) === dockerApi.iconInk(false));
+  ok('the badge box itself keeps its OWN colour, completely unaffected by the tint pick', dockerApi.bgColor() === '#1030a0', dockerApi.bgColor());
+  localStorage.setItem('cc.iconbg', '0');
+  ok('turning the badge off leaves the ink identical — it was never the source of it', dockerApi.iconInk(false) === '#e5a00d', dockerApi.iconInk(false));
   reset();
 }
 
@@ -263,7 +267,9 @@ console.log('\nHintergrund and Einfärben are INDEPENDENT (v4.32.5 fix): the bad
   ok('background ON, Einfärben EXPLICITLY off: still no ink even with the badge showing', dockerApi.iconInk(false) === '');
 
   localStorage.setItem('cc.icontint', '1');
-  ok('background ON, Einfärben explicitly ON: NOW it inks (contrast against the badge box)', dockerApi.iconInk(false) !== '');
+  ok('background ON, Einfärben explicitly ON but still no colour ever picked: still no ink (no pick to lift)', dockerApi.iconInk(false) === '');
+  localStorage.setItem('cc.iconcolor', '#e5a00d');
+  ok('background ON, Einfärben ON, colour NOW picked: inks in that picked colour', dockerApi.iconInk(false) === '#e5a00d', dockerApi.iconInk(false));
   reset();
 
   // pre-4.32.5 installs: only cc.iconbg + cc.iconcolor were ever set, and iconcolor's mere
@@ -272,11 +278,15 @@ console.log('\nHintergrund and Einfärben are INDEPENDENT (v4.32.5 fix): the bad
   ok('pre-existing install (no cc.icontint key at all): behaves exactly as it always did — inked', dockerApi.tintOn() === true && dockerApi.iconInk(false) !== '');
   reset();
 
-  // the background's OWN colour is independent of the tint's colour once both are configured
+  // CONFIRMED BUG (v4.32.6, fixed here): with both controls on and given DELIBERATELY
+  // different colours, the icon's ink must be the TINT's own colour, never a contrast colour
+  // derived from the (different) badge box colour — live-tested: tint #e5a00d rendered as
+  // plain white (#ffffff) once the badge was also on, discarding the picked colour entirely.
   localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#161616'); localStorage.setItem('cc.icontint', '0');
   ok('background colour applies even with Einfärben off (bgColor reads cc.iconbgcolor)', dockerApi.bgColor() === '#161616');
   localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#e5a00d');
-  ok('once both are on, the badge ink contrasts with the BADGE colour, not the (different) tint colour', dockerApi.iconInk(false) === '#ffffff', dockerApi.iconInk(false));
+  ok('once both are on, the ink is the TINT colour, never a contrast colour derived from the (different) badge colour', dockerApi.iconInk(false) === '#e5a00d', dockerApi.iconInk(false));
+  ok('and the badge box itself is still exactly its own configured colour, unaffected by the tint pick', dockerApi.bgColor() === '#161616', dockerApi.bgColor());
   reset();
 }
 

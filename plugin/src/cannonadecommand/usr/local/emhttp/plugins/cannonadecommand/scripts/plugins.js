@@ -203,13 +203,15 @@
     return accent();
   }
   // The icon pipeline's target colour for this tab — same contract as docker.js iconInk():
-  // "" whenever Einfärben (tint) is off, regardless of the badge; on the Logo-Hintergrund box
-  // the ink must contrast with the BOX's OWN colour, otherwise it is the picked TINT colour
-  // lifted out of the dark end. `forTint` doubles the floor because a luminance tint outputs
-  // roughly half the target's luma (see CCTheme.liftDark).
+  // "" whenever Einfärben (tint) is off, regardless of the badge; ALWAYS the picked TINT colour,
+  // lifted out of the dark end — regardless of whether the Logo-Hintergrund badge is also on
+  // (v4.32.6 fix: this used to return idealText(plugBgColor()) whenever the badge was on,
+  // discarding the user's own picked tint colour — see docker.js iconInk() for the full
+  // writeup). plugBgColor()/eff("iconbg") stay the badge box's OWN colour, never the icon's
+  // ink. `forTint` doubles the floor because a luminance tint outputs roughly half the
+  // target's luma (see CCTheme.liftDark).
   function plugIconInk(forTint) {
     if (!plugTintOn()) return "";
-    if (eff("iconbg") === "1") return ccHex6(idealText(plugBgColor()));
     var pick = eff("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
@@ -222,11 +224,12 @@
   // unit-testable without a full render pass.
   //
   // `ibgOn`/`ibgBg` are kept as parameters for call-site stability but are no longer consulted
-  // directly: `pInk` (plugIconInk()'s result) already resolves to the box-contrast colour
-  // whenever the badge is on AND Einfärben is on, and to "" whenever Einfärben is off — the old
-  // `if (ibgOn) return {color: idealText(ibgBg), ...}` branch forced a colour onto every plugin
-  // glyph the moment the badge was on, even with Einfärben off (the same background-forces-tint
-  // bug as plugIconInk(), for font/Unraid-icon glyphs specifically — v4.32.5 fix).
+  // directly: `pInk` (plugIconInk()'s result) already resolves to the picked tint colour
+  // whenever Einfärben is on — badge or not (v4.32.6 fix) — and to "" whenever Einfärben is
+  // off — the old `if (ibgOn) return {color: idealText(ibgBg), ...}` branch forced a colour
+  // onto every plugin glyph the moment the badge was on, even with Einfärben off (the same
+  // background-forces-tint bug as plugIconInk(), for font/Unraid-icon glyphs specifically —
+  // v4.32.5 fix).
   function plugGlyphInkAndFilter(plan, ibgOn, ibgBg, pInk, want) {
     if (plan.treat === "native") return { color: "", filter: "none" };
     if (pInk) return { color: pInk, filter: "none" };
