@@ -317,12 +317,16 @@ console.log('\ndocker.js honours its OWN adopt toggle (cc.styledocker) for iconc
   reset();
 }
 
-console.log('\ncc.iconbgrainbow / cc.icontintrainbow (v4.33.0): Badge-Einstellungen übernehmen — regression pin');
+console.log('\ncc.iconbgrainbow (v4.33.1): Badge-Einstellungen übernehmen — ONE master toggle, regression pin');
 {
   // Regression pin for the exact user-reported capability gap: v4.32.4-v4.32.7 made Hintergrund/
   // Einfärben's OWN colour win unconditionally, with no way back to "follow Rainbow/accent like
-  // every other badge". These two adopt keys restore that as an explicit, independently-toggled
-  // choice per control.
+  // every other badge". v4.33.0's first attempt gave each control its OWN independent adopt key;
+  // redesigned within minutes into ONE shared key (this file) because the tint is a single
+  // page-wide filter, so two independently-adopting controls could never look like a genuine
+  // per-item rainbow. Now: ONE toggle adopts BOTH — the background follows Rainbow/accent exactly
+  // as before, and the ink stops being a separately-adopted colour and becomes an automatic
+  // black/white CONTRAST colour instead, regardless of Einfärben's own on/off.
   reset();
   localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#e5a00d');
   localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#00aa00');
@@ -332,19 +336,22 @@ console.log('\ncc.iconbgrainbow / cc.icontintrainbow (v4.33.0): Badge-Einstellun
   ok('adopt OFF (default): iconInk() is the independently picked tint colour', dockerApi.iconInk(false) === '#00aa00', dockerApi.iconInk(false));
 
   localStorage.setItem('cc.iconbgrainbow', '1');
-  ok('Hintergrund adopting: bgColor() answers "" so the caller never stamps --cc-iconbg-color, letting the CSS var() chain fall through to --cc-rb-c/--cc-accent — the SAME source every generic badge already uses', dockerApi.bgColor() === '', JSON.stringify(dockerApi.bgColor()));
-  ok('Einfärben untouched: still the independently picked tint colour (the two controls are independent)', dockerApi.iconInk(false) === '#00aa00', dockerApi.iconInk(false));
+  ok('adopting: bgColor() answers "" so the caller never stamps --cc-iconbg-color, letting the CSS var() chain fall through to --cc-rb-c/--cc-accent — the SAME source every generic badge already uses', dockerApi.bgColor() === '', JSON.stringify(dockerApi.bgColor()));
 
-  localStorage.setItem('cc.icontintrainbow', '1');
   localStorage.setItem('cc.rainbow', '0');
-  ok('Einfärben adopting, Rainbow OFF: iconInk() matches iconAdoptTint() (the plain accent) — not the own picked colour', dockerApi.iconInk(false) === '#2f6feb', dockerApi.iconInk(false));
+  ok('adopting, Rainbow OFF: iconInk() is the automatic contrast colour for the plain accent (idealText of iconAdoptTint()) — not the own picked colour', dockerApi.iconInk(false) === dockerApi.idealText(dockerApi.iconAdoptTint()), dockerApi.iconInk(false));
+  ok('and that accent is dark-ish (#2f6feb), so the contrast ink is white', dockerApi.iconInk(false) === '#fff', dockerApi.iconInk(false));
 
   localStorage.setItem('cc.rainbow', '1');
-  ok('Einfärben adopting, Rainbow ON: iconInk() matches the SAME ccRbColor(5) a generic badge (--cc-btn-accent) resolves to, not a frozen accent snapshot', dockerApi.iconInk(false) === dockerApi.ccRbColor(5), dockerApi.iconInk(false) + ' vs ' + dockerApi.ccRbColor(5));
+  ok('adopting, Rainbow ON: iconInk() is the automatic contrast colour for the SAME ccRbColor(5) a generic badge (--cc-btn-accent) resolves to, not a frozen accent snapshot', dockerApi.iconInk(false) === dockerApi.idealText(dockerApi.ccRbColor(5)), dockerApi.iconInk(false) + ' vs idealText(' + dockerApi.ccRbColor(5) + ')');
   ok('and that is NOT the own picked colour either', dockerApi.iconInk(false) !== '#00aa00');
 
-  localStorage.setItem('cc.icontintrainbow', '0');
-  ok('turning Einfärben adopt back off restores the own picked colour immediately', dockerApi.iconInk(false) === '#00aa00', dockerApi.iconInk(false));
+  localStorage.setItem('cc.icontint', '0');
+  ok('adopting: the ink is STILL the automatic contrast colour even with Einfärben explicitly OFF — the master toggle no longer depends on Einfärben\'s own on/off at all', dockerApi.iconInk(false) === dockerApi.idealText(dockerApi.ccRbColor(5)), dockerApi.iconInk(false));
+  localStorage.setItem('cc.icontint', '1');
+
+  localStorage.setItem('cc.iconbgrainbow', '0');
+  ok('turning the master toggle back off restores the own picked colour immediately', dockerApi.iconInk(false) === '#00aa00', dockerApi.iconInk(false));
   reset();
 }
 

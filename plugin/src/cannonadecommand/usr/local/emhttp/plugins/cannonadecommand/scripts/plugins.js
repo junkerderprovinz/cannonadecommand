@@ -195,15 +195,18 @@
     var v = eff("icontint");
     return v == null ? !!eff("iconcolor") : v === "1";
   }
-  // ADOPT RAINBOW/ACCENT (v4.33.0, mirrors docker.js iconAdoptTint()): Hintergrund/Einfärben can
-  // each independently step aside from their own picked colour and defer to whatever a generic
-  // plugin-row badge already shows. Hintergrund adopting: plugBgColor() answers "" so
-  // paintRow() never stamps --cc-iconbg-color; docker.css's own var() chain
+  // ADOPT RAINBOW/ACCENT — ONE master toggle (v4.33.1, mirrors docker.js; redesigned from the
+  // two independent toggles v4.33.0 shipped, see docker.js's iconAdoptTint() doc comment for the
+  // full writeup of why). Hintergrund adopting: plugBgColor() answers "" so paintRow() never
+  // stamps --cc-iconbg-color; docker.css's own var() chain
   // (var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent)))) then falls through to --cc-rb-c,
-  // the per-row rotating colour paintRow() already stamps (colorFor(i)). Einfärben adopting: the
-  // tint is one flat filter for the whole page (never per-row), so it takes colorFor(5) — the
-  // SAME single "action" rainbow slot docker.js/vms.js already use for buttons/toggles, live and
-  // recomputed every repaint via the existing colorFor()/pal()/RB_OFFSET machinery.
+  // the per-row rotating colour paintRow() already stamps (colorFor(i)) — Plugins has no grid
+  // view, only the list, so nothing else was needed here for genuine per-item rotation. Einfärben
+  // no longer adopts a separate HUE at all: the ink is instead the automatic black/white CONTRAST
+  // colour for the resolved background (idealText()), regardless of Einfärben's own on/off —
+  // colorFor(5) still resolves the REPRESENTATIVE colour that contrast is computed FROM (the SAME
+  // single "action" rainbow slot docker.js/vms.js use for buttons/toggles, live and recomputed
+  // every repaint via the existing colorFor()/pal()/RB_OFFSET machinery).
   function plugBgColor() {
     if (eff("iconbgrainbow") === "1") return "";   // adopting: defer to the CSS rainbow/accent chain
     var c = eff("iconbgcolor");
@@ -213,16 +216,21 @@
     return accent();
   }
   // The icon pipeline's target colour for this tab — same contract as docker.js iconInk():
-  // "" whenever Einfärben (tint) is off, regardless of the badge; ALWAYS the picked TINT colour,
-  // lifted out of the dark end — regardless of whether the Logo-Hintergrund badge is also on
-  // (v4.32.6 fix: this used to return idealText(plugBgColor()) whenever the badge was on,
-  // discarding the user's own picked tint colour — see docker.js iconInk() for the full
-  // writeup). plugBgColor()/eff("iconbg") stay the badge box's OWN colour, never the icon's
-  // ink. `forTint` doubles the floor because a luminance tint outputs roughly half the
-  // target's luma (see CCTheme.liftDark).
+  //   · Master adopt ON: ALWAYS the automatic black/white contrast colour for the resolved
+  //     background, regardless of Einfärben's own on/off.
+  //   · Master adopt OFF: "" whenever Einfärben (tint) is off, regardless of the badge; ALWAYS
+  //     the picked TINT colour, lifted out of the dark end — regardless of whether the
+  //     Logo-Hintergrund badge is also on (v4.32.6 fix: this used to return
+  //     idealText(plugBgColor()) whenever the badge was on, discarding the user's own picked
+  //     tint colour — see docker.js iconInk() for the full writeup). plugBgColor()/eff("iconbg")
+  //     stay the badge box's OWN colour, never the icon's ink.
+  // `forTint` doubles the floor because a luminance tint outputs roughly half the target's luma
+  // (see CCTheme.liftDark); the auto contrast branch skips the guard — idealText() only ever
+  // answers #fff/#161616.
   function plugIconInk(forTint) {
+    if (eff("iconbgrainbow") === "1") return idealText(colorFor(5));
     if (!plugTintOn()) return "";
-    var pick = eff("icontintrainbow") === "1" ? colorFor(5) : eff("iconcolor");
+    var pick = eff("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);

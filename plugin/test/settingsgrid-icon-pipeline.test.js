@@ -108,8 +108,14 @@ console.log('\nHintergrund and Einfärben are INDEPENDENT on this area too (v4.3
   reset();
 }
 
-console.log('\ncc.iconbgrainbow / cc.icontintrainbow (v4.33.0): Badge-Einstellungen übernehmen — regression pin');
+console.log('\ncc.iconbgrainbow (v4.33.1): Badge-Einstellungen übernehmen — ONE master toggle, regression pin');
 {
+  // v4.33.0 shipped TWO independent adopt keys; redesigned within minutes into ONE shared key
+  // (mirrors docker.js — see icon-pipeline.test.js for the full writeup of why). Unlike
+  // docker.js/vms.js/plugins.js, badge and tint are mutually exclusive in THIS area (see
+  // bgAdopting()'s doc comment), so the master toggle here still resolves tintColorEff() to a
+  // rotating/accent HUE (there is no badge behind a pure-tint tile to contrast against) — only
+  // the storage key is shared with bgColorEff()/bgColorIsCustom() now, not the two independently.
   reset();
   localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#e5a00d');
   localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#00aa00');
@@ -119,21 +125,19 @@ console.log('\ncc.iconbgrainbow / cc.icontintrainbow (v4.33.0): Badge-Einstellun
   ok('adopt OFF (default): bgColorIsCustom() is true', sgApi.bgColorIsCustom() === true);
   ok('adopt OFF (default): tintColorEff() is the independently picked tint colour', sgApi.tintColorEff() === '#00aa00', sgApi.tintColorEff());
 
-  localStorage.setItem('cc.iconbgrainbow', '1');
-  ok('Hintergrund adopting: bgColorEff() answers "" so apply() never stamps --cc-iconbg-color', sgApi.bgColorEff() === '', JSON.stringify(sgApi.bgColorEff()));
-  ok('Hintergrund adopting: bgColorIsCustom() is now false, so paintGrid()\'s existing iconSet branch falls through to its OWN rotating-colour paint (c = rbColor(i)) — genuine per-tile rotation, no new colour math', sgApi.bgColorIsCustom() === false);
-  ok('Einfärben untouched: still the independently picked tint colour (the two controls are independent)', sgApi.tintColorEff() === '#00aa00', sgApi.tintColorEff());
-
-  localStorage.setItem('cc.icontintrainbow', '1');
   localStorage.setItem('cc.rainbow', '0');
-  ok('Einfärben adopting, Rainbow OFF: tintColorEff() is the plain accent — not the own picked colour', sgApi.tintColorEff() === '#2f6feb', sgApi.tintColorEff());
+  localStorage.setItem('cc.iconbgrainbow', '1');
+  ok('adopting: bgColorEff() answers "" so apply() never stamps --cc-iconbg-color', sgApi.bgColorEff() === '', JSON.stringify(sgApi.bgColorEff()));
+  ok('adopting: bgColorIsCustom() is now false, so paintGrid()\'s existing iconSet branch falls through to its OWN rotating-colour paint (c = rbColor(i)) — genuine per-tile rotation, no new colour math', sgApi.bgColorIsCustom() === false);
+  ok('adopting, Rainbow OFF: tintColorEff() is ALSO adopting now (ONE shared key) and is the plain accent — not the own picked colour', sgApi.tintColorEff() === '#2f6feb', sgApi.tintColorEff());
 
   localStorage.setItem('cc.rainbow', '1');
-  ok('Einfärben adopting, Rainbow ON: tintColorEff() matches the SAME rbColor(5) a generic rotating tile resolves to, not a frozen accent snapshot', sgApi.tintColorEff() === sgApi.rbColor(5), sgApi.tintColorEff() + ' vs ' + sgApi.rbColor(5));
+  ok('adopting, Rainbow ON: tintColorEff() matches the SAME rbColor(5) a generic rotating tile resolves to, not a frozen accent snapshot', sgApi.tintColorEff() === sgApi.rbColor(5), sgApi.tintColorEff() + ' vs ' + sgApi.rbColor(5));
   ok('and that is NOT the own picked colour either', sgApi.tintColorEff() !== '#00aa00');
 
-  localStorage.setItem('cc.icontintrainbow', '0');
-  ok('turning Einfärben adopt back off restores the own picked colour immediately', sgApi.tintColorEff() === '#00aa00', sgApi.tintColorEff());
+  localStorage.setItem('cc.iconbgrainbow', '0');
+  ok('turning the master toggle back off restores the own picked tint colour immediately', sgApi.tintColorEff() === '#00aa00', sgApi.tintColorEff());
+  ok('and the own picked background colour too', sgApi.bgColorEff() === '#e5a00d', sgApi.bgColorEff());
   reset();
 }
 

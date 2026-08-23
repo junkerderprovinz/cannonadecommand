@@ -41,12 +41,22 @@
   // key below now goes through eff(), the SAME adopt-gated per-area -> global fallback
   // docker.js/vms.js/plugins.js already use (see eff() above): with adopt on it reads cc.<key>,
   // with adopt off it reads ccs.<key> — exactly matching the other three areas' contract.
-  // ADOPT RAINBOW/ACCENT (v4.33.0, mirrors docker.js iconAdoptTint()): Hintergrund/Einfärben can
-  // each independently step aside from their own picked colour and defer to whatever a
-  // generic tile already shows — Rainbow's rotating per-tile colour when Rainbow is on, the
-  // plain accent otherwise. bgAdopting() gates bgColorEff() to "" so paintGrid()'s own
-  // iconSet check (bgColorIsCustom()) falls through to its EXISTING rotating-colour branch
-  // (`c = rbColor(i)`) — no new colour math for the badge, genuine per-tile rotation for free.
+  // ADOPT RAINBOW/ACCENT — ONE master toggle (v4.33.1, mirrors docker.js; redesigned from the
+  // two independent toggles v4.33.0 shipped, see docker.js's iconAdoptTint() doc comment for the
+  // full writeup of why). bgAdopting() gates bgColorEff() to "" so paintGrid()'s own iconSet
+  // check (bgColorIsCustom()) falls through to its EXISTING rotating-colour branch (`c =
+  // rbColor(i)`) — no new colour math for the badge, genuine per-tile rotation for free (this
+  // area already paints its badge AND its ink per tile in the loop, so unlike docker.js/vms.js/
+  // plugins.js's single page-wide ink filter, nothing extra was needed here for genuine per-item
+  // rotation — see paintGrid()'s `btc` below). Badge and tint are mutually exclusive in THIS area
+  // (one square icon can only show one treatment — see apply()), so there is no "Hintergrund on,
+  // Einfärben off" badge+ink combination to reconcile the way docker.js/vms.js/plugins.js do:
+  // whenever the badge shows, paintGrid()/apply() already ink every tile with its own automatic
+  // black/white contrast unconditionally (ensureMonoFilter(idealText(...))), which is exactly the
+  // reference behaviour the master toggle generalises to the other three areas. tintColorEff()
+  // below still uses the master toggle too, for the OTHER mode (badge off, Einfärben on): there
+  // is no badge to contrast against there, so it keeps resolving a rotating/accent HUE rather
+  // than a black/white contrast, same as v4.33.0 — only the storage key is now shared.
   function bgAdopting() { return eff("iconbgrainbow", "0") === "1"; }
   function bgColorEff() {
     if (bgAdopting()) return "";
@@ -60,11 +70,14 @@
   // explicit pick should outrank the rotating rainbow colour. Adopting counts as "no configured
   // colour" so the rotating branch always wins while it's on.
   function bgColorIsCustom() { return !bgAdopting() && (/^#[0-9a-f]{6}$/i.test(eff("iconbgcolor", "")) || /^#[0-9a-f]{6}$/i.test(eff("iconcolor", ""))); }
-  // Einfärben's adopt-rainbow colour: the tile grid tints EVERY icon with one flat filter (never
-  // per-tile), so it takes the same live rotating-or-accent single value docker.js/vms.js/
-  // plugins.js use for their tint's adopt state — here reusing this area's OWN rbColor()/rbOn().
+  // Einfärben's adopt-rainbow colour (pure-tint mode only, badge off — see bgAdopting()'s comment
+  // above): the tile grid tints EVERY icon with one flat filter (never per-tile) and there is no
+  // badge behind it to contrast against, so this keeps resolving a rotating/accent HUE rather
+  // than an auto black/white contrast — the same live rotating-or-accent value docker.js/vms.js/
+  // plugins.js use for THEIR tint's adopt-representative colour — here reusing this area's OWN
+  // rbColor()/rbOn(). Reads the SAME single master key as bgAdopting() now (v4.33.1).
   function tintColorEff() {
-    if (eff("icontintrainbow", "0") === "1") return rbOn() ? rbColor(5) : accent();
+    if (eff("iconbgrainbow", "0") === "1") return rbOn() ? rbColor(5) : accent();
     return eff("iconcolor", "");
   }
   // Einfärben (tint) on/off (v4.32.5, mirrors cc.icontint): unset falls back to the pre-4.32.5

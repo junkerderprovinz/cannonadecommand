@@ -498,32 +498,51 @@
   //   io.getBgColor()/setBgColor(hex)    — background's OWN colour ("" = unset -> falls back)
   //   io.getTint()/setTint(bool)         — tint on/off
   //   io.getColor()/setColor(hex)        — tint's OWN colour (the pre-existing *iconcolor key)
-  //   io.getBgRainbow()/setBgRainbow(bool)     — background's adopt-rainbow (v4.33.0)
-  //   io.getTintRainbow()/setTintRainbow(bool) — tint's adopt-rainbow (v4.33.0)
+  //   io.getAdopt()/setAdopt(bool)       — the ONE master "Badge-Einstellungen übernehmen"
+  //                                         toggle (v4.33.1, see below)
   //   io.getAccent()                     — this scope's effective accent, for the colour fallback
-  //   io.onChange()                      — called after ANY of the ten writes above (repaint hook)
+  //   io.onChange()                      — called after ANY of the eight writes above (repaint hook)
   // Returns the toggle/picker handles a caller may still need (e.g. the strength slider) plus a
   // sync() that repaints every row from the CURRENT stored values (an adopt-toggle flip on an
   // area card needs this to jump to the newly-effective values).
   //
-  // ── BADGE-EINSTELLUNGEN ÜBERNEHMEN (v4.33.0) ────────────────────────────────────────
+  // ── BADGE-EINSTELLUNGEN ÜBERNEHMEN — ONE toggle, not two (v4.33.1) ──────────────────
   // v4.32.4-v4.32.7 deliberately made Hintergrund's/Einfärben's OWN picked colour win over
   // Rainbow mode's rotating colour unconditionally — correct as the default, but it removed a
   // capability an install could rely on: making the icon FOLLOW Rainbow (or the plain accent)
-  // like every other badge, exactly as it behaved before v4.32.4. User-confirmed regression,
-  // user-proposed fix: a THIRD, independent toggle per control ("Badge-Einstellungen
-  // übernehmen") that, when on, makes that control's colour come from the SAME source every
-  // generic badge already uses, and hides that control's own picker (dimmed + inert, the same
-  // convention the Intensität row already uses while Einfärben is off) since it isn't consulted
-  // while adopting. The actual colour resolution lives entirely on the read side
+  // like every other badge, exactly as it behaved before v4.32.4. v4.33.0's first attempt at
+  // restoring that gave EACH control its own independent adopt toggle — user-tested minutes
+  // after release and immediately redesigned: two toggles meant Einfärben's adopt state still
+  // had to pick ONE flat rotating hue for the tint (never per-item, since the tint is one shared
+  // SVG filter for the whole page — see iconInk()/vmIconInk()/plugIconInk()), so "rainbow mode"
+  // never actually looked like a rainbow — every logo showed the SAME colour. The fix the user
+  // asked for: collapse both toggles into ONE, sitting at the very TOP of this block (above both
+  // colour-picker rows, not as a third row per control). When it is ON, Hintergrund follows
+  // Rainbow/accent exactly as before (unchanged mechanism — bgColor() and its mirrors answer ""
+  // so the existing --cc-rb-c/--cc-accent CSS fallback chain resolves it, now genuinely PER-ITEM
+  // in every view via the new per-card/per-row rainbow stamping), and Einfärben's ink stops being
+  // a separately-adopted colour altogether: it becomes an AUTOMATIC black-or-white contrast
+  // colour for whatever the resolved background actually is — exactly the contrast-ink treatment
+  // settingsgrid.js's own badge mode already computes unconditionally for its tiles. Both colour
+  // pickers below are dimmed + inert while this ONE toggle is on (neither is consulted), the same
+  // convention the Intensität row already uses for "this control is not currently in effect".
+  // When it is OFF, Hintergrund/Einfärben are exactly as independent as v4.32.6/v4.32.7 left them
+  // — unchanged. The actual colour resolution lives entirely on the read side
   // (docker.js/vms.js/plugins.js/settingsgrid.js's bgColor()/iconInk() and mirrors) — this
-  // control only flips the two storage keys.
+  // control only flips ONE storage key.
   function logoToggles(into, io) {
     function bgColorEff() {
       var c = io.getBgColor(); if (/^#[0-9a-f]{6}$/i.test(c)) return c;
       var ic = io.getColor(); if (/^#[0-9a-f]{6}$/i.test(ic)) return ic;
       return /^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#1f9d55";
     }
+    // the ONE master toggle — first thing in the card, above every other row.
+    var adoptTg = toggle(io.getAdopt(), function (v) { io.setAdopt(v); sync(); io.onChange(); });
+    var adoptRow = el("div", "cc-set-row cc-set-inline");
+    var adoptLbl = el("span", "cc-set-lblwrap"); adoptLbl.appendChild(el("span", null, T("Badge-Einstellungen übernehmen", "Adopt badge settings")));
+    adoptLbl.appendChild(infoIcon(T("AN: Hintergrund UND Einfärben folgen zusammen Regenbogen (rotierend, pro Symbol) bzw. der Akzentfarbe, wenn Regenbogen aus ist — genau wie jedes andere Badge. Das Symbol selbst wird dabei automatisch schwarz oder weiß eingefärbt, je nachdem was auf dem Hintergrund lesbar ist. Die beiden Farbwähler unten werden dabei ignoriert.", "ON: Background AND Colourise together follow Rainbow mode (rotating, per icon) or the plain accent when Rainbow is off — exactly like every other badge. The icon itself is then automatically inked black or white, whichever reads on the resolved background. Both colour pickers below are ignored while this is on.")));
+    adoptRow.appendChild(adoptLbl); adoptRow.appendChild(adoptTg);
+
     var bgTg = toggle(io.getBg(), function (v) {
       io.setBg(v);
       if (v && !/^#[0-9a-f]{6}$/i.test(io.getBgColor())) { var seed = bgColorEff(); io.setBgColor(seed); bgPk._set(seed); bgHx.value = seed; }
@@ -534,11 +553,6 @@
     var bgPk = inlinePicker(bgColorEff(), function (v) { io.setBgColor(v); bgHx.value = v; sync(); io.onChange(); });
     bgHx.addEventListener("input", function () { var v = normHex(bgHx.value); if (v) { io.setBgColor(v); bgPk._set(v); sync(); io.onChange(); } });
     var bgPickRow = el("div", "cc-set-pickrow"); bgPickRow.appendChild(bgPk); bgPickRow.appendChild(bgHx);
-    var bgRbTg = toggle(io.getBgRainbow(), function (v) { io.setBgRainbow(v); sync(); io.onChange(); });
-    var bgRbRow = el("div", "cc-set-row cc-set-inline");
-    var bgRbLbl = el("span", "cc-set-lblwrap"); bgRbLbl.appendChild(el("span", null, T("Badge-Einstellungen übernehmen", "Adopt badge settings")));
-    bgRbLbl.appendChild(infoIcon(T("AN: der Hintergrund folgt Regenbogen (rotierend) bzw. der Akzentfarbe, wenn Regenbogen aus ist — genau wie jedes andere Badge. Die eigene Farbe oben wird dabei ignoriert.", "ON: the background follows Rainbow mode (rotating) or the plain accent when Rainbow is off — exactly like every other badge. The colour above is ignored while this is on.")));
-    bgRbRow.appendChild(bgRbLbl); bgRbRow.appendChild(bgRbTg);
 
     var tintTg = toggle(io.getTint(), function (v) {
       io.setTint(v);
@@ -550,40 +564,36 @@
     var tintPk = inlinePicker(/^#[0-9a-f]{6}$/i.test(io.getColor()) ? io.getColor() : (/^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#1f9d55"), function (v) { io.setColor(v); tintHx.value = v; sync(); io.onChange(); });
     tintHx.addEventListener("input", function () { var v = normHex(tintHx.value); if (v) { io.setColor(v); tintPk._set(v); sync(); io.onChange(); } });
     var tintPickRow = el("div", "cc-set-pickrow"); tintPickRow.appendChild(tintPk); tintPickRow.appendChild(tintHx);
-    var tintRbTg = toggle(io.getTintRainbow(), function (v) { io.setTintRainbow(v); sync(); io.onChange(); });
-    var tintRbRow = el("div", "cc-set-row cc-set-inline");
-    var tintRbLbl = el("span", "cc-set-lblwrap"); tintRbLbl.appendChild(el("span", null, T("Badge-Einstellungen übernehmen", "Adopt badge settings")));
-    tintRbLbl.appendChild(infoIcon(T("AN: das Einfärben folgt Regenbogen bzw. der Akzentfarbe, wenn Regenbogen aus ist — genau wie jedes andere Badge. Die eigene Farbe oben wird dabei ignoriert.", "ON: colourising follows Rainbow mode or the plain accent when Rainbow is off — exactly like every other badge. The colour above is ignored while this is on.")));
-    tintRbRow.appendChild(tintRbLbl); tintRbRow.appendChild(tintRbTg);
 
     var strRow = el("div", "cc-set-row"); strRow.appendChild(el("span", "cc-set-rl", T("Intensität", "Strength")));
     var strInput = el("input"); strInput.type = "range"; strInput.min = "10"; strInput.max = "100"; strInput.style.flex = "1"; strRow.appendChild(strInput);
 
     function sync() {
+      adoptTg._setOn(io.getAdopt());
+      var adopting = io.getAdopt();
+      // NEITHER picker is consulted while the master toggle adopts — dim + inert both, the same
+      // convention the Intensität row below already uses for "this control is not currently in
+      // effect".
       bgTg._setOn(io.getBg());
       bgHx.value = io.getBgColor() || ""; try { bgPk._set(bgColorEff()); } catch (e9) {}
-      bgRbTg._setOn(io.getBgRainbow());
-      // the OWN picker is not consulted while adopting — dim + inert it, the same convention
-      // the Intensität row below already uses for "this control is currently not in effect".
-      var bgAdopt = io.getBgRainbow();
-      bgPickRow.style.opacity = bgAdopt ? ".4" : ""; bgPickRow.style.pointerEvents = bgAdopt ? "none" : "";
+      bgPickRow.style.opacity = adopting ? ".4" : ""; bgPickRow.style.pointerEvents = adopting ? "none" : "";
       tintTg._setOn(io.getTint());
       tintHx.value = io.getColor() || ""; try { if (/^#[0-9a-f]{6}$/i.test(io.getColor())) tintPk._set(io.getColor()); } catch (e9) {}
-      tintRbTg._setOn(io.getTintRainbow());
-      var tintAdopt = io.getTintRainbow();
-      tintPickRow.style.opacity = tintAdopt ? ".4" : ""; tintPickRow.style.pointerEvents = tintAdopt ? "none" : "";
+      tintPickRow.style.opacity = adopting ? ".4" : ""; tintPickRow.style.pointerEvents = adopting ? "none" : "";
       // Intensität only ever means anything for the LUMINANCE tint, which only runs when tint is
       // on — the badge box no longer affects the icon's ink at all (v4.32.6 fix: iconInk() and
       // its mirrors now always tint in the picked colour, badge or not — see iconInk()/
-      // vmIconInk()/plugIconInk()) — so it only dims when tint itself is off.
-      var dim = !io.getTint();
+      // vmIconInk()/plugIconInk()) — so it only dims when tint itself is off. While adopting, the
+      // ink is a flat auto black/white contrast colour with no strength to tune either.
+      var dim = !io.getTint() || adopting;
       strRow.style.opacity = dim ? ".4" : ""; strRow.style.pointerEvents = dim ? "none" : "";
     }
-    into.appendChild(bgRow); into.appendChild(bgPickRow); into.appendChild(bgRbRow);
-    into.appendChild(tintRow); into.appendChild(tintPickRow); into.appendChild(tintRbRow);
+    into.appendChild(adoptRow);
+    into.appendChild(bgRow); into.appendChild(bgPickRow);
+    into.appendChild(tintRow); into.appendChild(tintPickRow);
     into.appendChild(strRow);
     sync();
-    return { sync: sync, strInput: strInput, bgToggle: bgTg, tintToggle: tintTg, bgRainbowToggle: bgRbTg, tintRainbowToggle: tintRbTg };
+    return { sync: sync, strInput: strInput, bgToggle: bgTg, tintToggle: tintTg, adoptToggle: adoptTg };
   }
 
   // ── REAL sample icons per area, for the previews ─────────────────────────────────────
@@ -1363,11 +1373,14 @@
       function gpaint() {
         var acc9 = get("cc.accent", "#2f6feb");
         var strn = parseInt(get("cc.iconstrength", "100"), 10) || 100;
-        // Adopting (v4.33.0): the preview has no Rainbow-rotation simulation (never did, even for
-        // the pre-existing controls) — approximate with the accent, same fidelity as the real
-        // "Rainbow off" case, instead of showing the stale own-colour underneath the adopt toggle.
-        var bgAdopt9 = get("cc.iconbgrainbow", "0") === "1", tintAdopt9 = get("cc.icontintrainbow", "0") === "1";
-        gPrevs.forEach(function (p9) { try { p9.set({ bg: get("cc.iconbg", "0") === "1", bgColor: bgAdopt9 ? acc9 : get("cc.iconbgcolor", ""), tint: gTintOnEff(), color: tintAdopt9 ? acc9 : get("cc.iconcolor", ""), strength: strn, accent: acc9, size: "48px" }); } catch (e9) {} });
+        // Adopting (v4.33.1): the preview has no Rainbow-rotation simulation (never did) —
+        // approximate the resolved background with the accent, same fidelity as the real
+        // "Rainbow off" case. The ink is then the AUTOMATIC black/white contrast for THAT
+        // approximated background (idealText), never the accent hue itself — matching iconInk()'s
+        // new master-adopt branch — and forced on (tint: true) since it no longer depends on
+        // Einfärben's own on/off while adopting.
+        var adopt9 = get("cc.iconbgrainbow", "0") === "1";
+        gPrevs.forEach(function (p9) { try { p9.set({ bg: get("cc.iconbg", "0") === "1", bgColor: adopt9 ? acc9 : get("cc.iconbgcolor", ""), tint: adopt9 ? true : gTintOnEff(), color: adopt9 ? idealText(acc9) : get("cc.iconcolor", ""), strength: strn, accent: acc9, size: "48px" }); } catch (e9) {} });
       }
       function gsync() { gpaint(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); } // adopt-ON area cards repaint with the new globals
       // Einfärben on/off, unset falling back to the pre-4.32.5 reading (a valid cc.iconcolor
@@ -1382,10 +1395,8 @@
         setTint: function (v) { set("cc.icontint", v ? "1" : "0"); },
         getColor: function () { return get("cc.iconcolor", ""); },
         setColor: function (v) { set("cc.iconcolor", v); },
-        getBgRainbow: function () { return get("cc.iconbgrainbow", "0") === "1"; },
-        setBgRainbow: function (v) { set("cc.iconbgrainbow", v ? "1" : "0"); },
-        getTintRainbow: function () { return get("cc.icontintrainbow", "0") === "1"; },
-        setTintRainbow: function (v) { set("cc.icontintrainbow", v ? "1" : "0"); },
+        getAdopt: function () { return get("cc.iconbgrainbow", "0") === "1"; },
+        setAdopt: function (v) { set("cc.iconbgrainbow", v ? "1" : "0"); },
         getAccent: function () { return get("cc.accent", "#2f6feb"); },
         onChange: gsync
       });
@@ -1462,10 +1473,8 @@
       setTint: function (v) { set("cc.icontint", v ? "1" : "0"); },
       getColor: function () { return get("cc.iconcolor", ""); },
       setColor: function (v) { set("cc.iconcolor", v); },
-      getBgRainbow: function () { return get("cc.iconbgrainbow", "0") === "1"; },
-      setBgRainbow: function (v) { set("cc.iconbgrainbow", v ? "1" : "0"); },
-      getTintRainbow: function () { return get("cc.icontintrainbow", "0") === "1"; },
-      setTintRainbow: function (v) { set("cc.icontintrainbow", v ? "1" : "0"); },
+      getAdopt: function () { return get("cc.iconbgrainbow", "0") === "1"; },
+      setAdopt: function (v) { set("cc.iconbgrainbow", v ? "1" : "0"); },
       getAccent: function () { return get("cc.accent", "#2f6feb"); },
       onChange: c2OnChange
     });
@@ -1503,9 +1512,11 @@
     }).catch(function () { dockPrev.add("/plugins/cannonadecommand/images/cannonadecommand.png", ""); tintPrev(); });
     function tintPrev() {
       var acc9 = get("cc.accent", "#2f6feb");
-      // Adopting (v4.33.0): approximate with the accent — see gpaint()'s comment above.
-      var bgAdopt9 = get("cc.iconbgrainbow", "0") === "1", tintAdopt9 = get("cc.icontintrainbow", "0") === "1";
-      dockPrev.set({ bg: get("cc.iconbg", "0") === "1", bgColor: bgAdopt9 ? acc9 : get("cc.iconbgcolor", ""), tint: c2TintOnEff(), color: tintAdopt9 ? acc9 : get("cc.iconcolor", ""), strength: parseInt(get("cc.iconstrength", "100"), 10) || 100, accent: acc9 });
+      // Adopting (v4.33.1): approximate the resolved background with the accent — see gpaint()'s
+      // comment above — and ink with its automatic black/white contrast, forced on regardless of
+      // Einfärben's own on/off.
+      var adopt9 = get("cc.iconbgrainbow", "0") === "1";
+      dockPrev.set({ bg: get("cc.iconbg", "0") === "1", bgColor: adopt9 ? acc9 : get("cc.iconbgcolor", ""), tint: adopt9 ? true : c2TintOnEff(), color: adopt9 ? idealText(acc9) : get("cc.iconcolor", ""), strength: parseInt(get("cc.iconstrength", "100"), 10) || 100, accent: acc9 });
     }
     c2.appendChild(tprevWrap); tintPrev(); c2OnChange(); sizePrev();   // #5: preview is the card's LAST block now, sized to the tile-size control
     wrap.appendChild(c2);
@@ -1756,10 +1767,8 @@
         setTint: function (v) { set(P + "icontint", v ? "1" : "0"); useOwn(); },
         getColor: function () { return ga() ? get("cc.iconcolor", "") : get(P + "iconcolor", ""); },
         setColor: function (v) { set(P + "iconcolor", v); useOwn(); },
-        getBgRainbow: function () { return (ga() ? get("cc.iconbgrainbow", "0") : get(P + "iconbgrainbow", "0")) === "1"; },
-        setBgRainbow: function (v) { set(P + "iconbgrainbow", v ? "1" : "0"); useOwn(); },
-        getTintRainbow: function () { return (ga() ? get("cc.icontintrainbow", "0") : get(P + "icontintrainbow", "0")) === "1"; },
-        setTintRainbow: function (v) { set(P + "icontintrainbow", v ? "1" : "0"); useOwn(); },
+        getAdopt: function () { return (ga() ? get("cc.iconbgrainbow", "0") : get(P + "iconbgrainbow", "0")) === "1"; },
+        setAdopt: function (v) { set(P + "iconbgrainbow", v ? "1" : "0"); useOwn(); },
         getAccent: function () { return acc; },
         onChange: function () { applyBgClasses(); try { tp(); } catch (e9) {} }
       });
@@ -1798,13 +1807,14 @@
       }
       function tp() {
         var ga9 = ga();
-        // Adopting (v4.33.0): approximate with the effective accent — see gpaint()'s comment
-        // in the global Logos & Icons card for why (the preview never simulated Rainbow rotation).
-        var bgAdopt9 = (ga9 ? get("cc.iconbgrainbow", "0") : get(P + "iconbgrainbow", "0")) === "1";
-        var tintAdopt9 = (ga9 ? get("cc.icontintrainbow", "0") : get(P + "icontintrainbow", "0")) === "1";
+        // Adopting (v4.33.1): approximate the resolved background with the effective accent — see
+        // gpaint()'s comment in the global Logos & Icons card for why (the preview never simulated
+        // Rainbow rotation) — and ink with its automatic black/white contrast, forced on regardless
+        // of Einfärben's own on/off while adopting.
+        var adopt9 = (ga9 ? get("cc.iconbgrainbow", "0") : get(P + "iconbgrainbow", "0")) === "1";
         pvl.set({
-          bg: effIconBg(), bgColor: bgAdopt9 ? acc : (ga9 ? get("cc.iconbgcolor", "") : get(P + "iconbgcolor", "")),
-          tint: ga9 ? tintOnAt("cc.") : tintOnAt(P), color: tintAdopt9 ? acc : (ga9 ? get("cc.iconcolor", "") : get(P + "iconcolor", "")),
+          bg: effIconBg(), bgColor: adopt9 ? acc : (ga9 ? get("cc.iconbgcolor", "") : get(P + "iconbgcolor", "")),
+          tint: adopt9 ? true : (ga9 ? tintOnAt("cc.") : tintOnAt(P)), color: adopt9 ? idealText(acc) : (ga9 ? get("cc.iconcolor", "") : get(P + "iconcolor", "")),
           strength: effIconStrength(), accent: acc, size: "48px"
         });
       }

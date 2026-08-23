@@ -77,16 +77,20 @@
     var v = effK("icontint");
     return v == null ? !!effK("iconcolor") : v === "1";
   }
-  // ADOPT RAINBOW/ACCENT (v4.33.0, mirrors docker.js iconAdoptTint()): Hintergrund/Einfärben can
-  // each independently step aside from their own picked colour and defer to whatever a generic
-  // VM badge (CPU/RAM/…) already shows. Hintergrund adopting: vmBgColor() answers "" so
-  // paintVmIcons() never stamps --cc-iconbg-color; VmTab.css's own var() chain
+  // ADOPT RAINBOW/ACCENT — ONE master toggle (v4.33.1, mirrors docker.js; redesigned from the
+  // two independent toggles v4.33.0 shipped, see docker.js's iconAdoptTint() doc comment for the
+  // full writeup of why). Hintergrund adopting: vmBgColor() answers "" so paintVmIcons() never
+  // stamps --cc-iconbg-color; VmTab.css's own var() chain
   // (var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent))))) then falls
-  // through to --cc-rb-c, the per-row rotating colour the tile already takes with no icon colour
-  // configured at all. Einfärben adopting: the tint is one flat filter for the whole page (never
-  // per-row, even before this feature), so it takes the SAME single "action" rainbow slot
-  // VmTab.css already stamps for buttons/badges (--cc-rbaccent = pal[(5+off) % pal.length]), via
-  // vmRbColor(5) — live, recomputed every repaint, never a snapshot frozen at toggle time.
+  // through to --cc-rb-c, the per-row rotating colour the tile already takes (VMs has no grid
+  // view — only the list, which already stamps --cc-rb-c per row, so nothing else was needed
+  // here for genuine per-item rotation). Einfärben no longer adopts a separate HUE at all: the
+  // ink is instead the automatic black/white CONTRAST colour for the resolved background
+  // (idealText()), regardless of Einfärben's own on/off — vmAdoptTint() still resolves the
+  // REPRESENTATIVE colour that contrast is computed FROM (the SAME single "action" rainbow slot
+  // VmTab.css already stamps for buttons/badges, --cc-rbaccent = pal[(5+off) % pal.length], via
+  // vmRbColor(5) when Rainbow is on, the plain accent when it's off) — live, recomputed every
+  // repaint, never a snapshot frozen at toggle time.
   function vmAdoptTint() {
     if (ls("cc.theming") === "0" || ls("cc.rainbow") !== "1") return ccAccent();
     return vmRbColor(5);
@@ -100,16 +104,20 @@
     return ccAccent();
   }
   // The icon pipeline's target colour for this tab — same contract as docker.js iconInk():
-  // "" whenever Einfärben (tint) is off, regardless of the badge; ALWAYS the picked TINT colour,
-  // lifted out of the dark end by the shared darkness guard — regardless of whether the
-  // Logo-Hintergrund badge is also on (v4.32.6 fix: this used to return ccIdeal(vmBgColor())
-  // whenever the badge was on, discarding the user's own picked tint colour — see docker.js
-  // iconInk() for the full writeup). vmBgColor()/effK("iconbg") stay the badge box's OWN
-  // colour, never the icon's ink. `forTint` doubles the floor because a luminance tint outputs
-  // roughly half the target's luma.
+  //   · Master adopt ON: ALWAYS the automatic black/white contrast colour for the resolved
+  //     background, regardless of Einfärben's own on/off.
+  //   · Master adopt OFF: "" whenever Einfärben (tint) is off, regardless of the badge; ALWAYS
+  //     the picked TINT colour, lifted out of the dark end by the shared darkness guard —
+  //     regardless of whether the Logo-Hintergrund badge is also on (v4.32.6 fix: this used to
+  //     return ccIdeal(vmBgColor()) whenever the badge was on, discarding the user's own picked
+  //     tint colour — see docker.js iconInk() for the full writeup). vmBgColor()/effK("iconbg")
+  //     stay the badge box's OWN colour, never the icon's ink.
+  // `forTint` doubles the floor because a luminance tint outputs roughly half the target's luma;
+  // the auto contrast branch skips the guard — idealText() only ever answers #fff/#161616.
   function vmIconInk(forTint) {
+    if (effK("iconbgrainbow") === "1") return ccIdeal(vmAdoptTint());
     if (!vmTintOn()) return "";
-    var pick = effK("icontintrainbow") === "1" ? vmAdoptTint() : effK("iconcolor");
+    var pick = effK("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);

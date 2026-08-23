@@ -147,8 +147,10 @@ console.log('\nHintergrund and Einfärben are INDEPENDENT (v4.32.5 fix): the bad
   reset();
 }
 
-console.log('\ncc.iconbgrainbow / cc.icontintrainbow (v4.33.0): Badge-Einstellungen übernehmen — regression pin');
+console.log('\ncc.iconbgrainbow (v4.33.1): Badge-Einstellungen übernehmen — ONE master toggle, regression pin');
 {
+  // v4.33.0 shipped TWO independent adopt keys; redesigned within minutes into ONE shared key
+  // (mirrors docker.js — see icon-pipeline.test.js for the full writeup of why).
   reset();
   localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#e5a00d');
   localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#00aa00');
@@ -158,19 +160,21 @@ console.log('\ncc.iconbgrainbow / cc.icontintrainbow (v4.33.0): Badge-Einstellun
   ok('adopt OFF (default): plugIconInk() is the independently picked tint colour', pluginsApi.plugIconInk(false) === '#00aa00', pluginsApi.plugIconInk(false));
 
   localStorage.setItem('cc.iconbgrainbow', '1');
-  ok('Hintergrund adopting: plugBgColor() answers "" so the caller never stamps --cc-iconbg-color, letting docker.css\'s var() chain fall through to --cc-rb-c/--cc-accent — the SAME source every generic plugin badge already uses', pluginsApi.plugBgColor() === '', JSON.stringify(pluginsApi.plugBgColor()));
-  ok('Einfärben untouched: still the independently picked tint colour (the two controls are independent)', pluginsApi.plugIconInk(false) === '#00aa00', pluginsApi.plugIconInk(false));
+  ok('adopting: plugBgColor() answers "" so the caller never stamps --cc-iconbg-color, letting docker.css\'s var() chain fall through to --cc-rb-c/--cc-accent — the SAME source every generic plugin badge already uses', pluginsApi.plugBgColor() === '', JSON.stringify(pluginsApi.plugBgColor()));
 
-  localStorage.setItem('cc.icontintrainbow', '1');
   localStorage.setItem('cc.rainbow', '0');
-  ok('Einfärben adopting, Rainbow OFF: plugIconInk() matches colorFor(5) (the plain accent) — not the own picked colour', pluginsApi.plugIconInk(false) === '#2f6feb', pluginsApi.plugIconInk(false));
+  ok('adopting, Rainbow OFF: plugIconInk() is the automatic contrast colour for the plain accent (idealText of colorFor(5)) — not the own picked colour', pluginsApi.plugIconInk(false) === pluginsApi.idealText(pluginsApi.colorFor(5)), pluginsApi.plugIconInk(false));
 
   localStorage.setItem('cc.rainbow', '1');
-  ok('Einfärben adopting, Rainbow ON: plugIconInk() matches the SAME colorFor(5) a generic plugin badge resolves to, not a frozen accent snapshot', pluginsApi.plugIconInk(false) === pluginsApi.colorFor(5), pluginsApi.plugIconInk(false) + ' vs ' + pluginsApi.colorFor(5));
+  ok('adopting, Rainbow ON: plugIconInk() is the automatic contrast colour for the SAME colorFor(5) a generic plugin badge resolves to, not a frozen accent snapshot', pluginsApi.plugIconInk(false) === pluginsApi.idealText(pluginsApi.colorFor(5)), pluginsApi.plugIconInk(false) + ' vs idealText(' + pluginsApi.colorFor(5) + ')');
   ok('and that is NOT the own picked colour either', pluginsApi.plugIconInk(false) !== '#00aa00');
 
-  localStorage.setItem('cc.icontintrainbow', '0');
-  ok('turning Einfärben adopt back off restores the own picked colour immediately', pluginsApi.plugIconInk(false) === '#00aa00', pluginsApi.plugIconInk(false));
+  localStorage.setItem('cc.icontint', '0');
+  ok('adopting: the ink is STILL the automatic contrast colour even with Einfärben explicitly OFF — no longer dependent on Einfärben\'s own on/off at all', pluginsApi.plugIconInk(false) === pluginsApi.idealText(pluginsApi.colorFor(5)), pluginsApi.plugIconInk(false));
+  localStorage.setItem('cc.icontint', '1');
+
+  localStorage.setItem('cc.iconbgrainbow', '0');
+  ok('turning the master toggle back off restores the own picked colour immediately', pluginsApi.plugIconInk(false) === '#00aa00', pluginsApi.plugIconInk(false));
   reset();
 }
 

@@ -141,8 +141,10 @@ console.log('\nHintergrund and Einfärben are INDEPENDENT (v4.32.5 fix): the bad
   reset();
 }
 
-console.log('\ncc.iconbgrainbow / cc.icontintrainbow (v4.33.0): Badge-Einstellungen übernehmen — regression pin');
+console.log('\ncc.iconbgrainbow (v4.33.1): Badge-Einstellungen übernehmen — ONE master toggle, regression pin');
 {
+  // v4.33.0 shipped TWO independent adopt keys; redesigned within minutes into ONE shared key
+  // (mirrors docker.js — see icon-pipeline.test.js for the full writeup of why).
   reset();
   localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#e5a00d');
   localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#00aa00');
@@ -152,19 +154,21 @@ console.log('\ncc.iconbgrainbow / cc.icontintrainbow (v4.33.0): Badge-Einstellun
   ok('adopt OFF (default): vmIconInk() is the independently picked tint colour', vmsApi.vmIconInk(false) === '#00aa00', vmsApi.vmIconInk(false));
 
   localStorage.setItem('cc.iconbgrainbow', '1');
-  ok('Hintergrund adopting: vmBgColor() answers "" so the caller never stamps --cc-iconbg-color, letting VmTab.css\'s var() chain fall through to --cc-rb-c/--cc-rbaccent — the SAME source every generic VM badge already uses', vmsApi.vmBgColor() === '', JSON.stringify(vmsApi.vmBgColor()));
-  ok('Einfärben untouched: still the independently picked tint colour (the two controls are independent)', vmsApi.vmIconInk(false) === '#00aa00', vmsApi.vmIconInk(false));
+  ok('adopting: vmBgColor() answers "" so the caller never stamps --cc-iconbg-color, letting VmTab.css\'s var() chain fall through to --cc-rb-c/--cc-rbaccent — the SAME source every generic VM badge already uses', vmsApi.vmBgColor() === '', JSON.stringify(vmsApi.vmBgColor()));
 
-  localStorage.setItem('cc.icontintrainbow', '1');
   localStorage.setItem('cc.rainbow', '0');
-  ok('Einfärben adopting, Rainbow OFF: vmIconInk() matches vmAdoptTint() (the plain accent) — not the own picked colour', vmsApi.vmIconInk(false) === '#2f6feb', vmsApi.vmIconInk(false));
+  ok('adopting, Rainbow OFF: vmIconInk() is the automatic contrast colour for the plain accent (ccIdeal of vmAdoptTint()) — not the own picked colour', vmsApi.vmIconInk(false) === vmsApi.ccIdeal(vmsApi.vmAdoptTint()), vmsApi.vmIconInk(false));
 
   localStorage.setItem('cc.rainbow', '1');
-  ok('Einfärben adopting, Rainbow ON: vmIconInk() matches the SAME vmRbColor(5) a generic VM badge (--cc-rbaccent) resolves to, not a frozen accent snapshot', vmsApi.vmIconInk(false) === vmsApi.vmRbColor(5), vmsApi.vmIconInk(false) + ' vs ' + vmsApi.vmRbColor(5));
+  ok('adopting, Rainbow ON: vmIconInk() is the automatic contrast colour for the SAME vmRbColor(5) a generic VM badge (--cc-rbaccent) resolves to, not a frozen accent snapshot', vmsApi.vmIconInk(false) === vmsApi.ccIdeal(vmsApi.vmRbColor(5)), vmsApi.vmIconInk(false) + ' vs ccIdeal(' + vmsApi.vmRbColor(5) + ')');
   ok('and that is NOT the own picked colour either', vmsApi.vmIconInk(false) !== '#00aa00');
 
-  localStorage.setItem('cc.icontintrainbow', '0');
-  ok('turning Einfärben adopt back off restores the own picked colour immediately', vmsApi.vmIconInk(false) === '#00aa00', vmsApi.vmIconInk(false));
+  localStorage.setItem('cc.icontint', '0');
+  ok('adopting: the ink is STILL the automatic contrast colour even with Einfärben explicitly OFF — no longer dependent on Einfärben\'s own on/off at all', vmsApi.vmIconInk(false) === vmsApi.ccIdeal(vmsApi.vmRbColor(5)), vmsApi.vmIconInk(false));
+  localStorage.setItem('cc.icontint', '1');
+
+  localStorage.setItem('cc.iconbgrainbow', '0');
+  ok('turning the master toggle back off restores the own picked colour immediately', vmsApi.vmIconInk(false) === '#00aa00', vmsApi.vmIconInk(false));
   reset();
 }
 

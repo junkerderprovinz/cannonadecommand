@@ -624,24 +624,33 @@
     var v = effc("icontint");
     return v == null ? !!effc("iconcolor") : v === "1";
   }
-  // ── ADOPT RAINBOW/ACCENT (v4.33.0) ──────────────────────────────────────────────────
-  // A per-control opt-in (cc.iconbgrainbow / cc.icontintrainbow) that lets Hintergrund or
-  // Einfärben step ASIDE from its own picked colour and defer to whatever a generic badge
-  // (CPU/RAM/…) already shows — Rainbow's rotating palette when Rainbow is on, the plain
-  // accent otherwise. v4.32.4-v4.32.7 deliberately made the icon's OWN colour always win —
-  // correct as the default, but it removed the "icon follows the colour mode" behaviour some
-  // installs relied on (user-confirmed regression). This restores it as an explicit choice.
+  // ── ADOPT RAINBOW/ACCENT — ONE master toggle (v4.33.1, redesigned from v4.33.0) ──────
+  // cc.iconbgrainbow lets Hintergrund AND Einfärben together step ASIDE from their own picked
+  // colours and defer to whatever a generic badge (CPU/RAM/…) already shows — Rainbow's rotating
+  // palette when Rainbow is on, the plain accent otherwise. v4.32.4-v4.32.7 deliberately made the
+  // icon's OWN colour always win — correct as the default, but it removed the "icon follows the
+  // colour mode" behaviour some installs relied on. v4.33.0 restored it with TWO independent
+  // toggles (one per control); user-tested minutes after release and redesigned into this ONE
+  // toggle, because Einfärben's tint is a single flat SVG filter for the whole page (never
+  // per-row — see ensureTintFilter()), so two adopting-but-still-flat-hued controls never actually
+  // looked like a rainbow: every logo showed the identical colour. Now:
   //   · Hintergrund adopting: bgColor() answers "" so applyIconTint() never stamps
   //     --cc-iconbg-color; docker.css's OWN var() chain
   //     (var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent)))) then falls through to
-  //     --cc-rb-c — the SAME per-row rotating colour the tile already takes whenever no icon
-  //     colour is configured at all, reactive-hover included. No new colour math, no CSS edit.
-  //   · Einfärben adopting: the tint is ONE flat SVG filter shared by every icon on the page
-  //     (never per-row, even before this feature — see ensureTintFilter()), so its natural
-  //     analogue is the single "action" rainbow slot already stamped for buttons/toggles
-  //     (--cc-btn-accent = pal[(5+off) % pal.length]) rather than a per-row value. iconAdoptTint()
-  //     reuses the exact same ccPalActive()/RB_OFFSET machinery via ccRbColor(), recomputed live
-  //     on every repaint — never a colour frozen at toggle time.
+  //     --cc-rb-c — now genuinely PER-ITEM in every view (card() stamps it per grid/folder card,
+  //     applyRainbowPalette() per list row), so the badge itself really does rotate per container.
+  //   · Einfärben adopting: no longer a separately-adopted HUE at all — iconInk() instead answers
+  //     the automatic black-or-white CONTRAST colour for the resolved background (idealText()),
+  //     exactly like settingsgrid.js's badge mode already computes for its tiles unconditionally.
+  //     A flat #fff/#161616 has no rotation to lose, so this stays a single page-wide value even
+  //     though the badge underneath it now rotates per item — the icon simply always reads
+  //     against whatever colour happens to be behind it. iconAdoptTint() below still resolves the
+  //     REPRESENTATIVE colour the ink is computed FROM: the plain accent when Rainbow is off
+  //     (where every badge, rotating or not, is genuinely that one flat colour), or the single
+  //     "action" rainbow slot already stamped for buttons/toggles when Rainbow is on
+  //     (--cc-btn-accent = pal[(5+off) % pal.length]) — the same representative-colour approach
+  //     the OLD two-toggle Einfärben-adopt used, just fed through idealText() now instead of used
+  //     as the hue directly. Recomputed live on every repaint via ccRbColor() — never frozen.
   function iconAdoptTint() {
     if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") return effc("accent") || "#2f6feb";
     return ccRbColor(5);
@@ -655,26 +664,26 @@
     return effc("accent") || "#2f6feb";
   }
   // ── THE ICON PIPELINE'S TARGET COLOUR ───────────────────────────────────────────────
-  // iconInk() is the ONE colour both icon treatments paint with, and it answers "" whenever
-  // Einfärben (tint) is OFF — regardless of the background badge — which is what makes the
-  // whole pipeline degrade to plain native icons sitting on (or off) the badge box.
-  //   · Einfärben OFF: never any ink, full stop — a background badge alone must not recolour
-  //     the icon (the v4.32.6 fix).
-  //   · Einfärben ON: ALWAYS the picked TINT colour (effc("iconcolor")), lifted out of the dark
-  //     end by the shared darkness guard — regardless of whether Logo-Hintergrund is also on.
-  //     Confirmed bug (v4.32.6, fixed here): this branch used to return
-  //     ccHex6(idealText(bgColor())) whenever the badge was on, discarding the user's own picked
-  //     tint colour completely and painting a flat black-or-white contrast colour instead — so
-  //     Einfärben's own colour picker only ever did anything when the badge happened to be off,
-  //     even though the two controls are otherwise fully independent. Hintergrund/iconbg/
-  //     bgColor() still governs ONLY the badge box's OWN background — it must never again feed
-  //     the icon's ink.
+  // iconInk() is the ONE colour both icon treatments paint with.
+  //   · Master adopt ON (cc.iconbgrainbow): ALWAYS an automatic black/white contrast colour for
+  //     the resolved background — regardless of Einfärben's own on/off, exactly like
+  //     settingsgrid.js's badge mode already computes contrast ink unconditionally today. This
+  //     is the ONE case iconInk() ever answers a colour while Einfärben itself is off.
+  //   · Master adopt OFF: "" whenever Einfärben (tint) is OFF — regardless of the background
+  //     badge — which is what makes the pipeline degrade to plain native icons sitting on (or
+  //     off) the badge box (the v4.32.6 fix, unchanged). When Einfärben IS on, ALWAYS the picked
+  //     TINT colour (effc("iconcolor")), lifted out of the dark end by the shared darkness guard
+  //     — regardless of whether Logo-Hintergrund is also on. Hintergrund/iconbg/bgColor() still
+  //     governs ONLY the badge box's OWN background — it must never feed the icon's ink here.
   // `forTint` doubles the floor: see CCTheme.liftDark — a luminance tint outputs roughly
   // half the target's luma on mid-bright artwork, so the badge floor alone is not enough
-  // (live-measured: a #2a2a2a target renders "schwer erkennbar" against the card).
+  // (live-measured: a #2a2a2a target renders "schwer erkennbar" against the card). The auto
+  // contrast branch skips the guard entirely — idealText() only ever answers #fff/#161616,
+  // already maximally readable, nothing to lift.
   function iconInk(forTint) {
+    if (effc("iconbgrainbow") === "1") return idealText(iconAdoptTint());
     if (!tintOn()) return "";
-    var pick = effc("icontintrainbow") === "1" ? iconAdoptTint() : effc("iconcolor");
+    var pick = effc("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
@@ -1816,8 +1825,37 @@
   }
 
   // ───────────────────────── GRID mode (engine-driven cards)
+  // Per-card rainbow stamping (v4.33.1): LIST mode's applyRainbowPalette() already stamps a
+  // rotating --cc-rb-c/--cc-rb-ct on every #docker_list tr.sortable, by DOM row position, so the
+  // logo tile (and everything else that falls back to --cc-rb-c) genuinely rotates per row. GRID
+  // and FOLDER mode never had the equivalent: both build their tiles through this SAME card()
+  // function, but nothing ever stamped --cc-rb-c on a .cc-card, so docker.css's
+  // var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent))) chain could never find it and fell
+  // straight to the flat accent for every card — confirmed live (every card showed the identical
+  // colour, no rotation, while the equivalent list rows correctly rotated). Fixed here, inside
+  // card() itself rather than after the fact in renderGrid()/renderFolderView(), so both callers
+  // get it for free and neither can drift out of sync with the other.
+  //   Index source: containerNames is the GLOBAL alphabetically-sorted name list indexState()
+  //   already maintains — stable regardless of which view is rendering (renderGrid() sorts its
+  //   own cards alphabetically too, so this matches its own on-screen order 1:1; renderFolderView()
+  //   groups by folder/drag position instead, so its on-screen order can differ, but every
+  //   CONTAINER still always gets the SAME colour by name, so a container's badge never jumps
+  //   around when switching Grid <-> Folder view). List mode indexes by DOM row position instead
+  //   (whatever order the native table currently sorts by) — usually name order too by default,
+  //   but not guaranteed identical; "where practical" per the design call, not a hard guarantee.
+  //   Same pal/offset machinery as list mode either way (ccRbColor() — see applyRainbowPalette()).
+  function stampCardRainbow(wrap, name) {
+    if (themingOn() && localStorage.getItem("cc.rainbow") === "1") {
+      var idx = containerNames.indexOf(name); if (idx < 0) idx = 0;
+      var rc = ccRbColor(idx);
+      wrap.style.setProperty("--cc-rb-c", rc); wrap.style.setProperty("--cc-rb-ct", idealText(rc));
+    } else {
+      wrap.style.removeProperty("--cc-rb-c"); wrap.style.removeProperty("--cc-rb-ct");
+    }
+  }
   function card(c) {
     var wrap = el("div", "cc-card"); wrap.dataset.name = c.name;
+    stampCardRainbow(wrap, c.name);
     var head = el("div", "cc-card-head");
     var ico = iconFor(c.name);
     if (ico) { var im = el("img", "cc-card-ico"); im.src = ico; im.setAttribute("data-cc-name", c.name); im.onerror = function () { this.style.visibility = "hidden"; }; head.appendChild(im); } else head.appendChild(el("div", "cc-card-ico cc-card-ico-ph"));

@@ -2340,11 +2340,19 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b.cc-b-
 /* LOGO TILE joins the row: in neutral the tile rests grey like the badges and returns to its
    configured tile colour on ROW/card hover. Gated on the iconbg mode class — the list stamps it
    on the native table (applyEnhanceClasses), the grid holder gets the SAME class from renderGrid.
-   The mono ink the JS applies to the logo itself stays untouched. */
+   The mono ink the JS applies to the logo itself stays untouched.
+   v4.33.1: both hover rules below were missing the --cc-rb-c tier entirely (fell straight from
+   --cc-iconbg-color to the flat --cc-accent), the same class of gap the v4.32.9 fix closed for
+   the per-kind value badges just above — a genuine bug even before this release, now far more
+   visible because the Hintergrund adopt toggle (bgColor() -> "") + per-card rainbow stamping
+   (docker.js card()) mean --cc-rb-c is the ONLY source of the badge's rotating colour while
+   adopting; without this tier, reactive-mode hover would always show one flat accent instead of
+   the row/card's own rotating colour. Matches the already-correct non-reactive rainbow rules
+   above (line ~75-80) exactly. */
 html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list td.ct-name .outer > span.hand { background: rgba(128, 128, 128, .18) !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand { background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card-ico { background: rgba(128, 128, 128, .18) !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card:hover .cc-card-ico { background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card:hover .cc-card-ico { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; }
 /* UPDATE-column badges join the row too (user: "changelog und auf aktuellem Stand nur farbig
    wenn aktiv/mouseover"): the "auf dem neusten Stand" green / "Aktualisierung" orange chips and
    the ShipLog changelog chip rest GREY in neutral and take their state colour on ROW hover.

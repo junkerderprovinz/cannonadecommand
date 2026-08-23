@@ -115,6 +115,28 @@ console.log('\nSettingsGrid tile badge (JS paintGrid): the plain-rainbow paint d
   ok('when an icon colour is configured, the badge paints with accBg (the resolved icon colour), not the raw rainbow colour', /bg\s*=\s*iconSet\s*\?\s*accBg\s*:\s*c/.test(body), body);
 }
 
+console.log('\nDocker icon logo badge reactive-hover (NO icon colour configured): --cc-rb-c is in the fallback chain (v4.33.1 fix)');
+{
+  // The .cc-rainbow-gated rules above (icon colour configured, wins over the palette) are a
+  // DIFFERENT pair from these: these two apply whenever Hintergrund is on regardless of whether
+  // an icon colour is configured, and reactive mode's hover previously fell straight from
+  // --cc-iconbg-color to the flat --cc-accent, skipping --cc-rb-c entirely — the same class of
+  // gap the v4.32.9 fix closed for the per-kind value badges, just missed here. This mattered far
+  // more once bgColor() started answering "" while the master adopt toggle is on (the badge's
+  // ONLY colour source is then --cc-rb-c), and became directly testable once GRID/FOLDER cards
+  // started carrying their own per-card --cc-rb-c (docker-grid-rainbow-stamp.test.js).
+  const listNoColorHoverSel = 'html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand';
+  const gridNoColorHoverSel = 'html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card:hover .cc-card-ico';
+  [
+    ['list-mode tile (reactive hover, no icon colour configured)', listNoColorHoverSel],
+    ['grid-mode tile (reactive hover, no icon colour configured)', gridNoColorHoverSel],
+  ].forEach(([label, sel]) => {
+    const body = ruleBody(css, sel);
+    ok(label + ' rule exists', body != null);
+    ok(label + ': --cc-iconbg-color comes before --cc-rb-c, before the flat --cc-accent', iconbgFirst(body), body);
+  });
+}
+
 console.log('\nGeneric (non-icon) rainbow badges stay rainbow-first — this fix must NOT touch them');
 {
   // CPU/RAM value badges and the generic plugin row-badge hover path are NOT icon logo tiles;
