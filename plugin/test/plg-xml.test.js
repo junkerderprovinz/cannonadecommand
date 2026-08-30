@@ -4,7 +4,7 @@
 // release is dead on arrival for every box.
 //
 // That is not hypothetical: v4.31.0 shipped with `"Logos & Icons"` in its changelog and
-// could not be installed at all. CLAUDE.md warned about exactly this; a warning in a
+// could not be installed at all. The convention warned about exactly this; a warning in a
 // document is not a gate, so here is the gate.
 //
 // No XML library is used on purpose: this must run on the same bare Node the other

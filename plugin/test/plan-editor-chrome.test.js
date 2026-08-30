@@ -314,7 +314,7 @@ ok(/"6px 24px 0 24px"/.test(src), 'the plan window\'s own head stamp agrees too 
 
 /* ── 13. the product is spelled out for users, never abbreviated to "CC" ─────── */
 // user: "in den infobubbles nicht die abkürzung CC verwenden. Da weiß keiner was damit gemeint ist.
-// ausschreiben". Standing rule (CLAUDE.md). The distinction this test has to respect is the whole point:
+// ausschreiben". Standing rule. The distinction this test has to respect is the whole point:
 // "CC" is everywhere in this codebase as a source-code prefix (cc- classes, CC_* constants, cc.* keys,
 // --cc-* properties, comments) and must stay. Only STRING LITERALS are user-facing, so that is all this
 // scans — a line-based grep would flag the class names and a blind replace would break the plugin.
