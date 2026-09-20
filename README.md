@@ -20,7 +20,7 @@
 <p align="center">
 CannonadeCommand upgrades Unraid's Docker tab into a full container command post:
 dependency-aware, health-gated start orchestration, live CPU/RAM/bandwidth limits
-with built-in proof diagnostics, one-click actions, and clean, themeable badges —
+with built-in proof diagnostics, one-click actions, and clean, themeable badges,
 all injected right into the native page. A small Go engine does the work; nothing
 leaves your server.
 </p>
@@ -67,21 +67,21 @@ If it has earned a place on your server or computer, toss a coin to your knight:
 ## 1. What is this?
 
 CannonadeCommand gives Unraid's native **Docker, Plugins and VM tabs** both muscle
-and a makeover — without replacing a single page. Everything is enhanced in place.
+and a makeover, without replacing a single page. Everything is enhanced in place.
 
 On the **Docker tab** it replaces start-order guesswork with a **start plan**:
 containers declare what they depend on, and the engine starts them in dependency
 order, releasing the next stage only when a container is actually **ready** (not
 merely "running"). It adds per-container **CPU, RAM and bandwidth limits**, a
 compact **actions column**, and a badge-based UI that shows live state at a glance.
-The **Plugins tab** gets the same styling — uniform logos and badges for author,
-version, status and changelog — and the **VM tab** picks up matching icon theming.
+The **Plugins tab** gets the same styling (uniform logos and badges for author,
+version, status and changelog), and the **VM tab** picks up matching icon theming.
 
 Accent or rainbow colours, a configurable badge shape and a floating action bar tie
-it all together — and CannonadeCommand can extend the same theme to Unraid's **main
+it all together, and CannonadeCommand can extend the same theme to Unraid's **main
 menu bar** (opt-in) and turn the **Settings page** category icons into large square
-badges. A **Bereiche** (Areas) tab in the settings lets you turn each area — menu bar,
-Docker, Plugins, VMs, Settings — on or off independently, each with its own style tab.
+badges. A **Bereiche** (Areas) tab in the settings lets you turn each area (menu bar,
+Docker, Plugins, VMs, Settings) on or off independently, each with its own style tab.
 
 **Firepower and finish for your whole Unraid dashboard. Fire when ready.**
 
@@ -95,34 +95,34 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
 - Readiness probes per container: running (with grace), TCP port, HTTP check,
   log-line match, or a command inside the container.
 - Failure policies per node: abort dependents, continue, or degrade.
-- Dependencies on containers **outside** the plan just work — the engine resolves
+- Dependencies on containers **outside** the plan just work: the engine resolves
   them implicitly, nothing is written into your plan.
 - Watchdog (auto-restart on crash or unhealthy, rate-capped per hour) and time
   schedules (start/stop/restart at fixed times, per weekday).
 - Per-container restart policy (no, unless-stopped, always, on-failure) set from
   the plan editor, applied live with a Docker update and mirrored into the
   template so it survives Apply.
-- Idle auto-stop (ContainerNursery-style): stop a container after it stays idle —
-  low CPU **and** low network — for a set number of minutes. A busy container is
+- Idle auto-stop (ContainerNursery-style): stop a container after it stays idle
+  (low CPU **and** low network) for a set number of minutes. A busy container is
   never stopped, and a host/container-network container (whose per-container idle
-  can't be measured) is skipped. CannonadeCommand does not wake it back up — a schedule, the
+  can't be measured) is skipped. CannonadeCommand does not wake it back up: a schedule, the
   plan, or Unraid's autostart does.
 
 **Resource limits**
 - Live CPU limit, CPU pinning (topology-aware, with P/E-core detection on Intel
-  hybrid CPUs) and RAM limit via Docker update — no container restart.
-- Upload limit (tbf shaper) and download limit (pure netfilter policing — never
+  hybrid CPUs) and RAM limit via Docker update, no container restart.
+- Upload limit (tbf shaper) and download limit (pure netfilter policing, never
   a tc ingress qdisc) per container, applied inside the container's own network
   namespace. Works for bridge, ipvlan and macvlan networks alike.
 - Built-in proof: the bandwidth editor reads the LIVE rule from the container and
-  shows either the applied state or the exact failure — a silent no-op is
+  shows either the applied state or the exact failure: a silent no-op is
   impossible.
 
 <details>
 <summary><b>UI</b></summary>
 
 - Actions column: WebUI, log, edit, restart, pause, stop/start and a "…" menu
-  with the container's project/support/donate links — harvested from Unraid's
+  with the container's project/support/donate links, harvested from Unraid's
   own page data.
 - Clean badges for state, network, IPs (click to copy), ports, volumes, update
   status; live CPU/RAM/bandwidth values with their limit editors attached.
@@ -131,15 +131,15 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
   bits and bytes); each chip is toggleable and re-arrangeable.
 - List view, a card (grid) view, and a Folder view (grouped by Unraid's own
   organizer) with the same controls. Folder view has its own three-way content
-  density — full detail cards, small flex-wrapped chips (icon, name, a
+  density: full detail cards, small flex-wrapped chips (icon, name, a
   coloured status dot + text, one action), or full-width rows (icon, name,
-  state badge, one action) — plus per-folder collapse/expand, a per-folder
+  state badge, one action), plus per-folder collapse/expand, a per-folder
   "hide stopped" toggle, per-folder bulk start/stop, and live search that
   auto-expands any folder containing a match. Scroll position is preserved
   across every folder action.
 - Theming: one accent colour for everything, or rainbow mode with an editable
   palette; icon colours toggleable; settings sync across origins (IP, hostname,
-  domain) via the engine — and they survive cleared browser data.
+  domain) via the engine, and they survive cleared browser data.
 - Icon pipeline: each logo gets the treatment it can actually take. A logo whose
   visible pixels are already one tone is flattened to clean ink; for a known app a
   real monochrome glyph is fetched and flattened instead; anything else is tinted so
@@ -160,13 +160,13 @@ Docker, Plugins, VMs, Settings — on or off independently, each with its own st
   schedules, idle-stop), leaving a native-looking Docker tab.
 - Areas: the Docker, Plugins, VM and **Favorites** tabs, plus (opt-in) the main menu
   bar, the **Start (Main)** tab and the Settings-page category icons (large square
-  badges) — each toggleable under **Bereiche** (Areas) with its own style tab. The VM
+  badges), each toggleable under **Bereiche** (Areas) with its own style tab. The VM
   tab is styled to match the Docker tab exactly (logo badge, state/CPU/RAM/IP badges,
   autostart switch); the Favorites tab reuses the category-icon badges.
 - Tab view: on every tab with sub-tabs (Shares detail, Start/Main, Plugins, VMs)
   choose per tab whether the sub-tabs render as stacked CannonadeCommand sections or as native
   Unraid sub-tabs (native by default).
-- VM tab: full Docker-tab parity — logo badge, state/CPU/RAM/IP badges, an actions
+- VM tab: full Docker-tab parity, logo badge, state/CPU/RAM/IP badges, an actions
   column, per-VM CPU/RAM/bandwidth limit gears (a graphical P/E-aware CPU core-picker,
   a CPU cap, RAM and up/down caps, a live bandwidth rate) and a live vDisk grow, the
   accent autostart switch, a list/grid (card) view and rainbow mode.
@@ -199,7 +199,7 @@ restarted automatically.
   when a limit is set.
 - The **plan badge** opens the per-container editor: manage-in-plan toggle,
   dependencies, readiness probe, start delay, failure policy, watchdog and
-  schedules — one save button stores it all.
+  schedules. One save button stores it all.
 - The **bandwidth gear** opens the up/down limit editor. After saving, the popup
   stays open and verifies the applied rule live inside the container.
 - The gear in the table header opens the global menu: list/grid/folder view
@@ -229,7 +229,7 @@ origin sees the same configuration.
 | Page scripts | Enhance the native Docker tab in place (badges, actions, editors); a settings page under Utilities |
 
 The daemon exposes proof endpoints (`/api/limitlog`, `/api/bwstatus`) so the UI
-can always show what REALLY happened — values read back from Docker, live tc and
+can always show what REALLY happened: values read back from Docker, live tc and
 netfilter state from the container's netns, and the monitor's last apply attempt.
 
 <br>
@@ -238,10 +238,10 @@ netfilter state from the container's netns, and the monitor's last apply attempt
 
 - **No tc ingress qdisc, ever.** Download limiting is pure netfilter policing on
   the container's INPUT chain; the `sch_ingress` module (which can freeze some
-  Unraid kernels) is never touched — a unit test enforces that the download path
+  Unraid kernels) is never touched: a unit test enforces that the download path
   cannot even emit a tc command.
 - Quirk compensation is built in and CI-proven: legacy iptables (≥ 1.8.12)
-  applies byte rates as bits — detected and compensated ×8; hashlimit minimum
+  applies byte rates as bits, detected and compensated ×8; hashlimit minimum
   burst honoured; every build measures real throughput through the rule in a
   live container netns.
 - Shaping is skipped for host-network / shared-netns containers (it would shape
