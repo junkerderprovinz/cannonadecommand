@@ -14,14 +14,15 @@ import (
 // unraidNotify is Unraid's own notification agent.
 const unraidNotify = "/usr/local/emhttp/plugins/dynamix/scripts/notify"
 
-// SysNotifier delivers alerts via Unraid's notification system and/or a webhook.
-// Failures are swallowed: a notification problem must never break the monitor.
+// SysNotifier delivers alerts through Unraid's notification system or a webhook.
+// Failures are ignored so a notification problem cannot break the monitor.
 type SysNotifier struct{ HTTP *http.Client }
 
-// Notify sends the alert per cfg. importance is Unraid's level: normal|warning|alert.
+// Notify sends the alert as cfg says. importance is Unraid's level: normal,
+// warning or alert.
 func (s SysNotifier) Notify(ctx context.Context, cfg model.Notify, subject, desc, importance string) {
 	if cfg.Unraid {
-		// Bound the child: a wedged notify agent must never stall the monitor tick.
+		// A hung notify agent must not stall the monitor tick.
 		nctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 		_ = exec.CommandContext(nctx, unraidNotify,
 			"-e", "CannonadeCommand", "-s", subject, "-d", desc, "-i", importance).Run()

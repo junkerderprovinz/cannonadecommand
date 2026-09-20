@@ -1,12 +1,10 @@
-// Regression test: Folder view's per-folder state — collapse/expand persistence, per-folder
-// "Gestoppte ausblenden" filtering, live-search auto-expand, and the bulk-action target list
-// (v4.34.0, adopted from the Docker Folders comparison the user requested and approved).
+// Pins the Folder view's per-folder state: collapse persistence, the per-folder
+// "Gestoppte ausblenden" filter, the auto-expand while searching, and the bulk
+// action target list.
 //
-// All of these are pure functions of localStorage + an explicit byParent entry tree, deliberately
-// extracted OUT of renderFolderView()'s closures for exactly this reason — this file source-slices
-// the REAL isFolderCollapsed()/setFolderCollapsed()/folderHidesStopped()/setFolderHideStopped()/
-// ccFolderHidesContainer()/ccEntryMatches()/ccEffectiveCollapsed()/ccCollectFolderContainerNames()
-// out of docker.js (never re-typed) and proves each one in isolation, with no DOM required at all.
+// Each of these is a function of localStorage and an explicit byParent entry tree,
+// which is why they sit outside renderFolderView()'s closures, so this file can
+// slice them out of docker.js and drive them with no DOM at all.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand', 'scripts');
@@ -31,8 +29,8 @@ function grabFn(name) {
   for (let k = src.indexOf('{', i); k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}') { d--; if (!d) return src.slice(i, k + 1); } }
   throw new Error('unbalanced function: ' + name);
 }
-// FOLDER_COLLAPSED_KEY and FOLDER_HIDESTOPPED_KEY are declared together in ONE statement
-// ("var A = ..., B = ...;") — grabbing either name pulls the whole statement, which defines both.
+// FOLDER_COLLAPSED_KEY and FOLDER_HIDESTOPPED_KEY share one var statement, so
+// grabbing either name brings both.
 function grabVar(name) {
   const m = src.match(new RegExp('var ' + name + ' = [^;]+;'));
   if (!m) throw new Error('var not found in docker.js: ' + name);
@@ -54,23 +52,23 @@ const dockerApi = new Function('localStorage',
   'ccEffectiveCollapsed: ccEffectiveCollapsed, ccCollectFolderContainerNames: ccCollectFolderContainerNames };'
 )(localStorage);
 
-console.log('\nCollapse/expand persistence (adopted recommendation) — keyed by folder id, cc.folderCollapsed');
+console.log('\nCollapse persistence, keyed by folder id in cc.folderCollapsed');
 {
   reset();
-  ok('a folder never touched is NOT collapsed by default', dockerApi.isFolderCollapsed('fA') === false);
+  ok('a folder never touched starts expanded', dockerApi.isFolderCollapsed('fA') === false);
   dockerApi.setFolderCollapsed('fA', true);
   ok('setFolderCollapsed(id, true) persists', localStorage.getItem('cc.folderCollapsed') === JSON.stringify({ fA: true }));
-  ok('isFolderCollapsed() now reads true for that id', dockerApi.isFolderCollapsed('fA') === true);
-  ok('a DIFFERENT folder id is unaffected (per-folder, not global)', dockerApi.isFolderCollapsed('fB') === false);
+  ok('isFolderCollapsed() reads true for that id', dockerApi.isFolderCollapsed('fA') === true);
+  ok('another folder id is unaffected', dockerApi.isFolderCollapsed('fB') === false);
   dockerApi.setFolderCollapsed('fA', false);
-  ok('setFolderCollapsed(id, false) clears the entry entirely (not just flips it to false)', localStorage.getItem('cc.folderCollapsed') === JSON.stringify({}));
-  ok('isFolderCollapsed() now reads false again', dockerApi.isFolderCollapsed('fA') === false);
+  ok('setFolderCollapsed(id, false) drops the entry rather than storing false', localStorage.getItem('cc.folderCollapsed') === JSON.stringify({}));
+  ok('isFolderCollapsed() reads false again', dockerApi.isFolderCollapsed('fA') === false);
   localStorage.setItem('cc.folderCollapsed', 'not valid json {{{');
-  ok('corrupted stored state degrades to "nothing collapsed" instead of throwing', dockerApi.isFolderCollapsed('fA') === false);
+  ok('corrupted stored state degrades to nothing collapsed instead of throwing', dockerApi.isFolderCollapsed('fA') === false);
   reset();
 }
 
-console.log('\nPer-folder "Gestoppte ausblenden" (adopted recommendation) — independent per folder, not global');
+console.log('\n"Gestoppte ausblenden", held per folder rather than globally');
 {
   reset();
   ok('off by default for an untouched folder', dockerApi.folderHidesStopped('media') === false);
@@ -87,16 +85,17 @@ console.log('\nccFolderHidesContainer(): the actual filtering predicate used whi
   reset();
   const running = { name: 'plex', state: 'running' };
   const stopped = { name: 'radarr', state: 'exited' };
-  ok('toggle OFF: nothing is hidden, running or not', !dockerApi.ccFolderHidesContainer('media', running) && !dockerApi.ccFolderHidesContainer('media', stopped));
+  ok('toggle off: nothing is hidden, running or not', !dockerApi.ccFolderHidesContainer('media', running) && !dockerApi.ccFolderHidesContainer('media', stopped));
   dockerApi.setFolderHideStopped('media', true);
-  ok('toggle ON: a RUNNING container in that folder stays visible', !dockerApi.ccFolderHidesContainer('media', running));
-  ok('toggle ON: a STOPPED container in that folder is hidden', dockerApi.ccFolderHidesContainer('media', stopped));
-  ok('toggle ON but a DIFFERENT folder: unaffected (per-folder, not global)', !dockerApi.ccFolderHidesContainer('tools', stopped));
-  ok('never throws on a missing container object (edge case)', dockerApi.ccFolderHidesContainer('media', null) === false);
+  ok('toggle on: a running container in that folder stays visible', !dockerApi.ccFolderHidesContainer('media', running));
+  ok('toggle on: a stopped container in that folder is hidden', dockerApi.ccFolderHidesContainer('media', stopped));
+  ok('toggle on: another folder is unaffected', !dockerApi.ccFolderHidesContainer('tools', stopped));
+  ok('a missing container object does not throw', dockerApi.ccFolderHidesContainer('media', null) === false);
   reset();
 }
 
-// A small nested tree: root -> [Media (folder), plex (container)]; Media -> [sonarr (container), Nested (folder)]; Nested -> [radarr (container)]
+// root holds the Media folder and plex, Media holds sonarr and the Nested folder,
+// and Nested holds radarr.
 const ROOT = 'root';
 const folderMedia = { id: 'fMedia', type: 'folder', name: 'Media', parentId: ROOT };
 const folderNested = { id: 'fNested', type: 'folder', name: 'Nested', parentId: 'fMedia' };
@@ -105,44 +104,44 @@ const cSonarr = { id: 'cSonarr', type: 'container', name: '/sonarr', parentId: '
 const cRadarr = { id: 'cRadarr', type: 'container', name: '/radarr', parentId: 'fNested' };
 const byParent = { [ROOT]: [folderMedia, cPlex], fMedia: [cSonarr, folderNested], fNested: [cRadarr] };
 
-console.log('\nccEntryMatches(): live-search matching (bug #1 fix), recursive through nested folders');
+console.log('\nccEntryMatches(): search matching, down through nested folders');
 {
-  ok('empty filter: everything "matches" (nothing gets hidden by search)', dockerApi.ccEntryMatches(byParent, '', folderMedia) && dockerApi.ccEntryMatches(byParent, '', cPlex));
-  ok('a container matches on its OWN name (leading "/" stripped)', dockerApi.ccEntryMatches(byParent, 'plex', cPlex));
+  ok('an empty filter matches everything, so search hides nothing', dockerApi.ccEntryMatches(byParent, '', folderMedia) && dockerApi.ccEntryMatches(byParent, '', cPlex));
+  ok('a container matches on its own name, with the leading slash stripped', dockerApi.ccEntryMatches(byParent, 'plex', cPlex));
   ok('a container that does not match returns false', !dockerApi.ccEntryMatches(byParent, 'zzz-nomatch', cPlex));
-  ok('a folder matches on its OWN name too', dockerApi.ccEntryMatches(byParent, 'media', folderMedia));
-  ok('a folder matches via a DIRECT child container', dockerApi.ccEntryMatches(byParent, 'sonarr', folderMedia));
-  ok('a folder matches via a match buried in a NESTED sub-folder (recursive)', dockerApi.ccEntryMatches(byParent, 'radarr', folderMedia));
-  ok('the nested sub-folder itself also matches on that same buried container', dockerApi.ccEntryMatches(byParent, 'radarr', folderNested));
-  ok('a folder with no matching name and no matching descendant anywhere returns false', !dockerApi.ccEntryMatches(byParent, 'zzz-nomatch', folderMedia));
+  ok('a folder matches on its own name too', dockerApi.ccEntryMatches(byParent, 'media', folderMedia));
+  ok('a folder matches through a child container', dockerApi.ccEntryMatches(byParent, 'sonarr', folderMedia));
+  ok('a folder matches through one buried in a sub-folder', dockerApi.ccEntryMatches(byParent, 'radarr', folderMedia));
+  ok('the sub-folder matches on that buried container as well', dockerApi.ccEntryMatches(byParent, 'radarr', folderNested));
+  ok('a folder with no match in its name or anywhere below returns false', !dockerApi.ccEntryMatches(byParent, 'zzz-nomatch', folderMedia));
 }
 
-console.log('\nccEffectiveCollapsed(): live-search AUTO-EXPAND (adopted recommendation) — never overrides a folder shut, only open, and only while searching');
+console.log('\nccEffectiveCollapsed(): a search opens a folder without writing the stored state');
 {
   reset();
-  ok('no persisted collapse, no filter: stays expanded', dockerApi.ccEffectiveCollapsed(byParent, '', folderMedia) === false);
+  ok('nothing persisted and no filter: expanded', dockerApi.ccEffectiveCollapsed(byParent, '', folderMedia) === false);
   dockerApi.setFolderCollapsed('fMedia', true);
-  ok('persisted collapsed, no active search: stays collapsed', dockerApi.ccEffectiveCollapsed(byParent, '', folderMedia) === true);
-  ok('persisted collapsed, search matches something INSIDE it (nested): AUTO-EXPANDS', dockerApi.ccEffectiveCollapsed(byParent, 'radarr', folderMedia) === false);
-  ok('persisted collapsed, search matches nothing in it: stays collapsed (auto-expand is NOT "expand everything")', dockerApi.ccEffectiveCollapsed(byParent, 'zzz-nomatch', folderMedia) === true);
-  ok('clearing the filter restores the PERSISTED collapse state automatically (nothing was ever overwritten)', dockerApi.ccEffectiveCollapsed(byParent, '', folderMedia) === true);
+  ok('persisted collapsed and no search: collapsed', dockerApi.ccEffectiveCollapsed(byParent, '', folderMedia) === true);
+  ok('persisted collapsed and a search matching inside it: expanded', dockerApi.ccEffectiveCollapsed(byParent, 'radarr', folderMedia) === false);
+  ok('persisted collapsed and a search matching nothing in it: still collapsed', dockerApi.ccEffectiveCollapsed(byParent, 'zzz-nomatch', folderMedia) === true);
+  ok('clearing the filter brings the persisted state back untouched', dockerApi.ccEffectiveCollapsed(byParent, '', folderMedia) === true);
   dockerApi.setFolderCollapsed('fMedia', false);
-  ok('persisted EXPANDED + a search that matches: stays expanded (no double-open weirdness)', dockerApi.ccEffectiveCollapsed(byParent, 'sonarr', folderMedia) === false);
+  ok('persisted expanded and a matching search: still expanded', dockerApi.ccEffectiveCollapsed(byParent, 'sonarr', folderMedia) === false);
   reset();
 }
 
-console.log('\nccCollectFolderContainerNames(): bulk start/stop target list (adopted recommendation), recursive through nested folders');
+console.log('\nccCollectFolderContainerNames(): the bulk start and stop target list');
 {
   const exists = nm => ['plex', 'sonarr', 'radarr'].indexOf(nm) >= 0; // stands in for containerByName()
   const names = dockerApi.ccCollectFolderContainerNames(byParent, 'fMedia', exists).sort();
-  ok('collects the DIRECT child container', names.indexOf('sonarr') >= 0, JSON.stringify(names));
-  ok('collects a container buried in a NESTED sub-folder too', names.indexOf('radarr') >= 0, JSON.stringify(names));
-  ok('does NOT include a sibling outside this folder (plex lives at root)', names.indexOf('plex') < 0, JSON.stringify(names));
-  ok('exactly the two containers under Media, nothing more', names.length === 2, JSON.stringify(names));
+  ok('collects the child container', names.indexOf('sonarr') >= 0, JSON.stringify(names));
+  ok('collects one buried in a sub-folder too', names.indexOf('radarr') >= 0, JSON.stringify(names));
+  ok('leaves out a sibling outside the folder, plex living at root', names.indexOf('plex') < 0, JSON.stringify(names));
+  ok('the two containers under Media and nothing else', names.length === 2, JSON.stringify(names));
   const rootNames = dockerApi.ccCollectFolderContainerNames(byParent, ROOT, exists).sort();
-  ok('called from root: recurses through EVERY folder under it too, collecting all three containers', rootNames.length === 3 && rootNames.join(',') === 'plex,radarr,sonarr', JSON.stringify(rootNames));
+  ok('from root it recurses through every folder and collects all three', rootNames.length === 3 && rootNames.join(',') === 'plex,radarr,sonarr', JSON.stringify(rootNames));
   const unknown = dockerApi.ccCollectFolderContainerNames(byParent, 'fMedia', () => false);
-  ok('a container unknown to CC (existsFn false) is skipped, never crashes', Array.isArray(unknown) && unknown.length === 0);
+  ok('a container the plugin does not know is skipped', Array.isArray(unknown) && unknown.length === 0);
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

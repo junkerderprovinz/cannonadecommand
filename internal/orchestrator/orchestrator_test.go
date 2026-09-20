@@ -81,9 +81,6 @@ func TestTopoStages(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			// a dependency OUTSIDE the plan becomes an IMPLICIT node (ready-when-
-			// running) instead of an error — the UI no longer persists such nodes,
-			// so disabling a referenced container in the plan sticks.
 			name: "unknown dependency becomes an implicit node",
 			plan: model.Plan{Nodes: []model.Node{node("a", "ghost")}},
 			want: [][]string{{"ghost"}, {"a"}},
@@ -113,15 +110,13 @@ func TestTopoStages(t *testing.T) {
 	}
 }
 
-// #11: within a stage, StartOrder orders the peers — lower positive first, 0 last (keeping plan order),
-// ties broken by plan order.
 func TestTopoStages_StartOrder(t *testing.T) {
 	p := model.Plan{Nodes: []model.Node{
-		{Name: "a", Policy: model.PolicyAbort},                 // unnumbered
-		{Name: "b", StartOrder: 20, Policy: model.PolicyAbort}, // numbered 20
-		{Name: "c", StartOrder: 10, Policy: model.PolicyAbort}, // numbered 10
-		{Name: "d", Policy: model.PolicyAbort},                 // unnumbered
-		{Name: "e", StartOrder: 10, Policy: model.PolicyAbort}, // same as c → plan order breaks the tie
+		{Name: "a", Policy: model.PolicyAbort},
+		{Name: "b", StartOrder: 20, Policy: model.PolicyAbort},
+		{Name: "c", StartOrder: 10, Policy: model.PolicyAbort},
+		{Name: "d", Policy: model.PolicyAbort},
+		{Name: "e", StartOrder: 10, Policy: model.PolicyAbort}, // ties with c, so plan order decides
 	}}
 	stages, err := TopoStages(p)
 	if err != nil {
@@ -130,18 +125,16 @@ func TestTopoStages_StartOrder(t *testing.T) {
 	if len(stages) != 1 {
 		t.Fatalf("no deps → 1 stage, got %d: %v", len(stages), stages)
 	}
-	want := []string{"c", "e", "b", "a", "d"} // 10,10,20 then the two unnumbered in plan order
+	want := []string{"c", "e", "b", "a", "d"} // 10, 10, 20, then the unnumbered in plan order
 	if !reflect.DeepEqual(stages[0], want) {
 		t.Errorf("StartOrder within stage = %v, want %v", stages[0], want)
 	}
 }
 
-// #11: StartOrder must NEVER override a dependency — a low-numbered node that depends on an unnumbered one
-// still starts in a later stage than its dependency.
 func TestTopoStages_StartOrderRespectsDeps(t *testing.T) {
 	p := model.Plan{Nodes: []model.Node{
 		{Name: "app", StartOrder: 1, After: []string{"db"}, Policy: model.PolicyAbort},
-		{Name: "db", Policy: model.PolicyAbort}, // unnumbered dependency
+		{Name: "db", Policy: model.PolicyAbort},
 	}}
 	stages, err := TopoStages(p)
 	if err != nil {
@@ -153,7 +146,6 @@ func TestTopoStages_StartOrderRespectsDeps(t *testing.T) {
 }
 
 func TestRun_HealthGatedOrder(t *testing.T) {
-	// gluetun -> qbittorrent, postgres -> nextcloud
 	plan := model.Plan{Nodes: []model.Node{
 		node("gluetun"),
 		node("postgres"),
@@ -180,11 +172,6 @@ func TestRun_HealthGatedOrder(t *testing.T) {
 	}
 }
 
-// TestRun_OutOfPlanDepIsRunAndReported locks the HIGH fix: byName and the final
-// report are built from the AUGMENTED plan. A dependency on a container outside
-// the plan ("ext") becomes an implicit node that is started + probed + reported —
-// never a zero-value node that starts an empty container name and then vanishes
-// from the result.
 func TestRun_OutOfPlanDepIsRunAndReported(t *testing.T) {
 	plan := model.Plan{Nodes: []model.Node{node("app", "ext")}}
 	fs := &fakeStarter{}
@@ -219,9 +206,9 @@ func TestRun_OutOfPlanDepIsRunAndReported(t *testing.T) {
 
 func TestRun_AbortSkipsDependents(t *testing.T) {
 	plan := model.Plan{Nodes: []model.Node{
-		node("gluetun"),                // will fail readiness, policy abort
-		node("qbittorrent", "gluetun"), // depends on gluetun
-		node("sonarr", "qbittorrent"),  // transitive dependent
+		node("gluetun"), // fails readiness under the abort policy
+		node("qbittorrent", "gluetun"),
+		node("sonarr", "qbittorrent"),
 	}}
 	fs := &fakeStarter{}
 	o := Orchestrator{Starter: fs, Ready: fakeReady{notReady: map[string]bool{"gluetun": true}}}

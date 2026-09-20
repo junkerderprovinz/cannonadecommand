@@ -1,7 +1,6 @@
-// Package hostcpu reports the HOST's CPU layout for the CPU-pinning grid. The
-// browser's navigator.hardwareConcurrency is the CLIENT machine's core count, not
-// the Unraid server's — so the pin grid must come from the daemon, which sees the
-// real host topology (like the VM manager's core picker).
+// Package hostcpu reports the Unraid host's CPU layout, load and memory. The pin
+// grid needs this from the server because the browser only knows the client's
+// core count.
 package hostcpu
 
 import (
@@ -13,13 +12,9 @@ import (
 	"sync"
 )
 
-// ── HOST CPU UTILISATION ──────────────────────────────────────────────────────
-// The status-island CPU chip needs host CPU % on EVERY page. Unraid 7.3 dropped the
-// old /sub/cpuload nchan channel and moved CPU load to a GraphQL *websocket* — which a
-// reverse proxy (e.g. the user's *.lol tunnel) often fails to upgrade (101 -> 200), so
-// the chip stays blank. This HTTP endpoint is proxy-safe: it computes utilisation from
-// two /proc/stat samples (delta since the previous call), so a ~3s island poll yields a
-// live figure with no websocket and no per-call sleep. First call returns 0.
+// Unraid 7.3 moved CPU load from the /sub/cpuload nchan channel to a GraphQL
+// websocket, which reverse proxies often fail to upgrade. Percent works over plain
+// HTTP polling instead, diffing /proc/stat against the previous call.
 var (
 	hcMu        sync.Mutex
 	hcPrevIdle  uint64
@@ -27,8 +22,8 @@ var (
 	hcSeeded    bool
 )
 
-// Percent returns host CPU utilisation (0-100) since the PREVIOUS call. The first call
-// seeds the baseline and returns 0. Concurrency-safe.
+// Percent returns host CPU utilisation (0-100) since the previous call. The first
+// call returns 0.
 func Percent() int {
 	idle, total := readProcStatCPU()
 	hcMu.Lock()
@@ -45,14 +40,15 @@ func Percent() int {
 			if busy > dt {
 				busy = dt
 			}
-			pct = int((busy*100 + dt/2) / dt) // rounded
+			pct = int((busy*100 + dt/2) / dt)
 		}
 	}
 	hcPrevIdle, hcPrevTotal, hcSeeded = idle, total, true
 	return pct
 }
 
-// readProcStatCPU sums the aggregate "cpu " line of /proc/stat into (idle+iowait, total).
+// readProcStatCPU sums the aggregate "cpu " line of /proc/stat into idle plus
+// iowait and the total.
 func readProcStatCPU() (idle, total uint64) {
 	data, err := os.ReadFile("/proc/stat")
 	if err != nil {
@@ -78,10 +74,8 @@ func readProcStatCPU() (idle, total uint64) {
 	return 0, 0
 }
 
-// MemTotal is the host's total RAM in bytes (from /proc/meminfo). Docker cannot UNSET
-// a memory limit through a live update, so the editor's "remove RAM limit" sets it to
-// this host total — effectively unlimited, applied live without recreating. 0 if the
-// value can't be read.
+// MemTotal returns the host's total RAM in bytes from /proc/meminfo, or 0 if it
+// cannot be read.
 func MemTotal() int64 {
 	data, err := os.ReadFile("/proc/meminfo")
 	if err != nil {
@@ -90,8 +84,7 @@ func MemTotal() int64 {
 	return parseMemTotal(string(data))
 }
 
-// parseMemTotal reads the "MemTotal: N kB" line of /proc/meminfo into bytes. Split out
-// so it is unit-testable without /proc.
+// parseMemTotal reads the "MemTotal: N kB" line of /proc/meminfo into bytes.
 func parseMemTotal(data string) int64 {
 	for _, line := range strings.Split(data, "\n") {
 		if strings.HasPrefix(line, "MemTotal:") {
@@ -106,10 +99,9 @@ func parseMemTotal(data string) int64 {
 	return 0
 }
 
-// HybridPE returns the logical CPUs that are Intel hybrid P-cores and E-cores, read from
-// /sys/devices/cpu_core/cpus (P) and /sys/devices/cpu_atom/cpus (E) — the sysfs interface
-// hybrid CPUs (12th gen+) expose. Both nil on a non-hybrid machine (either file absent or
-// empty), so the pin grid only draws P/E tags when the distinction really exists.
+// HybridPE returns the logical CPUs that are Intel hybrid P-cores and E-cores,
+// from /sys/devices/cpu_core/cpus and /sys/devices/cpu_atom/cpus. Both are nil on
+// a machine without that split.
 func HybridPE() (p, e []int) {
 	p = readCPUList("/sys/devices/cpu_core/cpus")
 	e = readCPUList("/sys/devices/cpu_atom/cpus")
@@ -127,8 +119,8 @@ func readCPUList(path string) []int {
 	return parseCPUList(string(data))
 }
 
-// parseCPUList parses a kernel cpulist ("0-15,32,34-35") into the individual CPU numbers.
-// Split out so it is unit-testable without /sys. nil on any malformed part.
+// parseCPUList expands a kernel cpulist such as "0-15,32,34-35", or returns nil
+// if any part is malformed.
 func parseCPUList(s string) []int {
 	var out []int
 	for _, part := range strings.Split(strings.TrimSpace(s), ",") {
@@ -155,12 +147,9 @@ func parseCPUList(s string) []int {
 	return out
 }
 
-// Count is the host's logical CPU count (every core + hyperthread). It counts the
-// processor entries in /proc/cpuinfo — the TRUE host total — because runtime.NumCPU()
-// is affinity-aware: isolcpus (the cores a VM user reserves, exactly the ones the pin
-// grid must still show) are dropped from the daemon's affinity mask, so NumCPU() would
-// undercount. Falls back to runtime.NumCPU() only when /proc/cpuinfo can't be read
-// (e.g. non-Linux dev).
+// Count returns the host's logical CPU count from /proc/cpuinfo.
+// runtime.NumCPU follows the affinity mask and would miss the isolcpus cores
+// reserved for VMs, so it is only the fallback.
 func Count() int {
 	if n := procCount(); n > 0 {
 		return n
@@ -182,11 +171,9 @@ func procCount() int {
 	return n
 }
 
-// CoreOf returns, per logical CPU index, the id of the PHYSICAL core it belongs to
-// (hyperthread siblings share one id), so the grid can group HT pairs like the VM
-// core picker. It is nil when /proc/cpuinfo can't be read, doesn't match Count(), or
-// carries NO real topology (a machine without physical id / core id, e.g. some ARM /
-// VMs) — the frontend then falls back to a flat grid.
+// CoreOf returns the physical core id of each logical CPU, so hyperthread
+// siblings share an id. It is nil when /proc/cpuinfo is unreadable, disagrees
+// with Count or has no topology fields.
 func CoreOf() []int {
 	data, err := os.ReadFile("/proc/cpuinfo")
 	if err != nil {
@@ -199,11 +186,9 @@ func CoreOf() []int {
 	return out
 }
 
-// parseCoreOf turns /proc/cpuinfo into a physical-core group id per logical CPU,
-// INDEXED BY THE processor NUMBER (not file order), so out-of-order or gapped listings
-// don't mismap. It returns the slice and whether ANY block carried real physical-id /
-// core-id topology (so an all-degenerate machine yields hasTopo=false → flat grid, not
-// one bogus core). Split out so it is unit-testable without /proc.
+// parseCoreOf maps /proc/cpuinfo to a core group id per logical CPU, indexed by
+// processor number rather than file order. The bool reports whether any block
+// had physical id or core id fields.
 func parseCoreOf(data string) ([]int, bool) {
 	type entry struct {
 		proc int
@@ -245,7 +230,6 @@ func parseCoreOf(data string) ([]int, bool) {
 	if len(entries) == 0 || maxProc < 0 {
 		return nil, false
 	}
-	// place each entry at its processor index; assign group ids in ascending processor order
 	sort.Slice(entries, func(i, j int) bool { return entries[i].proc < entries[j].proc })
 	out := make([]int, maxProc+1)
 	for i := range out {
@@ -263,7 +247,7 @@ func parseCoreOf(data string) ([]int, bool) {
 		}
 	}
 	for _, v := range out {
-		if v < 0 { // a gap in the processor numbering → not usable
+		if v < 0 { // a gap in the processor numbering
 			return nil, false
 		}
 	}

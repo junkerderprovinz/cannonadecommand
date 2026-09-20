@@ -13,8 +13,7 @@ import (
 const glyphSVG = `<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Plex</title><path d="M0 0h24v24H0z"/></svg>`
 const colorSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect fill="#282a2d" width="512" height="512"/></svg>`
 
-// newTest builds a resolver pointed at a stub instead of the real CDNs, with the
-// background workers running as in production.
+// newTest builds a resolver pointed at a stub instead of the real CDNs.
 func newTest(t *testing.T, simple, dash string) *Resolver {
 	t.Helper()
 	r := New(t.TempDir())
@@ -24,9 +23,7 @@ func newTest(t *testing.T, simple, dash string) *Resolver {
 	return r
 }
 
-// waitFor polls until cond holds or the deadline passes. The lookups run on
-// background workers, so the test WAITS on the condition rather than sleeping a
-// guessed interval (the async-cleanup race this repo has been bitten by before).
+// waitFor polls until cond holds, since the lookups run on background workers.
 func waitFor(t *testing.T, what string, cond func() bool) {
 	t.Helper()
 	deadline := time.Now().Add(5 * time.Second)
@@ -52,7 +49,6 @@ func TestResolveNeverBlocksAndBackfills(t *testing.T) {
 	defer srv.Close()
 	r := newTest(t, srv.URL+"/simple/", srv.URL+"/dash/")
 
-	// FIRST call must answer instantly from an empty cache: pending, no network.
 	start := time.Now()
 	got := r.Resolve([]string{"Plex"})
 	if d := time.Since(start); d > 250*time.Millisecond {
@@ -73,7 +69,6 @@ func TestResolveNeverBlocksAndBackfills(t *testing.T) {
 	if !ok || kind != KindGlyph || string(body) != glyphSVG {
 		t.Fatalf("SVG() = (%q, %v, %v), want the cached glyph", string(body), kind, ok)
 	}
-	// Repeated calls are cache reads, not fetches.
 	for i := 0; i < 5; i++ {
 		r.Resolve([]string{"Plex"})
 	}
@@ -108,7 +103,7 @@ func TestDashboardIconsFallback(t *testing.T) {
 			_, _ = w.Write([]byte(colorSVG))
 			return
 		}
-		http.NotFound(w, r) // simple-icons has no navidrome, exactly as upstream
+		http.NotFound(w, r)
 	}))
 	defer srv.Close()
 	r := newTest(t, srv.URL+"/simple/", srv.URL+"/dash/")
@@ -132,8 +127,8 @@ func TestNoMatchAnywhereIsNone(t *testing.T) {
 	}
 }
 
-// A dead network is the case that must NOT break or slow the Docker tab, and
-// must not be cached as a week-long miss either — the icon probably does exist.
+// An unreachable CDN must neither slow Resolve down nor be cached as a week-long
+// miss, because the icon probably exists.
 func TestUnreachableHostDegradesGracefully(t *testing.T) {
 	r := newTest(t, "http://127.0.0.1:1/simple/", "http://127.0.0.1:1/dash/")
 	start := time.Now()
@@ -150,8 +145,6 @@ func TestUnreachableHostDegradesGracefully(t *testing.T) {
 		e, ok := r.ents["plex"]
 		return ok && e.Err
 	})
-	// Recorded as an ERROR, so it is retried in minutes rather than blackholed
-	// for the full miss TTL.
 	r.mu.Lock()
 	e := r.ents["plex"]
 	r.mu.Unlock()
@@ -164,7 +157,6 @@ func TestUnreachableHostDegradesGracefully(t *testing.T) {
 	if !e.fresh(time.Unix(e.At, 0).Add(time.Minute)) {
 		t.Fatal("an error entry must stay fresh for a few minutes (no probe storm)")
 	}
-	// And the UI still gets a usable answer, immediately.
 	if r.Resolve([]string{"Plex"})["Plex"].Kind == "" {
 		t.Fatal("Resolve must always answer with a kind, even when nothing works")
 	}
@@ -191,7 +183,6 @@ func TestCachePersistsAcrossRestart(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dir, "icons", "index.json")); err != nil {
 		t.Fatalf("index.json was not written: %v", err)
 	}
-	// A brand-new resolver, with the stub torn down, must still answer from disk.
 	srv.Close()
 	second := New(dir)
 	defer second.Close()

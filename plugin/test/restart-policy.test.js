@@ -1,13 +1,12 @@
-// DOM-shim regression test for the per-container restart-policy feature in docker.js.
-// Loads the REAL restart-policy helpers (restartPolicySelect / restartWarnBadge /
-// restartPolicyLabel) plus el / badgeInfo / t and the T dict, and pins the DOM shape of
-// the editor dropdown and the "no auto-start" warning badge, plus de/en i18n parity.
+// Pins the per-container restart policy in docker.js: the DOM shape of the editor
+// dropdown restartPolicySelect() builds, the warning badge restartWarnBadge()
+// builds, and that every label exists in both languages.
 const fs = require('fs');
 const path = require('path');
 const DOCKER = process.argv[2] || path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local',
   'emhttp', 'plugins', 'cannonadecommand', 'scripts', 'docker.js');
 
-/* ── minimal DOM shim (a trimmed copy of the one in clone-select.test.js) ────── */
+// A trimmed copy of the DOM shim in clone-select.test.js.
 class CL {
   constructor() { this.s = new Set(); }
   add(c) { this.s.add(c); } remove(c) { this.s.delete(c); }
@@ -38,7 +37,7 @@ const document = { createElement: t => (t === 'select' ? new SelectN() : t === '
 global.document = document;
 global.navigator = { language: 'en' };
 
-/* ── pull the REAL code out of docker.js ──────────────────────────────────── */
+// Pull the code under test out of docker.js.
 const src = fs.readFileSync(DOCKER, 'utf8');
 function grabFn(name) {
   const i = src.indexOf('function ' + name + '(');
@@ -62,7 +61,6 @@ const api = new Function('document', 'navigator',
   prelude + code + '\nreturn { T: T, RESTART_POLICIES: RESTART_POLICIES, restartPolicyLabel: restartPolicyLabel, restartPolicySelect: restartPolicySelect, restartWarnBadge: restartWarnBadge, setLang: function (l) { LANG = l; } };'
 )(document, global.navigator);
 
-/* ── tests ────────────────────────────────────────────────────────────────── */
 let pass = 0, fail = 0;
 const ok = (name, cond, extra) => { cond ? (pass++, console.log('  PASS  ' + name)) : (fail++, console.log('  FAIL  ' + name + (extra ? '  -> ' + extra : ''))); };
 
@@ -75,10 +73,10 @@ console.log('\nThe editor dropdown offers exactly Docker\'s four restart policie
   ok('option values match the four policies in order', sel.options.map(o => o.value).join(',') === 'no,unless-stopped,always,on-failure', sel.options.map(o => o.value).join(','));
   ok('every option has a non-empty label', sel.options.every(o => o.text && o.text.length > 0));
   const selected = sel.options.filter(o => o.selected);
-  ok('the current policy is preselected (exactly one)', selected.length === 1 && selected[0].value === 'unless-stopped', JSON.stringify(selected.map(o => o.value)));
+  ok('the current policy is the one preselected', selected.length === 1 && selected[0].value === 'unless-stopped', JSON.stringify(selected.map(o => o.value)));
 }
 
-console.log('\nAn unknown/blank current policy falls back to "no" selected (default prefill)');
+console.log('\nAn unknown or blank current policy preselects "no"');
 {
   const sel = api.restartPolicySelect('no');
   const selected = sel.options.filter(o => o.selected);
@@ -89,13 +87,13 @@ console.log('\nThe warning badge is a semantic-warn info badge carrying the tool
 {
   const b = api.restartWarnBadge();
   ok('carries the base info-badge class', b.classList.contains('cc-b') && b.classList.contains('cc-b-info'));
-  ok('carries the semantic warn class (never accent/rainbow)', b.classList.contains('cc-b-warn'));
-  ok('kind class present for the column system', b.classList.contains('cc-b-restart'));
-  ok('shows the warn glyph + label', b.textContent.indexOf('⚠') >= 0 && b.textContent.indexOf(api.T.en.rpWarn) >= 0, JSON.stringify(b.textContent));
+  ok('carries the semantic warn class rather than an accent or rainbow one', b.classList.contains('cc-b-warn'));
+  ok('carries the kind class the column system needs', b.classList.contains('cc-b-restart'));
+  ok('shows the warn glyph and the label', b.textContent.indexOf('⚠') >= 0 && b.textContent.indexOf(api.T.en.rpWarn) >= 0, JSON.stringify(b.textContent));
   ok('the tooltip is the reboot warning', b.getAttribute('data-tip') === api.T.en.rpWarnTip, JSON.stringify(b.getAttribute('data-tip')));
 }
 
-console.log('\ni18n parity: every restart-policy key exists and is non-empty in BOTH de and en');
+console.log('\nEvery restart-policy key exists in German and English');
 {
   const keys = ['restartPolicy', 'rpNo', 'rpUnlessStopped', 'rpAlways', 'rpOnFailure', 'rpWarn', 'rpWarnTip'];
   keys.forEach(k => {

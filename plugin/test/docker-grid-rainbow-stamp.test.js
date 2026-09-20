@@ -1,28 +1,17 @@
-// Regression test: genuine PER-CARD rainbow rotation in Docker's GRID/FOLDER view (v4.33.1).
+// Pins stampCardRainbow(), which gives a .cc-card the per-card rainbow colour that
+// applyRainbowPalette() gives a list row. Without it the var chain in docker.css,
+// var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent))), falls straight to the
+// flat accent and every tile in Grid and Folder view comes out the same colour.
+// It sits inside card(), so renderGrid() and renderFolderView() both get it.
 //
-// The bug (confirmed via source, not guessed, then live on Bottich): applyRainbowPalette()
-// stamps a rotating --cc-rb-c/--cc-rb-ct on every #docker_list tr.sortable (LIST mode), which
-// docker.css's var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent))) fallback chain then
-// resolves per row. GRID and FOLDER mode build their tiles through the SAME card() function, but
-// nothing ever stamped --cc-rb-c on a .cc-card — so the chain always fell through to the flat
-// --cc-accent, and every card showed the identical colour with no rotation at all, live-verified
-// on a real box (every card the same accent, while the equivalent list rows correctly rotated).
-//
-// This mattered a lot more once the "Badge-Einstellungen übernehmen" master toggle became the
-// ONLY way an icon badge follows Rainbow mode (v4.33.1): the whole point of "rainbow mode for the
-// logos too" collapses if the badges it adopts into never actually rotate per item in the two
-// icon-driven views (Grid, Folder).
-//
-// Fixed inside card() itself (stampCardRainbow()), so both renderGrid() and renderFolderView()
-// get it for free — this file source-slices that REAL function (never re-typed) and proves:
-//   1. distinct containers get DISTINCT rotating colours, matching the exact palette/offset
-//      machinery applyRainbowPalette() already uses for list rows (ccRbColor()/ccPalActive()/
-//      RB_OFFSET) — same palette, same offset, same rotation source, per the design brief;
-//   2. the SAME container name always gets the SAME colour (deterministic — switching between
-//      Grid and Folder view can't make a badge jump around);
-//   3. --cc-rb-ct is always idealText() of the paired --cc-rb-c (auto contrast, never hardcoded);
-//   4. Rainbow off (or theming off) clears both vars instead of leaving a stale stamp;
-//   5. cc.rainbowrot=0 collapses rotation to a fixed offset, exactly like list mode.
+// What it pins:
+//   1. different containers get different colours, from the same palette, offset
+//      and rotation source list rows use;
+//   2. the same container name always gets the same colour, so a badge does not
+//      jump when switching between Grid and Folder view;
+//   3. --cc-rb-ct is idealText() of its --cc-rb-c, never a hardcoded contrast;
+//   4. rainbow or theming off clears both vars rather than leaving a stale stamp;
+//   5. cc.rainbowrot=0 collapses the rotation to a fixed offset, as in list mode.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand', 'scripts');
@@ -40,8 +29,8 @@ function grabFn(name) {
   throw new Error('unbalanced function: ' + name);
 }
 
-// A minimal stand-in for the .cc-card element stampCardRainbow() writes onto — only the two
-// methods it actually calls, so a signature drift on the real card() DOM builder can't hide here.
+// Stands in for the .cc-card stampCardRainbow() writes onto, with only the two
+// methods it calls, so a drift in what it expects shows up here.
 function fakeWrap() {
   const w = { _s: {} };
   w.style = {
@@ -59,9 +48,8 @@ global.localStorage = {
 };
 const reset = () => { Object.keys(store).forEach(k => delete store[k]); };
 
-// containerNames is docker.js's own module-level var (indexState() keeps it alphabetically
-// sorted); stampCardRainbow() reads it directly, so the harness declares it the same way rather
-// than passing it as a parameter — exactly how it exists in the real module scope.
+// stampCardRainbow() reads docker.js's module-level containerNames, which
+// indexState() keeps sorted, so the harness declares it rather than passing it in.
 const dockerApi = new Function('localStorage',
   'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
@@ -70,58 +58,58 @@ const dockerApi = new Function('localStorage',
   'return { stampCardRainbow: stampCardRainbow, ccRbColor: ccRbColor, idealText: idealText, setNames: function (n) { containerNames = n; } };'
 )(global.localStorage);
 
-console.log('\nRainbow OFF (or theming off): no stamp at all — clears any stale --cc-rb-c/--cc-rb-ct instead of leaving one behind');
+console.log('\nRainbow or theming off: no stamp, and a stale one is cleared');
 {
   reset();
   dockerApi.setNames(['alpha', 'beta', 'gamma']);
   const w = fakeWrap();
-  w._s['--cc-rb-c'] = '#stale'; w._s['--cc-rb-ct'] = '#stale2';   // simulate a leftover stamp from a previous rainbow-on render
+  w._s['--cc-rb-c'] = '#stale'; w._s['--cc-rb-ct'] = '#stale2';   // left over from a rainbow-on render
   dockerApi.stampCardRainbow(w, 'beta');
-  ok('Rainbow unset: --cc-rb-c is cleared, not left stale', !('--cc-rb-c' in w._s));
-  ok('Rainbow unset: --cc-rb-ct is cleared too', !('--cc-rb-ct' in w._s));
+  ok('rainbow unset: --cc-rb-c is cleared', !('--cc-rb-c' in w._s));
+  ok('rainbow unset: --cc-rb-ct is cleared too', !('--cc-rb-ct' in w._s));
 
   localStorage.setItem('cc.rainbow', '1');
   localStorage.setItem('cc.theming', '0');
   const w2 = fakeWrap(); w2._s['--cc-rb-c'] = '#stale';
   dockerApi.stampCardRainbow(w2, 'beta');
-  ok('theming off (even with cc.rainbow=1): still no stamp', !('--cc-rb-c' in w2._s));
+  ok('theming off with cc.rainbow=1: still no stamp', !('--cc-rb-c' in w2._s));
   reset();
 }
 
-console.log('\nRainbow ON: distinct containers get DISTINCT rotating colours, matching ccRbColor() exactly (same palette/offset applyRainbowPalette() uses for list rows)');
+console.log('\nRainbow on: different containers get different colours, matching ccRbColor()');
 {
   reset();
   localStorage.setItem('cc.rainbow', '1');
   const names = ['alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot', 'golf', 'hotel', 'india'];
-  dockerApi.setNames(names.slice().sort());   // containerNames is always alphabetically sorted (indexState())
+  dockerApi.setNames(names.slice().sort());   // indexState() keeps containerNames sorted
 
   const colours = names.map(n => { const w = fakeWrap(); dockerApi.stampCardRainbow(w, n); return w._s['--cc-rb-c']; });
-  ok('every card actually received a --cc-rb-c value', colours.every(c => !!c), JSON.stringify(colours));
+  ok('every card received a --cc-rb-c value', colours.every(c => !!c), JSON.stringify(colours));
 
   const distinct = new Set(colours);
-  ok('MORE THAN ONE distinct colour across 9 containers over an 8-colour palette — genuine rotation, not one flat colour for every card (the confirmed live bug)', distinct.size > 1, JSON.stringify(colours));
+  ok('more than one colour across nine containers over an eight-colour palette', distinct.size > 1, JSON.stringify(colours));
 
-  names.forEach((n, sortedIdxIgnored) => {
+  names.forEach((n) => {
     const idx = names.slice().sort().indexOf(n);
     const want = dockerApi.ccRbColor(idx);
     const w = fakeWrap();
     dockerApi.stampCardRainbow(w, n);
-    ok('container "' + n + '" (sorted index ' + idx + ') matches ccRbColor(' + idx + ') exactly — same pal/offset machinery as list mode\'s per-row stamping', w._s['--cc-rb-c'] === want, w._s['--cc-rb-c'] + ' vs ' + want);
+    ok('"' + n + '" at sorted index ' + idx + ' matches ccRbColor(' + idx + ')', w._s['--cc-rb-c'] === want, w._s['--cc-rb-c'] + ' vs ' + want);
   });
 }
 
-console.log('\nSAME container name always gets the SAME colour — deterministic, so a badge never jumps around switching Grid <-> Folder view');
+console.log('\nThe same container name always gets the same colour');
 {
   reset();
   localStorage.setItem('cc.rainbow', '1');
   dockerApi.setNames(['jdownloader', 'nextcloud', 'plex', 'sonarr']);
   const w1 = fakeWrap(); dockerApi.stampCardRainbow(w1, 'plex');
   const w2 = fakeWrap(); dockerApi.stampCardRainbow(w2, 'plex');
-  ok('two independent stamping passes for the SAME name produce the IDENTICAL colour', w1._s['--cc-rb-c'] === w2._s['--cc-rb-c'], w1._s['--cc-rb-c'] + ' vs ' + w2._s['--cc-rb-c']);
-  ok('and the identical contrast ink too', w1._s['--cc-rb-ct'] === w2._s['--cc-rb-ct']);
+  ok('two stamping passes for one name produce the same colour', w1._s['--cc-rb-c'] === w2._s['--cc-rb-c'], w1._s['--cc-rb-c'] + ' vs ' + w2._s['--cc-rb-c']);
+  ok('and the same contrast ink', w1._s['--cc-rb-ct'] === w2._s['--cc-rb-ct']);
 }
 
-console.log('\n--cc-rb-ct is always the automatic contrast colour for its paired --cc-rb-c (idealText, never hardcoded)');
+console.log('\n--cc-rb-ct is idealText() of its paired --cc-rb-c');
 {
   reset();
   localStorage.setItem('cc.rainbow', '1');
@@ -134,7 +122,7 @@ console.log('\n--cc-rb-ct is always the automatic contrast colour for its paired
   });
 }
 
-console.log('\nA container missing from containerNames (edge case) degrades to a valid, non-throwing colour instead of crashing the render');
+console.log('\nA container missing from containerNames still gets a valid colour');
 {
   reset();
   localStorage.setItem('cc.rainbow', '1');
@@ -142,23 +130,23 @@ console.log('\nA container missing from containerNames (edge case) degrades to a
   const w = fakeWrap();
   let threw = false;
   try { dockerApi.stampCardRainbow(w, 'totally-unknown-container'); } catch (e) { threw = true; }
-  ok('does not throw for a name absent from containerNames', !threw);
-  ok('still stamps SOME valid --cc-rb-c (falls back to index 0)', /^#[0-9a-f]{6}$/i.test(w._s['--cc-rb-c'] || ''), w._s['--cc-rb-c']);
+  ok('a name absent from containerNames does not throw', !threw);
+  ok('it still stamps a valid --cc-rb-c, falling back to index 0', /^#[0-9a-f]{6}$/i.test(w._s['--cc-rb-c'] || ''), w._s['--cc-rb-c']);
 }
 
-console.log('\ncc.rainbowrot=0 collapses rotation to a fixed offset — matches list mode\'s applyRainbowPalette() exactly');
+console.log('\ncc.rainbowrot=0 collapses the rotation to a fixed offset, as in list mode');
 {
   reset();
   localStorage.setItem('cc.rainbow', '1');
   localStorage.setItem('cc.rainbowrot', '0');
-  dockerApi.setNames(['zulu', 'yankee', 'xray'].slice().sort());   // containerNames is always alphabetically sorted (indexState())
+  dockerApi.setNames(['zulu', 'yankee', 'xray'].slice().sort());   // indexState() keeps containerNames sorted
   const w1 = fakeWrap(); dockerApi.stampCardRainbow(w1, 'zulu');
   const w2 = fakeWrap(); dockerApi.stampCardRainbow(w2, 'yankee');
-  // sorted order: xray(0), yankee(1), zulu(2) — with RB_OFFSET pinned to 0 in this harness,
-  // "no rotation" and "offset 0" are indistinguishable, so assert against ccRbColor() directly,
-  // which already reads the SAME cc.rainbowrot key.
-  ok('zulu (sorted index 2) still matches ccRbColor(2) with rotation disabled', w1._s['--cc-rb-c'] === dockerApi.ccRbColor(2), w1._s['--cc-rb-c']);
-  ok('yankee (sorted index 1) still matches ccRbColor(1) with rotation disabled', w2._s['--cc-rb-c'] === dockerApi.ccRbColor(1), w2._s['--cc-rb-c']);
+  // Sorted: xray 0, yankee 1, zulu 2. With RB_OFFSET pinned to 0 here, no rotation
+  // and offset 0 look alike, so the assertion goes against ccRbColor(), which reads
+  // cc.rainbowrot itself.
+  ok('zulu, at sorted index 2, matches ccRbColor(2)', w1._s['--cc-rb-c'] === dockerApi.ccRbColor(2), w1._s['--cc-rb-c']);
+  ok('yankee, at sorted index 1, matches ccRbColor(1)', w2._s['--cc-rb-c'] === dockerApi.ccRbColor(1), w2._s['--cc-rb-c']);
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

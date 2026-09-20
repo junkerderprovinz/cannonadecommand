@@ -28,8 +28,7 @@ func TestParsers(t *testing.T) {
 	}
 }
 
-// fakeVirsh answers the Get() probes with canned output and records every call so an
-// Apply can be asserted on the exact virsh argv it generates.
+// fakeVirsh answers Get's probes with canned output and records every call.
 func fakeVirsh(calls *[][]string, state string) runner {
 	return func(_ context.Context, args ...string) (string, error) {
 		*calls = append(*calls, args)
@@ -62,7 +61,6 @@ func TestApply_RunningSetsLiveConfigCap(t *testing.T) {
 			sched = a
 		}
 	}
-	// cap 50% of one core -> quota 50000 at the 100000 period, applied to both --config + --live.
 	if sched == nil || !contains(sched, "vcpu_quota=50000") || !contains(sched, "--live") || !contains(sched, "--config") {
 		t.Fatalf("schedinfo argv wrong: %v", sched)
 	}
@@ -105,8 +103,7 @@ func TestBlkCapacity(t *testing.T) {
 	}
 }
 
-// fakeDisk answers Get()'s probes plus domblklist/domblkinfo (one 50 GiB disk "hdc", one cdrom),
-// and records blockresize so a live grow can be asserted on the byte-exact size it sends.
+// fakeDisk is fakeVirsh with one 50 GiB disk "hdc" and one cdrom.
 func fakeDisk(calls *[][]string, state string) runner {
 	return func(_ context.Context, args ...string) (string, error) {
 		*calls = append(*calls, args)
@@ -148,15 +145,13 @@ func TestDisks_SkipsCdromParsesCapacity(t *testing.T) {
 func TestResizeDisk_GrowOnly(t *testing.T) {
 	var calls [][]string
 	c := &Controller{run: fakeDisk(&calls, "running")}
-	// current capacity is 53687091200 (50 GiB); a smaller/equal target must be refused before any call.
 	if err := c.ResizeDisk(context.Background(), "VM", "hdc", 40*1024*1024*1024); err == nil {
 		t.Fatal("ResizeDisk to a smaller size must fail (grow-only)")
 	}
 	if err := c.ResizeDisk(context.Background(), "VM", "nope", 60*1024*1024*1024); err == nil {
 		t.Fatal("ResizeDisk of an unknown target must fail")
 	}
-	// An unreadable source reports capacity 0 -> we can't prove a grow, so a resize must be refused
-	// (never risk truncating a disk that is actually larger than the 0 we read).
+	// An unreadable source reports capacity 0, which proves nothing about a grow.
 	var c2calls [][]string
 	unknownCap := func(ctx context.Context, args ...string) (string, error) {
 		c2calls = append(c2calls, args)
@@ -177,7 +172,7 @@ func TestResizeDisk_GrowOnly(t *testing.T) {
 func TestResizeDisk_LiveBlockresize(t *testing.T) {
 	var calls [][]string
 	c := &Controller{run: fakeDisk(&calls, "running")}
-	want := int64(60) * 1024 * 1024 * 1024 // grow 50 -> 60 GiB
+	want := int64(60) * 1024 * 1024 * 1024
 	if err := c.ResizeDisk(context.Background(), "VM", "hdc", want); err != nil {
 		t.Fatalf("ResizeDisk: %v", err)
 	}
@@ -187,7 +182,6 @@ func TestResizeDisk_LiveBlockresize(t *testing.T) {
 			br = a
 		}
 	}
-	// a RUNNING domain resizes live via blockresize with a byte-exact ('B' suffix) size, never qemu-img.
 	if br == nil || !contains(br, "hdc") || !contains(br, "64424509440B") {
 		t.Fatalf("blockresize argv wrong: %v", br)
 	}

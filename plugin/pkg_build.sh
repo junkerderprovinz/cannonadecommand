@@ -1,11 +1,11 @@
 #!/bin/bash
-# Build the CannonadeCommand Unraid plugin package (.txz) = the Go supervisor
-# binary + the plugin files. Portable (tar, not makepkg) so it runs in CI.
+# Build the CannonadeCommand plugin package from the Go supervisor binary and the
+# plugin files. It uses tar rather than makepkg, so it also runs in CI.
 #
 #   plugin/pkg_build.sh [VERSION]      # VERSION defaults to today (YYYY.MM.DD)
 #
-# Output: plugin/out/cannonadecommand-<version>-x86_64-1.txz (+ .sha256). The
-# release workflow attaches the .txz and injects the SHA256 into the .plg.
+# It writes plugin/out/cannonadecommand-<version>-x86_64-1.txz and its .sha256.
+# The release workflow attaches the .txz and injects the sha into the .plg.
 set -euo pipefail
 
 VERSION="${1:-$(date +%Y.%m.%d)}"
@@ -34,18 +34,17 @@ echo "==> normalising text files to LF"
 find "$PKGROOT" -type f ! -path "*/bin/*" ! -name '*.png' -print0 \
   | while IFS= read -r -d '' f; do perl -i -pe 's/\r\n/\n/g; s/\r$//' "$f"; done
 
-# Stamp the FRONTEND version into the scripts (shown as "UI vX" next to the engine
-# version), so a stale frontend under test is instantly recognisable.
+# The scripts show this as "UI vX" beside the engine version, so a stale frontend
+# under test gives itself away.
 echo "==> stamping UI version"
 sed -i "s/@@CCVER@@/$VERSION/" \
   "$PKGROOT/usr/local/emhttp/plugins/$SLUG/scripts/docker.js" \
   "$PKGROOT/usr/local/emhttp/plugins/$SLUG/scripts/settings.js" \
   "$PKGROOT/usr/local/emhttp/plugins/$SLUG/scripts/header.js"
 
-# Cache-bust: Unraid's autov() appends "?v=<filemtime>" to the injected .js/.css.
-# If installpkg restores an unchanged mtime, the browser serves a STALE script
-# (the "old toolbar still runs after an update" symptom). Stamp a fresh, uniform
-# mtime on every text asset so each release bumps ?v= and always loads fresh.
+# Unraid's autov() appends "?v=<filemtime>" to the injected .js and .css, so a
+# uniform fresh mtime is what makes a release bump the query and the browser drop
+# its cached copy. An mtime installpkg restores unchanged would serve the old one.
 echo "==> stamping fresh mtimes (cache-bust for autov ?v=)"
 find "$PKGROOT/usr/local/emhttp/plugins/$SLUG" -type f \( -name '*.js' -o -name '*.css' -o -name '*.page' -o -name '*.php' \) -exec touch {} +
 

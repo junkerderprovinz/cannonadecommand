@@ -1,8 +1,8 @@
 name: Build
 
-# Runs the unit tests, packages the plugin .txz, and BOOTS the supervisor binary
-# on the runner (curling its unix socket) before trusting a build. A green
-# compile only proves it builds; this proves it starts and serves.
+# Beyond the unit tests and the .txz, this starts the packaged supervisor on the
+# runner and calls it over its socket, so a green run means it serves, not only
+# that it compiles.
 on:
   push:
     branches: [main]
@@ -24,10 +24,10 @@ jobs:
       - name: Unit tests
         run: go test ./...
 
-      - name: Package plugin (.txz + sha)
+      - name: Package plugin (.txz and sha)
         run: bash plugin/pkg_build.sh 0.0.0-ci
 
-      - name: Boot smoke — supervisor serves its socket
+      - name: Boot smoke
         run: |
           set -euo pipefail
           BIN=plugin/src/cannonadecommand/usr/local/emhttp/plugins/cannonadecommand/bin/cannonadecommand
@@ -38,16 +38,15 @@ jobs:
           if ! curl -fsS --unix-socket /tmp/cc.sock http://localhost/api/health | grep -q ok; then
             echo "health check failed"; kill "$PID" || true; exit 1
           fi
-          # /api/state must still respond (with a docker_error, since the socket is bogus).
+          # The docker socket is bogus, so /api/state answers with a docker_error.
           curl -fsS --unix-socket /tmp/cc.sock http://localhost/api/state | grep -q docker_error
-          echo "✅ supervisor booted and served /api/health + /api/state"
+          echo "supervisor booted and served /api/health and /api/state"
           kill "$PID" || true
 
-      # END-TO-END limits proof against a REAL dockerd (the runner ships docker): the
-      # daemon must set, raise and REMOVE CPU/RAM caps on real containers — including
-      # the "Extra Parameters" cases (--memory with its auto swap cap, --cpu-quota) that
-      # broke on the box. If this is green, the daemon→docker chain provably works.
-      - name: Limits integration — real docker
+      # The runner ships docker, so the caps are set, raised and removed against a
+      # real daemon, including the "Extra Parameters" cases (--memory with its auto
+      # swap cap, --cpu-quota) that a unit test cannot reach.
+      - name: Limits integration against real docker
         run: |
           set -euo pipefail
           BIN=plugin/src/cannonadecommand/usr/local/emhttp/plugins/cannonadecommand/bin/cannonadecommand
@@ -57,25 +56,25 @@ jobs:
           docker run -d --name cc_mem --memory 1g busybox sleep 300
           docker run -d --name cc_quota --cpu-quota 150000 --cpu-period 100000 busybox sleep 300
           docker run -d --name cc_plain busybox sleep 300
-          # RAM: raise past the stored auto swap cap (2G > 2×1G? no — use 4G to be sure)
+          # 4G clears the auto swap cap docker stored for the 1g container.
           $CURL -X POST -d '{"name":"cc_mem","mem_bytes":4294967296}' http://localhost/api/limits
-          [ "$(docker inspect -f '{{.HostConfig.Memory}}' cc_mem)" = "4294967296" ] || { echo "RAM raise FAILED"; exit 1; }
-          # RAM: remove (engine sets host RAM) — must exceed any stored swap cap
+          [ "$(docker inspect -f '{{.HostConfig.Memory}}' cc_mem)" = "4294967296" ] || { echo "RAM raise failed"; exit 1; }
+          # Removing the cap sets host RAM, which has to exceed any stored swap cap.
           $CURL -X POST -d '{"name":"cc_mem","remove_mem":true}' http://localhost/api/limits
-          M=$(docker inspect -f '{{.HostConfig.Memory}}' cc_mem); [ "$M" -gt 4294967296 ] || { echo "RAM remove FAILED (Memory=$M)"; exit 1; }
-          # CPU on a quota-family container → expressed as quota = cpus × period
+          M=$(docker inspect -f '{{.HostConfig.Memory}}' cc_mem); [ "$M" -gt 4294967296 ] || { echo "RAM remove failed (Memory=$M)"; exit 1; }
+          # A quota-family container takes the CPU limit as quota = cpus × period.
           $CURL -X POST -d '{"name":"cc_quota","nano_cpus":2500000000}' http://localhost/api/limits
-          [ "$(docker inspect -f '{{.HostConfig.CpuQuota}}' cc_quota)" = "250000" ] || { echo "CPU quota-family FAILED"; exit 1; }
-          # CPU + cpuset on a plain container → NanoCpus + pinning
+          [ "$(docker inspect -f '{{.HostConfig.CpuQuota}}' cc_quota)" = "250000" ] || { echo "CPU quota-family failed"; exit 1; }
+          # A plain container takes NanoCpus and the cpuset.
           $CURL -X POST -d '{"name":"cc_plain","nano_cpus":1500000000,"cpuset_cpus":"0-1"}' http://localhost/api/limits
-          [ "$(docker inspect -f '{{.HostConfig.NanoCpus}}' cc_plain)" = "1500000000" ] || { echo "CPU NanoCpus FAILED"; exit 1; }
-          [ "$(docker inspect -f '{{.HostConfig.CpusetCpus}}' cc_plain)" = "0-1" ] || { echo "cpuset FAILED"; exit 1; }
-          # first-time RAM cap on a NEVER-capped container (stored swap 0 — the raw-compare trap)
+          [ "$(docker inspect -f '{{.HostConfig.NanoCpus}}' cc_plain)" = "1500000000" ] || { echo "CPU NanoCpus failed"; exit 1; }
+          [ "$(docker inspect -f '{{.HostConfig.CpusetCpus}}' cc_plain)" = "0-1" ] || { echo "cpuset failed"; exit 1; }
+          # A container that was never capped has a stored swap of 0, which a raw compare misreads.
           $CURL -X POST -d '{"name":"cc_plain","mem_bytes":2147483648}' http://localhost/api/limits
-          [ "$(docker inspect -f '{{.HostConfig.Memory}}' cc_plain)" = "2147483648" ] || { echo "first RAM cap FAILED"; exit 1; }
-          echo "✅ limits set/raise/remove PROVEN against real dockerd"
+          [ "$(docker inspect -f '{{.HostConfig.Memory}}' cc_plain)" = "2147483648" ] || { echo "first RAM cap failed"; exit 1; }
+          echo "limits set, raised and removed against real dockerd"
 
-      - name: Download policing — real netns (netfilter only, no qdisc)
+      - name: Download policing in a real netns
         run: |
           set -e
           CID=$(docker run -d --rm alpine:3 sleep 120)
@@ -89,9 +88,9 @@ jobs:
           sudo nsenter -t "$PID" -n iptables -w -F CC_DL
           sudo nsenter -t "$PID" -n iptables -w -X CC_DL
           docker rm -f "$CID"
-          echo "✅ download policing (hashlimit in a container netns) PROVEN against a real kernel"
+          echo "hashlimit rules held in a container netns on a real kernel"
 
-      - name: Download policing — throughput measurement
+      - name: Download policing throughput
         run: |
           set -e
           mkdir -p /tmp/ccserve && head -c 8000000 /dev/urandom > /tmp/ccserve/blob
@@ -110,10 +109,10 @@ jobs:
           MS=$(( (T1 - T0) / 1000000 ))
           RATE=$(( 8000000 * 1000 / MS ))
           echo "cap 250000 B/s → measured ${RATE} B/s over ${MS}ms"
-          if [ "$RATE" -gt 400000 ]; then echo "::error::limit NOT enforced (>160% of cap)"; exit 1; fi
-          if [ "$RATE" -lt 75000 ]; then echo "::warning::throughput collapsed below 30% of cap (policing quality)"; fi
+          if [ "$RATE" -gt 400000 ]; then echo "::error::limit not enforced (above 160% of the cap)"; exit 1; fi
+          if [ "$RATE" -lt 75000 ]; then echo "::warning::throughput collapsed below 30% of the cap"; fi
           docker rm -f "$CID"
-          echo "✅ download policing THROUGHPUT measured: ${RATE} B/s at a 250000 B/s cap"
+          echo "measured ${RATE} B/s at a 250000 B/s cap"
 
       - name: Upload package artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

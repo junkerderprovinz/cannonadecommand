@@ -1,24 +1,15 @@
-// Package netshape applies per-container bandwidth caps inside the container's own network
-// namespace (entered via nsenter using the container PID). It never touches the host uplink.
+// Package netshape caps a container's bandwidth inside its own network namespace,
+// entered with nsenter through the container PID. The host uplink is never touched.
 //
-// BOTH directions are POLICED with netfilter (an iptables hashlimit DROP), never a tc qdisc:
-// this Unraid kernel ships NO sch_tbf/sch_htb, so the old tc-tbf egress shaper silently
-// no-op'd (a failure = "no shaping"). UPLOAD now drops packets above the byte rate on OUTPUT,
-// DOWNLOAD on INPUT; TCP backs off to the cap either way.
+// Both directions are policed with an iptables hashlimit drop, upload on OUTPUT and
+// download on INPUT, and TCP backs off to the cap. There is no tc qdisc: Unraid's
+// kernel ships neither sch_tbf nor sch_htb, and adding an ingress qdisc crashes the
+// sch_ingress module on some Unraid kernels (fault in tcx_miniq_inc), freezing the
+// WebUI and SSH. The rules sit inside the container's namespace, so they work the
+// same for bridge, ipvlan and macvlan networks.
 //
-// DOWNLOAD (ingress) is POLICED with netfilter: an iptables hashlimit rule on the
-// container's INPUT chain drops packets above the byte rate, and TCP backs off to the cap.
-// This is pure netfilter — NO ingress qdisc is EVER created: `tc qdisc add dev X ingress`
-// triggers a KERNEL CRASH in the sch_ingress module (fault at tcx_miniq_inc, "exited with
-// irqs disabled") on some Unraid kernels, freezing WebUI/SSH while ping and running
-// containers keep working. That module stays untouched forever. Netfilter policing also
-// works identically for ipvlan AND macvlan networks (br0.x) — there is no host-side veth
-// to shape, but the rule lives inside the container's own netns, where the traffic always
-// passes the INPUT chain.
-//
-// Everything is bounded and safe: a failure just means "no shaping", never broken
-// networking and never a kernel qdisc that can crash the host. Rules are ephemeral (gone on
-// container restart), so the monitor re-applies them every tick (both paths idempotent).
+// A failure only means no shaping. The rules are lost when the container restarts,
+// so the monitor reapplies them every tick; both paths are idempotent.
 package netshape
 
 import (
@@ -31,22 +22,18 @@ import (
 	"time"
 )
 
-// DefaultIface is the in-container interface to shape when none is configured. eth0 is
-// the container's primary NIC in bridge, ipvlan and macvlan setups alike.
+// DefaultIface is the interface shaped when none is configured. eth0 is the
+// container's primary NIC in bridge, ipvlan and macvlan setups alike.
 const DefaultIface = "eth0"
 
-// dlChain is our private iptables chain inside the container netns; keeping the rule in
-// an own chain makes apply/remove surgical and visible (`iptables -S CC_DL`).
-const dlChain = "CC_DL"
+// dlChain and ulChain are the chains inside the container namespace that hold the
+// download and upload rules, so they can be replaced and inspected on their own.
+const (
+	dlChain = "CC_DL"
+	ulChain = "CC_UL"
+)
 
-// ulChain is the UPLOAD (egress) equivalent. This kernel has no sch_tbf, so the old tc-tbf
-// egress shaper silently no-op'd — CC now polices upload with a hashlimit DROP on OUTPUT,
-// exactly like the download policing on INPUT.
-const ulChain = "CC_UL"
-
-// ifaceOr returns the chosen interface, or DefaultIface when the (Settings-configured)
-// name is blank. The iface is threaded through every call rather than held in a mutable
-// global so a config change can never race with an in-flight tick.
+// ifaceOr returns iface, or DefaultIface when it is blank.
 func ifaceOr(iface string) string {
 	if iface = strings.TrimSpace(iface); iface != "" {
 		return iface
@@ -54,11 +41,10 @@ func ifaceOr(iface string) string {
 	return DefaultIface
 }
 
-// dlRateBytes converts kbit/s to bytes/s (kbit × 125), min 125. The rule uses the
-// NATIVE byte unit ("b") on purpose: the kb/mb prefixes are parsed differently
-// across legacy/nf_tables userspace builds — the box enforced ~1/8 of the
-// configured rate on "kb/s" (60 Mbit set → 7 Mbit measured).
-func dlRateBytes(kbit int) int {
+// DLRateBytes converts kbit/s to bytes/s, at least 125. The rules use the plain
+// byte unit because the kb and mb prefixes are parsed differently by the legacy
+// and nf_tables userspace builds; "kb/s" enforced about 1/8 of the rate.
+func DLRateBytes(kbit int) int {
 	r := kbit * 125
 	if r < 125 {
 		r = 125
@@ -66,57 +52,36 @@ func dlRateBytes(kbit int) int {
 	return r
 }
 
-// dlBurstBytes = TWO seconds of the rate. iptables hashlimit enforces a minimum
-// burst: nf_tables builds demand >= 1x rate, LEGACY iptables (v1.8.13 on the box)
-// demands ~1.5x rate — 2x clears both with margin.
-func dlBurstBytes(kbit int) int {
-	return 2 * dlRateBytes(kbit)
+// DLBurstBytes is two seconds of the rate. hashlimit demands a minimum burst of
+// 1x the rate on nf_tables and about 1.5x on legacy iptables.
+func DLBurstBytes(kbit int) int {
+	return 2 * DLRateBytes(kbit)
 }
 
-// iptArgs builds one nsenter+iptables argv inside the netns of `pid`. -w waits for the
-// xtables lock instead of failing on contention.
+// iptArgs builds an nsenter argv that runs iptables in the namespace of pid. -w
+// waits for the xtables lock instead of failing.
 func iptArgs(pid int, args ...string) []string {
 	return append([]string{"-t", strconv.Itoa(pid), "-n", "iptables", "-w"}, args...)
 }
 
-// rateFactor was historically 8 on legacy iptables >= 1.8.12 to compensate a
-// byte-rate bug (the box appeared to enforce ~1/8 of a byte-mode cap). Re-measured
-// on Unraid 7.3.2 (kernel 6.18.38, iptables v1.8.13 legacy) in an isolated netns:
-// a byte-mode hashlimit enforces the configured byte rate CORRECTLY (1,000,000 b/s
-// delivered ~8 Mbit/s; the old compensated 8,000,000 b/s over-delivered ~10x). So
-// that under-enforcement was a transient KERNEL bug, not tied to the iptables
-// version — multiplying by 8 off the version over-limited downloads ~8x on current
-// kernels. No compensation is applied; the byte-mode rule is used as-is.
-func rateFactor() int { return 1 }
-
-// DLRateBytes, DLBurstBytes and RateFactor expose the download-policing byte-rate math
-// so the VM shaper in package vmctl can build the SAME hashlimit rule host-side on a
-// VM's bridged tap.
-func DLRateBytes(kbit int) int  { return dlRateBytes(kbit) }
-func DLBurstBytes(kbit int) int { return dlBurstBytes(kbit) }
-func RateFactor() int           { return rateFactor() }
-
-// dlRuleSpec is the hashlimit rule body (everything after the chain name). Split out so
-// the -C check and the -A add use the EXACT same spec, and for unit tests. The byte
-// rate is used as-is (rateFactor() is 1; see above).
+// dlRuleSpec is the download rule after the chain name, shared by the -C check
+// and the -A add.
 func dlRuleSpec(kbit int) []string {
-	f := rateFactor()
 	return []string{"-m", "hashlimit",
-		"--hashlimit-above", strconv.Itoa(dlRateBytes(kbit)*f) + "b/s",
-		"--hashlimit-burst", strconv.Itoa(dlBurstBytes(kbit)*f) + "b",
+		"--hashlimit-above", strconv.Itoa(DLRateBytes(kbit)) + "b/s",
+		"--hashlimit-burst", strconv.Itoa(DLBurstBytes(kbit)) + "b",
 		"--hashlimit-name", "ccdl", "-j", "DROP"}
 }
 
-// applyIngressPolicing installs (or re-asserts) the download cap. Fast path: when the
-// exact rule and the INPUT jump already exist, nothing runs — the monitor calls this
-// every tick.
+// applyIngressPolicing installs the download cap. When the rule and the INPUT jump
+// are already in place nothing runs, since the monitor calls this every tick.
 func applyIngressPolicing(iface string, pid, kbit int) error {
 	dev := ifaceOr(iface)
 	if run(iptArgs(pid, append([]string{"-C", dlChain}, dlRuleSpec(kbit)...)...)) == nil &&
 		run(iptArgs(pid, "-C", "INPUT", "-i", dev, "-j", dlChain)) == nil {
 		return nil
 	}
-	_ = run(iptArgs(pid, "-N", dlChain)) // "chain exists" is fine
+	_ = run(iptArgs(pid, "-N", dlChain)) // the chain may already exist
 	if err := run(iptArgs(pid, "-F", dlChain)); err != nil {
 		return err
 	}
@@ -129,8 +94,8 @@ func applyIngressPolicing(iface string, pid, kbit int) error {
 	return nil
 }
 
-// clearIngressPolicing removes the download cap (jump, rules, chain). Best-effort:
-// "was never there" is success.
+// clearIngressPolicing removes the download jump, rules and chain. Anything
+// already missing counts as removed.
 func clearIngressPolicing(iface string, pid int) error {
 	dev := ifaceOr(iface)
 	_ = ignoreMissing(run(iptArgs(pid, "-D", "INPUT", "-i", dev, "-j", dlChain)))
@@ -138,26 +103,23 @@ func clearIngressPolicing(iface string, pid int) error {
 	return ignoreMissing(run(iptArgs(pid, "-X", dlChain)))
 }
 
-// ulRuleSpec is the upload hashlimit body — same byte-rate math as download (incl. the legacy
-// x8 factor) on its OWN hashlimit table + chain.
+// ulRuleSpec is the upload rule, with the same rate math as the download rule and
+// its own hashlimit table.
 func ulRuleSpec(kbit int) []string {
-	f := rateFactor()
 	return []string{"-m", "hashlimit",
-		"--hashlimit-above", strconv.Itoa(dlRateBytes(kbit)*f) + "b/s",
-		"--hashlimit-burst", strconv.Itoa(dlBurstBytes(kbit)*f) + "b",
+		"--hashlimit-above", strconv.Itoa(DLRateBytes(kbit)) + "b/s",
+		"--hashlimit-burst", strconv.Itoa(DLBurstBytes(kbit)) + "b",
 		"--hashlimit-name", "ccul", "-j", "DROP"}
 }
 
-// applyEgressPolicing installs (or re-asserts) the UPLOAD cap as a hashlimit DROP on OUTPUT
-// inside the container netns (no tc/tbf — unavailable on this kernel). Fast path: when the
-// rule + the OUTPUT jump already exist, nothing runs. Mirrors applyIngressPolicing.
+// applyEgressPolicing installs the upload cap on OUTPUT, like applyIngressPolicing.
 func applyEgressPolicing(iface string, pid, kbit int) error {
 	dev := ifaceOr(iface)
 	if run(iptArgs(pid, append([]string{"-C", ulChain}, ulRuleSpec(kbit)...)...)) == nil &&
 		run(iptArgs(pid, "-C", "OUTPUT", "-o", dev, "-j", ulChain)) == nil {
 		return nil
 	}
-	_ = run(iptArgs(pid, "-N", ulChain)) // "chain exists" is fine
+	_ = run(iptArgs(pid, "-N", ulChain)) // the chain may already exist
 	if err := run(iptArgs(pid, "-F", ulChain)); err != nil {
 		return err
 	}
@@ -170,7 +132,7 @@ func applyEgressPolicing(iface string, pid, kbit int) error {
 	return nil
 }
 
-// clearEgressPolicing removes the upload cap (jump, rules, chain). Best-effort.
+// clearEgressPolicing removes the upload jump, rules and chain.
 func clearEgressPolicing(iface string, pid int) error {
 	dev := ifaceOr(iface)
 	_ = ignoreMissing(run(iptArgs(pid, "-D", "OUTPUT", "-o", dev, "-j", ulChain)))
@@ -178,18 +140,14 @@ func clearEgressPolicing(iface string, pid int) error {
 	return ignoreMissing(run(iptArgs(pid, "-X", ulChain)))
 }
 
-// Apply sets the UPLOAD (egress tbf) and DOWNLOAD (netfilter policing) caps on `iface`
-// inside the container whose main process is `pid`. A value <=0 clears that direction;
-// Apply(iface,pid,0,0) is the monitor's "unshape" call. Both paths are idempotent, and
-// each direction is applied independently — a failure in one still leaves the other
-// correct (the monitor keeps the container tracked either way).
+// Apply sets the upload and download caps on iface inside the container whose
+// main process is pid. A value <= 0 clears that direction, so Apply(iface, pid,
+// 0, 0) removes both.
 func Apply(iface string, pid, egressKbit, ingressKbit int) error {
 	if pid <= 0 {
 		return fmt.Errorf("netshape: invalid pid %d", pid)
 	}
-	// The directions are INDEPENDENT — an egress(-clear) failure must never abort
-	// the ingress policing (an early return here silently blocked every download
-	// limit whenever no upload cap was set: the noqueue root-delete errored first).
+	// A failure in one direction must not keep the other from being applied.
 	var errs []error
 	if egressKbit > 0 {
 		if err := applyEgressPolicing(iface, pid, egressKbit); err != nil {
@@ -208,7 +166,7 @@ func Apply(iface string, pid, egressKbit, ingressKbit int) error {
 	return errors.Join(errs...)
 }
 
-// Clear removes the shaping (both directions) from the container. Best-effort.
+// Clear removes both caps from the container.
 func Clear(iface string, pid int) error {
 	if pid <= 0 {
 		return nil
@@ -219,15 +177,15 @@ func Clear(iface string, pid int) error {
 	return clearIngressPolicing(iface, pid)
 }
 
-// ignoreMissing swallows tc/iptables "nothing to delete" errors.
+// ignoreMissing swallows the tc and iptables errors for something that is not
+// there to delete.
 func ignoreMissing(err error) error {
 	if err != nil {
 		m := err.Error()
 		if strings.Contains(m, "No such file or directory") || strings.Contains(m, "RTNETLINK answers: No such file") ||
 			strings.Contains(m, "Cannot find") || strings.Contains(m, "No chain/target/match by that name") ||
 			strings.Contains(m, "does not exist") ||
-			// deleting the root qdisc of a device that only has the default noqueue —
-			// nothing was shaped, so nothing to delete
+			// deleting the root qdisc of a device that only has the default noqueue
 			strings.Contains(m, "handle of zero") {
 			return nil
 		}
@@ -235,9 +193,8 @@ func ignoreMissing(err error) error {
 	return err
 }
 
-// Show returns the LIVE shaping state inside the netns — the tc qdisc line(s) on the
-// interface and our CC_DL netfilter chain — for the on-demand diagnostics endpoint.
-// Best-effort: an error becomes readable text instead of an empty answer.
+// Show returns the qdiscs on the interface and the CC_DL and CC_UL chains inside
+// the namespace, for the diagnostics endpoint. Errors come back as text.
 func Show(iface string, pid int) (qdisc, filter string) {
 	dev := ifaceOr(iface)
 	q, qe := output([]string{"-t", strconv.Itoa(pid), "-n", "tc", "qdisc", "show", "dev", dev})
@@ -254,9 +211,8 @@ func Show(iface string, pid int) (qdisc, filter string) {
 	return strings.TrimSpace(q), strings.TrimSpace(f)
 }
 
-// DetectIface returns the container's default-route device (e.g. eth0), or "" when
-// undetectable. Used when no interface is configured, so bridge/ipvlan/macvlan
-// containers with unusual NIC names still get shaped on the right device.
+// DetectIface returns the container's default-route device, or "" if it cannot
+// be found. It covers containers whose NIC is not called eth0.
 func DetectIface(pid int) string {
 	if pid <= 0 {
 		return ""

@@ -4,17 +4,16 @@
  *   cannonadecommand-banner-dark.svg / .png  dark:  hell logo on #0d1117 (GitHub dark)
  *   cannonadecommand-banner-logo.svg / .png  text-free, dunkel on white (support thread)
  *
- * Theme-flip like ShipLog: the README serves a <picture> pair so the banner is
- * light in light mode and dark in dark mode. Each theme embeds the matching logo
- * variant VERBATIM (no recolour): light -> cannonadecommand-dunkel.svg (dark ring),
- * dark -> cannonadecommand-hell.svg (white ring). The "CannonadeCommand" wordmark
- * (Bree Serif) + the claim (Lato) are converted to SVG paths (opentype.js) so the
- * SVG needs NO font and renders identically with resvg or a browser.
+ * The README serves the light and dark banner as a <picture> pair. Each theme
+ * embeds its own logo master unchanged rather than recolouring one, and the
+ * wordmark (Bree Serif) and the claim (Lato) become SVG paths, so the file
+ * carries no font and renders the same in resvg and in a browser.
  *
- * Deps (global): opentype.js, @resvg/resvg-js. Bree Serif + Lato (both OFL) are
- * fetched at runtime to the OS temp dir — NOT committed.
+ * Needs opentype.js and @resvg/resvg-js installed globally. Bree Serif and Lato,
+ * both OFL, are fetched at runtime into the OS temp dir and stay out of the repo.
  *
- * To change name/claim: edit below and run `node .github/assets/gen-banner.mjs`.
+ * To change the name or the claim, edit the values below and run
+ * `node .github/assets/gen-banner.mjs`.
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -30,25 +29,21 @@ const { Resvg } = require(`${groot}/@resvg/resvg-js`);
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 
-// ---- content + styling -----------------------------------------------------
 const NAME_A = "Cannonade";
 const NAME_B = "Command";
 const CLAIM1 = "Firepower and finish for your whole";
 const CLAIM2 = "Unraid dashboard. Fire when ready.";
 const W = 1600, H = 500;
-const logoBox = 400;                 // rendered logo size (square, house standard)
-const logoX = 165, logoY = (H - logoBox) / 2;      // left-anchor (house standard)
-const textX = logoX + logoBox + 70;  // left edge of wordmark + claim (gap 70)
-const maxTextW = W - textX - 80;     // wordmark + claim fit between textX and the right margin
-// D1/D2 (baseline steps: name -> claim line 1, then claim line 1 -> 2) are derived
-// from the final font sizes below for a tight, house-standard name/claim gap.
+const logoBox = 400;                 // square, as in the sibling repos
+const logoX = 165, logoY = (H - logoBox) / 2;
+const textX = logoX + logoBox + 70;  // left edge of the text block
+const maxTextW = W - textX - 80;     // what is left between textX and the right margin
 
-// Each theme embeds the logo variant that reads on its background (no recolour).
+// Each theme embeds the logo variant that reads on its background.
 const THEMES = [
   { suffix: "", bg: "#ffffff", name: "#1f2328", claim: "#5a5d5e", logo: "cannonadecommand-dunkel.svg" },
   { suffix: "-dark", bg: "#0d1117", name: "#e6edf3", claim: "#9aa4ad", logo: "cannonadecommand-hell.svg" },
 ];
-// ---------------------------------------------------------------------------
 
 async function font(file, url) {
   const p = join(tmpdir(), file);
@@ -63,12 +58,10 @@ async function font(file, url) {
 const bree = await font("cc-BreeSerif-Regular.ttf", "https://github.com/google/fonts/raw/main/ofl/breeserif/BreeSerif-Regular.ttf");
 const lato = await font("cc-Lato-Regular.ttf", "https://github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf");
 
-// fit the sizes to the available width instead of hard-coding them; the claim is
-// TWO lines and noticeably larger (user call). opentype.js emits NaN points for
-// SOME size/glyph combinations (e.g. Lato "y" at 42px) — step down to the next
-// clean size instead of shipping a truncated path.
-// the NaN depends on the REAL pen position, so the retry loop generates the
-// actual paths and only accepts a size whose output is NaN-free
+// The sizes are fitted to the available width rather than hard-coded. opentype.js
+// emits NaN points for some size and glyph combinations (Lato "y" at 42px, for
+// one), and whether it does depends on the pen position, so the loop generates the
+// real paths and steps down until one comes out free of NaN.
 function cleanPaths(fnt, runs, size) {
   for (; size > 10; size--) {
     const paths = runs.map(([t, x, y]) => fnt.getPath(t, x, y, size));
@@ -82,23 +75,22 @@ const claimFit = cleanPaths(lato, [[CLAIM1, textX + 4, 0], [CLAIM2, textX + 4, 0
   Math.min(44, Math.floor(100 * maxTextW / Math.max(lato.getAdvanceWidth(CLAIM1, 100), lato.getAdvanceWidth(CLAIM2, 100)))));
 const nameSize = nameFit.size, claimSize = claimFit.size;
 
-// Vertically CENTRE the whole text block (wordmark + 2 claim lines) on H/2 so it always
-// lines up with the logo, which is also centred at H/2. Derive the baselines from the
-// real font metrics + line steps, then regenerate the final paths at those baselines.
+// The whole text block is centred on H/2, where the logo sits too. The baselines
+// come from the font metrics and the line steps, and the final paths are then
+// generated at those baselines.
 const sc = (fnt, s) => s / fnt.unitsPerEm;
 const nameAsc = bree.ascender * sc(bree, nameSize);
 const nameDesc = -bree.descender * sc(bree, nameSize);
 const claimAsc = lato.ascender * sc(lato, claimSize);
 const claimDesc = -lato.descender * sc(lato, claimSize);
-const D1 = Math.round(nameDesc + 8 + claimAsc);                            // tight name -> claim line 1 (house gap 8)
+const D1 = Math.round(nameDesc + 8 + claimAsc);                            // name to the first claim line
 const D2 = Math.round((lato.ascender - lato.descender) * sc(lato, claimSize) * 1.15); // claim line spacing
 const blockH = nameAsc + D1 + D2 + claimDesc;
 const nameBaseline = Math.round(H / 2 - blockH / 2 + nameAsc);
 const claim1Baseline = nameBaseline + D1;
 const claim2Baseline = claim1Baseline + D2;
-// Render text as ONE <path> PER GLYPH, not a single merged path: resvg's tessellator
-// can silently abort a merged multi-subpath path partway through for certain
-// glyph/coordinate combinations, and per-glyph paths sidestep that entirely.
+// One path per glyph: resvg's tessellator can abort a merged multi-subpath path
+// partway through for some glyph and coordinate combinations.
 const glyphD = (fnt, text, x, baseline, size) =>
   fnt.getPaths(text, x, baseline, size).map((p) => p.toPathData(2)).filter(Boolean);
 const nameD = glyphD(bree, NAME_A + NAME_B, textX, nameBaseline, nameSize);
@@ -106,7 +98,8 @@ const claim1D = glyphD(lato, CLAIM1, textX + 4, claim1Baseline, claimSize);
 const claim2D = glyphD(lato, CLAIM2, textX + 4, claim2Baseline, claimSize);
 const paths = (ds, fill) => ds.map((d) => `<path d="${d}" fill="${fill}"/>`).join("");
 
-// read a logo master VERBATIM -> inner markup + scale factor for its own viewBox
+// Read a logo master as it is and return its inner markup with the scale factor
+// for its own viewBox.
 function embed(logoFile) {
   const src = readFileSync(join(__dir, logoFile), "utf8");
   const inner = src.replace(/^[\s\S]*?<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
@@ -115,7 +108,7 @@ function embed(logoFile) {
   return { inner, scale: logoBox / vbW };
 }
 
-// README banners (both themes): logo (left) + wordmark + 2-line claim.
+// The README banners: the logo on the left, then the wordmark and the claim.
 for (const t of THEMES) {
   const { inner, scale } = embed(t.logo);
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -135,7 +128,7 @@ ${inner}
   console.log(`banner${t.suffix} ok: ${W}x${H}, png ${png.length} bytes`);
 }
 
-// text-free support banner (logo only, dunkel on white) — house-standard "-banner-logo" name.
+// The support banner: the dunkel logo on white, without any text.
 const { inner: dInner, scale: dScale } = embed("cannonadecommand-dunkel.svg");
 const logoOnly = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="CannonadeCommand">

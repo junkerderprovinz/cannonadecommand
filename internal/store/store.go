@@ -12,7 +12,7 @@ import (
 	"github.com/junkerderprovinz/cannonadecommand/internal/model"
 )
 
-// Store reads and writes the plan + config next to each other.
+// Store reads and writes the plan and the config, which live next to each other.
 type Store struct {
 	path    string // plan.json
 	cfgPath string // config.json (in the same dir)
@@ -35,8 +35,8 @@ func (s *Store) Load() (model.Plan, error) {
 // Save writes the plan atomically (temp file + rename).
 func (s *Store) Save(p model.Plan) error { return writeJSON(s.path, p) }
 
-// LoadConfig reads the automation config; a missing/empty file yields the zero
-// Config (nothing scheduled/watched, no notifications).
+// LoadConfig reads the automation config. A missing or empty file yields the
+// zero Config, with nothing scheduled or watched.
 func (s *Store) LoadConfig() (model.Config, error) {
 	var c model.Config
 	err := readJSON(s.cfgPath, &c)
@@ -57,10 +57,9 @@ func readJSON(path string, v any) error {
 	return json.Unmarshal(b, v)
 }
 
-// writeJSON writes atomically (temp file, fsync, rename). The fsync forces the
-// data to stable storage BEFORE the rename, so on the Unraid flash (FAT32, no
-// journaling) a power loss can't leave config.json present but zero-length or
-// half-written — the rename only ever exposes fully-flushed content.
+// writeJSON writes to a temp file, fsyncs it and renames it over the target. The
+// fsync has to happen before the rename: the Unraid flash is unjournaled FAT32,
+// so without it a power loss can leave a present but half-written file.
 func writeJSON(path string, v any) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err

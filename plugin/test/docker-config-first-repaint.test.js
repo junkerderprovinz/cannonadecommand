@@ -1,22 +1,13 @@
-// Regression test for the Docker-tab half of the "badges stuck in rainbow" investigation.
+// Pins docker.js's cross-origin config sync, loadConfig(). cc-theme.js has its own,
+// pinned in cc-theme-rerender-hook.test.js.
 //
-// docker.js already had its own cross-origin config sync (loadConfig(), separate from
-// cc-theme.js's — see cc-theme-rerender-hook.test.js for that half of the fix) whose repaint was
-// previously GATED on adoptUISettings() finding a difference: `if (adoptUISettings(...)) { ...full
-// repaint...}`. On the very FIRST loadConfig() of a page load, that gate depends purely on timing:
-// docker.js's own boot() may already have painted once, synchronously, off whatever localStorage
-// held BEFORE this async GET /config resolved. If the browser's local copy already happened to
-// equal the server's (nothing to adopt), that first paint's possibly-stale values would never get
-// a corrective repaint at all — no live bug was ever proven for this window (extensive live
-// Playwright testing against the real box found Docker's chain self-heals every ~9s poll and
-// leaves no residue), but the race is real and the fix is cheap and safe: force the SAME full
-// repaint unconditionally on the first loadConfig() ever, not only when adoptUISettings() detected
-// a difference. This pins that:
-//   1) the first loadConfig() call repaints even when nothing needed adopting;
-//   2) the SECOND call does NOT repaint when nothing changed (no render-loop regression);
-//   3) a real adoption on ANY call still repaints, exactly as before.
-//
-// The real source is sliced out, never re-typed.
+// docker.js's boot() paints synchronously off localStorage, before the async GET
+// /config resolves. If the local copy happens to equal the server's, a repaint
+// gated on adoptUISettings() finding a difference would never correct that first
+// paint, so the first loadConfig() repaints unconditionally. The three cases:
+//   1) the first call repaints even with nothing to adopt;
+//   2) a second call with nothing changed does not repaint again;
+//   3) a real adoption on any call repaints.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand', 'scripts');
@@ -38,11 +29,10 @@ const code = grabBetween(src,
   'function adoptUISettings(u) {',
   'function loadLimits()');
 
-// Minimal harness: stub every dependency loadConfig()/adoptUISettings() touch, and instrument the
-// four repaint calls (applySettings/applyEnhanceClasses/removeEnhanceClasses/reinjectRowBadges/
-// renderGrid) so a test can count exactly how many full-repaint passes each loadConfig() call did.
-// `serverUiSettings` is a plain mutable object the test can rewrite between calls, so a harness
-// can simulate a Rainbow toggle landing on a LATER poll without needing a second closure.
+// Stubs everything loadConfig() and adoptUISettings() touch and counts the repaint
+// calls, so a test can tell how many full passes each loadConfig() did. The server
+// settings live in a mutable object, so a test can let a Rainbow toggle land
+// between two polls.
 function harness(initialLocal) {
   const store = Object.assign({}, initialLocal || {});
   const localStorage = {
@@ -63,7 +53,7 @@ function harness(initialLocal) {
     win, localStorage, api,
     () => { calls.applySettings++; }, () => { calls.applyEnhanceClasses++; }, () => { calls.removeEnhanceClasses++; },
     () => { calls.reinjectRowBadges++; }, () => { calls.renderGrid++; },
-    () => true, // themingOn() -> true, so the list-mode branch takes applyEnhanceClasses (not removeEnhanceClasses)
+    () => true, // themingOn(), so the list-mode branch takes applyEnhanceClasses
     'list', true, () => ({}), {}, () => {}
   );
   return { state, store, calls, serverRef };
@@ -71,42 +61,41 @@ function harness(initialLocal) {
 
 console.log('docker.js loadConfig(): the first call always repaints, even with nothing to adopt');
 {
-  // local already equals server -> adoptUISettings() alone would find nothing and skip the repaint
+  // Local equals server, so adoptUISettings() alone would find nothing to do.
   const h = harness({ 'cc.rainbow': '0' });
   h.serverRef.ui_settings = { 'cc.rainbow': '0' };
   h.state.loadConfig().then(() => {
-    ok('applySettings ran on the very first loadConfig() despite no diff', h.calls.applySettings === 1, h.calls.applySettings);
-    ok('applyEnhanceClasses ran too (mode stayed "list")', h.calls.applyEnhanceClasses === 1, h.calls.applyEnhanceClasses);
+    ok('applySettings ran on the first loadConfig() despite no diff', h.calls.applySettings === 1, h.calls.applySettings);
+    ok('applyEnhanceClasses ran too, the mode being "list"', h.calls.applyEnhanceClasses === 1, h.calls.applyEnhanceClasses);
     ok('reinjectRowBadges ran too', h.calls.reinjectRowBadges === 1, h.calls.reinjectRowBadges);
-    ok('renderGrid did NOT run (mode is "list", not "grid")', h.calls.renderGrid === 0, h.calls.renderGrid);
+    ok('renderGrid stayed out of it, the mode being "list"', h.calls.renderGrid === 0, h.calls.renderGrid);
     run2();
   });
 }
 
 function run2() {
-  console.log('\ndocker.js loadConfig(): a SECOND call with nothing to adopt does NOT repaint again (no render-loop)');
+  console.log('\ndocker.js loadConfig(): a second call with nothing to adopt does not repaint again');
   const h = harness({ 'cc.rainbow': '0' });
   h.serverRef.ui_settings = { 'cc.rainbow': '0' };
   h.state.loadConfig().then(() => h.state.loadConfig()).then(() => {
-    ok('exactly one repaint pass across two identical calls (the first forced, the second correctly skipped)',
+    ok('one repaint pass across two identical calls',
       h.calls.applySettings === 1, h.calls.applySettings);
     run3();
   });
 }
 
 function run3() {
-  console.log('\ndocker.js loadConfig(): a real adoption on the SECOND call still repaints (existing behaviour preserved)');
+  console.log('\ndocker.js loadConfig(): a real adoption on a later call still repaints');
   const h = harness({ 'cc.rainbow': '0' });
   h.serverRef.ui_settings = { 'cc.rainbow': '0' };
   h.state.loadConfig().then(() => {
-    ok('first call repainted once (forced)', h.calls.applySettings === 1, h.calls.applySettings);
-    // simulate a Rainbow toggle landing server-side between polls — the NEXT poll must adopt it
+    ok('the first call repainted once', h.calls.applySettings === 1, h.calls.applySettings);
+    // A Rainbow toggle lands server-side between two polls.
     h.serverRef.ui_settings = { 'cc.rainbow': '1' };
     return h.state.loadConfig();
   }).then(() => {
-    ok('a real cross-origin change on a later call still triggers a second repaint', h.calls.applySettings === 2, h.calls.applySettings);
-    ok('localStorage actually adopted the new value', h.store['cc.rainbow'] === '1', h.store['cc.rainbow']);
-    // and a third, unchanged call must NOT repaint a third time
+    ok('a cross-origin change on a later call triggers a second repaint', h.calls.applySettings === 2, h.calls.applySettings);
+    ok('localStorage adopted the new value', h.store['cc.rainbow'] === '1', h.store['cc.rainbow']);
     return h.state.loadConfig();
   }).then(() => {
     ok('a third call with nothing new to adopt does not repaint again', h.calls.applySettings === 2, h.calls.applySettings);

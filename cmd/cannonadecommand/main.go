@@ -1,9 +1,8 @@
 // Command cannonadecommand is the host supervisor for the CannonadeCommand
-// Unraid plugin. It serves a localhost UNIX-socket API that the Docker-tab panel
-// calls (through a same-origin PHP proxy), and orchestrates dependency-ordered,
-// health-gated container starts. It talks to the Docker daemon over its socket;
-// running host-side (not in a container) is the correct home for that write
-// privilege, and the only place that can orchestrate the host's own autostart.
+// Unraid plugin. It serves the UNIX-socket API behind the plugin's PHP proxy and
+// runs dependency-ordered, health-gated container starts. It runs on the host
+// rather than in a container because only there can it drive the host's own
+// autostart.
 package main
 
 import (
@@ -35,9 +34,8 @@ import (
 // version is overridden at build time with -ldflags "-X main.version=vX.Y.Z".
 var version = "dev"
 
-// bannerArt is the house brand ASCII banner (the shared "junkerderprovinz" art),
-// printed to the supervisor log on startup per the ASCII-init convention. It is
-// embedded from banner.txt, byte-identical to .github/assets/banner-raw.txt.
+// bannerArt is printed to the supervisor log on startup. banner.txt is a copy of
+// .github/assets/banner-raw.txt.
 //
 //go:embed banner.txt
 var bannerArt string
@@ -101,15 +99,11 @@ func serve() {
 	dockerSock := env("CC_DOCKER_SOCK", defaultDockerSock)
 	apiSock := env("CC_SOCK", defaultAPISock)
 
-	// The interface to shape is chosen in Settings (config.shape_iface) and threaded
-	// through the monitor per-tick; no env override needed.
 	docker := dockercli.NewUnix(dockerSock)
 	st := store.New(filepath.Join(dataDir, "plan.json"))
 	prober := readiness.Prober{Inspector: inspectorAdapter{docker}, ExecCheck: docker.Exec, GetLogs: docker.Logs}
 	orch := &orchestrator.Orchestrator{Starter: docker, Ready: prober}
-	vmc := vmctl.New() // shared by the API (list/apply CPU-RAM) and the monitor (VM bandwidth reapply)
-	// The icon pipeline's cache. It only ever fetches on its own background workers,
-	// so a missing/broken internet connection costs the WebGUI nothing.
+	vmc := vmctl.New()
 	icons := iconsrc.New(dataDir)
 	defer icons.Close()
 	srv := &api.Server{Docker: docker, Store: st, Runner: orch, Pidder: docker, VMs: vmc, Icons: icons, TemplatesDir: env("CC_TEMPLATES_DIR", unraidtmpl.DefaultDir), Version: version}
@@ -137,17 +131,15 @@ func serve() {
 		_ = os.Remove(apiSock)
 	}()
 
-	// The always-on automation loop: scheduled actions, the watchdog, idle-stop, notifications.
 	mon := &monitor.Monitor{Docker: docker, Config: st, Notifier: monitor.SysNotifier{}, Pidder: docker, Shaper: shaperAdapter{}, Statter: docker, VMShaper: vmc}
-	srv.BwLast = mon // the bandwidth editor shows the monitor's last apply attempt
-	srv.Kicker = mon // config saves apply immediately (no 30s tick wait)
+	srv.BwLast = mon
+	// A saved config takes effect at once instead of on the next 30s tick.
+	srv.Kicker = mon
 	go mon.Run(ctx)
 
 	log.Print("\n" + bannerArt)
-	// Plain text, no ANSI color: this goes to /var/log/cannonadecommand.log
-	// (see rc.cannonadecommand), a flat file viewed through Unraid's generic
-	// log UI, not an ANSI-aware terminal like the docker log viewer the
-	// container images use.
+	// No ANSI colour: rc.cannonadecommand sends this to a flat log file that
+	// Unraid's log viewer shows as plain text.
 	log.Printf("✓ CANNONADECOMMAND %s IS READY - api %s · data %s · docker %s", version, apiSock, dataDir, dockerSock)
 
 	if err := httpSrv.Serve(ln); err != nil && err != http.ErrServerClosed {
@@ -160,7 +152,7 @@ func serve() {
 func apply() {
 	apiSock := env("CC_SOCK", defaultAPISock)
 	hc := &http.Client{
-		Timeout: 15 * time.Minute, // health-gated ordering can legitimately take a while
+		Timeout: 15 * time.Minute, // health-gated starts can take a while
 		Transport: &http.Transport{
 			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
 				var d net.Dialer

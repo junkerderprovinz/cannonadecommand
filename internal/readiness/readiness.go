@@ -1,6 +1,6 @@
-// Package readiness decides when a managed container is "ready" so the next
-// start stage may fire. Most Community-Apps images ship NO HEALTHCHECK, so the
-// TCP and running+grace probes are first-class, not a fallback.
+// Package readiness decides when a managed container is ready so the next start
+// stage may fire. Most Community Applications images ship without a HEALTHCHECK,
+// so the TCP and running probes matter as much as the health probe.
 package readiness
 
 import (
@@ -33,9 +33,9 @@ type Inspector interface {
 	Snapshot(ctx context.Context, ref string) (Snapshot, error)
 }
 
-// Prober waits for readiness per a node's probe spec. The clock, poll cadence,
-// sleeper and dialer are injectable so the whole thing is unit-testable without
-// real time or sockets.
+// Prober waits for readiness as a node's probe spec asks. The clock, the cadence,
+// the sleeper and the dialer are injectable, so a test needs neither real time
+// nor real sockets.
 type Prober struct {
 	Inspector Inspector
 	Interval  time.Duration
@@ -91,9 +91,8 @@ func (p Prober) httpGet(ctx context.Context, url string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	// Don't chase redirects: a readiness probe must observe the container's OWN status
-	// (a boot-time 3xx should count as "up but redirecting", and a redirect to another
-	// host must not let some other server's 200 mark this container ready).
+	// Chasing a redirect would let another host's 200 mark this container ready,
+	// and a 3xx while booting already says it is serving.
 	client := &http.Client{
 		Timeout:       dialTimeout,
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
@@ -202,8 +201,7 @@ func (p Prober) probeHTTP(ctx context.Context, node model.Node) (bool, string) {
 }
 
 func (p Prober) probeExec(ctx context.Context, node model.Node) (bool, string) {
-	// A misconfigured exec probe (no command, or exec unavailable) must not stall the
-	// whole start plan for the timeout — fall back to "ready once running".
+	// An exec probe with no command must not stall the whole plan until the timeout.
 	if p.ExecCheck == nil || node.Probe.Command == "" {
 		return p.readyIfRunning(ctx, node, "exec probe unset")
 	}
@@ -275,7 +273,7 @@ func (p Prober) probeHealth(ctx context.Context, node model.Node) (bool, string)
 			return true, "running (no healthcheck)"
 		}
 		return false, "not running"
-	default: // "starting" / "unhealthy" — keep waiting; it may recover
+	default: // "starting" or "unhealthy", both of which may still recover
 		return false, "health=" + snap.Health
 	}
 }

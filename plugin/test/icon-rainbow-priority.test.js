@@ -1,29 +1,17 @@
-// Static regression test: icon logo badge colour vs Rainbow mode priority (#T6).
+// The icon logo badge carries the app's identity, not a rotating value, so a
+// colour picked in the "Logos & Icons" card has to come before --cc-rb-c, the
+// per-row rainbow colour JS stamps inline, in every var() chain that paints it.
+// The rainbow colour stays as the fallback for rows with no icon colour set.
 //
-// The bug (live-tested on a real box, confirmed with the user): with Rainbow mode on and
-// Reactive mode on, hovering a Docker/Plugin/VM row's icon logo badge showed the rotating
-// rainbow colour instead of the colour the user picked in the "Logos & Icons" settings card.
-// Traced to every CSS rule painting that badge's background putting --cc-rb-c (the per-row
-// rainbow rotation colour, stamped inline by JS) BEFORE --cc-iconbg-color (the configured icon
-// colour) in the var() fallback chain, so rainbow always won whenever it was on.
+// This holds for the icon logo badge alone. Every other rainbow-coloured element,
+// the CPU and RAM badges, tab pills and buttons, stays rainbow-first, which this
+// file pins too so the two paths do not get conflated.
 //
-// Decided fix: an icon logo's OWN background badge represents the app's identity, not a rotating
-// value indicator, so --cc-iconbg-color must come first, with --cc-rb-c only as the fallback for
-// rows/tabs that have no icon colour configured. This is scoped ONLY to the icon logo badge —
-// every OTHER rainbow-coloured element (CPU/RAM/value badges, tab pills, buttons, ...) keeps
-// rainbow-first behaviour unchanged, which this file also pins so the two paths can't be
-// conflated by a future edit.
-//
-// Reuses settings-chrome.test.js's ruleBody()/declares() helpers verbatim (same comment-stripping
-// regex) — this is a static/string-level pin, appropriate for a CSS file with no CSS engine
-// available in the bare-Node test runner.
-//
-// #T6 follow-up (v4.32.5): v4.32.4 missed the Settings/Tools category-grid tile badge
-// (settingsgrid.js + CannonadeCommand.SettingsGrid.css) — the identical bug, in the one area the
-// original fix didn't touch. This file also pins that follow-up fix: the CSS reactive-hover var()
-// order (same technique as above) and, since paintGrid()'s plain rainbow paint has no CSS var()
-// chain to fall back on (it's a hard inline JS write), a source-sliced assertion on the real
-// paintGrid() function body.
+// Covered: Docker and Plugins in docker.css, and the Settings/Tools category grid
+// in CannonadeCommand.SettingsGrid.css. Its plain rainbow paint has no CSS chain
+// to fall back on, being a hard inline write, so paintGrid()'s body is checked
+// from source instead. The helpers come from settings-chrome.test.js, this being
+// a string-level pin for want of a CSS engine in the bare-Node runner.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand');
@@ -36,7 +24,7 @@ const ok = (name, cond, extra) => { cond ? (pass++, console.log('  PASS  ' + nam
 
 const css = fs.readFileSync(CSS, 'utf8');
 
-// Verbatim from settings-chrome.test.js.
+// Taken from settings-chrome.test.js.
 function ruleBody(sheet, selector) {
   const clean = sheet.replace(/\/\*[\s\S]*?\*\//g, '');
   const re = new RegExp('(^|[};])\\s*' + selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{([^}]*)\\}', 'm');
@@ -77,11 +65,10 @@ console.log('\nPlugins icon logo badge: a configured icon colour wins over the r
   });
 }
 
-console.log('\nSettingsGrid tile badge (CSS): a configured icon colour wins over the rainbow palette (#T6 follow-up)');
+console.log('\nSettingsGrid tile badge in CSS: a configured icon colour wins over the rainbow palette');
 {
-  // The reactive/neutral hover rules are the ONE place SettingsGrid resolves the badge colour
-  // through a CSS var() chain (the plain/non-reactive paint is a hard inline JS write, checked
-  // separately below) — same bug, same fix as Docker/VMs/Plugins above, missed in v4.32.4.
+  // The reactive hover rules are where SettingsGrid resolves the badge colour
+  // through a var() chain; the plain paint is an inline JS write, checked below.
   const sgCss = fs.readFileSync(SG_CSS, 'utf8');
   const localHoverSel = 'html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a:hover > span';
   const globalHoverSel = 'html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a:hover > span';
@@ -100,31 +87,26 @@ console.log('\nSettingsGrid tile badge (CSS): a configured icon colour wins over
   });
 }
 
-console.log('\nSettingsGrid tile badge (JS paintGrid): the plain-rainbow paint defers to a configured icon colour (#T6 follow-up)');
+console.log('\nSettingsGrid tile badge in paintGrid(): the plain paint defers to a configured icon colour');
 {
-  // paintGrid() has no CSS var() chain to fall back on for the plain (non-reactive) rainbow
-  // paint — it writes the background as a hard inline style. Source-slice the REAL function
-  // body (never re-typed) and pin that its background write is now conditional on whether an
-  // icon colour is configured, instead of the old unconditional `s.style.setProperty("background", c, ...)`.
+  // paintGrid() writes the background as an inline style, with no var() chain to
+  // fall back on, so the write has to be conditional on an icon colour being set.
   const sgJs = fs.readFileSync(SG_JS, 'utf8');
   const m = /function paintGrid\(\) \{[\s\S]*?\n  \}\n/.exec(sgJs);
   ok('paintGrid() is found in source', !!m);
   const body = m ? m[0] : '';
-  ok('checks whether ccs.iconcolor is a valid configured colour', /ccs\.iconcolor/.test(body), body);
-  ok('the background write is conditional (iconSet ? ... : c), not the old unconditional c', /setProperty\("background",\s*bg,\s*"important"\)/.test(body) && !/setProperty\("background",\s*c,\s*"important"\)/.test(body), body);
-  ok('when an icon colour is configured, the badge paints with accBg (the resolved icon colour), not the raw rainbow colour', /bg\s*=\s*iconSet\s*\?\s*accBg\s*:\s*c/.test(body), body);
+  ok('it checks whether ccs.iconcolor holds a colour', /ccs\.iconcolor/.test(body), body);
+  ok('the background write goes through bg rather than the raw rainbow colour', /setProperty\("background",\s*bg,\s*"important"\)/.test(body) && !/setProperty\("background",\s*c,\s*"important"\)/.test(body), body);
+  ok('with an icon colour configured the badge paints with the resolved accBg', /bg\s*=\s*iconSet\s*\?\s*accBg\s*:\s*c/.test(body), body);
 }
 
-console.log('\nDocker icon logo badge reactive-hover (NO icon colour configured): --cc-rb-c is in the fallback chain (v4.33.1 fix)');
+console.log('\nDocker icon logo badge on hover with no icon colour configured: --cc-rb-c stays in the chain');
 {
-  // The .cc-rainbow-gated rules above (icon colour configured, wins over the palette) are a
-  // DIFFERENT pair from these: these two apply whenever Hintergrund is on regardless of whether
-  // an icon colour is configured, and reactive mode's hover previously fell straight from
-  // --cc-iconbg-color to the flat --cc-accent, skipping --cc-rb-c entirely — the same class of
-  // gap the v4.32.9 fix closed for the per-kind value badges, just missed here. This mattered far
-  // more once bgColor() started answering "" while the master adopt toggle is on (the badge's
-  // ONLY colour source is then --cc-rb-c), and became directly testable once GRID/FOLDER cards
-  // started carrying their own per-card --cc-rb-c (docker-grid-rainbow-stamp.test.js).
+  // These two rules apply whenever Hintergrund is on, whether or not an icon colour
+  // is configured, so they are a different pair from the .cc-rainbow-gated ones
+  // above. Falling from --cc-iconbg-color straight to the flat --cc-accent would
+  // leave the badge with no colour source at all while the master adopt toggle is
+  // on, since bgColor() answers "" then.
   const listNoColorHoverSel = 'html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand';
   const gridNoColorHoverSel = 'html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card:hover .cc-card-ico';
   [
@@ -137,19 +119,19 @@ console.log('\nDocker icon logo badge reactive-hover (NO icon colour configured)
   });
 }
 
-console.log('\nGeneric (non-icon) rainbow badges stay rainbow-first — this fix must NOT touch them');
+console.log('\nBadges that are not icon logos stay rainbow-first');
 {
-  // CPU/RAM value badges and the generic plugin row-badge hover path are NOT icon logo tiles;
-  // they must keep --cc-rb-c as the FIRST colour source, exactly as before this fix.
+  // The CPU and RAM value badges and the generic plugin row-badge hover path are
+  // not icon logo tiles, so they keep --cc-rb-c as their first colour source.
   const cpuSel = '.cc-enh.cc-rainbow .cc-b-cpu, .cc-grid-holder.cc-rainbow .cc-b-cpu';
   const cpuBody = ruleBody(css, cpuSel);
   ok('CPU badge rule exists', cpuBody != null);
-  ok('CPU badge: --cc-rb-c is still FIRST (untouched by this fix)', /background:\s*var\(--cc-rb-cpu,/.test(cpuBody || ''), cpuBody);
+  ok('CPU badge: --cc-rb-c comes first', /background:\s*var\(--cc-rb-cpu,/.test(cpuBody || ''), cpuBody);
 
   const genericPluginHoverSel = 'html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b:not(.cc-b-del),\nhtml.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-plugsup';
   const genBody = ruleBody(css, genericPluginHoverSel);
   ok('generic plugin value-badge hover rule exists', genBody != null);
-  ok('generic plugin value badge: --cc-rb-c is still FIRST (untouched by this fix)', /background:\s*var\(--cc-rb-c,\s*var\(--cc-accent,/.test(genBody || ''), genBody);
+  ok('generic plugin value badge: --cc-rb-c comes first', /background:\s*var\(--cc-rb-c,\s*var\(--cc-accent,/.test(genBody || ''), genBody);
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

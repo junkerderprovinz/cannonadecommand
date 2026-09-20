@@ -1,23 +1,16 @@
-// Package iconsrc resolves an app name (a container / VM / plugin name) to a
-// better icon than whatever the image or template happened to ship, and caches
-// the answer — and the SVG bytes — on the flash so a page load never waits on
-// the network.
+// Package iconsrc finds a better icon for a container, VM or plugin name than
+// the one it ships, and caches the answer and the SVG on the flash.
 //
-// Two public icon sets are consulted, in this order:
+// Two public icon sets are tried in order:
 //
-//  1. simple-icons/simple-icons (CC0-1.0) — a single-path MONOCHROME glyph.
-//     Because it is a glyph by construction it can be ink-flattened to one flat
-//     colour without losing anything, which is the crisp "badge ink" look.
-//  2. homarr-labs/dashboard-icons (Apache-2.0) — a full-COLOUR app icon, far
-//     better curated than the average shipped container icon, used as the source
-//     for the luminance-preserving tint.
+//  1. simple-icons/simple-icons (CC0-1.0): single-path monochrome glyphs, which
+//     can be flattened to one ink colour without losing anything.
+//  2. homarr-labs/dashboard-icons (Apache-2.0): full-colour app icons, used as
+//     the source for the luminance-preserving tint.
 //
-// THE CONTRACT THAT MATTERS: Resolve never blocks on the network. It answers
-// from the cache and hands anything unknown to a small background worker pool;
-// unknown names come back as KindPending and the caller simply renders the
-// native icon this time round. A dead CDN, DNS failure or a captive portal
-// therefore costs the Docker tab exactly nothing — the worst case is that
-// icons stay native forever, which is where they started.
+// Resolve never blocks on the network. It answers from the cache and queues
+// unknown names for background workers, reporting them as KindPending, so an
+// unreachable CDN only means the native icons stay.
 package iconsrc
 
 import (
@@ -43,31 +36,30 @@ const (
 	KindPending = "pending" // queued for lookup; ask again later
 )
 
-// Source names, surfaced so the UI (and a support log) can say where an icon came from.
+// Source names, so the UI can say where an icon came from.
 const (
 	SrcSimple    = "simple-icons"
 	SrcDashboard = "dashboard-icons"
 )
 
-// Cache lifetimes. Icon sets change slowly, so a hit is good for a month; a
-// genuine 404 is re-checked weekly (new icons DO get added upstream); a
-// transport error is retried in minutes, because that one is probably us.
+// Cache lifetimes. Icon sets change slowly, so a hit lasts a month; a 404 is
+// checked again weekly because new icons get added; a transport error is retried
+// within minutes because it is probably local.
 const (
 	ttlHit   = 30 * 24 * time.Hour
 	ttlMiss  = 7 * 24 * time.Hour
 	ttlError = 15 * time.Minute
 )
 
-// maxSVG caps a single cached icon. dashboard-icons holds a few very detailed
-// pieces of artwork; anything past this is not worth shipping to a browser 50
-// times over, and is treated as a miss.
+// maxSVG caps a single cached icon; a few very detailed dashboard-icons pieces
+// are larger and count as a miss.
 const maxSVG = 128 << 10
 
 // maxProbes bounds the HTTP requests one unknown name may cost, so a container
 // called "a-b-c-d-e-f" can't fan out into a probe storm.
 const maxProbes = 8
 
-// entry is one cached lookup. It is written to index.json verbatim.
+// entry is one cached lookup as stored in index.json.
 type entry struct {
 	Kind   string `json:"kind"`
 	Source string `json:"source,omitempty"`
@@ -101,13 +93,11 @@ type Resolver struct {
 	dir    string
 	client *http.Client
 
-	// SimpleBase / DashBase are the URL prefixes a slug is appended to (plus
-	// ".svg"). Overridden by the tests to point at an httptest server; in
-	// production they are the jsdelivr CDN with a raw.githubusercontent fallback.
+	// SimpleBase and DashBase are the URL prefixes for slug + ".svg", tried in
+	// order.
 	SimpleBase []string
 	DashBase   []string
 
-	// Now is the clock, injectable so a test can age the cache without sleeping.
 	Now func() time.Time
 
 	mu       sync.Mutex
@@ -121,9 +111,8 @@ type Resolver struct {
 	once   sync.Once
 }
 
-// New opens (or creates) the cache under dir/icons and starts the workers.
-// A dir that cannot be created is not fatal: the resolver then runs purely
-// in memory, which still spares the CDN and still never blocks a render.
+// New opens or creates the cache under dir/icons and starts the workers. If the
+// directory cannot be created the resolver works from memory only.
 func New(dir string) *Resolver {
 	r := &Resolver{
 		dir: filepath.Join(dir, "icons"),
@@ -149,7 +138,7 @@ func New(dir string) *Resolver {
 	}
 	_ = os.MkdirAll(r.dir, 0o755)
 	r.load()
-	for i := 0; i < 3; i++ { // three workers: enough to warm 50 names quickly, gentle on the CDN
+	for i := 0; i < 3; i++ { // enough to warm 50 names quickly while staying gentle on the CDN
 		r.wg.Add(1)
 		go r.worker()
 	}
@@ -165,8 +154,8 @@ func (r *Resolver) Close() {
 	})
 }
 
-// Resolve answers for every name from the cache, queueing anything unknown or
-// stale for a background lookup. It performs NO network I/O and never blocks.
+// Resolve answers for every name from the cache and queues anything unknown or
+// stale for a background lookup. It does no network I/O.
 func (r *Resolver) Resolve(names []string) map[string]Result {
 	out := make(map[string]Result, len(names))
 	now := r.Now()
@@ -194,8 +183,8 @@ func (r *Resolver) Resolve(names []string) map[string]Result {
 	return out
 }
 
-// enqueue must be called with the lock held. A full queue simply drops the name
-// — the next Resolve will offer it again.
+// enqueue is called with the lock held. A full queue drops the name; the next
+// Resolve offers it again.
 func (r *Resolver) enqueue(key string) {
 	if r.inflight[key] {
 		return
@@ -264,9 +253,8 @@ func (r *Resolver) worker() {
 	}
 }
 
-// lookup probes both icon sets for one already-normalised name and records the
-// outcome. Every exit path writes an entry, so a name is never probed twice in
-// quick succession — including the failure paths.
+// lookup probes both icon sets for one normalised name. Every path, failures
+// included, records an entry, so a name is not probed twice in quick succession.
 func (r *Resolver) lookup(key string) {
 	now := r.Now().Unix()
 	probes := 0
@@ -284,7 +272,7 @@ func (r *Resolver) lookup(key string) {
 				continue // the other host may still answer
 			}
 			if status == http.StatusNotFound {
-				return entry{}, false // an authoritative "no such icon": don't ask the mirror
+				return entry{}, false // the mirror would say the same
 			}
 			if status != http.StatusOK || !looksLikeSVG(body) {
 				continue
@@ -310,9 +298,8 @@ func (r *Resolver) lookup(key string) {
 			return
 		}
 	}
-	// Nothing found. A transport error is recorded as an ERROR (retried in
-	// minutes) rather than a miss (retried weekly), so a flaky moment can't
-	// blackhole an icon that really does exist upstream.
+	// A transport error is retried within minutes rather than weekly, so a
+	// flaky moment cannot hide an icon that exists.
 	r.put(key, entry{Kind: KindNone, At: now, Err: transportErr})
 }
 
@@ -407,8 +394,6 @@ func (r *Resolver) save() {
 	}
 }
 
-// ── name → slug ─────────────────────────────────────────────────────────────
-
 // nonSlug matches every run of characters that is not a lowercase alphanumeric;
 // it both splits a name into tokens and scrubs a token down to a slug.
 var nonSlug = regexp.MustCompile(`[^a-z0-9]+`)
@@ -432,9 +417,9 @@ func normalise(name string) string {
 	return strings.Trim(s, "-_. ")
 }
 
-// variants yields the name, then the name with trailing tokens progressively
-// dropped ("plex-media-server" → "plex-media" → "plex"), which is how a
-// container called "Nextcloud-AIO" or "BombVault-Test" still finds its icon.
+// variants yields the name and then shorter forms with trailing tokens dropped
+// ("plex-media-server", "plex-media", "plex"), so "Nextcloud-AIO" still finds
+// its icon.
 func variants(key string) []string {
 	toks := nonSlug.Split(key, -1)
 	clean := toks[:0]
@@ -483,8 +468,8 @@ func dashSlugs(key string) []string {
 	return out
 }
 
-// looksLikeSVG rejects a 200 that is not actually artwork (a CDN error page, an
-// HTML redirect stub), which would otherwise be cached and served as an icon.
+// looksLikeSVG rejects a 200 that is not artwork, such as a CDN error page,
+// which would otherwise be cached and served as an icon.
 func looksLikeSVG(b []byte) bool {
 	head := strings.ToLower(strings.TrimSpace(string(b[:min(len(b), 512)])))
 	if strings.HasPrefix(head, "<?xml") {

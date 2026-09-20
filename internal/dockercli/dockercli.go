@@ -1,9 +1,6 @@
-// Package dockercli is a thin client over the Docker Engine API, spoken directly
-// over the host's unix socket. Unlike a read-only viewer, this engine WRITES
-// (start/stop) as well as reads (list/inspect/stats). It never exposes create/build,
-// and never proxies exec to the browser: Exec exists ONLY for the readiness prober to
-// run a plan-configured exec probe (like a HEALTHCHECK). On a single-admin, same-origin
-// Unraid box the admin already has root, so this is not an escalation.
+// Package dockercli is a small client for the Docker Engine API over the host's
+// unix socket. It reads and changes container state but has no create or build,
+// and Exec serves only the readiness prober's exec probe.
 package dockercli
 
 import (
@@ -24,8 +21,7 @@ import (
 	"github.com/junkerderprovinz/cannonadecommand/internal/model"
 )
 
-// apiVersion pins a modern Engine API. Engine 29 rejects versions older than
-// v1.44; pinning avoids "client version too new/old" negotiation surprises.
+// apiVersion is pinned because Engine 29 rejects versions older than v1.44.
 const apiVersion = "v1.44"
 
 // Client talks to a Docker daemon.
@@ -34,14 +30,12 @@ type Client struct {
 	base string
 }
 
-// New builds a client over an explicit http.Client and base URL. Used in tests
-// against an httptest server.
+// New builds a client over an explicit http.Client and base URL.
 func New(hc *http.Client, base string) *Client {
 	return &Client{hc: hc, base: strings.TrimRight(base, "/")}
 }
 
-// NewUnix builds a client that dials the Docker daemon over its unix socket
-// (read-only bind is enough for list/inspect/stats; start/stop need read-write).
+// NewUnix builds a client that dials the Docker daemon over its unix socket.
 func NewUnix(socket string) *Client {
 	hc := &http.Client{
 		Timeout: 30 * time.Second,
@@ -79,9 +73,9 @@ type apiPort struct {
 }
 
 type apiNetwork struct {
-	IPAddress  string `json:"IPAddress"` // runtime IP (empty when the container is stopped)
+	IPAddress  string `json:"IPAddress"` // empty while the container is stopped
 	IPAMConfig *struct {
-		IPv4Address string `json:"IPv4Address"` // the CONFIGURED static IP (e.g. a br0.x address) — survives a stop
+		IPv4Address string `json:"IPv4Address"` // configured static IP, kept while stopped
 	} `json:"IPAMConfig"`
 }
 
@@ -123,9 +117,7 @@ func (c *Client) List(ctx context.Context) ([]model.Container, error) {
 	for _, r := range raw {
 		net, ip := firstNetwork(r.NetworkSettings.Networks)
 		ports := formatPorts(r.Ports)
-		// A stopped container reports no Ports in the list; read its configured PortBindings so
-		// the Docker tab + allocations view still show the mappings (user #10). One extra inspect
-		// only for the stopped-and-portless ones.
+		// The list has no ports for a stopped container, so those get an inspect (#10).
 		if len(ports) == 0 && r.State != "running" {
 			ports = c.portsFor(ctx, r.ID)
 		}
@@ -145,8 +137,7 @@ func (c *Client) List(ctx context.Context) ([]model.Container, error) {
 	return out, nil
 }
 
-// formatMounts keeps the volume/bind mounts that map to a path inside the
-// container (an anonymous mount with no Destination carries no useful info).
+// formatMounts keeps the mounts that map to a path inside the container.
 func formatMounts(mounts []apiMount) []model.Mount {
 	out := make([]model.Mount, 0, len(mounts))
 	for _, m := range mounts {
@@ -158,10 +149,8 @@ func formatMounts(mounts []apiMount) []model.Mount {
 	return out
 }
 
-// firstNetwork returns a deterministic primary network name + its IP. For a
-// stopped container the runtime IPAddress is empty, so fall back to the configured
-// static IP (IPAMConfig) — that's the br0.x address the user assigned, which should
-// still show while the container is off.
+// firstNetwork returns the alphabetically first network and its IP, falling back
+// to the configured static IP while the container is stopped.
 func firstNetwork(nets map[string]apiNetwork) (string, string) {
 	if len(nets) == 0 {
 		return "", ""
@@ -199,12 +188,9 @@ func formatPorts(ports []apiPort) []string {
 	return out
 }
 
-// portsFor reads a STOPPED container's CONFIGURED port mappings from its HostConfig.PortBindings.
-// The /containers/json list endpoint reports Ports only for RUNNING containers, so a stopped
-// container comes back with an empty Ports slice — but the user's published mappings (e.g. a
-// bridge container's 8080:80) live in HostConfig.PortBindings and survive a stop. Formatted like
-// formatPorts ("hostPort:containerPort/proto" when published, else "containerPort/proto"), sorted
-// for stability. Best-effort: any error yields nil (the row simply shows no ports, as before).
+// portsFor reads a stopped container's port mappings from HostConfig.PortBindings,
+// which survive a stop, formatted and sorted like formatPorts. Without bindings it
+// returns the exposed ports, and on any error nil.
 func (c *Client) portsFor(ctx context.Context, ref string) []string {
 	resp, err := c.do(ctx, "GET", "/containers/"+url.PathEscape(ref)+"/json")
 	if err != nil {
@@ -234,7 +220,7 @@ func (c *Client) portsFor(ctx context.Context, ref string) []string {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	for _, k := range keys { // k = "80/tcp"
+	for _, k := range keys {
 		binds := raw.HostConfig.PortBindings[k]
 		if len(binds) == 0 {
 			if !seen[k] {
@@ -246,7 +232,7 @@ func (c *Client) portsFor(ctx context.Context, ref string) []string {
 		for _, b := range binds {
 			s := k
 			if b.HostPort != "" {
-				s = b.HostPort + ":" + k // "8080:80/tcp"
+				s = b.HostPort + ":" + k
 			}
 			if !seen[s] {
 				seen[s] = true
@@ -254,7 +240,6 @@ func (c *Client) portsFor(ctx context.Context, ref string) []string {
 			}
 		}
 	}
-	// nothing published -> fall back to the exposed (unpublished) ports so the row still shows something
 	if len(out) == 0 {
 		ek := make([]string, 0, len(raw.Config.ExposedPorts))
 		for k := range raw.Config.ExposedPorts {
@@ -271,7 +256,7 @@ func (c *Client) portsFor(ctx context.Context, ref string) []string {
 	return out
 }
 
-// Inspect is the authoritative live state of one container.
+// Inspect is the live state of one container.
 type Inspect struct {
 	Running bool
 	Health  string // "healthy" / "unhealthy" / "starting" / "none"
@@ -308,8 +293,8 @@ func (c *Client) Inspect(ctx context.Context, ref string) (Inspect, error) {
 	return ins, nil
 }
 
-// PID returns the container's main process id on the host (State.Pid), for entering
-// its network namespace to shape traffic. 0 when not running.
+// PID returns the container's main process id on the host, or 0 when it is not
+// running.
 func (c *Client) PID(ctx context.Context, ref string) (int, error) {
 	resp, err := c.do(ctx, "GET", "/containers/"+url.PathEscape(ref)+"/json")
 	if err != nil {
@@ -361,14 +346,14 @@ func (c *Client) post(ctx context.Context, path string) error {
 		return err
 	}
 	defer func() { _ = resp.Body.Close() }()
-	// 204 = done, 304 = already in that state — both are success for us.
+	// 304 means the container is already in that state.
 	if resp.StatusCode == http.StatusNoContent || resp.StatusCode == http.StatusNotModified {
 		return nil
 	}
 	return apiError(resp)
 }
 
-// doBody issues a request carrying a JSON body (the container-update endpoint).
+// doBody issues a request with a JSON body.
 func (c *Client) doBody(ctx context.Context, method, path string, body any) (*http.Response, error) {
 	var r io.Reader
 	if body != nil {
@@ -386,7 +371,7 @@ func (c *Client) doBody(ctx context.Context, method, path string, body any) (*ht
 	return c.hc.Do(req)
 }
 
-// Limits reads a container's CONFIGURED resource caps from its HostConfig.
+// Limits reads a container's configured resource caps and restart policy.
 func (c *Client) Limits(ctx context.Context, ref string) (model.Limits, error) {
 	resp, err := c.do(ctx, "GET", "/containers/"+url.PathEscape(ref)+"/json")
 	if err != nil {
@@ -411,16 +396,13 @@ func (c *Client) Limits(ctx context.Context, ref string) (model.Limits, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
 		return model.Limits{}, fmt.Errorf("decode limits: %w", err)
 	}
-	// A container capped the legacy way (--cpu-quota/--cpu-period) has NanoCpus 0;
-	// show the effective CPU count so the editor doesn't report "no limit".
+	// A container capped with --cpu-quota and --cpu-period has NanoCpus 0, so the
+	// effective CPU count is derived from those.
 	nano := raw.HostConfig.NanoCpus
 	if nano == 0 && raw.HostConfig.CpuQuota > 0 && raw.HostConfig.CpuPeriod > 0 {
 		nano = raw.HostConfig.CpuQuota * 1_000_000_000 / raw.HostConfig.CpuPeriod
 	}
-	// Docker reports an unset restart policy as either "no" or "" depending on the
-	// engine version; both mean "does not auto-restart". Normalise "" -> "no" so the
-	// frontend always sees one of the four canonical values (its dropdown prefill and
-	// the "no auto-start" warning badge then behave deterministically across versions).
+	// Depending on the engine version an unset policy reads "no" or "".
 	policy := raw.HostConfig.RestartPolicy.Name
 	if policy == "" {
 		policy = "no"
@@ -428,10 +410,8 @@ func (c *Client) Limits(ctx context.Context, ref string) (model.Limits, error) {
 	return model.Limits{MemBytes: raw.HostConfig.Memory, NanoCPUs: nano, CpusetCPUs: raw.HostConfig.CpusetCpus, RestartPolicy: policy}, nil
 }
 
-// HostMemTotal returns the host's total RAM in bytes as the Docker daemon reports it
-// (GET /info → MemTotal). It's a robust fallback for /proc/meminfo: the daemon always
-// knows the host RAM, so "remove RAM limit" (which sets the cap to the host total) and
-// the limit UI still work even if the supervisor can't read /proc. 0 on any error.
+// HostMemTotal returns the host's total RAM in bytes as the daemon reports it, or
+// 0 on any error. It backs up /proc/meminfo.
 func (c *Client) HostMemTotal(ctx context.Context) int64 {
 	resp, err := c.do(ctx, "GET", "/info")
 	if err != nil {
@@ -450,17 +430,11 @@ func (c *Client) HostMemTotal(ctx context.Context) int64 {
 	return info.MemTotal
 }
 
-// UpdateResources sets a container's memory + CPU caps via Docker's
-// container-update endpoint: applied LIVE (no restart) and persisted by Docker
-// across restarts. Only the fields the caller actually set (> 0) are sent, so a
-// zero field LEAVES that cap unchanged — Docker's update ignores a 0 (it cannot
-// REMOVE a cap; that needs recreating the container). Setting NanoCpus also
-// clears any legacy CpuQuota/CpuPeriod so the two can't conflict on next restart.
+// UpdateResources sets a container's memory and CPU caps through Docker's
+// container update, without a restart. A zero field leaves that cap unchanged.
 func (c *Client) UpdateResources(ctx context.Context, ref string, l model.Limits) error {
-	// The RIGHT update body depends on the caps the container was CREATED with. moby
-	// validates every update against the container's STORED HostConfig BEFORE merging
-	// (container_unix.go UpdateContainer), so the stored values decide what is legal —
-	// an inspect failure means we cannot build a correct body: fail fast with the cause.
+	// moby validates an update against the stored HostConfig before merging
+	// (UpdateContainer in container_unix.go), so the body depends on it.
 	cur, err := c.hostCaps(ctx, ref)
 	if err != nil {
 		return fmt.Errorf("inspect %s before update: %w", ref, err)
@@ -468,47 +442,32 @@ func (c *Client) UpdateResources(ctx context.Context, ref string, l model.Limits
 	body := map[string]any{}
 	if l.MemBytes > 0 {
 		body["Memory"] = l.MemBytes
-		// moby rejects a Memory update UNLESS Memory <= the STORED MemorySwap or the body
-		// carries a MemorySwap of its own: `resources.Memory > cResources.MemorySwap &&
-		// resources.MemorySwap == 0` — a RAW int64 comparison, so a stored swap of 0 (never
-		// capped) or -1 (unlimited) trips it for ANY positive Memory. That is why setting a
-		// RAM cap failed on this box for days ("Memory limit should be smaller than already
-		// set memoryswap limit"): a container created with --memory carries MemorySwap =
-		// 2×Memory, and raising/removing past it — or capping a never-capped container —
-		// needs the swap sent along. Policy, preserving the user's own swap semantics:
-		//   · stored swap == stored memory (the deliberate "no swap" recipe)
-		//       → keep swap disabled: MemorySwap = new Memory.
-		//   · new Memory fits under a finite stored swap → send nothing, cap is untouched.
-		//   · anything else (stored 0, stored -1, finite-but-too-small)
-		//       → MemorySwap = -1 (unlimited swap; valid for any Memory).
+		// moby rejects a Memory above the stored MemorySwap unless the body carries
+		// a MemorySwap too. The comparison is on raw int64s, so a stored 0 or -1
+		// fails for any positive Memory. Swap equal to memory means swap is off and
+		// stays off; a Memory under a finite stored swap needs nothing; anything
+		// else gets docker's create-time default of twice the memory, because
+		// dockerd refuses -1 on an update.
 		switch {
 		case cur.Memory > 0 && cur.MemorySwap == cur.Memory:
 			body["MemorySwap"] = l.MemBytes
 		case cur.MemorySwap > 0 && l.MemBytes <= cur.MemorySwap:
-			// fits — leave the existing swap cap alone
 		default:
-			// 2×Memory = docker's own create-time default. A POSITIVE swap value is the
-			// only variant real dockerd accepted in the CI integration test — the -1
-			// (“unlimited”) form was rejected on update, and the no-swap retry then hit
-			// the raw “Memory limit should be smaller than already set memoryswap limit”.
 			body["MemorySwap"] = 2 * l.MemBytes
 		}
 	}
 	if l.NanoCPUs > 0 {
-		// moby refuses NanoCpus while the STORED HostConfig carries a CFS quota OR period
-		// ("Conflicting options: Nano CPUs cannot be updated as CPU Quota has already been
-		// set") — the check runs against the stored values BEFORE any merge, so clearing
-		// the quota in the same body cannot help, and a stored CpuPeriod cannot be cleared
-		// at all (period -1 fails validation). For such containers the new limit is
-		// expressed IN THEIR OWN scheme instead: CpuQuota = cpus × period.
+		// moby refuses NanoCpus while the stored HostConfig has a CFS quota or
+		// period, and a stored period cannot be cleared, so such a container gets
+		// the limit in its own scheme: CpuQuota = cpus * period.
 		if cur.CpuQuota > 0 || cur.CpuPeriod > 0 {
 			period := cur.CpuPeriod
 			if period <= 0 {
-				period = 100000 // Docker's default CFS period (100ms)
+				period = 100000 // Docker's default CFS period, 100ms
 			}
 			quota := l.NanoCPUs * period / 1_000_000_000
 			if quota < 1000 {
-				quota = 1000 // moby's minimum (1ms)
+				quota = 1000 // moby's minimum, 1ms
 			}
 			body["CpuQuota"] = quota
 			body["CpuPeriod"] = period
@@ -517,15 +476,15 @@ func (c *Client) UpdateResources(ctx context.Context, ref string, l model.Limits
 		}
 	}
 	if l.CpusetCPUs != "" {
-		body["CpusetCpus"] = l.CpusetCPUs // CPU pinning, e.g. "0-3,6"
+		body["CpusetCpus"] = l.CpusetCPUs
 	}
 	if len(body) == 0 {
-		return nil // nothing to change
+		return nil
 	}
 	err = c.postUpdate(ctx, ref, body)
 	if err != nil && body["MemorySwap"] != nil && mentionsSwap(err) {
-		// Defensive fallback for daemons that reject the swap field itself (cgroup-v1
-		// memsw). Log the FIRST error too — the retry's error otherwise masks it.
+		// Daemons without the cgroup v1 memsw controller reject the swap field. The
+		// first error is logged because the retry's error would hide it.
 		log.Printf("dockercli: update %s with MemorySwap failed (%v), retrying without", ref, err)
 		delete(body, "MemorySwap")
 		err = c.postUpdate(ctx, ref, body)
@@ -533,16 +492,13 @@ func (c *Client) UpdateResources(ctx context.Context, ref string, l model.Limits
 	return err
 }
 
-// SetRestartPolicy sets a container's Docker restart policy live via the
-// container-update endpoint: applied without recreating the container and
-// persisted by Docker across restarts. MaximumRetryCount is left unset (0):
-// Docker requires it to be 0 for "no"/"always"/"unless-stopped", and 0 means
-// "retry forever" for "on-failure". The caller validates the policy string.
+// SetRestartPolicy sets a container's restart policy through a container update.
+// MaximumRetryCount stays 0, which Docker requires for every policy but
+// on-failure and reads there as retry forever.
 func (c *Client) SetRestartPolicy(ctx context.Context, ref, policy string) error {
 	return c.postUpdate(ctx, ref, map[string]any{"RestartPolicy": map[string]any{"Name": policy}})
 }
 
-// postUpdate POSTs one container-update body.
 func (c *Client) postUpdate(ctx context.Context, ref string, body map[string]any) error {
 	resp, err := c.doBody(ctx, "POST", "/containers/"+url.PathEscape(ref)+"/update", body)
 	if err != nil {
@@ -561,12 +517,11 @@ func mentionsSwap(err error) bool {
 	return strings.Contains(m, "memsw") || strings.Contains(m, "swap")
 }
 
-// hostCaps are the CURRENT HostConfig caps an update must be built against.
+// hostCaps are the stored HostConfig caps an update is built against.
 type hostCaps struct {
 	Memory, MemorySwap, NanoCpus, CpuQuota, CpuPeriod int64
 }
 
-// hostCaps reads the container's current Memory/MemorySwap/NanoCpus/CpuQuota/CpuPeriod.
 func (c *Client) hostCaps(ctx context.Context, ref string) (hostCaps, error) {
 	resp, err := c.do(ctx, "GET", "/containers/"+url.PathEscape(ref)+"/json")
 	if err != nil {
@@ -585,15 +540,11 @@ func (c *Client) hostCaps(ctx context.Context, ref string) (hostCaps, error) {
 	return raw.HostConfig, nil
 }
 
-// Exec runs a command inside a container and returns its exit code. Used ONLY by the
-// readiness prober (an exec readiness check, like a HEALTHCHECK) — it is not exposed as
-// a proxy verb. Detach:false blocks until the command finishes, then we inspect the
-// exec for its exit code.
+// Exec runs a command inside a container and returns its exit code.
 func (c *Client) Exec(ctx context.Context, ref string, cmd []string) (int, error) {
-	// AttachStdout/Stderr MUST be true: the start below only blocks until the attached
-	// output stream reaches EOF, i.e. until the process exits. With no streams attached
-	// the daemon returns as soon as the process is LAUNCHED, and the follow-up exit-code
-	// inspect would race the still-running command.
+	// The start below blocks until the attached output reaches EOF, which is when
+	// the process exits. Without attached streams it returns at launch, and the
+	// exit code read would race the command.
 	resp, err := c.doBody(ctx, "POST", "/containers/"+url.PathEscape(ref)+"/exec",
 		map[string]any{"AttachStdout": true, "AttachStderr": true, "Cmd": cmd})
 	if err != nil {
@@ -622,9 +573,9 @@ func (c *Client) Exec(ctx context.Context, ref string, cmd []string) (int, error
 	}
 	defer func() { _ = startResp.Body.Close() }()
 	if startResp.StatusCode != http.StatusOK && startResp.StatusCode != http.StatusCreated {
-		return -1, apiError(startResp) // a failed exec-start must not later read as a clean exit 0 ("ready")
+		return -1, apiError(startResp)
 	}
-	_, _ = io.Copy(io.Discard, startResp.Body) // drain to EOF so the exec completes, not a truncated 64 KiB
+	_, _ = io.Copy(io.Discard, startResp.Body)
 	insResp, err := c.do(ctx, "GET", "/exec/"+url.PathEscape(created.ID)+"/json")
 	if err != nil {
 		return -1, err
@@ -646,8 +597,7 @@ func (c *Client) Exec(ctx context.Context, ref string, cmd []string) (int, error
 	return ins.ExitCode, nil
 }
 
-// Logs returns the last `tail` lines of a container's combined stdout+stderr, demuxed
-// from Docker's stream framing. Read-only; used by the log-match readiness probe.
+// Logs returns the last tail lines of a container's stdout and stderr.
 func (c *Client) Logs(ctx context.Context, ref string, tail int) (string, error) {
 	if tail <= 0 {
 		tail = 100
@@ -664,13 +614,11 @@ func (c *Client) Logs(ctx context.Context, ref string, tail int) (string, error)
 	return demuxLogs(raw), nil
 }
 
-// demuxLogs strips Docker's 8-byte stream headers (non-TTY containers frame each chunk
-// as [stream 0 0 0 size(4-BE)] payload). A TTY container's logs are raw — detected by
-// the header shape — and returned unchanged.
+// demuxLogs strips Docker's 8-byte stream headers (stream, 0, 0, 0, big-endian
+// size). A TTY container's logs have no headers and come back unchanged.
 func demuxLogs(b []byte) string {
-	// a log frame's stream byte is 1 (stdout) or 2 (stderr) — never 0 (stdin) — and the
-	// next three bytes are 0. Requiring 1/2 (not <=2) avoids misreading a raw TTY line
-	// that merely starts with a NUL byte as framed.
+	// The stream byte is 1 or 2, never 0, so a raw line that starts with NUL is
+	// not taken for a frame.
 	framed := len(b) >= 8 && (b[0] == 1 || b[0] == 2) && b[1] == 0 && b[2] == 0 && b[3] == 0
 	if !framed {
 		return string(b)
@@ -688,7 +636,7 @@ func demuxLogs(b []byte) string {
 	return string(out)
 }
 
-// dockerStats is the raw docker /stats response we compute a model.Stats from.
+// dockerStats is the part of the /stats response computeStats reads.
 type dockerStats struct {
 	CPUStats struct {
 		CPUUsage struct {
@@ -710,7 +658,6 @@ type dockerStats struct {
 			Cache uint64 `json:"cache"`
 		} `json:"stats"`
 	} `json:"memory_stats"`
-	// per-interface cumulative counters; we sum them for the live up/down rate.
 	Networks map[string]struct {
 		RxBytes uint64 `json:"rx_bytes"`
 		TxBytes uint64 `json:"tx_bytes"`
@@ -734,12 +681,9 @@ func (c *Client) Stats(ctx context.Context, ref string) (model.Stats, error) {
 	return computeStats(raw), nil
 }
 
-// StatsLive returns an instantaneous snapshot with a REAL CPU delta. Unlike
-// Stats (one-shot, whose CPU% is a lifetime average because precpu_stats is
-// empty), this uses stream=false WITHOUT one-shot, so dockerd samples twice
-// ~1s apart and fills precpu_stats — yielding the CURRENT CPU% the idle-stop
-// watcher needs as its liveness signal. It costs ~1s per call, so the monitor
-// only calls it for the few containers that have idle-stop enabled.
+// StatsLive returns a snapshot with the current CPU%. Without one-shot, dockerd
+// samples twice about a second apart and fills precpu_stats, where Stats gives a
+// lifetime average. The second it costs is why only idle-stop uses it.
 func (c *Client) StatsLive(ctx context.Context, ref string) (model.Stats, error) {
 	resp, err := c.do(ctx, "GET", "/containers/"+url.PathEscape(ref)+"/stats?stream=false")
 	if err != nil {
@@ -756,8 +700,7 @@ func (c *Client) StatsLive(ctx context.Context, ref string) (model.Stats, error)
 	return computeStats(raw), nil
 }
 
-// computeStats mirrors the docker CLI's own CPU%/mem math and is a pure function
-// so it can be unit-tested with a canned snapshot.
+// computeStats follows the docker CLI's CPU and memory math.
 func computeStats(s dockerStats) model.Stats {
 	out := model.Stats{}
 	cpuDelta := float64(s.CPUStats.CPUUsage.TotalUsage) - float64(s.PreCPUStats.CPUUsage.TotalUsage)
@@ -779,7 +722,6 @@ func computeStats(s dockerStats) model.Stats {
 	if s.MemoryStats.Limit > 0 {
 		out.MemPercent = round2(float64(used) / float64(s.MemoryStats.Limit) * 100)
 	}
-	// cumulative network counters, summed over every interface (rx = download, tx = upload).
 	for _, n := range s.Networks {
 		out.NetRx += n.RxBytes
 		out.NetTx += n.TxBytes
@@ -798,9 +740,9 @@ func firstName(names []string) string {
 	return ""
 }
 
-// exitCodeFromStatus reads the exit code out of the /containers/json Status
-// string for a stopped container ("Exited (137) 5 minutes ago") — cheaper than
-// inspecting each one. 0 for anything not shaped like an exit (running/created).
+// exitCodeFromStatus reads the exit code from a list Status such as
+// "Exited (137) 5 minutes ago", which saves an inspect per container. Any other
+// status gives 0.
 func exitCodeFromStatus(status string) int {
 	i := strings.Index(status, "Exited (")
 	if i < 0 {
@@ -818,8 +760,8 @@ func exitCodeFromStatus(status string) int {
 	return n
 }
 
-// healthFromStatus best-effort reads health from the /containers/json Status
-// string ("Up 2 hours (healthy)"), which is cheaper than inspecting each one.
+// healthFromStatus reads the health from a list Status such as
+// "Up 2 hours (healthy)".
 func healthFromStatus(status string) string {
 	switch {
 	case strings.Contains(status, "(healthy)"):

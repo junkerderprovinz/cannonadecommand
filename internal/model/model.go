@@ -1,7 +1,5 @@
-// Package model holds the types shared across every CannonadeCommand unit.
-// The engine orchestrates Docker containers on the Unraid host: it starts them
-// in a dependency-aware order, gated on each one becoming ready, the way a
-// gunner rakes fire down a line one shot at a time.
+// Package model holds the types shared by the CannonadeCommand packages: the
+// start plan, its run results and the automation config.
 package model
 
 // Container is a Docker container as discovered on the host (read-only view).
@@ -27,12 +25,9 @@ type Mount struct {
 	RW     bool   `json:"rw"`     // read-write (false = read-only)
 }
 
-// Limits are a container's CONFIGURED resource caps (from HostConfig, 0 = no
-// limit). Read on demand (List() does not carry HostConfig) and edited through
-// Docker's container-update — applied live, no restart, and persisted by Docker
-// across restarts. NanoCPUs is CPUs*1e9 (1.5 CPUs = 1_500_000_000). RestartPolicy
-// is also live-read from HostConfig (Docker's restart policy, one of
-// "no"/"unless-stopped"/"always"/"on-failure") and live-set the same way.
+// Limits are a container's configured resource caps from HostConfig (0 means no
+// limit). Docker's container update applies them without a restart and keeps
+// them across restarts. NanoCPUs is CPUs*1e9.
 type Limits struct {
 	MemBytes      int64  `json:"mem_bytes"`
 	NanoCPUs      int64  `json:"nano_cpus"`
@@ -40,9 +35,9 @@ type Limits struct {
 	RestartPolicy string `json:"restart_policy,omitempty"` // Docker restart policy: no | unless-stopped | always | on-failure
 }
 
-// ProbeKind is how the engine decides a container is "ready" so the next stage
-// may fire. Most Community-Apps images ship NO HEALTHCHECK, so the TCP/running
-// probes are first-class, not just a fallback.
+// ProbeKind is how the engine decides a container is ready so the next stage
+// may start. Most Community Applications images ship without a HEALTHCHECK, so
+// the TCP and running probes matter as much as the health probe.
 type ProbeKind string
 
 const (
@@ -78,16 +73,13 @@ const (
 // Node is one managed container in the start plan.
 type Node struct {
 	Name         string   `json:"name"`                    // Unraid container name
-	After        []string `json:"after"`                   // must start AFTER these nodes are ready (edge: dep -> this)
-	DelaySeconds int      `json:"delay_seconds,omitempty"` // wait this long before starting it (the start delay)
+	After        []string `json:"after"`                   // starts once these nodes are ready
+	DelaySeconds int      `json:"delay_seconds,omitempty"` // wait this long before starting it
 	Probe        Probe    `json:"probe"`                   // how to decide it's ready
 	Policy       Policy   `json:"policy"`                  // what to do if it never becomes ready
-	// StartOrder is the user's coarse ordering priority: among containers that are
-	// startable at the same moment (dependencies satisfied), a LOWER positive number
-	// starts first; 0 means "unnumbered" and starts last, keeping the plan (list)
-	// order. It is a PRIORITY, not a strict permutation — duplicates are fine and
-	// break by list order. Dependencies/health-gates still bound it (a node is only
-	// ordered against others once its deps are ready), so it never races a dependency.
+	// StartOrder ranks nodes that become startable at the same moment: a lower
+	// positive number starts first, 0 starts last in plan order. Duplicates keep
+	// plan order, and dependencies always come first.
 	StartOrder int `json:"start_order,omitempty"`
 }
 
@@ -133,8 +125,6 @@ type RunResult struct {
 	Error  string       `json:"error,omitempty"` // set only when the plan itself is invalid
 }
 
-// ─────────────────────────── automation (the monitor subsystem) ───────────────
-
 // Schedule fires a lifecycle action on a container at a wall-clock time.
 type Schedule struct {
 	Name    string `json:"name"`           // container name
@@ -149,7 +139,7 @@ type Watchdog struct {
 	Name        string `json:"name"`
 	Enabled     bool   `json:"enabled"`
 	OnUnhealthy bool   `json:"on_unhealthy"` // restart when Docker health = unhealthy
-	OnExit      bool   `json:"on_exit"`      // restart on a NON-ZERO (crash) exit; a clean stop (0) is left alone
+	OnExit      bool   `json:"on_exit"`      // restart on a non-zero exit; a clean stop is left alone
 	MaxRestarts int    `json:"max_restarts"` // cap per hour (0 = unlimited)
 }
 
@@ -160,24 +150,21 @@ type Notify struct {
 	Webhook string `json:"webhook,omitempty"` // POST a JSON body to this URL
 }
 
-// Bandwidth caps a container's network rate. Docker has no native bandwidth API, so the
-// monitor applies it inside the container's network namespace with an iptables hashlimit DROP:
-// UPLOAD (egress) on OUTPUT, DOWNLOAD (ingress) on INPUT — no tc qdisc (this kernel ships no
-// sch_tbf, and sch_ingress crashes it). Re-applied while the container runs, lost on restart
-// until re-applied. A field <= 0 means "no cap" for that direction.
+// Bandwidth caps a container's network rate. Docker has no bandwidth API, so the
+// monitor adds iptables hashlimit drops in the container's network namespace
+// (upload on OUTPUT, download on INPUT); tc is out because Unraid's kernel ships
+// no sch_tbf and sch_ingress crashes it. A field <= 0 means no cap.
 type Bandwidth struct {
 	Name        string `json:"name"`
 	EgressKbit  int    `json:"egress_kbit"`            // upload cap (kbit/s)
 	IngressKbit int    `json:"ingress_kbit,omitempty"` // download cap (kbit/s)
 }
 
-// VMLimit is the CC-owned, config-stored part of a VM's limits — the ones the monitor must
-// re-assert every tick so they survive an Unraid VM-form "Apply" (which regenerates the domain
-// XML) and a VM restart. CPUCap is the CPU quota (% of one core): the Unraid form has no field
-// for it, so a form-Apply silently drops it. Bandwidth has no container netns to shape inside
-// either, so the monitor applies it host-side via an iptables physdev hashlimit on the VM's tap
-// (this kernel lacks the qdiscs libvirt's own domiftune QoS needs). CPU pin + RAM are NOT here:
-// the Unraid form manages them, so CC applies them once (virsh --config) and never fights the form.
+// VMLimit holds the VM limits the monitor reasserts every tick, because an Unraid
+// VM form Apply regenerates the domain XML and drops them. Bandwidth is shaped
+// host-side with an iptables physdev hashlimit on the VM's tap, since the kernel
+// lacks the qdiscs libvirt's domiftune needs. CPU pinning and RAM belong to the
+// Unraid form and are applied once instead.
 type VMLimit struct {
 	Name    string `json:"name"`
 	CPUCap  int    `json:"cpu_cap,omitempty"`  // % of one core (0 = uncapped)
@@ -185,13 +172,9 @@ type VMLimit struct {
 	OutKbit int    `json:"out_kbit,omitempty"` // upload cap (kbit/s)
 }
 
-// IdleStop stops a container after it has stayed idle (instantaneous CPU at or
-// below the threshold) for IdleMinutes — CC's take on ContainerNursery's
-// sleep-on-idle, driven by CPU LIVENESS instead of an HTTP proxy. A container
-// whose CPU rises above the threshold is "busy" and its idle timer resets, so a
-// container in active use is never stopped. Disabled entries and non-running
-// containers are ignored. The engine is stop-only (CC does not wake it back up —
-// the user or a schedule/Unraid autostart starts it again).
+// IdleStop stops a container once its CPU has stayed at or below the threshold
+// for IdleMinutes; any busier sample resets the timer. It only stops: starting
+// again is left to the user, a schedule or Unraid autostart.
 type IdleStop struct {
 	Name            string  `json:"name"`
 	Enabled         bool    `json:"enabled"`
@@ -216,9 +199,9 @@ type Config struct {
 	Notify     Notify            `json:"notify"`
 }
 
-// Stats is a one-shot resource snapshot for a container, for the live card gauges.
-// NetRx/NetTx are CUMULATIVE bytes since container start (summed over all interfaces);
-// the frontend diffs two samples to show a live download/upload RATE.
+// Stats is a one-shot resource snapshot for a container. NetRx and NetTx count
+// bytes since container start over all interfaces; the frontend diffs two
+// samples to get a rate.
 type Stats struct {
 	CPUPercent float64 `json:"cpu_percent"`
 	MemUsed    uint64  `json:"mem_used"`

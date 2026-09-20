@@ -27,7 +27,6 @@ func testServer(t *testing.T) (*Client, *httptest.Server) {
 		_, _ = w.Write([]byte(`{"State":{"Running":true,"Health":{"Status":"healthy"}},"NetworkSettings":{"IPAddress":"172.17.0.2"}}`))
 	})
 	mux.HandleFunc("/v1.44/containers/plain/json", func(w http.ResponseWriter, _ *http.Request) {
-		// a container with no HEALTHCHECK: State.Health is absent
 		_, _ = w.Write([]byte(`{"State":{"Running":true},"NetworkSettings":{"IPAddress":"172.17.0.3"}}`))
 	})
 	mux.HandleFunc("/v1.44/containers/gluetun/start", func(w http.ResponseWriter, _ *http.Request) {
@@ -74,11 +73,9 @@ func TestList(t *testing.T) {
 	if cs[1].Name != "sonarr" || cs[1].State != "exited" || cs[1].Health != "" {
 		t.Fatalf("sonarr parsed wrong: %+v", cs[1])
 	}
-	// a stopped container has no runtime IP; fall back to the configured static IP
 	if cs[1].Network != "br0.20" || cs[1].IP != "192.168.20.9" {
 		t.Fatalf("stopped container should show its static IP, got %+v", cs[1])
 	}
-	// mounts show even for a stopped container; the anonymous/no-destination one is dropped
 	if len(cs[1].Mounts) != 2 {
 		t.Fatalf("sonarr mounts parsed wrong: %+v", cs[1].Mounts)
 	}
@@ -99,7 +96,6 @@ func TestInspect(t *testing.T) {
 	if !ins.Running || ins.Health != "healthy" || ins.IP != "172.17.0.2" {
 		t.Fatalf("inspect gluetun wrong: %+v", ins)
 	}
-	// A container with no HEALTHCHECK must report health "none", not empty.
 	plain, err := c.Inspect(context.Background(), "plain")
 	if err != nil {
 		t.Fatalf("Inspect plain: %v", err)
@@ -132,18 +128,17 @@ func TestStats(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Stats: %v", err)
 	}
-	// cpuDelta=100, sysDelta=1000, cpus=2 → (100/1000)*2*100 = 20%
+	// (100/1000) * 2 CPUs * 100
 	if s.CPUPercent != 20 {
 		t.Fatalf("CPUPercent = %v, want 20", s.CPUPercent)
 	}
-	// usage 200MiB - cache 50MiB = 150MiB used; limit 1000MiB → 15%
+	// 200MiB usage minus 50MiB cache, of a 1000MiB limit
 	if s.MemUsed != 157286400 {
 		t.Fatalf("MemUsed = %d, want 157286400", s.MemUsed)
 	}
 	if s.MemPercent != 15 {
 		t.Fatalf("MemPercent = %v, want 15", s.MemPercent)
 	}
-	// net counters are summed across all interfaces (eth0 + eth1)
 	if s.NetRx != 1050 || s.NetTx != 205 {
 		t.Fatalf("net counters = rx %d / tx %d, want 1050 / 205", s.NetRx, s.NetTx)
 	}
@@ -188,9 +183,7 @@ func TestLimitsAndCpuset(t *testing.T) {
 	if !strings.Contains(gotBody, `"CpusetCpus":"0-3"`) {
 		t.Fatalf("update body missing cpuset: %s", gotBody)
 	}
-	// Never-capped container (stored MemorySwap 0): moby's raw check `Memory > stored
-	// MemorySwap && incoming MemorySwap == 0` trips for ANY positive Memory, so the body
-	// MUST carry MemorySwap:-1 or the very first RAM cap fails.
+	// With a stored MemorySwap of 0 moby rejects any Memory unless the body sends a swap too.
 	if err := c.UpdateResources(context.Background(), "pinme", model.Limits{MemBytes: 2147483648}); err != nil {
 		t.Fatalf("update mem: %v", err)
 	}
@@ -199,11 +192,8 @@ func TestLimitsAndCpuset(t *testing.T) {
 	}
 }
 
-// A container CREATED with --memory (Unraid "Extra Parameters") carries MemorySwap = 2×Memory.
-// Raising Memory past it — or REMOVING the cap (= set to host RAM) — is rejected unless the
-// swap cap is raised in the same update → MemorySwap:-1. A container with a stored CFS
-// quota/period REFUSES NanoCpus outright (moby validates against the STORED values before
-// merging), so the new limit must be expressed in the quota scheme instead.
+// A container created with --memory has MemorySwap = 2*Memory, and one with a CFS
+// quota refuses NanoCpus.
 func TestUpdateLiftsSwapAndQuotaCaps(t *testing.T) {
 	var gotBody string
 	mux := http.NewServeMux()
@@ -218,14 +208,13 @@ func TestUpdateLiftsSwapAndQuotaCaps(t *testing.T) {
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 	c := New(srv.Client(), srv.URL)
-	// "remove RAM limit" = set to host RAM (say 64G) — far above the stored 4G swap cap.
+	// Removing the RAM limit sets it to host RAM, far above the stored 4G swap.
 	if err := c.UpdateResources(context.Background(), "capped", model.Limits{MemBytes: 68719476736}); err != nil {
 		t.Fatalf("update mem: %v", err)
 	}
 	if !strings.Contains(gotBody, `"Memory":68719476736`) || !strings.Contains(gotBody, `"MemorySwap":`) {
 		t.Fatalf("memory update on a swap-capped container must lift the swap cap (2x), got: %s", gotBody)
 	}
-	// 2.5 cores on a quota-family container → CpuQuota = 2.5 × period, NO NanoCpus.
 	if err := c.UpdateResources(context.Background(), "capped", model.Limits{NanoCPUs: 2500000000}); err != nil {
 		t.Fatalf("update cpu: %v", err)
 	}
@@ -234,10 +223,8 @@ func TestUpdateLiftsSwapAndQuotaCaps(t *testing.T) {
 	}
 }
 
-// The user's own swap semantics survive a RAM edit: MemorySwap == Memory is the deliberate
-// "no swap" recipe and must FOLLOW the new Memory; a new Memory that fits under a bigger
-// stored swap cap must leave it untouched; and the SECOND edit after our own -1 (stored
-// MemorySwap -1) must send -1 again (raw int64: Memory > -1 is always true).
+// Swap equal to memory follows the new memory, a memory under a larger stored swap
+// leaves the swap alone, and a stored -1 still gets a swap sent.
 func TestUpdateMemoryPreservesSwapSemantics(t *testing.T) {
 	cases := []struct {
 		name, hostCfg, wantIn, wantOut string
@@ -272,8 +259,6 @@ func TestUpdateMemoryPreservesSwapSemantics(t *testing.T) {
 	}
 }
 
-// The update body cannot be built without the stored caps — an inspect failure must
-// surface as an error (not silently degrade to a body the daemon will reject).
 func TestUpdateFailsFastWhenInspectFails(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1.44/containers/gone/json", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusInternalServerError) })
@@ -285,8 +270,6 @@ func TestUpdateFailsFastWhenInspectFails(t *testing.T) {
 	}
 }
 
-// A cgroup-v1 box without swap accounting rejects the memsw write itself — the update is
-// then retried WITHOUT MemorySwap so at least the Memory cap applies.
 func TestUpdateRetriesWithoutSwapOnMemswError(t *testing.T) {
 	var bodies []string
 	mux := http.NewServeMux()
@@ -315,12 +298,10 @@ func TestUpdateRetriesWithoutSwapOnMemswError(t *testing.T) {
 }
 
 func TestDemuxLogs(t *testing.T) {
-	// non-TTY: two frames [stream 0 0 0 size] + payload
 	framed := []byte{1, 0, 0, 0, 0, 0, 0, 5, 'h', 'e', 'l', 'l', 'o', 2, 0, 0, 0, 0, 0, 0, 3, 'e', 'r', 'r'}
 	if got := demuxLogs(framed); got != "helloerr" {
 		t.Fatalf("demuxLogs(framed) = %q, want %q", got, "helloerr")
 	}
-	// TTY / raw text (no valid header shape) is returned unchanged
 	raw := []byte("plain log line without framing")
 	if got := demuxLogs(raw); got != string(raw) {
 		t.Fatalf("demuxLogs(raw) = %q, want it unchanged", got)

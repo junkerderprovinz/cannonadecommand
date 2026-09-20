@@ -1,26 +1,16 @@
-// Regression test: Folder view's THREE folder-content densities (v4.35.0 — a real List/Grid
-// split one level inside Folder view, extending v4.34.0's "Detailliert"/"Kompakt" toggle).
-//
-// jdp's live feedback on v4.34.0: "Die Ordneransicht gibt es immer noch nur als gridansicht" —
-// the shipped "Kompakt" density was still a vertical .cc-card-shaped tile, not the real List/Grid
-// split jdp asked for one level down inside Folder view. Clarified live: "Wie die native
-// Dockerliste aber abgespeckter. die grid ansicht soll so sein wie in Folderview 3. total
-// abgespeckt" — this file source-slices the REAL folderChip()/folderListRow()/folderDensity()/
-// setFolderDensity()/renderFolderView() out of docker.js (never re-typed) and proves:
-//   1. folderChip() ("Grid"): icon + name + a coloured status DOT + short status text + ONE tiny
-//      action button, all inline, nothing else (no stats/gauges/second row).
-//   2. folderListRow() ("Liste"): icon + name + a state BADGE + ONE action button, one full-width
-//      row, nothing else (no CPU/RAM/NET/port).
-//   3. Neither carries any of card()'s full-detail chrome.
-//   4. The single action in both always matches the container's actual state.
-//   5. Both still honour the live-search filter, same as card().
-//   6. folderDensity()/setFolderDensity() persist "full"/"grid"/"list" like every other cc.*
-//      pref, and a pre-4.35.0 "minimal" value migrates to "grid" (folderChip() IS v4.34.0's
-//      minimalRow() redesigned) rather than silently resetting to "full".
-//   7. renderFolderView() dispatches to the right builder per density (card() for "full",
-//      folderChip() for "grid", folderListRow() for "list").
-//   8. renderFolderView() preserves the page's scroll position across a full rebuild (item 2 —
-//      jdp: "Sbald man im ordner was macht springt es ganz nach oben in der seite").
+// Folder view holds three densities of its own, a List and a Grid one level below
+// the tab's. folderChip(), folderListRow(), folderDensity() and setFolderDensity()
+// are sliced out of docker.js, and this pins:
+//   1. folderChip(), the "Grid" density: icon, name, a coloured status dot, short
+//      status text and one small action button, all inline and nothing else.
+//   2. folderListRow(), the "Liste" density: icon, name, a state badge and one
+//      action button in a full-width row, with no CPU, RAM, NET or port.
+//   3. Neither carries any of card()'s detail chrome.
+//   4. The single action in both matches the container's state.
+//   5. Both honour the live-search filter, as card() does.
+//   6. The density persists as "full", "grid" or "list" like the other cc.*
+//      preferences, and a stored "minimal" from an older build reads as "grid",
+//      folderChip() being what that density renders now.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand', 'scripts');
@@ -29,7 +19,7 @@ const DOCKER = process.argv[2] || path.join(DIR, 'docker.js');
 let pass = 0, fail = 0;
 const ok = (name, cond, extra) => { cond ? (pass++, console.log('  PASS  ' + name)) : (fail++, console.log('  FAIL  ' + name + (extra ? '  -> ' + extra : ''))); };
 
-/* ── minimal DOM shim (only what these builders' own dependency chain actually touches) ─────── */
+// A DOM shim covering what these builders and their dependencies touch.
 class CL {
   constructor() { this.s = new Set(); }
   add(c) { this.s.add(c); } remove(c) { this.s.delete(c); }
@@ -72,7 +62,7 @@ const localStorage = {
 };
 const reset = () => { Object.keys(store).forEach(k => delete store[k]); };
 
-/* ── source-slice the REAL functions out of docker.js ────────────────────────────────────── */
+// Slice the functions under test out of docker.js.
 const src = fs.readFileSync(DOCKER, 'utf8');
 function grabFn(name) {
   const i = src.indexOf('function ' + name + '(');
@@ -86,9 +76,9 @@ function grabVar(name) {
   if (!m) throw new Error('var not found in docker.js: ' + name);
   return m[0];
 }
-ok('folderChip() really exists in docker.js (not just planned)', src.indexOf('function folderChip(') >= 0);
-ok('folderListRow() really exists in docker.js (not just planned)', src.indexOf('function folderListRow(') >= 0);
-ok('minimalRow() is genuinely retired — folderChip() replaced it, not a second parallel builder', src.indexOf('function minimalRow(') < 0);
+ok('folderChip() exists in docker.js', src.indexOf('function folderChip(') >= 0);
+ok('folderListRow() exists in docker.js', src.indexOf('function folderListRow(') >= 0);
+ok('minimalRow() is gone, folderChip() having replaced it rather than joined it', src.indexOf('function minimalRow(') < 0);
 
 const dockerApi = new Function('document', 'localStorage',
   'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
@@ -98,7 +88,7 @@ const dockerApi = new Function('document', 'localStorage',
   'var iconCache = {};\n' +
   'var containerNames = [];\n' +
   'var filterText = "";\n' +
-  'var mode = "list";\n' +               // setFolderDensity()'s re-render guard — "list" (view mode) means it never has to call renderFolderView()
+  'var mode = "list";\n' +               // the view mode, so setFolderDensity() never calls renderFolderView()
   'var unpauseGrace = {};\n' +
   grabVar('STATE_LABELS') + '\n' +
   grabVar('FOLDER_DENSITY_KEY') + '\n' +
@@ -114,87 +104,87 @@ const dockerApi = new Function('document', 'localStorage',
 
 function collectClasses(node, out) { out.push(...node.classList.s); node.children.forEach(c => collectClasses(c, out)); return out; }
 
-console.log('\n"Grid" density — folderChip(): icon + name + status dot + status text + ONE action — nothing else');
+console.log('\nThe "Grid" density: folderChip() builds an icon, a name, a dot, a status and one action');
 {
   reset();
   const chip = dockerApi.folderChip({ name: 'jdownloader', state: 'running' });
-  ok('wrapper carries .cc-card (rides card()\'s colour-mode CSS) AND .cc-chip (its own layout override)', chip.classList.contains('cc-card') && chip.classList.contains('cc-chip'));
-  ok('wrapper is tagged with the container name (dataset.name)', chip.dataset.name === 'jdownloader', chip.dataset.name);
-  ok('EXACTLY 4 direct children: icon, name, status dot, status text — action wrapper makes 5', chip.children.length === 5, chip.children.length);
+  ok('the wrapper carries .cc-card for card()\'s colour CSS and .cc-chip for its layout', chip.classList.contains('cc-card') && chip.classList.contains('cc-chip'));
+  ok('the wrapper is tagged with the container name', chip.dataset.name === 'jdownloader', chip.dataset.name);
+  ok('five direct children: icon, name, dot, status, action wrapper', chip.children.length === 5, chip.children.length);
 
   const classes = collectClasses(chip, []);
-  ok('shows an icon slot (real .cc-card-ico + .cc-chip-ico, no icon source resolved in this harness -> the placeholder)', classes.includes('cc-card-ico') && classes.includes('cc-chip-ico'));
+  ok('an icon slot is there, the placeholder for want of a resolved source', classes.includes('cc-card-ico') && classes.includes('cc-chip-ico'));
 
   const nameEl = chip.children.find(n => n.classList.contains('cc-chip-name'));
-  ok('shows the container NAME as text', !!nameEl && nameEl.textContent === 'jdownloader', nameEl && nameEl.textContent);
+  ok('the container name is shown as text', !!nameEl && nameEl.textContent === 'jdownloader', nameEl && nameEl.textContent);
 
   const dot = chip.children.find(n => n.classList.contains('cc-chip-dot'));
-  ok('shows a coloured status DOT (cc-badge-<state>, font-size:0 in CSS, same colour vocabulary as stateBadge())', !!dot && dot.classList.contains('cc-badge') && dot.classList.contains('cc-badge-running'));
-  ok('the dot is tagged with dataset.name too', dot && dot.dataset.name === 'jdownloader');
+  ok('the status dot uses stateBadge()\'s colour vocabulary', !!dot && dot.classList.contains('cc-badge') && dot.classList.contains('cc-badge-running'));
+  ok('the dot is tagged with the container name too', dot && dot.dataset.name === 'jdownloader');
 
   const statusEl = chip.children.find(n => n.classList.contains('cc-chip-status'));
-  ok('shows a separate short STATUS TEXT next to the dot', !!statusEl && statusEl.textContent === 'running', statusEl && statusEl.textContent);
+  ok('a short status text sits beside the dot', !!statusEl && statusEl.textContent === 'running', statusEl && statusEl.textContent);
 
   const actWrap = chip.children.find(n => n.classList.contains('cc-chip-act'));
-  ok('exactly ONE action control — "the single most essential action", not a full action bar', !!actWrap && actWrap.children.length === 1);
+  ok('one action control, not an action bar', !!actWrap && actWrap.children.length === 1);
   const btn = actWrap && actWrap.children[0];
-  ok('the action button is the real actBtn()/.cc-actbtn (same icon-button machinery as the full card)', !!btn && btn.classList.contains('cc-actbtn'));
-  ok('running container -> the essential action is STOP (fa-stop)', btn.children[0].className.indexOf('fa-stop') >= 0, btn.children[0].className);
+  ok('the button is actBtn(), the same machinery the full card uses', !!btn && btn.classList.contains('cc-actbtn'));
+  ok('for a running container the action is stop', btn.children[0].className.indexOf('fa-stop') >= 0, btn.children[0].className);
 
-  console.log('\n  ...and NONE of the full card()\'s detail chrome ever appears in a Grid chip:');
+  console.log('\n  ...and none of the full card\'s detail chrome turns up in a Grid chip:');
   const forbidden = ['cc-card-stats', 'cc-gauge', 'cc-card-badges', 'cc-card-actions', 'cc-card-res', 'cc-plan', 'cc-b-cpu', 'cc-b-ram', 'cc-b-bw', 'cc-b-net', 'cc-b-port', 'cc-b-ip', 'cc-card-movebtn', 'cc-card-img', 'cc-frow', 'cc-frow-name', 'cc-frow-status'];
-  forbidden.forEach(fc => ok('  no "' + fc + '" (that is full-card()/Liste-only chrome)', !classes.includes(fc)));
+  forbidden.forEach(fc => ok('  no "' + fc + '"', !classes.includes(fc)));
 }
 
-console.log('\n"Liste" density — folderListRow(): icon + name + status BADGE + ONE action — full-width row, nothing else');
+console.log('\nThe "Liste" density: folderListRow() builds a full-width row with a status badge');
 {
   reset();
   const row = dockerApi.folderListRow({ name: 'sonarr', state: 'running' });
-  ok('wrapper carries .cc-card AND .cc-frow', row.classList.contains('cc-card') && row.classList.contains('cc-frow'));
-  ok('wrapper is tagged with the container name (dataset.name)', row.dataset.name === 'sonarr', row.dataset.name);
-  ok('EXACTLY 4 direct children: icon, name, status badge, action', row.children.length === 4, row.children.length);
+  ok('the wrapper carries .cc-card and .cc-frow', row.classList.contains('cc-card') && row.classList.contains('cc-frow'));
+  ok('the wrapper is tagged with the container name', row.dataset.name === 'sonarr', row.dataset.name);
+  ok('four direct children: icon, name, status badge, action', row.children.length === 4, row.children.length);
 
   const classes = collectClasses(row, []);
-  ok('shows an icon slot (real .cc-card-ico, no source resolved -> the placeholder)', classes.includes('cc-card-ico') || classes.includes('cc-card-ico-ph'));
+  ok('an icon slot is there, the placeholder for want of a resolved source', classes.includes('cc-card-ico') || classes.includes('cc-card-ico-ph'));
 
   const nameEl = row.children.find(n => n.classList.contains('cc-frow-name'));
-  ok('shows the container NAME as text', !!nameEl && nameEl.textContent === 'sonarr', nameEl && nameEl.textContent);
+  ok('the container name is shown as text', !!nameEl && nameEl.textContent === 'sonarr', nameEl && nameEl.textContent);
 
   const statusWrap = row.children.find(n => n.classList.contains('cc-frow-status'));
-  ok('shows a status BADGE wrapper (native-list-style, not a bare dot)', !!statusWrap && statusWrap.children.length === 1);
+  ok('the status is a badge wrapper, as in the native list, not a bare dot', !!statusWrap && statusWrap.children.length === 1);
   const badge = statusWrap && statusWrap.children[0];
-  ok('the badge is the real stateBadge() (same one card() uses)', !!badge && badge.classList.contains('cc-badge') && badge.classList.contains('cc-badge-running'));
+  ok('the badge is stateBadge(), the one card() uses', !!badge && badge.classList.contains('cc-badge') && badge.classList.contains('cc-badge-running'));
 
   const actWrap = row.children.find(n => n.classList.contains('cc-frow-act'));
-  ok('exactly ONE action control', !!actWrap && actWrap.children.length === 1);
+  ok('one action control', !!actWrap && actWrap.children.length === 1);
   const btn = actWrap && actWrap.children[0];
-  ok('the action button is the real actBtn()/.cc-actbtn', !!btn && btn.classList.contains('cc-actbtn'));
-  ok('running container -> the essential action is STOP (fa-stop)', btn.children[0].className.indexOf('fa-stop') >= 0, btn.children[0].className);
+  ok('the button is actBtn()', !!btn && btn.classList.contains('cc-actbtn'));
+  ok('for a running container the action is stop', btn.children[0].className.indexOf('fa-stop') >= 0, btn.children[0].className);
 
-  console.log('\n  ...and NONE of the full card()\'s detail chrome, and none of Grid\'s chip chrome either, ever appears in a Liste row:');
+  console.log('\n  ...and neither the full card\'s chrome nor the Grid chip\'s turns up in a Liste row:');
   const forbidden = ['cc-card-stats', 'cc-gauge', 'cc-card-badges', 'cc-card-actions', 'cc-card-res', 'cc-plan', 'cc-b-cpu', 'cc-b-ram', 'cc-b-bw', 'cc-b-net', 'cc-b-port', 'cc-b-ip', 'cc-card-movebtn', 'cc-card-img', 'cc-chip', 'cc-chip-dot', 'cc-chip-status'];
-  forbidden.forEach(fc => ok('  no "' + fc + '" (that is full-card()/Grid-only chrome)', !classes.includes(fc)));
+  forbidden.forEach(fc => ok('  no "' + fc + '"', !classes.includes(fc)));
 }
 
-console.log('\nThe single action always matches the container\'s ACTUAL state — in BOTH new densities');
+console.log('\nThe single action follows the container\'s state in both densities');
 {
   reset();
   [['folderChip', dockerApi.folderChip, 'cc-chip-act'], ['folderListRow', dockerApi.folderListRow, 'cc-frow-act']].forEach(([label, build, actCls]) => {
     const stopped = build({ name: 'radarr', state: 'exited' });
     const stoppedBtn = stopped.children.find(n => n.classList.contains(actCls)).children[0];
-    ok(label + '(): stopped container -> START (fa-play), tooltip "Start"', stoppedBtn.children[0].className.indexOf('fa-play') >= 0 && stoppedBtn.getAttribute('data-tip') === 'Start');
+    ok(label + '(): a stopped container gets fa-play, tipped "Start"', stoppedBtn.children[0].className.indexOf('fa-play') >= 0 && stoppedBtn.getAttribute('data-tip') === 'Start');
 
     const paused = build({ name: 'radarr', state: 'paused' });
     const pausedBtn = paused.children.find(n => n.classList.contains(actCls)).children[0];
-    ok(label + '(): paused container -> RESUME (fa-play), tooltip "Resume" (distinct from a plain start)', pausedBtn.children[0].className.indexOf('fa-play') >= 0 && pausedBtn.getAttribute('data-tip') === 'Resume');
+    ok(label + '(): a paused container gets fa-play, tipped "Resume"', pausedBtn.children[0].className.indexOf('fa-play') >= 0 && pausedBtn.getAttribute('data-tip') === 'Resume');
 
     const running = build({ name: 'radarr', state: 'running' });
     const runningBtn = running.children.find(n => n.classList.contains(actCls)).children[0];
-    ok(label + '(): running container -> STOP (fa-stop), tooltip "Stop"', runningBtn.children[0].className.indexOf('fa-stop') >= 0 && runningBtn.getAttribute('data-tip') === 'Stop');
+    ok(label + '(): a running container gets fa-stop, tipped "Stop"', runningBtn.children[0].className.indexOf('fa-stop') >= 0 && runningBtn.getAttribute('data-tip') === 'Stop');
   });
 }
 
-console.log('\nBoth new densities still honour the live-search filter, exactly like the full card() does');
+console.log('\nBoth densities honour the live-search filter, as the full card does');
 {
   reset();
   dockerApi.setFilterText('sonarr');
@@ -209,7 +199,7 @@ console.log('\nBoth new densities still honour the live-search filter, exactly l
   ok('clearing the filter shows everything again', cleared.style.display !== 'none');
 }
 
-console.log('\nfolderDensity()/setFolderDensity(): "full"/"grid"/"list", persisted like every other cc.* preference, and a pre-4.35.0 "minimal" install migrates cleanly');
+console.log('\nfolderDensity() and setFolderDensity() persist "full", "grid" or "list"');
 {
   reset();
   ok('defaults to "full" with nothing stored yet', dockerApi.folderDensity() === 'full');
@@ -222,10 +212,10 @@ console.log('\nfolderDensity()/setFolderDensity(): "full"/"grid"/"list", persist
   ok('setFolderDensity("full") persists back', dockerApi.folderDensity() === 'full' && localStorage.getItem('cc.folderDensity') === 'full');
 
   localStorage.setItem('cc.folderDensity', 'minimal');
-  ok('a pre-4.35.0 "minimal" install migrates to "grid" — folderChip() IS minimalRow() redesigned, so this is the density that function actually renders now, never a silent reset to "full"', dockerApi.folderDensity() === 'grid');
+  ok('a stored "minimal" reads as "grid", which is what that builder renders now', dockerApi.folderDensity() === 'grid');
 
   localStorage.setItem('cc.folderDensity', 'garbage-from-an-older-build');
-  ok('any OTHER unrecognised stored value degrades to "full", never throws, never a blank density', dockerApi.folderDensity() === 'full');
+  ok('any other unrecognised value degrades to "full" rather than to a blank density', dockerApi.folderDensity() === 'full');
   reset();
 }
 

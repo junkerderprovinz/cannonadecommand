@@ -1,24 +1,22 @@
-// Package vmctl gives CannonadeCommand the same per-workload limits for libvirt/KVM VMs
-// that dockercli+netshape give for containers — CPU pinning, a CPU cap, a RAM (balloon)
-// allocation, and up/down bandwidth.
+// Package vmctl applies CPU pinning, a CPU cap, RAM and bandwidth limits to
+// libvirt VMs.
 //
-// CPU + RAM are done the NATIVE libvirt way, so they persist in the domain XML and Unraid
+// CPU and RAM go through libvirt, so they persist in the domain XML and Unraid
 // reads them back:
-//   - CPU cores (pin):  virsh vcpupin (each vcpu) + emulatorpin  -> <cputune><vcpupin>
-//   - CPU cap:          virsh schedinfo --set vcpu_quota/vcpu_period -> <cputune>
-//   - RAM:              virsh setmem (balloon, <= max memory)
+//   - CPU pinning: virsh vcpupin for each vcpu, plus emulatorpin
+//   - CPU cap:     virsh schedinfo --set vcpu_quota/vcpu_period
+//   - RAM:         virsh setmem, up to the maximum memory
 //
-// Each is applied with --config (persists across a VM restart) plus --live when running.
+// Each is applied with --config, plus --live while the VM runs.
 //
-// BANDWIDTH can't go through libvirt on Unraid: domiftune's QoS needs sch_htb, which this
-// kernel doesn't have (and sch_ingress crashes it). So ApplyBandwidth polices it host-side
-// with an iptables hashlimit on the FORWARD chain, matched to the VM's bridged tap via
-// -m physdev — the same DROP-above mechanism netshape uses for container download, in BOTH
-// directions. It is NOT persisted in libvirt; the caps live in the CC config and the monitor
-// re-asserts them every tick (the tap changes on restart), clearing the old tap.
+// Bandwidth cannot go through libvirt on Unraid: domiftune needs sch_htb, which
+// the kernel lacks. ApplyBandwidth instead adds an iptables hashlimit drop on
+// the host's FORWARD chain, matched to the VM's tap with -m physdev, in both
+// directions. The tap changes on every VM restart, so the monitor reapplies the
+// caps from the config every tick.
 //
-// stdlib-only, like the rest of the engine. Every virsh/iptables call is bounded by a
-// context timeout so a wedged libvirtd/xtables lock can never stall the caller.
+// Every virsh and iptables call has a timeout, so a hung libvirtd or xtables
+// lock cannot stall the caller.
 package vmctl
 
 import (
@@ -38,41 +36,39 @@ import (
 // callTimeout bounds a single virsh invocation.
 const callTimeout = 8 * time.Second
 
-// VM is one domain plus its currently-configured limits (0 / "" = unlimited/unset).
+// VM is one domain with its configured limits; 0 or "" means unset.
 type VM struct {
 	Name      string `json:"name"`
-	State     string `json:"state"`     // running | shut off | paused | ...
-	Running   bool   `json:"running"`   // convenience for the UI
-	VCPUs     int    `json:"vcpus"`     // configured vcpu count
-	MaxMemMiB int    `json:"maxMemMiB"` // ceiling (setmem can't exceed it)
-	MemMiB    int    `json:"memMiB"`    // current balloon allocation
-	MAC       string `json:"mac"`       // first bridged NIC, used as the domiftune iface
-	CPUCores  string `json:"cpuCores"`  // pin cpuset of vcpu 0, e.g. "6-15" ("" = not pinned)
-	CPUCap    int    `json:"cpuCap"`    // vcpu_quota as a percentage of ONE core (0 = uncapped)
-	InKbit    int    `json:"inKbit"`    // download cap kbit (0 = unlimited)
-	OutKbit   int    `json:"outKbit"`   // upload cap kbit (0 = unlimited)
-	DownBytes int64  `json:"downBytes"` // cumulative bytes host->VM (VM download), for the UI to diff into a live rate; running only
-	UpBytes   int64  `json:"upBytes"`   // cumulative bytes VM->host (VM upload); running only
+	State     string `json:"state"` // running, shut off, paused, ...
+	Running   bool   `json:"running"`
+	VCPUs     int    `json:"vcpus"`
+	MaxMemMiB int    `json:"maxMemMiB"`
+	MemMiB    int    `json:"memMiB"`
+	MAC       string `json:"mac"`       // first bridged NIC
+	CPUCores  string `json:"cpuCores"`  // pin cpuset of vcpu 0, e.g. "6-15"
+	CPUCap    int    `json:"cpuCap"`    // vcpu_quota as a percentage of one core
+	InKbit    int    `json:"inKbit"`    // download cap
+	OutKbit   int    `json:"outKbit"`   // upload cap
+	DownBytes int64  `json:"downBytes"` // bytes host to VM so far, while running
+	UpBytes   int64  `json:"upBytes"`   // bytes VM to host so far, while running
 }
 
-// Limits is a requested CPU/RAM change (persisted natively in the domain XML). A nil pointer
-// field means "leave this one alone". Bandwidth is NOT here — it can't live in libvirt on this
-// kernel, so it is stored in the CC config and applied host-side via ApplyBandwidth.
+// Limits is a requested CPU and RAM change; a nil field is left alone. Bandwidth
+// is applied separately through ApplyBandwidth.
 type Limits struct {
-	CPUCores *string `json:"cpuCores,omitempty"` // pin cpuset ("" clears the pin)
-	CPUCap   *int    `json:"cpuCap,omitempty"`   // % of one core (0 clears the cap)
-	MemMiB   *int    `json:"memMiB,omitempty"`   // balloon target
+	CPUCores *string `json:"cpuCores,omitempty"` // "" clears the pin
+	CPUCap   *int    `json:"cpuCap,omitempty"`   // % of one core, 0 clears the cap
+	MemMiB   *int    `json:"memMiB,omitempty"`
 }
 
-// Disk is one of a domain's writable block devices (a real disk, never a cdrom). CapacityBytes
-// is the virtual size the guest sees — the number a live-resize grows.
+// Disk is one of a domain's disks. CapacityBytes is the virtual size the guest
+// sees.
 type Disk struct {
-	Target        string `json:"target"`        // guest-side target dev, e.g. "hdc" / "vda" (the blockresize path)
-	Source        string `json:"source"`        // host-side backing file/volume path
-	CapacityBytes int64  `json:"capacityBytes"` // current virtual size (bytes)
+	Target        string `json:"target"` // guest target such as "vda"
+	Source        string `json:"source"` // backing file or volume on the host
+	CapacityBytes int64  `json:"capacityBytes"`
 }
 
-// runner is the virsh shell-out, swappable in tests.
 type runner func(ctx context.Context, args ...string) (string, error)
 
 func virshRun(ctx context.Context, args ...string) (string, error) {
@@ -85,24 +81,23 @@ func virshRun(ctx context.Context, args ...string) (string, error) {
 	return string(out), nil
 }
 
-// Controller wraps a runner so tests can inject a fake virsh. It also remembers which tap
-// each VM's bandwidth is currently policed on, so a VM restarted onto a new tap gets the
-// old tap's rules cleared.
+// Controller runs virsh and remembers which tap each VM's bandwidth is policed
+// on, so a VM restarted onto a new tap gets the old tap's rules cleared.
 type Controller struct {
 	run    runner
 	mu     sync.Mutex
-	shaped map[string]string // vm name -> tap it is currently bandwidth-shaped on
+	shaped map[string]string // VM name to tap
 }
 
 // New returns a Controller backed by the real virsh binary.
 func New() *Controller { return &Controller{run: virshRun, shaped: map[string]string{}} }
 
-// vcpuPeriod is the CFS period we standardise on so a cap reads as a clean percentage.
+// vcpuPeriod is a fixed CFS period, so a quota reads as a clean percentage.
 const vcpuPeriod = 100000
 
 func running(state string) bool { return strings.HasPrefix(strings.TrimSpace(state), "running") }
 
-// scope returns the persistence flags: always --config, plus --live when running.
+// scope returns --config, plus --live when the domain runs.
 func scope(isRunning bool) []string {
 	if isRunning {
 		return []string{"--config", "--live"}
@@ -110,7 +105,7 @@ func scope(isRunning bool) []string {
 	return []string{"--config"}
 }
 
-// List returns every defined domain with its details + current limits.
+// List returns every defined domain with its limits.
 func (c *Controller) List(ctx context.Context) ([]VM, error) {
 	out, err := c.run(ctx, "list", "--all", "--name")
 	if err != nil {
@@ -133,7 +128,7 @@ func (c *Controller) List(ctx context.Context) ([]VM, error) {
 	return vms, nil
 }
 
-// Get reads one domain's details and currently-configured limits.
+// Get reads one domain's details and limits.
 func (c *Controller) Get(ctx context.Context, name string) (VM, error) {
 	vm := VM{Name: name}
 	info, err := c.run(ctx, "dominfo", name)
@@ -158,29 +153,22 @@ func (c *Controller) Get(ctx context.Context, name string) (VM, error) {
 	}
 	vm.Running = running(vm.State)
 
-	// pin cpuset of vcpu 0 (Unraid pins uniformly; vcpu 0 represents the set)
+	// Unraid pins every vcpu the same, so vcpu 0 stands for the set.
 	if pin, pErr := c.run(ctx, "vcpupin", name); pErr == nil {
 		vm.CPUCores = firstVcpuAffinity(pin)
 	}
-	// CPU cap: vcpu_quota / vcpu_period as a % of one core. A running domain reports a
-	// huge sentinel quota when UNcapped (libvirt's "unlimited"), so only treat a quota
-	// that fits a sane cap (<= vcpus+2 cores) as a real limit; anything larger = uncapped.
+	// An uncapped running domain reports a huge sentinel quota, so only a quota up
+	// to vcpus+2 cores counts as a cap.
 	if sched, sErr := c.run(ctx, "schedinfo", name); sErr == nil {
 		q, p := schedQuotaPeriod(sched)
 		if q > 0 && p > 0 && q <= int64(vm.VCPUs+2)*vcpuPeriod {
 			vm.CPUCap = int(q * 100 / p)
 		}
 	}
-	// MAC of the first bridged NIC (informational). Bandwidth is NOT read from libvirt: this
-	// kernel can't run domiftune's HTB QoS, so CC polices it host-side (see ApplyBandwidth) and
-	// the configured caps are overlaid from the store by the API.
 	if iflist, iErr := c.run(ctx, "domiflist", name); iErr == nil {
 		vm.MAC = firstMAC(iflist)
 		if vm.Running {
-			// Live throughput: read the VM's bridged tap's byte counters. From the HOST tap's POV,
-			// tx = host->VM = the VM's DOWNLOAD, rx = VM->host = the VM's UPLOAD. The UI diffs two
-			// samples into a live rate (there is no libvirt counter that survives this kernel's missing
-			// QoS, so /sys is the source, same tap the bandwidth shaping polices).
+			// Seen from the host's tap, tx is the VM's download and rx its upload.
 			if tap := firstTap(iflist); tap != "" {
 				vm.DownBytes = readCounter("/sys/class/net/" + tap + "/statistics/tx_bytes")
 				vm.UpBytes = readCounter("/sys/class/net/" + tap + "/statistics/rx_bytes")
@@ -203,7 +191,7 @@ func (c *Controller) Apply(ctx context.Context, name string, lim Limits) error {
 		for v := 0; v < vm.VCPUs; v++ {
 			set := cores
 			if set == "" {
-				set = allCores(vm) // clearing the pin = float over every host core
+				set = allCores(vm)
 			}
 			if _, e := c.run(ctx, append([]string{"vcpupin", name, strconv.Itoa(v), set}, sc...)...); e != nil {
 				return e
@@ -229,10 +217,9 @@ func (c *Controller) Apply(ctx context.Context, name string, lim Limits) error {
 	if lim.MemMiB != nil && *lim.MemMiB > 0 {
 		kib := strconv.Itoa(*lim.MemMiB*1024) + "KiB"
 		if vm.MaxMemMiB > 0 && *lim.MemMiB > vm.MaxMemMiB {
-			// Above the domain's MAX memory: raise the ceiling first (setmem cannot exceed it). setmaxmem
-			// takes effect only from the domain XML, so do BOTH setmaxmem and setmem with --config; a running
-			// VM will pick up the larger RAM on its next start (a live bump past max needs memory-hotplug
-			// slots the Unraid form does not create).
+			// setmem cannot go past the maximum, and setmaxmem only works on the
+			// domain XML, so both go to --config. A running VM gets the RAM on its next
+			// start, since a live raise needs memory hotplug slots Unraid does not create.
 			if _, e := c.run(ctx, "setmaxmem", name, kib, "--config"); e != nil {
 				return e
 			}
@@ -246,9 +233,8 @@ func (c *Controller) Apply(ctx context.Context, name string, lim Limits) error {
 	return nil
 }
 
-// SetCPUCap re-asserts JUST the CPU quota (% of one core; <=0 uncaps) via schedinfo — a lean
-// path (one dominfo + one schedinfo, no full Get) for the monitor to reassert the cap every
-// tick, so it survives an Unraid VM-form "Apply" that regenerates the domain XML without it.
+// SetCPUCap sets only the CPU quota as a percentage of one core; <= 0 removes it.
+// It skips the full Get because the monitor calls it every tick.
 func (c *Controller) SetCPUCap(ctx context.Context, name string, capPct int) error {
 	info, err := c.run(ctx, "dominfo", name)
 	if err != nil {
@@ -261,7 +247,7 @@ func (c *Controller) SetCPUCap(ctx context.Context, name string, capPct int) err
 			break
 		}
 	}
-	quota := "-1" // uncapped
+	quota := "-1"
 	if capPct > 0 {
 		quota = strconv.Itoa(capPct * vcpuPeriod / 100)
 	}
@@ -271,15 +257,8 @@ func (c *Controller) SetCPUCap(ctx context.Context, name string, capPct int) err
 	return err
 }
 
-// ── vDISK LIVE RESIZE ────────────────────────────────────────────────────────────────────
-// Grow a domain's virtual disk without a reboot. A RUNNING domain resizes live via
-// virsh blockresize (QMP tells QEMU to grow the block device — the guest sees the new size
-// after a rescan); a SHUT-OFF domain has no QEMU to talk to, so the backing image file is
-// grown directly with qemu-img resize. GROW ONLY: shrinking a virtual disk truncates it and
-// loses data, so a target at or below the current capacity is refused.
-
-// Disks lists a domain's resizable disk devices (real disks only — cdroms and empty slots are
-// skipped). Each carries its current virtual capacity so the UI can offer a grow-only field.
+// Disks lists a domain's disks with their current capacity, leaving out cdroms
+// and empty slots.
 func (c *Controller) Disks(ctx context.Context, name string) ([]Disk, error) {
 	out, err := c.run(ctx, "domblklist", name, "--details")
 	if err != nil {
@@ -288,20 +267,20 @@ func (c *Controller) Disks(ctx context.Context, name string) ([]Disk, error) {
 	var disks []Disk
 	for _, ln := range strings.Split(out, "\n") {
 		f := strings.Fields(ln)
-		// columns: Type Device Target Source (a header + a "---" rule precede the rows)
+		// columns: Type Device Target Source, after a header and a rule
 		if len(f) < 4 {
 			continue
 		}
 		if (f[0] != "file" && f[0] != "block" && f[0] != "network") || f[1] != "disk" {
-			continue // skip the header, the rule, and cdrom/floppy devices
+			continue
 		}
 		source := f[3]
 		if source == "-" || source == "" {
-			continue // an empty disk slot has nothing to resize
+			continue
 		}
 		d := Disk{Target: f[2], Source: source}
-		// domblkinfo prints Capacity/Allocation/Physical as raw BYTES by default (the --human flag is
-		// the opt-in for readable units; --bytes isn't accepted on every libvirt build, e.g. 12.2.0).
+		// domblkinfo prints bytes by default; --bytes is not accepted by every
+		// libvirt build (12.2.0 rejects it).
 		if bi, e := c.run(ctx, "domblkinfo", name, d.Target); e == nil {
 			d.CapacityBytes = blkCapacity(bi)
 		}
@@ -310,8 +289,10 @@ func (c *Controller) Disks(ctx context.Context, name string) ([]Disk, error) {
 	return disks, nil
 }
 
-// ResizeDisk grows one of a domain's disks (identified by its guest target, e.g. "vda") to
-// newBytes. It refuses a target that is not larger than the disk's current capacity (grow-only).
+// ResizeDisk grows the disk with guest target such as "vda" to newBytes. It only
+// grows, because shrinking a virtual disk truncates it. A running domain is
+// resized live with virsh blockresize, a shut-off one with qemu-img resize on
+// the backing image.
 func (c *Controller) ResizeDisk(ctx context.Context, name, target string, newBytes int64) error {
 	if newBytes <= 0 {
 		return fmt.Errorf("resize: bad size %d", newBytes)
@@ -330,10 +311,9 @@ func (c *Controller) ResizeDisk(ctx context.Context, name, target string, newByt
 	if disk == nil {
 		return fmt.Errorf("resize: %s has no disk %q", name, target)
 	}
-	// Unknown current size (a missing/unreadable source) means we CAN'T prove the target is a grow —
-	// refuse rather than risk a qemu-img/blockresize that could truncate a disk that is actually larger.
+	// Without the current size there is no proof the resize grows the disk.
 	if disk.CapacityBytes <= 0 {
-		return fmt.Errorf("resize: current size of %q is unknown (source missing/unreadable) — refusing", target)
+		return fmt.Errorf("resize: current size of %q is unknown (source missing/unreadable), refusing", target)
 	}
 	if newBytes <= disk.CapacityBytes {
 		return fmt.Errorf("resize is grow-only: %d bytes is not larger than the current %d bytes", newBytes, disk.CapacityBytes)
@@ -343,12 +323,10 @@ func (c *Controller) ResizeDisk(ctx context.Context, name, target string, newByt
 		return err
 	}
 	if vm.Running {
-		// Live: QMP grows the running block device. The 'B' suffix makes the size byte-exact
-		// (virsh blockresize defaults to KiB otherwise).
+		// Without the B suffix blockresize reads the size as KiB.
 		_, e := c.run(ctx, "blockresize", name, disk.Target, strconv.FormatInt(newBytes, 10)+"B")
 		return e
 	}
-	// Shut off: no QEMU to talk to — grow the backing image file itself.
 	cctx, cancel := context.WithTimeout(ctx, callTimeout)
 	defer cancel()
 	out, e := exec.CommandContext(cctx, "qemu-img", "resize", disk.Source, strconv.FormatInt(newBytes, 10)).CombinedOutput()
@@ -358,9 +336,7 @@ func (c *Controller) ResizeDisk(ctx context.Context, name, target string, newByt
 	return nil
 }
 
-// ── parse helpers (all defensive: a missing/odd field yields the zero value) ──
-
-// blkCapacity reads the byte Capacity out of a `domblkinfo --bytes` block.
+// blkCapacity reads the Capacity in bytes from domblkinfo output.
 func blkCapacity(info string) int64 {
 	for _, ln := range strings.Split(info, "\n") {
 		if k, v, ok := splitKV(ln); ok && k == "Capacity" {
@@ -404,8 +380,8 @@ func firstVcpuAffinity(table string) string {
 	return ""
 }
 
-// schedQuotaPeriod pulls vcpu_quota + vcpu_period out of schedinfo. int64 because a
-// running domain's "unlimited" quota is a huge sentinel that would overflow an int.
+// schedQuotaPeriod reads vcpu_quota and vcpu_period from schedinfo. They are
+// int64 because the sentinel an uncapped domain reports would overflow an int.
 func schedQuotaPeriod(sched string) (quota, period int64) {
 	for _, ln := range strings.Split(sched, "\n") {
 		k, v, ok := splitKV(ln)
@@ -434,7 +410,7 @@ func firstMAC(table string) string {
 	return ""
 }
 
-// firstTap returns the first bridged tap device (vnetX) from a domiflist table ("" if none).
+// firstTap returns the first tap device (vnetX) in a domiflist table, or "".
 func firstTap(table string) string {
 	for _, ln := range strings.Split(table, "\n") {
 		f := strings.Fields(ln)
@@ -445,7 +421,7 @@ func firstTap(table string) string {
 	return ""
 }
 
-// readCounter reads a single integer out of a /sys counter file (0 on any error).
+// readCounter reads the integer in a /sys counter file, or 0 on any error.
 func readCounter(path string) int64 {
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -455,25 +431,19 @@ func readCounter(path string) int64 {
 	return n
 }
 
-// allCores returns a cpuset spanning every host core, used to clear a pin.
+// allCores returns a cpuset for clearing a pin. libvirt clamps 0-127 to the
+// host's cores.
 func allCores(vm VM) string {
-	// The host has at least the VM's vcpu count; hostcpu is the real source, but for a
-	// clear we just need a wide set. 0-127 is a safe upper bound libvirt clamps to the host.
 	return "0-127"
 }
 
-// ── BANDWIDTH ──────────────────────────────────────────────────────────────────────────
-// Hand-rolled because this Unraid kernel has no sch_htb/sch_tbf (libvirt's domiftune QoS
-// fails) and sch_ingress crashes it. The one mechanism that works is an iptables hashlimit
-// DROP on the host FORWARD chain, matched to the VM's bridged tap via -m physdev
-// (br_netfilter is loaded, bridge-nf-call-iptables is on). Applied in BOTH directions with
-// netshape's byte-rate math (incl. the legacy-iptables x8 compensation). The tap changes on
-// VM restart, so the monitor re-asserts every tick and this clears the OLD tap.
+// The bandwidth rules rely on br_netfilter with bridge-nf-call-iptables on, so
+// bridged VM traffic passes the host's FORWARD chain.
 
 func vmDLChain(tap string) string { return "CC-VMBW-DL-" + tap }
 func vmULChain(tap string) string { return "CC-VMBW-UL-" + tap }
 
-// ipt runs a host-side iptables command (-w waits for the xtables lock).
+// ipt runs iptables on the host; -w waits for the xtables lock.
 func ipt(ctx context.Context, args ...string) error {
 	cctx, cancel := context.WithTimeout(ctx, callTimeout)
 	defer cancel()
@@ -484,7 +454,7 @@ func ipt(ctx context.Context, args ...string) error {
 	return nil
 }
 
-// iptQuiet runs iptables and swallows the "it was never there" errors of an idempotent clear.
+// iptQuiet runs iptables for a clear, where nothing to remove is not an error.
 func iptQuiet(ctx context.Context, args ...string) {
 	if err := ipt(ctx, args...); err != nil {
 		m := err.Error()
@@ -495,31 +465,26 @@ func iptQuiet(ctx context.Context, args ...string) {
 	}
 }
 
-// resolveTap returns the running domain's first bridged tap (vnetX), or "" when not running.
+// resolveTap returns the domain's first tap, or "" when it is not running.
 func (c *Controller) resolveTap(ctx context.Context, name string) string {
 	out, err := c.run(ctx, "domiflist", name)
 	if err != nil {
 		return ""
 	}
-	for _, ln := range strings.Split(out, "\n") {
-		f := strings.Fields(ln)
-		if len(f) >= 1 && strings.HasPrefix(f[0], "vnet") {
-			return f[0]
-		}
-	}
-	return ""
+	return firstTap(out)
 }
 
-// hashRule is the hashlimit DROP body applied inside a per-tap/direction chain.
+// hashRule is the hashlimit drop inside a per-tap, per-direction chain, with the
+// same rate math as netshape.
 func hashRule(hname string, kbit int) []string {
-	f := netshape.RateFactor()
 	return []string{"-m", "hashlimit",
-		"--hashlimit-above", strconv.Itoa(netshape.DLRateBytes(kbit)*f) + "b/s",
-		"--hashlimit-burst", strconv.Itoa(netshape.DLBurstBytes(kbit)*f) + "b",
+		"--hashlimit-above", strconv.Itoa(netshape.DLRateBytes(kbit)) + "b/s",
+		"--hashlimit-burst", strconv.Itoa(netshape.DLBurstBytes(kbit)) + "b",
 		"--hashlimit-name", hname, "-j", "DROP"}
 }
 
-// hName is a <=15-char hashlimit table name unique per tap + direction.
+// hName is a hashlimit table name of at most 15 characters, unique per tap and
+// direction.
 func hName(dir, tap string) string {
 	n := "ccvm" + dir + strings.TrimPrefix(tap, "vnet")
 	if len(n) > 15 {
@@ -528,11 +493,12 @@ func hName(dir, tap string) string {
 	return n
 }
 
-// applyDir (re-)asserts one direction: a per-tap chain holds the hashlimit DROP, jumped from
-// FORWARD for packets crossing the tap in that direction (physdev-out = download to the VM,
-// physdev-in = upload from it). Flush+re-add so a changed rate replaces cleanly.
+// applyDir sets one direction: a per-tap chain holds the rule and FORWARD jumps to
+// it for packets crossing the tap (--physdev-out is the VM's download,
+// --physdev-in its upload). The chain is flushed first so a new rate replaces the
+// old one.
 func (c *Controller) applyDir(ctx context.Context, chain, physdev, tap, hname string, kbit int) error {
-	_ = ipt(ctx, "-N", chain) // "chain exists" is fine
+	_ = ipt(ctx, "-N", chain) // the chain may already exist
 	if err := ipt(ctx, "-F", chain); err != nil {
 		return err
 	}
@@ -552,9 +518,9 @@ func (c *Controller) clearDir(ctx context.Context, chain, physdev, tap string) {
 	iptQuiet(ctx, "-X", chain)
 }
 
-// ApplyBandwidth polices a domain's download (inKbit) + upload (outKbit) on its current tap,
-// clearing the previous tap when the VM was restarted onto a new one. A stopped VM (no tap) or
-// (0,0) clears + forgets it. Idempotent — safe for the monitor to call every tick.
+// ApplyBandwidth polices a domain's download (inKbit) and upload (outKbit) on its
+// current tap and clears the previous tap after a restart. A stopped VM or zero
+// for both clears and forgets it. It is idempotent.
 func (c *Controller) ApplyBandwidth(ctx context.Context, name string, inKbit, outKbit int) error {
 	tap := c.resolveTap(ctx, name)
 	c.mu.Lock()

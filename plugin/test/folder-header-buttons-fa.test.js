@@ -1,22 +1,16 @@
-// Regression test: the folder header's 5 action buttons use REAL Font-Awesome icons, not raw
-// emoji text (v4.35.0, item 3 — jdp: "die ganzen buttons der ordner sind nicht im GlimStone").
+// The five folder-header buttons carry Font-Awesome icons rather than emoji
+// glyphs. An emoji ignores CSS color, so it cannot follow the button's own grey at
+// rest and accent on hover, and 🗑 renders as a filled grey rectangle on this
+// stack, reading as a bordered swatch.
 //
-// Investigated live before touching anything (a Playwright screenshot of a minimal reproduction
-// using the EXACT shipped .cc-folder-act CSS rule + getComputedStyle on each button): every
-// button genuinely computes border:0px none — .cc-folder-act's own CSS was never the bug. The
-// visual culprit is the raw emoji glyphs themselves (👁 ▶ ■ ✎ 🗑) — 🗑 in particular rendered as a
-// solid filled grey rectangle with a rounded top on this stack, reading exactly like a bordered
-// swatch — and none of them follow `color` the way actBtn()'s own FA icons do everywhere else in
-// the app (actBtn()'s doc comment already states the rule: "Font-Awesome glyphs, NOT emoji: emoji
-// ignore CSS color, FA inherits it"). This file source-slices the REAL folderActBtn() (the new
-// helper) and its 5 call sites out of docker.js (never re-typed) and proves the fix landed:
-//   1. folderActBtn() builds a real <button class="cc-folder-act..."> with a FontAwesome <i class
-//      "fa fa-...">, never a raw emoji text node.
-//   2. All 5 folder-header buttons (hide-stopped, bulk-start, bulk-stop, rename, delete) call
-//      folderActBtn(), not the old raw-emoji el("button", ..., "👁") shape.
-//   3. Zero raw action-glyph emoji (👁 ▶ ■ ✎ 🗑) remain anywhere in docker.js.
-//   4. docker.css gives the icon `color: inherit` so it follows .cc-folder-act's own grey-at-rest/
-//      accent-on-hover treatment, the same convention .cc-actbtn i.fa already uses.
+// What this pins:
+//   1. folderActBtn() builds a <button> holding an <i class="fa fa-...">, with no
+//      text of its own.
+//   2. hide-stopped, bulk-start, bulk-stop, rename and delete all call it.
+//   3. No action-glyph emoji is left in docker.js's code.
+//   4. docker.css gives the icon color: inherit, as .cc-actbtn i.fa has.
+//   5. The button's own background rules beat Unraid's native button rules, which
+//      would otherwise paint a gradient at rest and transparency on hover.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand');
@@ -36,7 +30,6 @@ function grabFn(name) {
   throw new Error('unbalanced function: ' + name);
 }
 
-/* ── minimal DOM shim ─────────────────────────────────────────────────────────────────────── */
 class CL { constructor() { this.s = new Set(); } add(c) { this.s.add(c); } contains(c) { return this.s.has(c); } }
 class N {
   constructor(tag) { this.tagName = String(tag).toUpperCase(); this.children = []; this.classList = new CL(); this._cls = ''; this._txt = ''; this.attrs = {}; }
@@ -57,14 +50,14 @@ console.log('\nfolderActBtn(): a real FA icon button, never raw emoji text');
   ok('is a real <button>', b.tagName === 'BUTTON');
   ok('carries the class it was given', b.classList.contains('cc-folder-act'));
   ok('carries the title/tooltip it was given', b.title === 'Hide stopped');
-  ok('has NO raw text content of its own — the icon is the only content', b._txt === '');
-  ok('appends exactly ONE child: the <i class="fa fa-...">', b.children.length === 1);
+  ok('has no text of its own, the icon being the only content', b._txt === '');
+  ok('appends one child, the <i class="fa fa-...">', b.children.length === 1);
   const icon = b.children[0];
   ok('the child is an <i>', icon.tagName === 'I');
-  ok('the child carries "fa" AND the requested glyph class', icon.classList.contains('fa') && icon.classList.contains('fa-eye'));
+  ok('the child carries "fa" and the requested glyph class', icon.classList.contains('fa') && icon.classList.contains('fa-eye'));
 }
 
-console.log('\nAll 5 folder-header buttons call folderActBtn() — none build a raw emoji button any more');
+console.log('\nAll five folder-header buttons call folderActBtn()');
 {
   ok('hide-stopped button: folderActBtn(..., "fa-eye", t("hideStopped"))', /var hsBtn = folderActBtn\("cc-folder-act" \+ \(hsOn \? " cc-folder-act-on" : ""\), "fa-eye", t\("hideStopped"\)\);/.test(src));
   ok('bulk-start button: folderActBtn(..., "fa-play", t("bulkStartAll"))', /var startAllBtn = folderActBtn\("cc-folder-act", "fa-play", t\("bulkStartAll"\)\);/.test(src));
@@ -73,102 +66,73 @@ console.log('\nAll 5 folder-header buttons call folderActBtn() — none build a 
   ok('delete button: folderActBtn(..., "fa-trash", t("deleteFolder"))', /var delBtn = folderActBtn\("cc-folder-act", "fa-trash", t\("deleteFolder"\)\);/.test(src));
 }
 
-console.log('\nZero raw action-glyph emoji remain in LIVE docker.js CODE (comments may still narrate the old bug for posterity)');
+console.log('\nNo action-glyph emoji is left in docker.js\'s code');
 {
-  // Comment-stripped copy (same technique settings-chrome.test.js / adopt-rainbow-ui.test.js use)
-  // so this file's OWN doc comments — which quote the retired glyphs verbatim while explaining the
-  // fix — can never satisfy or break the assertion. Scoped to the literal glyphs the folder-header
-  // row used to ship (📁 is the UNRELATED "move to folder" button emoji, out of scope for item 3 —
-  // jdp's complaint was specifically the header row, not attachMoveButton()'s icon; left untouched
-  // on purpose, not missed).
+  // The comments are blanked out first, since docker.js may quote a retired glyph
+  // in one. 📁 belongs to the move-to-folder button and stays as it is.
   const code = src.replace(/\/\*[\s\S]*?\*\//g, m => m.replace(/[^\n]/g, ' '))
     .split('\n').map(l => l.replace(/(^|\s)\/\/.*$/, m => m.replace(/[^\n]/g, ' '))).join('\n');
   ['👁', '▶', '■', '✎', '🗑'].forEach(glyph => {
-    ok('"' + glyph + '" no longer appears in any live (non-comment) line of docker.js', code.indexOf(glyph) < 0);
+    ok('"' + glyph + '" appears in no code line of docker.js', code.indexOf(glyph) < 0);
   });
 }
 
-console.log('\ndocker.css: the icon follows .cc-folder-act\'s own colour (grey at rest, accent on hover), not a fixed/native colour');
+console.log('\ndocker.css: the icon follows .cc-folder-act\'s own colour');
 {
   const m = css.match(/\.cc-folder-act i\.fa\s*\{([^}]*)\}/);
-  ok('a dedicated .cc-folder-act i.fa rule exists', !!m, css.slice(0, 0));
+  ok('a .cc-folder-act i.fa rule exists', !!m);
   const body = m ? m[1] : '';
-  ok('it sets color: inherit (follows the button, not a fixed colour)', /color:\s*inherit/.test(body), body);
+  ok('it sets color: inherit, so the icon follows the button', /color:\s*inherit/.test(body), body);
 }
 
-console.log('\nv4.35.1 fix: .cc-folder-act/.cc-card-movebtn background is !important — clears Unraid\'s native button:where() gradient background-image');
+console.log('\nThe resting background beats Unraid\'s native button gradient');
 {
-  // Root cause (live-confirmed via CDP CSS.getMatchedStylesForNode on the real box, v4.35.1): the
-  // FA-icon fix above was real, but each button STILL rendered as a solid red/orange boxed swatch —
-  // Unraid's own `button:where(:not(.unapi *))` rule (webGui/styles/default-base.css) paints a
-  // 4-layer edge gradient through `background: transparent` whenever that declaration lacks
-  // !important, even though .cc-folder-act/.cc-card-movebtn have a higher-specificity class
-  // selector against that :where()-wrapped (zero-specificity) native rule — .cc-hgear already had
-  // !important here and never showed the bug; empirically confirmed adding it is what clears
-  // background-image, not border/box-shadow (those were never affected).
+  // Unraid's own `button:where(:not(.unapi *))` in default-base.css paints a
+  // four-layer edge gradient. Its :where() wrapper gives it zero specificity, yet
+  // a plain `background: transparent` on a class selector still loses to it, so
+  // the declaration needs !important. .cc-hgear has carried it all along.
   const folderAct = css.match(/\.cc-folder-act\s*\{([^}]*)\}/);
   const moveBtn = css.match(/\.cc-card-movebtn\s*\{([^}]*)\}/);
   ok('.cc-folder-act rule exists', !!folderAct);
   ok('.cc-card-movebtn rule exists', !!moveBtn);
   const faBody = folderAct ? folderAct[1] : '';
   const mbBody = moveBtn ? moveBtn[1] : '';
-  ok('.cc-folder-act: background is transparent WITH !important (the actual fix)', /background:\s*transparent\s*!important/.test(faBody), faBody);
-  ok('.cc-card-movebtn: background is transparent WITH !important (same latent bug, same fix)', /background:\s*transparent\s*!important/.test(mbBody), mbBody);
-  // box-shadow/border were never the bug — pin they stay untouched, so a future edit can't
-  // "fix" background again by accidentally weakening these instead.
-  ok('.cc-folder-act: box-shadow stays none !important (unrelated to this fix, unchanged)', /box-shadow:\s*none\s*!important/.test(faBody));
-  ok('.cc-card-movebtn: box-shadow stays none !important (unrelated to this fix, unchanged)', /box-shadow:\s*none\s*!important/.test(mbBody));
+  ok('.cc-folder-act: background transparent !important', /background:\s*transparent\s*!important/.test(faBody), faBody);
+  ok('.cc-card-movebtn: background transparent !important', /background:\s*transparent\s*!important/.test(mbBody), mbBody);
+  // box-shadow and border are a separate matter, pinned so a later edit cannot
+  // weaken them while reaching for the background again.
+  ok('.cc-folder-act: box-shadow none !important', /box-shadow:\s*none\s*!important/.test(faBody));
+  ok('.cc-card-movebtn: box-shadow none !important', /box-shadow:\s*none\s*!important/.test(mbBody));
 }
 
-console.log('\nv4.35.2 fix: hover/active backgrounds are no longer permanently shadowed by the base rule\'s !important');
+console.log('\nThe hover and active backgrounds are not shadowed by the base rule');
 {
-  // Regression test for the bug this release fixes. v4.35.1's `background: transparent !important`
-  // on .cc-folder-act/.cc-card-movebtn beat their OWN plain (non-!important) :hover rule (and
-  // .cc-folder-act's OWN .cc-folder-act-on active-state rule) no matter what, because !important
-  // always wins over non-!important regardless of :hover's higher selector specificity —
-  // live-confirmed via getComputedStyle: hovering a folder action button changed the icon colour
-  // but backgroundColor stayed stuck at rgba(0,0,0,0).
+  // Two rules have to be beaten, so :hover and .cc-folder-act-on carry !important
+  // of their own. The base rule's `transparent !important` outranks a plain hover
+  // rule whatever its specificity, and default-base.css's
+  // `button[type="button"]:where(:not(.unapi *))` has attribute specificity (0,1,1),
+  // above a single class selector such as .cc-folder-act-on's (0,1,0), so it forces
+  // the background back to transparent on specificity alone. :hover escapes the
+  // second one at (0,2,0) but not the first.
   //
-  // A first attempt fixed this by splitting the base rule's shorthand (background-color plain,
-  // only background-image !important), reasoning that only background-image ever needed to beat
-  // Unraid's gradient rule above. That is true for THAT rule — but live re-verification (getting
-  // the fix live on the real box and testing rest AND hover AND the "hide stopped" on-state, per
-  // this release's own testing bar) surfaced a SECOND native Unraid rule this task's diagnosis
-  // didn't know about: `button[type="button"]:where(:not(.unapi *))` (also default-base.css) has
-  // attribute-selector specificity (0,1,1) — higher than a plain single-class rule like
-  // .cc-folder-act-on's (0,1,0) — so it kept forcing background-color back to transparent by
-  // specificity ALONE, independent of !important, on every real <button type="button"> (which is
-  // all of them; :hover only escaped this by luck, since a class+pseudo-class selector's (0,2,0)
-  // already outranks (0,1,1) outright). The real fix: give :hover/.cc-folder-act-on their OWN
-  // !important, so they out-rank BOTH native rules the same way the base rule already does, and
-  // let normal specificity/source-order decide the contest between our OWN same-priority rules.
-  //
-  // This pins the exact facts that guarantee a real browser resolves hover/active to the shaded
-  // colour, not transparent, for all three buttons:
-  //   1. the base rule's background is `transparent !important` (unchanged from v4.35.1)
-  //   2. the hover/active rule's background is the shade colour, ALSO !important (this release's
-  //      actual fix — matches !important-for-!important against the base rule)
-  //   3. for :hover, normal CSS specificity (a pseudo-class adds to specificity) makes it win over
-  //      the base rule regardless of source order; for .cc-folder-act-on, which has the SAME
-  //      specificity as .cc-folder-act (both single class selectors), it must appear AFTER
-  //      .cc-folder-act in the file so source order breaks the tie in its favour
+  // With all of them at the same priority, specificity and source order settle the
+  // rest: :hover outranks the base rule by its pseudo-class, while
+  // .cc-folder-act-on ties with .cc-folder-act and has to come after it.
   var faIdx = css.indexOf('.cc-folder-act {');
   var faOnIdx = css.indexOf('.cc-folder-act-on {');
   var mbIdx = css.indexOf('.cc-card-movebtn {');
   var faHoverIdx = css.indexOf('.cc-folder-act:hover {');
   var mbHoverIdx = css.indexOf('.cc-card-movebtn:hover {');
-  ok('.cc-folder-act, :hover and -on rules all found', faIdx >= 0 && faHoverIdx >= 0 && faOnIdx >= 0);
-  ok('.cc-card-movebtn and :hover rules both found', mbIdx >= 0 && mbHoverIdx >= 0);
+  ok('the .cc-folder-act, :hover and -on rules are all found', faIdx >= 0 && faHoverIdx >= 0 && faOnIdx >= 0);
+  ok('the .cc-card-movebtn and :hover rules are both found', mbIdx >= 0 && mbHoverIdx >= 0);
 
   var faHoverBody = (css.match(/\.cc-folder-act:hover\s*\{([^}]*)\}/) || [, ''])[1];
   var faOnBody = (css.match(/\.cc-folder-act-on\s*\{([^}]*)\}/) || [, ''])[1];
   var mbHoverBody = (css.match(/\.cc-card-movebtn:hover\s*\{([^}]*)\}/) || [, ''])[1];
-  ok('.cc-folder-act:hover sets the shade background WITH !important (this release\'s fix)', /background:\s*rgba\(128, 128, 128, \.18\)\s*!important\s*;/.test(faHoverBody), faHoverBody);
-  ok('.cc-folder-act-on sets the shade background WITH !important (this release\'s fix)', /background:\s*rgba\(128, 128, 128, \.18\)\s*!important/.test(faOnBody), faOnBody);
-  ok('.cc-card-movebtn:hover sets the shade background WITH !important (this release\'s fix)', /background:\s*rgba\(128, 128, 128, \.18\)\s*!important\s*;/.test(mbHoverBody), mbHoverBody);
-  // Fact 3, the source-order tie-break for the equal-specificity case (.cc-folder-act-on vs.
-  // .cc-folder-act): .cc-folder-act-on must come AFTER .cc-folder-act in the file.
-  ok('.cc-folder-act-on appears after .cc-folder-act in source order (breaks the equal-specificity tie in its favour)', faOnIdx > faIdx);
+  ok('.cc-folder-act:hover sets the shade background with !important', /background:\s*rgba\(128, 128, 128, \.18\)\s*!important\s*;/.test(faHoverBody), faHoverBody);
+  ok('.cc-folder-act-on sets the shade background with !important', /background:\s*rgba\(128, 128, 128, \.18\)\s*!important/.test(faOnBody), faOnBody);
+  ok('.cc-card-movebtn:hover sets the shade background with !important', /background:\s*rgba\(128, 128, 128, \.18\)\s*!important\s*;/.test(mbHoverBody), mbHoverBody);
+  ok('.cc-folder-act-on comes after .cc-folder-act in the file', faOnIdx > faIdx);
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

@@ -1,14 +1,10 @@
-// Regression test: renderFolderView()'s per-item DENSITY DISPATCH (v4.35.0, item 1 — proves the
-// three density builders actually hook into the SAME render path, so collapse/hide-stopped/bulk/
-// live-search-auto-expand fall out "for free" in every density, exactly as the spec called for)
-// and its SCROLL-POSITION PRESERVATION (v4.35.0, item 2 — jdp: "Sbald man im ordner was macht
-// springt es ganz nach oben in der seite").
+// Runs renderFolderView() out of docker.js against a synthetic organizer tree,
+// with its collaborators (card, folderChip, folderListRow, ensureGridHolder,
+// makeGear and the rest) stubbed, as in folder-view-bug-fixes.test.js.
 //
-// This file source-slices the REAL renderFolderView() out of docker.js (never re-typed) and runs
-// it end-to-end against a synthetic organizer tree, with every OTHER collaborator (card()/
-// folderChip()/folderListRow()/ensureGridHolder()/makeGear()/etc.) replaced by a small stub —
-// the same "grab the real function under test, stub its collaborators" shape every other
-// docker.js-source-slice test in this suite already uses (see folder-view-bug-fixes.test.js).
+// It pins two things: the three densities dispatch through one render path, so
+// collapse, hide-stopped, bulk actions and search auto-expand work in each of
+// them, and a rebuild puts the page back at the scroll position it was at.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand', 'scripts');
@@ -26,7 +22,7 @@ function grabFn(name) {
   throw new Error('unbalanced function: ' + name);
 }
 
-/* ── minimal DOM shim, just enough for el()-built nodes + a fake gridHolder ─────────────────── */
+// A DOM shim for el()-built nodes and a stand-in gridHolder.
 class CL {
   constructor() { this.s = new Set(); }
   add(c) { this.s.add(c); } remove(c) { this.s.delete(c); }
@@ -66,7 +62,7 @@ function run(entries, density, opts) {
     get scrollY() { return this._scrollY; },
     scrollTo(x, y) { scrollCalls.push([x, y]); },
   };
-  const byParentEntries = entries; // [{id,type,name,parentId,position}] or containers stand in as {type:'container', name, parentId, position, id}
+  const byParentEntries = entries; // {id, type, name, parentId, position} per entry
   const ccOrgView = opts.noOrgView ? null : { rootId: 'root', flatEntries: byParentEntries };
   const containers = {}; (opts.containers || []).forEach(c => { containers[c.name.replace(/^\//, '').toLowerCase()] = c; });
 
@@ -86,16 +82,14 @@ function run(entries, density, opts) {
     (name) => containers[String(name).toLowerCase()] || null,
     () => false,
     (k) => k,
-    // v4.35.1: renderFolderView() now gates .cc-docker-iconbg via the shared iconBgOn() helper
-    // (effc("iconbg")==="1" || iconBgAdopts()) instead of inlining the effc() check — stub it the
-    // same way every other free-variable collaborator here is stubbed.
+    // iconBgOn(), which renderFolderView() gates .cc-docker-iconbg on.
     () => false
   );
   fn();
   return { gridHolder: fakeGridHolder, scrollCalls: scrollCalls, removed: removed };
 }
 
-console.log('\nrenderFolderView() dispatches to the right per-item builder for each density (item 1 — same render path for every density)');
+console.log('\nrenderFolderView() dispatches to the right per-item builder for each density');
 {
   const c = { name: '/plex', state: 'running' };
   const entry = { id: 'e1', type: 'container', name: '/plex', parentId: 'root', position: 0 };
@@ -106,33 +100,33 @@ console.log('\nrenderFolderView() dispatches to the right per-item builder for e
 
   function findMarker(gh, cls) { const walk = n => n.children.reduce((f, ch) => f || (ch.classList.contains(cls) ? ch : walk(ch)), null); return walk(gh); }
 
-  ok('"full" density: card() was used (cc-card-full-marker present)', !!findMarker(full.gridHolder, 'cc-card-full-marker'));
-  ok('"full" density: folderChip()/folderListRow() were NOT used', !findMarker(full.gridHolder, 'cc-chip-marker') && !findMarker(full.gridHolder, 'cc-frow-marker'));
+  ok('"full" density uses card()', !!findMarker(full.gridHolder, 'cc-card-full-marker'));
+  ok('"full" density uses neither folderChip() nor folderListRow()', !findMarker(full.gridHolder, 'cc-chip-marker') && !findMarker(full.gridHolder, 'cc-frow-marker'));
 
-  ok('"grid" density: folderChip() was used (cc-chip-marker present)', !!findMarker(gridD.gridHolder, 'cc-chip-marker'));
-  ok('"grid" density: card()/folderListRow() were NOT used', !findMarker(gridD.gridHolder, 'cc-card-full-marker') && !findMarker(gridD.gridHolder, 'cc-frow-marker'));
+  ok('"grid" density uses folderChip()', !!findMarker(gridD.gridHolder, 'cc-chip-marker'));
+  ok('"grid" density uses neither card() nor folderListRow()', !findMarker(gridD.gridHolder, 'cc-card-full-marker') && !findMarker(gridD.gridHolder, 'cc-frow-marker'));
 
-  ok('"list" density: folderListRow() was used (cc-frow-marker present)', !!findMarker(listD.gridHolder, 'cc-frow-marker'));
-  ok('"list" density: card()/folderChip() were NOT used', !findMarker(listD.gridHolder, 'cc-card-full-marker') && !findMarker(listD.gridHolder, 'cc-chip-marker'));
+  ok('"list" density uses folderListRow()', !!findMarker(listD.gridHolder, 'cc-frow-marker'));
+  ok('"list" density uses neither card() nor folderChip()', !findMarker(listD.gridHolder, 'cc-card-full-marker') && !findMarker(listD.gridHolder, 'cc-chip-marker'));
 }
 
-console.log('\nrenderFolderView() preserves scroll position across a full rebuild (item 2)');
+console.log('\nrenderFolderView() preserves the scroll position across a full rebuild');
 {
-  console.log('\n  ...with an empty organizer tree (the whole function still tears down + rebuilds gridHolder)');
+  console.log('\n  ...with an empty organizer tree, where gridHolder is still torn down and rebuilt');
   const empty = run([], 'full', { scrollY: 842 });
-  ok('window.scrollTo() was called exactly once', empty.scrollCalls.length === 1, JSON.stringify(empty.scrollCalls));
-  ok('...restoring the EXACT pre-render scrollY, at x=0', JSON.stringify(empty.scrollCalls[0]) === JSON.stringify([0, 842]), JSON.stringify(empty.scrollCalls));
+  ok('window.scrollTo() was called once', empty.scrollCalls.length === 1, JSON.stringify(empty.scrollCalls));
+  ok('...restoring the pre-render scrollY at x=0', JSON.stringify(empty.scrollCalls[0]) === JSON.stringify([0, 842]), JSON.stringify(empty.scrollCalls));
 
-  console.log('\n  ...with real content re-rendered (a container present, any density)');
+  console.log('\n  ...with real content re-rendered');
   const c = { name: '/plex', state: 'running' };
   const entry = { id: 'e1', type: 'container', name: '/plex', parentId: 'root', position: 0 };
   const withContent = run([entry], 'grid', { containers: [c], scrollY: 1337 });
   ok('scroll is still restored to the pre-render value after a non-trivial rebuild', JSON.stringify(withContent.scrollCalls[0]) === JSON.stringify([0, 1337]), JSON.stringify(withContent.scrollCalls));
 
-  console.log('\n  ...and the defensive early-return path (ccOrgView not loaded yet) restores scroll too, not just the happy path');
+  console.log('\n  ...and on the early return taken while ccOrgView is not loaded yet');
   const guarded = run([], 'full', { noOrgView: true, scrollY: 55 });
-  ok('the early-return branch (no ccOrgView) still calls window.scrollTo() before returning', guarded.scrollCalls.length === 1 && JSON.stringify(guarded.scrollCalls[0]) === JSON.stringify([0, 55]), JSON.stringify(guarded.scrollCalls));
-  ok('...and it still tears the grid holder down via removeGridHolder(), unaffected by the scroll fix', guarded.removed === true);
+  ok('the early return calls window.scrollTo() before it leaves', guarded.scrollCalls.length === 1 && JSON.stringify(guarded.scrollCalls[0]) === JSON.stringify([0, 55]), JSON.stringify(guarded.scrollCalls));
+  ok('...and still tears the grid holder down through removeGridHolder()', guarded.removed === true);
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

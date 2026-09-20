@@ -16,9 +16,9 @@ import (
 	"github.com/junkerderprovinz/cannonadecommand/internal/model"
 )
 
-// fakeHostMem is the host RAM the fake Docker daemon reports via /info — used as the
-// fallback when /proc/meminfo is unreadable (e.g. a non-Linux dev box).
-const fakeHostMem = int64(8) << 30 // 8 GiB
+// fakeHostMem is what the fake daemon reports, used where /proc/meminfo is
+// unreadable.
+const fakeHostMem = int64(8) << 30
 
 type fakeDocker struct {
 	containers []model.Container
@@ -60,7 +60,7 @@ func (f *fakeDocker) UpdateResources(_ context.Context, n string, l model.Limits
 }
 func (f *fakeDocker) SetRestartPolicy(_ context.Context, n, policy string) error {
 	f.actions = append(f.actions, "restart:"+n+":"+policy)
-	f.limits.RestartPolicy = policy // so the handler's verify re-read reflects the change
+	f.limits.RestartPolicy = policy
 	return nil
 }
 
@@ -143,7 +143,6 @@ func TestApply(t *testing.T) {
 	if !s.Runner.(*fakeRunner).ran {
 		t.Fatal("apply did not invoke the runner")
 	}
-	// last_run must now be exposed via /api/state
 	req2 := httptest.NewRequest("GET", "/api/state", nil)
 	rec2 := httptest.NewRecorder()
 	h.ServeHTTP(rec2, req2)
@@ -210,7 +209,6 @@ func TestStatsEndpoint(t *testing.T) {
 
 func TestLimitsSetGetAndValidate(t *testing.T) {
 	s, h := newServer()
-	// set caps on the known container
 	body, _ := json.Marshal(map[string]any{"name": "gluetun", "mem_bytes": 1073741824, "nano_cpus": 1500000000})
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest("POST", "/api/limits", bytes.NewReader(body)))
@@ -221,14 +219,12 @@ func TestLimitsSetGetAndValidate(t *testing.T) {
 	if len(fd.actions) != 1 || fd.actions[0] != "limits:gluetun:1073741824:1500000000" {
 		t.Fatalf("update not recorded: %v", fd.actions)
 	}
-	// an unknown container must be rejected before touching the socket
 	bad, _ := json.Marshal(map[string]any{"name": "ghost", "mem_bytes": 1})
 	rec2 := httptest.NewRecorder()
 	h.ServeHTTP(rec2, httptest.NewRequest("POST", "/api/limits", bytes.NewReader(bad)))
 	if rec2.Code != 400 {
 		t.Fatalf("unknown container must be 400, got %d", rec2.Code)
 	}
-	// GET returns the stored caps
 	rec3 := httptest.NewRecorder()
 	h.ServeHTTP(rec3, httptest.NewRequest("GET", "/api/limits?name=gluetun", nil))
 	if rec3.Code != 200 {
@@ -243,12 +239,8 @@ func TestLimitsSetGetAndValidate(t *testing.T) {
 	}
 }
 
-// Removing a limit must NOT be a no-op: remove_mem/remove_cpu translate to a
-// practical-unlimited LIVE value computed from the host totals (all RAM / all
-// CPUs), server-side — so a browser whose cached hostMem was 0 can still remove.
-// Compared against the same hostcpu funcs the handler uses, so this is hermetic
-// (on a non-Linux dev box both sides are 0 and it still passes; on Linux CI it
-// proves the value is the real, non-zero host total).
+// The expected totals come from the same hostcpu functions the handler uses, so
+// the test holds on any OS and on Linux proves the real host totals are sent.
 func TestLimitsRemoveSendsHostTotals(t *testing.T) {
 	s, h := newServer()
 	body, _ := json.Marshal(map[string]any{"name": "gluetun", "remove_mem": true, "remove_cpu": true})
@@ -257,8 +249,6 @@ func TestLimitsRemoveSendsHostTotals(t *testing.T) {
 	if rec.Code != 200 {
 		t.Fatalf("remove limits code = %d: %s", rec.Code, rec.Body)
 	}
-	// mirror s.hostMem: /proc/meminfo if readable (Linux CI), else the daemon's /info
-	// (the fake) — so this passes on a non-Linux dev box too and proves the fallback.
 	wantMem := hostcpu.MemTotal()
 	if wantMem == 0 {
 		wantMem = fakeHostMem
@@ -271,10 +261,6 @@ func TestLimitsRemoveSendsHostTotals(t *testing.T) {
 	}
 }
 
-// The limits dual-write must run the conflict stripper for BOTH cpu and memory:
-// template-written flags CC never sets itself (-m, --cpu-shares, space forms)
-// are gone after a set and CC's own values are in — so an Unraid recreate
-// cannot resurrect stale caps from the template's Extra Parameters.
 func TestLimitsDualWriteStripsTemplateConflicts(t *testing.T) {
 	s, h := newServer()
 	dir := t.TempDir()
@@ -303,8 +289,6 @@ func TestLimitsDualWriteStripsTemplateConflicts(t *testing.T) {
 	}
 }
 
-// GET /api/limits with NO name returns a map of every container's caps, so the
-// panel can flag which containers have a limit set in one round-trip.
 func TestLimitsBulk(t *testing.T) {
 	s, h := newServer()
 	s.Docker.(*fakeDocker).limits = model.Limits{MemBytes: 2147483648, NanoCPUs: 2000000000, CpusetCPUs: "0-1"}
@@ -323,10 +307,6 @@ func TestLimitsBulk(t *testing.T) {
 	}
 }
 
-// handleSetRestartPolicy applies a valid policy live, verifies it back in the reply,
-// upserts --restart into the template (replacing the old value, keeping other flags),
-// and rejects an invalid policy (400) and an unknown container (known() guard) before
-// anything reaches the socket.
 func TestRestartPolicySetValidateAndTemplate(t *testing.T) {
 	s, h := newServer()
 	dir := t.TempDir()
@@ -336,7 +316,6 @@ func TestRestartPolicySetValidateAndTemplate(t *testing.T) {
 	if err := os.WriteFile(f, []byte(tmpl), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	// a valid policy applies live and is verified back in the reply
 	body, _ := json.Marshal(map[string]any{"name": "gluetun", "policy": "unless-stopped"})
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest("POST", "/api/restartpolicy", bytes.NewReader(body)))
@@ -354,7 +333,6 @@ func TestRestartPolicySetValidateAndTemplate(t *testing.T) {
 	if len(fd.actions) != 1 || fd.actions[0] != "restart:gluetun:unless-stopped" {
 		t.Fatalf("live update not recorded: %v", fd.actions)
 	}
-	// --restart is upserted (old value gone) and unrelated flags survive
 	got, _ := os.ReadFile(f)
 	if strings.Contains(string(got), "--restart=no") {
 		t.Fatalf("old --restart must be replaced:\n%s", got)
@@ -364,21 +342,18 @@ func TestRestartPolicySetValidateAndTemplate(t *testing.T) {
 			t.Fatalf("missing %q in rewritten template:\n%s", want, got)
 		}
 	}
-	// an invalid policy is rejected before touching the socket
 	bad, _ := json.Marshal(map[string]any{"name": "gluetun", "policy": "sometimes"})
 	rec2 := httptest.NewRecorder()
 	h.ServeHTTP(rec2, httptest.NewRequest("POST", "/api/restartpolicy", bytes.NewReader(bad)))
 	if rec2.Code != 400 {
 		t.Fatalf("invalid policy must be 400, got %d", rec2.Code)
 	}
-	// an unknown container is rejected by the known() guard
 	ghost, _ := json.Marshal(map[string]any{"name": "ghost", "policy": "always"})
 	rec3 := httptest.NewRecorder()
 	h.ServeHTTP(rec3, httptest.NewRequest("POST", "/api/restartpolicy", bytes.NewReader(ghost)))
 	if rec3.Code != 400 {
 		t.Fatalf("unknown container must be 400, got %d", rec3.Code)
 	}
-	// neither the invalid policy nor the unknown container reached the socket
 	if len(fd.actions) != 1 {
 		t.Fatalf("invalid/unknown must not touch the socket: %v", fd.actions)
 	}
@@ -400,22 +375,18 @@ func TestConfigPutGetAndValidate(t *testing.T) {
 	if len(s.Store.(*memStore).cfg.Schedules) != 1 {
 		t.Fatalf("config not stored: %+v", s.Store.(*memStore).cfg)
 	}
-	// a bad schedule action is rejected
 	bad, _ := json.Marshal(model.Config{Schedules: []model.Schedule{{Name: "x", Action: "explode", Time: "03:00"}}})
 	rec2 := httptest.NewRecorder()
 	h.ServeHTTP(rec2, httptest.NewRequest("PUT", "/api/config", bytes.NewReader(bad)))
 	if rec2.Code != 400 {
 		t.Fatalf("bad action should be 400, got %d", rec2.Code)
 	}
-	// a malformed (non-zero-padded) schedule time is rejected before it can become
-	// a silently dead schedule
 	badTime, _ := json.Marshal(model.Config{Schedules: []model.Schedule{{Name: "x", Action: "start", Time: "9:00"}}})
 	rec2b := httptest.NewRecorder()
 	h.ServeHTTP(rec2b, httptest.NewRequest("PUT", "/api/config", bytes.NewReader(badTime)))
 	if rec2b.Code != 400 {
 		t.Fatalf("bad time should be 400, got %d", rec2b.Code)
 	}
-	// GET returns it
 	rec3 := httptest.NewRecorder()
 	h.ServeHTTP(rec3, httptest.NewRequest("GET", "/api/config", nil))
 	var got model.Config
@@ -433,7 +404,6 @@ func TestConfigIdleStopValidation(t *testing.T) {
 		h.ServeHTTP(rec, httptest.NewRequest("PUT", "/api/config", bytes.NewReader(body)))
 		return rec.Code
 	}
-	// valid idle-stop → stored and round-trips
 	if code := put(model.Config{IdleStops: []model.IdleStop{{Name: "jelly", Enabled: true, IdleMinutes: 30, CPUThresholdPct: 5}}}); code != 200 {
 		t.Fatalf("valid idle-stop should be 200, got %d", code)
 	}
@@ -447,7 +417,6 @@ func TestConfigIdleStopValidation(t *testing.T) {
 	if len(got.IdleStops) != 1 || got.IdleStops[0].Name != "jelly" || got.IdleStops[0].IdleMinutes != 30 {
 		t.Fatalf("idle-stop did not round-trip: %+v", got.IdleStops)
 	}
-	// invalid: empty name, out-of-range minutes, out-of-range threshold → 400
 	if code := put(model.Config{IdleStops: []model.IdleStop{{Name: "", Enabled: true, IdleMinutes: 30}}}); code != 400 {
 		t.Fatalf("empty name should be 400, got %d", code)
 	}

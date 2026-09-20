@@ -1,6 +1,6 @@
-// Package api is the localhost HTTP surface the Docker-tab panel calls (through
-// a same-origin PHP proxy). It deliberately exposes only read + orchestrate
-// verbs; it never proxies raw Docker create/exec/build.
+// Package api is the HTTP API the WebGUI pages reach through a same-origin PHP
+// proxy. It exposes read and orchestration verbs only, never Docker
+// create, exec or build.
 package api
 
 import (
@@ -24,8 +24,8 @@ import (
 	"github.com/junkerderprovinz/cannonadecommand/internal/vmctl"
 )
 
-// Docker is the read + lifecycle surface the card panel needs. It stays small on
-// purpose: list/inspect/stats + the safe lifecycle verbs, never create/exec/build.
+// Docker is the part of the Docker API the handlers use: reads and the safe
+// lifecycle verbs.
 type Docker interface {
 	List(ctx context.Context) ([]model.Container, error)
 	Start(ctx context.Context, name string) error
@@ -40,11 +40,9 @@ type Docker interface {
 	HostMemTotal(ctx context.Context) int64
 }
 
-// hostMem returns the host's total RAM in bytes, preferring /proc/meminfo and falling
-// back to what the Docker daemon reports (GET /info), so a box where the supervisor
-// can't read /proc still yields a real value. Used for the state's host_mem AND the
-// "remove RAM limit" sentinel — if this were 0, removal would be a no-op and the UI
-// would read every container as still limited.
+// hostMem returns the host's total RAM in bytes from /proc/meminfo, falling back
+// to the Docker daemon's figure. Removing a RAM limit sets it to this value, so a
+// 0 here would turn the removal into a no-op.
 func (s *Server) hostMem(ctx context.Context) int64 {
 	if m := hostcpu.MemTotal(); m > 0 {
 		return m
@@ -52,7 +50,7 @@ func (s *Server) hostMem(ctx context.Context) int64 {
 	return s.Docker.HostMemTotal(ctx)
 }
 
-// Store persists the plan + the automation config.
+// Store persists the plan and the automation config.
 type Store interface {
 	Load() (model.Plan, error)
 	Save(model.Plan) error
@@ -65,17 +63,15 @@ type Runner interface {
 	Run(ctx context.Context, plan model.Plan) model.RunResult
 }
 
-// IconSource is the icon pipeline's cache (optional; nil = the UI only ever sees
-// the icon the container/plugin/VM itself ships). Kept as an interface so the API
-// package stays free of the HTTP-fetching machinery and a test can stub it.
+// IconSource is the icon pipeline's cache.
 type IconSource interface {
-	// Resolve answers from cache only and must never block on the network.
+	// Resolve answers from the cache and does not block on the network.
 	Resolve(names []string) map[string]iconsrc.Result
 	// SVG returns the cached artwork for a name, its kind, and whether it exists.
 	SVG(name string) ([]byte, string, bool)
 }
 
-// VMController manages libvirt VM limits (optional; nil disables the VM-tab backend).
+// VMController manages libvirt VM limits.
 type VMController interface {
 	List(ctx context.Context) ([]vmctl.VM, error)
 	Apply(ctx context.Context, name string, lim vmctl.Limits) error
@@ -83,24 +79,25 @@ type VMController interface {
 	ResizeDisk(ctx context.Context, name, target string, newBytes int64) error
 }
 
-// Server wires the read/orchestrate handlers.
+// Server holds the handlers' dependencies. VMs, BwLast, Kicker and Icons may be
+// nil; an empty TemplatesDir skips writing limits into the Unraid templates.
 type Server struct {
 	Docker       Docker
 	Store        Store
 	Runner       Runner
-	VMs          VMController // optional: libvirt VM limits backend (CPU/RAM/bandwidth)
-	Pidder       Pidder       // resolves a container's main PID for the bandwidth diagnostics
-	BwLast       BwLaster     // optional: the monitor's last shaping attempt per container
-	Kicker       Kicker       // optional: nudges the monitor to apply a saved config immediately
-	Icons        IconSource   // optional: external icon lookup + cache for the icon pipeline (nil = native icons only)
-	TemplatesDir string       // Unraid dockerMan templates dir; "" disables the apply-fest template write
-	Version      string       // the running daemon's build version, surfaced in /api/state so the UI can show which backend is live
+	VMs          VMController
+	Pidder       Pidder
+	BwLast       BwLaster
+	Kicker       Kicker
+	Icons        IconSource
+	TemplatesDir string
+	Version      string
 
 	mu      sync.Mutex
 	lastRun model.RunResult
 
 	opsMu    sync.Mutex
-	limitOps []limitOp // last limit operations, for the Settings diagnostics card
+	limitOps []limitOp
 }
 
 // Handler returns the HTTP router.
@@ -115,13 +112,11 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/apply", s.handleApply)
 	mux.HandleFunc("POST /api/action", s.handleAction)
 	mux.HandleFunc("GET /api/stats", s.handleStats)
-	// #13: proxy-safe host CPU % for the status island (the GraphQL websocket the native
-	// Dashboard uses is often broken by reverse proxies; this HTTP poll always works).
+	// The status island polls host CPU and network here because reverse proxies
+	// often break the GraphQL websocket the native Dashboard uses (#12, #13).
 	mux.HandleFunc("GET /api/hostcpu", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]int{"pct": hostcpu.Percent()})
 	})
-	// #12: proxy-safe host network throughput for the status island. Returns the primary
-	// uplink's cumulative rx/tx byte counters; the browser deltas two polls into a rate.
 	mux.HandleFunc("GET /api/hostnet", func(w http.ResponseWriter, _ *http.Request) {
 		rx, tx := hostnet.Rate()
 		writeJSON(w, http.StatusOK, map[string]uint64{"rx": rx, "tx": tx})
@@ -137,18 +132,15 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/vmlimits", s.handleSetVMLimits)
 	mux.HandleFunc("GET /api/vmdisks", s.handleGetVMDisks)
 	mux.HandleFunc("POST /api/vmdiskresize", s.handleResizeVMDisk)
-	// Icon pipeline: a batch name→icon-source lookup and the cached SVG itself.
 	mux.HandleFunc("POST /api/icons", s.handleIcons)
 	mux.HandleFunc("GET /api/iconsvg", s.handleIconSVG)
 	return mux
 }
 
-// handleIcons answers a batch "what have you got for these names?" from the icon
-// cache. It NEVER performs a network fetch on the request path — unknown names
-// come back as "pending" and are looked up by the resolver's background workers,
-// so a slow or unreachable CDN can never delay (or hang) a Docker-tab render.
-// No resolver configured (or an older engine) yields an empty map, which the
-// frontend reads as "no external sources" and falls back to the native icon.
+// handleIcons answers a batch of names from the icon cache. Unknown names come
+// back as pending and are fetched in the background, so a slow CDN cannot hold
+// up a Docker tab render. Without a resolver the answer is an empty map and the
+// frontend keeps the native icons.
 func (s *Server) handleIcons(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Names []string `json:"names"`
@@ -161,18 +153,16 @@ func (s *Server) handleIcons(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]iconsrc.Result{})
 		return
 	}
-	// Bound the batch: the Docker tab asks for every row at once, and a hostile
-	// or buggy caller must not be able to make one request queue thousands.
+	// One request must not be able to queue thousands of lookups.
 	if len(req.Names) > 512 {
 		req.Names = req.Names[:512]
 	}
 	writeJSON(w, http.StatusOK, s.Icons.Resolve(req.Names))
 }
 
-// handleIconSVG serves one cached icon as real image/svg+xml, so the browser can
-// point an <img> straight at it (same-origin through the PHP proxy, which means
-// the complexity heuristic's canvas read is not tainted). Only bytes already on
-// the flash are served; a cache miss is a 404, never a live fetch.
+// handleIconSVG serves one cached icon as image/svg+xml. Coming through the
+// same-origin proxy keeps the frontend's canvas reads of it untainted. A cache
+// miss is a 404, not a fetch.
 func (s *Server) handleIconSVG(w http.ResponseWriter, r *http.Request) {
 	if s.Icons == nil {
 		http.NotFound(w, r)
@@ -188,9 +178,8 @@ func (s *Server) handleIconSVG(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(body)
 }
 
-// handleGetVMs lists every libvirt domain with its current CPU/RAM/bandwidth limits.
-// A box without libvirt (or a wedged libvirtd) yields an empty list, never a 500, so
-// the VM tab simply shows no CC controls there.
+// handleGetVMs lists every libvirt domain with its limits. Without a working
+// libvirt the list is empty rather than an error, so the VM tab shows no controls.
 func (s *Server) handleGetVMs(w http.ResponseWriter, r *http.Request) {
 	if s.VMs == nil {
 		writeJSON(w, http.StatusOK, []vmctl.VM{})
@@ -206,9 +195,9 @@ func (s *Server) handleGetVMs(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, vms)
 }
 
-// overlayVMLimits fills each VM's CPU cap + bandwidth from the stored config — these are the
-// CC-owned limits the monitor re-asserts, so the config is their source of truth (the live cap
-// can be transiently wiped by an Unraid VM-form apply; bandwidth never lives in libvirt).
+// overlayVMLimits fills each VM's CPU cap and bandwidth from the stored config,
+// which is their source of truth: an Unraid VM form apply can wipe the live cap,
+// and libvirt never holds the bandwidth.
 func (s *Server) overlayVMLimits(vms []vmctl.VM) {
 	cfg, err := s.Store.LoadConfig()
 	if err != nil {
@@ -229,8 +218,8 @@ func (s *Server) overlayVMLimits(vms []vmctl.VM) {
 	}
 }
 
-// saveVMLimit stores (or clears) a VM's CPU cap + bandwidth in the config. A nil field is left
-// unchanged; 0 clears it; an entry with everything clear is dropped.
+// saveVMLimit stores a VM's CPU cap and bandwidth in the config. A nil field is
+// left unchanged, 0 clears it, and an entry with nothing set is dropped.
 func (s *Server) saveVMLimit(name string, cpuCap, inKbit, outKbit *int) error {
 	cfg, err := s.Store.LoadConfig()
 	if err != nil {
@@ -261,7 +250,6 @@ func (s *Server) saveVMLimit(name string, cpuCap, inKbit, outKbit *int) error {
 	case empty && idx >= 0:
 		cfg.VMLimits = append(cfg.VMLimits[:idx], cfg.VMLimits[idx+1:]...)
 	case empty:
-		// nothing to store
 	case idx >= 0:
 		cfg.VMLimits[idx] = cur
 	default:
@@ -270,9 +258,9 @@ func (s *Server) saveVMLimit(name string, cpuCap, inKbit, outKbit *int) error {
 	return s.Store.SaveConfig(cfg)
 }
 
-// handleSetVMLimits applies CPU-pin / CPU-cap / RAM / bandwidth to ONE domain. The name
-// must be one libvirt actually knows (never an arbitrary or flag-like string), and a
-// cpuset is validated to a cpu-list before it reaches virsh.
+// handleSetVMLimits applies CPU pinning, CPU cap, RAM and bandwidth to one domain.
+// The name has to be a domain libvirt knows and the cpuset a cpu list before
+// either reaches virsh.
 func (s *Server) handleSetVMLimits(w http.ResponseWriter, r *http.Request) {
 	if s.VMs == nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "vm backend disabled"})
@@ -315,7 +303,6 @@ func (s *Server) handleSetVMLimits(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bad cpuset (want a cpu list like 0-3,6): " + *req.CPUCores})
 		return
 	}
-	// CPU/RAM go straight to libvirt (persisted in the domain XML, applied live if running).
 	if req.CPUCores != nil || req.CPUCap != nil || req.MemMiB != nil {
 		lim := vmctl.Limits{CPUCores: req.CPUCores, CPUCap: req.CPUCap, MemMiB: req.MemMiB}
 		if err := s.VMs.Apply(r.Context(), req.Name, lim); err != nil {
@@ -324,17 +311,15 @@ func (s *Server) handleSetVMLimits(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	// The CPU cap + bandwidth are ALSO stored in the config so the monitor re-asserts them every
-	// tick — that is what makes the cap survive an Unraid VM-form "Apply" (which regenerates the
-	// XML without it) and the bandwidth survive a VM restart onto a new tap. CPU pin + RAM stay
-	// form-managed (applied once above), so CC never fights the Unraid form on those.
+	// The monitor reasserts the stored cap and bandwidth every tick, so the cap
+	// survives an Unraid VM form Apply and the bandwidth a restart onto a new tap.
 	if req.CPUCap != nil || req.InKbit != nil || req.OutKbit != nil {
 		if err := s.saveVMLimit(req.Name, req.CPUCap, req.InKbit, req.OutKbit); err != nil {
 			writeErr(w, http.StatusInternalServerError, err)
 			return
 		}
 		if s.Kicker != nil {
-			s.Kicker.Kick() // apply/re-assert now, not up to a monitor tick later
+			s.Kicker.Kick()
 		}
 	}
 	log.Printf("vmlimits: %s applied", req.Name)
@@ -349,8 +334,7 @@ func (s *Server) handleSetVMLimits(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "vm": out})
 }
 
-// vmKnown reports whether name is a domain libvirt actually knows — the same guard the
-// limit handlers use before any virsh call touches a caller-supplied name.
+// vmKnown reports whether libvirt knows a domain called name.
 func (s *Server) vmKnown(ctx context.Context, name string) (bool, error) {
 	vms, err := s.VMs.List(ctx)
 	if err != nil {
@@ -364,8 +348,7 @@ func (s *Server) vmKnown(ctx context.Context, name string) (bool, error) {
 	return false, nil
 }
 
-// handleGetVMDisks lists one domain's resizable disks (target + source + current capacity), for
-// the VM tab's disk-resize editor. Unknown/absent backend -> a clean error, never a 500.
+// handleGetVMDisks lists one domain's resizable disks for the VM tab's resize editor.
 func (s *Server) handleGetVMDisks(w http.ResponseWriter, r *http.Request) {
 	if s.VMs == nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "vm backend disabled"})
@@ -396,9 +379,8 @@ func (s *Server) handleGetVMDisks(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, disks)
 }
 
-// handleResizeVMDisk grows one disk of a domain. The name is validated against the live domain
-// list and the size is taken in GiB; vmctl enforces grow-only and picks the live (blockresize)
-// vs shut-off (qemu-img) path. Returns the refreshed disk list so the UI can show the new size.
+// handleResizeVMDisk grows one disk of a domain to size_gib and answers with the
+// refreshed disk list. vmctl refuses to shrink.
 func (s *Server) handleResizeVMDisk(w http.ResponseWriter, r *http.Request) {
 	if s.VMs == nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "vm backend disabled"})
@@ -446,7 +428,7 @@ func (s *Server) handleResizeVMDisk(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "disks": disks})
 }
 
-// known reports whether name is a live container (guards every write verb).
+// known reports whether name is an existing container.
 func (s *Server) known(ctx context.Context, name string) (bool, error) {
 	containers, err := s.Docker.List(ctx)
 	if err != nil {
@@ -465,12 +447,12 @@ type stateResp struct {
 	Containers  []model.Container `json:"containers"`
 	LastRun     model.RunResult   `json:"last_run"`
 	DockerError string            `json:"docker_error,omitempty"`
-	HostCPUs    int               `json:"host_cpus"`              // host logical-CPU count, for the pin grid
-	HostCoreOf  []int             `json:"host_core_of,omitempty"` // physical-core id per logical CPU (HT grouping)
-	HostPCores  []int             `json:"host_pcores,omitempty"`  // Intel hybrid P-core CPUs (empty on non-hybrid)
-	HostECores  []int             `json:"host_ecores,omitempty"`  // Intel hybrid E-core CPUs (empty on non-hybrid)
-	HostMem     int64             `json:"host_mem,omitempty"`     // host total RAM bytes, for "remove RAM limit"
-	Version     string            `json:"version,omitempty"`      // the running daemon's build version, so the UI can show which backend is live
+	HostCPUs    int               `json:"host_cpus"`              // logical CPUs
+	HostCoreOf  []int             `json:"host_core_of,omitempty"` // physical core id per logical CPU
+	HostPCores  []int             `json:"host_pcores,omitempty"`  // Intel hybrid P-core CPUs
+	HostECores  []int             `json:"host_ecores,omitempty"`  // Intel hybrid E-core CPUs
+	HostMem     int64             `json:"host_mem,omitempty"`     // total RAM in bytes
+	Version     string            `json:"version,omitempty"`
 }
 
 func (s *Server) handleState(w http.ResponseWriter, r *http.Request) {
@@ -483,8 +465,7 @@ func (s *Server) handleState(w http.ResponseWriter, r *http.Request) {
 	resp.HostPCores, resp.HostECores = hostcpu.HybridPE()
 	containers, derr := s.Docker.List(r.Context())
 	if derr != nil {
-		// Tolerate a docker hiccup: still return the plan + the last run, so the
-		// panel degrades gracefully instead of going blank.
+		// The panel still shows the plan and the last run when Docker hiccups.
 		resp.DockerError = derr.Error()
 	} else {
 		resp.Containers = containers
@@ -510,7 +491,6 @@ func (s *Server) handlePutPlan(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
-	// Reject a structurally invalid plan (cycle / unknown dep) before persisting.
 	if _, err := orchestrator.TopoStages(plan); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
@@ -586,18 +566,14 @@ func (s *Server) handleAction(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-// perCallTimeout bounds a single container's Docker call inside a fan-out (handleStats,
-// handleGetLimits). A container that was JUST recreated (image pull/update in progress or
-// just finished) can leave dockerd slow to answer for that ONE container specifically —
-// without this, wg.Wait() blocks the WHOLE response (and every other container's already-
-// ready result) on that single straggler, which starves the panel's poll loop for as long
-// as dockerd takes to settle (observed live: one straggler held handleStats open 30+
-// seconds right after a container update, freezing the whole Docker tab's polling).
+// perCallTimeout bounds each container's call in the handleStats and
+// handleGetLimits fan-outs. Right after a container is recreated dockerd can take
+// 30s or more to answer for it, and one straggler would otherwise hold up the
+// whole response and the Docker tab's polling with it.
 const perCallTimeout = 8 * time.Second
 
-// handleStats returns a one-shot resource snapshot for every running container,
-// keyed by name. Snapshots are fetched concurrently but capped so a big host
-// doesn't hammer the socket.
+// handleStats returns a resource snapshot for every running container, keyed by
+// name. At most six fetches run at once so a big host does not flood the socket.
 func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	containers, err := s.Docker.List(r.Context())
 	if err != nil {
@@ -632,10 +608,9 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// handleGetLimits returns CONFIGURED resource caps (0 = none). With ?name= it
-// returns one container's caps; with no name it returns a map of EVERY container's
-// caps (concurrent inspects, capped) so the panel can flag, in one round-trip,
-// which containers actually have a CPU/RAM/pin limit set.
+// handleGetLimits returns configured resource caps (0 means none): one
+// container's with ?name=, otherwise a map of every container's, so the panel can
+// mark the limited ones in a single round trip.
 func (s *Server) handleGetLimits(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	if name == "" {
@@ -686,17 +661,13 @@ func (s *Server) handleGetLimits(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, lim)
 }
 
-// handleSetLimits sets a container's memory + CPU caps live (Docker update). The
-// name is validated against the live list first; a zero field is left unchanged
-// (Docker's update ignores 0 and cannot remove a cap — that needs recreating).
+// handleSetLimits sets a container's memory and CPU caps through a Docker update.
+// A zero field is left unchanged, because Docker's update ignores 0.
 //
-// Removal is explicit (remove_mem / remove_cpu), NOT "send 0": Docker cannot
-// live-UNSET a cap, so "remove" means set it to practically unlimited — all host
-// RAM / all host CPUs — and STRIP the flag from the template so a later recreate
-// ("Apply") starts with no cap at all. The unlimited value is computed HERE, from
-// the host totals the engine always knows (/proc/*), because the browser's cached
-// hostMem can be 0 if its state fetch lost a race — which used to make the Remove
-// button a silent no-op.
+// Docker cannot unset a cap on a running container, so remove_mem and remove_cpu
+// raise the cap to all host RAM or all host CPUs and strip the flag from the
+// template, and the next recreate starts without one. The host totals come from
+// the server because the browser's copy can still be 0.
 func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Name       string `json:"name"`
@@ -710,9 +681,8 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
-	// Translate removal into a practical-unlimited live value, server-side. Guard on
-	// >0 so a (near-impossible) /proc parse failure never sends a bogus 0/negative
-	// cap; the template strip below still runs, so a recreate drops the cap either way.
+	// If the host totals cannot be read, the live cap stays, but the template
+	// strip below still drops it on the next recreate.
 	if req.RemoveMem {
 		if mt := s.hostMem(r.Context()); mt > 0 {
 			req.MemBytes = mt
@@ -724,8 +694,6 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 			req.CpusetCPUs = "0-" + strconv.Itoa(n-1)
 		}
 	}
-	// cpuset is passed straight to Docker; allow only a cpu-list (digits, commas,
-	// hyphens) so nothing else can reach the daemon.
 	if req.CpusetCPUs != "" && !validCpuset(req.CpusetCPUs) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bad cpuset (want a cpu list like 0-3,6): " + req.CpusetCPUs})
 		return
@@ -739,25 +707,21 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unknown container: " + req.Name})
 		return
 	}
-	// Mirror the limit into the Unraid container template so it survives an "Apply" (which
-	// recreates from the template). Done BEFORE the live update and REGARDLESS of its
-	// result: a REMOVAL then strips the cap from the template even if the live update fails
-	// on this box, so a later Apply/recreate still lifts it. Best-effort; an empty value
-	// REMOVES the flag. No --memory-swap is written (it needs the memsw cgroup, absent on
-	// hosts without swap accounting — matching the live path, which omits MemorySwap).
+	// The limit goes into the Unraid template too, or the next Apply recreates the
+	// container without it. This runs before the live update and whatever its
+	// result, so a removal still reaches the template when the update fails.
 	tmplResult := "template: no change"
 	if s.TemplatesDir != "" {
-		// CC's window value must ALWAYS win over the template's Extra Parameters: any
-		// touch of RAM/CPU strips ALL conflicting docker flags of that family (an empty
-		// value = remove-only), then re-adds only what CC set — so an Unraid recreate
-		// cannot resurrect a stale template-written cap. A CLEAR only strips (rule: the
-		// user's template is never re-populated on remove).
+		// Every flag of the touched family is stripped (an empty value removes it)
+		// and only CC's value added back, so a stale template cap cannot return on a
+		// recreate. --memory-swap is never written: it needs the memsw cgroup, which
+		// hosts without swap accounting lack.
 		flags := map[string]string{}
 		if req.RemoveMem || req.MemBytes > 0 {
 			flags["--memory"] = ""
-			flags["-m"] = ""                   // short form of --memory
-			flags["--memory-swap"] = ""        // never set a swap cap (memsw cgroup)
-			flags["--memory-reservation"] = "" // soft cap would fight CC's hard cap
+			flags["-m"] = ""
+			flags["--memory-swap"] = ""
+			flags["--memory-reservation"] = "" // a soft cap would fight the hard cap
 			if !req.RemoveMem {
 				flags["--memory"] = strconv.FormatInt(req.MemBytes, 10)
 			}
@@ -765,11 +729,10 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 		if req.RemoveCPU || req.NanoCPUs > 0 || req.CpusetCPUs != "" {
 			flags["--cpus"] = ""
 			flags["--cpuset-cpus"] = ""
-			flags["--cpu-shares"] = "" // relative weight would fight CC's absolute cap
+			flags["--cpu-shares"] = "" // a relative weight would fight the absolute cap
 			if !req.RemoveCPU {
 				if req.NanoCPUs > 0 {
-					// 'f' (not 'g') so a small value never becomes scientific notation
-					// (e.g. "1e-06"), which docker run --cpus would reject on an Apply.
+					// 'f' because docker run --cpus rejects scientific notation such as 1e-06.
 					flags["--cpus"] = strconv.FormatFloat(float64(req.NanoCPUs)/1e9, 'f', -1, 64)
 				}
 				if req.CpusetCPUs != "" {
@@ -777,12 +740,9 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		// Bandwidth limits are tc-only (monitor/netshape); CC never wrote a rate flag
-		// into ExtraParams, so there is no legacy rate token to strip here.
 		if len(flags) > 0 {
-			// NOT silent anymore: a failing template mirror means every Unraid recreate
-			// (edit/apply/update) WIPES the live limits — the exact "green message but
-			// nothing sticks" triple symptom. The result lands in the diagnostics log.
+			// A failed template write means the next recreate loses the limit, so
+			// the result goes into the diagnostics log.
 			if merr := unraidtmpl.SetExtraParams(s.TemplatesDir, req.Name, flags); merr != nil {
 				tmplResult = "template FAILED: " + merr.Error()
 			} else {
@@ -790,9 +750,8 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	// Every limit operation is RECORDED (ring buffer + supervisor log) and, on success,
-	// VERIFIED by re-reading the container's live caps — so "did it actually apply?" is
-	// answerable from the Settings diagnostics card instead of a fleeting popup.
+	// Each operation is recorded and, on success, checked by reading the live caps
+	// back, so the Settings diagnostics card can show whether it took effect.
 	reqTxt := "mem=" + strconv.FormatInt(req.MemBytes, 10) + " nano=" + strconv.FormatInt(req.NanoCPUs, 10) + " cpuset=" + req.CpusetCPUs
 	if req.RemoveMem {
 		reqTxt += " remove_mem"
@@ -813,8 +772,6 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 		after["after_cpuset"] = l.CpusetCPUs
 		afterTxt = "mem=" + strconv.FormatInt(l.MemBytes, 10) + " nano=" + strconv.FormatInt(l.NanoCPUs, 10) + " cpuset=" + l.CpusetCPUs
 	} else {
-		// a FAILED verify read must be visible too — a bare "Angewendet" without values
-		// hid exactly this case from the user.
 		after["after_error"] = e.Error()
 		afterTxt = "verify FAILED: " + e.Error()
 	}
@@ -822,13 +779,9 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, after)
 }
 
-// handleSetRestartPolicy sets a container's Docker restart policy live (container
-// update, no recreate) and mirrors it into the Unraid container template so it
-// survives an "Apply"/recreate — the whole point for a container stuck on
-// restart=no permanently. The policy must be one of Docker's four exact values,
-// and the name is validated against the live list before anything reaches the
-// socket. It mirrors handleSetLimits: template first (best-effort, regardless of
-// the live result), then the live update, then a verify re-read + recordOp.
+// handleSetRestartPolicy sets a container's restart policy through a Docker
+// update and writes it into the Unraid template, so a recreate keeps it. Like
+// handleSetLimits it writes the template first, then updates, then reads back.
 func (s *Server) handleSetRestartPolicy(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Name   string `json:"name"`
@@ -853,12 +806,8 @@ func (s *Server) handleSetRestartPolicy(w http.ResponseWriter, r *http.Request) 
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unknown container: " + req.Name})
 		return
 	}
-	// Mirror --restart into the Unraid template BEFORE the live update and REGARDLESS of
-	// its result, exactly like handleSetLimits: a later Apply/recreate then keeps the new
-	// policy instead of resurrecting the old one. Best-effort; the diagnostics log records
-	// the outcome. SetExtraParams upserts --restart cleanly (strips any prior --restart
-	// token, re-adds ours) and leaves every other flag — including CC's own CPU/RAM caps —
-	// untouched, so the two mirrors never fight.
+	// SetExtraParams replaces only --restart, so the CPU and RAM caps written by
+	// handleSetLimits stay as they are.
 	tmplResult := "template: no change"
 	if s.TemplatesDir != "" {
 		if merr := unraidtmpl.SetExtraParams(s.TemplatesDir, req.Name, map[string]string{"--restart": req.Policy}); merr != nil {
@@ -873,8 +822,6 @@ func (s *Server) handleSetRestartPolicy(w http.ResponseWriter, r *http.Request) 
 		writeErr(w, http.StatusInternalServerError, err)
 		return
 	}
-	// Verify by re-reading the live policy, so "did it actually apply?" is answerable
-	// from the Settings diagnostics card, and the UI can echo the confirmed value.
 	after := map[string]any{"status": "ok", "template": tmplResult}
 	afterTxt := ""
 	if l, e := s.Docker.Limits(r.Context(), req.Name); e == nil {
@@ -888,9 +835,8 @@ func (s *Server) handleSetRestartPolicy(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, after)
 }
 
-// validRestartPolicy accepts only Docker's four exact restart-policy names. The
-// value is passed verbatim to the container-update endpoint and written into the
-// template's --restart flag, so keep it strict.
+// validRestartPolicy accepts Docker's four restart policy names. The value goes
+// verbatim to Docker and into the template's --restart flag.
 func validRestartPolicy(p string) bool {
 	switch p {
 	case "no", "unless-stopped", "always", "on-failure":
@@ -899,7 +845,7 @@ func validRestartPolicy(p string) bool {
 	return false
 }
 
-// limitOp is one recorded limit change (for the Settings diagnostics card).
+// limitOp is one recorded limit change for the Settings diagnostics card.
 type limitOp struct {
 	Time   string `json:"time"`
 	Name   string `json:"name"`
@@ -930,7 +876,7 @@ func (s *Server) handleLimitLog(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// Pidder resolves a container's main process PID (the docker client implements it).
+// Pidder resolves a container's main process PID.
 type Pidder interface {
 	PID(ctx context.Context, ref string) (int, error)
 }
@@ -940,14 +886,14 @@ type BwLaster interface {
 	LastBwApply(name string) string
 }
 
-// Kicker triggers an immediate monitor tick (the monitor implements it).
+// Kicker triggers an immediate monitor tick.
 type Kicker interface {
 	Kick()
 }
 
-// handleBwStatus answers "does the bandwidth limit ACTUALLY exist right now?" — it
-// reads the live tc qdisc + CC_DL netfilter chain inside the container's netns, so
-// the UI can show proof (or the exact failure) instead of a silent no-op.
+// handleBwStatus reads the live qdisc and CC_DL netfilter chain inside the
+// container's network namespace, so the UI can show whether the bandwidth limit
+// is in place or why not.
 func (s *Server) handleBwStatus(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 	if ok, err := s.known(r.Context(), name); err != nil || !ok {
@@ -978,7 +924,7 @@ func (s *Server) handleBwStatus(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"iface": iface, "pid": pid, "qdisc": qdisc, "filter": filter, "last_apply": last})
 }
 
-// handleGetConfig returns the automation config (schedules / watchdogs / notify).
+// handleGetConfig returns the automation config.
 func (s *Server) handleGetConfig(w http.ResponseWriter, _ *http.Request) {
 	cfg, err := s.Store.LoadConfig()
 	if err != nil {
@@ -988,22 +934,17 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, cfg)
 }
 
-// handlePutConfig validates + persists the automation config. Only the safe
-// lifecycle verbs are accepted for schedules; the monitor still never touches the
-// Docker socket for anything but start/stop/restart.
+// handlePutConfig validates and saves the automation config. Schedules may only
+// start, stop or restart.
 func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 	var cfg model.Config
 	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
-	// #74 (live-caught, real box): CC's own cc.* localStorage surface easily exceeds 64 distinct
-	// keys once per-area prefix variants are counted (cc./ccp./ccv./cch./ccs./ccf./ccd. — the same
-	// base setting name repeated per area), and this cap being hit made every settings push fail
-	// SILENTLY (the browser-side sync callers swallow PUT errors) with no visible symptom beyond
-	// "settings don't stay synced across browsers" — confirmed live at exactly 64 stored keys. Each
-	// entry is still capped at 64+4096 bytes below, so even 512 entries is a ~2MB worst case for one
-	// atomically-written JSON file, negligible for an infrequent (800ms-debounced) write.
+	// The per-area key prefixes (cc., ccp., ccv. and so on) push the UI settings
+	// well past 64 keys, and the browser ignores a failed sync (#74). At 64+4096
+	// bytes per entry, 512 entries stay around 2MB.
 	if len(cfg.UISettings) > 512 {
 		writeErr(w, http.StatusBadRequest, fmt.Errorf("too many ui settings"))
 		return
@@ -1019,9 +960,6 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bad schedule action: " + sc.Action})
 			return
 		}
-		// The monitor matches the time by exact "HH:MM" string equality against the
-		// host clock's zero-padded now.Format("15:04"), so reject anything that could
-		// never match (a non-zero-padded or malformed time = a silently dead schedule).
 		if !validScheduleTime(sc.Time) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bad schedule time (want HH:MM, zero-padded): " + sc.Time})
 			return
@@ -1052,7 +990,7 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "idle-stop entry with no container name"})
 			return
 		}
-		if is.IdleMinutes < 0 || is.IdleMinutes > 44640 { // 0..31 days (0 = inert; the monitor ignores it)
+		if is.IdleMinutes < 0 || is.IdleMinutes > 44640 { // 31 days; 0 disables the entry
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "bad idle-stop minutes (want 0-44640)"})
 			return
 		}
@@ -1066,14 +1004,13 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.Kicker != nil {
-		s.Kicker.Kick() // apply new bandwidth limits immediately, not up to 30s later
+		s.Kicker.Kick()
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "saved"})
 }
 
-// validScheduleTime requires a strictly zero-padded 24h "HH:MM" (00:00–23:59),
-// matching the monitor's now.Format("15:04"); time.Parse is too lenient here (it
-// would accept "9:00", which can never string-equal the padded clock).
+// validScheduleTime requires a zero-padded 24h "HH:MM". The monitor compares the
+// string with now.Format("15:04"), so a time.Parse-accepted "9:00" would never fire.
 func validScheduleTime(s string) bool {
 	if len(s) != 5 || s[2] != ':' {
 		return false
@@ -1091,9 +1028,8 @@ func validScheduleTime(s string) bool {
 	return h <= 23 && m <= 59
 }
 
-// validIface accepts a Linux interface name like "eth0", "br0.20", "bond0" — letters,
-// digits and . _ : - only, within the kernel's 15-char limit. It reaches tc via argv
-// (exec, no shell), so this is tidiness + a sanity guard, not the sole injection barrier.
+// validIface accepts a Linux interface name such as "eth0" or "br0.20": letters,
+// digits and . _ : - within the kernel's 15-character limit.
 func validIface(s string) bool {
 	if len(s) == 0 || len(s) > 15 {
 		return false
@@ -1111,8 +1047,8 @@ func validIface(s string) bool {
 	return true
 }
 
-// validCpuset accepts a Linux cpu-list like "0-3,6" (digits, commas, hyphens only,
-// bounded length). It is passed verbatim to Docker's CpusetCpus, so keep it strict.
+// validCpuset accepts a Linux cpu list such as "0-3,6". The value goes verbatim
+// to Docker's CpusetCpus.
 func validCpuset(s string) bool {
 	if len(s) == 0 || len(s) > 128 {
 		return false

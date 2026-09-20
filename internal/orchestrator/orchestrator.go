@@ -14,12 +14,9 @@ import (
 	"github.com/junkerderprovinz/cannonadecommand/internal/model"
 )
 
-// withImplicitDeps appends an IMPLICIT node (ready-when-running, never blocking)
-// for every dependency that references a container OUTSIDE the plan. The UI used
-// to persist such nodes into the stored plan, which made the referenced container
-// look "managed" forever — it re-appeared after every save of a dependent editor
-// and could not be disabled. Now the dependency just works without ever touching
-// the user's stored plan.
+// withImplicitDeps appends a ready-when-running, never-blocking node for every
+// dependency on a container outside the plan, so such a dependency works without
+// the UI having to persist the container as a managed node.
 func withImplicitDeps(plan model.Plan) model.Plan {
 	known := make(map[string]bool, len(plan.Nodes))
 	for _, n := range plan.Nodes {
@@ -65,9 +62,8 @@ func TopoStages(plan model.Plan) ([][]string, error) {
 		}
 	}
 
-	// #11: StartOrder priority. Among nodes startable in the SAME stage (all deps satisfied), a lower
-	// positive StartOrder starts first; 0 = unnumbered = last, keeping plan order. Dependencies still decide
-	// the STAGE, so a numbered node never jumps ahead of a dependency — StartOrder only reorders peers.
+	// StartOrder only reorders peers within a stage; the dependencies decide the
+	// stage itself, so a numbered node can never jump ahead of a dependency.
 	const unordered = 1 << 30
 	orderOf := make(map[string]int, len(plan.Nodes))
 	for _, n := range plan.Nodes {
@@ -83,12 +79,12 @@ func TopoStages(plan model.Plan) ([][]string, error) {
 	var stages [][]string
 	for remaining > 0 {
 		var stage []string
-		for _, n := range plan.Nodes { // plan order → stable base order within a stage
+		for _, n := range plan.Nodes { // plan order gives the stage a stable base order
 			if !done[n.Name] && indeg[n.Name] == 0 {
 				stage = append(stage, n.Name)
 			}
 		}
-		// #11: reorder the stage by StartOrder priority; stable so plan order breaks ties and orders the unnumbered
+		// A stable sort leaves plan order to break ties and to order the unnumbered.
 		sort.SliceStable(stage, func(i, j int) bool { return orderOf[stage[i]] < orderOf[stage[j]] })
 		if len(stage) == 0 {
 			return nil, fmt.Errorf("dependency cycle detected among %d remaining node(s)", remaining)
@@ -123,14 +119,11 @@ type Orchestrator struct {
 	Ready   ReadinessChecker
 }
 
-// Run executes the plan and returns per-node results. Per-node failures are
-// captured in the result, never returned as an error. Only a structurally
-// invalid plan (cycle / unknown dep / duplicate) is reported via RunResult.Error.
+// Run executes the plan and returns per-node results. A node's failure is part of
+// its result; only a structurally invalid plan is reported in RunResult.Error.
 func (o *Orchestrator) Run(ctx context.Context, plan model.Plan) model.RunResult {
-	// Augment BEFORE anything reads plan.Nodes. TopoStages augments internally, but byName
-	// and the final report below iterate plan.Nodes directly, so an out-of-plan implicit dep
-	// would be dropped from both (never started, never reported). withImplicitDeps is
-	// idempotent — the second call inside TopoStages sees the ghost as already known.
+	// byName and the report below iterate plan.Nodes, so the implicit nodes have to
+	// be in place before that, not only inside TopoStages. The call is idempotent.
 	plan = withImplicitDeps(plan)
 	stages, err := TopoStages(plan)
 	if err != nil {
@@ -145,8 +138,8 @@ func (o *Orchestrator) Run(ctx context.Context, plan model.Plan) model.RunResult
 	blocked := make(map[string]bool) // nodes that aborted the chain, or were skipped
 
 	for stageIdx, stage := range stages {
-		// A cancelled context (request abort / timeout / shutdown) is a GLOBAL stop,
-		// not a per-node policy outcome: skip everything not yet run, uniformly.
+		// A cancelled context stops the whole run, so the rest is skipped uniformly
+		// rather than run through each node's failure policy.
 		if ctx.Err() != nil {
 			for _, rest := range stages[stageIdx:] {
 				for _, name := range rest {
@@ -157,9 +150,8 @@ func (o *Orchestrator) Run(ctx context.Context, plan model.Plan) model.RunResult
 			}
 			break
 		}
-		// Phase 1 (sequential): decide skips. A node's dependencies always live
-		// in an earlier, already-finished stage, so `blocked` is final for them
-		// and this read/write happens with no goroutines running.
+		// A node's dependencies live in an earlier, finished stage, so blocked is
+		// final for them and can be read here with no goroutines running.
 		var toRun []model.Node
 		for _, name := range stage {
 			node := byName[name]
@@ -171,7 +163,6 @@ func (o *Orchestrator) Run(ctx context.Context, plan model.Plan) model.RunResult
 			toRun = append(toRun, node)
 		}
 
-		// Phase 2 (parallel): start + gate the rest of the stage.
 		var wg sync.WaitGroup
 		var mu sync.Mutex
 		for _, node := range toRun {

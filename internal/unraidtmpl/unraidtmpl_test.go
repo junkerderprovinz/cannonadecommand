@@ -18,7 +18,6 @@ func TestApplyExtraParams_UpsertPreservesOthers(t *testing.T) {
 	if !ok {
 		t.Fatal("should have matched <Name>plex")
 	}
-	// the prior --memory=2G is replaced, --restart is preserved, --cpus is added.
 	if strings.Contains(out, "--memory=2G") {
 		t.Fatalf("old --memory should be gone:\n%s", out)
 	}
@@ -27,15 +26,13 @@ func TestApplyExtraParams_UpsertPreservesOthers(t *testing.T) {
 			t.Fatalf("missing %q in:\n%s", want, out)
 		}
 	}
-	// exactly one --memory flag (no duplicate)
 	if strings.Count(out, "--memory=") != 1 {
 		t.Fatalf("expected one --memory=, got %d:\n%s", strings.Count(out, "--memory="), out)
 	}
 }
 
-// The restart-policy mirror upserts --restart cleanly: a prior value is replaced (not
-// duplicated) and every unrelated flag — including CC's own CPU/RAM caps — is preserved,
-// so the restart-policy write and the limits write never fight over ExtraParams.
+// The restart-policy write and the limits write share ExtraParams, so neither may
+// disturb the other's flags.
 func TestApplyExtraParams_RestartUpsert(t *testing.T) {
 	doc := `<Container><Name>gluetun</Name><ExtraParams>--restart=no --memory=1073741824 --cpus=2</ExtraParams></Container>`
 	out, ok := applyExtraParams(doc, "gluetun", map[string]string{"--restart": "unless-stopped"})
@@ -67,8 +64,8 @@ func TestApplyExtraParams_MemoryNotConfusedWithSwap(t *testing.T) {
 }
 
 func TestApplyExtraParams_SelfClosingReplaced(t *testing.T) {
-	// Unraid commonly writes an empty <ExtraParams/>; it must be REPLACED, not left in
-	// place with a second ExtraParams appended (which Unraid would then read as empty).
+	// Unraid writes an empty <ExtraParams/>. Appending a second element beside it
+	// would leave Unraid reading the empty one.
 	doc := `<Container><Name>plex</Name><ExtraParams/></Container>`
 	out, ok := applyExtraParams(doc, "plex", map[string]string{"--memory": "4294967296"})
 	if !ok {
@@ -77,8 +74,8 @@ func TestApplyExtraParams_SelfClosingReplaced(t *testing.T) {
 	if strings.Contains(out, "<ExtraParams/>") {
 		t.Fatalf("self-closing tag must be gone:\n%s", out)
 	}
-	if strings.Count(out, "ExtraParams") != 2 { // exactly one <ExtraParams> + one </ExtraParams>
-		t.Fatalf("must NOT create a duplicate ExtraParams:\n%s", out)
+	if strings.Count(out, "ExtraParams") != 2 { // one opening and one closing tag
+		t.Fatalf("must not create a duplicate ExtraParams:\n%s", out)
 	}
 	if !strings.Contains(out, "<ExtraParams>--memory=4294967296</ExtraParams>") {
 		t.Fatalf("self-closing must become a proper element:\n%s", out)
@@ -146,9 +143,8 @@ func TestStripFlags(t *testing.T) {
 	}
 }
 
-// The dual-write transform must strip CONFLICTING template flags (short -m,
-// --cpu-shares, --memory-reservation, space forms) even though CC never writes
-// them itself — an empty kv value is remove-only.
+// Flags the plugin never writes itself still have to go, since they would fight
+// the caps it does write. An empty kv value only removes.
 func TestApplyExtraParams_StripsConflictingFlags(t *testing.T) {
 	doc := `<Container><Name>x</Name><ExtraParams>--restart=always -m 1g --memory-reservation=512m --cpu-shares 512 --memory-swap=4g</ExtraParams></Container>`
 	out, ok := applyExtraParams(doc, "x", map[string]string{

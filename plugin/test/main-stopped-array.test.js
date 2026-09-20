@@ -1,26 +1,25 @@
-// DOM-shim regression test for the /Main "Array Devices" table WHILE THE ARRAY IS STOPPED.
+// The /Main "Array Devices" table with the array stopped, where device_list emits
+// a different row shape than for a started array, and three of the enhancements
+// have to cope with it:
+//   1. device_info only wraps the slot label in an <a href="/Main/Device?name=…">
+//      while the slot holds a device. An empty slot prints the label as a bare
+//      text node, and a stopped row carries no td.desc either, so neither of
+//      enhanceMainName's selectors reaches it.
+//   2. ccSlotTip mirrors the full device string into a title, so the bubble can
+//      replace the native hover reveal that overlapped the Temp column.
+//   3. The Parity/Data separator is a content-free tr.tr_last, which otherwise
+//      inherits the totals-bar tint. ccVoidRow stamps the empty tr_last rows and
+//      leaves the ones with content, the totals bar and the "Slots:" row.
 //
-// That state renders a completely different row shape than the started array, and three CC defects
-// only ever showed there (reported off a screen recording):
-//   1. only HALF the slots got a disk-name badge — device_list/device_info wraps the slot label in an
-//      <a href="/Main/Device?name=…"> ONLY when the slot HOLDS a device; an empty slot (DISK_NP, and a
-//      never-assigned second parity: DISK_NP_DSBL) prints the label as a BARE TEXT NODE, and stopped
-//      rows carry no td.desc either, so both of enhanceMainName's selectors missed them.
-//   2. the Identification control overlapped the Temp column (a CSS fix — the assertion here is that
-//      ccSlotTip mirrors the full device string into a title so the CC bubble can replace the native
-//      hover-reveal that WAS the overlap).
-//   3. the Parity/Data separator — a content-free <tr class='tr_last'><td colspan='10'></td></tr> —
-//      inherited the totals-bar tint and painted as a bare grey slab; ccVoidRow must stamp exactly the
-//      EMPTY tr_last rows and never the ones carrying content (totals bar, the "Slots:" control row).
-//
-// The markup below is the real emhttp/plugins/dynamix/nchan/device_list output for fsState=Stopped
-// (array_offline(), cases DISK_OK / DISK_NP / DISK_NP_DSBL / DISK_NP_MISSING).
+// The markup below is device_list's own output for fsState=Stopped, covering the
+// DISK_OK, DISK_NP, DISK_NP_DSBL and DISK_NP_MISSING cases.
 const fs = require('fs');
 const path = require('path');
 const SHARES = process.argv[2] || path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local',
   'emhttp', 'plugins', 'cannonadecommand', 'scripts', 'shares.js');
 
-/* ── minimal DOM shim (text nodes are first-class here — that is the whole point) ───────────── */
+// A DOM shim in which text nodes are first-class, since the bare labels are what
+// the enhancements have to find.
 class CL {
   constructor() { this.s = new Set(); }
   add(c) { this.s.add(c); } remove(c) { this.s.delete(c); }
@@ -111,7 +110,7 @@ global.document = {
   addEventListener() {}, querySelectorAll: () => [],
 };
 
-/* ── load the REAL functions out of shares.js ───────────────────────────────────────────────── */
+// Pull the functions under test out of shares.js.
 const src = fs.readFileSync(SHARES, 'utf8');
 function grab(name) {
   const i = src.indexOf('function ' + name + '(');
@@ -124,22 +123,22 @@ const code = ['el', 'enhanceMainName', 'ccSlotTip', 'ccVoidRow'].map(grab).join(
 const { enhanceMainName, ccSlotTip, ccVoidRow } =
   new Function('document', code + '\nreturn {enhanceMainName, ccSlotTip, ccVoidRow};')(global.document);
 
-/* ── the DOM device_list actually emits with the array STOPPED ──────────────────────────────── */
+// The DOM device_list emits while the array is stopped.
 const mk = (tag, cls) => { const n = document.createElement(tag); if (cls) n.className = cls; return n; };
 const txt = (host, v) => { const t = document.createTextNode(v); host.appendChild(t); return t; };
-// device_info(): <a class='view'></a><a class='info'><i class='… orb'></i><span>help</span></a> + label
+// device_info() emits a view link, an info link with its orb, then the label.
 function deviceCell(label, href, sub) {
   const td = mk('td');
   td.appendChild(mk('a', 'view'));
   const info = mk('a', 'info'); info.appendChild(mk('i', 'fa fa-square orb grey-orb')); txt(info, 'Device not present'); td.appendChild(info);
   if (href) { const a = mk('a'); a.setAttribute('href', href); txt(a, label); td.appendChild(a); } else txt(td, label);
-  if (sub) {                                     // DISK_NP_MISSING / DISK_WRONG: "<br><span class='diskinfo'><em>Missing</em></span>"
+  if (sub) {                                     // the diskinfo sub-line of DISK_NP_MISSING or DISK_WRONG
     td.appendChild(mk('br'));
     const s = mk('span', 'diskinfo'); const em = mk('em'); txt(em, sub); s.appendChild(em); td.appendChild(s);
   }
   return td;
 }
-// assignment(): <form …><input hidden …><select class='slot'>…</select></form>
+// assignment() emits a form around the slot select.
 function assignCell(opts, sel) {
   const td = mk('td'), form = mk('form');
   form.setAttribute('method', 'POST');
@@ -176,7 +175,7 @@ function slotsRow() {                            // <tr class='tr_last'><td>Slot
   tr.appendChild(mk('td'));
   return tr;
 }
-function totalsRow() {                           // the STARTED-array totals bar — also tr_last, but populated
+function totalsRow() {                           // the started array's totals bar, a tr_last with content
   const tr = mk('tr', 'tr_last');
   const a = mk('td'); a.appendChild(mk('a', 'info')); tr.appendChild(a);
   const b = mk('td'); txt(b, 'Array of five devices'); tr.appendChild(b);
@@ -184,22 +183,21 @@ function totalsRow() {                           // the STARTED-array totals bar
 }
 const nameBadge = tr => tr.querySelector('.cc-b-name');
 
-/* ── the tests ──────────────────────────────────────────────────────────────────────────────── */
 let pass = 0, fail = 0;
 const ok = (name, cond, extra) => { cond ? (pass++, console.log('  PASS  ' + name)) : (fail++, console.log('  FAIL  ' + name + (extra ? '  -> ' + extra : ''))); };
 
-console.log('\nGround truth: an EMPTY slot has no <a> to tag (this is why half the list stayed unbadged)');
+console.log('\nAn empty slot has no <a> to tag');
 {
   const tr = emptyRow('Parität 2');
   ok('no /Main/Device link in an unassigned row', !tr.querySelector('a[href*="/Main/Device?name="]'));
-  ok('and no td.desc either (stopped rows are plain <td>)', !tr.querySelector(':scope > td.desc a[href]'));
+  ok('and no td.desc either, stopped rows being plain <td>', !tr.querySelector(':scope > td.desc a[href]'));
 }
 
-console.log('\nEVERY slot gets the lg name badge (user: "Die disk namen sind nicht alle in badges")');
+console.log('\nEvery slot gets the name badge');
 {
   const a = assignedRow('Datenträger 1'); enhanceMainName(a);
   const b = nameBadge(a);
-  ok('assigned slot: the LINK is tagged (no regression)', !!b && b.tagName === 'A' && b.classList.contains('cc-b'), b && b.tagName);
+  ok('assigned slot: the link is tagged', !!b && b.tagName === 'A' && b.classList.contains('cc-b'), b && b.tagName);
   ok('assigned label intact', b && b.textContent === 'Datenträger 1', b && JSON.stringify(b.textContent));
 
   for (const label of ['Parität 2', 'Datenträger 5']) {
@@ -211,16 +209,16 @@ console.log('\nEVERY slot gets the lg name badge (user: "Die disk namen sind nic
   }
 }
 
-console.log('\nThe MISSING/WRONG sub-line must stay OUT of the name pill');
+console.log('\nThe Missing and Wrong sub-line stays out of the name pill');
 {
   const tr = emptyRow('Datenträger 6', 'Missing'); enhanceMainName(tr);
   const n = nameBadge(tr);
-  ok('badge holds the slot name only', n && n.textContent === 'Datenträger 6', n && JSON.stringify(n.textContent));
+  ok('the badge holds the slot name alone', n && n.textContent === 'Datenträger 6', n && JSON.stringify(n.textContent));
   ok('the diskinfo sub-line survives outside the badge', !!tr.querySelector('.diskinfo'));
-  ok('and it is NOT inside the badge', !n.querySelector('.diskinfo'));
+  ok('and is nowhere inside it', !n.querySelector('.diskinfo'));
 }
 
-console.log('\nenhanceMainName is idempotent (the nchan refill re-enters it every second)');
+console.log('\nenhanceMainName is idempotent, the nchan refill re-entering it every second');
 {
   const tr = emptyRow('Datenträger 7');
   enhanceMainName(tr); enhanceMainName(tr); enhanceMainName(tr);
@@ -228,26 +226,27 @@ console.log('\nenhanceMainName is idempotent (the nchan refill re-enters it ever
     tr.querySelectorAll('.cc-b-name').length + ' badges');
 }
 
-console.log('\nccSlotTip: the full device string reaches the CC bubble (replaces the overlap-on-hover)');
+console.log('\nccSlotTip: the full device string reaches the bubble');
 {
   const tr = assignedRow('Datenträger 1'); ccSlotTip(tr);
   const s = tr.querySelector('select.slot');
-  ok('title carries the SELECTED option text', s.getAttribute('title') === DEV1, JSON.stringify(s.getAttribute('title')));
+  ok('the title carries the selected option text', s.getAttribute('title') === DEV1, JSON.stringify(s.getAttribute('title')));
 
   const e = emptyRow('Datenträger 5'); ccSlotTip(e);
   ok('an unassigned slot tips its placeholder', e.querySelector('select.slot').getAttribute('title') === NO_DEV);
 
-  // ccTipSweep converts [title] -> [data-cc-tip] and strips the title; a later pass must not re-add it
+  // ccTipSweep moves [title] to [data-cc-tip] and strips the title, which a later
+  // pass must leave that way.
   s.removeAttribute('title'); s.setAttribute('data-cc-tip', DEV1);
   ccSlotTip(tr);
   ok('no churn once ccTipSweep has converted it', s.getAttribute('title') === null, JSON.stringify(s.getAttribute('title')));
 
   const plain = mk('tr', 'offline'); plain.appendChild(mk('td'));
-  ccSlotTip(plain);   // rows without an assignment select must be a no-op, never a throw
-  ok('rows without a slot select are a no-op', true);
+  ccSlotTip(plain);
+  ok('a row without a slot select does nothing and does not throw', true);
 }
 
-console.log('\nccVoidRow: only the CONTENT-FREE tr_last is the separator');
+console.log('\nccVoidRow: the separator is the tr_last without content');
 {
   const sep = separatorRow(); ccVoidRow(sep);
   ok('the Parity/Data separator is stamped', sep.classList.contains('cc-tr-void'));
@@ -258,16 +257,16 @@ console.log('\nccVoidRow: only the CONTENT-FREE tr_last is the separator');
   const tot = totalsRow(); ccVoidRow(tot);
   ok('the totals bar keeps its bar', !tot.classList.contains('cc-tr-void'));
 
-  // enhanceMainRow widens the separator's colspan to 11 BEFORE stamping — still empty, still stamped
+  // enhanceMainRow widens the separator's colspan before the stamp.
   sep.children[0].setAttribute('colspan', '11');
   ccVoidRow(sep);
   ok('still stamped after the colspan widening', sep.classList.contains('cc-tr-void'));
 
-  // an NBSP-only cell is not "content" either (the :empty-blind case ccVoidBars exists for)
+  // A cell holding only an nbsp is empty as well, which :empty does not see.
   const nb = separatorRow(); nb.children[0].textContent = ' '; ccVoidRow(nb);
-  ok('an &nbsp;-only cell still counts as empty', nb.classList.contains('cc-tr-void'));
+  ok('a cell holding only an nbsp counts as empty', nb.classList.contains('cc-tr-void'));
 
-  // and it must UN-stamp if a refill brings content back into the same row object
+  // A refill can bring content back into the same row object.
   const back = separatorRow(); ccVoidRow(back); back.children[0].textContent = 'Slots:'; ccVoidRow(back);
   ok('re-stamping clears when content arrives', !back.classList.contains('cc-tr-void'));
 }

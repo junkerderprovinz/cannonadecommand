@@ -1,13 +1,12 @@
-// DOM-shim regression test for the CC clone-select ("Read settings from") label bug.
-// Loads the REAL ccWrapSelect/ccSyncOne/ccSyncGroup out of shares.js and replays the user's clicks
-// against the DOM shape Unraid actually renders (ShareEdit.page: .relative = [div.clone-settings, form]).
+// Runs shares.js's own ccWrapSelect, ccSyncOne and ccSyncGroup against the DOM
+// shape Unraid renders on ShareEdit.page, where .relative holds the clone-settings
+// block and the form as siblings, and replays the clicks a user makes on the
+// "Read settings from" select.
 const fs = require('fs');
 const path = require('path');
-// default to the in-repo shares.js; an explicit path may be passed for ad-hoc runs
 const SHARES = process.argv[2] || path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local',
   'emhttp', 'plugins', 'cannonadecommand', 'scripts', 'shares.js');
 
-/* ── minimal DOM shim ─────────────────────────────────────────────────────── */
 class CL {
   constructor(n) { this.n = n; this.s = new Set(); }
   add(c) { this.s.add(c); } remove(c) { this.s.delete(c); }
@@ -47,17 +46,17 @@ class N {
   querySelectorAll(sel) { return this.walk().filter(n => sel.split(',').some(s => n._match(s.trim()))); }
   querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
 }
-class OptionN extends N {                 // HTMLOptionElement exposes .text (what ccSyncOne reads)
+class OptionN extends N {                 // ccSyncOne reads .text off an option
   constructor() { super('option'); }
   get text() { return this.textContent; }
 }
 class SelectN extends N {
   constructor() { super('select'); this._si = -1; }
   get options() { return this.children.filter(c => c.tagName === 'OPTION'); }
-  // real DOM: writing selectedIndex re-points option.selected (ccSyncOne reads option.selected for the chips)
+  // Writing selectedIndex re-points option.selected, which ccSyncOne reads for the chips.
   get selectedIndex() { return this._si; }
   set selectedIndex(i) { this._si = i; this.options.forEach((o, k) => { o.selected = k === i; }); }
-  // Per the HTML spec: .form is the ancestor <form>, else null. THIS is the whole bug.
+  // .form is the ancestor <form> or null, which is what the clone block trips over.
   get form() { let p = this.parentNode; while (p) { if (p.tagName === 'FORM') return p; p = p.parentNode; } return null; }
 }
 const document = {
@@ -70,7 +69,7 @@ global.navigator = { language: 'en' };
 global.location = { pathname: '/Shares/Share' };
 global.Event = class { constructor(t, o = {}) { this.type = t; this.bubbles = !!o.bubbles; } };
 
-/* ── load the REAL functions out of shares.js ─────────────────────────────── */
+// Pull the functions under test out of shares.js.
 const src = fs.readFileSync(SHARES, 'utf8');
 function grab(name) {
   const i = src.indexOf('function ' + name + '(');
@@ -82,10 +81,8 @@ function grab(name) {
 const code = ['el', 'ccWrapSelect', 'ccSyncOne', 'ccSyncGroup'].map(grab).join('\n');
 const { ccWrapSelect, ccSyncOne } = new Function('document', 'Event', code + '\nreturn {ccWrapSelect, ccSyncOne};')(document, global.Event);
 
-/* ── build the DOM Unraid actually renders ────────────────────────────────── */
-// ShareEdit.page:338  <div class="relative">
-// ShareEdit.page:341    <div class="clone-settings shade">  ... <select name="readshare"> ...  </div>  (line 371)
-// ShareEdit.page:375    <form name="share_edit"> ... </form>                                            (line 603)
+// The markup ShareEdit.page renders: a div.relative holding div.clone-settings
+// with the readshare select, and the form beside it rather than around it.
 function build() {
   const relative = new N('div'); relative.className = 'relative';
   const clone = new N('div'); clone.className = 'clone-settings shade'; relative.appendChild(clone);
@@ -94,7 +91,7 @@ function build() {
   const sel = new SelectN(); sel.setAttribute('name', 'readshare'); span.appendChild(sel);
   const names = ['select...', 'appdata', 'domains', 'isos'];
   names.forEach((t, i) => { const o = new OptionN(); o.textContent = t; if (i === 0) { o.disabled = true; o.selected = true; sel.selectedIndex = 0; } sel.appendChild(o); });
-  const form = new N('form'); form.setAttribute('name', 'share_edit'); relative.appendChild(form); // SIBLING of clone
+  const form = new N('form'); form.setAttribute('name', 'share_edit'); relative.appendChild(form); // beside the clone block
   return { relative, sel };
 }
 const label = sel => sel.parentNode.querySelector('.cc-sel-trigger').textContent;
@@ -102,10 +99,9 @@ const chips = sel => sel.parentNode.querySelectorAll('.cc-sel-opt').map(c => c.t
 const pick = (sel, i) => { const chip = sel.parentNode.querySelector('.cc-sel-panel').children[i]; chip.listeners.click[0]({ stopPropagation() {} }); };
 const openIt = sel => sel.parentNode.querySelector('.cc-sel-trigger').listeners.click[0]({ stopPropagation() {} });
 
-// ShareEdit.page renders #direction ("Mover action") with EMPTY option text —
-//   <?=mk_option(direction(),'0','')?>  ->  <option value='0' selected></option>
-// and only labels it later, from updateScreen()'s jQuery .text() writes. shares.js is a defer
-// script, so it wraps the select BEFORE that happens.
+// ShareEdit.page renders #direction ("Mover action") with empty option text and
+// labels it later from updateScreen()'s jQuery .text() writes. shares.js is a
+// defer script, so it wraps the select while the options are still blank.
 function buildDirection() {
   const form = new N('form'); form.setAttribute('name', 'share_edit');
   const sel = new SelectN(); sel.setAttribute('id', 'direction'); form.appendChild(sel);
@@ -115,34 +111,33 @@ function buildDirection() {
 }
 const updateScreen = sel => { sel.options[0].textContent = 'cache -> Array'; sel.options[1].textContent = 'Array -> cache'; };
 
-/* ── the tests ────────────────────────────────────────────────────────────── */
 let pass = 0, fail = 0;
 const ok = (name, cond, extra) => { cond ? (pass++, console.log('  PASS  ' + name)) : (fail++, console.log('  FAIL  ' + name + (extra ? '  -> ' + extra : ''))); };
 
-console.log('\nGround truth: the clone block is a SIBLING of the form, so select.form is null');
+console.log('\nThe clone block sits beside the form, so select.form is null');
 {
   const { sel } = build();
   ok('readshare.form === null (clone-settings is outside <form>)', sel.form === null, 'got ' + sel.form);
 }
 
-console.log("\nThe user's exact sequence: pick a share, then pick a different one");
+console.log('\nPicking a share, then picking a different one');
 {
   const { sel } = build(); ccWrapSelect(sel);
   ok('starts on the placeholder', label(sel) === 'select...', JSON.stringify(label(sel)));
 
   openIt(sel); pick(sel, 1);                       // click "appdata"
-  ok('REPORT: picking a share shows it in the field', label(sel) === 'appdata',
+  ok('picking a share shows it in the field', label(sel) === 'appdata',
      'field shows ' + JSON.stringify(label(sel)) + ' after picking "appdata"');
-  ok('the native select really moved (POST stays correct)', sel.selectedIndex === 1);
+  ok('the native select moves with it, so the POST stays correct', sel.selectedIndex === 1);
 
   openIt(sel); pick(sel, 2);                       // click "domains"
-  ok('REPORT: picking a DIFFERENT share does not show the previous one', label(sel) === 'domains',
+  ok('picking another share does not show the previous one', label(sel) === 'domains',
      'field shows ' + JSON.stringify(label(sel)) + ' after picking "domains"');
   ok('selected chip tracks the pick', sel.parentNode.querySelectorAll('.cc-sel-opt')[2].classList.contains('is-selected'));
   ok('previous chip deselected', !sel.parentNode.querySelectorAll('.cc-sel-opt')[1].classList.contains('is-selected'));
 }
 
-console.log('\nUnraid inline onchange still fires (the LESEN button must un-disable)');
+console.log("\nUnraid's inline onchange still fires, so the LESEN button un-disables");
 {
   const { sel } = build(); let fired = 0;
   sel.addEventListener('change', () => fired++);   // stands in for onchange="toggleButton('readshare',false)"
@@ -150,13 +145,13 @@ console.log('\nUnraid inline onchange still fires (the LESEN button must un-disa
   ok('a real change event is dispatched', fired === 1, 'fired ' + fired + 'x');
 }
 
-console.log('\nA select INSIDE the form (the disk dropdowns) still works');
+console.log('\nA select inside the form, such as a disk dropdown');
 {
   const relative = new N('div'); const form = new N('form'); relative.appendChild(form);
   const sel = new SelectN(); form.appendChild(sel);
   ['auto', 'disk1', 'disk2'].forEach((t, i) => { const o = new OptionN(); o.textContent = t; if (!i) sel.selectedIndex = 0; sel.appendChild(o); });
   ccWrapSelect(sel); openIt(sel); pick(sel, 2);
-  ok('in-form select still labels correctly (no regression)', label(sel) === 'disk2', JSON.stringify(label(sel)));
+  ok('in-form select labels correctly', label(sel) === 'disk2', JSON.stringify(label(sel)));
   ok('in-form select.form resolves', sel.form === form);
 }
 
@@ -167,31 +162,30 @@ console.log('\nDisabled placeholder is not pickable');
   ok('clicking the disabled placeholder is ignored', label(sel) === 'appdata' && sel.selectedIndex === 1, JSON.stringify(label(sel)));
 }
 
-console.log('\n"Mover action" (#direction): option text is written by Unraid AFTER we wrap');
+console.log('\n"Mover action" (#direction), whose option text Unraid writes after the wrap');
 {
   const { sel } = buildDirection();
-  ccWrapSelect(sel);                                   // defer script: wraps while the options are still empty
+  ccWrapSelect(sel);
   ok('chips start blank, mirroring the empty options', chips(sel).join('|') === '|');
 
   updateScreen(sel);                                   // Unraid labels the options via jQuery .text()
-  ccSyncOne(sel);                                      // what the observer tick / open / pick now does
-  ok('REPORT-CLASS: chip labels follow the option text', chips(sel).join('|') === 'cache -> Array|Array -> cache',
+  ccSyncOne(sel);                                      // what an observer tick, an open or a pick does
+  ok('chip labels follow the option text', chips(sel).join('|') === 'cache -> Array|Array -> cache',
      'chips are ' + JSON.stringify(chips(sel)));
   ok('the closed field shows the selected label too', label(sel) === 'cache -> Array', JSON.stringify(label(sel)));
 
-  // a Primary/Secondary change re-labels the SAME options — the chips must not go stale
+  // A Primary or Secondary change relabels the same options, and the chips follow.
   sel.options[0].textContent = 'disk1 -> Array'; sel.options[1].textContent = 'Array -> disk1';
   ccSyncOne(sel);
   ok('chips re-follow a later relabel', chips(sel).join('|') === 'disk1 -> Array|Array -> disk1',
      'chips are ' + JSON.stringify(chips(sel)));
 }
 
-console.log('\nccSyncOne is idempotent (it must not churn the DOM -> no observer loop)');
+console.log('\nccSyncOne is idempotent, so it cannot drive the observer in a loop');
 {
-  // ccSelects() re-syncs EVERY already-wrapped select on every MutationObserver tick
-  // (childList:true, subtree:true), so an unconditional textContent write anywhere in ccSyncOne would
-  // replace a text node every 150ms even when nothing changed -> a self-sustaining repaint loop.
-  // Instrument BOTH the trigger and the chips and assert re-syncing an unchanged select writes nothing.
+  // ccSelects() re-syncs every wrapped select on each MutationObserver tick, so an
+  // unconditional textContent write in ccSyncOne would replace a text node every
+  // 150ms with nothing changed and keep the observer firing on its own output.
   const { sel } = buildDirection(); ccWrapSelect(sel); updateScreen(sel); ccSyncOne(sel);
   const trigger = sel.parentNode.querySelector('.cc-sel-trigger');
   const chip = sel.parentNode.querySelectorAll('.cc-sel-opt')[0];
@@ -199,8 +193,8 @@ console.log('\nccSyncOne is idempotent (it must not churn the DOM -> no observer
   const raw = Object.getOwnPropertyDescriptor(N.prototype, 'textContent');
   const instrument = n => Object.defineProperty(n, 'textContent', { get: raw.get, set(v) { writes++; raw.set.call(this, v); } });
   instrument(trigger); instrument(chip);
-  ccSyncOne(sel); ccSyncOne(sel);                      // re-syncing unchanged options must write nothing
-  ok('a no-op sync performs zero text writes (trigger + chips)', writes === 0, writes + ' write(s)');
+  ccSyncOne(sel); ccSyncOne(sel);
+  ok('a sync of unchanged options writes no text at all', writes === 0, writes + ' write(s)');
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

@@ -23,16 +23,14 @@ jobs:
       - name: go vet
         run: go vet ./...
       - name: golangci-lint
-        # Build golangci-lint v2 from source with the runner's Go so its build-Go
-        # is never older than the module's target (the action's prebuilt binary
-        # was built with an older Go and refused a go 1.26 module).
+        # Built from source with the runner's Go: the action's prebuilt binary is
+        # built with an older Go and refuses the module's go directive.
         run: |
           go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
           "$(go env GOPATH)/bin/golangci-lint" run ./...
 
-      # The WebGUI half is plain browser JS with no bundler, so it gets the gate the Go half already has:
-      # a syntax check on every script, plus DOM-shim tests that replay the markup Unraid really renders.
-      # Every bug here that has cost us a release came from ASSUMING a DOM shape instead of pinning it.
+      # The injected scripts have no bundler to catch them, so they get a syntax
+      # check plus the DOM-shim tests that replay Unraid's markup.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: "24"

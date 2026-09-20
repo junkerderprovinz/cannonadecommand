@@ -1,25 +1,18 @@
-// DOM-shim regression test for the VMs-tab icon pipeline (vms.js).
+// Pins the VMs-tab icon pipeline in vms.js, with the harness icon-pipeline.test.js
+// uses pointed at this file. Three things:
 //
-// Mirrors plugin/test/icon-pipeline.test.js's exact harness pattern (grabFn source-slicing,
-// the same minimal DOM + localStorage shim) but pointed at vms.js. This file pins THREE things:
-//
-//  1. effK() adopt-gating for iconcolor/iconbg/iconstrength under cc.stylevms on/off. VMs was
-//     independently confirmed to already get this right (unlike docker.js's bypass bug) — this
-//     is a regression pin so the effK()-dedup cleanup (lines 74/86 used to re-type the adopt-gate
-//     expression instead of calling the already-declared effK()) can never silently reintroduce
-//     a divergence.
-//  2. The cc.sgsize -> [--cc-logo-img, --cc-logo-box] map is the SAME one used by docker.js's
-//     ccLogoSizes() / plugins.js's logoSize(), so the three copies can't silently drift again.
-//  3. A glyph never ends up with both a direct `color` and a non-empty tint `filter` at once —
-//     the double-tint fix (forced "tint" mode used to re-process an already-inked glyph).
-//
-// The REAL functions are pulled out of the shipped source, never re-typed.
+//  1. effK() gates iconcolor, iconbg and iconstrength on cc.stylevms, and every
+//     read goes through it rather than repeating the expression.
+//  2. The cc.sgsize map to [--cc-logo-img, --cc-logo-box] is the one docker.js's
+//     ccLogoSizes() and plugins.js's logoSize() use, so the three cannot drift.
+//  3. A glyph never carries both a direct colour and a tint filter, which would
+//     tint an already-inked glyph a second time.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand', 'scripts');
 const VMS = process.argv[2] || path.join(DIR, 'vms.js');
 
-/* ── minimal DOM + storage shim (verbatim copy of icon-pipeline.test.js's) ─────────────────── */
+// The DOM and storage shim from icon-pipeline.test.js.
 class N {
   constructor(tag) {
     this.tagName = String(tag).toUpperCase(); this.children = []; this.parentNode = null;
@@ -58,7 +51,7 @@ global.localStorage = {
 };
 global.window = { localStorage: global.localStorage, CCTheme: null };
 
-/* ── pull the REAL functions out of vms.js ──────────────────────────────── */
+// Pull the functions under test out of vms.js.
 const src = fs.readFileSync(VMS, 'utf8');
 function grabFn(name) {
   const i = src.indexOf('function ' + name + '(');
@@ -67,9 +60,9 @@ function grabFn(name) {
   for (let k = src.indexOf('{', i); k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}') { d--; if (!d) return src.slice(i, k + 1); } }
   throw new Error('unbalanced function: ' + name);
 }
-// RB_PAL/RB_OFFSET stand in for vms.js's module-level rainbow-palette vars (normally
-// window.CCTheme.RB / a persisted random seed) — pinned to the shipped default palette and
-// offset 0 so vmRbColor(i)/vmAdoptTint() are deterministic here.
+// RB_PAL and RB_OFFSET stand in for the module-level palette vars, normally
+// window.CCTheme.RB and a persisted seed, pinned to the shipped palette at offset 0
+// so vmRbColor(i) and vmAdoptTint() are deterministic.
 const vmsApi = new Function('document', 'localStorage', 'window',
   'var dead = false;\n' +
   'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
@@ -82,105 +75,97 @@ const vmsApi = new Function('document', 'localStorage', 'window',
   'return { effK: effK, vmTintOn: vmTintOn, vmBgColor: vmBgColor, vmIconInk: vmIconInk, vmItemAdoptInk: vmItemAdoptInk, ensureTintFilter: ensureTintFilter, ensureTintFilterAs: ensureTintFilterAs, vmLogoSizes: vmLogoSizes, glyphInkAndFilter: glyphInkAndFilter, ccIdeal: ccIdeal, ccAccent: ccAccent, vmRbColor: vmRbColor, vmAdoptTint: vmAdoptTint };'
 )(document, global.localStorage, global.window);
 
-/* ── tests ───────────────────────────────────────────────────────────────── */
 let pass = 0, fail = 0;
 const ok = (name, cond, extra) => { cond ? (pass++, console.log('  PASS  ' + name)) : (fail++, console.log('  FAIL  ' + name + (extra ? '  -> ' + extra : ''))); };
 const reset = () => { Object.keys(store).forEach(k => delete store[k]); };
 
-console.log('\neffK() adopt-gating for iconcolor/iconbg/iconstrength (regression pin — VMs was already correct here)');
+console.log('\neffK() gates iconcolor, iconbg and iconstrength on cc.stylevms');
 {
   reset();
   localStorage.setItem('cc.iconcolor', '#e5a00d'); localStorage.setItem('cc.iconbg', '0'); localStorage.setItem('cc.iconstrength', '100');
   localStorage.setItem('ccv.iconcolor', '#00aa00'); localStorage.setItem('ccv.iconbg', '1'); localStorage.setItem('ccv.iconstrength', '40');
 
-  ok('adopt ON (cc.stylevms unset): vmIconInk() follows the GLOBAL colour', vmsApi.vmIconInk(false) === '#e5a00d', vmsApi.vmIconInk(false));
+  ok('adopt on, cc.stylevms unset: vmIconInk() follows the global colour', vmsApi.vmIconInk(false) === '#e5a00d', vmsApi.vmIconInk(false));
   vmsApi.ensureTintFilter();
   const sigOn = document.getElementById('cc-vm-tint-svg') && document.getElementById('cc-vm-tint-svg').dataset.sig;
 
   localStorage.setItem('cc.stylevms', '0');
-  ok('adopt OFF: vmIconInk() now follows VM-LOCAL ccv.iconbg (badge-mode ink), not the global colour', vmsApi.vmIconInk(false) !== '#e5a00d', vmsApi.vmIconInk(false));
+  ok('adopt off: vmIconInk() follows the VM-local ccv.iconbg instead', vmsApi.vmIconInk(false) !== '#e5a00d', vmsApi.vmIconInk(false));
   vmsApi.ensureTintFilter();
   const sigOff = document.getElementById('cc-vm-tint-svg') && document.getElementById('cc-vm-tint-svg').dataset.sig;
-  ok('and the tint STRENGTH differs between the two toggle states too (ccv.iconstrength=40 vs cc.iconstrength=100)', sigOff !== sigOn, sigOn + ' vs ' + sigOff);
+  ok('the tint strength differs between the two states as well, 40 against 100', sigOff !== sigOn, sigOn + ' vs ' + sigOff);
   reset();
 }
 
-console.log('\nHintergrund and Einfärben are INDEPENDENT (v4.32.5 fix): the badge alone must not force the tint on');
+console.log('\nHintergrund and Einfärben stay independent: the badge alone does not tint');
 {
   reset();
   ok('nothing configured at all: no ink', vmsApi.vmIconInk(false) === '');
 
-  // the CONFIRMED bug: Logo-Hintergrund on, Einfärben never touched (no cc.icontint, no
-  // cc.iconcolor) used to still tint every VM icon via the accent fallback
   localStorage.setItem('cc.iconbg', '1');
-  ok('background ON, Einfärben untouched, no colour picked ANYWHERE: still no ink', vmsApi.vmIconInk(false) === '');
+  ok('background on, Einfärben untouched, no colour picked: no ink', vmsApi.vmIconInk(false) === '');
 
   localStorage.setItem('cc.icontint', '0');
-  ok('background ON, Einfärben EXPLICITLY off: still no ink even with the badge showing', vmsApi.vmIconInk(false) === '');
+  ok('background on, Einfärben off: no ink even with the badge showing', vmsApi.vmIconInk(false) === '');
 
   localStorage.setItem('cc.icontint', '1');
-  ok('background ON, Einfärben explicitly ON but still no colour ever picked: still no ink (no pick to lift)', vmsApi.vmIconInk(false) === '');
+  ok('background on, Einfärben on, no colour picked: no ink to lift', vmsApi.vmIconInk(false) === '');
   localStorage.setItem('cc.iconcolor', '#e5a00d');
-  ok('background ON, Einfärben ON, colour NOW picked: inks in that picked colour', vmsApi.vmIconInk(false) === '#e5a00d', vmsApi.vmIconInk(false));
+  ok('background on, Einfärben on, colour picked: inked in that colour', vmsApi.vmIconInk(false) === '#e5a00d', vmsApi.vmIconInk(false));
   reset();
 
-  // pre-4.32.5 installs: only cc.iconbg + cc.iconcolor were ever set, and iconcolor's mere
-  // presence WAS the tint's on-signal — vmTintOn()'s fallback keeps that reading intact.
+  // On an install with cc.iconbg and cc.iconcolor and no cc.icontint, the colour's
+  // presence is the tint signal, which vmTintOn()'s fallback keeps reading.
   localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconcolor', '#1f9d55');
-  ok('pre-existing install (no cc.icontint key at all): behaves exactly as it always did — inked', vmsApi.vmTintOn() === true && vmsApi.vmIconInk(false) !== '');
+  ok('no cc.icontint key at all: the icon is inked', vmsApi.vmTintOn() === true && vmsApi.vmIconInk(false) !== '');
   reset();
 
-  // CONFIRMED BUG (v4.32.6, fixed here): with both controls on and given DELIBERATELY different
-  // colours, the icon's ink must be the TINT's own colour, never a contrast colour derived from
-  // the (different) badge box colour — live-tested: tint #e5a00d rendered as plain white
-  // (#ffffff) once the badge was also on, discarding the picked colour entirely.
+  // With both controls on and two different colours, the ink is the tint's own,
+  // never a contrast colour derived from the badge box.
   localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#161616'); localStorage.setItem('cc.icontint', '0');
-  ok('background colour applies even with Einfärben off (vmBgColor reads cc.iconbgcolor)', vmsApi.vmBgColor() === '#161616');
+  ok('the background colour applies with Einfärben off', vmsApi.vmBgColor() === '#161616');
   localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#e5a00d');
-  ok('once both are on, the ink is the TINT colour, never a contrast colour derived from the (different) badge colour', vmsApi.vmIconInk(false) === '#e5a00d', vmsApi.vmIconInk(false));
-  ok('and the badge box itself is still exactly its own configured colour, unaffected by the tint pick', vmsApi.vmBgColor() === '#161616', vmsApi.vmBgColor());
+  ok('with both on, the ink is the tint colour', vmsApi.vmIconInk(false) === '#e5a00d', vmsApi.vmIconInk(false));
+  ok('and the badge box keeps its own colour', vmsApi.vmBgColor() === '#161616', vmsApi.vmBgColor());
   reset();
 }
 
-console.log('\ncc.iconbgrainbow (v4.33.1): Badge-Einstellungen übernehmen — ONE master toggle, regression pin');
+console.log('\ncc.iconbgrainbow: "Badge-Einstellungen übernehmen" as one master toggle');
 {
-  // v4.33.0 shipped TWO independent adopt keys; redesigned within minutes into ONE shared key
-  // (mirrors docker.js — see icon-pipeline.test.js for the full writeup of why).
   reset();
   localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#e5a00d');
   localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#00aa00');
   localStorage.setItem('cc.accent', '#2f6feb');
 
-  ok('adopt OFF (default): vmBgColor() is the independently picked background colour', vmsApi.vmBgColor() === '#e5a00d', vmsApi.vmBgColor());
-  ok('adopt OFF (default): vmIconInk() is the independently picked tint colour', vmsApi.vmIconInk(false) === '#00aa00', vmsApi.vmIconInk(false));
+  ok('not adopting: vmBgColor() is the picked background colour', vmsApi.vmBgColor() === '#e5a00d', vmsApi.vmBgColor());
+  ok('not adopting: vmIconInk() is the picked tint colour', vmsApi.vmIconInk(false) === '#00aa00', vmsApi.vmIconInk(false));
 
   localStorage.setItem('cc.iconbgrainbow', '1');
-  ok('adopting: vmBgColor() answers "" so the caller never stamps --cc-iconbg-color, letting VmTab.css\'s var() chain fall through to --cc-rb-c/--cc-rbaccent — the SAME source every generic VM badge already uses', vmsApi.vmBgColor() === '', JSON.stringify(vmsApi.vmBgColor()));
+  ok('adopting: vmBgColor() answers "", so no --cc-iconbg-color is stamped and VmTab.css falls through to the source every generic VM badge uses', vmsApi.vmBgColor() === '', JSON.stringify(vmsApi.vmBgColor()));
 
   localStorage.setItem('cc.rainbow', '0');
-  ok('adopting, Rainbow OFF: vmIconInk() is the automatic contrast colour for the plain accent (ccIdeal of vmAdoptTint()) — not the own picked colour', vmsApi.vmIconInk(false) === vmsApi.ccIdeal(vmsApi.vmAdoptTint()), vmsApi.vmIconInk(false));
+  ok('adopting with rainbow off: the ink is the contrast colour for the plain accent', vmsApi.vmIconInk(false) === vmsApi.ccIdeal(vmsApi.vmAdoptTint()), vmsApi.vmIconInk(false));
 
   localStorage.setItem('cc.rainbow', '1');
-  ok('adopting, Rainbow ON: vmIconInk() is the automatic contrast colour for the SAME vmRbColor(5) a generic VM badge (--cc-rbaccent) resolves to, not a frozen accent snapshot', vmsApi.vmIconInk(false) === vmsApi.ccIdeal(vmsApi.vmRbColor(5)), vmsApi.vmIconInk(false) + ' vs ccIdeal(' + vmsApi.vmRbColor(5) + ')');
-  ok('and that is NOT the own picked colour either', vmsApi.vmIconInk(false) !== '#00aa00');
+  ok('adopting with rainbow on: the ink is the contrast colour for the vmRbColor(5) a generic badge resolves to', vmsApi.vmIconInk(false) === vmsApi.ccIdeal(vmsApi.vmRbColor(5)), vmsApi.vmIconInk(false) + ' vs ccIdeal(' + vmsApi.vmRbColor(5) + ')');
+  ok('and not the picked colour', vmsApi.vmIconInk(false) !== '#00aa00');
 
   localStorage.setItem('cc.icontint', '0');
-  ok('adopting: the ink is STILL the automatic contrast colour even with Einfärben explicitly OFF — no longer dependent on Einfärben\'s own on/off at all', vmsApi.vmIconInk(false) === vmsApi.ccIdeal(vmsApi.vmRbColor(5)), vmsApi.vmIconInk(false));
+  ok('adopting with Einfärben off: the ink is still the contrast colour', vmsApi.vmIconInk(false) === vmsApi.ccIdeal(vmsApi.vmRbColor(5)), vmsApi.vmIconInk(false));
   localStorage.setItem('cc.icontint', '1');
 
   localStorage.setItem('cc.iconbgrainbow', '0');
-  ok('turning the master toggle back off restores the own picked colour immediately', vmsApi.vmIconInk(false) === '#00aa00', vmsApi.vmIconInk(false));
+  ok('turning the master toggle off brings the picked colour back', vmsApi.vmIconInk(false) === '#00aa00', vmsApi.vmIconInk(false));
   reset();
 }
 
-console.log('\nvmItemAdoptInk() (v4.33.2 fix): PER-ROW contrast ink — mirrors docker.js itemAdoptInk(), the exact regression an independent reviewer found in v4.33.1');
+console.log('\nvmItemAdoptInk(): the contrast ink per row, as docker.js\'s itemAdoptInk() does');
 {
-  // THE CONFIRMED BUG: under the master adopt toggle, vmIconInk() answered ONE representative
-  // colour for every VM row (idealText(vmRbColor(5)) — always palette slot 5), even though
-  // enhanceCells() already stamps a genuinely rotating --cc-rb-c/--cc-rb-ct per row. Slot 2
-  // (#eab308, yellow) is the one slot in the default 8-colour palette needing BLACK ink instead
-  // of slot 5's white — whichever VM row's own rotation landed there got illegible white-on-
-  // yellow. vmItemAdoptInk() fixes this by reusing THAT row's own already-stamped --cc-rb-ct.
+  // While adopting, vmIconInk() answers one colour for the whole page, taken from
+  // palette slot 5, but enhanceCells() stamps a rotating --cc-rb-c and --cc-rb-ct
+  // per row. Slot 2, the yellow, is the one that needs black ink instead of white,
+  // so a row landing there would read white on yellow. vmItemAdoptInk() takes that
+  // row's own --cc-rb-ct.
   reset();
   localStorage.setItem('cc.iconbgrainbow', '1');
   localStorage.setItem('cc.rainbow', '1');
@@ -191,31 +176,31 @@ console.log('\nvmItemAdoptInk() (v4.33.2 fix): PER-ROW contrast ink — mirrors 
     return { style: { setProperty: function (k, v) { s[k] = v; }, getPropertyValue: function (k) { return s[k] || ''; } } };
   }
 
-  ok('slot 5 (vmRbColor(5)) really is #2f6feb, needing WHITE ink', vmsApi.vmRbColor(5) === '#2f6feb' && vmsApi.ccIdeal(vmsApi.vmRbColor(5)) === '#fff');
-  ok('slot 2 (vmRbColor(2)) really is the yellow #eab308, needing BLACK ink', vmsApi.vmRbColor(2) === '#eab308' && vmsApi.ccIdeal(vmsApi.vmRbColor(2)) === '#161616');
+  ok('slot 5 is #2f6feb, which takes white ink', vmsApi.vmRbColor(5) === '#2f6feb' && vmsApi.ccIdeal(vmsApi.vmRbColor(5)) === '#fff');
+  ok('slot 2 is the yellow #eab308, which takes black ink', vmsApi.vmRbColor(2) === '#eab308' && vmsApi.ccIdeal(vmsApi.vmRbColor(2)) === '#161616');
 
   var yellowRow = fakeRow();
   yellowRow.style.setProperty('--cc-rb-c', vmsApi.vmRbColor(2));
   yellowRow.style.setProperty('--cc-rb-ct', vmsApi.ccIdeal(vmsApi.vmRbColor(2)));
 
-  ok('THE REGRESSION PIN: a VM row on the yellow slot gets BLACK ink from vmItemAdoptInk(), not the representative white', vmsApi.vmItemAdoptInk(yellowRow) === '#161616', vmsApi.vmItemAdoptInk(yellowRow));
-  ok('…which genuinely DIFFERS from the old page-wide vmIconInk() answer for the SAME settings (the confirmed bug)', vmsApi.vmItemAdoptInk(yellowRow) !== vmsApi.vmIconInk(false), vmsApi.vmItemAdoptInk(yellowRow) + ' vs ' + vmsApi.vmIconInk(false));
+  ok('a row on the yellow slot gets black ink from vmItemAdoptInk()', vmsApi.vmItemAdoptInk(yellowRow) === '#161616', vmsApi.vmItemAdoptInk(yellowRow));
+  ok('...which differs from the page-wide vmIconInk() answer for the same settings', vmsApi.vmItemAdoptInk(yellowRow) !== vmsApi.vmIconInk(false), vmsApi.vmItemAdoptInk(yellowRow) + ' vs ' + vmsApi.vmIconInk(false));
 
   var blueRow = fakeRow();
   blueRow.style.setProperty('--cc-rb-c', vmsApi.vmRbColor(5));
   blueRow.style.setProperty('--cc-rb-ct', vmsApi.ccIdeal(vmsApi.vmRbColor(5)));
-  ok('a row on the representative slot still gets white ink', vmsApi.vmItemAdoptInk(blueRow) === '#fff', vmsApi.vmItemAdoptInk(blueRow));
+  ok('a row on slot 5 gets white ink', vmsApi.vmItemAdoptInk(blueRow) === '#fff', vmsApi.vmItemAdoptInk(blueRow));
 
   localStorage.setItem('cc.rainbow', '0');
-  ok('Rainbow OFF: vmItemAdoptInk() ignores a stale --cc-rb-ct stamp and falls back to the uniform accent-derived ink', vmsApi.vmItemAdoptInk(yellowRow) === vmsApi.vmIconInk(false), vmsApi.vmItemAdoptInk(yellowRow));
+  ok('rainbow off: a stale --cc-rb-ct stamp is ignored for the uniform ink', vmsApi.vmItemAdoptInk(yellowRow) === vmsApi.vmIconInk(false), vmsApi.vmItemAdoptInk(yellowRow));
   localStorage.setItem('cc.rainbow', '1');
 
-  ok('no row element at all: degrades to the uniform fallback, never throws', vmsApi.vmItemAdoptInk(null) === vmsApi.vmIconInk(false));
-  ok('a row with no --cc-rb-ct stamp yet: same safe fallback', vmsApi.vmItemAdoptInk(fakeRow()) === vmsApi.vmIconInk(false));
+  ok('no row element: the uniform fallback, without throwing', vmsApi.vmItemAdoptInk(null) === vmsApi.vmIconInk(false));
+  ok('a row with no --cc-rb-ct stamp yet: the same fallback', vmsApi.vmItemAdoptInk(fakeRow()) === vmsApi.vmIconInk(false));
   reset();
 }
 
-console.log('\nvmLogoSizes(): the SAME cc.sgsize map as docker.js\'s ccLogoSizes() / plugins.js\'s logoSize()');
+console.log('\nvmLogoSizes(): the cc.sgsize map docker.js and plugins.js use as well');
 {
   reset();
   localStorage.setItem('cc.sgsize', 's'); ok('s -> [48px, 62px]', JSON.stringify(vmsApi.vmLogoSizes()) === JSON.stringify(['48px', '62px']));
@@ -226,16 +211,14 @@ console.log('\nvmLogoSizes(): the SAME cc.sgsize map as docker.js\'s ccLogoSizes
   reset();
 }
 
-console.log('\nA glyph never ends up with BOTH a direct colour AND the luminance-tint filter (double-tint regression pin)');
+console.log('\nA glyph never carries both a direct colour and the luminance-tint filter');
 {
-  ok('native treat: no colour AND no filter', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'native' }, false, '#2f6feb', '#e5a00d'); return !r.color && !r.filter; })());
-  ok('Logo-Hintergrund on, forced "tint": colour is the resolved ink verbatim (caller already resolved it), filter stays empty', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', '#e5a00d'); return !!r.color && !r.filter; })());
-  ok('an ink colour is available, forced "tint": colour is set, filter stays empty', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'tint' }, false, '#2f6feb', '#e5a00d'); return r.color === '#e5a00d' && !r.filter; })());
-  // v4.32.5 regression pin: the badge alone must NEVER force a colour onto a glyph — `ink` (the
-  // 4th arg) already answers "" whenever Einfärben is off, badge or not, so ibgOn must not be
-  // consulted on its own any more (the old `if (ibgOn) return {color: idealText(ibgAcc), ...}`
-  // branch ignored an empty `ink` and forced one anyway).
-  ok('Logo-Hintergrund on but NO ink (Einfärben off): no colour is forced onto the glyph', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', ''); return !r.color; })());
+  ok('native treat: neither a colour nor a filter', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'native' }, false, '#2f6feb', '#e5a00d'); return !r.color && !r.filter; })());
+  ok('Hintergrund on and treat "tint": the colour is the resolved ink, with no filter', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', '#e5a00d'); return !!r.color && !r.filter; })());
+  ok('an ink colour with treat "tint": the colour is set, with no filter', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'tint' }, false, '#2f6feb', '#e5a00d'); return r.color === '#e5a00d' && !r.filter; })());
+  // The ink argument answers "" whenever Einfärben is off, badge or no badge, so
+  // the badge state alone must not put a colour on a glyph.
+  ok('Hintergrund on with no ink: no colour is forced onto the glyph', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', ''); return !r.color; })());
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
