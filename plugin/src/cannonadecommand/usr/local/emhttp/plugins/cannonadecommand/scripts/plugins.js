@@ -1,46 +1,34 @@
-﻿/* CannonadeCommand — enhances Unraid's PLUGINS tab in place, Docker-tab style:
- * plugin cell with container-sized logo + name + support badge, description in
- * its own column, version + changelog badges stacked, status and remove as
- * pills, accent or rainbow colours — all idempotent on top of the native
- * #plugin_table (ground truth: dynamix.plugin.manager/Plugins.page +
- * include/ShowPlugins.php; the name lives as <strong> in the README markdown). */
+﻿/* CannonadeCommand: restyles Unraid's Plugins tab in place, like the Docker tab. The plugin cell
+ * gets a container-sized logo, the name and a support badge; the description keeps its own
+ * column, version and changelog badges are stacked, and status and remove become pills, all in
+ * the accent or rainbow colours. Idempotent on top of the native #plugin_table
+ * (dynamix.plugin.manager/Plugins.page, include/ShowPlugins.php; the name is the <strong> in the
+ * README markdown). */
 (function () {
   "use strict";
   if (window.__ccPlug) return; window.__ccPlug = 1;
-  // ═══ UPDATE-BUTTON PIN LOOP — FIRST STATEMENT IN THE FILE (v2.31.5). The purple pill proves
-  // the CSS reaches the button while every JS relocation round changed nothing — the one
-  // remaining explanation is that the script DIES somewhere above the loop registration.
-  // So the registration now happens before ANY other top-level statement can throw.
+  // The update button pin loop is registered before any other top-level statement, so a throw
+  // further down this file cannot take it down.
   function plugPinTick() {
     try {
       var db = document.getElementById("displaybox");
       if (!db || !document.querySelector("#plugin_table, table.cc-plug")) {
-        // Not the Plugins page. Once the DOM is fully loaded and there is still no plugin table,
-        // this page never will — stop the perpetual 600 ms wakeup instead of spinning forever on
-        // every Unraid page. The Plugins page keeps the loop (its layout keeps shifting).
+        // Not the Plugins page. Once the DOM is complete without a plugin table there never will
+        // be one, so stop the 600 ms wakeup; the Plugins page keeps it because its layout shifts.
         if (_pinIv && document.readyState === "complete") { clearInterval(_pinIv); _pinIv = null; }
         return;
       }
       if (localStorage.getItem("cc.theming") === "0" || localStorage.getItem("cc.enable.plugins") === "0") return;
-      // THE ANCHOR (v2.31.6): the Plugins page uses Unraid's OLD radio+label tab markup —
-      // paint()'s own comment says these tabs are styled via "input:checked + label". There is
-      // NO button[role=tab] and NO .tabs-container on this page, so every earlier pass (and this
-      // loop's first version) bailed out silently at this exact line. Labels first, modern
-      // variants as fallbacks.
-      // #6 (the reason this kept "not being fixed"): in TAB-ANSICHT docker.css hides every
-      // button[role=tab] with display:none, so each candidate below has offsetHeight 0, `tab` stays
-      // null, _ccNoTab flips true and the anchor silently becomes the TABLE's top edge — while the
-      // badge the user actually sees on that row is .cc-card-head, which this loop never measured.
-      // With sections OFF (a default test profile) the very same code aligns perfectly, which is why
-      // every measurement said 0px while the screenshot showed the button sitting low. .cc-card-head
-      // goes FIRST: it only exists in Tab-Ansicht, so the normal view is unaffected.
-      var tab = null, cands = db.querySelectorAll(".cc-card-head, div.tab input[type=radio] + label, .tabbed input[type=radio] + label, div.tab label, .tabbed label, div.tabs label, .tabs label, button[role='tab'], .tabs-container > *");   // div.tab (SINGULAR) + .tabbed = the REAL wrapper classes our own docker.css styles (576-585) — v2.31.6 searched div.tabS and missed again
+      // The anchor. The Plugins page uses Unraid's older radio+label tab markup without
+      // button[role=tab] or .tabs-container, so labels come first and the modern variants are
+      // fallbacks. In section view docker.css hides every tab button, so .cc-card-head, which
+      // only exists there, goes first.
+      var tab = null, cands = db.querySelectorAll(".cc-card-head, div.tab input[type=radio] + label, .tabbed input[type=radio] + label, div.tab label, .tabbed label, div.tabs label, .tabs label, button[role='tab'], .tabs-container > *");   // div.tab and .tabbed are the wrapper classes docker.css styles
       for (var i = 0; i < cands.length; i++) { var cr0 = cands[i].getBoundingClientRect(); if (cands[i].offsetHeight && cr0.width) { tab = cands[i]; break; } }
       var _ccNoTab = false;
       if (!tab) {
-        // native NON-tabbed plugin view has NO radio/label tab strip -> the loop used to bail here,
-        // stranding #checkall/#updateall/#removeall mid-list. Fall back to the plugin table's TOP edge
-        // as the vertical anchor so the button still pins top/right above the list.
+        // The non-tabbed plugin view has no tab strip, so the table's top edge is the anchor and
+        // the buttons still pin above the list.
         tab = document.querySelector("#plugin_table, table.cc-plug, #plugin_list");
         if (!tab) return;
         _ccNoTab = true;
@@ -51,8 +39,8 @@
       var spans = document.querySelectorAll("#displaybox span.status.vhshift, #displaybox span.vhshift, #checkall, #updateall, #removeall");
       for (var sp = 0; sp < spans.length; sp++) { var s = spans[sp]; if (s !== host && !host.contains(s) && s.parentNode !== host) host.appendChild(s); }
       if (!host.firstChild) {
-        // last-resort adoption: this Unraid build may wrap the trio differently — match any
-        // button whose handler/label smells like the update-check controls (de + en).
+        // Some Unraid builds wrap the three controls differently, so adopt any button whose
+        // handler or label looks like an update check (German or English).
         var ins = db.querySelectorAll("input[type='button'], input[type='submit'], button");
         for (var q = 0; q < ins.length; q++) {
           var oc = ((ins[q].getAttribute("onclick") || "") + " " + (ins[q].value || ins[q].textContent || ""));
@@ -70,40 +58,29 @@
       host.style.setProperty("gap", "12px", "important");
       host.style.setProperty("margin", "0", "important");
       host.style.setProperty("z-index", "3", "important");
-      // v2.31.9 — align the VISIBLE BUTTON, not the host box: the user's console proved the host
-      // rect pixel-perfect on the pill row while the screenshot showed the button lower — an
-      // INNER offset (Update.css's 13px vhshift on the span, or anything else) pushed the content
-      // down inside the aligned box. Zero the inner vertical margins, then iteratively nudge the
-      // host until the button's own centre sits on the pill centre — cascade-proof by measurement.
+      // Align the visible button rather than the host box, since an inner offset (Update.css's
+      // 13px vhshift on the span) pushes the content down inside it. The inner margins go, the
+      // host's gap is the only spacing, and the host is nudged until the button's centre sits
+      // on the tab row's centre.
       var inn = host.querySelectorAll("span, input, button");
       for (var n2 = 0; n2 < inn.length; n2++) {
         inn[n2].style.setProperty("margin-top", "0", "important"); inn[n2].style.setProperty("margin-bottom", "0", "important");
-        // v2.32.6 (live-verified in the real WebUI): the input carries a native margin-right:12px
-        // — the HOST edge was flush while the visible button ended 12px short. ALL inner margins
-        // go; the host's flex gap is the only spacing.
         inn[n2].style.setProperty("margin-left", "0", "important"); inn[n2].style.setProperty("margin-right", "0", "important");
       }
       var tr0 = tab.getBoundingClientRect(), dr = db.getBoundingClientRect();
-      // non-tabbed view: sit the button just ABOVE the list top; tabbed view: on the tab-row centre.
-      var anchorY = _ccNoTab ? (tr0.top - (host.offsetHeight || 30) / 2 - 6) : (tr0.top + tr0.height / 2);   // #6: 30 = --cc-md-h, the row's tier
-      // flush RIGHT with the MENU BAR's icon edge (house rule "alles richtet sich an der
-      // Menueleiste aus" — user measurement 2026-07-19: icons end at 1414, table at 1417, the
-      // 3px offset read as "nicht rechtsbuendig"). Fallbacks: table edge, then page padding.
-      // the VISUALLY rightmost element, not the DOM-last one: the merged drag zone lets the user
-      // reorder icons + usage meter freely, so DOM order can differ from visual order (proven
-      // live: DOM-last icon at 1414 measured "flush" while the eye saw the button left of the
-      // real right edge). Take the MAX right edge over all visible candidates.
+      // non-tabbed: just above the list; tabbed: on the tab row's centre
+      var anchorY = _ccNoTab ? (tr0.top - (host.offsetHeight || 30) / 2 - 6) : (tr0.top + tr0.height / 2);   // 30 = --cc-md-h
+      // The right edge is flush with the visually rightmost menu bar icon, since the icons and the
+      // usage meter can be reordered by drag. Fallbacks: the table edge, then the page padding.
       var ref = null, mi = document.querySelectorAll("#menu .nav-tile.right .nav-item.util > a, #menu .usage-bar");
       for (var m2 = 0; m2 < mi.length; m2++) {
         if (!mi[m2].offsetHeight) continue;
         var mr2 = mi[m2].getBoundingClientRect().right;
         if (ref == null || mr2 > ref) ref = mr2;
       }
-      // the docked bell/burger (header.js #16 round 5: adopted as real children of their proxy slots,
-      // so they're now PART of the row) — the primary query above (.nav-item.util > a) misses them
-      // since the adopted trigger is a <span> sibling of that <a>, not the <a> itself, so include their
-      // rects too. [data-cc-trig] covers the adopted (normal) state; the plain #UserProfile selector is
-      // a harmless fallback for the moment before adoption runs and for theming-off.
+      // header.js adopts the bell and burger into the menu row as <span> siblings of the
+      // .nav-item.util > a links, so the query above misses them. [data-cc-trig] covers the
+      // adopted state, #UserProfile the moment before adoption and theming off.
       if (document.documentElement.classList.contains("cc-header-on")) {
         var dk = document.querySelectorAll("#menu .nav-tile.right [data-cc-trig], #UserProfile > div:nth-child(2) > span");
         for (var d2 = 0; d2 < dk.length; d2++) {
@@ -124,7 +101,7 @@
   }
   var _pinIv = null; try { _pinIv = setInterval(plugPinTick, 600); } catch (e) {}
   try { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", plugPinTick); else plugPinTick(); } catch (e) {}
-  // ═══ end pin loop — everything below may fail without taking the loop down with it. ═══
+  // Everything below may fail without taking the pin loop down.
   var PROXY = "/plugins/cannonadecommand/server/ccapi.php";
   var LANG = ((document.documentElement.lang || navigator.language || "en").toLowerCase().indexOf("de") === 0) ? "de" : "en";
   var MARK = "data-ccp";
@@ -133,19 +110,16 @@
   // effective setting: adopt the Docker tab's cc.* while the takeover toggle is
   // on (default), otherwise this tab's own ccp.* keys
   function eff(name) { return ls("cc.styleplugin") !== "0" ? ls("cc." + name) : ls("ccp." + name); }
-  // v4.35.0 (item 5): adopt-rainbow is now a PURELY GLOBAL decision (see docker.js's
-  // iconBgAdopts() for the full writeup) — bypasses eff()'s own/adopted-STYLE fallback on purpose.
+  // Adopting the rainbow for the icon background is a global setting, so it bypasses eff()
+  // (see docker.js iconBgAdopts()).
   function iconBgAdoptsP() { return ls("cc.iconbgrainbow") === "1"; }
   function el(t, c, x) { var n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; }
 
   var RB_PAL = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
-  if (window.CCTheme) { RB_PAL = window.CCTheme.RB; }  /* single source: adopt the shared jewel-clamped palette so the Plugins tab matches every other area (was raw crayon hexes -> visibly brighter/different hues) */
-  var RB_OFFSET = window.CCTheme ? window.CCTheme.rbSeed(RB_PAL.length) : Math.floor(Math.random() * RB_PAL.length); // shared PERSISTED seed, aligned with header/docker/shares (was Math.random per reload -> reshuffled every load and never lined up)
-  // Rainbow is a GLOBAL mode: read cc.rainbow / cc.rbpal / cc.rainbowrot DIRECTLY (not the
-  // adopt-gated eff()), like docker.js — one global Rainbow switch colours every enabled area.
-  // accent() stays adopt-gated (eff) for the non-rainbow single colour.
-  // Active palette: flag mode reads cc.flagpal (its own key), never cc.rbpal — flag and rainbow
-  // palettes stay independent (no bleed either way).
+  if (window.CCTheme) { RB_PAL = window.CCTheme.RB; }  /* the shared palette, so this tab matches every other area */
+  var RB_OFFSET = window.CCTheme ? window.CCTheme.rbSeed(RB_PAL.length) : Math.floor(Math.random() * RB_PAL.length); // the shared seed, so the rotation matches the other areas
+  // Rainbow is a global mode, so cc.rainbow, cc.rbpal and cc.rainbowrot are read directly, as in
+  // docker.js, while accent() stays adopt-gated. Flag mode reads its own cc.flagpal, never cc.rbpal.
   function pal() { try { if (ls("cc.flagmode") === "1") { var f = JSON.parse(ls("cc.flagpal") || "null"); if (f && f.length) return f; } var jp = JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) return jp; } catch (e) {} return RB_PAL; }
   function idealText(bg) { var n = parseInt(String(bg).replace("#", ""), 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
   function accent() { return eff("accent") || "#2f6feb"; }
@@ -154,15 +128,12 @@
     var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
     return pal()[(i + off) % pal().length];
   }
-  // reactive rainbow sub-mode (cc.rbmode==="active"): row chrome RESTS grey and takes the row's
-  // palette colour only on hover — so the WHOLE plugin row reacts, not just the logo (N2). restBg
-  // returns grey at rest in that mode; otherwise the normal accent/rainbow colour.
-  function reactive() { return ls("cc.rbmode") === "active"; }   /* #2: reactive works in Normal mode too (rbmode default "all" -> off by default, so the default look is unchanged) */
+  // Reactive rainbow (cc.rbmode "active"): the row chrome rests grey and takes the row's palette
+  // colour on hover, so the whole row reacts.
+  function reactive() { return ls("cc.rbmode") === "active"; }
   function restBg(i) { return reactive() ? "#2e2e2e" : colorFor(i); }
-  // #17/#27: a CC confirmation for the per-row plugin uninstall — same shape as the container
-  // remove (a themed swal), so deleting a plugin is a single trash icon + an "are you sure?"
-  // dialog instead of Unraid's separate confirm CHECKBOX. Falls back to confirm() if SweetAlert
-  // is somehow unavailable.
+  // Confirms a per-row plugin uninstall with a themed swal, like the container remove, in place of
+  // Unraid's separate confirm checkbox. Falls back to confirm() without SweetAlert.
   function ccPluginConfirm(name, run) {
     var txt = LANG === "de" ? '"' + name + '.plg" wird entfernt. Fortfahren?' : '"' + name + '.plg" will be removed. Continue?';
     if (typeof window.swal === "function") {
@@ -173,43 +144,27 @@
       }, function (ok) { if (ok) run(); });
     } else if (window.confirm(txt)) { run(); }
   }
-  // ONE global tile-size key (cc.sgsize, GLOBAL like cc.rainbow — not eff-gated):
-  // s 48/62 · m 62/78 · l 76/94 [img, box]. Docker's applySettings stamps the same
-  // vars there; stamp them HERE too (docker.js doesn't run on this page) so the
-  // docker.css #plugin_list/.cc-plugico rules agree, and return the img px for the
-  // inline stamps below.
+  // One global tile size key (cc.sgsize, not eff-gated): s 48/62, m 62/78, l 76/94 [img, box].
+  // docker.js does not run on this page, so the vars are stamped here for the docker.css
+  // #plugin_list and .cc-plugico rules; returns the img size for the inline stamps.
   function logoSize() {
     var lg = ({ s: ["48px", "62px"], m: ["62px", "78px"], l: ["76px", "94px"] })[ls("cc.sgsize") || "m"] || ["62px", "78px"];
     try { var rs = document.documentElement.style; rs.setProperty("--cc-logo-img", lg[0]); rs.setProperty("--cc-logo-box", lg[1]); } catch (e) {}
     return lg[0];
   }
 
-  // the Docker-tab icon tint, standalone: luminance x target colour via an SVG
-  // feColorMatrix, blended by cc.iconstrength; imgs get filter: url(#cc-plug-tint)
-  // ── Hintergrund (background) and Einfärben (tint) are two INDEPENDENT controls (v4.32.5
-  // fix, mirrored from docker.js): eff("iconbg") stays the background badge's on/off key, and
-  // eff("iconbgcolor") (new) is its OWN colour; eff("icontint") (new) is the tint's OWN on/off,
-  // and eff("iconcolor") stays its existing colour key. Before this, iconcolor's mere presence
-  // WAS the tint's on-signal and doubled as the badge's colour too, so switching Hintergrund on
-  // forced icon tinting on as a side effect. plugTintOn()/plugBgColor() fall back to that exact
-  // pre-4.32.5 reading whenever the new keys were never touched, so an untouched install looks
-  // unchanged.
+  // The Docker tab's icon tint on its own: luminance x target colour through an SVG
+  // feColorMatrix, blended by cc.iconstrength. The background (Hintergrund) and the tint
+  // (Einfärben) are independent: eff("iconbg") and eff("iconbgcolor") drive the badge,
+  // eff("icontint") and eff("iconcolor") the tint. Without icontint, a set iconcolor still means
+  // the tint is on, so older settings keep their look.
   function plugTintOn() {
     var v = eff("icontint");
     return v == null ? !!eff("iconcolor") : v === "1";
   }
-  // ADOPT RAINBOW/ACCENT — ONE master toggle (v4.33.1, mirrors docker.js; redesigned from the
-  // two independent toggles v4.33.0 shipped, see docker.js's iconAdoptTint() doc comment for the
-  // full writeup of why). Hintergrund adopting: plugBgColor() answers "" so paintRow() never
-  // stamps --cc-iconbg-color; docker.css's own var() chain
-  // (var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent)))) then falls through to --cc-rb-c,
-  // the per-row rotating colour paintRow() already stamps (colorFor(i)) — Plugins has no grid
-  // view, only the list, so nothing else was needed here for genuine per-item rotation. Einfärben
-  // no longer adopts a separate HUE at all: the ink is instead the automatic black/white CONTRAST
-  // colour for the resolved background (idealText()), regardless of Einfärben's own on/off —
-  // colorFor(5) still resolves the REPRESENTATIVE colour that contrast is computed FROM (the SAME
-  // single "action" rainbow slot docker.js/vms.js use for buttons/toggles, live and recomputed
-  // every repaint via the existing colorFor()/pal()/RB_OFFSET machinery).
+  // With the adopt toggle on this answers "", so paintRow() never stamps --cc-iconbg-color and
+  // docker.css's var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent))) chain falls through to
+  // the per-row --cc-rb-c. See docker.js iconAdoptTint().
   function plugBgColor() {
     if (iconBgAdoptsP()) return "";   // adopting: defer to the CSS rainbow/accent chain
     var c = eff("iconbgcolor");
@@ -218,18 +173,13 @@
     if (ic && /^#?[0-9a-f]{6}$/i.test(ic)) return ccHex6(ic);
     return accent();
   }
-  // The icon pipeline's target colour for this tab — same contract as docker.js iconInk():
-  //   · Master adopt ON: ALWAYS the automatic black/white contrast colour for the resolved
-  //     background, regardless of Einfärben's own on/off.
-  //   · Master adopt OFF: "" whenever Einfärben (tint) is off, regardless of the badge; ALWAYS
-  //     the picked TINT colour, lifted out of the dark end — regardless of whether the
-  //     Logo-Hintergrund badge is also on (v4.32.6 fix: this used to return
-  //     idealText(plugBgColor()) whenever the badge was on, discarding the user's own picked
-  //     tint colour — see docker.js iconInk() for the full writeup). plugBgColor()/eff("iconbg")
-  //     stay the badge box's OWN colour, never the icon's ink.
-  // `forTint` doubles the floor because a luminance tint outputs roughly half the target's luma
-  // (see CCTheme.liftDark); the auto contrast branch skips the guard — idealText() only ever
-  // answers #fff/#161616.
+  // The icon pipeline's target colour, the same contract as docker.js iconInk(). With the adopt
+  // toggle on it is the black or white contrast colour for the resolved background, whatever the
+  // tint toggle says. Otherwise it is "" while the tint is off and the picked tint colour, lifted
+  // out of the dark end, while it is on, whether or not the background badge is on too.
+  // forTint doubles the floor because a luminance tint lands at about half the target's luma (see
+  // CCTheme.liftDark); idealText() only answers #fff or #161616, so the contrast branch needs no
+  // guard.
   function plugIconInk(forTint) {
     if (iconBgAdoptsP()) return idealText(colorFor(5));
     if (!plugTintOn()) return "";
@@ -239,26 +189,16 @@
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
     return ccHex6(window.CCTheme.liftDark(pick, accent(), window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1)));
   }
-  // A font glyph's colour and the luminance-tint filter are mutually exclusive (mirrors the
-  // docker.js/vms.js fix — see glyphInkAndFilter() there): once a glyph gets a direct css
-  // colour, the filter must never ALSO run on top of it. Extracted so the invariant is
-  // unit-testable without a full render pass.
-  //
-  // `ibgOn`/`ibgBg` are kept as parameters for call-site stability but are no longer consulted
-  // directly: `pInk` (plugIconInk()'s result) already resolves to the picked tint colour
-  // whenever Einfärben is on — badge or not (v4.32.6 fix) — and to "" whenever Einfärben is
-  // off — the old `if (ibgOn) return {color: idealText(ibgBg), ...}` branch forced a colour
-  // onto every plugin glyph the moment the badge was on, even with Einfärben off (the same
-  // background-forces-tint bug as plugIconInk(), for font/Unraid-icon glyphs specifically —
-  // v4.32.5 fix).
+  // A glyph's css colour and the luminance tint filter never apply together, as in docker.js
+  // glyphInkAndFilter(); a separate function so a test can pin it. pInk already resolves to the
+  // tint colour or "", so ibgOn and ibgBg are not consulted.
   function plugGlyphInkAndFilter(plan, ibgOn, ibgBg, pInk, want) {
     if (plan.treat === "native") return { color: "", filter: "none" };
     if (pInk) return { color: pInk, filter: "none" };
     return { color: "", filter: want };
   }
-  // Generalised so TWO independent tint filters can coexist (v4.33.2 fix — see the
-  // master-adopt block in paintRow() below): every pre-existing caller hardcoded hostId
-  // "cc-plug-tint-svg"/filtId "cc-plug-tint" — ensureTint() below stays that spelling.
+  // Takes the ids so the black and white ink filters of the adopt branch in paintRow() can
+  // coexist; ensureTint() keeps the cc-plug-tint spelling.
   function ensureTintAs(hostId, filtId, ic) {
     var hex = /^#?([0-9a-f]{6})$/i.exec(ic || "");
     var host = document.getElementById(hostId);
@@ -277,17 +217,15 @@
     return "url(#" + filtId + ")";
   }
   function ensureTint() { return ensureTintAs("cc-plug-tint-svg", "cc-plug-tint", plugIconInk(true)); }
-  // logo-background monochrome tint: flatten the logo to a single ink tone (the
-  // ideal-contrast text colour for the accent badge box) via an SVG feColorMatrix
-  // that keeps alpha but maps RGB to one grey. Signature-guarded so the shared
-  // MutationObserver never re-writes identical SVG in a repaint loop.
-  // Ink-FLATTEN to ANY colour (docker.js ensureFlatFilter, verbatim contract).
-  // Expand a #rgb shorthand to #rrggbb. idealText answers "#fff", every filter builder and
-  // every colour regex here wants six digits — this is the one place that bridges the two.
+  // Expands #rgb to #rrggbb: idealText answers "#fff", while every filter builder and colour
+  // regex here wants six digits.
   function ccHex6(c) {
     c = String(c == null ? "" : c).trim();
     return /^#[0-9a-f]{3}$/i.test(c) ? "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c;
   }
+  // Flattens a logo to one ink colour with an SVG feColorMatrix that keeps alpha, the same
+  // contract as docker.js ensureFlatFilter. Signature-guarded so the MutationObserver never
+  // rewrites identical SVG in a repaint loop.
   function ensureFlatFilter(hostId, filtId, hex) {
     var host = document.getElementById(hostId);
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ccHex6(hex) || "");
@@ -308,8 +246,7 @@
   }
   function shapeRadius() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
   function pill(node, bg, tx) {
-    // sm tier — same tokens as every other small badge system-wide (--cc-sm-fs/--cc-sm-pad,
-    // defined once in CannonadeCommand.Tokens.css), not hand-picked numbers local to this file.
+    // the sm size from CannonadeCommand.Tokens.css, like every other small badge
     node.style.setProperty("font-size", "var(--cc-sm-fs, 11px)", "important");
     node.style.setProperty("vertical-align", "middle", "important");
     node.style.setProperty("background", bg, "important");
@@ -321,13 +258,9 @@
     node.style.setProperty("display", "inline-block", "important");
     node.style.setProperty("line-height", "1.5", "important");
     node.style.setProperty("text-decoration", "none", "important");
-    // #badgesize (user: "die beiden badges sind unterschiedlich groß"): this fires on BOTH a
-    // plain <span> ("Auf dem neuesten Stand") and a native <input type=button> ("Aktualisierung")
-    // — the input carries its own browser button chrome (-webkit-appearance) AND, live-traced,
-    // an unrelated md-tier height/min-height/box-sizing rule in Tokens.css meant for the page-level
-    // "search for updates" button (same [value*="update"] selector also matches every per-row
-    // button). Neither touches the span, so the two rendered ~30px vs ~22.5px tall. Claim the whole
-    // box model here so this ALWAYS wins, on any element, regardless of what else targets it.
+    // This runs on a <span> and on a native <input type=button>, which brings browser button
+    // chrome and a Tokens.css height rule meant for the page-level update button, so the whole
+    // box model is set here to give both the same size.
     node.style.setProperty("box-sizing", "border-box", "important");
     node.style.setProperty("height", "auto", "important");
     node.style.setProperty("min-height", "0", "important");
@@ -346,24 +279,13 @@
     return b;
   }
 
-  // CONTENT-AWARE logo sizing: many plugin icons carry baked-in padding, so a
-  // fixed box alone still LOOKS uneven. The alpha bounding box of each icon is
-  // measured once on a canvas and the image scaled so the visible artwork spans
-  // the same size everywhere.
-  //
-  // Deterministic icon normalization: the transform-scale hack was uneven (a 1.6x
-  // cap left heavily-padded icons small, and drawing to a square distorted the
-  // aspect ratio it measured from). Instead we crop each logo to its real content
-  // bounding box (alpha) and RE-RENDER it centered at the same target fill in a
-  // square canvas, then swap the src. Every plugin logo then shows content at the
-  // SAME visual size regardless of its baked-in padding or source resolution.
-  //
+  // Many plugin icons carry baked-in padding, so each logo is cropped to its alpha bounding box,
+  // re-rendered centred at the same fill in a square canvas, and the src swapped. Every logo then
+  // shows its content at the same size whatever its padding or resolution.
   var normCache = {};
   var plugWantNames = [];   // every plugin name of the current paint pass, asked for in one batch
-  // Source swap for the icon pipeline. Same contract as docker.js setIconSrc, plus one
-  // extra: clearing data-cc-normed, because reverting to the native icon has to let
-  // normalizeIcon re-apply its crop (its own guard would otherwise short-circuit and
-  // leave the raw, un-normalised source showing).
+  // Source swap for the icon pipeline, like docker.js setIconSrc, but it also clears
+  // data-cc-normed, so going back to the native icon lets normalizeIcon crop it again.
   function plugSetIconSrc(img, url) {
     if (!img.getAttribute("data-cc-osrc")) img.setAttribute("data-cc-osrc", img.getAttribute("src") || "");
     var want = url || img.getAttribute("data-cc-osrc") || "";
@@ -379,7 +301,7 @@
     img.src = url;
   }
   function normalizeIcon(img) {
-    // key on the ORIGINAL src so a re-render (Unraid rewrites the row) still hits cache
+    // key on the original src so a re-render (Unraid rewrites the row) still hits the cache
     var src = img.getAttribute("data-cc-osrc") || img.src || ""; if (!src) return;
     if (src.indexOf("data:") === 0) return;
     if (normCache[src] != null) { if (normCache[src] !== "1") applyNorm(img, normCache[src]); return; }
@@ -399,7 +321,7 @@
         for (var y = 0; y < W; y++) for (var x = 0; x < W; x++) { if (dpx[(y * W + x) * 4 + 3] > 12) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; } }
         if (maxX < 0) { normCache[src] = "1"; return; }
         var bw = maxX - minX + 1, bh = maxY - minY + 1;
-        // re-render the cropped content, centered, filling 88% of the output square
+        // re-render the cropped content, centred, filling 82% of the output square
         var OUT = 128, avail = OUT * 0.82, k = Math.min(avail / bw, avail / bh);
         var out = document.createElement("canvas"); out.width = out.height = OUT;
         var ocx = out.getContext("2d"); ocx.imageSmoothingEnabled = true; ocx.imageSmoothingQuality = "high";
@@ -414,17 +336,14 @@
   function paintRow(tr, idx) {
     var tds = tr.children;
     if (!tds || tds.length < 6) return;
-    // stamp the row's palette colour so the reactive hover rules (docker.css) can colour the whole
-    // row on hover; harmless at rest (the CSS only reads it under :hover in reactive mode). ALSO
-    // this row's own contrast ink (v4.33.2 fix): the icon pipeline below reuses THIS exact value
-    // for the master-adopt toggle instead of a single page-wide representative colour.
+    // The row's palette colour for the reactive hover rules in docker.css, and its contrast ink,
+    // which the adopt branch of the icon pipeline below reuses.
     var rowInk = "";
     try { var rc = colorFor(idx); rowInk = idealText(rc); tr.style.setProperty("--cc-rb-c", rc); tr.style.setProperty("--cc-rb-ct", rowInk); } catch (e0) {}
     for (var i = 0; i < tds.length; i++) tds[i].style.setProperty("vertical-align", "middle", "important");
-    // ── col 1 becomes the PLUGIN cell, Docker-ct-name style: logo at container
-    // size + the name in the container font, support-thread badge underneath.
-    // The name lives as <strong> inside the README markdown of col 2 — pull it
-    // out; the description keeps its own column.
+    // Column 1 becomes the plugin cell, like Docker's ct-name: the logo at container size, the
+    // name, and the support thread badge underneath. The name is the <strong> in column 2's
+    // README markdown.
     if (!tds[0].getAttribute(MARK)) {
       tds[0].setAttribute(MARK, "1");
       var nameEl = tds[1].querySelector("h1, h2, h3") || tds[1].querySelector("strong, b");
@@ -447,12 +366,10 @@
         sup.remove();
         txt.appendChild(sb);
       }
-      // The plugin's name has to survive into later passes (this block is MARK-guarded and
-      // runs once) — the icon pipeline needs it for the lookup and for the per-plugin pin.
+      // This block runs once, so the name is kept for the icon lookup and the per-plugin pin.
       tds[0].setAttribute("data-cc-pname", nm || "");
-      // The Plugins tab has no per-item settings window at all, so the icon pin gets its
-      // own small control right next to the name, opening the SHARED five-option popover
-      // (cc-theme.js) that the Docker and VM windows show as a row.
+      // The Plugins tab has no per-item settings window, so the icon pin gets a small control
+      // next to the name that opens the shared popover from cc-theme.js.
       if (window.CCTheme && window.CCTheme.icons && nm) {
         var icb = el("span", "cc-b cc-plugicm", LANG === "de" ? "Icon" : "Icon");
         icb.setAttribute(MARK, "1");
@@ -472,23 +389,14 @@
       tds[0].appendChild(box);
     }
     var ico = tds[0].querySelector(".cc-plugico");
-    // Let the box be CONTENT-sized like Docker/VM span.hand (62px logo + 8px padding = 78px). The old
-    // fixed 64px !important made the plugin box smaller than Docker/VM AND clipped the logo under overflow:hidden.
+    // content-sized like the Docker and VM span.hand (62px logo plus 8px padding)
     if (ico) { ico.style.removeProperty("width"); ico.style.removeProperty("height"); }
-    // ALL THREE icon types Unraid emits in this cell: <img> (PNG), <i class="fa …">
-    // (FontAwesome) AND <i class="icon-… list"> (Unraid's own glyph font). The old
-    // "img, i.fa" selector missed the icon-* glyphs entirely and sized fa (46px) vs
-    // img (62px) differently — exactly why the logos came out different sizes.
-    // logo-background badge on: flatten every logo to one ink tone so it reads on
-    // the accent box (mono filter overrides the iconcolor tint f2 when active)
+    // Unraid puts one of three icon types in this cell: <img> (PNG), <i class="fa ..."> and
+    // <i class="icon-... list"> (its own glyph font). All three are sized alike below.
     var ibgOn = eff("iconbg") === "1";
     var ibgBg = plugBgColor();
-    // Master ADOPT toggle ON: TWO shared filters (black ink, white ink — idealText() only
-    // ever answers one of the two), built idempotently (constant hex -> no-op after the
-    // first row); THIS row picks whichever matches its OWN resolved background — reusing
-    // `rowInk`, the EXACT value already stamped as this row's --cc-rb-ct above — instead of
-    // every row sharing ONE filter built from a single representative colour (the v4.33.1
-    // bug: plugIconInk()'s old idealText(colorFor(5)) answer, identical for every row).
+    // With the adopt toggle on there are two shared filters, black ink and white ink, and each
+    // row picks the one matching its own rowInk, the value stamped as its --cc-rb-ct above.
     var f2, pFlat, pInk;
     if (iconBgAdoptsP()) {
       var rowBlk = rowInk !== "#fff";
@@ -498,16 +406,14 @@
     } else {
       f2 = ensureTint();
       pInk = plugIconInk(false);
-      // branch on pInk alone (which already answers "" whenever Einfärben is off, badge or not) —
-      // branching on ibgOn directly here instead (as this used to) reintroduces the
-      // background-forces-tint bug: it would flatten every icon to the box's ink even with
-      // Einfärben off.
+      // Branch on pInk, which is "" whenever the tint is off; branching on ibgOn would flatten
+      // every icon to the box's ink with the tint off.
       pFlat = pInk ? ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", pInk) : ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", "");
     }
     var LOGO = logoSize(); // cc.sgsize step = Docker/VM logo size (m default 62px)
     var pName = tds[0].getAttribute("data-cc-pname") || "";
     var PCI = window.CCTheme && window.CCTheme.icons;
-    if (PCI && pName) plugWantNames.push(pName);   // collected here, asked ONCE per paint() (see paint)
+    if (PCI && pName) plugWantNames.push(pName);   // asked for in one batch per paint()
     Array.prototype.slice.call(tds[0].querySelectorAll("img, i")).forEach(function (el2) {
       el2.style.setProperty("width", LOGO, "important");
       el2.style.setProperty("height", LOGO, "important");
@@ -545,11 +451,9 @@
       var name = au.textContent.trim();
       if (name) { au.textContent = ""; var ab = badge("Von", name, idx); ab.classList.add("cc-b-von", "cc-b-pauthor", "cc-plugauth"); au.appendChild(ab); }
     }
-    // ── col 4 (vid): version badge with the CHANGELOG badge stacked underneath
-    // (Docker-tab style); the native info-circle keeps its delegated handler —
-    // it is hidden and our badge clicks it.
-    // ── col 4 (vid): the stack is rebuilt after EVERY ajax rewrite —
-    // [Neu <new>] (amber, only with a pending update) → [Version <old>] → [Changelog]
+    // Column 4 (vid) is rebuilt after every ajax rewrite: [Neu <new>] (amber, only with a pending
+    // update), [Version <old>], [Changelog]. The native info circle keeps its delegated handler;
+    // it is hidden and the changelog badge clicks it.
     var vid = tds[3];
     var col = vid.querySelector(".cc-plugver");
     if (!col) { col = el("div", "cc-plugver"); vid.appendChild(col); }
@@ -582,11 +486,10 @@
         col.appendChild(ib);
       }
     }
-    // ── col 5 (sid): status badge — green "auf dem neuesten Stand", amber update.
-    // The cell is REWRITTEN by the update-check ajax, so this re-runs per mutation.
+    // Column 5 (sid): the status badge. The update check rewrites the cell, so this runs on every
+    // mutation. With native state colours on it is green (up to date) or amber (update);
+    // otherwise it follows the colour mode.
     var sid = tds[4];
-    // #5 (user: the STATUS-column badges belong to the state indicators): native state colours ON ->
-    // keep green (up to date) / amber (update); OFF -> integrate into the colour mode (rainbow/flag/accent).
     var stNative = ls("cc.statenative") === "1";
     var pRs = getComputedStyle(document.documentElement);
     var palC = (pRs.getPropertyValue("--cc-rbaccent") || "").trim() || (pRs.getPropertyValue("--cc-accent") || "").trim() || "#2f6feb";
@@ -607,10 +510,9 @@
       else if (/update|aktualis|install/.test(t2) && !/checking|prüf/.test(t2)) { pill(stEl, stNative ? "#e0912a" : palC, stNative ? "#161616" : palT); stEl.setAttribute(MARK, "1"); }
     }
     var lnk = sid.querySelector("a"); if (lnk) lnk.style.setProperty("color", "inherit", "important");
-    // ── col 6: the remove action — the CANONICAL delete control (standardized systemwide,
-    // see the Shares detail page). The confirm checkbox stays a SEPARATE accent-tinted sibling
-    // (.cc-cb-del, never inside the badge) and the button is the always-red badge (.cc-b-del);
-    // both classes live in styles/docker.css (loaded on the Plugins tab) so the two areas match.
+    // Column 6: the remove control, the same delete control as on the Shares detail page. The
+    // confirm checkbox stays a separate sibling (.cc-cb-del) and the button is the red badge
+    // (.cc-b-del); both classes live in styles/docker.css.
     var cb = tds[5].querySelector("input[type=checkbox]");
     if (cb && !cb.getAttribute(MARK)) { cb.setAttribute(MARK, "1"); cb.classList.add("cc-cb-del"); }
     var rm = tds[5].querySelector("a, input[type=button], input[type=submit], button");
@@ -628,11 +530,11 @@
       } else if (rm.tagName === "INPUT" && !rm.value.trim()) {
         rm.value = LANG === "de" ? "Entfernen" : "Remove";
       }
-      // #17/#27: turn the per-row uninstall into a single trash ICON with a CC confirmation
-      // (like the container remove), dropping Unraid's separate confirm CHECKBOX. The button's
-      // native onclick runs the real "plugin remove <file>" via openInstall(); we detach it, gate
-      // it behind ccPluginConfirm, and enable the button (Unraid disabled it until the — now hidden
-      // — checkbox was ticked). The .cc-b-delicon look + the hidden checkbox live in docker.css.
+      // The uninstall becomes a trash icon with a CC confirmation, like the container remove,
+      // without Unraid's confirm checkbox. The native onclick runs "plugin remove <file>" through
+      // openInstall(); it is detached and gated behind ccPluginConfirm, and the button is enabled,
+      // since Unraid keeps it disabled until the hidden checkbox is ticked. The .cc-b-delicon
+      // look and the hidden checkbox live in docker.css.
       var native = isRemove ? (rm.getAttribute("onclick") || "") : "";
       if (native) {
         rm.removeAttribute("onclick");
@@ -645,8 +547,7 @@
         if (cb) cb.classList.add("cc-cb-hidden");
       }
     }
-    // col 2: description in its own column — NOT click-expandable any more; a
-    // fixed window whose content scrolls UP while hovered (Docker-volumes style)
+    // Column 2: the description in a fixed, scrollable window instead of dynamix's click-to-expand.
     var desc = tds[1].querySelector(".desc_readmore, .cc-desc");
     if (desc && !desc.getAttribute(MARK)) {
       desc.setAttribute(MARK, "1");
@@ -657,25 +558,23 @@
       desc.appendChild(inn);
       var sib = desc.nextElementSibling; // the chevron the readmore lib left behind
       if (sib && /readmore|toggle/i.test(sib.className || "")) sib.style.setProperty("display", "none", "important");
-      // manually scrollable window (the auto-marquee scrolled unevenly)
     }
     if (desc) {
       desc.style.setProperty("color", "#9a9a9a", "important"); desc.style.setProperty("font-size", "12px", "important");
-      // inline, EVERY pass: the readmore lib left inline heights on some rows,
-      // which killed the scroll window there
+      // inline on every pass, because the readmore lib leaves inline heights on some rows
       desc.style.setProperty("display", "block", "important");
       desc.style.setProperty("height", "auto", "important");
       desc.style.setProperty("max-height", "5em", "important");
       desc.style.setProperty("overflow-y", "auto", "important");
-      // IDENTICAL geometry in every row, so the scrollbars line up exactly
+      // the same geometry in every row, so the scrollbars line up
       desc.style.setProperty("width", "100%", "important");
       desc.style.setProperty("box-sizing", "border-box", "important");
       desc.style.setProperty("margin", "0", "important");
     }
   }
 
-  // (4) colour the page tab buttons: colorFor() gives the accent normally and a
-  // rotated palette colour in rainbow mode, so the active tab follows the theme.
+  // Colours the page tab buttons: colorFor() gives the accent, or a rotated palette colour in
+  // rainbow mode, so the active tab follows the theme.
   function colorTabs() {
     try {
       Array.prototype.slice.call(document.querySelectorAll("nav.tabs .tabs-container > button[role=tab]")).forEach(function (t, i) {
@@ -689,13 +588,11 @@
       });
     } catch (e) {}
   }
-  // ── Tab-Ansicht: flatten the native Plugins sub-tabs into stacked CC sections. In Unraid's Tabbed
-  // display mode the Plugins page renders the SAME MainContentTabbed DOM as /Shares/Share and /Main —
-  // nav.tabs > button[role=tab] paired by DOM INDEX with sibling section[role=tabpanel] inside
-  // #displaybox — so this mirrors shares.js/cardPanels(): prepend a .cc-card-head (cloned from each
-  // now-hidden tab button) to every panel. The CSS (docker.css, gated html.cc-on-plugins.cc-sections-plugins)
-  // reveals every panel and hides the tab BUTTONS only (the Check/Update/Remove span.status buttons stay).
-  // Idempotent via data-cc-card; the Plugins panels have no clone-settings split, so no .cc-main-col here.
+  // Section view. In Unraid's tabbed display mode the Plugins page renders the same
+  // MainContentTabbed markup as /Shares/Share and /Main (nav.tabs > button[role=tab] paired by
+  // index with sibling section[role=tabpanel]), so like shares.js cardPanels() this prepends a
+  // .cc-card-head cloned from each hidden tab button to its panel. docker.css, gated on
+  // html.cc-on-plugins.cc-sections-plugins, shows every panel and hides only the tab buttons.
   function cardPanels(box) {
     var tablist = box.querySelector('nav.tabs, [role="tablist"]');
     var tabBtns = tablist ? tablist.querySelectorAll('button[role="tab"]') : [];
@@ -724,23 +621,9 @@
       for (var m = 0; m < marked.length; m++) marked[m].removeAttribute("data-cc-card");
     } catch (e) {}
   }
-  // ── Check/Update/Remove relocation. Plugins.page appends the three <span class='status vhshift'>
-  // controls INTO the scrollable flex .tabs-container ($('.tabs-container').append), and the plugin
-  // manager's Update.css adds span.vhshift{margin-top:13px!important} — a vertical shift tuned to the
-  // TALL native tabs. Against CC's 30px pills the button rode 13px BELOW the row (overflowing the
-  // strip -> stray scrollbar), and once the strip overflowed horizontally the margin-left:auto span
-  // lived in the scrolled-out right region. Deterministic cure: move the spans OUT of the scroll flow
-  // into #cc-plugbtns, a flex SIBLING of .tabs-container inside nav.tabs (.tabs is display:flex;
-  // align-items:center) — the tabs scroll in their own shrinkable strip (overflow-x:auto => min-width:0)
-  // while the buttons stay pinned on the row at ANY width. Mirrors shares.js ccDiskioMove. Idempotent
-  // (parent check); native .show()/.hide() + inline onclick are id-bound and survive the move; reverts
-  // on reload when the area is disabled (paint() gates before calling this).
-  // pick the RIGHT nav strip: the page can hold MORE THAN ONE nav.tabs (hidden templates /
-  // (pin loop lives at the TOP of the file — v2.31.5; relocateChecks below is its stub)
-  function relocateChecks() { plugPinTick(); }   // paint()'s call site drives the SAME mechanism — no second path to diverge
   function paint() {
     try {
-      if (localStorage.getItem("cc.theming") === "0" || localStorage.getItem("cc.enable.plugins") === "0") return; // master theming off OR area disabled: don't paint (reverts on reload)
+      if (localStorage.getItem("cc.theming") === "0" || localStorage.getItem("cc.enable.plugins") === "0") return; // theming or the area is off; a reload reverts
       var tbs = document.querySelectorAll("#plugin_table, table.tablesorter");
       if (!tbs.length) return;
       Array.prototype.slice.call(tbs).forEach(function (t5) { t5.classList.add(t5.querySelector("#plugin_list") ? "cc-plug" : "cc-plug-lite"); });
@@ -755,28 +638,27 @@
       var rows = document.querySelectorAll("#plugin_list > tr");
       plugWantNames = [];
       Array.prototype.slice.call(rows).forEach(function (tr, i) { try { paintRow(tr, i); } catch (e) {} });
-      // ONE batched lookup for the whole table, not one call per row.
+      // one batched lookup for the whole table
       try { if (window.CCTheme && window.CCTheme.icons && plugWantNames.length) window.CCTheme.icons.want(plugWantNames); } catch (e) {}
-      // the page TABS are styled by pure CSS (input:checked + label in docker.css)
-      // — the accent lives in :root vars so the CSS follows the configured colour
+      // the page tabs are styled by CSS (input:checked + label in docker.css), which reads the
+      // accent from these :root vars
       document.documentElement.style.setProperty("--cc-accent", accent());
       document.documentElement.style.setProperty("--cc-accent-text", idealText(accent()));
       // logo-background badge: scope the docker.css .cc-plugico box on/off from the
       // adopt-aware key (honours "Adopt Docker style" via eff()), same as the Docker tab
       document.documentElement.classList.toggle("cc-plugins-iconbg", eff("iconbg") === "1");
-      // #13: in rainbow/flag mode the logo tile adopts the row palette (docker.css gates the tile rule on this)
+      // in rainbow and flag mode the logo tile takes the row palette (docker.css gates the tile rule on this)
       document.documentElement.classList.toggle("cc-plugins-rainbow", ls("cc.rainbow") === "1");
       // reactive rainbow: rows rest grey and colour on hover (docker.css hover rules gated here)
       document.documentElement.classList.toggle("cc-shares-rbneutral", reactive());
-      // the box's OWN colour (plugBgColor(), new cc.iconbgcolor key with a fallback chain to
-      // the legacy cc.iconcolor and then the accent) — independent of whether Einfärben is on,
-      // exactly like the badge itself is independent of it.
+      // the box's own colour (cc.iconbgcolor, then cc.iconcolor, then the accent), whether or not
+      // the tint is on
       var pIbgAcc = plugBgColor();
       if (eff("iconbg") === "1" && pIbgAcc) document.documentElement.style.setProperty("--cc-iconbg-color", pIbgAcc);
       else document.documentElement.style.removeProperty("--cc-iconbg-color");
-      // Tab-Ansicht (cc.sections.plugins, default OFF = native sub-tabs): opt in to stacked CC sections.
-      // cc-on-plugins marks the page; the CSS flatten block (docker.css) is gated
-      // html.cc-on-plugins.cc-sections-plugins. Only flattens where nav.tabs sections exist (else no-op).
+      // Section view (cc.sections.plugins, off by default): cc-on-plugins marks the page and
+      // docker.css gates the flatten block on html.cc-on-plugins.cc-sections-plugins. Pages
+      // without nav.tabs sections are left as they are.
       document.documentElement.classList.add("cc-on-plugins");
       var secOn = localStorage.getItem("cc.sections.plugins") === "1";
       document.documentElement.classList.toggle("cc-sections-plugins", secOn);
@@ -800,7 +682,7 @@
         var fc = fm.querySelector("input[type=checkbox]");
         if (fc && !fc.getAttribute(MARK)) { fc.setAttribute(MARK, "1"); fc.style.setProperty("accent-color", accent(), "important"); }
       });
-      // every OTHER table on the composite page (install errors / stale tab)
+      // every other table on the composite page (install errors / stale tab)
       Array.prototype.slice.call(document.querySelectorAll("table.tablesorter")).forEach(function (t4) { if (t4.id !== "plugin_table") t4.classList.add("cc-plug-lite"); });
       // lite tables (install errors / stale): ERROR pill + red action link
       Array.prototype.slice.call(document.querySelectorAll("table.cc-plug-lite tbody tr")).forEach(function (tr5) {
@@ -809,17 +691,13 @@
         var ac5 = tr5.querySelector("a, input[type=button]");
         if (ac5 && !ac5.getAttribute(MARK)) { ac5.setAttribute(MARK, "1"); pill(ac5, "#d9433f", "#fff"); ac5.style.setProperty("cursor", "pointer", "important"); }
       });
-      relocateChecks();
+      plugPinTick();
       // the Check/Update/Remove buttons in the tab bar become accent pills
       Array.prototype.slice.call(document.querySelectorAll("#checkall input, #updateall input, #removeall input")).forEach(function (b2, i2) {
         if (!b2.getAttribute(MARK)) {
           pill(b2, colorFor(i2 + 6));
-          // EXACT same box as the tab pills: fixed height + centered (pill()'s
-          // line-height:1.5 had made these ~4px taller than the tabs).
-          // #6: the md tier, like the pills, the wrapper and the section badge. This line once held a bare
-          // "26px" beside md padding and md font-size on the next two lines — a squashed md, and the reason
-          // the badges read "zu klein". An INLINE !important outranks every sheet, so this write is the one
-          // that decides: it must never carry a literal the token table does not know.
+          // The md size of the tab pills, with the height fixed and the text centred. An inline
+          // !important outranks every sheet, so the values come from the tokens.
           b2.style.setProperty("height", "var(--cc-md-h, 30px)", "important");
           b2.style.setProperty("padding", "var(--cc-md-pad, 0 20px)", "important");
           b2.style.setProperty("line-height", "1", "important");
@@ -835,8 +713,8 @@
     } catch (e) {}
   }
 
-  // adopt the engine-mirrored cc.* settings first, so accent/rainbow match the
-  // other tabs on EVERY origin, then paint and follow the ajax rewrites
+  // Adopts the cc.* settings mirrored in the engine, so the accent and rainbow match the other
+  // tabs on every origin.
   function adopt(done) {
     fetch(PROXY + "?path=config", { headers: { Accept: "application/json" } })
       .then(function (r) { return r.ok ? r.json() : null; })
@@ -848,19 +726,18 @@
   }
 
   function boot() {
-    try { window.ccPluginsApply = paint; } catch (e) {} // let the CC Settings page live-update the Tab-Ansicht toggle (parity with ccSharesApply)
+    try { window.ccPluginsApply = paint; } catch (e) {} // lets the CC Settings page repaint this tab live, like ccSharesApply
     if (localStorage.getItem("cc.enable.plugins") === "0" || localStorage.getItem("cc.theming") === "0") return; // area disabled, or master theming off
-    // PAINT FIRST from the mirrored cc.* localStorage — do NOT gate the first coat on the /api/config
-    // round-trip (the old order left /Plugins native until the fetch resolved). adopt() below only
-    // RE-paints if it actually pulled a changed setting.
+    // Paint from the mirrored cc.* localStorage first rather than waiting for /api/config;
+    // adopt() below paints again once the settings are in.
     paint();
     // Icon pipeline: repaint once an engine lookup or a complexity measurement lands. Fires
     // only on a real change (cc-theme.js), so it settles instead of looping.
     try { if (window.CCTheme && window.CCTheme.icons) window.CCTheme.icons.onResolved(function () { try { paint(); } catch (e) {} }); } catch (e) {}
     var host = document.getElementById("displaybox") || document.body; // whole page: tab switches + ajax rewrites
-    // LEADING-EDGE + coalesce (was a 250ms trailing debounce = the visible render lag): paint in the SAME
-    // frame the DOM changes. childList/subtree only — drop characterData so a per-second status-text tick
-    // can't force a full re-skin. Disconnect during our own paint so it can't self-trigger.
+    // Paint in the same frame the DOM changes and coalesce bursts. childList and subtree only, so
+    // a per-second status text tick cannot force a full re-skin, and the observer is disconnected
+    // during our own paint so it cannot trigger itself.
     var pObs = null, pBusy = false, pTrail = false, pT = null;
     function pSweep() {
       pBusy = true; pTrail = false;
@@ -873,11 +750,9 @@
     pObs.observe(host, { childList: true, subtree: true });
     document.addEventListener("change", function () { setTimeout(paint, 50); }); // tab switches repaint the pills
     [600, 1500, 3500].forEach(function (ms) { setTimeout(paint, ms); });          // late-render safety net (idempotent)
-    adopt(function () { paint(); });   // hydrate mirrored settings, re-paint only if something changed
-    // the CC Settings page writes cc.*/ccp.* keys from another origin/tab -> repaint live, so an
-    // accent / adopt-toggle change is reflected without a manual reload. Exclude cc.stateCache (the
-    // Docker tab rewrites it every 9s; matching it would repaint the plugins table on every poll —
-    // every other cc-key consumer excludes it too). paint() self-gates on theming + area-enable.
+    adopt(function () { paint(); });   // paint again with the mirrored settings
+    // The CC Settings page writes cc.* and ccp.* keys from another tab, so repaint live.
+    // cc.stateCache is skipped because the Docker tab rewrites it every 9s.
     try { window.addEventListener("storage", function (e) { if (e && e.key && e.key !== "cc.stateCache" && /^cc[a-z]*\./.test(e.key)) paint(); }); } catch (e) {}
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();

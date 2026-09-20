@@ -1,25 +1,22 @@
-/* CannonadeCommand — GLOBAL Carbon restyle for the Tools SUB-pages (#14) and the docker/plugin
- * EXECUTION-OUTPUT / install-log pages (#1). Auto-<link>-injected on EVERY page via the Tools .page
- * hook, but EVERY rule is scoped to html.cc-tools-on, which header.js stamps ONLY when:
- *   - location.pathname starts with /Tools/  (System Information, System Devices, Diagnostics, …), OR
- *   - location.pathname is a native /Settings/<x> sub-page (NOT our own CannonadeCommand page) — e.g.
- *     the un-hidden Display Settings page after the Anzeige-Rework, OR
- *   - #displaybox contains a native <fieldset><legend> (the "Container hinzufügen" install log).
- * Absent everywhere else => ZERO effect. First-pass broad restyle; refined tool-by-tool afterwards
- * (user: "wenn du es gemacht hast gehen wir Werkzeug für Werkzeug durch und bugfixen").
+/* CannonadeCommand: the Tools sub-pages, the native Settings sub-pages and the Docker and plugin
+ * install log pages. Injected on every page through the Tools .page hook, but every rule is scoped
+ * to html.cc-tools-on, which header.js sets only when
+ *   - the path starts with /Tools/ (System Information, System Devices, Diagnostics, ...),
+ *   - the path is a native /Settings/<x> sub-page other than CC's own, or
+ *   - #displaybox holds a native <fieldset><legend> (the "Container hinzufügen" install log).
  *
- * House laws: Carbon dark surface (#161616/#1c1c1c), NO borders/rings anywhere, focus = brightness
- * only, accent from --cc-accent (fallback #2f6feb), content indented to the menu bar (--cc-align-left). */
+ * Carbon dark surfaces (#161616/#1c1c1c), no borders or rings, focus shown as brightness, the
+ * accent from --cc-accent (fallback #2f6feb), content indented to the menu bar (--cc-align-left). */
 
 html.cc-tools-on { --cc-tl-surface: #1c1c1c; --cc-tl-surface2: #232323; }
 
 /* content column lines up with the menu bar, like every other CC area */
 html.cc-tools-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 15px); }
-/* #4 (user): in BOXED display width, left-align the centred content to the full-width menu bar (header.js
-   measureAlign sets --cc-box-shift = the menu's absolute left; overrides the auto-centring margin). */
+/* In boxed display width the centred content moves left to line up with the full-width menu bar
+   (header.js measureAlign sets --cc-box-shift to the menu's left edge). */
 html.cc-tools-on.Theme--width-boxed:not(.Theme--sidebar) #displaybox { margin-left: var(--cc-box-shift, 0) !important; margin-right: 0 !important; }
 
-/* ── FIELDSETS -> borderless dark cards; the <legend> becomes an accent badge ── */
+/* fieldsets as borderless dark cards; the <legend> becomes an accent badge */
 html.cc-tools-on #displaybox fieldset {
   background: var(--cc-tl-surface, #1c1c1c) !important;
   border: none !important; outline: none !important;
@@ -37,7 +34,7 @@ html.cc-tools-on #displaybox legend {
   display: inline-flex; align-items: center; margin: 0 0 12px !important;
 }
 
-/* ── PRE / code + log output -> dark block, soft-wrapped, no border ── */
+/* pre, code and log output as a dark, soft-wrapped block */
 html.cc-tools-on #displaybox pre,
 html.cc-tools-on #displaybox pre.text,
 html.cc-tools-on #displaybox textarea.wide {
@@ -47,7 +44,7 @@ html.cc-tools-on #displaybox textarea.wide {
   white-space: pre-wrap; word-break: break-word;
 }
 
-/* ── native TABLES on tools pages -> dark, borderless, comfy rows ── */
+/* native tables: dark, borderless, comfortable rows */
 html.cc-tools-on #displaybox table:not(.cc-enh) { background: transparent !important; border: none !important; }
 html.cc-tools-on #displaybox table:not(.cc-enh) th,
 html.cc-tools-on #displaybox table:not(.cc-enh) td {
@@ -56,10 +53,10 @@ html.cc-tools-on #displaybox table:not(.cc-enh) td {
 }
 html.cc-tools-on #displaybox table:not(.cc-enh) thead th { color: #9a9a9a; text-transform: uppercase; font-size: 11.5px; letter-spacing: .6px; }
 html.cc-tools-on #displaybox table:not(.cc-enh) tr:hover td { background: rgba(255, 255, 255, .03) !important; }
-/* #(user: "die Listen in den Disk-Subtabs (Attribute/Selbsttest/Identität) MAXIMAL clean"): drop the grey 2nd-row
-   zebra AND the line under the column-title row; each row instead reveals its OWN rotated palette colour on HOVER in
-   rainbow mode (--cc-rb-c per row, stamped by header.js ccPaintRotate), accent otherwise. Any value badge is
-   flattened to plain text so nothing but the hover carries colour. */
+/* The disk sub-tab lists (Attributes, Self-Test, Identity) have no zebra and no line under the
+   header row. Each row shows its own palette colour on hover in rainbow mode (--cc-rb-c per row
+   from header.js ccPaintRotate), the accent otherwise, and value badges are flattened to plain
+   text so only the hover carries colour. */
 html.cc-diskpage #displaybox table.unraid tbody tr,
 html.cc-diskpage #displaybox table.unraid tbody tr > td { background: transparent !important; }
 html.cc-diskpage #displaybox table.unraid thead tr,
@@ -71,22 +68,17 @@ html.cc-diskpage #displaybox table.unraid tbody tr:hover > td {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
 }
-/* #(user: "die listentitelzeile und der button um zum nächsten gerät zu springen sind zu weit rechts"): the reka disk
-   page sets #displaybox to width:100% of the viewport but ALSO margin-left:15px, so the block overshoots the right edge
-   by 15px (horizontal scrollbar). Cap it flush to the viewport so the scrollbar disappears and a right gutter opens up. */
+/* The reka disk page sets #displaybox to the full viewport width plus margin-left:15px, which
+   overshoots the right edge by 15px and adds a horizontal scrollbar. */
 html.cc-diskpage #displaybox { max-width: calc(100% - 15px) !important; }
-/* #(user: "orientier dich an den statusinsel chips"): the CC status-island chips sit at a 16px viewport gutter
-   (clientW - 16). Line the disk-page right edge up with them. The prev/next (next-device) button group is
-   position:absolute; right:0 anchored to <body>, and its visible button stops ~12px inside the group box, so a right:4px
-   offset lands the button's edge on the island gutter (clientW - 16). */
+/* The disk page's right edge lines up with the status island chips at a 16px gutter. The
+   prev/next device button group is absolutely positioned at right:0 on <body> and its visible
+   button stops about 12px inside the group, so right:4px puts the button edge on the gutter. */
 html.cc-diskpage #displaybox nav.tabs .tabs-container > span { right: 4px !important; }
-/* #(user: "die Listentitelzeile schließt rechts nicht bündig mit den anderen elementen ab"): the table fills the content
-   box (clientW - 10 padding); inset it 6px more so its right edge also lands on the island gutter (clientW - 16), flush
-   with the next-device button above it. */
+/* The table fills the content box (10px padding); 6px more puts its right edge on the same 16px
+   gutter as the next-device button above it. */
 html.cc-diskpage #displaybox div.TableContainer { margin-right: 6px !important; }
-/* #(user: "kannst du die hoverbalken auch an die badgeform anpassen"): round the row-hover bar to the active badge
-   shape — the outer cells pick up --cc-b-radius (square 0 / rounded 6px / pill caps), so the highlight reads as a
-   bar in the same silhouette as the badges instead of a hard rectangle. */
+/* the row hover bar takes the badge shape through the outer cells' --cc-b-radius */
 html.cc-diskpage #displaybox table.unraid tbody tr:hover > td:first-child {
   border-top-left-radius: var(--cc-b-radius, 6px) !important;
   border-bottom-left-radius: var(--cc-b-radius, 6px) !important;
@@ -95,36 +87,26 @@ html.cc-diskpage #displaybox table.unraid tbody tr:hover > td:last-child {
   border-top-right-radius: var(--cc-b-radius, 6px) !important;
   border-bottom-right-radius: var(--cc-b-radius, 6px) !important;
 }
-/* #(user: "alle Subseiten des Boot-Devices in CC-Style, alles richtig ausrichten"): the Boot-Parameters tab uses
-   native .warning-box callouts that already carry an amber SHADE — the extra border line breaks the "nie
-   Rahmenlinien" law, so drop it and deepen the tint a touch to keep the callout readable. */
+/* The Boot Parameters .warning-box callouts already carry an amber shade, so the border goes and
+   the tint is a little deeper to keep them readable. */
 html.cc-tools-on #displaybox .warning-box { border: none !important; background: rgba(240, 173, 78, .12) !important; }
-/* The SMB tab's "copy settings" reka rows hold a fixed-width flex row (select + KOPIEREN button) that overshoots
-   the container at its label offset, stranding a horizontal scrollbar. Force the dd to fill only the available
-   space and let the flex row WRAP so the two-column form fits inside the viewport. */
-/* #(user: "die dropdown listen sind nicht ordentlich" + "die unteren beiden funktionieren nicht"): the SMB
-   copy-settings rows overshot the container ONLY because the cc-tsel single-select was ~240px wide. Shrinking it to
-   the narrow ui-dropdownchecklist's width (≈123px) makes the row fit on ONE line with its button — no flex-wrap and
-   no display/width hacks on the dd (those collapsed the dropdownchecklist's jQuery panel). The dropdownchecklist is
-   left completely untouched so it still opens. Both rows now read at one width. */
+/* The SMB copy-settings rows overshot the container because the cc-tsel single-select was about
+   240px wide. At the width of the ui-dropdownchecklist beside it (about 123px) the row fits on one
+   line with its button, without touching the dd, whose width hacks broke the dropdownchecklist's
+   jQuery panel. */
 html.cc-diskpage #displaybox dd > span.flex.flex-row > .cc-tsel { width: 124px !important; max-width: 124px !important; box-sizing: border-box !important; }
-/* #(user: "die oberen Dropdowns überlagern die Buttons daneben"): the trigger has a hard min-width:240px, so
-   inside the 124px wrapper (overflow:visible) it kept its 240px and slid RIGHT under+past the LESEN/KOPIEREN
-   button, its arrow poking out as a stray ▼. Clamp the trigger to the wrapper on these narrow rows only — the
-   wide Exportieren/Sicherheit selectors sit outside this dd>flex-row structure and keep their 240px. */
+/* The trigger's 240px min-width would slide it under the LESEN/KOPIEREN button inside the 124px
+   wrapper, so it is clamped on these narrow rows only; the wide Exportieren and Sicherheit
+   selectors sit outside this structure and keep 240px. */
 html.cc-diskpage #displaybox dd > span.flex.flex-row > .cc-tsel > .cc-tsel-trigger { min-width: 0 !important; width: 100% !important; max-width: 100% !important; }
-/* #(user: "den hellen Hintergrund in dem SMB-Subtab entfernen"): the native .shade boxes lift the SMB form onto a
-   lighter (#212121) surface — flatten them back to the page so the tab reads as one dark surface. */
+/* the native .shade boxes put the SMB form on a lighter #212121 surface; flatten them so the tab
+   reads as one dark surface */
 html.cc-diskpage #displaybox div.shade { background: transparent !important; }
-/* #(user: "ein Scrollbalken der gar nicht nötig ist — die Seite ist lang genug"): the reka tab panel was pinned to
-   a fixed height with an inner scrollbar. Let it grow to its content so the PAGE scrolls instead of an inner box. */
+/* the reka tab panel has a fixed height with an inner scrollbar; let it grow so the page scrolls */
 html.cc-diskpage #displaybox section.tab-content { height: auto !important; max-height: none !important; overflow: visible !important; }
 
-/* ══ Boot-Parameters reka editor (user: "die Abschnitt-Überschriften sollen Badges sein, die Toggles nicht im
-   CC-Style, im unteren Bereich viele Rahmenlinien") ══ */
-/* section headings h3.section-header (orange text + orange underline) -> CC badge that FOLLOWS the colour mode
-   (user: "alle Abschnittsbadges sind farblos"): the colour chain resolves to the reactive accent / rainbow /
-   static accent just like every other CC badge — NO grey neutral override (that made them colourless). */
+/* Boot Parameters reka editor: the h3.section-header headings (orange text, orange underline)
+   become badges that follow the colour mode like every other CC badge. */
 html.cc-diskpage #displaybox h3.section-header {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
@@ -135,58 +117,42 @@ html.cc-diskpage #displaybox h3.section-header {
 }
 /* the inner "Advanced" sub-badge stays readable as a dark inset chip on the accent badge */
 html.cc-diskpage #displaybox h3.section-header .section-badge { background: rgba(0, 0, 0, .22) !important; color: inherit !important; border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 2px 9px !important; font-size: 10px !important; }
-/* #(user: "alle Buttons und Badges in die Farbmodi übernehmen"): toggles + reka buttons must ROTATE with the
-   palette like every other CC control. ccPaintRotate stamps --cc-rb-c on .switch-button-background and on the
-   badges (added there); the reka buttons carry a HARD-CODED #2f6feb that ignored it -> point all three at the same
-   rotated chain, so on the page every button, badge and toggle reads its own palette slot (rainbow / reactive). */
+/* Toggles and reka buttons rotate through the palette like every other CC control. ccPaintRotate
+   stamps --cc-rb-c on .switch-button-background and the badges; the reka buttons' hard-coded
+   #2f6feb gives way to the same chain. */
 html.cc-diskpage #displaybox .main-content .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
 html.cc-diskpage #displaybox .main-content button:not(.switch-button-background),
 html.cc-diskpage #displaybox .main-content input[type="button"] { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important; border-color: transparent !important; }
-/* #(user: "die Buttons in der Menueansicht sind nicht in den Farbmodi"): the clickable .parameter-code chips (the
-   kernel arg each option inserts) stayed a flat grey rgba(0,0,0,.15) while every other button rotated. Give them
-   the same solid rotating fill (--cc-rb-c stamped per chip by ccPaintRotate) so they read as coloured chips too. */
+/* the clickable .parameter-code chips (the kernel argument each option inserts) get the same
+   rotating fill, stamped per chip by ccPaintRotate */
 html.cc-diskpage #displaybox .parameter-code {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
   border: none !important; border-radius: min(var(--cc-b-radius, 999px), 10px) !important; padding: 2px 8px !important;
 }
-/* the Raw-View / syslinux config boxes separate cards with grey border LINES -> drop them (nie Rahmenlinien);
-   spacing keeps the groups legible. */
+/* the Raw View and syslinux config boxes separate cards with grey border lines; spacing keeps the
+   groups apart without them */
 html.cc-diskpage #displaybox .main-content div,
 html.cc-diskpage #displaybox .main-content dl,
 html.cc-diskpage #displaybox .main-content section.section { border: none !important; box-shadow: none !important; }
 
-/* ── form rows (dl/dt/dd): #3 CORRECTION (user: "die Ausrichtung aller Texte und Felder ist zu weit links -> die
-   NATIVE Ausrichtung soll bleiben"). CC no longer re-lays-out the settings form: the native dynamix float layout
-   (right-aligned floated dt + block dd + native field widths) stands untouched. Only the label/value COLOURS are
-   nudged for readability on the dark surface, and a CC toggle inside a dd is vertically centred — NO horizontal
-   repositioning, NO width caps, NO grid. ── */
+/* Form rows keep the native dynamix float layout (right-aligned floated dt, block dd, native field
+   widths). Only the label and value colours change for the dark surface, and a CC toggle in a dd
+   is centred vertically. */
 html.cc-tools-on #displaybox dl > dt { color: var(--cc-text-chip, #cfcfcf); }
 html.cc-tools-on #displaybox dl > dd { color: #d6d6d6; }
 html.cc-tools-on #displaybox dl > dd > .cc-tgl,
 html.cc-tools-on #displaybox dl > dd .switch-button-background { vertical-align: middle; }
-/* #(user: "die native Ausrichtung und Platzierung beibehalten"): the disk DETAIL form keeps its NATIVE full-width
-   grid (label at the right of col 1, value at the left of col 2). The earlier break was ONLY the stray help-icon dts
-   (now folded into their labels by ccToolsEnhance on cc-diskpage) — NOT the width — so nothing here re-lays it out. */
-/* #15 (user: clicking Help did nothing visible): the native HelpButton toggles the inline_help blocks (which
-   CC normally hides in favour of the (i) bubbles). When the user DOES expand them, span the full grid width
-   and give them a readable CC note look so they aren't squeezed into a single grid column. */
+/* The native Help button shows the inline_help blocks CC otherwise replaces with (i) bubbles; shown,
+   they span the full grid width with a readable note look. */
 html.cc-tools-on #displaybox dl > blockquote.inline_help,
 html.cc-tools-on #displaybox dl > .inline-help { grid-column: 1 / -1; }
 html.cc-tools-on #displaybox blockquote.inline_help { background: #1c1c1c !important; border: none !important; border-radius: 8px !important; color: #b8b8b8 !important; padding: 8px 12px !important; margin: 2px 0 8px !important; font-size: 12.5px !important; }
-/* #11/#12 (user: Mover / TRIM subtabs "durcheinander") + #32 (user: Boot-Datenträger flyout on /Main —
-   "einige Texte... werden überlagert"): a stray <dt> (Mover/TRIM's carries only a help (i)-icon; the
-   Boot-Datenträger dl's are completely empty structural placeholders) breaks the dl's native 2-column grid
-   auto-flow. The fix used to live HERE as a blanket "dl:has(a stray dt anywhere) -> pin EVERY child to
-   grid-row:1" rule — correct for Mover/TRIM's single stray-dt row, but #32's dl has TWO separate label/value
-   rows each with their OWN stray dt, and :has()/adjacent-sibling matching doesn't care about display, so the
-   blanket rule matched the whole dl and flattened BOTH rows onto row 1, overlapping "Active GUID" directly on
-   top of "GUID Type". Moved to header.js ccToolsEnhance() instead: every stray <dt> (icon-carrying or fully
-   empty) is now display:none'd there, for ANY number of occurrences per dl, so the grid never sees them and
-   plain native auto-flow places every real row correctly on its own — no grid-row/-column overrides needed
-   here at all. */
+/* Stray <dt> elements (Mover and TRIM carry only a help icon, the boot device flyout on /Main has
+   empty ones) would break the dl grid's auto-flow. header.js ccToolsEnhance() hides every one of
+   them, so the native flow places each row and no grid placement is needed here. */
 
-/* ── INPUTS / SELECT / TEXTAREA -> dark fills, NO focus ring (focus = brightness) ── */
+/* inputs, selects and textareas: dark fills and no focus ring */
 html.cc-tools-on #displaybox input[type="text"],
 html.cc-tools-on #displaybox input[type="number"],
 html.cc-tools-on #displaybox input[type="password"],
@@ -201,14 +167,13 @@ html.cc-tools-on #displaybox input:focus,
 html.cc-tools-on #displaybox select:focus,
 html.cc-tools-on #displaybox textarea:focus { outline: none !important; box-shadow: none !important; background: rgba(255, 255, 255, .11) !important; }
 
-/* ── BUTTONS (incl. the install-log "VIEW CONTAINER LOG" / "FERTIG") -> accent, md tier, no ring ── */
+/* buttons, including the install log's "VIEW CONTAINER LOG" and "FERTIG": accent, md size, no ring */
 html.cc-tools-on #displaybox input[type="button"],
 html.cc-tools-on #displaybox input[type="submit"],
 html.cc-tools-on #displaybox button:not([role="tab"]),
 html.cc-tools-on #displaybox a.button {
-  /* #5 (user: "der Fertig-Button hat eine andere Farbe"): FORM action buttons (ANWENDEN/FERTIG/SPEICHERN)
-     read as ONE uniform action colour — the single rainbow/flag accent, else the base accent. NOT the
-     per-button --cc-rb-c rotation, which made Apply/Done/Save each a different colour. */
+  /* form actions (ANWENDEN, FERTIG, SPEICHERN) share one colour, the rainbow or flag accent or
+     else the base accent, rather than rotating per button */
   background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
   border: none !important; outline: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   height: var(--cc-md-h, 30px); padding: var(--cc-md-pad, 0 20px) !important;
@@ -223,11 +188,9 @@ html.cc-tools-on #displaybox input[type="button"]:focus-visible,
 html.cc-tools-on #displaybox button:focus-visible,
 html.cc-tools-on #displaybox a:focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
 
-/* #56 (user: "vieles ist noch nicht im GLS: toggles, buttons, Feld mit Rahmen" - Settings > Management
-   Access): that page's form (native name="SSLSettings") never sits inside #displaybox at all - proven
-   live (its <input class="switch"> ancestor chain runs straight to #joel-start-defaults, no #displaybox
-   in between) - so none of the #displaybox-scoped rules above ever reached it. Same treatment, mirrored
-   onto its own actual container instead of assuming every Settings sub-page shares one wrapper. */
+/* Settings > Management Access: the SSLSettings form does not sit inside #displaybox (its
+   ancestors run straight to #joel-start-defaults), so it gets the same treatment on its own
+   container. */
 html.cc-tools-on form[name="SSLSettings"] input[type="text"],
 html.cc-tools-on form[name="SSLSettings"] input[type="number"],
 html.cc-tools-on form[name="SSLSettings"] input[type="password"],
@@ -238,8 +201,8 @@ html.cc-tools-on form[name="SSLSettings"] select {
 }
 html.cc-tools-on form[name="SSLSettings"] input:focus,
 html.cc-tools-on form[name="SSLSettings"] select:focus { outline: none !important; box-shadow: none !important; background: rgba(255, 255, 255, .11) !important; }
-/* the toggle checkboxes themselves (TELNET/SSH/UPnP) live OUTSIDE the form entirely (live-verified:
-   input[name=-s].closest('form') is null) - #joel-start-defaults is their real, stable ancestor. */
+/* the TELNET, SSH and UPnP checkboxes sit outside the form; #joel-start-defaults is their stable
+   ancestor */
 html.cc-tools-on #joel-start-defaults input[type="checkbox"] {
   accent-color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); cursor: pointer;
 }
@@ -256,19 +219,11 @@ html.cc-tools-on form[name="SSLSettings"] input[type="submit"]:hover:not(:disabl
 html.cc-tools-on form[name="SSLSettings"] input[type="button"]:focus-visible,
 html.cc-tools-on form[name="SSLSettings"] input[type="submit"]:focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
 
-/* #56 follow-up (user: "Unraid API Settings" + "API Keys" subtabs — "Add item buttons nicht im GLS,
-   unterster Button 'Bist du sicher' auch nicht im GLS, unterste card mit Rahmen und falscher Farbe, toggle
-   nicht im GLS, Farben passen nicht"): these two subtabs (and "Unraid API Status") are not the classic
-   PHP form the rest of Verwaltungszugriff already got — Unraid ships EACH as its own Vue/Tailwind custom
-   element (confirmed live: <unraid-connect-settings> on Settings, a DIFFERENT <unraid-api-key-manager> on
-   API Keys — do not assume one tag name covers every subtab). All of them share class="unapi dark" though
-   (confirmed on both), so .unapi below is the one stable anchor across every current AND future subtab —
-   light DOM, no shadow root, so it IS reachable from a plain stylesheet, just built entirely from
-   shadcn/Tailwind utility classes instead of plain inputs. header.js (ccSyncApiTheme) remaps its
-   --primary/--ring/--accent CSS variables to the user's configured CC accent so every colour utility that
-   already reads those vars (the toggle's checked fill, focus rings, the built-in "Unraid.net" provider
-   pill) follows CC automatically; the rules below give the generic shadcn button/input/card recipes CC's
-   own shape (radius, height, weight) the same way every other native form in this file already gets it. */
+/* The Unraid API Settings, API Keys and API Status sub-tabs are Vue/Tailwind custom elements
+   (<unraid-connect-settings>, <unraid-api-key-manager>, ...) that all carry class="unapi dark" in
+   the light DOM, so .unapi is the stable anchor. header.js ccSyncApiTheme maps their --primary,
+   --ring and --accent variables to the CC accent; the rules below give the shadcn button, input and
+   card recipes CC's shape. */
 html.cc-tools-on .unapi [class*="border-input"][class*="bg-background"] {
   border-radius: var(--cc-b-radius, 8px) !important;
 }
@@ -276,12 +231,9 @@ html.cc-tools-on .unapi span[class*="cursor-pointer"][class*="border-input"],
 html.cc-tools-on .unapi span[class*="inline-flex"][class*="border-input"][class*="bg-background"] {
   background: var(--cc-tl-surface2, #232323) !important; border-color: transparent !important;
 }
-/* buttons: shadcn's "default"/"outline"/"secondary"/"destructive" variants all share this base recipe —
-   match on the invariant utility trio rather than a specific variant class, so a future Add/Remove/Save
-   button anywhere in the tree gets the same pill without needing its own selector. Height/padding pinned
-   to the SAME --cc-md-h/--cc-md-btnpad tokens the bottom action bar and card buttons use elsewhere (user:
-   "API Keys badge und button nicht in standardisierter Größe") — shadcn's own h-10/h-9/h-8 utilities vary
-   per component, which is exactly what read as "not standardised" next to CC's one consistent badge size. */
+/* shadcn's button variants share this utility set, so matching it catches every button in the
+   tree. Height and padding use --cc-md-h and --cc-md-btnpad, since shadcn's h-10/h-9/h-8 vary per
+   component. */
 html.cc-tools-on .unapi [class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="font-medium"] {
   height: auto !important; min-height: var(--cc-md-h, 30px) !important;
   padding: var(--cc-md-btnpad, 0 14px) !important; box-sizing: border-box !important;
@@ -295,27 +247,21 @@ html.cc-tools-on .unapi [class*="border-input"][class*="bg-background"][class*="
 html.cc-tools-on .unapi [class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="font-medium"]:hover {
   filter: brightness(1.14) !important;
 }
-/* destructive (Remove/Delete + the "Bist du sicher" confirm) keeps semantic red, same convention as the
-   Previous-Apps delete button in Tokens.css — a destructive action must not read like any other pill. */
+/* destructive buttons (Remove, Delete, the "Bist du sicher" confirm) keep semantic red, as the
+   Previous Apps delete button in Tokens.css does */
 html.cc-tools-on .unapi [class*="bg-destructive"] {
   background: var(--cc-err, #d9433f) !important; color: #fff !important; border-color: transparent !important;
 }
-/* #56 follow-up (user: "unterster Button 'Bist du sicher' auch nicht im GLS" — this is the Developer
-   Sandbox enable confirmation, a DIFFERENT native button recipe than the shadcn Button matched above: its
-   own background/border are both transparent, and the visible red/orange ring comes entirely from a
-   sibling `.from-unraid-red.to-orange` div absolutely-positioned 2px outside its edges - a gradient
-   BORDER implemented as a decorative layer rather than a real border property, so `border-color:
-   transparent` overrides alone could never touch it. GlimStone is shade, never a ring around an edge, so
-   the glow layer is hidden and the button gets the same solid semantic-red fill as every other
-   destructive control instead. */
+/* The Developer Sandbox confirm button is transparent, and its red and orange ring comes from a
+   sibling .from-unraid-red.to-orange layer placed 2px outside it. GlimStone uses shade, not rings,
+   so the layer is hidden and the button gets the solid red fill of the other destructive controls. */
 html.cc-tools-on .unapi span:has(> .from-unraid-red) {
   background: var(--cc-err, #d9433f) !important; border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
 }
 html.cc-tools-on .unapi span:has(> .from-unraid-red) > .from-unraid-red { display: none !important; }
 html.cc-tools-on .unapi span:has(> .from-unraid-red):hover { filter: brightness(1.1) !important; box-shadow: none !important; }
-/* cards / list rows (the OIDC provider list, the built-in Unraid.net pill's own row, rule cards) — CA and
-   the classic Settings pages never use a flat 1px grey border for a card edge (GlimStone: shade, not
-   lines), so replace the border with the same surface-tier shading used everywhere else in this file. */
+/* cards and list rows (OIDC providers, the Unraid.net row, rule cards): shade instead of a 1px grey
+   border */
 html.cc-tools-on .unapi [class*="rounded-lg"][class*="border"]:not([class*="bg-warning"]):not([class*="bg-destructive"]) {
   border-color: transparent !important; background: var(--cc-tl-surface, #1c1c1c) !important;
 }
@@ -323,19 +269,18 @@ html.cc-tools-on .unapi [class*="rounded-md"][class*="border"][class*="px-3"] {
   border-color: rgba(255, 255, 255, .14) !important;
 }
 
-/* #10 (user): the page heading BAR on Tools/Settings sub-pages -> a colour-mode badge like every other CC heading. */
+/* the page heading bar on Tools and Settings sub-pages as a colour-mode badge */
 html.cc-tools-on #displaybox div.title {
   display: inline-flex !important; align-items: center; gap: 8px; width: fit-content !important;
   background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 0 18px !important; margin: 4px 0 16px !important;
-  /* #10: the Tools/Settings sub-page TITLE badge = the same md tier (30px/13px) as every other section head. */
+  /* the same md size (30px/13px) as every other section head */
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase; letter-spacing: .6px;
   box-shadow: none !important; min-height: var(--cc-md-h, 30px) !important;
 }
-/* #7 (user: "Status als Zustandsdot RECHTS NEBEN dem Badge, ohne Text, wie bei den Disks"): when the heading carries
-   a status (the Docker settings page), the title ROW turns transparent and the BADGE wraps ONLY the name (.left);
-   the state dot then sits OUTSIDE the badge to its right, with the native "Status:" label hidden -> reads
-   "DOCKER  <dot>", exactly like a disk chip. Other tool pages (no status) keep the whole-title badge above. */
+/* When the heading carries a status (the Docker settings page) the title row goes transparent, the
+   badge wraps only the name (.left), and the state dot sits to its right with the "Status:" label
+   hidden, like a disk chip. Pages without a status keep the whole-title badge. */
 html.cc-tools-on #displaybox div.title:has(.cc-status-dot) {
   background: transparent !important; padding: 0 !important; gap: 10px;
 }
@@ -345,29 +290,27 @@ html.cc-tools-on #displaybox div.title:has(.cc-status-dot) > .left {
   border-radius: var(--cc-b-radius, 999px); padding: 0 18px; min-height: var(--cc-md-h, 30px);
 }
 html.cc-tools-on #displaybox div.title:has(.cc-status-dot) .status { font-size: 0 !important; }   /* hide the "Status:" label; the dot child keeps its own 12px box */
-/* #23 the CC info (i) icon that carries the native help text (rides the document-wide CC tip bubble) */
+/* the CC (i) icon carrying the native help text, shown through the page-wide CC tip bubble */
 html.cc-tools-on #displaybox .cc-toolsinfo {
   display: inline-flex; align-items: center; justify-content: center; margin-left: 7px;
   width: 15px; height: 15px; border-radius: 50%; font-size: 13px; line-height: 0;
   color: #9a9a9a; cursor: help; opacity: .85;
-  /* #9 (user: the (i) sits too low): vertical-align:middle centres on the x-height, which reads low next to
-     the cap-height label — pin to text-bottom + a small upward nudge so the glyph sits on the text mid-line. */
+  /* vertical-align: middle centres on the x-height, which reads low next to the cap-height label,
+     so it sits on text-bottom and is nudged up */
   vertical-align: text-bottom; position: relative; top: -1px;
 }
 html.cc-tools-on #displaybox .cc-toolsinfo:hover { color: var(--cc-accent, #2f6feb); opacity: 1; }
-/* #7 (user: "Zustandsdot, wie bei den Disks, ohne Text"): a clean state DOT. COLOUR = the LIVE state (green running
-   / red stopped, stored inline as --cc-dotstate) like a disk chip, independent of the accent; SHAPE follows the
-   badge-shape setting (--cc-dot-r). The native pill padding (0 5px -> 22px wide) is stripped so it reads as a dot. */
+/* The state dot: its colour is the live state (green running, red stopped, inline as
+   --cc-dotstate) like a disk chip, and its shape follows the badge shape (--cc-dot-r). The native
+   pill padding is removed so it reads as a dot. */
 html.cc-tools-on #displaybox div.title .cc-status-dot {
   display: inline-block; width: 12px; height: 12px; border-radius: var(--cc-dot-r, 50%);
   margin: 0 !important; padding: 0 !important; vertical-align: middle; box-shadow: 0 0 0 2px rgba(0, 0, 0, .25);
   background: var(--cc-dotstate, #8d8d8d) !important;
 }
-/* #24 a CC toggle standing in for a yes/no <select> (the real select stays hidden as the form value) */
-/* #8 (user: the toggles must follow the CC Badge-Form): the track + knob read the global shape vars
-   (--cc-b-radius for the track, --cc-dot-r for the knob), so pill/rounded/square/circle all carry through.
-   header.js sets both vars unconditionally on every page. min() caps the pill track so it stays a rounded
-   bar, not a full oval. */
+/* A CC toggle standing in for a yes/no <select>, which stays hidden as the form value. Track and
+   knob follow the badge shape through --cc-b-radius and --cc-dot-r, which header.js sets on every
+   page; min() keeps the pill track a rounded bar rather than an oval. */
 html.cc-tools-on #displaybox .cc-tgl {
   display: inline-flex; flex: 0 0 auto; width: 44px; height: 24px; border-radius: min(var(--cc-b-radius, 999px), 12px); background: var(--cc-toggle-track-off, #3a3a3a);
   position: relative; cursor: pointer; vertical-align: middle; transition: background .15s; box-sizing: border-box;
@@ -375,18 +318,16 @@ html.cc-tools-on #displaybox .cc-tgl {
 html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); }
 html.cc-tools-on #displaybox .cc-tgl .cc-tgl-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: var(--cc-dot-r, 50%); background: #fff; transition: left .15s; }
 html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on .cc-tgl-knob { left: 23px; }
-/* #8 (user): native switch tracks (e.g. Docker aktivieren) on tools/settings pages -> CC pill shape that
-   follows the colour mode (rotated per toggle via --cc-rb-c). */
+/* native switch tracks (Docker aktivieren, for one) take the CC shape and rotate through the
+   colour mode via --cc-rb-c */
 html.cc-tools-on #displaybox .switch-button-background {
   border: none !important; box-shadow: none !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important; background: var(--cc-toggle-track-off, #3a3a3a) !important;
 }
 html.cc-tools-on #displaybox .switch-button-background .switch-button-button { border-radius: var(--cc-dot-r, 50%) !important; }
 html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
-/* #(user: "die ganzen Toggles im Boot Parameters sind nicht im CC-Style"): the reka boot editor renders the
-   native switch at a tiny 25x11 "switch narrow" INLINE size, so it stayed a mini native toggle while every other
-   CC toggle is a full 44x24 pill (the .advancedview rule below already does this for the disk detail form). Force
-   the same CC geometry on every disk-page toggle — track, knob and checked-position; the inline width/height/left
-   the reka component stamps need !important to beat. */
+/* The reka boot editor renders the native switch at a narrow inline 25x11, so every disk-page
+   toggle gets the full 44x24 CC geometry for track, knob and checked position, as the .advancedview
+   rule below does for the disk detail form; !important beats the inline sizes. */
 html.cc-diskpage #displaybox .switch-button-background {
   width: 44px !important; height: 24px !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important;
 }
@@ -395,10 +336,9 @@ html.cc-diskpage #displaybox .switch-button-background .switch-button-button {
 }
 html.cc-diskpage #displaybox .switch-button-background.checked .switch-button-button { left: 23px !important; }
 
-/* #(b) (user: "der Ansicht-Toggle ist nicht im CC-Style + soll rechts oben in die Ecke"): pin the Basic/Advanced
-   VIEW switch to the top-right corner of the content and grow its tiny native track (25x11) to the full CC pill
-   size. The knob's native inline `left` is beaten by an !important rule keyed off the .checked state, so it snaps
-   to the pill's ends instead of the native 25px geometry. */
+/* The Basic/Advanced view switch sits in the top-right corner of the content with a full-size CC
+   track. The knob's inline left is beaten by an !important rule keyed on .checked, so it snaps to
+   the pill's ends. */
 html.cc-tools-on #displaybox .content { position: relative; }
 html.cc-tools-on #displaybox dl:has(.advancedview) {
   position: absolute; top: 0; right: 0; z-index: 6; margin: 0 !important; width: auto !important; max-width: none !important;
@@ -406,9 +346,7 @@ html.cc-tools-on #displaybox dl:has(.advancedview) {
 }
 html.cc-tools-on #displaybox dl:has(.advancedview) > dt { display: none !important; }
 html.cc-tools-on #displaybox dl:has(.advancedview) > dd { width: auto !important; margin: 0 !important; float: none !important; display: flex; align-items: center; gap: 8px; }
-/* #(user: "der Text ist nicht vertikal zentriert"): the on/off labels are floated block boxes that top-align with
-   the 24px toggle, so a 16px label sat ~5px above the toggle's centre. Give the label the toggle's 24px line-box so
-   its text centres against the pill. */
+/* the floated on/off labels get the toggle's 24px line box so their text centres against the pill */
 html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-label { color: var(--cc-text-chip, #cfcfcf); font-weight: 600; line-height: 24px; height: 24px; }
 html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-background {
   width: 44px !important; height: 24px !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important; flex: 0 0 auto;
@@ -422,20 +360,14 @@ html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-background.che
 html.cc-tools-on #displaybox a:not(.button) { color: var(--cc-accent, #2f6feb); text-decoration: none; }
 html.cc-tools-on #displaybox a:not(.button):hover { filter: brightness(1.14); text-decoration: none; }
 
-/* #7 (user: "die Dropdownlisten sind nicht im CC-Style"): the CC overlay dropdown (header.js ccToolsWrapSelect)
-   — chips in a floating elevated panel, accent selected + hover. Ported from the docker cc-dsel look. The
-   panel is re-anchored position:fixed at open time by ccPositionTsel, so it escapes the page's overflow clip.
-   #74 (user, re: the Display-Settings Sprache dropdown: "die dropdownliste ... in die farb und form engine
-   aufnehmen"): ccToolsWrapSelect() runs on EVERY native <select> site-wide (originally built for the Tools
-   page, later reused generically), but this styling was gated ONLY behind html.cc-tools-on — so any select
-   on a page outside the Tools area (Display Settings' own locale dropdown included) got the .cc-tsel DOM
-   structure with none of its theming, rendering unstyled. Added html.cc-popups-on (the GLOBAL "theming is
-   on" gate, true whenever CC theming is enabled regardless of which specific area toggle) as a second
-   qualifying condition, so any select anywhere themes correctly, not just ones on Tools pages. */
+/* The CC overlay dropdown (header.js ccToolsWrapSelect): chips in a floating elevated panel,
+   accent when selected and on hover. ccPositionTsel makes the panel position:fixed when it opens,
+   so it escapes the page's overflow clip. ccToolsWrapSelect wraps every native <select> on every
+   page, so the rules also apply under html.cc-popups-on, which is set whenever CC theming is on. */
 html.cc-tools-on #displaybox .cc-tsel,
 html.cc-popups-on #displaybox .cc-tsel { position: relative; display: inline-block; vertical-align: middle; }
-/* #1 (user CORRECTION): the OPEN button (trigger) is only REACTIVE — neutral at rest, it takes the colour
-   mode ONLY on hover (not permanently filled). The coloured list items live in the panel below. */
+/* the trigger rests neutral and takes the colour mode only on hover; the coloured items live in
+   the panel */
 html.cc-tools-on #displaybox .cc-tsel-trigger,
 html.cc-popups-on #displaybox .cc-tsel-trigger {
   display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
@@ -443,13 +375,9 @@ html.cc-popups-on #displaybox .cc-tsel-trigger {
   background: var(--cc-tl-surface2, #232323); border-radius: min(var(--cc-b-radius, 8px), 12px);
   padding: 4px 12px; color: #eaeaea; cursor: pointer; transition: background .12s, color .12s;
 }
-/* #(user: "nicht alle dropdonlisten sind vollends in glimstone") — the DASHBOARD tiles. The 240px min-width
-   above is right for a settings FORM, where the dropdown owns the value column of a dl grid. The Dashboard's
-   four (CPU timescale, network interface/view/timescale) are INLINE controls in a tile header, and the native
-   ones they replace are 38-119px wide: forcing 240px made a "1 m" picker six times wider than what it stood
-   in for and, on a narrower viewport than the one it was first measured on, pushes the header past its own
-   cell. Size to content here, with a floor that keeps the trigger a comfortable target. Scoped exactly like
-   the cc-diskpage width override further up this file — same problem, same shape of answer. */
+/* The Dashboard tiles' four dropdowns (CPU timescale, network interface, view and timescale) are
+   inline controls in a tile header, where the native selects are 38-119px wide. 240px would push
+   the header past its cell, so they size to content with a floor that keeps a comfortable target. */
 html.cc-popups-on #displaybox table.dashboard .cc-tsel-trigger {
   min-width: 76px; width: max-content; max-width: 100%;
 }
@@ -478,8 +406,8 @@ html.cc-tools-on #displaybox .cc-tsel.cc-tsel-disabled .cc-tsel-trigger,
 html.cc-popups-on #displaybox .cc-tsel.cc-tsel-disabled .cc-tsel-trigger { opacity: .5; cursor: not-allowed; }
 html.cc-tools-on #displaybox .cc-tsel-group,
 html.cc-popups-on #displaybox .cc-tsel-group { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9a9a9a; padding: 4px 12px 0; }
-/* #1 (user): each list item takes a DIFFERENT palette colour in rainbow mode (per-item --cc-rb-c stamped by
-   ccPaintRotate on each panel); hover/selected just brighten. Accent mode -> the single accent colour. */
+/* in rainbow mode each item takes its own palette colour (--cc-rb-c per item from ccPaintRotate)
+   and hover or selection brightens it; accent mode uses the single accent */
 html.cc-tools-on #displaybox .cc-tsel-opt,
 html.cc-popups-on #displaybox .cc-tsel-opt {
   display: flex; align-items: center; gap: 8px; justify-content: flex-start;
@@ -494,12 +422,9 @@ html.cc-popups-on #displaybox .cc-tsel-opt:hover,
 html.cc-popups-on #displaybox .cc-tsel-opt.is-selected { filter: brightness(1.18); box-shadow: none !important; }
 html.cc-tools-on #displaybox .cc-tsel-opt.is-disabled,
 html.cc-popups-on #displaybox .cc-tsel-opt.is-disabled { opacity: .45; cursor: not-allowed; }
-/* #77/#83 (user: "die nicht installierten sprachen haben einen button mit rahmenlinie. das darf
-   nicht sein. entspricht nicht dem GLS"): a border was the wrong tool — GLS never uses border lines,
-   only background shade differences. Distinct from a real, selectable option via a DIMMER fill
-   instead (no rainbow stamping either, since these carry no data-i so ccPaintRotate/ccToolsSyncSel
-   never touch them) — the trailing download glyph is what actually signals "this installs
-   something", the shade is just a secondary/lower-emphasis cue. */
+/* Languages that are not installed yet get a dimmer fill rather than a border. They carry no
+   data-i, so ccPaintRotate and ccToolsSyncSel skip them; the trailing download glyph says that
+   choosing one installs something. */
 html.cc-popups-on #displaybox .cc-tsel-opt-avail {
   background: var(--cc-surface-1, rgba(255, 255, 255, .04)) !important;
   color: var(--cc-text-dim, #8a8a8a) !important; justify-content: space-between !important;
@@ -508,21 +433,17 @@ html.cc-popups-on #displaybox .cc-tsel-opt-avail:hover {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important; filter: none !important;
 }
 html.cc-popups-on #displaybox .cc-tsel-avail-dl { opacity: .7; font-size: 11px; }
-/* #92 (user, real root cause of 3x "flags not showing" reports): the locale dropdown's flag is now a
-   real bundled SVG (images/flags/<iso>.svg), not a Unicode emoji pair — Windows renders the emoji pair
-   as two separate letter glyphs instead of ligating them into a flag (confirmed via a screenshot from
-   the user's own browser). Same sizing convention as settings.js's Flaggen-Modus .cc-flag-img, so the
-   flag reads consistently everywhere in the plugin. */
+/* The locale flag is a bundled SVG (images/flags/<iso>.svg) because Windows renders flag emoji as
+   two letters. Sized like settings.js's .cc-flag-img. */
 html.cc-tools-on #displaybox .cc-lang-flag,
 html.cc-popups-on #displaybox .cc-lang-flag {
   display: inline-block; width: 20px; height: 14px; flex: 0 0 auto; object-fit: cover;
   border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12);
 }
 html.cc-popups-on #displaybox .cc-tsel-avail-flag { display: inline-flex; flex: 0 0 auto; }
-/* #1 CORRECTION (user): in the REACTIVE sub-mode (cc.rbmode=active) the list items REST neutral and reveal
-   their OWN rotating colour ONLY on mouseover / when selected — matching every other reactive control. Full
-   rainbow keeps them permanently coloured (rule above). The per-item --cc-rb-c is still stamped, just unused
-   until hover. Higher specificity (extra .cc-tools-rbneutral class) beats the always-coloured base rule. */
+/* In the reactive sub-mode (cc.rbmode=active) the items rest neutral and show their own colour on
+   hover or when selected; full rainbow keeps them coloured. The extra .cc-tools-rbneutral class
+   outranks the base rule. */
 html.cc-tools-on.cc-tools-rbneutral #displaybox .cc-tsel-opt {
   background: rgba(128, 128, 128, .16); color: #e4e4e4;
 }
@@ -533,18 +454,16 @@ html.cc-tools-on.cc-tools-rbneutral #displaybox .cc-tsel-opt.is-selected {
   filter: none;
 }
 
-/* ── jQuery-UI dropdownchecklist (user: "hier sind die ganzen Dropdownlisten nicht im CC-Style"): the Notification
-   Agents page (Notification title/message = Betreff/Beschreibung) hides the native <select> and renders a
-   `ui-dropdownchecklist` widget in its place, so ccToolsWrapSelect never sees it. Restyle the widget to the CC
-   dropdown look: dark rounded trigger + CC caret (killing the native underline + gradient-arrow), and a borderless
-   elevated panel with accent hover/checked items. ── */
+/* The Notification Agents page hides its native <select> (Betreff, Beschreibung) behind a jQuery
+   UI dropdownchecklist, which ccToolsWrapSelect never sees. The widget gets the CC dropdown look:
+   a dark rounded trigger with a CC caret instead of the underline and gradient arrow, and a
+   borderless elevated panel. */
 html.cc-tools-on #displaybox .ui-dropdownchecklist-selector-wrapper {
   background: none !important; border: none !important; box-shadow: none !important; overflow: visible !important;
   border-radius: min(var(--cc-b-radius, 8px), 12px) !important; width: auto !important; height: auto !important; vertical-align: middle;
 }
-/* #(user: "die Zeile für die Dropdownliste ist viel zu hoch"): the native selector is a 22px box; the old
-   min-height:34 + 6px padding ballooned it to 45px and it OVERFLOWED the 25px row. A FIXED 30px flex-centred
-   control matches the neighbouring text inputs (also 30px) and no longer spills over. */
+/* A fixed 30px, flex-centred selector matches the text inputs next to it; a min-height with
+   padding would grow it past its 25px row. */
 html.cc-tools-on #displaybox .ui-dropdownchecklist-selector {
   position: relative; box-sizing: border-box !important; display: inline-flex !important; align-items: center;
   background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important;
@@ -564,11 +483,9 @@ html.cc-tools-on #displaybox .ui-dropdownchecklist-selector::after {
   width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor;
 }
 html.cc-tools-on #displaybox .ui-dropdownchecklist-selector .ui-icon { display: none !important; }
-/* the drop panel + its items. #(user: "die Dropdownliste ist viel komprimierter, sie sollen ueberall gleich
-   aussehen"): match the .cc-tsel-panel dimensions EXACTLY — 8px padding, 180px min-width, flex-column with 6px
-   gaps. The widget hard-sets inline overflow-y:auto + a fixed height at init; override to height:auto so the
-   roomier CC spacing fits with no scrollbar. min-width makes the panel wider than its 123px selector, just like
-   the cc-tsel panels are wider than their trigger. */
+/* The panel matches .cc-tsel-panel: 8px padding, 180px min-width, a flex column with 6px gaps, wider
+   than its selector. The widget sets overflow-y:auto and a fixed height inline at init, so
+   height:auto lets the roomier spacing fit without a scrollbar. */
 html.cc-tools-on #displaybox .ui-dropdownchecklist-dropcontainer {
   background: #303030 !important; border: none !important; border-radius: 10px !important;
   box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .6)) !important;
@@ -576,18 +493,16 @@ html.cc-tools-on #displaybox .ui-dropdownchecklist-dropcontainer {
   padding: 8px !important; min-width: 180px !important; max-width: min(92vw, 460px) !important;
   height: auto !important; max-height: 50vh !important; overflow-y: auto !important; overflow-x: hidden !important;
 }
-/* #(user: "nicht im cc style"): make each row an identical twin of .cc-tsel-opt — a CC chip. Full-rainbow =
-   permanent per-item colour (--cc-rb-c already stamped on each item by ccPaintRotate); reactive-neutral = a
-   neutral pill that reveals its colour on hover / when checked. The native square checkbox is HIDDEN — the chip
-   colour itself is the checked marker (:has(input:checked)), exactly like cc-tsel's is-selected chips.
-   The widget's toggle handler sits on the ITEM div (not the label, whose native for= is broken by a trailing
-   slash), so the label gets pointer-events:none — every click falls through to the item div and toggles cleanly. */
+/* Each row is a twin of .cc-tsel-opt. Full rainbow gives each item its own colour (--cc-rb-c from
+   ccPaintRotate); the reactive mode rests neutral and colours on hover or when checked. The native
+   checkbox is hidden and the chip colour marks the checked state. The widget's toggle handler sits
+   on the item div (the label's for= is broken by a trailing slash), so the label ignores pointer
+   events and every click reaches the div. */
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item {
   display: flex !important; align-items: center; gap: 8px; justify-content: flex-start;
   line-height: 1.3; margin: 0 !important; padding: 6px 12px !important; cursor: pointer; white-space: nowrap;
-  /* #(user: "die Dropdown-Einträge sind noch zu klein, gleich groß wie überall sonst"): a native rule pins the
-     item to a 22px border-box height, so the 6px padding was swallowed and the row was shorter than a cc-tsel
-     option. height:auto lets each row grow to text + padding (~29px), matching the cc-tsel options exactly. */
+  /* a native rule pins the item to a 22px border-box height, swallowing the padding; height:auto
+     lets it match the cc-tsel options (about 29px) */
   height: auto !important; min-height: 0 !important; box-sizing: border-box !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
@@ -596,15 +511,14 @@ html.cc-tools-on #displaybox .ui-dropdownchecklist-item {
 }
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item input[type="checkbox"] { display: none !important; }
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item .ui-dropdownchecklist-text { color: inherit !important; }
-/* only the CHECKBOX rows get pointer-events:none so clicks fall through to the item div's toggle handler. The
-   "...schließen" close row KEEPS its native handler — this widget has no outside-click close, that row is the
-   only way to shut the panel, so it must stay clickable. */
+/* Only the checkbox rows pass clicks through. The "...schließen" row keeps its handler, because
+   the widget has no outside-click close and that row is the only way to shut the panel. */
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item:not(.ui-dropdownchecklist-close) .ui-dropdownchecklist-text { pointer-events: none !important; }
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item.ui-state-hover,
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item:hover,
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item.ui-state-active,
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item:has(input:checked) { filter: brightness(1.18); box-shadow: none !important; }
-/* reactive-neutral sub-mode: rest neutral, colour ONLY on hover / when checked (mirror .cc-tsel-opt reactive rules) */
+/* reactive sub-mode: neutral at rest, colour on hover or when checked, like .cc-tsel-opt */
 html.cc-tools-on.cc-tools-rbneutral #displaybox .ui-dropdownchecklist-item {
   background: rgba(128, 128, 128, .16) !important; color: #e4e4e4 !important;
 }
@@ -623,15 +537,13 @@ html.cc-tools-on #displaybox .ui-dropdownchecklist-item:not(:has(input[type="che
   background: rgba(128, 128, 128, .16) !important; color: #e4e4e4 !important;
 }
 
-/* #3-Infotext (user: "nicht ALLE Beschreibungstexte in Infobubbles"): CC converts each inline_help into an
-   (i) bubble and hides the native block inline. BUT the native HELP button runs jQuery .show(), which sets
-   an inline display:block that beats CC's inline display:none -> the description reappears when help is
-   toggled (exactly when the user was testing the help icon). A CSS !important hide beats that inline show,
-   so a converted help block stays in its bubble regardless of the native toggle. */
+/* CC turns each inline_help into an (i) bubble and hides the block inline, but the native Help
+   button's jQuery .show() sets an inline display:block that would bring it back. The !important
+   hide keeps converted blocks in their bubble. */
 html.cc-tools-on #displaybox blockquote.inline_help[data-cc-help],
 html.cc-tools-on #displaybox .inline-help[data-cc-help] { display: none !important; }
 
-/* #2-B: native colour-picker swatch injected next to the header colour hex fields (ccToolsEnhance). */
+/* the native colour picker swatch ccToolsEnhance puts next to the header colour hex fields */
 html.cc-tools-on #displaybox .cc-colpick {
   width: 34px; height: 30px; padding: 2px; margin-right: 8px; flex: 0 0 auto; box-sizing: border-box;
   background: var(--cc-tl-surface2, #232323) !important; border: none !important; outline: none !important;
@@ -639,20 +551,13 @@ html.cc-tools-on #displaybox .cc-colpick {
 }
 html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch-wrapper { padding: 0; }
 html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch { border: none; border-radius: 4px; }
-/* #86-B (user: "die Farbwählfelder und das Hexfeld in eine Zeile. Das Hexfeld soll so breit sein, dass es
-   rechts bündig mit den ganzen Dropdownlisten abschließt"): this dd inherits Unraid's native
-   dd{flex-direction:column}, stacking the swatch above the hex text on separate lines. It also has no
-   sibling field in its grid row (Eigene Kopfzeilen-...farbe rows run alone), so left alone it stretches
-   across the whole remaining grid width instead of matching a normal field's width. Row the two children
-   and cap the row at 240px — the SAME min-width every themed dropdown trigger on this page already uses
-   (html.cc-popups-on #displaybox .cc-tsel-trigger below) — so the hex field's right edge lands exactly
-   where every dropdown's right edge already does. */
+/* The swatch and the hex field share one row: this dd inherits Unraid's dd{flex-direction:column}
+   and has no sibling field, so it would stack and stretch. The row is capped at 240px, the
+   min-width of every themed dropdown trigger, so the hex field ends where the dropdowns do. */
 html.cc-tools-on #displaybox dd:has(> .cc-colpick) { flex-direction: row !important; align-items: center; max-width: 240px; }
 html.cc-tools-on #displaybox dd:has(> .cc-colpick) input[type="text"][data-cc-colpick] { flex: 1 1 auto; width: auto; min-width: 0; }
 
-/* #3-B REVERTED (user: "native Ausrichtung soll bleiben"): the native field widths stand — CC no longer stretches
-   selects/inputs to fill the value column, so the form keeps its native proportions. */
-/* #Tools-Checkboxen (user: native Checkboxen nicht im CC-Style): dark accent checkbox, no border. */
+/* native checkboxes: dark, borderless, accent when checked */
 html.cc-tools-on #displaybox input[type="checkbox"] {
   -webkit-appearance: none; appearance: none; width: 18px; height: 18px; box-sizing: border-box; flex: none;
   background: var(--cc-tl-surface2, #232323); border: none !important; outline: none !important; border-radius: 4px;
@@ -663,7 +568,7 @@ html.cc-tools-on #displaybox input[type="checkbox"]:checked::after {
   content: ""; position: absolute; left: 5.5px; top: 1.5px; width: 4px; height: 9px;
   border: solid var(--cc-accent-text, #fff); border-width: 0 2px 2px 0; transform: rotate(45deg);
 }
-/* #10 (user: Energiemodus native Radiobuttons -> CC-Style): dark, borderless, round, accent-filled dot on check. */
+/* radio buttons (Energiemodus): dark, borderless, round, with an accent dot when checked */
 html.cc-tools-on #displaybox input[type="radio"] {
   -webkit-appearance: none; appearance: none; width: 18px; height: 18px; box-sizing: border-box; flex: none;
   background: var(--cc-tl-surface2, #232323); border: none !important; outline: none !important; border-radius: 50%;
@@ -674,7 +579,6 @@ html.cc-tools-on #displaybox input[type="radio"]:checked::after {
   content: ""; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; border-radius: 50%;
   background: var(--cc-accent-text, #fff); transform: translate(-50%, -50%);
 }
-/* ── #Tools-Durchgang (user: native Toggles/Badges/Selects/Rahmen nicht im CC-Style) ── */
 /* native Unraid toggle switch -> CC pill that follows the colour mode when on */
 html.cc-tools-on #displaybox .switch-button-background { background: var(--cc-toggle-track-off, #3a3a3a) !important; border: none !important; outline: none !important; box-shadow: none !important; }
 html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
@@ -683,12 +587,12 @@ html.cc-tools-on #displaybox select[multiple],
 html.cc-tools-on #displaybox select[size]:not([size="1"]) { background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important; border: none !important; outline: none !important; border-radius: 8px !important; padding: 4px 6px !important; }
 html.cc-tools-on #displaybox select[multiple] option:checked,
 html.cc-tools-on #displaybox select[size] option:checked { background: var(--cc-accent, #2f6feb) linear-gradient(0deg, var(--cc-accent, #2f6feb), var(--cc-accent, #2f6feb)); color: var(--cc-accent-text, #fff); }
-/* NO border lines anywhere on tools content (user: "hier ist wieder ein Rahmen ... andere Subseiten ohne Rahmen") */
+/* no border lines on tools content */
 html.cc-tools-on #displaybox .Panel,
 html.cc-tools-on #displaybox .box,
 html.cc-tools-on #displaybox .content,
 html.cc-tools-on #displaybox form { border: none !important; outline: none !important; }
-/* orange hint / notice cards (user: KEEP the card but WITHOUT the border/frame) */
+/* orange hint and notice cards keep the card but lose the border */
 html.cc-tools-on #displaybox blockquote:not(.inline_help),
 html.cc-tools-on #displaybox .notice,
 html.cc-tools-on #displaybox .callout,

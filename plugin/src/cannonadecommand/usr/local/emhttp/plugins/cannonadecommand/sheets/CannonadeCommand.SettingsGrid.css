@@ -1,41 +1,26 @@
-/* CannonadeCommand - GLOBAL Settings-page category-icon restyle.
+/* CannonadeCommand: the category tiles and headings on the /Settings and /Tools landing pages.
  *
- * Auto-<link>-injected into <head> on EVERY Unraid page (Buttons .page hook). To make that
- * safe, EVERY rule is scoped to one of TWO html classes that settingsgrid.js only adds on the
- * /Settings AND /Tools LANDING pages (identical .Panel tile grid) when the "Einstellungen und
- * Werkzeuge" area is enabled — absent => ZERO effect anywhere:
- *   - cc-settingsgrid-on        the category TILE badge (additionally gated on ccs.iconbg)
- *   - cc-settingsgrid-heads-on  the category-group HEADING badges (see the block at the end;
- *                               gated on `live` only, because they must badge in TINT mode too)
- * Both are set only behind onGrid(), so neither can reach a Docker/Plugins/VMs page.
+ * Injected into every Unraid page through the Buttons hook, so every rule is scoped to one of two
+ * classes that settingsgrid.js sets only on those two pages while the area is enabled:
+ *   cc-settingsgrid-on        the tile badges (also gated on ccs.iconbg)
+ *   cc-settingsgrid-heads-on  the category heading badges, which show in tint mode too
  *
- * Each category tile's icon wrapper (the bare <span> inside the tile's <a>, DOM:
+ * Each tile's icon wrapper
  *   <div class="Panel"><a><span><i class="icon-x PanelIcon"></i></span>
- *                          <div class="PanelText">Label</div></a></div>)
- * becomes a LARGE square accent badge (clearly bigger than the 26px menu-bar chips),
- * following --cc-b-radius (capped so pill-mode reads as a rounded SQUARE, not a circle,
- * since the user asked for square badges), with a centred contrast glyph. Colours come
- * from --cc-accent / --cc-accent-text (set by settingsgrid.js; rainbow mode paints each
- * badge per-tile inline). The native .Panels grid layout is left intact. */
+ *                          <div class="PanelText">Label</div></a></div>
+ * becomes a large square badge with a centred contrast glyph. Its radius follows --cc-b-radius but
+ * is capped, so pill mode gives a rounded square. Colours come from --cc-accent and
+ * --cc-accent-text (rainbow mode paints each badge inline); the native .Panels grid stays. */
 
-/* --cc-sg-size/-glyph: DEFAULTS for the cc.sgsize=m step (78px = Docker's logo-tile box, 62px
-   content + 8px pad); settingsgrid.js paintGrid stamps s(64/32)|m(78/38)|l(96/46) live.
-   --cc-lgb-h: per-sheet copy (house rule). */
-:root { --cc-sg-size: 78px; --cc-sg-glyph: 38px; --cc-sg-rmax: 16px; }   /* #4 badge engine: --cc-lgb-h now central (Tokens.css); only the SettingsGrid tile metrics stay here */
+/* Defaults for the cc.sgsize=m step (78px, Docker's logo tile: 62px content plus 8px padding);
+   settingsgrid.js paintGrid sets s (64/32), m (78/38) or l (96/46). */
+:root { --cc-sg-size: 78px; --cc-sg-glyph: 38px; --cc-sg-rmax: 16px; }
 
-/* ═══ align the Settings/Tools content with the MAIN MENU BAR (v2.16.0) ═══
-   --cc-align-left is the geometry token every other CC area wires — but each globally-injected sheet
-   must define its OWN local copy: docker.css (Docker+Plugins) only loads via page-specific hooks
-   (Menu="Docker"/"Plugins"), Shares.css/Header.css/THIS sheet load via Menu="Buttons" (every page) —
-   none of these stylesheets share scope, so falling back to var(...,10px) here would silently ignore
-   the Header-area 15px case (docker.css's copy is simply absent on /Settings and /Tools). 10px is the
-   native menu TEXT edge; 15px is the CC Header area's PILL edge (nav-tile 12px padding + nav-item>a 3px
-   margin, border-box left) once that area turns the first menu item into a pill. This sheet never wired
-   any of this, which is EXACTLY why the category-group heading badges sat 5-10px off the menu-bar edge
-   while every other area's badges lined up. Gate the anchor on cc-settingsgrid-heads-on (live whenever
-   this is a grid page + theming is on, INDEPENDENT of the tile badge/tint mode), not cc-settingsgrid-on.
-   div.title's own native left padding is already zeroed by the heading-badge reset below
-   (`padding: 0 !important`), so no separate div.title override is needed here. */
+/* Align the content with the main menu bar. Each sheet injected through Buttons defines its own
+   --cc-align-left, because docker.css, which also has it, loads only on Docker and Plugins. 10px is
+   the native menu text edge, 15px the Header area's pill edge (12px tile padding plus the 3px
+   margin of nav-item > a). Keyed on -heads-on so it applies in every tile mode; the heading reset
+   below already zeroes div.title's own padding. */
 html.cc-settingsgrid-heads-on { --cc-align-left: 10px; }
 html.cc-settingsgrid-heads-on.cc-header-on { --cc-align-left: 15px; }
 html.cc-settingsgrid-heads-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 10px); }
@@ -46,8 +31,8 @@ html.cc-settingsgrid-on #displaybox .Panel > a > span {
   box-sizing: border-box !important; position: relative;
   width: var(--cc-sg-size, 78px) !important; height: var(--cc-sg-size, 78px) !important;
   margin: 0 auto !important; padding: 0 !important;
-  /* cap the radius so pill-mode gives a rounded SQUARE; rounded(6px)/square(0) stay exact
-     -> one shape family across all badge-form modes (same trick as the header sheet) */
+  /* capped so pill mode gives a rounded square while rounded (6px) and square (0) stay exact,
+     as in the header sheet */
   border-radius: min(var(--cc-b-radius, 14px), var(--cc-sg-rmax, 16px)) !important;
   background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important;
   transition: filter .12s;
@@ -59,27 +44,24 @@ html.cc-settingsgrid-on #displaybox .Panel > a > span > i.PanelIcon {
   font-size: var(--cc-sg-glyph, 38px) !important; line-height: 1 !important;
   color: var(--cc-iconbg-text, var(--cc-accent-text, #fff)) !important; margin: 0 !important; padding: 0 !important;
 }
-/* span twin of the glyph colour: the tailscale ::after mask paints with currentColor, so the
-   span must carry EXACTLY the i.PanelIcon ink in every mode — every i.PanelIcon colour rule
-   in this sheet has this twin next to it. Glyph tiles unaffected (their i sets its own color). */
+/* The tailscale ::after mask paints with currentColor, so the span carries the same ink as
+   i.PanelIcon, and every i.PanelIcon colour rule in this sheet has a span twin next to it. Glyph
+   tiles are unaffected because their i sets its own colour. */
 html.cc-settingsgrid-on #displaybox .Panel > a > span { color: var(--cc-iconbg-text, var(--cc-accent-text, #fff)) !important; }
-/* a raster logo can't be tinted -> just scale it to the badge. Covers BOTH img.PanelImg AND img.icon:
-   a category whose Tag= is a .png renders <img class="icon"> (PageBuilder.php:97), and paintGrid used to
-   skip it, so a PNG-logo tile in Tools/Settings kept its full colour while glyph tiles went monochrome
-   (user: "im Werkzeugtab ist im untersten Abschnitt das Icon farbig, angleichen"). */
+/* A raster logo cannot be tinted, so it is only scaled to the badge. This covers img.PanelImg and
+   img.icon, which a category whose Tag= is a .png renders (PageBuilder.php:97). */
 html.cc-settingsgrid-on #displaybox .Panel > a > span > img {
   width: var(--cc-sg-glyph, 38px) !important; height: var(--cc-sg-glyph, 38px) !important;
   max-width: none !important; object-fit: contain !important; margin: 0 !important;
 }
-/* ═══ Tailscale tile: the shipped tailscale.png flattens to a white BLOB on the badge ═══
-   Swap it for our dots SVG rendered as an ALPHA MASK, so the dots take the badge's contrast
-   colour and the 0.2-opacity corner dots come through at 20% (mask keeps per-pixel alpha ->
-   the two-tone design survives any badge colour). [href*="ailscale"] = case-tolerant anchor. */
+/* Tailscale: the shipped tailscale.png flattens to a white blob on the badge, so it is replaced by
+   the dots SVG as an alpha mask. The dots take the badge's contrast colour and the corner dots keep
+   their 20% opacity. [href*="ailscale"] matches either case. */
 html.cc-settingsgrid-on #displaybox .Panel > a[href*="ailscale"] > span > img { display: none !important; }
 html.cc-settingsgrid-on #displaybox .Panel > a[href*="ailscale"] > span::after {
-  content: ""; display: block;   /* the span is already a centred flex box -> auto-centred */
+  content: ""; display: block;   /* centred by the span's flex box */
   width: var(--cc-sg-glyph, 38px); height: var(--cc-sg-glyph, 38px);
-  background-color: currentColor;   /* = the span's ink (twin rules) -> tracks i.PanelIcon in every mode */
+  background-color: currentColor;   /* the span's ink, which matches i.PanelIcon in every mode */
   -webkit-mask: url(/plugins/cannonadecommand/images/tailscale-dots.svg) center / contain no-repeat;
   mask: url(/plugins/cannonadecommand/images/tailscale-dots.svg) center / contain no-repeat;
 }
@@ -89,8 +71,8 @@ html.cc-settingsgrid-on #displaybox .Panel > a > span > i.favo {
   position: absolute !important; top: 3px !important; right: 4px !important; left: auto !important;
   font-size: 12px !important; line-height: 1 !important; color: var(--cc-accent-text, #fff) !important; opacity: .8;
 }
-/* tile labels appear ONLY on hover, muted, never link-blue, never underlined (user) —
-   the fade keeps the grid calm; the reserved line height stops the grid from jumping. */
+/* tile labels show on hover only, muted and not underlined; the fade keeps the grid calm and the
+   reserved line height stops it from jumping */
 html.cc-settingsgrid-on #displaybox .Panel .PanelText {
   margin-top: 4px; opacity: 0; transition: opacity .12s;
   color: var(--cc-text-chip, #cfcfcf) !important; text-decoration: none !important;
@@ -101,18 +83,12 @@ html.cc-settingsgrid-on #displaybox .Panel .PanelText a,
 html.cc-settingsgrid-on #displaybox .Panel a .PanelText,
 html.cc-settingsgrid-on #displaybox .Panel > a { color: var(--cc-text-chip, #cfcfcf) !important; text-decoration: none !important; }
 
-/* rainbow "active only" sub-mode (cc.rbmode=active -> html.cc-settingsgrid-rbneutral, set by paintGrid):
-   the tiles have no active tile, so idle badges go neutral grey and colour on HOVER via the per-tile
-   --cc-rb-c/--cc-rb-ct paintGrid stamps on the span. Same specificity as the base badge rules but
-   appended last, so it wins once paintGrid clears the inline background. Covers /Settings AND /Tools.
-   ALSO gated on .cc-settingsgrid-on (the badge-mode class): paintGrid only toggles -rbneutral in the
-   badge branch and never clears it when badge/theming/area turns off, so pairing with -on stops the
-   neutral rules the instant -on is removed (else grey badges leak onto native tiles until a reload).
-   #T6-follow-up: the hover var() chain used to try --cc-rb-c BEFORE --cc-iconbg-color, so a
-   configured Logo-Hintergrund colour lost to the rotating rainbow colour on hover — the same bug
-   v4.32.4 fixed for Docker/VMs/Plugins, missed here. Icon colour now resolves first, rainbow only
-   fills in when no icon colour is configured; the paired glyph-ink rule below is swapped the same
-   way so the badge's background and its glyph colour always agree. */
+/* Rainbow "active only" (cc.rbmode=active, html.cc-settingsgrid-rbneutral from paintGrid): there is
+   no active tile, so idle badges go grey and take the per-tile --cc-rb-c/--cc-rb-ct colour on
+   hover. Same specificity as the base rules but later, so it wins once paintGrid clears the inline
+   background. Paired with .cc-settingsgrid-on because paintGrid does not clear -rbneutral when the
+   badges or the area turn off. A configured logo background colour wins over the rainbow colour on
+   hover, for the background and the glyph alike. */
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a > span { background: rgba(128, 128, 128, .18) !important; }
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a > span > i.PanelIcon,
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a > span { color: var(--cc-text-chip, #cfcfcf) !important; }   /* span = tailscale-mask ink twin */
@@ -124,14 +100,9 @@ html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a:hover >
   color: var(--cc-iconbg-text, var(--cc-rb-ct, var(--cc-accent-text, #fff))) !important;
 }
 
-/* GLOBAL reactive signal (cc.rbmode=active → shares.js stamps html.cc-shares-rbneutral on EVERY
-   page): the SAME rest-grey/hover-colour contract as the local -settingsgrid-rbneutral block
-   above, keyed on the global class so the /Settings + /Tools tile badges react even when only
-   the global signal is present. Both blocks agree visually when both classes are set. Gated on
-   .cc-settingsgrid-on exactly like above — absent ⇒ zero effect anywhere. Category-group
-   HEADINGS stay exempt (house law: section heads ALWAYS keep their colour).
-   #T6-follow-up: same var()-order fix as the local block above — icon colour wins over the
-   rotating rainbow colour on hover, in both directions of the background/glyph-ink pair. */
+/* The same grey-at-rest, colour-on-hover behaviour for the global signal (shares.js sets
+   html.cc-shares-rbneutral on every page for cc.rbmode=active), so the tiles react when only that
+   class is present. Category headings are exempt: section heads always keep their colour. */
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a > span { background: rgba(128, 128, 128, .18) !important; }
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a > span > i.PanelIcon,
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a > span { color: var(--cc-text-chip, #cfcfcf) !important; }   /* span = tailscale-mask ink twin */
@@ -143,29 +114,21 @@ html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a:hover > span 
   color: var(--cc-iconbg-text, var(--cc-rb-ct, var(--cc-accent-text, #fff))) !important;
 }
 
-/* ═══ category-group HEADINGS (/Settings + /Tools) -> filled accent badges ═══
-   Native DOM read from source (include/DefaultPageLayout/MainContentTabless.php:12-18 +
-   include/PageBuilder.php tab_title()) — IDENTICAL on both pages (both Type="xmenu" Tabs="false",
-   so both render through the same tabless template):
+/* Category headings become filled accent badges. Both pages render through the tabless template
+   (MainContentTabless.php, PageBuilder.php tab_title()):
      <div class="title">
        <span class="left inline-flex flex-row items-center gap-1"><i class="fa fa-cog title"></i>System Settings</span>
        <span class="right inline-flex flex-row items-center gap-1"></span>
      </div>
-   Settings.page/Tools.page carry NO Title= of their own and the template only emits div.title for a
-   page that HAS one, so EVERY div.title on the two LANDING pages is exactly one category heading
-   (System Settings / Network Services / User Preferences / User Utilities | Unraid OS / webGUI /
-   Wizards / About). The label is a bare TEXT NODE inside span.left, so span.left IS the badge box —
-   no DOM surgery, idempotent by construction.
-   BEWARE: that <i> ALSO carries class "title" (PageBuilder.php:99) -> ALWAYS qualify div.title.
-   Scoped to html.cc-settingsgrid-heads-on, which settingsgrid.js sets on the two landing pages
-   whenever area + master theming are on — INDEPENDENT of the tile badge/tint modes, so the headings
-   badge in BOTH (cc-settingsgrid-on would vanish the moment a user opts out of the tile badge). */
+   The pages have no Title= of their own, so every div.title there is a category heading, and the
+   label is a bare text node, so span.left is the badge box. The <i> also carries class "title"
+   (PageBuilder.php:99), hence div.title in every selector. Scoped to -heads-on, which stays set in
+   both tile modes. */
 html.cc-settingsgrid-heads-on #displaybox div.title {
   background: none !important; background-color: transparent !important;
   border-bottom: 0 !important; padding: 0 !important;
   letter-spacing: normal !important; font-size: inherit !important;
-  /* user: "die Abschnitte sind sehr weit auseinander" -> inter-section rhythm ~40% tighter
-     (22px top -> 13px); the 12px badge-to-tiles gap stays untouched. */
+  /* 13px on top keeps the sections close; the 12px gap to the tiles stays */
   margin: 13px 0 12px !important;
 }
 /* native .Panels bottom margin must not stack extra air onto the next title's top margin */
@@ -176,10 +139,8 @@ html.cc-settingsgrid-heads-on #displaybox div.title > span.right { flex: 0 0 aut
 /* span.left (glyph + label) -> the filled accent badge; same recipe as Shares' .cc-card-head */
 html.cc-settingsgrid-heads-on #displaybox div.title > span.left {
   display: inline-flex !important; align-items: center; gap: 6px !important;
-  /* #11 (user: "Subtabs und Abschnittsbadges gleich groß, in allen Tabs vereinheitlichen"): adopt the
-     md TAB-BADGE tier — the exact height/font/padding/weight/tracking of the Shares/Docker/Plugins
-     subtabs AND the main menu tabs (Shares.css button[role=tab]) — so every badge-tab across the WebGUI
-     is one size. Was the lg heading tier (36px/15px/9-18) = the lone outlier. */
+  /* the md tab-badge size of the Shares, Docker and Plugins subtabs and the main menu tabs, so
+     every tab badge in the WebGUI is one size */
   min-height: var(--cc-md-h, 30px) !important; box-sizing: border-box;
   font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-md-fs, 13px); line-height: 1;
   background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
@@ -187,31 +148,25 @@ html.cc-settingsgrid-heads-on #displaybox div.title > span.left {
   padding: var(--cc-md-pad, 0 20px) !important; margin: 0 !important;
   text-decoration: none !important; transition: filter .12s;
 }
-/* glyph inherits the badge ink; zero native i.title{margin-right:8px} — the gap handles spacing.
-   img.icon arm: a category whose Tag= is a .png takes tab_title()'s <img class="icon"> branch. */
+/* The glyph takes the badge ink and the gap replaces the native i.title margin. img.icon is what
+   tab_title() renders for a category whose Tag= is a .png. */
 html.cc-settingsgrid-heads-on #displaybox div.title > span.left > i,
 html.cc-settingsgrid-heads-on #displaybox div.title > span.left > img.icon {
   color: inherit !important; margin: 0 !important;
-  display: inline-block !important;   /* the sidebar themes do `.Theme--sidebar i.title{display:none}`,
-                                         which would strip the glyph out of OUR badge while the tiles
-                                         keep theirs; our (1,3,3) beats their (0,2,1). */
+  display: inline-block !important;   /* the sidebar themes set .Theme--sidebar i.title{display:none};
+                                         this selector's (1,3,3) beats their (0,2,1) */
 }
-/* #9: a category whose heading icon is a raster PNG (<img class="icon">, e.g. "System Information")
-   kept its ORIGINAL colours on the accent badge while every glyph-based heading rendered a clean
-   white icon -> it "didn't fit" (user). color:inherit can't tint a raster, so force it to the badge
-   ink with a filter: brightness(0) crushes it to black, invert(1) flips to white = matches the
-   white heading text. Sits AFTER the rule above so it wins; only touches heading <img>, not tiles. */
+/* color: inherit cannot tint a raster heading icon (System Information, for one), so the filter
+   crushes it to black and inverts it to white to match the heading text. Heading images only. */
 html.cc-settingsgrid-heads-on #displaybox div.title > span.left > img.icon {
   filter: brightness(0) invert(1) !important;
   width: 20px !important; height: 20px !important; object-fit: contain !important;
 }
 
-/* HOUSE LAW: section heads ALWAYS keep their colour. The rainbow "active only" (neutral)
-   sub-mode greys the TILES only (-rbneutral block above) — heads are EXEMPT, so there are NO
-   -headsneutral grey-rest rules any more: paintHeads stamps the painted palette/accent colour
-   in BOTH rainbow sub-modes and always removes the legacy -headsneutral class. */
+/* Section heads always keep their colour: the rainbow "active only" mode greys only the tiles,
+   and paintHeads stamps the colour in both sub-modes and removes any -headsneutral class. */
 
-/* ═══ FOCUS LAW: keyboard focus draws NO outline/ring/shadow either — feedback is brightness only ═══ */
+/* keyboard focus draws no outline, ring or shadow; the feedback is brightness only */
 html.cc-settingsgrid-on #displaybox .Panel > a:focus-visible,
 html.cc-settingsgrid-heads-on #displaybox div.title a:focus-visible {
   outline: none !important; box-shadow: none !important; filter: brightness(1.18);

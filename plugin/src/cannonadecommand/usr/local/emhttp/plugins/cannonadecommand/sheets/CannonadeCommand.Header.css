@@ -1,70 +1,45 @@
-/* CannonadeCommand - GLOBAL main-menu-bar restyle.
+/* CannonadeCommand: the main menu bar.
  *
- * Auto-<link>-injected into <head> on EVERY Unraid page (Buttons .page hook). To
- * make that safe, EVERY rule is scoped to `html.cc-header-on`, a class header.js
- * only adds when the "Hauptmenueleiste" area is enabled. Disabled => class absent
- * => this sheet has ZERO effect anywhere.
+ * Injected into every Unraid page through the Buttons .page hook, so every rule is scoped to
+ * html.cc-header-on, which header.js adds only while the Hauptmenueleiste area is enabled.
  *
- * The CC design language, applied to #menu:
- *   - the page tabs become BADGES (grey pill when idle, accent pill when active,
- *     with black/white contrast text), following --cc-b-radius.
- *   - the right-side utility icons become accent-FILLED boxes with a black/white
- *     glyph (like the Docker-tab action icons), following --cc-b-radius.
- *   - the array-usage meter becomes a clean, thin accent pill.
- * Colours come from --cc-hdr-accent / --cc-hdr-accent-text (this bar's OWN isolated vars,
- * set by header.js — NOT the shared --cc-accent, which shares.js / the tab enhancers would
- * clobber) plus --cc-b-radius. The top-header Connect components (unraid-header-os-version /
- * unraid-user-profile) render LIGHT DOM: CSS from outside matches them and SURVIVES the
- * auto-mount rebuilds — see the TOP HEADER TAKEOVER section (CSS-only there; DOM surgery
- * inside those components would be wiped on every rebuild).
+ * On #menu the page tabs become badges (grey when idle, accent when active, with contrast text),
+ * the utility icons become accent-filled boxes with a contrast glyph, and the array usage meter
+ * becomes a thin accent pill, all following --cc-b-radius. Colours come from --cc-hdr-accent and
+ * --cc-hdr-accent-text, this bar's own variables, because shares.js and the tab scripts overwrite
+ * --cc-accent. The Connect components in the top header (unraid-header-os-version,
+ * unraid-user-profile) render light DOM, so outside CSS reaches them and survives their
+ * auto-mount rebuilds, which DOM changes inside them would not; see the top header section.
  */
 
 :root {
-  /* CC badge size system, md tier — MIRRORED from styles/docker.css (keep in sync).
-     The menu-bar tab badges, the array-usage meter, the search field AND the right-side icon
-     boxes now ALL share ONE height (--cc-md-h) so the three groups line up at exactly the same
-     height across the whole bar (user: "die drei Gruppen auf dieselbe Höhe bringen"). The icon
-     boxes were 26px (deliberately smaller); they are now --cc-md-h too, i.e. square 30×30. */
-  /* #4 badge engine: shared badge tiers (--cc-md-fs/-h/-pad, --cc-lgb-h/-fs) now central in Tokens.css;
-     Header keeps ONLY its own icon metrics. */
+  /* The menu tab badges, the usage meter, the search field and the icon boxes share one height,
+     so the three groups line up across the bar. The badge sizes live in Tokens.css; only the icon
+     metrics are kept here. header.js ccPopIframes() repeats the lg sizes as literals for popup
+     iframes, which cannot read the parent's variables, so a change there has to follow. */
   --cc-md-icon: 14px; --cc-md-ibox: var(--cc-md-h, 30px);
-  /* NOTE: header.js ccPopIframes() still duplicates the lg-tier values as LITERALS for popup iframes
-     (iframes can't read the parent's vars) - if the central --cc-lgb-h/-fs ever change, update those too. */
 }
 
-/* ═══ page tabs -> badges. Selectors are TILE-AGNOSTIC (v2.30.0 merged drag zone: any item may
-   live in either tile and must keep its own look there). ═══ */
+/* Page tabs as badges. The selectors do not depend on the tile, since any item can be dragged into
+   either tile and keeps its look there. */
 html.cc-header-on #menu .nav-tile:not(.right) { padding-left: 12px; } /* breathing room before the first badge */
-/* EXACT alignment (user: Tabs + Icons + Füllstandsanzeige exakt gleiche Höhe + horizontal bündig):
-   both tiles are centered flex rows and every participant self-centres on the ONE --cc-md-h line. */
+/* both tiles are centred flex rows and every item centres on the same line, so tabs, icons and
+   the usage meter line up */
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile { display: flex !important; align-items: center !important; }
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile > .nav-item {
   display: inline-flex !important; align-items: center !important; align-self: center !important;
   float: none !important; margin-top: 0 !important; margin-bottom: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important;
 }
-/* HIDE the Favorites menu tab on demand (settings toggle cc.hidefavtab -> html.cc-hide-favtab).
-   Unraid's own favorites=no does NOT hide the tab, and the rule right above force-shows every
-   nav-item (inline-flex !important) — so this needs a higher specificity than (1,4,1) to win.
-   The .nav-tile>.nav-item variant covers header-off too (beats Unraid's non-important flex). */
+/* Hides the Favorites tab (cc.hidefavtab -> html.cc-hide-favtab), which Unraid's own favorites=no
+   does not. The rule above forces every nav-item to inline-flex !important at (1,4,1), so this
+   needs more; the .nav-tile > .nav-item variant covers the header area being off. */
 html.cc-hide-favtab.cc-header-on #menu .nav-item:has(> a[href="/Favorites"]),
 html.cc-hide-favtab #menu .nav-tile > .nav-item:has(> a[href="/Favorites"]) { display: none !important; }
-/* (Anzeige-Rework/Option A) The native Display-Settings tile is VISIBLE again: mirroring all ~21 fields
-   into CC was too cluttered, so the full page now lives natively — Carbon-styled by CannonadeCommand via
-   cc-tools-on (which now covers /Settings/*) — and CC keeps only a compact live-sync card. No hide rule. */
-/* #2b: per-icon SHOW/HIDE for the top-right utility icons (settings toggles cc.hideicon.<key> ->
-   html.cc-hideicon-<key>, stamped by header.js apply()). Keys map to the native #menu button classes.
-   The docked bell/burger are hidden in header.js ccDockProfile (they live outside #menu). */
-/* .nav-tile > .nav-item.<Class>.util = specificity (1,5,1), which BEATS the util force-show
-   `html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile > .nav-item{display:inline-flex!important}`
-   at (1,4,1) — otherwise the icons stay visible (live-proven: class stamped but display:flex won). */
-/* …but that only settled the BASE force-show. The SEARCH-OPEN force-show further down
-   (`html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-item.util{display:flex!important}`,
-   which exists so gui_search's inline display:none can't blank the row) also scores exactly (1,5,1) — a
-   TIE, and on a tie the LATER rule wins, so opening the search resurrected every icon the user had
-   switched off (user, v3.6.6: "wenn man auf das Suchicon klickt wird das Sprachen-Icon angezeigt obwohl ich
-   es deaktiviert habe" — live-confirmed: display flips none -> flex the moment cc-search-open lands).
-   The user's choice must outrank a transient UI state, so anchor these one class higher by repeating the
-   html gate: (1,6,1) beats both force-shows regardless of source order. */
+/* Per-icon hiding of the top-right utility icons (cc.hideicon.<key> -> html.cc-hideicon-<key>,
+   stamped by header.js apply()); the keys map to the native #menu button classes, and header.js
+   ccDockProfile hides the docked bell and burger. Repeating the html class gives (1,6,1), which
+   beats the base force-show at (1,4,1) and the search-open force-show further down at (1,5,1), so
+   the user's choice outranks a transient state in any source order. */
 html.cc-hideicon-lang.cc-hideicon-lang #menu .nav-tile > .nav-item.LanguageButton.util,
 html.cc-hideicon-search.cc-hideicon-search #menu .nav-tile > .nav-item.gui_search.util,
 html.cc-hideicon-logout.cc-hideicon-logout #menu .nav-tile > .nav-item.LogoutButton.util,
@@ -76,8 +51,8 @@ html.cc-hideicon-log.cc-hideicon-log #menu .nav-tile > .nav-item.LogButton.util,
 html.cc-hideicon-help.cc-hideicon-help #menu .nav-tile > .nav-item.HelpButton.util { display: none !important; }
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a {
   display: inline-flex !important; align-items: center; justify-content: center;
-  /* #10 (user): the MAIN-MENU-BAR badges are the LARGEST tier system-wide — one step above the section/title
-     badges (which are the md tier, 30px/13px). So the nav pills use the lgb tier (36px) + 15px. */
+  /* the menu bar badges are the largest size, lgb (36px) with 15px text, one step above the md
+     section badges */
   line-height: 1; height: var(--cc-lgb-h, 36px) !important; padding: 0 22px !important; margin: 0 3px;
   border-radius: var(--cc-b-radius, 999px) !important;
   background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
@@ -85,41 +60,34 @@ html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a {
   transition: filter .12s, background .12s, color .12s;
 }
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search):hover > a { filter: brightness(1.14); }
-/* main-tab icons (header.js ccTabIcons(), Tabler MIT) — the pill above is ALREADY inline-flex/centered,
-   so the icon just joins the flex row; stroke inherits the pill's own colour (accent/neutral/rainbow,
-   whatever paintNav() already stamped) via currentColor, no separate colour wiring needed. */
+/* tab icons (header.js ccTabIcons(), Tabler, MIT) join the pill's flex row, and their stroke takes
+   the pill's colour through currentColor */
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a svg.cc-tab-ico {
   width: 16px; height: 16px; flex-shrink: 0; margin-right: 7px; color: inherit;
 }
-/* #18 (user, extension: "auch toggle um den text auszublenden") — icon-only mode. The label is wrapped in
-   its own span by ccTabIcons() specifically so this can hide just the text; the icon's right margin only
-   existed to space it from that text, so it collapses too, leaving the icon centred in the pill alone.
-   REGRESSION caught live: Unraid's own default-base.css carries a blanket ".nav-item a span { display:
-   none }" (unrelated to this plugin) that the raw text node never matched before it was wrapped — so
-   wrapping it accidentally hid the label for EVERYONE, toggle or not, until this default-visible rule
-   claws it back; the .cc-tabtext-off rule right below then has one extra class and wins when it applies. */
+/* Icon-only mode. ccTabIcons() wraps the label in its own span so it can be hidden, and the icon's
+   right margin collapses with it. Unraid's default-base.css hides every ".nav-item a span", so the
+   label needs this default-visible rule; the .cc-tabtext-off rule below has one more class and wins
+   when it applies. */
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a span.cc-tab-label { display: inline; }
 html.cc-tabtext-off #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a span.cc-tab-label { display: none; }
 html.cc-tabtext-off #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a svg.cc-tab-ico { margin-right: 0; }
-/* #18 (user: "können wir die tabs wenn sie kein text haben genauso groß machen wie die hauptleisten icons?"):
-   with the label gone the pill kept its text-sized padding (0 22px), so a 16px icon sat in a 60px-wide box —
-   match the utility icons' own box exactly instead (36x36, --cc-lgb-h, zero padding, same tier both already
-   share) rather than just trimming the existing padding to an arbitrary smaller number. */
+/* without the label the pill matches the utility icon boxes (36x36, --cc-lgb-h, no padding) */
 html.cc-tabtext-off #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a {
   width: var(--cc-lgb-h, 36px) !important; padding: 0 !important;
 }
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search).active > a {
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
 }
-/* rainbow: every page tab wears its own palette colour (inline by paintNav); ring the ACTIVE one so the
-   current page stays obvious once all tabs are coloured. cc-header-rb is already toggled by header.js. */
+/* rainbow: every tab wears its own palette colour, painted inline by paintNav (cc-header-rb comes
+   from header.js); the active one gets no ring either */
 html.cc-header-on.cc-header-rb #menu .nav-tile .nav-item.active > a {
-  box-shadow: none !important;   /* KEINE Rahmen/Ringe — Nutzer-Gesetz, gilt auch fuer aktive/selektierte Badges */
+  box-shadow: none !important;
 }
-/* ═══ rainbow "active only" sub-mode (cc.rbmode=active -> html.cc-header-rbneutral): idle badges stay
-   neutral grey, the ACTIVE left tab keeps its paintNav-painted colour, and every badge colours on hover
-   using the per-item --cc-rb-c/--cc-rb-ct vars paintNav stamps. The idle LEFT tabs are already grey
-   (base rule); only the accent-filled util icons + usage meter need overriding to neutral. */
+/* Rainbow "active only" (cc.rbmode=active -> html.cc-header-rbneutral): idle badges stay grey, the
+   active tab keeps its paintNav colour, and every badge colours on hover from the per-item
+   --cc-rb-c/--cc-rb-ct paintNav stamps. The idle tabs are grey already; only the accent-filled
+   icons and the usage meter need the neutral override. */
 html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util > a,
 html.cc-header-on.cc-header-rbneutral #menu .usage-bar > span { background: rgba(128, 128, 128, .18) !important; }
 html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util b.system,
@@ -131,49 +99,45 @@ html.cc-header-on.cc-header-rbneutral #menu .usage-bar > span:hover {
 }
 html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util > a:hover b.system,
 html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util > a:hover img.system { color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)) !important; }
-/* the underline accent is redundant now that the tab itself is a badge */
+/* no underline accent, since the tab itself is a badge */
 html.cc-header-on #menu .nav-item:after, html.cc-header-on #menu .nav-user.show:after { display: none !important; }
 
-/* ═══ utility icons -> accent-filled boxes, black/white glyph (tile-agnostic) ═══ */
+/* utility icons as accent-filled boxes with a contrast glyph, in either tile */
 html.cc-header-on #menu .nav-tile .nav-item.util > a {
   display: inline-flex !important; align-items: center; justify-content: center;
   box-sizing: border-box !important; flex: 0 0 auto;
-  /* #10: the utility icon boxes match the enlarged nav-pill HEIGHT (lgb tier, 36px) so they line up. */
+  /* the same lgb height (36px) as the tab pills */
   width: var(--cc-lgb-h, 36px) !important; height: var(--cc-lgb-h, 36px) !important; padding: 0 !important; margin: 0 3px;
-  /* cap the radius so pill-mode gives a rounded SQUARE (like the mockup), not a full
-     circle; rounded(6px)/square(0) stay untouched -> one shape family across modes */
+  /* capped so pill mode gives a rounded square rather than a circle, while rounded (6px) and
+     square (0) stay exact */
   border-radius: min(var(--cc-b-radius, 8px), 8px) !important;
   background: var(--cc-hdr-accent, #2f6feb) !important;
   transition: filter .12s;
 }
 html.cc-header-on #menu .nav-tile .nav-item.util > a:hover { filter: brightness(1.14); }
-html.cc-header-on #menu .nav-tile .nav-item.util:not(.cc-iconproxy) > a span { display: none !important; }   /* icon-only util buttons; the bell/burger proxy ghost is exempt (it IS the icon) */
+html.cc-header-on #menu .nav-tile .nav-item.util:not(.cc-iconproxy) > a span { display: none !important; }   /* icon-only util buttons; the bell/burger proxy is exempt because the span is the icon */
 html.cc-header-on #menu .nav-tile .nav-item.util b.system,
 html.cc-header-on #menu .nav-tile .nav-item.util img.system {
   font-size: var(--cc-md-icon, 14px) !important; line-height: 1 !important;
   padding: 0 !important; margin: 0 !important; color: var(--cc-hdr-accent-text, #fff) !important;
 }
-/* raster glyphs (img.system) ignore font-size — pin them to the icon token so they
-   scale to the box exactly like the icon-font glyphs, instead of rendering natural size */
+/* raster glyphs (img.system) ignore font-size, so they are pinned to the icon size to scale with
+   the box like the font glyphs */
 html.cc-header-on #menu .nav-tile .nav-item.util img.system {
   width: var(--cc-md-icon, 14px) !important; height: var(--cc-md-icon, 14px) !important;
   object-fit: contain !important;
 }
 
-/* ═══ hover bubbles ═══
-   ONE shared FLOATING bubble div#cc-tipfloat, a BODY child header.js fills + positions for
-   EVERY [data-cc-tip]/[data-tip] anchor DOCUMENT-WIDE (fixed, centred under the anchor,
-   viewport-clamped, FLIPPED above the anchor when the bottom edge would clip it) — pure-CSS
-   ::after bubbles get CLIPPED by overflow ancestors (nav tiles, tables) and by the viewport
-   edge (live-proven), so the island chips and every other area's anchors ride this engine now.
-   Scoped to cc-popups-on (= master theming, set on every page) — the engine's own JS gate.
-   tooltipster + jQuery-UI tooltips (Unraid's own systems) get the same frameless dark look.
-   UNIFIED BUBBLE SPEC (identical across all CC sheets — keep in sync). */
+/* Hover bubbles. One floating div#cc-tipfloat, a body child that header.js fills and positions
+   for every [data-cc-tip] and [data-tip] anchor on the page: fixed, centred under the anchor,
+   clamped to the viewport and flipped above it at the bottom edge. A CSS ::after bubble would be
+   clipped by overflow ancestors and the viewport. Scoped to cc-popups-on (master theming, set on
+   every page). Unraid's tooltipster and jQuery UI tooltips get the same frameless dark look, and
+   the bubble looks the same in every CC sheet. */
 html.cc-popups-on #cc-tipfloat {
   position: fixed; display: none; transform: translateX(-50%);
-  /* #(user: "die Infobubble funktioniert nicht"): the account popover + notification drawer live in .unapi, a
-     body-level stacking context at z-index 999999. The bubble is its sibling, so at z:9999 it rendered BEHIND
-     them. Lift it above every app layer so it is always on top. */
+  /* above every app layer, including the .unapi account popover and notification drawer at
+     z-index 999999 */
   z-index: 2147483647; width: max-content; max-width: 280px;
   background: #393939; color: #f4f4f4; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);
   padding: 9px 12px; font-size: 12.5px; font-weight: 400; line-height: 1.45;
@@ -190,7 +154,7 @@ html.cc-popups-on #cc-tipfloat::before {
   border-color: transparent transparent #393939 transparent;
   pointer-events: none;
 }
-/* flipped ABOVE the anchor (header.js sets the class at the bottom edge): arrow points DOWN */
+/* flipped above the anchor (header.js sets the class at the bottom edge), so the arrow points down */
 html.cc-popups-on #cc-tipfloat.cc-tip-above::before {
   top: auto; bottom: -6px;
   border-width: 6px 6px 0 6px;
@@ -204,54 +168,44 @@ html.cc-header-on .ui-tooltip {
 }
 html.cc-header-on .tooltipster-base .tooltipster-arrow { display: none !important; }   /* the arrow draws tinted edges = lines */
 
-/* ═══ STATUS ISLAND (span#cc-island, built by header.js ccIsland()) ═══
-   Lives INSIDE div#header (the 91px top strip) between the two Connect components
-   (unraid-header-os-version / unraid-user-profile) — restyled CSS-only in the TAKEOVER
-   section below (their light DOM is rebuilt by the auto-mount observer, so never DOM-edit
-   them); the island is our OWN light-DOM element NEXT to them.
-   S-tier chips (~21px, 11px font) + 10px state dots. NO borders/lines (law): the grey
-   fill alone is the chip; the dot COLOUR is set inline per state by header.js. */
-html.cc-header-on #header { display: flex; align-items: center; }   /* flex row so margin-left:auto works + everything centres on ONE 91px line */
-/* #19 (user: "chips per drag and drop anordenbar, drei zeilen"): the island is a COLUMN of 3 explicit,
-   right-aligned rows; header.js builds the chips into them per the saved cc.isl.order and lets the user
-   long-press + drag a chip to any row/position. Empty rows collapse. */
+/* Status island (span#cc-island, built by header.js ccIsland()). It sits inside div#header, the
+   91px top strip, between the two Connect components, which the top header section styles with
+   CSS alone because the auto-mount observer rebuilds them; the island is CC's own element next to
+   them. Small chips (about 21px, 11px text) with 10px state dots and no borders: the grey fill is
+   the chip, and header.js sets each dot's colour inline. */
+html.cc-header-on #header { display: flex; align-items: center; }   /* a flex row so margin-left:auto works and everything centres on the 91px line */
+/* The island is a column of three right-aligned rows. header.js fills them in the saved
+   cc.isl.order and lets the user long-press and drag a chip to any row and position. */
 html.cc-header-on #cc-island {
-  /* #(user: "der Anordnungsbereich soll unbegrenzt über den ganzen Kopfbereich gehen, frei ohne Zwang — zB
-     alle Chips in eine Zeile"): the island spans the whole free header strip (right edge to just past the
-     brand at ~233px), so a single row can hold every chip. It stays content-sized (margin-left:auto), the
-     cap only lifts the old 430px ceiling that forced wrapping. */
+  /* spans the free header strip from the right edge to just past the brand, so one row can hold
+     every chip; margin-left:auto keeps it content-sized */
   display: flex; flex-direction: column; align-items: flex-end; gap: 5px;
   max-width: calc(100vw - 270px); margin-left: auto; margin-right: 16px; align-self: center; order: 2;
 }
 html.cc-header-on #cc-island .cc-isl-row {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; row-gap: 6px;
-  min-height: 22px;   /* #(user: "die Zeilen sollen immer fix bleiben wo sie sind, auch wenn andere leer sind"): each of the 3 rows reserves its slot -> no vertical re-centring when a row empties */
+  min-height: 22px;   /* each row keeps its slot, so the others do not move when one empties */
 }
-html.cc-header-on #cc-island .cc-isl-row:empty { display: flex; }   /* keep the empty slot (do NOT collapse) so the surviving rows stay in place */
-/* #(user: "nur die drei Zeilen fest, Chips frei verteilbar"): in ARRANGE mode the empty rows must become
-   real drop targets (a Y-band + a landing area), else you could never move a chip INTO an emptied row. */
+html.cc-header-on #cc-island .cc-isl-row:empty { display: flex; }   /* keep the empty slot so the other rows stay in place */
+/* in arrange mode empty rows are real drop targets, or a chip could never move into one */
 html.cc-header-on.cc-arrange #cc-island .cc-isl-row:empty { display: flex !important; min-height: 24px; min-width: 52px; }
-/* #7 (user): the grab "hand" cursor should show ONLY in edit/arrange mode, not on every hover. Outside
-   arrange the island is a passive status display, so the chip keeps the default cursor. */
+/* the grab cursor shows only in arrange mode; otherwise the island is a passive display */
 html.cc-header-on #cc-island .cc-isl-chip { cursor: default; }
 html.cc-header-on.cc-arrange #cc-island .cc-isl-chip { cursor: grab; }
 /* while dragging: reveal the 3 drop zones + fade the dragged chip */
 html.cc-header-on.cc-arrange #cc-island { gap: 8px; }
-/* #11 (user): while arranging, chips must STAY IN PLACE (only wiggle) -> NO reflow of any kind. Rows keep their
-   natural size (no min-width/min-height/padding); they only get a dashed drop-target outline. Empty rows stay
-   hidden - making them visible re-centred the island and shifted the chips ~8px (verified live). Reordering within
-   the visible rows still works; that is what the user needs. */
+/* while arranging, the chips stay in place and only wiggle, so the rows get a dashed drop outline
+   and nothing that would reflow them */
 html.cc-header-on.cc-arrange #cc-island .cc-isl-row { outline: 1px dashed rgba(255, 255, 255, .22); outline-offset: 3px; border-radius: 8px; }
 html.cc-header-on #cc-island .cc-isl-chip.cc-isl-dragging { opacity: .4; cursor: grabbing; }
-/* K12 (user): the chips WIGGLE while the arrange mode is on (like the menu-drag), so it's obvious they can be moved */
+/* the chips wiggle in arrange mode, like the menu drag, to show they can be moved */
 @keyframes cc-isl-wiggle { 0%{transform:rotate(-1.6deg);} 25%{transform:rotate(1.4deg) translateY(-.5px);} 50%{transform:rotate(-1.2deg);} 75%{transform:rotate(1.6deg) translateY(.5px);} 100%{transform:rotate(-1.6deg);} }
 html.cc-header-on.cc-arrange #cc-island .cc-isl-chip { animation: cc-isl-wiggle .32s ease-in-out infinite; transform-origin: 50% 50%; }
 html.cc-header-on.cc-arrange #cc-island .cc-isl-chip:nth-child(2n) { animation-delay: -0.16s; }   /* per-chip phase offset -> individual jitter, not a synced block */
 html.cc-header-on.cc-arrange #cc-island .cc-isl-chip:nth-child(3n) { animation-delay: -0.08s; }
 html.cc-header-on.cc-arrange #cc-island .cc-isl-chip.cc-isl-dragging { animation: none; }
 
-/* V-B (suggestion): respect prefers-reduced-motion — kill CC's wiggle/pulse/transitions for users who ask
-   the OS to reduce motion (only bites when the setting is on). */
+/* prefers-reduced-motion turns off CC's wiggle, pulse and transitions */
 @media (prefers-reduced-motion: reduce) {
   html.cc-header-on *, html.cc-popups-on *, html.cc-tools-on *, html.cc-shares-on *, html.cc-vms-on *, html.cc-docker-on *,
   html.cc-header-on, html.cc-popups-on {
@@ -266,42 +220,39 @@ html.cc-header-on #cc-island .cc-isl-chip {
   background: rgba(128, 128, 128, .18); color: #e6e6e6;
   font-size: 11px; font-weight: 600; line-height: 1.4;
 }
-/* the dot is OPTIONAL: text-only chips (uptime/OS, prepended by header.js) carry no
-   .cc-isl-dot span — nothing above assumes one, the symmetric padding stands alone */
+/* the dot is optional: text-only chips (uptime, OS) carry no .cc-isl-dot and the symmetric
+   padding stands alone */
 html.cc-header-on #cc-island .cc-isl-dot {
   width: 10px; height: 10px; flex: 0 0 auto; margin-right: 6px;
   border-radius: var(--cc-dot-r, 50%);           /* state dots follow the global dot radius */
 }
-/* usage chip MINI BAR (user: "die Füllstandanzeige soll so ein schöner balken sein wie zuvor"):
-   grey track + coloured fill; width/colour come inline from header.js — the fill IS the state
-   (green <80, amber <95, red above), so this chip carries no dot */
+/* The usage chip's mini bar: a grey track with a fill whose width and colour header.js sets
+   inline. The fill is the state (green below 80, amber below 95, red above), so the chip has no
+   dot. */
 html.cc-header-on #cc-island .cc-isl-bar {
   width: 46px; height: 8px; flex: 0 0 auto; margin-right: 6px;
   border-radius: var(--cc-dot-r, 4px);
   background: rgba(128, 128, 128, .25); overflow: hidden;
 }
 html.cc-header-on #cc-island .cc-isl-fill { display: block; height: 100%; }
-/* #13: short lead label before the fill/RAM/CPU mini-bars — disambiguates the three otherwise-identical
-   bars (Array / RAM / CPU); the % text stays to the right of the bar, the tooltip carries the detail */
+/* a short label before the array, RAM and CPU bars tells the three apart; the % text stays right
+   of the bar and the tooltip has the detail */
 html.cc-header-on #cc-island .cc-isl-lead {
   flex: 0 0 auto; margin-right: 6px; font-size: 10px; font-weight: 700;
   letter-spacing: .4px; opacity: .72; text-transform: uppercase;
 }
-/* #12: network Up/Down chip — clickable (toggles Bit/Byte); the two arrow segments sit side by side.
-   Shade-only, radius from --cc-b-radius via the shared .cc-isl-chip rule; no dot, no border, no ring. */
+/* the network up/down chip toggles bit and byte on click; its two segments sit side by side */
 html.cc-header-on #cc-island .cc-isl-net { cursor: pointer; }
 html.cc-header-on #cc-island .cc-isl-net .cc-isl-net-seg + .cc-isl-net-seg { margin-left: 8px; }
 
-/* ═══ TOP HEADER TAKEOVER: brand + version chip + bell/burger in CC style ═══
-   The Connect components render LIGHT DOM, so outside CSS matches and survives the
-   auto-mount rebuilds (DOM surgery would not — CSS-only here, header.js only ADDS
-   siblings like #cc-brand). FRAGILITY CONTRACT: the Tailwind class soup on these nodes
-   is generated output, NOT a stable API — every selector below is structural
-   (tag / :nth-child / [id^="reka-menu-trigger"]). If a future Unraid build reorders the
-   nodes, these rules fail SOFT (natives simply reappear); re-measure the live DOM and
-   re-pin. Measured DOM (7.3.2): unraid-header-os-version > div > a > img = wordmark,
-   sibling div holds the version dropdown trigger; #UserProfile > div:1 = text row,
-   > div:2 = [server-name div, bell span, burger span]. */
+/* Top header: brand, version chip, bell and burger in CC style. The Connect components render
+   light DOM, so outside CSS reaches them and survives their auto-mount rebuilds, which DOM changes
+   would not; header.js only adds siblings such as #cc-brand. Their Tailwind classes are generated
+   output, so every selector here is structural (tag, :nth-child, [id^="reka-menu-trigger"]). If an
+   Unraid build reorders the nodes these rules fail soft and the native parts reappear; measure the
+   live DOM again. On 7.3.2: unraid-header-os-version > div > a > img is the wordmark and the
+   sibling div holds the version dropdown trigger; #UserProfile > div:1 is the text row and
+   > div:2 holds [server-name div, bell span, burger span]. */
 
 /* 1) hide natives: wordmark anchor, #UserProfile text row, server-name div in the controls row */
 html.cc-header-on unraid-header-os-version a { display: none !important; }
@@ -314,9 +265,8 @@ html.cc-header-on.cc-usage-isl #menu .usage-bar { display: none !important; }
    its left edge flush with the first menu tab below (the measured shared alignment anchor) */
 html.cc-header-on #cc-brand {
   display: inline-flex; align-items: center; gap: 10px;
-  font-size: 30px; font-weight: 650; color: #f4f4f4; letter-spacing: .3px;   /* "wesentlich größer" (user call) */
-  /* -8px: #header's own left offset (the wordmark sat at x=8) — without the correction
-     the brand landed at 23 instead of the tabs' 15 (live-measured) */
+  font-size: 30px; font-weight: 650; color: #f4f4f4; letter-spacing: .3px;
+  /* -8px for #header's own left offset, so the brand lines up with the tabs */
   margin-left: calc(var(--cc-align-left, 15px) - 8px);
   margin-right: 14px; order: 0;   /* leftmost on the #header flex row (island 2, version chip 3) */
 }
@@ -326,7 +276,7 @@ html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"] {
   background: rgba(128, 128, 128, .18); color: var(--cc-text-chip, #cfcfcf);
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 3px 11px);
   font-size: 11px; font-weight: 600;
-  /* its Tailwind ring-offset/underline visuals are lines — never (law) */
+  /* no Tailwind ring or underline */
   outline: none !important; box-shadow: none !important; text-decoration: none !important;
   transition: filter .12s;
 }
@@ -335,78 +285,62 @@ html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"]:focus,
 html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"]:focus-visible {
   outline: none !important; box-shadow: none !important; text-decoration: none !important;
 }
-/* N10: the native floating version component is HIDDEN — its version number now renders as a
-   proper island chip (header.js cc-isl-ver), so every chip aligns right in 2-3 rows instead of
-   one chip floating apart in the corner. CSS-only, no DOM moves — law. */
+/* the native floating version component is hidden; the version shows as an island chip
+   (header.js cc-isl-ver), so every chip aligns right in the rows */
 html.cc-header-on unraid-header-os-version { display: none !important; }
 
-/* 3) bell + burger: #16 ROUND 5 (reparent model). Rounds 1-4 all tried to keep a position:fixed
-   OVERLAY in sync with the position:sticky menu row from JS (a 1s interval, a hover listener, then a
-   per-frame rAF loop) — structurally unfixable, since no "stickychange" event exists and a poll is
-   always at least one frame behind during the sticky scroll transition. Worse, a fixed span pinned OVER
-   #menu is still visually a CHILD of #header's own stacking context, so `html.cc-anim-wild #menu:has(
-   .nav-tile > .nav-item:hover) { z-index: 103 }` (below) lifted #menu's opaque .nav-tile.right background
-   straight over both triggers on ANY nav-item hover — the actual cause of "hidden on hover elsewhere,
-   still a group" (they are siblings inside the same Connect container, so they vanish together). FIX:
-   header.js's dock code physically ADOPTS the two live trigger <span>s as real DOM children of their
-   proxy divs (#cc-bell-proxy / #cc-burger-proxy, already living in the native .nav-tile.right flow for
-   drag & drop). Adopted, they reflow NATIVELY with the row (zero JS-tracking lag) and paint INSIDE
-   .nav-tile.right's own stacking context, where that tile's background can never cover them again. */
-/* #11 ROOT CAUSE (help icon "does nothing", still relevant post-reparent): the leftover, zero-footprint
-   #UserProfile container must stay CLICK-THROUGH so it can never eat a click meant for whatever now sits
-   at its old on-screen spot. */
+/* 3) Bell and burger. header.js adopts the two live trigger <span>s as children of their proxy
+   divs (#cc-bell-proxy, #cc-burger-proxy) in the native .nav-tile.right flow, so they reflow with
+   the sticky row and paint inside that tile's stacking context. A position:fixed overlay synced
+   from JS always lags a frame behind the sticky scroll, and the tile's opaque background covered
+   it whenever the #menu z-index lift further down applied. */
+/* the leftover, zero-footprint #UserProfile container stays click-through, so it cannot eat
+   clicks meant for whatever sits at its old spot */
 html.cc-header-on #UserProfile { pointer-events: none !important; }
 html.cc-header-on #UserProfile > div:nth-child(2) > span { pointer-events: auto !important; }
-/* SAFETY NET, independent of JS timing: a trigger span still (or again, mid-rebuild) inside the Connect
-   container is by definition NOT YET ADOPTED — hide it. An ADOPTED span no longer matches this selector
-   (it lives inside its proxy now, see `[data-cc-trig]` below) and is unaffected. visibility, not
-   display:none, so Connect's own layout measurement of the row stays undisturbed. This is what makes the
-   "flash at the parked anchor on a Vue rebuild" failure mode structurally impossible, independent of how
-   fast header.js's ccWatchAdopt() observer reacts. */
+/* A trigger span still inside the Connect container, or back there during a rebuild, is not
+   adopted yet, so it is hidden; an adopted span no longer matches. visibility rather than
+   display:none leaves Connect's layout measurement intact, and a Vue rebuild cannot flash the
+   trigger at its old spot however fast ccWatchAdopt() reacts. */
 html.cc-header-on #UserProfile > div:nth-child(2) > span { visibility: hidden !important; }
 html.cc-header-on #UserProfile > div:nth-child(2) { align-items: center; gap: 6px; }   /* leftover container spacing; harmless once its children are hidden/adopted */
-/* bell + burger dress EXACTLY like the utility icon boxes beside them (user call): accent
-   fill + contrast glyph in normal mode, grey fill + grey glyph in the reactive sub-mode —
-   the native glyph STATE colours (yellow bell, red warning) are overridden for consistency.
-   [data-cc-trig] is the marker header.js stamps on each trigger the moment it adopts it — this now
-   targets the ADOPTED span wherever it lives (inside its proxy), not its old #UserProfile position. */
+/* Bell and burger look like the utility icon boxes beside them: accent fill and contrast glyph,
+   grey in the reactive sub-mode, over the native state colours (yellow bell, red warning).
+   header.js stamps [data-cc-trig] on each trigger when it adopts it. */
 html.cc-header-on [data-cc-trig] {
   display: inline-flex; align-items: center; justify-content: center;
   box-sizing: border-box; width: var(--cc-md-ibox, 30px); height: var(--cc-md-ibox, 30px); padding: 0;
-  /* #34-followup: a plain util icon's spacing comes from `margin: 0 3px` on its <a> (Header.css ~line
-     142) - the adopted trigger is a <span>, never matches that selector, so without its own margin it
-     sits flush (0px) against its neighbour instead of the same 3px+3px = 6px gap. Match it explicitly. */
+  /* the same 3px margin a util icon's <a> has, which the adopted <span> never matches */
   margin: 0 3px;
-  background: var(--cc-rb-c, var(--cc-hdr-accent, #2f6feb)) !important;   /* #15: rainbow slot colour (JS-stamped) with the single-accent fallback */
+  background: var(--cc-rb-c, var(--cc-hdr-accent, #2f6feb)) !important;   /* the rainbow slot colour header.js stamps, or the accent */
   border-radius: min(var(--cc-b-radius, 8px), 8px);
   color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)); transition: color .12s, filter .12s;
 }
 html.cc-header-on [data-cc-trig]:hover { filter: brightness(1.14); }
 html.cc-header-on.cc-header-rbneutral [data-cc-trig] { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf); }
 html.cc-header-on.cc-header-rbneutral [data-cc-trig]:hover { background: var(--cc-rb-c, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #fff)); }
-/* glyphs at 16px — the 14px icon token +2px, these two glyphs read better a notch larger;
-   color FORCED onto the svg so the native state tints (yellow/red) cannot leak through */
+/* glyphs at 16px, a notch above the 14px icon size; the colour is forced onto the svg so the
+   native state tints cannot leak through */
 html.cc-header-on [data-cc-trig] svg { width: 16px !important; height: 16px !important; color: inherit !important; fill: currentColor; }
-/* UNREAD indicator: the bell shows a SECOND svg (svg.absolute -top-1 -right-1 size-4) only when
-   notifications exist. The blanket rule above sized it to 16px = the bell's own size AND forced it to the
-   bell's colour, so an unread state HALF-COVERED the glyph with a same-colour blob (user report). Shrink it
-   to a small amber corner dot that reads as a proper badge and clears the glyph. */
+/* The bell shows a second svg (svg.absolute -top-1 -right-1 size-4) when there are unread
+   notifications. The rule above would size and colour it like the bell and cover the glyph, so it
+   becomes a small amber corner dot. */
 html.cc-header-on [data-cc-trig] svg[class*="absolute"] {
   width: 8px !important; height: 8px !important;
   top: -5px !important; right: -5px !important;
   color: var(--cc-warn, #e0912a) !important; fill: currentColor !important;
 }
-/* the burger's SECOND svg is a dropdown chevron — visual noise inside a 30px box */
+/* the burger's second svg is a dropdown chevron, which is noise inside a 30px box */
 html.cc-header-on [data-cc-trig="burger"] svg:nth-of-type(2) { display: none !important; }
-/* their Tailwind ring-offset classes may paint focus rings — kill on every focusable (law) */
+/* their Tailwind ring-offset classes may paint focus rings, so remove them on every focusable */
 html.cc-header-on [data-cc-trig]:is(:focus, :focus-visible),
 html.cc-header-on [data-cc-trig] :is(span, button, a):focus,
 html.cc-header-on [data-cc-trig] :is(span, button, a):focus-visible {
   outline: none !important; box-shadow: none !important;
 }
-/* the burger's dropdown MENU (Connect popover, appended to body as .bg-popover) in CC style:
-   dark carbon surface, no frame, CC radius, elevation shadow — matches the ui-dialog/SweetAlert
-   popup theming. Gated on cc-popups-on (master theming), like the other popup restyles. */
+/* The burger's dropdown menu (a Connect popover appended to body as .bg-popover): dark surface,
+   no frame, CC radius and an elevation shadow, like the ui-dialog and SweetAlert popups. Gated
+   on cc-popups-on (master theming). */
 html.cc-popups-on .bg-popover {
   background: #161616 !important; color: #e6e6e6 !important;
   border: none !important; border-radius: 12px !important;
@@ -414,9 +348,9 @@ html.cc-popups-on .bg-popover {
 }
 /* dim + blur backdrop behind the bell/burger menu (header.js ccPopoverDim injects #cc-pop-dim) */
 #cc-pop-dim { position: fixed; inset: 0; background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)); backdrop-filter: var(--cc-backdrop-blur, blur(5px)); -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)); }
-/* highlighted/active menu items -> CC accent SOLID (kills the native orange gradient). The gradient
-   can sit on the item OR a child, and reka-ui marks the active item several ways, so cover them all
-   (N6: the old rule missed data-state / the child gradient node). */
+/* Highlighted and active menu items get a solid accent instead of the native orange gradient. The
+   gradient can sit on the item or a child, and reka-ui marks the active item several ways, so all
+   of them are covered. */
 html.cc-popups-on .bg-popover :is(button, a, [role="menuitem"], li):hover,
 html.cc-popups-on .bg-popover [data-highlighted],
 html.cc-popups-on .bg-popover [data-state="active"],
@@ -435,8 +369,8 @@ html.cc-popups-on .bg-popover [aria-selected="true"] *,
 html.cc-popups-on .bg-popover [class*="gradient"] {
   background-image: none !important;
 }
-/* the "API offline" warning row -> calm CC warning (rötlich getönt, kein Alarm-Balken), NO frame/
-   border/ring (law). Cover the first-child box AND any red/orange bordered/alert node. */
+/* the "API offline" warning row as a calm red tint without a frame; covers the first-child box
+   and any red or orange bordered alert node */
 html.cc-popups-on .bg-popover li:first-child:has(> div),
 html.cc-popups-on .bg-popover [role="alert"],
 html.cc-popups-on .bg-popover [class*="border-red"],
@@ -451,44 +385,34 @@ html.cc-popups-on .bg-popover [role="alert"] :is([class*="bg-red"], [class*="bg-
   background: transparent !important; background-image: none !important; color: #e0655f !important; font-weight: 600; border: none !important; box-shadow: none !important;
 }
 
-/* ═══ right-edge gutter: bell + burger are now REAL in-flow proxies (cc-iconproxy), no longer a
-   reserved-space fixed dock. The right nav group (.nav-tile.right, justify-content:flex-end) packs to
-   the right, so a 16px right pad lands the trailing proxy on the same gutter as the status island
-   (clientW-16). The trailing item's right margin is zeroed so the row tail is the icon box itself.
-   Sidebar theme is a vertical menu (padding-left:8rem) — excluded, like the search rules. */
+/* Right-edge gutter. The right nav group (.nav-tile.right, justify-content:flex-end) packs to the
+   right, so a 16px right padding puts the trailing bell and burger proxies on the status island's
+   gutter, and the trailing item's right margin is zeroed so the row ends at the icon box. The
+   sidebar theme has a vertical menu and is left out, like the search rules. */
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right { padding-right: 16px !important; }
-/* ROOT CAUSE of "das menue und der badge sind rechts nicht buendig" (user, v3.6.6): #menu is a 2-column
-   grid (left page-tabs tile + .nav-tile.right icon group). The left tile defaults to min-width:auto, so it
-   refuses to shrink below its tabs' intrinsic width; once the tabs get long enough the grid overflows and
-   pushes the WHOLE right group past the viewport (measured live at 1400px viewport with the user's real
-   settings: #menu scrollWidth 1689 vs clientWidth 1392 — the trailing icons, hamburger included, sat 289px
-   off-screen). Then the hamburger is simply nowhere near the content edge that SHOW MORE aligns to, which
-   is exactly the "not flush" the user kept seeing while a narrower window made it worse. The identical
-   min-width:0 + overflow-x:auto pair already existed BELOW, but only while the search box was open
-   (cc-search-open) — the overflow is not search-specific, so it belongs on the tile unconditionally. */
+/* #menu is a two-column grid (page tabs, icon group). With min-width:auto the tab tile will not
+   shrink below its tabs' width, so long tabs push the whole icon group past the viewport. The tab
+   tile gets min-width:0 and scrolls instead. */
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile:not(.right) { min-width: 0 !important; overflow-x: auto !important; }
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right { min-width: 0 !important; flex-wrap: nowrap !important; }
-/* …but WITHOUT the scrollbar the overflow would otherwise draw: a full-width native bar across the menu bar
-   is louder than the tabs it serves (and CC's own thumb styling doesn't rescue it there). The row still
-   scrolls by wheel/trackpad/drag; only the bar is hidden. */
+/* the tab row scrolls by wheel, trackpad or drag, but a full-width native scrollbar across the menu
+   bar would be louder than the tabs, so it is hidden */
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile:not(.right) { scrollbar-width: none !important; }
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile:not(.right)::-webkit-scrollbar { height: 0 !important; width: 0 !important; display: none !important; }
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right > *:last-child { margin-right: 0 !important; }
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right .nav-item.util:last-child > a { margin-right: 0 !important; }
-/* ── bell/burger PROXIES: real draggable nav-items that hold each icon's slot in the flow. In NORMAL
-   mode the live reka trigger is ADOPTED as a real child of the proxy (header.js) and the proxy's own
-   <a>/ghost is hidden (JS sets display:none on it — two 36px boxes must not sit side by side). In ARRANGE
-   mode header.js swaps it: the adopted trigger goes visibility:hidden (CSS below) and the ghost's <a>
-   comes back (display:'' -> the CSS rule below applies again), so you drag a visible, correctly-dressed
-   ghost icon and the pointer lands on the proxy DIV itself (the real click target is safely tucked away
-   invisible, not able to intercept the drag). Ghost mirrors the trigger box for a faithful preview. */
+/* Bell and burger proxies: draggable nav-items that hold each icon's slot in the flow. Normally
+   header.js adopts the live reka trigger into the proxy and hides the proxy's own <a>, so two 36px
+   boxes never sit side by side. In arrange mode it swaps them: the adopted trigger is hidden (CSS
+   below) and the ghost <a> comes back, so the user drags a visible ghost dressed like the trigger
+   and the real click target cannot intercept the drag. */
 html.cc-header-on #menu .nav-item.cc-iconproxy > a { display: inline-flex; align-items: center; justify-content: center; padding: 0; width: 36px; height: 36px; }
-/* transparent: the overlaid live trigger (or the ghost) supplies the fill — else two .18 layers stack lighter than
-   the sibling icons. Specificity must top the util-fill rules (accent 142 / rbneutral 152), so qualify fully. */
+/* transparent, because the trigger or the ghost supplies the fill and two .18 layers would stack
+   lighter than the sibling icons; fully qualified to outrank the util fill rules */
 html.cc-header-on.cc-header-rbneutral #menu .nav-tile .nav-item.util.cc-iconproxy > a,
 html.cc-header-on #menu .nav-tile .nav-item.util.cc-iconproxy > a { background: transparent !important; }
-/* display FORCED (Unraid hides <span> labels inside util-icon <a>s); the ghost fills the <a> so its box is
-   a reliable pin target, and matches the 36px live-trigger box. Hidden in normal mode (live trigger shows). */
+/* display is forced because Unraid hides <span> labels inside util icon links; the ghost fills the
+   36px <a> so its box is a reliable pin target, and stays hidden outside arrange mode */
 html.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost {
   display: inline-flex !important; align-items: center; justify-content: center; box-sizing: border-box;
   width: 100%; height: 100%;
@@ -498,12 +422,11 @@ html.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost {
 html.cc-header-on.cc-header-rbneutral #menu .nav-item.cc-iconproxy .cc-proxy-ghost { background: rgba(128, 128, 128, .18); color: var(--cc-text-chip, #cfcfcf); }
 html.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost svg { width: 16px; height: 16px; color: inherit; fill: currentColor; }
 html.cc-shape-circle.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost { border-radius: 50%; }
-/* arrange mode: swap live (adopted) trigger <-> ghost. [data-cc-trig] (not the old #UserProfile path) —
-   the adopted span now lives inside the proxy itself. */
+/* arrange mode: the adopted trigger hides and the ghost shows */
 html.cc-arrange.cc-header-on [data-cc-trig] { visibility: hidden !important; }
 html.cc-arrange.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost { visibility: visible; }
 
-/* ═══ array-usage meter -> clean, minimal accent pill ═══ */
+/* the array usage meter as a minimal accent pill */
 html.cc-header-on #menu .usage-bar {
   float: none !important; align-self: center;
   height: var(--cc-md-h, 30px) !important; line-height: var(--cc-md-h, 30px) !important; width: 130px !important;
@@ -520,23 +443,11 @@ html.cc-header-on #menu .usage-bar > span {
   font-size: 11px !important; font-weight: 600 !important; padding-right: 8px !important; line-height: 24px !important;
 }
 
-/* ═══ gui_search field (horizontal top-nav layout only) ═══
-   Clicking search opens Unraid's NATIVE box, prepended as the FIRST child of
-   #menu .nav-tile.right. gui_search hides the util icons + user menu with a jQuery
-   inline display:none — we OVERRIDE that with !important so every icon AND the
-   array-usage meter STAY VISIBLE and simply shift aside; nothing is covered. The box
-   gets a MODERATE width (not stretched across the bar) plus the CC look, and the left
-   page tabs shrink/scroll to make room. Scoped to >=768px and NOT the sidebar theme. */
-/* SEARCH AS A DROP-DOWN PANEL, EVERY WIDTH (user, v3.6.6 aktiver Sammelmodus: "koennen wir die suche nach
-   unten aufploppen lassen, jetzt verschiebt das die icons und der verfuegbare platz ist zu klein, daher
-   kommt ein scrollbalken"). gui_search injects #guiSearchBoxSpan INLINE as a flex child of .nav-tile.right,
-   so the field's width is taken out of the icon row: the icons shift and, once the row no longer fits, the
-   bar scrolls. The old moderate-width treatment (22rem, formerly in a >=768px block) only made the theft
-   smaller, never stopped it — and an earlier attempt scoped the real fix to <768px, which never fired at
-   the user's actual desktop width. Take the field OUT of the flex flow at ALL widths instead: anchor it
-   absolutely to the icon row and drop it BELOW as a floating panel, so no sibling ever moves.
-   Gated on cc-popups-on (the master theming switch), NOT the optional cc-header-on sub-toggle — this closes
-   a layout defect, not a re-skin. */
+/* The gui_search field (horizontal top nav only). gui_search inserts #guiSearchBoxSpan as a flex
+   child of .nav-tile.right, where its width would push the icons aside and make the row scroll. So
+   the field leaves the flex flow at every width and drops below the icon row as a floating panel.
+   Gated on cc-popups-on (master theming) rather than the header area, since this fixes the layout
+   rather than restyling it. */
 html.cc-popups-on:not(.Theme--sidebar) #menu .nav-tile.right { position: relative !important; }
 html.cc-popups-on:not(.Theme--sidebar) #guiSearchBoxSpan {
   position: absolute !important; top: calc(100% + 8px) !important; right: 0 !important; left: auto !important;
@@ -545,7 +456,7 @@ html.cc-popups-on:not(.Theme--sidebar) #guiSearchBoxSpan {
 }
 html.cc-popups-on:not(.Theme--sidebar) #guiSearchBox {
   width: 100% !important; max-width: 100% !important;
-  height: 40px !important; padding: 0 14px 0 2.4rem !important;   /* KEEP the native 2.4rem LEFT pad — the magnifier glyph (#guiSearchBoxSpan:after, left:1.5rem) sits there; a 0-14px override once slid the text UNDER it */
+  height: 40px !important; padding: 0 14px 0 2.4rem !important;   /* the native 2.4rem left padding holds the magnifier glyph (#guiSearchBoxSpan:after, left:1.5rem) */
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
   background: var(--cc-surface-3, #2e2e2e) !important; color: #eaeaea !important; font-size: var(--cc-md-fs, 13px) !important;
   box-shadow: 0 14px 40px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .4) !important; outline: none !important;
@@ -553,26 +464,24 @@ html.cc-popups-on:not(.Theme--sidebar) #guiSearchBox {
 html.cc-popups-on:not(.Theme--sidebar) #guiSearchBoxSpan:after { color: var(--cc-text-dim, #8a8a8a) !important; }
 html.cc-popups-on:not(.Theme--sidebar) #guiSearchBoxSpan .awesomplete { width: 100% !important; }
 @media (min-width: 768px) {
-  /* KEEP every util icon + the user menu visible while searching — an external !important
-     beats gui_search's normal inline display:none (importance outranks inline origin) */
+  /* keep every util icon and the user menu visible while searching; !important beats gui_search's
+     inline display:none */
   html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-item.util { display: flex !important; }
   html.cc-header-on.cc-search-open:not(.Theme--sidebar) #menu .nav-user.show { display: flex !important; }
 }
 @media (max-width: 767.98px) {
-  /* the field floats ABOVE content now instead of squeezing the row, so the icons never need to
-     shrink/scroll while searching — the >=768px "keep everything visible + shrink the tabs" trick above
-     is unnecessary here (nothing shrinks), but harmless if it still matches. */
+  /* the field floats above the content, so the icons can stay visible here too */
   html.cc-popups-on.cc-search-open:not(.Theme--sidebar) #menu .nav-item.util { display: flex !important; }
   html.cc-popups-on.cc-search-open:not(.Theme--sidebar) #menu .nav-user.show { display: flex !important; }
 }
-/* T7 (user: "die liste die bei der suche erscheint ist nicht im cc style"): the gui_search results are an
-   Awesomplete dropdown (.awesomplete > ul). Give it the CC popover look — dark surface, no border line, CC
-   radius, elevation — and colour the active/hover item + the matched-text <mark> in the colour mode. */
+/* The gui_search results are an Awesomplete dropdown (.awesomplete > ul). It gets the CC popover
+   look (dark surface, no border, CC radius, elevation), and the active item and the matched <mark>
+   take the colour mode. */
 html.cc-header-on .awesomplete > ul {
   background: var(--cc-surface-window, #242424) !important; border: none !important; box-shadow: 0 14px 40px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .4) !important;
   border-radius: var(--cc-r-2, 10px) !important; margin-top: 6px !important; padding: 4px !important; color: var(--cc-text, #e6e6e6) !important;
 }
-html.cc-header-on .awesomplete > ul::before { display: none !important; }   /* kill the little pointer triangle (a border-line artefact) */
+html.cc-header-on .awesomplete > ul::before { display: none !important; }   /* no pointer triangle, which is drawn with border lines */
 html.cc-header-on .awesomplete > ul > li {
   color: var(--cc-text, #e6e6e6) !important; background: transparent !important; padding: 8px 12px !important;
   border-radius: var(--cc-r-1, 6px) !important; border: none !important;
@@ -585,39 +494,31 @@ html.cc-header-on .awesomplete mark, html.cc-header-on .awesomplete > ul > li ma
   background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important; border-radius: 3px;
 }
 
-/* Badge-Form "circle" (v2.18.0): round the SQUARE utility icon boxes to full circles. Only square/
-   near-square objects get this — rectangular text pills stay capsules (--cc-b-radius 999px).
-   The docked bell/burger are the same square box family, so they follow. */
+/* Badge shape "circle" rounds the square utility icon boxes, the docked bell and burger included,
+   into circles; text pills stay capsules. */
 html.cc-shape-circle.cc-header-on #menu .nav-tile .nav-item.util > a { border-radius: 50% !important; }
 html.cc-shape-circle.cc-header-on [data-cc-trig] { border-radius: 50%; }
 
-/* ═══ NATIVE POPUP WINDOWS -> CC look (v2.32.0, user: "alle Subfenster/Popupfenster in den CC
-   Style — keine Rahmen, Linien, super clean, modern, minimalistisch"). Gated on html.cc-popups-on
-   (master theming, set by header.js on EVERY page). Covers the two native dialog families:
-   jQuery-UI dialogs (openBox/openPlugin — the update-check window) and SweetAlert confirmations.
-   The dialog CONTENT is often an iframe (its inner document is out of reach) — this styles the
-   window chrome: surface, title bar, buttons. Separation via fill + shadow, never a line. */
+/* Native popup windows in the CC look, gated on html.cc-popups-on (master theming, set by
+   header.js on every page). This covers jQuery UI dialogs (openBox, openPlugin, the update check
+   window) and SweetAlert confirmations. The content is often an iframe out of reach, so this
+   styles the window: surface, title bar, buttons, separated by fill and shadow rather than lines. */
 html.cc-popups-on .ui-dialog {
-  background: #1a1a1a !important; border: none !important; border-radius: 14px !important;   /* #(user 2026-07-29: "exakt wie das Update-Fenster"): DARK frame #1a1a1a to match the locked update-window template (content sits in a LIGHT #2e2e2e card below) */
+  background: #1a1a1a !important; border: none !important; border-radius: 14px !important;   /* the dark frame of the update window, with the content in a lighter #2e2e2e card */
   box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important; padding: 0 !important; overflow: hidden;
-  /* #17 (user: the Feedback window content is too wide): cap the native inline width so the dialog reads as a
-     tidy card instead of a full-bleed sheet. min(...) keeps it responsive; content inside the iframe wraps. */
+  /* caps the native inline width so a dialog such as Feedback reads as a card; the iframe content wraps */
   max-width: min(92vw, 720px) !important;
 }
-/* NO grey bar (user): the title bar is invisible — only the title BADGE floats on the surface.
-   The badge follows the colour modes: base = accent vars, rainbow = painted by header.js
-   paintPopups() with the palette. */
+/* The title bar is invisible and only the title badge floats on the surface. The badge follows the
+   colour modes: the accent vars, or the palette painted by header.js paintPopups() in rainbow mode. */
 html.cc-popups-on .ui-dialog .ui-dialog-titlebar {
   background: transparent !important; border: none !important; border-radius: 0 !important;
-  padding: 18px 18px 14px !important;   /* #(user 2026-07-29): frame inset + 14px gap to the content card, like the update window */
+  padding: 18px 18px 14px !important;   /* frame inset and a 14px gap to the content card, as in the update window */
   display: flex !important; align-items: center !important; justify-content: flex-start !important;
 }
-/* v2.33.1 (user): the badge spans the FULL width, its text centred — flex:1 (not width:100%) so
-   the ui-dialog close X keeps its slot in the flex titlebar. */
-/* #7-IV (user: the "CONTAINER AKTUALISIEREN" template-update window must look like #7): that window is the
-   CreateDocker.php iframe inside .ui-dialog (identified by iframe#myIframe). docker.js forces its title into a
-   full-width bar; override it into the SAME centered accent pill the sweet-alert.nchan title uses. The iframe
-   BODY is themed by ccPopIframes (fieldset.docker->card, legend->pill). */
+/* The template update window ("CONTAINER AKTUALISIEREN") is the CreateDocker.php iframe
+   (iframe#myIframe) inside .ui-dialog. docker.js makes its title a full-width bar; here it becomes
+   the centred accent pill of the sweet-alert.nchan title. ccPopIframes themes the iframe body. */
 html.cc-popups-on .ui-dialog:has(iframe#myIframe) .ui-dialog-titlebar {
   justify-content: center !important; background: #0f0f0f !important; border: none !important; padding: 12px 0 4px !important;
 }
@@ -629,7 +530,8 @@ html.cc-popups-on .ui-dialog:has(iframe#myIframe) .ui-dialog-title {
 }
 html.cc-popups-on .ui-dialog:has(iframe#myIframe) { background: #0f0f0f !important; }
 html.cc-popups-on .ui-dialog .ui-dialog-title {
-  /* #(user 2026-07-29): FULL-WIDTH title bar, 40px — identical to the locked update-window title (was a 36px pill). */
+  /* a full-width 40px title bar like the update window's; flex:1 rather than width:100% keeps the
+     close X in its slot */
   display: flex !important; align-items: center; justify-content: center !important;
   flex: 1 1 auto; float: none !important; margin: 0 !important; box-sizing: border-box !important;
   height: 40px !important; padding: 0 18px; border-radius: var(--cc-b-radius, 10px);
@@ -639,23 +541,18 @@ html.cc-popups-on .ui-dialog .ui-dialog-title {
 }
 html.cc-popups-on .sweet-alert { text-align: center !important; }
 html.cc-popups-on .sweet-alert h2 {
-  /* #(user 2026-07-29: "alle Fenster exakt wie das Update-Fenster"): FULL-WIDTH title bar (40px) for EVERY
-     sweet-alert incl. the plain start/stop/remove CONFIRMS — no more centred pill. Uniform across all windows. */
+  /* the same full-width 40px title bar on every sweet-alert, the start, stop and remove confirms
+     included */
   display: flex !important; align-items: center; justify-content: center !important; float: none !important;
   width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
   height: 40px !important; padding: 0 18px !important; border-radius: var(--cc-b-radius, 10px);
-  /* #(user: "titelbadges ... in allen fenstern nicht in den farbmodi"): three-tier chain — the per-window
-     --cc-rb-c jewel (header.js paintPopups) first, then the shared rainbow accent, then the plain accent. */
+  /* the per-window --cc-rb-c from header.js paintPopups, then the shared rainbow accent, then the
+     plain accent */
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff))) !important;
   font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; margin: 0 0 14px !important;
 }
-/* #N1 (user REVERSAL: the streaming windows' badge was "zu groß" — bring it back to the CC STANDARD size
-   every other dialog uses). The .nchan / changelog title badge now matches the base .sweet-alert h2 badge
-   (lgb 36px / 14px, content-width, centred) instead of the old 46px full-bleed bar. "Immer und alles!" */
-/* #(user 2026-07-28: "Titel-Badge zu gross, ueber alle Fenster einheitlich"): the streaming/changelog title
-   badge now MATCHES the base .sweet-alert h2 badge exactly (lgb 36px / 14px, content-width, centred pill) —
-   no more 48px full-width bar. Uniform title across every dialog. (Overrides the earlier "#12 always full-width".) */
+/* the streaming and changelog windows use the same title bar as every other dialog */
 html.cc-popups-on .sweet-alert:has(pre) h2,
 html.cc-popups-on .sweet-alert.nchan h2 {
   height: 40px !important; font-size: var(--cc-lgb-fs, 14px) !important;
@@ -675,192 +572,140 @@ html.cc-popups-on .sweet-alert pre h3 {
   padding: 3px 12px !important; border-radius: var(--cc-b-radius, 999px) !important;
   font-size: 13px !important; font-weight: 700 !important; margin: 16px 0 8px !important; letter-spacing: .5px;
 }
-/* #15: ShipLog's changelog renders each entry's feature headline as an <h1> (natural 28px) — far too big
-   for a changelog item. Render it as a compact, brighter subheading so the window reads cleanly. */
+/* ShipLog's changelog renders each entry's headline as a 28px <h1>, so it becomes a compact, brighter
+   subheading */
 html.cc-popups-on .sweet-alert pre h1 {
   font-size: 15px !important; font-weight: 700 !important; color: #f0f0f0 !important;
   margin: 2px 0 6px !important; line-height: 1.4 !important; letter-spacing: normal !important;
 }
 html.cc-popups-on .sweet-alert pre ul { margin: 0 0 6px !important; padding-left: 20px !important; }
 html.cc-popups-on .sweet-alert pre li { color: #d6d6d6 !important; margin: 3px 0 !important; line-height: 1.5; }
-/* #21/#11/#14 + #15: the plugin install/update + container-update windows are .sweet-alert.nchan (they
-   STREAM a raw log — incl. the ASCII READY banner — into a <pre>). The changelog-pre rules above render
-   markdown (white-space:normal, inherit font), which COLLAPSES the ASCII banner. BUT the ShipLog CHANGELOG
-   window is ALSO .nchan yet its <pre> holds PARSED MARKDOWN (version <h3> badges + <ul> lists) — it must
-   stay proportional. So the terminal look is scoped to a raw-log <pre> (no parsed <h3>/<ul> inside);
-   a markdown <pre> keeps the clean changelog rendering. */
+/* The plugin install and update and the container update windows are .sweet-alert.nchan and stream
+   a raw log, ASCII banner included, into a <pre>. The changelog rules above render markdown and
+   would collapse the banner, but the ShipLog changelog window is .nchan too and holds parsed
+   markdown (<h3> version badges, <ul> lists). So the terminal look applies only to a <pre> without
+   <h3> or <ul>. */
 html.cc-popups-on .sweet-alert.nchan p { text-align: left !important; }
 html.cc-popups-on .sweet-alert.nchan pre:not(:has(h3)):not(:has(ul)) {
-  /* #(user: "beim Update blitzt eine horizontale Scrollbar auf"): Unraid's own docker-pull
-     progress can land as ONE unbroken line thousands of characters long (same native pattern
-     documented for `plugin install` output — not CC-specific). Plain `white-space:pre` never
-     wraps ANY line, so that one line forced the whole <pre> wider than the dialog -> a
-     horizontal scrollbar. `pre-wrap` still preserves newlines/whitespace runs exactly like
-     `pre` (the ASCII READY banner's short lines never need to wrap, so it renders unchanged) —
-     it only kicks in for a line that's actually too wide, which is exactly the case that broke.
-     overflow-wrap is the backstop for a single unbroken WORD (a hash/digest) longer than the
-     dialog even after wrapping is allowed. */
+  /* Docker pull progress can arrive as one unbroken line thousands of characters long, which
+     white-space:pre would turn into a horizontal scrollbar. pre-wrap keeps newlines and runs of
+     spaces, so the banner's short lines are unchanged, and overflow-wrap handles a single long
+     word such as a digest. */
   white-space: pre-wrap !important; overflow-wrap: anywhere !important; text-align: left !important;
   font-family: Consolas, "SFMono-Regular", ui-monospace, monospace !important;
   font-size: 12px !important; line-height: 1.35 !important; color: #d6d6d6 !important;
-  background: #2e2e2e !important; border: none !important; border-radius: 8px !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;   /* #(user 2026-07-28): the log TEXT sits in a LIGHT card raised on the dark frame */
+  background: #2e2e2e !important; border: none !important; border-radius: 8px !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;   /* the log sits in a lighter card on the dark frame */
   padding: 12px 14px !important; max-height: 60vh; overflow: auto;
 }
-/* CARD-SIZE FIX (user 2026-07-28: "das Systeminfo-Fenster — die Card ist viel zu groß. Das Fenster soll immer
-   gleich groß bleiben, nur die Card, die den Text hinterlegt, passt sich an die Textgröße an"): CC stamps .nchan
-   on ANY .sweet-alert with a <pre> (System Information, changelog, container-update) to reuse the streaming look.
-   Unraid's own jquery.sweetalert.css sizes those for a long streaming log: `.sweet-alert.nchan{height:95vh}` (the
-   WINDOW — correct, KEEP it, it is the template) + `pre#swalbody{height:100%}` (the light card FILLS the window).
-   On SHORT content (System Information's ~336px info table) that filled card became a huge #2e2e2e sheet with
-   ~349px empty. So the WINDOW stays 95vh; only the CARD hugs its text. The <p> holding the <pre> is flex-COLUMN,
-   so the card flex-GREW to fill — pin it with `flex:0 0 auto` + `height:auto` so it hugs its content instead.
-   `max-height:100%` caps a LONG streaming log at the available window space (so the update window's log still
-   FILLS like before — only short content shrinks). ID-specificity (#swalbody) + !important is REQUIRED to beat
-   Unraid's `pre#swalbody{height:100%}`. */
+/* CC stamps .nchan on any .sweet-alert with a <pre> (System Information, changelog, container
+   update). Unraid's jquery.sweetalert.css gives .sweet-alert.nchan a 95vh height, which stays,
+   and pre#swalbody height:100%, which would stretch a short card such as System Information's
+   table over the whole window. The card inside the flex column hugs its content instead, and
+   max-height:100% still lets a long log fill the window. The id selector is needed to beat
+   Unraid's pre#swalbody rule. */
 html.cc-popups-on .sweet-alert.nchan pre#swalbody,
 html.cc-popups-on .sweet-alert.nchan pre#swaltext { flex: 0 0 auto !important; height: auto !important; max-height: 100% !important; overflow: auto !important; }
-/* #15 (user, LIVE-verified on a real update: the window is .sweet-alert.nchan, NOT the cc-ctout page my earlier
-   fix targeted): the update stream carries a <style> block (.logLine{font-family:bitstream…}) that renders as
-   VISIBLE raw CSS text under the title. A <style> is display:none by default; here it shows — force it hidden. */
+/* the update stream carries a <style> block (.logLine{font-family:...}) that would show as raw CSS
+   text under the title */
 html.cc-popups-on .sweet-alert style { display: none !important; }
-/* #16 (user: "die button und der spinner bleiben nicht ganz unten, werden vom log überlagert"): the
-   .sa-button-container (which also carries the cc-nchan-loader spinner) flows right after the log, so in a
-   multi-step update it strands mid-window. The window is a fixed-height (95vh) flex column, so push the button
-   row to the BOTTOM with margin-top:auto, opaque + above the log so a long stream can never overlay it. */
+/* The window is a 95vh flex column, and the button row (with the cc-nchan-loader spinner) sits at
+   the bottom via margin-top:auto, opaque and above the log. */
 html.cc-popups-on .sweet-alert.nchan { display: flex !important; flex-direction: column !important; }
-/* #(user, v3.6.6): "die unteren Buttons inkl. Spinner sind nicht an Ort und Stelle verankert und werden
-   verschoben wenn der Log laenger ist als das Fenster … das scrollbare Bereich soll nur zwischen Titelbadge
-   und den unteren Buttons sein."
-   margin-top:auto alone only pins the row while the content is SHORTER than the window. Once the stream
-   outgrows it, the base `.sweet-alert { max-height:92vh; overflow-y:auto }` scrolls the ENTIRE dialog, so the
-   title scrolls away at the top and the button row rides down past the bottom edge with the log.
-   The fix pins the title and the button row with position:sticky against the dialog's own scroll box, so
-   the scrolling region ends up being exactly the space between them.
-   Deliberately NOT done by switching the dialog to overflow:hidden and flexing one log element: the stream's
-   markup varies (a single pre#swaltext on some updates, a run of step <fieldset> siblings on others), and if
-   the guess is wrong, clipping the dialog makes the tail of the log unreachable — strictly worse than today.
-   Sticky needs no assumption about how many siblings the log spans and cannot hide content. */
+/* margin-top:auto only holds while the content is shorter than the window; beyond that the base
+   .sweet-alert { max-height:92vh; overflow-y:auto } scrolls the whole dialog. The title and the
+   button row are made sticky instead, so only the space between them scrolls. Clipping the dialog
+   and flexing one log element would need to know the stream's markup, which varies (one
+   pre#swaltext, or a run of step <fieldset>s), and a wrong guess would hide the end of the log. */
 html.cc-popups-on .sweet-alert.nchan .sa-button-container {
-  order: 999 !important;   /* force LAST in the flex column even when Unraid streams more step-cards after it */
+  order: 999 !important;   /* last in the flex column, even when Unraid streams more step cards after it */
   margin-top: auto !important; position: relative; z-index: 3 !important;
   background: #202020 !important; padding: 12px 0 2px !important;
 }
-/* ── the actual lock, scoped to the STREAMING windows only ──────────────────────────────────────────────
-   `.nchan` alone is too broad: header.js stamps it on any .sweet-alert that owns a <pre>, which also covers
-   System Information and the ShipLog changelog, and those deliberately hug their content. The update/install
-   stream is identified by its own markup marker #swaltext, plus header.js's stream flags as a second route.
-   Carrying an id inside :has() also lifts every rule here to id-level specificity, which matters twice:
-     - two existing pre#swaltext rules already contradict each other at equal weight (the later one wins with
-       overflow:visible), so a same-weight rule would be a coin flip on source order;
-     - the .nchan background stripper scores (0,7,6) and would otherwise turn the pinned button row
-       transparent, letting the log scroll through it. */
+/* The lock, for the streaming windows only. header.js stamps .nchan on any .sweet-alert with a
+   <pre>, System Information and the ShipLog changelog included, and those hug their content. The
+   update and install stream is recognised by #swaltext or by header.js's stream flags. The id
+   inside :has() also gives these rules id-level specificity, which they need: two pre#swaltext
+   rules of equal weight already disagree, and the .nchan background rule at (0,7,6) would make the
+   pinned button row transparent. */
 html.cc-popups-on .sweet-alert.nchan:is(:has(#swaltext), .cc-nchan-loading, .cc-nchan-done):not(.hideSweetAlert) > p {
-  /* THE fix: a flex item's min-height defaults to auto, i.e. its min-content height — a 4000px log carries a
-     4000px floor that flex:1 can never shrink. The column then overflows the fixed-height window, auto
-     margins get no positive free space to distribute, and the button row rides down with the log. Zeroing the
-     floor (both min-height and overflow, either of which removes the automatic minimum) makes this band the
-     scroller; the column then fits exactly and the window's own scrollbar never appears. */
+  /* A flex item's min-height defaults to its min-content height, so a 4000px log would keep a
+     4000px floor that flex:1 cannot shrink, and the button row would ride down with it. With the
+     floor at zero this band scrolls and the window's own scrollbar never appears. */
   flex: 1 1 auto !important; min-height: 0 !important; overflow: auto !important;
 }
 html.cc-popups-on .sweet-alert.nchan:is(:has(#swaltext), .cc-nchan-loading, .cc-nchan-done):not(.hideSweetAlert) h2 {
   position: sticky !important; top: 0 !important; z-index: 4 !important;
-  /* the badge is opaque, its 14px bottom margin is not — extend the window colour across the gap without
-     touching the badge's own accent fill */
+  /* the badge is opaque but its 14px bottom margin is not, so the window colour is extended across
+     the gap without touching the badge's fill */
   box-shadow: 0 14px 0 #1a1a1a !important;
 }
 html.cc-popups-on .sweet-alert.nchan:is(:has(#swaltext), .cc-nchan-loading, .cc-nchan-done):not(.hideSweetAlert) .sa-button-container {
   flex: 0 0 auto !important; margin-top: 0 !important;
   position: sticky !important; bottom: 0 !important;
-  background: #1a1a1a !important;   /* same shade as the frame -> reads as no footer bar at all (no light strips) */
+  background: #1a1a1a !important;   /* the frame's shade, so it reads as no footer bar at all */
   align-items: center !important; flex-wrap: nowrap !important; min-height: var(--cc-lgb-h, 36px) !important;
 }
 /* the spinner rides in that row; keep it in flow and vertically centred so it can never wrap to its own line */
 html.cc-popups-on .sweet-alert.nchan:is(:has(#swaltext), .cc-nchan-loading, .cc-nchan-done) .sa-button-container .cc-nchan-loader {
   flex: 0 0 auto !important; align-self: center !important; position: static !important; margin: 0 !important;
 }
-/* the streaming step-cards / log <pre> must NEVER order after the button row */
+/* the streaming step cards and log <pre> always come before the button row */
 html.cc-popups-on .sweet-alert.nchan > p,
 html.cc-popups-on .sweet-alert.nchan > pre,
 html.cc-popups-on .sweet-alert.nchan > fieldset { order: 1 !important; }
-/* Changelog (ShipLog): the version-<h3>-badges + <ul>-lists markdown pre sits in the SAME light #2e2e2e content
-   card as every other window (user 2026-07-29: "Changelog auch in #2e2e2e-Card"). The card-size rule above
-   already hugs it; here it just gets the light fill (the raw streaming-log pre keeps its own rule below). */
+/* the ShipLog changelog's markdown <pre> gets the same lighter #2e2e2e card as every other window */
 html.cc-popups-on .sweet-alert.nchan pre#swalbody:has(h3),
 html.cc-popups-on .sweet-alert.nchan pre#swalbody:has(ul) {
   background: #2e2e2e !important; border-radius: 10px !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important; padding: 12px 14px !important;
 }
-/* (a) Title-Badge must NOT shrink (user 2026-07-28: "im Update-Fenster ist der Titelbadge zu niedrig"): in the
-   fixed-height (95vh) streaming window a LONG log overflows, and the h2 (a flex item that could shrink) got
-   squished from 40px down to ~25px. Pin it. (b) The content column sits at the TITLE-BADGE width, not
-   edge-to-edge: SweetAlert's `p { margin: 0 -20px }` cancels the window's 20px padding, so the gray content
-   card ran the full window width and looked too wide — align it with the title (user: "die Cards sollen so
-   breit sein wie der Titel-Badge"). */
+/* In the 95vh streaming window a long log would squeeze the title (a shrinkable flex item), so it
+   is pinned. SweetAlert's p { margin: 0 -20px } cancels the window padding, which would make the
+   content card wider than the title, so the margins are reset. */
 html.cc-popups-on .sweet-alert.nchan h2 { flex: 0 0 auto !important; min-height: 40px !important; }
 html.cc-popups-on .sweet-alert.nchan > p { margin-left: 0 !important; margin-right: 0 !important; }
-/* Update/Install stream: the step <fieldset>s ARE the cards. The OUTER pre#swaltext WRAPS them and must NOT
-   also carry the #2e2e2e card fill (that stacked a wide gray container behind the inset step cards; user:
-   "die Cards ... grauer Hintergrund ... zu breit / zu schmal"). Make it a transparent, padding-less wrapper so
-   ONLY the fieldsets show as cards, at the full title-badge width. (System Information uses pre#swalbody with a
-   TABLE and keeps its single #2e2e2e card.) ID-specificity beats the base `pre:not(:has(h3)):not(:has(ul))`. */
+/* In the update and install stream the step <fieldset>s are the cards, so the pre#swaltext around
+   them is a transparent wrapper without padding. System Information uses pre#swalbody with a table
+   and keeps its single card. The id outranks the base pre:not(:has(h3)):not(:has(ul)) rule. */
 html.cc-popups-on .sweet-alert.nchan pre#swaltext { background: transparent !important; padding: 0 !important; box-shadow: none !important; }
-/* #11/#14: the container-update dialog groups its steps in <fieldset>s (Lade Image / Stoppe Container …)
-   -> Carbon cards with an accent legend badge, matching the Tools-page install log. */
+/* the container update groups its steps in <fieldset>s (Lade Image, Stoppe Container, ...), shown
+   as cards with an accent legend badge like the Tools page install log */
 html.cc-popups-on .sweet-alert.nchan fieldset {
-  /* user: "oben und unten den hellen Hintergrund auf dunkel" — the step cards were #1c1c1c, a shade
-     lighter than the #161616 window, which read as light bands top and bottom. Match the window so the
-     whole dialog is one continuous dark surface; the accent legend badge still marks each step. */
   background: #2e2e2e !important; border: none !important; border-radius: 10px !important;
-  margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;   /* #(user 2026-07-28): LIGHT step card raised on the dark frame */
+  margin: 0 0 12px !important; padding: 10px 12px !important; text-align: left !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;   /* a lighter step card on the dark frame */
 }
 html.cc-popups-on .sweet-alert.nchan fieldset > legend {
-  /* #(user: "die abschnittsbadges ... in allen fenstern nicht in den farbmodi"): this fell straight through
-     to the SHARED --cc-rbaccent, so EVERY step badge in a window rendered the same flat colour (measured:
-     4x #5e89c9 on a real update). --cc-rb-c is the per-badge jewel header.js paintPopups() now stamps. */
+  /* --cc-rb-c is the per-badge colour header.js paintPopups() stamps, so the step badges rotate
+     instead of all taking the shared --cc-rbaccent */
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, var(--cc-accent, #2f6feb)))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff))) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   padding: 3px 12px !important; font-size: 12px !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
 }
-/* #11 rework (user): replace Unraid's garish green "ball-fall" loader entirely with a clean modern
-   rotating ring that sits LEFT of the title badge; the badge greys out while the stream runs
-   (ccNchanStyle adds .cc-nchan-loading + the .cc-nchan-spin element). Also hide the empty grey
-   <fieldset> bars Unraid leaves at the top/bottom of the dialog (user: "oben und unten grauer
-   hintergrund"). */
+/* Unraid's green ball-fall loader is replaced by CC's own indicator in the button row. */
 html.cc-popups-on .sweet-alert .la-ball-fall { display: none !important; }
 html.cc-popups-on .sweet-alert.nchan h2 { position: relative; }
-/* user: the "working" loader moved OUT of the title badge to the BOTTOM-LEFT, beside the Schliessen button
-   — a clean 3-dot pulse in the colour-mode accent (the same look shown over a busy container logo). */
-/* the loader is anchored to the BUTTON ROW, not the sweet-alert bottom (the alert can be far taller than its
-   content, which pushed a bottom:26px loader way below the buttons — user). It sits at the row's left edge,
-   vertically centred: "unten links neben den Buttons". */
+/* The loader is anchored to the button row rather than the sweet-alert's bottom, since the alert
+   can be much taller than its content; it sits at the row's left edge, vertically centred. */
 html.cc-popups-on .sweet-alert.nchan .sa-button-container { position: relative; width: 100% !important; box-sizing: border-box; }
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader {
-  /* (user 2026-07-28: "die Statusanzeige unten soll auch in Badge-Form sein") the indicator is a filled CIRCLE
-     BADGE sitting immediately LEFT of the buttons in the (row-reverse, centred) button row: accent while running
-     (with a white spinning ring), a green circle-check when done. Same 26px footprint in both states. */
+  /* a 26px circle left of the buttons in the row-reverse button row: a spinning ring while
+     running, a green circle with a check when done */
   position: static; z-index: 3; flex: none; box-sizing: border-box;
   width: 26px; height: 26px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center; pointer-events: none;
-  background: transparent;   /* RUNNING = transparent; the .cc-loader double ring supplies the accent colour */
+  background: transparent;   /* while running the .cc-loader double ring supplies the colour */
 }
-html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader.cc-nchan-check { background: transparent !important; }  /* DONE: the SVG green circle IS the badge */
-/* RUNNING badge holds a white spinning fa-refresh — the EXACT icon + native 2s-linear fa-spin cadence Unraid
-   shows over a busy/updating container logo, so the dialog status badge and the container-row logo animate
-   IDENTICALLY (user 2026-07-29: "die Ladeanimation mit der auf dem Containerlogo abgleichen"). fa-spin comes
-   from FontAwesome (loaded globally), so no local @keyframes are needed. */
+html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader.cc-nchan-check { background: transparent !important; }  /* when done the SVG's green circle is the badge */
+/* The running badge holds a white fa-refresh with FontAwesome's 2s fa-spin, the same icon and
+   cadence Unraid shows over a busy container logo, so the two animate alike. */
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader .cc-nchan-fa {
   color: #fff; font-size: 14px; line-height: 1;
 }
-/* #10 (user): in RAINBOW the running badge cycles its colour once per spin revolution — the fa-spin glyph
-   turns every 2s, so the 8-hue palette steps every 2s (16s total, step-end = a clean jump synced to each
-   turn): "im rainbowmode soll bei jeder umdrehung die farbe gewechselt werden". Glyph stays white; the DONE
-   (check) badge is transparent and excluded. Jewel hues = the shared CCTheme.RB palette. */
+/* one palette step (CCTheme.RB) per 2s fa-spin turn, 16s for the eight hues */
 @keyframes cc-spin-huebg { 0%{background:#c95e5e} 12.5%{background:#c98d5e} 25%{background:#c9af5e} 37.5%{background:#5ec986} 50%{background:#5ec9c2} 62.5%{background:#5e89c9} 75%{background:#865ec9} 87.5%{background:#c95e94} }
-/* (removed: the RUN badge is now transparent and the .cc-loader ring cycles its own rainbow via
-   html.cc-rb-on .cc-loader — a solid cycling square behind the ring would be wrong.) */
-/* #7-II finished: the bottom-left loader morphs into a circle-with-check (no text), drawn in. Green = done. */
+/* when done, the loader turns into a green circle with a check that draws itself in */
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader.cc-nchan-check { gap: 0; }
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg { width: 26px; height: 26px; overflow: visible; display: block; }
-html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-c { fill: var(--cc-ok, #1f9d55); stroke: none; opacity: 1; }   /* #2 (user: "das Status-Icon soll ein Badge sein"): a FILLED green CC badge, not a thin outline ring */
+html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-c { fill: var(--cc-ok, #1f9d55); stroke: none; opacity: 1; }   /* a filled green badge rather than an outline ring */
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-p {
   fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
   stroke-dasharray: 22; stroke-dashoffset: 22; animation: cc-ck-draw .34s ease .04s forwards;
@@ -868,18 +713,18 @@ html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-p {
 @keyframes cc-ck-draw { to { stroke-dashoffset: 0; } }
 html.cc-anim-off .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-p { animation: none !important; stroke-dashoffset: 0 !important; }
 html.cc-anim-off .sweet-alert.nchan .cc-nchan-loader .cc-nchan-fa { animation: none !important; }
-/* ── D11 (docker-CREATE sweet-alert: different inner structure than the plugin-install window) ── */
-/* (a) LOADER FALLBACK: while it STREAMS there is no button row yet, so ccNchanStyle appends the status
-   loader to the .sweet-alert itself (a DIRECT child). Pin THAT case bottom-left — never top-centre — where the
-   VIEW LOG / FERTIG buttons appear (once they exist the JS re-homes the loader into the real row). */
+/* The docker create sweet-alert is built differently from the plugin install window. While it
+   streams there is no button row yet, so ccNchanStyle appends the loader to the .sweet-alert
+   itself; it is pinned bottom-left, where the VIEW LOG and FERTIG buttons appear, until the script
+   moves it into the real row. */
 html.cc-popups-on .sweet-alert.nchan > .cc-nchan-loader {
   position: absolute !important; left: 20px !important; bottom: 20px !important;
   top: auto !important; right: auto !important; margin: 0 !important;
 }
-/* (b) NO OVERLAP + NO NESTED SCROLLBARS: Unraid streams the `docker pull` progress (a floated "Pull complete"
-   bar) + the step cards into pre#swaltext; the float overlapped the cards and the inner pre/fieldset each grew
-   their OWN scrollbar inside the already-scrollable 92vh dialog. Force a plain static block column and let ONLY
-   the outer dialog scroll. Scoped to #swaltext so System Info's pre#swalbody card is untouched. */
+/* Unraid streams the docker pull progress (a floated "Pull complete" bar) and the step cards into
+   pre#swaltext, where the float overlaps the cards and the inner pre and fieldsets grow their own
+   scrollbars inside the scrolling dialog. A plain static block column leaves only the dialog to
+   scroll. Scoped to #swaltext so System Information's pre#swalbody card is untouched. */
 html.cc-popups-on .sweet-alert.nchan pre#swaltext,
 html.cc-popups-on .sweet-alert.nchan pre#swaltext fieldset { max-height: none !important; overflow: visible !important; }
 html.cc-popups-on .sweet-alert.nchan pre#swaltext > *,
@@ -893,25 +738,25 @@ html.cc-popups-on .sweet-alert.nchan fieldset:empty,
 html.cc-popups-on .sweet-alert.nchan p:empty,
 html.cc-popups-on .sweet-alert.nchan > div:empty,
 html.cc-popups-on .sweet-alert:has(pre) fieldset:empty { display: none !important; }
-/* the native success/error/warning icon rings sit calmer on the dark surface */
-html.cc-popups-on .sweet-alert .sa-icon { display: none !important; }   /* #(user 2026-07-29): no native icon ring — the accent title bar carries the identity, exactly like the update window (same as .swal-icon) */
+/* no native success, error or warning icon ring; the accent title bar carries the identity, as in
+   the update window */
+html.cc-popups-on .sweet-alert .sa-icon { display: none !important; }
 html.cc-popups-on .ui-dialog .ui-dialog-titlebar-close {
   border: none !important; background: transparent !important; box-shadow: none !important; opacity: .7;
 }
 html.cc-popups-on .ui-dialog .ui-dialog-titlebar-close:hover { opacity: 1; }
 html.cc-popups-on .ui-dialog .ui-widget-content,
 html.cc-popups-on .ui-dialog .ui-dialog-content {
-  background: #1a1a1a !important; border: none !important; color: #d6d6d6 !important;   /* frame colour by default (iframe windows: the iframe body is the content, themed by ccPopIframes) */
+  background: #1a1a1a !important; border: none !important; color: #d6d6d6 !important;   /* the frame colour; in iframe windows ccPopIframes themes the iframe body */
 }
-/* #(user 2026-07-29: "exakt wie das Update-Fenster"): NON-iframe, NON-form content (info table, plugin log,
-   allocations, Browse tree) sits in a LIGHT #2e2e2e CARD, inset to the title width, borderless + soft shadow.
-   FORM dialogs (the "Konfiguration hinzufügen" Add-Config popup with input/select/textarea) get NO card —
-   the fields carry their own structure and a grey card behind a form looks wrong (user: "hier kann die Card weg"). */
+/* Content that is neither an iframe nor a form (info table, plugin log, allocations, Browse tree)
+   sits in a lighter #2e2e2e card inset to the title width, as in the update window. Form dialogs
+   such as "Konfiguration hinzufügen" get no card, since the fields carry their own structure. */
 html.cc-popups-on .ui-dialog:not(:has(iframe)):not(:has(input)):not(:has(select)):not(:has(textarea)) .ui-dialog-content {
   background: #2e2e2e !important; border-radius: 10px !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
   margin: 0 18px 6px !important; padding: 12px 14px !important;
 }
-/* dialog buttons: LARGE (lg tier), horizontally CENTRED (user, v2.33.1) */
+/* dialog buttons: lg size, centred */
 html.cc-popups-on .ui-dialog .ui-dialog-buttonpane {
   background: #1a1a1a !important; border: none !important; margin: 0 !important; padding: 10px 18px 16px !important;
   text-align: center !important; display: flex !important; justify-content: center !important; gap: 10px;
@@ -926,15 +771,14 @@ html.cc-popups-on .ui-dialog .ui-dialog-content button:not([class*="switch"]) {
   letter-spacing: .6px !important; cursor: pointer; transition: filter .12s;
 }
 html.cc-popups-on .ui-dialog .ui-dialog-buttonpane button:hover { filter: brightness(1.14); }
-/* #6: the page behind a popup dims AND blurs so the window clearly lifts off — now from the ONE
-   backdrop token (was blur(3px)/.6 here, blur(4px)/.5 on the bell menu = the inconsistency the user saw). */
+/* the page behind a popup dims and blurs through the shared backdrop tokens, like the bell menu */
 html.cc-popups-on .ui-widget-overlay,
 html.cc-popups-on .sweet-overlay {
   background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)) !important; opacity: 1 !important;
   backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important; -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important;
 }
-/* #7 (user): the window scrollbar sat flush against the rounded edge -> inset it. A transparent padding-box
-   border gaps the thumb ~3px off the border and a slimmer thumb floats it left; Firefox uses thin + colour. */
+/* The window scrollbar is inset from the rounded edge: a transparent padding-box border keeps the
+   thumb about 3px off it. Firefox gets a thin, coloured scrollbar. */
 html.cc-popups-on .sweet-alert,
 html.cc-popups-on .sweet-alert pre,
 html.cc-popups-on .sweet-alert.nchan pre,
@@ -953,34 +797,29 @@ html.cc-popups-on .sweet-alert::-webkit-scrollbar-track,
 html.cc-popups-on .sweet-alert pre::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
 /* SweetAlert confirmations (start/stop/remove dialogs) */
 html.cc-popups-on .sweet-alert {
-  background: #1a1a1a !important; border: none !important; border-radius: 14px !important;   /* #(user 2026-07-28): DARK frame; the content sits in a LIGHT raised card (System-Info "dunkler + Text in heller Card") */
-  /* #(user "systemweit gleich, nie Rahmenlinien" + "keine hellen Kopf-/Fußleisten"): the DEEP surface keeps the frame
-     the darkest layer so the #191919 step cards stay RAISED (no lighter strip). NO ring, soft small shadow — uniform
-     backdrop, no halo. */
+  background: #1a1a1a !important; border: none !important; border-radius: 14px !important;   /* the dark frame; the content sits in a lighter card */
+  /* the frame stays the darkest layer so the cards read as raised; no ring, a small soft shadow */
   box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
 }
-/* #10 (user: "das Update-Fenster plopt viel zu weit oben auf"): SweetAlert1 positions the dialog with a
-   JS-computed margin-top = HALF ITS HEIGHT AT OPEN TIME; when the content grows after open (e.g. the OS
-   update-check result populates late) the box ends up too high, its top clipped above the viewport. Center it
-   with a transform instead — correct for ANY content height — and cap the height so a tall dialog scrolls
-   inside rather than overflowing. Overrides SweetAlert1's inline margin-top/left. Uniform for every swal. */
+/* SweetAlert1 sets margin-top to half the dialog's height at open time, so content that grows
+   afterwards (the OS update check result, for one) pushes the top above the viewport. A transform
+   centres it for any height, overriding the inline margins, and a capped height scrolls inside. */
 html.cc-popups-on .sweet-alert {
   top: 50% !important; left: 50% !important; right: auto !important; bottom: auto !important;
   margin: 0 !important; transform: translate(-50%, -50%) !important;
   max-height: 92vh !important; overflow-y: auto !important;
 }
-/* #N1/#9 (user: "Kopf- und Fußleiste sind immer noch heller!"): force EVERY element inside the streaming
-   windows onto the dialog's own #161616 — no lighter header/footer strip ANYWHERE (the direct-child version
-   missed grandchild wrapper divs). Content elements keep their own fills: the title/legend badges, the
-   buttons, the raw-log pre (#0f0f0f), and the step fieldsets (#161616). */
+/* Every element inside the streaming and changelog windows sits on the dialog's own surface, with
+   no lighter header or footer strip and no stray borders, at any depth. The title and legend
+   badges, buttons, the log <pre>, the step fieldsets and the cc-nchan status badge keep their
+   own fills. */
 html.cc-popups-on .sweet-alert.nchan,
 html.cc-popups-on .sweet-alert:has(pre) { background: #1a1a1a !important; }
 html.cc-popups-on .sweet-alert.nchan *:not(h2):not(button):not(pre):not(fieldset):not(legend):not(.sa-icon):not([class*="badge"]):not([class*="chip"]):not([class*="cc-nchan"]),
-html.cc-popups-on .sweet-alert:has(pre) *:not(h2):not(button):not(pre):not(fieldset):not(legend):not(.sa-icon):not([class*="badge"]):not([class*="chip"]):not([class*="cc-nchan"]) { background-color: transparent !important; box-shadow: none !important; border: none !important; }   /* :not([class*="cc-nchan"]) keeps the status BADGE (loader/spinner ring) from being stripped */   /* #3 (user: "das ShipLog-Changelog-Fenster hat Rahmenlinien"): also strip stray borders from changelog/streaming-window descendants (CC no-line law) */
-/* (sweet-alert h2 badge styling above) */
+html.cc-popups-on .sweet-alert:has(pre) *:not(h2):not(button):not(pre):not(fieldset):not(legend):not(.sa-icon):not([class*="badge"]):not([class*="chip"]):not([class*="cc-nchan"]) { background-color: transparent !important; box-shadow: none !important; border: none !important; }
 html.cc-popups-on .sweet-alert p, html.cc-popups-on .sweet-alert .sa-text { color: #bdbdbd !important; }
 html.cc-popups-on .sweet-alert hr { display: none !important; }
-/* button row as a flex row (a block-level button ignores text-align) — CENTRED (user, v2.33.1) */
+/* the button row is a centred flex row, since a block-level button ignores text-align */
 html.cc-popups-on .sweet-alert .sa-button-container,
 html.cc-popups-on .sweet-alert p:has(> button.confirm) {
   text-align: center !important; display: flex !important; justify-content: center !important; gap: 10px;
@@ -992,75 +831,56 @@ html.cc-popups-on .sweet-alert .sa-button-container button {
   display: inline-flex !important; align-items: center; float: none !important;
   height: var(--cc-lgb-h, 36px) !important; padding: 0 24px !important; font-size: var(--cc-lgb-fs, 14px) !important;
   font-weight: 600 !important; text-transform: uppercase !important;
-  letter-spacing: .6px !important; transition: filter .12s; margin: 0 !important;   /* the flex gap spaces them — a one-sided margin would skew the centring */
+  letter-spacing: .6px !important; transition: filter .12s; margin: 0 !important;   /* the flex gap spaces them; a one-sided margin would skew the centring */
 }
-html.cc-popups-on .sweet-alert button.confirm { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff))) !important; }   /* #(user: "unteren buttons ... nicht in den farbmodi"): --cc-rb-c = this window's own rotating slot, stamped by paintPopups() */
+html.cc-popups-on .sweet-alert button.confirm { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff))) !important; }   /* --cc-rb-c is this window's rotating slot from paintPopups() */
 html.cc-popups-on .sweet-alert button.cancel { background: #2e2e2e !important; color: #e6e6e6 !important; }
 html.cc-popups-on .sweet-alert .sa-button-container button:hover { filter: brightness(1.14); }
-/* #(user: "die Buttons ganz unten sind verschieden angeordnet"): a leftover `button.cancel` from the
-   "Bist du sicher?" confirm step (SweetAlert1 reuses ONE dialog node across its whole lifecycle) stays in
-   the DOM once the stream finishes, and Unraid itself hides it inline (`style="display:none"`) — but the
-   generic `display:inline-flex !important` two rules up outranks that plain inline style, so a stray
-   Cancel button popped back into the row between the status badge and Fertig, breaking the intended
-   status -> Fertig -> other-button order on live-measured real update windows. Higher-specificity
-   (adds the attribute selector) restores the native hide regardless of source order. */
+/* SweetAlert1 reuses one dialog node, so the "Bist du sicher?" step leaves a button.cancel that
+   Unraid hides inline once the stream finishes. The inline-flex !important above would show it
+   again between the status badge and Fertig; the attribute selector restores the native hide. */
 html.cc-popups-on .sweet-alert button.cancel[style*="display: none"],
 html.cc-popups-on .sweet-alert button.cancel[style*="display:none"] { display: none !important; }
-/* #N1 (user REVERSAL): the .nchan action buttons drop back to the CC STANDARD lgb height (36px, inherited
-   from the base button rule above) — the old 46px was "zu groß". No .nchan-specific height override now. */
 
-/* ═══ #3 (user): the CA "UPDATING CONTENT" dialog shows ONLY the centred CC loader over the blurred backdrop —
-   no title bar, no "Please Wait" line, no buttons, no box. header.js stamps .cc-only-loader on the SHARED
-   .sweet-alert node ONLY while the .updateContent-swal marker is up (and strips it when the node is reused for
-   any other dialog), so these rules never bleed into a normal confirm. The .sweet-overlay backdrop is untouched. */
+/* The CA "UPDATING CONTENT" dialog shows only the centred CC loader over the blurred backdrop: no
+   title, no "Please Wait" line, no buttons, no box. header.js sets .cc-only-loader on the shared
+   .sweet-alert node only while the .updateContent-swal marker is up and removes it when the node is
+   reused, so a normal confirm is unaffected. */
 html.cc-popups-on .sweet-alert.cc-only-loader {
   background: transparent !important; border: none !important; box-shadow: none !important;
   display: flex !important; align-items: center !important; justify-content: center !important; padding: 0 !important;
 }
-/* #22 (user, live-diagnosed via a targeted overflow scan — TWO earlier attempts fixed html/body, the wrong
-   element entirely): this dialog is SweetAlert1's own base .sweet-alert, which ships overflow-y:auto for
-   normal dialogs with long confirm text. That was never overridden for the loader-only variant, so once the
-   110px ring's carrying <p> needed a few px more than this box's own height, the native rule did exactly
-   what it was designed to do elsewhere — auto-scroll — which is exactly the scrollbar next to the spinner.
-   Nothing in this dialog is meant to scroll once every OTHER child is hidden above; let the box grow to fit
-   instead of clipping or scrolling it. */
+/* The base .sweet-alert has overflow-y:auto for long confirm text, which would put a scrollbar
+   next to the 110px ring; with every other child hidden nothing here needs to scroll. */
 html.cc-popups-on .sweet-alert.cc-only-loader { overflow: visible !important; }
-/* keep ONLY the element that carries the loader (the <p>); hide title, icons, fieldset, button row, all else */
+/* keep only the <p> that carries the loader; hide the title, icons, fieldset, button row and the rest */
 html.cc-popups-on .sweet-alert.cc-only-loader > *:not(:has(.cc-loader)) { display: none !important; }
-/* inside that <p>, drop the "Please Wait" marker so ONLY the spinner shows */
+/* inside that <p>, hide the "Please Wait" marker so only the spinner shows */
 html.cc-popups-on .sweet-alert.cc-only-loader .updateContent-swal { display: none !important; }
-/* the loader now stands alone — clear the JS inline margins that assumed a text line beneath it.
-   #4 (follow-up): it is also the ONLY ring on screen now that the fullscreen tab-load overlay is
-   suppressed while this dialog is up, so it must carry the full tab-load size (110px, the same number
-   div.spinner.fixed uses). 48px was chosen back when it sat as a small ring above a "Please Wait" line;
-   alone on a dark page it read as a stray dot. The sheet wins over the JS inline value because that
-   inline write carries no !important. */
+/* The loader stands alone, so the inline margins meant for a text line below it go. The tab-load
+   overlay is suppressed while this dialog is up, so it takes the full tab-load size (110px, as
+   div.spinner.fixed); the inline value from the script carries no !important. */
 html.cc-popups-on .sweet-alert.cc-only-loader .cc-loader { margin: 0 !important; --cc-load-sz: 110px !important; }
 
-/* ═══ FREEZE FIX — a CLOSED sweet-alert must never linger as an invisible click-blocker ═══
-   User live-diagnosed 2026-07-28 ("sichtbar aber Klicks tot" + "Fenster erscheinen nach dem Schließen
-   erneut"): SweetAlert shows the alert as display:flex and closes it by removing .visible / adding
-   .hideSweetAlert plus a JS timeout that sets display:none. On the STREAMING container-update window that
-   final display:none did not stick, so the closed alert lingered as display:flex, opacity:0,
-   pointer-events:auto at z-index 99999 covering ~81% of the viewport — an invisible sheet that swallowed
-   EVERY click until a full page reload. Force any closing/closed alert fully gone + click-through so a
-   stuck dialog can never trap the UI again. Scoped to .hideSweetAlert = only the closing/closed state, so
-   an OPEN dialog (.showSweetAlert/.visible, no .hideSweetAlert) is untouched. */
+/* A closed sweet-alert must not linger as an invisible click blocker. SweetAlert closes by adding
+   .hideSweetAlert and setting display:none from a timeout, which on the streaming container update
+   window does not stick; the alert stays display:flex at opacity 0 and z-index 99999 and swallows
+   every click until a reload. Only the closing and closed state carries .hideSweetAlert, so an
+   open dialog is untouched. */
 html.cc-popups-on .sweet-alert.hideSweetAlert {
   display: none !important;
   opacity: 0 !important;
   pointer-events: none !important;
 }
 
-/* ═══ t4t5 SweetAlert (.swal-modal / .swal-overlay) -> CC look ═══
-   The Unassigned Devices plugin bundles a SECOND sweetalert (t4t5 v2, .swal-* classes) for its
-   "remove saved configuration" confirm — CC's .sweet-alert rules above never reached it, so it stayed
-   native WHITE with orange-outlined buttons (user). Same dark carbon surface + CC pill buttons; the
-   .swal-modal prefix beats the plugin's own themed button rules. Live-verified on the UD remove dialog. */
+/* The Unassigned Devices plugin bundles a second SweetAlert (t4t5 v2, .swal-* classes) for its
+   "remove saved configuration" confirm, which the .sweet-alert rules above do not reach. It gets
+   the same dark surface and CC pill buttons; the .swal-modal prefix beats the plugin's own button
+   rules. */
 html.cc-popups-on .swal-overlay { background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)) !important; backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important; -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important; }
-html.cc-popups-on .swal-modal { background: #1a1a1a !important; border: none !important; border-radius: 14px !important; box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important; padding: 18px !important; }   /* #(user 2026-07-29): frame + soft shadow identical to the update window */
-html.cc-popups-on .swal-modal .swal-icon { display: none !important; }   /* the template has no native icon ring; the accent title bar carries the identity */
-/* FULL-WIDTH accent title bar, 40px — identical to the update window */
+html.cc-popups-on .swal-modal { background: #1a1a1a !important; border: none !important; border-radius: 14px !important; box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important; padding: 18px !important; }   /* frame and soft shadow as in the update window */
+html.cc-popups-on .swal-modal .swal-icon { display: none !important; }   /* no native icon ring; the accent title bar carries the identity */
+/* a full-width 40px accent title bar, as in the update window */
 html.cc-popups-on .swal-modal .swal-title {
   display: flex !important; align-items: center; justify-content: center !important;
   height: 40px !important; margin: 0 0 14px !important; padding: 0 18px !important; border: none !important;
@@ -1068,7 +888,7 @@ html.cc-popups-on .swal-modal .swal-title {
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #fff)) !important;
   font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
 }
-/* body TEXT sits in a LIGHT #2e2e2e card */
+/* the body text sits in a lighter #2e2e2e card */
 html.cc-popups-on .swal-modal .swal-text {
   color: #d6d6d6 !important; text-align: center !important;
   background: #2e2e2e !important; border-radius: 10px !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
@@ -1086,59 +906,46 @@ html.cc-popups-on .swal-modal .swal-button--cancel { background: #2e2e2e !import
 html.cc-popups-on .swal-modal .swal-button:hover { filter: brightness(1.14) !important; }
 html.cc-popups-on .swal-modal .swal-button:focus { box-shadow: none !important; outline: none !important; }
 
-/* ═══ CC STANDARD NEUTRAL PALETTE (user: "Farben systemweit standardisieren + im Style Guide speichern") ═══
-   ONE canonical dark-surface scale reused across all CC floating windows / badges so nothing drifts. The accent /
-   rainbow tones stay dynamic (header.js: --cc-accent, --cc-rbaccent, --cc-rb-c). Documented in the vault Docker
-   Container style guide. */
+/* The neutral dark surfaces shared by every CC floating window and badge. The accent and rainbow
+   tones stay dynamic (header.js: --cc-accent, --cc-rbaccent, --cc-rb-c). */
 :root {
   --cc-surface-window: #242424;   /* a card-based floating window / sheet surface (stands off the dimmed backdrop) */
-  --cc-surface-window-deep: #0f0f0f;  /* a STREAMING/log window frame — must be the DARKEST layer so the step cards
-                                         read as RAISED and no header/footer strip is ever lighter than the content */
+  --cc-surface-window-deep: #0f0f0f;  /* a streaming or log window frame, the darkest layer so the step cards
+                                         read as raised and no strip is lighter than the content */
   --cc-surface-card:   #191919;   /* an inset card / list item / read-only field inside a window */
-  --cc-surface-chip:   #383838;   /* a NEUTRAL badge / chip / icon-button at rest (clearly above the window) */
+  --cc-surface-chip:   #383838;   /* a neutral badge, chip or icon button at rest, clearly above the window */
   --cc-ink:            #e8e8e8;   /* primary text on a dark surface */
   --cc-ink-dim:        #c9c9c9;   /* secondary / neutral-chip text */
 }
 
-/* ═══ NOTIFICATION CENTRE (Connect bell) -> floating CC window (P14) ═══
-   The bell opens a full-height right-edge Sheet (reka-ui, div.fixed.z-50.bg-background inside the
-   .unapi host, LIGHT DOM so outside CSS reaches it). User: make it a FLOATING window in CC style.
-   Detach it from the edges into a rounded top-right card with the CC surface + shadow, no border-line
-   (law). Fragile Tailwind-class hook — if Connect renames these utilities the rule fails SOFT (the
-   native full-height sheet returns). Live-verified: floats top-right, content reflows in-bounds.
-   #41 (root cause, live-traced): the same div.fixed.z-50.bg-background recipe is ALSO what every
-   CENTERED reka dialog uses (e.g. the API-key creation modal) - :not(.top-1\/2) excludes those (a
-   centered dialog carries the top-1/2/left-1/2 self-centering utilities; this edge-anchored sheet never
-   does), so its own inset:74px/16px/auto/auto stops hijacking a modal that was trying to center itself.
-   Without this exclusion this rule's higher specificity silently won over any centering fix, no matter
-   what that fix set top/left/transform/inset to - hours were lost to that before spotting this rule. */
+/* The notification centre (Connect bell) as a floating CC window. The bell opens a full-height
+   right-edge reka-ui Sheet (div.fixed.z-50.bg-background inside the light-DOM .unapi host), which
+   becomes a rounded top-right card with the CC surface and shadow. The Tailwind class hooks fail
+   soft: if Connect renames them the native sheet returns. Centred reka dialogs such as the API key
+   modal use the same recipe plus the top-1/2 and left-1/2 centring utilities, so :not(.top-1\/2)
+   keeps this inset from overriding them. */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background:not(.top-1\/2) {
   inset: 74px 16px auto auto !important;
-  /* #(user: "ohne Benachrichtigungen ist das Fenster zu kurz, wirkt abgeschnitten"): a floor keeps the empty state
-     (check + "keine Benachrichtigungen") from collapsing into a stub; capped by 82vh when full. */
+  /* a floor keeps the empty state from collapsing into a stub; 82vh caps it when full */
   height: auto !important; max-height: 82vh !important; min-height: min(380px, 82vh) !important;
-  width: min(560px, calc(100vw - 32px)) !important; max-width: none !important;   /* wider + roomier (user) — override the native sm:max-w-[540px] clamp */
+  width: min(560px, calc(100vw - 32px)) !important; max-width: none !important;   /* wider than the native sm:max-w-[540px] */
   border: none !important; border-radius: 14px !important;
-  /* #(user: "nie Rahmenlinien" + "Hintergrund gleichmäßig abdunkeln, nicht nur ums Fenster"): NO ring and only a
-     SOFT shadow (the old 80px/.82 shadow drew a dark halo AROUND the window on top of the uniform reka overlay). The
-     window now lifts purely by its lighter surface against the evenly-dimmed backdrop. */
+  /* no ring and only a soft shadow, so the window lifts by its lighter surface against the evenly
+     dimmed backdrop instead of a dark halo */
   box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
   background-color: var(--cc-surface-window) !important;
   overflow: hidden !important;
 }
-/* MORE AIR inside (user: "größer und geräumiger"): wider list gutters + taller rows so each
-   notification breathes instead of stacking tight. Fragile Tailwind hooks -> fail soft. */
-/* #1 (user: "Cards und Buttons sind links/rechts nicht bündig"): line the card list up with the header controls
-   (which sit at a 12px inset). A thin overlay-style scrollbar keeps the right edge close too. */
+/* Wider list gutters and taller rows. The card list lines up with the header controls at a 12px
+   inset, and a thin scrollbar keeps the right edge close. */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .overflow-y-scroll { padding-left: 12px !important; padding-right: 8px !important; scrollbar-width: thin; scrollbar-color: #3a3a3a transparent; }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .overflow-y-scroll::-webkit-scrollbar { width: 6px; }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .overflow-y-scroll::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .overflow-y-scroll::-webkit-scrollbar-track { background: transparent; }
-/* the heading badge sits 4px in on an ml-1 wrapper — pull it back so it lines up with the tabs/filters/cards. */
+/* the heading badge sits 4px in on an ml-1 wrapper; pull it back in line with the tabs, filters and cards */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background h2 { margin-left: -4px !important; }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .divide-y > div { padding-top: 15px !important; padding-bottom: 15px !important; }
-/* #5 (user: "die Überschrift ist kein Badge" + "das Benachrichtigung(en)-Badge soll am GRÖSSTEN sein, alle anderen
-   eine Größe kleiner"): the drawer title -> the LARGEST CC accent badge; every other control is one tier smaller. */
+/* the drawer title is the largest accent badge; every other control is one size smaller */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background h2 {
   display: inline-flex !important; align-items: center; width: fit-content !important;
   background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
@@ -1146,13 +953,11 @@ html.cc-popups-on .unapi div.fixed.z-50.bg-background h2 {
   font-size: 15px !important; font-weight: 700 !important; text-transform: uppercase; letter-spacing: .7px !important;
 }
 
-/* BULK ACTIONS AS BADGES (user: "alles soll in badges. also zb archivieren oder alle löschen").
-   header.js (ccNotifActions) hides the native "Alle archivieren" text-link and drops CLONED, Vue-
-   handler-free badges into its column (.cc-notif-actions): archive (neutral) + delete (red). Clones
-   carry NO native click handler, so archiving no longer opens Unraid's off-screen confirm dialog
-   (user: "das bestätigungsfenster ist weit abseits") — both act via GraphQL then reload the page
-   (the ONLY reliable way to refresh the Vue notification list, which caches and never refetches on
-   its own — proven live). Delete is a two-step: first click arms ("Wirklich löschen?"), second clears. */
+/* Bulk actions as badges. header.js ccNotifActions hides the native "Alle archivieren" link and
+   puts cloned badges without Vue handlers into its column (.cc-notif-actions): archive and delete.
+   Without the native handler Unraid's off-screen confirm dialog stays closed; both act through
+   GraphQL and then reload, since the Vue list caches and never refetches. Delete takes two clicks:
+   the first arms it ("Wirklich löschen?"). */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .cc-notif-actions {
   flex-direction: row !important; align-items: center !important; justify-content: flex-end !important;
   flex-wrap: wrap !important; gap: 8px !important; margin-top: 0 !important;
@@ -1168,35 +973,30 @@ html.cc-popups-on .cc-notif-arch:hover { background: #333 !important; color: #ff
 html.cc-popups-on .cc-notif-del { background: rgba(255, 107, 107, .14) !important; color: #ff6b6b !important; }
 html.cc-popups-on .cc-notif-del:hover { background: rgba(255, 107, 107, .22) !important; color: #ff8a8a !important; }
 html.cc-popups-on .cc-notif-del.cc-notif-armed { background: #e5484d !important; color: #fff !important; }
-/* ── #5 FULL CC restyle of the notification centre (user: "vollständig in den CC-Style; nicht scrollbar" + corrections:
-   Überschrift am größten / alle anderen Badges eine Stufe kleiner, Hover = Akzent, Card-Schrift kleiner, Card-Buttons
-   im CC-Style). reka-ui drawer — fragile Tailwind hooks, fail soft. ── */
+/* The rest of the notification centre in CC style; the Tailwind hooks fail soft. */
 
-/* SCROLL: the top wrapper is `h-full` but the drawer height is auto+max-height:82vh (not definite), so height:100%
-   collapsed to full CONTENT height and nothing scrolled. Make it a flex child that fills the column + can shrink; the
-   inner list then bounds to 82vh and scrolls. Only vertical flex-col wrappers get min-height:0 so header rows keep size. */
+/* The top wrapper is h-full, but the drawer's height is auto with max-height:82vh, so height:100%
+   resolves to the content height and nothing scrolls. As a shrinkable flex child it fills the
+   column, and the inner list is bounded and scrolls. Only the vertical flex-col wrappers get
+   min-height:0, so the header rows keep their size. */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .relative.flex.h-full.w-full.flex-col {
   height: auto !important; flex: 1 1 auto !important; min-height: 0 !important;
 }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .flex.flex-1.flex-col,
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .overflow-y-scroll { min-height: 0 !important; }
-/* #(user: "ohne Benachrichtigungen wirkt das Fenster abgeschnitten"): centre the empty-state check + message in the
-   filled min-height space. Scoped to the empty case only — the list wrapper has NO .overflow-y-scroll when empty, so
-   this never touches the populated card list. */
+/* centre the empty state's check and message in the min-height space; the list wrapper has no
+   .overflow-y-scroll when empty, so a populated list is untouched */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [class*="ring-offset"][class*="mt-2"]:not(:has(.overflow-y-scroll)) {
   display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important;
 }
 
-/* drop the native BARS behind the Ungelesen/Archiviert tabs + the type filters */
+/* drop the native bars behind the Ungelesen/Archiviert tabs and the type filters */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="tablist"],
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .flex-wrap.rounded-xl {
   background: transparent !important; border: none !important; padding: 0 !important; gap: 8px !important; border-radius: 0 !important; box-shadow: none !important;
 }
 
-/* every header CONTROL = a CC pill one tier smaller than the heading badge (28px/12px). #6 (user: "alle Badges in die
-   Farbmodi aufnehmen"): neutral at rest, the COLOUR-MODE tone (rotated --cc-rb-c in rainbow, else accent) on hover +
-   when active — so in rainbow mode each badge reveals its own palette colour. */
-/* shared sizing for all header controls (tabs, filters, gear) */
+/* every header control (tabs, filters, gear) is a CC pill one size below the heading badge (28px/12px) */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="tab"],
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="button"][aria-pressed]:not(.cc-notif-badge),
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .shrink-0 > a[href*="Notification"] {
@@ -1205,42 +1005,38 @@ html.cc-popups-on .unapi div.fixed.z-50.bg-background .shrink-0 > a[href*="Notif
   min-height: 28px !important; height: 28px !important; padding: 0 12px !important; border: none !important;
   font-size: 12px !important; font-weight: 600 !important; line-height: 1 !important; text-decoration: none !important; transition: filter .12s, opacity .12s;
 }
-/* #(user: "die Badges sind nicht in die Farbmodi integriert"): the TABS + type FILTERS carry the colour-mode tone at
-   REST (rotated --cc-rb-c per badge in rainbow, accent otherwise), so the row reads as the mode's colours instead of
-   flat grey. Inactive ones ride dimmer so the ACTIVE one (full strength + inner ring) still stands out. */
+/* The tabs and type filters carry the colour mode at rest (a rotated --cc-rb-c per badge in
+   rainbow mode, the accent otherwise). Inactive ones are dimmer, so the active one stands out. */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="tab"],
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="button"][aria-pressed]:not(.cc-notif-badge) {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important; box-shadow: none !important;
 }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="tab"]:not([data-state="active"]),
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="button"][aria-pressed="false"]:not(.cc-notif-badge) { opacity: .5; }
-/* #(user: "die aktiven Badges haben einen hellen Rahmen — ich will NIE Rahmenlinien sehen"): NO ring. The active
-   badge is distinguished by full strength (opacity 1) vs the dimmed / neutral-grey inactive ones. */
+/* the active badge is marked by full opacity, not by a ring */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="tab"][data-state="active"],
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="button"][aria-pressed="true"]:not(.cc-notif-badge) { opacity: 1 !important; box-shadow: none !important; }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="tab"]:hover,
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="button"][aria-pressed]:not(.cc-notif-badge):hover { opacity: 1 !important; filter: brightness(1.12) !important; }
-/* #(user: "die NICHT-aktiven Badges sollen im REAKTIVEN Modus grau sein, nicht farbig; das Grau soll sich besser
-   abheben"): in the reactive sub-mode the inactive tabs/filters rest on the neutral chip surface (--cc-surface-chip,
-   clearly above the window), NOT their palette colour. The active one keeps its colour; hover reveals colour. */
+/* in the reactive sub-mode the inactive tabs and filters rest on the neutral chip surface; the
+   active one keeps its colour and hover shows it */
 html.cc-popups-on.cc-header-rbneutral .unapi div.fixed.z-50.bg-background [role="tab"]:not([data-state="active"]):not(:hover),
 html.cc-popups-on.cc-header-rbneutral .unapi div.fixed.z-50.bg-background [role="button"][aria-pressed="false"]:not(.cc-notif-badge):not(:hover) {
   background: var(--cc-surface-chip) !important; color: var(--cc-ink-dim) !important; opacity: 1 !important;
 }
-/* the GEAR stays a neutral icon button that flushes to the colour-mode tone on hover, matching the archive/delete
-   icons beside it. */
+/* the gear is a neutral icon button that takes the colour mode on hover, like the archive and
+   delete icons beside it */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .shrink-0 > a[href*="Notification"] { background: var(--cc-surface-chip) !important; color: var(--cc-ink-dim) !important; box-shadow: none !important; }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .shrink-0 > a[href*="Notification"]:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important; }
-/* #2 (user: "das Zahnrad hat zwei Badge-Formen und das Hovern spinnt"): the gear <a> wraps a native <span> that ALSO
-   drew a pill (+ its own transition) -> flatten the inner span so only the outer CC badge shows. Fixed square. */
+/* the gear <a> wraps a native <span> with its own pill and transition, which is flattened so only
+   the outer square badge shows */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .shrink-0 > a[href*="Notification"] { width: 34px !important; min-width: 34px !important; padding: 0 !important; }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .shrink-0 > a[href*="Notification"] > * {
   background: transparent !important; box-shadow: none !important; border: none !important; border-radius: 0 !important;
   padding: 0 !important; margin: 0 !important; height: auto !important; min-height: 0 !important; color: inherit !important; transition: none !important;
 }
 
-/* #5 (user): Alle archivieren / Alle löschen -> ICON-ONLY square badges docked left of the gear. archive follows the
-   colour mode (neutral -> --cc-rb-c on hover), delete stays semantic red (base + armed handled above). */
+/* "Alle archivieren" and "Alle löschen" as icon-only square badges left of the gear */
 html.cc-popups-on .cc-notif-arch,
 html.cc-popups-on .cc-notif-del {
   display: inline-flex !important; align-items: center; justify-content: center;
@@ -1252,28 +1048,24 @@ html.cc-popups-on .cc-notif-del svg { width: 15px !important; height: 15px !impo
 html.cc-popups-on .cc-notif-arch { background: var(--cc-surface-chip) !important; color: var(--cc-ink-dim) !important; }
 html.cc-popups-on .cc-notif-arch:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important; }
 html.cc-popups-on .cc-notif-del:hover { background: rgba(255, 107, 107, .24) !important; color: #ff8a8a !important; }
-/* #(user: "der Löschen-Button soll im reaktiven Modus auch nur bei Mouseover leuchten"): in the reactive sub-mode the
-   delete icon rests neutral like the rest and only flushes red on hover. */
+/* in the reactive sub-mode the delete icon rests neutral like the rest */
 html.cc-popups-on.cc-header-rbneutral .cc-notif-del:not(:hover) { background: var(--cc-surface-chip) !important; color: var(--cc-ink-dim) !important; }
-/* #(user: "das Löschen-Icon ist rot, soll weiß sein — also nur das Icon, nicht der Button"): force the trash GLYPH
-   white in every state (rest / hover / armed), leaving the button background untouched. The svg strokes with
-   currentColor, so pinning color+stroke on the svg wins over whatever the button's color rule sets. */
+/* the trash glyph is white in every state; the svg strokes with currentColor, so colour and stroke
+   are pinned on the svg itself */
 html.cc-popups-on .cc-notif-del svg { color: #fff !important; stroke: #fff !important; }
-/* #(user: "der Löschen-Button wird viel schwächer eingefärbt"): the archive button rotates through the palette
-   (--cc-rb-c) while delete used only a hard faint-red — so it read much weaker next to it. Give delete the SAME
-   colour-mode treatment as archive: neutral chip at rest, full solid --cc-rb-c on hover (it now gets a palette
-   stamp from ccPaintRotate). The confirm-delete "armed" state keeps its bold red; the glyph stays white. */
+/* Delete gets the same colour-mode treatment as archive, a neutral chip at rest and the solid
+   --cc-rb-c from ccPaintRotate on hover. The armed confirm state keeps its red. */
 html.cc-popups-on .cc-notif-del { background: var(--cc-surface-chip) !important; }
 html.cc-popups-on .cc-notif-del:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
 html.cc-popups-on .cc-notif-del.cc-notif-armed { background: #e5484d !important; }
 
-/* CARD text smaller (user: "die Schrift der Nachrichten ist zu groß") — native title/body are 16px. */
+/* smaller card text than the native 16px title and body */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] { font-size: 12.5px !important; }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] .flex-1.truncate { font-size: 13px !important; }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] h4 { font-size: 12.5px !important; }
 
-/* CARD action buttons (user: "Anzeigen und Archiv sind nicht im CC-Style") -> CC pills: Anzeigen neutral (accent on
-   hover), Archiv accent. Both drop the Unraid-orange. */
+/* the card actions as CC pills instead of Unraid orange: Anzeigen neutral with the accent on hover,
+   Archiv in the accent */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] a[class*="text-primary"] {
   display: inline-flex !important; align-items: center; justify-content: center;
   background: var(--cc-surface-chip) !important; color: var(--cc-ink) !important; border-radius: var(--cc-b-radius, 999px) !important;
@@ -1289,21 +1081,18 @@ html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] span
   font-size: 12.5px !important; font-weight: 600 !important; box-shadow: none !important; border: none !important; transition: background-color .12s, color .12s, filter .12s;
 }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] span[class*="rounded-md"][class*="inline-flex"]:hover { filter: brightness(1.12) !important; }
-/* #3 (user: "der Archiv-Button soll im REAKTIVEN Modus nur per Hover farbig sein"): in the reactive sub-mode
-   (cc-header-rbneutral) Archiv rests neutral and reveals the colour only on hover. */
+/* in the reactive sub-mode (cc-header-rbneutral) Archiv rests neutral and colours on hover */
 html.cc-popups-on.cc-header-rbneutral .unapi div.fixed.z-50.bg-background [class~="group/item"] span[class*="rounded-md"][class*="inline-flex"]:not(:hover) {
   background: var(--cc-surface-chip) !important; color: var(--cc-ink) !important; filter: none !important;
 }
 
-/* Drag-and-drop menu-tab ordering (v2.24.1): the cursor stays the NORMAL link pointer on hover — no grab
-   hand. Draggability is armed by a press-and-HOLD (~450ms, in header.js): the bar enters reorder mode and
-   every tab jiggles (cc-nav-wiggle) to signal it can be moved, then a drag reorders it and the order
-   persists to cc.navorder. The pill being dragged dims and drops its own jiggle. Header area only. */
+/* Drag-and-drop tab ordering. The cursor stays the normal pointer; a press-and-hold (about 450ms,
+   in header.js) puts the bar into reorder mode, every tab wiggles (cc-nav-wiggle), and a drag
+   reorders it and saves cc.navorder. The dragged pill dims and stops wiggling. */
 html.cc-header-on #menu .cc-navdrag > a { cursor: pointer; }
 html.cc-header-on #menu .cc-dragging { opacity: .45; animation: none !important; }
-/* #(user: "die Icons zittern viel weniger als die anderen Elemente"): a square ~36px icon shows far less
-   movement than a wide chip at the same rotation (the corners travel with width). So the icon wiggle gets a
-   bigger swing PLUS a horizontal shake, which reads strongly on a small square. */
+/* A square 36px icon moves far less than a wide chip at the same rotation, since the corners
+   travel with the width, so the wiggle adds a horizontal shake to the rotation. */
 @keyframes cc-nav-wiggle {
   0%   { transform: rotate(-2.8deg) translate(-1.2px, 0); }
   25%  { transform: rotate(2.6deg)  translate(1.2px, -0.9px); }
@@ -1311,31 +1100,27 @@ html.cc-header-on #menu .cc-dragging { opacity: .45; animation: none !important;
   75%  { transform: rotate(2.8deg)  translate(1.2px, 0.9px); }
   100% { transform: rotate(-2.8deg) translate(-1.2px, 0); }
 }
-/* one wiggle rule for BOTH zones: the left tab pills AND the right utility icons + usage meter
-   (user: das Verschieben/Zittern auch fuer die Fuellstandsanzeige und die Icons) */
+/* one wiggle rule for both zones: the tab pills and the utility icons with the usage meter */
 html.cc-header-on #menu .cc-nav-wiggle {
   animation: cc-nav-wiggle .32s ease-in-out infinite;
   transform-origin: 50% 50%;
 }
-/* #(user: "die Icons zittern nicht einzeln, nur alle zusammen als ein Block"): with every item in the SAME
-   phase the whole row tilts in unison. Offset the phase per item (negative delays start mid-cycle) so
-   neighbours wiggle out of sync -> individual jitter. */
+/* per-item phase offsets (negative delays start mid-cycle), so neighbours wiggle out of sync
+   rather than the whole row tilting at once */
 html.cc-header-on #menu .cc-nav-wiggle:nth-child(2n) { animation-delay: -0.16s; }
 html.cc-header-on #menu .cc-nav-wiggle:nth-child(3n) { animation-delay: -0.08s; }
 html.cc-header-on #menu .cc-nav-wiggle:nth-child(5n) { animation-delay: -0.24s; }
 
-/* ═══ native footer strip: footer#footer (position:fixed, 28px — array status + temps +
-   copyright). DEFAULT HIDDEN (user: "komplett ausblenden"); the settings toggle
-   (cc.footer="0") restores it. header.js stamps cc-footer-off master-gated, so theming
-   OFF = class absent = fully native. No body give-back rule: the native layout sizes the
-   scroll area via fillAvailableHeight(), not a body padding-bottom — nothing reserves
-   the 28px on the body itself. ═══ */
+/* The native footer strip (footer#footer, fixed, 28px: array status, temperatures, copyright) is
+   hidden by default and cc.footer="0" brings it back. header.js sets cc-footer-off only with
+   theming on. The native layout sizes the scroll area with fillAvailableHeight() rather than a
+   body padding, so nothing needs to be given back. */
 html.cc-footer-off #footer { display: none !important; }
 @media (prefers-reduced-motion: reduce) {
   html.cc-header-on #menu .cc-nav-wiggle { animation: none; outline: 2px dashed var(--cc-hdr-accent, #70b8ff); outline-offset: 2px; }
 }
 
-/* ═══ FOCUS LAW: keyboard focus draws NO outline/ring/shadow either — feedback is brightness only ═══ */
+/* keyboard focus draws no outline, ring or shadow; the feedback is brightness only */
 html.cc-header-on #menu :is(a, button, input):focus-visible,
 html.cc-header-on #guiSearchBox:focus-visible,
 html.cc-popups-on .ui-dialog :is(a, button, input, .ui-dialog-titlebar-close):focus-visible,
@@ -1343,10 +1128,9 @@ html.cc-popups-on .sweet-alert :is(a, button):focus-visible {
   outline: none !important; box-shadow: none !important; filter: brightness(1.18);
 }
 
-/* ═══ #19 tasteful motion + #24 reduced-motion guard ═══════════════════════════════════════════════
-   A gentle entry animation for the CC-styled popups + smooth hover/colour transitions on the
-   interactive chrome. Deliberately NOT on live-updating elements (island chips repaint every few
-   seconds — animating them would flicker). Everything collapses under prefers-reduced-motion (a11y). */
+/* A gentle entry animation for the popups and smooth hover and colour transitions on the
+   interactive chrome, but not on live-updating elements such as the island chips, which repaint
+   every few seconds and would flicker. prefers-reduced-motion turns it all off. */
 @keyframes cc-pop-in { from { opacity: 0; transform: translateY(7px) scale(.985); } to { opacity: 1; transform: none; } }
 html.cc-popups-on .sweet-alert,
 html.cc-popups-on .swal-modal,
@@ -1355,8 +1139,7 @@ html.cc-header-on #menu .nav-item,
 html.cc-header-on #cc-brand,
 html.cc-docker-on .cc-badge,
 html.cc-shares-on .cc-badge { transition: background-color .14s ease, color .14s ease, filter .12s ease; }
-/* #16: functional badges react on mouseover. The ShipLog chip row (Changelog / update / version) +
-   the docker update/changelog chips lift on hover so the clickable ones read as interactive. */
+/* clickable badges (the ShipLog chip row, the Docker update and changelog chips) brighten on hover */
 html.cc-docker-on .sl-chiprow > *,
 html.cc-docker-on .cc-3p,
 html.cc-docker-on a.cc-badge,
@@ -1364,8 +1147,8 @@ html.cc-docker-on .cc-badge[onclick] { transition: filter .12s ease, background-
 html.cc-docker-on .sl-chiprow > *:hover,
 html.cc-docker-on a.cc-badge:hover,
 html.cc-docker-on .cc-badge[onclick]:hover { filter: brightness(1.2); }
-/* -- CC TOAST (#11 help feedback + reusable notice) -- bottom-centre pill, colour-mode accent border,
-   slides up + fades in. A single reused node (header.js ccToast). Hidden until .cc-toast-show. */
+/* The CC toast (header.js ccToast, one reused node): a bottom-centre pill with a colour-mode border
+   that slides up and fades in, hidden until .cc-toast-show. */
 #cc-toast {
   position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 14px);
   z-index: 100000; pointer-events: none; opacity: 0;
@@ -1377,18 +1160,11 @@ html.cc-docker-on .cc-badge[onclick]:hover { filter: brightness(1.2); }
   transition: opacity .18s ease, transform .22s cubic-bezier(.2, .9, .3, 1);
 }
 #cc-toast.cc-toast-show { opacity: 1; transform: translate(-50%, 0); }
-/* #14: the OS "reduce motion" preference only stills CC motion when the user has NOT explicitly forced
-   animations on (cc.anim default ON -> cc-anim-on -> the user opted into motion, so we honour that). */
-/* MOTION ENGINE COVERAGE GAP (found auditing cc.anim for the loader engine): [class*="cc-"] only reaches
-   elements CC put its OWN class on. Roughly half of everything CC animates is a NATIVE Unraid/CA element
-   restyled in place — a.back_to_top, .caButton, input[type=button|submit], .switch-button-background, the
-   pager's .pageNumber, i.fa-trash, plain <a>/<button>/<span> — none of which ever carry a cc- class, so
-   the "off" switch and prefers-reduced-motion silently missed ~130 transition/animation sites across every
-   sheet (docker.css, Shares.css, Tools.css, VmTab.css, SettingsGrid.css, Tokens.css, Header.css). Listing
-   130 individual selectors here would be unmaintainable and drift the moment a new badge is added — cover
-   the STRUCTURAL CONTAINERS CC actually touches instead (#displaybox holds virtually every area sheet's
-   content; #header/#menu the chrome; the two footer arrows are direct <body> children, outside all of
-   them, so they still need to be named). Popups get their own descendant sweep too, not just the shell. */
+/* The OS reduce-motion preference stills CC motion only while the user has not turned animations on
+   explicitly (cc-anim-on). [class*="cc-"] reaches only elements with a CC class, but much of what CC
+   animates is native markup restyled in place (a.back_to_top, .caButton, buttons, switches, the
+   pager, i.fa-trash), so the containers CC touches are covered instead: #displaybox, #header and
+   #menu, the two footer arrows that sit directly in <body>, and the popups with their contents. */
 @media (prefers-reduced-motion: reduce) {
   html:not(.cc-anim-on) #cc-toast { transition: opacity .12s ease !important; transform: translate(-50%, 0) !important; }
   html:not(.cc-anim-on).cc-popups-on .sweet-alert,
@@ -1405,7 +1181,7 @@ html.cc-docker-on .cc-badge[onclick]:hover { filter: brightness(1.2); }
   html:not(.cc-anim-on) a.back_to_top,
   html:not(.cc-anim-on) a.move_to_end { transition: none !important; animation: none !important; }
 }
-/* #14: the explicit OFF switch stills ALL CannonadeCommand motion, regardless of the OS setting. */
+/* the explicit off switch stills all CannonadeCommand motion, whatever the OS setting */
 html.cc-anim-off [class*="cc-"],
 html.cc-anim-off #displaybox *,
 html.cc-anim-off #header *,
@@ -1420,8 +1196,8 @@ html.cc-anim-off .swal-modal *,
 html.cc-anim-off .ui-dialog,
 html.cc-anim-off .ui-dialog * { transition: none !important; animation: none !important; }
 html.cc-anim-off #cc-toast { transition: none !important; transform: translate(-50%, 0) !important; }
-/* #14: "systemweit mehr Animationen" when ON — a soft entrance fade for the island/brand and a gentle
-   hover lift on the Docker/Plugin/VM cards. Kept subtle so it reads as polish, not noise. */
+/* with animations on: a soft entrance for the island and brand, and a gentle hover lift on the
+   Docker, Plugin and VM cards */
 @keyframes cc-fade-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 html.cc-anim-on #cc-island { animation: cc-fade-rise .40s cubic-bezier(.2, .9, .3, 1) both; }
 html.cc-anim-on.cc-header-on #cc-brand { animation: cc-fade-rise .46s cubic-bezier(.2, .9, .3, 1) both; }
@@ -1429,29 +1205,26 @@ html.cc-anim-on .cc-card { transition: transform .16s ease, box-shadow .18s ease
 html.cc-anim-on .cc-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0, 0, 0, .45); }
 html.cc-anim-on .cc-b:hover, html.cc-anim-on .cc-navtab:hover { transition: transform .12s ease, filter .12s ease; }
 
-/* #4-B (user, RECURRING frustration): align the content column to the main menu bar on EVERY page. The per-
-   area sheets only aligned #displaybox when THEIR class (cc-tools-on / cc-on-main / cc-docker-on / ...) was
-   present, so un-classed pages -- e.g. the /Settings LANDING xmenu (native Vue) -- fell through and sat ~15px
-   left of the menu tabs. This global fallback (gated only on cc-header-on) covers them. On area pages it sets
-   the SAME --cc-align-left / --cc-box-shift the area rule already uses, so it is idempotent -- no double shift.
-   measureAlign() writes those vars (and now the brand margin) from the measured menu edge on every resize. */
+/* Aligns the content column with the menu bar on pages that no area sheet covers, such as the
+   /Settings landing xmenu. On area pages it sets the same --cc-align-left and --cc-box-shift the
+   area rule uses, so nothing shifts twice. measureAlign() writes both variables, and the brand
+   margin, from the measured menu edge on every resize. */
 html.cc-header-on:not(.Theme--sidebar):not(.Theme--width-boxed) #displaybox { padding-left: var(--cc-align-left, 0); }
 html.cc-header-on.Theme--width-boxed:not(.Theme--sidebar) #displaybox { margin-left: var(--cc-box-shift, 0); margin-right: 0; }
 
-/* #7-III (user: the #191919 bar between the last card and the buttons is STILL there): belt to the JS hide.
-   Empty step cards / stray empty blocks in the streaming window must never render as a grey bar. */
+/* backs up the script's hiding: empty step cards and blocks in the streaming window never render as
+   a grey bar */
 html.cc-popups-on .sweet-alert.nchan fieldset:empty,
 html.cc-popups-on .sweet-alert.nchan p:empty,
 html.cc-popups-on .sweet-alert.nchan > div:empty,
 html.cc-popups-on .sweet-alert.nchan fieldset:not(:has(*)):not(:has(:not(:empty))) { display: none !important; }
-/* #7-V (user: the bottom buttons are reversed vs the other window): standardise -> PRIMARY (Fertig/Schliessen)
-   on the RIGHT, secondary left, matching the template-update window. The nchan confirm button is first in DOM
-   (left); row-reverse puts it right. */
+/* the primary button (Fertig, Schliessen) goes right, as in the template update window; the nchan
+   confirm button comes first in the DOM, so the row is reversed */
 html.cc-popups-on .sweet-alert.nchan .sa-button-container,
 html.cc-popups-on .sweet-alert.nchan p:has(> button.confirm) { flex-direction: row-reverse !important; }
 
-/* #Drag-Umbau (user): the always-visible LOCK toggle. Locked = grey padlock; click -> ARRANGE mode (accent,
-   everything wiggles + drags immediately); click again / Esc -> locked + order saved. Floating, top-right. */
+/* The floating arrange lock, top right. Locked it is a grey padlock; a click enters arrange mode
+   (accent, everything wiggles and can be dragged), and another click or Esc locks and saves. */
 #cc-arrange-lock {
   position: fixed !important; top: 64px; right: 16px; z-index: 100001;
   width: 40px !important; height: 40px !important; min-width: 0 !important; max-width: none !important; box-sizing: border-box !important;
@@ -1472,13 +1245,10 @@ html.cc-popups-on .sweet-alert.nchan p:has(> button.confirm) { flex-direction: r
 html.cc-arrange #menu .nav-item, html.cc-arrange #cc-island .cc-isl-chip { cursor: grab; }
 html.cc-arrange #menu .nav-item.cc-dragging, html.cc-arrange #cc-island .cc-isl-chip.cc-isl-dragging { cursor: grabbing; }
 
-/* ═══ #17 SYSTEM NOTICE BANNER (user: "können wir diese Banner auch in GLS aufnehmen. Global. egal was
-   für eine Meldung im Banner kommt") — Unraid's own top-of-page notices (.upgrade_notice: boot-parameter
-   changes, plugin-update banners; .ca_element_notice: CA's own element notices) render in raw native
-   yellow/cream on every page, borderless GLS elsewhere in the plugin. Semantic, NOT accent/rainbow — a
-   warning must always read as a warning regardless of colour mode, same rule as the destructive-red delete
-   button and the restart-policy warn badge. .alert/.done are Unraid's own state classes on the same element
-   (error / success), reusing the --cc-warn/--cc-err/--cc-ok tokens every other status pill already uses. */
+/* Unraid's top-of-page notices (.upgrade_notice for boot parameter changes and plugin updates,
+   .ca_element_notice for CA) in the semantic status colours rather than the accent, so a warning
+   reads as a warning in any colour mode. .alert and .done are Unraid's error and success classes
+   on the same element. */
 html.cc-popups-on .upgrade_notice,
 html.cc-popups-on .ca_element_notice {
   background: var(--cc-warn, #e0912a) !important; color: var(--cc-warn-fg, #1a1a1a) !important;
@@ -1496,7 +1266,7 @@ html.cc-popups-on .ca_element_notice.done {
 html.cc-popups-on .upgrade_notice i, html.cc-popups-on .ca_element_notice i { color: inherit !important; }
 html.cc-popups-on .upgrade_notice a, html.cc-popups-on .ca_element_notice a { color: inherit !important; text-decoration: underline !important; }
 
-/* #S6 command palette (Ctrl/Cmd+K) — dark launcher, accent-highlighted selection. */
+/* the command palette (Ctrl/Cmd+K): a dark launcher with the selection in the accent */
 #cc-cmd { position: fixed; inset: 0; z-index: 100002; display: none; }
 #cc-cmd.cc-cmd-open { display: block; }
 #cc-cmd .cc-cmd-bd { position: absolute; inset: 0; background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)); backdrop-filter: var(--cc-backdrop-blur, blur(5px)); -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)); }
@@ -1510,20 +1280,13 @@ html.cc-popups-on .upgrade_notice a, html.cc-popups-on .ca_element_notice a { co
 #cc-cmd .cc-cmd-lbl { color: #ededed; font-size: 14px; font-weight: 600; }
 #cc-cmd .cc-cmd-sub { color: #8f8f8f; font-size: 12px; margin-left: auto; white-space: nowrap; }
 
-/* #11 (user REVERT of the v2.94 "viel breiter" drop zones): widening the island to 60vw AND forcing every row
-   to width:100% made ALL chips jump the instant arrange mode turned on ("macht das Neu-Anordnen zum Gluecksspiel").
-   The island now keeps its normal content width and the chips stay put; the no-reflow drop-target outline lives
-   with the base island-arranging rules above. */
-/* #Drag-Umbau: the reused native lock icon glows in the accent while arranging (open/unlocked look) */
+/* the reused native lock icon glows in the accent while arranging */
 html.cc-arrange #menu .nav-item.LockButton b, html.cc-arrange #cc-lock-item b { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
 
-/* ── #S9 light-theme pass (Theme--white / Theme--azure) ── CannonadeCommand is dark-first (Carbon). Solid dark
-   badges/cards read fine on a light page, but elements with a FAINT/transparent background + light text vanish
-   on true white. Give those a light surface + dark text so nothing disappears. (Solid CC surfaces stay dark on
-   purpose — that's the CC look.) */
-/* The island lives in the CC brand header, which stays DARK in every theme (cc-header-on). So it
-   must keep LIGHT-on-dark chips in white/azure too — the earlier light pass gave it dark text on the
-   dark header = invisible. Force light text on the whole island + a subtle light fill on the chips. */
+/* Light themes (Theme--white, Theme--azure). CC is dark-first: solid dark badges and cards read fine
+   on a light page, but faint or transparent fills with light text vanish on white, so those get a
+   light surface and dark text. The island sits in the brand header, which stays dark in every
+   theme, so it keeps light text with a subtle light fill on the chips. */
 html.Theme--white #cc-island,
 html.Theme--azure #cc-island { color: #e8e8e8; }
 html.Theme--white #cc-island .cc-isl-chip,
@@ -1540,26 +1303,23 @@ html.Theme--azure #cc-toast { background: #f4f4f4; color: #1c1c1c; }
 html.Theme--white.cc-shares-rbneutral .cc-badge,
 html.Theme--white.cc-docker-on .cc-limbtn:not(.cc-limbtn-set) { color: #303030 !important; }
 
-/* ── #5 (user): the Unraid/Connect NOTIFICATIONS drawer (a reka-ui dialog). The single messages were only
-   line-separated (.divide-y), not cards, and the top tabs/buttons (Ungelesen/Archiviert, Alle Typen/Info/Warnung,
-   Alle archivieren/loeschen) had mismatched heights + radii. Card-ify each message and give the tabs/buttons one
-   consistent height + radius. Scoped to reka dialogs + the notification item class so nothing else is touched. */
+/* The Connect notifications drawer (a reka-ui dialog): each message becomes a card instead of a
+   .divide-y line, and the tabs and buttons share one height and radius. Scoped to reka dialogs and
+   the notification item class. */
 html.cc-popups-on [id^="reka-dialog-content"] .divide-y > * { border: 0 !important; }
 html.cc-popups-on [id^="reka-dialog-content"] [class~="group/item"] {
   background: var(--cc-surface-card) !important; border: none !important; border-radius: 10px !important;
   padding: 12px 14px !important; margin: 0 0 8px 0 !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
 }
-/* #(user: "der Hover-Text soll bei allen drei gleich aussehen"): reka-ui renders its OWN tooltip for the gear
-   (a portal div), which looks different from the CC bubble the archive/delete icons use. Hide it so all three ride
-   the single frameless CC data-cc-tip bubble (CC law: never a framework/native balloon). */
+/* reka-ui renders its own tooltip for the gear; it is hidden so all three icons use the CC
+   data-cc-tip bubble */
 html.cc-popups-on [id^="reka-tooltip-content"] { display: none !important; }
 html.cc-popups-on [id^="reka-dialog-content"] [class*="inline-flex"][class*="justify-center"] { border-radius: 8px !important; min-height: 30px !important; }
 
-/* #(user: "das Menue in den CC-Style uebernehmen. Infotext in Infobubble"): the account popover (Lizenz verwalten /
-   Auf Updates pruefen / Konto / Einstellungen). It is a body-level popover (NOT inside #displaybox), so these rules
-   are page-global, gated on cc-header-on. header.js tags it .cc-acctmenu and folds its description paragraph onto a
-   .cc-acctinfo (i) bubble. The menu is already dark+rounded+borderless natively; we add CC elevation + colour-mode
-   item hover (each item stamped its own --cc-rb-c by ccPaintRotate, revealed on hover — like every CC menu). */
+/* The account popover (Lizenz verwalten, Auf Updates prüfen, Konto, Einstellungen) sits in the
+   body, outside #displaybox, so these rules are page-global. header.js tags it .cc-acctmenu and
+   folds its description into a .cc-acctinfo (i) bubble. It gets CC elevation and a colour-mode
+   hover from the --cc-rb-c that ccPaintRotate stamps on each item. */
 html.cc-header-on .cc-acctmenu { box-shadow: 0 12px 30px rgba(0, 0, 0, .55) !important; border: none !important; }
 html.cc-header-on .cc-acctmenu li > span,
 html.cc-header-on .cc-acctmenu li > a { border-radius: min(var(--cc-b-radius, 999px), 10px) !important; transition: background .12s, color .12s; }
@@ -1568,14 +1328,14 @@ html.cc-header-on .cc-acctmenu li > a:hover {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
 }
-/* the (i) is a CLICK help button (header.js toggles #cc-acctinfo-pop with the folded description text). */
+/* the (i) is a click help button; header.js toggles #cc-acctinfo-pop with the folded description */
 html.cc-header-on .cc-acctinfo {
   display: inline-flex; align-items: center; justify-content: center; margin-left: 7px; flex: 0 0 auto;
   width: 18px; height: 18px; font-size: 14px; line-height: 1; cursor: pointer; vertical-align: middle;
   color: #b9b9b9; opacity: .9; border-radius: 50%;
 }
 html.cc-header-on .cc-acctinfo:hover { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); opacity: 1; }
-/* the pinned info bubble the (i) click opens — same look as the CC hover bubble, above every .unapi layer */
+/* the pinned info bubble the (i) opens, like the hover bubble and above every .unapi layer */
 html.cc-popups-on #cc-acctinfo-pop {
   position: fixed; z-index: 2147483647; width: max-content; max-width: 280px;
   background: #393939; color: #f4f4f4; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);
@@ -1583,34 +1343,18 @@ html.cc-popups-on #cc-acctinfo-pop {
   font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; white-space: pre-line; text-align: left;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .55);
 }
-/* #(user chose "entfernen"): in CC every help text lives in an (i) bubble system-wide, so the native header Help
-   ("?") button — which only toggled the raw inline help — has no job left. Hide it from the header toolbar. The
-   nav-tile/util chain is needed to out-specify the base .nav-tile .nav-item.util { display:flex !important } rule. */
+/* Every help text lives in an (i) bubble, so the native Help ("?") button, which only toggled the
+   inline help, is hidden. The nav-tile and util classes outrank the base util display rule. */
 html.cc-header-on #menu .nav-tile .nav-item.HelpButton.util { display: none !important; }
-/* #(user: "auf zwei Buttons ist dieses Verlinkungsicon, das kann weg"): the external-link (arrow-out-of-box) glyph
-   on the two items that open unraid.net (Lizenz verwalten / Konto). Its path starts M15.75 2.25H21 — hide it via
-   CSS so a reka re-render can never bring it back. */
+/* the external-link glyph on the two items that open unraid.net (its path starts M15.75 2.25H21),
+   hidden with CSS so a reka re-render cannot bring it back */
 html.cc-header-on .cc-acctmenu li svg:has(path[d^="M15.75 2.25H21"]) { display: none !important; }
 
-/* #41 (root cause, live-traced): a reka/shadcn DialogContent centers itself via the standard
-   position:fixed;top-1/2;left-1/2;-translate-x-1/2;-translate-y-1/2 utility recipe - but on this box the
-   -translate-x/y-1/2 utility RULES themselves are missing from Unraid Connect's own bundled CSS (confirmed
-   live: document.styleSheets has zero rules matching those two classes at all, a native build/purge gap, not
-   anything CC's stylesheet touches - toggling cc-header-on/cc-popups-on off left the broken position
-   unchanged). computed transform reads "none", so the dialog sits at its raw top:50%/left:50% box origin
-   instead of being pulled back by half its own size - hundreds of px too high/right depending on its content
-   height (user: "das Fenster erscheint zu weit oben ... und ist abgeschnitten"). Same fix this codebase
-   already applies to .sweet-alert's own JS-computed centering bug: force the transform directly rather than
-   depend on the (here, absent) utility classes. Scoped to the exact fixed+top-1/2+left-1/2 recipe, not just
-   .fixed alone, so this can't catch an unrelated fixed-position element that was never meant to self-center. */
-/* ACTUAL root cause (found after the inset:0/margin:auto rule above still measured off-screen even with
-   computed top/bottom/margin all individually correct - 54px/54px on a 972px box in a 1080px viewport):
-   Tailwind's -translate-x-1\/2/-translate-y-1\/2 utilities here compile to the STANDALONE CSS `translate`
-   property (--tw-translate-x/y feeding `translate: var(...) var(...)`), not `transform: translate(...)`.
-   `translate` and `transform` are independent CSS properties that both apply to the final render - zeroing
-   transform (above) left `translate: -50% -50%` fully in effect, still yanking the centered box by half its
-   own size on top of the inset:0/margin:auto centering that already produced the right box. Neutralise it
-   explicitly; transform:none stays in case some other build ever routes centering through transform instead. */
+/* A reka/shadcn DialogContent centres itself with fixed, top-1/2, left-1/2 and the translate
+   utilities, but its position comes out wrong on Unraid, so it is centred with inset:0 and
+   margin:auto instead. Tailwind compiles those utilities to the standalone translate property,
+   which applies on top of transform, so both are reset. Scoped to the full fixed + top-1/2 +
+   left-1/2 recipe so no other fixed element is caught. */
 html.cc-header-on .fixed.top-1\/2.left-1\/2 {
   inset: 0 !important;
   margin: auto !important;
@@ -1618,11 +1362,9 @@ html.cc-header-on .fixed.top-1\/2.left-1\/2 {
   translate: none !important;
 }
 
-/* #41 (user: "der create api key button ist zu groß und nicht in den farbmodi. der soll diesn nach unten
-   zeigenden pfeil nicht haben"): native reka trigger - bg-primary/h-10 read Unraid's own orange accent
-   and a 40px height, both off CC's own accent + --cc-lgb-h button-height convention every other CC-styled
-   action button uses. The dropdown itself (Create New / Create from Template) is real and stays working -
-   only the chevron GLYPH is hidden, matching "keine Rahmen/Icons, die nicht zum Stil passen" elsewhere. */
+/* The Create API Key trigger takes the colour mode and the --cc-lgb-h height instead of Unraid's
+   orange bg-primary and 40px h-10. Its dropdown (Create New, Create from Template) keeps working;
+   only the chevron glyph is hidden. */
 html.cc-apikeyspage [aria-haspopup="menu"][role="button"] {
   background: var(--cc-rbaccent, var(--cc-hdr-accent, var(--cc-accent, #2f6feb))) !important;
   color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, var(--cc-accent-text, #fff))) !important;
@@ -1631,22 +1373,18 @@ html.cc-apikeyspage [aria-haspopup="menu"][role="button"] {
 html.cc-apikeyspage [aria-haspopup="menu"][role="button"]:hover { filter: brightness(1.14); }
 html.cc-apikeyspage [aria-haspopup="menu"][role="button"] svg { display: none !important; }
 
-/* #56 (user: "Management Access > Unraid API Status/Settings nicht sauber im GLS. Rahmenlinien, falsche
-   Farben, Buttons nicht als GLS-Badges, Farbmodi"): the same reka/Tailwind card recipe as the API-key
-   dialog (#41) - border.rounded-lg.border-muted is this component family's card signature wherever it
-   shows up, not just on one page, so this catches every card in the Unraid-API settings tabs at once. */
+/* border.rounded-lg.border-muted is the card of this reka/Tailwind component family, so this catches
+   every card in the Unraid API settings tabs (Management Access) */
 html.cc-tools-on .unapi .border.rounded-lg.border-muted {
   border: none !important;
   background: var(--cc-surface-card, #191919) !important;
   box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
 }
-/* the "View the current status..." footnote sits behind its own border-t divider line - shade only, law. */
+/* no divider line above the "View the current status..." footnote */
 html.cc-tools-on .unapi .border-muted.border-t { border-top: none !important; }
-/* #56: Refresh Status / Restart API (and any sibling native <button> in this component family) read
-   Tailwind's own bg-secondary/bg-destructive, ignoring CC entirely - even though header.js's ccPaintRotate()
-   already stamps --cc-rb-c/-ct onto every button in a cc-tools-on #displaybox row (rainbow mode), nothing
-   here ever consumed it, so the stamp was a no-op and every OTHER colour mode left them fully native too.
-   Same accent/rainbow fallback chain as every other CC action button; brightness-only hover, never a swap. */
+/* Refresh Status, Restart API and their sibling buttons use the --cc-rb-c that ccPaintRotate()
+   stamps in rainbow mode, with the usual accent fallbacks, instead of Tailwind's bg-secondary and
+   bg-destructive. */
 html.cc-tools-on .unapi button:not([role="tab"]) {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
@@ -1654,12 +1392,10 @@ html.cc-tools-on .unapi button:not([role="tab"]) {
 }
 html.cc-tools-on .unapi button:not([role="tab"]):hover { filter: brightness(1.14); }
 
-/* ═══ USER tiles (/Users) — user #13: "schöne Kacheln für die User wie für Einstellungen/Werkzeuge, die sich
-   an die Farb- und Form-Engine halten" + "das klebt zu eng aufeinander". The native /Users grid is a .Panels
-   grid of div.user-list > a > img.picture(48) + name — no card, 10px gap. Mirror the Settings/Tools tile recipe
-   (SettingsGrid.css): turn the avatar into a big accent icon-badge (--cc-iconbg-color/--cc-accent + --cc-b-radius,
-   50% in circle mode), name below, more grid gap. Scoped to the user grid via :has(.user-list) so the
-   Settings/Tools tile grids are untouched. Gated on cc-header-on = CC theming on. ═══ */
+/* User tiles on /Users, like the Settings and Tools tiles in SettingsGrid.css. The native grid is a
+   .Panels of div.user-list > a > img.picture (48px) plus the name with a 10px gap; the avatar becomes
+   a large accent badge following --cc-b-radius, with the name below and more room between tiles.
+   Scoped to the user grid with :has(.user-list). */
 html.cc-header-on #displaybox .Panels:has(.user-list) { gap: 20px !important; padding-top: 6px; }
 html.cc-header-on #displaybox .user-list { display: contents; }
 html.cc-header-on #displaybox .user-list > a {
@@ -1678,9 +1414,8 @@ html.cc-header-on #displaybox .user-list > a img.picture {
 }
 html.cc-shape-circle.cc-header-on #displaybox .user-list > a img.picture { border-radius: 50% !important; }
 html.cc-header-on #displaybox .user-list > a:hover img.picture { filter: brightness(1.1); }
-/* /Users action buttons (Benutzer hinzufügen / Fertig) had the raw native orange OUTLINE (no cc-tools-on on
-   /Users) — give them the CC accent pill, uniform like the other form buttons (#5). Scoped to the Users page
-   via #displaybox:has(.user-list) so no other page's buttons are touched. */
+/* the /Users action buttons (Benutzer hinzufügen, Fertig) as accent pills like the other form
+   buttons, since cc-tools-on is not set there */
 html.cc-header-on #displaybox:has(.user-list) input[type="button"],
 html.cc-header-on #displaybox:has(.user-list) input[type="submit"],
 html.cc-header-on #displaybox:has(.user-list) a.button {
@@ -1692,12 +1427,9 @@ html.cc-header-on #displaybox:has(.user-list) a.button {
 html.cc-header-on #displaybox:has(.user-list) input[type="button"]:hover:not(:disabled),
 html.cc-header-on #displaybox:has(.user-list) input[type="submit"]:hover:not(:disabled) { filter: brightness(1.14); }
 
-/* ═══ TABLE TITLE BARS (thead) — bring every list's column-header row into the CC style ═══
-   Native Unraid theads are a loud near-white uppercase label on a grey bar. Re-cast them as QUIET tracked
-   small-caps in the chip tone on a subtle CC surface, so the header reads as a refined title bar separated
-   from the rows by SHADE (no line), consistent across every page and theme-aware. Only text + fill are
-   touched (background-COLOR, not the shorthand, so tablesorter's sort-arrow background image survives) —
-   native padding / width / sorting stay intact. */
+/* Table header rows as quiet, tracked small caps in the chip tone on a subtle surface, separated
+   from the rows by shade. Only the text and background-color change, not the background shorthand,
+   so tablesorter's sort arrow image, the padding, widths and sorting stay native. */
 html.cc-header-on .tablesorter > thead > tr > th,
 html.cc-header-on #kvm_table > thead > tr > th {
   background-color: var(--cc-surface-3, #2e2e2e) !important;
@@ -1707,59 +1439,38 @@ html.cc-header-on #kvm_table > thead > tr > th {
   text-transform: uppercase !important;
   font-size: 10.5px !important;
 }
-/* a hairline top inner-highlight + soft inset bottom shade turns the bar into a lit title strip without a
-   border line (the elevation language, applied per-cell since box-shadow on <thead> is unreliable) */
+/* a hairline highlight on top and a soft inset shade below instead of a border line, set per cell
+   since box-shadow on <thead> is unreliable */
 html.cc-header-on .tablesorter > thead > tr > th { box-shadow: inset 0 1px 0 rgba(255,255,255,.05), inset 0 -6px 8px -6px rgba(0,0,0,.35); }
 
-/* Gliding telemetry (edel): the header status-island fill bars tween instead of jumping on each nchan tick. */
+/* the island's fill bars glide on each nchan tick instead of jumping */
 html.cc-header-on .cc-isl-fill { transition: width .5s ease, background-color .4s ease; }
 
-/* ═══ WILD animation mode (cc.anim="2") — very present motion the user explicitly asked for, layered ON TOP
-   of the normal transitions and gated on cc-anim-wild. It deliberately ignores the OS reduce-motion hint
-   (like the whole cc.anim master), because it is an opt-in choice. ═══ */
+/* Wild animation mode (cc.anim="2", html.cc-anim-wild): strong motion on top of the normal
+   transitions. It is an explicit opt-in, so like the rest of cc.anim it ignores the OS
+   reduce-motion hint. */
 @keyframes cc-wild-bounce { 0%{transform:translateY(0)} 28%{transform:translateY(-7px)} 52%{transform:translateY(3px)} 72%{transform:translateY(-3px)} 88%{transform:translateY(1px)} 100%{transform:translateY(0)} }
 /* the main-menu tabs HOP when the pointer enters them */
 html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item:hover { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
-/* the RIGHT group bounces too (user: "die Icons der Hauptleiste hüpfen nicht im wilden Modus") — the rule
-   above only ever covered the left page tabs, so every util icon, the usage meter and the bell/burger
-   proxies stayed still while the tabs jumped.
-   #39 (user: "alle Icons hüpfen zu hoch, außer Bell/Menü"): this rule used to ALSO re-target the child <a>
-   of every .util icon on a second selector. For a normal icon (its <a> IS the visible glyph) that meant
-   TWO cc-wild-bounce instances ran at once — one on the .nav-item div, another on the <a> inside it — and
-   nested transforms stack, so the glyph moved at roughly double amplitude. Bell/burger never showed the
-   bug because their visible trigger is an adopted <span> sibling of the ghost <a>, not an <a> itself, so
-   only the single div-level rule ever matched them — live-confirmed via getComputedStyle().animationName
-   during a real hover: a util <a> reads "cc-wild-bounce" same as its parent div, the bell <span> reads
-   "none". One rule on the .nav-item is enough — its transform already carries every child along. */
+/* The right group bounces too: util icons, the usage meter and the bell and burger proxies. The
+   rule sits on the .nav-item only, whose transform carries its children; a second bounce on the
+   inner <a> would stack and double the amplitude. */
 html.cc-anim-wild #menu .nav-tile.right > .nav-item:hover { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
-/* the -7px hop peaks ABOVE the header band; without this the bar (and its tiles) clip the tab at the top.
-   Let the whole nav chain overflow visibly only while WILD is armed, so the bounce is fully seen. */
-/* #menu: keep VERTICAL overflow visible so the -7px hop shows above the header band, but CLIP the HORIZONTAL
-   axis — otherwise nav tiles wider than the viewport (many tabs) escape and stretch the PAGE, giving a
-   horizontal scrollbar + dead space on the right (live-measured: scrollWidth 1689 vs 1100). `clip` (unlike
-   `hidden`) does NOT coerce the other axis to `auto`, so overflow-y stays truly visible. The tiles/items
-   themselves keep full `visible` for their own bounce. */
+/* The -7px hop peaks above the header band, so the nav chain overflows visibly in wild mode. #menu
+   clips the horizontal axis, or tiles wider than the viewport would stretch the page and add a
+   horizontal scrollbar; clip, unlike hidden, leaves overflow-y truly visible. */
 html.cc-anim-wild #menu { overflow-x: clip !important; overflow-y: visible !important; }
 html.cc-anim-wild #menu .nav-tile,
 html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item { overflow: visible !important; }
-/* …but the tab strip also carries `overflow-x: auto` so it can shrink instead of pushing the right group
-   off screen (the SHOW MORE alignment fix). That rule scores (1,4,2) and beat the (0,2,2) above, so the
-   bounce got CLIPPED at the top (user: "die Badges in der Hauptleiste werden beim Hüpfen oben wieder
-   abgeschnitten"). Note `overflow-x: auto` alone is enough to clip vertically: once one axis is not
-   visible, the other resolves to auto too.
-   Release the clip only WHILE something is actually bouncing — the strip stays scrollable the rest of the
-   time. Doubling the class lifts this to (1,5,1), which outranks the scroll rule's (1,4,2) on class count. */
+/* The tab strip's overflow-x:auto (1,4,2) keeps it scrollable, and with one axis not visible the
+   other resolves to auto as well, which would clip the bounce. The clip is lifted only while an
+   item bounces; doubling the class gives (1,5,1). */
 html.cc-anim-wild.cc-anim-wild #menu .nav-tile:has(> .nav-item:hover) {
   overflow: visible !important;
 }
-/* ROOT CAUSE of the clip (live-measured): nothing overflows — the sticky #header (z-index 102, solid dark
-   background) sits ABOVE #menu (z-index 101) and PAINTS OVER the zone the tab hops into (above the bar). While
-   a main tab is hovered (= bouncing), lift the whole #menu stacking context above #header so the hop shows in
-   full. :has scopes the lift to the bounce moment, so the header keeps its normal stacking the rest of the time. */
-/* #1: …and for the RIGHT group too. Every ancestor already has overflow-y:visible, so the icon was never
-   CLIPPED — it was COVERED: the bounce lifts it above the bar and the layer above #menu painted over it,
-   which looks exactly like a cut-off top edge. Raising #menu while any of its items bounces fixes both
-   groups; the previous selector only ever matched the left page tabs. */
+/* The sticky #header (z-index 102, solid background) sits above #menu (101) and paints over the
+   area an item hops into. While any item in either group bounces, #menu is lifted above #header;
+   :has limits the lift to that moment. */
 html.cc-anim-wild #menu:has(.nav-tile > .nav-item:hover),
 html.cc-anim-wild #menu:has(.nav-tile.right > .nav-item.util:hover),
 html.cc-anim-wild #menu:has(.nav-tile:not(.right) > .nav-item:hover) { z-index: 103 !important; }
@@ -1773,11 +1484,8 @@ html.cc-anim-wild .cc-limbtn:hover { transform: translateY(-2px) scale(1.08) rot
 /* a bouncier popover/menu/dropdown entrance */
 @keyframes cc-wild-pop { 0%{opacity:0;transform:translateY(12px) scale(.9)} 60%{transform:translateY(-4px) scale(1.02)} 100%{opacity:1;transform:none} }
 html.cc-anim-wild .cc-pop, html.cc-anim-wild .cc-menu, html.cc-anim-wild .cc-drop { animation: cc-wild-pop .32s cubic-bezier(.34,1.56,.64,1) !important; }
-/* #94 (user: "beide Fenster sollen im Animationsstil wild eine coole Animation bekommen wenn sie
-   einfliegen" — "beide" = the App-Info drawer (Tokens.css: cc-wild-slidein, edge-anchored so it slides)
-   AND this notification centre, a floating card that suits the SAME bouncy pop-in every other CC popover/
-   menu/dropdown already uses above. Fragile Tailwind hook, same one Header.css's P14 section already
-   depends on for this panel — fails soft (native transition) if Connect ever renames it. */
+/* the notification centre gets the same pop-in (the App-Info drawer slides in, see Tokens.css
+   cc-wild-slidein); the Tailwind hook fails soft if Connect renames it */
 html.cc-anim-wild .unapi div.fixed.z-50.bg-background:not(.top-1\/2) { animation: cc-wild-pop .32s cubic-bezier(.34,1.56,.64,1) !important; }
 /* the brand wordmark gives a little wobble on hover */
 @keyframes cc-wild-wobble { 0%{transform:rotate(0)} 25%{transform:rotate(-2.5deg)} 50%{transform:rotate(2deg)} 75%{transform:rotate(-1deg)} 100%{transform:rotate(0)} }

@@ -1,22 +1,20 @@
-/* CannonadeCommand - Favorites tab (/Favorites) restyle, made to match the Docker/Settings tiles.
+/* CannonadeCommand: the /Favorites tiles, matching the Docker and Settings tiles.
  *
- * Loaded globally via the Buttons hook (CannonadeCommand.Favorites.page), gated on
- * html.cc-favorites-on which favorites.js sets only on /Favorites when the Favoriten area +
- * master theming are on. A scoped copy of CannonadeCommand.SettingsGrid.css's tile rules: the
- * favorites tab has the IDENTICAL .Panel > a > span / .PanelText / i.favo DOM (MyFavorites.page),
- * so the same square-accent-badge recipe (cc.sgsize-stepped box) gives instant parity. Inert
- * on every other page.
+ * Loaded globally through the Buttons hook (CannonadeCommand.Favorites.page) and gated on
+ * html.cc-favorites-on, which favorites.js sets only on /Favorites. MyFavorites.page uses the same
+ * .Panel > a > span, .PanelText and i.favo markup as the settings grid, so these are scoped copies
+ * of the tile rules in CannonadeCommand.SettingsGrid.css.
  */
 
-/* DEFAULTS = cc.sgsize=m step (78px = Docker's logo-tile box); favorites.js stamps
-   s(64/32)|m(78/38)|l(96/46) live from the SAME cc.sgsize key settingsgrid.js uses. */
+/* The cc.sgsize=m step (78px, Docker's logo tile). favorites.js sets s (64/32), m (78/38) or
+   l (96/46) from the same cc.sgsize key settingsgrid.js uses. */
 :root { --cc-fav-size: 78px; --cc-fav-glyph: 38px; --cc-fav-rmax: 16px; }
 
-/* align favorites content with the MAIN MENU BAR (mirrors SettingsGrid.css) */
+/* align with the main menu bar, as in SettingsGrid.css */
 html.cc-favorites-on { --cc-align-left: 10px; }
 html.cc-favorites-on.cc-header-on { --cc-align-left: 15px; }
 html.cc-favorites-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 10px); }
-/* hide the "❤ Meine Favoriten" page-title bar (user call) — the tiles speak for themselves */
+/* hide the "❤ Meine Favoriten" title bar; the tiles speak for themselves */
 html.cc-favorites-on #displaybox .content > div.title { display: none !important; }
 
 /* each favourite tile's icon wrapper <span> -> big square accent badge */
@@ -46,5 +44,5 @@ html.cc-favorites-on #displaybox .Panel > a > span > i.favo {
 html.cc-favorites-on #displaybox .Panel .PanelText { margin-top: 4px; }
 /* empty state (MyFavorites.page #nofavs h3) */
 html.cc-favorites-on #displaybox #nofavs { color: var(--cc-accent, #2f6feb); }
-/* Badge-Form circle: square tile badge -> circle (mirrors SettingsGrid.css) */
+/* circle badge shape, as in SettingsGrid.css */
 html.cc-shape-circle.cc-favorites-on #displaybox .Panel > a > span { border-radius: 50% !important; }

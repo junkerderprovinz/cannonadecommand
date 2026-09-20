@@ -1,32 +1,27 @@
-/* CannonadeCommand - VM-tab (/VMs) restyle, made PIXEL-IDENTICAL to the Docker tab.
+/* CannonadeCommand: the /VMs tab, styled to match the Docker tab.
  *
- * Loaded globally via the Buttons hook (CannonadeCommand.VmTab.page), gated on html.cc-vms-on which
- * vms.js sets only on /VMs when the VM area + master theming are on. It copies Docker's EXACT badge
- * system (docker.css) so vms.js can emit Docker's real classes (cc-b / cc-badge / cc-b-k / cc-b-v /
- * cc-b-info) on #kvm_list and get the same look. We deliberately do NOT load the 72KB styles/docker.css
- * here — it carries unscoped global .cc-b rules + Docker/Settings-specific selectors that would bleed
- * onto every page. Native VM row verified against dynamix.vm.manager/include/VMMachines.php:
+ * Loaded globally through the Buttons hook (CannonadeCommand.VmTab.page) and gated on html.cc-vms-on,
+ * which vms.js sets only on /VMs. It copies Docker's badge rules so vms.js can emit the same classes
+ * (cc-b, cc-badge, cc-b-k, cc-b-v, cc-b-info) on #kvm_list. styles/docker.css is not loaded here
+ * because its unscoped .cc-b rules and Docker-specific selectors would leak onto every page. Native
+ * VM row, from dynamix.vm.manager/include/VMMachines.php:
  *   tr.sortable > td.vm-name [span.outer>span.hand=logo + span.inner>a(name)+i.STATUS+span.state]
- *   · td[desc] · td[a.vcpu-*] · td[mem] · td[disks] · td[span.vmgraphics=graphics] · td[ip] · td[autostart]
+ *   td[desc], td[a.vcpu-*], td[mem], td[disks], td[span.vmgraphics=graphics], td[ip], td[autostart]
  */
 
-/* #4 badge engine: the shared badge SIZE tiers (sm/md/lgb/head + --cc-density) now live centrally in
-   CannonadeCommand.Tokens.css; this sheet has no VM-specific badge metric, so no local :root copy remains. */
-
-/* ═══ align the VM content with the MAIN MENU BAR (self-measured --cc-align-left; header.js sets it) ═══ */
+/* align the VM content with the main menu bar */
 html.cc-vms-on.cc-header-on { --cc-align-left: 15px; }
 html.cc-vms-on:not(.cc-header-on) { --cc-align-left: 10px; }
-html.cc-vms-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 10px); padding-right: var(--cc-edge-gutter, 8px); }  /* #11: rechte Content-Kante; --cc-edge-gutter aus Tokens.css (global) */
+html.cc-vms-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 10px); padding-right: var(--cc-edge-gutter, 8px); }  /* right content edge; --cc-edge-gutter comes from Tokens.css */
 html.cc-vms-on:not(.Theme--sidebar) #displaybox div.title { padding-left: 0; }
 
-/* ═══ sub-tab vertical gap (BUG C): /VMs is NOT covered by the Shares.css 12px gap rule (that one is gated
-   on html.cc-shares-on, which does not ride /VMs), so the sub-tab bar sat too far below the main menu.
-   Mirror it here gated html.cc-vms-on so /VMs gets the SAME menu->sub-tab gap as every other tab. Native
-   /VMs renders #displaybox > nav.tabs directly (MainContentTabbed.php). Sidebar theme excluded. ═══ */
+/* The 12px gap between the main menu and the sub-tabs. The Shares.css rule is gated on
+   html.cc-shares-on, which is not set on /VMs. /VMs renders #displaybox > nav.tabs directly
+   (MainContentTabbed.php); the sidebar theme is left out. */
 html.cc-vms-on:not(.Theme--sidebar) #displaybox:has(> nav.tabs) { padding-top: 12px; }
 html.cc-vms-on:not(.Theme--sidebar) #displaybox > nav.tabs { margin-top: 0 !important; }
 
-/* ═══ table -> the Docker row polish: no border lines, subtle header, density padding ═══ */
+/* table rows as on Docker: no border lines, subtle header, density padding */
 html.cc-vms-on #displaybox table.tablesorter { background: none; }
 html.cc-vms-on #displaybox #kvm_list tr.sortable > td { border: none !important; padding-top: var(--cc-density, 9px) !important; padding-bottom: var(--cc-density, 9px) !important; }
 html.cc-vms-on #displaybox table.tablesorter thead th {
@@ -34,8 +29,8 @@ html.cc-vms-on #displaybox table.tablesorter thead th {
   text-transform: uppercase; letter-spacing: .6px; font-weight: 600;
 }
 
-/* ═══ Docker's EXACT badge system (docker.css:148-161, 250-262) — copied so the VM badges are identical.
-   One shared pill shape for .cc-b and .cc-badge; info badge = solid accent + light text. ═══ */
+/* Docker's badge rules, copied so the VM badges look the same. One pill shape for .cc-b and
+   .cc-badge; the info badge is solid accent with light text. */
 html.cc-vms-on #kvm_list .cc-b,
 html.cc-vms-on #kvm_list .cc-badge {
   display: inline-flex; align-items: center; gap: 5px; border: none !important;
@@ -43,12 +38,12 @@ html.cc-vms-on #kvm_list .cc-badge {
   font-size: var(--cc-sm-fs, 11px); font-weight: 600; line-height: 1.35; white-space: nowrap;
   text-decoration: none; vertical-align: middle;
 }
-/* #7 (user: VM badges follow the colour modes): generic badges (Snapshots/Beschreibung/Grafik, no kind)
-   take the rainbow/flag action colour when active; the kind badges (cpu/ram/ip/vol) keep their own
-   rotated slots via the higher-specificity rules below. Accent when the colour mode is off. */
+/* Generic badges (Snapshots, Beschreibung, Grafik) take the rainbow or flag colour when that mode is
+   on and the accent otherwise; the cpu, ram, ip and vol badges keep their own slots from the more
+   specific rules below. */
 html.cc-vms-on #kvm_list .cc-b { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)); }
-/* #N4 (user: VM list into the REACTIVE colour mode): reactive rainbow -> every row badge RESTS grey and
-   takes the palette colour only on row hover (matching the Docker/Shares reactive behaviour). */
+/* reactive rainbow: every row badge rests grey and takes the palette colour on row hover, as on
+   Docker and Shares */
 html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-cpu,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b-ram,
@@ -61,9 +56,8 @@ html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-ram,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-bw,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-ip,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-vol { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important; }
-/* per-KIND reactive hover (mirrors docker.css:1435-1450): on ROW hover the cpu/ram/ip/vol badges take
-   their OWN palette colour instead of the generic --cc-rbaccent fallback above. .cc-b.cc-b-* raises the
-   specificity over the generic tr:hover .cc-b rule; source order settles the tie per kind. */
+/* On row hover the cpu, ram, ip and vol badges take their own palette colour rather than the
+   generic --cc-rbaccent above, as in docker.css. .cc-b.cc-b-* outranks the generic tr:hover .cc-b. */
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-cpu-t, var(--cc-accent-text, #fff)) !important; }
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-ram { background: var(--cc-rb-ram, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ram-t, var(--cc-accent-text, #fff)) !important; }
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-bw  { background: var(--cc-rb-bw, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-bw-t, var(--cc-accent-text, #fff)) !important; }
@@ -71,35 +65,35 @@ html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-ip  { background: v
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-vol { background: var(--cc-rb-vol, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-vol-t, var(--cc-accent-text, #fff)) !important; }
 html.cc-vms-on #kvm_list .cc-b-k { opacity: .72; font-weight: 500; }
 html.cc-vms-on #kvm_list .cc-b-v { font-family: Consolas, "SFMono-Regular", monospace; }
-/* Badge VALUE (incl. the a.vcpu-* CPU link vms.js moves into .cc-b-v) inherits the badge text colour;
-   without this Unraid's theme link colour wins and the CPU number is unreadable (docker.css:191/214). */
+/* The badge value, including the a.vcpu-* CPU link vms.js moves into .cc-b-v, inherits the badge
+   text colour; otherwise Unraid's link colour wins and the CPU number is unreadable. */
 html.cc-vms-on #kvm_list .cc-b a,
 html.cc-vms-on #kvm_list .cc-b a:hover,
 html.cc-vms-on #kvm_list .cc-b .cc-b-v a { color: inherit !important; text-decoration: none !important; }
 html.cc-vms-on #kvm_list .cc-b-copy { cursor: pointer; transition: filter .12s, transform .12s; }
 html.cc-vms-on #kvm_list .cc-b-copy:hover { filter: brightness(1.18); transform: translateY(-1px); }
-/* state badge colours (docker.css:250-262) — VM started->running, paused->paused, stopped->exited */
+/* state badge colours as in docker.css: started -> running, paused -> paused, stopped -> exited */
 html.cc-vms-on #kvm_list .cc-badge-running { background: var(--cc-ok, #1f9d55); color: #fff; }
 html.cc-vms-on #kvm_list .cc-badge-paused  { background: var(--cc-warn, #e0912a); color: #1a1a1a; }
 html.cc-vms-on #kvm_list .cc-badge-exited,
 html.cc-vms-on #kvm_list .cc-badge-created { background: var(--cc-badge-neutral, #3c3c3c); color: var(--cc-text-chip, #cfcfcf); }
 html.cc-vms-on #kvm_list .cc-badge-dead    { background: var(--cc-err, #d9433f); color: #fff; }
-/* group stacks (docker.css:225-231): IP pills + disk badges stacked one per line */
+/* IP pills and disk badges stacked one per line */
 html.cc-vms-on #kvm_list .cc-namemeta,
 html.cc-vms-on #kvm_list .cc-vmb-ips,
 html.cc-vms-on #kvm_list .cc-vmb-disks { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-/* CPU + RAM merged into ONE stacked column (docker.css:229-231 .cc-resgroup/.cc-resline) */
+/* CPU and RAM share one stacked column, like docker.css .cc-resgroup/.cc-resline */
 html.cc-vms-on #kvm_list .cc-resgroup { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 html.cc-vms-on #kvm_list .cc-resline { display: inline-flex; align-items: center; gap: 5px; }
-/* the limit GEAR behind each res badge — Docker-identical (docker.css:285-291), retargeted to #kvm_list.
-   vms.js's vmGearFill fills it INLINE with priority in accent/native mode and stamps --cc-rb-c (the kind
-   colour) in rainbow mode; these rules provide the idle/hover/set look the inline fill sits on top of. */
-html.cc-vms-on #kvm_list .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--cc-b-radius, 999px); background: #3a3a3a; color: #ececec; cursor: pointer; font-size: 12px; margin: 2px 0; }   /* radius FOLLOWS the badge shape, like Docker (user) */
+/* The limit gear behind each resource badge, as on Docker. vms.js vmGearFill paints it inline in
+   accent and native mode and stamps --cc-rb-c (the kind colour) in rainbow mode; these rules give
+   the idle, hover and set look underneath. */
+html.cc-vms-on #kvm_list .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--cc-b-radius, 999px); background: #3a3a3a; color: #ececec; cursor: pointer; font-size: 12px; margin: 2px 0; }   /* radius follows the badge shape, as on Docker */
 html.cc-vms-on #kvm_list .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: #fff; }
 html.cc-vms-on #kvm_list .cc-limbtn-set { color: #10321f; background: #35d07f; }   /* filled when a limit is configured */
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-limbtn-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
-/* Graphical CPU core-picker in the VM limits editor (Docker-identical, docker.css:508-529). Scoped to the
-   editor overlay #cc-vmlim-ov since the modal lives on document.body, not #kvm_list. */
+/* The CPU core picker in the VM limits editor, as on Docker. Scoped to the #cc-vmlim-ov overlay
+   because the modal lives on document.body, not in #kvm_list. */
 #cc-vmlim-ov .cc-cores { display: flex; flex-wrap: wrap; gap: 5px; }
 #cc-vmlim-ov .cc-corebox { display: inline-flex; flex-direction: column; gap: 3px; padding: 4px; background: var(--cc-surface-2, #1e1e1e); border: none; border-radius: 7px; align-items: stretch; }
 #cc-vmlim-ov .cc-corebox-tag { text-align: center; font-size: 9px; line-height: 1; color: var(--cc-text-dim, #8a8a8a); letter-spacing: .5px; user-select: none; }
@@ -108,7 +102,7 @@ html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-limbtn-set { background: var(--cc-rb-
 #cc-vmlim-ov .cc-core { width: 34px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-dim, #9a9a9a); border: none; border-radius: 5px; font-size: 12px; cursor: pointer; user-select: none; box-sizing: border-box; transition: background .1s, color .1s; }
 #cc-vmlim-ov .cc-core:hover { background: #3a3a3a; color: var(--cc-text, #e6e6e6); }
 #cc-vmlim-ov .cc-core-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
-/* rainbow: colour each selected core by its physical-core group (mirrors docker.css:522-529) */
+/* rainbow: colour each selected core by its physical-core group, as in docker.css */
 html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-0 { background: var(--cc-ok, #1f9d55); color: #fff; }
 html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-1 { background: #2f6feb; color: #fff; }
 html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-2 { background: #8b5cf6; color: #fff; }
@@ -121,31 +115,26 @@ html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-7 { background: #6366f1; color
 html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand,
 html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand i { color: inherit !important; text-decoration: none !important; }
 
-/* ═══ LOGO box, pixel-identical to Docker (docker.css:54-68 + circle 844), retargeted td.ct-name -> td.vm-name.
-   Native VM logo is span.outer > span.hand, so the selectors map 1:1. The accent badge box is gated on
-   html.cc-vm-iconbg (vms.js toggles it, mirroring cc-docker-iconbg). ═══ */
+/* The logo box, matching Docker's with td.ct-name retargeted to td.vm-name. The native VM logo is
+   span.outer > span.hand, so the selectors map one to one. The accent box is gated on
+   html.cc-vm-iconbg, which vms.js toggles like cc-docker-iconbg. */
 html.cc-vms-on #kvm_list td.vm-name { vertical-align: middle; }
 html.cc-vms-on #kvm_list td.vm-name .outer { display: flex; align-items: center; gap: 12px; }
 html.cc-vms-on #kvm_list td.vm-name .outer > span.hand { flex: none; display: flex; align-items: center; justify-content: center; }
-/* Ground truth (VMMachines.php): span[id^="vm-"] IS span.hand (same element), and the icon is USUALLY an
-   inline <i class="fa fa-… img"> glyph, not an <img>. So the earlier display:contents on span[id^="vm-"]
-   collapsed the very box the accent square is drawn on (why it did nothing). Fix: the img is a block 62px;
-   the glyph <i> is an explicitly CENTERED flex box, its font-size tied 1:1 to --cc-logo-img — same
-   contract as docker.css's own i.img rule and plugins.js's logoSize() (both also unscaled). A bare
-   pixel literal here (the old "44px fits inside the 62px square" ratio) froze the GLYPH ITSELF at a
-   fixed size while only its invisible bounding box tracked Kachelgröße — since most VM rows render as
-   a glyph, not an <img>, that made "automatic"/size changes look broken specifically on this tab. */
+/* In VMMachines.php span[id^="vm-"] is span.hand itself, and the icon is usually an inline
+   <i class="fa fa-... img"> glyph rather than an <img>. The img is a 62px block; the glyph is a
+   centred flex box whose font-size follows --cc-logo-img, as docker.css's i.img rule and
+   plugins.js logoSize() do, so the tile size setting scales the glyph too. */
 html.cc-vms-on #kvm_list td.vm-name .outer > span.hand img { display: block !important; width: var(--cc-logo-img, 62px) !important; height: var(--cc-logo-img, 62px) !important; object-fit: contain !important; margin: 0 !important; }
 html.cc-vms-on #kvm_list td.vm-name .outer > span.hand i.img {
   display: flex !important; align-items: center !important; justify-content: center !important;
   width: var(--cc-logo-img, 62px) !important; height: var(--cc-logo-img, 62px) !important; font-size: var(--cc-logo-img, 62px) !important; line-height: 1 !important; text-align: center !important; margin: 0 !important;
 }
-/* iconbg accent box pinned to a FIXED 78x78 square (62 icon + 2*8 pad, border-box) so it is ALWAYS a
-   perfect centred square regardless of whether the child is an <img> or a glyph <i> — instead of shrink-
-   wrapping the child (which made it non-square for glyph VMs). */
+/* The icon background box is a fixed square (62px icon plus 8px padding each side, border-box), so
+   it stays square whether the child is an <img> or a glyph. --cc-logo-box is shared with Docker and
+   Plugins so the three tabs' tiles match. */
 html.cc-vms-on.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand {
   flex: none !important;
-  /* T5: use the SAME --cc-logo-box token as Docker/Plugin so all three tabs' tiles are pixel-identical */
   width: var(--cc-logo-box, 78px) !important; height: var(--cc-logo-box, 78px) !important; min-width: var(--cc-logo-box, 78px) !important; max-width: var(--cc-logo-box, 78px) !important;
   padding: calc((var(--cc-logo-box, 78px) - var(--cc-logo-img, 62px)) / 2) !important; box-sizing: border-box !important; overflow: hidden !important;
   background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important;
@@ -153,28 +142,25 @@ html.cc-vms-on.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand {
   display: flex !important; align-items: center !important; justify-content: center !important;
 }
 html.cc-shape-circle.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand { border-radius: 50% !important; }
-/* #3/#T6 (user: "Icons und Logo/Hintergrund nicht im reaktiven Modus integriert"; decided fix,
-   live-tested and confirmed with the user): the logo box is the icon's OWN badge, not a rotating
-   value indicator — a configured Logo-Hintergrund colour must win over the rainbow palette in
-   BOTH rainbow sub-modes, with --cc-rb-c only as the fallback for rows with no icon colour set.
-   Reactive sub-mode still rests neutral grey and only reveals colour on ROW hover, exactly like
-   the VM value badges — only the WINNING colour source on hover changed. */
+/* The logo box is the icon's own badge, not a rotating value indicator, so a configured logo
+   background colour wins over the rainbow palette in both sub-modes; --cc-rb-c is only the fallback
+   for rows without one. The reactive sub-mode rests grey and shows the colour on row hover, like
+   the value badges. */
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rainbow:not(.cc-vm-rbneutral) #kvm_list td.vm-name .outer > span.hand {
-  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)))) !important;   /* T5/T6: the configured icon colour wins over the per-row rainbow colour, like Docker/Plugin */
+  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)))) !important;
 }
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list td.vm-name .outer > span.hand { background: #2e2e2e !important; }
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list tr:hover td.vm-name .outer > span.hand {
-  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)))) !important;   /* T6: reactive hover -> the configured icon colour wins, --cc-rb-c is the no-icon-colour fallback */
+  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)))) !important;
 }
-/* name column layout (docker.css:69-72): stacked, native <br> hidden, native status glyph hidden */
+/* name column layout as in docker.css: stacked, native <br> and status glyph hidden */
 html.cc-vms-on #kvm_list td.vm-name .inner { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; line-height: 1.2; min-width: 0; }
 html.cc-vms-on #kvm_list td.vm-name .inner br { display: none !important; }
 html.cc-vms-on #kvm_list td.vm-name .inner > i.started,
 html.cc-vms-on #kvm_list td.vm-name .inner > i.paused,
 html.cc-vms-on #kvm_list td.vm-name .inner > i.stopped { display: none !important; }
 
-/* ═══ VM NAME — Docker's ACTUAL live row is PLAIN BOLD text (docker.css:73 .appname 15px/600), NOT a
-   filled pill (that was only the Settings-page preview headline). Match it exactly. ═══ */
+/* VM name: plain bold text like Docker's .appname (15px/600), not a filled pill */
 html.cc-vms-on #kvm_list td.vm-name .inner > a:first-child {
   display: inline-block; background: none !important; color: inherit !important;
   padding: 0 !important; margin: 0 !important; border-radius: 0 !important;
@@ -183,18 +169,17 @@ html.cc-vms-on #kvm_list td.vm-name .inner > a:first-child {
 }
 html.cc-vms-on #kvm_list td.vm-name .inner > a:first-child:hover { text-decoration: underline !important; }
 
-/* ═══ autostart toggle -> CC accent. VMMachines.page turns input.autostart into a jQuery switchButton
-   (verified: $('.autostart').switchButton(...)) which HIDES the native checkbox and inserts
-   .switch-button-background (track; .checked -> accent) + .switch-button-button (knob) +
-   .switch-button-label(.on). Matches docker.css:504 (which colours only the .checked track). ═══ */
+/* Autostart toggle in the CC accent. VMMachines.page turns input.autostart into a jQuery
+   switchButton, which hides the checkbox and inserts .switch-button-background (the track, accent
+   when .checked), .switch-button-button (the knob) and .switch-button-label. */
 html.cc-vms-on #kvm_list .switch-button-background {
-  width: 44px !important; height: 24px !important; border-radius: 999px !important;   /* slim toggle (30px reverted: "zu gross und klobig") */
+  width: 44px !important; height: 24px !important; border-radius: 999px !important;   /* slim toggle; 30px high looked clumsy */
   border: none !important; outline: none !important; box-shadow: none !important;
   background: var(--cc-toggle-track-off, #3a3a3a) !important; transform: none !important; position: relative !important;
   display: inline-block; vertical-align: middle; margin: 0 12px 0 3px; cursor: pointer;
   transition: background .15s; box-sizing: border-box;
 }
-html.cc-vms-on #kvm_list .switch-button-background.checked { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }   /* #7: autostart toggle follows the colour mode */
+html.cc-vms-on #kvm_list .switch-button-background.checked { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }   /* follows the colour mode */
 html.cc-vms-on #kvm_list .switch-button-background .switch-button-button {
   width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important;
   border-radius: 50% !important; background: #fff !important; box-shadow: none !important;
@@ -203,9 +188,9 @@ html.cc-vms-on #kvm_list .switch-button-background .switch-button-button {
 html.cc-vms-on #kvm_list .switch-button-background.checked .switch-button-button { left: 21px !important; }
 html.cc-vms-on #kvm_list .switch-button-label { display: none !important; }
 
-/* ═══ Actions column — Docker's EXACT action bar (docker.css:104-133), retargeted to #kvm_list. Grey icon
-   buttons that vms.js tintAct() colours to the accent/rainbow inline (like Docker); "…" (cc-actmore) expands
-   the extra VM actions; cc-act-flash pulses the whole bar when the VM logo is clicked. docker.css not loaded here. ═══ */
+/* Actions column: Docker's action bar retargeted to #kvm_list. Grey icon buttons that vms.js
+   tintAct() colours inline; the "..." button (cc-actmore) expands the extra VM actions, and
+   cc-act-flash pulses the bar when the VM logo is clicked. */
 html.cc-vms-on #kvm_table thead tr .cc-act-th { font-size: 11px; width: 122px; }
 html.cc-vms-on #kvm_list td.cc-actcell { white-space: nowrap; vertical-align: middle; }
 html.cc-vms-on .cc-actbar { display: flex; flex-direction: column; gap: 4px; }
@@ -220,13 +205,13 @@ html.cc-vms-on .cc-actmore.cc-open { display: flex; flex-wrap: wrap; }
 html.cc-vms-on .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }
 @keyframes cc-actflash { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--cc-accent, #2f6feb); } }
 
-/* reactive rainbow (mirrors docker.css:1428-1430): tintAct() skips its inline paint and stamps
-   --cc-rb-c/--cc-rb-ct per button — enabled icons REST dark grey and take that palette colour on ROW
-   hover; disabled .cc-actoff keeps its own grey (never matched). */
+/* Reactive rainbow, as in docker.css: tintAct() skips its inline paint and stamps
+   --cc-rb-c/--cc-rb-ct per button, so enabled icons rest dark grey and take that colour on row
+   hover. Disabled .cc-actoff buttons keep their own grey. */
 html.cc-vms-on.cc-vm-rbneutral .cc-actbtn:not(.cc-actoff) { background: #2e2e2e !important; color: #e9e9e9 !important; }
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-actbtn:not(.cc-actoff) { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
 
-/* ═══ bottom action buttons (input[type=button]) -> CC accent pills ═══ */
+/* bottom action buttons (input[type=button]) as CC accent pills */
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart) {
   border: none !important; box-shadow: none !important;
   height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-btnpad, 0 14px) !important; min-width: 0 !important; box-sizing: border-box !important;
@@ -237,7 +222,7 @@ html.cc-vms-on #displaybox input[type="button"]:not(.autostart) {
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart):hover:not(:disabled) { filter: brightness(1.14); }
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart):disabled { opacity: .45 !important; filter: grayscale(.4) !important; cursor: not-allowed !important; }
 
-/* ═══ VM-logo context menu (addVMContext -> ul.dropdown-menu.dropdown-context, appended to <body>) ═══ */
+/* VM logo context menu (addVMContext appends ul.dropdown-menu.dropdown-context to <body>) */
 html.cc-vms-on ul.dropdown-menu.dropdown-context {
   background: #303030 !important; border: none !important; border-radius: var(--cc-b-radius, 10px) !important;
   box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .6)) !important; padding: 6px !important;
@@ -253,11 +238,10 @@ html.cc-vms-on ul.dropdown-menu.dropdown-context > li > a i,
 html.cc-vms-on ul.dropdown-menu.dropdown-context > li > a:hover i { color: inherit !important; }
 html.cc-vms-on ul.dropdown-menu.dropdown-context > li.divider { background: rgba(255, 255, 255, .1) !important; margin: 4px 0 !important; }
 
-/* ═══ VM USAGE STATISTICS subtab (VMUsageStats.page, Menu="VMs:2") — the SECOND role=tabpanel under /VMs,
-   so html.cc-vms-on already applies (no gating change). Native markup is a SEPARATE table
-   (#vmstats > tbody#vmstatsbody), rows pushed live via the /sub/vm_usage websocket, so the #kvm_list-scoped
-   rules never reached it. Styled CSS-only (no JS — a JS enhancer would fight the ~3s re-render). Row order:
-   1 name · 2 guest CPU td.advanced · 3 host CPU td.advanced · 4 memory · 5 disk IO · 6 network IO. ═══ */
+/* The VM usage statistics sub-tab (VMUsageStats.page, Menu="VMs:2"), the second tab panel under
+   /VMs. Its table (#vmstats > tbody#vmstatsbody) is re-rendered from the /sub/vm_usage websocket
+   every few seconds, so it is styled with CSS alone. Columns: name, guest CPU (td.advanced), host
+   CPU (td.advanced), memory, disk IO, network IO. */
 html.cc-vms-on #displaybox #vmstats { background: none; }
 html.cc-vms-on #displaybox #vmstats tbody tr > td {
   border: none !important;
@@ -265,23 +249,23 @@ html.cc-vms-on #displaybox #vmstats tbody tr > td {
   vertical-align: middle;
 }
 html.cc-vms-on #vmstats tbody tr > td:first-child { letter-spacing: .1px; }
-/* #8 (user): the VM name is now a badge (vms.js wraps it in .cc-vmstat-name), following the colour mode. */
+/* the VM name as a badge (vms.js wraps it in .cc-vmstat-name) that follows the colour mode */
 html.cc-vms-on #vmstats .cc-vmstat-name {
   display: inline-flex; align-items: center;
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 4px 12px);
   font-size: var(--cc-md-fs, 13px); font-weight: 600; line-height: 1.35; white-space: nowrap;
   background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff));
 }
-/* Guest/Host CPU % readout (span first child of td.advanced) -> CC accent value pill */
+/* guest and host CPU % (the first span in td.advanced) as a value pill in the palette colour */
 html.cc-vms-on #vmstats tbody td.advanced > span:first-child {
   display: inline-flex; align-items: center;
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 3px 11px);
   font-size: var(--cc-sm-fs, 11px); font-weight: 600; line-height: 1.35; white-space: nowrap;
   font-family: Consolas, "SFMono-Regular", monospace;
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-accent-text, #fff));   /* #22: follow the rainbow/flag palette, not just the accent */
+  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-accent-text, #fff));
 }
-/* #22: memory / disk-IO / network-IO readouts -> a neutral CC chip (vms.js wraps the bare text into
-   span.cc-vmstat-chip, re-render-safe), so every stat cell reads as a badge like the CPU pills. */
+/* memory, disk IO and network IO as neutral chips (vms.js wraps the bare text in
+   span.cc-vmstat-chip on every re-render), so every stat cell reads as a badge */
 html.cc-vms-on #vmstats .cc-vmstat-chip {
   display: inline-flex; flex-direction: column; align-items: flex-start;
   background: rgba(255, 255, 255, .07); border-radius: var(--cc-b-radius, 12px);
@@ -294,11 +278,10 @@ html.cc-vms-on #vmstats td.advanced .usage-disk.mm > span:first-child { backgrou
 /* memory / disk IO / network IO cells (cols 4-6) -> monospace numerics */
 html.cc-vms-on #vmstats tbody tr > td:nth-child(n+4) { font-family: Consolas, "SFMono-Regular", monospace; font-size: var(--cc-md-fs, 13px); }
 
-/* ═══ Tab-Ansicht (cc.sections.vms): flatten the two /VMs sub-tabs — "Virtual Machines" (#kvm_list) and
-   "VM Usage Statistics" (#vmstats) — into stacked CC sections. Same MainContentTabbed DOM as the
-   /Shares/Share + /Main flatten: both panels are server-rendered as sibling section[role=tabpanel] inside
-   #displaybox and Unraid's tab JS only toggles inline display, so reveal EVERY panel, hide the tab BUTTONS
-   ONLY, and dress each section with a .cc-card-head badge vms.js clones from the (hidden) tab button. ═══ */
+/* Section view (cc.sections.vms) stacks the two /VMs sub-tabs, "Virtual Machines" (#kvm_list) and
+   "VM Usage Statistics" (#vmstats), as CC sections. Both panels are server-rendered siblings and
+   Unraid's tab script only toggles inline display, so every panel is shown, the tab buttons are
+   hidden, and each section gets a .cc-card-head badge that vms.js clones from its tab button. */
 html.cc-vms-on.cc-sections-vms #displaybox section[role="tabpanel"] {
   display: block !important;                 /* beats the inline display:none Unraid's tab JS sets */
   margin: 0 0 28px; background: none; border-radius: 0; padding: 0; box-shadow: none; overflow: visible !important;
@@ -310,16 +293,15 @@ html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head {
   display: inline-flex; align-items: center; gap: 8px;
   min-height: var(--cc-lgb-h, 36px); box-sizing: border-box;   /* head badges sit on the 36px lg line */
   font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-head-fs, 15px); line-height: 1;
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;   /* #19: rainbow-aware so the VM section head is a jewel colour in rainbow, not the static (possibly orange) accent */
+  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;   /* rainbow-aware, so the head takes a palette colour instead of the plain accent */
   border: none; border-radius: var(--cc-b-radius, 999px); padding: var(--cc-head-pad, 9px 18px); margin: 0 0 16px;
 }
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head i,
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head i.title,
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
 
-/* ═══ VIEW TOGGLE (List/Grid) — homed ON the /VMs sub-tab row (nav.tabs .tabs-container), right-aligned and
-   the SAME height as the sub-tabs, WITHOUT a border. Mirrors Docker, whose global controls live in
-   nav.tabs .tabs-container; sub-tab pill height = --cc-md-h. ═══ */
+/* The list/grid toggle sits on the sub-tab row (nav.tabs .tabs-container), right-aligned, borderless
+   and as tall as the sub-tabs (--cc-md-h), where Docker keeps its global controls too. */
 html.cc-vms-on #displaybox nav.tabs .tabs-container { display: flex; align-items: center; }
 html.cc-vms-on #displaybox nav.tabs .tabs-container > .cc-vm-viewseg { margin-left: auto; }
 html.cc-vms-on .cc-seg { display: inline-flex; border: none; border-radius: 999px; overflow: visible; gap: 4px; }
@@ -332,10 +314,9 @@ html.cc-vms-on .cc-seg-btn {
 html.cc-vms-on .cc-seg-btn:hover { color: #e6e6e6; }
 html.cc-vms-on .cc-seg-btn.cc-seg-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); font-weight: 600; }
 
-/* ═══ GRID / CARD view (cc.vmview="grid", html.cc-vmgrid) — DOM-only mirror of Docker's card grid. vms.js
-   has no engine data, so REFLOW the native #kvm_list table into cards via CSS: every native cell + our
-   badges stay live/clickable. Scoped table.tablesorter:has(#kvm_list) so the #vmstats table (also a
-   .tablesorter, and revealed when sections are on) is NEVER reflowed into a grid. ═══ */
+/* Grid view (cc.vmview="grid", html.cc-vmgrid). vms.js has no engine data, so the native #kvm_list
+   table is reflowed into cards with CSS and every cell and badge stays live. Scoped to
+   table.tablesorter:has(#kvm_list) so the #vmstats table, also a .tablesorter, is left alone. */
 html.cc-vms-on.cc-vmgrid #displaybox table.tablesorter:has(#kvm_list) { display: block; background: none; }
 html.cc-vms-on.cc-vmgrid #displaybox table.tablesorter:has(#kvm_list) thead { display: none; }
 html.cc-vms-on.cc-vmgrid #displaybox table.tablesorter tbody#kvm_list {
@@ -346,21 +327,21 @@ html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable {
   background: #1e1e1e; border: none; border-radius: 10px; padding: 12px 14px;
   transition: transform .12s, box-shadow .12s;
 }
-html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0, 0, 0, .35); } /* elevation only — no resting border, no hover border tint (law) */
+html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0, 0, 0, .35); } /* elevation only, no border at rest or on hover */
 html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable > td {
   display: block; border: none !important; padding: 0 !important; max-width: none !important; white-space: normal !important;
 }
 
-/* ═══ RAINBOW mode (html.cc-vm-rainbow) — reads the SAME global cc.rainbow + --cc-rb-* palette vms.js
-   stamps on <html>. Only the info badges (CPU/RAM/IP) recolour; the state badge keeps its semantic
-   colour, exactly like Docker. Applies in BOTH list and grid view. ═══ */
+/* Rainbow mode (html.cc-vm-rainbow) reads the global cc.rainbow and the --cc-rb-* palette vms.js
+   stamps on <html>. Only the CPU, RAM and IP badges recolour; the state badge keeps its meaning
+   colour, as on Docker. Applies in list and grid view. */
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-err, #d9433f)); color: var(--cc-rb-cpu-t, #fff); }
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ram { background: var(--cc-rb-ram, #2f9d8b); color: var(--cc-rb-ram-t, #fff); }
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-bw  { background: var(--cc-rb-bw, #8b5cf6); color: var(--cc-rb-bw-t, #fff); }
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ip  { background: var(--cc-rb-ip, #2f6feb); color: var(--cc-rb-ip-t, #fff); }
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-vol { background: var(--cc-rb-vol, #8b5cf6); color: var(--cc-rb-vol-t, #fff); }
 
-/* ═══ FOCUS LAW: keyboard focus draws NO outline/ring/shadow either — feedback is brightness only ═══ */
+/* keyboard focus draws no outline, ring or shadow; the feedback is brightness only */
 html.cc-vms-on #displaybox :is(a, button, input, select, textarea):focus-visible,
 html.cc-vms-on :is(.cc-actbtn, .cc-seg-btn):focus-visible,
 html.cc-vms-on #kvm_list .switch-button-background:focus-visible,
@@ -368,10 +349,9 @@ html.cc-vms-on ul.dropdown-menu.dropdown-context a:focus-visible {
   outline: none !important; box-shadow: none !important; filter: brightness(1.18);
 }
 
-/* ═══ badge-shape MASTER override (mirrors docker.css:857-872) — MUST remain the LAST rules in this file so
-   the chosen --cc-b-radius (cc.badgeshape: pill 999px / rounded 6px / square 0 / circle 999px) wins for every
-   CC pill AND the native autostart switch TRACK + KNOB, exactly like the Docker tab. Without it the VM switch
-   stayed a hardcoded pill while Docker's followed the shape setting ("hat nicht die richtige form"). ═══ */
+/* The badge shape override, as in docker.css. These stay the last rules in the file so the chosen
+   --cc-b-radius (cc.badgeshape: pill 999px, rounded 6px, square 0, circle 999px) wins for every CC
+   pill and for the native autostart switch's track and knob. */
 html.cc-vms-on #kvm_list .cc-b,
 html.cc-vms-on #kvm_list .cc-badge,
 html.cc-vms-on .cc-actbtn,
