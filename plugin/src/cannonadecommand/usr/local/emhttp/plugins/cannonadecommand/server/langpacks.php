@@ -1,16 +1,14 @@
 <?php
 /*
- * Read-only reader for Community Applications' own local template cache (the
- * SAME file castats.php reads), filtered to the "Language:" category — Unraid's
- * own official language packs (github.com/unraid/language-templates) are
- * ordinary CA catalog entries, not a separate system. This just lists them, so
- * the Display-Settings language dropdown can offer every AVAILABLE pack, not
- * only the ones already installed (the native <select> only ever lists those).
+ * Lists the language packs in Community Applications' local template cache (the
+ * file castats.php reads), filtered to the "Language:" category. Unraid's official
+ * packs (github.com/unraid/language-templates) are ordinary CA catalog entries, and
+ * listing them lets the Display Settings dropdown offer every available pack, not
+ * only the installed ones the native <select> shows.
  *
- * "Installed" is deliberately NOT decided here: the frontend already has the
- * authoritative list via the native <select>'s own option values, and this
- * endpoint would otherwise have to duplicate CA's own installed-language
- * directory scan and could drift out of sync with it.
+ * Whether a pack is installed is left to the frontend, which reads the native
+ * <select>'s option values; deciding it here would duplicate CA's directory scan
+ * and could drift from it.
  */
 header('Content-Type: application/json');
 

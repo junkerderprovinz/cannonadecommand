@@ -4,15 +4,12 @@ Icon="cannonadecommand.png"
 Link="cc-dockerform-hook"
 ---
 <?php
-/* CannonadeCommand — Docker-FORM hook. The container add/edit form + its run OUTPUT render at BOTH
-   /Docker/AddContainer|UpdateContainer AND /Apps/AddContainer — Community Applications opens the very
-   same template via window.open("/Apps/AddContainer?xmlTemplate=…") (Apps.page), and CreateDocker.php
-   itself branches on "/Apps/". Without /Apps here, a CA install showed the NATIVE form + flat output
-   (docker.js was never loaded). These are Title-only .page files (no Menu=): DefaultPageLayout merges
-   Menu-hook pages only for Type=xmenu parents (find_pages), so the Menu="Docker" hook never loads there.
-   This Buttons hook runs on EVERY page but emits its assets ONLY on those container-form URLs, so every
-   other page pays nothing. docker.js detects the form (onCtForm) and boots its light form-mode branch —
-   no API polling, no timers. Link="..." keeps the nav bar icon-free, exactly like the cc-shares-hook. */
+/* Loads the Docker-tab enhancer on the container add/edit form and its run output. Community
+   Applications opens the same form at /Apps/AddContainer (CreateDocker.php branches on "/Apps/"),
+   and the Menu="Docker" hook never loads on these Title-only pages because DefaultPageLayout
+   merges Menu hooks only for Type=xmenu parents. This Buttons hook runs on every page but emits
+   its assets only on the form URLs; docker.js detects the form (onCtForm) and boots its light
+   form mode without polling. Link="..." keeps the nav bar free of an icon. */
 $ccReq = strtok($_SERVER['REQUEST_URI'] ?? '', '?');
 if (preg_match('#^/(Docker|Apps)/(AddContainer|UpdateContainer)/?$#', $ccReq)):
 ?>

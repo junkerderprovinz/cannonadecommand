@@ -1,15 +1,8 @@
-// CannonadeCommand - GLOBAL main-menu-bar enhancer.
-//
-// Loaded on EVERY Unraid page via the Buttons .page hook
-// (CannonadeCommand.Header.page). It deliberately does the MINIMUM in JS:
-//   * toggle html.cc-header-on  -> the auto-injected sheet only takes effect when
-//     the "Hauptmenueleiste" (main menu bar) area is enabled in CC settings, so a
-//     disabled area = ZERO effect on any page.
-//   * mirror the CC accent/text/badge-shape vars onto the document root so the
-//     sheet can follow the user's configured theme.
-// All actual styling lives in sheets/CannonadeCommand.Header.css, every rule of it
-// scoped to html.cc-header-on. Default is OFF: the user opts in under
-// Settings > CannonadeCommand > Bereiche > Hauptmenueleiste.
+// Enhances Unraid's main menu bar. Loaded on every page through
+// CannonadeCommand.Header.page, it keeps the JS side small: toggle html.cc-header-on, which gates
+// every rule in sheets/CannonadeCommand.Header.css, and mirror the accent, text and badge-shape
+// vars onto the document root so the sheet follows the configured theme. The area is off by
+// default, opt in under Settings > CannonadeCommand > Bereiche > Hauptmenueleiste.
 (function () {
   "use strict";
   function g(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
@@ -19,46 +12,33 @@
     return L > 150 ? "#161616" : "#fff";
   }
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
-  function T(d, e) { return LANG === "de" ? d : e; }   // same bilingual helper as settings.js
+  function T(d, e) { return LANG === "de" ? d : e; }
   function eff(k, d) { return g("cc.styleheader", "1") !== "0" ? g("cc." + k, d) : g("cch." + k, d); }
   function accent() { var a = eff("accent", "#2f6feb"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
-  // cc.badgeshape is a GLOBAL key (one Badge-Form control for every area), so read it
-  // DIRECTLY, not via eff(): eff() would fall back to an UNSET cch.badgeshape when the
-  // header's adopt toggle is off, so --cc-b-radius (and thus the menu-bar badge shape)
-  // would flip between pages depending on which script set it last.
+  // cc.badgeshape is global, so it is read directly: through eff() it would fall back to an unset
+  // cch.badgeshape while the adopt toggle is off, and the bar's badge shape would then flip from
+  // page to page depending on which script wrote --cc-b-radius last.
   function shape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[g("cc.badgeshape", "pill")] || "999px"; }
   var RB = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
-  if (window.CCTheme) { idealText = window.CCTheme.idealText; RB = window.CCTheme.RB; }  /* single source: shared palette/contrast when CCTheme is loaded (global+sync); local copies stay as the fallback */
-  var RB_OFF = window.CCTheme ? window.CCTheme.rbSeed(RB.length) : Math.floor(Math.random() * RB.length); // shared persisted seed: aligns + stabilises the rainbow across areas (was random per load)
-  // Rainbow is a GLOBAL mode: read cc.rainbow / cc.rbpal / cc.rainbowrot DIRECTLY (not the
-  // adopt-gated eff()), exactly like docker.js — so ONE global Rainbow switch colours EVERY
-  // enabled area (the menu bar too), regardless of this bar's adopt state. The per-area accent
-  // (eff("accent")) stays adopt-gated for the non-rainbow single-colour look.
-  // Active palette: flag mode reads its OWN key (cc.flagpal), never cc.rbpal — so the flag never
-  // repaints the rainbow swatches and rainbow colours never leak out when the flag is off.
+  if (window.CCTheme) { idealText = window.CCTheme.idealText; RB = window.CCTheme.RB; } // the local copies are the fallback
+  var RB_OFF = window.CCTheme ? window.CCTheme.rbSeed(RB.length) : Math.floor(Math.random() * RB.length); // the persisted seed keeps the rainbow aligned across areas
+  // Rainbow is a global mode, read directly rather than through the adopt-gated eff(), so one
+  // switch colours every enabled area whatever this bar's adopt state is. The per-area accent
+  // stays adopt-gated for the single-colour look. Flag mode keeps its own palette in cc.flagpal,
+  // so neither palette leaks into the other.
   function pal() { try { if (g("cc.flagmode", "0") === "1") { var f = JSON.parse(g("cc.flagpal", "null")); if (f && f.length) return f; } var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
   function rbOn() { return g("cc.rainbow", "0") === "1"; }
-  function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "1") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; } /* rainbowrot default ON (matches cc-theme.js + docker/plugins/vms); was "0" -> the menu bar sat one rotation off from the row badges */
+  function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "1") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; } // rotation defaults to on, as in the other areas
   function lumOf(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return 255; var n = parseInt(m[1], 16); return 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); }
-  // #15: a popup TITLE badge sits on the dark (#161616) modal. A near-black palette slot — e.g. the
-  // German flag's black stripe — paints an INVISIBLE badge ("oberster Badge zu klein / nicht ordentlich").
-  // For the title we swap any too-dark slot for the BRIGHTEST palette slot (stays on-theme, e.g. the
-  // flag's gold), falling back to the accent if the whole palette is dark — so every window's title
-  // badge is readable and uniform across the UI.
-  // THRESHOLD (was 64, lowered to 28): 64 was tuned when popBadge only ever coloured the ONE title badge, so
-  // an over-eager swap was invisible. Now that every section badge and bottom button in a window rotates
-  // through popBadge too, the threshold decides whether a FLAG still reads as its flag. Live-measured with
-  // the Algerian palette (cc.flag=dz, ["#006233","#FFFFFF","#D21034"] repeated): #006233 scores 63.3 — a hair
-  // under 64 — so every green slot was swapped for the brightest one and the window rendered white/white/red/
-  // white/white/red instead of the flag's green/white/red cycle, i.e. adjacent duplicates and no green at all.
-  // A flagpal is deliberately the flag repeated, so the repeat IS the intended pattern and must survive.
-  // 28 still catches what this guard was actually written for (the German flag's #000000 black stripe, which
-  // is genuinely invisible on the #1a1a1a window) while keeping legitimately dark FLAG colours that are
-  // perfectly legible as a badge with white text — #006233 (63.3) and e.g. navy #002868 (35.4).
-  // The swap itself now lives ONCE in cc-theme.js (CCTheme.liftDark), because the icon
-  // pipeline needs exactly this guard for its tint/flatten target and a second copy is how
-  // the four info bubbles drifted apart. The local branch below stays byte-identical as the
-  // load-order fallback, per this file's convention.
+  // A badge inside a popup sits on the dark modal, where a near-black palette slot such as the
+  // German flag's black stripe would be invisible. Such a slot is swapped for the brightest one in
+  // the palette, which stays on theme, or for the accent when the whole palette is dark.
+  // The threshold of 28 catches black while keeping dark flag colours that read perfectly well
+  // against white text, such as #006233 (63.3) or navy #002868 (35.4). A higher bar breaks a flag
+  // palette, which is the flag repeated: swapping its green for the brightest slot turns the
+  // green/white/red cycle into white/white/red with adjacent duplicates and no green at all.
+  // cc-theme.js holds the swap, because the icon pipeline needs the same guard for its tint
+  // target; the branch below is the load-order fallback.
   function popBadge(i) {
     var c = rbColor(i);
     if (window.CCTheme && window.CCTheme.liftDark) return window.CCTheme.liftDark(c, accent());
@@ -67,25 +47,23 @@
     for (var k = 0; k < p.length; k++) { var L = lumOf(p[k]); if (L > bl) { bl = L; best = p[k]; } }
     return (best && bl >= 28) ? best : accent();
   }
-  // rainbow: colour the active tab, each utility icon box and the usage fill with a
-  // rotated palette colour (in accent mode the CSS handles it via --cc-accent, so we
-  // just clear our overrides). childList observer only, so these style writes can't loop.
-  // rainbow sub-mode "active only" (cc.rbmode=active, global like cc.rainbow): idle badges go
-  // neutral, only the active one keeps its colour, and CSS colours any badge on hover using the
-  // per-item --cc-rb-c/--cc-rb-ct vars this function still stamps on every item.
+  // In rainbow mode the active tab, each utility icon box and the usage fill take a rotated palette
+  // colour; in accent mode the CSS handles it through --cc-accent and this only clears the inline
+  // overrides. In the "active only" sub-mode the idle badges go neutral and only the active one
+  // keeps its colour, with the CSS colouring any badge on hover from the per-item vars stamped
+  // below. The observer watches childList only, so these style writes cannot loop.
   function rbNeutral() { return g("cc.rbmode", "all") === "active"; }
   function paintNav() {
     try {
-      // gate on the enabled class: if the menu-bar area is OFF, rb=false -> every branch below
-      // removeProperty's, so a disabled area (even with Rainbow ON) never paints and any lingering
-      // inline colours are cleared. paintNav runs from apply() + the always-on search observer.
+      // With the area off, rb is false and every branch below clears its properties, so a disabled
+      // area never paints even with rainbow on and loses any inline colour it still carries.
       var rb = rbOn() && document.documentElement.classList.contains("cc-header-on"), neutral = rb && rbNeutral(), n = 0;
-      document.documentElement.classList.toggle("cc-header-rbneutral", rbNeutral() && document.documentElement.classList.contains("cc-header-on"));   // #2: reactive class also in Normal mode (rbmode default "all" -> off by default, so this can't change the default look); the paint `neutral` above stays rainbow-keyed
-      // each item ALWAYS carries its rotated colour as --cc-rb-c/--cc-rb-ct (for the CSS :hover);
-      // the DIRECT background is painted only when NOT neutral, or on the ACTIVE left tab.
+      document.documentElement.classList.toggle("cc-header-rbneutral", rbNeutral() && document.documentElement.classList.contains("cc-header-on"));   // the class applies in accent mode too, the paint above stays rainbow-keyed
+      // Every item carries its rotated colour for the CSS :hover; the background itself is painted
+      // only outside the neutral sub-mode, or on the active tab.
       function stamp(elm, c, t) { elm.style.setProperty("--cc-rb-c", c); elm.style.setProperty("--cc-rb-ct", t); }
       function clear(elm) { elm.style.removeProperty("background"); elm.style.removeProperty("color"); elm.style.removeProperty("--cc-rb-c"); elm.style.removeProperty("--cc-rb-ct"); }
-      Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a")).forEach(function (aEl) {   // tabs match in EITHER tile — the merged drag zone can park one on the right
+      Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a")).forEach(function (aEl) {   // either tile, since the merged drag zone can park a tab on the right
         if (!rb) { clear(aEl); n++; return; }
         var c = rbColor(n), t = idealText(c), item = aEl.closest(".nav-item"), active = !!(item && item.classList.contains("active"));
         stamp(aEl, c, t);
@@ -93,7 +71,7 @@
         else { aEl.style.removeProperty("background"); aEl.style.removeProperty("color"); }
         n++;
       });
-      Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile .nav-item.util > a")).forEach(function (aEl) {   // icons match in EITHER tile
+      Array.prototype.slice.call(document.querySelectorAll("#menu .nav-tile .nav-item.util > a")).forEach(function (aEl) {   // either tile, as above
         var gl = aEl.querySelector("b.system, img.system");
         if (!rb) { clear(aEl); if (gl) gl.style.removeProperty("color"); n++; return; }
         var c = rbColor(n), t = idealText(c);
@@ -107,80 +85,53 @@
         if (!rb) { clear(u); }
         else { var cu = rbColor(n), tu = idealText(cu); stamp(u, cu, tu); if (!neutral) { u.style.setProperty("background", cu, "important"); u.style.setProperty("color", tu, "important"); } else { u.style.removeProperty("background"); u.style.removeProperty("color"); } }
       }
-      // #12 (user: "nicht im regenbogenmodus, bitte in alle Farbmodi aufnehmen"): the footer scroll arrows
-      // never got their own --cc-rb-c/--cc-rb-ct, so in Rainbow they fell through the var() chain straight
-      // to --cc-rbaccent (one SHARED jewel), never their own rotating position like the menu icons above.
-      // CSS already owns background/rest-vs-hover for these (Tokens.css "#12 FOOTER ARROWS"); this call only
-      // supplies the colour the CSS reads. Deliberately NOT gated on cc-header-on like the loops above —
-      // the arrows are shown whenever html.cc-popups-on is on (CSS gate), independent of whether the user
-      // has the Hauptmenüleiste area itself enabled, so their rainbow stamp must not depend on it either.
-      // A fresh index (100) rather than continuing `n`, so disabling the header area doesn't shift them.
+      // The footer scroll arrows need their own rotating colour, or they fall through the var()
+      // chain to the one shared --cc-rbaccent. The CSS owns their background and hover state and
+      // only reads the colour from here. They are not gated on cc-header-on like the loops above,
+      // because the CSS shows them whenever html.cc-popups-on is set, whatever the menu bar area
+      // does. Their index starts at 100, so disabling that area does not shift their colours.
       Array.prototype.slice.call(document.querySelectorAll("a.back_to_top, a.move_to_end")).forEach(function (aEl, ai) {
         if (!rbOn()) { aEl.style.removeProperty("--cc-rb-c"); aEl.style.removeProperty("--cc-rb-ct"); return; }
         var ca = rbColor(100 + ai), ta = idealText(ca); stamp(aEl, ca, ta);
       });
     } catch (e) {}
   }
-  // ── MAIN-TAB ICONS (user: "das icon feature für die Haupttabs gefällt mir", pointing at
-  // github.com/benjaminmue/unraid-themer's icon-set swapper) — that plugin repaints EXISTING native
-  // icon-font glyphs; CC's own page tabs never carried an icon at all (native <a href="/Docker"> is a
-  // bare text node, confirmed live), so this is additive, not a swap. One curated set (Tabler, MIT
-  // licensed, github.com/tabler/tabler-icons) rather than the 9-set picker unraid-themer offers — the
-  // reasoning (user, live): "reicht nicht ein Set wie Tabler? Das enthält doch tausenden icons" — for
-  // ~11 fixed tab slots a single well-stocked set has zero coverage gaps, so the 9-set machinery (per-
-  // set licensing review, 22-51% cross-set fallback rate) buys nothing here. Inline SVG + currentColor,
-  // matching the bell/burger proxy ghost's own icon-cloning approach elsewhere in this file — the tab's
-  // EXISTING --cc-rb-c-driven text colour (paintNav() above) already becomes the icon colour for free,
-  // no separate colour wiring. Path data verbatim from tabler-icons (MIT) icons/FILLED/<name>.svg.
-  // ── GlimStone Rule 20 (user: "kannst du auf der hauptmenüleiste bitte vollflächige icons verwenden …
-  // also keine Icons mit Rahmenlinien"): every glyph here moved from Tabler's `outline` set to its
-  // `filled` set. NOT by flipping fill/stroke on the old path data — outline data is open, thin line-art
-  // and fills into a smear; screenshot-proven on brand-docker below, which rendered as an unreadable blob.
-  // Six tabs had a same-name filled twin (layout-dashboard, star, settings, puzzle, device-desktop, apps)
-  // and simply swapped. Five had NONE in the filled set. Three of those five still take the nearest filled
-  // glyph FROM THE SAME SET, reason noted per line: /Main, /Shares, /Stats. Every candidate was rendered at
-  // 16/20/24/40px before picking — "technically filled" is not the bar, legible at the 16px this bar
-  // actually paints is. Two rejects worth recording so they are not re-tried: Tabler's filled `container`
-  // (its corner rivets are r=1 dots in a 24 viewBox — invisible sub-pixel noise at 16px) and `stack-2`/
-  // `stack-3` for /Docker (a stack of layers is too close to /Main's `database` stack one tab over).
-  // ── The remaining two of the five leave Tabler entirely, on the user's call after seeing 4.26.0: a
-  // near-enough stand-in is not the same thing as the icon that tab is ABOUT.
-  //   · /Tools wants a WRENCH ("Werkzeuge soll ein schraubenschlüssel glyph haben"). Tabler ships none in
-  //     EITHER set, so the glyph is FontAwesome Solid `wrench` — no new dependency, the Unraid WebGUI
-  //     already loads FA globally and CC uses its glyphs elsewhere (fa-check/fa-spin/fa-star). It is the
-  //     one entry drawn on a 512 grid; see CC_TAB_VB below.
-  //   · /Docker wants the OFFICIAL logo ("Docker das offizierlle dockersymbol"), so the mark comes from
-  //     Simple Icons — Docker's real registered brand mark, verbatim, not an approximation. Legibility was
-  //     the open question (eleven container blocks at 16px) and was measured on the box, not assumed: the
-  //     whale + its stack read as a whale, distinct from every neighbour.
+  // Icons for the main page tabs. Unraid renders a tab label as a bare text node with no icon, so
+  // these are added rather than swapped: inline SVG on currentColor, which picks up the tab's own
+  // rainbow colour from paintNav() without any further wiring.
+  // The glyphs are filled, not outlined. Outline path data is open line art and fills into a smear,
+  // so a filled twin is taken where the set has one and the nearest filled glyph otherwise. Every
+  // candidate was rendered at 16px, which is what this bar paints, before it was picked. Two that
+  // do not work at that size: Tabler's `container`, whose corner rivets vanish, and `stack-2` for
+  // /Docker, which reads like /Main's `database` one tab over.
+  // Sources: Tabler icons (MIT) for most tabs, FontAwesome Solid `wrench` (CC-BY 4.0) for /Tools,
+  // which Tabler has in neither set and which the WebGUI already loads globally, and Docker's own
+  // brand mark from Simple Icons, verbatim, for /Docker.
   var CC_TAB_ICONS = {
     "/Dashboard": '<path d="M9 3a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2zm0 12a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-2a2 2 0 0 1 2 -2zm10 -4a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2zm0 -8a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-2a2 2 0 0 1 2 -2z" />',   // layout-dashboard
-    "/Main": '<path d="M3 15.731c1.968 1.507 5.234 2.269 9 2.269c3.76 0 7.025 -.76 9 -2.252v2.252c0 2.425 -3.895 3.936 -8.693 3.998l-.307 .002c-4.938 0 -9 -1.523 -9 -4z" /><path d="M3 9.731c1.968 1.507 5.234 2.269 9 2.269c3.76 0 7.025 -.76 9 -2.252v2.252c0 2.477 -4.062 4 -9 4c-4.798 0 -8.77 -1.438 -8.979 -3.795l-.016 -.101l-.005 -.104z" /><path d="M12 2c1.041 0 2.044 .068 2.977 .198l.469 .071q .84 .14 1.586 .348l.44 .131l.075 .024a11 11 0 0 1 .805 .3l.199 .086q .535 .242 .967 .53q .165 .11 .313 .225a3.8 3.8 0 0 1 .669 .668l.091 .128q .07 .105 .129 .211l.07 .139q .163 .35 .2 .73l.01 .211c0 2.477 -4.062 4 -9 4c-4.798 0 -8.77 -1.438 -8.979 -3.795a1 1 0 0 1 -.021 -.205l.005 -.104l.016 -.1c.205 -2.306 4.01 -3.733 8.667 -3.794z" />',   // database — NO filled server/server-2 in Tabler -> stacked discs = the array itself
+    "/Main": '<path d="M3 15.731c1.968 1.507 5.234 2.269 9 2.269c3.76 0 7.025 -.76 9 -2.252v2.252c0 2.425 -3.895 3.936 -8.693 3.998l-.307 .002c-4.938 0 -9 -1.523 -9 -4z" /><path d="M3 9.731c1.968 1.507 5.234 2.269 9 2.269c3.76 0 7.025 -.76 9 -2.252v2.252c0 2.477 -4.062 4 -9 4c-4.798 0 -8.77 -1.438 -8.979 -3.795l-.016 -.101l-.005 -.104z" /><path d="M12 2c1.041 0 2.044 .068 2.977 .198l.469 .071q .84 .14 1.586 .348l.44 .131l.075 .024a11 11 0 0 1 .805 .3l.199 .086q .535 .242 .967 .53q .165 .11 .313 .225a3.8 3.8 0 0 1 .669 .668l.091 .128q .07 .105 .129 .211l.07 .139q .163 .35 .2 .73l.01 .211c0 2.477 -4.062 4 -9 4c-4.798 0 -8.77 -1.438 -8.979 -3.795a1 1 0 0 1 -.021 -.205l.005 -.104l.016 -.1c.205 -2.306 4.01 -3.733 8.667 -3.794z" />',   // database; Tabler has no filled server, and stacked discs read as the array
     "/Favorites": '<path d="M8.243 7.34l-6.38 .925l-.113 .023a1 1 0 0 0 -.44 1.684l4.622 4.499l-1.09 6.355l-.013 .11a1 1 0 0 0 1.464 .944l5.706 -3l5.693 3l.1 .046a1 1 0 0 0 1.352 -1.1l-1.091 -6.355l4.624 -4.5l.078 -.085a1 1 0 0 0 -.633 -1.62l-6.38 -.926l-2.852 -5.78a1 1 0 0 0 -1.794 0l-2.853 5.78z" />',   // star
-    "/Shares": '<path d="M12 2a1 1 0 0 1 .707 .293l1.708 1.707h4.585a3 3 0 0 1 2.995 2.824l.005 .176v7a3 3 0 0 1 -3 3h-1v1a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-9a3 3 0 0 1 3 -3h1v-1a3 3 0 0 1 3 -3zm-6 6h-1a1 1 0 0 0 -1 1v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1 -1v-1h-7a3 3 0 0 1 -3 -3z" />',   // folders — NO filled folder-share -> plural folders keeps the several-shares reading
+    "/Shares": '<path d="M12 2a1 1 0 0 1 .707 .293l1.708 1.707h4.585a3 3 0 0 1 2.995 2.824l.005 .176v7a3 3 0 0 1 -3 3h-1v1a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-9a3 3 0 0 1 3 -3h1v-1a3 3 0 0 1 3 -3zm-6 6h-1a1 1 0 0 0 -1 1v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1 -1v-1h-7a3 3 0 0 1 -3 -3z" />',   // folders; there is no filled folder-share, and the plural keeps the several-shares reading
     "/Settings": '<path d="M14.647 4.081a.724 .724 0 0 0 1.08 .448c2.439 -1.485 5.23 1.305 3.745 3.744a.724 .724 0 0 0 .447 1.08c2.775 .673 2.775 4.62 0 5.294a.724 .724 0 0 0 -.448 1.08c1.485 2.439 -1.305 5.23 -3.744 3.745a.724 .724 0 0 0 -1.08 .447c-.673 2.775 -4.62 2.775 -5.294 0a.724 .724 0 0 0 -1.08 -.448c-2.439 1.485 -5.23 -1.305 -3.745 -3.744a.724 .724 0 0 0 -.447 -1.08c-2.775 -.673 -2.775 -4.62 0 -5.294a.724 .724 0 0 0 .448 -1.08c-1.485 -2.439 1.305 -5.23 3.744 -3.745a.722 .722 0 0 0 1.08 -.447c.673 -2.775 4.62 -2.775 5.294 0zm-2.647 4.919a3 3 0 1 0 0 6a3 3 0 0 0 0 -6" />',   // settings
-    "/Docker": '<path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z" />',   // the OFFICIAL Docker brand mark (Simple Icons, verbatim) — user call: the real logo, not a stand-in. Replaces the box-multiple SUBSTITUTE, not the un-fillable Tabler brand-docker outline.
+    "/Docker": '<path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z" />',   // Docker's brand mark, from Simple Icons
     "/Plugins": '<path d="M10 2a3 3 0 0 1 2.995 2.824l.005 .176v1h3a2 2 0 0 1 1.995 1.85l.005 .15v3h1a3 3 0 0 1 .176 5.995l-.176 .005h-1v3a2 2 0 0 1 -1.85 1.995l-.15 .005h-3a2 2 0 0 1 -1.995 -1.85l-.005 -.15v-1a1 1 0 0 0 -1.993 -.117l-.007 .117v1a2 2 0 0 1 -1.85 1.995l-.15 .005h-3a2 2 0 0 1 -1.995 -1.85l-.005 -.15v-3a2 2 0 0 1 1.85 -1.995l.15 -.005h1a1 1 0 0 0 .117 -1.993l-.117 -.007h-1a2 2 0 0 1 -1.995 -1.85l-.005 -.15v-3a2 2 0 0 1 1.85 -1.995l.15 -.005h3v-1a3 3 0 0 1 3 -3z" />',   // puzzle
     "/VMs": '<path d="M7 21a1 1 0 0 1 0 -2h1v-2h-4a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-4v2h1a1 1 0 0 1 0 2zm7 -4h-4v2h4z" />',   // device-desktop
-    "/Tools": '<path d="M352 320c88.4 0 160-71.6 160-160c0-15.3-2.2-30.1-6.2-44.2c-3.1-10.8-16.4-13.2-24.3-5.3l-76.8 76.8c-3 3-7.1 4.7-11.3 4.7L336 192c-8.8 0-16-7.2-16-16l0-57.4c0-4.2 1.7-8.3 4.7-11.3l76.8-76.8c7.9-7.9 5.4-21.2-5.3-24.3C382.1 2.2 367.3 0 352 0C263.6 0 192 71.6 192 160c0 19.1 3.4 37.5 9.5 54.5L19.9 396.1C7.2 408.8 0 426.1 0 444.1C0 481.6 30.4 512 67.9 512c18 0 35.3-7.2 48-19.9L297.5 310.5c17 6.2 35.4 9.5 54.5 9.5zM80 408a24 24 0 1 1 0 48 24 24 0 1 1 0-48z" />',   // FontAwesome Solid wrench (CC-BY 4.0) — user call: a real WRENCH. Tabler has none in EITHER set (outline + filled both 404), so this one glyph comes from FA, which the Unraid WebGUI already loads globally.
-    "/Stats": '<path d="M20 18a1 1 0 0 1 .117 1.993l-.117 .007h-16a1 1 0 0 1 -.117 -1.993l.117 -.007h16z" /><path d="M15.22 5.375a1 1 0 0 1 1.393 -.165l.094 .083l4 4a1 1 0 0 1 .284 .576l.009 .131v5a1 1 0 0 1 -.883 .993l-.117 .007h-16.022l-.11 -.009l-.11 -.02l-.107 -.034l-.105 -.046l-.1 -.059l-.094 -.07l-.06 -.055l-.072 -.082l-.064 -.089l-.054 -.096l-.016 -.035l-.04 -.103l-.027 -.106l-.015 -.108l-.004 -.11l.009 -.11l.019 -.105c.01 -.04 .022 -.077 .035 -.112l.046 -.105l.059 -.1l4 -6a1 1 0 0 1 1.165 -.39l.114 .05l3.277 1.638l3.495 -4.369z" />',   // chart-area — NO filled chart-bar -> a solid area chart, the only filled chart glyph still legible at 16px
+    "/Tools": '<path d="M352 320c88.4 0 160-71.6 160-160c0-15.3-2.2-30.1-6.2-44.2c-3.1-10.8-16.4-13.2-24.3-5.3l-76.8 76.8c-3 3-7.1 4.7-11.3 4.7L336 192c-8.8 0-16-7.2-16-16l0-57.4c0-4.2 1.7-8.3 4.7-11.3l76.8-76.8c7.9-7.9 5.4-21.2-5.3-24.3C382.1 2.2 367.3 0 352 0C263.6 0 192 71.6 192 160c0 19.1 3.4 37.5 9.5 54.5L19.9 396.1C7.2 408.8 0 426.1 0 444.1C0 481.6 30.4 512 67.9 512c18 0 35.3-7.2 48-19.9L297.5 310.5c17 6.2 35.4 9.5 54.5 9.5zM80 408a24 24 0 1 1 0 48 24 24 0 1 1 0-48z" />',   // FontAwesome Solid wrench (CC-BY 4.0); Tabler ships none
+    "/Stats": '<path d="M20 18a1 1 0 0 1 .117 1.993l-.117 .007h-16a1 1 0 0 1 -.117 -1.993l.117 -.007h16z" /><path d="M15.22 5.375a1 1 0 0 1 1.393 -.165l.094 .083l4 4a1 1 0 0 1 .284 .576l.009 .131v5a1 1 0 0 1 -.883 .993l-.117 .007h-16.022l-.11 -.009l-.11 -.02l-.107 -.034l-.105 -.046l-.1 -.059l-.094 -.07l-.06 -.055l-.072 -.082l-.064 -.089l-.054 -.096l-.016 -.035l-.04 -.103l-.027 -.106l-.015 -.108l-.004 -.11l.009 -.11l.019 -.105c.01 -.04 .022 -.077 .035 -.112l.046 -.105l.059 -.1l4 -6a1 1 0 0 1 1.165 -.39l.114 .05l3.277 1.638l3.495 -4.369z" />',   // chart-area, the only filled chart glyph still legible at 16px
     "/Apps": '<path d="M9 3h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" /><path d="M9 13h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" /><path d="M19 13h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" /><path d="M17 3a1 1 0 0 1 .993 .883l.007 .117v2h2a1 1 0 0 1 .117 1.993l-.117 .007h-2v2a1 1 0 0 1 -1.993 .117l-.007 -.117v-2h-2a1 1 0 0 1 -.117 -1.993l.117 -.007h2v-2a1 1 0 0 1 1 -1z" />'   // apps
   };
-  // Tabler draws on a 24 grid, so ccTabIcons() hard-coded "0 0 24 24" for every tab. /Tools no longer
-  // comes from Tabler (see its line above) and FontAwesome draws on a 512 grid — a 512-unit path in a
-  // 24-unit box renders as one enormous filled corner. Record the exceptions here rather than rescaling
-  // the path by hand: a retyped path is a redrawn icon, and the point of the swap was the REAL glyph.
+  // Tabler draws on a 24 grid, FontAwesome on 512, and a 512-unit path in a 24-unit box renders as
+  // one enormous filled corner. The exceptions go here rather than into rescaled path data, since a
+  // retyped path is a redrawn icon.
   var CC_TAB_VB = { "/Tools": "0 0 512 512" };
   function ccTabIcons() {
     try {
-      // #18 (user: "wo sind die einstellungen dafür?"): additive markup needs a real off-switch, not just
-      // a gate on future paints — CC_TAB_ICONS is the only place that puts these <svg>s in the DOM, so
-      // this is also the only place that can take them back out again when the setting flips off.
+      // This is the only place that puts the icons into the DOM, so it also takes them back out
+      // when the setting flips off.
       var on = g("cc.tabicons", "1") !== "0";
-      // #18 (user, extension: "auch toggle um den text auszublenden" — icon-only mode). The label has no
-      // element of its own (CA/Unraid renders it as a bare text node next to the icon), so wrap it in a
-      // span ONCE per tab; hiding is then a plain CSS class toggle, independent of the icon switch above —
-      // wrapping always runs regardless of `on` so text-only mode still works with icons off.
+      // The label has no element of its own, so it is wrapped in a span once per tab and hiding it
+      // becomes a class toggle. The wrapping runs whatever `on` says, so icon-only and text-only
+      // mode stay independent.
       var textOff = g("cc.tabtext", "1") === "0";
       var items = document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a[href]");
       for (var i = 0; i < items.length; i++) {
@@ -193,9 +144,8 @@
             var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             svg.setAttribute("class", "cc-tab-ico");
             svg.setAttribute("viewBox", CC_TAB_VB[href] || "0 0 24 24");
-            // Rule 20: FILLED, no stroke. The stroke-* attributes are removed rather than left at their
-            // old values — a leftover stroke-width:2 on a filled path paints a 2px skin around the shape
-            // and fattens every glyph by a third at 16px.
+            // Filled, with no stroke: a leftover stroke-width paints a skin around the shape and
+            // fattens every glyph by a third at 16px.
             svg.setAttribute("fill", "currentColor"); svg.setAttribute("stroke", "none");
             svg.innerHTML = d;
             a.insertBefore(svg, a.firstChild);
@@ -217,39 +167,21 @@
       document.documentElement.classList.toggle("cc-tabtext-off", textOff);
     } catch (e) {}
   }
-  try { window.ccTabIcons = ccTabIcons; } catch (eTI) {}   // same-page live toggle hook for the CC Settings page (the nav bar is on every page, Settings included)
-  // popup title badges follow the COLOUR MODES (user): accent by default (CSS vars), palette in
-  // rainbow — painted here because dialogs appear as direct BODY children at any time.
+  try { window.ccTabIcons = ccTabIcons; } catch (eTI) {}   // the settings page's live toggle hook
+  // Popup badges follow the colour modes: the accent by default through the CSS vars, a palette slot
+  // in rainbow mode. Painted from here because a dialog can appear as a direct body child at any
+  // time.
   function paintPopups() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
-      // #(user: "die ganzen abschnittsbadges und titelbadges sind nicht in den farbmodi integriert"):
-      // #cc-ctout-title (docker.js bootCtOutput, the template-edit recreate window) only ever read the
-      // flat var(--cc-rbaccent,...) CSS chain — the SAME single value its own fieldset legends read, so
-      // in Rainbow it always matched the legends exactly instead of getting its own distinct colour like
-      // the real .sweet-alert h2 title does here (live-measured: title #c95e5e vs legend #5e89c9 on the
-      // same open window), and it never got popBadge()'s dark-slot swap (a near-black palette slot makes
-      // an unreadable badge, see popBadge's own comment). Folded into the same loop so it now goes
-      // through the identical code path as every other popup title.
-      // #(user, THIS round: "die abschnittsbadges, titelbadges und unteren buttons sind in allen fenstern
-      // nicht in den farbmodi"). Root cause, LIVE-measured on a real DiskSpeed container update before the
-      // fix (Rainbow, accent #1f9d55): title #c95e5e — but ALL FOUR step legends AND the Fertig button
-      // identically #5e89c9. Only the TITLE was ever painted here; every other badge/button in every popup
-      // window read the flat `var(--cc-rbaccent, …)` chain, i.e. ONE shared jewel (rbColor(5)) for the whole
-      // window, so a 4-step update window rendered as a single flat colour while the rest of the UI rotated.
-      // This is the SAME failure #94-F already diagnosed and fixed for the /Apps info popup (user, verbatim
-      // there: "die ganzen badges sind nicht in den farbmodi ... das musst du jetzt endlich wissen!!!!",
-      // see Tokens.css .cc-ic-legend) — it was simply never carried over to the SweetAlert / jQuery-UI /
-      // ctout windows. Fix mirrors that one exactly: stamp the per-element --cc-rb-c/--cc-rb-ct jewel and
-      // give the CSS the same three-tier chain var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, …))).
-      // Rotation is CONTINUOUS PER WINDOW (title, then each section badge, then each bottom button) rather
-      // than per selector, so no two badges inside one window can land on the same slot — that adjacency is
-      // the whole point (#3/#8: "in rainbow mode ADJACENT buttons/toggles get DIFFERENT palette colours").
-      // Deliberately NOT given the reactive-neutral (cc.rbmode=active) treatment: #96 established that a
-      // legend is a non-interactive element, so "neutral until hover" never resolves and just reads as
-      // permanently colourless. popBadge() rather than raw rbColor() for every slot — these all sit on the
-      // dark modal, where a near-black palette slot (the German flag's black stripe) paints an invisible
-      // badge; popBadge swaps such a slot for the brightest one, exactly as the title already did.
+      // Every badge inside a window is stamped with its own --cc-rb-c/--cc-rb-ct, which the CSS
+      // reads through var(--cc-rb-c, var(--cc-rbaccent, …)). Without the stamp they all fall
+      // through to --cc-rbaccent, one shared colour, and a four-step update window renders flat
+      // while the rest of the UI rotates. The rotation is continuous per window (title, then each
+      // section badge, then each bottom button) rather than per selector, so two badges next to
+      // each other never land on the same slot. The neutral sub-mode is skipped here: a legend is
+      // not interactive, so "neutral until hover" would leave it colourless for good. Every slot
+      // goes through popBadge(), since these sit on the dark modal.
       var scopes = [];
       Array.prototype.forEach.call(document.querySelectorAll(".sweet-alert"), function (w) {
         scopes.push({ root: w, title: w.querySelector("h2"), btns: "button.confirm, .sa-button-container button:not(.cancel)" });
@@ -257,7 +189,7 @@
       Array.prototype.forEach.call(document.querySelectorAll(".ui-dialog"), function (w) {
         scopes.push({ root: w, title: w.querySelector(".ui-dialog-title"), btns: ".ui-dialog-buttonpane button" });
       });
-      // the ctout recreate window is a PAGE, not a dialog node — its window box is #displaybox .content.
+      // The ctout recreate window is a page, not a dialog node, so its box is #displaybox .content.
       var ctT = document.getElementById("cc-ctout-title");
       if (ctT) {
         var ctRoot = ctT.closest(".content") || document.querySelector("#displaybox .content");
@@ -266,49 +198,43 @@
       var rb = rbOn();
       scopes.forEach(function (sc) {
         var n = 0;
-        // #7-II (user NEW SPEC): the title badge carries NO status indication — it keeps its normal
-        // colour-mode colour the whole time. (Running/done lives in the bottom-left indicator.)
+        // The title badge shows no status of its own; running and done live in the bottom-left
+        // indicator.
         function stamp(el, legacy) {
           if (!el) return;
-          // earlier releases painted the TITLE with an inline background/color; a stale one would outrank
-          // the var() chain forever after a live mode switch or a hot-swapped script, so always clear it.
+          // An inline background on the title would outrank the var() chain for good after a live
+          // mode switch, so it is always cleared.
           if (legacy) { el.style.removeProperty("background"); el.style.removeProperty("color"); }
-          if (!rb) { el.style.removeProperty("--cc-rb-c"); el.style.removeProperty("--cc-rb-ct"); return; }   // Normal: CSS falls through to the plain accent (never popBadge's swap, which would override a deliberately dark accent)
+          if (!rb) { el.style.removeProperty("--cc-rb-c"); el.style.removeProperty("--cc-rb-ct"); return; }   // in accent mode the CSS falls through to the plain accent, which popBadge's swap would override
           var c = popBadge(n++), t = idealText(c);
           el.style.setProperty("--cc-rb-c", c); el.style.setProperty("--cc-rb-ct", t);
         }
         stamp(sc.title, true);
         Array.prototype.forEach.call(sc.root.querySelectorAll("fieldset > legend"), function (l) { stamp(l, false); });
         Array.prototype.forEach.call(sc.root.querySelectorAll(sc.btns), function (b) {
-          // a leftover hidden Cancel (SweetAlert1 reuses ONE node for its whole lifecycle) must not eat a
-          // palette slot, or the visible buttons would shift colour depending on invisible siblings.
+          // SweetAlert reuses one node for its whole lifecycle, so a leftover hidden Cancel must
+          // not eat a palette slot and shift the visible buttons.
           if (b.offsetParent === null && getComputedStyle(b).display === "none") return;
           stamp(b, false);
         });
       });
-      // the iframe dialog (CreateDocker/log.htm) paints its own badges from the parent — it can't read our
-      // CSS vars, so it must be repainted on the SAME cadence, or a live colour-mode switch (apply() ->
-      // paintPopups()) would leave it on the previous mode's colours. Idempotent + self-guarded.
+      // The iframe dialog paints its own badges from the parent and cannot read these CSS vars, so
+      // it is repainted on the same cadence; otherwise a live mode switch leaves it on the old
+      // colours.
       try { ccPopIframes(); } catch (ePI) {}
     } catch (e) {}
   }
-  // docker.js's ctout window (a completely separate page navigation, not a sweet-alert) has no reason to
-  // pull in this whole file's mutation-observer machinery just to get its title painted — expose the one
-  // function it needs, the same way window.ccGql is already shared the other direction.
+  // docker.js's ctout window is a page navigation of its own, so it gets the one function it needs
+  // rather than this file's observer machinery.
   try { window.paintPopups = paintPopups; } catch (ePP) {}
-  // #11 rework: the streaming plugin-install / container-update dialog (.sweet-alert.nchan) gets a
-  // clean modern loader. Detect the IN-PROGRESS state from the title, drop a rotating ring beside the
-  // title badge, grey the badge while it runs, and hide the empty grey <fieldset> bars Unraid leaves.
-  // A per-dialog subtree observer re-styles on every streamed line + the IN PROGRESS -> FINISHED flip.
-  // FREEZE FIX: those per-dialog subtree+characterData observers (and the body ccPopObs) used to run
-  // ccNchanStyle()+paintPopups() SYNCHRONOUSLY on every mutation. During a container update/install the
-  // nchan <pre> log streams hundreds of lines/sec -> hundreds of full re-styles/sec saturated the main
-  // thread and froze the whole UI until a page reload (user: "wenn man das zweite schließt reagiert die
-  // ganze ui nicht mehr"). Coalesce every observer wake into ONE restyle per animation frame: at most one
-  // run per debounce window can never outrun a streaming flood, so the page can no longer lock. A short
-  // setTimeout debounce (NOT requestAnimationFrame — rAF is paused/throttled on a non-painting or
-  // background tab, which would starve the restyle and leave the dialog unstyled) coalesces a burst of
-  // streamed lines into ONE restyle per ~60ms (≤~16/s), matching the debounce docker.js already uses.
+  // The streaming plugin-install and container-update dialog gets a loader: the in-progress state is
+  // read from the title, a rotating ring goes beside the title badge, and the empty grey fieldset
+  // bars Unraid leaves behind are hidden. A per-dialog subtree observer restyles on every streamed
+  // line and on the flip to finished.
+  // Those observers wake hundreds of times a second while a log streams, so they are coalesced into
+  // one restyle per 60ms rather than restyling on every mutation, which saturated the main thread
+  // and locked the UI. A timeout, not requestAnimationFrame, which a background tab throttles and
+  // which would leave the dialog unstyled.
   var _ccPopT = 0, _ccPopFull = false;
   function ccPopRestyleSoon(full) {
     if (full) _ccPopFull = true;
@@ -324,17 +250,13 @@
   function ccNchanStyle() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
-      // #12 (user, furious "schon so oft gesagt!!!"): the container-UPDATE window is a .sweet-alert that in this
-      // Unraid build does NOT carry the `nchan` class, so EVERY nchan-scoped fix (title strip, bottom-left loader,
-      // dark step cards, empty-grey-bar hide) missed it and only the broad paintPopups colour reached it. Also
-      // match any .sweet-alert that has a <pre> log and STAMP the nchan class on it, so all the existing
-      // .sweet-alert.nchan CSS + JS below apply to it at once.
-      // #12 ROOT FIX (user "mach es endlich!!!"): the global ccPopObs watches only document.body CHILDLIST (no
-      // subtree), so it fires when a sweet-alert first appears (the "Are you sure?" confirm — which has NO <pre>)
-      // but NEVER again while that SAME alert streams IN PLACE (pre appears, title becomes "-IN PROGRESS" then
-      // "-FINISHED"). That is why the real update window kept the status text + spinner in the badge (my earlier
-      // synthetic test inserted an already-finished alert as a fresh body child, so it "passed"). Attach a subtree
-      // observer to EVERY sweet-alert (matched or not) so any later in-place streaming re-runs this and strips it.
+      // The container-update window is a .sweet-alert without the nchan class in this Unraid build,
+      // so every nchan-scoped rule below would miss it. Any .sweet-alert holding a <pre> log is
+      // matched too and gets the class stamped on it.
+      // ccPopObs watches document.body's childList without subtree, so it fires when an alert
+      // first appears (the "are you sure" confirm, which has no <pre>) but never again while that
+      // same alert streams in place and its title cycles. A subtree observer on every sweet-alert,
+      // matched or not, makes the later in-place streaming re-run this.
       var allSa = document.querySelectorAll(".sweet-alert");
       for (var z = 0; z < allSa.length; z++) {
         if (!allSa[z].__ccNchanObs) {
@@ -346,10 +268,9 @@
       for (var i = 0; i < sas.length; i++) {
         var sa = sas[i], h2 = sa.querySelector("h2"); if (!h2) continue;
         sa.classList.add("nchan");
-        // #15 (user, LIVE-verified: this window is .sweet-alert.nchan): the update stream carries a Fonts/log
-        // <style> block whose content ALSO lands in a bare <p>/text node and renders as raw CSS text under the
-        // title. The CSS hides the <style> element; here we blank the text-rendered variant (leaf elements + text
-        // nodes carrying a CSS signature). Idempotent (once blanked it no longer matches).
+        // The update stream carries a <style> block whose content also lands in a bare text node
+        // and renders as raw CSS under the title. The CSS hides the element; this blanks the
+        // text-rendered variant, matching leaf elements and text nodes with a CSS signature.
         try {
           var CSS_SIG = /font-family\s*:|@font-face|\.logLine\s*\{/i;
           var leafs = sa.querySelectorAll("p, div, font, pre, span");
@@ -357,88 +278,62 @@
           var tw = document.createTreeWalker(sa, NodeFilter.SHOW_TEXT, null);
           var tn; while ((tn = tw.nextNode())) { if (CSS_SIG.test(tn.nodeValue || "") && (tn.nodeValue || "").indexOf("{") !== -1) tn.nodeValue = ""; }
         } catch (eCss) {}
-        // #7-II (user NEW SPEC): the TITLE badge must carry NO status text and NO loader — just the clean name.
-        // The status lives BOTTOM-LEFT beside the buttons: a 3-dot loader (no text) while running, which turns
-        // into a circle-with-check (no text) when finished. Because the title cycles (step names AND
-        // "-IN PROGRESS"/"-FINISHED"), the state is LATCHED on the element (dataset) so stripping the suffix
-        // doesn't lose it: once seen "in progress" -> run; once "finished" -> done; step names don't reset it.
+        // The title badge shows the clean name, with no status text and no loader. The status sits
+        // bottom left beside the buttons: a three-dot loader while the stream runs, a circle with
+        // a check when it finishes.
         var raw = (h2.textContent || "");
-        // ── bottom-left run/done STATUS BADGE ──
-        // Only ACTUAL install/update STREAMS get the indicator — NOT the System Information or ShipLog changelog
-        // windows (they ALSO carry a <pre>, but are static). A stream is marked by a progress-verb title OR by
-        // the step <fieldset>s Unraid emits. (user, "unzählige Male drauf hingewiesen": the green check showed
-        // CONSTANTLY because the old code LATCHED dataset.ccState="done" and NEVER reset it on the REUSED
-        // SweetAlert node — so every later window inherited "done"; and the static System-Info <pre> falsely
-        // qualified as a running stream.)
-        // A real STREAM = a progress-verb title OR Unraid's exec step cards (fieldset.CMD/.docker from
-        // Helpers.php addLog). The old `fieldset` match was too broad: the System Information window ALSO wraps
-        // its `table.info` in a plain <fieldset>, so it falsely qualified and showed the loader (user: "im
-        // Systeminfofenster ist die Ladeanimation immer noch"). Scope to the exec fieldsets AND hard-exclude any
-        // window carrying a `table.info` (System Info) — that never runs a process.
+        // Only a real install or update stream gets the indicator. The System Information and
+        // changelog windows carry a <pre> too but are static, so a stream is recognised by a
+        // progress verb in the title or by the exec step cards Unraid emits (fieldset.CMD and
+        // fieldset.docker from Helpers.php addLog). A plain <fieldset> is too broad a match, since
+        // System Information wraps its table.info in one, which is why that table also excludes a
+        // window outright.
         var isStream = (/in\s*progress|wird\s+(aktualisiert|installiert|erstellt|neu\s*erstellt|gezogen|gestartet)|updating|installing|pulling|creating/i.test(raw) || !!sa.querySelector("fieldset.CMD, fieldset.docker") || !!sa.querySelector("#swaltext")) && !sa.querySelector("table.info");
         if (isStream) {
-          // Recompute STATELESSLY each pass so a fresh window ALWAYS starts as RUN (loader) and never inherits a
-          // stale "done". Flip to DONE only when the log reports completion AND the stream has SETTLED (no new
-          // output for ~700ms) — so the check never appears mid-run (e.g. right after "erfolgreich ausgeführt"
-          // while an orphaned image is still being removed). No mutations fire once the stream stops, so arm a
-          // one-shot re-check to let the check appear after the tail settles.
-          // #14 (user, de_DE box): completion is Unraid's OWN signal, not a log-phrase guess. openPlugin/
-          // openDocker/openVMAction render `<span id="pluginProgressTitle">In Progress <i class="fa fa-refresh
-          // fa-spin"></i></span>` while running; on the nchan _DONE_/_ERROR_ message openDone()/openError()
-          // REPLACE that span with plain "Finished"/"Fertig" | "Error"/"Fehler" (spinner GONE) and enable the
-          // confirm button. That flip is instant + locale-independent — a plugin install log never contains
-          // "finished/erfolgreich", which is why the old finishTxt regex left the ring spinning forever.
+          // Recomputed from scratch on every pass, so a fresh window starts as running and never
+          // inherits a stale "done" from the reused SweetAlert node.
+          // Completion comes from Unraid's own signal rather than a phrase in the log: while a job
+          // runs it renders a #pluginProgressTitle span with a spinner, and on the nchan done or
+          // error message openDone() and openError() replace that span with plain text and enable
+          // the confirm button. That flip is instant and locale-independent, while an install log
+          // may never contain a completion phrase at all.
           var progT = h2.querySelector("#pluginProgressTitle");
           var spinning = progT ? !!progT.querySelector(".fa-spin, .fa-refresh, i.fa") : false;
           var cb0 = sa.querySelector("button.confirm");
           var btnDone = !!(cb0 && !cb0.disabled && cb0.offsetParent !== null && !/close|schlie|abbrech|cancel/i.test(cb0.textContent || ""));
           var done;
-          if (progT) { done = !spinning; }               // native span present: spinner removed == finished/error
-          else if (btnDone) { done = true; }             // no span, but the Done/Fertig button went live
-          else {                                         // last resort: the old settled log-phrase heuristic
+          if (progT) { done = !spinning; }               // the span is there, so a missing spinner means finished or error
+          else if (btnDone) { done = true; }             // no span, but the confirm button went live
+          else {                                         // last resort: wait for the log phrase and a settled stream
             var finishTxt = /(erfolgreich (ausgeführt|beendet)|successfully|command (finished|completed|executed)|finished)/i.test(sa.textContent || "");
             var len = (sa.textContent || "").length;
             if (sa.__ccLen !== len) { sa.__ccLen = len; sa.__ccGrow = Date.now(); }
             done = finishTxt && (Date.now() - (sa.__ccGrow || 0)) > 700;
             if (!done && finishTxt) { clearTimeout(sa.__ccSettleT); sa.__ccSettleT = setTimeout(function () { try { ccNchanStyle(); paintPopups(); } catch (e) {} }, 750); }
           }
-          if (done) sa.__ccDone = true;                  // latch: never revert to run once finished
+          if (done) sa.__ccDone = true;                  // once finished it never goes back to running
           sa.dataset.ccState = (done || sa.__ccDone) ? "done" : "run";
           sa.classList.toggle("cc-nchan-err", (done || sa.__ccDone) && /error|fehler/i.test((progT ? progT.textContent : (cb0 && cb0.textContent)) || ""));
         } else { sa.dataset.ccState = ""; sa.__ccDone = false; }
         var state = sa.dataset.ccState || "";
         sa.classList.toggle("cc-nchan-loading", state === "run");
         sa.classList.toggle("cc-nchan-done", state === "done");
-        // #23 (user: "update oder installationsfenster scrollen nicht automatisch nach unten"): the
-        // streamed log keeps growing but nothing follows it to the new bottom line — whichever element
-        // in this dialog actually scrolls (varies: #swaltext, a fieldset, the dialog box itself, or the
-        // page behind it, depending on Unraid build/dialog type) gets pinned to its own bottom on every
-        // restyle pass, i.e. at most once per ~60ms debounce window, not per streamed line.
-        // #31 (user: "immer wenn ich den changelog eines containers öffne springt die Seite ans Ende"):
-        // this used to run for EVERY .sweet-alert:has(pre) match unconditionally, `isStream` above already
-        // exists specifically to tell a real update/install stream apart from a static <pre> dialog (System
-        // Information, a plugin/ShipLog changelog viewer) — but this block ran BEFORE that check and ignored
-        // it. ShipLog's own changelog bubble isn't even a sweet-alert (watchPopups' body-childList observer
-        // just restyles on ANY body mutation, sweet-alert or not), so opening it re-ran this loop over the
-        // WHOLE document and blind-scrolled the page for any matching static dialog left over from earlier
-        // in the session (System Info, a changelog view) — nothing to do with what was actually opened.
-        // state === "run" only: follow while genuinely streaming, stop once finished, never for static text.
-        // #40 (user: "wenn ich ein Update auslöse springt es ans Ende der Seite"): this used to ALSO scroll
-        // document.documentElement to its bottom. Every .sweet-alert here is forced position:fixed + centered
-        // with its own overflow-y:auto (see the #10/#22 rules above) - the dialog never moves or needs more
-        // room when the PAGE scrolls, so that call only ever dragged the container list behind it out from
-        // under the user, with zero benefit to the dialog's own readability. The two calls below (the
-        // dialog's internal scrollers + the dialog box itself) are what actually follows the growing log;
-        // keep those, drop the page-level one.
+        // Follow the streamed log to its new bottom line. Which element actually scrolls varies
+        // with the Unraid build and the dialog type (#swaltext, a fieldset, or the dialog box), so
+        // every scroller inside the dialog is pinned to its own bottom, once per restyle pass
+        // rather than per streamed line. The page itself is left alone: a .sweet-alert here is
+        // fixed and centred with its own overflow, so scrolling the page only drags the list
+        // behind it out from under the reader. Gated on the running state, so a static <pre>
+        // dialog such as System Information or a changelog viewer never scrolls at all.
         if (state === "run") {
           var scrollers = sa.querySelectorAll("*");
           for (var sc = 0; sc < scrollers.length; sc++) { var sn = scrollers[sc]; if (sn.scrollHeight - sn.clientHeight > 2) sn.scrollTop = sn.scrollHeight; }
           if (sa.scrollHeight - sa.clientHeight > 2) sa.scrollTop = sa.scrollHeight;
         }
-        // #14: strip the status suffix from the title — but do NOT rewrite h2.textContent: that DESTROYS
-        // #pluginProgressTitle, the only reliable completion signal (later passes could then never see "done").
-        // Hide the native progress span in place + trim the trailing separator; keep text-clean only as the
-        // fallback for alerts that have no progress span.
+        // Strip the status suffix from the title without rewriting h2.textContent, which would
+        // destroy #pluginProgressTitle, the completion signal read above. Hide the progress span in
+        // place and trim the trailing separator; rewriting the text is the fallback for an alert
+        // that has no such span.
         var progH = h2.querySelector("#pluginProgressTitle");
         if (progH) {
           progH.style.display = "none";
@@ -448,29 +343,28 @@
           var clean = raw.replace(/\s*[-–—]\s*(IN\s*PROGRESS|FINISHED)\b[\s\S]*$/i, "").replace(/\s+$/, "");
           if (clean && clean !== raw && h2.textContent !== clean) h2.textContent = clean;
         }
-        var oldspin = h2.querySelector(".cc-nchan-spin"); if (oldspin) oldspin.remove();   // kill any legacy in-badge spinner
-        // bottom-left STATUS BADGE (no text): a spinning ring while RUNNING, a green circle-check when DONE
+        var oldspin = h2.querySelector(".cc-nchan-spin"); if (oldspin) oldspin.remove();
+        // the bottom-left status badge: a spinning ring while running, a circle with a check when done
         var loader = sa.querySelector(".cc-nchan-loader");
         if (state === "run" || state === "done") {
           if (!loader) {
             loader = document.createElement("span"); loader.className = "cc-nchan-loader"; loader.setAttribute("role", "status");
           }
-          // D11: anchor to the BUTTON ROW and RE-HOME every pass. The docker-CREATE window streams with NO
-          // buttons (the loader would fall back to `sa` and land top-centre), then renders VIEW LOG / FERTIG
-          // only when done -> re-parent as soon as the real row appears. Match ANY button (the docker buttons
-          // carry no .confirm/.cancel class); with no row yet land on `sa` (CSS then pins that case bottom-left).
+          // The loader is re-homed to the button row on every pass: the docker-create window
+          // streams with no buttons at all and renders them only when it finishes. Any button
+          // counts, since those carry no .confirm or .cancel class; without a row the loader lands
+          // on the dialog, which the CSS pins bottom left.
           var _btns = sa.querySelectorAll("button");
           var _row = sa.querySelector(".sa-button-container") || (_btns.length ? _btns[_btns.length - 1].parentElement : sa);
           if (loader.parentElement !== _row) _row.appendChild(loader);
           if (state === "done") {
             if (loader.getAttribute("data-cc-mode") !== "done") { loader.setAttribute("data-cc-mode", "done"); loader.classList.add("cc-nchan-check"); loader.setAttribute("aria-label", T("Fertig", "Done")); loader.innerHTML = "<svg viewBox='0 0 24 24' aria-hidden='true'><circle class='cc-ck-c' cx='12' cy='12' r='10.5'/><path class='cc-ck-p' d='M6.5 12.5l3.6 3.6L17.5 8.8'/></svg>"; }
           } else if (loader.getAttribute("data-cc-mode") !== "run") {
-            loader.setAttribute("data-cc-mode", "run"); loader.classList.remove("cc-nchan-check"); loader.setAttribute("aria-label", T("Läuft…", "Working…")); loader.innerHTML = "<span class='cc-loader cc-load-sm'><span class='o'><i></i></span><span class='in'><i></i></span></span>";  // RUN = CC double counter-rotating ring, sm tier (status-badge ring)
+            loader.setAttribute("data-cc-mode", "run"); loader.classList.remove("cc-nchan-check"); loader.setAttribute("aria-label", T("Läuft…", "Working…")); loader.innerHTML = "<span class='cc-loader cc-load-sm'><span class='o'><i></i></span><span class='in'><i></i></span></span>";  // the shared double counter-rotating ring, small tier
           }
         } else if (loader) { loader.remove(); }
-        // #7-III (user: "nutzloser hellgrauer Balken ueber den Buttons"): the step cards are #191919 now, so an
-        // EMPTY fieldset (or one with only a <legend> and no body text) renders as a stray grey bar. Hide any
-        // fieldset whose BODY (text minus the legend) is blank, not just the fully-empty ones.
+        // The step cards are dark, so a fieldset holding only a legend renders as a stray grey bar.
+        // Hide any whose body text, the content minus the legend, is blank.
         var fs = sa.querySelectorAll("fieldset");
         for (var j = 0; j < fs.length; j++) {
           var body = (fs[j].textContent || ""), leg = fs[j].querySelector("legend");
@@ -481,9 +375,8 @@
       }
     } catch (e) {}
   }
-  // dialog CONTENT often lives in a SAME-ORIGIN iframe the parent CSS cannot style — inject a
-  // small CC style into the inner document (user: "der button in den popupfenstern soll
-  // groesser sein und linksbuendig"): big accent buttons, left-aligned button rows.
+  // A dialog's content often lives in a same-origin iframe the parent CSS cannot reach, so a small
+  // sheet goes into the inner document.
   function ccPopIframes() {
     try {
       var acc = (getComputedStyle(document.documentElement).getPropertyValue("--cc-hdr-accent") || "").trim() || "#2f6feb";
@@ -495,32 +388,25 @@
               var d = f.contentDocument;
               if (!d || !d.head || d.getElementById("cc-pop-inner")) return;
               var st = d.createElement("style"); st.id = "cc-pop-inner";
-              // 36px/14px literals: keep in sync with --cc-lgb-* in Header.css (iframes cannot read the parent's CSS vars)
-              // focus law duplicated here too: the inner document cannot read the parent's focus-kill rules
-              // #16/#17 (user: Systeminfo/Feedback-Fenster haben helle Kopf-/Fussleiste + Feedback ist nicht im
-              // CC-Style): darken the iframe's OWN surface (html/body + structural elements) onto #161616 so no
-              // lighter native band shows, and theme the form controls (radios keep native, text/textarea/select
-              // get the CC dark fill). Literals only — the iframe cannot read the parent's CSS vars.
+              // The iframe cannot read the parent's CSS vars, so this sheet carries literals; the
+              // 36px and 14px button metrics track --cc-lgb-* in Header.css, and the focus rules
+              // repeat the parent's. The inner surface is darkened so no lighter native band shows
+              // through, and the text inputs get the dark fill while radios stay native.
               st.textContent = "html,body{background:#0f0f0f !important;color:#d6d6d6 !important} fieldset,table,tbody,thead,tr,td,th,.tabs,dl,dt,dd,form,center,p,section,article,div{background:transparent !important;border:none !important} legend{color:#9a9a9a !important} label,td,th{color:#d6d6d6 !important} input[type=text],input[type=password],input[type=email],input[type=search],input[type=number],input[type=url],textarea,select{background:#232323 !important;color:#eaeaea !important;border:none !important;border-radius:6px !important;outline:none !important;box-shadow:none !important} textarea{width:100% !important;box-sizing:border-box !important} a{color:" + acc + " !important} " +
                 "input[type=button],input[type=submit],button{height:36px !important;padding:0 24px !important;font-size:14px !important;border:0 !important;border-radius:6px !important;box-shadow:none !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important;cursor:pointer} center,.buttons{text-align:center !important} a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none !important;box-shadow:none !important;filter:brightness(1.18)} " +
-                // #7-IV (user: the "CONTAINER AKTUALISIEREN" template-update window must look like #7): its body is
-                // CreateDocker.php/log.htm INSIDE this iframe, with its OWN inline styles (orange gradient buttons,
-                // blue span.system box, bordered fieldset.docker cards). These selectors only exist in that window,
-                // so mirroring #7's look here is safe: fieldset.docker -> borderless CC card, legend -> accent pill,
-                // span.system -> neutral. (The buttons already pick up the accent rule above.)
+                // The template-update window is CreateDocker.php inside this iframe, with inline
+                // styles of its own. These selectors exist only in that window, so giving them the
+                // CC look here reaches nothing else.
                 "fieldset.docker{background:#191919 !important;border:none !important;border-radius:10px !important;margin:0 0 12px !important;padding:10px 12px !important;box-shadow:0 1px 4px rgba(0,0,0,.35) !important} fieldset.docker>legend{display:inline-block !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;border:none !important;border-radius:999px !important;padding:3px 12px !important;font-size:12px !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important} span.system{background:transparent !important;color:#d6d6d6 !important;box-shadow:none !important} span.label{background:rgba(255,255,255,.08) !important;color:#e6e6e6 !important;border-radius:999px !important;padding:3px 10px !important}";
               d.head.appendChild(st);
             } catch (e2) {}
           }
-          // #(user: "die abschnittsbadges, titelbadges und unteren buttons sind in ALLEN fenstern nicht in
-          // den farbmodi"): the injected sheet above bakes in ONE colour (`acc`, read from --cc-hdr-accent
-          // ONLY — it never looked at --cc-rbaccent at all), so this window's section badges and buttons sat
-          // on the plain accent even in Rainbow/Flag: not one shared jewel like the other windows, but
-          // completely OUTSIDE the colour modes. An iframe cannot read the parent's CSS vars, so there is no
-          // var() chain to fix here — paint the rotation in directly instead. Inline + "important" outranks
-          // the injected sheet's own !important, and re-running is idempotent, so streamed-in cards get their
-          // slot as they arrive. Same continuous per-window sequence as paintPopups(): the window title is
-          // slot 0, so the badges start at 1 and the buttons carry on after the last badge.
+          // The sheet above bakes in one colour, so in rainbow mode the inner window would sit
+          // outside the colour modes entirely. An iframe has no var() chain to read, so the
+          // rotation is painted in directly; inline with "important" outranks the injected sheet,
+          // and re-running is idempotent, so a card streamed in later gets its slot as it arrives.
+          // The sequence continues the one in paintPopups(): the title is slot 0, so the badges
+          // start at 1 and the buttons follow the last badge.
           function paintInner() {
             try {
               var d = f.contentDocument; if (!d || !d.body) return;
@@ -540,15 +426,14 @@
       }
     } catch (e) {}
   }
-  // Connect popover (bell/burger menu) has no backdrop -> it floats over the page unclearly
-  // (user #13). Inject a dim+blur overlay BEHIND it while it's open; clicking it closes the menu
-  // (Escape, which reka honours). Runs from the same body-childList observer as the dialogs.
+  // The Connect popover (bell and burger menu) has no backdrop of its own, so a dim and blur
+  // overlay goes behind it while it is open. Clicking it sends Escape, which reka honours.
   function ccPopoverDim() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) { var d0 = document.getElementById("cc-pop-dim"); if (d0) d0.style.display = "none"; return; }
-      // the burger MENU teleports to body as .bg-popover; the bell NOTIFICATION centre is a Sheet
-      // rendered INSIDE the Connect root (.unapi div.fixed.z-50.bg-background) which the body observer
-      // misses. Cover BOTH open states so both get the one #cc-pop-dim backdrop (#21).
+      // The burger menu teleports to body as .bg-popover, while the bell's notification centre is
+      // a sheet rendered inside the Connect root, which the body observer misses. Both open states
+      // share the one backdrop.
       var pop = document.querySelector(".bg-popover") || document.querySelector(".unapi div.fixed.z-50.bg-background");
       var dim = document.getElementById("cc-pop-dim");
       if (!pop) { if (dim) dim.style.display = "none"; return; }
@@ -557,11 +442,10 @@
         dim.addEventListener("pointerdown", function () { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); });
         document.body.appendChild(dim);
       }
-      // #9 Sit ABOVE #header (z102)/#menu (z101) so the blur covers the header band too, but BELOW the
-      // popup's OWN root-level stacking context so the menu/sheet stays crisp. The bell sheet paints inside
-      // .unapi (z999999) and the burger inside its reka popper wrapper; the inner node is only z50 RELATIVE to
-      // that context. Walk up, take the HIGHEST z-index ancestor (= the real root layer the popup lives in),
-      // base the dim one step under it. Floor at 103 so it always clears the header/menu.
+      // The backdrop sits above #header and #menu so the blur covers the header band, and below
+      // the popup's own root stacking context so the menu stays crisp. The inner node's z-index is
+      // relative to that context, so the walk up takes the highest one, the real root layer, and
+      // the backdrop goes one step under it, floored at 103 to clear the header.
       var topZ = 0;
       for (var an = pop; an && an !== document.body && an !== document.documentElement; an = an.parentElement) {
         var az = parseInt(getComputedStyle(an).zIndex, 10);
@@ -570,9 +454,8 @@
       if (!topZ) topZ = 50;
       dim.style.zIndex = String(topZ - 1 > 102 ? topZ - 1 : 103);
       dim.style.display = "block";
-      // #21 the Connect Sheet/menu closes ASYNC (animation) — none of the open-time triggers fire again on
-      // close, so the dim stayed stuck. While shown, poll (bounded, self-clearing) and hide the instant the
-      // popover is gone. No observer, terminates itself -> freeze-safe.
+      // The Connect sheet closes through an animation and fires none of the open-time triggers
+      // again, so while the backdrop shows, a self-clearing poll hides it once the popover is gone.
       if (!ccDimWatch) {
         ccDimWatch = setInterval(function () {
           if (!document.querySelector(".bg-popover") && !document.querySelector(".unapi div.fixed.z-50.bg-background")) {
@@ -588,25 +471,22 @@
   function watchPopups() {
     try {
       if (ccPopObs) return; ccPopObs = new MutationObserver(function () { ccPopRestyleSoon(true); });
-      ccPopObs.observe(document.body, { childList: true });   // dialogs/sweetalerts append as direct body children — cheap, no subtree
+      ccPopObs.observe(document.body, { childList: true });   // dialogs append as direct body children, so no subtree needed
     } catch (e) {}
   }
-  // ── NOTIFICATION CENTRE (P14, reworked): the Connect bell shows a Vue notification list that CACHES
-  // its rows and never refetches on its own — a raw GraphQL mutation clears the BACKEND but the open
-  // list stays stale (proven live: counts drop to 0, the rows remain -> user "Alle löschen funktioniert
-  // nicht"). And the native "Alle archivieren" opens a confirm dialog that floats far off-screen (user:
-  // "das bestätigungsfenster ist weit abseits"). Fix: CC hides the native archive text-link and drops
-  // two CLONED badges into its column — a clone carries NO Vue click handler, so no off-screen confirm —
-  // that act via the same-origin GraphQL API (x-csrf-token) then location.reload(): the ONLY reliable
-  // way to refresh the cached list (mutation / tab-switch / close+reopen all failed live; reload is also
-  // CC's existing pattern for the display settings). Archive sweeps unread into the archive; delete
-  // archives-then-deletes-archived, guarded by a two-step armed click. Idempotent per sheet open.
+  // The Connect bell shows a Vue notification list that caches its rows: a GraphQL mutation clears
+  // the backend, but the open list keeps showing them. The native "archive all" link also opens a
+  // confirm dialog far off screen. So the native link is hidden and two cloned badges take its
+  // place, a clone carrying no Vue handler and therefore no confirm, which call the same-origin
+  // GraphQL API and then reload the page, the only way the cached list comes back current.
+  // Archiving sweeps the unread into the archive; deleting archives first and then deletes the
+  // archived, behind a two-step armed click.
   function ccGql(q, variables) {
     return fetch("/graphql", { method: "POST", credentials: "same-origin",
       headers: { "Content-Type": "application/json", "x-csrf-token": (window.csrf_token || "") },
       body: JSON.stringify(variables ? { query: q, variables: variables } : { query: q }) });
   }
-  try { window.ccGql = ccGql; } catch (e) {} // let docker.js's organizer/Folder-View code (ccOrgQuery/ccOrgMutate) reuse the same GraphQL transport
+  try { window.ccGql = ccGql; } catch (e) {} // docker.js's organizer code reuses the same transport
   function ccArchiveNotifs() {
     try { ccGql("mutation { archiveAll { archive { total } } }").then(function () { location.reload(); }).catch(function () {}); } catch (e) {}
   }
@@ -618,11 +498,11 @@
         .catch(function () {});
     } catch (e) {}
   }
-  function ccArmDelete(del) {                                                        // first click arms + relabels, second (within 4s) clears
+  function ccArmDelete(del) {                                                        // the first click arms, a second one within 4s clears
     if (del.getAttribute("data-armed") === "1") { ccClearNotifs(); return; }
     del.setAttribute("data-armed", "1"); del.classList.add("cc-notif-armed");
-    // icon-only bulk button (docked by the gear): keep the trash icon, signal "armed" via the red .cc-notif-armed
-    // fill + the tooltip (there's no text to relabel).
+    // The icon-only button has no text to relabel, so it signals the armed state through its fill
+    // and its tooltip.
     var iconOnly = del.classList.contains("cc-notif-iconbtn");
     if (iconOnly) del.setAttribute("title", T("Wirklich löschen? Nochmal klicken.", "Really delete? Click again."));
     else del.textContent = T("Wirklich löschen?", "Really delete?");
@@ -635,31 +515,31 @@
   }
   function ccNotifActions() {
     try {
-      if (g("cc.theming", "1") === "0") return;                                    // master-gated (chrome)
-      var host = document.querySelector(".unapi div.fixed.z-50.bg-background");     // the Connect notification Sheet (light DOM)
-      if (!host || host.querySelector(".cc-notif-badge")) return;                   // no sheet, or already injected
+      if (g("cc.theming", "1") === "0") return;
+      var host = document.querySelector(".unapi div.fixed.z-50.bg-background");     // the Connect notification sheet
+      if (!host || host.querySelector(".cc-notif-badge")) return;
       var arch = null, sp = host.querySelectorAll("span, button, a");
       for (var i = 0; i < sp.length; i++) { if (/^\s*(Alle archivieren|Archive all)\s*$/i.test(sp[i].textContent || "")) { arch = sp[i]; break; } }
-      if (!arch || !arch.parentElement) return;                                     // native archive-all not present (empty state / archive tab) -> nothing to attach to
-      arch.parentElement.classList.add("cc-notif-actions");                         // CSS turns the column into a horizontal badge row
-      // #5 (user): the two bulk actions become ICON-ONLY badges docked just LEFT of the type-filter gear.
+      if (!arch || !arch.parentElement) return;                                     // the empty state and the archive tab have no link to attach to
+      arch.parentElement.classList.add("cc-notif-actions");                         // the CSS turns the column into a badge row
+      // The two bulk actions become icon-only badges docked left of the type-filter gear.
       var gear = null, glinks = host.querySelectorAll('a[href*="Notification"]');
       for (var gi = 0; gi < glinks.length; gi++) { if (glinks[gi].querySelector("svg") && !(glinks[gi].textContent || "").trim()) { gear = glinks[gi]; break; } }
-      if (gear && !gear.getAttribute("data-cc-tip")) { gear.setAttribute("data-cc-tip", T("Benachrichtigungs-Einstellungen", "Notification settings")); gear.removeAttribute("title"); }  // same frameless CC bubble as the two bulk icons
-      var ICON_ARCH = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><path d="M2 5a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2z" /><path d="M19 9c.513 0 .936 .463 .993 1.06l.007 .14v7.2c0 1.917 -1.249 3.484 -2.824 3.594l-.176 .006h-10c-1.598 0 -2.904 -1.499 -2.995 -3.388l-.005 -.212v-7.2c0 -.663 .448 -1.2 1 -1.2h14zm-5 2h-4l-.117 .007a1 1 0 0 0 0 1.986l.117 .007h4l.117 -.007a1 1 0 0 0 0 -1.986l-.117 -.007z" /></svg>';   // tabler filled/archive (Rule 20)
-      var ICON_DEL = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><path d="M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007zm-10 4a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1m4 0a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1" /><path d="M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005z" /></svg>';   // tabler filled/trash (Rule 20)
+      if (gear && !gear.getAttribute("data-cc-tip")) { gear.setAttribute("data-cc-tip", T("Benachrichtigungs-Einstellungen", "Notification settings")); gear.removeAttribute("title"); }  // the same frameless bubble the two bulk icons get
+      var ICON_ARCH = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><path d="M2 5a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2z" /><path d="M19 9c.513 0 .936 .463 .993 1.06l.007 .14v7.2c0 1.917 -1.249 3.484 -2.824 3.594l-.176 .006h-10c-1.598 0 -2.904 -1.499 -2.995 -3.388l-.005 -.212v-7.2c0 -.663 .448 -1.2 1 -1.2h14zm-5 2h-4l-.117 .007a1 1 0 0 0 0 1.986l.117 .007h4l.117 -.007a1 1 0 0 0 0 -1.986l-.117 -.007z" /></svg>';   // tabler filled/archive
+      var ICON_DEL = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><path d="M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007zm-10 4a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1m4 0a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1" /><path d="M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005z" /></svg>';   // tabler filled/trash
       function badge(icon, label, cls, onAct) {
-        var b = arch.cloneNode(true);                                              // clone the native chrome MINUS its Vue handler
+        var b = arch.cloneNode(true);                                              // the native look without its Vue handler
         b.removeAttribute("id"); b.className = arch.className + " cc-notif-badge cc-notif-iconbtn " + cls;
-        b.innerHTML = icon; b.setAttribute("role", "button"); b.setAttribute("aria-label", label); b.setAttribute("data-cc-tip", label); b.removeAttribute("title"); b.tabIndex = 0; b.style.cursor = "pointer";  // frameless CC bubble (like the gear), never a native title balloon
+        b.innerHTML = icon; b.setAttribute("role", "button"); b.setAttribute("aria-label", label); b.setAttribute("data-cc-tip", label); b.removeAttribute("title"); b.tabIndex = 0; b.style.cursor = "pointer";
         b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); onAct(b); });
         b.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); onAct(b); } });
         return b;
       }
       var arB = badge(ICON_ARCH, T("Alle archivieren", "Archive all"), "cc-notif-arch", function () { ccArchiveNotifs(); });
-      var del = badge(ICON_DEL, T("Alle löschen", "Delete all"), "cc-notif-del", function () { ccClearNotifs(); });  // #(user): single click deletes (the two-step arming was confusing)
-      arch.style.display = "none";                                                  // hide the native archive link (its click opens the off-screen confirm)
-      if (gear && gear.parentNode) {                                                // dock LEFT of the gear (user); fall back to the native spot if it's absent
+      var del = badge(ICON_DEL, T("Alle löschen", "Delete all"), "cc-notif-del", function () { ccClearNotifs(); });
+      arch.style.display = "none";                                                  // its click opens the off-screen confirm
+      if (gear && gear.parentNode) {                                                // without a gear, fall back to the native spot
         var anchor = gear.closest(".shrink-0") || gear;
         anchor.parentNode.insertBefore(arB, anchor);
         anchor.parentNode.insertBefore(del, anchor);
@@ -667,55 +547,46 @@
         arch.parentNode.insertBefore(arB, arch.nextSibling);
         arB.parentNode.insertBefore(del, arB.nextSibling);
       }
-      for (var k = 0; k < sp.length; k++) { if (sp[k] !== del && /^\s*(Alle löschen|Delete all)\s*$/i.test(sp[k].textContent || "")) sp[k].style.display = "none"; }  // hide any native delete-all (archive tab)
+      for (var k = 0; k < sp.length; k++) { if (sp[k] !== del && /^\s*(Alle löschen|Delete all)\s*$/i.test(sp[k].textContent || "")) sp[k].style.display = "none"; }  // the archive tab has a native delete-all too
     } catch (e) {}
   }
-  // ── SELF-MEASURING alignment anchor (v2.17.0). Every CC area lines its left edge up with the main
-  // menu bar (rule cc-align-everything-to-menu-bar). We used to GUESS the offset with a header-gated
-  // px constant (10px native text edge / 15px CC-pill edge) — which was fragile and drifted (Settings
-  // sat 5-10px off). Instead MEASURE it: the first menu item's real left edge minus #displaybox's own
-  // left, written once to the shared --cc-align-left custom property on <html>. Every area's sheet
-  // already reads `padding-left: var(--cc-align-left)`, so ONE measured value aligns them all — correct
-  // for any theme, font size, and header-on/off, with no per-area guessing. Runs on every apply() +
-  // resize; the static per-sheet 10/15px stays as a no-JS fallback.
+  // Every CC area lines its left edge up with the main menu bar. The offset is measured rather than
+  // guessed with a constant, which drifts: the first menu item's real left edge minus #displaybox's
+  // own left, written once to --cc-align-left on <html>. Every area's sheet reads that, so one
+  // measured value aligns them all whatever the theme, the font size or the header state. Runs on
+  // every apply() and on resize; the static value in each sheet is the fallback without JS.
   function measureAlign() {
     try {
       var root = document.documentElement;
-      if (root.classList.contains("Theme--sidebar")) return;   // vertical left menu — the horizontal-edge model doesn't apply (sheets exclude it too)
+      if (root.classList.contains("Theme--sidebar")) return;   // a vertical menu has no horizontal edge to match, and the sheets exclude it too
       var box = document.getElementById("displaybox");
       var tile = document.querySelector("#menu .nav-tile:not(.right)");
       var a = tile && tile.querySelector(".nav-item > a");
-      if (!box || !a) return;                                  // no menu/content here -> leave the CSS fallback in place
+      if (!box || !a) return;                                  // no menu or no content here, so the CSS fallback stands
       var aRect = a.getBoundingClientRect(), boxRect = box.getBoundingClientRect();
-      // compensate for horizontal scroll INSIDE the menu tile (many tabs) so the value is stable
+      // compensate for horizontal scroll inside the menu tile, so the value is stable with many tabs
       var scroll = tile.scrollLeft || 0;
       var edge;
       if (root.classList.contains("cc-header-on")) {
-        edge = aRect.left + scroll;                            // CC pill: its background box IS the visible left edge
+        edge = aRect.left + scroll;                            // the pill's background box is the visible edge
       } else {
-        var cs = getComputedStyle(a);                         // native text menu: the visible edge is the TEXT, i.e. past the anchor's own padding/border
+        var cs = getComputedStyle(a);                         // in the native text menu the text is the visible edge, past the anchor's own padding
         edge = aRect.left + scroll + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.borderLeftWidth) || 0);
       }
-      // #4 (user: on WIDE screens the boxed content is centred while the menu is full-width, so the section
-      // badges land far right of the menu). Measure against the box's NATURAL left (subtract any shift we
-      // already applied, so it doesn't oscillate). A POSITIVE offset indents via --cc-align-left (padding,
-      // normal case); a NEGATIVE offset (boxed content sits RIGHT of the menu) pulls the whole content left
-      // via --cc-box-shift (a negative margin), so the badges line up flush with the menu bar.
       if (root.classList.contains("Theme--width-boxed")) {
-        // BOXED display width: the content is centred (margin auto) while the menu bar is full-width, so the
-        // section badges land far right of the menu. LEFT-align the whole content to the menu by overriding
-        // the centring margin with the menu item's ABSOLUTE left (edge is independent of the box position, so
-        // it never oscillates). --cc-align-left stays 0 (the margin does the whole job here).
+        // At boxed display width the content is centred while the menu bar runs full width, so the
+        // section badges would land far right of the menu. Overriding the centring margin with the
+        // menu item's absolute left aligns the whole content to the bar; edge does not depend on
+        // the box position, so this cannot oscillate, and --cc-align-left stays at zero.
         root.style.setProperty("--cc-box-shift", Math.round(edge) + "px");
         root.style.setProperty("--cc-align-left", "0px");
       } else {
         var align = Math.round(edge - boxRect.left);
-        if (align >= 0 && align < 200) { root.style.setProperty("--cc-align-left", align + "px"); root.style.setProperty("--cc-box-shift", "0px"); }  // sanity-bounded; overrides the sheets' static fallback inline
+        if (align >= 0 && align < 200) { root.style.setProperty("--cc-align-left", align + "px"); root.style.setProperty("--cc-box-shift", "0px"); }  // bounded, so a bad measurement leaves the sheets' fallback
       }
-      // #4-B (user, recurring frustration): the server-name BRAND sat at x=0 while the menu tabs start at
-      // `edge` (their padded left). Nothing aligned it -> it always looked off by the pad. Self-correct it
-      // here to the SAME menu edge: measure where it landed, nudge its margin by the delta (converges, since
-      // the next pass measures ~0 delta). Runs on every apply()/resize like the content alignment.
+      // The server-name brand sits at x=0 while the menu tabs start at their padded left, so it
+      // looks off by that pad. Nudging its margin by the measured delta converges, since the next
+      // pass measures roughly nothing.
       var brand = document.getElementById("cc-brand");
       if (brand) {
         var bRect = brand.getBoundingClientRect();
@@ -727,40 +598,34 @@
       }
     } catch (e) {}
   }
-  // ── DRAG-AND-DROP main-menu tab ordering (v2.20.0). The left menu tabs (#menu .nav-tile:not(.right)
-  // > .nav-item, each an <a href="/PageName">) can be reordered, but ONLY after a press-and-HOLD arms it
-  // (v2.24.1): the cursor stays the normal link pointer (no grab hand), and a plain click just navigates.
-  // Hold an item for ~450ms and its ZONE starts to jiggle (cc-nav-wiggle) to signal "you can move me
-  // now"; from that same held press a drag reorders it. TWO zones (v2.25.0, user request): the LEFT tab
-  // tile (keys = hrefs, cc.navorder) and the RIGHT tile's utility icons + array-usage meter (keys =
-  // link signature / "usage-bar", cc.navorder.right); items reorder only within their own zone, and
-  // non-participants on the right (user menu, transient search box) never move. Native order comes from
-  // the server, so this is a pure front-end reorder + persistence. Only active while the header area is
-  // on (opt-in via cc.navdrag, default on). New/unknown items keep native position AFTER the saved ones.
+  // The main-menu items can be reordered by dragging, but only after a press and hold arms it: the
+  // cursor stays the normal link pointer and a plain click still navigates. Holding an item for
+  // about 450ms sets everything jiggling to signal that it can be moved, and the same held press
+  // then drags it. The native order comes from the server, so this is a front-end reorder plus its
+  // persistence, active while the header area is on. An item with no saved position keeps its
+  // native slot after the saved ones.
   function navTile() { return document.querySelector("#menu .nav-tile:not(.right)"); }
   function navTileR() { return document.querySelector("#menu .nav-tile.right"); }
-  // ONE MERGED ZONE across BOTH tiles (v2.30.0, user chose per popup: "alles überall anordnen").
-  // Participants = every page tab, every utility icon AND the array-usage meter, in EITHER tile.
-  // Non-participants (user menu .nav-user, the transient #guiSearchBoxSpan) never move.
+  // Both tiles form one zone: every page tab, every utility icon and the array-usage meter take
+  // part, wherever they sit. The user menu and the transient search box never move.
   function navParts(tile) { if (!tile) return []; return Array.prototype.slice.call(tile.querySelectorAll(":scope > .nav-item, :scope > .usage-bar")); }
   function navAllParts() { return navParts(navTile()).concat(navParts(navTileR())); }
-  // stable key: tabs by href; utils by link signature (href, else onclick, else the localised
-  // title — a language switch then just resets that one icon); the meter fixed.
+  // A stable key per item: tabs by href, utility icons by their link signature, the meter fixed.
+  // Keying an icon by its localised title resets that one icon on a language switch.
   function navKeyAll(it) {
-    if (it.id === "cc-bell-proxy") return "cc-bell";              // bell/burger proxies key by id (no href to key on)
+    if (it.id === "cc-bell-proxy") return "cc-bell";              // the proxies have no href to key on
     if (it.id === "cc-burger-proxy") return "cc-burger";
     if (it.classList.contains("usage-bar")) return "usage-bar";
     var a = it.querySelector("a"); if (!a) return null;
-    // #2 (user: "die beiden Icons ganz rechts flackern"): every native util <a> is href="#" (the real
-    // discriminator is in onclick, e.g. "InfoButton();return false;"). href-first collapsed ALL util icons
-    // to the single key "#", which broke applyNavOrder's idempotence gate → place()/the #menu observer
-    // looped into an endless right-tile re-shuffle = Info/Log flickering. Drop the shared "#" and key by onclick.
+    // Every native utility anchor is href="#" and carries its real discriminator in onclick, so
+    // keying by href first collapses them all onto one key. That breaks applyNavOrder's
+    // idempotence gate, and place() and the #menu observer then reshuffle the right tile forever.
     var href = (a.getAttribute("href") || "").trim();
-    if (href === "#") href = "";                                  // href="#" is shared by every util button -> not a key
+    if (href === "#") href = "";
     return ((href || a.getAttribute("onclick") || a.getAttribute("title") || "") + "").slice(0, 160) || null;
   }
-  // storage: cc.navorder.all = {left:[keys], right:[keys]} — each tile's own sequence INCLUDING
-  // items dragged over from the other side. One-time fallback-migration from the old zone keys.
+  // cc.navorder.all holds {left:[keys], right:[keys]}, each tile's own sequence including items
+  // dragged over from the other side, with a one-time migration from the older per-zone keys.
   function navReadAll() {
     var o = null;
     try { o = JSON.parse(g("cc.navorder.all", "null")); if (!(o && o.left && o.right)) o = null; } catch (e) {}
@@ -771,52 +636,49 @@
       } catch (e2) {}
     }
     if (!o) return null;
-    // #34: bell/burger proxies host a LIVE adopted Vue trigger, not a plain link — they only
-    // render correctly among the other utility icons. A stray drag (or a leftover save from
-    // testing the merged reorder zone) must never leave them parked among the page tabs.
+    // The bell and burger proxies host a live adopted Vue trigger rather than a plain link and
+    // render correctly only among the other utility icons, so a stray drag must not leave them
+    // parked among the page tabs.
     if (o.left && o.left.length) o.left = o.left.filter(function (k) { return k !== "cc-bell" && k !== "cc-burger"; });
     return o;
   }
   function applyNavOrder() {
     try {
       if (ccReorder || ccDragged) return;                      // never fight a live drag
-      // TRUCE (freeze root cause, live-proven via localStorage stack dumps): Unraid's Connect
-      // auto-mount script observes the menu and REBUILDS its component nodes on our reorder —
-      // its rebuild refires our observer, place() reorders again, and the two observers ping-pong
-      // the main thread into a hard freeze (>4000 insertBefore from place() captured). If the
-      // arrangement does not SETTLE after a few attempts, stand down for a while.
+      // Unraid's Connect auto-mount script observes the menu and rebuilds its component nodes on
+      // a reorder. That rebuild refires this observer, place() reorders again, and the two sides
+      // ping-pong the main thread into a freeze, so an arrangement that will not settle after a
+      // few attempts stands down for a while.
       if (Date.now() < ccNavTruce) return;
       var o = navReadAll(); if (!o) return;
       var lt = navTile(), rt = navTileR(); if (!lt || !rt) return;
       var byKey = {}, all = navAllParts(), i, k;
       for (i = 0; i < all.length; i++) { k = navKeyAll(all[i]); if (k && !byKey[k]) byKey[k] = all[i]; }
-      // IDEMPOTENCE GATE — this also runs from the #menu observer now. THE OLD BUG ("die
-      // Reihenfolge wird nicht gespeichert"): the order was applied ONLY at boot, but most
-      // utility icons are appended by native scripts AFTER boot, so their saved positions
-      // never took effect. insertBefore always mutates, so re-running from the observer
-      // demands a strict no-op when the arrangement already matches — else it loops.
+      // Applying the order at boot alone misses the utility icons, which native scripts append
+      // afterwards, so this runs from the #menu observer as well. insertBefore always mutates, so
+      // re-running demands a strict no-op once the arrangement matches, or it loops.
       function inPlace(tile2, want) {
         var wantHere = [], wset = {}, have = [], cur = navParts(tile2), j, kk;
         for (j = 0; j < want.length; j++) if (byKey[want[j]]) { wantHere.push(want[j]); wset[want[j]] = 1; }
         for (j = 0; j < cur.length; j++) { kk = navKeyAll(cur[j]); if (kk && wset[kk]) have.push(kk); }
-        if (have.length !== wantHere.length) return false;     // a saved item currently sits in the OTHER tile
+        if (have.length !== wantHere.length) return false;     // a saved item currently sits in the other tile
         for (j = 0; j < have.length; j++) if (have[j] !== wantHere[j]) return false;
         return true;
       }
       if (inPlace(lt, o.left) && inPlace(rt, o.right)) { ccNavTries = 0; return; }
-      // Auto-mount undoes our reorder ASYNCHRONOUSLY, so a post-place re-check would always pass —
-      // instead count how often we have to RE-place within a short window: a lone apply (page load,
-      // late-added icon) is 1-2 rounds, a fight is an endless chain. Stand down BEFORE placing, so
-      // the opponent gets nothing to react to and the chain dies.
+      // Auto-mount undoes the reorder asynchronously, so a re-check right after placing would
+      // always pass. Count instead how often a re-place happens in a short window: a page load or
+      // a late icon takes one or two rounds, a fight never ends. Standing down before placing
+      // leaves the other side nothing to react to.
       var now = Date.now();
-      if (now - ccNavLast > 3000) ccNavTries = 0;              // old rounds don't count as a fight
+      if (now - ccNavLast > 3000) ccNavTries = 0;
       ccNavLast = now;
       if (++ccNavTries >= 4) { ccNavTruce = now + 5000; ccNavTries = 0; return; }
       function place(tile2, want) {
-        var anchor = tile2.querySelector(":scope > .nav-user");   // the user menu stays the tail; null => append
+        var anchor = tile2.querySelector(":scope > .nav-user");   // the user menu stays the tail, and a missing one means append
         for (var j = 0; j < want.length; j++) { var it = byKey[want[j]]; if (it) tile2.insertBefore(it, anchor); }
       }
-      place(lt, o.left); place(rt, o.right);                   // unknown/new items keep their native tile + slot
+      place(lt, o.left); place(rt, o.right);                   // an item with no saved position keeps its native tile and slot
     } catch (e) {}
   }
   function saveNavOrder() {
@@ -827,11 +689,11 @@
     } catch (e) {}
   }
   var ccDragged = null, ccReorder = false, ccHoldTimer = null, ccPressXY = null, ccSuppressClick = false, ccDocBound = false;
-  var ccPressItem = null, ccPressPtr = 0, ccMoved = false;   // POINTER-drag state (replaces the HTML5 drag)
-  var ccNavTruce = 0, ccNavTries = 0, ccNavLast = 0;   // anti-ping-pong truce vs Unraid's Connect auto-mount observer (see applyNavOrder)
-  var ccLockCapBound = false;   // the arrange-lock document-capture toggle is bound once
+  var ccPressItem = null, ccPressPtr = 0, ccMoved = false;   // pointer-drag state
+  var ccNavTruce = 0, ccNavTries = 0, ccNavLast = 0;   // see applyNavOrder
+  var ccLockCapBound = false;
   function cancelHold() { if (ccHoldTimer) { clearTimeout(ccHoldTimer); ccHoldTimer = null; } ccPressXY = null; ccPressItem = null; }
-  function enterReorder() {   // long-press satisfied => EVERYTHING jiggles (one zone)
+  function enterReorder() {   // the hold is satisfied, so the whole zone jiggles
     if (ccReorder) return; ccReorder = true;
     navAllParts().forEach(function (it) { it.classList.add("cc-nav-wiggle"); });
   }
@@ -839,43 +701,38 @@
     ccReorder = false; ccDragged = null; ccMoved = false;
     navAllParts().forEach(function (it) { it.classList.remove("cc-nav-wiggle", "cc-dragging"); });
   }
-  // ── #Drag-Umbau (user): a LOCK toggle replaces long-press. Locked (default, every page load) = tabs/chips
-  // navigate normally. Click the lock -> ARRANGE mode: everything wiggles and can be dragged immediately;
-  // click again (or Esc) -> locked + the new order saved. The lock is ALWAYS visible while the header is on.
-  // #Drag-Umbau (user CORRECTION): NO separate lock button — reuse Unraid's OWN "unlock sortable" icon
-  // (.nav-item.LockButton, icon-u-lock) that natively appears only on the Dashboard. Make a lock icon PERSISTENT
-  // in the util row on EVERY page and wire it to the CC arrange mode: on Dashboard the native LockButton is
-  // wired to ALSO toggle CC arranging; on other pages CC injects a look-alike util icon.
+  // A lock toggle arms arranging. Locked, which is the state on every page load, the tabs and chips
+  // navigate as usual; unlocked, everything wiggles and can be dragged straight away, and locking
+  // again or pressing Escape saves the new order. The lock reuses Unraid's own "unlock sortable"
+  // icon, which natively appears on the Dashboard only: there the native LockButton also toggles CC
+  // arranging, and on every other page a look-alike util icon is injected.
   function ccArrangeLock() {
     try {
-      // #(user: "zum Beenden muss ich zweimal aufs Schloss klicken"): a downstream CAPTURE-phase
-      // stopPropagation on the header eats lock clicks before they reach any per-element handler (proven
-      // live: a document-level capture listener fires; a .nav-item-level one does NOT, nor does the <a>'s
-      // own handler). So the lock's own click handlers were unreliable. Bind ONE toggle on the DOCUMENT
-      // in the capture phase — it fires FIRST, so one click = one reliable toggle, for BOTH the native
-      // LockButton (Dashboard) and CC's injected #cc-lock-item (other pages).
+      // A capture-phase stopPropagation on the header eats lock clicks before they reach any
+      // per-element handler, so one toggle is bound on the document in the capture phase, where it
+      // fires first. It covers the native LockButton and the injected #cc-lock-item alike.
       if (!ccLockCapBound) {
         ccLockCapBound = true;
         document.addEventListener("click", function (e) {
           var lk = e.target && e.target.closest ? e.target.closest("#cc-lock-item, #menu .nav-item.LockButton") : null;
           if (!lk) return;
-          if (lk.id === "cc-lock-item") e.preventDefault();   // CC's own #href lock: suppress navigation
+          if (lk.id === "cc-lock-item") e.preventDefault();   // the injected lock is an anchor, so suppress its navigation
           ccToggleArrange();
         }, true);
       }
-      var old = document.getElementById("cc-arrange-lock"); if (old) old.remove();   // drop the previous floating button
+      var old = document.getElementById("cc-arrange-lock"); if (old) old.remove();
       var on = document.documentElement.classList.contains("cc-header-on");
       var tileR = document.querySelector("#menu .nav-tile.right");
       var injected = document.getElementById("cc-lock-item");
       if (!on || !tileR) { if (injected) injected.remove(); return; }
       var native = tileR.querySelector(".nav-item.LockButton");
       if (native) {
-        if (injected) injected.remove();   // native present -> no clone needed (the document-capture toggle drives it)
+        if (injected) injected.remove();   // the native one is there, and the capture toggle drives it
       } else if (!injected) {
-        injected = document.createElement("div"); injected.className = "nav-item util cc-navdrag"; injected.id = "cc-lock-item"; injected.setAttribute("data-cc-drag", "1");   // exclude from nav reorder
+        injected = document.createElement("div"); injected.className = "nav-item util cc-navdrag"; injected.id = "cc-lock-item"; injected.setAttribute("data-cc-drag", "1");   // the marker keeps it out of the reorder
         var a = document.createElement("a"); a.href = "#"; a.className = "hand"; a.setAttribute("data-cc-tip", T("Anordnen entsperren/sperren", "Unlock/lock arranging"));
         a.innerHTML = "<b class='icon-u-lock system'></b>";
-        injected.appendChild(a); tileR.insertBefore(injected, tileR.firstChild);   // click handled by the document-capture toggle above
+        injected.appendChild(a); tileR.insertBefore(injected, tileR.firstChild);
       }
       var arr = document.documentElement.classList.contains("cc-arrange");
       if (native) native.classList.toggle("cc-lock-arranging", arr);
@@ -894,12 +751,11 @@
         try { ccIslandSaveOrder(); } catch (e2) {}
       }
       ccArrangeLock();
-      try { ccDockProfile(); } catch (eD) {}                      // re-adopt bell/burger into their proxies at the new order (arrange enter/exit swaps ghost<->trigger)
-      // #19 (user: move arrows stay after closing arrange on the Docker tab): the docker "move" arrows are
-      // Unraid's own i.mover, driven ONLY by the native LockButton onclick — which the header's capture-phase
-      // stopPropagation eats on a real (trusted) click (see line ~606), so arrange exits but the arrows persist.
-      // Reconcile AFTER the native handler had its turn (setTimeout 0): on the Docker page, if the lockbutton
-      // cookie doesn't match our arrange state, flip Unraid's LockButton once so cookie+arrows+sortable follow.
+      try { ccDockProfile(); } catch (eD) {}                      // entering and leaving arrange swaps ghost and trigger, so re-adopt the bell and burger
+      // The Docker tab's move arrows are Unraid's own, driven only by the native LockButton
+      // onclick, which the header's capture-phase stopPropagation eats on a trusted click. So
+      // arrange exits while the arrows stay. After the native handler has had its turn, flip
+      // Unraid's LockButton once if its cookie disagrees with the arrange state.
       if (document.getElementById("docker_list")) {
         var wantArr = arr;
         setTimeout(function () {
@@ -912,19 +768,17 @@
       }
     } catch (e) {}
   }
-  // ── #S6 COMMAND PALETTE (Ctrl/⌘+K) ── a quick launcher over every page tab + a few CC actions. Fuzzy-
-  // filtered, keyboard-driven (↑/↓/Enter/Esc). Built lazily on first open; one overlay reused thereafter.
+  // A command palette on Ctrl+K: a quick launcher over every page tab and a few CC actions, fuzzy
+  // filtered and keyboard driven. Built on first open, one overlay reused afterwards.
   var ccCmdEl = null, ccCmdInput = null, ccCmdList = null, ccCmdItems = [], ccCmdSel = 0;
   function ccCmdSources() {
     var items = [];
-    // every page tab (works on every page: #menu is always present)
     var seen = {};
     Array.prototype.forEach.call(document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a[href]"), function (a) {
       var href = a.getAttribute("href") || "", label = (a.textContent || "").replace(/\s+/g, " ").trim();
       if (!href || href === "#" || !label || seen[href]) return; seen[href] = 1;
       items.push({ label: label, sub: href, kind: "page", go: function () { location.href = href; } });
     });
-    // a few CC actions
     items.push({ label: T("Anordnen ein/aus", "Toggle arranging"), sub: T("Menü & Insel umsortieren", "Rearrange menu & island"), kind: "action", go: function () { ccToggleArrange(); } });
     items.push({ label: T("CannonadeCommand-Einstellungen", "CannonadeCommand settings"), sub: "/Settings/CannonadeCommand", kind: "action", go: function () { location.href = "/Settings/CannonadeCommand"; } });
     return items;
@@ -973,19 +827,17 @@
     setTimeout(function () { try { ccCmdInput.focus(); } catch (e) {} }, 20);
   }
   function ccCmdClose() { if (ccCmdEl) ccCmdEl.classList.remove("cc-cmd-open"); }
-  // wire ONE participant. Guard PER ITEM. POINTER-based drag (NOT HTML5): the native drag needs
-  // draggable=true set BEFORE pointerdown, so arming it on a long-press made the first press do
-  // nothing (user had to press 2-3x). Pointer capture + manual insertBefore has no such rule —
-  // the very gesture that armed the hold continues straight into the drag.
+  // Wires one participant, guarded per item. The drag is pointer-based rather than the native HTML5
+  // one, which needs draggable=true before pointerdown and so swallows the press that arms it.
+  // Pointer capture with a manual insertBefore lets the arming gesture continue into the drag.
   function wireNavItem(it) {
     if (it.getAttribute("data-cc-drag") === "1") return; it.setAttribute("data-cc-drag", "1");
     it.setAttribute("draggable", "false"); it.classList.add("cc-navdrag");
     var la = it.querySelectorAll("a"); for (var ai = 0; ai < la.length; ai++) la[ai].setAttribute("draggable", "false");
     it.addEventListener("pointerdown", function (e) {
-      if (e.button !== 0) return;                            // left only
-      // #Drag-Umbau (user): drag is now UNLOCKED by the lock toggle, not by a long press. LOCKED (default) =
-      // pointerdown does nothing, the tab just navigates. ARRANGE mode (cc-arrange) = the SAME press drags
-      // IMMEDIATELY (no hold), and everything already wiggles. Escape/clicking the lock again re-locks.
+      if (e.button !== 0) return;
+      // Locked, this does nothing and the tab navigates; in arrange mode the same press drags at
+      // once, with no hold, and everything already wiggles.
       if (!document.documentElement.classList.contains("cc-arrange")) return;
       cancelHold(); ccPressXY = { x: e.clientX, y: e.clientY }; ccPressItem = it; ccPressPtr = e.pointerId; ccMoved = false;
       enterReorder(); ccDragged = ccPressItem;
@@ -993,15 +845,16 @@
       e.preventDefault();
     });
   }
-  // document-level pointer handlers (bound once) run the whole gesture — capture routes moves here
+  // The document-level pointer handlers, bound once, run the whole gesture; pointer capture routes
+  // the moves here.
   function ccNavPointerMove(e) {
-    if (ccPressXY && !ccReorder) {   // still deciding: a real move before arming = a click/scroll, cancel the hold
+    if (ccPressXY && !ccReorder) {   // a real move before arming is a click or a scroll
       if (Math.abs(e.clientX - ccPressXY.x) > 8 || Math.abs(e.clientY - ccPressXY.y) > 8) { cancelHold(); }
       return;
     }
     if (!ccDragged) return;
     ccMoved = true;
-    // find the nav item under the pointer and insert the dragged one before/after it
+    // insert the dragged item before or after whichever one the pointer is over
     var parts = navAllParts(), i, best = null;
     for (i = 0; i < parts.length; i++) { if (parts[i] === ccDragged) continue; var r = parts[i].getBoundingClientRect(); if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top - 20 && e.clientY <= r.bottom + 20) { best = parts[i]; break; } }
     if (best) { var br = best.getBoundingClientRect(), before = e.clientX < br.left + br.width / 2; best.parentNode.insertBefore(ccDragged, before ? best : best.nextSibling); }
@@ -1010,11 +863,11 @@
     var wasReorder = ccReorder, dragged = ccDragged, moved = ccMoved;
     cancelHold();
     if (dragged) { try { dragged.releasePointerCapture(ccPressPtr); } catch (e) {} saveNavOrder(); }
-    if (wasReorder) { if (!moved) ccSuppressClick = true; exitReorder(); }   // armed but never moved -> suppress the click, don't navigate
+    if (wasReorder) { if (!moved) ccSuppressClick = true; exitReorder(); }   // armed but never moved, so swallow the click rather than navigate
   }
   function setupNavDrag() {
     try {
-      if (g("cc.navdrag", "1") === "0") return;                 // opt-out
+      if (g("cc.navdrag", "1") === "0") return;
       navAllParts().forEach(wireNavItem);
       if (!ccDocBound) {
         ccDocBound = true;
@@ -1022,12 +875,11 @@
         document.addEventListener("pointerup", ccNavPointerUp);
         document.addEventListener("pointercancel", ccNavPointerUp);
         document.addEventListener("keydown", function (e) { if (e.key === "Escape" && document.documentElement.classList.contains("cc-arrange")) { cancelHold(); ccToggleArrange(); } });
-        // a long-press that never became a drag must not ALSO navigate (capture phase so it beats the link)
+        // in the capture phase, so a press that never became a drag cannot navigate either
         document.addEventListener("click", function (e) { if (ccSuppressClick) { e.preventDefault(); e.stopPropagation(); ccSuppressClick = false; } }, true);
-        // #8 (user: "um den VM-Tab zu öffnen muss ich immer zweimal klicken"): /VMs is a Tabs="true" inline-eval
-        // page, and a Connect auto-mount / nav-reorder that re-inserts the <a> between mousedown and mouseup can
-        // swallow the FIRST click. This delegated handler lives on document (survives node reinsertion) and forces
-        // a reliable full navigation on the first click. Skipped while dragging (arrange) or already on /VMs.
+        // An auto-mount or a nav reorder that re-inserts the <a> between mousedown and mouseup
+        // swallows the first click on /VMs. This handler sits on document, survives the
+        // reinsertion and navigates on that first click.
         if (!window.__ccVmsClickFix) {
           window.__ccVmsClickFix = true;
           document.addEventListener("click", function (e) {
@@ -1043,30 +895,24 @@
       }
     } catch (e) {}
   }
-  // ── STATUS ISLAND (user-approved concept). The 91px top strip (div#header) is EMPTY between
-  // Unraid's two Connect web components (unraid-header-os-version left, unraid-user-profile
-  // right). Both are Shadow-DOM and UNTOUCHABLE (law: never restyle/move them) — so we build
-  // our OWN light-DOM span#cc-island NEXT to them (inserted before the profile; the sheet's
-  // margin-left:auto pushes it right). Data source = the CSS-hidden native footer: span#statusbar
-  // textContent is bullet-separated ("Array gestartet•shiplog: started (pid …, port …)" — first
-  // segment = array state, each following segment = "name: status (details)" per service), and
-  // the footer text also carries the CPU/board temps ("38 °C27.8 °C" — unmarked spans, so we
-  // parse TEXT, not structure). Chips are S-tier (~21px, 11px font) with 10px state dots
-  // (radius var(--cc-dot-r)); tooltips ride the frameless CC data-cc-tip bubble, never title=.
+  // The top strip is empty between Unraid's two Connect web components, which are shadow DOM and
+  // stay untouched, so the status island is a light-DOM span of its own inserted before the
+  // profile. Its data comes from the CSS-hidden native footer: span#statusbar's text is bullet
+  // separated, the first segment the array state and each following one "name: status (details)"
+  // per service, and the same text carries the CPU and board temperatures in unmarked spans, so
+  // the parsing goes by text rather than by structure.
   var ccIslandObs = null, ccIslandSig = "";
-  // #19: the 3 island row containers (rebuilt each paint) + pointer-drag state for arranging chips
+  // the three island rows, rebuilt on each paint, and the pointer-drag state for arranging chips
   var ccIslRows = null, ccIslDragBound = false, ccIslDragged = null, ccIslHold = null, ccIslPressXY = null, ccIslPressPtr = 0, ccIslMoved = false, ccIslSuppressClick = false;
-  // V-C: a chip click jumps to its page (array->/Main, containers->/Docker, ram/cpu/temps->/Dashboard)
+  // a chip click jumps to the page it belongs to
   var CC_ISL_NAV = { array: "/Main", "array-fill": "/Main", docker: "/Docker", ram: "/Dashboard", cpu: "/Dashboard" };
   function ccIslandOn() { return g("cc.enable.header", "0") !== "0" && g("cc.theming", "1") !== "0" && g("cc.island", "1") !== "0"; }
-  // #13 (user: "was können wir noch sinnvolles anzeigen?"): CPU/RAM live only as Dashboard page-globals,
-  // but Unraid PUBLISHES them cross-page on nchan (the same feed the footer rides). We subscribe to
-  // /sub/update1 — JSON {"ram":["95%","29.7 GiB",…],"sys":[…]} — for the RAM %/used, and DEFENSIVELY to
-  // /sub/cpuload for CPU load (empty on boxes that don't measure it; the chip then simply hides). One
-  // lightweight websocket each, started when the island is on, torn down when it goes off; every message
-  // repaints the island (sig-guarded, so unchanged values are no-ops). Never loops: we write #header only.
+  // CPU and RAM exist as page globals on the Dashboard only, but Unraid publishes them cross-page on
+  // nchan, the feed the footer rides. One lightweight websocket each, started when the island comes
+  // on and stopped when it goes off; every message repaints the island, which the signature guard
+  // turns into a no-op when nothing changed. This writes only inside #header, so it cannot loop.
   var ccLiveRam = "", ccLiveRamUsed = "", ccLiveCpu = "", ccLiveDocker = "", ccLiveSubs = null;
-  var ccLiveNetRx = 0, ccLiveNetTx = 0, ccLiveNetOk = false;   // #12: live Down(rx)/Up(tx) rate in bytes/s
+  var ccLiveNetRx = 0, ccLiveNetTx = 0, ccLiveNetOk = false;   // live receive and send rate in bytes/s
   function ccStartLive() {
     if (ccLiveSubs || typeof window.NchanSubscriber !== "function") return;
     ccLiveSubs = [];
@@ -1083,11 +929,11 @@
       });
       u1.start(); ccLiveSubs.push(u1);
     } catch (e) {}
-    ccStartCpu();   // #13: CPU load (7.3.2 dropped /sub/cpuload -> GraphQL systemMetricsCpu; nchan fallback for older)
-    ccStartNet();   // #12: network Up/Down rate (engine /api/hostnet -> /proc/net/dev; frontend deltas the cumulative counters)
+    ccStartCpu();
+    ccStartNet();
     try {
-      // #23: /sub/dockerload publishes ONE line per RUNNING container ("<id>;<cpu%>;<mem> / <lim>") on
-      // every page — the running-container count is just the number of non-empty lines.
+      // /sub/dockerload publishes one line per running container on every page, so the count is
+      // the number of non-empty lines.
       var dk = new window.NchanSubscriber("/sub/dockerload", { subscriber: "websocket" });
       dk.on("message", function (m) {
         try { var n = String(m).split("\n").filter(function (l) { return l.indexOf(";") > 0; }).length; var s = n > 0 ? String(n) : ""; if (s !== ccLiveDocker) { ccLiveDocker = s; ccIsland(); } } catch (e) {}
@@ -1096,12 +942,10 @@
     } catch (e) {}
   }
   function ccStopLive() { if (ccLiveSubs) { ccLiveSubs.forEach(function (s) { try { s.stop(); } catch (e) {} }); ccLiveSubs = null; } ccLiveRam = ccLiveRamUsed = ccLiveCpu = ccLiveDocker = ""; ccLiveNetRx = ccLiveNetTx = 0; ccLiveNetOk = false; }
-  // #13 (user: CPU chip stuck on "--"): Unraid 7.3 dropped /sub/cpuload and moved CPU load to a GraphQL
-  // WEBSOCKET (wss://.../graphql) — which reverse proxies (the user's *.lol tunnel) fail to upgrade
-  // (handshake returns 200, not 101), so the subscription never emits and the chip stays blank. Proxy-safe
-  // fix: poll CannonadeCommand's OWN engine over plain HTTP (ccapi.php -> /api/hostcpu), which computes host
-  // CPU % from /proc/stat deltas. Works on every page, through any proxy, no websocket. First reading is 0%
-  // (baseline seed), then live.
+  // Unraid 7.3 moved CPU load to a GraphQL websocket, which a reverse proxy may fail to upgrade, so
+  // the subscription never emits and the chip stays blank. Polling this plugin's own engine over
+  // plain HTTP instead works on every page and through any proxy; the engine computes host CPU
+  // percent from /proc/stat deltas, so the first reading is the baseline and the rest are live.
   function ccStartCpu() {
     var PROXY = "/plugins/cannonadecommand/server/ccapi.php", stopped = false;
     function poll() {
@@ -1115,9 +959,9 @@
     var iv = setInterval(poll, 3000);
     if (ccLiveSubs) ccLiveSubs.push({ stop: function () { stopped = true; clearInterval(iv); } });
   }
-  // #12: network Up/Down — poll the engine's /api/hostnet (cumulative rx/tx bytes from /proc/net/dev,
-  // primary-uplink summed) over plain HTTP (proxy-safe, same idiom as ccStartCpu), delta successive
-  // readings into a per-second rate. Counter reset / first sample -> no rate yet (chip shows "--").
+  // The network rate comes from the engine's /api/hostnet, which sums the primary uplink's
+  // cumulative byte counters, polled over plain HTTP like the CPU above. Successive readings become
+  // a per-second rate; the first sample and a counter reset leave no rate to show yet.
   function ccStartNet() {
     var PROXY = "/plugins/cannonadecommand/server/ccapi.php", stopped = false, prev = null;
     function poll() {
@@ -1139,18 +983,18 @@
     var iv = setInterval(poll, 3000);
     if (ccLiveSubs) ccLiveSubs.push({ stop: function () { stopped = true; clearInterval(iv); } });
   }
-  // #18: on /Main, compute the size-weighted array-disk fill % and cache it (cc.arrfill) so the island's
-  // fill chip has a value on EVERY page (7.3.x dropped the cross-page menu usage-bar). Refreshes each /Main.
+  // On /Main, compute the size-weighted array fill and cache it in cc.arrfill, so the island's fill
+  // chip has a value on every page: 7.3.x dropped the cross-page menu usage bar.
   function ccArrFill() {
     try {
       if (!/^\/Main/.test(location.pathname)) return;
       var tbl = document.querySelector("table.disk_status");
-      if (!tbl) { if (!ccArrFill._t) { ccArrFill._t = setTimeout(function () { ccArrFill._t = 0; ccArrFill(); }, 900); } return; }   // apply() can run before /Main's array table is parsed -> retry until it exists
+      if (!tbl) { if (!ccArrFill._t) { ccArrFill._t = setTimeout(function () { ccArrFill._t = 0; ccArrFill(); }, 900); } return; }   // apply() can run before the array table is parsed
       var usedSum = 0, sizeSum = 0, n = 0;
       Array.prototype.forEach.call(tbl.querySelectorAll("tr"), function (row) {
         var sp = row.querySelector(".usage-disk span"); if (!sp) return;
         var w = parseFloat(sp.style.width || ""); if (isNaN(w)) return;
-        var mm = (row.textContent || "").match(/(\d+(?:[.,]\d+)?)\s*(PB|TB|GB|MB)\b/i); if (!mm) return;   // first size in the row = the GRÖSSE column
+        var mm = (row.textContent || "").match(/(\d+(?:[.,]\d+)?)\s*(PB|TB|GB|MB)\b/i); if (!mm) return;   // the first size in the row is the size column
         var val = parseFloat(mm[1].replace(",", ".")), unit = mm[2].toUpperCase();
         var mult = unit === "PB" ? 1e15 : unit === "TB" ? 1e12 : unit === "GB" ? 1e9 : 1e6, bytes = val * mult;
         usedSum += bytes * w / 100; sizeSum += bytes; n++;
@@ -1161,83 +1005,78 @@
   function ccIsland() {
     try {
       var isle = document.getElementById("cc-island");
-      if (!ccIslandOn()) { if (isle && isle.parentNode) isle.parentNode.removeChild(isle); ccIslandSig = ""; ccStopLive(); return; }   // teardown: gate off = island gone (+ drop the live nchan subs)
-      ccStartLive();   // #13: ensure the RAM/CPU nchan subscriptions are running while the island is on (idempotent)
-      if (ccIslDragged) return;   // #19: never rebuild the island mid-drag (it would detach the dragged chip)
+      if (!ccIslandOn()) { if (isle && isle.parentNode) isle.parentNode.removeChild(isle); ccIslandSig = ""; ccStopLive(); return; }
+      ccStartLive();
+      if (ccIslDragged) return;   // a rebuild mid-drag would detach the dragged chip
       var hdr = document.getElementById("header"); if (!hdr) return;
       var foot = document.getElementById("footer"), sb = document.getElementById("statusbar");
       var raw = ((sb && sb.textContent) || "").replace(/^\s+|\s+$/g, "");
       var footTxt = (foot && foot.textContent) || "";
-      // every "NN.N °C" in the footer text (defensive: temp span markup varies per board/plugins)
+      // every temperature in the footer text, matched by value since the span markup varies by board
       var temps = [], tm, tre = /(\d+(?:[.,]\d+)?)\s*°\s*C/g;
       while ((tm = tre.exec(footTxt))) temps.push(parseFloat(tm[1].replace(",", ".")));
       var warn = parseFloat(g("cc.tempwarn", "60")); if (!isFinite(warn) || warn <= 0) warn = 60;
-      // parity/…% progress text (e.g. "Parity … 12.3 %") — goes into the ARRAY chip tooltip only
+      // the parity progress text, which goes into the array chip's tooltip only
       var par = /parit[^•%]{0,120}?\d+(?:[.,]\d+)?\s*%/i.exec(footTxt);
-      // native uptime + edition (top-strip restyle): the Connect profile's FIRST row carries
-      // "Betriebszeit …" (span.text-xs, title "Server hoch seit …") and "Unraid OS" + <em>edition.
-      // Both spans STAY in the DOM (Header.css hides them visually) — we only READ them here
-      // (law: never move/edit inside the components). Missing uptime span = chip skipped.
+      // The Connect profile's first row carries the uptime and the OS edition. Both spans stay in
+      // the DOM, hidden by Header.css, and are only read here, never moved or edited. Without an
+      // uptime span the chip is skipped.
       var up = document.querySelector("#UserProfile > div:first-child span.text-xs");
       var upTxt = ((up && up.textContent) || "").replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
       var upTitle = (up && up.getAttribute("title")) || "";
       var osSp = null, osRow = document.querySelector("#UserProfile > div:first-child");
       if (osRow) { var sps = osRow.querySelectorAll("span"); for (var oj = 0; oj < sps.length; oj++) { if (/Unraid\s*OS/i.test(sps[oj].textContent || "")) { osSp = sps[oj]; break; } } }
-      // the span's textContent already includes the nested <em> edition ("Unraid OS Plus"); no em -> plain "Unraid OS"
+      // the span's textContent already carries the nested edition, so a missing one leaves the base name
       var osLabel = osSp ? (osSp.textContent || "").replace(/\s+/g, " ").replace(/^\s|\s$/g, "") : "Unraid OS";
-      // array fill level: prefer the menu usage-bar's text (older Unraid); 7.3.x dropped it, so fall back
-      // to cc.arrfill — the size-weighted array-disk fill that ccArrFill() computes+caches while on /Main
-      // (#18: the enabled fill chip was blank because the native bar is gone).
+      // The fill level prefers the menu usage bar, which older Unraid versions still carry, and
+      // falls back to the value ccArrFill() caches while on /Main.
       var ub = document.querySelector("#menu .usage-bar > span");
       var usage = ub ? (ub.textContent || "").replace(/\s+/g, "").trim() : (g("cc.arrfill", "") || "");
-      // usage MINI BAR geometry (user: "die Füllstandanzeige soll so ein schöner balken sein wie
-      // zuvor"): fill width = the percentage, fill COLOUR carries the state (green <80, amber <95,
-      // red above — the same thresholds the dot used); non-numeric text -> empty grey track
+      // The fill bar's width is the percentage and its colour carries the state, on the same
+      // thresholds as the dots; text that is not a number leaves an empty grey track.
       var un = parseInt(usage, 10);
       var uw = isNaN(un) ? 0 : Math.max(0, Math.min(100, un));
       var uc = isNaN(un) ? "#8d8d8d" : un >= 95 ? "#d9433f" : un >= 80 ? "#d6a243" : "#3fae6a";
-      // per-element visibility (user: an/abhaken welche Chips die Insel zeigt) — cc.isl.<key>,
-      // default ON; a fixed render order gives the island a deterministic, tidy layout
+      // Each chip has its own cc.isl.<key> toggle, on by default, and the fixed render order below
+      // keeps the layout the same from page to page.
       function iOn(k) { return g("cc.isl." + k, "1") !== "0"; }
-      var netUnit = g("cc.isl.net.unit", "bit") === "byte" ? "byte" : "bit";   // #12: Bit/Byte toggle, persisted
+      var netUnit = g("cc.isl.net.unit", "bit") === "byte" ? "byte" : "bit";
       var verNum = "";
       var verElN = document.querySelector('unraid-header-os-version span[id^="reka-menu-trigger"]');
       if (verElN) verNum = ((verElN.textContent) || "").replace(/\s+/g, " ").replace(/^\s|\s$/g, "");
-      // #18 (user): also show the count of NON-running containers. /sub/dockerload only carries RUNNING ones,
-      // so the total comes from the cross-page cc.stateCache (docker.js caches the full /api/state list).
+      // /sub/dockerload carries the running containers only, so the total for the stopped count
+      // comes from cc.stateCache, where docker.js keeps the full list.
       var dockRun = parseInt(ccLiveDocker, 10) || 0, dockTot = 0;
       try { var csD = JSON.parse(g("cc.stateCache", "null")); if (csD && csD.containers && csD.containers.length) dockTot = csD.containers.length; } catch (eD) {}
       var dockStop = dockTot > dockRun ? dockTot - dockRun : 0;
       var items = "u" + (iOn("uptime") ? 1 : 0) + "o" + (iOn("os") ? 1 : 0) + "v" + (iOn("version") ? 1 : 0) + "a" + (iOn("array") ? 1 : 0) + "f" + (iOn("fill") ? 1 : 0) + "r" + (iOn("ram") ? 1 : 0) + "c" + (iOn("cpu") ? 1 : 0) + "d" + (iOn("containers") ? 1 : 0) + "t" + (iOn("temps") ? 1 : 0) + "n" + (iOn("net") ? 1 : 0) + "|dt" + dockTot + "|nu" + netUnit;
-      // idempotence guard: nchan rewrites the footer every few seconds with UNCHANGED text most
-      // of the time — compare the source signature and skip the DOM rebuild when nothing moved
-      // (bar width/colour + the item toggles included so a change always redraws)
+      // nchan rewrites the footer every few seconds, mostly with the same text, so the rebuild is
+      // skipped unless this signature changes. It covers the bar geometry and the chip toggles too.
       var sig = upTxt + "|" + upTitle + "|" + osLabel + "|" + verNum + "|" + raw + "|" + temps.join(",") + "|" + warn + "|" + usage + "|" + uw + uc + "|" + (par ? par[0] : "") + "|" + ccLiveRam + "/" + ccLiveRamUsed + "/" + ccLiveCpu + "/" + ccLiveDocker + "|net" + (ccLiveNetOk ? Math.round(ccLiveNetRx) + "/" + Math.round(ccLiveNetTx) : "") + "|" + items;
       if (isle && sig === ccIslandSig) return;
       ccIslandSig = sig;
       if (!isle) {
         isle = document.createElement("span"); isle.id = "cc-island";
-        var prof = hdr.querySelector("unraid-user-profile");   // insert BESIDE the web component, never inside it
+        var prof = hdr.querySelector("unraid-user-profile");   // beside the web component, never inside it
         if (prof) hdr.insertBefore(isle, prof); else hdr.appendChild(isle);
       }
-      while (isle.firstChild) isle.removeChild(isle.firstChild);   // clear + refill = idempotent rebuild
-      // #19 (user): the chips live in 3 arrangeable ROWS. Build them into row 0 (staging); ccIslandArrange()
-      // then moves each into its saved row/position, new/unknown chips stay in row 0. Each chip carries a
-      // stable data-cc-chip key (its cc-isl-<key> suffix) so the saved order survives every rebuild.
+      while (isle.firstChild) isle.removeChild(isle.firstChild);
+      // The chips live in three arrangeable rows. They are built into row 0, and ccIslandArrange()
+      // then moves each into its saved row and position; a chip with no saved place stays here.
+      // The data-cc-chip key is stable, so the saved order survives every rebuild.
       ccIslRows = [];
       for (var ir = 0; ir < 3; ir++) { var rw = document.createElement("span"); rw.className = "cc-isl-row"; rw.setAttribute("data-cc-row", ir); isle.appendChild(rw); ccIslRows.push(rw); }
       function chip(label, dot, tip, cls) {
         var c = document.createElement("span"); c.className = "cc-isl-chip" + (cls ? " " + cls : "");
         if (cls) c.setAttribute("data-cc-chip", cls.replace(/^cc-isl-/, ""));
         var d = document.createElement("span"); d.className = "cc-isl-dot";
-        d.style.background = dot;   // state COLOUR inline; size/shape (var(--cc-dot-r)) in the sheet
+        d.style.background = dot;   // the state colour inline, the size and shape from the sheet
         c.appendChild(d); c.appendChild(document.createTextNode(label));
-        if (tip) c.setAttribute("data-cc-tip", tip);   // frameless CC bubble (law) — no native balloon
+        if (tip) c.setAttribute("data-cc-tip", tip);
         ccIslRows[0].appendChild(c);
       }
-      // mini-BAR chip (fill / RAM / CPU): a short lead label + fill width = %, fill COLOUR carries the
-      // state (green <80, amber <95, red above — same thresholds as the dots); non-numeric % -> grey track.
-      // The lead label disambiguates the three bars visually (else identical); tooltip carries the detail.
+      // A bar chip for the fill, RAM and CPU readings. The lead label tells the three apart, since
+      // the bars themselves look alike, and the tooltip carries the detail.
       function barChip(lead, pctText, tip, cls) {
         var n = parseInt(pctText, 10), w = isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
         var col = isNaN(n) ? "#8d8d8d" : n >= 95 ? "#d9433f" : n >= 80 ? "#d6a243" : "#3fae6a";
@@ -1251,50 +1090,38 @@
         if (cls) uch.setAttribute("data-cc-chip", cls.replace(/^cc-isl-/, ""));
         ccIslRows[0].appendChild(uch);
       }
-      // FIXED render order (user: "total unsortiert" -> deterministic layout): uptime, OS,
-      // array state, fill bar, temps. Each element is gated by its cc.isl.<key> toggle. Every
-      // tooltip carries REAL extra info, never just the label back (user call).
-      var arrSeg = (raw ? raw.split("•")[0] : "").replace(/^\s+|\s+$/g, "");   // first bullet segment = array state
-      // 1) UPTIME — label without the leading word; bubble = the boot timestamp (the useful bit)
+      // The render order is fixed, and every tooltip carries information the chip itself does not.
+      var arrSeg = (raw ? raw.split("•")[0] : "").replace(/^\s+|\s+$/g, "");   // the first bullet segment is the array state
+      // uptime, with the boot timestamp in the bubble
       if (iOn("uptime") && upTxt) {
         var upClean = upTxt.replace(/^(Betriebszeit|Uptime)\s*/i, "");
         chip(upClean, "#3fae6a", upTitle || (T("Läuft seit ", "Up since ") + upClean), "cc-isl-up");
       }
-      // 2) OS EDITION — bubble names the running version (the native 7.3.2 dropdown stays in place)
+      // the OS edition, with the running version in the bubble
       if (iOn("os")) {
         chip(osLabel, "#8d8d8d", T("Version ", "Version ") + (verNum || "?"), "cc-isl-os");
       }
-      // 2b) VERSION NUMBER — the native floating version chip is hidden by the sheet and its number
-      // (e.g. "7.3.2") joins the island so ALL chips align right in 2-3 rows (N10). Display chip; the
-      // OS-update dropdown stays reachable via Tools -> Update OS.
+      // The sheet hides the native floating version chip, so its number joins the island and every
+      // chip aligns in the same rows. It only displays; the OS update stays under Tools.
       if (iOn("version") && verNum) {
         chip(verNum, "#8d8d8d", T("Unraid-Version ", "Unraid version ") + verNum, "cc-isl-ver");
       }
-      // 3) ARRAY STATE — bubble adds the parity/progress line when one is running
+      // the array state, with the parity progress in the bubble while a check runs
       if (iOn("array") && arrSeg) {
         var low = arrSeg.toLowerCase(), dc = "#d6a243";
         if (low.indexOf("gestartet") !== -1 || low.indexOf("started") !== -1) dc = "#3fae6a";
         else if (low.indexOf("gestoppt") !== -1 || low.indexOf("stopped") !== -1) dc = "#d9433f";
-        chip(arrSeg, dc, par ? arrSeg + " — " + par[0].replace(/\s+/g, " ") : arrSeg, "cc-isl-array");
+        chip(arrSeg, dc, par ? arrSeg + ", " + par[0].replace(/\s+/g, " ") : arrSeg, "cc-isl-array");
       }
-      // 4) ARRAY FILL LEVEL — mini bar + % text (fill colour = state); bubble = plain sentence. Source is
-      // the native menu usage-bar, which 7.3.x dropped -> usually empty here (chip hides); kept for boxes
-      // that still expose it. RAM (5) is the always-available live usage bar in its place.
-      // #20 (user: toggled-on chips that don't appear): show the chip with a "--" placeholder even when the
-      // source is momentarily empty, so an enabled toggle always produces a visible chip (fill needs a /Main
-      // visit to prime cc.arrfill on 7.3.x; the tooltip says so).
-      if (iOn("fill")) barChip(T("Array", "Array"), usage || "--", usage ? T("Array zu " + usage + " belegt", "Array " + usage + " used") : T("Array-Füllstand — auf der Startseite messbar", "Array fill — measured on the Main page"), "cc-isl-array-fill");
-      // 5) RAM USAGE — live from nchan /sub/update1 (ccLiveRam="95%", ccLiveRamUsed="29.7 GiB"); mini bar,
-      // works on EVERY page (the missing "fill/temps show nothing" fix + the "was noch anzeigen" expansion).
+      // The fill chip shows a placeholder while its source is empty, so an enabled toggle always
+      // produces a visible chip; on 7.3.x the value needs a visit to /Main first, which the
+      // tooltip says.
+      if (iOn("fill")) barChip(T("Array", "Array"), usage || "--", usage ? T("Array zu " + usage + " belegt", "Array " + usage + " used") : T("Array-Füllstand, auf der Startseite messbar", "Array fill, measured on the Main page"), "cc-isl-array-fill");
       if (iOn("ram") && ccLiveRam) barChip("RAM", ccLiveRam, T("RAM zu " + ccLiveRam + " belegt" + (ccLiveRamUsed ? " (" + ccLiveRamUsed + ")" : ""), "RAM " + ccLiveRam + " used" + (ccLiveRamUsed ? " (" + ccLiveRamUsed + ")" : "")), "cc-isl-ram");
-      // 5b) CPU LOAD — live from nchan /sub/cpuload; empty on boxes that don't measure it (chip hides).
-      if (iOn("cpu")) barChip("CPU", ccLiveCpu || "--", ccLiveCpu ? T("CPU-Last " + ccLiveCpu, "CPU load " + ccLiveCpu) : T("CPU-Last derzeit nicht verfügbar", "CPU load currently unavailable"), "cc-isl-cpu");   // #20: placeholder so the toggle is visible
-      // 5c) CONTAINERS — #23: running-container count, live from nchan /sub/dockerload (one line per running
-      // container); a dotted chip, not a bar. Cross-page. Hides if none / no data.
-      if (iOn("containers") && (ccLiveDocker || dockTot)) chip((ccLiveDocker || "0") + (dockTot ? " / " + dockStop : ""), "#3fae6a", T(dockRun + " laufend" + (dockTot ? ", " + dockStop + " gestoppt (von " + dockTot + ")" : ""), dockRun + " running" + (dockTot ? ", " + dockStop + " stopped (of " + dockTot + ")" : "")), "cc-isl-docker");   // #18: running / stopped
-      // 5d) NET — #12 (user): live Down(rx)/Up(tx) throughput as ONE chip with two segments (↓ / ↑),
-      // fed by ccStartNet() -> engine /api/hostnet. Click toggles the unit Bit <-> Byte (persisted,
-      // handled in the island click delegate). Shows "--" until the /api/hostnet backend ships.
+      if (iOn("cpu")) barChip("CPU", ccLiveCpu || "--", ccLiveCpu ? T("CPU-Last " + ccLiveCpu, "CPU load " + ccLiveCpu) : T("CPU-Last derzeit nicht verfügbar", "CPU load currently unavailable"), "cc-isl-cpu");
+      if (iOn("containers") && (ccLiveDocker || dockTot)) chip((ccLiveDocker || "0") + (dockTot ? " / " + dockStop : ""), "#3fae6a", T(dockRun + " laufend" + (dockTot ? ", " + dockStop + " gestoppt (von " + dockTot + ")" : ""), dockRun + " running" + (dockTot ? ", " + dockStop + " stopped (of " + dockTot + ")" : "")), "cc-isl-docker");
+      // One chip with a receive and a send segment, fed by ccStartNet(). A click flips the unit
+      // between bit and byte, handled in the island's click delegate.
       if (iOn("net")) {
         var fmtRate = function (bps) {
           if (!ccLiveNetOk || !isFinite(bps) || bps < 0) return "--";
@@ -1304,28 +1131,25 @@
           return (i === 0 || v >= 100 ? Math.round(v) : Math.round(v * 10) / 10) + " " + u[i];
         };
         var nc = document.createElement("span"); nc.className = "cc-isl-chip cc-isl-net"; nc.setAttribute("data-cc-chip", "net");
-        nc.setAttribute("data-cc-tip", T("Netzwerk-Traffic — Klick: Bit/Byte", "Network traffic — click: bit/byte"));
+        nc.setAttribute("data-cc-tip", T("Netzwerk-Traffic, Klick wechselt Bit/Byte", "Network traffic, click switches bit/byte"));
         var segD = document.createElement("span"); segD.className = "cc-isl-net-seg"; segD.textContent = "↓ " + fmtRate(ccLiveNetRx);
         var segU = document.createElement("span"); segU.className = "cc-isl-net-seg"; segU.textContent = "↑ " + fmtRate(ccLiveNetTx);
         nc.appendChild(segD); nc.appendChild(segU); ccIslRows[0].appendChild(nc);
       }
-      // 6) TEMPS — first sensor = CPU, second = Mainboard (Unraid footer order), rest generic; the
-      // dot carries the state (green below cc.tempwarn, amber at/above, red at threshold+15)
+      // In the footer's order the first sensor is the CPU and the second the mainboard; the rest
+      // stay generic. The dot carries the state against cc.tempwarn.
       if (iOn("temps")) {
         for (var i = 0; i < temps.length; i++) {
           var tlab = i === 0 ? T("CPU-Temperatur", "CPU temperature") : i === 1 ? T("Mainboard-Temperatur", "Motherboard temperature") : T("Temperatur", "Temperature");
           chip(Math.round(temps[i]) + " °C", temps[i] >= warn + 15 ? "#d9433f" : temps[i] >= warn ? "#d6a243" : "#3fae6a", tlab + ": " + temps[i] + " °C", "cc-isl-temp" + i);
         }
       }
-      // service segments (e.g. "shiplog: started …") are deliberately NOT mirrored — that daemon
-      // status stays in the (hidden) native footer (user questioned it twice)
-      ccIslandArrange(); ccWireIslandDrag();   // #19: apply the saved 3-row arrangement + make the chips draggable
+      // The per-service segments stay in the hidden native footer rather than on a chip.
+      ccIslandArrange(); ccWireIslandDrag();
     } catch (e) {}
   }
-  // ── #19 STATUS-ISLAND CHIP ARRANGEMENT (user: "chips per drag and drop anordenbar, drei zeilen") ──
-  // The chips are built into 3 row containers; the user long-presses a chip and drags it to any row/position.
-  // The layout is persisted as cc.isl.order = [[row0 keys],[row1 keys],[row2 keys]] and re-applied on every
-  // island rebuild (idempotent), mirroring the main-menu nav-drag persistence idiom.
+  // A chip can be dragged to any row and position. The layout is persisted as cc.isl.order, three
+  // lists of chip keys, and re-applied on every island rebuild, as the main menu's nav drag does.
   function ccIslKey(el) { return el && el.getAttribute ? el.getAttribute("data-cc-chip") : null; }
   function ccIslandOrderRead() { try { var o = JSON.parse(g("cc.isl.order", "null")); if (o && o.length === 3) return o; } catch (e) {} return null; }
   function ccIslandSaveOrder() {
@@ -1341,9 +1165,9 @@
       if (!ccIslRows) return;
       var order = ccIslandOrderRead();
       if (!order) {
-        // no saved arrangement -> a sensible DEFAULT: spread the chips evenly across the 3 rows. Now that the
-        // rows can be full-header wide (user: free arrangement), leaving everything in row 0 would collapse the
-        // island to ONE long line; an even split keeps the familiar compact 3-row block until the user arranges.
+        // Without a saved arrangement, spread the chips evenly across the three rows: the rows run
+        // the full header width, so leaving them all in row 0 would stretch the island into one
+        // long line.
         var chips0 = ccIslRows[0].querySelectorAll(":scope > .cc-isl-chip"), n = chips0.length;
         if (n) { var per = Math.ceil(n / 3); for (var d = 0; d < n; d++) { var rr = Math.min(2, Math.floor(d / per)); if (rr > 0) ccIslRows[rr].appendChild(chips0[d]); } }
         return;
@@ -1351,7 +1175,7 @@
       var byKey = {}, all = ccIslRows[0].querySelectorAll(":scope > .cc-isl-chip");
       for (var i = 0; i < all.length; i++) { var k = ccIslKey(all[i]); if (k && !byKey[k]) byKey[k] = all[i]; }
       for (var r = 0; r < 3; r++) { var list = order[r] || []; for (var j = 0; j < list.length; j++) { var el = byKey[list[j]]; if (el) { ccIslRows[r].appendChild(el); delete byKey[list[j]]; } } }
-    } catch (e) {}   // keys not present are skipped; chips in no saved list stay in row 0
+    } catch (e) {}   // a chip in no saved list stays in row 0
   }
   function ccIslandDropTarget(x, y) {
     if (!ccIslRows) return null;
@@ -1369,9 +1193,9 @@
       for (var i = 0; i < chips.length; i++) {
         (function (c) {
           if (c.getAttribute("data-cc-idrag") === "1") return; c.setAttribute("data-cc-idrag", "1");
-          c.addEventListener("pointerdown", function (e) {   // #Drag-Umbau: LOCKED = click jumps to the page; ARRANGE (cc-arrange) = drag immediately
+          c.addEventListener("pointerdown", function (e) {
             if (e.button !== 0) return;
-            if (!document.documentElement.classList.contains("cc-arrange")) return;   // locked -> the chip click navigates
+            if (!document.documentElement.classList.contains("cc-arrange")) return;   // locked, so the click navigates instead
             ccIslPressXY = { x: e.clientX, y: e.clientY }; ccIslPressPtr = e.pointerId; ccIslMoved = false;
             ccIslDragged = c; c.classList.add("cc-isl-dragging");
             var isle = document.getElementById("cc-island"); if (isle) isle.classList.add("cc-isl-arranging");
@@ -1395,13 +1219,13 @@
         };
         document.addEventListener("pointerup", up);
         document.addEventListener("pointercancel", up);
-        // V-C: click a chip -> jump to its page (suppressed on the click that follows a drag)
+        // a chip click jumps to its page, except for the click that follows a drag
         document.addEventListener("click", function (e) {
           var chip = e.target && e.target.closest ? e.target.closest("#cc-island .cc-isl-chip") : null;
           if (!chip) return;
           if (ccIslSuppressClick) { ccIslSuppressClick = false; e.preventDefault(); e.stopPropagation(); return; }
           var key = ccIslKey(chip);
-          // #12: the net chip is a unit toggle, not a nav target — flip Bit<->Byte, persist, repaint in place
+          // the net chip is a unit toggle rather than a nav target
           if (key === "net") { localStorage.setItem("cc.isl.net.unit", g("cc.isl.net.unit", "bit") === "bit" ? "byte" : "bit"); ccIslandSig = ""; ccIsland(); e.preventDefault(); e.stopPropagation(); return; }
           var url = key ? (CC_ISL_NAV[key] || (/^temp/.test(key) ? "/Dashboard" : null)) : null;
           if (url) location.href = url;
@@ -1409,22 +1233,17 @@
       }
     } catch (e) {}
   }
-  // #16 (user: "Zustandsanzeigen native Zustandsfarbe ODER in den Farbmodus integriert"): the /Main
-  // array/pool usage bars (.usage-disk > span:first-child, coloured with the accent by the sheets) get
-  // their fill-LEVEL semantic colour (green <80% / amber <95% / red ≥95%, same thresholds as the island
-  // fill chip) when cc.statenative is ON. OFF -> remove the inline colour so the palette (accent/rainbow/
-  // flag) shows through. The fill % lives in the span's inline width. Runs from apply() (load + storage).
+  // With cc.statenative on, the /Main usage bars carry their fill level as a colour, on the same
+  // thresholds as the island's fill chip; with it off they follow the colour mode through the CSS.
+  // Unraid 7.3.x no longer stamps its own bar classes, so this assigns cc-fill-* classes that the
+  // sheet colours rather than writing inline, which keeps the native table re-render from
+  // flickering. Both bars of a row take the used percentage, so a nearly empty disk, whose free bar
+  // fills the track, stays green instead of turning red.
   function ccStateBars() {
     try {
-      // #2 (user): "native state colours" ON -> the /Main usage bars keep the semantic green/amber/red by
-      // fill level; OFF (default) -> they follow the colour mode via CSS. Unraid 7.3.x no longer stamps the
-      // native greenbar/orangebar/redbar class, so we assign our OWN cc-fill-{green,amber,red} class (CSS
-      // colours it) instead of writing inline — CLASS-based + idempotent = the native table re-render can't
-      // make it flicker. CRUCIAL: BOTH the BENUTZT and the FREI bar of a row are coloured by the USED %, so a
-      // nearly-EMPTY disk (its free bar ~98% wide) stays GREEN, not red ("leere Platte = roter Balken" bug).
       var on = g("cc.statenative", "0") === "1" && g("cc.theming", "1") !== "0";
       var allBars = document.querySelectorAll(".usage-disk:not(.sys):not(.mm) > span:first-child");
-      if (!on) {   // integrated: strip any lingering semantic class/inline -> the CSS colour mode shows through
+      if (!on) {   // strip any leftover class so the colour mode shows through
         for (var i = 0; i < allBars.length; i++) { var b = allBars[i]; if (b.style.background) b.style.removeProperty("background"); if (b.className && b.className.indexOf("cc-fill-") >= 0) b.className = b.className.replace(/\s*cc-fill-(green|amber|red)\b/g, ""); }
         return;
       }
@@ -1432,22 +1251,19 @@
       for (var t = 0; t < trs.length; t++) {
         var bars = trs[t].querySelectorAll(".usage-disk:not(.sys):not(.mm) > span:first-child");
         if (!bars.length) continue;
-        var usedW = parseFloat(bars[0].style.width) || 0;   // FIRST bar in the row = BENUTZT -> its % is the disk's fill state
+        var usedW = parseFloat(bars[0].style.width) || 0;   // the first bar in the row is the used one
         var cls = usedW >= 95 ? "cc-fill-red" : usedW >= 80 ? "cc-fill-amber" : "cc-fill-green";
         for (var k = 0; k < bars.length; k++) { if (!bars[k].classList.contains(cls)) { bars[k].classList.remove("cc-fill-green", "cc-fill-amber", "cc-fill-red"); bars[k].classList.add(cls); } }
       }
     } catch (e) {}
   }
-  // #(user: "das Menue in den CC-Style uebernehmen. Infotext in Infobubble"): the account popover (Lizenz
-  // verwalten / Auf Updates pruefen / Konto / Einstellungen) mounts fresh on every open. Tag it so the CC sheet
-  // styles it (elevated card + colour-mode item hover), and fold any plain description <li> (no icon/link) onto a
-  // CC (i) bubble on the item above it, hiding the inline paragraph — the bubble rides the document-wide cc-tipfloat.
+  // The account popover mounts fresh on every open, so it is tagged for the CC sheet, and any plain
+  // description item, one with no icon or link, folds onto an info bubble on the item above it.
   function ccAcctMenu() {
     try {
-      // #(user: "bei Klick auf den Hilfebutton passiert nichts"): the (i) is a CLICK button, NOT a hover tooltip.
-      // Bind ONCE a document-capture click handler: clicking a .cc-acctinfo toggles a pinned info bubble
-      // (#cc-acctinfo-pop) with its help text; clicking the same (i) again, or anywhere outside, dismisses it.
-      // stopPropagation on the (i) keeps the reka menu open and stops the row from navigating.
+      // The bubble opens on a click as well as on hover, so a document-capture handler toggles a
+      // pinned copy: the same icon again, or a click anywhere outside, dismisses it.
+      // stopPropagation keeps the reka menu open and stops the row from navigating.
       if (!document.__ccAcctInfoBound) {
         document.__ccAcctInfoBound = true;
         document.addEventListener("click", function (e) {
@@ -1457,7 +1273,7 @@
             e.preventDefault(); e.stopPropagation();
             var same = pop && pop.getAttribute("data-src") === (icon.getAttribute("data-cc-info") || "");
             if (pop) pop.remove();
-            if (same) return;                                             // second click on the same (i) closes it
+            if (same) return;                                             // a second click on the same icon closes it
             pop = document.createElement("div"); pop.id = "cc-acctinfo-pop";
             pop.textContent = icon.getAttribute("data-cc-info") || "";
             pop.setAttribute("data-src", icon.getAttribute("data-cc-info") || "");
@@ -1486,14 +1302,11 @@
           var host = prev ? (prev.querySelector("span, a") || prev) : null;
           if (host && !host.querySelector(".cc-acctinfo")) {
             var ic = document.createElement("span");
-            ic.className = "cc-acctinfo"; ic.textContent = "ⓘ";            // circled i — click AND hover
+            ic.className = "cc-acctinfo"; ic.textContent = "ⓘ";
             ic.setAttribute("role", "button"); ic.tabIndex = 0; ic.setAttribute("aria-label", txt);
-            ic.setAttribute("data-cc-info", txt);                          // the help text the click bubble shows
-            // #38 (user: "info erscheint erst bei klick, soll schon bei hoover angezeigt werden"): additive,
-            // not a replacement — data-cc-tip rides the SAME document-wide #cc-tipfloat hover engine every
-            // other CC icon already uses (ccWireTips()), so hovering previews the text instantly. The click
-            // handler below is untouched: a pinned copy still opens on click for anyone who can't hover
-            // reliably (touch/keyboard), so nothing that already worked stops working.
+            ic.setAttribute("data-cc-info", txt);                          // the text the pinned bubble shows
+            // data-cc-tip rides the same hover engine every other CC icon uses, so the text
+            // previews on hover while the click handler still pins a copy for touch and keyboard.
             ic.setAttribute("data-cc-tip", txt);
             host.appendChild(ic);
             li.style.display = "none";
@@ -1502,15 +1315,14 @@
       }
     } catch (e) {}
   }
-  // #3/#8 (user: in rainbow mode ADJACENT buttons/toggles get DIFFERENT palette colours, not one blue).
-  // Stamp a per-element rotating palette colour (--cc-rb-c) on each CC-themed native button (rotated within
-  // its own row) and each tools/settings toggle (rotated across the page). The CSS reads
-  // var(--cc-rb-c, var(--cc-rbaccent, <accent>)) so a single element still falls back to the one accent.
+  // In rainbow mode two controls next to each other take different palette slots rather than one
+  // shared colour. Each themed native button gets a slot rotated within its own row, each toggle
+  // one rotated across the page. The CSS reads var(--cc-rb-c, var(--cc-rbaccent, <accent>)), so a
+  // control that never gets a stamp still falls back to the one accent.
   function ccPaintRotate() {
     try {
       var on = g("cc.theming", "1") !== "0" && rbOn();
-      // #1 CORRECTION (user): in the REACTIVE sub-mode the dropdown OPTIONS must rest neutral and reveal their
-      // own colour ONLY on hover (they used to stay permanently coloured). Gate a class the Tools sheet keys off.
+      // in the neutral sub-mode the dropdown options rest grey and show their colour on hover
       document.documentElement.classList.toggle("cc-tools-rbneutral", on && rbNeutral());
       var stamp = function (el, ix) { var c = rbColor(ix); el.style.setProperty("--cc-rb-c", c, "important"); el.style.setProperty("--cc-rb-ct", idealText(c), "important"); };
       var clear = function (el) { el.style.removeProperty("--cc-rb-c"); el.style.removeProperty("--cc-rb-ct"); };
@@ -1518,51 +1330,43 @@
       var btns = document.querySelectorAll(BSEL);
       if (!on) { for (var i0 = 0; i0 < btns.length; i0++) clear(btns[i0]); }
       else {
-        // group by VISUAL ROW (rounded top) so buttons sitting next to each other rotate through the
-        // palette even when they live in different DOM parents (e.g. Standard vs Anwenden/Fertig).
+        // Group by visual row, rounding the top offset, so buttons sitting next to each other
+        // rotate through the palette even when they live in different DOM parents.
         var rows = {};
         for (var i = 0; i < btns.length; i++) { var rct = btns[i].getBoundingClientRect(); if (!rct.width) { clear(btns[i]); continue; } var key = Math.round(rct.top / 6); if (rows[key] == null) rows[key] = 0; stamp(btns[i], rows[key]++); }
       }
-      // toggles AND dropdowns (#1) on tools/settings pages -> rotate across the page so no two read the same
-      // colour (the CC-tsel dropdown box + selected chip follow --cc-rb-c, inherited from the .cc-tsel wrapper).
-      // #74 (user, re: the Display-Settings Sprache dropdown: "die dropdownliste ... in die farb und form
-      // engine aufnehmen"): html.cc-popups-on added alongside cc-tools-on — the JS-side stamping was gated
-      // the same way the CSS was (Tools.css, same #74 note there), so a .cc-tsel outside the Tools area never
-      // got --cc-rb-c set at all and could never show rainbow rotation regardless of the CSS fix.
-      var tgls = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tgl, html.cc-tools-on #displaybox .switch-button-background, html.cc-tools-on #displaybox .cc-tsel, html.cc-tools-on #displaybox .ui-dropdownchecklist-selector-wrapper, html.cc-diskpage #displaybox h3.section-header, html.cc-popups-on #displaybox .cc-tsel");   // #(user: "alle Badges in die Farbmodi"): the Boot-Parameters section badges rotate too
+      // The toggles and dropdowns on the tools and settings pages rotate across the page, so no two
+      // read the same colour; the dropdown's box and selected chip inherit --cc-rb-c from the
+      // .cc-tsel wrapper. cc-popups-on is listed beside cc-tools-on, or a .cc-tsel outside the
+      // Tools area would never be stamped at all.
+      var tgls = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tgl, html.cc-tools-on #displaybox .switch-button-background, html.cc-tools-on #displaybox .cc-tsel, html.cc-tools-on #displaybox .ui-dropdownchecklist-selector-wrapper, html.cc-diskpage #displaybox h3.section-header, html.cc-popups-on #displaybox .cc-tsel");
       for (var t = 0; t < tgls.length; t++) { if (!on) clear(tgls[t]); else stamp(tgls[t], t); }
-      // #1 (user): each dropdown OPTION gets its OWN palette slot — rotate WITHIN each panel so the open list
-      // reads as a rainbow of items (the trigger itself stays neutral until hover; see Tools.css). Covers the CC
-      // overlay dropdown (.cc-tsel-panel/.cc-tsel-opt) AND the jQuery dropdownchecklist (Notification-agent lists).
+      // Each dropdown option gets its own slot, rotated within its panel, so an open list reads as
+      // a run of colours while the trigger rests neutral until hover. Covers the CC overlay
+      // dropdown and the jQuery dropdownchecklist.
       var panels = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tsel-panel, html.cc-tools-on #displaybox .ui-dropdownchecklist-dropcontainer, html.cc-popups-on #displaybox .cc-tsel-panel");
       for (var pn = 0; pn < panels.length; pn++) { var opts = panels[pn].querySelectorAll(".cc-tsel-opt, .ui-dropdownchecklist-item"); for (var oi = 0; oi < opts.length; oi++) { if (!on) clear(opts[oi]); else stamp(opts[oi], oi); } }
-      // #5 (user: "alle Badges in die Farbmodi aufnehmen"): the notification-drawer badges rotate through the palette
-      // too (tabs, type filters, gear, the bulk-action icons, and the per-card Anzeigen/Archiv buttons). The delete
-      // icon stays semantic red (handled in CSS). In the REACTIVE sub-mode the sheet keys off cc-header-rbneutral to
-      // rest neutral + reveal --cc-rb-c on hover.
+      // The notification drawer's badges rotate as well: tabs, type filters, gear, the bulk action
+      // icons and the per-card buttons. The delete icon keeps its semantic red, in the CSS.
       var nd = document.querySelector(".unapi div.fixed.z-50.bg-background");
       if (nd) {
-        var ndb = nd.querySelectorAll('[role="tab"], [role="button"][aria-pressed]:not(.cc-notif-badge), .shrink-0 > a[href*="Notification"], .cc-notif-arch, .cc-notif-del, [class~="group/item"] a[class*="text-primary"], [class~="group/item"] span[class*="rounded-md"][class*="inline-flex"]');   // #(user: "Löschen-Button viel schwächer eingefärbt"): stamp delete too so it rotates like archive
+        var ndb = nd.querySelectorAll('[role="tab"], [role="button"][aria-pressed]:not(.cc-notif-badge), .shrink-0 > a[href*="Notification"], .cc-notif-arch, .cc-notif-del, [class~="group/item"] a[class*="text-primary"], [class~="group/item"] span[class*="rounded-md"][class*="inline-flex"]');
         for (var di = 0; di < ndb.length; di++) { if (!on) clear(ndb[di]); else stamp(ndb[di], di); }
       }
-      // #(user: "die Listen in den Disk-Subtabs mit abwechselnder Hoverfarbe im Rainbow-Modus"): a rotated palette
-      // colour per table ROW so each reveals its own colour on hover (Tools.css keys tbody tr:hover off --cc-rb-c).
+      // one slot per table row on the disk pages, so each reveals its own hover colour
       var dtr = document.querySelectorAll("html.cc-diskpage #displaybox table.unraid tbody tr");
       for (var dr2 = 0; dr2 < dtr.length; dr2++) { if (!on) clear(dtr[dr2]); else stamp(dtr[dr2], dr2); }
-      // #(user: "die Buttons in der Boot-Parameters-Menueansicht sind nicht in den Farbmodi"): the clickable
-      // .parameter-code chips (the kernel arg each option inserts) never got a palette slot, so they stayed flat
-      // grey while every other button rotated. Stamp them across the page like the action buttons.
+      // the clickable kernel-argument chips on the boot-parameters page, like the action buttons
       var pcodes = document.querySelectorAll("html.cc-diskpage #displaybox .parameter-code");
       for (var pc = 0; pc < pcodes.length; pc++) { if (!on) clear(pcodes[pc]); else stamp(pcodes[pc], pc); }
-      // #(user: "das Menue in den CC-Style"): the account popover items rotate too so each reveals its own colour on hover.
+      // the account popover items, so each reveals its own colour on hover
       var amItems = document.querySelectorAll('div[role="menu"].bg-popover li > span, div[role="menu"].bg-popover li > a');
       for (var am = 0; am < amItems.length; am++) { if (!on) clear(amItems[am]); else stamp(amItems[am], am); }
     } catch (e) {}
   }
-  // #(user chose "JS-Reinit"): the SMB "copy settings" dropdownchecklist widgets are built by Unraid while their
-  // reka tab is still HIDDEN (selector width 0), so the jQuery plugin sizes their drop panel to ~0 and the list
-  // never opens. Once the tab is visible, destroy + re-create each widget ONCE so it measures the real selector —
-  // then the list opens normally. Guarded per widget (data-cc-dclfixed) so it runs a single time after the tab shows.
+  // Unraid builds the SMB dropdownchecklist widgets while their tab is still hidden, so the jQuery
+  // plugin sizes the drop panel from a zero-width selector and the list never opens. Once the tab
+  // is visible, each widget is destroyed and rebuilt once so it measures the real selector.
   function ccFixSmbDcl() {
     try {
       var jq = window.jQuery; if (!jq || !jq.fn || typeof jq.fn.dropdownchecklist !== "function") return;
@@ -1581,53 +1385,46 @@
       }
     } catch (e) {}
   }
-  // The /Main disk tables, settings forms and button rows are AJAX-rendered AFTER apply() runs, so the
-  // one-shot paint missed them (usage bars stayed uncoloured, buttons/toggles un-rotated). Watch #displaybox
-  // (childList only -> our own inline style/attr writes never re-trigger it) and re-run the paints debounced.
+  // The /Main disk tables, the settings forms and the button rows are rendered after apply() has
+  // run, so a one-shot paint misses them. This watches #displaybox for childList changes only, so
+  // the inline style writes never re-trigger it, and re-runs the paints debounced.
   var ccMainObs = null, ccMainT = null, ccTabPaintBound = false;
   function ccWatchMain() {
     try {
       if (ccMainObs) return;
       var box = document.getElementById("displaybox"); if (!box) return;
       ccMainObs = new MutationObserver(function (recs) {
-        // #33 (user: "Docker/VM/Plugin-Tab lädt drastisch langsam"): this observer's own work
-        // (ccStateBars/ccPaintRotate/ccToolsEnhance) is only ever relevant on /Main's disk table or a
-        // cc-tools-on settings form — but it was armed unconditionally on EVERY page via apply(), so
-        // Docker's/VMs'/Plugins' own heavy per-row DOM churn (badge stamping, action-cell rebuilds, up to
-        // 100+ mutations per native table refresh) woke this callback too, adding a synchronous
-        // closest()-per-record scan plus a batch of document-wide querySelectorAll calls on top of work
-        // that was already the bottleneck. None of that page's mutations could ever match, so bail before
-        // touching a single record — cheap on every page, and a true no-op exactly where it matters most.
+        // The work below matters only on /Main's disk table or a settings form, but the observer is
+        // armed on every page, where the Docker and VM tabs' own per-row churn would wake it
+        // hundreds of times per refresh. Bail before touching a single record.
         if (!document.querySelector("table.unraid.disk_status") && !document.documentElement.classList.contains("cc-tools-on")) return;
-        // #13 (user: fill bars BLINK when "native state colours" is on): Unraid WHOLESALE-replaces the /Main
-        // disk table every nchan tick, so the fresh bars briefly show the base colour until the debounced
-        // pass re-classes them = the blink. Re-class them SYNCHRONOUSLY here (a MutationObserver callback is a
-        // microtask that runs AFTER Unraid's .html() but BEFORE the next paint), so the semantic cc-fill class
-        // is on the new bars before they ever paint. ccStateBars only writes classList (no childList) -> no loop.
+        // Unraid replaces the whole /Main disk table on every nchan tick, so the fresh bars would
+        // show the base colour until the debounced pass re-classes them, which reads as a blink.
+        // This callback is a microtask that runs after the .html() call but before the next paint,
+        // so re-classing here puts the class on the new bars before they ever paint. ccStateBars
+        // writes only classList, so it cannot loop back into this observer.
         for (var i = 0; i < recs.length; i++) { var t2 = recs[i].target; if (t2 && t2.closest && t2.closest("table.unraid.disk_status")) { try { ccStateBars(); } catch (e3) {} break; } }
         if (ccMainT) return; ccMainT = setTimeout(function () { ccMainT = null; try { ccStateBars(); ccPaintRotate(); ccToolsEnhance(); } catch (e2) {} }, 120);
       });
       ccMainObs.observe(box, { childList: true, subtree: true });
-      // #(user: "alle Buttons und Badges in die Farbmodi"): a reka SUB-TAB switch only toggles display (an
-      // attribute change the childList observer above deliberately ignores to avoid a paint loop), so the
-      // freshly-shown panel's buttons/badges never got their rotating --cc-rb-c. Re-run the paints shortly
-      // after any sub-tab click so the now-visible controls pick up their palette slot.
+      // A reka sub-tab switch only toggles display, an attribute change the observer above ignores
+      // to avoid a paint loop, so the freshly shown panel's controls would never get their palette
+      // slot. Re-run the paints shortly after any sub-tab click.
       if (!ccTabPaintBound) {
         ccTabPaintBound = true;
         document.addEventListener("click", function (e) {
           var t = e.target && e.target.closest ? e.target.closest('#displaybox nav.tabs button[role="tab"], #displaybox .tabs-container button[role="tab"]') : null;
           if (t) {
             setTimeout(function () { try { ccPaintRotate(); ccToolsEnhance(); ccFixSmbDcl(); } catch (er) {} }, 70);
-            setTimeout(function () { try { ccFixSmbDcl(); } catch (er2) {} }, 400);   // backup once the reka tab is fully on screen
+            setTimeout(function () { try { ccFixSmbDcl(); } catch (er2) {} }, 400);   // again once the tab is fully on screen
           }
         }, true);
       }
     } catch (e) {}
   }
-  // #6 (user: "die Texte in der Infobubble sind nicht in der richtigen Sprache"): Unraid's DisplaySettings
-  // help strings are server-rendered and its German language pack leaves several of them ENGLISH. CC carries
-  // a DE map for those native strings, matched on the whitespace-normalised English text and applied only
-  // when the UI language is German. Any string not in the map falls back to the native (server) text.
+  // Unraid's Display Settings help strings are server-rendered, and its German language pack leaves
+  // several of them in English. This map is keyed on the whitespace-normalised English text and is
+  // applied only on a German UI; a string it does not carry keeps the server's text.
   var CC_HELP_DE = {
     "Boxed is the legacy setting which constrains the content width to maximum 1920 pixels Unlimited allows content to use all available width, which maybe useful on wide screens":
       "Boxed ist die alte Einstellung, die die Inhaltsbreite auf maximal 1920 Pixel begrenzt. Unlimited erlaubt dem Inhalt, die gesamte verfügbare Breite zu nutzen, was auf breiten Bildschirmen nützlich sein kann.",
@@ -1645,11 +1442,11 @@
   function ccTransHelp(txt) {
     try { if (LANG !== "de") return txt; var k = (txt || "").replace(/\s+/g, " ").trim(); return CC_HELP_DE[k] || txt; } catch (e) { return txt; }
   }
-  // #7 (user: "die Dropdownlisten sind nicht im CC-Style"): on cc-tools-on pages, replace the native <select>
-  // with the SAME CC overlay dropdown the docker Add-Container form uses (docker.js/ctWrapSelect), ported here
-  // as cc-tsel with distinct names so nothing else unwraps it. The real <select> stays hidden as the form
-  // value; a click writes selectedIndex back + dispatches change so native onchange chains still fire. The
-  // panel is position:fixed (escapes overflow clipping) and flips upward when there's more room above.
+  // On cc-tools-on pages the native <select> is replaced with the same overlay dropdown the Docker
+  // add-container form uses, under its own class names so nothing else unwraps it. The real select
+  // stays hidden and carries the form value: a click writes selectedIndex back and dispatches
+  // change, so the native onchange chains still fire. The panel is fixed, which escapes the
+  // overflow clipping, and flips upward when there is more room above.
   function ccMkEl(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
   var ccTselDocBound = false;
   function ccBindTselDoc() {
@@ -1674,11 +1471,10 @@
       else { panel.style.bottom = Math.round(cbBottom - r.top + gap) + "px"; panel.style.top = "auto"; panel.style.maxHeight = Math.max(140, above - gap) + "px"; }
     } catch (e) {}
   }
-  // /Apps/ca_settings button rows (user: "Anwenden und Fertig in eine Zeile, Download Log und
-  // Hilfeforen-Badge in eine zweite Zeile"). CA emits ANWENDEN/FERTIG/DOWNLOAD LOG inside one <span> and the
-  // help link in a separate <center>; two elements in different parents can never share a flex line, so the
-  // one that has to change rows is MOVED. Idempotent: it only acts while the button is still in the span,
-  // and this page is a plain form render — nothing rebuilds it underneath us.
+  // On /Apps/ca_settings the apply, done and download-log buttons come out of one <span> while the
+  // help link sits in a separate <center>. Two elements in different parents cannot share a flex
+  // line, so the one that has to change rows is moved. It acts only while the button is still in
+  // the span, and the page is a plain form render that nothing rebuilds underneath.
   function ccCaSettingsRows() {
     try {
       if (!/^\/Apps\/ca_settings/i.test(location.pathname)) return;
@@ -1687,20 +1483,16 @@
       var btns = box.querySelectorAll('span > input[type="button"]');
       for (var i = 0; i < btns.length; i++) {
         var b = btns[i], v = (b.value || "").toUpperCase();
-        if (v.indexOf("LOG") < 0) continue;              // only DOWNLOAD LOG joins the help link
-        if (b.parentElement === host) continue;           // already moved -> no-op
+        if (v.indexOf("LOG") < 0) continue;              // only the log button joins the help link
+        if (b.parentElement === host) continue;
         host.insertBefore(b, host.firstChild);
       }
-      // #3: both button rows line up with the TOGGLES (user: "die Buttons unten an den Toggles ausrichten").
-      // The two rows sit in different parents (a <span> inside the form, a <center> outside the dl grid), so
-      // one shared indent can't work: measured live they started at 767 and 626 while the toggle column
-      // starts at 847. Measure the control edge once and push each row to it individually — self-correcting,
-      // so it survives a language change, another font size or a longer label.
-      // A yes/no <select> that ccToolsWrapSelect turned into a .cc-tgl pill stays in the DOM (display:none)
-      // right where it was, i.e. BEFORE its own pill in document order — so a plain querySelector() over
-      // ".cc-tgl, .cc-tsel, input, select" can land on that hidden select first (zero rect, cx=0), which
-      // silently breaks the whole measurement (verified live: 0 vs the real column at 1107px). Skip anything
-      // with no rendered box and take the first control that's actually visible.
+      // Both button rows line up with the toggle column. They sit in different parents, so one
+      // shared indent cannot work: the control edge is measured once and each row pushed to it,
+      // which survives a language change, another font size or a longer label.
+      // A yes/no select that ccToolsWrapSelect turned into a pill stays in the DOM hidden, right
+      // where it was and therefore before its own pill, so a plain query can land on it first and
+      // measure a zero rect. Skip anything with no rendered box.
       var ctrlCands = box.querySelectorAll("dd .cc-tgl, dd .cc-tsel, dd input, dd select"), ctrl = null;
       for (var cc = 0; cc < ctrlCands.length; cc++) {
         var ccRect = ctrlCands[cc].getBoundingClientRect();
@@ -1711,13 +1503,11 @@
         var rows = [];
         var sub = box.querySelector('form span:has(> input[type="submit"])'); if (sub) rows.push(sub);
         if (host) rows.push(host);
-        // Probe, don't assume 1:1: the "Anwenden/Fertig" span sits inside a shrink-wrapped ancestor
-        // that keeps ITSELF centred, so growing the span via padding-left also widens that ancestor,
-        // which re-centres and eats HALF of every pixel of padding (measured live: 100px of padding
-        // only ever moved the button 50px — the CA "DOWNLOAD LOG" row has no such ancestor and takes
-        // padding 1:1). Rather than hard-code which row is which, measure the real px-of-content-shift
-        // per px-of-padding with a small probe write and solve for the padding that closes the exact
-        // remaining gap — correct for either layout, and for any future CC/CA markup change too.
+        // Padding does not move the two rows equally: one of them sits inside a shrink-wrapped
+        // ancestor that keeps itself centred, so widening it re-centres the ancestor and eats half
+        // of every pixel, while the other takes padding one to one. Rather than hard-coding which
+        // row is which, a probe write measures the real shift per pixel of padding and the padding
+        // that closes the remaining gap follows from it.
         for (var r = 0; r < rows.length; r++) {
           var row = rows[r];
           row.style.setProperty("padding-left", "0px", "important");
@@ -1725,7 +1515,7 @@
           var PROBE = 100;
           row.style.setProperty("padding-left", PROBE + "px", "important");
           var cP = row.getBoundingClientRect().left + PROBE;
-          var slope = (cP - c0) / PROBE;                    // px of actual shift per px of padding
+          var slope = (cP - c0) / PROBE;
           var pad = slope > 0.05 ? Math.round((cx - c0) / slope) : 0;
           if (pad > 0 && pad < 2400) row.style.setProperty("padding-left", pad + "px", "important");
           else row.style.removeProperty("padding-left");
@@ -1733,23 +1523,14 @@
       }
     } catch (e) {}
   }
-  // #22 (user forum feature request): the Display-Settings "Sprache/Language" dropdown gets a
-  // flag per option.
-  // #92 (user, real root cause behind three separate "flags not showing" reports — proven with a
-  // screenshot from the user's own Windows browser): the ORIGINAL arithmetic approach here built a
-  // Unicode regional-indicator-symbol PAIR and relied on the OS emoji font to ligature it into a
-  // single flag glyph. Windows' Segoe UI Emoji does not do that — it shows the two letters as two
-  // separate boxes ("DE", "GB", ...), which is exactly what the user's screenshot showed. This is
-  // the SAME gap settings.js's Flaggen-Modus picker already worked around by switching to the
-  // plugin's own bundled flag SVGs (images/flags/<iso>.svg, window.CC_FLAGS) instead of emoji —
-  // ccLangFlagImg below applies that same fix here.
-  // A second, independent bug rides along: several of Unraid's OWN locale codes are NOT real ISO
-  // country codes — da_DA/hu_HU/no_NO/ja_JA/ko_KO/ar_AR/bn_BN duplicate the LANGUAGE code as a fake
-  // "country" suffix. Naively uppercasing that suffix either hit no real territory (da/ja/ko — no
-  // flag could ever render, on any platform) or a real but WRONG one by coincidence (ar_AR ->
-  // Argentina, bn_BN -> Brunei — neither has anything to do with Arabic or Bengali). Explicit map,
-  // built from the full official pack list (github.com/unraid/language-templates), fixes both at
-  // once; the old suffix-arithmetic still runs as a fallback for any future pack not yet listed here.
+  // The Display Settings language dropdown shows a flag per option, drawn from the plugin's own
+  // bundled SVGs rather than from emoji: a regional-indicator pair relies on the OS font to
+  // ligature it into one glyph, which Segoe UI Emoji does not do, so on Windows it renders as two
+  // letter boxes. settings.js's flag picker takes the same route.
+  // Several of Unraid's locale codes are not ISO country codes but repeat the language as a fake
+  // country suffix, so uppercasing that suffix lands on no territory at all or on the wrong one by
+  // coincidence, such as Argentina for Arabic. This map is built from the official pack list; the
+  // suffix arithmetic below stays as the fallback for a pack not listed here yet.
   var CC_LOCALE_COUNTRY = {
     "": "gb", "en_US": "us", "de_DE": "de", "da_DA": "dk", "hu_HU": "hu", "nl_NL": "nl", "no_NO": "no",
     "it_IT": "it", "fr_FR": "fr", "pt_BR": "br", "pt_PT": "pt", "pl_PL": "pl", "es_ES": "es", "sv_SE": "se",
@@ -1760,12 +1541,11 @@
     val = val || "";
     if (CC_LOCALE_COUNTRY.hasOwnProperty(val)) return CC_LOCALE_COUNTRY[val];
     var m = /_([A-Za-z]{2})$/.exec(val);
-    return m ? m[1].toLowerCase() : "gb"; // no suffix at all -> Unraid's blank/default locale = English
+    return m ? m[1].toLowerCase() : "gb"; // no suffix at all is Unraid's default locale, English
   }
-  // Writes/refreshes the flag <img> as the FIRST child of `container` (a trigger or an option chip),
-  // never touching its text — ccToolsSyncSel below still owns `container.textContent` for the name,
-  // and a plain `.textContent =` write removes every child, so the image must be (re)inserted AFTER
-  // that write runs, not folded into the text itself the way the old emoji prefix was.
+  // Writes the flag image as the first child of a trigger or an option chip without touching its
+  // text, which ccToolsSyncSel owns. A textContent write removes every child, so the image has to
+  // be inserted after that write rather than folded into the text.
   function ccLangFlagImg(container, val) {
     var iso = ccLocaleCountry(val);
     var img = container.firstElementChild && container.firstElementChild.classList.contains("cc-lang-flag") ? container.firstElementChild : null;
@@ -1778,55 +1558,41 @@
     var src = "/plugins/cannonadecommand/images/flags/" + iso + ".svg";
     if (img.getAttribute("src") !== src) { img.style.display = ""; img.src = src; }
   }
-  // scoped to name="locale" only — every OTHER <select> on the site goes through this same
-  // generic ccToolsWrapSelect/ccToolsSyncSel pair and must render unchanged.
-  // #83 (user: "Bei deutsch steht der text in der klammer noch da"): the earlier #81 fix only
-  // stripped the parenthetical CC itself added to the "available, not installed" entries — this
-  // native <option>'s own text ("Deutsch (German)") is Unraid's, not CC's, but the same clean
-  // single-name style now applies to it too for consistency across the whole dropdown.
+  // Scoped to the locale select: every other select on the site goes through the same generic
+  // wrap and sync pair and has to render unchanged. The parenthetical the native option carries
+  // ("Deutsch (German)") is dropped, so the whole dropdown reads as one name per entry.
   function ccLangLabel(sel, o) {
     if (sel.name !== "locale") return o.text;
-    // #92: no more emoji prefix here — the flag is now a real <img> ccLangFlagImg inserts alongside
-    // this text (see ccToolsSyncSel), not baked into the string.
     return o.text.replace(/\s*\([^)]*\)\s*$/, "");
   }
-  // #77 (user: "alle verfügbaren Sprachen anzeigen und auf klick runterladen und installieren"): Unraid's
-  // official language packs (github.com/unraid/language-templates) are ordinary Community-Applications
-  // catalog entries with Category "Language:" — server/langpacks.php reads the SAME local CA cache
-  // castats.php already reads and lists every one, installed or not (the native <select> only ever lists
-  // installed ones — that's Unraid's own behaviour, not something to patch). Every pack NOT already among
-  // this select's own option values gets an extra entry appended to the panel, styled with a download
-  // glyph instead of a flag. It carries no data-i, so ccToolsSyncSel's resync loop (which reads
-  // sel.options[+c[k].getAttribute("data-i")] and skips anything that resolves to no option) already
-  // ignores it safely — no fight with the generic widget's own refresh cycle.
-  // Clicking one does not attempt a custom install: CA's own per-template Install button is the proven,
-  // safe path for an actual system-plugin install (a language pack downloads+extracts a zip, not a
-  // docker pull), so this navigates to /Apps with the pack's name queued for ccAppsAutoSearch (below) to
-  // drop into CA's own native search box — landing the user directly on CA's real Install button instead
-  // of reimplementing CA's own install flow.
+  // Unraid's official language packs are ordinary Community Applications catalog entries in the
+  // "Language:" category, so server/langpacks.php reads the same local CA cache and lists every
+  // one, installed or not; the native select lists only the installed ones. A pack missing from
+  // this select's own option values gets an entry appended to the panel with a download glyph
+  // instead of a flag. Its data-i resolves to no option, so ccToolsSyncSel's resync loop skips it.
+  // Clicking one does not install anything here: a language pack extracts a zip rather than
+  // pulling an image, and CA's own Install button is the safe path for that, so this navigates to
+  // /Apps with the pack's name queued for ccAppsAutoSearch to drop into CA's search box.
   function ccLangAugmentPanel(sel, panel) {
     var installed = {}; for (var i = 0; i < sel.options.length; i++) installed[sel.options[i].value] = true;
     fetch("/plugins/cannonadecommand/server/langpacks.php", { headers: { Accept: "application/json" } })
       .then(function (r) { return r.ok ? r.json() : []; })
       .then(function (packs) {
         if (!Array.isArray(packs) || !panel.isConnected) return;
-        // #83 (user: "am unteren ende der liste steht verfügbar (nicht installiert) -> das kann weg")
-        // — no group label; the download glyph on each entry already signals "not installed" on its own.
+        // No group label: the download glyph on each entry already says it is not installed.
         packs.forEach(function (p) {
           if (!p || !p.code || installed[p.code]) return;
           var chip = ccMkEl("div", "cc-tsel-opt cc-tsel-opt-avail");
-          // ccToolsSyncSel's resync loop reads +c[k].getAttribute("data-i") — a MISSING attribute gives
-          // null, and +null === 0 (not NaN), which resolved to sel.options[0] ("English") for every one
-          // of these and stomped its text on the very next sync. data-i="-1" makes sel.options[-1]
-          // genuinely undefined, so the loop's existing "if (!o) continue" skips it as originally intended.
+          // A missing data-i reads as +null, which is 0, so the resync loop would resolve these to
+          // the first option and stomp their text. -1 resolves to nothing, which the loop skips.
           chip.setAttribute("data-i", "-1");
           var flagWrap = ccMkEl("span", "cc-tsel-avail-flag");
           chip.appendChild(flagWrap);
-          ccLangFlagImg(flagWrap, p.code); // #92 — same real-SVG fix as the installed entries, not emoji
-          chip.appendChild(ccMkEl("span", "cc-tsel-avail-name", p.local || p.name || p.code)); // #81 (user: "den Text in der Klammer kann weg") — just the native name, no English clarification
+          ccLangFlagImg(flagWrap, p.code);
+          chip.appendChild(ccMkEl("span", "cc-tsel-avail-name", p.local || p.name || p.code));
           chip.appendChild(ccMkEl("i", "fa fa-download cc-tsel-avail-dl"));
           chip.setAttribute("role", "option"); chip.setAttribute("tabindex", "-1");
-          chip.title = LANG === "de" ? "Nicht installiert — klicken, um es in Community Applications zu finden" : "Not installed — click to find it in Community Applications";
+          chip.title = LANG === "de" ? "Nicht installiert, klicken, um es in Community Applications zu finden" : "Not installed, click to find it in Community Applications";
           chip.addEventListener("click", function (ev) {
             ev.stopPropagation();
             try { sessionStorage.setItem("cc.appsSearch", p.name || p.local || p.code); } catch (e) {}
@@ -1837,24 +1603,18 @@
       })
       .catch(function () {});
   }
-  // The other half of #77: if a language chip's click above stashed a pending search term, run it
-  // through CA's own #searchBox once the Apps tab has actually rendered it. ccApps() calls this on
-  // EVERY tick while the page settles (same idempotent-retry shape as the rest of this file) — the flag
-  // is only cleared once #searchBox is genuinely found and the search is applied, not on the first tick
-  // that merely sees the flag, or an early tick (before CA's own async feed load finishes) would consume
-  // it and never actually search (live-caught: the flag vanished with the box still unset).
+  // Runs a search term a language chip stashed through CA's own search box once the Apps tab has
+  // rendered it. ccApps() calls this on every tick while the page settles, and the term is only
+  // cleared once the search actually runs.
   function ccAppsAutoSearch() {
     var term; try { term = sessionStorage.getItem("cc.appsSearch"); } catch (e) { return; }
     if (!term) return;
-    // live-traced: #searchBox's own "input" handler only swaps the search/clear icon — the actual
-    // filter runs inside CA's global doSearch(button, newSearch), which the searchSubmit button's click
-    // handler calls directly (doSearch(true)). Calling it the same way is the real, proven trigger;
-    // synthetic input/keyup events on the box itself never reach it.
-    // Also live-traced: calling doSearch before CA's OWN initial catalog render finished ran the search
-    // against an empty/not-yet-loaded grid and was silently overwritten the instant CA's async first
-    // render landed right after — waiting for at least one real .ca_holder card is a simple, reliable
-    // "the initial render already happened" signal (retried on the next tick until that's true).
-    if (typeof window.doSearch !== "function" || !document.getElementById("searchBox") || !document.querySelector(".ca_holder")) return; // flag stays — retried on the next tick
+    // The search box's own input handler only swaps its icon; the filter runs inside CA's global
+    // doSearch(), which its submit button calls directly, so a synthetic input event never reaches
+    // it. Calling doSearch before CA's initial catalog render has finished searches an empty grid
+    // and is overwritten the moment that render lands, and one rendered card is a reliable sign
+    // that it has.
+    if (typeof window.doSearch !== "function" || !document.getElementById("searchBox") || !document.querySelector(".ca_holder")) return;   // retried on the next tick
     try { sessionStorage.removeItem("cc.appsSearch"); } catch (e) {}
     window.doSearch(true, term);
   }
@@ -1864,17 +1624,16 @@
     var t2 = w.querySelector(".cc-tsel-trigger"), c = w.querySelectorAll(".cc-tsel-opt");
     var label = sel.selectedIndex >= 0 ? ccLangLabel(sel, sel.options[sel.selectedIndex]) : "";
     if (t2 && t2.textContent !== label) t2.textContent = label;
-    // #92: the flag <img> must be (re)inserted AFTER the textContent write above, every sync — that
-    // write wipes all children whenever the label actually changed, and is a no-op (children left
-    // alone) when it didn't, so calling this unconditionally is what makes it self-heal either way.
+    // The flag goes back in after the write above, on every sync: that write wipes the children
+    // whenever the label changed and leaves them alone when it did not, so calling this
+    // unconditionally heals either case.
     if (sel.name === "locale" && t2) ccLangFlagImg(t2, sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].value : "");
-    // A host script that REFILLS a wrapped <select> (a preclear dialog's disk list, a locale list that grows)
-    // changes its option COUNT — the loop below only re-reads TEXT for chips that already exist, so the panel
-    // would keep offering yesterday's list forever, silently. Detect the mismatch and rebuild by unwrapping +
-    // re-wrapping, i.e. through the one existing builder rather than a second copy of it that can drift.
-    // Only chips with a real index count: the language panel deliberately appends "available, not installed"
-    // chips carrying data-i="-1" (see ccLangAugmentPanel), and counting those would make every pass rebuild.
-    // Never while the panel is OPEN — rebuilding under the user's cursor would drop the click they are aiming.
+    // A host script that refills a wrapped select, such as a disk list or a growing locale list,
+    // changes its option count, and the loop below only re-reads the text of chips that already
+    // exist, so the panel would keep offering the old list. A mismatch rebuilds through the one
+    // existing builder. Only chips with a real index count, since the language panel appends its
+    // "not installed" chips with data-i="-1". Never while the panel is open: rebuilding under the
+    // pointer would drop the click it is aiming at.
     if (!w.classList.contains("cc-open")) {
       var real = 0;
       for (var q = 0; q < c.length; q++) if (+c[q].getAttribute("data-i") >= 0) real++;
@@ -1887,12 +1646,12 @@
       c[k].classList.toggle("is-selected", o.selected); c[k].classList.toggle("is-disabled", !!o.disabled); c[k].setAttribute("aria-selected", o.selected ? "true" : "false");
     }
   }
-  // GlimStone Rule 21 (wheel over the CLOSED field): the shared handler lives in cc-theme.js, but the
-  // REPAINT has to be this family's own — ccToolsSyncSel re-inserts the locale flag image and rebuilds
-  // the panel when the host refilled the <select>, neither of which a generic mirror knows about.
+  // The wheel handler for a closed field lives in cc-theme.js, but the repaint has to be this
+  // family's own: ccToolsSyncSel re-inserts the locale flag and rebuilds the panel after a refill,
+  // neither of which a generic mirror knows about.
   try { if (window.CCTheme && window.CCTheme.registerSelectSync) window.CCTheme.registerSelectSync(function (sel, wrap) { if (!wrap || !wrap.classList || !wrap.classList.contains("cc-tsel")) return false; ccToolsSyncSel(sel); return true; }); } catch (e) {}
-  // Put the native <select> back where it was and wrap it again from scratch. Used only by the count-mismatch
-  // branch above; the <select> itself is never recreated, so every host handler bound to it survives.
+  // Puts the native select back where it was and wraps it again from scratch. The select itself is
+  // never recreated, so every host handler bound to it survives.
   function ccToolsRewrap(sel) {
     try {
       var w = sel.parentNode;
@@ -1903,13 +1662,13 @@
     } catch (e) {}
   }
   function ccToolsWrapSelect(sel) {
-    if (sel.getAttribute("data-cc-tsel") || sel.getAttribute("data-cc-tgl")) return;   // already ours / a yes-no toggle (#24)
-    if (sel.multiple || (sel.size && sel.size > 1) || sel.options.length < 1) return;   // multi / list-box stay native
+    if (sel.getAttribute("data-cc-tsel") || sel.getAttribute("data-cc-tgl")) return;   // already wrapped, or a yes-no toggle
+    if (sel.multiple || (sel.size && sel.size > 1) || sel.options.length < 1) return;   // a multiple or a list box stays native
     sel.setAttribute("data-cc-tsel", "1");
     var wrap = ccMkEl("span", "cc-tsel"); sel.parentNode.insertBefore(wrap, sel);
     sel.style.display = "none"; wrap.appendChild(sel);
     var trig = ccMkEl("span", "cc-tsel-trigger"); wrap.appendChild(trig);
-    // V-E A11y: the trigger is a listbox button; the panel is a listbox; each chip is an option
+    // the trigger is a listbox button, the panel a listbox, each chip an option
     trig.setAttribute("role", "button"); trig.setAttribute("tabindex", "0"); trig.setAttribute("aria-haspopup", "listbox"); trig.setAttribute("aria-expanded", "false");
     var lid = "cc-tsel-lb-" + (ccTselSeq++); trig.setAttribute("aria-controls", lid);
     if (sel.id || sel.name) trig.setAttribute("aria-label", (function () { var lab = sel.closest && sel.closest("dd") ? (sel.closest("dd").previousElementSibling || {}).textContent : ""; return (lab || sel.name || sel.id || "").replace(/\s*:\s*$/, "").trim() || "Auswahl"; })());
@@ -1938,26 +1697,14 @@
     ccBindTselDoc();
   }
   var ccTselSeq = 0;
-  // ── #(user: "nicht alle dropdonlisten sind vollends in glimstone") — GlimStone Rule 18: a native control is
-  // REPLACED, not talked round, and the replacement is the one the app already has (.cc-tsel). CC has wrapped
-  // every native <select> it could reach for a long time, but ONLY from ccToolsEnhance(), which returns early
-  // unless html.cc-tools-on is set — i.e. only on /Tools and /Settings sub-pages.
-  // Live-measured across every CC area (Docker, VMs, Shares, Main, Plugins, Apps, Settings, Dashboard): the
-  // ONLY on-screen native <select>s left in the whole UI were the FOUR on the DASHBOARD — the CPU tile's
-  // timescale (#cpuline) and the network tile's interface / view / timescale (port_select, enter_view,
-  // #netline). They sit inside #displaybox, so the existing sweep SELECTOR already matched them; only the
-  // area gate kept it away. Exactly the same shape of gap as the one recorded once before, when the .cc-tsel
-  // THEMING was bound to cc-tools-on while the widget ran on other pages too — that fix extended the CSS and
-  // the rainbow stamping to cc-popups-on and stopped there. This is the third leg: the wrapping itself.
-  // Three conditions, each earning its place from a measured case on this box:
-  //   · RENDERED (non-zero box): /Main carries 13 <select>s belonging to a third-party preclear dialog that is
-  //     display:none until opened, and /VMs two option-less template selects. Wrapping a control nobody can
-  //     see buys nothing and risks fighting whatever builds it; when such a dialog does open, the next pass
-  //     picks it up, and the count-resync above keeps it honest if the host refills it afterwards.
-  //   · at least TWO options: a one-option select is a placeholder, not a choice.
-  //   · not already inside another CC widget: CC's OWN settings page wraps its 11 selects with settings.js's
-  //     .cc-dsel, which sets no marker attribute — without this guard the sweep would nest a .cc-tsel INSIDE
-  //     a .cc-dsel and the user would get two triggers stacked on one field.
+  // ccToolsEnhance() wraps every select it can reach, but returns early unless cc-tools-on is set,
+  // so it covers the /Tools and /Settings sub-pages only. The Dashboard's tile selects sit inside
+  // #displaybox and match the same selector; this sweep reaches them. Three conditions:
+  //   a rendered box, since a select inside a dialog that is hidden until opened buys nothing and
+  //   risks fighting whatever builds it, and the next pass picks it up once it opens;
+  //   at least two options, because a single-option select is a placeholder, not a choice;
+  //   not already inside another CC widget: the settings page wraps its own selects in .cc-dsel,
+  //   which sets no marker attribute, and nesting would stack two triggers on one field.
   function ccWrapPageSelects() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
@@ -1966,28 +1713,21 @@
         var s = sels[i];
         if (s.options.length < 2) continue;
         if (s.closest(".cc-dsel") || s.closest(".cc-tsel")) continue;
-        // …and NEVER the /Main array-device table. Its tbody is WHOLESALE-replaced by Unraid's
-        // device_list nchan tick every second, so a wrapper cannot survive a single tick: with the
-        // array STOPPED the Identifikation column flickered between the .cc-tsel trigger and the
-        // native control, and since a slot with no free device left to offer has exactly ONE option
-        // (skipped above) the two looks sat in the same column at the same time. The real hazard is
-        // worse than the look: an OPEN panel is destroyed mid-click on the one control that ASSIGNS
-        // DISKS. Shares.css gives that native select the CC filled-pill look instead, and its popup
-        // is OS-rendered, so it cannot be torn out from under the pointer.
+        // Never the /Main array-device table: Unraid replaces its whole tbody every second, so a
+        // wrapper cannot survive one tick, and an open panel would be destroyed mid-click on the
+        // very control that assigns disks. Shares.css gives that native select the filled-pill
+        // look instead, and its popup is drawn by the OS, so nothing can tear it away.
         if (s.closest("table.unraid.disk_status")) continue;
         var r = s.getBoundingClientRect(); if (!r.width || !r.height) continue;
         ccToolsWrapSelect(s);
       }
     } catch (e) {}
   }
-  // apply() runs ONCE at boot, and on the Dashboard that is too early: dynamix renders the tiles itself, so at
-  // that moment the four <select>s have a zero box and the "RENDERED" test above correctly skips them (measured:
-  // 0 wrapped after a full load with the sweep in apply() alone). Two cheap, bounded follow-ups, both idempotent
-  // because the sweep's own :not([data-cc-tsel]) filter makes a repeat pass a no-op:
-  //   · a 300ms x 15 settle interval, the same shape ccAppsBoot() already uses for CA's late card render;
-  //   · a debounced re-sweep after any click, which is what catches a control that only exists once something
-  //     is OPENED (a plugin's modal, a tile the user switches on) — without it "the next pass picks it up"
-  //     would be a claim with no pass behind it.
+  // apply() runs once at boot, which on the Dashboard is before dynamix has rendered its tiles, so
+  // the selects still measure zero and the rendered test above skips them. Two bounded follow-ups,
+  // both no-ops on a repeat pass thanks to the sweep's own marker filter: a settle interval, as
+  // ccAppsBoot() uses for CA's late cards, and a debounced sweep after any click, which catches a
+  // control that exists only once something is opened.
   var ccSelSweepT = null;
   function ccWrapSelectsBoot() {
     try {
@@ -1998,16 +1738,15 @@
       }, true);
     } catch (e) {}
   }
-  // V-E: roving focus between option chips (skips group headers + disabled)
+  // roving focus between option chips, skipping group headers and disabled ones
   function ccTselMove(panel, cur, dir) {
     var opts = Array.prototype.filter.call(panel.querySelectorAll(".cc-tsel-opt"), function (o) { return !o.classList.contains("is-disabled"); });
     var i = opts.indexOf(cur); if (i < 0) i = 0; else i = (i + dir + opts.length) % opts.length;
     if (opts[i]) opts[i].focus();
   }
-  // #2 (user: "Banner und Favoriten Toggle sind unwirksam"): native /Settings/* apply on FORM SUBMIT, not on
-  // `change` — so a CC toggle/dropdown flip has NO live effect until "Anwenden". Persist the single changed
-  // field the way native Apply does (POST it to /update.php with the form's #file/#section + csrf_token), then
-  // reload so the effect shows — the same mechanism CC's own settings.js already proves works for these fields.
+  // The native /Settings pages apply on form submit rather than on change, so flipping a wrapped
+  // toggle has no effect until Apply. This persists the one changed field the way Apply does, by
+  // posting it to /update.php with the form's own #file and #section, and reloads.
   function ccApplyToolsSel(sel) {
     try {
       if (!sel || !sel.name || typeof window.csrf_token === "undefined") return;
@@ -2018,18 +1757,16 @@
       fd.append("#section", (sEl && sEl.value) || "display");
       fd.append("csrf_token", window.csrf_token);
       fd.append(sel.name, sel.value);
-      // #3 (user): couple native settings that ALSO have a CC counterpart, so the CC side is kept in step and
-      // doesn't override the effect. favorites <-> cc.hidefavtab (native "no" = CC "hide the favourites tab").
+      // Keep a native setting that has a CC counterpart in step, or the CC side overrides it again.
       try { if (sel.name === "favorites") localStorage.setItem("cc.hidefavtab", (sel.value === "no" || sel.value === "0") ? "1" : "0"); } catch (eC) {}
       fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function () { location.reload(); }).catch(function () {});
     } catch (e) {}
   }
-  // #22 (user: "bei allen Einstellungen die Doppelpunkte weg"): on native /Tools/* and /Settings/* sub-pages
-  // (cc-tools-on) strip the trailing colon from every setting label. Visual only + idempotent (marks done).
+  // Tidies the native /Tools and /Settings sub-pages: the setting labels lose their trailing colon,
+  // the status word becomes a state dot, and each inline help block moves onto an info bubble.
   function ccToolsEnhance() {
     try {
       if (!document.documentElement.classList.contains("cc-tools-on")) return;
-      // #22: strip the trailing colon from every setting label
       var dts = document.querySelectorAll("#displaybox dl > dt:not([data-cc-nocolon])");
       for (var i = 0; i < dts.length; i++) {
         var dt = dts[i]; dt.setAttribute("data-cc-nocolon", "1");
@@ -2038,35 +1775,32 @@
         for (var j = walk.childNodes.length - 1; j >= 0; j--) { if (walk.childNodes[j].nodeType === 3 && (walk.childNodes[j].nodeValue || "").trim()) { tn = walk.childNodes[j]; break; } }
         if (tn) tn.nodeValue = tn.nodeValue.replace(/\s*:\s*$/, "");
       }
-      // #N5 (user: the docker "Läuft" status should be a small STATE DOT right of the badge, like the disk
-      // state dots): turn the coloured status word in the page-title status span into a dot (word kept as tip).
+      // The coloured status word in the page-title span becomes a state dot, with the word as its
+      // tooltip, like the disk state dots.
       var stcolor = { green: "#1f9d55", orange: "#e0912a", red: "#d9433f", grey: "#8d8d8d", gray: "#8d8d8d", blue: "#2f6feb" };
       var stwords = document.querySelectorAll("#displaybox div.title .status span[class]:not([data-cc-dot]), #displaybox div.title span.status span[class]:not([data-cc-dot])");
       for (var sw = 0; sw < stwords.length; sw++) {
         var w = stwords[sw]; var cl = (w.className || "").trim().toLowerCase(); var col = stcolor[cl];
         if (!col) continue;
         w.setAttribute("data-cc-dot", "1"); w.setAttribute("data-cc-tip", (w.textContent || "").trim());
-        // #7 (user): the dot follows the colour modes (accent) unless state-native is on; its shape follows the
-        // badge-shape setting (--cc-dot-r). Store the raw state colour as a var; the Tools.css rules pick which wins.
+        // The dot follows the colour modes unless state-native is on, and its shape the badge
+        // setting. The raw state colour goes into a var, and the sheet decides which one wins.
         w.textContent = ""; w.classList.add("cc-status-dot"); w.style.setProperty("--cc-dotstate", col);
       }
-      // #23 (user: native infotexts -> a CC info bubble): Unraid's per-setting help is a
-      // blockquote.inline_help; move its text onto a small (i) icon on the label (rides the CC tip bubble)
-      // and hide the native block.
+      // Unraid's per-setting help is a blockquote, whose text moves onto a small icon on the label
+      // and rides the CC bubble; the native block is hidden.
       var helps = document.querySelectorAll("#displaybox blockquote.inline_help:not([data-cc-help]), #displaybox .inline-help:not([data-cc-help])");
       for (var h = 0; h < helps.length; h++) {
         var bq = helps[h]; bq.setAttribute("data-cc-help", "1");
-        var txt = ccTransHelp((bq.textContent || "").trim()); if (!txt) { continue; }   // #6: German where Unraid left the help English
-        // #N7 (user: bubbles deplatziert): the help block sits either INSIDE the field's dd, or (other
-        // pages) as a flat sibling AFTER the dl it describes. Resolve the real label (dt) both ways; if
-        // none is found, leave the native help visible rather than dropping a stray icon at the edge.
+        var txt = ccTransHelp((bq.textContent || "").trim()); if (!txt) { continue; }
+        // The help block sits either inside the field's dd or as a flat sibling after the dl it
+        // describes, so the label is resolved both ways.
         var lab = null, dd = bq.closest("dd");
         if (dd) lab = dd.previousElementSibling;
         else { var pv = bq.previousElementSibling; while (pv && pv.tagName !== "DL" && pv.tagName !== "DT") pv = pv.previousElementSibling; if (pv) lab = pv.tagName === "DL" ? pv.querySelector("dt") : pv; }
         var host = (lab && lab.tagName === "DT") ? (lab.querySelector("span") || lab) : null;
-        // #3-Infotext (user: "nicht ALLE Beschreibungstexte in Infobubbles verlagert"): never leave a help
-        // block inline. If no label span resolves, fall back to the value cell (dd) or the label itself so
-        // EVERY description becomes an (i) bubble and the native inline text is always hidden.
+        // Without a label span, fall back to the value cell or the label itself, so no help block
+        // is left inline.
         if (!host && dd) host = dd;
         if (!host && lab) host = lab;
         if (host) {
@@ -2074,31 +1808,23 @@
           bq.style.display = "none";
         }
       }
-      // Unraid's form dl's carry EMPTY structural <dt>s before some real labels (a leftover placeholder from
-      // the native markup). Two sub-cases, both handled the same way — hide the stray dt so it drops out of
-      // the dl's grid layout entirely and native auto-flow places every real dt/dd row correctly on its own
-      // (#11/#12 Mover/TRIM, #32 Boot-Datenträger flyout on /Main — see Tools.css for why this moved out of a
-      // blanket CSS rule: :has()/adjacent-sibling matching can't tell "one stray row" from "several", so a
-      // single CSS rule flattened multi-row dl's onto each other). Was cc-diskpage-only; broadened to every
-      // cc-tools-on page since Mover/TRIM's stray dt lives on plain /Settings/*, not a disk page.
-      // (a) the resolver above sometimes appended a (i) icon to the WRONG (empty) dt instead of the real
-      //     label — fold that icon into the following label dt, then hide the now-empty carrier.
+      // Unraid's form lists carry empty structural <dt>s before some real labels. Hiding a stray dt
+      // takes it out of the grid entirely, so auto-flow places every real row itself. CSS cannot do
+      // this: :has() and sibling matching cannot tell one stray row from several, and a blanket
+      // rule flattens multi-row lists onto each other.
+      // The resolver above can append its icon to such an empty dt instead of the real label, so
+      // the icon moves into the following label and the empty carrier is hidden.
       var carriers = document.querySelectorAll("#displaybox dl > dt > .cc-toolsinfo");
       for (var ck = 0; ck < carriers.length; ck++) {
         var cic = carriers[ck], cdt = cic.parentElement;
-        if ((cdt.textContent || "").replace(/[\sⓘ]/g, "")) continue;              // dt already carries a label -> icon is fine
+        if ((cdt.textContent || "").replace(/[\sⓘ]/g, "")) continue;              // the dt has a label, so the icon belongs there
         var nlab = cdt.nextElementSibling;
         while (nlab && nlab.tagName === "DT" && (getComputedStyle(nlab).display === "none" || !(nlab.textContent || "").trim())) nlab = nlab.nextElementSibling;
         if (nlab && nlab.tagName === "DT") { nlab.appendChild(cic); cdt.style.display = "none"; }
       }
-      // (b) a stray dt with NOTHING in it at all (no icon, no text — #32's Boot-Datenträger case) has no
-      //     content to relocate; just hide it.
-      // #32 REGRESSION (user: "die Anwenden/Fertig-Buttons sind in allen Subtabs nach links verschoben"):
-      // hiding the dt with display:none also removes it as a GRID ITEM, so it no longer occupies column 1 —
-      // when a bare dt sits directly before a <dd> with no real <dt> between them (e.g. the ANWENDEN/FERTIG
-      // button row, term(empty) -> definition(buttons), no label needed), that dd lost its column-1 anchor
-      // and auto-flowed into column 1 itself instead of column 2. Force it back onto column 2 explicitly the
-      // moment its anchor disappears, rather than leaning on auto-flow to land the same place by accident.
+      // A dt with nothing in it at all has no content to relocate and is simply hidden. That also
+      // takes it out of the grid, so a dd that used it as its column-1 anchor, such as the button
+      // row, would flow into column 1 itself; it is put back on column 2 explicitly.
       var bareDts = document.querySelectorAll("#displaybox dl > dt:not([data-cc-barehid])");
       for (var bd = 0; bd < bareDts.length; bd++) {
         var bdt = bareDts[bd];
@@ -2110,11 +1836,9 @@
           if (afterBare && afterBare.tagName === "DD") afterBare.style.gridColumn = "2";
         }
       }
-      // #2-B (user: "Wo sind die Farbwählfelder bei Eigene Kopfzeilen-...farbe?"): Unraid's header colour
-      // fields (header / headermetacolor / background) are plain hex TEXT inputs with no picker. Give each a
-      // real colour-picker swatch (native <input type=color>) synced both ways, so a colour can be picked
-      // visually. Detected by a hex value AND a colour-ish label/name; the swatch writes the field + fires
-      // change so Unraid's Apply still works.
+      // Unraid's header colour fields are plain hex text inputs with no picker, so each gets a
+      // native colour swatch synced both ways. They are recognised by a hex value together with a
+      // colour-like name, and the swatch writes the field and fires change, so Apply still works.
       var COLNAMES = { header: 1, headermetacolor: 1, background: 1, headertext: 1 };
       function hex6(x) { x = String(x || "").replace(/^#/, ""); if (x.length === 3) x = x[0] + x[0] + x[1] + x[1] + x[2] + x[2]; return "#" + (x || "000000").toLowerCase(); }
       var cinp = document.querySelectorAll("#displaybox input[type=text]:not([data-cc-colpick])");
@@ -2133,10 +1857,9 @@
           inp2.addEventListener("input", function () { var vv = (inp2.value || "").trim(); if (/^#?[0-9a-f]{3}$|^#?[0-9a-f]{6}$/i.test(vv)) pk2.value = hex6(vv); });
         })(inp, pk);
       }
-      // #9 (user): on the VM-Manager settings page the "Entfernen" link beside the VirtIO-ISO dropdown becomes the
-      // same trash ICON the Plugins tab uses (cc-b-del cc-b-delicon). Gated to /Settings/VM* so it can't false-match
-      // a "Remove" elsewhere; only converts a short Remove/Entfernen control that rides in the same row as a <select>.
-      // The native onclick is kept (it just clears the ISO path).
+      // On the VM manager settings page the remove link beside the VirtIO ISO dropdown becomes the
+      // trash icon the Plugins tab uses. Gated to /Settings/VM so no other "remove" matches, and
+      // only for one riding in the same row as a select. Its native onclick stays.
       try {
         if (/\/Settings\/VM/i.test(location.pathname)) {
           var rms = document.querySelectorAll("#displaybox a, #displaybox span, #displaybox input[type=button], #displaybox button");
@@ -2145,14 +1868,14 @@
             var rmt = (rme.textContent || rme.value || "").replace(/^[^0-9a-zäöüß]+/i, "").trim();   // strip a leading 🗑 glyph
             if (!/^(entfernen|remove|löschen|delete)$/i.test(rmt)) continue;
             var rmrow = rme.closest("dd") || rme.closest("dl") || rme.parentElement;
-            if (!rmrow || !rmrow.querySelector("select")) continue;   // only a Remove that rides beside a dropdown
+            if (!rmrow || !rmrow.querySelector("select")) continue;
             rme.setAttribute("data-cc-delicon", "1"); rme.classList.add("cc-b-del", "cc-b-delicon"); rme.setAttribute("title", rmt);
           }
         }
       } catch (eRm) {}
-      // #24 (user: yes/no settings -> a toggle): a two-option <select> reading Ja/Nein (or Yes/No,
-      // Enabled/Disabled, An/Aus, On/Off) becomes a CC toggle. The real <select> stays in the DOM (hidden)
-      // as the form value; the toggle writes it back and fires change so Unraid's handlers still run.
+      // A two-option select whose options read as yes and no becomes a toggle. The real select
+      // stays hidden in the DOM as the form value, and the toggle writes it back and fires change,
+      // so Unraid's own handlers still run.
       var YES = { ja: 1, yes: 1, enabled: 1, an: 1, on: 1, aktiviert: 1 }, NO = { nein: 1, no: 1, disabled: 1, aus: 1, off: 1, deaktiviert: 1 };
       var sels = document.querySelectorAll("#displaybox select:not([data-cc-tgl]):not([multiple])");
       for (var s = 0; s < sels.length; s++) {
@@ -2166,63 +1889,61 @@
         var tg = document.createElement("span"); tg.className = "cc-tgl" + (sel.value === yesOpt.value ? " cc-tgl-on" : ""); tg.setAttribute("role", "switch"); tg.setAttribute("tabindex", "0");
         tg.appendChild(document.createElement("span")).className = "cc-tgl-knob";
         (function (sel2, tg2, yv, nv) {
-          var flip = function () { var nowOn = !tg2.classList.contains("cc-tgl-on"); tg2.classList.toggle("cc-tgl-on", nowOn); sel2.value = nowOn ? yv : nv; try { sel2.dispatchEvent(new Event("change", { bubbles: true })); } catch (e2) {} ccApplyToolsSel(sel2); };   // #2: persist + reload so the toggle takes effect live
+          var flip = function () { var nowOn = !tg2.classList.contains("cc-tgl-on"); tg2.classList.toggle("cc-tgl-on", nowOn); sel2.value = nowOn ? yv : nv; try { sel2.dispatchEvent(new Event("change", { bubbles: true })); } catch (e2) {} ccApplyToolsSel(sel2); };   // persist and reload, so the flip takes effect without Apply
           tg2.addEventListener("click", flip);
           tg2.addEventListener("keydown", function (e3) { if (e3.key === "Enter" || e3.key === " ") { e3.preventDefault(); flip(); } });
         })(sel, tg, yesOpt.value, noOpt.value);
         sel.style.display = "none";
         sel.parentNode.insertBefore(tg, sel.nextSibling);
       }
-      // #7: every REMAINING native <select> (not turned into a yes/no toggle above) becomes a CC overlay dropdown.
+      // every select not turned into a toggle above becomes the overlay dropdown
       var dsels = document.querySelectorAll("#displaybox select:not([data-cc-tgl]):not([data-cc-tsel]):not([multiple])");
       for (var ds = 0; ds < dsels.length; ds++) ccToolsWrapSelect(dsels[ds]);
     } catch (e) {}
   }
-  function watchIsland() {   // nchan rewrites the (hidden) footer live — mirror every update into the island
+  function watchIsland() {   // nchan rewrites the hidden footer live, and the island mirrors it
     try {
       if (ccIslandObs) return;
-      var f = document.getElementById("footer"); if (!f) return;   // no footer yet -> the next apply() retries
+      var f = document.getElementById("footer"); if (!f) return;   // no footer yet, so the next apply() retries
       ccIslandObs = new MutationObserver(function () { ccIsland(); });
-      ccIslandObs.observe(f, { childList: true, subtree: true, characterData: true });   // we write into #header, never #footer -> no loop
+      ccIslandObs.observe(f, { childList: true, subtree: true, characterData: true });   // the island writes into #header, so this cannot loop
     } catch (e) {}
   }
-  // ── SERVER-NAME BRAND (top-strip restyle). span#cc-brand = FIRST child of div#header, a
-  // light-DOM SIBLING of the Connect components (law: never inside them — auto-mount rebuilds
-  // their nodes; our sibling survives, and Header.css does all the styling). Name source is the
-  // document title ("Bottich/Dashboard" -> "Bottich"), fallback the native server-name span in
-  // the profile's controls row, else "Unraid". Gates on header+theming ONLY — NOT cc.island:
-  // hiding the status island must not remove the server name.
+  // The server name is a light-DOM sibling of the Connect components, never a child of them, since
+  // auto-mount rebuilds their nodes. It comes from the document title, else from the native
+  // server-name span in the profile, else it reads "Unraid". Gated on the header area and master
+  // theming but not on cc.island: hiding the status island must not take the name with it.
   var ccBrandSig = "";
   function ccBrandOn() { return g("cc.enable.header", "0") !== "0" && g("cc.theming", "1") !== "0"; }
   function ccBrand() {
     try {
       var br = document.getElementById("cc-brand");
-      if (!ccBrandOn()) { if (br && br.parentNode) br.parentNode.removeChild(br); ccBrandSig = ""; return; }   // teardown: gate off = brand gone (island idiom)
+      if (!ccBrandOn()) { if (br && br.parentNode) br.parentNode.removeChild(br); ccBrandSig = ""; return; }
       var hdr = document.getElementById("header"); if (!hdr) return;
       var name = (document.title.split("/")[0] || "").replace(/^\s+|\s+$/g, "");
-      if (!name) {   // titleless page -> read the native server-name span (first span of the profile's controls row)
+      if (!name) {   // a page without a title, so read the native server-name span
         var ns = document.querySelector("#UserProfile > div:nth-child(2) span");
         name = ((ns && ns.textContent) || "").replace(/^\s+|\s+$/g, "");
       }
       if (!name) name = "Unraid";
-      // customisation (user: size/weight/italic/font/colour in CC settings) — read the cc.brand.*
-      // keys and inline them; part of the sig so a live settings change re-renders.
+      // The cc.brand.* keys are inlined here and are part of the signature, so a settings change
+      // re-renders the name.
       var bSize = g("cc.brand.size", "30"), bWeight = g("cc.brand.weight", "650"), bItalic = g("cc.brand.italic", "0"),
           bFont = g("cc.brand.font", ""), bColor = g("cc.brand.color", "");
       var sig = name + "|" + bSize + "|" + bWeight + "|" + bItalic + "|" + bFont + "|" + bColor;
-      if (br && sig === ccBrandSig) return;   // idempotence: profile rebuilds re-run us, only a real change re-renders
+      if (br && sig === ccBrandSig) return;   // a profile rebuild re-runs this, but only a real change re-renders
       ccBrandSig = sig;
       if (!br) { br = document.createElement("span"); br.id = "cc-brand"; hdr.insertBefore(br, hdr.firstChild); }
-      while (br.firstChild) br.removeChild(br.firstChild);   // clear + refill = idempotent rebuild
+      while (br.firstChild) br.removeChild(br.firstChild);
       var nm = document.createElement("span"); nm.className = "cc-brand-name";
-      // inline overrides (the sheet's defaults apply when a key is unset/empty)
+      // an unset key leaves the sheet's default in place
       if (/^\d{1,3}$/.test(bSize)) nm.style.fontSize = bSize + "px";
       if (bWeight) nm.style.fontWeight = bWeight;
       nm.style.fontStyle = bItalic === "1" ? "italic" : "normal";
       if (bFont) {
         nm.style.fontFamily = bFont;
-        // if the chosen face is one of the curated Google families, load the web font so the wordmark
-        // renders for EVERYONE, not just clients that happen to have it installed.
+        // Load the web font for one of the curated Google families, so the name renders the same
+        // on a client that does not have it installed.
         try {
           if (window.CCTheme && window.CCTheme.loadGFonts && window.CCTheme.gfonts) {
             var fam = window.CCTheme.primaryFamily(bFont);
@@ -2236,40 +1957,34 @@
     } catch (e) {}
   }
   var ccProfObs = null, ccProfT = null;
-  function watchProfile() {   // uptime/edition/name live inside the Connect profile — auto-mount rebuilds it at will
+  function watchProfile() {   // the uptime, edition and name live inside the Connect profile, which auto-mount rebuilds at will
     try {
       if (ccProfObs) return;
-      // observe the CUSTOM ELEMENT when present (it survives auto-mount replacing div#UserProfile
-      // wholesale), never div#header — we write #cc-island/#cc-brand into #header ourselves and
-      // must not observe our own writes
+      // Observe the custom element where there is one, since it survives auto-mount replacing
+      // div#UserProfile wholesale, and never div#header, where this file writes itself.
       var p = document.querySelector("unraid-user-profile") || document.getElementById("UserProfile");
-      if (!p) return;   // not mounted yet -> the next apply() retries (watchIsland idiom)
+      if (!p) return;   // not mounted yet, so the next apply() retries
       ccProfObs = new MutationObserver(function () {
-        if (ccProfT) return;   // DEBOUNCE 120ms (freeze law): coalesce auto-mount's rebuild burst into ONE pass
+        if (ccProfT) return;   // coalesce auto-mount's rebuild burst into one pass
         ccProfT = setTimeout(function () {
           ccProfT = null;
-          ccIsland(); ccBrand();   // both are sig-guarded no-ops when nothing changed; we never write inside the component, so no loop is possible — the debounce stays anyway
-          ccDockProfile();         // slow net: catches anything the fast net (ccWatchAdopt) missed
+          ccIsland(); ccBrand();
+          ccDockProfile();         // the slow net, for anything ccWatchAdopt missed
         }, 120);
       });
       ccProfObs.observe(p, { childList: true, subtree: true, characterData: true });
-      // #16 ROUND 5: the bell/burger dock is REPARENTED, not overlaid — ccWatchAdopt() (declared with
-      // the rest of the dock code) is the FAST/synchronous net that re-adopts the instant Connect's
-      // auto-mount inserts a fresh (un-adopted) trigger span, straight off the childList mutation, no
-      // debounce, so the CSS visibility-hidden safety net never has to cover more than one frame. This
-      // 120ms-debounced observer above is the slow net for the rest of the profile chips + a fallback
-      // re-adopt in case ccWatchAdopt's own observe() target wasn't mounted yet on first call.
+      // ccWatchAdopt() is the fast net: it re-adopts the moment auto-mount inserts a fresh trigger
+      // span, straight off the childList mutation and without a debounce, so the CSS safety net
+      // never has to cover more than one frame. The debounced observer above is the slow net for
+      // the rest of the profile, and a fallback if ccWatchAdopt's own target was not mounted yet.
       ccWatchAdopt();
     } catch (e) {}
   }
-  // ── GLOBAL FLOATING hover bubble (user: "im Start-Tab passen viele Mouseover-Bubbles nicht …
-  // systemweit checken"). Pure-CSS ::after bubbles get CLIPPED by overflow ancestors (nav tiles,
-  // tables) and by the viewport edge — so ONE shared body-mounted div#cc-tipfloat serves EVERY
-  // [data-cc-tip]/[data-tip] anchor DOCUMENT-WIDE (island chips, docker lists, shares tables,
-  // the settings panel …) via delegation on document (survives any rebuild). Positioning: fixed,
-  // centred under the anchor, clamped into the viewport (8px margins, the arrow stays over the
-  // anchor), FLIPPED above the anchor when the bottom edge would clip it (cc-tip-above turns the
-  // arrow downward). Hidden on scroll + pointerdown. Master-theming gated (cc-popups-on mirrors it).
+  // A ::after bubble is clipped by an overflow ancestor such as a nav tile or a table, and by the
+  // viewport edge, so one body-mounted div serves every [data-cc-tip] anchor in the document
+  // through delegation, which survives any rebuild. It is fixed, centred under the anchor and
+  // clamped into the viewport with the arrow staying over the anchor, and flips above the anchor
+  // when the bottom edge would clip it. Hidden on scroll and on pointerdown.
   var ccTipBound = false, ccTipCur = null;
   function ccTipEl() {
     var d = document.getElementById("cc-tipfloat");
@@ -2281,88 +1996,67 @@
     var tip = t.getAttribute("data-cc-tip") || t.getAttribute("data-tip"); if (!tip) return;
     var d = ccTipEl(), r = t.getBoundingClientRect();
     d.textContent = tip;
-    d.style.display = "block";                                     // show first — size only measures while visible
+    d.style.display = "block";                                     // shown first, since it only measures while visible
     var vw = document.documentElement.clientWidth || window.innerWidth;
     var vh = document.documentElement.clientHeight || window.innerHeight;
     var w = d.offsetWidth, h = d.offsetHeight, cx = r.left + r.width / 2;
-    var x = Math.max(8 + w / 2, Math.min(vw - 8 - w / 2, cx));     // clamp INTO the viewport (tables/rows run to both edges)
-    d.style.left = x + "px";                                       // left = bubble CENTRE (CSS translateX(-50%))
-    // vertical FLIP: a bubble that would clip at the bottom edge opens ABOVE the anchor instead
-    // (only when it actually fits up there); cc-tip-above points the arrow downward
+    var x = Math.max(8 + w / 2, Math.min(vw - 8 - w / 2, cx));     // clamped into the viewport, since rows run to both edges
+    d.style.left = x + "px";                                       // left is the bubble's centre, which the CSS shifts back
+    // a bubble that would clip at the bottom opens above the anchor, where it fits
     var above = r.bottom + 8 + h > vh && r.top - 8 - h >= 0;
     d.classList.toggle("cc-tip-above", above);
     d.style.top = (above ? r.top - 8 - h : r.bottom + 8) + "px";
-    d.style.setProperty("--cc-tip-ax", Math.max(10, Math.min(w - 10, cx - (x - w / 2))) + "px");   // arrow stays over the anchor even when the bubble clamps
+    d.style.setProperty("--cc-tip-ax", Math.max(10, Math.min(w - 10, cx - (x - w / 2))) + "px");   // the arrow stays over the anchor even when the bubble clamps
   }
   function ccWireTips() {
     try {
       if (ccTipBound) return;
       ccTipBound = true;
       function over(e) {
-        if (!document.documentElement.classList.contains("cc-popups-on")) return;   // master theming off -> fully native
+        if (!document.documentElement.classList.contains("cc-popups-on")) return;   // master theming off, so everything stays native
         var t = e.target && e.target.closest ? e.target.closest("[data-cc-tip], [data-tip], [title]") : null;
         if (!t) return;
-        // a raw title anywhere (a menu icon a script never converted, a native control) becomes a
-        // CC bubble on the fly + the OS balloon is suppressed — so EVERY hover text is a CC bubble
-        // (user: "die Symbole haben nicht alle ein Mouseover-Text"). Skip empty/whitespace titles.
+        // A raw title anywhere, on a native control or an icon no script converted, becomes a
+        // bubble here and the OS balloon is suppressed, so every hover text reads the same.
         if (!t.getAttribute("data-cc-tip") && !t.getAttribute("data-tip")) {
           var nt = t.getAttribute("title");
           if (nt && nt.trim()) { t.setAttribute("data-cc-tip", nt); t.removeAttribute("title"); }
           else return;
         }
-        if (t === ccTipCur) return;                                // same anchor -> the bubble already stands
+        if (t === ccTipCur) return;                                // the bubble already stands on this anchor
         ccTipCur = t; ccTipShow(t);
       }
       function out(e) {
         if (!ccTipCur) return;
         var to = e.relatedTarget;
-        if (to && ccTipCur.contains(to)) return;                   // moved within the same anchor
+        if (to && ccTipCur.contains(to)) return;                   // still inside the same anchor
         ccTipHide();
       }
       document.addEventListener("mouseover", over);
       document.addEventListener("mouseout", out);
       document.addEventListener("focusin", over);
       document.addEventListener("focusout", out);
-      document.addEventListener("pointerdown", ccTipHide, true);   // a press means action, not reading -> hide
-      window.addEventListener("scroll", ccTipHide, true);          // any scroll de-anchors the fixed bubble -> hide (capture catches inner-container scrolls too)
-      // GlimStone Rule 8 spells out "Hover UND Fokus, Escape schliesst" — the focus half was here from the
-      // start (focusin/focusout above), Escape never was. A keyboard user who tabbed onto an (i) had no way
-      // to dismiss the bubble except tabbing away again. Capture phase so it fires before any window/dialog
-      // Escape handler that stops propagation; it only hides a tooltip, so it never swallows the key.
+      document.addEventListener("pointerdown", ccTipHide, true);   // a press means action rather than reading
+      window.addEventListener("scroll", ccTipHide, true);          // any scroll de-anchors the fixed bubble, and capture catches inner containers too
+      // Escape dismisses the bubble, which is a keyboard user's only way out after tabbing onto an
+      // icon. In the capture phase, so it fires before a dialog handler that stops propagation; it
+      // only hides a tooltip, so it never swallows the key.
       document.addEventListener("keydown", function (e) { if (e.key === "Escape") ccTipHide(); }, true);
     } catch (e) {}
   }
-  // ── BELL + BURGER DOCK — REPARENT MODEL (#16 ROUND 5). Rounds 1-4 (a 1s safety-net interval, a
-  // hover listener scoped to #UserProfile, one widened to the whole document, then a continuous
-  // per-frame rAF re-pin loop) all tried to make a position:fixed OVERLAY track a position:sticky
-  // proxy from JS. That is structurally unfixable: sticky recompute is resolved natively by the
-  // compositor with no synchronous JS hook, so a rAF poll is always at least one frame behind
-  // during the sticky transition (measured live: 30px trailing during the scroll handoff) — and,
-  // separately and more importantly, `html.cc-anim-wild #menu:has(.nav-tile > .nav-item:hover) {
-  // z-index: 103 }` lifts #menu above #header (102) on hover of ANY nav item; since the fixed
-  // trigger spans are still visually children of #header's OWN stacking context, .nav-tile.right's
-  // opaque background then paints straight over BOTH of them (they are siblings inside the SAME
-  // re-rendered Connect container, hence "still a group") for as long as the hover lasts. Four
-  // rounds of re-pin timing fixes could never have touched that: it is a stacking-context bug, not
-  // a timing bug.
-  // FIX: physically ADOPT the two live Connect trigger <span>s as children of their existing proxy
-  // <div>s (#cc-bell-proxy / #cc-burger-proxy — already first-class, draggable nav-items living in
-  // the native .nav-tile.right flow, added for drag & drop reordering). Adopted, the spans reflow
-  // NATIVELY with the row (zero scroll lag, no JS tracking needed) and paint INSIDE .nav-tile.right's
-  // own stacking context (structurally impossible for that tile's own background to cover them).
-  // The old "the live triggers are NEVER moved in the DOM" law (asserted v3.1.0, commit 1ae6664,
-  // on the theory that Connect's Vue framework requires it) was never actually tested and is
-  // EMPIRICALLY FALSIFIED this round: a moved span still takes real clicks, still flips its own
-  // data-state, and the real .bg-popover / notification Sheet still render correctly anchored
-  // under it. The real constraint was only ever that Connect periodically REBUILDS the profile row
-  // (auto-mount) — ccWatchAdopt() below re-adopts synchronously, before paint, the instant that
-  // happens, and a CSS safety net (Header.css) hides any leftover un-adopted span regardless of
-  // JS timing, so a rebuild can never flash the icons at the parked zero-footprint anchor.
+  // The bell and burger triggers are adopted as children of their proxy divs rather than overlaid.
+  // An overlay cannot work here: a fixed box tracking a sticky proxy from JS is always a frame
+  // behind, because the compositor resolves sticky with no synchronous hook, and worse, hovering
+  // any nav item lifts #menu above #header, so .nav-tile.right's opaque background paints over two
+  // spans that still belong to #header's stacking context. Adopted, the spans reflow with the row
+  // and paint inside that tile's own context, where its background cannot cover them. Connect
+  // rebuilds the profile row periodically; ccWatchAdopt() below re-adopts before paint the moment
+  // it does, and a CSS rule hides any leftover un-adopted span whatever the JS timing, so a rebuild
+  // cannot flash the icons at the parked anchor.
   var ccDockProps = ["position", "left", "right", "top", "height", "width", "z-index", "padding", "min-width"];
-  // classify the two trigger spans by IDENTITY, not DOM position (position was fine while both
-  // stayed put; once adopted, order in the DOM changes) — the burger's live id starts with
-  // "reka-menu-trigger" (verified live, e.g. "reka-menu-trigger-v-0-0"); first/last-of-the-rest is
-  // the fallback so this still degrades safely if Connect's naming ever changes.
+  // The two trigger spans are told apart by identity rather than DOM position, which changes once
+  // they are adopted: the burger's id starts with "reka-menu-trigger". Falling back to first and
+  // last keeps this working if Connect's naming changes.
   function ccClassifyTrig(sp) {
     var burger = null, i;
     for (i = 0; i < sp.length; i++) { if (/^reka-menu-trigger/.test(sp[i].id || "")) { burger = sp[i]; break; } }
@@ -2372,10 +2066,9 @@
     if (!bell) bell = sp.length ? sp[0] : null;
     return { bell: bell, burger: burger };
   }
-  // ── proxies: TWO real, draggable nav-items (#cc-bell-proxy / #cc-burger-proxy) that live in the
-  // normal .nav-tile.right flow, so they reflow/reorder like every other icon. Each now HOSTS its
-  // live trigger as a real DOM child (ccDockProfile below); the proxy's own <a>/ghost glyph is only
-  // needed as the drag handle while arrange mode is active (JS toggles its display — see below). ──
+  // The proxies are two real draggable nav items in the normal .nav-tile.right flow, so they
+  // reflow and reorder like every other icon, and each hosts its live trigger as a DOM child. The
+  // proxy's own ghost glyph serves as the drag handle while arrange mode is active.
   function ccEnsureProxies(bellSpan, burgerSpan) {
     var tileR = navTileR(); if (!tileR) return [null, null];
     var defs = [["cc-bell-proxy", true, bellSpan], ["cc-burger-proxy", false, burgerSpan]];
@@ -2389,13 +2082,13 @@
         it.id = id;
         var a = document.createElement("a"); a.href = "#"; a.className = "hand cc-proxy-a";
         a.setAttribute("data-cc-tip", isBell ? T("Benachrichtigungen", "Notifications") : T("Menü", "Menu"));
-        a.addEventListener("click", function (e) { e.preventDefault(); });   // arrange-mode ghost handle only; normal-mode clicks land on the adopted span beside it
+        a.addEventListener("click", function (e) { e.preventDefault(); });   // a click in normal mode lands on the adopted span beside it
         var gh = document.createElement("span"); gh.className = "cc-proxy-ghost"; a.appendChild(gh);
         it.appendChild(a);
-        tileR.appendChild(it);                                     // default = far right (burger last), matching native order
-        wireNavItem(it);                                           // make it a first-class drag participant
+        tileR.appendChild(it);                                     // far right by default, which matches the native order
+        wireNavItem(it);
       }
-      // keep the ghost glyph a faithful clone of the live trigger's icon (for the arrange-mode preview)
+      // the ghost glyph mirrors the live trigger's icon, for the arrange-mode preview
       var gh2 = it.querySelector(".cc-proxy-ghost");
       if (gh2 && span && gh2.getAttribute("data-cc-svg") !== "1") { var svg = span.querySelector("svg"); if (svg) { gh2.innerHTML = svg.outerHTML; gh2.setAttribute("data-cc-svg", "1"); } }
       out.push(it);
@@ -2407,15 +2100,13 @@
       if (!document.documentElement.classList.contains("cc-header-on")) { ccUndockProfile(); return; }
       var up = document.getElementById("UserProfile"); if (!up) return;
       var container = up.querySelector(":scope > div:nth-child(2)");
-      // classify + stamp any FRESH (un-adopted) span Connect just rebuilt; already-adopted spans
-      // (living inside a proxy now) keep their data-cc-trig and are found via the document query.
+      // Stamp any fresh span Connect just rebuilt; an already adopted one lives inside its proxy,
+      // keeps its data-cc-trig and is found by the document query below.
       if (container) {
         var freshSp = container.querySelectorAll(":scope > span:not([data-cc-trig])");
         if (freshSp.length === 1) {
-          // exactly one un-adopted span: id-based classification needs a SECOND span to disambiguate
-          // against, so if exactly one role is currently missing document-wide, it must be this one —
-          // safer than falling through ccClassifyTrig's position fallback, which would otherwise (with
-          // only one candidate) tag the SAME node as both bell and burger.
+          // With only one candidate, ccClassifyTrig's position fallback would tag the same node as
+          // both roles, so take the one role that is missing document-wide instead.
           var needBell1 = !document.querySelector('[data-cc-trig="bell"]'), needBurger1 = !document.querySelector('[data-cc-trig="burger"]');
           if (needBell1 !== needBurger1) freshSp[0].setAttribute("data-cc-trig", needBurger1 ? "burger" : "bell");
         } else if (freshSp.length >= 2) {
@@ -2426,42 +2117,39 @@
       }
       var bellSpan = document.querySelector('[data-cc-trig="bell"]');
       var burgerSpan = document.querySelector('[data-cc-trig="burger"]');
-      if (!bellSpan && !burgerSpan) return;                        // profile not mounted yet -> next pass retries
-      var hideBell = g("cc.hideicon.bell", "0") === "1", hideBurger = g("cc.hideicon.burger", "0") === "1";   // #2b
-      var proxies = ccEnsureProxies(bellSpan, burgerSpan);          // [bellProxy, burgerProxy]
+      if (!bellSpan && !burgerSpan) return;                        // the profile is not mounted yet, so the next pass retries
+      var hideBell = g("cc.hideicon.bell", "0") === "1", hideBurger = g("cc.hideicon.burger", "0") === "1";
+      var proxies = ccEnsureProxies(bellSpan, burgerSpan);
       var arranging = document.documentElement.classList.contains("cc-arrange");
-      // Neutralise the leftover Connect container (auto-mount-safe: never removed from the DOM,
-      // just zero footprint — CSS already sets pointer-events:none on it).
-      function setUp(p, v) { if (up.style.getPropertyValue(p) !== v) up.style.setProperty(p, v, "important"); }   // diff-write = zero mutations once settled
+      // The emptied Connect container keeps its place in the DOM, which auto-mount needs, and is
+      // shrunk to no footprint instead.
+      function setUp(p, v) { if (up.style.getPropertyValue(p) !== v) up.style.setProperty(p, v, "important"); }   // writing only on a difference means no mutations once settled
       setUp("position", "fixed"); setUp("left", "0"); setUp("top", "0"); setUp("width", "0"); setUp("height", "0"); setUp("min-width", "0"); setUp("padding", "0");
       [[bellSpan, proxies[0], hideBell, true], [burgerSpan, proxies[1], hideBurger, false]].forEach(function (row) {
         var span = row[0], proxy = row[1], hidden = row[2], isBell = row[3];
         if (!span || !proxy) return;
         var wantDisp = hidden ? "none" : "";
-        if (proxy.style.display !== wantDisp) proxy.style.display = wantDisp;   // per-icon hide collapses the whole slot
+        if (proxy.style.display !== wantDisp) proxy.style.display = wantDisp;   // hiding the proxy collapses the whole slot
         var ss = span.style;
         if (hidden) { if (ss.getPropertyValue("display") !== "none") ss.setProperty("display", "none", "important"); return; }
         if (ss.getPropertyValue("display")) ss.removeProperty("display");
-        // CC bubbles instead of native balloons (the #menu sweep can't reach these once adopted either, they live outside #menu proper -> tip binding is document-wide, see ccWireTips)
+        // a CC bubble instead of the native balloon; ccWireTips binds document-wide
         if (!span.getAttribute("data-cc-tip")) span.setAttribute("data-cc-tip", isBell ? T("Benachrichtigungen", "Notifications") : T("Menü", "Menu"));
         if (span.getAttribute("title")) span.removeAttribute("title");
-        // the triggers carry Tailwind MIN-width/height (36px) that beat even sheet !important — enforce the 36px box inline
+        // the triggers carry a Tailwind min-width and min-height that beat the sheet, so the box is set inline
         if (ss.getPropertyValue("min-height") !== "36px") { ss.setProperty("width", "36px", "important"); ss.setProperty("height", "36px", "important"); ss.setProperty("min-width", "36px", "important"); ss.setProperty("min-height", "36px", "important"); }
-        // #15 colour modes: mirror the proxy slot's rainbow colour onto the adopted trigger so bell +
-        // burger follow rainbow/flag exactly like the util icons. paintNav() stamps --cc-rb-c on the
-        // proxy's <a> (it matches the util selector); copy it here. Normal mode -> cleared -> CSS wins.
+        // Mirror the proxy slot's rainbow colour onto the adopted trigger, so the bell and burger
+        // rotate like the other utility icons; paintNav() stamps it on the proxy's own anchor. In
+        // accent mode it is cleared and the CSS decides.
         var pxa = proxy.querySelector(".cc-proxy-a"), rbc = (rbOn() && pxa) ? pxa.style.getPropertyValue("--cc-rb-c") : "";
         if (rbc) { ss.setProperty("--cc-rb-c", rbc); ss.setProperty("--cc-rb-ct", pxa.style.getPropertyValue("--cc-rb-ct") || idealText(rbc)); }
         else { ss.removeProperty("--cc-rb-c"); ss.removeProperty("--cc-rb-ct"); }
-        // idempotent ADOPTION: the actual fix. appendChild is a no-op once the span already sits
-        // last inside the proxy — this branch then never fires again until Vue rebuilds a fresh span.
+        // The adoption itself. It is a no-op once the span sits inside the proxy, so this branch
+        // fires again only when Vue rebuilds a fresh span.
         if (span.parentElement !== proxy) proxy.appendChild(span);
-        // the proxy's OWN <a>/ghost is only the arrange-mode drag handle now; hide it whenever the
-        // real adopted trigger is doing the showing, so the two 36px boxes don't sit side by side.
-        // #34-followup: the general ".nav-item.util > a" rule forces display:inline-flex !important
-        // (it doesn't know about the iconproxy's own ghost handle) - a plain inline style can never
-        // beat that, so the hide silently no-op'd and the ghost sat there, transparent but full-width,
-        // widening the gap before bell/burger. Match its !important instead of losing to it.
+        // The ghost handle is hidden whenever the adopted trigger is showing, so the two boxes do
+        // not sit side by side. The general ".nav-item.util > a" rule forces display with
+        // !important, which a plain inline style cannot beat, so this matches it.
         var ghostA = proxy.querySelector(".cc-proxy-a");
         if (ghostA) {
           if (arranging) { if (ghostA.style.display) ghostA.style.removeProperty("display"); }
@@ -2470,16 +2158,16 @@
           }
         }
       });
-      ccArmAdoptObs();   // (re)arm the narrow style-attribute watch on the two now-adopted spans
+      ccArmAdoptObs();
     } catch (e) {}
   }
-  function ccUndockProfile() {                                     // OFF branch: move the spans back, drop the proxies, fully native again
+  function ccUndockProfile() {                                     // move the spans back and drop the proxies, so the row is native again
     try {
       ccDisarmAdoptObs();
       var bell = document.querySelector('[data-cc-trig="bell"]'), burger = document.querySelector('[data-cc-trig="burger"]');
       var up = document.getElementById("UserProfile");
       var container = up ? up.querySelector(":scope > div:nth-child(2)") : null;
-      if (container) { if (bell) container.appendChild(bell); if (burger) container.appendChild(burger); }   // native order: bell then burger
+      if (container) { if (bell) container.appendChild(bell); if (burger) container.appendChild(burger); }   // the native order is bell, then burger
       [bell, burger].forEach(function (s) {
         if (!s) return;
         s.removeAttribute("data-cc-trig");
@@ -2489,14 +2177,13 @@
       if (up) for (var i = 0; i < ccDockProps.length; i++) up.style.removeProperty(ccDockProps[i]);
     } catch (e) {}
   }
-  // ── auto-mount re-adoption. Two nets, same non-reentrancy argument for both: their only DOM
-  // writes land on the two trigger spans (attributes) or inside a PROXY div under #menu, and
-  // neither of those is inside the subtree either observer watches — so a write can wake the OTHER
-  // net at most once, see a clean/empty diff, and stop. Circuit breaker on the childList net is the
-  // hard backstop against the v3.6.5 self-observing-MutationObserver freeze class if Connect ever
-  // fights back harder than expected (a real tug-of-war, not just a rebuild). ──
+  // Two nets re-adopt after an auto-mount rebuild. Neither can loop: their only writes land on the
+  // trigger spans' attributes or inside a proxy under #menu, and neither sits in the subtree the
+  // other observer watches, so a write wakes the other net once, it sees a clean diff and stops.
+  // The counter on the wide net is the backstop if Connect ever fights back with a real tug-of-war
+  // rather than a plain rebuild.
   var ccAdoptObs = null, ccTrigStyleObs = null, ccAdoptHits = 0, ccAdoptWinT = 0, ccAdoptOffT = 0;
-  function ccArmAdoptObs() {   // narrow net: re-writes the 36px sizing on the two ADOPTED spans only, on a real wipe
+  function ccArmAdoptObs() {   // the narrow net: rewrites the box on the two adopted spans when something wipes it
     try {
       if (ccTrigStyleObs) { ccTrigStyleObs.disconnect(); ccTrigStyleObs = null; }
       var trig = document.querySelectorAll("[data-cc-trig]"); if (!trig.length) return;
@@ -2509,16 +2196,16 @@
       for (var i = 0; i < trig.length; i++) ccTrigStyleObs.observe(trig[i], { attributes: true, attributeFilter: ["style"] });
     } catch (e) {}
   }
-  function ccWatchAdopt() {   // wide net: catches Connect inserting a FRESH (un-adopted) trigger span on rebuild
+  function ccWatchAdopt() {   // the wide net: catches Connect inserting a fresh trigger span on a rebuild
     try {
       if (ccAdoptObs) return;
       var p = document.querySelector("unraid-user-profile"); if (!p) return;
       ccAdoptObs = new MutationObserver(function () {
-        if (Date.now() < ccAdoptOffT) return;                                                                 // breaker tripped -> stand down
-        if (!document.querySelector("#UserProfile > div:nth-child(2) > span:not([data-cc-trig])")) return;    // gate: nothing un-adopted -> no-op, chain terminates here
+        if (Date.now() < ccAdoptOffT) return;                                                                 // stood down
+        if (!document.querySelector("#UserProfile > div:nth-child(2) > span:not([data-cc-trig])")) return;    // nothing un-adopted, so the chain ends here
         var now = Date.now();
         if (now - ccAdoptWinT > 1000) { ccAdoptWinT = now; ccAdoptHits = 0; }
-        if (++ccAdoptHits > 30) { ccAdoptOffT = now + 5000; return; }                                          // >30 re-adoptions/second -> Connect tug-of-war, disarm 5s (v3.6.5 freeze law)
+        if (++ccAdoptHits > 30) { ccAdoptOffT = now + 5000; return; }                                          // thirty re-adoptions a second is a tug-of-war, so stand down
         try { ccDockProfile(); } catch (e2) {}
       });
       ccAdoptObs.observe(p, { childList: true, subtree: true });
@@ -2527,9 +2214,8 @@
   function ccDisarmAdoptObs() {
     try { if (ccAdoptObs) { ccAdoptObs.disconnect(); ccAdoptObs = null; } if (ccTrigStyleObs) { ccTrigStyleObs.disconnect(); ccTrigStyleObs = null; } } catch (e) {}
   }
-  // ── CC TOAST ── one reusable bottom-centre notice (help feedback #11, "what's new" toast, …). A single
-  // reused node; the styling (surface, radius, colour-mode accent) lives in Header.css (.cc-toast). Auto-
-  // dismisses; reduced-motion respected via CSS. Safe no-op if the document body is not ready.
+  // One reusable bottom-centre notice, a single node the styling in Header.css dresses. It
+  // dismisses itself, and reduced motion is handled in the CSS.
   var ccToastEl = null, ccToastT = 0;
   function ccToast(msg, ms) {
     try {
@@ -2541,17 +2227,13 @@
       ccToastT = setTimeout(function () { ccToastT = 0; if (ccToastEl) ccToastEl.classList.remove("cc-toast-show"); }, ms || 2600);
     } catch (e) {}
   }
-  try { window.ccToast = ccToast; } catch (e) {}   // let docker.js / settings.js reuse the same toast
-  // #56 (user, Settings > Verwaltungszugriff > Unraid API Settings / API Keys: "toggle nicht im GLS,
-  // Farben passen nicht"): those subtabs are NOT the classic PHP form the rest of Verwaltungszugriff is
-  // (already GLS'd in Tools.css) - each is its OWN Vue/Tailwind custom element Unraid ships (confirmed
-  // live: <unraid-connect-settings> on "Unraid API Settings", a DIFFERENT <unraid-api-key-manager> on
-  // "API Keys" - do not assume a single tag name covers every subtab). All of them share class="unapi
-  // dark" though, confirmed on both, so that's the one stable anchor - light-DOM (no shadow root), styled
-  // entirely through shadcn/Tailwind's own CSS-variable convention: every colour utility reads
-  // `hsl(var(--primary))` etc, with the triplet (not a hex, not wrapped in hsl()) defined locally on the
-  // element. Overriding the TRIPLET is the one hook point that reaches every one of its buttons/toggles/
-  // rings/focus states at once, without chasing each Tailwind class combination individually.
+  try { window.ccToast = ccToast; } catch (e) {}   // docker.js and settings.js reuse the same toast
+  // The API settings sub-tabs are not the classic PHP form the rest of that page is: each is its own
+  // Vue custom element with its own tag name, so no single tag covers them. They all carry
+  // class="unapi" in the light DOM, which is the stable anchor, and they are styled through
+  // Tailwind's CSS-variable convention, where every colour utility reads hsl(var(--primary)) and
+  // the variable holds a bare triplet defined on the element. Overriding that triplet reaches
+  // every button, toggle and focus ring at once, without chasing each class combination.
   function ccHexToHslTriplet(hex) {
     var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "220 91% 55%";
     var n = parseInt(m[1], 16), r = (n >> 16 & 255) / 255, gC = (n >> 8 & 255) / 255, b = (n & 255) / 255;
@@ -2567,22 +2249,18 @@
     try {
       var hosts = document.querySelectorAll(".unapi");
       if (!hosts.length) return;
-      // live-caught: rbColor(0) is palette SLOT ZERO (red in the default palette), not "the" rainbow
-      // colour - painted the whole subtab red the moment Rainbow was on, clashing with every other area
-      // on the same page. --cc-rbaccent (set a few hundred lines down, ONLY while Rainbow + the header
-      // area are both on) is the house's actual "one representative colour under Rainbow" value - it's
-      // rbColor(5), deliberately the same palette index as the default accent, so it stays continuous
-      // with the plain-accent look instead of landing on an arbitrary slot. Read that computed value
-      // (falling back to the plain accent exactly like every var(--cc-rb-c, var(--cc-rbaccent, <accent>))
-      // chain elsewhere in this file) instead of recomputing a second, differently-indexed rainbow colour.
+      // --cc-rbaccent is the one representative colour under rainbow, set further down while
+      // rainbow and the header area are both on. It is rbColor(5), the same palette index as the
+      // default accent, so it stays continuous with the plain-accent look; taking slot zero
+      // instead would paint the whole sub-tab red and clash with every other area on the page.
       var rbaVar = getComputedStyle(document.documentElement).getPropertyValue("--cc-rbaccent").trim();
       var hex = /^#[0-9a-f]{6}$/i.test(rbaVar) ? rbaVar : accent();
       var triplet = ccHexToHslTriplet(hex), fg = idealText(hex) === "#fff" ? "0 0% 98%" : "0 0% 9%";
       for (var i = 0; i < hosts.length; i++) {
         var s = hosts[i].style;
-        // --primary/--ring drive the toggle-checked fill, focus rings and primary buttons; --accent/
-        // --accent-foreground drive the neutral :hover states (bg-accent) - mapping both to the SAME
-        // colour matches the rest of CC, where hover always resolves to the accent (.caButton:hover etc).
+        // --primary and --ring drive the checked fill, the focus rings and the primary buttons,
+        // --accent the neutral hover states. Both take the same colour, as elsewhere in the
+        // plugin, where a hover always resolves to the accent.
         s.setProperty("--primary", triplet); s.setProperty("--primary-foreground", fg);
         s.setProperty("--ring", triplet);
         s.setProperty("--accent", triplet); s.setProperty("--accent-foreground", fg);
@@ -2592,203 +2270,154 @@
   function apply() {
     try {
       var root = document.documentElement;
-      // MASTER THEMING off (cc.theming="0") behaves like the area being disabled — header is
-      // purely presentational. The storage listener re-runs apply(), so a live toggle reverts.
+      // Master theming off behaves like a disabled area, since the header is presentational. The
+      // storage listener re-runs apply(), so a live toggle reverts it.
       var on = g("cc.enable.header", "0") !== "0" && g("cc.theming", "1") !== "0";
       root.classList.toggle("cc-header-on", on);
-      // GLOBAL Badge-Form "circle": header.js runs on every page, so it owns the one global class the
-      // per-object 50%-radius overrides in every sheet key off. Set it UNCONDITIONALLY (badge shape is
-      // global, independent of whether the header area itself is on) — it only rounds SQUARE badges, and
-      // if no area is enabled there are no badges to round, so it's harmless when everything is off.
+      // This file runs on every page, so it owns the global classes the sheets key off. The badge
+      // shape is global and set whatever the header area does; with no area enabled there are no
+      // badges for it to reach.
       root.classList.toggle("cc-shape-circle", g("cc.badgeshape", "pill") === "circle");
-      // #14 (user: "systemweit mehr Animationen" + ein Toggle): GLOBAL animation master, default ON. cc-anim-on
-      // makes CC animations run even when the OS asks to reduce motion (the user explicitly wants more); cc-anim-
-      // off stills them everywhere. Set unconditionally (motion is global chrome, like the badge shape above).
-      root.classList.toggle("cc-anim-on", g("cc.anim", "1") !== "0");   // on = normal OR wild
+      // The animation master is global too. cc-anim-on lets the CC animations run even when the OS
+      // asks to reduce motion, which is what the setting is for; cc-anim-off stills them.
+      root.classList.toggle("cc-anim-on", g("cc.anim", "1") !== "0");
       root.classList.toggle("cc-anim-off", g("cc.anim", "1") === "0");
-      root.classList.toggle("cc-anim-wild", g("cc.anim", "1") === "2"); // wild = the exuberant extras on top
-      // #8/#4: the badge-form radii must be present on EVERY page (the Tools/Settings sub-page toggle
-      // track/knob and the docker state dot read them) — set them UNCONDITIONALLY here, not only inside the
-      // header-area-on branch below. All areas compute the SAME shape(), so this can't disagree with them.
+      root.classList.toggle("cc-anim-wild", g("cc.anim", "1") === "2");
+      // The badge radii are read on every page, by the settings toggles and the docker state dot
+      // among others, so they are set here rather than inside the header branch below. Every area
+      // computes the same shape(), so they cannot disagree.
       try {
         root.style.setProperty("--cc-b-radius", shape());
         root.style.setProperty("--cc-dot-r", ({ pill: "50%", circle: "50%", rounded: "3px", square: "0px" })[g("cc.badgeshape", "pill")] || "50%");
       } catch (eR) {}
-      // GLOBAL popup theming (user: "alle Subfenster/Popupfenster in den CC Style"): the native
-      // jQuery-UI dialogs (openBox/openPlugin) + SweetAlert confirmations follow the CC look on
-      // every page. Master-gated only — it is chrome, not an area of its own.
+      // The native jQuery-UI dialogs and the SweetAlert confirmations follow the CC look on every
+      // page. Master-gated only, since it is chrome rather than an area of its own.
       root.classList.toggle("cc-popups-on", g("cc.theming", "1") !== "0");
-      // CA's settings sub-page (/Apps/ca_settings) is a REAL Unraid form page, not one of CA's overlays, and
-      // nothing in its markup identifies it: its <form> posts to /update.php like every other Unraid setting
-      // page, so a :has(form[action*="ca_settings"]) hook matched nothing (verified live). Stamp the page
-      // identity from the URL instead — the same trick the sheet already relies on for the other CA states.
+      // CA's settings sub-page is a real Unraid form page, not one of CA's overlays, and nothing in
+      // its markup identifies it: its form posts to /update.php like any other settings page. The
+      // identity comes from the URL instead, as the sheet already does for CA's other states.
       root.classList.toggle("cc-ca-settings", /^\/Apps\/ca_settings/i.test(location.pathname));
-      // Two passes: writing the padding moves the row, so one measurement only gets part of the way there
-      // (live: 767 -> 797 against a target of 843). The function is self-correcting, so a second pass after
-      // layout has settled lands it exactly; both are strict no-ops once aligned.
+      // Writing the padding moves the row, so the first measurement only gets part of the way. The
+      // function corrects itself, so a second pass once layout has settled lands it, and both are
+      // no-ops once aligned.
       ccCaSettingsRows();
       setTimeout(ccCaSettingsRows, 60);
       setTimeout(ccCaSettingsRows, 400);
-      // #56: same async-mount problem as ccCaSettingsRows above (Vue custom element, not present at the
-      // moment apply() first runs) - same immediate + staggered-retry shape, plus a bounded interval since
-      // switching between the Unraid API Settings / API Keys sub-tabs re-mounts the element without a full
-      // page navigation (apply() itself is not re-triggered by a tab click, only by boot()/storage events).
+      // The API settings element mounts asynchronously too, and switching between its sub-tabs
+      // remounts it without a page navigation, which nothing else here would notice.
       ccSyncApiTheme();
       setTimeout(ccSyncApiTheme, 60);
       setTimeout(ccSyncApiTheme, 400);
       if (/^\/Settings\/ManagementAccess/i.test(location.pathname)) {
         var ccApiTick = 0, ccApiIv = setInterval(function () { ccSyncApiTheme(); if (++ccApiTick >= 20) clearInterval(ccApiIv); }, 500);
       }
-      // GLOBAL footer hide (user: "die native Leiste wo Array gestartet steht ... komplett
-      // ausblenden"): footer#footer = the fixed 28px strip (#statusraid/#statusbar + temps +
-      // copyright). DEFAULT HIDDEN — cc.footer="0" (settings toggle) brings it back. Same
-      // master-gating idiom as cc-popups-on; the storage listener re-runs apply() live.
+      // The native footer strip is hidden by default; cc.footer brings it back.
       root.classList.toggle("cc-footer-off", g("cc.footer", "1") === "1" && g("cc.theming", "1") !== "0");
-      // hide the native Favorites menu tab (user: "Favoriten ausblenden" — Unraid's own favorites=no
-      // does NOT hide the tab, and CC's own `#menu .nav-item{display:inline-flex!important}` even
-      // forces it visible; the sheet rule beats that on cc-hide-favtab). Master-gated only (chrome).
+      // Unraid's own favorites=no does not hide the Favorites tab, and CC's own nav rule even
+      // forces it visible, which the sheet's cc-hide-favtab rule beats.
       root.classList.toggle("cc-hide-favtab", g("cc.hidefavtab", "0") === "1" && g("cc.theming", "1") !== "0");
-      // array-usage chip lives in the island now — hide the native menu usage-bar while the
-      // island is on (its data source; the chip mirrors the text). Island off = native bar back.
+      // The island's fill chip mirrors the native menu usage bar, which is its data source, so that
+      // bar is hidden while the island shows and comes back when it does not.
       root.classList.toggle("cc-usage-isl", on && ccIslandOn());
-      // #2b per-icon hide (top-right utility icons) + #16 native state colours — global chrome toggles,
-      // master-theming-gated. cc.hideicon.<key>=1 hides that icon (Header.css); the docked bell/burger
-      // are handled in ccDockProfile. cc.statenative=1 lets state indicators keep their native colour.
-      // T3: bell + burger are integral (never hidden) — dropped from this list so a stale cc.hideicon.bell/
-      // burger can no longer blank the icon while leaving its badge; the settings toggles were removed too.
+      // Per-icon hide for the utility icons, and the native state colours. The bell and burger are
+      // not in the list: they are integral and handled in ccDockProfile, and a stale key would
+      // otherwise blank the icon while leaving its badge.
       ["lang", "search", "logout", "terminal", "browse", "feedback", "info", "log", "help"].forEach(function (k9) { root.classList.toggle("cc-hideicon-" + k9, g("cc.hideicon." + k9, "0") === "1" && g("cc.theming", "1") !== "0"); });
       root.classList.toggle("cc-state-native", g("cc.statenative", "0") === "1" && g("cc.theming", "1") !== "0");
-      // #10: global rainbow flag on <html> so the unified loader (.cc-nchan-loader) can cycle its colour
-      // once per spin revolution while rainbow is on. Independent of the header AREA being enabled.
+      // a global rainbow flag, so the shared loader can cycle its colour once per revolution
       root.classList.toggle("cc-rb-on", rbOn() && g("cc.theming", "1") !== "0");
-      // #4/#11 (user: buttons in den Farbmodi): stamp ONE rainbow/flag "action" colour on <html> so
-      // native buttons in EVERY sheet (Freigaben, Tools/Settings sub-pages) can follow the colour mode
-      // via var(--cc-rbaccent, <accent>). Flag mode also sets cc.rainbow=1, so rbColor() already yields
-      // the flag colour here. Cleared when rainbow is off -> buttons fall back to their accent.
-      // #93 (user: "im anzeige einstellungstab sind die unteren buttons nicht in den farbmodi"): that
-      // "fall back to their accent" never actually happened — nothing ever set the --cc-accent side of
-      // the CSS fallback chain (var(--cc-rbaccent, var(--cc-accent, #2f6feb))) on a GENERIC native page.
-      // The 6 area-specific scripts (docker/plugins/vms/settingsgrid/settings/favorites.js) each stamp
-      // it on their OWN page, but a plain /Settings/* sub-page like Display Settings has none of those —
-      // its buttons silently fell all the way through to the CSS-hardcoded #2f6feb default instead of
-      // the user's actual configured accent the instant rainbow/flag mode was off (or the moment
-      // rbColor(5) legitimately isn't a fitting colour for that spot). accent() is the SAME function
-      // rbColor()'s own non-rainbow fallback already calls internally, so this is the accent this exact
-      // block already treats as canonical for generic pages — just applying it directly too.
+      // One representative colour on <html>, so a native button in any sheet can follow the colour
+      // mode through var(--cc-rbaccent, var(--cc-accent, …)). The six area scripts stamp --cc-accent
+      // on their own pages, but a plain /Settings sub-page has none of them, so without the branch
+      // below its buttons fall through to the hardcoded default rather than the configured accent.
+      // accent() is the same function rbColor()'s own non-rainbow fallback calls.
       try {
         if (on) { var accA = accent(); root.style.setProperty("--cc-accent", accA); root.style.setProperty("--cc-accent-text", idealText(accA)); }
         else { root.style.removeProperty("--cc-accent"); root.style.removeProperty("--cc-accent-text"); }
         if (on && rbOn()) { var rbA = rbColor(5); root.style.setProperty("--cc-rbaccent", rbA); root.style.setProperty("--cc-rbaccent-text", idealText(rbA)); }
         else { root.style.removeProperty("--cc-rbaccent"); root.style.removeProperty("--cc-rbaccent-text"); }
       } catch (e7) {}
-      // #14 + #1 + Anzeige-Rework: Carbon-ify the Tools SUB-pages, the docker/plugin execution-output
-      // (install-log) pages AND every native /Settings/* SUB-page (so the un-hidden Display Settings page
-      // is CC-styled). cc-tools-on = a /Tools/... path OR a /Settings/<x> sub-page (NOT our own CC page,
-      // which owns #cc-settings) OR the content carries a native <fieldset><legend>. Master-theming-gated.
+      // cc-tools-on covers the /Tools sub-pages, every native /Settings sub-page and the
+      // docker/plugin execution-output pages, but not CC's own settings page, which owns
+      // #cc-settings.
       try {
         var p0 = location.pathname, ownPg = /^\/Settings\/CannonadeCommand/.test(p0);
-        // #(user: "alle Disk-Subseiten in den CC-Style" + "alle Subseiten des Boot-Devices in CC-Style"): the disk/pool
-        // DETAIL pages (click a disk on /Main) are /Main/Device? / /Main/Disk?, and the boot/flash device is /Main/Boot? —
-        // all reka settings forms with the SAME layout as a /Settings sub-page (section headings, toggles, selects,
-        // inputs, sub-tab bar). Match by URL (not by a fieldset probe, which races the async reka render) so the full
-        // Tools treatment applies reliably. The /Main ROOT (disk_status table) is NOT matched -> it stays native.
-        // #37 (root cause, live-traced): /Main/Boot is the flash DEVICE detail page (health, partition, share) - a
-        // DIFFERENT page from the actual "Boot Parameters" kernel-arguments editor the user meant, which lives at
-        // /Settings/BootParameters. Only the device page ever matched, so every .warning-box/.section-header/
-        // toggle rule already written for Boot Parameters (Tools.css, this file's rainbow rotation below) sat
-        // dormant - cc-tools-on fired (it matches any /Settings/. sub-page) but cc-diskpage never did, and the
-        // compact grid + section badges are gated on cc-diskpage specifically.
+        // The disk and pool detail pages and the boot parameters editor are reka settings forms
+        // with the same layout as a /Settings sub-page. They are matched by URL rather than by
+        // probing for a fieldset, which races the async render. The /Main root stays native.
         var diskPg = /^\/Main\/(Device|Disk|Boot)\b/.test(p0) || /^\/Settings\/BootParameters\b/.test(p0);
-        // CA's settings sub-page (/Apps/ca_settings) is a NATIVE Unraid settings form — same dl/dt/dd layout,
-        // same selects, same bare input buttons — so it gets the SAME treatment instead of a second, thinner
-        // one of its own. That is what finally puts its dropdowns in the CC style: ccToolsEnhance() replaces
-        // every native <select> with the .cc-tsel overlay (a real CC panel that CAN be styled when open,
-        // unlike an OS-rendered option list), turns yes/no pairs into CC toggles, and the Tools sheet already
-        // carries the colour-mode variants for all of it. Maintaining a parallel half-solution here is what
-        // kept the page looking un-CC through several rounds.
+        // CA's settings sub-page is a native Unraid settings form, with the same layout, selects
+        // and bare input buttons, so it takes the same treatment rather than one of its own.
         var caSettingsPg = /^\/Apps\/ca_settings/i.test(p0);
-        // #(user: "abschnittsbadges zu groß" on the container-recreate window, measured live): the
-        // fieldset+legend fallback below exists for the Tools plugin-install log, but /Docker/(AddContainer|
-        // UpdateContainer) ALSO renders a native fieldset+legend once it streams (docker.js's dedicated
-        // html.cc-ctout-on already restyles that exact page) — so cc-tools-on fired there TOO and its own
-        // generic Tools.css legend rule (display:inline-flex, min-height:30px, margin-bottom:12px) fought
-        // cc-ctout-on's legend rule on the SAME elements, inflating the badges past what either rule alone
-        // specified. Exclude the ctout URL so only cc-ctout-on styles that page.
+        // The container-recreate pages render a native fieldset and legend once they stream, so
+        // the fallback below would match them and its generic legend rule would fight the one
+        // docker.js already applies there, inflating the badges past either rule on its own.
         var ctOutPg = /^\/(Docker|Apps)\/(AddContainer|UpdateContainer)$/.test(p0);
         var toolsPg = !ownPg && !ctOutPg && (/^\/Tools\//.test(p0) || /^\/Settings\/./.test(p0) || diskPg || caSettingsPg || !!document.querySelector("#displaybox fieldset legend"));
         root.classList.toggle("cc-tools-on", toolsPg && g("cc.theming", "1") !== "0");
-        // the disk DETAIL form is a full-width native grid, so the reverted-to-native /Settings dl handling lets its
-        // labels/values spread to the screen edges. Mark disk pages so the COMPACT CC grid (kept only here) reins the
-        // form back in — /Settings pages stay native.
+        // The disk detail form is a full-width native grid whose labels and values would spread to
+        // the screen edges, so the compact grid is kept for these pages alone.
         root.classList.toggle("cc-diskpage", diskPg && toolsPg && g("cc.theming", "1") !== "0");
-        // #41 (user: "der create api key button ist zu groß und nicht in den farbmodi"): the "Create API Key"
-        // trigger + its own reka dropdown menu live only on this one settings sub-page — scope narrowly rather
-        // than restyling every [aria-haspopup="menu"] trigger CC has never audited on other /Settings pages.
+        // The create-key trigger and its dropdown live on this one sub-page, so the rules for it
+        // are scoped here rather than reaching every menu trigger on other /Settings pages.
         var apiKeysPg = /^\/Settings\/ApiKeys\b/.test(p0);
         root.classList.toggle("cc-apikeyspage", apiKeysPg && toolsPg && g("cc.theming", "1") !== "0");
       } catch (e0) {}
-      ccArrFill();      // #18: on /Main, refresh the cached array-fill % the island's fill chip reads
-      ccStateBars();   // #16: usage-bar fills follow the fill-level state colour when cc.statenative, else the palette
-      ccToolsEnhance();   // #22: strip label colons on native Tools/Settings sub-pages
-      ccWrapPageSelects();   // Rule 18: the remaining native <select>s OUTSIDE the Tools area (the Dashboard tiles) get the CC dropdown too
-      ccPaintRotate();    // #3/#8: per-element rotating palette colour on button rows + toggles (rainbow)
-      ccWatchMain();      // re-paint late AJAX-rendered content (usage bars, buttons, toggles)
+      ccArrFill();
+      ccStateBars();
+      ccToolsEnhance();
+      ccWrapPageSelects();
+      ccPaintRotate();
+      ccWatchMain();      // repaints content rendered after this pass
       ccNchanStyle(); paintPopups(); watchPopups();
-      ccWireTips();     // document-wide floating-bubble delegation (bound once) — on EVERY page: docker/shares/settings anchors ride it even with the header area off
-      try { ccApps(); } catch (e) {}   // #8: repaint /Apps colour-mode badges on every apply (live rainbow/accent toggle)
-      // paintNav() with cc-header-on now removed => rb=false => it removeProperty's every
-      // lingering rainbow inline colour, so a live theming-OFF (even with Rainbow on) fully
-      // reverts the menu bar instead of leaving the coloured tabs behind.
+      ccWireTips();     // on every page: the docker, shares and settings anchors ride it with the header area off too
+      try { ccApps(); } catch (e) {}
+      // With cc-header-on gone, paintNav() clears every lingering inline rainbow colour, so
+      // switching theming off reverts the menu bar instead of leaving the coloured tabs behind.
       if (!on) {
         paintNav(); measureAlign();
-        ccIsland();   // gate off inside -> removes span#cc-island from div#header
-        ccBrand();    // same teardown for span#cc-brand (server name)
-        // styled hover bubbles -> native title balloons back (area off = fully native)
+        ccIsland();
+        ccBrand();
+        // styled hover bubbles back to native title balloons
         var tps0 = document.querySelectorAll("#menu [data-cc-tip]");
         for (var tq = 0; tq < tps0.length; tq++) { tps0[tq].setAttribute("title", tps0[tq].getAttribute("data-cc-tip")); tps0[tq].removeAttribute("data-cc-tip"); }
-        ccTipHide();        // the floating bubble must not linger once the titles are native again
-        ccUndockProfile();  // bell/burger back to their native top-right spot
-        return;   // measure even when the header area is off: OTHER areas (shares/settings) still align to the native menu-text edge
+        ccTipHide();
+        ccUndockProfile();
+        return;   // measureAlign() ran above, since the other areas still align to the native menu-text edge
       }
-      // utility-icon titles -> the styled CC bubble (user: hover bubbles frameless + badge-form;
-      // the native OS balloon can't be styled). Idempotent; the off-branch above restores.
+      // The utility icons' titles become CC bubbles, because the OS balloon cannot be styled.
       var tps1 = document.querySelectorAll("#menu .nav-item.util a[title], #menu .usage-bar [title]");
       for (var tr1 = 0; tr1 < tps1.length; tr1++) { var th = tps1[tr1]; th.setAttribute("data-cc-tip", th.getAttribute("title")); th.removeAttribute("title"); }
       var a = accent();
-      // ISOLATED accent var — NOT the shared --cc-accent. Other global enhancers (shares.js,
-      // the page-specific docker/plugins/vms) also write --cc-accent on documentElement and
-      // would clobber the menu-bar colour (and vice-versa); each area now owns its var and the
-      // sheet reads --cc-hdr-accent. (--cc-b-radius stays shared: one global Badge-Form.)
+      // The menu bar owns its own accent var: the other global enhancers write --cc-accent on
+      // documentElement and would clobber this colour, and the reverse. --cc-b-radius stays
+      // shared, being the one badge shape.
       root.style.setProperty("--cc-hdr-accent", a);
       root.style.setProperty("--cc-hdr-accent-text", idealText(a));
       root.style.setProperty("--cc-b-radius", shape());
       root.classList.toggle("cc-header-rb", rbOn());
-      applyNavOrder();  // restore the user's saved tab order BEFORE painting/measuring (it reorders the DOM)
-      setupNavDrag();   // make the tabs draggable (idempotent per tile)
+      applyNavOrder();  // before painting and measuring, since it reorders the DOM
+      setupNavDrag();
       paintNav();
-      ccTabIcons();     // main-tab icons (idempotent; insertBefore changes tab width, so it must run before measureAlign)
-      measureAlign();   // after the pill geometry is live -> measure the real left edge
-      ccIsland();       // status island in the top strip (self-gated on cc.island, default on)
-      ccBrand();        // server-name brand, first child of the top strip (header+theming gated, NOT cc.island)
-      watchIsland();    // live footer observer so nchan status/temp updates flow into the chips
-      watchProfile();   // debounced profile observer so uptime/edition/name rebuilds flow into chips + brand
-      ccDockProfile();  // adopt bell+burger into their proxy slots at the far right end of the menu icon row (idempotent, self-gated)
-      ccArrangeLock();  // #Drag-Umbau: the always-visible lock toggle (self-gates on cc-header-on)
-      // #16 ROUND 5: late passes against a settling layout (live-proven: the first pass can run before
-      // late-loading icons/styles have finished shifting the row) — re-adopt twice after the dust settles.
-      // No continuous rAF loop needed any more (rounds 1-4's history): adoption makes the trigger part of
-      // the native flow, so once adopted it needs no further per-frame tracking at all.
+      ccTabIcons();     // before measureAlign: inserting an icon changes the tab width
+      measureAlign();   // once the pill geometry is live
+      ccIsland();
+      ccBrand();
+      watchIsland();
+      watchProfile();
+      ccDockProfile();
+      ccArrangeLock();
+      // The first pass can run before late-loading icons and styles have finished shifting the
+      // row, so the dock is re-adopted twice more once the layout has settled. Adoption puts the
+      // trigger into the native flow, so nothing has to track it per frame afterwards.
       setTimeout(ccDockProfile, 300); setTimeout(ccDockProfile, 1200);
     } catch (e) {}
   }
-  // gui_search() prepends #guiSearchBoxSpan at the FAR-LEFT of .nav-tile.right, focuses
-  // the input, and closes the search on the input's focusout. We want the field to sit
-  // directly LEFT of the search toggle (magnifier) — but MOVING the span in the DOM
-  // blurs the focused input, which fires gui_search's onfocusout and instantly closes
-  // the search (the field never appears). So we position the span purely with flex
-  // `order` (no DOM move => no blur => the field stays open). Setting `order` is an
-  // attribute change, not a childList mutation, so it never re-triggers our observer.
-  // On close (no span) we reset the orders. Only when CC header is on + top-nav layout.
+  // gui_search() prepends its box at the far left of the right tile, focuses the input and closes
+  // the search on that input's focusout. The field belongs directly left of the magnifier, but
+  // moving the span blurs the focused input, which fires that focusout and closes the search
+  // before it appears. So the span is placed with flex order alone: no DOM move, no blur, and an
+  // attribute change rather than a childList mutation, which never re-triggers the observer.
   function reorderSearch() {
     try {
       var root = document.documentElement;
@@ -2803,7 +2432,7 @@
       if (!toggle) { for (j = 0; j < kids.length; j++) kids[j].style.removeProperty("order"); return; }
       var order = 0;
       for (j = 0; j < kids.length; j++) {
-        if (kids[j] === span) continue;                 // placed just before the toggle below
+        if (kids[j] === span) continue;                 // it is placed just before the toggle below
         if (kids[j] === toggle) { span.style.setProperty("order", order); order++; }
         kids[j].style.setProperty("order", order); order++;
       }
@@ -2812,10 +2441,9 @@
   function watchSearch() {
     try {
       var target = document.getElementById("menu") || document.body;
-      // DEBOUNCED (freeze fix): a synchronous callback here ping-ponged with Unraid's Connect
-      // auto-mount observer (its component rebuilds refire us, our reorder refires it) and the
-      // microtask storm froze the tab. The timer hop lets the event loop breathe and coalesces
-      // auto-mount's burst into ONE pass; the applyNavOrder truce covers the rest.
+      // A synchronous callback here ping-pongs with Connect's auto-mount observer, whose rebuilds
+      // refire this one and whose own observer the reorder refires. The timer hop lets the event
+      // loop breathe and coalesces the rebuild burst into one pass; applyNavOrder covers the rest.
       var moT = null;
       var mo = new MutationObserver(function () {
         if (moT) return;
@@ -2823,24 +2451,22 @@
           moT = null;
           reorderSearch();
           document.documentElement.classList.toggle("cc-search-open", !!document.getElementById("guiSearchBoxSpan"));
-          // late-added utility icons (native scripts append them AFTER boot) get their saved slot
-          // + drag wiring here — applyNavOrder is a strict no-op once the arrangement matches.
+          // A utility icon the native scripts append after boot gets its saved slot and its drag
+          // wiring here; applyNavOrder is a no-op once the arrangement matches.
           if (document.documentElement.classList.contains("cc-header-on")) { applyNavOrder(); setupNavDrag(); }
           paintNav();
-          ccDockProfile();   // the icon row shifts when the search box opens/closes or icons arrive late — re-pin the dock (self-gated)
+          ccDockProfile();   // the icon row shifts when the search box opens or an icon arrives late
         }, 120);
       });
       mo.observe(target, { childList: true, subtree: true });
     } catch (e) {}
   }
-  // Native gui_search only OPENS on a click; make a 2nd click on the magnifier CLOSE it.
-  // Delegated capture-phase listener runs BEFORE the toggle's inline onclick="gui_search()",
-  // so when the box is already open we close it and stop the event from re-opening it.
+  // gui_search() only opens on a click, so a second click on the magnifier closes it here. The
+  // delegated capture-phase listener runs before the toggle's own inline onclick.
   function wireSearchToggle() {
-    // ROOT CAUSE of "2nd click doesn't close" (user): a REAL click on the magnifier first BLURS the search
-    // input, whose onfocusout closes the box — so by click-time the box is already gone, a click-time "is it
-    // open?" check reads false, and the inline gui_search() then RE-opens it. Fix: remember whether the box was
-    // open at MOUSEDOWN (before the blur), and on the following click block the re-open + force it closed.
+    // A real click on the magnifier first blurs the search input, whose focusout closes the box, so
+    // by click time the box is already gone and the inline gui_search() reopens it. Remembering
+    // whether it was open at mousedown, before the blur, is what tells the two cases apart.
     var searchWasOpen = false;
     function onToggle(e) { return e.target && e.target.closest ? e.target.closest(".nav-item.gui_search, [onclick*='gui_search']") : null; }
     function closeSearch(ev) {
@@ -2855,7 +2481,7 @@
         if (!document.documentElement.classList.contains("cc-header-on")) { searchWasOpen = false; return; }
         if (onToggle(e)) { searchWasOpen = !!document.getElementById("guiSearchBoxSpan"); return; }
         searchWasOpen = false;
-        // click OUTSIDE the search span while it is open -> close it too
+        // a click outside the search span while it is open closes it too
         var span = document.getElementById("guiSearchBoxSpan");
         if (span && !(e.target && e.target.closest && e.target.closest("#guiSearchBoxSpan"))) closeSearch(e);
       } catch (err) {}
@@ -2864,84 +2490,76 @@
       try {
         if (!document.documentElement.classList.contains("cc-header-on")) return;
         if (!onToggle(e)) return;
-        if (!searchWasOpen && !document.getElementById("guiSearchBoxSpan")) return; // was closed -> let native OPEN it
+        if (!searchWasOpen && !document.getElementById("guiSearchBoxSpan")) return; // it was closed, so let the native handler open it
         searchWasOpen = false;
-        e.preventDefault(); e.stopImmediatePropagation(); // block the inline gui_search() re-open
+        e.preventDefault(); e.stopImmediatePropagation(); // keep the inline gui_search() from reopening it
         closeSearch(e);
       } catch (err) {}
     }, true);
     document.addEventListener("keydown", function (e) { try { if (e.key === "Escape" && document.getElementById("guiSearchBoxSpan")) closeSearch(e); } catch (err) {} });
   }
   var CC_VER = "@@CCVER@@"; if (CC_VER.indexOf("@@") === 0) CC_VER = "dev";
-  // V-D "Was ist neu?": after an update, greet with a one-shot toast naming the new version (never on the
-  // very first install — no baseline to compare — and never in dev builds). cc.lastver tracks the last seen.
+  // After an update, a one-shot toast names the new version. Never on the first install, which has
+  // no baseline to compare against, and never in a dev build.
   function ccWhatsNew() {
     try {
       if (CC_VER === "dev") return;
-      if (g("cc.theming", "1") === "0") return;                 // CC disabled -> stay silent
+      if (g("cc.theming", "1") === "0") return;
       var last = g("cc.lastver", "");
       if (last && last !== CC_VER) { setTimeout(function () { ccToast(T("CannonadeCommand auf v" + CC_VER + " aktualisiert.", "CannonadeCommand updated to v" + CC_VER + ".")); }, 1400); }
       if (last !== CC_VER) { try { localStorage.setItem("cc.lastver", CC_VER); } catch (e2) {} }
     } catch (e) {}
   }
-  // ═══ #7/#8/#9/#11 Apps (Community Applications) tab — colour-mode stamping + subtitle→(i) bubble ═══════
-  // header.js is the ONLY CC script on /Apps (docker/plugins/vms are page-scoped), and --cc-accent /
-  // --cc-rbaccent are NOT stamped on root here — so CA badges fell back to the default blue in BOTH modes.
-  // This self-contained pass stamps --cc-rb-c/--cc-rb-ct per element (like docker.js injectRowBadges):
-  // rbColor(i) returns the user's accent when rainbow is off, or a rotating jewel when on. It also moves
-  // each home-section subtitle into the shared (i) bubble (#9). FREEZE-SAFE: NO subtree observer on the card
-  // tree (that froze the tab); a childList(subtree:false) observer on #templates_content catches CA's view
-  // swaps, plus a re-stamp on the CA nav clicks.
-  // ONE (i) for the whole plugin — cc-theme.js owns the glyph and the markup now (see the block there:
-  // four separate hand-rolled versions of this had drifted apart). Local fallback kept byte-compatible
-  // per this file's own convention, in case cc-theme.js ever fails to load first.
+  // This file is the only CC script on the Apps tab, and it stamps no accent var on the root there,
+  // so without this pass CA's badges fall back to the default blue in both colour modes. It stamps
+  // --cc-rb-c per element, which rbColor() resolves to the accent or to a rotating slot, and moves
+  // each home-section subtitle into the shared bubble. No subtree observer on the card tree, which
+  // froze the tab: a childList observer on #templates_content catches CA's view swaps, and a
+  // re-stamp rides the nav clicks.
+  // The plugin has one (i) glyph, which cc-theme.js owns; this is the fallback for a page that
+  // loads without it.
   function ccMakeInfo(tip) {
     if (window.CCTheme && window.CCTheme.infoIcon) return window.CCTheme.infoIcon(tip);
     var s = document.createElement("span"); s.className = "cc-info";
     s.innerHTML = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3" /><circle cx="8" cy="4.6" r="0.9" fill="currentColor" /><path d="M8 7v4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>';
     s.setAttribute("data-tip", tip); s.setAttribute("aria-label", tip); s.setAttribute("tabindex", "0");
-    return s;   // rides the document-wide #cc-tipfloat engine (ccWireTips)
+    return s;
   }
   function ccAppsStamp(sel) {
     var els = document.querySelectorAll(sel);
     for (var i = 0; i < els.length; i++) {
-      var c = rbColor(i);                                  // accent when rainbow off, jewel[i] when on
+      var c = rbColor(i);
       els[i].style.setProperty("--cc-rb-c", c);
       els[i].style.setProperty("--cc-rb-ct", idealText(c));
     }
   }
-  // #7: turn CA's full-width search into a collapsible far-right badge — the magnifier is a colour-mode
-  // BUTTON that expands into an input on click (mirrors CC-settings wireSearchToggle / .cc-set-searchbadge).
-  // Idempotent via data-cc-search so it re-wires after CA view swaps; re-open block runs in capture phase.
+  // CA's full-width search becomes a collapsible badge: a magnifier that expands into an input on
+  // click, as the CC settings search does. data-cc-search keeps it idempotent, so it re-wires after
+  // a CA view swap, and the reopen block runs in the capture phase.
   function wireCaSearch() {
     try {
       var filter = document.getElementById("searchFilter");
       if (!filter) return;
-      // #4 (user: "die suche als badge links unter dem Home badge platzieren, oben rechts passt nicht"): move
-      // the collapsible search badge out of the top-right search bar into the LEFT category sidebar, directly
-      // under the Home item. Guarded so it only mutates when NOT already placed -> idempotent, no observer loop
-      // (CA rebuilds the sidebar on view swaps, so this re-homes it on the next ccApps pass).
+      // The badge moves out of the top-right search bar into the left category sidebar, under the
+      // home item. CA rebuilds that sidebar on a view swap, so the next ccApps pass re-homes it.
       var caMenu = document.querySelector("ul.caMenu");
       if (caMenu) {
         var li = document.getElementById("cc-ca-search-li");
         if (!li) { li = document.createElement("li"); li.id = "cc-ca-search-li"; li.className = "caMenuItem cc-ca-search-li"; }
-        // EXCLUDE our own node when resolving the anchor: our li also carries .caMenuItem, so on a menu with no
-        // li.startupButton the querySelector below could return the li ITSELF once it has been inserted first.
-        // `home.nextElementSibling !== li` is then trivially true and every pass re-runs insertBefore — which
-        // removes + re-inserts the node, blurring whatever is focused inside it. With the search now interactive
-        // that would tear the input out mid-typing on any ccApps pass (they fire on every category click).
+        // This item carries .caMenuItem too, so on a menu without a startup button the query below
+        // could return it once inserted. The comparison after it would then always hold, every
+        // pass would re-insert the node, and that blurs whatever is focused inside it, which on a
+        // ccApps pass would tear the input away mid-typing.
         var home = caMenu.querySelector("li.startupButton") || caMenu.querySelector("li.caMenuItem:not(#cc-ca-search-li)");
         if (filter.parentElement !== li) li.appendChild(filter);
         if (home && home !== li) { if (home.nextElementSibling !== li) caMenu.insertBefore(li, home.nextElementSibling); }
         else if (li.parentElement !== caMenu) caMenu.insertBefore(li, caMenu.firstChild);
       }
-      // user (v3.6.6): "das Suchfeld im CA-Tab soll ein Badge sein mit Icon und Text; wenn man drauf klickt
-      // soll das Suchfeld kommen" — so cc-open is now RUNTIME STATE owned by the handlers below, not a
-      // permanent stamp. (v3.6.2 forced it on here on every pass, which no collapse handler could survive:
-      // ccApps re-runs on every category/magnifier click, so the badge would silently re-open ~60ms later.)
-      // CA's markup has no label text, so inject one. ABOVE the idempotency guard: the guard is right for
-      // event listeners (bind once per node) but wrong for DOM content, which must be repairable if CA
-      // rewrites the container's children while keeping the node.
+      // cc-open is runtime state the handlers below own, never stamped here: ccApps re-runs on
+      // every category and magnifier click, so a stamp would reopen the badge behind any collapse.
+      // CA's markup carries no label text, so one is injected. Above the idempotency guard, which
+      // is right for listeners, bound once per node, and wrong for DOM content, which has to be
+      // repairable when CA rewrites the container's children but keeps the node.
       if (!filter.querySelector(".cc-ca-search-label")) {
         var lb = document.createElement("span");
         lb.className = "cc-ca-search-label";
@@ -2951,8 +2569,8 @@
       if (filter.getAttribute("data-cc-search") === "1") return;
       filter.setAttribute("data-cc-search", "1");
       var box = document.getElementById("searchBox");
-      // #4: while typing, flag <html> so the suggestion popup grows past the narrow sidebar and the page dims +
-      // blurs behind it. The awesomplete <ul> is re-anchored fixed (right of the field) so the sidebar can't clip it.
+      // While typing, a class on <html> lets the suggestion popup grow past the narrow sidebar and
+      // dims the page behind it. The suggestion list is re-anchored fixed, clear of the sidebar.
       if (box) {
         var caFlag = function () {
           var on = !!(box.value && box.value.trim());
@@ -2964,40 +2582,34 @@
         box.addEventListener("focus", caFlag);
         box.addEventListener("blur", function () { setTimeout(function () { document.documentElement.classList.remove("cc-ca-searching"); }, 200); });
       }
-      // EXPAND: delegated on #searchFilter (not on the magnifier node) so a click anywhere in the chip —
-      // icon OR the "Suche" label — opens it, and so a CA re-render of the inner icon can't orphan the
-      // handler. The open-state is latched at MOUSEDOWN because a real click on the magnifier blurs the
-      // input first, so a click-time read would already say "closed" (the same trap the top-bar search
-      // documents in wireSearchToggle above).
+      // Delegated on the whole chip rather than on the magnifier, so a click on the icon or the
+      // label opens it and a CA re-render of the inner icon cannot orphan the handler. The open
+      // state is latched at mousedown, for the reason wireSearchToggle above gives.
       var caWasOpen = false;
       filter.addEventListener("mousedown", function () { caWasOpen = filter.classList.contains("cc-open"); }, true);
       filter.addEventListener("click", function (e) {
         try {
-          if (caWasOpen || filter.classList.contains("cc-open")) return;   // already open -> leave CA's own submit alone
-          // #26 (user: "wenn man aufs X klickt um die Suche zurückzusetzen öffnet sich das Suchfenster —
-          // es soll aber die Suche gleich zurücksetzen"): CA swaps the magnifier icon to fa-remove ("X")
-          // once a query is active — clicking it then means "clear", not "open" (confirmed live: the badge
-          // stays collapsed, #searchButton carries fa-remove, box.value is the old query). This capture-
-          // phase handler ran unconditionally and stopPropagation()'d every click, which ate CA's own
-          // clear-button handling right along with the open-badge one it was meant to intercept.
+          if (caWasOpen || filter.classList.contains("cc-open")) return;   // already open, so leave CA's own submit alone
+          // CA swaps the magnifier for a clear icon once a query is active, and a click then means
+          // clear rather than open. Without this check the capture-phase handler would stop that
+          // click along with the one it is here to intercept.
           var btn = filter.querySelector("#searchButton");
-          if (btn && btn.classList.contains("fa-remove")) return;   // let CA's own clear/reset run untouched
+          if (btn && btn.classList.contains("fa-remove")) return;
           e.preventDefault(); e.stopPropagation();
           filter.classList.add("cc-open");
-          // the expanded field leaves the sidebar column and overlays the app grid, so lift the sidebar's
-          // stacking context immediately — waiting for cc-ca-searching (set on the first keystroke) would
-          // paint the panel UNDER the cards for the moment between opening and typing.
+          // The expanded field leaves the sidebar column and overlays the app grid, so the
+          // sidebar's stacking context is lifted right away; waiting for the typing class would
+          // paint the panel under the cards until the first keystroke.
           document.documentElement.classList.add("cc-ca-searchopen");
           if (box) box.focus();
         } catch (e2) {}
       }, true);
     } catch (e) {}
   }
-  // COLLAPSE, bound ONCE per document (mirrors the CC-settings search badge). Never on blur/focusout: the
-  // suggestion list is position:fixed and visually outside the field but still a DOM descendant, so a
-  // focusout collapse would fire on pointer-down over a suggestion and destroy the list before its own click
-  // lands. BUBBLE phase and no stopPropagation — a capture-phase document listener that stops the event
-  // swallows the real click for every CA control underneath.
+  // The collapse is bound once per document, and never on focusout: the suggestion list is fixed
+  // and visually outside the field but still a DOM descendant, so a focusout collapse would fire on
+  // pointerdown over a suggestion and destroy the list before its own click landed. Bubble phase
+  // and no stopPropagation, or it would swallow the click for every CA control underneath.
   function ccWireCaSearchCollapse() {
     try {
       if (window.__ccCaSearchDoc) return;
@@ -3005,7 +2617,7 @@
       function collapse() {
         var f = document.getElementById("searchFilter");
         if (!f || !f.classList.contains("cc-open")) return;
-        if (!f.closest("li.cc-ca-search-li")) return;      // top-bar variant keeps its own behaviour
+        if (!f.closest("li.cc-ca-search-li")) return;      // the top-bar variant keeps its own behaviour
         f.classList.remove("cc-open");
         var b = document.getElementById("searchBox");
         if (b && b.value) {                                 // reset CA's own filter through its own listeners
@@ -3014,28 +2626,23 @@
           b.dispatchEvent(new Event("keyup", { bubbles: true }));
         }
         try { b && b.blur(); } catch (e) {}
-        document.documentElement.classList.remove("cc-ca-searching");   // else the dim would outlive the field
+        document.documentElement.classList.remove("cc-ca-searching");   // or the dim outlives the field
         document.documentElement.classList.remove("cc-ca-searchopen");
       }
       document.addEventListener("click", function (e) {
         var f = document.getElementById("searchFilter");
         if (!f || !f.contains(e.target)) collapse();        // contains() counts the fixed suggestion list as inside
       });
-      // CAPTURE for Escape: awesomplete binds its own Escape handler to close the suggestion list and the
-      // event never reached a bubble-phase document listener (live-proven: the value cleared but the field
-      // stayed expanded). Capture only LISTENS here — it must never stopPropagation, or it would swallow
-      // Escape for every control underneath.
+      // Escape is listened for in the capture phase, because awesomplete binds its own handler to
+      // close the suggestion list and the event never reaches a bubble-phase listener. It only
+      // listens and never stops propagation, or it would swallow Escape for the controls underneath.
       document.addEventListener("keydown", function (e) { if (e.key === "Escape") collapse(); }, true);
-      // #9 (user: "wenn man was sucht und enter drückt oder auf ein suchvorschlag klickt bleibt das
-      // suchfenster offen und der blur da bis man escape drückt"): collapse() above is CANCEL — it clears
-      // the term, which is correct for "dismiss" but WRONG for "I just searched", since it would wipe out
-      // the very query CA is about to filter by. Awesomplete's own library fires "awesomplete-selectcomplete"
-      // on #searchBox for BOTH a click on an <li> AND Enter-with-a-highlighted-item (verified in
-      // libraries.js: select() always ends with `i.fire(this.input,"awesomplete-selectcomplete",…)`; CA
-      // itself listens to the identical event at Apps.page:1349 to run its own search). Plain Enter with
-      // NOTHING highlighted reaches neither path — awesomplete only intercepts keyCode 13 when
-      // `s.selected`, so an un-highlighted Enter falls through as an ordinary keydown on the input. A
-      // direct Enter listener on the box covers that case without depending on awesomplete's internal state.
+      // collapse() above cancels, clearing the term, which is right for a dismissal and wrong after
+      // an actual search, where it would wipe the query CA is about to filter by. Awesomplete fires
+      // awesomplete-selectcomplete for a click on a suggestion and for Enter on a highlighted one,
+      // and CA listens to the same event. A plain Enter with nothing highlighted reaches neither,
+      // since awesomplete intercepts the key only while a suggestion is selected, so a direct Enter
+      // listener on the box covers that without depending on its internal state.
       function submitCollapse() {
         var f = document.getElementById("searchFilter");
         if (!f || !f.classList.contains("cc-open")) return;
@@ -3052,18 +2659,15 @@
       }
     } catch (e) {}
   }
-  // #4: anchor the CA app-suggestion popup as position:fixed to the RIGHT of the sidebar search field, so the
-  // 140px sidebar (overflow) can't clip it and it can grow wide + tall. Re-applied on every keystroke because
-  // awesomplete rewrites the <ul> and its inline top/left each render.
+  // Anchors the suggestion popup fixed, so the narrow sidebar cannot clip it. Re-applied on every
+  // keystroke, because awesomplete rewrites the list and its inline offsets on each render.
   function ccPositionCaResults(filter) {
     try {
       var ul = filter.querySelector(".awesomplete > ul"); if (!ul || ul.hasAttribute("hidden")) return;
       var r = filter.getBoundingClientRect();
       ul.style.setProperty("position", "fixed", "important");
-      // user (v3.6.6): "das Dropdown soll dann direkt unter der Suchleiste sein". It used to sit to the RIGHT
-      // of the field (left = r.right + 12) because the field was a 140px sidebar box the list had to escape;
-      // now the field itself opens to the right at the header panel's own width, so the list belongs directly
-      // beneath it, left-aligned and exactly as wide — i.e. one panel, not two adjacent boxes.
+      // The field opens to the right at the panel's own width, so the list sits directly beneath
+      // it, left-aligned and exactly as wide: one panel rather than two boxes side by side.
       ul.style.setProperty("left", Math.round(r.left) + "px", "important");
       ul.style.setProperty("top", Math.round(r.bottom + 6) + "px", "important");
       ul.style.setProperty("width", Math.round(r.width) + "px", "important");
@@ -3073,29 +2677,12 @@
       ul.style.setProperty("right", "auto", "important");
     } catch (e) {}
   }
-  // user (v3.6.6): "das menue und der badge sind rechts nicht buendig" / "die show more buttons sind zu weit
-  // rechts". The gutter the user compares SHOW MORE against is the HEADER's icon row (icons + status island
-  // agree on it: .nav-tile.right's right edge minus its padding). The section-header row lives in a DIFFERENT
-  // container (.menuAdjust), whose right edge sits some viewport-, scrollbar- and font-dependent distance
-  // further out (21px at a 1400px viewport) — no static padding can track that, and measuring against
-  // #displaybox instead of the row's real parent overshot by 10px. So measure each row against ITS OWN
-  // offsetParent and pad by exactly the delta; a later pass re-measures ~0 delta, so it converges.
-  // ── SIDEBAR CARDS (user, v3.6.6: "in der Seitenleiste machen wir Cards fuer die Abschnitte … Card fuer
-  // Installed Apps, fuer Previous Apps, Pinned Apps … Card fuer die Kategorien … dann All Apps und
-  // Repositories bleiben einzeln, alles darunter kommt wieder in eine Card"). CA renders the sidebar as
-  // FLAT <li> siblings across THREE separate ul.caMenu lists, so a card is not reachable in CSS alone
-  // (there is no "group of siblings" selector) — the group needs a real wrapper. We MOVE CA's own <li>
-  // nodes into it rather than cloning, so their click handlers survive untouched (same technique the
-  // search field already uses).
-  // Idempotency is the whole game here: ccApps re-runs on every category click and CA rebuilds this menu on
-  // view swaps. Each pass therefore checks whether the group's first node is ALREADY inside its card and
-  // bails out before touching the DOM — a re-parent would otherwise blur focus and fire needless mutations.
-  // MARK-ONLY, never re-parent. The first attempt wrapped each group in a real <li><ul> and MOVED CA's <li>
-  // into it; that broke CA outright — the "Installed/Previous Apps" sub-lists came back display:none, because
-  // CA's own show/hide logic addresses them through their original sibling relationship. So the card is drawn
-  // PURELY in CSS: every member of a group gets cc-card-in plus an edge marker (cc-card-top / cc-card-bot),
-  // and the sheet paints one continuous surface with the radius only on the outer edges. Nothing moves, CA's
-  // logic keeps working, and a class write is a cheap no-op on repeat passes.
+  // The sidebar's sections read as cards. CA renders it as flat siblings across three lists, and
+  // CSS has no selector for a group of siblings, but the card is still drawn purely in CSS:
+  // wrapping the groups in a real element breaks CA outright, because its own show and hide logic
+  // addresses the sub-lists through their original sibling relationship. Each member instead gets
+  // a class plus an edge marker, and the sheet paints one continuous surface with the radius on
+  // the outer edges only. Nothing moves, and a class write is a no-op on a repeat pass.
   function ccMark(items, title) {
     try {
       if (!items.length) return;
@@ -3105,22 +2692,20 @@
         el.classList.toggle("cc-card-top", first);
         el.classList.toggle("cc-card-bot", last);
       }
-      // CA ships no heading for the categories, so CC supplies one ("Ueberschrift 'Kategorien'").
+      // CA ships no heading for the categories, so one is supplied here.
       if (title) {
         var host = items[0].parentElement; if (!host) return;
         var h = host.querySelector(":scope > .cc-ca-cardtitle");
         if (!h) { h = document.createElement("li"); h.className = "cc-ca-cardtitle cc-card-in cc-card-top"; h.textContent = title; }
         if (h.nextElementSibling !== items[0]) host.insertBefore(h, items[0]);
-        items[0].classList.remove("cc-card-top");   // the title is the card's top edge now
+        items[0].classList.remove("cc-card-top");   // the title is the card's top edge instead
       }
     } catch (e) {}
   }
-  // #15 (user: "results per page und dockerhub badge bitte unter dem such-badge platzieren"): the two
-  // controls live in .searchArea, a MAIN-CONTENT-area container, while the search chip is in the SIDEBAR
-  // (li.cc-ca-search-li under ul.caMenu) — different DOM regions entirely, so no CSS selector can place one
-  // under the other. Moves the REAL nodes (never clones — same reason ccAppsCards below does: a clone would
-  // carry no click handler). Idempotent: bails the moment the host already holds them, so a re-run on every
-  // ccApps() pass (CA rebuilds .searchArea on every category/search change) is a cheap no-op.
+  // The results-per-page control and the Docker Hub badge live in the main content area while the
+  // search chip is in the sidebar, so no selector can put one under the other. The real nodes are
+  // moved, never cloned, or their click handlers would be left behind. It bails the moment the host
+  // already holds them, so a run on every ccApps() pass is cheap.
   function ccMoveSearchAreaBadges() {
     try {
       var searchLi = document.querySelector("li.cc-ca-search-li");
@@ -3136,14 +2721,10 @@
       var dh = document.querySelector(".searchArea .dockerSearch");
       if (mpp && mpp.parentNode !== host) host.appendChild(mpp);
       if (dh && dh.parentNode !== host) host.appendChild(dh);
-      // #15 follow-up (live-measured): #dropdown-maxPerPage is appended directly to <body> and CA positions
-      // it with inline top/left computed for the control's OLD home — after the move it opened pinned near
-      // the page's top-left corner instead of under the relocated button. Forcing the fix ONCE (or even
-      // twice, at 0ms/60ms) was proven live to lose: opacity was still mid-fade at that point (CA runs a
-      // jQuery-style fade/slide that keeps re-touching the node's style across several frames), so CA's own
-      // next frame overwrote the single corrective write. Same idea as ccPositionCaResults below, but
-      // fighting an ANIMATION means covering the animation's whole duration, not one or two beats —
-      // matches the codebase's own 8x180ms convention for a similarly animated popover (ccNotifActions).
+      // CA appends the per-page dropdown to <body> and positions it with offsets computed for the
+      // control's old home, so after the move it opens near the page corner. One corrective write
+      // loses: CA fades the node in and keeps touching its style across several frames, so the
+      // correction has to cover the whole animation rather than one or two beats.
       if (mpp && !mpp.getAttribute("data-cc-dd-wired")) {
         mpp.setAttribute("data-cc-dd-wired", "1");
         mpp.addEventListener("click", function () {
@@ -3161,9 +2742,8 @@
       }
     } catch (e) {}
   }
-  // #30 (user: "results per page (ohne die Zahl)"): CA appends the live count to its own label ("Results
-  // Per Page: 12"), which is also why the badge needed multi-line wrapping to fit — strips the ": N" tail
-  // on every pass so it stays gone even after the user picks a different per-page value from CA's dropdown.
+  // CA appends the live count to its own label, which is what forced the badge to wrap. The tail is
+  // stripped on every pass, so it stays gone after a different per-page value is picked.
   function ccAppsStripCount() {
     try {
       var mpp = document.querySelector(".cc-ca-search-extras .caButton.maxPerPage");
@@ -3176,9 +2756,9 @@
     try {
       var menus = [].slice.call(document.querySelectorAll("ul.caMenu"));
       if (!menus.length) return;
-      // Identify the three lists by CONTENT, never by index: CA fills them asynchronously, so on an early
-      // pass the category list may not exist yet and index 1 silently pointed at the meta list — which is
-      // how the first build ended up filing "All Apps/Einstellungen/…" under a card titled "Kategorien".
+      // The three lists are identified by content, never by index: CA fills them asynchronously, so
+      // on an early pass the category list may not exist yet and an index would point at the meta
+      // list, filing its entries under a card titled "Kategorien".
       var mMain = null, mCats = null, mMeta = null;
       for (var mi = 0; mi < menus.length; mi++) {
         var m = menus[mi];
@@ -3186,8 +2766,8 @@
         else if (m.querySelector("li.startupButton") || m.querySelector("#cc-ca-search-li")) mMain = m;
         else if (m.querySelector("li.categoryMenu")) mCats = m;
       }
-      // ---- MAIN: Home + search stay loose; each sectionMenu heading opens a group that runs to the next
-      //      heading. Action Centre is deliberately excluded — it becomes a standalone badge.
+      // In the main list, home and search stay loose and each section heading opens a group that
+      // runs to the next heading. The action centre is excluded and becomes a badge of its own.
       if (mMain) {
         var kids = [].slice.call(mMain.children), group = null, groups = [];
         for (var i = 0; i < kids.length; i++) {
@@ -3195,45 +2775,38 @@
           var isHead = li.classList && li.classList.contains("sectionMenu");
           if (isHead && li.classList.contains("actionCentre")) { group = null; continue; }
           if (isHead) { group = [li]; groups.push(group); continue; }
-          if (!group) continue;                                                       // Home / search / rules before any heading
+          if (!group) continue;                                                       // anything before the first heading
           if (li.querySelector && li.querySelector("hr")) { group = null; continue; }  // a rule ends the group
           group.push(li);
         }
         for (var g = 0; g < groups.length; g++) ccMark(groups[g], null);
       }
-      // ---- CATEGORIES: their own list, no heading at all -> one card, titled by CC.
+      // The categories have a list of their own and no heading, so they become one titled card.
       if (mCats) {
         var cats = [].slice.call(mCats.children).filter(function (n) { return !n.classList || !n.classList.contains("cc-ca-cardtitle"); });
         if (cats.length) ccMark(cats, T("Kategorien", "Categories"));
       }
-      // ---- META: All Apps + Repositories stay loose (they are categoryMenu entries). #30 (user: "einzelne
-      // Punkte sollen ein einzelner badge sein" — Einstellungen/Statistics/Credits/Support/Version/Change
-      // Log/Debugging are each their own top-level list entry in the user's spec, not a shared card): used
-      // to be grouped into one untitled card here; now left loose like Home/Action Centre/All Apps, so they
-      // fall through to the same standalone-badge rule those already use. Strip the OLD card marks so a box
-      // that still carries them from before this change (no full DOM rebuild happened yet) drops them too.
+      // In the meta list every entry stands on its own, so each falls through to the standalone
+      // badge rule. The loop strips the card marks a box may still carry from an earlier render.
       if (mMeta) {
         var k2 = [].slice.call(mMeta.children), tail = [], seenCat = false;
         for (var j = 0; j < k2.length; j++) {
           var n = k2[j];
           if (n.classList && n.classList.contains("categoryMenu")) { seenCat = true; tail = []; continue; }
           if (!seenCat) continue;
-          if (n.querySelector && n.querySelector("hr")) continue;      // rules are hidden inside a card anyway
+          if (n.querySelector && n.querySelector("hr")) continue;
           if (!(n.textContent || "").trim()) continue;
           tail.push(n);
         }
         for (var jt = 0; jt < tail.length; jt++) {
           tail[jt].classList.remove("cc-card-in", "cc-card-top", "cc-card-bot");
         }
-        // #30d (user: explicit sidebar order has VERSION after Change Log and Debugging; CA natively
-        // renders it between Support and Change Log instead). VERSION + its number are a plain text pair
-        // (classless <li>, no click handler), so moving them is safe. Found INDEPENDENTLY — VERSION by its
-        // exact text, the number via CA's own #caInstalledVersion id — never by tail-array adjacency: CA
-        // re-injects a fresh <hr> between the two on some renders (e.g. update-check state changes), which
-        // once left them non-adjacent and a position-based pairing paired VERSION with the wrong neighbour,
-        // scrambling the tail further on every subsequent pass instead of converging. Guarded on "already
-        // last, in order" so a pass where the order already matches is a strict no-op — this whole block
-        // reruns on every ccApps() pass (category clicks, view swaps).
+        // The version label and its number belong at the end of the sidebar, where CA renders them
+        // further up. They are a plain text pair with no click handler, so moving them is safe.
+        // Each is found on its own, the label by its text and the number by CA's own id, never by
+        // adjacency: CA re-injects an <hr> between the two on some renders, and a position-based
+        // pairing then takes the wrong neighbour and scrambles the tail further on every pass. The
+        // guard makes a pass where the order already matches a no-op.
         var verLabel = null, verNumEl = mMeta.querySelector("#caInstalledVersion");
         var verNum = verNumEl ? verNumEl.closest("li") : null;
         for (var vi = 0; vi < tail.length; vi++) {
@@ -3258,24 +2831,23 @@
       var heads = document.querySelectorAll(".ca_homeTemplatesHeader");
       for (var i = 0; i < heads.length; i++) {
         var more = heads[i].querySelector(".homeMore"); if (!more) continue;
-        // SELF-CORRECTING, not computed-from-container: derive the new padding from where SHOW MORE ACTUALLY
-        // landed vs the gutter, and nudge by that delta. Deriving it from the parent's rect instead was wrong
-        // twice over (the parent's border-box right includes its own padding, and #displaybox is a different
-        // box again) — this form needs no assumption about the container at all and converges to 0 delta.
+        // The new padding comes from where the button actually landed against the gutter, nudged
+        // by that delta. Computing it from the parent's rect needs assumptions about the container
+        // that do not hold: its border-box right includes its own padding, and #displaybox is a
+        // different box again. This form converges to no delta at all.
         var cur = parseFloat(heads[i].style.paddingRight) || 0;
         var delta = more.getBoundingClientRect().right - gutter;
-        if (Math.abs(delta) < 0.5) continue;                       // already flush -> no write (keeps it a no-op)
+        if (Math.abs(delta) < 0.5) continue;                       // already flush, so no write
         var pad = Math.round(cur + delta);
         if (pad >= 0 && pad < 200) heads[i].style.setProperty("padding-right", pad + "px", "important");
       }
     } catch (e) {}
   }
-  // user (v3.6.6): "kannst du es so machen, dass der Abschnittsbadge horizontal buendig ist mit dem Home
-  // badge? also alles weiter hochruecken" — the first section row sat 11px below the sidebar's Home chip.
-  // The two badges are different heights (34 vs 30), so align their vertical CENTRES, not their tops, and
-  // measure it: a static margin would drift with the font size, the badge tier and the theme. Only the FIRST
-  // row is nudged (its margin-top collapses out of .menuAdjust, which is what pulls the whole column up);
-  // the rows below keep their own rhythm.
+  // The first section row lines up with the sidebar's home chip. The two badges differ in height,
+  // so their vertical centres are aligned rather than their tops, and it is measured, since a
+  // static margin drifts with the font size, the badge tier and the theme. Only the first row is
+  // nudged; its margin collapses out of the container, which pulls the whole column up, and the
+  // rows below keep their own rhythm.
   function ccAppsAlignTop() {
     try {
       var caMenu = document.querySelector("ul.caMenu"); if (!caMenu) return;
@@ -3285,39 +2857,34 @@
       var hr = home.getBoundingClientRect(), br = badge.getBoundingClientRect();
       if (!hr.height || !br.height) return;
       var delta = (hr.top + hr.height / 2) - (br.top + br.height / 2);
-      if (Math.abs(delta) < 0.5) return;                       // already level -> no write (stays a no-op)
+      if (Math.abs(delta) < 0.5) return;                       // already level, so no write
       var cur = parseFloat(head.style.marginTop);
       if (isNaN(cur)) cur = parseFloat(getComputedStyle(head).marginTop) || 0;
       var mt = Math.round(cur + delta);
-      if (mt > -80 && mt < 80) head.style.setProperty("margin-top", mt + "px", "important");   // sanity-bounded
+      if (mt > -80 && mt < 80) head.style.setProperty("margin-top", mt + "px", "important");   // bounded against a bad measurement
     } catch (e) {}
   }
-  // The corner marks become badges stacked at the card's top right (user: "können wir die Ribbons auch in
-  // CC-Badges umwandeln? und auch das Monthly Spotlight … wenn beide vorhanden sind sollen sie rechts in der
-  // Card untereinander angeordnet sein"). CA emits the ribbon as a SIBLING of the card (its
-  // closest('.ca_holder') is null) and positions it with its own left/right, which kept winning against a
-  // pure CSS re-anchor. Moving it INTO the card puts both marks in the same containing block — the card —
-  // so one rule stacks them. Idempotent: it only moves a ribbon that is not already inside its card.
+  // The corner marks stack as badges at the card's top right. CA emits a ribbon as a sibling of the
+  // card and positions it with its own offsets, which beat a CSS re-anchor; moving it into the card
+  // puts both marks in the same containing block, where one rule stacks them.
   function ccAppsCornerMarks() {
     try {
       var marks = document.querySelectorAll(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground");
       for (var i = 0; i < marks.length; i++) {
         var m = marks[i];
-        if (m.closest(".ca_holder")) continue;                 // already inside -> no-op
+        if (m.closest(".ca_holder")) continue;                 // already inside its card
         var slot = m.parentElement; if (!slot) continue;
         var card = slot.querySelector(".ca_holder"); if (!card) continue;
         card.appendChild(m);
       }
     } catch (e) {}
   }
-  // Download count / last-updated month on each card face, matching the look of ca.unraid.net/apps (user:
-  // "können wir die Cards im Apps Tab so gestalten wie im CA auf der Unraid Seite"). CA's own on-box card
-  // never shows this — it is only ever fetched per-app when the Info popup opens — but CA already caches
-  // the WHOLE catalog's downloads/LastUpdate locally for its own use; server/castats.php reads that same
-  // cache once and returns a "Name|RepoName" -> {d,u} map instead of one round trip per card. Fetched ONCE
-  // per page load, applied on every ccApps() pass so cards that render later (search, pagination, SHOW
-  // MORE) get it too. Fails silently to "no stat line" — never a broken card — if CA isn't installed, its
-  // cache is missing, or a future CA update changes its internal format.
+  // The download count and the last-updated month on each card face, as ca.unraid.net shows them.
+  // CA's own card never does: it fetches them per app when the Info popup opens. But CA already
+  // caches the whole catalog locally, and server/castats.php reads that cache once and returns a
+  // map keyed by name and repository, rather than one round trip per card. Fetched once per page
+  // load and applied on every ccApps() pass, so a card rendered later gets it too. Without CA, its
+  // cache or a format it still understands, the stat line stays empty and the card is fine.
   var ccCaStats = null, ccCaStatsWanted = false;
   function ccCaStatsFetch() {
     if (ccCaStats || ccCaStatsWanted) return;
@@ -3334,10 +2901,9 @@
     var d = new Date(ts * 1000);
     return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0");
   }
-  // Returns the update-available action string from an already-installed app's Actions dropdown, or null.
-  // CA's own .actionsButtonContext carries the exact same data-context CA's native menu would render; an
-  // "Aktualisierung"/updateDocker(...) entry is present ONLY when a real update is available (live-
-  // confirmed: an up-to-date app's context array holds only Bearbeiten/Uninstall, nothing update-shaped).
+  // The update action string from an installed app's own Actions dropdown, or null. CA's context
+  // attribute carries the same data its native menu renders, and an update entry appears there only
+  // when an update is actually available.
   function ccAppsUpdateAction(holder) {
     var ctx = holder.querySelector(".actionsButtonContext"); if (!ctx) return null;
     var raw = ctx.getAttribute("data-context"); if (!raw) return null;
@@ -3346,25 +2912,20 @@
     for (var i = 0; i < arr.length; i++) { if (arr[i].action && /updateDocker\(/.test(arr[i].action)) return arr[i].action; }
     return null;
   }
-  // #68 follow-up chain (user, across several rounds: stats badges always shown with an N/A fallback + a
-  // shared fixed width instead of hide-when-missing; "installieren button soll zu installiert werden wenn
-  // die app schon installiert ist oder Update wenn installiert und ein update verfügbar"): the row now
-  // ALWAYS exists (every card gets a downloads badge and an update badge, real value or "N/A") and its
-  // third slot is a tri-state primary CTA — "Installieren" (not installed: the real native button, moved
-  // in so its own click handler keeps working untouched), "Update" (installed + ccAppsUpdateAction() found
-  // one: a synthetic badge that runs that exact action string, same trust boundary ccAppsCardMenu() already
-  // uses), or "Installiert" (installed, no update: an inert status badge). Whichever of the three is not
-  // active stays hidden rather than removed, so re-runs are cheap DOM toggles, not rebuilds.
+  // Every card carries this row: a downloads badge, an updated badge and one call to action in
+  // three states. Not installed shows the real native button, moved in so its own click handler
+  // keeps working; installed with an update shows a badge that runs the action string from CA's own
+  // context, the same trust boundary ccAppsCardMenu() uses; installed without one shows an inert
+  // status badge. The two states that do not apply stay hidden rather than removed, so a re-run is
+  // a toggle rather than a rebuild.
   function ccAppsStatRow(holder) {
     var name = holder.getAttribute("data-appname"), repo = holder.getAttribute("data-repository");
     var rec = (ccCaStats && name && repo) ? ccCaStats[name + "|" + repo] : null;
     var row = holder.querySelector(".cc-castats");
     if (!row) { row = document.createElement("div"); row.className = "cc-castats"; holder.appendChild(row); }
-    // #73 (user: "der Offiziell, beta, etc badge kommt in die zeile vom installieren badge nur
-    // linksbündig"): the official/beta/etc ribbons now share THIS row (ccAppsRibbonRow, below), aligned
-    // left, while download/updated/install stay right-aligned — .cc-castats went from one flush-right
-    // group to two groups (space-between in Tokens.css), so the download/updated/install triplet needs
-    // its OWN sub-wrapper to keep behaving as one right-aligned cluster instead of spreading out.
+    // The ribbons share this row, aligned left, while the three badges stay right. The row holds
+    // two groups rather than one flush-right cluster, so the triplet needs its own wrapper or it
+    // would spread out across the row.
     var right = row.querySelector(".cc-cs-right");
     if (!right) {
       right = document.createElement("div"); right.className = "cc-cs-right";
@@ -3373,25 +2934,21 @@
       var cta = document.createElement("span"); cta.className = "cc-cs-cta"; right.appendChild(cta);
       row.appendChild(right);
     }
-    // #71 second follow-up (user reversed the earlier N/A ask: "wenn die daten dafür nicht vorhanden sind
-    // sollen die badges nicht angezeigt werden anstatt n/a anzuzeigen") — back to hide-when-missing. The
-    // display toggle needs setProperty(..., "important"): .cc-cs-d/.cc-cs-u are display:inline-flex
-    // !important in Tokens.css (so they were flush with .cc-cs-cta's own !important box), and a bare
-    // style.display assignment cannot beat that (same trap already hit on the CTA badge and the hamburger).
+    // A badge with no data is hidden rather than showing a placeholder. The two spans are
+    // display:inline-flex with !important in Tokens.css, so the hide has to carry !important too.
     var dSpan = right.querySelector(".cc-cs-d"), uSpan = right.querySelector(".cc-cs-u"), ctaEl = right.querySelector(".cc-cs-cta");
     var dTxt = (rec && rec.d != null) ? ccFmtCompact(rec.d) : "";
     var uTxt = (rec && rec.u != null) ? ccFmtMonth(rec.u) : "";
-    if (dSpan.textContent !== dTxt) dSpan.textContent = dTxt;   // change-guarded write — no DOM churn on a no-op pass
+    if (dSpan.textContent !== dTxt) dSpan.textContent = dTxt;   // written only on a change, so a repeat pass churns nothing
     if (uSpan.textContent !== uTxt) uSpan.textContent = uTxt;
     if (dTxt) dSpan.style.removeProperty("display"); else dSpan.style.setProperty("display", "none", "important");
     if (uTxt) uSpan.style.removeProperty("display"); else uSpan.style.setProperty("display", "none", "important");
     dSpan.title = T("Downloads", "Downloads");
     uSpan.title = T("Aktualisiert", "Updated");
 
-    // NOTE: .cc-cs-cta's `display` is !important in Tokens.css (it must win over the badge-shape engine's
-    // own generic rules) — a bare `style.display = "none"` cannot override an !important CSS rule, only
-    // another !important wins that fight (same trap the hamburger's min-width hit earlier); setProperty(...,
-    // "important") is required here, a plain property clear is enough for the visible states.
+    // The call to action's display is !important in Tokens.css, where it has to beat the badge
+    // shape rules, so hiding it needs !important as well; clearing the property is enough to show
+    // it again.
     var plainInstall = holder.querySelector(".ca_bottomLine .actionsButton:not(.actionsButtonContext)");
     var updateAction = ccAppsUpdateAction(holder);
     var installed = !!holder.querySelector(".actionsButtonContext");
@@ -3411,15 +2968,13 @@
       if (ctaEl.textContent !== iWord) ctaEl.textContent = iWord;
       ctaEl.onclick = null;
     } else {
-      ctaEl.style.setProperty("display", "none", "important");   // neither state resolved yet (late-rendering card) — next pass catches it
+      ctaEl.style.setProperty("display", "none", "important");   // a late-rendering card resolves neither state yet, and the next pass catches it
     }
   }
-  // Info + Support + an already-installed app's Actions (Edit/Uninstall) all fold into one hamburger menu
-  // top-right, matching the reference's "..." corner menu. Built entirely from data CA itself already
-  // computed (Support's and Actions' own data-context JSON — the exact same array CA's native dropdown
-  // would render) plus a direct trigger of the untouched native Info button, so the underlying behaviour
-  // stays 100% native (a Support link still opens the same URL, an Actions entry still runs CA's own
-  // Edit/Uninstall call) — only the presentation is CC's. Built once per card instance (idempotent).
+  // Info, support and an installed app's actions fold into one corner menu. It is built from data
+  // CA itself computed, the same context arrays its own dropdown renders, plus a direct click on
+  // the untouched native Info button, so the behaviour stays CA's: a support link opens the same
+  // URL, an actions entry runs CA's own call. Only the presentation is different.
   var ccCaMenuOpen = null;
   function ccCaMenuClose() { if (ccCaMenuOpen) { ccCaMenuOpen.remove(); ccCaMenuOpen = null; } }
   function ccAppsCardMenu(holder) {
@@ -3438,11 +2993,11 @@
       arr.forEach(function (it) {
         if (it.divider) { items.push({ divider: true }); return; }
         if (it.link) { items.push({ text: it.text || it.link, run: function () { window.open(it.link, "_blank"); } }); return; }
-        // the update entry is promoted to the primary CTA badge (ccAppsStatRow's "Update" state) — skip it
-        // here so the same action isn't offered twice in two different places on the same card.
+        // The update entry is already the card's primary badge, so it is skipped here rather than
+        // offered twice on the same card.
         if (it.action && /updateDocker\(/.test(it.action)) return;
-        // CA's own dropdown runs this exact string via inline onclick for the non-context Actions button
-        // (skin.php: onclick={$actionsContext[0]['action']}) — same trust boundary, just deferred to a click here.
+        // CA's own dropdown runs this exact string from an inline onclick, so the trust boundary
+        // is the same one; here it waits for a click.
         if (it.action) { items.push({ text: it.text || "", run: function () { try { (new Function(it.action))(); } catch (e) {} } }); return; }
       });
     }
@@ -3455,8 +3010,8 @@
     btn.addEventListener("click", function (e) {
       e.preventDefault(); e.stopPropagation();
       if (ccCaMenuOpen) { ccCaMenuClose(); return; }
-      // rendered into <body>, position:fixed and measured off the button — .ca_holder clips overflow, so a
-      // child-positioned dropdown would be cut off; same "escape the clipped host" pattern as the info bubble.
+      // Rendered into <body>, fixed and measured off the button: the card clips overflow, so a
+      // dropdown positioned inside it would be cut off, as with the info bubble.
       var menu = document.createElement("div"); menu.className = "cc-ca-menu";
       items.forEach(function (it) {
         if (it.divider) { menu.appendChild(document.createElement("hr")); return; }
@@ -3465,11 +3020,9 @@
         menu.appendChild(row);
       });
       document.body.appendChild(menu);
-      // #84 (user: "das actions menü in der appcard: die dropdownliste ist nicht in die farbmodi
-      // integriert"): the hamburger BUTTON was already in ccAppsStamp's sweep (--cc-rb-c on
-      // .cc-ca-menu-btn), but the menu itself renders into document.body fresh on every open — a
-      // separate DOM branch the page-wide sweep's timing can't reliably catch before/after each
-      // open/close cycle. Stamp its items directly here, at creation, every time it opens.
+      // The button itself is in ccAppsStamp's sweep, but the menu renders into body fresh on every
+      // open, a separate branch the page-wide sweep cannot catch in time, so its items are stamped
+      // here as they are created.
       ccAppsStamp(".cc-ca-menu-item");
       var r = btn.getBoundingClientRect(), mr = menu.getBoundingClientRect();
       menu.style.left = Math.max(8, Math.min(r.right - mr.width, window.innerWidth - mr.width - 8)) + "px";
@@ -3478,109 +3031,78 @@
     });
     holder.appendChild(btn);
   }
-  // #69 (user: "Wenn badges wie spotlight, official, beta, etc vorhanden sind sollen die in einer zeile
-  // über dem downloadbadge angeordnet sein"): these used to stack vertically pinned to the top-right
-  // corner, which is also why the hamburger once needed ccAppsMenuPos() to dodge them (removed — the
-  // corner is free now that ribbons live down here instead). Moved into one flex-row wrapper positioned
-  // just above .cc-castats (Tokens.css); ::before-generated content ("Spotlight") can't be moved by JS, so
-  // .homespotlightIconArea travels as ONE item and lays its own two pills out horizontally via CSS instead.
-  // #69 (user: "links vom menü soll der docker oder plugin badge angezeigt werden"): the type glyph
-  // (Docker/Plugin/Language pack/Driver/Repository — CA never renders more than one) moves out of the old
-  // three-button row and becomes a direct .ca_holder child, so it can be positioned beside the hamburger
-  // like every other card-level badge instead of being trapped inside a row that is now mostly hidden.
+  // The type glyph, of which CA renders at most one per card, moves out of the old button row and
+  // becomes a direct child of the card, so it can sit beside the corner menu like the other
+  // card-level badges instead of staying inside a row that is now mostly hidden.
   function ccAppsTypeBadge(holder) {
     var glyph = holder.querySelector(".appDocker, .appPlugin, .appLanguage, .appDriver, .appRepository");
     if (glyph && glyph.parentElement !== holder) holder.appendChild(glyph);
   }
-  // #73 (user: "das Spotlight badge kommt als quadratisches Badge links neben den Dockerbadge und soll
-  // ein Sternsymbol haben. bei mouseover wird das datum ... angezeigt"): the spotlight mark splits off
-  // from the other ribbons entirely — it becomes a square icon-only badge next to the type glyph
-  // (ccAppsTypeBadge, same row, same recipe), a real Font-Awesome star (not emoji — inherits colour,
-  // matches every other glyph badge on this card), with the month CA already rendered in .spotlightDate
-  // moved into the native `title` tooltip instead of staying a second visible pill (same tooltip
-  // mechanism ccAppsStatRow already uses for the download/updated badges just above).
+  // The spotlight mark leaves the other ribbons and becomes a square icon-only badge beside the
+  // type glyph, with a Font Awesome star rather than an emoji, so it inherits its colour like every
+  // other glyph on the card. The month CA renders beside it moves into the title tooltip instead of
+  // staying a second visible pill.
   function ccAppsSpotlightBadge(holder) {
     var area = holder.querySelector(".homespotlightIconArea");
     if (!area) return;
     if (area.parentElement !== holder) holder.appendChild(area);
-    if (area.getAttribute("data-cc-spot")) return; // idempotent — the star + tooltip only need building once
+    if (area.getAttribute("data-cc-spot")) return;
     area.setAttribute("data-cc-spot", "1");
     var dateEl = area.querySelector(".spotlightDate");
     var dateTxt = dateEl ? dateEl.textContent.trim() : "";
-    area.textContent = ""; // drop CA's own children (icon, date pill) — replaced by one star glyph below
+    area.textContent = ""; // CA's own icon and date pill give way to the star below
     var star = document.createElement("i"); star.className = "fa fa-star"; area.appendChild(star);
     if (dateTxt) area.title = dateTxt;
   }
-  // #94 (user: "die Infocard... im gleichen Stil wie das Benachrichtigungsfenster machen... abschnittbadges
-  // die halb auf der card liegen... closebutton ein quadratischer Badge mit X... Wenn spotlight soll wieder
-  // der Sternbadge neben dem Appname stehen"): the App-Info side drawer (.sidenav > #sidenavContent >
-  // .popup, CA's own native markup) is restructured into the SAME numbered badge-card system already used
-  // for the notification centre / update window (the "P14" floating-window recipe, Tokens.css).
-  // Live-caught (root cause of "works for the first app opened, silently does nothing for every app after
-  // that"): CA does NOT recreate `.popup` fresh per app — it reuses the SAME node and swaps its inner
-  // content. A plain presence-flag guard on `.popup` (set once, never cleared) therefore only ever fired
-  // for the FIRST app opened all session; every later app hit the guard and bailed while still showing the
-  // previous app's now-stale enhancement (or none at all if the first app opened before ccApps() ever got
-  // a stable tick). Keying the guard's VALUE to the currently-shown app's name fixes this: a different app
-  // is a different key, so the enhancement re-runs, while the SAME app re-rendering (e.g. a chart refresh)
-  // still correctly no-ops.
+  // The app-info side drawer is restructured into the same badge-card system the notification
+  // centre and the update window use.
+  // CA does not recreate the popup per app: it reuses one node and swaps its content. A plain
+  // presence guard would therefore fire for the first app opened and bail for every later one,
+  // leaving the previous app's enhancement in place. Keying the guard to the app's name re-runs it
+  // for a different app while the same app re-rendering still no-ops.
   function ccInfoCardEnhance() {
     var sc = document.getElementById("sidenavContent");
     var popup = sc && sc.querySelector(".popup");
     if (!popup) return;
     var nameEl0 = sc.querySelector(".popupName");
-    // live-caught (root cause of "only ever worked in the first few seconds after a page load"): CA opens
-    // the drawer and THEN fills .popup's content in ASYNCHRONOUSLY — the single 80ms-delayed retry the
-    // click handler below schedules is very often too early, and NOTHING else re-triggers ccApps() for
-    // this drawer afterward once the page's own 4.5s boot-interval window has elapsed (traced live via a
-    // logging build: the retry fired at +161ms and still found no .popup at all). Bail (guard NOT written)
-    // until the name is genuinely there; the MutationObserver on #sidenavContent (ccAppsBoot) is what
-    // actually re-triggers ccApps() reliably now, the MOMENT CA's own render finishes, however long that
-    // takes — the click-triggered retry is just a (now harmless) head start for the common fast case.
+    // CA opens the drawer and fills it asynchronously, so this bails without writing the guard
+    // until the name is really there. The observer on #sidenavContent re-triggers ccApps() the
+    // moment CA's render finishes, however long it takes; the retry the click handler schedules is
+    // only a head start for the fast case.
     if (!nameEl0 || !nameEl0.textContent.trim()) return;
     var key = nameEl0.textContent.trim();
     if (popup.getAttribute("data-cc-ic") === key) return;
-    if (!sc.querySelector(".popupDescription")) return; // same early-render race, for the description block specifically
+    if (!sc.querySelector(".popupDescription")) return; // the same race, for the description block
     popup.setAttribute("data-cc-ic", key);
-    // close button -> square X badge. CSS keeps it a fixed square regardless of the user's badge-shape
-    // setting — a close control should read the same in every mode. Native onclick stays untouched; only
-    // the visible content changes.
+    // The close button becomes a square badge, which the CSS keeps square whatever the badge-shape
+    // setting says, since a close control should read the same in every mode. Its native onclick
+    // stays untouched.
     var closeBtn = sc.querySelector(".popUpClose");
     if (closeBtn) {
       closeBtn.textContent = ""; closeBtn.classList.add("cc-ic-close");
       closeBtn.appendChild(ccMkEl("i", "fa fa-times"));
       closeBtn.title = T("Schließen", "Close"); closeBtn.setAttribute("aria-label", closeBtn.title);
     }
-    // spotlight -> inline star next to the app name (matching the CARD's own spotlight badge, #73). #96
-    // (user: "bei spotlight apps soll der text der infobubble in die mouseoverblase des spotlight badges"):
-    // the "why we picked it" text used to live in a SEPARATE (i) bubble next to the star (#94-B) — now it
-    // rides the star's OWN hover tooltip instead, via the same [data-tip] attributes ccMakeInfo() itself
-    // sets (ccWireTips, header.js, watches document-wide for data-cc-tip/data-tip/title — it isn't tied to
-    // the .cc-info element specifically). One hoverable control instead of two.
+    // The spotlight becomes a star beside the app name, matching the card's own badge, and the
+    // reason for the pick rides the star's hover tooltip rather than a separate bubble beside it:
+    // ccWireTips watches the document for the same [data-tip] attribute, so one hoverable control
+    // is enough.
     var spotBlock = sc.querySelector(".spotlightPopup");
     var nameEl = sc.querySelector(".popupName");
     if (spotBlock && nameEl && !nameEl.querySelector(".cc-ic-spot")) {
       var star = ccMkEl("span", "cc-ic-spot");
       star.appendChild(ccMkEl("i", "fa fa-star"));
       var msgEl = spotBlock.querySelector(".spotlightMessage"), whoEl = spotBlock.querySelector(".spotlightWho");
-      // live-caught: .spotlightWho already carries its OWN leading "- " ("- SpaceInvader One"), so joining
-      // with " — " doubled up into "...enjoying. — - SpaceInvader One" — strip that native prefix first.
+      // the attribution already carries a leading dash, which would double up with the separator
       var tipParts = [msgEl, whoEl].map(function (e) { return e ? e.textContent.trim().replace(/^-\s*/, "") : ""; }).filter(Boolean);
-      var spotTip = tipParts.length ? tipParts.join(" — ") : T("Spotlight-App", "Spotlight app");
+      var spotTip = tipParts.length ? tipParts.join(", ") : T("Spotlight-App", "Spotlight app");
       star.setAttribute("data-tip", spotTip); star.setAttribute("aria-label", spotTip); star.setAttribute("tabindex", "0");
       nameEl.appendChild(star);
     }
-    // wraps `els` (already-live DOM elements; the first one anchors the insertion point) in a new badge-
-    // card — the same visual idea as a <fieldset><legend> (the legend badge sits half ON the card via CSS
-    // position:absolute), built from plain divs since that is what CA's own markup already is. #94-B
-    // (user: "die abschnittbadges sollen nicht nummeriert sein. die war nur für dich"): the earlier 1./1.1./
-    // 2./3./4. prefixes were only ever meant to communicate the intended structure while building this, not
-    // to actually ship — plain titles now. `warn` reuses the amber "needs attention" tone the #86 border-
-    // fix established elsewhere in this file, for Zusätzliche Anforderungen — a background tint, never a
-    // border line (GLS). #94-E (user: "die card zusätzliche anforderungen ist nicht richtig ausgerichtet"):
-    // this used to take a `nested` flag that indented the card 20px under Infotext — that broke the "every
-    // card is the same width, full width" rule from the very first refinement round, which is exactly what
-    // read as misaligned. Every card is a plain top-level sibling now, no nesting concept left.
+    // Wraps live elements in a badge card, the first one anchoring the insertion point. It is the
+    // same idea as a fieldset with a legend, the badge sitting half on the card, built from plain
+    // divs because that is what CA's own markup is. `warn` gives the card the amber tone, a
+    // background tint rather than a border. Every card is a top-level sibling at the same width.
     function cardify(els, title, warn) {
       els = els.filter(Boolean);
       if (!els.length) return;
@@ -3590,28 +3112,20 @@
       card.appendChild(legend);
       els.forEach(function (el) { card.appendChild(el); });
     }
-    // gather every section BEFORE the first cardify() call moves anything — an element reference stays
-    // valid once reparented, but a querySelector run AFTER an earlier move could miss something already
-    // relocated into a previous card.
+    // Every section is gathered before the first cardify() call moves anything: an element
+    // reference stays valid once reparented, but a query run after a move could miss something
+    // already relocated into an earlier card.
     var desc = sc.querySelector(".popupDescription");
-    // #94-D (user: "die show more dinger sollen auch in ein badge" — the description's OWN toggle, missed
-    // the first time): .popupDescription carries the same "popup_readmore" class as .changelog, so CA's
-    // `$('.popup_readmore').readmore(...)` call (Apps.page) truncates it and appends the identical
-    // ".ca_readmore" toggle as its very next sibling too — only present when the text is long enough to
-    // collapse, exactly like changelogMore below.
+    // The description carries the same readmore class as the changelog, so CA truncates it and
+    // appends its own toggle as the next sibling, present only when the text is long enough.
     var descMore = desc && desc.nextElementSibling && desc.nextElementSibling.classList.contains("ca_readmore") ? desc.nextElementSibling : null;
     var video = sc.querySelector(".videoPlayOverlay");
     var videoWrap = video ? video.parentElement : null;
-    // #94-D (user: "die rote Meldung soll auch eine card werden"): CA's own "Attention:" box — blacklist /
-    // incompatible-OS / custom-network notices all land here (skin.php displayPopup(), $ModeratorComment) —
-    // rendered as a plain sibling in .popupContent with a hardcoded red border, never wrapped by the earlier
-    // version at all.
+    // CA's attention box, where the blacklist, incompatible-OS and custom-network notices land.
     var modComment = sc.querySelector(".modComment");
-    // #94-C (user, root cause of "card ist verschoben und der titeltext ist zweimal da"): .additionalRequirementsHeader
-    // is a SIBLING immediately before .additionalRequirements in CA's markup, not nested inside it — the
-    // earlier version only ever moved .additionalRequirements itself, leaving this header orphaned in its
-    // original spot (unhidden, since the CSS hide rule only ever reached INSIDE a .cc-ic-card). Grabbing it
-    // here too means it travels into the same card and the existing hide rule finally reaches it.
+    // The requirements header is a sibling immediately before the requirements block rather than
+    // nested inside it, so it has to travel into the same card; the CSS hide rule reaches only
+    // inside a card, and left behind it would show twice.
     var addReqHeader = sc.querySelector(".additionalRequirementsHeader");
     var addReq = sc.querySelector(".additionalRequirements");
     var infoLefts = sc.querySelectorAll(".popupInfoLeft");
@@ -3623,19 +3137,15 @@
       var sib = trendsHead.nextElementSibling;
       for (var ti = 0; ti < 2 && sib; ti++) { trendEls.push(sib); sib = sib.nextElementSibling; }
     }
-    // #94-C (user: "der changelog soll auch in eine badge card"): .changelogTitle + .changelogMessage +
-    // the actual .changelog body are flat siblings in CA's markup; readmore.js appends its own "SHOW MORE"
-    // toggle (.ca_readmore) as the very next sibling after .changelog, ONLY when the content is genuinely
-    // long enough to collapse — absent (null) on shorter changelogs, cardify()'s own .filter(Boolean)
-    // already handles that safely.
+    // The changelog's title, message and body are flat siblings, with the readmore toggle appended
+    // after the body only when the content is long enough; cardify() filters out a missing one.
     var changelogTitle = sc.querySelector(".changelogTitle");
     var changelogMsg = sc.querySelector(".changelogMessage");
     var changelogBody = sc.querySelector(".changelog");
     var changelogMore = changelogBody ? changelogBody.nextElementSibling : null;
     if (changelogMore && !changelogMore.classList.contains("ca_readmore")) changelogMore = null;
-    // #94-C (user: "das steht bei manchen ganz unten: Template Errors / ... / das auch in eine card"):
-    // .templateErrors (a heading) is followed by one or more bare <li class="templateErrorsList"> siblings
-    // — CA's own markup emits them outside any <ul>, kept as-is rather than "fixed" into valid list markup.
+    // The template-errors heading is followed by bare list-item siblings, which CA emits outside
+    // any list; they are left as they are rather than rewrapped.
     var templateErrHead = sc.querySelector(".templateErrors");
     var templateErrEls = [];
     if (templateErrHead) {
@@ -3652,17 +3162,13 @@
     cardify([changelogTitle, changelogMsg, changelogBody, changelogMore], T("Änderungsprotokoll", "Changelog"));
     cardify(templateErrEls, T("Vorlagenfehler", "Template Errors"));
   }
-  // #76 (user: "der DVDCompress Container hat eine gelbe Sprechblase. Können wir das in ein weiteren
-  // quadratischen badge umwandeln der links des Dockerbadges sitzt. Als symbol soll ein Achtung icon
-  // drauf."): CA's own inline .cardWarning glyph (a small comment-bubble icon INSIDE .ca_applicationName,
-  // title "Click info to see the notes regarding this application") becomes a square badge matching the
-  // type/spotlight recipe. Clicking it does what the native title already instructs — opens the Info
-  // popup (same infoButton.click() delegation ccAppsCardMenu's own Info item uses). Position is handled
-  // by ccAppsPositionTopBadges below, which compacts around whichever badges actually exist per card.
+  // CA's inline warning glyph sits inside the app name and becomes a square badge like the type and
+  // spotlight ones. Clicking it does what its native title says and opens the info popup.
+  // ccAppsPositionTopBadges below places it among whichever badges the card actually has.
   function ccAppsWarnBadge(holder) {
     var native = holder.querySelector(".cardWarning");
     if (!native) return;
-    native.style.setProperty("display", "none", "important"); // the inline glyph inside the name text — replaced by the badge
+    native.style.setProperty("display", "none", "important"); // the badge replaces the inline glyph
     if (holder.querySelector(".cc-warn-badge")) return;
     var badge = document.createElement("span"); badge.className = "cc-warn-badge";
     badge.appendChild(document.createElement("i")).className = "fa fa-exclamation-triangle";
@@ -3670,17 +3176,13 @@
     badge.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); var infoBtn = holder.querySelector(".infoButton"); if (infoBtn) infoBtn.click(); });
     holder.appendChild(badge);
   }
-  // #69/#76 (user: "wenn der appname zu lang ist soll er nicht von den badges überlagert werden sondern
-  // vorher aufhören" + "zu lange appnamen sollen sich in der angezeigten länge auch automatisch anpassen
-  // je nachdem wie viele badges vorhanden sind"): the top-right badges (hamburger/type/warning/spotlight)
-  // are each independently optional per card — a fixed CSS `right` per badge type left gaps when one was
-  // missing and gave the name a single fixed max-width regardless of how many badges actually claim
-  // space. This computes real slots dynamically per card: only badges that EXIST get positioned,
-  // back-to-back with no gaps, and the name's own right boundary stops exactly where the leftmost
-  // present badge begins — measured against the card's REAL width, not a guessed constant.
+  // Each of the top-right badges is optional per card, so a fixed offset per badge type leaves gaps
+  // where one is missing and gives the name the same width whatever is actually there. This places
+  // only the badges that exist, back to back, and stops the name exactly where the leftmost one
+  // begins, measured against the card's real width.
   function ccAppsPositionTopBadges(holder) {
     var GAP = 6, W = 30, RIGHT0 = 10;
-    // right-to-left priority: hamburger nearest the corner, then type, then warning, then spotlight
+    // from the corner inwards: menu, type, warning, spotlight
     var order = [
       holder.querySelector(".cc-ca-menu-btn"),
       holder.querySelector(".appDocker, .appPlugin, .appLanguage, .appDriver, .appRepository"),
@@ -3689,23 +3191,18 @@
     ].filter(Boolean);
     var right = RIGHT0;
     order.forEach(function (b) { b.style.setProperty("right", right + "px", "important"); right += W + GAP; });
-    var reservedFromRight = order.length ? (right - GAP + 10) : 16; // + a small clearance past the leftmost badge
+    var reservedFromRight = order.length ? (right - GAP + 10) : 16; // with a little clearance past the leftmost badge
     var nameEl = holder.querySelector(".ca_applicationName");
     if (!nameEl) return;
     var holderW = holder.getBoundingClientRect().width || 378;
-    var nameLeft = 105; // .ca_applicationName's own fixed left anchor (Tokens.css)
+    var nameLeft = 105; // the name's own left anchor, from Tokens.css
     var maxW = Math.max(40, Math.round(holderW - nameLeft - reservedFromRight));
     nameEl.style.setProperty("max-width", maxW + "px", "important");
   }
-  // Once truncated by ccAppsPositionTopBadges above, a hover reveals the full name via the SAME
-  // scroll-back-and-forth technique docker.js's setupVolMarquee already uses for long volume paths.
-  // #80 (user: "lauftext funktioniert nicht richtig. der text wird einfach nach links über das logo
-  // geschoben und der fehlende text erscheint nicht"): the FIRST version transformed .ca_applicationName
-  // itself — but that element is CA's own position:absolute box. Translating it moves the WHOLE box
-  // (including its overflow:hidden clip boundary) left across the card, sliding it out from under the
-  // badges and over the icon, instead of scrolling text within a box that stays put. setupVolMarquee
-  // avoids exactly this by animating an INNER element while the outer stays fixed — do the same here:
-  // wrap the name's existing content in one inner span, transform ONLY that.
+  // A name truncated above reveals itself on hover, sliding back and forth as docker.js does for a
+  // long volume path. The name element is CA's own absolutely positioned box, so transforming it
+  // would move the whole box and its clip boundary across the card rather than scroll the text
+  // inside it; the content is wrapped in an inner span and only that one moves.
   function ccAppsNameMarquee(holder) {
     var nameEl = holder.querySelector(".ca_applicationName");
     if (!nameEl || nameEl.getAttribute("data-cc-marq")) return;
@@ -3728,38 +3225,25 @@
       inner.style.transition = "transform .3s ease"; inner.style.transform = "translateX(0)";
     });
   }
-  // #82 (user: "Die abschnittsbadges, der infotext dazu, show more badges, vieles ist nicht in der
-  // richtigen sprache. alles soll in der eingestellten sprache angezeigt werden. auch in der side
-  // bar"): Community Applications ships a fair amount of its own sidebar/toolbar text only in
-  // English, even with Unraid's display language set to German (live-confirmed: document.
-  // documentElement.lang is "de", these strings still show English — a CA i18n gap, not something CC
-  // introduced). CC already translates other native CA/Unraid text it restyles (the Installieren/
-  // Update button states), so the same treatment applies here: an exact-match dictionary swapped in
-  // place on the section sidebar (category labels, "Show more", results-per-page, sort options).
-  // Anything not in this list is left untouched rather than guessed at — flag anything still missed
-  // with the exact English text and it's a one-line addition to this table.
+  // Community Applications ships much of its sidebar and toolbar text in English even on a German
+  // UI. This is an exact-match dictionary swapped in place over the sidebar labels, the show-more
+  // toggle, the results-per-page control and the sort options. A string it does not carry is left
+  // as it is rather than guessed at.
   var CC_APPS_XLATE_DE = {
     "Home": "Start", "Installed Apps": "Installierte Apps", "Previous Apps": "Bisherige Apps",
     "Pinned Apps": "Angeheftete Apps", "Favourite Repo": "Bevorzugtes Repository", "Action Centre": "Aktionszentrale",
     "SHOW MORE": "MEHR ANZEIGEN", "Results Per Page": "Ergebnisse pro Seite", "Sort By:": "Sortieren nach:",
     "Name Ascending": "Name aufsteigend", "Name Descending": "Name absteigend", "Date Added": "Hinzugefügt am",
-    // #85 (user, repeated: "die abschnittbadges fehlen noch in der übersetzung") — the first pass only
-    // covered what was visible without opening every category; the full sidebar sweep turned up plenty
-    // more section names still English.
     "Language": "Sprache", "Media Applications": "Medienanwendungen", "Media Servers": "Medienserver",
     "Network Services": "Netzwerkdienste", "Tools / Utilities": "Werkzeuge", "Utilities": "Dienstprogramme",
     "All Apps": "Alle Apps", "Statistics": "Statistiken", "Change Log": "Änderungsprotokoll", "Debugging": "Fehlersuche",
-    // #85-B (user, 3rd report, verbatim: "die abschnittbadges fehlen noch in der übersetzung") — the PREVIOUS
-    // #85 pass only covered the sidebar (.caMenuItem etc); the actual "Abschnittbadges" the user meant are CC's
-    // own .cc-sechead-badge pills above each horizontal app row (RECENTLY ADDED, SPOTLIGHT APPS, ...) plus their
-    // info-bubble subtitle sentences — both built from CA's exec.php $startupTypes text1/text2, which CA's own
-    // tr() leaves in English for this locale (same native-CA i18n gap #82 already diagnosed, just a spot #82
-    // missed). Title strings, keyed exactly as CA emits them (source-cased, .cc-sechead-badge applies its own
-    // uppercase via CSS):
+    // The section headings above each app row and their subtitle sentences come from CA's own
+    // startup types, which its translation leaves in English here. Keyed exactly as CA emits them,
+    // in its own casing, since the badge uppercases in CSS.
     "Featured Applications": "Empfohlene Anwendungen", "Recently Added": "Kürzlich hinzugefügt",
     "Spotlight Apps": "Spotlight-Apps", "Top Trending Apps": "Angesagte Apps", "Top New Installs": "Top-Neuinstallationen",
     "Most Popular Plugins": "Beliebteste Plugins", "Random Apps": "Zufällige Apps",
-    // ...and their text2 subtitle sentences (shown inside the (i) info bubble):
+    // and the subtitle sentences, shown inside the info bubble
     "Check out these newly added applications from our awesome community": "Entdecke diese neu hinzugefügten Anwendungen aus unserer großartigen Community",
     "Each month we highlight some of the amazing work from our community": "Jeden Monat heben wir einige der großartigen Arbeiten aus unserer Community hervor",
     "Check out these up and coming apps": "Entdecke diese aufstrebenden Apps",
@@ -3769,15 +3253,15 @@
   };
   function ccAppsTranslateNative() {
     if (LANG !== "de") return;
-    // leaf elements whose ENTIRE text is one dictionary entry — child ELEMENTS (icons etc) mean a
-    // blind textContent overwrite could destroy markup, so those are skipped rather than risked.
+    // Leaf elements whose whole text is one dictionary entry. An element with children is skipped,
+    // since overwriting its textContent would destroy that markup.
     Array.prototype.slice.call(document.querySelectorAll(".caMenuItem, .homeMore, .maxPerPage, .sortIcons")).forEach(function (el) {
       if (el.children.length) return;
       var xl = CC_APPS_XLATE_DE[el.textContent.trim()];
       if (xl && el.textContent !== xl) el.textContent = xl;
     });
-    // "Sort By:" is a bare text NODE among #sortIconArea's children (siblings with the .sortIcons
-    // links), not its own element — walk child nodes instead of querying for it.
+    // The sort label is a bare text node among the sort links rather than an element of its own,
+    // so this walks the child nodes instead of querying for it.
     var sortArea = document.getElementById("sortIconArea");
     if (sortArea) {
       Array.prototype.slice.call(sortArea.childNodes).forEach(function (n) {
@@ -3790,7 +3274,7 @@
   function ccAppsRibbonRow(holder) {
     var marks = holder.querySelectorAll(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground");
     if (!marks.length) return;
-    var stats = holder.querySelector(".cc-castats"); if (!stats) return; // built by ccAppsStatRow just before this runs
+    var stats = holder.querySelector(".cc-castats"); if (!stats) return; // ccAppsStatRow builds it just before this runs
     var row = stats.querySelector(".cc-ribbonrow");
     if (!row) { row = document.createElement("div"); row.className = "cc-ribbonrow"; stats.insertBefore(row, stats.firstChild); }
     for (var i = 0; i < marks.length; i++) { if (marks[i].parentElement !== row) row.appendChild(marks[i]); }
@@ -3803,144 +3287,70 @@
     try {
       if (!/^\/Apps(\/|$)/.test(location.pathname)) return;
       ccCaStatsFetch();
-      ccAppsAutoSearch(); // #77 — idempotent (clears its own sessionStorage flag once applied), safe to call every tick until #searchBox exists
-      ccAppsTranslateNative(); // #82 — idempotent (keyed off the ENGLISH source text, self-skips once already translated)
+      ccAppsAutoSearch();
+      ccAppsTranslateNative();
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
-      // user (v3.6.6, aktiver Sammelmodus: "die badges auf den app cards sind nicht im reaktive modus der
-      // derzeit eingeschaltet ist"): "Reaktiver Modus" (cc.rbmode=active) is a GLOBAL settings-page toggle
-      // ("gilt global fuer ALLE Farbmodi ... und alle Bereiche") but was only ever wired to two areas
-      // (cc-header-rbneutral, cc-tools-rbneutral) — Apps never got its own class, so its badges could only
-      // ever render fully coloured, same as header.js's own "reactive class also in Normal mode" comment
-      // above documents for the header case. Mirror that here for the Apps tab.
+      // the neutral sub-mode is global, so the Apps tab carries its own class like the others
       document.documentElement.classList.toggle("cc-apps-rbneutral", rbNeutral());
-      // #61 (user: "wenn man installed apps löscht sind die unteren buttons nutzlos, man kann ja gar nichts
-      // auswählen und löschen. ist das nativ auch so? dann blenden wir die buttons aus" - confirmed live on
-      // the Apps home page too: "die ganzen buttons ... sollen auf der seite gar nicht angezeigt werden"):
-      // CA renders the .multi_installDiv bulk-action bar (Install Selected / Select all on page / reset /
-      // delete) UNCONDITIONALLY on every Apps sub-view, but only Previous Apps actually renders the
-      // per-card .ca_multiselect checkboxes it acts on - confirmed live via DOM inspection, and genuinely
-      // native (none of CC's own code creates either the bar or the checkboxes). On the home page, category
-      // browsing and Installed Apps there is nothing to check, so the bar just sits there permanently
-      // disabled. Gate on the actual signal (checkbox presence) rather than a URL/category name so this
-      // keeps working correctly if CA ever wires multi-select into another view.
+      // CA renders its bulk-action bar on every Apps view, but only Previous Apps renders the
+      // per-card checkboxes it acts on, so elsewhere the bar sits there permanently disabled. The
+      // gate is the checkboxes themselves rather than a URL, so it keeps working if CA ever wires
+      // multi-select into another view.
       document.documentElement.classList.toggle("cc-apps-noselect", !document.querySelector(".ca_multiselect"));
       ccAppsStamp(".ca_homeTemplatesHeader");
       ccAppsStamp(".caMenuItem.selectedMenu");
-      ccAppsStamp("#searchFilter");                          // #7: stamp the collapsible badge (bg + icon colour follow the mode)
-      // #10 (user: "nicht im regenbogenmodus, bitte in alle Farbmodi aufnehmen"): the search-results header
-      // (Results Per Page, DockerHub, the pager numbers, the Sort By links) was styled as badges but never
-      // STAMPED, so --cc-rb-c never reached them and Rainbow could only ever show the shared --cc-rbaccent
-      // fallback, never each control's own jewel — same gap the bottom-line card buttons had (#8).
-      // #15: BOTH locations in one selector — before ccMoveSearchAreaBadges() runs (or on a page where the
-      // move host doesn't exist yet) they're still under .searchArea; afterwards they're under
-      // .cc-ca-search-extras. Covering both means restamping keeps working across every re-run either way.
+      ccAppsStamp("#searchFilter");
+      // The search-results header covers both homes in one selector: before ccMoveSearchAreaBadges()
+      // runs, or on a page without the host, these still sit under CA's own search area, and
+      // afterwards under the relocated one.
       ccAppsStamp(".searchArea .caButton.maxPerPage, .searchArea .dockerSearch, .cc-ca-search-extras .caButton.maxPerPage, .cc-ca-search-extras .dockerSearch");
       ccAppsStamp(".pageNavigation .pageNumber");
       ccAppsStamp("a.sortIcons");
-      // #13 (user: "bitte in alle Farbmodi integrieren"): the card corner ribbons (OFFICIAL/LIMITED TIME/
-      // INSTALLED/BETA) and the Spotlight badges are already wired to --cc-rb-c on the CSS side (reactive-
-      // neutral, colour on .ca_holder:hover — Tokens.css ~1220) but were never stamped, so they only ever
-      // fell back to the flat shared accent instead of each card's own rotating jewel — the same gap #10
-      // above already documents for the search-results header. Re-runs every tick like the others, so cards
-      // that arrive later (SHOW MORE / infinite scroll) get stamped too.
+      // the card ribbons and spotlight badges, re-run every tick so a card that arrives later is stamped too
       ccAppsStamp(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground, .homespotlightIconArea");
-      // #24 (user: "im action centre wird ueber den header badges auch action centre text angezeigt, bitte
-      // weg machen"): CA's .category.categoryLine label reuses the same slot for "Search for X" (useful —
-      // tells you what you searched) and the plain section name (redundant — the sidebar's own entry for
-      // that section, e.g. ACTION CENTRE, is already highlighted). Originally hid Action Centre only by
-      // exact text; #43 (user: "bei previous apps wird wieder der Text 'previous apps' angezeigt, bitte in
-      // ALLEN App-Tab-Subseiten ausblenden") is the SAME redundant-label pattern for every other plain
-      // section name (Previous Apps, Installed Apps, Pinned Apps, a category) — CA itself already marks
-      // every one of these (but never the "Search for X" case) with its own hideWithMenu class, so key off
-      // that instead of hardcoding one more literal string each time a new section repeats the report.
-      // REGRESSION (user: "text ist weg aber dafuer sind jetzt die header badges zu weit oben, bitte auf
-      // allen seiten auf gleicher hoehe wie der homebutton"): display:none collapses the slot's own ~15px,
-      // which every OTHER page still reserves (the Home page renders this same element with EMPTY text,
-      // still taking up its height) — so only the Action Centre page lost that space and everything below
-      // it (Suche, Results Per Page, ...) crept up. visibility:hidden removes the text without collapsing
-      // the box, so Home/Suche land on the same line on every page again.
+      // CA reuses one label slot for "Search for X", which says what was searched, and for the plain
+      // section name, which the highlighted sidebar entry already says. CA marks the redundant case
+      // itself with hideWithMenu, so that is the signal rather than a list of section names.
+      // visibility rather than display: the slot's height is reserved on every other page, where CA
+      // renders this element empty, so collapsing it here alone would pull everything below it up.
       Array.prototype.slice.call(document.querySelectorAll(".category.categoryLine")).forEach(function (cl) {
         cl.style.setProperty("visibility", cl.classList.contains("hideWithMenu") ? "hidden" : "", "important");
       });
-      ccMoveSearchAreaBadges();                              // #15: relocate under the search badge
-      ccAppsStripCount();                                    // #30: "Results Per Page: 12" -> "Results Per Page"
+      ccMoveSearchAreaBadges();
+      ccAppsStripCount();
       wireCaSearch();
       ccWireCaSearchCollapse();
-      ccAppsCards();                                         // group the flat sidebar <li>s into cards
-      // #30 (user: "die cards sollen einen titelbadge haben"): the card heading used to sit on the same flat
-      // surface as the card body (plain uppercase text, no fill) — stamp it like every other badge so it
-      // reads as its own coloured pill instead of blending into the shade behind it (CSS side: Tokens.css).
+      ccAppsCards();
       ccAppsStamp(".cc-ca-cardtitle, li.cc-card-in.sectionMenu");
-      // #71 (user: "alle badges in die farbmodi integrieren"): the type-glyph badge and the Update/
-      // Installiert CTA were both missing from this call — same gap #8 below already documents for a
-      // different row, now closed here too. .cc-cs-cta-installed stays deliberately unstamped: it is a
-      // resting status (Rule 4 neutral), never accent-filled in any mode, so it has nothing to stamp.
+      // The installed status badge stays unstamped: it is a resting state, never accent-filled in
+      // any mode, so it has nothing to stamp.
       ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton, .cc-castats .actionsButton, .cc-ca-menu-btn, .appDocker, .appPlugin, .appLanguage, .appDriver, .appRepository, .cc-cs-cta.cc-cs-cta-update, .cc-warn-badge");
-      // #63: the Info drawer's own Installieren/Support/Pin App row (.popupInfo) is the same badge recipe
-      // as the card's .ca_bottomLine row above and needs the same per-button rainbow jewel, not one flat
-      // shared colour — stamp it every pass since the drawer's content is (re)built fresh on each open.
+      // the info drawer's own button row, stamped every pass because CA rebuilds it on each open
       ccAppsStamp(".popupInfo .actionsPopup, .popupInfo .caButton");
-      // #94 (user: "die Infocard... im gleichen Stil wie das Benachrichtigungsfenster... abschnittbadges
-      // die halb auf der card liegen... closebutton ein quadratischer Badge mit X... Wenn spotlight soll
-      // wieder der Sternbadge neben dem Appname stehen"): restructure the fixed sections into numbered
-      // badge-cards (CSS: Tokens.css #94), close button -> square X, spotlight -> inline star. Rainbow
-      // needs these freshly-built elements in the SAME stamp pass or they'd stay flat-accent forever.
       ccInfoCardEnhance();
-      // #94-C: the "SHOW MORE" toggle and the Donate badge are new badge-recipe elements too, added to the
-      // same per-tick stamp pass as the rest of the Info-Card badges (rainbow needs the pass to reach them
-      // in the tick they first render, same reasoning as the comment above).
+      // the elements ccInfoCardEnhance just built, stamped in the same pass or they stay flat
       ccAppsStamp(".cc-ic-legend, .cc-ic-close, .cc-ic-spot, .cc-ic-card .ca_readmore, .cc-ic-card .donateDiv .caButton.donate");
-      // #8 (user: "die buttons ganz unten sind nicht in die farbmodi integriert"): the bottom action bar
-      // (.multi_installDiv) was styled as a badge row but never STAMPED, so --cc-rb-c never reached it and
-      // it could only ever paint the neutral chip. Stamped like every other Apps badge, it takes the accent
-      // in Normal mode and its own jewel position in Rainbow; the reactive rule then handles the rest state.
       ccAppsStamp(".multi_installDiv input[type='button'], .multi_installDiv input[type='submit']");
-      // #42 (user: "der Löschen-Button der nur die Auswahl löscht ... soll Auswahl löschen heißen"): CA's own
-      // class name (multi_installClear) confirms the button only clears the selection checkmarks - it never
-      // touches the app list itself (that's the separate, per-card "Actions -> Remove from Previous Apps" menu).
-      // The native German string "Löschen" reads as a destructive delete, not a selection reset, so the button
-      // looked like the "real" delete when it isn't one. Relabel only the exact stale string, so an already-
-      // correct or already-translated label (a future CA/locale update) is left alone.
-      // #57 follow-up (user: "Auswahl löschen soll Auswahl zurücksetzen heißen"): "löschen" (delete) still
-      // read as destructive even after the first relabel - migrate BOTH the original native string and the
-      // earlier "Auswahl löschen" relabel forward, so nobody gets stuck on either stale wording.
+      // CA's own class name says this button only clears the selection checkmarks; removing an app
+      // is the separate per-card action. Its native German label reads as a destructive delete, so
+      // it is relabelled, matching the exact stale strings only, which leaves an already correct
+      // label from a future CA release alone.
       var clearBtn = document.querySelector("input.multi_installClear");
       if (clearBtn && (clearBtn.value === "Löschen" || clearBtn.value === "Auswahl löschen")) clearBtn.value = "Auswahl zurücksetzen";
-      // #57 (user: "wir brauchen auch einen Löschen button der die Previous Docker und Plugins dann auch
-      // löscht"): a REAL bulk remove, reusing CA's own removeApp()/post({action:'remove_application'})
-      // plumbing per app instead of reimplementing it - each checked card's .ca_holder ancestor already
-      // carries data-apppath/data-appname (the exact two args removeApp() takes), so this just drives the
-      // same native call once per selection instead of forcing one-at-a-time through the Actions menu.
-      // Inserted as a sibling INSIDE .multi_installDiv so the existing ccAppsStamp() call above (which
-      // already runs every pass) colour-integrates it automatically - no separate CSS needed.
+      // A bulk remove, driving CA's own remove_application call once per checked card rather than
+      // reimplementing it: each card already carries the path and name that call takes. It is
+      // inserted inside the bulk-action bar, so the stamp pass above colours it along with the rest.
       if (clearBtn && !document.getElementById("cc-prevapps-del")) {
         var delBtn = document.createElement("input");
         delBtn.type = "button"; delBtn.id = "cc-prevapps-del";
-        // NOT clearBtn.className: CA binds its own delegated "clear the selection" click handler to
-        // .multi_installClear specifically, which fired ALONGSIDE this button's own listener the moment it
-        // shared that class (live-caught: the confirm dialog never rendered - CA's own handler ran too and
-        // raced it). Styling doesn't need the class anyway - ccAppsStamp() above already matches ANY
-        // input[type=button] inside .multi_installDiv, class-agnostic.
-        // #57 regression (live-caught): the ORIGINAL fix here reused CA's OWN "multi_deleteButton" class
-        // purely for its red Tokens.css styling hook, reasoning it was just a paint class. It is not - CA
-        // ALSO delegates its native bulk-remove click handler off that exact class (matching the real,
-        // permanently-hidden `.multi_deleteButton.ca_hide` button CA ships), same trap as the
-        // .multi_installClear one two lines up, just missed because that button's own confirm dialog LOOKS
-        // like a real dialog ("DELETE TEMPLATE? Are you sure you want to delete N applications...") instead
-        // of silently no-opping. Whichever handler's swal() call lost the race never showed, and the one
-        // that "won" ran against CA's own (button-specific, not selection-generic) delete plumbing, which
-        // did nothing for a button it never created - net effect: sometimes no dialog, sometimes native's
-        // inert one, and the previousApps() refresh this button's own go() triggers never ran at all, which
-        // is what actually explains "springt unter das Seitenende" - the real refresh (and this file's own
-        // scroll-restore below) simply never fired, so whatever scroll CA's own half-run handler left behind
-        // stuck. Fix: do NOT carry .multi_deleteButton at all - Tokens.css now targets .cc-prevapps-delbtn
-        // directly for both the red paint and the rest-state exclusions, so this button gets the exact same
-        // look with zero shared classes for CA's delegation to match on.
+        // The button carries none of CA's own classes. CA delegates click handlers off both
+        // multi_installClear and multi_deleteButton, and sharing either class makes its handler run
+        // alongside this one and race it, so the two confirm dialogs cancel out and the refresh
+        // this button's own handler triggers never happens. Tokens.css targets this class directly
+        // for the same look, with nothing for CA's delegation to match on.
         delBtn.className = "cc-prevapps-delbtn";
-        // #57 follow-up (user: "Ausgewählte entfernen soll einfach nur Löschen heißen; der Löschen button
-        // soll erst aktiv werden wenn etwas ausgewählt wurde"): shorter label, and disabled until at least
-        // one card is checked - delegated "change" listener below keeps it in sync without needing its own
-        // render pass, since CA's own checkbox toggling never touches this button otherwise.
+        // Disabled until at least one card is checked; the delegated change listener below keeps it
+        // in sync, since CA's own checkbox toggling never touches this button.
         delBtn.value = T("Löschen", "Delete");
         delBtn.disabled = true;
         var ccSyncDelBtn = function () { delBtn.disabled = !document.querySelector(".ca_multiselect:checked"); };
@@ -3956,10 +3366,8 @@
           if (!apps.length) return;
           var names = apps.map(function (a) { return a.name; }).join(", ");
           var go = function () {
-            // #57 follow-up (user: "sobald was gelöscht wurde springt die seite ganz nach unten"): CA's own
-            // previousApps() refresh scrolls the page itself as a side effect (native behaviour, not ours to
-            // edit) - pin the pre-delete scroll position back across the few ticks that refresh spans, the
-            // same "fight a native async scroll" shape as the #40 fix elsewhere in this file.
+            // CA's own refresh scrolls the page as a side effect, so the scroll position from
+            // before the delete is pinned back across the few ticks that refresh spans.
             var savedScroll = window.scrollY;
             var restoreScroll = function () { window.scrollTo(0, savedScroll); };
             var done = 0;
@@ -3994,26 +3402,26 @@
       ccAppsCornerMarks();
       var holders = document.querySelectorAll(".ca_holder");
       for (var ci = 0; ci < holders.length; ci++) {
-        ccAppsCardMenu(holders[ci]);   // build the hamburger BEFORE moving the install button out of .ca_bottomLine
+        ccAppsCardMenu(holders[ci]);   // before the install button leaves .ca_bottomLine
         ccAppsTypeBadge(holders[ci]);
         ccAppsWarnBadge(holders[ci]);
         ccAppsSpotlightBadge(holders[ci]);
-        ccAppsPositionTopBadges(holders[ci]); // needs every top-right badge above to already exist — compacts them + sizes the name
+        ccAppsPositionTopBadges(holders[ci]); // needs every badge above to exist before it compacts them
         ccAppsNameMarquee(holders[ci]);
-        ccAppsStatRow(holders[ci]);    // builds .cc-castats + its .cc-cs-right sub-group — ribbon row below nests into it
-        ccAppsRibbonRow(holders[ci]);  // relies on ccAppsCornerMarks() above having already moved the ribbon in
+        ccAppsStatRow(holders[ci]);    // builds the row the ribbon row below nests into
+        ccAppsRibbonRow(holders[ci]);  // needs ccAppsCornerMarks() to have moved the ribbon in
       }
-      // (#9) subtitle -> (i) bubble on the header, keep SHOW MORE inline, retire the body-text line.
+      // The subtitle moves into an info bubble on the header, the show-more toggle stays inline and
+      // the body-text line is retired.
       var heads = document.querySelectorAll(".ca_homeTemplatesHeader:not([data-cc-info])");
       for (var h = 0; h < heads.length; h++) {
         var head = heads[h]; head.setAttribute("data-cc-info", "1");
-        // #9 wrap the bare title text in its own element so it can carry a fill BADGE (an anonymous flex
-        // text-run is unstylable); the (i) bubble + SHOW MORE stay siblings in the transparent flex row.
+        // The bare title text goes into an element of its own so it can carry a fill; an anonymous
+        // flex text run cannot be styled. The bubble and the toggle stay siblings in the row.
         if (!head.querySelector(".cc-sechead-badge")) {
           var tb = document.createElement("span"); tb.className = "cc-sechead-badge";
           while (head.firstChild) tb.appendChild(head.firstChild);
-          // #85-B: translate the badge's own moved-in native text (see CC_APPS_XLATE_DE above) — safe as a
-          // wholesale textContent overwrite because every source header here is plain text, no child elements.
+          // every source header here is plain text, so overwriting it wholesale destroys no markup
           if (LANG === "de") { var xlB = CC_APPS_XLATE_DE[tb.textContent.trim()]; if (xlB) tb.textContent = xlB; }
           head.appendChild(tb);
         }
@@ -4022,31 +3430,27 @@
         var more = line2.querySelector(".homeMore"), sub = "";
         for (var n = 0; n < line2.childNodes.length; n++) { var nd = line2.childNodes[n]; if (nd.nodeType === 3) sub += nd.textContent; }
         sub = sub.trim();
-        if (LANG === "de" && CC_APPS_XLATE_DE[sub]) sub = CC_APPS_XLATE_DE[sub];   // #85-B: text2 subtitle
-        // #5: the horizontal-scroll hint. Corrected — it works ONLY with the right mouse button held down,
-        // not with the wheel, and it gets its own paragraph so it doesn't drown in the section text.
+        if (LANG === "de" && CC_APPS_XLATE_DE[sub]) sub = CC_APPS_XLATE_DE[sub];
+        // the sideways-scroll hint gets its own paragraph, or it drowns in the section text
         if (sub) sub += "\n\n" + T("Tipp: seitlich scrollen mit gedrückter rechter Maustaste.",
                                    "Tip: scroll sideways with the right mouse button held down.");
         if (sub) head.appendChild(ccMakeInfo(sub));
-        if (more) head.appendChild(more);     // SHOW MORE now rides inside the section badge
+        if (more) head.appendChild(more);
         line2.style.display = "none";
       }
-      // AFTER the loop: the alignment passes read each row's SHOW MORE / title badge, which only exist inside
-      // the header once the loop above has built them. Calling them earlier made them silent no-ops on first paint.
+      // After the loop: the alignment passes read each row's toggle and title badge, which exist
+      // only once the loop above has built them.
       ccAppsAlignRight();
       ccAppsAlignTop();
     } catch (e) {}
   }
   var ccAppsObs = null, ccInfoObs = null, ccAppsT = 0;
   function ccAppsSoon() { if (ccAppsT) return; ccAppsT = setTimeout(function () { ccAppsT = 0; ccApps(); }, 60); }
-  // #94 (live-traced, root cause of "the Info-Card redesign only ever worked in the first few seconds
-  // after a page load"): #sidenavContent does NOT exist at boot — confirmed live (a boot-time
-  // getElementById returned null on a page where the drawer had never been opened yet). CA creates it
-  // lazily, apparently as a side effect of the FIRST .ca_appPopup click itself, so attaching its
-  // MutationObserver only needs to happen once — but only from AFTER that first click, not at boot. A
-  // short bounded retry (#sidenavContent may take a few ms to appear after the click that creates it)
-  // finds it once and attaches for the rest of the page's life; ccAppsSoon() is also called immediately
-  // once attached, so the click that triggered this doesn't itself need to wait for a later mutation.
+  // #sidenavContent does not exist at boot: CA creates it lazily, as a side effect of the first
+  // click that opens the drawer, so the observer can only attach after that click. A short bounded
+  // retry covers the few milliseconds it takes to appear, and attaches for the rest of the page's
+  // life. ccAppsSoon() runs right away once attached, so the click that triggered this does not
+  // have to wait for a later mutation.
   function ccInfoObsAttach(tries) {
     if (ccInfoObs) return;
     var sc1 = document.getElementById("sidenavContent");
@@ -4057,40 +3461,27 @@
     try {
       if (!/^\/Apps(\/|$)/.test(location.pathname)) return;
       ccApps();
-      // #94: harmless no-op if #sidenavContent already exists from an earlier session/navigation state;
-      // otherwise this is a bounded no-op poll (2s) until the first real click creates it (see below).
       ccInfoObsAttach(0);
       document.addEventListener("click", function (e) {
         if (e.target && e.target.closest && e.target.closest(".caMenuItem, .homeMore, .sortIcons, .searchSubmit, #searchButton")) ccAppsSoon();
-        // #63: .ca_appPopup marks every entry point into the Info drawer (the card itself, its icon, its
-        // name/description, and the explicit Info button) - none of those match the selectors above, so
-        // without this the drawer's own .popupInfo buttons only got their rainbow stamp on some LATER,
-        // unrelated pass instead of the moment they actually appear. A capture-phase listener sees the
-        // click before CA's own handler swaps in the drawer content, so the delay is intentional (below).
-        // #94: the single 80ms retry is a harmless head start for when #sidenavContent already exists
-        // (the common case, every open after the first) — ccInfoObsAttach is what reliably catches the
-        // very FIRST open of the whole session, when #sidenavContent doesn't exist until this exact click
-        // creates it, and every open after that via the MutationObserver it sets up once found.
+        // .ca_appPopup marks every entry point into the info drawer, none of which the selectors
+        // above match, so without this its buttons get their stamp on some later, unrelated pass.
+        // The capture-phase listener sees the click before CA swaps in the drawer content, hence
+        // the delay; the attach call is what catches the very first open of the session.
         if (e.target && e.target.closest && e.target.closest(".ca_appPopup")) { setTimeout(ccAppsSoon, 80); ccInfoObsAttach(0); }
       }, true);
-      // the measured right gutter moves with the viewport, so re-measure on resize — without this the padding
-      // stays frozen at whatever the last pass computed and SHOW MORE drifts off the icon gutter again (seen
-      // live: exact at the measured width, 15px off after a resize). rAF-throttled, writes one style prop.
+      // The measured right gutter moves with the viewport, so without a re-measure the padding
+      // stays frozen at whatever the last pass computed and the toggle drifts off the gutter.
       var arRaf = 0;
       window.addEventListener("resize", function () {
         if (arRaf) return;
         function pass() { arRaf = 0; ccAppsAlignRight(); ccAppsAlignTop(); setTimeout(function () { ccAppsAlignRight(); ccAppsAlignTop(); }, 120); }
         arRaf = window.requestAnimationFrame ? window.requestAnimationFrame(pass) : setTimeout(pass, 16);
       }, { passive: true });
-      // #15 (found chasing the "Results Per Page/DockerHub never relocate on cold load" bug): this used to
-      // call ccApps() only on the FIRST tick where #templates_content exists (`!ccAppsObs` guards it to
-      // once) — every later tick just counted down. That is fine for anything the #templates_content
-      // observer already covers, but .searchArea (Results Per Page, DockerHub, the pager, Sort By) lives
-      // OUTSIDE #templates_content entirely (verified live: templatesContent.contains(searchArea) === false)
-      // and often finishes rendering LATER than the first tick, since CA's feed load is async — so its own
-      // late appearance was invisible to both the one-shot call and the observer. ccApps() is already
-      // idempotent (its own comment says it "re-runs on every category/click"), so calling it every tick
-      // for the same bounded 4.5s window is cheap and closes the gap without a second observer.
+      // CA's search area sits outside #templates_content, so the observer below never sees it, and
+      // it often finishes rendering after the first tick because CA's feed load is async. ccApps()
+      // is idempotent, so running it on every tick of this bounded window closes that gap without a
+      // second observer.
       var k = 0, t = setInterval(function () {
         var tc = document.getElementById("templates_content");
         if (tc && !ccAppsObs) { ccAppsObs = new MutationObserver(ccAppsSoon); ccAppsObs.observe(tc, { childList: true, subtree: false }); }
@@ -4101,14 +3492,13 @@
   }
 
   function boot() {
-    try { window.ccHeaderApply = apply; } catch (e) {} // let the Settings page live-update this bar same-page
+    try { window.ccHeaderApply = apply; } catch (e) {} // the settings page's live toggle hook
     apply();
     ccWhatsNew();
-    // re-settle the header geometry after fonts/layout finish + on resize (the pill edge shifts with the
-    // viewport/font). #10 + #15: the brand and the docked bell can land off during the FIRST paint (a
-    // load-transient) before the anchor is measured — re-run the FULL settle (anchor + brand + dock),
-    // not just measureAlign, on rAF AND on load, so any early misalignment self-corrects once layout is
-    // stable. Idempotent (diff-writes), so the extra passes are cheap.
+    // The pill edge shifts with the viewport and the font, and the brand and the docked bell can
+    // land off during the first paint, before the anchor is measured. Re-running the whole settle,
+    // not just measureAlign, on the next frame and again on load corrects that once layout is
+    // stable; every write is diffed, so the extra passes are cheap.
     function reSettle() { try { measureAlign(); ccBrand(); ccDockProfile(); } catch (e2) {} }
     try {
       if (window.requestAnimationFrame) window.requestAnimationFrame(reSettle);
@@ -4117,38 +3507,34 @@
     } catch (e) {}
     watchSearch();
     wireSearchToggle();
-    ccAppsBoot();     // #7/#8/#9/#11: /Apps colour-mode stamping + subtitle bubble (self-gated to /Apps)
-    ccWrapSelectsBoot();   // Rule 18: catch native <select>s that only exist after the host finishes rendering (Dashboard tiles) or after something is opened
-    // #11 ROOT CAUSE (agent-diagnosed): the docked #UserProfile (position:fixed, z above #menu) overlapped the
-    // help icon and ATE the real mouse click — a synthetic click bypasses hit-testing, which is why it "worked"
-    // in tests but never for a real click. Fix A (Header.css) makes the dock click-through. Fix B here is belt-
-    // and-suspenders: if e.target isn't the help icon (some future overlay), hit-test the pointer's element
-    // STACK for it; and bind pointerup too so the >300ms nav-drag path (where `click` may not fire after
-    // setPointerCapture) still toggles. After toggling ON with no visible .inline_help, surface a toast.
+    ccAppsBoot();
+    ccWrapSelectsBoot();   // catches a select that exists only once the host has rendered, or once something is opened
+    // The docked profile once overlapped the help icon and ate the real click; Header.css makes the
+    // dock click-through. This is the belt and braces: if the event target is not the help icon,
+    // because of some other overlay, hit-test the pointer's element stack for it, and bind
+    // pointerup too, since a drag path with pointer capture may never fire a click.
     var ccHelpBusy = 0;
     function ccHelpTrigger(e) {
       try {
         if (!document.documentElement.classList.contains("cc-header-on")) return;
         var h = e.target && e.target.closest ? e.target.closest("#menu .nav-item.HelpButton") : null;
-        if (!h && e.clientX != null && document.elementsFromPoint) {   // overlay-proof: scan the hit stack
+        if (!h && e.clientX != null && document.elementsFromPoint) {   // scan the hit stack, in case an overlay sits on top
           var stk = document.elementsFromPoint(e.clientX, e.clientY);
           for (var s = 0; s < stk.length; s++) { if (stk[s].closest && stk[s].closest("#menu .nav-item.HelpButton")) { h = stk[s]; break; } }
         }
         if (!h) return;
-        if (ccHelpBusy && Date.now() - ccHelpBusy < 400) { e.preventDefault(); e.stopImmediatePropagation(); return; }   // debounce click+pointerup double-fire
+        if (ccHelpBusy && Date.now() - ccHelpBusy < 400) { e.preventDefault(); e.stopImmediatePropagation(); return; }   // click and pointerup both fire
         ccHelpBusy = Date.now();
         e.preventDefault(); e.stopImmediatePropagation();
         if (typeof window.HelpButton !== "function") { ccToast(T("Hilfe ist auf dieser Seite nicht verfügbar.", "Help is not available on this page.")); return; }
         window.HelpButton();
-        // NO "no inline help" toast (user: "der Hilfe-Button funktioniert nicht, kommt keine Inline-Hilfe"). On pages
-        // like the Docker list the native .inline_help blocks live in a display:none template container (there is
-        // genuinely nothing to show), and on Tools/Settings pages CC already moved the help into the (i) bubbles.
-        // The toast fired on exactly those pages and only annoyed. Help now behaves like native: it shows help where
-        // the page actually has it, and does nothing (silently) where it does not.
+        // No toast when nothing appears: on a page like the Docker list the native help blocks live
+        // in a hidden template container with genuinely nothing to show, and on the settings pages
+        // the help has already moved into the info bubbles. Help behaves like the native button.
       } catch (err) {}
     }
     try { document.addEventListener("click", ccHelpTrigger, true); document.addEventListener("pointerup", ccHelpTrigger, true); } catch (e) {}
-    // #S6: Ctrl/⌘+K opens the command palette (skip when typing in a field, and when CC theming is off)
+    // Ctrl+K opens the command palette, except while typing in a field or with theming off
     try {
       document.addEventListener("keydown", function (e) {
         if (!((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === "k" || e.key === "K"))) return;
@@ -4158,26 +3544,21 @@
         e.preventDefault(); e.stopPropagation(); ccCmdOpen();
       }, true);
     } catch (e) {}
-    // #16 ROUND 5: each trigger is now a REAL CHILD of its in-flow proxy (reparent model, see the dock
-    // code) — it reflows with the row natively, no JS position tracking needed, so no scroll listener at
-    // all any more (that was the source of the scroll-lag complaint: JS mirroring a compositor-positioned
-    // sticky element is always at least one frame behind). Keep only a cheap, idempotent resize pass —
-    // covers a genuine DOM change (icons appearing/disappearing/reordering across a breakpoint), not a
-    // per-frame position fix.
+    // Each trigger is a child of its in-flow proxy and reflows with the row, so nothing tracks its
+    // position per frame; a resize pass covers a real DOM change, such as icons appearing or
+    // reordering across a breakpoint.
     try { window.addEventListener("resize", function () { try { ccDockProfile(); } catch (e2) {} }); } catch (e) {}
-    // #14 (user: "wenn man das fenster breiter zieht, ziehen Insel/Icons/Pfeile nach rechts weg"): with
-    // Theme--width-boxed the CONTENT is capped (~1920px) and LEFT-aligned, but the full-width header island,
-    // the #menu util icons and the fixed footer arrows ride to the VIEWPORT edge → a gap that GROWS with the
-    // window. Publish the content-right gap (viewport - #displaybox.right) as --cc-content-rgap; the sheet pulls
-    // those three back to the content edge via calc(). rAF-throttled, sets ONLY a CSS var (no DOM mutation →
-    // freeze-safe, no observer loop). Fluid width -> gap 0 -> no-op.
+    // At boxed display width the content is capped and left-aligned while the full-width island,
+    // the utility icons and the footer arrows ride to the viewport edge, leaving a gap that grows
+    // with the window. Publishing that gap as a var lets the sheet pull the three back to the
+    // content edge. It writes one custom property and no DOM, and at fluid width the gap is zero.
     try {
       var ccGapRaf = 0;
       function ccContentGap() {
         ccGapRaf = 0;
         try {
           var db = document.getElementById("displaybox");
-          var vw = document.documentElement.clientWidth;   // layout width EXCLUDING the vertical scrollbar (innerWidth would over-count by ~scrollbar)
+          var vw = document.documentElement.clientWidth;   // the layout width without the scrollbar, which innerWidth would include
           var r = db ? db.getBoundingClientRect().right : vw;
           var gap = Math.max(0, Math.round(vw - r));
           document.documentElement.style.setProperty("--cc-content-rgap", gap + "px");
@@ -4189,22 +3570,21 @@
       ccContentGap();
       setTimeout(ccContentGap, 300);   // once more after the boxed layout settles
     } catch (e) {}
-    // the Settings page (or the Docker tab) writes cc.* AND section-specific keys (cch./ccs./
-    // ccp./ccv.) from another origin/tab — re-apply on any of them. NB: "cch.accent" does NOT
-    // contain the substring "cc." so the old indexOf("cc.")===0 check silently missed it.
-    try { window.addEventListener("storage", function (e) { if (e && e.key && e.key !== "cc.stateCache" && /^cc[a-z]*\./.test(e.key)) apply(); }); } catch (e) {} // cc.stateCache EXCLUDED: docker.js rewrites it every 9s, which would repaint this area on a 9s loop in every other open tab
-    // the notification Sheet mounts INSIDE .unapi (not a body child), so the body popup-observer
-    // can miss it — poll ccNotifActions a few times after a click on the docked bell/profile so our
-    // "Alle löschen" button lands as soon as the sheet appears. Idempotent, cheap (only after clicks).
+    // The settings page and the Docker tab write cc.* and the per-area keys from another tab. The
+    // pattern matches those prefixes too, which a plain "cc." check would miss. cc.stateCache is
+    // skipped because docker.js rewrites it every 9s.
+    try { window.addEventListener("storage", function (e) { if (e && e.key && e.key !== "cc.stateCache" && /^cc[a-z]*\./.test(e.key)) apply(); }); } catch (e) {}
+    // The notification sheet mounts inside the Connect root rather than as a body child, so the
+    // body observer can miss it; a few passes after a click on the bell land the bulk buttons as
+    // soon as it appears.
     try {
       document.addEventListener("click", function (e) {
         try { if (e.target && e.target.closest && e.target.closest("#UserProfile, [data-cc-trig]")) { var n = 0, t = setInterval(function () { ccNotifActions(); try { ccPopoverDim(); } catch (ed) {} try { ccPaintRotate(); } catch (ep) {} try { ccAcctMenu(); } catch (ea) {} if (++n >= 8) clearInterval(t); }, 180); } } catch (err) {}
       }, true);
     } catch (e) {}
-    // #21 backdrop sync: the bell Sheet mounts inside .unapi (not a body child), so the body popup
-    // observer misses its OPEN and CLOSE. Re-evaluate #cc-pop-dim after any click or Escape: ccPopoverDim()
-    // shows it while a popover is open and self-hides when none is. A few deferred passes cover the Sheet's
-    // mount delay. Cheap + freeze-safe: no persistent polling, no new observers.
+    // For the same reason the body observer misses that sheet opening and closing, so the backdrop
+    // is re-evaluated after any click or Escape; ccPopoverDim() shows it while a popover is open
+    // and hides it when none is. The deferred passes cover the sheet's mount delay.
     try {
       var ccDimSync = function () { [0, 100, 300, 600].forEach(function (ms) { setTimeout(function () { try { ccPopoverDim(); } catch (e) {} }, ms); }); };
       document.addEventListener("click", ccDimSync, true);
@@ -4214,22 +3594,19 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();
 
-/* ═══ #4: SYSTEM-WIDE LOADER injection ═══════════════════════════════════════════════════════════════════
-   Inject the CC loader markup (.cc-loader, styled in Tokens.css) into Unraid's full-screen tab-load spinner
-   (div.spinner.fixed), replacing the stock red Unraid mark. Exposes window.ccMakeLoader so the app-tab
-   "UPDATING CONTENT" dialog (#2) and the plugin-install view (#3) can drop in the SAME loader. Appended as a
-   separate IIFE so it is fully isolated from the main header logic above. */
+/* Puts the CC loader into Unraid's full-screen tab-load spinner in place of the stock mark, and
+   exposes window.ccMakeLoader so the Apps dialog and the plugin-install view use the same one. Its
+   own closure, so it stays isolated from the header logic above. */
 (function () {
-  // ONE factory. tier is "full" | "dlg" | "sm" | "xs" (Tokens.css .cc-load-* classes); every size lives in
-  // the CSS tokens, nothing here ever writes --cc-load-sz inline, so no sheet has to out-!important a call
-  // site and no call site can invent a number the tier system does not know.
+  // One factory. Every size lives in the CSS tokens and nothing writes the size inline, so no sheet
+  // has to out-weigh a call site and no call site can invent a number the tiers do not know.
   function ccLoader(tier) {
     var w = document.createElement("span"); w.className = "cc-loader cc-load-" + (tier || "dlg");
     w.setAttribute("role", "status"); w.setAttribute("aria-live", "polite");
     w.innerHTML = '<span class="o"><i></i></span><span class="in"><i></i></span>';
     return w;
   }
-  // idempotent: at most one ring per host, ever — re-tiers an existing ring instead of appending a second.
+  // At most one ring per host: an existing one changes tier rather than gaining a second.
   function ccMountLoader(host, tier) {
     try {
       if (!host) return null;
@@ -4243,21 +3620,15 @@
   }
   try {
     window.ccLoader = ccLoader; window.ccMountLoader = ccMountLoader; window.ccUnmountLoader = ccUnmountLoader;
-    window.ccMakeLoader = function () { return ccLoader("dlg"); };   // back-compat shim for any external caller
+    window.ccMakeLoader = function () { return ccLoader("dlg"); };   // for an external caller
   } catch (e) {}
 
-  // #4/#15h THE ARBITER — decides from REAL computed state which fullscreen loader (if any) is genuinely on
-  // screen, mounts exactly one ring there, dedupes every other div.spinner, and stamps html.cc-loading
-  // (+ data-cc-load) so ONE scroll-lock rule (Tokens.css) covers every phase: the Unraid tab-load overlay,
-  // the CA "Updating Content" dialog, and the Docker container-update window (#cc-ctout-bd) alike — closing
-  // the gap where only the CA dialog was locked and a plain tab load still left the page scrollable behind
-  // the ring (user, still open after the dialog-only fix: "der scrollbalken rechts ist immer noch da").
-  // #freeze (live-reported, v3.6.5): an earlier version attached a MutationObserver to the .fixed overlay
-  // itself (attributeFilter style/class) to re-run this the instant its display flips. If Unraid's OWN native
-  // code touches that same element's style/class repeatedly, each touch retriggers this function, which is
-  // not provably loop-free and pegs the CPU under load -> a frozen tab. This function is READ-ONLY
-  // (getComputedStyle) plus idempotent diff-writes, called from a plain bounded-nowhere setInterval below —
-  // a timer callback cannot recursively re-trigger itself the way a self-observing attribute observer can.
+  // Decides from the computed state which fullscreen loader is genuinely on screen, mounts exactly
+  // one ring there, dedupes every other spinner and stamps the loading class, so one scroll-lock
+  // rule covers the tab-load overlay, the Apps dialog and the container-update window alike.
+  // It only reads and writes on a difference, and runs from a timer rather than an observer on the
+  // overlay: Unraid's own code touches that element's style repeatedly, and an attribute observer
+  // on it re-triggers this on every touch, which is not provably loop-free.
   function ccLoadState() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
@@ -4267,11 +3638,8 @@
       var ctout = document.getElementById("cc-ctout-bd");
       var ctoutOn = !!(ctout && getComputedStyle(ctout).display !== "none");
 
-      // Release any forced-flex override THIS function applied on a previous tick before reading
-      // "genuine" visibility below — otherwise our own last write reads back as Unraid still
-      // showing it, so a held-then-released spinner (#33 below) could never actually leave: the
-      // exact stuck-overlay shape the #36 !important removal exists to prevent, just self-inflicted
-      // one tick later instead of by the stylesheet. Caught live by spinner-election.test.js.
+      // Release the override a previous tick applied before reading visibility below, or that
+      // write reads back as Unraid still showing the overlay and a held spinner could never leave.
       var prevFixed = document.querySelectorAll("div.spinner.fixed");
       for (var p = 0; p < prevFixed.length; p++) {
         if (prevFixed[p].style.getPropertyValue("display") === "flex") prevFixed[p].style.removeProperty("display");
@@ -4285,37 +3653,24 @@
         if (s.classList.contains("fixed")) { if (!fixedUp) fixedUp = s; }
         else if (!inPageUp) inPageUp = s;
       }
-      // #33 (user: "lassen den spinner anzeigen solange es lädt"): UNRAID hides its own tab-load overlay the
-      // moment ITS AJAX populates the table — well before a tab enhancer (docker.js et al.) has painted its
-      // badges/actions/gauges over the now-visible-but-still-native rows. If that enhancer says it is still
-      // busy (html.cc-enh-busy, bounded — see docker.js), hold the SAME native overlay open a little longer
-      // instead of letting it close: force it back to visible so every branch below treats it exactly like
-      // a genuinely-showing native spinner, no parallel code path to keep in sync. data-cc-held marks OUR
-      // hold specifically, so the release branch never fights some unrelated reason the element is shown.
+      // Unraid hides its tab-load overlay the moment its own AJAX populates the table, well before
+      // a tab enhancer has painted its badges over the now-visible native rows. While an enhancer
+      // reports itself busy, the same native overlay is held open rather than replaced by a
+      // parallel one, so every branch below treats it like any other showing spinner. data-cc-held
+      // marks this hold, so the release branch never fights another reason the element is shown.
       var heldFixed = document.querySelector("div.spinner.fixed");
       if (!fixedUp && !swalOn && !ctoutOn && root.classList.contains("cc-enh-busy")) {
-        if (heldFixed) { heldFixed.setAttribute("data-cc-held", "1"); fixedUp = heldFixed; }   // display itself is set below, in the election loop, same as any other genuinely-elected .fixed
+        if (heldFixed) { heldFixed.setAttribute("data-cc-held", "1"); fixedUp = heldFixed; }   // the election loop sets the display, as for any other elected overlay
       } else if (heldFixed && heldFixed.getAttribute("data-cc-held") === "1") {
-        heldFixed.removeAttribute("data-cc-held");   // release: the loop below drops the forced display since it's no longer elected
+        heldFixed.removeAttribute("data-cc-held");   // no longer elected, so the loop drops the forced display
       }
-      // cc-spin-active is the ONLY thing that lets an in-page spinner become a fullscreen overlay
-      // (Tokens.css) — never forced blind on every div.spinner:not(.fixed) that merely EXISTS, which is
-      // what stranded Settings > System Temperature under a permanent dimmed overlay before this pass: that
-      // rule fired on ANY such element regardless of whether Unraid meant it visible, because
-      // :not([style*="display: none"]) reads "shown" for a node that has never had an inline style written
-      // yet — exactly the state at page load.
-
-      // ONE ring, ONE elected host, in PRIORITY order: swal > ctout > fixed > in-page div.spinner. LIVE
-      // PROOF this priority is not optional: on /Apps the tab-load overlay (div.spinner.fixed) and CA's own
-      // "Updating Content" dialog (.sweet-alert.cc-only-loader) are BOTH genuinely showing on almost every
-      // real load — CA opens that dialog itself while its feed refreshes. ccUpdatingSwal() used to mount its
-      // OWN ring into the dialog's <p> independently of whatever this div.spinner loop decided, so the two
-      // systems never knew about each other and painted two rings at once — reproducing the exact "doppelter
-      // Spinner" bug this engine exists to prevent, just from a second, uncoordinated mounting path instead
-      // of the original's. ccUpdatingSwal() now only does its non-ring housekeeping (hiding the swal's own
-      // icon, tagging cc-only-loader); this is the ONE place that ever calls ccMountLoader/ccUnmountLoader.
+      // One ring and one elected host, in order: the Apps dialog, the container-update window, the
+      // fullscreen overlay, then an in-page spinner. The order matters: on the Apps tab the overlay
+      // and CA's own dialog are both genuinely showing on nearly every load, since CA opens that
+      // dialog while its feed refreshes. ccUpdatingSwal() only does its housekeeping; this is the
+      // one place that mounts or unmounts a ring.
       var swalMark = swal ? swal.querySelector(".updateContent-swal") : null;
-      var swalHost = swalMark ? swalMark.parentNode : null;   // the <p> the ring sits above (insertBefore, not append)
+      var swalHost = swalMark ? swalMark.parentNode : null;   // the ring goes above the marker, not after it
       var elected = swalOn ? swalHost : ctoutOn ? null : (fixedUp || inPageUp);
 
       if (swalHost) {
@@ -4327,11 +3682,9 @@
         var spElected = (elected === sp);
         sp.classList.toggle("cc-spin-dupe", !spElected && !!(fixedUp || inPageUp) && !swalOn);
         sp.classList.toggle("cc-spin-active", !!(spElected && !sp.classList.contains("fixed")));
-        // #33-followup (own regression, caught live): flex-centering .fixed used to be an unconditional
-        // CSS !important, which can never lose to UNRAID's own (non-important) inline display:none - it
-        // forced the dimmed/blurred overlay permanently on, on every page. JS already knows the TRUE
-        // elected state right here, so set/clear the inline override only at the exact moment it changes,
-        // same "JS decides, CSS just paints" split cc-spin-active already uses two lines up.
+        // Centring the overlay from CSS with !important can never lose to Unraid's own inline
+        // display:none and forces the dimmed overlay on permanently. The elected state is known
+        // here, so the inline override is set and cleared exactly when it changes.
         if (sp.classList.contains("fixed")) {
           if (spElected) sp.style.setProperty("display", "flex", "important");
           else if (sp.style.getPropertyValue("display") === "flex") sp.style.removeProperty("display");
@@ -4346,41 +3699,35 @@
   }
   try { window.ccLoadState = ccLoadState; } catch (e) {}
 
-  /* #2: the CA "Updating Content" dialog (Apps.page → myAlert, content carries a unique `.updateContent-swal`
-     marker span) is a SweetAlert1 `.sweet-alert` appended as a DIRECT child of <body>. Hide the stock swal
-     info-icon and tag the shell so CSS/ccLoadState know a loader-only dialog is up. Detection keys on the
-     marker span, so it never fires on any OTHER swal.
-     RING PLACEMENT LIVES IN ccLoadState() NOW, NOT HERE (found live: on /Apps the tab-load overlay and this
-     very dialog are BOTH genuinely showing on almost every real load, and this function used to mount its
-     OWN ring independently of whatever the div.spinner arbiter decided — two uncoordinated mounting paths,
-     two rings at once, the exact "doppelter Spinner" bug this engine exists to prevent). This function only
-     does the housekeeping ccLoadState needs already done before IT decides where the one ring goes. */
+  /* CA's "Updating Content" dialog is a SweetAlert appended as a direct child of body, whose
+     content carries a marker span. This hides the stock info icon and tags the shell, so the CSS
+     and ccLoadState know a loader-only dialog is up. Keyed on the marker, so it never fires on any
+     other dialog. ccLoadState places the ring; doing it here as well gave two rings at once. */
   function ccUpdatingSwal() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
       var mark = document.querySelector(".updateContent-swal");
       var box  = mark ? ((mark.closest && mark.closest(".sweet-alert")) || mark.parentElement)
                       : document.querySelector(".sweet-alert.cc-only-loader");
-      // SweetAlert1 REUSES one .sweet-alert node for every dialog: stamp cc-only-loader ONLY while the
-      // update-content marker is present, and strip it the moment the node is reused for anything else.
+      // SweetAlert reuses one node for every dialog, so the class is stamped only while the marker
+      // is present and stripped the moment the node serves something else.
       if (box) box.classList.toggle("cc-only-loader", !!mark);
       if (!mark || !box) return;
       var icon = box.querySelector(".sa-icon"); if (icon) icon.style.display = "none";
     } catch (e) {}
   }
 
-  /* #3: the plugin install / update / downgrade dialog (openPlugin/openBox in Unraid's shared layout) is a
-     SweetAlert1 whose title carries a unique `#pluginProgressTitle` span with a stock `fa-refresh fa-spin`.
-     Swap that spin for a small inline CC loader. On completion Unraid calls $('#pluginProgressTitle').text(...)
-     ("Finished"/"Error"), which REPLACES the span content — so the injected loader is auto-removed, no cleanup
-     observer needed. Keyed on the unique id, so it only ever touches the install/update dialog. */
+  /* The plugin install dialog's title carries a #pluginProgressTitle span with a stock spinner
+     glyph, which this swaps for a small inline ring. On completion Unraid replaces that span's
+     content, which removes the ring with it, so nothing has to clean up afterwards. Keyed on the
+     id, so it only ever touches that dialog. */
   function ccPluginSwal() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
       var t = document.getElementById("pluginProgressTitle");
       if (!t || t.querySelector(".cc-loader")) return;
       var fa = t.querySelector("i.fa"); if (fa) fa.style.display = "none";
-      var l = ccLoader("xs");   // inline ring replacing a glyph in a title line
+      var l = ccLoader("xs");   // an inline ring in place of a glyph in a title line
       l.style.display = "inline-block"; l.style.verticalAlign = "middle"; l.style.marginLeft = "8px";
       t.appendChild(l);
     } catch (e) {}
@@ -4388,13 +3735,10 @@
 
   function ccSwalScan() { ccUpdatingSwal(); ccPluginSwal(); }
 
-  /* Attach a SCOPED observer to the SweetAlert1 shell. SweetAlert1 creates `.sweet-alert` ONCE and REUSES it
-     (toggling a `visible`/`show-sweet-alert` CLASS to open) instead of re-adding it — so a body-childList
-     observer only catches the FIRST dialog, not repeat shows. Watching the small `.sweet-alert` element's
-     `class` attribute catches EVERY open, and content (marker span / #pluginProgressTitle) is already in place
-     when the class flips. This element is tiny (title/text/buttons) — nothing like the app-card tree that froze
-     the tab under a body subtree observer, and we deliberately watch attributes ONLY (no childList/subtree), so a
-     streaming install log never generates mutation noise here. */
+  /* A scoped observer on the SweetAlert shell. SweetAlert creates that element once and reuses it,
+     toggling a class to open it, so a body-childList observer catches only the first dialog.
+     Watching the element's class attribute catches every open, and its content is already in place
+     when the class flips. Attributes only, so a streaming install log makes no noise here. */
   function ccAttachSwalObs() {
     try {
       var shells = document.querySelectorAll(".sweet-alert, .swal-modal, .swal2-popup");
@@ -4409,9 +3753,9 @@
 
   var ccBodyObs = null;
   function ccWatchBodyForSwal() {
-    // FREEZE-PROOF: observe ONLY <body>'s DIRECT children (subtree:false), purely to notice the FIRST time a swal
-    // shell is added so we can attach the scoped observer above. NEVER add subtree here — that fires on the
-    // thousands of deep app-card mutations that froze the CA tab in an earlier attempt.
+    // Body's direct children only, purely to notice the first time a shell is added so the scoped
+    // observer above can attach. A subtree here fires on the deep app-card mutations that froze
+    // the Apps tab.
     try {
       if (ccBodyObs || !document.body) return;
       ccBodyObs = new MutationObserver(function () { ccAttachSwalObs(); ccSwalScan(); });
@@ -4419,15 +3763,10 @@
     } catch (e) {}
   }
 
-  // #29 (user: "die footer pfeile werden wenn man ganz unten ist nicht entsprechend ausgeblendet"):
-  // dynamix.js natively fades a.back_to_top OUT at the TOP of the page via jQuery fadeIn/fadeOut, but ships
-  // no equivalent for a.move_to_end at the BOTTOM. Tried mirroring that exact jQuery mechanism first —
-  // dropped it after live-tracing: something (unclear what, possibly this animation engine's own rAF-tick
-  // cleanup fighting a scroll/resize-driven re-trigger, reproduced even with a same-state guard in place and
-  // .stop(true) before every call) kept resetting a completed fadeOut's display:none back to an opacity
-  // value within ~50ms, so the arrow never actually stayed hidden. A CSS class + opacity/pointer-events
-  // transition sidesteps the whole animation-queue class of problem: no display toggling, no JS per-frame
-  // ticks to fight, just one idempotent class flip Tokens.css reacts to.
+  // dynamix.js fades the back-to-top arrow out at the top of the page but ships nothing for the
+  // move-to-end arrow at the bottom. Mirroring its jQuery animation did not hold: something kept
+  // resetting a completed fade back to an opacity value within a few frames, so the arrow never
+  // stayed hidden. A class with an opacity transition avoids the animation queue entirely.
   var ccFooterBottomState = null;
   function ccFooterArrowsBottom() {
     try {
@@ -4442,35 +3781,22 @@
     ccAttachSwalObs();
     ccSwalScan();          // in case a dialog is already open on load
     ccWatchBodyForSwal();
-    ccFooterArrowsBottom();                                                 // correct initial state (e.g. a page shorter than the viewport)
+    ccFooterArrowsBottom();                                                 // the initial state, for a page shorter than the viewport
     window.addEventListener("scroll", ccFooterArrowsBottom, { passive: true });
     window.addEventListener("resize", ccFooterArrowsBottom);
-    // #4 (found chasing "der scrollbalken rechts ist immer noch da"): this used to be a BOUNDED 12x350ms
-    // retry (4.2s), which could only ever repair the first few seconds of a page's life — any loader that
-    // opened later (a plugin install triggered minutes into a session, a Docker update window) never got
-    // ccLoadState's scroll-lock applied at all. A PERMANENT heartbeat closes that, and is safe where the old
-    // documented freeze (#freeze above) was not: that freeze came from a MutationObserver whose callback
-    // could be RE-ENTERED by the very DOM writes it was watching (self-observing attributeFilter on a node
-    // Unraid's own code churns). A plain setInterval callback cannot re-enter itself — each tick is a fresh,
-    // browser-scheduled call — and ccLoadState() only ever calls getComputedStyle (read) plus idempotent
-    // class/attribute diffs (writes only when the value actually changes), so there is no path back into
-    // itself. Paused via document.hidden so a backgrounded tab does no work at all.
-    // 60ms (was 200ms) — matches the nchan restyle debounce elsewhere in this file. #22 (user screenshot: a
-    // vertical scrollbar next to the spinner "hüpft die ganze Zeit"): CA's catalog fetch toggles its loading
-    // indicators through several phases, and every poll gap around a toggle was a moment html.cc-loading's
-    // scroll-lock sat off while content height was still changing. The Tokens.css scrollbar-gutter fix is the
-    // real fix (timing-independent), this just shrinks the worst-case lock-latency for every cc-loading
-    // consumer, at the same getComputedStyle-read-only cost that made the 200ms interval provably freeze-safe.
+    // A permanent heartbeat rather than a bounded retry, which would only repair the first few
+    // seconds of a page's life and miss a loader that opens minutes into a session. A timer
+    // callback cannot re-enter itself the way an observer on a node Unraid churns can, and
+    // ccLoadState() only reads and writes on a difference, so there is no path back into itself.
+    // It pauses while the tab is hidden, and the interval matches the restyle debounce above.
     setInterval(function () { if (!document.hidden) { ccLoadState(); ccAttachSwalObs(); } }, 60);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ccLoaderBoot); else ccLoaderBoot();
 })();
 
-/* #5: RMB-hold + wheel = horizontal scroll (system-wide). Hold the right mouse button and spin the wheel to
-   scroll ANY horizontal overflow container sideways (deltaY -> scrollLeft), e.g. the .ca_homeTemplates app rows.
-   The context menu is swallowed only for that gesture (once the wheel actually moved a row), so a plain
-   right-click still opens the browser menu elsewhere. Shift+wheel is wired as a bonus. Capture-phase listeners
-   only, ZERO observers -> freeze-safe. */
+/* Holding the right mouse button and spinning the wheel scrolls any horizontally overflowing
+   container sideways, such as the Apps rows. The context menu is swallowed only once that gesture
+   has actually moved a row, so a plain right-click still opens it. Shift and the wheel do the same. */
 (function () {
   "use strict";
   var rmbDown = false, rmbUsed = false, clearT = 0;

@@ -10,7 +10,7 @@ $sock  = getenv('CC_SOCK') ?: '/var/run/cannonadecommand.sock';
 // validates the container name against the live list and never exposes
 // create/exec/build); plan/apply: the start-order plan. Nothing else is forwarded.
 // vms: read-only VM list + current limits; vmlimits: apply CPU-pin/cap, RAM, bandwidth to
-// ONE VM (the engine validates the name against the live libvirt domain list, uses only
+// one VM (the engine validates the name against the live libvirt domain list, uses only
 // virsh --config/--live, and never virsh-defines/undefines/creates a domain).
 $allow = ['state' => ['GET'], 'stats' => ['GET'], 'action' => ['POST'], 'limits' => ['GET', 'POST'], 'restartpolicy' => ['POST'], 'limitlog' => ['GET'], 'plan' => ['GET', 'PUT'], 'apply' => ['POST'], 'config' => ['GET', 'PUT'], 'vms' => ['GET'], 'vmlimits' => ['POST']];
 

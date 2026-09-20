@@ -1,50 +1,43 @@
-/* CannonadeCommand settings page. Client-side only: renders a polished,
- * card-based form (ShipLog-style, Carbon dark) into #cc-settings and persists to
- * localStorage (cc.accent / cc.rainbow / cc.iconcolor / cc.iconstrength /
- * cc.density / cc.view / cc.colview). The Docker-tab enhancer reads the same keys
- * and reacts live via the storage event. */
+/* The CannonadeCommand settings page. Client-side only: it renders a card-based form into
+ * #cc-settings and persists to localStorage under the cc.* keys, which the Docker-tab enhancer reads
+ * and reacts to live through the storage event. */
 (function () {
   "use strict";
   var root = document.getElementById("cc-settings");
   if (!root) return;
-  // tiny page-local style additions (docker.css is owned elsewhere): md-tier buttons for the
-  // backup section (30px line, pad 0 14px, grey fill + hover accent via .cc-btn) + its inline
-  // notice. NO borders/outlines/rings anywhere (house law); lives in <head>, survives render().
+  // Page-local style additions, since docker.css is owned elsewhere. They live in <head> and so
+  // survive render().
   (function () {
     if (document.getElementById("cc-set-xtra")) return;
     var st = document.createElement("style"); st.id = "cc-set-xtra";
     st.textContent =
       "#cc-settings .cc-set-xbtn{display:inline-flex;align-items:center;justify-content:center;height:var(--cc-md-h,30px);padding:var(--cc-md-btnpad,0 14px);font-size:var(--cc-md-fs,13px);font-weight:600;border-radius:var(--cc-b-radius,999px);box-sizing:border-box;margin:12px 10px 0 0}" +
       "#cc-settings .cc-set-xnote{margin-top:10px;font-size:12px;white-space:pre-wrap}" +
-      // #17 flag picker: colour-stripe swatches + searchable custom dropdown (emoji flags fail on Windows)
+      // the flag picker's stripe swatches and its searchable dropdown
       "#cc-settings .cc-flag-sw{display:inline-block;width:22px;height:15px;border-radius:3px;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}" +
       "#cc-settings .cc-flag-sw-lg{width:34px;height:22px}" +
-      // #2 real flag image (4:3 SVG); same footprint as the stripe swatch, subtle hairline
+      // the real flag image, at the same footprint as the stripe swatch
       "#cc-settings .cc-flag-img{display:inline-block;width:22px;height:15px;flex:0 0 auto;object-fit:cover;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}" +
       "#cc-settings .cc-flag-img-lg{width:34px;height:22px}" +
-      // #7/#10 rainbow palette + flag colours stretch to fill the card width; the reset is the SAME
-      // size as a swatch (its own equal flex cell at the end of the row), not a small right-pushed icon.
+      // the palette rows fill the card width, with the reset as one more equal cell at the end
       "#cc-settings .cc-set-swatches.cc-fill{display:flex;gap:6px;align-items:center}" +
-      // #5 (user redo): EVERY colour row is 9 equal flex cells so a swatch is the IDENTICAL size in every card.
-      // A swatch = 1 cell. The reset = 1 cell (same size as a swatch). The hex field = 2 cells (wider than a
-      // reset, as the hex code needs the room) — and the builder shows 7 presets instead of 9 in a hex row so
-      // 7 + 2 = 9. All three are the SAME 30px height (box-sizing:border-box) so the whole row lines up flush.
+      // Every colour row is nine equal cells, so a swatch is the same size in every card. A swatch
+      // and the reset take one cell each, the hex field two, since the code needs the room, and the
+      // builder shows seven presets in a hex row to keep the total at nine.
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;border-radius:var(--cc-b-radius,5px)}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:var(--cc-b-radius,5px);cursor:pointer;color:#cfcfcf;font-size:14px;transition:filter .12s,background .12s,color .12s}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn:hover{background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff)}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{flex:2 2 0;height:30px;min-width:0;box-sizing:border-box;padding:0 8px;align-self:center;font-size:11px;letter-spacing:0;margin:0}" +
-      // #26 settings search + nuke-reset button
+      // the settings search and the reset-everything button
       "#cc-settings .cc-set-searchrow{margin:12px 0 2px}" +
       "#cc-settings .cc-set-search{box-sizing:border-box;width:100%;max-width:420px;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:9px 13px;font-size:13px;transition:background-color .12s}" +
-      // Unraid's default-base.css paints EVERY placeholder in the theme's link colour
-      // (`input::-webkit-input-placeholder{color:var(--link-text-color)}`), i.e. blue on Theme--black — a
-      // hint that reads as a link, or worse as an already-filled value. This used to be guarded for the
-      // search box ALONE, which left the hex fields, the webhook URL and the interface name blue; the
-      // Docker/popup half of the same guard lives in docker.css. One rule per sheet, every field.
+      // Unraid's default-base.css paints every placeholder in the theme's link colour, so a hint
+      // reads as a link or as an already filled value. One rule per sheet covers every field; the
+      // Docker half of the same guard lives in docker.css.
       "#cc-settings input::placeholder{color:#8d8d8d;opacity:1}" +
       "#cc-settings .cc-set-search:focus{background:#2e2e2e}" +
-      // #13 settings search as an expandable hero badge (magnifier -> input on click)
-      // #6 (user): the collapsed search badge FOLLOWS the colour mode (accent/rainbow); it turns into a dark input box only while expanded
+      // The search is a badge that expands into an input on click. Collapsed it follows the colour
+      // mode; expanded it becomes a dark input box.
       "#cc-settings .cc-set-searchbadge{margin-left:auto;display:inline-flex;align-items:center;background:var(--cc-btn-accent,var(--cc-accent,#2f6feb));border-radius:min(var(--cc-b-radius,999px),17px);height:34px;overflow:hidden;transition:background-color .12s}" +
       "#cc-settings .cc-set-searchbadge .cc-set-searchicon{flex:0 0 auto;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:var(--cc-accent-text,#fff);cursor:pointer}" +
       "#cc-settings .cc-set-searchbadge.cc-open{background:#2e2e2e}" +
@@ -53,9 +46,9 @@
       "#cc-settings .cc-set-searchbadge .cc-set-search{box-sizing:border-box;width:0;max-width:0;padding:0;background:transparent;transition:width .2s,max-width .2s,padding .2s}" +
       "#cc-settings .cc-set-searchbadge.cc-open{background:#2e2e2e}" +
       "#cc-settings .cc-set-searchbadge.cc-open .cc-set-search{width:220px;max-width:220px;padding:0 12px 0 2px}" +
-      // #14 version pinned to the very bottom, centred + muted
+      // the version line at the very bottom, centred and muted
       "#cc-settings .cc-set-version-foot{margin:28px 0 6px;text-align:center;opacity:.55;font-size:12px}" +
-      // #11 the native-display link is a proper CC accent button (not the grey chip)
+      // the native-display link as an accent button rather than the grey chip
       "#cc-settings .cc-btn.cc-btn-accent{background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff)}" +
       "#cc-settings .cc-btn.cc-btn-accent:hover{filter:brightness(1.14);background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff)}" +
       "#cc-settings .cc-set-danger{background:#5a2a2a!important;color:#ffd7d7!important}" +
@@ -64,23 +57,21 @@
       "#cc-settings .cc-flag-trigger{display:flex;align-items:center;gap:9px;background:#232323;border-radius:8px;padding:7px 12px;cursor:pointer;user-select:none}" +
       "#cc-settings .cc-flag-trigger:hover{filter:brightness(1.1)}" +
       "#cc-settings .cc-flag-name{font-size:13px;color:#eaeaea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
-      // #8: the trigger reads as a button (no caret). The panel is pinned FIXED at open time (see openPanel).
+      // The trigger reads as a button, with no caret, and openPanel pins the panel fixed.
       "#cc-settings .cc-flag-panel{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:9999;background:#1c1c1c;border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.6);overflow:hidden}" +
       "#cc-settings .cc-flag-search{box-sizing:border-box;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:8px 10px;margin:8px;width:calc(100% - 16px);font-size:13px}" +
       "#cc-settings .cc-flag-list{max-height:260px;overflow-y:auto;padding:0 6px 6px}" +
       "#cc-settings .cc-flag-item{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:6px;cursor:pointer}" +
-      "#cc-settings .cc-flag-item:hover,#cc-settings .cc-flag-item.cc-sel{background:rgba(255,255,255,.09)}" +   // #25 keyboard highlight
-      // ── the LOGO PREVIEW TILE (logoPreview below). The coloured badge is THIS BOX — a real element with a
-      // real border-radius and overflow:hidden — never an feFlood baked into the filter: an feFlood fills the
-      // whole filter region, so the "badge" ignored border-radius and rendered a hard square where the live
-      // tab shows a rounded tile. Same split the real tabs use (docker/vms span.hand, plugins .cc-plugico):
-      // the TILE carries the badge, the child carries the pixels.
+      "#cc-settings .cc-flag-item:hover,#cc-settings .cc-flag-item.cc-sel{background:rgba(255,255,255,.09)}" +   // the keyboard highlight too
+      // The logo preview tile. Its coloured badge is this box, a real element with a radius and
+      // overflow hidden, never an feFlood inside the filter: an feFlood fills the whole filter
+      // region and ignores the radius, rendering a hard square where the live tab shows a rounded
+      // tile. The real tabs split it the same way: the tile carries the badge, the child the pixels.
       "#cc-settings .cc-set-tile{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;overflow:hidden;flex:0 0 auto;transition:background-color .12s}" +
       "#cc-settings .cc-set-tile>img{width:100%;height:100%;object-fit:contain;display:block;box-sizing:border-box}" +
       "#cc-settings .cc-set-tile>i{display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;box-sizing:border-box}" +
       "#cc-settings .cc-set-tile-bg>img,#cc-settings .cc-set-tile-bg>i{padding:14%}" +
-      // per-area sub-heading inside ONE card (the global Logos card's Docker/VM/Plugin sections) — a plain
-      // muted caption, not a second card (Rule 1: one raised surface, never a card inside a card)
+      // A per-area sub-heading inside one card is a muted caption, never a card inside a card.
       "#cc-settings .cc-set-sublbl{margin:12px 0 0;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;opacity:.55}" +
       "#cc-settings .cc-set-prev-empty{margin:6px 0 0;font-size:12px;opacity:.5}";
     document.head.appendChild(st);
@@ -105,27 +96,22 @@
     { key: "restart", label: T("Restart-Policy", "Restart policy") },
   ];
   var PRESETS = ["#2f6feb", "#1f9d55", "#ff8c2f", "#8b5cf6", "#e0912a", "#d9433f", "#0ea5a4", "#e05299", "#525252"];
-  // rainbow-mode colour per column (same order as COLS): the matrix checkboxes take
-  // these when rainbow mode is on, so the settings echo the Docker-tab badge colours.
-  // net/ip/lan/port share a network-ish family (net kept its old purple; ip/lan/port added after it).
+  // The rainbow colour per column, in the order of COLS, so the matrix checkboxes echo the
+  // Docker-tab badge colours. The four network columns share a family of related hues.
   var RB = ["#1f9d55", "#2f6feb", "#6b7280", "#8b5cf6", "#7c6df0", "#5b8def", "#4aa3c7", "#d9433f", "#0ea5a4", "#e05299", "#0891b2", "#6366f1", "#e0912a"];
 
-  // Each column gets its OWN object via a factory call — chkCell mutates colview[key][v] IN PLACE, so a
-  // SHARED `both`/`adv` reference let one checkbox flip every aliased column (net/ip/lan/port all aliased
-  // `both`, blanking the whole Simple-view network area). Must stay in lock-step with docker.js defaultColview().
+  // Each column gets an object of its own from a factory call: chkCell mutates these in place, so a
+  // shared reference would let one checkbox flip every column that aliased it. Stays in step with
+  // docker.js defaultColview().
   function defColview() { var adv = function () { return { s: false, a: true }; }, both = function () { return { s: true, a: true }; }; return { update: both(), force: adv(), version: adv(), net: both(), ip: both(), lan: both(), port: both(), res: both(), id: adv(), von: adv(), vol: adv(), plan: both(), restart: adv() }; }
   function get(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function del(k) { try { localStorage.removeItem(k); } catch (e) {} }
-  // The "Standard-Ansicht" picker below only ever wrote localStorage — the Docker tab's own
-  // organizer-probe reconcile (docker.js boot()) treats the SERVER's saved ccViewMode as
-  // authoritative and silently overwrites a local-only pick on the next load (live-caught:
-  // picking Grid here never survived a reload once the server remembered a different mode).
-  // window.ccGql is header.js's shared GraphQL transport (exposed globally since docker.js's
-  // organizer code needs it too) — read-then-merge-then-write so an unrelated prefs key some
-  // other feature adds later never gets clobbered by this picker.
+  // The default-view picker has to reach the server as well: docker.js treats the saved view mode
+  // there as authoritative and overwrites a local-only pick on the next load. It reads, merges and
+  // writes back, so a preference another feature adds later survives this picker.
   function syncViewModeServer(v) {
-    if (typeof window.ccGql !== "function") return; // header.js missing/too old — degrade silently, localStorage still has the value
+    if (typeof window.ccGql !== "function") return; // without header.js, localStorage still holds the value
     window.ccGql("{ docker { organizer { views { id prefs } } } }")
       .then(function (r) { return r.json(); })
       .then(function (j) {
@@ -136,22 +122,21 @@
         merged.ccViewMode = v;
         return window.ccGql("mutation($v: String, $p: JSON!) { updateDockerViewPreferences(viewId: $v, prefs: $p) { version } }", { v: view.id, p: merged });
       })
-      .catch(function () {}); // best-effort — the picker already reflects the choice either way
+      .catch(function () {});   // the picker reflects the choice either way
   }
-  // ONE-TIME upgrade migration (runs at module load, BEFORE any render/applyFlag): builds before 2.66
-  // stored the FLAG palette in the shared cc.rbpal key. If a flag is selected but cc.flagpal is still
-  // absent, cc.rbpal currently HOLDS exactly those flag colours — so move them into cc.flagpal and clear
-  // cc.rbpal, returning the rainbow palette to its clean default. No flag-data lookup needed (the value
-  // is already the flag palette), so it can't race CC_FLAGS loading. Idempotent: once cc.flagpal exists
-  // the guard is false, so it never runs again and never touches a legit custom rainbow palette.
+  // Older builds stored the flag palette in the shared cc.rbpal key. With a flag selected and
+  // cc.flagpal still absent, cc.rbpal holds exactly those flag colours, so they move across and the
+  // rainbow palette returns to its default. No flag lookup is needed, since the value already is
+  // the palette, so this cannot race the flag data loading. It runs at module load, before any
+  // render, and once cc.flagpal exists the guard is false and it never runs again.
   (function migrateFlagPalette() {
     try {
       var rb = get("cc.rbpal", "");
       if (get("cc.flag", "") && rb) {
         var fp = get("cc.flagpal", "");
-        if (!fp) { set("cc.flagpal", rb); del("cc.rbpal"); }          // pre-2.66: rbpal IS the flag palette -> move it, clear rbpal
-        else if (fp === rb) { del("cc.rbpal"); }                       // 2.66.1/2.66.2: both hold the flag palette -> drop the redundant rbpal
-        // else: rbpal differs from flagpal -> it is a legit custom rainbow palette, leave it alone
+        if (!fp) { set("cc.flagpal", rb); del("cc.rbpal"); }
+        else if (fp === rb) { del("cc.rbpal"); }                       // both hold the flag palette, so the rainbow one is redundant
+        // a differing rbpal is a genuine custom rainbow palette and stays
       }
     } catch (e) {}
   })();
@@ -166,18 +151,18 @@
   var view = get("cc.view", "list");
   var colview = loadColview();
 
-  // Notifications are engine-side config (not localStorage): loaded/saved through
-  // the same-origin proxy. We keep the WHOLE config so a notify save never drops
-  // the per-container schedules/watchdogs set in the Docker tab.
+  // Notifications are engine config rather than localStorage, loaded and saved through the
+  // same-origin proxy. The whole config is kept, so a save here never drops the per-container
+  // schedules and watchdogs set in the Docker tab.
   var PROXY = "/plugins/cannonadecommand/server/ccapi.php";
   var fullConfig = { schedules: [], watchdogs: [], notify: { unraid: false, webhook: "" } };
   var notify = { unraid: false, webhook: "" };
-  var shapeIface = "";       // engine config: interface the egress shaping runs on (blank = eth0)
-  var notifyDirty = false;   // true once the user has touched the Notifications card
-  var shapeDirty = false;    // true once the user has touched the shaping-interface field
-  var configLoaded = false;  // true only after a SUCCESSFUL initial GET /config
-  // mirror every cc.* write into the engine config — localStorage is per-origin,
-  // so without this the toggles only ever applied to the origin they were set on
+  var shapeIface = "";       // the interface the egress shaping runs on; blank means eth0
+  var notifyDirty = false;
+  var shapeDirty = false;
+  var configLoaded = false;  // only after a successful initial GET
+  // Every cc.* write is mirrored into the engine config: localStorage is per origin, so without
+  // this the toggles apply only to the origin they were set on.
   var uiSyncT = null, uiPending = {};
   (function () {
     try {
@@ -188,13 +173,10 @@
         try { if (/^cc[a-z]*\./.test(String(k)) && k !== "cc.stateCache") { uiPending[k] = 1; clearTimeout(uiSyncT); uiSyncT = setTimeout(pushUISettings, 800); } } catch (e) {}
       };
     } catch (e) {}
-    // removeItem was never intercepted (only setItem was) — a key cleared via del()/
-    // localStorage.removeItem() (this file's own del(), the cc.rbpal migration cleanup below,
-    // the kill.forEach cleanup further down) never got queued into uiPending, so the deletion
-    // never reached the engine's ui_settings mirror and adoptUISettings() resurrected the old
-    // value on the next load. pushUISettings() already treats a null local read as "delete the
-    // server key" — this was the missing half that queues the key at all. Mirrors the same
-    // patch in docker.js/cc-theme.js (each page runs exactly one of the three, never doubled).
+    // removeItem is intercepted too, or a cleared key never reaches the engine's mirror and the
+    // next adopt resurrects the old value. pushUISettings() already reads a missing local value as
+    // "delete the server key"; this is what queues the key at all. docker.js and cc-theme.js carry
+    // the same interception, and a page runs exactly one of the three.
     try {
       var origRm = localStorage.removeItem.bind(localStorage);
       window.__ccLSRemove = origRm;
@@ -205,7 +187,7 @@
     } catch (e) {}
   })();
   function collectUISettings() { var o = {}; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && /^cc[a-z]*\./.test(k) && k !== "cc.stateCache") o[k] = localStorage.getItem(k); } return o; }
-  // merge ONLY the changed keys into the server map (never replace it wholesale)
+  // merges the changed keys into the server map rather than replacing it
   function pushUISettings() {
     var keys = Object.keys(uiPending); if (!keys.length) return;
     api("GET", "config").then(function (c) {
@@ -219,19 +201,19 @@
   }
   function adoptUISettings(u) {
     var changed = false;
-    // Two-way-sync migration: old builds stored the FLAG palette in the shared cc.rbpal key. The engine's
-    // ui_settings is the sync's source of truth, so if we only cleaned localStorage the very next adopt
-    // would restore cc.rbpal=flag. Move it into cc.flagpal and drop cc.rbpal IN u, clear the local copy,
-    // and flag _migrated so the loader persists the cleaned config back to the engine.
+    // The same migration on the other side of the sync: the engine's ui_settings is the source of
+    // truth, so cleaning localStorage alone would let the next adopt restore the old key. The
+    // palette moves across in the incoming map, the local copy is cleared, and _migrated tells the
+    // loader to persist the cleaned config back to the engine.
     adoptUISettings._migrated = false;
     try {
       if (u && u["cc.flag"] && u["cc.rbpal"]) {
-        if (!u["cc.flagpal"]) { u["cc.flagpal"] = u["cc.rbpal"]; delete u["cc.rbpal"]; adoptUISettings._migrated = true; }        // pre-2.66: move the flag palette out of rbpal
-        else if (u["cc.flagpal"] === u["cc.rbpal"]) { delete u["cc.rbpal"]; adoptUISettings._migrated = true; }                  // 2.66.1/2.66.2: drop the redundant contaminated rbpal
-        // else: rbpal differs from flagpal -> a legit custom rainbow palette, keep it
+        if (!u["cc.flagpal"]) { u["cc.flagpal"] = u["cc.rbpal"]; delete u["cc.rbpal"]; adoptUISettings._migrated = true; }
+        else if (u["cc.flagpal"] === u["cc.rbpal"]) { delete u["cc.rbpal"]; adoptUISettings._migrated = true; }
+        // a differing rbpal is a genuine custom rainbow palette and stays
       }
     } catch (e0) {}
-    if (adoptUISettings._migrated) { try { localStorage.removeItem("cc.rbpal"); } catch (e1) {} }   // u no longer carries cc.rbpal -> clear the local contaminated value explicitly
+    if (adoptUISettings._migrated) { try { localStorage.removeItem("cc.rbpal"); } catch (e1) {} }
     try { Object.keys(u || {}).forEach(function (k) { if (/^cc[a-z]*\./.test(k) && k !== "cc.stateCache" && localStorage.getItem(k) !== u[k]) { (window.__ccLS || localStorage.setItem.bind(localStorage))(k, u[k]); changed = true; } }); } catch (e) {}
     return changed;
   }
@@ -240,7 +222,7 @@
     var u = PROXY + "?path=" + encodeURIComponent(path);
     var tk = "";
     try { tk = (typeof window.csrf_token !== "undefined" && window.csrf_token) || (document.querySelector('input[name="csrf_token"]') || {}).value || ((document.cookie || "").match(/csrf_token=([0-9A-Za-z]+)/) || [])[1] || ""; } catch (e) {}
-    if (method !== "GET") { // emhttp accepts the csrf_token ONLY in a form body
+    if (method !== "GET") { // emhttp accepts the csrf_token in a form body only
       opts.headers["Content-Type"] = "application/x-www-form-urlencoded";
       opts.body = (tk ? "csrf_token=" + encodeURIComponent(tk) + "&" : "") + "data=" + encodeURIComponent(JSON.stringify(body != null ? body : {}));
     }
@@ -248,7 +230,7 @@
       return r.text().then(function (tx) { var d = null; try { d = tx ? JSON.parse(tx) : null; } catch (e) {} if (!r.ok) throw new Error((d && d.error) || ("HTTP " + r.status)); return d; });
     });
   }
-  // ── permanently embedded colour picker (no OS popup window) ──
+  // an embedded colour picker, with no OS popup window
   function hexToHsv(hex) {
     var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return null;
     var n = parseInt(m[1], 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
@@ -264,7 +246,7 @@
     var f = function (u) { return ("0" + Math.round((u + m) * 255).toString(16)).slice(-2); };
     return "#" + f(r) + f(g) + f(b);
   }
-  // An always-visible SV-square + hue bar; el._set(hex) syncs it, el._get() reads it.
+  // A saturation square and a hue bar; _set(hex) syncs it and _get() reads it back.
   function inlinePicker(hex, onChange) {
     var box = el("div", "cc-ip"), sv = el("div", "cc-ip-sv"), dot = el("span", "cc-ip-dot"), hue = el("div", "cc-ip-hue"), hdot = el("span", "cc-ip-hdot");
     sv.appendChild(dot); hue.appendChild(hdot); box.appendChild(sv); box.appendChild(hue);
@@ -293,40 +275,37 @@
     paint(); return box;
   }
 
-  // Serialise config read-modify-write so the Notifications and Bandwidth cards saving
-  // near-simultaneously can't lose each other's field: each GET-modify-PUT waits for the
-  // previous to settle, so the second GET always sees the first's PUT.
+  // Serialises the config read, modify and write, so two cards saving at nearly the same moment
+  // cannot lose each other's field: each cycle waits for the previous one to settle.
   var cfgChain = Promise.resolve();
   function withConfigLock(fn) { var p = cfgChain.then(fn, fn); cfgChain = p.catch(function () {}); return p; }
 
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
   var cardN = 0;
   function card(title, sub) {
-    var c = el("div", "cc-set-card"); // no coloured top bar (user call)
+    var c = el("div", "cc-set-card");
     var h = el("div", "cc-set-h", title);
-    if (sub) h.appendChild(infoIcon(sub)); // info text lives behind the ⓘ bubble, never on the card (user call)
+    if (sub) h.appendChild(infoIcon(sub)); // the explanation lives behind the bubble, never on the card
     c.appendChild(h); return c;
   }
   function elk(t) { var s = el("span", "cc-b-k"); s.textContent = t; return s; }
   function elv(t) { var s = el("span", "cc-b-v"); s.textContent = t; return s; }
-  // Systemwide INFO ICON: a small "i" in a circle; hover OR keyboard-focus shows a CSS bubble with
-  // the explanation (styled in docker.css). Lets us tuck long info texts behind a clean glyph so the
-  // cards stay uncluttered — reuse this anywhere a control needs a "what does this do?" hint.
-  // ONE (i) for the whole plugin — glyph + markup live in cc-theme.js (window.CCTheme.infoIcon).
+  // The plugin's one info glyph, shared through cc-theme.js; this is the fallback for a page that
+  // loads without it. Hover or keyboard focus shows the explanation in a bubble.
   function infoIcon(tip) { if (window.CCTheme && window.CCTheme.infoIcon) return window.CCTheme.infoIcon(tip); var s = el("span", "cc-info"); s.innerHTML = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3" /><circle cx="8" cy="4.6" r="0.9" fill="currentColor" /><path d="M8 7v4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>'; if (tip) { s.setAttribute("data-tip", tip); s.setAttribute("aria-label", tip); } s.setAttribute("tabindex", "0"); return s; }
   // normalise a typed hex ("2f6feb" / "#2F6FEB") to "#rrggbb", or "" if invalid.
   function normHex(s) { var v = String(s || "").trim(); if (/^[0-9a-f]{6}$/i.test(v)) v = "#" + v; return /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : ""; }
 
-  // a badge-styled on/off toggle. A <span> (NOT a <button>): Unraid's global button
-  // CSS was painting an orange border and limiting the knob travel to mid-way.
+  // A badge-styled on/off toggle, built from a span rather than a button: Unraid's global button
+  // CSS paints a border on it and limits the knob's travel.
   function toggle(on, onChange, disabled) {
     var t = el("span", "cc-set-toggle" + (on ? " cc-set-toggle-on" : "") + (disabled ? " cc-set-toggle-disabled" : ""));
     t.setAttribute("role", "switch"); t.setAttribute("tabindex", disabled ? "-1" : "0"); t.setAttribute("aria-checked", on ? "true" : "false");
     if (disabled) t.setAttribute("aria-disabled", "true");
     t.appendChild(el("span", "cc-set-knob"));
     function paint() { t.classList.toggle("cc-set-toggle-on", on); t.setAttribute("aria-checked", on ? "true" : "false"); }
-    function flip() { if (t.classList.contains("cc-set-toggle-disabled")) return; on = !on; paint(); onChange(on); }   // #3: a gated toggle refuses to flip
-    t._setOn = function (v) { if (v === on) return; on = v; paint(); }; // programmatic sync, fires NO onChange
+    function flip() { if (t.classList.contains("cc-set-toggle-disabled")) return; on = !on; paint(); onChange(on); }
+    t._setOn = function (v) { if (v === on) return; on = v; paint(); }; // a programmatic sync, which fires no onChange
     t._setDisabled = function (d) { t.classList.toggle("cc-set-toggle-disabled", !!d); t.setAttribute("tabindex", d ? "-1" : "0"); if (d) t.setAttribute("aria-disabled", "true"); else t.removeAttribute("aria-disabled"); };
     t.addEventListener("click", flip);
     t.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
@@ -337,22 +316,18 @@
     row.appendChild(toggle(on, onChange)); return row;
   }
 
-  // ── THE SELECTED SWATCH, in ONE place ────────────────────────────────────────────────
-  // Every colour row on this page draws the same swatch, so "which one is picked" has to be
-  // marked the same way in every one of them. It used to be a CSS-only `transform: scale()`,
-  // which made the picked swatch a DIFFERENT SIZE from its neighbours (measured live: 33x35
-  // against 28x30) — see the long note on .cc-set-sw-on in docker.css. The box never changes
-  // now; the mark is a tick drawn on the fill, and the tick needs an ink that contrasts with
-  // THIS swatch's colour, so the class and the ink are always set together. Going through one
-  // helper is what keeps the global card, every area card and syncSwOn() from drifting apart.
+  // Every colour row draws the same swatch, so the picked one is marked the same way everywhere.
+  // The box never changes size, since a scaled swatch reads as a different size from its
+  // neighbours; the mark is a tick on the fill, and that tick needs an ink contrasting with this
+  // swatch's own colour, so the class and the ink are always set together.
   function swMark(sw, on, colour) {
     if (!sw) return;
     sw.classList.toggle("cc-set-sw-on", !!on);
     if (on) sw.style.setProperty("--cc-sw-tick", ccTick(idealText(colour || sw.dataset.c || "")));
     else sw.style.removeProperty("--cc-sw-tick");
   }
-  // Mark exactly the swatch whose colour is `colour` inside `row` (and unmark the rest).
-  // dataset.c is the swatch's own colour — the ONE attribute every preset swatch carries.
+  // Marks the swatch in `row` whose colour matches and unmarks the rest; dataset.c is the one
+  // attribute every preset swatch carries.
   function swMarkRow(row, colour) {
     if (!row) return;
     var want = String(colour || "").toLowerCase();
@@ -362,27 +337,17 @@
     });
   }
 
-  // ── ONE LOGO PREVIEW FOR EVERY CARD THAT HAS ONE ─────────────────────────────────────
-  // There were THREE private copies of this (the Docker tab's Logos card, every area's own
-  // Logos card, and nothing at all in the global card), and all three painted something the
-  // real tabs never paint. Two concrete faults, both reported as "the preview doesn't work":
-  //   · they applied a RAW luminance tint / ink flatten and never once looked at cc.iconmode,
-  //     so with the global Icon-Färbung on anything but the raw treatment the preview showed a
-  //     different picture from the tab it is a preview OF;
-  //   · the coloured badge was an feFlood INSIDE the SVG filter. An feFlood fills the whole
-  //     filter region, which is the element's border box — so the badge ignored border-radius
-  //     and came out a hard square while the live tab shows a rounded tile.
-  // This runs the tabs' OWN pipeline instead: CCTheme.icons.plan() picks native/flat/tint and
-  // may swap in a curated glyph, exactly as docker.js/plugins.js/vms.js do it, and the badge is
-  // a real CSS box (.cc-set-tile) behind the image. `scope` is the pipeline's per-item scope
-  // ("docker"/"vm"/"plugin"), so a per-item pin set in a row's own window shows up here too.
+  // One logo preview for every card that has one. It runs the tabs' own icon pipeline, which
+  // picks the treatment and may swap in a curated glyph, exactly as the area scripts do, so the
+  // preview shows what the tab it previews will show. The badge is a real CSS box behind the
+  // image, not an feFlood inside the filter, which fills the whole filter region and would ignore
+  // the radius. `scope` is the pipeline's per-item scope, so a per-item pin shows up here too.
   function logoPreview(scope, fid) {
     var wrap = el("div", "cc-set-prev");
-    var items = [];                                   // {tile, node, name, glyph, src}
-    // bg/bgColor and tint/color are two INDEPENDENT pairs (v4.32.5): bg draws the badge box (in
-    // ITS OWN bgColor, falling back to `color` then `accent` — same chain as bgColor() in
-    // docker.js/vms.js/plugins.js), tint recolours the icon itself (in `color`) and is gated by
-    // its OWN on/off — a background badge alone no longer forces the icon to be recoloured.
+    var items = [];
+    // The background and the tint are two independent pairs: the background draws the badge box
+    // in its own colour, falling back to the tint colour and then the accent, while the tint
+    // recolours the icon and has its own switch, so a badge alone never forces a recolour.
     var st = { bg: false, bgColor: "", tint: false, color: "", strength: 100, accent: "#2f6feb", size: null };
     var bound = false;
     function C() { return window.CCTheme && window.CCTheme.icons; }
@@ -392,13 +357,10 @@
       if (/^#[0-9a-f]{6}$/i.test(st.color)) return st.color;
       return st.accent;
     }
-    // Same ink contract as docker.js iconInk()/plugins.js plugIconInk(): "" whenever tint is off
-    // (regardless of the badge); ALWAYS the picked TINT colour, lifted out of the dark end —
-    // regardless of whether the badge is also on (v4.32.6 fix: this used to return
-    // hex6(idealText(badgeBg())) whenever the badge was on, discarding the user's own picked
-    // tint colour — see docker.js iconInk() for the full writeup). badgeBg() stays the badge
-    // box's OWN colour, never the icon's ink. A luminance tint outputs about half the target's
-    // luma, so the tint path doubles the floor.
+    // The same ink contract as docker.js iconInk(): nothing while the tint is off, and otherwise
+    // the picked tint colour lifted out of the dark end, whether or not the badge is on too.
+    // badgeBg() stays the box's own colour and is never the icon's ink. A luminance tint outputs
+    // about half the target's luma, so that path doubles the floor.
     function ink(forTint) {
       if (!st.tint) return "";
       if (!/^#[0-9a-f]{6}$/i.test(st.color)) return "";
@@ -431,8 +393,8 @@
       return sh === "circle" ? "50%" : "min(" + ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" }[sh] || "999px") + ", 16px)";
     }
     function size() { return st.size || ({ s: "48px", m: "62px", l: "76px" })[get("cc.sgsize", "m")] || "62px"; }
-    // A sample starting with "fa-"/"icon-" is a FONT GLYPH (the Settings/Tools tiles, most VM rows),
-    // which is monochrome by construction: it inks via CSS colour and has no raster to matrix.
+    // A sample whose name starts with a font-icon prefix is a glyph, monochrome by construction:
+    // it inks through the CSS colour and has no raster for a filter to work on.
     function add(src, name) {
       var tile = el("span", "cc-set-tile"), node;
       if (/^(fa-|icon-)/.test(src)) { node = el("i", (/^fa-/.test(src) ? "fa " : "") + src); }
@@ -448,8 +410,8 @@
         it.tile.style.borderRadius = rad;
         it.tile.style.background = st.bg ? bg : "";
         it.tile.classList.toggle("cc-set-tile-bg", !!st.bg);
-        // The plan is the pipeline's, never a local guess: an unmeasured/unknown icon falls through
-        // to the safe treatment exactly as it does on the real tab.
+        // The plan comes from the pipeline, never from a local guess, so an unknown icon falls
+        // through to the safe treatment exactly as it does on the real tab.
         var plan = { treat: "tint", url: "" };
         if (Ci) {
           var res = it.name ? Ci.result(it.name) : null, kind = (res && res.kind !== "pending") ? res.kind : "";
@@ -460,9 +422,8 @@
         var want = plan.treat === "native" ? "none" : (plan.treat === "flat" ? (flat || tint || "none") : (tint || "none"));
         if (it.glyph) {
           it.node.style.fontSize = "calc(" + sz + " * .46)";
-          // ink(false) already answers the picked tint colour whenever tint is on (badge or not),
-          // and "" whenever tint is off (badge or not) — branching on st.bg directly here instead
-          // (as this used to) would force a colour onto the glyph even with tint off.
+          // ink() already answers the picked colour while the tint is on and nothing while it is
+          // off, badge or no badge; branching on the badge here would colour the glyph regardless.
           it.node.style.color = plan.treat === "native" ? "" : (ink(false) || "");
           it.node.style.filter = "none";
         } else {
@@ -485,73 +446,44 @@
     };
   }
 
-  // ── ONE "Hintergrund" (background) + "Einfärben" (tint) control pair, for every card that
-  // has one — the global "Logos & Icons" card, the Docker tab's own Logos card and every other
-  // area's Logos card (buildStyleCards' cB). Before 4.32.5 there were THREE hand-rolled copies
-  // of "a toggle whose on/off state IS a colour key's presence" (gOn/iconOn/on2 further down in
-  // this file), and the confirmed bug — turning Hintergrund on silently switched icon tinting on
-  // too — was exactly that BOTH controls read and wrote the SAME cc.iconcolor key. This gives
-  // each control its own on/off key AND its own colour key, and builds the DOM for both exactly
-  // once, so a future change to the row's shape (or another conflation bug) only has to be fixed
-  // in one place instead of three.
-  //   io.getBg()/setBg(bool)             — background on/off
-  //   io.getBgColor()/setBgColor(hex)    — background's OWN colour ("" = unset -> falls back)
-  //   io.getTint()/setTint(bool)         — tint on/off
-  //   io.getColor()/setColor(hex)        — tint's OWN colour (the pre-existing *iconcolor key)
-  //   io.getAdopt()/setAdopt(bool)       — the ONE master "Badge-Einstellungen übernehmen"
-  //                                         toggle (v4.33.1, see below)
-  //   io.getAccent()                     — this scope's effective accent, for the colour fallback
-  //   io.onChange()                      — called after ANY of the eight writes above (repaint hook)
-  // Returns the toggle/picker handles a caller may still need (e.g. the strength slider) plus a
-  // sync() that repaints every row from the CURRENT stored values (an adopt-toggle flip on an
-  // area card needs this to jump to the newly-effective values).
+  // The one background and icon control pair, for every card that has one: the global logos card,
+  // the Docker tab's own and every other area's. Each control has its own on/off key and its own
+  // colour key, which is what keeps turning the background on from silently switching the icon
+  // tint on with it, and the DOM for both is built exactly once.
+  //   io.getBg()/setBg(bool)             the background on or off
+  //   io.getBgColor()/setBgColor(hex)    its own colour; empty falls back
+  //   io.getTint()/setTint(bool)         the icon tint on or off
+  //   io.getColor()/setColor(hex)        its own colour
+  //   io.getAdopt()/setAdopt(bool)       the master adopt toggle
+  //   io.getAccent()                     this scope's accent, for the fallback
+  //   io.onChange()                      called after any of those writes
+  // It returns the handles a caller may still need, such as the strength slider, and a sync() that
+  // repaints every row from the stored values, which an adopt flip on an area card needs.
   //
-  // ── BADGE-EINSTELLUNGEN ÜBERNEHMEN — ONE toggle, not two (v4.33.1) ──────────────────
-  // v4.32.4-v4.32.7 deliberately made Hintergrund's/Einfärben's OWN picked colour win over
-  // Rainbow mode's rotating colour unconditionally — correct as the default, but it removed a
-  // capability an install could rely on: making the icon FOLLOW Rainbow (or the plain accent)
-  // like every other badge, exactly as it behaved before v4.32.4. v4.33.0's first attempt at
-  // restoring that gave EACH control its own independent adopt toggle — user-tested minutes
-  // after release and immediately redesigned: two toggles meant Einfärben's adopt state still
-  // had to pick ONE flat rotating hue for the tint (never per-item, since the tint is one shared
-  // SVG filter for the whole page — see iconInk()/vmIconInk()/plugIconInk()), so "rainbow mode"
-  // never actually looked like a rainbow — every logo showed the SAME colour. The fix the user
-  // asked for: collapse both toggles into ONE, sitting at the very TOP of this block (above both
-  // colour-picker rows, not as a third row per control). When it is ON, Hintergrund follows
-  // Rainbow/accent exactly as before (unchanged mechanism — bgColor() and its mirrors answer ""
-  // so the existing --cc-rb-c/--cc-accent CSS fallback chain resolves it, now genuinely PER-ITEM
-  // in every view via the new per-card/per-row rainbow stamping), and Einfärben's ink stops being
-  // a separately-adopted colour altogether: it becomes an AUTOMATIC black-or-white contrast
-  // colour for whatever the resolved background actually is — exactly the contrast-ink treatment
-  // settingsgrid.js's own badge mode already computes unconditionally for its tiles. Both colour
-  // pickers below are dimmed + inert while this ONE toggle is on (neither is consulted), the same
-  // convention the Intensität row already uses for "this control is not currently in effect".
-  // When it is OFF, Hintergrund/Einfärben are exactly as independent as v4.32.6/v4.32.7 left them
-  // — unchanged. The actual colour resolution lives entirely on the read side
-  // (docker.js/vms.js/plugins.js/settingsgrid.js's bgColor()/iconInk() and mirrors) — this
-  // control only flips ONE storage key.
+  // The adopt toggle is one switch, not one per control. Two would each have to resolve the tint
+  // to a single flat hue, since the tint is one shared SVG filter for the whole page, so rainbow
+  // mode would paint every logo the same colour. With this one on, the background follows rainbow
+  // or the accent as any other badge does, per item, and the icon's ink becomes an automatic black
+  // or white contrast against whatever background that resolves to; both colour pickers are dimmed
+  // and inert, since neither is consulted. With it off the two are independent. The colour
+  // resolution itself lives on the read side in each area script; this control flips one key.
   function logoToggles(into, io) {
     function bgColorEff() {
       var c = io.getBgColor(); if (/^#[0-9a-f]{6}$/i.test(c)) return c;
       var ic = io.getColor(); if (/^#[0-9a-f]{6}$/i.test(ic)) return ic;
       return /^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#1f9d55";
     }
-    // v4.35.0 (item 5, jdp: "den kann man von den Docker/Plugins/VMs tabs weg lassen... man muss
-    // ihn eh nur global an/aus machen, sonst ist er redundant"): the master toggle now lives on the
-    // GLOBAL "Logos & Icons" card ONLY — every area card (Docker/Plugins/VMs/Settings…) still needs
-    // io.getAdopt() internally (sync() below dims the colour pickers exactly as before, now purely
-    // reading whatever the caller's getAdopt() resolves to — see the "always global" getAdopt()s at
-    // the area call sites), it just never gets its OWN visible row/switch to flip. Skips building
-    // adoptTg/adoptRow at all when set, rather than building-then-hiding — nothing to leak inert
-    // DOM for a control this card can never show.
+    // The master toggle is a global decision, so only the global card shows a switch for it. An
+    // area card still reads getAdopt() to dim its colour pickers, it just has no row of its own;
+    // that row is not built at all rather than built and hidden.
     var hideAdopt = !!io.hideAdoptRow;
     var adoptTg = null, adoptRow = null;
     if (!hideAdopt) {
-      // the ONE master toggle — first thing in the card, above every other row.
+      // the master toggle, first in the card and above every other row
       adoptTg = toggle(io.getAdopt(), function (v) { io.setAdopt(v); sync(); io.onChange(); });
       adoptRow = el("div", "cc-set-row cc-set-inline");
       var adoptLbl = el("span", "cc-set-lblwrap"); adoptLbl.appendChild(el("span", null, T("Badge-Einstellungen übernehmen", "Adopt badge settings")));
-      adoptLbl.appendChild(infoIcon(T("AN: Hintergrund UND Icons folgen zusammen Regenbogen (rotierend, pro Symbol) bzw. der Akzentfarbe, wenn Regenbogen aus ist — genau wie jedes andere Badge. Das Symbol selbst wird dabei automatisch schwarz oder weiß eingefärbt, je nachdem was auf dem Hintergrund lesbar ist. Die beiden Farbwähler unten werden dabei ignoriert.", "ON: Background AND Icons together follow Rainbow mode (rotating, per icon) or the plain accent when Rainbow is off — exactly like every other badge. The icon itself is then automatically inked black or white, whichever reads on the resolved background. Both colour pickers below are ignored while this is on.")));
+      adoptLbl.appendChild(infoIcon(T("An: Hintergrund und Icons folgen zusammen dem Regenbogen (rotierend, pro Symbol) oder der Akzentfarbe, wenn Regenbogen aus ist, genau wie jedes andere Badge. Das Symbol selbst wird dabei automatisch schwarz oder weiß eingefärbt, je nachdem was auf dem Hintergrund lesbar ist. Die beiden Farbwähler unten werden dabei ignoriert.", "On: background and icons together follow rainbow mode (rotating, per icon) or the plain accent when rainbow is off, exactly like every other badge. The icon itself is inked black or white, whichever reads on the resolved background. Both colour pickers below are ignored while this is on.")));
       adoptRow.appendChild(adoptLbl); adoptRow.appendChild(adoptTg);
     }
 
@@ -571,9 +503,7 @@
       if (v && !/^#[0-9a-f]{6}$/i.test(io.getColor())) { var seed2 = tintPk._get(); io.setColor(seed2); tintHx.value = seed2; }
       sync(); io.onChange();
     });
-    // v4.35.0 (item 4, jdp: "Einfärben soll eigentlich Icons heißen"): display label only — the
-    // storage key (cc.icontint/P+icontint), the getter/setter names (getTint/setTint/io.getTint())
-    // and every internal variable (tintTg, tintRow, tintOn, …) keep their existing names unchanged.
+    // The label reads "Icons"; the storage key and every name in the code stay as the tint.
     var tintRow = el("div", "cc-set-row cc-set-inline"); tintRow.appendChild(el("span", null, T("Icons", "Icons"))); tintRow.appendChild(tintTg);
     var tintHx = el("input", "cc-set-hexin"); tintHx.type = "text"; tintHx.value = io.getColor() || ""; tintHx.placeholder = "#1f9d55"; tintHx.maxLength = 7; tintHx.spellcheck = false;
     var tintPk = inlinePicker(/^#[0-9a-f]{6}$/i.test(io.getColor()) ? io.getColor() : (/^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#1f9d55"), function (v) { io.setColor(v); tintHx.value = v; sync(); io.onChange(); });
@@ -586,28 +516,18 @@
     function sync() {
       if (adoptTg) adoptTg._setOn(io.getAdopt());
       var adopting = io.getAdopt();
-      // NEITHER picker is consulted while the master toggle adopts — dim + inert both, the same
-      // convention the Intensität row below already uses for "this control is not currently in
-      // effect".
+      // Neither picker is consulted while the master toggle adopts, so both are dimmed and inert.
       bgTg._setOn(io.getBg());
       bgHx.value = io.getBgColor() || ""; try { bgPk._set(bgColorEff()); } catch (e9) {}
       bgPickRow.style.opacity = adopting ? ".4" : ""; bgPickRow.style.pointerEvents = adopting ? "none" : "";
-      // v4.35.0 (item 4, jdp: the switches themselves — not just their colour pickers — must grey
-      // out and refuse clicks while adopting). toggle()'s own disabled state (_setDisabled) already
-      // does exactly that: opacity .4 + grayscale + cursor:not-allowed (see .cc-set-toggle-disabled
-      // in docker.css) AND flip() refuses to fire onChange while it's set — so this is the SAME
-      // mechanism the Intensität row's opacity/pointerEvents convention approximates by hand,
-      // applied to the switch itself instead of a wrapping row.
+      // The switches grey out and refuse clicks too, through toggle()'s own disabled state.
       bgTg._setDisabled(adopting);
       tintTg._setDisabled(adopting);
       tintTg._setOn(io.getTint());
       tintHx.value = io.getColor() || ""; try { if (/^#[0-9a-f]{6}$/i.test(io.getColor())) tintPk._set(io.getColor()); } catch (e9) {}
       tintPickRow.style.opacity = adopting ? ".4" : ""; tintPickRow.style.pointerEvents = adopting ? "none" : "";
-      // Intensität only ever means anything for the LUMINANCE tint, which only runs when tint is
-      // on — the badge box no longer affects the icon's ink at all (v4.32.6 fix: iconInk() and
-      // its mirrors now always tint in the picked colour, badge or not — see iconInk()/
-      // vmIconInk()/plugIconInk()) — so it only dims when tint itself is off. While adopting, the
-      // ink is a flat auto black/white contrast colour with no strength to tune either.
+      // The strength only means anything for the luminance tint, so it dims when the tint is off.
+      // While adopting, the ink is a flat black or white contrast with no strength to tune.
       var dim = !io.getTint() || adopting;
       strRow.style.opacity = dim ? ".4" : ""; strRow.style.pointerEvents = dim ? "none" : "";
     }
@@ -619,35 +539,23 @@
     return { sync: sync, strInput: strInput, bgToggle: bgTg, tintToggle: tintTg, adoptToggle: adoptTg };
   }
 
-  // ── REAL sample icons per area, for the previews ─────────────────────────────────────
-  // What 4.32.0 did — fetch("/VMs") / fetch("/Plugins") and parse the answer — CANNOT work, on any
-  // box, ever. All three native list pages ship an EMPTY table body and fill it from their own
-  // jQuery AFTER load:
-  //     Plugins.page          initlist() -> $.get('/plugins/dynamix.plugin.manager/include/ShowPlugins.php')
-  //     VMMachines.page       loadlist() -> $.get('/plugins/dynamix.vm.manager/include/VMMachines.php')
-  //     DockerContainers.page loadlist() -> $.get('/plugins/dynamix.docker.manager/include/DockerContainers.php')
-  // fetch() never executes a page's <script>, so parsing the page shell can only ever see that
-  // pre-population skeleton — literally `<tbody id="plugin_list"><tr><td colspan="6"></td></tr></tbody>`,
-  // zero <img>, always, no matter how long you wait. Not a selector bug and not a race: the bytes
-  // fetch() gets simply never contain an icon. Verified live on a real box.
-  // So we call the SAME row-fragment endpoints the native pages call. They are plain
-  // server-rendered <tr> HTML with the real icons already in them — no JS execution required,
-  // and by construction identical to what the live tab ends up showing.
-  //
-  // Three parsing details that are NOT optional:
-  //  · VMMachines.php answers "rows \0 script" — only the FIRST NUL-separated part is markup.
-  //  · A bare "<tr>…" string handed to DOMParser is DISCARDED (the HTML parser foster-parents a
-  //    <tr> that has no table around it), so the fragment must be wrapped in <table><tbody> first.
-  //  · Only the DIRECT <tr> children of that wrapper are rows; a plugin's rendered README can
-  //    contain its own nested tables and images, which must never be mistaken for a logo.
-  // ShowPlugins.php is called with init=1 (server-rendered icon markup) and check=1 (no remote
-  // version check — the network path lives exclusively in the non-init branch).
+  // Real sample icons per area, for the previews. Fetching the native list pages cannot work:
+  // all three ship an empty table body and fill it from their own jQuery after load, and fetch()
+  // never executes a page's scripts, so the bytes it gets hold no icon at all. These are the same
+  // row-fragment endpoints those pages call, plain server-rendered rows with the real icons in
+  // them, identical by construction to what the live tab shows.
+  // Three details in the parsing below:
+  //  the VM endpoint answers the rows and a script separated by a NUL, and only the first part is
+  //  markup; a bare row string handed to DOMParser is discarded, because the parser foster-parents
+  //  a row with no table around it, so the fragment is wrapped first; and only the direct row
+  //  children of that wrapper count, since a plugin's rendered README can carry its own tables
+  //  and images. The plugin endpoint takes init=1 for the server-rendered icon markup and check=1
+  //  to skip the remote version check, whose network path lives in the other branch.
   var ICON_SRC = {
-    // Docker used to build its own "/state/.../<name>-icon.png" URL out of the engine's container
-    // list. That is a GUESS, and it is wrong for every container Unraid has no cached icon for:
-    // the file 404s, the preview's onerror hides the tile, and the row comes out as a hole. The
-    // fragment carries the src the Docker tab itself renders, including Unraid's question.png
-    // stand-in — so what the preview shows is what the tab shows, gap-free.
+    // The fragment carries the src the Docker tab itself renders, including Unraid's stand-in
+    // image. Building a URL from the engine's container list instead is a guess, and it is wrong
+    // for every container Unraid has no cached icon for: the file 404s and the row comes out as
+    // a hole.
     docker: {
       url: "/plugins/dynamix.docker.manager/include/DockerContainers.php",
       cell: "td.ct-name",
@@ -660,9 +568,9 @@
     },
     vm: {
       url: "/plugins/dynamix.vm.manager/include/VMMachines.php",
-      cell: "td.vm-name",                                                     // detail/disk rows have no such cell and are skipped
-      sels: ["span[id^='vm-'] > .img", "img.img", "img", "i.img"],            // same order vms.js vmImgs() uses
-      // mirrors vms.js vmNameOf(): a row's VM name is the 1st argument of its addVMContext(…) handler
+      cell: "td.vm-name",                                                     // a detail or disk row has no such cell and is skipped
+      sels: ["span[id^='vm-'] > .img", "img.img", "img", "i.img"],            // the order vms.js uses
+      // as vms.js does: a row's VM name is the first argument of its context handler
       name: function (cell) {
         var h = cell.querySelector("[onclick*='addVMContext']");
         var m = /addVMContext\('([^']+)'/.exec(h ? (h.getAttribute("onclick") || "") : "");
@@ -673,8 +581,8 @@
       url: "/plugins/dynamix.plugin.manager/include/ShowPlugins.php?init=1&check=1",
       cell: "td",
       sels: ["img.list", "i.list", "img", "i"],
-      // mirrors plugins.js paintRow(): the display name is the README heading in the description
-      // cell, with the version cell's vid-<name> id as the fallback.
+      // as plugins.js does: the display name is the README heading in the description cell, with
+      // the version cell's own id as the fallback.
       name: function (cell, row) {
         var tds = row.children; if (!tds || tds.length < 4) return "";
         var h = tds[1].querySelector("h1, h2, h3") || tds[1].querySelector("strong, b");
@@ -682,8 +590,8 @@
       }
     }
   };
-  // Best-effort throughout: a disabled tab, no VMs or a slow box just yields an empty list and
-  // the caller shows its "nothing to show" line instead of a broken row.
+  // A disabled tab, no VMs or a slow box yields an empty list, and the caller shows its
+  // "nothing to show" line rather than a broken row.
   function rowIcons(kind, max) {
     var cfg = ICON_SRC[kind];
     if (!cfg) return Promise.resolve([]);
@@ -713,11 +621,9 @@
 
   function render() {
     root.innerHTML = "";
-    // #1 FIX: re-read the live theming snapshot on EVERY render. accent/rainbow/iconcolor/iconstrength
-    // are module-init vars (read once at load, lines 67-70); a setting change calls render(), so without
-    // refreshing them here the UI repaints from the STALE load-time value. Root cause of "Rainbow-Toggle
-    // funktioniert nicht": rbOnly used the stale `rainbow`, so the switch snapped back OFF after every
-    // click (and the reactive/rotation/palette rows stayed greyed) even though cc.rainbow flipped to 1.
+    // The theming snapshot is re-read on every render: these are module-level variables read once
+    // at load, and a setting change calls render(), so without this the page repaints from the
+    // value it started with and a freshly flipped switch snaps back.
     accent = get("cc.accent", "#2f6feb");
     rainbow = get("cc.rainbow", "0") === "1";
     iconcolor = get("cc.iconcolor", "");
@@ -729,7 +635,7 @@
     var head = el("div", "cc-set-head");
     var hero = el("div", "cc-set-hero");
     var hleft = el("div", "cc-set-heroleft");
-    var lg = el("img", "cc-set-logo"); lg.src = "/plugins/cannonadecommand/images/cannonadecommand-unraid.svg"; lg.alt = "";   // theme-safe double-ring variant (reads on every Unraid theme)
+    var lg = el("img", "cc-set-logo"); lg.src = "/plugins/cannonadecommand/images/cannonadecommand-unraid.svg"; lg.alt = "";   // the double-ring variant, which reads on every Unraid theme
     hleft.appendChild(lg);
     var htx = el("div", null);
     var brand = el("div", "cc-set-brand"); brand.appendChild(el("b", null, "Cannonade")); brand.appendChild(el("span", null, "Command"));
@@ -738,27 +644,26 @@
     hleft.appendChild(htx);
     hero.appendChild(hleft);
     head.appendChild(hero);
-    // The RUNNING engine version, always findable HERE (the Docker-tab gear was hard to
-    // locate) — an old value after an update = the update didn't take / daemon not restarted.
+    // The running engine's version, where it is easy to find: an old value after an update means
+    // the update did not take, or the daemon was not restarted.
     var CC_VER = "@@CCVER@@"; if (CC_VER.indexOf("@@") === 0) CC_VER = "dev";
-    // GlimStone version this UI is built against — bump by hand whenever tokens.css /
-    // appearance.ts are re-copied from a newer github.com/junkerderprovinz/glimstone release.
+    // the GlimStone version this UI is built against, bumped by hand whenever its files are recopied
     var GLS_VER = "1.0.0";
-    // #14 (user): the version line moves to the very BOTTOM of the page (appended to root after all wraps, below).
+    // the line itself is appended to root after every wrap, at the very bottom of the page
     var verLine = el("div", "cc-set-sub cc-set-version cc-set-version-foot", "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + T("Engine: verbinde…", "Engine: connecting…"));
     api("GET", "state").then(function (s) {
       verLine.textContent = "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + ((s && s.version) ? ("Engine " + String(s.version).replace(/^v/, "v")) + " · " + T("läuft", "running") : T("Engine läuft (Version unbekannt)", "Engine running (version unknown)"));
-    }).catch(function (e) { verLine.textContent = "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + T("Engine NICHT erreichbar", "Engine NOT reachable") + " — " + (e && e.message ? e.message : ""); verLine.style.color = "#d9433f"; });
-    // #26/#13 (user): quick settings search — filters cards/rows across ALL tabs. It sits far-RIGHT in the
-    // hero (where the version used to be) as a BADGE with a magnifier that EXPANDS to the input on click.
+    }).catch(function (e) { verLine.textContent = "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + T("Engine nicht erreichbar", "Engine not reachable") + ": " + (e && e.message ? e.message : ""); verLine.style.color = "#d9433f"; });
+    // The settings search filters cards and rows across every tab. It sits at the right of the
+    // hero as a badge with a magnifier that expands into the input on click.
     var setSearch = el("input", "cc-set-search"); setSearch.type = "search"; setSearch.placeholder = T("Einstellungen durchsuchen …", "Search settings …"); setSearch.spellcheck = false;
     var searchBadge = el("div", "cc-set-searchbadge");
-    var searchIcon = el("span", "cc-set-searchicon"); searchIcon.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M14 3.072a8 8 0 0 1 2.32 11.834l5.387 5.387a1 1 0 0 1 -1.414 1.414l-5.388 -5.387a8 8 0 1 1 -.905 -13.249" /></svg>';   // tabler filled/search (Rule 20)
+    var searchIcon = el("span", "cc-set-searchicon"); searchIcon.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M14 3.072a8 8 0 0 1 2.32 11.834l5.387 5.387a1 1 0 0 1 -1.414 1.414l-5.388 -5.387a8 8 0 1 1 -.905 -13.249" /></svg>';   // tabler filled/search
     searchBadge.appendChild(searchIcon); searchBadge.appendChild(setSearch);
     searchIcon.addEventListener("click", function (e) { e.stopPropagation(); var open = searchBadge.classList.toggle("cc-open"); if (open) { setSearch.focus(); } else { setSearch.value = ""; if (typeof runFilter === "function") runFilter(""); } });
     hero.appendChild(searchBadge);
-    // #7 (user): the search collapses again when you click BESIDE it. Bound once (render() is re-entrant);
-    // clears the query + resets the filter via a synthetic input event so the existing filter listener runs.
+    // The search collapses again on a click beside it, clearing the query and resetting the filter
+    // through an input event so the existing listener runs. Bound once, since render() re-enters.
     if (!window.__ccSetSearchDoc) {
       window.__ccSetSearchDoc = true;
       document.addEventListener("click", function (e) {
@@ -775,31 +680,27 @@
     var wrap = el("div", "cc-set-wrap");
     var wrapPlugin = el("div", "cc-set-wrap"), wrapVms = el("div", "cc-set-wrap"), wrapHeader = el("div", "cc-set-wrap"), wrapShares = el("div", "cc-set-wrap");
     var wrapSettings = el("div", "cc-set-wrap");
-    var wrapTools = el("div", "cc-set-wrap");   // #6: Werkzeuge is its own sub-tab now (shares the /Settings grid config — Unraid renders both landing pages identically)
+    var wrapTools = el("div", "cc-set-wrap");   // Werkzeuge shares the /Settings grid config, since Unraid renders both landing pages alike
     var wrapFavorites = el("div", "cc-set-wrap");
-    var wrapStart = el("div", "cc-set-wrap");   // Start (/Main) area — its own CC-settings section
-    var wrapMain = el("div", "cc-set-wrap");    // Allgemein — also hosts the export/import card (last)
-    var adoptToggles = {}; // adopt-key → its toggle element (a colour pick flips it live); declared UP here (not further down) because the Docker area's styleToggle now runs early, with the moved global Badges card
-    var styleCardSync = {}; // adopt-key → refresher: repaints an area card's picker/hex/swatches/preview with the EFFECTIVE colour (global while adopt is ON, own while OFF)
+    var wrapStart = el("div", "cc-set-wrap");
+    var wrapMain = el("div", "cc-set-wrap");    // Allgemein, which also hosts the export and import card
+    var adoptToggles = {}; // each adopt key's toggle element, which a colour pick flips live
+    var styleCardSync = {}; // each adopt key's refresher, repainting an area card with the effective colour
     function syncAllStyleCards() { for (var k9 in styleCardSync) { try { styleCardSync[k9](); } catch (e9) {} } }
-    // MASTER THEMING switch (first, prominent). Off = keep ONLY the Docker orchestration
-    // FUNCTIONS (start plan, dependencies, health-gate, watchdog, schedules, limits, bandwidth,
-    // idle-stop) and disable ALL visual theming (badges, colours, rainbow, cards, and every
-    // area's restyling). Defaults on, so existing installs are unchanged. render() on change
-    // keeps the toggle in sync; the tabs pick it up via their storage listeners / on next load.
-    var themingCard; // the first Allgemein card — Sichern & Übertragen moves in here (user call)
+    // The master theming switch. Off keeps the Docker orchestration functions and disables every
+    // visual change. It defaults on, so an existing install is unchanged, and the tabs pick a
+    // change up through their storage listeners or on the next load.
+    var themingCard; // the first Allgemein card, which the backup section moves into
     (function () {
-      var tc = card(T("Theming", "Theming"), T("Aus = nur die Docker-FUNKTIONEN von CannonadeCommand bleiben (Startplan, Abhängigkeiten, Health-Gate, Watchdog, Zeitpläne, Limits, Bandbreite, Auto-Stop bei Leerlauf). Das gesamte visuelle Theming — Badges, Farben, Rainbow, Karten und die Umgestaltung aller Tabs — wird abgeschaltet.", "Off = only CannonadeCommand's Docker FUNCTIONS remain (start plan, dependencies, health-gate, watchdog, schedules, limits, bandwidth, idle auto-stop). All visual theming — badges, colours, rainbow, cards and every tab's restyling — is turned off."));
+      var tc = card(T("Theming", "Theming"), T("Aus: nur die Docker-Funktionen von CannonadeCommand bleiben (Startplan, Abhängigkeiten, Health-Gate, Watchdog, Zeitpläne, Limits, Bandbreite, Auto-Stop bei Leerlauf). Das gesamte visuelle Theming, also Badges, Farben, Rainbow, Karten und die Umgestaltung aller Tabs, wird abgeschaltet.", "Off: only CannonadeCommand's Docker functions remain (start plan, dependencies, health gate, watchdog, schedules, limits, bandwidth, idle auto-stop). All visual theming, meaning badges, colours, rainbow, cards and every tab's restyling, is turned off."));
       tc.appendChild(toggleRow(T("Theming aktiv", "Theming on"), localStorage.getItem("cc.theming") !== "0", function (v) { set("cc.theming", v ? "1" : "0"); render(); syncHeaderBar(); syncSharesBar(); }));
       themingCard = tc;
       wrapMain.appendChild(tc);
     })();
-    // ── Anzeige (Unraid), LIVE-SYNC (Option A rework): mirroring all ~21 native display fields into CC
-    // was "super unübersichtlich" (user). Now the FULL native Display Settings live on Unraid's own page
-    // — Carbon-styled by CannonadeCommand (cc-tools-on covers /Settings/*), tile un-hidden — and CC keeps
-    // only the handful that were genuinely useful here as LIVE-SYNC controls: they POST the SAME field via
-    // update.php (URLSearchParams -> 200; multipart 504s) + reload, so switching here flips the native
-    // setting too. csrf_token gates the POST. "favorites" also drives cc.hidefavtab.
+    // Unraid's display settings stay on Unraid's own page, which CC styles anyway, rather than
+    // being mirrored field by field. The few controls kept here post the same field through
+    // update.php and reload, so flipping one here flips the native setting too. A multipart body
+    // times out, hence URLSearchParams. The favourites field also drives cc.hidefavtab.
     if (typeof csrf_token !== "undefined") (function () {
       var postDisplay = function (field, value) {
         try {
@@ -810,7 +711,7 @@
           fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function () { location.reload(); });
         } catch (e9) {}
       };
-      // field -> concise CC help text [de, en] (native page ships none)
+      // a short help text per field, since the native page ships none
       var H = {
         width: ["Verpackt hält den Inhalt in fester Breite; Unbegrenzt nutzt die volle Fensterbreite.", "Packed keeps a fixed content width; Unlimited uses the full window width."],
         locale: ["Sprache der WebGUI.", "Language of the WebGUI."],
@@ -839,8 +740,8 @@
       };
       function help(nm) { var h = H[nm]; return h ? T(h[0], h[1]) : ""; }
       function fieldLabel(c, nm) { var dd = c.closest("dd"), dt = dd ? dd.previousElementSibling : null; return (dt && dt.tagName === "DT") ? (dt.textContent || "").replace(/\s*:\s*$/, "").trim() : nm; }
-      // #7 native header COLOUR field -> CC picker + hex; commit (post+reload) on hex change or 700ms
-      // after the picker settles (dragging must not reload per-frame).
+      // A native header colour field becomes a picker and a hex input. It commits on a hex change
+      // or once the picker has settled, since dragging must not reload on every frame.
       function colorRow(lbl, hexv, onCommit, helpTxt) {
         hexv = (hexv || "").replace(/^#/, "");
         var row = el("div", "cc-set-row"); var rl = el("span", "cc-set-rl", lbl); if (helpTxt) rl.appendChild(infoIcon(helpTxt)); row.appendChild(rl);
@@ -850,20 +751,16 @@
         hx.addEventListener("change", function () { clearTimeout(colT); var v = normHex(hx.value); if (v) { pk._set(v); onCommit(v.replace(/^#/, "")); } else if (!hx.value) onCommit(""); });
         pr.appendChild(pk); pr.appendChild(hx); row.appendChild(pr); return row;
       }
-      // #6 the native banner IMAGE upload is a file-drop on Unraid's page — link out to it (re-implementing
-      // a multipart file upload through the proxy is out of scope; the native page is reachable by URL).
+      // The banner upload is a file drop on Unraid's page, which this links out to rather than
+      // reimplementing a multipart upload through the proxy.
       function bannerUploadRow() {
         var row = el("div", "cc-set-row"); row.appendChild(el("span", "cc-set-rl", T("Eigenes Banner-Bild", "Custom banner image")));
         var b = el("button", "cc-btn", T("Hochladen / ändern …", "Upload / change …")); b.type = "button";
         b.addEventListener("click", function () { location.href = "/Settings/DisplaySettings"; });
         row.appendChild(b); return row;
       }
-      // #5 (cleanup): mirroring Unraid's display PREFS into CC felt redundant once the native page is
-      // CC-styled + one click away ("es sind noch alte Einstellungen ... in den cc settings"). We now keep
-      // ONLY the 3 header COLOURS here — they affect CannonadeCommand's OWN header and were explicitly
-      // wanted back (#7) — as live-sync controls; theme/tabbed-view/banner/favourites live natively.
-      // #19 (user): the native header COLOUR pickers moved BACK to Unraid's Display Settings page (now
-      // CC-styled) — this card keeps only the quick link + the auto-theme coupling (#20).
+      // The header colour pickers live on Unraid's own page too; this card keeps the quick link
+      // and the theme coupling below.
       var postDisplayMulti = function (fields) {
         try {
           var fd = new URLSearchParams();
@@ -872,8 +769,8 @@
           fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function () { location.reload(); });
         } catch (e9) {}
       };
-      // #20: match the native header background + text colour to Unraid's active theme (dark theme ->
-      // dark bg + light text; light theme -> light bg + dark text). Reads the theme's real body colour.
+      // Matches the native header background and text colour to Unraid's active theme, read from
+      // the theme's real body colour.
       function applyHdrAuto() {
         try {
           var bg = getComputedStyle(document.body).backgroundColor || "";
@@ -884,14 +781,14 @@
           postDisplayMulti({ header: ink, headermetacolor: ink, background: bghex });
         } catch (e9) {}
       }
-      // #2 (user): "Anzeige — Kopfbereich" is no longer its own card — its rows are merged INTO the Theming card.
+      // The header rows sit in the Theming card rather than in a card of their own.
       var cCard = themingCard;
       (function () {
-        // #Native-Card (user): label + (i) bubble on the left, a SHORT button next to it on the right (not a full-width button below).
+        // the label and its bubble on the left, a short button beside it on the right
         var r = el("div", "cc-set-row cc-set-inline");
         var rl = el("span", "cc-set-lblwrap");
         rl.appendChild(el("span", null, T("Native Anzeige-Seite", "Native display page")));
-        rl.appendChild(infoIcon(T("Öffnet Unraids Anzeige-Einstellungen (im CannonadeCommand-Stil) — dort liegen u. a. die Kopfzeilen-Farben, Banner und die Favoriten-Option.", "Opens Unraid's Display Settings (in CannonadeCommand style) — home of the header colours, banner and favourites option.")));
+        rl.appendChild(infoIcon(T("Öffnet Unraids Anzeige-Einstellungen im CannonadeCommand-Stil. Dort liegen unter anderem die Kopfzeilen-Farben, das Banner und die Favoriten-Option.", "Opens Unraid's Display Settings in CannonadeCommand style, where the header colours, the banner and the favourites option live.")));
         r.appendChild(rl);
         var b = el("button", "cc-btn cc-btn-accent", T("Öffnen", "Open")); b.type = "button";
         b.style.marginLeft = "auto";   // #3 (user): push the native-settings button flush right
@@ -900,17 +797,17 @@
         var ar = el("div", "cc-set-row cc-set-inline");
         var arl = el("span", "cc-set-lblwrap");
         arl.appendChild(el("span", null, T("Kopf-Farben ans Thema koppeln", "Match header colours to the theme")));
-        arl.appendChild(infoIcon(T("AN = die Kopfzeilen-Hintergrund- und Textfarbe folgen automatisch Unraids Farbschema (dunkles Thema: dunkler Hintergrund + helle Schrift; helles Thema umgekehrt). Wirkt, wenn CannonadeCommands Kopfbereich AUS ist.", "ON = the header background + text colour follow Unraid's colour scheme automatically (dark theme: dark bg + light text; light theme reversed). Applies when CannonadeCommand's header area is OFF.")));
+        arl.appendChild(infoIcon(T("An: die Kopfzeilen-Hintergrund- und Textfarbe folgen automatisch Unraids Farbschema, also dunkler Hintergrund mit heller Schrift beim dunklen Thema und umgekehrt. Wirkt, wenn CannonadeCommands Kopfbereich aus ist.", "On: the header background and text colour follow Unraid's colour scheme automatically, dark background with light text on a dark theme and the reverse on a light one. Applies while CannonadeCommand's header area is off.")));
         ar.appendChild(arl);
-        ar.appendChild(toggle(get("cc.hdrauto", "1") === "1", function (v) { set("cc.hdrauto", v ? "1" : "0"); if (v) applyHdrAuto(); }));   // #5 (user): default ON
+        ar.appendChild(toggle(get("cc.hdrauto", "1") === "1", function (v) { set("cc.hdrauto", v ? "1" : "0"); if (v) applyHdrAuto(); }));
         cCard.appendChild(ar);
-        // #5: apply the theme-coupling ONCE for a fresh default-on state (only bites when the CC header area
-        // is off — it just POSTs native header colours). Guarded by a one-shot flag so a reloading postDisplay
-        // can't loop; the flag is set BEFORE the call.
+        // Apply the coupling once for a fresh default-on state. It only bites while the CC header
+        // area is off, and the flag is set before the call, so the reload postDisplay triggers
+        // cannot loop.
         try { if (get("cc.hdrauto", "1") === "1" && get("cc.hdrauto.done", "0") !== "1") { set("cc.hdrauto.done", "1"); applyHdrAuto(); } } catch (e9) {}
       })();
-      // #2: cCard IS themingCard now (already in the DOM) — do NOT re-append (would reorder the cards).
-      // keep the favourites value in sync (drives cc.hidefavtab) — no colour pickers here anymore
+      // cCard is themingCard, already in the DOM, so re-appending it would reorder the cards. This
+      // only keeps the favourites value in sync.
       fetch("/Settings/DisplaySettings", { credentials: "same-origin" }).then(function (r) { return r.text(); }).then(function (html) {
         try {
           var doc = new DOMParser().parseFromString(html, "text/html");
@@ -918,7 +815,7 @@
           Array.prototype.forEach.call(doc.querySelectorAll("form"), function (f) { var s = f.querySelector('input[name="#section"]'); if (s && s.value === "display") form = f; });
           if (!form) return;
           var fav = form.querySelector('select[name="favorites"]'); if (fav) set("cc.hidefavtab", fav.value === "no" ? "1" : "0");
-          try { if (window.ccFavGateSync) window.ccFavGateSync(); } catch (eG) {}   // #3: re-gate the CC Favoriten toggle now that the real native state is known
+          try { if (window.ccFavGateSync) window.ccFavGateSync(); } catch (eG) {}   // the real native state is known now, so re-gate the Favoriten toggle
           syncHeaderBar();
         } catch (e9) {}
       }).catch(function () {});
@@ -940,7 +837,7 @@
           var favOn = !favOff && (cur == null ? true : cur !== "0");
           var favTgl = toggle(favOn, function (v) { localStorage.setItem("cc.enable.favorites", v ? "1" : "0"); refreshTabs(); }, favOff);
           row.appendChild(favTgl);
-          // #3-Infotext (user: "infotext in infobubble!"): the precondition rides an (i) bubble on the label, NOT inline.
+          // the precondition rides a bubble on the label rather than sitting inline
           lw.appendChild(infoIcon(T("Nur verfügbar, wenn Favoriten in den Unraid-Anzeige-Einstellungen aktiviert sind.", "Only available when favourites are enabled in Unraid's display settings.")));
           try {
             window.ccFavGateSync = function () {
@@ -957,45 +854,42 @@
       });
       wrapMain.appendChild(c);
     })();
-    // Animation master, now THREE-WAY (user: "aus, normal, wild"). cc.anim = "0" off / "1" normal (subtle,
-    // default) / "2" WILD (very present). cc-anim-on covers normal AND wild (the normal motion keeps running
-    // in wild); cc-anim-wild layers the exuberant extras (bouncing main-tab pills on hover, springier moves).
-    // Overrides the OS "reduce motion" preference (the user explicitly wants motion).
+    // The animation master has three settings: off, normal and wild. cc-anim-on covers normal and
+    // wild alike, since the normal motion keeps running in wild, and cc-anim-wild layers the
+    // exuberant extras on top. It overrides the OS reduce-motion preference, which is the point of
+    // the setting.
     function applyAnim() { var v = get("cc.anim", "1"); var r = document.documentElement.classList; r.toggle("cc-anim-off", v === "0"); r.toggle("cc-anim-on", v !== "0"); r.toggle("cc-anim-wild", v === "2"); }
-    applyAnim();   // stamp immediately so the settings page itself animates per the current setting
-    // Lives inside the Theming card (like Density), as a 3-way segmented control.
+    applyAnim();   // stamped at once, so this page animates per the current setting
     if (themingCard) {
       themingCard.appendChild(segRow(T("Animationen", "Animations"),
         [["0", T("Aus", "Off")], ["1", T("Normal", "Normal")], ["2", T("Wild", "Wild")]],
         get("cc.anim", "1"),
         function (v) { set("cc.anim", v); applyAnim(); },
-        T("Aus = keine Animationen. Normal = dezente Übergänge, Hover-Effekte und Einblendungen (überschreibt das OS-„Bewegung reduzieren“). Wild = sehr präsente Effekte, z. B. hüpfende Hauptleisten-Tabs beim Überfahren.", "Off = no animations. Normal = subtle transitions, hovers and fades (overrides the OS 'reduce motion'). Wild = very present effects, e.g. bouncing main-tab pills on hover."),
+        T("Aus: keine Animationen. Normal: dezente Übergänge, Hover-Effekte und Einblendungen, überschreibt das „Bewegung reduzieren“ des Systems. Wild: sehr präsente Effekte, etwa hüpfende Hauptleisten-Tabs beim Überfahren.", "Off: no animations. Normal: subtle transitions, hovers and fades, overriding the system's reduce-motion setting. Wild: very present effects, such as bouncing main-tab pills on hover."),
         true));
     }
-    // (the compact live-sync "Anzeige (Unraid, live)" card is built above; everything else lives natively)
-    // ── section order = the USER'S main-menu order. header.js persists the drag-reordered
-    // menu as cc.navorder.all {left:[href keys],right:[...]}; read DEFENSIVELY (accept .left
-    // or a plain array; absent/garbage -> native menu order fallback below).
+    // The section order follows the main menu. header.js persists a drag-reordered menu, and this
+    // reads it loosely: either shape is accepted, and anything else falls back to the order below.
     var NAVDEF = ["Start", "Favorites", "Freigaben", "Einstellungen", "Docker", "Plugins", "VMs", "Werkzeuge", "Stats", "Apps"];
     var navOrder = NAVDEF;
     try { var no9 = JSON.parse(get("cc.navorder.all", "null")); var arr9 = no9 && no9.left ? no9.left : no9; if (arr9 && arr9.length && typeof arr9.forEach === "function") navOrder = arr9; } catch (e9b) {}
-    // #7 STRICT + LIVE: read the ACTUAL on-screen menu order first (the user's live drag result), so the CC
-    // sub-tabs always mirror the main tabs exactly — persisted snapshot / hardcoded default are only fallbacks.
+    // The on-screen menu order comes first, so these sub-tabs mirror the main tabs exactly; the
+    // persisted snapshot and the default above are only fallbacks.
     try {
       var liveToks9 = [];
       Array.prototype.forEach.call(document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a[href]"), function (a9) {
         var h9 = (a9.getAttribute("href") || "").replace(/^\//, "").split(/[/?#]/)[0].toLowerCase();
         if (h9 && liveToks9.indexOf(h9) < 0) liveToks9.push(h9);
       });
-      if (liveToks9.length >= 2) navOrder = liveToks9;   // trust the live menu whenever it yields a real ordering
+      if (liveToks9.length >= 2) navOrder = liveToks9;
     } catch (e9x) {}
-    // one normalised token per entry: "/Docker" == "Docker" == "docker" (hrefs, labels alike)
+    // one normalised token per entry, so an href and a label compare equal
     var navToks = [];
     navOrder.forEach(function (k9) { navToks.push(String(k9).replace(/^\//, "").split(/[/?#]/)[0].toLowerCase()); });
     function navRank(aliases) { var best = -1; aliases.forEach(function (a9) { var i9 = navToks.indexOf(a9); if (i9 >= 0 && (best < 0 || i9 < best)) best = i9; }); return best; }
-    // fixed head: Allgemein first, Kopfbereich second (chrome, not a menu tab). The tab
-    // sections follow the menu order; tabs missing from it keep native relative order at the
-    // END. Each section carries a STABLE id — cc.settab persists that id, never the index.
+    // Allgemein comes first and Kopfbereich second, both chrome rather than menu tabs. The rest
+    // follow the menu order, with anything missing from it keeping its relative order at the end.
+    // Each section carries a stable id, which is what cc.settab persists.
     var SECS = [
       { id: "general", t: T("Allgemein", "General"), w: wrapMain, key: null },
       { id: "header", t: T("Kopfbereich", "Header area"), w: wrapHeader, key: "cc.enable.header" }
@@ -1016,23 +910,18 @@
     function areaOn(key) { return !key || localStorage.getItem(key) !== "0"; }
     function showSec(i) {
       if (!SECS[i] || !areaOn(SECS[i].key)) i = 0; // never land on a hidden section
-      localStorage.setItem("cc.settab", SECS[i].id); // stable id, NOT the index — a menu reorder must never restore the wrong tab
+      localStorage.setItem("cc.settab", SECS[i].id); // the id, not the index, or a menu reorder restores the wrong tab
       SECS.forEach(function (sc, j) { sc.w.style.display = j === i ? "" : "none"; tabBtns[j].classList.toggle("cc-set-tab-on", j === i); });
       paintSetTabs();
       ccSetAlignSearch();
     }
-    // #28 (user: "in den cc settings ist der suchbutton bei breitem browserfenster zu weit rechts"): the
-    // hero row (icon/title left, search badge right via margin-left:auto) spans the FULL settings width,
-    // but .cc-set-wrap is a FIXED-340px-column grid that does NOT stretch on a wide window (T2, by design —
-    // packed from the left) — so on a wide window the badge sits far past wherever the cards actually end,
-    // and by how much depends on which tab is active (different tabs have different card counts) and the
-    // viewport width. Self-correcting, same idea as header.js ccAppsAlignRight(), but on the BADGE's own
-    // margin-right, not the hero's padding: .cc-set-hero is box-sizing:content-box with flex-shrink:1, so
-    // padding-right there gets silently absorbed into the content width instead of moving the border-box
-    // edge (proved live: adding it never changed hero's own getBoundingClientRect().right at all) — a
-    // cur+delta correction against that non-moving reference compounds larger every call instead of
-    // converging. Reset-then-remeasure avoids that entirely: clear any earlier correction, measure the
-    // badge's now-natural position, then pull it in by exactly the one delta needed this time.
+    // The hero row spans the full settings width, but the card grid has fixed columns packed from
+    // the left, so on a wide window the search badge sits well past where the cards end, by an
+    // amount that depends on the active tab's card count. The correction goes on the badge's own
+    // margin, not the hero's padding: the hero is content-box and shrinkable, so padding there is
+    // absorbed into the content width without moving its border-box edge, and a correction
+    // measured against that reference compounds rather than converging. Clearing the earlier
+    // correction first and measuring the natural position avoids that.
     function ccSetAlignSearch() {
       try {
         var badge = document.querySelector(".cc-set-searchbadge");
@@ -1053,29 +942,24 @@
         if (delta > 0.5 && delta < 900) badge.style.setProperty("margin-right", delta + "px", "important");
       } catch (e) {}
     }
-    // render() re-runs on every settings change (root.innerHTML = "" at the top rebuilds .cc-set-hero/
-    // -searchbadge/-card from scratch each time), so a resize listener bound straight to THIS call's
-    // ccSetAlignSearch goes stale the moment render() runs again — proved live: it kept calling the FIRST
-    // render's closure, whose SECS entries pointed at already-removed wrap elements (0 cards found,
-    // contentRight stayed 0, the early-return made it a silent no-op), while tab clicks stayed correct only
-    // because their onclick is rebound fresh every render(). Route through a window-level pointer that
-    // every render() call reassigns, so whichever listener fired always calls the CURRENT version.
+    // render() rebuilds the hero and the cards from scratch on every settings change, so a resize
+    // listener bound to this call's function goes stale as soon as it runs again: the old closure
+    // holds wrap elements that are no longer in the document, finds no cards and returns early.
+    // A window-level pointer that every render() reassigns keeps the listener on the current one.
     window.__ccSetAlignSearch = ccSetAlignSearch;
     if (!window.__ccSetAlignResize) {
       window.__ccSetAlignResize = true;
       var alignTimer = null;
       window.addEventListener("resize", function () { clearTimeout(alignTimer); alignTimer = setTimeout(function () { window.__ccSetAlignSearch(); }, 120); });
     }
-    // rainbow: colour EVERY settings tab per palette index (was: only the accent-filled active tab, so
-    // rainbow never reached the CC tab bar). palG() is the shared rainbow palette; idealText is hoisted.
+    // In rainbow mode every settings tab takes its own palette slot, not just the active one.
     function paintSetTabs() {
       var rb = get("cc.rainbow", "0") === "1";
-      // reactive sub-mode: idle tabs rest on the grey base CSS and only carry their palette
-      // colour as vars (--cc-rb-c/--cc-rb-ct — the docker.css :hover rule paints from them);
-      // the ACTIVE tab keeps its direct colour.
+      // In the neutral sub-mode an idle tab rests on the grey base and carries its colour only as
+      // vars, which the hover rule paints from; the active tab keeps its direct colour.
       var reactive = rb && get("cc.rbmode", "all") === "active";
-      // palG() is scoped inside buildStyleCards, not reachable here -> read the palette directly.
-      var DEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"], p = DEF;   /* #1: jewel palette (shared) so the tab strip matches the live UI when cc.rbpal is unset */
+      // palG() is scoped inside buildStyleCards, so the palette is read directly here
+      var DEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"], p = DEF;   // the shared palette, so the strip matches the rest of the UI
       try { var j = JSON.parse(get("cc.rbpal", "null")); if (j && j.length) p = j; } catch (e) {}
       tabBtns.forEach(function (b, i) {
         if (rb) {
@@ -1107,77 +991,60 @@
       tabBtns.push(b); tabRow.appendChild(b);
     });
     root.appendChild(tabRow);
-    alignSetTabs(); // indent the strip to the first main-menu tab (internally try/catch'd, can't break the build)
+    alignSetTabs(); // indent the strip to the first main-menu tab
     root.appendChild(wrapMain); root.appendChild(wrapStart); root.appendChild(wrapHeader); root.appendChild(wrapShares); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms); root.appendChild(wrapSettings); root.appendChild(wrapTools); root.appendChild(wrapFavorites);
-    root.appendChild(verLine); // #14 (user): the UI/Engine version sits at the very BOTTOM (a sibling AFTER every wrap; the cards fill the wraps above it)
+    root.appendChild(verLine); // the version sits at the very bottom, after every wrap
 
-    // ── Badges ──
-    // (flag/rainbow palette split migration runs at module load — see migrateFlagPalette near the top.)
+    // The picker stays visible with a hex field beside it, both editing the same value and staying
+    // in sync. It is embedded rather than an <input type=color>, which opens an OS dialog in a
+    // window of its own.
     var c1 = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
-    // The colour-picker field stays ALWAYS visible, PLUS a hex text field beside it;
-    // both edit the same value and stay in sync.
-    // picker sits DIRECTLY under the card sub in BOTH colour cards (same height), full
-    // card width, hex field BELOW it — no "Akzentfarbe" label (the card title says it).
     var prow = el("div", "cc-set-pickrow");
-    // PERMANENTLY EMBEDDED picker (an <input type=color> opens the OS colour dialog in
-    // its own window — "ich will das Farbwählfeld fest integriert").
     var hexIn = el("input", "cc-set-hexin"); hexIn.type = "text"; hexIn.value = accent; hexIn.placeholder = "#2f6feb"; hexIn.maxLength = 7; hexIn.spellcheck = false;
-    // the global accent handlers must ALSO push the new colour onto the live bars (header + shares
-    // use their OWN isolated vars, so setting --cc-accent here alone doesn't reach them) — this is
-    // why "the global colour didn't apply everywhere": the menu bar / Freigaben only updated on
-    // reload. syncHeaderBar/syncSharesBar re-run their apply() so every enabled area follows live.
+    // The handlers push the new colour onto the live bars as well: the header and the shares area
+    // own isolated vars, so writing --cc-accent here alone would leave them until the next reload.
     var pick = inlinePicker(/^#[0-9a-f]{6}$/i.test(accent) ? accent : "#2f6feb", function (v) { accent = v; hexIn.value = v; set("cc.accent", v); root.style.setProperty("--cc-accent", v); root.style.setProperty("--cc-accent-text", idealText(v)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); });
     function setAccent(v) { accent = v; pick._set(v); hexIn.value = v; set("cc.accent", accent); root.style.setProperty("--cc-accent", accent); root.style.setProperty("--cc-accent-text", idealText(accent)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); }
     hexIn.addEventListener("input", function () { var v = normHex(hexIn.value); if (v) setAccent(v); });
-    prow.appendChild(pick); c1.appendChild(prow);   // #1/#2: colour field + hue slider (both live in the inline picker)
-    // #18 (user): the preset swatches FILL the row (flex:1 each) with the HEX field as the rightmost
-    // cell — exactly like the rainbow row's swatches + reset. Identical layout for EVERY colour picker
-    // (the per-area cards use the same shape below).
-    // cc-set-swrow-global marks THE global accent row. syncSwOn() used to sweep every .cc-set-sw on
-    // the page and re-mark it against the GLOBAL accent, which silently un-marked every AREA card's
-    // own picked swatch the moment the global colour changed (an area on its own colour was then
-    // showing no selection at all). One class, one scope, and the area cards mark their own rows.
+    prow.appendChild(pick); c1.appendChild(prow);
+    // The preset swatches fill the row with the hex field as its rightmost cell, the same layout
+    // every colour picker on this page uses. cc-set-swrow-global scopes syncSwOn() to this row:
+    // sweeping every swatch on the page and marking it against the global accent would un-mark an
+    // area card's own pick whenever the global colour changed.
     var srow = el("div", "cc-set-swatches cc-fill cc-set-swrow-global");
-    PRESETS.slice(0, 7).forEach(function (c) {   // #5: 7 presets + hex(2 cells) = 9 cells, matching the rainbow/flag rows (8 + reset)
-      // a <span>, NOT a <button>: Unraid's global button CSS was bloating these into
-      // big bordered rectangles. dataset.c lets syncSwOn highlight the active one.
+    PRESETS.slice(0, 7).forEach(function (c) {   // seven presets plus the two-cell hex field make nine
+      // a span rather than a button, which Unraid's global CSS would bloat into a bordered box
       var sw = el("span", "cc-set-sw"); sw.setAttribute("data-tip", c); sw.style.background = c; sw.dataset.c = c;
-      swMark(sw, c === accent, c);   // ONE selected-mark helper (tick + ink), never a size change
+      swMark(sw, c === accent, c);
       sw.addEventListener("click", function () { accent = c; set("cc.accent", accent); render(); syncHeaderBar(); syncSharesBar(); });
       srow.appendChild(sw);
     });
-    srow.appendChild(hexIn); c1.appendChild(srow);   // hex field = rightmost cell of the swatch row
-    // (Badge-Form was here; MOVED to #11, just above the "Zustandsanzeigen" toggle — see below)
-    // #17: Rainbow-Modus and Flaggen-Modus are TWO mutually-exclusive palette modes sharing ONE colour
-    // engine. cc.rainbow="1" is the master "a palette is active" flag every reader checks; cc.flagmode="1"
-    // means the ACTIVE palette is a country flag (else the rainbow palette). rbOnly = rainbow is the
-    // active mode. Turning one on turns the other off; the UI greys the inactive one out (user call).
+    srow.appendChild(hexIn); c1.appendChild(srow);
+    // Rainbow and flag are two mutually exclusive palette modes sharing one colour engine.
+    // cc.rainbow is the master flag every reader checks for an active palette, and cc.flagmode says
+    // that palette is a country's flag. Turning one on turns the other off, and the UI greys out
+    // the inactive one's controls.
     var flagOn = get("cc.flagmode", "0") === "1";
     var rbOnly = rainbow && !flagOn;
-    // rainbow toggle: label + switch adjacent (no parenthetical, no far-right spacer)
     var rr = el("div", "cc-set-row cc-set-inline");
     rr.appendChild(el("span", null, T("Regenbogen-Modus", "Rainbow mode")));
     rr.appendChild(toggle(rbOnly, function (v) { set("cc.rainbow", v ? "1" : "0"); set("cc.flagmode", "0"); if (!v) set("cc.rainbowrot", "0"); render(); syncHeaderBar(); syncSharesBar(); }));
-    // user: the two MASTER toggles stay clickable and flip each other — turning Rainbow on turns Flaggen-Modus
-    // off (handler above sets cc.flagmode=0) and vice versa; NO greying of the master row.
+    // Both master toggles stay clickable and flip each other; neither master row is greyed out.
     c1.appendChild(rr);
-    // (T1: the single "Reaktiver Modus" toggle now lives directly ABOVE the "Zustandsanzeigen nativ
-    //  färben" toggle below — one toggle for ALL colour modes, not a per-mode duplicate.)
-    // rotation toggle: on = every tab reload deals a fresh colour mapping; off = stable colours
+    // on: every reload deals a fresh colour mapping; off: the colours stay put
     var rrot = el("div", "cc-set-row cc-set-inline");
     var rrotL = el("span", "cc-set-lblwrap");
     rrotL.appendChild(el("span", null, T("Automatische Farbenrotation", "Automatic colour rotation")));
     rrotL.appendChild(infoIcon(T("Mischt die Rainbow-Farben bei jedem Neuladen der Seite neu durch, statt die Reihenfolge fest zu lassen.", "Reshuffles the rainbow colours on every page reload instead of keeping the order fixed.")));
     rrot.appendChild(rrotL);
     rrot.appendChild(toggle(get("cc.rainbowrot", "1") !== "0", function (v) { set("cc.rainbowrot", v ? "1" : "0"); syncHeaderBar(); syncSharesBar(); }));
-    if (!rbOnly) { rrot.style.opacity = ".4"; rrot.style.pointerEvents = "none"; } // only with rainbow mode
+    if (!rbOnly) { rrot.style.opacity = ".4"; rrot.style.pointerEvents = "none"; }
     c1.appendChild(rrot);
-    // EVERY rainbow palette colour is editable: click a swatch, adjust it in the
-    // embedded picker below; stored as cc.rbpal (JSON), read live by the Docker tab.
-    var RBDEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; // #1: the editable swatches DEFAULT to the shared jewel palette (was crayon -> the swatches/preview disagreed with the live UI, and any edit persisted the crayon set to cc.rbpal, flipping the whole UI to crayon)
+    // Every palette colour is editable: clicking a swatch opens the embedded picker below it. The
+    // palette is stored as JSON in cc.rbpal, which the Docker tab reads live.
+    var RBDEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; // the shared palette, or the swatches and the live UI disagree
     var rbpal = null; try { rbpal = JSON.parse(get("cc.rbpal", "null")); } catch (e) { rbpal = null; }
     if (!rbpal || rbpal.length !== RBDEF.length) rbpal = RBDEF.slice();
-    // #7: no "Rainbow-Farben" heading — the swatches sit directly under the rotation toggle.
     var rbrow = el("div", "cc-set-swatches cc-fill");
     var rbPick = null, rbIdx = -1, rbPickWrap = el("div", "cc-set-pickrow"); rbPickWrap.style.display = "none";
     rbpal.forEach(function (cx, ix) {
@@ -1185,29 +1052,27 @@
       sw.addEventListener("click", function () {
         rbIdx = ix; rbPickWrap.style.display = "";
         if (!rbPick) {
-          rbPick = inlinePicker(rbpal[ix], function (v) { if (rbIdx >= 0) { rbpal[rbIdx] = v; rbrow.children[rbIdx].style.background = v; rbrow.children[rbIdx].setAttribute("data-tip", v); set("cc.rbpal", JSON.stringify(rbpal)); syncHeaderBar(); syncSharesBar(); } });   // rainbow palette is its own key now — editing it never touches the flag
+          rbPick = inlinePicker(rbpal[ix], function (v) { if (rbIdx >= 0) { rbpal[rbIdx] = v; rbrow.children[rbIdx].style.background = v; rbrow.children[rbIdx].setAttribute("data-tip", v); set("cc.rbpal", JSON.stringify(rbpal)); syncHeaderBar(); syncSharesBar(); } });   // its own key, so editing it never touches the flag palette
           rbPickWrap.appendChild(rbPick);
         } else rbPick._set(rbpal[ix]);
       });
       rbrow.appendChild(sw);
     });
-    // icon-only undo arrow RIGHT of the swatches (user: "statt dem badge ... nur so ein rueckgaengig pfeil")
+    // an undo arrow right of the swatches, the same size as one of them
     var rbReset = el("span", "cc-set-ibtn");
     rbReset.setAttribute("data-tip", T("Farben zurücksetzen", "Reset colours"));
     var rbRi = document.createElement("i"); rbRi.className = "fa fa-undo"; rbReset.appendChild(rbRi);
     rbReset.addEventListener("click", function () { del("cc.rbpal"); render(); syncHeaderBar(); syncSharesBar(); });
     rbrow.appendChild(rbReset);
     c1.appendChild(rbrow); c1.appendChild(rbPickWrap);
-    if (!rbOnly) { [rbrow, rbPickWrap].forEach(function (e9) { e9.style.opacity = ".4"; e9.style.pointerEvents = "none"; }); }   // rainbow palette editor belongs to rainbow mode
-    // ── FLAGGEN-MODUS (#17): a SEPARATE mode with its OWN toggle, reactive toggle, picker and colour
-    // display, mutually exclusive with Rainbow (each greys the other). A country's flag colours become
-    // the active palette (cc.rbpal, cycled to 8 slots) that drives the SAME engine. The picker draws the
-    // flag COLOURS as stripe-swatches + searches by name — the emoji flags render as "DE"/"AF" letter
-    // codes on Windows, so colour swatches are shown instead. Data: window.CC_FLAGS (scripts/flags.js).
+    if (!rbOnly) { [rbrow, rbPickWrap].forEach(function (e9) { e9.style.opacity = ".4"; e9.style.pointerEvents = "none"; }); }
+    // Flag mode has its own toggle and picker and excludes rainbow mode. A country's colours become
+    // the active palette, cycled to fill every slot, and drive the same engine. The picker searches
+    // by name and shows real flag images; an emoji flag renders as two letter boxes on Windows.
     if (window.CC_FLAGS && window.CC_FLAGS.length) {
       var FLAG_BASE = "/plugins/cannonadecommand/images/flags/";
-      // #2: the REAL flag (flag-icons 4:3 SVG, bundled) — a country's actual pattern, not colour bars.
-      // Falls back to the colour-stripe swatch if the SVG is missing (e.g. a code we don't ship).
+      // The bundled SVG shows the country's actual pattern, and a code with no SVG falls back to
+      // the colour-stripe swatch.
       var flagImg = function (f9, big) {
         var im = document.createElement("img");
         im.className = "cc-flag-img" + (big ? " cc-flag-img-lg" : "");
@@ -1221,10 +1086,9 @@
         s.style.background = "linear-gradient(to bottom, " + stops.join(", ") + ")"; return s;
       };
       var curFlag = function () { var c9 = get("cc.flag", ""); for (var j9 = 0; j9 < window.CC_FLAGS.length; j9++) if (window.CC_FLAGS[j9].code === c9) return window.CC_FLAGS[j9]; return null; };
-      // Flag palette is its OWN key (cc.flagpal), NEVER the rainbow cc.rbpal — so the rainbow editor
-      // keeps the rainbow colours and the engine only paints flag colours when cc.flagmode==="1".
+      // The flag palette has its own key, never the rainbow one, so the editor above keeps the
+      // rainbow colours and the engine paints flag colours only while flag mode is on.
       var applyFlag = function (f9) { var pal = []; for (var k9 = 0; k9 < RBDEF.length; k9++) pal.push(f9.colors[k9 % f9.colors.length]); set("cc.flag", f9.code); set("cc.flagpal", JSON.stringify(pal)); };
-      // flag master toggle (mutually exclusive with Rainbow)
       var fr = el("div", "cc-set-row cc-set-inline");
       fr.appendChild(el("span", null, T("Flaggen-Modus", "Flag mode")));
       fr.appendChild(toggle(flagOn, function (v) {
@@ -1232,17 +1096,12 @@
         else { set("cc.flagmode", "0"); set("cc.rainbow", "0"); }
         render(); syncHeaderBar(); syncSharesBar();
       }));
-      // NOT greyed while Rainbow is active — the master toggle stays clickable; turning Flaggen-Modus on
-      // sets cc.flagmode=1 (+cc.rainbow=1 for the engine) so Rainbow-only display flips off, and vice versa.
       c1.appendChild(fr);
-      // (T1: no separate reactive-flag toggle any more — the ONE "Reaktiver Modus" toggle above the
-      //  "Zustandsanzeigen nativ färben" toggle governs every colour mode, flag included.)
-      // #4: the picker sits DIRECTLY under the Flaggen-Modus toggle — NO "Land wählen" heading — and the
-      // reactive-flag toggle (fmode, built above) is appended AFTER the picker (see below).
-      // custom flag picker: real flag image + name, searchable (native <select> can't show flag images).
+      // A picker of its own, since a native select cannot show flag images: a real flag, the name,
+      // and a search over both.
       var picker = el("div", "cc-flag-picker");
       var trigger = el("div", "cc-flag-trigger"); trigger.setAttribute("tabindex", "0");
-      // #8: the picker reads as a BUTTON (no little caret arrow) — a solid CC control you click to pick a country.
+      // the trigger reads as a button, with no caret
       var renderTrigger = function () { trigger.innerHTML = ""; var f0 = curFlag(); if (f0) { trigger.appendChild(flagImg(f0)); trigger.appendChild(el("span", "cc-flag-name", f0.name_de)); } else trigger.appendChild(el("span", "cc-flag-name", T("Land wählen …", "Pick a country …"))); };
       renderTrigger();
       var panel = el("div", "cc-flag-panel"); panel.style.display = "none";
@@ -1253,8 +1112,7 @@
         window.CC_FLAGS.forEach(function (f0) {
           if (q && f0.name_de.toLowerCase().indexOf(q) < 0 && f0.name.toLowerCase().indexOf(q) < 0 && f0.code.indexOf(q) < 0) return;
           var row = el("div", "cc-flag-item"); row.appendChild(flagImg(f0)); row.appendChild(el("span", "cc-flag-name", f0.name_de));
-          // picking a flag ACTIVATES flag mode (and thus flips Rainbow off) — the picker now lives in the
-          // master row, so selecting a country should just turn the mode on.
+          // Picking a country turns flag mode on, and with it rainbow mode off.
           row.addEventListener("click", function () { set("cc.flagmode", "1"); set("cc.rainbow", "1"); applyFlag(f0); render(); syncHeaderBar(); syncSharesBar(); });
           list.appendChild(row);
         });
@@ -1263,8 +1121,8 @@
       search.addEventListener("input", function () { buildList(search.value); });
       var openPanel = function () {
         panel.style.display = ""; search.value = ""; buildList("");
-        // #8: escape the settings-card overflow clip — pin the panel FIXED at the trigger and cap the
-        // list to the room below the trigger, so the WHOLE country list stays reachable/scrollable on hover.
+        // Pinning the panel fixed at the trigger escapes the card's overflow clip, and capping the
+        // list to the room below it keeps the whole country list scrollable.
         try {
           var r = trigger.getBoundingClientRect();
           panel.style.position = "fixed"; panel.style.left = Math.round(r.left) + "px"; panel.style.top = Math.round(r.bottom + 4) + "px"; panel.style.right = "auto"; panel.style.width = Math.round(r.width) + "px";
@@ -1272,18 +1130,15 @@
         } catch (e8) {}
         try { search.focus(); } catch (e9) {}
         var closer = function (e9) { if (!picker.contains(e9.target)) { panel.style.display = "none"; document.removeEventListener("click", closer, true); } };
-        setTimeout(function () { document.addEventListener("click", closer, true); }, 0);   // self-removing click-outside (no leak across render)
+        setTimeout(function () { document.addEventListener("click", closer, true); }, 0);   // removes itself, so it cannot leak across a render
       };
       var closePanel = function () { panel.style.display = "none"; try { trigger.focus(); } catch (e9) {} };
       trigger.addEventListener("click", function () { if (panel.style.display !== "none") panel.style.display = "none"; else openPanel(); });
-      // GlimStone Rule 21, this page's FOURTH selection-field variant. The country picker is a closed
-      // field standing for exactly one value, so it wheel-steps like every other one — it just isn't
-      // <select>-backed, so cc-theme.js's shared handler (which reads a real <select>) cannot serve it
-      // and the step is spelled out here against the same CC_FLAGS list the panel is built from.
-      // Clamped at both ends, like the shared handler and like the panel's own arrow keys.
-      // The commit is the click path's commit — same keys, same applyFlag, same syncs — but the full
-      // render() is DEBOUNCED: render() rebuilds this whole page, which would tear the element out from
-      // under the cursor on every notch of a gesture that is meant to be a continuous browse.
+      // The country picker is a closed field standing for one value, so it wheel-steps like the
+      // other selection fields. It has no <select> behind it, so cc-theme.js's shared handler
+      // cannot serve it and the step is spelled out here against the same list the panel uses,
+      // clamped at both ends. The commit is the click path's, but the full render is debounced: it
+      // rebuilds the page, which would tear the element out from under the cursor on every notch.
       var flagRenderT = null;
       trigger.addEventListener("wheel", function (e9) {
         if (e9.ctrlKey || e9.metaKey || e9.altKey) return;
@@ -1292,30 +1147,27 @@
         var list9 = window.CC_FLAGS, cur9 = get("cc.flag", ""), ix9 = -1;
         for (var j9 = 0; j9 < list9.length; j9++) if (list9[j9].code === cur9) { ix9 = j9; break; }
         var nx9 = ix9 < 0 ? (d9 > 0 ? 0 : list9.length - 1) : ix9 + (d9 > 0 ? 1 : -1);
-        if (nx9 < 0 || nx9 >= list9.length) return;                 // clamped: let the page scroll instead
+        if (nx9 < 0 || nx9 >= list9.length) return;                 // clamped, so the page scrolls instead
         e9.preventDefault();
         set("cc.flagmode", "1"); set("cc.rainbow", "1"); applyFlag(list9[nx9]);
-        renderTrigger();                                            // the field repaints exactly as a pick would
+        renderTrigger();                                            // the field repaints as a pick would
         syncHeaderBar(); syncSharesBar();
         clearTimeout(flagRenderT); flagRenderT = setTimeout(function () { render(); }, 450);
       }, { passive: false });
-      // #25: keyboard-operable — Enter/Space/ArrowDown on the trigger opens; then arrows move the
-      // highlight, Enter picks, Escape closes. The search already matches name_de / English name / code.
+      // Enter, space or the down arrow opens the panel; then the arrows move the highlight, Enter
+      // picks and Escape closes. The search matches either name and the country code.
       trigger.addEventListener("keydown", function (e9) { if (e9.key === "Enter" || e9.key === " " || e9.key === "ArrowDown") { e9.preventDefault(); openPanel(); } });
       var moveSel = function (dir) { var items = list.querySelectorAll(".cc-flag-item"); if (!items.length) return; var cur = list.querySelector(".cc-flag-item.cc-sel"); var idx = cur ? Array.prototype.indexOf.call(items, cur) : -1; idx += dir; if (idx < 0) idx = 0; if (idx >= items.length) idx = items.length - 1; if (cur) cur.classList.remove("cc-sel"); items[idx].classList.add("cc-sel"); items[idx].scrollIntoView({ block: "nearest" }); };
       search.addEventListener("keydown", function (e9) { if (e9.key === "ArrowDown") { e9.preventDefault(); moveSel(1); } else if (e9.key === "ArrowUp") { e9.preventDefault(); moveSel(-1); } else if (e9.key === "Enter") { e9.preventDefault(); var sel = list.querySelector(".cc-flag-item.cc-sel") || list.querySelector(".cc-flag-item"); if (sel) sel.click(); } else if (e9.key === "Escape") { e9.preventDefault(); closePanel(); } });
       picker.appendChild(trigger); picker.appendChild(panel);
-      fr.insertBefore(picker, fr.lastChild);   // user: the flag picker sits BETWEEN the "Flaggen-Modus" label and its toggle
-      // (T1: reactive-flag toggle removed — see the single Reaktiver Modus toggle above statenative)
-      // the selected flag's COLOURS, shown separately (not the rainbow editor)
+      fr.insertBefore(picker, fr.lastChild);   // the picker sits between the label and its toggle
+      // the selected flag's colours, shown apart from the rainbow editor
       var f1 = curFlag();
       if (f1) {
         c1.appendChild(el("div", "cc-set-lbl", T("Flaggenfarben", "Flag colours")));
-        // #3: the colour fields stretch to fill the card width (each cc-set-sw flex:1) + a reset icon
-        // pushed to the far right, in line with the toggle switches. Reset clears the flag selection.
         var frow = el("div", "cc-set-swatches cc-fill");
-        // #10: show the SAME count as the rainbow row (8), cycled from the flag's colours — matches
-        // the cc.flagpal the engine paints and keeps both rows visually consistent.
+        // The same count as the rainbow row, cycled from the flag's own colours, which matches the
+        // palette the engine paints and keeps both rows the same shape.
         var fpal = []; for (var kf = 0; kf < RBDEF.length; kf++) fpal.push(f1.colors[kf % f1.colors.length]);
         fpal.forEach(function (c9) { var sw9 = el("span", "cc-set-sw"); sw9.style.background = c9; sw9.setAttribute("data-tip", c9); frow.appendChild(sw9); });
         var fReset = el("span", "cc-set-ibtn"); fReset.setAttribute("data-tip", T("Flagge zurücksetzen", "Reset flag"));
@@ -1324,46 +1176,30 @@
         frow.appendChild(fReset);
         c1.appendChild(frow);
       }
-      // (T1: the reactive-flag sub-toggle was removed — the single Reaktiver Modus toggle above statenative
-      //  covers flag mode too, so there is nothing to grey out here any more.)
     }
-    // #11 (user): Badge-Form sits here — below the flag colours, above the state-colour toggle. segRow
-    // already puts the label + options on ONE row; options are ordered by ASCENDING roundness.
+    // The badge shape options are ordered by rising roundness.
     c1.appendChild(segRow(T("Badge-Form", "Badge shape"), [["square", T("eckig", "square")], ["rounded", T("abgerundet", "rounded")], ["pill", "Pills"], ["circle", T("Kreise", "Circles")]], get("cc.badgeshape", "pill"), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); }));
-    // #9 (user: "eine Auswahl für flat und glass … damit man es ein und abschalten kann"): ONE global badge
-    // STYLE. Glass adds a glossy sheen (top highlight + inner edge + backdrop blur) to EVERY badge at once
-    // (html.cc-badge-glass); flat is the solid look. Sits right under Badge-Form (both are badge-look axes).
+    // One global badge style: glass adds a sheen to every badge at once, flat is the solid look.
     c1.appendChild(segRow(T("Badge-Stil", "Badge style"), [["flat", "Flat"], ["glass", "Glass"]], get("cc.badgeglass", "0") === "1" ? "glass" : "flat", function (v) { set("cc.badgeglass", v === "glass" ? "1" : "0"); document.documentElement.classList.toggle("cc-badge-glass", v === "glass" && get("cc.theming", "1") !== "0"); syncHeaderBar(); syncSharesBar(); }));
-    // (#12: the curated palette-presets block was removed per user request)
-    // #16 (user): let STATE indicators keep their NATIVE state colour (green/amber/red) instead of
-    // folding into the accent/rainbow/flag palette. Default OFF = integrated (current look). ON stamps
-    // html.cc-state-native; the sheets then let the native semantic colours through.
-    // SCOPE (narrowed by the state-dot law — see the long comment in styles/docker.css): this governs the
-    // indicators where colour is a REDUNDANT second channel and can be spent on decoration — usage bars
-    // (value = fill LENGTH), plugin status badges and container update badges (value = TEXT). The state
-    // DOTS are no longer in it: a font-size:0 dot has no text and no length, so folding its colour into the
-    // palette doesn't integrate it, it erases it (live-measured: 38 running and 20 stopped containers all
-    // on the same rgb(94,137,201)). Dots are unconditionally native now, in every colour mode.
-    // T1: the ONE reactive-mode toggle for ALL colour modes (rainbow / flag / normal). Rests everything
-    // grey, colours on hover, the active one stays lit. Sits directly ABOVE the state-native toggle (user).
+    // The reactive toggle covers every colour mode: everything rests grey, colours on hover, and
+    // the active item stays lit.
     var rmode = el("div", "cc-set-row cc-set-inline");
     var rmodeL = el("span", "cc-set-lblwrap");
     rmodeL.appendChild(el("span", null, T("Reaktiver Modus", "Reactive mode")));
-    rmodeL.appendChild(infoIcon(T("AN = alles ruht grau und färbt sich beim Überfahren; Aktives bleibt farbig. Gilt global für ALLE Farbmodi (Regenbogen, Flagge und Normal) und alle Bereiche inklusive Logo-Hintergründen.", "ON = everything rests grey and colours on hover; active stays coloured. Global across EVERY colour mode (rainbow, flag and normal) and every area, logo backgrounds included.")));
+    rmodeL.appendChild(infoIcon(T("An: alles ruht grau und färbt sich beim Überfahren, Aktives bleibt farbig. Gilt global für alle Farbmodi (Regenbogen, Flagge und Normal) und alle Bereiche, Logo-Hintergründe eingeschlossen.", "On: everything rests grey and colours on hover, and the active item stays coloured. Global across every colour mode (rainbow, flag and accent) and every area, logo backgrounds included.")));
     rmode.appendChild(rmodeL);
     rmode.appendChild(toggle(get("cc.rbmode", "all") === "active", function (v) { set("cc.rbmode", v ? "active" : "all"); paintSetTabs(); syncHeaderBar(); syncSharesBar(); }));
     c1.appendChild(rmode);
     var snR = el("div", "cc-set-row cc-set-inline");
     var snL = el("span", "cc-set-lblwrap");
     snL.appendChild(el("span", null, T("Zustandsanzeigen nativ färben", "Native state colours")));
-    snL.appendChild(infoIcon(T("AN = Auslastungsbalken und Status-Badges behalten ihre native Zustandsfarbe (grün/gelb/rot). AUS = sie werden in den aktuellen Farbmodus (Akzent/Regenbogen/Flagge) integriert. Zustands-Punkte (Container, Laufwerke) sind immer nativ — bei ihnen ist die Farbe die einzige Information.", "ON = usage bars and status badges keep their native state colour (green/amber/red). OFF = they fold into the current colour mode (accent/rainbow/flag). State dots (containers, drives) are always native — for them the colour is the only information there is.")));
+    snL.appendChild(infoIcon(T("An: Auslastungsbalken und Status-Badges behalten ihre native Zustandsfarbe (grün, gelb, rot). Aus: sie werden in den aktuellen Farbmodus integriert. Zustands-Punkte bei Containern und Laufwerken sind immer nativ, denn bei ihnen ist die Farbe die einzige Information.", "On: usage bars and status badges keep their native state colour (green, amber, red). Off: they fold into the current colour mode. The state dots on containers and drives are always native, because for them the colour is the only information there is.")));
     snR.appendChild(snL);
     snR.appendChild(toggle(get("cc.statenative", "0") === "1", function (v) { set("cc.statenative", v ? "1" : "0"); syncHeaderBar(); syncSharesBar(); }));
     c1.appendChild(snR);
     c1.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var prev = el("div", "cc-set-prev");
-    // #13: a RICHER preview — eight mixed badges (name headlines, key/value pairs, a tab pill) so the
-    // full palette sweep is visible, not just three. paintPrev colours each child by index.
+    // Eight mixed badges, so the whole palette sweep is visible; paintPrev colours each by index.
     var pvName = el("span", "cc-b cc-b-lg", "nextcloud");
     var pvVal = el("span", "cc-b"); pvVal.appendChild(elk("CPU")); pvVal.appendChild(elv("2/8"));
     var pvVal2 = el("span", "cc-b"); pvVal2.appendChild(elk("RAM")); pvVal2.appendChild(elv("1.2G"));
@@ -1374,40 +1210,32 @@
     var pvTab = el("span", "cc-navtab cc-navtab-on", "Docker");
     [pvName, pvVal, pvVal2, pvName2, pvVal3, pvVal4, pvName3, pvTab].forEach(function (x9) { prev.appendChild(x9); });
     prev.id = "cc-set-prev"; c1.appendChild(prev);
-    wrapMain.appendChild(c1); // GLOBAL badge colour + rainbow -> the "Allgemein" tab (was the Docker tab)
-    // ── Dichte (GLOBAL): cc.density is ONE key that every list (Docker, Start, Freigaben) reads,
-    // so it belongs in Allgemein with the other global controls — not buried in the Docker tab.
-    // #12 (user): the Density control lives INSIDE the Theming card now — no separate card.
-    if (themingCard) themingCard.appendChild(segRow(T("Dichte", "Density"), [["compact", T("Kompakt", "Compact")], ["normal", "Normal"], ["airy", T("Luftig", "Airy")]], density, function (v) { density = v; set("cc.density", v); }, T("Gilt global für ALLE Listen (Docker, Start, Freigaben, VMs).", "Applies globally to ALL lists (Docker, Start, Shares, VMs)."), true));
-    // ── Kachelgröße (GLOBAL): cc.sgsize is ONE key read by docker.js/plugins.js/vms.js/favorites.js/settingsgrid.js.
-    // It belongs here in Allgemein next to Density — NOT duplicated per tab (user: "global einstellbar, nicht per tab").
-    if (themingCard) themingCard.appendChild(tileSizeRow());   // hoisted (defined below); onChange still live-resizes the Docker preview
-    // ── Logos & Icons (GLOBAL): edits the shared cc.iconbg / cc.iconcolor / cc.iconstrength
-    // keys every adopting tab resolves through eff('icon…'). Same control set as the per-area
-    // Logos cards — and, since 4.32.0, the same PREVIEW. It used to have none on the reasoning
-    // that "this card is the source, not a consumer", which is true of the DATA and false of the
-    // user: this is where Icon-Färbung lives, so the one card that decides how every logo in the
-    // whole plugin is treated was the one card that showed no logo at all. Three sections, one per
-    // area, each with that area's REAL icons.
+    wrapMain.appendChild(c1);
+    // Density and tile size are each one key every list reads, so they sit here with the other
+    // global controls rather than being repeated per tab.
+    if (themingCard) themingCard.appendChild(segRow(T("Dichte", "Density"), [["compact", T("Kompakt", "Compact")], ["normal", "Normal"], ["airy", T("Luftig", "Airy")]], density, function (v) { density = v; set("cc.density", v); }, T("Gilt global für alle Listen: Docker, Start, Freigaben und VMs.", "Applies globally to every list: Docker, Start, Shares and VMs."), true));
+    if (themingCard) themingCard.appendChild(tileSizeRow());
+    // The global logos card edits the shared icon keys every adopting tab resolves through eff().
+    // It carries the same controls as a per-area card and the same preview: this is where the icon
+    // treatment is decided, so it is the last card that should show no logo. Three sections, one
+    // per area, each with that area's real icons.
     (function () {
       var cLI = card(T("Logos & Icons", "Logos & icons"), T("Globale Logo-/Icon-Farben. Tabs mit aktivem 'Globale Badge-Farbe übernehmen' folgen auch hier.", "Global logo/icon colours. Tabs adopting the global colour follow these too."));
-      // the three live previews (built at the bottom of this card); repainted by every control here
+      // the three previews at the bottom of this card, repainted by every control in it
       var gPrevs = [];
       function gpaint() {
         var acc9 = get("cc.accent", "#2f6feb");
         var strn = parseInt(get("cc.iconstrength", "100"), 10) || 100;
-        // Adopting (v4.33.1): the preview has no Rainbow-rotation simulation (never did) —
-        // approximate the resolved background with the accent, same fidelity as the real
-        // "Rainbow off" case. The ink is then the AUTOMATIC black/white contrast for THAT
-        // approximated background (idealText), never the accent hue itself — matching iconInk()'s
-        // new master-adopt branch — and forced on (tint: true) since it no longer depends on
-        // Einfärben's own on/off while adopting.
+        // The preview does not simulate the rainbow rotation, so while adopting it approximates
+        // the resolved background with the accent, as accurate as the rainbow-off case. The ink is
+        // then the automatic contrast for that background rather than the accent hue itself, and
+        // it is forced on, since while adopting it no longer depends on the tint's own switch.
         var adopt9 = get("cc.iconbgrainbow", "0") === "1";
         gPrevs.forEach(function (p9) { try { p9.set({ bg: get("cc.iconbg", "0") === "1", bgColor: adopt9 ? acc9 : get("cc.iconbgcolor", ""), tint: adopt9 ? true : gTintOnEff(), color: adopt9 ? idealText(acc9) : get("cc.iconcolor", ""), strength: strn, accent: acc9, size: "48px" }); } catch (e9) {} });
       }
-      function gsync() { gpaint(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); } // adopt-ON area cards repaint with the new globals
-      // Einfärben on/off, unset falling back to the pre-4.32.5 reading (a valid cc.iconcolor
-      // implicitly meant "tint on") — see cc.icontint's doc comment in docker.js's iconInk().
+      function gsync() { gpaint(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); } // an adopting area card repaints with the new globals
+      // An unset icontint means "on whenever a valid icon colour is set", which keeps the tint of
+      // installs that predate the toggle.
       function gTintOnEff() { var v = get("cc.icontint", null); return v == null ? !!get("cc.iconcolor", "") : v === "1"; }
       var gLT = logoToggles(cLI, {
         getBg: function () { return get("cc.iconbg", "0") === "1"; },
@@ -1433,15 +1261,10 @@
         [["auto", T("Automatisch", "Automatic")], ["native", T("Natives Icon", "Native icon")], ["flat", T("Ink-Flatten", "Ink flatten")], ["tint", T("Luminanz-Tint", "Luminance tint")]],
         get("cc.iconmode", "auto"),
         function (v) { set("cc.iconmode", v); gsync(); },
-        // #(user: "der infotext ist unverständlich"). The old text named the two treatments and their
-        // internal labels without ever saying WHY there are two, so it read as jargon. This one starts
-        // from the problem: a logo is either one solid shape or a little picture, and the two need
-        // opposite handling. Short enough for a bubble (Rule 8) — no wall of text.
-        T("Ein Logo ist entweder eine einzelne durchgehende Form oder ein kleines mehrfarbiges Bild. Eine Form kann man komplett in deiner Farbe nachzeichnen und sie bleibt erkennbar; ein Bild würde dabei zum Farbklecks, weil Hintergrund und Motiv dieselbe Farbe bekämen. Darum zwei Behandlungen:\n\nAutomatisch (empfohlen) — CannonadeCommand sieht sich jedes Logo an: Formen werden nachgezeichnet (für bekannte Programme wird dafür sogar ein echtes Marken-Logo geholt), Bilder nur eingefärbt.\nNatives Icon — nichts einfärben, jedes Logo bleibt wie geliefert.\nInk-Flatten — alles nachzeichnen, auch Bilder.\nLuminanz-Tint — alles nur einfärben, auch Formen.\n\nEinzelne Container, VMs und Plugins kannst du in ihrem eigenen Fenster abweichend einstellen; diese Einzelwahl gewinnt immer gegen die Einstellung hier.",
-          "A logo is either one solid shape or a small multi-colour picture. A shape can be redrawn entirely in your colour and stays recognisable; a picture would turn into a blob, because its background and its mark would end up the same colour. Hence two treatments:\n\nAutomatic (recommended) — CannonadeCommand looks at each logo: shapes are redrawn (for well-known apps a real brand logo is even fetched to redraw), pictures are only tinted.\nNative icon — no colouring, every logo stays as shipped.\nInk flatten — redraw everything, pictures included.\nLuminance tint — only tint everything, shapes included.\n\nIndividual containers, VMs and plugins can be set differently in their own window; that per-item choice always wins over the setting here.")));
-      // ── the three PREVIEW sections: Docker · VMs · Plugins, each with that area's REAL icons.
-      // Every one of them runs the SAME pipeline the real tab runs, so switching Icon-Färbung above
-      // is visible right here without leaving the Allgemein tab.
+        T("Ein Logo ist entweder eine einzelne durchgehende Form oder ein kleines mehrfarbiges Bild. Eine Form kann man komplett in deiner Farbe nachzeichnen und sie bleibt erkennbar; ein Bild würde dabei zum Farbklecks, weil Hintergrund und Motiv dieselbe Farbe bekämen. Darum zwei Behandlungen:\n\nAutomatisch (empfohlen): CannonadeCommand sieht sich jedes Logo an. Formen werden nachgezeichnet, für bekannte Programme wird dafür sogar ein echtes Marken-Logo geholt; Bilder werden nur eingefärbt.\nNatives Icon: nichts einfärben, jedes Logo bleibt wie geliefert.\nInk-Flatten: alles nachzeichnen, auch Bilder.\nLuminanz-Tint: alles nur einfärben, auch Formen.\n\nEinzelne Container, VMs und Plugins kannst du in ihrem eigenen Fenster abweichend einstellen; diese Einzelwahl gewinnt immer gegen die Einstellung hier.",
+          "A logo is either one solid shape or a small multi-colour picture. A shape can be redrawn entirely in your colour and stays recognisable; a picture would turn into a blob, because its background and its mark would end up the same colour. Hence two treatments:\n\nAutomatic (recommended): CannonadeCommand looks at each logo. Shapes are redrawn, and for a well-known app a real brand logo is fetched to redraw; pictures are only tinted.\nNative icon: no colouring, every logo stays as shipped.\nInk flatten: redraw everything, pictures included.\nLuminance tint: only tint everything, shapes included.\n\nIndividual containers, VMs and plugins can be set differently in their own window; that per-item choice always wins over the setting here.")));
+      // Three preview sections, each with that area's real icons, each running the same pipeline
+      // the real tab runs, so the choice above is visible without leaving this tab.
       [
         ["docker", T("Docker-Container", "Docker containers")],
         ["vm", T("VMs", "VMs")],
@@ -1458,34 +1281,32 @@
           if (!p9.count()) empty9.style.display = "";
           gpaint();
         };
-        // ONE mechanism for all three: ask the very same row-fragment endpoint that area's own
-        // page asks (see rowIcons above — fetching /Docker, /VMs or /Plugins themselves can only
-        // ever return the empty pre-JS skeleton). Best-effort: an empty answer just shows the line.
+        // One mechanism for all three: the same row-fragment endpoint that area's own page asks,
+        // since the pages themselves only ever return an empty skeleton. An empty answer shows
+        // the line above instead.
         rowIcons(sec9[0], 4).then(fill9);
       });
       gpaint();
       wrapMain.appendChild(cLI);
     })();
-    // Docker is now a normal area like the others: a "Stil" adopt card + its OWN Badges (accent)
-    // card at the TOP of the Docker tab. buildStyleCards writes ccd.accent; docker.js reads it via
-    // effc() (adopt on = follow global cc.accent, the default -> no change for existing installs).
-    var cD = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
+    // Docker is an area like the others: an adopt card and its own badges card at the top of its
+    // tab. buildStyleCards writes the area's own accent key, which docker.js resolves through its
+    // adopt-gated reader, so an install that never touches it follows the global colour.
+    var cD = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
     cD.appendChild(styleToggle("cc.styledocker", null));
     wrap.appendChild(cD);
     buildStyleCards("ccd.", wrap, [], true);
 
-    // ── Logos (background + tint, two INDEPENDENT controls — see logoToggles()) ──
-    var c2 = card(T("Logos", "Logos"), T("Die Schalter aktivieren Hintergrund und Icons unabhängig voneinander — jeder hat seine eigene Farbe.", "The switches turn Background and Icons on independently — each has its own colour."));
-    // Einfärben on/off, unset falling back to the pre-4.32.5 reading (a valid cc.iconcolor
-    // implicitly meant "tint on") — mirrors gTintOnEff() in the global Logos & Icons card
-    // (this Docker card edits the SAME global cc.* keys, not a ccd.-scoped copy).
+    var c2 = card(T("Logos", "Logos"), T("Die Schalter aktivieren Hintergrund und Icons unabhängig voneinander, jeder hat seine eigene Farbe.", "The switches turn the background and the icons on independently, each with its own colour."));
+    // As in the global card: an unset icontint means "on whenever a valid icon colour is set".
+    // This Docker card edits the same global keys, not a scoped copy of them.
     function c2TintOnEff() { var v = get("cc.icontint", null); return v == null ? !!get("cc.iconcolor", "") : v === "1"; }
     function c2OnChange() {
       var on = get("cc.iconbg", "0") === "1";
       c2.classList.toggle("cc-bg-mode", on);
       tprevWrap.classList.toggle("cc-prev-bg", on);
       try { tintPrev(); } catch (e9) {}
-      syncAllStyleCards(); // global cc.icon* changed -> adopt-ON area cards follow
+      syncAllStyleCards(); // the global icon keys changed, so an adopting area card follows
     }
     var c2LT = logoToggles(c2, {
       getBg: function () { return get("cc.iconbg", "0") === "1"; },
@@ -1496,9 +1317,8 @@
       setTint: function (v) { set("cc.icontint", v ? "1" : "0"); },
       getColor: function () { return get("cc.iconcolor", ""); },
       setColor: function (v) { set("cc.iconcolor", v); },
-      // v4.35.0 (item 5, jdp: the adopt toggle is redundant per-area — only need it globally):
-      // already read/wrote the GLOBAL key unconditionally, so getAdopt/setAdopt need no change —
-      // only hideAdoptRow, so the Docker card no longer shows its OWN copy of this switch.
+      // These already read and write the global key, so hideAdoptRow is all it takes to keep this
+      // card from showing a second copy of that switch.
       getAdopt: function () { return get("cc.iconbgrainbow", "0") === "1"; },
       setAdopt: function (v) { set("cc.iconbgrainbow", v ? "1" : "0"); },
       getAccent: function () { return get("cc.accent", "#2f6feb"); },
@@ -1507,31 +1327,20 @@
     });
     c2LT.strInput.value = String(iconstrength);
     c2LT.strInput.addEventListener("input", function () { iconstrength = parseInt(c2LT.strInput.value, 10); set("cc.iconstrength", c2LT.strInput.value); try { tintPrev(); } catch (e9) {} syncAllStyleCards(); });
-    // (the VM-icons toggle is obsolete — the VM tab has its own style section)
-    // cc.sgsize is GLOBAL (one key). The CONTROL now lives ONCE in Allgemein (Theming card, next to Density;
-    // user: "global einstellbar, nicht per tab"). This Docker card keeps only the LIVE PREVIEW below, which
-    // sizePrev() resizes whenever the global control changes.
+    // The tile size is one global key, and its control lives once in the Theming card. This Docker
+    // card keeps the preview, which sizePrev() resizes whenever that control changes.
     function tileSizeRow() {
-      // #5: pass the tip through `help` so the ⓘ lands INSIDE the label, consistent with every other row.
-      return segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small")], ["m", T("Mittel", "Medium")], ["l", T("Groß", "Large")]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); try { sizePrev(); } catch (e) {} }, T("Gilt global – dieselbe Größe steuert das Einstellungen-/Werkzeuge-Raster und die Docker-/Plugin-Logos.", "Global – the same size drives the Settings/Tools grid and the Docker/Plugin logos."));   /* live-resize the Docker preview */
+      // the tip goes through `help`, so the icon lands inside the label as it does on every row
+      return segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small")], ["m", T("Mittel", "Medium")], ["l", T("Groß", "Large")]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); try { sizePrev(); } catch (e) {} }, T("Gilt global: dieselbe Größe steuert das Einstellungen- und Werkzeuge-Raster und die Docker- und Plugin-Logos.", "Global: the same size drives the Settings and Tools grid and the Docker and Plugin logos."));
     }
-    c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));   // preview stays the Docker card's last block
-    // ONE shared preview (logoPreview) — the tabs' own icon pipeline, and the coloured badge on a real
-    // CSS tile. The private recipe that used to sit here composited the badge with an feFlood INSIDE
-    // the filter; an feFlood fills the whole filter region, so the badge came out a hard square that
-    // ignored the Badge-Form, and the whole thing painted a raw tint with no regard for cc.iconmode —
-    // i.e. a preview of something the Docker tab never renders.
+    c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var dockPrev = logoPreview("docker", "cc-set-dockprev");
     var tprevWrap = dockPrev.el;
-    // #5 (user: "die vorschau soll auch die kachelgröße live anzeigen"): the preview logos take the size the
-    // tile-size control selects, so Klein/Mittel/Groß is reflected in the preview immediately.
+    // the preview logos take the size the tile-size control selects, so a change shows at once
     function sizePrev() { tintPrev(); }
-    // REAL container logos (up to four), from the Docker tab's OWN row fragment (rowIcons) — our
-    // own logo is only the fallback when the tab has nothing to show. This used to build the icon
-    // URL itself out of the engine's container names ("/state/…/<name>-icon.png"), which is a guess
-    // and 404s for every container Unraid has no cached icon for; the tile then hid itself and the
-    // row came out with holes in it. The NAME rides along: the pipeline needs it to look a glyph up
-    // and to honour a per-container pin.
+    // Up to four real container logos, from the Docker tab's own row fragment; the plugin's logo
+    // is the fallback when the tab has nothing to show. The name rides along, since the pipeline
+    // needs it to look a glyph up and to honour a per-container pin.
     rowIcons("docker", 4).then(function (l9) {
       (l9 || []).forEach(function (it9) { dockPrev.add(it9.src, it9.name || ""); });
       if (!dockPrev.count()) dockPrev.add("/plugins/cannonadecommand/images/cannonadecommand.png", "");
@@ -1539,19 +1348,14 @@
     }).catch(function () { dockPrev.add("/plugins/cannonadecommand/images/cannonadecommand.png", ""); tintPrev(); });
     function tintPrev() {
       var acc9 = get("cc.accent", "#2f6feb");
-      // Adopting (v4.33.1): approximate the resolved background with the accent — see gpaint()'s
-      // comment above — and ink with its automatic black/white contrast, forced on regardless of
-      // Einfärben's own on/off.
+      // While adopting, the accent approximates the resolved background, as in gpaint() above, and
+      // the ink is its automatic contrast, forced on whatever the tint's own switch says.
       var adopt9 = get("cc.iconbgrainbow", "0") === "1";
       dockPrev.set({ bg: get("cc.iconbg", "0") === "1", bgColor: adopt9 ? acc9 : get("cc.iconbgcolor", ""), tint: adopt9 ? true : c2TintOnEff(), color: adopt9 ? idealText(acc9) : get("cc.iconcolor", ""), strength: parseInt(get("cc.iconstrength", "100"), 10) || 100, accent: acc9 });
     }
-    c2.appendChild(tprevWrap); tintPrev(); c2OnChange(); sizePrev();   // #5: preview is the card's LAST block now, sized to the tile-size control
+    c2.appendChild(tprevWrap); tintPrev(); c2OnChange(); sizePrev();   // the preview is the card's last block, sized to the tile-size control
     wrap.appendChild(c2);
 
-    // (The CPU/RAM diagnostics card is built right before the Bandwidth card below,
-    //  so it sits DIRECTLY above it — explicit user placement request.)
-
-    // ── Columns matrix ──
     var c3 = card(T("Spalten / Badges je Ansicht", "Columns / badges per view"), T("Welche Badges in der einfachen und in der Advanced-Ansicht erscheinen.", "Which badges appear in the Simple and the Advanced view."));
     var tbl = el("table", "cc-set-tbl");
     var thr = el("tr"); thr.appendChild(el("th")); thr.appendChild(thc(T("Einfach", "Simple"))); thr.appendChild(thc(T("Advanced", "Advanced"))); tbl.appendChild(thr);
@@ -1562,40 +1366,31 @@
     c3.appendChild(tbl);
     wrap.appendChild(c3);
 
-    // ── View ──
-    // (Dichte is ONE GLOBAL key and lives in the Allgemein tab now — see the global density
-    //  card added to wrapMain below, so the user finds it with the other global controls.)
     var c4 = card(T("Ansicht", "View"), null);
-    // "folder" always offered here (unlike the Docker-tab's own gear menu, which hides the
-    // Folder toggle until real organizer folders exist — spec decision 4, a DIFFERENT, ambient
-    // control surface): setMode() on the Docker tab itself already falls back to an ungrouped
-    // flat Grid-look if the organizer has no folders yet, so picking "Folder" here as a deliberate
-    // default preference never shows anything broken, just an unremarkable Grid until you add one.
+    // The folder view is always offered here, unlike the Docker tab's own gear menu, which hides
+    // it until the organizer has folders: the tab falls back to an ungrouped grid when it has
+    // none, so picking it as a default preference shows a plain grid rather than anything broken.
     c4.appendChild(segRow(T("Standard-Ansicht", "Default view"), [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")], ["folder", T("Ordner", "Folder")]], view, function (v) { view = v; set("cc.view", v); syncViewModeServer(v); }));
-    function applyShape() { var m9 = { pill: "999px", rounded: "6px", square: "0px", circle: "999px" }; var sh9 = get("cc.badgeshape", "pill"); var r9 = m9[sh9] || "999px"; root.style.setProperty("--cc-b-radius", r9); document.documentElement.style.setProperty("--cc-b-radius", r9); document.documentElement.classList.toggle("cc-shape-circle", sh9 === "circle"); var d9 = { pill: "50%", rounded: "3px", square: "0px", circle: "50%" }[sh9] || "50%"; document.documentElement.style.setProperty("--cc-dot-r", d9); /* dot token: the preset swatches follow the badge form too (user call) */ }
+    function applyShape() { var m9 = { pill: "999px", rounded: "6px", square: "0px", circle: "999px" }; var sh9 = get("cc.badgeshape", "pill"); var r9 = m9[sh9] || "999px"; root.style.setProperty("--cc-b-radius", r9); document.documentElement.style.setProperty("--cc-b-radius", r9); document.documentElement.classList.toggle("cc-shape-circle", sh9 === "circle"); var d9 = { pill: "50%", rounded: "3px", square: "0px", circle: "50%" }[sh9] || "50%"; document.documentElement.style.setProperty("--cc-dot-r", d9); /* the preset swatches follow the badge shape too */ }
     wrap.appendChild(c4);
-    // Badge-Form (shape) is a single GLOBAL control in the Allgemein "Badges" card now — not per
-    // area — so the Docker tab has no inline Badge-Form card either. Keep the initial applyShape()
-    // so the settings page's --cc-b-radius is set on first render.
+    // The badge shape is a single global control in the Badges card; this call is what sets the
+    // radius on this page's first render.
     applyShape();
 
-    // ── Notifications (engine-side; saved to the flash) ──
+    // Notifications are engine-side and saved to the flash.
     var c5 = card(T("Benachrichtigungen", "Notifications"), T("Warnungen bei Watchdog-Neustarts, fehlgeschlagenen Starts und Zeitplan-Fehlern.", "Alerts on watchdog restarts, failed starts and schedule errors."));
     c5.appendChild(toggleRow(T("Unraid-Benachrichtigungen", "Unraid notifications"), notify.unraid, function (v) { notify.unraid = v; notifyDirty = true; }));
     var wrow = el("div", "cc-set-row"); wrow.appendChild(el("span", "cc-set-rl", T("Webhook-URL", "Webhook URL")));
     var win = el("input", "cc-set-txt"); win.type = "url"; win.placeholder = "https://…"; win.value = notify.webhook || "";
     win.addEventListener("input", function () { notify.webhook = win.value.trim(); notifyDirty = true; });
     wrow.appendChild(win); c5.appendChild(wrow);
-    // Save stays disabled until the current config has been read once, so we never
-    // save notify over a config we haven't seen (and by then there is no in-flight
-    // initial GET left to race a just-saved value back to stale).
+    // Save stays disabled until the config has been read once, so a save never lands on top of a
+    // config this page has not seen, and no initial read is left in flight to race it back.
     var save5 = el("span", "cc-btn cc-btn-primary cc-set-save" + (configLoaded ? "" : " cc-set-disabled"), configLoaded ? T("Speichern", "Save") : T("lädt…", "loading…"));
     save5.addEventListener("click", function () { if (configLoaded && !save5.classList.contains("cc-set-disabled")) saveNotify(save5); }); c5.appendChild(save5);
     wrap.appendChild(c5);
 
-    // ── Bandwidth / network shaping (engine-side; saved to the flash) ──
-    // ── Limit diagnostics: the engine's last CPU/RAM limit operations, VERIFIED ——
-    // sits DIRECTLY before the Bandwidth card (explicit placement request).
+    // the engine's last CPU and RAM limit operations, with the values it verified afterwards
     var cd = card(T("Diagnose: CPU/RAM-Limits", "Diagnostics: CPU/RAM limits"), T("Die letzten Limit-Änderungen mit Docker-Ergebnis und verifizierten Werten danach.", "The most recent limit changes with docker's result and the verified values after."));
     var diag = el("div", "cc-set-diag"); diag.textContent = "…"; cd.appendChild(diag); wrap.appendChild(cd);
     api("GET", "limitlog").then(function (ops) {
@@ -1608,7 +1403,7 @@
       });
     }).catch(function (e) { diag.textContent = T("Diagnose nicht verfügbar: ", "Diagnostics unavailable: ") + e.message; });
 
-    var c6 = card(T("Bandbreite", "Bandwidth"), T("Schnittstelle IM Container, auf der die Limits gesetzt werden. LEER = automatisch (Default-Route des Containers) — empfohlen. Pro-Container-Limits stellst du im Docker-Tab ein.", "Interface INSIDE the container the limits are applied to. BLANK = automatic (the container's default route) — recommended. Set per-container limits in the Docker tab."));
+    var c6 = card(T("Bandbreite", "Bandwidth"), T("Schnittstelle im Container, auf der die Limits gesetzt werden. Leer heißt automatisch, also die Default-Route des Containers, und ist die Empfehlung. Pro-Container-Limits stellst du im Docker-Tab ein.", "The interface inside the container the limits are applied to. Blank means automatic, the container's default route, which is the recommendation. Per-container limits are set in the Docker tab."));
     var ifrow = el("div", "cc-set-row"); ifrow.appendChild(el("span", "cc-set-rl", T("Schnittstelle", "Interface")));
     var ifin = el("input", "cc-set-txt"); ifin.type = "text"; ifin.placeholder = T("automatisch", "automatic"); ifin.value = shapeIface; ifin.maxLength = 15; ifin.spellcheck = false; ifin.setAttribute("list", "cc-iface-list");
     var dl = el("datalist"); dl.id = "cc-iface-list"; ["eth0", "eth1", "eth2"].forEach(function (n) { var o = el("option"); o.value = n; dl.appendChild(o); });
@@ -1618,62 +1413,53 @@
     save6.addEventListener("click", function () { if (configLoaded && !save6.classList.contains("cc-set-disabled")) saveShape(save6); }); c6.appendChild(save6);
     wrap.appendChild(c6);
 
-    // ── Plugin-Tab / VM-Tab sections: adopt the global badge colour there too? ──
-    // Push the header area's live state onto the real top bar on THIS page (browsers don't
-    // fire 'storage' in the originating document, so header.js won't hear a same-page change).
+    // A browser fires no storage event in the document that wrote the key, so the header and the
+    // shares bar are pushed their new state directly on this page.
     function syncHeaderBar() { try { if (typeof window.ccHeaderApply === "function") window.ccHeaderApply(); } catch (e) {} }
-    // same live push for the Freigaben tabs (no 'storage' event fires in this document)
     function syncSharesBar() { try { if (typeof window.ccSharesApply === "function") window.ccSharesApply(); } catch (e) {} }
-    // adopt-key -> the area's own key prefix (for seeding its own accent on adopt-OFF)
+    // each adopt key's own key prefix, for seeding that area's accent when adopt goes off
     var ADOPT_PREF = { "cc.styleheader": "cch.", "cc.styleshares": "ccsh.", "cc.styledocker": "ccd.", "cc.styleplugin": "ccp.", "cc.stylevms": "ccv.", "cc.stylesettings": "ccs.", "cc.stylefavorites": "ccf.", "cc.stylemain": "ccm." };
     function styleToggle(key, onChange, lbl) {
-      // the SAME knob switch as everywhere else (the text-in-pill variant looked wrong)
       var row = el("div", "cc-set-row cc-set-inline");
       row.appendChild(el("span", null, lbl || T("Globale Badge-Farbe übernehmen", "Adopt the global badge colour")));
       var tg = toggle(localStorage.getItem(key) !== "0", function (v) {
         localStorage.setItem(key, v ? "1" : "0");
-        // Adopt OFF + this area never had its OWN colour: seed it from the CURRENT global accent, so
-        // (a) the colour doesn't jump to the #2f6feb default and (b) the area's picker reflects the
-        // live colour and any later edit visibly applies (the "toggle does nothing" the user hit —
-        // an unset own-accent otherwise fell back to the same default as the global).
+        // Turning adopt off in an area that never had a colour of its own seeds it from the
+        // current global accent, so the colour does not jump to the built-in default and the
+        // area's picker shows what is actually in effect.
         var p = ADOPT_PREF[key];
         if (!v && p && localStorage.getItem(p + "accent") == null) set(p + "accent", get("cc.accent", "#2f6feb"));
-        if (styleCardSync[key]) styleCardSync[key](); // picker/swatches/preview jump to the now-effective colour (user call)
+        if (styleCardSync[key]) styleCardSync[key]();   // the picker and preview jump to the now effective colour
         if (onChange) onChange(); syncHeaderBar(); syncSharesBar();
       });
       adoptToggles[key] = tg; row.appendChild(tg);
       return row;
     }
-    // per-area "Tabansicht" row — lives IN the Stil card now (was its own Tab-Ansicht card).
-    // INVERTED vs storage on purpose: toggle ON = cc.sections.<area> "0" (native Unraid
-    // sub-tabs, the DEFAULT), toggle OFF = "1" (sub-tabs stacked as CC sections). Only areas
-    // that actually HAVE sub-tabs get it: Freigaben, Start (/Main), Plugin, VM.
+    // The tabbed-view row reads inverted to its storage: on means the native Unraid sub-tabs,
+    // which is the default, and off means the sub-tabs stacked as CC sections. Only an area that
+    // has sub-tabs gets one.
     function tabviewRow(area, applyFn) {
       var row = el("div", "cc-set-row cc-set-inline");
       var lw = el("span", "cc-set-lblwrap");
       lw.appendChild(el("span", null, T("Tabansicht", "Tabbed view")));
-      lw.appendChild(infoIcon(T("AUS = Unterreiter dieses Tabs werden als CannonadeCommand-Abschnitte untereinander gestapelt. Unraids globale Tabansicht (Theming-Karte) ist der Master: steht sie auf 'Ohne Tabs', rendert Unraid überall Abschnitte und dieser Schalter wirkt nicht.", "OFF = this tab's sub-tabs stack as CannonadeCommand sections. Unraid's global tabbed view (Theming card) is the master: set to non-tabbed, Unraid renders sections everywhere and this switch has no effect.")));
+      lw.appendChild(infoIcon(T("Aus: die Unterreiter dieses Tabs werden als CannonadeCommand-Abschnitte untereinander gestapelt. Unraids globale Tabansicht ist der Master: steht sie auf „Ohne Tabs“, rendert Unraid überall Abschnitte und dieser Schalter wirkt nicht.", "Off: this tab's sub-tabs stack as CannonadeCommand sections. Unraid's own tabbed view is the master: set to non-tabbed, Unraid renders sections everywhere and this switch has no effect.")));
       row.appendChild(lw);
       row.appendChild(toggle(get("cc.sections." + area, "0") === "0", function (v) { set("cc.sections." + area, v ? "0" : "1"); if (applyFn) applyFn(); }));
       return row;
     }
-    var cP = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
+    var cP = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
     cP.appendChild(styleToggle("cc.styleplugin", null));
     cP.appendChild(tabviewRow("plugins", syncPluginsBar));
-    // per-tab style controls — the SAME set as the Docker tab, active while the
-    // adopt-toggle above is OFF (own key prefix per tab)
-    // The Plugin/VM sections carry EXACTLY the Docker tab's style cards (same
-    // picker, swatches, rainbow palette, tint toggle + strength) on their own
-    // key prefix; they apply while "Adopt the Docker-tab style" is OFF.
+    // Every area carries the same style cards on its own key prefix, which apply while its adopt
+    // toggle is off.
     function buildStyleCards(P, into, samples, noLogos) {
-      // Picking a colour in an area's card means "this area uses its OWN style" — so turn its
-      // adopt toggle OFF (else eff() keeps reading the global cc.* accent and the pick is
-      // ignored, the "colour not applied to the menu" bug). Reflected live on the toggle +
-      // the real header bar. Turn adopt back ON to re-follow the global Docker accent.
+      // Picking a colour in an area's card means that area uses its own style, so its adopt
+      // toggle goes off; otherwise the read side keeps resolving the global accent and the pick
+      // has no visible effect. Turning adopt back on follows the global colour again.
       var ADOPT = { "ccd.": "cc.styledocker", "ccp.": "cc.styleplugin", "ccv.": "cc.stylevms", "cch.": "cc.styleheader", "ccs.": "cc.stylesettings", "ccsh.": "cc.styleshares", "ccf.": "cc.stylefavorites", "ccm.": "cc.stylemain" };
       var adoptKey = ADOPT[P];
-      // the card always shows the EFFECTIVE colour: the global accent while adopt is ON,
-      // the area's own accent while OFF (user call: the fields must "jump" on adopt)
+      // The card always shows the effective colour: the global accent while adopt is on, the
+      // area's own while it is off, so the fields jump the moment it is flipped.
       function effAcc() { return (adoptKey && localStorage.getItem(adoptKey) !== "0") ? get("cc.accent", "#2f6feb") : get(P + "accent", "#2f6feb"); }
       var acc = effAcc(), istr = parseInt(get(P + "iconstrength", "100"), 10) || 100;
       function useOwn() {
@@ -1688,28 +1474,20 @@
       var hx = el("input", "cc-set-hexin"); hx.type = "text"; hx.value = acc; hx.placeholder = "#2f6feb"; hx.maxLength = 7; hx.spellcheck = false;
       var pk = inlinePicker(/^#[0-9a-f]{6}$/i.test(acc) ? acc : "#2f6feb", function (v) { acc = v; hx.value = v; set(P + "accent", v); useOwn(); paintPv(); });
       hx.addEventListener("input", function () { var v = normHex(hx.value); if (v) { acc = v; pk._set(v); set(P + "accent", v); useOwn(); paintPv(); } });
-      pr.appendChild(pk); cA.appendChild(pr);   // #18: hex moves onto the swatch row (rightmost cell), like the top Badges card
+      pr.appendChild(pk); cA.appendChild(pr);
       var sr = el("div", "cc-set-swatches cc-fill");
-      PRESETS.slice(0, 7).forEach(function (c) {   // #5: 7 presets + hex(2 cells) = 9 cells, matching the rainbow/flag rows (8 + reset)
-        var sw = el("span", "cc-set-sw"); sw.setAttribute("data-tip", c); sw.style.background = c; sw.dataset.c = c;   // dataset.c = the ONE attribute swMarkRow reads
-        // Clicking a preset here USED to recolour the preview and leave the tick sitting on whatever
-        // swatch was picked at build time, so the card claimed one colour and previewed another
-        // (measured: pick violet -> preview violet, mark still on blue). Every colour change in this
-        // card now re-marks the row, exactly like the global card does.
+      PRESETS.slice(0, 7).forEach(function (c) {   // seven presets plus the two-cell hex field make nine
+        var sw = el("span", "cc-set-sw"); sw.setAttribute("data-tip", c); sw.style.background = c; sw.dataset.c = c;   // the one attribute swMarkRow reads
         sw.addEventListener("click", function () { acc = c; pk._set(c); hx.value = c; set(P + "accent", c); useOwn(); paintPv(); });
         sr.appendChild(sw);
       });
-      sr.appendChild(hx); cA.appendChild(sr);   // hex field = rightmost cell of the swatch row
-      // Rainbow is a GLOBAL mode now (one switch + one palette in the top Badges card): when it's
-      // on, EVERY enabled area rainbows, so there is NO per-area rainbow toggle/palette here — just
-      // this area's single accent colour above. The preview below still reflects the global rainbow.
-      var RB2 = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];   /* #1: jewel default so every area's preview matches the live UI */
+      sr.appendChild(hx); cA.appendChild(sr);
+      // Rainbow is a global mode with one switch and one palette in the Badges card, so an area
+      // has no rainbow controls of its own, only the accent above. The preview still reflects it.
+      var RB2 = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];   // the shared palette, so every preview matches the live UI
       function palG() { try { if (get("cc.flagmode", "0") === "1") { var fj = JSON.parse(get("cc.flagpal", "null")); if (fj && fj.length) return fj; } var pj = JSON.parse(get("cc.rbpal", "null")); if (pj && pj.length) return pj; } catch (e2) {} return RB2; }
-      // live preview — the Hauptmenueleiste (cch.) previews the MENU TABS (idle grey pill +
-      // one accent-filled active pill, mirroring CannonadeCommand.Header.css); every other
-      // area previews the Docker badges.
-      // both the Hauptmenueleiste (cch.) and Freigaben (ccsh.) restyle Unraid TAB bars ->
-      // preview tab pills (menu tabs vs the two Shares sub-tabs); every other area = badges.
+      // The header and shares areas restyle Unraid tab bars, so their previews are tab pills, one
+      // of them active; every other area previews the Docker badges.
       var isTabs = P === "cch." || P === "ccsh.";
       cA.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
       var pv = el("div", "cc-set-prev" + (isTabs ? " cc-set-navprev" : ""));
@@ -1723,13 +1501,9 @@
           var t9 = el("span", "cc-navtab" + (i9 === activeIx ? " cc-navtab-on" : ""), nm9); pv.appendChild(t9); return t9;
         });
       } else {
-        // THE SAME EIGHT SAMPLES THE GLOBAL BADGES CARD SHOWS (user: the area preview "doesn't work").
-        // It showed THREE badges: one name headline, one key/value pair and a tab pill. With a rainbow
-        // or flag palette of eight that is a third of the palette, so the preview could not show what
-        // the tab does — the sweep it is there to demonstrate was cut off after three hues, and two of
-        // the three badge TIERS the tab actually paints (the second name headline, the further
-        // key/value pairs) never appeared at all. Same mix, same order, same paint-by-index rule as the
-        // Allgemein card, so the two previews finally agree.
+        // The same eight samples the global Badges card shows, in the same order and painted by the
+        // same rule, so the two previews agree. Three would cut a palette of eight off after three
+        // hues and leave two of the badge tiers the tab paints out of the preview entirely.
         var mkName = function (t9) { return el("span", "cc-b cc-b-lg", t9); };
         var mkVal = function (k9, v9) { var b8 = el("span", "cc-b"); b8.appendChild(elk(k9)); b8.appendChild(elv(v9)); return b8; };
         pvBadges = [
@@ -1741,40 +1515,35 @@
       function paintPv() {
         var rbOn9 = get("cc.rainbow", "0") === "1", p9 = palG();
         pvBadges.forEach(function (b9, i9) {
-          if (rbOn9) {   // rainbow: colour EVERY badge/tab by index (matches the now-fully-rainbow live bar)
+          if (rbOn9) {
             var cr = p9[i9 % p9.length];
             b9.style.setProperty("background", cr, "important"); b9.style.setProperty("color", idealText(cr), "important");
             return;
           }
-          if (isTabs && i9 !== activeIx) { b9.style.removeProperty("background"); b9.style.removeProperty("color"); return; } // accent: idle tab keeps its grey CSS pill
+          if (isTabs && i9 !== activeIx) { b9.style.removeProperty("background"); b9.style.removeProperty("color"); return; } // an idle tab keeps its grey pill
           b9.style.setProperty("background", acc, "important"); b9.style.setProperty("color", idealText(acc), "important");
         });
-        swMarkRow(sr, acc);   // the preset row's tick follows the colour the preview is showing
+        swMarkRow(sr, acc);   // the preset row's tick follows the colour the preview shows
       }
       paintPv();
       cA.appendChild(pv);
-      // adopt flip / global edit → this card repaints with the effective colour. ALSO repaints
-      // the Logos card below with the EFFECTIVE icon values (adopt ON -> global cc.icon*, OFF ->
-      // this area's own P+icon*) via cBLT.sync(), reusing applyBgClasses()/tp() for the paint.
-      // cBLT/applyBgClasses/tp are assigned below; the refresher only ever runs after
-      // buildStyleCards finished, so they are live by then.
+      // An adopt flip or a global edit repaints this card with the effective colour, and the Logos
+      // card below with the effective icon values. cBLT, applyBgClasses and tp are assigned further
+      // down, and this refresher only ever runs once buildStyleCards has finished.
       if (adoptKey) styleCardSync[adoptKey] = function () {
         acc = effAcc();
         try { pk._set(/^#[0-9a-f]{6}$/i.test(acc) ? acc : "#2f6feb"); } catch (e9) {}
         hx.value = acc;
-        paintPv();   // repaints the sample badges AND re-marks the preset row (swMarkRow) in one place
-        cBLT.sync(); // Hintergrund/Einfärben toggles + pickers follow the now-effective values
+        paintPv();
+        cBLT.sync();
         cBLT.strInput.value = String(effIconStrength());
         applyBgClasses(); tp();
       };
       into.appendChild(cA);
-      // Badge-Form (shape) is now a single GLOBAL control in the Allgemein "Badges" card, so it is
-      // no longer repeated per area here.
-      var cB = card(T("Logos", "Logos"), T("Die Schalter aktivieren Hintergrund und Icons unabhängig voneinander — jeder hat seine eigene Farbe.", "The switches turn Background and Icons on independently — each has its own colour."));
-      // ga(): adopt ON -> read/preview the GLOBAL cc.icon* values; adopt OFF -> this area's own
-      // P+icon* values. Every value change here means "this area uses its OWN style" (useOwn(),
-      // exactly like the Badges card handlers above), so the six io setters below always WRITE
-      // the area's own P+ key regardless of the current adopt state.
+      var cB = card(T("Logos", "Logos"), T("Die Schalter aktivieren Hintergrund und Icons unabhängig voneinander, jeder hat seine eigene Farbe.", "The switches turn the background and the icons on independently, each with its own colour."));
+      // ga() says whether this area adopts: with it on the card reads and previews the global icon
+      // values, with it off the area's own. Every change here means the area uses its own style,
+      // so the setters below always write the area's own key whatever ga() currently answers.
       function ga() { return !!adoptKey && localStorage.getItem(adoptKey) !== "0"; }
       function tintOnAt(prefix) { var v = get(prefix + "icontint", null); return v == null ? !!get(prefix + "iconcolor", "") : v === "1"; }
       function bgColorAt(prefix) {
@@ -1794,14 +1563,10 @@
         setTint: function (v) { set(P + "icontint", v ? "1" : "0"); useOwn(); },
         getColor: function () { return ga() ? get("cc.iconcolor", "") : get(P + "iconcolor", ""); },
         setColor: function (v) { set(P + "iconcolor", v); useOwn(); },
-        // v4.35.0 (item 5): adopt-rainbow is no longer area-gated at all — this card no longer
-        // shows the switch (hideAdoptRow below), and the ONE global "Logos & Icons" card is the
-        // only place it can be flipped, so getAdopt() always answers the global key regardless of
-        // ga() (own vs. adopted STYLE is unrelated now — Hintergrund/Icons colours can still be
-        // this area's own; whether they follow rainbow is a purely global decision). setAdopt is
-        // unreachable dead code (logoToggles() never builds/wires a switch to call it while
-        // hideAdoptRow is set) — kept as a harmless no-op rather than deleted outright, in case a
-        // future caller re-enables the row for this card.
+        // Adopting the rainbow is a global decision, flipped only on the global logos card, so
+        // this answers the global key whatever ga() says: an area's own icon colours and whether
+        // they follow the rainbow are separate questions. setAdopt is never called while
+        // hideAdoptRow is set, and stays as a no-op in case a caller shows the row again.
         getAdopt: function () { return get("cc.iconbgrainbow", "0") === "1"; },
         setAdopt: function () {},
         getAccent: function () { return acc; },
@@ -1810,28 +1575,19 @@
       });
       cBLT.strInput.value = String(istr);
       cBLT.strInput.addEventListener("input", function () { set(P + "iconstrength", cBLT.strInput.value); useOwn(); try { tp(); } catch (e9) {} });
-      // live logo preview with real icons of this tab — ONE shared preview (logoPreview), which runs
-      // the SAME icon pipeline the real tab runs (CCTheme.icons.plan) and puts the coloured badge on a
-      // real CSS tile instead of an feFlood. The private copy that used to live here recoloured the
-      // pixels with a raw tint/mono matrix and never looked at cc.iconmode, so with Icon-Färbung on
-      // anything but "auto"'s raw treatment it previewed a picture the tab does not paint.
       cB.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
-      // the pipeline SCOPE this area's items live under, so a per-item pin set in a row's own window
-      // shows up in the preview too (the same scope strings docker.js/vms.js/plugins.js pass)
-      var PAREA = { "ccd.": "docker", "ccv.": "vm", "ccp.": "plugin" }[P];   // areas whose rows carry REAL per-item logos
+      // the pipeline scope this area's items live under, so a per-item pin shows up here too
+      var PAREA = { "ccd.": "docker", "ccv.": "vm", "ccp.": "plugin" }[P];   // the areas whose rows carry real per-item logos
       var PSCOPE = PAREA || "docker";
       var pvl = logoPreview(PSCOPE, "cc-set-tint-" + P.replace(/[^a-z]/g, ""));
       var tpw = pvl.el;
-      // A sample beginning with "fa-"/"icon-" is a FONT GLYPH (the Settings/Tools tiles use FA/Unraid
-      // font icons, not raster PNGs) — logoPreview renders it as an <i> coloured via CSS. Anything else
-      // is a raster logo. This is why ccs. showed no preview: its samples were empty because there are
-      // no PNGs; it passes glyph classes instead.
+      // A sample whose name starts with a font-icon prefix is a glyph, which logoPreview renders
+      // as an <i> coloured through CSS; the Settings and Tools tiles pass those rather than
+      // raster paths, which is why their sample list looks empty.
       var addSamples = function () { (samples || []).forEach(function (s9) { pvl.add(s9, ""); }); };
-      // Docker/VMs/Plugins show REAL per-item logos, so the preview shows this box's own — same
-      // row fragments the global Logos card uses (rowIcons). The canned sample list stays as the
-      // fallback for a box with no containers/VMs/plugins. It could never be more than a stand-in
-      // anyway: two of the three plugin samples are paths that exist on no Unraid box at all, so
-      // they 404, the tile hides itself, and that preview rendered as a single lonely logo.
+      // Docker, VMs and Plugins have real per-item logos, from the same row fragments the global
+      // card uses, so the preview shows this box's own. The canned samples are the fallback for a
+      // box with none of them, and could never be more than stand-ins anyway.
       if (PAREA && !noLogos) {
         rowIcons(PAREA, 4).then(function (l9) {
           (l9 || []).forEach(function (it9) { pvl.add(it9.src, it9.name || ""); });
@@ -1843,12 +1599,9 @@
       }
       function tp() {
         var ga9 = ga();
-        // Adopting (v4.33.1): approximate the resolved background with the effective accent — see
-        // gpaint()'s comment in the global Logos & Icons card for why (the preview never simulated
-        // Rainbow rotation) — and ink with its automatic black/white contrast, forced on regardless
-        // of Einfärben's own on/off while adopting.
-        // v4.35.0 (item 5): purely global now, same as cBLT's getAdopt() above — no longer gated by
-        // ga() (own vs. adopted STYLE), so the preview never disagrees with what getAdopt() answers.
+        // While adopting, the effective accent approximates the resolved background and the ink is
+        // its automatic contrast, as in the global card. It reads the global key, like getAdopt()
+        // above, so the preview never disagrees with what that answers.
         var adopt9 = get("cc.iconbgrainbow", "0") === "1";
         pvl.set({
           bg: effIconBg(), bgColor: adopt9 ? acc : (ga9 ? get("cc.iconbgcolor", "") : get(P + "iconbgcolor", "")),
@@ -1865,16 +1618,14 @@
     // the adopt "Stil" card is the FIRST card of every section (user call), then
     // the Badges/Logos cards. Same cards for the Kopfbereich (menu bar) as Plugins/VMs;
     // the Kopfbereich additionally carries the Fussleiste toggle + Status-Insel card.
-    var cV = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
+    var cV = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
     cV.appendChild(styleToggle("cc.stylevms", null));
     cV.appendChild(tabviewRow("vms", syncVmsBar));
-    var cH = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
+    var cH = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
     cH.appendChild(styleToggle("cc.styleheader", null));
-    // footer visibility (cc.footer, "1" hidden = DEFAULT): header.js applies it; same-page live via syncHeaderBar.
-    // MOVED into the Allgemein Theming card (user): the footer bar is not part of the Kopfbereich AREA — it is
-    // one global on/off for a page element, exactly like Dichte and Kachelgröße, which were moved there for the
-    // same reason ("global settings belong together"). Behaviour is untouched: same key, same handler, same live
-    // sync; only the card it is built into changed.
+    // The footer bar is hidden by default. header.js applies it, and it sits in the Theming card
+    // rather than here: it is one global on/off for a page element, like density and tile size,
+    // not part of the header area itself.
     if (themingCard) {
       var cHf = el("div", "cc-set-row cc-set-inline");
       var cHfL = el("span", "cc-set-lblwrap");
@@ -1884,40 +1635,33 @@
       cHf.appendChild(toggle(get("cc.footer", "1") !== "0", function (v) { set("cc.footer", v ? "1" : "0"); syncHeaderBar(); }));
       themingCard.appendChild(cHf);
     }
-    var cSh = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
+    var cSh = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
     cSh.appendChild(styleToggle("cc.styleshares", null));
     cSh.appendChild(tabviewRow("shares", syncSharesBar));
-    var cSet = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
+    var cSet = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
     cSet.appendChild(styleToggle("cc.stylesettings", null));
     // tile size of the /Settings + /Tools grid is the GLOBAL cc.sgsize control in Allgemein (no per-tab copy).
-    var cFav = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
+    var cFav = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
     cFav.appendChild(styleToggle("cc.stylefavorites", null));
-    var cStart = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt.", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies."));
+    var cStart = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
     cStart.appendChild(styleToggle("cc.stylemain", null));
     cStart.appendChild(tabviewRow("main", syncSharesBar));
     wrapHeader.appendChild(cH); wrapShares.appendChild(cSh); wrapPlugin.appendChild(cP); wrapVms.appendChild(cV); wrapSettings.appendChild(cSet); wrapFavorites.appendChild(cFav); wrapStart.appendChild(cStart);
-    // #6/#20 (user: "der werkzeugtab soll nicht nur verweisen, das soll den gleichen funktionsumfang wie
-    // beim einstellungstab haben. die tabs sind ja baugleich"): Unraid renders /Settings and /Tools with
-    // the IDENTICAL category-tile grid, so they always share ONE underlying flag (cc.stylesettings) - that
-    // part of the architecture is real and correct, a per-tab COPY of the flag would silently do nothing
-    // on one of the two pages. What was wrong is that this tab only ever showed a sentence about that
-    // fact instead of the actual control: same "Stil" card + toggle as the Einstellungen-Tab, wired to the
-    // SAME key, so either tab can flip it and both stay in sync (honest duplication - real control, shared
-    // state - not a second, disconnected copy).
-    var cTools = card(T("Stil", "Style"), T("AN = die globale Badge-Farbe (Allgemein) gilt auch hier. AUS = die eigene Farbe dieses Abschnitts gilt. Wirkt auf /Einstellungen UND /Werkzeuge zugleich (Unraid rendert beide Seiten identisch).", "ON = the global badge colour (General) applies here too. OFF = this section's own colour applies. Affects /Settings AND /Tools at once (Unraid renders both pages identically)."));
+    // Unraid renders /Settings and /Tools with the identical tile grid, so both pages share one
+    // flag; a per-tab copy of it would do nothing on one of them. This tab therefore carries the
+    // same card and toggle wired to that same key, so either page can flip it.
+    var cTools = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt. Wirkt auf /Einstellungen und /Werkzeuge zugleich, da Unraid beide Seiten identisch rendert.", "On: the global badge colour from General applies here too. Off: this section's own colour applies. It affects /Settings and /Tools at once, since Unraid renders both pages identically."));
     cTools.appendChild(styleToggle("cc.stylesettings", null));
     wrapTools.appendChild(cTools);
-    // (the per-area Tabansicht toggle lives IN each Stil card now — see tabviewRow above)
     function syncPluginsBar() { try { if (typeof window.ccPluginsApply === "function") window.ccPluginsApply(); } catch (e) {} }
     function syncVmsBar() { try { if (typeof window.ccVmsApply === "function") window.ccVmsApply(); } catch (e) {} }
-    buildStyleCards("cch.", wrapHeader, [], true); // Kopfbereich (menu bar): pill/badge settings only
+    buildStyleCards("cch.", wrapHeader, [], true);
     // Kopfbereich covers the main menu bar AND the top strip: the Status-Insel (top strip)
     // belongs to THIS area. header.js renders it and reads cc.island / cc.tempwarn live.
     (function () {
       var cI = card(T("Status-Insel", "Status island"), T("Die Status-Insel im oberen Streifen gehört zum Kopfbereich.", "The status island in the top strip belongs to the header area."));
       cI.appendChild(toggleRow(T("Status-Insel anzeigen", "Show status island"), get("cc.island", "1") !== "0", function (v) { set("cc.island", v ? "1" : "0"); syncHeaderBar(); }));
-      // per-element checklist (user: an/abhaken welche Chips die Insel zeigt); header.js renders
-      // them in a FIXED order and reads cc.isl.<key> live. Default all on.
+      // one checkbox per chip; header.js renders them in a fixed order and reads the keys live
       cI.appendChild(el("div", "cc-set-lbl", T("Angezeigte Elemente", "Shown elements")));
       [["uptime", T("Betriebszeit", "Uptime")], ["os", T("Unraid-Edition", "Unraid edition")], ["version", T("Unraid-Version", "Unraid version")], ["array", T("Array-Zustand", "Array state")], ["fill", T("Array-Füllstand", "Array usage")], ["ram", T("RAM-Auslastung", "RAM usage")], ["cpu", T("CPU-Last", "CPU load")], ["containers", T("Laufende Container", "Running containers")], ["net", T("Netzwerk-Traffic", "Network traffic")], ["temps", T("Temperaturen", "Temperatures")]].forEach(function (it) {
         cI.appendChild(toggleRow(it[1], get("cc.isl." + it[0], "1") !== "0", function (v) { set("cc.isl." + it[0], v ? "1" : "0"); syncHeaderBar(); }));
@@ -1925,37 +1669,27 @@
       cI.appendChild(segRow(T("Temperatur-Warnschwelle", "Temperature warning threshold"), [["50", "50 °C"], ["60", "60 °C"], ["70", "70 °C"]], get("cc.tempwarn", "60"), function (v) { set("cc.tempwarn", v); syncHeaderBar(); }));
       wrapHeader.appendChild(cI);
     })();
-    // #18 (user: "ich wollte die icon funktion übernehmen. nicht nur die icons einbauen. wo sind die
-    // einstellungen dafür?"): the main-tab icons (Tabler, one curated set — see header.js ccTabIcons())
-    // are additive markup CC inserts, not a native toggle, so they need their own on/off like every other
-    // CC-added element. header.js reads cc.tabicons live and both inserts AND removes the icons on flip
-    // (unlike most toggles here, which only gate future paints — nothing else in ccTabIcons() clears
-    // already-inserted svg.cc-tab-ico, so turning this off has to be as real as turning it on).
+    // The main-tab icons are markup CC inserts rather than a native element, so they get an on/off
+    // of their own. header.js reads the key live and both inserts and removes them on a flip;
+    // nothing else clears an icon already in the DOM.
     (function () {
       var cT = card(T("Haupttabs", "Main tabs"), T("Icon (Tabler, MIT-lizenziert) und/oder Text vor jedem Haupttab-Namen (Übersicht, Docker, VMs, …). Beides aus ist möglich, zeigt dann eine leere Pille.", "Icon (Tabler, MIT licensed) and/or text for every main tab label (Dashboard, Docker, VMs, …). Turning both off is possible and shows an empty pill."));
       cT.appendChild(toggleRow(T("Icons anzeigen", "Show icons"), get("cc.tabicons", "1") !== "0", function (v) { set("cc.tabicons", v ? "1" : "0"); try { window.ccTabIcons && window.ccTabIcons(); } catch (e) {} }));
-      // #18 (user, extension: "auch toggle um den text auszublenden") — icon-only mode alongside the
-      // existing icon switch, same card since both control the same tab pill's contents.
+      // an icon-only mode beside the icon switch, in the same card, since both fill the same pill
       cT.appendChild(toggleRow(T("Text anzeigen", "Show text"), get("cc.tabtext", "1") !== "0", function (v) { set("cc.tabtext", v ? "1" : "0"); try { window.ccTabIcons && window.ccTabIcons(); } catch (e) {} }));
       wrapHeader.appendChild(cT);
     })();
-    // ── SERVERNAME card (user: size/weight/italic/font/colour customisable). header.js reads the
-    // cc.brand.* keys live and inlines them on span.cc-brand-name — the REAL header is the preview
-    // (no card preview). Controls are all dropdowns (stringent, no lone slider/toggle); colour
-    // stays a picker like every other CC colour control.
+    // The server name's look. header.js reads the cc.brand.* keys live and inlines them, so the
+    // real header is the preview. Every control is a dropdown, apart from the colour, which is a
+    // picker like every other colour control here.
     (function () {
       var cB = card(T("Servername", "Server name"), T("Aussehen des Servernamens oben links. Änderungen erscheinen live im Kopfbereich.", "Look of the server name at the top left. Changes appear live in the header."));
-      // size (preset dropdown — replaces the lone slider)
       var SZ = ["16", "18", "20", "22", "24", "26", "28", "30", "32", "36", "40", "44", "48", "56", "64"].map(function (s) { return [s, s + " px"]; });
       cB.appendChild(dropRow(T("Größe", "Size"), SZ, get("cc.brand.size", "30"), function (v) { set("cc.brand.size", v); syncHeaderBar(); }));
-      // weight
       cB.appendChild(dropRow(T("Stärke", "Weight"), [["300", T("Dünn", "Thin")], ["400", "Normal"], ["500", "Medium"], ["650", T("Halbfett", "Semibold")], ["800", T("Fett", "Bold")]], get("cc.brand.weight", "650"), function (v) { set("cc.brand.weight", v); syncHeaderBar(); }));
-      // italic (dropdown, not a lone toggle — keep the control set uniform)
       cB.appendChild(dropRow(T("Kursiv", "Italic"), [["0", T("Normal", "Normal")], ["1", T("Kursiv", "Italic")]], get("cc.brand.italic", "0"), function (v) { set("cc.brand.italic", v); syncHeaderBar(); }));
-      // Font family for the wordmark. Genuinely-system faces (render if the client has them) — the old
-      // cursive/fantasy junk (Comic Sans, Papyrus, Brush Script, Lucida Handwriting, Segoe Print/Script,
-      // Copperplate, Rockwell, Sylfaen) is dropped (user: "teilweise echt alt und furchtbar"), and the
-      // web-only families that never rendered without a download come back below as PROPER Google fonts.
+      // System faces, which render where the client has them. The Google families below are
+      // downloaded, so they render anywhere.
       var SYS = [
         ['Arial,Helvetica,sans-serif', "Arial"],
         ['"Arial Black",Gadget,sans-serif', "Arial Black"],
@@ -2013,42 +1747,38 @@
       pr.appendChild(pk); pr.appendChild(hx); cB.appendChild(pr);
       wrapHeader.appendChild(cB);
     })();
-    // #2b: per-icon SHOW/HIDE for the top-right utility icons (user: "jedes Icon ein-/ausblendbar").
-    // Toggle ON = visible (default). cc.hideicon.<key>="1" hides it; header.js apply() stamps
-    // html.cc-hideicon-<key> (Header.css hides the #menu .<Class>Button), and ccDockProfile hides the
-    // docked bell/burger spans. Keys map to the native #menu button classes.
+    // One show-and-hide per utility icon in the top right; on means visible. header.js stamps a
+    // class per key, which the sheet hides the matching button on. The keys are the native button
+    // classes.
     (function () {
-      var cIc = card(T("Kopf-Icons", "Header icons"), T("Blende einzelne Icons oben rechts aus. Aus = versteckt.", "Hide individual icons in the top-right. Off = hidden."));
-      // NOTE: "help" is intentionally ABSENT — CC removed the native Help button entirely (its inline help
-      // moved into the ⓘ bubbles), so a hide-toggle for it was dead UI (user: "man kann das hilfeicon noch
-      // ein/ausschalten obwohl wir es gänzlich entfernt haben").
-      // T3 (user): bell + burger are integral parts of the system (hiding them left the badge without its
-      // icon), so they are NOT listed here any more — they can no longer be hidden.
+      var cIc = card(T("Kopf-Icons", "Header icons"), T("Blende einzelne Icons oben rechts aus. Aus heißt versteckt.", "Hide individual icons in the top right. Off means hidden."));
+      // The help icon is absent because its inline help moved into the bubbles, and the bell and
+      // burger because they are integral: hiding one left its badge without an icon.
       [["lang", T("Sprache", "Language")], ["search", T("Suche", "Search")], ["logout", T("Abmelden", "Logout")], ["terminal", T("Terminal", "Terminal")], ["browse", T("Datei-Verwaltung", "File manager")], ["feedback", T("Feedback", "Feedback")], ["info", T("Info", "Info")], ["log", T("Protokoll", "Log")]].forEach(function (ic) {
         cIc.appendChild(toggleRow(ic[1], get("cc.hideicon." + ic[0], "0") === "0", function (v) { set("cc.hideicon." + ic[0], v ? "0" : "1"); syncHeaderBar(); }));
       });
       wrapHeader.appendChild(cIc);
     })();
-    buildStyleCards("ccsh.", wrapShares, [], true); // Freigaben: tab pills use FA glyphs -> badges only, no logo card
-    buildStyleCards("ccs.", wrapSettings, ["fa-cog", "fa-globe", "fa-star"], false); // Einstellungs-Tab: badges + logo-tint + Logo-Hintergrund cards; the tiles use FA glyphs, so the preview shows sample glyphs (cog/globe/star = System/Network/User category icons), coloured via CSS not the raster filter
+    buildStyleCards("ccsh.", wrapShares, [], true); // the shares tab pills are glyphs, so badges only
+    buildStyleCards("ccs.", wrapSettings, ["fa-cog", "fa-globe", "fa-star"], false); // the settings tiles are glyphs, so the preview shows sample ones
     buildStyleCards("ccp.", wrapPlugin, ["/plugins/dynamix.plugin.manager/images/dynamix.plugin.manager.png", "/plugins/dynamix.docker.manager/images/dynamix.docker.manager.png", "/plugins/cannonadecommand/images/cannonadecommand.png"]);
     buildStyleCards("ccv.", wrapVms, ["/plugins/dynamix.vm.manager/templates/images/linux.png", "/plugins/dynamix.vm.manager/templates/images/windows.png", "/plugins/cannonadecommand/images/cannonadecommand.png"]);
-    buildStyleCards("ccf.", wrapFavorites, ["fa-star", "fa-heart", "fa-cog"], false); // Favoriten: tiles use FA glyphs -> preview shows sample glyphs coloured via CSS (like the Settings card)
-    buildStyleCards("ccm.", wrapStart, [], true); // Start (/Main): disk_status value + name badges, no per-row logos -> badges only, no logo card
-    // ── Sichern & Übertragen: export/import of every cc-family localStorage setting.
-    // Lives INSIDE the Theming card now (user call) — a label row + the two buttons.
+    buildStyleCards("ccf.", wrapFavorites, ["fa-star", "fa-heart", "fa-cog"], false); // glyph tiles again
+    buildStyleCards("ccm.", wrapStart, [], true); // /Main has value and name badges but no per-row logos
+    // Export and import of every cc-family setting, as a label row and two buttons in the Theming
+    // card.
     (function () {
       var cX = themingCard;
       var lblw = el("div", "cc-set-lbl cc-set-lblwrap");
       lblw.appendChild(el("span", null, T("Sichern & Übertragen", "Backup & transfer")));
       lblw.appendChild(infoIcon(T("Exportiert alle CannonadeCommand-Einstellungen (cc.*-Schlüssel) als JSON-Datei. Der Import schreibt sie zurück und lädt die Seite neu.", "Exports every CannonadeCommand setting (cc.* keys) as a JSON file. Import writes them back and reloads the page.")));
       cX.appendChild(lblw);
-      var note = el("div", "cc-set-xnote"); // inline notice — this page has no toast mechanism
+      var note = el("div", "cc-set-xnote"); // an inline notice, since this page has no toast
       function say(msg, bad) { note.textContent = msg || ""; note.style.color = bad ? "#d9433f" : ""; }
-      var ex = el("span", "cc-btn cc-set-xbtn", T("Exportieren", "Export")); // grey fill + hover accent, md tier, no rings
+      var ex = el("span", "cc-btn cc-set-xbtn", T("Exportieren", "Export"));
       ex.addEventListener("click", function () {
         try {
-          // collectUISettings = every cc-family key except cc.stateCache (same set the engine mirrors)
+          // every cc-family key but cc.stateCache, the same set the engine mirrors
           var blob = new Blob([JSON.stringify(collectUISettings(), null, 2)], { type: "application/json" });
           var a = el("a"); a.href = URL.createObjectURL(blob); a.download = "cannonadecommand-settings.json";
           document.body.appendChild(a); a.click(); document.body.removeChild(a);
@@ -2064,14 +1794,14 @@
         rd.onload = function () {
           var o = null;
           try { o = JSON.parse(String(rd.result)); } catch (e) { say(T("Keine gültige JSON-Datei.", "Not a valid JSON file."), true); return; }
-          // must be a FLAT object of cc-family string keys (never cc.stateCache)
+          // it has to be a flat object of cc-family string keys, and never cc.stateCache
           var ks = o && typeof o === "object" && !Array.isArray(o) ? Object.keys(o) : [];
           var bad = ks.filter(function (k) { return !/^cc[a-z]*\./.test(k) || k === "cc.stateCache" || typeof o[k] !== "string"; });
           if (!ks.length || bad.length) { say(T("Ungültiges Format: erwartet wird ein flaches Objekt mit cc.*-Textwerten.", "Invalid format: expected a flat object of cc.* string values."), true); return; }
-          var w = window.__ccLS || localStorage.setItem.bind(localStorage); // raw write, no 800ms mirror debounce
+          var w = window.__ccLS || localStorage.setItem.bind(localStorage); // a raw write, bypassing the mirror debounce
           ks.forEach(function (k) { try { w(k, o[k]); } catch (e) {} });
-          // push into the engine mirror BEFORE reloading — the reloaded page re-adopts
-          // ui_settings from the engine, which would revert an unmirrored import.
+          // The engine mirror is written before the reload: the reloaded page adopts ui_settings
+          // from the engine, which would otherwise revert the import.
           withConfigLock(function () {
             return api("GET", "config").then(function (c) {
               if (!c || typeof c !== "object") return;
@@ -2086,7 +1816,7 @@
         rd.readAsText(f);
       });
       im.addEventListener("click", function () { fin.click(); });
-      // #26: NUKE reset — two-step, clears every cc.* key AND the engine mirror, then reloads to defaults.
+      // A two-step reset that clears every cc.* key and the engine mirror, then reloads.
       var rs = el("span", "cc-btn cc-set-xbtn cc-set-danger", T("Alles zurücksetzen", "Reset all"));
       rs.addEventListener("click", function () {
         if (rs.getAttribute("data-armed") !== "1") { rs.setAttribute("data-armed", "1"); rs.textContent = T("Wirklich? Nochmal klicken", "Sure? Click again"); setTimeout(function () { rs.setAttribute("data-armed", "0"); rs.textContent = T("Alles zurücksetzen", "Reset all"); }, 3500); return; }
@@ -2098,15 +1828,15 @@
         } catch (e) { say(T("Zurücksetzen fehlgeschlagen: ", "Reset failed: ") + ((e && e.message) || e), true); }
       });
       var brow = el("div", "cc-set-row"); brow.appendChild(ex); brow.appendChild(im); brow.appendChild(rs);
-      cX.appendChild(brow); cX.appendChild(fin); cX.appendChild(note); // rows land at the end of the Theming card
+      cX.appendChild(brow); cX.appendChild(fin); cX.appendChild(note);
     })();
     refreshTabs();
-    // cc.settab holds a stable section id ("general"/"header"/…). A legacy numeric index
-    // or any unknown value migrates silently to 0 (Allgemein).
+    // cc.settab holds a section id; an older numeric index, or anything unknown, lands on the
+    // first section.
     var st0 = localStorage.getItem("cc.settab"), ix0 = 0;
     SECS.forEach(function (sc9, j9) { if (sc9.id === st0) ix0 = j9; });
     showSec(ix0);
-    // #26: settings search — filters cards + rows across ALL tabs; empty query restores the tabbed view.
+    // The search filters cards and rows across every tab; an empty query restores the tabbed view.
     (function () {
       function restore() {
         Array.prototype.forEach.call(root.querySelectorAll(".cc-set-card, .cc-set-row, .cc-set-lbl"), function (e9) { e9.style.removeProperty("display"); });
@@ -2138,21 +1868,19 @@
   function saveNotify(btn) {
     btn.textContent = T("Speichere…", "Saving…"); btn.classList.add("cc-set-disabled");
     function reset(txt) { btn.textContent = txt; setTimeout(function () { btn.textContent = T("Speichern", "Save"); btn.classList.remove("cc-set-disabled"); }, 1800); }
-    // Read-modify-write against the LIVE config: re-fetch it, change ONLY notify,
-    // then write it back. This never touches schedules/watchdogs — including any set
-    // in the Docker tab after this page loaded — and if the fresh read fails we
-    // ABORT (no PUT), so a transient engine outage can never wipe the automation.
+    // Reads the live config, changes only the notify block and writes it back, so the schedules
+    // and watchdogs survive, including any set in the Docker tab since this page loaded. A failed
+    // read aborts without writing, so an engine outage cannot wipe the automation.
     withConfigLock(function () {
       return api("GET", "config").then(function (c) {
         if (!c || typeof c !== "object") throw new Error("config unreadable");
         c.notify = { unraid: !!notify.unraid, webhook: notify.webhook || "" };
         return api("PUT", "config", c).then(function () { fullConfig = c; reset(T("Gespeichert ✓", "Saved ✓")); });
       });
-    }).catch(function () { reset(T("Fehler — Engine erreichbar?", "Error — engine reachable?")); });
+    }).catch(function () { reset(T("Fehler, ist die Engine erreichbar?", "Error, is the engine reachable?")); });
   }
-  // Persist ONLY the shaping interface, read-modify-write against the LIVE config so
-  // notify + every container's schedules/watchdogs/bandwidths are preserved. Aborts
-  // (no PUT) if the fresh read fails, and surfaces a validation error from the engine.
+  // The same read, change and write for the shaping interface alone, so the notify block and
+  // every container's own settings survive. A validation error from the engine is shown as such.
   function saveShape(btn) {
     btn.textContent = T("Speichere…", "Saving…"); btn.classList.add("cc-set-disabled");
     function reset(txt) { btn.textContent = txt; setTimeout(function () { btn.textContent = T("Speichern", "Save"); btn.classList.remove("cc-set-disabled"); }, 1800); }
@@ -2162,17 +1890,15 @@
         c.shape_iface = shapeIface || "";
         return api("PUT", "config", c).then(function () { fullConfig = c; reset(T("Gespeichert ✓", "Saved ✓")); });
       });
-    }).catch(function (e) { reset(/bad shaping interface/.test(String(e && e.message)) ? T("Ungültige Schnittstelle", "Invalid interface") : T("Fehler — Engine erreichbar?", "Error — engine reachable?")); });
+    }).catch(function (e) { reset(/bad shaping interface/.test(String(e && e.message)) ? T("Ungültige Schnittstelle", "Invalid interface") : T("Fehler, ist die Engine erreichbar?", "Error, is the engine reachable?")); });
   }
-  // dark text on light backgrounds, white on dark (perceived luminance)
+  // dark text on a light background and white on a dark one, by perceived luminance
   function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16); var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
-  // preview uses the REAL rainbow palette (identical to docker.css) so it matches
-  // what the Docker tab actually shows, with auto-contrast text.
-  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; var pal = DEF;   /* #1: jewel default so the preview matches the live UI */ try { var fj = get("cc.flagmode", "0") === "1" ? JSON.parse(get("cc.flagpal", "null")) : null; var j = (fj && fj.length) ? fj : JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
-  // #6 (user): every CC-settings toggle follows the colour engine. In rainbow each toggle takes a DIFFERENT
-  // jewel from the shared seed (CCTheme.rbColor honours cc.rbseed + rotation), exactly like the Docker/VM/grid
-  // badges stamp --cc-rb-c; in accent (or flag-off) the stamp is cleared so the track CSS falls back through
-  // --cc-rbaccent to --cc-accent. Track reads var(--cc-rb-c, …) (docker.css); knob stays white.
+  // The preview uses the real palette, so it matches what the Docker tab shows.
+  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; var pal = DEF; try { var fj = get("cc.flagmode", "0") === "1" ? JSON.parse(get("cc.flagpal", "null")) : null; var j = (fj && fj.length) ? fj : JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
+  // Every toggle on this page follows the colour engine. In rainbow mode each takes its own slot
+  // from the shared seed, as the badges elsewhere do; otherwise the stamp is cleared and the
+  // track's CSS falls back through the shared vars to the accent.
   function paintToggles() {
     if (!root) return;
     var rbC = (window.CCTheme && window.CCTheme.rbColor) || function (i, a) { return a; };
@@ -2186,35 +1912,30 @@
   // live-highlight the preset swatch that matches the current accent (no re-render)
   function syncSwOn() { Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-swrow-global")).forEach(function (row) { swMarkRow(row, accent); }); }
   function thc(t) { var e = el("th", null, t); return e; }
-  // The badge-visibility matrix is the ONE place this page builds checkboxes, and it was still handing the
-  // operating system's box a tint via accent-color. It now uses CC's own .cc-cb widget (docker.css), which
-  // the Startplan editor's audit turned into a shared class — the per-badge colour it already carried moves
-  // onto --cc-rb-c, so each cell keeps wearing its OWN badge's colour instead of one flat accent, and the
-  // tick gets the matching contrast ink (a white tick is invisible on a light badge colour).
+  // The badge-visibility matrix is the one place this page builds checkboxes. They use the shared
+  // .cc-cb widget rather than tinting the OS box, and each cell carries its own badge's colour
+  // with a matching contrast tick, since a white tick vanishes on a light one.
   function ccTick(c) { return "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='" + encodeURIComponent(c) + "' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>\")"; }
   function chkCell(key, v, color) { var td = el("td", "cc-set-chk"); var cb = el("input", "cc-cb"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); if (rainbow && color) { cb.style.setProperty("--cc-rb-c", color); cb.style.setProperty("--cc-rb-ct", idealText(color)); cb.style.setProperty("--cc-cb-tick", ccTick(idealText(color))); } else { cb.style.setProperty("--cc-cb-tick", ccTick(idealText(accent))); } cb.addEventListener("change", function () { var cur = colview[key] || { s: true, a: true }; colview[key] = { s: cur.s, a: cur.a }; colview[key][v] = cb.checked; set("cc.colview2", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
-  // #4 (user): every segmented option row is now a UNIFIED CC dropdown. segRow() delegates to dropRow()
-  // (defined below, hoisted) so ALL callers (Animationen, Dichte, Badge-Form, Badge-Stil, Kachelgröße,
-  // Ansicht, Temperatur-Warnschwelle) convert at once with the SAME (value,label) opts + the SAME onChange —
-  // the native <select> fires `change`, so the live effects (applyAnim/sizePrev/glass toggle/…) still run.
-  // The old `segFirst` seg-left layout is obsolete (dropdowns are uniformly label-left); the arg is ignored.
-  function segRow(labelText, opts, cur, onChange, help /*, segFirst (obsolete) */) {
+  // Every option row is a dropdown, so segRow() delegates to dropRow() and its callers keep the
+  // same options and handler; the select fires change, so the live effects still run. The old
+  // layout argument is ignored, since a dropdown always puts its label on the left.
+  function segRow(labelText, opts, cur, onChange, help) {
     return dropRow(labelText, opts, cur, onChange, help);
   }
-  // Native <select> styled as a CC control (no orange Unraid border). opts = [value, label, face?];
-  // when a third element is given the option renders in that font-family (used by the font picker).
+  // A native select dressed as a CC control. An option is [value, label, face], and with a face it
+  // renders in that font family, which the font picker uses.
   function dropRow(labelText, opts, cur, onChange, help) {
     var row = el("div", "cc-set-row"); var rl = el("span", "cc-set-rl", labelText); if (help) rl.appendChild(infoIcon(help)); row.appendChild(rl);
     var sel = el("select", "cc-set-sel");
     opts.forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; if (o[0] === cur) op.selected = true; if (o[2]) op.style.fontFamily = o[2]; sel.appendChild(op); });
     sel.addEventListener("change", function () { onChange(sel.value); });
-    row.appendChild(ccDsel(sel)); return row;   // #2: native <select> hidden, wrapped in the cc-dsel custom widget
+    row.appendChild(ccDsel(sel)); return row;
   }
-  // #2 (user, 2 screenshots): the settings dropdowns must use the SAME custom CC widget as the Docker
-  // network dropdown (.cc-dsel), not a native <select> whose opened list is browser-black. Mirror
-  // docker.js ctWrapSelect: keep the native <select> as the display:none source of truth (its `change`
-  // still fires onChange -> the live effects run), render a trigger + floating chip panel. No
-  // border/ring; selected chip = rainbow/accent SHADE only (house law).
+  // The dropdowns use the same widget the Docker network dropdown does, rather than a native
+  // select, whose opened list the browser draws in its own colours. As in docker.js, the native
+  // select stays hidden as the source of truth, so its change event still runs the live effects,
+  // and a trigger with a floating panel of chips renders on top of it.
   function ccDsel(sel) {
     var wrap = el("span", "cc-dsel"); sel.style.display = "none"; wrap.appendChild(sel);
     var trig = el("span", "cc-dsel-trigger"); wrap.appendChild(trig);
@@ -2222,7 +1943,7 @@
     for (var k = 0; k < sel.options.length; k++) {
       var o = sel.options[k];
       var chip = el("div", "cc-dsel-opt", o.text); chip.setAttribute("data-i", k);
-      if (o.style.fontFamily) chip.style.fontFamily = o.style.fontFamily;   // font picker: chip previews in its own face
+      if (o.style.fontFamily) chip.style.fontFamily = o.style.fontFamily;   // in the font picker a chip previews its own face
       chip.addEventListener("click", (function (idx) {
         return function (ev) {
           ev.stopPropagation();
@@ -2246,16 +1967,15 @@
     var w = sel.parentNode; if (!w || !w.classList || !w.classList.contains("cc-dsel")) return;
     var t2 = w.querySelector(".cc-dsel-trigger"), c = w.querySelectorAll(".cc-dsel-opt");
     var label = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : "";
-    if (t2 && t2.textContent !== label) t2.textContent = label;   // GUARDED writes: no childList churn
+    if (t2 && t2.textContent !== label) t2.textContent = label;   // written only on a change, so nothing churns
     for (var k = 0; k < c.length; k++) { var o = sel.options[+c[k].getAttribute("data-i")]; if (!o) continue; c[k].classList.toggle("is-selected", o.selected); c[k].classList.toggle("is-disabled", !!o.disabled); }
   }
-  // GlimStone Rule 21 (wheel over the CLOSED field): the shared handler is in cc-theme.js; this settings
-  // page builds its OWN .cc-dsel widgets (ccDsel above), so it hands over its own repaint. docker.js
-  // registers the same shape for its copy — the two never load on the same page, and both syncs are
-  // guarded no-ops on a wrapper that is not theirs.
+  // The wheel handler for a closed field lives in cc-theme.js; this page builds its own widgets,
+  // so it hands over its own repaint. docker.js registers the same shape for its copy, the two
+  // never load on one page, and each sync is a no-op on a wrapper that is not its own.
   try { if (window.CCTheme && window.CCTheme.registerSelectSync) window.CCTheme.registerSelectSync(function (sel, wrap) { if (!wrap || !wrap.classList || !wrap.classList.contains("cc-dsel")) return false; ccDselSync(sel); return true; }); } catch (e) {}
-  // panel is position:fixed on open so the #canvas overflow can't clip a long list; flips up when there
-  // is more room above (no transform-ancestor math needed — settings has no jQuery-UI dialog).
+  // The panel is fixed on open, so the page's overflow cannot clip a long list, and it flips up
+  // where there is more room above. No transform-ancestor maths, since this page has no dialog.
   function ccDselPosition(trig, panel) {
     try {
       var r = trig.getBoundingClientRect(), gap = 4, edge = 14;
@@ -2266,35 +1986,34 @@
       else { panel.style.bottom = Math.round(window.innerHeight - r.top + gap) + "px"; panel.style.top = "auto"; panel.style.maxHeight = Math.max(140, above - gap) + "px"; }
     } catch (e) {}
   }
-  if (!window.__ccSetDsel) {   // ONE document-level close handler for the page lifetime (no body observer)
+  if (!window.__ccSetDsel) {   // one document-level close handler for the page's lifetime
     window.__ccSetDsel = true;
     document.addEventListener("click", function () { var o = document.querySelectorAll("#cc-settings .cc-dsel.cc-open"); for (var i = 0; i < o.length; i++) o[i].classList.remove("cc-open"); });
     window.addEventListener("scroll", function (e) { var tgt = e && e.target; if (tgt && tgt.closest && tgt.closest(".cc-dsel-panel")) return; var o = document.querySelectorAll("#cc-settings .cc-dsel.cc-open"); for (var i = 0; i < o.length; i++) o[i].classList.remove("cc-open"); }, true);
   }
-  // indent the WHOLE panel (logo/hero, tab strip AND cards) so it starts at the first
-  // main-menu tab: --cc-align-left is stamped by header.js (fallback 15px). Padding the
-  // root is idempotent — the root's border edge doesn't move with its own padding.
+  // Indents the whole panel, hero, tab strip and cards alike, so it starts at the first main-menu
+  // tab; header.js stamps the offset. Padding the root is safe to repeat, since the root's border
+  // edge does not move with its own padding.
   function alignSetTabs() {
     try {
       var al = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cc-align-left")) || 15;
       var rr = root.getBoundingClientRect();
       var need = al - rr.left;
       if (need > 0 && need < 60) root.style.paddingLeft = need + "px"; else root.style.paddingLeft = "";
-      // T2 (user: "cc settings sind rechts nicht bündig und zu weit rechts. auch das suchicon"): Unraid's
-      // #displaybox is a few px WIDER than the viewport, so the panel (and the right-pinned search icon)
-      // spilled past the right edge. Mirror the left inset: pad the right so the content + search icon end
-      // at a symmetric inset INSIDE the viewport.
+      // Unraid's #displaybox is a few pixels wider than the viewport, so the panel and the search
+      // icon pinned to its right would spill past the edge. The right is padded to mirror the
+      // left inset, which brings both back inside.
       var padR = Math.round(rr.right - (document.documentElement.clientWidth - al));
       if (padR > 0 && padR < 80) root.style.paddingRight = padR + "px"; else root.style.paddingRight = "";
     } catch (e) {}
   }
-  var alignT = null; // ONE debounced resize listener for the page's lifetime (module scope, added once)
+  var alignT = null; // one debounced resize listener for the page's lifetime
   window.addEventListener("resize", function () { clearTimeout(alignT); alignT = setTimeout(alignSetTabs, 150); });
 
-  // #7: re-sort the CC sub-tabs LIVE when the main menu order changes (drag-reorder / Connect auto-mount).
-  // A menu childList mutation re-runs render(), which re-reads the live #menu order and rebuilds the strip,
-  // preserving the active tab via cc.settab. Debounced + gated on the ACTUAL order string so unrelated menu
-  // mutations (badge stamps, auto-mount attribute writes) never trigger a rebuild. Added once per page.
+  // The sub-tabs re-sort when the main menu order changes, whether by a drag or by an auto-mount.
+  // A menu mutation re-runs render(), which re-reads the live order and rebuilds the strip while
+  // cc.settab preserves the active tab. Gated on the order string itself, so an unrelated menu
+  // mutation such as a badge stamp never triggers a rebuild.
   if (!window.__ccSetNavObs) {
     window.__ccSetNavObs = true;
     var menuEl9 = document.getElementById("menu");
@@ -2313,21 +2032,20 @@
   }
 
   render();
-  // Pull the engine-side config so the Notifications card reflects what is saved,
-  // then re-render. Failure (engine down / older build) leaves the defaults shown.
-  // If the user already started editing the card during the round-trip, keep their
-  // edits (don't overwrite notify or re-render on top of them).
+  // Pulls the engine config so the Notifications card shows what is saved, then re-renders. With
+  // the engine down the defaults stay. An edit made during the round trip is kept rather than
+  // overwritten.
   api("GET", "config").then(function (c) {
-    if (!c || typeof c !== "object") return; // leave Save disabled if unreadable
+    if (!c || typeof c !== "object") return; // unreadable, so Save stays disabled
     fullConfig = { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: c.ui_settings || undefined };
     configLoaded = true;
     adoptUISettings(c.ui_settings); // render() below shows the adopted values
-    // persist the flag/rainbow palette migration in the engine (c.ui_settings was cleaned in place) —
-    // otherwise the next load's adopt would restore the contaminated cc.rbpal from the mirror
+    // The palette migration cleaned the incoming map in place, so it is written back; otherwise
+    // the next load's adopt would restore the old key from the mirror.
     if (adoptUISettings._migrated) { try { api("PUT", "config", c); } catch (e8) {} }
     if (!c.ui_settings || !Object.keys(c.ui_settings).length) { var seed9 = collectUISettings(); if (Object.keys(seed9).length) { Object.keys(seed9).forEach(function (k9) { uiPending[k9] = 1; }); pushUISettings(); } } // seed the mirror
-    // keep the user's in-flight edits if they already started typing; otherwise
-    // adopt the loaded values. Either way re-render to enable Save.
+    // An edit already in progress stays; otherwise the loaded values apply. Either way the
+    // re-render enables Save.
     if (!notifyDirty) notify = { unraid: !!fullConfig.notify.unraid, webhook: fullConfig.notify.webhook || "" };
     if (!shapeDirty) shapeIface = fullConfig.shape_iface || "";
     render();

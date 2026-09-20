@@ -1,27 +1,18 @@
-/* CannonadeCommand - VM-icon tint for Unraid's VMs tab.
- *
- * A tiny, self-contained companion to the Docker-tab enhancer: when "Also tint VM
- * icons" is on in the Settings page (cc.vmicons) and an icon colour is chosen
- * (cc.iconcolor), it tints the VM row icons with the SAME filter recipe used for
- * container icons, applied DIRECTLY as an inline style (robust against re-renders).
- *
- * It touches nothing else on the page and adds no bar/panel. It self-clears on an
- * uninstall (the same-origin proxy 404s), and reacts live to Settings changes via
- * the storage event. The VM-row selectors are best-effort against Unraid's VM
- * manager DOM; if a build renders icons differently, it simply tints nothing.
+/* CannonadeCommand for Unraid's VMs tab: state and info badges, the VM icon tint and the
+ * per-VM limits. It reacts live to settings changes through the storage event and clears
+ * itself after an uninstall, when the same-origin proxy answers 404. The selectors follow
+ * Unraid's VM manager DOM; a build that renders icons differently gets no tint.
  */
 (function () {
   "use strict";
   var PROXY = "/plugins/cannonadecommand/server/ccapi.php";
-  // Same FILLED gear as docker.js (tabler-icons MIT, icons/filled/settings.svg) — GlimStone Rule 20. Kept a
-  // verbatim copy rather than a shared import: vms.js is page-scoped and must not depend on docker.js loading.
-  // If one changes, change BOTH.
+  // The filled gear from docker.js (tabler-icons MIT, icons/filled/settings.svg), copied because
+  // vms.js cannot rely on docker.js being loaded. Change both together.
   var CC_GEAR_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="none" aria-hidden="true"><path d="M14.647 4.081a.724 .724 0 0 0 1.08 .448c2.439 -1.485 5.23 1.305 3.745 3.744a.724 .724 0 0 0 .447 1.08c2.775 .673 2.775 4.62 0 5.294a.724 .724 0 0 0 -.448 1.08c1.485 2.439 -1.305 5.23 -3.744 3.745a.724 .724 0 0 0 -1.08 .447c-.673 2.775 -4.62 2.775 -5.294 0a.724 .724 0 0 0 -1.08 -.448c-2.439 1.485 -5.23 -1.305 -3.745 -3.744a.724 .724 0 0 0 -.447 -1.08c-2.775 -.673 -2.775 -4.62 0 -5.294a.724 .724 0 0 0 .448 -1.08c-1.485 -2.439 1.305 -5.23 3.744 -3.745a.722 .722 0 0 0 1.08 -.447c.673 -2.775 4.62 -2.775 5.294 0zm-2.647 4.919a3 3 0 1 0 0 6a3 3 0 0 0 0 -6" /></svg>';
   var dead = false, mo = null, liveTimer = null, moPending = false, moTimer = null, moTrail = false, smo = null, smoPending = false, vmBwTimer = null;
-  var ccFirstPaintDone = false, ccEnhBusyStart = 0;   // #54: same minimum-visible-spinner pattern as docker.js's #33
-  // #22: wrap the memory / disk-IO / network-IO readouts (cols 4-6) of the VM-usage-stats table into
-  // CC chips so every cell reads as a badge like the CPU pills. Re-render-safe: guarded by an
-  // already-wrapped check (the tbody is replaced ~every 3s via the vm_usage websocket).
+  var ccFirstPaintDone = false, ccEnhBusyStart = 0;   // minimum visible spinner, as in docker.js
+  // Wraps the memory, disk-IO and network-IO readouts of the VM usage table into chips like the
+  // CPU pills. The vm_usage websocket replaces the tbody about every 3s, hence the wrapped check.
   function wrapVmStats() {
     try {
       if (!document.documentElement.classList.contains("cc-vms-on")) return;
@@ -29,7 +20,7 @@
       if (!body) return;
       Array.prototype.forEach.call(body.querySelectorAll("tr"), function (tr) {
         var tds = tr.children;
-        // #8 (user): the VM NAME (col 0) becomes a badge like the main list, not plain bold text.
+        // the VM name becomes a badge like in the main list
         var n0 = tds[0];
         if (n0 && n0.tagName === "TD" && !n0.querySelector(":scope > .cc-vmstat-name") && (n0.textContent || "").trim()) {
           var nb = document.createElement("span"); nb.className = "cc-b cc-vmstat-name";
@@ -49,71 +40,43 @@
   }
   var VMVIEW_KEY = "cc.vmview";
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
-  // Rainbow: ported verbatim from docker.js so the VM badges read the SAME global palette. --cc-rb-* vars
-  // are stamped on <html>; the kind->colour map rotates by a per-load random offset (toggle cc.rainbowrot).
-  // VM info badges carry kinds cpu/ram/ip, so only those recolour.
+  // Rainbow, as in docker.js, so the VM badges share the global palette. The --cc-rb-* vars are
+  // stamped on <html>; the kind-to-colour map rotates by the shared seed (cc.rainbowrot). VM info
+  // badges carry the kinds cpu/ram/ip.
   var RB_KINDS = ["net", "ip", "lan", "port", "id", "von", "cpu", "ram", "bw", "version", "vol", "plan"];
   var RB_PAL = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
-  if (window.CCTheme) { RB_PAL = window.CCTheme.RB; }  /* single source: shared palette when CCTheme is loaded (global+sync); local copy stays as the fallback */
-  var RB_OFFSET = window.CCTheme ? window.CCTheme.rbSeed(RB_PAL.length) : Math.floor(Math.random() * RB_PAL.length); // shared PERSISTED seed, aligned with header/docker/shares (was Math.random per reload -> the VM palette reshuffled every load and never matched)
+  if (window.CCTheme) { RB_PAL = window.CCTheme.RB; } // the local copy is the fallback
+  var RB_OFFSET = window.CCTheme ? window.CCTheme.rbSeed(RB_PAL.length) : Math.floor(Math.random() * RB_PAL.length); // persisted seed, aligned with the other areas
 
   function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
-  // EXACT-colour tint via an inline SVG feColorMatrix (identical recipe to
-  // docker.js): map every opaque pixel to the chosen sRGB colour, keep alpha, and
-  // blend the original back by (100 - strength)%. hue-rotate only APPROXIMATES a
-  // hue and got the colour wrong; feColorMatrix hits the picked colour exactly.
-  // VM tinting is ON by DEFAULT whenever a container-icon colour is chosen (cc.vmicons
-  // is an opt-OUT: only the literal "0" disables it). Requiring a separate "1" opt-in was
-  // an easy-to-miss toggle that made VMs look like they "never tinted".
+  // VM tinting follows the container icon colour unless cc.vmicons is "0".
   function vmTintOff() { return ls("cc.vmicons") === "0"; }
-  // ── Hintergrund (background) and Einfärben (tint) are two INDEPENDENT controls (v4.32.5
-  // fix, mirrored from docker.js): cc.iconbg stays the background badge's on/off key, and
-  // cc.iconbgcolor (new) is its OWN colour; cc.icontint (new) is the tint's OWN on/off, and
-  // cc.iconcolor stays its existing colour key. Before this, iconcolor's mere presence WAS the
-  // tint's on-signal and doubled as the badge's colour too, so switching Hintergrund on forced
-  // icon tinting on as a side effect. vmTintOn()/vmBgColor() fall back to that exact pre-4.32.5
-  // reading whenever the new keys were never touched, so an untouched install looks unchanged.
+  // Hintergrund and Einfärben are independent, as in docker.js: cc.iconbg/cc.iconbgcolor drive
+  // the badge, cc.icontint/cc.iconcolor the tint. An unset icontint means "on whenever a valid
+  // icon colour is set", which keeps the look of installs that predate the toggle.
   function vmTintOn() {
     var v = effK("icontint");
     return v == null ? !!effK("iconcolor") : v === "1";
   }
-  // ADOPT RAINBOW/ACCENT — ONE master toggle (v4.33.1, mirrors docker.js; redesigned from the
-  // two independent toggles v4.33.0 shipped, see docker.js's iconAdoptTint() doc comment for the
-  // full writeup of why). Hintergrund adopting: vmBgColor() answers "" so paintVmIcons() never
-  // stamps --cc-iconbg-color; VmTab.css's own var() chain
-  // (var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent))))) then falls
-  // through to --cc-rb-c, the per-row rotating colour the tile already takes (VMs has no grid
-  // view — only the list, which already stamps --cc-rb-c per row, so nothing else was needed
-  // here for genuine per-item rotation). Einfärben no longer adopts a separate HUE at all: the
-  // ink is instead the automatic black/white CONTRAST colour for the resolved background
-  // (idealText()), regardless of Einfärben's own on/off — vmAdoptTint() still resolves the
-  // REPRESENTATIVE colour that contrast is computed FROM (the SAME single "action" rainbow slot
-  // VmTab.css already stamps for buttons/badges, --cc-rbaccent = pal[(5+off) % pal.length], via
-  // vmRbColor(5) when Rainbow is on, the plain accent when it's off) — live, recomputed every
-  // repaint, never a snapshot frozen at toggle time.
+  // While the icons adopt the rainbow/accent, vmBgColor() answers "" and VmTab.css's var() chain
+  // falls through to the per-row --cc-rb-c. The ink is then the black/white contrast for the
+  // colour this returns: the rainbow "action" slot 5 (--cc-rbaccent), or the accent.
   function vmAdoptTint() {
     if (ls("cc.theming") === "0" || ls("cc.rainbow") !== "1") return ccAccent();
     return vmRbColor(5);
   }
   function vmBgColor() {
-    if (iconBgAdoptsV()) return "";   // adopting: defer to the CSS rainbow/accent chain
+    if (iconBgAdoptsV()) return "";   // the CSS rainbow/accent chain decides
     var c = effK("iconbgcolor");
     if (c && /^#?[0-9a-f]{6}$/i.test(c)) return ccHex6(c);
     var ic = effK("iconcolor");
     if (ic && /^#?[0-9a-f]{6}$/i.test(ic)) return ccHex6(ic);
     return ccAccent();
   }
-  // The icon pipeline's target colour for this tab — same contract as docker.js iconInk():
-  //   · Master adopt ON: ALWAYS the automatic black/white contrast colour for the resolved
-  //     background, regardless of Einfärben's own on/off.
-  //   · Master adopt OFF: "" whenever Einfärben (tint) is off, regardless of the badge; ALWAYS
-  //     the picked TINT colour, lifted out of the dark end by the shared darkness guard —
-  //     regardless of whether the Logo-Hintergrund badge is also on (v4.32.6 fix: this used to
-  //     return ccIdeal(vmBgColor()) whenever the badge was on, discarding the user's own picked
-  //     tint colour — see docker.js iconInk() for the full writeup). vmBgColor()/effK("iconbg")
-  //     stay the badge box's OWN colour, never the icon's ink.
-  // `forTint` doubles the floor because a luminance tint outputs roughly half the target's luma;
-  // the auto contrast branch skips the guard — idealText() only ever answers #fff/#161616.
+  // The icon ink, as in docker.js iconInk(): with adopt on, the black/white contrast for the
+  // resolved background; otherwise the picked tint colour lifted out of the dark end, or "" while
+  // Einfärben is off. The badge colour is never the ink. `forTint` doubles the floor because a
+  // luminance tint outputs roughly half the target's luma.
   function vmIconInk(forTint) {
     if (iconBgAdoptsV()) return ccIdeal(vmAdoptTint());
     if (!vmTintOn()) return "";
@@ -123,9 +86,8 @@
     if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
     return ccHex6(window.CCTheme.liftDark(pick, ccAccent(), window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1)));
   }
-  // Generalised so TWO independent luminance-tint filters can coexist (v4.33.2 fix — see
-  // vmItemAdoptInk() below): every pre-existing caller hardcoded hostId "cc-vm-tint-svg"/
-  // filtId "cc-vm-icon-tint" — ensureTintFilter() below stays that single-filter spelling.
+  // Takes the host and filter ids so the black and white adopt filters can coexist with the
+  // page-wide one.
   function ensureTintFilterAs(hostId, filtId, ic) {
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ic || "");
     var host = document.getElementById(hostId);
@@ -135,10 +97,8 @@
     // shading-preserving: channel = luminance × target colour (matches docker.js)
     var lum = function (c) { return (0.2126 * c).toFixed(4) + " " + (0.7152 * c).toFixed(4) + " " + (0.0722 * c).toFixed(4); };
     if (!host) { host = document.createElement("div"); host.id = hostId; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
-    // IDEMPOTENT: only rewrite the SVG when the colour/strength actually changed. The host
-    // lives on document.body; a blind innerHTML write on every apply() would be a DOM
-    // mutation that — if an observer ever watched body — re-triggers apply() into a
-    // ~300ms CPU-pegging loop (the classic non-idempotent-inject + MutationObserver trap).
+    // Rewrites the SVG only when colour or strength changed; a blind innerHTML write on every
+    // apply() would feed any observer on body into a repaint loop.
     var sig = filtId + "|" + tr + "|" + tg + "|" + tb + "|" + s + "|lum";
     if (host.dataset.sig !== sig) {
       var mid = '<feColorMatrix in="SourceGraphic" type="matrix" result="flat" values="' + lum(tr) + ' 0 0 ' + lum(tg) + ' 0 0 ' + lum(tb) + ' 0 0 0 0 0 1 0"/>';
@@ -150,11 +110,8 @@
   }
   function ensureTintFilter() { return ensureTintFilterAs("cc-vm-tint-svg", "cc-vm-icon-tint", vmIconInk(true)); }
   function filterVal() { return ensureTintFilter() ? "url(#cc-vm-icon-tint)" : ""; }
-  // ── PER-ROW adopt ink (v4.33.2 fix) — mirrors docker.js itemAdoptInk() exactly: reuses
-  // the EXACT --cc-rb-ct enhanceCells() already stamped on THIS row's own rotated badge
-  // colour, instead of vmIconInk()'s single page-wide representative-slot answer. Falls
-  // back to that representative answer whenever Rainbow itself is off (genuinely uniform
-  // then) or the row/its stamp is unavailable.
+  // Per-row adopt ink, as in docker.js itemAdoptInk(): the --cc-rb-ct enhanceCells() stamped for
+  // this row's rotated colour, else the page-wide answer (Rainbow off, or no stamp yet).
   function vmItemAdoptInk(rowEl) {
     if (rowEl && rowEl.style && ls("cc.theming") !== "0" && ls("cc.rainbow") === "1") {
       var v = rowEl.style.getPropertyValue ? rowEl.style.getPropertyValue("--cc-rb-ct") : "";
@@ -162,19 +119,16 @@
     }
     return ccIdeal(vmAdoptTint());
   }
-  // The chosen colour as a plain hex, gated the same way. Unraid renders MOST VM
-  // icons as a FontAwesome/icon-font glyph (`<i class="fa fa-… img">`), whose colour
-  // comes from CSS `color:`, NOT from an image filter — so a glyph never tinted
-  // before. Real `.png` icons render as `<img class="img">` and DO take the filter.
+  // The chosen colour as a plain hex, gated the same way. Most VM icons are icon-font glyphs
+  // (`<i class="fa fa-… img">`) coloured through CSS `color:`; only real .png icons
+  // (`<img class="img">`) take the filter.
   function tintColor() {
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(vmIconInk(false) || "");
     if (dead || vmTintOff() || !m) return "";
     return "#" + m[1] + m[2] + m[3];
   }
-  // VM-row icon selector — GROUND TRUTH from unraid/webgui dynamix.vm.manager
-  // VMMachines.php: the VM list is tbody#kvm_list, each row td.vm-name has the icon at
-  // span[id^="vm-"] > .img (an <img class="img"> or an <i class="… img"> glyph). The
-  // old selectors used #vms, which does not exist — that's why VM icons never tinted.
+  // From dynamix.vm.manager VMMachines.php: the VM list is tbody#kvm_list and each row's
+  // td.vm-name holds the icon at span[id^="vm-"] > .img (an <img> or an <i> glyph).
   function vmImgs() {
     var sels = ["#kvm_list td.vm-name span[id^='vm-'] > .img", "#kvm_list td.vm-name img.img", "#kvm_list td.vm-name img"];
     for (var i = 0; i < sels.length; i++) { var n = document.querySelectorAll(sels[i]); if (n.length) return n; }
@@ -182,17 +136,9 @@
   }
   // The VM behind one icon element, for the icon pipeline's lookup + per-VM pin.
   function vmIconName(n) { var tr = n && n.closest ? n.closest("tr") : null; return (tr && vmNameOf(tr)) || ""; }
-  // A font glyph's colour and the luminance-tint filter are mutually exclusive (mirrors the
-  // docker.js fix — see glyphInkAndFilter() there): once a glyph gets a direct css colour, the
-  // filter must never ALSO run on top of it, or a forced "tint" mode double-tints/dims the same
-  // hue. Extracted so the invariant is unit-testable without a full render pass.
-  //
-  // `ibgOn`/`ibgAcc` are kept as parameters for call-site stability but are no longer consulted
-  // directly: `ink` (vmIconInk()'s result) already resolves to the picked tint colour whenever
-  // Einfärben is on — badge or not (v4.32.6 fix) — and to "" whenever Einfärben is off — the old
-  // `ibgOn ? ccIdeal(ibgAcc) : ink` forced a colour onto every VM glyph the moment the badge was
-  // on, even with Einfärben off (the same background-forces-tint bug as vmIconInk(), for font
-  // glyphs specifically — v4.32.5 fix).
+  // A glyph gets either a css colour or the luminance filter, never both, or the tint would
+  // double and dim the hue. Kept separate so the tests can reach it; ibgOn and ibgAcc are unused
+  // because `ink` already says whether Einfärben is on.
   function glyphInkAndFilter(plan, ibgOn, ibgAcc, ink) {
     if (plan.treat === "native") return { color: "", filter: "" };
     return { color: ink, filter: "" };
@@ -205,8 +151,8 @@
     img.setAttribute("data-cc-isrc", want);
     if (img.getAttribute("src") !== want) img.setAttribute("src", want);
   }
-  // Unraid renders MOST VM icons as a font glyph (<i class="fa … img">), which is already
-  // monochrome — it inks, and there is no src to swap. Real .png icons run the full chain.
+  // A font glyph (<i class="fa … img">) is already monochrome, so it only inks and has no src to
+  // swap. Real .png icons run the full chain.
   function vmIconPlan(n, name) {
     var CI = window.CCTheme && window.CCTheme.icons;
     if (!CI) return { treat: "tint", url: "" };
@@ -216,28 +162,20 @@
     var plan = CI.plan(CI.mode("vm", name), kind, spread);
     return { treat: plan.treat, url: (!isGlyphEl && (plan.src === "glyph" || plan.src === "color")) ? CI.svgUrl(name) : "" };
   }
-  // ── CC treatment for the VM rows: a state badge (green/amber/grey, shape-aware)
-  //    on td.vm-name, mirroring the Docker-tab state badge, plus the accent vars on
-  //    the document root. Self-contained + idempotent; the tint stays separate below.
+  // cc.stylevms on reads the shared cc.* keys, off the VM area's own ccv.* keys.
   function effK(k) { return ls("cc.stylevms") !== "0" ? ls("cc." + k) : ls("ccv." + k); }
-  // v4.35.0 (item 5): adopt-rainbow is now a PURELY GLOBAL decision (see docker.js's
-  // iconBgAdopts() for the full writeup) — bypasses effK()'s own/adopted-STYLE fallback on purpose.
+  // Adopting the rainbow is a global decision, so it bypasses effK().
   function iconBgAdoptsV() { return ls("cc.iconbgrainbow") === "1"; }
   function ccIdeal(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
   function ccAccent() { var a = effK("accent") || "#2f6feb"; return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
-  // Logo-Hintergrund read-side: a monochrome b/w feColorMatrix that flattens any icon
-  // to a single ink (black on a light accent, white on a dark accent), so a coloured
-  // glyph/png reads cleanly on the accent-filled badge box. Signature-guarded like
-  // ensureTintFilter so a blind innerHTML write can't feed a MutationObserver loop.
-  // Ink-FLATTEN to ANY colour (docker.js ensureFlatFilter, verbatim contract): every opaque
-  // pixel becomes one flat colour, alpha untouched. Only ever aimed at a real glyph or an
-  // icon the complexity heuristic proved is already one tone.
-  // Expand a #rgb shorthand to #rrggbb. idealText answers "#fff", every filter builder and
-  // every colour regex here wants six digits — this is the one place that bridges the two.
+  // Expands #rgb to #rrggbb: idealText answers "#fff", while the filter builders and colour
+  // regexes here want six digits.
   function ccHex6(c) {
     c = String(c == null ? "" : c).trim();
     return /^#[0-9a-f]{3}$/i.test(c) ? "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c;
   }
+  // Flattens every opaque pixel to one colour with alpha untouched, as docker.js does. Only
+  // aimed at a real glyph or an icon the complexity heuristic found to be one tone already.
   function ensureFlatFilter(hostId, filtId, hex) {
     var host = document.getElementById(hostId);
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ccHex6(hex) || "");
@@ -252,33 +190,28 @@
     }
     return "url(#" + filtId + ")";
   }
+  // Flattens an icon to black on a light accent or white on a dark one.
   function ensureMonoFilter(hostId, filtId, accentHex) {
     var m = /^#?([0-9a-f]{6})$/i.exec(accentHex || "");
     return ensureFlatFilter(hostId, filtId, m ? ccIdeal("#" + m[1]) : "");
   }
   function ccShape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
-  // ── Rainbow palette (verbatim port of docker.js applyRainbowPalette): read the GLOBAL cc.rainbow +
-  //    cc.rbpal/cc.rainbowrot and stamp --cc-rb-* on <html>. Cleared when off.
-  // Active palette resolver (docker.js's ccPalActive() mirror): flag mode reads its own cc.flagpal
-  // key, never cc.rbpal — no bleed between flag and rainbow palettes. Factored out so
-  // applyRainbowPalette() and vmRbColor() (v4.33.0's adopt-rainbow tint) share ONE resolver
-  // instead of two copies of the same try/catch.
+  // The active palette, as docker.js ccPalActive(): flag mode keeps its own cc.flagpal.
   function vmPalActive() {
     var pal = RB_PAL;
     try { var fjp = ls("cc.flagmode") === "1" ? JSON.parse(ls("cc.flagpal") || "null") : null; var jp = (fjp && fjp.length) ? fjp : JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e) {}
     return pal;
   }
-  // A single palette slot by index — same rotation math applyRainbowPalette() uses per KIND,
-  // exposed standalone for v4.33.0's Einfärben adopt-rainbow (see vmAdoptTint()).
+  // One palette slot, rotated the same way applyRainbowPalette() rotates the kinds.
   function vmRbColor(i) { var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET; return vmPalActive()[(i + off) % vmPalActive().length]; }
+  // Stamps --cc-rb-* on <html> from the global rainbow keys, as docker.js does; cleared when off.
   function applyRainbowPalette() {
     var rt = document.documentElement.style, on = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1";
     if (!on) { rt.removeProperty("--cc-rbaccent"); rt.removeProperty("--cc-rbaccent-text"); RB_KINDS.forEach(function (k) { rt.removeProperty("--cc-rb-" + k); rt.removeProperty("--cc-rb-" + k + "-t"); }); return; }
     var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
     var pal = vmPalActive();
-    // SINGLE rainbow "action" colour: VmTab.css's generic .cc-b badge rule, the reactive-hover fallback,
-    // the autostart toggle and the vmstat name badge ALL read --cc-rbaccent, but nothing on /VMs stamped it
-    // (Shares-domain var) so they fell back to --cc-accent = flat blue. Stamp it (pal slot 5, like docker).
+    // The rainbow "action" colour (slot 5, like docker.js). VmTab.css's generic badge, the
+    // reactive hover, the autostart toggle and the vmstat name badge all read --cc-rbaccent.
     var acc = pal[(5 + off) % pal.length], an = parseInt(String(acc).slice(1), 16);
     var aL = 0.299 * (an >> 16 & 255) + 0.587 * (an >> 8 & 255) + 0.114 * (an & 255);
     rt.setProperty("--cc-rbaccent", acc); rt.setProperty("--cc-rbaccent-text", aL > 150 ? "#161616" : "#fff");
@@ -288,11 +221,8 @@
       rt.setProperty("--cc-rb-" + k, c); rt.setProperty("--cc-rb-" + k + "-t", L > 150 ? "#161616" : "#fff");
     });
   }
-  // ── GRID / CARD view — DISABLED (v2.23.1). The CSS-only reflow (html.cc-vmgrid) of Unraid's LIVE
-  //    jQuery-tablesorter + jQuery-UI-sortable table overlapped badly (drag/sort machinery + stray
-  //    non-.sortable rows fight the reflow). vms.js has no engine data model to emit real card DOM, so a
-  //    robust grid needs a purpose-built card view (a follow-up), not a CSS patch. Until then force LIST:
-  //    currentView() always returns "list" and ensureViewToggle() is a no-op, so cc-vmgrid is never set.
+  // The VM tab has no grid view: a CSS reflow of Unraid's live tablesorter/sortable table
+  // fights its drag and sort machinery, and vms.js has no data model to render real cards.
   function currentView() { return "list"; }
   function applyView() {
     document.documentElement.classList.toggle("cc-vmgrid", currentView() === "grid");
@@ -301,14 +231,13 @@
     if (b[0]) b[0].classList.toggle("cc-seg-on", !g); if (b[1]) b[1].classList.toggle("cc-seg-on", g);
   }
   function ensureViewToggle() {
-    // Grid view DISABLED (see currentView): do NOT inject the List/Grid toggle, and remove any stale one
-    // (e.g. left over from a v2.23.0 session) so no broken grid or dangling control remains.
+    // removes a List/Grid toggle an older version may have left in the page
     var ex = document.getElementById("cc-vm-viewtoggle");
     if (ex) { var eb = ex.closest(".cc-vm-toolbar") || ex; if (eb.parentNode) eb.parentNode.removeChild(eb); }
   }
-  // ── Tab-Ansicht: flatten the /VMs sub-tabs ("Virtual Machines" #kvm_list + "VM Usage Statistics"
-  //    #vmstats) into stacked CC sections. Same MainContentTabbed DOM as /Shares/Share + /Main. Prepend a
-  //    .cc-card-head cloned from each hidden tab button to every panel. Idempotent via data-cc-card.
+  // Tab-Ansicht: flattens the /VMs sub-tabs (#kvm_list and #vmstats) into stacked sections, each
+  // headed by a .cc-card-head cloned from its hidden tab button. Same MainContentTabbed DOM as
+  // /Shares/Share and /Main.
   function cardPanels(box) {
     var tablist = box.querySelector('nav.tabs, [role="tablist"]');
     var tabBtns = tablist ? tablist.querySelectorAll('button[role="tab"]') : [];
@@ -332,23 +261,17 @@
       for (var m = 0; m < marked.length; m++) marked[m].removeAttribute("data-cc-card");
     } catch (e) {}
   }
-  // ONE size map, byte-identical to docker.js's ccLogoSizes()/plugins.js's logoSize() map — see
-  // the fix-plan note on cc.sgsize drift: three independent copies of this literal map is exactly
-  // how the docker.js list-mode 62px hardcode regression happened in the first place.
+  // Keep this map identical to docker.js ccLogoSizes() and plugins.js logoSize().
   function vmLogoSizes() { return ({ s: ["48px", "62px"], m: ["62px", "78px"], l: ["76px", "94px"] })[ls("cc.sgsize") || "m"] || ["62px", "78px"]; }
   function enhanceRows() {
     try {
       var a = ccAccent(), rad = ccShape(), root = document.documentElement.style;
       root.setProperty("--cc-accent", a); root.setProperty("--cc-accent-text", ccIdeal(a)); root.setProperty("--cc-b-radius", rad);
-      // T5: stamp the logo tile size from the ONE global cc.sgsize key (verbatim from docker.js) so the VM
-      // logo + tile track the SAME size as Docker/Plugin (they stamp it too) — was fixed at the CSS default,
-      // so at any non-default sgsize the VM tiles were a different size than the other tabs.
+      // the logo tile follows the global cc.sgsize like the Docker and Plugins tabs
       var lg = vmLogoSizes();
       root.setProperty("--cc-logo-img", lg[0]); root.setProperty("--cc-logo-box", lg[1]);
-      // VM state -> a Docker-IDENTICAL cc-badge (class-driven, colours from VmTab.css). Read the native
-      // status from the sibling <i.fa> class (started/paused/stopped + green-/orange-/red-text), NOT the
-      // translated label \u2014 the old text match never matched German "GESTARTET". Map to Docker's state
-      // names (running/paused/exited) so the exact .cc-badge-<state> colours apply.
+      // The VM state becomes a Docker state badge. The state comes from the sibling <i.fa> class
+      // rather than the translated label, mapped to Docker's running/paused/exited.
       Array.prototype.slice.call(document.querySelectorAll("#kvm_list tr.sortable td.vm-name span.state")).forEach(function (st) {
         var txt = (st.textContent || "").trim(); if (!txt) return;
         var icon = st.previousElementSibling, cls = (icon && icon.className) || "", low = txt.toLowerCase();
@@ -356,20 +279,18 @@
         var paused = /\bpaused\b|orange-text/.test(cls) || /paus/.test(low);
         var dstate = running ? "running" : paused ? "paused" : "exited";
         st.className = "state cc-badge cc-badge-" + dstate;   // keep native .state (sort/hooks) + Docker classes
-        st.style.cssText = "";                                // CSS owns the look now
+        st.style.cssText = "";                                // the look comes from CSS
       });
     } catch (e) {}
   }
-  // Revert every inline visual this enhancer applies (state-badge styling + icon tint),
-  // so the MASTER THEMING toggle live-reverts the VM page without a reload. Leaves the
-  // observer/timers alone (unlike teardown), so re-enabling theming re-tints via apply().
+  // Reverts every inline visual, so the master theming toggle restores the native VM page
+  // without a reload. Unlike teardown it keeps the observer and timers for a re-enable.
   function stripVmTheming() {
     try {
-      // state badge -> back to the bare native span (drop the cc-badge classes + any old inline styles)
       Array.prototype.slice.call(document.querySelectorAll("#kvm_list tr.sortable td.vm-name span.state")).forEach(function (st) {
         st.className = "state"; st.style.cssText = "";
       });
-      document.documentElement.classList.remove("cc-vm-iconbg");                 // Logo-Hintergrund box is CSS-driven now
+      document.documentElement.classList.remove("cc-vm-iconbg");
       document.documentElement.style.removeProperty("--cc-iconbg-color");
       var imgs = vmImgs();
       for (var i = 0; i < imgs.length; i++) {
@@ -377,24 +298,18 @@
         var w = imgs[i].parentElement; if (w) ["background", "border-radius", "width", "height", "padding", "display", "align-items", "justify-content", "box-sizing"].forEach(function (p) { w.style.removeProperty(p); });
       }
       ["cc-vm-tint-svg", "cc-vm-mono-svg", "cc-vm-tint-svg-blk", "cc-vm-tint-svg-wht", "cc-vm-mono-svg-blk", "cc-vm-mono-svg-wht"].forEach(function (id) { var h = document.getElementById(id); if (h) h.remove(); });
-      // grid/rainbow live-revert: drop the classes, clear the palette vars, remove the injected view toggle
       document.documentElement.classList.remove("cc-vmgrid", "cc-vm-rainbow", "cc-vm-rbneutral");
       RB_KINDS.forEach(function (k) { document.documentElement.style.removeProperty("--cc-rb-" + k); document.documentElement.style.removeProperty("--cc-rb-" + k + "-t"); });
       var vt = document.getElementById("cc-vm-viewtoggle"); if (vt) { var vbar = vt.closest(".cc-vm-toolbar") || vt; if (vbar.parentNode) vbar.parentNode.removeChild(vbar); }
     } catch (e) {}
   }
-  // wrap the vCPU (a.vcpu-*) and RAM (mem) cell values in CC value badges (span.cc-vmb), styled by
-  // CannonadeCommand.VMs.css. Idempotent via .cc-vmb-cell; the tbody re-renders, so this re-runs from
-  // the observer. Never touch td.vm-name (logo/state handled inline above), the disks/graphics/ip
-  // cells (they carry live markup) or the autostart cell (styled purely by CSS).
-  // el() + badgeInfo() ported from docker.js so the VM badges use Docker's EXACT classes/structure.
+  // from docker.js, so the VM badges share Docker's classes and structure
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
 
-  // ── CC VM LIMITS ─ a gear per VM row opens an editor for CPU pin/cap, RAM (balloon) and
-  //    up/down bandwidth; the engine applies CPU/RAM via virsh (domain XML) and bandwidth
-  //    host-side (iptables physdev hashlimit, re-asserted by the monitor). Proxy = the same
-  //    ccapi.php the Docker tab uses. Self-contained + theme-aware via the global CC tokens
-  //    (docker.css's cc-pop styling isn't loaded on /VMs).
+  // VM limits: a gear per resource opens an editor for CPU pin/cap, RAM (balloon) and up/down
+  // bandwidth. The engine applies CPU and RAM through virsh and bandwidth host-side with an
+  // iptables physdev hashlimit that the monitor re-asserts. docker.css is not loaded on /VMs,
+  // so the editor styles itself from the global tokens.
   var VMDE = (function () { try { return /de/i.test(document.documentElement.lang || "") || (localStorage.getItem("locale") || "").indexOf("de") === 0; } catch (e) { return false; } })();
   var CCPROXY = "/plugins/cannonadecommand/server/ccapi.php";
   var vmLims = {}; // name -> the VM's current limits from /api/vms
@@ -409,14 +324,14 @@
   function vmApi(method, path, body, query) {
     var o = { method: method, headers: { Accept: "application/json" } };
     if (method !== "GET") {
-      // emhttp only accepts a POST whose csrf_token is a FORM-BODY field; ccapi.php unwraps
-      // `data` back into the JSON body for the engine (an empty 200 = the token was dropped).
+      // emhttp accepts a POST only with csrf_token in the form body; ccapi.php unwraps `data`
+      // into the JSON body for the engine. An empty 200 means the token was dropped.
       var tk = vmCsrf();
       o.headers["Content-Type"] = "application/x-www-form-urlencoded";
       o.body = (tk ? "csrf_token=" + encodeURIComponent(tk) + "&" : "") + "data=" + encodeURIComponent(JSON.stringify(body || {}));
     }
-    // extra query (e.g. name=… for vmdisks) rides ALONGSIDE ?path=… — ccapi.php sanitises
-    // path to [a-z] and forwards only the params on its own per-path $qallow list.
+    // An extra query such as name=… rides next to ?path=…; ccapi.php forwards only the params
+    // on its per-path $qallow list.
     return fetch(CCPROXY + "?path=" + encodeURIComponent(path) + (query ? "&" + query : ""), o).then(function (r) {
       return r.text().then(function (t) {
         var j = null; try { j = t ? JSON.parse(t) : null; } catch (e) {}
@@ -429,20 +344,19 @@
   function loadVmLims() {
     return vmApi("GET", "vms").then(function (list) { vmLims = {}; if (Array.isArray(list)) list.forEach(function (v) { vmLims[v.name] = v; }); }).catch(function () {});
   }
-  // HOST CPU topology for the graphical core-picker (Docker-identical): /api/state already exposes the
-  // host's logical-CPU count + HT grouping + Intel P/E lists (docker.js reads the SAME keys). Loaded once.
+  // Host CPU topology for the core picker, from the same /api/state keys docker.js reads.
   var vmHost = { cpus: 0, coreOf: null, pcores: [], ecores: [] };
   function loadVmHost() {
     return vmApi("GET", "state", null).then(function (st) {
       if (st) vmHost = { cpus: st.host_cpus || 0, coreOf: st.host_core_of || null, pcores: st.host_pcores || [], ecores: st.host_ecores || [] };
     }).catch(function () {});
   }
-  // cpuset <-> set helpers (verbatim from docker.js) for the core-picker prefill/read.
+  // cpuset string <-> list of CPUs, as in docker.js
   function cpusetToSet(str) { var out = []; String(str || "").split(",").forEach(function (p) { p = p.trim(); var m = /^(\d+)-(\d+)$/.exec(p); if (m) { for (var i = +m[1]; i <= +m[2]; i++) out.push(i); } else if (/^\d+$/.test(p)) out.push(+p); }); return out; }
   function setToCpuset(arr) { arr = arr.slice().sort(function (a, b) { return a - b; }); var parts = [], i = 0; while (i < arr.length) { var j = i; while (j + 1 < arr.length && arr[j + 1] === arr[j] + 1) j++; parts.push(i === j ? String(arr[i]) : arr[i] + "-" + arr[j]); i = j + 1; } return parts.join(","); }
-  // Build the Docker-style core grid: one BOX per physical core, its hyperthreads stacked vertically,
-  // wrapping into rows. Intel hybrid CPUs get a P/E tag. Returns { node, read } or null (unknown topology
-  // -> caller falls back to a text cpuset field). Prefills the current pin.
+  // The Docker-style core grid: one box per physical core with its hyperthreads stacked, and a P/E
+  // tag on hybrid Intel CPUs. Returns { node, read }, or null for an unknown topology, in which case
+  // the caller falls back to a text cpuset field.
   function buildCoreGrid(cur) {
     var ncpu = vmHost.cpus || 0;
     if (!(ncpu > 0 && ncpu <= 512)) return null;
@@ -481,8 +395,8 @@
     if (hint) { var hh = el("div", null, hint); hh.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a)"; wrap.appendChild(hh); }
     return { wrap: wrap, input: inp };
   }
-  // BW badge VALUE, mirroring the Docker BW badge: a RUNNING VM shows its LIVE throughput (↓ down / ↑ up,
-  // diffed from the tap byte counters by pollVmBw); a stopped/idle VM shows the CONFIGURED cap, or "–".
+  // The BW badge, like Docker's: a running VM shows its live throughput from pollVmBw, any other VM
+  // its configured cap.
   var vmBwPrev = {}, vmRate = {}; // name -> {down,up,t} sample ; name -> {down,up} bytes/s
   function rateFmt(bps) {
     var bits = (bps || 0) * 8;
@@ -497,12 +411,12 @@
       return "↓" + rateFmt(r.down) + " ↑" + rateFmt(r.up);
     }
     var d = lim && lim.inKbit > 0, u = lim && lim.outKbit > 0;
-    if (!d && !u) return "–";
+    if (!d && !u) return "-";
     function fmt(k) { return k >= 1000 ? (Math.round(k / 100) / 10) + "M" : k + "k"; }
     return "↓" + (d ? fmt(lim.inKbit) : "∞") + " ↑" + (u ? fmt(lim.outKbit) : "∞");
   }
-  // Live-BW poll: re-fetch /api/vms and diff each running VM's tap byte counters into a bytes/s rate, then
-  // recolour/refill the BW badges. Gated in arm() so the heavy virsh List() only runs while a VM RUNS.
+  // Diffs each running VM's tap byte counters into a bytes/s rate. arm() runs it only while a VM is
+  // running, because the engine's virsh list is expensive.
   function pollVmBw() {
     return loadVmLims().then(function () {
       var now = Date.now();
@@ -519,9 +433,8 @@
       try { refreshAllRes(); } catch (e) {}
     });
   }
-  // Gear colour — VERBATIM method from docker.js gearFill so the VM gears read the SAME palette:
-  // rainbow stamps the kind var (--cc-rb-<kind>) and lets CSS decide the rest; accent/native mode
-  // fills inline with priority (Unraid's theme CSS would otherwise beat the stylesheet).
+  // Gear colour, as docker.js gearFill: rainbow stamps the kind var and leaves the rest to CSS;
+  // accent mode fills inline with priority, since Unraid's theme CSS would beat the stylesheet.
   function vmGearFill(lb, set, kind) {
     var rbOn = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1";
     if (rbOn && kind) {
@@ -540,9 +453,8 @@
     cpu: VMDE ? "CPU (Pin + Limit)" : "CPU (pin + limit)", ram: VMDE ? "RAM (Balloon)" : "RAM (balloon)",
     bw: VMDE ? "Bandbreite" : "Bandwidth", disk: VMDE ? "vDisk live vergrößern" : "grow vDisk live"
   };
-  // One cc-limbtn gear (Docker-identical class + look), coloured per kind, opening the focused
-  // editor for that resource. The disk gear colours as "vol" (matching the vDisks badge) but keeps
-  // its own cc-lim-disk class + editor target.
+  // One gear per resource, coloured by kind, opening that resource's editor. The disk gear takes
+  // the "vol" colour of the vDisks badge.
   function vmGear(name, which, set) {
     var colorKind = which === "disk" ? "vol" : which;
     var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "") + " cc-lim-" + which); lb.innerHTML = CC_GEAR_SVG;
@@ -554,8 +466,8 @@
     });
     return lb;
   }
-  // After the async limits load (or an editor Apply) update each built resource group's gears
-  // (set-state + colour) and BW badge text IN PLACE — #kvm_list rows are stable and won't rebuild.
+  // After the limits load or an editor applies, the gears and BW text update in place, since the
+  // #kvm_list rows are not rebuilt.
   function syncGear(g, set, kind) { if (!g) return; g.classList.toggle("cc-limbtn-set", set); vmGearFill(g, set, kind); }
   function limSet(lim) {
     return {
@@ -575,7 +487,7 @@
   function refreshAllRes() { try { Array.prototype.forEach.call(document.querySelectorAll("#kvm_list .cc-resgroup[data-cc-vm]"), refreshResGroup); } catch (e) {} }
   // one resource line: badge + its gear, side by side (docker.js resLine). Gear optional.
   function vmResLine(badge, gear) { var l = el("div", "cc-resline"); l.appendChild(badge); if (gear) l.appendChild(gear); return l; }
-  // vDISK live-resize rows: one per resizable disk, grow-only (the engine rejects a shrink).
+  // One live-resize row per disk, grow only (the engine rejects a shrink).
   function diskRow(name, d, statusEl) {
     var known = d.capacityBytes > 0;
     var curG = known ? (Math.round(d.capacityBytes / 1073741824 * 100) / 100) : 0;
@@ -591,7 +503,7 @@
     var btn = el("button", null, VMDE ? "Vergrößern" : "Grow"); btn.style.cssText = "background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff);border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer";
     btn.onclick = function () {
       var g = parseFloat(String(inp.value).replace(",", "."));
-      if (isNaN(g) || g <= curG) { statusEl.style.color = "var(--cc-err,#d9433f)"; statusEl.textContent = (VMDE ? "nur vergrößern — > " : "grow only — > ") + curG + " GiB"; return; }
+      if (isNaN(g) || g <= curG) { statusEl.style.color = "var(--cc-err,#d9433f)"; statusEl.textContent = (VMDE ? "nur vergrößern, mehr als " : "grow only, more than ") + curG + " GiB"; return; }
       function doResize() {
         btn.disabled = true; statusEl.style.color = "var(--cc-text-dim,#8a8a8a)"; statusEl.textContent = VMDE ? "Vergrößern läuft…" : "resizing…";
         vmApi("POST", "vmdiskresize", { name: name, target: d.target, size_gib: g }).then(function () {
@@ -599,9 +511,9 @@
           curG = g; cur.textContent = "  " + g + " GiB"; d.capacityBytes = g * 1073741824; inp.min = String(g);
         }).catch(function (e) { btn.disabled = false; statusEl.style.color = "var(--cc-err,#d9433f)"; statusEl.textContent = String(e.message || e).slice(0, 70); });
       }
-      // a grow is IRREVERSIBLE (a vDisk can't be shrunk back without data loss) — confirm first, using the
-      // same swal dialog the VM-remove uses, with a native confirm() fallback.
-      var q = "vDisk " + d.target + ": " + curG + " GiB → " + g + " GiB. " + (VMDE ? "Das lässt sich NICHT rückgängig machen." : "This can NOT be undone.");
+      // A vDisk cannot shrink back without data loss, so a grow is confirmed first with the swal
+      // dialog VM removal uses, or confirm() without it.
+      var q = "vDisk " + d.target + ": " + curG + " GiB → " + g + " GiB. " + (VMDE ? "Das lässt sich nicht rückgängig machen." : "This cannot be undone.");
       if (typeof window.swal === "function") {
         window.swal({ title: VMDE ? "Sicher?" : "Are you sure?", text: q, type: "warning", showCancelButton: true, confirmButtonText: VMDE ? "Vergrößern" : "Grow", cancelButtonText: VMDE ? "Abbrechen" : "Cancel" }, function (ok) { if (ok) doResize(); });
       } else if (window.confirm(q)) { doResize(); }
@@ -617,21 +529,19 @@
       disks.forEach(function (d) { host.appendChild(diskRow(name, d, statusEl)); });
     }).catch(function (e) { host.textContent = String(e.message || e).slice(0, 70); });
   }
-  // Focused limits editor. `which` = "cpu" | "ram" | "bw" | "disk" | "all" — a gear opens only its
-  // own section (Docker opens one popup per kind); "all"/absent shows everything. CPU/RAM/BW commit
-  // via POST vmlimits; the disk section resizes per-disk via POST vmdiskresize.
+  // The limits editor. `which` is "cpu", "ram", "bw", "disk" or "all": a gear opens only its own
+  // section, as Docker does. CPU, RAM and BW commit through vmlimits, disks through vmdiskresize.
   function openVmEd(name, which, anchor) {
     which = which || "all";
     var v = vmLims[name] || {};
     var showCpu = which === "all" || which === "cpu", showRam = which === "all" || which === "ram";
     var showBw = which === "all" || which === "bw", showDisk = which === "all" || which === "disk";
     var hasLimFields = showCpu || showRam || showBw;
-    // ANCHORED popover (user: "erscheinen mitten im Fenster statt am Zahnrädchen"): a transparent full-screen
-    // click-catcher (click outside = close) with the card positioned right at the gear, exactly like Docker.
+    // A popover anchored at the gear, like Docker's: a transparent full-screen layer closes it on an
+    // outside click.
     var ov = el("div"); ov.id = "cc-vmlim-ov";
     ov.style.cssText = "position:fixed;inset:0;z-index:99999";
-    // Match the Docker CPU/RAM/BW popover's chrome exactly (user: "gleich machen"): same #161616 surface,
-    // 10px radius, elevation ramp (key + ambient shadow + inner top-highlight) and Segoe stack as .cc-pop.
+    // the chrome of Docker's .cc-pop popover
     var card = el("div", "cc-rainbow"); card.style.cssText = "position:absolute;background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:10px;padding:14px 16px;width:420px;max-width:92vw;max-height:88vh;overflow:auto;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font:13px/1.5 \"Segoe UI\",system-ui,sans-serif";
     var titleMap = { cpu: VMDE ? "CPU-Limit" : "CPU limit", ram: VMDE ? "RAM-Limit" : "RAM limit", bw: VMDE ? "Bandbreite" : "Bandwidth", disk: VMDE ? "vDisk-Größe" : "vDisk size", all: VMDE ? "VM-Limits" : "VM limits" };
     var head = el("div"); head.style.cssText = "display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:700;margin:0 0 4px 0";
@@ -646,8 +556,7 @@
     var cores = (v.cpuCores && v.cpuCores !== "0-127") ? v.cpuCores : "";
     var f = {}, readCpuset = null;   // readCpuset() yields the pin cpuset (grid selection or text field)
     if (showCpu) {
-      // CPU pin: the SAME graphical core-picker the Docker tab uses when the host topology is known,
-      // else a plain cpuset text field.
+      // the Docker tab's core picker when the topology is known, else a cpuset text field
       var grid = buildCoreGrid(cores);
       if (grid) {
         var pinWrap = el("div"); pinWrap.style.cssText = "display:flex;flex-direction:column;gap:5px;margin:0 0 10px 0";
@@ -670,16 +579,14 @@
     }
     if (showDisk) {
       var dsec = el("div"); dsec.style.cssText = "margin:2px 0 6px 0";
-      var dlbl = el("div", null, VMDE ? "vDisks — Live-Resize (nur vergrößern)" : "vDisks — live resize (grow only)"); dlbl.style.cssText = "font-size:12px;font-weight:600;margin:0 0 8px 0;color:var(--cc-text,#e6e6e6)";
+      var dlbl = el("div", null, VMDE ? "vDisks: Live-Resize (nur vergrößern)" : "vDisks: live resize (grow only)"); dlbl.style.cssText = "font-size:12px;font-weight:600;margin:0 0 8px 0;color:var(--cc-text,#e6e6e6)";
       var dlist = el("div"); dlist.style.cssText = "font-size:12px;color:var(--cc-text-dim,#8a8a8a)";
       var dstat = el("div"); dstat.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a);margin-top:2px";
       dsec.appendChild(dlbl); dsec.appendChild(dlist); dsec.appendChild(dstat); card.appendChild(dsec);
       loadDisks(name, dlist, dstat);
     }
-    // ── Icon colouring for THIS VM. Present in every variant of the editor (whichever gear
-    // you opened), because the VM tab has no other per-item settings surface and a control
-    // reachable from only one of four gears is a control nobody finds. Applies instantly —
-    // it is a display choice, so it does not belong behind the Apply button.
+    // Icon colouring for this VM sits in every variant of the editor, since the VM tab has no
+    // other per-item settings. It is a display choice and applies at once, not on Apply.
     (function () {
       var CI = window.CCTheme && window.CCTheme.icons; if (!CI) return;
       var wrap = el("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:3px;margin:8px 0 10px 0";
@@ -690,7 +597,7 @@
         : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Ink flatten"], ["tint", "Luminance tint"]];
       var cur = CI.override("vm", name);
       opts.forEach(function (o) { var op = el("option", null, o[1]); op.value = o[0]; if (o[0] === cur) op.selected = true; sel.appendChild(op); });
-      sel.addEventListener("change", function () { CI.setOverride("vm", name, sel.value); paintVmIcons(); });   // NOT apply() — `apply` is this function's own Apply button (see paintVmIcons)
+      sel.addEventListener("change", function () { CI.setOverride("vm", name, sel.value); paintVmIcons(); });   // `apply` here is the editor's Apply button
       wrap.appendChild(l); wrap.appendChild(sel); card.appendChild(wrap);
     })();
     var foot = el("div"); foot.style.cssText = "display:flex;gap:8px;align-items:center;margin-top:6px";
@@ -726,12 +633,11 @@
     };
     if (f.cores) f.cores.input.focus(); else if (f.ram) f.ram.input.focus(); else if (f.dn) f.dn.input.focus();
   }
-  // ACTIONS column — Docker-VERBATIM action bar (docker.js actBtn/actBtnOff/tintAct/actionBars/
-  // injectActionCell). Each icon is wired to the SAME native global the VM context menu calls
-  // (vmmanager.js addVMContext). Per-VM context is read from the logo span#vm-<uuid> id + its
-  // onclick=addVMContext('name','uuid','template','state','vmrcurl','PROTO','log','fstype',
-  // 'console;rdp','','webui',...). Every native call is typeof-guarded so a renamed/missing Unraid
-  // global degrades the button to a no-op instead of throwing.
+  // The Actions column, built like docker.js's action bar. Each icon calls the native global the
+  // VM context menu uses (vmmanager.js addVMContext), with the VM context read from the logo's
+  // span#vm-<uuid> and its onclick=addVMContext('name','uuid','template','state','vmrcurl',
+  // 'PROTO','log','fstype','console;rdp','','webui',...). Native calls are typeof-guarded, so a
+  // missing Unraid global leaves a button that does nothing.
   function actBtn(icon, tip, fn) {
     var b = el("span", "cc-actbtn"); b.title = tip; b.appendChild(el("i", "fa " + icon));
     b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); try { fn(); } catch (_) {} });
@@ -739,16 +645,14 @@
   }
   function actBtnOff(icon, tip) { var b = el("span", "cc-actbtn cc-actoff"); b.title = tip; b.appendChild(el("i", "fa " + icon)); return b; }
   function vmDisp(action, uuid) { if (typeof window.ajaxVMDispatch === "function") window.ajaxVMDispatch({ action: action, uuid: uuid }, "loadlist"); }
-  // tintAct: verbatim port of docker.js tintAct — accent (or rainbow) inline colour per button, grey
-  // for cc-actoff. Reuses vms.js RB_PAL/RB_OFFSET/ccAccent + the cc.actcolors gate.
+  // As docker.js tintAct: an accent or rainbow colour per button, grey for cc-actoff.
   function tintAct(bar) {
     var colorsOn = ls("cc.actcolors") !== "0";
     var rb = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1";
-    // reactive sub-mode (cc.rbmode="active"): enabled coloured buttons REST grey and take their palette
-    // colour only on ROW hover — so skip the inline paint and stamp --cc-rb-c/--cc-rb-ct for the CSS hover
-    // rule (an inline !important background would make the sheet powerless). Matches docker.js tintAct.
+    // In the reactive sub-mode buttons rest grey and take their colour on row hover, so only
+    // --cc-rb-c/--cc-rb-ct are stamped; an inline !important background would beat the sheet.
     var neutral = rb && ls("cc.rbmode") === "active";
-    // flag mode reads cc.flagpal (own key), never cc.rbpal — no bleed between flag and rainbow palettes
+    // flag mode keeps its own palette in cc.flagpal
     var pal = RB_PAL; try { var fjp = ls("cc.flagmode") === "1" ? JSON.parse(ls("cc.flagpal") || "null") : null; var jp = (fjp && fjp.length) ? fjp : JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e2) {}
     var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
     Array.prototype.slice.call(bar.querySelectorAll(".cc-actbtn")).forEach(function (b2, i2) {
@@ -792,8 +696,8 @@
       window.swal({ title: de ? "Sicher?" : "Are you sure?", text: (withDisks ? (de ? "Vollstaendig ENTFERNEN " : "Completely REMOVE ") : (de ? "Definition entfernen: " : "Remove definition: ")) + name, type: "warning", showCancelButton: true, confirmButtonText: de ? "Fortfahren" : "Proceed", cancelButtonText: de ? "Abbrechen" : "Cancel" }, run);
     } else if (window.confirm((de ? "Entfernen: " : "Remove: ") + name)) run();
   }
-  // actionBars for a VM row — mirrors docker.js actionBars(): row1 WebUI/Log/Edit, row2 Restart/
-  // Pause|Resume/Stop|Start + "…", more = Console/Hibernate/ForceStop/Snapshot/Clone/Remove(+Disks).
+  // As docker.js actionBars(): console/log/edit, then restart, pause or resume, stop or start and
+  // "…", which opens console, hibernate, force stop, snapshot, clone and remove.
   function vmActionBars(tr) {
     var de = LANG === "de";
     var cx = vmCtxFor(tr), uuid = cx.uuid, name = cx.name, st = cx.state;
@@ -801,7 +705,7 @@
     var path = location.pathname; var xi = path.indexOf("?"); if (xi !== -1) path = path.substring(0, xi);
     var bar = el("div", "cc-actbar");
     var r1 = el("div", "cc-actrow");
-    // Primary icon = VNC/VM console (user: replace the Docker "WebUI" globe with the VNC console). Opens vmrcurl.
+    // the VNC console takes the place of Docker's WebUI globe
     r1.appendChild((cx.vmrcurl && running) ? actBtn("fa-desktop", (de ? "VNC-Konsole" : "VNC Console") + (cx.proto ? " (" + cx.proto + ")" : ""), function () { window.open(cx.vmrcurl, "_blank", "scrollbars=yes,resizable=yes"); }) : actBtnOff("fa-desktop", de ? "keine Konsole" : "no console"));
     r1.appendChild((cx.log && typeof window.openTerminal === "function") ? actBtn("fa-navicon", "Log", function () { window.openTerminal("log", name, cx.log); }) : actBtnOff("fa-navicon", "Log"));
     r1.appendChild(actBtn("fa-pencil", de ? "Bearbeiten" : "Edit", function () { location.href = path + "/UpdateVM?uuid=" + uuid; }));
@@ -832,10 +736,8 @@
       var de = LANG === "de";
       nameTd = nameTd || tr.querySelector(":scope > td.vm-name");
       var head = document.querySelector("#kvm_table thead tr");
-      // Header Actions TH inserted ONCE, right after the Name th. It MUST stay in lockstep with the row TD
-      // below: thead is a SEPARATE block that survives #kvm_list AJAX re-renders, so if any row lacks its
-      // Actions TD while this TH exists, that row renders one column short (CPU+RAM badge lands under
-      // "Beschreibung" — the reported shift).
+      // The Actions th goes in once, after the Name th. thead survives the #kvm_list re-renders, so
+      // every row needs its Actions td or it renders one column short.
       if (head && !head.querySelector(".cc-act-th")) {
         var nameTh = head.querySelector("th.th1") || head.children[0];
         var th = el("th", "cc-act-th", de ? "Aktionen" : "Actions");
@@ -843,11 +745,11 @@
       }
       var old = tr.querySelector(":scope > td.cc-actcell");
       var ab = null;
-      try { ab = vmActionBars(tr); } catch (e) { ab = null; }              // per-row failure must NOT skip the TD
+      try { ab = vmActionBars(tr); } catch (e) { ab = null; }              // a failed row still gets its td
       if (old) { if (ab && old.getAttribute("data-cc-sig") === ab.sig) return; old.remove(); } // rebuild only on change
       var td = el("td", "cc-actcell");
       if (ab) { td.setAttribute("data-cc-sig", ab.sig); td.appendChild(ab.bar); td.appendChild(ab.more); }
-      // ALWAYS insert the TD (even empty) so header-TH / body-TD column counts can never diverge -> no shift.
+      // inserted even when empty, so the column counts of thead and tbody always match
       tr.insertBefore(td, nameTd ? nameTd.nextSibling : (tr.children[1] || null));
     } catch (e) {}
   }
@@ -860,38 +762,36 @@
     var v = el("span", "cc-b-v"); while (td.firstChild) v.appendChild(td.firstChild); b.appendChild(v);  // keep live children (a.vcpu-*) inside .cc-b-v
     td.appendChild(b); td.classList.add("cc-vmb-cell");
   }
-  // CPU + RAM merged into ONE stacked column, mirroring Docker's .cc-resgroup (docker.css:229-231).
-  // Docker keeps cpu-/mem- in one native cell; VMs split them, so we move the RAM badge under the CPU
-  // badge in the CPU cell and HIDE the native RAM cell + header. Live children are MOVED (not cloned).
+  // CPU, RAM and BW stacked in one column like Docker's .cc-resgroup. The VM table has separate
+  // CPU and RAM cells, so the RAM content moves (live children, not clones) into the CPU cell and
+  // the native RAM cell and header are hidden.
   function vmResCell(cpuTd, ramTd) {
     if (!cpuTd || cpuTd.classList.contains("cc-vmb-cell")) return;
     var vmn = vmNameOf(cpuTd.closest("tr"));
     var lim = (vmn && vmLims[vmn]) || {}, s = limSet(lim);
     var group = el("div", "cc-resgroup"); if (vmn) group.setAttribute("data-cc-vm", vmn);
-    // CPU line — badge + its own rainbow-kind gear (Docker-identical: docker.js resLine + limGear)
     var cb = el("span", "cc-b cc-b-info cc-b-cpu"); cb.appendChild(el("span", "cc-b-k", "CPU"));
     var cv = el("span", "cc-b-v"); var cpuTxt = (cpuTd.textContent || "").trim();
-    if (cpuTxt && cpuTxt !== "-") { while (cpuTd.firstChild) cv.appendChild(cpuTd.firstChild); } else cv.textContent = "–";
+    if (cpuTxt && cpuTxt !== "-") { while (cpuTd.firstChild) cv.appendChild(cpuTd.firstChild); } else cv.textContent = "-";
     cb.appendChild(cv);
     group.appendChild(vmResLine(cb, vmn ? vmGear(vmn, "cpu", s.cpu) : null));
-    // RAM line
     if (ramTd) {
       var rb = el("span", "cc-b cc-b-info cc-b-ram"); rb.appendChild(el("span", "cc-b-k", "RAM"));
       var rv = el("span", "cc-b-v"); var ramTxt = (ramTd.textContent || "").trim();
-      if (ramTxt && ramTxt !== "-") { while (ramTd.firstChild) rv.appendChild(ramTd.firstChild); } else rv.textContent = "–";
+      if (ramTxt && ramTxt !== "-") { while (ramTd.firstChild) rv.appendChild(ramTd.firstChild); } else rv.textContent = "-";
       rb.appendChild(rv);
       group.appendChild(vmResLine(rb, vmn ? vmGear(vmn, "ram", s.ram) : null));
       ramTd.style.display = "none"; ramTd.classList.add("cc-vmb-ramcell");   // hidden, reverted in teardown
     }
-    // BW line — VMs have no native BW cell; the badge shows the CONFIGURED cap (↓/↑), Docker-shaped.
+    // VMs have no native BW cell
     var bwB = el("span", "cc-b cc-b-info cc-b-bw"); bwB.appendChild(el("span", "cc-b-k", "BW"));
     bwB.appendChild(el("span", "cc-b-v", vmBwText(lim)));
     group.appendChild(vmResLine(bwB, vmn ? vmGear(vmn, "bw", s.bw) : null));
     cpuTd.appendChild(group); cpuTd.classList.add("cc-vmb-cell", "cc-vmb-rescell");
     hideResHeader();
   }
-  // Hide the native RAM/Memory column header ONCE (thead persists across tbody re-renders). Located by
-  // header TEXT (the injected Actions column shifts indices, so nth-child is fragile). Reverted in teardown.
+  // Hides the native memory header once, found by its text because the Actions column shifts the
+  // indices. teardown reverts it.
   function hideResHeader() {
     try {
       var head = document.querySelector("#kvm_table thead tr");
@@ -904,10 +804,9 @@
       head.setAttribute("data-cc-reshdr", "1");
     } catch (e) {}
   }
-  // IP cell: the native $iptablestr joins one "addr/prefix" per line with <br> (VMMachines.php), and
-  // textContent DROPS those <br> separators, gluing "…/24" + "10.…" into garbage ("24172…"). Split
-  // STRUCTURALLY on the <br> element boundaries instead, validate each line, and emit Docker-style
-  // click-to-copy pills. If there are no addresses (e.g. "guest agent" note) keep the native content.
+  // The native IP cell joins one "addr/prefix" per line with <br>, and textContent would glue the
+  // lines together, so the split follows the <br> elements. Each valid address becomes a Docker-style
+  // click-to-copy pill; without any (a "guest agent" note) the native content stays.
   function vmIpCell(td) {
     if (!td || td.classList.contains("cc-vmb-cell")) return;
     var span = td.querySelector("span.vmgraphics") || td, lines = [], cur = "";
@@ -930,10 +829,9 @@
     for (var c = td.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) c.style.display = "none"; }  // hide native, don't destroy -> reversible teardown
     td.appendChild(wrap); td.classList.add("cc-vmb-cell", "cc-vmb-ipcell");
   }
-  // DISKS cell (native td index 4): span.state = "DISKS&nbsp;&nbsp;&nbsp;&nbsp;CDS<a.hand ISO-picker><br>(Snapshots: X)".
-  // vmCell skips it (has a <br>). Split into three Docker-style badges (vDisks / CD / Snapshots), CLONE the
-  // live ISO-picker a.hand (inline onclick survives cloneNode) into the CD badge, hide the native span
-  // (reversible). The .diskresize control lives in the separate child detail table, not this cell.
+  // The disks cell holds span.state = "DISKS&nbsp;&nbsp;&nbsp;&nbsp;CDS<a.hand ISO-picker><br>(Snapshots: X)",
+  // which vmCell skips for its <br>. It splits into vDisks, CD and Snapshots badges; the ISO picker
+  // is cloned into the CD badge (its inline onclick survives cloneNode) and the native span hidden.
   function vmDiskCell(td) {
     if (!td || td.classList.contains("cc-vmb-cell")) return;
     var span = td.querySelector(":scope > span.state"); if (!span) return;
@@ -953,7 +851,7 @@
     };
     var wrap = el("span", "cc-vmb-disks");
     if (disksVal && disksVal !== "-") {
-      // vDisks badge gets a gear behind it (Docker-style) that opens the live-resize editor.
+      // the gear opens the live-resize editor
       var vmn = vmNameOf(td.closest("tr"));
       var vdB = mk("vDisks", disksVal, "vol");
       wrap.appendChild(vmn ? vmResLine(vdB, vmGear(vmn, "disk", false)) : vdB);
@@ -973,9 +871,8 @@
       var rows = document.querySelectorAll("#kvm_list tr.sortable");
       for (var i = 0; i < rows.length; i++) {
         var row = rows[i];
-        // T5: per-row rotating palette colour so the VM logo TILE joins the rainbow (VM badges are coloured
-        // per KIND, so a row has no single colour). Cleared when rainbow off; the tile rule prefers this over
-        // the custom iconbg colour, exactly like the Docker + Plugin tabs.
+        // A rotating colour per row lets the logo tile join the rainbow, since the badges are
+        // coloured per kind. The tile rule prefers it over the iconbg colour, as on Docker and Plugins.
         try {
           if (ls("cc.theming") !== "0" && ls("cc.rainbow") === "1") {
             var _off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET, _pal = RB_PAL;
@@ -984,25 +881,24 @@
             row.style.setProperty("--cc-rb-c", _c); row.style.setProperty("--cc-rb-ct", _L > 150 ? "#161616" : "#fff");
           } else { row.style.removeProperty("--cc-rb-c"); row.style.removeProperty("--cc-rb-ct"); }
         } catch (_eR) {}
-        // CONTENT-ANCHORED cell lookup (ground truth: dynamix.vm.manager VMMachines.php L217-229). Fixed
-        // tds[] indices are fragile (a row transiently missing its injected Actions TD shifts everything);
-        // anchor every cell by class/content so it always maps to the right column, description or not.
+        // Cells are found by class and content (VMMachines.php L217-229) rather than by index, which
+        // the injected Actions td or a missing description would shift.
         var nameTd = row.querySelector(":scope > td.vm-name");
         var vcpuA = row.querySelector(":scope > td a[class*='vcpu-']");   // <a class='vcpu-$uuid'> (L224)
         var cpuTd = vcpuA ? vcpuA.closest("td") : null;
         var ramTd = cpuTd ? cpuTd.nextElementSibling : null;             // $mem cell (L225)
         var descTd = null;                                               // the cell before vCPU, unless it's name/Actions
         if (cpuTd) { var p = cpuTd.previousElementSibling; if (p && !p.classList.contains("vm-name") && !p.classList.contains("cc-actcell")) descTd = p; }
-        var diskSpan = row.querySelector(":scope > td > span.state");    // vm-name's span.state is nested -> never matches (L226)
+        var diskSpan = row.querySelector(":scope > td > span.state");    // vm-name's span.state is nested deeper (L226)
         var diskTd = diskSpan ? diskSpan.parentNode : null;
         var vg = row.querySelectorAll(":scope > td > span.vmgraphics");  // graphics (L227) then ip (L228), document order
         var graphicsTd = vg[0] ? vg[0].parentNode : null, ipTd = vg[1] ? vg[1].parentNode : null;
-        if (descTd) vmCell(descTd, "", "");            // description -> plain accent pill (self-skips when empty)
-        if (cpuTd) vmResCell(cpuTd, ramTd);            // CPU + RAM merged into ONE stacked column
-        if (graphicsTd) vmCell(graphicsTd, "", "");    // graphics -> plain accent pill
-        if (ipTd) vmIpCell(ipTd);                      // IP addresses -> one copy-pill each
-        if (diskTd) vmDiskCell(diskTd);                // disks -> vDisks/CD/Snapshots badges
-        injectVmActionCell(row, nameTd);               // LAST: always inserts the Actions <td> right after td.vm-name
+        if (descTd) vmCell(descTd, "", "");
+        if (cpuTd) vmResCell(cpuTd, ramTd);
+        if (graphicsTd) vmCell(graphicsTd, "", "");
+        if (ipTd) vmIpCell(ipTd);
+        if (diskTd) vmDiskCell(diskTd);
+        injectVmActionCell(row, nameTd);
       }
     } catch (e) {}
   }
@@ -1011,13 +907,13 @@
       var cells = document.querySelectorAll("#kvm_list td.cc-vmb-cell");
       for (var i = 0; i < cells.length; i++) {
         var td = cells[i];
-        if (td.classList.contains("cc-vmb-rescell")) continue;   // merged CPU+RAM cell handled by the dedicated pass below
-        if (td.classList.contains("cc-vmb-diskcell")) {          // disks cell: drop badges, un-hide the native span
+        if (td.classList.contains("cc-vmb-rescell")) continue;   // handled by the pass below
+        if (td.classList.contains("cc-vmb-diskcell")) {
           var dw = td.querySelector(":scope > span.cc-vmb-disks"); if (dw) td.removeChild(dw);
           var ds = td.querySelector(":scope > span.state"); if (ds) ds.style.removeProperty("display");
           td.classList.remove("cc-vmb-cell", "cc-vmb-diskcell"); continue;
         }
-        if (td.classList.contains("cc-vmb-ipcell")) {         // IP cell: drop the pills, un-hide the native content
+        if (td.classList.contains("cc-vmb-ipcell")) {
           var ipw = td.querySelector(":scope > span.cc-vmb-ips"); if (ipw) td.removeChild(ipw);
           for (var c = td.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) c.style.removeProperty("display"); }
           td.classList.remove("cc-vmb-cell", "cc-vmb-ipcell"); continue;
@@ -1026,7 +922,7 @@
         if (b) { var k = b.querySelector(".cc-b-k"); if (k) b.removeChild(k); var v = b.querySelector(".cc-b-v"); var src = v || b; while (src.firstChild) td.insertBefore(src.firstChild, b); td.removeChild(b); }
         td.classList.remove("cc-vmb-cell");
       }
-      // merged CPU+RAM rescell: move both values back to their native cells, un-hide the RAM cell + header
+      // move CPU and RAM back into their native cells and unhide the RAM cell and header
       Array.prototype.slice.call(document.querySelectorAll("#kvm_list td.cc-vmb-rescell")).forEach(function (cpuTd) {
         var g = cpuTd.querySelector(":scope > .cc-resgroup"), ramTd = cpuTd.nextElementSibling;
         if (g) {
@@ -1040,7 +936,6 @@
       });
       var rh = document.querySelector("#kvm_table thead tr .cc-vmb-ramhdr"); if (rh) { rh.style.removeProperty("display"); rh.classList.remove("cc-vmb-ramhdr"); }
       var hdrRow = document.querySelector("#kvm_table thead tr[data-cc-reshdr]"); if (hdrRow) hdrRow.removeAttribute("data-cc-reshdr");
-      // drop the injected Actions column + its header so master-theming/area-off fully reverts
       Array.prototype.slice.call(document.querySelectorAll("#kvm_list td.cc-actcell")).forEach(function (td) { td.remove(); });
       var actTh = document.querySelector("#kvm_table thead tr .cc-act-th"); if (actTh) actTh.remove();
     } catch (e) {}
@@ -1049,54 +944,42 @@
     var root = document.documentElement;
     var live = ls("cc.theming") !== "0" && ls("cc.enable.vms") !== "0";
     root.classList.toggle("cc-vms-on", live);
-    if (!live) { root.classList.remove("cc-sections-vms"); stripVmTheming(); enhanceCellsTeardown(); flattenTeardown(); return; } // MASTER THEMING / area off: VMs page fully native
+    if (!live) { root.classList.remove("cc-sections-vms"); stripVmTheming(); enhanceCellsTeardown(); flattenTeardown(); return; }
     try { enhanceRows(); } catch (e) {}
     try { enhanceCells(); } catch (e) {}
-    try { wrapVmStats(); } catch (e) {}   // #22: chip-wrap the VM-usage-stats readouts
-    // Tab-Ansicht (cc.sections.vms, default OFF): stacked CC sections vs native sub-tabs. MUST run BEFORE
-    // the adopt/tint early-return below so it still applies with adopt-off + no tint colour. Idempotent.
+    try { wrapVmStats(); } catch (e) {}
+    // Tab-Ansicht (cc.sections.vms, default off). It runs before the tint early return below so it
+    // applies without a tint colour too.
     try {
       var vmSections = ls("cc.sections.vms") === "1";
       root.classList.toggle("cc-sections-vms", vmSections);
       var vbox = document.getElementById("displaybox");
       if (vbox) { if (vmSections) cardPanels(vbox); else flattenTeardown(); }
     } catch (e) {}
-    try { ensureViewToggle(); applyView(); } catch (e) {}   // Grid/List view (cc.vmview)
-    try { applyRainbowPalette(); var vmRb = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1"; root.classList.toggle("cc-vm-rainbow", vmRb); root.classList.toggle("cc-vm-rbneutral", ls("cc.theming") !== "0" && ls("cc.rbmode") === "active"); } catch (e) {}   /* #N4/#2: reactive -> badges rest grey, colour on hover; also in Normal mode (rbmode default "all" -> off by default) */
-    // RE-TINT every visible action bar on ANY colour-mode change. injectVmActionCell's rebuild guard
-    // (data-cc-sig = state|webui|vmrcurl|log|uuid) is colour-mode-INDEPENDENT, so a rainbow/reactive/accent
-    // toggle keeps the old cell and never re-runs tintAct — the bar kept its stale inline colours. Re-tint
-    // the existing bars in place (cheaper than a rebuild); passing td.cc-actcell also catches the .cc-actmore
-    // extras (a TD sibling of .cc-actbar). tintAct() re-reads cc.rainbow / cc.rbmode / cc.actcolors / cc.accent.
+    try { ensureViewToggle(); applyView(); } catch (e) {}
+    try { applyRainbowPalette(); var vmRb = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1"; root.classList.toggle("cc-vm-rainbow", vmRb); root.classList.toggle("cc-vm-rbneutral", ls("cc.theming") !== "0" && ls("cc.rbmode") === "active"); } catch (e) {} // reactive: badges rest grey and colour on hover, in accent mode too
+    // The action bars' rebuild signature ignores the colour mode, so they are re-tinted in place;
+    // passing td.cc-actcell also reaches the .cc-actmore extras.
     try { Array.prototype.forEach.call(document.querySelectorAll("#kvm_list td.cc-actcell"), function (cell) { tintAct(cell); }); } catch (e) {}
-    // RE-COLOUR the limit gears on any colour-mode change too: enhanceCells is idempotent (won't
-    // rebuild a built res cell), so a rainbow/accent toggle would otherwise leave the gears' inline
-    // fill stale. refreshAllRes re-runs vmGearFill per gear (cheap; reads the current mode).
+    // enhanceCells does not rebuild a finished cell, so the gear colours are refreshed here too
     try { refreshAllRes(); } catch (e) {}
-    // adopt-toggle ON (default) -> Docker's cc.* settings; OFF -> own ccv.* keys.
-    // Stay even with adopt-off + no tint colour when the Logo-Hintergrund badge is on.
+    // Adopt off with no own tint colour needs the icon pass only for the badge.
     if (ls("cc.stylevms") === "0" && !ls("ccv.iconcolor") && effK("iconbg") !== "1") return;
     paintVmIcons();
   }
-  // The icon pass, factored OUT of apply() so the per-VM Icon-Färbung dropdown can repaint
-  // straight away. It has to be its own function: openVmEd declares `var apply = null` for
-  // its Apply BUTTON, which shadows the page-level apply() for that whole function — calling
-  // apply() from inside the editor threw "not a function" into a swallowing catch and the
-  // pinned VM only repainted on the next native list rebuild. Caught live on the box.
+  // The icon pass, separate from apply() so the per-VM dropdown can repaint at once: inside
+  // openVmEd, `var apply` is the Apply button and shadows the page-level apply().
   function paintVmIcons() {
     try {
       var imgs = vmImgs();
       var ibgOn = effK("iconbg") === "1"; var ibgAcc = vmBgColor();
-      // Logo-Hintergrund badge box is now drawn by VmTab.css via html.cc-vm-iconbg (mirroring Docker's
-      // cc-docker-iconbg) — the box shape/size/circle live in CSS. We only toggle the class + hand it the
-      // tint colour; the monochrome ink flatten still has to be an INLINE filter on each logo image.
+      // VmTab.css draws the badge box through html.cc-vm-iconbg; the ink flatten has to be an
+      // inline filter on each logo.
       var root2 = document.documentElement;
       root2.classList.toggle("cc-vm-iconbg", ibgOn);
       if (ibgOn && ibgAcc) root2.style.setProperty("--cc-iconbg-color", ibgAcc); else root2.style.removeProperty("--cc-iconbg-color");
-      // Master ADOPT toggle ON: TWO shared filters (black ink, white ink — idealText() only
-      // ever answers one of the two) built ONCE, page-wide; each row below picks whichever
-      // matches ITS OWN resolved background instead of every row sharing ONE filter built
-      // from a single representative colour (the v4.33.1 bug — see vmItemAdoptInk()).
+      // Adopting builds a black-ink and a white-ink filter once for the page, and each row picks
+      // the one that matches its own background.
       var f, flat, c, fBlk, fWht, flatBlk, flatWht, vmInk;
       var adopt = iconBgAdoptsV();
       if (adopt) {
@@ -1106,10 +989,8 @@
         fWht = ensureTintFilterAs("cc-vm-tint-svg-wht", "cc-vm-icon-tint-wht", "#fff") ? "url(#cc-vm-icon-tint-wht)" : "";
       } else {
         f = filterVal(); c = tintColor();
-        // ONE flat filter for the page, from the SAME ink the tint uses (vmIconInk(), which already
-        // answers "" whenever Einfärben is off, badge or not) — branching on ibgOn directly here
-        // instead (as this used to) reintroduces the background-forces-tint bug: it would flatten
-        // every icon to the box's ink even with Einfärben off, since it never checked vmInk at all.
+        // One flat filter for the page from the tint's ink, which is "" while Einfärben is off, so
+        // the badge alone never flattens the icons.
         vmInk = vmIconInk(false);
         flat = vmInk ? ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", vmInk) : ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", "");
       }
@@ -1118,8 +999,6 @@
         var n = imgs[i], vname = vmIconName(n);
         if (vname) vmNames.push(vname);
         var plan = vmIconPlan(n, vname);
-        // Adopting: this ROW's own ink/filters (see block above); everything else: the
-        // single page-wide values, unchanged.
         var thisFlat = flat, thisTint = f, thisInk = vmInk;
         if (adopt) {
           var rowInk = vmItemAdoptInk(n.closest("tr")), rowBlk = rowInk !== "#fff";
@@ -1129,9 +1008,7 @@
         }
         var want = plan.treat === "native" ? "" : (plan.treat === "flat" ? thisFlat : thisTint);
         if (n.tagName === "IMG") { vmSetIconSrc(n, plan.url); n.style.filter = want; if (ibgOn) n.style.removeProperty("color"); }
-        // font-glyph: `color` is the reliable exact tint. Set it with PRIORITY — Unraid's VM CSS colours
-        // these glyphs via a class rule, which a plain inline colour can lose to; `!important` wins. With
-        // the badge on, the ink is the accent's ideal text colour (b/w contrast).
+        // A glyph takes `color` with !important, since Unraid's VM CSS colours it through a class rule.
         else {
           var gif = glyphInkAndFilter(plan, ibgOn, ibgAcc, thisInk || c || "");
           if (gif.color) n.style.setProperty("color", gif.color, "important"); else n.style.removeProperty("color");
@@ -1142,28 +1019,20 @@
     } catch (e) {}
   }
   function connectObserver() {
-    // Observe ONLY the VM list container — NEVER document.body: our tint SVG host lives
-    // on body, so observing body could see our own writes. If the list container isn't
-    // present there is nothing to tint (the tbody is server-rendered on the real page).
+    // Observes the VM list, not body, where the filter hosts live and would feed back.
     var host = document.getElementById("kvm_list") || document.getElementById("kvm_table");
     if (!host) return;
-    // Icon pipeline: repaint once an engine lookup or a complexity measurement lands. Fires
-    // only on a real change (cc-theme.js), so it settles instead of looping.
+    // Repaints when an engine lookup or a complexity measurement lands; cc-theme.js fires only on
+    // a real change, so this settles.
     try { if (window.CCTheme && window.CCTheme.icons) window.CCTheme.icons.onResolved(function () { if (!dead) paintVmIcons(); }); } catch (e) {}
-    // debounced: the VM list re-renders in bursts; re-apply at most every ~300ms.
-    // (childList only — we never observe attributes, so our own style writes can't
-    // re-trigger this into a loop.)
-    // LEADING-EDGE: paint the reskin in the SAME frame the VM rows appear (a MutationObserver callback
-    // runs before the browser paints) instead of 300ms later — the trailing debounce was the visible
-    // "theme renders slowly after a tab switch" delay. A burst still coalesces into one trailing pass.
+    // Leading edge: a MutationObserver callback runs before the browser paints, so the rows are
+    // restyled in the frame they appear. A burst coalesces into one trailing pass within 300ms.
     function vmSweep() {
       moPending = true; moTrail = false;
-      try { mo.disconnect(); } catch (e) {}   // our own badge writes (subtree) must not re-fire us during the pass
+      try { mo.disconnect(); } catch (e) {}   // our own writes must not re-fire the observer
       if (!dead) { try { apply(); } catch (e) {} }
-      // #54: the FIRST real pass is what the tab-load spinner was covering for; later native rebuilds
-      // (polling, a VM action) are fast/invisible already and must not re-arm the overlay. Same minimum-
-      // visible-time guard as docker.js's #33 (moSweep) - clearing the instant a fast pass finishes never
-      // gave the spinner a chance to actually paint a frame.
+      // The first pass ends the tab-load spinner, after a minimum visible time so it paints at
+      // least one frame; later native rebuilds do not re-arm it.
       if (!ccFirstPaintDone) {
         ccFirstPaintDone = true;
         var ccEnhMinMs = 400, ccEnhElapsed = Date.now() - ccEnhBusyStart;
@@ -1182,20 +1051,15 @@
       vmSweep();
     });
     mo.observe(host, { childList: true, subtree: true });
-    // paint immediately if the list is already populated (observer won't fire without a future mutation)
+    // the observer only fires on a later mutation, so paint a list that is already there
     try { if (!moPending && host.querySelector("tr")) vmSweep(); } catch (e) {}
-    // #22: the VM-usage-stats table (#vmstats) is LAZILY rendered when its subtab is first opened, so an
-    // observer bound to #vmstats here would miss it. Bind to the STABLE #displaybox instead (always present
-    // on /VMs) and re-wrap the readout cells whenever anything under it changes. Debounced; the
-    // already-wrapped guard means our own wrap can't loop it. Cheap no-op while #vmstats isn't there.
+    // #vmstats renders only when its subtab first opens, so the observer sits on #displaybox.
     try {
       var dbox = document.getElementById("displaybox");
       if (dbox && !smo) {
         wrapVmStats();
-        // #8 (user: "flippt bei jeder Aktualisierung kurz ins native Design"): re-wrap SYNCHRONOUSLY in
-        // the observer callback (MutationObserver runs as a microtask BEFORE the browser paints), so the
-        // re-badging lands before the native cells are ever shown — no flash. The already-wrapped guard in
-        // wrapVmStats makes our own DOM writes a cheap no-op on the follow-up callback (no loop).
+        // Wraps synchronously in the callback, before the browser paints, so the native cells
+        // never flash; the wrapped check turns our own writes into a no-op.
         smo = new MutationObserver(function () { if (dead) return; wrapVmStats(); });
         smo.observe(dbox, { childList: true, subtree: true });
       }
@@ -1216,23 +1080,15 @@
   }
   function arm() {
     dead = false;
-    // #54 (user: "der vm tab dauert ewig bis er geöffnet wird ... spinner anzeigen solange es lädt"): same
-    // mechanism as docker.js's #33 - header.js's ccLoadState() holds the native tab-load overlay open while
-    // html.cc-enh-busy is set, with a minimum visible time so a fast enhancement pass still gets a chance to
-    // paint at least one frame. The VM tab never had this at all (unlike Docker, pre-#33). This does NOT
-    // touch the real bottleneck (VMMachines.php itself takes ~700ms server-side for the libvirt query,
-    // before the browser even starts rendering - not CC's code, not fixable client-side) - it only closes
-    // the gap AFTER the page starts arriving, same as #33 did for Docker.
+    // header.js ccLoadState() keeps the native tab-load overlay open while html.cc-enh-busy is set,
+    // as on the Docker tab, so the page does not show half-enhanced.
     document.documentElement.classList.add("cc-enh-busy");
     ccEnhBusyStart = Date.now();
     setTimeout(function () { document.documentElement.classList.remove("cc-enh-busy"); }, 5000);
     apply();
     connectObserver();
-    // The VM list tbody (#kvm_list) is usually populated by an AJAX loadlist() AFTER this
-    // defer-loaded script runs — so connectObserver() no-ops (no tbody yet) and the first
-    // apply() finds nothing. That is why the tint "sometimes" didn't take: a timing race,
-    // not the colour code. Retry attaching the observer AND re-applying for a short window
-    // until the list appears and is tinted, so a late-rendered VM list still colours.
+    // #kvm_list is usually filled by an AJAX loadlist() after this script runs, so the observer
+    // and apply() retry for a short window until the list is there.
     var tries = 0;
     var poll = setInterval(function () {
       if (dead) { clearInterval(poll); return; }
@@ -1245,29 +1101,25 @@
     liveTimer = setInterval(function () {
       try { fetch(PROXY + "?path=state", { headers: { Accept: "application/json" } }).then(function (r) { if (r.status === 404 || r.status === 410) teardown(); }).catch(function () {}); } catch (e) {}
     }, 8000);
-    // live BW rate: only spend the (heavy) /api/vms round-trip while a VM is actually RUNNING — when all
-    // are stopped the badges show the configured cap and this is a cheap DOM check, no virsh load.
+    // The /api/vms round trip is expensive, so the live rate is polled only while a VM runs.
     if (!vmBwTimer) vmBwTimer = setInterval(function () {
       try { if (dead) return; if (!document.querySelector("#kvm_list .cc-badge-running")) { vmRate = {}; return; } pollVmBw(); } catch (e) {}
     }, 4000);
   }
   function boot() {
-    // vms.js now loads GLOBALLY via the Buttons hook (CannonadeCommand.VmTab.page) so it reliably runs
-    // on /VMs — the old Menu="VMs" injector went through the tabbed inline-eval branch, which never
-    // executes a <script>, so the whole enhancer was dead. Being global, it must self-gate to /VMs:
-    // otherwise its proxy poll/liveness timers would run on every page.
+    // Loaded on every page through CannonadeCommand.VmTab.page, so it gates itself to /VMs;
+    // otherwise its polling timers would run everywhere.
     try { if (location.pathname.replace(/\/+$/, "") !== "/VMs") return; } catch (e) { return; }
-    try { window.ccVmsApply = apply; } catch (e) {} // same-tab live toggle hook for the CC Settings page (only set on /VMs, never on the Settings page -> no VmTab.css bleed)
-    if (localStorage.getItem("cc.enable.vms") === "0") return; // area disabled in CC settings
-    // prime the limits, then colour the gears + fill the BW badges once they land (the first
-    // enhanceCells runs before this async load resolves, so the rows build "unset" and this fixes them).
+    try { window.ccVmsApply = apply; } catch (e) {} // the settings page's live toggle hook
+    if (localStorage.getItem("cc.enable.vms") === "0") return;
+    // The first enhanceCells builds the rows before the limits arrive, so the gears and BW
+    // badges are refreshed once they do.
     loadVmLims().then(function () { try { refreshAllRes(); } catch (e) {} });
-    loadVmHost(); // prime the host CPU topology for the editor's graphical core-picker (static, once)
+    loadVmHost();
     try {
       arm();
-      // Clicking a VM ICON no longer opens the native dropdown — the action icons FLASH instead, pointing
-      // the user at the actions column (verbatim mirror of docker.js boot() logo flash). If there is no CC
-      // action bar (theming off) the native menu opens as before.
+      // A click on a VM icon flashes the action bar instead of opening the native menu, as on the
+      // Docker tab. Without a CC action bar the native menu opens.
       if (!window.__ccVmLogoFlash) {
         window.__ccVmLogoFlash = true;
         document.addEventListener("click", function (e) {
@@ -1277,18 +1129,20 @@
             var hand = e.target && e.target.closest ? e.target.closest("#kvm_list td.vm-name span.hand") : null;
             if (!hand) return;
             var row2 = hand.closest("tr"), bar2 = row2 && row2.querySelector(".cc-actbar");
-            if (!bar2) return; // no CC bar -> let the native menu open
+            if (!bar2) return;
             e.preventDefault(); e.stopPropagation();
             bar2.classList.add("cc-act-flash");
             setTimeout(function () { bar2.classList.remove("cc-act-flash"); }, 1600);
           } catch (e2) {}
         }, true);
       }
-      window.addEventListener("storage", function (e) { try { if (!dead && e && e.key && e.key !== "cc.stateCache" && /^ccv?\./.test(e.key)) apply(); } catch (e2) {} }); // cc.* AND the VM tab's own ccv.* (accent/iconcolor) — else an adopt-OFF own-colour pick never live-updates. // cc.stateCache EXCLUDED: docker.js rewrites it every 9s, which would repaint this area on a 9s loop in every other open tab
-      // persistent re-probe (NEVER cleared): re-arm when the proxy returns, so a
-      // transient gap during a plugin UPDATE doesn't kill the tint until reload.
+      // cc.* and the VM tab's own ccv.* keys; cc.stateCache is skipped because docker.js rewrites
+      // it every 9s.
+      window.addEventListener("storage", function (e) { try { if (!dead && e && e.key && e.key !== "cc.stateCache" && /^ccv?\./.test(e.key)) apply(); } catch (e2) {} });
+      // Re-arms when the proxy comes back, so the gap during a plugin update does not end the
+      // enhancer until a reload.
       setInterval(function () { try { if (!dead) return; fetch(PROXY + "?path=state", { headers: { Accept: "application/json" } }).then(function (r) { if (r.ok) arm(); }).catch(function () {}); } catch (e) {} }, 8000);
-    } catch (e) { /* never break Unraid's VM page */ }
+    } catch (e) {}
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();

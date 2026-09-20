@@ -3,12 +3,10 @@ Title="CannonadeCommand"
 Icon="cannonadecommand.png"
 ---
 <?php
-/* CannonadeCommand settings (Settings > Utilities). Appearance prefs (badge
-   accent colour, per-view column visibility, default view, row density) live in
-   the browser's localStorage under cc.* keys and are picked up LIVE by the
-   Docker-tab enhancer via the storage event. The Notifications card is the one
-   piece of engine-side config: it is read/written through the same-origin proxy
-   and persisted on the flash in config.json (kept on uninstall, like the plan). */
+/* Settings > Utilities. Appearance prefs live in localStorage under cc.* keys and reach the
+   Docker-tab enhancer live through the storage event. The Notifications card is the one piece of
+   engine config: it goes through the same-origin proxy into config.json on the flash, which
+   survives an uninstall like the start plan. */
 ?>
 <link type="text/css" rel="stylesheet" href="<?autov('/plugins/cannonadecommand/styles/docker.css')?>">
 <div id="cc-settings" class="cc-root"></div>

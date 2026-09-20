@@ -10,7 +10,7 @@ $sock  = getenv('CC_SOCK') ?: '/var/run/cannonadecommand.sock';
 // validates the container name against the live list and never exposes
 // create/exec/build); plan/apply: the start-order plan. Nothing else is forwarded.
 // vms: read-only VM list + current limits; vmlimits: apply CPU-pin/cap, RAM, bandwidth to
-// ONE VM (the engine validates the name against the live libvirt domain list, uses only
+// one VM (the engine validates the name against the live libvirt domain list, uses only
 // virsh --config/--live for CPU/RAM and host-side iptables physdev hashlimit for bandwidth,
 // and never virsh-defines/undefines/creates a domain).
 // icons: batch name -> icon-source lookup, answered from the engine's cache only
@@ -23,8 +23,8 @@ $allow = ['state' => ['GET'], 'stats' => ['GET'], 'hostcpu' => ['GET'], 'hostnet
 $path   = isset($_GET['path']) ? preg_replace('/[^a-z]/', '', $_GET['path']) : '';
 $method = $_SERVER['REQUEST_METHOD'];
 
-// iconsvg is the ONE path that does not answer JSON — it hands back SVG artwork,
-// cached hard by the browser so 50 rows cost 50 requests once and none after that.
+// iconsvg answers with SVG artwork instead of JSON, cached by the browser so each
+// icon is fetched once.
 if ($path === 'iconsvg') {
     header('Content-Type: image/svg+xml');
     header('Cache-Control: public, max-age=86400');
@@ -61,10 +61,9 @@ curl_setopt_array($ch, [
     CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Accept: application/json'],
 ]);
 if ($method === 'PUT' || $method === 'POST') {
-    // Writes arrive FORM-ENCODED (csrf_token=...&data=<json>) — Unraid's emhttp only
-    // accepts POSTs whose csrf_token sits in the form body (the query-string variant is
-    // dropped with an empty 200, which ate every save). Unwrap the JSON from `data`;
-    // fall back to the raw body for old callers that still send plain JSON.
+    // Writes arrive form-encoded (csrf_token=...&data=<json>) because emhttp drops a POST
+    // whose csrf_token is not in the form body with an empty 200. Unwrap the JSON from
+    // `data`, or pass a plain JSON body through as it is.
     $body = file_get_contents('php://input');
     if (isset($_POST['data'])) {
         $body = $_POST['data'];

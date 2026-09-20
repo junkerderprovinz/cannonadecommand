@@ -7,9 +7,8 @@ PIDFILE=/var/run/cannonadecommand.pid
 DATA=/boot/config/plugins/cannonadecommand
 LOG=/var/log/cannonadecommand.log
 
-# Truth = a process running the actual binary, NOT the pidfile: `setsid CMD &` can fork,
-# making $! the wrong pid — stop() then killed nothing and every update kept serving the
-# OLD engine forever ("Ruecklese fehlt / engine older than UI").
+# Checks for a process running the binary rather than trusting the pidfile, since
+# `setsid CMD &` can fork and leave $! pointing at the wrong pid.
 is_running() { pgrep -f "$BIN" >/dev/null 2>&1; }
 
 start() {
@@ -24,8 +23,8 @@ start() {
 
 stop() {
   [ -f "$PIDFILE" ] && kill "$(cat "$PIDFILE")" 2>/dev/null
-  # Belt: kill EVERY process running the binary (exact path — never matches this script),
-  # then wait for graceful exit so a restart cannot race the socket rebind.
+  # The pidfile can be stale, so kill every process running the binary (the full path
+  # never matches this script) and wait for it to exit before a restart rebinds the socket.
   for p in $(pgrep -f "$BIN" 2>/dev/null); do kill "$p" 2>/dev/null; done
   for _ in $(seq 1 20); do is_running || break; sleep 0.25; done
   for p in $(pgrep -f "$BIN" 2>/dev/null); do kill -9 "$p" 2>/dev/null; done

@@ -4,17 +4,13 @@ Icon="cannonadecommand.png"
 Link="cc-tokens-hook"
 ---
 <?php
-/* CannonadeCommand GLOBAL hook. Menu="Buttons" => Unraid auto-injects the same-basename
-   sheet sheets/CannonadeCommand.Tokens.css into <head> of EVERY page (like the Header /
-   Favorites hooks). It is the theme engine's foundation: the semantic colour tokens + the
-   size canon, defined once on <html>, so every CC sheet inherits them and a component
-   auto-adapts to all Unraid themes (the light override keys on Theme--white/azure) and the
-   accent/rainbow modes. Loaded at :94, BEFORE the area sheets at :95+, so the tokens are
-   defined first. The sheet is only custom-property definitions - inert until a gated CC
-   sheet reads a token. Link="cc-tokens-hook" renders a bare <div>, no visible icon.
+/* Menu="Buttons" makes Unraid auto-inject sheets/CannonadeCommand.Tokens.css into the <head> of
+   every page. It defines the semantic colour tokens and the size canon once on <html>, so every
+   CC sheet inherits them and follows all Unraid themes (the light override keys on
+   Theme--white/azure) and the accent/rainbow modes. Loaded at :94, before the area sheets at
+   :95+, so the tokens exist first. Link="cc-tokens-hook" renders a bare <div>, no icon.
 
-   It ALSO loads the shared theme MODULE (scripts/cc-theme.js) synchronously — not defer — so
-   window.CCTheme (idealText + the ONE persisted rainbow seed + palette/rbColor) exists before
-   the deferred area scripts (header at :95, docker/settings/shares/...) run. */
+   cc-theme.js loads synchronously rather than deferred, so window.CCTheme (idealText, the
+   persisted rainbow seed, palette/rbColor) exists before the deferred area scripts run. */
 ?>
 <script src="<?autov('/plugins/cannonadecommand/scripts/cc-theme.js')?>"></script>

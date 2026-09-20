@@ -4,24 +4,14 @@ Icon="cannonadecommand.png"
 Link="cc-vmtab-hook"
 ---
 <?php
-/* CannonadeCommand GLOBAL hook for the VM-tab stylesheet. Registered under
-   Menu="Buttons" so Unraid AUTO-INJECTS the same-basename sheet
-   (sheets/CannonadeCommand.VmTab.css) into the <head> of EVERY page — exactly like
-   the Header/Shares/SettingsGrid hooks. That is the ONLY reliable way to load it:
-   the VM area's own CannonadeCommand.VMs.page is Menu="VMs" (title-less injector for
-   vms.js) and a manual <link> there does NOT load, which is why the VM-tab CSS
-   (badges + alignment) never applied. All rules are gated behind html.cc-vms-on,
-   which vms.js sets only when the VM area + master theming are on, so this sheet is
-   inert on every other page. Link="cc-vmtab-hook" renders a bare <div> instead of a
-   visible CC menu icon (we only restyle, never add an icon).
+/* Registered under Menu="Buttons" so Unraid auto-injects sheets/CannonadeCommand.VmTab.css into
+   the <head> of every page, like the Header/Shares/SettingsGrid hooks; a <link> in a Menu="VMs"
+   page does not load. All rules are gated behind html.cc-vms-on, which vms.js sets only when the
+   VM area and master theming are on. Link="cc-vmtab-hook" renders a bare <div> instead of a
+   visible icon.
 
-   vms.js is ALSO loaded here (not from a Menu="VMs" page): Unraid's /VMs page is
-   Tabs="true", so a title-less child page goes through the tabbed layout's inline-eval
-   branch — which does NOT execute a <script> tag (dynamically eval'd markup never runs
-   script elements). That is why the whole VM enhancer was inert ("VM tab completely
-   unchanged"): vms.js never ran, so html.cc-vms-on was never set and this sheet couldn't
-   apply. Loading it from this Buttons hook puts it in the <head> of every page like
-   header.js/shares.js, bypassing the inline-eval branch entirely. vms.js self-gates to
-   /VMs, so it is inert elsewhere. */
+   vms.js loads here as well: /VMs is Tabs="true", so a title-less child page goes through the
+   tabbed layout's inline-eval branch, which does not execute <script> tags. vms.js gates itself
+   to /VMs. */
 ?>
 <script defer src="<?autov('/plugins/cannonadecommand/scripts/vms.js')?>"></script>

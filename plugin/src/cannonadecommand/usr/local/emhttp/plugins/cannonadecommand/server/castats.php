@@ -1,17 +1,13 @@
 <?php
 /*
- * Read-only reader for Community Applications' own local template cache, so the
- * Apps-tab card can show a download count / last-updated month without a per-app
- * round trip. CA itself never puts this on the card face — only inside its own
- * Info popup, fetched one app at a time when that popup opens — but it already
- * caches the whole catalog (name/repo/downloads/last-update) in one file for its
- * own use, so this reads that same file instead of re-deriving the data.
+ * Reads Community Applications' local template cache so the Apps-tab card can show
+ * a download count and last-updated month without a per-app round trip. CA shows
+ * these only in its Info popup, fetched per app, but it caches the whole catalog in
+ * one file for its own use.
  *
- * That cache is PHP serialize()'d, not JSON, despite its .json extension (a CA
- * implementation detail, confirmed live). This only ever READS it and degrades
- * to an empty map if CA isn't installed, hasn't populated its cache yet, or ever
- * changes its internal format: a future CA update just means the stat line stops
- * appearing on cards, not a broken Apps tab.
+ * That cache is PHP serialize()'d despite its .json extension. When CA is missing,
+ * has no cache yet or changes the format, the answer is an empty map, so the stat
+ * line disappears from the cards and the Apps tab keeps working.
  */
 header('Content-Type: application/json');
 

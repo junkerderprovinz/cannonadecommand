@@ -3,12 +3,9 @@ Icon="rocket"
 Tag="rocket"
 ---
 <?php
-/* CannonadeCommand - injected into Unraid's native Docker tab.
-   Like ShipLog, this page renders NO visible panel or section of its own (no
-   Title, no content div - that is what produced the stray "bars"). It only
-   loads the styles + the script, which enhance the existing container list in
-   place: a gear in the table header holds every global control, and each row
-   gets clean badges. Data comes from the same-origin PHP proxy. */
+/* Injected into Unraid's Docker tab. The page has no Title and no content of its own, which
+   would render as a stray bar; it only loads the styles and the script, which enhance the
+   existing container list in place. Data comes from the same-origin PHP proxy. */
 ?>
 <link type="text/css" rel="stylesheet" href="<?autov('/plugins/cannonadecommand/styles/docker.css')?>">
 <script defer src="<?autov('/plugins/cannonadecommand/scripts/docker.js')?>"></script>

@@ -2,10 +2,8 @@ Menu="Plugins"
 Icon="cannonadecommand.png"
 ---
 <?php
-/* CannonadeCommand - injected into Unraid's native PLUGINS tab. Renders NO
-   visible panel of its own; it only loads the styles + the script, which
-   decorate the existing #plugin_table in place (badges, pills, accent/rainbow),
-   exactly like the Docker-tab enhancer. */
+/* Injected into Unraid's Plugins tab. It renders no panel of its own; the script decorates the
+   existing #plugin_table in place, like the Docker-tab enhancer. */
 ?>
 <link type="text/css" rel="stylesheet" href="<?autov('/plugins/cannonadecommand/styles/docker.css')?>">
 <script defer src="<?autov('/plugins/cannonadecommand/scripts/plugins.js')?>"></script>
