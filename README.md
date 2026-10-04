@@ -27,16 +27,9 @@ leaves your server.
 
 <br>
 
-<div align="center">
-
-> # 🧪 In development: testers welcome
->
-> **CannonadeCommand is still in development, so bugs can happen.**<br>
-> Everyone is invited to test it and report what they find.
->
-> **[Report a bug](https://github.com/junkerderprovinz/cannonadecommand/issues/new/choose)**
-
-</div>
+<p align="center">
+  <a href="https://github.com/junkerderprovinz/cannonadecommand/issues/new/choose"><img src=".github/assets/in-development.png" alt="In development, testers welcome: report a bug" width="100%"></a>
+</p>
 
 <br>
 
