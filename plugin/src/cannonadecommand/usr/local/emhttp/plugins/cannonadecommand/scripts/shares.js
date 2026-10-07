@@ -28,7 +28,9 @@
   var RB_OFF = window.CCTheme ? window.CCTheme.rbSeed(RB.length) : Math.floor(Math.random() * RB.length); // the persisted seed keeps the rainbow aligned across areas
   // Rainbow is a global mode, read directly rather than through eff(), so one switch colours
   // every enabled area. Flag mode keeps its own palette in cc.flagpal.
-  function pal() { try { if (g("cc.flagmode", "0") === "1") { var f = JSON.parse(g("cc.flagpal", "null")); if (f && f.length) return f; } var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
+  function storedPal() { try { if (g("cc.flagmode", "0") === "1") { var f = JSON.parse(g("cc.flagpal", "null")); if (f && f.length) return f; } var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
+  // On a light theme the near-white slots are swapped, see CCTheme.surfacePalette.
+  function pal() { var p = storedPal(); return (window.CCTheme && window.CCTheme.surfacePalette) ? window.CCTheme.surfacePalette(p, accent()) : p; }
   function rbOn() { return g("cc.rainbow", "0") === "1"; }
   function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "1") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; } // rotation defaults to on, as in the other areas
   // rainbow "active only" sub-mode (cc.rbmode=active): idle badges neutral, active painted, hover colours.

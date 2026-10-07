@@ -53,8 +53,9 @@ const reset = () => { Object.keys(store).forEach(k => delete store[k]); };
 const dockerApi = new Function('localStorage',
   'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
+  'var window = {};\n' +   // no CCTheme, so the palette readers answer the stored palette
   'var containerNames = [];\n' +
-  grabFn('themingOn') + '\n' + grabFn('idealText') + '\n' + grabFn('ccPalActive') + '\n' + grabFn('ccRbColor') + '\n' + grabFn('stampCardRainbow') + '\n' +
+  grabFn('themingOn') + '\n' + grabFn('idealText') + '\n' + grabFn('ccPalStored') + '\n' + grabFn('ccPalActive') + '\n' + grabFn('ccRbColor') + '\n' + grabFn('stampCardRainbow') + '\n' +
   'return { stampCardRainbow: stampCardRainbow, ccRbColor: ccRbColor, idealText: idealText, setNames: function (n) { containerNames = n; } };'
 )(global.localStorage);
 

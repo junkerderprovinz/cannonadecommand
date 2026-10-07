@@ -56,7 +56,7 @@
   // (cc.rainbowrot, default on) and the shared seed.
   function rbColor(i, accent, def) {
     if (g("cc.rainbow", "0") !== "1") return accent;
-    var p = palette(def), off = g("cc.rainbowrot", "1") === "0" ? 0 : rbSeed(p.length);
+    var p = surfacePalette(palette(def), accent), off = g("cc.rainbowrot", "1") === "0" ? 0 : rbSeed(p.length);
     return p[((i % p.length) + off) % p.length];
   }
 
@@ -84,6 +84,36 @@
     var p = palette(), best = null, bl = -1;
     for (var k = 0; k < p.length; k++) { var L = lumOf(p[k]); if (L > bl) { bl = L; best = p[k]; } }
     return (best && bl >= floor) ? best : (accent || hex);
+  }
+
+  // The mirror of liftDark for Unraid's white and azure themes, where Tokens.css turns the
+  // surfaces white and light grey: a near-white slot (a flag's white stripe) paints a badge with no
+  // visible edge there, so a slot above 255 - floor is swapped for the palette's darkest slot, or
+  // for the accent when the whole palette is light. The floor is liftDark's, mirrored, so the same
+  // flag colours survive on either side. pal is the palette to search, the active one by default.
+  function liftLight(hex, accent, floor, pal) {
+    if (floor == null) floor = LUM_FLOOR;
+    if (!hex) return hex;
+    var ceil = 255 - floor;
+    if (lumOf(hex) <= ceil) return hex;
+    var p = pal || palette(), best = null, bl = 256;
+    for (var k = 0; k < p.length; k++) { var L = lumOf(p[k]); if (L < bl) { bl = L; best = p[k]; } }
+    return (best && bl <= ceil) ? best : (accent || hex);
+  }
+  function lightTheme() {
+    var c = document.documentElement.classList;
+    return c.contains("Theme--white") || c.contains("Theme--azure");
+  }
+  // The guard for the theme the page is in, for a colour that sits on CC's own surfaces.
+  function liftSurface(hex, accent, floor) {
+    return lightTheme() ? liftLight(hex, accent, floor) : liftDark(hex, accent, floor);
+  }
+  // The palette as the fills on a light theme need it, every near-white slot swapped as above, so
+  // each area's palette reader covers its badges, buttons and hover stamps in one place. A dark
+  // theme gets the palette as stored.
+  function surfacePalette(p, accent) {
+    if (!p || !lightTheme()) return p;
+    return p.map(function (c) { return liftLight(c, accent, LUM_FLOOR, p); });
   }
 
   // Colour modes for the select replacements header.js does not paint: .cc-dsel (Docker form, CC
@@ -478,7 +508,8 @@
     registerSelectSync: registerSelectSync, nextSelIndex: nextSelIndex, wheelStepSelect: wheelStepSelect,
     gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily,
     CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG,
-    lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark,
+    lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark, liftLight: liftLight, lightTheme: lightTheme,
+    liftSurface: liftSurface, surfacePalette: surfacePalette,
     icons: {
       MODES: ICON_MODES, SIMPLE_MAX: ICON_SIMPLE_MAX,
       globalMode: iconGlobalMode, mode: iconMode, override: iconOverride, setOverride: setIconOverride,

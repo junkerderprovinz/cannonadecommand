@@ -37,9 +37,10 @@ function grabFn(name) {
 const sgApi = new Function('localStorage',
   'var RB = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFF = 0;\n' +
+  'var window = {};\n' +   // no CCTheme, so the palette readers answer the stored palette
   grabFn('g') + '\n' + grabFn('eff') + '\n' + grabFn('accent') + '\n' +
   grabFn('bgAdopting') + '\n' + grabFn('bgColorEff') + '\n' + grabFn('badgeBg') + '\n' + grabFn('bgColorIsCustom') + '\n' + grabFn('tintOnEff') + '\n' +
-  grabFn('rbOn') + '\n' + grabFn('rbNeutral') + '\n' + grabFn('pal') + '\n' + grabFn('rbColor') + '\n' + grabFn('tintColorEff') + '\n' +
+  grabFn('rbOn') + '\n' + grabFn('rbNeutral') + '\n' + grabFn('storedPal') + '\n' + grabFn('pal') + '\n' + grabFn('rbColor') + '\n' + grabFn('tintColorEff') + '\n' +
   'return { g: g, eff: eff, accent: accent, bgAdopting: bgAdopting, bgColorEff: bgColorEff, badgeBg: badgeBg, bgColorIsCustom: bgColorIsCustom, tintOnEff: tintOnEff, rbColor: rbColor, tintColorEff: tintColorEff };'
 )(global.localStorage);
 

@@ -120,7 +120,9 @@
   var RB_OFFSET = window.CCTheme ? window.CCTheme.rbSeed(RB_PAL.length) : Math.floor(Math.random() * RB_PAL.length); // the shared seed, so the rotation matches the other areas
   // Rainbow is a global mode, so cc.rainbow, cc.rbpal and cc.rainbowrot are read directly, as in
   // docker.js, while accent() stays adopt-gated. Flag mode reads its own cc.flagpal, never cc.rbpal.
-  function pal() { try { if (ls("cc.flagmode") === "1") { var f = JSON.parse(ls("cc.flagpal") || "null"); if (f && f.length) return f; } var jp = JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) return jp; } catch (e) {} return RB_PAL; }
+  function storedPal() { try { if (ls("cc.flagmode") === "1") { var f = JSON.parse(ls("cc.flagpal") || "null"); if (f && f.length) return f; } var jp = JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) return jp; } catch (e) {} return RB_PAL; }
+  // On a light theme the near-white slots are swapped, see CCTheme.surfacePalette.
+  function pal() { var p = storedPal(); return (window.CCTheme && window.CCTheme.surfacePalette) ? window.CCTheme.surfacePalette(p, accent()) : p; }
   function idealText(bg) { var n = parseInt(String(bg).replace("#", ""), 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
   function accent() { return eff("accent") || "#2f6feb"; }
   function colorFor(i) {
@@ -176,9 +178,9 @@
   // The icon pipeline's target colour, the same contract as docker.js iconInk(). With the adopt
   // toggle on it is the black or white contrast colour for the resolved background, whatever the
   // tint toggle says. Otherwise it is "" while the tint is off and the picked tint colour, lifted
-  // out of the dark end, while it is on, whether or not the background badge is on too.
+  // off the surface colour, while it is on, whether or not the background badge is on too.
   // forTint doubles the floor because a luminance tint lands at about half the target's luma (see
-  // CCTheme.liftDark); idealText() only answers #fff or #161616, so the contrast branch needs no
+  // CCTheme.liftSurface); idealText() only answers #fff or #161616, so the contrast branch needs no
   // guard.
   function plugIconInk(forTint) {
     if (iconBgAdoptsP()) return idealText(colorFor(5));
@@ -186,8 +188,8 @@
     var pick = eff("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
-    if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
-    return ccHex6(window.CCTheme.liftDark(pick, accent(), window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1)));
+    if (!window.CCTheme || !window.CCTheme.liftSurface) return ccHex6(pick);
+    return ccHex6(window.CCTheme.liftSurface(pick, accent(), window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1)));
   }
   // A glyph's css colour and the luminance tint filter never apply together, as in docker.js
   // glyphInkAndFilter(); a separate function so a test can pin it. pInk already resolves to the

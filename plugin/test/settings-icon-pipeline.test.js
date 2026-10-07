@@ -19,7 +19,7 @@ const byId = {};
 const document = {
   createElement: () => ({ style: {}, setAttribute() {}, appendChild() {} }),
   getElementById: id => byId[id] || null,
-  documentElement: { style: { setProperty() {}, removeProperty() {} }, classList: { toggle() {} } },
+  documentElement: { style: { setProperty() {}, removeProperty() {} }, classList: { toggle() {}, contains() { return false; } } },
   body: { appendChild() {} },
   cookie: ''
 };

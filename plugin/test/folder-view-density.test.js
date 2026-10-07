@@ -83,6 +83,7 @@ ok('minimalRow() is gone, folderChip() having replaced it rather than joined it'
 const dockerApi = new Function('document', 'localStorage',
   'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
+  'var window = {};\n' +   // no CCTheme, so the palette readers answer the stored palette
   'var LANG = "en";\n' +
   'var T = { en: { resume: "Resume", stop: "Stop", start: "Start" } };\n' +
   'var iconCache = {};\n' +
@@ -94,7 +95,7 @@ const dockerApi = new Function('document', 'localStorage',
   grabVar('FOLDER_DENSITY_KEY') + '\n' +
   grabFn('el') + '\n' + grabFn('norm') + '\n' + grabFn('t') + '\n' +
   grabFn('stateLabel') + '\n' + grabFn('showUnhealthy') + '\n' + grabFn('stateBadge') + '\n' +
-  grabFn('idealText') + '\n' + grabFn('ccPalActive') + '\n' + grabFn('ccRbColor') + '\n' +
+  grabFn('idealText') + '\n' + grabFn('ccPalStored') + '\n' + grabFn('ccPalActive') + '\n' + grabFn('ccRbColor') + '\n' +
   grabFn('themingOn') + '\n' + grabFn('effc') + '\n' + grabFn('stampCardRainbow') + '\n' +
   grabFn('iconFor') + '\n' + grabFn('actBtn') + '\n' + grabFn('tintAct') + '\n' +
   grabFn('folderChip') + '\n' + grabFn('folderListRow') + '\n' +

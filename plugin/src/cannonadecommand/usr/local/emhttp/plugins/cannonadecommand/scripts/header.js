@@ -26,13 +26,16 @@
   // switch colours every enabled area whatever this bar's adopt state is. The per-area accent
   // stays adopt-gated for the single-colour look. Flag mode keeps its own palette in cc.flagpal,
   // so neither palette leaks into the other.
-  function pal() { try { if (g("cc.flagmode", "0") === "1") { var f = JSON.parse(g("cc.flagpal", "null")); if (f && f.length) return f; } var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
+  function storedPal() { try { if (g("cc.flagmode", "0") === "1") { var f = JSON.parse(g("cc.flagpal", "null")); if (f && f.length) return f; } var p = JSON.parse(g("cc.rbpal", "null")); if (p && p.length) return p; } catch (e) {} return RB; }
+  // On a light theme the near-white slots are swapped, see CCTheme.surfacePalette.
+  function pal() { var p = storedPal(); return (window.CCTheme && window.CCTheme.surfacePalette) ? window.CCTheme.surfacePalette(p, accent()) : p; }
   function rbOn() { return g("cc.rainbow", "0") === "1"; }
   function rbColor(i) { if (!rbOn()) return accent(); var off = g("cc.rainbowrot", "1") === "0" ? 0 : RB_OFF; var p = pal(); return p[(i + off) % p.length]; } // rotation defaults to on, as in the other areas
   function lumOf(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return 255; var n = parseInt(m[1], 16); return 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); }
-  // A badge inside a popup sits on the dark modal, where a near-black palette slot such as the
-  // German flag's black stripe would be invisible. Such a slot is swapped for the brightest one in
-  // the palette, which stays on theme, or for the accent when the whole palette is dark.
+  // A badge inside a popup sits on the dark modal, which stays dark on a light theme too, where a
+  // near-black palette slot such as the German flag's black stripe would be invisible. Such a slot
+  // is swapped for the brightest one in the palette, which stays on theme, or for the accent when
+  // the whole palette is dark.
   // The threshold of 28 catches black while keeping dark flag colours that read perfectly well
   // against white text, such as #006233 (63.3) or navy #002868 (35.4). A higher bar breaks a flag
   // palette, which is the flag repeated: swapping its green for the brightest slot turns the

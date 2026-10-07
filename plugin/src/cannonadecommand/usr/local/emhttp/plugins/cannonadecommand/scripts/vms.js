@@ -74,7 +74,7 @@
     return ccAccent();
   }
   // The icon ink, as in docker.js iconInk(): with adopt on, the black/white contrast for the
-  // resolved background; otherwise the picked tint colour lifted out of the dark end, or "" while
+  // resolved background; otherwise the picked tint colour kept off the surface colour, or "" while
   // Einfärben is off. The badge colour is never the ink. `forTint` doubles the floor because a
   // luminance tint outputs roughly half the target's luma.
   function vmIconInk(forTint) {
@@ -83,8 +83,8 @@
     var pick = effK("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
-    if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
-    return ccHex6(window.CCTheme.liftDark(pick, ccAccent(), window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1)));
+    if (!window.CCTheme || !window.CCTheme.liftSurface) return ccHex6(pick);
+    return ccHex6(window.CCTheme.liftSurface(pick, ccAccent(), window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1)));
   }
   // Takes the host and filter ids so the black and white adopt filters can coexist with the
   // page-wide one.
@@ -197,11 +197,13 @@
   }
   function ccShape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
   // The active palette, as docker.js ccPalActive(): flag mode keeps its own cc.flagpal.
-  function vmPalActive() {
+  function vmPalStored() {
     var pal = RB_PAL;
     try { var fjp = ls("cc.flagmode") === "1" ? JSON.parse(ls("cc.flagpal") || "null") : null; var jp = (fjp && fjp.length) ? fjp : JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e) {}
     return pal;
   }
+  // On a light theme the near-white slots are swapped, see CCTheme.surfacePalette.
+  function vmPalActive() { var p = vmPalStored(); return (window.CCTheme && window.CCTheme.surfacePalette) ? window.CCTheme.surfacePalette(p, ccAccent()) : p; }
   // One palette slot, rotated the same way applyRainbowPalette() rotates the kinds.
   function vmRbColor(i) { var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET; return vmPalActive()[(i + off) % vmPalActive().length]; }
   // Stamps --cc-rb-* on <html> from the global rainbow keys, as docker.js does; cleared when off.
@@ -653,7 +655,7 @@
     // --cc-rb-c/--cc-rb-ct are stamped; an inline !important background would beat the sheet.
     var neutral = rb && ls("cc.rbmode") === "active";
     // flag mode keeps its own palette in cc.flagpal
-    var pal = RB_PAL; try { var fjp = ls("cc.flagmode") === "1" ? JSON.parse(ls("cc.flagpal") || "null") : null; var jp = (fjp && fjp.length) ? fjp : JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) pal = jp; } catch (e2) {}
+    var pal = vmPalActive();
     var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
     Array.prototype.slice.call(bar.querySelectorAll(".cc-actbtn")).forEach(function (b2, i2) {
       var bg = "#2e2e2e", tx = "#7a7a7a";
@@ -877,6 +879,7 @@
           if (ls("cc.theming") !== "0" && ls("cc.rainbow") === "1") {
             var _off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET, _pal = RB_PAL;
             try { if (ls("cc.flagmode") === "1") { var _f = JSON.parse(ls("cc.flagpal") || "null"); if (_f && _f.length) _pal = _f; } else { var _r = JSON.parse(ls("cc.rbpal") || "null"); if (_r && _r.length) _pal = _r; } } catch (_e) {}
+            if (window.CCTheme && window.CCTheme.surfacePalette) _pal = window.CCTheme.surfacePalette(_pal, ccAccent());
             var _c = _pal[(i + _off) % _pal.length], _n = parseInt(String(_c).replace("#", ""), 16), _L = 0.299 * (_n >> 16 & 255) + 0.587 * (_n >> 8 & 255) + 0.114 * (_n & 255);
             row.style.setProperty("--cc-rb-c", _c); row.style.setProperty("--cc-rb-ct", _L > 150 ? "#161616" : "#fff");
           } else { row.style.removeProperty("--cc-rb-c"); row.style.removeProperty("--cc-rb-ct"); }

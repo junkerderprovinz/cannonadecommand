@@ -69,7 +69,7 @@ const vmsApi = new Function('document', 'localStorage', 'window',
   'var RB_OFFSET = 0;\n' +
   grabFn('ls') + '\n' + grabFn('vmTintOff') + '\n' + grabFn('effK') + '\n' + grabFn('iconBgAdoptsV') + '\n' + grabFn('ccIdeal') + '\n' + grabFn('ccAccent') + '\n' +
   grabFn('ccHex6') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' +
-  grabFn('vmPalActive') + '\n' + grabFn('vmRbColor') + '\n' + grabFn('vmAdoptTint') + '\n' +
+  grabFn('vmPalStored') + '\n' + grabFn('vmPalActive') + '\n' + grabFn('vmRbColor') + '\n' + grabFn('vmAdoptTint') + '\n' +
   grabFn('vmTintOn') + '\n' + grabFn('vmBgColor') + '\n' + grabFn('vmIconInk') + '\n' + grabFn('vmItemAdoptInk') + '\n' +
   grabFn('ensureTintFilterAs') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('vmLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
   'return { effK: effK, vmTintOn: vmTintOn, vmBgColor: vmBgColor, vmIconInk: vmIconInk, vmItemAdoptInk: vmItemAdoptInk, ensureTintFilter: ensureTintFilter, ensureTintFilterAs: ensureTintFilterAs, vmLogoSizes: vmLogoSizes, glyphInkAndFilter: glyphInkAndFilter, ccIdeal: ccIdeal, ccAccent: ccAccent, vmRbColor: vmRbColor, vmAdoptTint: vmAdoptTint };'

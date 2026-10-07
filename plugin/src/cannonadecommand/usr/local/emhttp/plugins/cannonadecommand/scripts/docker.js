@@ -595,7 +595,7 @@
   // settingsgrid.js computes for its tiles; that is the only case where it answers a colour with
   // the tint off. With the adopt toggle off it is "" while the tint is off, whatever the
   // background badge does, which lets the pipeline fall back to the plain native icons, and the
-  // picked tint colour while it is on, lifted out of the dark end by the shared guard. bgColor()
+  // picked tint colour while it is on, kept off the surface colour by the shared guard. bgColor()
   // governs the badge box's own background and never feeds the icon's ink.
   //
   // forTint doubles the floor: a luminance tint lands at about half the target's luma on
@@ -607,9 +607,9 @@
     var pick = effc("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
-    if (!window.CCTheme || !window.CCTheme.liftDark) return ccHex6(pick);
+    if (!window.CCTheme || !window.CCTheme.liftSurface) return ccHex6(pick);
     var floor = window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1);
-    return ccHex6(window.CCTheme.liftDark(pick, effc("accent") || "#2f6feb", floor));
+    return ccHex6(window.CCTheme.liftSurface(pick, effc("accent") || "#2f6feb", floor));
   }
   // The per-item contrast ink. Under the adopt toggle iconInk() answers one representative
   // colour for the whole page, but with the rainbow on the badge each icon sits on rotates per
@@ -848,7 +848,9 @@
   // Flag mode reads the flag's own cc.flagpal and never cc.rbpal, so a flag does not repaint the
   // rainbow swatches and its colours do not leak onto the page once it is off. Every rainbow
   // reader below goes through this.
-  function ccPalActive(def) { try { if (localStorage.getItem("cc.flagmode") === "1") { var f = JSON.parse(localStorage.getItem("cc.flagpal") || "null"); if (f && f.length) return f; } var p = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (p && p.length) return p; } catch (e) {} return def; }
+  function ccPalStored(def) { try { if (localStorage.getItem("cc.flagmode") === "1") { var f = JSON.parse(localStorage.getItem("cc.flagpal") || "null"); if (f && f.length) return f; } var p = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (p && p.length) return p; } catch (e) {} return def; }
+  // On a light theme the near-white slots are swapped, see CCTheme.surfacePalette.
+  function ccPalActive(def) { var p = ccPalStored(def); return (window.CCTheme && window.CCTheme.surfacePalette) ? window.CCTheme.surfacePalette(p, effc("accent") || "#2f6feb") : p; }
   function applyRainbowPalette() {
     var rt = document.documentElement;
     if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") { rt.style.removeProperty("--cc-btn-accent"); RB_KINDS.forEach(function (k) { rt.style.removeProperty("--cc-rb-" + k); rt.style.removeProperty("--cc-rb-" + k + "-t"); }); try { document.querySelectorAll("#docker_list tr.sortable").forEach(function (tr) { tr.style.removeProperty("--cc-rb-c"); tr.style.removeProperty("--cc-rb-ct"); }); } catch (e0) {} return; }

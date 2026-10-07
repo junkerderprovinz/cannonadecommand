@@ -92,7 +92,7 @@ const dockerApi = new Function('document', 'localStorage', 'window',
   'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
   grabFn('effc') + '\n' + grabFn('iconBgAdopts') + '\n' + grabFn('themingOn') + '\n' +
-  grabFn('idealText') + '\n' + grabFn('ccHex6') + '\n' + grabFn('tintOn') + '\n' + grabFn('ccPalActive') + '\n' + grabFn('ccRbColor') + '\n' + grabFn('iconAdoptTint') + '\n' + grabFn('bgColor') + '\n' + grabFn('iconInk') + '\n' + grabFn('itemAdoptInk') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' + grabFn('ensureTintFilterAs') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('ccLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
+  grabFn('idealText') + '\n' + grabFn('ccHex6') + '\n' + grabFn('tintOn') + '\n' + grabFn('ccPalStored') + '\n' + grabFn('ccPalActive') + '\n' + grabFn('ccRbColor') + '\n' + grabFn('iconAdoptTint') + '\n' + grabFn('bgColor') + '\n' + grabFn('iconInk') + '\n' + grabFn('itemAdoptInk') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' + grabFn('ensureTintFilterAs') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('ccLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
   'return { iconInk: iconInk, itemAdoptInk: itemAdoptInk, tintOn: tintOn, bgColor: bgColor, ensureFlatFilter: ensureFlatFilter, ensureMonoFilter: ensureMonoFilter, ensureTintFilter: ensureTintFilter, ensureTintFilterAs: ensureTintFilterAs, ccLogoSizes: ccLogoSizes, glyphInkAndFilter: glyphInkAndFilter, idealText: idealText, effc: effc, iconAdoptTint: iconAdoptTint, ccRbColor: ccRbColor };'
 )(document, global.localStorage, global.window);
 
@@ -225,6 +225,46 @@ console.log('\nThe darkness guard, CCTheme.liftDark, shared with popBadge');
     localStorage.removeItem('cc.rbpal');
     return got === '#ffcc00';
   })());
+}
+
+console.log('\nThe lightness guard, CCTheme.liftLight, the mirror of liftDark for light themes');
+{
+  const html = document.documentElement.classList;
+  const ALGERIA = ['#006233', '#FFFFFF', '#D21034'];
+  const withPal = (p, fn) => { localStorage.setItem('cc.rbpal', JSON.stringify(p)); try { return fn(); } finally { localStorage.removeItem('cc.rbpal'); } };
+  ok('pure white is lowered off the light surface', CCTheme.liftLight('#ffffff', '#2f6feb') !== '#ffffff');
+  ok('a dark colour is left as chosen', CCTheme.liftLight('#006233', '#2f6feb') === '#006233');
+  ok('a flag gold survives the badge ceiling', CCTheme.liftLight('#ffce00', '#2f6feb') === '#ffce00');
+  // The ceiling is 255 minus liftDark's floor, 227: #e2e2e2 (luma 226) stays and
+  // #e4e4e4 (228) does not, as #1c1c1c (28) stays and #1a1a1a (26) is lifted on the dark side.
+  ok('#e2e2e2 sits just under the badge ceiling', CCTheme.liftLight('#e2e2e2', '#2f6feb') === '#e2e2e2');
+  ok('#e4e4e4 is just over it', CCTheme.liftLight('#e4e4e4', '#2f6feb') !== '#e4e4e4');
+  ok('#d5d5d5 clears the badge ceiling', CCTheme.liftLight('#d5d5d5', '#2f6feb') === '#d5d5d5');
+  ok('#d5d5d5 is lowered at the tint ceiling', CCTheme.liftLight('#d5d5d5', '#2f6feb', CCTheme.LUM_FLOOR * 2) !== '#d5d5d5');
+  ok('with an all-light palette the guard falls back to the accent',
+    withPal(['#ffffff', '#fafafa'], () => CCTheme.liftLight('#ffffff', '#2f6feb')) === '#2f6feb');
+  ok('a swapped slot is the darkest of the active palette, so it stays on theme',
+    withPal(ALGERIA, () => CCTheme.liftLight('#FFFFFF', '#2f6feb')) === '#006233');
+
+  html.remove('Theme--white'); html.remove('Theme--azure');
+  ok('a dark theme is not a light theme', CCTheme.lightTheme() === false);
+  ok('on a dark theme liftSurface is liftDark', CCTheme.liftSurface('#000000', '#2f6feb') === CCTheme.liftDark('#000000', '#2f6feb'));
+  ok('on a dark theme white keeps its slot', CCTheme.liftSurface('#ffffff', '#2f6feb') === '#ffffff');
+  ok('on a dark theme the palette comes back as stored', (() => { const p = ALGERIA.slice(); return CCTheme.surfacePalette(p, '#2f6feb') === p; })());
+  ok('on a dark theme ccRbColor paints the white stripe as stored',
+    withPal(ALGERIA, () => { localStorage.setItem('cc.rainbow', '1'); localStorage.setItem('cc.rainbowrot', '0'); const c = dockerApi.ccRbColor(1); localStorage.removeItem('cc.rainbow'); localStorage.removeItem('cc.rainbowrot'); return c; }) === '#FFFFFF');
+
+  for (const theme of ['Theme--white', 'Theme--azure']) {
+    html.add(theme);
+    ok(theme + ' is a light theme', CCTheme.lightTheme() === true);
+    ok(theme + ': liftSurface is liftLight', CCTheme.liftSurface('#ffffff', '#2f6feb') === CCTheme.liftLight('#ffffff', '#2f6feb'));
+    ok(theme + ': black keeps its slot, as it reads on a light surface', CCTheme.liftSurface('#000000', '#2f6feb') === '#000000');
+    ok(theme + ': the white stripe becomes the flag green, the other slots stay',
+      JSON.stringify(CCTheme.surfacePalette(ALGERIA, '#2f6feb')) === JSON.stringify(['#006233', '#006233', '#D21034']));
+    ok(theme + ': ccRbColor paints the white stripe in the flag green',
+      withPal(ALGERIA, () => { localStorage.setItem('cc.rainbow', '1'); localStorage.setItem('cc.rainbowrot', '0'); const c = dockerApi.ccRbColor(1); localStorage.removeItem('cc.rainbow'); localStorage.removeItem('cc.rainbowrot'); return c; }) === '#006233');
+    html.remove(theme);
+  }
 }
 
 console.log('\ndocker.js iconInk(): the target colour both treatments paint with');

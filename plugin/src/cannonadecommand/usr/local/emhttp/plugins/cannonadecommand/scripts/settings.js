@@ -358,14 +358,14 @@
       return st.accent;
     }
     // The same ink contract as docker.js iconInk(): nothing while the tint is off, and otherwise
-    // the picked tint colour lifted out of the dark end, whether or not the badge is on too.
+    // the picked tint colour kept off the surface colour, whether or not the badge is on too.
     // badgeBg() stays the box's own colour and is never the icon's ink. A luminance tint outputs
     // about half the target's luma, so that path doubles the floor.
     function ink(forTint) {
       if (!st.tint) return "";
       if (!/^#[0-9a-f]{6}$/i.test(st.color)) return "";
       var T = window.CCTheme;
-      return (T && T.liftDark) ? hex6(T.liftDark(st.color, st.accent, T.LUM_FLOOR * (forTint ? 2 : 1))) : st.color;
+      return (T && T.liftSurface) ? hex6(T.liftSurface(st.color, st.accent, T.LUM_FLOOR * (forTint ? 2 : 1))) : st.color;
     }
     function host(id) {
       var h = document.getElementById(id);
@@ -961,6 +961,7 @@
       // palG() is scoped inside buildStyleCards, so the palette is read directly here
       var DEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"], p = DEF;   // the shared palette, so the strip matches the rest of the UI
       try { var j = JSON.parse(get("cc.rbpal", "null")); if (j && j.length) p = j; } catch (e) {}
+      if (window.CCTheme && window.CCTheme.surfacePalette) p = window.CCTheme.surfacePalette(p);
       tabBtns.forEach(function (b, i) {
         if (rb) {
           var c = p[i % p.length];
@@ -1485,7 +1486,8 @@
       // Rainbow is a global mode with one switch and one palette in the Badges card, so an area
       // has no rainbow controls of its own, only the accent above. The preview still reflects it.
       var RB2 = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];   // the shared palette, so every preview matches the live UI
-      function palG() { try { if (get("cc.flagmode", "0") === "1") { var fj = JSON.parse(get("cc.flagpal", "null")); if (fj && fj.length) return fj; } var pj = JSON.parse(get("cc.rbpal", "null")); if (pj && pj.length) return pj; } catch (e2) {} return RB2; }
+      function storedPalG() { try { if (get("cc.flagmode", "0") === "1") { var fj = JSON.parse(get("cc.flagpal", "null")); if (fj && fj.length) return fj; } var pj = JSON.parse(get("cc.rbpal", "null")); if (pj && pj.length) return pj; } catch (e2) {} return RB2; }
+      function palG() { var p = storedPalG(); return (window.CCTheme && window.CCTheme.surfacePalette) ? window.CCTheme.surfacePalette(p, acc) : p; }
       // The header and shares areas restyle Unraid tab bars, so their previews are tab pills, one
       // of them active; every other area previews the Docker badges.
       var isTabs = P === "cch." || P === "ccsh.";
@@ -1895,7 +1897,7 @@
   // dark text on a light background and white on a dark one, by perceived luminance
   function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16); var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
   // The preview uses the real palette, so it matches what the Docker tab shows.
-  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; var pal = DEF; try { var fj = get("cc.flagmode", "0") === "1" ? JSON.parse(get("cc.flagpal", "null")) : null; var j = (fj && fj.length) ? fj : JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
+  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; var pal = DEF; try { var fj = get("cc.flagmode", "0") === "1" ? JSON.parse(get("cc.flagpal", "null")) : null; var j = (fj && fj.length) ? fj : JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} if (window.CCTheme && window.CCTheme.surfacePalette) pal = window.CCTheme.surfacePalette(pal, accent); Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
   // Every toggle on this page follows the colour engine. In rainbow mode each takes its own slot
   // from the shared seed, as the badges elsewhere do; otherwise the stamp is cleared and the
   // track's CSS falls back through the shared vars to the accent.
