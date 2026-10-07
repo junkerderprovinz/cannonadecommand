@@ -80,5 +80,56 @@ console.log('\nThe card surface follows the light themes like the text on it');
   ok('the info card reads the token', /#sidenavContent \.cc-ic-card\s*\{[^}]*background:\s*var\(--cc-surface-card/.test(tokens));
 }
 
+// Unraid paints its header bar with --header-background-color, which the white theme keeps dark
+// and azure makes light, so chips on the bar read Unraid's paired --header-text-color there
+// rather than a page ink that flips with the theme.
+console.log('\nChips on the header bar take the header ink, not the page ink');
+{
+  const tokens = fs.readFileSync(TOKENS, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const header = fs.readFileSync(path.join(path.dirname(TOKENS), 'CannonadeCommand.Header.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  // the dark defaults are spread over every plain html { } block
+  let dark = ''; const blocks = /(^|\})\s*html\s*\{([^}]*)\}/g; let b;
+  while ((b = blocks.exec(tokens))) dark += b[2];
+  const light = (/html\.Theme--white,\s*html\.Theme--azure\s*\{([^}]*)\}/.exec(tokens) || [])[1] || '';
+  const chipDark = (/--cc-text-chip:\s*(#[0-9a-f]{6})/i.exec(dark) || [])[1];
+  const inkDark = (/--cc-header-ink:\s*(#[0-9a-f]{6})/i.exec(dark) || [])[1];
+  ok('the dark chip ink is found', !!chipDark);
+  ok('the dark header ink is the dark chip ink, so the dark themes look the same', !!inkDark && inkDark === chipDark, inkDark + ' vs ' + chipDark);
+  ok('the light header ink is Unraid\'s header text colour', /--cc-header-ink:\s*var\(--header-text-color\b/.test(light));
+  const rules = [];
+  const re = /([^{}]+)\{([^}]*)\}/g; let m;
+  while ((m = re.exec(header))) if (/#menu|\[data-cc-trig\]|unraid-header-os-version/.test(m[1]) && /(^|;)\s*color:/.test(m[2])) rules.push([m[1].trim(), m[2]]);
+  ok('the header bar rules with a text colour are found', rules.length >= 5, String(rules.length));
+  const flip = rules.filter(([, b]) => /color:\s*var\(--cc-text(-chip|-dim)?\b/.test(b)).map(([s]) => s.slice(0, 80));
+  ok('none of them reads a page ink that flips with the theme', flip.length === 0, flip.join(' | '));
+  ok('the menu tabs read --cc-header-ink', rules.some(([s, b]) => /\.nav-item:not\(\.util\):not\(\.gui_search\) > a$/.test(s) && /var\(--cc-header-ink/.test(b)));
+}
+
+// Tools.css paints fieldsets and the Unraid API cards with --cc-tl-surface and leaves their text
+// to the page, so the surface needs a light value on the light themes.
+console.log('\nThe Tools card surface turns light with the page text');
+{
+  const tools = fs.readFileSync(path.join(path.dirname(TOKENS), 'CannonadeCommand.Tools.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const light = (/html\.cc-tools-on\.Theme--white,\s*html\.cc-tools-on\.Theme--azure\s*\{([^}]*)\}/.exec(tools) || [])[1] || '';
+  ok('the light block for the Tools pages is found', light.length > 0);
+  ok('it gives --cc-tl-surface a light value', /--cc-tl-surface:\s*var\(--cc-surface-1\b/.test(light), light);
+  ok('it leaves the dark control fill --cc-tl-surface2 alone', !/--cc-tl-surface2/.test(light));
+}
+
+// The Docker action bar is Unraid's footer colour and the CC settings hero sits on Unraid's page,
+// both of which follow the theme, so their text cannot be a dark-theme literal.
+console.log('\nText on Unraid\'s own surfaces follows the theme');
+{
+  const docker = fs.readFileSync(path.join(path.dirname(TOKENS), '..', 'styles', 'docker.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const lbl = (/div\.js-actions \.cc-bar-adv-lbl\s*\{([^}]*)\}/.exec(docker) || [])[1] || '';
+  ok('the action bar label reads --cc-text-chip', /color:\s*var\(--cc-text-chip,\s*#cfcfcf\)/.test(lbl), lbl);
+  const bar = []; const re = /([^{}]+)\{([^}]*)\}/g; let m;
+  while ((m = re.exec(docker))) if (/div\.js-actions/.test(m[1]) && /(^|;)\s*color:\s*#[c-f]/i.test(m[2])) bar.push(m[1].trim().slice(0, 90));
+  ok('no action bar rule hard-codes a light ink', bar.length === 0, bar.join(' | '));
+  const hero = (/html\.Theme--white #cc-settings \.cc-set-heroleft,\s*html\.Theme--azure #cc-settings \.cc-set-heroleft\s*\{([^}]*)\}/.exec(docker) || [])[1] || '';
+  ok('the settings hero takes the page ink on the light themes', /--txt:\s*var\(--cc-text\b/.test(hero) && /--dim:\s*var\(--cc-text-dim\b/.test(hero), hero);
+  ok('and re-applies it, since the inherited colour is computed above it', /(^|;)\s*color:\s*var\(--txt\)/.test(hero), hero);
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

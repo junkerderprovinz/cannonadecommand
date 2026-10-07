@@ -60,6 +60,9 @@ html {
   --cc-text-dim:   #8a8a8a;
   --cc-text-dim2:  #6f6f6f;
   --cc-text-chip:  #cfcfcf;
+  /* chip text on Unraid's header bar, whose colour is --header-background-color rather than the
+     page's, so the white theme keeps it dark */
+  --cc-header-ink: #cfcfcf;
 
   /* the accent; JS overrides --cc-accent on documentElement, this is the default */
   --cc-accent:     #2f6feb;
@@ -139,6 +142,8 @@ html.Theme--azure {
   --cc-text-dim:   #545454;
   --cc-text-dim2:  #6f6f6f;
   --cc-text-chip:  #303030;
+  /* Unraid's own ink for its header bar, which is dark on white and light on azure */
+  --cc-header-ink: var(--header-text-color, #cfcfcf);
   --cc-toggle-track-off: #cfcfcf;
   --cc-toggle-knob:      #ffffff;
   --cc-line-solid:  #d0d0d0;

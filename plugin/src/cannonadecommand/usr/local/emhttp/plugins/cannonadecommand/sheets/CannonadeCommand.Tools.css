@@ -9,6 +9,11 @@
  * accent from --cc-accent (fallback #2f6feb), content indented to the menu bar (--cc-align-left). */
 
 html.cc-tools-on { --cc-tl-surface: #1c1c1c; --cc-tl-surface2: #232323; }
+/* The fieldsets and the Unraid API cards on --cc-tl-surface take the page's text, which a light
+   theme turns dark, so their surface turns light with it. --cc-tl-surface2, the fill of the form
+   controls, stays dark. */
+html.cc-tools-on.Theme--white,
+html.cc-tools-on.Theme--azure { --cc-tl-surface: var(--cc-surface-1, #ffffff); }
 
 /* content column lines up with the menu bar, like every other CC area */
 html.cc-tools-on:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 15px); }

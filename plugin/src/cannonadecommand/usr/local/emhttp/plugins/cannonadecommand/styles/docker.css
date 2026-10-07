@@ -1129,6 +1129,10 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
 .cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: inline-flex !important; align-items: center; justify-content: center; height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-pad, 0 20px) !important; font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important; border-radius: 999px !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS inflates the strip's gap */
 .cc-set-tab-on { background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important; }
 .cc-set-brand { font-size: 24px; letter-spacing: .2px; } .cc-set-brand b { font-weight: 700; } .cc-set-brand span { font-weight: 400; color: var(--dim); }
+/* The settings palette is dark, made for the cards; the brand and claim sit on Unraid's page
+   instead, so on a light theme they take the page's ink. */
+html.Theme--white #cc-settings .cc-set-heroleft,
+html.Theme--azure #cc-settings .cc-set-heroleft { --txt: var(--cc-text, #1c1c1c); --dim: var(--cc-text-dim, #545454); color: var(--txt); }
 .cc-set-sub { color: var(--dim2); font-size: 12.5px; }
 .cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fill, 340px); gap: 16px; justify-content: start; } /* fixed-width cards packed from the left, so they do not stretch on a wide window */
 .cc-set-card { background: #222222; border: none; border-radius: 12px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
@@ -1362,7 +1366,7 @@ div.js-actions .cc-bulkmode-badge-on {
    so the negative value is what puts its right edge on the bar's outer edge, flush with the header
    icons. */
 div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; position: sticky; right: -16px; z-index: 2; padding-left: 10px; padding-right: 8px; background: var(--footer-background-color, var(--mild-background-color, #1c1c1c)); }
-div.js-actions .cc-bar-adv-lbl { color: #cfcfcf; font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+div.js-actions .cc-bar-adv-lbl { color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 div.js-actions input[type=button]:hover,
 div.js-actions .cc-bulkmode-badge:hover { filter: brightness(1.14); }
 
@@ -1380,6 +1384,9 @@ div.js-actions .cc-bulkmode-badge:hover { filter: brightness(1.14); }
 .sl-bubble .sl-upd.sl-upd-off { background: transparent !important; color: var(--sl-dim) !important; border: 1px solid var(--sl-line2) !important; filter: none !important; }
 .sl-bubble .sl-pill { border-radius: var(--cc-b-radius, 999px) !important; }
 .sl-bubble .sl-x { border-radius: var(--cc-b-radius, 7px) !important; }
+/* The close button rests on ShipLog's neutral chip and on hover takes the colour the repository
+   button rests on: the accent, or its stamped --cc-rb-c. */
+.sl-bubble .sl-x:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
 /* ShipLog's buttons take the same rest and hover split as every other Docker-tab control in the
    reactive mode: docker.js enhanceShipLogBubble() skips its own paint here and only stamps
    --cc-rb-c and --cc-rb-ct for the hover rule to read. The close button rests on ShipLog's own
@@ -1997,7 +2004,7 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b:not(.
    Mehrfachauswahl badge with them, except while it is on: a pressed toggle keeps its fill, which
    is what the :not() holds the rest state off. */
 html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:not(:disabled),
-html.cc-shares-rbneutral.cc-docker-on div.js-actions .cc-bulkmode-badge:not(.cc-bulkmode-badge-on) { background: rgba(128, 128, 128, .18) !important; color: #cfcfcf !important; }
+html.cc-shares-rbneutral.cc-docker-on div.js-actions .cc-bulkmode-badge:not(.cc-bulkmode-badge-on) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:hover:not(:disabled),
 html.cc-shares-rbneutral.cc-docker-on div.js-actions .cc-bulkmode-badge:not(.cc-bulkmode-badge-on):hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important; }
 /* an inactive page tab rests grey, with the --cc-rb-c paintTabs stamps on it for the hover; the

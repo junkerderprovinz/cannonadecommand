@@ -58,5 +58,16 @@ console.log('\nIn the reactive mode every button of the changelog window colours
   ok('docker.js stamps the close button too', /querySelectorAll\("\.sl-upd:not\(\.sl-upd-off\), \.sl-gh, \.sl-x"\)/.test(js));
 }
 
+// Outside the reactive mode nothing stamps the close button while rainbow is off, so its hover
+// falls through to the accent the repository button rests on.
+console.log('\nThe close button hovers in the accent like the repository button rests');
+{
+  const body = ruleBody(css, '.sl-bubble .sl-x:hover');
+  ok('a hover rule for the close button exists', body != null);
+  ok('it reads the stamp, then the accent', /background:\s*var\(--cc-rb-c,\s*var\(--cc-accent,/.test(body || ''), body);
+  ok('with the accent text', /color:\s*var\(--cc-rb-ct,\s*var\(--cc-accent-text,/.test(body || ''), body);
+  ok('and outranks ShipLog\'s own neutral hover', /!important/.test(body || ''), body);
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);
