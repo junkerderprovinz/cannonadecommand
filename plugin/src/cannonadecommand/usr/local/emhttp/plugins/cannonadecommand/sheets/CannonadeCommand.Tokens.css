@@ -93,9 +93,9 @@ html {
   --cc-density: 9px;
 
   /* the semantic states, with their foreground colours */
-  --cc-ok:   var(--cc-ok, #1f9d55);  --cc-ok-fg:   #fff;
-  --cc-warn: var(--cc-warn, #e0912a);  --cc-warn-fg: #1a1a1a;
-  --cc-err:  var(--cc-err, #d9433f);  --cc-err-fg:  #fff;
+  --cc-ok:   #1f9d55;  --cc-ok-fg:   #fff;
+  --cc-warn: #e0912a;  --cc-warn-fg: #1a1a1a;
+  --cc-err:  #d9433f;  --cc-err-fg:  #fff;
   /* advice rather than a problem, such as ShipLog's pinned tag with a newer version out; ShipLog's
      own sheets read this name too */
   --cc-info: #3b82d0;  --cc-info-fg: #fff;
@@ -1395,7 +1395,7 @@ html.cc-popups-on .changelog {
   border-radius: var(--cc-b-radius, 8px) !important; padding: 14px 16px !important; margin: 14px 0 !important;
   box-sizing: border-box !important;
 }
-html.cc-popups-on .additionalRequirements { border-left: none !important; box-shadow: inset 3px 0 0 var(--cc-warn, #d6a243) !important; }
+html.cc-popups-on .additionalRequirements { border-left: none !important; box-shadow: inset 3px 0 0 var(--cc-warn, #e0912a) !important; }
 /* section labels: Details / Maintainer / Change Log read as small caps captions, not bare bold text */
 html.cc-popups-on .rightTitle,
 html.cc-popups-on .popupAuthorTitle,
@@ -1503,7 +1503,7 @@ html.cc-popups-on #sidenavContent .cc-ic-legend {
    stripe. Warn is a semantic status colour, not a rotating accent, so it stays amber in every
    colour mode. */
 html.cc-popups-on #sidenavContent .cc-ic-legend.cc-ic-warn {
-  background: var(--cc-warn, #d6a243) !important; color: #1a1400 !important;
+  background: var(--cc-warn, #e0912a) !important; color: #1a1400 !important;
 }
 /* The section content sits inside .cc-ic-card, which supplies the background, padding and spacing,
    so each piece's own card styling goes rather than boxing twice. */
