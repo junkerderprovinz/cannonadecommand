@@ -317,6 +317,9 @@ table:not(.cc-enh) #docker_list tr:is(.sortable, .folder-element) td.advanced:ha
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-mid)  { background: var(--cc-warn, #e0912a); color: #1a1a1a !important; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #d9433f); }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-crit) { background: var(--cc-err, #d9433f); }
+/* sl-info is a tag pinned while a newer version exists. With the dot hidden, the colour is all
+   that sets it apart from the grey up-to-date chip. */
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-info) { background: var(--cc-info, #3b82d0); }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip .sl-amp { display: none; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip .sl-ico { opacity: .85; }
 
@@ -2062,6 +2065,7 @@ html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .fol
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-mid) { background: var(--cc-warn, #e0912a) !important; color: #1a1a1a !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #d9433f) !important; color: #fff !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-crit) { background: var(--cc-err, #d9433f) !important; color: #fff !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-info) { background: var(--cc-info, #3b82d0) !important; color: #fff !important; }
 /* #45/#50 (user, live-verified via getComputedStyle: measured rgba(128,128,128,.18), the plain rest-
    grey fallback, on a live "Nicht gepflegt" row): ShipLog's Not-maintained/CADeprecated chips carry
    no .sl-amp risk dot, so none of the :has() rules above ever match them - they fall through to the

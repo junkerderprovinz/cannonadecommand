@@ -96,6 +96,9 @@ html {
   --cc-ok:   var(--cc-ok, #1f9d55);  --cc-ok-fg:   #fff;
   --cc-warn: var(--cc-warn, #e0912a);  --cc-warn-fg: #1a1a1a;
   --cc-err:  var(--cc-err, #d9433f);  --cc-err-fg:  #fff;
+  /* advice rather than a problem, such as ShipLog's pinned tag with a newer version out; ShipLog's
+     own sheets read this name too */
+  --cc-info: #3b82d0;  --cc-info-fg: #fff;
 
   /* component roles, so a new component reads one name and adapts with the theme */
   --cc-toggle-track-off: #3a3a3a;
