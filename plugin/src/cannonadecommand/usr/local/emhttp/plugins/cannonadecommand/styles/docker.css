@@ -1382,11 +1382,12 @@ div.js-actions .cc-bulkmode-badge:hover { filter: brightness(1.14); }
 .sl-bubble .sl-x { border-radius: var(--cc-b-radius, 7px) !important; }
 /* ShipLog's buttons take the same rest and hover split as every other Docker-tab control in the
    reactive mode: docker.js enhanceShipLogBubble() skips its own paint here and only stamps
-   --cc-rb-c and --cc-rb-ct for the hover rule to read. */
+   --cc-rb-c and --cc-rb-ct for the hover rule to read. The close button rests on ShipLog's own
+   neutral chip, so it joins only the hover. */
 html.cc-shares-rbneutral .sl-bubble .sl-upd:not(.sl-upd-off), html.cc-shares-rbneutral .sl-bubble .sl-gh {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
-html.cc-shares-rbneutral .sl-bubble .sl-upd:not(.sl-upd-off):hover, html.cc-shares-rbneutral .sl-bubble .sl-gh:hover {
+html.cc-shares-rbneutral .sl-bubble .sl-upd:not(.sl-upd-off):hover, html.cc-shares-rbneutral .sl-bubble .sl-gh:hover, html.cc-shares-rbneutral .sl-bubble .sl-x:hover {
   background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
   filter: none !important;
 }

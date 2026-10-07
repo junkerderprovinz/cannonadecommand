@@ -62,5 +62,23 @@ console.log('\nEvery call site falls back to the colour its token holds');
   }
 }
 
+// Header.css declares --cc-surface-card dark on :root. The Apps info card, the notification
+// items and the Unraid API cards paint it behind text in --cc-text, which the light override
+// turns dark, so the card has to turn light with it or the text sits dark on dark.
+console.log('\nThe card surface follows the light themes like the text on it');
+{
+  const tokens = fs.readFileSync(TOKENS, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const header = fs.readFileSync(path.join(path.dirname(TOKENS), 'CannonadeCommand.Header.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const light = (/html\.Theme--white,\s*html\.Theme--azure\s*\{([^}]*)\}/.exec(tokens) || [])[1] || '';
+  const lum = (h) => { const n = parseInt(h.slice(1), 16); return 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); };
+  ok('the light override block is found', light.length > 0);
+  ok('Header.css declares the card dark on :root', /:root\s*\{[^}]*--cc-surface-card:\s*#1[0-9a-f]{5}/i.test(header));
+  ok('the light override turns --cc-text dark', /--cc-text:\s*#[0-3][0-9a-f]{5}/i.test(light));
+  const card = /--cc-surface-card:\s*(#[0-9a-f]{6})/i.exec(light);
+  ok('the light override declares --cc-surface-card', !!card);
+  ok('and it is a light surface', !!card && lum(card[1]) > 200, card && card[1]);
+  ok('the info card reads the token', /#sidenavContent \.cc-ic-card\s*\{[^}]*background:\s*var\(--cc-surface-card/.test(tokens));
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

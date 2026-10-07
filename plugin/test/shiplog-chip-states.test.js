@@ -45,5 +45,18 @@ console.log('\n--cc-info resolves to a colour on <html>');
   ok('--cc-info-fg is declared', /--cc-info-fg:\s*#fff/.test(tokens));
 }
 
+// enhanceShipLogBubble() stamps --cc-rb-c on all three window buttons in the reactive mode and
+// leaves the paint to this rule, so a button missing from it stays grey under the pointer.
+console.log('\nIn the reactive mode every button of the changelog window colours on hover');
+{
+  const HOVER_SEL = 'html.cc-shares-rbneutral .sl-bubble .sl-upd:not(.sl-upd-off):hover, html.cc-shares-rbneutral .sl-bubble .sl-gh:hover, html.cc-shares-rbneutral .sl-bubble .sl-x:hover';
+  const body = ruleBody(css, HOVER_SEL);
+  ok('one hover rule covers update, repository and close', body != null);
+  ok('it paints the stamped --cc-rb-c', /background:\s*var\(--cc-rb-c,/.test(body || ''), body);
+  ok('with the stamped ink', /color:\s*var\(--cc-rb-ct,/.test(body || ''), body);
+  const js = fs.readFileSync(path.join(DIR, 'scripts', 'docker.js'), 'utf8');
+  ok('docker.js stamps the close button too', /querySelectorAll\("\.sl-upd:not\(\.sl-upd-off\), \.sl-gh, \.sl-x"\)/.test(js));
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

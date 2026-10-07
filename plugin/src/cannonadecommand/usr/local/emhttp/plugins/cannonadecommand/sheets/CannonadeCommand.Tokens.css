@@ -131,6 +131,9 @@ html.Theme--azure {
   --cc-surface-base:   #f2f2f2;
   --cc-surface-4:      #e6e6e6;
   --cc-surface-window: #ffffff;
+  /* Header.css declares the card dark on :root; it sits under --cc-text, so it flips with it, one
+     step under the window as on the dark side */
+  --cc-surface-card:   #f4f4f4;
   --cc-surface-deep:   #f4f4f4;
   --cc-text:       #1c1c1c;
   --cc-text-dim:   #545454;
