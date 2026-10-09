@@ -115,7 +115,7 @@ jobs:
           echo "measured ${RATE} B/s at a 250000 B/s cap"
 
       - name: Upload package artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: cannonadecommand-txz
           path: plugin/out/*.txz
