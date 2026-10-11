@@ -232,22 +232,26 @@ html.cc-docker-on .cc-grid-holder .cc-chip-dot.cc-badge-running:not(.cc-badge-al
 .cc-cb-del { accent-color: var(--cc-accent, #FCC419); width: 16px; height: 16px; margin: 0 8px 0 0; cursor: pointer; vertical-align: middle; }
 /* The bulk-select toolbar: a per-row selection mark as the first flex child of .outer, plus a
    floating toolbar that appears once a row is picked. Its buttons ride the md tier of the .cc-b-del
-   control above, so Start, Stop, Remove and Clear read as one cluster. The marks are hidden until
-   the Mehrfachauswahl badge in the floating action bar is switched on.
+   control above, so Start, Stop, Remove and Clear read as one cluster. A mark shows while the
+   pointer is over its row or the focus is in it, and every mark shows once one is picked or while
+   the Mehrfachauswahl badge in the floating action bar is on (GlimStone, "Lists"). The slot stays
+   at rest, so the row does not move when its mark comes in, and opacity rather than display keeps
+   the mark in the Tab order.
 
    The mark is GlimStone's one control for picking rows: round at the pill radius, a quiet shade
    until picked, then the row's colour with a filled tick (IconCheck) in that colour's ink. The tick
    is a mask on ::before, so its ink comes from the colour chain rather than a colour baked into a
    data URI. */
 .cc-bulk-cb {
-  display: none !important; position: relative; flex: 0 0 auto; vertical-align: middle;
+  display: inline-block !important; opacity: 0; position: relative; flex: 0 0 auto; vertical-align: middle;
   -webkit-appearance: none !important; appearance: none !important;
   width: 18px; height: 18px; box-sizing: border-box; margin: 0 8px 0 0; padding: 0; cursor: pointer;
   border: none !important; outline: none !important; box-shadow: none;
   border-radius: var(--cc-radius-pill); background: rgba(128, 128, 128, .28);
-  transition: background-color .12s;
+  transition: background-color .12s, opacity var(--cc-motion-fade-dur, 0s);
 }
-html.cc-bulkmode-on .cc-bulk-cb { display: inline-block !important; }
+html:is(.cc-bulkmode-on, .cc-bulk-picked) .cc-bulk-cb,
+#docker_list tr:is(:hover, :focus-within) .cc-bulk-cb, .cc-bulk-cb:checked { opacity: 1; }
 .cc-bulk-cb:hover { background: rgba(128, 128, 128, .42); }
 .cc-bulk-cb:checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); }
 .cc-bulk-cb:checked:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }

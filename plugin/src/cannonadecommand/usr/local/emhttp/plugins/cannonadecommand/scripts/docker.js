@@ -1048,11 +1048,15 @@
       var outerEl = nameCell && nameCell.querySelector(".outer");
       if (outerEl && !outerEl.querySelector(".cc-bulk-cb")) {
         var bcb = el("input", "cc-bulk-cb"); bcb.type = "checkbox"; bcb.setAttribute(MARK, "1");
+        bcb.setAttribute("aria-label", (LANG === "de" ? "Auswählen: " : "Select ") + name);
         bcb.checked = !!ccBulkSel[name];
-        bcb.addEventListener("click", function (e) { e.stopPropagation(); });
+        // A Shift on the mark itself picks a range as a Shift on the row does. The click comes
+        // before the change, so it notes the key for the change to read.
+        var bcbShift = false;
+        bcb.addEventListener("click", function (e) { e.stopPropagation(); bcbShift = e.shiftKey; });
         bcb.addEventListener("change", function () {
-          if (bcb.checked) { var cx0 = ctxFor(name, tr); ccBulkSel[name] = { id: cx0.id, image: cx0.image }; }
-          else delete ccBulkSel[name];
+          if (bcbShift && ccBulkInRange(tr)) { ccBulkClick(tr, { shiftKey: true }); return; }
+          ccBulkSet(tr, bcb.checked); ccBulkAnchor = tr;
           ccBulkBarSync();
         });
         outerEl.insertBefore(bcb, outerEl.firstChild);
@@ -1487,9 +1491,9 @@
     tg.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
     wrap.appendChild(tg); bar.appendChild(wrap);
   }
-  // The per-row checkboxes are hidden until this badge in the floating action bar switches bulk
-  // mode on; docker.css gates their display on html.cc-bulkmode-on. Switching it off clears the
-  // selection too, since a hidden checkbox with a lingering count bar is a confusing state.
+  // This badge in the floating action bar keeps every row's mark showing (html.cc-bulkmode-on), for
+  // a touch screen, which has no hover to bring them in. Switching it off clears the selection too,
+  // since a hidden mark with a lingering count bar is a confusing state.
   var ccBulkModeOn = false;
   function ccBulkModeToggle() {
     ccBulkModeOn = !ccBulkModeOn;
@@ -1683,6 +1687,7 @@
   var ccBulkBarEl = null;
   function ccBulkBarSync() {
     var names = Object.keys(ccBulkSel);
+    document.documentElement.classList.toggle("cc-bulk-picked", names.length > 0);
     if (!names.length) { if (ccBulkBarEl) ccBulkBarEl.style.setProperty("display", "none", "important"); return; }
     var de = LANG === "de";
     if (!ccBulkBarEl) {
@@ -1697,6 +1702,38 @@
     }
     ccBulkBarEl.style.removeProperty("display");
     ccBulkBarEl.querySelector(".cc-bulkbar-count").textContent = names.length + " " + (de ? "ausgewählt" : "selected");
+  }
+  // Picking rows the way a file manager does (GlimStone, "Lists"): Ctrl or Cmd and a click toggles
+  // a row's mark and makes it the anchor, Shift and a click picks the rows from the anchor to this
+  // one, in the order the list shows them. A click on a control in the row keeps doing its own job.
+  var ccBulkAnchor = null;
+  var BULK_SKIP = "a[href], button, input, select, textarea, label, [role=button], [role=switch], .cc-actcell, .cc-b-copy, .cc-plan, .cc-limbtn";
+  function ccBulkRows() { return findRows().filter(function (r) { return r.style.display !== "none" && r.querySelector(".cc-bulk-cb"); }); }
+  function ccBulkRowFor(e) {
+    if (mode !== "list" || !(e.ctrlKey || e.metaKey || e.shiftKey) || e.button || !e.target || !e.target.closest) return null;
+    var tr = e.target.closest("#docker_list tr");
+    if (!tr || !tr.querySelector(".cc-bulk-cb") || e.target.closest(BULK_SKIP)) return null;
+    return tr;
+  }
+  function ccBulkInRange(tr) { var rows = ccBulkRows(); return rows.indexOf(ccBulkAnchor) >= 0 && rows.indexOf(tr) >= 0; }
+  function ccBulkSet(tr, on) {
+    var name = rowName(tr), cb = tr.querySelector(".cc-bulk-cb");
+    if (cb) cb.checked = on;
+    if (on) { var cx = ctxFor(name, tr); ccBulkSel[name] = { id: cx.id, image: cx.image }; }
+    else delete ccBulkSel[name];
+  }
+  function ccBulkClick(tr, e) {
+    if (e.shiftKey && ccBulkInRange(tr)) {
+      var rows = ccBulkRows(), a = rows.indexOf(ccBulkAnchor), b = rows.indexOf(tr);
+      var lo = Math.min(a, b), hi = Math.max(a, b);
+      // The range takes the place of the selection, rows a filter hides included, so a bulk action
+      // never reaches one out of sight.
+      findRows().forEach(function (r) { if (r.querySelector(".cc-bulk-cb")) { var i = rows.indexOf(r); ccBulkSet(r, i >= lo && i <= hi); } });
+    } else {
+      ccBulkSet(tr, !ccBulkSel[rowName(tr)]);
+      ccBulkAnchor = tr;
+    }
+    ccBulkBarSync();
   }
   // Every checkbox is un-ticked after a bulk action or a clear. The fresh rows a native tbody
   // replace creates start unchecked, so there is nothing to do for those.
@@ -3712,6 +3749,7 @@
       try { var rs = document.documentElement.style; ["--cc-icon-color", "--cc-icon-strength", "--cc-accent", "--cc-density"].forEach(function (p) { rs.removeProperty(p); }); } catch (e) {}
       Array.prototype.slice.call(document.querySelectorAll(".cc-hgear, .cc-grid-holder, .cc-menu, .cc-toast, .cc-pop, #cc-names")).forEach(function (n) { n.remove(); });
       if (ccBulkBarEl) { ccBulkBarEl.remove(); ccBulkBarEl = null; } ccBulkSel = {};
+      document.documentElement.classList.remove("cc-bulk-picked");
       hideNative(false);
     } catch (e) {}
   }
@@ -4298,6 +4336,8 @@
       document.addEventListener("click", function (e) {
         try {
           if (dead || mode !== "list") return;
+          var picked = ccBulkRowFor(e);
+          if (picked) { e.preventDefault(); e.stopPropagation(); ccBulkClick(picked, e); return; }
           var hand = e.target && e.target.closest ? e.target.closest("td.ct-name span.hand, td.ct-name span.appname, td.ct-name .cc-ct-dotrow") : null;
           if (!hand) return;
           var row2 = hand.closest("tr"); var bar2 = row2 && row2.querySelector(".cc-actbar");
@@ -4307,6 +4347,8 @@
           setTimeout(function () { bar2.classList.remove("cc-act-flash"); }, 1600);
         } catch (e2) {}
       }, true);
+      // A Shift and a press on a row would otherwise start a text selection across the list.
+      document.addEventListener("mousedown", function (e) { try { if (!dead && e.shiftKey && ccBulkRowFor(e)) e.preventDefault(); } catch (e2) {} }, true);
       window.addEventListener("scroll", function () { try { if (menu) positionMenu(); } catch (e) {} }, true);
       // A click outside closes the window, but a panel that belongs to the window is not
       // outside it. .cc-drop has to render as a direct body child, because any overflow ancestor
