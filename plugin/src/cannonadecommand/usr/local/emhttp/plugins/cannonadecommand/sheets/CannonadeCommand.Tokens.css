@@ -763,7 +763,7 @@ html.cc-popups-on *:hover::-webkit-scrollbar-thumb {
 }
 
 /* The search badge: a magnifier in the colour mode that expands into an input on click, wired by
-   header.js wireCaSearch like the CC settings .cc-set-searchbadge. Collapsed it is an accent chip,
+   header.js wireCaSearch. Collapsed it is an accent chip,
    open a dark field whose input grows to the left of the icon so it never spills past the viewport. */
 html.cc-popups-on .searchArea { display: flex !important; flex-wrap: nowrap !important; align-items: center !important; gap: 8px !important; padding-right: var(--cc-edge-gutter, 8px) !important; }
 html.cc-popups-on #searchFilter {

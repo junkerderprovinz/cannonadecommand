@@ -35,20 +35,19 @@
       // Docker half of the same guard lives in docker.css.
       "#cc-settings input::placeholder{color:#8d8d8d;opacity:1}" +
       "#cc-settings .cc-set-search:focus{background:#2e2e2e}" +
-      // The search is a badge that expands into an input on click. Collapsed it follows the colour
-      // mode; expanded it becomes a dark input box.
-      "#cc-settings .cc-set-searchbadge{margin-left:auto;display:inline-flex;align-items:center;background:var(--cc-btn-accent,var(--cc-accent,#FCC419));border-radius:var(--cc-radius-pill);height:34px;overflow:hidden;transition:background-color .12s}" +
-      "#cc-settings .cc-set-searchbadge .cc-set-searchicon{flex:0 0 auto;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:var(--cc-accent-text, #161616);cursor:pointer}" +
-      "#cc-settings .cc-set-searchbadge.cc-open{background:#2e2e2e}" +
-      "#cc-settings .cc-set-searchbadge:not(.cc-open):hover{background:color-mix(in srgb,var(--cc-btn-accent,var(--cc-accent,#FCC419)) 85%,var(--cc-text,#e6e6e6))}" +
-      "#cc-settings .cc-set-searchbadge.cc-open .cc-set-searchicon{color:#fff}" +
+      // The search is a secondary badge that expands into an input on click, grey like every
+      // button in a card, so it takes the colour mode only under the pointer.
+      "#cc-settings .cc-set-searchbadge{margin-left:auto;display:inline-flex;align-items:center;background:#2e2e2e;border-radius:var(--cc-radius-pill);height:34px;overflow:hidden;transition:background-color .12s}" +
+      "#cc-settings .cc-set-searchbadge .cc-set-searchicon{flex:0 0 auto;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:#e6e6e6;cursor:pointer;transition:color .12s}" +
+      "#cc-settings .cc-set-searchbadge:not(.cc-open):hover{background:var(--cc-rbaccent,var(--cc-accent,#FCC419))}" +
+      "#cc-settings .cc-set-searchbadge:not(.cc-open):hover .cc-set-searchicon{color:var(--cc-rbaccent-text,var(--cc-accent-text,#161616))}" +
       "#cc-settings .cc-set-searchbadge .cc-set-search{box-sizing:border-box;width:0;max-width:0;padding:0;background:transparent;transition:width .2s,max-width .2s,padding .2s}" +
-      "#cc-settings .cc-set-searchbadge.cc-open{background:#2e2e2e}" +
       "#cc-settings .cc-set-searchbadge.cc-open .cc-set-search{width:220px;max-width:220px;padding:0 12px 0 2px}" +
-      // the version line at the very bottom, centred and muted
-      // the native-display link as an accent button rather than the grey chip
-      "#cc-settings .cc-btn.cc-btn-accent{background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
-      "#cc-settings .cc-btn.cc-btn-accent:hover{background:var(--cc-accent-hover);color:var(--cc-accent-text, #161616)}" +
+      // what a search shows when no setting matches, in the place the cards would take
+      "#cc-settings .cc-set-empty{display:flex;align-items:center;gap:14px;max-width:420px;box-sizing:border-box;padding:18px;background:#222222;border-radius:var(--cc-radius-card);box-shadow:0 1px 4px rgba(0,0,0,.45)}" +
+      "#cc-settings .cc-set-empty svg{flex:none;width:28px;height:28px;opacity:.4}" +
+      "#cc-settings .cc-set-empty-t{font-weight:600;color:var(--dim,#9a9a9a)}" +
+      "#cc-settings .cc-set-empty-h{margin-top:2px;font-size:var(--cc-text-meta);color:var(--dim2,#6f6f6f)}" +
       "#cc-settings .cc-flag-picker{position:relative;margin-top:6px;max-width:340px}" +
       "#cc-settings .cc-flag-trigger{display:flex;align-items:center;gap:9px;background:#232323;border-radius:var(--cc-radius-control);padding:7px 12px;cursor:pointer;user-select:none}" +
       "#cc-settings .cc-flag-trigger:hover{background:color-mix(in srgb,#232323 85%,var(--cc-text,#e6e6e6))}" +
@@ -663,7 +662,13 @@
     var searchBadge = el("div", "cc-set-searchbadge");
     var searchIcon = el("span", "cc-set-searchicon"); searchIcon.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M14 3.072a8 8 0 0 1 2.32 11.834l5.387 5.387a1 1 0 0 1 -1.414 1.414l-5.388 -5.387a8 8 0 1 1 -.905 -13.249" /></svg>';   // tabler filled/search
     searchBadge.appendChild(searchIcon); searchBadge.appendChild(setSearch);
-    searchIcon.addEventListener("click", function (e) { e.stopPropagation(); var open = searchBadge.classList.toggle("cc-open"); if (open) { setSearch.focus(); } else { setSearch.value = ""; if (typeof runFilter === "function") runFilter(""); } });
+    searchIcon.addEventListener("click", function (e) { e.stopPropagation(); var open = searchBadge.classList.toggle("cc-open"); if (open) { setSearch.focus(); } else { setSearch.value = ""; runFilter(""); } });
+    // Escape clears the query first and puts the search away on a second press.
+    setSearch.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      if (setSearch.value) { setSearch.value = ""; runFilter(""); } else { searchBadge.classList.remove("cc-open"); setSearch.blur(); }
+    });
     hero.appendChild(searchBadge);
     // The search collapses again on a click beside it, clearing the query and resetting the filter
     // through an input event so the existing listener runs. Bound once, since render() re-enters.
@@ -675,6 +680,20 @@
       });
     }
     root.appendChild(head);
+    // "/" opens the search from anywhere on the page outside a field. Ctrl+K stays with header.js's
+    // command palette, which takes it on every page. Bound once, since render() re-enters; it looks
+    // the badge up when the key is pressed.
+    if (!window.__ccSetSearchKey) {
+      window.__ccSetSearchKey = true;
+      document.addEventListener("keydown", function (e) {
+        if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
+        var t = e.target, tag = t && t.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;
+        var sb = document.querySelector("#cc-settings .cc-set-searchbadge"), si = sb && sb.querySelector(".cc-set-search");
+        if (!si) return;
+        e.preventDefault(); sb.classList.add("cc-open"); si.focus();
+      });
+    }
 
     // the Unraid title strip between the main menu and our hero is redundant here
     try { Array.prototype.slice.call(document.querySelectorAll("div.title")).forEach(function (tt) { tt.style.setProperty("display", "none", "important"); }); } catch (e9) {}
@@ -799,7 +818,7 @@
         rl.appendChild(el("span", null, T("Native Anzeige-Seite", "Native display page")));
         rl.appendChild(infoIcon(T("Öffnet Unraids Anzeige-Einstellungen im CannonadeCommand-Stil. Dort liegen unter anderem die Kopfzeilen-Farben, das Banner und die Favoriten-Option.", "Opens Unraid's Display Settings in CannonadeCommand style, where the header colours, the banner and the favourites option live.")));
         r.appendChild(rl);
-        var b = el("button", "cc-btn cc-btn-accent", T("Öffnen", "Open")); b.type = "button";
+        var b = el("button", "cc-btn", T("Öffnen", "Open")); b.type = "button";
         b.style.marginLeft = "auto";   // #3 (user): push the native-settings button flush right
         b.addEventListener("click", function () { location.href = "/Settings/DisplaySettings"; });
         r.appendChild(b); cCard.appendChild(r);
@@ -1876,6 +1895,37 @@
       var brow = el("div", "cc-set-row"); brow.appendChild(ex); brow.appendChild(im); brow.appendChild(rs);
       cX.appendChild(brow); cX.appendChild(fin);
     })();
+    // The search filters cards and rows across every tab, matching a row's text and the
+    // explanations in its bubbles, so a word that only stands in an (i) still finds its row. An
+    // empty query restores the tabbed view.
+    var searchEmpty = el("div", "cc-set-empty"); searchEmpty.style.display = "none";
+    searchEmpty.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 3.072a8 8 0 0 1 2.32 11.834l5.387 5.387a1 1 0 0 1 -1.414 1.414l-5.388 -5.387a8 8 0 1 1 -.905 -13.249" /></svg>';
+    var emptyText = el("div"), emptyTitle = el("div", "cc-set-empty-t", T("Keine Treffer", "No matches")), emptyHint = el("div", "cc-set-empty-h");
+    emptyText.appendChild(emptyTitle); emptyText.appendChild(emptyHint); searchEmpty.appendChild(emptyText);
+    root.appendChild(searchEmpty);
+    function restore() {
+      Array.prototype.forEach.call(root.querySelectorAll(".cc-set-card, .cc-set-row, .cc-set-lbl, .cc-set-prose"), function (e9) { e9.style.removeProperty("display"); });
+      searchEmpty.style.display = "none";
+      tabRow.style.removeProperty("display");
+      var st9 = localStorage.getItem("cc.settab"), ix9 = 0; SECS.forEach(function (sc9, j9) { if (sc9.id === st9) ix9 = j9; }); showSec(ix9);
+    }
+    function runFilter(q) {
+      var raw = (q || "").trim(); q = raw.toLowerCase();
+      if (!q) { restore(); return; }
+      tabRow.style.setProperty("display", "none");
+      SECS.forEach(function (sc9) { sc9.w.style.display = ""; });
+      var shown = 0;
+      Array.prototype.forEach.call(root.querySelectorAll(".cc-set-card"), function (cardEl) {
+        var h9 = cardEl.querySelector(".cc-set-h"), titleHit = !!h9 && searchText(h9).indexOf(q) >= 0, any = false;
+        Array.prototype.forEach.call(cardEl.querySelectorAll(".cc-set-row, .cc-set-lbl, .cc-set-prose"), function (r9) {
+          var hit = titleHit || searchText(r9).indexOf(q) >= 0; r9.style.display = hit ? "" : "none"; if (hit) any = true;
+        });
+        cardEl.style.display = (titleHit || any) ? "" : "none";
+        if (titleHit || any) shown++;
+      });
+      emptyHint.textContent = T("Keine Einstellung enthält „" + raw + "“.", "No setting contains “" + raw + "”.");
+      searchEmpty.style.display = shown ? "none" : "";
+    }
     // The Info tab in GlimStone's order: Version, Help, About.
     (function () {
       var cVer = card(T("Version", "Version"));
@@ -1917,28 +1967,7 @@
     var st0 = localStorage.getItem("cc.settab"), ix0 = 0;
     SECS.forEach(function (sc9, j9) { if (sc9.id === st0) ix0 = j9; });
     showSec(ix0);
-    // The search filters cards and rows across every tab; an empty query restores the tabbed view.
-    (function () {
-      function restore() {
-        Array.prototype.forEach.call(root.querySelectorAll(".cc-set-card, .cc-set-row, .cc-set-lbl"), function (e9) { e9.style.removeProperty("display"); });
-        tabRow.style.removeProperty("display");
-        var st9 = localStorage.getItem("cc.settab"), ix9 = 0; SECS.forEach(function (sc9, j9) { if (sc9.id === st9) ix9 = j9; }); showSec(ix9);
-      }
-      function runFilter(q) {
-        q = (q || "").trim().toLowerCase();
-        if (!q) { restore(); return; }
-        tabRow.style.setProperty("display", "none");
-        SECS.forEach(function (sc9) { sc9.w.style.display = ""; });
-        Array.prototype.forEach.call(root.querySelectorAll(".cc-set-card"), function (cardEl) {
-          var h9 = cardEl.querySelector(".cc-set-h"); var titleHit = !!(h9 && (h9.textContent || "").toLowerCase().indexOf(q) >= 0), any = false;
-          Array.prototype.forEach.call(cardEl.querySelectorAll(".cc-set-row, .cc-set-lbl"), function (r9) {
-            var hit = titleHit || (r9.textContent || "").toLowerCase().indexOf(q) >= 0; r9.style.display = hit ? "" : "none"; if (hit) any = true;
-          });
-          cardEl.style.display = (titleHit || any) ? "" : "none";
-        });
-      }
-      setSearch.addEventListener("input", function () { runFilter(setSearch.value); });
-    })();
+    setSearch.addEventListener("input", function () { runFilter(setSearch.value); });
     paintPrev(); paintToggles(); paintSelects(); paintCardHeads();
   }
   // #(user: "Alle drop down listen sind nicht in den farbmodi"): this page's own eleven .cc-dsel
@@ -2050,6 +2079,12 @@
         btn.classList.add("cc-set-chk-bad"); btn.textContent = T("Prüfung fehlgeschlagen", "Check failed");
         failed(btn, T("Die Update-Prüfung ist fehlgeschlagen: ", "The update check failed: ") + ((e && e.message) || e));
       });
+  }
+  // What the settings search matches in a row: its text and the bubble texts on and inside it.
+  function searchText(n) {
+    var t = (n.textContent || "") + " " + (n.getAttribute("data-tip") || "");
+    Array.prototype.forEach.call(n.querySelectorAll("[data-tip]"), function (x) { t += " " + x.getAttribute("data-tip"); });
+    return t.toLowerCase();
   }
   // A span with the button role, since Unraid's global button CSS would bloat a real button.
   function actionBtn(text, cls, run) {
