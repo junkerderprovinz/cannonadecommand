@@ -710,7 +710,10 @@
     var wrapFavorites = el("div", "cc-set-wrap");
     var wrapStart = el("div", "cc-set-wrap");
     var wrapMain = el("div", "cc-set-wrap");    // Allgemein, which also hosts the export and import card
-    var adoptToggles = {}; // each adopt key's toggle element, which a colour pick flips live
+    // Each area's adopt key, "1" or unset while it follows the global badge colour and "0" once it
+    // has a colour of its own, with that area's key prefix and the switches showing it.
+    var ADOPT_PREF = { "cc.styleheader": "cch.", "cc.styleshares": "ccsh.", "cc.styledocker": "ccd.", "cc.styleplugin": "ccp.", "cc.stylevms": "ccv.", "cc.stylesettings": "ccs.", "cc.stylefavorites": "ccf.", "cc.stylemain": "ccm." };
+    var adoptToggles = {};
     var styleCardSync = {}; // each adopt key's refresher, repainting an area card with the effective colour
     function syncAllStyleCards() { for (var k9 in styleCardSync) { try { styleCardSync[k9](); } catch (e9) {} } }
     // The master theming switch. Off keeps the Docker orchestration functions and disables every
@@ -1245,6 +1248,46 @@
     [pvName, pvVal, pvVal2, pvName2, pvVal3, pvVal4, pvName3, pvTab].forEach(function (x9) { prev.appendChild(x9); });
     prev.id = "cc-set-prev"; c1.appendChild(prev);
     wrapMain.appendChild(c1);
+    // The global badge colour is set once, in the card above. This card says that every area
+    // follows it and lists only the areas set apart, each with its way back.
+    var EXC_AREAS = [
+      ["cc.styleheader", "header", T("Kopfbereich", "Header area")],
+      ["cc.stylemain", "main", T("Start-Tab", "Start tab")],
+      ["cc.styleshares", "shares", T("Freigaben-Tab", "Shares tab")],
+      ["cc.styledocker", "docker", T("Docker-Tab", "Docker tab")],
+      ["cc.styleplugin", "plugins", T("Plugin-Tab", "Plugins tab")],
+      ["cc.stylevms", "vms", T("VM-Tab", "VMs tab")],
+      ["cc.stylesettings", "settings", T("Einstellungen- und Werkzeuge-Tab", "Settings and Tools tabs")],
+      ["cc.stylefavorites", "favorites", T("Favoriten-Tab", "Favorites tab")]
+    ];
+    var cExc = card(T("Bereichsfarben", "Area colours"));
+    wrapMain.appendChild(cExc);
+    function paintExceptions() {
+      Array.prototype.slice.call(cExc.querySelectorAll(".cc-set-row")).forEach(function (r) { r.parentNode.removeChild(r); });
+      var own = [], follow = [];
+      EXC_AREAS.forEach(function (a) {
+        var sec = SECS.filter(function (s9) { return s9.id === a[1]; })[0];
+        if (sec && areaOn(sec.key)) (localStorage.getItem(a[0]) === "0" ? own : follow).push(a);
+      });
+      var lead = el("div", "cc-set-row cc-set-inline"), lw = el("span", "cc-set-lblwrap");
+      lw.appendChild(el("span", null, own.length ? T("Alle Bereiche folgen der globalen Badge-Farbe, bis auf diese:", "Every area follows the global badge colour, except these:") : T("Alle Bereiche folgen der globalen Badge-Farbe", "Every area follows the global badge colour")));
+      lw.appendChild(infoIcon(T("Eine eigene Farbe bekommt ein Bereich über „Ausnahme hinzufügen“ oder in seinem eigenen Tab. Alle übrigen Bereiche ändern sich mit der globalen Farbe.", "Add an exception here or on the area's own tab to give it a colour of its own. Every other area changes with the global colour.")));
+      lead.appendChild(lw); cExc.appendChild(lead);
+      own.forEach(function (a) {
+        var row = el("div", "cc-set-row cc-set-inline"), nm = el("span", "cc-set-lblwrap"), dot = el("span", "cc-set-excdot");
+        dot.style.background = get(ADOPT_PREF[a[0]] + "accent", "#FCC419");
+        nm.appendChild(dot); nm.appendChild(el("span", null, a[2])); row.appendChild(nm);
+        row.appendChild(actionBtn(T("Globale Farbe nutzen", "Use the global colour"), "cc-btn", function () { setOwnColour(a[0], false); }));
+        cExc.appendChild(row);
+      });
+      if (follow.length) {
+        var add = el("div", "cc-set-row"); add.appendChild(el("span", "cc-set-rl", T("Ausnahme hinzufügen", "Add an exception")));
+        add.appendChild(areaPicker(T("Bereich wählen", "Choose an area"), follow, function (a) { setOwnColour(a[0], true); localStorage.setItem("cc.settab", a[1]); render(); }));
+        cExc.appendChild(add);
+      }
+      paintSelects();
+    }
+    paintExceptions();
     // Density and tile size are each one key every list reads, so they sit here with the other
     // global controls rather than being repeated per tab.
     if (themingCard) themingCard.appendChild(segRow(T("Dichte", "Density"), [["compact", T("Kompakt", "Compact")], ["normal", "Normal"], ["airy", T("Luftig", "Airy")]], density, function (v) { density = v; set("cc.density", v); }, T("Gilt global für alle Listen: Docker, Start, Freigaben und VMs.", "Applies globally to every list: Docker, Start, Shares and VMs."), true));
@@ -1254,7 +1297,7 @@
     // treatment is decided, so it is the last card that should show no logo. Three sections, one
     // per area, each with that area's real icons.
     (function () {
-      var cLI = card(T("Logos & Icons", "Logos & icons"), T("Globale Logo-/Icon-Farben. Tabs mit aktivem 'Globale Badge-Farbe übernehmen' folgen auch hier.", "Global logo/icon colours. Tabs adopting the global colour follow these too."));
+      var cLI = card(T("Logos & Icons", "Logos & icons"), T("Globale Logo- und Icon-Farben. Bereiche ohne eigene Farbe folgen ihnen.", "Global logo and icon colours. Areas without a colour of their own follow them."));
       // the three previews at the bottom of this card, repainted by every control in it
       var gPrevs = [];
       function gpaint() {
@@ -1326,8 +1369,8 @@
     // Docker is an area like the others: an adopt card and its own badges card at the top of its
     // tab. buildStyleCards writes the area's own accent key, which docker.js resolves through its
     // adopt-gated reader, so an install that never touches it follows the global colour.
-    var cD = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
-    cD.appendChild(styleToggle("cc.styledocker", null));
+    var cD = card(T("Stil", "Style"));
+    cD.appendChild(exceptionRow("cc.styledocker"));
     wrap.appendChild(cD);
     buildStyleCards("ccd.", wrap, [], true);
 
@@ -1451,22 +1494,24 @@
     // shares bar are pushed their new state directly on this page.
     function syncHeaderBar() { try { if (typeof window.ccHeaderApply === "function") window.ccHeaderApply(); } catch (e) {} }
     function syncSharesBar() { try { if (typeof window.ccSharesApply === "function") window.ccSharesApply(); } catch (e) {} }
-    // each adopt key's own key prefix, for seeding that area's accent when adopt goes off
-    var ADOPT_PREF = { "cc.styleheader": "cch.", "cc.styleshares": "ccsh.", "cc.styledocker": "ccd.", "cc.styleplugin": "ccp.", "cc.stylevms": "ccv.", "cc.stylesettings": "ccs.", "cc.stylefavorites": "ccf.", "cc.stylemain": "ccm." };
-    function styleToggle(key, onChange, lbl) {
-      var row = el("div", "cc-set-row cc-set-inline");
-      row.appendChild(el("span", null, lbl || T("Globale Badge-Farbe übernehmen", "Adopt the global badge colour")));
-      var tg = toggle(localStorage.getItem(key) !== "0", function (v) {
-        localStorage.setItem(key, v ? "1" : "0");
-        // Turning adopt off in an area that never had a colour of its own seeds it from the
-        // current global accent, so the colour does not jump to the built-in default and the
-        // area's picker shows what is actually in effect.
-        var p = ADOPT_PREF[key];
-        if (!v && p && localStorage.getItem(p + "accent") == null) set(p + "accent", get("cc.accent", "#FCC419"));
-        if (styleCardSync[key]) styleCardSync[key]();   // the picker and preview jump to the now effective colour
-        if (onChange) onChange(); syncHeaderBar(); syncSharesBar();
-      });
-      adoptToggles[key] = tg; row.appendChild(tg);
+    function setOwnColour(key, own) {
+      localStorage.setItem(key, own ? "0" : "1");
+      // An area set apart for the first time starts from the global accent, so its colour does not
+      // jump to the built-in default and its picker shows what is in effect.
+      var p = ADOPT_PREF[key];
+      if (own && p && localStorage.getItem(p + "accent") == null) set(p + "accent", get("cc.accent", "#FCC419"));
+      (adoptToggles[key] || []).forEach(function (t) { t._setOn(own); });
+      if (styleCardSync[key]) styleCardSync[key]();
+      paintExceptions(); syncHeaderBar(); syncSharesBar();
+    }
+    function exceptionRow(key, tip) {
+      var row = el("div", "cc-set-row cc-set-inline"), lw = el("span", "cc-set-lblwrap");
+      lw.appendChild(el("span", null, T("Eigene Farbe für diesen Bereich", "Own colour for this area")));
+      lw.appendChild(infoIcon(tip || T("An: Der Bereich nimmt seine Farbe aus der Badges-Karte darunter. Aus: Er folgt der globalen Badge-Farbe aus Allgemein.", "On: this area takes its colour from the Badges card below. Off: it follows the global badge colour from General.")));
+      row.appendChild(lw);
+      var tg = toggle(localStorage.getItem(key) === "0", function (v) { setOwnColour(key, v); });
+      (adoptToggles[key] = adoptToggles[key] || []).push(tg);
+      row.appendChild(tg);
       return row;
     }
     // The tabbed-view row reads inverted to its storage: on means the native Unraid sub-tabs,
@@ -1481,8 +1526,8 @@
       row.appendChild(toggle(get("cc.sections." + area, "0") === "0", function (v) { set("cc.sections." + area, v ? "0" : "1"); if (applyFn) applyFn(); }));
       return row;
     }
-    var cP = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
-    cP.appendChild(styleToggle("cc.styleplugin", null));
+    var cP = card(T("Stil", "Style"));
+    cP.appendChild(exceptionRow("cc.styleplugin"));
     cP.appendChild(tabviewRow("plugins", syncPluginsBar));
     // Every area carries the same style cards on its own key prefix, which apply while its adopt
     // toggle is off.
@@ -1497,11 +1542,8 @@
       function effAcc() { return (adoptKey && localStorage.getItem(adoptKey) !== "0") ? get("cc.accent", "#FCC419") : get(P + "accent", "#FCC419"); }
       var acc = effAcc(), istr = parseInt(get(P + "iconstrength", "100"), 10) || 100;
       function useOwn() {
-        if (adoptKey && localStorage.getItem(adoptKey) !== "0") {
-          localStorage.setItem(adoptKey, "0");
-          if (adoptToggles[adoptKey] && adoptToggles[adoptKey]._setOn) adoptToggles[adoptKey]._setOn(false);
-        }
-        syncHeaderBar(); syncSharesBar();
+        if (adoptKey && localStorage.getItem(adoptKey) !== "0") setOwnColour(adoptKey, true);
+        else { syncHeaderBar(); syncSharesBar(); }
       }
       var cA = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
       var pr = el("div", "cc-set-pickrow");
@@ -1653,11 +1695,11 @@
     // the adopt "Stil" card is the FIRST card of every section (user call), then
     // the Badges/Logos cards. Same cards for the Kopfbereich (menu bar) as Plugins/VMs;
     // the Kopfbereich additionally carries the Fussleiste toggle + Status-Insel card.
-    var cV = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
-    cV.appendChild(styleToggle("cc.stylevms", null));
+    var cV = card(T("Stil", "Style"));
+    cV.appendChild(exceptionRow("cc.stylevms"));
     cV.appendChild(tabviewRow("vms", syncVmsBar));
-    var cH = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
-    cH.appendChild(styleToggle("cc.styleheader", null));
+    var cH = card(T("Stil", "Style"));
+    cH.appendChild(exceptionRow("cc.styleheader"));
     // The footer bar is hidden by default. header.js applies it, and it sits in the Theming card
     // rather than here: it is one global on/off for a page element, like density and tile size,
     // not part of the header area itself.
@@ -1670,23 +1712,23 @@
       cHf.appendChild(toggle(get("cc.footer", "1") !== "0", function (v) { set("cc.footer", v ? "1" : "0"); syncHeaderBar(); }));
       themingCard.appendChild(cHf);
     }
-    var cSh = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
-    cSh.appendChild(styleToggle("cc.styleshares", null));
+    var cSh = card(T("Stil", "Style"));
+    cSh.appendChild(exceptionRow("cc.styleshares"));
     cSh.appendChild(tabviewRow("shares", syncSharesBar));
-    var cSet = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
-    cSet.appendChild(styleToggle("cc.stylesettings", null));
+    var cSet = card(T("Stil", "Style"));
+    cSet.appendChild(exceptionRow("cc.stylesettings", T("An: Der Bereich nimmt seine Farbe aus der Badges-Karte darunter. Aus: Er folgt der globalen Badge-Farbe aus Allgemein. Gilt für /Einstellungen und /Werkzeuge zugleich, weil Unraid beide Seiten gleich aufbaut.", "On: this area takes its colour from the Badges card below. Off: it follows the global badge colour from General. It applies to /Settings and /Tools at once, since Unraid builds both pages the same way.")));
     // tile size of the /Settings + /Tools grid is the GLOBAL cc.sgsize control in Allgemein (no per-tab copy).
-    var cFav = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
-    cFav.appendChild(styleToggle("cc.stylefavorites", null));
-    var cStart = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt.", "On: the global badge colour from General applies here too. Off: this section's own colour applies."));
-    cStart.appendChild(styleToggle("cc.stylemain", null));
+    var cFav = card(T("Stil", "Style"));
+    cFav.appendChild(exceptionRow("cc.stylefavorites"));
+    var cStart = card(T("Stil", "Style"));
+    cStart.appendChild(exceptionRow("cc.stylemain"));
     cStart.appendChild(tabviewRow("main", syncSharesBar));
     wrapHeader.appendChild(cH); wrapShares.appendChild(cSh); wrapPlugin.appendChild(cP); wrapVms.appendChild(cV); wrapSettings.appendChild(cSet); wrapFavorites.appendChild(cFav); wrapStart.appendChild(cStart);
     // Unraid renders /Settings and /Tools with the identical tile grid, so both pages share one
     // flag; a per-tab copy of it would do nothing on one of them. This tab therefore carries the
     // same card and toggle wired to that same key, so either page can flip it.
-    var cTools = card(T("Stil", "Style"), T("An: die globale Badge-Farbe aus Allgemein gilt auch hier. Aus: die eigene Farbe dieses Abschnitts gilt. Wirkt auf /Einstellungen und /Werkzeuge zugleich, da Unraid beide Seiten identisch rendert.", "On: the global badge colour from General applies here too. Off: this section's own colour applies. It affects /Settings and /Tools at once, since Unraid renders both pages identically."));
-    cTools.appendChild(styleToggle("cc.stylesettings", null));
+    var cTools = card(T("Stil", "Style"));
+    cTools.appendChild(exceptionRow("cc.stylesettings", T("An: Der Bereich nimmt seine Farbe aus der Badges-Karte im Einstellungen-Tab. Aus: Er folgt der globalen Badge-Farbe aus Allgemein. Gilt für /Einstellungen und /Werkzeuge zugleich, weil Unraid beide Seiten gleich aufbaut.", "On: this area takes its colour from the Badges card on the Settings tab. Off: it follows the global badge colour from General. It applies to /Settings and /Tools at once, since Unraid builds both pages the same way.")));
     wrapTools.appendChild(cTools);
     function syncPluginsBar() { try { if (typeof window.ccPluginsApply === "function") window.ccPluginsApply(); } catch (e) {} }
     function syncVmsBar() { try { if (typeof window.ccVmsApply === "function") window.ccVmsApply(); } catch (e) {} }
@@ -1955,6 +1997,27 @@
   // switch, carrying its own badge's colour and the ink for its knob.
   function ccTick(c) { return "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='" + encodeURIComponent(c) + "' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>\")"; }
   function chkCell(key, v, color) { var td = el("td", "cc-set-chk"); var cb = el("input", "cc-cb"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); if (rainbow && color) { cb.style.setProperty("--cc-rb-c", color); cb.style.setProperty("--cc-rb-ct", idealText(color)); } cb.addEventListener("change", function () { var cur = colview[key] || { s: true, a: true }; colview[key] = { s: cur.s, a: cur.a }; colview[key][v] = cb.checked; set("cc.colview2", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
+  // A span with the button role, since Unraid's global button CSS would bloat a real button.
+  function actionBtn(text, cls, run) {
+    var b = el("span", cls, text);
+    b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+    b.addEventListener("click", run);
+    b.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); run(); } });
+    return b;
+  }
+  // A dropdown of areas that runs an action on a pick. It has no <select> behind it, so the shared
+  // wheel step in cc-theme.js passes it by and a turn of the wheel never adds an exception.
+  function areaPicker(label, items, onPick) {
+    var wrap = el("span", "cc-dsel"), trig = el("span", "cc-dsel-trigger", label), panel = el("div", "cc-dsel-panel");
+    items.forEach(function (it) {
+      var o = el("div", "cc-dsel-opt", it[2]);
+      o.addEventListener("click", function (ev) { ev.stopPropagation(); wrap.classList.remove("cc-open"); onPick(it); });
+      panel.appendChild(o);
+    });
+    trig.addEventListener("click", function (ev) { ev.stopPropagation(); if (wrap.classList.toggle("cc-open")) ccDselPosition(trig, panel); });
+    wrap.appendChild(trig); wrap.appendChild(panel);
+    return wrap;
+  }
   // Every option row is a dropdown, so segRow() delegates to dropRow() and its callers keep the
   // same options and handler; the select fires change, so the live effects still run. The old
   // layout argument is ignored, since a dropdown always puts its label on the left.

@@ -1285,6 +1285,8 @@ html.cc-tools-rbneutral #cc-settings .cc-dsel-opt.is-selected {
    infoIcon(tip) emits <span class="cc-info" data-tip="…">, neutral, never accent, and header.js's
    floating bubble shows the text. */
 .cc-set-lblwrap { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+/* an area's own colour beside its name in the area colours card */
+.cc-set-excdot { width: 14px; height: 14px; flex: none; border-radius: var(--cc-radius-pill); }
 .cc-info { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; background: none; color: var(--txt, #e6e6e6); opacity: .8; cursor: help; position: relative; flex: 0 0 auto; }
 .cc-info svg { width: 15px; height: 15px; display: block; background: none; }
 .cc-info:hover, .cc-info:focus { opacity: 1; outline: none; }
