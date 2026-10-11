@@ -3,7 +3,9 @@
 // declaration that wins. A test that only reads the rule it cares about misses
 // the heavier rule in another sheet that overrides it.
 //
-// The element is described, not built: { tag, classes, attrs, states }. Ancestors
+// The element is described, not built: { tag, classes, attrs, states }, with
+// optional html (the classes on <html>, to pick a colour mode or theme) and has
+// (the selectors a :has() may name, such as '.sl-low'). Other ancestors
 // are assumed to be whatever a selector asks for, so a rule counts as matching
 // if it could match the element in some context. Pseudo-classes it cannot decide
 // (structural ones, :has) count as possible too, which errs towards reporting.
@@ -187,6 +189,7 @@ function matchPseudo(x, el) {
       return !!st[x.name];
     case 'enabled': return !st.disabled;
     case 'root': return el.tag === 'html';
+    case 'has': return el.has ? el.has.includes(x.arg.trim()) : null;
     default: return null;
   }
 }
@@ -218,6 +221,7 @@ function candidates(page, el, prop) {
         if (m === false) continue;
         const c = compounds(sel);
         if (c.length > 1 && !keyed(c[c.length - 1], el)) continue;
+        if (el.html && c.length > 1 && /^html\b/.test(c[0]) && matchCompound(c[0], { tag: 'html', classes: el.html, attrs: {}, states: {} }) === false) continue;
         hits.forEach((d, n) => out.push({ sheet: name, selector: sel, value: d.value, important: d.important, spec: specificity(sel), order: order + n / 100 }));
       }
     }
@@ -225,4 +229,23 @@ function candidates(page, el, prop) {
   return out.sort((a, b) => (a.important - b.important) || cmp(a.spec, b.spec) || (a.order - b.order));
 }
 
-module.exports = { DIR, PAGES, parseRules, parseDecls, specificity, matchSubject, candidates, cmp };
+// The custom properties Tokens.css sets on <html>, for the dark themes or, with
+// light, with the white and azure override on top.
+function tokens(light) {
+  const out = {};
+  for (const r of parseRules(fs.readFileSync(path.join(DIR, 'sheets/CannonadeCommand.Tokens.css'), 'utf8'))) {
+    const sel = r.selector.replace(/\s+/g, ' ');
+    if (sel === 'html' || (light && sel === 'html.Theme--white, html.Theme--azure')) for (const d of r.decls) if (d.prop.startsWith('--')) out[d.prop] = d.value;
+  }
+  return out;
+}
+// Substitutes var() references from a token map until a plain value is left.
+function resolve(value, map) {
+  let v = value, guard = 0;
+  while (/var\(/.test(v) && guard++ < 20) {
+    v = v.replace(/var\(\s*(--[\w-]+)\s*(?:,\s*((?:[^()]|\([^()]*\))*))?\)/, (m, name, fb) => (name in map ? map[name] : (fb != null ? fb.trim() : 'unset')));
+  }
+  return v.trim();
+}
+
+module.exports = { tokens, resolve, DIR, PAGES, parseRules, parseDecls, specificity, matchSubject, candidates, cmp };

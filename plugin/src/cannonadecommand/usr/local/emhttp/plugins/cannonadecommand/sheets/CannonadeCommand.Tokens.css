@@ -198,8 +198,9 @@ html {
   --cc-warn-hover: color-mix(in srgb, var(--cc-warn) 85%, var(--cc-text));
   --cc-err-hover:  color-mix(in srgb, var(--cc-err) 85%, var(--cc-text));
   /* advice rather than a problem, such as ShipLog's pinned tag with a newer version out; ShipLog's
-     own sheets read this name too */
-  --cc-info: #3b82d0;  --cc-info-fg: #fff;
+     own sheets read this name too. The blue sits just above idealText()'s 0.197 crossover, so its
+     ink is the dark one. */
+  --cc-info: #3b82d0;  --cc-info-fg: #161616;
 
   /* component roles, so a new component reads one name and adapts with the theme */
   --cc-toggle-track-off: #3a3a3a;

@@ -328,15 +328,16 @@ table:not(.cc-enh) #docker_list tr:is(.sortable, .folder-element) td.advanced:ha
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn a.exec:has(span.orange-text):hover { background: var(--cc-warn-hover); }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn a.exec > span.orange-text { display: inline !important; background: transparent !important; color: inherit !important; padding: 0; margin: 0; }
 
-/* ShipLog's changelog chip becomes a solid badge coloured by its risk dot */
+/* ShipLog's changelog chip becomes a solid badge coloured by its risk dot, each state fill with its
+   own ink over the white of the grey chip */
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip { color: #fff !important; background: #4a4a4a; }
-.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-low)  { background: var(--cc-ok, #6fdc8c); }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-low)  { background: var(--cc-ok, #6fdc8c); color: var(--cc-ok-fg, #161616) !important; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-mid)  { background: var(--cc-warn, #ff832b); color: var(--cc-warn-fg, #161616) !important; }
-.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #ff8389); }
-.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-crit) { background: var(--cc-err, #ff8389); }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #ff8389); color: var(--cc-err-fg, #161616) !important; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-crit) { background: var(--cc-err, #ff8389); color: var(--cc-err-fg, #161616) !important; }
 /* sl-info is a tag pinned while a newer version exists. With the dot hidden, the colour is all
    that sets it apart from the grey up-to-date chip. */
-.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-info) { background: var(--cc-info, #3b82d0); }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip:has(.sl-info) { background: var(--cc-info, #3b82d0); color: var(--cc-info-fg, #161616) !important; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip .sl-amp { display: none; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip .sl-ico { opacity: .85; }
 
@@ -2119,11 +2120,11 @@ html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .fol
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn > span.green-text { background: var(--cc-ok, #6fdc8c) !important; color: var(--cc-ok-fg, #161616) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn span.orange-text { background: var(--cc-warn, #ff832b) !important; color: var(--cc-warn-fg, #161616) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip { background: #4a4a4a !important; color: #fff !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-low) { background: var(--cc-ok, #6fdc8c) !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-low) { background: var(--cc-ok, #6fdc8c) !important; color: var(--cc-ok-fg, #161616) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-mid) { background: var(--cc-warn, #ff832b) !important; color: var(--cc-warn-fg, #161616) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-crit) { background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important; }
-html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-info) { background: var(--cc-info, #3b82d0) !important; color: #fff !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-info) { background: var(--cc-info, #3b82d0) !important; color: var(--cc-info-fg, #161616) !important; }
 /* #45/#50 (user, live-verified via getComputedStyle: measured rgba(128,128,128,.18), the plain rest-
    grey fallback, on a live "Nicht gepflegt" row): ShipLog's Not-maintained/CADeprecated chips carry
    no .sl-amp risk dot, so none of the :has() rules above ever match them - they fall through to the

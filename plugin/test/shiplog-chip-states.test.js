@@ -31,6 +31,29 @@ for (const [cls, token] of Object.entries(STATES)) {
   ok(`sl-${cls}: the reactive hover rule reads var(${token}`, (hover || '').includes(`var(${token},`), hover);
 }
 
+// The grey chip's white ink is !important, so a state rule that sets only its fill keeps
+// that white on a pastel green or pink. Resolved across every sheet the Docker page loads,
+// in both theme families, each state has to read at 4.5:1.
+console.log('\nEvery chip state reads, with the cascade resolved and the tokens filled in');
+{
+  const { candidates, tokens, resolve } = require('./cascade');
+  const lum = (hex) => { const n = parseInt(hex.slice(1), 16); const l = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * l(n >> 16 & 255) + 0.7152 * l(n >> 8 & 255) + 0.0722 * l(n & 255); };
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const six = (h) => (/^#[0-9a-f]{3}$/i.test(h) ? '#' + h.slice(1).split('').map((c) => c + c).join('') : h);
+  const MODES = { plain: { html: ['cc-docker-on'], hover: false }, 'reactive row hover': { html: ['cc-docker-on', 'cc-shares-rbneutral'], hover: true } };
+  for (const [theme, light] of [['dark', false], ['light', true]]) {
+    const map = tokens(light);
+    for (const [mode, m] of Object.entries(MODES)) for (const cls of Object.keys(STATES)) {
+      const el = { tag: 'span', classes: ['sl-chip'], attrs: { class: 'sl-chip' }, states: { hover: m.hover }, html: m.html.concat(light ? ['Theme--white'] : []), has: ['.sl-' + cls] };
+      const win = (prop) => { const c = candidates('docker', el, prop); return c[c.length - 1]; };
+      const bg = win('background'), fg = win('color');
+      const b = bg && six(resolve(bg.value, map)), f = fg && six(resolve(fg.value, map));
+      const r = b && f && /^#[0-9a-f]{6}$/i.test(b) && /^#[0-9a-f]{6}$/i.test(f) ? ratio(b, f) : 0;
+      ok(`${theme}, ${mode}: sl-${cls} reads at 4.5:1`, r >= 4.5, `${f} on ${b} = ${r.toFixed(2)}:1 (${fg && fg.selector.slice(-40)})`);
+    }
+  }
+}
+
 console.log('\nThe up-to-date chip stays the neutral grey the pinned one is told apart from');
 {
   ok('sl-ok has no colour rule of its own', ruleBody(css, `${ROW}:has(.sl-ok)`) == null);
@@ -42,7 +65,7 @@ console.log('\n--cc-info resolves to a colour on <html>');
   const m = /--cc-info:\s*([^;]+);/.exec(tokens);
   ok('--cc-info is declared', !!m);
   ok('--cc-info is a literal, not a var() that could refer to itself', !!m && /^#[0-9a-fA-F]{6}$/.test(m[1].trim()), m && m[1]);
-  ok('--cc-info-fg is declared', /--cc-info-fg:\s*#fff/.test(tokens));
+  ok('--cc-info-fg is the dark ink the blue takes', /--cc-info-fg:\s*#161616;/.test(tokens));
 }
 
 // enhanceShipLogBubble() stamps --cc-rb-c on all three window buttons in the reactive mode and
