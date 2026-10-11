@@ -839,7 +839,7 @@
         rl.appendChild(infoIcon(T("Öffnet Unraids Anzeige-Einstellungen im CannonadeCommand-Stil. Dort liegen unter anderem die Kopfzeilen-Farben, das Banner und die Favoriten-Option.", "Opens Unraid's Display Settings in CannonadeCommand style, where the header colours, the banner and the favourites option live.")));
         r.appendChild(rl);
         var b = el("button", "cc-btn", T("Öffnen", "Open")); b.type = "button";
-        b.style.marginLeft = "auto";   // #3 (user): push the native-settings button flush right
+        b.style.marginLeft = "auto";   // flush right, like the switches in the rows around it
         b.addEventListener("click", function () { location.href = "/Settings/DisplaySettings"; });
         r.appendChild(b); cCard.appendChild(r);
         var ar = el("div", "cc-set-row cc-set-inline");
@@ -875,10 +875,10 @@
         var row = el("div", "cc-set-row cc-set-inline");
         var cur = localStorage.getItem(a[0]);
         if (a[0] === "cc.enable.favorites") {
-          // #3 (user): the CC Favoriten-Tab area is only switchable ON when Unraid's OWN favorites setting is
-          // ON. cc.hidefavtab mirrors the native "favorites=no" state (synced by the fetch above + on the
-          // Display Settings page). Native off => no tab to enhance => force the area off + disable the toggle
-          // with a hint. window.ccFavGateSync re-evaluates it once the async native-state fetch resolves.
+          // The favourites tab area can only be switched on while Unraid's own favourites setting is on,
+          // since otherwise there is no tab to enhance. cc.hidefavtab mirrors the native "favorites=no"
+          // state (synced by the fetch above and on the Display Settings page); with it set, the area is
+          // forced off and its switch disabled with a hint. window.ccFavGateSync re-evaluates it once the async native-state fetch resolves.
           var lw = el("span", "cc-set-lblwrap"); lw.appendChild(el("span", null, a[1])); row.appendChild(lw);
           var favOff = localStorage.getItem("cc.hidefavtab") === "1";
           if (favOff && localStorage.getItem("cc.enable.favorites") !== "0") localStorage.setItem("cc.enable.favorites", "0");
@@ -1350,7 +1350,7 @@
       });
       gLT.strInput.value = String(parseInt(get("cc.iconstrength", "100"), 10) || 100);
       gLT.strInput.addEventListener("input", function () { set("cc.iconstrength", gLT.strInput.value); gsync(); });
-      // ── Icon-Färbung (GLOBAL): how the two icon treatments are CHOSEN, as opposed to the
+      // Icon-Färbung, global: how the two icon treatments are chosen, as opposed to the
       // colour they use (that is the picker above). See cc-theme.js for the chain itself.
       // The default is "auto"; the other three are manual overrides and are respected even
       // where the automatic choice would have picked differently.
@@ -1706,9 +1706,9 @@
       if (adoptKey) { try { styleCardSync[adoptKey](); } catch (e9) {} }
       if (!noLogos) into.appendChild(cB); // header tab: badges only, no logo card
     }
-    // the adopt "Stil" card is the FIRST card of every section (user call), then
-    // the Badges/Logos cards. Same cards for the Kopfbereich (menu bar) as Plugins/VMs;
-    // the Kopfbereich additionally carries the Fussleiste toggle + Status-Insel card.
+    // The adopt "Stil" card leads every section, followed by the Badges and Logos cards. The menu
+    // bar section has the same cards as Plugins and VMs, plus the footer switch and the status
+    // island card.
     var cV = card(T("Stil", "Style"));
     cV.appendChild(exceptionRow("cc.stylevms"));
     cV.appendChild(tabviewRow("vms", syncVmsBar));
@@ -1822,7 +1822,7 @@
       var GF = (window.CCTheme && window.CCTheme.gfonts) ? window.CCTheme.gfonts : [];
       var rest = SYS.slice();
       GF.forEach(function (gf) { var val = '"' + gf[0] + '",' + gf[1]; rest.push([val, gf[0], val]); }); // Google faces (always render)
-      rest.sort(function (a, b) { return a[1].localeCompare(b[1]); });   // the WHOLE list alphabetical (user)
+      rest.sort(function (a, b) { return a[1].localeCompare(b[1]); });   // system and Google faces in one alphabetical list
       var FONTS = [["", T("Standard", "Default")], ['system-ui,-apple-system,"Segoe UI",sans-serif', "System"]]
         .concat(rest).map(function (f) { return [f[0], f[1], f[2] || f[0]]; }); // o[2] = self-preview face
       // load the Google faces so their dropdown previews (and any chosen one on this page) actually render
@@ -2003,10 +2003,9 @@
     setSearch.addEventListener("input", function () { runFilter(setSearch.value); });
     paintPrev(); paintToggles(); paintSelects(); paintCardHeads();
   }
-  // #(user: "Alle drop down listen sind nicht in den farbmodi"): this page's own eleven .cc-dsel
-  // dropdowns were built but never stamped, so in rainbow/flag mode every option showed the flat
-  // accent. Same shared painter every area now uses (cc-theme.js), called from the same render
-  // chokepoint as paintToggles() so the two can never drift apart.
+  // This page's own .cc-dsel dropdowns take the colour mode through the painter every area shares
+  // (cc-theme.js); without the stamp each option would show the flat accent in rainbow and flag
+  // mode. It runs from the same render step as paintToggles(), so the two cannot drift apart.
   function paintSelects() { try { if (window.CCTheme && window.CCTheme.paintSelects) window.CCTheme.paintSelects(root || document); } catch (e) {} }
   // Notifications and the shaping interface save as they change: a switch at once, reverting when
   // the engine refuses, and a text field once typing has been quiet for a moment, keeping what was

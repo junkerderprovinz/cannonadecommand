@@ -1838,7 +1838,7 @@ html.cc-popups-on .installedCardBackground { display: none !important; }
 html.cc-popups-on .officialCardBackground,
 html.cc-popups-on .LTOfficialCardBackground,
 html.cc-popups-on .betaCardBackground {
-  position: static !important;                      /* the flex row lays these out now */
+  position: static !important;                      /* the flex row lays these out */
   clip-path: none !important;                       /* the wedge is the ribbon shape */
   /* CA also hangs a negative right margin on the ribbon so the wedge sticks out past the card
      corner, so the margin has to go with the clip-path, transform and size. */
@@ -2352,8 +2352,8 @@ html.cc-popups-on a.sortIcons.enabledIcon {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
 }
-/* REACTIVE: maxPerPage/dockerSearch drop back to neutral-at-rest here (their #8-style coloured rest
-   above is the NORMAL/Rainbow behaviour); sortIcons rests neutral in every mode, matching the pager.
+/* Reactive: maxPerPage and dockerSearch rest neutral here (the coloured rest above is the normal and
+   rainbow behaviour); sortIcons rests neutral in every mode, matching the pager.
    .cc-popups-on carried for (0,4,1). */
 html.cc-apps-rbneutral.cc-popups-on .searchArea .caButton.maxPerPage,
 html.cc-apps-rbneutral.cc-popups-on .searchArea .dockerSearch,
@@ -2368,10 +2368,10 @@ html.cc-apps-rbneutral.cc-popups-on a.sortIcons.enabledIcon {
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
 }
 
-/* ═══ #15 RESULTS-PER-PAGE DROPDOWN IN GLS ═══════════════════════════════════════════════════════════
-   #dropdown-maxPerPage is CA's own dropdown-context <ul>: white-on-dark native list, a checkmark icon for
-   the active row, a hardcoded green span. Scoped to the ID (not the generic .dropdown-context class) so
-   this never touches CA's OTHER context menus (right-click app actions) the user never asked about. */
+/* The results-per-page dropdown in the GlimStone look. #dropdown-maxPerPage is CA's own
+   dropdown-context <ul>: white-on-dark native list, a checkmark icon for the active row, a hardcoded
+   green span. Scoped to the ID (not the generic .dropdown-context class) so this leaves CA's other
+   context menus (the right-click app actions) alone. */
 html.cc-popups-on #dropdown-maxPerPage.dropdown-menu {
   background: var(--cc-surface-window, #242424) !important; border: none !important;
   border-radius: var(--cc-radius-card) !important; box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;

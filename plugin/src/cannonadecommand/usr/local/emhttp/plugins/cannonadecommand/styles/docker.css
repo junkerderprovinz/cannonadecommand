@@ -111,10 +111,9 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbo
 /* ACTIONS column: icon buttons, name as tooltip; "…" opens the native menu */
 .cc-actcell { white-space: nowrap; }
 .cc-act-th { font-size: var(--cc-text-meta); }
-/* #10 (user: "listentitelleisten in den cc style"): the native tablesorter column headers were a flat grey
-   strip with a hard 1px separator line + an orange sort caret. CC treatment: a clean surface-shade strip,
-   dim chip text, uppercase/tracked type, NO border line (differentiate by SHADE), and the orange sort caret
-   recoloured to the CC accent (rainbow-aware). Scoped to the enhanced docker table. */
+/* The native tablesorter column headers become a surface-shade strip with dim chip text in tracked
+   uppercase, set apart by shade rather than a separator line, and the orange sort caret takes the
+   accent (rainbow-aware). Scoped to the enhanced Docker table. */
 html.cc-docker-on table.cc-enh thead th {
   background: var(--cc-surface-3, #2e2e2e) !important;
   color: var(--cc-text-chip, #cfcfcf) !important;
@@ -2122,10 +2121,9 @@ html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list td.c
 html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #FCC419))) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card-ico { background: rgba(128, 128, 128, .18) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card:hover .cc-card-ico { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #FCC419))) !important; }
-/* UPDATE-column badges join the row too (user: "changelog und auf aktuellem Stand nur farbig
-   wenn aktiv/mouseover"): the "auf dem neusten Stand" green / "Aktualisierung" orange chips and
-   the ShipLog changelog chip rest GREY in neutral and take their state colour on ROW hover.
-   Placed AFTER the .cc-c-update colour rules so equal-importance ties resolve by order. */
+/* The update column's badges join the row too: the green "up to date" and orange "update" chips and
+   the ShipLog changelog chip rest grey in neutral and take their state colour on the row's hover.
+   Placed after the .cc-c-update colour rules so equal-importance ties resolve by order. */
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn > span.green-text,
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn span.orange-text,
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip {
@@ -2139,12 +2137,10 @@ html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .fol
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-high) { background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-crit) { background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-info) { background: var(--cc-info, #3b82d0) !important; color: var(--cc-info-fg, #161616) !important; }
-/* #45/#50 (user, live-verified via getComputedStyle: measured rgba(128,128,128,.18), the plain rest-
-   grey fallback, on a live "Nicht gepflegt" row): ShipLog's Not-maintained/CADeprecated chips carry
-   no .sl-amp risk dot, so none of the :has() rules above ever match them - they fall through to the
-   REST-GREY base like a routine update chip, even though they're a PERSISTENT problem state that
-   must always read red/orange, never neutral, hover or not. More specific (adds the sl-unmaint/sl-dep
-   class) than the plain .sl-chip rules above, so it wins regardless of source order. */
+/* ShipLog's Not-maintained and CA-deprecated chips carry no .sl-amp risk dot, so none of the :has()
+   rules above match them and they would rest grey like a routine update chip. They mark a lasting
+   problem and read red or orange at rest and on hover. The extra class makes these rules heavier
+   than the plain .sl-chip ones, so they win whatever the source order. */
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip.sl-unmaint,
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip.sl-unmaint {
   background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important;
@@ -2153,11 +2149,10 @@ html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .fol
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip.sl-dep {
   background: var(--cc-warn, #ff832b) !important; color: var(--cc-warn-fg, #161616) !important;
 }
-/* FLASH FIX (user: "wenn ich über die unterste Buttonleiste fahre blitzt die Docker-Zeile
-   dahinter auf"): the fixed bottom action bar does NOT hit-test across its right region (proven:
-   z-index 3000 still leaves the row topmost there), so the pointer passing the bar's right zone
-   :hover'd the row underneath and fired the reactive colouring. docker.js stamps html.cc-actbar-hot
-   while the pointer is in the bar's Y-band; suppress the row-hover colouring back to grey then. */
+/* The fixed bottom action bar does not hit-test across its right region (even at z-index 3000 the
+   row stays topmost there), so a pointer crossing that zone hovers the row underneath and it lights
+   up in the reactive colours. docker.js stamps html.cc-actbar-hot while the pointer is in the bar's
+   band, and the row's hover colouring stays grey meanwhile. */
 html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand { background: rgba(128, 128, 128, .18) !important; }
 html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b:not(.cc-plan-on),
 html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn > span.green-text,

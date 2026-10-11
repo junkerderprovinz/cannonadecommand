@@ -1,6 +1,6 @@
 // Runs renderFolderView() out of docker.js against a synthetic organizer tree,
 // with its collaborators (card, folderChip, folderListRow, ensureGridHolder,
-// makeGear and the rest) stubbed, as in folder-view-bug-fixes.test.js.
+// makeGear and the rest) stubbed, as in folder-mode-everywhere.test.js.
 //
 // It pins two things: the three densities dispatch through one render path, so
 // collapse, hide-stopped, bulk actions and search auto-expand work in each of

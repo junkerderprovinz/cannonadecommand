@@ -71,7 +71,7 @@
 
 ### 4.35.0
 **✨ Added**
-- **Folder view's content density is now a genuine List/Grid/Detailed switch, one level inside Folder view** - the thing that was originally asked for, which 4.34.0's "Detailliert"/"Kompakt" toggle did not actually deliver (both of its options were still vertical card-shaped tiles). "Grid" is now a small inline pill per container - icon, name, a coloured status dot, a short status word, and one tiny action button, all on one line, flowing and wrapping left-to-right tightly packed against its neighbours, matching the compact chip style of the FolderView Plus plugin. "Liste" is a brand-new full-width row layout reusing the native Docker List view's own look (a bigger icon, the name, a state badge) stripped down to just icon + name + status + one action button, one row per container. "Detailliert" is unchanged - the full card with live CPU/RAM/network stats. Folders are still always grouped in every density; collapse/expand, per-folder hide-stopped, bulk start/stop, and live-search auto-expand all keep working identically across all three, since they render through the exact same per-item path regardless of density. An install already on the old "Kompakt" setting lands on "Grid" automatically (that row's own layout is what became Grid, just redesigned tighter) rather than silently resetting to Detailed.
+- **Folder view's content density is now a genuine List/Grid/Detailed switch, one level inside Folder view**, which 4.34.0's "Detailliert"/"Kompakt" toggle did not actually deliver (both of its options were still vertical card-shaped tiles). "Grid" is now a small inline pill per container - icon, name, a coloured status dot, a short status word, and one tiny action button, all on one line, flowing and wrapping left-to-right tightly packed against its neighbours, matching the compact chip style of the FolderView Plus plugin. "Liste" is a brand-new full-width row layout reusing the native Docker List view's own look (a bigger icon, the name, a state badge) stripped down to just icon + name + status + one action button, one row per container. "Detailliert" is unchanged - the full card with live CPU/RAM/network stats. Folders are still always grouped in every density; collapse/expand, per-folder hide-stopped, bulk start/stop, and live-search auto-expand all keep working identically across all three, since they render through the exact same per-item path regardless of density. An install already on the old "Kompakt" setting lands on "Grid" automatically (that row's own layout is what became Grid, just redesigned tighter) rather than silently resetting to Detailed.
 
 **🐛 Fixed**
 - **Any action inside a folder (collapsing/expanding it, toggling "hide stopped", bulk start/stop) used to jump the whole page straight back to the top.** Every one of those actions re-renders Folder view by clearing and rebuilding its content, and nothing ever restored the scroll position afterwards. Folder view now remembers where the page was scrolled to before it rebuilds and puts it back once the new content is in place, for every trigger, in one place.
@@ -178,7 +178,7 @@
 - **A configured icon colour disappeared under Rainbow mode.** The "Logos &amp; Icons" card lets you pick one fixed colour for every container/VM/plugin logo's own background badge. With Rainbow mode on, that badge instead showed the rainbow's rotating per-row colour, and with Reactive mode on top of Rainbow, hovering a row's logo revealed the rainbow colour on hover instead of the picked one. Every CSS rule painting that badge resolved its colour from a fallback chain that tried the rainbow colour first and the picked colour second, so rainbow always won whenever it was on. A logo's own badge represents that app's identity, not a rotating value indicator, so the picked icon colour now resolves first everywhere that badge is painted (list view, grid view, and both the plain-Rainbow and Rainbow+Reactive combinations), on Docker, VMs and Plugins alike. The rainbow colour still shows on that badge for anyone who has never picked an icon colour, and it is untouched everywhere else Rainbow mode paints (CPU/RAM/port/IP badges, tab pills, buttons): this fix reaches only the icon logo's own badge.
 
 **🔧 Under the hood**
-- This was a deliberate product decision, not a plain bug fix: confirmed directly with the user after a live reproduction on a real box (Rainbow on, Reactive on, a magenta icon colour picked) that showed the badge take the rainbow colour on hover instead of the picked magenta.
+- This is a product decision rather than a plain bug fix: on a real box (Rainbow on, Reactive on, a magenta icon colour picked) the badge took the rainbow colour on hover instead of the picked magenta.
 - New tests pin the colour-priority order for the Docker list-tile, Docker grid-tile, Plugins tile and VM tile rules, across both the plain-Rainbow and Rainbow+Reactive-hover variants, and separately confirm the generic (non-icon) rainbow-coloured elements were left untouched.
 
 ### 4.32.3
@@ -1100,7 +1100,7 @@
 - Notifications drawer: each message is a proper card now (raised surface, rounded, spaced) instead of a plain
   line-separated row, and the top tabs/buttons share one consistent height and radius.
 ### 2.99.0
-- Removed the Docker multiselect (#S7) and the container note/tag (#S8) features again (user set them aside).
+- Removed the Docker multiselect and the container note/tag features again.
 - "Add Container" / template form no longer stays completely native: the CC styling (dl grids, CC dropdowns, colon-
   stripped labels) failed when the form was injected into #canvas AFTER boot()'s one-shot check. A scoped re-detection
   watcher now restyles it whenever the form (or the run OUTPUT) appears, however the page was reached.
@@ -2102,7 +2102,7 @@
   der Fuellfarbe.
 
 ### 2.31.9
-- #1 Plugin-Tab ENDLICH: Die Konsolen-Messung des Nutzers bewies den RAHMEN pixelgenau auf der
+- #1 Plugin-Tab ENDLICH: Eine Messung in der Konsole bewies den RAHMEN pixelgenau auf der
   Zeile, waehrend der Screenshot den KNOPF darunter zeigte -- ein INNERER Abstand (Unraids
   13px-Verschiebung auf dem inneren Span) drueckte den Inhalt im korrekt sitzenden Rahmen nach
   unten. Die Schleife zentriert jetzt den SICHTBAREN KNOPF selbst auf die Badge-Mitte

@@ -1256,7 +1256,7 @@
   }
   // With cc.statenative on, the /Main usage bars carry their fill level as a colour, on the same
   // thresholds as the island's fill chip; with it off they follow the colour mode through the CSS.
-  // Unraid 7.3.x no longer stamps its own bar classes, so this assigns cc-fill-* classes that the
+  // Unraid 7.3.x stamps no bar classes of its own, so this assigns cc-fill-* classes that the
   // sheet colours rather than writing inline, which keeps the native table re-render from
   // flickering. Both bars of a row take the used percentage, so a nearly empty disk, whose free bar
   // fills the track, stays green instead of turning red.

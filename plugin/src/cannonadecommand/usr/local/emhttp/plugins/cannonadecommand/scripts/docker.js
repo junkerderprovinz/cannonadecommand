@@ -86,12 +86,10 @@
     };
     jQuery.fn.switchButton.__ccPatched = true;
   })();
-  // ── perf: skip readmore.js for the per-cell Docker "read more" spans ──
-  // (user: "der erweiterte/einfache Ansicht Toggle im Dockertab: das Umschalten dauert lange und
-  // der Tab friert ein"). Root cause, live-profiled with a CDP CPU sampling profile across a real
-  // click on the toggle (55 containers / 223 .docker_readmore spans on the reporting host): ONE
-  // blocking main-thread task of 7.2-7.6s, and 7.3s of it sat inside readmore.js's init() called
-  // from Unraid's own listview(). readmore's init runs, per element,
+  // readmore.js is skipped for the Docker list's "read more" spans. On a host with 55 containers
+  // (223 .docker_readmore spans) a Basic/Advanced switch froze the tab for over seven seconds in one
+  // task, nearly all of it inside readmore's init(), called from Unraid's own listview(). It runs,
+  // per element,
   //   css("max-height") -> css("max-height","none") -> css({height:"auto",overflow:"visible"})
   //   -> outerHeight(true)
   // a write, a read, a write and a read, where each read forces a synchronous style and layout
@@ -203,7 +201,7 @@
   // "↓1.2M ↑340K" (down = received, up = transmitted). "…" until the second sample.
   function netRate(s) { if (!s || s._rxr == null || s._txr == null) return "…"; return "↓" + humanBytes(s._rxr) + " ↑" + humanBytes(s._txr); }
 
-  // ───────────────────────── native table (source-verified selectors)
+  // the native table, by selectors checked against Unraid's source
   function nativeTable() { var l = document.getElementById("docker_list"); if (l) return l.closest("table") || l.parentNode; return document.getElementById("docker_containers") || document.querySelector("table#docker_containers"); }
   function headerRow() { var tb = nativeTable(); if (!tb || tb.tagName !== "TABLE") return null; return tb.querySelector("thead tr:last-child") || tb.querySelector("thead tr") || null; }
   function isFolderHeader(tr) { return !!(tr.classList.contains("folder") || tr.querySelector(":scope > td.folder-name, :scope > td.folder-update")); }
@@ -231,7 +229,6 @@
   }
   function readContainerId(advDiv) { try { var m = /container id[:\s]+([0-9a-f]{6,})/i.exec(advDiv.textContent || ""); return m ? m[1] : ""; } catch (e) { return ""; } }
 
-  // ───────────────────────── data
   function indexState(state) {
     containers = (state && state.containers) || [];
     if (state && state.host_cpus) hostCpus = state.host_cpus;
@@ -896,8 +893,8 @@
       rt.style.setProperty("--cc-rb-" + k, c);
       rt.style.setProperty("--cc-rb-" + k + "-t", idealText(c));
     });
-    // #13: docker rows are coloured per KIND (above), so a row carries no single colour for its logo TILE.
-    // Stamp a per-row rotating --cc-rb-c so the tile can join the rainbow (docker.css gates the tile on
+    // Docker rows are coloured per kind (above), so a row carries no single colour for its logo tile.
+    // A per-row rotating --cc-rb-c lets the tile join the rainbow (docker.css gates the tile on
     // .cc-docker-iconbg.cc-rainbow). Mirrors the Plugins tab (plugins.js stamps --cc-rb-c per row).
     try {
       var rows2 = document.querySelectorAll("#docker_list tr.sortable");
@@ -1329,7 +1326,7 @@
   function actBtnOff(icon, tip) { var b = el("span", "cc-actbtn cc-actoff"); b.setAttribute("data-tip", tip); b.setAttribute("aria-disabled", "true"); b.innerHTML = ccGlyph(icon); return b; }
   // rainbow: every action icon takes a rotating palette colour (falls back to grey);
   // disabled placeholders stay grey
-  // Icons follow THE CONFIGURED ACCENT COLOUR, exactly like the badges (user call):
+  // Icons follow the configured accent exactly like the badges:
   // normal mode = cc.accent, rainbow mode = the rainbow palette. cc.actcolors = "0"
   // turns the colours off (grey buttons) via the gear menu. Colours are computed
   // directly (no CSS-var indirection) with auto black/white glyphs.
@@ -1442,9 +1439,9 @@
       if (lr && lr.width > 0) {
         bar.style.setProperty("left", Math.round(lr.left) + "px", "important");
         // The bar keeps its full width rather than being narrowed for the scroll arrows, which
-        // Tokens.css raises above it instead, so they no longer overlap the right-pinned view
-        // toggle. The inset is clamped at 0, so a list overflowing past the viewport cannot push
-        // the bar off screen.
+        // Tokens.css raises above it instead, so they stay clear of the right-pinned view toggle.
+        // The inset is clamped at 0, so a list overflowing past the viewport cannot push the bar
+        // off screen.
         var rightInset = Math.max(0, Math.round(vw - lr.right));
         bar.style.setProperty("right", rightInset + "px", "important");
         bar.style.setProperty("width", "auto", "important");
@@ -3962,8 +3959,8 @@
       for (var i = 0; i < ws.length; i++) { var w = ws[i]; while (w.firstChild) w.parentNode.insertBefore(w.firstChild, w); w.parentNode.removeChild(w); }
     } catch (e) {}
   }
-  // VARIABLE LABELS AS BADGES (user: alle Variablen wie "Max Expiry" in ein Badge, ohne den
-  // Doppelpunkt). Each config row is <dl><dt><span>Label:</span></dt><dd>field</dd>. We class the
+  // Every variable label in the container form becomes a badge without its trailing colon. Each
+  // config row is <dl><dt><span>Label:</span></dt><dd>field</dd>. We class the
   // label span (docker.css badges it) and strip the trailing ":" from its last text node, stashing
   // the original in data-cc-lab for a clean teardown. Idempotent via the class guard.
   // strip the trailing colon on the LAST non-empty text node (keeps a leading fa icon), stashing
@@ -4044,8 +4041,8 @@
       }
     } catch (e) {}
   }
-  // COLOUR-PICKER for colour variables (user: bei Farb-Variablen ein Farbwählfeld wie in den CC
-  // Einstellungen). A config row whose LABEL/description mentions a colour (colour/color/hex/farbe)
+  // A colour picker for colour variables, like the one on the settings page. A config row whose
+  // label or description mentions a colour (colour/color/hex/farbe)
   // and holds a text input gets a swatch (a native <input type=color> styled as a CC dot) placed
   // before the field, two-way synced. Empty text keeps the swatch at a neutral default (no write).
   function ctColorFields() {
@@ -4066,8 +4063,8 @@
       }
     } catch (e) {}
   }
-  // #10: the native #dockerAllocations table ("Docker-Zuweisungen") shows "invalid IP" for a STOPPED
-  // container's IP and "???" for its ports. The CC engine knows the CONFIGURED static IP (survives a
+  // The native #dockerAllocations table ("Docker-Zuweisungen") shows "invalid IP" for a stopped
+  // container's IP and "???" for its ports. The CC engine knows the configured static IP (survives a
   // stop) + the published ports (HostConfig.PortBindings), so fetch the engine state once and fill
   // those cells. The AddContainer page runs only bootCtForm (no list machinery), so fetch the state
   // directly from the proxy here. norm()/MARK/PROXY are the same helpers the list enhancer uses.
@@ -4106,9 +4103,9 @@
       // Port col: "???" -> the published ports (bridge containers) from the engine's HostConfig read
       if (/\?\?\?/.test(spans[3].textContent || "") && c.ports && c.ports.length) { spans[3].textContent = c.ports.join(" "); spans[3].classList.add("cc-alloc-filled"); }
     }
-    ccAllocSortUI(); ccAllocSortApply();   // #2 (user): keep the sort control + applied order after every (re)paint
+    ccAllocSortUI(); ccAllocSortApply();   // keep the sort control and the applied order after every repaint
   }
-  // #2 (user): sort the Docker allocations by container NAME (A-Z) or by IP. The rows are native DOM
+  // Sorts the Docker allocations by container name (A-Z) or by IP. The rows are native DOM
   // (.docker-allocation-row; span[0]=name, span[2]=IP), so we reorder the nodes. Idempotent (only re-appends
   // when the order actually changed) so the bootCtForm subtree observer can't ping-pong into a re-sort loop.
   function ccAllocSortMode() { try { return localStorage.getItem("cc.allocsort") || ""; } catch (e) { return ""; } }
@@ -4146,17 +4143,8 @@
     });
     for (var i = 0; i < dls.length; i++) { if (dls[i] !== sorted[i]) { sorted.forEach(function (d) { tbl.appendChild(d); }); return; } }   // only reorder if order actually changed (loop guard)
   }
-  // #12/D2: right-align the Add/Update-Container form's Basic/Advanced view toggle (div.title >
-  // span.right) to the ACTUAL value-field right edge, replacing the fragile calc(64% - 400px) that
-  // only lined up at one viewport/field width. Measure the widest fixed-width field (skip hidden +
-  // full-width stretch fields) and pad div.title's right by (title-right - field-right) so
-  // flex/space-between lands the toggle flush with the inputs at any width. Writing a CSS var on
-  // <html> mutates no childList -> the body observer cannot loop (freeze-safe).
-  // #5 (user "der toggle ist immer noch in der mitte der seite"): the fragile FIELD-measurement is REMOVED.
-  // docker.css now right-pads div.title by the fixed content gutter (--cc-edge-gutter) so span.right sits
-  // FLUSH at the #displaybox content right edge (like the menu bar / Plugins-Update button), not the form-
-  // field right edge (~page middle). Kept as a no-op that clears any stale --cc-ct-toggle-pad from an older
-  // build (mutates no childList -> freeze-safe).
+  // docker.css pads div.title by the content gutter, which puts the form's Basic/Advanced toggle at
+  // the content's right edge. This only clears the --cc-ct-toggle-pad an older build wrote inline.
   function ctAlignToggle() {
     try { document.documentElement.style.removeProperty("--cc-ct-toggle-pad"); } catch (e) {}
   }

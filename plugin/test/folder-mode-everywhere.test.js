@@ -1,5 +1,5 @@
 // Folder mode has to be handled everywhere the other modes are, in three places
-// that each used to check for "grid" alone:
+// that would otherwise check for "grid" alone:
 //
 //   · applyFilter(), or the filter falls through to findRows() over the hidden
 //     native table, which folder mode never drives;
