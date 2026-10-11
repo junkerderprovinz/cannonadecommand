@@ -51,7 +51,7 @@ const reset = () => { Object.keys(store).forEach(k => delete store[k]); };
 // stampCardRainbow() reads docker.js's module-level containerNames, which
 // indexState() keeps sorted, so the harness declares it rather than passing it in.
 const dockerApi = new Function('localStorage',
-  'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
+  'var RB_PAL = ["#d9433f","#f97316","#fcc419","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
   'var window = {};\n' +   // no CCTheme, so the palette readers answer the stored palette
   'var containerNames = [];\n' +

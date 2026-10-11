@@ -9,8 +9,8 @@
   function g(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   function idealText(hex) {
     var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff";
-    var n = parseInt(m[1], 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255);
-    return L > 150 ? "#161616" : "#fff";
+    var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+    return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.55 ? "#161616" : "#fff";
   }
   // adopt toggle: cc.styleshares on -> shared cc.* keys, else this area's own ccsh.* keys
   function eff(k, d) { return g("cc.styleshares", "1") !== "0" ? g("cc." + k, d) : g("ccsh." + k, d); }

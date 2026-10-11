@@ -17,12 +17,12 @@
   // it. A stored cc.rbpal replaces the whole set and is never rewritten.
   var RB = ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];
 
-  // Dark ink on light accents, white on dark (Rec-601 luma, threshold 150). The fallbacks in the
-  // area scripts use the same formula.
+  // Dark ink or white on a fill, picked as GlimStone's contrastOn() does: the relative luminance
+  // of the linearised channels against 0.55. The fallbacks in the area scripts use the same formula.
   function idealText(hex) {
     var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff";
-    var n = parseInt(m[1], 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255);
-    return L > 150 ? "#161616" : "#fff";
+    var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+    return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.55 ? "#161616" : "#fff";
   }
 
   // cc.anim holds a GlimStone motion level, off, subtle or wild, and subtle when unset. The digits
@@ -59,7 +59,7 @@
     return p[((i % p.length) + off) % p.length];
   }
 
-  // Rec-601 luma of a hex colour, 0-255, the same measure idealText uses.
+  // Rec-601 luma of a hex colour, 0-255, the measure the floors below were taken in.
   function lumOf(hex) {
     var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return 255;
     var n = parseInt(m[1], 16);

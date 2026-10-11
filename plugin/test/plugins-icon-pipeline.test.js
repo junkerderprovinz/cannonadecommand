@@ -68,7 +68,7 @@ function grabFn(name) {
 // window.CCTheme.RB and a persisted seed, pinned to the shipped palette at offset 0
 // so colorFor(i) is deterministic.
 const pluginsApi = new Function('document', 'localStorage', 'window',
-  'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
+  'var RB_PAL = ["#d9433f","#f97316","#fcc419","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
   grabFn('ls') + '\n' + grabFn('eff') + '\n' + grabFn('iconBgAdoptsP') + '\n' + grabFn('idealText') + '\n' + grabFn('accent') + '\n' +
   grabFn('storedPal') + '\n' + grabFn('pal') + '\n' + grabFn('colorFor') + '\n' +
@@ -173,7 +173,7 @@ console.log('\nThe contrast ink per row, rather than one colour for the page');
   localStorage.setItem('cc.accent', '#2f6feb');
 
   ok('slot 5, the one plugIconInk() is fixed to, is #2f6feb and takes white ink', pluginsApi.colorFor(5) === '#2f6feb' && pluginsApi.idealText(pluginsApi.colorFor(5)) === '#fff');
-  ok('slot 2 is the yellow #eab308 and takes black ink', pluginsApi.colorFor(2) === '#eab308' && pluginsApi.idealText(pluginsApi.colorFor(2)) === '#161616');
+  ok('slot 2 is the yellow #fcc419 and takes black ink', pluginsApi.colorFor(2) === '#fcc419' && pluginsApi.idealText(pluginsApi.colorFor(2)) === '#161616');
 
   var rowInkAtIdx2 = pluginsApi.idealText(pluginsApi.colorFor(2));
   ok('a row at index 2, whose own colour is the yellow, resolves to black ink', rowInkAtIdx2 === '#161616', rowInkAtIdx2);

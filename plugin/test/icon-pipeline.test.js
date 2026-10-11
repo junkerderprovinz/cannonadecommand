@@ -89,7 +89,7 @@ function grabFn(name) {
 // window.CCTheme.RB and a persisted seed, pinned to the shipped palette at offset 0
 // so ccRbColor(i) and iconAdoptTint() are deterministic.
 const dockerApi = new Function('document', 'localStorage', 'window',
-  'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
+  'var RB_PAL = ["#d9433f","#f97316","#fcc419","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
   grabFn('effc') + '\n' + grabFn('iconBgAdopts') + '\n' + grabFn('themingOn') + '\n' +
   grabFn('idealText') + '\n' + grabFn('ccHex6') + '\n' + grabFn('tintOn') + '\n' + grabFn('ccPalStored') + '\n' + grabFn('ccPalActive') + '\n' + grabFn('ccRbColor') + '\n' + grabFn('iconAdoptTint') + '\n' + grabFn('bgColor') + '\n' + grabFn('iconInk') + '\n' + grabFn('itemAdoptInk') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' + grabFn('ensureTintFilterAs') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('ccLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
@@ -402,7 +402,7 @@ console.log('\nitemAdoptInk(): the contrast ink per item, rather than one for th
 
   ok('slot 5, the one iconInk() is fixed to, is #2f6feb', dockerApi.ccRbColor(5) === '#2f6feb', dockerApi.ccRbColor(5));
   ok('and it takes white ink', dockerApi.idealText(dockerApi.ccRbColor(5)) === '#fff');
-  ok('slot 2 is the yellow #eab308', dockerApi.ccRbColor(2) === '#eab308', dockerApi.ccRbColor(2));
+  ok('slot 2 is the yellow #fcc419', dockerApi.ccRbColor(2) === '#fcc419', dockerApi.ccRbColor(2));
   ok('and it is the slot that takes black ink', dockerApi.idealText(dockerApi.ccRbColor(2)) === '#161616', dockerApi.idealText(dockerApi.ccRbColor(2)));
 
   var yellowOwner = fakeOwner();

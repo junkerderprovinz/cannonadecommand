@@ -166,7 +166,7 @@
   function effK(k) { return ls("cc.stylevms") !== "0" ? ls("cc." + k) : ls("ccv." + k); }
   // Adopting the rainbow is a global decision, so it bypasses effK().
   function iconBgAdoptsV() { return ls("cc.iconbgrainbow") === "1"; }
-  function ccIdeal(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
+  function ccIdeal(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.55 ? "#161616" : "#fff"; }
   // A failed action shakes the control that was used and says why in a toast.
   function ccvFail(ctl, msg) { if (window.CCTheme) window.CCTheme.fail(ctl, msg); }
   function ccAccent() { var a = effK("accent") || "#FCC419"; return /^#[0-9a-f]{6}$/i.test(a) ? a : "#FCC419"; }
@@ -216,13 +216,11 @@
     var pal = vmPalActive();
     // The rainbow "action" colour (slot 5, like docker.js). VmTab.css's generic badge, the
     // reactive hover, the autostart toggle and the vmstat name badge all read --cc-rbaccent.
-    var acc = pal[(5 + off) % pal.length], an = parseInt(String(acc).slice(1), 16);
-    var aL = 0.299 * (an >> 16 & 255) + 0.587 * (an >> 8 & 255) + 0.114 * (an & 255);
-    rt.setProperty("--cc-rbaccent", acc); rt.setProperty("--cc-rbaccent-text", aL > 150 ? "#161616" : "#fff");
+    var acc = pal[(5 + off) % pal.length];
+    rt.setProperty("--cc-rbaccent", acc); rt.setProperty("--cc-rbaccent-text", ccIdeal(acc));
     RB_KINDS.forEach(function (k, i) {
-      var c = pal[(i + off) % pal.length], n = parseInt(String(c).slice(1), 16);
-      var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255);
-      rt.setProperty("--cc-rb-" + k, c); rt.setProperty("--cc-rb-" + k + "-t", L > 150 ? "#161616" : "#fff");
+      var c = pal[(i + off) % pal.length];
+      rt.setProperty("--cc-rb-" + k, c); rt.setProperty("--cc-rb-" + k + "-t", ccIdeal(c));
     });
   }
   // The VM tab has no grid view: a CSS reflow of Unraid's live tablesorter/sortable table
@@ -882,8 +880,8 @@
             var _off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET, _pal = RB_PAL;
             try { if (ls("cc.flagmode") === "1") { var _f = JSON.parse(ls("cc.flagpal") || "null"); if (_f && _f.length) _pal = _f; } else { var _r = JSON.parse(ls("cc.rbpal") || "null"); if (_r && _r.length) _pal = _r; } } catch (_e) {}
             if (window.CCTheme && window.CCTheme.surfacePalette) _pal = window.CCTheme.surfacePalette(_pal, ccAccent());
-            var _c = _pal[(i + _off) % _pal.length], _n = parseInt(String(_c).replace("#", ""), 16), _L = 0.299 * (_n >> 16 & 255) + 0.587 * (_n >> 8 & 255) + 0.114 * (_n & 255);
-            row.style.setProperty("--cc-rb-c", _c); row.style.setProperty("--cc-rb-ct", _L > 150 ? "#161616" : "#fff");
+            var _c = _pal[(i + _off) % _pal.length];
+            row.style.setProperty("--cc-rb-c", _c); row.style.setProperty("--cc-rb-ct", ccIdeal(_c));
           } else { row.style.removeProperty("--cc-rb-c"); row.style.removeProperty("--cc-rb-ct"); }
         } catch (_eR) {}
         // Cells are found by class and content (VMMachines.php L217-229) rather than by index, which

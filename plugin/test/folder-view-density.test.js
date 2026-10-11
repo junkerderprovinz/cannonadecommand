@@ -81,7 +81,7 @@ ok('folderListRow() exists in docker.js', src.indexOf('function folderListRow(')
 ok('minimalRow() is gone, folderChip() having replaced it rather than joined it', src.indexOf('function minimalRow(') < 0);
 
 const dockerApi = new Function('document', 'localStorage',
-  'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
+  'var RB_PAL = ["#d9433f","#f97316","#fcc419","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
   'var window = {};\n' +   // no CCTheme, so the palette readers answer the stored palette
   'var LANG = "en";\n' +

@@ -35,7 +35,7 @@ function grabFn(name) {
 // and a persisted seed, pinned to the shipped palette at offset 0 so rbColor(i) is
 // deterministic, as in the sibling tests.
 const sgApi = new Function('localStorage',
-  'var RB = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
+  'var RB = ["#d9433f","#f97316","#fcc419","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFF = 0;\n' +
   'var window = {};\n' +   // no CCTheme, so the palette readers answer the stored palette
   grabFn('g') + '\n' + grabFn('eff') + '\n' + grabFn('accent') + '\n' +

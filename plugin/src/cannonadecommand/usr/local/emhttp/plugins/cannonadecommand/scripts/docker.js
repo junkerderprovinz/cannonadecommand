@@ -544,7 +544,7 @@
   // The accent colour and the row density come from localStorage as CSS variables, written live
   // by the settings page along with a poke event.
   // the badge text colour for a background: dark ink on a light one, white on a dark one
-  function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16); var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
+  function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.55 ? "#161616" : "#fff"; }
   // The container icons are tinted with an inline SVG feColorMatrix filter applied to each icon
   // element, so it cannot be mis-positioned the way an overlay can and it maps to the exact sRGB
   // colour, which a grayscale, sepia and hue-rotate chain only approximates. The icon becomes a
@@ -862,9 +862,8 @@
     rt.style.setProperty("--cc-btn-accent", pal[(5 + off) % pal.length]);
     RB_KINDS.forEach(function (k, i) {
       var c = pal[(i + off) % pal.length];
-      var n = parseInt(c.slice(1), 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255);
       rt.style.setProperty("--cc-rb-" + k, c);
-      rt.style.setProperty("--cc-rb-" + k + "-t", L > 150 ? "#161616" : "#fff"); // auto text contrast
+      rt.style.setProperty("--cc-rb-" + k + "-t", idealText(c));
     });
     // #13: docker rows are coloured per KIND (above), so a row carries no single colour for its logo TILE.
     // Stamp a per-row rotating --cc-rb-c so the tile can join the rainbow (docker.css gates the tile on
@@ -872,9 +871,8 @@
     try {
       var rows2 = document.querySelectorAll("#docker_list tr.sortable");
       for (var ri = 0; ri < rows2.length; ri++) {
-        var rc = pal[(ri + off) % pal.length], rn = parseInt(rc.slice(1), 16);
-        var rL = 0.299 * (rn >> 16 & 255) + 0.587 * (rn >> 8 & 255) + 0.114 * (rn & 255);
-        rows2[ri].style.setProperty("--cc-rb-c", rc); rows2[ri].style.setProperty("--cc-rb-ct", rL > 150 ? "#161616" : "#fff");
+        var rc = pal[(ri + off) % pal.length];
+        rows2[ri].style.setProperty("--cc-rb-c", rc); rows2[ri].style.setProperty("--cc-rb-ct", idealText(rc));
       }
     } catch (e1) {}
   }
@@ -1014,8 +1012,8 @@
         if (themingOn() && localStorage.getItem("cc.rainbow") === "1") {
           var _pp = tr.parentNode, _ix = _pp ? Array.prototype.indexOf.call(_pp.querySelectorAll("tr.sortable"), tr) : 0; if (_ix < 0) _ix = 0;
           var _of = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET, _pl = ccPalActive(RB_PAL);
-          var _c = _pl[(_ix + _of) % _pl.length], _n = parseInt(_c.slice(1), 16), _L = 0.299 * (_n >> 16 & 255) + 0.587 * (_n >> 8 & 255) + 0.114 * (_n & 255);
-          tr.style.setProperty("--cc-rb-c", _c); tr.style.setProperty("--cc-rb-ct", _L > 150 ? "#161616" : "#fff");
+          var _c = _pl[(_ix + _of) % _pl.length];
+          tr.style.setProperty("--cc-rb-c", _c); tr.style.setProperty("--cc-rb-ct", idealText(_c));
         } else { tr.style.removeProperty("--cc-rb-c"); tr.style.removeProperty("--cc-rb-ct"); }
       } catch (_eR) {}
       var name = rowName(tr);
@@ -1311,8 +1309,7 @@
         tx = "#e9e9e9";
         if (colorsOn) {
           bg = rb ? pal[(i2 + off) % pal.length] : (effc("accent") || "#FCC419");
-          var n2 = parseInt(String(bg).replace("#", ""), 16), L2 = 0.299 * (n2 >> 16 & 255) + 0.587 * (n2 >> 8 & 255) + 0.114 * (n2 & 255);
-          tx = L2 > 150 ? "#161616" : "#fff";
+          tx = idealText(bg);
         }
       }
       // In the reactive sub-mode the CSS rests the coloured buttons grey and colours them on
@@ -3092,7 +3089,7 @@
     lb.style.removeProperty("--cc-rb-c"); lb.style.removeProperty("--cc-rb-ct");   // accent and native mode take the inline fill
     var bg = set ? (effc("accent") || "#FCC419") : "#4a4a4a"; // a set limit carries the badge accent
     var tx = "#f2f2f2";
-    if (set) { var n2 = parseInt(String(bg).replace("#", ""), 16), L2 = 0.299 * (n2 >> 16 & 255) + 0.587 * (n2 >> 8 & 255) + 0.114 * (n2 & 255); tx = L2 > 150 ? "#161616" : "#fff"; }
+    if (set) tx = idealText(bg);
     lb.style.setProperty("background", bg, "important");
     lb.style.setProperty("color", tx, "important");
   }
@@ -4023,8 +4020,7 @@
         var ce = chrome[r3];
         if (!rbOn2) { ce.style.removeProperty("--cc-rb-c"); ce.style.removeProperty("--cc-rb-ct"); continue; }
         var cc0 = pal2[(ci3 + off3) % pal2.length]; ci3++;
-        var n0 = parseInt(cc0.slice(1), 16), L0 = 0.299 * (n0 >> 16 & 255) + 0.587 * (n0 >> 8 & 255) + 0.114 * (n0 & 255);
-        ce.style.setProperty("--cc-rb-c", cc0); ce.style.setProperty("--cc-rb-ct", L0 > 150 ? "#161616" : "#fff");
+        ce.style.setProperty("--cc-rb-c", cc0); ce.style.setProperty("--cc-rb-ct", idealText(cc0));
       }
       ccAllocFill();   // fill a stopped container's IP and ports in the allocations table when it is open
       ctAlignToggle();

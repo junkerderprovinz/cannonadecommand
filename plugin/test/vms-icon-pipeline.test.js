@@ -65,7 +65,7 @@ function grabFn(name) {
 // so vmRbColor(i) and vmAdoptTint() are deterministic.
 const vmsApi = new Function('document', 'localStorage', 'window',
   'var dead = false;\n' +
-  'var RB_PAL = ["#d9433f","#f97316","#eab308","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
+  'var RB_PAL = ["#d9433f","#f97316","#fcc419","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
   grabFn('ls') + '\n' + grabFn('vmTintOff') + '\n' + grabFn('effK') + '\n' + grabFn('iconBgAdoptsV') + '\n' + grabFn('ccIdeal') + '\n' + grabFn('ccAccent') + '\n' +
   grabFn('ccHex6') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' +
@@ -177,7 +177,7 @@ console.log('\nvmItemAdoptInk(): the contrast ink per row, as docker.js\'s itemA
   }
 
   ok('slot 5 is #2f6feb, which takes white ink', vmsApi.vmRbColor(5) === '#2f6feb' && vmsApi.ccIdeal(vmsApi.vmRbColor(5)) === '#fff');
-  ok('slot 2 is the yellow #eab308, which takes black ink', vmsApi.vmRbColor(2) === '#eab308' && vmsApi.ccIdeal(vmsApi.vmRbColor(2)) === '#161616');
+  ok('slot 2 is the yellow #fcc419, which takes black ink', vmsApi.vmRbColor(2) === '#fcc419' && vmsApi.ccIdeal(vmsApi.vmRbColor(2)) === '#161616');
 
   var yellowRow = fakeRow();
   yellowRow.style.setProperty('--cc-rb-c', vmsApi.vmRbColor(2));
