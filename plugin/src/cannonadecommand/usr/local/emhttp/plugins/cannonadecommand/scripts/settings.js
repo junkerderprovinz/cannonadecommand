@@ -93,7 +93,7 @@
     { key: "id", label: T("Container-ID", "Container ID") },
     { key: "von", label: T("Von / Quelle", "From / source") },
     { key: "vol", label: T("Volumes", "Volumes") },
-    { key: "plan", label: T("Startplan", "Plan") },
+    { key: "plan", label: T("Startplan", "Start plan") },
     { key: "restart", label: T("Restart-Policy", "Restart policy") },
   ];
   // One glyph per settings tab, filled on currentColor, each with the viewBox glyphs.json crops to
@@ -782,7 +782,7 @@
       // reimplementing a multipart upload through the proxy.
       function bannerUploadRow() {
         var row = el("div", "cc-set-row"); row.appendChild(el("span", "cc-set-rl", T("Eigenes Banner-Bild", "Custom banner image")));
-        var b = el("button", "cc-btn", T("Hochladen / ändern …", "Upload / change …")); b.type = "button";
+        var b = el("button", "cc-btn", T("Hochladen oder ändern", "Upload or change")); b.type = "button";
         b.addEventListener("click", function () { location.href = "/Settings/DisplaySettings"; });
         row.appendChild(b); return row;
       }
@@ -1135,7 +1135,7 @@
       var picker = el("div", "cc-flag-picker");
       var trigger = el("div", "cc-flag-trigger"); trigger.setAttribute("tabindex", "0");
       // the trigger reads as a button, with no caret
-      var renderTrigger = function () { trigger.innerHTML = ""; var f0 = curFlag(); if (f0) { trigger.appendChild(flagImg(f0)); trigger.appendChild(el("span", "cc-flag-name", f0.name_de)); } else trigger.appendChild(el("span", "cc-flag-name", T("Land wählen …", "Pick a country …"))); };
+      var renderTrigger = function () { trigger.innerHTML = ""; var f0 = curFlag(); if (f0) { trigger.appendChild(flagImg(f0)); trigger.appendChild(el("span", "cc-flag-name", f0.name_de)); } else trigger.appendChild(el("span", "cc-flag-name", T("Land wählen", "Choose a country"))); };
       renderTrigger();
       var panel = el("div", "cc-flag-panel"); panel.style.display = "none";
       var search = el("input", "cc-flag-search"); search.type = "text"; search.placeholder = T("Suchen…", "Search…"); search.spellcheck = false; panel.appendChild(search);

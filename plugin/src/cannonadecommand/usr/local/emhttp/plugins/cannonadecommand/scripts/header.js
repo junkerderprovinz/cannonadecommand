@@ -1386,7 +1386,7 @@
         var empty = (selr.textContent || "").trim() || "...", wdt = Math.max(110, Math.round(selr.getBoundingClientRect().width));
         var $sel = jq(selEl);
         try { $sel.dropdownchecklist("destroy"); } catch (e1) {}
-        try { $sel.dropdownchecklist({ emptyText: empty, firstItemChecksAll: true, explicitClose: T("...schließen", "...close"), width: wdt }); } catch (e2) {}
+        try { $sel.dropdownchecklist({ emptyText: empty, firstItemChecksAll: true, explicitClose: T("Schließen", "Close"), width: wdt }); } catch (e2) {}
         var nw = document.getElementById("ddcl-" + selId); if (nw) nw.setAttribute("data-cc-dclfixed", "1");
       }
     } catch (e) {}
