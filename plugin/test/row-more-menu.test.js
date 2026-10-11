@@ -180,7 +180,7 @@ console.log('\nColour modes');
 console.log('\nThe sheet and the rows');
 {
   const tokens = read('sheets/CannonadeCommand.Tokens.css').replace(/\/\*[\s\S]*?\*\//g, '');
-  ok('the menu stays dark on a light theme, in the window token island', /\n\.cc-pop, \.cc-menu, \.cc-win, \.cc-rowmenu \{/.test(tokens));
+  ok('the menu stays dark on a light theme, in the window token island', /\n\.cc-pop, \.cc-menu, \.cc-win, \.cc-rowmenu[, ]/.test(tokens));
   ok('an item takes the mode colour under the pointer and the keyboard focus',
     /\.cc-rowmenu-it:is\(:hover, :focus-visible\) \{\s*background: var\(--cc-rb-c, var\(--cc-rbaccent, var\(--cc-accent, #FCC419\)\)\);\s*color: var\(--cc-rb-ct, var\(--cc-rbaccent-text, var\(--cc-accent-text, #161616\)\)\);/.test(tokens));
   const docker = read('scripts/docker.js'), vms = read('scripts/vms.js');

@@ -268,10 +268,11 @@ html.Theme--azure {
   --cc-elev-3: 0 10px 24px rgba(0, 0, 0, .18);
 }
 /* CannonadeCommand's own windows, the .cc-pop editors, the .cc-win windows, the .cc-menu gear
-   menu and a row's .cc-rowmenu, stay dark on every theme, so inside them each token the light
-   override flips reads its dark value again. The tokens mixed from those on <html> are computed
-   there with the light values and inherited as finished colours, so they are mixed again here. */
-.cc-pop, .cc-menu, .cc-win, .cc-rowmenu {
+   menu, a row's .cc-rowmenu and the panel of CA's Statistics, Credits and Change Log views, stay
+   dark on every theme, so inside them each token the light override flips reads its dark value
+   again. The tokens mixed from those on <html> are computed there with the light values and
+   inherited as finished colours, so they are mixed again here. */
+.cc-pop, .cc-menu, .cc-win, .cc-rowmenu, html.cc-popups-on #alternateView .alternateViewContent {
   --cc-surface-1: #1e1e1e;  --cc-surface-2: #222222;  --cc-surface-3: #2e2e2e;  --cc-surface-base: #161616;
   --cc-surface-4: #262626;  --cc-surface-window: #242424;  --cc-surface-card: #191919;  --cc-surface-deep: #0f0f0f;
   --cc-text: #e6e6e6;  --cc-text-dim: #8a8a8a;  --cc-text-chip: #cfcfcf;  --cc-header-ink: #cfcfcf;

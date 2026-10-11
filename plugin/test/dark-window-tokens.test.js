@@ -24,8 +24,9 @@ const computed = (map) => { const out = {}; for (const k of Object.keys(map)) ou
 const darkHtml = computed(dark), lightHtml = computed(light);
 
 const windowDecls = {};
+let islandSel = '';
 for (const r of parseRules(fs.readFileSync(path.join(DIR, 'sheets/CannonadeCommand.Tokens.css'), 'utf8'))) {
-  if (r.selector.replace(/\s+/g, ' ').trim() === '.cc-pop, .cc-menu, .cc-win, .cc-rowmenu') for (const d of r.decls) if (d.prop.startsWith('--')) windowDecls[d.prop] = d.value;
+  if (r.selector.replace(/\s+/g, ' ').trim().startsWith('.cc-pop, .cc-menu, .cc-win, .cc-rowmenu')) { islandSel = r.selector; for (const d of r.decls) if (d.prop.startsWith('--')) windowDecls[d.prop] = d.value; }
 }
 function inWindow(htmlComputed) {
   const scope = Object.assign({}, htmlComputed, windowDecls);
@@ -81,6 +82,26 @@ console.log('\nThe Startplan window, white theme, reactive rest');
     const f = rgb(resolve(fg.value, lightWin));
     const r = f ? ratio(f, fill) : 0;
     ok(`${what} reads at 4.5:1`, r >= 4.5, `${fg.sheet}: ${fg.selector} => ${resolve(fg.value, lightWin)}, ${r.toFixed(2)}:1`);
+  }
+}
+
+// CA's Statistics, Credits and Change Log panel is a #1a1a1a surface on every theme, and its text
+// reads --cc-text-chip, which the white theme flips to #303030.
+console.log('\nThe CA changelog panel, white theme');
+{
+  const inIsland = /#alternateView \.alternateViewContent/.test(islandSel);
+  ok('the panel is part of the dark island', inIsland);
+  const scope = inIsland ? lightWin : lightHtml;
+  const lum = (rgb) => { const l = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * l(rgb[0]) + 0.7152 * l(rgb[1]) + 0.0722 * l(rgb[2]); };
+  const hex = (v) => { const m = /^#([0-9a-f]{6})$/i.exec(v); if (!m) return null; const n = parseInt(m[1], 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const PANEL = [0x1a, 0x1a, 0x1a];
+  const html = ['cc-popups-on', 'Theme--white'];
+  for (const [what, tag, classes] of [['a changelog line', 'li', []], ['a statistics label', 'td', ['ca_table']]]) {
+    const el = { tag, classes, attrs: {}, states: {}, html, inside: ['#alternateView', '.alternateViewContent'] };
+    const c = candidates('every', el, 'color'), fg = c[c.length - 1];
+    const f = fg && hex(resolve(fg.value, scope));
+    const r = f ? (lum(f) + 0.05 > lum(PANEL) + 0.05 ? (lum(f) + 0.05) / (lum(PANEL) + 0.05) : (lum(PANEL) + 0.05) / (lum(f) + 0.05)) : 0;
+    ok(`${what} reads at 4.5:1`, r >= 4.5, `${fg && fg.selector} => ${fg && resolve(fg.value, scope)}, ${r.toFixed(2)}:1`);
   }
 }
 

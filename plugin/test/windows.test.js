@@ -242,7 +242,7 @@ console.log('\nThe sheet');
   ok('and hovers like it', delHover && cancelHover && delHover.value === cancelHover.value);
   ok('no rule paints it in the fault colour', !/--cc-err|#ff8389|#da1e28/i.test(del.value + delHover.value));
   const tokens = read('sheets/CannonadeCommand.Tokens.css');
-  ok('the windows stay dark on a light theme, in the token island', /\n\.cc-pop, \.cc-menu, \.cc-win, \.cc-rowmenu \{/.test(tokens));
+  ok('the windows stay dark on a light theme, in the token island', /\n\.cc-pop, \.cc-menu, \.cc-win, \.cc-rowmenu[, ]/.test(tokens));
   const title = top(['cc-win-title'], 'background');
   ok('the title badge is filled with the colour chain', title && /var\(--cc-rb-c, var\(--cc-rbaccent, var\(--cc-accent/.test(title.value));
   const frame = top(['cc-win'], 'background'), card = top(['cc-win-card'], 'background');
