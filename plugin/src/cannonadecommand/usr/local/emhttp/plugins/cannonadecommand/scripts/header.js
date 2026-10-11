@@ -3457,7 +3457,7 @@
       ccAppsAlignTop();
     } catch (e) {}
   }
-  var ccAppsObs = null, ccInfoObs = null, ccAppsT = 0;
+  var ccAppsObs = null, ccInfoObs = null, ccAltObs = null, ccAppsT = 0;
   function ccAppsSoon() { if (ccAppsT) return; ccAppsT = setTimeout(function () { ccAppsT = 0; ccApps(); }, 60); }
   // #sidenavContent does not exist at boot: CA creates it lazily, as a side effect of the first
   // click that opens the drawer, so the observer can only attach after that click. A short bounded
@@ -3498,6 +3498,10 @@
       var k = 0, t = setInterval(function () {
         var tc = document.getElementById("templates_content");
         if (tc && !ccAppsObs) { ccAppsObs = new MutationObserver(ccAppsSoon); ccAppsObs.observe(tc, { childList: true, subtree: false }); }
+        // CA fills the Statistics, Credits and Change Log panel from a request that lands well
+        // after the menu click, so its icons are stamped when the content arrives.
+        var av = document.getElementById("alternateView");
+        if (av && !ccAltObs) { ccAltObs = new MutationObserver(ccAppsSoon); ccAltObs.observe(av, { childList: true, subtree: true }); }
         ccApps();
         if (++k >= 15) clearInterval(t);
       }, 300);

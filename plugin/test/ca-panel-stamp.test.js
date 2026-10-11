@@ -40,5 +40,20 @@ console.log('\nThe stamp rotates through the palette');
   ok('with its ink', els.every((e) => e.css['--cc-rb-ct'] === '#161616'));
 }
 
+// The menu click only schedules a pass 60ms out, and CA fills the panel from a request that
+// returns later, so a stamp tied to the click finds an empty panel. The panel itself is watched.
+console.log('\nThe stamp follows the content, not the click');
+{
+  const i = header.indexOf('function ccAppsBoot(');
+  const boot = header.slice(i, header.indexOf('\n  }\n', i));
+  ok('the Apps boot watches #alternateView', /getElementById\("alternateView"\)/.test(boot));
+  ok('for content arriving anywhere inside it', /ccAltObs = new MutationObserver\(ccAppsSoon\); ccAltObs\.observe\(av, \{ childList: true, subtree: true \}\)/.test(boot));
+  ok('once per page', /if \(av && !ccAltObs\)/.test(boot));
+  // The stamp writes style, not children, so the pass it runs cannot wake the observer again.
+  const i2 = header.indexOf('function ccAppsStamp(');
+  const stampFn = header.slice(i2, header.indexOf('\n  }\n', i2));
+  ok('the stamp only writes custom properties', !/appendChild|insertBefore|innerHTML|textContent/.test(stampFn));
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);
