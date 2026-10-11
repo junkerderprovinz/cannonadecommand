@@ -2027,9 +2027,10 @@ html.cc-docker-on.cc-on-addct .ui-dialog select:focus-visible { outline: none !i
 
 /* No focus rings anywhere in this sheet's scope; brightness and fill carry the feedback. The
    sheet loads only on CC-governed pages, so the page-level selector is safe, and the field rules
-   above already give focus a fill. */
+   above already give focus a fill. The (i) keeps its halo from Tokens.css, which this rule would
+   outweigh by coming later. */
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
-[tabindex]:focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
+[tabindex]:where(:not(.cc-info)):focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
 
 /* The reactive rainbow on /Docker, gated on the html.cc-shares-rbneutral shares.js stamps on
    every page, the same contract as /Main. Every CC-painted control rests grey and takes its

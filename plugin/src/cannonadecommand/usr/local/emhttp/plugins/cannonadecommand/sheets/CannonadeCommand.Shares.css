@@ -1625,8 +1625,9 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status.cc-dens-compact td:n
 html.cc-shares-on.cc-on-main #displaybox table.array_status.cc-dens-airy td:not(:nth-child(1)) { padding-top: 10px !important; padding-bottom: 10px !important; }
 
 /* No outlines or rings on hover or focus anywhere in this area; brightness and fill carry the
-   feedback. The filter is not !important, so the :hover and :disabled filters still outrank it. */
-html.cc-shares-on :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+   feedback. The filter is not !important, so the :hover and :disabled filters still outrank it.
+   The (i) keeps the halo Tokens.css gives it, and the :where() leaves this rule's weight as it is. */
+html.cc-shares-on :is(a, button, input, select, textarea, summary, [tabindex]):where(:not(.cc-info)):focus-visible {
   outline: none !important; box-shadow: none !important; filter: brightness(1.18);
 }
 
