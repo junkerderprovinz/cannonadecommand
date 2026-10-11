@@ -1649,15 +1649,15 @@
       });
     } catch (e) {}
   }
-  function doAction(name, action) {
+  function doAction(name, action, ctl) {
     if (action === "unpause") unpauseGrace[name] = Date.now() + 90000; // the stale unhealthy of a pause gets time to recover
     pendingAction[name] = true; markTransient(name, action); flash(action + " " + name + "…");
     api("POST", "action", { name: name, action: action })
       .then(function () { delete pendingAction[name]; return load(); }) // cleared before the confirming load, so its sync updates this badge
       .then(function () { flash(t("done")); })
-      .catch(function (e) { delete pendingAction[name]; flash("Error: " + e.message, true); syncStateBadges(); });
+      .catch(function (e) { delete pendingAction[name]; flash("Error: " + e.message, true, ctl); syncStateBadges(); });
   }
-  function actionBtn(label, name, action, primary) { var b = el("button", "cc-abtn" + (primary ? " cc-abtn-primary" : ""), label); b.addEventListener("click", function (e) { e.stopPropagation(); doAction(name, action); }); return b; }
+  function actionBtn(label, name, action, primary) { var b = el("button", "cc-abtn" + (primary ? " cc-abtn-primary" : ""), label); b.addEventListener("click", function (e) { e.stopPropagation(); doAction(name, action, b); }); return b; }
 
   // The bulk-select action bar. Start, stop and restart go through CC's own engine API, the same
   // path every single-container button uses, one request per container in parallel with a single
@@ -2218,7 +2218,7 @@
     m.appendChild(el("div", "cc-menu-sep"));
     var prow = el("div", "cc-menu-row cc-menu-plain");
     var save = el("button", "cc-btn", t("save")), fire = el("button", "cc-btn cc-btn-primary", t("startorder"));
-    save.addEventListener("click", function () { savePlan(false); }); fire.addEventListener("click", function () { savePlan(true); });
+    save.addEventListener("click", function () { savePlan(false, save); }); fire.addEventListener("click", function () { savePlan(true, fire); });
     prow.appendChild(save); prow.appendChild(fire); m.appendChild(prow);
     var link = el("a", "cc-menu-link", "⚙ " + (LANG === "de" ? "Einstellungen (Farbe, Spalten)…" : "Settings (color, columns)…"));
     link.href = "/Settings/CannonadeCommand"; m.appendChild(link);
@@ -2931,7 +2931,7 @@
           flash(t("done"));
           if (mode === "list") reinjectRowBadges(); else renderCurrentView();
         })
-        .catch(function (e) { flash("Error: " + e.message, true); });
+        .catch(function (e) { flash("Error: " + e.message, true, rpSel); });
     });
     // The authoritative prefill; the bulk limits map can be stale after another edit.
     api("GET", "limits", null, "name=" + encodeURIComponent(name)).then(function (l) {
@@ -3029,7 +3029,7 @@
     var act = el("div", "cc-pop-row cc-pop-act");
     act.style.setProperty("border-top", "none", "important"); // no bottom separator line either
     var bSave = el("span", "cc-btn cc-btn-primary", t("saveShort"));
-    bSave.addEventListener("click", function () { saveEditor(name, readWatchdog(), readSchedules(), readNursery(), false); });
+    bSave.addEventListener("click", function () { saveEditor(name, readWatchdog(), readSchedules(), readNursery(), false, bSave); });
     act.appendChild(bSave); pop.appendChild(act);
     function commit() {
       if (!manageOn) { delete workingPlan[name]; body.classList.add("cc-dis"); refreshChip(anchor, name); return; }
@@ -3146,8 +3146,8 @@
     pop.appendChild(body); // no explainer text; the diagnosis line says what matters
     function readKbit(inp) { var v = parseFloat(String(inp.value).trim().replace(",", ".")); return v > 0 ? Math.round(v * 1000) : 0; }
     var srow = el("div", "cc-pop-row cc-pop-act");
-    var rem = el("span", "cc-btn", t("removeLim")); rem.addEventListener("click", function () { saveBandwidth(name, 0, 0); });
-    var save = el("span", "cc-btn cc-btn-primary", t("saveShort")); save.addEventListener("click", function () { saveBandwidth(name, readKbit(upIn), readKbit(dnIn)); });
+    var rem = el("span", "cc-btn", t("removeLim")); rem.addEventListener("click", function () { saveBandwidth(name, 0, 0, rem); });
+    var save = el("span", "cc-btn cc-btn-primary", t("saveShort")); save.addEventListener("click", function () { saveBandwidth(name, readKbit(upIn), readKbit(dnIn), save); });
     srow.appendChild(rem); srow.appendChild(save); pop.appendChild(srow);
     document.body.appendChild(pop); hardenPop(pop);
     placePop(pop, anchor, 300);   // Rule 15: anchors head/foot, clamps into the viewport, locks the page behind it
@@ -3195,10 +3195,12 @@
   // The backend or Docker rejection stays in the open window, where a 4s toast would be
   // unreadable, so the reason `docker update` refused can still be read back. It is the only
   // way to diagnose a set or remove failure once a stale install is ruled out. Also logged.
-  function popError(e) {
+  function popError(e, ctl) {
     var m = (e && e.message) ? e.message : String(e);
     try { console.error("CannonadeCommand:", e); } catch (_) {}
-    var p = openPop; if (!p) { flash("Error: " + m, true); return; }
+    var p = openPop;
+    if (ctl || !p) flash("Error: " + m, true, ctl);   // a failed click reports like any other; the line below keeps the reason
+    if (!p) return;
     var box = p.querySelector(".cc-pop-err");
     if (!box) { box = el("div", "cc-pop-err"); var foot = p.querySelector(".cc-pop-foot"); if (foot && foot.nextSibling) p.insertBefore(box, foot.nextSibling); else p.appendChild(box); }
     box.classList.remove("cc-pop-ok"); box.textContent = "✕ " + m; box.style.display = "block";
@@ -3214,7 +3216,7 @@
   // Persist one container's up and down caps, where 0/0 removes them. It is a read, modify and
   // write against the live config, so schedules, watchdogs, notify, shape_iface and every other
   // container survive the save.
-  function saveBandwidth(name, egressKbit, ingressKbit) {
+  function saveBandwidth(name, egressKbit, ingressKbit, ctl) {
     popClearError(); flash(t("saving"));
     api("GET", "config")
       .then(function (fresh) {
@@ -3235,7 +3237,7 @@
           setTimeout(function () { if (openPop === pop0) checkBwStatus(pop0, name); }, 5000);
         }
       })
-      .catch(function (e) { popError(e); });
+      .catch(function (e) { popError(e, ctl); });
   }
   // Each badge has its own gear, so "cpu" or "ram" shows only that field. RAM is a number with
   // an MB/GB unit, CPU a core count with an optional cpuset pin.
@@ -3306,7 +3308,7 @@
       body.appendChild(prow);
     }
     pop.appendChild(body);
-    function submitLimits(payload) {
+    function submitLimits(payload, ctl) {
       popClearError(); flash(t("saving")); api("POST", "limits", payload)
         .then(function (resp) {
           // The engine verifies the change by re-reading the live caps and returns them, so
@@ -3338,6 +3340,7 @@
           var em = (e && e.message) ? e.message : String(e);
           if (showRam && mrow) statDot(mrow, false, em);
           if (showCpu && crow) statDot(crow, false, em);
+          flash("Error: " + em, true, ctl);
           try { console.error("CannonadeCommand:", e); } catch (_) {}
         });
     }
@@ -3351,7 +3354,7 @@
       var payload = { name: name };
       if (showRam) payload.remove_mem = true;
       if (showCpu) payload.remove_cpu = true;
-      submitLimits(payload);
+      submitLimits(payload, rem);
     });
     // cur holds this container's current limits from the fresh per-name prefill GET, not from
     // the bulk map, which can be stale, and curLoaded flips true once that GET lands. The
@@ -3369,16 +3372,16 @@
         var v = String(memNum.value).trim().replace(",", ".");
         if (v) {
           var num = parseFloat(v);
-          if (!(num >= 0)) { flash(t("invalid"), true); return; }
+          if (!(num >= 0)) { flash(t("invalid"), true, save); return; }
           payload.mem_bytes = Math.round(num * (memUnit.value === "GB" ? 1073741824 : 1048576)); act = true;
         } else if (curLoaded && ramLimited(cur)) { payload.remove_mem = true; act = true; } // cleared → remove
       }
       if (showCpu) {
         var cv = cpu ? String(cpu.value).trim() : "";
         var cpuset = readCpuset();
-        if (cpuset && !/^[0-9,\-]+$/.test(cpuset)) { flash(t("invalid"), true); return; }
+        if (cpuset && !/^[0-9,\-]+$/.test(cpuset)) { flash(t("invalid"), true, save); return; }
         var nc = cv ? parseCPU(cpu.value) : 0;
-        if (nc < 0) { flash(t("invalid"), true); return; }
+        if (nc < 0) { flash(t("invalid"), true, save); return; }
         if (nc > 0 || cpuset) {
           if (nc > 0) payload.nano_cpus = nc;
           if (cpuset) payload.cpuset_cpus = cpuset;
@@ -3386,7 +3389,7 @@
         } else if (curLoaded && (cpuLimited(cur) || cpuPinned(cur))) { payload.remove_cpu = true; act = true; } // both CPU controls cleared → remove
       }
       if (!act) { closePop(); return; } // nothing set and nothing to remove
-      submitLimits(payload);
+      submitLimits(payload, save);
     });
     srow.appendChild(rem); srow.appendChild(save); pop.appendChild(srow);
     document.body.appendChild(pop); hardenPop(pop);
@@ -3418,13 +3421,13 @@
     // in the plan sticks.
     return { nodes: nodes };
   }
-  function savePlan(thenApply) { flash(t("saving")); api("PUT", "plan", collectPlan()).then(function () { if (thenApply) return apply(); flash(t("saved")); }).catch(function (e) { flash("Error: " + e.message, true); }); }
+  function savePlan(thenApply, ctl) { flash(t("saving")); api("PUT", "plan", collectPlan()).then(function () { if (thenApply) return apply(ctl); flash(t("saved")); }).catch(function (e) { flash("Error: " + e.message, true, ctl); }); }
   // Persist this container's automation, the watchdog and schedules, together with the start
   // plan, then optionally run the plan. The config is PUT whole, so other containers' entries
   // and the notify block from the settings page are preserved. It is saved first and on its
   // own, because the automation is unrelated to the plan and a stale plan with a bad dependency
   // would otherwise take the watchdog and schedules down with it.
-  function saveEditor(name, wd, scheds, nursery, thenApply) {
+  function saveEditor(name, wd, scheds, nursery, thenApply, ctl) {
     flash(t("saving"));
     // Read, modify and write: re-fetch the live config, replace only this container's watchdog
     // and schedules, then write it back, so notify and the shaping interface from the settings
@@ -3442,16 +3445,18 @@
         return api("PUT", "config", config);
       })
       .then(function () { return api("PUT", "plan", collectPlan()); })
-      .then(function () { closePop(); if (mode === "list") reinjectRowBadges(); else renderCurrentView(); if (thenApply) return apply(); flash(t("saved")); })
-      .catch(function (e) { flash("Error: " + e.message, true); });
+      .then(function () { closePop(); if (mode === "list") reinjectRowBadges(); else renderCurrentView(); if (thenApply) return apply(ctl); flash(t("saved")); })
+      .catch(function (e) { flash("Error: " + e.message, true, ctl); });
   }
-  function apply() { flash(t("startorder") + "…"); return api("POST", "apply").then(function () { return load(); }).then(function () { flash(t("done")); }).catch(function (e) { flash("Error: " + e.message, true); }); }
-  function flash(msg, bad) {
+  function apply(ctl) { flash(t("startorder") + "…"); return api("POST", "apply").then(function () { return load(); }).then(function () { flash(t("done")); }).catch(function (e) { flash("Error: " + e.message, true, ctl); }); }
+  // A failure also shakes ctl, the control that was used, when the caller has one.
+  function flash(msg, bad, ctl) {
     try {
       if (menuStatusEl) { menuStatusEl.textContent = msg; menuStatusEl.className = "cc-menu-status " + (bad ? "cc-bad-text" : "cc-ok-text"); }
       // A progress note ("saving…") is rewritten by the result that follows it rather than
       // stacking a second toast under it.
       var kind = bad ? "error" : "";
+      if (bad && ctl && window.CCTheme) window.CCTheme.shake(ctl);
       if (!(flashToast && flashToast.update(msg, kind))) flashToast = window.CCTheme ? window.CCTheme.toast(msg, kind) : null;
       if (!/…$/.test(msg)) flashToast = null;
     } catch (e) {}

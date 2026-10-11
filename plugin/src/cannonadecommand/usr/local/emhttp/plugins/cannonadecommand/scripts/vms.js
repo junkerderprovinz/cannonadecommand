@@ -167,6 +167,8 @@
   // Adopting the rainbow is a global decision, so it bypasses effK().
   function iconBgAdoptsV() { return ls("cc.iconbgrainbow") === "1"; }
   function ccIdeal(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
+  // A failed action shakes the control that was used and says why in a toast.
+  function ccvFail(ctl, msg) { if (window.CCTheme) window.CCTheme.fail(ctl, msg); }
   function ccAccent() { var a = effK("accent") || "#FCC419"; return /^#[0-9a-f]{6}$/i.test(a) ? a : "#FCC419"; }
   // Expands #rgb to #rrggbb: idealText answers "#fff", while the filter builders and colour
   // regexes here want six digits.
@@ -505,13 +507,13 @@
     var btn = el("button", null, VMDE ? "Vergrößern" : "Grow"); btn.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:6px;padding:6px 12px;font-size:var(--cc-text-meta);font-weight:600;cursor:pointer";
     btn.onclick = function () {
       var g = parseFloat(String(inp.value).replace(",", "."));
-      if (isNaN(g) || g <= curG) { statusEl.style.color = "var(--cc-err, #ff8389)"; statusEl.textContent = (VMDE ? "nur vergrößern, mehr als " : "grow only, more than ") + curG + " GiB"; return; }
+      if (isNaN(g) || g <= curG) { statusEl.textContent = ""; ccvFail(btn, (VMDE ? "Nur vergrößern, auf mehr als " : "Grow only, to more than ") + curG + " GiB"); return; }
       function doResize() {
         btn.disabled = true; statusEl.style.color = "var(--cc-text-dim,#8a8a8a)"; statusEl.textContent = VMDE ? "Vergrößern läuft…" : "resizing…";
         vmApi("POST", "vmdiskresize", { name: name, target: d.target, size_gib: g }).then(function () {
           btn.disabled = false; statusEl.style.color = "var(--cc-ok, #6fdc8c)"; statusEl.textContent = (VMDE ? "vergrößert auf " : "grown to ") + g + " GiB" + (VMDE ? " · Gast muss Partition/FS erweitern" : " · guest must extend partition/FS");
           curG = g; cur.textContent = "  " + g + " GiB"; d.capacityBytes = g * 1073741824; inp.min = String(g);
-        }).catch(function (e) { btn.disabled = false; statusEl.style.color = "var(--cc-err, #ff8389)"; statusEl.textContent = String(e.message || e).slice(0, 70); });
+        }).catch(function (e) { btn.disabled = false; statusEl.textContent = ""; ccvFail(btn, String(e.message || e)); });
       }
       // A vDisk cannot shrink back without data loss, so a grow is confirmed first with the swal
       // dialog VM removal uses, or confirm() without it.
@@ -631,7 +633,7 @@
       if (f.up) { var upN = intOr(f.up.input.value); if (upN != null) body.out_kbit = Math.max(0, upN); }
       apply.disabled = true; msg.style.color = "var(--cc-text-dim,#8a8a8a)"; msg.textContent = VMDE ? "wird angewendet…" : "applying…";
       vmApi("POST", "vmlimits", body).then(function (res) { if (res && res.vm) vmLims[name] = res.vm; try { refreshAllRes(); } catch (e) {} close(); })
-        .catch(function (e) { apply.disabled = false; msg.style.color = "var(--cc-err, #ff8389)"; msg.textContent = String(e.message || e).slice(0, 44); });
+        .catch(function (e) { apply.disabled = false; msg.textContent = ""; ccvFail(apply, String(e.message || e)); });
     };
     if (f.cores) f.cores.input.focus(); else if (f.ram) f.ram.input.focus(); else if (f.dn) f.dn.input.focus();
   }

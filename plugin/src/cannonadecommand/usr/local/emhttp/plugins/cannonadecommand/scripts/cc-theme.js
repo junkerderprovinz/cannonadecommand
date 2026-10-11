@@ -558,13 +558,32 @@
     };
   }
 
+  // A control that could not do what was asked shakes once (GlimStone, "Failure feedback"). The
+  // class comes off and goes back on across a forced layout, which restarts the animation, so a
+  // second refusal in a row shakes again. The timeout clears it where no animationend arrives.
+  function shake(el) {
+    if (!el || !el.classList) return;
+    el.classList.remove("cc-shake");
+    void el.offsetWidth;
+    el.classList.add("cc-shake");
+    var done = function (e) {
+      if (e && e.animationName && e.animationName.indexOf("cc-shake") !== 0) return;   // a child's animation bubbling up
+      el.classList.remove("cc-shake"); el.removeEventListener("animationend", done);
+    };
+    el.addEventListener("animationend", done);
+    clearTimeout(el.ccShakeT); el.ccShakeT = setTimeout(done, 600);
+  }
+  // Every failure reports through both channels at once: the message in a toast and a shake on the
+  // control that was used, when there is one.
+  function fail(el, msg) { shake(el); return toast(msg, "error"); }
+
   window.CCTheme = {
     RB: RB, idealText: idealText, motionLevel: motionLevel, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects,
     registerSelectSync: registerSelectSync, nextSelIndex: nextSelIndex, wheelStepSelect: wheelStepSelect,
     gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily,
     CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG, delIcon: delIcon,
     lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark, liftLight: liftLight, lightTheme: lightTheme,
-    liftSurface: liftSurface, surfacePalette: surfacePalette, toast: toast,
+    liftSurface: liftSurface, surfacePalette: surfacePalette, toast: toast, shake: shake, fail: fail,
     icons: {
       MODES: ICON_MODES, SIMPLE_MAX: ICON_SIMPLE_MAX,
       globalMode: iconGlobalMode, mode: iconMode, override: iconOverride, setOverride: setIconOverride,

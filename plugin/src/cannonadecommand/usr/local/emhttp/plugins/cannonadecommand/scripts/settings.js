@@ -12,7 +12,6 @@
     var st = document.createElement("style"); st.id = "cc-set-xtra";
     st.textContent =
       "#cc-settings .cc-set-xbtn{display:inline-flex;align-items:center;justify-content:center;height:var(--cc-md-h,30px);padding:var(--cc-md-btnpad,0 14px);font-size:var(--cc-md-fs);font-weight:600;border-radius:var(--cc-b-radius,999px);box-sizing:border-box;margin:12px 10px 0 0}" +
-      "#cc-settings .cc-set-xnote{margin-top:10px;font-size:var(--cc-text-meta);white-space:pre-wrap}" +
       // the flag picker's stripe swatches and its searchable dropdown
       "#cc-settings .cc-flag-sw{display:inline-block;width:22px;height:15px;border-radius:3px;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}" +
       "#cc-settings .cc-flag-sw-lg{width:34px;height:22px}" +
@@ -105,6 +104,8 @@
   function get(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  // A failed save shakes the control that was used and says why in a toast.
+  function failed(ctl, msg) { if (window.CCTheme) window.CCTheme.fail(ctl, msg); }
   // The default-view picker has to reach the server as well: docker.js treats the saved view mode
   // there as authoritative and overwrites a local-only pick on the next load. It reads, merges and
   // writes back, so a preference another feature adds later survives this picker.
@@ -706,7 +707,8 @@
           fd.append("#file", "dynamix/dynamix.cfg"); fd.append("#section", "display");
           fd.append("csrf_token", window.csrf_token); fd.append(field, value);
           if (field === "favorites") set("cc.hidefavtab", value === "no" ? "1" : "0");
-          fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function () { location.reload(); });
+          fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error(r.status); location.reload(); })
+            .catch(function () { failed(null, T("Die Anzeige-Einstellung wurde nicht gespeichert.", "The display setting was not saved.")); });
         } catch (e9) {}
       };
       // a short help text per field, since the native page ships none
@@ -764,7 +766,8 @@
           var fd = new URLSearchParams();
           fd.append("#file", "dynamix/dynamix.cfg"); fd.append("#section", "display"); fd.append("csrf_token", window.csrf_token);
           Object.keys(fields).forEach(function (k9) { fd.append(k9, fields[k9]); });
-          fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function () { location.reload(); });
+          fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error(r.status); location.reload(); })
+            .catch(function () { failed(null, T("Die Anzeige-Einstellung wurde nicht gespeichert.", "The display setting was not saved.")); });
         } catch (e9) {}
       };
       // Matches the native header background and text colour to Unraid's active theme, read from
@@ -1774,8 +1777,6 @@
       lblw.appendChild(el("span", null, T("Sichern & Übertragen", "Backup & transfer")));
       lblw.appendChild(infoIcon(T("Exportiert alle CannonadeCommand-Einstellungen (cc.*-Schlüssel) als JSON-Datei. Der Import schreibt sie zurück und lädt die Seite neu.", "Exports every CannonadeCommand setting (cc.* keys) as a JSON file. Import writes them back and reloads the page.")));
       cX.appendChild(lblw);
-      var note = el("div", "cc-set-xnote"); // an inline notice, since this page has no toast
-      function say(msg, bad) { note.textContent = msg || ""; note.style.color = bad ? "var(--cc-err-ink, #ff8389)" : ""; }
       var ex = el("span", "cc-btn cc-set-xbtn", T("Exportieren", "Export"));
       ex.addEventListener("click", function () {
         try {
@@ -1784,8 +1785,7 @@
           var a = el("a"); a.href = URL.createObjectURL(blob); a.download = "cannonadecommand-settings.json";
           document.body.appendChild(a); a.click(); document.body.removeChild(a);
           setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
-          say("");
-        } catch (e) { say(T("Export fehlgeschlagen: ", "Export failed: ") + ((e && e.message) || e), true); }
+        } catch (e) { failed(ex, T("Export fehlgeschlagen: ", "Export failed: ") + ((e && e.message) || e)); }
       });
       var im = el("span", "cc-btn cc-set-xbtn", T("Importieren", "Import"));
       var fin = el("input"); fin.type = "file"; fin.accept = ".json,application/json"; fin.style.display = "none";
@@ -1794,11 +1794,11 @@
         var rd = new FileReader();
         rd.onload = function () {
           var o = null;
-          try { o = JSON.parse(String(rd.result)); } catch (e) { say(T("Keine gültige JSON-Datei.", "Not a valid JSON file."), true); return; }
+          try { o = JSON.parse(String(rd.result)); } catch (e) { failed(im, T("Keine gültige JSON-Datei.", "Not a valid JSON file.")); return; }
           // it has to be a flat object of cc-family string keys, and never cc.stateCache
           var ks = o && typeof o === "object" && !Array.isArray(o) ? Object.keys(o) : [];
           var bad = ks.filter(function (k) { return !/^cc[a-z]*\./.test(k) || k === "cc.stateCache" || typeof o[k] !== "string"; });
-          if (!ks.length || bad.length) { say(T("Ungültiges Format: erwartet wird ein flaches Objekt mit cc.*-Textwerten.", "Invalid format: expected a flat object of cc.* string values."), true); return; }
+          if (!ks.length || bad.length) { failed(im, T("Ungültiges Format: erwartet wird ein flaches Objekt mit cc.*-Textwerten.", "Invalid format: expected a flat object of cc.* string values.")); return; }
           var w = window.__ccLS || localStorage.setItem.bind(localStorage); // a raw write, bypassing the mirror debounce
           ks.forEach(function (k) { try { w(k, o[k]); } catch (e) {} });
           // The engine mirror is written before the reload: the reloaded page adopts ui_settings
@@ -1813,7 +1813,7 @@
             });
           }).then(function () { location.reload(); }, function () { location.reload(); });
         };
-        rd.onerror = function () { say(T("Datei konnte nicht gelesen werden.", "Could not read the file."), true); };
+        rd.onerror = function () { failed(im, T("Datei konnte nicht gelesen werden.", "Could not read the file.")); };
         rd.readAsText(f);
       });
       im.addEventListener("click", function () { fin.click(); });
@@ -1826,10 +1826,10 @@
           kill.forEach(function (k9) { try { localStorage.removeItem(k9); } catch (e9) {} });
           withConfigLock(function () { return api("GET", "config").then(function (c) { if (!c || typeof c !== "object") return; c.ui_settings = {}; return api("PUT", "config", c); }); })
             .then(function () { location.reload(); }, function () { location.reload(); });
-        } catch (e) { say(T("Zurücksetzen fehlgeschlagen: ", "Reset failed: ") + ((e && e.message) || e), true); }
+        } catch (e) { failed(rs, T("Zurücksetzen fehlgeschlagen: ", "Reset failed: ") + ((e && e.message) || e)); }
       });
       var brow = el("div", "cc-set-row"); brow.appendChild(ex); brow.appendChild(im); brow.appendChild(rs);
-      cX.appendChild(brow); cX.appendChild(fin); cX.appendChild(note);
+      cX.appendChild(brow); cX.appendChild(fin);
     })();
     refreshTabs();
     // cc.settab holds a section id; an older numeric index, or anything unknown, lands on the
@@ -1869,6 +1869,7 @@
   function saveNotify(btn) {
     btn.textContent = T("Speichere…", "Saving…"); btn.classList.add("cc-set-disabled");
     function reset(txt) { btn.textContent = txt; setTimeout(function () { btn.textContent = T("Speichern", "Save"); btn.classList.remove("cc-set-disabled"); }, 1800); }
+    function refuse(msg) { btn.textContent = T("Speichern", "Save"); btn.classList.remove("cc-set-disabled"); failed(btn, msg); }
     // Reads the live config, changes only the notify block and writes it back, so the schedules
     // and watchdogs survive, including any set in the Docker tab since this page loaded. A failed
     // read aborts without writing, so an engine outage cannot wipe the automation.
@@ -1878,20 +1879,21 @@
         c.notify = { unraid: !!notify.unraid, webhook: notify.webhook || "" };
         return api("PUT", "config", c).then(function () { fullConfig = c; reset(T("Gespeichert ✓", "Saved ✓")); });
       });
-    }).catch(function () { reset(T("Fehler, ist die Engine erreichbar?", "Error, is the engine reachable?")); });
+    }).catch(function () { refuse(T("Nicht gespeichert. Ist die Engine erreichbar?", "Not saved. Is the engine reachable?")); });
   }
   // The same read, change and write for the shaping interface alone, so the notify block and
   // every container's own settings survive. A validation error from the engine is shown as such.
   function saveShape(btn) {
     btn.textContent = T("Speichere…", "Saving…"); btn.classList.add("cc-set-disabled");
     function reset(txt) { btn.textContent = txt; setTimeout(function () { btn.textContent = T("Speichern", "Save"); btn.classList.remove("cc-set-disabled"); }, 1800); }
+    function refuse(msg) { btn.textContent = T("Speichern", "Save"); btn.classList.remove("cc-set-disabled"); failed(btn, msg); }
     withConfigLock(function () {
       return api("GET", "config").then(function (c) {
         if (!c || typeof c !== "object") throw new Error("config unreadable");
         c.shape_iface = shapeIface || "";
         return api("PUT", "config", c).then(function () { fullConfig = c; reset(T("Gespeichert ✓", "Saved ✓")); });
       });
-    }).catch(function (e) { reset(/bad shaping interface/.test(String(e && e.message)) ? T("Ungültige Schnittstelle", "Invalid interface") : T("Fehler, ist die Engine erreichbar?", "Error, is the engine reachable?")); });
+    }).catch(function (e) { refuse(/bad shaping interface/.test(String(e && e.message)) ? T("Ungültige Schnittstelle", "Invalid interface") : T("Nicht gespeichert. Ist die Engine erreichbar?", "Not saved. Is the engine reachable?")); });
   }
   // dark text on a light background and white on a dark one, by perceived luminance
   function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16); var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
