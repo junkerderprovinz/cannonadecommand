@@ -259,6 +259,29 @@ html.Theme--azure {
   --cc-elev-2: 0 8px 20px rgba(0, 0, 0, .14);
   --cc-elev-3: 0 10px 24px rgba(0, 0, 0, .18);
 }
+/* CannonadeCommand's own windows, the .cc-pop editors and the .cc-menu gear menu, stay dark on every
+   theme, so inside them each token the light override flips reads its dark value again. The tokens
+   mixed from those on <html> are computed there with the light values and inherited as finished
+   colours, so they are mixed again here. */
+.cc-pop, .cc-menu {
+  --cc-surface-1: #1e1e1e;  --cc-surface-2: #222222;  --cc-surface-3: #2e2e2e;  --cc-surface-base: #161616;
+  --cc-surface-4: #262626;  --cc-surface-window: #242424;  --cc-surface-card: #191919;  --cc-surface-deep: #0f0f0f;
+  --cc-text: #e6e6e6;  --cc-text-dim: #8a8a8a;  --cc-text-chip: #cfcfcf;  --cc-header-ink: #cfcfcf;
+  --cc-toggle-track-off: #3a3a3a;  --cc-toggle-knob: #fff;  --cc-line-solid: #2a2a2a;  --cc-badge-neutral: #3c3c3c;
+  --cc-ink-mix: 100%;
+  --cc-ok:   #6fdc8c;  --cc-ok-fg:   #161616;  --cc-ok-ink:   #6fdc8c;
+  --cc-warn: #ff832b;  --cc-warn-fg: #161616;  --cc-warn-ink: #ff832b;
+  --cc-err:  #ff8389;  --cc-err-fg:  #161616;  --cc-err-ink:  #ff8389;
+  --cc-backdrop-dim: rgba(0, 0, 0, .72);
+  --cc-elev-1: 0 1px 4px rgba(0, 0, 0, .35);  --cc-elev-2: 0 10px 28px rgba(0, 0, 0, .38);  --cc-elev-3: 0 12px 30px rgba(0, 0, 0, .6);
+  --cc-accent-ink:   color-mix(in srgb, var(--cc-accent) var(--cc-ink-mix), black);
+  --cc-accent-hover: color-mix(in srgb, var(--cc-accent) 85%, var(--cc-text));
+  --cc-hover-wash:   color-mix(in srgb, var(--cc-text) 15%, transparent);
+  --cc-ok-hover:   color-mix(in srgb, var(--cc-ok) 85%, var(--cc-text));
+  --cc-warn-hover: color-mix(in srgb, var(--cc-warn) 85%, var(--cc-text));
+  --cc-err-hover:  color-mix(in srgb, var(--cc-err) 85%, var(--cc-text));
+  --cc-card-bg: var(--cc-surface-1);  --cc-card-inset: var(--cc-surface-2);  --cc-field-bg: var(--cc-surface-3);
+}
 
 /* Fixed digit advance width on every live badge value, so a value ticking from 9 to 100% cannot
    widen the pill and its column. */
