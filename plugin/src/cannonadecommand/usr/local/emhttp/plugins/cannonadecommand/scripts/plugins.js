@@ -512,7 +512,7 @@
     }
     var lnk = sid.querySelector("a"); if (lnk) lnk.style.setProperty("color", "inherit", "important");
     // Column 6: the remove control, the same delete control as on the Shares detail page. The
-    // confirm checkbox stays a separate sibling (.cc-cb-del) and the button is the red badge
+    // confirm checkbox stays a separate sibling (.cc-cb-del) and the button is the delete badge
     // (.cc-b-del); both classes live in styles/docker.css.
     var cb = tds[5].querySelector("input[type=checkbox]");
     if (cb && !cb.getAttribute(MARK)) { cb.setAttribute(MARK, "1"); cb.classList.add("cc-cb-del"); }
@@ -549,6 +549,13 @@
         if (cb) cb.classList.add("cc-cb-hidden");
       }
     }
+    // The delete badge reads the row's colour, which under the rainbow can be the palette's red; a
+    // delete is never red, so it takes the next slot instead (CCTheme.deleteSlot).
+    var dc = (ls("cc.rainbow") === "1" && window.CCTheme) ? window.CCTheme.deleteSlot(pal(), idx + (ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET)) : "";
+    Array.prototype.forEach.call(tds[5].querySelectorAll(".cc-b-del"), function (b) {
+      if (dc && dc !== colorFor(idx)) { b.style.setProperty("--cc-rb-c", dc); b.style.setProperty("--cc-rb-ct", idealText(dc)); }
+      else { b.style.removeProperty("--cc-rb-c"); b.style.removeProperty("--cc-rb-ct"); }
+    });
     // Column 2: the description in a fixed, scrollable window instead of dynamix's click-to-expand.
     var desc = tds[1].querySelector(".desc_readmore, .cc-desc");
     if (desc && !desc.getAttribute(MARK)) {

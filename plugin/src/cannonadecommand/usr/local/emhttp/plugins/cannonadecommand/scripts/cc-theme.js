@@ -134,8 +134,10 @@
     return h <= 15 && h >= -15;
   }
   // Palette slot i for a control that deletes something. A delete is never red, so a slot that
-  // lands on red passes to the next one that is not.
+  // lands on the rainbow's red passes to the next one that is not. A flag's colours are the flag's
+  // own and stay where they fall.
   function deleteSlot(pal, i) {
+    if (g("cc.flagmode", "0") === "1") return pal[i % pal.length];
     for (var k = 0; k < pal.length; k++) { var c = pal[(i + k) % pal.length]; if (!isRed(c)) return c; }
     return pal[i % pal.length];
   }

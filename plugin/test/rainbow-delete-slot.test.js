@@ -1,7 +1,9 @@
 // Under the rainbow every row action takes the palette slot of its position, and the
 // Remove action sits far enough along to come round to red. A delete is never red, so
 // it passes to the next slot that is not, on Docker and on VMs, at rest and as the
-// colour the reactive mode stamps for the hover.
+// colour the reactive mode stamps for the hover, and so does the delete badge on the
+// Plugins page, which reads its row's colour. A flag's colours are the flag's own, so
+// in flag mode a delete stays where it falls.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand', 'scripts');
@@ -18,8 +20,9 @@ function grabFn(src, name) {
 }
 const read = (f) => fs.readFileSync(path.join(DIR, f), 'utf8');
 const theme = read('cc-theme.js');
-const CCTheme = new Function(grabFn(theme, 'idealText') + grabFn(theme, 'isRed') + grabFn(theme, 'deleteSlot') +
-  'return { idealText: idealText, isRed: isRed, deleteSlot: deleteSlot };')();
+const store = {};
+const CCTheme = new Function('store', 'function g(k, d) { return k in store ? store[k] : d; }' + grabFn(theme, 'idealText') + grabFn(theme, 'isRed') + grabFn(theme, 'deleteSlot') +
+  'return { idealText: idealText, isRed: isRed, deleteSlot: deleteSlot };')(store);
 const RB = JSON.parse(/var RB = (\[[^\]]+\]);/.exec(theme)[1]);
 const AUSTRIA = ['#ED2939', '#FFFFFF', '#ED2939'];
 
@@ -34,7 +37,11 @@ ok('the palette has exactly one red slot', RB.filter(CCTheme.isRed).length === 1
 console.log('\nThe slot a delete takes');
 ok('a delete landing on red takes the next slot', CCTheme.deleteSlot(RB, 8) === RB[1], CCTheme.deleteSlot(RB, 8));
 ok('a delete elsewhere keeps its own slot', CCTheme.deleteSlot(RB, 11) === RB[3]);
-ok('in a red and white flag it takes the white', CCTheme.deleteSlot(AUSTRIA, 0) === '#FFFFFF');
+ok('in a red and white palette of the user\'s own it takes the white', CCTheme.deleteSlot(AUSTRIA, 0) === '#FFFFFF');
+store['cc.flagmode'] = '1';
+ok('in flag mode the flag\'s red stays', CCTheme.deleteSlot(AUSTRIA, 0) === '#ED2939', CCTheme.deleteSlot(AUSTRIA, 0));
+ok('and every other slot is the flag\'s too', CCTheme.deleteSlot(AUSTRIA, 4) === '#FFFFFF');
+delete store['cc.flagmode'];
 
 function button(classes) {
   const b = { cls: new Set(classes), css: {} };
@@ -73,6 +80,29 @@ for (const [area, tint, count] of [['Docker', dockerTint, 9], ['VMs', vmTint, 9]
 }
 ok('docker.js marks Remove as a delete', /actBtn\("fa-trash", [^\n]*rmContainer[^\n]*, true\)\);/.test(docker));
 ok('vms.js marks both removes as deletes', (vms.match(/vmRemove\(uuid, name, (true|false)\); \}, true\)\);/g) || []).length === 2);
+
+console.log('\nThe delete badge on the Plugins page');
+{
+  const plugins = read('plugins.js');
+  const paint = grabFn(plugins, 'paintRow');
+  const i = paint.indexOf('var dc = '), j = paint.indexOf('// Column 2');
+  ok('paintRow gives the delete badge a slot of its own', i > 0 && j > i);
+  // the slot logic as paintRow runs it, against a row whose colour is the red slot
+  const run = (extra) => {
+    const ls = settings(Object.assign({ 'cc.rbpal': null }, extra));
+    const b = button(['cc-b-del']);
+    const td = { querySelectorAll: () => [b] };
+    new Function('ls', 'window', 'pal', 'colorFor', 'idealText', 'RB_OFFSET', 'idx', 'tds', paint.slice(i, j))(
+      (k) => ls.getItem(k), { CCTheme }, () => RB, (n) => RB[n % RB.length], CCTheme.idealText, 0, 8, [0, 0, 0, 0, 0, td]);
+    return b.css['--cc-rb-c'];
+  };
+  const own = run();
+  ok('a badge in a row on the red slot gets a colour that is not red', !!own && !CCTheme.isRed(own), own);
+  ok('a badge in an accent-coloured row keeps the row\'s colour', run({ 'cc.rainbow': '0' }) === undefined);
+  store['cc.flagmode'] = '1';
+  ok('in flag mode it keeps the row\'s colour', run() === undefined);
+  delete store['cc.flagmode'];
+}
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);
