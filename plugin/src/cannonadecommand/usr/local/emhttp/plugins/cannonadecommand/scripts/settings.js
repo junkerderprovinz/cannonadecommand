@@ -137,23 +137,6 @@
   function del(k) { try { localStorage.removeItem(k); } catch (e) {} }
   // A failed save shakes the control that was used and says why in a toast.
   function failed(ctl, msg) { if (window.CCTheme) window.CCTheme.fail(ctl, msg); }
-  // The default-view picker has to reach the server as well: docker.js treats the saved view mode
-  // there as authoritative and overwrites a local-only pick on the next load. It reads, merges and
-  // writes back, so a preference another feature adds later survives this picker.
-  function syncViewModeServer(v) {
-    if (typeof window.ccGql !== "function") return; // without header.js, localStorage still holds the value
-    window.ccGql("{ docker { organizer { views { id prefs } } } }")
-      .then(function (r) { return r.json(); })
-      .then(function (j) {
-        var view = j.data && j.data.docker && j.data.docker.organizer && j.data.docker.organizer.views && j.data.docker.organizer.views[0];
-        if (!view) return;
-        var merged = {}, cur = view.prefs;
-        if (cur && typeof cur === "object") for (var k in cur) if (Object.prototype.hasOwnProperty.call(cur, k)) merged[k] = cur[k];
-        merged.ccViewMode = v;
-        return window.ccGql("mutation($v: String, $p: JSON!) { updateDockerViewPreferences(viewId: $v, prefs: $p) { version } }", { v: view.id, p: merged });
-      })
-      .catch(function () {});   // the picker reflects the choice either way
-  }
   // Older builds stored the flag palette in the shared cc.rbpal key. With a flag selected and
   // cc.flagpal still absent, cc.rbpal holds exactly those flag colours, so they move across and the
   // rainbow palette returns to its default. No flag lookup is needed, since the value already is
@@ -178,7 +161,6 @@
   var iconstrength = parseInt(get("cc.iconstrength", "100"), 10);
   var vmicons = get("cc.vmicons", "1") === "1"; // ON by default; the switch is an opt-OUT
   var density = get("cc.density", "normal");
-  var view = get("cc.view", "list");
   var colview = loadColview();
 
   // Notifications are engine config rather than localStorage, loaded and saved through the
@@ -1444,14 +1426,8 @@
     c3.appendChild(tbl);
     wrap.appendChild(c3);
 
-    var c4 = card(T("Ansicht", "View"), null);
-    // The folder view is always offered here, unlike the Docker tab's own gear menu, which hides
-    // it until the organizer has folders: the tab falls back to an ungrouped grid when it has
-    // none, so picking it as a default preference shows a plain grid rather than anything broken.
-    c4.appendChild(segRow(T("Standard-Ansicht", "Default view"), [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")], ["folder", T("Ordner", "Folder")]], view, function (v) { view = v; set("cc.view", v); syncViewModeServer(v); }));
     function shapeName(v) { return window.CCTheme ? window.CCTheme.shapeName(v) : (v === "soft" || v === "rounded" ? "soft" : v === "square" ? "square" : "round"); }
     function applyShape() { document.documentElement.setAttribute("data-cc-shape", shapeName(get("cc.badgeshape", "round"))); }
-    wrap.appendChild(c4);
     applyShape();
 
     // Notifications are engine-side and saved to the flash.
