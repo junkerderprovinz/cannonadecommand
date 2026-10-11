@@ -1694,7 +1694,19 @@
   function ccBulkBarSync() {
     var names = Object.keys(ccBulkSel);
     document.documentElement.classList.toggle("cc-bulk-picked", names.length > 0);
-    if (!names.length) { if (ccBulkBarEl) ccBulkBarEl.style.setProperty("display", "none", "important"); return; }
+    if (!names.length) {
+      if (!ccBulkBarEl) return;
+      // A bar that hides under the keyboard focus would drop it on <body>; the multi-select badge,
+      // else a row's mark, is where the next step starts.
+      var hadFocus = ccBulkBarEl.contains(document.activeElement);
+      ccBulkBarEl.style.setProperty("display", "none", "important");
+      if (hadFocus) {
+        var next = [document.querySelector(".cc-bulkmode-badge")].concat(Array.prototype.slice.call(document.querySelectorAll(".cc-bulk-cb")))
+          .filter(function (n) { return n && n.getClientRects().length; })[0];
+        if (next) next.focus();
+      }
+      return;
+    }
     var de = LANG === "de";
     if (!ccBulkBarEl) {
       var bar = el("div", "cc-bulkbar");
@@ -1703,6 +1715,7 @@
       var stopB = el("span", "cc-b cc-bulkbtn", de ? "Stoppen" : "Stop"); stopB.addEventListener("click", function () { ccBulkRun("stop"); }); bar.appendChild(stopB);
       var rmB = el("span", "cc-b cc-bulkbtn", de ? "Entfernen" : "Remove"); rmB.addEventListener("click", ccBulkRemove); bar.appendChild(rmB);
       var clearB = el("span", "cc-b cc-bulkbtn cc-bulkbtn-clear", de ? "Aufheben" : "Clear"); clearB.addEventListener("click", function () { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); }); bar.appendChild(clearB);
+      if (window.CCTheme) [startB, stopB, rmB, clearB].forEach(window.CCTheme.pressable);
       document.body.appendChild(bar);
       ccBulkBarEl = bar;
     }
