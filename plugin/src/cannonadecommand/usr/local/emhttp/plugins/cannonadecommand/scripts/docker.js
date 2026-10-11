@@ -2559,22 +2559,14 @@
   // is honoured by always stamping the custom properties and never forcing a rest colour, so the
   // sheets decide whether a control rests neutral until hover.
   var POP_PAINT_SEL = ".cc-set-toggle, input[type=checkbox], .cc-day, .cc-btn, .cc-sched-time, .cc-pop-x";
-  // The checkbox tick carries its own contrast colour, since a white one vanishes on a light
-  // palette slot. The `#` has to be percent-escaped or it truncates the data URI.
-  function ccTickURL(c) {
-    return "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='" + encodeURIComponent(c) + "' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>\")";
-  }
   function paintPopChrome(root) {
     try {
       if (!root) return;
       var rb = themingOn() && localStorage.getItem("cc.rainbow") === "1";
       Array.prototype.slice.call(root.querySelectorAll(POP_PAINT_SEL)).forEach(function (e, i) {
-        // Outside the rainbow the stamps are removed, so the sheets resolve to the plain accent,
-        // but the tick colour is still computed: a chosen accent can be light too.
-        var c = rb ? ccRbColor(i) : (effc("accent") || "#FCC419"), tx = idealText(c);
-        if (rb) { e.style.setProperty("--cc-rb-c", c); e.style.setProperty("--cc-rb-ct", tx); }
+        // Outside the rainbow the stamps are removed, so the sheets resolve to the plain accent.
+        if (rb) { var c = ccRbColor(i); e.style.setProperty("--cc-rb-c", c); e.style.setProperty("--cc-rb-ct", idealText(c)); }
         else { e.style.removeProperty("--cc-rb-c"); e.style.removeProperty("--cc-rb-ct"); }
-        if (e.type === "checkbox") e.style.setProperty("--cc-cb-tick", ccTickURL(tx));
       });
     } catch (e) {}
   }
@@ -2942,8 +2934,7 @@
     // The auto-restart watchdog, independent of plan membership.
     var wd = watchdogFor(name);
     var wSec = el("div", "cc-pop-auto");
-    // cc-cb is CC's own checkbox from docker.css, not the operating system's box tinted with
-    // accent-color; GlimStone Rule 18.
+    // cc-cb draws GlimStone's switch on the checkbox, so the toggles below keep reading .checked.
     var wHead = el("label", "cc-pop-row cc-pop-toggle"), wEn = el("input", "cc-cb"); wEn.type = "checkbox"; wEn.checked = !!(wd && wd.enabled);
     wHead.appendChild(wEn); wHead.appendChild(el("span", "cc-pop-sech", t("watchdog"))); wSec.appendChild(wHead);
     var wBody = el("div", "cc-pop-sub" + (wEn.checked ? "" : " cc-dis"));

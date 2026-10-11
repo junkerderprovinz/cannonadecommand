@@ -1912,11 +1912,10 @@
   // live-highlight the preset swatch that matches the current accent (no re-render)
   function syncSwOn() { Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-swrow-global")).forEach(function (row) { swMarkRow(row, accent); }); }
   function thc(t) { var e = el("th", null, t); return e; }
-  // The badge-visibility matrix is the one place this page builds checkboxes. They use the shared
-  // .cc-cb widget rather than tinting the OS box, and each cell carries its own badge's colour
-  // with a matching contrast tick, since a white tick vanishes on a light one.
+  // The badge-visibility matrix is a grid of on/off settings, so each cell is the shared .cc-cb
+  // switch, carrying its own badge's colour and the ink for its knob.
   function ccTick(c) { return "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='" + encodeURIComponent(c) + "' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>\")"; }
-  function chkCell(key, v, color) { var td = el("td", "cc-set-chk"); var cb = el("input", "cc-cb"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); if (rainbow && color) { cb.style.setProperty("--cc-rb-c", color); cb.style.setProperty("--cc-rb-ct", idealText(color)); cb.style.setProperty("--cc-cb-tick", ccTick(idealText(color))); } else { cb.style.setProperty("--cc-cb-tick", ccTick(idealText(accent))); } cb.addEventListener("change", function () { var cur = colview[key] || { s: true, a: true }; colview[key] = { s: cur.s, a: cur.a }; colview[key][v] = cb.checked; set("cc.colview2", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
+  function chkCell(key, v, color) { var td = el("td", "cc-set-chk"); var cb = el("input", "cc-cb"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); if (rainbow && color) { cb.style.setProperty("--cc-rb-c", color); cb.style.setProperty("--cc-rb-ct", idealText(color)); } cb.addEventListener("change", function () { var cur = colview[key] || { s: true, a: true }; colview[key] = { s: cur.s, a: cur.a }; colview[key][v] = cb.checked; set("cc.colview2", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
   // Every option row is a dropdown, so segRow() delegates to dropRow() and its callers keep the
   // same options and handler; the select fires change, so the live effects still run. The old
   // layout argument is ignored, since a dropdown always puts its label on the left.

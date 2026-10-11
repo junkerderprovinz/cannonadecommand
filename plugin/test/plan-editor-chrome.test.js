@@ -91,26 +91,26 @@ function grabLine(marker) {
   return src.slice(src.lastIndexOf('\n', i) + 1, src.indexOf('\n', i));
 }
 const POP_PAINT_SEL = (/var POP_PAINT_SEL = "([^"]+)"/.exec(src) || [])[1];
-const code = ['el', 'ccTickURL', 'ccTimePicker'].map(grabFn).join('\n');
-const fns = new Function('paintSelects', code + '\n; return { el, ccTickURL, ccTimePicker };')(function () {});
+const code = ['el', 'ccTimePicker'].map(grabFn).join('\n');
+const fns = new Function('paintSelects', code + '\n; return { el, ccTimePicker };')(function () {});
 
 console.log('\nPart 1: the paint sweep covers every interactive control class in the window');
 ok(!!POP_PAINT_SEL, 'POP_PAINT_SEL is still declared in docker.js');
 [
   ['.cc-set-toggle', 'the activation toggle ("Im Startplan verwalten")'],
-  ['input[type=checkbox]', 'the watchdog / idle-stop checkboxes'],
+  ['input[type=checkbox]', 'the watchdog / idle-stop switches'],
   ['.cc-day', 'the Mo..So day chips'],
   ['.cc-btn', 'Speichern and "+ Zeitplan"'],
   ['.cc-sched-time', 'the schedule time field'],
   ['.cc-pop-x', 'the window close X'],
 ].forEach(([sel, what]) => ok(POP_PAINT_SEL.indexOf(sel) >= 0, 'the sweep includes ' + sel + ', ' + what));
 
-console.log('\nPart 2: the per-checkbox tick colour');
-const tick = fns.ccTickURL('#161616');
-ok(tick.indexOf('%23161616') >= 0, 'the # of the colour is percent-escaped (a raw # truncates the data URI)');
-ok(tick.indexOf("stroke='#") < 0, 'no raw # survives anywhere in the URI');
-ok(/^url\("data:image\/svg\+xml/.test(tick), 'it is a url() wrapped data URI, usable as background-image');
-ok(fns.ccTickURL('#fff').indexOf('%23fff') >= 0, 'short hex is escaped the same way');
+console.log('\nPart 2: the switch knob takes its ink from the stamped chain');
+{
+  const paint = grabFn('paintPopChrome');
+  ok(/e\.style\.setProperty\("--cc-rb-ct", idealText\(c\)\)/.test(paint), 'in rainbow each control gets the ink for its own slot');
+  ok(!/--cc-cb-tick/.test(paint), 'no per-checkbox tick image is stamped');
+}
 
 console.log('\nPart 3: the .cc-timepick replacement widget');
 const input = new N('input');
