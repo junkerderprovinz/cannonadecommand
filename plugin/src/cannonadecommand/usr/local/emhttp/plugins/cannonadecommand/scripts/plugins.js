@@ -123,7 +123,7 @@
   function storedPal() { try { if (ls("cc.flagmode") === "1") { var f = JSON.parse(ls("cc.flagpal") || "null"); if (f && f.length) return f; } var jp = JSON.parse(ls("cc.rbpal") || "null"); if (jp && jp.length) return jp; } catch (e) {} return RB_PAL; }
   // On a light theme the near-white slots are swapped, see CCTheme.surfacePalette.
   function pal() { var p = storedPal(); return (window.CCTheme && window.CCTheme.surfacePalette) ? window.CCTheme.surfacePalette(p, accent()) : p; }
-  function idealText(bg) { var m = /^#?([0-9a-f]{6})$/i.exec(bg || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.55 ? "#161616" : "#fff"; }
+  function idealText(bg) { var m = /^#?([0-9a-f]{6})$/i.exec(bg || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.197 ? "#161616" : "#fff"; }
   function accent() { return eff("accent") || "#FCC419"; }
   function colorFor(i) {
     if (ls("cc.rainbow") !== "1") return accent();

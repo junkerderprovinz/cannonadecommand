@@ -166,7 +166,7 @@
   function effK(k) { return ls("cc.stylevms") !== "0" ? ls("cc." + k) : ls("ccv." + k); }
   // Adopting the rainbow is a global decision, so it bypasses effK().
   function iconBgAdoptsV() { return ls("cc.iconbgrainbow") === "1"; }
-  function ccIdeal(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.55 ? "#161616" : "#fff"; }
+  function ccIdeal(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.197 ? "#161616" : "#fff"; }
   // A failed action shakes the control that was used and says why in a toast.
   function ccvFail(ctl, msg) { if (window.CCTheme) window.CCTheme.fail(ctl, msg); }
   function ccAccent() { var a = effK("accent") || "#FCC419"; return /^#[0-9a-f]{6}$/i.test(a) ? a : "#FCC419"; }

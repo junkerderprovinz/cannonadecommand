@@ -1,8 +1,7 @@
-// Ink on a coloured fill is dark (#161616) or white, picked the way GlimStone's contrastOn()
-// in reference/appearance.ts does: the relative luminance of the linearised sRGB channels
-// against 0.55. Every area keeps its own fallback copy of idealText() for when cc-theme.js
-// has not loaded, so every copy is held to the reference, and no script may pick ink by the
-// old Rec-601 brightness threshold of 150 inline.
+// Ink on a coloured fill is dark (#161616) or white, whichever has the higher contrast ratio.
+// Every area keeps its own fallback copy of idealText() for when cc-theme.js has not loaded, so
+// every copy is held to the ratio computed here, and no script may pick ink by the old Rec-601
+// brightness threshold of 150 inline.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand', 'scripts');
@@ -17,18 +16,21 @@ function grabFn(src, name) {
   return null;
 }
 
-// GlimStone's contrastOn(), transcribed.
+// The ink with the higher WCAG contrast ratio against the fill.
 function contrastOn(hex) {
   if (!/^#[0-9a-fA-F]{6}$/.test(hex || '')) return '#fff';
   const n = parseInt(hex.slice(1), 16);
   const lin = (c) => { const v = c / 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
-  return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255) > 0.55 ? '#161616' : '#fff';
+  const L = (n) => 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+  const fill = L(n), dark = L(0x161616);
+  return (fill + 0.05) / (dark + 0.05) > 1.05 / (fill + 0.05) ? '#161616' : '#fff';
 }
 
 console.log('\nThe reference itself');
 ok('Sunflower takes dark ink', contrastOn('#FCC419') === '#161616');
-ok('the palette blue takes white', contrastOn('#1D99F3') === '#fff');
-ok('a mid yellow the old threshold gave dark ink takes white now', contrastOn('#eab308') === '#fff');
+ok('every palette pastel takes dark ink', ['#FF8389', '#FF832B', '#6FDC8C', '#3DDBD9', '#1D99F3', '#BE95FF', '#FF7EB6'].every((h) => contrastOn(h) === '#161616'));
+ok('a deep blue takes white', contrastOn('#0f62fe') === '#fff');
+ok('the light-theme error red takes white', contrastOn('#da1e28') === '#fff');
 
 const SAMPLES = ['#FF8389', '#FF832B', '#FCC419', '#6FDC8C', '#3DDBD9', '#1D99F3', '#BE95FF', '#FF7EB6',
   '#198038', '#da1e28', '#f1c21b', '#0f62fe', '#eab308', '#22c55e', '#06b6d4', '#a855f7', '#f97316',

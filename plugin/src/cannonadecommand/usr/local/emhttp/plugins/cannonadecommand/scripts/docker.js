@@ -544,7 +544,7 @@
   // The accent colour and the row density come from localStorage as CSS variables, written live
   // by the settings page along with a poke event.
   // the badge text colour for a background: dark ink on a light one, white on a dark one
-  function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.55 ? "#161616" : "#fff"; }
+  function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.197 ? "#161616" : "#fff"; }
   // The container icons are tinted with an inline SVG feColorMatrix filter applied to each icon
   // element, so it cannot be mis-positioned the way an overlay can and it maps to the exact sRGB
   // colour, which a grayscale, sepia and hue-rotate chain only approximates. The icon becomes a
