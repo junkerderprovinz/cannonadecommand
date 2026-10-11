@@ -34,6 +34,13 @@
   // script; without it a control keeps its tooltip and its name and only loses the drawing.
   var CC_TRASH_SVG = (window.CCTheme && window.CCTheme.CC_TRASH_SVG) || "";
   function ccGlyph(name) { return window.CCTheme && window.CCTheme.glyph ? window.CCTheme.glyph(name) : ""; }
+  // A dropdown's trigger takes the focus on a click and from Tab, which is what lets the wheel step
+  // its value (GlimStone rule 14), and Enter or Space opens it.
+  function selTrigger(trig) {
+    if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(trig);
+    trig.setAttribute("aria-haspopup", "listbox");
+    return trig;
+  }
   var PROBES = ["health", "running", "tcp", "http", "exec", "log"], POLICIES = ["abort", "continue", "degrade"];
   var SCHED_ACTIONS = ["start", "stop", "restart"];
   // Docker's four restart-policy names, in the order they appear in the editor dropdown.
@@ -3755,7 +3762,7 @@
     sel.setAttribute("data-cc-dsel", "1");                 // set FIRST -> observer re-fire is a no-op
     var wrap = el("span", "cc-dsel"); sel.parentNode.insertBefore(wrap, sel);
     sel.style.display = "none"; wrap.appendChild(sel);
-    var trig = el("span", "cc-dsel-trigger"); wrap.appendChild(trig);
+    var trig = selTrigger(el("span", "cc-dsel-trigger")); wrap.appendChild(trig);
     var panel = el("div", "cc-dsel-panel"); wrap.appendChild(panel);
     var lastGroup = null;
     for (var k = 0; k < sel.options.length; k++) {
@@ -3770,6 +3777,7 @@
           sel.dispatchEvent(new Event("change", { bubbles: true }));
           ctSyncOne(sel);
           wrap.classList.remove("cc-open");
+          trig.focus();
         };
       })(k));
       panel.appendChild(chip);
@@ -3832,8 +3840,9 @@
       c[k].classList.toggle("is-disabled", !!o.disabled);
     }
   }
-  // GlimStone Rule 21 (wheel over the CLOSED field): the shared handler is in cc-theme.js; this hands it
-  // the repaint the chip-click path already uses, so a wheel step and a click leave the widget identical.
+  // The wheel over a closed field with focus (GlimStone rule 14) is handled in cc-theme.js; this hands
+  // it the repaint the chip-click path already uses, so a wheel step and a click leave the widget
+  // identical.
   try { if (window.CCTheme && window.CCTheme.registerSelectSync) window.CCTheme.registerSelectSync(function (sel, wrap) { if (!wrap || !wrap.classList || !wrap.classList.contains("cc-dsel")) return false; ctSyncOne(sel); return true; }); } catch (e) {}
   function ctSelectsTeardown() {
     try {

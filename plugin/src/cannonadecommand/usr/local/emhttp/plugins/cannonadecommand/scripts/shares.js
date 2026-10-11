@@ -426,7 +426,11 @@
     sel.setAttribute("data-cc-sel", "1");                 // first, so the observer's re-fire is a no-op
     var wrap = el("span", "cc-sel"); sel.parentNode.insertBefore(wrap, sel);
     sel.style.display = "none"; wrap.appendChild(sel);
+    // The trigger takes the focus on a click and from Tab, which lets the wheel step the value
+    // (GlimStone rule 14), and Enter or Space opens it.
     var trig = el("span", "cc-sel-trigger"); wrap.appendChild(trig);
+    if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(trig);
+    trig.setAttribute("aria-haspopup", "listbox");
     var panel = el("div", "cc-sel-panel"); wrap.appendChild(panel);
     for (var k = 0; k < sel.options.length; k++) {
       var chip = el("div", "cc-sel-opt", sel.options[k].text); chip.setAttribute("data-i", k);
@@ -443,6 +447,7 @@
           // no observer sees.
           ccSyncGroup(sel.form);
           wrap.classList.remove("cc-open");
+          trig.focus();
         };
       })(k));
       panel.appendChild(chip);

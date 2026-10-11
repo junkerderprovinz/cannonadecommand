@@ -1,11 +1,14 @@
-// A closed select field steps with the scroll wheel, as a native <select> does,
-// in every family that replaces one (GlimStone Rule 21).
+// A closed select field with focus steps with the scroll wheel, in every family
+// that replaces a native <select> (GlimStone rule 14, reference/selectScroll.ts).
 //
 // The handler is a single document-level listener in cc-theme.js, the one file
 // that loads on every page, driven by the shared family selectors. What can
 // quietly break it:
-//   · it fires only over a closed widget, since an open panel's scroll is the
-//     user's and the page has to keep scrolling everywhere else
+//   · it fires only over a closed widget that has the focus, since an open
+//     panel's scroll is the user's, and a page with a dropdown on every row
+//     scrolls past them without changing one
+//   · each trigger takes the focus on a click and from Tab, and gets it back
+//     after a pick, or the condition could never be met
 //   · it calls preventDefault only when a value changed, or a wheel over a dead
 //     field swallows the gesture and the page freezes under the cursor
 //   · it clamps at both ends rather than wrapping, like the panels' arrow keys
@@ -51,7 +54,10 @@ class N {
   closest(sel) { let n = this; while (n) { if (n.matchesSel && n.matchesSel(sel)) return n; n = n.parentNode; } return null; }
   querySelectorAll(sel) { const out = []; const walk = n => n.children.forEach(c => { if (c.matchesSel(sel)) out.push(c); walk(c); }); walk(this); return out; }
   querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
+  contains(n) { for (; n; n = n.parentNode) if (n === this) return true; return false; }
+  focus() { active = this; }
 }
+let active = null;
 const store = {};
 const docListeners = {};
 global.document = {
@@ -59,6 +65,7 @@ global.document = {
   getElementById: () => null,
   querySelector: () => null,
   querySelectorAll: () => [],
+  get activeElement() { return active || this.body; },
   documentElement: new N('html'),
   body: new N('body'),
   cookie: '',
@@ -112,6 +119,7 @@ function widget(cls, labels, selIdx, opts) {
   labels.forEach((t, i) => { const chip = new N('div'); chip.className = cls + '-opt'; chip.textContent = t; chip.setAttribute('data-i', String(i)); panel.appendChild(chip); });
   wrap.appendChild(panel);
   document.body.appendChild(wrap);
+  if (!opts.blur) trig.focus();   // a click on the trigger focuses it, which the wheel asks for
   return { wrap, sel, trig, panel };
 }
 function wheel(target, dy) {
@@ -134,6 +142,29 @@ console.log('\nStepping a closed field, in every family CC has');
   eq(w.sel.selectedIndex, 0, fam + ': a wheel up steps back');
   eq(w.wrap.classList.contains('cc-open'), false, fam + ': the panel never opened');
 });
+
+console.log('\nFocus is the condition, not the pointer');
+{
+  const w = widget('cc-dsel', ['a', 'b', 'c'], 0, { blur: true });
+  ok(!wheel(w.trig, 120), 'a field the page scrolls past, without the focus, is left to the page');
+  eq(w.sel.selectedIndex, 0, 'and keeps its value');
+  const other = widget('cc-dsel', ['x', 'y'], 0);
+  ok(!wheel(w.trig, 120) && w.sel.selectedIndex === 0, 'the focus on another field does not count for this one');
+  w.trig.focus();
+  ok(wheel(w.trig, 120) && w.sel.selectedIndex === 1, 'once it has the focus, the wheel steps it');
+  eq(other.sel.selectedIndex, 0, 'and the field that had the focus before is untouched');
+  const dir = path.join(DIR);
+  const src = (n) => fs.readFileSync(path.join(dir, n), 'utf8');
+  const docker = src('docker.js'), settings = src('settings.js'), shares = src('shares.js'), header = src('header.js');
+  ok(/function selTrigger\(trig\) \{[^}]*window\.CCTheme\.pressable\(trig\)/.test(docker) && /var trig = selTrigger\(el\("span", "cc-dsel-trigger"\)\);/.test(docker), 'docker.js: the .cc-dsel trigger takes the focus and opens on Enter');
+  ok(/var trig = el\("span", "cc-dsel-trigger"\); wrap\.appendChild\(trig\);\n    if \(window\.CCTheme && window\.CCTheme\.pressable\) window\.CCTheme\.pressable\(trig\);/.test(settings), 'settings.js: so does its .cc-dsel trigger');
+  ok(/var trig = el\("span", "cc-sel-trigger"\); wrap\.appendChild\(trig\);\n    if \(window\.CCTheme && window\.CCTheme\.pressable\) window\.CCTheme\.pressable\(trig\);/.test(shares), 'shares.js: so does the .cc-sel trigger');
+  ok(/trig\.setAttribute\("role", "button"\); trig\.setAttribute\("tabindex", "0"\);/.test(header), 'header.js: the .cc-tsel trigger already is a button with a tab stop');
+  ok(/ctSyncOne\(sel\);\n          wrap\.classList\.remove\("cc-open"\);\n          trig\.focus\(\);/.test(docker), 'docker.js: a pick hands the focus back to the trigger, so the wheel keeps working');
+  ok(/ccDselSync\(sel\); wrap\.classList\.remove\("cc-open"\); trig\.focus\(\);/.test(settings), 'settings.js: so does a pick there');
+  ok(/wrap\.classList\.remove\("cc-open"\);\n          trig\.focus\(\);/.test(shares), 'shares.js: and there');
+  ok(/wrap\.classList\.remove\("cc-open"\); trig\.setAttribute\("aria-expanded", "false"\); trig\.focus\(\);/.test(header), 'header.js: and in the header\'s family');
+}
 
 console.log('\nIt clamps, it does not wrap');
 {

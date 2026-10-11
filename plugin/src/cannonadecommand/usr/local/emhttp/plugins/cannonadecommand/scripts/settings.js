@@ -2155,7 +2155,11 @@
   // and a trigger with a floating panel of chips renders on top of it.
   function ccDsel(sel) {
     var wrap = el("span", "cc-dsel"); sel.style.display = "none"; wrap.appendChild(sel);
+    // The trigger takes the focus on a click and from Tab, which lets the wheel step the value
+    // (GlimStone rule 14), and Enter or Space opens it.
     var trig = el("span", "cc-dsel-trigger"); wrap.appendChild(trig);
+    if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(trig);
+    trig.setAttribute("aria-haspopup", "listbox");
     var panel = el("div", "cc-dsel-panel"); wrap.appendChild(panel);
     for (var k = 0; k < sel.options.length; k++) {
       var o = sel.options[k];
@@ -2167,7 +2171,7 @@
           if (sel.options[idx].disabled) return;
           sel.selectedIndex = idx;
           sel.dispatchEvent(new Event("change", { bubbles: true }));
-          ccDselSync(sel); wrap.classList.remove("cc-open");
+          ccDselSync(sel); wrap.classList.remove("cc-open"); trig.focus();
         };
       })(k));
       panel.appendChild(chip);

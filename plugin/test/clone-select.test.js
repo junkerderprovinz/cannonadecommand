@@ -45,6 +45,7 @@ class N {
   }
   querySelectorAll(sel) { return this.walk().filter(n => sel.split(',').some(s => n._match(s.trim()))); }
   querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
+  focus() {}
 }
 class OptionN extends N {                 // ccSyncOne reads .text off an option
   constructor() { super('option'); }
@@ -65,6 +66,7 @@ const document = {
   addEventListener() {}, querySelectorAll: () => [],
 };
 global.document = document;
+global.window = {};   // no cc-theme.js here, so the trigger skips its keyboard wiring
 global.navigator = { language: 'en' };
 global.location = { pathname: '/Shares/Share' };
 global.Event = class { constructor(t, o = {}) { this.type = t; this.bubbles = !!o.bubbles; } };

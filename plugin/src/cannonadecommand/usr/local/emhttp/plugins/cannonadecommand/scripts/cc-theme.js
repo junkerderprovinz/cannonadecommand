@@ -178,17 +178,20 @@
     } catch (e) {}
   }
 
-  // GlimStone rule 21: a closed select field steps through its values with the scroll wheel, as a
-  // native <select> does. It lives here because this file loads on every page. .cc-tsel (header.js),
-  // .cc-dsel (docker.js form, CC settings, .cc-pop) and .cc-sel (share detail) keep a hidden
-  // <select> as their value, so a wheel step changes its selectedIndex. .cc-drop is left out: it has
-  // no closed field, only a text input holding a comma list with no next value to step to.
+  // GlimStone rule 14: a closed select field with focus steps through its values with the scroll
+  // wheel (reference/selectScroll.ts). It lives here because this file loads on every page.
+  // .cc-tsel (header.js), .cc-dsel (docker.js form, CC settings, .cc-pop) and .cc-sel (share
+  // detail) keep a hidden <select> as their value, so a wheel step changes its selectedIndex.
+  // .cc-drop is left out: it has no closed field, only a text input holding a comma list with no
+  // next value to step to.
   //
-  // The handler acts only over a closed widget, so open panels and the page scroll as before, and
-  // it calls preventDefault only when the value changed, so a disabled or single-option field still
-  // lets the page scroll. It clamps at the ends like the arrow keys in settings.js moveSel and
-  // header.js ccTselMove, and it commits through the same path as an option click (selectedIndex,
-  // a bubbling change event, then a resync), so the host page's inline onchange handlers fire.
+  // The handler acts only over a closed widget that has the focus, from a click or from Tab, so a
+  // page with a dropdown on every row can scroll past them without changing one, and an open panel
+  // scrolls as before. It calls preventDefault only when the value changed, so a disabled or
+  // single-option field still lets the page scroll. It clamps at the ends like the arrow keys in
+  // settings.js moveSel and header.js ccTselMove, and it commits through the same path as an option
+  // click (selectedIndex, a bubbling change event, then a resync), so the host page's inline
+  // onchange handlers fire.
   var CC_SEL_WHEEL = ".cc-tsel, .cc-dsel, .cc-sel";
   var selSyncFns = [];
   // Each family registers the sync its click handler calls, because they differ: .cc-tsel
@@ -245,7 +248,7 @@
         if (!t || !t.closest) return;
         if (t.closest(".cc-tsel-panel, .cc-dsel-panel, .cc-sel-panel, .cc-drop")) return;
         var wrap = t.closest(CC_SEL_WHEEL);
-        if (!wrap || wrap.classList.contains("cc-open")) return;
+        if (!wrap || wrap.classList.contains("cc-open") || !wrap.contains(document.activeElement)) return;
         if (wrap.classList.contains("cc-tsel-disabled") || wrap.classList.contains("cc-dsel-disabled") || wrap.classList.contains("cc-sel-disabled")) return;
         var dy = e.deltaY || 0, dx = e.deltaX || 0;
         var d = Math.abs(dy) >= Math.abs(dx) ? dy : dx;
