@@ -202,20 +202,33 @@
     } catch (e) {}
   })();
   function collectUISettings() { var o = {}; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && /^cc[a-z]*\./.test(k) && k !== "cc.stateCache") o[k] = localStorage.getItem(k); } return o; }
-  // merges the changed keys into the server map rather than replacing it
+  // Merges the changed keys into the server map rather than replacing it, one push at a time and
+  // inside the config lock, so it cannot race a card's own save. The keys a push carries stay
+  // unsynced until its PUT has landed, so the adopt below cannot bring the old value back.
+  var uiSending = {}, uiPushing = false, uiQueued = false;
   function pushUISettings() {
+    if (uiPushing) { uiQueued = true; return; }
     var keys = Object.keys(uiPending); if (!keys.length) return;
-    api("GET", "config").then(function (c) {
-      if (!c || typeof c !== "object") return;
-      var u = c.ui_settings || {};
-      keys.forEach(function (k) { var v = localStorage.getItem(k); if (v === null) delete u[k]; else u[k] = v; });
-      uiPending = {};
-      c.ui_settings = u;
-      return api("PUT", "config", c);
-    }).catch(function () {});
+    uiPushing = true;
+    keys.forEach(function (k) { uiSending[k] = 1; delete uiPending[k]; });
+    var unsent = function () { keys.forEach(function (k) { uiPending[k] = 1; }); };
+    withConfigLock(function () {
+      return api("GET", "config").then(function (c) {
+        if (!c || typeof c !== "object") { unsent(); return; }
+        var u = c.ui_settings || {};
+        keys.forEach(function (k) { var v = localStorage.getItem(k); if (v === null) delete u[k]; else u[k] = v; });
+        c.ui_settings = u;
+        return api("PUT", "config", c);
+      });
+    }).catch(unsent).then(function () {
+      uiPushing = false; uiSending = {};
+      if (uiQueued) { uiQueued = false; pushUISettings(); }
+    });
   }
-  function adoptUISettings(u) {
-    var changed = false;
+  function uiUnsynced() { var o = {}; Object.keys(uiPending).concat(Object.keys(uiSending)).forEach(function (k) { o[k] = 1; }); return o; }
+  function adoptUISettings(u, busy) {
+    var changed = false, skip = uiUnsynced();
+    Object.keys(busy || {}).forEach(function (k) { skip[k] = 1; });
     // The same migration on the other side of the sync: the engine's ui_settings is the source of
     // truth, so cleaning localStorage alone would let the next adopt restore the old key. The
     // palette moves across in the incoming map, the local copy is cleared, and _migrated tells the
@@ -229,7 +242,7 @@
       }
     } catch (e0) {}
     if (adoptUISettings._migrated) { try { localStorage.removeItem("cc.rbpal"); } catch (e1) {} }
-    try { Object.keys(u || {}).forEach(function (k) { if (/^cc[a-z]*\./.test(k) && k !== "cc.stateCache" && localStorage.getItem(k) !== u[k]) { (window.__ccLS || localStorage.setItem.bind(localStorage))(k, u[k]); changed = true; } }); } catch (e) {}
+    try { Object.keys(u || {}).forEach(function (k) { if (/^cc[a-z]*\./.test(k) && k !== "cc.stateCache" && !skip[k] && localStorage.getItem(k) !== u[k]) { (window.__ccLS || localStorage.setItem.bind(localStorage))(k, u[k]); changed = true; } }); } catch (e) {}
     return changed;
   }
   function api(method, path, body) {
@@ -2228,10 +2241,11 @@
   // Pulls the engine config so the Notifications card shows what is saved, then re-renders. With
   // the engine down the defaults stay. An edit made during the round trip is kept rather than
   // overwritten.
+  var bootBusy = uiUnsynced();
   api("GET", "config").then(function (c) {
     if (!c || typeof c !== "object") return;
     fullConfig = { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: c.ui_settings || undefined };
-    adoptUISettings(c.ui_settings); // render() below shows the adopted values
+    adoptUISettings(c.ui_settings, bootBusy); // render() below shows the adopted values
     // The palette migration cleaned the incoming map in place, so it is written back; otherwise
     // the next load's adopt would restore the old key from the mirror.
     if (adoptUISettings._migrated) { try { api("PUT", "config", c); } catch (e8) {} }

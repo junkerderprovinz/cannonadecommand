@@ -26,7 +26,7 @@ function grabBetween(src, startMarker, endMarker) {
 
 const src = fs.readFileSync(DOCKER, 'utf8');
 const code = grabBetween(src,
-  'function adoptUISettings(u) {',
+  'function uiUnsynced() {',
   'function loadLimits()');
 
 // Stubs everything loadConfig() and adoptUISettings() touch and counts the repaint
@@ -45,7 +45,7 @@ function harness(initialLocal) {
   const fnBody = code + '\nreturn { loadConfig: loadConfig, adoptUISettings: adoptUISettings, get config() { return config; } };';
   const factory = new Function(
     'window', 'localStorage', 'api', 'applySettings', 'applyEnhanceClasses', 'removeEnhanceClasses',
-    'reinjectRowBadges', 'renderGrid', 'themingOn', 'mode', 'uiSeeded', 'collectUISettings', 'uiPending', 'pushUISettings',
+    'reinjectRowBadges', 'renderGrid', 'themingOn', 'mode', 'uiSeeded', 'collectUISettings', 'uiPending', 'uiSending', 'pushUISettings',
     fnBody
   );
   const api = (method, path) => { if (method === 'GET' && path === 'config') return Promise.resolve({ ui_settings: serverRef.ui_settings }); return Promise.resolve(null); };
@@ -54,7 +54,7 @@ function harness(initialLocal) {
     () => { calls.applySettings++; }, () => { calls.applyEnhanceClasses++; }, () => { calls.removeEnhanceClasses++; },
     () => { calls.reinjectRowBadges++; }, () => { calls.renderGrid++; },
     () => true, // themingOn(), so the list-mode branch takes applyEnhanceClasses
-    'list', true, () => ({}), {}, () => {}
+    'list', true, () => ({}), {}, {}, () => {}
   );
   return { state, store, calls, serverRef };
 }

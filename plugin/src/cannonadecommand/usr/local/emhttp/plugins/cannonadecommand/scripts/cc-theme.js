@@ -650,19 +650,31 @@
         };
       }
     } catch (e) {}
+    // One push at a time; a write landing while one is out queues another for when it returns. The
+    // keys a push carries stay unsynced until its PUT has landed, so adopt() leaves them alone.
+    var sending = {}, pushing = false, queued = false;
     function push() {
+      if (pushing) { queued = true; return; }
       var keys = Object.keys(pending); if (!keys.length) return;
+      pushing = true;
+      keys.forEach(function (k) { sending[k] = 1; delete pending[k]; });
+      var unsent = function () { keys.forEach(function (k) { pending[k] = 1; }); };
       apiGet("config").then(function (c) {
-        if (!c || typeof c !== "object") return;
+        if (!c || typeof c !== "object") { unsent(); return; }
         var u = c.ui_settings || {};
         keys.forEach(function (k) { var v = localStorage.getItem(k); if (v === null) delete u[k]; else u[k] = v; });
-        pending = {};
-        return apiPut("config", { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], idle_stops: c.idle_stops || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: u });
+        return apiPut("config", { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], idle_stops: c.idle_stops || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: u })
+          .then(function (r) { if (!r || !r.ok) unsent(); });
+      }).then(function () {
+        pushing = false; sending = {};
+        if (queued) { queued = false; push(); }
       });
     }
-    function adopt(u) {
-      var changed = false;
-      try { Object.keys(u || {}).forEach(function (k) { if (/^cc[a-z]*\./.test(k) && k !== "cc.stateCache" && localStorage.getItem(k) !== u[k]) { (window.__ccLS || localStorage.setItem.bind(localStorage))(k, u[k]); changed = true; } }); } catch (e) {}
+    function unsynced() { var o = {}; Object.keys(pending).concat(Object.keys(sending)).forEach(function (k) { o[k] = 1; }); return o; }
+    function adopt(u, busy) {
+      var changed = false, skip = unsynced();
+      Object.keys(busy || {}).forEach(function (k) { skip[k] = 1; });
+      try { Object.keys(u || {}).forEach(function (k) { if (/^cc[a-z]*\./.test(k) && k !== "cc.stateCache" && !skip[k] && localStorage.getItem(k) !== u[k]) { (window.__ccLS || localStorage.setItem.bind(localStorage))(k, u[k]); changed = true; } }); } catch (e) {}
       return changed;
     }
     // adopt() corrects localStorage from the server copy after the page has already drawn itself
@@ -674,9 +686,10 @@
         try { if (typeof window[fnName] === "function") window[fnName](); } catch (e) {}
       });
     }
+    var bootBusy = unsynced();
     apiGet("config").then(function (c) {
       if (!c || typeof c !== "object") return;
-      if (adopt(c.ui_settings)) rerenderAdoptedAreas();
+      if (adopt(c.ui_settings, bootBusy)) rerenderAdoptedAreas();
       if (!c.ui_settings || !Object.keys(c.ui_settings).length) {
         var seed = {};
         try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && /^cc[a-z]*\./.test(k) && k !== "cc.stateCache") seed[k] = localStorage.getItem(k); } } catch (e) {}

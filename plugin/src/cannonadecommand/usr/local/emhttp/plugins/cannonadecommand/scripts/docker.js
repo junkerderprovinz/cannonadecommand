@@ -252,6 +252,9 @@
   // origin. Every cc.* write is mirrored into the engine config's ui_settings and adopted back on
   // every origin.
   var uiSyncT = null, uiSeeded = false, uiPending = {};
+  // One push at a time, and the keys a push carries stay unsynced until its PUT has landed, so a
+  // config read in between cannot adopt the old server value back over them.
+  var uiSending = {}, uiPushing = false, uiQueued = false;
   (function () {
     try {
       var orig = localStorage.setItem.bind(localStorage);
@@ -277,22 +280,33 @@
   function collectUISettings() { var o = {}; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && /^cc[a-z]*\./.test(k) && k !== "cc.stateCache") o[k] = localStorage.getItem(k); } return o; }
   // merge the changed keys into the server map rather than replacing it wholesale
   function pushUISettings() {
+    if (uiPushing) { uiQueued = true; return; }
     var keys = Object.keys(uiPending); if (!keys.length) return;
+    uiPushing = true;
+    keys.forEach(function (k) { uiSending[k] = 1; delete uiPending[k]; });
+    var unsent = function () { keys.forEach(function (k) { uiPending[k] = 1; }); };
     api("GET", "config").then(function (c) {
-      if (!c || typeof c !== "object") return;
+      if (!c || typeof c !== "object") { unsent(); return; }
       var u = c.ui_settings || {};
       keys.forEach(function (k) { var v = localStorage.getItem(k); if (v === null) delete u[k]; else u[k] = v; });
-      uiPending = {};
       return api("PUT", "config", { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], idle_stops: c.idle_stops || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: u });
-    }).catch(function () {});
+    }).catch(unsent).then(function () {
+      uiPushing = false; uiSending = {};
+      if (uiQueued) { uiQueued = false; pushUISettings(); }
+    });
   }
-  function adoptUISettings(u) {
-    var changed = false;
-    try { Object.keys(u || {}).forEach(function (k) { if (/^cc[a-z]*\./.test(k) && k !== "cc.stateCache" && localStorage.getItem(k) !== u[k]) { (window.__ccLS || localStorage.setItem.bind(localStorage))(k, u[k]); changed = true; } }); } catch (e) {}
+  // The keys whose local value has not reached the engine yet. A config read takes this before it
+  // goes out, since its answer can arrive after the push it raced has finished.
+  function uiUnsynced() { var o = {}; Object.keys(uiPending).concat(Object.keys(uiSending)).forEach(function (k) { o[k] = 1; }); return o; }
+  function adoptUISettings(u, busy) {
+    var changed = false, skip = uiUnsynced();
+    Object.keys(busy || {}).forEach(function (k) { skip[k] = 1; });
+    try { Object.keys(u || {}).forEach(function (k) { if (/^cc[a-z]*\./.test(k) && k !== "cc.stateCache" && !skip[k] && localStorage.getItem(k) !== u[k]) { (window.__ccLS || localStorage.setItem.bind(localStorage))(k, u[k]); changed = true; } }); } catch (e) {}
     return changed;
   }
   var ccConfigFirstLoad = true; // see loadConfig()'s forced first repaint below
   function loadConfig() {
+    var busy = uiUnsynced();
     return api("GET", "config").then(function (c) {
       if (c && typeof c === "object") {
         config = { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], idle_stops: c.idle_stops || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: c.ui_settings || undefined };
@@ -301,7 +315,7 @@
         // that already ran used whatever localStorage held before it resolved. The first
         // loadConfig() therefore repaints unconditionally.
         var forceFirst = ccConfigFirstLoad; ccConfigFirstLoad = false;
-        if (adoptUISettings(c.ui_settings) || forceFirst) { applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderCurrentView(); }
+        if (adoptUISettings(c.ui_settings, busy) || forceFirst) { applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderCurrentView(); }
         // on the first run against this engine, seed the server mirror from this browser, so the
         // settings survive an origin switch and cleared browser data
         if (!uiSeeded && (!c.ui_settings || !Object.keys(c.ui_settings).length)) { uiSeeded = true; var seed9 = collectUISettings(); if (Object.keys(seed9).length) { Object.keys(seed9).forEach(function (k9) { uiPending[k9] = 1; }); pushUISettings(); } }

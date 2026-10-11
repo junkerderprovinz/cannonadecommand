@@ -8,6 +8,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/junkerderprovinz/cannonadecommand/internal/model"
 )
@@ -16,6 +17,7 @@ import (
 type Store struct {
 	path    string // plan.json
 	cfgPath string // config.json (in the same dir)
+	mu      sync.Mutex
 }
 
 // New builds a store backed by the given plan JSON file path; the config lives in
@@ -33,7 +35,7 @@ func (s *Store) Load() (model.Plan, error) {
 }
 
 // Save writes the plan atomically (temp file + rename).
-func (s *Store) Save(p model.Plan) error { return writeJSON(s.path, p) }
+func (s *Store) Save(p model.Plan) error { return s.write(s.path, p) }
 
 // LoadConfig reads the automation config. A missing or empty file yields the
 // zero Config, with nothing scheduled or watched.
@@ -60,7 +62,15 @@ func renameUIValues(ui map[string]string) {
 }
 
 // SaveConfig writes the automation config atomically.
-func (s *Store) SaveConfig(c model.Config) error { return writeJSON(s.cfgPath, c) }
+func (s *Store) SaveConfig(c model.Config) error { return s.write(s.cfgPath, c) }
+
+// write serialises the saves, so two requests landing together replace the file
+// one after the other and the last one wins whole.
+func (s *Store) write(path string, v any) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return writeJSON(path, v)
+}
 
 func readJSON(path string, v any) error {
 	b, err := os.ReadFile(path)
@@ -75,7 +85,8 @@ func readJSON(path string, v any) error {
 
 // writeJSON writes to a temp file, fsyncs it and renames it over the target. The
 // fsync has to happen before the rename: the Unraid flash is unjournaled FAT32,
-// so without it a power loss can leave a present but half-written file.
+// so without it a power loss can leave a present but half-written file. Each
+// write gets its own temp name, so two writers never share one temp file.
 func writeJSON(path string, v any) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
@@ -84,9 +95,14 @@ func writeJSON(path string, v any) error {
 	if err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	f, err := os.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	f, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path)+".*.tmp")
 	if err != nil {
+		return err
+	}
+	tmp := f.Name()
+	if err := f.Chmod(0o644); err != nil {
+		_ = f.Close()
+		_ = os.Remove(tmp)
 		return err
 	}
 	if _, err := f.Write(b); err != nil {

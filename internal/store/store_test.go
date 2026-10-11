@@ -1,7 +1,10 @@
 package store
 
 import (
+	"fmt"
 	"path/filepath"
+	"strings"
+	"sync"
 	"testing"
 
 	"github.com/junkerderprovinz/cannonadecommand/internal/model"
@@ -81,5 +84,38 @@ func TestLoadConfigNamesTheOldShapes(t *testing.T) {
 		if c.UISettings["cc.badgeshape"] != name {
 			t.Errorf("cc.badgeshape %q loaded as %q, want %q", old, c.UISettings["cc.badgeshape"], name)
 		}
+	}
+}
+
+func TestConcurrentConfigSavesAllSucceed(t *testing.T) {
+	dir := t.TempDir()
+	s := New(filepath.Join(dir, "plan.json"))
+	const writers = 16
+	errs := make(chan error, writers)
+	var wg sync.WaitGroup
+	for i := range writers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			errs <- s.SaveConfig(model.Config{UISettings: map[string]string{"cc.accent": fmt.Sprintf("#%06d", i)}})
+		}()
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		if err != nil {
+			t.Errorf("save: %v", err)
+		}
+	}
+	c, err := s.LoadConfig()
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if !strings.HasPrefix(c.UISettings["cc.accent"], "#") {
+		t.Errorf("config.json holds no whole write: %+v", c.UISettings)
+	}
+	left, _ := filepath.Glob(filepath.Join(dir, "*.tmp"))
+	if len(left) != 0 {
+		t.Errorf("temp files left behind: %v", left)
 	}
 }
