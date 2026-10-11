@@ -44,7 +44,7 @@
   // stamped on <html>; the kind-to-colour map rotates by the shared seed (cc.rainbowrot). VM info
   // badges carry the kinds cpu/ram/ip.
   var RB_KINDS = ["net", "ip", "lan", "port", "id", "von", "cpu", "ram", "bw", "version", "vol", "plan"];
-  var RB_PAL = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
+  var RB_PAL = ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];
   if (window.CCTheme) { RB_PAL = window.CCTheme.RB; } // the local copy is the fallback
   var RB_OFFSET = window.CCTheme ? window.CCTheme.rbSeed(RB_PAL.length) : Math.floor(Math.random() * RB_PAL.length); // persisted seed, aligned with the other areas
 
@@ -167,7 +167,7 @@
   // Adopting the rainbow is a global decision, so it bypasses effK().
   function iconBgAdoptsV() { return ls("cc.iconbgrainbow") === "1"; }
   function ccIdeal(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
-  function ccAccent() { var a = effK("accent") || "#2f6feb"; return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
+  function ccAccent() { var a = effK("accent") || "#FCC419"; return /^#[0-9a-f]{6}$/i.test(a) ? a : "#FCC419"; }
   // Expands #rgb to #rrggbb: idealText answers "#fff", while the filter builders and colour
   // regexes here want six digits.
   function ccHex6(c) {
@@ -441,7 +441,7 @@
     var rbOn = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1";
     if (rbOn && kind) {
       lb.style.removeProperty("background"); lb.style.removeProperty("color");
-      lb.style.setProperty("--cc-rb-c", "var(--cc-rb-" + kind + ", var(--cc-accent, #2f6feb))");
+      lb.style.setProperty("--cc-rb-c", "var(--cc-rb-" + kind + ", var(--cc-accent, #FCC419))");
       lb.style.setProperty("--cc-rb-ct", "var(--cc-rb-" + kind + "-t, #fff)");
       return;
     }
@@ -502,16 +502,16 @@
     var inp = el("input"); inp.type = "number"; inp.min = String(curG); inp.step = "1"; inp.value = String(Math.max(1, Math.ceil(curG)));
     inp.style.cssText = "width:74px;background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:6px 8px;font-size:13px;outline:none";
     var unit = el("span", null, "GiB"); unit.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a)";
-    var btn = el("button", null, VMDE ? "Vergrößern" : "Grow"); btn.style.cssText = "background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff);border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer";
+    var btn = el("button", null, VMDE ? "Vergrößern" : "Grow"); btn.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer";
     btn.onclick = function () {
       var g = parseFloat(String(inp.value).replace(",", "."));
-      if (isNaN(g) || g <= curG) { statusEl.style.color = "var(--cc-err,#d9433f)"; statusEl.textContent = (VMDE ? "nur vergrößern, mehr als " : "grow only, more than ") + curG + " GiB"; return; }
+      if (isNaN(g) || g <= curG) { statusEl.style.color = "var(--cc-err, #ff8389)"; statusEl.textContent = (VMDE ? "nur vergrößern, mehr als " : "grow only, more than ") + curG + " GiB"; return; }
       function doResize() {
         btn.disabled = true; statusEl.style.color = "var(--cc-text-dim,#8a8a8a)"; statusEl.textContent = VMDE ? "Vergrößern läuft…" : "resizing…";
         vmApi("POST", "vmdiskresize", { name: name, target: d.target, size_gib: g }).then(function () {
-          btn.disabled = false; statusEl.style.color = "var(--cc-ok,#1f9d55)"; statusEl.textContent = (VMDE ? "vergrößert auf " : "grown to ") + g + " GiB" + (VMDE ? " · Gast muss Partition/FS erweitern" : " · guest must extend partition/FS");
+          btn.disabled = false; statusEl.style.color = "var(--cc-ok, #6fdc8c)"; statusEl.textContent = (VMDE ? "vergrößert auf " : "grown to ") + g + " GiB" + (VMDE ? " · Gast muss Partition/FS erweitern" : " · guest must extend partition/FS");
           curG = g; cur.textContent = "  " + g + " GiB"; d.capacityBytes = g * 1073741824; inp.min = String(g);
-        }).catch(function (e) { btn.disabled = false; statusEl.style.color = "var(--cc-err,#d9433f)"; statusEl.textContent = String(e.message || e).slice(0, 70); });
+        }).catch(function (e) { btn.disabled = false; statusEl.style.color = "var(--cc-err, #ff8389)"; statusEl.textContent = String(e.message || e).slice(0, 70); });
       }
       // A vDisk cannot shrink back without data loss, so a grow is confirmed first with the swal
       // dialog VM removal uses, or confirm() without it.
@@ -607,7 +607,7 @@
     var cancel = el("button", null, VMDE ? "Schließen" : "Close"); cancel.style.cssText = "background:var(--cc-chip,rgba(128,128,128,.18));color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer";
     foot.appendChild(msg); foot.appendChild(cancel);
     var apply = null;
-    if (hasLimFields) { apply = el("button", null, VMDE ? "Anwenden" : "Apply"); apply.style.cssText = "background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff);border:none;border-radius:6px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer"; foot.appendChild(apply); }
+    if (hasLimFields) { apply = el("button", null, VMDE ? "Anwenden" : "Apply"); apply.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:6px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer"; foot.appendChild(apply); }
     card.appendChild(foot);
     ov.appendChild(card); document.body.appendChild(ov);
     // place the card at the gear (clamped into the viewport; flips above if it would overflow the bottom)
@@ -631,7 +631,7 @@
       if (f.up) { var upN = intOr(f.up.input.value); if (upN != null) body.out_kbit = Math.max(0, upN); }
       apply.disabled = true; msg.style.color = "var(--cc-text-dim,#8a8a8a)"; msg.textContent = VMDE ? "wird angewendet…" : "applying…";
       vmApi("POST", "vmlimits", body).then(function (res) { if (res && res.vm) vmLims[name] = res.vm; try { refreshAllRes(); } catch (e) {} close(); })
-        .catch(function (e) { apply.disabled = false; msg.style.color = "var(--cc-err,#d9433f)"; msg.textContent = String(e.message || e).slice(0, 44); });
+        .catch(function (e) { apply.disabled = false; msg.style.color = "var(--cc-err, #ff8389)"; msg.textContent = String(e.message || e).slice(0, 44); });
     };
     if (f.cores) f.cores.input.focus(); else if (f.ram) f.ram.input.focus(); else if (f.dn) f.dn.input.focus();
   }

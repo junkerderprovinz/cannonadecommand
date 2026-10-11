@@ -579,7 +579,7 @@
   // action slot already stamped for the buttons and toggles while it is on. ccRbColor()
   // recomputes it on every repaint.
   function iconAdoptTint() {
-    if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") return effc("accent") || "#2f6feb";
+    if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") return effc("accent") || "#FCC419";
     return ccRbColor(5);
   }
   function bgColor() {
@@ -588,7 +588,7 @@
     if (c && /^#?[0-9a-f]{6}$/i.test(c)) return ccHex6(c);
     var ic = effc("iconcolor");
     if (ic && /^#?[0-9a-f]{6}$/i.test(ic)) return ccHex6(ic);
-    return effc("accent") || "#2f6feb";
+    return effc("accent") || "#FCC419";
   }
   // The one colour both icon treatments paint with. With the adopt toggle on it is the black or
   // white contrast colour for the resolved background, whatever the tint toggle says, as
@@ -609,7 +609,7 @@
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftSurface) return ccHex6(pick);
     var floor = window.CCTheme.LUM_FLOOR * (forTint ? 2 : 1);
-    return ccHex6(window.CCTheme.liftSurface(pick, effc("accent") || "#2f6feb", floor));
+    return ccHex6(window.CCTheme.liftSurface(pick, effc("accent") || "#FCC419", floor));
   }
   // The per-item contrast ink. Under the adopt toggle iconInk() answers one representative
   // colour for the whole page, but with the rainbow on the badge each icon sits on rotates per
@@ -842,7 +842,7 @@
   // The rotating rainbow: the mapping from badge kind to colour shifts by a shared offset, so
   // every area starts the palette on the same hue.
   var RB_KINDS = ["net", "ip", "lan", "port", "id", "von", "cpu", "ram", "bw", "version", "vol", "plan"];
-  var RB_PAL = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; // red through to pink
+  var RB_PAL = ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"]; // red through to pink
   if (window.CCTheme) { idealText = window.CCTheme.idealText; RB_PAL = window.CCTheme.RB; }  /* the shared palette and contrast when CCTheme is loaded; the local copies are the fallback */
   var RB_OFFSET = window.CCTheme ? window.CCTheme.rbSeed(RB_PAL.length) : Math.floor(Math.random() * RB_PAL.length);
   // Flag mode reads the flag's own cc.flagpal and never cc.rbpal, so a flag does not repaint the
@@ -850,7 +850,7 @@
   // reader below goes through this.
   function ccPalStored(def) { try { if (localStorage.getItem("cc.flagmode") === "1") { var f = JSON.parse(localStorage.getItem("cc.flagpal") || "null"); if (f && f.length) return f; } var p = JSON.parse(localStorage.getItem("cc.rbpal") || "null"); if (p && p.length) return p; } catch (e) {} return def; }
   // On a light theme the near-white slots are swapped, see CCTheme.surfacePalette.
-  function ccPalActive(def) { var p = ccPalStored(def); return (window.CCTheme && window.CCTheme.surfacePalette) ? window.CCTheme.surfacePalette(p, effc("accent") || "#2f6feb") : p; }
+  function ccPalActive(def) { var p = ccPalStored(def); return (window.CCTheme && window.CCTheme.surfacePalette) ? window.CCTheme.surfacePalette(p, effc("accent") || "#FCC419") : p; }
   function applyRainbowPalette() {
     var rt = document.documentElement;
     if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") { rt.style.removeProperty("--cc-btn-accent"); RB_KINDS.forEach(function (k) { rt.style.removeProperty("--cc-rb-" + k); rt.style.removeProperty("--cc-rb-" + k + "-t"); }); try { document.querySelectorAll("#docker_list tr.sortable").forEach(function (tr) { tr.style.removeProperty("--cc-rb-c"); tr.style.removeProperty("--cc-rb-ct"); }); } catch (e0) {} return; }
@@ -901,7 +901,7 @@
       root.setProperty("--cc-logo-img", lg[0]); root.setProperty("--cc-logo-box", lg[1]);
       // The colour for ShipLog's update-all button, restyled to match the badges. It goes on
       // documentElement so it reaches .ToggleViewMode, which sits outside the enhanced table.
-      var ub = localStorage.getItem("cc.rainbow") === "1" ? "#1f9d55" : (accent || "#2f6feb");
+      var ub = localStorage.getItem("cc.rainbow") === "1" ? ccRbColor(5) : (accent || "#FCC419");   // the action slot the toggles and primary buttons share
       root.setProperty("--cc-updall-bg", ub); root.setProperty("--cc-updall-text", idealText(ub));
       colview = loadColview();
     } catch (e) {}
@@ -1144,7 +1144,7 @@
           // The apply-update link, a top-level a.exec rather than one inside an advanced div,
           // gets its pill inline: some builds have no nested orange-text span, so the :has()
           // rule never fires and only bare text shows. With the native state colours on it keeps
-          // its amber; with them off it joins the colour mode. injectAllRowBadges computes
+          // its orange; with them off it joins the colour mode. injectAllRowBadges computes
           // ccUpBg and ccUpFg once per pass.
           Array.prototype.slice.call(upCell.querySelectorAll("a.exec")).forEach(function (ax) {
             if (ax.closest("div.advanced")) return;
@@ -1310,7 +1310,7 @@
       if (!b2.classList.contains("cc-actoff")) {
         tx = "#e9e9e9";
         if (colorsOn) {
-          bg = rb ? pal[(i2 + off) % pal.length] : (effc("accent") || "#2f6feb");
+          bg = rb ? pal[(i2 + off) % pal.length] : (effc("accent") || "#FCC419");
           var n2 = parseInt(String(bg).replace("#", ""), 16), L2 = 0.299 * (n2 >> 16 & 255) + 0.587 * (n2 >> 8 & 255) + 0.114 * (n2 & 255);
           tx = L2 > 150 ? "#161616" : "#fff";
         }
@@ -1549,8 +1549,8 @@
     // with a hundred containers that is a hundred recalculations in one blocking task.
     var upNative = localStorage.getItem("cc.statenative") === "1";
     var upRs = getComputedStyle(document.documentElement);
-    ccUpBg = upNative ? "#e0912a" : ((upRs.getPropertyValue("--cc-rbaccent") || "").trim() || (upRs.getPropertyValue("--cc-accent") || "").trim() || "#e0912a");
-    ccUpFg = upNative ? "#1a1a1a" : ((upRs.getPropertyValue("--cc-rbaccent-text") || "").trim() || (upRs.getPropertyValue("--cc-accent-text") || "").trim() || "#1a1a1a");
+    ccUpBg = upNative ? "var(--cc-warn, #ff832b)" : ((upRs.getPropertyValue("--cc-rbaccent") || "").trim() || (upRs.getPropertyValue("--cc-accent") || "").trim() || "#FCC419");
+    ccUpFg = upNative ? "var(--cc-warn-fg, #161616)" : ((upRs.getPropertyValue("--cc-rbaccent-text") || "").trim() || (upRs.getPropertyValue("--cc-accent-text") || "").trim() || "#161616");
     // The advanced/basic read is cached for this pass (see isAdvancedView) and reset in a finally,
     // so a mid-pass exception cannot leave a later call reading a stale value.
     ccAdvCache = isAdvancedViewReal();
@@ -2575,7 +2575,7 @@
       Array.prototype.slice.call(root.querySelectorAll(POP_PAINT_SEL)).forEach(function (e, i) {
         // Outside the rainbow the stamps are removed, so the sheets resolve to the plain accent,
         // but the tick colour is still computed: a chosen accent can be light too.
-        var c = rb ? ccRbColor(i) : (effc("accent") || "#2f6feb"), tx = idealText(c);
+        var c = rb ? ccRbColor(i) : (effc("accent") || "#FCC419"), tx = idealText(c);
         if (rb) { e.style.setProperty("--cc-rb-c", c); e.style.setProperty("--cc-rb-ct", tx); }
         else { e.style.removeProperty("--cc-rb-c"); e.style.removeProperty("--cc-rb-ct"); }
         if (e.type === "checkbox") e.style.setProperty("--cc-cb-tick", ccTickURL(tx));
@@ -2761,7 +2761,7 @@
     return sel;
   }
   // The per-row warning badge for a container whose restart policy is "no", so it does not
-  // come back after a host reboot. Semantic amber like cc-b-del, outside rainbow and accent.
+  // come back after a host reboot. The warning state colour, outside rainbow and accent.
   function restartWarnBadge() {
     var b = badgeInfo("⚠", t("rpWarn"), "restart"); b.classList.add("cc-b-warn"); b.setAttribute("data-tip", t("rpWarnTip")); return b;
   }
@@ -3087,12 +3087,12 @@
     // Clearing --cc-rb-c instead would drop hover back to the flat accent for every gear.
     if (rbOn && kind) {
       lb.style.removeProperty("background"); lb.style.removeProperty("color");
-      lb.style.setProperty("--cc-rb-c", "var(--cc-rb-" + kind + ", var(--cc-accent, #2f6feb))");
+      lb.style.setProperty("--cc-rb-c", "var(--cc-rb-" + kind + ", var(--cc-accent, #FCC419))");
       lb.style.setProperty("--cc-rb-ct", "var(--cc-rb-" + kind + "-t, #fff)");
       return;
     }
     lb.style.removeProperty("--cc-rb-c"); lb.style.removeProperty("--cc-rb-ct");   // accent and native mode take the inline fill
-    var bg = set ? (effc("accent") || "#2f6feb") : "#4a4a4a"; // a set limit carries the badge accent
+    var bg = set ? (effc("accent") || "#FCC419") : "#4a4a4a"; // a set limit carries the badge accent
     var tx = "#f2f2f2";
     if (set) { var n2 = parseInt(String(bg).replace("#", ""), 16), L2 = 0.299 * (n2 >> 16 & 255) + 0.587 * (n2 >> 8 & 255) + 0.114 * (n2 & 255); tx = L2 > 150 ? "#161616" : "#fff"; }
     lb.style.setProperty("background", bg, "important");

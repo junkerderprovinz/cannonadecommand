@@ -34,7 +34,7 @@ html.cc-settingsgrid-on #displaybox .Panel > a > span {
   /* capped so pill mode gives a rounded square while rounded (6px) and square (0) stay exact,
      as in the header sheet */
   border-radius: min(var(--cc-b-radius, 14px), var(--cc-sg-rmax, 16px)) !important;
-  background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important;
+  background: var(--cc-iconbg-color, var(--cc-accent, #FCC419)) !important;
   transition: filter .12s;
 }
 html.cc-settingsgrid-on #displaybox .Panel > a:hover > span { filter: brightness(1.1); }
@@ -42,12 +42,12 @@ html.cc-settingsgrid-on #displaybox .Panel > a:hover > span { filter: brightness
 /* the icon-font glyph (icon-* / fa-*) inside the badge: big, contrast colour */
 html.cc-settingsgrid-on #displaybox .Panel > a > span > i.PanelIcon {
   font-size: var(--cc-sg-glyph, 38px) !important; line-height: 1 !important;
-  color: var(--cc-iconbg-text, var(--cc-accent-text, #fff)) !important; margin: 0 !important; padding: 0 !important;
+  color: var(--cc-iconbg-text, var(--cc-accent-text, #161616)) !important; margin: 0 !important; padding: 0 !important;
 }
 /* The tailscale ::after mask paints with currentColor, so the span carries the same ink as
    i.PanelIcon, and every i.PanelIcon colour rule in this sheet has a span twin next to it. Glyph
    tiles are unaffected because their i sets its own colour. */
-html.cc-settingsgrid-on #displaybox .Panel > a > span { color: var(--cc-iconbg-text, var(--cc-accent-text, #fff)) !important; }
+html.cc-settingsgrid-on #displaybox .Panel > a > span { color: var(--cc-iconbg-text, var(--cc-accent-text, #161616)) !important; }
 /* A raster logo cannot be tinted, so it is only scaled to the badge. This covers img.PanelImg and
    img.icon, which a category whose Tag= is a .png renders (PageBuilder.php:97). */
 html.cc-settingsgrid-on #displaybox .Panel > a > span > img {
@@ -69,7 +69,7 @@ html.cc-settingsgrid-on #displaybox .Panel > a[href*="ailscale"] > span::after {
    corner so it doesn't sit under the glyph, and keep it readable on the accent badge */
 html.cc-settingsgrid-on #displaybox .Panel > a > span > i.favo {
   position: absolute !important; top: 3px !important; right: 4px !important; left: auto !important;
-  font-size: 12px !important; line-height: 1 !important; color: var(--cc-accent-text, #fff) !important; opacity: .8;
+  font-size: 12px !important; line-height: 1 !important; color: var(--cc-accent-text, #161616) !important; opacity: .8;
 }
 /* tile labels show on hover only, muted and not underlined; the fade keeps the grid calm and the
    reserved line height stops it from jumping */
@@ -93,11 +93,11 @@ html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a > span 
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a > span > i.PanelIcon,
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a > span { color: var(--cc-text-chip, #cfcfcf) !important; }   /* span = tailscale-mask ink twin */
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a:hover > span {
-  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; filter: none !important;
+  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #FCC419))) !important; filter: none !important;
 }
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a:hover > span > i.PanelIcon,
 html.cc-settingsgrid-on.cc-settingsgrid-rbneutral #displaybox .Panel > a:hover > span {   /* span = tailscale-mask ink twin */
-  color: var(--cc-iconbg-text, var(--cc-rb-ct, var(--cc-accent-text, #fff))) !important;
+  color: var(--cc-iconbg-text, var(--cc-rb-ct, var(--cc-accent-text, #161616))) !important;
 }
 
 /* The same grey-at-rest, colour-on-hover behaviour for the global signal (shares.js sets
@@ -107,11 +107,11 @@ html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a > span { back
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a > span > i.PanelIcon,
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a > span { color: var(--cc-text-chip, #cfcfcf) !important; }   /* span = tailscale-mask ink twin */
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a:hover > span {
-  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #2f6feb))) !important; filter: none !important;
+  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #FCC419))) !important; filter: none !important;
 }
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a:hover > span > i.PanelIcon,
 html.cc-shares-rbneutral.cc-settingsgrid-on #displaybox .Panel > a:hover > span {   /* span = tailscale-mask ink twin */
-  color: var(--cc-iconbg-text, var(--cc-rb-ct, var(--cc-accent-text, #fff))) !important;
+  color: var(--cc-iconbg-text, var(--cc-rb-ct, var(--cc-accent-text, #161616))) !important;
 }
 
 /* Category headings become filled accent badges. Both pages render through the tabless template
@@ -143,7 +143,7 @@ html.cc-settingsgrid-heads-on #displaybox div.title > span.left {
      every tab badge in the WebGUI is one size */
   min-height: var(--cc-md-h, 30px) !important; box-sizing: border-box;
   font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-md-fs, 13px); line-height: 1;
-  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+  background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   padding: var(--cc-md-pad, 0 20px) !important; margin: 0 !important;
   text-decoration: none !important; transition: filter .12s;

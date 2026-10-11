@@ -6,7 +6,7 @@
  *   - #displaybox holds a native <fieldset><legend> (the "Container hinzufügen" install log).
  *
  * Carbon dark surfaces (#161616/#1c1c1c), no borders or rings, focus shown as brightness, the
- * accent from --cc-accent (fallback #2f6feb), content indented to the menu bar (--cc-align-left). */
+ * accent from --cc-accent (fallback #FCC419), content indented to the menu bar (--cc-align-left). */
 
 html.cc-tools-on { --cc-tl-surface: #1c1c1c; --cc-tl-surface2: #232323; }
 /* The fieldsets and the Unraid API cards on --cc-tl-surface take the page's text, which a light
@@ -31,7 +31,7 @@ html.cc-tools-on #displaybox fieldset {
 }
 html.cc-tools-on #displaybox fieldset > legend,
 html.cc-tools-on #displaybox legend {
-  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+  background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px;
   font-size: var(--cc-md-fs, 13px) !important; line-height: 1;
@@ -70,8 +70,8 @@ html.cc-diskpage #displaybox table.unraid thead th { border: none !important; bo
 html.cc-diskpage #displaybox table.unraid td .cc-b,
 html.cc-diskpage #displaybox table.unraid td [class*="badge"] { background: transparent !important; color: inherit !important; padding: 0 !important; }
 html.cc-diskpage #displaybox table.unraid tbody tr:hover > td {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
 }
 /* The reka disk page sets #displaybox to the full viewport width plus margin-left:15px, which
    overshoots the right edge by 15px and adds a horizontal scrollbar. */
@@ -113,7 +113,7 @@ html.cc-diskpage #displaybox section.tab-content { height: auto !important; max-
 /* Boot Parameters reka editor: the h3.section-header headings (orange text, orange underline)
    become badges that follow the colour mode like every other CC badge. */
 html.cc-diskpage #displaybox h3.section-header {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   font-weight: 600 !important; text-transform: uppercase; letter-spacing: 1.1px;
   font-size: var(--cc-md-fs, 13px) !important; line-height: 1 !important;
@@ -124,15 +124,15 @@ html.cc-diskpage #displaybox h3.section-header {
 html.cc-diskpage #displaybox h3.section-header .section-badge { background: rgba(0, 0, 0, .22) !important; color: inherit !important; border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 2px 9px !important; font-size: 10px !important; }
 /* Toggles and reka buttons rotate through the palette like every other CC control. ccPaintRotate
    stamps --cc-rb-c on .switch-button-background and the badges; the reka buttons' hard-coded
-   #2f6feb gives way to the same chain. */
-html.cc-diskpage #displaybox .main-content .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
+   #FCC419 gives way to the same chain. */
+html.cc-diskpage #displaybox .main-content .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; }
 html.cc-diskpage #displaybox .main-content button:not(.switch-button-background),
-html.cc-diskpage #displaybox .main-content input[type="button"] { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important; border-color: transparent !important; }
+html.cc-diskpage #displaybox .main-content input[type="button"] { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; border-color: transparent !important; }
 /* the clickable .parameter-code chips (the kernel argument each option inserts) get the same
    rotating fill, stamped per chip by ccPaintRotate */
 html.cc-diskpage #displaybox .parameter-code {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
   border: none !important; border-radius: min(var(--cc-b-radius, 999px), 10px) !important; padding: 2px 8px !important;
 }
 /* the Raw View and syslinux config boxes separate cards with grey border lines; spacing keeps the
@@ -179,7 +179,7 @@ html.cc-tools-on #displaybox button:not([role="tab"]),
 html.cc-tools-on #displaybox a.button {
   /* form actions (ANWENDEN, FERTIG, SPEICHERN) share one colour, the rainbow or flag accent or
      else the base accent, rather than rotating per button */
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   border: none !important; outline: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   height: var(--cc-md-h, 30px); padding: var(--cc-md-pad, 0 20px) !important;
   font-weight: 600; box-shadow: none !important; text-decoration: none !important;
@@ -209,11 +209,11 @@ html.cc-tools-on form[name="SSLSettings"] select:focus { outline: none !importan
 /* the TELNET, SSH and UPnP checkboxes sit outside the form; #joel-start-defaults is their stable
    ancestor */
 html.cc-tools-on #joel-start-defaults input[type="checkbox"] {
-  accent-color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); cursor: pointer;
+  accent-color: var(--cc-rbaccent, var(--cc-accent, #FCC419)); cursor: pointer;
 }
 html.cc-tools-on form[name="SSLSettings"] input[type="button"],
 html.cc-tools-on form[name="SSLSettings"] input[type="submit"] {
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   border: none !important; outline: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   height: var(--cc-md-h, 30px); padding: var(--cc-md-pad, 0 20px) !important;
   font-weight: 600; box-shadow: none !important; text-decoration: none !important;
@@ -255,13 +255,13 @@ html.cc-tools-on .unapi [class*="inline-flex"][class*="items-center"][class*="ju
 /* destructive buttons (Remove, Delete, the "Bist du sicher" confirm) keep semantic red, as the
    Previous Apps delete button in Tokens.css does */
 html.cc-tools-on .unapi [class*="bg-destructive"] {
-  background: var(--cc-err, #d9433f) !important; color: #fff !important; border-color: transparent !important;
+  background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important; border-color: transparent !important;
 }
 /* The Developer Sandbox confirm button is transparent, and its red and orange ring comes from a
    sibling .from-unraid-red.to-orange layer placed 2px outside it. GlimStone uses shade, not rings,
    so the layer is hidden and the button gets the solid red fill of the other destructive controls. */
 html.cc-tools-on .unapi span:has(> .from-unraid-red) {
-  background: var(--cc-err, #d9433f) !important; border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  background: var(--cc-err, #ff8389) !important; border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
 }
 html.cc-tools-on .unapi span:has(> .from-unraid-red) > .from-unraid-red { display: none !important; }
 html.cc-tools-on .unapi span:has(> .from-unraid-red):hover { filter: brightness(1.1) !important; box-shadow: none !important; }
@@ -277,7 +277,7 @@ html.cc-tools-on .unapi [class*="rounded-md"][class*="border"][class*="px-3"] {
 /* the page heading bar on Tools and Settings sub-pages as a colour-mode badge */
 html.cc-tools-on #displaybox div.title {
   display: inline-flex !important; align-items: center; gap: 8px; width: fit-content !important;
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 0 18px !important; margin: 4px 0 16px !important;
   /* the same md size (30px/13px) as every other section head */
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase; letter-spacing: .6px;
@@ -291,7 +291,7 @@ html.cc-tools-on #displaybox div.title:has(.cc-status-dot) {
 }
 html.cc-tools-on #displaybox div.title:has(.cc-status-dot) > .left {
   display: inline-flex; align-items: center; gap: 8px;
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff));
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
   border-radius: var(--cc-b-radius, 999px); padding: 0 18px; min-height: var(--cc-md-h, 30px);
 }
 html.cc-tools-on #displaybox div.title:has(.cc-status-dot) .status { font-size: 0 !important; }   /* hide the "Status:" label; the dot child keeps its own 12px box */
@@ -304,7 +304,7 @@ html.cc-tools-on #displaybox .cc-toolsinfo {
      so it sits on text-bottom and is nudged up */
   vertical-align: text-bottom; position: relative; top: -1px;
 }
-html.cc-tools-on #displaybox .cc-toolsinfo:hover { color: var(--cc-accent, #2f6feb); opacity: 1; }
+html.cc-tools-on #displaybox .cc-toolsinfo:hover { color: var(--cc-accent-ink, #FCC419); opacity: 1; }
 /* The state dot: its colour is the live state (green running, red stopped, inline as
    --cc-dotstate) like a disk chip, and its shape follows the badge shape (--cc-dot-r). The native
    pill padding is removed so it reads as a dot. */
@@ -320,7 +320,7 @@ html.cc-tools-on #displaybox .cc-tgl {
   display: inline-flex; flex: 0 0 auto; width: 44px; height: 24px; border-radius: min(var(--cc-b-radius, 999px), 12px); background: var(--cc-toggle-track-off, #3a3a3a);
   position: relative; cursor: pointer; vertical-align: middle; transition: background .15s; box-sizing: border-box;
 }
-html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); }
+html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); }
 html.cc-tools-on #displaybox .cc-tgl .cc-tgl-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: var(--cc-dot-r, 50%); background: #fff; transition: left .15s; }
 html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on .cc-tgl-knob { left: 23px; }
 /* native switch tracks (Docker aktivieren, for one) take the CC shape and rotate through the
@@ -329,7 +329,7 @@ html.cc-tools-on #displaybox .switch-button-background {
   border: none !important; box-shadow: none !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important; background: var(--cc-toggle-track-off, #3a3a3a) !important;
 }
 html.cc-tools-on #displaybox .switch-button-background .switch-button-button { border-radius: var(--cc-dot-r, 50%) !important; }
-html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
+html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; }
 /* The reka boot editor renders the native switch at a narrow inline 25x11, so every disk-page
    toggle gets the full 44x24 CC geometry for track, knob and checked position, as the .advancedview
    rule below does for the disk detail form; !important beats the inline sizes. */
@@ -362,7 +362,7 @@ html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-button {
 html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-background.checked .switch-button-button { left: 23px !important; }
 
 /* links: no native blue / underline on tools pages */
-html.cc-tools-on #displaybox a:not(.button) { color: var(--cc-accent, #2f6feb); text-decoration: none; }
+html.cc-tools-on #displaybox a:not(.button) { color: var(--cc-accent-ink, #FCC419); text-decoration: none; }
 html.cc-tools-on #displaybox a:not(.button):hover { filter: brightness(1.14); text-decoration: none; }
 
 /* The CC overlay dropdown (header.js ccToolsWrapSelect): chips in a floating elevated panel,
@@ -391,7 +391,7 @@ html.cc-tools-on #displaybox .cc-tsel-trigger:hover,
 html.cc-tools-on #displaybox .cc-tsel.cc-open .cc-tsel-trigger,
 html.cc-popups-on #displaybox .cc-tsel-trigger:hover,
 html.cc-popups-on #displaybox .cc-tsel.cc-open .cc-tsel-trigger {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff)));
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
 }
 html.cc-tools-on #displaybox .cc-tsel-trigger::after,
 html.cc-popups-on #displaybox .cc-tsel-trigger::after {
@@ -417,8 +417,8 @@ html.cc-tools-on #displaybox .cc-tsel-opt,
 html.cc-popups-on #displaybox .cc-tsel-opt {
   display: flex; align-items: center; gap: 8px; justify-content: flex-start;
   line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 999px);
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))); border: none;
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))); white-space: nowrap;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); border: none;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); white-space: nowrap;
   transition: filter .12s;
 }
 html.cc-tools-on #displaybox .cc-tsel-opt:hover,
@@ -454,8 +454,8 @@ html.cc-tools-on.cc-tools-rbneutral #displaybox .cc-tsel-opt {
 }
 html.cc-tools-on.cc-tools-rbneutral #displaybox .cc-tsel-opt:hover,
 html.cc-tools-on.cc-tools-rbneutral #displaybox .cc-tsel-opt.is-selected {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)));
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff)));
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)));
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
   filter: none;
 }
 
@@ -478,8 +478,8 @@ html.cc-tools-on #displaybox .ui-dropdownchecklist-selector {
 html.cc-tools-on #displaybox .ui-dropdownchecklist-selector.ui-state-hover,
 html.cc-tools-on #displaybox .ui-dropdownchecklist-selector:hover,
 html.cc-tools-on #displaybox .ui-dropdownchecklist-selector:focus {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
 }
 html.cc-tools-on #displaybox .ui-dropdownchecklist-selector .ui-dropdownchecklist-text { color: inherit !important; }
 /* CC caret replaces the widget's gradient-drawn arrow */
@@ -510,8 +510,8 @@ html.cc-tools-on #displaybox .ui-dropdownchecklist-item {
      lets it match the cc-tsel options (about 29px) */
   height: auto !important; min-height: 0 !important; box-sizing: border-box !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
   transition: filter .12s, background .12s, color .12s;
 }
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item input[type="checkbox"] { display: none !important; }
@@ -530,8 +530,8 @@ html.cc-tools-on.cc-tools-rbneutral #displaybox .ui-dropdownchecklist-item {
 html.cc-tools-on.cc-tools-rbneutral #displaybox .ui-dropdownchecklist-item:hover,
 html.cc-tools-on.cc-tools-rbneutral #displaybox .ui-dropdownchecklist-item.ui-state-hover,
 html.cc-tools-on.cc-tools-rbneutral #displaybox .ui-dropdownchecklist-item:has(input:checked) {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important; filter: none;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; filter: none;
 }
 /* the explicitClose "...schließen" row carries no checkbox -> a muted, centred footer link, never a coloured chip */
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item:not(:has(input[type="checkbox"])) {
@@ -568,10 +568,10 @@ html.cc-tools-on #displaybox input[type="checkbox"] {
   background: var(--cc-tl-surface2, #232323); border: none !important; outline: none !important; border-radius: 4px;
   cursor: pointer; vertical-align: middle; position: relative; margin: 0 6px 0 0;
 }
-html.cc-tools-on #displaybox input[type="checkbox"]:checked { background: var(--cc-accent, #2f6feb); }
+html.cc-tools-on #displaybox input[type="checkbox"]:checked { background: var(--cc-accent, #FCC419); }
 html.cc-tools-on #displaybox input[type="checkbox"]:checked::after {
   content: ""; position: absolute; left: 5.5px; top: 1.5px; width: 4px; height: 9px;
-  border: solid var(--cc-accent-text, #fff); border-width: 0 2px 2px 0; transform: rotate(45deg);
+  border: solid var(--cc-accent-text, #161616); border-width: 0 2px 2px 0; transform: rotate(45deg);
 }
 /* radio buttons (Energiemodus): dark, borderless, round, with an accent dot when checked */
 html.cc-tools-on #displaybox input[type="radio"] {
@@ -579,19 +579,19 @@ html.cc-tools-on #displaybox input[type="radio"] {
   background: var(--cc-tl-surface2, #232323); border: none !important; outline: none !important; border-radius: 50%;
   cursor: pointer; vertical-align: middle; position: relative; margin: 0 6px 0 0;
 }
-html.cc-tools-on #displaybox input[type="radio"]:checked { background: var(--cc-accent, #2f6feb); }
+html.cc-tools-on #displaybox input[type="radio"]:checked { background: var(--cc-accent, #FCC419); }
 html.cc-tools-on #displaybox input[type="radio"]:checked::after {
   content: ""; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; border-radius: 50%;
-  background: var(--cc-accent-text, #fff); transform: translate(-50%, -50%);
+  background: var(--cc-accent-text, #161616); transform: translate(-50%, -50%);
 }
 /* native Unraid toggle switch -> CC pill that follows the colour mode when on */
 html.cc-tools-on #displaybox .switch-button-background { background: var(--cc-toggle-track-off, #3a3a3a) !important; border: none !important; outline: none !important; box-shadow: none !important; }
-html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; }
+html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; }
 /* multi / list selects -> CC dark fill, borderless (they stay native selects) */
 html.cc-tools-on #displaybox select[multiple],
 html.cc-tools-on #displaybox select[size]:not([size="1"]) { background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important; border: none !important; outline: none !important; border-radius: 8px !important; padding: 4px 6px !important; }
 html.cc-tools-on #displaybox select[multiple] option:checked,
-html.cc-tools-on #displaybox select[size] option:checked { background: var(--cc-accent, #2f6feb) linear-gradient(0deg, var(--cc-accent, #2f6feb), var(--cc-accent, #2f6feb)); color: var(--cc-accent-text, #fff); }
+html.cc-tools-on #displaybox select[size] option:checked { background: var(--cc-accent, #FCC419) linear-gradient(0deg, var(--cc-accent, #FCC419), var(--cc-accent, #FCC419)); color: var(--cc-accent-text, #161616); }
 /* no border lines on tools content */
 html.cc-tools-on #displaybox .Panel,
 html.cc-tools-on #displaybox .box,
@@ -608,7 +608,7 @@ html.cc-tools-on #displaybox h3.section,
 html.cc-tools-on #displaybox .section-title {
   border: none !important; border-bottom: none !important;
   display: inline-flex; align-items: center; width: fit-content;
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff));
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-md-pad, 4px 14px); font-size: var(--cc-md-fs, 13px);
   font-weight: 600; text-transform: uppercase; letter-spacing: .8px; margin: 8px 0 12px !important;
 }

@@ -7,9 +7,9 @@
 // Every kind is checked in both sheets: a check of the "net" kind alone passes by
 // luck on a box whose accent is green, since that fallback is var(--cc-ok).
 //
-// The .cc-rainbow and .cc-vm-rainbow rules are a different case and stay as they
-// are: their gating class guarantees --cc-rb-<kind> is set, which makes the
-// hardcoded fallback unreachable rather than wrong.
+// The .cc-rainbow and .cc-vm-rainbow rules are a different case: their gating class
+// guarantees --cc-rb-<kind> is set, so the fallback is unreachable there. It is the
+// accent chain all the same, so no state hue stands in for a palette position.
 //
 // The helpers come from settings-chrome.test.js, this being a string-level pin for
 // want of a CSS engine in the bare-Node runner.
@@ -62,21 +62,21 @@ console.log('\nVM per-kind hover badges: the fallback goes through --cc-accent')
     ok(`${kind}: the hover rule exists`, body != null, sel);
     ok(`${kind}: the background chain includes var(--cc-accent`, bgAccentSafe(body), body);
     ok(`${kind}: the background does not end in a bare hex`, !bgBareHexFallback(body), body);
-    ok(`${kind}: the colour chain includes var(--cc-accent-text`, /color:\s*var\(--cc-rb-[a-z]+-t,\s*var\(--cc-accent-text,\s*#fff\)\)/.test(body || ''), body);
+    ok(`${kind}: the colour chain includes var(--cc-accent-text`, /color:\s*var\(--cc-rb-[a-z]+-t,\s*var\(--cc-accent-text,\s*#161616\)\)/.test(body || ''), body);
   });
 }
 
-console.log('\nThe rainbow-gated per-kind rules keep their hex fallback, which is unreachable there');
+console.log('\nThe rainbow-gated per-kind rules fall back to the accent, never to a state hue');
 {
   const dockerCpuSel = '.cc-enh.cc-rainbow .cc-b-cpu, .cc-grid-holder.cc-rainbow .cc-b-cpu';
   const dockerCpuBody = ruleBody(dockerCss, dockerCpuSel);
   ok('docker.css rainbow-mode CPU rule exists', dockerCpuBody != null);
-  ok('docker.css rainbow-mode CPU rule keeps its hex fallback', /background:\s*var\(--cc-rb-cpu,\s*var\(--cc-err,\s*#d9433f\)\)/.test(dockerCpuBody || ''), dockerCpuBody);
+  ok('docker.css rainbow-mode CPU rule falls back to the accent', /background:\s*var\(--cc-rb-cpu,\s*var\(--cc-accent,\s*#FCC419\)\)/.test(dockerCpuBody || ''), dockerCpuBody);
 
   const vmCpuSel = 'html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-cpu';
   const vmCpuBody = ruleBody(vmtabCss, vmCpuSel);
   ok('VmTab.css rainbow-mode CPU rule exists', vmCpuBody != null);
-  ok('VmTab.css rainbow-mode CPU rule keeps its hex fallback', /background:\s*var\(--cc-rb-cpu,\s*var\(--cc-err,\s*#d9433f\)\)/.test(vmCpuBody || ''), vmCpuBody);
+  ok('VmTab.css rainbow-mode CPU rule falls back to the accent', /background:\s*var\(--cc-rb-cpu,\s*var\(--cc-accent,\s*#FCC419\)\)/.test(vmCpuBody || ''), vmCpuBody);
 }
 
 console.log('\nSettingsGrid has no per-kind badge var, so a new one cannot slip in untested');

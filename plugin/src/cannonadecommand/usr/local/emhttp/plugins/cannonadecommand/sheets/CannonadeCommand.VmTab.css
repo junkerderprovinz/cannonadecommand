@@ -41,7 +41,7 @@ html.cc-vms-on #kvm_list .cc-badge {
 /* Generic badges (Snapshots, Beschreibung, Grafik) take the rainbow or flag colour when that mode is
    on and the accent otherwise; the cpu, ram, ip and vol badges keep their own slots from the more
    specific rules below. */
-html.cc-vms-on #kvm_list .cc-b { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)); }
+html.cc-vms-on #kvm_list .cc-b { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)); }
 /* reactive rainbow: every row badge rests grey and takes the palette colour on row hover, as on
    Docker and Shares */
 html.cc-vms-on.cc-vm-rbneutral #kvm_list .cc-b,
@@ -55,14 +55,14 @@ html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-cpu,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-ram,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-bw,
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-ip,
-html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-vol { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b-vol { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important; }
 /* On row hover the cpu, ram, ip and vol badges take their own palette colour rather than the
    generic --cc-rbaccent above, as in docker.css. .cc-b.cc-b-* outranks the generic tr:hover .cc-b. */
-html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-cpu-t, var(--cc-accent-text, #fff)) !important; }
-html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-ram { background: var(--cc-rb-ram, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ram-t, var(--cc-accent-text, #fff)) !important; }
-html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-bw  { background: var(--cc-rb-bw, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-bw-t, var(--cc-accent-text, #fff)) !important; }
-html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-ip  { background: var(--cc-rb-ip, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ip-t, var(--cc-accent-text, #fff)) !important; }
-html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-vol { background: var(--cc-rb-vol, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-vol-t, var(--cc-accent-text, #fff)) !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-cpu-t, var(--cc-accent-text, #161616)) !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-ram { background: var(--cc-rb-ram, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ram-t, var(--cc-accent-text, #161616)) !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-bw  { background: var(--cc-rb-bw, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-bw-t, var(--cc-accent-text, #161616)) !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-ip  { background: var(--cc-rb-ip, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ip-t, var(--cc-accent-text, #161616)) !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-vol { background: var(--cc-rb-vol, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-vol-t, var(--cc-accent-text, #161616)) !important; }
 html.cc-vms-on #kvm_list .cc-b-k { opacity: .72; font-weight: 500; }
 html.cc-vms-on #kvm_list .cc-b-v { font-family: Consolas, "SFMono-Regular", monospace; }
 /* The badge value, including the a.vcpu-* CPU link vms.js moves into .cc-b-v, inherits the badge
@@ -73,11 +73,11 @@ html.cc-vms-on #kvm_list .cc-b .cc-b-v a { color: inherit !important; text-decor
 html.cc-vms-on #kvm_list .cc-b-copy { cursor: pointer; transition: filter .12s, transform .12s; }
 html.cc-vms-on #kvm_list .cc-b-copy:hover { filter: brightness(1.18); transform: translateY(-1px); }
 /* state badge colours as in docker.css: started -> running, paused -> paused, stopped -> exited */
-html.cc-vms-on #kvm_list .cc-badge-running { background: var(--cc-ok, #1f9d55); color: #fff; }
-html.cc-vms-on #kvm_list .cc-badge-paused  { background: var(--cc-warn, #e0912a); color: #1a1a1a; }
+html.cc-vms-on #kvm_list .cc-badge-running { background: var(--cc-ok, #6fdc8c); color: var(--cc-ok-fg, #161616); }
+html.cc-vms-on #kvm_list .cc-badge-paused  { background: var(--cc-warn, #ff832b); color: var(--cc-warn-fg, #161616); }
 html.cc-vms-on #kvm_list .cc-badge-exited,
 html.cc-vms-on #kvm_list .cc-badge-created { background: var(--cc-badge-neutral, #3c3c3c); color: var(--cc-text-chip, #cfcfcf); }
-html.cc-vms-on #kvm_list .cc-badge-dead    { background: var(--cc-err, #d9433f); color: #fff; }
+html.cc-vms-on #kvm_list .cc-badge-dead    { background: var(--cc-err, #ff8389); color: var(--cc-err-fg, #161616); }
 /* IP pills and disk badges stacked one per line */
 html.cc-vms-on #kvm_list .cc-namemeta,
 html.cc-vms-on #kvm_list .cc-vmb-ips,
@@ -89,28 +89,28 @@ html.cc-vms-on #kvm_list .cc-resline { display: inline-flex; align-items: center
    accent and native mode and stamps --cc-rb-c (the kind colour) in rainbow mode; these rules give
    the idle, hover and set look underneath. */
 html.cc-vms-on #kvm_list .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--cc-b-radius, 999px); background: #3a3a3a; color: #ececec; cursor: pointer; font-size: 12px; margin: 2px 0; }   /* radius follows the badge shape, as on Docker */
-html.cc-vms-on #kvm_list .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: #fff; }
-html.cc-vms-on #kvm_list .cc-limbtn-set { color: #10321f; background: #35d07f; }   /* filled when a limit is configured */
-html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-limbtn-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
+html.cc-vms-on #kvm_list .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
+html.cc-vms-on #kvm_list .cc-limbtn-set { color: var(--cc-ok-fg, #161616); background: var(--cc-ok, #6fdc8c); }   /* filled when a limit is configured */
+html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-limbtn-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 /* The CPU core picker in the VM limits editor, as on Docker. Scoped to the #cc-vmlim-ov overlay
    because the modal lives on document.body, not in #kvm_list. */
 #cc-vmlim-ov .cc-cores { display: flex; flex-wrap: wrap; gap: 5px; }
 #cc-vmlim-ov .cc-corebox { display: inline-flex; flex-direction: column; gap: 3px; padding: 4px; background: var(--cc-surface-2, #1e1e1e); border: none; border-radius: 7px; align-items: stretch; }
 #cc-vmlim-ov .cc-corebox-tag { text-align: center; font-size: 9px; line-height: 1; color: var(--cc-text-dim, #8a8a8a); letter-spacing: .5px; user-select: none; }
-#cc-vmlim-ov .cc-corebox-p .cc-corebox-tag { color: var(--cc-accent, #6ea0ff); }
-#cc-vmlim-ov .cc-corebox-e .cc-corebox-tag { color: var(--cc-warn, #e0912a); }
+#cc-vmlim-ov .cc-corebox-p .cc-corebox-tag { color: var(--cc-accent-ink, #FCC419); }
+#cc-vmlim-ov .cc-corebox-e .cc-corebox-tag { color: var(--cc-warn, #ff832b); }
 #cc-vmlim-ov .cc-core { width: 34px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-dim, #9a9a9a); border: none; border-radius: 5px; font-size: 12px; cursor: pointer; user-select: none; box-sizing: border-box; transition: background .1s, color .1s; }
 #cc-vmlim-ov .cc-core:hover { background: #3a3a3a; color: var(--cc-text, #e6e6e6); }
-#cc-vmlim-ov .cc-core-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
+#cc-vmlim-ov .cc-core-on { background: var(--cc-accent, #FCC419); color: var(--cc-accent-text, #161616); }
 /* rainbow: colour each selected core by its physical-core group, as in docker.css */
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-0 { background: var(--cc-ok, #1f9d55); color: #fff; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-1 { background: #2f6feb; color: #fff; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-2 { background: #8b5cf6; color: #fff; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-3 { background: var(--cc-warn, #e0912a); color: #161616; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-4 { background: var(--cc-err, #d9433f); color: #fff; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-5 { background: #0ea5a4; color: #fff; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-6 { background: #e05299; color: #fff; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-7 { background: #6366f1; color: #fff; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-0 { background: #FF8389; color: #161616; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-1 { background: #FF832B; color: #161616; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-2 { background: #FCC419; color: #161616; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-3 { background: #6FDC8C; color: #161616; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-4 { background: #3DDBD9; color: #161616; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-5 { background: #1D99F3; color: #fff; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-6 { background: #BE95FF; color: #161616; }
+html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-7 { background: #FF7EB6; color: #161616; }
 /* keep the cloned native ISO-picker link (a.hand) legible inside the CD badge */
 html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand,
 html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand i { color: inherit !important; text-decoration: none !important; }
@@ -137,7 +137,7 @@ html.cc-vms-on.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand {
   flex: none !important;
   width: var(--cc-logo-box, 78px) !important; height: var(--cc-logo-box, 78px) !important; min-width: var(--cc-logo-box, 78px) !important; max-width: var(--cc-logo-box, 78px) !important;
   padding: calc((var(--cc-logo-box, 78px) - var(--cc-logo-img, 62px)) / 2) !important; box-sizing: border-box !important; overflow: hidden !important;
-  background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important;
+  background: var(--cc-iconbg-color, var(--cc-accent, #FCC419)) !important;
   border-radius: min(var(--cc-b-radius, 14px), 16px) !important;
   display: flex !important; align-items: center !important; justify-content: center !important;
 }
@@ -147,11 +147,11 @@ html.cc-shape-circle.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand { bord
    for rows without one. The reactive sub-mode rests grey and shows the colour on row hover, like
    the value badges. */
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rainbow:not(.cc-vm-rbneutral) #kvm_list td.vm-name .outer > span.hand {
-  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)))) !important;
+  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)))) !important;
 }
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list td.vm-name .outer > span.hand { background: #2e2e2e !important; }
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list tr:hover td.vm-name .outer > span.hand {
-  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)))) !important;
+  background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)))) !important;
 }
 /* name column layout as in docker.css: stacked, native <br> and status glyph hidden */
 html.cc-vms-on #kvm_list td.vm-name .inner { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; line-height: 1.2; min-width: 0; }
@@ -179,7 +179,7 @@ html.cc-vms-on #kvm_list .switch-button-background {
   display: inline-block; vertical-align: middle; margin: 0 12px 0 3px; cursor: pointer;
   transition: background .15s; box-sizing: border-box;
 }
-html.cc-vms-on #kvm_list .switch-button-background.checked { background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }   /* follows the colour mode */
+html.cc-vms-on #kvm_list .switch-button-background.checked { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; }   /* follows the colour mode */
 html.cc-vms-on #kvm_list .switch-button-background .switch-button-button {
   width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important;
   border-radius: 50% !important; background: #fff !important; box-shadow: none !important;
@@ -196,20 +196,20 @@ html.cc-vms-on #kvm_list td.cc-actcell { white-space: nowrap; vertical-align: mi
 html.cc-vms-on .cc-actbar { display: flex; flex-direction: column; gap: 4px; }
 html.cc-vms-on .cc-actrow { display: flex; gap: 4px; }
 html.cc-vms-on .cc-actbtn { width: 27px; height: 26px; border-radius: var(--cc-b-radius, 999px); background: #2e2e2e; color: #c9c9c9; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; user-select: none; transition: background .12s, color .12s, box-shadow .12s; }
-html.cc-vms-on .cc-actbtn:hover { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); }
+html.cc-vms-on .cc-actbtn:hover { background: var(--cc-accent, #FCC419); color: var(--cc-accent-text, #161616); }
 html.cc-vms-on .cc-actbtn i.fa { font-size: 13px; line-height: 1; color: inherit !important; }
 html.cc-vms-on .cc-actoff { opacity: .35; cursor: default; }
 html.cc-vms-on .cc-actoff:hover { background: #2e2e2e; color: #c9c9c9; }
 html.cc-vms-on .cc-actmore { display: none; margin-top: 4px; }
 html.cc-vms-on .cc-actmore.cc-open { display: flex; flex-wrap: wrap; }
 html.cc-vms-on .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }
-@keyframes cc-actflash { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--cc-accent, #2f6feb); } }
+@keyframes cc-actflash { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--cc-accent, #FCC419); } }
 
 /* Reactive rainbow, as in docker.css: tintAct() skips its inline paint and stamps
    --cc-rb-c/--cc-rb-ct per button, so enabled icons rest dark grey and take that colour on row
    hover. Disabled .cc-actoff buttons keep their own grey. */
 html.cc-vms-on.cc-vm-rbneutral .cc-actbtn:not(.cc-actoff) { background: #2e2e2e !important; color: #e9e9e9 !important; }
-html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-actbtn:not(.cc-actoff) { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
+html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-actbtn:not(.cc-actoff) { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 
 /* bottom action buttons (input[type=button]) as CC accent pills */
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart) {
@@ -217,7 +217,7 @@ html.cc-vms-on #displaybox input[type="button"]:not(.autostart) {
   height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-btnpad, 0 14px) !important; min-width: 0 !important; box-sizing: border-box !important;
   border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer;
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important; transition: filter .12s;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; transition: filter .12s;
 }
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart):hover:not(:disabled) { filter: brightness(1.14); }
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart):disabled { opacity: .45 !important; filter: grayscale(.4) !important; cursor: not-allowed !important; }
@@ -232,7 +232,7 @@ html.cc-vms-on ul.dropdown-menu.dropdown-context > li > span {
   color: #ececec !important; border-radius: var(--cc-b-radius, 8px) !important; padding: 6px 12px !important; transition: background .12s, color .12s;
 }
 html.cc-vms-on ul.dropdown-menu.dropdown-context > li > a:hover {
-  background: var(--cc-accent, #2f6feb) !important; color: var(--cc-accent-text, #fff) !important;
+  background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important;
 }
 html.cc-vms-on ul.dropdown-menu.dropdown-context > li > a i,
 html.cc-vms-on ul.dropdown-menu.dropdown-context > li > a:hover i { color: inherit !important; }
@@ -254,7 +254,7 @@ html.cc-vms-on #vmstats .cc-vmstat-name {
   display: inline-flex; align-items: center;
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 4px 12px);
   font-size: var(--cc-md-fs, 13px); font-weight: 600; line-height: 1.35; white-space: nowrap;
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff));
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
 }
 /* guest and host CPU % (the first span in td.advanced) as a value pill in the palette colour */
 html.cc-vms-on #vmstats tbody td.advanced > span:first-child {
@@ -262,7 +262,7 @@ html.cc-vms-on #vmstats tbody td.advanced > span:first-child {
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 3px 11px);
   font-size: var(--cc-sm-fs, 11px); font-weight: 600; line-height: 1.35; white-space: nowrap;
   font-family: Consolas, "SFMono-Regular", monospace;
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)); color: var(--cc-rb-ct, var(--cc-accent-text, #fff));
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616));
 }
 /* memory, disk IO and network IO as neutral chips (vms.js wraps the bare text in
    span.cc-vmstat-chip on every re-render), so every stat cell reads as a badge */
@@ -274,7 +274,7 @@ html.cc-vms-on #vmstats .cc-vmstat-chip {
 }
 /* live usage bar (native .usage-disk.mm) -> accent fill on a subtle rounded track */
 html.cc-vms-on #vmstats td.advanced .usage-disk.mm { background: rgba(128, 128, 128, .20) !important; border-radius: var(--cc-b-radius, 999px); }
-html.cc-vms-on #vmstats td.advanced .usage-disk.mm > span:first-child { background: var(--cc-accent, #2f6feb) !important; border-radius: var(--cc-b-radius, 999px); }
+html.cc-vms-on #vmstats td.advanced .usage-disk.mm > span:first-child { background: var(--cc-accent, #FCC419) !important; border-radius: var(--cc-b-radius, 999px); }
 /* memory / disk IO / network IO cells (cols 4-6) -> monospace numerics */
 html.cc-vms-on #vmstats tbody tr > td:nth-child(n+4) { font-family: Consolas, "SFMono-Regular", monospace; font-size: var(--cc-md-fs, 13px); }
 
@@ -293,7 +293,7 @@ html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head {
   display: inline-flex; align-items: center; gap: 8px;
   min-height: var(--cc-lgb-h, 36px); box-sizing: border-box;   /* head badges sit on the 36px lg line */
   font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-head-fs, 15px); line-height: 1;
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;   /* rainbow-aware, so the head takes a palette colour instead of the plain accent */
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;   /* rainbow-aware, so the head takes a palette colour instead of the plain accent */
   border: none; border-radius: var(--cc-b-radius, 999px); padding: var(--cc-head-pad, 9px 18px); margin: 0 0 16px;
 }
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head i,
@@ -312,7 +312,7 @@ html.cc-vms-on .cc-seg-btn {
   display: inline-flex; align-items: center; justify-content: center;
 }
 html.cc-vms-on .cc-seg-btn:hover { color: #e6e6e6; }
-html.cc-vms-on .cc-seg-btn.cc-seg-on { background: var(--cc-accent, #2f6feb); color: var(--cc-accent-text, #fff); font-weight: 600; }
+html.cc-vms-on .cc-seg-btn.cc-seg-on { background: var(--cc-accent, #FCC419); color: var(--cc-accent-text, #161616); font-weight: 600; }
 
 /* Grid view (cc.vmview="grid", html.cc-vmgrid). vms.js has no engine data, so the native #kvm_list
    table is reflowed into cards with CSS and every cell and badge stays live. Scoped to
@@ -335,11 +335,11 @@ html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable > td {
 /* Rainbow mode (html.cc-vm-rainbow) reads the global cc.rainbow and the --cc-rb-* palette vms.js
    stamps on <html>. Only the CPU, RAM and IP badges recolour; the state badge keeps its meaning
    colour, as on Docker. Applies in list and grid view. */
-html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-err, #d9433f)); color: var(--cc-rb-cpu-t, #fff); }
-html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ram { background: var(--cc-rb-ram, #2f9d8b); color: var(--cc-rb-ram-t, #fff); }
-html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-bw  { background: var(--cc-rb-bw, #8b5cf6); color: var(--cc-rb-bw-t, #fff); }
-html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ip  { background: var(--cc-rb-ip, #2f6feb); color: var(--cc-rb-ip-t, #fff); }
-html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-vol { background: var(--cc-rb-vol, #8b5cf6); color: var(--cc-rb-vol-t, #fff); }
+html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-accent, #FCC419)); color: var(--cc-rb-cpu-t, var(--cc-accent-text, #161616)); }
+html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ram { background: var(--cc-rb-ram, var(--cc-accent, #FCC419)); color: var(--cc-rb-ram-t, var(--cc-accent-text, #161616)); }
+html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-bw  { background: var(--cc-rb-bw, var(--cc-accent, #FCC419)); color: var(--cc-rb-bw-t, var(--cc-accent-text, #161616)); }
+html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ip  { background: var(--cc-rb-ip, var(--cc-accent, #FCC419)); color: var(--cc-rb-ip-t, var(--cc-accent-text, #161616)); }
+html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-vol { background: var(--cc-rb-vol, var(--cc-accent, #FCC419)); color: var(--cc-rb-vol-t, var(--cc-accent-text, #161616)); }
 
 /* keyboard focus draws no outline, ring or shadow; the feedback is brightness only */
 html.cc-vms-on #displaybox :is(a, button, input, select, textarea):focus-visible,

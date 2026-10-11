@@ -24,13 +24,13 @@ html.cc-favorites-on #displaybox .Panel > a > span {
   width: var(--cc-fav-size, 78px) !important; height: var(--cc-fav-size, 78px) !important;
   margin: 0 auto !important; padding: 0 !important;
   border-radius: min(var(--cc-b-radius, 14px), var(--cc-fav-rmax, 16px)) !important;
-  background: var(--cc-iconbg-color, var(--cc-accent, #2f6feb)) !important;
+  background: var(--cc-iconbg-color, var(--cc-accent, #FCC419)) !important;
   transition: filter .12s;
 }
 html.cc-favorites-on #displaybox .Panel > a:hover > span { filter: brightness(1.1); }
 html.cc-favorites-on #displaybox .Panel > a > span > i.PanelIcon {
   font-size: var(--cc-fav-glyph, 38px) !important; line-height: 1 !important;
-  color: var(--cc-iconbg-text, var(--cc-accent-text, #fff)) !important; margin: 0 !important; padding: 0 !important;
+  color: var(--cc-iconbg-text, var(--cc-accent-text, #161616)) !important; margin: 0 !important; padding: 0 !important;
 }
 html.cc-favorites-on #displaybox .Panel > a > span > img {
   width: var(--cc-fav-glyph, 38px) !important; height: var(--cc-fav-glyph, 38px) !important;
@@ -39,10 +39,10 @@ html.cc-favorites-on #displaybox .Panel > a > span > img {
 /* the fa-trash-o 'remove favorite' icon MyFavorites.page injects into the span on hover */
 html.cc-favorites-on #displaybox .Panel > a > span > i.favo {
   position: absolute !important; top: 3px !important; right: 4px !important; left: auto !important;
-  font-size: 12px !important; line-height: 1 !important; color: var(--cc-accent-text, #fff) !important; opacity: .8;
+  font-size: 12px !important; line-height: 1 !important; color: var(--cc-accent-text, #161616) !important; opacity: .8;
 }
 html.cc-favorites-on #displaybox .Panel .PanelText { margin-top: 4px; }
 /* empty state (MyFavorites.page #nofavs h3) */
-html.cc-favorites-on #displaybox #nofavs { color: var(--cc-accent, #2f6feb); }
+html.cc-favorites-on #displaybox #nofavs { color: var(--cc-accent-ink, #FCC419); }
 /* circle badge shape, as in SettingsGrid.css */
 html.cc-shape-circle.cc-favorites-on #displaybox .Panel > a > span { border-radius: 50% !important; }

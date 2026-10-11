@@ -32,8 +32,8 @@ html {
 
   /* one dim and blur behind every popup: swal, jQuery-UI dialog, bell and burger menu, nchan
      centre, CC popups */
-  --cc-backdrop-dim:  rgba(0, 0, 0, .55);
-  --cc-backdrop-blur: blur(5px);
+  --cc-backdrop-dim:  rgba(0, 0, 0, .72);
+  --cc-backdrop-blur: blur(6px);
 
   /* The loader sizes and the motion switch for every ring in the product: the tab-load overlay, CA
      Updating Content, plugin install, the nchan status badge and the inline spin icons. header.js
@@ -64,9 +64,17 @@ html {
      page's, so the white theme keeps it dark */
   --cc-header-ink: #cfcfcf;
 
-  /* the accent; JS overrides --cc-accent on documentElement, this is the default */
-  --cc-accent:     #2f6feb;
-  --cc-accent-fg:  var(--cc-accent-text, #fff);
+  /* the accent; JS overrides --cc-accent and --cc-accent-text on documentElement, these are the
+     defaults, GlimStone's Sunflower with its computed ink */
+  --cc-accent:      #FCC419;
+  --cc-accent-text: #161616;
+  --cc-accent-fg:   var(--cc-accent-text, #161616);
+  /* The accent as a fill and the accent as something read are two jobs. Text, a link or a line glyph
+     on the page reads --cc-accent-ink, which mixes toward black by --cc-ink-mix: not at all on a
+     dark ground, 45% on a light one, where gold text on white would be unreadable. It derives from
+     --cc-accent, so it follows a picked colour as well as the default. */
+  --cc-ink-mix:     100%;
+  --cc-accent-ink:  color-mix(in srgb, var(--cc-accent) var(--cc-ink-mix), black);
 
   /* The right-edge gutter that pulls every right-flush element (search badge, show more, view
      toggle, footer arrows, list rows) in to the #displaybox content edge rather than the scrollbar
@@ -95,10 +103,12 @@ html {
   --cc-pagebadge-fs: 13px;
   --cc-density: 9px;
 
-  /* the semantic states, with their foreground colours */
-  --cc-ok:   #1f9d55;  --cc-ok-fg:   #fff;
-  --cc-warn: #e0912a;  --cc-warn-fg: #1a1a1a;
-  --cc-err:  #d9433f;  --cc-err-fg:  #fff;
+  /* The semantic states: the fill, the ink on the fill, and the -ink colour for a state written as
+     text on the page. Warning is orange, so yellow only ever means the accent. They are fixed per
+     theme and never follow the accent or the rainbow. */
+  --cc-ok:   #6fdc8c;  --cc-ok-fg:   #161616;  --cc-ok-ink:   #6fdc8c;
+  --cc-warn: #ff832b;  --cc-warn-fg: #161616;  --cc-warn-ink: #ff832b;
+  --cc-err:  #ff8389;  --cc-err-fg:  #161616;  --cc-err-ink:  #ff8389;
   /* advice rather than a problem, such as ShipLog's pinned tag with a newer version out; ShipLog's
      own sheets read this name too */
   --cc-info: #3b82d0;  --cc-info-fg: #fff;
@@ -123,9 +133,9 @@ html {
   --cc-elev-3: 0 12px 30px rgba(0, 0, 0, .6);   /* modal / popup */
 }
 
-/* The light override, shared by the white and azure Unraid themes. Only the surface, text and track
+/* The light override, shared by the white and azure Unraid themes. The surface, text, track and state
    tokens flip; the rgba greys of --cc-chip and --cc-shade-line read fine on a light page, and
-   --cc-accent with its contrast colour stays JS-driven. */
+   --cc-accent with its contrast colour stays JS-driven, only its ink darkens. */
 html.Theme--white,
 html.Theme--azure {
   --cc-surface-1:      #ffffff;
@@ -148,8 +158,12 @@ html.Theme--azure {
   --cc-toggle-knob:      #ffffff;
   --cc-line-solid:  #d0d0d0;
   --cc-badge-neutral: #d8d8d8;      /* light enough for the dark chip text of this theme */
-  /* a lighter, less opaque dim; the blur radius has nothing to do with the theme and stays shared */
-  --cc-backdrop-dim: rgba(20, 20, 20, .35);
+  --cc-ink-mix: 55%;
+  --cc-ok:   #198038;  --cc-ok-fg:   #fff;  --cc-ok-ink:   #0e6027;
+  --cc-warn: #ba4e00;  --cc-warn-fg: #fff;  --cc-warn-ink: #ba4e00;
+  --cc-err:  #da1e28;  --cc-err-fg:  #fff;  --cc-err-ink:  #da1e28;
+  /* a lighter dim; the blur radius has nothing to do with the theme and stays shared */
+  --cc-backdrop-dim: rgba(0, 0, 0, .62);
   /* lighter and tighter shadows, so a raised surface still reads as raised without smudging on a
      bright page */
   --cc-elev-1: 0 1px 3px rgba(0, 0, 0, .12);
@@ -177,8 +191,8 @@ html { --cc-r-1: 6px; --cc-r-2: 10px; --cc-r-3: 14px; }
    supplies the alpha, and the fixed-accent line above it is the fallback without color-mix. */
 :is(.cc-b, .cc-actbtn, .cc-limbtn, .cc-btn, .cc-seg-btn, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core):focus-visible {
   outline: none !important;
-  box-shadow: 0 0 0 3px rgba(47, 111, 235, .42);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #2f6feb) 45%, transparent);
+  box-shadow: 0 0 0 3px rgba(252, 196, 25, .42);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent);
 }
 /* the copied pill pulses in place rather than opening a toast in the corner */
 @keyframes cc-copyflash { 0% { filter: brightness(1); transform: scale(1); } 35% { filter: brightness(1.4); transform: scale(1.06); } 100% { filter: brightness(1); transform: scale(1); } }
@@ -204,7 +218,7 @@ html.cc-popups-on div.title > span.left, html.cc-popups-on div.title > span.righ
 }
 html.cc-popups-on div.title span.left i.title,
 html.cc-popups-on div.title span.left i[class*="icon-"],
-html.cc-popups-on div.title span.left i.fa { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+html.cc-popups-on div.title span.left i.fa { color: color-mix(in srgb, var(--cc-rbaccent, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black) !important; }
 /* The section badge and the page's action control share a line, so they share the md tier, the same
    one every other section badge in CC uses. plugins.js stamps this button inline with !important,
    which outranks this rule, so the two have to stay on the same token. */
@@ -223,8 +237,8 @@ html.cc-popups-on nav.tabs .tabs-container > button[role="tab"] {
 }
 html.cc-popups-on nav.tabs .tabs-container > button[role="tab"]:hover,
 html.cc-popups-on nav.tabs .tabs-container > button[role="tab"][aria-selected="true"] {
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   border-color: transparent !important;
 }
 
@@ -236,15 +250,15 @@ html.cc-popups-on nav.tabs .tabs-container > button[role="tab"][aria-selected="t
 @keyframes cc-load-cw   { to { transform: rotate(1turn); } }
 @keyframes cc-load-ccw  { to { transform: rotate(-1turn); } }
 @keyframes cc-load-rb {
-  0%,12.4%{--cc-lc:#c95e5e} 12.5%,24.9%{--cc-lc:#c98d5e} 25%,37.4%{--cc-lc:#c9af5e} 37.5%,49.9%{--cc-lc:#5ec986}
-  50%,62.4%{--cc-lc:#5ec9c2} 62.5%,74.9%{--cc-lc:#5e89c9} 75%,87.4%{--cc-lc:#865ec9} 87.5%,100%{--cc-lc:#c95e94}
+  0%,12.4%{--cc-lc:#FF8389} 12.5%,24.9%{--cc-lc:#FF832B} 25%,37.4%{--cc-lc:#FCC419} 37.5%,49.9%{--cc-lc:#6FDC8C}
+  50%,62.4%{--cc-lc:#3DDBD9} 62.5%,74.9%{--cc-lc:#1D99F3} 75%,87.4%{--cc-lc:#BE95FF} 87.5%,100%{--cc-lc:#FF7EB6}
 }
 /* --cc-load-sz is set by a tier class (.cc-load-full, -dlg, -sm, -xs), which header.js
    ccLoader(tier) applies; the bare 40px default covers ring markup created outside that factory.
    --acc reads --cc-rb-c first, the per-element rainbow slot every other badge uses, so a loader
    header.js has stamped takes its own hue and an unstamped one falls through to --cc-rbaccent. */
 .cc-loader {
-  --sz: var(--cc-load-sz, 40px); --acc: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb)));
+  --sz: var(--cc-load-sz, 40px); --acc: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)));
   --th: calc(var(--sz) / 10); --arc: 155deg;
   position: relative; width: var(--sz); height: var(--sz); display: inline-block; flex: none; vertical-align: -.15em;
 }
@@ -284,7 +298,7 @@ html.cc-anim-off .cc-loader { animation: none; }
   html:not(.cc-anim-on) { --cc-load-play: paused; }
   html:not(.cc-anim-on) .cc-loader > span { animation: none; }
   .cc-loader > span.in { transform: rotate(-.4turn); }
-  html.cc-rb-on .cc-loader { animation: none; --cc-lc: #5ec9c2; }
+  html.cc-rb-on .cc-loader { animation: none; --cc-lc: #3DDBD9; }
 }
 
 /* The tab-load overlay: hide Unraid's own mark and any fa-spin, dim the backdrop, and let header.js
@@ -353,7 +367,7 @@ html.cc-popups-on div.spinner:not(.fixed).cc-spin-active {
   pointer-events: none !important;
 }
 /* inline busy loaders on the container logo take the accent where no markup is injected */
-html.cc-popups-on i.fa-spin.fa-circle-o-notch, html.cc-popups-on .cc-ct-busy i.fa-spin { color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+html.cc-popups-on i.fa-spin.fa-circle-o-notch, html.cc-popups-on .cc-ct-busy i.fa-spin { color: color-mix(in srgb, var(--cc-rbaccent, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black) !important; }
 
 
 /* One dim and blur behind every popup overlay: swal (.sweet-overlay), jQuery-UI dialogs
@@ -434,9 +448,9 @@ html.cc-popups-on a[class*="back_to"] {
   right: calc(var(--cc-content-rgap, 0px) + var(--cc-edge-gutter, 8px)) !important;   /* the content right edge: viewport gutter plus the boxed-mode gap */
   z-index: 9990 !important;                       /* above the page chrome, below the popup backdrops at 9998 */
   /* the badge carries the colour and the glyph reads on top of it, as every other CC badge does */
-  color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   transform: translateY(calc(-1 * (var(--cc-footer-h, 0px) + var(--cc-actbar-h, 44px) + 8px))) !important;
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
   border-radius: var(--cc-b-radius, 999px) !important;
   width: 40px !important; height: 40px !important;
   padding: 0 !important;
@@ -533,8 +547,8 @@ html.cc-popups-on .ca_homeTemplatesHeader {
    writes, the size comes from the page-badge token and the shape from --cc-b-radius. */
 html.cc-popups-on .ca_homeTemplatesHeader .cc-sechead-badge {
   display: inline-flex !important; align-items: center !important;
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   font-size: var(--cc-pagebadge-fs, 13px) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: 1px !important;
   /* md padding and an explicit md height, so this matches the Plugins section badge; the sm
@@ -558,8 +572,8 @@ html.cc-popups-on .ca_homeTemplatesHeader .homeMore {
   display: inline-flex !important; align-items: center !important;
   padding: 4px 10px !important; font-size: 11px !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .4px !important; cursor: pointer !important;
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   border-radius: var(--cc-b-radius, 8px) !important; opacity: 1 !important;
   transition: background .15s ease, color .15s ease, filter .12s ease !important;
 }
@@ -572,12 +586,12 @@ html.cc-apps-rbneutral.cc-popups-on .ca_homeTemplatesHeader .homeMore {
 }
 html.cc-apps-rbneutral.cc-popups-on .ca_homeTemplatesHeader .homeMore:hover,
 html.cc-apps-rbneutral.cc-popups-on .ca_homeTemplatesHeader .homeMore:focus {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; filter: none !important;
 }
 /* before ccApps runs, line 2 stays dim body text so Show more never vanishes */
 html.cc-popups-on .ca_homeTemplatesLine2 { color: var(--cc-text-dim, #8a8a8a) !important; font-size: 13px !important; margin: 0 0 12px !important; }
-html.cc-popups-on .ca_homeTemplatesLine2 .homeMore { color: var(--cc-accent, #2f6feb) !important; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; }
+html.cc-popups-on .ca_homeTemplatesLine2 .homeMore { color: var(--cc-accent-ink, #FCC419) !important; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; }
 
 /* The horizontal carousels of the Apps tab: the thumb takes the colour mode and appears on hover.
    Chromium from 121 on ignores every ::-webkit-scrollbar rule as soon as scrollbar-width or
@@ -607,12 +621,12 @@ html.cc-popups-on.cc-popups-on .ca_homeTemplates:has(.ca_holder:hover)::-webkit-
    be grabbed; the row's :hover covers the strip, the thumb's the drag */
 html.cc-popups-on.cc-popups-on .ca_homeTemplates:hover::-webkit-scrollbar-thumb:hover,
 html.cc-popups-on.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-thumb:hover {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
 }
 /* without :has(), fall back to the row's own hover rather than never showing the bar */
 @supports not selector(:has(*)) {
   html.cc-popups-on.cc-popups-on .ca_homeTemplates:hover::-webkit-scrollbar-thumb {
-    background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+    background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
   }
 }
 
@@ -629,22 +643,22 @@ html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-thumb {
   border: 0 !important; background-clip: padding-box !important;
   border-radius: var(--cc-b-radius, 8px) !important;   /* thumb follows the badge shape */
   background: rgba(130,130,130,.55) !important;
-  background: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent) !important;
+  background: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) 55%, transparent) !important;
 }
 html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-thumb:hover,
 html.cc-popups-on *:hover::-webkit-scrollbar-thumb {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
 }
 /* Firefox has no ::-webkit-scrollbar, so it gets colour alone. Its width keywords (thin, none) have
    no value meaning native, so leaving the property unset is what keeps the native thickness, and
    scrollbar-color still tints the bar. */
 @supports not selector(::-webkit-scrollbar) {
-  html.cc-popups-on * { scrollbar-color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent) transparent !important; }
-  html.cc-popups-on *:hover { scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important; }
+  html.cc-popups-on * { scrollbar-color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) 55%, transparent) transparent !important; }
+  html.cc-popups-on *:hover { scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) transparent !important; }
   /* same tie as the webkit block above: `*:hover` scores (0,2,1) and is written earlier here, so a plain
      `.ca_homeTemplates` at (0,2,1) would lose the rest state on any hover inside the row. Double the class. */
   html.cc-popups-on.cc-popups-on .ca_homeTemplates { scrollbar-color: transparent transparent !important; }
-  html.cc-popups-on.cc-popups-on .ca_homeTemplates:has(.ca_holder:hover) { scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) transparent !important; }
+  html.cc-popups-on.cc-popups-on .ca_homeTemplates:has(.ca_holder:hover) { scrollbar-color: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) transparent !important; }
 }
 
 /* The search badge: a magnifier in the colour mode that expands into an input on click, wired by
@@ -654,7 +668,7 @@ html.cc-popups-on .searchArea { display: flex !important; flex-wrap: nowrap !imp
 html.cc-popups-on #searchFilter {
   margin-left: auto !important; margin-right: 0 !important; align-self: center !important; order: 99 !important;
   display: inline-flex !important; align-items: center !important;
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   border-radius: var(--cc-b-radius, 8px) !important;
   height: 36px !important; box-sizing: border-box !important; padding: 0 !important;
   overflow: hidden !important; left: 0 !important; top: 0 !important;
@@ -686,7 +700,7 @@ html.cc-popups-on .searchSubmit {
   width: 36px !important; height: 36px !important; min-width: 36px !important; margin: 0 !important; padding: 0 !important;
   left: 0 !important; top: 0 !important; cursor: pointer !important; border: none !important;
   background: transparent !important; border-radius: 0 !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-popups-on #searchFilter.cc-open .searchSubmit { color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .searchSubmit:hover { filter: brightness(1.08) !important; }
@@ -717,8 +731,8 @@ html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open) {
   box-shadow: none !important;
 }
 html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open):hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; filter: none !important;
 }
 /* The hidden input still drives the chip's height: at width 0 it is invisible, but its 34px box
    plus the chip's padding makes the badge 48px tall beside its 34px siblings. */
@@ -755,7 +769,7 @@ html.cc-apps-rbneutral.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-ope
   background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
 html.cc-apps-rbneutral.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open):hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; filter: none !important;
 }
 /* Results per page and DockerHub, moved under the search badge. header.js ccMoveSearchAreaBadges()
    moves the real .maxPerPage and .dockerSearch nodes, whose click handlers have to survive, into
@@ -780,8 +794,8 @@ html.cc-popups-on .cc-ca-search-extras .dockerSearch {
   font-size: 15px !important; font-weight: 600 !important; line-height: 1.25 !important;
   text-align: center !important; text-transform: none !important; letter-spacing: normal !important;
   white-space: normal !important;   /* "Results Per Page: 12" wraps in a 132px column, unlike its old row */
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
 }
@@ -799,7 +813,7 @@ html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .dockerSearch {
 }
 html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:hover,
 html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .dockerSearch:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; filter: none !important;
 }
 /* Expanded, the field leaves the sidebar column and opens to the right in the geometry of the
    header's own search panel: the same width, height, surface, radius and elevation as
@@ -854,7 +868,7 @@ html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li {
 }
 html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li:hover,
 html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li[aria-selected="true"] {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 
 /* CA's own .menuItems{width:14rem} is too narrow for the uppercase, letter-spaced section badges,
@@ -873,8 +887,8 @@ html.cc-popups-on .caMenuItem {
   cursor: pointer !important; transition: background .12s, color .12s, filter .12s !important;
 }
 html.cc-popups-on .caMenuItem:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 /* The heading margin is for a loose section break; a card-nested title takes its spacing from the
    card edge rules below, or the two fight over margin-top with only source order to settle it. */
@@ -913,8 +927,8 @@ html.cc-popups-on .subCategory .caMenuItem { width: 100% !important; max-width: 
    block. The li has no selected look of its own; its contents carry their own colours. */
 html.cc-popups-on .caMenuItem.selectedMenu:not(.cc-ca-search-li),
 html.cc-popups-on .caMenuItem.selectedMenu:not(.cc-ca-search-li):hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-popups-on .caMenuItem.selectedMenu:not(.cc-ca-search-li):hover { filter: brightness(1.06) !important; }
 html.cc-popups-on .caMenuItem a.caMenuItem {
@@ -979,8 +993,8 @@ html.cc-popups-on li.cc-card-in:hover { filter: none !important; }
    stays non-interactive: cursor:default and no hover. */
 html.cc-popups-on li.cc-ca-cardtitle,
 html.cc-popups-on li.cc-card-in.sectionMenu {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   text-transform: uppercase !important; letter-spacing: .6px !important;
   font-size: 15px !important; font-weight: 700 !important; cursor: default !important;
 }
@@ -994,7 +1008,7 @@ html.cc-popups-on li.cc-card-in .caMenuItem { background: var(--cc-surface-3, #2
 /* Hover only, with no exception for CA's .selectedMenu, so every card member colours the same way;
    otherwise the open category would stay filled while its neighbours only react to the pointer. */
 html.cc-popups-on li.cc-card-in .caMenuItem:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 /* A card member that carries .caMenuItem on the element itself rather than on a wrapping <li>, such
    as the favourite repo and every category chip, needs its own rule: the descendant combinator
@@ -1003,7 +1017,7 @@ html.cc-popups-on li.cc-card-in.caMenuItem:not(.sectionMenu):not(.cc-ca-cardtitl
   background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
 html.cc-popups-on li.cc-card-in.caMenuItem:not(.sectionMenu):not(.cc-ca-cardtitle):hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 
 /* The Action Centre is a coloured badge that pulses when it appears. It carries .sectionMenu, which
@@ -1011,18 +1025,18 @@ html.cc-popups-on li.cc-card-in.caMenuItem:not(.sectionMenu):not(.cc-ca-cardtitl
    cycles rather than forever, and CA re-renders the entry when its state changes, which restarts
    the animation without an observer. */
 @keyframes cc-ac-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 var(--cc-ac-glow, rgba(47, 111, 235, .55)); }
-  50%      { box-shadow: 0 0 14px 4px var(--cc-ac-glow, rgba(47, 111, 235, .55)); }
+  0%, 100% { box-shadow: 0 0 0 0 var(--cc-ac-glow, rgba(252, 196, 25, .55)); }
+  50%      { box-shadow: 0 0 14px 4px var(--cc-ac-glow, rgba(252, 196, 25, .55)); }
 }
 html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre {
   display: block !important; box-sizing: border-box !important;
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   text-transform: uppercase !important; letter-spacing: .6px !important;
   font-size: 15px !important; font-weight: 700 !important;
   margin: 6px 0 !important; padding: 7px 12px !important;
   border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
-  --cc-ac-glow: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #2f6feb)) 55%, transparent);
+  --cc-ac-glow: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) 55%, transparent);
   animation: cc-ac-pulse 1.4s ease-in-out 6 !important;
 }
 html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre:hover { filter: brightness(1.08) !important; }
@@ -1050,7 +1064,7 @@ html.cc-popups-on .ca_iconArea i.displayIcon {
   padding: 0 !important; border-radius: 0 !important;
   filter: drop-shadow(0 0 1px var(--cc-text, #e6e6e6)) drop-shadow(0 0 1px var(--cc-text, #e6e6e6));
 }
-html.cc-popups-on .ca_iconArea i.displayIcon { display: inline-flex !important; align-items: center !important; justify-content: center !important; color: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important; }
+html.cc-popups-on .ca_iconArea i.displayIcon { display: inline-flex !important; align-items: center !important; justify-content: center !important; color: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; }
 html.cc-popups-on .ca_applicationName { color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .ca_author, html.cc-popups-on a.ca_author { color: var(--cc-text-dim, #8a8a8a) !important; }
 /* the category stays off the card face; the Info popup's own row still shows it */
@@ -1125,8 +1139,8 @@ html.cc-popups-on .ca_bottomLine .caButton {
 }
 html.cc-popups-on .ca_bottomLine .caButton:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .ca_bottomLine .actionsButton {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 /* Info, Support and an installed app's Actions dropdown move into the hamburger header.js
    ccAppsCardMenu() builds. They are hidden rather than removed, so the native buttons and the
@@ -1157,7 +1171,7 @@ html.cc-popups-on .appPlugin:hover,
 html.cc-popups-on .appLanguage:hover,
 html.cc-popups-on .appDriver:hover,
 html.cc-popups-on .appRepository:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 /* the reactive mode's rest and hover swap, as on every other Apps badge */
 html.cc-apps-rbneutral.cc-popups-on .appDocker,
@@ -1172,7 +1186,7 @@ html.cc-apps-rbneutral.cc-popups-on .appPlugin:hover,
 html.cc-apps-rbneutral.cc-popups-on .appLanguage:hover,
 html.cc-apps-rbneutral.cc-popups-on .appDriver:hover,
 html.cc-apps-rbneutral.cc-popups-on .appRepository:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 /* The notice badge: the same square chip as the type badge and the same colour contract, with
    ccAppsStamp writing its palette slot. Its horizontal position comes from
@@ -1187,17 +1201,17 @@ html.cc-popups-on .cc-warn-badge {
   transition: background .12s ease, color .12s ease !important;
 }
 html.cc-popups-on .cc-warn-badge:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-apps-rbneutral.cc-popups-on .cc-warn-badge {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
 html.cc-apps-rbneutral.cc-popups-on .cc-warn-badge:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-popups-on .ca_bottomLine .actionsButton:hover { filter: brightness(1.08) !important; }
 html.cc-rb-on.cc-popups-on .ca_bottomLine .caButton {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, #fff) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-rb-on.cc-popups-on .ca_bottomLine .caButton:hover { filter: brightness(1.08) !important; background: var(--cc-rb-c, var(--cc-accent)) !important; }
 html.cc-popups-on .searchArea .caButton {
@@ -1250,7 +1264,7 @@ html.cc-popups-on .cc-castats .actionsButton {
   box-sizing: border-box !important; height: var(--cc-md-h, 30px) !important; padding: 0 14px !important;
   border-radius: var(--cc-b-radius, 8px) !important; font-size: 10px !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .3px !important; white-space: nowrap !important;
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-popups-on .cc-castats .actionsButton:hover { filter: brightness(1.08) !important; }
 /* CC's own badge for the installed states, Update and Installiert, in the same box as
@@ -1264,7 +1278,7 @@ html.cc-popups-on .cc-castats .cc-cs-cta {
 }
 /* Update is an action, so it takes the accent like every other call to action */
 html.cc-popups-on .cc-cs-cta.cc-cs-cta-update {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-popups-on .cc-cs-cta.cc-cs-cta-update:hover { filter: brightness(1.08) !important; }
 /* Installiert is a status rather than an action, so it stays a neutral chip and is not clickable */
@@ -1277,7 +1291,7 @@ html.cc-apps-rbneutral.cc-popups-on .cc-cs-cta.cc-cs-cta-update {
 /* Each badge reacts to its own hover, not to .ca_holder:hover, or a pointer anywhere on the card
    would light them all at once; .appDocker and its siblings work the same way. */
 html.cc-apps-rbneutral.cc-popups-on .cc-cs-cta.cc-cs-cta-update:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 
 /* The card menu holding Info, Support and Actions. header.js ccAppsCardMenu() builds it once per
@@ -1300,8 +1314,8 @@ html.cc-popups-on .cc-ca-menu-btn {
   transition: background .12s ease !important;
 }
 html.cc-popups-on .cc-ca-menu-btn span { width: 14px !important; height: 2px !important; border-radius: 1px !important; background: var(--cc-text-chip, #cfcfcf) !important; }
-html.cc-popups-on .cc-ca-menu-btn:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; }
-html.cc-popups-on .cc-ca-menu-btn:hover span { background: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
+html.cc-popups-on .cc-ca-menu-btn:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; }
+html.cc-popups-on .cc-ca-menu-btn:hover span { background: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 html.cc-popups-on .cc-ca-menu {
   position: fixed !important; z-index: 10000 !important; min-width: 150px !important;
   background: var(--cc-surface-2, #222222) !important; border-radius: var(--cc-b-radius, 8px) !important;
@@ -1312,7 +1326,7 @@ html.cc-popups-on .cc-ca-menu-item {
   font-size: 12px !important; color: var(--cc-text, #e6e6e6) !important; white-space: nowrap !important;
   overflow: hidden !important; text-overflow: ellipsis !important;
 }
-html.cc-popups-on .cc-ca-menu-item:hover { background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; }
+html.cc-popups-on .cc-ca-menu-item:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 html.cc-popups-on .cc-ca-menu hr { border: none !important; border-top: 1px solid var(--cc-shade-line, rgba(128, 128, 128, .14)) !important; margin: 4px 2px !important; }
 /* .actionsButton is the one element here that is accent-filled in the other modes, so the reactive
    mode rests it neutral until its own hover. The hamburger is neutral at rest in every mode and
@@ -1321,7 +1335,7 @@ html.cc-apps-rbneutral.cc-popups-on .cc-castats .actionsButton {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
 html.cc-apps-rbneutral.cc-popups-on .cc-castats .actionsButton:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 
 /* The app info drawer (.sidenav.sidenavShow > #sidenavContent > .popup). CA renders it black,
@@ -1351,7 +1365,7 @@ html.cc-popups-on .popupCloseArea .popUpClose {
   cursor: pointer !important; transition: background .12s ease, color .12s ease !important;
 }
 html.cc-popups-on .popupCloseArea .popUpClose:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-popups-on .popupIcon img { border-radius: var(--cc-b-radius, 8px) !important; }
 html.cc-popups-on .popupName { color: var(--cc-text, #e6e6e6) !important; }
@@ -1367,13 +1381,13 @@ html.cc-popups-on .popupInfo .caButton {
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
 }
 html.cc-popups-on .popupInfo .actionsPopup {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 /* Support and Pin App read the per-badge --cc-rb-c that ccAppsStamp() writes on them, the same
    neutral-rest, coloured-hover recipe as .cc-ic-spot, .ca_readmore and the Donate button. It is
    identical in both colour modes, so unlike .actionsPopup they need no rbneutral variant. */
 html.cc-popups-on .popupInfo .caButton:not(.actionsPopup):hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   filter: none !important;
 }
 html.cc-popups-on .popupInfo .actionsPopup:hover { filter: brightness(1.1) !important; }
@@ -1381,7 +1395,7 @@ html.cc-apps-rbneutral.cc-popups-on .popupInfo .actionsPopup {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
 }
 html.cc-apps-rbneutral.cc-popups-on .popupInfo .actionsPopup:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 /* CA renders the Support glyph as a ::before on the same <span> as its text, so dropping it is
    scoped to that span; the dropdown's own Support Forum icon is an <i> and keeps its glyph. */
@@ -1403,7 +1417,7 @@ html.cc-popups-on .changelog {
   border-radius: var(--cc-b-radius, 8px) !important; padding: 14px 16px !important; margin: 14px 0 !important;
   box-sizing: border-box !important;
 }
-html.cc-popups-on .additionalRequirements { border-left: none !important; box-shadow: inset 3px 0 0 var(--cc-warn, #e0912a) !important; }
+html.cc-popups-on .additionalRequirements { border-left: none !important; box-shadow: inset 3px 0 0 var(--cc-warn, #ff832b) !important; }
 /* section labels: Details / Maintainer / Change Log read as small caps captions, not bare bold text */
 html.cc-popups-on .rightTitle,
 html.cc-popups-on .popupAuthorTitle,
@@ -1435,7 +1449,7 @@ html.cc-popups-on .ca_favouriteRepo {
 html.cc-popups-on .popupProfile:hover,
 html.cc-popups-on .repoPopup:hover,
 html.cc-popups-on .ca_favouriteRepo:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-popups-on .changelogMessage,
 html.cc-popups-on .ca_note {
@@ -1474,13 +1488,13 @@ html.cc-popups-on .cc-ic-spot {
   transition: background .12s ease, color .12s ease !important;
 }
 html.cc-popups-on .cc-ic-spot:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-apps-rbneutral.cc-popups-on .cc-ic-spot {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
 html.cc-apps-rbneutral.cc-popups-on .cc-ic-spot:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 /* The card: --cc-surface-card against the drawer's --cc-surface-window, one step darker, the same
    two-tier depth the notification centre's cards have. The extra top padding and margin leave room
@@ -1502,16 +1516,16 @@ html.cc-popups-on #sidenavContent .cc-ic-legend {
   display: inline-flex !important; align-items: center !important; box-sizing: border-box !important;
   height: 26px !important; padding: 0 14px !important; white-space: nowrap !important;
   border-radius: var(--cc-b-radius, 999px) !important;
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
   font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: .5px !important;
   box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
 }
-/* The additional-requirements legend takes the amber of a warning as a fill rather than a border
-   stripe. Warn is a semantic status colour, not a rotating accent, so it stays amber in every
+/* The additional-requirements legend takes the orange of a warning as a fill rather than a border
+   stripe. Warn is a semantic status colour, not a rotating accent, so it stays orange in every
    colour mode. */
 html.cc-popups-on #sidenavContent .cc-ic-legend.cc-ic-warn {
-  background: var(--cc-warn, #e0912a) !important; color: #1a1400 !important;
+  background: var(--cc-warn, #ff832b) !important; color: var(--cc-warn-fg, #161616) !important;
 }
 /* The section content sits inside .cc-ic-card, which supplies the background, padding and spacing,
    so each piece's own card styling goes rather than boxing twice. */
@@ -1554,7 +1568,7 @@ html.cc-popups-on #sidenavContent .cc-ic-card .ca_readmore {
   transition: background .12s ease, color .12s ease !important;
 }
 html.cc-popups-on #sidenavContent .cc-ic-card .ca_readmore:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 /* CA nests .donateText and .donateDiv inside .popupInfoLeft, so they are already in the maintainer
    card once it is wrapped and only need styling. The generic .popupInfo .caButton rule does not
@@ -1571,7 +1585,7 @@ html.cc-popups-on #sidenavContent .cc-ic-card .donateDiv .caButton.donate {
 }
 html.cc-popups-on #sidenavContent .cc-ic-card .donateDiv .caButton.donate a { color: inherit !important; text-decoration: none !important; }
 html.cc-popups-on #sidenavContent .cc-ic-card .donateDiv .caButton.donate:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 /* CA emits the template error text as a bare <li> with no <ul> around it, kept as it is and styled
    to read */
@@ -1615,8 +1629,8 @@ html.cc-popups-on .betaCardBackground {
   /* one floor, so a corner badge is the same width whatever its label; a longer one still grows */
   min-width: var(--cc-corner-badge-w, 92px) !important;
   border-radius: var(--cc-b-radius, 8px) !important;
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   font-size: var(--cc-sm-fs, 11px) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; white-space: nowrap !important;
   z-index: 3 !important; box-shadow: 0 2px 6px rgba(0, 0, 0, .3) !important; pointer-events: auto !important; flex: 0 0 auto !important;
@@ -1647,13 +1661,13 @@ html.cc-popups-on .homespotlightIconArea::before { content: none !important; } /
 html.cc-popups-on .homespotlightIconArea .spotlightIcon,
 html.cc-popups-on .homespotlightIconArea .spotlightDate { display: none !important; }
 html.cc-popups-on .homespotlightIconArea:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-apps-rbneutral.cc-popups-on .homespotlightIconArea {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
 html.cc-apps-rbneutral.cc-popups-on .homespotlightIconArea:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 /* The ribbons are labels on a card, so they follow the badge contract too.
    .homespotlightIconArea has its own reactive rule just above. */
@@ -1665,7 +1679,7 @@ html.cc-apps-rbneutral.cc-popups-on .betaCardBackground {
 html.cc-apps-rbneutral.cc-popups-on .officialCardBackground:hover,
 html.cc-apps-rbneutral.cc-popups-on .LTOfficialCardBackground:hover,
 html.cc-apps-rbneutral.cc-popups-on .betaCardBackground:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 /* The reactive mode for the card's Info, Support and Installieren buttons: cc.rbmode=active rests
    every badge grey and reveals its colour on hover, as html.cc-header-rbneutral does in Header.css,
@@ -1678,7 +1692,7 @@ html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .caButton {
 }
 html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .actionsButton:hover,
 html.cc-apps-rbneutral.cc-popups-on .ca_bottomLine .caButton:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 
 /* The Action Centre button bar. It lives in .multi_installDiv and its controls are bare
@@ -1710,8 +1724,8 @@ html.cc-popups-on .multi_installDiv .multi_installClear:not(.ca_hide) {
   /* The rest state carries the colour mode, like every other badge; resting neutral and colouring on
      hover is the reactive mode's job. header.js stamps these inputs, so in rainbow each takes its
      own hue. */
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
   box-shadow: none !important; outline: none !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
@@ -1733,17 +1747,17 @@ html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="button"]:hover
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="submit"]:hover,
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installAll:hover,
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installClear:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; filter: none !important;
 }
 /* the primary action carries the colour mode */
 html.cc-popups-on .multi_installDiv .multi_install,
 html.cc-popups-on .multi_installDiv .multi_installButton {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-popups-on .multi_installDiv .multi_install:hover,
-html.cc-popups-on .multi_installDiv .multi_installButton:hover { filter: brightness(1.08) !important; background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; }
+html.cc-popups-on .multi_installDiv .multi_installButton:hover { filter: brightness(1.08) !important; background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; }
 /* A delete stays semantic red and must not read like any other chip. The shared
    input[type="button"] rule excludes it, so this one carries its box shape as well as its colour. */
 html.cc-popups-on .multi_installDiv .multi_deleteButton:not(.ca_hide),
@@ -1756,7 +1770,7 @@ html.cc-popups-on .multi_installDiv .cc-prevapps-delbtn {
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
   box-shadow: none !important; outline: none !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
-  background: var(--cc-err, #d9433f) !important; color: var(--cc-err-fg, #fff) !important;
+  background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important;
 }
 html.cc-popups-on .multi_installDiv .multi_deleteButton:hover,
 html.cc-popups-on .multi_installDiv .cc-prevapps-delbtn:hover { filter: brightness(1.08) !important; }
@@ -1771,7 +1785,7 @@ html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installButton {
 }
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_install:hover,
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installButton:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 
 /* CA's Statistics, Credits and Change Log sub-views share one container, #alternateView, a fixed
@@ -1817,34 +1831,34 @@ html.cc-popups-on #alternateView .alternateViewContent .ca_center > font {
   width: 100% !important; box-sizing: border-box !important;
   height: 40px !important; padding: 0 18px !important;
   border-radius: var(--cc-b-radius, 10px) !important;
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important;
 }
 /* the changelog's version headings become the same small badges the ShipLog changelog popup uses */
 html.cc-popups-on #alternateView .alternateViewContent h3 {
   display: inline-flex !important; align-items: center !important;
-  background: var(--cc-rbaccent, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rbaccent-text, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   padding: 3px 12px !important; border-radius: var(--cc-b-radius, 999px) !important;
   font-size: 13px !important; font-weight: 700 !important; margin: 16px 0 8px !important; letter-spacing: .5px !important;
 }
 html.cc-popups-on #alternateView .alternateViewContent ul { margin: 0 0 6px !important; padding-left: 20px !important; }
 html.cc-popups-on #alternateView .alternateViewContent li { color: var(--cc-text-chip, #d6d6d6) !important; margin: 3px 0 !important; line-height: 1.5 !important; }
-/* The close button is always red, so it stands out on any of these panels; being a semantic colour
-   it does not follow the colour mode, like the delete button in the action bar. */
+/* The close button stands out on any of these panels through its place and the panel's single
+   accent, never through red, which only marks a fault. */
 html.cc-popups-on #alternateView .alternateViewClose {
   position: fixed !important; top: 18px !important; right: 18px !important; left: auto !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   min-height: var(--cc-lgb-h, 36px) !important; padding: 0 20px !important;
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .5px !important;
-  background: var(--cc-err, #d9433f) !important; color: var(--cc-err-fg, #fff) !important;
+  background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important;
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, .45) !important; z-index: 10 !important;
 }
-html.cc-popups-on #alternateView .alternateViewClose:hover { filter: brightness(1.1) !important; background: var(--cc-err, #d9433f) !important; }
+html.cc-popups-on #alternateView .alternateViewClose:hover { filter: brightness(1.1) !important; background: var(--cc-err, #ff8389) !important; }
 /* The stats and credits table: rows separated by a shade rather than a rule, with the value column
    in the accent. CA paints the table black, which sits as a slab inside the frame, so nothing
    inside the panel carries its own fill and the frame is the only surface; the title badge and the
@@ -1856,9 +1870,12 @@ html.cc-popups-on #alternateView table { border-collapse: collapse !important; w
 html.cc-popups-on #alternateView td { border: none !important; padding: 8px 12px !important; vertical-align: middle !important; }
 html.cc-popups-on #alternateView tr + tr td { box-shadow: inset 0 1px 0 var(--cc-shade-line, rgba(128, 128, 128, .14)) !important; }
 html.cc-popups-on #alternateView td.ca_table { color: var(--cc-text-chip, #cfcfcf) !important; font-weight: 500 !important; }
-html.cc-popups-on #alternateView td.ca_stat { color: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; font-weight: 700 !important; font-variant-numeric: tabular-nums !important; text-align: right !important; }
-html.cc-popups-on #alternateView i.fa { color: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; }
-html.cc-popups-on #alternateView a { color: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; text-decoration: none !important; }
+/* Under rainbow the figures and links keep the single accent, since rainbow never colours text, and
+   only the glyphs take the position hue. The panel is dark on every theme, so the plain accent is
+   already its ink. */
+html.cc-popups-on #alternateView td.ca_stat { color: var(--cc-accent, #FCC419) !important; font-weight: 700 !important; font-variant-numeric: tabular-nums !important; text-align: right !important; }
+html.cc-popups-on #alternateView i.fa { color: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; }
+html.cc-popups-on #alternateView a { color: var(--cc-accent, #FCC419) !important; text-decoration: none !important; }
 html.cc-popups-on #alternateView a:hover { filter: brightness(1.16) !important; }
 /* the scroll wrapper CA sets inline (overflow:scroll) draws a permanent bar around the panel */
 html.cc-popups-on #alternateView .alternateViewContent > div[style*="overflow"] { overflow: auto !important; width: 100% !important; }
@@ -1876,8 +1893,8 @@ html.cc-popups-on.cc-ca-settings #displaybox form {
 /* the page's title bar is a SECTION BADGE, not a full-width strip (Style Guide regel 2) */
 html.cc-popups-on.cc-ca-settings #displaybox div.title {
   display: inline-flex !important; align-items: center !important; gap: 8px !important;
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   border-radius: var(--cc-b-radius, 8px) !important;
   padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px) !important;
   font-size: var(--cc-pagebadge-fs, 13px) !important; font-weight: 700 !important;
@@ -1925,7 +1942,7 @@ html.cc-popups-on.cc-ca-settings #displaybox a {
   margin: 10px 6px !important;
 }
 html.cc-popups-on.cc-ca-settings #displaybox a:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; filter: none !important;
 }
 /* every badge on this page shares one box, the buttons and the help link alike */
 html.cc-popups-on.cc-ca-settings #displaybox input[type="button"],
@@ -1960,19 +1977,19 @@ html.cc-popups-on.cc-ca-settings #displaybox center:has(> input) a { margin: 0 !
 /* The submit is the primary action and carries the colour mode; the others rest neutral and reveal
    it on hover, and in the reactive mode the primary rests neutral too. */
 html.cc-popups-on.cc-ca-settings #displaybox input[type="submit"] {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-popups-on.cc-ca-settings #displaybox input[type="button"]:hover,
 html.cc-popups-on.cc-ca-settings #displaybox a:hover,
 html.cc-popups-on.cc-ca-settings #displaybox input[type="submit"]:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; filter: none !important;
 }
 html.cc-popups-on.cc-ca-settings #displaybox input:disabled { opacity: .5 !important; cursor: default !important; }
 html.cc-apps-rbneutral.cc-popups-on.cc-ca-settings #displaybox input[type="submit"] {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
 }
 html.cc-apps-rbneutral.cc-popups-on.cc-ca-settings #displaybox input[type="submit"]:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important; filter: none !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; filter: none !important;
 }
 
 /* Keep the fullscreen tab-load loader out from under an open swal loader: the swal dims the
@@ -2033,8 +2050,8 @@ html.cc-popups-on .pageNavigation .pageSelected,
 html.cc-popups-on .pageNavigation a.pageNumber:hover,
 html.cc-popups-on .pageNavigation .pageLeft:not(.pageNavNoClick):hover,
 html.cc-popups-on .pageNavigation .pageRight:not(.pageNavNoClick):hover {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
 }
 /* an arrow with nowhere to go is dimmed rather than hidden, so the row keeps its width on page 1 */
 html.cc-popups-on .pageNavigation .pageNavNoClick {
@@ -2048,8 +2065,8 @@ html.cc-apps-rbneutral.cc-popups-on .pageNavigation a.pageNumber {
 }
 html.cc-apps-rbneutral.cc-popups-on .pageNavigation a.pageNumber:hover,
 html.cc-apps-rbneutral.cc-popups-on .pageNavigation .pageSelected {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
 }
 /* the "Displaying 1 - 12 (of 56)" line above the pager: quiet caption, tabular digits so the count does
    not jiggle as pages change */
@@ -2070,8 +2087,8 @@ html.cc-popups-on .multi_installDiv [style*="display: none"][style*="display: no
    carrying a FontAwesome glyph; the badge takes the colour and the glyph the contrast colour. */
 html.cc-popups-on a.back_to_top,
 html.cc-popups-on a.move_to_end {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
 }
@@ -2090,8 +2107,8 @@ html.cc-header-rbneutral.cc-popups-on a.move_to_end {
 }
 html.cc-header-rbneutral.cc-popups-on a.back_to_top:hover,
 html.cc-header-rbneutral.cc-popups-on a.move_to_end:hover {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important; filter: none !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; filter: none !important;
 }
 
 /* The search results header. .searchArea carries CA's bare controls (Results per page, DockerHub)
@@ -2110,8 +2127,8 @@ html.cc-popups-on .searchArea .dockerSearch {
   padding: var(--cc-md-pad, 0 20px) !important; margin: 0 !important;
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1 !important;
   text-transform: none !important; letter-spacing: normal !important;
-  background: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #fff)) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
 }
@@ -2135,8 +2152,8 @@ html.cc-popups-on a.sortIcons {
 }
 html.cc-popups-on a.sortIcons:hover,
 html.cc-popups-on a.sortIcons.enabledIcon {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
 }
 /* REACTIVE: maxPerPage/dockerSearch drop back to neutral-at-rest here (their #8-style coloured rest
    above is the NORMAL/Rainbow behaviour); sortIcons rests neutral in every mode, matching the pager.
@@ -2150,8 +2167,8 @@ html.cc-apps-rbneutral.cc-popups-on .searchArea .caButton.maxPerPage:hover,
 html.cc-apps-rbneutral.cc-popups-on .searchArea .dockerSearch:hover,
 html.cc-apps-rbneutral.cc-popups-on a.sortIcons:hover,
 html.cc-apps-rbneutral.cc-popups-on a.sortIcons.enabledIcon {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #2f6feb))) !important;
-  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #fff))) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
 }
 
 /* ═══ #15 RESULTS-PER-PAGE DROPDOWN IN GLS ═══════════════════════════════════════════════════════════
@@ -2178,10 +2195,8 @@ html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a:hover {
 /* The active row: CA's green span and checkmark icon both take the colour mode instead of a
    hardcoded hue. The icon slot stays reserved on the other rows, through fa-fw, so the labels
    stay aligned. */
-html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a .ca_green,
-html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a i.ca_fa-checkmark {
-  color: var(--cc-rb-c, var(--cc-accent, #2f6feb)) !important;
-}
+html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a .ca_green { color: var(--cc-accent-ink, #FCC419) !important; }
+html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a i.ca_fa-checkmark { color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black) !important; }
 html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a i { color: var(--cc-text-dim2, #6f6f6f) !important; width: 16px !important; }
 /* The active row's colour is a state, which page size is on, so it stays coloured in every mode;
    a selection indicator never greys out. */

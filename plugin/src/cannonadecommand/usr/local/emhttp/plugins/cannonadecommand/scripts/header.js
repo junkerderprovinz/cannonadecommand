@@ -14,12 +14,12 @@
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
   function T(d, e) { return LANG === "de" ? d : e; }
   function eff(k, d) { return g("cc.styleheader", "1") !== "0" ? g("cc." + k, d) : g("cch." + k, d); }
-  function accent() { var a = eff("accent", "#2f6feb"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
+  function accent() { var a = eff("accent", "#FCC419"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#FCC419"; }
   // cc.badgeshape is global, so it is read directly: through eff() it would fall back to an unset
   // cch.badgeshape while the adopt toggle is off, and the bar's badge shape would then flip from
   // page to page depending on which script wrote --cc-b-radius last.
   function shape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[g("cc.badgeshape", "pill")] || "999px"; }
-  var RB = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
+  var RB = ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];
   if (window.CCTheme) { idealText = window.CCTheme.idealText; RB = window.CCTheme.RB; } // the local copies are the fallback
   var RB_OFF = window.CCTheme ? window.CCTheme.rbSeed(RB.length) : Math.floor(Math.random() * RB.length); // the persisted seed keeps the rainbow aligned across areas
   // Rainbow is a global mode, read directly rather than through the adopt-gated eff(), so one
@@ -382,7 +382,7 @@
   // sheet goes into the inner document.
   function ccPopIframes() {
     try {
-      var acc = (getComputedStyle(document.documentElement).getPropertyValue("--cc-hdr-accent") || "").trim() || "#2f6feb";
+      var acc = (getComputedStyle(document.documentElement).getPropertyValue("--cc-hdr-accent") || "").trim() || "#FCC419";
       var ifr = document.querySelectorAll(".ui-dialog iframe");
       for (var i = 0; i < ifr.length; i++) {
         (function (f) {
@@ -1039,7 +1039,7 @@
       // thresholds as the dots; text that is not a number leaves an empty grey track.
       var un = parseInt(usage, 10);
       var uw = isNaN(un) ? 0 : Math.max(0, Math.min(100, un));
-      var uc = isNaN(un) ? "#8d8d8d" : un >= 95 ? "#d9433f" : un >= 80 ? "#d6a243" : "#3fae6a";
+      var uc = isNaN(un) ? "#8d8d8d" : un >= 95 ? "var(--cc-err, #ff8389)" : un >= 80 ? "var(--cc-warn, #ff832b)" : "var(--cc-ok, #6fdc8c)";
       // Each chip has its own cc.isl.<key> toggle, on by default, and the fixed render order below
       // keeps the layout the same from page to page.
       function iOn(k) { return g("cc.isl." + k, "1") !== "0"; }
@@ -1082,7 +1082,7 @@
       // the bars themselves look alike, and the tooltip carries the detail.
       function barChip(lead, pctText, tip, cls) {
         var n = parseInt(pctText, 10), w = isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
-        var col = isNaN(n) ? "#8d8d8d" : n >= 95 ? "#d9433f" : n >= 80 ? "#d6a243" : "#3fae6a";
+        var col = isNaN(n) ? "#8d8d8d" : n >= 95 ? "var(--cc-err, #ff8389)" : n >= 80 ? "var(--cc-warn, #ff832b)" : "var(--cc-ok, #6fdc8c)";
         var uch = document.createElement("span"); uch.className = "cc-isl-chip cc-isl-usage" + (cls ? " " + cls : "");
         if (lead) { var lb = document.createElement("span"); lb.className = "cc-isl-lead"; lb.textContent = lead; uch.appendChild(lb); }
         var ubar = document.createElement("span"); ubar.className = "cc-isl-bar";
@@ -1098,7 +1098,7 @@
       // uptime, with the boot timestamp in the bubble
       if (iOn("uptime") && upTxt) {
         var upClean = upTxt.replace(/^(Betriebszeit|Uptime)\s*/i, "");
-        chip(upClean, "#3fae6a", upTitle || (T("Läuft seit ", "Up since ") + upClean), "cc-isl-up");
+        chip(upClean, "var(--cc-ok, #6fdc8c)", upTitle || (T("Läuft seit ", "Up since ") + upClean), "cc-isl-up");
       }
       // the OS edition, with the running version in the bubble
       if (iOn("os")) {
@@ -1111,9 +1111,9 @@
       }
       // the array state, with the parity progress in the bubble while a check runs
       if (iOn("array") && arrSeg) {
-        var low = arrSeg.toLowerCase(), dc = "#d6a243";
-        if (low.indexOf("gestartet") !== -1 || low.indexOf("started") !== -1) dc = "#3fae6a";
-        else if (low.indexOf("gestoppt") !== -1 || low.indexOf("stopped") !== -1) dc = "#d9433f";
+        var low = arrSeg.toLowerCase(), dc = "var(--cc-warn, #ff832b)";
+        if (low.indexOf("gestartet") !== -1 || low.indexOf("started") !== -1) dc = "var(--cc-ok, #6fdc8c)";
+        else if (low.indexOf("gestoppt") !== -1 || low.indexOf("stopped") !== -1) dc = "var(--cc-err, #ff8389)";
         chip(arrSeg, dc, par ? arrSeg + ", " + par[0].replace(/\s+/g, " ") : arrSeg, "cc-isl-array");
       }
       // The fill chip shows a placeholder while its source is empty, so an enabled toggle always
@@ -1122,7 +1122,7 @@
       if (iOn("fill")) barChip(T("Array", "Array"), usage || "--", usage ? T("Array zu " + usage + " belegt", "Array " + usage + " used") : T("Array-Füllstand, auf der Startseite messbar", "Array fill, measured on the Main page"), "cc-isl-array-fill");
       if (iOn("ram") && ccLiveRam) barChip("RAM", ccLiveRam, T("RAM zu " + ccLiveRam + " belegt" + (ccLiveRamUsed ? " (" + ccLiveRamUsed + ")" : ""), "RAM " + ccLiveRam + " used" + (ccLiveRamUsed ? " (" + ccLiveRamUsed + ")" : "")), "cc-isl-ram");
       if (iOn("cpu")) barChip("CPU", ccLiveCpu || "--", ccLiveCpu ? T("CPU-Last " + ccLiveCpu, "CPU load " + ccLiveCpu) : T("CPU-Last derzeit nicht verfügbar", "CPU load currently unavailable"), "cc-isl-cpu");
-      if (iOn("containers") && (ccLiveDocker || dockTot)) chip((ccLiveDocker || "0") + (dockTot ? " / " + dockStop : ""), "#3fae6a", T(dockRun + " laufend" + (dockTot ? ", " + dockStop + " gestoppt (von " + dockTot + ")" : ""), dockRun + " running" + (dockTot ? ", " + dockStop + " stopped (of " + dockTot + ")" : "")), "cc-isl-docker");
+      if (iOn("containers") && (ccLiveDocker || dockTot)) chip((ccLiveDocker || "0") + (dockTot ? " / " + dockStop : ""), "var(--cc-ok, #6fdc8c)", T(dockRun + " laufend" + (dockTot ? ", " + dockStop + " gestoppt (von " + dockTot + ")" : ""), dockRun + " running" + (dockTot ? ", " + dockStop + " stopped (of " + dockTot + ")" : "")), "cc-isl-docker");
       // One chip with a receive and a send segment, fed by ccStartNet(). A click flips the unit
       // between bit and byte, handled in the island's click delegate.
       if (iOn("net")) {
@@ -1144,7 +1144,7 @@
       if (iOn("temps")) {
         for (var i = 0; i < temps.length; i++) {
           var tlab = i === 0 ? T("CPU-Temperatur", "CPU temperature") : i === 1 ? T("Mainboard-Temperatur", "Motherboard temperature") : T("Temperatur", "Temperature");
-          chip(Math.round(temps[i]) + " °C", temps[i] >= warn + 15 ? "#d9433f" : temps[i] >= warn ? "#d6a243" : "#3fae6a", tlab + ": " + temps[i] + " °C", "cc-isl-temp" + i);
+          chip(Math.round(temps[i]) + " °C", temps[i] >= warn + 15 ? "var(--cc-err, #ff8389)" : temps[i] >= warn ? "var(--cc-warn, #ff832b)" : "var(--cc-ok, #6fdc8c)", tlab + ": " + temps[i] + " °C", "cc-isl-temp" + i);
         }
       }
       // The per-service segments stay in the hidden native footer rather than on a chip.
@@ -1780,7 +1780,7 @@
       }
       // The coloured status word in the page-title span becomes a state dot, with the word as its
       // tooltip, like the disk state dots.
-      var stcolor = { green: "#1f9d55", orange: "#e0912a", red: "#d9433f", grey: "#8d8d8d", gray: "#8d8d8d", blue: "#2f6feb" };
+      var stcolor = { green: "var(--cc-ok, #6fdc8c)", orange: "var(--cc-warn, #ff832b)", red: "var(--cc-err, #ff8389)", grey: "#8d8d8d", gray: "#8d8d8d", blue: "#1D99F3" };
       var stwords = document.querySelectorAll("#displaybox div.title .status span[class]:not([data-cc-dot]), #displaybox div.title span.status span[class]:not([data-cc-dot])");
       for (var sw = 0; sw < stwords.length; sw++) {
         var w = stwords[sw]; var cl = (w.className || "").trim().toLowerCase(); var col = stcolor[cl];
@@ -3104,7 +3104,7 @@
     }
     // Wraps live elements in a badge card, the first one anchoring the insertion point. It is the
     // same idea as a fieldset with a legend, the badge sitting half on the card, built from plain
-    // divs because that is what CA's own markup is. `warn` gives the card the amber tone, a
+    // divs because that is what CA's own markup is. `warn` gives the card the orange warning tone, a
     // background tint rather than a border. Every card is a top-level sibling at the same width.
     function cardify(els, title, warn) {
       els = els.filter(Boolean);

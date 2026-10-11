@@ -115,7 +115,7 @@
   function iconBgAdoptsP() { return ls("cc.iconbgrainbow") === "1"; }
   function el(t, c, x) { var n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; }
 
-  var RB_PAL = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
+  var RB_PAL = ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];
   if (window.CCTheme) { RB_PAL = window.CCTheme.RB; }  /* the shared palette, so this tab matches every other area */
   var RB_OFFSET = window.CCTheme ? window.CCTheme.rbSeed(RB_PAL.length) : Math.floor(Math.random() * RB_PAL.length); // the shared seed, so the rotation matches the other areas
   // Rainbow is a global mode, so cc.rainbow, cc.rbpal and cc.rainbowrot are read directly, as in
@@ -124,7 +124,7 @@
   // On a light theme the near-white slots are swapped, see CCTheme.surfacePalette.
   function pal() { var p = storedPal(); return (window.CCTheme && window.CCTheme.surfacePalette) ? window.CCTheme.surfacePalette(p, accent()) : p; }
   function idealText(bg) { var n = parseInt(String(bg).replace("#", ""), 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
-  function accent() { return eff("accent") || "#2f6feb"; }
+  function accent() { return eff("accent") || "#FCC419"; }
   function colorFor(i) {
     if (ls("cc.rainbow") !== "1") return accent();
     var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
@@ -453,7 +453,7 @@
       var name = au.textContent.trim();
       if (name) { au.textContent = ""; var ab = badge("Von", name, idx); ab.classList.add("cc-b-von", "cc-b-pauthor", "cc-plugauth"); au.appendChild(ab); }
     }
-    // Column 4 (vid) is rebuilt after every ajax rewrite: [Neu <new>] (amber, only with a pending
+    // Column 4 (vid) is rebuilt after every ajax rewrite: [Neu <new>] (orange, only with a pending
     // update), [Version <old>], [Changelog]. The native info circle keeps its delegated handler;
     // it is hidden and the changelog badge clicks it.
     var vid = tds[3];
@@ -466,8 +466,8 @@
       var nb0 = el("span", "cc-b"); nb0.setAttribute(MARK, "1");
       nb0.appendChild(el("span", "cc-b-k", "Neu"));
       nb0.appendChild(el("span", "cc-b-v", redV.textContent.trim()));
-      nb0.style.setProperty("background", "#e0912a", "important");
-      nb0.style.setProperty("color", "#161616", "important");
+      nb0.style.setProperty("background", "var(--cc-warn, #ff832b)", "important");
+      nb0.style.setProperty("color", "var(--cc-warn-fg, #161616)", "important");
       col.insertBefore(nb0, col.firstChild);
     }
     if (!col.querySelector(".cc-verb")) {
@@ -489,16 +489,16 @@
       }
     }
     // Column 5 (sid): the status badge. The update check rewrites the cell, so this runs on every
-    // mutation. With native state colours on it is green (up to date) or amber (update);
+    // mutation. With native state colours on it is green (up to date) or orange (update);
     // otherwise it follows the colour mode.
     var sid = tds[4];
     var stNative = ls("cc.statenative") === "1";
     var pRs = getComputedStyle(document.documentElement);
-    var palC = (pRs.getPropertyValue("--cc-rbaccent") || "").trim() || (pRs.getPropertyValue("--cc-accent") || "").trim() || "#2f6feb";
-    var palT = (pRs.getPropertyValue("--cc-rbaccent-text") || "").trim() || (pRs.getPropertyValue("--cc-accent-text") || "").trim() || "#fff";
+    var palC = (pRs.getPropertyValue("--cc-rbaccent") || "").trim() || (pRs.getPropertyValue("--cc-accent") || "").trim() || "#FCC419";
+    var palT = (pRs.getPropertyValue("--cc-rbaccent-text") || "").trim() || (pRs.getPropertyValue("--cc-accent-text") || "").trim() || "#161616";
     var upA = sid.querySelector("a:not([data-ccp]), input[type=button]:not([data-ccp])");
     if (upA && /update|aktualis/i.test(upA.textContent || upA.value || "")) {
-      upA.setAttribute(MARK, "1"); pill(upA, stNative ? "#e0912a" : palC, stNative ? "#161616" : palT);
+      upA.setAttribute(MARK, "1"); pill(upA, stNative ? "var(--cc-warn, #ff832b)" : palC, stNative ? "var(--cc-warn-fg, #161616)" : palT);
       upA.style.setProperty("cursor", "pointer", "important");
       upA.style.setProperty("font-weight", "600", "important");
     }
@@ -508,8 +508,8 @@
     }
     if (stEl && !stEl.getAttribute(MARK)) {
       var t2 = sid.textContent.toLowerCase();
-      if (/up.to.date|aktuell|neue?sten stand|current/.test(t2)) { pill(stEl, stNative ? "#1f9d55" : palC, stNative ? "#fff" : palT); stEl.setAttribute(MARK, "1"); }
-      else if (/update|aktualis|install/.test(t2) && !/checking|prüf/.test(t2)) { pill(stEl, stNative ? "#e0912a" : palC, stNative ? "#161616" : palT); stEl.setAttribute(MARK, "1"); }
+      if (/up.to.date|aktuell|neue?sten stand|current/.test(t2)) { pill(stEl, stNative ? "var(--cc-ok, #6fdc8c)" : palC, stNative ? "var(--cc-ok-fg, #161616)" : palT); stEl.setAttribute(MARK, "1"); }
+      else if (/update|aktualis|install/.test(t2) && !/checking|prüf/.test(t2)) { pill(stEl, stNative ? "var(--cc-warn, #ff832b)" : palC, stNative ? "var(--cc-warn-fg, #161616)" : palT); stEl.setAttribute(MARK, "1"); }
     }
     var lnk = sid.querySelector("a"); if (lnk) lnk.style.setProperty("color", "inherit", "important");
     // Column 6: the remove control, the same delete control as on the Shares detail page. The
@@ -538,7 +538,7 @@
       // since Unraid keeps it disabled until the hidden checkbox is ticked. The .cc-b-delicon
       // look and the hidden checkbox live in docker.css.
       var native = isRemove ? (rm.getAttribute("onclick") || "") : "";
-      if (native) {
+      if (native && window.CCTheme) {
         rm.removeAttribute("onclick");
         rm.disabled = false;
         rm.classList.add("cc-b-delicon");
@@ -689,9 +689,9 @@
       // lite tables (install errors / stale): ERROR pill + red action link
       Array.prototype.slice.call(document.querySelectorAll("table.cc-plug-lite tbody tr")).forEach(function (tr5) {
         var st5 = tr5.querySelector("span.orange-text, span.red-text");
-        if (st5 && !st5.getAttribute(MARK)) { st5.setAttribute(MARK, "1"); pill(st5, "#e0912a", "#161616"); }
+        if (st5 && !st5.getAttribute(MARK)) { st5.setAttribute(MARK, "1"); pill(st5, "var(--cc-warn, #ff832b)", "var(--cc-warn-fg, #161616)"); }
         var ac5 = tr5.querySelector("a, input[type=button]");
-        if (ac5 && !ac5.getAttribute(MARK)) { ac5.setAttribute(MARK, "1"); pill(ac5, "#d9433f", "#fff"); ac5.style.setProperty("cursor", "pointer", "important"); }
+        if (ac5 && !ac5.getAttribute(MARK)) { ac5.setAttribute(MARK, "1"); pill(ac5, "var(--cc-err, #ff8389)", "var(--cc-err-fg, #161616)"); ac5.style.setProperty("cursor", "pointer", "important"); }
       });
       plugPinTick();
       // the Check/Update/Remove buttons in the tab bar become accent pills

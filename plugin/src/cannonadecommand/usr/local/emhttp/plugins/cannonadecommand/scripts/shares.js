@@ -14,16 +14,16 @@
   }
   // adopt toggle: cc.styleshares on -> shared cc.* keys, else this area's own ccsh.* keys
   function eff(k, d) { return g("cc.styleshares", "1") !== "0" ? g("cc." + k, d) : g("ccsh." + k, d); }
-  function accent() { var a = eff("accent", "#2f6feb"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
+  function accent() { var a = eff("accent", "#FCC419"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#FCC419"; }
   // /Main is its own area (cc.enable.main, cc.stylemain, ccm.*) but lives here because it reuses
   // the flatten and badge code. On /Main --cc-shr-accent carries the Start accent, so the
   // shares-scoped rules paint in that colour without a second CSS scope.
   function effMain(k, d) { return g("cc.stylemain", "1") !== "0" ? g("cc." + k, d) : g("ccm." + k, d); }
-  function mainAccent() { var a = effMain("accent", "#2f6feb"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
+  function mainAccent() { var a = effMain("accent", "#FCC419"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#FCC419"; }
   // cc.badgeshape is global; an adopt-aware read would fall back to an unset ccsh.badgeshape
   // and flip --cc-b-radius between pages.
   function shape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[g("cc.badgeshape", "pill")] || "999px"; }
-  var RB = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
+  var RB = ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];
   if (window.CCTheme) { idealText = window.CCTheme.idealText; RB = window.CCTheme.RB; } // the local copies are the fallback
   var RB_OFF = window.CCTheme ? window.CCTheme.rbSeed(RB.length) : Math.floor(Math.random() * RB.length); // the persisted seed keeps the rainbow aligned across areas
   // Rainbow is a global mode, read directly rather than through eff(), so one switch colours

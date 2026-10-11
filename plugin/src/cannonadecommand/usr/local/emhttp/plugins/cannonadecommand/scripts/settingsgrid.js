@@ -14,7 +14,7 @@
   }
   // adopt toggle: cc.stylesettings on -> shared cc.* keys, else this area's own ccs.* keys
   function eff(k, d) { return g("cc.stylesettings", "1") !== "0" ? g("cc." + k, d) : g("ccs." + k, d); }
-  function accent() { var a = eff("accent", "#2f6feb"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#2f6feb"; }
+  function accent() { var a = eff("accent", "#FCC419"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#FCC419"; }
   // Adopting the rainbow/accent for the icons is a global decision, so it bypasses eff(). While
   // it is on, bgColorEff() answers "" and paintGrid() takes the rotating colour per tile.
   function bgAdopting() { return g("cc.iconbgrainbow", "0") === "1"; }
@@ -62,7 +62,7 @@
   // cc.sgsize (global): tile badge [box, glyph]. The default m matches Docker's logo tile
   // (62px content + 8px pad); favorites.js reads the same key so /Favorites matches.
   function sgSize() { return ({ s: ["64px", "32px"], m: ["78px", "38px"], l: ["96px", "46px"] })[g("cc.sgsize", "m")] || ["78px", "38px"]; }
-  var RB = ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];
+  var RB = ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];
   if (window.CCTheme) { idealText = window.CCTheme.idealText; RB = window.CCTheme.RB; } // the local copies are the fallback
   var RB_OFF = window.CCTheme ? window.CCTheme.rbSeed(RB.length) : Math.floor(Math.random() * RB.length); // the persisted seed keeps the rainbow aligned across areas
   // Rainbow is a global mode, read directly rather than through eff(), so one switch colours

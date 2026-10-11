@@ -12,20 +12,10 @@
   function g(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   function s(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
-  // The eight rainbow hues share one saturation and lightness, so they read as a matched set and
-  // idealText does not flip from hue to hue.
-  function hsl2hex(h, s, l) {
-    h /= 360; var r, g2, b2;
-    if (s === 0) { r = g2 = b2 = l; } else {
-      var hue2rgb = function (p, q, t) { if (t < 0) t += 1; if (t > 1) t -= 1; if (t < 1 / 6) return p + (q - p) * 6 * t; if (t < 1 / 2) return q; if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6; return p; };
-      var q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
-      r = hue2rgb(p, q, h + 1 / 3); g2 = hue2rgb(p, q, h); b2 = hue2rgb(p, q, h - 1 / 3);
-    }
-    var hx = function (x) { var v = Math.round(x * 255).toString(16); return v.length === 1 ? "0" + v : v; };
-    return "#" + hx(r) + hx(g2) + hx(b2);
-  }
-  // Red, orange, gold, green, teal, blue, violet and pink.
-  var RB = [0, 26, 45, 142, 176, 216, 262, 330].map(function (h) { return hsl2hex(h, 0.50, 0.58); });
+  // GlimStone's palette, the Carbon 30 steps once round the wheel: red, orange, Sunflower, green,
+  // teal, blue, purple and magenta. Sunflower is the default accent, so one position always matches
+  // it. A stored cc.rbpal replaces the whole set and is never rewritten.
+  var RB = ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];
 
   // Dark ink on light accents, white on dark (Rec-601 luma, threshold 150). The fallbacks in the
   // area scripts use the same formula.

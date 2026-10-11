@@ -26,7 +26,7 @@
       // builder shows seven presets in a hex row to keep the total at nine.
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;border-radius:var(--cc-b-radius,5px)}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:var(--cc-b-radius,5px);cursor:pointer;color:#cfcfcf;font-size:14px;transition:filter .12s,background .12s,color .12s}" +
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn:hover{background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff)}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn:hover{background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{flex:2 2 0;height:30px;min-width:0;box-sizing:border-box;padding:0 8px;align-self:center;font-size:11px;letter-spacing:0;margin:0}" +
       // the settings search and the reset-everything button
       "#cc-settings .cc-set-searchrow{margin:12px 0 2px}" +
@@ -38,8 +38,8 @@
       "#cc-settings .cc-set-search:focus{background:#2e2e2e}" +
       // The search is a badge that expands into an input on click. Collapsed it follows the colour
       // mode; expanded it becomes a dark input box.
-      "#cc-settings .cc-set-searchbadge{margin-left:auto;display:inline-flex;align-items:center;background:var(--cc-btn-accent,var(--cc-accent,#2f6feb));border-radius:min(var(--cc-b-radius,999px),17px);height:34px;overflow:hidden;transition:background-color .12s}" +
-      "#cc-settings .cc-set-searchbadge .cc-set-searchicon{flex:0 0 auto;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:var(--cc-accent-text,#fff);cursor:pointer}" +
+      "#cc-settings .cc-set-searchbadge{margin-left:auto;display:inline-flex;align-items:center;background:var(--cc-btn-accent,var(--cc-accent,#FCC419));border-radius:min(var(--cc-b-radius,999px),17px);height:34px;overflow:hidden;transition:background-color .12s}" +
+      "#cc-settings .cc-set-searchbadge .cc-set-searchicon{flex:0 0 auto;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:var(--cc-accent-text, #161616);cursor:pointer}" +
       "#cc-settings .cc-set-searchbadge.cc-open{background:#2e2e2e}" +
       "#cc-settings .cc-set-searchbadge:hover{filter:brightness(1.08)}" +
       "#cc-settings .cc-set-searchbadge.cc-open .cc-set-searchicon{color:#fff}" +
@@ -49,8 +49,8 @@
       // the version line at the very bottom, centred and muted
       "#cc-settings .cc-set-version-foot{margin:28px 0 6px;text-align:center;opacity:.55;font-size:12px}" +
       // the native-display link as an accent button rather than the grey chip
-      "#cc-settings .cc-btn.cc-btn-accent{background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff)}" +
-      "#cc-settings .cc-btn.cc-btn-accent:hover{filter:brightness(1.14);background:var(--cc-accent,#2f6feb);color:var(--cc-accent-text,#fff)}" +
+      "#cc-settings .cc-btn.cc-btn-accent{background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
+      "#cc-settings .cc-btn.cc-btn-accent:hover{filter:brightness(1.14);background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
       "#cc-settings .cc-set-danger{background:#5a2a2a!important;color:#ffd7d7!important}" +
       "#cc-settings .cc-set-danger:hover{filter:brightness(1.18)}" +
       "#cc-settings .cc-flag-picker{position:relative;margin-top:6px;max-width:340px}" +
@@ -95,10 +95,10 @@
     { key: "plan", label: T("Startplan", "Plan") },
     { key: "restart", label: T("Restart-Policy", "Restart policy") },
   ];
-  var PRESETS = ["#2f6feb", "#1f9d55", "#ff8c2f", "#8b5cf6", "#e0912a", "#d9433f", "#0ea5a4", "#e05299", "#525252"];
-  // The rainbow colour per column, in the order of COLS, so the matrix checkboxes echo the
-  // Docker-tab badge colours. The four network columns share a family of related hues.
-  var RB = ["#1f9d55", "#2f6feb", "#6b7280", "#8b5cf6", "#7c6df0", "#5b8def", "#4aa3c7", "#d9433f", "#0ea5a4", "#e05299", "#0891b2", "#6366f1", "#e0912a"];
+  // GlimStone's accent presets, the same eight in the same order in every app of the family, so
+  // Blue here is the Blue of the next app. Only the offer changes: a saved cc.accent is never
+  // rewritten, whichever preset it came from.
+  var PRESETS = ["#FCC419", "#1D99F3", "#6FDC8C", "#FF8389", "#BE95FF", "#FF832B", "#3DDBD9", "#FF7EB6"];
 
   // Each column gets an object of its own from a factory call: chkCell mutates these in place, so a
   // shared reference would let one checkbox flip every column that aliased it. Stays in step with
@@ -142,7 +142,7 @@
   })();
   function loadColview() { try { var j = JSON.parse(localStorage.getItem("cc.colview2") || "null"); if (j && typeof j === "object") { var d = defColview(); Object.keys(d).forEach(function (k) { if (j[k]) d[k] = { s: !!j[k].s, a: !!j[k].a }; }); return d; } } catch (e) {} return defColview(); }
 
-  var accent = get("cc.accent", "#2f6feb");
+  var accent = get("cc.accent", "#FCC419");
   var rainbow = get("cc.rainbow", "0") === "1";
   var iconcolor = get("cc.iconcolor", "");
   var iconstrength = parseInt(get("cc.iconstrength", "100"), 10);
@@ -293,7 +293,7 @@
   // The plugin's one info glyph, shared through cc-theme.js; this is the fallback for a page that
   // loads without it. Hover or keyboard focus shows the explanation in a bubble.
   function infoIcon(tip) { if (window.CCTheme && window.CCTheme.infoIcon) return window.CCTheme.infoIcon(tip); var s = el("span", "cc-info"); s.innerHTML = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3" /><circle cx="8" cy="4.6" r="0.9" fill="currentColor" /><path d="M8 7v4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>'; if (tip) { s.setAttribute("data-tip", tip); s.setAttribute("aria-label", tip); } s.setAttribute("tabindex", "0"); return s; }
-  // normalise a typed hex ("2f6feb" / "#2F6FEB") to "#rrggbb", or "" if invalid.
+  // normalise a typed hex ("fcc419" / "#FCC419") to "#rrggbb", or "" if invalid.
   function normHex(s) { var v = String(s || "").trim(); if (/^[0-9a-f]{6}$/i.test(v)) v = "#" + v; return /^#[0-9a-f]{6}$/i.test(v) ? v.toLowerCase() : ""; }
 
   // A badge-styled on/off toggle, built from a span rather than a button: Unraid's global button
@@ -348,7 +348,7 @@
     // The background and the tint are two independent pairs: the background draws the badge box
     // in its own colour, falling back to the tint colour and then the accent, while the tint
     // recolours the icon and has its own switch, so a badge alone never forces a recolour.
-    var st = { bg: false, bgColor: "", tint: false, color: "", strength: 100, accent: "#2f6feb", size: null };
+    var st = { bg: false, bgColor: "", tint: false, color: "", strength: 100, accent: "#FCC419", size: null };
     var bound = false;
     function C() { return window.CCTheme && window.CCTheme.icons; }
     function hex6(c) { c = String(c == null ? "" : c).trim(); return /^#[0-9a-f]{3}$/i.test(c) ? "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c; }
@@ -471,7 +471,7 @@
     function bgColorEff() {
       var c = io.getBgColor(); if (/^#[0-9a-f]{6}$/i.test(c)) return c;
       var ic = io.getColor(); if (/^#[0-9a-f]{6}$/i.test(ic)) return ic;
-      return /^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#1f9d55";
+      return /^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#FCC419";
     }
     // The master toggle is a global decision, so only the global card shows a switch for it. An
     // area card still reads getAdopt() to dim its colour pickers, it just has no row of its own;
@@ -493,7 +493,7 @@
       sync(); io.onChange();
     });
     var bgRow = el("div", "cc-set-row cc-set-inline"); bgRow.appendChild(el("span", null, T("Hintergrund", "Background"))); bgRow.appendChild(bgTg);
-    var bgHx = el("input", "cc-set-hexin"); bgHx.type = "text"; bgHx.value = io.getBgColor() || ""; bgHx.placeholder = "#1f9d55"; bgHx.maxLength = 7; bgHx.spellcheck = false;
+    var bgHx = el("input", "cc-set-hexin"); bgHx.type = "text"; bgHx.value = io.getBgColor() || ""; bgHx.placeholder = "#FCC419"; bgHx.maxLength = 7; bgHx.spellcheck = false;
     var bgPk = inlinePicker(bgColorEff(), function (v) { io.setBgColor(v); bgHx.value = v; sync(); io.onChange(); });
     bgHx.addEventListener("input", function () { var v = normHex(bgHx.value); if (v) { io.setBgColor(v); bgPk._set(v); sync(); io.onChange(); } });
     var bgPickRow = el("div", "cc-set-pickrow"); bgPickRow.appendChild(bgPk); bgPickRow.appendChild(bgHx);
@@ -505,8 +505,8 @@
     });
     // The label reads "Icons"; the storage key and every name in the code stay as the tint.
     var tintRow = el("div", "cc-set-row cc-set-inline"); tintRow.appendChild(el("span", null, T("Icons", "Icons"))); tintRow.appendChild(tintTg);
-    var tintHx = el("input", "cc-set-hexin"); tintHx.type = "text"; tintHx.value = io.getColor() || ""; tintHx.placeholder = "#1f9d55"; tintHx.maxLength = 7; tintHx.spellcheck = false;
-    var tintPk = inlinePicker(/^#[0-9a-f]{6}$/i.test(io.getColor()) ? io.getColor() : (/^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#1f9d55"), function (v) { io.setColor(v); tintHx.value = v; sync(); io.onChange(); });
+    var tintHx = el("input", "cc-set-hexin"); tintHx.type = "text"; tintHx.value = io.getColor() || ""; tintHx.placeholder = "#FCC419"; tintHx.maxLength = 7; tintHx.spellcheck = false;
+    var tintPk = inlinePicker(/^#[0-9a-f]{6}$/i.test(io.getColor()) ? io.getColor() : (/^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#FCC419"), function (v) { io.setColor(v); tintHx.value = v; sync(); io.onChange(); });
     tintHx.addEventListener("input", function () { var v = normHex(tintHx.value); if (v) { io.setColor(v); tintPk._set(v); sync(); io.onChange(); } });
     var tintPickRow = el("div", "cc-set-pickrow"); tintPickRow.appendChild(tintPk); tintPickRow.appendChild(tintHx);
 
@@ -624,7 +624,7 @@
     // The theming snapshot is re-read on every render: these are module-level variables read once
     // at load, and a setting change calls render(), so without this the page repaints from the
     // value it started with and a freshly flipped switch snaps back.
-    accent = get("cc.accent", "#2f6feb");
+    accent = get("cc.accent", "#FCC419");
     rainbow = get("cc.rainbow", "0") === "1";
     iconcolor = get("cc.iconcolor", "");
     iconstrength = parseInt(get("cc.iconstrength", "100"), 10);
@@ -653,7 +653,7 @@
     var verLine = el("div", "cc-set-sub cc-set-version cc-set-version-foot", "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + T("Engine: verbinde…", "Engine: connecting…"));
     api("GET", "state").then(function (s) {
       verLine.textContent = "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + ((s && s.version) ? ("Engine " + String(s.version).replace(/^v/, "v")) + " · " + T("läuft", "running") : T("Engine läuft (Version unbekannt)", "Engine running (version unknown)"));
-    }).catch(function (e) { verLine.textContent = "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + T("Engine nicht erreichbar", "Engine not reachable") + ": " + (e && e.message ? e.message : ""); verLine.style.color = "#d9433f"; });
+    }).catch(function (e) { verLine.textContent = "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + T("Engine nicht erreichbar", "Engine not reachable") + ": " + (e && e.message ? e.message : ""); verLine.style.color = "var(--cc-err-ink, #ff8389)"; });
     // The settings search filters cards and rows across every tab. It sits at the right of the
     // hero as a badge with a magnifier that expands into the input on click.
     var setSearch = el("input", "cc-set-search"); setSearch.type = "search"; setSearch.placeholder = T("Einstellungen durchsuchen …", "Search settings …"); setSearch.spellcheck = false;
@@ -959,7 +959,7 @@
       // vars, which the hover rule paints from; the active tab keeps its direct colour.
       var reactive = rb && get("cc.rbmode", "all") === "active";
       // palG() is scoped inside buildStyleCards, so the palette is read directly here
-      var DEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"], p = DEF;   // the shared palette, so the strip matches the rest of the UI
+      var DEF = (window.CCTheme && window.CCTheme.RB) || ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"], p = DEF;   // the shared palette, so the strip matches the rest of the UI
       try { var j = JSON.parse(get("cc.rbpal", "null")); if (j && j.length) p = j; } catch (e) {}
       if (window.CCTheme && window.CCTheme.surfacePalette) p = window.CCTheme.surfacePalette(p);
       tabBtns.forEach(function (b, i) {
@@ -1001,10 +1001,10 @@
     // window of its own.
     var c1 = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
     var prow = el("div", "cc-set-pickrow");
-    var hexIn = el("input", "cc-set-hexin"); hexIn.type = "text"; hexIn.value = accent; hexIn.placeholder = "#2f6feb"; hexIn.maxLength = 7; hexIn.spellcheck = false;
+    var hexIn = el("input", "cc-set-hexin"); hexIn.type = "text"; hexIn.value = accent; hexIn.placeholder = "#FCC419"; hexIn.maxLength = 7; hexIn.spellcheck = false;
     // The handlers push the new colour onto the live bars as well: the header and the shares area
     // own isolated vars, so writing --cc-accent here alone would leave them until the next reload.
-    var pick = inlinePicker(/^#[0-9a-f]{6}$/i.test(accent) ? accent : "#2f6feb", function (v) { accent = v; hexIn.value = v; set("cc.accent", v); root.style.setProperty("--cc-accent", v); root.style.setProperty("--cc-accent-text", idealText(v)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); });
+    var pick = inlinePicker(/^#[0-9a-f]{6}$/i.test(accent) ? accent : "#FCC419", function (v) { accent = v; hexIn.value = v; set("cc.accent", v); root.style.setProperty("--cc-accent", v); root.style.setProperty("--cc-accent-text", idealText(v)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); });
     function setAccent(v) { accent = v; pick._set(v); hexIn.value = v; set("cc.accent", accent); root.style.setProperty("--cc-accent", accent); root.style.setProperty("--cc-accent-text", idealText(accent)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); }
     hexIn.addEventListener("input", function () { var v = normHex(hexIn.value); if (v) setAccent(v); });
     prow.appendChild(pick); c1.appendChild(prow);
@@ -1013,7 +1013,7 @@
     // sweeping every swatch on the page and marking it against the global accent would un-mark an
     // area card's own pick whenever the global colour changed.
     var srow = el("div", "cc-set-swatches cc-fill cc-set-swrow-global");
-    PRESETS.slice(0, 7).forEach(function (c) {   // seven presets plus the two-cell hex field make nine
+    PRESETS.forEach(function (c) {   // all eight presets, with the two-cell hex field after them
       // a span rather than a button, which Unraid's global CSS would bloat into a bordered box
       var sw = el("span", "cc-set-sw"); sw.setAttribute("data-tip", c); sw.style.background = c; sw.dataset.c = c;
       swMark(sw, c === accent, c);
@@ -1043,7 +1043,7 @@
     c1.appendChild(rrot);
     // Every palette colour is editable: clicking a swatch opens the embedded picker below it. The
     // palette is stored as JSON in cc.rbpal, which the Docker tab reads live.
-    var RBDEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; // the shared palette, or the swatches and the live UI disagree
+    var RBDEF = (window.CCTheme && window.CCTheme.RB) || ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"]; // the shared palette, or the swatches and the live UI disagree
     var rbpal = null; try { rbpal = JSON.parse(get("cc.rbpal", "null")); } catch (e) { rbpal = null; }
     if (!rbpal || rbpal.length !== RBDEF.length) rbpal = RBDEF.slice();
     var rbrow = el("div", "cc-set-swatches cc-fill");
@@ -1194,7 +1194,7 @@
     var snR = el("div", "cc-set-row cc-set-inline");
     var snL = el("span", "cc-set-lblwrap");
     snL.appendChild(el("span", null, T("Zustandsanzeigen nativ färben", "Native state colours")));
-    snL.appendChild(infoIcon(T("An: Auslastungsbalken und Status-Badges behalten ihre native Zustandsfarbe (grün, gelb, rot). Aus: sie werden in den aktuellen Farbmodus integriert. Zustands-Punkte bei Containern und Laufwerken sind immer nativ, denn bei ihnen ist die Farbe die einzige Information.", "On: usage bars and status badges keep their native state colour (green, amber, red). Off: they fold into the current colour mode. The state dots on containers and drives are always native, because for them the colour is the only information there is.")));
+    snL.appendChild(infoIcon(T("An: Auslastungsbalken und Status-Badges behalten ihre native Zustandsfarbe (grün, orange, rot). Aus: sie werden in den aktuellen Farbmodus integriert. Zustands-Punkte bei Containern und Laufwerken sind immer nativ, denn bei ihnen ist die Farbe die einzige Information.", "On: usage bars and status badges keep their native state colour (green, orange, red). Off: they fold into the current colour mode. The state dots on containers and drives are always native, because for them the colour is the only information there is.")));
     snR.appendChild(snL);
     snR.appendChild(toggle(get("cc.statenative", "0") === "1", function (v) { set("cc.statenative", v ? "1" : "0"); syncHeaderBar(); syncSharesBar(); }));
     c1.appendChild(snR);
@@ -1225,7 +1225,7 @@
       // the three previews at the bottom of this card, repainted by every control in it
       var gPrevs = [];
       function gpaint() {
-        var acc9 = get("cc.accent", "#2f6feb");
+        var acc9 = get("cc.accent", "#FCC419");
         var strn = parseInt(get("cc.iconstrength", "100"), 10) || 100;
         // The preview does not simulate the rainbow rotation, so while adopting it approximates
         // the resolved background with the accent, as accurate as the rainbow-off case. The ink is
@@ -1249,7 +1249,7 @@
         setColor: function (v) { set("cc.iconcolor", v); },
         getAdopt: function () { return get("cc.iconbgrainbow", "0") === "1"; },
         setAdopt: function (v) { set("cc.iconbgrainbow", v ? "1" : "0"); },
-        getAccent: function () { return get("cc.accent", "#2f6feb"); },
+        getAccent: function () { return get("cc.accent", "#FCC419"); },
         onChange: gsync
       });
       gLT.strInput.value = String(parseInt(get("cc.iconstrength", "100"), 10) || 100);
@@ -1322,7 +1322,7 @@
       // card from showing a second copy of that switch.
       getAdopt: function () { return get("cc.iconbgrainbow", "0") === "1"; },
       setAdopt: function (v) { set("cc.iconbgrainbow", v ? "1" : "0"); },
-      getAccent: function () { return get("cc.accent", "#2f6feb"); },
+      getAccent: function () { return get("cc.accent", "#FCC419"); },
       onChange: c2OnChange,
       hideAdoptRow: true
     });
@@ -1348,7 +1348,7 @@
       tintPrev();
     }).catch(function () { dockPrev.add("/plugins/cannonadecommand/images/cannonadecommand.png", ""); tintPrev(); });
     function tintPrev() {
-      var acc9 = get("cc.accent", "#2f6feb");
+      var acc9 = get("cc.accent", "#FCC419");
       // While adopting, the accent approximates the resolved background, as in gpaint() above, and
       // the ink is its automatic contrast, forced on whatever the tint's own switch says.
       var adopt9 = get("cc.iconbgrainbow", "0") === "1";
@@ -1361,8 +1361,9 @@
     var tbl = el("table", "cc-set-tbl");
     var thr = el("tr"); thr.appendChild(el("th")); thr.appendChild(thc(T("Einfach", "Simple"))); thr.appendChild(thc(T("Advanced", "Advanced"))); tbl.appendChild(thr);
     COLS.forEach(function (c, i) {
-      var tr = el("tr"); tr.appendChild(el("td", "cc-set-cname", c.label));
-      tr.appendChild(chkCell(c.key, "s", RB[i])); tr.appendChild(chkCell(c.key, "a", RB[i])); tbl.appendChild(tr);
+      var tr = el("tr"), hue = window.CCTheme ? window.CCTheme.rbColor(i, accent) : accent;   // one palette position per column
+      tr.appendChild(el("td", "cc-set-cname", c.label));
+      tr.appendChild(chkCell(c.key, "s", hue)); tr.appendChild(chkCell(c.key, "a", hue)); tbl.appendChild(tr);
     });
     c3.appendChild(tbl);
     wrap.appendChild(c3);
@@ -1429,7 +1430,7 @@
         // current global accent, so the colour does not jump to the built-in default and the
         // area's picker shows what is actually in effect.
         var p = ADOPT_PREF[key];
-        if (!v && p && localStorage.getItem(p + "accent") == null) set(p + "accent", get("cc.accent", "#2f6feb"));
+        if (!v && p && localStorage.getItem(p + "accent") == null) set(p + "accent", get("cc.accent", "#FCC419"));
         if (styleCardSync[key]) styleCardSync[key]();   // the picker and preview jump to the now effective colour
         if (onChange) onChange(); syncHeaderBar(); syncSharesBar();
       });
@@ -1461,7 +1462,7 @@
       var adoptKey = ADOPT[P];
       // The card always shows the effective colour: the global accent while adopt is on, the
       // area's own while it is off, so the fields jump the moment it is flipped.
-      function effAcc() { return (adoptKey && localStorage.getItem(adoptKey) !== "0") ? get("cc.accent", "#2f6feb") : get(P + "accent", "#2f6feb"); }
+      function effAcc() { return (adoptKey && localStorage.getItem(adoptKey) !== "0") ? get("cc.accent", "#FCC419") : get(P + "accent", "#FCC419"); }
       var acc = effAcc(), istr = parseInt(get(P + "iconstrength", "100"), 10) || 100;
       function useOwn() {
         if (adoptKey && localStorage.getItem(adoptKey) !== "0") {
@@ -1472,12 +1473,12 @@
       }
       var cA = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
       var pr = el("div", "cc-set-pickrow");
-      var hx = el("input", "cc-set-hexin"); hx.type = "text"; hx.value = acc; hx.placeholder = "#2f6feb"; hx.maxLength = 7; hx.spellcheck = false;
-      var pk = inlinePicker(/^#[0-9a-f]{6}$/i.test(acc) ? acc : "#2f6feb", function (v) { acc = v; hx.value = v; set(P + "accent", v); useOwn(); paintPv(); });
+      var hx = el("input", "cc-set-hexin"); hx.type = "text"; hx.value = acc; hx.placeholder = "#FCC419"; hx.maxLength = 7; hx.spellcheck = false;
+      var pk = inlinePicker(/^#[0-9a-f]{6}$/i.test(acc) ? acc : "#FCC419", function (v) { acc = v; hx.value = v; set(P + "accent", v); useOwn(); paintPv(); });
       hx.addEventListener("input", function () { var v = normHex(hx.value); if (v) { acc = v; pk._set(v); set(P + "accent", v); useOwn(); paintPv(); } });
       pr.appendChild(pk); cA.appendChild(pr);
       var sr = el("div", "cc-set-swatches cc-fill");
-      PRESETS.slice(0, 7).forEach(function (c) {   // seven presets plus the two-cell hex field make nine
+      PRESETS.forEach(function (c) {   // all eight presets, with the two-cell hex field after them
         var sw = el("span", "cc-set-sw"); sw.setAttribute("data-tip", c); sw.style.background = c; sw.dataset.c = c;   // the one attribute swMarkRow reads
         sw.addEventListener("click", function () { acc = c; pk._set(c); hx.value = c; set(P + "accent", c); useOwn(); paintPv(); });
         sr.appendChild(sw);
@@ -1485,7 +1486,7 @@
       sr.appendChild(hx); cA.appendChild(sr);
       // Rainbow is a global mode with one switch and one palette in the Badges card, so an area
       // has no rainbow controls of its own, only the accent above. The preview still reflects it.
-      var RB2 = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"];   // the shared palette, so every preview matches the live UI
+      var RB2 = (window.CCTheme && window.CCTheme.RB) || ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];   // the shared palette, so every preview matches the live UI
       function storedPalG() { try { if (get("cc.flagmode", "0") === "1") { var fj = JSON.parse(get("cc.flagpal", "null")); if (fj && fj.length) return fj; } var pj = JSON.parse(get("cc.rbpal", "null")); if (pj && pj.length) return pj; } catch (e2) {} return RB2; }
       function palG() { var p = storedPalG(); return (window.CCTheme && window.CCTheme.surfacePalette) ? window.CCTheme.surfacePalette(p, acc) : p; }
       // The header and shares areas restyle Unraid tab bars, so their previews are tab pills, one
@@ -1534,7 +1535,7 @@
       // down, and this refresher only ever runs once buildStyleCards has finished.
       if (adoptKey) styleCardSync[adoptKey] = function () {
         acc = effAcc();
-        try { pk._set(/^#[0-9a-f]{6}$/i.test(acc) ? acc : "#2f6feb"); } catch (e9) {}
+        try { pk._set(/^#[0-9a-f]{6}$/i.test(acc) ? acc : "#FCC419"); } catch (e9) {}
         hx.value = acc;
         paintPv();
         cBLT.sync();
@@ -1776,7 +1777,7 @@
       lblw.appendChild(infoIcon(T("Exportiert alle CannonadeCommand-Einstellungen (cc.*-Schlüssel) als JSON-Datei. Der Import schreibt sie zurück und lädt die Seite neu.", "Exports every CannonadeCommand setting (cc.* keys) as a JSON file. Import writes them back and reloads the page.")));
       cX.appendChild(lblw);
       var note = el("div", "cc-set-xnote"); // an inline notice, since this page has no toast
-      function say(msg, bad) { note.textContent = msg || ""; note.style.color = bad ? "#d9433f" : ""; }
+      function say(msg, bad) { note.textContent = msg || ""; note.style.color = bad ? "var(--cc-err-ink, #ff8389)" : ""; }
       var ex = el("span", "cc-btn cc-set-xbtn", T("Exportieren", "Export"));
       ex.addEventListener("click", function () {
         try {
@@ -1897,7 +1898,7 @@
   // dark text on a light background and white on a dark one, by perceived luminance
   function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16); var L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255); return L > 150 ? "#161616" : "#fff"; }
   // The preview uses the real palette, so it matches what the Docker tab shows.
-  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = (window.CCTheme && window.CCTheme.RB) || ["#d9433f", "#f97316", "#eab308", "#1f9d55", "#0ea5a4", "#2f6feb", "#8b5cf6", "#e05299"]; var pal = DEF; try { var fj = get("cc.flagmode", "0") === "1" ? JSON.parse(get("cc.flagpal", "null")) : null; var j = (fj && fj.length) ? fj : JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} if (window.CCTheme && window.CCTheme.surfacePalette) pal = window.CCTheme.surfacePalette(pal, accent); Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
+  function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = (window.CCTheme && window.CCTheme.RB) || ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"]; var pal = DEF; try { var fj = get("cc.flagmode", "0") === "1" ? JSON.parse(get("cc.flagpal", "null")) : null; var j = (fj && fj.length) ? fj : JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} if (window.CCTheme && window.CCTheme.surfacePalette) pal = window.CCTheme.surfacePalette(pal, accent); Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
   // Every toggle on this page follows the colour engine. In rainbow mode each takes its own slot
   // from the shared seed, as the badges elsewhere do; otherwise the stamp is cleared and the
   // track's CSS falls back through the shared vars to the accent.
