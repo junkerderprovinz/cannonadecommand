@@ -639,8 +639,8 @@
   // span#vm-<uuid> and its onclick=addVMContext('name','uuid','template','state','vmrcurl',
   // 'PROTO','log','fstype','console;rdp','','webui',...). Native calls are typeof-guarded, so a
   // missing Unraid global leaves a button that does nothing.
-  function actBtn(icon, tip, fn) {
-    var b = el("span", "cc-actbtn"); b.title = tip; b.appendChild(el("i", "fa " + icon));
+  function actBtn(icon, tip, fn, del) {
+    var b = el("span", "cc-actbtn" + (del ? " cc-actdel" : "")); b.title = tip; b.appendChild(el("i", "fa " + icon));
     b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); try { fn(); } catch (_) {} });
     return b;
   }
@@ -660,7 +660,7 @@
       var bg = "#2e2e2e", tx = "#7a7a7a";
       if (!b2.classList.contains("cc-actoff")) {
         tx = "#e9e9e9";
-        if (colorsOn) { bg = rb ? pal[(i2 + off) % pal.length] : ccAccent(); tx = ccIdeal(bg); }
+        if (colorsOn) { bg = !rb ? ccAccent() : (b2.classList.contains("cc-actdel") && window.CCTheme ? window.CCTheme.deleteSlot(pal, i2 + off) : pal[(i2 + off) % pal.length]); tx = ccIdeal(bg); }
       }
       if (neutral && colorsOn && !b2.classList.contains("cc-actoff")) {
         b2.style.setProperty("--cc-rb-c", bg); b2.style.setProperty("--cc-rb-ct", tx);
@@ -723,8 +723,8 @@
     if ((running || shutoff) && typeof window.selectsnapshot === "function") more.appendChild(actBtn("fa-camera", de ? "Snapshot erstellen" : "Create Snapshot", function () { window.selectsnapshot(uuid, name, "--generate", "create", false, st, cx.fstype); }));
     if (shutoff && typeof window.VMClone === "function") more.appendChild(actBtn("fa-clone", de ? "Klonen" : "Clone", function () { window.VMClone(uuid, name); }));
     if (shutoff) {
-      more.appendChild(actBtn("fa-minus", de ? "VM entfernen" : "Remove VM", function () { vmRemove(uuid, name, false); }));
-      more.appendChild(actBtn("fa-trash", de ? "VM + Disks entfernen" : "Remove VM & Disks", function () { vmRemove(uuid, name, true); }));
+      more.appendChild(actBtn("fa-minus", de ? "VM entfernen" : "Remove VM", function () { vmRemove(uuid, name, false); }, true));
+      more.appendChild(actBtn("fa-trash", de ? "VM + Disks entfernen" : "Remove VM & Disks", function () { vmRemove(uuid, name, true); }, true));
     }
     r2.appendChild(more.children.length ? actBtn("fa-ellipsis-h", de ? "Mehr" : "More", function () { more.classList.toggle("cc-open"); tintAct(more); })
       : actBtnOff("fa-ellipsis-h", de ? "keine weiteren Aktionen" : "no more actions"));

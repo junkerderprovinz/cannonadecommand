@@ -1298,8 +1298,8 @@
   // One action icon, with its name as the tooltip. The glyphs are FontAwesome rather than emoji,
   // which ignore a CSS colour, so the icon inherits black or white against its background like
   // the badge text does.
-  function actBtn(icon, tip, fn) {
-    var b = el("span", "cc-actbtn"); b.setAttribute("data-tip", tip); b.appendChild(el("i", "fa " + icon));
+  function actBtn(icon, tip, fn, del) {
+    var b = el("span", "cc-actbtn" + (del ? " cc-actdel" : "")); b.setAttribute("data-tip", tip); b.appendChild(el("i", "fa " + icon));
     b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); fn(); });
     return b;
   }
@@ -1322,7 +1322,7 @@
       if (!b2.classList.contains("cc-actoff")) {
         tx = "#e9e9e9";
         if (colorsOn) {
-          bg = rb ? pal[(i2 + off) % pal.length] : (effc("accent") || "#FCC419");
+          bg = !rb ? (effc("accent") || "#FCC419") : (b2.classList.contains("cc-actdel") && window.CCTheme ? window.CCTheme.deleteSlot(pal, i2 + off) : pal[(i2 + off) % pal.length]);
           tx = idealText(bg);
         }
       }
@@ -1363,7 +1363,7 @@
     var more = el("div", "cc-actrow cc-actmore");
     if (typeof window.openTerminal === "function") more.appendChild(actBtn("fa-terminal", LANG === "de" ? "Konsole" : "Console", function () { if (cx.shell) window.openTerminal("docker", name, cx.shell); else window.openTerminal("docker", name); }));
     // Remove sits behind the second click, and goes through Unraid's own confirm dialog.
-    if (typeof window.rmContainer === "function" && cx.id) more.appendChild(actBtn("fa-trash", LANG === "de" ? "Entfernen" : "Remove", function () { window.rmContainer(name, cx.image, cx.id); }));
+    if (typeof window.rmContainer === "function" && cx.id) more.appendChild(actBtn("fa-trash", LANG === "de" ? "Entfernen" : "Remove", function () { window.rmContainer(name, cx.image, cx.id); }, true));
     if (cx.tswebui) more.appendChild(actBtn("fa-globe", "Tailscale WebUI", function () { window.open(cx.tswebui, "_blank"); }));
     cx.links.forEach(function (l2) { more.appendChild(actBtn(l2.glyph, l2.tip, function () { window.open(l2.url, "_blank"); })); });
     if (more.children.length) {

@@ -124,6 +124,22 @@
     return p.map(function (c) { return liftLight(c, accent, LUM_FLOOR, p); });
   }
 
+  // A hue within 15 degrees of pure red, saturated enough to read as red rather than a grey.
+  function isRed(hex) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return false;
+    var n = parseInt(m[1], 16), r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255;
+    var hi = Math.max(r, g, b), lo = Math.min(r, g, b);
+    if (hi !== r || hi === 0 || (hi - lo) / hi < 0.3) return false;
+    var h = (g - b) / (hi - lo) * 60;
+    return h <= 15 && h >= -15;
+  }
+  // Palette slot i for a control that deletes something. A delete is never red, so a slot that
+  // lands on red passes to the next one that is not.
+  function deleteSlot(pal, i) {
+    for (var k = 0; k < pal.length; k++) { var c = pal[(i + k) % pal.length]; if (!isRed(c)) return c; }
+    return pal[i % pal.length];
+  }
+
   // Colour modes for the select replacements header.js does not paint: .cc-dsel (Docker form, CC
   // settings, .cc-pop windows), .cc-sel (share detail) and .cc-drop (the Startplan "Hängt ab von"
   // multi-select). It lives here because this is the only file loaded on every page. .cc-tsel is
@@ -592,7 +608,7 @@
     gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily,
     CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG, delIcon: delIcon,
     lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark, liftLight: liftLight, lightTheme: lightTheme,
-    liftSurface: liftSurface, surfacePalette: surfacePalette, toast: toast, shake: shake, fail: fail,
+    liftSurface: liftSurface, surfacePalette: surfacePalette, isRed: isRed, deleteSlot: deleteSlot, toast: toast, shake: shake, fail: fail,
     icons: {
       MODES: ICON_MODES, SIMPLE_MAX: ICON_SIMPLE_MAX,
       globalMode: iconGlobalMode, mode: iconMode, override: iconOverride, setOverride: setIconOverride,
