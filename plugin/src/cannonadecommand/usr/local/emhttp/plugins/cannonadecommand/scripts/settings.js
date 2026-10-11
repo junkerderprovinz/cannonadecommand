@@ -936,7 +936,10 @@
       .forEach(function (d9) { SECS.push(d9.s); });
     SECS.push({ id: "info", t: T("Info", "Info"), w: wrapInfo, key: null });   // GlimStone's Info tile comes last
     var tabBtns = [];
-    function areaOn(key) { return !key || localStorage.getItem(key) !== "0"; }
+    // The start tab, the header and the shares stay off until switched on, as their scripts read
+    // them, so an unset key hides their tab here too.
+    var OFF_BY_DEFAULT = { "cc.enable.main": true, "cc.enable.header": true, "cc.enable.shares": true };
+    function areaOn(key) { if (!key) return true; var v = localStorage.getItem(key); return v == null ? !OFF_BY_DEFAULT[key] : v !== "0"; }
     function showSec(i) {
       if (!SECS[i] || !areaOn(SECS[i].key)) i = 0; // never land on a hidden section
       localStorage.setItem("cc.settab", SECS[i].id); // the id, not the index, or a menu reorder restores the wrong tab
@@ -1266,7 +1269,7 @@
         var sec = SECS.filter(function (s9) { return s9.id === a[1]; })[0];
         if (sec && areaOn(sec.key)) (localStorage.getItem(a[0]) === "0" ? own : follow).push(a);
       });
-      var lead = el("div", "cc-set-row cc-set-inline"), lw = el("span", "cc-set-lblwrap");
+      var lead = el("div", "cc-set-row"), lw = el("span", "cc-set-lblwrap");
       lw.appendChild(el("span", null, own.length ? T("Alle Bereiche folgen der globalen Badge-Farbe, bis auf diese:", "Every area follows the global badge colour, except these:") : T("Alle Bereiche folgen der globalen Badge-Farbe", "Every area follows the global badge colour")));
       lw.appendChild(infoIcon(T("Eine eigene Farbe bekommt ein Bereich über „Ausnahme hinzufügen“ oder in seinem eigenen Tab. Alle übrigen Bereiche ändern sich mit der globalen Farbe.", "Add an exception here or on the area's own tab to give it a colour of its own. Every other area changes with the global colour.")));
       lead.appendChild(lw); cExc.appendChild(lead);

@@ -69,6 +69,20 @@ console.log('\nOne width, and a strip that wraps into even rows');
   ok('the gap matches TAB_GAP', decl(strip, 'gap') === '6px' && /var TAB_GAP = 6;/.test(settings));
 }
 
+console.log('\nA tab shows only while its area is on');
+{
+  const off = (/  var OFF_BY_DEFAULT = [^;]+;/.exec(settings) || [''])[0];
+  const areaOn = (store) => new Function('localStorage', off + '\n' + grabFn(settings, 'areaOn') + '\nreturn areaOn;')({ getItem: (k) => (k in store ? store[k] : null) });
+  const fresh = areaOn({});
+  ok('the start tab, the header and the shares are off until switched on', !fresh('cc.enable.main') && !fresh('cc.enable.header') && !fresh('cc.enable.shares'));
+  ok('the other areas are on until switched off', fresh('cc.enable.docker') && fresh('cc.enable.plugins'));
+  ok('General and Info have no switch and always show', fresh(null));
+  const set = areaOn({ 'cc.enable.header': '1', 'cc.enable.docker': '0' });
+  ok('a stored value wins either way', set('cc.enable.header') && !set('cc.enable.docker'));
+  const defaults = [...settings.matchAll(/\["(cc\.enable\.\w+)", T\("[^"]+", "[^"]+"\), "0"\]/g)].map((m) => m[1]).sort().join(' ');
+  ok('the areas card agrees on which start off', defaults === 'cc.enable.header cc.enable.main cc.enable.shares', defaults);
+}
+
 console.log('\nThe tab-strip colour rule');
 {
   ok('an idle glyph carries the tab colour', /^var\(--cc-rb-c, var\(--cc-accent/.test(decl(body(css, '.cc-set-tabico'), 'color') || ''));
