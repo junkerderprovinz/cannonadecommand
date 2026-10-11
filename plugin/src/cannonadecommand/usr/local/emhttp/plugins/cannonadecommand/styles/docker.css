@@ -157,7 +157,7 @@ a.sl-updall { display: none !important; }
 @keyframes cc-actfade { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
 .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }
 @keyframes cc-actflash { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--cc-btn-accent, var(--cc-accent, #FCC419)); } }
-.cc-actbtn { width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: #2e2e2e; color: #c9c9c9; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--cc-text-subline); user-select: none; transition: background .12s, color .12s; }
+.cc-actbtn { width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-chip, #cfcfcf); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--cc-text-subline); user-select: none; transition: background .12s, color .12s; }
 .cc-actbtn:hover { background: var(--cc-btn-accent, var(--cc-accent, #FCC419)); color: var(--cc-accent-text, #161616); }
 
 /* the uptime column shows in the advanced view only */
@@ -2074,9 +2074,9 @@ html.cc-shares-rbneutral.cc-docker-on :is(.cc-pop, .cc-menu) .cc-btn:hover { bac
 html.cc-shares-rbneutral.cc-docker-on .cc-pop .cc-day:not(.cc-day-on) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-pop .cc-day:not(.cc-day-on):hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 /* tintAct() skips its inline paint here and stamps --cc-rb-c instead, so an enabled action icon
-   rests on its own dark grey rather than the translucent chip grey and takes the stamped colour
+   rests on the surface grey rather than the translucent chip grey and takes the stamped colour
    on the row's hover; a disabled .cc-actoff is never matched and keeps its inline grey. */
-html.cc-shares-rbneutral.cc-docker-on .cc-actbtn:not(.cc-actoff) { background: #2e2e2e !important; color: #e9e9e9 !important; }
+html.cc-shares-rbneutral.cc-docker-on .cc-actbtn:not(.cc-actoff) { background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text, #e6e6e6) !important; }
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-actbtn:not(.cc-actoff),
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-actbtn:not(.cc-actoff) { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 /* A value badge carries its kind's own colour, stamped on the container as --cc-rb-net and the

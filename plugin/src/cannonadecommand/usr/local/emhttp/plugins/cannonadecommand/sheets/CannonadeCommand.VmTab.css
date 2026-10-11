@@ -194,7 +194,7 @@ html.cc-vms-on #kvm_table thead tr .cc-act-th { font-size: var(--cc-text-meta); 
 html.cc-vms-on #kvm_list td.cc-actcell { white-space: nowrap; vertical-align: middle; }
 html.cc-vms-on .cc-actbar { display: flex; flex-direction: column; gap: 4px; }
 html.cc-vms-on .cc-actrow { display: flex; gap: 4px; }
-html.cc-vms-on .cc-actbtn { width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: #2e2e2e; color: #c9c9c9; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--cc-text-subline); user-select: none; transition: background .12s, color .12s, box-shadow .12s; }
+html.cc-vms-on .cc-actbtn { width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-chip, #cfcfcf); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--cc-text-subline); user-select: none; transition: background .12s, color .12s, box-shadow .12s; }
 html.cc-vms-on .cc-actbtn:hover { background: var(--cc-accent, #FCC419); color: var(--cc-accent-text, #161616); }
 html.cc-vms-on .cc-actbtn i.fa { font-size: var(--cc-text-subline); line-height: 1; color: inherit !important; }
 html.cc-vms-on .cc-actoff { opacity: .35; cursor: default; }
@@ -205,9 +205,9 @@ html.cc-vms-on .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }
 @keyframes cc-actflash { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--cc-accent, #FCC419); } }
 
 /* Reactive rainbow, as in docker.css: tintAct() skips its inline paint and stamps
-   --cc-rb-c/--cc-rb-ct per button, so enabled icons rest dark grey and take that colour on row
+   --cc-rb-c/--cc-rb-ct per button, so enabled icons rest on the surface grey and take that colour on row
    hover. Disabled .cc-actoff buttons keep their own grey. */
-html.cc-vms-on.cc-vm-rbneutral .cc-actbtn:not(.cc-actoff) { background: #2e2e2e !important; color: #e9e9e9 !important; }
+html.cc-vms-on.cc-vm-rbneutral .cc-actbtn:not(.cc-actoff) { background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text, #e6e6e6) !important; }
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-actbtn:not(.cc-actoff) { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 
 /* bottom action buttons (input[type=button]) as CC accent pills */

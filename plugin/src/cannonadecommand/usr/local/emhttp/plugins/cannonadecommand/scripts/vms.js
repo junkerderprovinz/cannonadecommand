@@ -657,9 +657,9 @@
     var pal = vmPalActive();
     var off = ls("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
     Array.prototype.slice.call(bar.querySelectorAll(".cc-actbtn")).forEach(function (b2, i2) {
-      var bg = "#2e2e2e", tx = "#7a7a7a";
+      var bg = "var(--cc-surface-3, #2e2e2e)", tx = "var(--cc-text-dim, #8a8a8a)";
       if (!b2.classList.contains("cc-actoff")) {
-        tx = "#e9e9e9";
+        tx = "var(--cc-text, #e6e6e6)";
         if (colorsOn) { bg = !rb ? ccAccent() : (b2.classList.contains("cc-actdel") && window.CCTheme ? window.CCTheme.deleteSlot(pal, i2 + off) : pal[(i2 + off) % pal.length]); tx = ccIdeal(bg); }
       }
       if (neutral && colorsOn && !b2.classList.contains("cc-actoff")) {
