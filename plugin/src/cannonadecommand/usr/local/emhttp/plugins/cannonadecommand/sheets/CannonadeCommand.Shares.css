@@ -584,7 +584,7 @@ html.cc-shares-on.cc-on-main #displaybox a.cc-ud-icon,
 html.cc-shares-on:is(.cc-on-main, .cc-on-shares) #displaybox a.cc-ibtn {   /* .cc-on-shares covers the /Shares column reset */
   display: inline-flex !important; align-items: center; justify-content: center;
   box-sizing: border-box !important; flex: 0 0 auto;
-  width: 24px !important; height: 24px !important; padding: 0 !important;   /* on /Main the tiles match the slim toggle height */
+  width: var(--cc-icon-badge, 26px) !important; height: var(--cc-icon-badge, 26px) !important; padding: 0 !important;
   border-radius: var(--cc-radius-pill) !important;
   background: var(--cc-rb-c, var(--cc-shr-accent, #FCC419)) !important;   /* paintMain stamps --cc-rb-c per tile in rainbow mode */
   text-decoration: none !important; opacity: 1; transition: filter .12s;
@@ -679,21 +679,21 @@ html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mount
 /* the per-device settings gear (a.info > i.fa-gears, JS-skipped from badging) -> small CC icon button */
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) a.info i.fa-gears {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; border-radius: var(--cc-radius-pill);   /* the 24px /Main icon tile, like a.cc-ud-icon */
+  width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill);
   background: var(--cc-shr-accent, #FCC419); color: var(--cc-shr-accent-text, #161616); transition: filter .12s;
 }
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) a.info:hover i.fa-gears { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) i.fa-gears[disabled],
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) i.fa-gears.disabled {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; border-radius: var(--cc-radius-pill);
+  width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill);
   background: #3a3a3a; color: #8a8a8a; opacity: .55;
 }
-/* the remove control (ENTFERNEN column, UD historical devices) as a 24px icon tile in the page's
+/* the remove control (ENTFERNEN column, UD historical devices) as an icon tile in the page's
    accent, forced over the native inline red on the <i>, since removing is never painted red */
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) :is(i.fa-remove, i.fa-times, i.fa-trash, i.fa-trash-o, i.fa-ban) {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; border-radius: var(--cc-radius-pill);
+  width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill);
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important; transition: background-color .12s; cursor: pointer;
 }
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) a:hover > :is(i.fa-remove, i.fa-times, i.fa-trash, i.fa-trash-o, i.fa-ban),

@@ -183,6 +183,10 @@ html {
      author badges sit under the main menu bar, so they are one step below its tab badges. */
   --cc-pagebadge-fs: var(--cc-text-subline);
   --cc-density: 9px;
+  /* One size for every square icon badge: the row actions, the limit gear, the day chip and its
+     delete, the trash on the Plugins page and the /Main icon tiles. A size per role reads as
+     several sizes side by side on one card, so a dense row absorbs this one with its own padding. */
+  --cc-icon-badge: 26px;
 
   /* The semantic states: the fill, the ink on the fill, and the -ink colour for a state written as
      text on the page. Warning is orange, so yellow only ever means the accent. They are fixed per

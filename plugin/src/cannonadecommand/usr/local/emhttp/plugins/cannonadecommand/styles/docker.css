@@ -129,7 +129,7 @@ html.cc-docker-on table.cc-enh thead th.tablesorter-headerDesc::after { color: c
 /* Three icons per row, with the expander as the fourth icon of the second row, so both rows are
    real flex rows and the harvested extras wrap three per row when the bar opens. */
 .cc-actbar { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
-/* the actions column needs room for its two icon rows: four 27px icons and the gaps */
+/* the actions column needs room for its two icon rows: four icon badges and the gaps */
 .cc-enh thead tr:last-child th:nth-child(2) { width: 122px; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) > td:nth-child(2) { max-width: 122px; }
 .cc-actbtn i.fa { font-size: var(--cc-text-subline); line-height: 1; color: inherit !important; } /* theme CSS colours .fa directly */
@@ -148,16 +148,16 @@ a.sl-updall { display: none !important; }
 /* copyable IP badges react on hover like the plan chip */
 .cc-b-copy { cursor: pointer; transition: box-shadow .12s, transform .12s; }
 .cc-b-copy:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; transform: translateY(-1px); }
-/* The harvested extras stay hidden until the toggle opens the bar, then wrap three per row, at
-   89px, while the toggle itself hides and a short fade brings them in. actionBars collapses the bar
-   again on mouseleave. */
+/* The harvested extras stay hidden until the toggle opens the bar, then wrap three per row, while
+   the toggle itself hides and a short fade brings them in. actionBars collapses the bar again on
+   mouseleave. */
 .cc-actmore { display: none; }
-.cc-actbar.cc-open .cc-actmore { display: flex; flex-wrap: wrap; width: 89px; gap: 4px; animation: cc-actfade .18s ease; }
+.cc-actbar.cc-open .cc-actmore { display: flex; flex-wrap: wrap; width: calc(3 * var(--cc-icon-badge, 26px) + 8px); gap: 4px; animation: cc-actfade .18s ease; }
 .cc-actbar.cc-open .cc-acttoggle { display: none; }
 @keyframes cc-actfade { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
 .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }
 @keyframes cc-actflash { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--cc-btn-accent, var(--cc-accent, #FCC419)); } }
-.cc-actbtn { width: 27px; height: 26px; border-radius: var(--cc-radius-pill); background: #2e2e2e; color: #c9c9c9; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--cc-text-subline); user-select: none; transition: background .12s, color .12s; }
+.cc-actbtn { width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: #2e2e2e; color: #c9c9c9; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--cc-text-subline); user-select: none; transition: background .12s, color .12s; }
 .cc-actbtn:hover { background: var(--cc-btn-accent, var(--cc-accent, #FCC419)); color: var(--cc-accent-text, #161616); }
 
 /* the uptime column shows in the advanced view only */
@@ -258,7 +258,7 @@ html.cc-on-plugins .cc-cb-del.cc-cb-hidden,
 html.cc-tools-on .cc-cb-del.cc-cb-hidden { display: none !important; }
 html.cc-on-plugins .cc-b-del.cc-b-delicon,
 html.cc-tools-on .cc-b-del.cc-b-delicon {
-  width: 32px !important; min-width: 32px !important; height: 30px !important; padding: 0 !important;
+  width: var(--cc-icon-badge, 26px) !important; min-width: var(--cc-icon-badge, 26px) !important; height: var(--cc-icon-badge, 26px) !important; padding: 0 !important;
   font-size: 0 !important; letter-spacing: 0 !important; text-transform: none !important;
   border: none !important; box-shadow: none !important;
   border-radius: var(--cc-radius-pill) !important; cursor: pointer;
@@ -332,7 +332,7 @@ table:not(.cc-enh) #docker_list tr:is(.sortable, .folder-element) td.advanced:ha
 .cc-b.cc-b-warn .cc-b-k, .cc-b.cc-b-warn .cc-b-v { opacity: 1 !important; color: inherit; }
 
 /* CPU/RAM limits editor button on the resource cell */
-.cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--cc-radius-pill); background: #3a3a3a; color: #ececec; cursor: pointer; font-size: var(--cc-text-meta); margin: 2px 0; } /* filled, at the pill radius like the badge beside it */
+.cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: #3a3a3a; color: #ececec; cursor: pointer; font-size: var(--cc-text-meta); margin: 2px 0; } /* filled, at the pill radius like the badge beside it */
 .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }  /* in rainbow the per-gear --cc-rb-c wins, in accent mode the chain falls through */
 /* the gear turns green once a CPU or RAM limit is configured, like the "set" dot */
 .cc-limbtn-set { color: var(--cc-ok-fg, #161616); background: var(--cc-ok, #6fdc8c); }
@@ -488,7 +488,7 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 .cc-chip-dot { width: 8px !important; height: 8px !important; min-width: 8px !important; padding: 0 !important; margin: 0 !important; gap: 0 !important; border-radius: 50% !important; font-size: 0 !important; line-height: 0 !important; flex: 0 0 auto; box-shadow: 0 0 0 1px rgba(0, 0, 0, .25); }
 .cc-chip-status { font-size: var(--cc-text-meta); color: var(--cc-dim); white-space: nowrap; }
 .cc-chip-act { flex: none; display: flex; }
-.cc-chip .cc-actbtn { width: 20px; height: 20px; font-size: var(--cc-text-meta); border-radius: var(--cc-radius-pill); } /* smaller than the 27x26 of the full action bars */
+.cc-chip .cc-actbtn { font-size: var(--cc-text-meta); border-radius: var(--cc-radius-pill); }
 
 /* The list density: full-width rows in the Docker list's own language, icon, bold name and status
    badge, with one action button and none of the CPU, RAM, network or port columns. folderListRow()
@@ -773,7 +773,7 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { backgr
    pill sweep further down, so a shape change moves both. `flex: none` on both, because a
    chip that shrinks is no longer the same size. */
 .cc-day, .cc-sched-x {
-  box-sizing: border-box; flex: none; width: 26px; height: 26px; padding: 0;
+  box-sizing: border-box; flex: none; width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); padding: 0;
   border: none; border-radius: var(--cc-radius-pill); line-height: 1; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
 }

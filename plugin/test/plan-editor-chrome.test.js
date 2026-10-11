@@ -199,7 +199,7 @@ ok(!/polyline points='3 6 5 6 21 6'/.test(css), 'and the stroke-drawn outline tr
 const shared = /\.cc-day, \.cc-sched-x \{[^}]*\}/.exec(css);
 ok(!!shared, '.cc-day and .cc-sched-x share one geometry rule');
 if (shared) {
-  ['width: 26px', 'height: 26px', 'padding: 0', 'border: none', 'box-sizing: border-box', 'flex: none'].forEach(d =>
+  ['width: var(--cc-icon-badge, 26px)', 'height: var(--cc-icon-badge, 26px)', 'padding: 0', 'border: none', 'box-sizing: border-box', 'flex: none'].forEach(d =>
     ok(shared[0].indexOf(d) >= 0, 'the shared box declares ' + d));
 }
 ok(/html \.cc-limbtn, html \.cc-day, html \.cc-sched-x,/.test(css), 'both are swept by the shape engine together, so a Badge-Form change moves the badge and the chips as one');
