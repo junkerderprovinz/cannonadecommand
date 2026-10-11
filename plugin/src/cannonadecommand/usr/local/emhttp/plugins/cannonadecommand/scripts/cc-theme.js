@@ -233,7 +233,7 @@
     var painted = false;
     for (var k = 0; k < selSyncFns.length; k++) { try { if (selSyncFns[k](sel, wrap) === true) painted = true; } catch (e) {} }
     if (!painted) ccSelMirror(wrap, sel);
-    // the freshly-selected chip has to wear the mode colour like every other one (Rule 9)
+    // the freshly-selected chip has to wear the mode colour like every other one (rule 9)
     try { paintSelects(wrap); } catch (e2) {}
     return true;
   }
@@ -288,9 +288,9 @@
   // primaryFamily("\"Montserrat\",sans-serif") -> "Montserrat"; used to tell if a chosen brand font is a GFONT.
   function primaryFamily(css) { var m = /^\s*(?:"([^"]+)"|'([^']+)'|([^,]+))/.exec(String(css || "")); return (m ? (m[1] || m[2] || m[3] || "") : "").trim(); }
 
-  // The (i) info bubble for every area script; GlimStone rule 8 names cc-info as its reference. The
-  // glyph is an outline ring, the one exception to rules 5 and 20, because the ring is the letter i
-  // set in a circle and filling it leaves a meaningless disc. The markup matches BombVault's
+  // The (i) info bubble for every area script, after reference/tooltip.ts infoIcon(). The glyph is
+  // an outline ring, the one exception the "Icon glyphs" section allows, because the ring is the
+  // letter i set in a circle and filling it leaves a meaningless disc. The markup matches BombVault's
   // InfoBubble.tsx: r=7, stroke-width 1.3, dot r=0.9, and a round-capped <path> for the stem, since
   // a <rect>'s rx rounds the ends differently. It is neutral, not accent: the sheets resolve
   // currentColor to var(--txt). The text goes into data-tip and is rendered by header.js's
@@ -301,7 +301,7 @@
     s.className = "cc-info";
     s.innerHTML = CC_INFO_SVG;
     if (tip) { s.setAttribute("data-tip", tip); s.setAttribute("aria-label", tip); }
-    s.setAttribute("tabindex", "0");   // Rule 8: reachable by keyboard, so focus opens it like hover does
+    s.setAttribute("tabindex", "0");   // rule 8: reachable by keyboard, so focus opens it like hover does
     return s;
   }
 

@@ -2078,7 +2078,7 @@ html.cc-popups-on.cc-ca-settings #displaybox form {
   border: none !important; padding: 8px 24px 20px !important; margin: 6px auto !important;
   max-width: 900px !important; box-sizing: border-box !important;
 }
-/* the page's title bar is a SECTION BADGE, not a full-width strip (Style Guide regel 2) */
+/* the page's title bar is a section badge, not a full-width strip (GlimStone rule 11) */
 html.cc-popups-on.cc-ca-settings #displaybox div.title {
   display: inline-flex !important; align-items: center !important; gap: 8px !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
