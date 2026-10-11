@@ -92,6 +92,37 @@
     { key: "plan", label: T("Startplan", "Plan") },
     { key: "restart", label: T("Restart-Policy", "Restart policy") },
   ];
+  // One glyph per settings tab, filled on currentColor, each with the viewBox glyphs.json crops to
+  // its ink so every tab's glyph reads the same size.
+  var TAB_GLYPHS = {
+    general: ["0.1 0.106 13.797 13.797", '<path fill-rule="evenodd" d="M0.597 1.73 L0.47 1.783 L0.305 1.905 L0.218 2.011 L0.153 2.132 L0.103 2.331 L0.103 2.469 L0.13 2.603 L0.218 2.789 L0.305 2.895 L0.411 2.982 L0.532 3.047 L0.663 3.087 L0.8 3.1 L1.491 3.1 L1.418 2.713 L1.401 2.361 L1.418 2.087 L1.491 1.7 L0.8 1.7ZM13.468 3.047 L13.589 2.982 L13.695 2.895 L13.817 2.73 L13.887 2.537 L13.897 2.331 L13.847 2.132 L13.782 2.011 L13.695 1.905 L13.53 1.783 L13.337 1.713 L13.2 1.7 L6.909 1.7 L6.982 2.087 L6.999 2.361 L6.982 2.713 L6.909 3.1 L13.2 3.1 L13.337 3.087ZM6.114 1.819 L5.964 1.457 L5.746 1.131 L5.469 0.854 L5.143 0.636 L4.781 0.486 L4.396 0.41 L4.004 0.41 L3.619 0.486 L3.257 0.636 L2.931 0.854 L2.654 1.131 L2.436 1.457 L2.286 1.819 L2.21 2.204 L2.21 2.596 L2.286 2.981 L2.436 3.343 L2.654 3.669 L2.931 3.946 L3.257 4.164 L3.619 4.314 L4.004 4.39 L4.396 4.39 L4.781 4.314 L5.143 4.164 L5.469 3.946 L5.746 3.669 L5.964 3.343 L6.114 2.981 L6.19 2.596 L6.19 2.204ZM0.597 6.33 L0.411 6.418 L0.259 6.556 L0.153 6.732 L0.113 6.863 L0.1 7 L0.113 7.137 L0.153 7.268 L0.259 7.444 L0.356 7.541 L0.47 7.617 L0.663 7.687 L0.8 7.7 L7.091 7.7 L7.018 7.313 L7.001 6.961 L7.018 6.687 L7.091 6.3 L0.8 6.3ZM11.714 6.419 L11.564 6.057 L11.346 5.731 L11.069 5.454 L10.743 5.236 L10.381 5.086 L9.996 5.01 L9.604 5.01 L9.219 5.086 L8.857 5.236 L8.531 5.454 L8.254 5.731 L8.036 6.057 L7.886 6.419 L7.81 6.804 L7.81 7.196 L7.886 7.581 L8.036 7.943 L8.254 8.269 L8.531 8.546 L8.857 8.764 L9.219 8.914 L9.604 8.99 L9.996 8.99 L10.381 8.914 L10.743 8.764 L11.069 8.546 L11.346 8.269 L11.564 7.943 L11.714 7.581 L11.79 7.196 L11.79 6.804ZM13.468 7.647 L13.589 7.582 L13.695 7.495 L13.817 7.33 L13.87 7.203 L13.897 7.069 L13.887 6.863 L13.847 6.732 L13.782 6.611 L13.695 6.505 L13.589 6.418 L13.468 6.353 L13.337 6.313 L13.2 6.3 L12.509 6.3 L12.582 6.687 L12.599 6.961 L12.582 7.313 L12.509 7.7 L13.269 7.697ZM0.597 10.93 L0.411 11.018 L0.259 11.156 L0.153 11.332 L0.103 11.531 L0.113 11.737 L0.183 11.93 L0.305 12.095 L0.47 12.217 L0.663 12.287 L0.8 12.3 L3.091 12.3 L3.018 11.913 L3.001 11.639 L3.018 11.287 L3.091 10.9 L0.8 10.9ZM7.648 10.835 L7.463 10.489 L7.214 10.186 L6.911 9.937 L6.565 9.752 L6.19 9.638 L5.8 9.6 L5.41 9.638 L5.035 9.752 L4.689 9.937 L4.386 10.186 L4.137 10.489 L3.952 10.835 L3.838 11.21 L3.8 11.6 L3.838 11.99 L3.952 12.365 L4.137 12.711 L4.386 13.014 L4.689 13.263 L5.035 13.448 L5.41 13.562 L5.8 13.6 L6.19 13.562 L6.565 13.448 L6.911 13.263 L7.214 13.014 L7.463 12.711 L7.648 12.365 L7.762 11.99 L7.8 11.6 L7.762 11.21ZM13.53 12.217 L13.695 12.095 L13.817 11.93 L13.887 11.737 L13.897 11.531 L13.847 11.332 L13.741 11.156 L13.589 11.018 L13.403 10.93 L13.2 10.9 L8.509 10.9 L8.582 11.287 L8.599 11.561 L8.582 11.913 L8.509 12.3 L13.2 12.3 L13.337 12.287Z" />'],   // IconTabGeneral
+    header: ["0.046 0.047 13.908 13.908", '<g><path fill="currentColor" fill-rule="evenodd" d="M1.546 12.25V3.314h10.908v8.934a0.204 0.204 0 0 1 -0.205 0.205H1.751a0.204 0.204 0 0 1 -0.205 -0.205Zm-1.5 -10.5C0.046 0.81 0.81 0.047 1.751 0.047h10.498c0.942 0 1.705 0.763 1.705 1.705V12.25c0 0.942 -0.763 1.705 -1.705 1.705H1.751A1.704 1.704 0 0 1 0.046 12.25V1.751Z" clip-rule="evenodd" stroke-width="1"></path></g>'],   // IconBrowser
+    main: ["0.056 0.112 13.888 13.888", '<g><path fill="currentColor" fill-rule="evenodd" d="M0.551514 2.27783c0 -0.15488 0.07702 -0.36799 0.357204 -0.62937 0.281142 -0.26227 0.721972 -0.52723 1.318962 -0.762786C3.41794 0.416028 5.10495 0.111832 6.99996 0.111832S10.582 0.416028 11.7722 0.885674c0.597 0.235556 1.0379 0.500516 1.319 0.762786 0.2802 0.26138 0.3572 0.47449 0.3572 0.62937 0 0.15487 -0.077 0.36799 -0.3572 0.62936 -0.2811 0.26227 -0.722 0.52723 -1.319 0.76279 -1.1902 0.46965 -2.87723 0.77384 -4.77224 0.77384s-3.58202 -0.30419 -4.77228 -0.77384c-0.59699 -0.23556 -1.03782 -0.50052 -1.318962 -0.76279 -0.280184 -0.26137 -0.357204 -0.47449 -0.357204 -0.62936ZM13.5121 4.16708c-0.3673 0.25522 -0.8026 0.47686 -1.2811 0.66566 -1.3698 0.54049 -3.21949 0.86108 -5.23104 0.86108s-3.86126 -0.32059 -5.23108 -0.86108c-0.47845 -0.18879 -0.913723 -0.41041 -1.280965 -0.66562v3.17781c0.055969 0.0849 0.135466 0.17801 0.246193 0.27869 0.289992 0.26368 0.744472 0.52986 1.359042 0.76629 1.22499 0.47125 2.95961 0.77608 4.90685 0.77608 1.94723 0 3.6819 -0.30483 4.9068 -0.77608 0.6146 -0.23643 1.0691 -0.50261 1.3591 -0.76629 0.1107 -0.10067 0.1902 -0.19378 0.2462 -0.27868V4.16708ZM0.487915 11.209V8.99273c0.341164 0.21282 0.732125 0.4006 1.156435 0.56383C3.04569 10.0957 4.93936 10.416 7 10.416c2.06063 0 3.9543 -0.3203 5.3556 -0.85944 0.4243 -0.16323 0.8153 -0.351 1.1565 -0.56383V11.209c0 1.5406 -2.9154 2.791 -6.51211 2.791 -3.59667 0 -6.512075 -1.2504 -6.512075 -2.791Z" clip-rule="evenodd" stroke-width="1"></path></g>'],   // IconDatabase
+    shares: ["0 0 14 14", '<g><path fill="currentColor" d="M6.12675 0.805269c-0.2708 -0.205804 -0.60343 -0.313418 -0.9433 -0.305333H1.5c-0.39782 0 -0.779356 0.158035 -1.06066 0.43934C0.158035 1.22058 0 1.60211 0 1.99994v9.99996c0 0.3979 0.158035 0.7794 0.43934 1.0607 0.281304 0.2813 0.66283 0.4393 1.06066 0.4393h11c0.3978 0 0.7794 -0.158 1.0607 -0.4393S14 12.3978 14 11.9999V3.99994c0 -0.39783 -0.158 -0.77936 -0.4393 -1.06066 -0.2813 -0.28131 -0.6629 -0.43934 -1.0607 -0.43934H6.89039l-0.21495 -0.85979c-0.08224 -0.33249 -0.27599 -0.62762 -0.54869 -0.834881Z" stroke-width="1"></path></g>'],   // IconFolder
+    docker: ["0 0 24 24", '<path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z" />'],   // IconContainers
+    plugins: ["0.25 0.25 13.5 13.5", '<g><path fill="currentColor" fill-rule="evenodd" d="M7.01916 0.25c-0.16092 0 -0.32002 0.034013 -0.46688 0.099809 -0.14165 0.063467 -0.26883 0.155124 -0.37379 0.269316L5.04523 1.74619c-0.1201 -0.24641 -0.28227 -0.47269 -0.48153 -0.66779C4.10172 0.617519 3.47577 0.358645 2.82313 0.358645c-0.65362 0 -1.28048 0.25965 -1.74266 0.721825 -0.462175 0.46218 -0.721825 1.08904 -0.721825 1.74266 0 0.65264 0.258874 1.27859 0.719755 1.74057 0.1927 0.19681 0.41581 0.35743 0.6587 0.47708L0.621448 6.13804c-0.115273 0.10537 -0.207743 0.23331 -0.271639 0.37592C0.284013 6.66082 0.25 6.81992 0.25 6.98084s0.034013 0.32002 0.099809 0.46688c0.063572 0.14189 0.155429 0.26925 0.269887 0.37431L2.08637 9.28871c0.11441 0.11441 0.2771 0.16638 0.43664 0.1395 0.15955 -0.02689 0.29622 -0.12931 0.36681 -0.27489 0.07392 -0.15244 0.17174 -0.29206 0.28976 -0.41359 0.27608 -0.27707 0.65075 -0.43344 1.04195 -0.43478 0.392 -0.00134 0.76848 0.15309 1.04661 0.42933 0.27813 0.27623 0.43514 0.65165 0.43649 1.04364 0.00133 0.39058 -0.15201 0.76588 -0.42643 1.04368 -0.12124 0.1175 -0.26044 0.2149 -0.41236 0.2886 -0.144 0.0698 -0.24588 0.2043 -0.27404 0.3619 -0.02816 0.1575 0.0208 0.319 0.1317 0.4344l1.41232 1.4696c0.10579 0.1164 0.23453 0.2097 0.37814 0.2741 0.14686 0.0658 0.30596 0.0998 0.46688 0.0998s0.32002 -0.034 0.46688 -0.0998c0.14165 -0.0635 0.26881 -0.1551 0.37378 -0.2693l1.13609 -1.1299c0.06501 0.1337 0.14226 0.2617 0.23113 0.3825 0.2813 0.3823 0.66704 0.6753 1.11088 0.8436 0.4438 0.1683 0.9267 0.2048 1.3908 0.1052 0.4641 -0.0996 0.8895 -0.3311 1.2251 -0.6668 0.3357 -0.3356 0.5672 -0.761 0.6668 -1.2251 0.0996 -0.4641 0.0631 -0.947 -0.1052 -1.3908 -0.1683 -0.44384 -0.4613 -0.82958 -0.8436 -1.11088 -0.118 -0.08686 -0.2431 -0.16262 -0.3734 -0.2267l1.1185 -1.10006c0.1152 -0.10537 0.2077 -0.23331 0.2716 -0.37592 0.0658 -0.14686 0.0998 -0.30596 0.0998 -0.46688s-0.034 -0.32002 -0.0998 -0.46688c-0.0638 -0.14245 -0.1562 -0.27025 -0.2713 -0.37556l-1.4867 -1.4677c-0.1148 -0.11327 -0.2771 -0.16426 -0.436 -0.13696 -0.1589 0.02731 -0.2948 0.12956 -0.3652 0.27462 -0.072 0.1486 -0.1668 0.28503 -0.2809 0.40438 -0.2787 0.2483 -0.6415 0.38168 -1.01504 0.37282 -0.37858 -0.00899 -0.73917 -0.16339 -1.00694 -0.43116 -0.26777 -0.26777 -0.42217 -0.62836 -0.43116 -1.00695 -0.00886 -0.37355 0.12452 -0.73632 0.37282 -1.01505 0.11935 -0.11406 0.25578 -0.20884 0.40438 -0.2809 0.144 -0.06983 0.24587 -0.20437 0.27404 -0.36191 0.02816 -0.15755 -0.0208 -0.31905 -0.1317 -0.43444L7.86419 0.623895c-0.1058 -0.116412 -0.23453 -0.209738 -0.37815 -0.274086C7.33918 0.284013 7.18008 0.25 7.01916 0.25Z" clip-rule="evenodd" stroke-width="1"></path></g>'],   // IconModules
+    vms: ["0 0.247 14 14", '<g><path fill="currentColor" fill-rule="evenodd" d="M2 9V2.5h10V9H2ZM1.457 0.5C0.652 0.5 0 1.152 0 1.957v7.586C0 10.348 0.652 11 1.457 11h4.026l-0.535 1.495H4a0.75 0.75 0 0 0 0 1.5h6a0.75 0.75 0 0 0 0 -1.5h-0.948L8.517 11h4.026C13.348 11 14 10.348 14 9.543V1.957C14 1.152 13.348 0.5 12.543 0.5H1.457Z" clip-rule="evenodd" stroke-width="1"></path></g>'],   // IconVM
+    settings: ["-0.001 0 14 14", '<g><path fill="currentColor" fill-rule="evenodd" d="m5.557 0.69 -0.463 1.195 -1.594 0.904 -1.27 -0.194a1.077 1.077 0 0 0 -1.078 0.528l-0.43 0.754a1.077 1.077 0 0 0 0.086 1.217l0.807 1.001v1.81L0.83 8.906a1.077 1.077 0 0 0 -0.086 1.217l0.43 0.754a1.077 1.077 0 0 0 1.078 0.528l1.27 -0.194 1.573 0.904 0.463 1.196a1.076 1.076 0 0 0 1 0.689h0.905a1.076 1.076 0 0 0 1.002 -0.69l0.463 -1.195 1.572 -0.904 1.27 0.194a1.077 1.077 0 0 0 1.078 -0.528l0.43 -0.754a1.077 1.077 0 0 0 -0.086 -1.217l-0.807 -1.001v-1.81l0.786 -1.001a1.077 1.077 0 0 0 0.086 -1.217l-0.43 -0.754a1.076 1.076 0 0 0 -1.078 -0.528l-1.27 0.194 -1.573 -0.904L8.443 0.689A1.077 1.077 0 0 0 7.442 0h-0.884a1.077 1.077 0 0 0 -1.001 0.69ZM7 9.25a2.25 2.25 0 1 0 0 -4.5 2.25 2.25 0 0 0 0 4.5Z" clip-rule="evenodd" stroke-width="1"></path></g>'],   // IconGear
+    info: ["0 0 14 14", '<path fill="currentColor" fill-rule="evenodd" d="M7 14c3.866 0 7 -3.134 7 -7 0 -3.86599 -3.134 -7 -7 -7 -3.86599 0 -7 3.13401 -7 7 0 3.866 3.13401 7 7 7ZM5.5 9.375c-0.34518 0 -0.625 0.27982 -0.625 0.625 0 0.3452 0.27982 0.625 0.625 0.625h3c0.34518 0 0.625 -0.2798 0.625 -0.625 0 -0.34518 -0.27982 -0.625 -0.625 -0.625h-0.875V6.5c0 -0.34518 -0.27982 -0.625 -0.625 -0.625H6c-0.34518 0 -0.625 0.27982 -0.625 0.625s0.27982 0.625 0.625 0.625h0.375v2.25H5.5ZM8 4c0 0.55228 -0.44772 1 -1 1s-1 -0.44772 -1 -1 0.44772 -1 1 -1 1 0.44772 1 1Z" clip-rule="evenodd" stroke-width="1"></path>'],   // IconInfo
+    favorites: ["0 0 24 24", '<path d="M8.243 7.34l-6.38 .925l-.113 .023a1 1 0 0 0 -.44 1.684l4.622 4.499l-1.09 6.355l-.013 .11a1 1 0 0 0 1.464 .944l5.706 -3l5.693 3l.1 .046a1 1 0 0 0 1.352 -1.1l-1.091 -6.355l4.624 -4.5l.078 -.085a1 1 0 0 0 -.633 -1.62l-6.38 -.926l-2.852 -5.78a1 1 0 0 0 -1.794 0l-2.853 5.78z" />'],   // Tabler star (MIT), the main bar's; glyphs.json has none
+    tools: ["0 0 512 512", '<path d="M352 320c88.4 0 160-71.6 160-160c0-15.3-2.2-30.1-6.2-44.2c-3.1-10.8-16.4-13.2-24.3-5.3l-76.8 76.8c-3 3-7.1 4.7-11.3 4.7L336 192c-8.8 0-16-7.2-16-16l0-57.4c0-4.2 1.7-8.3 4.7-11.3l76.8-76.8c7.9-7.9 5.4-21.2-5.3-24.3C382.1 2.2 367.3 0 352 0C263.6 0 192 71.6 192 160c0 19.1 3.4 37.5 9.5 54.5L19.9 396.1C7.2 408.8 0 426.1 0 444.1C0 481.6 30.4 512 67.9 512c18 0 35.3-7.2 48-19.9L297.5 310.5c17 6.2 35.4 9.5 54.5 9.5zM80 408a24 24 0 1 1 0 48 24 24 0 1 1 0-48z" />']   // FontAwesome Solid wrench (CC BY 4.0), the main bar's; glyphs.json has none
+  };
+  function tabGlyph(id) {
+    var g = TAB_GLYPHS[id], svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "cc-set-tabico"); svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("viewBox", g[0]); svg.setAttribute("fill", "currentColor");
+    svg.innerHTML = g[1];
+    return svg;
+  }
+  // The tab strip's gap in px, which docker.css .cc-set-tabs repeats.
+  var TAB_GAP = 6;
+  // How many tabs of width w share one row: all of them while they fit, otherwise an even share,
+  // so seven that fit four to a row go four and three rather than leaving one alone.
+  function tabsPerRow(n, w, gap, room) {
+    var fit = Math.max(1, Math.floor((room + gap) / (w + gap)));
+    if (fit >= n) return n;
+    return Math.ceil(n / Math.ceil(n / fit));
+  }
   // GlimStone's accent presets, the same eight in the same order in every app of the family, so
   // Blue here is the Blue of the next app. Only the offer changes: a saved cc.accent is never
   // rewritten, whichever preset it came from.
@@ -948,30 +979,32 @@
     if (!window.__ccSetAlignResize) {
       window.__ccSetAlignResize = true;
       var alignTimer = null;
-      window.addEventListener("resize", function () { clearTimeout(alignTimer); alignTimer = setTimeout(function () { window.__ccSetAlignSearch(); }, 120); });
+      window.addEventListener("resize", function () { clearTimeout(alignTimer); alignTimer = setTimeout(function () { window.__ccSetSizeTabs(); window.__ccSetAlignSearch(); }, 120); });
     }
-    // In rainbow mode every settings tab takes its own palette slot, not just the active one.
+    // GlimStone's tab-strip colour rule: every tab owns a rainbow position, which its glyph shows
+    // at rest and its fill once chosen. The sheet does the painting from these vars; reactive mode
+    // rests the idle glyphs grey through the class on the root.
     function paintSetTabs() {
-      var rb = get("cc.rainbow", "0") === "1";
-      // In the neutral sub-mode an idle tab rests on the grey base and carries its colour only as
-      // vars, which the hover rule paints from; the active tab keeps its direct colour.
-      var reactive = rb && get("cc.rbmode", "all") === "active";
-      // palG() is scoped inside buildStyleCards, so the palette is read directly here
-      var DEF = (window.CCTheme && window.CCTheme.RB) || ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"], p = DEF;   // the shared palette, so the strip matches the rest of the UI
-      try { var j = JSON.parse(get("cc.rbpal", "null")); if (j && j.length) p = j; } catch (e) {}
-      if (window.CCTheme && window.CCTheme.surfacePalette) p = window.CCTheme.surfacePalette(p);
+      var rb = get("cc.rainbow", "0") === "1", rbC = (window.CCTheme && window.CCTheme.rbColor) || function (i, a) { return a; };
+      root.classList.toggle("cc-set-reactive", get("cc.rbmode", "all") === "active");
       tabBtns.forEach(function (b, i) {
-        if (rb) {
-          var c = p[i % p.length];
-          b.style.setProperty("--cc-rb-c", c); b.style.setProperty("--cc-rb-ct", idealText(c));
-          if (reactive && !b.classList.contains("cc-set-tab-on")) { b.style.removeProperty("background"); b.style.removeProperty("color"); return; }
-          b.style.setProperty("background", c, "important"); b.style.setProperty("color", idealText(c), "important");
-        } else {
-          b.style.removeProperty("background"); b.style.removeProperty("color");
-          b.style.removeProperty("--cc-rb-c"); b.style.removeProperty("--cc-rb-ct");
-        }
+        if (rb) { var c = rbC(i, accent); b.style.setProperty("--cc-rb-c", c); b.style.setProperty("--cc-rb-ct", idealText(c)); }
+        else { b.style.removeProperty("--cc-rb-c"); b.style.removeProperty("--cc-rb-ct"); }
       });
     }
+    // Every tab takes the width of the widest one, and once the strip wraps its rows share the tabs
+    // evenly, so no row ends in an empty strip.
+    function sizeSetTabs() {
+      var shown = tabBtns.filter(function (b) { return b.style.display !== "none"; });
+      shown.forEach(function (b) { b.style.removeProperty("min-width"); b.style.removeProperty("flex"); });
+      var w = 0;
+      shown.forEach(function (b) { w = Math.max(w, Math.ceil(b.getBoundingClientRect().width)); });
+      if (!w) return;
+      var cs = getComputedStyle(root), room = root.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+      var perRow = tabsPerRow(shown.length, w, TAB_GAP, room);
+      shown.forEach(function (b) { b.style.minWidth = w + "px"; b.style.flex = "1 0 calc((100% - " + perRow + " * " + TAB_GAP + "px) / " + perRow + ")"; });
+    }
+    window.__ccSetSizeTabs = sizeSetTabs;
     // hide the tab of any disabled area immediately; if we were ON it, fall back to Bereiche
     function refreshTabs() {
       var activeHidden = false;
@@ -983,9 +1016,11 @@
         if (!on && tabBtns[j].classList.contains("cc-set-tab-on")) { activeHidden = true; sc.w.style.display = "none"; }
       });
       if (activeHidden) showSec(0);
+      sizeSetTabs();
     }
     SECS.forEach(function (sc, i) {
-      var b = el("button", "cc-set-tab", sc.t); b.type = "button";
+      var b = el("button", "cc-set-tab"); b.type = "button";
+      b.appendChild(tabGlyph(sc.id)); b.appendChild(el("span", null, sc.t));
       b.addEventListener("click", function () { showSec(i); });
       tabBtns.push(b); tabRow.appendChild(b);
     });
