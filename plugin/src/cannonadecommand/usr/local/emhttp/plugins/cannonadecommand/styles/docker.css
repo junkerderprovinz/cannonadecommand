@@ -16,19 +16,19 @@
 .cc-root, .cc-grid-holder {
   --cc-bg: var(--cc-surface-base, #161616); --cc-bg2: var(--cc-surface-1, #1e1e1e); --cc-bg3: var(--cc-surface-4, #262626); --cc-line: var(--cc-line-solid, #2a2a2a);
   --cc-txt: var(--cc-text, #e6e6e6); --cc-dim: var(--cc-text-dim, #8a8a8a);
-  color: var(--cc-txt); font: 13px/1.45 "Segoe UI", system-ui, sans-serif;
+  color: var(--cc-txt); font: var(--cc-text-subline)/1.45 "Segoe UI", system-ui, sans-serif;
 }
 .cc-grid-holder { position: relative; margin: 6px 0 14px; }
 
 /* the gear, a small icon moved into Unraid's Advanced/Basic toggle bar */
-.cc-hgear { background: transparent !important; border: none !important; box-shadow: none !important; outline: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 4px; vertical-align: middle; transition: color .12s; -webkit-appearance: none; appearance: none; }
+.cc-hgear { background: transparent !important; border: none !important; box-shadow: none !important; outline: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: var(--cc-text-body); line-height: 1; padding: 0 4px; vertical-align: middle; transition: color .12s; -webkit-appearance: none; appearance: none; }
 .cc-hgear:hover { color: var(--cc-accent-ink, #FCC419); }
-.cc-hgear-bar { margin-right: 10px; font-size: 17px; color: var(--cc-accent-ink, #FCC419); }
+.cc-hgear-bar { margin-right: 10px; font-size: var(--cc-text-title); color: var(--cc-accent-ink, #FCC419); }
 .cc-hgear-th { float: right; }
 .cc-hgear-float { display: none !important; } /* fallback gear caused the load flash */
 /* the grid gear is a tile within the card grid, not a floating button */
 .cc-gear-tile { display: flex; align-items: center; justify-content: center; min-height: 90px; border: 1px dashed #333; background: transparent; }
-.cc-gear-tile .cc-hgear { position: static; font-size: 18px; }
+.cc-gear-tile .cc-hgear { position: static; font-size: var(--cc-text-title); }
 /* daemon unreachable → a permanent red gear (CPU/RAM/BW can't work without the daemon) */
 .cc-hgear-down { color: var(--cc-err-ink, #ff8389) !important; }
 .cc-ok-text { color: var(--cc-ok-ink, #6fdc8c); }
@@ -75,7 +75,7 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbo
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .inner br { display: none; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .inner > i[id^='load-'],
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .inner > span.state { display: none !important; }
-.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .appname { font-size: 15px !important; font-weight: 600 !important; letter-spacing: .1px; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .appname { font-size: var(--cc-text-title) !important; font-weight: 600 !important; letter-spacing: .1px; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) > td { padding-top: var(--cc-density) !important; padding-bottom: var(--cc-density) !important; }
 /* The row height is mostly badge content, so the --cc-density padding on the cells is barely
    visible on its own; compact and airy also tighten or loosen the badge groups and the name meta. */
@@ -110,7 +110,7 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbo
 
 /* ACTIONS column: icon buttons, name as tooltip; "…" opens the native menu */
 .cc-actcell { white-space: nowrap; }
-.cc-act-th { font-size: 11px; }
+.cc-act-th { font-size: var(--cc-text-meta); }
 /* #10 (user: "listentitelleisten in den cc style"): the native tablesorter column headers were a flat grey
    strip with a hard 1px separator line + an orange sort caret. CC treatment: a clean surface-shade strip,
    dim chip text, uppercase/tracked type, NO border line (differentiate by SHADE), and the orange sort caret
@@ -132,11 +132,11 @@ html.cc-docker-on table.cc-enh thead th.tablesorter-headerDesc::after { color: c
 /* the actions column needs room for its two icon rows: four 27px icons and the gaps */
 .cc-enh thead tr:last-child th:nth-child(2) { width: 122px; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) > td:nth-child(2) { max-width: 122px; }
-.cc-actbtn i.fa { font-size: 13px; line-height: 1; color: inherit !important; } /* theme CSS colours .fa directly */
+.cc-actbtn i.fa { font-size: var(--cc-text-subline); line-height: 1; color: inherit !important; } /* theme CSS colours .fa directly */
 /* the gear lives inside the header strip (the last th), because an absolute overlay is clipped */
 .cc-hgear-th2 { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: #9a9a9a !important; }
 .cc-hgear-home { border: none !important; box-shadow: none !important; cursor: pointer; line-height: 1; align-self: center; }
-nav.tabs .tabs-container .cc-hgear-home { background: #2a2a2a !important; color: #b5b5b5 !important; padding: 4px 12px !important; margin-left: 6px; font-size: 14px; }
+nav.tabs .tabs-container .cc-hgear-home { background: #2a2a2a !important; color: #b5b5b5 !important; padding: 4px 12px !important; margin-left: 6px; font-size: var(--cc-text-body); }
 nav.tabs .tabs-container .cc-hgear-home:hover { background: #3a3a3a !important; color: #fff !important; }
 /* card view: the same action block the list rows carry */
 .cc-card-actbar { padding: 6px 12px 0 12px; }
@@ -157,7 +157,7 @@ a.sl-updall { display: none !important; }
 @keyframes cc-actfade { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
 .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }
 @keyframes cc-actflash { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--cc-btn-accent, var(--cc-accent, #FCC419)); } }
-.cc-actbtn { width: 27px; height: 26px; border-radius: 6px; background: #2e2e2e; color: #c9c9c9; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; user-select: none; transition: background .12s, color .12s; }
+.cc-actbtn { width: 27px; height: 26px; border-radius: 6px; background: #2e2e2e; color: #c9c9c9; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--cc-text-subline); user-select: none; transition: background .12s, color .12s; }
 .cc-actbtn:hover { background: var(--cc-btn-accent, var(--cc-accent, #FCC419)); color: var(--cc-accent-text, #161616); }
 
 /* the uptime column shows in the advanced view only */
@@ -175,7 +175,7 @@ a.sl-updall { display: none !important; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='mem-'],
 .cc-badge, .cc-pill {
   display: inline-flex; align-items: center; gap: 5px; border: none !important;
-  border-radius: 999px; padding: var(--cc-sm-pad, 3px 11px); margin: 2px 4px 2px 0; font-size: var(--cc-sm-fs, 11px);
+  border-radius: 999px; padding: var(--cc-sm-pad, 3px 11px); margin: 2px 4px 2px 0; font-size: var(--cc-sm-fs);
   font-weight: 600; line-height: 1.35; white-space: nowrap; text-decoration: none; vertical-align: middle;
 }
 /* The container state is a colour dot on its own row under the name, like the /Main disk dots;
@@ -207,7 +207,7 @@ a.sl-updall { display: none !important; }
 .cc-b-von .cc-b-v { font-family: inherit; }
 /* The Plugins tab's author badge follows the page-badge scale, one step under the main menu tabs,
    in both views. Scoped to Plugins, so nothing else shifts. */
-.cc-plug .cc-plugauth, .cc-plug-lite .cc-plugauth { font-size: var(--cc-pagebadge-fs, 13px) !important; }
+.cc-plug .cc-plugauth, .cc-plug-lite .cc-plugauth { font-size: var(--cc-pagebadge-fs) !important; }
 /* The delete control shared by the plugin list and the Shares detail page: a badge that hugs its
    text, with the confirm checkbox as an accent-tinted sibling beside it rather than inside the
    pill. CannonadeCommand.Shares.css carries the same look, scoped to the detail page. Deleting is
@@ -217,7 +217,7 @@ a.sl-updall { display: none !important; }
   display: inline-flex !important; align-items: center; justify-content: center;
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; border: none !important; box-shadow: none !important;
   border-radius: var(--cc-b-radius, 999px) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1.5;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important; line-height: 1.5;
   text-transform: uppercase; letter-spacing: .6px; cursor: pointer; text-decoration: none;
   vertical-align: middle; transition: background-color .12s;
 }
@@ -239,11 +239,11 @@ html.cc-bulkmode-on .cc-bulk-cb { display: inline-block !important; }
   background: var(--cc-bg, #161616); border-radius: var(--cc-b-radius, 999px);
   padding: 6px 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
 }
-.cc-bulkbar-count { font-size: var(--cc-md-fs, 13px); font-weight: 600; color: var(--cc-text, #e6e6e6); padding: 0 6px; white-space: nowrap; }
+.cc-bulkbar-count { font-size: var(--cc-md-fs); font-weight: 600; color: var(--cc-text, #e6e6e6); padding: 0 6px; white-space: nowrap; }
 .cc-bulkbtn {
   display: inline-flex !important; align-items: center; justify-content: center; cursor: pointer;
   border-radius: var(--cc-b-radius, 999px) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1.5;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important; line-height: 1.5;
   text-transform: uppercase; letter-spacing: .6px; text-decoration: none; vertical-align: middle;
   transition: filter .12s; border: none !important; box-shadow: none !important; white-space: nowrap;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
@@ -332,7 +332,7 @@ table:not(.cc-enh) #docker_list tr:is(.sortable, .folder-element) td.advanced:ha
 .cc-b.cc-b-warn .cc-b-k, .cc-b.cc-b-warn .cc-b-v { opacity: 1 !important; color: inherit; }
 
 /* CPU/RAM limits editor button on the resource cell */
-.cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--cc-b-radius, 999px); background: #3a3a3a; color: #ececec; cursor: pointer; font-size: 12px; margin: 2px 0; } /* filled, and the radius follows the badge shape so the gear matches its badge */
+.cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--cc-b-radius, 999px); background: #3a3a3a; color: #ececec; cursor: pointer; font-size: var(--cc-text-meta); margin: 2px 0; } /* filled, and the radius follows the badge shape so the gear matches its badge */
 .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }  /* in rainbow the per-gear --cc-rb-c wins, in accent mode the chain falls through */
 /* the gear turns green once a CPU or RAM limit is configured, like the "set" dot */
 .cc-limbtn-set { color: var(--cc-ok-fg, #161616); background: var(--cc-ok, #6fdc8c); }
@@ -403,13 +403,13 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
    children then wrap inside its box instead of interleaving with sibling top-level chips on the
    same flex line. */
 .cc-folder-group { grid-column: 1 / -1; flex: 1 1 100%; width: 100%; background: var(--cc-bg2); border-radius: 10px; padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
-.cc-folder-group-head { background: var(--cc-bg3); border-radius: 7px; padding: 6px 8px 6px 12px; font-size: 14px; font-weight: 600; color: var(--cc-txt); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cc-folder-group-head { background: var(--cc-bg3); border-radius: 7px; padding: 6px 8px 6px 12px; font-size: var(--cc-text-body); font-weight: 600; color: var(--cc-txt); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .cc-folder-group-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* The chevron and the label share one flex item, so the head's justify-content:space-between still
    splits label against actions; a third top-level flex child would pull the label off the left
    edge. */
 .cc-folder-group-title { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
-.cc-folder-chev { flex: none; font-size: 10px; width: 10px; text-align: center; color: var(--cc-dim, #8a8a8a); }
+.cc-folder-chev { flex: none; font-size: var(--cc-text-meta); width: 10px; text-align: center; color: var(--cc-dim, #8a8a8a); }
 .cc-folder-group-actions { display: flex; align-items: center; gap: 2px; flex: none; }
 /* The folder write actions render only for folders CC created itself. Collapse, hide-stopped and
    the bulk start and stop are per-folder view state and container actions rather than folder
@@ -421,11 +421,11 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
    attribute selector outranks a single-class rule on specificity alone and resets
    background-color. Marking the base, the hover and the on-state alike puts them all at the same
    priority, where ordinary specificity and source order decide again. */
-.cc-folder-act { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 4px 6px; border-radius: 6px; transition: background .12s, color .12s; }
+.cc-folder-act { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: var(--cc-text-subline); line-height: 1; padding: 4px 6px; border-radius: 6px; transition: background .12s, color .12s; }
 .cc-folder-act:hover { background: rgba(128, 128, 128, .18) !important; color: var(--cc-txt); }
 /* docker.js folderActBtn() puts a FontAwesome <i> in the button; `color: inherit` is needed
    because Unraid's theme styles .fa glyphs directly, which beats plain inheritance. */
-.cc-folder-act i.fa { color: inherit; font-size: 12px; line-height: 1; }
+.cc-folder-act i.fa { color: inherit; font-size: var(--cc-text-meta); line-height: 1; }
 /* the hide-stopped active state is a shade, never a border line */
 .cc-folder-act-on { background: rgba(128, 128, 128, .18) !important; color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black); }
 .cc-folder-group-body { padding-top: 0; } /* a nested body has no corner gear to clear */
@@ -445,7 +445,7 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 /* The per-card move-to-folder menu at the end of the card's head row, reachable by touch and
    keyboard where dragging is not. Its backgrounds need !important for the same reason as
    .cc-folder-act above. */
-.cc-card-movebtn { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: 13px; line-height: 1; padding: 3px 5px; border-radius: 6px; flex: none; transition: background .12s, color .12s; }
+.cc-card-movebtn { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: var(--cc-text-subline); line-height: 1; padding: 3px 5px; border-radius: 6px; flex: none; transition: background .12s, color .12s; }
 .cc-card-movebtn:hover { background: rgba(128, 128, 128, .18) !important; color: var(--cc-txt); }
 .cc-menu-link-current { background: rgba(128, 128, 128, .18); }
 .cc-card { background: var(--cc-bg2); border: none; border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; transition: transform .12s, box-shadow .12s; }
@@ -454,10 +454,10 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 .cc-card-ico { width: 44px; height: 44px; border-radius: 7px; object-fit: contain; background: var(--cc-bg3); flex: none; }
 .cc-card-ico-ph { background: var(--cc-bg3); }
 .cc-card-name { flex: 1; min-width: 0; }
-.cc-card-title { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cc-card-img { color: var(--cc-dim); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-card-title { font-weight: 600; font-size: var(--cc-text-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-card-img { color: var(--cc-dim); font-size: var(--cc-text-meta); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cc-card-stats { display: flex; flex-direction: column; gap: 6px; }
-.cc-stat { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+.cc-stat { display: flex; align-items: center; gap: 8px; font-size: var(--cc-text-meta); }
 .cc-stat-lbl { color: var(--cc-dim); width: 30px; flex: none; }
 .cc-stat-val { color: var(--cc-dim); margin-left: auto; white-space: nowrap; }
 .cc-gauge { flex: 1; height: 6px; background: var(--cc-bg3); border-radius: 999px; overflow: hidden; }
@@ -469,7 +469,7 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 /* the limit gears on a grid card, as one full-width group at the bottom of the card */
 .cc-card-res { display: flex !important; width: 100%; border-top: 1px solid var(--cc-line); padding-top: 8px; margin-top: 2px; }
 .cc-life { display: inline-flex; gap: 6px; }
-.cc-abtn { background: var(--cc-bg3); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; transition: background .12s; }
+.cc-abtn { background: var(--cc-bg3); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: 5px; padding: 4px 10px; font-size: var(--cc-text-meta); cursor: pointer; transition: background .12s; }
 .cc-abtn:hover { background: #333; }
 .cc-abtn-primary { color: var(--cc-ok-ink, #6fdc8c); border-color: rgba(63,174,106,.4); }
 /* the single-action wrapper folderChip() and folderListRow() share; the action itself is the
@@ -484,18 +484,18 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 .cc-card.cc-chip { flex-direction: row; align-items: center; padding: 4px 10px 4px 4px; gap: 6px; background: rgba(128, 128, 128, .12); border-radius: 999px; width: auto; }
 .cc-chip:hover { transform: none; box-shadow: none; background: rgba(128, 128, 128, .2); } /* the .cc-card hover elevation is too heavy on a pill this small */
 .cc-chip-ico { width: 24px; height: 24px; border-radius: 999px; }
-.cc-chip-name { font-size: 12px; font-weight: 500; color: var(--cc-txt); max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-chip-name { font-size: var(--cc-text-meta); font-weight: 500; color: var(--cc-txt); max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cc-chip-dot { width: 8px !important; height: 8px !important; min-width: 8px !important; padding: 0 !important; margin: 0 !important; gap: 0 !important; border-radius: 50% !important; font-size: 0 !important; line-height: 0 !important; flex: 0 0 auto; box-shadow: 0 0 0 1px rgba(0, 0, 0, .25); }
-.cc-chip-status { font-size: 11px; color: var(--cc-dim); white-space: nowrap; }
+.cc-chip-status { font-size: var(--cc-text-meta); color: var(--cc-dim); white-space: nowrap; }
 .cc-chip-act { flex: none; display: flex; }
-.cc-chip .cc-actbtn { width: 20px; height: 20px; font-size: 11px; border-radius: 5px; } /* smaller than the 27x26 of the full action bars */
+.cc-chip .cc-actbtn { width: 20px; height: 20px; font-size: var(--cc-text-meta); border-radius: 5px; } /* smaller than the 27x26 of the full action bars */
 
 /* The list density: full-width rows in the Docker list's own language, icon, bold name and status
    badge, with one action button and none of the CPU, RAM, network or port columns. folderListRow()
    keeps the .cc-card base class for the same reason as .cc-chip above. */
 .cc-card.cc-frow { flex-direction: row; align-items: center; padding: 8px 14px; gap: 12px; }
 .cc-frow .cc-card-ico { width: 40px; height: 40px; }
-.cc-frow-name { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-frow-name { flex: 1; min-width: 0; font-weight: 600; font-size: var(--cc-text-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cc-frow-status { flex: none; }
 .cc-frow-act { flex: none; display: flex; }
 
@@ -503,24 +503,24 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
    90px square among tiny chips or slim rows */
 .cc-gear-tile.cc-chip, .cc-gear-tile.cc-frow { min-height: auto; }
 
-.cc-filter { background: var(--cc-bg2); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: 6px; padding: 5px 10px; font-size: 12px; }
+.cc-filter { background: var(--cc-bg2); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: 6px; padding: 5px 10px; font-size: var(--cc-text-meta); }
 /* Buttons are filled, with no borders anywhere: a neutral fill for a secondary, the accent for a
    primary, and fills and shadows for separation. */
-.cc-btn { background: #2e2e2e; color: #e6e6e6; border: none; border-radius: 5px; padding: 5px 12px; font-size: 12px; cursor: pointer; transition: background .12s, color .12s, filter .12s; }
+.cc-btn { background: #2e2e2e; color: #e6e6e6; border: none; border-radius: 5px; padding: 5px 12px; font-size: var(--cc-text-meta); cursor: pointer; transition: background .12s, color .12s, filter .12s; }
 /* A button reads the same three-tier colour chain as the badges: its own stamped slot, which
    paintPopChrome writes, then the shared rainbow accent, then the plain accent. */
 .cc-btn:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 .cc-btn-primary { font-weight: 600; background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 .cc-btn-primary:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }
 .cc-seg { display: inline-flex; border: none; border-radius: 6px; overflow: hidden; }
-.cc-seg-btn { background: var(--cc-bg2); color: var(--cc-dim); border: none; padding: 5px 14px; font-size: 12px; cursor: pointer; }
+.cc-seg-btn { background: var(--cc-bg2); color: var(--cc-dim); border: none; padding: 5px 14px; font-size: var(--cc-text-meta); cursor: pointer; }
 .cc-seg-btn:hover { color: var(--cc-txt); }
 .cc-seg-btn.cc-seg-on { background: var(--cc-accent); color: var(--cc-accent-text, #161616); font-weight: 600; }
 
-.cc-menu { position: absolute; z-index: 99999; min-width: 190px; background: var(--cc-bg, #161616); border: none; border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); padding: 6px; font: 13px/1.5 "Segoe UI", system-ui, sans-serif; color: #e6e6e6; }
+.cc-menu { position: absolute; z-index: 99999; min-width: 190px; background: var(--cc-bg, #161616); border: none; border-radius: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.55); padding: 6px; font: var(--cc-text-subline)/1.5 "Segoe UI", system-ui, sans-serif; color: #e6e6e6; }
 .cc-menu-wide { min-width: 240px; max-width: 92vw; }
-.cc-menu-status { font-size: 12px; padding: 2px 8px 6px; }
-.cc-menu-h { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: #8a8a8a; padding: 7px 8px 3px; }
+.cc-menu-status { font-size: var(--cc-text-meta); padding: 2px 8px 6px; }
+.cc-menu-h { font-size: var(--cc-text-meta); text-transform: uppercase; letter-spacing: .5px; color: #8a8a8a; padding: 7px 8px 3px; }
 .cc-menu-row { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 5px; cursor: pointer; }
 .cc-menu-row:hover { background: #262626; }
 .cc-menu-plain { cursor: default; gap: 8px; flex-wrap: wrap; }
@@ -528,17 +528,17 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 .cc-menu-plain .cc-filter { width: 100%; }
 .cc-menu-plain .cc-btn { flex: 1; text-align: center; }
 .cc-menu-sep { height: 6px; background: transparent; margin: 0; }   /* spacing, not a line */
-.cc-menu-link { color: var(--cc-accent); font-size: 12px; padding: 6px 8px; display: block; text-decoration: none; border-radius: 6px; transition: background .12s, color .12s; }
+.cc-menu-link { color: var(--cc-accent); font-size: var(--cc-text-meta); padding: 6px 8px; display: block; text-decoration: none; border-radius: 6px; transition: background .12s, color .12s; }
 /* a colour-mode fill on hover, and no underline */
 .cc-menu-link:hover { text-decoration: none; background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 
-.cc-toast { position: fixed; right: 18px; bottom: 18px; z-index: 100000; background: #161616; color: #e6e6e6; border: none; border-radius: 8px; padding: 9px 14px; font: 12px/1.4 "Segoe UI", system-ui, sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,.5); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .2s, transform .2s; max-width: 60vw; }
+.cc-toast { position: fixed; right: 18px; bottom: 18px; z-index: 100000; background: #161616; color: #e6e6e6; border: none; border-radius: 8px; padding: 9px 14px; font: var(--cc-text-meta)/1.4 "Segoe UI", system-ui, sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,.5); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .2s, transform .2s; max-width: 60vw; }
 .cc-toast-show { opacity: 1; transform: translateY(0); }
 
 /* A tight key shadow, a soft wide ambient one and an inner top highlight, so the popover reads as
    a raised, top-lit surface rather than a flat box, separated by light instead of a border line. A
    short fade and rise replaces the blink-on, and reduced motion drops it below. */
-.cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: 92vw; background: var(--cc-bg, #161616); color: var(--cc-txt, #e6e6e6); border: none; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,.38), 0 14px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05); font: 13px/1.5 "Segoe UI", system-ui, sans-serif; animation: cc-pop-in .14s cubic-bezier(.2,.7,.3,1); }
+.cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: 92vw; background: var(--cc-bg, #161616); color: var(--cc-txt, #e6e6e6); border: none; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,.38), 0 14px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05); font: var(--cc-text-subline)/1.5 "Segoe UI", system-ui, sans-serif; animation: cc-pop-in .14s cubic-bezier(.2,.7,.3,1); }
 @keyframes cc-pop-in { from { opacity: 0; transform: translateY(6px) scale(.985); } to { opacity: 1; transform: none; } }
 /* While a window stands, the page behind it is pinned: docker.js ccScrollLock sets
    html.cc-scrolllock and closePop(), the funnel every dismiss path goes through, releases it. The
@@ -599,11 +599,11 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
    The 6px is padding rather than margin because hardenPop() stamps `margin: 0 !important` on every
    row child, and it sits on the label rather than on the row's gap, so the checkbox rows keep
    their tight spacing. */
-.cc-pop-lbl { color: #8a8a8a; font-size: 12px; flex: 0 0 auto; box-sizing: content-box; min-width: 100px; padding-right: 6px; white-space: nowrap; }
+.cc-pop-lbl { color: #8a8a8a; font-size: var(--cc-text-meta); flex: 0 0 auto; box-sizing: content-box; min-width: 100px; padding-right: 6px; white-space: nowrap; }
 .cc-pop-body.cc-dis { opacity: .4; pointer-events: none; }
-.cc-pop-foot { padding: 9px 24px; border-top: none; color: #8a8a8a; font-size: 11px; }
+.cc-pop-foot { padding: 9px 24px; border-top: none; color: #8a8a8a; font-size: var(--cc-text-meta); }
 /* a rejection from the engine or Docker stays on screen instead of passing as a toast, and wraps */
-.cc-pop-err { display: none; margin: 8px 24px 2px; padding: 7px 9px; border-radius: 6px; background: rgba(220,53,69,.13); border: none; color: #ff7a7a; font-size: 12px; line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
+.cc-pop-err { display: none; margin: 8px 24px 2px; padding: 7px 9px; border-radius: 6px; background: rgba(220,53,69,.13); border: none; color: #ff7a7a; font-size: var(--cc-text-meta); line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
 /* In the rotating rainbow the colours come from the --cc-rb-* vars docker.js sets: one rotation
    offset walks every badge kind through the palette. */
 .cc-enh.cc-rainbow .cc-b-net, .cc-grid-holder.cc-rainbow .cc-b-net { background: var(--cc-rb-net, var(--cc-accent, #FCC419)); color: var(--cc-rb-net-t, var(--cc-accent-text, #161616)); }
@@ -629,7 +629,7 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
 .cc-lbl-info { display: inline-flex; align-items: center; gap: 6px; }
 /* the apply-status dot behind a field: a green check or a red cross whose detail opens on hover,
    like the info bubbles */
-.cc-statdot { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 999px; flex: none; font-size: 10px; font-weight: 700; color: #fff; cursor: help; }   /* not .cc-stat, which is the grid card's stat row above */
+.cc-statdot { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 999px; flex: none; font-size: var(--cc-text-meta); font-weight: 700; color: #fff; cursor: help; }   /* not .cc-stat, which is the grid card's stat row above */
 .cc-stat-slot { visibility: hidden; }   /* the slot is reserved, so a field does not shrink when the result lands */
 .cc-stat-ok { background: var(--cc-ok, #6fdc8c); }
 .cc-stat-bad { background: var(--cc-err, #ff8389); }
@@ -660,7 +660,7 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
    a row has more than one control to split, so the other rows are unaffected. */
 .cc-pop.cc-pop-plan .cc-pop-row .cc-dsel { flex: 1 1 16px; }
 /* every editor field in the same box: no border, a lighter background */
-.cc-in { flex: 1; background: #2e2e2e; color: #e6e6e6; border: none !important; border-radius: 6px; padding: 5px 8px; font-size: 12px; }
+.cc-in { flex: 1; background: #2e2e2e; color: #e6e6e6; border: none !important; border-radius: 6px; padding: 5px 8px; font-size: var(--cc-text-meta); }
 /* Focus is a brightness step, never a ring, and it sets background-color rather than the
    `background` shorthand, which would reset background-image and blank the clock glyph on
    .cc-sched-time while the field has focus. The rest colour lives in the `html .cc-pop .cc-in`
@@ -691,7 +691,7 @@ select.cc-in { cursor: pointer; }
 .cc-port { flex: none; width: 80px; margin-left: 6px; }   /* docker.js stamps the same 80px inline, so the two have to keep agreeing; the plan window overrides both */
 .cc-unit { flex: none; width: 68px; margin-left: 6px; }
 .cc-pop-act { gap: 8px; padding: 10px 24px 12px; border-top: none; }   /* unwrapped, so the save button lines up with the fields above it */
-.cc-pop-act .cc-btn { flex: 1; text-align: center; font-size: 11.5px; padding: 7px 6px; white-space: normal; line-height: 1.2; }
+.cc-pop-act .cc-btn { flex: 1; text-align: center; font-size: var(--cc-text-meta); padding: 7px 6px; white-space: normal; line-height: 1.2; }
 /* The buttons in a CC window are styled here rather than stamped inline by hardenPop(). An inline
    !important beats Unraid's theme, but it also beats CC's own rules, so the colour-mode chain, the
    hover state and the reactive sub-mode never reach a button. The `html` prefix carries the same
@@ -718,13 +718,13 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { backgr
 .cc-pop-foot { border-top: none; padding-top: 0; }
 .cc-pop-sech-lone { padding-top: 6px; }
 .cc-pop-toggle { cursor: pointer; }
-.cc-pop-sech { font-weight: 600; font-size: 12.5px; }
+.cc-pop-sech { font-weight: 600; font-size: var(--cc-text-subline); }
 /* the blocks below sit inside a .cc-pop-auto, so 10px is their share of the 24px inset and their
    wrapper's margin supplies the rest */
-.cc-pop-sech-lone { display: block; color: #9a9a9a; padding: 10px 10px 5px; text-transform: uppercase; letter-spacing: .5px; font-size: 10.5px; }
+.cc-pop-sech-lone { display: block; color: #9a9a9a; padding: 10px 10px 5px; text-transform: uppercase; letter-spacing: .5px; font-size: var(--cc-text-meta); }
 .cc-pop-sub { padding-bottom: 4px; }
 .cc-pop-sub.cc-dis { opacity: .4; pointer-events: none; }
-.cc-btn-sm { margin: 4px 10px 6px; padding: 3px 10px; font-size: 11.5px; }
+.cc-btn-sm { margin: 4px 10px 6px; padding: 3px 10px; font-size: var(--cc-text-meta); }
 .cc-sched-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 10px 2px; }
 /* each schedule on its own card, so the action, time and days do not run together */
 .cc-sched-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #1e1e1e; border: none; border-radius: 7px; padding: 8px 9px; }
@@ -780,7 +780,7 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { backgr
   border: none; border-radius: 5px; line-height: 1; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.cc-day { background: #2e2e2e; color: #9a9a9a; font-size: 11px; transition: background .12s, color .12s; }
+.cc-day { background: #2e2e2e; color: #9a9a9a; font-size: var(--cc-text-meta); transition: background .12s, color .12s; }
 /* both states read the standard three-tier chain, so a day chip rotates with the colour mode */
 .cc-day:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 .cc-day-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
@@ -799,10 +799,10 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { backgr
 .cc-pop-wide { width: 430px; }
 .cc-cores { display: flex; flex-wrap: wrap; gap: 5px; flex: 1; }
 .cc-corebox { display: inline-flex; flex-direction: column; gap: 3px; padding: 4px; background: #1e1e1e; border: none; border-radius: 7px; align-items: stretch; }
-.cc-corebox-tag { text-align: center; font-size: 9px; line-height: 1; color: #8a8a8a; letter-spacing: .5px; user-select: none; }
+.cc-corebox-tag { text-align: center; font-size: var(--cc-text-meta); line-height: 1; color: #8a8a8a; letter-spacing: .5px; user-select: none; }
 .cc-corebox-p .cc-corebox-tag { color: var(--cc-accent-ink, #FCC419); }   /* the tag carries the colour, not a border line */
 .cc-corebox-e .cc-corebox-tag { color: var(--cc-warn, #ff832b); }
-.cc-core { width: 34px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: #2e2e2e; color: #9a9a9a; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; user-select: none; box-sizing: border-box; transition: background .1s, color .1s; }
+.cc-core { width: 34px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: #2e2e2e; color: #9a9a9a; border: none; border-radius: 5px; font-size: var(--cc-text-meta); cursor: pointer; user-select: none; box-sizing: border-box; transition: background .1s, color .1s; }
 .cc-core:hover { background: #3a3a3a; color: #e6e6e6; }
 .cc-core-on { background: var(--cc-accent, #FCC419); color: var(--cc-accent-text, #161616); }
 /* rainbow mode: selected cores wear their physical-core group's palette position, never a state colour */
@@ -817,7 +817,7 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { backgr
 /* A toggle is one solid colour, in rainbow mode too. This rule is more specific than the generic
    .cc-set-toggle-on further down, so it has to carry the same chain, which paintPopChrome feeds. */
 .cc-pop.cc-rainbow .cc-set-toggle-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-btn-accent, var(--cc-accent, #FCC419)))); }
-.cc-plan-mark { margin-left: 5px; opacity: .85; font-size: 10px; }
+.cc-plan-mark { margin-left: 5px; opacity: .85; font-size: var(--cc-text-meta); }
 .cc-plan-auto .cc-b-k { position: relative; }
 
 /* In rainbow mode the per-row autostart switch joins the palette too, so the whole row does. */
@@ -890,7 +890,7 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { backgr
 .sl-updall { align-items: center !important; line-height: 1.2 !important;
   display: inline-flex; align-items: center; height: 24px; padding: 0 13px;
   border-radius: 999px !important; background: var(--cc-updall-bg, #FCC419) !important;
-  color: var(--cc-updall-text, #fff) !important; font-weight: 600; font-size: 12px;
+  color: var(--cc-updall-text, #fff) !important; font-weight: 600; font-size: var(--cc-text-meta);
   letter-spacing: .2px; white-space: nowrap; text-decoration: none !important;
   border: none !important; box-shadow: none !important; cursor: pointer; margin: 0 10px 0 0;
   transition: filter .12s;
@@ -906,7 +906,7 @@ nav.tabs { background: transparent !important; border: none !important; box-shad
 nav.tabs .tabs-container > button[role=tab] {
   background: #2a2a2a !important; color: #b5b5b5 !important; border: none !important;
   box-shadow: none !important; border-radius: 999px !important; padding: var(--cc-md-pad, 0 20px) !important;
-  text-transform: uppercase !important; letter-spacing: 1.5px !important; font-size: var(--cc-md-fs, 13px) !important;
+  text-transform: uppercase !important; letter-spacing: 1.5px !important; font-size: var(--cc-md-fs) !important;
   font-weight: 600 !important; cursor: pointer; margin-right: 8px;
   height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; line-height: 1 !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important; gap: 6px;
@@ -919,7 +919,7 @@ div.tab input[type=radio] + label,
 .tabbed input[type=radio] + label {
   background: #2a2a2a !important; color: #b5b5b5 !important; border: none !important;
   box-shadow: none !important; border-radius: 999px !important; padding: var(--cc-md-pad, 0 20px) !important;
-  text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-md-fs, 13px); cursor: pointer;
+  text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-md-fs); cursor: pointer;
   height: var(--cc-md-h, 30px); box-sizing: border-box; line-height: 1;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
 }
@@ -937,7 +937,7 @@ div.tab input[type=radio] + label,
 /* Page chrome on the pages this sheet loads on: Unraid's title bars and tab strips go flat, with
    no background block, a thin base line and spaced uppercase labels. */
 div.title { background: transparent !important; border-bottom: 1px solid #2f2f2f !important; box-shadow: none !important; padding-left: 0 !important; }
-div.title span.left, div.title span.right { text-transform: uppercase; letter-spacing: 2px; font-size: 12px; }
+div.title span.left, div.title span.right { text-transform: uppercase; letter-spacing: 2px; font-size: var(--cc-text-meta); }
 
 /* Align the Docker and Plugins content with the styled main menu bar. Header.css turns the first
    menu item into a pill whose left edge is 15px in, from the nav tile's padding plus the link's
@@ -1030,7 +1030,7 @@ html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head {
   /* the md tier, like every other section badge in CC and like the action button it shares the row
      with, one step below the main bar */
   min-height: var(--cc-md-h, 30px); height: var(--cc-md-h, 30px); box-sizing: border-box;
-  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-pagebadge-fs, 13px); line-height: 1;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-pagebadge-fs); line-height: 1;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   border: none; border-radius: var(--cc-b-radius, 999px);
   padding: var(--cc-md-pad, 0 20px); margin: 0 0 16px;
@@ -1079,7 +1079,7 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
 .cc-plugicm { transition: box-shadow .12s, transform .12s; }
 .cc-plugicm:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; transform: translateY(-1px); }
 /* the other tabs' tables (install errors etc.): same clean look */
-.cc-plug-lite thead th { text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; }
+.cc-plug-lite thead th { text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-text-meta); }
 .cc-desc { display: block; max-height: 5em; overflow-y: auto; padding-right: 6px; width: 100%; box-sizing: border-box; margin: 0; scrollbar-gutter: stable; }
 .cc-desc::-webkit-scrollbar { width: 6px; }
 .cc-desc::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
@@ -1087,19 +1087,19 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
 .cc-descin { display: block; }
 .cc-plug-lite tbody td { padding-top: 6px !important; padding-bottom: 6px !important; }
 .cc-plugtxt { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-.cc-plugtitle { font-size: 16px; font-weight: 600; } /* the Docker tab's container-name look */
-.cc-plugsup { font-size: 11px; }
-.cc-plugicm { font-size: 11px; }
+.cc-plugtitle { font-size: var(--cc-text-title); font-weight: 600; } /* the Docker tab's container-name look */
+.cc-plugsup { font-size: var(--cc-text-meta); }
+.cc-plugicm { font-size: var(--cc-text-meta); }
 .cc-plugver { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-.cc-plug thead th { text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; }
-.cc-plug .cc-b { display: inline-flex; gap: 5px; align-items: center; border-radius: 999px; padding: var(--cc-sm-pad, 3px 11px); font-size: var(--cc-sm-fs, 11px); }
+.cc-plug thead th { text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-text-meta); }
+.cc-plug .cc-b { display: inline-flex; gap: 5px; align-items: center; border-radius: 999px; padding: var(--cc-sm-pad, 3px 11px); font-size: var(--cc-sm-fs); }
 .cc-plug .cc-b .cc-b-k { opacity: .72; font-weight: 500; }
 
 /* the badge shape follows the setting: pills, rounded rectangles or squares */
 .cc-b, .cc-plug .cc-b { border-radius: var(--cc-b-radius, 999px) !important; }
 
 /* The settings page under Settings > Utilities */
-#cc-settings { --bg: #161616; --bg2: #1c1c1c; --line: #2a2a2a; --line2: #333; --txt: #e6e6e6; --dim: #9a9a9a; --dim2: #6f6f6f; color: var(--txt); font: 14px/1.5 "Segoe UI", system-ui, sans-serif; padding-bottom: 40px; }
+#cc-settings { --bg: #161616; --bg2: #1c1c1c; --line: #2a2a2a; --line2: #333; --txt: #e6e6e6; --dim: #9a9a9a; --dim2: #6f6f6f; color: var(--txt); font: var(--cc-text-body)/1.5 "Segoe UI", system-ui, sans-serif; padding-bottom: 40px; }
 /* Unraid's global button CSS paints an orange border on every <button>, which the toggles,
    segments and swatches have to be clear of. */
 #cc-settings button { -webkit-appearance: none; appearance: none; outline: none; font-family: inherit; text-transform: none; letter-spacing: normal; }
@@ -1114,20 +1114,20 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
 .cc-set-hero { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 6px; }
 .cc-set-heroleft { display: flex; align-items: center; gap: 16px; }
 .cc-set-logo { width: 64px; height: 64px; border-radius: 14px; display: block; }
-.cc-set-claim { color: var(--dim); font-size: 13px; font-style: italic; margin-top: 2px; }
+.cc-set-claim { color: var(--dim); font-size: var(--cc-text-subline); font-style: italic; margin-top: 2px; }
 .cc-set-version { margin-left: auto; text-align: right; align-self: center; }
 .cc-set-tabs { display: flex; gap: 6px; margin: 0 0 18px; } /* the main menu bar's own 0 3px per tab, so the distance matches */
-.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: inline-flex !important; align-items: center; justify-content: center; height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-pad, 0 20px) !important; font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important; border-radius: 999px !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS inflates the strip's gap */
+.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: inline-flex !important; align-items: center; justify-content: center; height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-pad, 0 20px) !important; font-size: var(--cc-md-fs) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important; border-radius: 999px !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS inflates the strip's gap */
 .cc-set-tab-on { background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important; }
 .cc-set-brand { font-size: 24px; letter-spacing: .2px; } .cc-set-brand b { font-weight: 700; } .cc-set-brand span { font-weight: 400; color: var(--dim); }
 /* The settings palette is dark, made for the cards; the brand and claim sit on Unraid's page
    instead, so on a light theme they take the page's ink. */
 html.Theme--white #cc-settings .cc-set-heroleft,
 html.Theme--azure #cc-settings .cc-set-heroleft { --txt: var(--cc-text, #1c1c1c); --dim: var(--cc-text-dim, #545454); color: var(--txt); }
-.cc-set-sub { color: var(--dim2); font-size: 12.5px; }
+.cc-set-sub { color: var(--dim2); font-size: var(--cc-text-subline); }
 .cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fill, 340px); gap: 16px; justify-content: start; } /* fixed-width cards packed from the left, so they do not stretch on a wide window */
 .cc-set-card { background: #222222; border: none; border-radius: 12px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
-.cc-set-h { font-size: 15px; font-weight: 600; margin-bottom: 3px; display: flex; align-items: center; gap: 7px; } /* flex, so the heading and its info bubble sit side by side */
+.cc-set-h { font-size: var(--cc-text-title); font-weight: 600; margin-bottom: 3px; display: flex; align-items: center; gap: 7px; } /* flex, so the heading and its info bubble sit side by side */
 .cc-set-card .cc-set-sub { margin-bottom: 12px; }
 .cc-set-card .cc-set-row, .cc-set-card .cc-set-swatches, .cc-set-card .cc-set-lbl { margin-top: 12px; }
 .cc-set-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; flex-wrap: wrap; }
@@ -1173,11 +1173,11 @@ html.Theme--azure #cc-settings .cc-set-heroleft { --txt: var(--cc-text, #1c1c1c)
 #cc-settings input[type="color"]::-moz-color-swatch { border: none; border-radius: 4px; }
 .cc-set-pick { width: 40px; height: 30px; box-sizing: border-box; }
 /* the hex field beside the colour picker, without Unraid's input underline */
-#cc-settings .cc-set-hexin { flex: 1 1 auto; min-width: 90px; height: 30px; font-family: ui-monospace, "Cascadia Code", monospace; text-transform: uppercase; letter-spacing: .5px; background: var(--cc-surface-chip, #383838) !important; color: var(--txt); border: none !important; outline: none !important; border-radius: 6px !important; padding: 0 10px !important; font-size: 13px; box-sizing: border-box; }   /* a filled box at the swatches' own height, growing to the row's right edge like every dropdown row */
+#cc-settings .cc-set-hexin { flex: 1 1 auto; min-width: 90px; height: 30px; font-family: ui-monospace, "Cascadia Code", monospace; text-transform: uppercase; letter-spacing: .5px; background: var(--cc-surface-chip, #383838) !important; color: var(--txt); border: none !important; outline: none !important; border-radius: 6px !important; padding: 0 10px !important; font-size: var(--cc-text-subline); box-sizing: border-box; }   /* a filled box at the swatches' own height, growing to the row's right edge like every dropdown row */
 #cc-settings .cc-set-hexin:focus { outline: none; border-color: var(--cc-accent, #FCC419) !important; }
 /* A native <select> styled as a readable control: a fill light enough to stand out from the card,
    so it does not read as underlined text, and a bright caret so it reads as a dropdown. */
-#cc-settings .cc-set-sel { flex: 1; min-width: 0; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-color: var(--cc-surface-chip, #383838) !important; color: var(--txt, #eaeaea) !important; border: 0 !important; border-radius: var(--cc-b-radius, 8px) !important; padding: 0 36px 0 13px !important; font-size: 13px; font-weight: 600; cursor: pointer; box-sizing: border-box; height: 36px; min-height: 36px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" fill="none" stroke="%23eaeaea" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>') !important; background-repeat: no-repeat !important; background-position: right 12px center !important; transition: background-color .12s, filter .12s; }
+#cc-settings .cc-set-sel { flex: 1; min-width: 0; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-color: var(--cc-surface-chip, #383838) !important; color: var(--txt, #eaeaea) !important; border: 0 !important; border-radius: var(--cc-b-radius, 8px) !important; padding: 0 36px 0 13px !important; font-size: var(--cc-text-subline); font-weight: 600; cursor: pointer; box-sizing: border-box; height: 36px; min-height: 36px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" fill="none" stroke="%23eaeaea" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>') !important; background-repeat: no-repeat !important; background-position: right 12px center !important; transition: background-color .12s, filter .12s; }
 #cc-settings .cc-set-sel:hover { background-color: color-mix(in srgb, var(--cc-surface-chip, #383838) 85%, var(--cc-text, #e6e6e6)) !important; }
 /* focus is a brighter surface, not a ring */
 #cc-settings .cc-set-sel:focus, #cc-settings .cc-set-sel:focus-visible { outline: none !important; box-shadow: none !important; background-color: var(--cc-surface-chip-hi, color-mix(in srgb, var(--cc-surface-chip, #383838) 82%, #ffffff)) !important; filter: brightness(1.18); }
@@ -1192,7 +1192,7 @@ html.Theme--azure #cc-settings .cc-set-heroleft { --txt: var(--cc-text, #1c1c1c)
   display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
   flex: 1; min-width: 0; height: 36px; box-sizing: border-box;
   background-color: var(--cc-surface-chip, #383838); color: var(--txt, #eaeaea);
-  border: 0; border-radius: var(--cc-b-radius, 8px); padding: 0 13px; font-size: 13px; font-weight: 600;
+  border: 0; border-radius: var(--cc-b-radius, 8px); padding: 0 13px; font-size: var(--cc-text-subline); font-weight: 600;
   cursor: pointer; transition: background-color .12s, filter .12s;
 }
 #cc-settings .cc-dsel-trigger:hover { background-color: color-mix(in srgb, var(--cc-surface-chip, #383838) 85%, var(--cc-text, #e6e6e6)); }
@@ -1231,12 +1231,12 @@ html.cc-tools-rbneutral #cc-settings .cc-dsel-opt.is-selected {
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); filter: none;
 }
 .cc-set-prev { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; align-items: center; }
-.cc-set-prev .cc-b-lg { font-size: 15px; font-weight: 700; padding: 6px 16px; letter-spacing: .2px; } /* the live lg tier of the Shares sheet */
+.cc-set-prev .cc-b-lg { font-size: var(--cc-text-title); font-weight: 700; padding: 6px 16px; letter-spacing: .2px; } /* the live lg tier of the Shares sheet */
 /* The main menu bar preview: the top nav tabs as an idle grey pill and one filled active pill,
    mirroring CannonadeCommand.Header.css. settings.js paintPv() sets the active tab's colour
    inline; the idle tabs keep the grey pill below. */
 .cc-set-navprev { gap: 6px; align-items: center; }
-.cc-navtab { display: inline-flex; align-items: center; justify-content: center; height: var(--cc-md-h, 30px); padding: 0 16px; line-height: 1; border-radius: var(--cc-b-radius, 999px); background: rgba(128,128,128,.18); color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; white-space: nowrap; }   /* the padding stays 0 16px rather than --cc-md-pad: the preview strip is narrow */
+.cc-navtab { display: inline-flex; align-items: center; justify-content: center; height: var(--cc-md-h, 30px); padding: 0 16px; line-height: 1; border-radius: var(--cc-b-radius, 999px); background: rgba(128,128,128,.18); color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs); font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; white-space: nowrap; }   /* the padding stays 0 16px rather than --cc-md-pad: the preview strip is narrow */
 /* The info icon: an SVG "i" glyph that keeps a long explanation off the card. settings.js
    infoIcon(tip) emits <span class="cc-info" data-tip="…">, neutral, never accent, and header.js's
    floating bubble shows the text. */
@@ -1248,10 +1248,10 @@ html.cc-tools-rbneutral #cc-settings .cc-dsel-opt.is-selected {
    body-level bubble, so only the anchor positions live here. */
 :is(#cc-settings, .cc-enh, .cc-grid-holder, .cc-actbar, .cc-pop, .cc-menu, nav.tabs) [data-tip],
 button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-tip] { position: relative; }
-.cc-set-mini { background: transparent; color: var(--dim); border: 1px solid var(--line2); border-radius: 7px; padding: 5px 12px; font-size: 12.5px; cursor: pointer; }
+.cc-set-mini { background: transparent; color: var(--dim); border: 1px solid var(--line2); border-radius: 7px; padding: 5px 12px; font-size: var(--cc-text-subline); cursor: pointer; }
 .cc-set-mini-on { color: #fff; border-color: var(--cc-accent, #FCC419); background: rgba(255,255,255,.05); }
 /* the limit diagnostics card: monospace log lines, red on a rejection from Docker */
-.cc-set-diag { font-family: Consolas, "SFMono-Regular", monospace; font-size: 11px; line-height: 1.6; color: #b9b9b9; max-height: 200px; overflow: auto; }
+.cc-set-diag { font-family: Consolas, "SFMono-Regular", monospace; font-size: var(--cc-text-meta); line-height: 1.6; color: #b9b9b9; max-height: 200px; overflow: auto; }
 .cc-set-diag-row { white-space: pre-wrap; word-break: break-word; padding: 2px 0; border-bottom: 1px solid #242424; }
 .cc-set-diag-bad { color: #ff7a7a; }
 /* The embedded colour picker, in place of <input type=color> and its OS popup: a
@@ -1271,7 +1271,7 @@ button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-t
   display: inline-flex; align-items: center; justify-content: center;
   width: 34px; height: 28px; flex: none; box-sizing: border-box; /* the height of the swatches beside it */
   border-radius: min(var(--cc-b-radius, 8px), 8px); background: var(--cc-accent, #FCC419);
-  color: var(--cc-accent-text, #161616); font-size: 14px; cursor: pointer; transition: filter .12s;
+  color: var(--cc-accent-text, #161616); font-size: var(--cc-text-body); cursor: pointer; transition: filter .12s;
   margin-left: 6px; align-self: center;
 }
 #cc-settings .cc-set-ibtn:hover { background: var(--cc-accent-hover); }
@@ -1287,22 +1287,22 @@ html.cc-shape-circle #cc-settings .cc-set-ibtn { border-radius: 50%; }
 /* a gated toggle, such as Favoriten while the native favourites are off, reads non-interactive */
 .cc-set-toggle-disabled { opacity: .4; cursor: not-allowed; filter: grayscale(1); }
 /* the hint under a gated toggle, naming its precondition */
-.cc-set-hint { margin-top: 3px; font-size: 11px; line-height: 1.3; color: var(--dim2, #8a8a8a); max-width: 320px; }
-.cc-set-tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
-.cc-set-tbl th { color: var(--dim2); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; font-weight: 500; padding: 4px 10px; text-align: center; }
+.cc-set-hint { margin-top: 3px; font-size: var(--cc-text-meta); line-height: 1.3; color: var(--dim2, #8a8a8a); max-width: 320px; }
+.cc-set-tbl { width: 100%; border-collapse: collapse; font-size: var(--cc-text-subline); margin-top: 4px; }
+.cc-set-tbl th { color: var(--dim2); font-size: var(--cc-text-meta); text-transform: uppercase; letter-spacing: .5px; font-weight: 500; padding: 4px 10px; text-align: center; }
 .cc-set-tbl td { padding: 5px 10px; border-top: 1px solid var(--line); }
 .cc-set-cname { text-align: left; }
 .cc-set-chk { text-align: center; }
-.cc-set-foot { color: var(--dim2); font-size: 12px; margin-top: 20px; }
-.cc-set-txt { flex: 1; min-width: 160px; background: #1e1e1e; color: var(--txt); border: 1px solid var(--line2); border-radius: 6px; padding: 6px 9px; font-size: 13px; font-family: inherit; }
+.cc-set-foot { color: var(--dim2); font-size: var(--cc-text-meta); margin-top: 20px; }
+.cc-set-txt { flex: 1; min-width: 160px; background: #1e1e1e; color: var(--txt); border: 1px solid var(--line2); border-radius: 6px; padding: 6px 9px; font-size: var(--cc-text-subline); font-family: inherit; }
 .cc-set-txt:focus { outline: none; border-color: var(--cc-accent, #FCC419); }
 #cc-settings .cc-set-save { margin-top: 12px; padding: 6px 16px; border-radius: 6px; }
 #cc-settings .cc-set-save[disabled] { opacity: .6; cursor: default; }
 /* the accent-colour picker: the field on top, the preset swatches below */
-.cc-set-lbl { font-size: 12.5px; color: var(--dim); margin: 2px 0 7px; }
+.cc-set-lbl { font-size: var(--cc-text-subline); color: var(--dim); margin: 2px 0 7px; }
 .cc-set-pickrow { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .cc-set-pick-lg { width: 100%; max-width: 130px; height: 40px; }
-.cc-set-hex { font-family: ui-monospace, "Cascadia Code", monospace; color: var(--dim); font-size: 13px; text-transform: uppercase; letter-spacing: .5px; }
+.cc-set-hex { font-family: ui-monospace, "Cascadia Code", monospace; color: var(--dim); font-size: var(--cc-text-subline); text-transform: uppercase; letter-spacing: .5px; }
 
 /* The action bar at the page bottom, docked above Unraid's fixed footer so it stays visible while
    the page scrolls. docker.js syncFooterDock() stamps --cc-footer-h at runtime and writes 0 when
@@ -1327,7 +1327,7 @@ div.js-actions > * { pointer-events: auto; }
    source rather than a copy that drifts; docker.js also moves it next to the container-size
    button, instead of after the right-pinned view toggle at the far end of the bar. */
 div.js-actions input[type=button],
-div.js-actions .cc-bulkmode-badge { flex: none !important; background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important; border: none !important; box-shadow: none !important; padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs, 13px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.6px !important; font-family: inherit !important; cursor: pointer; transition: filter .12s; }
+div.js-actions .cc-bulkmode-badge { flex: none !important; background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important; border: none !important; box-shadow: none !important; padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.6px !important; font-family: inherit !important; cursor: pointer; transition: filter .12s; }
 /* docker.js ensureBulkModeBadge() builds the badge as a <span>, so what an <input type=button>
    gets for free is spelled out here: a centred single-line text box and the native input margin,
    which together with the bar's flex gap is what sets the buttons apart. gap:0 drops the .cc-b
@@ -1357,7 +1357,7 @@ div.js-actions .cc-bulkmode-badge-on {
    so the negative value is what puts its right edge on the bar's outer edge, flush with the header
    icons. */
 div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; position: sticky; right: -16px; z-index: 2; padding-left: 10px; padding-right: 8px; background: var(--footer-background-color, var(--mild-background-color, #1c1c1c)); }
-div.js-actions .cc-bar-adv-lbl { color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs, 13px); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+div.js-actions .cc-bar-adv-lbl { color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 div.js-actions input[type=button]:hover,
 div.js-actions .cc-bulkmode-badge:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 
@@ -1421,7 +1421,7 @@ html.cc-docker-on.cc-on-addct #canvas button:not([role="tab"]),
 html.cc-docker-on.cc-on-addct .ui-dialog .ui-dialog-buttonpane button {
   border: none !important; box-shadow: none !important;
   padding: var(--cc-md-btnpad, 0 14px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; font-family: inherit !important;
   border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer; transition: filter .12s, opacity .12s;
   display: inline-flex !important; align-items: center; justify-content: center;
@@ -1464,7 +1464,7 @@ html.cc-docker-on.cc-on-addct #canvas a[href="javascript:addConfigPopup()"] {
   display: inline-flex; align-items: center; gap: 8px;
   padding: var(--cc-bmd-pad, 4px 12px); border-radius: var(--cc-b-radius, 999px);
   background: rgba(128, 128, 128, .18); color: var(--cc-text-chip, #cfcfcf) !important;
-  font-size: 13px; font-weight: 600; text-decoration: none !important;
+  font-size: var(--cc-text-subline); font-weight: 600; text-decoration: none !important;
   transition: background .12s, color .12s;
 }
 html.cc-docker-on.cc-on-addct #canvas #readmore_toggle a:hover,
@@ -1533,7 +1533,7 @@ html.cc-docker-on.cc-on-addct .cc-dsel-panel {
 }
 html.cc-docker-on.cc-on-addct .cc-dsel.cc-open .cc-dsel-panel { display: flex; }
 html.cc-docker-on.cc-on-addct .cc-dsel.cc-dsel-disabled .cc-dsel-trigger { opacity: .5; cursor: not-allowed; }
-html.cc-docker-on.cc-on-addct .cc-dsel-group { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9a9a9a; padding: 4px 12px 0; }
+html.cc-docker-on.cc-on-addct .cc-dsel-group { font-size: var(--cc-text-meta); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9a9a9a; padding: 4px 12px 0; }
 /* the same .cc-tsel-opt contract as the settings block above: a rotating colour per item, the
    accent through the full chain, and a colour-step hover */
 html.cc-docker-on.cc-on-addct .cc-dsel-opt {
@@ -1586,7 +1586,7 @@ html.cc-tools-rbneutral.cc-docker-on.cc-on-addct .cc-dsel-opt.is-selected {
 }
 .cc-pop .cc-dsel.cc-open .cc-dsel-panel { display: flex; }
 .cc-pop .cc-dsel.cc-dsel-disabled .cc-dsel-trigger { opacity: .5; cursor: not-allowed; }
-.cc-pop .cc-dsel-group { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9a9a9a; padding: 4px 12px 0; }
+.cc-pop .cc-dsel-group { font-size: var(--cc-text-meta); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9a9a9a; padding: 4px 12px 0; }
 .cc-pop .cc-dsel-opt {
   display: flex; align-items: center; gap: 8px; justify-content: flex-start;
   line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 999px);
@@ -1610,7 +1610,7 @@ html.cc-tools-rbneutral.cc-docker-on.cc-on-addct .cc-dsel-opt.is-selected {
 .cc-drop-it {
   display: flex; align-items: center; gap: 8px; justify-content: flex-start;
   line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 999px);
-  font-size: 12px; white-space: nowrap; border: none;
+  font-size: var(--cc-text-meta); white-space: nowrap; border: none;
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)));
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
   transition: background .12s, color .12s, filter .12s;
@@ -1669,8 +1669,8 @@ html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .docker-allocation-r
 }
 /* the allocations sort bar sits above the list, its active button in the colour mode */
 html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbar { display: flex; align-items: center; gap: 8px; padding: 2px 10px 10px; }
-html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortlbl { color: #9a9a9a; font-size: 12px; }
-html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbtn { background: #262626; color: #c9c9c9; border: none; border-radius: 6px; padding: 4px 12px; font-size: 12px; cursor: pointer; transition: background .12s, color .12s; }
+html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortlbl { color: #9a9a9a; font-size: var(--cc-text-meta); }
+html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbtn { background: #262626; color: #c9c9c9; border: none; border-radius: 6px; padding: 4px 12px; font-size: var(--cc-text-meta); cursor: pointer; transition: background .12s, color .12s; }
 html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbtn:hover { background: #303030; }
 html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbtn.cc-alloc-sorton { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-accent-text, #161616); }
 /* the categories dropdownchecklist widget keeps its intrinsic width, so it is made to fill the
@@ -1684,7 +1684,7 @@ html.cc-docker-on.cc-on-addct .ui-dialog #ddcl-catSelect {
    and hides the native heading. */
 html.cc-ctout-on #cc-ctout-bd { position: fixed; inset: 0; background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)); z-index: 9998; } /* the dim is set here, the blur comes from the central backdrop rule in Tokens.css */
 /* This window matches the real .sweet-alert.nchan update window. Its max-width is a pixel value,
-   not SweetAlert1's own `max-width: 60rem`, because this page sets html{font-size:10px} while the
+   not SweetAlert1's own `max-width: 60rem`, because this page sets html{font-size:var(--cc-text-meta)} while the
    page the real dialog renders on uses 20px, so the same rule would resolve to half the size here.
 
    The height is fixed rather than capped, so the window does not shrink to whatever the recreate
@@ -1716,7 +1716,7 @@ html.cc-ctout-on #cc-ctout-title {
   position: static !important; margin: 0 0 26px !important; padding: 0 18px !important; height: 40px;
   display: flex; width: 100%; max-width: 100%; align-items: center; justify-content: center; box-sizing: border-box;
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #161616));
-  font-weight: 600; font-size: var(--cc-lgb-fs, 14px); letter-spacing: .6px; text-transform: uppercase;
+  font-weight: 600; font-size: var(--cc-lgb-fs); letter-spacing: .6px; text-transform: uppercase;
   border-radius: var(--cc-b-radius, 10px);
 }
 /* the same three-tier chain as the real update window's h2 in Header.css: the per-window --cc-rb-c
@@ -1736,7 +1736,7 @@ html.cc-ctout-on #displaybox .content fieldset.docker {
 html.cc-ctout-on #displaybox .content fieldset > legend {
   /* --cc-rb-c is this badge's own rotating slot, which header.js paintPopups() stamps */
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #161616))) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 3px 12px !important; font-size: 12px !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;   /* #(user 2026-07-29): follow the badge shape like the update-window legends, not a hard pill */
+  border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 3px 12px !important; font-size: var(--cc-text-meta) !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;   /* #(user 2026-07-29): follow the badge shape like the update-window legends, not a hard pill */
 }
 /* same empty-step hide as the update window: no stray light bar between the last card and the buttons */
 html.cc-ctout-on #displaybox .content fieldset:empty,
@@ -1775,7 +1775,7 @@ html.cc-ctout-on #displaybox .content > div:has(> button) > #cc-ctout-status {
   position: static !important; flex: none !important; margin: 0 !important;
 }
 html.cc-ctout-on #cc-ctout-status.cc-ctout-done { background: var(--cc-ok, #6fdc8c); color: var(--cc-ok-fg, #161616); }   /* done: a green badge with its check in the state ink */
-html.cc-ctout-on #cc-ctout-status .cc-ctout-fa { color: inherit; font-size: 14px; line-height: 1; }
+html.cc-ctout-on #cc-ctout-status .cc-ctout-fa { color: inherit; font-size: var(--cc-text-body); line-height: 1; }
 html.cc-anim-off #cc-ctout-status .cc-ctout-fa { animation: none !important; }
 html.cc-ctout-on #displaybox .content span.system { background: transparent !important; color: #d6d6d6 !important; box-shadow: none !important; display: block; }
 html.cc-ctout-on .docker-install-blocker { background: transparent !important; }
@@ -1792,7 +1792,7 @@ html.cc-ctout-on #displaybox .content input[type="submit"] {
   /* the update window's own buttons: a fixed height with the text centred by inline-flex */
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   height: var(--cc-lgb-h, 36px) !important; padding: 0 24px !important; line-height: 1 !important;
-  font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
+  font-size: var(--cc-lgb-fs) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
 }
 /* Unraid streams a <style> block into the update log, which shows here as raw CSS text under the
    title; docker.js blanks the text-node variant. */
@@ -1885,7 +1885,7 @@ html.cc-docker-on.cc-on-addct:not(.Theme--sidebar) #displaybox { padding-left: v
 html.cc-docker-on.cc-on-addct #displaybox div.title > span.left,
 html.cc-docker-on.cc-on-addct div.title .cc-pagehead {
   display: inline-flex !important; align-items: center; gap: 8px;
-  font-size: var(--cc-pagebadge-fs, 13px) !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;   /* one step below the main-menu tabs */
+  font-size: var(--cc-pagebadge-fs) !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;   /* one step below the main-menu tabs */
   padding: var(--cc-md-pad, 0 20px); min-height: var(--cc-md-h, 30px); box-sizing: border-box;
   border-radius: var(--cc-b-radius, 999px); line-height: 1;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;   /* ctApply stamps --cc-rb-c per element; unstamped falls back to the accent */
@@ -1895,7 +1895,7 @@ html.cc-docker-on.cc-on-addct div.title .cc-pagehead i.fa { color: inherit !impo
 /* the title bar's toggle label is muted uppercase, never link-blue, and centres on one line with
    its track */
 html.cc-docker-on.cc-on-addct div.title span.right,
-html.cc-docker-on.cc-on-addct div.title span.right .switch-button-label { color: var(--cc-text-chip, #cfcfcf) !important; font-size: 13px; font-weight: 600; text-transform: uppercase; }
+html.cc-docker-on.cc-on-addct div.title span.right .switch-button-label { color: var(--cc-text-chip, #cfcfcf) !important; font-size: var(--cc-text-subline); font-weight: 600; text-transform: uppercase; }
 html.cc-docker-on.cc-on-addct div.title span.right span.status,
 html.cc-docker-on.cc-on-addct #canvas span.status { display: inline-flex !important; align-items: center; gap: 8px; vertical-align: middle; }
 

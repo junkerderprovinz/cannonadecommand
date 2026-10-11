@@ -69,7 +69,7 @@ html.cc-settingsgrid-on #displaybox .Panel > a[href*="ailscale"] > span::after {
    corner so it doesn't sit under the glyph, and keep it readable on the accent badge */
 html.cc-settingsgrid-on #displaybox .Panel > a > span > i.favo {
   position: absolute !important; top: 3px !important; right: 4px !important; left: auto !important;
-  font-size: 12px !important; line-height: 1 !important; color: var(--cc-accent-text, #161616) !important; opacity: .8;
+  font-size: var(--cc-text-meta) !important; line-height: 1 !important; color: var(--cc-accent-text, #161616) !important; opacity: .8;
 }
 /* tile labels show on hover only, muted and not underlined; the fade keeps the grid calm and the
    reserved line height stops it from jumping */
@@ -142,7 +142,7 @@ html.cc-settingsgrid-heads-on #displaybox div.title > span.left {
   /* the md tab-badge size of the Shares, Docker and Plugins subtabs and the main menu tabs, so
      every tab badge in the WebGUI is one size */
   min-height: var(--cc-md-h, 30px) !important; box-sizing: border-box;
-  font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-md-fs, 13px); line-height: 1;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-md-fs); line-height: 1;
   background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   padding: var(--cc-md-pad, 0 20px) !important; margin: 0 !important;

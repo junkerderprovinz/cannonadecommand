@@ -249,7 +249,7 @@
   function shapeRadius() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
   function pill(node, bg, tx) {
     // the sm size from CannonadeCommand.Tokens.css, like every other small badge
-    node.style.setProperty("font-size", "var(--cc-sm-fs, 11px)", "important");
+    node.style.setProperty("font-size", "var(--cc-sm-fs)", "important");
     node.style.setProperty("vertical-align", "middle", "important");
     node.style.setProperty("background", bg, "important");
     node.style.setProperty("color", tx || idealText(bg), "important");
@@ -563,7 +563,7 @@
       if (sib && /readmore|toggle/i.test(sib.className || "")) sib.style.setProperty("display", "none", "important");
     }
     if (desc) {
-      desc.style.setProperty("color", "#9a9a9a", "important"); desc.style.setProperty("font-size", "12px", "important");
+      desc.style.setProperty("color", "#9a9a9a", "important"); desc.style.setProperty("font-size", "var(--cc-text-meta)", "important");
       // inline on every pass, because the readmore lib leaves inline heights on some rows
       desc.style.setProperty("display", "block", "important");
       desc.style.setProperty("height", "auto", "important");
@@ -706,7 +706,7 @@
           b2.style.setProperty("padding", "var(--cc-md-pad, 0 20px)", "important");
           b2.style.setProperty("line-height", "1", "important");
           b2.style.setProperty("box-sizing", "border-box", "important");
-          b2.style.setProperty("font-size", "var(--cc-md-fs, 13px)", "important");
+          b2.style.setProperty("font-size", "var(--cc-md-fs)", "important");
           b2.style.setProperty("font-weight", "600", "important");
           b2.style.setProperty("text-transform", "uppercase", "important");
           b2.style.setProperty("letter-spacing", "1.5px", "important");

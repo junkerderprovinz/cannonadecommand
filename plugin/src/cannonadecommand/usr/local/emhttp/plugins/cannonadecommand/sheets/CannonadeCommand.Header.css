@@ -51,12 +51,12 @@ html.cc-hideicon-log.cc-hideicon-log #menu .nav-tile > .nav-item.LogButton.util,
 html.cc-hideicon-help.cc-hideicon-help #menu .nav-tile > .nav-item.HelpButton.util { display: none !important; }
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a {
   display: inline-flex !important; align-items: center; justify-content: center;
-  /* the menu bar badges are the largest size, lgb (36px) with 15px text, one step above the md
+  /* the menu bar badges are the largest size, lgb (36px) with body text, one step above the md
      section badges */
   line-height: 1; height: var(--cc-lgb-h, 36px) !important; padding: 0 22px !important; margin: 0 3px;
   border-radius: var(--cc-b-radius, 999px) !important;
   background: rgba(128, 128, 128, .18) !important; color: var(--cc-header-ink, #cfcfcf) !important;
-  font-size: 15px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important;
+  font-size: var(--cc-text-body) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important;
   transition: filter .12s, background .12s, color .12s;
 }
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search):hover > a { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
@@ -140,7 +140,7 @@ html.cc-popups-on #cc-tipfloat {
      z-index 999999 */
   z-index: 2147483647; width: max-content; max-width: 280px;
   background: #393939; color: #f4f4f4; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);
-  padding: 9px 12px; font-size: 12.5px; font-weight: 400; line-height: 1.45;
+  padding: 9px 12px; font-size: var(--cc-text-subline); font-weight: 400; line-height: 1.45;
   font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   text-transform: none; letter-spacing: normal; white-space: pre-line; text-align: left;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .55); pointer-events: none;
@@ -171,8 +171,8 @@ html.cc-header-on .tooltipster-base .tooltipster-arrow { display: none !importan
 /* Status island (span#cc-island, built by header.js ccIsland()). It sits inside div#header, the
    91px top strip, between the two Connect components, which the top header section styles with
    CSS alone because the auto-mount observer rebuilds them; the island is CC's own element next to
-   them. Small chips (about 21px, 11px text) with 10px state dots and no borders: the grey fill is
-   the chip, and header.js sets each dot's colour inline. */
+   them. Small chips (about 22px, meta-size text) with 10px state dots and no borders: the grey fill
+   is the chip, and header.js sets each dot's colour inline. */
 html.cc-header-on #header { display: flex; align-items: center; }   /* a flex row so margin-left:auto works and everything centres on the 91px line */
 /* The island is a column of three right-aligned rows. header.js fills them in the saved
    cc.isl.order and lets the user long-press and drag a chip to any row and position. */
@@ -215,10 +215,10 @@ html.cc-header-on.cc-arrange #cc-island .cc-isl-chip.cc-isl-dragging { animation
 }
 html.cc-header-on #cc-island .cc-isl-chip {
   display: inline-flex; align-items: center; white-space: nowrap;
-  padding: 3px 11px;                             /* S tier: 11px text + 3px pads ≈ 21px chip */
+  padding: 3px 11px;                             /* S tier: meta text + 3px pads ≈ 22px chip */
   border-radius: var(--cc-b-radius, 999px);      /* badges follow the global Badge-Form */
   background: rgba(128, 128, 128, .18); color: #e6e6e6;
-  font-size: 11px; font-weight: 600; line-height: 1.4;
+  font-size: var(--cc-text-meta); font-weight: 600; line-height: 1.4;
 }
 /* the dot is optional: text-only chips (uptime, OS) carry no .cc-isl-dot and the symmetric
    padding stands alone */
@@ -238,7 +238,7 @@ html.cc-header-on #cc-island .cc-isl-fill { display: block; height: 100%; }
 /* a short label before the array, RAM and CPU bars tells the three apart; the % text stays right
    of the bar and the tooltip has the detail */
 html.cc-header-on #cc-island .cc-isl-lead {
-  flex: 0 0 auto; margin-right: 6px; font-size: 10px; font-weight: 700;
+  flex: 0 0 auto; margin-right: 6px; font-size: var(--cc-text-meta); font-weight: 700;
   letter-spacing: .4px; opacity: .72; text-transform: uppercase;
 }
 /* the network up/down chip toggles bit and byte on click; its two segments sit side by side */
@@ -275,7 +275,7 @@ html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"] {
   display: inline-flex; align-items: center; white-space: nowrap; line-height: 1.4;
   background: rgba(128, 128, 128, .18); color: var(--cc-header-ink, #cfcfcf);
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 3px 11px);
-  font-size: 11px; font-weight: 600;
+  font-size: var(--cc-text-meta); font-weight: 600;
   /* no Tailwind ring or underline */
   outline: none !important; box-shadow: none !important; text-decoration: none !important;
   transition: filter .12s;
@@ -440,7 +440,7 @@ html.cc-header-on #menu .usage-bar > span {
   background: var(--cc-hdr-accent, #FCC419) !important;
   box-shadow: none !important;
   color: var(--cc-hdr-accent-text, #161616) !important;
-  font-size: 11px !important; font-weight: 600 !important; padding-right: 8px !important; line-height: 24px !important;
+  font-size: var(--cc-text-meta) !important; font-weight: 600 !important; padding-right: 8px !important; line-height: 24px !important;
 }
 
 /* The gui_search field (horizontal top nav only). gui_search inserts #guiSearchBoxSpan as a flex
@@ -458,7 +458,7 @@ html.cc-popups-on:not(.Theme--sidebar) #guiSearchBox {
   width: 100% !important; max-width: 100% !important;
   height: 40px !important; padding: 0 14px 0 2.4rem !important;   /* the native 2.4rem left padding holds the magnifier glyph (#guiSearchBoxSpan:after, left:1.5rem) */
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
-  background: var(--cc-surface-3, #2e2e2e) !important; color: #eaeaea !important; font-size: var(--cc-md-fs, 13px) !important;
+  background: var(--cc-surface-3, #2e2e2e) !important; color: #eaeaea !important; font-size: var(--cc-md-fs) !important;
   box-shadow: 0 14px 40px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .4) !important; outline: none !important;
 }
 html.cc-popups-on:not(.Theme--sidebar) #guiSearchBoxSpan:after { color: var(--cc-text-dim, #8a8a8a) !important; }
@@ -526,7 +526,7 @@ html.cc-popups-on .ui-dialog:has(iframe#myIframe) .ui-dialog-title {
   flex: 0 0 auto !important; width: fit-content !important; float: none !important; text-align: center !important;
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #161616))) !important;
   height: 44px !important; display: inline-flex !important; align-items: center !important; border-radius: 999px !important;
-  padding: 0 24px !important; font-size: 16px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .7px !important; margin: 0 auto !important;
+  padding: 0 24px !important; font-size: var(--cc-text-title) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .7px !important; margin: 0 auto !important;
 }
 html.cc-popups-on .ui-dialog:has(iframe#myIframe) { background: #0f0f0f !important; }
 html.cc-popups-on .ui-dialog .ui-dialog-title {
@@ -536,7 +536,7 @@ html.cc-popups-on .ui-dialog .ui-dialog-title {
   flex: 1 1 auto; float: none !important; margin: 0 !important; box-sizing: border-box !important;
   height: 40px !important; padding: 0 18px; border-radius: var(--cc-b-radius, 10px);
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #161616))) !important;
-  font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
+  font-size: var(--cc-lgb-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important;
 }
 html.cc-popups-on .sweet-alert { text-align: center !important; }
@@ -549,13 +549,13 @@ html.cc-popups-on .sweet-alert h2 {
   /* the per-window --cc-rb-c from header.js paintPopups, then the shared rainbow accent, then the
      plain accent */
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #161616))) !important;
-  font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
+  font-size: var(--cc-lgb-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; margin: 0 0 14px !important;
 }
 /* the streaming and changelog windows use the same title bar as every other dialog */
 html.cc-popups-on .sweet-alert:has(pre) h2,
 html.cc-popups-on .sweet-alert.nchan h2 {
-  height: 40px !important; font-size: var(--cc-lgb-fs, 14px) !important;
+  height: 40px !important; font-size: var(--cc-lgb-fs) !important;
   width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
   padding: 0 18px !important; margin: 0 0 14px !important; letter-spacing: .6px !important; border-radius: var(--cc-b-radius, 10px) !important;
 }
@@ -570,12 +570,12 @@ html.cc-popups-on .sweet-alert pre h3 {
   display: inline-flex !important; align-items: center;
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #161616)) !important;
   padding: 3px 12px !important; border-radius: var(--cc-b-radius, 999px) !important;
-  font-size: 13px !important; font-weight: 700 !important; margin: 16px 0 8px !important; letter-spacing: .5px;
+  font-size: var(--cc-text-subline) !important; font-weight: 700 !important; margin: 16px 0 8px !important; letter-spacing: .5px;
 }
 /* ShipLog's changelog renders each entry's headline as a 28px <h1>, so it becomes a compact, brighter
    subheading */
 html.cc-popups-on .sweet-alert pre h1 {
-  font-size: 15px !important; font-weight: 700 !important; color: #f0f0f0 !important;
+  font-size: var(--cc-text-title) !important; font-weight: 700 !important; color: #f0f0f0 !important;
   margin: 2px 0 6px !important; line-height: 1.4 !important; letter-spacing: normal !important;
 }
 html.cc-popups-on .sweet-alert pre ul { margin: 0 0 6px !important; padding-left: 20px !important; }
@@ -593,7 +593,7 @@ html.cc-popups-on .sweet-alert.nchan pre:not(:has(h3)):not(:has(ul)) {
      word such as a digest. */
   white-space: pre-wrap !important; overflow-wrap: anywhere !important; text-align: left !important;
   font-family: Consolas, "SFMono-Regular", ui-monospace, monospace !important;
-  font-size: 12px !important; line-height: 1.35 !important; color: #d6d6d6 !important;
+  font-size: var(--cc-text-meta) !important; line-height: 1.35 !important; color: #d6d6d6 !important;
   background: #2e2e2e !important; border: none !important; border-radius: 8px !important; box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;   /* the log sits in a lighter card on the dark frame */
   padding: 12px 14px !important; max-height: 60vh; overflow: auto;
 }
@@ -678,7 +678,7 @@ html.cc-popups-on .sweet-alert.nchan fieldset > legend {
      instead of all taking the shared --cc-rbaccent */
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, var(--cc-accent, #FCC419)))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #161616))) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
-  padding: 3px 12px !important; font-size: 12px !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
+  padding: 3px 12px !important; font-size: var(--cc-text-meta) !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
 }
 /* Unraid's green ball-fall loader is replaced by CC's own indicator in the button row. */
 html.cc-popups-on .sweet-alert .la-ball-fall { display: none !important; }
@@ -698,7 +698,7 @@ html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader.cc-nchan-check { backgroun
 /* The running badge holds a white fa-refresh with FontAwesome's 2s fa-spin, the same icon and
    cadence Unraid shows over a busy container logo, so the two animate alike. */
 html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader .cc-nchan-fa {
-  color: #fff; font-size: 14px; line-height: 1;
+  color: #fff; font-size: var(--cc-text-body); line-height: 1;
 }
 /* one palette step (CCTheme.RB) per 2s fa-spin turn, 16s for the eight hues */
 @keyframes cc-spin-huebg { 0%{background:#FF8389} 12.5%{background:#FF832B} 25%{background:#FCC419} 37.5%{background:#6FDC8C} 50%{background:#3DDBD9} 62.5%{background:#1D99F3} 75%{background:#BE95FF} 87.5%{background:#FF7EB6} }
@@ -766,7 +766,7 @@ html.cc-popups-on .ui-dialog .ui-dialog-buttonpane button,
 html.cc-popups-on .ui-dialog .ui-dialog-content button:not([class*="switch"]) {
   border: none !important; border-radius: 6px !important; box-shadow: none !important;
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #161616))) !important;
-  height: var(--cc-lgb-h, 36px) !important; padding: 0 24px !important; font-size: var(--cc-lgb-fs, 14px) !important;
+  height: var(--cc-lgb-h, 36px) !important; padding: 0 24px !important; font-size: var(--cc-lgb-fs) !important;
   font-weight: 600 !important; text-transform: uppercase !important;
   letter-spacing: .6px !important; cursor: pointer; transition: filter .12s;
 }
@@ -829,7 +829,7 @@ html.cc-popups-on .sweet-alert button.cancel,
 html.cc-popups-on .sweet-alert .sa-button-container button {
   border: none !important; border-radius: 6px !important; box-shadow: none !important;
   display: inline-flex !important; align-items: center; float: none !important;
-  height: var(--cc-lgb-h, 36px) !important; padding: 0 24px !important; font-size: var(--cc-lgb-fs, 14px) !important;
+  height: var(--cc-lgb-h, 36px) !important; padding: 0 24px !important; font-size: var(--cc-lgb-fs) !important;
   font-weight: 600 !important; text-transform: uppercase !important;
   letter-spacing: .6px !important; transition: filter .12s; margin: 0 !important;   /* the flex gap spaces them; a one-sided margin would skew the centring */
 }
@@ -886,7 +886,7 @@ html.cc-popups-on .swal-modal .swal-title {
   height: 40px !important; margin: 0 0 14px !important; padding: 0 18px !important; border: none !important;
   border-radius: var(--cc-b-radius, 10px) !important;
   background: var(--cc-rbaccent, var(--cc-hdr-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #161616)) !important;
-  font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
+  font-size: var(--cc-lgb-fs) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
 }
 /* the body text sits in a lighter #2e2e2e card */
 html.cc-popups-on .swal-modal .swal-text {
@@ -897,7 +897,7 @@ html.cc-popups-on .swal-modal .swal-text {
 html.cc-popups-on .swal-modal .swal-footer { text-align: center !important; margin: 0 !important; padding: 0 !important; }
 html.cc-popups-on .swal-modal .swal-button {
   border: none !important; box-shadow: none !important; border-radius: var(--cc-b-radius, 999px) !important;
-  height: var(--cc-lgb-h, 36px); padding: 0 24px !important; font-size: var(--cc-lgb-fs, 14px) !important;
+  height: var(--cc-lgb-h, 36px); padding: 0 24px !important; font-size: var(--cc-lgb-fs) !important;
   font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
   cursor: pointer; transition: filter .12s;
   background: var(--cc-hdr-accent, #FCC419) !important; background-image: none !important; color: var(--cc-hdr-accent-text, #161616) !important;
@@ -950,7 +950,7 @@ html.cc-popups-on .unapi div.fixed.z-50.bg-background h2 {
   display: inline-flex !important; align-items: center; width: fit-content !important;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   border-radius: var(--cc-b-radius, 999px) !important; padding: 0 20px !important; min-height: 38px !important;
-  font-size: 15px !important; font-weight: 700 !important; text-transform: uppercase; letter-spacing: .7px !important;
+  font-size: var(--cc-text-title) !important; font-weight: 700 !important; text-transform: uppercase; letter-spacing: .7px !important;
 }
 
 /* Bulk actions as badges. header.js ccNotifActions hides the native "Alle archivieren" link and
@@ -963,7 +963,7 @@ html.cc-popups-on .unapi div.fixed.z-50.bg-background .cc-notif-actions {
   flex-wrap: wrap !important; gap: 8px !important; margin-top: 0 !important;
 }
 html.cc-popups-on .cc-notif-badge {
-  text-decoration: none !important; font-weight: 600 !important; font-size: .95rem !important;
+  text-decoration: none !important; font-weight: 600 !important; font-size: var(--cc-text-body) !important;
   border-radius: 8px !important; padding: 7px 14px !important; line-height: 1 !important;
   cursor: pointer; user-select: none; transition: background-color .12s, color .12s, filter .12s;
 }
@@ -1000,7 +1000,7 @@ html.cc-popups-on .unapi div.fixed.z-50.bg-background .shrink-0 > a[href*="Notif
   display: inline-flex !important; align-items: center; justify-content: center;
   border-radius: var(--cc-b-radius, 999px) !important;
   min-height: 28px !important; height: 28px !important; padding: 0 12px !important; border: none !important;
-  font-size: 12px !important; font-weight: 600 !important; line-height: 1 !important; text-decoration: none !important; transition: filter .12s, opacity .12s;
+  font-size: var(--cc-text-meta) !important; font-weight: 600 !important; line-height: 1 !important; text-decoration: none !important; transition: filter .12s, opacity .12s;
 }
 /* The tabs and type filters carry the colour mode at rest (a rotated --cc-rb-c per badge in
    rainbow mode, the accent otherwise). Inactive ones are dimmer, so the active one stands out. */
@@ -1049,16 +1049,16 @@ html.cc-popups-on :is(.cc-notif-arch, .cc-notif-del):hover,
 html.cc-popups-on .cc-notif-del.cc-notif-armed { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; }
 
 /* smaller card text than the native 16px title and body */
-html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] { font-size: 12.5px !important; }
-html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] .flex-1.truncate { font-size: 13px !important; }
-html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] h4 { font-size: 12.5px !important; }
+html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] { font-size: var(--cc-text-subline) !important; }
+html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] .flex-1.truncate { font-size: var(--cc-text-subline) !important; }
+html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] h4 { font-size: var(--cc-text-subline) !important; }
 
 /* the card actions as CC pills instead of Unraid orange: Anzeigen neutral with the accent on hover,
    Archiv in the accent */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] a[class*="text-primary"] {
   display: inline-flex !important; align-items: center; justify-content: center;
   background: var(--cc-surface-chip) !important; color: var(--cc-ink) !important; border-radius: var(--cc-b-radius, 999px) !important;
-  min-height: 30px !important; height: 30px !important; padding: 0 14px !important; font-size: 12.5px !important; font-weight: 600 !important; text-decoration: none !important; transition: background-color .12s, color .12s;
+  min-height: 30px !important; height: 30px !important; padding: 0 14px !important; font-size: var(--cc-text-subline) !important; font-weight: 600 !important; text-decoration: none !important; transition: background-color .12s, color .12s;
 }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] a[class*="text-primary"]:hover {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
@@ -1067,7 +1067,7 @@ html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] a[cl
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] span[class*="rounded-md"][class*="inline-flex"] {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
   border-radius: var(--cc-b-radius, 999px) !important; min-height: 30px !important; height: 30px !important; padding: 0 14px !important;
-  font-size: 12.5px !important; font-weight: 600 !important; box-shadow: none !important; border: none !important; transition: background-color .12s, color .12s, filter .12s;
+  font-size: var(--cc-text-subline) !important; font-weight: 600 !important; box-shadow: none !important; border: none !important; transition: background-color .12s, color .12s, filter .12s;
 }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] span[class*="rounded-md"][class*="inline-flex"]:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* in the reactive sub-mode (cc-header-rbneutral) Archiv rests neutral and colours on hover */
@@ -1142,7 +1142,7 @@ html.cc-docker-on .cc-badge[onclick]:hover { box-shadow: inset 0 0 0 100vmax var
   position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 14px);
   z-index: 100000; pointer-events: none; opacity: 0;
   max-width: min(88vw, 460px); padding: 11px 18px;
-  background: #0f0f0f; color: #e8e8e8; font-size: 13px; line-height: 1.35; text-align: center;
+  background: #0f0f0f; color: #e8e8e8; font-size: var(--cc-text-subline); line-height: 1.35; text-align: center;
   border: 1px solid var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)));
   border-radius: min(var(--cc-b-radius, 999px), 12px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, .55);
@@ -1260,14 +1260,14 @@ html.cc-popups-on .upgrade_notice a, html.cc-popups-on .ca_element_notice a { co
 #cc-cmd.cc-cmd-open { display: block; }
 #cc-cmd .cc-cmd-bd { position: absolute; inset: 0; background: var(--cc-backdrop-dim, rgba(0, 0, 0, .55)); backdrop-filter: var(--cc-backdrop-blur, blur(5px)); -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)); }
 #cc-cmd .cc-cmd-box { position: absolute; left: 50%; top: 84px; transform: translateX(-50%); width: min(92vw, 560px); background: #0f0f0f; border-radius: 14px; box-shadow: 0 24px 60px rgba(0, 0, 0, .6); overflow: hidden; }
-#cc-cmd .cc-cmd-in { width: 100%; box-sizing: border-box; background: #171717 !important; color: #eaeaea !important; border: none !important; outline: none !important; padding: 16px 20px !important; font-size: 16px !important; border-radius: 0 !important; }
+#cc-cmd .cc-cmd-in { width: 100%; box-sizing: border-box; background: #171717 !important; color: #eaeaea !important; border: none !important; outline: none !important; padding: 16px 20px !important; font-size: var(--cc-text-title) !important; border-radius: 0 !important; }
 #cc-cmd .cc-cmd-in::placeholder { color: #8a8a8a; }
 #cc-cmd .cc-cmd-list { max-height: 52vh; overflow-y: auto; padding: 6px; }
 #cc-cmd .cc-cmd-item { display: flex; align-items: baseline; gap: 10px; padding: 10px 14px; border-radius: 8px; cursor: pointer; }
 #cc-cmd .cc-cmd-item.cc-cmd-on { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); }
 #cc-cmd .cc-cmd-item.cc-cmd-on .cc-cmd-lbl, #cc-cmd .cc-cmd-item.cc-cmd-on .cc-cmd-sub { color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)); }
-#cc-cmd .cc-cmd-lbl { color: #ededed; font-size: 14px; font-weight: 600; }
-#cc-cmd .cc-cmd-sub { color: #8f8f8f; font-size: 12px; margin-left: auto; white-space: nowrap; }
+#cc-cmd .cc-cmd-lbl { color: #ededed; font-size: var(--cc-text-body); font-weight: 600; }
+#cc-cmd .cc-cmd-sub { color: #8f8f8f; font-size: var(--cc-text-meta); margin-left: auto; white-space: nowrap; }
 
 /* the reused native lock icon glows in the accent while arranging */
 html.cc-arrange #menu .nav-item.LockButton b, html.cc-arrange #cc-lock-item b { color: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; }
@@ -1320,7 +1320,7 @@ html.cc-header-on .cc-acctmenu li > a:hover {
 /* the (i) is a click help button; header.js toggles #cc-acctinfo-pop with the folded description */
 html.cc-header-on .cc-acctinfo {
   display: inline-flex; align-items: center; justify-content: center; margin-left: 7px; flex: 0 0 auto;
-  width: 18px; height: 18px; font-size: 14px; line-height: 1; cursor: pointer; vertical-align: middle;
+  width: 18px; height: 18px; font-size: var(--cc-text-body); line-height: 1; cursor: pointer; vertical-align: middle;
   color: #b9b9b9; opacity: .9; border-radius: 50%;
 }
 html.cc-header-on .cc-acctinfo:hover { color: var(--cc-rbaccent, var(--cc-accent, #FCC419)); opacity: 1; }
@@ -1328,7 +1328,7 @@ html.cc-header-on .cc-acctinfo:hover { color: var(--cc-rbaccent, var(--cc-accent
 html.cc-popups-on #cc-acctinfo-pop {
   position: fixed; z-index: 2147483647; width: max-content; max-width: 280px;
   background: #393939; color: #f4f4f4; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);
-  padding: 9px 12px; font-size: 12.5px; font-weight: 400; line-height: 1.45;
+  padding: 9px 12px; font-size: var(--cc-text-subline); font-weight: 400; line-height: 1.45;
   font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; white-space: pre-line; text-align: left;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .55);
 }
@@ -1426,7 +1426,7 @@ html.cc-header-on #kvm_table > thead > tr > th {
   font-weight: 600 !important;
   letter-spacing: 1.2px !important;
   text-transform: uppercase !important;
-  font-size: 10.5px !important;
+  font-size: var(--cc-text-meta) !important;
 }
 /* a hairline highlight on top and a soft inset shade below instead of a border line, set per cell
    since box-shadow on <thead> is unreliable */

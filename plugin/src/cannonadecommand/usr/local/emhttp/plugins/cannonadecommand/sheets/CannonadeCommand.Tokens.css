@@ -82,6 +82,15 @@ html {
   --cc-accent-hover: color-mix(in srgb, var(--cc-accent) 85%, var(--cc-text));
   --cc-hover-wash:   color-mix(in srgb, var(--cc-text) 15%, transparent);
 
+  /* The type scale, one size per role: the status line and a tile's one figure, an emphasised
+     title, body text, the sub-line beside or under a name, and the meta size for notches, counts
+     and small labels. Every font size reads one of these. */
+  --cc-text-status:  22px;
+  --cc-text-title:   16px;
+  --cc-text-body:    14px;
+  --cc-text-subline: 13px;
+  --cc-text-meta:    12px;
+
   /* The right-edge gutter that pulls every right-flush element (search badge, show more, view
      toggle, footer arrows, list rows) in to the #displaybox content edge rather than the scrollbar
      edge. */
@@ -94,19 +103,19 @@ html {
        bmd medium block pill, lg and lgb large text and large button, head section-head badge
      Per-area sheets keep only their own metrics (Header --cc-md-icon, Shares --cc-aop-*,
      SettingsGrid --cc-sg-*). */
-  --cc-sm-fs: 11px;  --cc-sm-pad: 3px 11px;
-  --cc-md-fs: 13px;  --cc-md-h: 30px;  --cc-md-pad: 0 20px;  --cc-md-btnpad: 0 14px;
+  --cc-sm-fs: var(--cc-text-meta);  --cc-sm-pad: 3px 11px;
+  --cc-md-fs: var(--cc-text-subline);  --cc-md-h: 30px;  --cc-md-pad: 0 20px;  --cc-md-btnpad: 0 14px;
   /* md is the smallest tier, and the sub-nav row does not invent one below it: the main bar is lgb
-     (36px/15px) and md is the step under it, as Header.css and Shares.css both state. A height
-     without a matching font size, padding and letter spacing gives a squashed md rather than a
-     smaller tier, so the step below the bar is expressed through letter-spacing. */
+     (36px, body size) and md is the step under it, as Header.css and Shares.css both state. A
+     height without a matching font size, padding and letter spacing gives a squashed md rather than
+     a smaller tier, so the step below the bar is expressed through letter-spacing. */
   --cc-bmd-pad: 4px 12px;
-  --cc-lg-fs: 15px;  --cc-lg-pad: 6px 16px;
-  --cc-lgb-h: 36px;  --cc-lgb-fs: 14px;
-  --cc-head-fs: 15px;  --cc-head-pad: 9px 18px;
+  --cc-lg-fs: var(--cc-text-title);  --cc-lg-pad: 6px 16px;
+  --cc-lgb-h: 36px;  --cc-lgb-fs: var(--cc-text-body);
+  --cc-head-fs: var(--cc-text-title);  --cc-head-pad: 9px 18px;
   /* The page-title (div.title span.left, .cc-pagehead), section-head (.ca_homeTemplatesHeader) and
-     author badges sit under the main menu bar, so they are one step below its 15px tab badges. */
-  --cc-pagebadge-fs: 13px;
+     author badges sit under the main menu bar, so they are one step below its tab badges. */
+  --cc-pagebadge-fs: var(--cc-text-subline);
   --cc-density: 9px;
 
   /* The semantic states: the fill, the ink on the fill, and the -ink colour for a state written as
@@ -222,7 +231,7 @@ html.cc-popups-on div.title {
   padding: 8px 14px !important;
 }
 html.cc-popups-on div.title > span.left, html.cc-popups-on div.title > span.right {
-  text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-text-meta); font-weight: 600;
   color: var(--cc-text, #e6e6e6) !important;
 }
 html.cc-popups-on div.title span.left i.title,
@@ -234,7 +243,7 @@ html.cc-popups-on div.title span.left i.fa { color: color-mix(in srgb, var(--cc-
 html.cc-popups-on #displaybox input[type="button"][value*="ktualisierung" i],
 html.cc-popups-on #displaybox input[type="button"][value*="update" i] {
   height: var(--cc-md-h, 30px) !important; min-height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-pad, 0 20px) !important;
-  font-size: var(--cc-md-fs, 13px) !important;
+  font-size: var(--cc-md-fs) !important;
   display: inline-flex !important; align-items: center !important; box-sizing: border-box !important;
 }
 /* The tabbed view's pill row: idle pills take a grey shade, the active and hovered one the CC
@@ -558,7 +567,7 @@ html.cc-popups-on .ca_homeTemplatesHeader .cc-sechead-badge {
   display: inline-flex !important; align-items: center !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
-  font-size: var(--cc-pagebadge-fs, 13px) !important; font-weight: 700 !important;
+  font-size: var(--cc-pagebadge-fs) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: 1px !important;
   /* md padding and an explicit md height, so this matches the Plugins section badge; the sm
      padding with an md font size gives a 24px badge under the tier's own 30px */
@@ -579,7 +588,7 @@ html.cc-popups-on .ca_homeTemplatesHeader .cc-info:hover, html.cc-popups-on .ca_
 html.cc-popups-on .ca_homeTemplatesHeader .homeMore {
   margin-left: auto !important;
   display: inline-flex !important; align-items: center !important;
-  padding: 4px 10px !important; font-size: 11px !important; font-weight: 600 !important;
+  padding: 4px 10px !important; font-size: var(--cc-text-meta) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .4px !important; cursor: pointer !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
@@ -599,7 +608,7 @@ html.cc-apps-rbneutral.cc-popups-on .ca_homeTemplatesHeader .homeMore:focus {
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; filter: none !important;
 }
 /* before ccApps runs, line 2 stays dim body text so Show more never vanishes */
-html.cc-popups-on .ca_homeTemplatesLine2 { color: var(--cc-text-dim, #8a8a8a) !important; font-size: 13px !important; margin: 0 0 12px !important; }
+html.cc-popups-on .ca_homeTemplatesLine2 { color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-subline) !important; margin: 0 0 12px !important; }
 html.cc-popups-on .ca_homeTemplatesLine2 .homeMore { color: var(--cc-accent-ink, #FCC419) !important; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; }
 
 /* The horizontal carousels of the Apps tab: the thumb takes the colour mode and appears on hover.
@@ -759,7 +768,7 @@ html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open):hover .searchSu
    pointer-events:none keeps the click on the chip. */
 html.cc-popups-on li.cc-ca-search-li #searchFilter .cc-ca-search-label {
   order: 3 !important; display: inline-flex !important; align-items: center !important;
-  margin-left: 6px !important; font-size: 12.5px !important; font-weight: 400 !important;
+  margin-left: 6px !important; font-size: var(--cc-text-subline) !important; font-weight: 400 !important;
   line-height: 1.3 !important; white-space: nowrap !important; color: inherit !important; pointer-events: none !important;
 }
 html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open .cc-ca-search-label { display: none !important; }
@@ -798,9 +807,9 @@ html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage,
 html.cc-popups-on .cc-ca-search-extras .dockerSearch {
   width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
   height: auto !important; min-height: 0 !important; padding: 7px 12px !important; margin: 0 !important;
-  /* The sidebar knows two sizes, badge and sub-badge, so these take the badge tier (15px) like every
-     other top-level sidebar entry and a long label wraps to two lines in the 132px column. */
-  font-size: 15px !important; font-weight: 600 !important; line-height: 1.25 !important;
+  /* The sidebar knows two sizes, badge and sub-badge, so these take the badge tier (body size) like
+     every other top-level sidebar entry and a long label wraps to two lines in the 132px column. */
+  font-size: var(--cc-text-body) !important; font-weight: 600 !important; line-height: 1.25 !important;
   text-align: center !important; text-transform: none !important; letter-spacing: normal !important;
   white-space: normal !important;   /* "Results Per Page: 12" wraps in a 132px column, unlike its old row */
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
@@ -873,7 +882,7 @@ html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul {
   box-shadow: 0 18px 46px rgba(0, 0, 0, .6) !important; z-index: 2147483000 !important; padding: 8px !important;
 }
 html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li {
-  padding: 8px 12px !important; border-radius: 8px !important; font-size: 13.5px !important; white-space: normal !important;
+  padding: 8px 12px !important; border-radius: 8px !important; font-size: var(--cc-text-subline) !important; white-space: normal !important;
 }
 html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li:hover,
 html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li[aria-selected="true"] {
@@ -903,7 +912,7 @@ html.cc-popups-on .caMenuItem:hover {
    card edge rules below, or the two fight over margin-top with only source order to settle it. */
 html.cc-popups-on .caMenuItem.sectionMenu:not(.cc-card-in) {
   text-transform: uppercase !important; letter-spacing: .6px !important;
-  font-size: 15px !important; font-weight: 600 !important; color: var(--cc-text, #e6e6e6) !important;
+  font-size: var(--cc-text-body) !important; font-weight: 600 !important; color: var(--cc-text, #e6e6e6) !important;
   background: transparent !important; margin: 22px 0 6px !important; padding: 2px 8px !important; cursor: default !important;
 }
 html.cc-popups-on .caMenuItem.sectionMenu:not(.cc-card-in):hover { background: transparent !important; color: var(--cc-text, #e6e6e6) !important; filter: none !important; }
@@ -918,7 +927,7 @@ html.cc-popups-on .subCategory { margin: 0 !important; padding: 0 !important; li
    category sub-list is a level below the category above it, so it keeps a smaller size and an
    indent, which together is what makes it read as being inside that category. */
 html.cc-popups-on .subCategory.onlyShowWithFeed .caMenuItem {
-  font-size: 15px !important; text-transform: none !important; letter-spacing: normal !important; font-weight: 600 !important;
+  font-size: var(--cc-text-body) !important; text-transform: none !important; letter-spacing: normal !important; font-weight: 600 !important;
 }
 /* The wrapping <li> carries .cc-card-in but not .caMenuItem, which only its <ul> children do, so
    the class-less row rule further down is the one that would otherwise win. This selector repeats
@@ -926,7 +935,7 @@ html.cc-popups-on .subCategory.onlyShowWithFeed .caMenuItem {
    child below computes against the full column instead of a padding-narrowed box. */
 html.cc-popups-on li.subCategory.onlyShowWithFeed.cc-card-in:not(.caMenuItem) { padding-left: 0 !important; padding-right: 0 !important; }
 html.cc-popups-on .subCategory:not(.onlyShowWithFeed) { padding-left: 14px !important; }
-html.cc-popups-on .subCategory:not(.onlyShowWithFeed) .caMenuItem { font-size: 12.5px !important; text-transform: none !important; letter-spacing: normal !important; font-weight: 400 !important; }
+html.cc-popups-on .subCategory:not(.onlyShowWithFeed) .caMenuItem { font-size: var(--cc-text-subline) !important; text-transform: none !important; letter-spacing: normal !important; font-weight: 400 !important; }
 /* a nested badge takes the same content-box width as every other badge in the sidebar, whatever its
    wrapper's padding or CA's default <ul> margin would give it */
 html.cc-popups-on .subCategory .caMenuItem { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; margin: 2px 0 !important; }
@@ -959,7 +968,7 @@ html.cc-popups-on .caMenu > li:not(.caMenuItem):not(:has(> hr)):not(.cc-card-in)
   padding: 7px 12px !important;
   background: var(--cc-surface-2, rgba(128, 128, 128, .10)) !important;
   color: var(--cc-text-chip, #cfcfcf) !important;
-  border-radius: var(--cc-b-radius, 8px) !important; font-size: 12.5px !important;
+  border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-subline) !important;
 }
 html.cc-popups-on .caMenuItem.sectionMenu:first-child { margin-top: 4px !important; }
 
@@ -994,7 +1003,7 @@ html.cc-popups-on li.cc-card-bot {
    fallback chip rule would paint them as standalone chips; inside a card they are plain text. */
 html.cc-popups-on li.cc-card-in:not(.caMenuItem):not(.cc-ca-cardtitle) {
   padding: 2px 8px !important; margin: 0 !important;
-  color: var(--cc-text-dim, #8a8a8a) !important; font-size: 12.5px !important;
+  color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-subline) !important;
   border-radius: 0 !important;
 }
 html.cc-popups-on li.cc-card-in:hover { filter: none !important; }
@@ -1005,7 +1014,7 @@ html.cc-popups-on li.cc-card-in.sectionMenu {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   text-transform: uppercase !important; letter-spacing: .6px !important;
-  font-size: 15px !important; font-weight: 700 !important; cursor: default !important;
+  font-size: var(--cc-text-body) !important; font-weight: 700 !important; cursor: default !important;
 }
 html.cc-popups-on li.cc-card-in.sectionMenu:hover { filter: none !important; }
 html.cc-apps-rbneutral.cc-popups-on li.cc-ca-cardtitle,
@@ -1042,7 +1051,7 @@ html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   text-transform: uppercase !important; letter-spacing: .6px !important;
-  font-size: 15px !important; font-weight: 700 !important;
+  font-size: var(--cc-text-body) !important; font-weight: 700 !important;
   margin: 6px 0 !important; padding: 7px 12px !important;
   border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
   --cc-ac-glow: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) 55%, transparent);
@@ -1172,7 +1181,7 @@ html.cc-popups-on .appRepository {
   float: none !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important; margin: 0 !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-b-radius, 8px) !important;
-  font-size: 15px !important; opacity: 1 !important;
+  font-size: var(--cc-text-body) !important; opacity: 1 !important;
   color: var(--cc-text-chip, #cfcfcf) !important; transition: background .12s ease, color .12s ease !important;
 }
 html.cc-popups-on .appDocker:hover,
@@ -1206,7 +1215,7 @@ html.cc-popups-on .cc-warn-badge {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important; margin: 0 !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-b-radius, 8px) !important;
-  font-size: 14px !important; color: var(--cc-text-chip, #cfcfcf) !important; cursor: pointer !important;
+  font-size: var(--cc-text-body) !important; color: var(--cc-text-chip, #cfcfcf) !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease !important;
 }
 html.cc-popups-on .cc-warn-badge:hover {
@@ -1262,7 +1271,7 @@ html.cc-popups-on .cc-castats .cc-cs-u {
   width: 70px !important; flex: 0 0 auto !important; height: var(--cc-md-h, 30px) !important;
   border-radius: min(var(--cc-b-radius, 8px), 999px) !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
-  font-size: var(--cc-sm-fs, 11px) !important; font-variant-numeric: tabular-nums !important;
+  font-size: var(--cc-sm-fs) !important; font-variant-numeric: tabular-nums !important;
   white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
 }
 /* CA's own Installieren button, moved into this row with its behaviour untouched. Its native
@@ -1271,7 +1280,7 @@ html.cc-popups-on .cc-castats .actionsButton {
   pointer-events: auto !important; flex: 0 0 auto !important; margin: 0 !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; height: var(--cc-md-h, 30px) !important; padding: 0 14px !important;
-  border-radius: var(--cc-b-radius, 8px) !important; font-size: 10px !important; font-weight: 700 !important;
+  border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-meta) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .3px !important; white-space: nowrap !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
@@ -1282,7 +1291,7 @@ html.cc-popups-on .cc-castats .cc-cs-cta {
   pointer-events: auto !important; flex: 0 0 auto !important; cursor: pointer !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; height: var(--cc-md-h, 30px) !important; padding: 0 14px !important;
-  border-radius: var(--cc-b-radius, 8px) !important; font-size: 10px !important; font-weight: 700 !important;
+  border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-meta) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .3px !important; white-space: nowrap !important;
 }
 /* Update is an action, so it takes the accent like every other call to action */
@@ -1332,7 +1341,7 @@ html.cc-popups-on .cc-ca-menu {
 }
 html.cc-popups-on .cc-ca-menu-item {
   padding: 7px 10px !important; border-radius: var(--cc-b-radius, 6px) !important; cursor: pointer !important;
-  font-size: 12px !important; color: var(--cc-text, #e6e6e6) !important; white-space: nowrap !important;
+  font-size: var(--cc-text-meta) !important; color: var(--cc-text, #e6e6e6) !important; white-space: nowrap !important;
   overflow: hidden !important; text-overflow: ellipsis !important;
 }
 html.cc-popups-on .cc-ca-menu-item:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
@@ -1370,7 +1379,7 @@ html.cc-popups-on .popupCloseArea .popUpClose {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
   border-radius: var(--cc-b-radius, 8px) !important; padding: 0 14px !important; height: 30px !important;
-  font-size: 12px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .4px !important;
+  font-size: var(--cc-text-meta) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .4px !important;
   cursor: pointer !important; transition: background .12s ease, color .12s ease !important;
 }
 html.cc-popups-on .popupCloseArea .popUpClose:hover {
@@ -1384,7 +1393,7 @@ html.cc-popups-on .popupAuthorMain { color: var(--cc-text-dim, #8a8a8a) !importa
 html.cc-popups-on .popupInfo .caButton {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   height: 28px !important; padding: 0 12px !important; margin: 8px 6px 0 0 !important; box-sizing: border-box !important;
-  border-radius: var(--cc-b-radius, 8px) !important; font-size: 12px !important; font-weight: 600 !important;
+  border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-meta) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .3px !important; cursor: pointer !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
@@ -1415,7 +1424,7 @@ html.cc-popups-on .popupInfo .caButton span.ca_fa-support::before { content: non
 html.cc-popups-on .popupInfo .pinPopup { width: 28px !important; padding: 0 !important; position: relative !important; }
 html.cc-popups-on .popupInfo .pinPopup > span { display: none !important; }
 html.cc-popups-on .popupInfo .pinPopup::before {
-  font-family: fontAwesome !important; content: "\f08d" !important; font-size: 13px !important;
+  font-family: fontAwesome !important; content: "\f08d" !important; font-size: var(--cc-text-subline) !important;
 }
 /* The description, additional requirements and changelog are three near-identical CA readmore
    blocks, all hardcoded as a white card on black, so one recipe covers them. */
@@ -1432,7 +1441,7 @@ html.cc-popups-on .rightTitle,
 html.cc-popups-on .popupAuthorTitle,
 html.cc-popups-on .changelogTitle,
 html.cc-popups-on .additionalRequirementsHeader {
-  color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11px !important; font-weight: 700 !important;
+  color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; margin: 0 0 8px !important;
 }
 html.cc-popups-on .additionalRequirementsHeader { margin-bottom: 4px !important; }
@@ -1440,7 +1449,7 @@ html.cc-popups-on .additionalRequirementsHeader { margin-bottom: 4px !important;
    top-level cards; as a flex row the two cards would each be as wide as their own content. */
 html.cc-popups-on .popupInfoSection { display: block !important; }
 html.cc-popups-on .popupTable { border-collapse: collapse !important; width: 100% !important; }
-html.cc-popups-on .popupTable td { padding: 4px 0 !important; font-size: 13px !important; }
+html.cc-popups-on .popupTable td { padding: 4px 0 !important; font-size: var(--cc-text-subline) !important; }
 html.cc-popups-on .popupTableLeft { color: var(--cc-text-dim, #8a8a8a) !important; padding-right: 14px !important; white-space: nowrap !important; }
 html.cc-popups-on .popupTableRight { color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .popupAuthorIcon img { border-radius: 50% !important; width: 28px !important; height: 28px !important; object-fit: cover !important; }
@@ -1450,7 +1459,7 @@ html.cc-popups-on .repoPopup,
 html.cc-popups-on .ca_favouriteRepo {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   height: 26px !important; padding: 0 10px !important; margin: 6px 6px 0 0 !important; box-sizing: border-box !important;
-  border-radius: var(--cc-b-radius, 8px) !important; font-size: 11px !important; font-weight: 600 !important;
+  border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-meta) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .3px !important; cursor: pointer !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   transition: background .12s ease, color .12s ease !important;
@@ -1462,7 +1471,7 @@ html.cc-popups-on .ca_favouriteRepo:hover {
 }
 html.cc-popups-on .changelogMessage,
 html.cc-popups-on .ca_note {
-  color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11px !important;
+  color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important;
 }
 
 /* The info drawer as a floating window, in the recipe the notification centre and the sweet-alert
@@ -1484,7 +1493,7 @@ html.cc-popups-on .sidenav.sidenavShow {
    close control reads the same whatever badge shape is set. */
 html.cc-popups-on .popupCloseArea .popUpClose.cc-ic-close {
   width: 30px !important; height: 30px !important; padding: 0 !important; border-radius: 8px !important;
-  font-size: 14px !important; margin: 0 !important;
+  font-size: var(--cc-text-body) !important; margin: 0 !important;
 }
 /* The spotlight star beside the app name, the square chip the card's own spotlight badge uses,
    sized for a text line instead of a card corner. It mirrors .homespotlightIconArea's four rules,
@@ -1492,7 +1501,7 @@ html.cc-popups-on .popupCloseArea .popUpClose.cc-ic-close {
 html.cc-popups-on .cc-ic-spot {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   width: 22px !important; height: 22px !important; margin-left: 8px !important; vertical-align: middle !important;
-  box-sizing: border-box !important; border-radius: var(--cc-b-radius, 8px) !important; font-size: 11px !important;
+  box-sizing: border-box !important; border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-meta) !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   transition: background .12s ease, color .12s ease !important;
 }
@@ -1527,7 +1536,7 @@ html.cc-popups-on #sidenavContent .cc-ic-legend {
   border-radius: var(--cc-b-radius, 999px) !important;
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
-  font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: .5px !important;
+  font-size: var(--cc-text-meta) !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: .5px !important;
   box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
 }
 /* The additional-requirements legend takes the orange of a warning as a fill rather than a border
@@ -1546,7 +1555,7 @@ html.cc-popups-on #sidenavContent .cc-ic-card .modComment {
 }
 /* the moderator comment's body text in line with every other card's, instead of CA's italic 1.2rem */
 html.cc-popups-on #sidenavContent .cc-ic-card .moderatorComment {
-  color: var(--cc-text, #e6e6e6) !important; font-style: normal !important; font-size: 13px !important; line-height: 1.5 !important;
+  color: var(--cc-text, #e6e6e6) !important; font-style: normal !important; font-size: var(--cc-text-subline) !important; line-height: 1.5 !important;
 }
 /* CA's own section labels say what the legend badge on the same card already says, so they are
    hidden. .additionalRequirementsHeader is a sibling before .additionalRequirements rather than
@@ -1572,7 +1581,7 @@ html.cc-popups-on #sidenavContent .cc-ic-card .ca_readmore {
   display: flex !important; align-items: center !important; justify-content: center !important; gap: 6px !important;
   width: fit-content !important; margin: 10px auto 0 !important; height: 26px !important; padding: 0 14px !important;
   border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer !important; font-style: normal !important;
-  font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: .5px !important;
+  font-size: var(--cc-text-meta) !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: .5px !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   transition: background .12s ease, color .12s ease !important;
 }
@@ -1582,12 +1591,12 @@ html.cc-popups-on #sidenavContent .cc-ic-card .ca_readmore:hover {
 /* CA nests .donateText and .donateDiv inside .popupInfoLeft, so they are already in the maintainer
    card once it is wrapped and only need styling. The generic .popupInfo .caButton rule does not
    reach into .popupInfoLeft. */
-html.cc-popups-on #sidenavContent .cc-ic-card .donateText { color: var(--cc-text-dim, #8a8a8a) !important; font-size: 11px !important; margin: 10px 0 6px !important; }
+html.cc-popups-on #sidenavContent .cc-ic-card .donateText { color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important; margin: 10px 0 6px !important; }
 html.cc-popups-on #sidenavContent .cc-ic-card .donateDiv { margin: 0 !important; }
 html.cc-popups-on #sidenavContent .cc-ic-card .donateDiv .caButton.donate {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   height: 26px !important; padding: 0 12px !important; box-sizing: border-box !important;
-  border-radius: var(--cc-b-radius, 8px) !important; font-size: 11px !important; font-weight: 600 !important;
+  border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-meta) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .3px !important; cursor: pointer !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
@@ -1600,7 +1609,7 @@ html.cc-popups-on #sidenavContent .cc-ic-card .donateDiv .caButton.donate:hover 
    to read */
 html.cc-popups-on #sidenavContent .cc-ic-card .templateErrorsList {
   list-style: none !important; margin: 0 0 6px !important; padding: 0 !important;
-  color: var(--cc-text-dim, #8a8a8a) !important; font-size: 12px !important; line-height: 1.5 !important;
+  color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important; line-height: 1.5 !important;
 }
 html.cc-popups-on #sidenavContent .cc-ic-card .templateErrorsList:last-child { margin-bottom: 0 !important; }
 /* CA toggles body.body_sidebarScroll while the drawer is open and hides the body's overflow, but
@@ -1640,7 +1649,7 @@ html.cc-popups-on .betaCardBackground {
   border-radius: var(--cc-b-radius, 8px) !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
-  font-size: var(--cc-sm-fs, 11px) !important; font-weight: 700 !important;
+  font-size: var(--cc-sm-fs) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; white-space: nowrap !important;
   z-index: 3 !important; box-shadow: 0 2px 6px rgba(0, 0, 0, .3) !important; pointer-events: auto !important; flex: 0 0 auto !important;
 }
@@ -1663,7 +1672,7 @@ html.cc-popups-on .homespotlightIconArea {
   float: none !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important; margin: 0 !important;
   padding: 0 !important; background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-b-radius, 8px) !important;
-  font-size: 15px !important; opacity: 1 !important; box-shadow: none !important;
+  font-size: var(--cc-text-body) !important; opacity: 1 !important; box-shadow: none !important;
   color: var(--cc-text-chip, #cfcfcf) !important; transition: background .12s ease, color .12s ease !important;
 }
 html.cc-popups-on .homespotlightIconArea::before { content: none !important; } /* the star glyph replaces CA's word */
@@ -1722,7 +1731,7 @@ html.cc-popups-on .multi_installDiv .multi_installClear:not(.ca_hide) {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   width: auto !important; height: auto !important; min-height: var(--cc-md-h, 30px) !important;
   padding: var(--cc-md-btnpad, 0 14px) !important; margin: 0 !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .4px !important;
   /* The rest state carries the colour mode, like every other badge; resting neutral and colouring on
      hover is the reactive mode's job. header.js stamps these inputs, so in rainbow each takes its
@@ -1819,7 +1828,7 @@ html.cc-popups-on #alternateView .alternateViewContent .ca_center > font {
   border-radius: var(--cc-b-radius, 10px) !important;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
-  font-size: var(--cc-lgb-fs, 14px) !important; font-weight: 600 !important;
+  font-size: var(--cc-lgb-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important;
 }
 /* the changelog's version headings become the same small badges the ShipLog changelog popup uses */
@@ -1828,7 +1837,7 @@ html.cc-popups-on #alternateView .alternateViewContent h3 {
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   padding: 3px 12px !important; border-radius: var(--cc-b-radius, 999px) !important;
-  font-size: 13px !important; font-weight: 700 !important; margin: 16px 0 8px !important; letter-spacing: .5px !important;
+  font-size: var(--cc-text-subline) !important; font-weight: 700 !important; margin: 16px 0 8px !important; letter-spacing: .5px !important;
 }
 html.cc-popups-on #alternateView .alternateViewContent ul { margin: 0 0 6px !important; padding-left: 20px !important; }
 html.cc-popups-on #alternateView .alternateViewContent li { color: var(--cc-text-chip, #d6d6d6) !important; margin: 3px 0 !important; line-height: 1.5 !important; }
@@ -1838,7 +1847,7 @@ html.cc-popups-on #alternateView .alternateViewClose {
   position: fixed !important; top: 18px !important; right: 18px !important; left: auto !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   min-height: var(--cc-lgb-h, 36px) !important; padding: 0 20px !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 700 !important;
+  font-size: var(--cc-md-fs) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .5px !important;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
@@ -1883,7 +1892,7 @@ html.cc-popups-on.cc-ca-settings #displaybox div.title {
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   border-radius: var(--cc-b-radius, 8px) !important;
   padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px) !important;
-  font-size: var(--cc-pagebadge-fs, 13px) !important; font-weight: 700 !important;
+  font-size: var(--cc-pagebadge-fs) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: 1px !important;
   /* Flush with the main menu bar, not with the form column or the viewport: the reference is the
      nav bar's left edge, which header.js measureAlign publishes as --cc-align-left, so the badge
@@ -1922,7 +1931,7 @@ html.cc-popups-on.cc-ca-settings #displaybox a {
   min-height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-btnpad, 0 14px) !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .4px !important; text-decoration: none !important;
   /* the same side margin as the button bar above it, so all four badges share one grid */
   margin: 10px 6px !important;
@@ -1937,7 +1946,7 @@ html.cc-popups-on.cc-ca-settings #displaybox a {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   height: var(--cc-lgb-h, 36px) !important; min-height: var(--cc-lgb-h, 36px) !important;
   padding: 0 18px !important; margin: 0 !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .4px !important; text-decoration: none !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
@@ -2018,7 +2027,7 @@ html.cc-popups-on .pageNavigation .pageDots {
   box-sizing: border-box !important;
   min-width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important;
   padding: 0 8px !important; margin: 0 !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1 !important;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important; line-height: 1 !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
   text-decoration: none !important; cursor: pointer !important;
@@ -2057,7 +2066,7 @@ html.cc-apps-rbneutral.cc-popups-on .pageNavigation .pageSelected {
 /* the "Displaying 1 - 12 (of 56)" line above the pager: quiet caption, tabular digits so the count does
    not jiggle as pages change */
 html.cc-popups-on .navigationArea {
-  color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-sm-fs, 11px) !important;
+  color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-sm-fs) !important;
   letter-spacing: .4px !important; font-variant-numeric: tabular-nums !important;
 }
 
@@ -2111,7 +2120,7 @@ html.cc-popups-on .searchArea .dockerSearch {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; height: var(--cc-md-h, 30px) !important;
   padding: var(--cc-md-pad, 0 20px) !important; margin: 0 !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1 !important;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important; line-height: 1 !important;
   text-transform: none !important; letter-spacing: normal !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
@@ -2123,14 +2132,14 @@ html.cc-popups-on .searchArea .dockerSearch:hover { box-shadow: inset 0 0 0 100v
 /* the "Search for X" caption states a fact and is not clickable, so it stays quiet prose */
 html.cc-popups-on .searchArea .category.categoryLine {
   background: transparent !important; color: var(--cc-text-dim, #8a8a8a) !important;
-  font-style: italic !important; font-size: var(--cc-sm-fs, 11px) !important; padding: 0 !important;
+  font-style: italic !important; font-size: var(--cc-sm-fs) !important; padding: 0 !important;
 }
 /* Sort By row: same badge box, the ACTIVE sort takes the colour mode instead of CA's own orange */
 html.cc-popups-on a.sortIcons {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; height: var(--cc-md-h, 30px) !important;
   padding: var(--cc-md-pad, 0 20px) !important; margin: 0 6px 0 0 !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1 !important;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important; line-height: 1 !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
   text-decoration: none !important; cursor: pointer !important;
@@ -2170,7 +2179,7 @@ html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li { margin: 0 !important; 
 html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a {
   display: flex !important; align-items: center !important; gap: 8px !important;
   padding: 8px 10px !important; border-radius: var(--cc-r-1, 6px) !important;
-  font-size: var(--cc-sm-fs, 11px) !important; font-weight: 600 !important;
+  font-size: var(--cc-sm-fs) !important; font-weight: 600 !important;
   color: var(--cc-text, #e6e6e6) !important; background: transparent !important;
   text-decoration: none !important; white-space: nowrap !important;
   transition: background .12s ease, color .12s ease !important;
@@ -2201,7 +2210,7 @@ html.cc-popups-on #dropdown-supportPopup.dropdown-menu li { margin: 0 !important
 html.cc-popups-on #dropdown-supportPopup.dropdown-menu li > a {
   display: flex !important; align-items: center !important; gap: 8px !important;
   padding: 8px 10px !important; border-radius: var(--cc-r-1, 6px) !important;
-  font-size: var(--cc-sm-fs, 11px) !important; font-weight: 600 !important;
+  font-size: var(--cc-sm-fs) !important; font-weight: 600 !important;
   color: var(--cc-text, #e6e6e6) !important; background: transparent !important;
   text-decoration: none !important; white-space: nowrap !important;
   transition: background .12s ease, color .12s ease !important;

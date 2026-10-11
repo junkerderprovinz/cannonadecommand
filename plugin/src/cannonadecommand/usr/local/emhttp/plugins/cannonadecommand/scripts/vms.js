@@ -390,11 +390,11 @@
   }
   function vmFld(label, hint, value, ph) {
     var wrap = el("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:3px;margin:0 0 10px 0";
-    var l = el("label", null, label); l.style.cssText = "font-size:12px;font-weight:600;color:var(--cc-text,#e6e6e6)";
+    var l = el("label", null, label); l.style.cssText = "font-size:var(--cc-text-meta);font-weight:600;color:var(--cc-text,#e6e6e6)";
     var inp = el("input"); inp.type = "text"; inp.value = (value == null ? "" : String(value)); if (ph != null) inp.placeholder = String(ph);
-    inp.style.cssText = "background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:6px 10px;font-size:13px;outline:none";
+    inp.style.cssText = "background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:6px 10px;font-size:var(--cc-text-subline);outline:none";
     wrap.appendChild(l); wrap.appendChild(inp);
-    if (hint) { var hh = el("div", null, hint); hh.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a)"; wrap.appendChild(hh); }
+    if (hint) { var hh = el("div", null, hint); hh.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)"; wrap.appendChild(hh); }
     return { wrap: wrap, input: inp };
   }
   // The BW badge, like Docker's: a running VM shows its live throughput from pollVmBw, any other VM
@@ -494,15 +494,15 @@
     var known = d.capacityBytes > 0;
     var curG = known ? (Math.round(d.capacityBytes / 1073741824 * 100) / 100) : 0;
     var row = el("div"); row.style.cssText = "display:flex;align-items:center;gap:8px;margin:0 0 7px 0";
-    var lab = el("div"); lab.style.cssText = "flex:1;min-width:0;font-size:12px;color:var(--cc-text,#e6e6e6)";
+    var lab = el("div"); lab.style.cssText = "flex:1;min-width:0;font-size:var(--cc-text-meta);color:var(--cc-text,#e6e6e6)";
     var tgt = el("span", null, d.target); tgt.style.cssText = "font-weight:600";
     var cur = el("span", null, "  " + (known ? curG + " GiB" : (VMDE ? "Größe unbekannt" : "size unknown"))); cur.style.cssText = "color:var(--cc-text-dim,#8a8a8a);font-family:Consolas,monospace";
     lab.appendChild(tgt); lab.appendChild(cur);
     if (!known) { row.appendChild(lab); return row; }   // source missing -> no size to grow from; label only
     var inp = el("input"); inp.type = "number"; inp.min = String(curG); inp.step = "1"; inp.value = String(Math.max(1, Math.ceil(curG)));
-    inp.style.cssText = "width:74px;background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:6px 8px;font-size:13px;outline:none";
-    var unit = el("span", null, "GiB"); unit.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a)";
-    var btn = el("button", null, VMDE ? "Vergrößern" : "Grow"); btn.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer";
+    inp.style.cssText = "width:74px;background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:6px 8px;font-size:var(--cc-text-subline);outline:none";
+    var unit = el("span", null, "GiB"); unit.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)";
+    var btn = el("button", null, VMDE ? "Vergrößern" : "Grow"); btn.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:6px;padding:6px 12px;font-size:var(--cc-text-meta);font-weight:600;cursor:pointer";
     btn.onclick = function () {
       var g = parseFloat(String(inp.value).replace(",", "."));
       if (isNaN(g) || g <= curG) { statusEl.style.color = "var(--cc-err, #ff8389)"; statusEl.textContent = (VMDE ? "nur vergrößern, mehr als " : "grow only, more than ") + curG + " GiB"; return; }
@@ -544,17 +544,17 @@
     var ov = el("div"); ov.id = "cc-vmlim-ov";
     ov.style.cssText = "position:fixed;inset:0;z-index:99999";
     // the chrome of Docker's .cc-pop popover
-    var card = el("div", "cc-rainbow"); card.style.cssText = "position:absolute;background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:10px;padding:14px 16px;width:420px;max-width:92vw;max-height:88vh;overflow:auto;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font:13px/1.5 \"Segoe UI\",system-ui,sans-serif";
+    var card = el("div", "cc-rainbow"); card.style.cssText = "position:absolute;background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:10px;padding:14px 16px;width:420px;max-width:92vw;max-height:88vh;overflow:auto;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font:var(--cc-text-subline)/1.5 \"Segoe UI\",system-ui,sans-serif";
     var titleMap = { cpu: VMDE ? "CPU-Limit" : "CPU limit", ram: VMDE ? "RAM-Limit" : "RAM limit", bw: VMDE ? "Bandbreite" : "Bandwidth", disk: VMDE ? "vDisk-Größe" : "vDisk size", all: VMDE ? "VM-Limits" : "VM limits" };
-    var head = el("div"); head.style.cssText = "display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:700;margin:0 0 4px 0";
+    var head = el("div"); head.style.cssText = "display:flex;align-items:center;justify-content:space-between;font-size:var(--cc-text-title);font-weight:700;margin:0 0 4px 0";
     head.appendChild(el("span", null, titleMap[which] + ": " + name));
-    var hx = el("span", null, "✕"); hx.style.cssText = "cursor:pointer;color:#8a8a8a;font-weight:400;font-size:14px;line-height:1;transition:color .12s";
+    var hx = el("span", null, "✕"); hx.style.cssText = "cursor:pointer;color:#8a8a8a;font-weight:400;font-size:var(--cc-text-body);line-height:1;transition:color .12s";
     hx.addEventListener("mouseenter", function () { hx.style.color = "var(--cc-txt,#e6e6e6)"; });
     hx.addEventListener("mouseleave", function () { hx.style.color = "#8a8a8a"; });
     hx.addEventListener("click", function () { close(); });
     head.appendChild(hx); card.appendChild(head);
     var sub = el("div", null, (v.vcpus || 0) + " vCPUs · " + (v.maxMemMiB || 0) + " MiB max" + (v.running ? (VMDE ? " · läuft" : " · running") : (VMDE ? " · gestoppt" : " · stopped")));
-    sub.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a);margin:0 0 14px 0"; card.appendChild(sub);
+    sub.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a);margin:0 0 14px 0"; card.appendChild(sub);
     var cores = (v.cpuCores && v.cpuCores !== "0-127") ? v.cpuCores : "";
     var f = {}, readCpuset = null;   // readCpuset() yields the pin cpuset (grid selection or text field)
     if (showCpu) {
@@ -562,8 +562,8 @@
       var grid = buildCoreGrid(cores);
       if (grid) {
         var pinWrap = el("div"); pinWrap.style.cssText = "display:flex;flex-direction:column;gap:5px;margin:0 0 10px 0";
-        var pinLbl = el("label", null, VMDE ? "CPU-Kerne (Pin)" : "CPU cores (pin)"); pinLbl.style.cssText = "font-size:12px;font-weight:600;color:var(--cc-text,#e6e6e6)";
-        var pinHint = el("div", null, VMDE ? "Kerne anklicken · nichts gewählt = alle" : "click cores · none = all"); pinHint.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a)";
+        var pinLbl = el("label", null, VMDE ? "CPU-Kerne (Pin)" : "CPU cores (pin)"); pinLbl.style.cssText = "font-size:var(--cc-text-meta);font-weight:600;color:var(--cc-text,#e6e6e6)";
+        var pinHint = el("div", null, VMDE ? "Kerne anklicken · nichts gewählt = alle" : "click cores · none = all"); pinHint.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)";
         pinWrap.appendChild(pinLbl); pinWrap.appendChild(grid.node); pinWrap.appendChild(pinHint); card.appendChild(pinWrap);
         readCpuset = grid.read;
       } else {
@@ -581,9 +581,9 @@
     }
     if (showDisk) {
       var dsec = el("div"); dsec.style.cssText = "margin:2px 0 6px 0";
-      var dlbl = el("div", null, VMDE ? "vDisks: Live-Resize (nur vergrößern)" : "vDisks: live resize (grow only)"); dlbl.style.cssText = "font-size:12px;font-weight:600;margin:0 0 8px 0;color:var(--cc-text,#e6e6e6)";
-      var dlist = el("div"); dlist.style.cssText = "font-size:12px;color:var(--cc-text-dim,#8a8a8a)";
-      var dstat = el("div"); dstat.style.cssText = "font-size:11px;color:var(--cc-text-dim,#8a8a8a);margin-top:2px";
+      var dlbl = el("div", null, VMDE ? "vDisks: Live-Resize (nur vergrößern)" : "vDisks: live resize (grow only)"); dlbl.style.cssText = "font-size:var(--cc-text-meta);font-weight:600;margin:0 0 8px 0;color:var(--cc-text,#e6e6e6)";
+      var dlist = el("div"); dlist.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)";
+      var dstat = el("div"); dstat.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a);margin-top:2px";
       dsec.appendChild(dlbl); dsec.appendChild(dlist); dsec.appendChild(dstat); card.appendChild(dsec);
       loadDisks(name, dlist, dstat);
     }
@@ -592,8 +592,8 @@
     (function () {
       var CI = window.CCTheme && window.CCTheme.icons; if (!CI) return;
       var wrap = el("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:3px;margin:8px 0 10px 0";
-      var l = el("label", null, VMDE ? "Icon-Färbung" : "Icon colouring"); l.style.cssText = "font-size:12px;font-weight:600;color:var(--cc-text,#e6e6e6)";
-      var sel = el("select"); sel.style.cssText = "background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:6px 10px;font-size:13px;outline:none";
+      var l = el("label", null, VMDE ? "Icon-Färbung" : "Icon colouring"); l.style.cssText = "font-size:var(--cc-text-meta);font-weight:600;color:var(--cc-text,#e6e6e6)";
+      var sel = el("select"); sel.style.cssText = "background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:6px 10px;font-size:var(--cc-text-subline);outline:none";
       var opts = VMDE
         ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Ink-Flatten"], ["tint", "Luminanz-Tint"]]
         : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Ink flatten"], ["tint", "Luminance tint"]];
@@ -603,11 +603,11 @@
       wrap.appendChild(l); wrap.appendChild(sel); card.appendChild(wrap);
     })();
     var foot = el("div"); foot.style.cssText = "display:flex;gap:8px;align-items:center;margin-top:6px";
-    var msg = el("div"); msg.style.cssText = "flex:1;font-size:11px;color:var(--cc-text-dim,#8a8a8a)";
-    var cancel = el("button", null, VMDE ? "Schließen" : "Close"); cancel.style.cssText = "background:var(--cc-chip,rgba(128,128,128,.18));color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer";
+    var msg = el("div"); msg.style.cssText = "flex:1;font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)";
+    var cancel = el("button", null, VMDE ? "Schließen" : "Close"); cancel.style.cssText = "background:var(--cc-chip,rgba(128,128,128,.18));color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:7px 14px;font-size:var(--cc-text-subline);font-weight:600;cursor:pointer";
     foot.appendChild(msg); foot.appendChild(cancel);
     var apply = null;
-    if (hasLimFields) { apply = el("button", null, VMDE ? "Anwenden" : "Apply"); apply.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:6px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer"; foot.appendChild(apply); }
+    if (hasLimFields) { apply = el("button", null, VMDE ? "Anwenden" : "Apply"); apply.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:6px;padding:7px 16px;font-size:var(--cc-text-subline);font-weight:600;cursor:pointer"; foot.appendChild(apply); }
     card.appendChild(foot);
     ov.appendChild(card); document.body.appendChild(ov);
     // place the card at the gear (clamped into the viewport; flips above if it would overflow the bottom)

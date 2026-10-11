@@ -11,8 +11,8 @@
     if (document.getElementById("cc-set-xtra")) return;
     var st = document.createElement("style"); st.id = "cc-set-xtra";
     st.textContent =
-      "#cc-settings .cc-set-xbtn{display:inline-flex;align-items:center;justify-content:center;height:var(--cc-md-h,30px);padding:var(--cc-md-btnpad,0 14px);font-size:var(--cc-md-fs,13px);font-weight:600;border-radius:var(--cc-b-radius,999px);box-sizing:border-box;margin:12px 10px 0 0}" +
-      "#cc-settings .cc-set-xnote{margin-top:10px;font-size:12px;white-space:pre-wrap}" +
+      "#cc-settings .cc-set-xbtn{display:inline-flex;align-items:center;justify-content:center;height:var(--cc-md-h,30px);padding:var(--cc-md-btnpad,0 14px);font-size:var(--cc-md-fs);font-weight:600;border-radius:var(--cc-b-radius,999px);box-sizing:border-box;margin:12px 10px 0 0}" +
+      "#cc-settings .cc-set-xnote{margin-top:10px;font-size:var(--cc-text-meta);white-space:pre-wrap}" +
       // the flag picker's stripe swatches and its searchable dropdown
       "#cc-settings .cc-flag-sw{display:inline-block;width:22px;height:15px;border-radius:3px;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}" +
       "#cc-settings .cc-flag-sw-lg{width:34px;height:22px}" +
@@ -25,12 +25,12 @@
       // and the reset take one cell each, the hex field two, since the code needs the room, and the
       // builder shows seven presets in a hex row to keep the total at nine.
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;border-radius:var(--cc-b-radius,5px)}" +
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:var(--cc-b-radius,5px);cursor:pointer;color:#cfcfcf;font-size:14px;transition:filter .12s,background .12s,color .12s}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:var(--cc-b-radius,5px);cursor:pointer;color:#cfcfcf;font-size:var(--cc-text-body);transition:filter .12s,background .12s,color .12s}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn:hover{background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{flex:2 2 0;height:30px;min-width:0;box-sizing:border-box;padding:0 8px;align-self:center;font-size:11px;letter-spacing:0;margin:0}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{flex:2 2 0;height:30px;min-width:0;box-sizing:border-box;padding:0 8px;align-self:center;font-size:var(--cc-text-meta);letter-spacing:0;margin:0}" +
       // the settings search and the reset-everything button
       "#cc-settings .cc-set-searchrow{margin:12px 0 2px}" +
-      "#cc-settings .cc-set-search{box-sizing:border-box;width:100%;max-width:420px;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:9px 13px;font-size:13px;transition:background-color .12s}" +
+      "#cc-settings .cc-set-search{box-sizing:border-box;width:100%;max-width:420px;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:9px 13px;font-size:var(--cc-text-subline);transition:background-color .12s}" +
       // Unraid's default-base.css paints every placeholder in the theme's link colour, so a hint
       // reads as a link or as an already filled value. One rule per sheet covers every field; the
       // Docker half of the same guard lives in docker.css.
@@ -47,17 +47,17 @@
       "#cc-settings .cc-set-searchbadge.cc-open{background:#2e2e2e}" +
       "#cc-settings .cc-set-searchbadge.cc-open .cc-set-search{width:220px;max-width:220px;padding:0 12px 0 2px}" +
       // the version line at the very bottom, centred and muted
-      "#cc-settings .cc-set-version-foot{margin:28px 0 6px;text-align:center;opacity:.55;font-size:12px}" +
+      "#cc-settings .cc-set-version-foot{margin:28px 0 6px;text-align:center;opacity:.55;font-size:var(--cc-text-meta)}" +
       // the native-display link as an accent button rather than the grey chip
       "#cc-settings .cc-btn.cc-btn-accent{background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
       "#cc-settings .cc-btn.cc-btn-accent:hover{background:var(--cc-accent-hover);color:var(--cc-accent-text, #161616)}" +
       "#cc-settings .cc-flag-picker{position:relative;margin-top:6px;max-width:340px}" +
       "#cc-settings .cc-flag-trigger{display:flex;align-items:center;gap:9px;background:#232323;border-radius:8px;padding:7px 12px;cursor:pointer;user-select:none}" +
       "#cc-settings .cc-flag-trigger:hover{background:color-mix(in srgb,#232323 85%,var(--cc-text,#e6e6e6))}" +
-      "#cc-settings .cc-flag-name{font-size:13px;color:#eaeaea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+      "#cc-settings .cc-flag-name{font-size:var(--cc-text-subline);color:#eaeaea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
       // The trigger reads as a button, with no caret, and openPanel pins the panel fixed.
       "#cc-settings .cc-flag-panel{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:9999;background:#1c1c1c;border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.6);overflow:hidden}" +
-      "#cc-settings .cc-flag-search{box-sizing:border-box;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:8px 10px;margin:8px;width:calc(100% - 16px);font-size:13px}" +
+      "#cc-settings .cc-flag-search{box-sizing:border-box;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:8px 10px;margin:8px;width:calc(100% - 16px);font-size:var(--cc-text-subline)}" +
       "#cc-settings .cc-flag-list{max-height:260px;overflow-y:auto;padding:0 6px 6px}" +
       "#cc-settings .cc-flag-item{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:6px;cursor:pointer}" +
       "#cc-settings .cc-flag-item:hover,#cc-settings .cc-flag-item.cc-sel{background:rgba(255,255,255,.09)}" +   // the keyboard highlight too
@@ -70,8 +70,8 @@
       "#cc-settings .cc-set-tile>i{display:inline-flex;align-items:center;justify-content:center;width:100%;height:100%;box-sizing:border-box}" +
       "#cc-settings .cc-set-tile-bg>img,#cc-settings .cc-set-tile-bg>i{padding:14%}" +
       // A per-area sub-heading inside one card is a muted caption, never a card inside a card.
-      "#cc-settings .cc-set-sublbl{margin:12px 0 0;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;opacity:.55}" +
-      "#cc-settings .cc-set-prev-empty{margin:6px 0 0;font-size:12px;opacity:.5}";
+      "#cc-settings .cc-set-sublbl{margin:12px 0 0;font-size:var(--cc-text-meta);font-weight:700;letter-spacing:.6px;text-transform:uppercase;opacity:.55}" +
+      "#cc-settings .cc-set-prev-empty{margin:6px 0 0;font-size:var(--cc-text-meta);opacity:.5}";
     document.head.appendChild(st);
   })();
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();

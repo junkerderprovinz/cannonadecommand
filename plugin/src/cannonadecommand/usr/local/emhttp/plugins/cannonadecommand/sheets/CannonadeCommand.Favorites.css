@@ -39,7 +39,7 @@ html.cc-favorites-on #displaybox .Panel > a > span > img {
 /* the fa-trash-o 'remove favorite' icon MyFavorites.page injects into the span on hover */
 html.cc-favorites-on #displaybox .Panel > a > span > i.favo {
   position: absolute !important; top: 3px !important; right: 4px !important; left: auto !important;
-  font-size: 12px !important; line-height: 1 !important; color: var(--cc-accent-text, #161616) !important; opacity: .8;
+  font-size: var(--cc-text-meta) !important; line-height: 1 !important; color: var(--cc-accent-text, #161616) !important; opacity: .8;
 }
 html.cc-favorites-on #displaybox .Panel .PanelText { margin-top: 4px; }
 /* empty state (MyFavorites.page #nofavs h3) */

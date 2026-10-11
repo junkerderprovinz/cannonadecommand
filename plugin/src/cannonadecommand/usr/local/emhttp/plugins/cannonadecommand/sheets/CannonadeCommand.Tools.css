@@ -34,7 +34,7 @@ html.cc-tools-on #displaybox legend {
   background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px;
-  font-size: var(--cc-md-fs, 13px) !important; line-height: 1;
+  font-size: var(--cc-md-fs) !important; line-height: 1;
   padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px);
   display: inline-flex; align-items: center; margin: 0 0 12px !important;
 }
@@ -56,7 +56,7 @@ html.cc-tools-on #displaybox table:not(.cc-enh) td {
   border: none !important;
   padding: 7px 10px !important; color: #d6d6d6;
 }
-html.cc-tools-on #displaybox table:not(.cc-enh) thead th { color: #9a9a9a; text-transform: uppercase; font-size: 11.5px; letter-spacing: .6px; }
+html.cc-tools-on #displaybox table:not(.cc-enh) thead th { color: #9a9a9a; text-transform: uppercase; font-size: var(--cc-text-meta); letter-spacing: .6px; }
 html.cc-tools-on #displaybox table:not(.cc-enh) tr:hover td { background: rgba(255, 255, 255, .03) !important; }
 /* The disk sub-tab lists (Attributes, Self-Test, Identity) have no zebra and no line under the
    header row. Each row shows its own palette colour on hover in rainbow mode (--cc-rb-c per row
@@ -116,12 +116,12 @@ html.cc-diskpage #displaybox h3.section-header {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
   font-weight: 600 !important; text-transform: uppercase; letter-spacing: 1.1px;
-  font-size: var(--cc-md-fs, 13px) !important; line-height: 1 !important;
+  font-size: var(--cc-md-fs) !important; line-height: 1 !important;
   padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px);
   display: inline-flex !important; align-items: center; gap: 10px; width: auto !important; margin: 2px 0 14px !important;
 }
 /* the inner "Advanced" sub-badge stays readable as a dark inset chip on the accent badge */
-html.cc-diskpage #displaybox h3.section-header .section-badge { background: rgba(0, 0, 0, .22) !important; color: inherit !important; border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 2px 9px !important; font-size: 10px !important; }
+html.cc-diskpage #displaybox h3.section-header .section-badge { background: rgba(0, 0, 0, .22) !important; color: inherit !important; border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 2px 9px !important; font-size: var(--cc-text-meta) !important; }
 /* Toggles and reka buttons rotate through the palette like every other CC control. ccPaintRotate
    stamps --cc-rb-c on .switch-button-background and the badges; the reka buttons' hard-coded
    #FCC419 gives way to the same chain. */
@@ -152,7 +152,7 @@ html.cc-tools-on #displaybox dl > dd .switch-button-background { vertical-align:
    they span the full grid width with a readable note look. */
 html.cc-tools-on #displaybox dl > blockquote.inline_help,
 html.cc-tools-on #displaybox dl > .inline-help { grid-column: 1 / -1; }
-html.cc-tools-on #displaybox blockquote.inline_help { background: #1c1c1c !important; border: none !important; border-radius: 8px !important; color: #b8b8b8 !important; padding: 8px 12px !important; margin: 2px 0 8px !important; font-size: 12.5px !important; }
+html.cc-tools-on #displaybox blockquote.inline_help { background: #1c1c1c !important; border: none !important; border-radius: 8px !important; color: #b8b8b8 !important; padding: 8px 12px !important; margin: 2px 0 8px !important; font-size: var(--cc-text-subline) !important; }
 /* Stray <dt> elements (Mover and TRIM carry only a help icon, the boot device flyout on /Main has
    empty ones) would break the dl grid's auto-flow. header.js ccToolsEnhance() hides every one of
    them, so the native flow places each row and no grid placement is needed here. */
@@ -281,7 +281,7 @@ html.cc-tools-on #displaybox div.title {
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 0 18px !important; margin: 4px 0 16px !important;
   /* the same md size (30px/13px) as every other section head */
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase; letter-spacing: .6px;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important; text-transform: uppercase; letter-spacing: .6px;
   box-shadow: none !important; min-height: var(--cc-md-h, 30px) !important;
 }
 /* When the heading carries a status (the Docker settings page) the title row goes transparent, the
@@ -299,7 +299,7 @@ html.cc-tools-on #displaybox div.title:has(.cc-status-dot) .status { font-size: 
 /* the CC (i) icon carrying the native help text, shown through the page-wide CC tip bubble */
 html.cc-tools-on #displaybox .cc-toolsinfo {
   display: inline-flex; align-items: center; justify-content: center; margin-left: 7px;
-  width: 15px; height: 15px; border-radius: 50%; font-size: 13px; line-height: 0;
+  width: 15px; height: 15px; border-radius: 50%; font-size: var(--cc-text-subline); line-height: 0;
   color: #9a9a9a; cursor: help; opacity: .85;
   /* vertical-align: middle centres on the x-height, which reads low next to the cap-height label,
      so it sits on text-bottom and is nudged up */
@@ -411,7 +411,7 @@ html.cc-popups-on #displaybox .cc-tsel.cc-open .cc-tsel-panel { display: flex; }
 html.cc-tools-on #displaybox .cc-tsel.cc-tsel-disabled .cc-tsel-trigger,
 html.cc-popups-on #displaybox .cc-tsel.cc-tsel-disabled .cc-tsel-trigger { opacity: .5; cursor: not-allowed; }
 html.cc-tools-on #displaybox .cc-tsel-group,
-html.cc-popups-on #displaybox .cc-tsel-group { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9a9a9a; padding: 4px 12px 0; }
+html.cc-popups-on #displaybox .cc-tsel-group { font-size: var(--cc-text-meta); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9a9a9a; padding: 4px 12px 0; }
 /* in rainbow mode each item takes its own palette colour (--cc-rb-c per item from ccPaintRotate)
    and hover or selection steps it; accent mode uses the single accent */
 html.cc-tools-on #displaybox .cc-tsel-opt,
@@ -438,7 +438,7 @@ html.cc-popups-on #displaybox .cc-tsel-opt-avail {
 html.cc-popups-on #displaybox .cc-tsel-opt-avail:hover {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important; filter: none !important;
 }
-html.cc-popups-on #displaybox .cc-tsel-avail-dl { opacity: .7; font-size: 11px; }
+html.cc-popups-on #displaybox .cc-tsel-avail-dl { opacity: .7; font-size: var(--cc-text-meta); }
 /* The locale flag is a bundled SVG (images/flags/<iso>.svg) because Windows renders flag emoji as
    two letters. Sized like settings.js's .cc-flag-img. */
 html.cc-tools-on #displaybox .cc-lang-flag,
@@ -537,7 +537,7 @@ html.cc-tools-on.cc-tools-rbneutral #displaybox .ui-dropdownchecklist-item:has(i
 /* the explicitClose "...schließen" row carries no checkbox -> a muted, centred footer link, never a coloured chip */
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item:not(:has(input[type="checkbox"])) {
   background: transparent !important; color: #9a9a9a !important; justify-content: center;
-  border-radius: 8px !important; font-size: 12px; margin-top: 4px !important; filter: none !important;
+  border-radius: 8px !important; font-size: var(--cc-text-meta); margin-top: 4px !important; filter: none !important;
 }
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item:not(:has(input[type="checkbox"])):hover {
   background: rgba(128, 128, 128, .16) !important; color: #e4e4e4 !important;
@@ -610,6 +610,6 @@ html.cc-tools-on #displaybox .section-title {
   border: none !important; border-bottom: none !important;
   display: inline-flex; align-items: center; width: fit-content;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
-  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-md-pad, 4px 14px); font-size: var(--cc-md-fs, 13px);
+  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-md-pad, 4px 14px); font-size: var(--cc-md-fs);
   font-weight: 600; text-transform: uppercase; letter-spacing: .8px; margin: 8px 0 12px !important;
 }

@@ -26,7 +26,7 @@ html.cc-shares-on #displaybox nav.tabs button[role="tab"] {
   /* md tab-badge metrics: identical height/font/padding to the menu-bar + plugin-page tabs */
   height: var(--cc-md-h, 30px);
   padding: var(--cc-md-pad, 0 20px);
-  font-size: var(--cc-md-fs, 13px);
+  font-size: var(--cc-md-fs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -112,7 +112,7 @@ html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status tr > td:nth
 html.cc-shares-on #displaybox table.unraid.share_status .cc-b {
   display: inline-flex; align-items: center; gap: 5px; border: none;
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-bmd-pad, 4px 12px);
-  font-size: var(--cc-md-fs, 13px); font-weight: 600; line-height: 1.35;
+  font-size: var(--cc-md-fs); font-weight: 600; line-height: 1.35;
   white-space: nowrap; text-decoration: none; vertical-align: middle;
   background: var(--cc-shr-accent, #FCC419); color: var(--cc-shr-accent-text, #161616);
 }
@@ -127,7 +127,7 @@ html.cc-shares-on #displaybox table.unraid.share_status .cc-b em { font-style: i
    at the lg size; the link keeps working. In rainbow mode paintRows sets an inline row colour
    that beats the var() here. */
 html.cc-shares-on #displaybox table.unraid.share_status .cc-b.cc-b-name {
-  padding: var(--cc-lg-pad, 6px 16px); font-size: var(--cc-lg-fs, 15px);
+  padding: var(--cc-lg-pad, 6px 16px); font-size: var(--cc-lg-fs);
   font-weight: 700; letter-spacing: .2px;
 }
 html.cc-shares-on #displaybox table.unraid.share_status .cc-b.cc-b-name:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
@@ -165,7 +165,7 @@ html.cc-shares-on #displaybox table.unraid.share_status td.cc-browse-col { white
 html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-browse {
   display: inline-flex !important; width: auto !important; align-items: center; justify-content: center;
   border-radius: var(--cc-b-radius, 999px) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
-  font-family: inherit !important; font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  font-family: inherit !important; font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   line-height: 1.35; white-space: nowrap; text-decoration: none !important; vertical-align: middle;
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
   transition: filter .12s;
@@ -179,7 +179,7 @@ html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-browse:hover { bo
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b {
   display: inline-flex; align-items: center; gap: 5px; border: none;
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-bmd-pad, 4px 12px);
-  font-size: var(--cc-md-fs, 13px); font-weight: 600; line-height: 1.35;
+  font-size: var(--cc-md-fs); font-weight: 600; line-height: 1.35;
   white-space: nowrap; text-decoration: none; vertical-align: middle;
   background: var(--cc-shr-accent, #FCC419); color: var(--cc-shr-accent-text, #161616);
 }
@@ -200,7 +200,7 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status td:first-child
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status a.cc-b-browse {
   display: inline-flex !important; width: auto !important; align-items: center; justify-content: center;
   border-radius: var(--cc-b-radius, 999px) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
-  font-family: inherit !important; font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  font-family: inherit !important; font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   line-height: 1.35; white-space: nowrap; text-decoration: none !important; vertical-align: middle;
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
   transition: filter .12s;
@@ -238,7 +238,7 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status td.desc .cc-b 
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tbody td { padding: 9px 14px; }   /* native rows have only 8px on the left */
 /* the disk name as a large headline badge, like the share name */
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b.cc-b-name {
-  padding: var(--cc-lg-pad, 6px 16px); font-size: var(--cc-lg-fs, 15px);
+  padding: var(--cc-lg-pad, 6px 16px); font-size: var(--cc-lg-fs);
   font-weight: 700; letter-spacing: .2px;
 }
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b.cc-b-name:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
@@ -305,7 +305,7 @@ html.cc-shares-on.cc-on-main.cc-state-native #displaybox .usage-disk:not(.sys):n
 html.cc-shares-on.cc-on-main #displaybox .usage-disk:not(.sys):not(.mm) > span:last-child {
   position: absolute; top: 0; right: 0; bottom: 0; z-index: 1;
   display: inline-flex; align-items: center; padding-right: 10px;
-  font-size: 12px; font-weight: 600; line-height: 1; text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+  font-size: var(--cc-text-meta); font-weight: 600; line-height: 1; text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
 }
 /* Column drag-resize, as in a file explorer. shares.js ccColGrips adds grips to every full thead
    row; the widths live in a <colgroup> per table (ccColSet), saved in cc.main.colpx. */
@@ -406,7 +406,7 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status select.slot {
   border: none !important; box-shadow: none !important;
   border-radius: var(--cc-b-radius, 999px) !important;
   padding: 5px 16px 5px 12px !important;
-  font-size: var(--cc-md-fs, 13px); font-weight: 600;
+  font-size: var(--cc-md-fs); font-weight: 600;
 }
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status select.slot:focus {
   outline: none !important; background-color: rgba(128, 128, 128, .26) !important;
@@ -479,7 +479,7 @@ html.cc-shares-on.cc-on-main #displaybox input[type="button"],
 html.cc-shares-on.cc-on-main #displaybox a.button {
   border: none !important; box-shadow: none !important;
   padding: var(--cc-md-btnpad, 0 14px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
-  min-width: 150px !important; font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  min-width: 150px !important; font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; font-family: inherit !important;
   border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer; transition: filter .12s, opacity .12s;
   display: inline-flex !important; align-items: center; justify-content: center; text-decoration: none !important;
@@ -502,7 +502,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="button"]
 html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="reset"],
 html.cc-shares-on.cc-on-main #displaybox table.array_status button:not([role="tab"]),
 html.cc-shares-on.cc-on-main #displaybox table.array_status a.button {
-  height: var(--cc-lgb-h, 36px) !important; font-size: var(--cc-lgb-fs, 14px) !important;
+  height: var(--cc-lgb-h, 36px) !important; font-size: var(--cc-lgb-fs) !important;
   width: var(--cc-lgb-w, 200px) !important; min-width: var(--cc-lgb-w, 200px) !important; max-width: var(--cc-lgb-w, 200px) !important;
   flex: 0 0 auto !important; white-space: nowrap !important; padding: 0 12px !important;   /* one fixed width puts the (i) bubble and the PLANUNG badge at the same x in every row */
 }
@@ -523,7 +523,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status button:disabled:hove
 html.cc-shares-on.cc-on-main #displaybox button:not([role="tab"]) {
   border: none !important; box-shadow: none !important;
   padding: var(--cc-md-btnpad, 0 14px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
-  min-width: 0 !important; font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  min-width: 0 !important; font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; font-family: inherit !important;
   border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer; transition: filter .12s, opacity .12s;
   display: inline-flex !important; align-items: center; justify-content: center; text-decoration: none !important;
@@ -548,7 +548,7 @@ html.cc-shares-on.cc-on-main #displaybox div.title :is(span.left, div.left) .cc-
   display: inline-flex; align-items: center; gap: 6px; border: none;
   min-height: var(--cc-md-h, 30px); box-sizing: border-box;   /* the md 30px height, one step below the menu bar */
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-bmd-pad, 4px 12px);
-  font-size: var(--cc-md-fs, 13px); font-weight: 600; line-height: 1.35; white-space: nowrap;
+  font-size: var(--cc-md-fs); font-weight: 600; line-height: 1.35; white-space: nowrap;
   background: var(--cc-shr-accent, #FCC419); color: var(--cc-shr-accent-text, #161616);
 }
 html.cc-shares-on.cc-on-main #displaybox div.title :is(span.left, div.left) .cc-b img.icon { height: 16px; width: auto; padding: 0; }
@@ -593,7 +593,7 @@ html.cc-shares-on.cc-on-main #displaybox a.cc-ud-icon,
 html.cc-shares-on.cc-on-main #displaybox a.cc-ud-icon *,
 html.cc-shares-on:is(.cc-on-main, .cc-on-shares) #displaybox a.cc-ibtn,
 html.cc-shares-on:is(.cc-on-main, .cc-on-shares) #displaybox a.cc-ibtn * {
-  font-size: 13px !important; line-height: 1 !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #161616)) !important;   /* a glyph in proportion to the 24px tile */
+  font-size: var(--cc-text-subline) !important; line-height: 1 !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #161616)) !important;   /* a glyph in proportion to the 24px tile */
 }
 html.cc-shares-on.cc-on-main #displaybox a.cc-ud-icon:hover,
 html.cc-shares-on:is(.cc-on-main, .cc-on-shares) #displaybox a.cc-ibtn:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
@@ -667,7 +667,7 @@ html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mount
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) .cc-b {
   display: inline-flex; align-items: center; gap: 5px; border: none;
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-bmd-pad, 4px 12px);
-  font-size: var(--cc-md-fs, 13px); font-weight: 600; line-height: 1.35;
+  font-size: var(--cc-md-fs); font-weight: 600; line-height: 1.35;
   white-space: nowrap; text-decoration: none; vertical-align: middle;
   background: var(--cc-shr-accent, #FCC419); color: var(--cc-shr-accent-text, #161616);
 }
@@ -675,7 +675,7 @@ html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mount
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) .cc-b a:hover,
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) .cc-b i { color: inherit; text-decoration: none; }
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) .cc-b.cc-b-name {
-  padding: var(--cc-lg-pad, 6px 16px); font-size: var(--cc-lg-fs, 15px); font-weight: 700; letter-spacing: .2px;
+  padding: var(--cc-lg-pad, 6px 16px); font-size: var(--cc-lg-fs); font-weight: 700; letter-spacing: .2px;
 }
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) a.cc-b-name,
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) a.cc-b-name:hover { text-decoration: none; }
@@ -721,7 +721,7 @@ html.cc-shares-on.cc-on-main #displaybox .switch-button-background.checked .swit
    high, so the cluster is a centred flex row; the plugin's .show() and .hide() on the twin labels
    still work. */
 html.cc-shares-on.cc-on-main #displaybox div.title.ud :is(span.right.ud, div.right.ud) { display: inline-flex !important; align-items: center; }
-html.cc-shares-on.cc-on-main #displaybox div.title.ud span.switch-button-label { float: none; line-height: 1; font-size: var(--cc-md-fs, 13px); font-weight: 600; letter-spacing: .4px; }
+html.cc-shares-on.cc-on-main #displaybox div.title.ud span.switch-button-label { float: none; line-height: 1; font-size: var(--cc-md-fs); font-weight: 600; letter-spacing: .4px; }
 /* the visible checkboxes (optionCorrect "Korrekturen auf Parität schreiben", safemode, confirm*)
    get the accent tick; switchButton hides its own source checkbox */
 html.cc-shares-on.cc-on-main #displaybox input[type="checkbox"] { accent-color: var(--cc-shr-accent, #FCC419); }
@@ -741,7 +741,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="checkbox
 }
 html.cc-shares-on.cc-on-main #displaybox table.array_status label,
 html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="checkbox"] + small,
-html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="checkbox"] ~ small { font-size: var(--cc-md-fs, 13px); font-weight: 600; letter-spacing: .2px; vertical-align: middle; }
+html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="checkbox"] ~ small { font-size: var(--cc-md-fs); font-weight: 600; letter-spacing: .2px; vertical-align: middle; }
 /* /Main "Array-Vorgang" (table.array_status): no separator lines, buttons aligned with equal
    spacing, and the inline descriptions folded into (i) bubbles (shares.js enhanceArrayOps). */
 /* The array_status tables are static markup (only the #mover-text and #stop-text text changes), so
@@ -789,7 +789,7 @@ html.cc-shares-on.cc-on-main:not(.cc-sections-main) #displaybox .cc-aop-pcard {
   background: rgba(255, 255, 255, .045); border-radius: 12px; padding: 14px 18px;
   display: flex; flex-direction: column; gap: 8px;
 }
-html.cc-shares-on.cc-on-main #displaybox .cc-aop-prow { display: flex; justify-content: space-between; gap: 18px; align-items: center; font-size: var(--cc-md-fs, 13px); }
+html.cc-shares-on.cc-on-main #displaybox .cc-aop-prow { display: flex; justify-content: space-between; gap: 18px; align-items: center; font-size: var(--cc-md-fs); }
 html.cc-shares-on.cc-on-main #displaybox .cc-aop-prow .cc-aop-pv { font-weight: 700; white-space: nowrap; }
 html.cc-shares-on.cc-on-main #displaybox .cc-aop-rows { display: flex; flex-direction: column; gap: 8px; }
 /* The progress bar at the bottom of the card looks like the usage bars, with the percentage inside
@@ -820,7 +820,7 @@ html.cc-shares-rb.cc-shares-on.cc-on-main #displaybox .cc-aop-pbar > .cc-aop-pfi
 html.cc-shares-on.cc-on-main #displaybox .cc-aop-pbar > .cc-aop-plab {
   position: absolute; right: 10px; top: 0; bottom: 0; z-index: 1;
   display: inline-flex; align-items: center;
-  font-size: 12px; font-weight: 700; line-height: 1; text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+  font-size: var(--cc-text-meta); font-weight: 700; line-height: 1; text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
 }
 @media (prefers-reduced-motion: reduce) {
   html.cc-shares-on.cc-on-main #displaybox .cc-aop-pbar > .cc-aop-pfill { animation: none; }
@@ -838,7 +838,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status a.cc-aop-link {
   display: inline-flex; align-items: center; margin-left: 8px; vertical-align: middle;
   background: var(--cc-rb-c, var(--cc-shr-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-shr-accent-text, #161616));   /* paintMain stamps --cc-rb-c per link in rainbow mode */
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 3px 11px);
-  font-size: var(--cc-sm-fs, 11px); font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
+  font-size: var(--cc-sm-fs); font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
   text-decoration: none !important; white-space: nowrap; transition: filter .12s;
 }
 html.cc-shares-on.cc-on-main #displaybox table.array_status a.cc-aop-link:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-shr-accent, #FCC419)) 85%, var(--cc-text, #e6e6e6)); }
@@ -850,9 +850,9 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-brow { displ
    outranks the checkbox rule above and comes after it. */
 html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-toggle {
   display: inline-flex; align-items: center; gap: 8px; margin-left: 12px; vertical-align: middle;
-  font-size: var(--cc-md-fs, 13px); font-weight: 600; letter-spacing: .2px; cursor: pointer; white-space: nowrap;
+  font-size: var(--cc-md-fs); font-weight: 600; letter-spacing: .2px; cursor: pointer; white-space: nowrap;
 }
-html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-toggle small { font-size: var(--cc-md-fs, 13px); font-weight: 600; }
+html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-toggle small { font-size: var(--cc-md-fs); font-weight: 600; }
 html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-toggle input[type="checkbox"] {
   -webkit-appearance: none; appearance: none; width: 44px; height: 24px; margin: 0; flex: 0 0 auto;
   border: none; border-radius: var(--cc-b-radius, 999px); box-sizing: border-box;
@@ -869,7 +869,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-toggle input
    language. The pills can sit in table.array_status or in the .cc-aop-pills stack outside it. */
 html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-b.cc-aop-status {
   display: inline-flex; align-items: center; gap: 8px;
-  padding: var(--cc-lg-pad, 6px 16px); font-size: var(--cc-lg-fs, 15px); font-weight: 700;
+  padding: var(--cc-lg-pad, 6px 16px); font-size: var(--cc-lg-fs); font-weight: 700;
   border-radius: var(--cc-b-radius, 999px); white-space: nowrap; line-height: 1.35;   /* one line; the first grid track is wide enough */
 }
 html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-aop-status.cc-aop-ok   { background: var(--cc-ok, #6fdc8c); color: var(--cc-ok-fg, #161616); }
@@ -929,7 +929,7 @@ html.cc-shares-on #displaybox form[name="share_form"] input[type="submit"] {
      colour, else the accent */
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-shr-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-shr-accent-text, #161616))) !important;
   border: none !important; box-shadow: none !important;
-  padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs, 13px) !important;
+  padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs) !important;
   height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
   font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.6px !important;
   font-family: inherit !important; border-radius: var(--cc-b-radius, 999px) !important;
@@ -968,7 +968,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox input[type="submit"],
 html.cc-shares-on.cc-on-share-detail #displaybox input[type="button"] {   /* every detail-page button, the NFS Apply/Done included */
   border: none !important; box-shadow: none !important;
   padding: var(--cc-md-btnpad, 0 14px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: 0.6px !important; font-family: inherit !important;
   border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer; transition: filter .12s, opacity .12s;
 }
@@ -1009,10 +1009,10 @@ html.cc-shares-on.cc-on-share-detail #displaybox div.title.nocontrol {
 }
 html.cc-shares-on.cc-on-share-detail #displaybox div.title.nocontrol span.left {
   color: color-mix(in srgb, var(--cc-shr-accent, #FCC419) var(--cc-ink-mix, 100%), black) !important; font-weight: 700 !important;
-  text-transform: uppercase; letter-spacing: .6px; font-size: 13px !important;
+  text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-text-subline) !important;
 }
 html.cc-shares-on.cc-on-share-detail #displaybox div.title.nocontrol span.right {
-  padding-right: 0 !important; font-size: 12px !important;
+  padding-right: 0 !important; font-size: var(--cc-text-meta) !important;
 }
 html.cc-shares-on.cc-on-share-detail #displaybox div.title.nocontrol span.right i {
   font-style: normal; color: #9a9a9a; background: rgba(255, 255, 255, .06);
@@ -1048,7 +1048,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-b-del {
   display: inline-flex !important; align-items: center; justify-content: center;
   background: var(--cc-rb-c, var(--cc-shr-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #161616)) !important; border: none !important; box-shadow: none !important;
   border-radius: var(--cc-b-radius, 999px) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1.5;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important; line-height: 1.5;
   text-transform: uppercase; letter-spacing: .6px; cursor: pointer; text-decoration: none;
   vertical-align: middle; transition: background-color .12s;
 }
@@ -1152,7 +1152,7 @@ html.cc-tools-rbneutral.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item input[type="checkbox"] { display: none !important; }
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item label,
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item .ui-dropdownchecklist-text {
-  color: inherit !important; font-size: var(--cc-md-fs, 13px) !important; padding: 0 !important;
+  color: inherit !important; font-size: var(--cc-md-fs) !important; padding: 0 !important;
   white-space: nowrap; pointer-events: none !important;   /* the click passes through to the item, so one click toggles */
 }
 
@@ -1196,7 +1196,7 @@ html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sec
   display: inline-flex; align-items: center; gap: 8px;
   /* heading badges are the md tier, one step below the main menu bar, so every section head matches */
   min-height: var(--cc-md-h, 30px); box-sizing: border-box;
-  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-md-fs, 13px); line-height: 1;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-md-fs); line-height: 1;
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
   border: none; border-radius: var(--cc-b-radius, 999px);
   padding: 0 18px; margin: 0 0 16px;
@@ -1214,7 +1214,7 @@ html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sec
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head.cc-ink-dark img.icon { filter: brightness(0); }
 /* the SMB user-access sub-heading becomes an in-section title badge, so the native one is hidden */
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .title.cc-carded { display: none !important; }
-html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-note { color: inherit; opacity: .7; font-size: 12px; font-style: italic; margin: -4px 0 12px; }
+html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-note { color: inherit; opacity: .7; font-size: var(--cc-text-meta); font-style: italic; margin: -4px 0 12px; }
 /* Form labels keep the native theme's colour: forcing an ink colour only works with a fill forced
    alongside it, and these sections no longer force one, so a light grey would sit on the white page
    background of Theme--white and Theme--azure. The accent headers, inputs and the SMB bar's
@@ -1457,7 +1457,7 @@ html.cc-shares-on.cc-on-browse #displaybox .TableContainer {
    tablesorter sort-arrow artwork off the sorted column header. */
 html.cc-shares-on.cc-on-browse #displaybox table.indexer thead th {
   background-color: rgba(128, 128, 128, .14); border: none;
-  font-weight: 600; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-sm-fs, 11px);
+  font-weight: 600; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-sm-fs);
 }
 /* roomier rows, matching the /Shares list; padding only, never height or display (see 1 and 2) */
 html.cc-shares-on.cc-on-browse #displaybox table.indexer tbody td { padding-top: 6px; padding-bottom: 6px; border: none; }
@@ -1465,7 +1465,7 @@ html.cc-shares-on.cc-on-browse #displaybox table.indexer tbody td { padding-top:
    tinted, the native theme owns the ink */
 html.cc-shares-on.cc-on-browse #displaybox table.indexer tfoot td {
   background-color: rgba(128, 128, 128, .10); border: none;
-  font-size: 12px; font-style: italic; opacity: .8;
+  font-size: var(--cc-text-meta); font-style: italic; opacity: .8;
 }
 /* The #displaybox id outranks Browse.css's table.tablesorter.indexer tbody tr:hover td. The tint
    stays faint so it cannot be read as a selection. */
@@ -1519,7 +1519,7 @@ html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"] {
   border: none !important; box-shadow: none !important;
   padding: var(--cc-md-btnpad, 0 14px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
   min-width: 0 !important;   /* beats the native min-width:86px so the pill hugs its text */
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; font-family: inherit !important;
   border-radius: var(--cc-b-radius, 999px) !important;
   cursor: pointer; transition: filter .12s, opacity .12s;
@@ -1548,7 +1548,7 @@ html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"]:disable
 html.cc-shares-on.cc-on-browse #displaybox table.indexer span.cc-fmb {
   display: inline-flex; align-items: center; border-radius: var(--cc-b-radius, 999px);
   background: rgba(128, 128, 128, .16); color: inherit;
-  padding: var(--cc-sm-pad, 3px 11px); font-size: var(--cc-sm-fs, 11px); font-weight: 600; line-height: 1.5; white-space: nowrap;
+  padding: var(--cc-sm-pad, 3px 11px); font-size: var(--cc-sm-fs); font-weight: 600; line-height: 1.5; white-space: nowrap;
 }
 html.cc-shares-on.cc-on-browse #displaybox table.indexer span.cc-fmb.cc-b-perm { font-family: ui-monospace, "Bitstream Vera Sans Mono", monospace; letter-spacing: .3px; }
 html.cc-shares-on.cc-on-browse #displaybox table.indexer span.cc-fmb.cc-b-owner { background: color-mix(in srgb, var(--cc-shr-accent, #FCC419) 20%, transparent); }
@@ -1589,7 +1589,7 @@ html.cc-shares-on.cc-on-stats #displaybox > span.status input[type="button"] {
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important; border: none !important; box-shadow: none !important;
   height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-btnpad, 0 14px) !important; min-width: 0 !important; box-sizing: border-box !important;
   border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
   transition: filter .12s;
 }
 html.cc-shares-on.cc-on-stats #displaybox > span.status input[type="button"]:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }

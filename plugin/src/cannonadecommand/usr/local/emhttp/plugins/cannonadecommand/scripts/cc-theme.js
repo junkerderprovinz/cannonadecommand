@@ -478,16 +478,16 @@
     var ov = document.createElement("div"); ov.id = "cc-icm-pop";
     ov.style.cssText = "position:fixed;inset:0;z-index:99999";
     var card = document.createElement("div");
-    card.style.cssText = "position:absolute;background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:10px;padding:12px 14px;width:250px;max-width:92vw;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font:13px/1.5 \"Segoe UI\",system-ui,sans-serif";
+    card.style.cssText = "position:absolute;background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:10px;padding:12px 14px;width:250px;max-width:92vw;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font:var(--cc-text-subline)/1.5 \"Segoe UI\",system-ui,sans-serif";
     var h = document.createElement("div");
     h.textContent = (de ? "Icon-Färbung" : "Icon colouring") + ": " + name;
-    h.style.cssText = "font-size:13px;font-weight:700;margin:0 0 8px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+    h.style.cssText = "font-size:var(--cc-text-subline);font-weight:700;margin:0 0 8px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
     card.appendChild(h);
     var opts = de
       ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Ink-Flatten"], ["tint", "Luminanz-Tint"]]
       : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Ink flatten"], ["tint", "Luminance tint"]];
     var sel = document.createElement("select");
-    sel.style.cssText = "width:100%;background:var(--cc-surface-3,#2e2e2e);color:var(--cc-txt,#e6e6e6);border:none;border-radius:6px;padding:6px 10px;font-size:13px;outline:none";
+    sel.style.cssText = "width:100%;background:var(--cc-surface-3,#2e2e2e);color:var(--cc-txt,#e6e6e6);border:none;border-radius:6px;padding:6px 10px;font-size:var(--cc-text-subline);outline:none";
     var cur = iconOverride(scope, name);
     opts.forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; if (o[0] === cur) op.selected = true; sel.appendChild(op); });
     sel.addEventListener("change", function () { setIconOverride(scope, name, sel.value); if (typeof onChange === "function") { try { onChange(); } catch (e2) {} } });

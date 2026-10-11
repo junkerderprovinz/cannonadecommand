@@ -35,7 +35,7 @@ html.cc-vms-on #kvm_list .cc-b,
 html.cc-vms-on #kvm_list .cc-badge {
   display: inline-flex; align-items: center; gap: 5px; border: none !important;
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 3px 11px); margin: 2px 4px 2px 0;
-  font-size: var(--cc-sm-fs, 11px); font-weight: 600; line-height: 1.35; white-space: nowrap;
+  font-size: var(--cc-sm-fs); font-weight: 600; line-height: 1.35; white-space: nowrap;
   text-decoration: none; vertical-align: middle;
 }
 /* Generic badges (Snapshots, Beschreibung, Grafik) take the rainbow or flag colour when that mode is
@@ -88,7 +88,7 @@ html.cc-vms-on #kvm_list .cc-resline { display: inline-flex; align-items: center
 /* The limit gear behind each resource badge, as on Docker. vms.js vmGearFill paints it inline in
    accent and native mode and stamps --cc-rb-c (the kind colour) in rainbow mode; these rules give
    the idle, hover and set look underneath. */
-html.cc-vms-on #kvm_list .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--cc-b-radius, 999px); background: #3a3a3a; color: #ececec; cursor: pointer; font-size: 12px; margin: 2px 0; }   /* radius follows the badge shape, as on Docker */
+html.cc-vms-on #kvm_list .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--cc-b-radius, 999px); background: #3a3a3a; color: #ececec; cursor: pointer; font-size: var(--cc-text-meta); margin: 2px 0; }   /* radius follows the badge shape, as on Docker */
 html.cc-vms-on #kvm_list .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 html.cc-vms-on #kvm_list .cc-limbtn-set { color: var(--cc-ok-fg, #161616); background: var(--cc-ok, #6fdc8c); }   /* filled when a limit is configured */
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-limbtn-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
@@ -96,10 +96,10 @@ html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-limbtn-set { background: var(--cc-rb-
    because the modal lives on document.body, not in #kvm_list. */
 #cc-vmlim-ov .cc-cores { display: flex; flex-wrap: wrap; gap: 5px; }
 #cc-vmlim-ov .cc-corebox { display: inline-flex; flex-direction: column; gap: 3px; padding: 4px; background: var(--cc-surface-2, #1e1e1e); border: none; border-radius: 7px; align-items: stretch; }
-#cc-vmlim-ov .cc-corebox-tag { text-align: center; font-size: 9px; line-height: 1; color: var(--cc-text-dim, #8a8a8a); letter-spacing: .5px; user-select: none; }
+#cc-vmlim-ov .cc-corebox-tag { text-align: center; font-size: var(--cc-text-meta); line-height: 1; color: var(--cc-text-dim, #8a8a8a); letter-spacing: .5px; user-select: none; }
 #cc-vmlim-ov .cc-corebox-p .cc-corebox-tag { color: var(--cc-accent-ink, #FCC419); }
 #cc-vmlim-ov .cc-corebox-e .cc-corebox-tag { color: var(--cc-warn, #ff832b); }
-#cc-vmlim-ov .cc-core { width: 34px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-dim, #9a9a9a); border: none; border-radius: 5px; font-size: 12px; cursor: pointer; user-select: none; box-sizing: border-box; transition: background .1s, color .1s; }
+#cc-vmlim-ov .cc-core { width: 34px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-dim, #9a9a9a); border: none; border-radius: 5px; font-size: var(--cc-text-meta); cursor: pointer; user-select: none; box-sizing: border-box; transition: background .1s, color .1s; }
 #cc-vmlim-ov .cc-core:hover { background: #3a3a3a; color: var(--cc-text, #e6e6e6); }
 #cc-vmlim-ov .cc-core-on { background: var(--cc-accent, #FCC419); color: var(--cc-accent-text, #161616); }
 /* rainbow: colour each selected core by its physical-core group, as in docker.css */
@@ -164,7 +164,7 @@ html.cc-vms-on #kvm_list td.vm-name .inner > i.stopped { display: none !importan
 html.cc-vms-on #kvm_list td.vm-name .inner > a:first-child {
   display: inline-block; background: none !important; color: inherit !important;
   padding: 0 !important; margin: 0 !important; border-radius: 0 !important;
-  font-size: 15px !important; font-weight: 600 !important; letter-spacing: .1px;
+  font-size: var(--cc-text-title) !important; font-weight: 600 !important; letter-spacing: .1px;
   text-decoration: none !important; line-height: 1.2;
 }
 html.cc-vms-on #kvm_list td.vm-name .inner > a:first-child:hover { text-decoration: underline !important; }
@@ -191,13 +191,13 @@ html.cc-vms-on #kvm_list .switch-button-label { display: none !important; }
 /* Actions column: Docker's action bar retargeted to #kvm_list. Grey icon buttons that vms.js
    tintAct() colours inline; the "..." button (cc-actmore) expands the extra VM actions, and
    cc-act-flash pulses the bar when the VM logo is clicked. */
-html.cc-vms-on #kvm_table thead tr .cc-act-th { font-size: 11px; width: 122px; }
+html.cc-vms-on #kvm_table thead tr .cc-act-th { font-size: var(--cc-text-meta); width: 122px; }
 html.cc-vms-on #kvm_list td.cc-actcell { white-space: nowrap; vertical-align: middle; }
 html.cc-vms-on .cc-actbar { display: flex; flex-direction: column; gap: 4px; }
 html.cc-vms-on .cc-actrow { display: flex; gap: 4px; }
-html.cc-vms-on .cc-actbtn { width: 27px; height: 26px; border-radius: var(--cc-b-radius, 999px); background: #2e2e2e; color: #c9c9c9; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; user-select: none; transition: background .12s, color .12s, box-shadow .12s; }
+html.cc-vms-on .cc-actbtn { width: 27px; height: 26px; border-radius: var(--cc-b-radius, 999px); background: #2e2e2e; color: #c9c9c9; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--cc-text-subline); user-select: none; transition: background .12s, color .12s, box-shadow .12s; }
 html.cc-vms-on .cc-actbtn:hover { background: var(--cc-accent, #FCC419); color: var(--cc-accent-text, #161616); }
-html.cc-vms-on .cc-actbtn i.fa { font-size: 13px; line-height: 1; color: inherit !important; }
+html.cc-vms-on .cc-actbtn i.fa { font-size: var(--cc-text-subline); line-height: 1; color: inherit !important; }
 html.cc-vms-on .cc-actoff { opacity: .35; cursor: default; }
 html.cc-vms-on .cc-actoff:hover { background: #2e2e2e; color: #c9c9c9; }
 html.cc-vms-on .cc-actmore { display: none; margin-top: 4px; }
@@ -216,7 +216,7 @@ html.cc-vms-on #displaybox input[type="button"]:not(.autostart) {
   border: none !important; box-shadow: none !important;
   height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-btnpad, 0 14px) !important; min-width: 0 !important; box-sizing: border-box !important;
   border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; transition: filter .12s;
 }
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart):hover:not(:disabled) { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
@@ -253,14 +253,14 @@ html.cc-vms-on #vmstats tbody tr > td:first-child { letter-spacing: .1px; }
 html.cc-vms-on #vmstats .cc-vmstat-name {
   display: inline-flex; align-items: center;
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 4px 12px);
-  font-size: var(--cc-md-fs, 13px); font-weight: 600; line-height: 1.35; white-space: nowrap;
+  font-size: var(--cc-md-fs); font-weight: 600; line-height: 1.35; white-space: nowrap;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
 }
 /* guest and host CPU % (the first span in td.advanced) as a value pill in the palette colour */
 html.cc-vms-on #vmstats tbody td.advanced > span:first-child {
   display: inline-flex; align-items: center;
   border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 3px 11px);
-  font-size: var(--cc-sm-fs, 11px); font-weight: 600; line-height: 1.35; white-space: nowrap;
+  font-size: var(--cc-sm-fs); font-weight: 600; line-height: 1.35; white-space: nowrap;
   font-family: Consolas, "SFMono-Regular", monospace;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616));
 }
@@ -270,13 +270,13 @@ html.cc-vms-on #vmstats .cc-vmstat-chip {
   display: inline-flex; flex-direction: column; align-items: flex-start;
   background: rgba(255, 255, 255, .07); border-radius: var(--cc-b-radius, 12px);
   padding: 4px 11px; line-height: 1.4; color: #dcdcdc;
-  font-family: Consolas, "SFMono-Regular", monospace; font-size: var(--cc-md-fs, 13px);
+  font-family: Consolas, "SFMono-Regular", monospace; font-size: var(--cc-md-fs);
 }
 /* live usage bar (native .usage-disk.mm) -> accent fill on a subtle rounded track */
 html.cc-vms-on #vmstats td.advanced .usage-disk.mm { background: rgba(128, 128, 128, .20) !important; border-radius: var(--cc-b-radius, 999px); }
 html.cc-vms-on #vmstats td.advanced .usage-disk.mm > span:first-child { background: var(--cc-accent, #FCC419) !important; border-radius: var(--cc-b-radius, 999px); }
 /* memory / disk IO / network IO cells (cols 4-6) -> monospace numerics */
-html.cc-vms-on #vmstats tbody tr > td:nth-child(n+4) { font-family: Consolas, "SFMono-Regular", monospace; font-size: var(--cc-md-fs, 13px); }
+html.cc-vms-on #vmstats tbody tr > td:nth-child(n+4) { font-family: Consolas, "SFMono-Regular", monospace; font-size: var(--cc-md-fs); }
 
 /* Section view (cc.sections.vms) stacks the two /VMs sub-tabs, "Virtual Machines" (#kvm_list) and
    "VM Usage Statistics" (#vmstats), as CC sections. Both panels are server-rendered siblings and
@@ -292,7 +292,7 @@ html.cc-vms-on.cc-sections-vms #displaybox nav.tabs { border: none; min-height: 
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head {
   display: inline-flex; align-items: center; gap: 8px;
   min-height: var(--cc-lgb-h, 36px); box-sizing: border-box;   /* head badges sit on the 36px lg line */
-  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-head-fs, 15px); line-height: 1;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-head-fs); line-height: 1;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;   /* rainbow-aware, so the head takes a palette colour instead of the plain accent */
   border: none; border-radius: var(--cc-b-radius, 999px); padding: var(--cc-head-pad, 9px 18px); margin: 0 0 16px;
 }
@@ -308,7 +308,7 @@ html.cc-vms-on .cc-seg { display: inline-flex; border: none; border-radius: 999p
 html.cc-vms-on .cc-seg-btn {
   background: #2a2a2a; color: #b5b5b5; border: none; border-radius: 999px;
   height: var(--cc-md-h, 30px); box-sizing: border-box; padding: 0 16px;
-  font-size: var(--cc-md-fs, 13px); line-height: 1; cursor: pointer;
+  font-size: var(--cc-md-fs); line-height: 1; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
 }
 html.cc-vms-on .cc-seg-btn:hover { color: #e6e6e6; }
