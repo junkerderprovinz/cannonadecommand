@@ -503,7 +503,7 @@
     var inp = el("input"); inp.type = "number"; inp.min = String(curG); inp.step = "1"; inp.value = String(Math.max(1, Math.ceil(curG)));
     inp.style.cssText = "width:74px;background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:var(--cc-radius-control);padding:6px 8px;font-size:var(--cc-text-subline);outline:none";
     var unit = el("span", null, "GiB"); unit.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)";
-    var btn = el("button", null, VMDE ? "Vergrößern" : "Grow"); btn.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:var(--cc-radius-pill);padding:6px 12px;font-size:var(--cc-text-meta);font-weight:600;cursor:pointer";
+    var btn = el("button", "cc-vm-grow", VMDE ? "Vergrößern" : "Grow"); btn.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:var(--cc-radius-pill);padding:6px 12px;font-size:var(--cc-text-meta);font-weight:600;cursor:pointer";
     btn.onclick = function () {
       var g = parseFloat(String(inp.value).replace(",", "."));
       if (isNaN(g) || g <= curG) { statusEl.textContent = ""; ccvFail(btn, (VMDE ? "Nur vergrößern, auf mehr als " : "Grow only, to more than ") + curG + " GiB"); return; }

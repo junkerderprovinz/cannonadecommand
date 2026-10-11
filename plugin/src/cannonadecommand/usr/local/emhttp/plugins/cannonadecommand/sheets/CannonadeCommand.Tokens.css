@@ -117,7 +117,15 @@ html[dir="rtl"] { --cc-dir-sign: -1; }   /* a keyframe does not mirror on its ow
     scale: var(--cc-motion-press-scale, 1);
   }
 }
-@keyframes cc-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+/* Unraid's default-base.css makes every <button> an uppercase control with an 86px floor and
+   outer margins, which no CC button wants. The two selectors carry the weight of Unraid's two,
+   button and button[type="button"], and win the tie by loading after it. The fill, ink, padding,
+   radius and size stay with each class, whose rules docker.css lifts the same way. */
+button:where(.cc-btn, .cc-seg-btn, .cc-abtn, .cc-hgear, .cc-card-movebtn, .cc-folder-act, .cc-alloc-sortbtn, .cc-set-tab, .cc-vm-grow),
+button[type="button"]:where(.cc-btn, .cc-seg-btn, .cc-abtn, .cc-hgear, .cc-card-movebtn, .cc-folder-act, .cc-alloc-sortbtn, .cc-set-tab, .cc-vm-grow) {
+  min-width: 0; margin: 0; text-transform: none; letter-spacing: normal; font-weight: inherit; font-family: inherit;
+}
+@keyframes cc-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes cc-fade-out { from { opacity: 1; } to { opacity: 0; } }
 html {
 

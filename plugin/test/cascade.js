@@ -9,7 +9,9 @@
 // are assumed to be whatever a selector asks for, so a rule counts as matching
 // if it could match the element in some context. Pseudo-classes it cannot decide
 // (structural ones, :has) count as possible too, which errs towards reporting.
-// Rules that reach the element by its tag alone are left out, see keyed().
+// Rules that reach the element by its tag alone are left out, see keyed(), unless
+// they name an ancestor listed in inside ('#cc-settings'); outside lists the
+// classes and ids known not to be ancestors ('.cc-pop').
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand');
@@ -184,7 +186,9 @@ function matchPseudo(x, el) {
   const st = el.states || {};
   switch (x.name) {
     case 'is': case 'where': case 'matches': case 'any': return matchList(x.arg, el);
-    case 'not': return not(matchList(x.arg, el));
+    // A complex argument such as Unraid's :not(.unapi *) turns on the ancestors, which are
+    // not described, so it can go either way unless its subject cannot be the element at all.
+    case 'not': return not(anyOf(splitTop(x.arg, ',').map((s) => (compounds(s).length > 1 && matchSubject(s, el) !== false ? null : matchSubject(s, el)))));
     case 'hover': case 'active': case 'focus': case 'focus-visible': case 'focus-within': case 'checked': case 'disabled':
       return !!st[x.name];
     case 'enabled': return !st.disabled;
@@ -203,6 +207,9 @@ function keyed(comp, el) {
     (x.t === 'pc' && /^(is|where|matches|any)$/.test(x.name) && splitTop(x.arg, ',').some((a) => { const c = compounds(a); return matchCompound(c[c.length - 1], el) !== false && keyed(c[c.length - 1], el); })));
 }
 
+// Parsed sheets by their text, since a test asks about many elements and properties.
+const PARSED = new Map();
+
 // Every declaration of prop that can reach the element, in cascade order with the
 // winner last. Each carries its rule's selector, its sheet and its specificity.
 function candidates(page, el, prop) {
@@ -212,7 +219,8 @@ function candidates(page, el, prop) {
     // A sheet is a path under the plugin, or { name, css } for a test's own snippet.
     const css = typeof f === 'object' ? f.css : (f.endsWith('.js') ? settingsStyle() : fs.readFileSync(path.join(DIR, f), 'utf8'));
     const name = typeof f === 'object' ? f.name : f;
-    for (const rule of parseRules(css, name)) {
+    if (!PARSED.has(css)) PARSED.set(css, parseRules(css, name));
+    for (const rule of PARSED.get(css)) {
       const hits = rule.decls.filter((d) => d.prop === prop);
       order++;
       if (!hits.length) continue;
@@ -220,7 +228,9 @@ function candidates(page, el, prop) {
         const m = matchSubject(sel, el);
         if (m === false) continue;
         const c = compounds(sel);
-        if (c.length > 1 && !keyed(c[c.length - 1], el)) continue;
+        const ctx = c.slice(0, -1).map((x) => simples(x).filter((t) => t.t === 'class' || t.t === 'id').map((t) => (t.t === 'id' ? '#' : '.') + t.v));
+        if (el.outside && ctx.some((t) => t.some((v) => el.outside.includes(v)))) continue;
+        if (c.length > 1 && !keyed(c[c.length - 1], el) && !(el.inside && ctx.some((t) => t.some((v) => el.inside.includes(v))))) continue;
         if (el.html && c.length > 1 && /^html\b/.test(c[0]) && matchCompound(c[0], { tag: 'html', classes: el.html, attrs: {}, states: {} }) === false) continue;
         hits.forEach((d, n) => out.push({ sheet: name, selector: sel, value: d.value, important: d.important, spec: specificity(sel), order: order + n / 100 }));
       }
@@ -248,4 +258,21 @@ function resolve(value, map) {
   return v.trim();
 }
 
-module.exports = { tokens, resolve, DIR, PAGES, parseRules, parseDecls, specificity, matchSubject, candidates, cmp };
+// Unraid's own control rules from webGui/styles/default-base.css, the ones that compete with
+// CC's single-class rules: an attribute selector plus a tag outweighs one class. They load in
+// <head> before any CC sheet, so a tie goes to CC. The values are the white theme's.
+const UNRAID = { name: 'unraid default-base.css', css: `
+input[type="text"]:where(:not(.unapi *)), input[type="number"]:where(:not(.unapi *)), textarea:where(:not(.unapi *)) {
+  color: #1d1b1b; font-size: 1.3rem; background-color: transparent; border-width: 0; border-bottom-width: 1px;
+  padding: .5rem; min-height: 2rem; line-height: 2rem; width: 100%; margin: 0; box-shadow: none; border-radius: 0; }
+input:focus[type="text"]:where(:not(.unapi *)), input:focus[type="number"]:where(:not(.unapi *)), textarea:focus:where(:not(.unapi *)) { background-color: #ebebeb; outline: 0; }
+input[type="button"]:where(:not(.unapi *)), button:where(:not(.unapi *)), button[type="button"]:where(:not(.unapi *)), a.button:where(:not(.unapi *)) {
+  font-size: 1.1rem; font-weight: bold; letter-spacing: 1.8px; text-transform: uppercase; min-width: 86px; margin: 10px 12px 10px 0;
+  padding: 8px; border-radius: 4px; border: none; color: #f15a2c;
+  background: linear-gradient(90deg, #e22828 0, #f15a2c) 0 0 no-repeat; background-size: 100% 2px, 100% 2px, 2px 100%, 2px 100%; }
+input:hover[type="button"]:where(:not(.unapi *)), button:hover:where(:not(.unapi *)), button:hover[type="button"]:where(:not(.unapi *)), a.button:hover:where(:not(.unapi *)) {
+  color: #fff; background: linear-gradient(90deg, #e22828 0, #f15a2c); }
+` };
+const withUnraid = (page) => [UNRAID].concat(PAGES[page]);
+
+module.exports = { UNRAID, withUnraid, tokens, resolve, DIR, PAGES, parseRules, parseDecls, specificity, matchSubject, candidates, cmp };

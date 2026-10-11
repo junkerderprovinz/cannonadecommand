@@ -71,6 +71,17 @@ console.log('\nThe Startplan window, white theme, reactive rest');
     const r = b && f ? (() => { const x = lum(over(b, WIN)), y = lum(f); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); })() : 0;
     ok(`${what} reads at 4.5:1`, r >= 4.5, `${fg && resolve(fg.value, lightWin)} on ${bg && bg.value} = ${r.toFixed(2)}:1`);
   }
+  // A field's ink competes with Unraid's input[type="text"]:where(...), which paints the white
+  // theme's #1d1b1b and outweighs a single class, so its rules take part here.
+  const { withUnraid } = require('./cascade');
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  for (const [what, type, states, fill] of [['the max./Std. field', 'number', {}, [0x2e, 0x2e, 0x2e]], ['the CPU field', 'text', {}, [0x2e, 0x2e, 0x2e]], ['a focused field', 'text', { focus: true }, [0x38, 0x38, 0x38]]]) {
+    const el = { tag: 'input', classes: ['cc-in'], attrs: { type }, states, html, inside: ['.cc-pop'] };
+    const c = candidates(withUnraid('docker'), el, 'color'), fg = c[c.length - 1];
+    const f = rgb(resolve(fg.value, lightWin));
+    const r = f ? ratio(f, fill) : 0;
+    ok(`${what} reads at 4.5:1`, r >= 4.5, `${fg.sheet}: ${fg.selector} => ${resolve(fg.value, lightWin)}, ${r.toFixed(2)}:1`);
+  }
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

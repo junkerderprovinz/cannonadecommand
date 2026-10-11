@@ -21,9 +21,9 @@
 .cc-grid-holder { position: relative; margin: 6px 0 14px; }
 
 /* the gear, a small icon moved into Unraid's Advanced/Basic toggle bar */
-.cc-hgear { background: transparent !important; border: none !important; box-shadow: none !important; outline: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: var(--cc-text-body); line-height: 1; padding: 0 4px; vertical-align: middle; transition: color .12s; -webkit-appearance: none; appearance: none; }
-.cc-hgear:hover { color: var(--cc-accent-ink, #FCC419); }
-.cc-hgear-bar { margin-right: 10px; font-size: var(--cc-text-title); color: var(--cc-accent-ink, #FCC419); }
+html .cc-hgear { background: transparent !important; border: none !important; box-shadow: none !important; outline: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: var(--cc-text-body); line-height: 1; padding: 0 4px; border-radius: var(--cc-radius-control); vertical-align: middle; transition: color .12s; -webkit-appearance: none; appearance: none; }
+html .cc-hgear:hover { color: var(--cc-accent-ink, #FCC419); }
+html .cc-hgear-bar { margin-right: 10px; font-size: var(--cc-text-title); color: var(--cc-accent-ink, #FCC419); }
 .cc-hgear-th { float: right; }
 .cc-hgear-float { display: none !important; } /* fallback gear caused the load flash */
 /* the grid gear is a tile within the card grid, not a floating button */
@@ -458,11 +458,11 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
    attribute selector outranks a single-class rule on specificity alone and resets
    background-color. Marking the base, the hover and the on-state alike puts them all at the same
    priority, where ordinary specificity and source order decide again. */
-.cc-folder-act { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: var(--cc-text-subline); line-height: 1; padding: 4px 6px; border-radius: var(--cc-radius-pill); transition: background .12s, color .12s; }
-.cc-folder-act:hover { background: rgba(128, 128, 128, .18) !important; color: var(--cc-txt); }
+html .cc-folder-act { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: var(--cc-text-subline); line-height: 1; padding: 4px 6px; border-radius: var(--cc-radius-pill); transition: background .12s, color .12s; }
+html .cc-folder-act:hover { background: rgba(128, 128, 128, .18) !important; color: var(--cc-txt); }
 .cc-folder-act .cc-glyph { font-size: var(--cc-text-meta); }
 /* the hide-stopped active state is a shade, never a border line */
-.cc-folder-act-on { background: rgba(128, 128, 128, .18) !important; color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black); }
+html .cc-folder-act-on { background: rgba(128, 128, 128, .18) !important; color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black); }
 .cc-folder-group-body { padding-top: 0; } /* a nested body has no corner gear to clear */
 /* collapse and expand, kept in cc.folderCollapsed; a collapsed folder shows its header and child
    count only */
@@ -480,8 +480,8 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 /* The per-card move-to-folder menu at the end of the card's head row, reachable by touch and
    keyboard where dragging is not. Its backgrounds need !important for the same reason as
    .cc-folder-act above. */
-.cc-card-movebtn { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: var(--cc-text-subline); line-height: 1; padding: 3px 5px; border-radius: var(--cc-radius-pill); flex: none; transition: background .12s, color .12s; }
-.cc-card-movebtn:hover { background: rgba(128, 128, 128, .18) !important; color: var(--cc-txt); }
+html .cc-card-movebtn { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: var(--cc-text-subline); line-height: 1; padding: 3px 5px; border-radius: var(--cc-radius-pill); flex: none; transition: background .12s, color .12s; }
+html .cc-card-movebtn:hover { background: rgba(128, 128, 128, .18) !important; color: var(--cc-txt); }
 .cc-menu-link-current { background: rgba(128, 128, 128, .18); }
 .cc-card { background: var(--cc-bg2); border: none; border-radius: var(--cc-radius-card); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; transition: transform .12s, box-shadow .12s; }
 .cc-card:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0,0,0,.35); } /* elevation, not a border tint; the background contrast separates the card */
@@ -504,9 +504,9 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 /* the limit gears on a grid card, as one full-width group at the bottom of the card */
 .cc-card-res { display: flex !important; width: 100%; border-top: 1px solid var(--cc-line); padding-top: 8px; margin-top: 2px; }
 .cc-life { display: inline-flex; gap: 6px; }
-.cc-abtn { background: var(--cc-bg3); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: var(--cc-radius-pill); padding: 4px 10px; font-size: var(--cc-text-meta); cursor: pointer; transition: background .12s; }
-.cc-abtn:hover { background: #333; }
-.cc-abtn-primary { color: var(--cc-ok-ink, #6fdc8c); border-color: rgba(63,174,106,.4); }
+html .cc-abtn { background: var(--cc-bg3); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: var(--cc-radius-pill); padding: 4px 10px; font-size: var(--cc-text-meta); cursor: pointer; transition: background .12s; }
+html .cc-abtn:hover { background: #333; }
+html .cc-abtn-primary { color: var(--cc-ok-ink, #6fdc8c); border-color: rgba(63,174,106,.4); }
 /* the single-action wrapper folderChip() and folderListRow() share; the action itself is the
    ordinary .cc-actbtn */
 .cc-mrow-act { flex: none; display: flex; }
@@ -540,16 +540,18 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 
 .cc-filter { background: var(--cc-bg2); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: var(--cc-radius-control); padding: 5px 10px; font-size: var(--cc-text-meta); }
 /* Buttons are filled, with no borders anywhere: a neutral fill for a secondary, the accent for a
-   primary, and fills and shadows for separation. */
-.cc-btn { background: #2e2e2e; color: #e6e6e6; border: none; border-radius: var(--cc-radius-pill); padding: 5px 12px; font-size: var(--cc-text-meta); cursor: pointer; transition: background .12s, color .12s, filter .12s; }
+   primary, and fills and shadows for separation. Every CC button rule carries the html prefix,
+   which matches the weight of Unraid's button[type="button"]:where(...) and button:hover:where(...)
+   and wins the tie because this sheet loads after Unraid's. */
+html .cc-btn { background: #2e2e2e; color: #e6e6e6; border: none; border-radius: var(--cc-radius-pill); padding: 5px 12px; font-size: var(--cc-text-meta); cursor: pointer; transition: background .12s, color .12s, filter .12s; }
 /* A button reads the same three-tier colour chain as the badges: its own stamped slot, which
    paintPopChrome writes, then the shared rainbow accent, then the plain accent. */
-.cc-btn:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
-.cc-btn-primary { font-weight: 600; background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
-.cc-btn-primary:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }
+html .cc-btn:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
+html .cc-btn-primary { font-weight: 600; background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
+html .cc-btn-primary:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }
 .cc-seg { display: inline-flex; border: none; border-radius: var(--cc-radius-pill); overflow: hidden; }
-.cc-seg-btn { background: var(--cc-bg2); color: var(--cc-dim); border: none; padding: 5px 14px; font-size: var(--cc-text-meta); cursor: pointer; }
-.cc-seg-btn:hover { color: var(--cc-txt); }
+html .cc-seg-btn { background: var(--cc-bg2); color: var(--cc-dim); border: none; padding: 5px 14px; font-size: var(--cc-text-meta); cursor: pointer; }
+html .cc-seg-btn:hover { color: var(--cc-txt); }
 .cc-seg-btn.cc-seg-on { background: var(--cc-accent); color: var(--cc-accent-text, #161616); font-weight: 600; }
 
 .cc-menu { position: absolute; z-index: 99999; min-width: 190px; background: var(--cc-bg, #161616); border: none; border-radius: var(--cc-radius-card); box-shadow: 0 14px 40px rgba(0,0,0,.55); padding: 6px; font: var(--cc-text-subline)/1.5 "Segoe UI", system-ui, sans-serif; color: #e6e6e6; }
@@ -693,9 +695,11 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
 /* Focus is a brightness step, never a ring, and it sets background-color rather than the
    `background` shorthand, which would reset background-image and blank the caret on a select
    while the field has focus. The rest colour lives in the `html .cc-pop .cc-in` pair below,
-   because hardenPop stamps it inline with !important and :focus has to be able to win. */
+   because hardenPop stamps it inline with !important and :focus has to be able to win. The ink
+   and size sit there too: Unraid's input[type="text"]:where(...) outweighs a single class and
+   would paint the white theme's dark text into the always-dark window. */
 .cc-in:focus { background-color: #383838; outline: none !important; box-shadow: none !important; }
-html .cc-pop .cc-in { background-color: #2e2e2e !important; }
+html .cc-pop .cc-in { background-color: #2e2e2e !important; color: var(--cc-text, #e6e6e6); font-size: var(--cc-text-meta); }
 html .cc-pop .cc-in:focus { background-color: #383838 !important; }
 /* Unraid's default-base.css paints every placeholder in the theme's link colour, so a hint reads
    as a link or as filled-in data. One rule here covers every field CC draws on these pages, at the
@@ -752,7 +756,7 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { backgr
 .cc-pop-sech-lone { display: block; color: #9a9a9a; padding: 10px 10px 5px; text-transform: uppercase; letter-spacing: .5px; font-size: var(--cc-text-meta); }
 .cc-pop-sub { padding-bottom: 4px; }
 .cc-pop-sub.cc-dis { opacity: .4; pointer-events: none; }
-.cc-btn-sm { margin: 4px 10px 6px; padding: 3px 10px; font-size: var(--cc-text-meta); }
+html .cc-btn-sm { margin: 4px 10px 6px; padding: 3px 10px; font-size: var(--cc-text-meta); }
 .cc-sched-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 10px 2px; }
 /* each schedule on its own card, so the action, time and days do not run together */
 .cc-sched-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #1e1e1e; border: none; border-radius: var(--cc-radius-control); padding: 8px 9px; }
