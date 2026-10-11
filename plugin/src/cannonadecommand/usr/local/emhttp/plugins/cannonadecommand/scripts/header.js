@@ -3310,6 +3310,8 @@
       ccAppsStamp(".searchArea .caButton.maxPerPage, .searchArea .dockerSearch, .cc-ca-search-extras .caButton.maxPerPage, .cc-ca-search-extras .dockerSearch");
       ccAppsStamp(".pageNavigation .pageNumber");
       ccAppsStamp("a.sortIcons");
+      // the icons in the Statistics, Credits and Change Log panel, which CA fills on each open
+      ccAppsStamp("#alternateView i.fa");
       // the card ribbons and spotlight badges, re-run every tick so a card that arrives later is stamped too
       ccAppsStamp(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground, .homespotlightIconArea");
       // CA reuses one label slot for "Search for X", which says what was searched, and for the plain
