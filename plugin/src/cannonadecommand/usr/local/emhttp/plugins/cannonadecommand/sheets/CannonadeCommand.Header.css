@@ -140,8 +140,7 @@ html.cc-popups-on #cc-tipfloat {
      z-index 999999 */
   z-index: 2147483647; width: max-content; max-width: 280px;
   background: #393939; color: #f4f4f4; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);
-  padding: 9px 12px; font-size: var(--cc-text-subline); font-weight: 400; line-height: 1.45;
-  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  padding: 9px 12px; font-size: var(--cc-text-meta); font-weight: 400; line-height: 1.45;
   text-transform: none; letter-spacing: normal; white-space: pre-line; text-align: left;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .55); pointer-events: none;
 }
@@ -159,6 +158,12 @@ html.cc-popups-on #cc-tipfloat.cc-tip-above::before {
   top: auto; bottom: -6px;
   border-width: 6px 6px 0 6px;
   border-color: #393939 transparent transparent transparent;
+}
+/* A short fade on open and none on close: the pointer is already waiting for the bubble, and it
+   should be gone the moment it is not wanted. Going from display:none to block restarts the
+   animation, so every opening fades. */
+@media (prefers-reduced-motion: no-preference) {
+  html.cc-popups-on #cc-tipfloat { animation: cc-fade-in var(--cc-motion-fade-dur, 110ms) ease both; }
 }
 html.cc-header-on .tooltipster-base .tooltipster-box,
 html.cc-header-on .ui-tooltip {
@@ -1365,8 +1370,8 @@ html.cc-header-on .cc-acctinfo:hover { color: var(--cc-rbaccent, var(--cc-accent
 html.cc-popups-on #cc-acctinfo-pop {
   position: fixed; z-index: 2147483647; width: max-content; max-width: 280px;
   background: #393939; color: #f4f4f4; border: none; border-radius: min(var(--cc-b-radius, 8px), 10px);
-  padding: 9px 12px; font-size: var(--cc-text-subline); font-weight: 400; line-height: 1.45;
-  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; white-space: pre-line; text-align: left;
+  padding: 9px 12px; font-size: var(--cc-text-meta); font-weight: 400; line-height: 1.45;
+  white-space: pre-line; text-align: left;
   box-shadow: 0 8px 24px rgba(0, 0, 0, .55);
 }
 /* Every help text lives in an (i) bubble, so the native Help ("?") button, which only toggled the

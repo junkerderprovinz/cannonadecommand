@@ -1998,7 +1998,7 @@
   // through delegation, which survives any rebuild. It is fixed, centred under the anchor and
   // clamped into the viewport with the arrow staying over the anchor, and flips above the anchor
   // when the bottom edge would clip it. Hidden on scroll and on pointerdown.
-  var ccTipBound = false, ccTipCur = null;
+  var ccTipBound = false, ccTipCur = null, ccTipKeys = false;
   function ccTipEl() {
     var d = document.getElementById("cc-tipfloat");
     if (!d) { d = document.createElement("div"); d.id = "cc-tipfloat"; document.body.appendChild(d); }
@@ -2027,6 +2027,10 @@
       ccTipBound = true;
       function over(e) {
         if (!document.documentElement.classList.contains("cc-popups-on")) return;   // master theming off, so everything stays native
+        // Focus opens the bubble only for keyboard users. After a press the focus arrives as a side
+        // effect, from the click or from a dialog handing it back, and a bubble opened then would
+        // stand where the pointer no longer is until the focus moves on.
+        if (e.type === "focusin" && !ccTipKeys) return;
         var t = e.target && e.target.closest ? e.target.closest("[data-cc-tip], [data-tip], [title]") : null;
         if (!t) return;
         // A raw title anywhere, on a native control or an icon no script converted, becomes a
@@ -2049,7 +2053,8 @@
       document.addEventListener("mouseout", out);
       document.addEventListener("focusin", over);
       document.addEventListener("focusout", out);
-      document.addEventListener("pointerdown", ccTipHide, true);   // a press means action rather than reading
+      document.addEventListener("pointerdown", function () { ccTipKeys = false; ccTipHide(); }, true);   // a press means action rather than reading
+      document.addEventListener("keydown", function () { ccTipKeys = true; }, true);   // the last input, page-wide, since a press on one control can focus another
       window.addEventListener("scroll", ccTipHide, true);          // any scroll de-anchors the fixed bubble, and capture catches inner containers too
       // Escape dismisses the bubble, which is a keyboard user's only way out after tabbing onto an
       // icon. In the capture phase, so it fires before a dialog handler that stops propagation; it
