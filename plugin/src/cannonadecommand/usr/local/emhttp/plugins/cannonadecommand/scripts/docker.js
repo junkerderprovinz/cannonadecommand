@@ -411,7 +411,10 @@
         var unh = showUnhealthy(c);
         if (unh) label += " ✕"; else if (c.health === "starting") label += " …";
         var isToggle = b.classList.contains("cc-badge-toggle");
-        var cls = "cc-badge cc-badge-" + s + (isToggle ? " cc-badge-toggle" : "") + (unh ? " cc-badge-alert" : "");
+        // Only the state and alert classes are rewritten: the hide rule for a running container
+        // is keyed on the dot's own class (cc-ct-statedot, cc-chip-dot), which has to survive.
+        var cls = Array.prototype.filter.call(b.classList, function (k) { return k === "cc-badge-toggle" || !/^cc-badge-/.test(k); })
+          .concat("cc-badge-" + s, unh ? ["cc-badge-alert"] : []).join(" ");
         if (unh) b.setAttribute("data-tip", unhealthyTip());
         if (b.textContent !== label) b.textContent = label;
         if (b.className !== cls) b.className = cls;
