@@ -2175,6 +2175,10 @@ html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b-del,
 html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-plugsup {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
+/* The two that do something, delete and the support link, step once more under the pointer itself. */
+html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover :is(.cc-b-del, .cc-plugsup):hover {
+  background: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) 85%, var(--cc-text, #e6e6e6)) !important;
+}
 /* The logo tile is the icon badge rather than a value badge, so a configured icon colour wins
    here as it does outside the reactive mode. The rule matches the pair above on specificity and
    sits after it. */

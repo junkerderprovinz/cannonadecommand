@@ -90,5 +90,19 @@ console.log('\nAn inline-painted control steps under the pointer, whatever else 
   ok('a greyed placeholder action does not answer the pointer', !off.some((x) => x.value === WASH));
 }
 
+// In the reactive mode a plugin row's badges take the row's colour once the row is hovered, so a
+// clickable one needs a step of its own on top, or the pointer over it changes nothing.
+console.log('\nA plugin row\'s delete and support badges step under the pointer in the reactive mode');
+{
+  const { candidates } = require('./cascade');
+  const html = ['cc-shares-rbneutral', 'cc-on-plugins'];
+  for (const [what, tag, classes] of [['delete', 'span', ['cc-b-del']], ['support', 'a', ['cc-plugsup']]]) {
+    const at = (states) => { const c = candidates('docker', { tag, classes, attrs: {}, states, html, inside: ['#plugin_list'] }, 'background'); return c[c.length - 1]; };
+    const row = at({}), hov = at({ hover: true });
+    ok(`${what}: under the pointer it is a step off the row's colour`, !!hov && /^color-mix\(in srgb, var\(--cc-rb-c, var\(--cc-accent, #FCC419\)\) 85%, var\(--cc-text, #e6e6e6\)\)$/.test(hov.value), hov && hov.selector + ' => ' + hov.value);
+    ok(`${what}: which differs from what it shows while only the row is hovered`, !!row && !!hov && row.value !== hov.value);
+  }
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);
