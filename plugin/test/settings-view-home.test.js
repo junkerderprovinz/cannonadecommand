@@ -21,5 +21,27 @@ ok('and saves it locally and on the server', /mode = m; localStorage\.setItem\(V
 const writers = fs.readdirSync(path.join(DIR, 'scripts')).filter((f) => f.endsWith('.js') && f !== 'docker.js' && /setItem\("cc\.view"/.test(read('scripts/' + f)));
 ok('no other script writes the view', writers.length === 0, writers.join(' '));
 
+// With no settings card, the gear has to be on screen in every view, or a user in the list
+// view can never reach the grid, the folders or "New folder" again.
+console.log('\nEvery view has a gear');
+{
+  const fn = (name) => { const i = docker.indexOf('function ' + name + '('); let d = 0; for (let k = docker.indexOf('{', i); k < docker.length; k++) { if (docker[k] === '{') d++; else if (docker[k] === '}') { d--; if (!d) return docker.slice(i, k + 1); } } return ''; };
+  const top = fn('relocateTopBar');
+  ok('list: the bar carries a gear in its right-pinned toggle group', /advGrp = jsa\.querySelector\("\.cc-bar-adv"\)/.test(top) && /advGrp\.appendChild\(makeGear\("cc-hgear-home"\)\)/.test(top));
+  ok('list: the stale-gear sweep spares it', /if \(!x9\.closest\("\.cc-bar-adv"\)\) x9\.remove\(\)/.test(top));
+  ok('card and folder: the bar gear goes, their own tile takes over', /if \(mode !== "list"\) \{ var barGear = document\.querySelector\("div\.js-actions \.cc-hgear-home"\); if \(barGear\) barGear\.remove\(\); return; \}/.test(top));
+  ok('card view: a gear tile after the last card', /var gtile = el\("div", "cc-card cc-gear-tile"\); gtile\.appendChild\(hg\)/.test(fn('renderGrid')));
+  ok('folder view: a gear of its own', /makeGear\("cc-hgear-grid"\)/.test(fn('renderFolderView')));
+  ok('the bar gear has a look of its own in the bar', /div\.js-actions \.cc-bar-adv \.cc-hgear-home \{/.test(read('styles/docker.css')));
+
+  // The bar is docked at the bottom of the window, so a menu hung below the gear would open off screen.
+  const place = new Function('window', 'document', 'menu', 'menuAnchor', fn('positionMenu') + '\npositionMenu(); return menu.style;');
+  const win = { scrollX: 0, scrollY: 0 }, doc = { documentElement: { clientWidth: 1600, clientHeight: 900 } };
+  const at = (top, bottom) => ({ getBoundingClientRect: () => ({ top, bottom, right: 1500 }) });
+  const m = () => ({ offsetWidth: 240, offsetHeight: 400, style: {} });
+  ok('a gear at the bottom opens its menu upward', place(win, doc, m(), at(860, 884)).top === (860 - 6 - 400) + 'px');
+  ok('a gear near the top still opens downward', place(win, doc, m(), at(100, 124)).top === '130px');
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

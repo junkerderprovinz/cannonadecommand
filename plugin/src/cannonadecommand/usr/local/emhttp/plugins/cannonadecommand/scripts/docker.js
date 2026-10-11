@@ -1532,7 +1532,8 @@
       // and the native Update-All button below the table covers ShipLog's pill.
       var tv = document.querySelector("div.ToggleViewMode");
       if (tv) tv.style.setProperty("display", "none", "important");
-      if (mode !== "list") return;
+      // The card and folder views carry their gear as a tile of their own.
+      if (mode !== "list") { var barGear = document.querySelector("div.js-actions .cc-hgear-home"); if (barGear) barGear.remove(); return; }
       if (!findRows().length) return; // no gear before the rows exist, or it flashes on load
       // The gear sits inside the header row's last th; an absolute overlay on the TableContainer
       // is clipped by its overflow.
@@ -1546,13 +1547,15 @@
       var oldAm = document.querySelector(".cc-advmini"); if (oldAm) oldAm.remove();
       var jsa = document.querySelector("div.js-actions");
       if (jsa) {
-        // On the Docker page there is no gear menu: every option lives under Settings >
-        // Utilities, and the one quick control, the view toggle, sits in the floating action bar.
-        // Any gear left on the page from an earlier version is swept away.
-        Array.prototype.slice.call(document.querySelectorAll(".cc-hgear:not(.cc-hgear-grid)")).forEach(function (x9) { x9.remove(); });
+        // The gear menu is the one home of the list, grid and folder switch, so the list view
+        // needs a gear too. It rides in the right-pinned toggle group, which stays in view
+        // when the bar runs out of room.
+        Array.prototype.slice.call(document.querySelectorAll(".cc-hgear:not(.cc-hgear-grid)")).forEach(function (x9) { if (!x9.closest(".cc-bar-adv")) x9.remove(); });
         var hc = document.querySelector(".cc-headctl"); if (hc) hc.remove();
         ensureBarToggle(jsa);
         ensureBulkModeBadge(jsa);
+        var advGrp = jsa.querySelector(".cc-bar-adv");
+        if (advGrp && !advGrp.querySelector(".cc-hgear-home")) advGrp.appendChild(makeGear("cc-hgear-home"));
       } else {
         // the Plugins and VM pages have a tab strip rather than a js-actions bar
         var tc9 = document.querySelector("nav.tabs .tabs-container");
@@ -2283,7 +2286,10 @@
     var r = menuAnchor.getBoundingClientRect(), w = menu.offsetWidth || 240;
     var left = Math.min(window.scrollX + r.right - w, window.scrollX + document.documentElement.clientWidth - w - 12);
     menu.style.left = Math.max(window.scrollX + 8, left) + "px";
-    menu.style.top = (window.scrollY + r.bottom + 6) + "px";
+    // The list view's gear sits in the bar docked at the bottom, so its menu opens upward.
+    var h = menu.offsetHeight, room = document.documentElement.clientHeight - r.bottom - 6;
+    var top = h > room && r.top - 6 > room ? Math.max(8, r.top - 6 - h) : r.bottom + 6;
+    menu.style.top = (window.scrollY + top) + "px";
   }
   // `builder` lets another caller, the per-card move-to-folder button, reuse this menu,
   // positioning and outside-click machinery for its own panel, so there is one open-menu system.

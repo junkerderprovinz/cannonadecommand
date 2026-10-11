@@ -1425,6 +1425,8 @@ div.js-actions .cc-bulkmode-badge-on {
    so the negative value is what puts its right edge on the bar's outer edge, flush with the header
    icons. */
 div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; position: sticky; right: -16px; z-index: 2; padding-left: 10px; padding-right: 8px; background: var(--footer-background-color, var(--mild-background-color, #1c1c1c)); }
+div.js-actions .cc-bar-adv .cc-hgear-home { font-size: var(--cc-text-title); color: var(--cc-text-chip, #cfcfcf); padding: 0 4px; }
+div.js-actions .cc-bar-adv .cc-hgear-home:hover { color: var(--cc-accent-ink, #FCC419); }
 div.js-actions .cc-bar-adv-lbl { color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 div.js-actions input[type=button]:hover,
 div.js-actions .cc-bulkmode-badge:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
