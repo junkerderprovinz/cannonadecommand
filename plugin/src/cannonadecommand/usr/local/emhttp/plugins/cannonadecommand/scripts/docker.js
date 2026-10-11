@@ -145,7 +145,7 @@
   var limits = {}; // name to the configured caps {mem_bytes,nano_cpus,cpuset_cpus}, for the "limit set" dots
   var hostCpus = 0, hostCoreOf = [], hostMem = 0; // the host's logical CPU count, its hyperthread grouping and its total RAM
   var hostPCores = [], hostECores = []; // the P and E core lists of an Intel hybrid CPU, empty elsewhere
-  var filterText = "", gridHolder = null, openPop = null, openPopAnchor = null, menu = null, menuAnchor = null, menuStatusEl = null, toastEl = null, toastTimer = null;
+  var filterText = "", gridHolder = null, openPop = null, openPopAnchor = null, menu = null, menuAnchor = null, menuStatusEl = null, flashToast = null;
   var mo = null, dead = false, lastAdv = false, timers = [], moPending = false, moTimer = null, lastObsLoad = 0, moTrail = false;
   var ccFirstPaintDone = false;   // cleared once, in moSweep()
   var ccUpBg = "", ccUpFg = "";   // the update-pill colours, computed once per pass rather than per row
@@ -3192,7 +3192,7 @@
   // appears; statDot only makes the placeholder visible.
   function statSlot(row) { if (row && !row.querySelector(":scope > .cc-statdot")) row.appendChild(el("span", "cc-statdot cc-stat-slot")); }
   function statClear(row) { var d = row && row.querySelector(":scope > .cc-statdot"); if (d) { d.className = "cc-statdot cc-stat-slot"; d.textContent = ""; d.removeAttribute("data-tip"); d.removeAttribute("aria-label"); } }   // data-tip goes too: an invisible slot with a live tip would pop a bubble over nothing
-  // The backend or Docker rejection stays in the open window, where a 2.6s toast would be
+  // The backend or Docker rejection stays in the open window, where a 4s toast would be
   // unreadable, so the reason `docker update` refused can still be read back. It is the only
   // way to diagnose a set or remove failure once a stale install is ruled out. Also logged.
   function popError(e) {
@@ -3449,10 +3449,11 @@
   function flash(msg, bad) {
     try {
       if (menuStatusEl) { menuStatusEl.textContent = msg; menuStatusEl.className = "cc-menu-status " + (bad ? "cc-bad-text" : "cc-ok-text"); }
-      if (!toastEl) { toastEl = el("div", "cc-toast"); document.body.appendChild(toastEl); }
-      toastEl.textContent = msg; toastEl.className = "cc-toast cc-toast-show " + (bad ? "cc-bad-text" : "cc-ok-text");
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(function () { if (toastEl) toastEl.className = "cc-toast"; }, 2600);
+      // A progress note ("saving…") is rewritten by the result that follows it rather than
+      // stacking a second toast under it.
+      var kind = bad ? "error" : "";
+      if (!(flashToast && flashToast.update(msg, kind))) flashToast = window.CCTheme ? window.CCTheme.toast(msg, kind) : null;
+      if (!/…$/.test(msg)) flashToast = null;
     } catch (e) {}
   }
 
@@ -3646,7 +3647,7 @@
     });
   }
   // Every gear turns red while the daemon is unreachable, a standing health signal next to the
-  // "engine unreachable" toast, which lasts 2.6s and is easy to miss. Blue means up.
+  // "engine unreachable" toast, which lasts 4s and is easy to miss. Blue means up.
   function updateGearHealth() {
     try { var bad = daemonUp === false; Array.prototype.slice.call(document.querySelectorAll(".cc-hgear")).forEach(function (g) { g.classList.toggle("cc-hgear-down", bad); }); } catch (e) {}
   }

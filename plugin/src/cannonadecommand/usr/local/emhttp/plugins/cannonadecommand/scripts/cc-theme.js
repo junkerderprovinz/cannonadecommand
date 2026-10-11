@@ -515,13 +515,56 @@
     return ov;
   }
 
+  // The one toast every area uses (GlimStone, "Toasts"). Each lasts four seconds, a new one stacks
+  // under the last instead of replacing it, and hover or focus pauses the countdown and keeps what
+  // is left of it, so a toast under a resting pointer still expires once the pointer leaves. A
+  // click dismisses it. kind "error" or "ok" colours the text. The returned handle can rewrite the
+  // toast, which turns a progress note into its result without stacking a second toast.
+  var TOAST_MS = 4000;
+  function toast(msg, kind) {
+    if (!document.body || !msg) return null;
+    var stack = document.getElementById("cc-toasts");
+    if (!stack) {
+      stack = document.createElement("div"); stack.id = "cc-toasts";
+      stack.setAttribute("role", "status"); stack.setAttribute("aria-live", "polite");
+      document.body.appendChild(stack);
+    }
+    var el = document.createElement("div");
+    var left = TOAST_MS, started = 0, timer = 0, hover = false, focus = false, closed = false;
+    function paint(m, k) { el.className = "cc-toast" + (k === "error" ? " cc-toast-err" : k === "ok" ? " cc-toast-ok" : ""); el.textContent = m; }
+    function run() { if (closed || timer || hover || focus) return; started = Date.now(); timer = setTimeout(close, left); }
+    function pause() { if (!timer) return; clearTimeout(timer); timer = 0; left = Math.max(0, left - (Date.now() - started)); }
+    function close() {
+      if (closed) return;
+      closed = true; clearTimeout(timer); timer = 0;
+      el.classList.add("cc-toast-out");
+      // The fade-out reads its length from the motion level, none at "off".
+      var d = parseFloat(getComputedStyle(el).animationDuration) || 0;
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, d * 1000);
+    }
+    paint(msg, kind);
+    el.tabIndex = 0;
+    el.addEventListener("mouseenter", function () { hover = true; pause(); });
+    el.addEventListener("mouseleave", function () { hover = false; run(); });
+    el.addEventListener("focus", function () { focus = true; pause(); });
+    el.addEventListener("blur", function () { focus = false; run(); });
+    el.addEventListener("click", close);
+    stack.appendChild(el);
+    run();
+    return {
+      update: function (m, k) { if (closed) return false; paint(m, k); clearTimeout(timer); timer = 0; left = TOAST_MS; run(); return true; },
+      close: close,
+      isOpen: function () { return !closed; }
+    };
+  }
+
   window.CCTheme = {
     RB: RB, idealText: idealText, motionLevel: motionLevel, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects,
     registerSelectSync: registerSelectSync, nextSelIndex: nextSelIndex, wheelStepSelect: wheelStepSelect,
     gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily,
     CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG, delIcon: delIcon,
     lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark, liftLight: liftLight, lightTheme: lightTheme,
-    liftSurface: liftSurface, surfacePalette: surfacePalette,
+    liftSurface: liftSurface, surfacePalette: surfacePalette, toast: toast,
     icons: {
       MODES: ICON_MODES, SIMPLE_MAX: ICON_SIMPLE_MAX,
       globalMode: iconGlobalMode, mode: iconMode, override: iconOverride, setOverride: setIconOverride,

@@ -273,7 +273,7 @@ html.Theme--azure {
 html { --cc-r-1: 6px; --cc-r-2: 10px; --cc-r-3: 14px; }
 /* A soft accent halo on keyboard focus, distinct from hover: a glow, not a border line. color-mix
    supplies the alpha, and the fixed-accent line above it is the fallback without color-mix. */
-:is(.cc-b, .cc-actbtn, .cc-limbtn, .cc-btn, .cc-seg-btn, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core):focus-visible {
+:is(.cc-b, .cc-actbtn, .cc-limbtn, .cc-btn, .cc-seg-btn, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast):focus-visible {
   outline: none !important;
   box-shadow: 0 0 0 3px rgba(252, 196, 25, .42);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent);

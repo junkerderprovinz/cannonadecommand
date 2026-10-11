@@ -2227,20 +2227,9 @@
   function ccDisarmAdoptObs() {
     try { if (ccAdoptObs) { ccAdoptObs.disconnect(); ccAdoptObs = null; } if (ccTrigStyleObs) { ccTrigStyleObs.disconnect(); ccTrigStyleObs = null; } } catch (e) {}
   }
-  // One reusable bottom-centre notice, a single node the styling in Header.css dresses. It
-  // dismisses itself, and reduced motion is handled in the CSS.
-  var ccToastEl = null, ccToastT = 0;
-  function ccToast(msg, ms) {
-    try {
-      if (!document.body) return;
-      if (!ccToastEl) { ccToastEl = document.createElement("div"); ccToastEl.id = "cc-toast"; ccToastEl.setAttribute("role", "status"); ccToastEl.setAttribute("aria-live", "polite"); document.body.appendChild(ccToastEl); }
-      ccToastEl.textContent = msg;
-      ccToastEl.classList.add("cc-toast-show");
-      if (ccToastT) clearTimeout(ccToastT);
-      ccToastT = setTimeout(function () { ccToastT = 0; if (ccToastEl) ccToastEl.classList.remove("cc-toast-show"); }, ms || 2600);
-    } catch (e) {}
+  function ccToast(msg, kind) {
+    try { return window.CCTheme && window.CCTheme.toast ? window.CCTheme.toast(msg, kind) : null; } catch (e) { return null; }
   }
-  try { window.ccToast = ccToast; } catch (e) {}   // docker.js and settings.js reuse the same toast
   // The API settings sub-tabs are not the classic PHP form the rest of that page is: each is its own
   // Vue custom element with its own tag name, so no single tag covers them. They all carry
   // class="unapi" in the light DOM, which is the stable anchor, and they are styled through

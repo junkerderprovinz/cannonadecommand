@@ -532,9 +532,6 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 /* a colour-mode fill on hover, and no underline */
 .cc-menu-link:hover { text-decoration: none; background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 
-.cc-toast { position: fixed; right: 18px; bottom: 18px; z-index: 100000; background: #161616; color: #e6e6e6; border: none; border-radius: 8px; padding: 9px 14px; font: var(--cc-text-meta)/1.4 "Segoe UI", system-ui, sans-serif; box-shadow: 0 10px 30px rgba(0,0,0,.5); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .2s, transform .2s; max-width: 60vw; }
-.cc-toast-show { opacity: 1; transform: translateY(0); }
-
 /* A tight key shadow, a soft wide ambient one and an inner top highlight, so the popover reads as
    a raised, top-lit surface rather than a flat box, separated by light instead of a border line. A
    short fade and rise replaces the blink-on, and reduced motion drops it below. */
