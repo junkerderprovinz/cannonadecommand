@@ -116,6 +116,25 @@ console.log('\nCtrl+K reaches the settings search through the palette');
   ok('on other pages the palette has no such entry', !lst2.children.some((it) => it.pinned));
 }
 
+// The search badge lines up with the card grid's right edge. A tab with two cards and one with
+// six share the same grid tracks, so the badge has to stay where it is when the tab changes.
+console.log('\nThe search badge stays put from tab to tab');
+{
+  const grab = (name) => { const i = settings.indexOf('function ' + name + '('); let d = 0; for (let k = settings.indexOf('{', i); k < settings.length; k++) { if (settings[k] === '{') d++; else if (settings[k] === '}') { d--; if (!d) return settings.slice(i, k + 1); } } return ''; };
+  // a 1600px hero from x 20, a grid at x 20 with four 340px tracks and 16px gaps, so its edge is 1428
+  const badge = { margin: 0, style: { setProperty(k, v) { if (k === 'margin-right') badge.margin = parseFloat(v); }, removeProperty(k) { if (k === 'margin-right') badge.margin = 0; } }, getBoundingClientRect: () => ({ right: 1620 - badge.margin }) };
+  const tab = (cards) => ({ style: { display: '' }, getBoundingClientRect: () => ({ left: 20 }), querySelectorAll: () => Array.from({ length: cards }, (_, i) => ({ getBoundingClientRect: () => ({ width: 340, right: 20 + 340 * (i % 4 + 1) + 16 * (i % 4) }) })) });
+  const cs = () => ({ gridTemplateColumns: '340px 340px 340px 340px', paddingLeft: '0px', borderLeftWidth: '0px', columnGap: '16px' });
+  const at = (cards) => {
+    const SECS = [{ w: tab(cards) }];
+    new Function('document', 'SECS', 'getComputedStyle', grab('ccSetAlignSearch') + '\nccSetAlignSearch();')({ querySelector: () => badge }, SECS, cs);
+    return badge.getBoundingClientRect().right;
+  };
+  const wide = at(6), narrow = at(2);
+  ok('with a full row of cards the badge ends at the grid\'s edge', wide === 1428, String(wide));
+  ok('a tab with two cards leaves it there', narrow === wide, `${narrow} vs ${wide}`);
+}
+
 // The empty state stands in for the cards, dark like them on every theme, and its two lines
 // are text: both read at 4.5:1 on its own fill, whatever the theme.
 console.log('\nThe empty state reads, on every theme');

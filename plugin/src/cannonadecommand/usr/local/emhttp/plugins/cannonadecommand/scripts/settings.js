@@ -968,12 +968,13 @@
       ccSetAlignSearch();
     }
     // The hero row spans the full settings width, but the card grid has fixed columns packed from
-    // the left, so on a wide window the search badge sits well past where the cards end, by an
-    // amount that depends on the active tab's card count. The correction goes on the badge's own
-    // margin, not the hero's padding: the hero is content-box and shrinkable, so padding there is
-    // absorbed into the content width without moving its border-box edge, and a correction
-    // measured against that reference compounds rather than converging. Clearing the earlier
-    // correction first and measuring the natural position avoids that.
+    // the left, so on a wide window the search badge would sit well past the last column. It lines
+    // up with the grid's own column tracks, which auto-fill keeps whether a tab fills them or not,
+    // so the badge stays put from tab to tab. The correction goes on the badge's own margin, not
+    // the hero's padding: the hero is content-box and shrinkable, so padding there is absorbed into
+    // the content width without moving its border-box edge, and a correction measured against that
+    // reference compounds rather than converging. Clearing the earlier correction first and
+    // measuring the natural position avoids that.
     function ccSetAlignSearch() {
       try {
         var badge = document.querySelector(".cc-set-searchbadge");
@@ -981,13 +982,10 @@
         var activeWrap = null;
         for (var ai = 0; ai < SECS.length; ai++) { if (SECS[ai].w.style.display !== "none") { activeWrap = SECS[ai].w; break; } }
         if (!activeWrap) return;
-        var cards = activeWrap.querySelectorAll(".cc-set-card");
-        var contentRight = 0;
-        for (var ci = 0; ci < cards.length; ci++) {
-          var r = cards[ci].getBoundingClientRect();
-          if (r.width > 0 && r.right > contentRight) contentRight = r.right;
-        }
-        if (!contentRight) return;
+        var gs = getComputedStyle(activeWrap), tracks = gs.gridTemplateColumns.split(/\s+/).map(parseFloat).filter(function (n) { return n > 0; });
+        if (!tracks.length) return;
+        var contentRight = activeWrap.getBoundingClientRect().left + (parseFloat(gs.paddingLeft) || 0) + (parseFloat(gs.borderLeftWidth) || 0) +
+          tracks.reduce(function (a, b) { return a + b; }, 0) + (parseFloat(gs.columnGap) || 0) * (tracks.length - 1);
         badge.style.removeProperty("margin-right");
         var natural = badge.getBoundingClientRect().right;
         var delta = Math.round(natural - contentRight);
