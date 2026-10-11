@@ -1897,17 +1897,27 @@
         rd.readAsText(f);
       });
       im.addEventListener("click", function () { fin.click(); });
-      // A two-step reset that clears every cc.* key and the engine mirror, then reloads.
+      // Reset clears every cc.* key and the engine mirror and reloads, after a window has asked.
+      // The start plan and the engine config outside ui_settings stay.
       var rs = el("span", "cc-btn cc-set-xbtn", T("Alles zurücksetzen", "Reset all"));   // the colour of Export and Import beside it, never red
+      if (window.CCTheme) window.CCTheme.pressable(rs);   // focus comes back here when the window closes
       rs.addEventListener("click", function () {
-        if (rs.getAttribute("data-armed") !== "1") { rs.setAttribute("data-armed", "1"); rs.textContent = T("Wirklich? Nochmal klicken", "Sure? Click again"); setTimeout(function () { rs.setAttribute("data-armed", "0"); rs.textContent = T("Alles zurücksetzen", "Reset all"); }, 3500); return; }
+        if (!window.CCTheme || !window.CCTheme.ask) return;
+        window.CCTheme.ask({
+          title: T("Alle Einstellungen zurücksetzen?", "Reset all settings?"),
+          text: T("Alles, was CannonadeCommand im Browser speichert, also Farben, Form und Bereiche, geht auf den Standard zurück, die Kopie in der Engine auch. Danach lädt die Seite neu. Startplan, Zeitpläne, Limits und Benachrichtigungen bleiben.",
+            "Everything CannonadeCommand keeps in the browser, such as colours, shape and areas, goes back to its default, including the engine's copy, and the page reloads. The start plan, schedules, limits and notifications stay."),
+          ok: T("Zurücksetzen", "Reset"), cancel: T("Abbrechen", "Cancel"), danger: true, opener: rs, onOk: resetAll
+        });
+      });
+      function resetAll() {
         try {
           var kill = []; for (var i9 = 0; i9 < localStorage.length; i9++) { var k9 = localStorage.key(i9); if (k9 && /^cc[a-z]*\./.test(k9) && k9 !== "cc.stateCache") kill.push(k9); }
           kill.forEach(function (k9) { try { localStorage.removeItem(k9); } catch (e9) {} });
           withConfigLock(function () { return api("GET", "config").then(function (c) { if (!c || typeof c !== "object") return; c.ui_settings = {}; return api("PUT", "config", c); }); })
             .then(function () { location.reload(); }, function () { location.reload(); });
         } catch (e) { failed(rs, T("Zurücksetzen fehlgeschlagen: ", "Reset failed: ") + ((e && e.message) || e)); }
-      });
+      }
       var brow = el("div", "cc-set-row"); brow.appendChild(ex); brow.appendChild(im); brow.appendChild(rs);
       cX.appendChild(brow); cX.appendChild(fin);
     })();

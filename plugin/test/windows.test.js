@@ -256,7 +256,13 @@ console.log('\nThe sheet');
 
 console.log('\nThe windows that use it');
 {
-  const docker = read('scripts/docker.js'), vms = read('scripts/vms.js');
+  const docker = read('scripts/docker.js'), vms = read('scripts/vms.js'), settings = read('scripts/settings.js'), plugins = read('scripts/plugins.js'), header = read('scripts/header.js');
+  const all = { 'docker.js': docker, 'vms.js': vms, 'settings.js': settings, 'plugins.js': plugins, 'header.js': header };
+  for (const [f, src] of Object.entries(all)) {
+    ok(f + ': no window.prompt or window.confirm', !/\b(window\.)?(prompt|confirm)\(/.test(src.replace(/\/\/[^\n]*/g, '')));
+    ok(f + ': no generic "Sicher?" or "Are you sure?" title', !/"Sicher\?"|"Are you sure\?"/.test(src));
+    ok(f + ': no SweetAlert of its own', !/\bswal\(/.test(src));
+  }
   for (const fn of ['openEditor', 'openBandwidth', 'openLimits']) {
     const body = grabFn(docker, fn);
     ok(fn + ': a title badge naming the container', /el\("span", "cc-win-title cc-pop-ttl", .*?\+ ": " \+ name\)/.test(body));
@@ -278,6 +284,17 @@ console.log('\nThe windows that use it');
   ok('it is modal through the shared helper', /CT\.modal\(win, \{ opener: anchor/.test(vmEd));
   ok('no typed corner ✕ and no transparent click layer', !/✕/.test(vmEd) && !/cc-vmlim-ov/.test(vms + read('sheets/CannonadeCommand.VmTab.css')));
 
+  const create = grabFn(docker, 'ccOrgCreateFolder'), rename = grabFn(docker, 'ccOrgRenameFolder'), del = grabFn(docker, 'ccOrgDeleteFolder');
+  ok('a new folder is named in a window with a text field', /input: \{/.test(create) && /t\("newFolderTitle"\)/.test(create));
+  ok('a rename names the folder in the title and offers its old name', /t\("renameFolderTitle"\)\.replace\("%s", oldName/.test(rename) && /value: oldName/.test(rename));
+  ok('a delete names the folder and counts what moves up', /t\("deleteFolderTitle"\)\.replace\("%s"/.test(del) && /n === 1/.test(del) && /danger: true/.test(del));
+  const tde = /deleteFolderTitle: "([^"]+)"/.exec(docker);
+  ok('the German delete title says what happens', tde && tde[1] === 'Ordner „%s“ löschen?', tde && tde[1]);
+  const bulk = grabFn(docker, 'ccBulkRemove');
+  ok('the bulk remove counts the containers in its title', /count \+ " Container entfernen\?"/.test(bulk) && /"Remove " \+ count \+ " container"/.test(bulk));
+  ok('and its answer is a delete, never red', /danger: true/.test(bulk));
+  ok('Reset all asks in a window instead of arming itself', /CCTheme\.ask\(\{\s*title: T\("Alle Einstellungen zurücksetzen\?"/.test(settings) && !/data-armed/.test(settings) && !/Nochmal klicken|Click again/.test(settings));
+  ok('the plugin remove has no red confirm button', !/confirmButtonColor/.test(plugins) && /danger: true/.test(grabFn(plugins, 'ccPluginConfirm')));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

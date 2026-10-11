@@ -3394,14 +3394,13 @@
               } catch (e) { done++; }
             });
           };
-          if (typeof swal === "function") {
-            swal({
-              title: T("Ausgewählte Apps entfernen?", "Remove selected apps?"),
-              text: T(apps.length + " App(s) endgültig aus Previous Apps entfernen: ", "Permanently remove " + apps.length + " app(s) from Previous Apps: ") + names,
-              type: "warning", confirmButtonText: T("Ja, entfernen!", "Yes, remove them!"), cancelButtonText: T("Abbrechen", "Cancel"),
-              showCancelButton: true, showConfirmButton: true, allowOutsideClick: true
-            }, function (isConfirm) { if (isConfirm) go(); });
-          } else if (confirm(names)) { go(); }
+          if (!window.CCTheme || !window.CCTheme.ask) return;
+          var n = apps.length;
+          window.CCTheme.ask({
+            title: n === 1 ? T("1 App entfernen?", "Remove 1 app?") : T(n + " Apps entfernen?", "Remove " + n + " apps?"),
+            text: T("Sie werden endgültig aus „Previous Apps“ entfernt: ", "This removes them from “Previous Apps” for good: ") + names,
+            ok: T("Entfernen", "Remove"), cancel: T("Abbrechen", "Cancel"), danger: true, opener: delBtn, onOk: go
+          });
         });
         clearBtn.parentNode.insertBefore(delBtn, clearBtn.nextSibling);
       }

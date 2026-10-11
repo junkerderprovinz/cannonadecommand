@@ -134,17 +134,15 @@
   // colour on hover, so the whole row reacts.
   function reactive() { return ls("cc.rbmode") === "active"; }
   function restBg(i) { return reactive() ? "#2e2e2e" : colorFor(i); }
-  // Confirms a per-row plugin uninstall with a themed swal, like the container remove, in place of
-  // Unraid's separate confirm checkbox. Falls back to confirm() without SweetAlert.
-  function ccPluginConfirm(name, run) {
-    var txt = LANG === "de" ? '"' + name + '.plg" wird entfernt. Fortfahren?' : '"' + name + '.plg" will be removed. Continue?';
-    if (typeof window.swal === "function") {
-      window.swal({
-        title: LANG === "de" ? "Plugin entfernen?" : "Remove plugin?", text: txt, type: "warning",
-        showCancelButton: true, confirmButtonText: LANG === "de" ? "Löschen" : "Delete",
-        cancelButtonText: LANG === "de" ? "Abbrechen" : "Cancel", confirmButtonColor: "#c0392b"
-      }, function (ok) { if (ok) run(); });
-    } else if (window.confirm(txt)) { run(); }
+  // Asks before a per-row plugin uninstall, in a CannonadeCommand window in place of Unraid's
+  // separate confirm checkbox.
+  function ccPluginConfirm(name, run, opener) {
+    var de = LANG === "de";
+    window.CCTheme.ask({
+      title: de ? "Plugin „" + name + "“ entfernen?" : "Remove plugin “" + name + "”?",
+      text: de ? name + ".plg wird deinstalliert." : "This uninstalls " + name + ".plg.",
+      ok: de ? "Entfernen" : "Remove", cancel: de ? "Abbrechen" : "Cancel", danger: true, opener: opener, onOk: run
+    });
   }
   // One global tile size key (cc.sgsize, not eff-gated): s 48/62, m 62/78, l 76/94 [img, box].
   // docker.js does not run on this page, so the vars are stamped here for the docker.css
@@ -544,7 +542,7 @@
         rm.style.setProperty("display", "none", "important");
         var slug = (tr.id || "").trim() || "Plugin";
         var runNative; try { runNative = new Function(native); } catch (e) { runNative = function () {}; }
-        var ico = window.CCTheme.delIcon(LANG === "de" ? "Plugin löschen" : "Delete plugin", function () { ccPluginConfirm(slug, runNative); });
+        var ico = window.CCTheme.delIcon(LANG === "de" ? "Plugin löschen" : "Delete plugin", function () { ccPluginConfirm(slug, runNative, ico); });
         rm.parentNode.insertBefore(ico, rm.nextSibling);
         if (cb) cb.classList.add("cc-cb-hidden");
       }

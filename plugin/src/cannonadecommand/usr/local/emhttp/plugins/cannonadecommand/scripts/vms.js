@@ -514,12 +514,14 @@
           curG = g; cur.textContent = "  " + g + " GiB"; d.capacityBytes = g * 1073741824; inp.min = String(g);
         }).catch(function (e) { btn.disabled = false; statusEl.textContent = ""; ccvFail(btn, String(e.message || e)); });
       }
-      // A vDisk cannot shrink back without data loss, so a grow is confirmed first with the swal
-      // dialog VM removal uses, or confirm() without it.
-      var q = "vDisk " + d.target + ": " + curG + " GiB → " + g + " GiB. " + (VMDE ? "Das lässt sich nicht rückgängig machen." : "This cannot be undone.");
-      if (typeof window.swal === "function") {
-        window.swal({ title: VMDE ? "Sicher?" : "Are you sure?", text: q, type: "warning", showCancelButton: true, confirmButtonText: VMDE ? "Vergrößern" : "Grow", cancelButtonText: VMDE ? "Abbrechen" : "Cancel" }, function (ok) { if (ok) doResize(); });
-      } else if (window.confirm(q)) { doResize(); }
+      // A vDisk cannot shrink back without data loss, so a grow is asked first, in a window over
+      // the limits editor.
+      if (!window.CCTheme || !window.CCTheme.ask) return;
+      window.CCTheme.ask({
+        title: (VMDE ? "vDisk " + d.target + " vergrößern?" : "Grow vDisk " + d.target + "?"),
+        text: curG + " GiB → " + g + " GiB. " + (VMDE ? "Verkleinern lässt sie sich danach nicht mehr." : "It cannot be shrunk again."),
+        ok: VMDE ? "Vergrößern" : "Grow", cancel: VMDE ? "Abbrechen" : "Cancel", opener: btn, onOk: doResize
+      });
     };
     row.appendChild(lab); row.appendChild(inp); row.appendChild(unit); row.appendChild(btn);
     return row;
@@ -693,9 +695,16 @@
   function vmRemove(uuid, name, withDisks) {
     var de = LANG === "de";
     var run = function () { vmDisp(withDisks ? "domain-delete" : "domain-undefine", uuid); };
-    if (typeof window.swal === "function") {
-      window.swal({ title: de ? "Sicher?" : "Are you sure?", text: (withDisks ? (de ? "Vollstaendig ENTFERNEN " : "Completely REMOVE ") : (de ? "Definition entfernen: " : "Remove definition: ")) + name, type: "warning", showCancelButton: true, confirmButtonText: de ? "Fortfahren" : "Proceed", cancelButtonText: de ? "Abbrechen" : "Cancel" }, run);
-    } else if (window.confirm((de ? "Entfernen: " : "Remove: ") + name)) run();
+    if (!window.CCTheme || !window.CCTheme.ask) return;
+    window.CCTheme.ask(withDisks ? {
+      title: de ? "VM „" + name + "“ samt vDisks löschen?" : "Delete VM “" + name + "” and its vDisks?",
+      text: de ? "Die VM und ihre vDisks werden gelöscht. Das lässt sich nicht rückgängig machen." : "This deletes the VM and its vDisks. It cannot be undone.",
+      ok: de ? "Löschen" : "Delete", cancel: de ? "Abbrechen" : "Cancel", danger: true, onOk: run
+    } : {
+      title: de ? "VM „" + name + "“ entfernen?" : "Remove VM “" + name + "”?",
+      text: de ? "Die VM verschwindet aus der Liste. Ihre vDisks bleiben, wo sie sind." : "This takes the VM off the list. Its vDisks stay where they are.",
+      ok: de ? "Entfernen" : "Remove", cancel: de ? "Abbrechen" : "Cancel", danger: true, onOk: run
+    });
   }
   // As docker.js actionBars(): console/log/edit, then restart, pause or resume, stop or start and
   // "…", which opens console, hibernate, force stop, snapshot, clone and remove.
