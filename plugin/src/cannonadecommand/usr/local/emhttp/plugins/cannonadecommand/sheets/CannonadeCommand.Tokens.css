@@ -554,7 +554,7 @@ html.cc-popups-on a[class*="back_to"] {
   right: calc(var(--cc-content-rgap, 0px) + var(--cc-edge-gutter, 8px)) !important;   /* the content right edge: viewport gutter plus the boxed-mode gap */
   z-index: 9990 !important;                       /* above the page chrome, below the popup backdrops at 9998 */
   /* the badge carries the colour and the glyph reads on top of it, as every other CC badge does */
-  color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
   transform: translateY(calc(-1 * (var(--cc-footer-h, 0px) + var(--cc-actbar-h, 44px) + 8px))) !important;
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
   border-radius: var(--cc-radius-pill) !important;

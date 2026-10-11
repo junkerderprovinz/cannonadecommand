@@ -364,7 +364,7 @@ table:not(.cc-enh) #docker_list tr:is(.sortable, .folder-element) td.advanced:ha
 .cc-limbtn-set { color: var(--cc-ok-fg, #161616); background: var(--cc-ok, #6fdc8c); }
 /* With native state colours off, a set gear takes the palette or the accent like every other
    control; with them on it keeps the green. */
-html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
+html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; }
 
 /* the plan chip is one tappable Startplan badge in the accent */
 .cc-plan { cursor: pointer; background: var(--cc-accent, #FCC419); color: var(--cc-accent-text, #161616); }
@@ -535,8 +535,8 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 .cc-btn { background: #2e2e2e; color: #e6e6e6; border: none; border-radius: var(--cc-radius-pill); padding: 5px 12px; font-size: var(--cc-text-meta); cursor: pointer; transition: background .12s, color .12s, filter .12s; }
 /* A button reads the same three-tier colour chain as the badges: its own stamped slot, which
    paintPopChrome writes, then the shared rainbow accent, then the plain accent. */
-.cc-btn:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
-.cc-btn-primary { font-weight: 600; background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
+.cc-btn:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
+.cc-btn-primary { font-weight: 600; background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
 .cc-btn-primary:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }
 .cc-seg { display: inline-flex; border: none; border-radius: var(--cc-radius-pill); overflow: hidden; }
 .cc-seg-btn { background: var(--cc-bg2); color: var(--cc-dim); border: none; padding: 5px 14px; font-size: var(--cc-text-meta); cursor: pointer; }
@@ -611,7 +611,7 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
 /* The window's close control joins the colour rotation as a filled chip rather than a tinted
    glyph: a colour on the glyph disappears whenever the palette slot is dark, while a fill carries
    its own --cc-rb-ct contrast, which is why every CC badge is filled. */
-.cc-pop-x:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
+.cc-pop-x:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
 .cc-pop-row { display: flex; align-items: center; gap: 8px; padding: 8px 24px; }   /* an unwrapped row takes the full inset */
 /* The label column is a floor plus nowrap, not a fixed width: with a width, a label wider than the
    box wraps inside it and doubles the row height, while a floor lets the box grow and keeps one
@@ -721,8 +721,8 @@ select.cc-in { cursor: pointer; }
    weight against Unraid from a stylesheet, where those still work, and the reactive-neutral block
    later in this file is more specific again and keeps overriding these. */
 html .cc-pop .cc-btn, html .cc-menu .cc-btn { background: #2e2e2e !important; color: #e6e6e6 !important; border: none !important; }
-html .cc-pop .cc-btn:hover, html .cc-menu .cc-btn:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
-html .cc-pop .cc-btn-primary, html .cc-menu .cc-btn-primary { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
+html .cc-pop .cc-btn:hover, html .cc-menu .cc-btn:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; }
+html .cc-pop .cc-btn-primary, html .cc-menu .cc-btn-primary { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; }
 html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; }
 /* The plan editor groups its sections: plan fields, watchdog and schedules each get their own
    block, so the rows sit tight instead of drifting apart. */
@@ -805,14 +805,14 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { backgr
 }
 .cc-day { background: #2e2e2e; color: #9a9a9a; font-size: var(--cc-text-meta); transition: background .12s, color .12s; }
 /* both states read the standard three-tier chain, so a day chip rotates with the colour mode */
-.cc-day:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
-.cc-day-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
+.cc-day:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
+.cc-day-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
 /* The row's delete control. Its box comes from the shared `.cc-day, .cc-sched-x` rule above, and its
    colour is the chosen day chip's three-tier chain, since a delete is never painted red: the trash
    glyph and its tooltip say what it does. `margin-left: auto` pushes it to the row's right edge,
    away from the day chips it must not be mistaken for. The glyph is CC_TRASH_SVG from cc-theme.js,
    at the same ratio inside its box as the .cc-b-delicon button on the Plugins page. */
-.cc-sched-x { margin-left: auto; background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); transition: background-color .12s; }
+.cc-sched-x { margin-left: auto; background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); transition: background-color .12s; }
 .cc-sched-x svg { width: 15px; height: 15px; display: block; }
 .cc-sched-x:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }
 /* the CPU-pinning grid, like the VM settings: one clickable cell per logical core */
@@ -1731,7 +1731,7 @@ html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbar { display: fl
 html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortlbl { color: #9a9a9a; font-size: var(--cc-text-meta); }
 html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbtn { background: #262626; color: #c9c9c9; border: none; border-radius: var(--cc-radius-pill); padding: 4px 12px; font-size: var(--cc-text-meta); cursor: pointer; transition: background .12s, color .12s; }
 html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbtn:hover { background: #303030; }
-html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbtn.cc-alloc-sorton { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-accent-text, #161616); }
+html.cc-docker-on.cc-on-addct #dockerAllocations .cc-alloc-sortbtn.cc-alloc-sorton { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)); }
 /* the categories dropdownchecklist widget keeps its intrinsic width, so it is made to fill the
    value column and sit at its left edge like every other input */
 html.cc-docker-on.cc-on-addct #canvas #ddcl-catSelect,
