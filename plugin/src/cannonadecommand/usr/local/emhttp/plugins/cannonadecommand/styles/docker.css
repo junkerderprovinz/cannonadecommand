@@ -1130,7 +1130,6 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
 /* the segments are a pill group with no outer frame */
 #cc-settings .cc-seg { border: none !important; background: #232323; border-radius: var(--cc-radius-pill); padding: 3px; gap: 3px; overflow: visible; }
 #cc-settings .cc-seg-btn { border: 0 !important; border-radius: var(--cc-radius-pill); }
-#cc-settings .cc-set-disabled { opacity: .55; pointer-events: none; }
 .cc-set-head { display: flex; flex-direction: column; gap: 5px; padding: 6px 0 16px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
 .cc-set-hero { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 6px; }
 .cc-set-heroleft { display: flex; align-items: center; gap: 16px; }
@@ -1340,8 +1339,6 @@ button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-t
 .cc-set-foot { color: var(--dim2); font-size: var(--cc-text-meta); margin-top: 20px; }
 .cc-set-txt { flex: 1; min-width: 160px; background: #1e1e1e; color: var(--txt); border: 1px solid var(--line2); border-radius: var(--cc-radius-control); padding: 6px 9px; font-size: var(--cc-text-subline); font-family: inherit; }
 .cc-set-txt:focus { outline: none; border-color: var(--cc-accent, #FCC419); }
-#cc-settings .cc-set-save { margin-top: 12px; padding: 6px 16px; border-radius: var(--cc-radius-pill); }
-#cc-settings .cc-set-save[disabled] { opacity: .6; cursor: default; }
 /* the accent-colour picker: the field on top, the preset swatches below */
 .cc-set-lbl { font-size: var(--cc-text-subline); color: var(--dim); margin: 2px 0 7px; }
 .cc-set-pickrow { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }

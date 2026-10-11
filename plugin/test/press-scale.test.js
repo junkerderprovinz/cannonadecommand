@@ -29,7 +29,7 @@ const sel = rule[1] || '', body = rule[2] || '';
 ok('it scales through the scale property, from the level token', /^\s*scale:\s*var\(--cc-motion-press-scale, 1\);\s*$/.test(body), body.trim());
 ok('it sets no transform', !/transform/.test(body));
 ok('it waits for :active', /\):active/.test(sel));
-ok('a disabled control does not give way', /:not\(:disabled, \[aria-disabled="true"\], \.cc-set-disabled, \.cc-actoff\)/.test(sel));
+ok('a disabled control does not give way', /:not\(:disabled, \[aria-disabled="true"\], \.cc-actoff\)/.test(sel));
 
 console.log('\nThe buttons and clickable badges it reaches');
 const listed = (sel.match(/\.(cc|sl)-[a-z0-9-]+/g) || []).map((s) => s.slice(1));

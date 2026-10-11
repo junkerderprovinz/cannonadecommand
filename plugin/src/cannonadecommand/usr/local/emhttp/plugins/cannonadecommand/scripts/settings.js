@@ -190,7 +190,6 @@
   var shapeIface = "";       // the interface the egress shaping runs on; blank means eth0
   var notifyDirty = false;
   var shapeDirty = false;
-  var configLoaded = false;  // only after a successful initial GET
   // Every cc.* write is mirrored into the engine config: localStorage is per origin, so without
   // this the toggles apply only to the origin they were set on.
   var uiSyncT = null, uiPending = {};
@@ -1414,15 +1413,17 @@
 
     // Notifications are engine-side and saved to the flash.
     var c5 = card(T("Benachrichtigungen", "Notifications"), T("Warnungen bei Watchdog-Neustarts, fehlgeschlagenen Starts und Zeitplan-Fehlern.", "Alerts on watchdog restarts, failed starts and schedule errors."));
-    c5.appendChild(toggleRow(T("Unraid-Benachrichtigungen", "Unraid notifications"), notify.unraid, function (v) { notify.unraid = v; notifyDirty = true; }));
+    var nrow = el("div", "cc-set-row cc-set-inline"); nrow.appendChild(el("span", null, T("Unraid-Benachrichtigungen", "Unraid notifications")));
+    var ntg = toggle(notify.unraid, function (v) {
+      notify.unraid = v; notifyDirty = true;
+      saveNotify(ntg, function () { notify.unraid = !v; ntg._setOn(!v); });
+    });
+    nrow.appendChild(ntg); c5.appendChild(nrow);
     var wrow = el("div", "cc-set-row"); wrow.appendChild(el("span", "cc-set-rl", T("Webhook-URL", "Webhook URL")));
-    var win = el("input", "cc-set-txt"); win.type = "url"; win.placeholder = "https://…"; win.value = notify.webhook || "";
-    win.addEventListener("input", function () { notify.webhook = win.value.trim(); notifyDirty = true; });
+    var win = el("input", "cc-set-txt"); win.id = "cc-set-webhook"; win.type = "url"; win.placeholder = "https://…"; win.value = notify.webhook || "";
+    // a render in the meantime replaces the field, so the save looks it up again when it fires
+    win.addEventListener("input", function () { notify.webhook = win.value.trim(); notifyDirty = true; afterQuiet("notify", function () { saveNotify(document.getElementById("cc-set-webhook")); }); });
     wrow.appendChild(win); c5.appendChild(wrow);
-    // Save stays disabled until the config has been read once, so a save never lands on top of a
-    // config this page has not seen, and no initial read is left in flight to race it back.
-    var save5 = el("span", "cc-btn cc-btn-primary cc-set-save" + (configLoaded ? "" : " cc-set-disabled"), configLoaded ? T("Speichern", "Save") : T("lädt…", "loading…"));
-    save5.addEventListener("click", function () { if (configLoaded && !save5.classList.contains("cc-set-disabled")) saveNotify(save5); }); c5.appendChild(save5);
     wrap.appendChild(c5);
 
     // the engine's last CPU and RAM limit operations, with the values it verified afterwards
@@ -1440,12 +1441,10 @@
 
     var c6 = card(T("Bandbreite", "Bandwidth"), T("Schnittstelle im Container, auf der die Limits gesetzt werden. Leer heißt automatisch, also die Default-Route des Containers, und ist die Empfehlung. Pro-Container-Limits stellst du im Docker-Tab ein.", "The interface inside the container the limits are applied to. Blank means automatic, the container's default route, which is the recommendation. Per-container limits are set in the Docker tab."));
     var ifrow = el("div", "cc-set-row"); ifrow.appendChild(el("span", "cc-set-rl", T("Schnittstelle", "Interface")));
-    var ifin = el("input", "cc-set-txt"); ifin.type = "text"; ifin.placeholder = T("automatisch", "automatic"); ifin.value = shapeIface; ifin.maxLength = 15; ifin.spellcheck = false; ifin.setAttribute("list", "cc-iface-list");
+    var ifin = el("input", "cc-set-txt"); ifin.id = "cc-set-iface"; ifin.type = "text"; ifin.placeholder = T("automatisch", "automatic"); ifin.value = shapeIface; ifin.maxLength = 15; ifin.spellcheck = false; ifin.setAttribute("list", "cc-iface-list");
     var dl = el("datalist"); dl.id = "cc-iface-list"; ["eth0", "eth1", "eth2"].forEach(function (n) { var o = el("option"); o.value = n; dl.appendChild(o); });
-    ifin.addEventListener("input", function () { shapeIface = ifin.value.trim(); shapeDirty = true; });
+    ifin.addEventListener("input", function () { shapeIface = ifin.value.trim(); shapeDirty = true; afterQuiet("shape", function () { saveShape(document.getElementById("cc-set-iface")); }); });
     ifrow.appendChild(ifin); ifrow.appendChild(dl); c6.appendChild(ifrow);
-    var save6 = el("span", "cc-btn cc-btn-primary cc-set-save" + (configLoaded ? "" : " cc-set-disabled"), configLoaded ? T("Speichern", "Save") : T("lädt…", "loading…"));
-    save6.addEventListener("click", function () { if (configLoaded && !save6.classList.contains("cc-set-disabled")) saveShape(save6); }); c6.appendChild(save6);
     wrap.appendChild(c6);
 
     // A browser fires no storage event in the document that wrote the key, so the header and the
@@ -1898,34 +1897,28 @@
   // accent. Same shared painter every area now uses (cc-theme.js), called from the same render
   // chokepoint as paintToggles() so the two can never drift apart.
   function paintSelects() { try { if (window.CCTheme && window.CCTheme.paintSelects) window.CCTheme.paintSelects(root || document); } catch (e) {} }
-  function saveNotify(btn) {
-    btn.textContent = T("Speichere…", "Saving…"); btn.classList.add("cc-set-disabled");
-    function reset(txt) { btn.textContent = txt; setTimeout(function () { btn.textContent = T("Speichern", "Save"); btn.classList.remove("cc-set-disabled"); }, 1800); }
-    function refuse(msg) { btn.textContent = T("Speichern", "Save"); btn.classList.remove("cc-set-disabled"); failed(btn, msg); }
-    // Reads the live config, changes only the notify block and writes it back, so the schedules
-    // and watchdogs survive, including any set in the Docker tab since this page loaded. A failed
-    // read aborts without writing, so an engine outage cannot wipe the automation.
-    withConfigLock(function () {
+  // Notifications and the shaping interface save as they change: a switch at once, reverting when
+  // the engine refuses, and a text field once typing has been quiet for a moment, keeping what was
+  // typed. Each save reads the live config, changes its own field and writes it back, so the
+  // schedules, the watchdogs and the other card's field survive, and a failed read writes nothing.
+  function saveConfigField(change) {
+    return withConfigLock(function () {
       return api("GET", "config").then(function (c) {
         if (!c || typeof c !== "object") throw new Error("config unreadable");
-        c.notify = { unraid: !!notify.unraid, webhook: notify.webhook || "" };
-        return api("PUT", "config", c).then(function () { fullConfig = c; reset(T("Gespeichert ✓", "Saved ✓")); });
+        change(c);
+        return api("PUT", "config", c).then(function () { fullConfig = c; });
       });
-    }).catch(function () { refuse(T("Nicht gespeichert. Ist die Engine erreichbar?", "Not saved. Is the engine reachable?")); });
+    });
   }
-  // The same read, change and write for the shaping interface alone, so the notify block and
-  // every container's own settings survive. A validation error from the engine is shown as such.
-  function saveShape(btn) {
-    btn.textContent = T("Speichere…", "Saving…"); btn.classList.add("cc-set-disabled");
-    function reset(txt) { btn.textContent = txt; setTimeout(function () { btn.textContent = T("Speichern", "Save"); btn.classList.remove("cc-set-disabled"); }, 1800); }
-    function refuse(msg) { btn.textContent = T("Speichern", "Save"); btn.classList.remove("cc-set-disabled"); failed(btn, msg); }
-    withConfigLock(function () {
-      return api("GET", "config").then(function (c) {
-        if (!c || typeof c !== "object") throw new Error("config unreadable");
-        c.shape_iface = shapeIface || "";
-        return api("PUT", "config", c).then(function () { fullConfig = c; reset(T("Gespeichert ✓", "Saved ✓")); });
-      });
-    }).catch(function (e) { refuse(/bad shaping interface/.test(String(e && e.message)) ? T("Ungültige Schnittstelle", "Invalid interface") : T("Nicht gespeichert. Ist die Engine erreichbar?", "Not saved. Is the engine reachable?")); });
+  var quietT = {};
+  function afterQuiet(key, fn) { clearTimeout(quietT[key]); quietT[key] = setTimeout(fn, 800); }
+  function saveNotify(ctl, revert) {
+    return saveConfigField(function (c) { c.notify = { unraid: !!notify.unraid, webhook: notify.webhook || "" }; })
+      .catch(function () { if (revert) revert(); failed(ctl, T("Nicht gespeichert. Ist die Engine erreichbar?", "Not saved. Is the engine reachable?")); });
+  }
+  function saveShape(ctl) {
+    return saveConfigField(function (c) { c.shape_iface = shapeIface || ""; })
+      .catch(function (e) { failed(ctl, /bad shaping interface/.test(String(e && e.message)) ? T("Ungültige Schnittstelle", "Invalid interface") : T("Nicht gespeichert. Ist die Engine erreichbar?", "Not saved. Is the engine reachable?")); });
   }
   // dark text on a light background and white on a dark one, by perceived luminance
   function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.197 ? "#161616" : "#fff"; }
@@ -2081,16 +2074,14 @@
   // the engine down the defaults stay. An edit made during the round trip is kept rather than
   // overwritten.
   api("GET", "config").then(function (c) {
-    if (!c || typeof c !== "object") return; // unreadable, so Save stays disabled
+    if (!c || typeof c !== "object") return;
     fullConfig = { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: c.ui_settings || undefined };
-    configLoaded = true;
     adoptUISettings(c.ui_settings); // render() below shows the adopted values
     // The palette migration cleaned the incoming map in place, so it is written back; otherwise
     // the next load's adopt would restore the old key from the mirror.
     if (adoptUISettings._migrated) { try { api("PUT", "config", c); } catch (e8) {} }
     if (!c.ui_settings || !Object.keys(c.ui_settings).length) { var seed9 = collectUISettings(); if (Object.keys(seed9).length) { Object.keys(seed9).forEach(function (k9) { uiPending[k9] = 1; }); pushUISettings(); } } // seed the mirror
-    // An edit already in progress stays; otherwise the loaded values apply. Either way the
-    // re-render enables Save.
+    // An edit already in progress stays; otherwise the loaded values apply.
     if (!notifyDirty) notify = { unraid: !!fullConfig.notify.unraid, webhook: fullConfig.notify.webhook || "" };
     if (!shapeDirty) shapeIface = fullConfig.shape_iface || "";
     render();

@@ -106,8 +106,8 @@ console.log('\nsettings.js and vms.js');
   ok('settings.js routes through CCTheme.fail', /function failed\(ctl, msg\) \{ if \(window\.CCTheme\) window\.CCTheme\.fail\(ctl, msg\); \}/.test(settings));
   for (const fn of ['saveNotify', 'saveShape']) {
     const src = grabFn(settings, fn);
-    ok(fn + ' shakes its button and toasts on failure', /function refuse\(msg\) \{[^}]*failed\(btn, msg\); \}/.test(src) && /\.catch\(function \(e?\) \{ refuse\(/.test(src));
-    ok(fn + ' leaves no failure sentence on the button', !/reset\(T\("Fehler/.test(src));
+    ok(fn + ' shakes its control and toasts on failure', /\.catch\(function \(e?\) \{[^}]*failed\(ctl, /.test(src));
+    ok(fn + ' leaves no failure sentence on the page', !/textContent/.test(src));
   }
   ok('export, import and reset fail on their own buttons', /failed\(ex, /.test(settings) && (settings.match(/failed\(im, /g) || []).length === 3 && /failed\(rs, /.test(settings));
   ok('the inline notice under them is gone', !/cc-set-xnote/.test(settings));
