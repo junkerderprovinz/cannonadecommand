@@ -104,9 +104,6 @@
     };
     jQuery.fn.readmore.__ccPatched = true;
   })();
-  // The frontend version, which pkg_build.sh stamps at package time. It is shown next to the
-  // engine version, so a stale frontend can be told apart from a stale daemon.
-  var CC_VER = "@@CCVER@@"; if (CC_VER.indexOf("@@") === 0) CC_VER = "dev";
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
   // Mon-first day toggles; value is Go's time.Weekday (0=Sun..6=Sat).
   var DAYS = LANG === "de"
@@ -133,7 +130,6 @@
   var ccOrgView = null, ccOrgAvailable = false; // the cached docker.organizer GraphQL result; null while it is unloaded or unreachable
   var containers = [], containerNames = [], containersByName = {}, stats = {}, shiplog = {}, workingPlan = {}, lastRun = {}, iconCache = {};
   var netPrev = {}; // name to {rx,tx,t}, the previous cumulative counters, for the live rate
-  var daemonVersion = ""; // the running daemon's version from /api/state, shown in the gear menu
   // Whether the last /api/state reached the host daemon. The limits and bandwidth all need it
   // while the icon tint is pure client CSS, so a working tint with failing limits means the daemon
   // is unreachable rather than a broken feature, and the gear turns red and says so. null until
@@ -229,7 +225,6 @@
     if (state && state.host_pcores) hostPCores = state.host_pcores;
     if (state && state.host_ecores) hostECores = state.host_ecores;
     if (state && state.host_mem) hostMem = state.host_mem;
-    if (state && state.version) daemonVersion = state.version;
     containerNames = containers.map(function (c) { return c.name; }).sort();
     // containerByName() is called per row from syncStateBadges, syncActionBars and refreshStats,
     // the last of which runs every few seconds forever, so the names are indexed once here
@@ -2121,12 +2116,11 @@
     var m = el("div", "cc-menu cc-menu-wide");
     m.addEventListener("click", function (e) { e.stopPropagation(); });
     // Without the daemon the limits and bandwidth cannot work at all, so the status says so in
-    // red. With it, the running version is shown, so an update that did not restart the daemon,
-    // or a stale install, is visible here.
+    // red. The versions live in the settings page's Info tab.
     if (daemonUp === false) {
-      menuStatusEl = el("div", "cc-menu-status cc-bad-text", "engine down, daemon not reachable · UI v" + CC_VER);
+      menuStatusEl = el("div", "cc-menu-status cc-bad-text", "engine down, daemon not reachable");
     } else {
-      menuStatusEl = el("div", "cc-menu-status cc-ok-text", "engine up · " + containers.length + (daemonVersion ? " · v" + String(daemonVersion).replace(/^v/, "") : "") + " · UI v" + CC_VER);
+      menuStatusEl = el("div", "cc-menu-status cc-ok-text", "engine up · " + containers.length);
     }
     m.appendChild(menuStatusEl);
     // The list and grid choice belongs to the theming, so it is hidden with theming off.

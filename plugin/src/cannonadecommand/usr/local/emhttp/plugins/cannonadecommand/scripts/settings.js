@@ -46,7 +46,6 @@
       "#cc-settings .cc-set-searchbadge.cc-open{background:#2e2e2e}" +
       "#cc-settings .cc-set-searchbadge.cc-open .cc-set-search{width:220px;max-width:220px;padding:0 12px 0 2px}" +
       // the version line at the very bottom, centred and muted
-      "#cc-settings .cc-set-version-foot{margin:28px 0 6px;text-align:center;opacity:.55;font-size:var(--cc-text-meta)}" +
       // the native-display link as an accent button rather than the grey chip
       "#cc-settings .cc-btn.cc-btn-accent{background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
       "#cc-settings .cc-btn.cc-btn-accent:hover{background:var(--cc-accent-hover);color:var(--cc-accent-text, #161616)}" +
@@ -76,6 +75,12 @@
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
   var de = LANG === "de";
   function T(d, e) { return de ? d : e; }
+  var CC_VER = "@@CCVER@@"; if (CC_VER.indexOf("@@") === 0) CC_VER = "dev";
+  // the GlimStone version this UI is built against, bumped by hand whenever its files are recopied
+  var GLS_VER = "3.4.1";
+  var REPO = "https://github.com/junkerderprovinz/cannonadecommand";
+  var GLS_REPO = "https://github.com/junkerderprovinz/glimstone";
+  var LATEST_API = "https://api.github.com/repos/junkerderprovinz/cannonadecommand/releases/latest";
 
   var COLS = [
     { key: "update", label: T("Update-Status", "Update status") },
@@ -652,16 +657,6 @@
     hleft.appendChild(htx);
     hero.appendChild(hleft);
     head.appendChild(hero);
-    // The running engine's version, where it is easy to find: an old value after an update means
-    // the update did not take, or the daemon was not restarted.
-    var CC_VER = "@@CCVER@@"; if (CC_VER.indexOf("@@") === 0) CC_VER = "dev";
-    // the GlimStone version this UI is built against, bumped by hand whenever its files are recopied
-    var GLS_VER = "1.0.0";
-    // the line itself is appended to root after every wrap, at the very bottom of the page
-    var verLine = el("div", "cc-set-sub cc-set-version cc-set-version-foot", "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + T("Engine: verbinde…", "Engine: connecting…"));
-    api("GET", "state").then(function (s) {
-      verLine.textContent = "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + ((s && s.version) ? ("Engine " + String(s.version).replace(/^v/, "v")) + " · " + T("läuft", "running") : T("Engine läuft (Version unbekannt)", "Engine running (version unknown)"));
-    }).catch(function (e) { verLine.textContent = "UI v" + CC_VER + " · GlimStone v" + GLS_VER + " · " + T("Engine nicht erreichbar", "Engine not reachable") + ": " + (e && e.message ? e.message : ""); verLine.style.color = "var(--cc-err-ink, #ff8389)"; });
     // The settings search filters cards and rows across every tab. It sits at the right of the
     // hero as a badge with a magnifier that expands into the input on click.
     var setSearch = el("input", "cc-set-search"); setSearch.type = "search"; setSearch.placeholder = T("Einstellungen durchsuchen …", "Search settings …"); setSearch.spellcheck = false;
@@ -690,6 +685,7 @@
     var wrapSettings = el("div", "cc-set-wrap");
     var wrapTools = el("div", "cc-set-wrap");   // Werkzeuge shares the /Settings grid config, since Unraid renders both landing pages alike
     var wrapFavorites = el("div", "cc-set-wrap");
+    var wrapInfo = el("div", "cc-set-wrap");
     var wrapStart = el("div", "cc-set-wrap");
     var wrapMain = el("div", "cc-set-wrap");    // Allgemein, which also hosts the export and import card
     // Each area's adopt key, "1" or unset while it follows the global badge colour and "0" once it
@@ -919,6 +915,7 @@
     ].map(function (s9, i9) { return { s: s9, i: i9, r: navRank(s9.tabs) }; })
       .sort(function (a9, b9) { return (a9.r < 0 ? 1e9 + a9.i : a9.r) - (b9.r < 0 ? 1e9 + b9.i : b9.r) || a9.i - b9.i; })
       .forEach(function (d9) { SECS.push(d9.s); });
+    SECS.push({ id: "info", t: T("Info", "Info"), w: wrapInfo, key: null });   // GlimStone's Info tile comes last
     var tabBtns = [];
     function areaOn(key) { return !key || localStorage.getItem(key) !== "0"; }
     function showSec(i) {
@@ -1010,8 +1007,7 @@
     });
     root.appendChild(tabRow);
     alignSetTabs(); // indent the strip to the first main-menu tab
-    root.appendChild(wrapMain); root.appendChild(wrapStart); root.appendChild(wrapHeader); root.appendChild(wrapShares); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms); root.appendChild(wrapSettings); root.appendChild(wrapTools); root.appendChild(wrapFavorites);
-    root.appendChild(verLine); // the version sits at the very bottom, after every wrap
+    root.appendChild(wrapMain); root.appendChild(wrapStart); root.appendChild(wrapHeader); root.appendChild(wrapShares); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms); root.appendChild(wrapSettings); root.appendChild(wrapTools); root.appendChild(wrapFavorites); root.appendChild(wrapInfo);
 
     // The picker stays visible with a hex field beside it, both editing the same value and staying
     // in sync. It is embedded rather than an <input type=color>, which opens an OS dialog in a
@@ -1880,6 +1876,41 @@
       var brow = el("div", "cc-set-row"); brow.appendChild(ex); brow.appendChild(im); brow.appendChild(rs);
       cX.appendChild(brow); cX.appendChild(fin);
     })();
+    // The Info tab in GlimStone's order: Version, Help, About.
+    (function () {
+      var cVer = card(T("Version", "Version"));
+      cVer.appendChild(versionRow("UI", verLink(CC_VER, REPO)));
+      var engine = el("span", "cc-set-ver", "…");
+      cVer.appendChild(versionRow("Engine", engine));
+      cVer.appendChild(versionRow("GlimStone", verLink(GLS_VER, GLS_REPO)));
+      // the version of the daemon that is running, so an update that did not restart it shows
+      api("GET", "state").then(function (st) {
+        if (st && st.version) engine.parentNode.replaceChild(verLink(String(st.version), REPO), engine);
+        else engine.textContent = T("unbekannt", "unknown");
+      }).catch(function () { engine.textContent = T("nicht erreichbar", "not reachable"); engine.classList.add("cc-set-verbad"); });
+      var crow = el("div", "cc-set-btnrow");
+      var chk = actionBtn(T("Nach Updates suchen", "Check for updates"), "cc-btn cc-set-xbtn cc-set-check", function () { checkUpdates(chk); });
+      crow.appendChild(chk); cVer.appendChild(crow);
+      wrapInfo.appendChild(cVer);
+
+      var cHelp = card(T("Hilfe", "Help"));
+      cHelp.appendChild(el("p", "cc-set-prose", T("Probleme, Wünsche oder Vorschläge? Mach gern ein Issue auf GitHub auf.", "Problems, wishes or suggestions? You're welcome to open an issue on GitHub.")));
+      var hrow = el("div", "cc-set-btnrow");
+      hrow.appendChild(linkBtn("GitHub", REPO + "/issues"));
+      hrow.appendChild(linkBtn(T("Fehlerbericht", "Bug report"), REPO + "/issues/new/choose"));
+      cHelp.appendChild(hrow);
+      wrapInfo.appendChild(cHelp);
+
+      var cAbout = card(T("Über", "About"));
+      cAbout.appendChild(el("p", "cc-set-prose", T("CannonadeCommand ist ein kostenloses Plugin für Unraids Docker-, Plugin- und VM-Tabs, gebaut von einem einzelnen Ritter an Abenden und Wochenenden, ohne Konto, ohne Telemetrie und ohne Werbung.", "CannonadeCommand is a free plugin for Unraid's Docker, Plugins and VM tabs, built by one knight on evenings and weekends, with no accounts, no telemetry and no ads.")));
+      cAbout.appendChild(el("p", "cc-set-prose", T("Wenn es sich einen Platz auf deinem Server verdient hat, wirf deinem Ritter eine Münze zu: Das hilft bei den Kosten und hält das Projekt am Leben.", "If it has earned a place on your server, toss a coin to your knight: it helps cover the costs and keeps the project alive.")));
+      var give = el("div", "cc-set-btnrow cc-set-give");
+      give.appendChild(linkBtn("Buy Me a Coffee", "https://buymeacoffee.com/junkerderprovinz"));
+      give.appendChild(linkBtn("PayPal", "https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS"));
+      give.appendChild(linkBtn(T("Krypto", "Crypto"), "https://junkerderprovinz.github.io/junkerderprovinz/"));
+      cAbout.appendChild(give);
+      wrapInfo.appendChild(cAbout);
+    })();
     refreshTabs();
     // cc.settab holds a section id; an older numeric index, or anything unknown, lands on the
     // first section.
@@ -1973,6 +2004,53 @@
   // switch, carrying its own badge's colour and the ink for its knob.
   function ccTick(c) { return "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='" + encodeURIComponent(c) + "' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>\")"; }
   function chkCell(key, v, color) { var td = el("td", "cc-set-chk"); var cb = el("input", "cc-cb"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); if (rainbow && color) { cb.style.setProperty("--cc-rb-c", color); cb.style.setProperty("--cc-rb-ct", idealText(color)); } cb.addEventListener("change", function () { var cur = colview[key] || { s: true, a: true }; colview[key] = { s: cur.s, a: cur.a }; colview[key][v] = cb.checked; set("cc.colview2", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
+  function versionRow(name, value) {
+    var row = el("div", "cc-set-row cc-set-inline");
+    row.appendChild(el("span", null, name)); row.appendChild(value);
+    return row;
+  }
+  // A version links to its own release page. A build with no release behind it, such as a dev
+  // build, shows its name without a link, since the link would lead nowhere.
+  function verLink(ver, repo) {
+    var v = String(ver || "").replace(/^v/, "");
+    if (!/^\d+\.\d+\.\d+$/.test(v)) return el("span", "cc-set-ver", v);
+    var a = el("a", "cc-btn cc-set-ver", "v" + v);
+    a.href = repo + "/releases/tag/v" + v; a.target = "_blank"; a.rel = "noopener noreferrer";
+    return a;
+  }
+  function linkBtn(text, href) {
+    var a = el("a", "cc-btn cc-set-xbtn", text);
+    a.href = href; a.target = "_blank"; a.rel = "noopener noreferrer";
+    return a;
+  }
+  // Positive when version a is newer than b. A current version that is no release number, a dev
+  // build, counts as older than any release.
+  function verCmp(a, b) {
+    function parts(v) { var m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(String(v || "")); return m ? [+m[1], +m[2], +m[3]] : null; }
+    var pa = parts(a), pb = parts(b);
+    if (!pa) return 0;
+    if (!pb) return 1;
+    for (var i = 0; i < 3; i++) if (pa[i] !== pb[i]) return pa[i] - pb[i];
+    return 0;
+  }
+  // The check shows its verdict on the button itself: green when this build is the latest
+  // release, orange with the newer number, red and shaken when the check fails.
+  function checkUpdates(btn) {
+    btn.classList.remove("cc-set-chk-ok", "cc-set-chk-new", "cc-set-chk-bad");
+    btn.textContent = T("Prüfe …", "Checking …");
+    return fetch(LATEST_API, { headers: { Accept: "application/vnd.github+json" } })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) {
+        var latest = String((j && j.tag_name) || "").replace(/^v/, "");
+        if (!/^\d+\.\d+\.\d+$/.test(latest)) throw new Error(T("keine Versionsnummer in der Antwort", "no version number in the answer"));
+        if (verCmp(latest, CC_VER) > 0) { btn.classList.add("cc-set-chk-new"); btn.textContent = T("v" + latest + " verfügbar", "v" + latest + " available"); }
+        else { btn.classList.add("cc-set-chk-ok"); btn.textContent = T("Aktuell", "Up to date"); }
+      })
+      .catch(function (e) {
+        btn.classList.add("cc-set-chk-bad"); btn.textContent = T("Prüfung fehlgeschlagen", "Check failed");
+        failed(btn, T("Die Update-Prüfung ist fehlgeschlagen: ", "The update check failed: ") + ((e && e.message) || e));
+      });
+  }
   // A span with the button role, since Unraid's global button CSS would bloat a real button.
   function actionBtn(text, cls, run) {
     var b = el("span", cls, text);

@@ -334,7 +334,7 @@ const BARE_CC = /(^|[^A-Za-z0-9_])CC(-[A-Za-zÄÖÜäöü]|[^A-Za-z0-9_-]|$)/;
 ok(/CannonadeCommand startet sie zuerst/.test(src) && /CannonadeCommand starts them first/.test(src), '"Hängt ab von" names the product in full, in German and English');
 ok(/bevor CannonadeCommand stoppt/.test(src) && /before CannonadeCommand stops it/.test(src), 'so does the idle-stop bubble, in both');
 // The other half: the source-code prefix a blind find-and-replace would destroy.
-ok(/cc-pop-lbl/.test(css) && /CC_VER/.test(src) && /"cc\.rainbow"/.test(src), 'the cc- class namespace, the CC_* constants and the cc.* keys stay as they are');
+ok(/cc-pop-lbl/.test(css) && /CC_GEAR_SVG/.test(src) && /"cc\.rainbow"/.test(src), 'the cc- class namespace, the CC_* constants and the cc.* keys stay as they are');
 
 console.log('\n' + (fail ? 'FAILED ' + fail + ' of ' + (pass + fail) : 'OK  ' + pass + ' passed'));
 process.exit(fail ? 1 : 0);

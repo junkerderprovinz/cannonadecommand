@@ -1135,7 +1135,6 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
 .cc-set-heroleft { display: flex; align-items: center; gap: 16px; }
 .cc-set-logo { width: 64px; height: 64px; border-radius: var(--cc-radius-control); display: block; }
 .cc-set-claim { color: var(--dim); font-size: var(--cc-text-subline); font-style: italic; margin-top: 2px; }
-.cc-set-version { margin-left: auto; text-align: right; align-self: center; }
 /* The strip wraps rather than scrolling and hugs its tabs on one row; settings.js sizeSetTabs pins
    every tab to the widest one and spreads a wrapped strip evenly over its rows. The 6px gap is the
    main menu bar's own 0 3px per tab, and TAB_GAP in settings.js repeats it. */
@@ -1155,7 +1154,6 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
    instead, so on a light theme they take the page's ink. */
 html.Theme--white #cc-settings .cc-set-heroleft,
 html.Theme--azure #cc-settings .cc-set-heroleft { --txt: var(--cc-text, #1c1c1c); --dim: var(--cc-text-dim, #545454); color: var(--txt); }
-.cc-set-sub { color: var(--dim2); font-size: var(--cc-text-subline); }
 /* Fixed-width cards packed from the left, so they do not stretch on a wide window. Stacked cards
    keep GlimStone's 40px rhythm, since every card's title badge reaches into the gap above it. */
 .cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fill, 340px); gap: 40px 16px; justify-content: start; }
@@ -1172,7 +1170,6 @@ html.Theme--azure #cc-settings .cc-set-heroleft { --txt: var(--cc-text, #1c1c1c)
   text-transform: uppercase; letter-spacing: .6px;
 }
 .cc-set-h .cc-info { color: inherit; opacity: 1; }
-.cc-set-card .cc-set-sub { margin-bottom: 12px; }
 .cc-set-card .cc-set-row, .cc-set-card .cc-set-swatches, .cc-set-card .cc-set-lbl { margin-top: 12px; }
 .cc-set-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; flex-wrap: wrap; }
 .cc-set-card .cc-set-inline { justify-content: space-between; flex-wrap: nowrap; } /* label left, toggle flush right, so the toggles line up */
@@ -1285,6 +1282,24 @@ html.cc-tools-rbneutral #cc-settings .cc-dsel-opt.is-selected {
    infoIcon(tip) emits <span class="cc-info" data-tip="…">, neutral, never accent, and header.js's
    floating bubble shows the text. */
 .cc-set-lblwrap { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+/* The Info tab. Unraid paints every link in its theme colour, so a link drawn as a button takes
+   the button's ink back. A version number is a link to its release page, in tabular figures. */
+#cc-settings a.cc-btn, #cc-settings a.cc-btn:link, #cc-settings a.cc-btn:visited { color: #e6e6e6; text-decoration: none; }
+#cc-settings a.cc-btn:hover, #cc-settings a.cc-btn:focus-visible { color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
+.cc-set-ver { font-variant-numeric: tabular-nums lining-nums; }
+.cc-set-verbad { color: var(--cc-err-ink, #ff8389); }
+.cc-set-prose { margin: 12px 0 0; line-height: 1.5; }
+.cc-set-btnrow { display: flex; flex-wrap: wrap; align-items: center; }
+/* the give row stands a blank line below its sentence, as GlimStone's About card asks */
+.cc-set-give { padding-top: 9px; }
+/* The update check shows its verdict on itself in the state colours, which no colour mode
+   touches; the word changes with the colour, so colour is never the only signal. */
+#cc-settings .cc-set-check.cc-set-chk-ok { background: var(--cc-ok, #6fdc8c); color: var(--cc-ok-fg, #161616); }
+#cc-settings .cc-set-check.cc-set-chk-ok:hover { background: var(--cc-ok-hover); }
+#cc-settings .cc-set-check.cc-set-chk-new { background: var(--cc-warn, #ff832b); color: var(--cc-warn-fg, #161616); }
+#cc-settings .cc-set-check.cc-set-chk-new:hover { background: var(--cc-warn-hover); }
+#cc-settings .cc-set-check.cc-set-chk-bad { background: var(--cc-err, #ff8389); color: var(--cc-err-fg, #161616); }
+#cc-settings .cc-set-check.cc-set-chk-bad:hover { background: var(--cc-err-hover); }
 /* an area's own colour beside its name in the area colours card */
 .cc-set-excdot { width: 14px; height: 14px; flex: none; border-radius: var(--cc-radius-pill); }
 .cc-info { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; background: none; color: var(--txt, #e6e6e6); opacity: .8; cursor: help; position: relative; flex: 0 0 auto; }
