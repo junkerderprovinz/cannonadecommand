@@ -539,6 +539,10 @@ html.cc-badge-glass .cc-set-toggle > *,
 html.cc-badge-glass.cc-docker-iconbg #docker_list td.ct-name .outer > span.hand > *,
 html.cc-badge-glass.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand > *,
 html.cc-badge-glass.cc-plugins-iconbg .cc-plugico > * { position: relative; z-index: 2; }
+/* The row actions and the limit gears are painted inline, so a hover background in a sheet never
+   shows; the wash steps whatever fill they carry, on Docker and VMs alike. It outweighs the glass
+   shadow above, as the wash on the other badges does. */
+html :is(.cc-actbtn:not(.cc-actoff), .cc-limbtn):hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 
 /* Unraid's quick-scroll arrows (a.move_to_end, a.move_to_top, fixed bottom right, stock red): they
    take the CC accent, a transform lifts them above the docked action bar and footer so they clear

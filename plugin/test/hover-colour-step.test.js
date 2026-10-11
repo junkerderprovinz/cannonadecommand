@@ -69,5 +69,26 @@ console.log('\nThe step follows the fill it sits on');
   ok('the settings page injects no brightness hover', !/:hover\{[^}]*brightness/.test(settings));
 }
 
+// The row actions and limit gears carry an inline !important background, so a hover
+// background from a sheet loses to it; only the wash, resolved across every sheet the
+// page loads, can show the step.
+console.log('\nAn inline-painted control steps under the pointer, whatever else styles it');
+{
+  const { candidates } = require('./cascade');
+  const WASH = 'inset 0 0 0 100vmax var(--cc-hover-wash)';
+  const CTLS = {
+    'a row action': ['cc-actbtn'],
+    'an idle limit gear': ['cc-limbtn', 'cc-lim-cpu'],
+    'a set limit gear': ['cc-limbtn', 'cc-limbtn-set', 'cc-lim-bw'],
+  };
+  for (const [what, classes] of Object.entries(CTLS)) for (const page of ['docker', 'every']) {
+    const c = candidates(page, { tag: 'span', classes, attrs: { class: classes.join(' '), 'data-tip': 'x' }, states: { hover: true } }, 'box-shadow');
+    const w = c[c.length - 1];
+    ok(`${page === 'docker' ? 'Docker' : 'VMs and every other'} page: ${what} takes the wash on hover`, !!w && w.value === WASH, w && w.sheet + ' ' + w.selector + ' => ' + w.value);
+  }
+  const off = candidates('docker', { tag: 'span', classes: ['cc-actbtn', 'cc-actoff'], attrs: { class: 'cc-actbtn cc-actoff' }, states: { hover: true } }, 'box-shadow');
+  ok('a greyed placeholder action does not answer the pointer', !off.some((x) => x.value === WASH));
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);
