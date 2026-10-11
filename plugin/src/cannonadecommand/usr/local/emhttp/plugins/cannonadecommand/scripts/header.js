@@ -533,7 +533,7 @@
       for (var gi = 0; gi < glinks.length; gi++) { if (glinks[gi].querySelector("svg") && !(glinks[gi].textContent || "").trim()) { gear = glinks[gi]; break; } }
       if (gear && !gear.getAttribute("data-cc-tip")) { gear.setAttribute("data-cc-tip", T("Benachrichtigungs-Einstellungen", "Notification settings")); gear.removeAttribute("title"); }  // the same frameless bubble the two bulk icons get
       var ICON_ARCH = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><path d="M2 5a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2z" /><path d="M19 9c.513 0 .936 .463 .993 1.06l.007 .14v7.2c0 1.917 -1.249 3.484 -2.824 3.594l-.176 .006h-10c-1.598 0 -2.904 -1.499 -2.995 -3.388l-.005 -.212v-7.2c0 -.663 .448 -1.2 1 -1.2h14zm-5 2h-4l-.117 .007a1 1 0 0 0 0 1.986l.117 .007h4l.117 -.007a1 1 0 0 0 0 -1.986l-.117 -.007z" /></svg>';   // tabler filled/archive
-      var ICON_DEL = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none" aria-hidden="true"><path d="M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007zm-10 4a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1m4 0a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1" /><path d="M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005z" /></svg>';   // tabler filled/trash
+      var ICON_DEL = (window.CCTheme && window.CCTheme.CC_TRASH_SVG) || "";   // the one trash can, from cc-theme.js
       function badge(icon, label, cls, onAct) {
         var b = arch.cloneNode(true);                                              // the native look without its Vue handler
         b.removeAttribute("id"); b.className = arch.className + " cc-notif-badge cc-notif-iconbtn " + cls;
@@ -1454,6 +1454,14 @@
   // change, so the native onchange chains still fire. The panel is fixed, which escapes the
   // overflow clipping, and flips upward when there is more room above.
   function ccMkEl(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+  // A GlimStone glyph from cc-theme.js as an element, for the glyphs CC adds to Unraid's and CA's
+  // pages; their own icons keep their Font Awesome.
+  function ccGlyphEl(name, cls) {
+    var s = ccMkEl("span"); s.innerHTML = window.CCTheme && window.CCTheme.glyph ? window.CCTheme.glyph(name) : "";
+    var svg = s.firstChild || s;
+    if (cls) svg.classList.add(cls);
+    return svg;
+  }
   var ccTselDocBound = false;
   function ccBindTselDoc() {
     if (ccTselDocBound) return; ccTselDocBound = true;
@@ -1596,7 +1604,7 @@
           chip.appendChild(flagWrap);
           ccLangFlagImg(flagWrap, p.code);
           chip.appendChild(ccMkEl("span", "cc-tsel-avail-name", p.local || p.name || p.code));
-          chip.appendChild(ccMkEl("i", "fa fa-download cc-tsel-avail-dl"));
+          chip.appendChild(ccGlyphEl("Download", "cc-tsel-avail-dl"));
           chip.setAttribute("role", "option"); chip.setAttribute("tabindex", "-1");
           chip.title = LANG === "de" ? "Nicht installiert, klicken, um es in Community Applications zu finden" : "Not installed, click to find it in Community Applications";
           chip.addEventListener("click", function (ev) {
@@ -3056,7 +3064,7 @@
     var dateEl = area.querySelector(".spotlightDate");
     var dateTxt = dateEl ? dateEl.textContent.trim() : "";
     area.textContent = ""; // CA's own icon and date pill give way to the star below
-    var star = document.createElement("i"); star.className = "fa fa-star"; area.appendChild(star);
+    area.appendChild(ccGlyphEl("Star"));
     if (dateTxt) area.title = dateTxt;
   }
   // The app-info side drawer is restructured into the same badge-card system the notification
@@ -3084,7 +3092,7 @@
     var closeBtn = sc.querySelector(".popUpClose");
     if (closeBtn) {
       closeBtn.textContent = ""; closeBtn.classList.add("cc-ic-close");
-      closeBtn.appendChild(ccMkEl("i", "fa fa-times"));
+      closeBtn.appendChild(ccGlyphEl("Close"));
       closeBtn.title = T("Schließen", "Close"); closeBtn.setAttribute("aria-label", closeBtn.title);
     }
     // The spotlight becomes a star beside the app name, matching the card's own badge, and the
@@ -3095,7 +3103,7 @@
     var nameEl = sc.querySelector(".popupName");
     if (spotBlock && nameEl && !nameEl.querySelector(".cc-ic-spot")) {
       var star = ccMkEl("span", "cc-ic-spot");
-      star.appendChild(ccMkEl("i", "fa fa-star"));
+      star.appendChild(ccGlyphEl("Star"));
       var msgEl = spotBlock.querySelector(".spotlightMessage"), whoEl = spotBlock.querySelector(".spotlightWho");
       // the attribution already carries a leading dash, which would double up with the separator
       var tipParts = [msgEl, whoEl].map(function (e) { return e ? e.textContent.trim().replace(/^-\s*/, "") : ""; }).filter(Boolean);
@@ -3175,7 +3183,7 @@
     native.style.setProperty("display", "none", "important"); // the badge replaces the inline glyph
     if (holder.querySelector(".cc-warn-badge")) return;
     var badge = document.createElement("span"); badge.className = "cc-warn-badge";
-    badge.appendChild(document.createElement("i")).className = "fa fa-exclamation-triangle";
+    badge.appendChild(ccGlyphEl("Warning"));
     badge.title = native.getAttribute("title") || (LANG === "de" ? "Hinweis vorhanden" : "Note available");
     badge.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); var infoBtn = holder.querySelector(".infoButton"); if (infoBtn) infoBtn.click(); });
     holder.appendChild(badge);

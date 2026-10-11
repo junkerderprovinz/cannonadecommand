@@ -928,7 +928,7 @@
         b.href = "#";
         b.setAttribute("data-cc-colreset", cfg.key);
         b.setAttribute("data-cc-tip", mtText("Reset column widths"));
-        var ic = document.createElement("i"); ic.className = "fa fa-undo"; b.appendChild(ic);
+        b.innerHTML = window.CCTheme && window.CCTheme.glyph ? window.CCTheme.glyph("Restore") : "";
         b.addEventListener("click", function (e) { e.preventDefault(); reset(); apply(); });
         cfg.place(host, b);
       } catch (e) {}

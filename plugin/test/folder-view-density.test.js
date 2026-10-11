@@ -91,6 +91,7 @@ const dockerApi = new Function('document', 'localStorage',
   'var filterText = "";\n' +
   'var mode = "list";\n' +               // the view mode, so setFolderDensity() never calls renderFolderView()
   'var unpauseGrace = {};\n' +
+  'function ccGlyph(n) { return "<glyph " + n + ">"; }\n' +   // cc-theme.js draws the glyph; its name is enough here
   grabVar('STATE_LABELS') + '\n' +
   grabVar('FOLDER_DENSITY_KEY') + '\n' +
   grabFn('el') + '\n' + grabFn('norm') + '\n' + grabFn('t') + '\n' +
@@ -130,7 +131,7 @@ console.log('\nThe "Grid" density: folderChip() builds an icon, a name, a dot, a
   ok('one action control, not an action bar', !!actWrap && actWrap.children.length === 1);
   const btn = actWrap && actWrap.children[0];
   ok('the button is actBtn(), the same machinery the full card uses', !!btn && btn.classList.contains('cc-actbtn'));
-  ok('for a running container the action is stop', btn.children[0].className.indexOf('fa-stop') >= 0, btn.children[0].className);
+  ok('for a running container the action is stop', btn.innerHTML === '<glyph Stop>', btn.innerHTML);
 
   console.log('\n  ...and none of the full card\'s detail chrome turns up in a Grid chip:');
   const forbidden = ['cc-card-stats', 'cc-gauge', 'cc-card-badges', 'cc-card-actions', 'cc-card-res', 'cc-plan', 'cc-b-cpu', 'cc-b-ram', 'cc-b-bw', 'cc-b-net', 'cc-b-port', 'cc-b-ip', 'cc-card-movebtn', 'cc-card-img', 'cc-frow', 'cc-frow-name', 'cc-frow-status'];
@@ -160,7 +161,7 @@ console.log('\nThe "Liste" density: folderListRow() builds a full-width row with
   ok('one action control', !!actWrap && actWrap.children.length === 1);
   const btn = actWrap && actWrap.children[0];
   ok('the button is actBtn()', !!btn && btn.classList.contains('cc-actbtn'));
-  ok('for a running container the action is stop', btn.children[0].className.indexOf('fa-stop') >= 0, btn.children[0].className);
+  ok('for a running container the action is stop', btn.innerHTML === '<glyph Stop>', btn.innerHTML);
 
   console.log('\n  ...and neither the full card\'s chrome nor the Grid chip\'s turns up in a Liste row:');
   const forbidden = ['cc-card-stats', 'cc-gauge', 'cc-card-badges', 'cc-card-actions', 'cc-card-res', 'cc-plan', 'cc-b-cpu', 'cc-b-ram', 'cc-b-bw', 'cc-b-net', 'cc-b-port', 'cc-b-ip', 'cc-card-movebtn', 'cc-card-img', 'cc-chip', 'cc-chip-dot', 'cc-chip-status'];
@@ -173,15 +174,15 @@ console.log('\nThe single action follows the container\'s state in both densitie
   [['folderChip', dockerApi.folderChip, 'cc-chip-act'], ['folderListRow', dockerApi.folderListRow, 'cc-frow-act']].forEach(([label, build, actCls]) => {
     const stopped = build({ name: 'radarr', state: 'exited' });
     const stoppedBtn = stopped.children.find(n => n.classList.contains(actCls)).children[0];
-    ok(label + '(): a stopped container gets fa-play, tipped "Start"', stoppedBtn.children[0].className.indexOf('fa-play') >= 0 && stoppedBtn.getAttribute('data-tip') === 'Start');
+    ok(label + '(): a stopped container gets Play, tipped "Start"', stoppedBtn.innerHTML === '<glyph Play>' && stoppedBtn.getAttribute('data-tip') === 'Start');
 
     const paused = build({ name: 'radarr', state: 'paused' });
     const pausedBtn = paused.children.find(n => n.classList.contains(actCls)).children[0];
-    ok(label + '(): a paused container gets fa-play, tipped "Resume"', pausedBtn.children[0].className.indexOf('fa-play') >= 0 && pausedBtn.getAttribute('data-tip') === 'Resume');
+    ok(label + '(): a paused container gets Play, tipped "Resume"', pausedBtn.innerHTML === '<glyph Play>' && pausedBtn.getAttribute('data-tip') === 'Resume');
 
     const running = build({ name: 'radarr', state: 'running' });
     const runningBtn = running.children.find(n => n.classList.contains(actCls)).children[0];
-    ok(label + '(): a running container gets fa-stop, tipped "Stop"', runningBtn.children[0].className.indexOf('fa-stop') >= 0 && runningBtn.getAttribute('data-tip') === 'Stop');
+    ok(label + '(): a running container gets Stop, tipped "Stop"', runningBtn.innerHTML === '<glyph Stop>' && runningBtn.getAttribute('data-tip') === 'Stop');
   });
 }
 

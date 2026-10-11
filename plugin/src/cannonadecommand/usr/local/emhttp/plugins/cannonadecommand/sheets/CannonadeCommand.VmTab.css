@@ -188,18 +188,15 @@ html.cc-vms-on #kvm_list .switch-button-background.checked .switch-button-button
 html.cc-vms-on #kvm_list .switch-button-label { display: none !important; }
 
 /* Actions column: Docker's action bar retargeted to #kvm_list. Grey icon buttons that vms.js
-   tintAct() colours inline; the "..." button (cc-actmore) expands the extra VM actions, and
+   tintAct() colours inline; More opens the rarer VM actions as a menu (CCTheme.menu), and
    cc-act-flash pulses the bar when the VM logo is clicked. */
 html.cc-vms-on #kvm_table thead tr .cc-act-th { font-size: var(--cc-text-meta); width: 122px; }
 html.cc-vms-on #kvm_list td.cc-actcell { white-space: nowrap; vertical-align: middle; }
 html.cc-vms-on .cc-actbar { display: flex; flex-direction: column; gap: 4px; }
 html.cc-vms-on .cc-actrow { display: flex; gap: 4px; }
 html.cc-vms-on .cc-actbtn { width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-chip, #cfcfcf); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--cc-text-subline); user-select: none; transition: background .12s, color .12s, box-shadow .12s; }
-html.cc-vms-on .cc-actbtn i.fa { font-size: var(--cc-text-subline); line-height: 1; color: inherit !important; }
 html.cc-vms-on .cc-actoff { opacity: .35; cursor: default; }
 html.cc-vms-on .cc-actoff:hover { background: #2e2e2e; color: #c9c9c9; }
-html.cc-vms-on .cc-actmore { display: none; margin-top: 4px; }
-html.cc-vms-on .cc-actmore.cc-open { display: flex; flex-wrap: wrap; }
 html.cc-vms-on .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }
 @keyframes cc-actflash { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--cc-accent, #FCC419); } }
 

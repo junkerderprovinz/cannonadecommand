@@ -1,9 +1,7 @@
-// Under the rainbow every row action takes the palette slot of its position, and the
-// Remove action sits far enough along to come round to red. A delete is never red, so
-// it passes to the next slot that is not, on Docker and on VMs, at rest and as the
-// colour the reactive mode stamps for the hover, and so does the delete badge on the
-// Plugins page, which reads its row's colour. A flag's colours are the flag's own, so
-// in flag mode a delete stays where it falls.
+// Under the rainbow every action takes the palette slot of its position, and a delete
+// can come round to red. A delete is never red, so it passes to the next slot that is
+// not, here on the Plugins page's delete badge, which reads its row's colour. A flag's
+// colours are the flag's own, so in flag mode a delete stays where it falls.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand', 'scripts');
@@ -55,31 +53,8 @@ function settings(extra) {
   return { getItem: (k) => (k in s ? s[k] : null) };
 }
 
-// Docker: WebUI, Log, Edit, Restart, Pause, Stop, More, Console, Remove.
-const docker = read('docker.js');
-const dockerTint = (ls, off) => new Function('localStorage', 'window', 'RB_PAL', 'RB_OFFSET',
-  'function themingOn() { return true; } function ccPalActive(p) { return p; } function effc() { return "#FCC419"; } var idealText = window.CCTheme.idealText;' +
-  grabFn(docker, 'tintAct') + 'return tintAct;')(ls, { CCTheme }, RB, off);
-// VMs: Console, Log, Edit, Restart, Pause, Stop, More, then the extras ending in both removes.
-const vms = read('vms.js');
-const vmTint = (ls, off) => new Function('window', 'RB_OFFSET', 'store',
-  'function ls(k) { return store.getItem(k); } function vmPalActive() { return ' + JSON.stringify(RB) + '; } function ccAccent() { return "#FCC419"; } var ccIdeal = window.CCTheme.idealText;' +
-  grabFn(vms, 'tintAct') + 'return tintAct;')({ CCTheme }, off, ls);
-
-for (const [area, tint, count] of [['Docker', dockerTint, 9], ['VMs', vmTint, 9]]) {
-  for (const [mode, ls, prop] of [['at rest', settings(), 'background'], ['for the reactive hover', settings({ 'cc.rbmode': 'active' }), '--cc-rb-c']]) {
-    const btns = Array.from({ length: count }, (_, i) => button(i === count - 1 ? ['cc-actbtn', 'cc-actdel'] : ['cc-actbtn']));
-    tint(ls, 0)({ querySelectorAll: () => btns });
-    const del = btns[count - 1].css[prop];
-    ok(`${area}, ${mode}: the Remove action in the red position is not red`, !!del && !CCTheme.isRed(del), del);
-    ok(`${area}, ${mode}: the action before it keeps its own slot`, btns[count - 2].css[prop] === RB[(count - 2) % RB.length], btns[count - 2].css[prop]);
-  }
-  const btns = Array.from({ length: count }, () => button(['cc-actbtn']));
-  tint(settings(), 0)({ querySelectorAll: () => btns });
-  ok(`${area}: an ordinary action in that position still takes the red slot`, btns[count - 1].css.background === RB[0]);
-}
-ok('docker.js marks Remove as a delete', /actBtn\("fa-trash", [^\n]*rmContainer[^\n]*, true\)\);/.test(docker));
-ok('vms.js marks both removes as deletes', (vms.match(/vmRemove\(uuid, name, (true|false)\); \}, true\)\);/g) || []).length === 2);
+// The Docker and VM removes stand in their row's More menu, which keeps a delete off red the
+// same way; row-more-menu.test.js pins it there.
 
 console.log('\nThe delete badge on the Plugins page');
 {

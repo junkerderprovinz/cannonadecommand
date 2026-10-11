@@ -641,12 +641,14 @@
   // span#vm-<uuid> and its onclick=addVMContext('name','uuid','template','state','vmrcurl',
   // 'PROTO','log','fstype','console;rdp','','webui',...). Native calls are typeof-guarded, so a
   // missing Unraid global leaves a button that does nothing.
-  function actBtn(icon, tip, fn, del) {
-    var b = el("span", "cc-actbtn" + (del ? " cc-actdel" : "")); b.title = tip; b.appendChild(el("i", "fa " + icon));
+  function ccGlyph(name) { return window.CCTheme && window.CCTheme.glyph ? window.CCTheme.glyph(name) : ""; }
+  function actBtn(icon, tip, fn) {
+    var b = el("span", "cc-actbtn"); b.title = tip; b.setAttribute("aria-label", tip); b.innerHTML = ccGlyph(icon);
     b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); try { fn(); } catch (_) {} });
+    if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(b);
     return b;
   }
-  function actBtnOff(icon, tip) { var b = el("span", "cc-actbtn cc-actoff"); b.title = tip; b.appendChild(el("i", "fa " + icon)); return b; }
+  function actBtnOff(icon, tip) { var b = el("span", "cc-actbtn cc-actoff"); b.title = tip; b.setAttribute("aria-disabled", "true"); b.innerHTML = ccGlyph(icon); return b; }
   function vmDisp(action, uuid) { if (typeof window.ajaxVMDispatch === "function") window.ajaxVMDispatch({ action: action, uuid: uuid }, "loadlist"); }
   // As docker.js tintAct: an accent or rainbow colour per button, grey for cc-actoff.
   function tintAct(bar) {
@@ -662,7 +664,7 @@
       var bg = "var(--cc-surface-3, #2e2e2e)", tx = "var(--cc-text-dim, #8a8a8a)";
       if (!b2.classList.contains("cc-actoff")) {
         tx = "var(--cc-text, #e6e6e6)";
-        if (colorsOn) { bg = !rb ? ccAccent() : (b2.classList.contains("cc-actdel") && window.CCTheme ? window.CCTheme.deleteSlot(pal, i2 + off) : pal[(i2 + off) % pal.length]); tx = ccIdeal(bg); }
+        if (colorsOn) { bg = !rb ? ccAccent() : pal[(i2 + off) % pal.length]; tx = ccIdeal(bg); }
       }
       if (neutral && colorsOn && !b2.classList.contains("cc-actoff")) {
         b2.style.setProperty("--cc-rb-c", bg); b2.style.setProperty("--cc-rb-ct", tx);
@@ -672,7 +674,6 @@
         b2.style.setProperty("background", bg, "important");
         b2.style.setProperty("color", tx, "important");
       }
-      var ic2 = b2.querySelector("i"); if (ic2) ic2.style.setProperty("color", "inherit", "important");
     });
   }
   function vmCtxFor(tr) {
@@ -706,8 +707,8 @@
       ok: de ? "Entfernen" : "Remove", cancel: de ? "Abbrechen" : "Cancel", danger: true, onOk: run
     });
   }
-  // As docker.js actionBars(): console/log/edit, then restart, pause or resume, stop or start and
-  // "…", which opens console, hibernate, force stop, snapshot, clone and remove.
+  // As docker.js actionBars(): console, log and edit, then restart, pause or resume, stop or start
+  // and More, whose menu holds the console, hibernate, force stop, snapshot, clone and remove.
   function vmActionBars(tr) {
     var de = LANG === "de";
     var cx = vmCtxFor(tr), uuid = cx.uuid, name = cx.name, st = cx.state;
@@ -715,31 +716,36 @@
     var path = location.pathname; var xi = path.indexOf("?"); if (xi !== -1) path = path.substring(0, xi);
     var bar = el("div", "cc-actbar");
     var r1 = el("div", "cc-actrow");
-    // the VNC console takes the place of Docker's WebUI globe
-    r1.appendChild((cx.vmrcurl && running) ? actBtn("fa-desktop", (de ? "VNC-Konsole" : "VNC Console") + (cx.proto ? " (" + cx.proto + ")" : ""), function () { window.open(cx.vmrcurl, "_blank", "scrollbars=yes,resizable=yes"); }) : actBtnOff("fa-desktop", de ? "keine Konsole" : "no console"));
-    r1.appendChild((cx.log && typeof window.openTerminal === "function") ? actBtn("fa-navicon", "Log", function () { window.openTerminal("log", name, cx.log); }) : actBtnOff("fa-navicon", "Log"));
-    r1.appendChild(actBtn("fa-pencil", de ? "Bearbeiten" : "Edit", function () { location.href = path + "/UpdateVM?uuid=" + uuid; }));
+    var vnc = (de ? "VNC-Konsole" : "VNC Console") + (cx.proto ? " (" + cx.proto + ")" : "");
+    // the VNC console takes the place of Docker's WebUI
+    r1.appendChild((cx.vmrcurl && running) ? actBtn("VM", vnc, function () { window.open(cx.vmrcurl, "_blank", "scrollbars=yes,resizable=yes"); }) : actBtnOff("VM", de ? "keine Konsole" : "no console"));
+    r1.appendChild((cx.log && typeof window.openTerminal === "function") ? actBtn("Log", "Log", function () { window.openTerminal("log", name, cx.log); }) : actBtnOff("Log", "Log"));
+    r1.appendChild(actBtn("Pencil", de ? "Bearbeiten" : "Edit", function () { location.href = path + "/UpdateVM?uuid=" + uuid; }));
     var r2 = el("div", "cc-actrow");
-    r2.appendChild(running ? actBtn("fa-refresh", de ? "Neustart" : "Restart", function () { vmDisp("domain-restart", uuid); }) : actBtnOff("fa-refresh", de ? "Neustart" : "Restart"));
-    r2.appendChild(paused ? actBtn("fa-play", de ? "Fortsetzen" : "Resume", function () { vmDisp(st === "pmsuspended" ? "domain-pmwakeup" : "domain-resume", uuid); })
-      : (running ? actBtn("fa-pause", "Pause", function () { vmDisp("domain-pause", uuid); }) : actBtnOff("fa-pause", "Pause")));
-    r2.appendChild((running || paused) ? actBtn("fa-stop", de ? "Stoppen" : "Stop", function () { vmDisp("domain-stop", uuid); })
-      : actBtn("fa-play", de ? "Starten" : "Start", function () { vmDisp("domain-start", uuid); }));
-    var more = el("div", "cc-actrow cc-actmore");
-    if (cx.vmrcurl && running) more.appendChild(actBtn("fa-desktop", (de ? "VM-Konsole" : "VM Console") + (cx.proto ? " (" + cx.proto + ")" : ""), function () { window.open(cx.vmrcurl, "_blank", "scrollbars=yes,resizable=yes"); }));
-    if (running) more.appendChild(actBtn("fa-bed", de ? "Ruhezustand" : "Hibernate", function () { vmDisp("domain-pmsuspend", uuid); }));
-    if (running || paused) more.appendChild(actBtn("fa-bomb", de ? "Stopp erzwingen" : "Force Stop", function () { vmDisp("domain-destroy", uuid); }));
-    if ((running || shutoff) && typeof window.selectsnapshot === "function") more.appendChild(actBtn("fa-camera", de ? "Snapshot erstellen" : "Create Snapshot", function () { window.selectsnapshot(uuid, name, "--generate", "create", false, st, cx.fstype); }));
-    if (shutoff && typeof window.VMClone === "function") more.appendChild(actBtn("fa-clone", de ? "Klonen" : "Clone", function () { window.VMClone(uuid, name); }));
+    r2.appendChild(running ? actBtn("Refresh", de ? "Neustart" : "Restart", function () { vmDisp("domain-restart", uuid); }) : actBtnOff("Refresh", de ? "Neustart" : "Restart"));
+    r2.appendChild(paused ? actBtn("Play", de ? "Fortsetzen" : "Resume", function () { vmDisp(st === "pmsuspended" ? "domain-pmwakeup" : "domain-resume", uuid); })
+      : (running ? actBtn("Pause", "Pause", function () { vmDisp("domain-pause", uuid); }) : actBtnOff("Pause", "Pause")));
+    r2.appendChild((running || paused) ? actBtn("Stop", de ? "Stoppen" : "Stop", function () { vmDisp("domain-stop", uuid); })
+      : actBtn("Play", de ? "Starten" : "Start", function () { vmDisp("domain-start", uuid); }));
+    var extras = [];
+    if (cx.vmrcurl && running) extras.push({ glyph: "VM", label: (de ? "VM-Konsole" : "VM Console") + (cx.proto ? " (" + cx.proto + ")" : ""), run: function () { window.open(cx.vmrcurl, "_blank", "scrollbars=yes,resizable=yes"); } });
+    if (running) extras.push({ glyph: "Moon", label: de ? "Ruhezustand" : "Hibernate", run: function () { vmDisp("domain-pmsuspend", uuid); } });
+    if (running || paused) extras.push({ glyph: "Power", label: de ? "Stopp erzwingen" : "Force Stop", run: function () { vmDisp("domain-destroy", uuid); } });
+    if ((running || shutoff) && typeof window.selectsnapshot === "function") extras.push({ glyph: "BackupNow", label: de ? "Snapshot erstellen" : "Create Snapshot", run: function () { window.selectsnapshot(uuid, name, "--generate", "create", false, st, cx.fstype); } });
+    if (shutoff && typeof window.VMClone === "function") extras.push({ glyph: "Copy", label: de ? "Klonen" : "Clone", run: function () { window.VMClone(uuid, name); } });
     if (shutoff) {
-      more.appendChild(actBtn("fa-minus", de ? "VM entfernen" : "Remove VM", function () { vmRemove(uuid, name, false); }, true));
-      more.appendChild(actBtn("fa-trash", de ? "VM + Disks entfernen" : "Remove VM & Disks", function () { vmRemove(uuid, name, true); }, true));
+      extras.push({ glyph: "Trash", label: de ? "VM entfernen" : "Remove VM", del: true, run: function () { vmRemove(uuid, name, false); } });
+      extras.push({ glyph: "TrashFiles", label: de ? "VM + Disks entfernen" : "Remove VM & Disks", del: true, run: function () { vmRemove(uuid, name, true); } });
     }
-    r2.appendChild(more.children.length ? actBtn("fa-ellipsis-h", de ? "Mehr" : "More", function () { more.classList.toggle("cc-open"); tintAct(more); })
-      : actBtnOff("fa-ellipsis-h", de ? "keine weiteren Aktionen" : "no more actions"));
+    if (extras.length && window.CCTheme && window.CCTheme.menu) {
+      var moreBtn = actBtn("More", de ? "Mehr" : "More", function () { window.CCTheme.menu(moreBtn, extras); });
+      r2.appendChild(moreBtn);
+    } else {
+      r2.appendChild(actBtnOff("More", de ? "keine weiteren Aktionen" : "no more actions"));
+    }
     bar.appendChild(r1); bar.appendChild(r2);
     tintAct(bar);
-    return { bar: bar, more: more, sig: st + "|" + cx.webui + "|" + cx.vmrcurl + "|" + cx.log + "|" + uuid };
+    return { bar: bar, sig: st + "|" + cx.webui + "|" + cx.vmrcurl + "|" + cx.log + "|" + uuid };
   }
   function injectVmActionCell(tr, nameTd) {
     try {
@@ -758,7 +764,7 @@
       try { ab = vmActionBars(tr); } catch (e) { ab = null; }              // a failed row still gets its td
       if (old) { if (ab && old.getAttribute("data-cc-sig") === ab.sig) return; old.remove(); } // rebuild only on change
       var td = el("td", "cc-actcell");
-      if (ab) { td.setAttribute("data-cc-sig", ab.sig); td.appendChild(ab.bar); td.appendChild(ab.more); }
+      if (ab) { td.setAttribute("data-cc-sig", ab.sig); td.appendChild(ab.bar); }
       // inserted even when empty, so the column counts of thead and tbody always match
       tr.insertBefore(td, nameTd ? nameTd.nextSibling : (tr.children[1] || null));
     } catch (e) {}
@@ -969,8 +975,7 @@
     } catch (e) {}
     try { ensureViewToggle(); applyView(); } catch (e) {}
     try { applyRainbowPalette(); var vmRb = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1"; root.classList.toggle("cc-vm-rainbow", vmRb); root.classList.toggle("cc-vm-rbneutral", ls("cc.theming") !== "0" && ls("cc.rbmode") === "active"); } catch (e) {} // reactive: badges rest grey and colour on hover, in accent mode too
-    // The action bars' rebuild signature ignores the colour mode, so they are re-tinted in place;
-    // passing td.cc-actcell also reaches the .cc-actmore extras.
+    // The action bars' rebuild signature ignores the colour mode, so they are re-tinted in place.
     try { Array.prototype.forEach.call(document.querySelectorAll("#kvm_list td.cc-actcell"), function (cell) { tintAct(cell); }); } catch (e) {}
     // enhanceCells does not rebuild a finished cell, so the gear colours are refreshed here too
     try { refreshAllRes(); } catch (e) {}

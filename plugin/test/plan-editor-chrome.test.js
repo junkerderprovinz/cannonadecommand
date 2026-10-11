@@ -162,7 +162,7 @@ ok(/\.cc-day-on \{ background: var\(--cc-rb-c/.test(css), 'a selected day chip r
 ok(/\.cc-pop\.cc-rainbow \.cc-set-toggle-on \{ background: var\(--cc-rb-c/.test(css), 'the activation toggle reads --cc-rb-c before the shared --cc-rbaccent');
 ok(/\.cc-btn-primary \{ font-weight: 600; background: var\(--cc-rb-c/.test(css), 'the Save button reads --cc-rb-c before the shared accent');
 
-// GlimStone Rule 20 asks for filled glyphs and names the (i) as its exception,
+// GlimStone's "Icon glyphs" section asks for filled glyphs and names the (i) as its exception,
 // the ring being the circle around the "i", so a sweep applying that rule would
 // put tabler's filled info-circle back. Its absence is pinned in the shared
 // builder and in all three fallbacks.
@@ -181,16 +181,17 @@ ok(/<circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1\.3"/.test(
 ok(/<circle cx="8" cy="4\.6" r="0\.9" fill="currentColor"/.test(theme), 'the dot of the "i": r=0.9 at cy=4.6');
 ok(/<path d="M8 7v4\.4" stroke="currentColor" stroke-width="1\.3" stroke-linecap="round"/.test(theme), 'the stem is a <path> with round caps, where a <rect> would round its ends differently');
 // Stroke and fill both resolve through currentColor to .cc-info's var(--txt), so
-// the glyph stays neutral rather than taking the accent (Rule 8).
+// the glyph stays neutral rather than taking the accent (rule 8).
 ok(/\.cc-info \{[^}]*color: var\(--txt/.test(css), '.cc-info resolves currentColor to the neutral text colour');
 ok(/\.cc-info \{[^}]*background: none/.test(css), '.cc-info keeps background:none, which is what stops an inherited chip fill painting a disc behind the ring');
 
 console.log('\nPart 7: the schedule row fits on one line and its delete control is a badge');
 ok(/el\("span", "cc-sched-x"\); rm\.innerHTML = CC_TRASH_SVG/.test(src), 'the delete control carries the trash SVG, not a typed "✕"');
 ok(!/el\("span", "cc-sched-x", "✕"\)/.test(src), 'the bare ✕ character is gone from docker.js');
-ok(/CC_TRASH_SVG = \(window\.CCTheme && window\.CCTheme\.CC_TRASH_SVG\)/.test(src), 'docker.js takes the glyph from cc-theme.js with a local fallback, as it does the (i)');
-const TRASH = 'M20 6a1 1 0 0 1 .117 1.993';                            // tabler icons/filled/trash.svg
-ok(theme.indexOf(TRASH) >= 0, 'cc-theme.js carries the filled tabler trash from the set, as Rule 20 asks');
+ok(/CC_TRASH_SVG = \(window\.CCTheme && window\.CCTheme\.CC_TRASH_SVG\)/.test(src), 'docker.js takes the glyph from cc-theme.js, as it does the (i)');
+const TRASH = 'M5.76256 2.01256C6.09075 1.68437';                       // GlimStone's Trash, Streamline recycle-bin-2
+ok(/var CC_TRASH_SVG = '<svg viewBox="' \+ GLYPHS\.Trash\[0\] \+ [^;]*GLYPHS\.Trash\[1\]/.test(theme) && theme.indexOf(TRASH) >= 0, 'cc-theme.js builds the can from GlimStone\'s filled Trash, so the menus and the badges wear one drawing');
+ok(theme.indexOf('M20 6a1 1 0 0 1 .117 1.993') < 0, 'and the second can, tabler\'s, is gone from cc-theme.js');
 ok(/function delIcon\([^)]*\) \{[^}]*b\.innerHTML = CC_TRASH_SVG/.test(theme), 'the Plugins-page delete badge, CCTheme.delIcon, carries the same can, so there is one trash design');
 ok(/window\.CCTheme\.delIcon\(/.test(fs.readFileSync(path.join(SCRIPTS, 'plugins.js'), 'utf8')), 'and plugins.js builds its delete badge with it');
 ok(css.indexOf(TRASH) < 0, 'and no stylesheet draws a second can as a white background image');

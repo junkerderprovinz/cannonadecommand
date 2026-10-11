@@ -1,14 +1,15 @@
-// The five folder-header buttons carry Font-Awesome icons rather than emoji
-// glyphs. An emoji ignores CSS color, so it cannot follow the button's own grey at
-// rest and accent on hover, and 🗑 renders as a filled grey rectangle on this
-// stack, reading as a bordered swatch.
+// The five folder-header buttons carry GlimStone glyphs rather than emoji. An
+// emoji ignores CSS color, so it cannot follow the button's own grey at rest and
+// accent on hover, and 🗑 renders as a filled grey rectangle on this stack, reading
+// as a bordered swatch.
 //
 // What this pins:
-//   1. folderActBtn() builds a <button> holding an <i class="fa fa-...">, with no
-//      text of its own.
+//   1. folderActBtn() builds a <button> holding the glyph cc-theme.js draws, with
+//      no text of its own and its title as the accessible name.
 //   2. hide-stopped, bulk-start, bulk-stop, rename and delete all call it.
 //   3. No action-glyph emoji is left in docker.js's code.
-//   4. docker.css gives the icon color: inherit, as .cc-actbtn i.fa has.
+//   4. docker.css sizes the glyph, which takes the button's colour through
+//      currentColor.
 //   5. The button's own background rules beat Unraid's native button rules, which
 //      would otherwise paint a gradient at rest and transparency on hover.
 const fs = require('fs');
@@ -43,27 +44,25 @@ class N {
 }
 function el(tag, cls, txt) { const n = new N(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
 
-console.log('\nfolderActBtn(): a real FA icon button, never raw emoji text');
+console.log('\nfolderActBtn(): a glyph button, never raw emoji text');
 {
-  const fn = new Function('el', grabFn('folderActBtn') + '\nreturn folderActBtn;')(el);
-  const b = fn('cc-folder-act', 'fa-eye', 'Hide stopped');
+  const fn = new Function('el', 'ccGlyph', grabFn('folderActBtn') + '\nreturn folderActBtn;')(el, (n) => '<glyph ' + n + '>');
+  const b = fn('cc-folder-act', 'Eye', 'Hide stopped');
   ok('is a real <button>', b.tagName === 'BUTTON');
   ok('carries the class it was given', b.classList.contains('cc-folder-act'));
   ok('carries the title/tooltip it was given', b.title === 'Hide stopped');
-  ok('has no text of its own, the icon being the only content', b._txt === '');
-  ok('appends one child, the <i class="fa fa-...">', b.children.length === 1);
-  const icon = b.children[0];
-  ok('the child is an <i>', icon.tagName === 'I');
-  ok('the child carries "fa" and the requested glyph class', icon.classList.contains('fa') && icon.classList.contains('fa-eye'));
+  ok('its title is its accessible name too', b.getAttribute('aria-label') === 'Hide stopped');
+  ok('has no text of its own, the glyph being the only content', b._txt === '');
+  ok('holds the glyph cc-theme.js draws for the name it was given', b.innerHTML === '<glyph Eye>', b.innerHTML);
 }
 
 console.log('\nAll five folder-header buttons call folderActBtn()');
 {
-  ok('hide-stopped button: folderActBtn(..., "fa-eye", t("hideStopped"))', /var hsBtn = folderActBtn\("cc-folder-act" \+ \(hsOn \? " cc-folder-act-on" : ""\), "fa-eye", t\("hideStopped"\)\);/.test(src));
-  ok('bulk-start button: folderActBtn(..., "fa-play", t("bulkStartAll"))', /var startAllBtn = folderActBtn\("cc-folder-act", "fa-play", t\("bulkStartAll"\)\);/.test(src));
-  ok('bulk-stop button: folderActBtn(..., "fa-stop", t("bulkStopAll"))', /var stopAllBtn = folderActBtn\("cc-folder-act", "fa-stop", t\("bulkStopAll"\)\);/.test(src));
-  ok('rename button: folderActBtn(..., "fa-pencil", t("renameFolder"))', /var renBtn = folderActBtn\("cc-folder-act", "fa-pencil", t\("renameFolder"\)\);/.test(src));
-  ok('delete button: folderActBtn(..., "fa-trash", t("deleteFolder"))', /var delBtn = folderActBtn\("cc-folder-act", "fa-trash", t\("deleteFolder"\)\);/.test(src));
+  ok('hide-stopped button: an open eye, a crossed one while stopped containers are hidden', /var hsBtn = folderActBtn\("cc-folder-act" \+ \(hsOn \? " cc-folder-act-on" : ""\), hsOn \? "EyeOff" : "Eye", t\("hideStopped"\)\);/.test(src));
+  ok('bulk-start button: folderActBtn(..., "Play", t("bulkStartAll"))', /var startAllBtn = folderActBtn\("cc-folder-act", "Play", t\("bulkStartAll"\)\);/.test(src));
+  ok('bulk-stop button: folderActBtn(..., "Stop", t("bulkStopAll"))', /var stopAllBtn = folderActBtn\("cc-folder-act", "Stop", t\("bulkStopAll"\)\);/.test(src));
+  ok('rename button: folderActBtn(..., "Pencil", t("renameFolder"))', /var renBtn = folderActBtn\("cc-folder-act", "Pencil", t\("renameFolder"\)\);/.test(src));
+  ok('delete button: folderActBtn(..., "Trash", t("deleteFolder"))', /var delBtn = folderActBtn\("cc-folder-act", "Trash", t\("deleteFolder"\)\);/.test(src));
 }
 
 console.log('\nNo action-glyph emoji is left in docker.js\'s code');
@@ -77,12 +76,13 @@ console.log('\nNo action-glyph emoji is left in docker.js\'s code');
   });
 }
 
-console.log('\ndocker.css: the icon follows .cc-folder-act\'s own colour');
+console.log('\ndocker.css: the glyph is sized, and no Font Awesome rule is left behind');
 {
-  const m = css.match(/\.cc-folder-act i\.fa\s*\{([^}]*)\}/);
-  ok('a .cc-folder-act i.fa rule exists', !!m);
+  const m = css.match(/\.cc-folder-act \.cc-glyph\s*\{([^}]*)\}/);
+  ok('a .cc-folder-act .cc-glyph rule exists', !!m);
   const body = m ? m[1] : '';
-  ok('it sets color: inherit, so the icon follows the button', /color:\s*inherit/.test(body), body);
+  ok('it sets the meta size on the scale', /font-size:\s*var\(--cc-text-meta\)/.test(body), body);
+  ok('no .cc-folder-act i.fa rule is left', !/\.cc-folder-act i\.fa/.test(css));
 }
 
 console.log('\nThe resting background beats Unraid\'s native button gradient');

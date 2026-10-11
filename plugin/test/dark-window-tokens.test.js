@@ -25,7 +25,7 @@ const darkHtml = computed(dark), lightHtml = computed(light);
 
 const windowDecls = {};
 for (const r of parseRules(fs.readFileSync(path.join(DIR, 'sheets/CannonadeCommand.Tokens.css'), 'utf8'))) {
-  if (r.selector.replace(/\s+/g, ' ').trim() === '.cc-pop, .cc-menu, .cc-win') for (const d of r.decls) if (d.prop.startsWith('--')) windowDecls[d.prop] = d.value;
+  if (r.selector.replace(/\s+/g, ' ').trim() === '.cc-pop, .cc-menu, .cc-win, .cc-rowmenu') for (const d of r.decls) if (d.prop.startsWith('--')) windowDecls[d.prop] = d.value;
 }
 function inWindow(htmlComputed) {
   const scope = Object.assign({}, htmlComputed, windowDecls);

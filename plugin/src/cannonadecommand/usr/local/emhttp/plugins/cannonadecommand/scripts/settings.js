@@ -309,6 +309,7 @@
   function withConfigLock(fn) { var p = cfgChain.then(fn, fn); cfgChain = p.catch(function () {}); return p; }
 
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
+  function glyph(name) { return window.CCTheme && window.CCTheme.glyph ? window.CCTheme.glyph(name) : ""; }
   var cardN = 0;
   function card(title, sub) {
     var c = el("div", "cc-set-card");
@@ -1107,10 +1108,10 @@
       });
       rbrow.appendChild(sw);
     });
-    // an undo arrow right of the swatches, the same size as one of them
+    // a restore glyph right of the swatches, the same size as one of them
     var rbReset = el("span", "cc-set-ibtn");
     rbReset.setAttribute("data-tip", T("Farben zurücksetzen", "Reset colours"));
-    var rbRi = document.createElement("i"); rbRi.className = "fa fa-undo"; rbReset.appendChild(rbRi);
+    rbReset.innerHTML = glyph("Restore");
     rbReset.addEventListener("click", function () { del("cc.rbpal"); render(); syncHeaderBar(); syncSharesBar(); });
     rbrow.appendChild(rbReset);
     c1.appendChild(rbrow); c1.appendChild(rbPickWrap);
@@ -1220,7 +1221,7 @@
         var fpal = []; for (var kf = 0; kf < RBDEF.length; kf++) fpal.push(f1.colors[kf % f1.colors.length]);
         fpal.forEach(function (c9) { var sw9 = el("span", "cc-set-sw"); sw9.style.background = c9; sw9.setAttribute("data-tip", c9); frow.appendChild(sw9); });
         var fReset = el("span", "cc-set-ibtn"); fReset.setAttribute("data-tip", T("Flagge zurücksetzen", "Reset flag"));
-        var fRi = document.createElement("i"); fRi.className = "fa fa-undo"; fReset.appendChild(fRi);
+        fReset.innerHTML = glyph("Restore");
         fReset.addEventListener("click", function () { del("cc.flag"); del("cc.flagpal"); set("cc.flagmode", "0"); set("cc.rainbow", "0"); render(); syncHeaderBar(); syncSharesBar(); });
         frow.appendChild(fReset);
         c1.appendChild(frow);

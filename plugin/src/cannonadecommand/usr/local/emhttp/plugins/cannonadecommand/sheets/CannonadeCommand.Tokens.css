@@ -259,11 +259,11 @@ html.Theme--azure {
   --cc-elev-2: 0 8px 20px rgba(0, 0, 0, .14);
   --cc-elev-3: 0 10px 24px rgba(0, 0, 0, .18);
 }
-/* CannonadeCommand's own windows, the .cc-pop editors, the .cc-win windows and the .cc-menu gear
-   menu, stay dark on every theme, so inside them each token the light override flips reads its dark
-   value again. The tokens mixed from those on <html> are computed there with the light values and
-   inherited as finished colours, so they are mixed again here. */
-.cc-pop, .cc-menu, .cc-win {
+/* CannonadeCommand's own windows, the .cc-pop editors, the .cc-win windows, the .cc-menu gear
+   menu and a row's .cc-rowmenu, stay dark on every theme, so inside them each token the light
+   override flips reads its dark value again. The tokens mixed from those on <html> are computed
+   there with the light values and inherited as finished colours, so they are mixed again here. */
+.cc-pop, .cc-menu, .cc-win, .cc-rowmenu {
   --cc-surface-1: #1e1e1e;  --cc-surface-2: #222222;  --cc-surface-3: #2e2e2e;  --cc-surface-base: #161616;
   --cc-surface-4: #262626;  --cc-surface-window: #242424;  --cc-surface-card: #191919;  --cc-surface-deep: #0f0f0f;
   --cc-text: #e6e6e6;  --cc-text-dim: #8a8a8a;  --cc-text-chip: #cfcfcf;  --cc-header-ink: #cfcfcf;
@@ -341,7 +341,27 @@ html .cc-win .cc-win-in:focus { background: #383838 !important; }
 .cc-win-btn.cc-win-go { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
 .cc-win-btn.cc-win-go:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text)); }
 .cc-win.cc-win-reactive .cc-win-btn.cc-win-go:not(:hover) { background: var(--cc-surface-3); color: var(--cc-text); }
-
+/* A GlimStone glyph (CCTheme.glyph) is as tall as the text of what holds it and takes its ink. */
+.cc-glyph { display: inline-block; flex: none; width: 1em; height: 1em; vertical-align: -.125em; fill: currentColor; }
+/* The menu a row's More opens (CCTheme.menu), dark like the windows. An item has no fill of its own
+   and takes the mode colour under the pointer or the keyboard focus, so it reads the same in every
+   colour mode and the reactive one needs nothing extra. */
+.cc-rowmenu {
+  position: fixed; z-index: 99999; box-sizing: border-box; min-width: 180px; max-width: calc(100vw - 16px);
+  padding: 6px; background: #1a1a1a; color: var(--cc-text); border-radius: var(--cc-radius-card);
+  box-shadow: var(--cc-elev-3); text-align: start;
+}
+.cc-rowmenu-it {
+  display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: var(--cc-radius-control);
+  color: var(--cc-text); font-size: var(--cc-text-subline); line-height: 1.4; white-space: nowrap;
+  cursor: pointer; user-select: none; outline: none;
+  transition: background-color var(--cc-motion-control-dur, 0s), color var(--cc-motion-control-dur, 0s);
+}
+.cc-rowmenu-it .cc-glyph { font-size: var(--cc-text-body); }
+.cc-rowmenu-it:is(:hover, :focus-visible) {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)));
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
+}
 /* Fixed digit advance width on every live badge value, so a value ticking from 9 to 100% cannot
    widen the pill and its column. */
 .cc-b-v, .cc-vmstat-chip, .cc-isl-val { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
@@ -1587,12 +1607,16 @@ html.cc-apps-rbneutral.cc-popups-on .popupInfo .actionsPopup:hover {
    scoped to that span; the dropdown's own Support Forum icon is an <i> and keeps its glyph. */
 html.cc-popups-on .popupInfo .caButton span.ca_fa-support::before { content: none !important; }
 /* CA's click handler owns the Pin App and Unpin App text swap through data-pinnedalt, so the text
-   is hidden and a pin glyph takes its place in ::before, whatever CA sets the text to. The native
-   title still explains the icon: ccWireTips turns any bare title into a CC bubble. */
+   is hidden and GlimStone's Pin takes its place in ::before, whatever CA sets the text to, drawn as
+   a mask in the button's ink. The native title still explains the icon: ccWireTips turns any bare
+   title into a CC bubble. */
 html.cc-popups-on .popupInfo .pinPopup { width: 28px !important; padding: 0 !important; position: relative !important; }
 html.cc-popups-on .popupInfo .pinPopup > span { display: none !important; }
 html.cc-popups-on .popupInfo .pinPopup::before {
-  font-family: fontAwesome !important; content: "\f08d" !important; font-size: var(--cc-text-subline) !important;
+  content: "" !important; display: inline-block !important; width: 13px !important; height: 13px !important;
+  background: currentColor !important;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='2.25 2.5 15.5 15.5'><path d='M6 2.5h8v2h-1.8v4.5l2.8 2v1.6h-4.3v3.9L10 18l-.7-1.5v-3.9H5V11l2.8-2V4.5H6Z'/></svg>") center / contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='2.25 2.5 15.5 15.5'><path d='M6 2.5h8v2h-1.8v4.5l2.8 2v1.6h-4.3v3.9L10 18l-.7-1.5v-3.9H5V11l2.8-2V4.5H6Z'/></svg>") center / contain no-repeat;
 }
 /* The description, additional requirements and changelog are three near-identical CA readmore
    blocks, all hardcoded as a white card on black, so one recipe covers them. */

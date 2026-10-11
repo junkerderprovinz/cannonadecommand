@@ -30,9 +30,10 @@
   // filled set too, and lucide ships none. The centre hole is a reverse-wound subpath, which plain
   // fill-rule:nonzero knocks out, and it stays legible at the 12px this button renders.
   var CC_GEAR_SVG = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="none" aria-hidden="true"><path d="M14.647 4.081a.724 .724 0 0 0 1.08 .448c2.439 -1.485 5.23 1.305 3.745 3.744a.724 .724 0 0 0 .447 1.08c2.775 .673 2.775 4.62 0 5.294a.724 .724 0 0 0 -.448 1.08c1.485 2.439 -1.305 5.23 -3.744 3.745a.724 .724 0 0 0 -1.08 .447c-.673 2.775 -4.62 2.775 -5.294 0a.724 .724 0 0 0 -1.08 -.448c-2.439 1.485 -5.23 -1.305 -3.745 -3.744a.724 .724 0 0 0 -.447 -1.08c-2.775 -.673 -2.775 -4.62 0 -5.294a.724 .724 0 0 0 .448 -1.08c-1.485 -2.439 1.305 -5.23 3.744 -3.745a.722 .722 0 0 0 1.08 -.447c.673 -2.775 4.62 -2.775 5.294 0zm-2.647 4.919a3 3 0 1 0 0 6a3 3 0 0 0 0 -6" /></svg>';
-  // The filled trash can belongs to cc-theme.js, like the (i) bubble there; the identical local
-  // fallback covers a late or absent cc-theme.js, as elsewhere in this file.
-  var CC_TRASH_SVG = (window.CCTheme && window.CCTheme.CC_TRASH_SVG) || '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007zm-10 4a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1m4 0a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1" /><path d="M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005z" /></svg>';
+  // The trash can and the other glyphs belong to cc-theme.js, which loads on every page before this
+  // script; without it a control keeps its tooltip and its name and only loses the drawing.
+  var CC_TRASH_SVG = (window.CCTheme && window.CCTheme.CC_TRASH_SVG) || "";
+  function ccGlyph(name) { return window.CCTheme && window.CCTheme.glyph ? window.CCTheme.glyph(name) : ""; }
   var PROBES = ["health", "running", "tcp", "http", "exec", "log"], POLICIES = ["abort", "continue", "degrade"];
   var SCHED_ACTIONS = ["start", "stop", "restart"];
   // Docker's four restart-policy names, in the order they appear in the editor dropdown.
@@ -437,11 +438,11 @@
         // The pause and resume slot: a live button while running or paused, a placeholder while
         // stopped. It is replaced rather than relabelled, so a row that starts gains a working
         // pause.
-        var pauseNew = paused ? actBtn("fa-play", t("resume"), function () { doAction(name, "unpause"); })
-          : (running ? actBtn("fa-pause", t("pause"), function () { doAction(name, "pause"); }) : actBtnOff("fa-pause", t("pause")));
+        var pauseNew = paused ? actBtn("Play", t("resume"), function () { doAction(name, "unpause"); })
+          : (running ? actBtn("Pause", t("pause"), function () { doAction(name, "pause"); }) : actBtnOff("Pause", t("pause")));
         // The stop and start slot. Its action is re-derived at click time; this swaps the icon and
         // label, so a running container shows a stop glyph.
-        var toggleNew = actBtn(running || paused ? "fa-stop" : "fa-play", running || paused ? t("stop") : t("start"), function () { var cc2 = containerByName(name); doAction(name, cc2 && (cc2.state === "running" || cc2.state === "paused") ? "stop" : "start"); });
+        var toggleNew = actBtn(running || paused ? "Stop" : "Play", running || paused ? t("stop") : t("start"), function () { var cc2 = containerByName(name); doAction(name, cc2 && (cc2.state === "running" || cc2.state === "paused") ? "stop" : "start"); });
         r2.replaceChild(pauseNew, r2.children[1]);
         r2.replaceChild(toggleNew, r2.children[2]);
         tintAct(bar);
@@ -1285,27 +1286,28 @@
       if (ts && ts !== "#") out.tswebui = ts;
       if (/\.xml$/i.test(xml)) out.xml = xml;
       var L = LANG === "de";
-      [[q[7 + off], "Support", "fa-question"],
-       [q[8 + off], L ? "Projektseite" : "Project page", "fa-life-ring"],
-       [q[9 + off], L ? "Mehr Infos" : "More info", "fa-info-circle"],
-       [q[10 + off], L ? "Spenden" : "Donate", "fa-external-link"],
-       [q[11 + off], L ? "Zuerst lesen" : "Read me first", "fa-book"]].forEach(function (l2) {
+      [[q[7 + off], "Support", "Help"],
+       [q[8 + off], L ? "Projektseite" : "Project page", "ExternalLink"],
+       [q[9 + off], L ? "Mehr Infos" : "More info", "Info"],
+       [q[10 + off], L ? "Spenden" : "Donate", "ExternalLink"],
+       [q[11 + off], L ? "Zuerst lesen" : "Read me first", "Manual"]].forEach(function (l2) {
         if (l2[0] && l2[0].indexOf("://") > 0) out.links.push({ url: l2[0], tip: l2[1], glyph: l2[2] });
       });
     } catch (e) {}
     return out;
   }
-  // One action icon, with its name as the tooltip. The glyphs are FontAwesome rather than emoji,
-  // which ignore a CSS colour, so the icon inherits black or white against its background like
-  // the badge text does.
-  function actBtn(icon, tip, fn, del) {
-    var b = el("span", "cc-actbtn" + (del ? " cc-actdel" : "")); b.setAttribute("data-tip", tip); b.appendChild(el("i", "fa " + icon));
+  // One action button with a GlimStone glyph, its name as the tooltip and the accessible name. The
+  // glyph is drawn in currentColor, so it takes black or white against the button like badge text.
+  // Tab reaches it, which is what brings a row's buttons in for a keyboard (:focus-within).
+  function actBtn(icon, tip, fn) {
+    var b = el("span", "cc-actbtn"); b.setAttribute("data-tip", tip); b.setAttribute("aria-label", tip); b.innerHTML = ccGlyph(icon);
     b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); fn(); });
+    if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(b);
     return b;
   }
   // greyed placeholder: an action without a target still occupies its slot,
   // so every row shows the same stable icon block
-  function actBtnOff(icon, tip) { var b = el("span", "cc-actbtn cc-actoff", ""); b.setAttribute("data-tip", tip); b.appendChild(el("i", "fa " + icon)); return b; }
+  function actBtnOff(icon, tip) { var b = el("span", "cc-actbtn cc-actoff"); b.setAttribute("data-tip", tip); b.setAttribute("aria-disabled", "true"); b.innerHTML = ccGlyph(icon); return b; }
   // rainbow: every action icon takes a rotating palette colour (falls back to grey);
   // disabled placeholders stay grey
   // Icons follow THE CONFIGURED ACCENT COLOUR, exactly like the badges (user call):
@@ -1323,7 +1325,7 @@
       if (!b2.classList.contains("cc-actoff")) {
         tx = "var(--cc-text, #e6e6e6)";
         if (colorsOn) {
-          bg = !rb ? (effc("accent") || "#FCC419") : (b2.classList.contains("cc-actdel") && window.CCTheme ? window.CCTheme.deleteSlot(pal, i2 + off) : pal[(i2 + off) % pal.length]);
+          bg = !rb ? (effc("accent") || "#FCC419") : pal[(i2 + off) % pal.length];
           tx = idealText(bg);
         }
       }
@@ -1338,48 +1340,43 @@
         b2.style.setProperty("background", bg, "important");
         b2.style.setProperty("color", tx, "important");
       }
-      // Unraid's theme styles .fa glyphs directly, which beats inheritance
-      var ic2 = b2.querySelector("i"); if (ic2) ic2.style.setProperty("color", "inherit", "important");
     });
   }
   // Both views share the action block: the first row holds the web UI, the log and the edit
-  // action, the second the restart, pause and stop, with an expander for the harvested links.
+  // action, the second the restart, pause and stop, and More, whose menu holds the console, the
+  // remove and the links the template carries.
   function actionBars(name, c, tr) {
     var cx = ctxFor(name, tr);
     var bar = el("div", "cc-actbar");
     var running = c && c.state === "running", paused = c && c.state === "paused";
     var r1 = el("div", "cc-actrow");
-    r1.appendChild(cx.webui ? actBtn("fa-globe", "WebUI", function () { window.open(cx.webui, "_blank"); }) : actBtnOff("fa-globe", LANG === "de" ? "kein WebUI" : "no WebUI"));
-    r1.appendChild(typeof window.openTerminal === "function" ? actBtn("fa-navicon", "Log", function () { window.openTerminal("docker", name, ".log"); }) : actBtnOff("fa-navicon", "Log"));
-    r1.appendChild(cx.xml ? actBtn("fa-wrench", LANG === "de" ? "Bearbeiten" : "Edit", function () {
+    r1.appendChild(cx.webui ? actBtn("ExternalLink", "WebUI", function () { window.open(cx.webui, "_blank"); }) : actBtnOff("ExternalLink", LANG === "de" ? "kein WebUI" : "no WebUI"));
+    r1.appendChild(typeof window.openTerminal === "function" ? actBtn("Log", "Log", function () { window.openTerminal("docker", name, ".log"); }) : actBtnOff("Log", "Log"));
+    r1.appendChild(cx.xml ? actBtn("Pencil", LANG === "de" ? "Bearbeiten" : "Edit", function () {
       // what Unraid's own editContainer() does; the template path stays unencoded
       var p2 = location.pathname, x2 = p2.indexOf("?"); if (x2 !== -1) p2 = p2.substring(0, x2);
       location.href = p2 + "/UpdateContainer?xmlTemplate=edit:" + cx.xml;
-    }) : actBtnOff("fa-wrench", LANG === "de" ? "kein Template" : "no template"));
+    }) : actBtnOff("Pencil", LANG === "de" ? "kein Template" : "no template"));
     var r2 = el("div", "cc-actrow");
-    r2.appendChild(actBtn("fa-refresh", t("restart"), function () { doAction(name, "restart"); }));
-    r2.appendChild(paused ? actBtn("fa-play", t("resume"), function () { doAction(name, "unpause"); })
-      : (running ? actBtn("fa-pause", t("pause"), function () { doAction(name, "pause"); }) : actBtnOff("fa-pause", t("pause"))));
-    r2.appendChild(actBtn(running || paused ? "fa-stop" : "fa-play", running || paused ? t("stop") : t("start"), function () { var cc2 = containerByName(name); doAction(name, cc2 && (cc2.state === "running" || cc2.state === "paused") ? "stop" : "start"); }));
-    var more = el("div", "cc-actrow cc-actmore");
-    if (typeof window.openTerminal === "function") more.appendChild(actBtn("fa-terminal", LANG === "de" ? "Konsole" : "Console", function () { if (cx.shell) window.openTerminal("docker", name, cx.shell); else window.openTerminal("docker", name); }));
-    // Remove sits behind the second click, and goes through Unraid's own confirm dialog.
-    if (typeof window.rmContainer === "function" && cx.id) more.appendChild(actBtn("fa-trash", LANG === "de" ? "Entfernen" : "Remove", function () { window.rmContainer(name, cx.image, cx.id); }, true));
-    if (cx.tswebui) more.appendChild(actBtn("fa-globe", "Tailscale WebUI", function () { window.open(cx.tswebui, "_blank"); }));
-    cx.links.forEach(function (l2) { more.appendChild(actBtn(l2.glyph, l2.tip, function () { window.open(l2.url, "_blank"); })); });
-    if (more.children.length) {
-      var moreBtn = actBtn("fa-ellipsis-h", LANG === "de" ? "Mehr" : "More", function () { bar.classList.add("cc-open"); tintAct(bar); });
-      moreBtn.classList.add("cc-acttoggle");   // the expander is the fourth icon of row 2 and hides once the bar is open
+    r2.appendChild(actBtn("Refresh", t("restart"), function () { doAction(name, "restart"); }));
+    r2.appendChild(paused ? actBtn("Play", t("resume"), function () { doAction(name, "unpause"); })
+      : (running ? actBtn("Pause", t("pause"), function () { doAction(name, "pause"); }) : actBtnOff("Pause", t("pause"))));
+    r2.appendChild(actBtn(running || paused ? "Stop" : "Play", running || paused ? t("stop") : t("start"), function () { var cc2 = containerByName(name); doAction(name, cc2 && (cc2.state === "running" || cc2.state === "paused") ? "stop" : "start"); }));
+    var extras = [];
+    if (typeof window.openTerminal === "function") extras.push({ glyph: "Code", label: LANG === "de" ? "Konsole" : "Console", run: function () { if (cx.shell) window.openTerminal("docker", name, cx.shell); else window.openTerminal("docker", name); } });
+    // Remove goes through Unraid's own confirm dialog.
+    if (typeof window.rmContainer === "function" && cx.id) extras.push({ glyph: "Trash", label: LANG === "de" ? "Entfernen" : "Remove", del: true, run: function () { window.rmContainer(name, cx.image, cx.id); } });
+    if (cx.tswebui) extras.push({ glyph: "ExternalLink", label: "Tailscale WebUI", run: function () { window.open(cx.tswebui, "_blank"); } });
+    cx.links.forEach(function (l2) { extras.push({ glyph: l2.glyph, label: l2.tip, run: function () { window.open(l2.url, "_blank"); } }); });
+    if (extras.length && window.CCTheme && window.CCTheme.menu) {
+      var moreBtn = actBtn("More", LANG === "de" ? "Mehr" : "More", function () { window.CCTheme.menu(moreBtn, extras); });
       r2.appendChild(moreBtn);
     } else {
-      r2.appendChild(actBtnOff("fa-ellipsis-h", LANG === "de" ? "keine weiteren Links" : "no more links"));
+      r2.appendChild(actBtnOff("More", LANG === "de" ? "keine weiteren Aktionen" : "no more actions"));
     }
-    // Three icons per row, with the expander as the fourth of the second. Clicking it fades the
-    // harvested extras in, three per row, and the cluster collapses again on mouseleave.
-    bar.appendChild(r1); bar.appendChild(r2); bar.appendChild(more);
-    bar.addEventListener("mouseleave", function () { if (bar.classList.contains("cc-open")) { bar.classList.remove("cc-open"); tintAct(bar); } });
+    bar.appendChild(r1); bar.appendChild(r2);
     tintAct(bar);
-    return { bar: bar, more: more, sig: cx.webui + "|" + cx.xml + "|" + cx.tswebui + "|" + cx.links.length };
+    return { bar: bar, sig: cx.webui + "|" + cx.xml + "|" + cx.tswebui + "|" + cx.links.length };
   }
   function injectActionCell(tr, name, c) {
     try {
@@ -1390,7 +1387,7 @@
       if (old2) { if (old2.dataset.ccSig === ab.sig) return; old2.remove(); } // rebuild once the data changed
       var tda = el("td", "cc-actcell"); tda.setAttribute(MARK, "1"); tda.dataset.ccSig = ab.sig;
       tda.style.setProperty("vertical-align", "middle", "important");
-      tda.appendChild(ab.bar); // ab.more sits inside ab.bar and flows into the grid on expand
+      tda.appendChild(ab.bar);
       tr.insertBefore(tda, tr.children[1] || null); // between the name and the version column
     } catch (e) {}
   }
@@ -1773,7 +1770,7 @@
     var nb = el("div", "cc-card-name"); nb.appendChild(el("div", "cc-card-title", c.name)); nb.appendChild(el("div", "cc-card-img", c.image || "")); head.appendChild(nb);
     head.appendChild(stateBadge(c)); wrap.appendChild(head);
     var ab2 = actionBars(c.name, c);
-    var abrow = el("div", "cc-card-actbar"); abrow.appendChild(ab2.bar); abrow.appendChild(ab2.more);
+    var abrow = el("div", "cc-card-actbar"); abrow.appendChild(ab2.bar);
     wrap.appendChild(abrow);
     var s = stats[c.name], sb = el("div", "cc-card-stats");
     if (s && c.state === "running") {
@@ -1874,9 +1871,9 @@
     wrap.appendChild(el("span", "cc-chip-status", stateLabel(st)));
     var running = c && c.state === "running", paused = c && c.state === "paused";
     var actWrap = el("span", "cc-mrow-act cc-chip-act");
-    actWrap.appendChild(paused ? actBtn("fa-play", t("resume"), function () { doAction(c.name, "unpause"); })
-      : (running ? actBtn("fa-stop", t("stop"), function () { doAction(c.name, "stop"); })
-        : actBtn("fa-play", t("start"), function () { doAction(c.name, "start"); })));
+    actWrap.appendChild(paused ? actBtn("Play", t("resume"), function () { doAction(c.name, "unpause"); })
+      : (running ? actBtn("Stop", t("stop"), function () { doAction(c.name, "stop"); })
+        : actBtn("Play", t("start"), function () { doAction(c.name, "start"); })));
     tintAct(actWrap); // the tinting the full action bars use, rather than colour logic of its own
     wrap.appendChild(actWrap);
     if (filterText && norm(c.name).indexOf(filterText) < 0) wrap.style.display = "none";
@@ -1895,9 +1892,9 @@
     var statusWrap = el("span", "cc-frow-status"); statusWrap.appendChild(stateBadge(c)); wrap.appendChild(statusWrap);
     var running = c && c.state === "running", paused = c && c.state === "paused";
     var actWrap = el("span", "cc-mrow-act cc-frow-act");
-    actWrap.appendChild(paused ? actBtn("fa-play", t("resume"), function () { doAction(c.name, "unpause"); })
-      : (running ? actBtn("fa-stop", t("stop"), function () { doAction(c.name, "stop"); })
-        : actBtn("fa-play", t("start"), function () { doAction(c.name, "start"); })));
+    actWrap.appendChild(paused ? actBtn("Play", t("resume"), function () { doAction(c.name, "unpause"); })
+      : (running ? actBtn("Stop", t("stop"), function () { doAction(c.name, "stop"); })
+        : actBtn("Play", t("start"), function () { doAction(c.name, "start"); })));
     tintAct(actWrap);
     wrap.appendChild(actWrap);
     if (filterText && norm(c.name).indexOf(filterText) < 0) wrap.style.display = "none";
@@ -1945,12 +1942,12 @@
     });
     return out;
   }
-  // The folder header's action buttons carry a FontAwesome <i> rather than emoji text, for the
-  // reason actBtn() gives: emoji draw their own fixed shape and ignore a CSS colour, while the
-  // glyph inherits .cc-folder-act's own grey at rest and accent on hover.
+  // The folder header's action buttons carry a GlimStone glyph rather than emoji text: an emoji
+  // draws its own fixed shape and ignores a CSS colour, while the glyph inherits .cc-folder-act's
+  // own grey at rest and accent on hover.
   function folderActBtn(cls, icon, title) {
-    var b = el("button", cls); b.type = "button"; b.title = title;
-    b.appendChild(el("i", "fa " + icon));
+    var b = el("button", cls); b.type = "button"; b.title = title; b.setAttribute("aria-label", title);
+    b.innerHTML = ccGlyph(icon);
     return b;
   }
   // The folder view groups structurally and shows no aggregated figures per folder. flatEntries
@@ -2034,21 +2031,21 @@
           var acts = el("span", "cc-folder-group-actions");
           // hide-stopped is per folder rather than global
           var hsOn = folderHidesStopped(e.id);
-          var hsBtn = folderActBtn("cc-folder-act" + (hsOn ? " cc-folder-act-on" : ""), "fa-eye", t("hideStopped"));
+          var hsBtn = folderActBtn("cc-folder-act" + (hsOn ? " cc-folder-act-on" : ""), hsOn ? "EyeOff" : "Eye", t("hideStopped"));
           hsBtn.addEventListener("click", function (ev) { ev.stopPropagation(); setFolderHideStopped(e.id, !folderHidesStopped(e.id)); renderFolderView(); });
           acts.appendChild(hsBtn);
           // bulk start and stop for this folder's contents
-          var startAllBtn = folderActBtn("cc-folder-act", "fa-play", t("bulkStartAll"));
+          var startAllBtn = folderActBtn("cc-folder-act", "Play", t("bulkStartAll"));
           startAllBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccFolderBulk(e.id, "start"); });
-          var stopAllBtn = folderActBtn("cc-folder-act", "fa-stop", t("bulkStopAll"));
+          var stopAllBtn = folderActBtn("cc-folder-act", "Stop", t("bulkStopAll"));
           stopAllBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccFolderBulk(e.id, "stop"); });
           acts.appendChild(startAllBtn); acts.appendChild(stopAllBtn);
           // Rename and delete are offered only for folders CC created itself; one made by
           // another tool or by a future native UI stays read-only here.
           if (ccOrgIsOwned(e.id)) {
-            var renBtn = folderActBtn("cc-folder-act", "fa-pencil", t("renameFolder"));
+            var renBtn = folderActBtn("cc-folder-act", "Pencil", t("renameFolder"));
             renBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccOrgRenameFolder(e.id, e.name, renBtn); });
-            var delBtn = folderActBtn("cc-folder-act", "fa-trash", t("deleteFolder"));
+            var delBtn = folderActBtn("cc-folder-act", "Trash", t("deleteFolder"));
             delBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccOrgDeleteFolder(e.id, delBtn); });
             acts.appendChild(renBtn); acts.appendChild(delBtn);
             // A folder reorders only where CC owns it, so one another tool manages is never
@@ -4147,7 +4144,7 @@
           var btns = content.querySelectorAll("button, input[type=button], input[type=submit]");
           var row = btns.length ? btns[btns.length - 1].parentElement : content;
           if (sb.parentElement !== row) row.appendChild(sb);
-          if (done) { sb.classList.add("cc-ctout-done"); if (sb.getAttribute("data-m") !== "done") { sb.setAttribute("data-m", "done"); sb.setAttribute("aria-label", "Fertig"); sb.innerHTML = "<i class='fa fa-check cc-ctout-fa' aria-hidden='true'></i>"; } }
+          if (done) { sb.classList.add("cc-ctout-done"); if (sb.getAttribute("data-m") !== "done") { sb.setAttribute("data-m", "done"); sb.setAttribute("aria-label", "Fertig"); sb.innerHTML = ccGlyph("Check"); } }
           else { sb.classList.remove("cc-ctout-done"); if (sb.getAttribute("data-m") !== "run") { sb.setAttribute("data-m", "run"); sb.setAttribute("aria-label", "Läuft"); sb.innerHTML = "<span class='cc-loader cc-load-sm'><span class='o'><i></i></span><span class='in'><i></i></span></span>"; } }   // the sm tier, one size source with the loader engine in header.js
           // paintPopups() in header.js covers #cc-ctout-title, but nothing on this page calls
           // it, because the window is a plain navigation rather than a .sweet-alert that

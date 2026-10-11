@@ -126,13 +126,12 @@ html.cc-docker-on table.cc-enh thead th.tablesorter-headerAsc,
 html.cc-docker-on table.cc-enh thead th.tablesorter-headerDesc { color: var(--cc-accent-ink, #FCC419) !important; }
 html.cc-docker-on table.cc-enh thead th.tablesorter-headerAsc::after,
 html.cc-docker-on table.cc-enh thead th.tablesorter-headerDesc::after { color: color-mix(in srgb, var(--cc-rbaccent, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black) !important; border-bottom-color: color-mix(in srgb, var(--cc-rbaccent, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black) !important; border-top-color: color-mix(in srgb, var(--cc-rbaccent, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black) !important; }
-/* Three icons per row, with the expander as the fourth icon of the second row, so both rows are
-   real flex rows and the harvested extras wrap three per row when the bar opens. */
+/* Three buttons in the first row and four in the second, where More closes it, each a real flex
+   row. */
 .cc-actbar { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
 /* the actions column needs room for its two icon rows: four icon badges and the gaps */
 .cc-enh thead tr:last-child th:nth-child(2) { width: 122px; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) > td:nth-child(2) { max-width: 122px; }
-.cc-actbtn i.fa { font-size: var(--cc-text-subline); line-height: 1; color: inherit !important; } /* theme CSS colours .fa directly */
 /* the gear lives inside the header strip (the last th), because an absolute overlay is clipped */
 .cc-hgear-th2 { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: #9a9a9a !important; }
 .cc-hgear-home { border: none !important; box-shadow: none !important; cursor: pointer; line-height: 1; align-self: center; }
@@ -148,13 +147,6 @@ a.sl-updall { display: none !important; }
 /* copyable IP badges react on hover like the plan chip */
 .cc-b-copy { cursor: pointer; transition: box-shadow .12s, transform .12s; }
 .cc-b-copy:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; transform: translateY(-1px); }
-/* The harvested extras stay hidden until the toggle opens the bar, then wrap three per row, while
-   the toggle itself hides and a short fade brings them in. actionBars collapses the bar again on
-   mouseleave. */
-.cc-actmore { display: none; }
-.cc-actbar.cc-open .cc-actmore { display: flex; flex-wrap: wrap; width: calc(3 * var(--cc-icon-badge, 26px) + 8px); gap: 4px; animation: cc-actfade .18s ease; }
-.cc-actbar.cc-open .cc-acttoggle { display: none; }
-@keyframes cc-actfade { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
 .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }
 @keyframes cc-actflash { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--cc-btn-accent, var(--cc-accent, #FCC419)); } }
 .cc-actbtn { width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-chip, #cfcfcf); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--cc-text-subline); user-select: none; transition: background .12s, color .12s; }
@@ -448,9 +440,7 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
    priority, where ordinary specificity and source order decide again. */
 .cc-folder-act { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: var(--cc-text-subline); line-height: 1; padding: 4px 6px; border-radius: var(--cc-radius-pill); transition: background .12s, color .12s; }
 .cc-folder-act:hover { background: rgba(128, 128, 128, .18) !important; color: var(--cc-txt); }
-/* docker.js folderActBtn() puts a FontAwesome <i> in the button; `color: inherit` is needed
-   because Unraid's theme styles .fa glyphs directly, which beats plain inheritance. */
-.cc-folder-act i.fa { color: inherit; font-size: var(--cc-text-meta); line-height: 1; }
+.cc-folder-act .cc-glyph { font-size: var(--cc-text-meta); }
 /* the hide-stopped active state is a shade, never a border line */
 .cc-folder-act-on { background: rgba(128, 128, 128, .18) !important; color: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black); }
 .cc-folder-group-body { padding-top: 0; } /* a nested body has no corner gear to clear */
@@ -1830,8 +1820,7 @@ html.cc-ctout-on #displaybox .content > div:has(> button) > #cc-ctout-status {
   position: static !important; flex: none !important; margin: 0 !important;
 }
 html.cc-ctout-on #cc-ctout-status.cc-ctout-done { background: var(--cc-ok, #6fdc8c); color: var(--cc-ok-fg, #161616); }   /* done: a green badge with its check in the state ink */
-html.cc-ctout-on #cc-ctout-status .cc-ctout-fa { color: inherit; font-size: var(--cc-text-body); line-height: 1; }
-html[data-cc-motion="off"] #cc-ctout-status .cc-ctout-fa { animation: none !important; }
+html.cc-ctout-on #cc-ctout-status .cc-glyph { font-size: var(--cc-text-body); }
 html.cc-ctout-on #displaybox .content span.system { background: transparent !important; color: #d6d6d6 !important; box-shadow: none !important; display: block; }
 html.cc-ctout-on .docker-install-blocker { background: transparent !important; }
 html.cc-ctout-on #displaybox .content .buttons,

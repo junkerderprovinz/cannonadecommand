@@ -59,8 +59,9 @@ for (const want of ['docker.css .cc-actbtn', 'docker.css .cc-limbtn', 'docker.cs
   ok(want + ' is sized by the token', seen.has(want), [...seen].join(' | '));
 }
 {
+  // More opens a menu, so no extra badges unfold inside the bar and nothing there needs a width.
   const docker = clean(read('styles/docker.css'));
-  ok('the opened action bar is three badges wide', /\.cc-actbar\.cc-open \.cc-actmore \{[^}]*width: calc\(3 \* var\(--cc-icon-badge, 26px\) \+ 8px\)/.test(docker));
+  ok('no action bar unfolds a second block of badges', !/\.cc-actmore/.test(docker) && !/\.cc-actmore/.test(clean(read('sheets/CannonadeCommand.VmTab.css'))));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
