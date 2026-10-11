@@ -2568,10 +2568,9 @@
         i.style.setProperty("max-width", "100%", "important");
         i.style.setProperty("box-sizing", "border-box", "important");
         // The fill is not stamped here either. The `background` shorthand also resets
-        // background-image, where the field affordances live, the select caret and the clock
-        // glyph on .cc-sched-time, and an inline !important rest colour cannot be beaten by
-        // :focus, so the focus step never appears. `html .cc-pop .cc-in` in docker.css carries
-        // the same weight against Unraid and leaves :focus working.
+        // background-image, where the select caret lives, and an inline !important rest colour
+        // cannot be beaten by :focus, so the focus step never appears. `html .cc-pop .cc-in` in
+        // docker.css carries the same weight against Unraid and leaves :focus working.
         i.style.removeProperty("background");
         i.style.removeProperty("background-color");
         i.style.setProperty("border", "none", "important");
@@ -2579,7 +2578,7 @@
         i.style.setProperty("margin", "0", "important");
         i.style.setProperty("min-height", "0", "important");
         i.style.setProperty("height", "auto", "important");
-        // The time field and the multi-select keep room on the right for their clock glyph and
+        // The time field and the multi-select keep room on the right for the clock button and the
         // caret; docker.css asks for it, and this inline padding would otherwise win and run the
         // text under the icon.
         i.style.setProperty("padding", (i.classList.contains("cc-sched-time") || i.classList.contains("cc-dropin")) ? "5px 24px 5px 8px" : "5px 8px", "important");
@@ -2800,20 +2799,26 @@
   function restartWarnBadge() {
     var b = badgeInfo("⚠", t("rpWarn"), "restart"); b.classList.add("cc-b-warn"); b.setAttribute("data-tip", t("rpWarnTip")); return b;
   }
-  // The time picker. A native <input type=time> expands into the browser's own drop-down, which
-  // CSS cannot reach past a couple of vendor pseudo-elements, so it opens as a light panel over
-  // CC's dark window. GlimStone Rule 18 replaces such a control with the widget the app already
-  // has: this window builds a .cc-drop panel for "Hängt ab von", so the picker is that panel with
-  // two columns, hours 00-23 and minutes 00-59. Same class and same lifecycle, closePop() already
-  // sweeps .cc-drop, and paintSelects() in cc-theme.js therefore carries it through the colour
-  // modes without a painter of its own.
-  // The <input> stays the source of truth: typing HH:MM still works and row._read is untouched.
-  // docker.css hides the native indicator and sets color-scheme: dark, so the browser's own
-  // picker is dark too for anyone who reaches it by keyboard.
+  // The time picker (GlimStone, "The time picker"). A native <input type=time> expands into the
+  // browser's own drop-down, which CSS cannot reach past a couple of vendor pseudo-elements, so it
+  // opens as a light panel over CC's dark window; rule 18 replaces it with the widget this window
+  // already has, the .cc-drop panel of "Hängt ab von", here with two listbox columns, hours 00 to 23
+  // and minutes in steps of five. Same class and same lifecycle: closePop() sweeps .cc-drop, and
+  // paintSelects() in cc-theme.js carries it through the colour modes.
+  // The <input> stays the source of truth and stays typable, so a minute off the five-minute grid
+  // can still be typed, and the panel shows it as one more entry. The clock button beside it opens
+  // the panel; focus on the field does not. A clock reading is data, so the field, the button and
+  // the panel stay left to right under a right-to-left language.
+  var tpOpen = null;   // closes the one picker that is open
   function ccTimePicker(input) {
-    var panel = null, chips = [[], []];
-    function closePanel() { if (panel) { panel.remove(); panel = null; document.removeEventListener("mousedown", onDoc, true); } }
-    function onDoc(e) { if (panel && !panel.contains(e.target) && e.target !== input) closePanel(); }
+    var wrap = el("span", "cc-tp"), btn = el("span", "cc-tp-btn");
+    var label = LANG === "de" ? "Uhrzeit wählen" : "Pick a time";
+    btn.innerHTML = ccGlyph("Schedules");
+    btn.setAttribute("data-tip", label); btn.setAttribute("aria-label", label);
+    btn.setAttribute("aria-haspopup", "listbox"); btn.setAttribute("aria-expanded", "false");
+    if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(btn);
+    input.setAttribute("dir", "ltr"); btn.setAttribute("dir", "ltr");
+    var panel = null, cols = [];
     function two(n) { return (n < 10 ? "0" : "") + n; }
     function parts() { var m = /^(\d{1,2}):(\d{1,2})$/.exec(input.value || ""); return m ? [Math.min(23, +m[1]), Math.min(59, +m[2])] : [null, null]; }
     function write(h, mi) {
@@ -2822,48 +2827,87 @@
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
     }
+    function onDoc(e) { if (panel && !panel.contains(e.target) && !wrap.contains(e.target)) close(false); }
+    // A scroll inside a column is the panel's own and never closes it; only the page moving away
+    // from the field does.
+    function onScroll(e) { if (panel && !panel.contains(e.target)) close(false); }
+    function close(refocus) {
+      if (!panel) return;
+      panel.remove(); panel = null; cols = []; tpOpen = null;
+      document.removeEventListener("mousedown", onDoc, true);
+      window.removeEventListener("scroll", onScroll, true);
+      btn.setAttribute("aria-expanded", "false");
+      if (refocus) btn.focus();
+    }
+    function pick(ci, it) {
+      cols[ci].forEach(function (o) { o.classList.remove("cc-drop-on"); o.setAttribute("aria-selected", "false"); });
+      it.classList.add("cc-drop-on"); it.setAttribute("aria-selected", "true");
+      if (ci === 0) write(+it.dataset.v, null); else write(null, +it.dataset.v);
+    }
+    function onKey(e) {
+      var it = e.target, ci = it.parentNode === panel.children[0] ? 0 : 1, list = cols[ci], at = list.indexOf(it), to = -1;
+      if (e.key === "ArrowDown") to = Math.min(list.length - 1, at + 1);
+      else if (e.key === "ArrowUp") to = Math.max(0, at - 1);
+      else if (e.key === "Home") to = 0;
+      else if (e.key === "End") to = list.length - 1;
+      else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        e.preventDefault(); e.stopPropagation();
+        var other = cols[ci ? 0 : 1]; (other.filter(function (o) { return o.classList.contains("cc-drop-on"); })[0] || other[0]).focus();
+        return;
+      } else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); pick(ci, it); close(true); return; }
+      else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(true); return; }
+      else if (e.key === "Tab") { close(true); return; }   // the Tab itself moves on from the button
+      if (to < 0) return;
+      e.preventDefault(); e.stopPropagation();
+      pick(ci, list[to]); list[to].focus();
+    }
     function open() {
-      if (panel) return;
-      panel = el("div", "cc-drop cc-timepick");
-      chips = [[], []];
-      var cur = parts();
-      [{ n: 24, on: cur[0], set: function (v) { write(v, null); } }, { n: 60, on: cur[1], set: function (v) { write(null, v); } }].forEach(function (col, ci) {
-        var c = el("div", "cc-tp-col");
-        for (var v = 0; v < col.n; v++) {
-          var it = el("div", "cc-drop-it" + (v === col.on ? " cc-drop-on" : ""), two(v));
-          // mousedown + preventDefault, exactly like the dependency list: the field keeps focus and the
-          // panel stays open, so hour and minute are picked in one visit instead of two.
-          it.addEventListener("mousedown", (function (set, ci2, it2, v2) {
-            return function (ev) {
-              ev.preventDefault(); ev.stopPropagation();
-              set(v2);
-              chips[ci2].forEach(function (o) { o.classList.remove("cc-drop-on"); });
-              it2.classList.add("cc-drop-on");
-            };
-          })(col.set, ci, it, v));
-          chips[ci].push(it); c.appendChild(it);
-        }
+      if (panel && panel.isConnected) return;
+      if (tpOpen) tpOpen();
+      panel = el("div", "cc-drop cc-timepick"); panel.setAttribute("dir", "ltr");
+      panel.setAttribute("data-cc-own-keys", "1");   // the window leaves Escape and Tab to the panel
+      cols = [];
+      var cur = parts(), mins = [];
+      for (var mv = 0; mv < 60; mv += 5) mins.push(mv);
+      if (cur[1] != null && mins.indexOf(cur[1]) < 0) { mins.push(cur[1]); mins.sort(function (a, b) { return a - b; }); }
+      var hours = []; for (var hv = 0; hv < 24; hv++) hours.push(hv);
+      [[hours, cur[0], LANG === "de" ? "Stunde" : "Hour"], [mins, cur[1], LANG === "de" ? "Minute" : "Minute"]].forEach(function (spec, ci) {
+        var c = el("div", "cc-tp-col"); c.setAttribute("role", "listbox"); c.setAttribute("aria-label", spec[2]);
+        cols.push([]);
+        spec[0].forEach(function (v) {
+          var on = v === spec[1];
+          var it = el("div", "cc-drop-it" + (on ? " cc-drop-on" : ""), two(v));
+          it.dataset.v = String(v); it.setAttribute("role", "option"); it.setAttribute("aria-selected", on ? "true" : "false"); it.tabIndex = -1;
+          it.addEventListener("click", function (ev) { ev.stopPropagation(); pick(ci, it); it.focus(); });
+          it.addEventListener("keydown", onKey);
+          cols[ci].push(it); c.appendChild(it);
+        });
         panel.appendChild(c);
       });
       document.body.appendChild(panel);
       // Under the field, or above it when a schedule row sits near the bottom edge. The page
-      // behind is scroll-locked while a window stands (Rule 15), so a panel off the fold would
-      // be unreachable.
-      var r = input.getBoundingClientRect(), ph = panel.offsetHeight, pw = panel.offsetWidth;
+      // behind is scroll-locked while a window stands (rule 15), so a panel off the fold would
+      // be unreachable. Both edges are clamped, as in clampPop: a schedule row sits at the right
+      // end of a window that is itself clamped to the viewport.
+      var r = wrap.getBoundingClientRect(), ph = panel.offsetHeight, pw = panel.offsetWidth;
       var vh = document.documentElement.clientHeight || window.innerHeight, vw = document.documentElement.clientWidth || window.innerWidth;
       var top = (r.bottom + 3 + ph > vh && r.top - 3 - ph > 0) ? r.top - 3 - ph : r.bottom + 3;
-      // Both edges are clamped: a schedule row sits at the right-hand end of a window that is
-      // itself clamped to the viewport, and clamping only the left let the panel run off the
-      // right edge (measured right 1514 in a 1500px viewport). Same reasoning as clampPop.
       panel.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + vw - pw - 8)) + "px";
       panel.style.top = (window.scrollY + Math.max(8, Math.min(top, vh - ph - 8))) + "px";
-      // open ON the current value: 22:45 must not show 00 at the top of both columns
-      chips.forEach(function (cs) { for (var i = 0; i < cs.length; i++) if (cs[i].classList.contains("cc-drop-on")) { cs[i].parentNode.scrollTop = Math.max(0, cs[i].offsetTop - 64); break; } });
-      paintSelects();   // the picker joins the colour modes like every other CC dropdown
+      // Opens on the current value, so 22:45 does not show 00 at the top of both columns. This runs
+      // after the panel stands where it belongs, or the browser scrolls the page to reach it.
+      cols.forEach(function (cs) { for (var i = 0; i < cs.length; i++) if (cs[i].classList.contains("cc-drop-on")) { cs[i].parentNode.scrollTop = Math.max(0, cs[i].offsetTop - 64); break; } });
+      paintSelects();
+      btn.setAttribute("aria-expanded", "true");
       document.addEventListener("mousedown", onDoc, true);
+      window.addEventListener("scroll", onScroll, true);
+      tpOpen = function () { close(false); };
+      (cols[0].filter(function (o) { return o.classList.contains("cc-drop-on"); })[0] || cols[0][0]).focus();
     }
-    input.addEventListener("focus", open);
-    input.addEventListener("click", function (ev) { ev.stopPropagation(); open(); });
+    btn.addEventListener("click", function (ev) { ev.preventDefault(); ev.stopPropagation(); if (panel && panel.isConnected) close(true); else open(); });
+    btn.addEventListener("keydown", function (ev) { if (ev.key === "ArrowDown") { ev.preventDefault(); open(); } });
+    wrap.appendChild(input); wrap.appendChild(btn);
+    return wrap;
   }
   function openEditor(anchor, name) {
     if (togglePop(anchor)) return;
@@ -3019,7 +3063,7 @@
       var row = el("div", "cc-sched-row");
       var act2 = el("select", "cc-in cc-sched-act"); SCHED_ACTIONS.forEach(function (a) { var o = el("option", null, t(a)); o.value = a; if (s && s.action === a) o.selected = true; act2.appendChild(o); });
       var time = el("input", "cc-in cc-sched-time"); time.type = "time"; time.value = (s && s.time) || "";
-      ccTimePicker(time);   // Rule 18: CC's own two-column panel instead of the browser's light drop-down
+      var timeBox = ccTimePicker(time);
       var days = el("div", "cc-days"), sel = {}; ((s && s.days) || []).forEach(function (d) { sel[d] = true; });
       DAYS.forEach(function (d) { var b = el("span", "cc-day" + (sel[d[1]] ? " cc-day-on" : ""), d[0]); b.dataset.day = d[1]; b.addEventListener("click", function (e) { e.preventDefault(); b.classList.toggle("cc-day-on"); }); days.appendChild(b); });
       // stopPropagation is load-bearing: the document-level "click outside closes the window"
@@ -3029,7 +3073,7 @@
       // The delete control is a badge box-for-box like the .cc-day chip beside it, 26×26 on the
       // same shape-engine radius, in the chosen chip's colour rather than red, like .cc-b-del.
       var rm = el("span", "cc-sched-x"); rm.innerHTML = CC_TRASH_SVG; rm.setAttribute("data-tip", t("remove")); rm.setAttribute("aria-label", t("remove")); rm.addEventListener("click", function (ev) { ev.stopPropagation(); row.remove(); });
-      row.appendChild(act2); row.appendChild(time); row.appendChild(days); row.appendChild(rm);
+      row.appendChild(act2); row.appendChild(timeBox); row.appendChild(days); row.appendChild(rm);
       ctWrapSelect(act2);   // the schedule action <select> gets the CC dsel panel too; it dispatches a native change, so row._read still reads act2.value
       // No days means every day; only rows with a valid HH:MM time are saved.
       row._read = function () { if (!/^\d{2}:\d{2}$/.test(time.value)) return null; var ds = []; Array.prototype.slice.call(days.children).forEach(function (x) { if (x.classList.contains("cc-day-on")) ds.push(parseInt(x.dataset.day, 10)); }); var o = { name: name, action: act2.value, time: time.value, enabled: true }; if (ds.length) o.days = ds; return o; };

@@ -669,6 +669,8 @@
   function onWinKey(e) {
     var top = winStack[winStack.length - 1];
     if (!top) return;
+    // A panel the window opened, such as the time picker, answers Escape and Tab itself.
+    if (e.target && e.target.closest && e.target.closest("[data-cc-own-keys]")) return;
     if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); top.dismiss(); return; }
     if (e.key !== "Tab") return;
     var f = focusables(top.win), a = document.activeElement;

@@ -4,10 +4,11 @@
 // ccTimePicker, both of which a refactor can quietly drop.
 //
 // So: which controls the painter sweeps, that the checkbox tick stays a legal data
-// URI, that the time picker offers 24 hours and 60 minutes and writes a padded
-// HH:MM back into the input, and that the outside-click guard counts a body-level
-// .cc-drop panel as part of the window, without which picking a dependency tears
-// the editor down and takes every unsaved edit with it.
+// URI, that the time picker opens from its button with 24 hours and minutes in
+// steps of five, works from the keyboard and writes a padded HH:MM back into the
+// input, and that the outside-click guard counts a body-level .cc-drop panel as
+// part of the window, without which picking a dependency tears the editor down and
+// takes every unsaved edit with it.
 
 const fs = require('fs');
 const path = require('path');
@@ -35,8 +36,11 @@ class N {
     this.tagName = String(tag).toUpperCase(); this.children = []; this.parentNode = null;
     this.classList = new CL(this); this._txt = ''; this.attrs = {}; this.listeners = {};
     this.style = new Style(); this.value = ''; this.type = ''; this.scrollTop = 0; this.offsetTop = 0;
-    this.offsetHeight = 200; this.offsetWidth = 160;
+    this.offsetHeight = 200; this.offsetWidth = 160; this.dataset = {}; this.innerHTML = '';
   }
+  focus() { active = this; }
+  contains(n) { for (; n; n = n.parentNode) if (n === this) return true; return false; }
+  get isConnected() { return body.contains(this); }
   get className() { return [...this.classList.s].join(' '); }
   set className(v) { this.classList.s = new Set(String(v).split(/\s+/).filter(Boolean)); }
   get textContent() { return this.children.length ? this.children.map(c => c.textContent).join('') : this._txt; }
@@ -64,6 +68,7 @@ function matches(n, p) {
   if (p.startsWith('.')) return n.classList.contains(p.slice(1).split('[')[0]);
   return n.tagName === p.toUpperCase();
 }
+let active = null;
 const body = new N('body');
 global.document = {
   body,
@@ -71,7 +76,13 @@ global.document = {
   createElement: t => new N(t),
   addEventListener() {}, removeEventListener() {}
 };
-global.window = { scrollX: 0, scrollY: 0, innerHeight: 900, innerWidth: 1500 };
+const scrolls = [];
+global.window = {
+  scrollX: 0, scrollY: 0, innerHeight: 900, innerWidth: 1500,
+  CCTheme: { pressable(n) { n.setAttribute('role', 'button'); n.setAttribute('tabindex', '0'); return n; } },
+  addEventListener(t, fn) { if (t === 'scroll') scrolls.push(fn); },
+  removeEventListener(t, fn) { if (t === 'scroll' && scrolls.indexOf(fn) >= 0) scrolls.splice(scrolls.indexOf(fn), 1); },
+};
 global.Event = class { constructor(type) { this.type = type; } };
 global.localStorage = { _d: {}, getItem(k) { return k in this._d ? this._d[k] : null; }, setItem(k, v) { this._d[k] = String(v); } };
 global.navigator = { language: 'de' };
@@ -92,7 +103,7 @@ function grabLine(marker) {
 }
 const POP_PAINT_SEL = (/var POP_PAINT_SEL = "([^"]+)"/.exec(src) || [])[1];
 const code = ['el', 'ccTimePicker'].map(grabFn).join('\n');
-const fns = new Function('paintSelects', code + '\n; return { el, ccTimePicker };')(function () {});
+const fns = new Function('paintSelects', 'var tpOpen = null; var LANG = "de"; function ccGlyph(n) { return "<glyph " + n + ">"; }\n' + code + '\n; return { el, ccTimePicker };')(function () {});
 
 console.log('\nPart 1: the paint sweep covers every interactive control class in the window');
 ok(!!POP_PAINT_SEL, 'POP_PAINT_SEL is still declared in docker.js');
@@ -112,41 +123,89 @@ console.log('\nPart 2: the switch knob takes its ink from the stamped chain');
   ok(!/--cc-cb-tick/.test(paint), 'no per-checkbox tick image is stamped');
 }
 
-console.log('\nPart 3: the .cc-timepick replacement widget');
+console.log('\nPart 3: the time picker (GlimStone, "The time picker")');
 const input = new N('input');
 input.type = 'time'; input.className = 'cc-in cc-sched-time'; input.value = '07:30';
-fns.ccTimePicker(input);
-input.fire('focus');
+const box = fns.ccTimePicker(input);
+const btn = box.children[1];
+ok(box.classList.contains('cc-tp') && box.children[0] === input, 'the field goes into a box with its clock button');
+ok(btn.classList.contains('cc-tp-btn') && btn.innerHTML === '<glyph Schedules>', 'the button wears GlimStone\'s clock');
+ok(btn.attrs.role === 'button' && btn.attrs.tabindex === '0', 'it is a button Tab reaches');
+ok(btn.attrs['aria-haspopup'] === 'listbox' && btn.attrs['aria-expanded'] === 'false' && !!btn.attrs['aria-label'], 'it says it opens a list, and what for');
+ok(input.attrs.dir === 'ltr' && btn.attrs.dir === 'ltr', 'a clock reading stays left to right, field and button');
+input.fire('focus'); input.fire('click', { preventDefault() {}, stopPropagation() {} });
+ok(!body.children.some(c => c.classList.contains('cc-timepick')), 'focus or a click on the field opens nothing, so typing stays undisturbed');
+btn.fire('click', { preventDefault() {}, stopPropagation() {} });
 const panel = body.children.find(c => c.classList.contains('cc-timepick'));
-ok(!!panel, 'focusing the field opens a panel');
+ok(!!panel, 'the button opens the panel');
+ok(btn.attrs['aria-expanded'] === 'true', 'and says so');
 ok(panel.classList.contains('cc-drop'), 'it is a .cc-drop, so closePop() sweeps it and paintSelects() colours it');
+ok(panel.attrs.dir === 'ltr', 'the panel stays left to right too');
+ok(panel.attrs['data-cc-own-keys'] === '1', 'it keeps Escape and Tab from the window behind it');
 const cols = panel.querySelectorAll('.cc-tp-col');
 eq(cols.length, 2, 'two columns, hours and minutes');
+ok(cols.every(c => c.attrs.role === 'listbox' && !!c.attrs['aria-label']), 'each column is a named listbox');
+ok(cols[0].children.every(o => o.attrs.role === 'option' && o.tabIndex === -1), 'each entry is an option');
 eq(cols[0].querySelectorAll('.cc-drop-it').length, 24, 'every hour from 00 to 23');
-eq(cols[1].querySelectorAll('.cc-drop-it').length, 60, 'every minute from 00 to 59, as in the native field');
-eq(cols[0].children[0].textContent, '00', 'hours are zero padded');
-eq(cols[1].children[7].textContent, '07', 'minutes are zero padded');
+eq(cols[1].children.map(c => c.textContent).join(' '), '00 05 10 15 20 25 30 35 40 45 50 55', 'minutes in steps of five, zero padded');
 const onChips = panel.querySelectorAll('.cc-drop-on').map(c => c.textContent);
 eq(onChips.join(','), '07,30', 'the current value opens marked in both columns');
+ok(cols[0].children[7].attrs['aria-selected'] === 'true' && cols[0].children[6].attrs['aria-selected'] === 'false', 'and selected for a screen reader');
+ok(active === cols[0].children[7], 'the focus lands on the current hour');
 
-// Picking an hour writes back and keeps the panel open for the minute.
-const h22 = cols[0].children[22];
-h22.fire('mousedown', { preventDefault() {}, stopPropagation() {} });
-eq(input.value, '22:30', 'picking an hour rewrites only the hour, padded');
-ok(body.children.indexOf(panel) >= 0, 'the panel stays open, so hour and minute take one visit');
-eq(cols[0].querySelectorAll('.cc-drop-on').length, 1, 'exactly one hour stays marked');
-eq(cols[0].querySelectorAll('.cc-drop-on')[0].textContent, '22', 'and it is the one just picked');
-cols[1].children[5].fire('mousedown', { preventDefault() {}, stopPropagation() {} });
-eq(input.value, '22:05', 'picking a minute rewrites only the minute, padded');
+const key = (k) => { const ev = { key: k, target: active, defaultPrevented: false, stopped: false, preventDefault() { this.defaultPrevented = true; }, stopPropagation() { this.stopped = true; } }; active.fire('keydown', ev); return ev; };
+let ev = key('ArrowDown');
+eq(input.value, '08:30', 'ArrowDown steps the hour and writes it at once');
+ok(active === cols[0].children[8] && ev.stopped, 'the focus follows, and the key goes no further');
+key('End'); eq(input.value, '23:30', 'End jumps to the last hour');
+key('ArrowDown'); eq(input.value, '23:30', 'and the column stops there rather than wrapping');
+key('Home'); eq(input.value, '00:30', 'Home jumps to the first');
+key('ArrowRight'); ok(active === cols[1].children[6], 'ArrowRight moves to the minute column, onto its current minute');
+key('ArrowUp'); eq(input.value, '00:25', 'ArrowUp steps the minute by five');
+key('ArrowLeft'); ok(active === cols[0].children[0], 'ArrowLeft moves back to the hour');
+ev = key('Escape');
+ok(!body.children.includes(panel) && ev.stopped, 'Escape closes the panel and stops there, so the window behind stays');
+ok(active === btn, 'the focus goes back to the button');
+ok(btn.attrs['aria-expanded'] === 'false', 'which says the panel is closed');
+
+// Picking with the pointer writes back and keeps the panel open for the other half.
+btn.fire('click', { preventDefault() {}, stopPropagation() {} });
+const pnl = body.children.find(c => c.classList.contains('cc-timepick'));
+const c2 = pnl.querySelectorAll('.cc-tp-col');
+c2[0].children[22].fire('click', { preventDefault() {}, stopPropagation() {} });
+eq(input.value, '22:25', 'clicking an hour rewrites only the hour, padded');
+ok(body.children.includes(pnl), 'the panel stays open, so hour and minute take one visit');
+eq(c2[0].querySelectorAll('.cc-drop-on').map(c => c.textContent).join(), '22', 'exactly one hour stays marked, the one just picked');
+c2[1].children[1].fire('click', { preventDefault() {}, stopPropagation() {} });
+eq(input.value, '22:05', 'clicking a minute rewrites only the minute');
+active = c2[1].children[1]; key('Enter');
+ok(!body.children.includes(pnl) && active === btn, 'Enter takes the entry and closes, back on the button');
+
+// A minute typed off the grid stays and shows as one more entry.
+input.value = '06:07';
+btn.fire('click', { preventDefault() {}, stopPropagation() {} });
+const p3 = body.children.find(c => c.classList.contains('cc-timepick'));
+eq(p3.querySelectorAll('.cc-tp-col')[1].children.map(c => c.textContent).slice(0, 4).join(' '), '00 05 07 10', 'a typed 07 slots in among the steps');
+eq(p3.querySelectorAll('.cc-drop-on').map(c => c.textContent).join(','), '06,07', 'and opens marked');
+ok(scrolls.length === 1, 'the panel listens for a page scroll while it is open');
+scrolls[0]({ target: p3.querySelectorAll('.cc-tp-col')[1] });
+ok(body.children.includes(p3), 'a scroll inside a column leaves it open');
+scrolls[0]({ target: body });
+ok(!body.children.includes(p3) && scrolls.length === 0, 'a scroll of the page closes it and the listener goes with it');
 
 // An empty field must not produce "NaN:NaN".
-panel.remove();
 const blank = new N('input'); blank.type = 'time'; blank.className = 'cc-in cc-sched-time'; blank.value = '';
-fns.ccTimePicker(blank); blank.fire('focus');
+const bb = fns.ccTimePicker(blank).children[1];
+bb.fire('click', { preventDefault() {}, stopPropagation() {} });
 const p2 = body.children.find(c => c.classList.contains('cc-timepick'));
-p2.querySelectorAll('.cc-tp-col')[0].children[9].fire('mousedown', { preventDefault() {}, stopPropagation() {} });
+ok(active === p2.querySelectorAll('.cc-tp-col')[0].children[0], 'with no value the focus lands on 00');
+p2.querySelectorAll('.cc-tp-col')[0].children[9].fire('click', { preventDefault() {}, stopPropagation() {} });
 eq(blank.value, '09:00', 'an empty field fills the untouched half with 00, never NaN');
 ok(/^\d{2}:\d{2}$/.test(blank.value), 'the result matches the HH:MM shape row._read insists on');
+btn.fire('click', { preventDefault() {}, stopPropagation() {} });
+eq(body.children.filter(c => c.classList.contains('cc-timepick')).length, 1, 'opening a second picker closes the first');
+const themeSrc = fs.readFileSync(path.join(path.dirname(DOCKER), 'cc-theme.js'), 'utf8');
+ok(/function onWinKey\(e\) \{[^}]*if \(e\.target && e\.target\.closest && e\.target\.closest\("\[data-cc-own-keys\]"\)\) return;/.test(themeSrc), 'a window leaves the keys alone inside a panel that keeps its own');
 
 console.log('\nPart 4: the outside-click guard, for which a body-level panel is inside');
 const guard = grabLine('if (openPop && !openPop.contains(e.target)');

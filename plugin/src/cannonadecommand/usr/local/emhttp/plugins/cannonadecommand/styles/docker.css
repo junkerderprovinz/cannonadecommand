@@ -687,10 +687,9 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
 /* every editor field in the same box: no border, a lighter background */
 .cc-in { flex: 1; background: #2e2e2e; color: #e6e6e6; border: none !important; border-radius: var(--cc-radius-control); padding: 5px 8px; font-size: var(--cc-text-meta); }
 /* Focus is a brightness step, never a ring, and it sets background-color rather than the
-   `background` shorthand, which would reset background-image and blank the clock glyph on
-   .cc-sched-time while the field has focus. The rest colour lives in the `html .cc-pop .cc-in`
-   pair below, because hardenPop stamps it inline with !important and :focus has to be able to
-   win. */
+   `background` shorthand, which would reset background-image and blank the caret on a select
+   while the field has focus. The rest colour lives in the `html .cc-pop .cc-in` pair below,
+   because hardenPop stamps it inline with !important and :focus has to be able to win. */
 .cc-in:focus { background-color: #383838; outline: none !important; box-shadow: none !important; }
 html .cc-pop .cc-in { background-color: #2e2e2e !important; }
 html .cc-pop .cc-in:focus { background-color: #383838 !important; }
@@ -762,17 +761,20 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { backgr
    `.cc-pop .cc-dsel` sits later in this sheet and would win the tie. */
 .cc-pop .cc-sched-row .cc-dsel { flex: none; width: 104px; }
 /* The time field. `color-scheme: dark` makes the browser draw its hour and minute segments for a
-   dark UI; the page's own scheme is normal, so they arrive painted for a light one. The expanded
-   picker is CC's .cc-timepick panel, built on the same .cc-drop widget as the "Hängt ab von" list
-   in this window, and the native indicator is hidden; typing HH:MM still works. The clock glyph is
-   neutral grey like the select caret above, since an affordance is furniture. */
-.cc-sched-time {
-  flex: none; width: 100px; color-scheme: dark;
-  background-repeat: no-repeat; background-position: right 7px center; background-size: 13px 13px;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8a8a' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 2'/></svg>");
-  padding-right: 24px !important; cursor: pointer;
+   dark UI; the page's own scheme is normal, so they arrive painted for a light one. Typing HH:MM
+   works in the field; the clock button at its right end opens CC's .cc-timepick panel, built on the
+   same .cc-drop widget as the "Hängt ab von" list in this window, and the native indicator is
+   hidden. The button sits over the room the field keeps on its right, so the row keeps its measured
+   width. Its glyph is neutral grey like the select caret above, since an affordance is furniture. */
+.cc-tp { position: relative; display: inline-flex; flex: none; }
+.cc-sched-time { flex: none; width: 100px; color-scheme: dark; padding-right: 24px !important; }
+.cc-tp-btn {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 24px; display: inline-flex; align-items: center; justify-content: center;
+  color: #8a8a8a; font-size: var(--cc-text-subline); cursor: pointer; border-radius: var(--cc-radius-control);
+  transition: color var(--cc-motion-control-dur, 0s);
 }
-.cc-sched-time:hover { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e6e6e6' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='12' r='9'/><path d='M12 7v5l3 2'/></svg>"); }
+.cc-tp-btn:hover, .cc-tp-btn[aria-expanded="true"] { color: #e6e6e6; }
+.cc-tp-btn:focus-visible { outline: none; color: #e6e6e6; box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent); }
 .cc-sched-time::-webkit-calendar-picker-indicator { display: none !important; }   /* replaced by .cc-timepick */
 .cc-sched-time::-webkit-datetime-edit { padding: 0; color: inherit; }
 .cc-sched-time::-webkit-datetime-edit-fields-wrapper { padding: 0; }
@@ -794,6 +796,7 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { backgr
 .cc-tp-col { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
 .cc-tp-col .cc-drop-it { justify-content: center; padding: 4px 12px; min-width: 44px; }
 .cc-timepick .cc-drop-on::after { content: none; }   /* a two-character chip has no room for the tick, and the fill already says it is picked */
+.cc-timepick .cc-drop-it:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent); }
 .cc-days { display: flex; gap: 3px; flex-wrap: wrap; }
 /* The day chip and the row's delete badge have to be the same size, so they share one geometry
    declaration; two separate ones are equal only until somebody edits one. Only colour, glyph and
