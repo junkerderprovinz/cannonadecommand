@@ -1874,8 +1874,25 @@
     try { var tb = nativeTable(); if (tb && tb.parentNode) tb.parentNode.insertBefore(gridHolder, tb); else document.body.appendChild(gridHolder); } catch (e) { document.body.appendChild(gridHolder); }
     return gridHolder;
   }
+  // The card and folder views are rebuilt from scratch on every load, which would drop the keyboard
+  // focus every few seconds. The focused control is remembered by the card or folder it sits in and
+  // its place among that box's controls, and found again in the fresh DOM.
+  var GRID_FOCUSABLE = 'a[href], button, input, select, [tabindex]:not([tabindex="-1"])';
+  function gridFocusKey() {
+    var a = document.activeElement;
+    if (!gridHolder || !a || !gridHolder.contains(a)) return null;
+    var box = a.closest(".cc-card[data-name], .cc-folder-group[data-fid]") || gridHolder;
+    return { name: box.getAttribute("data-name"), fid: box.getAttribute("data-fid"), at: Array.prototype.indexOf.call(box.querySelectorAll(GRID_FOCUSABLE), a) };
+  }
+  function restoreGridFocus(k) {
+    if (!k || !gridHolder) return;
+    var box = k.name != null ? gridHolder.querySelector('.cc-card[data-name="' + CSS.escape(k.name) + '"]') : k.fid != null ? gridHolder.querySelector('.cc-folder-group[data-fid="' + CSS.escape(k.fid) + '"]') : gridHolder;
+    var target = box && box.querySelectorAll(GRID_FOCUSABLE)[k.at];
+    if (target) target.focus({ preventScroll: true });
+  }
   function removeGridHolder() { try { if (gridHolder && gridHolder.parentNode) gridHolder.parentNode.removeChild(gridHolder); } catch (e) {} gridHolder = null; }
   function renderGrid() {
+    var focusKey = gridFocusKey();
     ensureGridHolder(); gridHolder.innerHTML = "";
     relocateTopBar(); // the native toggle row collapses in the card view too
     gridHolder.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
@@ -1895,6 +1912,7 @@
     gridHolder.appendChild(grid);
     if (menu && menuAnchor && !menuAnchor.isConnected) { menuAnchor = hg; positionMenu(); }
     applyIconTint();
+    restoreGridFocus(focusKey);
   }
   // The folder view has three content densities, a second axis inside it: the folders are always
   // grouped, and only their contents and the root section switch between detailed, grid and list.
@@ -2023,7 +2041,7 @@
     // torn out. Capturing and restoring it here covers every trigger path, since they all funnel
     // through here. The whole page scrolls, not an inner container, as every popover positioner
     // in this file also assumes.
-    var savedScroll = window.scrollY;
+    var savedScroll = window.scrollY, focusKey = gridFocusKey();
     ensureGridHolder(); gridHolder.innerHTML = "";
     relocateTopBar();
     gridHolder.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
@@ -2080,7 +2098,7 @@
         if (e.type === "folder" || e.type === "group") {
           if (filterText && !entryMatches(e)) return; // live search: a folder with no match anywhere inside it (and no name match itself) is hidden outright
           var collapsed = effectiveCollapsed(e);
-          var grp = el("div", "cc-folder-group" + (collapsed ? " cc-folder-collapsed" : ""));
+          var grp = el("div", "cc-folder-group" + (collapsed ? " cc-folder-collapsed" : "")); grp.setAttribute("data-fid", e.id);
           var head = el("div", "cc-folder-group-head");
           var titleWrap = el("span", "cc-folder-group-title");
           var chev = el("span", "cc-folder-chev", collapsed ? "▸" : "▾"); chev.setAttribute("aria-hidden", "true");
@@ -2163,6 +2181,7 @@
     if (menu && menuAnchor && !menuAnchor.isConnected) { menuAnchor = hg; positionMenu(); }
     applyIconTint();
     window.scrollTo(0, savedScroll); // restored once the new DOM is in place
+    restoreGridFocus(focusKey);
   }
   // The one place that re-renders whichever non-list view is active. A call site that reaches for
   // renderGrid() as its not-list fallback replaces the folder view's grouping with the flat grid
