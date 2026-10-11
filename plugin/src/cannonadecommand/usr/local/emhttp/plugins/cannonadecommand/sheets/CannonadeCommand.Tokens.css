@@ -278,6 +278,14 @@ html { --cc-r-1: 6px; --cc-r-2: 10px; --cc-r-3: 14px; }
   box-shadow: 0 0 0 3px rgba(252, 196, 25, .42);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent);
 }
+/* The (i) glyph has no fill of its own, so its opacity step on focus reads exactly like hover and a
+   keyboard user cannot tell it is focused. It takes the same halo, round to follow the ring it
+   draws. The area sheets style the glyph through heavier selectors, hence !important. */
+.cc-info:focus-visible {
+  outline: none !important; border-radius: 50%; opacity: 1 !important;
+  box-shadow: 0 0 0 3px rgba(252, 196, 25, .42) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important;
+}
 /* the copied pill pulses in place rather than opening a toast in the corner */
 @keyframes cc-copyflash { 0% { filter: brightness(1); transform: scale(1); } 35% { filter: brightness(1.4); transform: scale(1.06); } 100% { filter: brightness(1); transform: scale(1); } }
 .cc-copied { animation: cc-copyflash .55s ease; }
