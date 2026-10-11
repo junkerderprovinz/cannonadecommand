@@ -129,6 +129,14 @@ html.cc-docker-on table.cc-enh thead th.tablesorter-headerDesc::after { color: c
 /* Three buttons in the first row and four in the second, where More closes it, each a real flex
    row. */
 .cc-actbar { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+/* At rest a row shows its name and its badges; its buttons come in while the pointer is over it or
+   the focus is inside it (GlimStone rule 6), and when a click on the name points at them. A touch
+   screen has no hover, so there they stay. Opacity rather than visibility, so Tab still reaches a
+   hidden button and brings the others in with it. */
+html.cc-docker-on :is(.cc-actbar, .cc-mrow-act) { opacity: 0; transition: opacity var(--cc-motion-fade-dur, 0s); }
+html.cc-docker-on :is(#docker_list tr, .cc-card):is(:hover, :focus-within) :is(.cc-actbar, .cc-mrow-act),
+html.cc-docker-on .cc-actbar.cc-act-flash { opacity: 1; }
+@media (hover: none) { html.cc-docker-on :is(.cc-actbar, .cc-mrow-act) { opacity: 1; } }
 /* the actions column needs room for its two icon rows: four icon badges and the gaps */
 .cc-enh thead tr:last-child th:nth-child(2) { width: 122px; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) > td:nth-child(2) { max-width: 122px; }
@@ -174,6 +182,14 @@ a.sl-updall { display: none !important; }
    class, because the state poll reassigns the badge's className every tick while the wrapper stays,
    and font-size:0 hides the label it writes back. */
 .cc-enh .cc-ct-dotrow { display: flex; align-items: center; margin-top: 3px; }
+/* Running is the normal case and shows nothing (GlimStone rule 33), so a container's state appears
+   only while it is stopped, paused or unhealthy. Keyed on the class the state poll rewrites, so a
+   container that stops shows its state on the next poll. The readiness dot beside the plan chip
+   carries no data-name and is left alone. */
+html.cc-docker-on .cc-enh .cc-ct-dotrow:has(> .cc-ct-statedot[data-name].cc-badge-running:not(.cc-badge-alert)),
+html.cc-docker-on .cc-grid-holder :is(.cc-card-head, .cc-frow-status) > .cc-badge-running:not(.cc-badge-alert),
+html.cc-docker-on .cc-grid-holder .cc-chip-dot.cc-badge-running:not(.cc-badge-alert),
+html.cc-docker-on .cc-grid-holder .cc-chip-dot.cc-badge-running:not(.cc-badge-alert) + .cc-chip-status { display: none !important; }
 .cc-enh .cc-ct-dotrow > .cc-badge {
   width: 13px !important; height: 13px !important; min-width: 13px !important; padding: 0 !important; margin: 0 !important;
   gap: 0 !important; border-radius: 50% !important; font-size: 0 !important; line-height: 0 !important;
