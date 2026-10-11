@@ -205,9 +205,10 @@ html.cc-header-on.cc-arrange #cc-island .cc-isl-chip:nth-child(2n) { animation-d
 html.cc-header-on.cc-arrange #cc-island .cc-isl-chip:nth-child(3n) { animation-delay: -0.08s; }
 html.cc-header-on.cc-arrange #cc-island .cc-isl-chip.cc-isl-dragging { animation: none; }
 
-/* prefers-reduced-motion turns off CC's wiggle, pulse and transitions */
+/* prefers-reduced-motion turns off CC's wiggle, pulse and transitions at every motion level. A toast
+   and a refusal keep their stand-ins, a fade and an opacity pulse, so they still arrive legibly. */
 @media (prefers-reduced-motion: reduce) {
-  html.cc-header-on *, html.cc-popups-on *, html.cc-tools-on *, html.cc-shares-on *, html.cc-vms-on *, html.cc-docker-on *,
+  :is(html.cc-header-on, html.cc-popups-on, html.cc-tools-on, html.cc-shares-on, html.cc-vms-on, html.cc-docker-on) *:not(.cc-toast, .cc-shake),
   html.cc-header-on, html.cc-popups-on {
     animation-duration: .001ms !important; animation-iteration-count: 1 !important;
     transition-duration: .001ms !important; scroll-behavior: auto !important;
@@ -711,8 +712,12 @@ html.cc-popups-on .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-p {
   stroke-dasharray: 22; stroke-dashoffset: 22; animation: cc-ck-draw .34s ease .04s forwards;
 }
 @keyframes cc-ck-draw { to { stroke-dashoffset: 0; } }
-html.cc-anim-off .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-p { animation: none !important; stroke-dashoffset: 0 !important; }
-html.cc-anim-off .sweet-alert.nchan .cc-nchan-loader .cc-nchan-fa { animation: none !important; }
+/* Still, the check is drawn at once: a check left at its undrawn offset would not show at all. */
+html[data-cc-motion="off"] .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-p { animation: none !important; stroke-dashoffset: 0 !important; }
+html[data-cc-motion="off"] .sweet-alert.nchan .cc-nchan-loader .cc-nchan-fa { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  html .sweet-alert.nchan .cc-nchan-loader svg .cc-ck-p { animation: none !important; stroke-dashoffset: 0 !important; }
+}
 /* The docker create sweet-alert is built differently from the plugin install window. While it
    streams there is no button row yet, so ccNchanStyle appends the loader to the .sweet-alert
    itself; it is pinned bottom-left, where the VIEW LOG and FERTIG buttons appear, until the script
@@ -1136,63 +1141,95 @@ html.cc-docker-on .cc-badge[onclick] { transition: filter .12s ease, background-
 html.cc-docker-on .sl-chiprow > *:hover,
 html.cc-docker-on a.cc-badge:hover,
 html.cc-docker-on .cc-badge[onclick]:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
-/* The CC toast (header.js ccToast, one reused node): a bottom-centre pill with a colour-mode border
-   that slides up and fades in, hidden until .cc-toast-show. */
-#cc-toast {
-  position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 14px);
-  z-index: 100000; pointer-events: none; opacity: 0;
-  max-width: min(88vw, 460px); padding: 11px 18px;
-  background: #0f0f0f; color: #e8e8e8; font-size: var(--cc-text-subline); line-height: 1.35; text-align: center;
-  border: 1px solid var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)));
-  border-radius: min(var(--cc-b-radius, 999px), 12px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .55);
-  transition: opacity .18s ease, transform .22s cubic-bezier(.2, .9, .3, 1);
+/* The toasts (CCTheme.toast in cc-theme.js): one stack in the bottom corner, each toast a filled
+   pill without a border that slides in from the edge and fades. The stack itself lets clicks
+   through; a toast takes the pointer, since hovering it pauses its countdown. Outside the gate are
+   the stand-ins that reduced motion and "off" keep, a plain fade in and out. */
+#cc-toasts {
+  position: fixed; bottom: 18px; inset-inline-end: 18px; z-index: 100000;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  max-width: min(88vw, 460px); pointer-events: none;
 }
-#cc-toast.cc-toast-show { opacity: 1; transform: translate(-50%, 0); }
-/* The OS reduce-motion preference stills CC motion only while the user has not turned animations on
-   explicitly (cc-anim-on). [class*="cc-"] reaches only elements with a CC class, but much of what CC
-   animates is native markup restyled in place (a.back_to_top, .caButton, buttons, switches, the
-   pager, i.fa-trash), so the containers CC touches are covered instead: #displaybox, #header and
-   #menu, the two footer arrows that sit directly in <body>, and the popups with their contents. */
+.cc-toast {
+  pointer-events: auto; cursor: default;
+  padding: 10px 16px; background: #0f0f0f; color: #e8e8e8;
+  font-size: var(--cc-text-subline); line-height: 1.35; text-align: start;
+  border: none; border-radius: min(var(--cc-b-radius, 999px), 12px);
+  box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38));
+  animation: cc-fade-in 160ms ease both;
+}
+html .cc-toast.cc-toast-err { color: var(--cc-err-ink, #ff8389); }   /* above the light themes' toast ink */
+html .cc-toast.cc-toast-ok { color: var(--cc-ok-ink, #6fdc8c); }
+.cc-toast.cc-toast-out { animation: cc-fade-out 160ms ease both; }
+@keyframes cc-toast-in { from { translate: calc(var(--cc-motion-toast-slide, 12px) * var(--cc-dir-sign, 1)) 0; } to { translate: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-cc-motion="off"]) .cc-toast {
+    animation:
+      cc-toast-in var(--cc-motion-toast-dur) var(--cc-motion-toast-ease) both,
+      cc-fade-in var(--cc-motion-toast-dur) ease-out both;
+  }
+  html:not([data-cc-motion="off"]) .cc-toast.cc-toast-out { animation: cc-fade-out var(--cc-motion-toast-dur) ease-in both; }
+}
+/* A control refusing an action shakes once (GlimStone, "Failure feedback"). CCTheme.shake() puts
+   .cc-shake on it and takes it off again when the animation ends, so the next refusal replays. It
+   moves through translate, which composes with any transform the control already has. Reduced
+   motion and "off" pulse its opacity instead, since a refusal that does not show is no signal. */
+@keyframes cc-shake {
+  0%, 100% { translate: none; }
+  20% { translate: calc(var(--cc-motion-shake-dist, 4px) * -1) 0; }
+  40% { translate: var(--cc-motion-shake-dist, 4px) 0; }
+  60% { translate: calc(var(--cc-motion-shake-dist, 4px) * -.5) 0; }
+  80% { translate: calc(var(--cc-motion-shake-dist, 4px) * .5) 0; }
+}
+@keyframes cc-shake-still { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+.cc-shake { animation: cc-shake-still 300ms ease-in-out !important; }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-cc-motion="off"]) .cc-shake { animation: cc-shake var(--cc-motion-shake-dur, 360ms) ease-in-out !important; }
+}
+/* Reduced motion stills CC motion at every level. [class*="cc-"] reaches only elements with a CC
+   class, but much of what CC animates is native markup restyled in place (a.back_to_top,
+   .caButton, buttons, switches, the pager, i.fa-trash), so the containers CC touches are covered
+   instead: #displaybox, #header and #menu, the two footer arrows that sit directly in <body>, and
+   the popups with their contents. */
 @media (prefers-reduced-motion: reduce) {
-  html:not(.cc-anim-on) #cc-toast { transition: opacity .12s ease !important; transform: translate(-50%, 0) !important; }
-  html:not(.cc-anim-on).cc-popups-on .sweet-alert,
-  html:not(.cc-anim-on).cc-popups-on .sweet-alert *,
-  html:not(.cc-anim-on).cc-popups-on .swal-modal,
-  html:not(.cc-anim-on).cc-popups-on .swal-modal *,
-  html:not(.cc-anim-on).cc-popups-on .ui-dialog,
-  html:not(.cc-anim-on).cc-popups-on .ui-dialog * { animation: none !important; }
-  html:not(.cc-anim-on) [class*="cc-"],
-  html:not(.cc-anim-on) #displaybox *,
-  html:not(.cc-anim-on) #header *,
-  html:not(.cc-anim-on) #menu *,
-  html:not(.cc-anim-on) #footer *,
-  html:not(.cc-anim-on) a.back_to_top,
-  html:not(.cc-anim-on) a.move_to_end { transition: none !important; animation: none !important; }
+  html.cc-popups-on .sweet-alert,
+  html.cc-popups-on .sweet-alert *:not(.cc-shake),
+  html.cc-popups-on .swal-modal,
+  html.cc-popups-on .swal-modal *:not(.cc-shake),
+  html.cc-popups-on .ui-dialog,
+  html.cc-popups-on .ui-dialog *:not(.cc-shake) { animation: none !important; }
+  html [class*="cc-"]:not(.cc-toast, .cc-shake),
+  html #displaybox *:not(.cc-toast, .cc-shake),
+  html #header *:not(.cc-toast, .cc-shake),
+  html #menu *:not(.cc-toast, .cc-shake),
+  html #footer *,
+  html a.back_to_top,
+  html a.move_to_end { transition: none !important; animation: none !important; }
 }
-/* the explicit off switch stills all CannonadeCommand motion, whatever the OS setting */
-html.cc-anim-off [class*="cc-"],
-html.cc-anim-off #displaybox *,
-html.cc-anim-off #header *,
-html.cc-anim-off #menu *,
-html.cc-anim-off #footer *,
-html.cc-anim-off a.back_to_top,
-html.cc-anim-off a.move_to_end,
-html.cc-anim-off .sweet-alert,
-html.cc-anim-off .sweet-alert *,
-html.cc-anim-off .swal-modal,
-html.cc-anim-off .swal-modal *,
-html.cc-anim-off .ui-dialog,
-html.cc-anim-off .ui-dialog * { transition: none !important; animation: none !important; }
-html.cc-anim-off #cc-toast { transition: none !important; transform: translate(-50%, 0) !important; }
-/* with animations on: a soft entrance for the island and brand, and a gentle hover lift on the
+/* "off" stills the same set by hand, whatever the OS setting */
+html[data-cc-motion="off"] [class*="cc-"]:not(.cc-toast, .cc-shake),
+html[data-cc-motion="off"] #displaybox *:not(.cc-toast, .cc-shake),
+html[data-cc-motion="off"] #header *:not(.cc-toast, .cc-shake),
+html[data-cc-motion="off"] #menu *:not(.cc-toast, .cc-shake),
+html[data-cc-motion="off"] #footer *,
+html[data-cc-motion="off"] a.back_to_top,
+html[data-cc-motion="off"] a.move_to_end,
+html[data-cc-motion="off"] .sweet-alert,
+html[data-cc-motion="off"] .sweet-alert *:not(.cc-shake),
+html[data-cc-motion="off"] .swal-modal,
+html[data-cc-motion="off"] .swal-modal *:not(.cc-shake),
+html[data-cc-motion="off"] .ui-dialog,
+html[data-cc-motion="off"] .ui-dialog *:not(.cc-shake) { transition: none !important; animation: none !important; }
+/* subtle and wild: a soft entrance for the island and brand, and a gentle hover lift on the
    Docker, Plugin and VM cards */
 @keyframes cc-fade-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-html.cc-anim-on #cc-island { animation: cc-fade-rise .40s cubic-bezier(.2, .9, .3, 1) both; }
-html.cc-anim-on.cc-header-on #cc-brand { animation: cc-fade-rise .46s cubic-bezier(.2, .9, .3, 1) both; }
-html.cc-anim-on .cc-card { transition: transform .16s ease, box-shadow .18s ease, background-color .14s ease; }
-html.cc-anim-on .cc-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0, 0, 0, .45); }
-html.cc-anim-on .cc-b:hover, html.cc-anim-on .cc-navtab:hover { transition: transform .12s ease, filter .12s ease; }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-cc-motion="off"]) #cc-island { animation: cc-fade-rise .40s cubic-bezier(.2, .9, .3, 1) both; }
+  html:not([data-cc-motion="off"]).cc-header-on #cc-brand { animation: cc-fade-rise .46s cubic-bezier(.2, .9, .3, 1) both; }
+  html:not([data-cc-motion="off"]) .cc-card { transition: transform .16s ease, box-shadow .18s ease, background-color .14s ease; }
+  html:not([data-cc-motion="off"]) .cc-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0, 0, 0, .45); }
+  html:not([data-cc-motion="off"]) .cc-b:hover, html:not([data-cc-motion="off"]) .cc-navtab:hover { transition: transform .12s ease, filter .12s ease; }
+}
 
 /* Aligns the content column with the menu bar on pages that no area sheet covers, such as the
    /Settings landing xmenu. On area pages it sets the same --cc-align-left and --cc-box-shift the
@@ -1286,8 +1323,8 @@ html.Theme--white.cc-tools-on #displaybox dl > dt,
 html.Theme--azure.cc-tools-on #displaybox dl > dt { color: #303030; }
 html.Theme--white.cc-tools-on #displaybox dl > dd,
 html.Theme--azure.cc-tools-on #displaybox dl > dd { color: #303030; }
-html.Theme--white #cc-toast,
-html.Theme--azure #cc-toast { background: #f4f4f4; color: #1c1c1c; }
+html.Theme--white .cc-toast,
+html.Theme--azure .cc-toast { background: #f4f4f4; color: #1c1c1c; }
 /* the reactive rest-grey (rgba grey .18 + light text) needs darker text on a light page */
 html.Theme--white.cc-shares-rbneutral .cc-badge,
 html.Theme--white.cc-docker-on .cc-limbtn:not(.cc-limbtn-set) { color: #303030 !important; }
@@ -1435,47 +1472,49 @@ html.cc-header-on .tablesorter > thead > tr > th { box-shadow: inset 0 1px 0 rgb
 /* the island's fill bars glide on each nchan tick instead of jumping */
 html.cc-header-on .cc-isl-fill { transition: width .5s ease, background-color .4s ease; }
 
-/* Wild animation mode (cc.anim="2", html.cc-anim-wild): strong motion on top of the normal
-   transitions. It is an explicit opt-in, so like the rest of cc.anim it ignores the OS
-   reduce-motion hint. */
-@keyframes cc-wild-bounce { 0%{transform:translateY(0)} 28%{transform:translateY(-7px)} 52%{transform:translateY(3px)} 72%{transform:translateY(-3px)} 88%{transform:translateY(1px)} 100%{transform:translateY(0)} }
-/* the main-menu tabs HOP when the pointer enters them */
-html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item:hover { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
-/* The right group bounces too: util icons, the usage meter and the bell and burger proxies. The
-   rule sits on the .nav-item only, whose transform carries its children; a second bounce on the
-   inner <a> would stack and double the amplitude. */
-html.cc-anim-wild #menu .nav-tile.right > .nav-item:hover { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
-/* The -7px hop peaks above the header band, so the nav chain overflows visibly in wild mode. #menu
-   clips the horizontal axis, or tiles wider than the viewport would stretch the page and add a
-   horizontal scrollbar; clip, unlike hidden, leaves overflow-y truly visible. */
-html.cc-anim-wild #menu { overflow-x: clip !important; overflow-y: visible !important; }
-html.cc-anim-wild #menu .nav-tile,
-html.cc-anim-wild #menu .nav-tile:not(.right) > .nav-item { overflow: visible !important; }
-/* The tab strip's overflow-x:auto (1,4,2) keeps it scrollable, and with one axis not visible the
-   other resolves to auto as well, which would clip the bounce. The clip is lifted only while an
-   item bounces; doubling the class gives (1,5,1). */
-html.cc-anim-wild.cc-anim-wild #menu .nav-tile:has(> .nav-item:hover) {
-  overflow: visible !important;
+/* The wild motion level: strong motion on top of the subtle transitions. The selectors name the
+   quiet levels rather than wild, so they also cover the attribute before header.js stamps it. Like
+   every level it sits inside the gate, so reduced motion stills it. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes cc-wild-bounce { 0%{transform:translateY(0)} 28%{transform:translateY(-7px)} 52%{transform:translateY(3px)} 72%{transform:translateY(-3px)} 88%{transform:translateY(1px)} 100%{transform:translateY(0)} }
+  /* the main-menu tabs hop when the pointer enters them */
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) #menu .nav-tile:not(.right) > .nav-item:hover { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
+  /* The right group bounces too: util icons, the usage meter and the bell and burger proxies. The
+     rule sits on the .nav-item only, whose transform carries its children; a second bounce on the
+     inner <a> would stack and double the amplitude. */
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) #menu .nav-tile.right > .nav-item:hover { animation: cc-wild-bounce .6s cubic-bezier(.28,.84,.42,1); }
+  /* The -7px hop peaks above the header band, so the nav chain overflows visibly in wild mode. #menu
+     clips the horizontal axis, or tiles wider than the viewport would stretch the page and add a
+     horizontal scrollbar; clip, unlike hidden, leaves overflow-y truly visible. */
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) #menu { overflow-x: clip !important; overflow-y: visible !important; }
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) #menu .nav-tile,
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) #menu .nav-tile:not(.right) > .nav-item { overflow: visible !important; }
+  /* The tab strip's overflow-x:auto (1,4,2) keeps it scrollable, and with one axis not visible the
+     other resolves to auto as well, which would clip the bounce. The clip is lifted only while an
+     item bounces, and the two :not() give (1,5,1). */
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) #menu .nav-tile:has(> .nav-item:hover) {
+    overflow: visible !important;
+  }
+  /* The sticky #header (z-index 102, solid background) sits above #menu (101) and paints over the
+     area an item hops into. While any item in either group bounces, #menu is lifted above #header;
+     :has limits the lift to that moment. */
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) #menu:has(.nav-tile > .nav-item:hover),
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) #menu:has(.nav-tile.right > .nav-item.util:hover),
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) #menu:has(.nav-tile:not(.right) > .nav-item:hover) { z-index: 103 !important; }
+  /* the bounce needs room above the bar: the icon box is 36px in a 40px row, so a lift of a few px lands on
+     the header strip. position:relative + a raised z-index keeps the moving item over its neighbours. */
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) #menu .nav-tile > .nav-item:hover { position: relative !important; z-index: 4 !important; }
+  /* springy lift on any CC pill / action icon; the limit gear also spins a quarter-turn */
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) .cc-b:hover,
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) .cc-actbtn:hover { transform: translateY(-2px) scale(1.06); transition: transform .18s cubic-bezier(.34,1.56,.64,1) !important; }
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) .cc-limbtn:hover { transform: translateY(-2px) scale(1.08) rotate(90deg); transition: transform .22s cubic-bezier(.34,1.56,.64,1) !important; }
+  /* a bouncier popover/menu/dropdown entrance */
+  @keyframes cc-wild-pop { 0%{opacity:0;transform:translateY(12px) scale(.9)} 60%{transform:translateY(-4px) scale(1.02)} 100%{opacity:1;transform:none} }
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) .cc-pop, html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) .cc-menu, html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) .cc-drop { animation: cc-wild-pop .32s cubic-bezier(.34,1.56,.64,1) !important; }
+  /* the notification centre gets the same pop-in (the App-Info drawer slides in, see Tokens.css
+     cc-wild-slidein); the Tailwind hook fails soft if Connect renames it */
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) .unapi div.fixed.z-50.bg-background:not(.top-1\/2) { animation: cc-wild-pop .32s cubic-bezier(.34,1.56,.64,1) !important; }
+  /* the brand wordmark gives a little wobble on hover */
+  @keyframes cc-wild-wobble { 0%{transform:rotate(0)} 25%{transform:rotate(-2.5deg)} 50%{transform:rotate(2deg)} 75%{transform:rotate(-1deg)} 100%{transform:rotate(0)} }
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) #cc-brand:hover .cc-brand-name { display:inline-block; animation: cc-wild-wobble .5s ease; }
 }
-/* The sticky #header (z-index 102, solid background) sits above #menu (101) and paints over the
-   area an item hops into. While any item in either group bounces, #menu is lifted above #header;
-   :has limits the lift to that moment. */
-html.cc-anim-wild #menu:has(.nav-tile > .nav-item:hover),
-html.cc-anim-wild #menu:has(.nav-tile.right > .nav-item.util:hover),
-html.cc-anim-wild #menu:has(.nav-tile:not(.right) > .nav-item:hover) { z-index: 103 !important; }
-/* the bounce needs room above the bar: the icon box is 36px in a 40px row, so a lift of a few px lands on
-   the header strip. position:relative + a raised z-index keeps the moving item over its neighbours. */
-html.cc-anim-wild #menu .nav-tile > .nav-item:hover { position: relative !important; z-index: 4 !important; }
-/* springy lift on any CC pill / action icon; the limit gear also spins a quarter-turn */
-html.cc-anim-wild .cc-b:hover,
-html.cc-anim-wild .cc-actbtn:hover { transform: translateY(-2px) scale(1.06); transition: transform .18s cubic-bezier(.34,1.56,.64,1) !important; }
-html.cc-anim-wild .cc-limbtn:hover { transform: translateY(-2px) scale(1.08) rotate(90deg); transition: transform .22s cubic-bezier(.34,1.56,.64,1) !important; }
-/* a bouncier popover/menu/dropdown entrance */
-@keyframes cc-wild-pop { 0%{opacity:0;transform:translateY(12px) scale(.9)} 60%{transform:translateY(-4px) scale(1.02)} 100%{opacity:1;transform:none} }
-html.cc-anim-wild .cc-pop, html.cc-anim-wild .cc-menu, html.cc-anim-wild .cc-drop { animation: cc-wild-pop .32s cubic-bezier(.34,1.56,.64,1) !important; }
-/* the notification centre gets the same pop-in (the App-Info drawer slides in, see Tokens.css
-   cc-wild-slidein); the Tailwind hook fails soft if Connect renames it */
-html.cc-anim-wild .unapi div.fixed.z-50.bg-background:not(.top-1\/2) { animation: cc-wild-pop .32s cubic-bezier(.34,1.56,.64,1) !important; }
-/* the brand wordmark gives a little wobble on hover */
-@keyframes cc-wild-wobble { 0%{transform:rotate(0)} 25%{transform:rotate(-2.5deg)} 50%{transform:rotate(2deg)} 75%{transform:rotate(-1deg)} 100%{transform:rotate(0)} }
-html.cc-anim-wild #cc-brand:hover .cc-brand-name { display:inline-block; animation: cc-wild-wobble .5s ease; }

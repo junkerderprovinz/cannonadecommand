@@ -11,6 +11,7 @@
     var n = parseInt(m[1], 16), L = 0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255);
     return L > 150 ? "#161616" : "#fff";
   }
+  function motionLevel(v) { return v === "off" || v === "0" ? "off" : v === "wild" || v === "2" ? "wild" : "subtle"; }
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
   function T(d, e) { return LANG === "de" ? d : e; }
   function eff(k, d) { return g("cc.styleheader", "1") !== "0" ? g("cc." + k, d) : g("cch." + k, d); }
@@ -20,7 +21,7 @@
   // page to page depending on which script wrote --cc-b-radius last.
   function shape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[g("cc.badgeshape", "pill")] || "999px"; }
   var RB = ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];
-  if (window.CCTheme) { idealText = window.CCTheme.idealText; RB = window.CCTheme.RB; } // the local copies are the fallback
+  if (window.CCTheme) { idealText = window.CCTheme.idealText; motionLevel = window.CCTheme.motionLevel; RB = window.CCTheme.RB; } // the local copies are the fallback
   var RB_OFF = window.CCTheme ? window.CCTheme.rbSeed(RB.length) : Math.floor(Math.random() * RB.length); // the persisted seed keeps the rainbow aligned across areas
   // Rainbow is a global mode, read directly rather than through the adopt-gated eff(), so one
   // switch colours every enabled area whatever this bar's adopt state is. The per-area accent
@@ -2290,11 +2291,12 @@
       // shape is global and set whatever the header area does; with no area enabled there are no
       // badges for it to reach.
       root.classList.toggle("cc-shape-circle", g("cc.badgeshape", "pill") === "circle");
-      // The animation master is global too. cc-anim-on lets the CC animations run even when the OS
-      // asks to reduce motion, which is what the setting is for; cc-anim-off stills them.
-      root.classList.toggle("cc-anim-on", g("cc.anim", "1") !== "0");
-      root.classList.toggle("cc-anim-off", g("cc.anim", "1") === "0");
-      root.classList.toggle("cc-anim-wild", g("cc.anim", "1") === "2");
+      // The motion level is global too. The sheets read it from data-cc-motion, and the OS
+      // reduce-motion setting still wins over every level. A digit from before the levels had
+      // names is rewritten once, through the patched setItem, so the engine's mirror follows.
+      var anim = g("cc.anim", "subtle"), level = motionLevel(anim);
+      if (/^[012]$/.test(anim)) { try { localStorage.setItem("cc.anim", level); } catch (e2) {} }
+      root.setAttribute("data-cc-motion", level);
       // The badge radii are read on every page, by the settings toggles and the docker state dot
       // among others, so they are set here rather than inside the header branch below. Every area
       // computes the same shape(), so they cannot disagree.

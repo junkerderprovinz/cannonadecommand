@@ -852,18 +852,18 @@
       });
       wrapMain.appendChild(c);
     })();
-    // The animation master has three settings: off, normal and wild. cc-anim-on covers normal and
-    // wild alike, since the normal motion keeps running in wild, and cc-anim-wild layers the
-    // exuberant extras on top. It overrides the OS reduce-motion preference, which is the point of
-    // the setting.
-    function applyAnim() { var v = get("cc.anim", "1"); var r = document.documentElement.classList; r.toggle("cc-anim-off", v === "0"); r.toggle("cc-anim-on", v !== "0"); r.toggle("cc-anim-wild", v === "2"); }
-    applyAnim();   // stamped at once, so this page animates per the current setting
+    // The motion level, GlimStone's off, subtle and wild. header.js stamps it on every page; this
+    // page stamps it again on change so the choice shows at once. The OS reduce-motion setting
+    // wins over every level, in the sheets.
+    function motionLevel(v) { return window.CCTheme ? window.CCTheme.motionLevel(v) : (v === "off" || v === "0" ? "off" : v === "wild" || v === "2" ? "wild" : "subtle"); }
+    function applyAnim() { document.documentElement.setAttribute("data-cc-motion", motionLevel(get("cc.anim", "subtle"))); }
+    applyAnim();
     if (themingCard) {
-      themingCard.appendChild(segRow(T("Animationen", "Animations"),
-        [["0", T("Aus", "Off")], ["1", T("Normal", "Normal")], ["2", T("Wild", "Wild")]],
-        get("cc.anim", "1"),
+      themingCard.appendChild(segRow(T("Bewegung", "Motion"),
+        [["off", T("Aus", "Off")], ["subtle", T("Dezent", "Subtle")], ["wild", T("Wild", "Wild")]],
+        motionLevel(get("cc.anim", "subtle")),
         function (v) { set("cc.anim", v); applyAnim(); },
-        T("Aus: keine Animationen. Normal: dezente Übergänge, Hover-Effekte und Einblendungen, überschreibt das „Bewegung reduzieren“ des Systems. Wild: sehr präsente Effekte, etwa hüpfende Hauptleisten-Tabs beim Überfahren.", "Off: no animations. Normal: subtle transitions, hovers and fades, overriding the system's reduce-motion setting. Wild: very present effects, such as bouncing main-tab pills on hover."),
+        T("Aus: nichts bewegt sich. Dezent: kurze Übergänge und Einblendungen. Wild: kräftigere Effekte, etwa Hauptleisten-Tabs, die beim Überfahren hüpfen. Wenn im System „Bewegung reduzieren“ an ist, gilt das bei jeder Stufe.", "Off: nothing moves. Subtle: short transitions and fades. Wild: stronger effects, such as main-bar tabs that hop on hover. If the system is set to reduce motion, that wins at every level."),
         true));
     }
     // The section order follows the main menu. header.js persists a drag-reordered menu, and this

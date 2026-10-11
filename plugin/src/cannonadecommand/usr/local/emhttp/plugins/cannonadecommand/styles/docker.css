@@ -1776,7 +1776,7 @@ html.cc-ctout-on #displaybox .content > div:has(> button) > #cc-ctout-status {
 }
 html.cc-ctout-on #cc-ctout-status.cc-ctout-done { background: var(--cc-ok, #6fdc8c); color: var(--cc-ok-fg, #161616); }   /* done: a green badge with its check in the state ink */
 html.cc-ctout-on #cc-ctout-status .cc-ctout-fa { color: inherit; font-size: var(--cc-text-body); line-height: 1; }
-html.cc-anim-off #cc-ctout-status .cc-ctout-fa { animation: none !important; }
+html[data-cc-motion="off"] #cc-ctout-status .cc-ctout-fa { animation: none !important; }
 html.cc-ctout-on #displaybox .content span.system { background: transparent !important; color: #d6d6d6 !important; box-shadow: none !important; display: block; }
 html.cc-ctout-on .docker-install-blocker { background: transparent !important; }
 html.cc-ctout-on #displaybox .content .buttons,

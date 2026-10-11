@@ -53,6 +53,58 @@ html {
 @media (prefers-reduced-transparency: reduce) {
   html.cc-popups-on { --cc-backdrop-blur: none; }
 }
+
+/* The motion engine (GlimStone, "The motion engine"). header.js stamps data-cc-motion on <html>
+   from cc.anim: off, subtle or wild, subtle by default. A level is a different number read by the
+   same rules, never a different animation, so every level answers every dial. The numbers outside
+   the gate are the still ones: a system that asks for reduced motion never evaluates the levels and
+   keeps them whatever cc.anim says, and "off" chooses the same numbers by hand. */
+html {
+  --cc-motion-control-dur: 0s;
+  --cc-motion-fade-dur:    0s;
+  --cc-motion-toast-dur:   0s;
+  --cc-motion-toast-slide: 0px;
+  --cc-motion-toast-ease:  ease;
+  --cc-motion-press-scale: 1;
+  --cc-motion-shake-dur:   360ms;
+  --cc-motion-shake-dist:  0px;
+  --cc-dir-sign: 1;
+}
+html[dir="rtl"] { --cc-dir-sign: -1; }   /* a keyframe does not mirror on its own */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    --cc-motion-control-dur: 150ms;
+    --cc-motion-fade-dur:    140ms;
+    --cc-motion-toast-dur:   300ms;
+    --cc-motion-toast-slide: 24px;
+    --cc-motion-toast-ease:  cubic-bezier(.2, .6, .2, 1);
+    --cc-motion-press-scale: .97;
+    --cc-motion-shake-dur:   360ms;
+    --cc-motion-shake-dist:  6px;
+  }
+  html[data-cc-motion="subtle"] {
+    --cc-motion-control-dur: 80ms;
+    --cc-motion-fade-dur:    110ms;
+    --cc-motion-toast-dur:   120ms;
+    --cc-motion-toast-slide: 12px;
+    --cc-motion-toast-ease:  cubic-bezier(.2, .6, .2, 1);
+    --cc-motion-press-scale: .97;
+    --cc-motion-shake-dur:   360ms;
+    --cc-motion-shake-dist:  4px;
+  }
+  html[data-cc-motion="off"] {
+    --cc-motion-control-dur: 0s;
+    --cc-motion-fade-dur:    0s;
+    --cc-motion-toast-dur:   0s;
+    --cc-motion-toast-slide: 0px;
+    --cc-motion-toast-ease:  ease;
+    --cc-motion-press-scale: 1;
+    --cc-motion-shake-dur:   360ms;
+    --cc-motion-shake-dist:  0px;
+  }
+}
+@keyframes cc-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cc-fade-out { from { opacity: 1; } to { opacity: 0; } }
 html {
 
   /* text */
@@ -306,15 +358,15 @@ html.cc-popups-on nav.tabs .tabs-container > button[role="tab"][aria-selected="t
 }
 html.cc-shape-circle .cc-loader > span::after, html.cc-shape-circle .cc-loader > span > i::before { border-radius: 50%; }
 html.cc-rb-on .cc-loader { animation: cc-load-rb 6s linear infinite; }   /* the hue steps at each meeting */
-/* html.cc-anim-off, set from cc.anim, is the switch every other CC animation obeys; going through
+/* The "off" motion level is the switch every other CC animation obeys; going through
    the token pauses both arcs and the hue cycle in one place. */
-html.cc-anim-off { --cc-load-play: paused; }
+html[data-cc-motion="off"] { --cc-load-play: paused; }
 /* animation:none rather than a pause, because pausing mid-cycle freezes the hue on whatever colour
    it reached, while none falls back to the plain --acc */
-html.cc-anim-off .cc-loader { animation: none; }
+html[data-cc-motion="off"] .cc-loader { animation: none; }
 @media (prefers-reduced-motion: reduce) {
-  html:not(.cc-anim-on) { --cc-load-play: paused; }
-  html:not(.cc-anim-on) .cc-loader > span { animation: none; }
+  html { --cc-load-play: paused; }
+  .cc-loader > span { animation: none; }
   .cc-loader > span.in { transform: rotate(-.4turn); }
   html.cc-rb-on .cc-loader { animation: none; --cc-lc: #3DDBD9; }
 }
@@ -1621,7 +1673,9 @@ html.cc-popups-on:has(body.body_sidebarScroll) { overflow: hidden !important; }
    from Header.css; the drawer is edge-anchored, so it slides in from the right with a matching
    bounce instead of popping out of a point. */
 @keyframes cc-wild-slidein { 0% { transform: translateX(28px); opacity: 0; } 55% { transform: translateX(-6px); opacity: 1; } 100% { transform: translateX(0); } }
-html.cc-anim-wild .sidenav.sidenavShow { animation: cc-wild-slidein .34s cubic-bezier(.34, 1.56, .64, 1); }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-cc-motion="subtle"]):not([data-cc-motion="off"]) .sidenav.sidenavShow { animation: cc-wild-slidein .34s cubic-bezier(.34, 1.56, .64, 1); }
+}
 
 /* The card's corner marks as ordinary badges in a row. CA draws Official, Limited Time, Installed
    and Beta as clip-path triangles wedged into a corner and the spotlight as a round stamp.

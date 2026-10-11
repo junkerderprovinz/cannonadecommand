@@ -25,6 +25,15 @@
     return L > 150 ? "#161616" : "#fff";
   }
 
+  // cc.anim holds a GlimStone motion level, off, subtle or wild, and subtle when unset. The digits
+  // stored before the levels had names, 0, 1 and 2, read as the same three, so nobody's choice is
+  // lost; header.js rewrites them to the names.
+  function motionLevel(v) {
+    if (v === "off" || v === "0") return "off";
+    if (v === "wild" || v === "2") return "wild";
+    return "subtle";
+  }
+
   // One seed, picked at random once and kept in cc.rbseed, so seed % len gives the same rotation
   // in every area and on every reload.
   function rbSeed(len) {
@@ -507,7 +516,7 @@
   }
 
   window.CCTheme = {
-    RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects,
+    RB: RB, idealText: idealText, motionLevel: motionLevel, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects,
     registerSelectSync: registerSelectSync, nextSelIndex: nextSelIndex, wheelStepSelect: wheelStepSelect,
     gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily,
     CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG, delIcon: delIcon,

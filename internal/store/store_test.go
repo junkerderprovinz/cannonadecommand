@@ -38,3 +38,32 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 		t.Fatalf("fields not preserved: %+v", got)
 	}
 }
+
+func TestLoadConfigNamesTheOldMotionDigits(t *testing.T) {
+	for digit, name := range map[string]string{"0": "off", "1": "subtle", "2": "wild", "wild": "wild"} {
+		s := New(filepath.Join(t.TempDir(), "plan.json"))
+		if err := s.SaveConfig(model.Config{UISettings: map[string]string{"cc.anim": digit, "cc.accent": "#123456"}}); err != nil {
+			t.Fatalf("save: %v", err)
+		}
+		c, err := s.LoadConfig()
+		if err != nil {
+			t.Fatalf("load: %v", err)
+		}
+		if c.UISettings["cc.anim"] != name {
+			t.Errorf("cc.anim %q loaded as %q, want %q", digit, c.UISettings["cc.anim"], name)
+		}
+		if c.UISettings["cc.accent"] != "#123456" {
+			t.Errorf("an unrelated setting changed: %q", c.UISettings["cc.accent"])
+		}
+	}
+}
+
+func TestLoadConfigWithoutUISettings(t *testing.T) {
+	s := New(filepath.Join(t.TempDir(), "plan.json"))
+	if err := s.SaveConfig(model.Config{}); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	if _, err := s.LoadConfig(); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+}

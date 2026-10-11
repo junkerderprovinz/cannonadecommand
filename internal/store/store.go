@@ -40,7 +40,22 @@ func (s *Store) Save(p model.Plan) error { return writeJSON(s.path, p) }
 func (s *Store) LoadConfig() (model.Config, error) {
 	var c model.Config
 	err := readJSON(s.cfgPath, &c)
+	renameUIValues(c.UISettings)
 	return c, err
+}
+
+// uiValueNames maps UI setting values stored before they had names to those
+// names, so a browser adopting the mirror on a new origin gets the name.
+var uiValueNames = map[string]map[string]string{
+	"cc.anim": {"0": "off", "1": "subtle", "2": "wild"},
+}
+
+func renameUIValues(ui map[string]string) {
+	for key, names := range uiValueNames {
+		if name, ok := names[ui[key]]; ok {
+			ui[key] = name
+		}
+	}
 }
 
 // SaveConfig writes the automation config atomically.
