@@ -162,7 +162,7 @@ html {
      edge. */
   --cc-edge-gutter: 8px;
 
-  /* The badge size tiers, the counterpart of --cc-b-radius for shape and --cc-accent for colour.
+  /* The badge size tiers, the counterpart of the --cc-radius-* tokens for shape and --cc-accent for colour.
      Every .cc-b, .cc-navtab and .cc-card-head reads them:
        sm  data pills (Docker and Plugin rows)
        md  tab and action badges (menu bar, plugin-page tabs, CC-settings tabs, view toggles)
@@ -269,8 +269,14 @@ html.Theme--azure {
 .cc-badge-dead::before    { content: "\2715"; }   /* ✕ */
 .cc-badge-running::before, .cc-badge-paused::before, .cc-badge-exited::before,
 .cc-badge-created::before, .cc-badge-dead::before { margin-right: 5px; font-size: .82em; opacity: .92; }
-/* three nesting radii, so inner and outer corners relate instead of curving at random */
-html { --cc-r-1: 6px; --cc-r-2: 10px; --cc-r-3: 14px; }
+/* Every rounded corner reads one of three tokens, GlimStone's shape engine, so the shape setting
+   moves them together: card for cards, windows and menus, control for fields, panels and tiles,
+   pill for everything somebody presses. header.js stamps cc.badgeshape as data-cc-shape. Use the
+   raw token even on a short element; the browser scales an oversized radius down evenly, while a
+   cap such as min(var(--cc-radius-pill), 50%) resolves per axis and draws an ellipse. */
+html { --cc-radius-card: 20px; --cc-radius-control: 12px; --cc-radius-pill: 9999px; }
+html[data-cc-shape="soft"] { --cc-radius-card: 8px; --cc-radius-control: 5px; --cc-radius-pill: 5px; }
+html[data-cc-shape="square"] { --cc-radius-card: 0px; --cc-radius-control: 0px; --cc-radius-pill: 0px; }
 /* A soft accent halo on keyboard focus, distinct from hover: a glow, not a border line. color-mix
    supplies the alpha, and the fixed-accent line above it is the fallback without color-mix. */
 :is(.cc-b, .cc-actbtn, .cc-limbtn, .cc-btn, .cc-seg-btn, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast):focus-visible {
@@ -301,7 +307,7 @@ html { --cc-r-1: 6px; --cc-r-2: 10px; --cc-r-3: 14px; }
 html.cc-popups-on div.title {
   background: var(--cc-surface-4, #262626) !important;
   border: none !important; box-shadow: none !important;
-  border-radius: var(--cc-r-1, 6px) !important;
+  border-radius: var(--cc-radius-control) !important;
   padding: 8px 14px !important;
 }
 html.cc-popups-on div.title > span.left, html.cc-popups-on div.title > span.right {
@@ -325,7 +331,7 @@ html.cc-popups-on #displaybox input[type="button"][value*="update" i] {
 html.cc-popups-on nav.tabs, html.cc-popups-on nav.tabs .tabs-container { background: transparent !important; border: none !important; box-shadow: none !important; }
 html.cc-popups-on nav.tabs .tabs-container > button[role="tab"] {
   background: var(--cc-surface-4, #262626) !important; color: var(--cc-text-chip, #cfcfcf) !important;
-  border: none !important; border-radius: min(var(--cc-b-radius, 8px), var(--cc-r-2, 10px)) !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important;
 }
 html.cc-popups-on nav.tabs .tabs-container > button[role="tab"]:hover,
 html.cc-popups-on nav.tabs .tabs-container > button[role="tab"][aria-selected="true"] {
@@ -369,16 +375,15 @@ html.cc-popups-on nav.tabs .tabs-container > button[role="tab"][aria-selected="t
   -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - var(--th)), #000 0);
           mask: radial-gradient(farthest-side, #0000 calc(100% - var(--th)), #000 0);
 }
-.cc-loader > span::after {    /* head cap, following the badge shape (--cc-b-radius) */
+.cc-loader > span::after {    /* head cap, following the shape setting */
   content: ""; position: absolute; top: 0; left: 50%; width: var(--th); height: var(--th);
-  margin-left: calc(var(--th) / -2); border-radius: var(--cc-b-radius, 50%); background: var(--cc-lc, var(--acc));
+  margin-left: calc(var(--th) / -2); border-radius: var(--cc-radius-pill); background: var(--cc-lc, var(--acc));
 }
 .cc-loader > span > i { position: absolute; inset: 0; transform: rotate(var(--arc)); }
 .cc-loader > span > i::before {   /* tail cap, likewise */
   content: ""; position: absolute; top: 0; left: 50%; width: var(--th); height: var(--th);
-  margin-left: calc(var(--th) / -2); border-radius: var(--cc-b-radius, 50%); background: var(--cc-lc, var(--acc));
+  margin-left: calc(var(--th) / -2); border-radius: var(--cc-radius-pill); background: var(--cc-lc, var(--acc));
 }
-html.cc-shape-circle .cc-loader > span::after, html.cc-shape-circle .cc-loader > span > i::before { border-radius: 50%; }
 html.cc-rb-on .cc-loader { animation: cc-load-rb 6s linear infinite; }   /* the hue steps at each meeting */
 /* The "off" motion level is the switch every other CC animation obeys; going through
    the token pauses both arcs and the hue cycle in one place. */
@@ -533,7 +538,7 @@ html.cc-badge-glass.cc-plugins-iconbg .cc-plugico > * { position: relative; z-in
 
 /* Unraid's quick-scroll arrows (a.move_to_end, a.move_to_top, fixed bottom right, stock red): they
    take the CC accent, a transform lifts them above the docked action bar and footer so they clear
-   the view toggle without narrowing the bar, and they get a chip that follows --cc-b-radius. */
+   the view toggle without narrowing the bar, and they get a chip at the pill radius. */
 html.cc-popups-on a[class*="move_to"],
 html.cc-popups-on a.back_to_top,
 html.cc-popups-on a[class*="back_to"] {
@@ -543,7 +548,7 @@ html.cc-popups-on a[class*="back_to"] {
   color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   transform: translateY(calc(-1 * (var(--cc-footer-h, 0px) + var(--cc-actbar-h, 44px) + 8px))) !important;
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
-  border-radius: var(--cc-b-radius, 999px) !important;
+  border-radius: var(--cc-radius-pill) !important;
   width: 40px !important; height: 40px !important;
   padding: 0 !important;
   align-items: center; justify-content: center;
@@ -636,7 +641,7 @@ html.cc-popups-on .ca_homeTemplatesHeader {
   padding: 0 !important; margin: 18px 0 12px !important;
 }
 /* The title is a filled badge: the fill follows the colour mode through the --cc-rb-c ccAppsStamp
-   writes, the size comes from the page-badge token and the shape from --cc-b-radius. */
+   writes, the size comes from the page-badge token and the shape from the pill radius. */
 html.cc-popups-on .ca_homeTemplatesHeader .cc-sechead-badge {
   display: inline-flex !important; align-items: center !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
@@ -646,7 +651,7 @@ html.cc-popups-on .ca_homeTemplatesHeader .cc-sechead-badge {
   /* md padding and an explicit md height, so this matches the Plugins section badge; the sm
      padding with an md font size gives a 24px badge under the tier's own 30px */
   padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px) !important;
-  border-radius: var(--cc-b-radius, 8px) !important;
+  border-radius: var(--cc-radius-pill) !important;
 }
 html.cc-popups-on .ca_homeTemplatesHeader::before { content: none !important; }   /* drop the native ▸ */
 html.cc-popups-on .ca_homeTemplatesHeader .cc-info {
@@ -666,7 +671,7 @@ html.cc-popups-on .ca_homeTemplatesHeader .homeMore {
   text-transform: uppercase !important; letter-spacing: .4px !important; cursor: pointer !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
-  border-radius: var(--cc-b-radius, 8px) !important; opacity: 1 !important;
+  border-radius: var(--cc-radius-pill) !important; opacity: 1 !important;
   transition: background .15s ease, color .15s ease, filter .12s ease !important;
 }
 html.cc-popups-on .ca_homeTemplatesHeader .homeMore:hover,
@@ -703,7 +708,7 @@ html.cc-popups-on.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-track { back
 html.cc-popups-on.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-corner { background: transparent !important; }
 html.cc-popups-on.cc-popups-on .ca_homeTemplates::-webkit-scrollbar-thumb {
   background: transparent !important; border: 0 !important; box-shadow: none !important;
-  border-radius: var(--cc-b-radius, 8px) !important;
+  border-radius: var(--cc-radius-pill) !important;
 }
 /* The thumb shows while the pointer is on an app card in that row. A plain :hover on the row is too
    eager: the row spans the full content width and keeps the scrollbar strip and the gaps between
@@ -733,7 +738,7 @@ html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-track { background: t
 html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-corner { background: transparent !important; }
 html.cc-popups-on *:not(body):not(html)::-webkit-scrollbar-thumb {
   border: 0 !important; background-clip: padding-box !important;
-  border-radius: var(--cc-b-radius, 8px) !important;   /* thumb follows the badge shape */
+  border-radius: var(--cc-radius-pill) !important;
   background: rgba(130,130,130,.55) !important;
   background: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) 55%, transparent) !important;
 }
@@ -761,7 +766,7 @@ html.cc-popups-on #searchFilter {
   margin-left: auto !important; margin-right: 0 !important; align-self: center !important; order: 99 !important;
   display: inline-flex !important; align-items: center !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
-  border-radius: var(--cc-b-radius, 8px) !important;
+  border-radius: var(--cc-radius-control) !important;
   height: 36px !important; box-sizing: border-box !important; padding: 0 !important;
   overflow: hidden !important; left: 0 !important; top: 0 !important;
   transition: background-color .12s !important;
@@ -818,7 +823,7 @@ html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open) {
   height: auto !important; min-height: 0 !important; padding: 7px 12px !important;
   background: var(--cc-surface-2, #222222) !important;
   color: var(--cc-text-chip, #cfcfcf) !important;
-  border-radius: var(--cc-b-radius, 8px) !important;
+  border-radius: var(--cc-radius-control) !important;
   box-sizing: border-box !important; overflow: hidden !important; cursor: pointer !important;
   box-shadow: none !important;
 }
@@ -888,7 +893,7 @@ html.cc-popups-on .cc-ca-search-extras .dockerSearch {
   white-space: normal !important;   /* "Results Per Page: 12" wraps in a 132px column, unlike its old row */
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
 }
 /* CA hides .maxPerPage with an inline display:none on the unpaginated home grid and shows it only on
@@ -918,7 +923,7 @@ html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open {
   height: 40px !important; min-height: 40px !important; box-sizing: border-box !important;
   padding: 0 !important; overflow: visible !important;
   background: var(--cc-surface-3, #2e2e2e) !important;
-  border-radius: var(--cc-b-radius, 8px) !important;
+  border-radius: var(--cc-radius-control) !important;
   box-shadow: 0 14px 40px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .4) !important;
   z-index: 10070 !important;
 }
@@ -952,11 +957,11 @@ html.cc-popups-on.cc-ca-searching .menuItems { z-index: 10060 !important; }
 html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul {
   width: min(460px, 60vw) !important; max-width: 60vw !important; min-width: 300px !important;
   max-height: 62vh !important; overflow-y: auto !important; overflow-x: hidden !important;
-  background: #242424 !important; border: none !important; border-radius: 12px !important;
+  background: #242424 !important; border: none !important; border-radius: var(--cc-radius-card) !important;
   box-shadow: 0 18px 46px rgba(0, 0, 0, .6) !important; z-index: 2147483000 !important; padding: 8px !important;
 }
 html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li {
-  padding: 8px 12px !important; border-radius: 8px !important; font-size: var(--cc-text-subline) !important; white-space: normal !important;
+  padding: 8px 12px !important; border-radius: var(--cc-radius-control) !important; font-size: var(--cc-text-subline) !important; white-space: normal !important;
 }
 html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li:hover,
 html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li[aria-selected="true"] {
@@ -972,7 +977,7 @@ html.cc-popups-on .ca_display_area .menuItems { width: 18rem !important; }
    fill on CA's own .selectedMenu class. */
 html.cc-popups-on .caMenu { padding: 4px !important; margin: 0 !important; }
 html.cc-popups-on .caMenuItem {
-  display: block !important; border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  display: block !important; border: none !important; border-radius: var(--cc-radius-pill) !important;
   margin: 3px 0 !important; padding: 7px 12px !important; line-height: 1.3 !important;
   box-sizing: border-box !important; width: auto !important;
   background: var(--cc-surface-2, rgba(128, 128, 128, .10)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
@@ -1042,7 +1047,7 @@ html.cc-popups-on .caMenu > li:not(.caMenuItem):not(:has(> hr)):not(.cc-card-in)
   padding: 7px 12px !important;
   background: var(--cc-surface-2, rgba(128, 128, 128, .10)) !important;
   color: var(--cc-text-chip, #cfcfcf) !important;
-  border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-subline) !important;
+  border-radius: var(--cc-radius-pill) !important; font-size: var(--cc-text-subline) !important;
 }
 html.cc-popups-on .caMenuItem.sectionMenu:first-child { margin-top: 4px !important; }
 
@@ -1058,18 +1063,17 @@ html.cc-popups-on li.cc-card-in {
   margin: 0 !important; padding: 4px 6px !important; box-sizing: border-box !important;
   list-style: none !important;
 }
-/* The card's corner sits one step outside the chips it holds, capped so a pill-shaped --cc-b-radius
-   cannot turn a tall box into a lozenge, and the gap around it matches the gap between two loose
-   badges, so a card is another block in the same rhythm. */
+/* The card takes the card radius, one step outside the chips it holds, and the gap around it
+   matches the gap between two loose badges, so a card is another block in the same rhythm. */
 html.cc-popups-on li.cc-card-top {
-  border-top-left-radius: min(calc(var(--cc-b-radius, 8px) * 1.6), 14px) !important;
-  border-top-right-radius: min(calc(var(--cc-b-radius, 8px) * 1.6), 14px) !important;
+  border-top-left-radius: var(--cc-radius-card) !important;
+  border-top-right-radius: var(--cc-radius-card) !important;
   margin-top: 6px !important; padding-top: 8px !important;
   box-shadow: 0 -1px 3px rgba(0, 0, 0, .18) !important;   /* the light theme's #fff on #f2f2f2 is too quiet a step on its own */
 }
 html.cc-popups-on li.cc-card-bot {
-  border-bottom-left-radius: min(calc(var(--cc-b-radius, 8px) * 1.6), 14px) !important;
-  border-bottom-right-radius: min(calc(var(--cc-b-radius, 8px) * 1.6), 14px) !important;
+  border-bottom-left-radius: var(--cc-radius-card) !important;
+  border-bottom-right-radius: var(--cc-radius-card) !important;
   margin-bottom: 6px !important; padding-bottom: 8px !important;
   box-shadow: 0 2px 5px rgba(0, 0, 0, .22) !important;
 }
@@ -1127,7 +1131,7 @@ html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre {
   text-transform: uppercase !important; letter-spacing: .6px !important;
   font-size: var(--cc-text-body) !important; font-weight: 700 !important;
   margin: 6px 0 !important; padding: 7px 12px !important;
-  border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
+  border-radius: var(--cc-radius-pill) !important; cursor: pointer !important;
   --cc-ac-glow: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) 55%, transparent);
   animation: cc-ac-pulse 1.4s ease-in-out 6 !important;
 }
@@ -1141,7 +1145,7 @@ html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre:hover { box-shadow: ins
 /* the app card: surface, radius, no border line and a matching hover, with no size or position changes */
 html.cc-popups-on .ca_holder {
   background: var(--cc-surface-1, #1e1e1e) !important; border: none !important;
-  border-radius: var(--cc-b-radius, 12px) !important; box-shadow: 0 2px 12px rgba(0, 0, 0, .3) !important;
+  border-radius: var(--cc-radius-card) !important; box-shadow: 0 2px 12px rgba(0, 0, 0, .3) !important;
 }
 html.cc-popups-on .ca_holder:hover { background: var(--cc-surface-2, #222222) !important; box-shadow: 0 4px 18px rgba(0, 0, 0, .42) !important; }
 /* Drop the tile behind each app icon, CC's and the native one alike, and put back the upstream
@@ -1203,7 +1207,7 @@ html.cc-popups-on .cardDesc { display: block !important; max-height: none !impor
 html.cc-popups-on .cardDesc::after { content: none !important; display: none !important; }
 html.cc-popups-on .cardDescription::-webkit-scrollbar { width: 5px !important; }
 html.cc-popups-on .cardDescription::-webkit-scrollbar-track { background: transparent !important; }
-html.cc-popups-on .cardDescription::-webkit-scrollbar-thumb { background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: 3px !important; }
+html.cc-popups-on .cardDescription::-webkit-scrollbar-thumb { background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-radius-pill) !important; }
 
 /* The card buttons. Install and Actions are filled by the colour mode through the per-element
    --cc-rb-c header.js ccApps stamps; Info and Support stay neutral in accent mode and follow the
@@ -1219,7 +1223,7 @@ html.cc-popups-on .ca_bottomLine {
 }
 html.cc-popups-on .ca_bottomLine .caButton {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
-  border-radius: var(--cc-b-radius, 8px) !important; -webkit-mask-image: none !important; mask-image: none !important;
+  border-radius: var(--cc-radius-pill) !important; -webkit-mask-image: none !important; mask-image: none !important;
   flex: 1 1 0 !important; min-width: 0 !important; text-align: center !important;
   overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important;
   /* one explicit height for every badge in the row, with border-box so padding cannot re-inflate it */
@@ -1254,7 +1258,7 @@ html.cc-popups-on .appRepository {
   position: absolute !important; top: 14px !important; right: 46px !important; z-index: 4 !important;
   float: none !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important; margin: 0 !important;
-  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-b-radius, 8px) !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-radius-pill) !important;
   font-size: var(--cc-text-body) !important; opacity: 1 !important;
   color: var(--cc-text-chip, #cfcfcf) !important; transition: background .12s ease, color .12s ease !important;
 }
@@ -1288,7 +1292,7 @@ html.cc-popups-on .cc-warn-badge {
   position: absolute !important; top: 14px !important; z-index: 4 !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important; margin: 0 !important;
-  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-b-radius, 8px) !important;
+  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-radius-pill) !important;
   font-size: var(--cc-text-body) !important; color: var(--cc-text-chip, #cfcfcf) !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease !important;
 }
@@ -1308,7 +1312,7 @@ html.cc-rb-on.cc-popups-on .ca_bottomLine .caButton {
 html.cc-rb-on.cc-popups-on .ca_bottomLine .caButton:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; background: var(--cc-rb-c, var(--cc-accent)) !important; }
 html.cc-popups-on .searchArea .caButton {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
-  border-radius: var(--cc-b-radius, 8px) !important; -webkit-mask-image: none !important; mask-image: none !important;
+  border-radius: var(--cc-radius-pill) !important; -webkit-mask-image: none !important; mask-image: none !important;
 }
 html.cc-popups-on .searchArea .caButton:hover { background: var(--cc-chip-hover, rgba(128, 128, 128, .30)) !important; }
 
@@ -1343,7 +1347,7 @@ html.cc-popups-on .cc-castats .cc-cs-u {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   pointer-events: auto !important; box-sizing: border-box !important;
   width: 70px !important; flex: 0 0 auto !important; height: var(--cc-md-h, 30px) !important;
-  border-radius: min(var(--cc-b-radius, 8px), 999px) !important;
+  border-radius: var(--cc-radius-pill) !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   font-size: var(--cc-sm-fs) !important; font-variant-numeric: tabular-nums !important;
   white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
@@ -1354,7 +1358,7 @@ html.cc-popups-on .cc-castats .actionsButton {
   pointer-events: auto !important; flex: 0 0 auto !important; margin: 0 !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; height: var(--cc-md-h, 30px) !important; padding: 0 14px !important;
-  border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-meta) !important; font-weight: 700 !important;
+  border-radius: var(--cc-radius-pill) !important; font-size: var(--cc-text-meta) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .3px !important; white-space: nowrap !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
@@ -1365,7 +1369,7 @@ html.cc-popups-on .cc-castats .cc-cs-cta {
   pointer-events: auto !important; flex: 0 0 auto !important; cursor: pointer !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; height: var(--cc-md-h, 30px) !important; padding: 0 14px !important;
-  border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-meta) !important; font-weight: 700 !important;
+  border-radius: var(--cc-radius-pill) !important; font-size: var(--cc-text-meta) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .3px !important; white-space: nowrap !important;
 }
 /* Update is an action, so it takes the accent like every other call to action */
@@ -1399,22 +1403,21 @@ html.cc-popups-on .cc-ca-menu-btn {
   /* that same reset also carries margin:10px 12px 10px 0, which drops the button below the type badge */
   margin: 0 !important;
   border: none !important; padding: 0 !important;
-  /* capped, so the badge keeps square corners with a pill or circle badge shape */
-  border-radius: min(var(--cc-b-radius, 8px), 8px) !important;
+  border-radius: var(--cc-radius-pill) !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; cursor: pointer !important;
   display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 3px !important;
   transition: background .12s ease !important;
 }
-html.cc-popups-on .cc-ca-menu-btn span { width: 14px !important; height: 2px !important; border-radius: 1px !important; background: var(--cc-text-chip, #cfcfcf) !important; }
+html.cc-popups-on .cc-ca-menu-btn span { width: 14px !important; height: 2px !important; border-radius: var(--cc-radius-pill) !important; background: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-popups-on .cc-ca-menu-btn:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; }
 html.cc-popups-on .cc-ca-menu-btn:hover span { background: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 html.cc-popups-on .cc-ca-menu {
   position: fixed !important; z-index: 10000 !important; min-width: 150px !important;
-  background: var(--cc-surface-2, #222222) !important; border-radius: var(--cc-b-radius, 8px) !important;
+  background: var(--cc-surface-2, #222222) !important; border-radius: var(--cc-radius-card) !important;
   box-shadow: 0 10px 28px rgba(0, 0, 0, .4) !important; padding: 6px !important; box-sizing: border-box !important;
 }
 html.cc-popups-on .cc-ca-menu-item {
-  padding: 7px 10px !important; border-radius: var(--cc-b-radius, 6px) !important; cursor: pointer !important;
+  padding: 7px 10px !important; border-radius: var(--cc-radius-pill) !important; cursor: pointer !important;
   font-size: var(--cc-text-meta) !important; color: var(--cc-text, #e6e6e6) !important; white-space: nowrap !important;
   overflow: hidden !important; text-overflow: ellipsis !important;
 }
@@ -1452,14 +1455,14 @@ html.cc-popups-on .popupCloseArea {
 html.cc-popups-on .popupCloseArea .popUpClose {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
-  border-radius: var(--cc-b-radius, 8px) !important; padding: 0 14px !important; height: 30px !important;
+  border-radius: var(--cc-radius-pill) !important; padding: 0 14px !important; height: 30px !important;
   font-size: var(--cc-text-meta) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .4px !important;
   cursor: pointer !important; transition: background .12s ease, color .12s ease !important;
 }
 html.cc-popups-on .popupCloseArea .popUpClose:hover {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
-html.cc-popups-on .popupIcon img { border-radius: var(--cc-b-radius, 8px) !important; }
+html.cc-popups-on .popupIcon img { border-radius: var(--cc-radius-control) !important; }
 html.cc-popups-on .popupName { color: var(--cc-text, #e6e6e6) !important; }
 html.cc-popups-on .popupAuthorMain { color: var(--cc-text-dim, #8a8a8a) !important; }
 /* Installieren, Support and Pin App take the same accent and neutral-chip split as the card's own
@@ -1467,7 +1470,7 @@ html.cc-popups-on .popupAuthorMain { color: var(--cc-text-dim, #8a8a8a) !importa
 html.cc-popups-on .popupInfo .caButton {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   height: 28px !important; padding: 0 12px !important; margin: 8px 6px 0 0 !important; box-sizing: border-box !important;
-  border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-meta) !important; font-weight: 600 !important;
+  border-radius: var(--cc-radius-pill) !important; font-size: var(--cc-text-meta) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .3px !important; cursor: pointer !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
@@ -1506,7 +1509,7 @@ html.cc-popups-on .popupDescription,
 html.cc-popups-on .additionalRequirements,
 html.cc-popups-on .changelog {
   background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text, #e6e6e6) !important;
-  border-radius: var(--cc-b-radius, 8px) !important; padding: 14px 16px !important; margin: 14px 0 !important;
+  border-radius: var(--cc-radius-control) !important; padding: 14px 16px !important; margin: 14px 0 !important;
   box-sizing: border-box !important;
 }
 html.cc-popups-on .additionalRequirements { border-left: none !important; box-shadow: inset 3px 0 0 var(--cc-warn, #ff832b) !important; }
@@ -1533,7 +1536,7 @@ html.cc-popups-on .repoPopup,
 html.cc-popups-on .ca_favouriteRepo {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   height: 26px !important; padding: 0 10px !important; margin: 6px 6px 0 0 !important; box-sizing: border-box !important;
-  border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-meta) !important; font-weight: 600 !important;
+  border-radius: var(--cc-radius-pill) !important; font-size: var(--cc-text-meta) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .3px !important; cursor: pointer !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   transition: background .12s ease, color .12s ease !important;
@@ -1561,12 +1564,11 @@ html.cc-popups-on .ca_note {
    that reserved space. */
 html.cc-popups-on .sidenav.sidenavShow {
   top: 74px !important; right: 16px !important; bottom: 16px !important; left: auto !important;
-  height: auto !important; border-radius: 14px !important; padding-top: 0 !important;
+  height: auto !important; border-radius: var(--cc-radius-card) !important; padding-top: 0 !important;
 }
-/* The close button is a square badge with an X, on a fixed radius rather than --cc-b-radius: a
-   close control reads the same whatever badge shape is set. */
+/* The close button is a square badge with an X. */
 html.cc-popups-on .popupCloseArea .popUpClose.cc-ic-close {
-  width: 30px !important; height: 30px !important; padding: 0 !important; border-radius: 8px !important;
+  width: 30px !important; height: 30px !important; padding: 0 !important; border-radius: var(--cc-radius-pill) !important;
   font-size: var(--cc-text-body) !important; margin: 0 !important;
 }
 /* The spotlight star beside the app name, the square chip the card's own spotlight badge uses,
@@ -1575,7 +1577,7 @@ html.cc-popups-on .popupCloseArea .popUpClose.cc-ic-close {
 html.cc-popups-on .cc-ic-spot {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   width: 22px !important; height: 22px !important; margin-left: 8px !important; vertical-align: middle !important;
-  box-sizing: border-box !important; border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-meta) !important;
+  box-sizing: border-box !important; border-radius: var(--cc-radius-pill) !important; font-size: var(--cc-text-meta) !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   transition: background .12s ease, color .12s ease !important;
 }
@@ -1594,7 +1596,7 @@ html.cc-apps-rbneutral.cc-popups-on .cc-ic-spot:hover {
    adjoining siblings collapse theirs to the larger of the two, not their sum. */
 html.cc-popups-on #sidenavContent .cc-ic-card {
   position: relative !important; background: var(--cc-surface-card, #191919) !important;
-  border-radius: var(--cc-b-radius, 10px) !important; padding: 18px 16px 14px !important;
+  border-radius: var(--cc-radius-card) !important; padding: 18px 16px 14px !important;
   margin: 30px 0 !important; box-sizing: border-box !important;
 }
 /* The legend badge reads the three-tier chain li.cc-ca-cardtitle uses, --cc-rb-c through
@@ -1607,7 +1609,7 @@ html.cc-popups-on #sidenavContent .cc-ic-legend {
   position: absolute !important; top: -13px !important; left: 16px !important; z-index: 1 !important;
   display: inline-flex !important; align-items: center !important; box-sizing: border-box !important;
   height: 26px !important; padding: 0 14px !important; white-space: nowrap !important;
-  border-radius: var(--cc-b-radius, 999px) !important;
+  border-radius: var(--cc-radius-pill) !important;
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
   font-size: var(--cc-text-meta) !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: .5px !important;
@@ -1654,7 +1656,7 @@ html.cc-popups-on #sidenavContent .cc-ic-spot { cursor: help !important; }
 html.cc-popups-on #sidenavContent .cc-ic-card .ca_readmore {
   display: flex !important; align-items: center !important; justify-content: center !important; gap: 6px !important;
   width: fit-content !important; margin: 10px auto 0 !important; height: 26px !important; padding: 0 14px !important;
-  border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer !important; font-style: normal !important;
+  border-radius: var(--cc-radius-pill) !important; cursor: pointer !important; font-style: normal !important;
   font-size: var(--cc-text-meta) !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: .5px !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   transition: background .12s ease, color .12s ease !important;
@@ -1670,7 +1672,7 @@ html.cc-popups-on #sidenavContent .cc-ic-card .donateDiv { margin: 0 !important;
 html.cc-popups-on #sidenavContent .cc-ic-card .donateDiv .caButton.donate {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   height: 26px !important; padding: 0 12px !important; box-sizing: border-box !important;
-  border-radius: var(--cc-b-radius, 8px) !important; font-size: var(--cc-text-meta) !important; font-weight: 600 !important;
+  border-radius: var(--cc-radius-pill) !important; font-size: var(--cc-text-meta) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .3px !important; cursor: pointer !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
@@ -1722,7 +1724,7 @@ html.cc-popups-on .betaCardBackground {
   height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; padding: 0 12px !important;
   /* one floor, so a corner badge is the same width whatever its label; a longer one still grows */
   min-width: var(--cc-corner-badge-w, 92px) !important;
-  border-radius: var(--cc-b-radius, 8px) !important;
+  border-radius: var(--cc-radius-pill) !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   font-size: var(--cc-sm-fs) !important; font-weight: 700 !important;
@@ -1747,7 +1749,7 @@ html.cc-popups-on .homespotlightIconArea {
   position: absolute !important; top: 14px !important; left: auto !important; right: 82px !important; z-index: 4 !important;
   float: none !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;
   box-sizing: border-box !important; width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important; margin: 0 !important;
-  padding: 0 !important; background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-b-radius, 8px) !important;
+  padding: 0 !important; background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; border-radius: var(--cc-radius-pill) !important;
   font-size: var(--cc-text-body) !important; opacity: 1 !important; box-shadow: none !important;
   color: var(--cc-text-chip, #cfcfcf) !important; transition: background .12s ease, color .12s ease !important;
 }
@@ -1814,7 +1816,7 @@ html.cc-popups-on .multi_installDiv .multi_installClear:not(.ca_hide) {
      own hue. */
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important;
   box-shadow: none !important; outline: none !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
 }
@@ -1883,7 +1885,7 @@ html.cc-popups-on #alternateView {
 html.cc-popups-on #alternateView .alternateViewContent {
   background: #1a1a1a !important;
   color: var(--cc-text, #e6e6e6) !important;
-  border: none !important; border-radius: 14px !important;
+  border: none !important; border-radius: var(--cc-radius-card) !important;
   box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
   padding: 24px 28px !important; margin: 0 auto !important;   /* auto = centred, no flex needed on the parent */
   width: fit-content !important; max-width: min(900px, 92vw) !important; box-sizing: border-box !important;
@@ -1901,7 +1903,7 @@ html.cc-popups-on #alternateView .alternateViewContent .ca_center > font {
   display: flex !important; align-items: center !important; justify-content: center !important;
   width: 100% !important; box-sizing: border-box !important;
   height: 40px !important; padding: 0 18px !important;
-  border-radius: var(--cc-b-radius, 10px) !important;
+  border-radius: var(--cc-radius-pill) !important;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   font-size: var(--cc-lgb-fs) !important; font-weight: 600 !important;
@@ -1912,7 +1914,7 @@ html.cc-popups-on #alternateView .alternateViewContent h3 {
   display: inline-flex !important; align-items: center !important;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
-  padding: 3px 12px !important; border-radius: var(--cc-b-radius, 999px) !important;
+  padding: 3px 12px !important; border-radius: var(--cc-radius-pill) !important;
   font-size: var(--cc-text-subline) !important; font-weight: 700 !important; margin: 16px 0 8px !important; letter-spacing: .5px !important;
 }
 html.cc-popups-on #alternateView .alternateViewContent ul { margin: 0 0 6px !important; padding-left: 20px !important; }
@@ -1926,7 +1928,7 @@ html.cc-popups-on #alternateView .alternateViewClose {
   font-size: var(--cc-md-fs) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .5px !important;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important; cursor: pointer !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, .45) !important; z-index: 10 !important;
 }
 html.cc-popups-on #alternateView .alternateViewClose:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; }
@@ -1966,7 +1968,7 @@ html.cc-popups-on.cc-ca-settings #displaybox div.title {
   display: inline-flex !important; align-items: center !important; gap: 8px !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
-  border-radius: var(--cc-b-radius, 8px) !important;
+  border-radius: var(--cc-radius-pill) !important;
   padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px) !important;
   font-size: var(--cc-pagebadge-fs) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: 1px !important;
@@ -2006,7 +2008,7 @@ html.cc-popups-on.cc-ca-settings #displaybox a {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   min-height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-btnpad, 0 14px) !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important;
   font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .4px !important; text-decoration: none !important;
   /* the same side margin as the button bar above it, so all four badges share one grid */
@@ -2025,7 +2027,7 @@ html.cc-popups-on.cc-ca-settings #displaybox a {
   font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .4px !important; text-decoration: none !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important;
   box-shadow: none !important; outline: none !important; cursor: pointer !important;
 }
 /* Two button rows. CA wraps the form's own buttons in a <span>, which is row 1, and row 2 is CA's
@@ -2105,7 +2107,7 @@ html.cc-popups-on .pageNavigation .pageDots {
   padding: 0 8px !important; margin: 0 !important;
   font-size: var(--cc-md-fs) !important; font-weight: 600 !important; line-height: 1 !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important;
   text-decoration: none !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease !important;
 }
@@ -2160,7 +2162,7 @@ html.cc-popups-on a.back_to_top,
 html.cc-popups-on a.move_to_end {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
 }
 html.cc-popups-on a.back_to_top > i,
@@ -2200,7 +2202,7 @@ html.cc-popups-on .searchArea .dockerSearch {
   text-transform: none !important; letter-spacing: normal !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
 }
 html.cc-popups-on .searchArea .caButton.maxPerPage:hover,
@@ -2217,7 +2219,7 @@ html.cc-popups-on a.sortIcons {
   padding: var(--cc-md-pad, 0 20px) !important; margin: 0 6px 0 0 !important;
   font-size: var(--cc-md-fs) !important; font-weight: 600 !important; line-height: 1 !important;
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important;
   text-decoration: none !important; cursor: pointer !important;
   transition: background .12s ease, color .12s ease !important;
 }
@@ -2248,13 +2250,13 @@ html.cc-apps-rbneutral.cc-popups-on a.sortIcons.enabledIcon {
    this never touches CA's OTHER context menus (right-click app actions) the user never asked about. */
 html.cc-popups-on #dropdown-maxPerPage.dropdown-menu {
   background: var(--cc-surface-window, #242424) !important; border: none !important;
-  border-radius: var(--cc-r-2, 10px) !important; box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
+  border-radius: var(--cc-radius-card) !important; box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
   padding: 6px !important; min-width: 180px !important;
 }
 html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li { margin: 0 !important; }
 html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a {
   display: flex !important; align-items: center !important; gap: 8px !important;
-  padding: 8px 10px !important; border-radius: var(--cc-r-1, 6px) !important;
+  padding: 8px 10px !important; border-radius: var(--cc-radius-control) !important;
   font-size: var(--cc-sm-fs) !important; font-weight: 600 !important;
   color: var(--cc-text, #e6e6e6) !important; background: transparent !important;
   text-decoration: none !important; white-space: nowrap !important;
@@ -2279,13 +2281,13 @@ html.cc-popups-on #dropdown-maxPerPage.dropdown-menu li > a i { color: var(--cc-
    row this menu does not have. */
 html.cc-popups-on #dropdown-supportPopup.dropdown-menu {
   background: var(--cc-surface-window, #242424) !important; border: none !important;
-  border-radius: var(--cc-r-2, 10px) !important; box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
+  border-radius: var(--cc-radius-card) !important; box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
   padding: 6px !important; min-width: 180px !important;
 }
 html.cc-popups-on #dropdown-supportPopup.dropdown-menu li { margin: 0 !important; }
 html.cc-popups-on #dropdown-supportPopup.dropdown-menu li > a {
   display: flex !important; align-items: center !important; gap: 8px !important;
-  padding: 8px 10px !important; border-radius: var(--cc-r-1, 6px) !important;
+  padding: 8px 10px !important; border-radius: var(--cc-radius-control) !important;
   font-size: var(--cc-sm-fs) !important; font-weight: 600 !important;
   color: var(--cc-text, #e6e6e6) !important; background: transparent !important;
   text-decoration: none !important; white-space: nowrap !important;

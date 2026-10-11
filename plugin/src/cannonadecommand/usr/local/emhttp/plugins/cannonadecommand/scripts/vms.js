@@ -197,7 +197,6 @@
     var m = /^#?([0-9a-f]{6})$/i.exec(accentHex || "");
     return ensureFlatFilter(hostId, filtId, m ? ccIdeal("#" + m[1]) : "");
   }
-  function ccShape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
   // The active palette, as docker.js ccPalActive(): flag mode keeps its own cc.flagpal.
   function vmPalStored() {
     var pal = RB_PAL;
@@ -267,8 +266,8 @@
   function vmLogoSizes() { return ({ s: ["48px", "62px"], m: ["62px", "78px"], l: ["76px", "94px"] })[ls("cc.sgsize") || "m"] || ["62px", "78px"]; }
   function enhanceRows() {
     try {
-      var a = ccAccent(), rad = ccShape(), root = document.documentElement.style;
-      root.setProperty("--cc-accent", a); root.setProperty("--cc-accent-text", ccIdeal(a)); root.setProperty("--cc-b-radius", rad);
+      var a = ccAccent(), root = document.documentElement.style;
+      root.setProperty("--cc-accent", a); root.setProperty("--cc-accent-text", ccIdeal(a));
       // the logo tile follows the global cc.sgsize like the Docker and Plugins tabs
       var lg = vmLogoSizes();
       root.setProperty("--cc-logo-img", lg[0]); root.setProperty("--cc-logo-box", lg[1]);
@@ -392,7 +391,7 @@
     var wrap = el("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:3px;margin:0 0 10px 0";
     var l = el("label", null, label); l.style.cssText = "font-size:var(--cc-text-meta);font-weight:600;color:var(--cc-text,#e6e6e6)";
     var inp = el("input"); inp.type = "text"; inp.value = (value == null ? "" : String(value)); if (ph != null) inp.placeholder = String(ph);
-    inp.style.cssText = "background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:6px 10px;font-size:var(--cc-text-subline);outline:none";
+    inp.style.cssText = "background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:var(--cc-radius-control);padding:6px 10px;font-size:var(--cc-text-subline);outline:none";
     wrap.appendChild(l); wrap.appendChild(inp);
     if (hint) { var hh = el("div", null, hint); hh.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)"; wrap.appendChild(hh); }
     return { wrap: wrap, input: inp };
@@ -500,9 +499,9 @@
     lab.appendChild(tgt); lab.appendChild(cur);
     if (!known) { row.appendChild(lab); return row; }   // source missing -> no size to grow from; label only
     var inp = el("input"); inp.type = "number"; inp.min = String(curG); inp.step = "1"; inp.value = String(Math.max(1, Math.ceil(curG)));
-    inp.style.cssText = "width:74px;background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:6px 8px;font-size:var(--cc-text-subline);outline:none";
+    inp.style.cssText = "width:74px;background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:var(--cc-radius-control);padding:6px 8px;font-size:var(--cc-text-subline);outline:none";
     var unit = el("span", null, "GiB"); unit.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)";
-    var btn = el("button", null, VMDE ? "Vergrößern" : "Grow"); btn.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:6px;padding:6px 12px;font-size:var(--cc-text-meta);font-weight:600;cursor:pointer";
+    var btn = el("button", null, VMDE ? "Vergrößern" : "Grow"); btn.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:var(--cc-radius-pill);padding:6px 12px;font-size:var(--cc-text-meta);font-weight:600;cursor:pointer";
     btn.onclick = function () {
       var g = parseFloat(String(inp.value).replace(",", "."));
       if (isNaN(g) || g <= curG) { statusEl.textContent = ""; ccvFail(btn, (VMDE ? "Nur vergrößern, auf mehr als " : "Grow only, to more than ") + curG + " GiB"); return; }
@@ -544,7 +543,7 @@
     var ov = el("div"); ov.id = "cc-vmlim-ov";
     ov.style.cssText = "position:fixed;inset:0;z-index:99999";
     // the chrome of Docker's .cc-pop popover
-    var card = el("div", "cc-rainbow"); card.style.cssText = "position:absolute;background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:10px;padding:14px 16px;width:420px;max-width:92vw;max-height:88vh;overflow:auto;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font:var(--cc-text-subline)/1.5 \"Segoe UI\",system-ui,sans-serif";
+    var card = el("div", "cc-rainbow"); card.style.cssText = "position:absolute;background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:var(--cc-radius-card);padding:14px 16px;width:420px;max-width:92vw;max-height:88vh;overflow:auto;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font:var(--cc-text-subline)/1.5 \"Segoe UI\",system-ui,sans-serif";
     var titleMap = { cpu: VMDE ? "CPU-Limit" : "CPU limit", ram: VMDE ? "RAM-Limit" : "RAM limit", bw: VMDE ? "Bandbreite" : "Bandwidth", disk: VMDE ? "vDisk-Größe" : "vDisk size", all: VMDE ? "VM-Limits" : "VM limits" };
     var head = el("div"); head.style.cssText = "display:flex;align-items:center;justify-content:space-between;font-size:var(--cc-text-title);font-weight:700;margin:0 0 4px 0";
     head.appendChild(el("span", null, titleMap[which] + ": " + name));
@@ -593,7 +592,7 @@
       var CI = window.CCTheme && window.CCTheme.icons; if (!CI) return;
       var wrap = el("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:3px;margin:8px 0 10px 0";
       var l = el("label", null, VMDE ? "Icon-Färbung" : "Icon colouring"); l.style.cssText = "font-size:var(--cc-text-meta);font-weight:600;color:var(--cc-text,#e6e6e6)";
-      var sel = el("select"); sel.style.cssText = "background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:6px 10px;font-size:var(--cc-text-subline);outline:none";
+      var sel = el("select"); sel.style.cssText = "background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:var(--cc-radius-control);padding:6px 10px;font-size:var(--cc-text-subline);outline:none";
       var opts = VMDE
         ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Ink-Flatten"], ["tint", "Luminanz-Tint"]]
         : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Ink flatten"], ["tint", "Luminance tint"]];
@@ -604,10 +603,10 @@
     })();
     var foot = el("div"); foot.style.cssText = "display:flex;gap:8px;align-items:center;margin-top:6px";
     var msg = el("div"); msg.style.cssText = "flex:1;font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)";
-    var cancel = el("button", null, VMDE ? "Schließen" : "Close"); cancel.style.cssText = "background:var(--cc-chip,rgba(128,128,128,.18));color:var(--cc-text,#e6e6e6);border:none;border-radius:6px;padding:7px 14px;font-size:var(--cc-text-subline);font-weight:600;cursor:pointer";
+    var cancel = el("button", null, VMDE ? "Schließen" : "Close"); cancel.style.cssText = "background:var(--cc-chip,rgba(128,128,128,.18));color:var(--cc-text,#e6e6e6);border:none;border-radius:var(--cc-radius-pill);padding:7px 14px;font-size:var(--cc-text-subline);font-weight:600;cursor:pointer";
     foot.appendChild(msg); foot.appendChild(cancel);
     var apply = null;
-    if (hasLimFields) { apply = el("button", null, VMDE ? "Anwenden" : "Apply"); apply.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:6px;padding:7px 16px;font-size:var(--cc-text-subline);font-weight:600;cursor:pointer"; foot.appendChild(apply); }
+    if (hasLimFields) { apply = el("button", null, VMDE ? "Anwenden" : "Apply"); apply.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:var(--cc-radius-pill);padding:7px 16px;font-size:var(--cc-text-subline);font-weight:600;cursor:pointer"; foot.appendChild(apply); }
     card.appendChild(foot);
     ov.appendChild(card); document.body.appendChild(ov);
     // place the card at the gear (clamped into the viewport; flips above if it would overflow the bottom)

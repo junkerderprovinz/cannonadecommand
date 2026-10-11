@@ -56,9 +56,6 @@
     }
     return "url(#" + filtId + ")";
   }
-  // cc.badgeshape is global; an adopt-aware read would fall back to an unset ccs.badgeshape
-  // and flip the shape per page.
-  function shape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[g("cc.badgeshape", "pill")] || "999px"; }
   // cc.sgsize (global): tile badge [box, glyph]. The default m matches Docker's logo tile
   // (62px content + 8px pad); favorites.js reads the same key so /Favorites matches.
   function sgSize() { return ({ s: ["64px", "32px"], m: ["78px", "38px"], l: ["96px", "46px"] })[g("cc.sgsize", "m")] || ["78px", "38px"]; }
@@ -224,7 +221,6 @@
         // --cc-accent is never written on another area's page.
         root.style.setProperty("--cc-accent", a);
         root.style.setProperty("--cc-accent-text", idealText(a));
-        root.style.setProperty("--cc-b-radius", shape());
         paintHeads();
       } else {
         clearHeads(); // area/theming off or not a grid page -> native headings back

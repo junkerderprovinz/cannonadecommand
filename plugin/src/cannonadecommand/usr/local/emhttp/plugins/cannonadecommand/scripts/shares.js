@@ -20,9 +20,6 @@
   // shares-scoped rules paint in that colour without a second CSS scope.
   function effMain(k, d) { return g("cc.stylemain", "1") !== "0" ? g("cc." + k, d) : g("ccm." + k, d); }
   function mainAccent() { var a = effMain("accent", "#FCC419"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#FCC419"; }
-  // cc.badgeshape is global; an adopt-aware read would fall back to an unset ccsh.badgeshape
-  // and flip --cc-b-radius between pages.
-  function shape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[g("cc.badgeshape", "pill")] || "999px"; }
   var RB = ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];
   if (window.CCTheme) { idealText = window.CCTheme.idealText; RB = window.CCTheme.RB; } // the local copies are the fallback
   var RB_OFF = window.CCTheme ? window.CCTheme.rbSeed(RB.length) : Math.floor(Math.random() * RB.length); // the persisted seed keeps the rainbow aligned across areas
@@ -2020,12 +2017,8 @@
       var a = (onMainArea && onMain()) ? mainAccent() : accent();
       // Each area owns its accent var: every global enhancer writes on documentElement, so a
       // shared --cc-accent would let the Freigaben colour bleed onto the menu bar and back.
-      // --cc-b-radius stays shared, being the one badge shape for the whole plugin.
       root.style.setProperty("--cc-shr-accent", a);
       root.style.setProperty("--cc-shr-accent-text", idealText(a));
-      root.style.setProperty("--cc-b-radius", shape());
-      // the state dot follows the badge shape at dot scale
-      root.style.setProperty("--cc-dot-r", ({ pill: "50%", circle: "50%", rounded: "3px", square: "0px" })[g("cc.badgeshape", "pill")] || "50%");
       root.classList.toggle("cc-shares-rb", rbOn());
       ensureTabbed();
       hideRedundantTabs();

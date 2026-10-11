@@ -1,7 +1,7 @@
 // Enhances Unraid's main menu bar. Loaded on every page through
 // CannonadeCommand.Header.page, it keeps the JS side small: toggle html.cc-header-on, which gates
-// every rule in sheets/CannonadeCommand.Header.css, and mirror the accent, text and badge-shape
-// vars onto the document root so the sheet follows the configured theme. The area is off by
+// every rule in sheets/CannonadeCommand.Header.css, and mirror the accent, text and shape
+// settings onto the document root so the sheet follows the configured theme. The area is off by
 // default, opt in under Settings > CannonadeCommand > Bereiche > Hauptmenueleiste.
 (function () {
   "use strict";
@@ -12,16 +12,13 @@
     return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.197 ? "#161616" : "#fff";
   }
   function motionLevel(v) { return v === "off" || v === "0" ? "off" : v === "wild" || v === "2" ? "wild" : "subtle"; }
+  function shapeName(v) { return v === "soft" || v === "rounded" ? "soft" : v === "square" ? "square" : "round"; }
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
   function T(d, e) { return LANG === "de" ? d : e; }
   function eff(k, d) { return g("cc.styleheader", "1") !== "0" ? g("cc." + k, d) : g("cch." + k, d); }
   function accent() { var a = eff("accent", "#FCC419"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#FCC419"; }
-  // cc.badgeshape is global, so it is read directly: through eff() it would fall back to an unset
-  // cch.badgeshape while the adopt toggle is off, and the bar's badge shape would then flip from
-  // page to page depending on which script wrote --cc-b-radius last.
-  function shape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[g("cc.badgeshape", "pill")] || "999px"; }
   var RB = ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];
-  if (window.CCTheme) { idealText = window.CCTheme.idealText; motionLevel = window.CCTheme.motionLevel; RB = window.CCTheme.RB; } // the local copies are the fallback
+  if (window.CCTheme) { idealText = window.CCTheme.idealText; motionLevel = window.CCTheme.motionLevel; shapeName = window.CCTheme.shapeName; RB = window.CCTheme.RB; } // the local copies are the fallback
   var RB_OFF = window.CCTheme ? window.CCTheme.rbSeed(RB.length) : Math.floor(Math.random() * RB.length); // the persisted seed keeps the rainbow aligned across areas
   // Rainbow is a global mode, read directly rather than through the adopt-gated eff(), so one
   // switch colours every enabled area whatever this bar's adopt state is. The per-area accent
@@ -383,7 +380,11 @@
   // sheet goes into the inner document.
   function ccPopIframes() {
     try {
-      var acc = (getComputedStyle(document.documentElement).getPropertyValue("--cc-hdr-accent") || "").trim() || "#FCC419";
+      var rootCS = getComputedStyle(document.documentElement);
+      var tok = function (name, d) { return (rootCS.getPropertyValue(name) || "").trim() || d; };
+      var acc = tok("--cc-hdr-accent", "#FCC419");
+      var rCtl = tok("--cc-radius-control", "12px"), rPill = tok("--cc-radius-pill", "9999px");
+      var fsBody = tok("--cc-text-body", "14px"), fsMeta = tok("--cc-text-meta", "12px");
       var ifr = document.querySelectorAll(".ui-dialog iframe");
       for (var i = 0; i < ifr.length; i++) {
         (function (f) {
@@ -392,16 +393,17 @@
               var d = f.contentDocument;
               if (!d || !d.head || d.getElementById("cc-pop-inner")) return;
               var st = d.createElement("style"); st.id = "cc-pop-inner";
-              // The iframe cannot read the parent's CSS vars, so this sheet carries literals; the
-              // 36px and 14px button metrics track --cc-lgb-* in Header.css, and the focus rules
-              // repeat the parent's. The inner surface is darkened so no lighter native band shows
-              // through, and the text inputs get the dark fill while radios stay native.
-              st.textContent = "html,body{background:#0f0f0f !important;color:#d6d6d6 !important} fieldset,table,tbody,thead,tr,td,th,.tabs,dl,dt,dd,form,center,p,section,article,div{background:transparent !important;border:none !important} legend{color:#9a9a9a !important} label,td,th{color:#d6d6d6 !important} input[type=text],input[type=password],input[type=email],input[type=search],input[type=number],input[type=url],textarea,select{background:#232323 !important;color:#eaeaea !important;border:none !important;border-radius:6px !important;outline:none !important;box-shadow:none !important} textarea{width:100% !important;box-sizing:border-box !important} a{color:" + acc + " !important} " +
-                "input[type=button],input[type=submit],button{height:36px !important;padding:0 24px !important;font-size:var(--cc-text-body) !important;border:0 !important;border-radius:6px !important;box-shadow:none !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important;cursor:pointer} center,.buttons{text-align:center !important} a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none !important;box-shadow:none !important;filter:brightness(1.18)} " +
+              // The iframe cannot read the parent's CSS vars, so the radii and type sizes are read
+              // off the parent's tokens and written in as values; the 36px button height tracks
+              // --cc-lgb-h in Header.css, and the focus rules repeat the parent's. The inner surface
+              // is darkened so no lighter native band shows through, and the text inputs get the
+              // dark fill while radios stay native.
+              st.textContent = "html,body{background:#0f0f0f !important;color:#d6d6d6 !important} fieldset,table,tbody,thead,tr,td,th,.tabs,dl,dt,dd,form,center,p,section,article,div{background:transparent !important;border:none !important} legend{color:#9a9a9a !important} label,td,th{color:#d6d6d6 !important} input[type=text],input[type=password],input[type=email],input[type=search],input[type=number],input[type=url],textarea,select{background:#232323 !important;color:#eaeaea !important;border:none !important;border-radius:" + rCtl + " !important;outline:none !important;box-shadow:none !important} textarea{width:100% !important;box-sizing:border-box !important} a{color:" + acc + " !important} " +
+                "input[type=button],input[type=submit],button{height:36px !important;padding:0 24px !important;font-size:" + fsBody + " !important;border:0 !important;border-radius:" + rPill + " !important;box-shadow:none !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important;cursor:pointer} center,.buttons{text-align:center !important} a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none !important;box-shadow:none !important;filter:brightness(1.18)} " +
                 // The template-update window is CreateDocker.php inside this iframe, with inline
                 // styles of its own. These selectors exist only in that window, so giving them the
                 // CC look here reaches nothing else.
-                "fieldset.docker{background:#191919 !important;border:none !important;border-radius:10px !important;margin:0 0 12px !important;padding:10px 12px !important;box-shadow:0 1px 4px rgba(0,0,0,.35) !important} fieldset.docker>legend{display:inline-block !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;border:none !important;border-radius:999px !important;padding:3px 12px !important;font-size:var(--cc-text-meta) !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important} span.system{background:transparent !important;color:#d6d6d6 !important;box-shadow:none !important} span.label{background:rgba(255,255,255,.08) !important;color:#e6e6e6 !important;border-radius:999px !important;padding:3px 10px !important}";
+                "fieldset.docker{background:#191919 !important;border:none !important;border-radius:" + rCtl + " !important;margin:0 0 12px !important;padding:10px 12px !important;box-shadow:0 1px 4px rgba(0,0,0,.35) !important} fieldset.docker>legend{display:inline-block !important;background:" + acc + " !important;color:" + idealText(acc) + " !important;border:none !important;border-radius:" + rPill + " !important;padding:3px 12px !important;font-size:" + fsMeta + " !important;font-weight:600 !important;text-transform:uppercase !important;letter-spacing:.6px !important} span.system{background:transparent !important;color:#d6d6d6 !important;box-shadow:none !important} span.label{background:rgba(255,255,255,.08) !important;color:#e6e6e6 !important;border-radius:" + rPill + " !important;padding:3px 10px !important}";
               d.head.appendChild(st);
             } catch (e2) {}
           }
@@ -2281,23 +2283,20 @@
       // storage listener re-runs apply(), so a live toggle reverts it.
       var on = g("cc.enable.header", "0") !== "0" && g("cc.theming", "1") !== "0";
       root.classList.toggle("cc-header-on", on);
-      // This file runs on every page, so it owns the global classes the sheets key off. The badge
-      // shape is global and set whatever the header area does; with no area enabled there are no
-      // badges for it to reach.
-      root.classList.toggle("cc-shape-circle", g("cc.badgeshape", "pill") === "circle");
+      // This file runs on every page, so it owns the global attributes the sheets key off. The
+      // shape is global and set whatever the header area does: data-cc-shape picks the radius set
+      // in Tokens.css. cc.badgeshape is read directly, since through eff() it would fall back to an
+      // unset cch.badgeshape while the adopt toggle is off. A name from before GlimStone's three
+      // shapes is rewritten once, through the patched setItem, so the engine's mirror follows.
+      var shp = g("cc.badgeshape", "round"), shpName = shapeName(shp);
+      if (/^(pill|rounded|circle)$/.test(shp)) { try { localStorage.setItem("cc.badgeshape", shpName); } catch (e3) {} }
+      root.setAttribute("data-cc-shape", shpName);
       // The motion level is global too. The sheets read it from data-cc-motion, and the OS
       // reduce-motion setting still wins over every level. A digit from before the levels had
       // names is rewritten once, through the patched setItem, so the engine's mirror follows.
       var anim = g("cc.anim", "subtle"), level = motionLevel(anim);
       if (/^[012]$/.test(anim)) { try { localStorage.setItem("cc.anim", level); } catch (e2) {} }
       root.setAttribute("data-cc-motion", level);
-      // The badge radii are read on every page, by the settings toggles and the docker state dot
-      // among others, so they are set here rather than inside the header branch below. Every area
-      // computes the same shape(), so they cannot disagree.
-      try {
-        root.style.setProperty("--cc-b-radius", shape());
-        root.style.setProperty("--cc-dot-r", ({ pill: "50%", circle: "50%", rounded: "3px", square: "0px" })[g("cc.badgeshape", "pill")] || "50%");
-      } catch (eR) {}
       // The native jQuery-UI dialogs and the SweetAlert confirmations follow the CC look on every
       // page. Master-gated only, since it is chrome rather than an area of its own.
       root.classList.toggle("cc-popups-on", g("cc.theming", "1") !== "0");
@@ -2398,11 +2397,9 @@
       for (var tr1 = 0; tr1 < tps1.length; tr1++) { var th = tps1[tr1]; th.setAttribute("data-cc-tip", th.getAttribute("title")); th.removeAttribute("title"); }
       var a = accent();
       // The menu bar owns its own accent var: the other global enhancers write --cc-accent on
-      // documentElement and would clobber this colour, and the reverse. --cc-b-radius stays
-      // shared, being the one badge shape.
+      // documentElement and would clobber this colour, and the reverse.
       root.style.setProperty("--cc-hdr-accent", a);
       root.style.setProperty("--cc-hdr-accent-text", idealText(a));
-      root.style.setProperty("--cc-b-radius", shape());
       root.classList.toggle("cc-header-rb", rbOn());
       applyNavOrder();  // before painting and measuring, since it reorders the DOM
       setupNavDrag();
@@ -3082,9 +3079,8 @@
     if (popup.getAttribute("data-cc-ic") === key) return;
     if (!sc.querySelector(".popupDescription")) return; // the same race, for the description block
     popup.setAttribute("data-cc-ic", key);
-    // The close button becomes a square badge, which the CSS keeps square whatever the badge-shape
-    // setting says, since a close control should read the same in every mode. Its native onclick
-    // stays untouched.
+    // The close button becomes a square badge at the pill radius. Its native onclick stays
+    // untouched.
     var closeBtn = sc.querySelector(".popUpClose");
     if (closeBtn) {
       closeBtn.textContent = ""; closeBtn.classList.add("cc-ic-close");

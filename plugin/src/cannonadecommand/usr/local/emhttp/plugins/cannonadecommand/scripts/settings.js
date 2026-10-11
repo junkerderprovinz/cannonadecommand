@@ -11,25 +11,25 @@
     if (document.getElementById("cc-set-xtra")) return;
     var st = document.createElement("style"); st.id = "cc-set-xtra";
     st.textContent =
-      "#cc-settings .cc-set-xbtn{display:inline-flex;align-items:center;justify-content:center;height:var(--cc-md-h,30px);padding:var(--cc-md-btnpad,0 14px);font-size:var(--cc-md-fs);font-weight:600;border-radius:var(--cc-b-radius,999px);box-sizing:border-box;margin:12px 10px 0 0}" +
+      "#cc-settings .cc-set-xbtn{display:inline-flex;align-items:center;justify-content:center;height:var(--cc-md-h,30px);padding:var(--cc-md-btnpad,0 14px);font-size:var(--cc-md-fs);font-weight:600;border-radius:var(--cc-radius-pill);box-sizing:border-box;margin:12px 10px 0 0}" +
       // the flag picker's stripe swatches and its searchable dropdown
-      "#cc-settings .cc-flag-sw{display:inline-block;width:22px;height:15px;border-radius:3px;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}" +
+      "#cc-settings .cc-flag-sw{display:inline-block;width:22px;height:15px;border-radius:calc(var(--cc-radius-control) / 4);flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}" +
       "#cc-settings .cc-flag-sw-lg{width:34px;height:22px}" +
       // the real flag image, at the same footprint as the stripe swatch
-      "#cc-settings .cc-flag-img{display:inline-block;width:22px;height:15px;flex:0 0 auto;object-fit:cover;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}" +
+      "#cc-settings .cc-flag-img{display:inline-block;width:22px;height:15px;flex:0 0 auto;object-fit:cover;border-radius:calc(var(--cc-radius-control) / 4);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}" +
       "#cc-settings .cc-flag-img-lg{width:34px;height:22px}" +
       // the palette rows fill the card width, with the reset as one more equal cell at the end
       "#cc-settings .cc-set-swatches.cc-fill{display:flex;gap:6px;align-items:center}" +
       // Every colour row is nine equal cells, so a swatch is the same size in every card. A swatch
       // and the reset take one cell each, the hex field two, since the code needs the room, and the
       // builder shows seven presets in a hex row to keep the total at nine.
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;border-radius:var(--cc-b-radius,5px)}" +
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:var(--cc-b-radius,5px);cursor:pointer;color:#cfcfcf;font-size:var(--cc-text-body);transition:filter .12s,background .12s,color .12s}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;border-radius:var(--cc-radius-pill)}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:var(--cc-radius-pill);cursor:pointer;color:#cfcfcf;font-size:var(--cc-text-body);transition:filter .12s,background .12s,color .12s}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn:hover{background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{flex:2 2 0;height:30px;min-width:0;box-sizing:border-box;padding:0 8px;align-self:center;font-size:var(--cc-text-meta);letter-spacing:0;margin:0}" +
       // the settings search and the reset-everything button
       "#cc-settings .cc-set-searchrow{margin:12px 0 2px}" +
-      "#cc-settings .cc-set-search{box-sizing:border-box;width:100%;max-width:420px;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:9px 13px;font-size:var(--cc-text-subline);transition:background-color .12s}" +
+      "#cc-settings .cc-set-search{box-sizing:border-box;width:100%;max-width:420px;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:var(--cc-radius-control);padding:9px 13px;font-size:var(--cc-text-subline);transition:background-color .12s}" +
       // Unraid's default-base.css paints every placeholder in the theme's link colour, so a hint
       // reads as a link or as an already filled value. One rule per sheet covers every field; the
       // Docker half of the same guard lives in docker.css.
@@ -37,7 +37,7 @@
       "#cc-settings .cc-set-search:focus{background:#2e2e2e}" +
       // The search is a badge that expands into an input on click. Collapsed it follows the colour
       // mode; expanded it becomes a dark input box.
-      "#cc-settings .cc-set-searchbadge{margin-left:auto;display:inline-flex;align-items:center;background:var(--cc-btn-accent,var(--cc-accent,#FCC419));border-radius:min(var(--cc-b-radius,999px),17px);height:34px;overflow:hidden;transition:background-color .12s}" +
+      "#cc-settings .cc-set-searchbadge{margin-left:auto;display:inline-flex;align-items:center;background:var(--cc-btn-accent,var(--cc-accent,#FCC419));border-radius:var(--cc-radius-pill);height:34px;overflow:hidden;transition:background-color .12s}" +
       "#cc-settings .cc-set-searchbadge .cc-set-searchicon{flex:0 0 auto;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:var(--cc-accent-text, #161616);cursor:pointer}" +
       "#cc-settings .cc-set-searchbadge.cc-open{background:#2e2e2e}" +
       "#cc-settings .cc-set-searchbadge:not(.cc-open):hover{background:color-mix(in srgb,var(--cc-btn-accent,var(--cc-accent,#FCC419)) 85%,var(--cc-text,#e6e6e6))}" +
@@ -51,14 +51,14 @@
       "#cc-settings .cc-btn.cc-btn-accent{background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
       "#cc-settings .cc-btn.cc-btn-accent:hover{background:var(--cc-accent-hover);color:var(--cc-accent-text, #161616)}" +
       "#cc-settings .cc-flag-picker{position:relative;margin-top:6px;max-width:340px}" +
-      "#cc-settings .cc-flag-trigger{display:flex;align-items:center;gap:9px;background:#232323;border-radius:8px;padding:7px 12px;cursor:pointer;user-select:none}" +
+      "#cc-settings .cc-flag-trigger{display:flex;align-items:center;gap:9px;background:#232323;border-radius:var(--cc-radius-control);padding:7px 12px;cursor:pointer;user-select:none}" +
       "#cc-settings .cc-flag-trigger:hover{background:color-mix(in srgb,#232323 85%,var(--cc-text,#e6e6e6))}" +
       "#cc-settings .cc-flag-name{font-size:var(--cc-text-subline);color:#eaeaea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
       // The trigger reads as a button, with no caret, and openPanel pins the panel fixed.
-      "#cc-settings .cc-flag-panel{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:9999;background:#1c1c1c;border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.6);overflow:hidden}" +
-      "#cc-settings .cc-flag-search{box-sizing:border-box;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:8px;padding:8px 10px;margin:8px;width:calc(100% - 16px);font-size:var(--cc-text-subline)}" +
+      "#cc-settings .cc-flag-panel{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:9999;background:#1c1c1c;border-radius:var(--cc-radius-card);box-shadow:0 12px 34px rgba(0,0,0,.6);overflow:hidden}" +
+      "#cc-settings .cc-flag-search{box-sizing:border-box;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:var(--cc-radius-control);padding:8px 10px;margin:8px;width:calc(100% - 16px);font-size:var(--cc-text-subline)}" +
       "#cc-settings .cc-flag-list{max-height:260px;overflow-y:auto;padding:0 6px 6px}" +
-      "#cc-settings .cc-flag-item{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:6px;cursor:pointer}" +
+      "#cc-settings .cc-flag-item{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:var(--cc-radius-control);cursor:pointer}" +
       "#cc-settings .cc-flag-item:hover,#cc-settings .cc-flag-item.cc-sel{background:rgba(255,255,255,.09)}" +   // the keyboard highlight too
       // The logo preview tile. Its coloured badge is this box, a real element with a radius and
       // overflow hidden, never an feFlood inside the filter: an feFlood fills the whole filter
@@ -387,10 +387,7 @@
       host(id + "-svg").innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + id + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + row(r, 0) + " " + row(g, 1) + " " + row(b, 2) + ' 0 0 0 1 0"/></filter></svg>';
       return "url(#" + id + ")";
     }
-    function radius() {
-      var sh = get("cc.badgeshape", "pill");
-      return sh === "circle" ? "50%" : "min(" + ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" }[sh] || "999px") + ", 16px)";
-    }
+    function radius() { return "var(--cc-radius-control)"; }   // the live logo tile is a tile
     function size() { return st.size || ({ s: "48px", m: "62px", l: "76px" })[get("cc.sgsize", "m")] || "62px"; }
     // A sample whose name starts with a font-icon prefix is a glyph, monochrome by construction:
     // it inks through the CSS colour and has no raster for a filter to work on.
@@ -1179,8 +1176,9 @@
         c1.appendChild(frow);
       }
     }
-    // The badge shape options are ordered by rising roundness.
-    c1.appendChild(segRow(T("Badge-Form", "Badge shape"), [["square", T("eckig", "square")], ["rounded", T("abgerundet", "rounded")], ["pill", "Pills"], ["circle", T("Kreise", "Circles")]], get("cc.badgeshape", "pill"), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); }));
+    // GlimStone's three shapes, in its order. A name stored before them shows as the shape it reads as.
+    c1.appendChild(segRow(T("Form", "Shape"), [["round", T("Rund", "Round")], ["soft", T("Weich", "Soft")], ["square", T("Eckig", "Square")]], shapeName(get("cc.badgeshape", "round")), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); },
+      T("Karten, Felder und Knöpfe ändern ihre Ecken gemeinsam.", "Cards, fields and buttons change their corners together.")));
     // One global badge style: glass adds a sheen to every badge at once, flat is the solid look.
     c1.appendChild(segRow(T("Badge-Stil", "Badge style"), [["flat", "Flat"], ["glass", "Glass"]], get("cc.badgeglass", "0") === "1" ? "glass" : "flat", function (v) { set("cc.badgeglass", v === "glass" ? "1" : "0"); document.documentElement.classList.toggle("cc-badge-glass", v === "glass" && get("cc.theming", "1") !== "0"); syncHeaderBar(); syncSharesBar(); }));
     // The reactive toggle covers every colour mode: everything rests grey, colours on hover, and
@@ -1374,10 +1372,9 @@
     // it until the organizer has folders: the tab falls back to an ungrouped grid when it has
     // none, so picking it as a default preference shows a plain grid rather than anything broken.
     c4.appendChild(segRow(T("Standard-Ansicht", "Default view"), [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")], ["folder", T("Ordner", "Folder")]], view, function (v) { view = v; set("cc.view", v); syncViewModeServer(v); }));
-    function applyShape() { var m9 = { pill: "999px", rounded: "6px", square: "0px", circle: "999px" }; var sh9 = get("cc.badgeshape", "pill"); var r9 = m9[sh9] || "999px"; root.style.setProperty("--cc-b-radius", r9); document.documentElement.style.setProperty("--cc-b-radius", r9); document.documentElement.classList.toggle("cc-shape-circle", sh9 === "circle"); var d9 = { pill: "50%", rounded: "3px", square: "0px", circle: "50%" }[sh9] || "50%"; document.documentElement.style.setProperty("--cc-dot-r", d9); /* the preset swatches follow the badge shape too */ }
+    function shapeName(v) { return window.CCTheme ? window.CCTheme.shapeName(v) : (v === "soft" || v === "rounded" ? "soft" : v === "square" ? "square" : "round"); }
+    function applyShape() { document.documentElement.setAttribute("data-cc-shape", shapeName(get("cc.badgeshape", "round"))); }
     wrap.appendChild(c4);
-    // The badge shape is a single global control in the Badges card; this call is what sets the
-    // radius on this page's first render.
     applyShape();
 
     // Notifications are engine-side and saved to the flash.

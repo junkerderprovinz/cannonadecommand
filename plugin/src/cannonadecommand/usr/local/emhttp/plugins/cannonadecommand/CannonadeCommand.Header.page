@@ -23,7 +23,8 @@ Link="cc-hdr-hook"
     var theming = g("cc.theming", "1") !== "0";
     var on = g("cc.enable.header", "0") !== "0" && theming;
     r.classList.toggle("cc-header-on", on);
-    r.classList.toggle("cc-shape-circle", g("cc.badgeshape", "pill") === "circle");
+    var shape = g("cc.badgeshape", "round");   // CCTheme.shapeName, the names from before GlimStone's shapes included
+    r.setAttribute("data-cc-shape", shape === "soft" || shape === "rounded" ? "soft" : shape === "square" ? "square" : "round");
     var anim = g("cc.anim", "subtle");   // CCTheme.motionLevel, digits from before the names included
     r.setAttribute("data-cc-motion", anim === "off" || anim === "0" ? "off" : anim === "wild" || anim === "2" ? "wild" : "subtle");
     r.classList.toggle("cc-badge-glass", g("cc.badgeglass", "0") === "1" && theming);

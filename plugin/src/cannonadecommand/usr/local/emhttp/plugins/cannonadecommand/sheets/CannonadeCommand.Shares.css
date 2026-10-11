@@ -4,7 +4,7 @@
  * html.cc-shares-on, which shares.js adds only while the Freigaben area is enabled.
  *
  * In the tabbed sub-page nav (#displaybox nav.tabs, [display] tabs=0) each tab becomes a badge
- * (grey when idle, accent when active, contrast text) following --cc-b-radius, and a bar with a
+ * (grey when idle, accent when active, contrast text) at the pill radius, and a bar with a
  * single redundant tab is hidden. Colours come from --cc-shr-accent and --cc-shr-accent-text, this
  * area's own variables, because the other scripts overwrite --cc-accent. Unraid's tab CSS
  * (.tabs button[role="tab"], 0,3,1) is outranked by the #displaybox prefix without !important.
@@ -21,7 +21,7 @@ html.cc-shares-on #displaybox nav.tabs button[role="tab"] {
   background: rgba(128, 128, 128, .18);
   color: var(--cc-text-chip, #cfcfcf);
   border: none;
-  border-radius: var(--cc-b-radius, 999px);
+  border-radius: var(--cc-radius-pill);
   opacity: 1;
   /* md tab-badge metrics: identical height/font/padding to the menu-bar + plugin-page tabs */
   height: var(--cc-md-h, 30px);
@@ -56,10 +56,10 @@ html.cc-shares-on:not(.cc-on-shares):not(.cc-on-share-detail):not(.cc-on-main) #
    overflow-x:auto that lets the 1000px-wide tables scroll, and with overflow-x not visible the box
    is a scroll container anyway, so the radius still clips. share_status only appears on /Shares. */
 html.cc-shares-on:is(.cc-on-shares, .cc-on-share-detail, .cc-on-browse, .cc-on-main) #displaybox .TableContainer {
-  border-radius: 8px;
+  border-radius: var(--cc-radius-control);
 }
 html.cc-shares-on #displaybox table.unraid.share_status {
-  border-radius: 8px;
+  border-radius: var(--cc-radius-control);
   overflow: hidden;
 }
 html.cc-shares-on #displaybox table.unraid.share_status thead td,
@@ -108,10 +108,10 @@ html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status tr > td:nth
 html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status tr > td:nth-child(8) { width: 13%; } /* Free        */
 
 /* shares.js wraps each SMB, NFS, Storage, Size and Free value in .cc-b > .cc-b-v; docker.css is not
-   loaded here, so the badge shape is repeated. "-" and empty values stay plain. */
+   loaded here, so the badge geometry is repeated. "-" and empty values stay plain. */
 html.cc-shares-on #displaybox table.unraid.share_status .cc-b {
   display: inline-flex; align-items: center; gap: 5px; border: none;
-  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-bmd-pad, 4px 12px);
+  border-radius: var(--cc-radius-pill); padding: var(--cc-bmd-pad, 4px 12px);
   font-size: var(--cc-md-fs); font-weight: 600; line-height: 1.35;
   white-space: nowrap; text-decoration: none; vertical-align: middle;
   background: var(--cc-shr-accent, #FCC419); color: var(--cc-shr-accent-text, #161616);
@@ -136,10 +136,10 @@ html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-name:hover { text
 
 /* The protection state is a disk-style dot at the start of the name cell. Its colours stay
    semantic (green protected, orange unprotected), and it has no .cc-b class, so paintRows leaves it
-   alone. Its shape follows --cc-dot-r, which apply() stamps. */
+   alone. It stays round in every shape, being a dot. */
 html.cc-shares-on #displaybox .cc-dot {
   display: inline-block; width: 10px; height: 10px; flex: 0 0 auto;
-  border-radius: var(--cc-dot-r, 50%); margin-right: 8px; vertical-align: middle;
+  border-radius: 50%; margin-right: 8px; vertical-align: middle;
 }
 html.cc-shares-on #displaybox .cc-dot-prot { background: var(--cc-ok, #6fdc8c); }
 html.cc-shares-on #displaybox .cc-dot-unprot { background: var(--cc-warn, #ff832b); }
@@ -149,7 +149,7 @@ html.cc-shares-on #displaybox .cc-dot-unprot { background: var(--cc-warn, #ff832
 html.cc-shares-on #displaybox i.fa-circle.orb {
   font-size: 0 !important; width: 10px !important; height: 10px !important;
   display: inline-block !important; background: currentColor !important;
-  border-radius: var(--cc-dot-r, 50%) !important; vertical-align: middle !important;
+  border-radius: 50% !important; vertical-align: middle !important;
 }
 /* The disk orb, like the Docker container dot, has no text, length or shape to speak with, so its
    colour is all it says and it keeps the native state colour in every colour mode (see the matching
@@ -164,7 +164,7 @@ html.cc-shares-on #displaybox table.unraid.share_status td.cc-browse-col { white
    font-family:inherit drops the icon font a.view carries. */
 html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-browse {
   display: inline-flex !important; width: auto !important; align-items: center; justify-content: center;
-  border-radius: var(--cc-b-radius, 999px) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
+  border-radius: var(--cc-radius-pill) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
   font-family: inherit !important; font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   line-height: 1.35; white-space: nowrap; text-decoration: none !important; vertical-align: middle;
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
@@ -178,7 +178,7 @@ html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-browse:hover { bo
    td.cc-browse-col pill. */
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b {
   display: inline-flex; align-items: center; gap: 5px; border: none;
-  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-bmd-pad, 4px 12px);
+  border-radius: var(--cc-radius-pill); padding: var(--cc-bmd-pad, 4px 12px);
   font-size: var(--cc-md-fs); font-weight: 600; line-height: 1.35;
   white-space: nowrap; text-decoration: none; vertical-align: middle;
   background: var(--cc-shr-accent, #FCC419); color: var(--cc-shr-accent-text, #161616);
@@ -199,7 +199,7 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status td.cc-browse-c
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status td:first-child a.view:not([href]) { display: none !important; }
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status a.cc-b-browse {
   display: inline-flex !important; width: auto !important; align-items: center; justify-content: center;
-  border-radius: var(--cc-b-radius, 999px) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
+  border-radius: var(--cc-radius-pill) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
   font-family: inherit !important; font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   line-height: 1.35; white-space: nowrap; text-decoration: none !important; vertical-align: middle;
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
@@ -273,11 +273,11 @@ html.cc-shares-on.cc-on-main #displaybox .usage-disk:not(.sys):not(.mm) {
   position: relative; height: 26px !important; margin: 0 auto; overflow: hidden;   /* 26px, the md badge height, so the bars line up with the value badges; auto margins centre them */
   min-width: 120px;   /* the bar is the cell's only content and has no intrinsic width, so without this the columns collapse; .cc-colfix below yields to drag-resize widths */
   background-color: rgba(128, 128, 128, .18) !important;
-  border-radius: var(--cc-b-radius, 999px);   /* follows the badge shape, like every .cc-b */
+  border-radius: var(--cc-radius-pill);
 }
 html.cc-shares-on.cc-on-main #displaybox .usage-disk:not(.sys):not(.mm) > span:first-child {
   position: absolute; left: 0; top: 0; height: 100% !important;
-  border-radius: var(--cc-b-radius, 999px) !important; box-shadow: none !important;
+  border-radius: var(--cc-radius-pill) !important; box-shadow: none !important;
 }
 /* By default (no cc-state-native) the fill follows the colour mode instead of Unraid's usage
    classes, in CSS so late-rendered bars are covered too. */
@@ -320,7 +320,7 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status thead td > .cc
 }
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status thead td > .cc-colgrip::after {
   content: ""; position: absolute; top: 15%; bottom: 15%; left: 3px; width: 2px;
-  border-radius: 1px; background: transparent; transition: background .12s;
+  border-radius: var(--cc-radius-pill); background: transparent; transition: background .12s;
 }
 /* hovering the header row shows all dividers softly; the grip's own hover accent below wins by
    source order */
@@ -398,13 +398,13 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status select.slot {
 /* !important beats the native hover overflow for the whole stopped row, including the <em>idSb</em>
    a missing or wrong slot prints after the select */
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status tbody tr.offline > td { overflow: hidden !important; }
-/* The clamped control is a neutral filled box following --cc-b-radius instead of Unraid's
+/* The clamped control is a neutral filled field at the control radius instead of Unraid's
    underline. Only background-color is set, since the shorthand would also remove the native caret,
    a background-image pair in the theme's border colour. Focus shows a stronger fill, no ring. */
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status select.slot {
   background-color: rgba(128, 128, 128, .16) !important;
   border: none !important; box-shadow: none !important;
-  border-radius: var(--cc-b-radius, 999px) !important;
+  border-radius: var(--cc-radius-control) !important;
   padding: 5px 16px 5px 12px !important;
   font-size: var(--cc-md-fs); font-weight: 600;
 }
@@ -432,7 +432,7 @@ html.cc-shares-on.cc-on-main #displaybox .TableContainer:has(table.unraid.disk_s
 html.cc-col-dragging #displaybox .TableContainer { overflow-x: hidden !important; }
 html.cc-shares-on.cc-on-main #displaybox .TableContainer::-webkit-scrollbar { height: 8px; }
 html.cc-shares-on.cc-on-main #displaybox .TableContainer::-webkit-scrollbar-track { background: transparent; }
-html.cc-shares-on.cc-on-main #displaybox .TableContainer::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, .35); border-radius: 4px; }
+html.cc-shares-on.cc-on-main #displaybox .TableContainer::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, .35); border-radius: var(--cc-radius-pill); }
 /* /Shares gets the same column drag-resize on both share_status lists (shares.js ccColFactory),
    saved in cc.shares.colpx; the rules repeat the /Main block for this table and page. */
 html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status thead td { position: relative; }
@@ -443,7 +443,7 @@ html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status thead td > 
 }
 html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status thead td > .cc-colgrip::after {
   content: ""; position: absolute; top: 15%; bottom: 15%; left: 3px; width: 2px;
-  border-radius: 1px; background: transparent; transition: background .12s;
+  border-radius: var(--cc-radius-pill); background: transparent; transition: background .12s;
 }
 html.cc-shares-on.cc-on-shares #displaybox table.unraid.share_status thead tr:hover td > .cc-colgrip::after {
   background: rgba(128, 128, 128, .45);
@@ -464,7 +464,7 @@ html.cc-shares-on.cc-on-shares #displaybox .TableContainer table.unraid.share_st
 html.cc-shares-on.cc-on-shares #displaybox .TableContainer:has(table.unraid.share_status.cc-colauto) { overflow-x: hidden !important; }
 html.cc-shares-on.cc-on-shares #displaybox .TableContainer::-webkit-scrollbar { height: 8px; }
 html.cc-shares-on.cc-on-shares #displaybox .TableContainer::-webkit-scrollbar-track { background: transparent; }
-html.cc-shares-on.cc-on-shares #displaybox .TableContainer::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, .35); border-radius: 4px; }
+html.cc-shares-on.cc-on-shares #displaybox .TableContainer::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, .35); border-radius: var(--cc-radius-pill); }
 /* the reset button sits at the right end of the tab bar (shares.js appends it to nav.tabs); the
    a.cc-ibtn rules below give it its look */
 html.cc-shares-on.cc-on-shares #displaybox nav.tabs > a.cc-colreset { margin-left: auto; align-self: center; float: right; }
@@ -481,7 +481,7 @@ html.cc-shares-on.cc-on-main #displaybox a.button {
   padding: var(--cc-md-btnpad, 0 14px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
   min-width: 150px !important; font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; font-family: inherit !important;
-  border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer; transition: filter .12s, opacity .12s;
+  border-radius: var(--cc-radius-pill) !important; cursor: pointer; transition: filter .12s, opacity .12s;
   display: inline-flex !important; align-items: center; justify-content: center; text-decoration: none !important;
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
 }
@@ -525,7 +525,7 @@ html.cc-shares-on.cc-on-main #displaybox button:not([role="tab"]) {
   padding: var(--cc-md-btnpad, 0 14px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
   min-width: 0 !important; font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; font-family: inherit !important;
-  border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer; transition: filter .12s, opacity .12s;
+  border-radius: var(--cc-radius-pill) !important; cursor: pointer; transition: filter .12s, opacity .12s;
   display: inline-flex !important; align-items: center; justify-content: center; text-decoration: none !important;
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
 }
@@ -547,7 +547,7 @@ html.cc-shares-on.cc-on-main #displaybox div.title :is(span.left, div.left) { di
 html.cc-shares-on.cc-on-main #displaybox div.title :is(span.left, div.left) .cc-b {
   display: inline-flex; align-items: center; gap: 6px; border: none;
   min-height: var(--cc-md-h, 30px); box-sizing: border-box;   /* the md 30px height, one step below the menu bar */
-  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-bmd-pad, 4px 12px);
+  border-radius: var(--cc-radius-pill); padding: var(--cc-bmd-pad, 4px 12px);
   font-size: var(--cc-md-fs); font-weight: 600; line-height: 1.35; white-space: nowrap;
   background: var(--cc-shr-accent, #FCC419); color: var(--cc-shr-accent-text, #161616);
 }
@@ -585,7 +585,7 @@ html.cc-shares-on:is(.cc-on-main, .cc-on-shares) #displaybox a.cc-ibtn {   /* .c
   display: inline-flex !important; align-items: center; justify-content: center;
   box-sizing: border-box !important; flex: 0 0 auto;
   width: 24px !important; height: 24px !important; padding: 0 !important;   /* on /Main the tiles match the slim toggle height */
-  border-radius: min(var(--cc-b-radius, 8px), 8px) !important;
+  border-radius: var(--cc-radius-pill) !important;
   background: var(--cc-rb-c, var(--cc-shr-accent, #FCC419)) !important;   /* paintMain stamps --cc-rb-c per tile in rainbow mode */
   text-decoration: none !important; opacity: 1; transition: filter .12s;
 }
@@ -611,9 +611,6 @@ html.cc-shares-on.cc-on-main #displaybox .cc-ud-ctrls span.help-content,
 html.cc-shares-on.cc-on-main #displaybox div.title.ud span.help-content { display: none !important; }
 /* a clear gap between the column reset and the (i) and toggle pair */
 html.cc-shares-on.cc-on-main #displaybox a.cc-colreset { margin-right: 14px !important; }
-/* Badge-Form "circle": full round like the header tiles */
-html.cc-shape-circle.cc-shares-on.cc-on-main #displaybox a.cc-ud-icon,
-html.cc-shape-circle.cc-shares-on:is(.cc-on-main, .cc-on-shares) #displaybox a.cc-ibtn { border-radius: 50% !important; }
 /* The FireSquire sub-tab is left out of /Main; shares.js marks its tab button and panel. The
    section view forces section[role=tabpanel] to display:block !important, so the panel selector
    adds .cc-smoke-hidden to the same match to outrank it. */
@@ -666,7 +663,7 @@ html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mount
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) tbody td { padding: 9px 14px; }
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) .cc-b {
   display: inline-flex; align-items: center; gap: 5px; border: none;
-  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-bmd-pad, 4px 12px);
+  border-radius: var(--cc-radius-pill); padding: var(--cc-bmd-pad, 4px 12px);
   font-size: var(--cc-md-fs); font-weight: 600; line-height: 1.35;
   white-space: nowrap; text-decoration: none; vertical-align: middle;
   background: var(--cc-shr-accent, #FCC419); color: var(--cc-shr-accent-text, #161616);
@@ -682,21 +679,21 @@ html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mount
 /* the per-device settings gear (a.info > i.fa-gears, JS-skipped from badging) -> small CC icon button */
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) a.info i.fa-gears {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; border-radius: var(--cc-b-radius, 999px);   /* the 24px /Main icon tile, like a.cc-ud-icon */
+  width: 24px; height: 24px; border-radius: var(--cc-radius-pill);   /* the 24px /Main icon tile, like a.cc-ud-icon */
   background: var(--cc-shr-accent, #FCC419); color: var(--cc-shr-accent-text, #161616); transition: filter .12s;
 }
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) a.info:hover i.fa-gears { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) i.fa-gears[disabled],
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) i.fa-gears.disabled {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; border-radius: var(--cc-b-radius, 999px);
+  width: 24px; height: 24px; border-radius: var(--cc-radius-pill);
   background: #3a3a3a; color: #8a8a8a; opacity: .55;
 }
 /* the remove control (ENTFERNEN column, UD historical devices) as a 24px icon tile in the page's
    accent, forced over the native inline red on the <i>, since removing is never painted red */
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) :is(i.fa-remove, i.fa-times, i.fa-trash, i.fa-trash-o, i.fa-ban) {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; border-radius: var(--cc-b-radius, 999px);
+  width: 24px; height: 24px; border-radius: var(--cc-radius-pill);
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important; transition: background-color .12s; cursor: pointer;
 }
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) a:hover > :is(i.fa-remove, i.fa-times, i.fa-trash, i.fa-trash-o, i.fa-ban),
@@ -705,7 +702,7 @@ html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mount
    .switch-button-background track, .checked when on, and a .switch-button-button knob). Only colour
    and radius change, as for the Docker and VM autostart toggles. */
 html.cc-shares-on.cc-on-main #displaybox .switch-button-background {
-  width: 44px !important; height: 24px !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important;   /* the slim toggle; the 12px cap is half the track, so square mode goes square */
+  width: 44px !important; height: 24px !important; border-radius: var(--cc-radius-pill) !important;   /* the slim toggle */
   border: none !important; outline: none !important; box-shadow: none !important;
   background: #3a3a3a !important; transform: none !important; position: relative !important;
   display: inline-block; vertical-align: middle; margin: 0 12px 0 3px !important; cursor: pointer;   /* UD's unassigned.css sets margin-top:2px !important */
@@ -714,7 +711,7 @@ html.cc-shares-on.cc-on-main #displaybox .switch-button-background {
 html.cc-shares-on.cc-on-main #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-shr-accent, #FCC419)) !important; }   /* paintMain stamps --cc-rb-c per track in rainbow mode; checked stays coloured in the reactive sub-mode, like the active menu tab */
 html.cc-shares-on.cc-on-main #displaybox .switch-button-background .switch-button-button {
   width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important;
-  border-radius: min(var(--cc-b-radius, 999px), 9px) !important; background: #fff !important; box-shadow: none !important; border: none !important; transition: left .15s;   /* the 9px cap is half the knob */
+  border-radius: var(--cc-radius-pill) !important; background: #fff !important; box-shadow: none !important; border: none !important; transition: left .15s;   /* the 9px cap is half the knob */
 }
 html.cc-shares-on.cc-on-main #displaybox .switch-button-background.checked .switch-button-button { left: 21px !important; }
 /* The UD containers are inline-block with floated switchButton children, which leaves the label
@@ -730,7 +727,7 @@ html.cc-shares-on.cc-on-main #displaybox input[type="checkbox"] { accent-color: 
 html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="checkbox"] {
   -webkit-appearance: none; appearance: none;
   width: 16px; height: 16px; box-sizing: border-box; flex: 0 0 auto;   /* the CC checkbox size, as .cc-cb-del */
-  border: 2px solid var(--cc-shr-accent, #FCC419); border-radius: 4px;
+  border: 2px solid var(--cc-shr-accent, #FCC419); border-radius: calc(var(--cc-radius-control) / 3);
   background-color: transparent; display: inline-block; vertical-align: middle;
   margin: 0 8px 0 0; cursor: pointer; transition: background-color .12s;
 }
@@ -781,12 +778,12 @@ html.cc-shares-on.cc-on-main.cc-sections-main #displaybox .cc-aop-pcard {
   position: absolute; left: calc(var(--cc-aop-c1, 380px) + var(--cc-aop-c2, 560px) + 24px);
   width: 560px; max-width: calc(100% - var(--cc-aop-c1, 380px) - var(--cc-aop-c2, 560px) - 36px); box-sizing: border-box;   /* capped rather than stretched to the right edge */
   top: 52px;   /* ccAopParityCard measures the first button and overrides this inline; the card is out of flow, so that cannot feed back */
-  background: rgba(255, 255, 255, .045); border-radius: 12px; padding: 14px 18px;
+  background: rgba(255, 255, 255, .045); border-radius: var(--cc-radius-card); padding: 14px 18px;
   display: flex; flex-direction: column; gap: 8px; z-index: 1;
 }
 html.cc-shares-on.cc-on-main:not(.cc-sections-main) #displaybox .cc-aop-pcard {
   position: static; margin: 12px 0 12px var(--cc-aop-c1, 380px); max-width: 560px;
-  background: rgba(255, 255, 255, .045); border-radius: 12px; padding: 14px 18px;
+  background: rgba(255, 255, 255, .045); border-radius: var(--cc-radius-card); padding: 14px 18px;
   display: flex; flex-direction: column; gap: 8px;
 }
 html.cc-shares-on.cc-on-main #displaybox .cc-aop-prow { display: flex; justify-content: space-between; gap: 18px; align-items: center; font-size: var(--cc-md-fs); }
@@ -798,7 +795,7 @@ html.cc-shares-on.cc-on-main #displaybox .cc-aop-rows { display: flex; flex-dire
    colour gradient slides through the fill as well. */
 html.cc-shares-on.cc-on-main #displaybox .cc-aop-pbar {
   position: relative; height: 26px; margin-top: 12px; overflow: hidden;   /* the usage bar height; fill and label are pinned top and bottom */
-  background: rgba(128, 128, 128, .18); border-radius: var(--cc-b-radius, 999px);
+  background: rgba(128, 128, 128, .18); border-radius: var(--cc-radius-pill);
 }
 @keyframes cc-pbar-stripes { from { background-position: 0 0; } to { background-position: 34px 0; } }
 @keyframes cc-pbar-rbmove { from { background-position: 0 0, 0% 50%; } to { background-position: 68px 0, 300% 50%; } }
@@ -837,7 +834,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-hide { displ
 html.cc-shares-on.cc-on-main #displaybox table.array_status a.cc-aop-link {
   display: inline-flex; align-items: center; margin-left: 8px; vertical-align: middle;
   background: var(--cc-rb-c, var(--cc-shr-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-shr-accent-text, #161616));   /* paintMain stamps --cc-rb-c per link in rainbow mode */
-  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-sm-pad, 3px 11px);
+  border-radius: var(--cc-radius-pill); padding: var(--cc-sm-pad, 3px 11px);
   font-size: var(--cc-sm-fs); font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
   text-decoration: none !important; white-space: nowrap; transition: filter .12s;
 }
@@ -846,7 +843,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status a.cc-aop-link:hover 
    the same x (column start, --cc-lgb-w, the 10px .cc-info margin) as in single-button rows */
 html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-brow { display: inline-flex; align-items: center; }
 /* optionCorrect and safemode become CC switches, moved into the button cell by enhanceArrayOpRow.
-   The track follows --cc-b-radius and the knob is a near-square rx=3 SVG, so square mode shows. It
+   The track takes the pill radius and the knob is a near-square rx=3 SVG, so square mode shows. It
    outranks the checkbox rule above and comes after it. */
 html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-toggle {
   display: inline-flex; align-items: center; gap: 8px; margin-left: 12px; vertical-align: middle;
@@ -855,7 +852,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-toggle {
 html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-toggle small { font-size: var(--cc-md-fs); font-weight: 600; }
 html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-toggle input[type="checkbox"] {
   -webkit-appearance: none; appearance: none; width: 44px; height: 24px; margin: 0; flex: 0 0 auto;
-  border: none; border-radius: var(--cc-b-radius, 999px); box-sizing: border-box;
+  border: none; border-radius: var(--cc-radius-pill); box-sizing: border-box;
   background-color: #3a3a3a; cursor: pointer;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><rect width='18' height='18' rx='3' fill='%23fff'/></svg>");
   background-repeat: no-repeat; background-size: 18px 18px; background-position: 3px center;
@@ -870,7 +867,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-toggle input
 html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-b.cc-aop-status {
   display: inline-flex; align-items: center; gap: 8px;
   padding: var(--cc-lg-pad, 6px 16px); font-size: var(--cc-lg-fs); font-weight: 700;
-  border-radius: var(--cc-b-radius, 999px); white-space: nowrap; line-height: 1.35;   /* one line; the first grid track is wide enough */
+  border-radius: var(--cc-radius-pill); white-space: nowrap; line-height: 1.35;   /* one line; the first grid track is wide enough */
 }
 html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-aop-status.cc-aop-ok   { background: var(--cc-ok, #6fdc8c); color: var(--cc-ok-fg, #161616); }
 html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-aop-status.cc-aop-warn { background: var(--cc-warn, #ff832b); color: var(--cc-warn-fg, #161616); }
@@ -894,13 +891,13 @@ html.cc-shares-on.cc-on-main #displaybox section:has(table.array_status) { overf
    native <a onclick="toggle_diskio()">. Without :has() the track stays grey while the knob still
    moves. display:block !important on i.toggle undoes the native $('i.toggle').hide(). */
 html.cc-shares-on.cc-on-main #displaybox span.status a.tooltip_diskio {
-  display: inline-flex; width: 44px; height: 24px; border-radius: min(var(--cc-b-radius, 999px), 12px); background: #3a3a3a;   /* follows the badge shape */
+  display: inline-flex; width: 44px; height: 24px; border-radius: var(--cc-radius-pill); background: #3a3a3a;
   position: relative; vertical-align: middle; box-sizing: border-box; transition: background .15s;
 }
 html.cc-shares-on.cc-on-main #displaybox span.status a.tooltip_diskio:has(i.fa-list) { background: var(--cc-shr-accent, #FCC419); }
 html.cc-shares-on.cc-on-main #displaybox span.status a.tooltip_diskio i.toggle {
   display: block !important; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px;
-  border-radius: min(var(--cc-b-radius, 999px), 9px); background: #fff; transition: left .15s; font-size: 0 !important; line-height: 0;   /* the knob follows the badge shape too; 9px is half the knob */
+  border-radius: var(--cc-radius-pill); background: #fff; transition: left .15s; font-size: 0 !important; line-height: 0;
 }
 html.cc-shares-on.cc-on-main #displaybox span.status a.tooltip_diskio i.toggle::before { content: none !important; }
 html.cc-shares-on.cc-on-main #displaybox span.status a.tooltip_diskio i.toggle.fa-list { left: 23px; }
@@ -932,7 +929,7 @@ html.cc-shares-on #displaybox form[name="share_form"] input[type="submit"] {
   padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs) !important;
   height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
   font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.6px !important;
-  font-family: inherit !important; border-radius: var(--cc-b-radius, 999px) !important;
+  font-family: inherit !important; border-radius: var(--cc-radius-pill) !important;
   cursor: pointer; transition: filter .12s;
 }
 html.cc-shares-on #displaybox #compute-shares:hover,
@@ -951,7 +948,7 @@ html.cc-shares-on #displaybox form[name="share_form"] input[type="submit"]:hover
 /* prev/next nav arrows (native: orange a.button) as CC accent pills */
 html.cc-shares-on.cc-on-share-detail #displaybox .menuNavButtonsTabbed a.button {
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
-  border: none !important; box-shadow: none !important; border-radius: var(--cc-b-radius, 999px) !important;
+  border: none !important; box-shadow: none !important; border-radius: var(--cc-radius-pill) !important;
   min-width: 0 !important; padding: var(--cc-md-btnpad, 0 14px) !important; height: var(--cc-md-h, 30px) !important;
   display: inline-flex !important; align-items: center; justify-content: center;
   cursor: pointer; transition: filter .12s;
@@ -970,7 +967,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox input[type="button"] {   /* eve
   padding: var(--cc-md-btnpad, 0 14px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
   font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: 0.6px !important; font-family: inherit !important;
-  border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer; transition: filter .12s, opacity .12s;
+  border-radius: var(--cc-radius-pill) !important; cursor: pointer; transition: filter .12s, opacity .12s;
 }
 /* The Apply submit, the SMB Apply and the clone Read/Write controls take the area accent. Plain
    non-clone form buttons (Done, Cancel) stay neutral. */
@@ -1016,7 +1013,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox div.title.nocontrol span.right 
 }
 html.cc-shares-on.cc-on-share-detail #displaybox div.title.nocontrol span.right i {
   font-style: normal; color: #9a9a9a; background: rgba(255, 255, 255, .06);
-  padding: 3px 10px; border-radius: var(--cc-b-radius, 999px); white-space: nowrap;   /* follows the global badge shape */
+  padding: 3px 10px; border-radius: var(--cc-radius-pill); white-space: nowrap;
 }
 html.cc-shares-on.cc-on-share-detail #displaybox div.title.nocontrol span.right i strong,
 html.cc-shares-on.cc-on-share-detail #displaybox div.title.nocontrol span.right i b {
@@ -1030,7 +1027,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox input[type="number"],
 html.cc-shares-on.cc-on-share-detail #displaybox input[type="password"],
 html.cc-shares-on.cc-on-share-detail #displaybox select {
   background: rgba(255, 255, 255, .07) !important; border: none !important; box-shadow: none !important;
-  border-radius: 6px !important; padding: 6px 10px !important; color: #eaeaea !important;
+  border-radius: var(--cc-radius-control) !important; padding: 6px 10px !important; color: #eaeaea !important;
 }
 html.cc-shares-on.cc-on-share-detail #displaybox input[type="text"]:focus,
 html.cc-shares-on.cc-on-share-detail #displaybox input[type="number"]:focus,
@@ -1047,7 +1044,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox select:focus {
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-b-del {
   display: inline-flex !important; align-items: center; justify-content: center;
   background: var(--cc-rb-c, var(--cc-shr-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #161616)) !important; border: none !important; box-shadow: none !important;
-  border-radius: var(--cc-b-radius, 999px) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
+  border-radius: var(--cc-radius-pill) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
   font-size: var(--cc-md-fs) !important; font-weight: 600 !important; line-height: 1.5;
   text-transform: uppercase; letter-spacing: .6px; cursor: pointer; text-decoration: none;
   vertical-align: middle; transition: background-color .12s;
@@ -1087,7 +1084,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-selector 
   border: none !important; background-image: none !important; box-shadow: none !important;
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist {
-  background-color: rgba(255, 255, 255, .07) !important; border-radius: 6px !important; padding: 0 10px !important;
+  background-color: rgba(255, 255, 255, .07) !important; border-radius: var(--cc-radius-control) !important; padding: 0 10px !important;
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-text { color: #eaeaea !important; }
 
@@ -1102,7 +1099,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-dropconta
   gap: 6px !important; padding: 8px !important;
   width: max-content !important; min-width: 160px !important; max-width: min(92vw, 420px) !important;  /* panel hugs the widest pill, not the widget's inline 300px */
   height: auto !important; max-height: 50vh !important; overflow-y: auto !important; overflow-x: hidden !important;  /* the list is the only scroll container */
-  background: #303030 !important; border: none !important; border-radius: 10px !important;
+  background: #303030 !important; border: none !important; border-radius: var(--cc-radius-card) !important;
   box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .6)) !important;   /* no border line; the fill and shadow carry the depth off the #222 card */
 }
 /* The widget writes a stale inline height and width:300 onto the outer wrapper, so free height,
@@ -1119,7 +1116,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item,
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt {
   display: flex !important; align-items: center; gap: 8px; justify-content: flex-start;
   height: auto !important; line-height: 1.3 !important; margin: 0 !important;
-  padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 999px);
+  padding: 6px 12px; cursor: pointer; border-radius: var(--cc-radius-pill);
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-shr-accent, #FCC419))) !important;
   border: none !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-shr-accent-text, #161616))) !important; white-space: nowrap;
   transition: background .12s, color .12s, filter .12s;
@@ -1198,7 +1195,7 @@ html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sec
   min-height: var(--cc-md-h, 30px); box-sizing: border-box;
   font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-md-fs); line-height: 1;
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
-  border: none; border-radius: var(--cc-b-radius, 999px);
+  border: none; border-radius: var(--cc-radius-pill);
   padding: 0 18px; margin: 0 0 16px;
 }
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head i.title,
@@ -1285,7 +1282,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .tab-content:has(.cc-split-row)
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel { position: relative; display: inline-block; }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-trigger {
   display: inline-flex; align-items: center; min-width: 220px;
-  background: rgba(255, 255, 255, .07); border-radius: 6px; padding: 6px 10px; color: #eaeaea; cursor: pointer;
+  background: rgba(255, 255, 255, .07); border-radius: var(--cc-radius-control); padding: 6px 10px; color: #eaeaea; cursor: pointer;
   transition: background .12s, color .12s;
 }
 /* Reactive trigger, like .cc-tsel-trigger and .cc-pop .cc-dsel-trigger: neutral at rest, the colour
@@ -1300,7 +1297,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-panel {
   display: none; position: absolute; z-index: 20; margin-top: 4px; flex-direction: column; gap: 6px;
   padding: 8px; width: max-content; min-width: 160px; max-width: min(92vw, 420px);
   max-height: 50vh; overflow-y: auto; overflow-x: hidden;
-  background: #303030; border: none; border-radius: 10px;
+  background: #303030; border: none; border-radius: var(--cc-radius-card);
   box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .6));   /* no border line */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel.cc-open .cc-sel-panel { display: flex; }
@@ -1503,7 +1500,7 @@ html.cc-shares-on.cc-on-browse #displaybox table.indexer tbody tr:has(i[id^="che
    not reach here. */
 html.cc-shares-on.cc-on-browse #displaybox .title input.dfm_filter {
   background-color: rgba(128, 128, 128, .12) !important; border: none !important;
-  border-radius: 6px !important;   /* no `color`: the field sits on the native theme backdrop, which owns the ink */
+  border-radius: var(--cc-radius-control) !important;   /* no `color`: the field sits on the native theme backdrop, which owns the ink */
 }
 
 /* The action buttons are input[type=button], as on the share-detail page, but they share no class
@@ -1521,7 +1518,7 @@ html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"] {
   min-width: 0 !important;   /* beats the native min-width:86px so the pill hugs its text */
   font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
   text-transform: uppercase !important; letter-spacing: .6px !important; font-family: inherit !important;
-  border-radius: var(--cc-b-radius, 999px) !important;
+  border-radius: var(--cc-radius-pill) !important;
   cursor: pointer; transition: filter .12s, opacity .12s;
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
 }
@@ -1546,7 +1543,7 @@ html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"]:disable
    cell alone. They stay quiet grey so a long listing keeps reading, and the permission pill is
    monospaced so drwxr-xr-x lines up. */
 html.cc-shares-on.cc-on-browse #displaybox table.indexer span.cc-fmb {
-  display: inline-flex; align-items: center; border-radius: var(--cc-b-radius, 999px);
+  display: inline-flex; align-items: center; border-radius: var(--cc-radius-pill);
   background: rgba(128, 128, 128, .16); color: inherit;
   padding: var(--cc-sm-pad, 3px 11px); font-size: var(--cc-sm-fs); font-weight: 600; line-height: 1.5; white-space: nowrap;
 }
@@ -1581,14 +1578,14 @@ html.cc-shares-on.cc-on-stats #displaybox > span.status > * { margin: 0 !importa
 /* the two interval selects become filled boxes instead of the native underline */
 html.cc-shares-on.cc-on-stats #displaybox > span.status select {
   background: rgba(128, 128, 128, .12) !important; border: none !important; box-shadow: none !important;
-  border-radius: 6px !important; padding: 6px 10px !important; height: var(--cc-md-h, 30px); box-sizing: border-box;
+  border-radius: var(--cc-radius-control) !important; padding: 6px 10px !important; height: var(--cc-md-h, 30px); box-sizing: border-box;
 }
 /* the Reset button is a pill in the colour mode's own colour, pushed right */
 html.cc-shares-on.cc-on-stats #displaybox > span.status input[type="button"] {
   margin-left: auto !important;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important; border: none !important; box-shadow: none !important;
   height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-btnpad, 0 14px) !important; min-width: 0 !important; box-sizing: border-box !important;
-  border-radius: var(--cc-b-radius, 999px) !important; cursor: pointer;
+  border-radius: var(--cc-radius-pill) !important; cursor: pointer;
   font-size: var(--cc-md-fs) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
   transition: filter .12s;
 }
@@ -1598,7 +1595,7 @@ html.cc-shares-on.cc-on-stats #displaybox > span.status input[type="button"]:hov
    placeholder rows and the UD single-cell notices in span.cc-muted: fill and radius, no border. */
 html.cc-shares-on #displaybox .cc-muted {
   display: inline-flex; align-items: center;
-  padding: var(--cc-bmd-pad, 4px 12px); border-radius: var(--cc-b-radius, 999px);
+  padding: var(--cc-bmd-pad, 4px 12px); border-radius: var(--cc-radius-pill);
   background: rgba(128, 128, 128, .14); color: #9a9a9a;
 }
 

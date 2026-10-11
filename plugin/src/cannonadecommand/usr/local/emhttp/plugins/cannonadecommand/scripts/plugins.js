@@ -246,14 +246,13 @@
     var m = /^#?([0-9a-f]{6})$/i.exec(accentHex || "");
     return ensureFlatFilter(hostId, filtId, m ? idealText("#" + m[1]) : "");
   }
-  function shapeRadius() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[ls("cc.badgeshape") || "pill"] || "999px"; }
   function pill(node, bg, tx) {
     // the sm size from CannonadeCommand.Tokens.css, like every other small badge
     node.style.setProperty("font-size", "var(--cc-sm-fs)", "important");
     node.style.setProperty("vertical-align", "middle", "important");
     node.style.setProperty("background", bg, "important");
     node.style.setProperty("color", tx || idealText(bg), "important");
-    node.style.setProperty("border-radius", "var(--cc-b-radius, 999px)", "important"); // shape follows the badge var
+    node.style.setProperty("border-radius", "var(--cc-radius-pill)", "important");
     node.style.setProperty("padding", "var(--cc-sm-pad, 3px 11px)", "important");
     node.style.setProperty("border", "none", "important");
     node.style.setProperty("box-shadow", "none", "important");
@@ -631,7 +630,6 @@
       if (!tbs.length) return;
       Array.prototype.slice.call(tbs).forEach(function (t5) { t5.classList.add(t5.querySelector("#plugin_list") ? "cc-plug" : "cc-plug-lite"); });
       var tb = document.querySelector("table.cc-plug") || tbs[0];
-      document.documentElement.style.setProperty("--cc-b-radius", shapeRadius());
       var ths = tb.querySelectorAll("thead th");
       if (ths.length >= 2 && !ths[0].getAttribute(MARK)) {
         ths[0].setAttribute(MARK, "1");
@@ -676,7 +674,7 @@
           ti.setAttribute(MARK, "1");
           ti.style.setProperty("background", "#1c1c1c", "important");
           ti.style.setProperty("border", "1px solid #333", "important");
-          ti.style.setProperty("border-radius", "8px", "important");
+          ti.style.setProperty("border-radius", "var(--cc-radius-control)", "important");
           ti.style.setProperty("padding", "7px 12px", "important");
           ti.style.setProperty("color", "#e6e6e6", "important");
         }

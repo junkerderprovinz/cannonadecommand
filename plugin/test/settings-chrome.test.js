@@ -120,7 +120,7 @@ console.log('\nPart 4: one logo preview, running the tabs\' own icon pipeline');
   // border-radius, and renders a square where the tab shows a rounded tile.
   ok('no feFlood badge is composited inside a filter', code.indexOf('feFlood') < 0);
   ok('the badge is a CSS tile with a real radius', /cc-set-tile/.test(src) && /it\.tile\.style\.borderRadius = rad/.test(src));
-  ok('the tile follows the global Badge-Form', /function radius\(\)[\s\S]{0,200}cc\.badgeshape/.test(src));
+  ok('the tile takes the control radius, like the live logo tile', /function radius\(\) \{ return "var\(--cc-radius-control\)"; \}/.test(src));
   // Every card that shows logos uses it, so there is no third copy.
   ['docker', 'vm', 'plugin'].forEach(s => ok('the global card previews the ' + s + ' area', new RegExp('\\["' + s + '", T\\(').test(src)));
   ok('the Docker card uses the shared preview', /logoPreview\("docker", "cc-set-dockprev"\)/.test(src));

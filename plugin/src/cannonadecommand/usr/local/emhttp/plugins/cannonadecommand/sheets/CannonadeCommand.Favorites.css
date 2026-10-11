@@ -8,7 +8,7 @@
 
 /* The cc.sgsize=m step (78px, Docker's logo tile). favorites.js sets s (64/32), m (78/38) or
    l (96/46) from the same cc.sgsize key settingsgrid.js uses. */
-:root { --cc-fav-size: 78px; --cc-fav-glyph: 38px; --cc-fav-rmax: 16px; }
+:root { --cc-fav-size: 78px; --cc-fav-glyph: 38px; }
 
 /* align with the main menu bar, as in SettingsGrid.css */
 html.cc-favorites-on { --cc-align-left: 10px; }
@@ -23,7 +23,7 @@ html.cc-favorites-on #displaybox .Panel > a > span {
   box-sizing: border-box !important; position: relative;
   width: var(--cc-fav-size, 78px) !important; height: var(--cc-fav-size, 78px) !important;
   margin: 0 auto !important; padding: 0 !important;
-  border-radius: min(var(--cc-b-radius, 14px), var(--cc-fav-rmax, 16px)) !important;
+  border-radius: var(--cc-radius-control) !important;
   background: var(--cc-iconbg-color, var(--cc-accent, #FCC419)) !important;
   transition: filter .12s;
 }
@@ -44,5 +44,3 @@ html.cc-favorites-on #displaybox .Panel > a > span > i.favo {
 html.cc-favorites-on #displaybox .Panel .PanelText { margin-top: 4px; }
 /* empty state (MyFavorites.page #nofavs h3) */
 html.cc-favorites-on #displaybox #nofavs { color: var(--cc-accent-ink, #FCC419); }
-/* circle badge shape, as in SettingsGrid.css */
-html.cc-shape-circle.cc-favorites-on #displaybox .Panel > a > span { border-radius: 50% !important; }

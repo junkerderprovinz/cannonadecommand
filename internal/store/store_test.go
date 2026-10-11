@@ -67,3 +67,19 @@ func TestLoadConfigWithoutUISettings(t *testing.T) {
 		t.Fatalf("load: %v", err)
 	}
 }
+
+func TestLoadConfigNamesTheOldShapes(t *testing.T) {
+	for old, name := range map[string]string{"pill": "round", "rounded": "soft", "square": "square", "circle": "round", "soft": "soft"} {
+		s := New(filepath.Join(t.TempDir(), "plan.json"))
+		if err := s.SaveConfig(model.Config{UISettings: map[string]string{"cc.badgeshape": old}}); err != nil {
+			t.Fatalf("save: %v", err)
+		}
+		c, err := s.LoadConfig()
+		if err != nil {
+			t.Fatalf("load: %v", err)
+		}
+		if c.UISettings["cc.badgeshape"] != name {
+			t.Errorf("cc.badgeshape %q loaded as %q, want %q", old, c.UISettings["cc.badgeshape"], name)
+		}
+	}
+}

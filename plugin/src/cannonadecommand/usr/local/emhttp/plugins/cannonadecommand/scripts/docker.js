@@ -891,7 +891,6 @@
       document.documentElement.classList.toggle("cc-docker-on", themingOn() && localStorage.getItem("cc.enable.docker") !== "0");
       var root = document.documentElement.style;
       var accent = effc("accent"); if (accent) { root.setProperty("--cc-accent", accent); root.setProperty("--cc-accent-text", idealText(accent)); }
-      root.setProperty("--cc-b-radius", ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[localStorage.getItem("cc.badgeshape") || "pill"] || "999px");
       var dens = localStorage.getItem("cc.density"); root.setProperty("--cc-density", { compact: "5px", normal: "9px", airy: "14px" }[dens] || "9px");
       // cc.sgsize, shared with the settings grid, drives the logo tile as [img, box] per step,
       // where box minus img is twice the tile's padding
@@ -2548,7 +2547,7 @@
         // caret; docker.css asks for it, and this inline padding would otherwise win and run the
         // text under the icon.
         i.style.setProperty("padding", (i.classList.contains("cc-sched-time") || i.classList.contains("cc-dropin")) ? "5px 24px 5px 8px" : "5px 8px", "important");
-        i.style.setProperty("border-radius", "6px", "important");
+        i.style.setProperty("border-radius", "var(--cc-radius-control)", "important");
         i.style.setProperty("line-height", "1.35", "important");
       });
     } catch (e) {}
@@ -3533,7 +3532,7 @@
   }
   // ShipLog integration, live only when both CC and ShipLog are installed. ShipLog's changelog
   // bubble, .sl-bubble appended to <body>, takes CC's button and severity-pill theme. Accent and
-  // badge shape come from the --cc-* vars in docker.css; this adds the per-element rainbow
+  // shape come from the --cc-* vars in docker.css; this adds the per-element rainbow
   // rotation CSS cannot express. ShipLog's own code stays untouched, and the selectors match
   // only once ShipLog has rendered a bubble.
   function ccRbColor(i) {
@@ -3997,7 +3996,7 @@
       root.classList.toggle("cc-docker-on", on2);
       root.classList.toggle("cc-on-addct", on2 && onCtForm());   // page gate: every docker.css form rule requires BOTH classes
       if (!on2) { ctSelectsTeardown(); ctTitleUnwrap(); ctVarLabelsTeardown(); return; }
-      applySettings();                                           // --cc-accent, --cc-accent-text, --cc-b-radius and the rainbow vars, the same chokepoint as list mode
+      applySettings();                                           // --cc-accent, --cc-accent-text and the rainbow vars, the same chokepoint as list mode
       ctTitleWrap();
       ctVarLabels();                                             // every variable label -> a colon-free badge
       ctColorFields();                                           // colour variables get a picker swatch

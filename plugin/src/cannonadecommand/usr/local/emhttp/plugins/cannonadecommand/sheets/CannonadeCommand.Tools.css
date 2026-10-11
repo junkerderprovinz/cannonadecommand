@@ -25,14 +25,14 @@ html.cc-tools-on.Theme--width-boxed:not(.Theme--sidebar) #displaybox { margin-le
 html.cc-tools-on #displaybox fieldset {
   background: var(--cc-tl-surface, #1c1c1c) !important;
   border: none !important; outline: none !important;
-  border-radius: 12px !important;
+  border-radius: var(--cc-radius-card) !important;
   margin: 0 0 14px !important; padding: 16px 18px !important;
   box-shadow: none !important;
 }
 html.cc-tools-on #displaybox fieldset > legend,
 html.cc-tools-on #displaybox legend {
   background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important;
   font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px;
   font-size: var(--cc-md-fs) !important; line-height: 1;
   padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px);
@@ -44,7 +44,7 @@ html.cc-tools-on #displaybox pre,
 html.cc-tools-on #displaybox pre.text,
 html.cc-tools-on #displaybox textarea.wide {
   background: #0f0f0f !important; color: #d6d6d6 !important;
-  border: none !important; outline: none !important; border-radius: 8px !important;
+  border: none !important; outline: none !important; border-radius: var(--cc-radius-control) !important;
   padding: 10px 12px !important; box-shadow: none !important;
   white-space: pre-wrap; word-break: break-word;
 }
@@ -83,14 +83,14 @@ html.cc-diskpage #displaybox nav.tabs .tabs-container > span { right: 4px !impor
 /* The table fills the content box (10px padding); 6px more puts its right edge on the same 16px
    gutter as the next-device button above it. */
 html.cc-diskpage #displaybox div.TableContainer { margin-right: 6px !important; }
-/* the row hover bar takes the badge shape through the outer cells' --cc-b-radius */
+/* the row hover bar takes the control radius on its outer cells */
 html.cc-diskpage #displaybox table.unraid tbody tr:hover > td:first-child {
-  border-top-left-radius: var(--cc-b-radius, 6px) !important;
-  border-bottom-left-radius: var(--cc-b-radius, 6px) !important;
+  border-top-left-radius: var(--cc-radius-control) !important;
+  border-bottom-left-radius: var(--cc-radius-control) !important;
 }
 html.cc-diskpage #displaybox table.unraid tbody tr:hover > td:last-child {
-  border-top-right-radius: var(--cc-b-radius, 6px) !important;
-  border-bottom-right-radius: var(--cc-b-radius, 6px) !important;
+  border-top-right-radius: var(--cc-radius-control) !important;
+  border-bottom-right-radius: var(--cc-radius-control) !important;
 }
 /* The Boot Parameters .warning-box callouts already carry an amber shade, so the border goes and
    the tint is a little deeper to keep them readable. */
@@ -114,14 +114,14 @@ html.cc-diskpage #displaybox section.tab-content { height: auto !important; max-
    become badges that follow the colour mode like every other CC badge. */
 html.cc-diskpage #displaybox h3.section-header {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important;
   font-weight: 600 !important; text-transform: uppercase; letter-spacing: 1.1px;
   font-size: var(--cc-md-fs) !important; line-height: 1 !important;
   padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px);
   display: inline-flex !important; align-items: center; gap: 10px; width: auto !important; margin: 2px 0 14px !important;
 }
 /* the inner "Advanced" sub-badge stays readable as a dark inset chip on the accent badge */
-html.cc-diskpage #displaybox h3.section-header .section-badge { background: rgba(0, 0, 0, .22) !important; color: inherit !important; border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 2px 9px !important; font-size: var(--cc-text-meta) !important; }
+html.cc-diskpage #displaybox h3.section-header .section-badge { background: rgba(0, 0, 0, .22) !important; color: inherit !important; border: none !important; border-radius: var(--cc-radius-pill) !important; padding: 2px 9px !important; font-size: var(--cc-text-meta) !important; }
 /* Toggles and reka buttons rotate through the palette like every other CC control. ccPaintRotate
    stamps --cc-rb-c on .switch-button-background and the badges; the reka buttons' hard-coded
    #FCC419 gives way to the same chain. */
@@ -133,7 +133,7 @@ html.cc-diskpage #displaybox .main-content input[type="button"] { background: va
 html.cc-diskpage #displaybox .parameter-code {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
-  border: none !important; border-radius: min(var(--cc-b-radius, 999px), 10px) !important; padding: 2px 8px !important;
+  border: none !important; border-radius: var(--cc-radius-control) !important; padding: 2px 8px !important;
 }
 /* the Raw View and syslinux config boxes separate cards with grey border lines; spacing keeps the
    groups apart without them */
@@ -152,7 +152,7 @@ html.cc-tools-on #displaybox dl > dd .switch-button-background { vertical-align:
    they span the full grid width with a readable note look. */
 html.cc-tools-on #displaybox dl > blockquote.inline_help,
 html.cc-tools-on #displaybox dl > .inline-help { grid-column: 1 / -1; }
-html.cc-tools-on #displaybox blockquote.inline_help { background: #1c1c1c !important; border: none !important; border-radius: 8px !important; color: #b8b8b8 !important; padding: 8px 12px !important; margin: 2px 0 8px !important; font-size: var(--cc-text-subline) !important; }
+html.cc-tools-on #displaybox blockquote.inline_help { background: #1c1c1c !important; border: none !important; border-radius: var(--cc-radius-control) !important; color: #b8b8b8 !important; padding: 8px 12px !important; margin: 2px 0 8px !important; font-size: var(--cc-text-subline) !important; }
 /* Stray <dt> elements (Mover and TRIM carry only a help icon, the boot device flyout on /Main has
    empty ones) would break the dl grid's auto-flow. header.js ccToolsEnhance() hides every one of
    them, so the native flow places each row and no grid placement is needed here. */
@@ -165,7 +165,7 @@ html.cc-tools-on #displaybox input[type="search"],
 html.cc-tools-on #displaybox select,
 html.cc-tools-on #displaybox textarea {
   background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important;
-  border: none !important; outline: none !important; border-radius: 8px !important;
+  border: none !important; outline: none !important; border-radius: var(--cc-radius-control) !important;
   box-shadow: none !important;
 }
 html.cc-tools-on #displaybox input:focus,
@@ -180,7 +180,7 @@ html.cc-tools-on #displaybox a.button {
   /* form actions (ANWENDEN, FERTIG, SPEICHERN) share one colour, the rainbow or flag accent or
      else the base accent, rather than rotating per button */
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
-  border: none !important; outline: none !important; border-radius: var(--cc-b-radius, 999px) !important;
+  border: none !important; outline: none !important; border-radius: var(--cc-radius-pill) !important;
   height: var(--cc-md-h, 30px); padding: var(--cc-md-pad, 0 20px) !important;
   font-weight: 600; box-shadow: none !important; text-decoration: none !important;
   transition: filter .12s;
@@ -201,7 +201,7 @@ html.cc-tools-on form[name="SSLSettings"] input[type="number"],
 html.cc-tools-on form[name="SSLSettings"] input[type="password"],
 html.cc-tools-on form[name="SSLSettings"] select {
   background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important;
-  border: none !important; outline: none !important; border-radius: 8px !important;
+  border: none !important; outline: none !important; border-radius: var(--cc-radius-control) !important;
   box-shadow: none !important;
 }
 html.cc-tools-on form[name="SSLSettings"] input:focus,
@@ -214,7 +214,7 @@ html.cc-tools-on #joel-start-defaults input[type="checkbox"] {
 html.cc-tools-on form[name="SSLSettings"] input[type="button"],
 html.cc-tools-on form[name="SSLSettings"] input[type="submit"] {
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
-  border: none !important; outline: none !important; border-radius: var(--cc-b-radius, 999px) !important;
+  border: none !important; outline: none !important; border-radius: var(--cc-radius-pill) !important;
   height: var(--cc-md-h, 30px); padding: var(--cc-md-pad, 0 20px) !important;
   font-weight: 600; box-shadow: none !important; text-decoration: none !important;
   transition: filter .12s;
@@ -230,7 +230,7 @@ html.cc-tools-on form[name="SSLSettings"] input[type="submit"]:focus-visible { o
    --ring and --accent variables to the CC accent; the rules below give the shadcn button, input and
    card recipes CC's shape. */
 html.cc-tools-on .unapi [class*="border-input"][class*="bg-background"] {
-  border-radius: var(--cc-b-radius, 8px) !important;
+  border-radius: var(--cc-radius-control) !important;
 }
 html.cc-tools-on .unapi span[class*="cursor-pointer"][class*="border-input"],
 html.cc-tools-on .unapi span[class*="inline-flex"][class*="border-input"][class*="bg-background"] {
@@ -242,7 +242,7 @@ html.cc-tools-on .unapi span[class*="inline-flex"][class*="border-input"][class*
 html.cc-tools-on .unapi [class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="font-medium"] {
   height: auto !important; min-height: var(--cc-md-h, 30px) !important;
   padding: var(--cc-md-btnpad, 0 14px) !important; box-sizing: border-box !important;
-  border-radius: var(--cc-b-radius, 999px) !important; font-weight: 600 !important;
+  border-radius: var(--cc-radius-pill) !important; font-weight: 600 !important;
   transition: filter .12s !important;
 }
 html.cc-tools-on .unapi [class*="border-input"][class*="bg-background"][class*="hover:bg-accent"] {
@@ -262,7 +262,7 @@ html.cc-tools-on .unapi [class*="bg-destructive"] {
    sibling .from-unraid-red.to-orange layer placed 2px outside it. GlimStone uses shade, not rings,
    so the layer is hidden and the button gets the solid fill of the other buttons. */
 html.cc-tools-on .unapi span:has(> .from-unraid-red) {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; border: none !important; border-radius: var(--cc-radius-pill) !important;
 }
 html.cc-tools-on .unapi span:has(> .from-unraid-red) > .from-unraid-red { display: none !important; }
 html.cc-tools-on .unapi span:has(> .from-unraid-red):hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
@@ -279,7 +279,7 @@ html.cc-tools-on .unapi [class*="rounded-md"][class*="border"][class*="px-3"] {
 html.cc-tools-on #displaybox div.title {
   display: inline-flex !important; align-items: center; gap: 8px; width: fit-content !important;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
-  border: none !important; border-radius: var(--cc-b-radius, 999px) !important; padding: 0 18px !important; margin: 4px 0 16px !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important; padding: 0 18px !important; margin: 4px 0 16px !important;
   /* the same md size (30px/13px) as every other section head */
   font-size: var(--cc-md-fs) !important; font-weight: 600 !important; text-transform: uppercase; letter-spacing: .6px;
   box-shadow: none !important; min-height: var(--cc-md-h, 30px) !important;
@@ -293,7 +293,7 @@ html.cc-tools-on #displaybox div.title:has(.cc-status-dot) {
 html.cc-tools-on #displaybox div.title:has(.cc-status-dot) > .left {
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
-  border-radius: var(--cc-b-radius, 999px); padding: 0 18px; min-height: var(--cc-md-h, 30px);
+  border-radius: var(--cc-radius-pill); padding: 0 18px; min-height: var(--cc-md-h, 30px);
 }
 html.cc-tools-on #displaybox div.title:has(.cc-status-dot) .status { font-size: 0 !important; }   /* hide the "Status:" label; the dot child keeps its own 12px box */
 /* the CC (i) icon carrying the native help text, shown through the page-wide CC tip bubble */
@@ -307,38 +307,37 @@ html.cc-tools-on #displaybox .cc-toolsinfo {
 }
 html.cc-tools-on #displaybox .cc-toolsinfo:hover { color: var(--cc-accent-ink, #FCC419); opacity: 1; }
 /* The state dot: its colour is the live state (green running, red stopped, inline as
-   --cc-dotstate) like a disk chip, and its shape follows the badge shape (--cc-dot-r). The native
-   pill padding is removed so it reads as a dot. */
+   --cc-dotstate) like a disk chip, and it stays round in every shape. The native pill padding is
+   removed so it reads as a dot. */
 html.cc-tools-on #displaybox div.title .cc-status-dot {
-  display: inline-block; width: 12px; height: 12px; border-radius: var(--cc-dot-r, 50%);
+  display: inline-block; width: 12px; height: 12px; border-radius: 50%;
   margin: 0 !important; padding: 0 !important; vertical-align: middle; box-shadow: 0 0 0 2px rgba(0, 0, 0, .25);
   background: var(--cc-dotstate, #8d8d8d) !important;
 }
 /* A CC toggle standing in for a yes/no <select>, which stays hidden as the form value. Track and
-   knob follow the badge shape through --cc-b-radius and --cc-dot-r, which header.js sets on every
-   page; min() keeps the pill track a rounded bar rather than an oval. */
+   knob take the pill radius. */
 html.cc-tools-on #displaybox .cc-tgl {
-  display: inline-flex; flex: 0 0 auto; width: 44px; height: 24px; border-radius: min(var(--cc-b-radius, 999px), 12px); background: var(--cc-toggle-track-off, #3a3a3a);
+  display: inline-flex; flex: 0 0 auto; width: 44px; height: 24px; border-radius: var(--cc-radius-pill); background: var(--cc-toggle-track-off, #3a3a3a);
   position: relative; cursor: pointer; vertical-align: middle; transition: background .15s; box-sizing: border-box;
 }
 html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); }
-html.cc-tools-on #displaybox .cc-tgl .cc-tgl-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: var(--cc-dot-r, 50%); background: #fff; transition: left .15s; }
+html.cc-tools-on #displaybox .cc-tgl .cc-tgl-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: var(--cc-radius-pill); background: #fff; transition: left .15s; }
 html.cc-tools-on #displaybox .cc-tgl.cc-tgl-on .cc-tgl-knob { left: 23px; }
 /* native switch tracks (Docker aktivieren, for one) take the CC shape and rotate through the
    colour mode via --cc-rb-c */
 html.cc-tools-on #displaybox .switch-button-background {
-  border: none !important; box-shadow: none !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important; background: var(--cc-toggle-track-off, #3a3a3a) !important;
+  border: none !important; box-shadow: none !important; border-radius: var(--cc-radius-pill) !important; background: var(--cc-toggle-track-off, #3a3a3a) !important;
 }
-html.cc-tools-on #displaybox .switch-button-background .switch-button-button { border-radius: var(--cc-dot-r, 50%) !important; }
+html.cc-tools-on #displaybox .switch-button-background .switch-button-button { border-radius: var(--cc-radius-pill) !important; }
 html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; }
 /* The reka boot editor renders the native switch at a narrow inline 25x11, so every disk-page
    toggle gets the full 44x24 CC geometry for track, knob and checked position, as the .advancedview
    rule below does for the disk detail form; !important beats the inline sizes. */
 html.cc-diskpage #displaybox .switch-button-background {
-  width: 44px !important; height: 24px !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important;
+  width: 44px !important; height: 24px !important; border-radius: var(--cc-radius-pill) !important;
 }
 html.cc-diskpage #displaybox .switch-button-background .switch-button-button {
-  width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important; border-radius: var(--cc-dot-r, 50%) !important;
+  width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important; border-radius: var(--cc-radius-pill) !important;
 }
 html.cc-diskpage #displaybox .switch-button-background.checked .switch-button-button { left: 23px !important; }
 
@@ -355,10 +354,10 @@ html.cc-tools-on #displaybox dl:has(.advancedview) > dd { width: auto !important
 /* the floated on/off labels get the toggle's 24px line box so their text centres against the pill */
 html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-label { color: var(--cc-text-chip, #cfcfcf); font-weight: 600; line-height: 24px; height: 24px; }
 html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-background {
-  width: 44px !important; height: 24px !important; border-radius: min(var(--cc-b-radius, 999px), 12px) !important; flex: 0 0 auto;
+  width: 44px !important; height: 24px !important; border-radius: var(--cc-radius-pill) !important; flex: 0 0 auto;
 }
 html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-button {
-  width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important; border-radius: var(--cc-dot-r, 50%) !important;
+  width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important; border-radius: var(--cc-radius-pill) !important;
 }
 html.cc-tools-on #displaybox dl:has(.advancedview) .switch-button-background.checked .switch-button-button { left: 23px !important; }
 
@@ -378,7 +377,7 @@ html.cc-tools-on #displaybox .cc-tsel-trigger,
 html.cc-popups-on #displaybox .cc-tsel-trigger {
   display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
   min-width: 240px; min-height: 34px; box-sizing: border-box;
-  background: var(--cc-tl-surface2, #232323); border-radius: min(var(--cc-b-radius, 8px), 12px);
+  background: var(--cc-tl-surface2, #232323); border-radius: var(--cc-radius-control);
   padding: 4px 12px; color: #eaeaea; cursor: pointer; transition: background .12s, color .12s;
 }
 /* The Dashboard tiles' four dropdowns (CPU timescale, network interface, view and timescale) are
@@ -404,7 +403,7 @@ html.cc-popups-on #displaybox .cc-tsel-panel {
   display: none; position: absolute; z-index: 9999; margin-top: 4px; flex-direction: column; gap: 6px;
   padding: 8px; width: max-content; min-width: 180px; max-width: min(92vw, 460px);
   max-height: 50vh; overflow-y: auto; overflow-x: hidden;
-  background: #303030; border: none; border-radius: 10px; box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .6));
+  background: #303030; border: none; border-radius: var(--cc-radius-card); box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .6));
 }
 html.cc-tools-on #displaybox .cc-tsel.cc-open .cc-tsel-panel,
 html.cc-popups-on #displaybox .cc-tsel.cc-open .cc-tsel-panel { display: flex; }
@@ -417,7 +416,7 @@ html.cc-popups-on #displaybox .cc-tsel-group { font-size: var(--cc-text-meta); f
 html.cc-tools-on #displaybox .cc-tsel-opt,
 html.cc-popups-on #displaybox .cc-tsel-opt {
   display: flex; align-items: center; gap: 8px; justify-content: flex-start;
-  line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 999px);
+  line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-radius-pill);
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); border: none;
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); white-space: nowrap;
   transition: filter .12s;
@@ -444,7 +443,7 @@ html.cc-popups-on #displaybox .cc-tsel-avail-dl { opacity: .7; font-size: var(--
 html.cc-tools-on #displaybox .cc-lang-flag,
 html.cc-popups-on #displaybox .cc-lang-flag {
   display: inline-block; width: 20px; height: 14px; flex: 0 0 auto; object-fit: cover;
-  border-radius: 2px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12);
+  border-radius: calc(var(--cc-radius-control) / 4); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12);
 }
 html.cc-popups-on #displaybox .cc-tsel-avail-flag { display: inline-flex; flex: 0 0 auto; }
 /* In the reactive sub-mode (cc.rbmode=active) the items rest neutral and show their own colour on
@@ -466,14 +465,14 @@ html.cc-tools-on.cc-tools-rbneutral #displaybox .cc-tsel-opt.is-selected {
    borderless elevated panel. */
 html.cc-tools-on #displaybox .ui-dropdownchecklist-selector-wrapper {
   background: none !important; border: none !important; box-shadow: none !important; overflow: visible !important;
-  border-radius: min(var(--cc-b-radius, 8px), 12px) !important; width: auto !important; height: auto !important; vertical-align: middle;
+  border-radius: var(--cc-radius-control) !important; width: auto !important; height: auto !important; vertical-align: middle;
 }
 /* A fixed 30px, flex-centred selector matches the text inputs next to it; a min-height with
    padding would grow it past its 25px row. */
 html.cc-tools-on #displaybox .ui-dropdownchecklist-selector {
   position: relative; box-sizing: border-box !important; display: inline-flex !important; align-items: center;
   background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important;
-  border: none !important; box-shadow: none !important; border-radius: min(var(--cc-b-radius, 8px), 12px) !important;
+  border: none !important; box-shadow: none !important; border-radius: var(--cc-radius-control) !important;
   min-height: 0 !important; height: 30px !important; line-height: 1 !important; padding: 0 30px 0 12px !important; transition: background .12s, color .12s;
 }
 html.cc-tools-on #displaybox .ui-dropdownchecklist-selector.ui-state-hover,
@@ -493,7 +492,7 @@ html.cc-tools-on #displaybox .ui-dropdownchecklist-selector .ui-icon { display: 
    than its selector. The widget sets overflow-y:auto and a fixed height inline at init, so
    height:auto lets the roomier spacing fit without a scrollbar. */
 html.cc-tools-on #displaybox .ui-dropdownchecklist-dropcontainer {
-  background: #303030 !important; border: none !important; border-radius: 10px !important;
+  background: #303030 !important; border: none !important; border-radius: var(--cc-radius-card) !important;
   box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .6)) !important;
   display: flex !important; flex-direction: column !important; gap: 6px !important;
   padding: 8px !important; min-width: 180px !important; max-width: min(92vw, 460px) !important;
@@ -510,7 +509,7 @@ html.cc-tools-on #displaybox .ui-dropdownchecklist-item {
   /* a native rule pins the item to a 22px border-box height, swallowing the padding; height:auto
      lets it match the cc-tsel options (about 29px) */
   height: auto !important; min-height: 0 !important; box-sizing: border-box !important;
-  border: none !important; border-radius: var(--cc-b-radius, 999px) !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important;
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
   transition: filter .12s, background .12s, color .12s;
@@ -537,7 +536,7 @@ html.cc-tools-on.cc-tools-rbneutral #displaybox .ui-dropdownchecklist-item:has(i
 /* the explicitClose "...schließen" row carries no checkbox -> a muted, centred footer link, never a coloured chip */
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item:not(:has(input[type="checkbox"])) {
   background: transparent !important; color: #9a9a9a !important; justify-content: center;
-  border-radius: 8px !important; font-size: var(--cc-text-meta); margin-top: 4px !important; filter: none !important;
+  border-radius: var(--cc-radius-control) !important; font-size: var(--cc-text-meta); margin-top: 4px !important; filter: none !important;
 }
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item:not(:has(input[type="checkbox"])):hover {
   background: rgba(128, 128, 128, .16) !important; color: #e4e4e4 !important;
@@ -553,10 +552,10 @@ html.cc-tools-on #displaybox .inline-help[data-cc-help] { display: none !importa
 html.cc-tools-on #displaybox .cc-colpick {
   width: 34px; height: 30px; padding: 2px; margin-right: 8px; flex: 0 0 auto; box-sizing: border-box;
   background: var(--cc-tl-surface2, #232323) !important; border: none !important; outline: none !important;
-  border-radius: 6px !important; cursor: pointer; vertical-align: middle;
+  border-radius: var(--cc-radius-control) !important; cursor: pointer; vertical-align: middle;
 }
 html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch-wrapper { padding: 0; }
-html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch { border: none; border-radius: 4px; }
+html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch { border: none; border-radius: calc(var(--cc-radius-control) / 2); }
 /* The swatch and the hex field share one row: this dd inherits Unraid's dd{flex-direction:column}
    and has no sibling field, so it would stack and stretch. The row is capped at 240px, the
    min-width of every themed dropdown trigger, so the hex field ends where the dropdowns do. */
@@ -566,7 +565,7 @@ html.cc-tools-on #displaybox dd:has(> .cc-colpick) input[type="text"][data-cc-co
 /* native checkboxes: dark, borderless, accent when checked */
 html.cc-tools-on #displaybox input[type="checkbox"] {
   -webkit-appearance: none; appearance: none; width: 18px; height: 18px; box-sizing: border-box; flex: none;
-  background: var(--cc-tl-surface2, #232323); border: none !important; outline: none !important; border-radius: 4px;
+  background: var(--cc-tl-surface2, #232323); border: none !important; outline: none !important; border-radius: calc(var(--cc-radius-control) / 3);
   cursor: pointer; vertical-align: middle; position: relative; margin: 0 6px 0 0;
 }
 html.cc-tools-on #displaybox input[type="checkbox"]:checked { background: var(--cc-accent, #FCC419); }
@@ -590,7 +589,7 @@ html.cc-tools-on #displaybox .switch-button-background { background: var(--cc-to
 html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; }
 /* multi / list selects -> CC dark fill, borderless (they stay native selects) */
 html.cc-tools-on #displaybox select[multiple],
-html.cc-tools-on #displaybox select[size]:not([size="1"]) { background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important; border: none !important; outline: none !important; border-radius: 8px !important; padding: 4px 6px !important; }
+html.cc-tools-on #displaybox select[size]:not([size="1"]) { background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important; border: none !important; outline: none !important; border-radius: var(--cc-radius-control) !important; padding: 4px 6px !important; }
 html.cc-tools-on #displaybox select[multiple] option:checked,
 html.cc-tools-on #displaybox select[size] option:checked { background: var(--cc-accent, #FCC419) linear-gradient(0deg, var(--cc-accent, #FCC419), var(--cc-accent, #FCC419)); color: var(--cc-accent-text, #161616); }
 /* no border lines on tools content */
@@ -610,6 +609,6 @@ html.cc-tools-on #displaybox .section-title {
   border: none !important; border-bottom: none !important;
   display: inline-flex; align-items: center; width: fit-content;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
-  border-radius: var(--cc-b-radius, 999px); padding: var(--cc-md-pad, 4px 14px); font-size: var(--cc-md-fs);
+  border-radius: var(--cc-radius-pill); padding: var(--cc-md-pad, 4px 14px); font-size: var(--cc-md-fs);
   font-weight: 600; text-transform: uppercase; letter-spacing: .8px; margin: 8px 0 12px !important;
 }

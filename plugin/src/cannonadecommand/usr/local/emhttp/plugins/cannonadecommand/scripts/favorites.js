@@ -1,7 +1,7 @@
 /* CannonadeCommand: styles the /Favorites page.
  *
  * /Favorites is rendered on the server (Tabs="false"), so this only toggles html.cc-favorites-on
- * and mirrors the accent, badge radius and tile size onto :root for CannonadeCommand.Favorites.css.
+ * and mirrors the accent and tile size onto :root for CannonadeCommand.Favorites.css.
  * Turning it off is removing the class, and the observer never injects anything, so it cannot
  * trigger itself.
  */
@@ -12,17 +12,14 @@
   function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.197 ? "#161616" : "#fff"; }
   // With the adopt toggle on (the default) the global cc.accent wins over this area's ccf.accent.
   function effAccent() { var a = g("cc.stylefavorites", "1") !== "0" ? g("cc.accent", "#FCC419") : g("ccf.accent", "#FCC419"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#FCC419"; }
-  function shape() { return ({ pill: "999px", rounded: "6px", square: "0px", circle: "999px" })[g("cc.badgeshape", "pill")] || "999px"; }
   function apply() {
     var root = document.documentElement;
     var live = g("cc.theming", "1") !== "0" && g("cc.enable.favorites", "1") !== "0" && onFavorites();
     root.classList.toggle("cc-favorites-on", live);
-    root.classList.toggle("cc-shape-circle", g("cc.badgeshape", "pill") === "circle");
     if (!live) return;
     var a = effAccent();
     root.style.setProperty("--cc-accent", a);
     root.style.setProperty("--cc-accent-text", idealText(a));
-    root.style.setProperty("--cc-b-radius", shape());
     // cc.sgsize is shared with settingsgrid.js so /Favorites, /Settings and /Tools use one tile
     // size; m matches Docker's 78px logo tile (62px plus 8px padding).
     var sz = ({ s: ["64px", "32px"], m: ["78px", "38px"], l: ["96px", "46px"] })[g("cc.sgsize", "m")] || ["78px", "38px"];

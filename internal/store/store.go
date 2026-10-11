@@ -44,10 +44,11 @@ func (s *Store) LoadConfig() (model.Config, error) {
 	return c, err
 }
 
-// uiValueNames maps UI setting values stored before they had names to those
-// names, so a browser adopting the mirror on a new origin gets the name.
+// uiValueNames maps UI setting values stored under an older name to the current
+// one, so a browser adopting the mirror on a new origin gets the current name.
 var uiValueNames = map[string]map[string]string{
-	"cc.anim": {"0": "off", "1": "subtle", "2": "wild"},
+	"cc.anim":       {"0": "off", "1": "subtle", "2": "wild"},
+	"cc.badgeshape": {"pill": "round", "rounded": "soft", "circle": "round"},
 }
 
 func renameUIValues(ui map[string]string) {
