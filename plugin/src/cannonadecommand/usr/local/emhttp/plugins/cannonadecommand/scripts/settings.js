@@ -51,8 +51,6 @@
       // the native-display link as an accent button rather than the grey chip
       "#cc-settings .cc-btn.cc-btn-accent{background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
       "#cc-settings .cc-btn.cc-btn-accent:hover{filter:brightness(1.14);background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
-      "#cc-settings .cc-set-danger{background:#5a2a2a!important;color:#ffd7d7!important}" +
-      "#cc-settings .cc-set-danger:hover{filter:brightness(1.18)}" +
       "#cc-settings .cc-flag-picker{position:relative;margin-top:6px;max-width:340px}" +
       "#cc-settings .cc-flag-trigger{display:flex;align-items:center;gap:9px;background:#232323;border-radius:8px;padding:7px 12px;cursor:pointer;user-select:none}" +
       "#cc-settings .cc-flag-trigger:hover{filter:brightness(1.1)}" +
@@ -1820,7 +1818,7 @@
       });
       im.addEventListener("click", function () { fin.click(); });
       // A two-step reset that clears every cc.* key and the engine mirror, then reloads.
-      var rs = el("span", "cc-btn cc-set-xbtn cc-set-danger", T("Alles zurücksetzen", "Reset all"));
+      var rs = el("span", "cc-btn cc-set-xbtn", T("Alles zurücksetzen", "Reset all"));   // the colour of Export and Import beside it, never red
       rs.addEventListener("click", function () {
         if (rs.getAttribute("data-armed") !== "1") { rs.setAttribute("data-armed", "1"); rs.textContent = T("Wirklich? Nochmal klicken", "Sure? Click again"); setTimeout(function () { rs.setAttribute("data-armed", "0"); rs.textContent = T("Alles zurücksetzen", "Reset all"); }, 3500); return; }
         try {

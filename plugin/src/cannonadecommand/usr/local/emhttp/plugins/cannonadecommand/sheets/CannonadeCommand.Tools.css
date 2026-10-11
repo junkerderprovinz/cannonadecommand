@@ -252,16 +252,17 @@ html.cc-tools-on .unapi [class*="border-input"][class*="bg-background"][class*="
 html.cc-tools-on .unapi [class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="font-medium"]:hover {
   filter: brightness(1.14) !important;
 }
-/* destructive buttons (Remove, Delete, the "Bist du sicher" confirm) keep semantic red, as the
-   Previous Apps delete button in Tokens.css does */
+/* Destructive buttons (Remove, Delete, the "Bist du sicher" confirm) take the colour of the buttons
+   beside them rather than red: the confirmation says what is at stake, a colour cannot say more. */
 html.cc-tools-on .unapi [class*="bg-destructive"] {
-  background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important; border-color: transparent !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; border-color: transparent !important;
 }
 /* The Developer Sandbox confirm button is transparent, and its red and orange ring comes from a
    sibling .from-unraid-red.to-orange layer placed 2px outside it. GlimStone uses shade, not rings,
-   so the layer is hidden and the button gets the solid red fill of the other destructive controls. */
+   so the layer is hidden and the button gets the solid fill of the other buttons. */
 html.cc-tools-on .unapi span:has(> .from-unraid-red) {
-  background: var(--cc-err, #ff8389) !important; border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
 }
 html.cc-tools-on .unapi span:has(> .from-unraid-red) > .from-unraid-red { display: none !important; }
 html.cc-tools-on .unapi span:has(> .from-unraid-red):hover { filter: brightness(1.1) !important; box-shadow: none !important; }

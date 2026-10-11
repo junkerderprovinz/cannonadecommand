@@ -334,7 +334,7 @@
         }
       }
       // One colour per control row in every array_status table, Mover, Sleep and Clear Stats
-      // included. Outside rainbow Reboot and Shutdown keep the sheet's danger red.
+      // included.
       var aops = document.querySelectorAll("#displaybox table.array_status"), bi = 0;
       for (var a2 = 0; a2 < aops.length; a2++) {
         var arows = aops[a2].rows;
@@ -1683,8 +1683,8 @@
   function ccUdBadgeCell(td) {
     if (!td || td.classList.contains("cc-bcell")) return;
     if (td.hasAttribute("colspan") || td.classList.contains("mount")) return;
-    // The action cells are icon buttons dressed by CSS, not text badges. The remove X is red, so a
-    // badge around it would be invisible.
+    // The action cells are icon buttons dressed by CSS, not text badges. The remove X is a filled
+    // tile of its own, so a badge around it would hide it.
     if (td.querySelector(".usage-disk, button, select, input, i.fa-gears, i.fa-remove, i.fa-times, i.fa-trash, i.fa-trash-o, i.fa-ban")) return;
     if (td.querySelector("a.cc-b-name")) return;
     var txt = (td.textContent || "").trim(); if (txt === "" || txt === "-" || txt === "*") return;

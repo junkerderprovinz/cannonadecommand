@@ -485,12 +485,6 @@ html.cc-shares-on.cc-on-main #displaybox a.button {
   display: inline-flex !important; align-items: center; justify-content: center; text-decoration: none !important;
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
 }
-/* Reboot and Shutdown are the two power-off actions and take the danger red; they are matched by
-   name so CC's own FireSquire and Sleep in the same form keep the accent. */
-html.cc-shares-on.cc-on-main #displaybox form[name="shutdownOps"] input[name="reboot"],
-html.cc-shares-on.cc-on-main #displaybox form[name="shutdownOps"] input[name="shutdown"] {
-  background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important;
-}
 html.cc-shares-on.cc-on-main #displaybox input[type="submit"]:hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox input[type="button"]:hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox a.button:hover:not(:disabled) { filter: brightness(1.14); }
@@ -699,12 +693,12 @@ html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mount
   width: 24px; height: 24px; border-radius: var(--cc-b-radius, 999px);
   background: #3a3a3a; color: #8a8a8a; opacity: .55;
 }
-/* the remove control (ENTFERNEN column, UD historical devices) as a red 24px icon tile with a white
-   glyph, forced over the native inline red on the <i> */
+/* the remove control (ENTFERNEN column, UD historical devices) as a 24px icon tile in the page's
+   accent, forced over the native inline red on the <i>, since removing is never painted red */
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) :is(i.fa-remove, i.fa-times, i.fa-trash, i.fa-trash-o, i.fa-ban) {
   display: inline-flex; align-items: center; justify-content: center;
   width: 24px; height: 24px; border-radius: var(--cc-b-radius, 999px);
-  background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important; transition: filter .12s; cursor: pointer;
+  background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important; transition: background-color .12s; cursor: pointer;
 }
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) a:hover > :is(i.fa-remove, i.fa-times, i.fa-trash, i.fa-trash-o, i.fa-ban),
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) :is(i.fa-remove, i.fa-times, i.fa-trash, i.fa-trash-o, i.fa-ban):hover { filter: brightness(1.14); }
@@ -1046,20 +1040,19 @@ html.cc-shares-on.cc-on-share-detail #displaybox select:focus {
   outline: none !important; background: rgba(255, 255, 255, .12) !important;   /* no focus ring; the fill gets stronger instead */
 }
 
-/* The delete control, shared with the plugin list: a danger-red badge that hugs its text, with the
-   confirm checkbox as an accent-tinted sibling beside it rather than inside the pill (shares.js
-   moves it out of label#deleteLabel and tags both). It looks like styles/docker.css's
+/* The delete control, shared with the plugin list: a badge in the page's accent that hugs its text,
+   never red, with the confirm checkbox as an accent-tinted sibling beside it rather than inside
+   the pill (shares.js moves it out of label#deleteLabel and tags both). It looks like styles/docker.css's
    .cc-b-del/.cc-cb-del but is scoped to the detail page, so this globally injected sheet stays
    inert elsewhere and never competes with docker.css on the Plugins tab. */
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-b-del {
   display: inline-flex !important; align-items: center; justify-content: center;
-  background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important; border: none !important; box-shadow: none !important;
+  background: var(--cc-rb-c, var(--cc-shr-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #161616)) !important; border: none !important; box-shadow: none !important;
   border-radius: var(--cc-b-radius, 999px) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1.5;
   text-transform: uppercase; letter-spacing: .6px; cursor: pointer; text-decoration: none;
-  vertical-align: middle; transition: filter .12s;
+  vertical-align: middle; transition: background-color .12s;
 }
-html.cc-shares-on.cc-on-share-detail #displaybox .cc-b-del:hover { filter: brightness(1.12); }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-cb-del {
   accent-color: var(--cc-shr-accent, #FCC419); width: 16px; height: 16px; margin: 0 8px 0 0; cursor: pointer; vertical-align: middle;
 }
@@ -1078,8 +1071,11 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-del-wrap .cc-b-del {
   opacity: .6; cursor: not-allowed; pointer-events: none !important;
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-del-wrap:has(.cc-cb-del:checked) .cc-b-del {
-  background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important;
+  background: var(--cc-rb-c, var(--cc-shr-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #161616)) !important;
   opacity: 1; cursor: pointer; pointer-events: auto !important;
+}
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-del-wrap:has(.cc-cb-del:checked) .cc-b-del:hover {
+  background: color-mix(in srgb, var(--cc-rb-c, var(--cc-shr-accent, #FCC419)) 85%, var(--cc-text, #e6e6e6)) !important;
 }
 
 /* The disk Include/Exclude controls are jQuery-UI dropdownchecklist widgets rather than <select>,
@@ -1535,13 +1531,6 @@ html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"] {
    in #buttons. */
 html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"]:not(.dfm_control) {
   background: #4a4a4a !important; color: #f0f0f0 !important;
-}
-/* Delete takes the danger red of .cc-b-del. It shares the class .extra with Copy, Move, Owner,
-   Permission and Calculate, so its action id is the only stable hook, and the comma in the prefix
-   pins the first argument so doActions(11,…) and its neighbours cannot match. If upstream ever
-   moves these to addEventListener, Delete falls back to the accent rather than to disabled grey. */
-html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"][onclick^="doActions(1,"] {
-  background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important;
 }
 html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"]:hover:not(:disabled) { filter: brightness(1.14); }
 /* A disabled button has to be unmistakable here. The detail page's opacity and grayscale leave the

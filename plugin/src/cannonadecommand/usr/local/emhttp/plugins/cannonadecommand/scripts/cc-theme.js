@@ -271,6 +271,19 @@
   // turns its open stroke geometry into a scribble.
   var CC_TRASH_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007zm-10 4a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1m4 0a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1" /><path d="M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005z" /></svg>';
 
+  // The icon-only delete badge that stands in for a native remove control. A span rather than a
+  // button, which Unraid's global CSS would bloat, so it carries the role and keys itself.
+  function delIcon(label, run) {
+    var b = document.createElement("span");
+    b.className = "cc-b-del cc-b-delicon";
+    b.innerHTML = CC_TRASH_SVG;
+    b.setAttribute("role", "button"); b.tabIndex = 0;
+    b.setAttribute("title", label); b.setAttribute("aria-label", label);
+    b.addEventListener("click", function (ev) { ev.preventDefault(); ev.stopPropagation(); run(); });
+    b.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); run(); } });
+    return b;
+  }
+
   // The icon pipeline. Ink-flattening (feColorMatrix to one flat colour) looks sharp on a real
   // glyph but turns a full-colour icon with a coloured background and a mark on top into one blob.
   // Luminance tinting (pixel luminance x target) is safe on anything but never looks as crisp. So
@@ -497,7 +510,7 @@
     RB: RB, idealText: idealText, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects,
     registerSelectSync: registerSelectSync, nextSelIndex: nextSelIndex, wheelStepSelect: wheelStepSelect,
     gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily,
-    CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG,
+    CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG, delIcon: delIcon,
     lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark, liftLight: liftLight, lightTheme: lightTheme,
     liftSurface: liftSurface, surfacePalette: surfacePalette,
     icons: {

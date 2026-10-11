@@ -191,7 +191,9 @@ ok(!/el\("span", "cc-sched-x", "✕"\)/.test(src), 'the bare ✕ character is go
 ok(/CC_TRASH_SVG = \(window\.CCTheme && window\.CCTheme\.CC_TRASH_SVG\)/.test(src), 'docker.js takes the glyph from cc-theme.js with a local fallback, as it does the (i)');
 const TRASH = 'M20 6a1 1 0 0 1 .117 1.993';                            // tabler icons/filled/trash.svg
 ok(theme.indexOf(TRASH) >= 0, 'cc-theme.js carries the filled tabler trash from the set, as Rule 20 asks');
-ok(css.indexOf(TRASH) >= 0, 'the Plugins-page delete button uses the same can, so there is one trash design');
+ok(/function delIcon\([^)]*\) \{[^}]*b\.innerHTML = CC_TRASH_SVG/.test(theme), 'the Plugins-page delete badge, CCTheme.delIcon, carries the same can, so there is one trash design');
+ok(/window\.CCTheme\.delIcon\(/.test(fs.readFileSync(path.join(SCRIPTS, 'plugins.js'), 'utf8')), 'and plugins.js builds its delete badge with it');
+ok(css.indexOf(TRASH) < 0, 'and no stylesheet draws a second can as a white background image');
 ok(!/polyline points='3 6 5 6 21 6'/.test(css), 'and the stroke-drawn outline trash is gone from docker.css');
 // The badge and the day chips can only stay the same size if one rule holds both.
 const shared = /\.cc-day, \.cc-sched-x \{[^}]*\}/.exec(css);
@@ -201,8 +203,8 @@ if (shared) {
     ok(shared[0].indexOf(d) >= 0, 'the shared box declares ' + d));
 }
 ok(/html \.cc-limbtn, html \.cc-day, html \.cc-sched-x,/.test(css), 'both are swept by the shape engine together, so a Badge-Form change moves the badge and the chips as one');
-ok(/\.cc-sched-x \{ margin-left: auto; background: var\(--cc-err/.test(css), 'the badge is the semantic red of a destructive action (Rule 4), never accent or rainbow');
-ok(!/cc-shares-rbneutral[^\n]*\.cc-sched-x/.test(css) && POP_PAINT_SEL.indexOf('.cc-sched-x') < 0, 'and no colour-mode sweep touches it');
+ok(/\.cc-sched-x \{ margin-left: auto; background: var\(--cc-rb-c, var\(--cc-rbaccent, var\(--cc-accent,/.test(css), 'the badge takes the chosen day chip\'s colour chain, since a delete is never red');
+ok(!/\.cc-sched-x[^{]*\{[^}]*--cc-err/.test(css), 'and no rule paints it in the fault colour');
 ok(/el\("div", "cc-pop cc-pop-plan"\)/.test(src), 'the Startplan editor opens with .cc-pop-plan');
 ok(/\.cc-pop\.cc-pop-plan \{ width: 548px; \}/.test(css), 'and is 548px wide, above the 528px at which the schedule row wraps');
 ok(/\.cc-pop \.cc-sched-row \.cc-dsel \{ flex: none; width: 104px; \}/.test(css), 'the action dropdown is pinned to its content width: a flex:1 basis:0 wrapper contributes almost nothing to the line break and then takes the leftover');

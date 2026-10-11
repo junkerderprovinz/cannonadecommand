@@ -1704,15 +1704,9 @@ html.cc-popups-on .multi_installDiv { display: flex !important; flex-wrap: wrap 
    header.js toggles cc-apps-noselect off the live presence of .ca_multiselect, so this stays
    correct if CA adds selection to another view. */
 html.cc-apps-noselect .multi_installDiv { display: none !important; }
-/* :not(.ca_hide) on every branch keeps this rule out of CA's own .ca_hide{display:none}.
-
-   The delete buttons are excluded on every branch too, not only their own: they are
-   input[type="button"] as well, and the generic branch outranks the semantic red further down. The
-   Previous Apps delete button carries .cc-prevapps-delbtn rather than .multi_deleteButton, because
-   that class is also how CA delegates its native bulk-remove click handler (see delBtn.className in
-   header.js), so both names need excluding wherever one does. Their box comes from their own rule
-   beside the red. */
-html.cc-popups-on .multi_installDiv input[type="button"]:not(.ca_hide):not(.multi_deleteButton):not(.cc-prevapps-delbtn),
+/* :not(.ca_hide) on every branch keeps this rule out of CA's own .ca_hide{display:none}. The delete
+   buttons ride the same rule as their siblings, colour included: a delete is never painted red. */
+html.cc-popups-on .multi_installDiv input[type="button"]:not(.ca_hide),
 html.cc-popups-on .multi_installDiv input[type="submit"]:not(.ca_hide),
 html.cc-popups-on .multi_installDiv .multi_installAll:not(.ca_hide),
 html.cc-popups-on .multi_installDiv .multi_installClear:not(.ca_hide) {
@@ -1735,10 +1729,9 @@ html.cc-popups-on .multi_installDiv input[type="submit"]:hover,
 html.cc-popups-on .multi_installDiv .multi_installAll:hover,
 html.cc-popups-on .multi_installDiv .multi_installClear:hover { filter: brightness(1.12) !important; }
 /* The reactive mode: neutral at rest, the mode's colour on hover. .cc-popups-on is repeated so this
-   beats the rainbow rule above, and the delete buttons are excluded on every branch for the reason
-   given there. */
-html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="button"]:not(.multi_deleteButton):not(.cc-prevapps-delbtn),
-html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="submit"]:not(.multi_deleteButton):not(.cc-prevapps-delbtn),
+   beats the rainbow rule above. */
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="button"],
+html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="submit"],
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installAll,
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installClear {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
@@ -1758,22 +1751,6 @@ html.cc-popups-on .multi_installDiv .multi_installButton {
 }
 html.cc-popups-on .multi_installDiv .multi_install:hover,
 html.cc-popups-on .multi_installDiv .multi_installButton:hover { filter: brightness(1.08) !important; background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; }
-/* A delete stays semantic red and must not read like any other chip. The shared
-   input[type="button"] rule excludes it, so this one carries its box shape as well as its colour. */
-html.cc-popups-on .multi_installDiv .multi_deleteButton:not(.ca_hide),
-html.cc-popups-on .multi_installDiv .cc-prevapps-delbtn {
-  display: inline-flex !important; align-items: center !important; justify-content: center !important;
-  width: auto !important; height: auto !important; min-height: var(--cc-md-h, 30px) !important;
-  padding: var(--cc-md-btnpad, 0 14px) !important; margin: 0 !important;
-  font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important;
-  text-transform: uppercase !important; letter-spacing: .4px !important;
-  border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
-  box-shadow: none !important; outline: none !important; cursor: pointer !important;
-  transition: background .12s ease, color .12s ease, filter .12s ease !important;
-  background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important;
-}
-html.cc-popups-on .multi_installDiv .multi_deleteButton:hover,
-html.cc-popups-on .multi_installDiv .cc-prevapps-delbtn:hover { filter: brightness(1.08) !important; }
 /* The Previous Apps bulk-delete button starts disabled and enables once a card is checked, so it
    dims and drops the hover brighten while inactive. */
 html.cc-popups-on .multi_installDiv .cc-prevapps-delbtn:disabled { opacity: .45 !important; cursor: default !important; }
@@ -1854,11 +1831,11 @@ html.cc-popups-on #alternateView .alternateViewClose {
   min-height: var(--cc-lgb-h, 36px) !important; padding: 0 20px !important;
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 700 !important;
   text-transform: uppercase !important; letter-spacing: .5px !important;
-  background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important;
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, .45) !important; z-index: 10 !important;
 }
-html.cc-popups-on #alternateView .alternateViewClose:hover { filter: brightness(1.1) !important; background: var(--cc-err, #ff8389) !important; }
+html.cc-popups-on #alternateView .alternateViewClose:hover { filter: brightness(1.1) !important; background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; }
 /* The stats and credits table: rows separated by a shade rather than a rule, with the value column
    in the accent. CA paints the table black, which sits as a slab inside the frame, so nothing
    inside the panel carries its own fill and the frame is the only surface; the title badge and the

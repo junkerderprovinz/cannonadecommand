@@ -1350,7 +1350,7 @@
       var panels = document.querySelectorAll("html.cc-tools-on #displaybox .cc-tsel-panel, html.cc-tools-on #displaybox .ui-dropdownchecklist-dropcontainer, html.cc-popups-on #displaybox .cc-tsel-panel");
       for (var pn = 0; pn < panels.length; pn++) { var opts = panels[pn].querySelectorAll(".cc-tsel-opt, .ui-dropdownchecklist-item"); for (var oi = 0; oi < opts.length; oi++) { if (!on) clear(opts[oi]); else stamp(opts[oi], oi); } }
       // The notification drawer's badges rotate as well: tabs, type filters, gear, the bulk action
-      // icons and the per-card buttons. The delete icon keeps its semantic red, in the CSS.
+      // icons and the per-card buttons.
       var nd = document.querySelector(".unapi div.fixed.z-50.bg-background");
       if (nd) {
         var ndb = nd.querySelectorAll('[role="tab"], [role="button"][aria-pressed]:not(.cc-notif-badge), .shrink-0 > a[href*="Notification"], .cc-notif-arch, .cc-notif-del, [class~="group/item"] a[class*="text-primary"], [class~="group/item"] span[class*="rounded-md"][class*="inline-flex"]');
@@ -1872,7 +1872,16 @@
             if (!/^(entfernen|remove|löschen|delete)$/i.test(rmt)) continue;
             var rmrow = rme.closest("dd") || rme.closest("dl") || rme.parentElement;
             if (!rmrow || !rmrow.querySelector("select")) continue;
-            rme.setAttribute("data-cc-delicon", "1"); rme.classList.add("cc-b-del", "cc-b-delicon"); rme.setAttribute("title", rmt);
+            rme.setAttribute("data-cc-delicon", "1");
+            if (!window.CCTheme) continue;
+            // An <input> cannot hold the SVG, so a badge stands in for it and clicks it.
+            if (rme.tagName === "INPUT") {
+              rme.style.setProperty("display", "none", "important");
+              rme.parentNode.insertBefore(window.CCTheme.delIcon(rmt, (function (n) { return function () { n.click(); }; })(rme)), rme.nextSibling);
+            } else {
+              rme.classList.add("cc-b-del", "cc-b-delicon"); rme.setAttribute("title", rmt);
+              rme.insertAdjacentHTML("beforeend", window.CCTheme.CC_TRASH_SVG);
+            }
           }
         }
       } catch (eRm) {}

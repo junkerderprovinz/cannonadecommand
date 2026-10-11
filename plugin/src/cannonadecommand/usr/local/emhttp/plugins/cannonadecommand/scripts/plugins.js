@@ -535,17 +535,18 @@
       // The uninstall becomes a trash icon with a CC confirmation, like the container remove,
       // without Unraid's confirm checkbox. The native onclick runs "plugin remove <file>" through
       // openInstall(); it is detached and gated behind ccPluginConfirm, and the button is enabled,
-      // since Unraid keeps it disabled until the hidden checkbox is ticked. The .cc-b-delicon
-      // look and the hidden checkbox live in docker.css.
+      // since Unraid keeps it disabled until the hidden checkbox is ticked. An <input> cannot hold
+      // the trash SVG, so a badge carrying it takes the input's place and the input stays hidden.
+      // The .cc-b-delicon look and the hidden checkbox live in docker.css.
       var native = isRemove ? (rm.getAttribute("onclick") || "") : "";
       if (native && window.CCTheme) {
         rm.removeAttribute("onclick");
         rm.disabled = false;
-        rm.classList.add("cc-b-delicon");
-        rm.title = LANG === "de" ? "Plugin löschen" : "Delete plugin";
+        rm.style.setProperty("display", "none", "important");
         var slug = (tr.id || "").trim() || "Plugin";
         var runNative; try { runNative = new Function(native); } catch (e) { runNative = function () {}; }
-        rm.addEventListener("click", function (ev) { ev.preventDefault(); ev.stopPropagation(); ccPluginConfirm(slug, runNative); });
+        var ico = window.CCTheme.delIcon(LANG === "de" ? "Plugin löschen" : "Delete plugin", function () { ccPluginConfirm(slug, runNative); });
+        rm.parentNode.insertBefore(ico, rm.nextSibling);
         if (cb) cb.classList.add("cc-cb-hidden");
       }
     }
@@ -686,12 +687,13 @@
       });
       // every other table on the composite page (install errors / stale tab)
       Array.prototype.slice.call(document.querySelectorAll("table.tablesorter")).forEach(function (t4) { if (t4.id !== "plugin_table") t4.classList.add("cc-plug-lite"); });
-      // lite tables (install errors / stale): ERROR pill + red action link
+      // lite tables (install errors / stale): an ERROR pill, and the action as an accent badge, since
+      // a remove is never painted red
       Array.prototype.slice.call(document.querySelectorAll("table.cc-plug-lite tbody tr")).forEach(function (tr5) {
         var st5 = tr5.querySelector("span.orange-text, span.red-text");
         if (st5 && !st5.getAttribute(MARK)) { st5.setAttribute(MARK, "1"); pill(st5, "var(--cc-warn, #ff832b)", "var(--cc-warn-fg, #161616)"); }
         var ac5 = tr5.querySelector("a, input[type=button]");
-        if (ac5 && !ac5.getAttribute(MARK)) { ac5.setAttribute(MARK, "1"); pill(ac5, "var(--cc-err, #ff8389)", "var(--cc-err-fg, #161616)"); ac5.style.setProperty("cursor", "pointer", "important"); }
+        if (ac5 && !ac5.getAttribute(MARK)) { ac5.setAttribute(MARK, "1"); pill(ac5, accent(), idealText(accent())); ac5.style.setProperty("cursor", "pointer", "important"); }
       });
       plugPinTick();
       // the Check/Update/Remove buttons in the tab bar become accent pills

@@ -1674,7 +1674,7 @@
       var count = el("span", "cc-bulkbar-count"); bar.appendChild(count);
       var startB = el("span", "cc-b cc-bulkbtn", de ? "Starten" : "Start"); startB.addEventListener("click", function () { ccBulkRun("start"); }); bar.appendChild(startB);
       var stopB = el("span", "cc-b cc-bulkbtn", de ? "Stoppen" : "Stop"); stopB.addEventListener("click", function () { ccBulkRun("stop"); }); bar.appendChild(stopB);
-      var rmB = el("span", "cc-b cc-bulkbtn cc-bulkbtn-danger", de ? "Entfernen" : "Remove"); rmB.addEventListener("click", ccBulkRemove); bar.appendChild(rmB);
+      var rmB = el("span", "cc-b cc-bulkbtn", de ? "Entfernen" : "Remove"); rmB.addEventListener("click", ccBulkRemove); bar.appendChild(rmB);
       var clearB = el("span", "cc-b cc-bulkbtn cc-bulkbtn-clear", de ? "Aufheben" : "Clear"); clearB.addEventListener("click", function () { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); }); bar.appendChild(clearB);
       document.body.appendChild(bar);
       ccBulkBarEl = bar;
@@ -2999,9 +2999,7 @@
       // window before that test runs, so removing one schedule row reads as a click outside and
       // shuts the whole editor along with every unsaved edit in it.
       // The delete control is a badge box-for-box like the .cc-day chip beside it, 26×26 on the
-      // same shape-engine radius, filled semantic red because deleting is destructive (Rule 4,
-      // like .cc-b-del), which is also why it stays out of POP_PAINT_SEL and takes no palette
-      // jewel.
+      // same shape-engine radius, in the chosen chip's colour rather than red, like .cc-b-del.
       var rm = el("span", "cc-sched-x"); rm.innerHTML = CC_TRASH_SVG; rm.setAttribute("data-tip", t("remove")); rm.setAttribute("aria-label", t("remove")); rm.addEventListener("click", function (ev) { ev.stopPropagation(); row.remove(); });
       row.appendChild(act2); row.appendChild(time); row.appendChild(days); row.appendChild(rm);
       ctWrapSelect(act2);   // the schedule action <select> gets the CC dsel panel too; it dispatches a native change, so row._read still reads act2.value

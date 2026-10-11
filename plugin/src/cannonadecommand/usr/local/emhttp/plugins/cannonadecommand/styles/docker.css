@@ -208,19 +208,20 @@ a.sl-updall { display: none !important; }
 /* The Plugins tab's author badge follows the page-badge scale, one step under the main menu tabs,
    in both views. Scoped to Plugins, so nothing else shifts. */
 .cc-plug .cc-plugauth, .cc-plug-lite .cc-plugauth { font-size: var(--cc-pagebadge-fs, 13px) !important; }
-/* The delete control shared by the plugin list and the Shares detail page: a danger-red badge that
-   hugs its text, with the confirm checkbox as an accent-tinted sibling beside it rather than inside
-   the pill. CannonadeCommand.Shares.css carries the same look, scoped to the detail page. The red
-   is semantic and never follows the accent or the rainbow. */
+/* The delete control shared by the plugin list and the Shares detail page: a badge that hugs its
+   text, with the confirm checkbox as an accent-tinted sibling beside it rather than inside the
+   pill. CannonadeCommand.Shares.css carries the same look, scoped to the detail page. Deleting is
+   never painted red: the badge takes the colour its sibling badges take, and the confirmation says
+   what is at stake. */
 .cc-b-del {
   display: inline-flex !important; align-items: center; justify-content: center;
-  background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important; border: none !important; box-shadow: none !important;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; border: none !important; box-shadow: none !important;
   border-radius: var(--cc-b-radius, 999px) !important; padding: var(--cc-bmd-pad, 4px 12px) !important;
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; line-height: 1.5;
   text-transform: uppercase; letter-spacing: .6px; cursor: pointer; text-decoration: none;
-  vertical-align: middle; transition: filter .12s;
+  vertical-align: middle; transition: background-color .12s;
 }
-.cc-b-del:hover { filter: brightness(1.12); }
+.cc-b-del:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; }
 .cc-cb-del { accent-color: var(--cc-accent, #FCC419); width: 16px; height: 16px; margin: 0 8px 0 0; cursor: pointer; vertical-align: middle; }
 /* The bulk-select toolbar: a per-row checkbox as the first flex child of .outer, plus a floating
    toolbar that appears once a row is checked. Its buttons ride the md tier of the .cc-b-del control
@@ -249,26 +250,22 @@ html.cc-bulkmode-on .cc-bulk-cb { display: inline-block !important; }
 }
 .cc-bulkbtn:hover { filter: brightness(1.14); }
 .cc-bulkbtn-clear { background: rgba(128, 128, 128, .28) !important; color: #cfcfcf !important; } /* a dismiss rests neutral */
-.cc-bulkbtn-danger { background: var(--cc-err, #ff8389) !important; color: var(--cc-err-fg, #161616) !important; } /* destructive, so semantic red like .cc-b-del */
 /* On the Plugins page the per-row uninstall is a trash icon with a CC confirmation, since
    plugins.js gates the native openInstall behind ccPluginConfirm, so Unraid's separate confirm
-   checkbox is hidden and the red text badge collapses to an icon. The html.cc-on-plugins scope
-   beats the .cc-b-del rule above for background and border. */
+   checkbox is hidden and the text badge collapses to an icon. The html.cc-on-plugins scope beats
+   the .cc-b-del rule above for the box. */
 html.cc-on-plugins .cc-cb-del.cc-cb-hidden,
 html.cc-tools-on .cc-cb-del.cc-cb-hidden { display: none !important; }
 html.cc-on-plugins .cc-b-del.cc-b-delicon,
 html.cc-tools-on .cc-b-del.cc-b-delicon {
   width: 32px !important; min-width: 32px !important; height: 30px !important; padding: 0 !important;
   font-size: 0 !important; letter-spacing: 0 !important; text-transform: none !important;
-  background-color: var(--cc-err, #ff8389) !important;   /* filled red, like the .cc-b-del badge */
-  /* the same can as the Startplan row's delete badge: tabler-icons (MIT) icons/filled/trash.svg */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M20 6a1 1 0 0 1 .117 1.993l-.117 .007h-.081l-.919 11a3 3 0 0 1 -2.824 2.995l-.176 .005h-8c-1.598 0 -2.904 -1.249 -2.992 -2.75l-.005 -.167l-.923 -11.083h-.08a1 1 0 0 1 -.117 -1.993l.117 -.007zm-10 4a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1m4 0a1 1 0 0 0 -1 1v6a1 1 0 0 0 2 0v-6a1 1 0 0 0 -1 -1'/%3E%3Cpath d='M14 2a2 2 0 0 1 2 2a1 1 0 0 1 -1.993 .117l-.007 -.117h-4l-.007 .117a1 1 0 0 1 -1.993 -.117a2 2 0 0 1 1.85 -1.995l.15 -.005z'/%3E%3C/svg%3E") !important;
-  background-repeat: no-repeat !important; background-position: center !important; background-size: 15px !important;
   border: none !important; box-shadow: none !important;
   border-radius: var(--cc-b-radius, 6px) !important; cursor: pointer;
-  transition: filter .15s;
 }
-html.cc-on-plugins .cc-b-del.cc-b-delicon:hover { filter: brightness(1.12) !important; }
+/* The glyph is CC_TRASH_SVG, the same can as the Startplan row's delete badge, drawn in
+   currentColor so it takes the badge's ink on every fill. */
+.cc-b-delicon svg { width: 15px; height: 15px; display: block; pointer-events: none; }
 /* the dot on a badge: filled green when a value is configured, hollow at the default */
 .cc-cfg { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 6px; vertical-align: middle; box-sizing: border-box; }
 .cc-cfg-on { background: var(--cc-ok, #6fdc8c); box-shadow: 0 0 0 1px rgba(0, 0, 0, .28); }
@@ -787,15 +784,14 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { filter
 /* both states read the standard three-tier chain, so a day chip rotates with the colour mode */
 .cc-day:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 .cc-day-on { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
-/* The row's delete control. Its box comes from the shared `.cc-day, .cc-sched-x` rule above, so
-   only the colour differs: deleting is destructive, so it stays semantic red and never joins the
-   accent or the rainbow, which is why .cc-sched-x is absent from POP_PAINT_SEL and gets no
-   --cc-rb-c. `margin-left: auto` pushes it to the row's right edge, away from the day chips it
-   must not be mistaken for. The glyph is CC_TRASH_SVG from cc-theme.js, at the same ratio inside
-   its box as the .cc-b-delicon button on the Plugins page. */
-.cc-sched-x { margin-left: auto; background: var(--cc-err, #ff8389); color: var(--cc-err-fg, #161616); transition: filter .12s; }
+/* The row's delete control. Its box comes from the shared `.cc-day, .cc-sched-x` rule above, and its
+   colour is the chosen day chip's three-tier chain, since a delete is never painted red: the trash
+   glyph and its tooltip say what it does. `margin-left: auto` pushes it to the row's right edge,
+   away from the day chips it must not be mistaken for. The glyph is CC_TRASH_SVG from cc-theme.js,
+   at the same ratio inside its box as the .cc-b-delicon button on the Plugins page. */
+.cc-sched-x { margin-left: auto; background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); transition: background-color .12s; }
 .cc-sched-x svg { width: 15px; height: 15px; display: block; }
-.cc-sched-x:hover { filter: brightness(1.12); }
+.cc-sched-x:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }
 /* the CPU-pinning grid, like the VM settings: one clickable cell per logical core */
 .cc-pin-row { align-items: flex-start; }
 /* One box per physical core with its hyperthreads stacked inside, the boxes wrapping into rows. On
@@ -2101,9 +2097,12 @@ html.cc-shares-rbneutral.cc-plugins-iconbg .cc-plugico { background: rgba(128, 1
 html.cc-shares-rbneutral.cc-plugins-iconbg #plugin_list tr:hover .cc-plugico { background: var(--cc-iconbg-color, var(--cc-accent, #FCC419)) !important; }
 /* The whole plugin row reacts, not just its logo: the badges rest grey through plugins.js restBg
    and take the row's stamped --cc-rb-c on hover, as the Docker rows do. The semantic status and
-   update pills are excluded and keep their own colour. This is the generic value-badge path, so
-   it stays rainbow-first, unlike the logo tile below. */
-html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b:not(.cc-b-del),
+   update pills are excluded and keep their own colour. The delete badge is one of the row's badges
+   like any other, so it rests and reveals with them. This is the generic value-badge path, so it
+   stays rainbow-first, unlike the logo tile below. */
+html.cc-shares-rbneutral.cc-on-plugins #plugin_list .cc-b-del { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
+html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b,
+html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b-del,
 html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-plugsup {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }

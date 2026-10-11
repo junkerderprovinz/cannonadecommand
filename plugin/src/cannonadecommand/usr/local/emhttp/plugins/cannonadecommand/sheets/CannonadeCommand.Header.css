@@ -970,9 +970,6 @@ html.cc-popups-on .cc-notif-badge {
 html.cc-popups-on .cc-notif-badge:hover { text-decoration: none !important; filter: brightness(1.08); }
 html.cc-popups-on .cc-notif-arch { background: #2a2a2a !important; color: #e6e6e6 !important; }
 html.cc-popups-on .cc-notif-arch:hover { background: #333 !important; color: #fff !important; }
-html.cc-popups-on .cc-notif-del { background: rgba(255, 107, 107, .14) !important; color: #ff6b6b !important; }
-html.cc-popups-on .cc-notif-del:hover { background: rgba(255, 107, 107, .22) !important; color: #ff8a8a !important; }
-html.cc-popups-on .cc-notif-del.cc-notif-armed { background: #e5484d !important; color: #fff !important; }
 /* The rest of the notification centre in CC style; the Tailwind hooks fail soft. */
 
 /* The top wrapper is h-full, but the drawer's height is auto with max-height:82vh, so height:100%
@@ -1045,19 +1042,11 @@ html.cc-popups-on .cc-notif-del {
 }
 html.cc-popups-on .cc-notif-arch svg,
 html.cc-popups-on .cc-notif-del svg { width: 15px !important; height: 15px !important; }
-html.cc-popups-on .cc-notif-arch { background: var(--cc-surface-chip) !important; color: var(--cc-ink-dim) !important; }
-html.cc-popups-on .cc-notif-arch:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; }
-html.cc-popups-on .cc-notif-del:hover { background: rgba(255, 107, 107, .24) !important; color: #ff8a8a !important; }
-/* in the reactive sub-mode the delete icon rests neutral like the rest */
-html.cc-popups-on.cc-header-rbneutral .cc-notif-del:not(:hover) { background: var(--cc-surface-chip) !important; color: var(--cc-ink-dim) !important; }
-/* the trash glyph is white in every state; the svg strokes with currentColor, so colour and stroke
-   are pinned on the svg itself */
-html.cc-popups-on .cc-notif-del svg { color: #fff !important; stroke: #fff !important; }
-/* Delete gets the same colour-mode treatment as archive, a neutral chip at rest and the solid
-   --cc-rb-c from ccPaintRotate on hover. The armed confirm state keeps its red. */
-html.cc-popups-on .cc-notif-del { background: var(--cc-surface-chip) !important; }
-html.cc-popups-on .cc-notif-del:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; }
-html.cc-popups-on .cc-notif-del.cc-notif-armed { background: #e5484d !important; }
+/* Delete is archive's twin: a neutral chip at rest and the solid --cc-rb-c from ccPaintRotate on
+   hover. The armed confirm state keeps that fill and says the rest in its tooltip, never in red. */
+html.cc-popups-on :is(.cc-notif-arch, .cc-notif-del) { background: var(--cc-surface-chip) !important; color: var(--cc-ink-dim) !important; }
+html.cc-popups-on :is(.cc-notif-arch, .cc-notif-del):hover,
+html.cc-popups-on .cc-notif-del.cc-notif-armed { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; }
 
 /* smaller card text than the native 16px title and body */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] { font-size: 12.5px !important; }
