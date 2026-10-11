@@ -75,6 +75,12 @@ html {
      --cc-accent, so it follows a picked colour as well as the default. */
   --cc-ink-mix:     100%;
   --cc-accent-ink:  color-mix(in srgb, var(--cc-accent) var(--cc-ink-mix), black);
+  /* Hover on a filled control is one colour step toward the theme's text, which is lighter on dark
+     and darker on light, rather than a brightness filter that also bleaches the ink on top. A fill
+     that is not one of these tokens takes the same mix inline. Where the fill is painted inline or
+     differs per badge, --cc-hover-wash laid over it as an inset shadow gives the same step. */
+  --cc-accent-hover: color-mix(in srgb, var(--cc-accent) 85%, var(--cc-text));
+  --cc-hover-wash:   color-mix(in srgb, var(--cc-text) 15%, transparent);
 
   /* The right-edge gutter that pulls every right-flush element (search badge, show more, view
      toggle, footer arrows, list rows) in to the #displaybox content edge rather than the scrollbar
@@ -109,6 +115,9 @@ html {
   --cc-ok:   #6fdc8c;  --cc-ok-fg:   #161616;  --cc-ok-ink:   #6fdc8c;
   --cc-warn: #ff832b;  --cc-warn-fg: #161616;  --cc-warn-ink: #ff832b;
   --cc-err:  #ff8389;  --cc-err-fg:  #161616;  --cc-err-ink:  #ff8389;
+  --cc-ok-hover:   color-mix(in srgb, var(--cc-ok) 85%, var(--cc-text));
+  --cc-warn-hover: color-mix(in srgb, var(--cc-warn) 85%, var(--cc-text));
+  --cc-err-hover:  color-mix(in srgb, var(--cc-err) 85%, var(--cc-text));
   /* advice rather than a problem, such as ShipLog's pinned tag with a newer version out; ShipLog's
      own sheets read this name too */
   --cc-info: #3b82d0;  --cc-info-fg: #fff;
@@ -565,7 +574,7 @@ html.cc-popups-on .ca_homeTemplatesHeader .cc-info {
 html.cc-popups-on .ca_homeTemplatesHeader .cc-info svg { width: 15px !important; height: 15px !important; display: block !important; }
 html.cc-popups-on .ca_homeTemplatesHeader .cc-info:hover, html.cc-popups-on .ca_homeTemplatesHeader .cc-info:focus { opacity: 1 !important; outline: none !important; }
 /* Show more follows the contract of every other Apps badge (maxPerPage, dockerSearch, the sort
-   icons, the ribbons): coloured at rest with a brightness hover, dropping to the neutral chip only
+   icons, the ribbons): coloured at rest with a colour-step hover, dropping to the neutral chip only
    under the reactive rainbow (.cc-apps-rbneutral). */
 html.cc-popups-on .ca_homeTemplatesHeader .homeMore {
   margin-left: auto !important;
@@ -579,7 +588,7 @@ html.cc-popups-on .ca_homeTemplatesHeader .homeMore {
 }
 html.cc-popups-on .ca_homeTemplatesHeader .homeMore:hover,
 html.cc-popups-on .ca_homeTemplatesHeader .homeMore:focus {
-  filter: brightness(1.12) !important; outline: none !important;
+  box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; outline: none !important;
 }
 html.cc-apps-rbneutral.cc-popups-on .ca_homeTemplatesHeader .homeMore {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
@@ -805,7 +814,7 @@ html.cc-popups-on .cc-ca-search-extras .dockerSearch {
    during a search and keeps CA's own visibility. */
 html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage { display: flex !important; }
 html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:hover,
-html.cc-popups-on .cc-ca-search-extras .dockerSearch:hover { filter: brightness(1.12) !important; }
+html.cc-popups-on .cc-ca-search-extras .dockerSearch:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* like the search chip above: neutral at rest, coloured on hover */
 html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage,
 html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .dockerSearch {
@@ -930,7 +939,7 @@ html.cc-popups-on .caMenuItem.selectedMenu:not(.cc-ca-search-li):hover {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
-html.cc-popups-on .caMenuItem.selectedMenu:not(.cc-ca-search-li):hover { filter: brightness(1.06) !important; }
+html.cc-popups-on .caMenuItem.selectedMenu:not(.cc-ca-search-li):hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-popups-on .caMenuItem a.caMenuItem {
   color: inherit !important; text-decoration: none !important; display: inline !important; padding: 0 !important; margin: 0 !important;
 }
@@ -1039,7 +1048,7 @@ html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre {
   --cc-ac-glow: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) 55%, transparent);
   animation: cc-ac-pulse 1.4s ease-in-out 6 !important;
 }
-html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre:hover { filter: brightness(1.08) !important; }
+html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* The reactive mode is a colour contract, not a motion one, so it leaves this badge coloured and
    pulsing. Reduced motion does stop the pulse. */
 @media (prefers-reduced-motion: reduce) {
@@ -1209,11 +1218,11 @@ html.cc-apps-rbneutral.cc-popups-on .cc-warn-badge {
 html.cc-apps-rbneutral.cc-popups-on .cc-warn-badge:hover {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
-html.cc-popups-on .ca_bottomLine .actionsButton:hover { filter: brightness(1.08) !important; }
+html.cc-popups-on .ca_bottomLine .actionsButton:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-rb-on.cc-popups-on .ca_bottomLine .caButton {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
-html.cc-rb-on.cc-popups-on .ca_bottomLine .caButton:hover { filter: brightness(1.08) !important; background: var(--cc-rb-c, var(--cc-accent)) !important; }
+html.cc-rb-on.cc-popups-on .ca_bottomLine .caButton:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; background: var(--cc-rb-c, var(--cc-accent)) !important; }
 html.cc-popups-on .searchArea .caButton {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
   border-radius: var(--cc-b-radius, 8px) !important; -webkit-mask-image: none !important; mask-image: none !important;
@@ -1266,7 +1275,7 @@ html.cc-popups-on .cc-castats .actionsButton {
   text-transform: uppercase !important; letter-spacing: .3px !important; white-space: nowrap !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
-html.cc-popups-on .cc-castats .actionsButton:hover { filter: brightness(1.08) !important; }
+html.cc-popups-on .cc-castats .actionsButton:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* CC's own badge for the installed states, Update and Installiert, in the same box as
    .actionsButton, so switching between the three states never changes the row's rhythm */
 html.cc-popups-on .cc-castats .cc-cs-cta {
@@ -1280,7 +1289,7 @@ html.cc-popups-on .cc-castats .cc-cs-cta {
 html.cc-popups-on .cc-cs-cta.cc-cs-cta-update {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
-html.cc-popups-on .cc-cs-cta.cc-cs-cta-update:hover { filter: brightness(1.08) !important; }
+html.cc-popups-on .cc-cs-cta.cc-cs-cta-update:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* Installiert is a status rather than an action, so it stays a neutral chip and is not clickable */
 html.cc-popups-on .cc-cs-cta.cc-cs-cta-installed {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important; cursor: default !important;
@@ -1390,7 +1399,7 @@ html.cc-popups-on .popupInfo .caButton:not(.actionsPopup):hover {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   filter: none !important;
 }
-html.cc-popups-on .popupInfo .actionsPopup:hover { filter: brightness(1.1) !important; }
+html.cc-popups-on .popupInfo .actionsPopup:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-apps-rbneutral.cc-popups-on .popupInfo .actionsPopup {
   background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text, #e6e6e6) !important;
 }
@@ -1727,7 +1736,7 @@ html.cc-popups-on .multi_installDiv .multi_installClear:not(.ca_hide) {
 html.cc-popups-on .multi_installDiv input[type="button"]:hover,
 html.cc-popups-on .multi_installDiv input[type="submit"]:hover,
 html.cc-popups-on .multi_installDiv .multi_installAll:hover,
-html.cc-popups-on .multi_installDiv .multi_installClear:hover { filter: brightness(1.12) !important; }
+html.cc-popups-on .multi_installDiv .multi_installClear:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* The reactive mode: neutral at rest, the mode's colour on hover. .cc-popups-on is repeated so this
    beats the rainbow rule above. */
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv input[type="button"],
@@ -1750,11 +1759,11 @@ html.cc-popups-on .multi_installDiv .multi_installButton {
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 html.cc-popups-on .multi_installDiv .multi_install:hover,
-html.cc-popups-on .multi_installDiv .multi_installButton:hover { filter: brightness(1.08) !important; background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; }
+html.cc-popups-on .multi_installDiv .multi_installButton:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; }
 /* The Previous Apps bulk-delete button starts disabled and enables once a card is checked, so it
-   dims and drops the hover brighten while inactive. */
+   dims and drops the hover step while inactive. */
 html.cc-popups-on .multi_installDiv .cc-prevapps-delbtn:disabled { opacity: .45 !important; cursor: default !important; }
-html.cc-popups-on .multi_installDiv .cc-prevapps-delbtn:disabled:hover { filter: none !important; }
+html.cc-popups-on .multi_installDiv .cc-prevapps-delbtn:disabled:hover { box-shadow: none !important; }
 /* reactive mode: the primary rests neutral like every other badge and colours on hover */
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_install,
 html.cc-apps-rbneutral.cc-popups-on .multi_installDiv .multi_installButton {
@@ -1835,7 +1844,7 @@ html.cc-popups-on #alternateView .alternateViewClose {
   border: none !important; border-radius: var(--cc-b-radius, 8px) !important; cursor: pointer !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, .45) !important; z-index: 10 !important;
 }
-html.cc-popups-on #alternateView .alternateViewClose:hover { filter: brightness(1.1) !important; background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; }
+html.cc-popups-on #alternateView .alternateViewClose:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; }
 /* The stats and credits table: rows separated by a shade rather than a rule, with the value column
    in the accent. CA paints the table black, which sits as a slab inside the frame, so nothing
    inside the panel carries its own fill and the frame is the only surface; the title badge and the
@@ -2072,7 +2081,7 @@ html.cc-popups-on a.move_to_end {
 html.cc-popups-on a.back_to_top > i,
 html.cc-popups-on a.move_to_end > i { color: inherit !important; }
 html.cc-popups-on a.back_to_top:hover,
-html.cc-popups-on a.move_to_end:hover { filter: brightness(1.12) !important; }
+html.cc-popups-on a.move_to_end:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* Neutral at rest, coloured on hover, with .cc-popups-on repeated so it beats the rule above. The
    rest fill is a solid surface with a shadow rather than the shared translucent --cc-chip: every
    other chip sits on a known panel, while these two float over whatever the page is scrolling
@@ -2110,7 +2119,7 @@ html.cc-popups-on .searchArea .dockerSearch {
   transition: background .12s ease, color .12s ease, filter .12s ease !important;
 }
 html.cc-popups-on .searchArea .caButton.maxPerPage:hover,
-html.cc-popups-on .searchArea .dockerSearch:hover { filter: brightness(1.12) !important; }
+html.cc-popups-on .searchArea .dockerSearch:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* the "Search for X" caption states a fact and is not clickable, so it stays quiet prose */
 html.cc-popups-on .searchArea .category.categoryLine {
   background: transparent !important; color: var(--cc-text-dim, #8a8a8a) !important;

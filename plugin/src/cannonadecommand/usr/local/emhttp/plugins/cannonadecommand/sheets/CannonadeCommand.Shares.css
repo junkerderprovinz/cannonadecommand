@@ -38,7 +38,7 @@ html.cc-shares-on #displaybox nav.tabs button[role="tab"] {
   gap: 6px;
   transition: filter .12s, background .12s, color .12s;
 }
-html.cc-shares-on #displaybox nav.tabs button[role="tab"]:hover { filter: brightness(1.14); }
+html.cc-shares-on #displaybox nav.tabs button[role="tab"]:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-shares-on #displaybox nav.tabs button[role="tab"][aria-selected="true"] {
   background: var(--cc-shr-accent, #FCC419);
   color: var(--cc-shr-accent-text, #161616);
@@ -130,7 +130,7 @@ html.cc-shares-on #displaybox table.unraid.share_status .cc-b.cc-b-name {
   padding: var(--cc-lg-pad, 6px 16px); font-size: var(--cc-lg-fs, 15px);
   font-weight: 700; letter-spacing: .2px;
 }
-html.cc-shares-on #displaybox table.unraid.share_status .cc-b.cc-b-name:hover { filter: brightness(1.14); }
+html.cc-shares-on #displaybox table.unraid.share_status .cc-b.cc-b-name:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-name,
 html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-name:hover { text-decoration: none; }
 
@@ -170,7 +170,7 @@ html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-browse {
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
   transition: filter .12s;
 }
-html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-browse:hover { filter: brightness(1.14); }
+html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-browse:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 
 /* /Main's disk_status gets the same value badges and Browse column as the Freigaben list, repeated
    and gated on .cc-on-main because disk_status also renders on /Device and /Disk, which stay
@@ -205,14 +205,14 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status a.cc-b-browse 
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
   transition: filter .12s;
 }
-html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status a.cc-b-browse:hover { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status a.cc-b-browse:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 
-/* A .cc-b that wraps a live link (Berechnen, the disk row's recompute link) brightens on hover like
+/* A .cc-b that wraps a live link (Berechnen, the disk row's recompute link) steps on hover like
    a.cc-b-name and a.cc-b-browse; static value pills and tooltip-only a.info anchors do not. */
 html.cc-shares-on #displaybox table.unraid.share_status .cc-b:has(a[href], a[onclick]),
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b:has(a[href], a[onclick]) { cursor: pointer; transition: filter .12s; }
 html.cc-shares-on #displaybox table.unraid.share_status .cc-b:has(a[href], a[onclick]):hover,
-html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b:has(a[href], a[onclick]):hover { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b:has(a[href], a[onclick]):hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* With table-layout:auto (the min-width override is below) each column sizes to its content, so the
    numeric headers (GESCHRIEBEN, FEHLER) keep their full label and the pool and boot rows ending in
    <td colspan=4> lay out correctly; a fixed layout would size the grid from a colspan-shifted row
@@ -241,7 +241,7 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b.cc-b-nam
   padding: var(--cc-lg-pad, 6px 16px); font-size: var(--cc-lg-fs, 15px);
   font-weight: 700; letter-spacing: .2px;
 }
-html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b.cc-b-name:hover { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-b.cc-b-name:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status a.cc-b-name,
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status a.cc-b-name:hover { text-decoration: none; }
 /* a small gap between the inline .diskio rate and the reads and writes count */
@@ -424,7 +424,7 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status .cc-tsel > .cc
 /* On an empty slot the disk name badge is a <span>, since there is no <a> to tag (shares.js
    enhanceMainName), so it reads as a label without the hover lift of .cc-b.cc-b-name. */
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status span.cc-b.cc-b-name { cursor: default; }
-html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status span.cc-b.cc-b-name:hover { filter: none; }
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status span.cc-b.cc-b-name:hover { box-shadow: none !important; }
 /* A table a few px wider than its container adds a dark scrollbar track under the rows, and during
    a column drag it pops in and out and the page jumps. Automatic widths never scroll, a drag
    freezes the overflow, and dragged widths keep a slim bar without a track. */
@@ -487,7 +487,7 @@ html.cc-shares-on.cc-on-main #displaybox a.button {
 }
 html.cc-shares-on.cc-on-main #displaybox input[type="submit"]:hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox input[type="button"]:hover:not(:disabled),
-html.cc-shares-on.cc-on-main #displaybox a.button:hover:not(:disabled) { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-main #displaybox a.button:hover:not(:disabled) { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* Format, Check, Pause and Cancel start disabled and look inert */
 html.cc-shares-on.cc-on-main #displaybox input[type="submit"]:disabled,
 html.cc-shares-on.cc-on-main #displaybox input[type="button"]:disabled {
@@ -506,14 +506,13 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status a.button {
   width: var(--cc-lgb-w, 200px) !important; min-width: var(--cc-lgb-w, 200px) !important; max-width: var(--cc-lgb-w, 200px) !important;
   flex: 0 0 auto !important; white-space: nowrap !important; padding: 0 12px !important;   /* one fixed width puts the (i) bubble and the PLANUNG badge at the same x in every row */
 }
-/* enabled buttons brighten on hover, disabled ones do not; brightness only, no ring */
+/* enabled buttons take a colour step on hover, disabled ones do not; no ring */
 html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="submit"]:hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="button"]:hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox table.array_status input[type="reset"]:hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox table.array_status button:not([role="tab"]):hover:not(:disabled),
 html.cc-shares-on.cc-on-main #displaybox table.array_status a.button:hover {
-  filter: brightness(1.22) !important;
-  box-shadow: none !important;
+  box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important;
 }
 html.cc-shares-on.cc-on-main #displaybox table.array_status input:disabled:hover,
 html.cc-shares-on.cc-on-main #displaybox table.array_status button:disabled:hover { filter: none !important; box-shadow: none !important; }
@@ -530,7 +529,7 @@ html.cc-shares-on.cc-on-main #displaybox button:not([role="tab"]) {
   display: inline-flex !important; align-items: center; justify-content: center; text-decoration: none !important;
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
 }
-html.cc-shares-on.cc-on-main #displaybox button:not([role="tab"]):hover:not(:disabled) { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-main #displaybox button:not([role="tab"]):hover:not(:disabled) { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-shares-on.cc-on-main #displaybox button:not([role="tab"]):disabled {
   background: #3a3a3a !important; color: #8a8a8a !important; opacity: .55 !important; filter: none !important; cursor: not-allowed !important;
 }
@@ -597,7 +596,7 @@ html.cc-shares-on:is(.cc-on-main, .cc-on-shares) #displaybox a.cc-ibtn * {
   font-size: 13px !important; line-height: 1 !important; color: var(--cc-rb-ct, var(--cc-shr-accent-text, #161616)) !important;   /* a glyph in proportion to the 24px tile */
 }
 html.cc-shares-on.cc-on-main #displaybox a.cc-ud-icon:hover,
-html.cc-shares-on:is(.cc-on-main, .cc-on-shares) #displaybox a.cc-ibtn:hover { filter: brightness(1.14); }
+html.cc-shares-on:is(.cc-on-main, .cc-on-shares) #displaybox a.cc-ibtn:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* UD gives the inner <i> a 20px inline-block box that sits off-centre in the 24px tile, so every
    inner box is neutralised and the flex tile centres the glyph */
 html.cc-shares-on.cc-on-main #displaybox a.cc-ud-icon :is(i, img, span:not(.help-content)),
@@ -686,7 +685,7 @@ html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mount
   width: 24px; height: 24px; border-radius: var(--cc-b-radius, 999px);   /* the 24px /Main icon tile, like a.cc-ud-icon */
   background: var(--cc-shr-accent, #FCC419); color: var(--cc-shr-accent-text, #161616); transition: filter .12s;
 }
-html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) a.info:hover i.fa-gears { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) a.info:hover i.fa-gears { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) i.fa-gears[disabled],
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) i.fa-gears.disabled {
   display: inline-flex; align-items: center; justify-content: center;
@@ -701,7 +700,7 @@ html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mount
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important; transition: background-color .12s; cursor: pointer;
 }
 html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) a:hover > :is(i.fa-remove, i.fa-times, i.fa-trash, i.fa-trash-o, i.fa-ban),
-html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) :is(i.fa-remove, i.fa-times, i.fa-trash, i.fa-trash-o, i.fa-ban):hover { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-main #displaybox :is(table.usb_mounts, table.samba_mounts, table.usb_absent) :is(i.fa-remove, i.fa-times, i.fa-trash, i.fa-trash-o, i.fa-ban):hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* The UD HISTORICAL, FREIGABEN and DISKS toggles are native jQuery switchButtons (a
    .switch-button-background track, .checked when on, and a .switch-button-button knob). Only colour
    and radius change, as for the Docker and VM autostart toggles. */
@@ -842,7 +841,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status a.cc-aop-link {
   font-size: var(--cc-sm-fs, 11px); font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
   text-decoration: none !important; white-space: nowrap; transition: filter .12s;
 }
-html.cc-shares-on.cc-on-main #displaybox table.array_status a.cc-aop-link:hover { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-main #displaybox table.array_status a.cc-aop-link:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-shr-accent, #FCC419)) 85%, var(--cc-text, #e6e6e6)); }
 /* in rows with two buttons each button gets its own flex row and bubble, so every bubble sits at
    the same x (column start, --cc-lgb-w, the 10px .cc-info margin) as in single-button rows */
 html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-brow { display: inline-flex; align-items: center; }
@@ -939,7 +938,7 @@ html.cc-shares-on #displaybox form[name="share_form"] input[type="submit"] {
 html.cc-shares-on #displaybox #compute-shares:hover,
 html.cc-shares-on #displaybox #compute-disks:hover,
 html.cc-shares-on #displaybox #cleanup-button:hover,
-html.cc-shares-on #displaybox form[name="share_form"] input[type="submit"]:hover { filter: brightness(1.14); }
+html.cc-shares-on #displaybox form[name="share_form"] input[type="submit"]:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 
 /* Share detail page (/Shares/Share?name=X), marked html.cc-on-share-detail by shares.js: the two
    sub-pages (Freigabeeinstellungen, SMB-Sicherheitseinstellungen) in the CC look. The sub-tabs are
@@ -957,7 +956,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .menuNavButtonsTabbed a.button 
   display: inline-flex !important; align-items: center; justify-content: center;
   cursor: pointer; transition: filter .12s;
 }
-html.cc-shares-on.cc-on-share-detail #displaybox .menuNavButtonsTabbed a.button:hover { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-share-detail #displaybox .menuNavButtonsTabbed a.button:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-shares-on.cc-on-share-detail #displaybox .menuNavButtonsTabbed a.button i { color: inherit !important; }
 
 /* Action buttons: one pill shape for the Apply/Done submit, the SMB Apply and the Read/Write clone
@@ -989,7 +988,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox input[type="button"]:not(.clone
 }
 html.cc-shares-on.cc-on-share-detail #displaybox input[type="submit"]:hover:not(:disabled),
 html.cc-shares-on.cc-on-share-detail #displaybox input[type="button"]:hover:not(:disabled),
-html.cc-shares-on.cc-on-share-detail #displaybox input.clone:hover:not(:disabled) { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-share-detail #displaybox input.clone:hover:not(:disabled) { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* The clone Read/Write buttons start disabled until a share is picked, so a disabled button has to
    read as inactive rather than as an enabled accent primary. */
 html.cc-shares-on.cc-on-share-detail #displaybox input[type="submit"]:disabled,
@@ -1125,9 +1124,9 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt {
   border: none !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-shr-accent-text, #161616))) !important; white-space: nowrap;
   transition: background .12s, color .12s, filter .12s;
 }
-/* a hovered dropdown option, disk item or cc-select overlay, brightens its own colour */
+/* a hovered dropdown option, disk item or cc-select overlay steps its own colour */
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item:hover,
-html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt:hover { filter: brightness(1.18); }
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-shr-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; }
 /* Reactive sub-mode: neutral at rest, own colour on hover or when picked. The gate is header.js's
    cc-tools-rbneutral rather than this area's cc-shares-rbneutral, which shares.js stamps on
    cc.rbmode alone and which would grey out lists that must stay accent in accent mode. */
@@ -1140,9 +1139,9 @@ html.cc-tools-rbneutral.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt:
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-shr-accent, #FCC419))) !important;
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-shr-accent-text, #161616))) !important; filter: none;
 }
-/* a selected item keeps its own stamped colour and a hover just brightens it */
+/* a selected item keeps its own stamped colour and a hover steps it */
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item:has(input:checked):hover,
-html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-selected:hover { filter: brightness(1.18); }
+html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-selected:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-shr-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; }
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item:has(input:checked),
 html.cc-tools-rbneutral.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item:has(input:checked),
 html.cc-tools-rbneutral.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-selected {
@@ -1306,12 +1305,11 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-panel {
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel.cc-open .cc-sel-panel { display: flex; }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel.cc-sel-disabled .cc-sel-trigger { opacity: .5; cursor: not-allowed; }
-/* the picked chip reads its stamped colour through the same chain as every other option, so it does
-   not jump back to the flat accent in a rotating list */
+/* the picked chip steps its stamped colour, read through the same chain as every other option, so
+   it does not jump back to the flat accent in a rotating list */
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-selected {
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-shr-accent, #FCC419))) !important;
+  background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-shr-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important;
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-shr-accent-text, #161616))) !important;
-  filter: brightness(1.18);
   box-shadow: none !important;   /* no frames or rings, on selected badges either */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-opt.is-disabled { opacity: .4; pointer-events: none; }
@@ -1532,7 +1530,7 @@ html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"] {
 html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"]:not(.dfm_control) {
   background: #4a4a4a !important; color: #f0f0f0 !important;
 }
-html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"]:hover:not(:disabled) { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-browse #displaybox #buttons input[type="button"]:hover:not(:disabled) { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* A disabled button has to be unmistakable here. The detail page's opacity and grayscale leave the
    background, and a dimmed red still reads as armed, so the fill is flattened outright. No
    pointer-events:none: the disabled property blocks the click already, and pointer events keep the
@@ -1594,7 +1592,7 @@ html.cc-shares-on.cc-on-stats #displaybox > span.status input[type="button"] {
   font-size: var(--cc-md-fs, 13px) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
   transition: filter .12s;
 }
-html.cc-shares-on.cc-on-stats #displaybox > span.status input[type="button"]:hover { filter: brightness(1.14); }
+html.cc-shares-on.cc-on-stats #displaybox > span.status input[type="button"]:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 
 /* Empty-state notices as muted pills. shares.js ccMutedEmpties wraps the bare text of td.empty
    placeholder rows and the UD single-cell notices in span.cc-muted: fill and radius, no border. */

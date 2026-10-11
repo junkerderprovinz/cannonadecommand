@@ -188,7 +188,7 @@ html.cc-tools-on #displaybox a.button {
 html.cc-tools-on #displaybox input[type="button"]:hover:not(:disabled),
 html.cc-tools-on #displaybox input[type="submit"]:hover:not(:disabled),
 html.cc-tools-on #displaybox button:not([role="tab"]):hover:not(:disabled),
-html.cc-tools-on #displaybox a.button:hover { filter: brightness(1.14); }
+html.cc-tools-on #displaybox a.button:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-tools-on #displaybox input[type="button"]:focus-visible,
 html.cc-tools-on #displaybox button:focus-visible,
 html.cc-tools-on #displaybox a:focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
@@ -220,7 +220,7 @@ html.cc-tools-on form[name="SSLSettings"] input[type="submit"] {
   transition: filter .12s;
 }
 html.cc-tools-on form[name="SSLSettings"] input[type="button"]:hover:not(:disabled),
-html.cc-tools-on form[name="SSLSettings"] input[type="submit"]:hover:not(:disabled) { filter: brightness(1.14); }
+html.cc-tools-on form[name="SSLSettings"] input[type="submit"]:hover:not(:disabled) { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-tools-on form[name="SSLSettings"] input[type="button"]:focus-visible,
 html.cc-tools-on form[name="SSLSettings"] input[type="submit"]:focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
 
@@ -250,7 +250,7 @@ html.cc-tools-on .unapi [class*="border-input"][class*="bg-background"][class*="
   color: var(--cc-text, #eaeaea) !important;
 }
 html.cc-tools-on .unapi [class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="font-medium"]:hover {
-  filter: brightness(1.14) !important;
+  box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important;
 }
 /* Destructive buttons (Remove, Delete, the "Bist du sicher" confirm) take the colour of the buttons
    beside them rather than red: the confirmation says what is at stake, a colour cannot say more. */
@@ -265,7 +265,7 @@ html.cc-tools-on .unapi span:has(> .from-unraid-red) {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; border: none !important; border-radius: var(--cc-b-radius, 8px) !important;
 }
 html.cc-tools-on .unapi span:has(> .from-unraid-red) > .from-unraid-red { display: none !important; }
-html.cc-tools-on .unapi span:has(> .from-unraid-red):hover { filter: brightness(1.1) !important; box-shadow: none !important; }
+html.cc-tools-on .unapi span:has(> .from-unraid-red):hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* cards and list rows (OIDC providers, the Unraid.net row, rule cards): shade instead of a 1px grey
    border */
 html.cc-tools-on .unapi [class*="rounded-lg"][class*="border"]:not([class*="bg-warning"]):not([class*="bg-destructive"]) {
@@ -413,7 +413,7 @@ html.cc-popups-on #displaybox .cc-tsel.cc-tsel-disabled .cc-tsel-trigger { opaci
 html.cc-tools-on #displaybox .cc-tsel-group,
 html.cc-popups-on #displaybox .cc-tsel-group { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #9a9a9a; padding: 4px 12px 0; }
 /* in rainbow mode each item takes its own palette colour (--cc-rb-c per item from ccPaintRotate)
-   and hover or selection brightens it; accent mode uses the single accent */
+   and hover or selection steps it; accent mode uses the single accent */
 html.cc-tools-on #displaybox .cc-tsel-opt,
 html.cc-popups-on #displaybox .cc-tsel-opt {
   display: flex; align-items: center; gap: 8px; justify-content: flex-start;
@@ -425,7 +425,7 @@ html.cc-popups-on #displaybox .cc-tsel-opt {
 html.cc-tools-on #displaybox .cc-tsel-opt:hover,
 html.cc-tools-on #displaybox .cc-tsel-opt.is-selected,
 html.cc-popups-on #displaybox .cc-tsel-opt:hover,
-html.cc-popups-on #displaybox .cc-tsel-opt.is-selected { filter: brightness(1.18); box-shadow: none !important; }
+html.cc-popups-on #displaybox .cc-tsel-opt.is-selected { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); box-shadow: none !important; }
 html.cc-tools-on #displaybox .cc-tsel-opt.is-disabled,
 html.cc-popups-on #displaybox .cc-tsel-opt.is-disabled { opacity: .45; cursor: not-allowed; }
 /* Languages that are not installed yet get a dimmer fill rather than a border. They carry no
@@ -523,7 +523,7 @@ html.cc-tools-on #displaybox .ui-dropdownchecklist-item:not(.ui-dropdownchecklis
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item.ui-state-hover,
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item:hover,
 html.cc-tools-on #displaybox .ui-dropdownchecklist-item.ui-state-active,
-html.cc-tools-on #displaybox .ui-dropdownchecklist-item:has(input:checked) { filter: brightness(1.18); box-shadow: none !important; }
+html.cc-tools-on #displaybox .ui-dropdownchecklist-item:has(input:checked) { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; box-shadow: none !important; }
 /* reactive sub-mode: neutral at rest, colour on hover or when checked, like .cc-tsel-opt */
 html.cc-tools-on.cc-tools-rbneutral #displaybox .ui-dropdownchecklist-item {
   background: rgba(128, 128, 128, .16) !important; color: #e4e4e4 !important;

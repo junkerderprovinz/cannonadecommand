@@ -59,7 +59,7 @@ html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a {
   font-size: 15px !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important;
   transition: filter .12s, background .12s, color .12s;
 }
-html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search):hover > a { filter: brightness(1.14); }
+html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search):hover > a { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* tab icons (header.js ccTabIcons(), Tabler, MIT) join the pill's flex row, and their stroke takes
    the pill's colour through currentColor */
 html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search) > a svg.cc-tab-ico {
@@ -114,7 +114,7 @@ html.cc-header-on #menu .nav-tile .nav-item.util > a {
   background: var(--cc-hdr-accent, #FCC419) !important;
   transition: filter .12s;
 }
-html.cc-header-on #menu .nav-tile .nav-item.util > a:hover { filter: brightness(1.14); }
+html.cc-header-on #menu .nav-tile .nav-item.util > a:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-header-on #menu .nav-tile .nav-item.util:not(.cc-iconproxy) > a span { display: none !important; }   /* icon-only util buttons; the bell/burger proxy is exempt because the span is the icon */
 html.cc-header-on #menu .nav-tile .nav-item.util b.system,
 html.cc-header-on #menu .nav-tile .nav-item.util img.system {
@@ -280,7 +280,7 @@ html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"] {
   outline: none !important; box-shadow: none !important; text-decoration: none !important;
   transition: filter .12s;
 }
-html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"]:hover { filter: brightness(1.14); }
+html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"]:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"]:focus,
 html.cc-header-on unraid-header-os-version span[id^="reka-menu-trigger"]:focus-visible {
   outline: none !important; box-shadow: none !important; text-decoration: none !important;
@@ -316,7 +316,7 @@ html.cc-header-on [data-cc-trig] {
   border-radius: min(var(--cc-b-radius, 8px), 8px);
   color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #161616)); transition: color .12s, filter .12s;
 }
-html.cc-header-on [data-cc-trig]:hover { filter: brightness(1.14); }
+html.cc-header-on [data-cc-trig]:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-header-on.cc-header-rbneutral [data-cc-trig] { background: rgba(128, 128, 128, .18) !important; color: var(--cc-header-ink, #cfcfcf); }
 html.cc-header-on.cc-header-rbneutral [data-cc-trig]:hover { background: var(--cc-rb-c, var(--cc-hdr-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-hdr-accent-text, #161616)); }
 /* glyphs at 16px, a notch above the 14px icon size; the colour is forced onto the svg so the
@@ -770,7 +770,7 @@ html.cc-popups-on .ui-dialog .ui-dialog-content button:not([class*="switch"]) {
   font-weight: 600 !important; text-transform: uppercase !important;
   letter-spacing: .6px !important; cursor: pointer; transition: filter .12s;
 }
-html.cc-popups-on .ui-dialog .ui-dialog-buttonpane button:hover { filter: brightness(1.14); }
+html.cc-popups-on .ui-dialog .ui-dialog-buttonpane button:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* the page behind a popup dims and blurs through the shared backdrop tokens, like the bell menu */
 html.cc-popups-on .ui-widget-overlay,
 html.cc-popups-on .sweet-overlay {
@@ -835,7 +835,7 @@ html.cc-popups-on .sweet-alert .sa-button-container button {
 }
 html.cc-popups-on .sweet-alert button.confirm { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #161616))) !important; }   /* --cc-rb-c is this window's rotating slot from paintPopups() */
 html.cc-popups-on .sweet-alert button.cancel { background: #2e2e2e !important; color: #e6e6e6 !important; }
-html.cc-popups-on .sweet-alert .sa-button-container button:hover { filter: brightness(1.14); }
+html.cc-popups-on .sweet-alert .sa-button-container button:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* SweetAlert1 reuses one dialog node, so the "Bist du sicher?" step leaves a button.cancel that
    Unraid hides inline once the stream finishes. The inline-flex !important above would show it
    again between the status badge and Fertig; the attribute selector restores the native hide. */
@@ -903,7 +903,7 @@ html.cc-popups-on .swal-modal .swal-button {
   background: var(--cc-hdr-accent, #FCC419) !important; background-image: none !important; color: var(--cc-hdr-accent-text, #161616) !important;
 }
 html.cc-popups-on .swal-modal .swal-button--cancel { background: #2e2e2e !important; color: #e6e6e6 !important; }
-html.cc-popups-on .swal-modal .swal-button:hover { filter: brightness(1.14) !important; }
+html.cc-popups-on .swal-modal .swal-button:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-popups-on .swal-modal .swal-button:focus { box-shadow: none !important; outline: none !important; }
 
 /* The neutral dark surfaces shared by every CC floating window and badge. The accent and rainbow
@@ -967,7 +967,7 @@ html.cc-popups-on .cc-notif-badge {
   border-radius: 8px !important; padding: 7px 14px !important; line-height: 1 !important;
   cursor: pointer; user-select: none; transition: background-color .12s, color .12s, filter .12s;
 }
-html.cc-popups-on .cc-notif-badge:hover { text-decoration: none !important; filter: brightness(1.08); }
+html.cc-popups-on .cc-notif-badge:hover { text-decoration: none !important; box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-popups-on .cc-notif-arch { background: #2a2a2a !important; color: #e6e6e6 !important; }
 html.cc-popups-on .cc-notif-arch:hover { background: #333 !important; color: #fff !important; }
 /* The rest of the notification centre in CC style; the Tailwind hooks fail soft. */
@@ -1014,7 +1014,7 @@ html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="button"][aria-press
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="tab"][data-state="active"],
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="button"][aria-pressed="true"]:not(.cc-notif-badge) { opacity: 1 !important; box-shadow: none !important; }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="tab"]:hover,
-html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="button"][aria-pressed]:not(.cc-notif-badge):hover { opacity: 1 !important; filter: brightness(1.12) !important; }
+html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="button"][aria-pressed]:not(.cc-notif-badge):hover { opacity: 1 !important; box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* in the reactive sub-mode the inactive tabs and filters rest on the neutral chip surface; the
    active one keeps its colour and hover shows it */
 html.cc-popups-on.cc-header-rbneutral .unapi div.fixed.z-50.bg-background [role="tab"]:not([data-state="active"]):not(:hover),
@@ -1069,7 +1069,7 @@ html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] span
   border-radius: var(--cc-b-radius, 999px) !important; min-height: 30px !important; height: 30px !important; padding: 0 14px !important;
   font-size: 12.5px !important; font-weight: 600 !important; box-shadow: none !important; border: none !important; transition: background-color .12s, color .12s, filter .12s;
 }
-html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] span[class*="rounded-md"][class*="inline-flex"]:hover { filter: brightness(1.12) !important; }
+html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] span[class*="rounded-md"][class*="inline-flex"]:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* in the reactive sub-mode (cc-header-rbneutral) Archiv rests neutral and colours on hover */
 html.cc-popups-on.cc-header-rbneutral .unapi div.fixed.z-50.bg-background [class~="group/item"] span[class*="rounded-md"][class*="inline-flex"]:not(:hover) {
   background: var(--cc-surface-chip) !important; color: var(--cc-ink) !important; filter: none !important;
@@ -1128,14 +1128,14 @@ html.cc-header-on #menu .nav-item,
 html.cc-header-on #cc-brand,
 html.cc-docker-on .cc-badge,
 html.cc-shares-on .cc-badge { transition: background-color .14s ease, color .14s ease, filter .12s ease; }
-/* clickable badges (the ShipLog chip row, the Docker update and changelog chips) brighten on hover */
+/* clickable badges (the ShipLog chip row, the Docker update and changelog chips) step on hover */
 html.cc-docker-on .sl-chiprow > *,
 html.cc-docker-on .cc-3p,
 html.cc-docker-on a.cc-badge,
 html.cc-docker-on .cc-badge[onclick] { transition: filter .12s ease, background-color .14s ease; cursor: pointer; }
 html.cc-docker-on .sl-chiprow > *:hover,
 html.cc-docker-on a.cc-badge:hover,
-html.cc-docker-on .cc-badge[onclick]:hover { filter: brightness(1.2); }
+html.cc-docker-on .cc-badge[onclick]:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 /* The CC toast (header.js ccToast, one reused node): a bottom-centre pill with a colour-mode border
    that slides up and fades in, hidden until .cc-toast-show. */
 #cc-toast {
@@ -1359,7 +1359,7 @@ html.cc-apikeyspage [aria-haspopup="menu"][role="button"] {
   color: var(--cc-rbaccent-text, var(--cc-hdr-accent-text, var(--cc-accent-text, #161616))) !important;
   height: var(--cc-lgb-h, 36px) !important; padding: 0 16px !important;
 }
-html.cc-apikeyspage [aria-haspopup="menu"][role="button"]:hover { filter: brightness(1.14); }
+html.cc-apikeyspage [aria-haspopup="menu"][role="button"]:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-apikeyspage [aria-haspopup="menu"][role="button"] svg { display: none !important; }
 
 /* border.rounded-lg.border-muted is the card of this reka/Tailwind component family, so this catches
@@ -1379,7 +1379,7 @@ html.cc-tools-on .unapi button:not([role="tab"]) {
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
   border: none !important; border-radius: var(--cc-b-radius, 6px) !important;
 }
-html.cc-tools-on .unapi button:not([role="tab"]):hover { filter: brightness(1.14); }
+html.cc-tools-on .unapi button:not([role="tab"]):hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; }
 
 /* User tiles on /Users, like the Settings and Tools tiles in SettingsGrid.css. The native grid is a
    .Panels of div.user-list > a > img.picture (48px) plus the name with a 10px gap; the avatar becomes
@@ -1414,7 +1414,7 @@ html.cc-header-on #displaybox:has(.user-list) a.button {
   font-weight: 600; text-transform: uppercase; letter-spacing: .6px; cursor: pointer; transition: filter .12s;
 }
 html.cc-header-on #displaybox:has(.user-list) input[type="button"]:hover:not(:disabled),
-html.cc-header-on #displaybox:has(.user-list) input[type="submit"]:hover:not(:disabled) { filter: brightness(1.14); }
+html.cc-header-on #displaybox:has(.user-list) input[type="submit"]:hover:not(:disabled) { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 
 /* Table header rows as quiet, tracked small caps in the chip tone on a subtle surface, separated
    from the rows by shade. Only the text and background-color change, not the background shorthand,

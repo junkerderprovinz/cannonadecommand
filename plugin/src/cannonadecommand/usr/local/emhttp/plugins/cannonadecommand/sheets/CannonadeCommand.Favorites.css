@@ -27,7 +27,7 @@ html.cc-favorites-on #displaybox .Panel > a > span {
   background: var(--cc-iconbg-color, var(--cc-accent, #FCC419)) !important;
   transition: filter .12s;
 }
-html.cc-favorites-on #displaybox .Panel > a:hover > span { filter: brightness(1.1); }
+html.cc-favorites-on #displaybox .Panel > a:hover > span { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 html.cc-favorites-on #displaybox .Panel > a > span > i.PanelIcon {
   font-size: var(--cc-fav-glyph, 38px) !important; line-height: 1 !important;
   color: var(--cc-iconbg-text, var(--cc-accent-text, #161616)) !important; margin: 0 !important; padding: 0 !important;

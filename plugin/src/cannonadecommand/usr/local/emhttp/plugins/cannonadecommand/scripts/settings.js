@@ -41,7 +41,7 @@
       "#cc-settings .cc-set-searchbadge{margin-left:auto;display:inline-flex;align-items:center;background:var(--cc-btn-accent,var(--cc-accent,#FCC419));border-radius:min(var(--cc-b-radius,999px),17px);height:34px;overflow:hidden;transition:background-color .12s}" +
       "#cc-settings .cc-set-searchbadge .cc-set-searchicon{flex:0 0 auto;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:var(--cc-accent-text, #161616);cursor:pointer}" +
       "#cc-settings .cc-set-searchbadge.cc-open{background:#2e2e2e}" +
-      "#cc-settings .cc-set-searchbadge:hover{filter:brightness(1.08)}" +
+      "#cc-settings .cc-set-searchbadge:not(.cc-open):hover{background:color-mix(in srgb,var(--cc-btn-accent,var(--cc-accent,#FCC419)) 85%,var(--cc-text,#e6e6e6))}" +
       "#cc-settings .cc-set-searchbadge.cc-open .cc-set-searchicon{color:#fff}" +
       "#cc-settings .cc-set-searchbadge .cc-set-search{box-sizing:border-box;width:0;max-width:0;padding:0;background:transparent;transition:width .2s,max-width .2s,padding .2s}" +
       "#cc-settings .cc-set-searchbadge.cc-open{background:#2e2e2e}" +
@@ -50,10 +50,10 @@
       "#cc-settings .cc-set-version-foot{margin:28px 0 6px;text-align:center;opacity:.55;font-size:12px}" +
       // the native-display link as an accent button rather than the grey chip
       "#cc-settings .cc-btn.cc-btn-accent{background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
-      "#cc-settings .cc-btn.cc-btn-accent:hover{filter:brightness(1.14);background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
+      "#cc-settings .cc-btn.cc-btn-accent:hover{background:var(--cc-accent-hover);color:var(--cc-accent-text, #161616)}" +
       "#cc-settings .cc-flag-picker{position:relative;margin-top:6px;max-width:340px}" +
       "#cc-settings .cc-flag-trigger{display:flex;align-items:center;gap:9px;background:#232323;border-radius:8px;padding:7px 12px;cursor:pointer;user-select:none}" +
-      "#cc-settings .cc-flag-trigger:hover{filter:brightness(1.1)}" +
+      "#cc-settings .cc-flag-trigger:hover{background:color-mix(in srgb,#232323 85%,var(--cc-text,#e6e6e6))}" +
       "#cc-settings .cc-flag-name{font-size:13px;color:#eaeaea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
       // The trigger reads as a button, with no caret, and openPanel pins the panel fixed.
       "#cc-settings .cc-flag-panel{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:9999;background:#1c1c1c;border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.6);overflow:hidden}" +

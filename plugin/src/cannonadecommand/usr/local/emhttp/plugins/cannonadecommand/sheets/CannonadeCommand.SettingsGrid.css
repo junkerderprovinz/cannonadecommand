@@ -37,7 +37,7 @@ html.cc-settingsgrid-on #displaybox .Panel > a > span {
   background: var(--cc-iconbg-color, var(--cc-accent, #FCC419)) !important;
   transition: filter .12s;
 }
-html.cc-settingsgrid-on #displaybox .Panel > a:hover > span { filter: brightness(1.1); }
+html.cc-settingsgrid-on #displaybox .Panel > a:hover > span { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 
 /* the icon-font glyph (icon-* / fa-*) inside the badge: big, contrast colour */
 html.cc-settingsgrid-on #displaybox .Panel > a > span > i.PanelIcon {
