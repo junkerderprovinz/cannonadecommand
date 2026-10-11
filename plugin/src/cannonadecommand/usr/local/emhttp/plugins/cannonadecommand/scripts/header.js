@@ -794,6 +794,13 @@
     });
     items.push({ label: T("Anordnen ein/aus", "Toggle arranging"), sub: T("Menü & Insel umsortieren", "Rearrange menu & island"), kind: "action", go: function () { ccToggleArrange(); } });
     items.push({ label: T("CannonadeCommand-Einstellungen", "CannonadeCommand settings"), sub: "/Settings/CannonadeCommand", kind: "action", go: function () { location.href = "/Settings/CannonadeCommand"; } });
+    // On the settings page the palette leads with that page's own search and hands it what was typed.
+    // It opens a tick later, after the click that chose it, which the search would otherwise take
+    // for a click beside it and close on.
+    var sb = document.querySelector("#cc-settings .cc-set-searchbadge"), si = sb && sb.querySelector(".cc-set-search");
+    if (si) items.unshift({ label: T("Einstellungen durchsuchen", "Search the settings"), sub: "/", kind: "action", pinned: true, go: function (q) {
+      setTimeout(function () { sb.classList.add("cc-open"); si.value = q || ""; si.dispatchEvent(new Event("input", { bubbles: true })); si.focus(); }, 0);
+    } });
     return items;
   }
   function ccCmdRender() {
@@ -801,7 +808,7 @@
     var scored = [];
     ccCmdItems.forEach(function (it) {
       var hay = (it.label + " " + (it.sub || "")).toLowerCase();
-      if (!q) { scored.push({ it: it, s: 0 }); return; }
+      if (!q || it.pinned) { scored.push({ it: it, s: it.pinned ? -1 : 0 }); return; }
       // simple subsequence fuzzy match
       var i = 0; for (var c = 0; c < hay.length && i < q.length; c++) { if (hay[c] === q[i]) i++; }
       if (i === q.length) scored.push({ it: it, s: hay.indexOf(q[0]) });
@@ -812,9 +819,10 @@
     scored.slice(0, 40).forEach(function (r, ix) {
       var row = document.createElement("div"); row.className = "cc-cmd-item" + (ix === 0 ? " cc-cmd-on" : "");
       row.innerHTML = "<span class='cc-cmd-lbl'></span><span class='cc-cmd-sub'></span>";
-      row.querySelector(".cc-cmd-lbl").textContent = r.it.label; row.querySelector(".cc-cmd-sub").textContent = r.it.sub || "";
+      var raw = ccCmdInput.value.trim();
+      row.querySelector(".cc-cmd-lbl").textContent = r.it.label; row.querySelector(".cc-cmd-sub").textContent = r.it.pinned && raw ? T("„" + raw + "“", "“" + raw + "”") : (r.it.sub || "");
       row.addEventListener("mousemove", function () { ccCmdMark(ix); });
-      row.addEventListener("click", function () { ccCmdClose(); r.it.go(); });
+      row.addEventListener("click", function () { var typed = ccCmdInput.value.trim(); ccCmdClose(); r.it.go(typed); });
       ccCmdList.appendChild(row);
     });
   }

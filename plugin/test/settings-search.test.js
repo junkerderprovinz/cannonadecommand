@@ -84,6 +84,38 @@ console.log('\nOne filled accent button per view');
   ok('"Open" is a plain secondary button', /el\("button", "cc-btn", T\("Öffnen", "Open"\)\)/.test(settings) && !/cc-btn-accent/.test(settings));
 }
 
+// Ctrl+K belongs to the command palette on every page. On the settings page the palette leads
+// with this page's search, whatever was typed, and hands the query over.
+console.log('\nCtrl+K reaches the settings search through the palette');
+{
+  const header = read('scripts/header.js');
+  const grab = (name) => { const i = header.indexOf('function ' + name + '('); let d = 0; for (let k = header.indexOf('{', i); k < header.length; k++) { if (header[k] === '{') d++; else if (header[k] === '}') { d--; if (!d) return header.slice(i, k + 1); } } return ''; };
+  const si = { value: '', focused: false, events: [], focus() { this.focused = true; }, dispatchEvent(e) { this.events.push(e.type); } };
+  const sb = { cls: new Set(), classList: { add: (c) => sb.cls.add(c) }, querySelector: () => si };
+  const row = () => { const parts = {}; return { className: '', set innerHTML(v) {}, querySelector: (s) => (parts[s] = parts[s] || { textContent: '' }), on: {}, addEventListener(t, f) { this.on[t] = f; }, parts }; };
+  const list = { children: [], set innerHTML(v) { this.children = []; }, appendChild(r) { this.children.push(r); } };
+  const input = { value: '' };
+  const later = [];
+  const doc = { querySelector: (s) => (s === '#cc-settings .cc-set-searchbadge' ? sb : null), querySelectorAll: () => [], createElement: row };
+  const api = new Function('document', 'T', 'setTimeout', 'Event', 'ccToggleArrange', 'ccCmdClose', 'ccCmdMark', 'location',
+    'var ccCmdInput, ccCmdList, ccCmdItems = [], ccCmdSel = 0;\n' + grab('ccCmdSources') + '\n' + grab('ccCmdRender') +
+    '\nreturn function (inp, lst) { ccCmdInput = inp; ccCmdList = lst; ccCmdItems = ccCmdSources(); ccCmdRender(); };')(
+    doc, (d, e) => e, (f) => later.push(f), function (t) { this.type = t; }, () => {}, () => {}, () => {}, {});
+  input.value = 'webhook';
+  api(input, list);
+  const first = list.children[0];
+  ok('a query that matches no page still shows the settings search first', !!first && first.parts['.cc-cmd-lbl'].textContent === 'Search the settings', first && first.parts['.cc-cmd-lbl'].textContent);
+  ok('it names the query it will search for', first && first.parts['.cc-cmd-sub'].textContent === '“webhook”');
+  if (first) first.on.click();
+  ok('choosing it opens the search a tick later, past the click that chose it', later.length === 1 && !sb.cls.has('cc-open'));
+  later.forEach((f) => f());
+  ok('the search opens with the query, filters and takes the focus', sb.cls.has('cc-open') && si.value === 'webhook' && si.events.includes('input') && si.focused);
+  const away = { querySelector: () => null, querySelectorAll: () => [], createElement: row };
+  const lst2 = { children: [], set innerHTML(v) { this.children = []; }, appendChild(r) { this.children.push(r); } };
+  new Function('document', 'T', 'ccToggleArrange', 'location', grab('ccCmdSources') + '\nreturn ccCmdSources;')(away, (d, e) => e, () => {}, {})().forEach((it) => lst2.appendChild(it));
+  ok('on other pages the palette has no such entry', !lst2.children.some((it) => it.pinned));
+}
+
 // The empty state stands in for the cards, dark like them on every theme, and its two lines
 // are text: both read at 4.5:1 on its own fill, whatever the theme.
 console.log('\nThe empty state reads, on every theme');

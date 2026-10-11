@@ -701,8 +701,8 @@
     }
     root.appendChild(head);
     // "/" opens the search from anywhere on the page outside a field. Ctrl+K stays with header.js's
-    // command palette, which takes it on every page. Bound once, since render() re-enters; it looks
-    // the badge up when the key is pressed.
+    // command palette, which takes it on every page and here offers this search first. Bound once,
+    // since render() re-enters; it looks the badge up when the key is pressed.
     if (!window.__ccSetSearchKey) {
       window.__ccSetSearchKey = true;
       document.addEventListener("keydown", function (e) {
