@@ -1,7 +1,7 @@
-// A row action at rest, greyed or with the action colours off, sits on the theme's
-// surface grey and its text colour, so on a white or azure page it is a light chip
-// rather than a dark slab. That holds for the inline paint tintAct() writes and for
-// every sheet rule that can reach the button.
+// A row action at rest, greyed or with the action colours off, and an unused limit gear
+// sit on the theme's surface grey and its text colour, so on a white or azure page they are
+// light chips rather than dark slabs. That holds for the inline paint tintAct() and gearFill()
+// write and for every sheet rule that can reach the button.
 const fs = require('fs');
 const path = require('path');
 const { DIR, candidates } = require('./cascade');
@@ -51,6 +51,33 @@ for (const [area, tint] of Object.entries(TINT)) {
     ok(`${area}: ${what} rests on the surface token`, /^var\(--cc-surface-3,/.test(b.css.background || ''), b.css.background);
     ok(`${area}: with ink from a text token`, /^var\(--cc-text(-dim)?,/.test(b.css.color || ''), b.css.color);
   }
+}
+
+// An unused limit gear rests like an action with its colours off; a fixed grey there is the
+// same dark slab on a light page.
+console.log('\nAn unused limit gear');
+{
+  const GEAR = {
+    Docker: new Function('localStorage', 'function themingOn() { return true; } function effc() { return "#FCC419"; } function idealText() { return "#161616"; }' + grabFn(docker, 'gearFill') + 'return gearFill;')(store({})),
+    VMs: new Function('store', 'function ls(k) { return store.getItem(k); } function ccAccent() { return "#FCC419"; } function ccIdeal() { return "#161616"; }' + grabFn(vms, 'vmGearFill') + 'return vmGearFill;')(store({})),
+  };
+  for (const [area, fill] of Object.entries(GEAR)) {
+    const off = button(['cc-limbtn']), on = button(['cc-limbtn']);
+    fill(off, false, 'cpu'); fill(on, true, 'cpu');
+    ok(`${area}: it rests on the surface token`, /^var\(--cc-surface-3,/.test(off.css.background || ''), off.css.background);
+    ok(`${area}: with ink from the text token`, /^var\(--cc-text,/.test(off.css.color || ''), off.css.color);
+    ok(`${area}: a set gear still carries the accent`, on.css.background === '#FCC419', on.css.background);
+  }
+}
+
+// tintAct paints every action inline, and the reactive mode's own rules come with
+// !important, so a plain :hover background in a sheet never shows; the wash in Tokens.css is
+// the hover.
+console.log('\nNo dead hover rules');
+for (const f of ['styles/docker.css', 'sheets/CannonadeCommand.VmTab.css']) {
+  const css = read(f).replace(/\/\*[\s\S]*?\*\//g, '');
+  const dead = (css.match(/[^{}]*\.cc-actbtn:hover\s*\{[^}]*\}/g) || []).filter((r) => /background/.test(r) && !/rbneutral/.test(r));
+  ok(`${f}: no background on .cc-actbtn:hover that the inline paint always beats`, dead.length === 0, dead.join(' | ').trim());
 }
 
 console.log('\nThe sheets');

@@ -445,8 +445,8 @@
       return;
     }
     lb.style.removeProperty("--cc-rb-c"); lb.style.removeProperty("--cc-rb-ct");
-    var bg = set ? ccAccent() : "#4a4a4a", tx = "#f2f2f2";
-    if (set) tx = ccIdeal(bg);
+    // an unused gear rests on the theme's surface grey, like the row actions
+    var bg = set ? ccAccent() : "var(--cc-surface-3, #2e2e2e)", tx = set ? ccIdeal(bg) : "var(--cc-text, #e6e6e6)";
     lb.style.setProperty("background", bg, "important");
     lb.style.setProperty("color", tx, "important");
   }

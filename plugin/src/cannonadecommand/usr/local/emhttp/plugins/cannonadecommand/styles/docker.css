@@ -158,7 +158,6 @@ a.sl-updall { display: none !important; }
 .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }
 @keyframes cc-actflash { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 3px var(--cc-btn-accent, var(--cc-accent, #FCC419)); } }
 .cc-actbtn { width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-chip, #cfcfcf); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--cc-text-subline); user-select: none; transition: background .12s, color .12s; }
-.cc-actbtn:hover { background: var(--cc-btn-accent, var(--cc-accent, #FCC419)); color: var(--cc-accent-text, #161616); }
 
 /* the uptime column shows in the advanced view only */
 .cc-enh:not(.cc-adv) thead tr:last-child th:nth-child(11),

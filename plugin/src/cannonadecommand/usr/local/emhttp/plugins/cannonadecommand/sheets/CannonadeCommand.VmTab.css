@@ -195,7 +195,6 @@ html.cc-vms-on #kvm_list td.cc-actcell { white-space: nowrap; vertical-align: mi
 html.cc-vms-on .cc-actbar { display: flex; flex-direction: column; gap: 4px; }
 html.cc-vms-on .cc-actrow { display: flex; gap: 4px; }
 html.cc-vms-on .cc-actbtn { width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-chip, #cfcfcf); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: var(--cc-text-subline); user-select: none; transition: background .12s, color .12s, box-shadow .12s; }
-html.cc-vms-on .cc-actbtn:hover { background: var(--cc-accent, #FCC419); color: var(--cc-accent-text, #161616); }
 html.cc-vms-on .cc-actbtn i.fa { font-size: var(--cc-text-subline); line-height: 1; color: inherit !important; }
 html.cc-vms-on .cc-actoff { opacity: .35; cursor: default; }
 html.cc-vms-on .cc-actoff:hover { background: #2e2e2e; color: #c9c9c9; }

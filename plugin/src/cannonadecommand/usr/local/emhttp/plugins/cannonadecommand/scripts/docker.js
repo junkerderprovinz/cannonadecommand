@@ -3092,9 +3092,10 @@
       return;
     }
     lb.style.removeProperty("--cc-rb-c"); lb.style.removeProperty("--cc-rb-ct");   // accent and native mode take the inline fill
-    var bg = set ? (effc("accent") || "#FCC419") : "#4a4a4a"; // a set limit carries the badge accent
-    var tx = "#f2f2f2";
-    if (set) tx = idealText(bg);
+    // A set limit carries the badge accent; an unused one rests on the theme's surface grey like
+    // the row actions, so it is no dark slab on a light page.
+    var bg = set ? (effc("accent") || "#FCC419") : "var(--cc-surface-3, #2e2e2e)";
+    var tx = set ? idealText(bg) : "var(--cc-text, #e6e6e6)";
     lb.style.setProperty("background", bg, "important");
     lb.style.setProperty("color", tx, "important");
   }
