@@ -1137,7 +1137,7 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
 .cc-set-logo { width: 64px; height: 64px; border-radius: var(--cc-radius-control); display: block; }
 .cc-set-claim { color: var(--dim); font-size: var(--cc-text-subline); font-style: italic; margin-top: 2px; }
 .cc-set-version { margin-left: auto; text-align: right; align-self: center; }
-.cc-set-tabs { display: flex; gap: 6px; margin: 0 0 18px; } /* the main menu bar's own 0 3px per tab, so the distance matches */
+.cc-set-tabs { display: flex; gap: 6px; margin: 0 0 40px; } /* the main menu bar's own 0 3px per tab, so the distance matches */
 .cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: inline-flex !important; align-items: center; justify-content: center; height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-pad, 0 20px) !important; font-size: var(--cc-md-fs) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 1.5px !important; border-radius: var(--cc-radius-pill) !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS inflates the strip's gap */
 .cc-set-tab-on { background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important; }
 .cc-set-brand { font-size: 24px; letter-spacing: .2px; } .cc-set-brand b { font-weight: 700; } .cc-set-brand span { font-weight: 400; color: var(--dim); }
@@ -1146,9 +1146,22 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
 html.Theme--white #cc-settings .cc-set-heroleft,
 html.Theme--azure #cc-settings .cc-set-heroleft { --txt: var(--cc-text, #1c1c1c); --dim: var(--cc-text-dim, #545454); color: var(--txt); }
 .cc-set-sub { color: var(--dim2); font-size: var(--cc-text-subline); }
-.cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fill, 340px); gap: 16px; justify-content: start; } /* fixed-width cards packed from the left, so they do not stretch on a wide window */
-.cc-set-card { background: #222222; border: none; border-radius: var(--cc-radius-card); padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
-.cc-set-h { font-size: var(--cc-text-title); font-weight: 600; margin-bottom: 3px; display: flex; align-items: center; gap: 7px; } /* flex, so the heading and its info bubble sit side by side */
+/* Fixed-width cards packed from the left, so they do not stretch on a wide window. Stacked cards
+   keep GlimStone's 40px rhythm, since every card's title badge reaches into the gap above it. */
+.cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fill, 340px); gap: 40px 16px; justify-content: start; }
+.cc-set-card { position: relative; background: #222222; border: none; border-radius: var(--cc-radius-card); padding: 22px 18px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
+/* The card title is a filled section badge straddling the card's top edge. It sets no left, so it
+   falls back to its static position on the card's content edge, and the self-relative translate
+   keeps it centred on the edge when a long title wraps. settings.js paintCardHeads stamps the
+   rainbow position; a heading is not a control, so reactive mode leaves it coloured. */
+.cc-set-h {
+  position: absolute; top: 0; transform: translateY(-50%); max-width: calc(100% - 36px); box-sizing: border-box;
+  display: inline-flex; align-items: center; gap: 8px; min-height: var(--cc-md-h, 30px); padding: 4px 18px; margin: 0;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616));
+  border-radius: var(--cc-radius-pill); font-size: var(--cc-md-fs); font-weight: 700; line-height: 1.2;
+  text-transform: uppercase; letter-spacing: .6px;
+}
+.cc-set-h .cc-info { color: inherit; opacity: 1; }
 .cc-set-card .cc-set-sub { margin-bottom: 12px; }
 .cc-set-card .cc-set-row, .cc-set-card .cc-set-swatches, .cc-set-card .cc-set-lbl { margin-top: 12px; }
 .cc-set-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; flex-wrap: wrap; }

@@ -1856,7 +1856,7 @@
       }
       setSearch.addEventListener("input", function () { runFilter(setSearch.value); });
     })();
-    paintPrev(); paintToggles(); paintSelects();
+    paintPrev(); paintToggles(); paintSelects(); paintCardHeads();
   }
   // #(user: "Alle drop down listen sind nicht in den farbmodi"): this page's own eleven .cc-dsel
   // dropdowns were built but never stamped, so in rainbow/flag mode every option showed the flat
@@ -1908,6 +1908,17 @@
       if (rainbow) { var c = rbC(i, accent); t.style.setProperty("--cc-rb-c", c); t.style.setProperty("--cc-rb-ct", idealText(c)); }
       else { t.style.removeProperty("--cc-rb-c"); t.style.removeProperty("--cc-rb-ct"); }
     }
+  }
+  // A card title counts through the palette from the first card of its own tab, so every tab
+  // starts on the same hue. Without rainbow the stamp goes and the badge falls back to the accent.
+  function paintCardHeads() {
+    var rbC = (window.CCTheme && window.CCTheme.rbColor) || function (i, a) { return a; };
+    Array.prototype.forEach.call(root.querySelectorAll(".cc-set-wrap"), function (w) {
+      Array.prototype.forEach.call(w.querySelectorAll(".cc-set-card > .cc-set-h"), function (h, i) {
+        if (rainbow) { var c = rbC(i, accent); h.style.setProperty("--cc-rb-c", c); h.style.setProperty("--cc-rb-ct", idealText(c)); }
+        else { h.style.removeProperty("--cc-rb-c"); h.style.removeProperty("--cc-rb-ct"); }
+      });
+    });
   }
   // live-highlight the preset swatch that matches the current accent (no re-render)
   function syncSwOn() { Array.prototype.slice.call(document.querySelectorAll("#cc-settings .cc-set-swrow-global")).forEach(function (row) { swMarkRow(row, accent); }); }
