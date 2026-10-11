@@ -69,5 +69,16 @@ console.log('\nNo script builds a Font Awesome glyph of its own');
   ok('the process window keeps the spinner that matches Unraid\'s', /\.cc-nchan-loader \.cc-nchan-fa \{/.test(read('sheets/CannonadeCommand.Header.css')));
 }
 
+// An emoji draws its own colours and shape, so it ignores the control's ink and every colour mode.
+console.log('\nNo control wears an emoji');
+{
+  const docker = read('scripts/docker.js');
+  ok('the move-to-folder button wears GlimStone\'s Folder', /btn\.innerHTML = ccGlyph\("Folder"\); btn\.setAttribute\("aria-label", t\("moveToFolder"\)\);/.test(docker));
+  for (const f of ['scripts/docker.js', 'scripts/vms.js', 'scripts/header.js', 'scripts/settings.js', 'scripts/shares.js', 'scripts/plugins.js']) {
+    const hits = read(f).split('\n').filter((l) => /el\("(button|span|a)", [^;]*"[^"]*[\u{1F300}-\u{1FAFF}]/u.test(l));
+    ok(path.basename(f) + ': no emoji as a control\'s text', hits.length === 0, hits.map((l) => l.trim().slice(0, 90)).join(' | '));
+  }
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

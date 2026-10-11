@@ -2090,7 +2090,8 @@
       });
     }
     function attachMoveButton(cardEl, entry) {
-      var btn = el("button", "cc-card-movebtn", "📁"); btn.type = "button"; btn.title = t("moveToFolder");
+      var btn = el("button", "cc-card-movebtn"); btn.type = "button"; btn.title = t("moveToFolder");
+      btn.innerHTML = ccGlyph("Folder"); btn.setAttribute("aria-label", t("moveToFolder"));
       btn.addEventListener("click", function (ev) { ev.stopPropagation(); ev.preventDefault(); toggleMenu(btn, function () { return buildMoveMenu(entry); }); });
       var head2 = cardEl.querySelector(".cc-card-head"); (head2 || cardEl).appendChild(btn);
     }

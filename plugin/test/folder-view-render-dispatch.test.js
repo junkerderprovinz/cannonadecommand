@@ -70,7 +70,7 @@ function run(entries, density, opts) {
     'el', 'window', 'localStorage', 'gridHolder', 'ccOrgView', 'filterText', 'mode', 'menu', 'menuAnchor',
     'ensureGridHolder', 'removeGridHolder', 'relocateTopBar', 'effc', 'makeGear', 'applyIconTint',
     'folderDensity', 'card', 'folderChip', 'folderListRow', 'containerByName', 'ccFolderHidesContainer', 't',
-    'iconBgOn', 'gridFocusKey', 'restoreGridFocus',
+    'iconBgOn', 'gridFocusKey', 'restoreGridFocus', 'ccGlyph',
     grabFn('renderFolderView') + '\nreturn renderFolderView;'
   )(
     el, fakeWindow, { getItem: () => null }, fakeGridHolder, ccOrgView, '', 'folder', null, null,
@@ -85,7 +85,8 @@ function run(entries, density, opts) {
     // iconBgOn(), which renderFolderView() gates .cc-docker-iconbg on.
     () => false,
     // no focus to keep in a detached holder
-    () => null, () => {}
+    () => null, () => {},
+    (n) => '<glyph ' + n + '>'
   );
   fn();
   return { gridHolder: fakeGridHolder, scrollCalls: scrollCalls, removed: removed };
