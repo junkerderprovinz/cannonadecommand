@@ -1,4 +1,4 @@
-// CannonadeCommand's own windows, .cc-pop and .cc-menu, stay #161616 on a white or azure
+// CannonadeCommand's own windows, .cc-pop, .cc-win and .cc-menu, stay dark on a white or azure
 // page, so the tokens inside them must read as on a dark theme. A custom property mixed
 // on <html> is inherited as the finished colour, so re-pinning --cc-text in the window
 // does not reach --cc-hover-wash: every token that derives from a flipped one has to be
@@ -25,7 +25,7 @@ const darkHtml = computed(dark), lightHtml = computed(light);
 
 const windowDecls = {};
 for (const r of parseRules(fs.readFileSync(path.join(DIR, 'sheets/CannonadeCommand.Tokens.css'), 'utf8'))) {
-  if (r.selector.replace(/\s+/g, ' ').trim() === '.cc-pop, .cc-menu') for (const d of r.decls) if (d.prop.startsWith('--')) windowDecls[d.prop] = d.value;
+  if (r.selector.replace(/\s+/g, ' ').trim() === '.cc-pop, .cc-menu, .cc-win') for (const d of r.decls) if (d.prop.startsWith('--')) windowDecls[d.prop] = d.value;
 }
 function inWindow(htmlComputed) {
   const scope = Object.assign({}, htmlComputed, windowDecls);
@@ -53,13 +53,14 @@ ok('on a dark theme the window changes nothing', Object.keys(windowDecls).every(
   Object.keys(windowDecls).filter((k) => darkWin[k] !== darkHtml[k]).join(', '));
 
 // The Startplan window on a white theme in the reactive mode: resting chips and buttons
-// sit on the translucent chip grey over the window's #161616 and take --cc-text-chip.
+// sit on the translucent chip grey over the window and take --cc-text-chip.
 console.log('\nThe Startplan window, white theme, reactive rest');
 {
   const lum = (rgb) => { const l = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * l(rgb[0]) + 0.7152 * l(rgb[1]) + 0.0722 * l(rgb[2]); };
   const rgb = (v) => { let m = /^#([0-9a-f]{6})$/i.exec(v); if (m) { const n = parseInt(m[1], 16); return [n >> 16 & 255, n >> 8 & 255, n & 255, 1]; } m = /^rgba?\(([^)]*)\)$/.exec(v); if (m) { const p = m[1].split(',').map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; } return null; };
   const over = (top, base) => [0, 1, 2].map((i) => top[i] * top[3] + base[i] * (1 - top[3]));
-  const WIN = [0x16, 0x16, 0x16];
+  // the content card, the lighter of the two surfaces a control stands on and so the harder one for light ink
+  const WIN = [0x24, 0x24, 0x24];
   const html = ['cc-docker-on', 'cc-shares-rbneutral', 'Theme--white'];
   const CTLS = { 'a resting day chip': ['cc-day'], '"+ Zeitplan"': ['cc-btn'], '"Speichern"': ['cc-btn', 'cc-btn-primary'] };
   for (const [what, classes] of Object.entries(CTLS)) {

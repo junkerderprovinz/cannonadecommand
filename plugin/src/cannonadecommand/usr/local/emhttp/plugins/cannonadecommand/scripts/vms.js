@@ -461,6 +461,8 @@
     var lb = el("span", "cc-limbtn" + (set ? " cc-limbtn-set" : "") + " cc-lim-" + which); lb.innerHTML = CC_GEAR_SVG;
     vmGearFill(lb, set, colorKind);
     lb.title = GEAR_TIP[which] + " · " + (set ? (VMDE ? "gesetzt" : "set") : (VMDE ? "Standard" : "default"));
+    lb.setAttribute("aria-label", lb.title);
+    if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(lb);   // focus returns here when the window closes
     lb.addEventListener("click", function (e) {
       e.preventDefault(); e.stopPropagation();
       if (vmLims[name]) openVmEd(name, which, lb); else loadVmLims().then(function () { openVmEd(name, which, lb); });
@@ -538,20 +540,12 @@
     var showCpu = which === "all" || which === "cpu", showRam = which === "all" || which === "ram";
     var showBw = which === "all" || which === "bw", showDisk = which === "all" || which === "disk";
     var hasLimFields = showCpu || showRam || showBw;
-    // A popover anchored at the gear, like Docker's: a transparent full-screen layer closes it on an
-    // outside click.
-    var ov = el("div"); ov.id = "cc-vmlim-ov";
-    ov.style.cssText = "position:fixed;inset:0;z-index:99999";
-    // the chrome of Docker's .cc-pop popover
-    var card = el("div", "cc-rainbow"); card.style.cssText = "position:absolute;background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:var(--cc-radius-card);padding:14px 16px;width:420px;max-width:92vw;max-height:88vh;overflow:auto;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font:var(--cc-text-subline)/1.5 \"Segoe UI\",system-ui,sans-serif";
+    // A CannonadeCommand window anchored at the gear, in the .cc-win template of Tokens.css, the
+    // same frame, title badge, card and button row as Docker's editors.
+    var win = el("div", "cc-win"); win.id = "cc-vmlim";
     var titleMap = { cpu: VMDE ? "CPU-Limit" : "CPU limit", ram: VMDE ? "RAM-Limit" : "RAM limit", bw: VMDE ? "Bandbreite" : "Bandwidth", disk: VMDE ? "vDisk-Größe" : "vDisk size", all: VMDE ? "VM-Limits" : "VM limits" };
-    var head = el("div"); head.style.cssText = "display:flex;align-items:center;justify-content:space-between;font-size:var(--cc-text-title);font-weight:700;margin:0 0 4px 0";
-    head.appendChild(el("span", null, titleMap[which] + ": " + name));
-    var hx = el("span", null, "✕"); hx.style.cssText = "cursor:pointer;color:#8a8a8a;font-weight:400;font-size:var(--cc-text-body);line-height:1;transition:color .12s";
-    hx.addEventListener("mouseenter", function () { hx.style.color = "var(--cc-txt,#e6e6e6)"; });
-    hx.addEventListener("mouseleave", function () { hx.style.color = "#8a8a8a"; });
-    hx.addEventListener("click", function () { close(); });
-    head.appendChild(hx); card.appendChild(head);
+    win.appendChild(el("div", "cc-win-title", titleMap[which] + ": " + name));
+    var card = el("div", "cc-win-card"); win.appendChild(card);
     var sub = el("div", null, (v.vcpus || 0) + " vCPUs · " + (v.maxMemMiB || 0) + " MiB max" + (v.running ? (VMDE ? " · läuft" : " · running") : (VMDE ? " · gestoppt" : " · stopped")));
     sub.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a);margin:0 0 14px 0"; card.appendChild(sub);
     var cores = (v.cpuCores && v.cpuCores !== "0-127") ? v.cpuCores : "";
@@ -601,38 +595,44 @@
       sel.addEventListener("change", function () { CI.setOverride("vm", name, sel.value); paintVmIcons(); });   // `apply` here is the editor's Apply button
       wrap.appendChild(l); wrap.appendChild(sel); card.appendChild(wrap);
     })();
-    var foot = el("div"); foot.style.cssText = "display:flex;gap:8px;align-items:center;margin-top:6px";
-    var msg = el("div"); msg.style.cssText = "flex:1;font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)";
-    var cancel = el("button", null, VMDE ? "Schließen" : "Close"); cancel.style.cssText = "background:var(--cc-chip,rgba(128,128,128,.18));color:var(--cc-text,#e6e6e6);border:none;border-radius:var(--cc-radius-pill);padding:7px 14px;font-size:var(--cc-text-subline);font-weight:600;cursor:pointer";
-    foot.appendChild(msg); foot.appendChild(cancel);
+    // the progress line of Apply, at the foot of the card
+    var msg = el("div"); msg.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)"; card.appendChild(msg);
+    var act = el("div", "cc-win-act");
+    var cancel = el("span", "cc-win-btn", VMDE ? "Schließen" : "Close"); act.appendChild(cancel);
     var apply = null;
-    if (hasLimFields) { apply = el("button", null, VMDE ? "Anwenden" : "Apply"); apply.style.cssText = "background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616);border:none;border-radius:var(--cc-radius-pill);padding:7px 16px;font-size:var(--cc-text-subline);font-weight:600;cursor:pointer"; foot.appendChild(apply); }
-    card.appendChild(foot);
-    ov.appendChild(card); document.body.appendChild(ov);
-    // place the card at the gear (clamped into the viewport; flips above if it would overflow the bottom)
+    if (hasLimFields) { apply = el("span", "cc-win-btn cc-win-go", VMDE ? "Anwenden" : "Apply"); act.appendChild(apply); }
+    win.appendChild(act);
+    document.body.appendChild(win);
+    var CT = window.CCTheme;
+    if (CT && CT.pressable) { CT.pressable(cancel); if (apply) CT.pressable(apply); }
+    if (CT && CT.paintWin) CT.paintWin(win);
+    // place the window at the gear (clamped into the viewport; flips above if it would overflow the bottom)
     try {
-      var r = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null, cw = card.offsetWidth || 420, ch = card.offsetHeight || 300;
+      var r = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null, cw = win.offsetWidth || 420, ch = win.offsetHeight || 300;
       if (r && (r.width || r.height)) {
         var left = Math.max(8, Math.min(r.left, window.innerWidth - cw - 12));
         var top = r.bottom + 6; if (top + ch > window.innerHeight - 8) top = Math.max(8, r.top - ch - 6);
-        card.style.left = (window.scrollX + left) + "px"; card.style.top = (window.scrollY + top) + "px";
-      } else { card.style.left = "50%"; card.style.top = "12vh"; card.style.transform = "translateX(-50%)"; }
-    } catch (e) { card.style.left = "50%"; card.style.top = "12vh"; card.style.transform = "translateX(-50%)"; }
-    function close() { if (ov.parentNode) ov.parentNode.removeChild(ov); }
-    cancel.onclick = close; ov.onclick = function (e) { if (e.target === ov) close(); };
+        win.style.left = (window.scrollX + left) + "px"; win.style.top = (window.scrollY + top) + "px";
+      } else { win.style.left = "50%"; win.style.top = "12vh"; win.style.transform = "translateX(-50%)"; }
+    } catch (e) { win.style.left = "50%"; win.style.top = "12vh"; win.style.transform = "translateX(-50%)"; }
+    var into = f.cores ? f.cores.input : f.ram ? f.ram.input : f.dn ? f.dn.input : null;
+    var modal = CT && CT.modal ? CT.modal(win, { opener: anchor, focus: into || undefined }) : null;
+    function close() { if (modal) modal.close(); else if (win.parentNode) win.parentNode.removeChild(win); }
+    cancel.addEventListener("click", close);
     function intOr(s) { s = (s || "").trim(); if (s === "") return null; var n = parseInt(s, 10); return isNaN(n) ? null : n; }
+    var busy = false;
     if (apply) apply.onclick = function () {
+      if (busy) return;
       var body = { name: name };
       if (readCpuset) body.cpu_cores = readCpuset(); // "" (no cores selected) clears the pin
       if (f.cap) { var capRaw = f.cap.input.value.trim(); if (capRaw === "") body.cpu_cap = 0; else { var cf = parseFloat(capRaw.replace(",", ".")); if (!isNaN(cf)) body.cpu_cap = Math.max(0, Math.round(cf * 100)); } }
       if (f.ram) { var ramN = intOr(f.ram.input.value); if (ramN != null && ramN > 0) body.mem_mib = ramN; }
       if (f.dn) { var dnN = intOr(f.dn.input.value); if (dnN != null) body.in_kbit = Math.max(0, dnN); }
       if (f.up) { var upN = intOr(f.up.input.value); if (upN != null) body.out_kbit = Math.max(0, upN); }
-      apply.disabled = true; msg.style.color = "var(--cc-text-dim,#8a8a8a)"; msg.textContent = VMDE ? "wird angewendet…" : "applying…";
+      busy = true; msg.style.color = "var(--cc-text-dim,#8a8a8a)"; msg.textContent = VMDE ? "wird angewendet…" : "applying…";
       vmApi("POST", "vmlimits", body).then(function (res) { if (res && res.vm) vmLims[name] = res.vm; try { refreshAllRes(); } catch (e) {} close(); })
-        .catch(function (e) { apply.disabled = false; msg.textContent = ""; ccvFail(apply, String(e.message || e)); });
+        .catch(function (e) { busy = false; msg.textContent = ""; ccvFail(apply, String(e.message || e)); });
     };
-    if (f.cores) f.cores.input.focus(); else if (f.ram) f.ram.input.focus(); else if (f.dn) f.dn.input.focus();
   }
   // The Actions column, built like docker.js's action bar. Each icon calls the native global the
   // VM context menu uses (vmmanager.js addVMContext), with the VM context read from the logo's

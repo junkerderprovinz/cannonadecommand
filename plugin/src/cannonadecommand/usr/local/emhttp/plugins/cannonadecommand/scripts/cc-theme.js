@@ -604,6 +604,132 @@
   // control that was used, when there is one.
   function fail(el, msg) { shake(el); return toast(msg, "error"); }
 
+  // A span that acts as a button: reachable with Tab, pressed with Enter or Space. CC draws its
+  // buttons as spans because Unraid's global button rules would restyle a real one.
+  function pressable(el) {
+    if (!el || el.ccPressable) return el;
+    el.ccPressable = true;
+    el.setAttribute("role", "button");
+    if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
+    el.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); el.click(); } });
+    return el;
+  }
+
+  // Every CannonadeCommand window is modal (GlimStone rule 15): the page behind it is darkened and
+  // blurred by a scrim, focus moves into the window and Tab cycles inside it, Escape and a click on
+  // the scrim dismiss it, and focus goes back to the control that opened it. Windows stack, so a
+  // question asked from inside a window answers Escape before the window does.
+  var winStack = [], winSeq = 0;
+  var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  function focusables(win) {
+    return Array.prototype.filter.call(win.querySelectorAll(FOCUSABLE), function (n) { return n.getClientRects().length > 0; });
+  }
+  function onWinKey(e) {
+    var top = winStack[winStack.length - 1];
+    if (!top) return;
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); top.dismiss(); return; }
+    if (e.key !== "Tab") return;
+    var f = focusables(top.win), a = document.activeElement;
+    if (!f.length) { e.preventDefault(); top.win.focus(); return; }
+    var first = f[0], last = f[f.length - 1];
+    if (!top.win.contains(a)) { e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+    else if (e.shiftKey && a === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); }
+  }
+  // win has to be in the document already. opts.onDismiss runs on Escape and on a scrim click and
+  // is expected to end in close(); without it those close the window outright.
+  function modal(win, opts) {
+    opts = opts || {};
+    var opener = opts.opener || document.activeElement, closed = false;
+    var scrim = document.createElement("div"); scrim.className = "cc-scrim";
+    var z = parseInt(getComputedStyle(win).zIndex, 10);
+    if (z > 0) scrim.style.zIndex = String(z - 1);
+    win.parentNode.insertBefore(scrim, win);
+    win.setAttribute("role", "dialog"); win.setAttribute("aria-modal", "true");
+    if (!win.hasAttribute("tabindex")) win.setAttribute("tabindex", "-1");
+    var title = win.querySelector(".cc-win-title");
+    if (title) { if (!title.id) title.id = "cc-win-t" + (++winSeq); win.setAttribute("aria-labelledby", title.id); }
+    function close() {
+      if (closed) return;
+      closed = true;
+      var i = winStack.indexOf(entry); if (i >= 0) winStack.splice(i, 1);
+      if (scrim.parentNode) scrim.parentNode.removeChild(scrim);
+      if (win.parentNode) win.parentNode.removeChild(win);
+      if (!winStack.length) document.removeEventListener("keydown", onWinKey, true);
+      try { if (opener && opener.focus && document.contains(opener)) opener.focus(); } catch (e) {}
+    }
+    var entry = { win: win, dismiss: function () { if (opts.onDismiss) opts.onDismiss(); else close(); } };
+    scrim.addEventListener("click", function (e) { e.stopPropagation(); entry.dismiss(); });
+    if (!winStack.length) document.addEventListener("keydown", onWinKey, true);
+    winStack.push(entry);
+    // The first field or switch in the content, else the first button in the bottom row; never
+    // the (i) beside the title, whose bubble would open the moment the window does.
+    var into = opts.focus;
+    if (!into) {
+      var f = focusables(win).filter(function (n) { return !n.classList.contains("cc-info"); });
+      into = f.filter(function (n) { return n.closest(".cc-win-card, .cc-pop-mid"); })[0] || f[0] || win;
+    }
+    try { into.focus(); } catch (e) {}
+    return { close: close };
+  }
+
+  // The title badge first, then each button, one palette slot after another in rainbow, a delete
+  // keeping off the red slot as on the rows. Under the reactive mode the main button rests grey;
+  // the title, a heading, keeps its colour.
+  function paintWin(win) {
+    var rb = g("cc.theming", "1") !== "0" && g("cc.rainbow", "0") === "1";
+    win.classList.toggle("cc-win-reactive", g("cc.theming", "1") !== "0" && g("cc.rbmode", "all") === "active");
+    var p = surfacePalette(palette(), null), off = g("cc.rainbowrot", "1") === "0" ? 0 : rbSeed(p.length);
+    Array.prototype.forEach.call(win.querySelectorAll(".cc-win-title, .cc-win-btn"), function (el, i) {
+      if (!rb) { el.style.removeProperty("--cc-rb-c"); el.style.removeProperty("--cc-rb-ct"); return; }
+      var c = el.classList.contains("cc-win-del") ? deleteSlot(p, i + off) : p[(i + off) % p.length];
+      el.style.setProperty("--cc-rb-c", c); el.style.setProperty("--cc-rb-ct", idealText(c));
+    });
+  }
+
+  // A question in its own window, in place of window.confirm and window.prompt. o.input asks for a
+  // name, which Enter takes and an empty one refuses; o.danger marks a deleting answer, which looks
+  // like Cancel rather than red and leaves the focus on Cancel, the safe choice. o.onOk gets the
+  // trimmed name.
+  function ask(o) {
+    var win = document.createElement("div"); win.className = "cc-win cc-dlg";
+    var title = document.createElement("div"); title.className = "cc-win-title"; title.textContent = o.title; win.appendChild(title);
+    var card = document.createElement("div"); card.className = "cc-win-card";
+    if (o.text) { var p = document.createElement("p"); p.className = "cc-win-text"; p.textContent = o.text; card.appendChild(p); }
+    var input = null;
+    if (o.input) {
+      input = document.createElement("input"); input.type = "text"; input.className = "cc-win-in";
+      input.value = o.input.value || ""; input.setAttribute("aria-label", o.input.label || o.title);
+      if (o.input.placeholder) input.placeholder = o.input.placeholder;
+      input.setAttribute("autocomplete", "off");
+      card.appendChild(input);
+    }
+    if (card.childNodes.length) win.appendChild(card);
+    var act = document.createElement("div"); act.className = "cc-win-act";
+    var no = pressable(document.createElement("span")); no.className = "cc-win-btn"; no.textContent = o.cancel;
+    var yes = pressable(document.createElement("span")); yes.className = "cc-win-btn " + (o.danger ? "cc-win-del" : "cc-win-go"); yes.textContent = o.ok;
+    act.appendChild(no); act.appendChild(yes); win.appendChild(act);
+    document.body.appendChild(win);
+    paintWin(win);
+    var done = false;
+    function finish(ok) {
+      if (done) return;
+      var val = input ? input.value.trim() : "";
+      if (ok && input && !val) { shake(input); input.focus(); return; }
+      done = true; h.close();
+      if (ok && o.onOk) o.onOk(val);
+    }
+    var h = modal(win, { opener: o.opener, focus: input || (o.danger ? no : yes), onDismiss: function () { finish(false); } });
+    if (input) input.select();
+    no.addEventListener("click", function () { finish(false); });
+    yes.addEventListener("click", function () { finish(true); });
+    win.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter" || e.target === no || e.target === yes) return;
+      e.preventDefault(); finish(true);
+    });
+    return { close: function () { finish(false); } };
+  }
+
   window.CCTheme = {
     RB: RB, idealText: idealText, motionLevel: motionLevel, shapeName: shapeName, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects,
     registerSelectSync: registerSelectSync, nextSelIndex: nextSelIndex, wheelStepSelect: wheelStepSelect,
@@ -611,6 +737,7 @@
     CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG, delIcon: delIcon,
     lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark, liftLight: liftLight, lightTheme: lightTheme,
     liftSurface: liftSurface, surfacePalette: surfacePalette, isRed: isRed, deleteSlot: deleteSlot, toast: toast, shake: shake, fail: fail,
+    pressable: pressable, modal: modal, paintWin: paintWin, ask: ask,
     icons: {
       MODES: ICON_MODES, SIMPLE_MAX: ICON_SIMPLE_MAX,
       globalMode: iconGlobalMode, mode: iconMode, override: iconOverride, setOverride: setIconOverride,

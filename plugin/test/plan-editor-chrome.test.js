@@ -102,7 +102,7 @@ ok(!!POP_PAINT_SEL, 'POP_PAINT_SEL is still declared in docker.js');
   ['.cc-day', 'the Mo..So day chips'],
   ['.cc-btn', 'Speichern and "+ Zeitplan"'],
   ['.cc-sched-time', 'the schedule time field'],
-  ['.cc-pop-x', 'the window close X'],
+  ['.cc-pop-ttl', 'the title badge, first in the rotation'],
 ].forEach(([sel, what]) => ok(POP_PAINT_SEL.indexOf(sel) >= 0, 'the sweep includes ' + sel + ', ' + what));
 
 console.log('\nPart 2: the switch knob takes its ink from the stamped chain');
@@ -271,25 +271,26 @@ if (caret) {
 }
 ok(/cc-dropin"\)\) \? "5px 24px 5px 8px"/.test(harden), 'hardenPop exempts it from the flat padding stamp, which would otherwise undo that room');
 
-// Every element in the window sits 24px from its edge. The arithmetic differs by
-// nesting: a row inside .cc-pop-body, .cc-pop-auto or .cc-pop-sub already has that
-// wrapper's 14px margin and adds 10, while a block placed straight into the window
-// carries all 24. Pinned as the shape of the fix, since making them all 14 like the
-// card is what a later tidy-up would write back.
+// Every field in the window sits 24px from its edge: the content card 10px in, and the
+// content 14px inside the card. The arithmetic differs by nesting: a row inside
+// .cc-pop-body, .cc-pop-auto or .cc-pop-sub already has that wrapper's 4px margin and
+// adds 10, while a block placed straight into the card carries all 14. The title badge
+// and the button row span the card's width. Pinned as the shape of the fix, since one
+// number everywhere is what a later tidy-up would write back.
 console.log('\nPart 12: one 24px side inset for the whole window');
-ok(/\.cc-pop-row \{[^}]*padding: 8px 24px/.test(css), 'an unwrapped .cc-pop-row (the manage-toggle line) takes the full 24px itself');
-ok(/\.cc-pop-body \.cc-pop-row, \.cc-pop-auto \.cc-pop-row \{ padding: 3px 10px !important/.test(css), 'a wrapped row keeps 10 and lets its wrapper margin supply the other 14');
-ok(/\.cc-pop-body \{[^}]*margin: 10px 14px 6px/.test(css) && /\.cc-pop-auto \{[^}]*margin: 6px 14px/.test(css), 'both wrappers carry that 14px margin, the two halves of 24 having to agree');
-ok(/\.cc-pop-head \{[^}]*padding: 10px 24px/.test(css), 'the head shares the column, so the ✕ sits on the same right edge as the toggle below it');
-ok(/\.cc-pop-act \{[^}]*padding: 10px 24px 12px/.test(css), 'and so does the button row, where Speichern would otherwise stand 10px wider than the fields');
+ok(/\.cc-pop-mid \{[^}]*margin: 0 10px/.test(css), 'the content card sits 10px inside the window');
+ok(/\.cc-pop-row \{[^}]*padding: 8px 14px/.test(css), 'an unwrapped .cc-pop-row (the manage-toggle line) takes the full 14px inside the card itself');
+ok(/\.cc-pop-body \.cc-pop-row, \.cc-pop-auto \.cc-pop-row \{ padding: 3px 10px !important/.test(css), 'a wrapped row keeps 10 and lets its wrapper margin supply the other 4');
+ok(/\.cc-pop-body \{[^}]*margin: 6px 4px 2px/.test(css) && /\.cc-pop-auto \{[^}]*margin: 6px 4px/.test(css), 'both wrappers carry that 4px margin, the two halves of 14 having to agree');
+ok(/\.cc-pop-head \{[^}]*padding: 10px;/.test(css), 'the head puts the title badge on the card\'s edges');
+ok(/\.cc-pop-act \{[^}]*padding: 10px;/.test(css), 'and so does the button row');
 ok(/\.cc-pop-sech-lone \{[^}]*padding: 10px 10px 5px/.test(css), '"ZEITPLÄNE" takes 10 inside its .cc-pop-auto, 14 there landing at 28');
 ok(/\.cc-sched-list \{[^}]*padding: 4px 10px 2px/.test(css), 'the schedule cards line up with the fields rather than sitting 4px right of them');
 ok(/\.cc-btn-sm \{ margin: 4px 10px 6px/.test(css), 'and "+ Zeitplan" with them');
 // hardenPop stamps the row padding inline with !important, which the sheet cannot beat.
 ok(/closest\("\.cc-pop-body, \.cc-pop-auto, \.cc-pop-sub"\)/.test(harden), 'hardenPop asks whether the row is wrapped instead of stamping one number everywhere');
-ok(/wrapped \? "3px 10px" : "3px 24px"/.test(harden), 'and stamps the matching half, a blanket 10 flattening the unwrapped row');
-ok(/"padding", "10px 24px 18px"/.test(harden), 'the action row keeps its roomier bottom gap and joins the 24px column');
-ok(/"6px 24px 0 24px"/.test(src), 'the plan window\'s own head stamp agrees, a hard 10px there pulling the ✕ out of line');
+ok(/wrapped \? "3px 10px" : "3px 14px"/.test(harden), 'and stamps the matching half, a blanket 10 flattening the unwrapped row');
+ok(/"padding", "10px", "important"/.test(harden), 'the action row agrees with the sheet on the card\'s edges');
 
 // "CC" is everywhere in this codebase as a source-code prefix, in cc- classes,
 // CC_* constants, cc.* keys and --cc-* properties, and stays. Only string literals

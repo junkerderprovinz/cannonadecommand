@@ -557,10 +557,10 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 /* a colour-mode fill on hover, and no underline */
 .cc-menu-link:hover { text-decoration: none; background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 
-/* A tight key shadow, a soft wide ambient one and an inner top highlight, so the popover reads as
-   a raised, top-lit surface rather than a flat box, separated by light instead of a border line. A
+/* The editor windows follow the .cc-win template in Tokens.css: the dark frame, the title badge
+   across the top, the content on the lighter .cc-pop-mid card and the button row at the bottom. A
    short fade and rise replaces the blink-on, and reduced motion drops it below. */
-.cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: 92vw; background: var(--cc-bg, #161616); color: var(--cc-txt, #e6e6e6); border: none; border-radius: var(--cc-radius-card); box-shadow: 0 2px 5px rgba(0,0,0,.38), 0 14px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05); font: var(--cc-text-subline)/1.5 "Segoe UI", system-ui, sans-serif; animation: cc-pop-in .14s cubic-bezier(.2,.7,.3,1); }
+.cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: 92vw; background: #1a1a1a; color: var(--cc-txt, #e6e6e6); border: none; border-radius: var(--cc-radius-card); box-shadow: var(--cc-elev-3); font: var(--cc-text-subline)/1.5 "Segoe UI", system-ui, sans-serif; animation: cc-pop-in .14s cubic-bezier(.2,.7,.3,1); }
 @keyframes cc-pop-in { from { opacity: 0; transform: translateY(6px) scale(.985); } to { opacity: 1; transform: none; } }
 /* While a window stands, the page behind it is pinned: docker.js ccScrollLock sets
    html.cc-scrolllock and closePop(), the funnel every dismiss path goes through, releases it. The
@@ -571,7 +571,7 @@ a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:h
 html.cc-scrolllock, html.cc-scrolllock body { overflow: hidden !important; }
 html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width the hidden scrollbar held, or the page jumps sideways on open */
 .cc-pop { display: flex; flex-direction: column; max-height: calc(100vh - 16px); }
-.cc-pop-mid { overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+.cc-pop-mid { overflow-y: auto; overscroll-behavior: contain; min-height: 0; margin: 0 10px; padding: 4px 0; background: var(--cc-surface-window, #242424); border-radius: var(--cc-radius-control); box-shadow: var(--cc-elev-1); }
 @media (prefers-reduced-motion: reduce) { .cc-pop { animation: none; } }
 /* A popover lives on document.body, outside #cc-settings, so Unraid's global button, input and
    select theming reaches it: orange borders, uppercasing that clips a button label, and underlines
@@ -599,19 +599,16 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
 .cc-cb:checked, .cc-pop input[type="checkbox"]:checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); }
 .cc-cb:checked:hover, .cc-pop input[type="checkbox"]:checked:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }
 .cc-cb:checked::before, .cc-pop input[type="checkbox"]:checked::before { left: 23px; background: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
-/* A .cc-pop window has one side inset, 24px, reached two ways. A row inside a section wrapper
-   (.cc-pop-body, .cc-pop-auto, .cc-pop-sub, each with a 14px side margin) keeps its own 10px
-   padding and lands on 24; a block that sits in the window with no wrapper takes the whole 24
-   itself. The same numbers appear in hardenPop(), which stamps row padding inline where no sheet
-   rule reaches, so the two have to keep agreeing, as .cc-port already does with it. */
-.cc-pop-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; border-bottom: none; }   /* no separator line */
-.cc-pop-ttl { display: inline-flex; align-items: center; gap: 8px; }   /* the window title and its one info bubble */
-.cc-pop-x { cursor: pointer; color: #8a8a8a; padding: 1px 6px; border-radius: var(--cc-radius-pill); transition: background .12s, color .12s; }
-/* The window's close control joins the colour rotation as a filled chip rather than a tinted
-   glyph: a colour on the glyph disappears whenever the palette slot is dark, while a fill carries
-   its own --cc-rb-ct contrast, which is why every CC badge is filled. */
-.cc-pop-x:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
-.cc-pop-row { display: flex; align-items: center; gap: 8px; padding: 8px 24px; }   /* an unwrapped row takes the full inset */
+/* The card sits 10px inside the window, and the title badge and the button row span the same
+   width. Content keeps 14px inside the card, reached two ways: a row inside a section wrapper
+   (.cc-pop-body, .cc-pop-auto, .cc-pop-sub, each with a 4px side margin) keeps its own 10px
+   padding, and a block in the card with no wrapper takes the whole 14 itself. Every field so stays
+   24px from the window's edge, the number the window widths below were measured with. The same
+   numbers appear in hardenPop(), which stamps row padding inline where no sheet rule reaches, so
+   the two have to keep agreeing, as .cc-port already does with it. */
+.cc-pop-head { display: flex; align-items: center; gap: 8px; padding: 10px; border-bottom: none; }   /* no separator line */
+.cc-pop-head .cc-win-title { flex: 1 1 auto; width: auto; margin: 0; }   /* leaves room for the window's one info bubble */
+.cc-pop-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }   /* an unwrapped row takes the full inset */
 /* The label column is a floor plus nowrap, not a fixed width: with a width, a label wider than the
    box wraps inside it and doubles the row height, while a floor lets the box grow and keeps one
    straight edge as long as every label stays under it, so every field starts at the same x.
@@ -623,9 +620,9 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
    their tight spacing. */
 .cc-pop-lbl { color: #8a8a8a; font-size: var(--cc-text-meta); flex: 0 0 auto; box-sizing: content-box; min-width: 100px; padding-right: 6px; white-space: nowrap; }
 .cc-pop-body.cc-dis { opacity: .4; pointer-events: none; }
-.cc-pop-foot { padding: 9px 24px; border-top: none; color: #8a8a8a; font-size: var(--cc-text-meta); }
+.cc-pop-foot { padding: 9px 14px; border-top: none; color: #8a8a8a; font-size: var(--cc-text-meta); }
 /* a rejection from the engine or Docker stays on screen instead of passing as a toast, and wraps */
-.cc-pop-err { display: none; margin: 8px 24px 2px; padding: 7px 9px; border-radius: var(--cc-radius-control); background: rgba(220,53,69,.13); border: none; color: #ff7a7a; font-size: var(--cc-text-meta); line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
+.cc-pop-err { display: none; margin: 0 10px 10px; padding: 7px 9px; border-radius: var(--cc-radius-control); background: rgba(220,53,69,.13); border: none; color: #ff7a7a; font-size: var(--cc-text-meta); line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
 /* In the rotating rainbow the colours come from the --cc-rb-* vars docker.js sets: one rotation
    offset walks every badge kind through the palette. */
 .cc-enh.cc-rainbow .cc-b-net, .cc-grid-holder.cc-rainbow .cc-b-net { background: var(--cc-rb-net, var(--cc-accent, #FCC419)); color: var(--cc-rb-net-t, var(--cc-accent-text, #161616)); }
@@ -712,7 +709,7 @@ select.cc-in { cursor: pointer; }
    at the same inset. Its text cursor stays, because the field is genuinely typable. */
 .cc-port { flex: none; width: 80px; margin-left: 6px; }   /* docker.js stamps the same 80px inline, so the two have to keep agreeing; the plan window overrides both */
 .cc-unit { flex: none; width: 68px; margin-left: 6px; }
-.cc-pop-act { gap: 8px; padding: 10px 24px 12px; border-top: none; }   /* unwrapped, so the save button lines up with the fields above it */
+.cc-pop-act { gap: 8px; padding: 10px; border-top: none; }   /* on the card's edges, like the title badge */
 .cc-pop-act .cc-btn { flex: 1; text-align: center; font-size: var(--cc-text-meta); padding: 7px 6px; white-space: normal; line-height: 1.2; }
 /* The buttons in a CC window are styled here rather than stamped inline by hardenPop(). An inline
    !important beats Unraid's theme, but it also beats CC's own rules, so the colour-mode chain, the
@@ -725,14 +722,14 @@ html .cc-pop .cc-btn-primary, html .cc-menu .cc-btn-primary { background: var(--
 html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; }
 /* The plan editor groups its sections: plan fields, watchdog and schedules each get their own
    block, so the rows sit tight instead of drifting apart. */
-.cc-pop-body { background: transparent; border: none; border-radius: var(--cc-radius-control); margin: 10px 14px 6px; padding: 3px 0; }   /* flat: spacing only, no card fill in the limit popups */
+.cc-pop-body { background: transparent; border: none; border-radius: var(--cc-radius-control); margin: 6px 4px 2px; padding: 3px 0; }   /* flat: spacing only, the card behind is .cc-pop-mid */
 /* Unraid's theme gives inputs and labels margins and min-heights that push the editor rows apart;
    the !important is because its sheet can load after this one. */
 .cc-pop-body .cc-pop-row, .cc-pop-auto .cc-pop-row { padding: 3px 10px !important; }
 .cc-pop .cc-pop-row { margin: 0 !important; }
 .cc-pop .cc-pop-row > *, .cc-pop .cc-pop-row .cc-in { margin-top: 0 !important; margin-bottom: 0 !important; min-height: 0 !important; }
 .cc-pop .cc-in { padding-top: 5px !important; padding-bottom: 5px !important; line-height: 1.35 !important; }
-.cc-pop-auto { background: transparent; border: none; border-radius: var(--cc-radius-control); margin: 6px 14px; padding: 5px 0 7px; }   /* flat, like cc-pop-body */
+.cc-pop-auto { background: transparent; border: none; border-radius: var(--cc-radius-control); margin: 6px 4px; padding: 5px 0 7px; }   /* flat, like cc-pop-body */
 .cc-pop-auto .cc-pop-row { padding: 5px 10px; }
 /* No label-column width here: a second, narrower column for half a window puts its longest labels
    onto two lines while the same construction elsewhere stays on one. One column per window, whose
@@ -741,7 +738,7 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { backgr
 .cc-pop-sech-lone { padding-top: 6px; }
 .cc-pop-toggle { cursor: pointer; }
 .cc-pop-sech { font-weight: 600; font-size: var(--cc-text-subline); }
-/* the blocks below sit inside a .cc-pop-auto, so 10px is their share of the 24px inset and their
+/* the blocks below sit inside a .cc-pop-auto, so 10px is their share of the 14px inset and their
    wrapper's margin supplies the rest */
 .cc-pop-sech-lone { display: block; color: #9a9a9a; padding: 10px 10px 5px; text-transform: uppercase; letter-spacing: .5px; font-size: var(--cc-text-meta); }
 .cc-pop-sub { padding-bottom: 4px; }

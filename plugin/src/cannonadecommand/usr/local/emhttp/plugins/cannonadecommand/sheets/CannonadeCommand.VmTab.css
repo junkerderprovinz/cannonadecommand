@@ -92,25 +92,25 @@ html.cc-vms-on #kvm_list .cc-limbtn { display: inline-flex; align-items: center;
 html.cc-vms-on #kvm_list .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 html.cc-vms-on #kvm_list .cc-limbtn-set { color: var(--cc-ok-fg, #161616); background: var(--cc-ok, #6fdc8c); }   /* filled when a limit is configured */
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-limbtn-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; }
-/* The CPU core picker in the VM limits editor, as on Docker. Scoped to the #cc-vmlim-ov overlay
+/* The CPU core picker in the VM limits editor, as on Docker. Scoped to the #cc-vmlim window
    because the modal lives on document.body, not in #kvm_list. */
-#cc-vmlim-ov .cc-cores { display: flex; flex-wrap: wrap; gap: 5px; }
-#cc-vmlim-ov .cc-corebox { display: inline-flex; flex-direction: column; gap: 3px; padding: 4px; background: var(--cc-surface-2, #1e1e1e); border: none; border-radius: var(--cc-radius-control); align-items: stretch; }
-#cc-vmlim-ov .cc-corebox-tag { text-align: center; font-size: var(--cc-text-meta); line-height: 1; color: var(--cc-text-dim, #8a8a8a); letter-spacing: .5px; user-select: none; }
-#cc-vmlim-ov .cc-corebox-p .cc-corebox-tag { color: var(--cc-accent-ink, #FCC419); }
-#cc-vmlim-ov .cc-corebox-e .cc-corebox-tag { color: var(--cc-warn, #ff832b); }
-#cc-vmlim-ov .cc-core { width: 34px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-dim, #9a9a9a); border: none; border-radius: var(--cc-radius-pill); font-size: var(--cc-text-meta); cursor: pointer; user-select: none; box-sizing: border-box; transition: background .1s, color .1s; }
-#cc-vmlim-ov .cc-core:hover { background: #3a3a3a; color: var(--cc-text, #e6e6e6); }
-#cc-vmlim-ov .cc-core-on { background: var(--cc-accent, #FCC419); color: var(--cc-accent-text, #161616); }
+#cc-vmlim .cc-cores { display: flex; flex-wrap: wrap; gap: 5px; }
+#cc-vmlim .cc-corebox { display: inline-flex; flex-direction: column; gap: 3px; padding: 4px; background: var(--cc-surface-1, #1e1e1e); border: none; border-radius: var(--cc-radius-control); align-items: stretch; }
+#cc-vmlim .cc-corebox-tag { text-align: center; font-size: var(--cc-text-meta); line-height: 1; color: var(--cc-text-dim, #8a8a8a); letter-spacing: .5px; user-select: none; }
+#cc-vmlim .cc-corebox-p .cc-corebox-tag { color: var(--cc-accent-ink, #FCC419); }
+#cc-vmlim .cc-corebox-e .cc-corebox-tag { color: var(--cc-warn, #ff832b); }
+#cc-vmlim .cc-core { width: 34px; height: 24px; display: inline-flex; align-items: center; justify-content: center; background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-dim, #9a9a9a); border: none; border-radius: var(--cc-radius-pill); font-size: var(--cc-text-meta); cursor: pointer; user-select: none; box-sizing: border-box; transition: background .1s, color .1s; }
+#cc-vmlim .cc-core:hover { background: #3a3a3a; color: var(--cc-text, #e6e6e6); }
+#cc-vmlim .cc-core-on { background: var(--cc-accent, #FCC419); color: var(--cc-accent-text, #161616); }
 /* rainbow: colour each selected core by its physical-core group, as in docker.css */
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-0 { background: #FF8389; color: #161616; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-1 { background: #FF832B; color: #161616; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-2 { background: #FCC419; color: #161616; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-3 { background: #6FDC8C; color: #161616; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-4 { background: #3DDBD9; color: #161616; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-5 { background: #1D99F3; color: #fff; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-6 { background: #BE95FF; color: #161616; }
-html.cc-vm-rainbow #cc-vmlim-ov .cc-core-on.cc-rb-7 { background: #FF7EB6; color: #161616; }
+html.cc-vm-rainbow #cc-vmlim .cc-core-on.cc-rb-0 { background: #FF8389; color: #161616; }
+html.cc-vm-rainbow #cc-vmlim .cc-core-on.cc-rb-1 { background: #FF832B; color: #161616; }
+html.cc-vm-rainbow #cc-vmlim .cc-core-on.cc-rb-2 { background: #FCC419; color: #161616; }
+html.cc-vm-rainbow #cc-vmlim .cc-core-on.cc-rb-3 { background: #6FDC8C; color: #161616; }
+html.cc-vm-rainbow #cc-vmlim .cc-core-on.cc-rb-4 { background: #3DDBD9; color: #161616; }
+html.cc-vm-rainbow #cc-vmlim .cc-core-on.cc-rb-5 { background: #1D99F3; color: #fff; }
+html.cc-vm-rainbow #cc-vmlim .cc-core-on.cc-rb-6 { background: #BE95FF; color: #161616; }
+html.cc-vm-rainbow #cc-vmlim .cc-core-on.cc-rb-7 { background: #FF7EB6; color: #161616; }
 /* keep the cloned native ISO-picker link (a.hand) legible inside the CD badge */
 html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand,
 html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand i { color: inherit !important; text-decoration: none !important; }
