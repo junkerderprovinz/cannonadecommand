@@ -2905,14 +2905,17 @@
     btn.setAttribute("aria-haspopup", "listbox"); btn.setAttribute("aria-expanded", "false");
     if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(btn);
     input.setAttribute("dir", "ltr"); btn.setAttribute("dir", "ltr");
-    var panel = null, cols = [];
+    var panel = null, cols = [], opened = "";
     function two(n) { return (n < 10 ? "0" : "") + n; }
     function parts() { var m = /^(\d{1,2}):(\d{1,2})$/.exec(input.value || ""); return m ? [Math.min(23, +m[1]), Math.min(59, +m[2])] : [null, null]; }
-    function write(h, mi) {
-      var p = parts();
-      input.value = two(h == null ? (p[0] == null ? 0 : p[0]) : h) + ":" + two(mi == null ? (p[1] == null ? 0 : p[1]) : mi);
+    function set(v) {
+      input.value = v;
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    function write(h, mi) {
+      var p = parts();
+      set(two(h == null ? (p[0] == null ? 0 : p[0]) : h) + ":" + two(mi == null ? (p[1] == null ? 0 : p[1]) : mi));
     }
     function onDoc(e) { if (panel && !panel.contains(e.target) && !wrap.contains(e.target)) close(false); }
     // A scroll inside a column is the panel's own and never closes it; only the page moving away
@@ -2942,7 +2945,8 @@
         var other = cols[ci ? 0 : 1]; (other.filter(function (o) { return o.classList.contains("cc-drop-on"); })[0] || other[0]).focus();
         return;
       } else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); pick(ci, it); close(true); return; }
-      else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(true); return; }
+      // Every step writes the field as it goes, so Escape puts back the time the panel opened on.
+      else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); if (input.value !== opened) set(opened); close(true); return; }
       else if (e.key === "Tab") { close(true); return; }   // the Tab itself moves on from the button
       if (to < 0) return;
       e.preventDefault(); e.stopPropagation();
@@ -2951,7 +2955,7 @@
     function open() {
       if (panel && panel.isConnected) return;
       if (tpOpen) tpOpen();
-      panel = el("div", "cc-drop cc-timepick"); panel.setAttribute("dir", "ltr");
+      panel = el("div", "cc-drop cc-timepick"); panel.setAttribute("dir", "ltr"); opened = input.value;
       panel.setAttribute("data-cc-own-keys", "1");   // the window leaves Escape and Tab to the panel
       cols = [];
       var cur = parts(), mins = [];

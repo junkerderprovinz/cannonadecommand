@@ -165,6 +165,7 @@ key('ArrowUp'); eq(input.value, '00:25', 'ArrowUp steps the minute by five');
 key('ArrowLeft'); ok(active === cols[0].children[0], 'ArrowLeft moves back to the hour');
 ev = key('Escape');
 ok(!body.children.includes(panel) && ev.stopped, 'Escape closes the panel and stops there, so the window behind stays');
+eq(input.value, '07:30', 'and puts back the time the panel opened on');
 ok(active === btn, 'the focus goes back to the button');
 ok(btn.attrs['aria-expanded'] === 'false', 'which says the panel is closed');
 
@@ -173,7 +174,7 @@ btn.fire('click', { preventDefault() {}, stopPropagation() {} });
 const pnl = body.children.find(c => c.classList.contains('cc-timepick'));
 const c2 = pnl.querySelectorAll('.cc-tp-col');
 c2[0].children[22].fire('click', { preventDefault() {}, stopPropagation() {} });
-eq(input.value, '22:25', 'clicking an hour rewrites only the hour, padded');
+eq(input.value, '22:30', 'clicking an hour rewrites only the hour, padded');
 ok(body.children.includes(pnl), 'the panel stays open, so hour and minute take one visit');
 eq(c2[0].querySelectorAll('.cc-drop-on').map(c => c.textContent).join(), '22', 'exactly one hour stays marked, the one just picked');
 c2[1].children[1].fire('click', { preventDefault() {}, stopPropagation() {} });
