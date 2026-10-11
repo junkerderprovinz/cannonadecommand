@@ -238,16 +238,16 @@ html.cc-docker-on .cc-grid-holder .cc-chip-dot.cc-badge-running:not(.cc-badge-al
    at rest, so the row does not move when its mark comes in, and opacity rather than display keeps
    the mark in the Tab order.
 
-   The mark is GlimStone's one control for picking rows: round at the pill radius, a quiet shade
-   until picked, then the row's colour with a filled tick (IconCheck) in that colour's ink. The tick
-   is a mask on ::before, so its ink comes from the colour chain rather than a colour baked into a
-   data URI. */
+   The mark is GlimStone's one control for picking rows: a circle in every shape setting, like the
+   state dot, a quiet shade until picked, then the row's colour with a filled tick (IconCheck) in
+   that colour's ink. The tick is a mask on ::before, so its ink comes from the colour chain rather
+   than a colour baked into a data URI. */
 .cc-bulk-cb {
   display: inline-block !important; opacity: 0; position: relative; flex: 0 0 auto; vertical-align: middle;
   -webkit-appearance: none !important; appearance: none !important;
   width: 18px; height: 18px; box-sizing: border-box; margin: 0 8px 0 0; padding: 0; cursor: pointer;
   border: none !important; outline: none !important; box-shadow: none;
-  border-radius: var(--cc-radius-pill); background: rgba(128, 128, 128, .28);
+  border-radius: 50%; background: rgba(128, 128, 128, .28);
   transition: background-color .12s, opacity var(--cc-motion-fade-dur, 0s);
 }
 html:is(.cc-bulkmode-on, .cc-bulk-picked) .cc-bulk-cb,

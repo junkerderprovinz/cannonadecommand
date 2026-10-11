@@ -1,5 +1,5 @@
 // Picking rows and switching a setting are two different questions, and GlimStone gives each its
-// own control. The Docker list's multi-select is the selection mark: round at the pill radius, a
+// own control. The Docker list's multi-select is the selection mark: a circle in every shape, a
 // shade until picked, then the row's colour with a filled tick in that colour's ink. An on/off
 // setting (the Startplan window's watchdog and idle rows, the badge-visibility matrix) is the
 // switch. What can quietly break it:
@@ -33,7 +33,12 @@ console.log('\nThe multi-select is the selection mark');
 {
   const base = rule(docker, '.cc-bulk-cb');
   ok('the mark is drawn, not the system box', /appearance:\s*none !important/.test(base) && !/accent-color/.test(base), base);
-  ok('it is round at the pill radius', /border-radius:\s*var\(--cc-radius-pill\)/.test(base));
+  // A circle is a form, not a shape setting: under Soft or Square the radius tokens shrink to 5px
+  // or 0 and would turn the mark into a box, so the winning radius is a plain 50%.
+  const { candidates } = require('./cascade');
+  const el = { tag: 'input', classes: ['cc-bulk-cb'], attrs: { type: 'checkbox' }, states: {}, html: ['cc-docker-on'], outside: ['.cc-pop'] };
+  const c = candidates('docker', el, 'border-radius'), w = c[c.length - 1];
+  ok('it is a circle whatever the shape setting', !!w && w.value === '50%', w && w.selector + ' => ' + w.value);
   ok('it is 18px', /width:\s*18px/.test(base) && /height:\s*18px/.test(base));
   ok('it rests as a shade', /background:\s*rgba\(128, 128, 128, \.28\)/.test(base));
   ok('its slot is always there, so a row does not move when its mark comes in', /display:\s*inline-block !important/.test(base) && /opacity:\s*0;/.test(base), base);

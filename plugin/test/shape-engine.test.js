@@ -47,12 +47,12 @@ function decls(css) {
 // A radius reads one of the three tokens, or a calc() of one for a part drawn inside a control
 // (a colour swatch inside its field, a text highlight). 0 and inherit are not shapes.
 const TOKEN = /^(var\(--cc-radius-(card|control|pill)\)|calc\(var\(--cc-radius-(card|control|pill)\) \/ \d\)|0|0px|inherit)$/;
-// The round things that have to stay round in every shape, being dots, rings or a photo: GlimStone
-// keeps the colour picker's dot at 50% for the same reason.
+// The round things that have to stay round in every shape, being dots, rings, the selection mark
+// or a photo: GlimStone keeps the colour picker's dot at 50% for the same reason.
 const ROUND = [
   '.cc-ct-dotrow > .cc-badge', '.cc-chip-dot', '.cc-cfg', '.cc-ip-dot', '.cc-req::after', '#cc-ctout-status',
   '.cc-isl-dot', '.cc-nchan-loader', '.cc-dot', 'i.fa-circle.orb', '.cc-status-dot', '.cc-loader > span',
-  '.cc-info:focus-visible', '.cc-acctinfo', '.cc-toolsinfo', '.popupAuthorIcon img', 'input[type="radio"]',
+  '.cc-info:focus-visible', '.cc-acctinfo', '.cc-toolsinfo', '.popupAuthorIcon img', 'input[type="radio"]', '.cc-bulk-cb',
 ];
 function radiusOk(sel, value) {
   const v = value.replace(/\s*!important$/, '').trim();
