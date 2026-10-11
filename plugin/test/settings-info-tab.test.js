@@ -55,22 +55,30 @@ console.log('\nEvery version links to its release page');
   ok('a leading v is not doubled', verLink('v0.9.0', 'R').href === 'R/releases/tag/v0.9.0');
   const dev = verLink('dev', 'R');
   ok('a dev build has no link', dev.tag === 'span' && dev.textContent === 'dev');
+  ok('a release candidate links to its own tag', verLink('1.0.0-rc1', 'R').href === 'R/releases/tag/v1.0.0-rc1');
   ok('GlimStone links to its own repository', /verLink\(GLS_VER, GLS_REPO\)/.test(settings) && /var GLS_REPO = "https:\/\/github\.com\/junkerderprovinz\/glimstone";/.test(settings));
   const cmp = new Function(grabFn(settings, 'verCmp') + '\nreturn verCmp;')();
   ok('a newer patch is newer', cmp('1.0.1', '1.0.0') > 0);
   ok('the minor outranks the patch', cmp('1.1.0', '1.0.9') > 0 && cmp('1.0.9', '1.1.0') < 0);
   ok('the same version is not newer', cmp('v1.2.0', '1.2.0') === 0);
   ok('any release is newer than a dev build', cmp('0.9.0', 'dev') > 0);
+  // A release candidate's own number is x.y.z-rcN, and an older release must never pass as an update to it.
+  ok('an older release is not newer than a release candidate', cmp('0.9.0', '1.0.0-rc1') < 0);
+  ok('the release is newer than its own candidate', cmp('1.0.0', '1.0.0-rc1') > 0 && cmp('1.0.0-rc1', '1.0.0') < 0);
+  ok('a later candidate is newer than an earlier one', cmp('1.0.0-rc2', '1.0.0-rc1') > 0 && cmp('1.0.0-rc.10', '1.0.0-rc.9') > 0);
+  ok('the same candidate is not newer', cmp('v1.0.0-rc1', '1.0.0-rc1') === 0);
+  ok('a later release is newer than a candidate', cmp('1.0.1', '1.0.0-rc1') > 0 && cmp('1.1.0', '1.0.0-beta') > 0);
+  ok('build metadata does not count', cmp('1.0.0+abc', '1.0.0') === 0);
 }
 
 console.log('\nThe update check shows its verdict on the button');
 (async () => {
-  const run = async (answer) => {
+  const run = async (answer, ver) => {
     const fails = [];
     const btn = el('span', 'cc-btn cc-set-check');
     const fetch = () => answer instanceof Error ? Promise.reject(answer) : Promise.resolve(answer);
     const check = new Function('fetch', 'T', 'failed', 'CC_VER', consts + '\n' + grabFn(settings, 'verCmp') + '\n' + grabFn(settings, 'checkUpdates') + '\nreturn checkUpdates;')(
-      fetch, (d, e) => e, (c, m) => fails.push([c, m]), '1.0.0');
+      fetch, (d, e) => e, (c, m) => fails.push([c, m]), ver || '1.0.0');
     await check(btn);
     return { btn, fails };
   };
@@ -80,6 +88,10 @@ console.log('\nThe update check shows its verdict on the button');
   const newer = await run(json({ tag_name: 'v1.1.0' }));
   ok('a newer release turns it orange with the number', newer.btn.classList.contains('cc-set-chk-new') && newer.btn.textContent === 'v1.1.0 available');
   ok('and leaves green behind', !newer.btn.classList.contains('cc-set-chk-ok'));
+  const rc = await run(json({ tag_name: 'v0.9.0' }), '1.0.0-rc1');
+  ok('a release candidate does not offer the older release as an update', rc.btn.classList.contains('cc-set-chk-ok'), rc.btn.textContent);
+  const rcDone = await run(json({ tag_name: 'v1.0.0' }), '1.0.0-rc1');
+  ok('but does offer its own release', rcDone.btn.textContent === 'v1.0.0 available');
   const down = await run({ ok: false, status: 403, json: () => Promise.resolve({}) });
   ok('a failed check turns it red', down.btn.classList.contains('cc-set-chk-bad') && down.btn.textContent === 'Check failed');
   ok('and shakes it with the reason in a toast', down.fails.length === 1 && down.fails[0][0] === down.btn && /HTTP 403/.test(down.fails[0][1]));

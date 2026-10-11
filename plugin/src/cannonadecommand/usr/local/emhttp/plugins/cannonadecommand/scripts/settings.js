@@ -2069,7 +2069,7 @@
   // build, shows its name without a link, since the link would lead nowhere.
   function verLink(ver, repo) {
     var v = String(ver || "").replace(/^v/, "");
-    if (!/^\d+\.\d+\.\d+$/.test(v)) return el("span", "cc-set-ver", v);
+    if (!/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(v)) return el("span", "cc-set-ver", v);
     var a = el("a", "cc-btn cc-set-ver", "v" + v);
     a.href = repo + "/releases/tag/v" + v; a.target = "_blank"; a.rel = "noopener noreferrer";
     return a;
@@ -2081,12 +2081,28 @@
   }
   // Positive when version a is newer than b. A current version that is no release number, a dev
   // build, counts as older than any release.
+  // Semantic versioning order: the numeric core decides, and a pre-release such as 1.0.0-rc1 sits
+  // just below its own release and above everything before it. A build without a version (dev)
+  // is older than any release.
   function verCmp(a, b) {
-    function parts(v) { var m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(String(v || "")); return m ? [+m[1], +m[2], +m[3]] : null; }
+    function parts(v) {
+      var m = /^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/.exec(String(v || ""));
+      return m ? { core: [+m[1], +m[2], +m[3]], pre: m[4] ? m[4].split(".") : [] } : null;
+    }
     var pa = parts(a), pb = parts(b);
     if (!pa) return 0;
     if (!pb) return 1;
-    for (var i = 0; i < 3; i++) if (pa[i] !== pb[i]) return pa[i] - pb[i];
+    for (var i = 0; i < 3; i++) if (pa.core[i] !== pb.core[i]) return pa.core[i] - pb.core[i];
+    if (!pa.pre.length || !pb.pre.length) return pb.pre.length - pa.pre.length;
+    for (var j = 0; j < Math.max(pa.pre.length, pb.pre.length); j++) {
+      var x = pa.pre[j], y = pb.pre[j];
+      if (x === undefined || y === undefined) return x === undefined ? -1 : 1;
+      if (x === y) continue;
+      var nx = /^\d+$/.test(x), ny = /^\d+$/.test(y);
+      if (nx && ny) return +x - +y;
+      if (nx !== ny) return nx ? -1 : 1;
+      return x < y ? -1 : 1;
+    }
     return 0;
   }
   // The check shows its verdict on the button itself: green when this build is the latest
