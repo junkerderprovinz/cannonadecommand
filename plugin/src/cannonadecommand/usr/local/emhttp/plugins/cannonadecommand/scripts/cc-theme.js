@@ -903,6 +903,11 @@
         };
       }
     } catch (e) {}
+    // the writes header.js made before this wrapper existed, see syncedSet() there
+    var early = Object.keys(window.__ccLSEarly || {});
+    early.forEach(function (k) { pending[k] = 1; });
+    if (early.length) syncT = setTimeout(push, 800);
+    delete window.__ccLSEarly;
     // One push at a time; a write landing while one is out queues another for when it returns. The
     // keys a push carries stay unsynced until its PUT has landed, so adopt() leaves them alone.
     var sending = {}, pushing = false, queued = false;

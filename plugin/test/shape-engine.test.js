@@ -111,7 +111,7 @@ console.log('\nheader.js rewrites an old name once and stamps the shape');
     const attrs = {};
     const root = { setAttribute: (k, v) => { attrs[k] = v; } };
     const g = (k, d) => { const v = localStorage.getItem(k); return v == null ? d : v; };
-    new Function('g', 'localStorage', 'root', grabFn(header, 'shapeName') + '\n' + m[0])(g, localStorage, root);
+    new Function('g', 'localStorage', 'root', 'window', grabFn(header, 'shapeName') + '\n' + grabFn(header, 'syncedSet') + '\n' + m[0])(g, localStorage, root, {});
     return { attr: attrs['data-cc-shape'], writes, stored: store['cc.badgeshape'] };
   };
   if (m) {

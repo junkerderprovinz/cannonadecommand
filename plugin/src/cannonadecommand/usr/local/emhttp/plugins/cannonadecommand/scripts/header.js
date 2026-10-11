@@ -6,6 +6,13 @@
 (function () {
   "use strict";
   function g(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
+  // docker.js, settings.js and cc-theme.js wrap localStorage.setItem to mirror cc.* keys into the
+  // engine, and a page's wrapper can arrive after this file's first pass. A write made before it
+  // is listed in __ccLSEarly for the wrapper to push, or the engine copy it adopts on load would
+  // put the old value back.
+  function syncedSet(k, v) {
+    try { localStorage.setItem(k, v); if (!window.__ccLS) (window.__ccLSEarly = window.__ccLSEarly || {})[k] = 1; } catch (e) {}
+  }
   function idealText(hex) {
     var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff";
     var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
@@ -2295,15 +2302,15 @@
       // shape is global and set whatever the header area does: data-cc-shape picks the radius set
       // in Tokens.css. cc.badgeshape is read directly, since through eff() it would fall back to an
       // unset cch.badgeshape while the adopt toggle is off. A name from before GlimStone's three
-      // shapes is rewritten once, through the patched setItem, so the engine's mirror follows.
+      // shapes is rewritten once, and the engine's mirror follows.
       var shp = g("cc.badgeshape", "round"), shpName = shapeName(shp);
-      if (/^(pill|rounded|circle)$/.test(shp)) { try { localStorage.setItem("cc.badgeshape", shpName); } catch (e3) {} }
+      if (/^(pill|rounded|circle)$/.test(shp)) syncedSet("cc.badgeshape", shpName);
       root.setAttribute("data-cc-shape", shpName);
       // The motion level is global too. The sheets read it from data-cc-motion, and the OS
       // reduce-motion setting still wins over every level. A digit from before the levels had
-      // names is rewritten once, through the patched setItem, so the engine's mirror follows.
+      // names is rewritten once, and the engine's mirror follows.
       var anim = g("cc.anim", "subtle"), level = motionLevel(anim);
-      if (/^[012]$/.test(anim)) { try { localStorage.setItem("cc.anim", level); } catch (e2) {} }
+      if (/^[012]$/.test(anim)) syncedSet("cc.anim", level);
       root.setAttribute("data-cc-motion", level);
       // The native jQuery-UI dialogs and the SweetAlert confirmations follow the CC look on every
       // page. Master-gated only, since it is chrome rather than an area of its own.
@@ -2520,7 +2527,7 @@
       if (g("cc.theming", "1") === "0") return;
       var last = g("cc.lastver", "");
       if (last && last !== CC_VER) { setTimeout(function () { ccToast(T("CannonadeCommand auf v" + CC_VER + " aktualisiert.", "CannonadeCommand updated to v" + CC_VER + ".")); }, 1400); }
-      if (last !== CC_VER) { try { localStorage.setItem("cc.lastver", CC_VER); } catch (e2) {} }
+      if (last !== CC_VER) syncedSet("cc.lastver", CC_VER);
     } catch (e) {}
   }
   // This file is the only CC script on the Apps tab, and it stamps no accent var on the root there,

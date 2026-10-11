@@ -78,7 +78,7 @@ console.log('\nheader.js rewrites a saved digit to its name, once');
     const attrs = {};
     const root = { setAttribute: (k, v) => { attrs[k] = v; } };
     const g = (k, d) => { const v = localStorage.getItem(k); return v == null ? d : v; };
-    new Function('g', 'localStorage', 'root', grabFn(header, 'motionLevel') + '\n' + m[0])(g, localStorage, root);
+    new Function('g', 'localStorage', 'root', 'window', grabFn(header, 'motionLevel') + '\n' + grabFn(header, 'syncedSet') + '\n' + m[0])(g, localStorage, root, {});
     return { attr: attrs['data-cc-motion'], writes, stored: store['cc.anim'] };
   };
   if (m) {

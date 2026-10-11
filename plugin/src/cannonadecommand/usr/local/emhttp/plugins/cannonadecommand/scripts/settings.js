@@ -200,6 +200,11 @@
         try { if (/^cc[a-z]*\./.test(String(k)) && k !== "cc.stateCache") { uiPending[k] = 1; clearTimeout(uiSyncT); uiSyncT = setTimeout(pushUISettings, 800); } } catch (e) {}
       };
     } catch (e) {}
+    // the writes header.js made before this wrapper existed, see syncedSet() there
+    var early = Object.keys(window.__ccLSEarly || {});
+    early.forEach(function (k) { uiPending[k] = 1; });
+    if (early.length) uiSyncT = setTimeout(pushUISettings, 800);
+    delete window.__ccLSEarly;
   })();
   function collectUISettings() { var o = {}; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && /^cc[a-z]*\./.test(k) && k !== "cc.stateCache") o[k] = localStorage.getItem(k); } return o; }
   // Merges the changed keys into the server map rather than replacing it, one push at a time and
