@@ -84,5 +84,27 @@ console.log('\nOne filled accent button per view');
   ok('"Open" is a plain secondary button', /el\("button", "cc-btn", T\("Öffnen", "Open"\)\)/.test(settings) && !/cc-btn-accent/.test(settings));
 }
 
+// The empty state stands in for the cards, dark like them on every theme, and its two lines
+// are text: both read at 4.5:1 on its own fill, whatever the theme.
+console.log('\nThe empty state reads, on every theme');
+{
+  const { candidates, tokens, resolve, parseRules, DIR: D } = require('./cascade');
+  const island = parseRules(fs.readFileSync(path.join(D, 'sheets/CannonadeCommand.Tokens.css'), 'utf8')).filter((r) => r.selector.replace(/\s+/g, ' ').startsWith('.cc-pop, .cc-menu'))[0];
+  ok('it is a dark token island', !!island && /#cc-settings \.cc-set-empty/.test(island.selector));
+  const lum = (h) => { const n = parseInt(h.slice(1), 16), l = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * l(n >> 16 & 255) + 0.7152 * l(n >> 8 & 255) + 0.0722 * l(n & 255); };
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const win = (light) => { const m = tokens(light); if (island && /#cc-settings \.cc-set-empty/.test(island.selector)) island.decls.forEach((d) => { if (d.prop.startsWith('--')) m[d.prop] = d.value; }); return m; };
+  const val = (classes, prop, m) => { const c = candidates('settings', { tag: 'div', classes, attrs: {}, states: {}, inside: ['#cc-settings'] }, prop); return c.length ? resolve(c[c.length - 1].value, m) : ''; };
+  for (const light of [false, true]) {
+    const m = win(light), bg = val(['cc-set-empty'], 'background', m);
+    for (const [what, cls] of [['the "nothing found" line', 'cc-set-empty-t'], ['the hint below it', 'cc-set-empty-h']]) {
+      const fg = val([cls], 'color', m);
+      const r = /^#[0-9a-f]{6}$/i.test(fg) && /^#[0-9a-f]{6}$/i.test(bg) ? ratio(fg, bg) : 0;
+      ok(`${what} on a ${light ? 'light' : 'dark'} theme`, r >= 4.5, `${fg} on ${bg} = ${r.toFixed(2)}:1`);
+    }
+  }
+  ok('no literal fill or ink is left on it', !/\.cc-set-empty\{[^}]*#[0-9a-f]{3,6}/i.test(settings) && !/\.cc-set-empty-[th]\{[^}]*#[0-9a-f]{3,6}/i.test(settings));
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

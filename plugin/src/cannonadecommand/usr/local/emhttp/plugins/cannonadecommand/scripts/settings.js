@@ -43,11 +43,12 @@
       "#cc-settings .cc-set-searchbadge:not(.cc-open):hover .cc-set-searchicon{color:var(--cc-rbaccent-text,var(--cc-accent-text,#161616))}" +
       "#cc-settings .cc-set-searchbadge .cc-set-search{box-sizing:border-box;width:0;max-width:0;padding:0;background:transparent;transition:width .2s,max-width .2s,padding .2s}" +
       "#cc-settings .cc-set-searchbadge.cc-open .cc-set-search{width:220px;max-width:220px;padding:0 12px 0 2px}" +
-      // what a search shows when no setting matches, in the place the cards would take
-      "#cc-settings .cc-set-empty{display:flex;align-items:center;gap:14px;max-width:420px;box-sizing:border-box;padding:18px;background:#222222;border-radius:var(--cc-radius-card);box-shadow:0 1px 4px rgba(0,0,0,.45)}" +
+      // What a search shows when no setting matches, in the place the cards would take and dark
+      // like them on every theme: Tokens.css counts it among the dark token islands.
+      "#cc-settings .cc-set-empty{display:flex;align-items:center;gap:14px;max-width:420px;box-sizing:border-box;padding:18px;background:var(--cc-surface-2);border-radius:var(--cc-radius-card);box-shadow:var(--cc-elev-1)}" +
       "#cc-settings .cc-set-empty svg{flex:none;width:28px;height:28px;opacity:.4}" +
-      "#cc-settings .cc-set-empty-t{font-weight:600;color:var(--dim,#9a9a9a)}" +
-      "#cc-settings .cc-set-empty-h{margin-top:2px;font-size:var(--cc-text-meta);color:var(--dim2,#6f6f6f)}" +
+      "#cc-settings .cc-set-empty-t{font-weight:600;color:var(--cc-text)}" +
+      "#cc-settings .cc-set-empty-h{margin-top:2px;font-size:var(--cc-text-meta);color:var(--cc-text-dim)}" +
       "#cc-settings .cc-flag-picker{position:relative;margin-top:6px;max-width:340px}" +
       "#cc-settings .cc-flag-trigger{display:flex;align-items:center;gap:9px;background:#232323;border-radius:var(--cc-radius-control);padding:7px 12px;cursor:pointer;user-select:none}" +
       "#cc-settings .cc-flag-trigger:hover{background:color-mix(in srgb,#232323 85%,var(--cc-text,#e6e6e6))}" +
