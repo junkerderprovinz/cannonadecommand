@@ -1208,7 +1208,7 @@ html.Theme--azure #cc-settings .cc-set-heroleft { --txt: var(--cc-text, #1c1c1c)
 #cc-settings .cc-dsel.cc-open .cc-dsel-panel { display: flex; }
 /* The same contract as .cc-tsel-opt in Tools.css, so every CC dropdown reads alike in every colour
    mode: each item takes its own palette slot, which cc-theme.js paintSelects stamps as --cc-rb-c,
-   accent mode falls through the chain, and hover and selected take one colour step. *
+   accent mode falls through the chain, and hover and selected take one colour step. */
 #cc-settings .cc-dsel-opt {
   display: flex; align-items: center; gap: 8px; justify-content: flex-start;
   line-height: 1.3; margin: 0; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-b-radius, 8px);

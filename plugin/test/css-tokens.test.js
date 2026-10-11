@@ -131,5 +131,18 @@ console.log('\nText on Unraid\'s own surfaces follows the theme');
   ok('and re-applies it, since the inherited colour is computed above it', /(^|;)\s*color:\s*var\(--txt\)/.test(hero), hero);
 }
 
+console.log('\nEvery comment closes before the next one opens');
+{
+  // A comment that loses its closing slash runs on to the next comment's end and takes every rule
+  // in between with it, without a parse error anywhere.
+  for (const f of sheets) {
+    const css = fs.readFileSync(f, 'utf8');
+    const open = [];
+    const re = /\/\*[\s\S]*?\*\//g; let m;
+    while ((m = re.exec(css))) if (m[0].slice(2).includes('/*')) open.push(css.slice(0, m.index).split('\n').length);
+    ok(path.basename(f) + ': no comment swallows the next', open.length === 0, 'unclosed near line ' + open.join(', '));
+  }
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);
