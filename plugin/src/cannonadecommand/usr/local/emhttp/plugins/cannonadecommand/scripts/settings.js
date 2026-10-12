@@ -185,8 +185,11 @@
       var orig = localStorage.setItem.bind(localStorage);
       window.__ccLS = orig;
       localStorage.setItem = function (k, v) {
+        // Writing the value already stored gives the engine nothing to hear, and the pages rewrite
+        // some keys unchanged on every render, the settings tab among them.
+        var same = false; try { same = localStorage.getItem(k) === String(v); } catch (e) {}
         orig(k, v);
-        try { if (/^cc[a-z]*\./.test(String(k)) && k !== "cc.stateCache") { uiPending[k] = 1; clearTimeout(uiSyncT); uiSyncT = setTimeout(pushUISettings, 800); } } catch (e) {}
+        try { if (!same && /^cc[a-z]*\./.test(String(k)) && k !== "cc.stateCache") { uiPending[k] = 1; clearTimeout(uiSyncT); uiSyncT = setTimeout(pushUISettings, 800); } } catch (e) {}
       };
     } catch (e) {}
     // removeItem is intercepted too, or a cleared key never reaches the engine's mirror and the
