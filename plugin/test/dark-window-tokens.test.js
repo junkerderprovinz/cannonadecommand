@@ -105,5 +105,28 @@ console.log('\nThe CA changelog panel, white theme');
   }
 }
 
+// A window's field labels stand on the content card and its placeholders in the fields, at rest
+// and focused. Both carry information, so both read at 4.5:1 on every theme.
+console.log('\nWindow labels and placeholders');
+{
+  const lum = (h) => { const n = parseInt(h.slice(1), 16); const l = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * l(n >> 16 & 255) + 0.7152 * l(n >> 8 & 255) + 0.0722 * l(n & 255); };
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const hexOf = (v) => (/^#[0-9a-f]{6}$/i.test(v) ? v : null);
+  for (const [theme, scope, html] of [['dark', darkWin, ['cc-docker-on']], ['white', lightWin, ['cc-docker-on', 'Theme--white']]]) {
+    const lbl = { tag: 'span', classes: ['cc-pop-lbl'], attrs: {}, states: {}, html, inside: ['.cc-pop'] };
+    const c = candidates('docker', lbl, 'color'), fg = c[c.length - 1];
+    const f = fg && hexOf(resolve(fg.value, scope)), r = f ? ratio(f, '#242424') : 0;
+    ok(`${theme}: a label on the content card reads at 4.5:1`, r >= 4.5, `${fg && fg.selector} => ${fg && resolve(fg.value, scope)}, ${r.toFixed(2)}:1`);
+    // The resolver leaves pseudo-elements out, so the placeholder rules are read directly.
+    const rules = parseRules(fs.readFileSync(path.join(DIR, 'styles/docker.css'), 'utf8')).filter((x) => /\.cc-(in|pop[^-])[^,{]*::placeholder|\.cc-pop input::placeholder/.test(x.selector));
+    const decl = rules.length ? rules[rules.length - 1].decls.find((d) => d.prop === 'color') : null;
+    const p = decl && hexOf(resolve(decl.value, scope));
+    for (const [state, fill] of [['at rest', '#2e2e2e'], ['focused', '#383838']]) {
+      const rp = p ? ratio(p, fill) : 0;
+      ok(`${theme}: a placeholder in a field ${state} reads at 4.5:1`, rp >= 4.5, `${decl && resolve(decl.value, scope)} on ${fill}, ${rp.toFixed(2)}:1`);
+    }
+  }
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

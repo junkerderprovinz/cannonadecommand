@@ -313,7 +313,7 @@ ok(/i\.closest\("\.cc-pop-plan"\)[\s\S]{0,120}?"flex", "1 1 0"/.test(harden), 'h
 // so a hint reads as a link or as a filled-in value. A guard repeated per field is
 // missing wherever it was not typed.
 console.log('\nPart 10: placeholders are hints, not links');
-ok(/\.cc-in::placeholder[^{]*\{[^}]*color: #8a8a8a/.test(css), 'every .cc-in placeholder is overridden to the neutral hint grey');
+ok(/\.cc-in::placeholder[^{]*\{[^}]*color: var\(--cc-text-hint/.test(css), 'every .cc-in placeholder is overridden to the hint token');
 ok(/\.cc-pop input::placeholder/.test(css), 'the guard covers every input in a window, not one class at a time');
 ok(/\.cc-in::placeholder[^{]*\{[^}]*opacity: 1/.test(css), 'opacity:1 as well, Firefox dimming placeholders on top of the colour');
 const setjs = fs.readFileSync(path.join(SCRIPTS, 'settings.js'), 'utf8');

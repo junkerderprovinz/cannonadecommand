@@ -134,6 +134,8 @@ html {
   --cc-text-dim:   #8a8a8a;
   --cc-text-dim2:  #6f6f6f;
   --cc-text-chip:  #cfcfcf;
+  /* a field's label and its placeholder, quieter than the value yet at 4.5:1 on a focused field */
+  --cc-text-hint:  #a3a3a3;
   /* chip text on Unraid's header bar, whose colour is --header-background-color rather than the
      page's, so the white theme keeps it dark */
   --cc-header-ink: #cfcfcf;
@@ -249,6 +251,7 @@ html.Theme--azure {
   --cc-text-dim:   #545454;
   --cc-text-dim2:  #6f6f6f;
   --cc-text-chip:  #303030;
+  --cc-text-hint:  #5e5e5e;
   /* Unraid's own ink for its header bar, which is dark on white and light on azure */
   --cc-header-ink: var(--header-text-color, #cfcfcf);
   --cc-toggle-track-off: #cfcfcf;
@@ -275,7 +278,7 @@ html.Theme--azure {
 .cc-pop, .cc-menu, .cc-win, .cc-rowmenu, #cc-settings .cc-set-empty, html.cc-popups-on #alternateView .alternateViewContent {
   --cc-surface-1: #1e1e1e;  --cc-surface-2: #222222;  --cc-surface-3: #2e2e2e;  --cc-surface-base: #161616;
   --cc-surface-4: #262626;  --cc-surface-window: #242424;  --cc-surface-card: #191919;  --cc-surface-deep: #0f0f0f;
-  --cc-text: #e6e6e6;  --cc-text-dim: #8a8a8a;  --cc-text-chip: #cfcfcf;  --cc-header-ink: #cfcfcf;
+  --cc-text: #e6e6e6;  --cc-text-dim: #8a8a8a;  --cc-text-chip: #cfcfcf;  --cc-text-hint: #a3a3a3;  --cc-header-ink: #cfcfcf;
   --cc-toggle-track-off: #3a3a3a;  --cc-toggle-knob: #fff;  --cc-line-solid: #2a2a2a;  --cc-badge-neutral: #3c3c3c;
   --cc-ink-mix: 100%;
   --cc-ok:   #6fdc8c;  --cc-ok-fg:   #161616;  --cc-ok-ink:   #6fdc8c;
