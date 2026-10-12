@@ -271,7 +271,7 @@ console.log('\nThe windows that use it');
   }
   ok('the Startplan keeps its own Save', /bSave = el\("span", "cc-btn cc-btn-primary", t\("saveShort"\)\)/.test(grabFn(docker, 'openEditor')));
   const place = grabFn(docker, 'placePop'), close = grabFn(docker, 'closePop');
-  ok('placePop makes every editor modal, focus returning to its badge', /CCTheme\.modal\(pop, \{ opener: anchor, onDismiss: closePop \}\)/.test(place));
+  ok('placePop makes every editor modal, focus returning to its badge', /CCTheme\.modal\(pop, \{ opener: anchor, onDismiss: dismissPop \}\)/.test(place));
   ok('closePop, the funnel of every dismiss, closes the modal', /popModal = null; m\.close\(\)/.test(close));
   ok('the painter starts with the title badge', /var POP_PAINT_SEL = "[^"]*\.cc-pop-ttl"/.test(docker) && !/cc-pop-x/.test(docker));
   ok('the window buttons answer the keyboard', /CCTheme\.pressable\(b\)/.test(grabFn(docker, 'hardenPop')));
