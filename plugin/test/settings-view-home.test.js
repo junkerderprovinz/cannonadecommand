@@ -27,13 +27,19 @@ console.log('\nEvery view has a gear');
 {
   const fn = (name) => { const i = docker.indexOf('function ' + name + '('); let d = 0; for (let k = docker.indexOf('{', i); k < docker.length; k++) { if (docker[k] === '{') d++; else if (docker[k] === '}') { d--; if (!d) return docker.slice(i, k + 1); } } return ''; };
   const top = fn('relocateTopBar');
-  ok('list: the gear sits in the last visible column header', /th3\.appendChild\(makeGear\("cc-hgear-th2"\)\)/.test(top) && /while \(th3 && !th3\.offsetParent\) th3 = th3\.previousElementSibling;/.test(top));
-  ok('list: it moves with the column rather than doubling', /if \(!th3\.querySelector\("\.cc-hgear-th2"\)\) \{\s*var movedGear = document\.querySelector\("\.cc-hgear-th2"\); if \(movedGear\) movedGear\.remove\(\);/.test(top));
-  ok('list: the stale-gear sweep spares it', /\.cc-hgear:not\(\.cc-hgear-grid\):not\(\.cc-hgear-th2\)/.test(top));
-  ok('card and folder: the list gear goes, their own tile takes over', /if \(mode !== "list"\) \{ var listGear = document\.querySelector\("\.cc-hgear-th2"\); if \(listGear\) listGear\.remove\(\); return; \}/.test(top));
+  ok('list: the gear sits beside the view switch in the docked bar', /advGrp = jsa\.querySelector\("\.cc-bar-adv"\)/.test(top) && /advGrp\.appendChild\(makeGear\("cc-hgear-home"\)\)/.test(top));
+  ok('list: never in a column header, which scrolls away with a wide table', !/th\d?\.appendChild\(makeGear/.test(top) && !/cc-hgear-th2/.test(docker));
+  ok('list: the stale-gear sweep spares the bar\'s gear', /if \(!x9\.closest\("\.cc-bar-adv"\)\) x9\.remove\(\)/.test(top));
+  ok('card and folder: the list gear goes, their own tile takes over', /if \(mode !== "list"\) \{ var listGear = document\.querySelector\("\.cc-bar-adv \.cc-hgear"\); if \(listGear\) listGear\.remove\(\); return; \}/.test(top));
   ok('card view: a gear tile after the last card', /var gtile = el\("div", "cc-card cc-gear-tile"\); gtile\.appendChild\(hg\)/.test(fn('renderGrid')));
   ok('folder view: a gear of its own', /makeGear\("cc-hgear-grid"\)/.test(fn('renderFolderView')));
-  ok('the list gear has a look of its own in the header strip', /html \.cc-hgear-th2 \{ position: absolute;/.test(read('styles/docker.css')));
+  // In the flow of the wrapping bar the gear takes its own room, so it cannot sit over a label.
+  const { candidates } = require('./cascade');
+  const gear = { tag: 'button', classes: ['cc-hgear', 'cc-hgear-home'], attrs: { type: 'button' }, states: {}, html: ['cc-docker-on'], inside: ['.js-actions', '.cc-bar-adv'] };
+  const pos = candidates('docker', gear, 'position');
+  ok('the list gear stays in the flow of the bar', !pos.length || pos[pos.length - 1].value === 'static', pos.length ? pos[pos.length - 1].selector + ' => ' + pos[pos.length - 1].value : '');
+  const size = candidates('docker', gear, 'font-size');
+  ok('and has a look of its own there', size.length > 0 && /\.cc-bar-adv \.cc-hgear-home/.test(size[size.length - 1].selector));
 
   // A gear near the bottom edge would hang its menu off screen.
   const place = new Function('window', 'document', 'menu', 'menuAnchor', fn('positionMenu') + '\npositionMenu(); return menu.style;');
