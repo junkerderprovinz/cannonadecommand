@@ -394,15 +394,16 @@ html.cc-popups-on .bg-popover [role="alert"] :is([class*="bg-red"], [class*="bg-
    gutter, and the trailing item's right margin is zeroed so the row ends at the icon box. The
    sidebar theme has a vertical menu and is left out, like the search rules. */
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right { padding-right: 16px !important; }
-/* #menu is a two-column grid (page tabs, icon group). With min-width:auto the tab tile will not
-   shrink below its tabs' width, so long tabs push the whole icon group past the viewport. The tab
-   tile gets min-width:0 and scrolls instead. */
-html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile:not(.right) { min-width: 0 !important; overflow-x: auto !important; }
+/* The tab row and the icon group share one line while they fit. When they do not, the icon group
+   moves to a line of its own at the right, and a tab row wider than the window wraps its tabs
+   (GlimStone: a strip wraps, it never scrolls or overlaps). Unraid lays #menu out as a two-column
+   grid from 768px up, which can only squeeze the tabs under the icons. */
+@media (min-width: 768px) {
+  html.cc-header-on:not(.Theme--sidebar) #menu { display: flex !important; flex-wrap: wrap !important; }
+  html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile:not(.right) { flex: 1 0 auto !important; max-width: 100% !important; box-sizing: border-box !important; flex-wrap: wrap !important; height: auto !important; overflow: visible !important; }
+  html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right { flex: 0 0 auto !important; margin-left: auto !important; }
+}
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right { min-width: 0 !important; flex-wrap: nowrap !important; }
-/* the tab row scrolls by wheel, trackpad or drag, but a full-width native scrollbar across the menu
-   bar would be louder than the tabs, so it is hidden */
-html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile:not(.right) { scrollbar-width: none !important; }
-html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile:not(.right)::-webkit-scrollbar { height: 0 !important; width: 0 !important; display: none !important; }
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right > *:last-child { margin-right: 0 !important; }
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right .nav-item.util:last-child > a { margin-right: 0 !important; }
 /* Bell and burger proxies: draggable nav-items that hold each icon's slot in the flow. Normally

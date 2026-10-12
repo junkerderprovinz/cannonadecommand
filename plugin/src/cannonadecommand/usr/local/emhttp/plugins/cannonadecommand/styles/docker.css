@@ -1385,8 +1385,10 @@ button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-t
 
    pointer-events:none lets a click pass through the bar's background strip, so a row's native
    update button in the docked band still receives it if the clearance ever mis-measures; the bar's
-   own controls take pointer events back. */
-div.js-actions { display: flex !important; flex-wrap: nowrap; gap: 5px; align-items: center; margin: 0; overflow-x: auto; overflow-y: hidden; pointer-events: none; }
+   own controls take pointer events back. A window too narrow for one row wraps the buttons onto a
+   second (GlimStone: a strip wraps, it never scrolls); syncFooterDock() measures the bar's height
+   into --cc-actbar-h, so the list keeps clear of either. */
+div.js-actions { display: flex !important; flex-wrap: wrap; gap: 0 5px; align-items: center; margin: 0; overflow: visible; pointer-events: none; }
 div.js-actions > * { pointer-events: auto; }
 @media (min-width: 768px) {
   /* a thin strip in Unraid's own footer colour, flush on top of it */
@@ -1421,14 +1423,9 @@ div.js-actions .cc-bulkmode-badge-on {
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
   box-shadow: inset 0 0 0 999px rgba(255, 255, 255, .22) !important;
 }
-/* The Basic/Advanced view toggle lives at the right end of the action bar. margin-left:auto pins
-   it right, and position:sticky keeps it there on a narrow window, where the native buttons
-   overflow this overflow-x:auto bar and it would otherwise scroll off screen; the buttons scroll
-   behind it, so it carries the bar's own background and reads as part of it rather than as a chip.
-   Sticky `right` is relative to the bar's content box, and div.js-actions has a 16px padding-right,
-   so the negative value is what puts its right edge on the bar's outer edge, flush with the header
-   icons. */
-div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; position: sticky; right: -16px; z-index: 2; padding-left: 10px; padding-right: 8px; background: var(--footer-background-color, var(--mild-background-color, #1c1c1c)); }
+/* The Basic/Advanced view toggle lives at the right end of the action bar, pinned there by
+   margin-left:auto on whichever row it lands. */
+div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; padding-right: 8px; }
 div.js-actions .cc-bar-adv-lbl { color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 div.js-actions input[type=button]:hover,
 div.js-actions .cc-bulkmode-badge:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }

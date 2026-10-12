@@ -198,12 +198,12 @@ function matchPseudo(x, el) {
   }
 }
 
-// Whether the subject reaches the element through a class or attribute it carries.
+// Whether the subject reaches the element through a class, id or attribute it carries.
 // A subject that names only a tag under some host container (.usage-disk > span)
 // is about the host's markup, and counting it would flood every query; a bare
 // page-wide tag rule (button:focus-visible) still counts.
 function keyed(comp, el) {
-  return simples(comp).some((x) => (x.t === 'class' && el.classes.includes(x.v)) || (x.t === 'attr' && matchAttr(x.v, el.attrs || {}) === true) ||
+  return simples(comp).some((x) => (x.t === 'class' && el.classes.includes(x.v)) || (x.t === 'id' && el.id === x.v) || (x.t === 'attr' && matchAttr(x.v, el.attrs || {}) === true) ||
     (x.t === 'pc' && /^(is|where|matches|any)$/.test(x.name) && splitTop(x.arg, ',').some((a) => { const c = compounds(a); return matchCompound(c[c.length - 1], el) !== false && keyed(c[c.length - 1], el); })));
 }
 
