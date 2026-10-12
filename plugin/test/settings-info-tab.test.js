@@ -35,7 +35,7 @@ console.log('\nThe last tab is Info, with three cards in GlimStone order');
   const block = settings.slice(settings.indexOf('// The Info tab in GlimStone'), settings.indexOf('refreshTabs();', settings.indexOf('// The Info tab in GlimStone')));
   const order = [...block.matchAll(/card\(T\("([^"]+)", "([^"]+)"\)\)/g)].map((m) => m[2]);
   ok('Version, Help, About', order.join(',') === 'Version,Help,About', order.join(','));
-  ok('the engine version comes from the state call', /api\("GET", "state"\)\.then\(function \(st\) \{/.test(block));
+  ok('the engine version comes from the state call', /apiRead\("state"\)\.then\(function \(st\) \{/.test(block));
   ok('an unreachable engine says so', /T\("nicht erreichbar", "not reachable"\)/.test(block));
   for (const url of ['https://buymeacoffee.com/junkerderprovinz', 'https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS', 'https://junkerderprovinz.github.io/junkerderprovinz/', 'REPO + "/issues"', 'REPO + "/issues/new/choose"']) {
     ok('About and Help reach ' + url, block.includes(url));

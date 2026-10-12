@@ -282,6 +282,20 @@
       return r.text().then(function (tx) { var d = null; try { d = tx ? JSON.parse(tx) : null; } catch (e) {} if (!r.ok) throw new Error((d && d.error) || ("HTTP " + r.status)); return d; });
     });
   }
+  // Loading the page renders more than once and every render reads the engine again, so a read in
+  // flight or answered a moment ago is shared rather than sent again, and a read that fails is
+  // tried once more before the page says the engine cannot be reached.
+  var sharedReads = {};
+  function apiRead(path) {
+    var s = sharedReads[path];
+    if (s && (!s.at || Date.now() - s.at < 3000)) return s.p;
+    var entry = { at: 0 };
+    entry.p = api("GET", path).catch(function () {
+      return new Promise(function (res) { setTimeout(res, 600); }).then(function () { return api("GET", path); });
+    }).then(function (d) { entry.at = Date.now(); return d; }, function (e) { if (sharedReads[path] === entry) delete sharedReads[path]; throw e; });
+    sharedReads[path] = entry;
+    return entry.p;
+  }
   // an embedded colour picker, with no OS popup window
   function hexToHsv(hex) {
     var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return null;
@@ -1502,7 +1516,7 @@
     // the engine's last CPU and RAM limit operations, with the values it verified afterwards
     var cd = card(T("Diagnose: CPU/RAM-Limits", "Diagnostics: CPU/RAM limits"), T("Die letzten Limit-Änderungen mit Docker-Ergebnis und verifizierten Werten danach.", "The most recent limit changes with docker's result and the verified values after."));
     var diag = el("div", "cc-set-diag"); diag.textContent = "…"; cd.appendChild(diag); wrap.appendChild(cd);
-    api("GET", "limitlog").then(function (ops) {
+    apiRead("limitlog").then(function (ops) {
       diag.textContent = "";
       if (!ops || !ops.length) { diag.textContent = T("Noch keine Limit-Änderung seit dem Daemon-Start.", "No limit change since the daemon started."); return; }
       ops.forEach(function (o) {
@@ -1983,7 +1997,7 @@
       cVer.appendChild(versionRow("Engine", engine));
       cVer.appendChild(versionRow("GlimStone", verLink(GLS_VER, GLS_REPO)));
       // the version of the daemon that is running, so an update that did not restart it shows
-      api("GET", "state").then(function (st) {
+      apiRead("state").then(function (st) {
         if (st && st.version) engine.parentNode.replaceChild(verLink(String(st.version), REPO), engine);
         else engine.textContent = T("unbekannt", "unknown");
       }).catch(function () { engine.textContent = T("nicht erreichbar", "not reachable"); engine.classList.add("cc-set-verbad"); });
@@ -2271,17 +2285,19 @@
   // The sub-tabs re-sort when the main menu order changes, whether by a drag or by an auto-mount.
   // A menu mutation re-runs render(), which re-reads the live order and rebuilds the strip while
   // cc.settab preserves the active tab. Gated on the order string itself, so an unrelated menu
-  // mutation such as a badge stamp never triggers a rebuild.
+  // mutation such as a badge stamp never triggers a rebuild. The order the first render() reads is
+  // the starting point, or the first stamp after load would rebuild the page a third time.
   if (!window.__ccSetNavObs) {
     window.__ccSetNavObs = true;
     var menuEl9 = document.getElementById("menu");
     if (menuEl9 && window.MutationObserver) {
-      var navT9 = null, lastOrd9 = "";
+      var menuOrder = function () { return Array.prototype.map.call(document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a[href]"), function (a9) { return a9.getAttribute("href"); }).join("|"); };
+      var navT9 = null, lastOrd9 = menuOrder();
       new MutationObserver(function () {
         clearTimeout(navT9);
         navT9 = setTimeout(function () {
           try {
-            var ord9 = Array.prototype.map.call(document.querySelectorAll("#menu .nav-tile .nav-item:not(.util) > a[href]"), function (a9) { return a9.getAttribute("href"); }).join("|");
+            var ord9 = menuOrder();
             if (ord9 && ord9 !== lastOrd9) { lastOrd9 = ord9; render(); }
           } catch (e9o) {}
         }, 200);
@@ -2294,7 +2310,7 @@
   // the engine down the defaults stay. An edit made during the round trip is kept rather than
   // overwritten.
   var bootBusy = uiUnsynced();
-  api("GET", "config").then(function (c) {
+  apiRead("config").then(function (c) {
     if (!c || typeof c !== "object") return;
     fullConfig = { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: c.ui_settings || undefined };
     adoptUISettings(c.ui_settings, bootBusy); // render() below shows the adopted values
