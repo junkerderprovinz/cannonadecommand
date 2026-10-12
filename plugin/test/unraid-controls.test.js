@@ -17,7 +17,7 @@ const btn = (classes, o) => Object.assign({ tag: 'button', classes, attrs: { typ
 const BUTTONS = [
   ['settings', '"Öffnen" and "Hochladen" on the settings page', btn(['cc-btn'], { inside: ['#cc-settings'], html: [] })],
   ['docker', 'the card view\'s gear', btn(['cc-hgear', 'cc-hgear-grid'], { inside: ['.cc-gear-tile', '.cc-grid-holder'] })],
-  ['docker', 'the list view\'s gear in the action bar', btn(['cc-hgear', 'cc-hgear-home'], { inside: ['.cc-bar-adv'] })],
+  ['docker', 'the list view\'s gear in the column header', btn(['cc-hgear', 'cc-hgear-th2'], { inside: ['.cc-enh'] })],
   ['docker', 'a card\'s move-to-folder button', btn(['cc-card-movebtn'], { inside: ['.cc-grid-holder', '.cc-card'] })],
   ['docker', 'a folder header action', btn(['cc-folder-act'], { inside: ['.cc-folderview'] })],
   ['docker', 'the port list\'s sort button', btn(['cc-alloc-sortbtn'], { inside: ['#dockerAllocations'], html: ['cc-docker-on', 'cc-on-addct'] })],
