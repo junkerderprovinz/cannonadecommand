@@ -2004,6 +2004,9 @@ html.cc-popups-on #alternateView {
   -webkit-backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important;
           backdrop-filter: var(--cc-backdrop-blur, blur(5px)) !important;
   overflow: auto !important; padding: 64px 16px 32px !important; box-sizing: border-box !important;
+  /* CA stops the box 1.6rem plus a 10px margin short of the bottom, which leaves a strip of the page
+     unblurred and clickable under a modal panel. */
+  bottom: 0 !important; margin-bottom: 0 !important;
   /* CA ships opacity:.9 on this container, and opacity on an ancestor composites the whole subtree,
      so the panel shows the page through it whatever opaque colour it carries. The dim belongs to
      the background-color above. */
