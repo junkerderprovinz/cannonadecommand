@@ -2200,7 +2200,7 @@
   function renderCurrentView() { if (mode === "folder") renderFolderView(); else renderGrid(); }
 
   // the gear and its menu
-  function makeGear(extra) { var g = el("button", "cc-hgear" + (extra ? " " + extra : "") + (daemonUp === false ? " cc-hgear-down" : ""), "⚙"); g.type = "button"; g.setAttribute("data-tip", daemonUp === false ? "CannonadeCommand: daemon not reachable" : "CannonadeCommand"); g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g); }); return g; }
+  function makeGear(extra) { var g = el("button", "cc-hgear" + (extra ? " " + extra : "") + (daemonUp === false ? " cc-hgear-down" : "")); g.innerHTML = ccGlyph("Gear"); g.type = "button"; var tip = daemonUp === false ? "CannonadeCommand: daemon not reachable" : "CannonadeCommand"; g.setAttribute("data-tip", tip); g.setAttribute("aria-label", tip); g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g); }); return g; }
   function injectHeaderGear() {
     try {
       // never a second list-mode gear once one exists
@@ -2320,7 +2320,8 @@
     var save = el("button", "cc-btn", t("save")), fire = el("button", "cc-btn cc-btn-primary", t("startorder"));
     save.addEventListener("click", function () { savePlan(false, save); }); fire.addEventListener("click", function () { savePlan(true, fire); });
     prow.appendChild(save); prow.appendChild(fire); m.appendChild(prow);
-    var link = el("a", "cc-menu-link", "⚙ " + (LANG === "de" ? "Einstellungen (Farbe, Spalten)" : "Settings (colour, columns)"));
+    var link = el("a", "cc-menu-link"); link.innerHTML = ccGlyph("Gear");
+    link.appendChild(document.createTextNode(" " + (LANG === "de" ? "Einstellungen (Farbe, Spalten)" : "Settings (colour, columns)")));
     link.href = "/Settings/CannonadeCommand"; m.appendChild(link);
     return m;
   }

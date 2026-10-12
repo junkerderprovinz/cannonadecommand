@@ -78,6 +78,14 @@ console.log('\nNo control wears an emoji');
     const hits = read(f).split('\n').filter((l) => /el\("(button|span|a)", [^;]*"[^"]*[\u{1F300}-\u{1FAFF}]/u.test(l));
     ok(path.basename(f) + ': no emoji as a control\'s text', hits.length === 0, hits.map((l) => l.trim().slice(0, 90)).join(' | '));
   }
+  // The text gear is a font's character, drawn in whatever shape and weight that font has.
+  ok('the gear button wears GlimStone\'s Gear', /function makeGear\(extra\) \{[^\n]*g\.innerHTML = ccGlyph\("Gear"\);/.test(docker));
+  ok('with a name of its own, since its picture is hidden from a screen reader', /function makeGear\(extra\) \{[^\n]*g\.setAttribute\("aria-label", tip\);/.test(docker));
+  ok('so does the settings link in the gear menu', /var link = el\("a", "cc-menu-link"\); link\.innerHTML = ccGlyph\("Gear"\);/.test(docker));
+  for (const f of ['scripts/docker.js', 'scripts/vms.js', 'scripts/header.js', 'scripts/settings.js', 'scripts/shares.js', 'scripts/plugins.js']) {
+    const hits = read(f).split('\n').filter((l) => /"[^"\n]*⚙/.test(l));
+    ok(path.basename(f) + ': no text gear in a string', hits.length === 0, hits.map((l) => l.trim().slice(0, 90)).join(' | '));
+  }
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
