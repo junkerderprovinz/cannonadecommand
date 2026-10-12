@@ -89,5 +89,28 @@ for (const page of ['docker', 'every']) {
   }
 }
 
+// In the rainbow and flag modes gearFill() leaves an unused gear to the sheets, so the sheets
+// decide what it rests on: the white theme's surface with its ink, not a dark slab with dark ink.
+console.log('\nAn unused limit gear in the sheets, white theme');
+{
+  const { tokens, resolve } = require('./cascade');
+  const map = tokens(true);
+  const lum = (h) => { const n = parseInt(h.slice(1), 16); const l = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * l(n >> 16 & 255) + 0.7152 * l(n >> 8 & 255) + 0.0722 * l(n & 255); };
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const CASES = {
+    'Docker, rainbow': { html: ['Theme--white', 'cc-docker-on', 'cc-popups-on'] },
+    'Docker, flag': { html: ['Theme--white', 'cc-docker-on', 'cc-popups-on', 'cc-flagmode'] },
+    'VMs, rainbow': { html: ['Theme--white', 'cc-vms-on', 'cc-vm-rainbow'], inside: ['#kvm_list'] },
+  };
+  for (const [what, ctx] of Object.entries(CASES)) {
+    const el = Object.assign({ tag: 'span', classes: ['cc-limbtn', 'cc-lim-cpu'], attrs: { class: 'cc-limbtn cc-lim-cpu' }, states: {} }, ctx);
+    const win = (prop) => { const c = candidates(what.startsWith('VMs') ? 'every' : 'docker', el, prop); return c[c.length - 1]; };
+    const bg = resolve(win('background').value, map), fg = resolve(win('color').value, map);
+    const r = /^#[0-9a-f]{6}$/i.test(bg) && /^#[0-9a-f]{6}$/i.test(fg) ? ratio(bg, fg) : 0;
+    ok(`${what}: it rests on a light surface`, /^#/.test(bg) && luma(bg) > 200, bg);
+    ok(`${what}: its ink reads at 4.5:1`, r >= 4.5, `${fg} on ${bg} = ${r.toFixed(2)}:1`);
+  }
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

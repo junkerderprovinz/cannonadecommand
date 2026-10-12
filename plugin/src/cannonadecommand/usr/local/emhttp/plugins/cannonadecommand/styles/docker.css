@@ -369,7 +369,7 @@ table:not(.cc-enh) #docker_list tr:is(.sortable, .folder-element) td.advanced:ha
 .cc-b.cc-b-warn .cc-b-k, .cc-b.cc-b-warn .cc-b-v { opacity: 1 !important; color: inherit; }
 
 /* CPU/RAM limits editor button on the resource cell */
-.cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: #3a3a3a; color: #ececec; cursor: pointer; font-size: var(--cc-text-meta); margin: 2px 0; } /* filled, at the pill radius like the badge beside it */
+.cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text, #e6e6e6); cursor: pointer; font-size: var(--cc-text-meta); margin: 2px 0; } /* filled, at the pill radius like the badge beside it */
 .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }  /* in rainbow the per-gear --cc-rb-c wins, in accent mode the chain falls through */
 /* the gear turns green once a CPU or RAM limit is configured, like the "set" dot */
 .cc-limbtn-set { color: var(--cc-ok-fg, #161616); background: var(--cc-ok, #6fdc8c); }
