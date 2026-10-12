@@ -73,6 +73,19 @@ func (m *memStore) Load() (model.Plan, error)         { return m.plan, nil }
 func (m *memStore) Save(p model.Plan) error           { m.plan = p; return nil }
 func (m *memStore) LoadConfig() (model.Config, error) { return m.cfg, nil }
 func (m *memStore) SaveConfig(c model.Config) error   { m.cfg = c; return nil }
+func (m *memStore) MergeUISettings(ch map[string]*string) error {
+	if m.cfg.UISettings == nil {
+		m.cfg.UISettings = map[string]string{}
+	}
+	for k, v := range ch {
+		if v == nil {
+			delete(m.cfg.UISettings, k)
+		} else {
+			m.cfg.UISettings[k] = *v
+		}
+	}
+	return nil
+}
 
 type fakeRunner struct{ ran bool }
 
@@ -428,5 +441,44 @@ func TestConfigIdleStopValidation(t *testing.T) {
 	}
 	if code := put(model.Config{IdleStops: []model.IdleStop{{Name: "x", IdleMinutes: 30, CPUThresholdPct: -1}}}); code != 400 {
 		t.Fatalf("negative threshold should be 400, got %d", code)
+	}
+}
+
+func TestPutUISettingsMergesAndDeletes(t *testing.T) {
+	s, h := newServer()
+	s.Store.(*memStore).cfg = model.Config{
+		Schedules:  []model.Schedule{{Name: "db", Action: "start", Time: "06:00"}},
+		UISettings: map[string]string{"cc.accent": "#FCC419", "cc.rainbow": "1", "cc.view": "grid"},
+	}
+	req := httptest.NewRequest("PUT", "/api/uisettings", strings.NewReader(`{"cc.accent":"#1D99F3","cc.rainbow":null,"ccp.badges":"0"}`))
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatalf("merge code = %d: %s", rec.Code, rec.Body)
+	}
+	cfg := s.Store.(*memStore).cfg
+	want := map[string]string{"cc.accent": "#1D99F3", "cc.view": "grid", "ccp.badges": "0"}
+	if len(cfg.UISettings) != len(want) {
+		t.Fatalf("ui settings = %v, want %v", cfg.UISettings, want)
+	}
+	for k, v := range want {
+		if cfg.UISettings[k] != v {
+			t.Errorf("%s = %q, want %q", k, cfg.UISettings[k], v)
+		}
+	}
+	if len(cfg.Schedules) != 1 {
+		t.Errorf("the merge touched the schedules: %+v", cfg.Schedules)
+	}
+}
+
+func TestPutUISettingsRejectsForeignKeys(t *testing.T) {
+	_, h := newServer()
+	for _, body := range []string{`{"schedules":"x"}`, `{"cc.x":"` + strings.Repeat("a", 4097) + `"}`, `not json`} {
+		req := httptest.NewRequest("PUT", "/api/uisettings", strings.NewReader(body))
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		if rec.Code != 400 {
+			t.Errorf("%.30s: code = %d, want 400", body, rec.Code)
+		}
 	}
 }

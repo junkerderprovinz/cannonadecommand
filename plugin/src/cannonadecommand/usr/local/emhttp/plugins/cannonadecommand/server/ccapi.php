@@ -16,8 +16,9 @@ $sock  = getenv('CC_SOCK') ?: '/var/run/cannonadecommand.sock';
 // icons: batch name -> icon-source lookup, answered from the engine's cache only
 // (it never fetches on the request path); iconsvg: the cached SVG itself, served
 // as real image/svg+xml so an <img> can point straight at it, same-origin.
+// uisettings: merges a few cc.* UI settings into the config, for a page that is closing.
 $allow = ['state' => ['GET'], 'stats' => ['GET'], 'hostcpu' => ['GET'], 'hostnet' => ['GET'], 'action' => ['POST'], 'limits' => ['GET', 'POST'], 'restartpolicy' => ['POST'], 'limitlog' => ['GET'],
-    'bwstatus' => ['GET'], 'plan' => ['GET', 'PUT'], 'apply' => ['POST'], 'config' => ['GET', 'PUT'], 'vms' => ['GET'], 'vmlimits' => ['POST'],
+    'bwstatus' => ['GET'], 'plan' => ['GET', 'PUT'], 'apply' => ['POST'], 'config' => ['GET', 'PUT'], 'uisettings' => ['PUT'], 'vms' => ['GET'], 'vmlimits' => ['POST'],
     'vmdisks' => ['GET'], 'vmdiskresize' => ['POST'], 'icons' => ['POST'], 'iconsvg' => ['GET']];
 
 $path   = isset($_GET['path']) ? preg_replace('/[^a-z]/', '', $_GET['path']) : '';

@@ -305,6 +305,22 @@
       if (uiQueued) { uiQueued = false; pushUISettings(); }
     });
   }
+  // A write in the last moments before the page goes away would wait out the debounce and die
+  // with the page, and a push needs two round trips. On pagehide what is still unsynced goes out
+  // in one keepalive request that the engine merges into the config itself.
+  window.addEventListener("pagehide", function () {
+    var keys = Object.keys(uiPending).concat(Object.keys(uiSending));
+    if (!keys.length) return;
+    var body = {};
+    keys.forEach(function (k) { body[k] = localStorage.getItem(k); });
+    var tk = csrfToken();
+    try {
+      fetch(PROXY + "?path=uisettings", {
+        method: "PUT", keepalive: true, headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: (tk ? "csrf_token=" + encodeURIComponent(tk) + "&" : "") + "data=" + encodeURIComponent(JSON.stringify(body))
+      });
+    } catch (e) {}
+  });
   // The keys whose local value has not reached the engine yet. A config read takes this before it
   // goes out, since its answer can arrive after the push it raced has finished.
   function uiUnsynced() { var o = {}; Object.keys(uiPending).concat(Object.keys(uiSending)).forEach(function (k) { o[k] = 1; }); return o; }

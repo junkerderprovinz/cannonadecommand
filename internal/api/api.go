@@ -6,9 +6,11 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -20,6 +22,7 @@ import (
 	"github.com/junkerderprovinz/cannonadecommand/internal/model"
 	"github.com/junkerderprovinz/cannonadecommand/internal/netshape"
 	"github.com/junkerderprovinz/cannonadecommand/internal/orchestrator"
+	"github.com/junkerderprovinz/cannonadecommand/internal/store"
 	"github.com/junkerderprovinz/cannonadecommand/internal/unraidtmpl"
 	"github.com/junkerderprovinz/cannonadecommand/internal/vmctl"
 )
@@ -56,6 +59,7 @@ type Store interface {
 	Save(model.Plan) error
 	LoadConfig() (model.Config, error)
 	SaveConfig(model.Config) error
+	MergeUISettings(map[string]*string) error
 }
 
 // Runner orchestrates a plan.
@@ -128,6 +132,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/restartpolicy", s.handleSetRestartPolicy)
 	mux.HandleFunc("GET /api/config", s.handleGetConfig)
 	mux.HandleFunc("PUT /api/config", s.handlePutConfig)
+	mux.HandleFunc("PUT /api/uisettings", s.handlePutUISettings)
 	mux.HandleFunc("GET /api/vms", s.handleGetVMs)
 	mux.HandleFunc("POST /api/vmlimits", s.handleSetVMLimits)
 	mux.HandleFunc("GET /api/vmdisks", s.handleGetVMDisks)
@@ -934,6 +939,36 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, cfg)
 }
 
+// uiKey matches the browser-side settings the UI mirrors: cc., ccp., ccv. and the
+// other per-area prefixes.
+var uiKey = regexp.MustCompile(`^cc[a-z]*\.`)
+
+// handlePutUISettings merges a few UI settings into the config, a null deleting
+// one. A page that is closing sends its unsynced keys here in a single request,
+// since it has no time left to read the config and write it back whole.
+func (s *Server) handlePutUISettings(w http.ResponseWriter, r *http.Request) {
+	var changes map[string]*string
+	if err := json.NewDecoder(r.Body).Decode(&changes); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	for k, v := range changes {
+		if !uiKey.MatchString(k) || len(k) > 64 || (v != nil && len(*v) > 4096) {
+			writeErr(w, http.StatusBadRequest, fmt.Errorf("bad ui setting: %s", k))
+			return
+		}
+	}
+	if err := s.Store.MergeUISettings(changes); err != nil {
+		code := http.StatusInternalServerError
+		if errors.Is(err, store.ErrTooManyUISettings) {
+			code = http.StatusBadRequest
+		}
+		writeErr(w, code, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "saved"})
+}
+
 // handlePutConfig validates and saves the automation config. Schedules may only
 // start, stop or restart.
 func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
@@ -945,7 +980,7 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 	// The per-area key prefixes (cc., ccp., ccv. and so on) push the UI settings
 	// well past 64 keys, and the browser ignores a failed sync (#74). At 64+4096
 	// bytes per entry, 512 entries stay around 2MB.
-	if len(cfg.UISettings) > 512 {
+	if len(cfg.UISettings) > store.MaxUISettings {
 		writeErr(w, http.StatusBadRequest, fmt.Errorf("too many ui settings"))
 		return
 	}

@@ -46,6 +46,7 @@ function makeStorage(initial) {
 function runSync(src, ui_settings, localStorage, win) {
   const code = grabSyncBlock(src);
   const fetchStub = (url) => Promise.resolve({ ok: true, json: () => Promise.resolve({ ui_settings: ui_settings }) });
+  win.addEventListener = win.addEventListener || (() => {});
   const run = new Function('window', 'localStorage', 'location', 'fetch', 'document', 'setTimeout', 'clearTimeout', code);
   run(win, localStorage, { pathname: '/Plugins' }, fetchStub, { querySelector: () => null, cookie: '' }, setTimeout, clearTimeout);
 }

@@ -64,6 +64,40 @@ func renameUIValues(ui map[string]string) {
 // SaveConfig writes the automation config atomically.
 func (s *Store) SaveConfig(c model.Config) error { return s.write(s.cfgPath, c) }
 
+// ErrTooManyUISettings is returned by MergeUISettings when the merge would hold
+// more entries than a config may.
+var ErrTooManyUISettings = errors.New("too many ui settings")
+
+// MaxUISettings caps the mirrored browser settings in one config.
+const MaxUISettings = 512
+
+// MergeUISettings sets the given UI settings in the stored config and deletes
+// those mapped to nil, leaving the rest of the config as it is. The read and the
+// write happen under one lock, so a page closing mid-save cannot lose a key to a
+// concurrent save.
+func (s *Store) MergeUISettings(changes map[string]*string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var c model.Config
+	if err := readJSON(s.cfgPath, &c); err != nil {
+		return err
+	}
+	if c.UISettings == nil {
+		c.UISettings = map[string]string{}
+	}
+	for k, v := range changes {
+		if v == nil {
+			delete(c.UISettings, k)
+		} else {
+			c.UISettings[k] = *v
+		}
+	}
+	if len(c.UISettings) > MaxUISettings {
+		return ErrTooManyUISettings
+	}
+	return writeJSON(s.cfgPath, c)
+}
+
 // write serialises the saves, so two requests landing together replace the file
 // one after the other and the last one wins whole.
 func (s *Store) write(path string, v any) error {

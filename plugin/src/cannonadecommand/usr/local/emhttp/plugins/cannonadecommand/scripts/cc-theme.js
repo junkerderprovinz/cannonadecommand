@@ -929,6 +929,22 @@
         if (queued) { queued = false; push(); }
       });
     }
+    // A write in the last moments before the page goes away would wait out the debounce and die
+    // with the page, and a push needs two round trips. On pagehide what is still unsynced goes out
+    // in one keepalive request that the engine merges into the config itself.
+    window.addEventListener("pagehide", function () {
+      var keys = Object.keys(pending).concat(Object.keys(sending));
+      if (!keys.length) return;
+      var body = {};
+      keys.forEach(function (k) { body[k] = localStorage.getItem(k); });
+      var tk = csrfToken();
+      try {
+        fetch(PROXY + "?path=uisettings", {
+          method: "PUT", keepalive: true, headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: (tk ? "csrf_token=" + encodeURIComponent(tk) + "&" : "") + "data=" + encodeURIComponent(JSON.stringify(body))
+        });
+      } catch (e) {}
+    });
     function unsynced() { var o = {}; Object.keys(pending).concat(Object.keys(sending)).forEach(function (k) { o[k] = 1; }); return o; }
     function adopt(u, busy) {
       var changed = false, skip = unsynced();

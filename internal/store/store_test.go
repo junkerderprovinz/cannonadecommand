@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -117,5 +118,68 @@ func TestConcurrentConfigSavesAllSucceed(t *testing.T) {
 	left, _ := filepath.Glob(filepath.Join(dir, "*.tmp"))
 	if len(left) != 0 {
 		t.Errorf("temp files left behind: %v", left)
+	}
+}
+
+func TestMergeUISettingsKeepsTheRestOfTheConfig(t *testing.T) {
+	s := New(filepath.Join(t.TempDir(), "plan.json"))
+	if err := s.SaveConfig(model.Config{ShapeIface: "br0", UISettings: map[string]string{"cc.accent": "#FCC419", "cc.rainbow": "1"}}); err != nil {
+		t.Fatal(err)
+	}
+	blue := "#1D99F3"
+	if err := s.MergeUISettings(map[string]*string{"cc.accent": &blue, "cc.rainbow": nil}); err != nil {
+		t.Fatal(err)
+	}
+	c, err := s.LoadConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.ShapeIface != "br0" || c.UISettings["cc.accent"] != blue || len(c.UISettings) != 1 {
+		t.Errorf("config after merge = %+v", c)
+	}
+}
+
+func TestMergeUISettingsIntoAFreshConfig(t *testing.T) {
+	s := New(filepath.Join(t.TempDir(), "plan.json"))
+	v := "1"
+	if err := s.MergeUISettings(map[string]*string{"cc.rainbow": &v}); err != nil {
+		t.Fatal(err)
+	}
+	c, _ := s.LoadConfig()
+	if c.UISettings["cc.rainbow"] != "1" {
+		t.Errorf("ui settings = %v", c.UISettings)
+	}
+}
+
+func TestMergeUISettingsCapsTheCount(t *testing.T) {
+	s := New(filepath.Join(t.TempDir(), "plan.json"))
+	ch := map[string]*string{}
+	v := "x"
+	for i := range MaxUISettings + 1 {
+		ch[fmt.Sprintf("cc.k%d", i)] = &v
+	}
+	if err := s.MergeUISettings(ch); !errors.Is(err, ErrTooManyUISettings) {
+		t.Errorf("err = %v, want ErrTooManyUISettings", err)
+	}
+}
+
+func TestConcurrentMergesKeepEveryKey(t *testing.T) {
+	s := New(filepath.Join(t.TempDir(), "plan.json"))
+	const writers = 16
+	var wg sync.WaitGroup
+	for i := range writers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			v := fmt.Sprint(i)
+			if err := s.MergeUISettings(map[string]*string{fmt.Sprintf("cc.k%d", i): &v}); err != nil {
+				t.Errorf("merge: %v", err)
+			}
+		}()
+	}
+	wg.Wait()
+	c, _ := s.LoadConfig()
+	if len(c.UISettings) != writers {
+		t.Errorf("%d keys survived, want %d", len(c.UISettings), writers)
 	}
 }

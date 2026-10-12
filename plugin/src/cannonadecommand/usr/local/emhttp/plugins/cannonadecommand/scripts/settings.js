@@ -231,6 +231,22 @@
       if (uiQueued) { uiQueued = false; pushUISettings(); }
     });
   }
+  // A write in the last moments before the page goes away would wait out the debounce and die
+  // with the page, and a push needs two round trips. On pagehide what is still unsynced goes out
+  // in one keepalive request that the engine merges into the config itself.
+  window.addEventListener("pagehide", function () {
+    var keys = Object.keys(uiPending).concat(Object.keys(uiSending));
+    if (!keys.length) return;
+    var body = {};
+    keys.forEach(function (k) { body[k] = localStorage.getItem(k); });
+    var tk = csrfToken();
+    try {
+      fetch(PROXY + "?path=uisettings", {
+        method: "PUT", keepalive: true, headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: (tk ? "csrf_token=" + encodeURIComponent(tk) + "&" : "") + "data=" + encodeURIComponent(JSON.stringify(body))
+      });
+    } catch (e) {}
+  });
   function uiUnsynced() { var o = {}; Object.keys(uiPending).concat(Object.keys(uiSending)).forEach(function (k) { o[k] = 1; }); return o; }
   function adoptUISettings(u, busy) {
     var changed = false, skip = uiUnsynced();
@@ -251,11 +267,13 @@
     try { Object.keys(u || {}).forEach(function (k) { if (/^cc[a-z]*\./.test(k) && k !== "cc.stateCache" && !skip[k] && localStorage.getItem(k) !== u[k]) { (window.__ccLS || localStorage.setItem.bind(localStorage))(k, u[k]); changed = true; } }); } catch (e) {}
     return changed;
   }
+  function csrfToken() {
+    try { return (typeof window.csrf_token !== "undefined" && window.csrf_token) || (document.querySelector('input[name="csrf_token"]') || {}).value || ((document.cookie || "").match(/csrf_token=([0-9A-Za-z]+)/) || [])[1] || ""; } catch (e) { return ""; }
+  }
   function api(method, path, body) {
     var opts = { method: method, headers: { Accept: "application/json" } };
     var u = PROXY + "?path=" + encodeURIComponent(path);
-    var tk = "";
-    try { tk = (typeof window.csrf_token !== "undefined" && window.csrf_token) || (document.querySelector('input[name="csrf_token"]') || {}).value || ((document.cookie || "").match(/csrf_token=([0-9A-Za-z]+)/) || [])[1] || ""; } catch (e) {}
+    var tk = csrfToken();
     if (method !== "GET") { // emhttp accepts the csrf_token in a form body only
       opts.headers["Content-Type"] = "application/x-www-form-urlencoded";
       opts.body = (tk ? "csrf_token=" + encodeURIComponent(tk) + "&" : "") + "data=" + encodeURIComponent(JSON.stringify(body != null ? body : {}));
