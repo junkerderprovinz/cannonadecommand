@@ -345,9 +345,9 @@ html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-bw  { background: var(--cc-rb-bw, v
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-ip  { background: var(--cc-rb-ip, var(--cc-accent, #FCC419)); color: var(--cc-rb-ip-t, var(--cc-accent-text, #161616)); }
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-b-vol { background: var(--cc-rb-vol, var(--cc-accent, #FCC419)); color: var(--cc-rb-vol-t, var(--cc-accent-text, #161616)); }
 
-/* keyboard focus draws no outline, ring or shadow; the feedback is brightness only */
-html.cc-vms-on #displaybox :is(a, button, input, select, textarea):focus-visible,
-html.cc-vms-on :is(.cc-actbtn, .cc-seg-btn):focus-visible,
+/* keyboard focus draws no outline, ring or shadow on Unraid's own controls; the feedback is
+   brightness only. CC's buttons, badges and fields keep the halo Tokens.css gives them. */
+html.cc-vms-on #displaybox :is(a, button, input, select, textarea):where(:not(.cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast)):focus-visible,
 html.cc-vms-on #kvm_list .switch-button-background:focus-visible,
 html.cc-vms-on ul.dropdown-menu.dropdown-context a:focus-visible {
   outline: none !important; box-shadow: none !important; filter: brightness(1.18);

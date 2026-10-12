@@ -396,12 +396,14 @@ html .cc-win .cc-win-in:focus { background: #383838 !important; }
 html { --cc-radius-card: 20px; --cc-radius-control: 12px; --cc-radius-pill: 9999px; }
 html[data-cc-shape="soft"] { --cc-radius-card: 8px; --cc-radius-control: 5px; --cc-radius-pill: 5px; }
 html[data-cc-shape="square"] { --cc-radius-card: 0px; --cc-radius-control: 0px; --cc-radius-pill: 0px; }
-/* A soft accent halo on keyboard focus, distinct from hover: a glow, not a border line. color-mix
-   supplies the alpha, and the fixed-accent line above it is the fallback without color-mix. */
-:is(.cc-b, .cc-actbtn, .cc-limbtn, .cc-btn, .cc-win-btn, .cc-seg-btn, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast):focus-visible {
+/* A soft accent halo on keyboard focus on every CC button, badge and field, distinct from hover: a
+   glow, not a border line. color-mix supplies the alpha, and the fixed-accent line above it is the
+   fallback without color-mix. The blanket no-ring rules in docker.css, Shares.css and VmTab.css
+   leave the same list out, so keep them in step. */
+:is(.cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast):focus-visible {
   outline: none !important;
-  box-shadow: 0 0 0 3px rgba(252, 196, 25, .42);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent);
+  box-shadow: 0 0 0 3px rgba(252, 196, 25, .42) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important;
 }
 /* The (i) glyph has no fill of its own, so its opacity step on focus reads exactly like hover and a
    keyboard user cannot tell it is focused. It takes the same halo, round to follow the ring it

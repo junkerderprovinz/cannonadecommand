@@ -695,7 +695,7 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
    because hardenPop stamps it inline with !important and :focus has to be able to win. The ink
    and size sit there too: Unraid's input[type="text"]:where(...) outweighs a single class and
    would paint the white theme's dark text into the always-dark window. */
-.cc-in:focus { background-color: #383838; outline: none !important; box-shadow: none !important; }
+.cc-in:focus { background-color: #383838; outline: none !important; }
 html .cc-pop .cc-in { background-color: #2e2e2e !important; color: var(--cc-text, #e6e6e6); font-size: var(--cc-text-meta); }
 html .cc-pop .cc-in:focus { background-color: #383838 !important; }
 /* Unraid's default-base.css paints every placeholder in the theme's link colour, so a hint reads
@@ -1428,6 +1428,8 @@ div.js-actions .cc-bar-adv .cc-hgear-home:hover { color: var(--cc-accent-ink, #F
 div.js-actions .cc-bar-adv-lbl { color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 div.js-actions input[type=button]:hover,
 div.js-actions .cc-bulkmode-badge:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
+/* the badge clears box-shadow above with more weight than the shared halo in Tokens.css */
+div.js-actions .cc-bulkmode-badge:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important; }
 
 /* ShipLog: where its changelog bubble is on the Docker tab, its buttons and severity pill take the
    CC look. The .sl-bubble selector matches only once ShipLog has rendered one, so with the plugin
@@ -2036,10 +2038,9 @@ html.cc-docker-on.cc-on-addct .ui-dialog select:focus-visible { outline: none !i
 
 /* No focus rings anywhere in this sheet's scope; brightness and fill carry the feedback. The
    sheet loads only on CC-governed pages, so the page-level selector is safe, and the field rules
-   above already give focus a fill. The (i) keeps its halo from Tokens.css, which this rule would
-   outweigh by coming later. */
-a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
-[tabindex]:where(:not(.cc-info)):focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
+   above already give focus a fill. The (i) and CC's own buttons, badges and fields keep their halo
+   from Tokens.css, which this rule would outweigh by coming later. */
+:is(a, button, input, select, [tabindex]):where(:not(.cc-info, .cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast)):focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
 
 /* The reactive rainbow on /Docker, gated on the html.cc-shares-rbneutral shares.js stamps on
    every page, the same contract as /Main. Every CC-painted control rests grey and takes its
