@@ -1550,8 +1550,14 @@
       // and the native Update-All button below the table covers ShipLog's pill.
       var tv = document.querySelector("div.ToggleViewMode");
       if (tv) tv.style.setProperty("display", "none", "important");
-      // The card and folder views carry their gear as a tile of their own.
-      if (mode !== "list") { var listGear = document.querySelector(".cc-bar-adv .cc-hgear"); if (listGear) listGear.remove(); return; }
+      // The card and folder views carry their gear as a tile of their own, and they draw no
+      // selection marks, so multi-select has nothing to pick there and leaves with the list.
+      if (mode !== "list") {
+        var listGear = document.querySelector(".cc-bar-adv .cc-hgear"); if (listGear) listGear.remove();
+        var bulkBadge = document.querySelector(".cc-bulkmode-badge"); if (bulkBadge) bulkBadge.remove();
+        if (ccBulkModeOn) ccBulkModeToggle();
+        return;
+      }
       if (!findRows().length) return; // no gear before the rows exist, or it flashes on load
       var oldAm = document.querySelector(".cc-advmini"); if (oldAm) oldAm.remove();
       var jsa = document.querySelector("div.js-actions");

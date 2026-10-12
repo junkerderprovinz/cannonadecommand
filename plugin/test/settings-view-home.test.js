@@ -30,7 +30,7 @@ console.log('\nEvery view has a gear');
   ok('list: the gear sits beside the view switch in the docked bar', /advGrp = jsa\.querySelector\("\.cc-bar-adv"\)/.test(top) && /advGrp\.appendChild\(makeGear\("cc-hgear-home"\)\)/.test(top));
   ok('list: never in a column header, which scrolls away with a wide table', !/th\d?\.appendChild\(makeGear/.test(top) && !/cc-hgear-th2/.test(docker));
   ok('list: the stale-gear sweep spares the bar\'s gear', /if \(!x9\.closest\("\.cc-bar-adv"\)\) x9\.remove\(\)/.test(top));
-  ok('card and folder: the list gear goes, their own tile takes over', /if \(mode !== "list"\) \{ var listGear = document\.querySelector\("\.cc-bar-adv \.cc-hgear"\); if \(listGear\) listGear\.remove\(\); return; \}/.test(top));
+  ok('card and folder: the list gear goes, their own tile takes over', /if \(mode !== "list"\) \{\s*var listGear = document\.querySelector\("\.cc-bar-adv \.cc-hgear"\); if \(listGear\) listGear\.remove\(\);/.test(top));
   ok('card view: a gear tile after the last card', /var gtile = el\("div", "cc-card cc-gear-tile"\); gtile\.appendChild\(hg\)/.test(fn('renderGrid')));
   ok('folder view: a gear of its own', /makeGear\("cc-hgear-grid"\)/.test(fn('renderFolderView')));
   // In the flow of the wrapping bar the gear takes its own room, so it cannot sit over a label.
@@ -48,6 +48,31 @@ console.log('\nEvery view has a gear');
   const m = () => ({ offsetWidth: 240, offsetHeight: 400, style: {} });
   ok('a gear at the bottom opens its menu upward', place(win, doc, m(), at(860, 884)).top === (860 - 6 - 400) + 'px');
   ok('a gear near the top still opens downward', place(win, doc, m(), at(100, 124)).top === '130px');
+}
+
+
+// The card and folder views draw no selection marks, so the multi-select badge leaves the bar
+// with the list, and a selection mode left on in the list ends rather than waiting unseen.
+console.log('\nMulti-select belongs to the list');
+{
+  const fnSrc = (() => { const i = docker.indexOf('function relocateTopBar('); let d = 0; for (let k = docker.indexOf('{', i); k < docker.length; k++) { if (docker[k] === '{') d++; else if (docker[k] === '}') { d--; if (!d) return docker.slice(i, k + 1); } } return ''; })();
+  const run = (viewMode, bulkOn) => {
+    const removed = [];
+    const els = { '.cc-bar-adv .cc-hgear': { remove() { removed.push('gear'); } }, '.cc-bulkmode-badge': { remove() { removed.push('badge'); } } };
+    const doc = { querySelector: (s) => els[s] || null, querySelectorAll: () => [] };
+    const state = new Function('document', 'mode', 'on',
+      'var ccBulkModeOn = on, toggled = 0; function ccBulkModeToggle() { ccBulkModeOn = !ccBulkModeOn; toggled++; }' +
+      'function syncFooterDock() {} function findRows() { return []; }\n' + fnSrc + '\nrelocateTopBar(); return { on: ccBulkModeOn, toggled: toggled };')(doc, viewMode, bulkOn);
+    return Object.assign(state, { removed });
+  };
+  for (const v of ['grid', 'folder']) {
+    const r = run(v, false);
+    ok(`${v}: the multi-select badge leaves the bar`, r.removed.includes('badge'), r.removed.join(' '));
+    const on = run(v, true);
+    ok(`${v}: a selection mode left on ends`, on.on === false && on.toggled === 1);
+  }
+  const list = run('list', false);
+  ok('list: the badge stays', !list.removed.includes('badge'), list.removed.join(' '));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
