@@ -69,7 +69,24 @@
       "#cc-settings .cc-set-tile-bg>img,#cc-settings .cc-set-tile-bg>i{padding:14%}" +
       // A per-area sub-heading inside one card is a muted caption, never a card inside a card.
       "#cc-settings .cc-set-sublbl{margin:12px 0 0;font-size:var(--cc-text-meta);font-weight:700;letter-spacing:.6px;text-transform:uppercase;opacity:.55}" +
-      "#cc-settings .cc-set-prev-empty{margin:6px 0 0;font-size:var(--cc-text-meta);opacity:.5}";
+      "#cc-settings .cc-set-prev-empty{margin:6px 0 0;font-size:var(--cc-text-meta);opacity:.5}" +
+      // The release notes window is wide and sets its body as reading text. It hangs on <body>,
+      // outside #cc-settings, so its rules carry the html prefix against Unraid's link colours.
+      ".cc-dlg.cc-win-notes{width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 48px)}" +
+      "html .cc-win-notes .cc-notes{color:var(--cc-text);font-size:var(--cc-text-subline);line-height:1.55;overflow-wrap:anywhere}" +
+      "html .cc-win-notes .cc-notes-h{margin:18px 0 6px;font-size:var(--cc-text-title);font-weight:700}" +
+      "html .cc-win-notes .cc-notes>:first-child{margin-top:0}" +
+      "html .cc-win-notes .cc-notes p{margin:0 0 10px}" +
+      "html .cc-win-notes .cc-notes :is(ul,ol){margin:0 0 10px;padding-inline-start:20px}" +
+      "html .cc-win-notes .cc-notes li{margin:5px 0}" +
+      "html .cc-win-notes .cc-notes code{font-family:ui-monospace,'Cascadia Code',Consolas,monospace;font-size:var(--cc-text-meta);background:var(--cc-surface-3);border-radius:calc(var(--cc-radius-control) / 2);padding:1px 5px}" +
+      "html .cc-win-notes .cc-notes pre{margin:0 0 10px;padding:10px 12px;background:var(--cc-surface-deep);border-radius:var(--cc-radius-control);overflow-x:auto}" +
+      "html .cc-win-notes .cc-notes pre code{background:none;padding:0;white-space:pre}" +
+      "html .cc-win-notes .cc-notes a,html .cc-win-notes .cc-notes a:visited{color:var(--cc-accent-ink);text-decoration:none;border-radius:calc(var(--cc-radius-control) / 2)}" +
+      "html .cc-win-notes .cc-notes a:hover{background:var(--cc-rbaccent,var(--cc-accent));color:var(--cc-rbaccent-text,var(--cc-accent-text))}" +
+      "html .cc-win a.cc-win-btn,html .cc-win a.cc-win-btn:visited{color:var(--cc-text);text-decoration:none}" +
+      "html .cc-win a.cc-win-btn:hover{color:var(--cc-rb-ct,var(--cc-rbaccent-text,var(--cc-accent-text,#161616)))}" +
+      ".cc-win-act .cc-win-link{margin-inline-end:auto}";
     document.head.appendChild(st);
   })();
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
@@ -81,6 +98,7 @@
   var REPO = "https://github.com/junkerderprovinz/cannonadecommand";
   var GLS_REPO = "https://github.com/junkerderprovinz/glimstone";
   var LATEST_API = "https://api.github.com/repos/junkerderprovinz/cannonadecommand/releases/latest";
+  var RELEASES_API = "https://api.github.com/repos/junkerderprovinz/cannonadecommand/releases";
 
   var COLS = [
     { key: "update", label: T("Update-Status", "Update status") },
@@ -2005,8 +2023,9 @@
         else engine.textContent = T("unbekannt", "unknown");
       }).catch(function () { engine.textContent = T("nicht erreichbar", "not reachable"); engine.classList.add("cc-set-verbad"); });
       var crow = el("div", "cc-set-btnrow");
+      var notes = actionBtn(T("Versionshinweise", "Release notes"), "cc-btn cc-set-xbtn cc-set-notes", function () { openReleaseNotes(notes); });
       var chk = actionBtn(T("Nach Updates suchen", "Check for updates"), "cc-btn cc-set-xbtn cc-set-check", function () { checkUpdates(chk); });
-      crow.appendChild(chk); cVer.appendChild(crow);
+      crow.appendChild(notes); crow.appendChild(chk); cVer.appendChild(crow);
       wrapInfo.appendChild(cVer);
 
       var cHelp = card(T("Hilfe", "Help"));
@@ -2160,6 +2179,87 @@
         btn.classList.add("cc-set-chk-bad"); btn.textContent = T("Prüfung fehlgeschlagen", "Check failed");
         failed(btn, T("Die Update-Prüfung ist fehlgeschlagen: ", "The update check failed: ") + ((e && e.message) || e));
       });
+  }
+  // The running version's notes, from the release API the update check reads. A dev build has no
+  // release of its own and shows the latest one.
+  function notesSource(ver) {
+    var v = String(ver || "").replace(/^v/, "");
+    if (/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(v)) return { api: RELEASES_API + "/tags/v" + v, page: REPO + "/releases/tag/v" + v, ver: v };
+    return { api: LATEST_API, page: REPO + "/releases", ver: "" };
+  }
+  function openReleaseNotes(opener) {
+    var C = window.CCTheme; if (!C || !C.modal) return;
+    var src = notesSource(CC_VER);
+    var win = el("div", "cc-win cc-dlg cc-win-notes");
+    var title = el("div", "cc-win-title", src.ver ? T("Neu in ", "New in ") + src.ver : T("Versionshinweise", "Release notes"));
+    var card = el("div", "cc-win-card cc-notes");
+    card.appendChild(el("p", "cc-win-text", T("Lade Versionshinweise …", "Loading the release notes …")));
+    var act = el("div", "cc-win-act");
+    var link = el("a", "cc-win-btn cc-win-link", T("Auf GitHub ansehen", "View on GitHub"));
+    link.href = src.page; link.target = "_blank"; link.rel = "noopener noreferrer";
+    var close = C.pressable(el("span", "cc-win-btn", T("Schließen", "Close")));
+    act.appendChild(link); act.appendChild(close);
+    win.appendChild(title); win.appendChild(card); win.appendChild(act);
+    document.body.appendChild(win);
+    C.paintWin(win);
+    var h = C.modal(win, { opener: opener, focus: close });
+    close.addEventListener("click", h.close);
+    function say(text) { card.textContent = ""; card.appendChild(el("p", "cc-win-text", text)); }
+    fetch(src.api, { headers: { Accept: "application/vnd.github+json" } })
+      .then(function (r) { if (r.status === 404) throw new Error("missing"); if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) {
+        var tag = String((j && j.tag_name) || "").replace(/^v/, "");
+        if (!src.ver && tag) { title.textContent = T("Neu in ", "New in ") + tag; link.href = REPO + "/releases/tag/v" + tag; }
+        if (!j || !String(j.body || "").trim()) { say(T("Zu dieser Version gibt es keine Versionshinweise.", "This version has no release notes.")); return; }
+        card.textContent = "";
+        notesDom(j.body, card);
+      })
+      .catch(function (e) {
+        say(e && e.message === "missing"
+          ? T("Zu dieser Version gibt es auf GitHub noch keine Versionshinweise.", "GitHub has no release notes for this version yet.")
+          : T("Die Versionshinweise ließen sich nicht laden. Auf GitHub kannst du sie lesen.", "Could not load the release notes. You can read them on GitHub."));
+      });
+  }
+  // A release body is GitHub Markdown. It is built from elements and text nodes, so nothing in it
+  // is ever read as HTML, and a link becomes an anchor only when it leads to http or https.
+  function notesInline(text, into) {
+    var re = /\*\*(.+?)\*\*|\x60([^\x60]+)\x60|\[([^\]]+)\]\(([^)\s]+)\)|\*(\S(?:.*?\S)?)\*/g, last = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > last) into.appendChild(document.createTextNode(text.slice(last, m.index)));
+      if (m[1] != null) { var b = el("strong"); notesInline(m[1], b); into.appendChild(b); }
+      else if (m[2] != null) into.appendChild(el("code", null, m[2]));
+      else if (m[3] != null) {
+        if (/^https?:\/\//i.test(m[4])) { var a = el("a", null, m[3]); a.href = m[4]; a.target = "_blank"; a.rel = "noopener noreferrer"; into.appendChild(a); }
+        else into.appendChild(document.createTextNode(m[3]));
+      } else { var i = el("em"); notesInline(m[5], i); into.appendChild(i); }
+      last = re.lastIndex;
+    }
+    if (last < text.length) into.appendChild(document.createTextNode(text.slice(last)));
+  }
+  function notesDom(md, into) {
+    var blocks = [], cur = null, code = null;
+    String(md || "").replace(/\r\n?/g, "\n").split("\n").forEach(function (ln) {
+      if (code) { if (/^\s*\x60{3}/.test(ln)) code = null; else code.text += (code.text ? "\n" : "") + ln; return; }
+      var m;
+      if (/^\s*\x60{3}/.test(ln)) { code = { type: "pre", text: "" }; blocks.push(code); cur = null; }
+      else if (!ln.trim() || /^\s*([-*_])(\s*\1){2,}\s*$/.test(ln)) cur = null;
+      else if ((m = /^(#{1,6})\s+(.*?)\s*#*\s*$/.exec(ln))) { blocks.push({ type: "h", text: m[2] }); cur = null; }
+      else if ((m = /^\s*([-*+]|\d+[.)])\s+(.*)$/.exec(ln))) {
+        var kind = /\d/.test(m[1]) ? "ol" : "ul";
+        if (!cur || cur.type !== kind) { cur = { type: kind, items: [] }; blocks.push(cur); }
+        cur.items.push(m[2]);
+      } else if (cur && (cur.type === "ul" || cur.type === "ol")) cur.items[cur.items.length - 1] += " " + ln.trim();
+      else if (cur && cur.type === "p") cur.text += " " + ln.trim().replace(/^>\s?/, "");
+      else { cur = { type: "p", text: ln.trim().replace(/^>\s?/, "") }; blocks.push(cur); }
+    });
+    blocks.forEach(function (b) {
+      if (b.type === "pre") { var pre = el("pre"); pre.appendChild(el("code", null, b.text)); into.appendChild(pre); return; }
+      if (b.type === "h") { var h = el("div", "cc-notes-h"); h.setAttribute("role", "heading"); h.setAttribute("aria-level", "3"); notesInline(b.text, h); into.appendChild(h); return; }
+      if (b.type === "p") { var p = el("p"); notesInline(b.text, p); into.appendChild(p); return; }
+      var list = el(b.type);
+      b.items.forEach(function (t) { var li = el("li"); notesInline(t, li); list.appendChild(li); });
+      into.appendChild(list);
+    });
   }
   // What the settings search matches in a row: its text and the bubble texts on and inside it.
   function searchText(n) {

@@ -23,7 +23,7 @@ console.log('\nNo action ends in an ellipsis');
   const pairs = (src) => [...src.matchAll(/T\("((?:[^"\\]|\\.)*)", "((?:[^"\\]|\\.)*)"\)/g)].map((m) => [m[1], m[2]]);
   const trailing = (s) => /(…|\.\.\.)\s*$/.test(s);
   // progress texts and field placeholders, which keep theirs
-  const KEEP = new Set(['Einstellungen durchsuchen …', 'Search settings …', 'Suchen…', 'Search…', 'Prüfe …', 'Checking …', 'Läuft…', 'Working…', 'Seite oder Aktion suchen…', 'Search a page or action…']);
+  const KEEP = new Set(['Einstellungen durchsuchen …', 'Search settings …', 'Suchen…', 'Search…', 'Prüfe …', 'Checking …', 'Lade Versionshinweise …', 'Loading the release notes …', 'Läuft…', 'Working…', 'Seite oder Aktion suchen…', 'Search a page or action…']);
   for (const [name, src] of [['settings.js', settings], ['header.js', header]]) {
     const bad = pairs(src).flat().filter((s) => trailing(s) && !KEEP.has(s));
     ok(name + ' has no action with an ellipsis', bad.length === 0, bad.join(' | '));
