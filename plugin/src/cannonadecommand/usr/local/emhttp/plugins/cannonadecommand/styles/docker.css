@@ -37,7 +37,7 @@ html .cc-hgear-bar { margin-right: 10px; font-size: var(--cc-text-title); color:
 
 /* The name cell (column 1): a larger logo with the name centred beside it in a narrower column,
    and under the name the start/stop badge with the id and author below it. */
-.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name { width: 225px !important; vertical-align: middle; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name { width: 199px !important; vertical-align: middle; }
 /* Unraid gives span.outer a 20px bottom margin, which would make every row 20px taller than its
    logo and hang the logo above the middle of the row. */
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer { display: flex; align-items: center; gap: 12px; margin: 0; }
@@ -113,13 +113,14 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbo
 /* ACTIONS column: icon buttons, name as tooltip; "…" opens the native menu */
 .cc-actcell { white-space: nowrap; }
 .cc-act-th { font-size: var(--cc-text-meta); }
-/* The native tablesorter column headers become a surface-shade strip with dim chip text in tracked
-   uppercase, set apart by shade rather than a separator line, and the orange sort caret takes the
-   accent (rainbow-aware). Scoped to the enhanced Docker table and the Plugins table, which match. */
+/* The native tablesorter column headers become GlimStone's eyebrow: no fill, the meta size in the
+   muted ink, uppercase and tracked, set apart from the rows by the space under them rather than a
+   line. The orange sort caret takes the accent (rainbow-aware). Scoped to the enhanced Docker
+   table and the Plugins table, which match. */
 html.cc-docker-on table.cc-enh thead th, html.cc-on-plugins table.cc-plug thead th {
-  background: var(--cc-surface-3, #2e2e2e) !important;
-  color: var(--cc-text-chip, #cfcfcf) !important;
-  border: none !important; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600;
+  background: transparent !important; color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important;
+  font-weight: 500 !important; text-transform: uppercase !important; letter-spacing: 1.2px !important;
+  border: none !important; box-shadow: none !important; padding-top: 8px !important; padding-bottom: 12px !important;
 }
 html.cc-docker-on table.cc-enh thead tr, html.cc-on-plugins table.cc-plug thead tr { border: none !important; box-shadow: none !important; }
 /* tablesorter's orange caret on the sorted column takes the CC accent */
@@ -127,9 +128,13 @@ html.cc-docker-on table.cc-enh thead th.tablesorter-headerAsc,
 html.cc-docker-on table.cc-enh thead th.tablesorter-headerDesc { color: var(--cc-accent-ink, #FCC419) !important; }
 html.cc-docker-on table.cc-enh thead th.tablesorter-headerAsc::after,
 html.cc-docker-on table.cc-enh thead th.tablesorter-headerDesc::after { color: color-mix(in srgb, var(--cc-rbaccent, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black) !important; border-bottom-color: color-mix(in srgb, var(--cc-rbaccent, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black) !important; border-top-color: color-mix(in srgb, var(--cc-rbaccent, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black) !important; }
-/* Three buttons in the first row and four in the second, where More closes it, each a real flex
-   row. */
-.cc-actbar { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+/* Three rows of icon badges, three, three and four with More closing the last, each a real flex
+   row. The gap is the one between the badges of the network and limits columns, which follows the
+   density, so the three rows line up with their three badges. */
+.cc-enh { --cc-badge-gap: 5px; }
+.cc-enh.cc-dens-compact { --cc-badge-gap: 3px; }
+.cc-enh.cc-dens-airy { --cc-badge-gap: 8px; }
+.cc-actbar { display: flex; flex-direction: column; gap: var(--cc-badge-gap, 5px); align-items: flex-start; }
 /* At rest a row shows its name and its badges; its buttons come in while the pointer is over it or
    the focus is inside it (GlimStone rule 6), and when a click on the name points at them. A touch
    screen has no hover, so there they stay. Opacity rather than visibility, so Tab still reaches a
@@ -138,9 +143,9 @@ html.cc-docker-on :is(.cc-actbar, .cc-mrow-act) { opacity: 0; transition: opacit
 html.cc-docker-on :is(#docker_list tr, .cc-card):is(:hover, :focus-within) :is(.cc-actbar, .cc-mrow-act),
 html.cc-docker-on .cc-actbar.cc-act-flash { opacity: 1; }
 @media (hover: none) { html.cc-docker-on :is(.cc-actbar, .cc-mrow-act) { opacity: 1; } }
-/* the actions column needs room for its two icon rows: four icon badges and the gaps */
-.cc-enh thead tr:last-child th:nth-child(2) { width: 122px; }
-.cc-enh #docker_list tr:is(.sortable, .folder-element) > td:nth-child(2) { max-width: 122px; }
+/* the actions column needs room for its widest row: four icon badges and the gaps between them */
+.cc-enh thead tr:last-child th:nth-child(2) { width: calc(4 * var(--cc-icon-badge, 26px) + 3 * var(--cc-badge-gap, 5px)); }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) > td:nth-child(2) { max-width: calc(4 * var(--cc-icon-badge, 26px) + 3 * var(--cc-badge-gap, 5px)); }
 .cc-hgear-home { border: none !important; box-shadow: none !important; cursor: pointer; line-height: 1; align-self: center; }
 nav.tabs .tabs-container .cc-hgear-home { background: #2a2a2a !important; color: #b5b5b5 !important; padding: 4px 12px !important; margin-left: 6px; font-size: var(--cc-text-body); }
 nav.tabs .tabs-container .cc-hgear-home:hover { background: #3a3a3a !important; color: #fff !important; }
@@ -148,7 +153,7 @@ nav.tabs .tabs-container .cc-hgear-home:hover { background: #3a3a3a !important; 
 .cc-card-actbar { padding: 6px 12px 0 12px; }
 /* ShipLog's update-all pill says what Unraid's own Update-All button below the table says */
 a.sl-updall { display: none !important; }
-.cc-actrow { display: flex; gap: 4px; }
+.cc-actrow { display: flex; gap: var(--cc-badge-gap, 5px); }
 .cc-actoff { opacity: .35; cursor: default; }
 .cc-actoff:hover { background: #2e2e2e; color: #c9c9c9; }
 /* copyable IP badges react on hover like the plan chip */
@@ -229,40 +234,37 @@ html.cc-docker-on .cc-grid-holder .cc-chip-dot.cc-badge-running:not(.cc-badge-al
 }
 .cc-b-del:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; }
 .cc-cb-del { accent-color: var(--cc-accent, #FCC419); width: 16px; height: 16px; margin: 0 8px 0 0; cursor: pointer; vertical-align: middle; }
-/* The bulk-select toolbar: a per-row selection mark as the first flex child of .outer, plus a
-   floating toolbar that appears once a row is picked. Its buttons ride the md tier of the .cc-b-del
-   control above, so Start, Stop, Remove and Clear read as one cluster. A mark shows while the
-   pointer is over its row or the focus is in it, and every mark shows once one is picked or while
-   the Mehrfachauswahl badge in the floating action bar is on (GlimStone, "Lists"). The slot stays
-   at rest, so the row does not move when its mark comes in, and opacity rather than display keeps
-   the mark in the Tab order.
+/* The bulk-select toolbar: a row's logo tile is its selection, plus a floating toolbar that
+   appears once a row is picked. Its buttons ride the md tier of the .cc-b-del control above, so
+   Start, Stop, Remove and Clear read as one cluster.
 
-   The mark is GlimStone's one control for picking rows: a circle in every shape setting, like the
-   state dot, a quiet shade until picked, then the row's colour with a filled tick (IconCheck) in
-   that colour's ink. The tick is a mask on ::before, so its ink comes from the colour chain rather
-   than a colour baked into a data URI. */
-html .cc-bulk-cb {
-  display: inline-block !important; opacity: 0; position: relative; flex: 0 0 auto; vertical-align: middle;
-  -webkit-appearance: none !important; appearance: none !important;
-  width: 18px; height: 18px; box-sizing: border-box; margin: 0 8px 0 0; padding: 0; cursor: pointer;
-  border: none !important; outline: none !important; box-shadow: none;
-  border-radius: 50%; background: rgba(128, 128, 128, .28);
-  transition: background-color .12s, opacity var(--cc-motion-fade-dur, 0s);
+   The tile picks with Ctrl or Shift and a click, with Space from the keyboard, and with a plain
+   click or tap while the Mehrfachauswahl badge is on or a row is picked already (GlimStone,
+   "Lists"). Picked, it fills with the row's colour chain and shows GlimStone's filled IconCheck
+   over the faded logo, in that colour's ink. The fill sits on ::before under the logo and the
+   tick on ::after over it, so no tile background rule (logo background, rainbow, reactive) has
+   to be outweighed. */
+html td.ct-name span.cc-pick { position: relative; border-radius: var(--cc-radius-control); }
+html td.ct-name span.cc-pick > :is(img, i) { position: relative; z-index: 1; transition: opacity .12s; }
+html td.ct-name span.cc-pick::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none;
+  background: transparent; transition: background-color .12s;
 }
-html:is(.cc-bulkmode-on, .cc-bulk-picked) .cc-bulk-cb,
-#docker_list tr:is(:hover, :focus-within) .cc-bulk-cb, html .cc-bulk-cb:checked { opacity: 1; }
-html .cc-bulk-cb:hover { background: rgba(128, 128, 128, .42); }
-html .cc-bulk-cb:checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); }
-html .cc-bulk-cb:checked:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }
-html .cc-bulk-cb:checked::before {
-  content: ""; position: absolute; inset: 0; margin: auto; width: 10px; height: 10px;
+html:is(.cc-bulkmode-on, .cc-bulk-picked) td.ct-name span.cc-pick { cursor: pointer; }
+html:is(.cc-bulkmode-on, .cc-bulk-picked) td.ct-name span.cc-pick:hover::before { background: var(--cc-hover-wash); }
+html td.ct-name span.cc-pick[aria-checked="true"]::before { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); }
+html td.ct-name span.cc-pick[aria-checked="true"]:hover::before { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }
+html td.ct-name span.cc-pick[aria-checked="true"] > :is(img, i) { opacity: .18; }
+html td.ct-name span.cc-pick[aria-checked="true"]::after {
+  content: ""; position: absolute; inset: 0; z-index: 2; margin: auto; width: 42%; height: 42%; pointer-events: none;
   background: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
   -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0.3 0.549 13.399 13.399'><path d='M4.381 12.219 L4.574 12.378 L4.793 12.497 L5.032 12.572 L5.155 12.592 L5.405 12.596 L5.651 12.552 L5.884 12.461 L6.096 12.328 L6.278 12.157 L13.457 3.957 L13.584 3.736 L13.666 3.495 L13.699 3.242 L13.683 2.988 L13.656 2.863 L13.566 2.625 L13.431 2.408 L13.257 2.222 L13.05 2.074 L12.936 2.016 L12.695 1.934 L12.442 1.901 L12.188 1.917 L11.942 1.983 L11.713 2.096 L11.511 2.251 L5.238 9.399 L2.519 6.681 L2.425 6.595 L2.213 6.454 L1.977 6.356 L1.854 6.325 L1.6 6.3 L1.346 6.325 L1.223 6.356 L0.987 6.454 L0.775 6.595 L0.595 6.775 L0.454 6.987 L0.399 7.103 L0.325 7.346 L0.3 7.6 L0.306 7.727 L0.356 7.977 L0.399 8.097 L0.519 8.322 L0.681 8.519Z'/></svg>") center / contain no-repeat;
           mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0.3 0.549 13.399 13.399'><path d='M4.381 12.219 L4.574 12.378 L4.793 12.497 L5.032 12.572 L5.155 12.592 L5.405 12.596 L5.651 12.552 L5.884 12.461 L6.096 12.328 L6.278 12.157 L13.457 3.957 L13.584 3.736 L13.666 3.495 L13.699 3.242 L13.683 2.988 L13.656 2.863 L13.566 2.625 L13.431 2.408 L13.257 2.222 L13.05 2.074 L12.936 2.016 L12.695 1.934 L12.442 1.901 L12.188 1.917 L11.942 1.983 L11.713 2.096 L11.511 2.251 L5.238 9.399 L2.519 6.681 L2.425 6.595 L2.213 6.454 L1.977 6.356 L1.854 6.325 L1.6 6.3 L1.346 6.325 L1.223 6.356 L0.987 6.454 L0.775 6.595 L0.595 6.775 L0.454 6.987 L0.399 7.103 L0.325 7.346 L0.3 7.6 L0.306 7.727 L0.356 7.977 L0.399 8.097 L0.519 8.322 L0.681 8.519Z'/></svg>") center / contain no-repeat;
 }
-html .cc-bulk-cb:focus-visible {
-  box-shadow: 0 0 0 3px rgba(252, 196, 25, .42);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent);
+html td.ct-name span.cc-pick:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(252, 196, 25, .42) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important;
 }
 /* The Mehrfachauswahl badge takes its whole look from the same rules as the native bar buttons, in
    the div.js-actions block further down. Nothing about its size, shape or colour belongs here, or
@@ -1138,7 +1140,8 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
 .cc-plugicm { transition: box-shadow .12s, transform .12s; }
 .cc-plugicm:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; transform: translateY(-1px); }
 /* the other tabs' tables (install errors etc.): same clean look */
-.cc-plug-lite thead th { text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-text-meta); }
+.cc-plug-lite thead th { background: transparent !important; color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important; font-weight: 500 !important; text-transform: uppercase !important; letter-spacing: 1.2px !important; border: none !important; box-shadow: none !important; padding-top: 8px !important; padding-bottom: 12px !important; }
+.cc-plug-lite thead tr { border: none !important; box-shadow: none !important; }
 .cc-desc { display: block; max-height: 5em; overflow-y: auto; padding-right: 6px; width: 100%; box-sizing: border-box; margin: 0; scrollbar-gutter: stable; color: #9a9a9a !important; }
 /* the light themes take their own muted ink, since the grey of the dark ones fades on white */
 html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #545454) !important; }
@@ -1152,7 +1155,6 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
 .cc-plugsup { font-size: var(--cc-text-meta); }
 .cc-plugicm { font-size: var(--cc-text-meta); }
 .cc-plugver { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-.cc-plug thead th { font-size: var(--cc-text-meta); }
 .cc-plug .cc-b { display: inline-flex; gap: 5px; align-items: center; border-radius: var(--cc-radius-pill); padding: var(--cc-sm-pad, 3px 11px); font-size: var(--cc-sm-fs); }
 .cc-plug .cc-b .cc-b-k { opacity: .72; font-weight: 500; }
 
@@ -1438,19 +1440,32 @@ div.js-actions > * { pointer-events: auto; }
   #displaybox { padding-bottom: calc(var(--cc-footer-h, 0px) + var(--cc-actbar-h, 40px) + 12px) !important; }
   #docker_list.js-fill-available-height { padding-bottom: var(--cc-actbar-h, 40px) !important; box-sizing: border-box; }
 }
-/* The Mehrfachauswahl badge is listed here so it takes the native bar button's look from the same
-   source rather than a copy that drifts; docker.js also moves it next to the container-size
-   button, instead of after the right-pinned view toggle at the far end of the bar. */
+/* One look for every button in the bar, the Mehrfachauswahl badge and the "Alle Container" menu
+   button included, so none of them drifts from a copy. Labels stay in sentence case. Only
+   "Container hinzufügen" is filled (GlimStone rule 3, one filled button per view); the others
+   rest grey and take their mode colour under the pointer, the slot docker.js colorBarButtons()
+   stamps in the rainbow. The four run-everything buttons wait hidden behind the menu. */
 div.js-actions input[type=button],
-div.js-actions .cc-bulkmode-badge { flex: none !important; background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important; border: none !important; box-shadow: none !important; padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.6px !important; font-family: inherit !important; cursor: pointer; transition: filter .12s; }
-/* docker.js ensureBulkModeBadge() builds the badge as a <span>, so what an <input type=button>
-   gets for free is spelled out here: a centred single-line text box and the native input margin,
+div.js-actions :is(.cc-bulkmode-badge, .cc-allct) { flex: none !important; background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important; border: none !important; box-shadow: none !important; padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: normal !important; font-family: inherit !important; cursor: pointer; transition: background-color .12s, color .12s; }
+div.js-actions input[type=button].cc-bar-primary {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
+}
+div.js-actions input[type=button].cc-folded { display: none !important; }
+div.js-actions :is(input[type=button]:disabled, .cc-allct[aria-disabled="true"]) { opacity: .5; cursor: default; }
+/* docker.js builds the badge and the menu button as <span>s, so what an <input type=button> gets
+   for free is spelled out here: a centred single-line text box and the native input margin,
    which together with the bar's flex gap is what sets the buttons apart. gap:0 drops the .cc-b
    flex gap, which would otherwise pad the label. */
-div.js-actions .cc-bulkmode-badge {
+div.js-actions :is(.cc-bulkmode-badge, .cc-allct) {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   gap: 0 !important; line-height: normal !important; margin: 10px 12px 10px 0 !important;
   white-space: nowrap; user-select: none; vertical-align: baseline;
+}
+/* the menu button's caret, a small filled triangle in the label's ink */
+div.js-actions .cc-allct-caret {
+  display: inline-block; width: 8px; height: 5px; margin-inline-start: 8px; background: currentColor;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
 }
 /* The badge is a toggle, so it has to read as pressed, and since it rests like its neighbours the
    hue alone cannot carry that: in accent mode the rest and the pressed fill are the same colour.
@@ -1469,11 +1484,17 @@ div.js-actions .cc-bulkmode-badge-on {
 div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; padding-right: 8px; }
 div.js-actions .cc-bar-adv .cc-hgear-home { font-size: var(--cc-text-title); color: var(--cc-text-chip, #cfcfcf); padding: 0 4px; }
 div.js-actions .cc-bar-adv .cc-hgear-home:hover { color: var(--cc-accent-ink, #FCC419); }
-div.js-actions .cc-bar-adv-lbl { color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-div.js-actions input[type=button]:hover,
-div.js-actions .cc-bulkmode-badge:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
-/* the badge clears box-shadow above with more weight than the shared halo in Tokens.css */
-div.js-actions .cc-bulkmode-badge:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important; }
+div.js-actions .cc-bar-adv-lbl { color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs); font-weight: 600; }
+div.js-actions input[type=button]:hover:not(:disabled),
+div.js-actions .cc-bulkmode-badge:hover,
+div.js-actions .cc-allct:hover:not([aria-disabled="true"]) {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
+}
+div.js-actions input[type=button].cc-bar-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; }
+/* the badge and the menu button clear box-shadow above with more weight than the shared halo in
+   Tokens.css */
+div.js-actions :is(.cc-bulkmode-badge, .cc-allct):focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important; }
 
 /* ShipLog: where its changelog bubble is on the Docker tab, its buttons and severity pill take the
    CC look. The .sl-bubble selector matches only once ShipLog has rendered one, so with the plugin
@@ -2104,12 +2125,14 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-b:not(.cc-plan-on) { b
    accent. The per-kind rules further down override it. */
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b:not(.cc-plan-on),
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b:not(.cc-plan-on) { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
-/* The docked .js-actions buttons rest grey and take the palette colour on hover, the
-   Mehrfachauswahl badge with them, except while it is on: a pressed toggle keeps its fill, which
-   is what the :not() holds the rest state off. */
-html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:not(:disabled),
+/* The docked .js-actions buttons rest grey and take the palette colour on hover, the Mehrfachauswahl
+   badge with them except while it is on: a pressed toggle keeps its fill, which is what the :not()
+   holds the rest state off. "Container hinzufügen" stays filled, the one filled button of the view. */
+html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:not(:disabled, .cc-bar-primary),
+html.cc-shares-rbneutral.cc-docker-on div.js-actions .cc-allct,
 html.cc-shares-rbneutral.cc-docker-on div.js-actions .cc-bulkmode-badge:not(.cc-bulkmode-badge-on) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
-html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:hover:not(:disabled),
+html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:hover:not(:disabled, .cc-bar-primary),
+html.cc-shares-rbneutral.cc-docker-on div.js-actions .cc-allct:hover:not([aria-disabled="true"]),
 html.cc-shares-rbneutral.cc-docker-on div.js-actions .cc-bulkmode-badge:not(.cc-bulkmode-badge-on):hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 /* an inactive page tab rests grey, with the --cc-rb-c paintTabs stamps on it for the hover; the
    selected tab stays painted */
@@ -2242,7 +2265,7 @@ html .ToggleViewMode .switch-button-background .switch-button-button,
 html .cc-enh #docker_list input.autostart.cc-noswitch,
 html .cc-enh #docker_list input.autostart.cc-noswitch::before,
 html div.js-actions input[type=button],
-html div.js-actions .cc-bulkmode-badge,
+html div.js-actions .cc-bulkmode-badge, html div.js-actions .cc-allct,
 html .cc-cb, html .cc-pop input[type="checkbox"],
 html .cc-set-toggle.cc-set-toggle, html .cc-set-knob.cc-set-knob { border-radius: var(--cc-radius-pill) !important; }
 

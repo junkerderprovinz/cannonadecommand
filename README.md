@@ -127,9 +127,13 @@ Docker, Plugins, VMs, Settings) on or off independently, each with its own style
 <details>
 <summary><b>UI</b></summary>
 
-- Actions column: WebUI, log, edit, restart, pause, stop/start and a "…" menu
-  with the container's project/support/donate links, harvested from Unraid's
-  own page data.
+- Actions column, in three rows that line up with the badges next to them:
+  WebUI, log, edit; restart, pause, stop/start; console, update, remove and a
+  "…" menu with the container's project/support/donate links, harvested from
+  Unraid's own page data.
+- Pick several containers by their logo tile (Ctrl or Shift and a click, Space
+  from the keyboard, or a plain click in multi-select) to start, stop or remove
+  them together.
 - Clean badges for state, network, IPs (click to copy), ports, volumes, update
   status; live CPU/RAM/bandwidth values with their limit editors attached.
 - Header status island: at-a-glance array fill, CPU, RAM, temperatures, running

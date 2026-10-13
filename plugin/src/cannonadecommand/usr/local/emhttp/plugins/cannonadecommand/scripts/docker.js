@@ -120,8 +120,8 @@
   // "CannonadeCommand" in both halves. "CC" is a source-code prefix, the cc- class namespace, the
   // CC_* constants and the cc.* keys, and it never leaves the source.
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Startplan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", search: "Suche", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge; Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen, restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container, kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle und kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“: dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner", renameFolder: "Ordner umbenennen", deleteFolder: "Ordner löschen", moveToFolder: "In Ordner verschieben", rootLevel: "(Wurzelebene)", iconMode: "Icon-Färbung", iconInherit: "folgt globaler Einstellung", iconAuto: "Automatisch", iconNative: "Natives Icon", iconFlat: "Ink-Flatten", iconTint: "Luminanz-Tint", folderContent: "Ordnerinhalt", detailed: "Detailliert", hideStopped: "Gestoppte ausblenden", bulkStartAll: "Alle starten", bulkStopAll: "Alle stoppen", close: "Schließen", discardTitle: "Ungespeicherte Änderungen verwerfen?", discard: "Verwerfen", keepEditing: "Weiter bearbeiten", cancel: "Abbrechen", newFolderTitle: "Neuen Ordner anlegen", folderName: "Name des Ordners", create: "Anlegen", renameFolderTitle: "Ordner „%s“ umbenennen", renameShort: "Umbenennen", deleteFolderTitle: "Ordner „%s“ löschen?", deleteShort: "Löschen" },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save start plan", startorder: "Start in order", filter: "filter…", search: "Search", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Start plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order; duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live, gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container, no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold and barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no”: this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder", renameFolder: "Rename folder", deleteFolder: "Delete folder", moveToFolder: "Move to folder", rootLevel: "(Root level)", iconMode: "Icon colouring", iconInherit: "follows the global setting", iconAuto: "Automatic", iconNative: "Native icon", iconFlat: "Ink flatten", iconTint: "Luminance tint", folderContent: "Folder contents", detailed: "Detailed", hideStopped: "Hide stopped", bulkStartAll: "Start all", bulkStopAll: "Stop all", close: "Close", discardTitle: "Discard unsaved changes?", discard: "Discard", keepEditing: "Keep editing", cancel: "Cancel", newFolderTitle: "Create a folder", folderName: "Folder name", create: "Create", renameFolderTitle: "Rename folder “%s”", renameShort: "Rename", deleteFolderTitle: "Delete folder “%s”?", deleteShort: "Delete" },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Startplan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", search: "Suche", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge; Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen, restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container, kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle und kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“: dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner", renameFolder: "Ordner umbenennen", deleteFolder: "Ordner löschen", moveToFolder: "In Ordner verschieben", rootLevel: "(Wurzelebene)", iconMode: "Icon-Färbung", iconInherit: "folgt globaler Einstellung", iconAuto: "Automatisch", iconNative: "Natives Icon", iconFlat: "Ink-Flatten", iconTint: "Luminanz-Tint", folderContent: "Ordnerinhalt", detailed: "Detailliert", hideStopped: "Gestoppte ausblenden", bulkStartAll: "Alle starten", bulkStopAll: "Alle stoppen", bulkPauseAll: "Alle pausieren", bulkResumeAll: "Alle fortsetzen", allContainers: "Alle Container", barAdd: "Container hinzufügen", barCheck: "Nach Aktualisierungen suchen", barUpdateAll: "Alle aktualisieren", barSizes: "Containergröße", updateCt: "Aktualisieren", close: "Schließen", discardTitle: "Ungespeicherte Änderungen verwerfen?", discard: "Verwerfen", keepEditing: "Weiter bearbeiten", cancel: "Abbrechen", newFolderTitle: "Neuen Ordner anlegen", folderName: "Name des Ordners", create: "Anlegen", renameFolderTitle: "Ordner „%s“ umbenennen", renameShort: "Umbenennen", deleteFolderTitle: "Ordner „%s“ löschen?", deleteShort: "Löschen" },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save start plan", startorder: "Start in order", filter: "filter…", search: "Search", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Start plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order; duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live, gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container, no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold and barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no”: this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder", renameFolder: "Rename folder", deleteFolder: "Delete folder", moveToFolder: "Move to folder", rootLevel: "(Root level)", iconMode: "Icon colouring", iconInherit: "follows the global setting", iconAuto: "Automatic", iconNative: "Native icon", iconFlat: "Ink flatten", iconTint: "Luminance tint", folderContent: "Folder contents", detailed: "Detailed", hideStopped: "Hide stopped", bulkStartAll: "Start all", bulkStopAll: "Stop all", bulkPauseAll: "Pause all", bulkResumeAll: "Resume all", allContainers: "All containers", barAdd: "Add container", barCheck: "Check for updates", barUpdateAll: "Update all", barSizes: "Container size", updateCt: "Update", close: "Close", discardTitle: "Discard unsaved changes?", discard: "Discard", keepEditing: "Keep editing", cancel: "Cancel", newFolderTitle: "Create a folder", folderName: "Folder name", create: "Create", renameFolderTitle: "Rename folder “%s”", renameShort: "Rename", deleteFolderTitle: "Delete folder “%s”?", deleteShort: "Delete" },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -446,37 +446,28 @@
       syncActionBars(); // the action bar's icons need the same live sync
     } catch (e) {}
   }
-  // The action bar's counterpart to syncStateBadges, for the start, stop and pause icons. The bar
-  // is built once per row in injectActionCell, and its rebuild guard does not look at the state,
-  // so the icons are re-derived here on every load and observer cycle. The source is CC's own
-  // c.state, a fresh docker ps on each /api/state, rather than Unraid's status glyph: nchan
-  // updates only CPU and RAM, and the glyph is refreshed by loadlist() every few seconds, so it
-  // is stale in the moment right after a start or stop. The glyph is the fallback for a row CC
-  // has not indexed.
+  // The action bar's counterpart to syncStateBadges. The bar is built once per row in
+  // injectActionCell, and its rebuild guard does not look at the state, so a row whose state
+  // changed gets a fresh bar here on every load and observer cycle: WebUI, console, pause and the
+  // start or stop slot all follow the state. The source is CC's own c.state, a fresh docker ps on
+  // each /api/state, rather than Unraid's status glyph: nchan updates only CPU and RAM, and the
+  // glyph is refreshed by loadlist() every few seconds, so it is stale in the moment right after a
+  // start or stop. The glyph is the fallback for a row CC has not indexed.
   function syncActionBars() {
     try {
       findRows().forEach(function (tr) {
         var bar = tr.querySelector(".cc-actbar"); if (!bar) return;
-        var r2 = bar.querySelectorAll(".cc-actrow")[1]; if (!r2 || r2.children.length < 3) return;
         var name = rowName(tr);
         if (pendingAction[name]) return; // an action is in flight, so the transient look stays
         var glyph = tr.querySelector("td.ct-name .inner i[id^='load-']");
         var c = containerByName(name);
         var st = (c && c.state) || glyphState(glyph) || "unknown";
         if (bar.dataset.ccState === st) return; // unchanged, so no DOM churn
-        bar.dataset.ccState = st;
-        var running = st === "running", paused = st === "paused";
-        // The pause and resume slot: a live button while running or paused, a placeholder while
-        // stopped. It is replaced rather than relabelled, so a row that starts gains a working
-        // pause.
-        var pauseNew = paused ? actBtn("Play", t("resume"), function () { doAction(name, "unpause"); })
-          : (running ? actBtn("Pause", t("pause"), function () { doAction(name, "pause"); }) : actBtnOff("Pause", t("pause")));
-        // The stop and start slot. Its action is re-derived at click time; this swaps the icon and
-        // label, so a running container shows a stop glyph.
-        var toggleNew = actBtn(running || paused ? "Stop" : "Play", running || paused ? t("stop") : t("start"), function () { var cc2 = containerByName(name); doAction(name, cc2 && (cc2.state === "running" || cc2.state === "paused") ? "stop" : "start"); });
-        r2.replaceChild(pauseNew, r2.children[1]);
-        r2.replaceChild(toggleNew, r2.children[2]);
-        tintAct(bar);
+        var fresh = actionBars(name, c, tr, st).bar;
+        // A keyboard user keeps the slot they were on.
+        var btns = Array.prototype.slice.call(bar.querySelectorAll(".cc-actbtn")), at = btns.indexOf(document.activeElement);
+        bar.parentNode.replaceChild(fresh, bar);
+        if (at >= 0) { var again = fresh.querySelectorAll(".cc-actbtn")[at]; if (again) again.focus(); }
       });
     } catch (e) {}
   }
@@ -983,31 +974,61 @@
     } catch (e) { return ""; }
   }
 
-  // The rainbow colours for the bottom action bar's native buttons. The CSS gives them the
-  // accent; the per-button palette colours have to be stamped here.
+  // The rainbow colours for the bottom action bar's buttons. Only "Container hinzufügen" is
+  // filled; the others rest grey and take their colour on hover, so this stamps each button's
+  // palette slot as vars and the sheet decides when to paint it. The folded buttons are hidden and
+  // skip the rotation, so the visible ones take neighbouring slots.
   function colorBarButtons() {
     try {
       var bar = document.querySelector("div.js-actions"); if (!bar) return;
-      // The Mehrfachauswahl badge joins the rotation: querySelectorAll returns DOM order and
-      // ensureBulkModeBadge parks it beside the container-size button, so it takes the next slot
-      // in the sequence.
-      var btns = bar.querySelectorAll("input[type=button], .cc-bulkmode-badge");
-      if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") { Array.prototype.slice.call(btns).forEach(function (b) { b.style.removeProperty("background"); b.style.removeProperty("color"); b.style.removeProperty("--cc-rb-c"); b.style.removeProperty("--cc-rb-ct"); }); return; }
+      var btns = Array.prototype.slice.call(bar.querySelectorAll("input[type=button]:not(.cc-folded), .cc-allct, .cc-bulkmode-badge"));
+      if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") { btns.forEach(function (b) { b.style.removeProperty("--cc-rb-c"); b.style.removeProperty("--cc-rb-ct"); }); return; }
       var pal = ccPalActive(RB_PAL);
       var off = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
-      // In the reactive sub-mode the CSS rests the buttons grey and colours them on hover, so
-      // this only stamps the vars: an inline !important background would beat any sheet rule.
-      var neutral = localStorage.getItem("cc.rbmode") === "active";
-      Array.prototype.slice.call(btns).forEach(function (b, i) {
+      btns.forEach(function (b, i) {
         var c = pal[(i + off) % pal.length];
         b.style.setProperty("--cc-rb-c", c); b.style.setProperty("--cc-rb-ct", idealText(c));
-        // A pressed Mehrfachauswahl badge takes no inline paint: that would bury
-        // .cc-bulkmode-badge-on and the toggle would look the same on and off. The vars above are
-        // still stamped, so the on-state resolves --cc-rb-c to this button's own slot.
-        if (neutral || b.classList.contains("cc-bulkmode-badge-on")) { b.style.removeProperty("background"); b.style.removeProperty("color"); }
-        else { b.style.setProperty("background", c, "important"); b.style.setProperty("color", idealText(c), "important"); }
       });
     } catch (e) {}
+  }
+  // The four run-everything buttons fold into one "Alle Container" menu, and the bar's labels
+  // read in sentence case from CannonadeCommand's own strings where it speaks the page's language.
+  // Unraid's other language packs keep their own labels. The natives stay in the bar, hidden, so
+  // Unraid keeps enabling and disabling them, and the menu clicks them.
+  var BAR_LABELS = { addContainer: "barAdd", checkAll: "barCheck", updateAll: "barUpdateAll", contSizes: "barSizes" };
+  var BAR_FOLD = [["startAll", "bulkStartAll", "Play"], ["stopAll", "bulkStopAll", "Stop"], ["pauseAll", "bulkPauseAll", "Pause"], ["resumeAll", "bulkResumeAll", "Play"]];
+  function barNative(bar, fn) { return bar.querySelector('input[type=button][onclick^="' + fn + '("]'); }
+  function foldBar(bar) {
+    var own = /^(de|en)/i.test(document.documentElement.lang || "en");
+    Object.keys(BAR_LABELS).forEach(function (fn) {
+      var b = barNative(bar, fn); if (!b) return;
+      if (fn === "addContainer") b.classList.add("cc-bar-primary");
+      if (own && b.value !== t(BAR_LABELS[fn])) b.value = t(BAR_LABELS[fn]);
+    });
+    var folded = BAR_FOLD.map(function (f2) { var b = barNative(bar, f2[0]); if (b) b.classList.add("cc-folded"); return b; });
+    if (!folded.some(Boolean)) return;
+    var btn = bar.querySelector(".cc-allct");
+    if (!btn) {
+      btn = el("span", "cc-allct", t("allContainers")); btn.setAttribute(MARK, "1");
+      btn.setAttribute("role", "button"); btn.setAttribute("tabindex", "0"); btn.setAttribute("aria-haspopup", "menu"); btn.setAttribute("aria-expanded", "false");
+      var caret = el("span", "cc-allct-caret"); caret.setAttribute("aria-hidden", "true"); btn.appendChild(caret);
+      var open = function () {
+        if (btn.getAttribute("aria-disabled") === "true" || !window.CCTheme || !window.CCTheme.menu) return;
+        var items = [];
+        BAR_FOLD.forEach(function (f2) {
+          var nb = barNative(bar, f2[0]); if (!nb || nb.disabled) return;
+          items.push({ glyph: f2[2], label: own ? t(f2[1]) : nb.value, run: function () { var n2 = barNative(bar, f2[0]); if (n2 && !n2.disabled) n2.click(); } });
+        });
+        if (items.length) window.CCTheme.menu(btn, items);
+      };
+      btn.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); open(); });
+      btn.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter" || e.key === "ArrowDown") { e.preventDefault(); open(); } });
+    }
+    // Unraid disables every native button while one of them runs, and the menu follows them.
+    var dead = folded.every(function (b) { return !b || b.disabled; });
+    if (btn.getAttribute("aria-disabled") !== String(dead)) btn.setAttribute("aria-disabled", String(dead));
+    var add = barNative(bar, "addContainer");
+    if (add ? btn.previousElementSibling !== add : btn.parentElement !== bar) bar.insertBefore(btn, add ? add.nextSibling : bar.firstChild);
   }
   // The per-line hover marquee for the volumes column. The native cell is one
   // span.docker_readmore whose lines are separated by <br>, so each line is wrapped and moved
@@ -1065,25 +1086,25 @@
       var name = rowName(tr);
       if (filterText) tr.style.display = (norm(name).indexOf(filterText) >= 0) ? "" : "none";
       var nameCell = tr.querySelector("td.ct-name"), upCell = tr.querySelector("td.updatecolumn");
-      // The bulk-select checkbox, for starting, stopping or removing several containers at once.
-      // It sits before the theming gate, being functional rather than cosmetic, and goes in as
-      // the first flex child of .outer, so it pushes the icon right without absolute positioning
-      // and without a new cell that would shift every nth-child offset used below.
-      var outerEl = nameCell && nameCell.querySelector(".outer");
-      if (outerEl && !outerEl.querySelector(".cc-bulk-cb")) {
-        var bcb = el("input", "cc-bulk-cb"); bcb.type = "checkbox"; bcb.setAttribute(MARK, "1");
-        bcb.setAttribute("aria-label", (LANG === "de" ? "Auswählen: " : "Select ") + name);
-        bcb.checked = !!ccBulkSel[name];
-        // A Shift on the mark itself picks a range as a Shift on the row does. The click comes
-        // before the change, so it notes the key for the change to read.
-        var bcbShift = false;
-        bcb.addEventListener("click", function (e) { e.stopPropagation(); bcbShift = e.shiftKey; });
-        bcb.addEventListener("change", function () {
-          if (bcbShift && ccBulkInRange(tr)) { ccBulkClick(tr, { shiftKey: true }); return; }
-          ccBulkSet(tr, bcb.checked); ccBulkAnchor = tr;
-          ccBulkBarSync();
-        });
-        outerEl.insertBefore(bcb, outerEl.firstChild);
+      // The logo tile is the row's selection, for starting, stopping or removing several
+      // containers at once. It is set up before the theming gate, being functional rather than
+      // cosmetic, on Unraid's own span.hand, so no new element or cell shifts the nth-child
+      // offsets used below. Space picks it from the keyboard and Shift and Space a range.
+      var tile = nameCell && nameCell.querySelector(".outer > span.hand");
+      if (tile) {
+        if (!tile.classList.contains("cc-pick")) {
+          tile.classList.add("cc-pick"); tile.setAttribute("role", "checkbox"); tile.setAttribute("tabindex", "0");
+          tile.setAttribute("aria-label", (LANG === "de" ? "Auswählen: " : "Select ") + name);
+        }
+        tile.setAttribute("aria-checked", ccBulkSel[name] ? "true" : "false");
+        if (!tile.ccPickKeys) {
+          tile.ccPickKeys = true;
+          tile.addEventListener("keydown", function (e) {
+            if (e.key !== " " || !tile.classList.contains("cc-pick")) return;
+            e.preventDefault(); e.stopPropagation();
+            var row = tile.closest("tr"); if (row) ccBulkClick(row, { shiftKey: e.shiftKey });
+          });
+        }
       }
       // The row centring is cosmetic, so it happens only with theming on; the orchestration
       // controls below inject either way.
@@ -1348,7 +1369,8 @@
   // Icons follow the configured accent exactly like the badges:
   // normal mode = cc.accent, rainbow mode = the rainbow palette. cc.actcolors = "0"
   // turns the colours off (grey buttons) via the gear menu. Colours are computed
-  // directly (no CSS-var indirection) with auto black/white glyphs.
+  // directly (no CSS-var indirection) with auto black/white glyphs. A delete is never red, so
+  // Entfernen passes a rainbow red on to the next slot.
   function tintAct(bar) {
     var colorsOn = localStorage.getItem("cc.actcolors") !== "0";
     var rb = themingOn() && localStorage.getItem("cc.rainbow") === "1"; // rainbow is theming; accent/legibility tint stays
@@ -1360,7 +1382,7 @@
       if (!b2.classList.contains("cc-actoff")) {
         tx = "var(--cc-text, #e6e6e6)";
         if (colorsOn) {
-          bg = !rb ? (effc("accent") || "#FCC419") : pal[(i2 + off) % pal.length];
+          bg = !rb ? (effc("accent") || "#FCC419") : (b2.classList.contains("cc-act-del") && window.CCTheme ? window.CCTheme.deleteSlot(pal, i2 + off) : pal[(i2 + off) % pal.length]);
           tx = idealText(bg);
         }
       }
@@ -1377,41 +1399,53 @@
       }
     });
   }
-  // Both views share the action block: the first row holds the web UI, the log and the edit
-  // action, the second the restart, pause and stop, and More, whose menu holds the console, the
-  // remove and the links the template carries.
-  function actionBars(name, c, tr) {
+  // Both views share the action block, three rows that line up with the three badges of the
+  // network and limits columns: WebUI, log and edit; restart, pause and stop; then console,
+  // update, remove and More, whose menu holds the Tailscale WebUI and the links the template
+  // carries. An action that does not apply keeps its slot as a disabled button, so every row
+  // shows the same grid: no WebUI or template, a stopped container's WebUI, console and pause.
+  function actionBars(name, c, tr, state) {
     var cx = ctxFor(name, tr);
     var bar = el("div", "cc-actbar");
-    var running = c && c.state === "running", paused = c && c.state === "paused";
+    var st = state || (c && c.state) || (tr && glyphState(tr.querySelector("td.ct-name .inner i[id^='load-']"))) || "unknown";
+    bar.dataset.ccState = st;
+    var running = st === "running", paused = st === "paused", de = LANG === "de";
+    var term = typeof window.openTerminal === "function";
     var r1 = el("div", "cc-actrow");
-    r1.appendChild(cx.webui ? actBtn("ExternalLink", "WebUI", function () { window.open(cx.webui, "_blank"); }) : actBtnOff("ExternalLink", LANG === "de" ? "kein WebUI" : "no WebUI"));
-    r1.appendChild(typeof window.openTerminal === "function" ? actBtn("Log", "Log", function () { window.openTerminal("docker", name, ".log"); }) : actBtnOff("Log", "Log"));
-    r1.appendChild(cx.xml ? actBtn("Pencil", LANG === "de" ? "Bearbeiten" : "Edit", function () {
+    r1.appendChild(cx.webui && running ? actBtn("ExternalLink", "WebUI", function () { window.open(cx.webui, "_blank"); }) : actBtnOff("ExternalLink", cx.webui ? (de ? "WebUI erst, wenn der Container läuft" : "WebUI once the container is running") : (de ? "kein WebUI" : "no WebUI")));
+    r1.appendChild(term ? actBtn("Log", "Log", function () { window.openTerminal("docker", name, ".log"); }) : actBtnOff("Log", "Log"));
+    r1.appendChild(cx.xml ? actBtn("Pencil", de ? "Bearbeiten" : "Edit", function () {
       // what Unraid's own editContainer() does; the template path stays unencoded
       var p2 = location.pathname, x2 = p2.indexOf("?"); if (x2 !== -1) p2 = p2.substring(0, x2);
       location.href = p2 + "/UpdateContainer?xmlTemplate=edit:" + cx.xml;
-    }) : actBtnOff("Pencil", LANG === "de" ? "kein Template" : "no template"));
+    }) : actBtnOff("Pencil", de ? "kein Template" : "no template"));
     var r2 = el("div", "cc-actrow");
     r2.appendChild(actBtn("Refresh", t("restart"), function () { doAction(name, "restart"); }));
     r2.appendChild(paused ? actBtn("Play", t("resume"), function () { doAction(name, "unpause"); })
       : (running ? actBtn("Pause", t("pause"), function () { doAction(name, "pause"); }) : actBtnOff("Pause", t("pause"))));
+    // The stop and start slot. Its action is re-derived at click time, so a stale bar never runs
+    // the opposite of what the container needs.
     r2.appendChild(actBtn(running || paused ? "Stop" : "Play", running || paused ? t("stop") : t("start"), function () { var cc2 = containerByName(name); doAction(name, cc2 && (cc2.state === "running" || cc2.state === "paused") ? "stop" : "start"); }));
+    var r3 = el("div", "cc-actrow");
+    var konsole = de ? "Konsole" : "Console";
+    r3.appendChild(term && running ? actBtn("Code", konsole, function () { if (cx.shell) window.openTerminal("docker", name, cx.shell); else window.openTerminal("docker", name); }) : actBtnOff("Code", term ? (de ? "Konsole erst, wenn der Container läuft" : "Console once the container is running") : konsole));
+    // Update and remove go through Unraid's own functions, which ask before they act.
+    r3.appendChild(typeof window.updateContainer === "function" ? actBtn("Download", t("updateCt"), function () { window.updateContainer(name); }) : actBtnOff("Download", t("updateCt")));
+    var rmLabel = de ? "Entfernen" : "Remove";
+    var rm = typeof window.rmContainer === "function" && cx.id ? actBtn("Trash", rmLabel, function () { window.rmContainer(name, cx.image, cx.id); }) : actBtnOff("Trash", rmLabel);
+    rm.classList.add("cc-act-del"); r3.appendChild(rm);
     var extras = [];
-    if (typeof window.openTerminal === "function") extras.push({ glyph: "Code", label: LANG === "de" ? "Konsole" : "Console", run: function () { if (cx.shell) window.openTerminal("docker", name, cx.shell); else window.openTerminal("docker", name); } });
-    // Remove goes through Unraid's own confirm dialog.
-    if (typeof window.rmContainer === "function" && cx.id) extras.push({ glyph: "Trash", label: LANG === "de" ? "Entfernen" : "Remove", del: true, run: function () { window.rmContainer(name, cx.image, cx.id); } });
     if (cx.tswebui) extras.push({ glyph: "ExternalLink", label: "Tailscale WebUI", run: function () { window.open(cx.tswebui, "_blank"); } });
     cx.links.forEach(function (l2) { extras.push({ glyph: l2.glyph, label: l2.tip, run: function () { window.open(l2.url, "_blank"); } }); });
     if (extras.length && window.CCTheme && window.CCTheme.menu) {
-      var moreBtn = actBtn("More", LANG === "de" ? "Mehr" : "More", function () { window.CCTheme.menu(moreBtn, extras); });
-      r2.appendChild(moreBtn);
+      var moreBtn = actBtn("More", de ? "Mehr" : "More", function () { window.CCTheme.menu(moreBtn, extras); });
+      r3.appendChild(moreBtn);
     } else {
-      r2.appendChild(actBtnOff("More", LANG === "de" ? "keine weiteren Aktionen" : "no more actions"));
+      r3.appendChild(actBtnOff("More", de ? "keine weiteren Aktionen" : "no more actions"));
     }
-    bar.appendChild(r1); bar.appendChild(r2);
+    bar.appendChild(r1); bar.appendChild(r2); bar.appendChild(r3);
     tintAct(bar);
-    return { bar: bar, sig: cx.webui + "|" + cx.xml + "|" + cx.tswebui + "|" + cx.links.length };
+    return { bar: bar, sig: cx.webui + "|" + cx.xml + "|" + cx.tswebui + "|" + cx.links.length + "|" + cx.id };
   }
   function injectActionCell(tr, name, c) {
     try {
@@ -1476,11 +1510,11 @@
   // The Basic/Advanced view toggle in the floating action bar. It writes Unraid's own cookie and
   // calls loadlist() directly, since triggering the hidden checkbox does nothing.
   function ensureBarToggle(bar) {
-    function advWord() { return isAdvancedView() ? (LANG === "de" ? "ERWEITERTE ANSICHT" : "ADVANCED VIEW") : (LANG === "de" ? "EINFACHE ANSICHT" : "BASIC VIEW"); }
+    function advWord(on) { return on ? (LANG === "de" ? "Erweiterte Ansicht" : "Advanced view") : (LANG === "de" ? "Einfache Ansicht" : "Basic view"); }
     var existing = bar.querySelector(".cc-bar-adv");
-    if (existing) { var on0 = isAdvancedView(); var t0 = existing.querySelector(".cc-set-toggle"), l0 = existing.querySelector(".cc-bar-adv-lbl"); if (t0) { t0.classList.toggle("cc-set-toggle-on", on0); t0.setAttribute("aria-checked", on0 ? "true" : "false"); } if (l0) l0.textContent = advWord(); return; }
+    if (existing) { var on0 = isAdvancedView(); var t0 = existing.querySelector(".cc-set-toggle"), l0 = existing.querySelector(".cc-bar-adv-lbl"); if (t0) { t0.classList.toggle("cc-set-toggle-on", on0); t0.setAttribute("aria-checked", on0 ? "true" : "false"); } if (l0) l0.textContent = advWord(on0); return; }
     var wrap = el("span", "cc-bar-adv"); wrap.setAttribute(MARK, "1");
-    var lbl = el("span", "cc-bar-adv-lbl", advWord()); wrap.appendChild(lbl);
+    var lbl = el("span", "cc-bar-adv-lbl", advWord(isAdvancedView())); wrap.appendChild(lbl);
     var tg = el("span", "cc-set-toggle" + (isAdvancedView() ? " cc-set-toggle-on" : ""));
     tg.setAttribute("role", "switch"); tg.setAttribute("tabindex", "0"); tg.setAttribute("aria-checked", isAdvancedView() ? "true" : "false");
     tg.setAttribute("data-tip", LANG === "de" ? "Einfache / Erweiterte Ansicht" : "Basic / Advanced view");
@@ -1488,7 +1522,7 @@
     function flip() {
       var next = !isAdvancedView();
       tg.classList.toggle("cc-set-toggle-on", next); tg.setAttribute("aria-checked", next ? "true" : "false");
-      lbl.textContent = next ? (LANG === "de" ? "ERWEITERTE ANSICHT" : "ADVANCED VIEW") : (LANG === "de" ? "EINFACHE ANSICHT" : "BASIC VIEW");
+      lbl.textContent = advWord(next);
       try { document.cookie = "docker_listview_mode=" + (next ? "advanced" : "basic") + "; path=/"; } catch (e9) {}
       try { var inp9 = document.querySelector("input.advancedview"); if (inp9) inp9.checked = next; } catch (e9) {}
       // One full re-enhancement per flip. loadlist() replaces #docker_list wholesale, which wakes
@@ -1515,16 +1549,17 @@
     tg.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
     wrap.appendChild(tg); bar.appendChild(wrap);
   }
-  // This badge in the floating action bar keeps every row's mark showing (html.cc-bulkmode-on), for
-  // a touch screen, which has no hover to bring them in. Switching it off clears the selection too,
-  // since a hidden mark with a lingering count bar is a confusing state.
+  // This badge in the floating action bar turns every logo tile into its row's selection
+  // (html.cc-bulkmode-on), so a plain click or a tap picks it, for a touch screen above all, which
+  // has no Ctrl or Shift. Switching it off clears the selection too, since a lingering count bar
+  // over tiles that do not pick is a confusing state.
   var ccBulkModeOn = false;
   function ccBulkModeToggle() {
     ccBulkModeOn = !ccBulkModeOn;
     document.documentElement.classList.toggle("cc-bulkmode-on", ccBulkModeOn);
     var btn = document.querySelector(".cc-bulkmode-badge"); if (btn) btn.classList.toggle("cc-bulkmode-badge-on", ccBulkModeOn);
     try { colorBarButtons(); } catch (e) {}   // the pressed badge drops its inline paint, and regains it on release, in the same tick as the class
-    if (!ccBulkModeOn) { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); }
+    if (!ccBulkModeOn) { ccBulkSel = {}; ccBulkClearMarks(); ccBulkBarSync(); }
   }
   function ensureBulkModeBadge(bar) {
     var btn = bar.querySelector(".cc-bulkmode-badge");
@@ -1553,8 +1588,8 @@
       // and the native Update-All button below the table covers ShipLog's pill.
       var tv = document.querySelector("div.ToggleViewMode");
       if (tv) tv.style.setProperty("display", "none", "important");
-      // The card and folder views carry their gear as a tile of their own, and they draw no
-      // selection marks, so multi-select has nothing to pick there and leaves with the list.
+      // The card and folder views carry their gear as a tile of their own, and their logos do not
+      // pick, so multi-select has nothing to pick there and leaves with the list.
       if (mode !== "list") {
         var listGear = document.querySelector(".cc-bar-adv .cc-hgear"); if (listGear) listGear.remove();
         var bulkBadge = document.querySelector(".cc-bulkmode-badge"); if (bulkBadge) bulkBadge.remove();
@@ -1571,6 +1606,7 @@
         // beside its label, while the bar wraps and stays on screen.
         Array.prototype.slice.call(document.querySelectorAll(".cc-hgear:not(.cc-hgear-grid)")).forEach(function (x9) { if (!x9.closest(".cc-bar-adv")) x9.remove(); });
         var hc = document.querySelector(".cc-headctl"); if (hc) hc.remove();
+        foldBar(jsa);
         ensureBarToggle(jsa);
         ensureBulkModeBadge(jsa);
         var advGrp = jsa.querySelector(".cc-bar-adv");
@@ -1648,6 +1684,7 @@
     Array.prototype.slice.call(root.querySelectorAll("[" + MARK + "]")).forEach(function (n) { n.remove(); });
     Array.prototype.slice.call(root.querySelectorAll("[" + ROWMARK + "]")).forEach(function (n) { n.removeAttribute(ROWMARK); });
     Array.prototype.slice.call(root.querySelectorAll(".cc-hidden")).forEach(function (n) { n.classList.remove("cc-hidden"); });
+    Array.prototype.slice.call(root.querySelectorAll(".cc-pick")).forEach(function (n) { n.classList.remove("cc-pick"); ["role", "tabindex", "aria-label", "aria-checked"].forEach(function (a) { n.removeAttribute(a); }); });
     // the third-party badges lose their stamped classes, and the group badge is unwrapped, which
     // puts the native icon and text back
     Array.prototype.slice.call(root.querySelectorAll(".cc-3p")).forEach(function (n) { n.classList.remove("cc-b", "cc-3p"); });
@@ -1716,11 +1753,11 @@
     if (!names.length) {
       if (!ccBulkBarEl) return;
       // A bar that hides under the keyboard focus would drop it on <body>; the multi-select badge,
-      // else a row's mark, is where the next step starts.
+      // else a row's logo tile, is where the next step starts.
       var hadFocus = ccBulkBarEl.contains(document.activeElement);
       ccBulkBarEl.style.setProperty("display", "none", "important");
       if (hadFocus) {
-        var next = [document.querySelector(".cc-bulkmode-badge")].concat(Array.prototype.slice.call(document.querySelectorAll(".cc-bulk-cb")))
+        var next = [document.querySelector(".cc-bulkmode-badge")].concat(Array.prototype.slice.call(document.querySelectorAll(".cc-pick")))
           .filter(function (n) { return n && n.getClientRects().length; })[0];
         if (next) next.focus();
       }
@@ -1733,7 +1770,7 @@
       var startB = el("span", "cc-b cc-bulkbtn", de ? "Starten" : "Start"); startB.addEventListener("click", function () { ccBulkRun("start"); }); bar.appendChild(startB);
       var stopB = el("span", "cc-b cc-bulkbtn", de ? "Stoppen" : "Stop"); stopB.addEventListener("click", function () { ccBulkRun("stop"); }); bar.appendChild(stopB);
       var rmB = el("span", "cc-b cc-bulkbtn", de ? "Entfernen" : "Remove"); rmB.addEventListener("click", ccBulkRemove); bar.appendChild(rmB);
-      var clearB = el("span", "cc-b cc-bulkbtn cc-bulkbtn-clear", de ? "Aufheben" : "Clear"); clearB.addEventListener("click", function () { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); }); bar.appendChild(clearB);
+      var clearB = el("span", "cc-b cc-bulkbtn cc-bulkbtn-clear", de ? "Aufheben" : "Clear"); clearB.addEventListener("click", function () { ccBulkSel = {}; ccBulkClearMarks(); ccBulkBarSync(); }); bar.appendChild(clearB);
       if (window.CCTheme) [startB, stopB, rmB, clearB].forEach(window.CCTheme.pressable);
       document.body.appendChild(bar);
       ccBulkBarEl = bar;
@@ -1742,21 +1779,28 @@
     ccBulkBarEl.querySelector(".cc-bulkbar-count").textContent = names.length + " " + (de ? "ausgewählt" : "selected");
   }
   // Picking rows the way a file manager does (GlimStone, "Lists"): Ctrl or Cmd and a click toggles
-  // a row's mark and makes it the anchor, Shift and a click picks the rows from the anchor to this
+  // a row's tile and makes it the anchor, Shift and a click picks the rows from the anchor to this
   // one, in the order the list shows them. A click on a control in the row keeps doing its own job.
   var ccBulkAnchor = null;
   var BULK_SKIP = "a[href], button, input, select, textarea, label, [role=button], [role=switch], .cc-actcell, .cc-b-copy, .cc-plan, .cc-limbtn";
-  function ccBulkRows() { return findRows().filter(function (r) { return r.style.display !== "none" && r.querySelector(".cc-bulk-cb"); }); }
+  function ccBulkRows() { return findRows().filter(function (r) { return r.style.display !== "none" && r.querySelector(".cc-pick"); }); }
   function ccBulkRowFor(e) {
     if (mode !== "list" || !(e.ctrlKey || e.metaKey || e.shiftKey) || e.button || !e.target || !e.target.closest) return null;
     var tr = e.target.closest("#docker_list tr");
-    if (!tr || !tr.querySelector(".cc-bulk-cb") || e.target.closest(BULK_SKIP)) return null;
+    if (!tr || !tr.querySelector(".cc-pick") || e.target.closest(BULK_SKIP)) return null;
     return tr;
+  }
+  // A plain click on a logo tile picks it while multi-select is on or something is picked already;
+  // otherwise the click keeps pointing at the row's actions.
+  function ccBulkTileFor(e) {
+    if (mode !== "list" || e.button || !e.target || !e.target.closest || !(ccBulkModeOn || Object.keys(ccBulkSel).length)) return null;
+    var tile = e.target.closest("#docker_list td.ct-name span.cc-pick");
+    return tile ? tile.closest("tr") : null;
   }
   function ccBulkInRange(tr) { var rows = ccBulkRows(); return rows.indexOf(ccBulkAnchor) >= 0 && rows.indexOf(tr) >= 0; }
   function ccBulkSet(tr, on) {
-    var name = rowName(tr), cb = tr.querySelector(".cc-bulk-cb");
-    if (cb) cb.checked = on;
+    var name = rowName(tr), tile = tr.querySelector(".cc-pick");
+    if (tile) tile.setAttribute("aria-checked", on ? "true" : "false");
     if (on) { var cx = ctxFor(name, tr); ccBulkSel[name] = { id: cx.id, image: cx.image }; }
     else delete ccBulkSel[name];
   }
@@ -1766,17 +1810,17 @@
       var lo = Math.min(a, b), hi = Math.max(a, b);
       // The range takes the place of the selection, rows a filter hides included, so a bulk action
       // never reaches one out of sight.
-      findRows().forEach(function (r) { if (r.querySelector(".cc-bulk-cb")) { var i = rows.indexOf(r); ccBulkSet(r, i >= lo && i <= hi); } });
+      findRows().forEach(function (r) { if (r.querySelector(".cc-pick")) { var i = rows.indexOf(r); ccBulkSet(r, i >= lo && i <= hi); } });
     } else {
       ccBulkSet(tr, !ccBulkSel[rowName(tr)]);
       ccBulkAnchor = tr;
     }
     ccBulkBarSync();
   }
-  // Every checkbox is un-ticked after a bulk action or a clear. The fresh rows a native tbody
-  // replace creates start unchecked, so there is nothing to do for those.
-  function ccBulkSyncCheckboxes() {
-    Array.prototype.slice.call(document.querySelectorAll(".cc-bulk-cb")).forEach(function (cb) { cb.checked = false; });
+  // Every tile is unpicked after a bulk action or a clear. The fresh rows a native tbody replace
+  // creates start unpicked, so there is nothing to do for those.
+  function ccBulkClearMarks() {
+    Array.prototype.slice.call(document.querySelectorAll(".cc-pick")).forEach(function (n) { n.setAttribute("aria-checked", "false"); });
   }
   // Shared by the bulk-select bar and the per-folder start and stop buttons, so there is one
   // start-in-parallel-then-reload mechanism rather than two.
@@ -1788,7 +1832,7 @@
       .then(function () { flash(t("done")); if (onDone) onDone(); });
   }
   function ccBulkRun(action) {
-    runBulkAction(Object.keys(ccBulkSel), action, function () { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); });
+    runBulkAction(Object.keys(ccBulkSel), action, function () { ccBulkSel = {}; ccBulkClearMarks(); ccBulkBarSync(); });
   }
   function ccBulkRemove(ev) {
     var names = Object.keys(ccBulkSel);
@@ -1807,7 +1851,7 @@
         return fetch("/plugins/dynamix.docker.manager/include/Events.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body }).catch(function () {});
       });
       Promise.all(reqs).then(function () {
-        ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync();
+        ccBulkSel = {}; ccBulkClearMarks(); ccBulkBarSync();
         if (typeof window.loadlist === "function") window.loadlist();
       });
     }
@@ -4465,7 +4509,7 @@
       document.addEventListener("click", function (e) {
         try {
           if (dead || mode !== "list") return;
-          var picked = ccBulkRowFor(e);
+          var picked = ccBulkRowFor(e) || ccBulkTileFor(e);
           if (picked) { e.preventDefault(); e.stopPropagation(); ccBulkClick(picked, e); return; }
           var hand = e.target && e.target.closest ? e.target.closest("td.ct-name span.hand, td.ct-name span.appname, td.ct-name .cc-ct-dotrow") : null;
           if (!hand) return;

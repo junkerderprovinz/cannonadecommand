@@ -188,7 +188,7 @@ console.log('\nThe sheet and the rows');
     ok(name + ': More opens the shared menu', /actBtn\("More", [^\n]*window\.CCTheme\.menu\(moreBtn, extras\)/.test(src));
     ok(name + ': no extra block of buttons unfolds in the row', src.indexOf('cc-actmore') < 0 && src.indexOf('cc-acttoggle') < 0);
   }
-  ok('docker.js: Remove is a delete item of the menu', /glyph: "Trash", label: [^\n]*, del: true, run: function \(\) \{ window\.rmContainer\(/.test(docker));
+  ok('docker.js: Remove is a button of the row, which takes the delete slot', /actBtn\("Trash", rmLabel, function \(\) \{ window\.rmContainer\(/.test(docker) && /rm\.classList\.add\("cc-act-del"\)/.test(docker));
   ok('vms.js: both removes are delete items of the menu', (vms.match(/del: true, run: function \(\) \{ vmRemove\(uuid, name, (true|false)\); \}/g) || []).length === 2);
 }
 

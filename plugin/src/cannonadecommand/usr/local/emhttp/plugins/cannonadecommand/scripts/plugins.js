@@ -19,6 +19,7 @@
         return;
       }
       if (localStorage.getItem("cc.theming") === "0" || localStorage.getItem("cc.enable.plugins") === "0") return;
+      showUpdateAll();
       // The anchor. The Plugins page uses Unraid's older radio+label tab markup without
       // button[role=tab] or .tabs-container, so labels come first and the modern variants are
       // fallbacks. In section view docker.css hides every tab button, so .cc-card-head, which
@@ -99,6 +100,19 @@
       if (Math.abs(need - cur) > 1) host.style.setProperty("top", need + "px", "important");
     } catch (e) {}
   }
+  // Unraid shows Update All only from two pending plugin updates; one is reason enough. Unraid
+  // hides it while an update runs, so a click on it keeps it hidden until the pending set changes.
+  var uaHeld = null;
+  function pendingUpdates() {
+    return Array.prototype.map.call(document.querySelectorAll("#plugin_list input.update:not(:disabled)"), function (b) { return b.getAttribute("data") || ""; }).join("*");
+  }
+  function showUpdateAll() {
+    var ua = document.getElementById("updateall"); if (!ua) return;
+    var key = pendingUpdates();
+    if (key !== uaHeld) uaHeld = null;
+    if (key && uaHeld === null && ua.style.display === "none") ua.style.display = "";
+  }
+  try { document.addEventListener("click", function (e) { if (e.target && e.target.closest && e.target.closest("#updateall")) uaHeld = pendingUpdates(); }, true); } catch (e) {}
   var _pinIv = null; try { _pinIv = setInterval(plugPinTick, 600); } catch (e) {}
   try { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", plugPinTick); else plugPinTick(); } catch (e) {}
   // Everything below may fail without taking the pin loop down.
