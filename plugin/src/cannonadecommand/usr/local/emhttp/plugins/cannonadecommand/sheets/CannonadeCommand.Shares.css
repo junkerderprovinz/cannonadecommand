@@ -1012,28 +1012,29 @@ html.cc-shares-on.cc-on-share-detail #displaybox div.title.nocontrol span.right 
   padding-right: 0 !important; font-size: var(--cc-text-meta) !important;
 }
 html.cc-shares-on.cc-on-share-detail #displaybox div.title.nocontrol span.right i {
-  font-style: normal; color: #9a9a9a; background: rgba(255, 255, 255, .06);
+  font-style: normal; color: var(--cc-text-dim, #9a9a9a); background: color-mix(in srgb, var(--cc-text, #e6e6e6) 6%, transparent);
   padding: 3px 10px; border-radius: var(--cc-radius-pill); white-space: nowrap;
 }
 html.cc-shares-on.cc-on-share-detail #displaybox div.title.nocontrol span.right i strong,
 html.cc-shares-on.cc-on-share-detail #displaybox div.title.nocontrol span.right i b {
-  color: #eaeaea; font-weight: 700;
+  color: var(--cc-text, #eaeaea); font-weight: 700;
 }
 
 /* Input fields as filled boxes: Unraid's underlined text inputs and selects become a subtle
-   rounded fill with no border, and focus deepens the fill instead of drawing a ring. */
+   rounded fill with no border, and focus deepens the fill instead of drawing a ring. Fill and text
+   are mixed from the theme's ink, so they read on the white and azure pages as on the dark ones. */
 html.cc-shares-on.cc-on-share-detail #displaybox input[type="text"],
 html.cc-shares-on.cc-on-share-detail #displaybox input[type="number"],
 html.cc-shares-on.cc-on-share-detail #displaybox input[type="password"],
 html.cc-shares-on.cc-on-share-detail #displaybox select {
-  background: rgba(255, 255, 255, .07) !important; border: none !important; box-shadow: none !important;
-  border-radius: var(--cc-radius-control) !important; padding: 6px 10px !important; color: #eaeaea !important;
+  background: color-mix(in srgb, var(--cc-text, #e6e6e6) 7%, transparent) !important; border: none !important; box-shadow: none !important;
+  border-radius: var(--cc-radius-control) !important; padding: 6px 10px !important; color: var(--cc-text, #eaeaea) !important;
 }
 html.cc-shares-on.cc-on-share-detail #displaybox input[type="text"]:focus,
 html.cc-shares-on.cc-on-share-detail #displaybox input[type="number"]:focus,
 html.cc-shares-on.cc-on-share-detail #displaybox input[type="password"]:focus,
 html.cc-shares-on.cc-on-share-detail #displaybox select:focus {
-  outline: none !important; background: rgba(255, 255, 255, .12) !important;   /* no focus ring; the fill gets stronger instead */
+  outline: none !important; background: color-mix(in srgb, var(--cc-text, #e6e6e6) 12%, transparent) !important;   /* no focus ring; the fill gets stronger instead */
 }
 
 /* The delete control, shared with the plugin list: a badge in the page's accent that hugs its text,
@@ -1084,9 +1085,9 @@ html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-selector 
   border: none !important; background-image: none !important; box-shadow: none !important;
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist {
-  background-color: rgba(255, 255, 255, .07) !important; border-radius: var(--cc-radius-control) !important; padding: 0 10px !important;
+  background-color: color-mix(in srgb, var(--cc-text, #e6e6e6) 7%, transparent) !important; border-radius: var(--cc-radius-control) !important; padding: 0 10px !important;
 }
-html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-text { color: #eaeaea !important; }
+html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-text { color: var(--cc-text, #eaeaea) !important; }
 
 /* Disks in the open dropdown become CC badge chips stacked in a column; the generic class covers
    every dropdownchecklist widget in the sub-tabs. The widget toggles on the item div's own click
@@ -1275,7 +1276,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .tab-content:has(.cc-split-row)
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel { position: relative; display: inline-block; }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-sel-trigger {
   display: inline-flex; align-items: center; min-width: 220px;
-  background: rgba(255, 255, 255, .07); border-radius: var(--cc-radius-control); padding: 6px 10px; color: #eaeaea; cursor: pointer;
+  background: color-mix(in srgb, var(--cc-text, #e6e6e6) 7%, transparent); border-radius: var(--cc-radius-control); padding: 6px 10px; color: var(--cc-text, #eaeaea); cursor: pointer;
   transition: background .12s, color .12s;
 }
 /* Reactive trigger, like .cc-tsel-trigger and .cc-pop .cc-dsel-trigger: neutral at rest, the colour
