@@ -32,11 +32,25 @@ console.log('\nA dropdown or a one-line field stands beside its name');
 {
   const page = withUnraid('settings');
   const dsel = { tag: 'span', classes: ['cc-dsel'], inside: ['#cc-settings'], outside: ['.cc-pop'] };
-  ok('a dropdown has a width of its own and gives way before it wraps', val(win(page, dsel, 'flex')) === '0 1 240px' && val(win(page, dsel, 'min-width')) === '120px', val(win(page, dsel, 'flex')));
+  // A flex line breaks on the basis, so a basis at the full width put the dropdown under a name
+  // that it fits beside once it shrinks.
+  ok('a dropdown breaks the line only at its narrowest width', val(win(page, dsel, 'flex')) === '1 1 120px' && val(win(page, dsel, 'min-width')) === '120px', val(win(page, dsel, 'flex')));
+  ok('and grows to a width of its own', val(win(page, dsel, 'max-width')) === 'var(--cc-dsel-w, 240px)');
+  {
+    // ccDsel with a select of three entries, the longest thirteen characters.
+    const nodes = [];
+    const mk = (tag, cls, txt) => { const n = { tag, className: cls || '', textContent: txt || '', style: { props: {}, setProperty(k, v) { this.props[k] = v; } }, kids: [], appendChild(c) { this.kids.push(c); return c; }, setAttribute() {}, addEventListener() {}, classList: { toggle() {}, remove() {}, contains: () => false } }; nodes.push(n); return n; };
+    const sel = { style: {}, options: [{ text: 'Aus', style: {} }, { text: 'Zwölf Zeichen', style: {} }, { text: 'Kurz', style: {} }], selectedIndex: 0, parentNode: null };
+    const wrap = new Function('el', 'sel', 'ccDselSync', 'ccDselPosition', 'Event', 'window', grabFn(settings, 'ccDsel') + '; return ccDsel(sel);')(mk, sel, () => {}, () => {}, function () {}, {});
+    ok('ccDsel sizes the dropdown to its longest entry', wrap.style.props['--cc-dsel-w'] === 'min(calc(13ch + 52px), 340px)', wrap.style.props['--cc-dsel-w']);
+  }
+  ok('the motion setting is such a dropdown, beside its name', /themingCard\.appendChild\(segRow\(T\("Bewegung", "Motion"\)/.test(settings) && /function segRow\(labelText, opts, cur, onChange, help\) \{\s*return dropRow\(/.test(settings));
+  const flag = /"#cc-settings \.cc-flag-picker\{([^}]*)\}"/.exec(settings);
+  ok('the country picker starts from room for a long country name and takes what its row has', !!flag && /flex:1 1 calc\(18ch \+ 52px\)/.test(flag[1]) && /min-width:0/.test(flag[1]) && !/margin-top/.test(flag[1]), flag && flag[1]);
   ok('it keeps the row\'s end', val(win(page, dsel, 'margin-left')) === 'auto');
   const txt = { tag: 'input', classes: ['cc-set-txt'], attrs: { type: 'text' }, inside: ['#cc-settings'], html: ['cc-popups-on'] };
   const tw = win(page, txt, 'width'), tf = win(page, txt, 'flex');
-  ok('a one-line field has a width of its own, past Unraid\'s 100%', tf && tf.value === '0 1 280px' && tw.selector === '#cc-settings .cc-set-txt' && tw.value === 'auto', tw && tw.selector);
+  ok('a one-line field has a width of its own, past Unraid\'s 100%', tf && tf.value === '1 1 140px' && val(win(page, txt, 'max-width')) === '280px' && tw.selector === '#cc-settings .cc-set-txt' && tw.value === 'auto', tw && tw.selector);
   ok('and stands at the end of its row', /auto$/.test(val(win(page, txt, 'margin'))));
   ok('it is filled like the dropdowns, with no line around it', /--cc-surface-chip/.test(val(win(page, txt, 'background'))) && val(win(page, txt, 'border')) === 'none');
   ok('its type sits on the scale, not on Unraid\'s 1.3rem', val(win(page, txt, 'font-size')) === 'var(--cc-text-subline)');

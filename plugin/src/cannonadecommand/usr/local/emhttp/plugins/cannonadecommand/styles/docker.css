@@ -1270,9 +1270,11 @@ html:is(.Theme--white, .Theme--azure) #cc-settings .cc-set-card { --cc-text-chip
 #cc-settings .cc-set-sel option:checked, #cc-settings .cc-set-sel option:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 /* The settings dropdowns use the same .cc-dsel widget as the Docker network dropdown, built by
    settings.js ccDsel; the native <select> stays as the value, display:none. */
-/* A dropdown stands at the end of its row with a width of its own (GlimStone rule 35); it gives
-   way before it wraps, and once it wraps under its name it still keeps the row's end. */
-#cc-settings .cc-dsel { position: relative; display: inline-flex; flex: 0 1 240px; min-width: 120px; margin-left: auto; }
+/* A dropdown stands at the end of its row with a width of its own (GlimStone rule 35):
+   --cc-dsel-w, which settings.js ccDsel sets from its longest entry. A flex line breaks on the
+   basis, so the basis is the narrowest width and the dropdown grows from there: it shrinks
+   before it wraps, and once it wraps under its name it still keeps the row's end. */
+#cc-settings .cc-dsel { position: relative; display: inline-flex; flex: 1 1 120px; min-width: 120px; max-width: var(--cc-dsel-w, 240px); margin-left: auto; }
 #cc-settings .cc-dsel-trigger {
   display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
   flex: 1; min-width: 0; height: 36px; box-sizing: border-box;
@@ -1398,10 +1400,11 @@ button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-t
 .cc-set-cname { text-align: left; }
 .cc-set-chk { text-align: center; }
 .cc-set-foot { color: var(--dim2); font-size: var(--cc-text-meta); margin-top: 20px; }
-/* A one-line field beside its name, filled like the dropdowns and as tall as them. The id keeps
+/* A one-line field beside its name, filled like the dropdowns and as tall as them, and like them it
+   wraps under the name only once its narrowest width no longer fits beside it. The id keeps
    it above Unraid's input[type="text"] rule, which would draw its underline and stretch it. */
 #cc-settings .cc-set-txt {
-  flex: 0 1 280px; width: auto; min-width: 140px; height: 36px; min-height: 36px; margin: 0 0 0 auto; box-sizing: border-box;
+  flex: 1 1 140px; width: auto; min-width: 140px; max-width: 280px; height: 36px; min-height: 36px; margin: 0 0 0 auto; box-sizing: border-box;
   background: var(--cc-surface-chip, #383838); color: var(--txt); border: none; border-radius: var(--cc-radius-control); box-shadow: none;
   padding: 0 12px; font-size: var(--cc-text-subline); line-height: normal; font-family: inherit;
 }

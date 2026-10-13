@@ -49,7 +49,9 @@
       "#cc-settings .cc-set-empty svg{flex:none;width:28px;height:28px;opacity:.4}" +
       "#cc-settings .cc-set-empty-t{font-weight:600;color:var(--cc-text)}" +
       "#cc-settings .cc-set-empty-h{margin-top:2px;font-size:var(--cc-text-meta);color:var(--cc-text-dim)}" +
-      "#cc-settings .cc-flag-picker{position:relative;margin-top:6px;max-width:340px}" +
+      // The country picker stands between its label and the toggle and takes the room between them,
+      // from a width that holds a long country name, so a short one does not leave it narrow.
+      "#cc-settings .cc-flag-picker{position:relative;flex:1 1 calc(18ch + 52px);min-width:0;max-width:340px}" +
       "#cc-settings .cc-flag-trigger{display:flex;align-items:center;gap:9px;background:#232323;border-radius:var(--cc-radius-control);padding:7px 12px;cursor:pointer;user-select:none}" +
       "#cc-settings .cc-flag-trigger:hover{background:color-mix(in srgb,#232323 85%,var(--cc-text,#e6e6e6))}" +
       "#cc-settings .cc-flag-name{font-size:var(--cc-text-subline);color:#eaeaea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
@@ -2326,6 +2328,10 @@
     if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(trig);
     trig.setAttribute("aria-haspopup", "listbox");
     var panel = el("div", "cc-dsel-panel"); wrap.appendChild(panel);
+    // Wide enough for the longest entry, the padding and the caret, so no choice is cut short.
+    var longest = 0;
+    for (var n = 0; n < sel.options.length; n++) longest = Math.max(longest, sel.options[n].text.length);
+    wrap.style.setProperty("--cc-dsel-w", "min(calc(" + longest + "ch + 52px), 340px)");
     for (var k = 0; k < sel.options.length; k++) {
       var o = sel.options[k];
       var chip = el("div", "cc-dsel-opt", o.text); chip.setAttribute("data-i", k);
