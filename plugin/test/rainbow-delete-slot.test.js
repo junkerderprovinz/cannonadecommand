@@ -53,8 +53,9 @@ function settings(extra) {
   return { getItem: (k) => (k in s ? s[k] : null) };
 }
 
-// The Docker and VM removes stand in their row's More menu, which keeps a delete off red the
-// same way; row-more-menu.test.js pins it there.
+// The Docker remove is a button of its row and docker-action-grid.test.js pins its slot; the VM
+// removes stand in their row's More menu, which keeps a delete off red the same way, and
+// row-more-menu.test.js pins it there.
 
 console.log('\nThe delete badge on the Plugins page');
 {

@@ -128,9 +128,13 @@ html.cc-docker-on table.cc-enh thead th.tablesorter-headerAsc,
 html.cc-docker-on table.cc-enh thead th.tablesorter-headerDesc { color: var(--cc-accent-ink, #FCC419) !important; }
 html.cc-docker-on table.cc-enh thead th.tablesorter-headerAsc::after,
 html.cc-docker-on table.cc-enh thead th.tablesorter-headerDesc::after { color: color-mix(in srgb, var(--cc-rbaccent, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black) !important; border-bottom-color: color-mix(in srgb, var(--cc-rbaccent, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black) !important; border-top-color: color-mix(in srgb, var(--cc-rbaccent, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black) !important; }
-/* Three buttons in the first row and four in the second, where More closes it, each a real flex
-   row. */
-.cc-actbar { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+/* Three rows of icon badges, three, three and four with More closing the last, each a real flex
+   row. The gap is the one between the badges of the network and limits columns, which follows the
+   density, so the three rows line up with their three badges. */
+.cc-enh { --cc-badge-gap: 5px; }
+.cc-enh.cc-dens-compact { --cc-badge-gap: 3px; }
+.cc-enh.cc-dens-airy { --cc-badge-gap: 8px; }
+.cc-actbar { display: flex; flex-direction: column; gap: var(--cc-badge-gap, 5px); align-items: flex-start; }
 /* At rest a row shows its name and its badges; its buttons come in while the pointer is over it or
    the focus is inside it (GlimStone rule 6), and when a click on the name points at them. A touch
    screen has no hover, so there they stay. Opacity rather than visibility, so Tab still reaches a
@@ -139,9 +143,9 @@ html.cc-docker-on :is(.cc-actbar, .cc-mrow-act) { opacity: 0; transition: opacit
 html.cc-docker-on :is(#docker_list tr, .cc-card):is(:hover, :focus-within) :is(.cc-actbar, .cc-mrow-act),
 html.cc-docker-on .cc-actbar.cc-act-flash { opacity: 1; }
 @media (hover: none) { html.cc-docker-on :is(.cc-actbar, .cc-mrow-act) { opacity: 1; } }
-/* the actions column needs room for its two icon rows: four icon badges and the gaps */
-.cc-enh thead tr:last-child th:nth-child(2) { width: 122px; }
-.cc-enh #docker_list tr:is(.sortable, .folder-element) > td:nth-child(2) { max-width: 122px; }
+/* the actions column needs room for its widest row: four icon badges and the gaps between them */
+.cc-enh thead tr:last-child th:nth-child(2) { width: calc(4 * var(--cc-icon-badge, 26px) + 3 * var(--cc-badge-gap, 5px)); }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) > td:nth-child(2) { max-width: calc(4 * var(--cc-icon-badge, 26px) + 3 * var(--cc-badge-gap, 5px)); }
 .cc-hgear-home { border: none !important; box-shadow: none !important; cursor: pointer; line-height: 1; align-self: center; }
 nav.tabs .tabs-container .cc-hgear-home { background: #2a2a2a !important; color: #b5b5b5 !important; padding: 4px 12px !important; margin-left: 6px; font-size: var(--cc-text-body); }
 nav.tabs .tabs-container .cc-hgear-home:hover { background: #3a3a3a !important; color: #fff !important; }
@@ -149,7 +153,7 @@ nav.tabs .tabs-container .cc-hgear-home:hover { background: #3a3a3a !important; 
 .cc-card-actbar { padding: 6px 12px 0 12px; }
 /* ShipLog's update-all pill says what Unraid's own Update-All button below the table says */
 a.sl-updall { display: none !important; }
-.cc-actrow { display: flex; gap: 4px; }
+.cc-actrow { display: flex; gap: var(--cc-badge-gap, 5px); }
 .cc-actoff { opacity: .35; cursor: default; }
 .cc-actoff:hover { background: #2e2e2e; color: #c9c9c9; }
 /* copyable IP badges react on hover like the plan chip */

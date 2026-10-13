@@ -446,37 +446,28 @@
       syncActionBars(); // the action bar's icons need the same live sync
     } catch (e) {}
   }
-  // The action bar's counterpart to syncStateBadges, for the start, stop and pause icons. The bar
-  // is built once per row in injectActionCell, and its rebuild guard does not look at the state,
-  // so the icons are re-derived here on every load and observer cycle. The source is CC's own
-  // c.state, a fresh docker ps on each /api/state, rather than Unraid's status glyph: nchan
-  // updates only CPU and RAM, and the glyph is refreshed by loadlist() every few seconds, so it
-  // is stale in the moment right after a start or stop. The glyph is the fallback for a row CC
-  // has not indexed.
+  // The action bar's counterpart to syncStateBadges. The bar is built once per row in
+  // injectActionCell, and its rebuild guard does not look at the state, so a row whose state
+  // changed gets a fresh bar here on every load and observer cycle: WebUI, console, pause and the
+  // start or stop slot all follow the state. The source is CC's own c.state, a fresh docker ps on
+  // each /api/state, rather than Unraid's status glyph: nchan updates only CPU and RAM, and the
+  // glyph is refreshed by loadlist() every few seconds, so it is stale in the moment right after a
+  // start or stop. The glyph is the fallback for a row CC has not indexed.
   function syncActionBars() {
     try {
       findRows().forEach(function (tr) {
         var bar = tr.querySelector(".cc-actbar"); if (!bar) return;
-        var r2 = bar.querySelectorAll(".cc-actrow")[1]; if (!r2 || r2.children.length < 3) return;
         var name = rowName(tr);
         if (pendingAction[name]) return; // an action is in flight, so the transient look stays
         var glyph = tr.querySelector("td.ct-name .inner i[id^='load-']");
         var c = containerByName(name);
         var st = (c && c.state) || glyphState(glyph) || "unknown";
         if (bar.dataset.ccState === st) return; // unchanged, so no DOM churn
-        bar.dataset.ccState = st;
-        var running = st === "running", paused = st === "paused";
-        // The pause and resume slot: a live button while running or paused, a placeholder while
-        // stopped. It is replaced rather than relabelled, so a row that starts gains a working
-        // pause.
-        var pauseNew = paused ? actBtn("Play", t("resume"), function () { doAction(name, "unpause"); })
-          : (running ? actBtn("Pause", t("pause"), function () { doAction(name, "pause"); }) : actBtnOff("Pause", t("pause")));
-        // The stop and start slot. Its action is re-derived at click time; this swaps the icon and
-        // label, so a running container shows a stop glyph.
-        var toggleNew = actBtn(running || paused ? "Stop" : "Play", running || paused ? t("stop") : t("start"), function () { var cc2 = containerByName(name); doAction(name, cc2 && (cc2.state === "running" || cc2.state === "paused") ? "stop" : "start"); });
-        r2.replaceChild(pauseNew, r2.children[1]);
-        r2.replaceChild(toggleNew, r2.children[2]);
-        tintAct(bar);
+        var fresh = actionBars(name, c, tr, st).bar;
+        // A keyboard user keeps the slot they were on.
+        var btns = Array.prototype.slice.call(bar.querySelectorAll(".cc-actbtn")), at = btns.indexOf(document.activeElement);
+        bar.parentNode.replaceChild(fresh, bar);
+        if (at >= 0) { var again = fresh.querySelectorAll(".cc-actbtn")[at]; if (again) again.focus(); }
       });
     } catch (e) {}
   }
@@ -1378,7 +1369,8 @@
   // Icons follow the configured accent exactly like the badges:
   // normal mode = cc.accent, rainbow mode = the rainbow palette. cc.actcolors = "0"
   // turns the colours off (grey buttons) via the gear menu. Colours are computed
-  // directly (no CSS-var indirection) with auto black/white glyphs.
+  // directly (no CSS-var indirection) with auto black/white glyphs. A delete is never red, so
+  // Entfernen passes a rainbow red on to the next slot.
   function tintAct(bar) {
     var colorsOn = localStorage.getItem("cc.actcolors") !== "0";
     var rb = themingOn() && localStorage.getItem("cc.rainbow") === "1"; // rainbow is theming; accent/legibility tint stays
@@ -1390,7 +1382,7 @@
       if (!b2.classList.contains("cc-actoff")) {
         tx = "var(--cc-text, #e6e6e6)";
         if (colorsOn) {
-          bg = !rb ? (effc("accent") || "#FCC419") : pal[(i2 + off) % pal.length];
+          bg = !rb ? (effc("accent") || "#FCC419") : (b2.classList.contains("cc-act-del") && window.CCTheme ? window.CCTheme.deleteSlot(pal, i2 + off) : pal[(i2 + off) % pal.length]);
           tx = idealText(bg);
         }
       }
@@ -1407,41 +1399,53 @@
       }
     });
   }
-  // Both views share the action block: the first row holds the web UI, the log and the edit
-  // action, the second the restart, pause and stop, and More, whose menu holds the console, the
-  // remove and the links the template carries.
-  function actionBars(name, c, tr) {
+  // Both views share the action block, three rows that line up with the three badges of the
+  // network and limits columns: WebUI, log and edit; restart, pause and stop; then console,
+  // update, remove and More, whose menu holds the Tailscale WebUI and the links the template
+  // carries. An action that does not apply keeps its slot as a disabled button, so every row
+  // shows the same grid: no WebUI or template, a stopped container's WebUI, console and pause.
+  function actionBars(name, c, tr, state) {
     var cx = ctxFor(name, tr);
     var bar = el("div", "cc-actbar");
-    var running = c && c.state === "running", paused = c && c.state === "paused";
+    var st = state || (c && c.state) || (tr && glyphState(tr.querySelector("td.ct-name .inner i[id^='load-']"))) || "unknown";
+    bar.dataset.ccState = st;
+    var running = st === "running", paused = st === "paused", de = LANG === "de";
+    var term = typeof window.openTerminal === "function";
     var r1 = el("div", "cc-actrow");
-    r1.appendChild(cx.webui ? actBtn("ExternalLink", "WebUI", function () { window.open(cx.webui, "_blank"); }) : actBtnOff("ExternalLink", LANG === "de" ? "kein WebUI" : "no WebUI"));
-    r1.appendChild(typeof window.openTerminal === "function" ? actBtn("Log", "Log", function () { window.openTerminal("docker", name, ".log"); }) : actBtnOff("Log", "Log"));
-    r1.appendChild(cx.xml ? actBtn("Pencil", LANG === "de" ? "Bearbeiten" : "Edit", function () {
+    r1.appendChild(cx.webui && running ? actBtn("ExternalLink", "WebUI", function () { window.open(cx.webui, "_blank"); }) : actBtnOff("ExternalLink", cx.webui ? (de ? "WebUI erst, wenn der Container läuft" : "WebUI once the container is running") : (de ? "kein WebUI" : "no WebUI")));
+    r1.appendChild(term ? actBtn("Log", "Log", function () { window.openTerminal("docker", name, ".log"); }) : actBtnOff("Log", "Log"));
+    r1.appendChild(cx.xml ? actBtn("Pencil", de ? "Bearbeiten" : "Edit", function () {
       // what Unraid's own editContainer() does; the template path stays unencoded
       var p2 = location.pathname, x2 = p2.indexOf("?"); if (x2 !== -1) p2 = p2.substring(0, x2);
       location.href = p2 + "/UpdateContainer?xmlTemplate=edit:" + cx.xml;
-    }) : actBtnOff("Pencil", LANG === "de" ? "kein Template" : "no template"));
+    }) : actBtnOff("Pencil", de ? "kein Template" : "no template"));
     var r2 = el("div", "cc-actrow");
     r2.appendChild(actBtn("Refresh", t("restart"), function () { doAction(name, "restart"); }));
     r2.appendChild(paused ? actBtn("Play", t("resume"), function () { doAction(name, "unpause"); })
       : (running ? actBtn("Pause", t("pause"), function () { doAction(name, "pause"); }) : actBtnOff("Pause", t("pause"))));
+    // The stop and start slot. Its action is re-derived at click time, so a stale bar never runs
+    // the opposite of what the container needs.
     r2.appendChild(actBtn(running || paused ? "Stop" : "Play", running || paused ? t("stop") : t("start"), function () { var cc2 = containerByName(name); doAction(name, cc2 && (cc2.state === "running" || cc2.state === "paused") ? "stop" : "start"); }));
+    var r3 = el("div", "cc-actrow");
+    var konsole = de ? "Konsole" : "Console";
+    r3.appendChild(term && running ? actBtn("Code", konsole, function () { if (cx.shell) window.openTerminal("docker", name, cx.shell); else window.openTerminal("docker", name); }) : actBtnOff("Code", term ? (de ? "Konsole erst, wenn der Container läuft" : "Console once the container is running") : konsole));
+    // Update and remove go through Unraid's own functions, which ask before they act.
+    r3.appendChild(typeof window.updateContainer === "function" ? actBtn("Download", t("updateCt"), function () { window.updateContainer(name); }) : actBtnOff("Download", t("updateCt")));
+    var rmLabel = de ? "Entfernen" : "Remove";
+    var rm = typeof window.rmContainer === "function" && cx.id ? actBtn("Trash", rmLabel, function () { window.rmContainer(name, cx.image, cx.id); }) : actBtnOff("Trash", rmLabel);
+    rm.classList.add("cc-act-del"); r3.appendChild(rm);
     var extras = [];
-    if (typeof window.openTerminal === "function") extras.push({ glyph: "Code", label: LANG === "de" ? "Konsole" : "Console", run: function () { if (cx.shell) window.openTerminal("docker", name, cx.shell); else window.openTerminal("docker", name); } });
-    // Remove goes through Unraid's own confirm dialog.
-    if (typeof window.rmContainer === "function" && cx.id) extras.push({ glyph: "Trash", label: LANG === "de" ? "Entfernen" : "Remove", del: true, run: function () { window.rmContainer(name, cx.image, cx.id); } });
     if (cx.tswebui) extras.push({ glyph: "ExternalLink", label: "Tailscale WebUI", run: function () { window.open(cx.tswebui, "_blank"); } });
     cx.links.forEach(function (l2) { extras.push({ glyph: l2.glyph, label: l2.tip, run: function () { window.open(l2.url, "_blank"); } }); });
     if (extras.length && window.CCTheme && window.CCTheme.menu) {
-      var moreBtn = actBtn("More", LANG === "de" ? "Mehr" : "More", function () { window.CCTheme.menu(moreBtn, extras); });
-      r2.appendChild(moreBtn);
+      var moreBtn = actBtn("More", de ? "Mehr" : "More", function () { window.CCTheme.menu(moreBtn, extras); });
+      r3.appendChild(moreBtn);
     } else {
-      r2.appendChild(actBtnOff("More", LANG === "de" ? "keine weiteren Aktionen" : "no more actions"));
+      r3.appendChild(actBtnOff("More", de ? "keine weiteren Aktionen" : "no more actions"));
     }
-    bar.appendChild(r1); bar.appendChild(r2);
+    bar.appendChild(r1); bar.appendChild(r2); bar.appendChild(r3);
     tintAct(bar);
-    return { bar: bar, sig: cx.webui + "|" + cx.xml + "|" + cx.tswebui + "|" + cx.links.length };
+    return { bar: bar, sig: cx.webui + "|" + cx.xml + "|" + cx.tswebui + "|" + cx.links.length + "|" + cx.id };
   }
   function injectActionCell(tr, name, c) {
     try {
