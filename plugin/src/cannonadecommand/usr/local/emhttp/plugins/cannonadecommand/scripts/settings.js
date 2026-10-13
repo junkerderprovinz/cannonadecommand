@@ -49,12 +49,10 @@
       "#cc-settings .cc-set-empty svg{flex:none;width:28px;height:28px;opacity:.4}" +
       "#cc-settings .cc-set-empty-t{font-weight:600;color:var(--cc-text)}" +
       "#cc-settings .cc-set-empty-h{margin-top:2px;font-size:var(--cc-text-meta);color:var(--cc-text-dim)}" +
-      // The country picker takes a line of its own under the flag mode switch: beside its name and the
-      // switch a 340px card leaves it too little room for a name like "Bosnien und Herzegowina".
-      "#cc-settings .cc-flag-row{flex-wrap:wrap}" +
-      "#cc-settings .cc-flag-row .cc-flag-picker{position:relative;order:3;flex:1 1 100%;min-width:0}" +
-      "#cc-settings .cc-flag-trigger{display:flex;align-items:center;gap:9px;background:#232323;border-radius:var(--cc-radius-control);padding:7px 12px;cursor:pointer;user-select:none}" +
-      "#cc-settings .cc-flag-trigger:hover{background:color-mix(in srgb,#232323 85%,var(--cc-text,#e6e6e6))}" +
+      // The country picker stands at the end of its row, wide enough for "Bosnien und Herzegowina".
+      "#cc-settings .cc-flag-row .cc-flag-picker{position:relative;margin-left:auto;flex:0 1 300px;min-width:0}" +
+      "#cc-settings .cc-flag-trigger{display:flex;align-items:center;gap:9px;background:var(--cc-surface-chip,#383838);border-radius:var(--cc-radius-control);padding:7px 12px;cursor:pointer;user-select:none}" +
+      "#cc-settings .cc-flag-trigger:hover{background:color-mix(in srgb,var(--cc-surface-chip,#383838) 85%,var(--cc-text,#e6e6e6))}" +
       "#cc-settings .cc-flag-name{font-size:var(--cc-text-subline);color:#eaeaea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
       // The trigger reads as a button, with no caret, and openPanel pins the panel fixed.
       "#cc-settings .cc-flag-panel{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:9999;background:#1c1c1c;border-radius:var(--cc-radius-card);box-shadow:0 12px 34px rgba(0,0,0,.6);overflow:hidden}" +
@@ -90,7 +88,62 @@
       "html .cc-win-notes :is(.cc-notes, .cc-notes a):focus-visible{outline:none!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--cc-accent,#FCC419) 45%,transparent)!important}" +
       "html .cc-win a.cc-win-btn,html .cc-win a.cc-win-btn:visited{color:var(--cc-text);text-decoration:none}" +
       "html .cc-win a.cc-win-btn:hover{color:var(--cc-rb-ct,var(--cc-rbaccent-text,var(--cc-accent-text,#161616)))}" +
-      ".cc-win-act .cc-win-link{margin-inline-end:auto}";
+      ".cc-win-act .cc-win-link{margin-inline-end:auto}" +
+      // A row or card that has nothing to act on stays out of the page and out of the search.
+      "#cc-settings [hidden],#cc-settings .cc-set-off{display:none!important}" +
+      "#cc-settings .cc-set-prose{text-align:start}" +
+      // The colour mode spans the card in a groove, and only the chosen mode is a badge.
+      "#cc-settings .cc-set-mode{display:flex;width:100%;box-sizing:border-box;margin-top:4px;background:var(--cc-surface-base,#161616)}" +
+      "#cc-settings .cc-set-mode .cc-seg-btn{flex:1 1 0;text-align:center;padding:7px 12px;font-size:var(--cc-text-subline)}" +
+      "#cc-settings .cc-set-mode .cc-seg-btn:not(.cc-seg-on){background:transparent;color:var(--cc-text-chip,#cfcfcf)}" +
+      "#cc-settings .cc-set-mode .cc-seg-btn:not(.cc-seg-on):hover{background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6)}" +
+      // An area's colour line and a row that names who decides its value.
+      "#cc-settings .cc-set-colend{display:inline-flex;align-items:center;gap:12px;flex:none}" +
+      "#cc-settings .cc-set-colend .cc-set-xbtn{margin:0}" +
+      "#cc-settings :is(.cc-set-colstate,.cc-set-lockby){display:inline-flex;align-items:center;gap:7px;color:var(--cc-text-dim,#8a8a8a);font-size:var(--cc-text-subline)}" +
+      "#cc-settings .cc-set-colstate .cc-set-excdot{width:10px;height:10px}" +
+      // The README buttons on the Info tab (GlimStone, "The App tab"). The cards stay dark on every
+      // theme, so the marks rest in their dark-theme colours.
+      "#cc-settings .cc-rbtn-rows{display:flex;flex-wrap:wrap;gap:13px;margin-top:12px}" +
+      "#cc-settings .cc-rbtn-rows.cc-set-give{margin-top:calc(var(--cc-text-body) * 1.5)}" +
+      "#cc-settings .cc-rbtn-unit{position:relative;display:inline-flex;border-radius:var(--cc-radius-pill);overflow:hidden;isolation:isolate;--cc-brand-coffee:#ffdd00;--cc-brand-paypal:#4fb5f0;--cc-brand-bitcoin:#f7931a;--cc-brand-github:#ffffff}" +
+      "#cc-settings .cc-rbtn{position:relative;display:block;flex:none;box-sizing:border-box;width:160px;height:46.6px;padding:0;background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);text-decoration:none;cursor:pointer}" +
+      "#cc-settings .cc-rbtn:hover{text-decoration:none}" +
+      // The unit clips at its edge, so the focus halo goes inside the button.
+      "#cc-settings .cc-rbtn:focus-visible{outline:none!important;filter:none!important;box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--cc-accent,#FCC419) 45%,transparent)!important}" +
+      "#cc-settings .cc-rbtn-mark{position:absolute;top:50%;left:14px;width:32px;height:25px;translate:0 -50%;display:flex}" +
+      "#cc-settings :is(.cc-rbtn-mark,.cc-rbtn-art) svg{display:block;width:100%;height:100%}" +
+      "#cc-settings .cc-rbtn-mark svg.cc-mark-hover{display:none}" +
+      "#cc-settings .cc-rbtn-art{position:absolute;inset:0}" +
+      "#cc-settings .cc-rbtn-text{position:absolute;top:0;bottom:0;left:53px;right:10px;display:flex;flex-direction:column;justify-content:center;line-height:1.15}" +
+      "#cc-settings :is(.cc-rbtn-name,.cc-rbtn-sub){max-width:100%;overflow:hidden;white-space:nowrap}" +
+      "#cc-settings .cc-rbtn-name{font-size:var(--cc-text-body);font-weight:700;transition:translate var(--cc-motion-control-dur,0s)}" +
+      "#cc-settings .cc-rbtn-name:not(:only-child){translate:0 7px}" +
+      "#cc-settings .cc-rbtn-sub{font-size:var(--cc-text-meta);opacity:0;translate:0 4px;transition:opacity var(--cc-motion-control-dur,0s),translate var(--cc-motion-control-dur,0s)}" +
+      "#cc-settings .cc-rbtn-unit:is(:hover,:focus-within) .cc-rbtn-name{translate:0 0}" +
+      "#cc-settings .cc-rbtn-unit:is(:hover,:focus-within) .cc-rbtn-sub{opacity:.9;translate:0 0}" +
+      "#cc-settings .cc-paypal-mark{color:var(--cc-brand-paypal)}" +
+      "#cc-settings .cc-bitcoin-mark{color:var(--cc-brand-bitcoin)}" +
+      "#cc-settings .cc-github-mark{color:var(--cc-brand-github)}" +
+      "#cc-settings .cc-house-mark{color:var(--cc-rb-c,var(--cc-rbaccent,var(--cc-accent,#FCC419)))}" +
+      "#cc-settings .cc-tile-github{--cc-tile:#181717;--cc-tile-ink:#fff}" +
+      "#cc-settings .cc-tile-paypal{--cc-tile:#003087;--cc-tile-ink:#fff}" +
+      "#cc-settings .cc-tile-bitcoin{--cc-tile:#f7931a;--cc-tile-ink:#161616}" +
+      "#cc-settings .cc-tile-coffee{--cc-tile:#ffdd00;--cc-tile-ink:#0d0c22}" +
+      // The button that reaches CannonadeCommand's author follows the colour engine.
+      "#cc-settings .cc-tile-house{--cc-tile:var(--cc-rb-c,var(--cc-rbaccent,var(--cc-accent,#FCC419)));--cc-tile-ink:var(--cc-rb-ct,var(--cc-rbaccent-text,var(--cc-accent-text,#161616)))}" +
+      "#cc-settings .cc-rbtn-unit .cc-rbtn:focus-visible .cc-house-mark .cc-mark-rest{display:none}" +
+      "#cc-settings .cc-rbtn-unit .cc-rbtn:focus-visible .cc-house-mark .cc-mark-hover{display:block}" +
+      "@media (hover:hover){" +
+        "#cc-settings .cc-rbtn-unit:hover .cc-rbtn{background:var(--cc-tile);color:var(--cc-tile-ink);--cc-mark-ink:var(--cc-tile-ink)}" +
+        "#cc-settings .cc-rbtn-unit:hover .cc-rbtn-mark{color:var(--cc-tile-ink)}" +
+        "#cc-settings .cc-rbtn-unit:hover .cc-mark-rest{display:none}" +
+        "#cc-settings .cc-rbtn-unit:hover .cc-rbtn-mark svg.cc-mark-hover{display:block}" +
+      "}" +
+      "#cc-settings .cc-rbtn-sheen{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}" +
+      "#cc-settings .cc-rbtn-sheen::after{content:'';position:absolute;top:-12px;bottom:-12px;left:-64px;width:33px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28) 45%,rgba(255,255,255,.28) 55%,transparent);transform:skewX(-16deg)}" +
+      "@keyframes cc-rbtn-sheen{to{left:calc(100% + 32px)}}" +
+      "@media (hover:hover) and (prefers-reduced-motion:no-preference){html:not([data-cc-motion=\"off\"]) #cc-settings .cc-rbtn-unit:hover .cc-rbtn-sheen::after{animation:cc-rbtn-sheen .7s linear}}";
     document.head.appendChild(st);
   })();
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
@@ -141,15 +194,11 @@
     svg.innerHTML = g[1];
     return svg;
   }
-  // The tab strip's gap in px, which docker.css .cc-set-tabs repeats.
-  var TAB_GAP = 6;
-  // How many tabs of width w share one row: all of them while they fit, otherwise an even share,
-  // so seven that fit four to a row go four and three rather than leaving one alone.
-  function tabsPerRow(n, w, gap, room) {
-    var fit = Math.max(1, Math.floor((room + gap) / (w + gap)));
-    if (fit >= n) return n;
-    return Math.ceil(n / Math.ceil(n / fit));
-  }
+  // The start tab, the header and the shares stay off until switched on, as their scripts read
+  // them, so an unset key hides their tab here too.
+  var OFF_BY_DEFAULT = { "cc.enable.main": true, "cc.enable.header": true, "cc.enable.shares": true };
+  // render() points this at its own tabs; a row that names who decides its value jumps there.
+  var jumpTo = function () {};
   // GlimStone's accent presets, the same eight in the same order in every app of the family, so
   // Blue here is the Blue of the next app. Only the offer changes: a saved cc.accent is never
   // rewritten, whichever preset it came from.
@@ -390,24 +439,79 @@
 
   // A badge-styled on/off toggle, built from a span rather than a button: Unraid's global button
   // CSS paints a border on it and limits the knob's travel.
-  function toggle(on, onChange, disabled) {
-    var t = el("span", "cc-set-toggle" + (on ? " cc-set-toggle-on" : "") + (disabled ? " cc-set-toggle-disabled" : ""));
-    t.setAttribute("role", "switch"); t.setAttribute("tabindex", disabled ? "-1" : "0"); t.setAttribute("aria-checked", on ? "true" : "false");
-    if (disabled) t.setAttribute("aria-disabled", "true");
+  function toggle(on, onChange) {
+    var t = el("span", "cc-set-toggle" + (on ? " cc-set-toggle-on" : ""));
+    t.setAttribute("role", "switch"); t.setAttribute("tabindex", "0"); t.setAttribute("aria-checked", on ? "true" : "false");
     t.appendChild(el("span", "cc-set-knob"));
     function paint() { t.classList.toggle("cc-set-toggle-on", on); t.setAttribute("aria-checked", on ? "true" : "false"); }
-    function flip() { if (t.classList.contains("cc-set-toggle-disabled")) return; on = !on; paint(); onChange(on); }
+    function flip() { on = !on; paint(); onChange(on); }
     t._setOn = function (v) { if (v === on) return; on = v; paint(); }; // a programmatic sync, which fires no onChange
-    t._setDisabled = function (d) { t.classList.toggle("cc-set-toggle-disabled", !!d); t.setAttribute("tabindex", d ? "-1" : "0"); if (d) t.setAttribute("aria-disabled", "true"); else t.removeAttribute("aria-disabled"); };
     t.addEventListener("click", flip);
     t.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
     return t;
+  }
+  // The flag palette has its own key, never the rainbow one, so the rainbow editor keeps its
+  // colours and the engine paints flag colours only while flag mode is on.
+  function applyFlag(f) {
+    var n = ((window.CCTheme && window.CCTheme.RB) || PRESETS).length, pal = [];
+    for (var k = 0; k < n; k++) pal.push(f.colors[k % f.colors.length]);
+    set("cc.flag", f.code); set("cc.flagpal", JSON.stringify(pal));
+  }
+  // The colour mode lives in the two keys every area script reads, cc.rainbow for a palette and
+  // cc.flagmode for a flag as that palette, so the mode needs no key of its own.
+  function colorMode() {
+    if (get("cc.rainbow", "0") !== "1") return "accent";
+    return get("cc.flagmode", "0") === "1" ? "flag" : "rainbow";
+  }
+  function setColorMode(m) {
+    set("cc.rainbow", m === "accent" ? "0" : "1");
+    set("cc.flagmode", m === "flag" ? "1" : "0");
+    var flags = window.CC_FLAGS || [];
+    if (m !== "flag" || !flags.length) return;
+    var code = get("cc.flag", "de"), pick = flags.filter(function (f) { return f.code === code; })[0] || flags.filter(function (f) { return f.code === "de"; })[0] || flags[0];
+    applyFlag(pick);
+  }
+  // GlimStone's horizontal selector in its well styling, across the card's width. The arrows
+  // move the choice and the focus with it, as in a radio group.
+  function modeSelector(opts, cur, onPick) {
+    var box = el("div", "cc-seg cc-set-mode"); box.setAttribute("role", "radiogroup");
+    var btns = opts.map(function (o) {
+      var on = o[0] === cur, b = el("span", "cc-seg-btn" + (on ? " cc-seg-on" : ""), o[1]);
+      b.setAttribute("role", "radio"); b.setAttribute("aria-checked", on ? "true" : "false"); b.setAttribute("tabindex", on ? "0" : "-1");
+      b.addEventListener("click", function () { if (!on) onPick(o[0]); });
+      box.appendChild(b);
+      return b;
+    });
+    box.addEventListener("keydown", function (e) {
+      var at = btns.indexOf(document.activeElement), to = null;
+      if (at < 0) return;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") to = at + 1;
+      else if (e.key === "ArrowLeft" || e.key === "ArrowUp") to = at - 1;
+      else if (e.key === "Home") to = 0;
+      else if (e.key === "End") to = btns.length - 1;
+      if (to === null) return;
+      e.preventDefault();
+      to = Math.max(0, Math.min(btns.length - 1, to));
+      if (to !== at) onPick(opts[to][0]);
+    });
+    return box;
   }
   function toggleRow(labelText, on, onChange) {
     var row = el("div", "cc-set-row"); row.appendChild(el("span", null, labelText)); var sp = el("span", "cc-set-spacer"); row.appendChild(sp);
     row.appendChild(toggle(on, onChange)); return row;
   }
 
+  // A switch whose value has no effect is left out, and this line stands in its place: it names
+  // what decides instead and jumps there.
+  function lockRow(label, by, jumpLabel, onJump) {
+    var row = el("div", "cc-set-row cc-set-inline cc-set-locked");
+    row.appendChild(el("span", null, label));
+    var end = el("span", "cc-set-colend");
+    end.appendChild(el("span", "cc-set-lockby", by));
+    end.appendChild(actionBtn(jumpLabel, "cc-btn cc-set-xbtn", onJump));
+    row.appendChild(end);
+    return row;
+  }
   // Every colour row draws the same swatch, so the picked one is marked the same way everywhere.
   // The box never changes size, since a scaled swatch reads as a different size from its
   // neighbours; the mark is a tick on the fill, and that tick needs an ink contrasting with this
@@ -553,9 +657,9 @@
   // to a single flat hue, since the tint is one shared SVG filter for the whole page, so rainbow
   // mode would paint every logo the same colour. With this one on, the background follows rainbow
   // or the accent as any other badge does, per item, and the icon's ink becomes an automatic black
-  // or white contrast against whatever background that resolves to; both colour pickers are dimmed
-  // and inert, since neither is consulted. With it off the two are independent. The colour
-  // resolution itself lives on the read side in each area script; this control flips one key.
+  // or white contrast against whatever background that resolves to. Neither switch nor picker is
+  // consulted then, so they give way to a line that says what decides. With it off the two are
+  // independent. The colour resolution itself lives on the read side in each area script.
   function logoToggles(into, io) {
     function bgColorEff() {
       var c = io.getBgColor(); if (/^#[0-9a-f]{6}$/i.test(c)) return c;
@@ -600,27 +704,29 @@
     var tintPickRow = el("div", "cc-set-pickrow"); tintPickRow.appendChild(tintPk); tintPickRow.appendChild(tintHx);
 
     var strRow = el("div", "cc-set-row"); strRow.appendChild(el("span", "cc-set-rl", T("Intensität", "Strength")));
-    var strInput = el("input"); strInput.type = "range"; strInput.min = "10"; strInput.max = "100"; strInput.style.flex = "1"; strRow.appendChild(strInput);
+    var strInput = el("input"); strInput.type = "range"; strInput.min = "10"; strInput.max = "100"; strRow.appendChild(strInput);
+    // On an area tab the global card decides; on the global card itself it is the badge colour.
+    var lock = hideAdopt
+      ? lockRow(T("Hintergrund und Icons", "Background and icons"), T("Folgt", "Follows"), T("Allgemein › Logos & Icons", "General › Logos & icons"), function () { jumpTo("general", T("Logos & Icons", "Logos & icons")); })
+      : lockRow(T("Hintergrund und Icons", "Background and icons"), T("Folgt", "Follows"), T("Badges", "Badges"), function () { jumpTo("general", T("Badges", "Badges")); });
 
     function sync() {
       if (adoptTg) adoptTg._setOn(io.getAdopt());
       var adopting = io.getAdopt();
-      // Neither picker is consulted while the master toggle adopts, so both are dimmed and inert.
       bgTg._setOn(io.getBg());
       bgHx.value = io.getBgColor() || ""; try { bgPk._set(bgColorEff()); } catch (e9) {}
-      bgPickRow.style.opacity = adopting ? ".4" : ""; bgPickRow.style.pointerEvents = adopting ? "none" : "";
-      // The switches grey out and refuse clicks too, through toggle()'s own disabled state.
-      bgTg._setDisabled(adopting);
-      tintTg._setDisabled(adopting);
       tintTg._setOn(io.getTint());
       tintHx.value = io.getColor() || ""; try { if (/^#[0-9a-f]{6}$/i.test(io.getColor())) tintPk._set(io.getColor()); } catch (e9) {}
-      tintPickRow.style.opacity = adopting ? ".4" : ""; tintPickRow.style.pointerEvents = adopting ? "none" : "";
-      // The strength only means anything for the luminance tint, so it dims when the tint is off.
-      // While adopting, the ink is a flat black or white contrast with no strength to tune.
-      var dim = !io.getTint() || adopting;
-      strRow.style.opacity = dim ? ".4" : ""; strRow.style.pointerEvents = dim ? "none" : "";
+      lock.hidden = !adopting;
+      bgRow.hidden = tintRow.hidden = adopting;
+      // A picker or the strength under a switch that is off has nothing to act on, and the
+      // strength only tunes the luminance tint.
+      bgPickRow.hidden = adopting || !io.getBg();
+      tintPickRow.hidden = adopting || !io.getTint();
+      strRow.hidden = adopting || !io.getTint();
     }
     if (adoptRow) into.appendChild(adoptRow);
+    into.appendChild(lock);
     into.appendChild(bgRow); into.appendChild(bgPickRow);
     into.appendChild(tintRow); into.appendChild(tintPickRow);
     into.appendChild(strRow);
@@ -787,7 +893,7 @@
     // Each area's adopt key, "1" or unset while it follows the global badge colour and "0" once it
     // has a colour of its own, with that area's key prefix and the switches showing it.
     var ADOPT_PREF = { "cc.styleheader": "cch.", "cc.styleshares": "ccsh.", "cc.styledocker": "ccd.", "cc.styleplugin": "ccp.", "cc.stylevms": "ccv.", "cc.stylesettings": "ccs.", "cc.styletools": "cct.", "cc.stylefavorites": "ccf.", "cc.stylemain": "ccm." };
-    var adoptToggles = {};
+    var areaSync = {};      // each adopt key's colour lines and area cards, told when the key flips
     var styleCardSync = {}; // each adopt key's refresher, repainting an area card with the effective colour
     function syncAllStyleCards() { for (var k9 in styleCardSync) { try { styleCardSync[k9](); } catch (e9) {} } }
     // The master theming switch. Off keeps the Docker orchestration functions and disables every
@@ -905,7 +1011,10 @@
         arl.appendChild(infoIcon(T("An: die Kopfzeilen-Hintergrund- und Textfarbe folgen automatisch Unraids Farbschema, also dunkler Hintergrund mit heller Schrift beim dunklen Thema und umgekehrt. Wirkt, wenn CannonadeCommands Kopfbereich aus ist.", "On: the header background and text colour follow Unraid's colour scheme automatically, dark background with light text on a dark theme and the reverse on a light one. Applies while CannonadeCommand's header area is off.")));
         ar.appendChild(arl);
         ar.appendChild(toggle(get("cc.hdrauto", "1") === "1", function (v) { set("cc.hdrauto", v ? "1" : "0"); if (v) applyHdrAuto(); }));
-        cCard.appendChild(ar);
+        // CannonadeCommand's own header area paints over the native colours, so while it is on the
+        // switch has nothing to show and the line says so.
+        if (areaOn("cc.enable.header")) cCard.appendChild(lockRow(T("Kopf-Farben ans Thema koppeln", "Match header colours to the theme"), T("Übermalt vom Kopfbereich", "Painted over by the header area"), T("Bereiche", "Areas"), function () { jumpTo("general", T("Bereiche", "Areas")); }));
+        else cCard.appendChild(ar);
         // Apply the coupling once for a fresh default-on state. It only bites while the CC header
         // area is off, and the flag is set before the call, so the reload postDisplay triggers
         // cannot loop.
@@ -932,29 +1041,29 @@
         var row = el("div", "cc-set-row cc-set-inline");
         var cur = localStorage.getItem(a[0]);
         if (a[0] === "cc.enable.favorites") {
-          // The favourites tab area can only be switched on while Unraid's own favourites setting is on,
-          // since otherwise there is no tab to enhance. cc.hidefavtab mirrors the native "favorites=no"
-          // state (synced by the fetch above and on the Display Settings page); with it set, the area is
-          // forced off and its switch disabled with a hint. window.ccFavGateSync re-evaluates it once the async native-state fetch resolves.
+          // The favourites area needs Unraid's own favourites, or there is no tab to enhance.
+          // cc.hidefavtab mirrors the native "favorites=no"; while it is set the area is off and its
+          // switch gives way to a line that leads to Unraid's display settings. ccFavGateSync checks
+          // again once the fetch above knows the native state.
           var lw = el("span", "cc-set-lblwrap"); lw.appendChild(el("span", null, a[1])); row.appendChild(lw);
-          var favOff = localStorage.getItem("cc.hidefavtab") === "1";
-          if (favOff && localStorage.getItem("cc.enable.favorites") !== "0") localStorage.setItem("cc.enable.favorites", "0");
-          var favOn = !favOff && (cur == null ? true : cur !== "0");
-          var favTgl = toggle(favOn, function (v) { localStorage.setItem("cc.enable.favorites", v ? "1" : "0"); refreshTabs(); }, favOff);
-          row.appendChild(favTgl);
-          // the precondition rides a bubble on the label rather than sitting inline
           lw.appendChild(infoIcon(T("Nur verfügbar, wenn Favoriten in den Unraid-Anzeige-Einstellungen aktiviert sind.", "Only available when favourites are enabled in Unraid's display settings.")));
-          try {
-            window.ccFavGateSync = function () {
-              var off = localStorage.getItem("cc.hidefavtab") === "1";
-              favTgl._setDisabled(off);
-              if (off) { favTgl._setOn(false); if (localStorage.getItem("cc.enable.favorites") !== "0") { localStorage.setItem("cc.enable.favorites", "0"); refreshTabs(); } }
-            };
-          } catch (eF) {}
-          c.appendChild(row); return;
+          var favTgl = toggle(cur == null ? true : cur !== "0", function (v) { localStorage.setItem("cc.enable.favorites", v ? "1" : "0"); refreshTabs(); });
+          row.appendChild(favTgl);
+          var favLock = lockRow(a[1], T("Aus in Unraid", "Off in Unraid"), T("Anzeige-Einstellungen", "Display settings"), function () { location.href = "/Settings/DisplaySettings"; });
+          var favGate = function (live) {
+            var off = localStorage.getItem("cc.hidefavtab") === "1";
+            row.hidden = off; favLock.hidden = !off;
+            if (!off || localStorage.getItem("cc.enable.favorites") === "0") return;
+            localStorage.setItem("cc.enable.favorites", "0"); favTgl._setOn(false);
+            if (live) refreshTabs();
+          };
+          favGate(false);
+          window.ccFavGateSync = function () { favGate(true); };
+          c.appendChild(row); c.appendChild(favLock); return;
         }
         row.appendChild(el("span", null, a[1]));
-        row.appendChild(toggle(cur == null ? a[2] !== "0" : cur !== "0", function (v) { localStorage.setItem(a[0], v ? "1" : "0"); refreshTabs(); }));
+        // The header area decides whether the Theming card's header colour switch shows.
+        row.appendChild(toggle(cur == null ? a[2] !== "0" : cur !== "0", function (v) { localStorage.setItem(a[0], v ? "1" : "0"); if (a[0] === "cc.enable.header") render(); else refreshTabs(); }));
         c.appendChild(row);
       });
       wrapMain.appendChild(c);
@@ -1013,52 +1122,32 @@
       .forEach(function (d9) { SECS.push(d9.s); });
     SECS.push({ id: "info", t: T("Info", "Info"), w: wrapInfo, key: null });   // GlimStone's Info tile comes last
     var tabBtns = [];
-    // The start tab, the header and the shares stay off until switched on, as their scripts read
-    // them, so an unset key hides their tab here too.
-    var OFF_BY_DEFAULT = { "cc.enable.main": true, "cc.enable.header": true, "cc.enable.shares": true };
     function areaOn(key) { if (!key) return true; var v = localStorage.getItem(key); return v == null ? !OFF_BY_DEFAULT[key] : v !== "0"; }
     function showSec(i) {
       if (!SECS[i] || !areaOn(SECS[i].key)) i = 0; // never land on a hidden section
       localStorage.setItem("cc.settab", SECS[i].id); // the id, not the index, or a menu reorder restores the wrong tab
-      SECS.forEach(function (sc, j) { sc.w.style.display = j === i ? "" : "none"; tabBtns[j].classList.toggle("cc-set-tab-on", j === i); });
+      SECS.forEach(function (sc, j) {
+        var on = j === i;
+        sc.w.style.display = on ? "" : "none";
+        tabBtns[j].classList.toggle("cc-set-tab-on", on);
+        tabBtns[j].setAttribute("aria-selected", on ? "true" : "false");
+        tabBtns[j].setAttribute("tabindex", on ? "0" : "-1");
+      });
       paintSetTabs();
-      ccSetAlignSearch();
     }
-    // The hero row spans the full settings width, but the card grid has fixed columns packed from
-    // the left, so on a wide window the search badge would sit well past the last column. It lines
-    // up with the grid's own column tracks, which auto-fill keeps whether a tab fills them or not,
-    // so the badge stays put from tab to tab. The correction goes on the badge's own margin, not
-    // the hero's padding: the hero is content-box and shrinkable, so padding there is absorbed into
-    // the content width without moving its border-box edge, and a correction measured against that
-    // reference compounds rather than converging. Clearing the earlier correction first and
-    // measuring the natural position avoids that.
-    function ccSetAlignSearch() {
-      try {
-        var badge = document.querySelector(".cc-set-searchbadge");
-        if (!badge) return;
-        var activeWrap = null;
-        for (var ai = 0; ai < SECS.length; ai++) { if (SECS[ai].w.style.display !== "none") { activeWrap = SECS[ai].w; break; } }
-        if (!activeWrap) return;
-        var gs = getComputedStyle(activeWrap), tracks = gs.gridTemplateColumns.split(/\s+/).map(parseFloat).filter(function (n) { return n > 0; });
-        if (!tracks.length) return;
-        var contentRight = activeWrap.getBoundingClientRect().left + (parseFloat(gs.paddingLeft) || 0) + (parseFloat(gs.borderLeftWidth) || 0) +
-          tracks.reduce(function (a, b) { return a + b; }, 0) + (parseFloat(gs.columnGap) || 0) * (tracks.length - 1);
-        badge.style.removeProperty("margin-right");
-        var natural = badge.getBoundingClientRect().right;
-        var delta = Math.round(natural - contentRight);
-        if (delta > 0.5 && delta < 900) badge.style.setProperty("margin-right", delta + "px", "important");
-      } catch (e) {}
-    }
-    // render() rebuilds the hero and the cards from scratch on every settings change, so a resize
-    // listener bound to this call's function goes stale as soon as it runs again: the old closure
-    // holds wrap elements that are no longer in the document, finds no cards and returns early.
-    // A window-level pointer that every render() reassigns keeps the listener on the current one.
-    window.__ccSetAlignSearch = ccSetAlignSearch;
-    if (!window.__ccSetAlignResize) {
-      window.__ccSetAlignResize = true;
-      var alignTimer = null;
-      window.addEventListener("resize", function () { clearTimeout(alignTimer); alignTimer = setTimeout(function () { window.__ccSetSizeTabs(); window.__ccSetAlignSearch(); }, 120); });
-    }
+    // Opens a tab and brings one of its cards into view, for a row that names who decides its value.
+    jumpTo = function (secId, cardTitle) {
+      var ix = -1; SECS.forEach(function (sc, j) { if (sc.id === secId) ix = j; });
+      if (ix < 0) return;
+      if (setSearch.value) { setSearch.value = ""; searchBadge.classList.remove("cc-open"); restore(); }
+      showSec(ix);
+      var target = null;
+      Array.prototype.forEach.call(SECS[ix].w.querySelectorAll(".cc-set-card > .cc-set-h"), function (h) { if (!target && (h.textContent || "").trim() === cardTitle) target = h.parentNode; });
+      if (!target) return;
+      try { target.scrollIntoView({ block: "start", behavior: "smooth" }); } catch (e) { target.scrollIntoView(); }
+      var first = target.querySelector("[tabindex='0'], a[href], input, .cc-dsel-trigger");
+      if (first) try { first.focus({ preventScroll: true }); } catch (e) {}
+    };
     // GlimStone's tab-strip colour rule: every tab owns a rainbow position, which its glyph shows
     // at rest and its fill once chosen. The sheet does the painting from these vars; reactive mode
     // rests the idle glyphs grey through the class on the root.
@@ -1070,55 +1159,72 @@
         else { b.style.removeProperty("--cc-rb-c"); b.style.removeProperty("--cc-rb-ct"); }
       });
     }
-    // Every tab takes the width of the widest one, and once the strip wraps its rows share the tabs
-    // evenly, so no row ends in an empty strip. Where that width would wrap a strip whose tabs fit
-    // one row at their own widths, they keep their own widths and share the rest of the row
-    // (GlimStone, "A label wraps only when its box has no room left").
-    function sizeSetTabs() {
-      var shown = tabBtns.filter(function (b) { return b.style.display !== "none"; });
-      shown.forEach(function (b) { b.style.removeProperty("min-width"); b.style.removeProperty("flex"); });
-      tabRow.style.removeProperty("width"); tabRow.style.removeProperty("flex-wrap");
-      var w = 0, sum = 0;
-      shown.forEach(function (b) { var bw = Math.ceil(b.getBoundingClientRect().width); w = Math.max(w, bw); sum += bw; });
-      if (!w) return;
-      var cs = getComputedStyle(root), room = root.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
-      var gaps = TAB_GAP * (shown.length - 1);
-      if (w * shown.length + gaps > room && sum + gaps <= room) {
-        tabRow.style.width = "100%"; tabRow.style.flexWrap = "nowrap";
-        shown.forEach(function (b) { b.style.flex = "1 0 auto"; });
-        return;
-      }
-      var perRow = tabsPerRow(shown.length, w, TAB_GAP, room);
-      shown.forEach(function (b) { b.style.minWidth = w + "px"; b.style.flex = "1 0 calc((100% - " + perRow + " * " + TAB_GAP + "px) / " + perRow + ")"; });
-    }
-    window.__ccSetSizeTabs = sizeSetTabs;
-    // hide the tab of any disabled area immediately; if we were ON it, fall back to Bereiche
+    // A switched-off area loses its tile at once, and if its tab was open, Allgemein opens.
     function refreshTabs() {
       var activeHidden = false;
       SECS.forEach(function (sc, j) {
         var on = areaOn(sc.key);
-        // .cc-set-tab is `display: inline-flex !important` (badge sizing), so a plain
-        // inline "none" can't hide it -> use inline !important, which outranks the sheet.
-        if (on) tabBtns[j].style.removeProperty("display"); else tabBtns[j].style.setProperty("display", "none", "important");
+        tabBtns[j].hidden = !on;
         if (!on && tabBtns[j].classList.contains("cc-set-tab-on")) { activeHidden = true; sc.w.style.display = "none"; }
       });
       if (activeHidden) showSec(0);
-      sizeSetTabs();
     }
+    // GlimStone's vertical tiles: one tab stop with a roving tabindex, where the arrows, Home and
+    // End move the focus and Enter, Space or a click opens the tab.
+    tabRow.setAttribute("role", "tablist"); tabRow.setAttribute("aria-orientation", "vertical");
     SECS.forEach(function (sc, i) {
       var b = el("button", "cc-set-tab"); b.type = "button";
-      b.appendChild(tabGlyph(sc.id)); b.appendChild(el("span", null, sc.t));
+      b.setAttribute("role", "tab"); b.setAttribute("aria-label", sc.t);
+      b.appendChild(tabGlyph(sc.id)); b.appendChild(el("span", "cc-set-tablbl", sc.t));
       b.addEventListener("click", function () { showSec(i); });
       tabBtns.push(b); tabRow.appendChild(b);
     });
-    root.appendChild(tabRow);
-    alignSetTabs(); // indent the strip to the first main-menu tab
-    root.appendChild(wrapMain); root.appendChild(wrapStart); root.appendChild(wrapHeader); root.appendChild(wrapShares); root.appendChild(wrap); root.appendChild(wrapPlugin); root.appendChild(wrapVms); root.appendChild(wrapSettings); root.appendChild(wrapTools); root.appendChild(wrapFavorites); root.appendChild(wrapInfo);
+    tabRow.addEventListener("keydown", function (e) {
+      var shown = tabBtns.filter(function (b) { return !b.hidden; }), at = shown.indexOf(document.activeElement), to = -1;
+      if (at < 0) return;
+      if (e.key === "ArrowDown") to = Math.min(shown.length - 1, at + 1);
+      else if (e.key === "ArrowUp") to = Math.max(0, at - 1);
+      else if (e.key === "Home") to = 0;
+      else if (e.key === "End") to = shown.length - 1;
+      if (to < 0) return;
+      e.preventDefault();
+      shown.forEach(function (b, j) { b.setAttribute("tabindex", j === to ? "0" : "-1"); });
+      shown[to].focus();
+    });
+    // Below 1024px the column shows the glyphs alone, and each name moves into its bubble.
+    window.__ccSetTabTips = function () {
+      var narrow = window.matchMedia && window.matchMedia("(max-width: 1023px)").matches;
+      tabBtns.forEach(function (b, i) { if (narrow) b.setAttribute("data-tip", SECS[i].t); else b.removeAttribute("data-tip"); });
+    };
+    window.__ccSetTabTips();
+    if (!window.__ccSetTabTipsBound && window.matchMedia) {
+      window.__ccSetTabTipsBound = true;
+      var narrowMq = window.matchMedia("(max-width: 1023px)");
+      var onNarrow = function () { window.__ccSetTabTips(); };
+      if (narrowMq.addEventListener) narrowMq.addEventListener("change", onNarrow); else narrowMq.addListener(onNarrow);
+    }
+    var body = el("div", "cc-set-body"), main = el("div", "cc-set-main");
+    body.appendChild(tabRow); body.appendChild(main);
+    root.appendChild(body);
+    alignSetTabs(); // indent the page to the first main-menu tab
+    [wrapMain, wrapStart, wrapHeader, wrapShares, wrap, wrapPlugin, wrapVms, wrapSettings, wrapTools, wrapFavorites, wrapInfo].forEach(function (w) { main.appendChild(w); });
 
     // The picker stays visible with a hex field beside it, both editing the same value and staying
     // in sync. It is embedded rather than an <input type=color>, which opens an OS dialog in a
     // window of its own.
     var c1 = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
+    // One colour mode at a time, and below the selector only the controls of the chosen one.
+    var mode = colorMode();
+    var modes = [["accent", T("Akzent", "Accent")], ["rainbow", T("Regenbogen", "Rainbow")]];
+    if (window.CC_FLAGS && window.CC_FLAGS.length) modes.push(["flag", T("Flagge", "Flag")]);
+    var modeLbl = el("div", "cc-set-lbl cc-set-lblwrap");
+    modeLbl.appendChild(el("span", null, T("Farbmodus", "Colour mode")));
+    modeLbl.appendChild(infoIcon(T("Akzent: alles in einer Farbe. Regenbogen: jedes Badge nimmt eine Farbe aus der Palette. Flagge: die Palette sind die Farben eines Landes.", "Accent: everything in one colour. Rainbow: every badge takes a colour from the palette. Flag: the palette is a country's colours.")));
+    c1.appendChild(modeLbl);
+    c1.appendChild(modeSelector(modes, mode, function (m) {
+      setColorMode(m); render(); syncHeaderBar(); syncSharesBar();
+      var on = root.querySelector(".cc-set-mode .cc-seg-on"); if (on) on.focus();
+    }));
     var prow = el("div", "cc-set-pickrow");
     var hexIn = el("input", "cc-set-hexin"); hexIn.type = "text"; hexIn.value = accent; hexIn.placeholder = "#FCC419"; hexIn.maxLength = 7; hexIn.spellcheck = false;
     // The handlers push the new colour onto the live bars as well: the header and the shares area
@@ -1126,7 +1232,7 @@
     var pick = inlinePicker(/^#[0-9a-f]{6}$/i.test(accent) ? accent : "#FCC419", function (v) { accent = v; hexIn.value = v; set("cc.accent", v); root.style.setProperty("--cc-accent", v); root.style.setProperty("--cc-accent-text", idealText(v)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); });
     function setAccent(v) { accent = v; pick._set(v); hexIn.value = v; set("cc.accent", accent); root.style.setProperty("--cc-accent", accent); root.style.setProperty("--cc-accent-text", idealText(accent)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); }
     hexIn.addEventListener("input", function () { var v = normHex(hexIn.value); if (v) setAccent(v); });
-    prow.appendChild(pick); c1.appendChild(prow);
+    prow.appendChild(pick);
     // The preset swatches fill the row with the hex field as its rightmost cell, the same layout
     // every colour picker on this page uses. cc-set-swrow-global scopes syncSwOn() to this row:
     // sweeping every swatch on the page and marking it against the global accent would un-mark an
@@ -1139,18 +1245,8 @@
       sw.addEventListener("click", function () { accent = c; set("cc.accent", accent); render(); syncHeaderBar(); syncSharesBar(); });
       srow.appendChild(sw);
     });
-    srow.appendChild(hexIn); c1.appendChild(srow);
-    // Rainbow and flag are two mutually exclusive palette modes sharing one colour engine.
-    // cc.rainbow is the master flag every reader checks for an active palette, and cc.flagmode says
-    // that palette is a country's flag. Turning one on turns the other off, and the UI greys out
-    // the inactive one's controls.
-    var flagOn = get("cc.flagmode", "0") === "1";
-    var rbOnly = rainbow && !flagOn;
-    var rr = el("div", "cc-set-row cc-set-inline");
-    rr.appendChild(el("span", null, T("Regenbogen-Modus", "Rainbow mode")));
-    rr.appendChild(toggle(rbOnly, function (v) { set("cc.rainbow", v ? "1" : "0"); set("cc.flagmode", "0"); if (!v) set("cc.rainbowrot", "0"); render(); syncHeaderBar(); syncSharesBar(); }));
-    // Both master toggles stay clickable and flip each other; neither master row is greyed out.
-    c1.appendChild(rr);
+    srow.appendChild(hexIn);
+    if (mode === "accent") { c1.appendChild(prow); c1.appendChild(srow); }
     // on: every reload deals a fresh colour mapping; off: the colours stay put
     var rrot = el("div", "cc-set-row cc-set-inline");
     var rrotL = el("span", "cc-set-lblwrap");
@@ -1158,8 +1254,6 @@
     rrotL.appendChild(infoIcon(T("Mischt die Rainbow-Farben bei jedem Neuladen der Seite neu durch, statt die Reihenfolge fest zu lassen.", "Reshuffles the rainbow colours on every page reload instead of keeping the order fixed.")));
     rrot.appendChild(rrotL);
     rrot.appendChild(toggle(get("cc.rainbowrot", "1") !== "0", function (v) { set("cc.rainbowrot", v ? "1" : "0"); syncHeaderBar(); syncSharesBar(); }));
-    if (!rbOnly) { rrot.style.opacity = ".4"; rrot.style.pointerEvents = "none"; }
-    c1.appendChild(rrot);
     // Every palette colour is editable: clicking a swatch opens the embedded picker below it. The
     // palette is stored as JSON in cc.rbpal, which the Docker tab reads live.
     var RBDEF = (window.CCTheme && window.CCTheme.RB) || ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"]; // the shared palette, or the swatches and the live UI disagree
@@ -1184,10 +1278,9 @@
     rbReset.innerHTML = glyph("Restore");
     rbReset.addEventListener("click", function () { del("cc.rbpal"); render(); syncHeaderBar(); syncSharesBar(); });
     rbrow.appendChild(rbReset);
-    c1.appendChild(rbrow); c1.appendChild(rbPickWrap);
-    if (!rbOnly) { [rbrow, rbPickWrap].forEach(function (e9) { e9.style.opacity = ".4"; e9.style.pointerEvents = "none"; }); }
-    // Flag mode has its own toggle and picker and excludes rainbow mode. A country's colours become
-    // the active palette, cycled to fill every slot, and drive the same engine. The picker searches
+    if (mode === "rainbow") { c1.appendChild(rrot); c1.appendChild(rbrow); c1.appendChild(rbPickWrap); }
+    // In flag mode a country's colours become the active palette, cycled to fill every slot, and
+    // drive the same engine. The picker searches
     // by name and shows real flag images; an emoji flag renders as two letter boxes on Windows.
     if (window.CC_FLAGS && window.CC_FLAGS.length) {
       var FLAG_BASE = "/plugins/cannonadecommand/images/flags/";
@@ -1206,17 +1299,10 @@
         s.style.background = "linear-gradient(to bottom, " + stops.join(", ") + ")"; return s;
       };
       var curFlag = function () { var c9 = get("cc.flag", ""); for (var j9 = 0; j9 < window.CC_FLAGS.length; j9++) if (window.CC_FLAGS[j9].code === c9) return window.CC_FLAGS[j9]; return null; };
-      // The flag palette has its own key, never the rainbow one, so the editor above keeps the
-      // rainbow colours and the engine paints flag colours only while flag mode is on.
-      var applyFlag = function (f9) { var pal = []; for (var k9 = 0; k9 < RBDEF.length; k9++) pal.push(f9.colors[k9 % f9.colors.length]); set("cc.flag", f9.code); set("cc.flagpal", JSON.stringify(pal)); };
-      var fr = el("div", "cc-set-row cc-set-inline cc-flag-row");
-      fr.appendChild(el("span", null, T("Flaggen-Modus", "Flag mode")));
-      fr.appendChild(toggle(flagOn, function (v) {
-        if (v) { set("cc.flagmode", "1"); set("cc.rainbow", "1"); var f0 = curFlag() || window.CC_FLAGS.filter(function (x9) { return x9.code === "de"; })[0] || window.CC_FLAGS[0]; applyFlag(f0); }
-        else { set("cc.flagmode", "0"); set("cc.rainbow", "0"); }
-        render(); syncHeaderBar(); syncSharesBar();
-      }));
-      c1.appendChild(fr);
+      var fr = el("div", "cc-set-row cc-flag-row"), frl = el("span", "cc-set-rl", T("Land", "Country"));
+      frl.appendChild(infoIcon(T("Die Farben der Flagge werden zur Palette, der Reihe nach wiederholt, bis alle acht Plätze belegt sind.", "The flag's colours become the palette, repeated in order until all eight places are filled.")));
+      fr.appendChild(frl);
+      if (mode === "flag") c1.appendChild(fr);
       // A picker of its own, since a native select cannot show flag images: a real flag, the name,
       // and a search over both.
       var picker = el("div", "cc-flag-picker");
@@ -1232,8 +1318,7 @@
         window.CC_FLAGS.forEach(function (f0) {
           if (q && f0.name_de.toLowerCase().indexOf(q) < 0 && f0.name.toLowerCase().indexOf(q) < 0 && f0.code.indexOf(q) < 0) return;
           var row = el("div", "cc-flag-item"); row.appendChild(flagImg(f0)); row.appendChild(el("span", "cc-flag-name", f0.name_de));
-          // Picking a country turns flag mode on, and with it rainbow mode off.
-          row.addEventListener("click", function () { set("cc.flagmode", "1"); set("cc.rainbow", "1"); applyFlag(f0); render(); syncHeaderBar(); syncSharesBar(); });
+          row.addEventListener("click", function () { applyFlag(f0); render(); syncHeaderBar(); syncSharesBar(); });
           list.appendChild(row);
         });
       };
@@ -1269,7 +1354,7 @@
         var nx9 = ix9 < 0 ? (d9 > 0 ? 0 : list9.length - 1) : ix9 + (d9 > 0 ? 1 : -1);
         if (nx9 < 0 || nx9 >= list9.length) return;                 // clamped, so the page scrolls instead
         e9.preventDefault();
-        set("cc.flagmode", "1"); set("cc.rainbow", "1"); applyFlag(list9[nx9]);
+        applyFlag(list9[nx9]);
         renderTrigger();                                            // the field repaints as a pick would
         syncHeaderBar(); syncSharesBar();
         clearTimeout(flagRenderT); flagRenderT = setTimeout(function () { render(); }, 450);
@@ -1283,7 +1368,7 @@
       fr.appendChild(picker);
       // the selected flag's colours, shown apart from the rainbow editor
       var f1 = curFlag();
-      if (f1) {
+      if (f1 && mode === "flag") {
         c1.appendChild(el("div", "cc-set-lbl", T("Flaggenfarben", "Flag colours")));
         var frow = el("div", "cc-set-swatches cc-fill");
         // The same count as the rainbow row, cycled from the flag's own colours, which matches the
@@ -1292,16 +1377,17 @@
         fpal.forEach(function (c9) { var sw9 = el("span", "cc-set-sw"); sw9.style.background = c9; sw9.setAttribute("data-tip", c9); frow.appendChild(sw9); });
         var fReset = el("span", "cc-set-ibtn"); fReset.setAttribute("data-tip", T("Flagge zurücksetzen", "Reset flag"));
         fReset.innerHTML = glyph("Restore");
-        fReset.addEventListener("click", function () { del("cc.flag"); del("cc.flagpal"); set("cc.flagmode", "0"); set("cc.rainbow", "0"); render(); syncHeaderBar(); syncSharesBar(); });
+        fReset.addEventListener("click", function () { del("cc.flag"); del("cc.flagpal"); setColorMode("accent"); render(); syncHeaderBar(); syncSharesBar(); });
         frow.appendChild(fReset);
         c1.appendChild(frow);
       }
     }
     // GlimStone's three shapes, in its order. A name stored before them shows as the shape it reads as.
-    c1.appendChild(segRow(T("Form", "Shape"), [["round", T("Rund", "Round")], ["soft", T("Weich", "Soft")], ["square", T("Eckig", "Square")]], shapeName(get("cc.badgeshape", "round")), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); },
+    themingCard.appendChild(segRow(T("Form", "Shape"), [["round", T("Rund", "Round")], ["soft", T("Weich", "Soft")], ["square", T("Eckig", "Square")]], shapeName(get("cc.badgeshape", "round")), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); },
       T("Karten, Felder und Knöpfe ändern ihre Ecken gemeinsam.", "Cards, fields and buttons change their corners together.")));
     // One global badge style: glass adds a sheen to every badge at once, flat is the solid look.
-    c1.appendChild(segRow(T("Badge-Stil", "Badge style"), [["flat", "Flat"], ["glass", "Glass"]], get("cc.badgeglass", "0") === "1" ? "glass" : "flat", function (v) { set("cc.badgeglass", v === "glass" ? "1" : "0"); document.documentElement.classList.toggle("cc-badge-glass", v === "glass" && get("cc.theming", "1") !== "0"); syncHeaderBar(); syncSharesBar(); }));
+    themingCard.appendChild(segRow(T("Badge-Stil", "Badge style"), [["flat", "Flat"], ["glass", "Glass"]], get("cc.badgeglass", "0") === "1" ? "glass" : "flat", function (v) { set("cc.badgeglass", v === "glass" ? "1" : "0"); document.documentElement.classList.toggle("cc-badge-glass", v === "glass" && get("cc.theming", "1") !== "0"); syncHeaderBar(); syncSharesBar(); },
+      T("Flat: einfarbige Badges. Glass: ein Glanz auf jedem Badge.", "Flat: solid badges. Glass: a sheen on every badge.")));
     // The reactive toggle covers every colour mode: everything rests grey, colours on hover, and
     // the active item stays lit.
     var rmode = el("div", "cc-set-row cc-set-inline");
@@ -1455,7 +1541,7 @@
     // tab. buildStyleCards writes the area's own accent key, which docker.js resolves through its
     // adopt-gated reader, so an install that never touches it follows the global colour.
     var cD = card(T("Stil", "Style"));
-    cD.appendChild(exceptionRow("cc.styledocker"));
+    cD.appendChild(colourRow("cc.styledocker"));
     wrap.appendChild(cD);
     buildStyleCards("ccd.", wrap, [], true);
 
@@ -1517,6 +1603,10 @@
     }
     c2.appendChild(tprevWrap); tintPrev(); c2OnChange(); sizePrev();   // the preview is the card's last block, sized to the tile-size control
     wrap.appendChild(c2);
+    // Docker's logo card stands in for an area logo card, so it shows only with an exception too.
+    var showC2 = function (own) { c2.classList.toggle("cc-set-off", !own); };
+    showC2(localStorage.getItem("cc.styledocker") === "0");
+    (areaSync["cc.styledocker"] = areaSync["cc.styledocker"] || []).push(showC2);
 
     var c3 = card(T("Spalten / Badges je Ansicht", "Columns / badges per view"), T("Welche Badges in der einfachen und in der Advanced-Ansicht erscheinen.", "Which badges appear in the Simple and the Advanced view."));
     var tbl = el("table", "cc-set-tbl");
@@ -1579,18 +1669,28 @@
       // jump to the built-in default and its picker shows what is in effect.
       var p = ADOPT_PREF[key];
       if (own && p && localStorage.getItem(p + "accent") == null) set(p + "accent", get("cc.accent", "#FCC419"));
-      (adoptToggles[key] || []).forEach(function (t) { t._setOn(own); });
+      (areaSync[key] || []).forEach(function (f) { f(own); });
       if (styleCardSync[key]) styleCardSync[key]();
       paintExceptions(); syncHeaderBar(); syncSharesBar();
     }
-    function exceptionRow(key, tip) {
-      var row = el("div", "cc-set-row cc-set-inline"), lw = el("span", "cc-set-lblwrap");
-      lw.appendChild(el("span", null, T("Eigene Farbe für diesen Bereich", "Own colour for this area")));
-      lw.appendChild(infoIcon(tip || T("An: Der Bereich nimmt seine Farbe aus der Badges-Karte darunter. Aus: Er folgt der globalen Badge-Farbe aus Allgemein.", "On: this area takes its colour from the Badges card below. Off: it follows the global badge colour from General.")));
+    // An area's colour line, in the words of the Bereichsfarben card on General: the area follows
+    // the global colour until it gets an exception, and only then shows badge and logo cards of its own.
+    function colourRow(key) {
+      var row = el("div", "cc-set-row cc-set-inline cc-set-colour"), lw = el("span", "cc-set-lblwrap");
+      lw.appendChild(el("span", null, T("Farbe", "Colour")));
+      lw.appendChild(infoIcon(T("Ohne Ausnahme folgt der Bereich der Badge-Farbe aus Allgemein. Mit einer Ausnahme bekommt er auf diesem Tab eigene Badge- und Logo-Karten.", "Without an exception the area follows the badge colour from General. With one it gets badge and logo cards of its own on this tab.")));
       row.appendChild(lw);
-      var tg = toggle(localStorage.getItem(key) === "0", function (v) { setOwnColour(key, v); });
-      (adoptToggles[key] = adoptToggles[key] || []).push(tg);
-      row.appendChild(tg);
+      var end = el("span", "cc-set-colend"), state = el("span", "cc-set-colstate"), dot = el("span", "cc-set-excdot"), word = el("span");
+      state.appendChild(dot); state.appendChild(word); end.appendChild(state);
+      var btn = actionBtn("", "cc-btn cc-set-xbtn", function () { setOwnColour(key, localStorage.getItem(key) !== "0"); });
+      end.appendChild(btn); row.appendChild(end);
+      function paint(own) {
+        dot.style.background = own ? get(ADOPT_PREF[key] + "accent", "#FCC419") : get("cc.accent", "#FCC419");
+        word.textContent = own ? T("Eigene Farbe", "Own colour") : T("Folgt Allgemein", "Follows General");
+        btn.textContent = own ? T("Globale Farbe nutzen", "Use the global colour") : T("Ausnahme hinzufügen", "Add an exception");
+      }
+      paint(localStorage.getItem(key) === "0");
+      (areaSync[key] = areaSync[key] || []).push(paint);
       return row;
     }
     // The tabbed-view row reads inverted to its storage: on means the native Unraid sub-tabs,
@@ -1606,7 +1706,7 @@
       return row;
     }
     var cP = card(T("Stil", "Style"));
-    cP.appendChild(exceptionRow("cc.styleplugin"));
+    cP.appendChild(colourRow("cc.styleplugin"));
     cP.appendChild(tabviewRow("plugins", syncPluginsBar));
     // Every area carries the same style cards on its own key prefix, which apply while its adopt
     // toggle is off.
@@ -1770,15 +1870,20 @@
       // refresher once so cB starts on the global icon values while adopt is ON, own while OFF)
       if (adoptKey) { try { styleCardSync[adoptKey](); } catch (e9) {} }
       if (!noLogos) into.appendChild(cB); // header tab: badges only, no logo card
+      if (adoptKey) {
+        var showCards = function (own) { cA.classList.toggle("cc-set-off", !own); cB.classList.toggle("cc-set-off", !own); };
+        showCards(localStorage.getItem(adoptKey) === "0");
+        (areaSync[adoptKey] = areaSync[adoptKey] || []).push(showCards);
+      }
     }
     // The adopt "Stil" card leads every section, followed by the Badges and Logos cards. The menu
     // bar section has the same cards as Plugins and VMs, plus the footer switch and the status
     // island card.
     var cV = card(T("Stil", "Style"));
-    cV.appendChild(exceptionRow("cc.stylevms"));
+    cV.appendChild(colourRow("cc.stylevms"));
     cV.appendChild(tabviewRow("vms", syncVmsBar));
     var cH = card(T("Stil", "Style"));
-    cH.appendChild(exceptionRow("cc.styleheader"));
+    cH.appendChild(colourRow("cc.styleheader"));
     // The footer bar is hidden by default. header.js applies it, and it sits in the Theming card
     // rather than here: it is one global on/off for a page element, like density and tile size,
     // not part of the header area itself.
@@ -1792,19 +1897,19 @@
       themingCard.appendChild(cHf);
     }
     var cSh = card(T("Stil", "Style"));
-    cSh.appendChild(exceptionRow("cc.styleshares"));
+    cSh.appendChild(colourRow("cc.styleshares"));
     cSh.appendChild(tabviewRow("shares", syncSharesBar));
     var cSet = card(T("Stil", "Style"));
-    cSet.appendChild(exceptionRow("cc.stylesettings"));
+    cSet.appendChild(colourRow("cc.stylesettings"));
     // tile size of the /Settings + /Tools grid is the GLOBAL cc.sgsize control in Allgemein (no per-tab copy).
     var cFav = card(T("Stil", "Style"));
-    cFav.appendChild(exceptionRow("cc.stylefavorites"));
+    cFav.appendChild(colourRow("cc.stylefavorites"));
     var cStart = card(T("Stil", "Style"));
-    cStart.appendChild(exceptionRow("cc.stylemain"));
+    cStart.appendChild(colourRow("cc.stylemain"));
     cStart.appendChild(tabviewRow("main", syncSharesBar));
     wrapHeader.appendChild(cH); wrapShares.appendChild(cSh); wrapPlugin.appendChild(cP); wrapVms.appendChild(cV); wrapSettings.appendChild(cSet); wrapFavorites.appendChild(cFav); wrapStart.appendChild(cStart);
     var cTools = card(T("Stil", "Style"));
-    cTools.appendChild(exceptionRow("cc.styletools"));
+    cTools.appendChild(colourRow("cc.styletools"));
     wrapTools.appendChild(cTools);
     function syncPluginsBar() { try { if (typeof window.ccPluginsApply === "function") window.ccPluginsApply(); } catch (e) {} }
     function syncVmsBar() { try { if (typeof window.ccVmsApply === "function") window.ccVmsApply(); } catch (e) {} }
@@ -1998,17 +2103,17 @@
     searchEmpty.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 3.072a8 8 0 0 1 2.32 11.834l5.387 5.387a1 1 0 0 1 -1.414 1.414l-5.388 -5.387a8 8 0 1 1 -.905 -13.249" /></svg>';
     var emptyText = el("div"), emptyTitle = el("div", "cc-set-empty-t", T("Keine Treffer", "No matches")), emptyHint = el("div", "cc-set-empty-h");
     emptyText.appendChild(emptyTitle); emptyText.appendChild(emptyHint); searchEmpty.appendChild(emptyText);
-    root.appendChild(searchEmpty);
+    main.appendChild(searchEmpty);
     function restore() {
       Array.prototype.forEach.call(root.querySelectorAll(".cc-set-card, .cc-set-row, .cc-set-lbl, .cc-set-prose"), function (e9) { e9.style.removeProperty("display"); });
       searchEmpty.style.display = "none";
-      tabRow.style.removeProperty("display");
       var st9 = localStorage.getItem("cc.settab"), ix9 = 0; SECS.forEach(function (sc9, j9) { if (sc9.id === st9) ix9 = j9; }); showSec(ix9);
     }
     function runFilter(q) {
       var raw = (q || "").trim(); q = raw.toLowerCase();
       if (!q) { restore(); return; }
-      tabRow.style.setProperty("display", "none");
+      // The matches come from every tab, so no tile is the chosen one while a query stands.
+      tabBtns.forEach(function (b) { b.classList.remove("cc-set-tab-on"); b.setAttribute("aria-selected", "false"); });
       SECS.forEach(function (sc9) { sc9.w.style.display = ""; });
       var shown = 0;
       Array.prototype.forEach.call(root.querySelectorAll(".cc-set-card"), function (cardEl) {
@@ -2041,20 +2146,23 @@
       wrapInfo.appendChild(cVer);
 
       var cHelp = card(T("Hilfe", "Help"));
-      cHelp.appendChild(el("p", "cc-set-prose", T("Probleme, Wünsche oder Vorschläge? Mach gern ein Issue auf GitHub auf.", "Problems, wishes or suggestions? You're welcome to open an issue on GitHub.")));
-      var hrow = el("div", "cc-set-btnrow");
-      hrow.appendChild(linkBtn("GitHub", REPO + "/issues"));
-      hrow.appendChild(linkBtn(T("Fehlerbericht", "Bug report"), REPO + "/issues/new/choose"));
+      cHelp.appendChild(el("p", "cc-set-prose", T("Probleme, Wünsche oder Vorschläge? Mach gern ein Issue auf GitHub auf, oder schreib eine E-Mail.", "Problems, wishes or suggestions? You're welcome to open an issue on GitHub, or send an email.")));
+      var hrow = el("div", "cc-rbtn-rows");
+      hrow.appendChild(readmeBtn({ brand: "github", name: "GitHub", mark: BRAND_MARKS.github, href: REPO }));
+      hrow.appendChild(readmeBtn({ brand: "house", name: T("E-Mail", "Email"), mark: BRAND_MARKS.mail, href: "mailto:hello@halleluja.design?subject=CannonadeCommand" }));
+      var bug = readmeBtn({ brand: "house", name: T("Fehlerbericht", "Bug report"), sub: T("Herunterladen", "Download"), mark: BRAND_MARKS.bug, run: function () { downloadBugReport(bug); } });
+      hrow.appendChild(bug);
       cHelp.appendChild(hrow);
       wrapInfo.appendChild(cHelp);
 
       var cAbout = card(T("Über", "About"));
       cAbout.appendChild(el("p", "cc-set-prose", T("CannonadeCommand ist ein kostenloses Plugin für Unraids Docker-, Plugin- und VM-Tabs, gebaut von einem einzelnen Ritter an Abenden und Wochenenden, ohne Konto, ohne Telemetrie und ohne Werbung.", "CannonadeCommand is a free plugin for Unraid's Docker, Plugins and VM tabs, built by one knight on evenings and weekends, with no accounts, no telemetry and no ads.")));
       cAbout.appendChild(el("p", "cc-set-prose", T("Wenn es sich einen Platz auf deinem Server verdient hat, wirf deinem Ritter eine Münze zu: Das hilft bei den Kosten und hält das Projekt am Leben.", "If it has earned a place on your server, toss a coin to your knight: it helps cover the costs and keeps the project alive.")));
-      var give = el("div", "cc-set-btnrow cc-set-give");
-      give.appendChild(linkBtn("Buy Me a Coffee", "https://buymeacoffee.com/junkerderprovinz"));
-      give.appendChild(linkBtn("PayPal", "https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS"));
-      give.appendChild(linkBtn(T("Krypto", "Crypto"), "https://junkerderprovinz.github.io/junkerderprovinz/"));
+      // The give row in its house form: hosted pages first, the wallet last.
+      var give = el("div", "cc-rbtn-rows cc-set-give");
+      give.appendChild(readmeBtn({ brand: "coffee", name: "Buy me a coffee", art: BRAND_MARKS.coffee, href: "https://buymeacoffee.com/junkerderprovinz" }));
+      give.appendChild(readmeBtn({ brand: "paypal", name: "PayPal", mark: BRAND_MARKS.paypal, href: "https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS" }));
+      give.appendChild(readmeBtn({ brand: "bitcoin", name: T("Krypto", "Crypto"), mark: BRAND_MARKS.bitcoin, href: "https://junkerderprovinz.github.io/junkerderprovinz/" }));
       cAbout.appendChild(give);
       wrapInfo.appendChild(cAbout);
     })();
@@ -2104,7 +2212,7 @@
   function paintToggles() {
     if (!root) return;
     var rbC = (window.CCTheme && window.CCTheme.rbColor) || function (i, a) { return a; };
-    var tgls = root.querySelectorAll(".cc-set-toggle");
+    var tgls = root.querySelectorAll(".cc-set-toggle, .cc-set-mode .cc-seg-on");   // the chosen mode wears a colour of its own, like a switch
     for (var i = 0; i < tgls.length; i++) {
       var t = tgls[i];
       if (rainbow) { var c = rbC(i, accent); t.style.setProperty("--cc-rb-c", c); t.style.setProperty("--cc-rb-ct", idealText(c)); }
@@ -2143,10 +2251,62 @@
     a.href = repo + "/releases/tag/v" + v; a.target = "_blank"; a.rel = "noopener noreferrer";
     return a;
   }
-  function linkBtn(text, href) {
-    var a = el("a", "cc-btn cc-set-xbtn", text);
-    a.href = href; a.target = "_blank"; a.rel = "noopener noreferrer";
-    return a;
+  // The marks on the Info tab's README buttons: Buy Me a Coffee's own artwork, PayPal and Bitcoin
+  // from Simple Icons (CC0), GitHub's Octicon (MIT), and GlimStone's envelope and bug glyphs.
+  var BRAND_MARKS = {
+    coffee: '<svg viewBox="0 0 841.9 245.3"><path fill="var(--cc-mark-ink, var(--cc-brand-coffee))" d="M110.7,113.9c-4.4,1.9-9.4,4.2-15.9,4.2s-5.5-.4-8-1.2l4.5,47.9c.2,2,1.1,3.9,2.5,5.2,1.4,1.4,3.3,2.1,5.2,2.1,0,0,6.3.3,8.5.3s9.1-.3,9.1-.3c1.9,0,3.7-.7,5.2-2.1,1.4-1.4,2.4-3.2,2.5-5.2l4.8-53c-2.1-.7-4.3-1.3-6.7-1.3-4.2,0-7.6,1.5-11.6,3.2h0Z"/><path fill="var(--cc-mark-ink, var(--cc-brand-coffee))" d="M149.7,89.1l-.6-3.5c-.6-3.2-2-6.2-5.1-7.4-1-.3-2.1-.5-2.9-1.3s-1-1.9-1.2-3c-.3-2-.6-4.1-1-6-.3-1.7-.5-3.6-1.3-5.2-1-2.1-3.1-3.3-5.1-4.2-1.1-.4-2.1-.7-3.2-1.1-5.1-1.4-10.5-1.9-15.7-2.2-6.3-.3-12.6-.2-18.9.3-4.7.4-9.6,1-14.1,2.7-1.6.6-3.3,1.4-4.5,2.7-1.5,1.6-2,4.1-.9,6.1.7,1.4,2.1,2.5,3.5,3.1,1.8.9,3.7,1.5,5.8,1.9,5.5,1.3,11.2,1.7,16.8,1.9,6.2.2,12.5,0,18.6-.6,1.5-.2,3.1-.4,4.6-.6,1.8-.3,3-2.8,2.5-4.4-.6-2-2.4-2.8-4.3-2.6-.3,0-.5,0-.9.1h-.2c-.6.1-1.3.2-1.9.2-1.4.1-2.7.3-4.1.4-3,.2-6.1.3-9.1.3s-6,0-9-.3c-1.4,0-2.7-.2-4.1-.3-.6,0-1.3-.1-1.8-.2h-1.4c-1.3-.3-2.5-.5-3.7-.7-.1,0-.2,0-.3-.2s-.1-.2-.1-.3,0-.2.1-.3c0-.1.2-.2.3-.2h0c1.1-.2,2.1-.4,3.2-.6.3,0,.7-.1,1.1-.2h0c.6,0,1.4-.2,2-.2,5.8-.6,11.7-.9,17.6-.6,2.9,0,5.7.2,8.5.5.6,0,1.2.1,1.8.2h1.2c1.4.3,2.8.5,4.1.9,2,.4,4.6.6,5.5,2.9.3.7.4,1.5.5,2.2l.2,1h0c.4,2.2,1,4.6,1.4,6.8v.5c0,.2,0,.3-.2.4,0,.1-.2.2-.3.3s-.3.1-.4.2h-.6c-.9.1-1.8.2-2.7.3-1.8.2-3.5.4-5.4.5-3.5.3-7.2.5-10.7.6h-5.5c-7.3,0-14.4-.4-21.7-1.3-.7,0-1.6-.2-2.4-.3.6,0-.4,0-.6,0-.5,0-1-.1-1.5-.2-1.7-.2-3.3-.5-5-.9-2-.3-4-.2-5.8.9-1.5.9-2.7,2.1-3.4,3.7-.7,1.7-1,3.5-1.4,5.4s-.9,3.7-.6,5.6c.4,4,3.1,7.3,7.1,8,3.6.6,7.3,1.3,11,1.7,14.4,1.8,29,2,43.6.6,1.2-.1,2.4-.2,3.5-.4.3,0,.7,0,1.1.1s.6.3,1,.6.4.6.6,1,.2.7.1,1.2l-.3,3.7c-.7,7.5-1.5,15-2.2,22.5-.7,7.9-1.5,15.7-2.4,23.5-.2,2.2-.4,4.4-.6,6.6-.2,2.1-.2,4.4-.6,6.5-.6,3.4-2.9,5.5-6.1,6.2-3,.6-6,1.1-9,1.1s-6.7-.1-10.1-.1-7.9-.3-10.7-3.1c-2.5-2.5-2.8-6.2-3.1-9.5-.4-4.4-.9-8.7-1.3-13.1l-2.5-24.2-1.6-15.6v-.7c-.2-1.9-1.5-3.7-3.4-3.6-1.7,0-3.6,1.6-3.4,3.6l1.2,11.7,2.4,24.1c.6,6.8,1.4,13.7,2,20.4.1,1.3.2,2.7.4,4,.7,7.2,6,11,12.5,12.1,3.9.6,7.7.7,11.6.9,4.9,0,10,.3,14.8-.6,7.2-1.4,12.6-6.4,13.4-14.1.2-2.2.4-4.5.6-6.7.7-7.4,1.5-14.9,2.2-22.3l2.4-24.2,1.1-11.1c0-.5.3-1.1.6-1.5s.9-.6,1.4-.7c2-.4,4.1-1.2,5.5-2.8,2.4-2.6,2.8-6,1.9-9.4h0ZM72.2,91.6v.4-.4ZM72.5,93.2h.1c0,.1-.1,0-.1,0ZM72.6,93.4c0,.2,0,.1,0,0ZM73,93.7h0ZM142.1,93.3c-.7.7-1.8,1.1-3,1.3-12.4,1.9-24.9,2.9-37.4,2.5-8.9-.3-17.8-1.4-26.6-2.7-.9-.1-1.8-.3-2.4-1-1.2-1.3-.5-3.7-.3-5.4.2-1.4.7-3.2,2.4-3.4,2.5-.3,5.4.7,7.8,1.2,3,.4,5.9.9,8.9,1.1,12.7,1.2,25.6,1.1,38.2-.7,2.4-.3,4.6-.6,6.8-1.1,2-.4,4.3-1.1,5.6,1.1.9,1.5,1,3.5.9,5.1,0,.7-.3,1.4-.9,1.9h0Z"/><path fill="currentColor" fill-rule="evenodd" d="M237.6,134.4c-1,1.8-2.2,3.4-4,4.7-1.7,1.3-3.6,2.5-5.8,3.3-2.2.9-4.5,1.4-6.7,1.7s-4.4.2-6.5,0c-2.1-.3-4-1.1-5.4-2.1l1.7-17.3c1.5-.5,3.4-1.1,5.8-1.6s4.7-1,7.2-1.2,4.8-.2,7,0c2.2.3,4,1,5.2,2.1.6.6,1.3,1.3,1.7,2s.7,1.5.9,2.2c.2,2.2,0,4.3-1.1,6h0ZM213.4,97.6c1.1-.6,2.5-1.3,4-1.8,1.6-.5,3.1-.9,4.8-1.1,1.6-.2,3.2-.2,4.8,0,1.6.1,2.9.5,4.2,1.3,1.2.7,2,1.7,2.7,3.1s.7,3,.4,5.1c-.2,1.6-.9,3-1.9,4.2s-2.4,2-4,2.9c-1.6.7-3.2,1.4-4.9,1.8s-3.4.7-5,1c-1.6.2-3,.3-4.2.4h-2.4l1.6-16.7h0v-.2ZM246.2,123.3c-.9-1.8-2-3.4-3.4-4.8s-3.1-2.4-5-3c.9-.6,1.7-1.7,2.5-3.2s1.5-3.1,2.1-4.8c.5-1.7,1-3.5,1.2-5.2s.1-3.3-.2-4.5c-.9-3.2-2.4-5.7-4.3-7.4-1.9-1.8-4.2-3-6.7-3.7-2.6-.6-5.4-.9-8.5-.4s-6.2,1.2-9.5,2.4v-1.8c0-.7-.4-1.5-1.2-2s-1.7-1-2.8-1.1-2,.1-3,.6c-1,.5-1.6,1.6-2,3-.4,4.7-.9,9.6-1.3,14.8s-.9,10.3-1.4,15.5c-.4,5.2-1,10.4-1.4,15.5-.4,5.1-1,10.1-1.4,14.8.1,1.4.5,2.6,1.2,3.3.6.7,1.4,1.3,2.2,1.4s1.7,0,2.7-.4,1.7-1.2,2.5-2.4c2.1,1.2,4.5,1.9,7.2,2.2s5.4.3,8,0,5.5-1,8-1.9c2.7-1,5-2.1,7.2-3.5s4-3,5.5-4.8,2.5-3.7,2.9-5.9.6-4.3.4-6.4c-.2-2.1-.7-4.2-1.6-6h.2Z"/><path fill="currentColor" fill-rule="evenodd" d="M323.5,164.9c-.3,1.7-.6,3.5-1.2,5.5s-1.2,3.6-1.8,5.2c-.7,1.6-1.5,2.9-2.4,3.9-.9,1-1.8,1.4-2.8,1.2-.7-.1-1.3-.6-1.5-1.5-.2-.9-.2-2,0-3.3s.6-2.8,1.2-4.5c.6-1.6,1.4-3.3,2.2-4.9.9-1.6,1.8-3.2,3-4.7,1.1-1.5,2.2-2.8,3.5-3.7.2.3.4,1.1.3,2.4s-.2,2.8-.4,4.5h-.2ZM350.4,130.6c-.7-.7-1.6-1.3-2.7-1.3-1.1-.1-2,.4-3.1,1.7-.6,1.3-1.6,2.5-2.7,3.6-1.1,1.2-2.1,2.2-3.3,3.2s-2.2,1.7-3.2,2.5c-1.1.6-1.8,1.2-2.5,1.5-.2-1.7-.3-3.5-.3-5.5s0-4,.1-5.9c.1-2.9.5-5.7,1-8.6s1.2-5.8,2.1-8.6c0-1.5-.3-2.7-1.1-3.6-.6-1-1.5-1.5-2.5-1.7s-2-.1-3,.4-1.9,1.4-2.7,2.7c-.6,1.7-1.4,3.7-2.1,5.9-.9,2.1-1.7,4.4-2.8,6.6s-2.1,4.4-3.4,6.5-2.7,4-4.2,5.6-3.1,2.9-4.9,3.9c-1.8,1-3.6,1.3-5.8,1.2-1-.2-1.6-1-2-2.1s-.6-2.6-.7-4.4,0-3.6.2-5.8.5-4.2,1-6.2.9-4,1.3-5.9,1-3.4,1.4-4.7c.6-1.5.6-2.8,0-3.9s-1.5-1.7-2.6-2-2.2-.3-3.5,0c-1.2.3-2.1,1.2-2.6,2.5-.9,2.1-1.7,4.6-2.5,7.3s-1.3,5.5-1.8,8.3c-.4,2.9-.7,5.7-.7,8.6v.5c-1.2,3.1-2.2,5.4-3.3,7-1.4,2-2.9,2.9-4.6,2.6-.7-.3-1.2-1.1-1.5-2.2-.2-1.2-.3-2.6-.2-4.3,0-1.7.3-3.6.6-5.8.3-2.1.7-4.4,1.2-6.6.5-2.2,1-4.6,1.5-7s1-4.5,1.4-6.5c0-1.8-.6-3.2-1.6-4.3s-2.5-1.4-4.3-1.2c-1.3.5-2.2,1.2-2.8,2s-1.1,1.9-1.5,3.2c-.2.6-.5,2-1,4.1s-1,4.4-1.6,7.1-1.5,5.5-2.4,8.3c-.9,2.9-1.9,5.6-3,7.8-1.1,2.4-2.4,4.3-3.6,5.7s-2.8,2-4.3,1.7c-.9-.1-1.4-1.1-1.6-2.6s-.3-3.5-.1-5.9.4-4.8,1-7.6c.4-2.8,1-5.4,1.5-7.9.5-2.5,1-4.7,1.4-6.5.4-1.9.7-3.2.9-3.7,0-1.5-.3-2.8-1.1-3.6s-1.5-1.5-2.5-1.7-2-.1-3,.4c-1.1.5-1.9,1.4-2.7,2.7-.2,1.4-.6,3.1-1.1,4.9-.4,1.9-.9,3.7-1.2,5.8s-.7,3.9-1.1,5.8-.6,3.5-.7,4.9c-.1,1.1-.2,2.5-.3,4.1s-.2,3.3-.2,5.1.1,3.5.4,5.4c.2,1.7.7,3.4,1.4,4.8s1.6,2.7,2.9,3.6,2.8,1.5,4.7,1.6c1.9.1,3.6,0,5.1-.4s2.8-1.1,4-1.8c1.2-.9,2.2-1.8,3.2-3s1.9-2.5,2.9-3.7c.9,2,2,3.5,3.5,4.7,1.4,1.1,2.9,1.7,4.5,1.9s3.2,0,4.8-.6,3.1-1.8,4.4-3.3c.9-1,1.7-2,2.5-3.3.3.5.6,1.1,1.1,1.6,1.3,1.7,3.1,2.9,5.2,3.4,2.4.6,4.7.7,7,.3s4.4-1.2,6.5-2.2c2-1.1,4-2.5,5.8-4s3.3-3.2,4.6-4.8v7c-2.7,1.8-5.1,4.1-7.5,6.6s-4.4,5.4-6.2,8.2c-1.7,2.9-3.2,5.9-4.2,8.9s-1.5,5.8-1.5,8.5.6,4.9,1.8,6.8c1.2,1.9,3.2,3.3,6,4.2,2.9.9,5.4,1,7.5,0,2.1-.9,4.1-2.2,5.7-4.2,1.6-1.9,2.9-4.3,4-7.1s1.8-5.7,2.5-8.7c.6-3,1-6,1.2-8.9s.1-5.5,0-7.7c4.5-1.9,8.2-4.3,11.1-7.2,2.9-2.9,5.4-6,7.2-9.2.5-.7.7-1.7.6-2.9-.2-1.1-.6-2-1.4-2.9h0v.3Z"/><path fill="currentColor" fill-rule="evenodd" d="M450.4,125.6c.1-1.2.4-2.5.7-3.9s.7-2.7,1.2-3.9c.4-1.3,1.1-2.4,1.7-3.3s1.3-1.6,2-2,1.4-.3,2.1.1,1.3,1.5,1.5,3c.2,1.5,0,3.2-.5,4.9s-1.5,3.3-3,4.9c-1.4,1.5-3.3,2.6-5.8,3-.1-.7,0-1.7,0-2.9h0ZM477.9,128.8c-.9-.2-1.7-.3-2.5,0-.7.2-1.3.7-1.5,1.6-.4,1.7-1.1,3.4-2,5.1s-2,3.4-3.4,5c-1.4,1.6-2.9,3-4.6,4.2-1.7,1.2-3.4,2-5.4,2.6-1.8.5-3.4.6-4.6.2-1.2-.4-2.1-1.2-2.9-2.2s-1.2-2.4-1.5-3.9c-.3-1.5-.5-3.1-.5-4.7,3,.2,5.7-.3,8-1.6s4.4-3,6-5.1,2.9-4.5,3.7-7.2,1.3-5.4,1.4-7.9c0-2.5-.3-4.6-1.1-6.3s-1.8-3-3.2-4-2.9-1.5-4.6-1.6c-1.7-.1-3.5,0-5.4.7-2.1.7-4,1.9-5.5,3.6s-2.8,3.6-3.7,5.8-1.8,4.5-2.4,7.1-1,5-1.3,7.5c-.2,2.1-.3,4.3-.4,6.3-.1.2-.2.5-.3.7-.9,1.9-1.8,3.7-2.9,5.5s-2.2,3.3-3.6,4.5c-1.3,1.2-2.7,1.6-4.2,1.3-.9-.2-1.3-1.2-1.4-2.9,0-1.7,0-3.9.3-6.4.2-2.6.5-5.4,1-8.3.3-3,.5-5.9.5-8.6s-.4-4.6-1.4-6.8c-.9-2.1-2.1-4-3.6-5.5-1.6-1.5-3.3-2.4-5.5-2.9-2-.4-4.3-.1-6.6,1s-4.3,2.7-5.7,4.7-2.7,4.1-3.9,6.3c-.4-1.7-1.1-3.2-1.8-4.7-.9-1.5-1.8-2.7-3-3.7s-2.6-1.9-4-2.6-3-1-4.7-1-3.1.3-4.4,1c-1.4.6-2.6,1.4-3.7,2.4-1.1,1-2.1,2-3,3.2s-1.7,2.4-2.4,3.5c-.1-1.4-.2-2.6-.3-3.6s-.4-1.9-.7-2.6-.9-1.3-1.5-1.6-1.5-.5-2.7-.5-1.2.1-1.7.3-1.1.5-1.5,1-.7,1-1.1,1.5-.3,1.3-.2,2.1c0,.5.2,1.3.4,2.1.2.9.4,1.9.6,3.2s.4,2.9.5,4.8.2,4.2.1,6.8c0,2.7-.2,5.9-.6,9.5-.3,3.6-.9,7.8-1.6,12.6-.1,1.1.3,2,1.3,2.7s2,1.1,3.2,1.2,2.4-.1,3.4-.6,1.7-1.5,1.8-2.8c.1-2.5.4-5.1,1-7.9.4-2.8,1-5.6,1.7-8.3s1.4-5.4,2.2-7.8c.9-2.5,1.8-4.7,2.8-6.5,1.1-1.9,2.1-3.4,3.2-4.5,1.1-1.2,2.2-1.7,3.5-1.7s2.7.6,3.4,2c.9,1.4,1.4,3.1,1.7,5.1.3,2.1.5,4.4.4,7s-.1,4.9-.3,7.3c-.2,2.4-.4,4.4-.6,6.2s-.4,3.1-.5,3.7c0,1.2.4,2.1,1.4,2.9s1.9,1.2,3.1,1.3c1.2.1,2.2,0,3.2-.6s1.6-1.5,1.7-2.8c.5-3.7,1.3-7.6,2.1-11.5,1-3.9,2-7.3,3.2-10.3,1.2-3,2.5-5.5,4-7.4,1.5-1.9,3-2.9,4.6-2.9s1.5.5,1.9,1.7.6,2.8.6,4.7-.1,3-.3,4.5c-.2,1.6-.5,3.2-.9,4.8s-.6,3.3-.9,5.1-.3,3.5-.3,5.5.1,2.9.4,4.6.7,3.4,1.5,4.9c.7,1.6,1.7,2.9,3.1,4s3,1.6,4.9,1.6c3,0,5.7-.6,8-1.9s4.3-3,6-5c0-.1.1-.2.2-.3.1.3.2.6.4,1,1.2,2.4,2.7,4.1,4.6,5.4s4.3,1.9,7,2.1c2.7.1,5.6-.3,8.7-1.5,2.4-.9,4.4-1.9,6.1-3.2s3.2-2.8,4.6-4.6,2.7-3.9,3.7-6.3,2.2-5.1,3.4-8.1c.2-.9,0-1.6-.5-2.2-.6-.6-1.4-1.1-2.2-1.4h0v-.5Z"/><path fill="currentColor" fill-rule="evenodd" d="M521,120.1c-.2,1.6-.6,3.2-1.1,5.1s-1.1,3.9-1.7,5.8c-.6,2-1.5,3.9-2.6,5.5-1,1.6-2.1,2.9-3.4,3.9-1.3,1-2.8,1.3-4.5,1.2-.9-.1-1.5-.6-1.9-1.7s-.6-2.4-.7-4.1c0-1.6.1-3.4.4-5.4s.9-3.9,1.5-5.8,1.5-3.6,2.5-5.1c1-1.6,2-2.8,3.3-3.6s2.6-1.3,4.1-1.2c1.5,0,3.1.7,4.8,2.2-.1.6-.3,1.8-.5,3.3h-.1ZM549.2,126c-.9-.4-1.6-.5-2.6-.3-.9.2-1.5,1.1-1.8,2.4-.2,1.5-.6,3.2-1.4,5.2-.7,2-1.6,3.9-2.8,5.7-1.1,1.8-2.4,3.3-3.7,4.5-1.4,1.2-2.9,1.7-4.5,1.6-1.3-.1-2.2-.7-2.8-2s-.9-2.8-.9-4.7.1-4,.5-6.3.9-4.7,1.4-7,1.1-4.5,1.7-6.6c.5-2.1,1.1-4,1.4-5.5.4-1.3.3-2.5-.4-3.3-.6-1-1.5-1.6-2.6-1.9-1.1-.4-2-.5-3.1-.3s-1.7.7-2,1.7c-3.1-2.7-6.1-4.2-9-4.4s-5.6.4-7.9,1.9c-2.5,1.5-4.6,3.6-6.4,6.4-1.9,2.8-3.4,5.9-4.6,9.1s-1.9,6.6-2.1,10.1c-.3,3.4,0,6.5.6,9.4.7,2.8,2,5.1,4,7,1.9,1.8,4.4,2.7,7.6,2.7s2.8-.3,4.2-.9,2.6-1.3,3.6-2,2.1-1.6,2.9-2.5,1.5-1.6,2-2.1c.3,1.9,1,3.5,1.8,4.8s1.8,2.4,2.9,3.2,2.2,1.5,3.4,1.8c1.2.4,2.4.5,3.4.5,2.5,0,4.8-.9,7-2.6,2.1-1.7,4.1-3.7,5.8-6.2,1.7-2.5,3.1-5,4.3-7.7,1.1-2.7,1.8-5.1,2.2-7.3.3-.7.3-1.6-.2-2.5s-1.2-1.5-2-1.9h.1Z"/><path fill="currentColor" fill-rule="evenodd" d="M691.9,169.7c-.4,1.8-1.2,3.3-2.1,4.5-1,1.3-2.1,1.9-3.5,1.9s-1.6-.4-2-1.4c-.5-1-.9-2.2-1-3.9-.2-1.6-.2-3.3-.2-5.4s0-3.9.2-5.8c.1-1.9.3-3.6.5-5.4.2-1.6.3-2.9.4-3.7,1.8.2,3.3,1,4.5,2.4,1.2,1.3,2.1,2.9,2.8,4.8.6,1.8,1,3.9,1.1,6,0,2.1,0,4.1-.5,5.9h-.1ZM663.2,169.7c-.4,1.8-1.2,3.3-2.1,4.5-1,1.3-2.1,1.9-3.5,1.9s-1.6-.4-2-1.4c-.5-1-.9-2.2-1-3.9-.2-1.6-.2-3.3-.2-5.4s0-3.9.2-5.8c.1-1.9.3-3.6.5-5.4.2-1.6.3-2.9.4-3.7,1.8.2,3.3,1,4.5,2.4,1.2,1.3,2.1,2.9,2.8,4.8.6,1.8,1,3.9,1.1,6,0,2.1,0,4.1-.5,5.9h-.1ZM633.8,124.9c0,1.3-.2,2.4-.3,3.3-.2,1-.4,1.6-.7,1.8-.5-.3-1.3-1.2-2.1-2.5s-1.5-2.8-1.9-4.5-.6-3.3-.4-4.9c.2-1.6,1.1-2.9,2.5-3.7.5-.3,1.1-.2,1.5.3s.7,1.4,1.1,2.4c.2,1.1.4,2.2.5,3.6,0,1.4.1,2.7,0,4h0v.2ZM626.7,140.6c-.9.9-1.7,1.6-2.8,2.2s-2,1.1-3.1,1.4-2,.4-2.9.2c-2.4-.4-4.2-1.5-5.5-3.1s-2-3.4-2.5-5.6c-.3-2.1-.3-4.4.1-6.8.4-2.5,1.2-4.7,2.1-6.7s2.2-3.9,3.6-5.4,3-2.5,4.7-2.8c-.6,2.7-.9,5.5-.6,8.3.2,2.9.9,5.6,2,8.1.7,1.5,1.6,2.9,2.7,4.2s2.2,2.4,3.7,3.2c-.4.9-1.1,1.8-1.8,2.7h.1ZM714.5,125.6c.2-1.2.4-2.5.7-3.9.3-1.3.7-2.7,1.2-3.9.5-1.3,1.1-2.4,1.7-3.3s1.3-1.6,2-2,1.4-.3,2.1.1,1.3,1.5,1.5,3,0,3.2-.5,4.9-1.5,3.3-3,4.9-3.3,2.6-5.8,3v-2.9h0ZM746.4,125.6c.2-1.2.4-2.5.7-3.9.3-1.3.7-2.7,1.2-3.9.5-1.3,1.1-2.4,1.7-3.3s1.3-1.6,2-2,1.4-.3,2.1.1,1.3,1.5,1.5,3,0,3.2-.5,4.9-1.5,3.3-3,4.9c-1.4,1.5-3.3,2.6-5.8,3v-2.9h0ZM776.2,130.2c-.6-.6-1.4-1.1-2.2-1.4s-1.7-.3-2.5,0c-.7.2-1.3.7-1.5,1.6-.4,1.7-1.1,3.4-2,5.1s-2,3.4-3.4,5-2.9,3-4.6,4.2-3.4,2-5.4,2.6c-1.8.5-3.4.6-4.6.2-1.2-.4-2.1-1.2-2.9-2.2s-1.3-2.4-1.5-3.9c-.3-1.5-.5-3.1-.5-4.7,3,.2,5.7-.3,8-1.6s4.4-3,6-5.1,2.9-4.5,3.7-7.2,1.3-5.4,1.4-7.9c0-2.5-.3-4.6-1.1-6.3s-1.8-3-3.2-4-2.9-1.5-4.6-1.6-3.5,0-5.4.7c-2.1.7-4,1.9-5.6,3.6-1.5,1.6-2.8,3.6-3.7,5.8s-1.8,4.5-2.4,7.1-1,5-1.3,7.5c-.2,2.4-.4,4.6-.4,6.8-.2.4-.4.9-.6,1.3-1,1.7-2,3.4-3.4,5s-2.9,3-4.6,4.2-3.4,2-5.4,2.6c-1.8.5-3.4.6-4.6.2-1.2-.4-2.1-1.2-2.9-2.2s-1.3-2.4-1.5-3.9c-.3-1.5-.5-3.1-.5-4.7,3,.2,5.7-.3,8-1.6s4.4-3,6-5.1,2.9-4.5,3.7-7.2,1.3-5.4,1.4-7.9c0-2.5-.3-4.6-1.1-6.3s-1.8-3-3.2-4-2.9-1.5-4.6-1.6-3.5,0-5.4.7c-2.1.7-4,1.9-5.6,3.6-1.5,1.6-2.8,3.6-3.7,5.8s-1.8,4.5-2.4,7.1-1,5-1.3,7.5c-.1,1.4-.2,2.7-.3,4.1-.5.4-1,.9-1.5,1.3-1.8,1.5-3.7,2.8-5.8,4-2,1.2-4.1,2.1-6.2,2.9s-4.4,1.2-6.6,1.4l4.9-52.4c.3-1.1.2-2-.5-2.9s-1.5-1.4-2.5-1.7c-1-.3-2-.3-3.2,0-1.2.4-2,1.2-2.8,2.6-.3,2-.7,4.7-1.2,8.2s-.7,7.3-1.2,11.3-.7,8.3-1.2,12.7c-.4,4.4-.7,8.5-1.1,12.2v.5c-.4.4-.9.7-1.4,1.2-1.8,1.5-3.7,2.8-5.8,4-2,1.2-4.1,2.1-6.2,2.9s-4.4,1.2-6.6,1.4l4.9-52.4c.3-1.1.2-2-.5-2.9s-1.5-1.4-2.5-1.7c-1-.3-2-.3-3.2,0-1.2.4-2,1.2-2.8,2.6-.3,2-.7,4.7-1.2,8.2s-.7,7.3-1.2,11.3-.7,8.3-1.2,12.7c-.4,4.4-.7,8.5-1.1,12.2v.2c-.9.4-1.7.7-2.7,1-1,.3-2.1.4-3.4.5.2-1,.4-2,.5-3.2s.2-2.4.3-3.6v-3.7c0-1.3,0-2.5-.2-3.4-.2-2.2-.7-4.4-1.5-6.4s-1.7-3.7-2.9-5.1c-1.2-1.4-2.8-2.2-4.6-2.8-1.8-.4-4-.3-6.4.4-3.6-.4-6.8-.1-9.7,1-2.9,1.2-5.4,2.8-7.5,4.9s-3.9,4.7-5.1,7.6c-1.4,2.9-2.2,5.9-2.7,9-.2,1.3-.3,2.6-.3,3.9-.9,1.7-1.7,3.1-2.7,4.4-1.4,1.7-2.9,3.2-4.4,4.3-1.5,1.1-3,1.9-4.5,2.6-1.5.5-2.8,1-4,1.2-1.4.2-2.7.3-4,0-1.3-.2-2.5-.9-3.5-1.8-.9-.7-1.5-1.9-1.9-3.5-.4-1.6-.7-3.5-.7-5.6s0-4.3.2-6.5.6-4.4,1.3-6.4c.5-2,1.3-3.9,2.2-5.5.9-1.6,1.9-2.8,3.2-3.4.6.1,1.1.5,1.3,1.2s.2,1.6.1,2.6c0,1-.2,2-.3,3-.2,1.1-.2,1.9-.2,2.6.2,1.4.7,2.6,1.5,3.3s1.6,1.3,2.6,1.4c1,.1,1.9,0,2.8-.6,1-.5,1.7-1.5,2.2-2.8h.2l1.1-10.1c.3-1.4,0-2.6-.6-3.6-.7-1.1-1.7-1.6-2.9-1.8-1.5-2.2-3.6-3.4-6.2-3.5-2.7-.1-5.4.7-8,2.6-1.7,1.2-3.2,2.9-4.5,5s-2.4,4.5-3.2,7.1-1.4,5.4-1.7,8.2-.4,5.7-.2,8.5.7,5.4,1.5,7.7c.7,2.5,1.8,4.5,3.2,6.1,1.2,1.4,2.5,2.5,4,3.1,1.5.6,3,1.1,4.6,1.2s3.2,0,4.8-.2,3.1-.6,4.5-1.2c1.8-.6,3.7-1.6,5.7-2.6,1.9-1.1,3.9-2.4,5.7-3.7,1-.7,1.8-1.6,2.8-2.6.4,1,.9,1.9,1.4,2.9,1.4,2.4,3.3,4.3,5.8,5.8,2.5,1.5,5.5,2.1,9,2.1s7.3-1.1,10.5-2.9c3.2-1.9,5.9-4.6,7.9-8.2,3.1,0,6.1-.5,9.1-1.5v1c-.2,2.8-.3,4.7-.3,5.7,0,1.7-.2,3.9-.3,6.4-.2,2.6-.3,5.2-.3,8s0,5.7.3,8.6c.2,2.9.9,5.5,1.7,7.8s2,4.3,3.6,6c1.6,1.6,3.6,2.6,6.1,2.9,2.7.3,5-.1,7-1.4s3.5-3.1,4.8-5.5c1.2-2.2,2-4.9,2.6-7.9.5-3,.6-6,.4-9.1s-.7-5.9-1.7-8.6-2.1-4.9-3.7-6.6c1-.2,2.1-.7,3.4-1.5s2.7-1.6,4.1-2.5c.3-.2.6-.4,1.1-.6-.1,1.8-.2,3.2-.2,4,0,1.7-.2,3.9-.3,6.4-.2,2.6-.3,5.2-.3,8s0,5.7.3,8.6c.2,2.9.9,5.5,1.7,7.8s2,4.3,3.6,6c1.6,1.6,3.6,2.6,6.1,2.9,2.7.3,5-.1,7-1.4s3.5-3.1,4.8-5.5c1.2-2.2,2-4.9,2.6-7.9.5-3,.6-6,.4-9.1s-.7-5.9-1.7-8.6-2.1-4.9-3.7-6.6c1-.2,2.1-.7,3.4-1.5s2.7-1.6,4.1-2.5c.7-.5,1.5-1,2.1-1.5.3,2.6.9,4.8,1.8,6.7,1.2,2.4,2.7,4.1,4.6,5.4s4.3,1.9,6.8,2.1c2.7.1,5.6-.3,8.7-1.5,2.4-.9,4.4-1.9,6.1-3.2,1.7-1.3,3.2-2.8,4.6-4.6,0-.1.2-.2.2-.3.2.7.5,1.5.9,2.1,1.2,2.4,2.7,4.1,4.6,5.4s4.3,1.9,6.8,2.1c2.7.1,5.6-.3,8.7-1.5,2.4-.9,4.4-1.9,6.1-3.2,1.7-1.3,3.2-2.8,4.6-4.6s2.7-3.9,3.7-6.3c1.2-2.4,2.2-5.1,3.4-8.1.2-.9,0-1.6-.6-2.2h0v-.2Z"/></svg>',
+    paypal: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.607 4.653H8.941L6.645 19.251H1.82L4.862 0h7.995c3.754 0 6.375 2.294 6.473 5.513-.648-.478-2.105-.86-3.722-.86m6.57 5.546c0 3.41-3.01 6.853-6.958 6.853h-2.493L11.595 24H6.74l1.845-11.538h3.592c4.208 0 7.346-3.634 7.153-6.949a5.24 5.24 0 0 1 2.848 4.686M9.653 5.546h6.408c.907 0 1.942.222 2.363.541-.195 2.741-2.655 5.483-6.441 5.483H8.714Z"/></svg>',
+    bitcoin: '<svg viewBox="3.961 4.178 15.2 15.2" fill="currentColor"><path d="M17.288 10.291c.24-1.59-.974-2.45-2.64-3.03l.54-2.153-1.315-.33-.525 2.107c-.345-.087-.705-.167-1.064-.25l.526-2.127-1.32-.33-.54 2.165c-.285-.067-.565-.132-.84-.2l-1.815-.45-.35 1.407s.975.225.955.236c.535.136.63.486.615.766l-1.477 5.92c-.075.166-.24.406-.614.314.015.02-.96-.24-.96-.24l-.66 1.51 1.71.426.93.242-.54 2.19 1.32.327.54-2.17c.36.1.705.19 1.05.273l-.51 2.154 1.32.33.545-2.19c2.24.427 3.93.257 4.64-1.774.57-1.637-.03-2.58-1.217-3.196.854-.193 1.5-.76 1.68-1.93h.01zm-3.01 4.22c-.404 1.64-3.157.75-4.05.53l.72-2.9c.896.23 3.757.67 3.33 2.37zm.41-4.24c-.37 1.49-2.662.735-3.405.55l.654-2.64c.744.18 3.137.524 2.75 2.084v.006z"/></svg>',
+    github: '<svg viewBox="0 0 20 20" fill="currentColor"><path transform="scale(1.25)" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>',
+    mail: '<svg viewBox="0 0 14 14" class="cc-mark-rest" fill="currentColor"><g><path fill="currentColor" fill-rule="evenodd" d="M0 2.75a1.5 1.5 0 0 1 1.5 -1.5h11a1.5 1.5 0 0 1 1.5 1.5v0.342L7.383 7.504A0.72 0.72 0 0 1 7 7.607a0.72 0.72 0 0 1 -0.383 -0.103L0 3.092V2.75Zm0 1.844v6.656a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5 -1.5V4.594L8.073 8.546l-0.005 0.004A1.966 1.966 0 0 1 7 8.857c-0.375 0 -0.753 -0.102 -1.068 -0.307l-0.005 -0.004L0 4.594Z" clip-rule="evenodd"></path></g></svg><svg viewBox="2 0.32 20 20" class="cc-mark-hover" fill="currentColor"><path d="M4,8L12,13L20,8V8L12,3L4,8V8M22,8V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V8C2,7.27 2.39,6.64 2.97,6.29L12,0.64L21.03,6.29C21.61,6.64 22,7.27 22,8Z" /></svg>',
+    bug: '<svg viewBox="0.05 0.05 13.9 13.9" fill="currentColor"><g><path fill="currentColor" fill-rule="evenodd" d="M10.1346 1.71069c0.0001 -0.41421 -0.33558 -0.750107 -0.74979 -0.750241 -0.41421 -0.000133 -0.75011 0.335541 -0.75024 0.749761 -0.00009 0.2881 -0.07634 0.57107 -0.22101 0.82022 -0.10982 0.18914 -0.25611 0.35369 -0.42966 0.48451 -0.31826 -0.06272 -0.64724 -0.0956 -0.98389 -0.0956 -0.33664 0 -0.6656 0.03288 -0.98385 0.09559 -0.17354 -0.13081 -0.31983 -0.29536 -0.42965 -0.4845 -0.14466 -0.24915 -0.22091 -0.53212 -0.221 -0.82022 -0.00013 -0.41422 -0.33603 -0.749894 -0.75024 -0.749761 -0.41422 0.000134 -0.74989 0.336031 -0.74976 0.750241 0.00018 0.5525 0.14639 1.09515 0.42382 1.57294 0.06078 0.10469 0.12739 0.20544 0.1994 0.30185 -0.47748 0.27348 -0.90612 0.62255 -1.26961 1.03089 -0.22639 -0.16753 -0.47029 -0.31148 -0.72801 -0.42907 -0.53139 -0.24246 -1.10894 -0.36711 -1.693029 -0.36541 -0.414212 0.0012 -0.7490202 0.33796 -0.7478154 0.75217 0.0012048 0.41422 0.3379664 0.74902 0.7521784 0.74782 0.367766 -0.00107 0.731426 0.07742 1.066006 0.23008 0.18909 0.08628 0.36637 0.19509 0.52815 0.32367 -0.18431 0.40261 -0.31734 0.83359 -0.39077 1.28459H0.800262c-0.414213 0 -0.7499995 0.33578 -0.7499995 0.75 0 0.41421 0.3357865 0.75 0.7499995 0.75H1.98524c0.06223 0.46278 0.18702 0.90575 0.36557 1.32009 -0.14925 0.11319 -0.31095 0.20989 -0.48236 0.28809 -0.33458 0.1527 -0.69824 0.2312 -1.066006 0.2301 -0.414212 -0.0012 -0.7509736 0.3336 -0.7521784 0.7478 -0.0012048 0.4142 0.3336034 0.751 0.7478154 0.7522 0.584089 0.0017 1.161639 -0.1229 1.693029 -0.3654 0.22985 -0.1049 0.44871 -0.2307 0.65395 -0.3756 0.92816 1.0905 2.31077 1.7822 3.85495 1.7822 1.54417 0 2.92679 -0.6917 3.85499 -1.7822 0.2052 0.1449 0.4241 0.2707 0.6539 0.3756 0.5314 0.2425 1.109 0.3671 1.6931 0.3654 0.4142 -0.0012 0.749 -0.338 0.7478 -0.7522 -0.0012 -0.4142 -0.338 -0.749 -0.7522 -0.7478 -0.3678 0.0011 -0.7314 -0.0774 -1.066 -0.2301 -0.1714 -0.0782 -0.3331 -0.1749 -0.4824 -0.2881 0.1786 -0.41434 0.3033 -0.8573 0.3656 -1.32008h1.185c0.4142 0 0.75 -0.33579 0.75 -0.75 0 -0.41422 -0.3358 -0.75 -0.75 -0.75h-1.2056c-0.0734 -0.45099 -0.2065 -0.88197 -0.3908 -1.28458 0.1618 -0.12859 0.3391 -0.2374 0.5282 -0.32368 0.3346 -0.15266 0.6982 -0.23115 1.066 -0.23008 0.4142 0.0012 0.751 -0.3336 0.7522 -0.74782 0.0012 -0.41421 -0.3336 -0.75097 -0.7478 -0.75217 -0.5841 -0.0017 -1.1617 0.12295 -1.6931 0.36541 -0.2577 0.11759 -0.5016 0.26155 -0.728 0.42908 -0.3635 -0.40833 -0.79211 -0.75739 -1.26958 -1.03087 0.07202 -0.09642 0.13864 -0.19718 0.19943 -0.30188 0.27743 -0.47779 0.42365 -1.02043 0.42385 -1.57294ZM7.00001 4.41934c1.42372 0 2.65224 0.83571 3.22179 2.04334H3.77821c0.56955 -1.20763 1.79808 -2.04334 3.2218 -2.04334Z" clip-rule="evenodd"></path></g></svg>'
+  };
+  // A button in the shape of the README's buttons (GlimStone, "The App tab"): the mark and the name
+  // at rest, and under the pointer the brand's own colour, a second line and one sheen. A link
+  // opens in a new tab, and a run button does its work on the page.
+  function readmeBtn(o) {
+    var unit = el("span", "cc-rbtn-unit cc-tile-" + o.brand), b;
+    if (o.href) {
+      b = el("a", "cc-rbtn");
+      b.href = o.href;
+      if (!/^mailto:/.test(o.href)) { b.target = "_blank"; b.rel = "noopener noreferrer"; }
+    } else {
+      b = actionBtn("", "cc-rbtn", o.run);
+    }
+    b.setAttribute("aria-label", o.sub ? o.name + " " + o.sub : o.name);
+    if (o.art) {
+      var art = el("span", "cc-rbtn-art"); art.innerHTML = o.art; b.appendChild(art);
+    } else {
+      var mk = el("span", "cc-rbtn-mark cc-" + o.brand + "-mark"); mk.innerHTML = o.mark; b.appendChild(mk);
+      var tx = el("span", "cc-rbtn-text"); tx.appendChild(el("span", "cc-rbtn-name", o.name));
+      if (o.sub) tx.appendChild(el("span", "cc-rbtn-sub", o.sub));
+      b.appendChild(tx);
+    }
+    unit.appendChild(b); unit.appendChild(el("span", "cc-rbtn-sheen"));
+    return unit;
+  }
+  // The bug report is a file the engine writes without passwords, keys or webhook addresses. It is
+  // saved as a download, and then GitHub's bug form opens so the file can be attached there. The
+  // form's tab opens before the request, inside the click, or a popup blocker would stop it.
+  function downloadBugReport(unit) {
+    var ctl = unit.querySelector(".cc-rbtn"), tab = window.open("about:blank", "_blank");
+    if (tab) tab.opener = null;
+    fetch(PROXY + "?path=bugreport", { credentials: "same-origin" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.blob(); })
+      .then(function (blob) {
+        var d = new Date(), p = function (n) { return ("0" + n).slice(-2); };
+        var a = el("a"); a.href = URL.createObjectURL(blob);
+        a.download = "cannonadecommand-bugreport-" + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + "-" + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds()) + ".txt";
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+        var form = REPO + "/issues/new?template=bug_report.yml&version=" + encodeURIComponent(CC_VER);
+        if (tab) tab.location.href = form; else window.open(form, "_blank", "noopener");
+        if (window.CCTheme && window.CCTheme.toast) window.CCTheme.toast(T("Fehlerbericht gespeichert. Häng die Datei im GitHub-Formular an.", "Bug report saved. Attach the file in the GitHub form."));
+      })
+      .catch(function (e) {
+        if (tab) tab.close();
+        failed(ctl, T("Der Fehlerbericht ließ sich nicht erstellen: ", "Could not create the bug report: ") + ((e && e.message) || e));
+      });
   }
   // Positive when version a is newer than b. A current version that is no release number, a dev
   // build, counts as older than any release.

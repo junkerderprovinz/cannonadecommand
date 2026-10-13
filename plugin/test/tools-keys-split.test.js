@@ -42,7 +42,7 @@ console.log('\nThe first load copies the Settings keys to Tools');
 console.log('\nThe settings page edits the Tools keys on the Tools tab');
 {
   ok('the Tools tab builds its cards on cct.', /buildStyleCards\("cct\.", wrapTools,/.test(settings));
-  ok('its exception is its own key', /exceptionRow\("cc\.styletools"\)/.test(settings));
+  ok('its exception is its own key', /colourRow\("cc\.styletools"\)/.test(settings));
   ok('cct. maps to cc.styletools', /"cct\.": "cc\.styletools"/.test(settings) && /"cc\.styletools": "cct\."/.test(settings));
   ok('Tools has its own line among the area colours', /\["cc\.styletools", "tools", T\("Werkzeuge", "Tools"\)\]/.test(settings));
 }

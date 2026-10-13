@@ -74,15 +74,14 @@ console.log('\nlogoToggles(): one adopt toggle above both colour pickers, none w
   ok('the adopt row is appended first, above the two controls and their pickers', intoAppends[0] === 'adoptRow', intoAppends.join(','));
   ok('one adopt row exists, with no per-control rows left', intoAppends.filter(n => /Rb(Row)?$/i.test(n)).length === 0, intoAppends.join(','));
 
-  // A control that is not in effect is dimmed and inert, which covers the two
-  // switches as much as their pickers.
+  // A control that has no effect is left out, the two switches as much as their
+  // pickers, and one line says what decides instead.
   ok('sync() guards adoptTg._setOn, adoptTg being null when hidden', /if \(adoptTg\) adoptTg\._setOn/.test(body));
-  ok('sync() dims the background colour picker while adopting', /bgPickRow\.style\.opacity = adopting \? "\.4" : ""/.test(body));
-  ok('sync() makes the background colour picker inert while adopting', /bgPickRow\.style\.pointerEvents = adopting \? "none" : ""/.test(body));
-  ok('sync() disables the Hintergrund switch while adopting', /bgTg\._setDisabled\(adopting\)/.test(body));
-  ok('sync() dims the tint colour picker while adopting', /tintPickRow\.style\.opacity = adopting \? "\.4" : ""/.test(body));
-  ok('sync() makes the tint colour picker inert while adopting', /tintPickRow\.style\.pointerEvents = adopting \? "none" : ""/.test(body));
-  ok('sync() disables the Icons switch while adopting', /tintTg\._setDisabled\(adopting\)/.test(body));
+  ok('sync() leaves both switch rows out while adopting', /bgRow\.hidden = tintRow\.hidden = adopting;/.test(body));
+  ok('sync() leaves the background picker out while adopting or while its switch is off', /bgPickRow\.hidden = adopting \|\| !io\.getBg\(\);/.test(body));
+  ok('sync() leaves the tint picker out while adopting or while its switch is off', /tintPickRow\.hidden = adopting \|\| !io\.getTint\(\);/.test(body));
+  ok('sync() shows the line that names what decides only while adopting', /lock\.hidden = !adopting;/.test(body));
+  ok('no switch in the card is dimmed instead', !/_setDisabled|style\.opacity/.test(body));
 
   ok('the returned handle exposes adoptToggle', /adoptToggle: adoptTg/.test(body));
   ok('the returned handle carries no per-control toggle names', !/bgRainbowToggle|tintRainbowToggle/.test(body));

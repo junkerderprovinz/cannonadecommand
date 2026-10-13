@@ -1,7 +1,8 @@
 // The global badge colour is a default with exceptions, as GlimStone's "Defaults and exceptions"
 // asks: one card on General says every area follows it and lists only the areas set apart, each
-// with a way back, and each area's own tab carries the exception as a switch. The keys keep their
-// meaning, an adopt key of "0" being an area with a colour of its own.
+// with a way back. Each area's own tab says in a colour line whether it follows General or has an
+// exception, in the same words, and shows its badge and logo cards only with an exception. The keys
+// keep their meaning, an adopt key of "0" being an area with a colour of its own.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand');
@@ -81,10 +82,10 @@ console.log('\nThe General card shows the default once and only the exceptions')
 console.log('\nSetting an area apart and back');
 {
   const ls = store({ 'cc.accent': '#fcc419' });
-  const toggles = [{ on: false }, { on: false }].map((t) => Object.assign(t, { _setOn(v) { t.on = v; } }));
+  const toggles = [{ on: false }, { on: false }];
   let synced = 0, painted = 0;
   const env = {
-    localStorage: ls, adoptToggles: { 'cc.stylesettings': toggles }, styleCardSync: { 'cc.stylesettings': () => synced++ },
+    localStorage: ls, areaSync: { 'cc.stylesettings': toggles.map((t) => (own) => { t.on = own; }) }, styleCardSync: { 'cc.stylesettings': () => synced++ },
     get: (k, d) => { const v = ls.getItem(k); return v == null ? d : v; }, set: (k, v) => ls.setItem(k, v),
     paintExceptions: () => painted++, syncHeaderBar: () => {}, syncSharesBar: () => {}
   };
@@ -92,7 +93,7 @@ console.log('\nSetting an area apart and back');
   setOwn('cc.stylesettings', true);
   ok('own colour writes "0" to the adopt key', ls.m['cc.stylesettings'] === '0');
   ok('it starts from the global accent', ls.m['ccs.accent'] === '#fcc419');
-  ok('both switches on that key follow, Settings and Tools', toggles.every((t) => t.on));
+  ok('everything on that key is told, the colour line and the area cards', toggles.every((t) => t.on));
   ok('the area card and the General card repaint', synced === 1 && painted === 1);
   ls.m['ccs.accent'] = '#ff8389';
   setOwn('cc.stylesettings', false);
@@ -101,15 +102,20 @@ console.log('\nSetting an area apart and back');
   ok('coming back again keeps the colour it had', ls.m['ccs.accent'] === '#ff8389');
 }
 
-console.log('\nEvery area tab carries the exception, never the nine adopt cards');
+console.log('\nEvery area tab carries a colour line, never a switch');
 {
   ok('the adopt label is gone', !/Globale Badge-Farbe übernehmen|Adopt the global badge colour/.test(settings));
+  ok('the old exception switch is gone', !/Eigene Farbe für diesen Bereich|Own colour for this area/.test(settings));
   ok('no Stil card carries the old adopt bubble', !/card\(T\("Stil", "Style"\), T\(/.test(settings));
-  const rows = [...settings.matchAll(/exceptionRow\("(cc\.style\w+)"/g)].map((m) => m[1]);
+  const rows = [...settings.matchAll(/colourRow\("(cc\.style\w+)"/g)].map((m) => m[1]);
   const want = ['cc.styledocker', 'cc.styleplugin', 'cc.stylevms', 'cc.styleheader', 'cc.styleshares', 'cc.stylesettings', 'cc.styletools', 'cc.stylefavorites', 'cc.stylemain'];
   ok('every area key has its exception row', want.every((k) => rows.includes(k)), rows.join(' '));
   ok('Settings and Tools each have their own', rows.filter((k) => k === 'cc.stylesettings').length === 1 && rows.filter((k) => k === 'cc.styletools').length === 1);
-  ok('the switch reads the key inverted', /toggle\(localStorage\.getItem\(key\) === "0", function \(v\) \{ setOwnColour\(key, v\); \}\)/.test(grabFn(settings, 'exceptionRow')));
+  const line = grabFn(settings, 'colourRow');
+  ok('the line uses the words of the General card', /T\("Folgt Allgemein", "Follows General"\)/.test(line) && /T\("Eigene Farbe", "Own colour"\)/.test(line) && /T\("Ausnahme hinzufügen", "Add an exception"\)/.test(line) && /T\("Globale Farbe nutzen", "Use the global colour"\)/.test(settings) && /T\("Globale Farbe nutzen", "Use the global colour"\)/.test(line));
+  ok('its button flips the key', /setOwnColour\(key, localStorage\.getItem\(key\) !== "0"\)/.test(line));
+  ok('the line has its (i)', /infoIcon\(/.test(line));
+  ok('an area\'s badge and logo cards show only with an exception', /var showCards = function \(own\) \{ cA\.classList\.toggle\("cc-set-off", !own\); cB\.classList\.toggle\("cc-set-off", !own\); \};/.test(settings) && /showCards\(localStorage\.getItem\(adoptKey\) === "0"\);/.test(settings));
   ok('a colour picked on an area card sets it apart', /setOwnColour\(adoptKey, true\)/.test(grabFn(settings, 'useOwn')));
   ok('the area picker has no select, so the wheel cannot add an exception', !/select/.test(grabFn(settings, 'areaPicker')));
 }

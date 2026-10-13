@@ -1176,17 +1176,28 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
 .cc-set-heroleft { display: flex; align-items: center; gap: 16px; }
 .cc-set-logo { width: 64px; height: 64px; border-radius: var(--cc-radius-control); display: block; }
 .cc-set-claim { color: var(--dim); font-size: var(--cc-text-subline); font-style: italic; margin-top: 2px; }
-/* The strip wraps rather than scrolling and hugs its tabs on one row; settings.js sizeSetTabs pins
-   every tab to the widest one and spreads a wrapped strip evenly over its rows. The 6px gap is the
-   main menu bar's own 0 3px per tab, and TAB_GAP in settings.js repeats it. */
-.cc-set-tabs { display: flex; flex-wrap: wrap; gap: 6px; width: fit-content; max-width: 100%; margin: 0 0 40px; }
-.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: inline-flex !important; align-items: center; justify-content: center; gap: 6px; box-sizing: border-box; white-space: nowrap; height: var(--cc-md-h, 30px) !important; padding: 0 12px !important; font-size: var(--cc-md-fs) !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: .2px !important; border-radius: var(--cc-radius-pill) !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS inflates the strip's gap; the compact padding and the plain case keep all eleven tabs on one row from 1280px */
+/* GlimStone's vertical tiles: the tab selector turned on its side, a column beside the cards that
+   stays in view while they scroll. The tiles stand 4px apart at a 40px floor, and a name that needs
+   it takes a second line. They keep that height rather than share the column's: with ten areas
+   a shared height makes each tile twice as tall as its name. Below 1024px the column shows the glyphs
+   alone, and settings.js moves each name into its bubble. */
+.cc-set-body { display: flex; align-items: flex-start; gap: 24px; }
+.cc-set-main { flex: 1 1 auto; min-width: 0; }
+.cc-set-tabs { position: sticky; top: 12px; flex: none; box-sizing: border-box; width: 12.75rem; max-height: calc(100vh - 24px); overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 0 8px 0 4px; margin: 0; }
+.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: flex !important; flex: none; min-height: 40px; align-items: center; justify-content: flex-start; gap: 10px; box-sizing: border-box; height: auto !important; padding: 0 12px !important; font-size: var(--cc-text-body) !important; font-weight: 600 !important; line-height: 20px; text-align: start; text-transform: none !important; letter-spacing: normal !important; border-radius: var(--cc-radius-control) !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS adds one to every button */
+.cc-set-tab[hidden] { display: none !important; }
+.cc-set-tablbl { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; text-wrap: balance; }
+@media (max-width: 1023px) {
+  .cc-set-tabs { width: 3.25rem; padding: 0 4px 0 0; }
+  .cc-set-tab { justify-content: center; padding: 0 !important; }
+  .cc-set-tablbl { display: none; }
+}
 .cc-set-tab:not(.cc-set-tab-on):hover { background: color-mix(in srgb, #2a2a2a 85%, var(--cc-text, #e6e6e6)) !important; }
 .cc-set-tab-on { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 /* GlimStone's tab-strip colour rule: an idle tab's glyph carries the tab's colour, the chosen tab
    carries it as its fill with the glyph in its ink, and in reactive mode an idle glyph rests in the
    tab's grey ink until the pointer or the focus reaches it. */
-.cc-set-tabico { flex: none; width: 16px; height: 16px; color: var(--cc-rb-c, var(--cc-accent, #FCC419)); }
+.cc-set-tabico { flex: none; width: 20px; height: 20px; color: var(--cc-rb-c, var(--cc-accent, #FCC419)); }
 .cc-set-tab-on .cc-set-tabico,
 #cc-settings.cc-set-reactive .cc-set-tab:not(.cc-set-tab-on) .cc-set-tabico { color: inherit; }
 #cc-settings.cc-set-reactive .cc-set-tab:not(.cc-set-tab-on):is(:hover, :focus-visible) .cc-set-tabico { color: var(--cc-rb-c, var(--cc-accent, #FCC419)); }
@@ -1198,11 +1209,11 @@ html.Theme--azure #cc-settings .cc-set-heroleft { --txt: var(--cc-text, #1c1c1c)
 /* The cards stay dark on the light themes, so a grey chip inside one, such as an idle tab in an
    area's preview, keeps the light chip ink instead of the page's dark one. */
 html:is(.Theme--white, .Theme--azure) #cc-settings .cc-set-card { --cc-text-chip: #cfcfcf; }
-/* The cards share the page's full width, so the last column ends at the same edge as the Docker
-   list. A row keeps its name at the start and its control at the end, and a field has a width of
-   its own rather than stretching with the card. Stacked cards keep GlimStone's 40px rhythm, since
-   every card's title badge reaches into the gap above it. */
-.cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 40px 16px; }
+/* The cards stand under each other at the page's full width, so they end at the same edge as the
+   Docker list. A row keeps its name at the start and its control at the end, and a field, a
+   picker or a slider keeps a width of its own rather than stretching with the card. Stacked cards
+   keep GlimStone's 40px rhythm, since every card's title badge reaches into the gap above it. */
+.cc-set-wrap { display: flex; flex-direction: column; gap: 40px; }
 .cc-set-card { position: relative; background: #222222; border: none; border-radius: var(--cc-radius-card); padding: 22px 18px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
 /* The card title is a filled section badge straddling the card's top edge. It sets no left, so it
    falls back to its static position on the card's content edge, and the self-relative translate
@@ -1376,6 +1387,8 @@ button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-t
 #cc-settings .cc-set-pickrow { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
 #cc-settings .cc-set-pickrow .cc-set-hexin { width: 110px; align-self: flex-start; }
 .cc-ip { width: 100%; min-width: 0; }
+#cc-settings .cc-set-pickrow, #cc-settings .cc-set-swatches.cc-fill { max-width: 420px; }
+#cc-settings .cc-set-row input[type="range"] { flex: 0 1 280px; margin-left: auto; }
 /* an icon-only tile button in the settings, such as the palette undo arrow: the header tile's
    look on the shared control line, an accent fill with a contrast glyph */
 #cc-settings .cc-set-ibtn {
@@ -1394,11 +1407,9 @@ button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-t
    contains white makes the track white, and a white knob disappears into it. It falls back to
    #fff, so nothing changes for a dark slot. */
 .cc-set-toggle-on .cc-set-knob { left: 21px; background: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
-/* a gated toggle, such as Favoriten while the native favourites are off, reads non-interactive */
-.cc-set-toggle-disabled { opacity: .4; cursor: not-allowed; filter: grayscale(1); }
 /* the hint under a gated toggle, naming its precondition */
 .cc-set-hint { margin-top: 3px; font-size: var(--cc-text-meta); line-height: 1.3; color: var(--dim2, #8a8a8a); max-width: 320px; }
-.cc-set-tbl { width: 100%; border-collapse: collapse; font-size: var(--cc-text-subline); margin-top: 4px; }
+.cc-set-tbl { width: 100%; max-width: 560px; border-collapse: collapse; font-size: var(--cc-text-subline); margin-top: 4px; }
 .cc-set-tbl th { color: var(--dim2); font-size: var(--cc-text-meta); text-transform: uppercase; letter-spacing: .5px; font-weight: 500; padding: 4px 10px; text-align: center; }
 .cc-set-tbl td { padding: 5px 10px; border-top: 1px solid var(--line); }
 .cc-set-cname { text-align: left; }

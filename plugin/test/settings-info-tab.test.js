@@ -31,18 +31,29 @@ console.log('\nThe last tab is Info, with three cards in GlimStone order');
 {
   ok('Info is pushed after every area', /SECS\.push\(\{ id: "info", t: T\("Info", "Info"\), w: wrapInfo, key: null \}\);/.test(settings));
   ok('the Info tab has a glyph', /^\s+info: \["/m.test(settings));
-  ok('its cards stand on the page', /root\.appendChild\(wrapInfo\);/.test(settings));
+  ok('its cards stand on the page', /\[wrapMain, [^\]]*wrapInfo\]\.forEach\(function \(w\) \{ main\.appendChild\(w\); \}\);/.test(settings));
   const block = settings.slice(settings.indexOf('// The Info tab in GlimStone'), settings.indexOf('refreshTabs();', settings.indexOf('// The Info tab in GlimStone')));
   const order = [...block.matchAll(/card\(T\("([^"]+)", "([^"]+)"\)\)/g)].map((m) => m[2]);
   ok('Version, Help, About', order.join(',') === 'Version,Help,About', order.join(','));
   ok('the engine version comes from the state call', /apiRead\("state"\)\.then\(function \(st\) \{/.test(block));
   ok('an unreachable engine says so', /T\("nicht erreichbar", "not reachable"\)/.test(block));
-  for (const url of ['https://buymeacoffee.com/junkerderprovinz', 'https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS', 'https://junkerderprovinz.github.io/junkerderprovinz/', 'REPO + "/issues"', 'REPO + "/issues/new/choose"']) {
+  for (const url of ['https://buymeacoffee.com/junkerderprovinz', 'https://www.paypal.com/donate/?hosted_button_id=76FVV52TKXTUS', 'https://junkerderprovinz.github.io/junkerderprovinz/', 'href: REPO }', 'mailto:hello@halleluja.design?subject=CannonadeCommand']) {
     ok('About and Help reach ' + url, block.includes(url));
   }
   const coffee = block.indexOf('buymeacoffee'), paypal = block.indexOf('paypal.com'), crypto = block.indexOf('github.io/junkerderprovinz');
   ok('the give row runs coffee, PayPal, crypto', coffee < paypal && paypal < crypto);
-  ok('every outside link opens in a new tab without an opener', /a\.target = "_blank"; a\.rel = "noopener noreferrer";/.test(grabFn(settings, 'linkBtn')));
+  const gh = block.indexOf('brand: "github"'), mail = block.indexOf('mailto:'), bug = block.indexOf('downloadBugReport');
+  ok('Help runs GitHub, Email, bug report', gh > 0 && gh < mail && mail < bug);
+  ok('the bug report says it is a download', /name: T\("Fehlerbericht", "Bug report"\), sub: T\("Herunterladen", "Download"\)/.test(block));
+  ok('the Help sentence names both ways the buttons offer', /oder schreib eine E-Mail/.test(block) && /or send an email/.test(block));
+  const btn = grabFn(settings, 'readmeBtn');
+  ok('an outside link opens in a new tab without an opener', /b\.target = "_blank"; b\.rel = "noopener noreferrer";/.test(btn));
+  ok('a mail link opens no empty tab', /if \(!\/\^mailto:\/\.test\(o\.href\)\)/.test(btn));
+  ok('the old plain links are gone', !/function linkBtn/.test(settings));
+  ok('every button carries its mark, Buy Me a Coffee its own artwork', /art: BRAND_MARKS\.coffee/.test(block) && /mark: BRAND_MARKS\.paypal/.test(block) && /mark: BRAND_MARKS\.bitcoin/.test(block) && /mark: BRAND_MARKS\.github/.test(block) && /mark: BRAND_MARKS\.mail/.test(block) && /mark: BRAND_MARKS\.bug/.test(block));
+  ok('the give row stands a blank line under its sentence', /"#cc-settings \.cc-rbtn-rows\.cc-set-give\{margin-top:calc\(var\(--cc-text-body\) \* 1\.5\)\}"/.test(settings));
+  ok('the prose runs ragged, never justified', /"#cc-settings \.cc-set-prose\{text-align:start\}"/.test(settings));
+  ok('a brand takes its own colour only under the pointer', /#cc-settings \.cc-rbtn-unit:hover \.cc-rbtn\{background:var\(--cc-tile\);color:var\(--cc-tile-ink\)/.test(settings));
 }
 
 console.log('\nEvery version links to its release page');

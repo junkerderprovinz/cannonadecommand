@@ -43,15 +43,16 @@ console.log('\nThe filter and its empty state');
     new Card('Notifications', [new Row('Unraid notifications'), new Row('Webhook URL')])
   ];
   const empty = { style: { display: 'none' } }, hint = { textContent: '' };
-  const tabRow = new Row('').style;
+  const tile = { cls: new Set(['cc-set-tab-on']), attrs: {}, classList: { remove(c) { tile.cls.delete(c); } }, setAttribute(k, v) { tile.attrs[k] = v; } };
   let restored = 0;
   const env = {
     root: { querySelectorAll: (sel) => sel === '.cc-set-card' ? cards : [] },
-    tabRow: { style: tabRow }, SECS: [{ w: { style: {} } }], searchEmpty: empty, emptyHint: hint,
+    tabBtns: [tile], SECS: [{ w: { style: {} } }], searchEmpty: empty, emptyHint: hint,
     T: (d, e) => e, searchText, restore: () => { restored++; }
   };
   const runFilter = new Function('env', 'with (env) { ' + grabFn(settings, 'runFilter') + '\nreturn runFilter; }')(env);
   runFilter('hop');
+  ok('no tile stays chosen while the matches come from every tab', !tile.cls.has('cc-set-tab-on') && tile.attrs['aria-selected'] === 'false');
   ok('a card whose bubble matches stays', cards[0].style.display === '' && cards[0].rows[1].style.display === '');
   ok('its other rows go', cards[0].rows[0].style.display === 'none');
   ok('a card with no match goes', cards[1].style.display === 'none');
@@ -116,23 +117,14 @@ console.log('\nCtrl+K reaches the settings search through the palette');
   ok('on other pages the palette has no such entry', !lst2.children.some((it) => it.pinned));
 }
 
-// The search badge lines up with the card grid's right edge. A tab with two cards and one with
-// six share the same grid tracks, so the badge has to stay where it is when the tab changes.
-console.log('\nThe search badge stays put from tab to tab');
+// The cards run the full width of the page, so the search badge at the end of the hero ends on
+// their edge on every tab, with nothing to measure.
+console.log("\nThe search badge ends on the cards' edge");
 {
-  const grab = (name) => { const i = settings.indexOf('function ' + name + '('); let d = 0; for (let k = settings.indexOf('{', i); k < settings.length; k++) { if (settings[k] === '{') d++; else if (settings[k] === '}') { d--; if (!d) return settings.slice(i, k + 1); } } return ''; };
-  // a 1600px hero from x 20, a grid at x 20 with four 340px tracks and 16px gaps, so its edge is 1428
-  const badge = { margin: 0, style: { setProperty(k, v) { if (k === 'margin-right') badge.margin = parseFloat(v); }, removeProperty(k) { if (k === 'margin-right') badge.margin = 0; } }, getBoundingClientRect: () => ({ right: 1620 - badge.margin }) };
-  const tab = (cards) => ({ style: { display: '' }, getBoundingClientRect: () => ({ left: 20 }), querySelectorAll: () => Array.from({ length: cards }, (_, i) => ({ getBoundingClientRect: () => ({ width: 340, right: 20 + 340 * (i % 4 + 1) + 16 * (i % 4) }) })) });
-  const cs = () => ({ gridTemplateColumns: '340px 340px 340px 340px', paddingLeft: '0px', borderLeftWidth: '0px', columnGap: '16px' });
-  const at = (cards) => {
-    const SECS = [{ w: tab(cards) }];
-    new Function('document', 'SECS', 'getComputedStyle', grab('ccSetAlignSearch') + '\nccSetAlignSearch();')({ querySelector: () => badge }, SECS, cs);
-    return badge.getBoundingClientRect().right;
-  };
-  const wide = at(6), narrow = at(2);
-  ok('with a full row of cards the badge ends at the grid\'s edge', wide === 1428, String(wide));
-  ok('a tab with two cards leaves it there', narrow === wide, `${narrow} vs ${wide}`);
+  const { candidates } = require('./cascade');
+  const hero = candidates('settings', { tag: 'div', classes: ['cc-set-hero'], attrs: {}, states: {}, inside: ['#cc-settings'] }, 'justify-content');
+  ok('the hero puts the badge at its end', hero.length && hero[hero.length - 1].value === 'space-between');
+  ok('no script moves the badge after the cards', !/ccSetAlignSearch|__ccSetAlignSearch/.test(settings));
 }
 
 // The empty state stands in for the cards, dark like them on every theme, and its two lines
