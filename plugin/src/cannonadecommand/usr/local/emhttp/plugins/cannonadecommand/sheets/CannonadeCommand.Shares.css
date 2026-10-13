@@ -786,6 +786,19 @@ html.cc-shares-on.cc-on-main:not(.cc-sections-main) #displaybox .cc-aop-pcard {
   background: rgba(255, 255, 255, .045); border-radius: var(--cc-radius-card); padding: 14px 18px;
   display: flex; flex-direction: column; gap: 8px;
 }
+/* On a narrow page the two tracks stack, label over control, the parity card follows the buttons
+   in the flow, and the unassigned-device tables scroll inside their own box, so the page itself
+   never scrolls sideways. */
+@media (max-width: 1023px) {
+  html.cc-shares-on.cc-on-main #displaybox table.array_status tr { grid-template-columns: minmax(0, 1fr); }
+  html.cc-shares-on.cc-on-main #displaybox table.array_status tr > td:nth-child(2) { white-space: normal; flex-wrap: wrap; }
+  html.cc-shares-on.cc-on-main #displaybox table.array_status tr > td:nth-child(2) .buttons-spaced { min-width: 0; max-width: 100%; }
+  html.cc-shares-on.cc-on-main #displaybox table.array_status tr > td:nth-child(2) .buttons-spaced > * { max-width: 100%; white-space: normal; }
+  html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-brow { flex-wrap: wrap; gap: 8px; }
+  html.cc-shares-on.cc-on-main #displaybox table.array_status .cc-aop-toggle { margin-left: 0; white-space: normal; }
+  html.cc-shares-on.cc-on-main:is(.cc-sections-main, :not(.cc-sections-main)) #displaybox .cc-aop-pcard { position: static; width: auto; max-width: none; margin: 12px 0; }
+  html.cc-shares-on.cc-on-main #displaybox :is(.show-disks, .show-shares) { overflow-x: auto; }
+}
 html.cc-shares-on.cc-on-main #displaybox .cc-aop-prow { display: flex; justify-content: space-between; gap: 18px; align-items: center; font-size: var(--cc-md-fs); }
 html.cc-shares-on.cc-on-main #displaybox .cc-aop-prow .cc-aop-pv { font-weight: 700; white-space: nowrap; }
 html.cc-shares-on.cc-on-main #displaybox .cc-aop-rows { display: flex; flex-direction: column; gap: 8px; }

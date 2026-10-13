@@ -177,6 +177,9 @@ html.cc-header-on .tooltipster-base .tooltipster-arrow { display: none !importan
    them. Small chips (about 22px, meta-size text) with 10px state dots and no borders: the grey fill
    is the chip, and header.js sets each dot's colour inline. */
 html.cc-header-on #header { display: flex; align-items: center; }   /* a flex row so margin-left:auto works and everything centres on the 91px line */
+/* on a phone a long server name and the island do not fit one row, and the island goes under the
+   name rather than past the page's edge */
+@media (max-width: 767px) { html.cc-header-on #header { flex-wrap: wrap; } }
 /* The island is a column of three right-aligned rows. header.js fills them in the saved
    cc.isl.order and lets the user long-press and drag a chip to any row and position. */
 html.cc-header-on #cc-island {

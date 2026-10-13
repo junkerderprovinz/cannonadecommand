@@ -842,9 +842,23 @@
       }
       return cg;
     }
-    function set(w) {
-      var sum = 0, i, n = w.length; for (i = 0; i < n; i++) sum += w[i];
+    // Stored widths wider than the page shrink in proportion to fit it, so the last columns are not
+    // cut off at its edge. Below half their width the columns get too narrow to read, so on a page
+    // that small the table keeps them and scrolls inside .TableContainer. A drag passes no fit and
+    // widens the table, as Explorer does.
+    function fitted(w, room) {
+      var sum = 0; for (var i = 0; i < w.length; i++) sum += w[i];
+      if (!room || sum <= room || room < sum / 2) return w;
+      return w.map(function (v) { return Math.max(min, Math.floor(v * room / sum)); });
+    }
+    function room(tbs) {   // a sub-tab hidden in native-tabs mode measures 0, so the widest one counts
+      var r = 0; for (var t = 0; t < tbs.length; t++) r = Math.max(r, tbs[t].parentNode.clientWidth || 0);
+      return r;
+    }
+    function set(w, fit) {
       var tbs = tables();
+      if (fit) w = fitted(w, room(tbs));
+      var sum = 0, i, n = w.length; for (i = 0; i < n; i++) sum += w[i];
       for (var t = 0; t < tbs.length; t++) {
         var cols = colgroup(tbs[t], n).children;
         for (i = 0; i < n; i++) { var px = w[i] + "px"; if (cols[i].style.width !== px) cols[i].style.width = px; }
@@ -875,12 +889,12 @@
           break;
         }
         if (w) { set(w); markAuto(true); }
-      } else { set(w); markAuto(false); }
+      } else { set(w, true); markAuto(false); }
       if (!bound) {
         bound = true;
         window.addEventListener("resize", function () {
-          if (read()) return;   // stored widths stay
-          clear(); apply();     // derived widths re-fit now, since /Shares has no nchan tick
+          if (!read()) clear();   // derived widths are measured again
+          apply();                // and stored ones fit the new width, since /Shares has no nchan tick
         });
       }
     }
@@ -888,8 +902,7 @@
       if (e.button != null && e.button !== 0) return;
       var table = this.closest("table"), h = table && headOf(table), n = num();
       if (!h || !n || h.children.length < n) return;
-      var w = read();
-      if (!w) { w = []; for (var k = 0; k < n; k++) w.push(Math.max(min, Math.round(h.children[k].getBoundingClientRect().width))); }   // the grabbed table's current geometry, so nothing jumps
+      var w = []; for (var k = 0; k < n; k++) w.push(Math.max(min, Math.round(h.children[k].getBoundingClientRect().width)));   // the grabbed table's geometry as drawn, fitted or not, so nothing jumps
       set(w);
       var ci = +this.getAttribute("data-cc-col");
       drag = { i: ci, x: e.clientX, w: w, start: w[ci] };
