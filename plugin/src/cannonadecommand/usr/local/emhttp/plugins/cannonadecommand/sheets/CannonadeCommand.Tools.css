@@ -562,14 +562,15 @@ html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch { border: none; b
 html.cc-tools-on #displaybox dd:has(> .cc-colpick) { flex-direction: row !important; align-items: center; max-width: 240px; }
 html.cc-tools-on #displaybox dd:has(> .cc-colpick) input[type="text"][data-cc-colpick] { flex: 1 1 auto; width: auto; min-width: 0; }
 
-/* native checkboxes: dark, borderless, accent when checked */
-html.cc-tools-on #displaybox input[type="checkbox"] {
+/* native checkboxes: dark, borderless, accent when checked. The Docker list's selection mark stays
+   round: the page counts as a tools page whenever #displaybox holds a fieldset legend. */
+html.cc-tools-on #displaybox input[type="checkbox"]:not(.cc-bulk-cb) {
   -webkit-appearance: none; appearance: none; width: 18px; height: 18px; box-sizing: border-box; flex: none;
   background: var(--cc-tl-surface2, #232323); border: none !important; outline: none !important; border-radius: calc(var(--cc-radius-control) / 3);
   cursor: pointer; vertical-align: middle; position: relative; margin: 0 6px 0 0;
 }
-html.cc-tools-on #displaybox input[type="checkbox"]:checked { background: var(--cc-accent, #FCC419); }
-html.cc-tools-on #displaybox input[type="checkbox"]:checked::after {
+html.cc-tools-on #displaybox input[type="checkbox"]:not(.cc-bulk-cb):checked { background: var(--cc-accent, #FCC419); }
+html.cc-tools-on #displaybox input[type="checkbox"]:not(.cc-bulk-cb):checked::after {
   content: ""; position: absolute; left: 5.5px; top: 1.5px; width: 4px; height: 9px;
   border: solid var(--cc-accent-text, #161616); border-width: 0 2px 2px 0; transform: rotate(45deg);
 }

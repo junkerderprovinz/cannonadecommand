@@ -31,7 +31,7 @@ const INK = 'var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #1616
 
 console.log('\nThe multi-select is the selection mark');
 {
-  const base = rule(docker, '.cc-bulk-cb');
+  const base = rule(docker, 'html .cc-bulk-cb');
   ok('the mark is drawn, not the system box', /appearance:\s*none !important/.test(base) && !/accent-color/.test(base), base);
   // A circle is a form, not a shape setting: under Soft or Square the radius tokens shrink to 5px
   // or 0 and would turn the mark into a box, so the winning radius is a plain 50%.
@@ -43,14 +43,14 @@ console.log('\nThe multi-select is the selection mark');
   ok('it rests as a shade', /background:\s*rgba\(128, 128, 128, \.28\)/.test(base));
   ok('its slot is always there, so a row does not move when its mark comes in', /display:\s*inline-block !important/.test(base) && /opacity:\s*0;/.test(base), base);
   ok('it comes in under the pointer, with the focus in the row, once one is picked, in bulk mode and while it is ticked',
-    /html:is\(\.cc-bulkmode-on, \.cc-bulk-picked\) \.cc-bulk-cb,\s*#docker_list tr:is\(:hover, :focus-within\) \.cc-bulk-cb, \.cc-bulk-cb:checked \{ opacity: 1; \}/.test(docker));
-  const picked = rule(docker, '.cc-bulk-cb:checked');
+    /html:is\(\.cc-bulkmode-on, \.cc-bulk-picked\) \.cc-bulk-cb,\s*#docker_list tr:is\(:hover, :focus-within\) \.cc-bulk-cb, html \.cc-bulk-cb:checked \{ opacity: 1; \}/.test(docker));
+  const picked = rule(docker, 'html .cc-bulk-cb:checked');
   ok('picked, it takes the row\'s colour chain', picked.includes('background: ' + CHAIN), picked);
-  const tick = rule(docker, '.cc-bulk-cb:checked::before');
+  const tick = rule(docker, 'html .cc-bulk-cb:checked::before');
   ok('the tick is painted in the chain\'s ink', tick.includes('background: ' + INK), tick);
   ok('the tick is GlimStone\'s filled IconCheck, as a mask', /mask: url\("data:image\/svg\+xml;utf8,<svg [^"]*viewBox='0\.3 0\.549 13\.399 13\.399'><path d='M4\.381 12\.219 /.test(tick) && /-webkit-mask:/.test(tick));
   ok('the tick is a filled shape, not a stroke', !/stroke/.test(tick));
-  ok('a keyboard focus shows the accent halo', /box-shadow:\s*0 0 0 3px color-mix\(in srgb, var\(--cc-accent, #FCC419\) 45%, transparent\)/.test(rule(docker, '.cc-bulk-cb:focus-visible')));
+  ok('a keyboard focus shows the accent halo', /box-shadow:\s*0 0 0 3px color-mix\(in srgb, var\(--cc-accent, #FCC419\) 45%, transparent\)/.test(rule(docker, 'html .cc-bulk-cb:focus-visible')));
   const js = read('scripts/docker.js');
   ok('docker.js still builds the mark as a checkbox, so the bulk code reads .checked', /el\("input", "cc-bulk-cb"\); bcb\.type = "checkbox";/.test(js));
 }
@@ -99,6 +99,31 @@ console.log('\nCtrl and Shift pick rows the way a file manager does');
   ok('a Shift on the mark itself picks the range too', /if \(bcbShift && ccBulkInRange\(tr\)\) \{ ccBulkClick\(tr, \{ shiftKey: true \}\); return; \}/.test(js));
   ok('html.cc-bulk-picked follows whether anything is picked', /classList\.toggle\("cc-bulk-picked", names\.length > 0\)/.test(js));
   ok('each mark is named for its container', /bcb\.setAttribute\("aria-label", \(LANG === "de" \? "Auswählen: " : "Select "\) \+ name\);/.test(js));
+}
+
+console.log('\nNo other rule on the page turns the mark into a box');
+{
+  // The Docker tab counts as a tools page whenever #displaybox holds a fieldset legend, and then
+  // the tools sheet's checkbox rule, at (1,2,2), would square the mark and draw a rotated tick.
+  const { candidates, withUnraid, cmp } = require('./cascade');
+  const page = withUnraid('docker');
+  const html = ['cc-docker-on', 'cc-popups-on', 'cc-enh', 'cc-tools-on', 'cc-shares-on', 'cc-on-main', 'cc-header-on', 'cc-vms-on', 'cc-rb-on', 'cc-badge-glass'];
+  const own = (w) => !!w && /(^|\s)html \.cc-bulk-cb(:|$)/.test(w.selector);
+  for (const checked of [false, true]) {
+    const el = { tag: 'input', classes: ['cc-bulk-cb'], attrs: { type: 'checkbox' }, states: { checked }, html, outside: ['.cc-pop', '#cc-settings', '.ui-dropdownchecklist-item', '.array_status'] };
+    // Unraid sets margin-right alone, so the shorthand competes with it as well.
+    for (const prop of ['border-radius', 'background', 'width', 'height', 'margin-right']) {
+      const c = candidates(page, el, prop).concat(prop === 'margin-right' ? candidates(page, el, 'margin') : []).sort((x, y) => (x.important - y.important) || cmp(x.spec, y.spec) || (x.order - y.order));
+      const w = c[c.length - 1];
+      ok((checked ? 'picked' : 'at rest') + ', the mark keeps its own ' + prop, own(w), w && w.sheet + ': ' + w.selector + ' => ' + w.value);
+    }
+  }
+  // A pseudo-element never matches in the cascade helper, so the ::before and ::after rules are
+  // resolved on the element they hang from.
+  const bare = page.map((f) => ({ name: typeof f === 'object' ? f.name : f, css: (typeof f === 'object' ? f.css : fs.readFileSync(path.join(DIR, f), 'utf8')).replace(/::?(before|after)\b/g, (m, p) => '.cc-pe-' + p) }));
+  const el = { tag: 'input', classes: ['cc-bulk-cb', 'cc-pe-after'], attrs: { type: 'checkbox' }, states: { checked: true }, html, outside: ['.cc-pop', '#cc-settings', '.ui-dropdownchecklist-item', '.array_status'] };
+  const after = candidates(bare, el, 'content').filter((r) => /\.cc-pe-after/.test(r.selector));
+  ok('nothing draws an ::after tick on it', after.length === 0, after.map((r) => r.sheet + ': ' + r.selector).join(' | '));
 }
 
 console.log('\nAn on/off setting is the switch');
