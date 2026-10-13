@@ -732,8 +732,10 @@ select.cc-in { cursor: pointer; }
    at the same inset. Its text cursor stays, because the field is genuinely typable. */
 .cc-port { flex: none; width: 80px; margin-left: 6px; }   /* docker.js stamps the same 80px inline, so the two have to keep agreeing; the plan window overrides both */
 .cc-unit { flex: none; width: 68px; margin-left: 6px; }
-.cc-pop-act { gap: 8px; padding: 10px; border-top: none; }   /* on the card's edges, like the title badge */
-.cc-pop-act .cc-btn { flex: 1; text-align: center; font-size: var(--cc-text-meta); padding: 7px 6px; white-space: normal; line-height: 1.2; }
+/* On the card's edges, like the title badge, with the actions at the end of the row as in every
+   window. */
+.cc-pop-act { justify-content: flex-end; flex-wrap: wrap; gap: 8px; padding: 10px; border-top: none; }
+.cc-pop-act .cc-btn { flex: 0 0 auto; min-width: 96px; text-align: center; font-size: var(--cc-text-meta); padding: 7px 12px; white-space: normal; line-height: 1.2; }
 /* The buttons in a CC window are styled here rather than stamped inline by hardenPop(). An inline
    !important beats Unraid's theme, but it also beats CC's own rules, so the colour-mode chain, the
    hover state and the reactive sub-mode never reach a button. The `html` prefix carries the same
@@ -1178,9 +1180,11 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
    instead, so on a light theme they take the page's ink. */
 html.Theme--white #cc-settings .cc-set-heroleft,
 html.Theme--azure #cc-settings .cc-set-heroleft { --txt: var(--cc-text, #1c1c1c); --dim: var(--cc-text-dim, #545454); color: var(--txt); }
-/* Fixed-width cards packed from the left, so they do not stretch on a wide window. Stacked cards
-   keep GlimStone's 40px rhythm, since every card's title badge reaches into the gap above it. */
-.cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fill, 340px); gap: 40px 16px; justify-content: start; }
+/* The cards share the page's full width, so the last column ends at the same edge as the Docker
+   list. A row keeps its name at the start and its control at the end, and a field has a width of
+   its own rather than stretching with the card. Stacked cards keep GlimStone's 40px rhythm, since
+   every card's title badge reaches into the gap above it. */
+.cc-set-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 40px 16px; }
 .cc-set-card { position: relative; background: #222222; border: none; border-radius: var(--cc-radius-card); padding: 22px 18px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
 /* The card title is a filled section badge straddling the card's top edge. It sets no left, so it
    falls back to its static position on the card's content edge, and the self-relative translate
@@ -1252,7 +1256,9 @@ html.Theme--azure #cc-settings .cc-set-heroleft { --txt: var(--cc-text, #1c1c1c)
 #cc-settings .cc-set-sel option:checked, #cc-settings .cc-set-sel option:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 /* The settings dropdowns use the same .cc-dsel widget as the Docker network dropdown, built by
    settings.js ccDsel; the native <select> stays as the value, display:none. */
-#cc-settings .cc-dsel { position: relative; display: inline-flex; flex: 1; min-width: 0; }
+/* A dropdown stands at the end of its row with a width of its own (GlimStone rule 35); it gives
+   way before it wraps, and once it wraps under its name it still keeps the row's end. */
+#cc-settings .cc-dsel { position: relative; display: inline-flex; flex: 0 1 240px; min-width: 120px; margin-left: auto; }
 #cc-settings .cc-dsel-trigger {
   display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
   flex: 1; min-width: 0; height: 36px; box-sizing: border-box;
@@ -1378,8 +1384,14 @@ button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-t
 .cc-set-cname { text-align: left; }
 .cc-set-chk { text-align: center; }
 .cc-set-foot { color: var(--dim2); font-size: var(--cc-text-meta); margin-top: 20px; }
-.cc-set-txt { flex: 1; min-width: 160px; background: #1e1e1e; color: var(--txt); border: 1px solid var(--line2); border-radius: var(--cc-radius-control); padding: 6px 9px; font-size: var(--cc-text-subline); font-family: inherit; }
-.cc-set-txt:focus { outline: none; border-color: var(--cc-accent, #FCC419); }
+/* A one-line field beside its name, filled like the dropdowns and as tall as them. The id keeps
+   it above Unraid's input[type="text"] rule, which would draw its underline and stretch it. */
+#cc-settings .cc-set-txt {
+  flex: 0 1 280px; width: auto; min-width: 140px; height: 36px; min-height: 36px; margin: 0 0 0 auto; box-sizing: border-box;
+  background: var(--cc-surface-chip, #383838); color: var(--txt); border: none; border-radius: var(--cc-radius-control); box-shadow: none;
+  padding: 0 12px; font-size: var(--cc-text-subline); line-height: normal; font-family: inherit;
+}
+#cc-settings .cc-set-txt:focus { outline: none; background: var(--cc-surface-chip-hi, color-mix(in srgb, var(--cc-surface-chip, #383838) 82%, #ffffff)); }
 /* the accent-colour picker: the field on top, the preset swatches below */
 .cc-set-lbl { font-size: var(--cc-text-subline); color: var(--dim); margin: 2px 0 7px; }
 .cc-set-pickrow { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
