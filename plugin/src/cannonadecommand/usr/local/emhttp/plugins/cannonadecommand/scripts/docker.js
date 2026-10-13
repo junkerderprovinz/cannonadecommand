@@ -2231,6 +2231,15 @@
     } catch (e) { return false; }
   }
   function menuHead(txt) { return el("div", "cc-menu-h", txt); }
+  // Under rainbow each selector wears a palette colour of its own, counted in the order they stand
+  // (GlimStone, "Every selector wears a colour of its own"); otherwise they share the accent.
+  function paintSelectors(root) {
+    var rb = themingOn() && localStorage.getItem("cc.rainbow") === "1";
+    Array.prototype.slice.call(root.querySelectorAll(".cc-seg")).forEach(function (s, i) {
+      if (rb) { var c = ccRbColor(i); s.style.setProperty("--cc-rb-c", c); s.style.setProperty("--cc-rb-ct", idealText(c)); }
+      else { s.style.removeProperty("--cc-rb-c"); s.style.removeProperty("--cc-rb-ct"); }
+    });
+  }
   // A search starts as a Search button and turns into the field when pressed (GlimStone, "Every
   // other search"). A field that holds text stays a field, so a forgotten filter cannot hide
   // behind the button, and Escape stops here so the menu around it stays open.
@@ -2353,6 +2362,7 @@
     var link = el("a", "cc-menu-link"); link.innerHTML = ccGlyph("Gear");
     link.appendChild(document.createTextNode(" " + (LANG === "de" ? "Einstellungen (Farbe, Spalten)" : "Settings (colour, columns)")));
     link.href = "/Settings/CannonadeCommand"; m.appendChild(link);
+    paintSelectors(m);
     return m;
   }
   function positionMenu() {

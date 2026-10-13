@@ -562,7 +562,7 @@ html .cc-btn-primary:hover { background: color-mix(in srgb, var(--cc-rb-c, var(-
 .cc-seg { display: inline-flex; border: none; border-radius: var(--cc-radius-pill); overflow: hidden; }
 html .cc-seg-btn { background: var(--cc-bg2); color: var(--cc-dim); border: none; padding: 5px 14px; font-size: var(--cc-text-meta); cursor: pointer; }
 html .cc-seg-btn:hover { color: var(--cc-txt); }
-.cc-seg-btn.cc-seg-on { background: var(--cc-accent); color: var(--cc-accent-text, #161616); font-weight: 600; }
+.cc-seg-btn.cc-seg-on { background: var(--cc-rb-c, var(--cc-accent)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); font-weight: 600; }
 
 .cc-menu { position: absolute; z-index: 99999; min-width: 190px; background: var(--cc-bg, #161616); border: none; border-radius: var(--cc-radius-card); box-shadow: 0 14px 40px rgba(0,0,0,.55); padding: 6px; font: var(--cc-text-subline)/1.5 "Segoe UI", system-ui, sans-serif; color: #e6e6e6; }
 .cc-menu-wide { min-width: 240px; max-width: 92vw; }
