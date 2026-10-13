@@ -79,11 +79,11 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbo
 .cc-enh #docker_list tr:is(.sortable, .folder-element) > td { padding-top: var(--cc-density) !important; padding-bottom: var(--cc-density) !important; }
 /* The row height is mostly badge content, so the --cc-density padding on the cells is barely
    visible on its own; compact and airy also tighten or loosen the badge groups and the name meta. */
-.cc-enh.cc-dens-compact .cc-rowbadges { gap: 3px; margin-top: 2px; }
+.cc-enh.cc-dens-compact .cc-rowbadges { gap: 3px; margin-block: 1px; }
 .cc-enh.cc-dens-compact .cc-namemeta, .cc-enh.cc-dens-compact .cc-resgroup, .cc-enh.cc-dens-compact .cc-netgroup { gap: 3px; }
 .cc-enh.cc-dens-compact .cc-b { margin-top: 1px; margin-bottom: 1px; padding-top: 2px; padding-bottom: 2px; }
 .cc-enh.cc-dens-compact #docker_list td.ct-name .img, .cc-enh.cc-dens-compact #docker_list td.ct-name img { max-height: 44px; object-fit: contain; }
-.cc-enh.cc-dens-airy .cc-rowbadges { gap: 8px; margin-top: 6px; }
+.cc-enh.cc-dens-airy .cc-rowbadges { gap: 8px; margin-block: 3px; }
 .cc-enh.cc-dens-airy .cc-namemeta, .cc-enh.cc-dens-airy .cc-resgroup, .cc-enh.cc-dens-airy .cc-netgroup { gap: 8px; }
 
 /* Each native network cell (IP 5, Port 6, LAN 7) is hidden only while its own CC badge column is
@@ -357,7 +357,13 @@ table:not(.cc-enh) #docker_list tr:is(.sortable, .folder-element) td.advanced:ha
 /* CPU, RAM and Bandwidth stacked one under the other, each on its own line */
 .cc-resgroup { flex-direction: column; align-items: flex-start; gap: 5px; }
 .cc-resline { display: inline-flex; align-items: center; gap: 5px; }
-#docker_list td.updatecolumn .cc-rowbadges { margin-top: 4px; }
+/* Every cell of a list row is centred as one block, so the badges of a row share its middle. A
+   group sitting inline would hang on the text baseline and add the line's descent below it, and
+   the <br> Unraid leaves between its hidden CPU and RAM spans would open an empty line above the
+   badges and push them below the middle of the row. */
+.cc-enh #docker_list tr:is(.sortable, .folder-element) > td > .cc-rowbadges { display: flex; width: fit-content; }
+#docker_list tr:is(.sortable, .folder-element) > td:has(> .cc-resgroup) > br { display: none; }
+#docker_list td.updatecolumn .cc-rowbadges { margin-block: 2px; }
 .cc-planholder { margin-top: 5px; } /* the same gap as between the CPU and RAM badges */
 /* The restart-policy warning badge (restart=no, so no auto-start after a host reboot) always takes
    the warning state colour. */
@@ -366,7 +372,7 @@ table:not(.cc-enh) #docker_list tr:is(.sortable, .folder-element) td.advanced:ha
 .cc-b.cc-b-warn .cc-b-k, .cc-b.cc-b-warn .cc-b-v { opacity: 1 !important; color: inherit; }
 
 /* CPU/RAM limits editor button on the resource cell */
-.cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text, #e6e6e6); cursor: pointer; font-size: var(--cc-text-meta); margin: 2px 0; } /* filled, at the pill radius like the badge beside it */
+.cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text, #e6e6e6); cursor: pointer; font-size: var(--cc-text-meta); margin: 0; } /* filled, at the pill radius and the height of the badge beside it with its margins */
 .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }  /* in rainbow the per-gear --cc-rb-c wins, in accent mode the chain falls through */
 /* the gear turns green once a CPU or RAM limit is configured, like the "set" dot */
 .cc-limbtn-set { color: var(--cc-ok-fg, #161616); background: var(--cc-ok, #6fdc8c); }
