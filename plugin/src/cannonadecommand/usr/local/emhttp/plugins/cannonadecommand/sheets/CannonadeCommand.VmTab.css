@@ -21,12 +21,12 @@ html.cc-vms-on:not(.Theme--sidebar) #displaybox div.title { padding-left: 0; }
 html.cc-vms-on:not(.Theme--sidebar) #displaybox:has(> nav.tabs) { padding-top: 12px; }
 html.cc-vms-on:not(.Theme--sidebar) #displaybox > nav.tabs { margin-top: 0 !important; }
 
-/* table rows as on Docker: no border lines, subtle header, density padding */
+/* table rows as on Docker: no border lines, the header on the surface shade, every cell centred, density padding */
 html.cc-vms-on #displaybox table.tablesorter { background: none; }
-html.cc-vms-on #displaybox #kvm_list tr.sortable > td { border: none !important; padding-top: var(--cc-density, 9px) !important; padding-bottom: var(--cc-density, 9px) !important; }
+html.cc-vms-on #displaybox #kvm_list tr.sortable > td { border: none !important; vertical-align: middle !important; padding-top: var(--cc-density, 9px) !important; padding-bottom: var(--cc-density, 9px) !important; }
 html.cc-vms-on #displaybox table.tablesorter thead th {
-  background: rgba(128, 128, 128, .14) !important; border: none !important;
-  text-transform: uppercase; letter-spacing: .6px; font-weight: 600;
+  background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important; border: none !important;
+  text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600;
 }
 
 /* Docker's badge rules, copied so the VM badges look the same. One pill shape for .cc-b and
@@ -88,7 +88,7 @@ html.cc-vms-on #kvm_list .cc-resline { display: inline-flex; align-items: center
 /* The limit gear behind each resource badge, as on Docker. vms.js vmGearFill paints it inline in
    accent and native mode and stamps --cc-rb-c (the kind colour) in rainbow mode; these rules give
    the idle, hover and set look underneath. */
-html.cc-vms-on #kvm_list .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text, #e6e6e6); cursor: pointer; font-size: var(--cc-text-meta); margin: 2px 0; }   /* as on Docker */
+html.cc-vms-on #kvm_list .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text, #e6e6e6); cursor: pointer; font-size: var(--cc-text-meta); margin: 0; }   /* as on Docker */
 html.cc-vms-on #kvm_list .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 html.cc-vms-on #kvm_list .cc-limbtn-set { color: var(--cc-ok-fg, #161616); background: var(--cc-ok, #6fdc8c); }   /* filled when a limit is configured */
 html.cc-vms-on.cc-vm-rainbow #kvm_list .cc-limbtn-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; }
@@ -148,7 +148,7 @@ html.cc-vms-on.cc-vm-iconbg #kvm_list td.vm-name .outer > span.hand {
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rainbow:not(.cc-vm-rbneutral) #kvm_list td.vm-name .outer > span.hand {
   background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)))) !important;
 }
-html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list td.vm-name .outer > span.hand { background: #2e2e2e !important; }
+html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list td.vm-name .outer > span.hand { background: rgba(128, 128, 128, .18) !important; }
 html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral #kvm_list tr:hover td.vm-name .outer > span.hand {
   background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)))) !important;
 }
@@ -161,6 +161,12 @@ html.cc-vms-on #kvm_list td.vm-name .inner > i.stopped { display: none !importan
 /* A running VM shows no state, the normal case (GlimStone rule 33); vms.js stamps the class from
    the native label on every pass. */
 html.cc-vms-on #kvm_list td.vm-name .inner > span.state.cc-badge-running { display: none !important; }
+/* A paused or stopped VM shows the Docker row's state dot under its name, the label in its tooltip. */
+html.cc-vms-on #kvm_list td.vm-name .inner > span.state.cc-badge {
+  width: 13px !important; height: 13px !important; min-width: 13px !important; padding: 0 !important; margin: 3px 0 0 !important;
+  gap: 0 !important; border-radius: 50% !important; font-size: 0 !important; line-height: 0 !important;
+  flex: 0 0 auto; box-shadow: 0 0 0 2px rgba(0, 0, 0, .25); overflow: hidden;
+}
 
 /* VM name: plain bold text like Docker's .appname (15px/600), not a filled pill */
 html.cc-vms-on #kvm_list td.vm-name .inner > a:first-child {

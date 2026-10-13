@@ -53,7 +53,7 @@ console.log('\nVM icon logo badge: a configured icon colour wins over the rainbo
   ok('non-reactive: --cc-iconbg-color comes before --cc-rb-c', /background:\s*var\(--cc-iconbg-color,\s*var\(--cc-rb-c,/.test(nrBody || ''), nrBody);
   ok('reactive hover rule exists', rhBody != null);
   ok('reactive hover: --cc-iconbg-color comes before --cc-rb-c', /background:\s*var\(--cc-iconbg-color,\s*var\(--cc-rb-c,/.test(rhBody || ''), rhBody);
-  ok('the reactive rest state stays flat grey', /background:\s*#2e2e2e/.test(rrBody || ''), rrBody);
+  ok('the reactive rest state takes the grey wash of the Docker tile, which reads on light themes too', /background:\s*rgba\(128, 128, 128, \.18\)/.test(rrBody || ''), rrBody);
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

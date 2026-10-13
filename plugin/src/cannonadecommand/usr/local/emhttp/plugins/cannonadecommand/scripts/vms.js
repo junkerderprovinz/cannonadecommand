@@ -271,7 +271,9 @@
       // the logo tile follows the global cc.sgsize like the Docker and Plugins tabs
       var lg = vmLogoSizes();
       root.setProperty("--cc-logo-img", lg[0]); root.setProperty("--cc-logo-box", lg[1]);
-      // The VM state becomes a Docker state badge. The state comes from the sibling <i.fa> class
+      // the rows are as dense as the Docker tab's (docker.js applySettings)
+      root.setProperty("--cc-density", { compact: "5px", normal: "9px", airy: "14px" }[ls("cc.density")] || "9px");
+      // The VM state becomes a Docker state dot. The state comes from the sibling <i.fa> class
       // rather than the translated label, mapped to Docker's running/paused/exited.
       Array.prototype.slice.call(document.querySelectorAll("#kvm_list tr.sortable td.vm-name span.state")).forEach(function (st) {
         var txt = (st.textContent || "").trim(); if (!txt) return;
@@ -280,6 +282,7 @@
         var paused = /\bpaused\b|orange-text/.test(cls) || /paus/.test(low);
         var dstate = running ? "running" : paused ? "paused" : "exited";
         st.className = "state cc-badge cc-badge-" + dstate;   // keep native .state (sort/hooks) + Docker classes
+        st.setAttribute("data-tip", txt);                    // the dot shows no text, as on Docker
         st.style.cssText = "";                                // the look comes from CSS
       });
     } catch (e) {}
@@ -289,10 +292,11 @@
   function stripVmTheming() {
     try {
       Array.prototype.slice.call(document.querySelectorAll("#kvm_list tr.sortable td.vm-name span.state")).forEach(function (st) {
-        st.className = "state"; st.style.cssText = "";
+        st.className = "state"; st.style.cssText = ""; st.removeAttribute("data-tip");
       });
       document.documentElement.classList.remove("cc-vm-iconbg");
       document.documentElement.style.removeProperty("--cc-iconbg-color");
+      document.documentElement.style.removeProperty("--cc-density");
       var imgs = vmImgs();
       for (var i = 0; i < imgs.length; i++) {
         imgs[i].style.filter = ""; imgs[i].style.removeProperty("color");
