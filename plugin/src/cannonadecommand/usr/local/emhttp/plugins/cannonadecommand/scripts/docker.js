@@ -1552,7 +1552,7 @@
   // This badge in the floating action bar turns every logo tile into its row's selection
   // (html.cc-bulkmode-on), so a plain click or a tap picks it, for a touch screen above all, which
   // has no Ctrl or Shift. Switching it off clears the selection too, since a lingering count bar
-  // over tiles that no longer pick is a confusing state.
+  // over tiles that do not pick is a confusing state.
   var ccBulkModeOn = false;
   function ccBulkModeToggle() {
     ccBulkModeOn = !ccBulkModeOn;

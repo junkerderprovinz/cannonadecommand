@@ -243,7 +243,7 @@ html.cc-docker-on .cc-grid-holder .cc-chip-dot.cc-badge-running:not(.cc-badge-al
    "Lists"). Picked, it fills with the row's colour chain and shows GlimStone's filled IconCheck
    over the faded logo, in that colour's ink. The fill sits on ::before under the logo and the
    tick on ::after over it, so no tile background rule (logo background, rainbow, reactive) has
-   to be outweighed, and nothing about it reads as a checkbox. */
+   to be outweighed. */
 html td.ct-name span.cc-pick { position: relative; border-radius: var(--cc-radius-control); }
 html td.ct-name span.cc-pick > :is(img, i) { position: relative; z-index: 1; transition: opacity .12s; }
 html td.ct-name span.cc-pick::before {
