@@ -242,10 +242,10 @@ html {
   --cc-edge-gutter: 8px;
 
   /* The badge size tiers, the counterpart of the --cc-radius-* tokens for shape and --cc-accent for colour.
-     Every .cc-b, .cc-navtab and .cc-card-head reads them:
+     Every .cc-b and .cc-navtab reads them:
        sm  data pills (Docker and Plugin rows)
        md  tab and action badges (menu bar, plugin-page tabs, CC-settings tabs, view toggles)
-       bmd medium block pill, lg and lgb large text and large button, head section-head badge
+       bmd medium block pill, lg and lgb large text and large button
      Per-area sheets keep only their own metrics (Header --cc-md-icon, Shares --cc-aop-*,
      SettingsGrid --cc-sg-*). */
   --cc-sm-fs: var(--cc-text-meta);  --cc-sm-pad: 3px 11px;
@@ -257,9 +257,12 @@ html {
   --cc-bmd-pad: 4px 12px;
   --cc-lg-fs: var(--cc-text-title);  --cc-lg-pad: 6px 16px;
   --cc-lgb-h: 36px;  --cc-lgb-fs: var(--cc-text-body);
-  --cc-head-fs: var(--cc-text-title);  --cc-head-pad: 9px 18px;
-  /* The page-title (div.title span.left, .cc-pagehead), section-head (.ca_homeTemplatesHeader) and
-     author badges sit under the main menu bar, so they are one step below its tab badges. */
+  /* GlimStone's section badge, one size for every heading badge: a settings card's title, a
+     window's title, the section heads on Main, the VM and Plugins tabs and the Apps page, and the
+     page and category titles on Unraid's own pages. A heading is not a control, so it sits below
+     the md tier and never stands in a row of buttons. */
+  --cc-sec-h: 22px;  --cc-sec-fs: var(--cc-text-meta);  --cc-sec-fw: 500;  --cc-sec-ls: 1.2px;  --cc-sec-pad: 0 12px;
+  /* The Plugins page's author badge, one step below the main menu bar's tab badges. */
   --cc-pagebadge-fs: var(--cc-text-subline);
   --cc-density: 9px;
   /* One size for every square icon badge: the row actions, the limit gear, the day chip and its
@@ -378,20 +381,24 @@ html.Theme--azure {
 .cc-win {
   position: absolute; z-index: 99999; box-sizing: border-box;
   width: 420px; max-width: calc(100vw - 32px); max-height: calc(100vh - 16px);
-  display: flex; flex-direction: column; padding: 10px;
+  display: flex; flex-direction: column; padding: 21px 10px 10px;   /* the top leaves room under the title notch */
   background: #1a1a1a; color: var(--cc-text); border: none; border-radius: var(--cc-radius-card);
   box-shadow: var(--cc-elev-3); font-size: var(--cc-text-subline); line-height: 1.5; text-align: start;
 }
 .cc-win:focus { outline: none; }
 .cc-dlg { position: fixed; z-index: 1000001; left: 50%; top: 50%; translate: -50% -50%; width: 400px; }
+/* The title is a section badge notched into the window's top edge, as a card's title sits on the
+   card: on the content's left edge, centred on the edge by its own height, so a title that wraps
+   stays centred on it. */
 .cc-win-title {
-  display: flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box;
-  width: 100%; min-height: 40px; margin: 0 0 10px; padding: 6px 18px;
+  position: absolute; top: 0; left: 24px; transform: translateY(-50%);
+  display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box;
+  max-width: calc(100% - 48px); min-height: var(--cc-sec-h); margin: 0; padding: var(--cc-sec-pad);
   border-radius: var(--cc-radius-pill);
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)));
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
-  font-size: var(--cc-lgb-fs); font-weight: 600; line-height: 1.3; letter-spacing: .6px;
-  text-transform: uppercase; text-align: center; overflow-wrap: anywhere;
+  font-size: var(--cc-sec-fs); font-weight: var(--cc-sec-fw); line-height: 1.2; letter-spacing: var(--cc-sec-ls);
+  text-transform: uppercase; text-align: start; overflow-wrap: anywhere;
 }
 .cc-win-card {
   flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
@@ -838,17 +845,15 @@ html.cc-popups-on .ca_homeTemplatesHeader {
      inline, which beats this declaration. */
   padding: 0 !important; margin: 18px 0 12px !important;
 }
-/* The title is a filled badge: the fill follows the colour mode through the --cc-rb-c ccAppsStamp
-   writes, the size comes from the page-badge token and the shape from the pill radius. */
+/* The title is a section badge: the fill follows the colour mode through the --cc-rb-c ccAppsStamp
+   writes, the size comes from the section badge tokens and the shape from the pill radius. */
 html.cc-popups-on .ca_homeTemplatesHeader .cc-sechead-badge {
-  display: inline-flex !important; align-items: center !important;
+  display: inline-flex !important; align-items: center !important; box-sizing: border-box !important;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
-  font-size: var(--cc-pagebadge-fs) !important; font-weight: 700 !important;
-  text-transform: uppercase !important; letter-spacing: 1px !important;
-  /* md padding and an explicit md height, so this matches the Plugins section badge; the sm
-     padding with an md font size gives a 24px badge under the tier's own 30px */
-  padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px) !important;
+  font-size: var(--cc-sec-fs) !important; font-weight: var(--cc-sec-fw) !important; line-height: 1.2 !important;
+  text-transform: uppercase !important; letter-spacing: var(--cc-sec-ls) !important;
+  padding: var(--cc-sec-pad) !important; min-height: var(--cc-sec-h) !important;
   border-radius: var(--cc-radius-pill) !important;
 }
 html.cc-popups-on .ca_homeTemplatesHeader::before { content: none !important; }   /* drop the native ▸ */
@@ -2174,9 +2179,9 @@ html.cc-popups-on.cc-ca-settings #displaybox div.title {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
   border-radius: var(--cc-radius-pill) !important;
-  padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px) !important;
-  font-size: var(--cc-pagebadge-fs) !important; font-weight: 700 !important;
-  text-transform: uppercase !important; letter-spacing: 1px !important;
+  padding: var(--cc-sec-pad) !important; min-height: var(--cc-sec-h) !important; box-sizing: border-box !important;
+  font-size: var(--cc-sec-fs) !important; font-weight: var(--cc-sec-fw) !important;
+  text-transform: uppercase !important; letter-spacing: var(--cc-sec-ls) !important;
   /* Flush with the main menu bar, not with the form column or the viewport: the reference is the
      nav bar's left edge, which header.js measureAlign publishes as --cc-align-left, so the badge
      stays aligned across themes, font sizes and boxed or fluid widths. */

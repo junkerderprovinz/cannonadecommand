@@ -638,8 +638,11 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
    24px from the window's edge, the number the window widths below were measured with. The same
    numbers appear in hardenPop(), which stamps row padding inline where no sheet rule reaches, so
    the two have to keep agreeing, as .cc-port already does with it. */
-.cc-pop-head { display: flex; align-items: center; gap: 8px; padding: 10px; border-bottom: none; }   /* no separator line */
-.cc-pop-head .cc-win-title { flex: 1 1 auto; width: auto; margin: 0; }   /* leaves room for the window's one info bubble */
+/* The title notches into the window's top edge with its info bubble beside it, the pair placed as
+   one group, as on a .cc-win; the window's top padding leaves room under it. */
+.cc-pop { padding-top: 21px; }
+.cc-pop-head { position: absolute; top: 0; left: 24px; transform: translateY(-50%); display: flex; align-items: center; gap: 8px; max-width: calc(100% - 48px); padding: 0; border-bottom: none; }
+.cc-pop-head .cc-win-title { position: static; transform: none; flex: 0 1 auto; max-width: none; }
 .cc-pop-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }   /* an unwrapped row takes the full inset */
 /* The label column is a floor plus nowrap, not a fixed width: with a width, a label wider than the
    box wraps inside it and doubles the row height, while a floor lets the box grow and keeps one
@@ -1085,13 +1088,12 @@ html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs button[role="tab"] {
 html.cc-on-plugins.cc-sections-plugins #displaybox nav.tabs { border: none; min-height: 0; }
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head {
   display: inline-flex; align-items: center; gap: 8px;
-  /* the md tier, like every other section badge in CC and like the action button it shares the row
-     with, one step below the main bar */
-  min-height: var(--cc-md-h, 30px); height: var(--cc-md-h, 30px); box-sizing: border-box;
-  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-pagebadge-fs); line-height: 1;
+  /* the section badge, like every other heading in CC */
+  min-height: var(--cc-sec-h, 22px); height: var(--cc-sec-h, 22px); box-sizing: border-box;
+  font-weight: var(--cc-sec-fw, 500); text-transform: uppercase; letter-spacing: var(--cc-sec-ls, 1.2px); font-size: var(--cc-sec-fs); line-height: 1;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
   border: none; border-radius: var(--cc-radius-pill);
-  padding: var(--cc-md-pad, 0 20px); margin: 0 0 16px;
+  padding: var(--cc-sec-pad, 0 12px); margin: 0 0 16px;
 }
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head i,
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
@@ -1208,10 +1210,10 @@ html:is(.Theme--white, .Theme--azure) #cc-settings .cc-set-card { --cc-text-chip
    rainbow position; a heading is not a control, so reactive mode leaves it coloured. */
 .cc-set-h {
   position: absolute; top: 0; transform: translateY(-50%); max-width: calc(100% - 36px); box-sizing: border-box;
-  display: inline-flex; align-items: center; gap: 8px; min-height: var(--cc-md-h, 30px); padding: 4px 18px; margin: 0;
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--cc-sec-h, 22px); padding: var(--cc-sec-pad, 0 12px); margin: 0;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616));
-  border-radius: var(--cc-radius-pill); font-size: var(--cc-md-fs); font-weight: 700; line-height: 1.2;
-  text-transform: uppercase; letter-spacing: .6px;
+  border-radius: var(--cc-radius-pill); font-size: var(--cc-sec-fs); font-weight: var(--cc-sec-fw, 500); line-height: 1.2;
+  text-transform: uppercase; letter-spacing: var(--cc-sec-ls, 1.2px);
 }
 .cc-set-h .cc-info { color: inherit; opacity: 1; }
 .cc-set-card .cc-set-row, .cc-set-card .cc-set-swatches, .cc-set-card .cc-set-lbl { margin-top: 12px; }
@@ -1998,8 +2000,8 @@ html.cc-docker-on.cc-on-addct:not(.Theme--sidebar) #displaybox { padding-left: v
 html.cc-docker-on.cc-on-addct #displaybox div.title > span.left,
 html.cc-docker-on.cc-on-addct div.title .cc-pagehead {
   display: inline-flex !important; align-items: center; gap: 8px;
-  font-size: var(--cc-pagebadge-fs) !important; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;   /* one step below the main-menu tabs */
-  padding: var(--cc-md-pad, 0 20px); min-height: var(--cc-md-h, 30px); box-sizing: border-box;
+  font-size: var(--cc-sec-fs) !important; font-weight: var(--cc-sec-fw, 500); text-transform: uppercase; letter-spacing: var(--cc-sec-ls, 1.2px);   /* the section badge */
+  padding: var(--cc-sec-pad, 0 12px); min-height: var(--cc-sec-h, 22px); box-sizing: border-box;
   border-radius: var(--cc-radius-pill); line-height: 1;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;   /* ctApply stamps --cc-rb-c per element; unstamped falls back to the accent */
 }

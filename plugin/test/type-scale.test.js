@@ -27,7 +27,7 @@ const TOKENS = fs.readFileSync(path.join(DIR, 'sheets', 'CannonadeCommand.Tokens
 const dark = (() => { let o = ''; const re = /(^|\})\s*html\s*\{([^}]*)\}/g; let m; while ((m = re.exec(clean(TOKENS)))) o += m[2]; return o; })();
 
 // A value is on the scale when it is a scale token, a stage token, or no size at all.
-const ON_SCALE = /^(var\(--cc-text-(status|title|body|subline|meta)\)|var\(--cc-(sm|md|lg|lgb|head|pagebadge)-fs\)|0|inherit)$/;
+const ON_SCALE = /^(var\(--cc-text-(status|title|body|subline|meta)\)|var\(--cc-(sm|md|lg|lgb|sec|pagebadge)-fs\)|0|inherit)$/;
 const PICTURES = [
   /td\.ct-name \.outer > span\.hand i\.img \{/,                 // the container logo glyph, sized with its tile
   /var\(--cc-(logo-img|sg-glyph|fav-glyph|md-icon),/,           // logo and glyph tiles, the header icon size
@@ -71,7 +71,7 @@ const SCALE = { status: '22px', title: '16px', body: '14px', subline: '13px', me
 for (const [role, px] of Object.entries(SCALE)) ok(`--cc-text-${role} is ${px}`, new RegExp(`--cc-text-${role}:\\s*${px};`).test(dark));
 
 console.log('\nThe badge stages name a role');
-const STAGES = { sm: 'meta', md: 'subline', lg: 'title', lgb: 'body', head: 'title', pagebadge: 'subline' };
+const STAGES = { sm: 'meta', md: 'subline', lg: 'title', lgb: 'body', sec: 'meta', pagebadge: 'subline' };
 for (const [stage, role] of Object.entries(STAGES)) ok(`--cc-${stage}-fs reads --cc-text-${role}`, new RegExp(`--cc-${stage}-fs:\\s*var\\(--cc-text-${role}\\);`).test(dark));
 
 console.log('\nNo font size off the scale');
