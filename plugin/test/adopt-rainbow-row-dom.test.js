@@ -1,10 +1,9 @@
 // Builds settings.js's logoToggles() against a DOM shim, for the two things the
 // string-slice checks in adopt-rainbow-ui.test.js cannot see: that io.hideAdoptRow
 // keeps the adopt row out of the built tree rather than hiding it with CSS, and
-// that while the master toggle adopts, the Hintergrund and Icons switches are
-// greyed and inert, not only their colour pickers, and come back the moment
-// adopting stops. The second one is driven through a synthetic click, checking
-// whether the wired setter fired.
+// that while the master toggle adopts, the Hintergrund and Icons switches and
+// their pickers give way to one line that names what decides and jumps there,
+// and come back the moment adopting stops.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand', 'scripts');
@@ -52,13 +51,15 @@ function grabFn(name) {
   for (let k = src.indexOf('{', i); k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}') { d--; if (!d) return src.slice(i, k + 1); } }
   throw new Error('unbalanced function: ' + name);
 }
-const build = new Function('document', 'window',
+const jumps = [];
+const build = new Function('document', 'window', 'jumpTo',
   'var de = false;\n' +   // the English labels, so the assertions can search for ASCII text
   grabFn('el') + '\n' + grabFn('T') + '\n' + grabFn('infoIcon') + '\n' + grabFn('normHex') + '\n' +
   grabFn('hexToHsv') + '\n' + grabFn('hsvToHex') + '\n' + grabFn('inlinePicker') + '\n' + grabFn('toggle') + '\n' +
-  grabFn('logoToggles') + '\n' +
+  grabFn('actionBtn') + '\n' + grabFn('lockRow') + '\n' + grabFn('logoToggles') + '\n' +
   'return { logoToggles: logoToggles };'
-)(document, {});
+)(document, {}, (sec, title) => jumps.push([sec, title]));
+const lockOf = (into) => into.children.find((c) => c.classList.contains('cc-set-locked'));
 
 // An in-memory io in the shape the real call sites pass.
 function makeIo(extra) {
@@ -85,32 +86,47 @@ console.log('\nio.hideAdoptRow keeps the adopt row out of the built DOM');
   ok('and the area card still builds its own Hintergrund and Icons rows', areaInto.children.length > 0 && areaInto.textContent.indexOf('Background') >= 0);
 }
 
-console.log('\nThe Hintergrund and Icons switches grey out and refuse clicks while adopting');
+console.log('\nWhile adopting, the switches give way to a line that names what decides');
 {
   const into = document.createElement('div');
-  const io = makeIo();
+  const io = makeIo({ hideAdoptRow: true });
   const h = build.logoToggles(into, io);
+  const lock = lockOf(into);
 
-  ok('not adopting: the Hintergrund switch is enabled', !h.bgToggle.classList.contains('cc-set-toggle-disabled'));
-  ok('not adopting: the Icons switch is enabled', !h.tintToggle.classList.contains('cc-set-toggle-disabled'));
+  ok('not adopting: the Hintergrund and Icons rows show', !h.bgToggle.parentNode.hidden && !h.tintToggle.parentNode.hidden);
+  ok('not adopting: the line is hidden', lock && lock.hidden === true);
   h.bgToggle.listeners.click[0]();
   ok('not adopting: clicking the Hintergrund switch flips it', io._state.bgCalls === 1, io._state.bgCalls);
 
   io._state.adopt = true; // as if the master row, hidden on this card, had been used elsewhere
   h.sync();
-  ok('adopting: the Hintergrund switch is disabled', h.bgToggle.classList.contains('cc-set-toggle-disabled'));
-  ok('adopting: the Icons switch is disabled too', h.tintToggle.classList.contains('cc-set-toggle-disabled'));
-  h.bgToggle.listeners.click[0]();
-  h.tintToggle.listeners.click[0]();
-  ok('adopting: clicking the Hintergrund switch does nothing', io._state.bgCalls === 1, io._state.bgCalls);
-  ok('adopting: clicking the Icons switch does nothing', io._state.tintCalls === 0, io._state.tintCalls);
+  ok('adopting: both switch rows are left out', h.bgToggle.parentNode.hidden && h.tintToggle.parentNode.hidden);
+  ok('adopting: the strength has nothing to tune and goes too', h.strInput.parentNode.hidden === true);
+  ok('adopting: the line shows', lock.hidden === false);
+  ok('on an area card it names the global card', /Follows/.test(lock.textContent) && /General › Logos & icons/.test(lock.textContent), lock.textContent);
+  const jump = lock.children[1].children.find((c) => c.attrs.role === 'button');
+  jump.listeners.click[0]();
+  ok('and its button jumps to that card', jumps.length === 1 && jumps[0][0] === 'general' && jumps[0][1] === 'Logos & icons', JSON.stringify(jumps));
 
   io._state.adopt = false;
   h.sync();
-  ok('adopting off again: the Hintergrund switch is enabled', !h.bgToggle.classList.contains('cc-set-toggle-disabled'));
-  ok('adopting off again: the Icons switch is enabled', !h.tintToggle.classList.contains('cc-set-toggle-disabled'));
+  ok('adopting off again: the switches are back', !h.bgToggle.parentNode.hidden && !h.tintToggle.parentNode.hidden && lock.hidden);
   h.tintToggle.listeners.click[0]();
   ok('adopting off again: clicking the Icons switch flips it', io._state.tintCalls === 1, io._state.tintCalls);
+}
+
+console.log('\nA picker or the strength under a switch that is off is left out');
+{
+  const into = document.createElement('div');
+  const io = makeIo();
+  const h = build.logoToggles(into, io);
+  const pickers = into.children.filter((c) => c.classList.contains('cc-set-pickrow'));
+  ok('both switches off: no picker and no strength', pickers.every((p) => p.hidden) && h.strInput.parentNode.hidden);
+  io._state.tint = true; h.sync();
+  ok('the tint on: its picker and the strength come in', !pickers[1].hidden && !h.strInput.parentNode.hidden && pickers[0].hidden);
+  const lock = lockOf(into);
+  io._state.adopt = true; h.sync();
+  ok('on the global card the line names the Badges card', /Badges/.test(lock.textContent), lock.textContent);
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

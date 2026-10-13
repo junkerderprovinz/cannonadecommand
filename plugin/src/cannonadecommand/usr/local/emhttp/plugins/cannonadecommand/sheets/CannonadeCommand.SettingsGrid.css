@@ -137,13 +137,12 @@ html.cc-settingsgrid-heads-on #displaybox div.title > span.right { flex: 0 0 aut
 /* span.left (glyph + label) -> the filled accent badge; same recipe as Shares' .cc-card-head */
 html.cc-settingsgrid-heads-on #displaybox div.title > span.left {
   display: inline-flex !important; align-items: center; gap: 6px !important;
-  /* the md tab-badge size of the Shares, Docker and Plugins subtabs and the main menu tabs, so
-     every tab badge in the WebGUI is one size */
-  min-height: var(--cc-md-h, 30px) !important; box-sizing: border-box;
-  font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-md-fs); line-height: 1;
+  /* a category heading is a section badge, like every heading in the WebGUI */
+  min-height: var(--cc-sec-h, 22px) !important; box-sizing: border-box;
+  font-weight: var(--cc-sec-fw, 500); text-transform: uppercase; letter-spacing: var(--cc-sec-ls, 1.2px); font-size: var(--cc-sec-fs); line-height: 1;
   background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important;
   border: none !important; border-radius: var(--cc-radius-pill) !important;
-  padding: var(--cc-md-pad, 0 20px) !important; margin: 0 !important;
+  padding: var(--cc-sec-pad, 0 12px) !important; margin: 0 !important;
   text-decoration: none !important; transition: filter .12s;
 }
 /* The glyph takes the badge ink and the gap replaces the native i.title margin. img.icon is what

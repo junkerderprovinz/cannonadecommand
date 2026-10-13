@@ -555,13 +555,13 @@ html.cc-shares-on.cc-on-main #displaybox .show-shares > div.title.shift,
 html.cc-shares-on.cc-on-main #displaybox .show-historical > div.title.shift {
   background: none !important; border-bottom: none !important;
 }
-/* the split heading badges (shares.js ccUdSplitHeading): md accent pills side by side */
+/* the split heading badges (shares.js ccUdSplitHeading): section badges side by side */
 html.cc-shares-on.cc-on-main #displaybox div.title :is(span.left, div.left) { display: inline-flex; align-items: center; gap: 8px; letter-spacing: .3px; }
 html.cc-shares-on.cc-on-main #displaybox div.title :is(span.left, div.left) .cc-b {
   display: inline-flex; align-items: center; gap: 6px; border: none;
-  min-height: var(--cc-md-h, 30px); box-sizing: border-box;   /* the md 30px height, one step below the menu bar */
-  border-radius: var(--cc-radius-pill); padding: var(--cc-bmd-pad, 4px 12px);
-  font-size: var(--cc-md-fs); font-weight: 600; line-height: 1.35; white-space: nowrap;
+  min-height: var(--cc-sec-h, 22px); box-sizing: border-box;   /* the section badge */
+  border-radius: var(--cc-radius-pill); padding: var(--cc-sec-pad, 0 12px);
+  font-size: var(--cc-sec-fs); font-weight: var(--cc-sec-fw, 500); letter-spacing: var(--cc-sec-ls, 1.2px); text-transform: uppercase; line-height: 1.35; white-space: nowrap;
   background: var(--cc-shr-accent, #FCC419); color: var(--cc-shr-accent-text, #161616);
 }
 html.cc-shares-on.cc-on-main #displaybox div.title :is(span.left, div.left) .cc-b img.icon { height: 16px; width: auto; padding: 0; }
@@ -1212,12 +1212,12 @@ html.cc-shares-on.cc-on-share-detail #displaybox .menuNavButtonsTabbed { positio
    shares.js cardPanels takes from the hidden tab button. It uses the area accent, not the rainbow. */
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head {
   display: inline-flex; align-items: center; gap: 8px;
-  /* heading badges are the md tier, one step below the main menu bar, so every section head matches */
-  min-height: var(--cc-md-h, 30px); box-sizing: border-box;
-  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-md-fs); line-height: 1;
+  /* the section badge, so every section head in the WebGUI matches */
+  min-height: var(--cc-sec-h, 22px); box-sizing: border-box;
+  font-weight: var(--cc-sec-fw, 500); text-transform: uppercase; letter-spacing: var(--cc-sec-ls, 1.2px); font-size: var(--cc-sec-fs); line-height: 1;
   background: var(--cc-shr-accent, #FCC419) !important; color: var(--cc-shr-accent-text, #161616) !important;
   border: none; border-radius: var(--cc-radius-pill);
-  padding: 0 18px; margin: 0 0 16px;
+  padding: var(--cc-sec-pad, 0 12px); margin: 0 0 16px;
 }
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head i.title,
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head i,

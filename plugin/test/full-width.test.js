@@ -1,5 +1,5 @@
 // Pages and windows run the full width (GlimStone, "The content column" and "Windows"). The
-// settings cards share the page's width instead of standing in fixed 340px columns, a dropdown or
+// settings cards stand under each other at the page's full width, a dropdown or
 // a one-line field stands beside its name with a width of its own (rule 35), and a window's
 // actions sit at the end of its foot with Close first. A grid of cards stands on the page: a
 // folder in the folder view has no card around its cards.
@@ -24,8 +24,13 @@ console.log('\nThe settings page uses the width it has');
 {
   const page = withUnraid('settings');
   const wrap = { tag: 'div', classes: ['cc-set-wrap'], inside: ['#cc-settings'] };
-  ok('the cards fill the row, 340px at the least', val(win(page, wrap, 'grid-template-columns')) === 'repeat(auto-fill, minmax(340px, 1fr))', val(win(page, wrap, 'grid-template-columns')));
-  ok('and are not packed against the left', !candidates(page, wrap, 'justify-content').length);
+  ok('the cards stand under each other', val(win(page, wrap, 'display')) === 'flex' && val(win(page, wrap, 'flex-direction')) === 'column', val(win(page, wrap, 'display')));
+  ok('and keep the 40px rhythm', val(win(page, wrap, 'gap')) === '40px');
+  ok('no grid of columns is left', !candidates(page, wrap, 'grid-template-columns').length);
+  const pick = { tag: 'div', classes: ['cc-set-pickrow'], inside: ['#cc-settings'] };
+  ok('a colour picker keeps a width of its own', val(win(page, pick, 'max-width')) === '420px', val(win(page, pick, 'max-width')));
+  const range = { tag: 'input', classes: [], attrs: { type: 'range' }, inside: ['#cc-settings', '.cc-set-row'] };
+  ok('a slider stands at the end of its row with a width of its own', val(win(page, range, 'flex')) === '0 1 280px' && val(win(page, range, 'margin-left')) === 'auto', val(win(page, range, 'flex')));
 }
 
 console.log('\nA dropdown or a one-line field stands beside its name');
@@ -45,9 +50,9 @@ console.log('\nA dropdown or a one-line field stands beside its name');
     ok('ccDsel sizes the dropdown to its longest entry', wrap.style.props['--cc-dsel-w'] === 'min(calc(13ch + 52px), 340px)', wrap.style.props['--cc-dsel-w']);
   }
   ok('the motion setting is such a dropdown, beside its name', /themingCard\.appendChild\(segRow\(T\("Bewegung", "Motion"\)/.test(settings) && /function segRow\(labelText, opts, cur, onChange, help\) \{\s*return dropRow\(/.test(settings));
-  const flagRow = /"#cc-settings \.cc-flag-row\{([^}]*)\}"/.exec(settings), flag = /"#cc-settings \.cc-flag-row \.cc-flag-picker\{([^}]*)\}"/.exec(settings);
-  ok('the country picker takes a line of its own under the flag mode switch, the width of the card', !!flagRow && /flex-wrap:wrap/.test(flagRow[1]) && !!flag && /order:3/.test(flag[1]) && /flex:1 1 100%/.test(flag[1]), flag && flag[1]);
-  ok('the flag row carries the class that wraps it', /el\("div", "cc-set-row cc-set-inline cc-flag-row"\)/.test(settings) && /fr\.appendChild\(picker\);/.test(settings));
+  const flag = /"#cc-settings \.cc-flag-row \.cc-flag-picker\{([^}]*)\}"/.exec(settings);
+  ok('the country picker stands at the end of its row, wide enough for a long name', !!flag && /margin-left:auto/.test(flag[1]) && /flex:0 1 300px/.test(flag[1]), flag && flag[1]);
+  ok('the flag row names the country beside the picker', /el\("div", "cc-set-row cc-flag-row"\), frl = el\("span", "cc-set-rl", T\("Land", "Country"\)\)/.test(settings) && /fr\.appendChild\(picker\);/.test(settings));
   ok('it keeps the row\'s end', val(win(page, dsel, 'margin-left')) === 'auto');
   const txt = { tag: 'input', classes: ['cc-set-txt'], attrs: { type: 'text' }, inside: ['#cc-settings'], html: ['cc-popups-on'] };
   const tw = win(page, txt, 'width'), tf = win(page, txt, 'flex');

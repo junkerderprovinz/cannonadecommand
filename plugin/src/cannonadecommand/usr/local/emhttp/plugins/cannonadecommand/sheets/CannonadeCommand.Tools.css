@@ -33,9 +33,9 @@ html.cc-tools-on #displaybox fieldset > legend,
 html.cc-tools-on #displaybox legend {
   background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important;
   border: none !important; border-radius: var(--cc-radius-pill) !important;
-  font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px;
-  font-size: var(--cc-md-fs) !important; line-height: 1;
-  padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px);
+  font-weight: var(--cc-sec-fw, 500); text-transform: uppercase; letter-spacing: var(--cc-sec-ls, 1.2px);
+  font-size: var(--cc-sec-fs) !important; line-height: 1;
+  padding: var(--cc-sec-pad, 0 12px) !important; min-height: var(--cc-sec-h, 22px); box-sizing: border-box;
   display: inline-flex; align-items: center; margin: 0 0 12px !important;
 }
 
@@ -115,9 +115,9 @@ html.cc-diskpage #displaybox section.tab-content { height: auto !important; max-
 html.cc-diskpage #displaybox h3.section-header {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
   border: none !important; border-radius: var(--cc-radius-pill) !important;
-  font-weight: 600 !important; text-transform: uppercase; letter-spacing: 1.1px;
-  font-size: var(--cc-md-fs) !important; line-height: 1 !important;
-  padding: var(--cc-md-pad, 0 20px) !important; min-height: var(--cc-md-h, 30px);
+  font-weight: var(--cc-sec-fw, 500) !important; text-transform: uppercase; letter-spacing: var(--cc-sec-ls, 1.2px);
+  font-size: var(--cc-sec-fs) !important; line-height: 1 !important;
+  padding: var(--cc-sec-pad, 0 12px) !important; min-height: var(--cc-sec-h, 22px); box-sizing: border-box;
   display: inline-flex !important; align-items: center; gap: 10px; width: auto !important; margin: 2px 0 14px !important;
 }
 /* the inner "Advanced" sub-badge stays readable as a dark inset chip on the accent badge */
@@ -279,10 +279,10 @@ html.cc-tools-on .unapi [class*="rounded-md"][class*="border"][class*="px-3"] {
 html.cc-tools-on #displaybox div.title {
   display: inline-flex !important; align-items: center; gap: 8px; width: fit-content !important;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
-  border: none !important; border-radius: var(--cc-radius-pill) !important; padding: 0 18px !important; margin: 4px 0 16px !important;
-  /* the same md size (30px/13px) as every other section head */
-  font-size: var(--cc-md-fs) !important; font-weight: 600 !important; text-transform: uppercase; letter-spacing: .6px;
-  box-shadow: none !important; min-height: var(--cc-md-h, 30px) !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important; padding: var(--cc-sec-pad, 0 12px) !important; margin: 4px 0 16px !important;
+  /* the section badge, as every other section head */
+  font-size: var(--cc-sec-fs) !important; font-weight: var(--cc-sec-fw, 500) !important; text-transform: uppercase; letter-spacing: var(--cc-sec-ls, 1.2px);
+  box-shadow: none !important; min-height: var(--cc-sec-h, 22px) !important; box-sizing: border-box !important;
 }
 /* When the heading carries a status (the Docker settings page) the title row goes transparent, the
    badge wraps only the name (.left), and the state dot sits to its right with the "Status:" label
@@ -293,7 +293,7 @@ html.cc-tools-on #displaybox div.title:has(.cc-status-dot) {
 html.cc-tools-on #displaybox div.title:has(.cc-status-dot) > .left {
   display: inline-flex; align-items: center; gap: 8px;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
-  border-radius: var(--cc-radius-pill); padding: 0 18px; min-height: var(--cc-md-h, 30px);
+  border-radius: var(--cc-radius-pill); padding: var(--cc-sec-pad, 0 12px); min-height: var(--cc-sec-h, 22px); box-sizing: border-box;
 }
 html.cc-tools-on #displaybox div.title:has(.cc-status-dot) .status { font-size: 0 !important; }   /* hide the "Status:" label; the dot child keeps its own 12px box */
 /* the CC (i) icon carrying the native help text, shown through the page-wide CC tip bubble */
@@ -609,6 +609,6 @@ html.cc-tools-on #displaybox .section-title {
   border: none !important; border-bottom: none !important;
   display: inline-flex; align-items: center; width: fit-content;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
-  border-radius: var(--cc-radius-pill); padding: var(--cc-md-pad, 4px 14px); font-size: var(--cc-md-fs);
-  font-weight: 600; text-transform: uppercase; letter-spacing: .8px; margin: 8px 0 12px !important;
+  border-radius: var(--cc-radius-pill); padding: var(--cc-sec-pad, 0 12px); font-size: var(--cc-sec-fs); min-height: var(--cc-sec-h, 22px); box-sizing: border-box;
+  font-weight: var(--cc-sec-fw, 500); text-transform: uppercase; letter-spacing: var(--cc-sec-ls, 1.2px); margin: 8px 0 12px !important;
 }

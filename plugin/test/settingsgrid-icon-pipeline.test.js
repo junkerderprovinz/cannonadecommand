@@ -34,15 +34,16 @@ function grabFn(name) {
 // RB and RB_OFF stand in for the module-level palette vars, normally window.CCTheme.RB
 // and a persisted seed, pinned to the shipped palette at offset 0 so rbColor(i) is
 // deterministic, as in the sibling tests.
-const sgApi = new Function('localStorage',
+const loc = { pathname: '/Settings' };
+const sgApi = new Function('localStorage', 'location',
   'var RB = ["#d9433f","#f97316","#fcc419","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFF = 0;\n' +
   'var window = {};\n' +   // no CCTheme, so the palette readers answer the stored palette
-  grabFn('g') + '\n' + grabFn('eff') + '\n' + grabFn('accent') + '\n' +
+  grabFn('g') + '\n' + grabFn('area') + '\n' + grabFn('eff') + '\n' + grabFn('accent') + '\n' +
   grabFn('bgAdopting') + '\n' + grabFn('bgColorEff') + '\n' + grabFn('badgeBg') + '\n' + grabFn('bgColorIsCustom') + '\n' + grabFn('tintOnEff') + '\n' +
   grabFn('rbOn') + '\n' + grabFn('rbNeutral') + '\n' + grabFn('storedPal') + '\n' + grabFn('pal') + '\n' + grabFn('rbColor') + '\n' + grabFn('tintColorEff') + '\n' +
   'return { g: g, eff: eff, accent: accent, bgAdopting: bgAdopting, bgColorEff: bgColorEff, badgeBg: badgeBg, bgColorIsCustom: bgColorIsCustom, tintOnEff: tintOnEff, rbColor: rbColor, tintColorEff: tintColorEff };'
-)(global.localStorage);
+)(global.localStorage, loc);
 
 let pass = 0, fail = 0;
 const ok = (name, cond, extra) => { cond ? (pass++, console.log('  PASS  ' + name)) : (fail++, console.log('  FAIL  ' + name + (extra ? '  -> ' + extra : ''))); };
@@ -62,6 +63,21 @@ console.log('\nbgColorEff() falls through to the global cc.* keys while cc.style
   // through to the accent.
   localStorage.setItem('cc.stylesettings', '0');
   ok('adopt off: bgColorEff() no longer takes the global colour', sgApi.bgColorEff() !== '#e5a00d', sgApi.bgColorEff());
+  reset();
+}
+
+console.log('\n/Tools reads its own keys, apart from /Settings');
+{
+  reset();
+  localStorage.setItem('cc.accent', '#fcc419');
+  localStorage.setItem('cc.stylesettings', '0'); localStorage.setItem('ccs.accent', '#ff8389');
+  localStorage.setItem('cct.accent', '#1d99f3');
+  ok('/Settings with its own colour takes ccs.accent', sgApi.accent() === '#ff8389', sgApi.accent());
+  loc.pathname = '/Tools';
+  ok('/Tools follows the global colour while cc.styletools is unset', sgApi.accent() === '#fcc419', sgApi.accent());
+  localStorage.setItem('cc.styletools', '0');
+  ok('/Tools with its own colour takes cct.accent, not the Settings one', sgApi.accent() === '#1d99f3', sgApi.accent());
+  loc.pathname = '/Settings';
   reset();
 }
 

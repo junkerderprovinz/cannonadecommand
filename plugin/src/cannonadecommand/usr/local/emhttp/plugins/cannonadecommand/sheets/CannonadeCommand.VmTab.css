@@ -303,10 +303,10 @@ html.cc-vms-on.cc-sections-vms #displaybox nav.tabs button[role="tab"] { display
 html.cc-vms-on.cc-sections-vms #displaybox nav.tabs { border: none; min-height: 0; }
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head {
   display: inline-flex; align-items: center; gap: 8px;
-  min-height: var(--cc-lgb-h, 36px); box-sizing: border-box;   /* head badges sit on the 36px lg line */
-  font-weight: 700; text-transform: uppercase; letter-spacing: .6px; font-size: var(--cc-head-fs); line-height: 1;
+  min-height: var(--cc-sec-h, 22px); box-sizing: border-box;   /* the section badge, as on every other page */
+  font-weight: var(--cc-sec-fw, 500); text-transform: uppercase; letter-spacing: var(--cc-sec-ls, 1.2px); font-size: var(--cc-sec-fs); line-height: 1;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;   /* rainbow-aware, so the head takes a palette colour instead of the plain accent */
-  border: none; border-radius: var(--cc-radius-pill); padding: var(--cc-head-pad, 9px 18px); margin: 0 0 16px;
+  border: none; border-radius: var(--cc-radius-pill); padding: var(--cc-sec-pad, 0 12px); margin: 0 0 16px;
 }
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head i,
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head i.title,

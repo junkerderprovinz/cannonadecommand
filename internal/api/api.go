@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/junkerderprovinz/cannonadecommand/internal/bugreport"
 	"github.com/junkerderprovinz/cannonadecommand/internal/hostcpu"
 	"github.com/junkerderprovinz/cannonadecommand/internal/hostnet"
 	"github.com/junkerderprovinz/cannonadecommand/internal/iconsrc"
@@ -96,6 +97,8 @@ type Server struct {
 	Icons        IconSource
 	TemplatesDir string
 	Version      string
+	// Diag names the host files the bug report reads.
+	Diag bugreport.Sources
 
 	mu      sync.Mutex
 	lastRun model.RunResult
@@ -139,7 +142,27 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/vmdiskresize", s.handleResizeVMDisk)
 	mux.HandleFunc("POST /api/icons", s.handleIcons)
 	mux.HandleFunc("GET /api/iconsvg", s.handleIconSVG)
+	mux.HandleFunc("GET /api/bugreport", s.handleBugReport)
 	return mux
+}
+
+// handleBugReport answers the bug report file as a download. A plan or config
+// that cannot be read goes into the report as a problem rather than failing it,
+// since a broken install is when the report is wanted most.
+func (s *Server) handleBugReport(w http.ResponseWriter, _ *http.Request) {
+	r := bugreport.Report{Created: time.Now(), Engine: s.Version}
+	var err error
+	if r.Plan, err = s.Store.Load(); err != nil {
+		r.Problems = append(r.Problems, "start plan: "+err.Error())
+	}
+	if r.Config, err = s.Store.LoadConfig(); err != nil {
+		r.Problems = append(r.Problems, "settings: "+err.Error())
+	}
+	s.Diag.Collect(&r)
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Content-Disposition", `attachment; filename="`+r.FileName()+`"`)
+	w.Header().Set("Cache-Control", "no-store")
+	_, _ = w.Write(r.Render())
 }
 
 // handleIcons answers a batch of names from the icon cache. Unknown names come

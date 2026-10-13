@@ -1,6 +1,5 @@
-// The settings tab strip follows GlimStone's one horizontal selector: every tab carries a filled
-// glyph, every tab has one width, and the strip wraps instead of scrolling, sharing its rows
-// evenly. Its colours follow the tab-strip colour rule: the idle glyph shows the tab's colour, the
+// The settings tabs are GlimStone's vertical tiles: the tab selector on its side, a column beside
+// the cards, every tile with a filled glyph and the order of the main menu as it stands. Its colours follow the tab-strip colour rule: the idle glyph shows the tab's colour, the
 // chosen tab is filled with it, and reactive mode rests the idle glyphs until hover or focus.
 const fs = require('fs');
 const path = require('path');
@@ -45,50 +44,70 @@ console.log('\nEvery tab has a glyph, and every glyph is filled');
   const stroked = Object.keys(glyphs).filter((k) => /stroke=|fill="none"/.test(glyphs[k].svg));
   ok('no glyph is a stroked outline', stroked.length === 0, stroked.join(' '));
   ok('every glyph names a four-number viewBox', Object.values(glyphs).every((g) => g.vb.split(' ').length === 4));
-  ok('each tab is built with its glyph and its label', /b\.appendChild\(tabGlyph\(sc\.id\)\); b\.appendChild\(el\("span", null, sc\.t\)\);/.test(settings));
+  ok('each tab is built with its glyph and its label', /b\.appendChild\(tabGlyph\(sc\.id\)\); b\.appendChild\(el\("span", "cc-set-tablbl", sc\.t\)\);/.test(settings));
   ok('the glyph inks on currentColor and hides from screen readers', /svg\.setAttribute\("aria-hidden", "true"\);/.test(grabFn(settings, 'tabGlyph')) && /"fill", "currentColor"/.test(grabFn(settings, 'tabGlyph')));
 }
 
-console.log('\nOne width, and a strip that wraps into even rows');
+console.log('\nThe tabs stand as vertical tiles beside the cards');
 {
-  const perRow = new Function(grabFn(settings, 'tabsPerRow') + '\nreturn tabsPerRow;')();
-  ok('tabs that fit stay on one row', perRow(5, 150, 6, 1200) === 5);
-  ok('eleven tabs that fit seven to a row go six and five', perRow(11, 150, 6, 1200) === 6);
-  ok('seven that fit four go four and three', perRow(7, 100, 6, 4 * 106 - 6) === 4);
-  ok('six that fit four go three and three', perRow(6, 100, 6, 4 * 106 - 6) === 3);
-  ok('a box narrower than one tab still gives one per row', perRow(4, 300, 6, 200) === 1);
-  const size = grabFn(settings, 'sizeSetTabs');
-  ok('every shown tab is pinned to the widest one', /b\.style\.minWidth = w \+ "px"/.test(size) && /var bw = Math\.ceil\(b\.getBoundingClientRect\(\)\.width\); w = Math\.max\(w, bw\);/.test(size));
-  // The tabs at their measured widths, in a strip of a given room.
-  const run = (widths, room) => {
-    const style = () => { const s = { removeProperty(k) { delete s[k === 'min-width' ? 'minWidth' : k === 'flex-wrap' ? 'flexWrap' : k]; } }; return s; };
-    const tabBtns = widths.map((wd) => ({ style: style(), getBoundingClientRect: () => ({ width: wd }) }));
-    const tabRow = { style: style() };
-    const root = { clientWidth: room };
-    new Function('tabBtns', 'tabRow', 'root', 'getComputedStyle', 'TAB_GAP', grabFn(settings, 'tabsPerRow') + grabFn(settings, 'sizeSetTabs') + '; sizeSetTabs();')(tabBtns, tabRow, root, () => ({ paddingLeft: '0', paddingRight: '0' }), 6);
-    return { row: tabRow.style, tabs: tabBtns.map((b) => b.style) };
-  };
-  // Eleven tabs at widths the compact padding gives them, 1109px with the gaps.
-  const eleven = [104, 117, 75, 104, 87, 92, 70, 126, 109, 104, 61];
-  const fits = run(eleven, 1240);
-  ok('at 1280px the eleven tabs stay on one row at their own widths', fits.row.flexWrap === 'nowrap' && fits.row.width === '100%' && fits.tabs.every((t) => t.flex === '1 0 auto' && !t.minWidth), JSON.stringify(fits.row));
-  const wide = run(eleven, 1500);
-  ok('with room for the widest width on every tab they are all one width', !wide.row.flexWrap && wide.tabs.every((t) => t.minWidth === '126px'));
-  const narrow = run(eleven, 900);
-  ok('below that the strip wraps into even rows at one width', !narrow.row.flexWrap && narrow.tabs.every((t) => t.minWidth === '126px' && /calc\(\(100% - 6 \* 6px\) \/ 6\)/.test(t.flex)), narrow.tabs[0].flex);
+  const strip = body(css, '.cc-set-tabs');
+  ok('the tiles stand in a column', decl(strip, 'display') === 'flex' && decl(strip, 'flex-direction') === 'column' && decl(strip, 'gap') === '4px', strip);
+  ok('the column stays in view while the cards scroll, and scrolls itself past the window', decl(strip, 'position') === 'sticky' && decl(strip, 'max-height') === 'calc(100vh - 24px)');
+  ok('the column is 12.75rem wide with words', decl(strip, 'width') === '12.75rem');
+  ok('the column may scroll, since the wheel moves it', decl(strip, 'overflow-y') === 'auto');
+  ok('the column and the cards share a row', decl(body(css, '.cc-set-body'), 'display') === 'flex' && decl(body(css, '.cc-set-main'), 'min-width') === '0');
   const tab = body(css, '.cc-set-tab');
-  ok('a tab is a compact pill', decl(tab, 'padding') === '0 12px !important' && decl(tab, 'gap') === '6px', decl(tab, 'padding'));
+  ok('every tile keeps a 40px floor and its own height', decl(tab, 'flex') === 'none' && decl(tab, 'min-height') === '40px', tab);
+  ok('a tile takes the control radius, so a tall one stays a tile', /var\(--cc-radius-control\)/.test(decl(tab, 'border-radius') || ''));
+  ok('a tile is the glyph, then the name', decl(tab, 'justify-content') === 'flex-start' && decl(tab, 'gap') === '10px');
   ok('in the label\'s own case', decl(tab, 'text-transform') === 'none !important');
+  ok('a long name takes a second line and no more', /-webkit-line-clamp:\s*2/.test(body(css, '.cc-set-tablbl')));
+  ok('the glyph is 20px', decl(body(css, '.cc-set-tabico'), 'width') === '20px');
+  ok('a switched-off area\'s tile is out of the column', decl(body(css, '.cc-set-tab[hidden]'), 'display') === 'none !important');
   const labels = [...settings.matchAll(/\{ id: "(\w+)", t: T\("([^"]+)", "([^"]+)"\)/g)].map((m) => m[2] + '|' + m[3]);
   ok('every tab carries the plain name of its Unraid tab', labels.every((l) => !/-Tab\b| tabs?\b/.test(l)), labels.join(' '));
-  ok('the old pin is cleared before measuring', size.indexOf('removeProperty("min-width")') < size.indexOf('getBoundingClientRect'));
-  ok('the sizing reruns when an area is switched off', /if \(activeHidden\) showSec\(0\);\s*sizeSetTabs\(\);/.test(settings));
-  ok('and when the window resizes', /window\.__ccSetSizeTabs\(\); window\.__ccSetAlignSearch\(\);/.test(settings));
-  const strip = body(css, '.cc-set-tabs');
-  ok('the strip wraps', decl(strip, 'flex-wrap') === 'wrap', strip);
-  ok('the strip never scrolls sideways', !/overflow/.test(strip));
-  ok('the strip hugs its tabs', decl(strip, 'width') === 'fit-content' && decl(strip, 'max-width') === '100%');
-  ok('the gap matches TAB_GAP', decl(strip, 'gap') === '6px' && /var TAB_GAP = 6;/.test(settings));
+  ok('no strip sizing is left', !/sizeSetTabs|tabsPerRow|TAB_GAP/.test(settings));
+  ok('the column is a vertical tab list', /tabRow\.setAttribute\("role", "tablist"\); tabRow\.setAttribute\("aria-orientation", "vertical"\);/.test(settings));
+}
+
+console.log('\nBelow 1024px the column shows the glyphs alone');
+{
+  const narrow = rules(read('styles/docker.css').slice(read('styles/docker.css').indexOf('@media (max-width: 1023px)')));
+  ok('the column narrows to 3.25rem', decl(body(narrow, '.cc-set-tabs'), 'width') === '3.25rem');
+  ok('and the names leave the tiles', decl(body(narrow, '.cc-set-tablbl'), 'display') === 'none');
+  const tips = /window\.__ccSetTabTips = function \(\) \{[\s\S]*?\n    \};/.exec(settings);
+  ok('each name moves into the tile\'s bubble then', !!tips && /matchMedia\("\(max-width: 1023px\)"\)/.test(tips[0]) && /b\.setAttribute\("data-tip", SECS\[i\]\.t\)/.test(tips[0]) && /b\.removeAttribute\("data-tip"\)/.test(tips[0]));
+}
+
+console.log('\nThe arrows move the focus along the column, a press opens the tab');
+{
+  // The keydown handler on a column of four tiles, the third hidden.
+  const tiles = [0, 1, 2, 3].map((i) => ({ i, hidden: i === 2, attrs: {}, setAttribute(k, v) { this.attrs[k] = v; }, focus() { doc.activeElement = this; } }));
+  const doc = { activeElement: tiles[0] };
+  let handler = null;
+  const tabRow = { addEventListener: (t, f) => { handler = f; } };
+  const m = /    tabRow\.addEventListener\("keydown", function \(e\) \{[\s\S]*?\n    \}\);/.exec(settings);
+  new Function('tabRow', 'tabBtns', 'document', m[0])(tabRow, tiles, doc);
+  const press = (key) => { let prevented = false; handler({ key, preventDefault: () => { prevented = true; } }); return prevented; };
+  press('ArrowDown');
+  ok('down moves the focus to the next tile', doc.activeElement === tiles[1] && tiles[1].attrs.tabindex === '0' && tiles[0].attrs.tabindex === '-1');
+  press('ArrowDown');
+  ok('a hidden tile is passed over', doc.activeElement === tiles[3]);
+  press('ArrowDown');
+  ok('the end of the column holds', doc.activeElement === tiles[3]);
+  press('Home');
+  ok('Home goes to the first tile', doc.activeElement === tiles[0]);
+  ok('a key the column does not use passes through', press('a') === false);
+  const show = grabFn(settings, 'showSec');
+  ok('the chosen tile is the one tab stop', /tabBtns\[j\]\.setAttribute\("tabindex", on \? "0" : "-1"\);/.test(show) && /tabBtns\[j\]\.setAttribute\("aria-selected", on \? "true" : "false"\);/.test(show));
+}
+
+console.log('\nThe order follows the main menu as it stands');
+{
+  ok('the live menu order is read from the page', /document\.querySelectorAll\("#menu \.nav-tile \.nav-item:not\(\.util\) > a\[href\]"\)/.test(settings));
+  ok('General comes first', /var SECS = \[\s*\{ id: "general"/.test(settings));
+  ok('Info comes last', /SECS\.push\(\{ id: "info"/.test(settings));
+  ok('a reordered menu rebuilds the column', /if \(ord9 && ord9 !== lastOrd9\) \{ lastOrd9 = ord9; render\(\); \}/.test(settings));
 }
 
 console.log('\nA tab shows only while its area is on');

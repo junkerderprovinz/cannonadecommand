@@ -343,7 +343,7 @@ ok(/\.cc-pop-mid \{[^}]*margin: 0 10px/.test(css), 'the content card sits 10px i
 ok(/\.cc-pop-row \{[^}]*padding: 8px 14px/.test(css), 'an unwrapped .cc-pop-row (the manage-toggle line) takes the full 14px inside the card itself');
 ok(/\.cc-pop-body \.cc-pop-row, \.cc-pop-auto \.cc-pop-row \{ padding: 3px 10px !important/.test(css), 'a wrapped row keeps 10 and lets its wrapper margin supply the other 4');
 ok(/\.cc-pop-body \{[^}]*margin: 6px 4px 2px/.test(css) && /\.cc-pop-auto \{[^}]*margin: 6px 4px/.test(css), 'both wrappers carry that 4px margin, the two halves of 14 having to agree');
-ok(/\.cc-pop-head \{[^}]*padding: 10px;/.test(css), 'the head puts the title badge on the card\'s edges');
+ok(/\.cc-pop-head \{[^}]*position: absolute; top: 0; left: 24px; transform: translateY\(-50%\);/.test(css) && /\.cc-pop \{ padding-top: 21px; \}/.test(css), 'the head notches the title badge into the window\'s top edge, on the content\'s 24px edge');
 ok(/\.cc-pop-act \{[^}]*padding: 10px;/.test(css), 'and so does the button row');
 ok(/\.cc-pop-sech-lone \{[^}]*padding: 10px 10px 5px/.test(css), '"ZEITPLÄNE" takes 10 inside its .cc-pop-auto, 14 there landing at 28');
 ok(/\.cc-sched-list \{[^}]*padding: 4px 10px 2px/.test(css), 'the schedule cards line up with the fields rather than sitting 4px right of them');
