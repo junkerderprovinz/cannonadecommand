@@ -412,6 +412,7 @@
       pFlat = pInk ? ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", pInk) : ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", "");
     }
     var LOGO = logoSize(); // cc.sgsize step = Docker/VM logo size (m default 62px)
+    var GLYPH = "calc(" + LOGO + " * .82)";   // a glyph fills its em box, so at 82% it matches the crop of the raster logos
     var pName = tds[0].getAttribute("data-cc-pname") || "";
     var PCI = window.CCTheme && window.CCTheme.icons;
     if (PCI && pName) plugWantNames.push(pName);   // asked for in one batch per paint()
@@ -439,7 +440,7 @@
         el2.style.setProperty("filter", want, "important");
       } else {
         // font glyph (fa- or icon-): size + center to visually match the images
-        el2.style.setProperty("font-size", LOGO, "important");
+        el2.style.setProperty("font-size", GLYPH, "important");
         el2.style.setProperty("line-height", LOGO, "important");
         el2.style.setProperty("text-align", "center", "important");
         el2.style.setProperty("display", "inline-block", "important");

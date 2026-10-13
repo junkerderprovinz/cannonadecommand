@@ -81,6 +81,10 @@ console.log('\nEvery plugin logo is cropped to the same fill');
   probe.onload();
   ok('an SVG with no natural size is cropped all the same', img.src === 'data:image/png;base64,CROPPED', img.src);
   ok('paintRow crops whatever source the pipeline chose', /plugSetIconSrc\(el2, plan\.url\);\s*normalizeIcon\(el2\);/.test(plugJs));
+  // A crop fills 82% of its square, and a font glyph fills its em box.
+  ok('a glyph logo is drawn at the crop\'s 82%, inline', /var GLYPH = "calc\(" \+ LOGO \+ " \* \.82\)";/.test(plugJs) && /el2\.style\.setProperty\("font-size", GLYPH, "important"\);/.test(plugJs));
+  ok('and in the sheet that holds through a re-render', /\.cc-plugico i \{[^}]*font-size: calc\(var\(--cc-logo-img, 62px\) \* \.82\) !important;/.test(docker));
+  ok('the crop fills 82% of its square', /var OUT = 192, avail = OUT \* 0\.82/.test(plugJs));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

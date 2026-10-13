@@ -1126,7 +1126,7 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
 .cc-plugico img, .cc-plugico i {
   width: var(--cc-logo-img, 62px) !important; height: var(--cc-logo-img, 62px) !important; min-width: var(--cc-logo-img, 62px) !important; min-height: var(--cc-logo-img, 62px) !important;
   max-width: var(--cc-logo-img, 62px) !important; max-height: var(--cc-logo-img, 62px) !important;
-  font-size: var(--cc-logo-img, 62px) !important; line-height: var(--cc-logo-img, 62px) !important;   /* --cc-logo-img is the Docker and VM logo size from cc.sgsize */
+  font-size: calc(var(--cc-logo-img, 62px) * .82) !important; line-height: var(--cc-logo-img, 62px) !important;   /* --cc-logo-img is the Docker and VM logo size from cc.sgsize; a glyph at 82% of it matches the cropped raster logos */
   object-fit: contain !important; text-align: center !important;
   display: inline-block !important; vertical-align: middle !important; box-sizing: border-box !important;
 }
