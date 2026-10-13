@@ -37,7 +37,7 @@ html .cc-hgear-bar { margin-right: 10px; font-size: var(--cc-text-title); color:
 
 /* The name cell (column 1): a larger logo with the name centred beside it in a narrower column,
    and under the name the start/stop badge with the id and author below it. */
-.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name { width: 225px !important; vertical-align: middle; }
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name { width: 199px !important; vertical-align: middle; }
 /* Unraid gives span.outer a 20px bottom margin, which would make every row 20px taller than its
    logo and hang the logo above the middle of the row. */
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer { display: flex; align-items: center; gap: 12px; margin: 0; }
@@ -234,40 +234,37 @@ html.cc-docker-on .cc-grid-holder .cc-chip-dot.cc-badge-running:not(.cc-badge-al
 }
 .cc-b-del:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; }
 .cc-cb-del { accent-color: var(--cc-accent, #FCC419); width: 16px; height: 16px; margin: 0 8px 0 0; cursor: pointer; vertical-align: middle; }
-/* The bulk-select toolbar: a per-row selection mark as the first flex child of .outer, plus a
-   floating toolbar that appears once a row is picked. Its buttons ride the md tier of the .cc-b-del
-   control above, so Start, Stop, Remove and Clear read as one cluster. A mark shows while the
-   pointer is over its row or the focus is in it, and every mark shows once one is picked or while
-   the Mehrfachauswahl badge in the floating action bar is on (GlimStone, "Lists"). The slot stays
-   at rest, so the row does not move when its mark comes in, and opacity rather than display keeps
-   the mark in the Tab order.
+/* The bulk-select toolbar: a row's logo tile is its selection, plus a floating toolbar that
+   appears once a row is picked. Its buttons ride the md tier of the .cc-b-del control above, so
+   Start, Stop, Remove and Clear read as one cluster.
 
-   The mark is GlimStone's one control for picking rows: a circle in every shape setting, like the
-   state dot, a quiet shade until picked, then the row's colour with a filled tick (IconCheck) in
-   that colour's ink. The tick is a mask on ::before, so its ink comes from the colour chain rather
-   than a colour baked into a data URI. */
-html .cc-bulk-cb {
-  display: inline-block !important; opacity: 0; position: relative; flex: 0 0 auto; vertical-align: middle;
-  -webkit-appearance: none !important; appearance: none !important;
-  width: 18px; height: 18px; box-sizing: border-box; margin: 0 8px 0 0; padding: 0; cursor: pointer;
-  border: none !important; outline: none !important; box-shadow: none;
-  border-radius: 50%; background: rgba(128, 128, 128, .28);
-  transition: background-color .12s, opacity var(--cc-motion-fade-dur, 0s);
+   The tile picks with Ctrl or Shift and a click, with Space from the keyboard, and with a plain
+   click or tap while the Mehrfachauswahl badge is on or a row is picked already (GlimStone,
+   "Lists"). Picked, it fills with the row's colour chain and shows GlimStone's filled IconCheck
+   over the faded logo, in that colour's ink. The fill sits on ::before under the logo and the
+   tick on ::after over it, so no tile background rule (logo background, rainbow, reactive) has
+   to be outweighed, and nothing about it reads as a checkbox. */
+html td.ct-name span.cc-pick { position: relative; border-radius: var(--cc-radius-control); }
+html td.ct-name span.cc-pick > :is(img, i) { position: relative; z-index: 1; transition: opacity .12s; }
+html td.ct-name span.cc-pick::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none;
+  background: transparent; transition: background-color .12s;
 }
-html:is(.cc-bulkmode-on, .cc-bulk-picked) .cc-bulk-cb,
-#docker_list tr:is(:hover, :focus-within) .cc-bulk-cb, html .cc-bulk-cb:checked { opacity: 1; }
-html .cc-bulk-cb:hover { background: rgba(128, 128, 128, .42); }
-html .cc-bulk-cb:checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); }
-html .cc-bulk-cb:checked:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }
-html .cc-bulk-cb:checked::before {
-  content: ""; position: absolute; inset: 0; margin: auto; width: 10px; height: 10px;
+html:is(.cc-bulkmode-on, .cc-bulk-picked) td.ct-name span.cc-pick { cursor: pointer; }
+html:is(.cc-bulkmode-on, .cc-bulk-picked) td.ct-name span.cc-pick:hover::before { background: var(--cc-hover-wash); }
+html td.ct-name span.cc-pick[aria-checked="true"]::before { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); }
+html td.ct-name span.cc-pick[aria-checked="true"]:hover::before { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }
+html td.ct-name span.cc-pick[aria-checked="true"] > :is(img, i) { opacity: .18; }
+html td.ct-name span.cc-pick[aria-checked="true"]::after {
+  content: ""; position: absolute; inset: 0; z-index: 2; margin: auto; width: 42%; height: 42%; pointer-events: none;
   background: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
   -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0.3 0.549 13.399 13.399'><path d='M4.381 12.219 L4.574 12.378 L4.793 12.497 L5.032 12.572 L5.155 12.592 L5.405 12.596 L5.651 12.552 L5.884 12.461 L6.096 12.328 L6.278 12.157 L13.457 3.957 L13.584 3.736 L13.666 3.495 L13.699 3.242 L13.683 2.988 L13.656 2.863 L13.566 2.625 L13.431 2.408 L13.257 2.222 L13.05 2.074 L12.936 2.016 L12.695 1.934 L12.442 1.901 L12.188 1.917 L11.942 1.983 L11.713 2.096 L11.511 2.251 L5.238 9.399 L2.519 6.681 L2.425 6.595 L2.213 6.454 L1.977 6.356 L1.854 6.325 L1.6 6.3 L1.346 6.325 L1.223 6.356 L0.987 6.454 L0.775 6.595 L0.595 6.775 L0.454 6.987 L0.399 7.103 L0.325 7.346 L0.3 7.6 L0.306 7.727 L0.356 7.977 L0.399 8.097 L0.519 8.322 L0.681 8.519Z'/></svg>") center / contain no-repeat;
           mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0.3 0.549 13.399 13.399'><path d='M4.381 12.219 L4.574 12.378 L4.793 12.497 L5.032 12.572 L5.155 12.592 L5.405 12.596 L5.651 12.552 L5.884 12.461 L6.096 12.328 L6.278 12.157 L13.457 3.957 L13.584 3.736 L13.666 3.495 L13.699 3.242 L13.683 2.988 L13.656 2.863 L13.566 2.625 L13.431 2.408 L13.257 2.222 L13.05 2.074 L12.936 2.016 L12.695 1.934 L12.442 1.901 L12.188 1.917 L11.942 1.983 L11.713 2.096 L11.511 2.251 L5.238 9.399 L2.519 6.681 L2.425 6.595 L2.213 6.454 L1.977 6.356 L1.854 6.325 L1.6 6.3 L1.346 6.325 L1.223 6.356 L0.987 6.454 L0.775 6.595 L0.595 6.775 L0.454 6.987 L0.399 7.103 L0.325 7.346 L0.3 7.6 L0.306 7.727 L0.356 7.977 L0.399 8.097 L0.519 8.322 L0.681 8.519Z'/></svg>") center / contain no-repeat;
 }
-html .cc-bulk-cb:focus-visible {
-  box-shadow: 0 0 0 3px rgba(252, 196, 25, .42);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent);
+html td.ct-name span.cc-pick:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(252, 196, 25, .42) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important;
 }
 /* The Mehrfachauswahl badge takes its whole look from the same rules as the native bar buttons, in
    the div.js-actions block further down. Nothing about its size, shape or colour belongs here, or

@@ -1086,25 +1086,25 @@
       var name = rowName(tr);
       if (filterText) tr.style.display = (norm(name).indexOf(filterText) >= 0) ? "" : "none";
       var nameCell = tr.querySelector("td.ct-name"), upCell = tr.querySelector("td.updatecolumn");
-      // The bulk-select checkbox, for starting, stopping or removing several containers at once.
-      // It sits before the theming gate, being functional rather than cosmetic, and goes in as
-      // the first flex child of .outer, so it pushes the icon right without absolute positioning
-      // and without a new cell that would shift every nth-child offset used below.
-      var outerEl = nameCell && nameCell.querySelector(".outer");
-      if (outerEl && !outerEl.querySelector(".cc-bulk-cb")) {
-        var bcb = el("input", "cc-bulk-cb"); bcb.type = "checkbox"; bcb.setAttribute(MARK, "1");
-        bcb.setAttribute("aria-label", (LANG === "de" ? "Auswählen: " : "Select ") + name);
-        bcb.checked = !!ccBulkSel[name];
-        // A Shift on the mark itself picks a range as a Shift on the row does. The click comes
-        // before the change, so it notes the key for the change to read.
-        var bcbShift = false;
-        bcb.addEventListener("click", function (e) { e.stopPropagation(); bcbShift = e.shiftKey; });
-        bcb.addEventListener("change", function () {
-          if (bcbShift && ccBulkInRange(tr)) { ccBulkClick(tr, { shiftKey: true }); return; }
-          ccBulkSet(tr, bcb.checked); ccBulkAnchor = tr;
-          ccBulkBarSync();
-        });
-        outerEl.insertBefore(bcb, outerEl.firstChild);
+      // The logo tile is the row's selection, for starting, stopping or removing several
+      // containers at once. It is set up before the theming gate, being functional rather than
+      // cosmetic, on Unraid's own span.hand, so no new element or cell shifts the nth-child
+      // offsets used below. Space picks it from the keyboard and Shift and Space a range.
+      var tile = nameCell && nameCell.querySelector(".outer > span.hand");
+      if (tile) {
+        if (!tile.classList.contains("cc-pick")) {
+          tile.classList.add("cc-pick"); tile.setAttribute("role", "checkbox"); tile.setAttribute("tabindex", "0");
+          tile.setAttribute("aria-label", (LANG === "de" ? "Auswählen: " : "Select ") + name);
+        }
+        tile.setAttribute("aria-checked", ccBulkSel[name] ? "true" : "false");
+        if (!tile.ccPickKeys) {
+          tile.ccPickKeys = true;
+          tile.addEventListener("keydown", function (e) {
+            if (e.key !== " " || !tile.classList.contains("cc-pick")) return;
+            e.preventDefault(); e.stopPropagation();
+            var row = tile.closest("tr"); if (row) ccBulkClick(row, { shiftKey: e.shiftKey });
+          });
+        }
       }
       // The row centring is cosmetic, so it happens only with theming on; the orchestration
       // controls below inject either way.
@@ -1549,16 +1549,17 @@
     tg.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
     wrap.appendChild(tg); bar.appendChild(wrap);
   }
-  // This badge in the floating action bar keeps every row's mark showing (html.cc-bulkmode-on), for
-  // a touch screen, which has no hover to bring them in. Switching it off clears the selection too,
-  // since a hidden mark with a lingering count bar is a confusing state.
+  // This badge in the floating action bar turns every logo tile into its row's selection
+  // (html.cc-bulkmode-on), so a plain click or a tap picks it, for a touch screen above all, which
+  // has no Ctrl or Shift. Switching it off clears the selection too, since a lingering count bar
+  // over tiles that no longer pick is a confusing state.
   var ccBulkModeOn = false;
   function ccBulkModeToggle() {
     ccBulkModeOn = !ccBulkModeOn;
     document.documentElement.classList.toggle("cc-bulkmode-on", ccBulkModeOn);
     var btn = document.querySelector(".cc-bulkmode-badge"); if (btn) btn.classList.toggle("cc-bulkmode-badge-on", ccBulkModeOn);
     try { colorBarButtons(); } catch (e) {}   // the pressed badge drops its inline paint, and regains it on release, in the same tick as the class
-    if (!ccBulkModeOn) { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); }
+    if (!ccBulkModeOn) { ccBulkSel = {}; ccBulkClearMarks(); ccBulkBarSync(); }
   }
   function ensureBulkModeBadge(bar) {
     var btn = bar.querySelector(".cc-bulkmode-badge");
@@ -1587,8 +1588,8 @@
       // and the native Update-All button below the table covers ShipLog's pill.
       var tv = document.querySelector("div.ToggleViewMode");
       if (tv) tv.style.setProperty("display", "none", "important");
-      // The card and folder views carry their gear as a tile of their own, and they draw no
-      // selection marks, so multi-select has nothing to pick there and leaves with the list.
+      // The card and folder views carry their gear as a tile of their own, and their logos do not
+      // pick, so multi-select has nothing to pick there and leaves with the list.
       if (mode !== "list") {
         var listGear = document.querySelector(".cc-bar-adv .cc-hgear"); if (listGear) listGear.remove();
         var bulkBadge = document.querySelector(".cc-bulkmode-badge"); if (bulkBadge) bulkBadge.remove();
@@ -1683,6 +1684,7 @@
     Array.prototype.slice.call(root.querySelectorAll("[" + MARK + "]")).forEach(function (n) { n.remove(); });
     Array.prototype.slice.call(root.querySelectorAll("[" + ROWMARK + "]")).forEach(function (n) { n.removeAttribute(ROWMARK); });
     Array.prototype.slice.call(root.querySelectorAll(".cc-hidden")).forEach(function (n) { n.classList.remove("cc-hidden"); });
+    Array.prototype.slice.call(root.querySelectorAll(".cc-pick")).forEach(function (n) { n.classList.remove("cc-pick"); ["role", "tabindex", "aria-label", "aria-checked"].forEach(function (a) { n.removeAttribute(a); }); });
     // the third-party badges lose their stamped classes, and the group badge is unwrapped, which
     // puts the native icon and text back
     Array.prototype.slice.call(root.querySelectorAll(".cc-3p")).forEach(function (n) { n.classList.remove("cc-b", "cc-3p"); });
@@ -1751,11 +1753,11 @@
     if (!names.length) {
       if (!ccBulkBarEl) return;
       // A bar that hides under the keyboard focus would drop it on <body>; the multi-select badge,
-      // else a row's mark, is where the next step starts.
+      // else a row's logo tile, is where the next step starts.
       var hadFocus = ccBulkBarEl.contains(document.activeElement);
       ccBulkBarEl.style.setProperty("display", "none", "important");
       if (hadFocus) {
-        var next = [document.querySelector(".cc-bulkmode-badge")].concat(Array.prototype.slice.call(document.querySelectorAll(".cc-bulk-cb")))
+        var next = [document.querySelector(".cc-bulkmode-badge")].concat(Array.prototype.slice.call(document.querySelectorAll(".cc-pick")))
           .filter(function (n) { return n && n.getClientRects().length; })[0];
         if (next) next.focus();
       }
@@ -1768,7 +1770,7 @@
       var startB = el("span", "cc-b cc-bulkbtn", de ? "Starten" : "Start"); startB.addEventListener("click", function () { ccBulkRun("start"); }); bar.appendChild(startB);
       var stopB = el("span", "cc-b cc-bulkbtn", de ? "Stoppen" : "Stop"); stopB.addEventListener("click", function () { ccBulkRun("stop"); }); bar.appendChild(stopB);
       var rmB = el("span", "cc-b cc-bulkbtn", de ? "Entfernen" : "Remove"); rmB.addEventListener("click", ccBulkRemove); bar.appendChild(rmB);
-      var clearB = el("span", "cc-b cc-bulkbtn cc-bulkbtn-clear", de ? "Aufheben" : "Clear"); clearB.addEventListener("click", function () { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); }); bar.appendChild(clearB);
+      var clearB = el("span", "cc-b cc-bulkbtn cc-bulkbtn-clear", de ? "Aufheben" : "Clear"); clearB.addEventListener("click", function () { ccBulkSel = {}; ccBulkClearMarks(); ccBulkBarSync(); }); bar.appendChild(clearB);
       if (window.CCTheme) [startB, stopB, rmB, clearB].forEach(window.CCTheme.pressable);
       document.body.appendChild(bar);
       ccBulkBarEl = bar;
@@ -1777,21 +1779,28 @@
     ccBulkBarEl.querySelector(".cc-bulkbar-count").textContent = names.length + " " + (de ? "ausgewählt" : "selected");
   }
   // Picking rows the way a file manager does (GlimStone, "Lists"): Ctrl or Cmd and a click toggles
-  // a row's mark and makes it the anchor, Shift and a click picks the rows from the anchor to this
+  // a row's tile and makes it the anchor, Shift and a click picks the rows from the anchor to this
   // one, in the order the list shows them. A click on a control in the row keeps doing its own job.
   var ccBulkAnchor = null;
   var BULK_SKIP = "a[href], button, input, select, textarea, label, [role=button], [role=switch], .cc-actcell, .cc-b-copy, .cc-plan, .cc-limbtn";
-  function ccBulkRows() { return findRows().filter(function (r) { return r.style.display !== "none" && r.querySelector(".cc-bulk-cb"); }); }
+  function ccBulkRows() { return findRows().filter(function (r) { return r.style.display !== "none" && r.querySelector(".cc-pick"); }); }
   function ccBulkRowFor(e) {
     if (mode !== "list" || !(e.ctrlKey || e.metaKey || e.shiftKey) || e.button || !e.target || !e.target.closest) return null;
     var tr = e.target.closest("#docker_list tr");
-    if (!tr || !tr.querySelector(".cc-bulk-cb") || e.target.closest(BULK_SKIP)) return null;
+    if (!tr || !tr.querySelector(".cc-pick") || e.target.closest(BULK_SKIP)) return null;
     return tr;
+  }
+  // A plain click on a logo tile picks it while multi-select is on or something is picked already;
+  // otherwise the click keeps pointing at the row's actions.
+  function ccBulkTileFor(e) {
+    if (mode !== "list" || e.button || !e.target || !e.target.closest || !(ccBulkModeOn || Object.keys(ccBulkSel).length)) return null;
+    var tile = e.target.closest("#docker_list td.ct-name span.cc-pick");
+    return tile ? tile.closest("tr") : null;
   }
   function ccBulkInRange(tr) { var rows = ccBulkRows(); return rows.indexOf(ccBulkAnchor) >= 0 && rows.indexOf(tr) >= 0; }
   function ccBulkSet(tr, on) {
-    var name = rowName(tr), cb = tr.querySelector(".cc-bulk-cb");
-    if (cb) cb.checked = on;
+    var name = rowName(tr), tile = tr.querySelector(".cc-pick");
+    if (tile) tile.setAttribute("aria-checked", on ? "true" : "false");
     if (on) { var cx = ctxFor(name, tr); ccBulkSel[name] = { id: cx.id, image: cx.image }; }
     else delete ccBulkSel[name];
   }
@@ -1801,17 +1810,17 @@
       var lo = Math.min(a, b), hi = Math.max(a, b);
       // The range takes the place of the selection, rows a filter hides included, so a bulk action
       // never reaches one out of sight.
-      findRows().forEach(function (r) { if (r.querySelector(".cc-bulk-cb")) { var i = rows.indexOf(r); ccBulkSet(r, i >= lo && i <= hi); } });
+      findRows().forEach(function (r) { if (r.querySelector(".cc-pick")) { var i = rows.indexOf(r); ccBulkSet(r, i >= lo && i <= hi); } });
     } else {
       ccBulkSet(tr, !ccBulkSel[rowName(tr)]);
       ccBulkAnchor = tr;
     }
     ccBulkBarSync();
   }
-  // Every checkbox is un-ticked after a bulk action or a clear. The fresh rows a native tbody
-  // replace creates start unchecked, so there is nothing to do for those.
-  function ccBulkSyncCheckboxes() {
-    Array.prototype.slice.call(document.querySelectorAll(".cc-bulk-cb")).forEach(function (cb) { cb.checked = false; });
+  // Every tile is unpicked after a bulk action or a clear. The fresh rows a native tbody replace
+  // creates start unpicked, so there is nothing to do for those.
+  function ccBulkClearMarks() {
+    Array.prototype.slice.call(document.querySelectorAll(".cc-pick")).forEach(function (n) { n.setAttribute("aria-checked", "false"); });
   }
   // Shared by the bulk-select bar and the per-folder start and stop buttons, so there is one
   // start-in-parallel-then-reload mechanism rather than two.
@@ -1823,7 +1832,7 @@
       .then(function () { flash(t("done")); if (onDone) onDone(); });
   }
   function ccBulkRun(action) {
-    runBulkAction(Object.keys(ccBulkSel), action, function () { ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync(); });
+    runBulkAction(Object.keys(ccBulkSel), action, function () { ccBulkSel = {}; ccBulkClearMarks(); ccBulkBarSync(); });
   }
   function ccBulkRemove(ev) {
     var names = Object.keys(ccBulkSel);
@@ -1842,7 +1851,7 @@
         return fetch("/plugins/dynamix.docker.manager/include/Events.php", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body }).catch(function () {});
       });
       Promise.all(reqs).then(function () {
-        ccBulkSel = {}; ccBulkSyncCheckboxes(); ccBulkBarSync();
+        ccBulkSel = {}; ccBulkClearMarks(); ccBulkBarSync();
         if (typeof window.loadlist === "function") window.loadlist();
       });
     }
@@ -4500,7 +4509,7 @@
       document.addEventListener("click", function (e) {
         try {
           if (dead || mode !== "list") return;
-          var picked = ccBulkRowFor(e);
+          var picked = ccBulkRowFor(e) || ccBulkTileFor(e);
           if (picked) { e.preventDefault(); e.stopPropagation(); ccBulkClick(picked, e); return; }
           var hand = e.target && e.target.closest ? e.target.closest("td.ct-name span.hand, td.ct-name span.appname, td.ct-name .cc-ct-dotrow") : null;
           if (!hand) return;
