@@ -1106,6 +1106,7 @@
         var ubar = document.createElement("span"); ubar.className = "cc-isl-bar";
         var ufill = document.createElement("span"); ufill.className = "cc-isl-fill";
         ufill.style.width = w + "%"; ufill.style.background = col;
+        if (window.CCTheme && window.CCTheme.slosh) window.CCTheme.slosh(ufill);
         ubar.appendChild(ufill); uch.appendChild(ubar); uch.appendChild(document.createTextNode(pctText));
         if (tip) uch.setAttribute("data-cc-tip", tip);
         if (cls) uch.setAttribute("data-cc-chip", cls.replace(/^cc-isl-/, ""));
@@ -1264,6 +1265,15 @@
     try {
       var on = g("cc.statenative", "0") === "1" && g("cc.theming", "1") !== "0";
       var allBars = document.querySelectorAll(".usage-disk:not(.sys):not(.mm) > span:first-child");
+      // Every usage bar CannonadeCommand draws sloshes at its end: the /Main bars while the Shares
+      // area restyles them, and the array meter in the menu while the header area is on.
+      var rt = document.documentElement.classList, CT = window.CCTheme;
+      if (CT && CT.slosh) {
+        var mainOn = rt.contains("cc-shares-on") && rt.contains("cc-on-main");
+        for (var s = 0; s < allBars.length; s++) CT.slosh(allBars[s], mainOn && !!allBars[s].closest("#displaybox"));
+        var meter = document.querySelector("#menu .usage-bar > span");
+        if (meter) CT.slosh(meter, rt.contains("cc-header-on"));
+      }
       if (!on) {   // strip any leftover class so the colour mode shows through
         for (var i = 0; i < allBars.length; i++) { var b = allBars[i]; if (b.style.background) b.style.removeProperty("background"); if (b.className && b.className.indexOf("cc-fill-") >= 0) b.className = b.className.replace(/\s*cc-fill-(green|amber|red)\b/g, ""); }
         return;
@@ -1423,7 +1433,8 @@
         // show the base colour until the debounced pass re-classes them, which reads as a blink.
         // This callback is a microtask that runs after the .html() call but before the next paint,
         // so re-classing here puts the class on the new bars before they ever paint. ccStateBars
-        // writes only classList, so it cannot loop back into this observer.
+        // adds the slosh's two bubble spans only to a bar that lacks them, so the pass its own
+        // insert wakes finds nothing to add and the observer settles.
         for (var i = 0; i < recs.length; i++) { var t2 = recs[i].target; if (t2 && t2.closest && t2.closest("table.unraid.disk_status")) { try { ccStateBars(); } catch (e3) {} break; } }
         if (ccMainT) return; ccMainT = setTimeout(function () { ccMainT = null; try { ccStateBars(); ccPaintRotate(); ccToolsEnhance(); } catch (e2) {} }, 120);
       });

@@ -438,6 +438,7 @@ html.cc-header-on #menu .usage-bar {
   border-radius: var(--cc-radius-pill) !important;
   background: rgba(128, 128, 128, .18) !important;
   box-shadow: none !important; border: none !important;
+  overflow: hidden;   /* the track clips the slosh that runs past a full meter's end */
 }
 html.cc-header-on #menu .usage-bar > span {
   border-radius: var(--cc-radius-pill) !important;

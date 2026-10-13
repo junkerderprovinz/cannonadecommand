@@ -53,6 +53,7 @@ const ROUND = [
   '.cc-ct-dotrow > .cc-badge', '.cc-chip-dot', '.cc-cfg', '.cc-ip-dot', '.cc-req::after', '#cc-ctout-status',
   '.cc-isl-dot', '.cc-nchan-loader', '.cc-dot', 'i.fa-circle.orb', '.cc-status-dot', '.cc-loader > span',
   '.cc-info:focus-visible', '.cc-acctinfo', '.cc-toolsinfo', '.popupAuthorIcon img', 'input[type="radio"]', '.cc-bulk-cb',
+  '.cc-slosh-pop-bar',
 ];
 function radiusOk(sel, value) {
   const v = value.replace(/\s*!important$/, '').trim();

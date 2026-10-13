@@ -633,6 +633,26 @@
     };
   }
 
+  // Makes a bar's fill slosh at its end (Tokens.css, .cc-slosh-edge), or takes the slosh off with
+  // on === false. The phase is the time since the page loaded, so a bar that is drawn again
+  // swings on from where the one before it was. A fill that already sloshes is left untouched,
+  // which keeps a MutationObserver that calls this from waking itself.
+  function slosh(fill, on) {
+    if (!fill || !fill.classList) return fill;
+    var pops = fill.querySelectorAll(":scope > .cc-slosh-pop-bar");
+    if (on === false) {
+      if (!fill.classList.contains("cc-slosh-edge") && !pops.length) return fill;
+      fill.classList.remove("cc-slosh-edge"); fill.style.removeProperty("--cc-slosh-phase");
+      for (var r = 0; r < pops.length; r++) fill.removeChild(pops[r]);
+      return fill;
+    }
+    if (fill.classList.contains("cc-slosh-edge") && pops.length === 2) return fill;
+    fill.classList.add("cc-slosh-edge");
+    fill.style.setProperty("--cc-slosh-phase", (-performance.now() / 1000).toFixed(3) + "s");
+    for (var n = pops.length; n < 2; n++) { var s = document.createElement("span"); s.className = "cc-slosh-pop-bar"; s.setAttribute("aria-hidden", "true"); fill.appendChild(s); }
+    return fill;
+  }
+
   // A control that could not do what was asked shakes once (GlimStone, "Failure feedback"). The
   // class comes off and goes back on across a forced layout, which restarts the animation, so a
   // second refusal in a row shakes again. The timeout clears it where no animationend arrives.
@@ -848,7 +868,7 @@
     CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG, delIcon: delIcon,
     lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark, liftLight: liftLight, lightTheme: lightTheme,
     liftSurface: liftSurface, surfacePalette: surfacePalette, isRed: isRed, deleteSlot: deleteSlot, toast: toast, shake: shake, fail: fail,
-    pressable: pressable, modal: modal, paintWin: paintWin, ask: ask, glyph: glyph, menu: menu,
+    pressable: pressable, modal: modal, paintWin: paintWin, ask: ask, glyph: glyph, menu: menu, slosh: slosh,
     icons: {
       MODES: ICON_MODES, SIMPLE_MAX: ICON_SIMPLE_MAX,
       globalMode: iconGlobalMode, mode: iconMode, override: iconOverride, setOverride: setIconOverride,

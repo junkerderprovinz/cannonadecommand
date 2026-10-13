@@ -68,6 +68,14 @@ html {
   --cc-motion-press-scale: 1;
   --cc-motion-shake-dur:   360ms;
   --cc-motion-shake-dist:  0px;
+  --cc-motion-slosh-dur:            60s;
+  --cc-motion-slosh-surge:          0px;
+  --cc-motion-slosh-lean:           0deg;
+  --cc-motion-slosh-bubble-pace:    6s;
+  --cc-motion-slosh-bubble-opacity: 0;
+  --cc-motion-slosh-pop-swell:      1;
+  --cc-motion-slosh-pop-ring:       1;
+  --cc-motion-slosh-pop-reach:      0px;
   --cc-dir-sign: 1;
 }
 html[dir="rtl"] { --cc-dir-sign: -1; }   /* a keyframe does not mirror on its own */
@@ -81,6 +89,17 @@ html[dir="rtl"] { --cc-dir-sign: -1; }   /* a keyframe does not mirror on its ow
     --cc-motion-press-scale: .97;
     --cc-motion-shake-dur:   360ms;
     --cc-motion-shake-dist:  6px;
+    /* A fill level's slosh: one swing out and back, how far the bar's end surges and leans, how
+       long a bubble takes and how strongly it shows, and how far a popping bubble swells, rings
+       and runs past the end. */
+    --cc-motion-slosh-dur:            3.6s;
+    --cc-motion-slosh-surge:          5px;
+    --cc-motion-slosh-lean:           12deg;
+    --cc-motion-slosh-bubble-pace:    .35s;
+    --cc-motion-slosh-bubble-opacity: .7;
+    --cc-motion-slosh-pop-swell:      1.5;
+    --cc-motion-slosh-pop-ring:       3.4;
+    --cc-motion-slosh-pop-reach:      5px;
   }
   html[data-cc-motion="subtle"] {
     --cc-motion-control-dur: 80ms;
@@ -91,6 +110,14 @@ html[dir="rtl"] { --cc-dir-sign: -1; }   /* a keyframe does not mirror on its ow
     --cc-motion-press-scale: .97;
     --cc-motion-shake-dur:   360ms;
     --cc-motion-shake-dist:  4px;
+    --cc-motion-slosh-dur:            5s;
+    --cc-motion-slosh-surge:          3.5px;
+    --cc-motion-slosh-lean:           8deg;
+    --cc-motion-slosh-bubble-pace:    .5s;
+    --cc-motion-slosh-bubble-opacity: .55;
+    --cc-motion-slosh-pop-swell:      1.4;
+    --cc-motion-slosh-pop-ring:       3;
+    --cc-motion-slosh-pop-reach:      4px;
   }
   html[data-cc-motion="off"] {
     --cc-motion-control-dur: 0s;
@@ -101,6 +128,14 @@ html[dir="rtl"] { --cc-dir-sign: -1; }   /* a keyframe does not mirror on its ow
     --cc-motion-press-scale: 1;
     --cc-motion-shake-dur:   360ms;
     --cc-motion-shake-dist:  0px;
+    --cc-motion-slosh-dur:            60s;
+    --cc-motion-slosh-surge:          0px;
+    --cc-motion-slosh-lean:           0deg;
+    --cc-motion-slosh-bubble-pace:    6s;
+    --cc-motion-slosh-bubble-opacity: 0;
+    --cc-motion-slosh-pop-swell:      1;
+    --cc-motion-slosh-pop-ring:       1;
+    --cc-motion-slosh-pop-reach:      0px;
   }
 }
 /* Every button and clickable badge gives way on press and returns on release. It goes through the
@@ -127,6 +162,102 @@ button[type="button"]:where(.cc-btn, .cc-seg-btn, .cc-abtn, .cc-hgear, .cc-card-
 }
 @keyframes cc-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes cc-fade-out { from { opacity: 1; } to { opacity: 0; } }
+
+/* A bar that shows a fill level sloshes at its end (GlimStone, "Illustrations"). A strip in the
+   fill's colour waits under the end and surges out leaning forward, white dots drift toward the
+   end, and two bubbles run past it and pop inside the track, which clips them. CCTheme.slosh()
+   puts the class and the two bubble spans on a fill and stamps --cc-slosh-phase, so a bar drawn
+   again picks up the swing where the last one was. The fill is a size container, so a bubble's
+   100cqi measures it. The bubbles are white in every theme, since they only need to be lighter
+   than the liquid. */
+@keyframes cc-slosh-surge {
+  from { translate: calc((-100% + var(--cc-motion-slosh-surge, 5px) * .4) * var(--cc-dir-sign, 1)) 0; transform: none; }
+  25%  { translate: calc((-100% + var(--cc-motion-slosh-surge, 5px) * .15) * var(--cc-dir-sign, 1)) 0; transform: skewX(calc(var(--cc-motion-slosh-lean, 12deg) * .5 * var(--cc-dir-sign, 1))); }
+  50%  { translate: calc((-100% + var(--cc-motion-slosh-surge, 5px) * .4) * var(--cc-dir-sign, 1)) 0; transform: none; }
+  75%  { translate: calc((-100% + var(--cc-motion-slosh-surge, 5px)) * var(--cc-dir-sign, 1)) 0; transform: skewX(calc(var(--cc-motion-slosh-lean, 12deg) * -1 * var(--cc-dir-sign, 1))); }
+  to   { translate: calc((-100% + var(--cc-motion-slosh-surge, 5px) * .4) * var(--cc-dir-sign, 1)) 0; transform: none; }
+}
+@keyframes cc-slosh-fizz { to { background-position: 40px 0, 40px 0, 40px 0, 26px 0, 26px 0; } }
+@keyframes cc-slosh-pop-bar {
+  from    { translate: 0 0; }
+  82%     { translate: calc((100cqi - 3px) * var(--cc-dir-sign, 1)) 0; }
+  90%, to { translate: calc((100cqi + var(--cc-motion-slosh-pop-reach, 5px)) * var(--cc-dir-sign, 1)) 0; }
+}
+@keyframes cc-slosh-pop-bar-bubble {
+  from { opacity: 0; scale: 1; }
+  10%  { opacity: var(--cc-motion-slosh-bubble-opacity, .7); }
+  80%  { opacity: var(--cc-motion-slosh-bubble-opacity, .7); scale: 1; }
+  84%  { opacity: 1; scale: 1.15; }
+  90%  { opacity: 1; scale: 1.2; }
+  93%  { opacity: 0; scale: var(--cc-motion-slosh-pop-swell, 1.5); }
+  to   { opacity: 0; scale: 1; }
+}
+@keyframes cc-slosh-pop-bar-ring {
+  from, 90% { opacity: 0; scale: 1; }
+  91%       { opacity: .9; scale: 1.3; }
+  97%       { opacity: 0; scale: var(--cc-motion-slosh-pop-ring, 3.4); }
+  to        { opacity: 0; scale: 1; }
+}
+/* At rest, outside the gate: the end lies level under the fill and every bubble is hidden. */
+.cc-slosh-edge { position: relative; container-type: inline-size; }
+.cc-slosh-edge::after {
+  content: ""; position: absolute; top: 0; bottom: 0; inset-inline-start: 100%;
+  width: calc(var(--cc-motion-slosh-surge, 0px) + 2px);
+  border-start-end-radius: var(--cc-radius-pill); border-end-end-radius: var(--cc-radius-pill);
+  background-color: inherit; translate: calc(-100% * var(--cc-dir-sign, 1)) 0; pointer-events: none;
+}
+.cc-slosh-edge::before {
+  content: ""; position: absolute; inset: 0; opacity: 0; pointer-events: none;
+  background-image:
+    radial-gradient(circle 1.1px at 6px 30%, #fff 55%, transparent),
+    radial-gradient(circle .9px at 19px 70%, #fff 55%, transparent),
+    radial-gradient(circle 1.3px at 31px 45%, #fff 55%, transparent),
+    radial-gradient(circle .8px at 9px 55%, #fff 55%, transparent),
+    radial-gradient(circle 1px at 20px 25%, #fff 55%, transparent);
+  background-size: 40px 100%, 40px 100%, 40px 100%, 26px 100%, 26px 100%;
+  background-repeat: repeat-x;
+  -webkit-mask: linear-gradient(to left, transparent, #000 10px); mask: linear-gradient(to left, transparent, #000 10px);
+}
+html[dir="rtl"] .cc-slosh-edge::before { -webkit-mask: linear-gradient(to right, transparent, #000 10px); mask: linear-gradient(to right, transparent, #000 10px); }
+.cc-slosh-pop-bar {
+  position: absolute; top: 50%; inset-inline-start: 0; width: 0; height: 0;
+  background-color: inherit; pointer-events: none;
+}
+.cc-slosh-pop-bar::before, .cc-slosh-pop-bar::after {
+  content: ""; position: absolute; left: -1.5px; top: -1.5px; width: 3px; height: 3px;
+  border-radius: 50%; background-color: inherit; opacity: 0;
+}
+.cc-slosh-pop-bar::before { background-image: radial-gradient(circle closest-side, #fff 60%, transparent 68%); }
+.cc-slosh-pop-bar::after {
+  -webkit-mask: radial-gradient(circle closest-side, transparent 58%, #000 64% 86%, transparent 94%);
+  mask: radial-gradient(circle closest-side, transparent 58%, #000 64% 86%, transparent 94%);
+}
+.cc-slosh-pop-bar:nth-child(1) { top: 35%; }
+.cc-slosh-pop-bar:nth-child(2) { top: 65%; }
+/* The motion lives inside the gate, so reduced motion never reads it and the liquid rests level;
+   at "off" the animations stop outright. */
+@media (prefers-reduced-motion: no-preference) {
+  .cc-slosh-edge::after { animation: cc-slosh-surge var(--cc-motion-slosh-dur) ease-in-out var(--cc-slosh-phase, 0s) infinite; }
+  .cc-slosh-edge::before {
+    opacity: var(--cc-motion-slosh-bubble-opacity);
+    animation: cc-slosh-fizz calc(var(--cc-motion-slosh-bubble-pace) * 30) linear var(--cc-slosh-phase, 0s) infinite;
+  }
+  html[dir="rtl"] .cc-slosh-edge::before { animation-direction: reverse; }
+  .cc-slosh-pop-bar { animation: cc-slosh-pop-bar var(--cc-pop-dur, 6s) linear calc(var(--cc-slosh-phase, 0s) + var(--cc-pop-delay, 0s)) infinite; }
+  .cc-slosh-pop-bar::before { animation: cc-slosh-pop-bar-bubble var(--cc-pop-dur, 6s) linear calc(var(--cc-slosh-phase, 0s) + var(--cc-pop-delay, 0s)) infinite; }
+  .cc-slosh-pop-bar::after { animation: cc-slosh-pop-bar-ring var(--cc-pop-dur, 6s) linear calc(var(--cc-slosh-phase, 0s) + var(--cc-pop-delay, 0s)) infinite; }
+  .cc-slosh-pop-bar:nth-child(1) {
+    --cc-pop-dur: calc(var(--cc-motion-slosh-bubble-pace) * 12.6);
+    --cc-pop-delay: calc(var(--cc-motion-slosh-bubble-pace) * -1.26);
+  }
+  .cc-slosh-pop-bar:nth-child(2) {
+    --cc-pop-dur: calc(var(--cc-motion-slosh-bubble-pace) * 16.1);
+    --cc-pop-delay: calc(var(--cc-motion-slosh-bubble-pace) * -9.66);
+  }
+  html[data-cc-motion="off"] :is(.cc-slosh-edge, .cc-slosh-pop-bar)::before,
+  html[data-cc-motion="off"] :is(.cc-slosh-edge, .cc-slosh-pop-bar)::after,
+  html[data-cc-motion="off"] .cc-slosh-pop-bar { animation: none; }
+}
 html {
 
   /* text */
