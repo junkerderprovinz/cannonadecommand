@@ -470,6 +470,9 @@ html .cc-win .cc-win-in {
 }
 html .cc-win .cc-win-card > .cc-win-in:first-child { margin-top: 0 !important; }
 html .cc-win .cc-win-in:focus { background: #383838 !important; }
+/* Unraid paints every placeholder in the theme's link colour; a window's hint takes the muted ink
+   instead, which reads at 4.5:1 on the field at rest and focused. */
+html .cc-win .cc-win-in::placeholder { color: var(--cc-text-hint, #a3a3a3) !important; opacity: 1 !important; }
 /* The actions stand at the end of the foot, Close first and the forward action last. */
 .cc-win-act { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; flex: none; padding: 10px 0 0; }
 .cc-win-btn {

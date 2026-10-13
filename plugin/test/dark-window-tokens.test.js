@@ -128,6 +128,22 @@ console.log('\nWindow labels and placeholders');
   }
 }
 
+console.log('\nThe field in a question window, such as "Neuer Ordner"');
+{
+  const lum = (h) => { const n = parseInt(h.slice(1), 16); const l = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * l(n >> 16 & 255) + 0.7152 * l(n >> 8 & 255) + 0.0722 * l(n & 255); };
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const rule = parseRules(fs.readFileSync(path.join(DIR, 'sheets/CannonadeCommand.Tokens.css'), 'utf8')).find((x) => /\.cc-win \.cc-win-in::placeholder/.test(x.selector));
+  const decl = rule && rule.decls.find((d) => d.prop === 'color');
+  ok('its placeholder takes the muted ink rather than Unraid\'s link colour', decl && decl.important && /--cc-text-hint/.test(decl.value), decl && decl.value);
+  for (const [theme, scope] of [['dark', darkWin], ['white', lightWin]]) {
+    const p = decl && resolve(decl.value, scope);
+    for (const [state, fill] of [['at rest', '#2e2e2e'], ['focused', '#383838']]) {
+      const rp = p ? ratio(p, fill) : 0;
+      ok(`${theme}: it reads at 4.5:1 on the field ${state}`, rp >= 4.5, `${p} on ${fill}, ${rp.toFixed(2)}:1`);
+    }
+  }
+}
+
 console.log('\nA settings card, dark on a light theme');
 for (const theme of ['Theme--white', 'Theme--azure']) {
   const card = { tag: 'div', classes: ['cc-set-card'], inside: ['#cc-settings'], html: [theme] };
