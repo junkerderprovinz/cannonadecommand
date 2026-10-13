@@ -77,7 +77,7 @@
   function T(d, e) { return de ? d : e; }
   var CC_VER = "@@CCVER@@"; if (CC_VER.indexOf("@@") === 0) CC_VER = "dev";
   // the GlimStone version this UI is built against, bumped by hand whenever its files are recopied
-  var GLS_VER = "3.4.1";
+  var GLS_VER = "3.5.0";
   var REPO = "https://github.com/junkerderprovinz/cannonadecommand";
   var GLS_REPO = "https://github.com/junkerderprovinz/glimstone";
   var LATEST_API = "https://api.github.com/repos/junkerderprovinz/cannonadecommand/releases/latest";
