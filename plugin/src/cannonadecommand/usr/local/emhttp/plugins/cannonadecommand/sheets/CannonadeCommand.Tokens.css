@@ -121,7 +121,7 @@ html[dir="rtl"] { --cc-dir-sign: -1; }   /* a keyframe does not mirror on its ow
    hover lift. It has no transition of its own: each of these controls sets its own transition
    shorthand, which a shared one would replace. */
 @media (prefers-reduced-motion: no-preference) {
-  html :is(.cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy,
+  html :is(.cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-allct, .cc-b-copy,
            .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-hgear-home,
            .cc-win-btn, .cc-seg-btn, .cc-set-tab, .cc-set-searchbadge, .cc-day, .cc-sched-x,
            .cc-b-del, .cc-plugsup, .cc-plugicm, .cc-flag-trigger, .cc-navtab, #cc-arrange-lock,

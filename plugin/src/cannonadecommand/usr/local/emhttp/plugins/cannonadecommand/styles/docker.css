@@ -1439,19 +1439,32 @@ div.js-actions > * { pointer-events: auto; }
   #displaybox { padding-bottom: calc(var(--cc-footer-h, 0px) + var(--cc-actbar-h, 40px) + 12px) !important; }
   #docker_list.js-fill-available-height { padding-bottom: var(--cc-actbar-h, 40px) !important; box-sizing: border-box; }
 }
-/* The Mehrfachauswahl badge is listed here so it takes the native bar button's look from the same
-   source rather than a copy that drifts; docker.js also moves it next to the container-size
-   button, instead of after the right-pinned view toggle at the far end of the bar. */
+/* One look for every button in the bar, the Mehrfachauswahl badge and the "Alle Container" menu
+   button included, so none of them drifts from a copy. Labels stay in sentence case. Only
+   "Container hinzufügen" is filled (GlimStone rule 3, one filled button per view); the others
+   rest grey and take their mode colour under the pointer, the slot docker.js colorBarButtons()
+   stamps in the rainbow. The four run-everything buttons wait hidden behind the menu. */
 div.js-actions input[type=button],
-div.js-actions .cc-bulkmode-badge { flex: none !important; background: var(--cc-accent, #FCC419) !important; color: var(--cc-accent-text, #161616) !important; border: none !important; box-shadow: none !important; padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: 0.6px !important; font-family: inherit !important; cursor: pointer; transition: filter .12s; }
-/* docker.js ensureBulkModeBadge() builds the badge as a <span>, so what an <input type=button>
-   gets for free is spelled out here: a centred single-line text box and the native input margin,
+div.js-actions :is(.cc-bulkmode-badge, .cc-allct) { flex: none !important; background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important; border: none !important; box-shadow: none !important; padding: var(--cc-md-btnpad, 0 14px) !important; font-size: var(--cc-md-fs) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: normal !important; font-family: inherit !important; cursor: pointer; transition: background-color .12s, color .12s; }
+div.js-actions input[type=button].cc-bar-primary {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
+}
+div.js-actions input[type=button].cc-folded { display: none !important; }
+div.js-actions :is(input[type=button]:disabled, .cc-allct[aria-disabled="true"]) { opacity: .5; cursor: default; }
+/* docker.js builds the badge and the menu button as <span>s, so what an <input type=button> gets
+   for free is spelled out here: a centred single-line text box and the native input margin,
    which together with the bar's flex gap is what sets the buttons apart. gap:0 drops the .cc-b
    flex gap, which would otherwise pad the label. */
-div.js-actions .cc-bulkmode-badge {
+div.js-actions :is(.cc-bulkmode-badge, .cc-allct) {
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
   gap: 0 !important; line-height: normal !important; margin: 10px 12px 10px 0 !important;
   white-space: nowrap; user-select: none; vertical-align: baseline;
+}
+/* the menu button's caret, a small filled triangle in the label's ink */
+div.js-actions .cc-allct-caret {
+  display: inline-block; width: 8px; height: 5px; margin-inline-start: 8px; background: currentColor;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
 }
 /* The badge is a toggle, so it has to read as pressed, and since it rests like its neighbours the
    hue alone cannot carry that: in accent mode the rest and the pressed fill are the same colour.
@@ -1470,11 +1483,17 @@ div.js-actions .cc-bulkmode-badge-on {
 div.js-actions .cc-bar-adv { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; flex: none; padding-right: 8px; }
 div.js-actions .cc-bar-adv .cc-hgear-home { font-size: var(--cc-text-title); color: var(--cc-text-chip, #cfcfcf); padding: 0 4px; }
 div.js-actions .cc-bar-adv .cc-hgear-home:hover { color: var(--cc-accent-ink, #FCC419); }
-div.js-actions .cc-bar-adv-lbl { color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-div.js-actions input[type=button]:hover,
-div.js-actions .cc-bulkmode-badge:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
-/* the badge clears box-shadow above with more weight than the shared halo in Tokens.css */
-div.js-actions .cc-bulkmode-badge:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important; }
+div.js-actions .cc-bar-adv-lbl { color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-md-fs); font-weight: 600; }
+div.js-actions input[type=button]:hover:not(:disabled),
+div.js-actions .cc-bulkmode-badge:hover,
+div.js-actions .cc-allct:hover:not([aria-disabled="true"]) {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
+}
+div.js-actions input[type=button].cc-bar-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; }
+/* the badge and the menu button clear box-shadow above with more weight than the shared halo in
+   Tokens.css */
+div.js-actions :is(.cc-bulkmode-badge, .cc-allct):focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important; }
 
 /* ShipLog: where its changelog bubble is on the Docker tab, its buttons and severity pill take the
    CC look. The .sl-bubble selector matches only once ShipLog has rendered one, so with the plugin
@@ -2105,12 +2124,14 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-b:not(.cc-plan-on) { b
    accent. The per-kind rules further down override it. */
 html.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b:not(.cc-plan-on),
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder .cc-card:hover .cc-b:not(.cc-plan-on) { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
-/* The docked .js-actions buttons rest grey and take the palette colour on hover, the
-   Mehrfachauswahl badge with them, except while it is on: a pressed toggle keeps its fill, which
-   is what the :not() holds the rest state off. */
-html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:not(:disabled),
+/* The docked .js-actions buttons rest grey and take the palette colour on hover, the Mehrfachauswahl
+   badge with them except while it is on: a pressed toggle keeps its fill, which is what the :not()
+   holds the rest state off. "Container hinzufügen" stays filled, the one filled button of the view. */
+html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:not(:disabled, .cc-bar-primary),
+html.cc-shares-rbneutral.cc-docker-on div.js-actions .cc-allct,
 html.cc-shares-rbneutral.cc-docker-on div.js-actions .cc-bulkmode-badge:not(.cc-bulkmode-badge-on) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
-html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:hover:not(:disabled),
+html.cc-shares-rbneutral.cc-docker-on div.js-actions input[type=button]:hover:not(:disabled, .cc-bar-primary),
+html.cc-shares-rbneutral.cc-docker-on div.js-actions .cc-allct:hover:not([aria-disabled="true"]),
 html.cc-shares-rbneutral.cc-docker-on div.js-actions .cc-bulkmode-badge:not(.cc-bulkmode-badge-on):hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 /* an inactive page tab rests grey, with the --cc-rb-c paintTabs stamps on it for the hover; the
    selected tab stays painted */
@@ -2243,7 +2264,7 @@ html .ToggleViewMode .switch-button-background .switch-button-button,
 html .cc-enh #docker_list input.autostart.cc-noswitch,
 html .cc-enh #docker_list input.autostart.cc-noswitch::before,
 html div.js-actions input[type=button],
-html div.js-actions .cc-bulkmode-badge,
+html div.js-actions .cc-bulkmode-badge, html div.js-actions .cc-allct,
 html .cc-cb, html .cc-pop input[type="checkbox"],
 html .cc-set-toggle.cc-set-toggle, html .cc-set-knob.cc-set-knob { border-radius: var(--cc-radius-pill) !important; }
 
