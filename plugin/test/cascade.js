@@ -263,6 +263,7 @@ function resolve(value, map) {
 // <head> before any CC sheet, so a tie goes to CC. The values are the white theme's.
 const UNRAID = { name: 'unraid default-base.css', css: `
 input[type="checkbox"] { vertical-align: middle; margin-right: 6px; }
+span.outer { margin-bottom: 20px; margin-right: 0px; }
 input[type="text"]:where(:not(.unapi *)), input[type="number"]:where(:not(.unapi *)), textarea:where(:not(.unapi *)) {
   color: #1d1b1b; font-size: 1.3rem; background-color: transparent; border-width: 0; border-bottom-width: 1px;
   padding: .5rem; min-height: 2rem; line-height: 2rem; width: 100%; margin: 0; box-shadow: none; border-radius: 0; }

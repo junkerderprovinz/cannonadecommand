@@ -38,7 +38,9 @@ html .cc-hgear-bar { margin-right: 10px; font-size: var(--cc-text-title); color:
 /* The name cell (column 1): a larger logo with the name centred beside it in a narrower column,
    and under the name the start/stop badge with the id and author below it. */
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name { width: 225px !important; vertical-align: middle; }
-.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer { display: flex; align-items: center; gap: 12px; }
+/* Unraid gives span.outer a 20px bottom margin, which would make every row 20px taller than its
+   logo and hang the logo above the middle of the row. */
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer { display: flex; align-items: center; gap: 12px; margin: 0; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer > span.hand { flex: none; display: flex; align-items: center; }
 /* object-fit:contain keeps a non-square logo's aspect ratio instead of squashing it into the box;
    a glyph <i> is sized by font-size instead. docker.js applySettings stamps --cc-logo-img and

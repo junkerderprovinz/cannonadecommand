@@ -23,6 +23,13 @@ console.log('\nEvery cell centres its content as one block');
     const w = win({ tag: 'div', classes: ['cc-rowbadges', cls], attrs: {}, states: {}, html, outside: ['.cc-grid-holder', '.cc-card'] }, 'display');
     ok('.' + cls + ' is a block, not a group on the text line', !!w && w.value === 'flex', w && w.selector + ' => ' + w.value);
   }
+  // Unraid's span.outer carries a 20px bottom margin, which the logo cell would add to the row.
+  for (const [where, html2] of [['Docker', ['cc-docker-on']], ['VM', ['cc-vms-on']]]) {
+    const outer = { tag: 'span', classes: ['outer'], attrs: {}, states: {}, html: html2, inside: [where === 'Docker' ? '#docker_list' : '#kvm_list'], outside: ['.cc-grid-holder'] };
+    const c = candidates(page, outer, 'margin-bottom').concat(candidates(page, outer, 'margin')).sort((x, y) => (x.important - y.important) || require('./cascade').cmp(x.spec, y.spec) || (x.order - y.order));
+    const w = c[c.length - 1];
+    ok('the ' + where + ' logo cell adds no margin under the logo', !!w && w.value === '0', w && w.sheet + ': ' + w.selector + ' => ' + w.value);
+  }
   ok('the stray <br> beside the CPU and RAM badges takes no line',
     /#docker_list tr:is\(\.sortable, \.folder-element\) > td:has\(> \.cc-resgroup\) > br \{ display: none; \}/.test(docker));
 }

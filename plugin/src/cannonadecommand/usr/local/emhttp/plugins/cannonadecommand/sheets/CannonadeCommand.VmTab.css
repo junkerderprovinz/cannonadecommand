@@ -119,7 +119,7 @@ html.cc-vms-on #kvm_list .cc-vmb-disks .cc-b-v a.hand i { color: inherit !import
    span.outer > span.hand, so the selectors map one to one. The accent box is gated on
    html.cc-vm-iconbg, which vms.js toggles like cc-docker-iconbg. */
 html.cc-vms-on #kvm_list td.vm-name { vertical-align: middle; }
-html.cc-vms-on #kvm_list td.vm-name .outer { display: flex; align-items: center; gap: 12px; }
+html.cc-vms-on #kvm_list td.vm-name .outer { display: flex; align-items: center; gap: 12px; margin: 0; }   /* without Unraid's 20px bottom margin, as on Docker */
 html.cc-vms-on #kvm_list td.vm-name .outer > span.hand { flex: none; display: flex; align-items: center; justify-content: center; }
 /* In VMMachines.php span[id^="vm-"] is span.hand itself, and the icon is usually an inline
    <i class="fa fa-... img"> glyph rather than an <img>. The img is a 62px block; the glyph is a
