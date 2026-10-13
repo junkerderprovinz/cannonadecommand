@@ -1,6 +1,6 @@
 // A bar that shows a fill level sloshes at its end (GlimStone, "Illustrations"): the end surges
-// out leaning forward and draws back and white dots drift toward it. Nothing runs past the end or
-// pops. The motion setting sets how lively it is, and at "off" or under reduced motion the liquid
+// out leaning forward and draws back. Nothing runs past the end or pops, and no dots drift in the
+// liquid. The motion setting sets how lively it is, and at "off" or under reduced motion the liquid
 // rests level. What can quietly break it:
 //   · a level that leaves a slosh dial out inherits the lively number
 //   · an animation outside the no-preference gate keeps moving under reduced motion
@@ -8,6 +8,7 @@
 //   · a MutationObserver that calls the stamp wakes itself if the stamp writes twice
 //   · a fill level CannonadeCommand draws without the class
 //   · bubbles that run past the end and pop coming back into a bar
+//   · GlimStone's drifting dots coming back into the liquid
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand');
@@ -36,31 +37,30 @@ const all = rules(tokens);
 
 console.log('\nEvery level answers the slosh dials');
 {
-  const DIALS = ['dur', 'surge', 'lean', 'bubble-pace', 'bubble-opacity'].map((d) => '--cc-motion-slosh-' + d);
+  const DIALS = ['dur', 'surge', 'lean'].map((d) => '--cc-motion-slosh-' + d);
   const block = (sel, gated) => all.find((r) => r.sel === sel && /--cc-motion-slosh-/.test(r.body) && (gated ? /no-preference/.test(r.media) : !r.media));
   const v = (r, d) => ((new RegExp(d + ':\\s*([^;]+);').exec(r ? r.body : '') || [])[1] || '').trim();
   const levels = { still: block('html', false), wild: block('html', true), subtle: block('html[data-cc-motion="subtle"]', true), off: block('html[data-cc-motion="off"]', true) };
   for (const [name, r] of Object.entries(levels)) ok(name + ' declares every slosh dial', !!r && DIALS.every((d) => v(r, d) !== ''), r ? DIALS.filter((d) => !v(r, d)).join(' ') : 'block missing');
   ok('wild swings in 3.6s with a 5px surge, as GlimStone\'s default', v(levels.wild, '--cc-motion-slosh-dur') === '3.6s' && v(levels.wild, '--cc-motion-slosh-surge') === '5px');
   ok('subtle swings in 5s with a 3.5px surge', v(levels.subtle, '--cc-motion-slosh-dur') === '5s' && v(levels.subtle, '--cc-motion-slosh-surge') === '3.5px');
-  for (const n of ['still', 'off']) ok(n + ' rests level: no surge, no lean, no dots', v(levels[n], '--cc-motion-slosh-surge') === '0px' && v(levels[n], '--cc-motion-slosh-lean') === '0deg' && v(levels[n], '--cc-motion-slosh-bubble-opacity') === '0');
+  for (const n of ['still', 'off']) ok(n + ' rests level: no surge, no lean', v(levels[n], '--cc-motion-slosh-surge') === '0px' && v(levels[n], '--cc-motion-slosh-lean') === '0deg');
 }
 
 console.log('\nThe motion lives inside the gate');
 {
   const anim = all.filter((r) => /cc-slosh/.test(r.sel) && /animation\s*:/.test(r.body) && !/animation:\s*none/.test(r.body));
-  ok('the end and the dots animate', ['.cc-slosh-edge::after', '.cc-slosh-edge::before'].every((s) => anim.some((r) => r.sel === s)));
+  ok('the end animates', anim.some((r) => r.sel === '.cc-slosh-edge::after'));
   const loose = anim.filter((r) => !/prefers-reduced-motion:\s*no-preference/.test(r.media));
   ok('no slosh animation sits outside the no-preference gate', loose.length === 0, loose.map((r) => r.sel).join(' | '));
   ok('every one starts at the bar\'s phase', anim.every((r) => /var\(--cc-slosh-phase, 0s\)/.test(r.body)));
   const off = all.find((r) => /html\[data-cc-motion="off"\][^,]*cc-slosh/.test(r.sel) && /animation:\s*none/.test(r.body));
-  ok('at "off" they stop outright', !!off && /::before/.test(off.sel) && /::after/.test(off.sel));
-  const restDots = all.find((r) => r.sel === '.cc-slosh-edge::before' && !r.media);
-  ok('at rest the dots are hidden', restDots && /opacity: 0;/.test(restDots.body));
+  ok('at "off" it stops outright', !!off && /::after/.test(off.sel));
+  ok('no dots drift in the liquid', !all.some((r) => /cc-slosh-edge::before/.test(r.sel)) && !/cc-slosh-fizz|--cc-motion-slosh-bubble-/.test(tokens));
   const restEnd = all.find((r) => r.sel === '.cc-slosh-edge::after' && !r.media);
   ok('at rest the end lies under the fill', restEnd && /translate: calc\(-100% \* var\(--cc-dir-sign, 1\)\) 0/.test(restEnd.body));
   ok('its corners follow the shape engine', restEnd && /border-start-end-radius: var\(--cc-radius-pill\)/.test(restEnd.body));
-  for (const k of ['cc-slosh-surge', 'cc-slosh-fizz']) ok('@keyframes ' + k, new RegExp('@keyframes ' + k + ' \\{').test(tokens));
+  for (const k of ['cc-slosh-surge']) ok('@keyframes ' + k, new RegExp('@keyframes ' + k + ' \\{').test(tokens));
 }
 
 console.log('\nCCTheme.slosh stamps a fill once');
