@@ -535,7 +535,20 @@ html .cc-abtn-primary { color: var(--cc-ok-ink, #6fdc8c); border-color: rgba(63,
    90px square among tiny chips or slim rows */
 .cc-gear-tile.cc-chip, .cc-gear-tile.cc-frow { min-height: auto; }
 
-.cc-filter { background: var(--cc-bg2); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: var(--cc-radius-control); padding: 5px 10px; font-size: var(--cc-text-meta); }
+/* The gear menu's filter, a filled field with no line around it. The html prefix and the menu
+   class carry it past Unraid's input[type="text"] rule, which would draw an underline. */
+html .cc-menu .cc-filter {
+  box-sizing: border-box; width: 100%; height: 30px; min-height: 0; margin: 0; padding: 0 10px;
+  background: var(--cc-surface-3, #2e2e2e); color: var(--cc-txt, #e6e6e6); border: none; border-radius: var(--cc-radius-control);
+  box-shadow: none; font-size: var(--cc-text-meta); line-height: normal;
+}
+html .cc-menu .cc-filter:focus { background-color: #383838; outline: none; }
+/* The Search button and the field share one place: the button until it is pressed or a filter is
+   set, the field after. */
+.cc-search { display: flex; width: 100%; }
+.cc-search .cc-filter, .cc-search.cc-search-open .cc-search-btn { display: none; }
+.cc-search.cc-search-open .cc-filter { display: block; }
+html .cc-search-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 /* Buttons are filled, with no borders anywhere: a neutral fill for a secondary, the accent for a
    primary, and fills and shadows for separation. Every CC button rule carries the html prefix,
    which matches the weight of Unraid's button[type="button"]:where(...) and button:hover:where(...)
