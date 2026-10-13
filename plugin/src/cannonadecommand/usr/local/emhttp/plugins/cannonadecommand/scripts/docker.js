@@ -2379,7 +2379,14 @@
   // `builder` lets another caller, the per-card move-to-folder button, reuse this menu,
   // positioning and outside-click machinery for its own panel, so there is one open-menu system.
   function openMenu(anchor, builder) { closeMenu(); menuAnchor = anchor; menu = (builder || buildMenu)(); document.body.appendChild(menu); positionMenu(); }
-  function closeMenu() { if (menu) { menu.remove(); menu = null; menuStatusEl = null; } }
+  // Focus that was inside the menu goes back to the gear that opened it, so Escape from the
+  // Search button does not drop the keyboard onto the page's start.
+  function closeMenu() {
+    if (!menu) return;
+    var held = menu.contains(document.activeElement);
+    menu.remove(); menu = null; menuStatusEl = null;
+    if (held && menuAnchor && document.contains(menuAnchor)) menuAnchor.focus();
+  }
   function toggleMenu(anchor, builder) { if (menu) closeMenu(); else openMenu(anchor, builder); }
 
   // The organizer behind the folder view, over the GraphQL helper header.js provides. Every

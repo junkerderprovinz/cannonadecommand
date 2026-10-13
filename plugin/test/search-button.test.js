@@ -59,6 +59,23 @@ console.log('\nThe gear menu\'s filter starts as a button');
   ok('a menu opened with a filter set shows the field at once', searchToggle(kept, () => {}).cls.has('cc-search-open'));
 }
 
+console.log('\nClosing the menu hands focus back to its gear');
+{
+  const make = (focusInside) => {
+    const gear = { focused: 0, focus() { this.focused++; } };
+    const inner = {};
+    const menu = { removed: false, remove() { this.removed = true; }, contains: (n) => n === inner };
+    const document = { activeElement: focusInside ? inner : {}, contains: (n) => n === gear };
+    const close = new Function('document', 'menu', 'menuAnchor', 'menuStatusEl', grabFn(docker, 'closeMenu') + '\ncloseMenu(); return menu;');
+    const left = close(document, menu, gear, null);
+    return { gear, menu, left };
+  };
+  const kb = make(true);
+  ok('Escape from inside the menu puts the caret back on the gear', kb.menu.removed && kb.left === null && kb.gear.focused === 1);
+  const mouse = make(false);
+  ok('a click elsewhere leaves focus where the click put it', mouse.menu.removed && mouse.gear.focused === 0);
+}
+
 console.log('\nThe menu wires it');
 {
   const menu = grabFn(docker, 'buildMenu');
