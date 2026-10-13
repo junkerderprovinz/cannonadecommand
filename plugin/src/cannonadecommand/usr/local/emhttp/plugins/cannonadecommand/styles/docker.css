@@ -577,9 +577,9 @@ html .cc-seg-btn:hover { color: var(--cc-txt); }
 .cc-menu-plain .cc-filter { width: 100%; }
 .cc-menu-plain .cc-btn { flex: 1; text-align: center; }
 .cc-menu-sep { height: 6px; background: transparent; margin: 0; }   /* spacing, not a line */
-.cc-menu-link { color: var(--cc-accent); font-size: var(--cc-text-meta); padding: 6px 8px; display: block; text-decoration: none; border-radius: var(--cc-radius-control); transition: background .12s, color .12s; }
-/* a colour-mode fill on hover, and no underline */
-.cc-menu-link:hover { text-decoration: none; background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
+.cc-menu-link { color: var(--cc-accent); font-size: var(--cc-text-meta); padding: 6px 8px; display: block; text-decoration: none; border-radius: var(--cc-radius-control); cursor: pointer; transition: background .12s, color .12s; }
+/* a colour-mode fill on hover and on keyboard focus, and no underline */
+.cc-menu-link:is(:hover, :focus-visible) { outline: none; text-decoration: none; background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 
 /* The editor windows follow the .cc-win template in Tokens.css: the dark frame, the title badge
    across the top, the content on the lighter .cc-pop-mid card and the button row at the bottom. A

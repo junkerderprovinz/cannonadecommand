@@ -2109,7 +2109,7 @@
     function attachMoveButton(cardEl, entry) {
       var btn = el("button", "cc-card-movebtn"); btn.type = "button"; btn.title = t("moveToFolder");
       btn.innerHTML = ccGlyph("Folder"); btn.setAttribute("aria-label", t("moveToFolder"));
-      btn.addEventListener("click", function (ev) { ev.stopPropagation(); ev.preventDefault(); toggleMenu(btn, function () { return buildMoveMenu(entry); }); });
+      btn.addEventListener("click", function (ev) { ev.stopPropagation(); ev.preventDefault(); toggleMenu(btn, function () { return buildMoveMenu(entry); }, ev); });
       var head2 = cardEl.querySelector(".cc-card-head"); (head2 || cardEl).appendChild(btn);
     }
 
@@ -2209,7 +2209,7 @@
   function renderCurrentView() { if (mode === "folder") renderFolderView(); else renderGrid(); }
 
   // the gear and its menu
-  function makeGear(extra) { var g = el("button", "cc-hgear" + (extra ? " " + extra : "") + (daemonUp === false ? " cc-hgear-down" : "")); g.innerHTML = ccGlyph("Gear"); g.type = "button"; var tip = daemonUp === false ? "CannonadeCommand: daemon not reachable" : "CannonadeCommand"; g.setAttribute("data-tip", tip); g.setAttribute("aria-label", tip); g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g); }); return g; }
+  function makeGear(extra) { var g = el("button", "cc-hgear" + (extra ? " " + extra : "") + (daemonUp === false ? " cc-hgear-down" : "")); g.innerHTML = ccGlyph("Gear"); g.type = "button"; var tip = daemonUp === false ? "CannonadeCommand: daemon not reachable" : "CannonadeCommand"; g.setAttribute("data-tip", tip); g.setAttribute("aria-label", tip); g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g, null, e); }); return g; }
   function injectHeaderGear() {
     try {
       // never a second list-mode gear once one exists
@@ -2307,10 +2307,7 @@
       }
       // New folder creates the first one, which is how the folder view above becomes available.
       if (ccOrgAvailable) {
-        var nf = el("div", "cc-menu-link", "+ " + t("newFolder"));
-        nf.style.cursor = "pointer";
-        nf.addEventListener("click", function () { closeMenu(); ccOrgCreateFolder(); });
-        m.appendChild(nf);
+        m.appendChild(menuItem("cc-menu-link", "+ " + t("newFolder"), ccOrgCreateFolder));
       }
     }
     // The native switch row above the table is hidden, so this flips Unraid's own hidden
@@ -2378,7 +2375,28 @@
   }
   // `builder` lets another caller, the per-card move-to-folder button, reuse this menu,
   // positioning and outside-click machinery for its own panel, so there is one open-menu system.
-  function openMenu(anchor, builder) { closeMenu(); menuAnchor = anchor; menu = (builder || buildMenu)(); document.body.appendChild(menu); positionMenu(); }
+  function openMenu(anchor, builder) {
+    closeMenu(); menuAnchor = anchor; menu = (builder || buildMenu)(); document.body.appendChild(menu); positionMenu();
+    // Tab walks the entries in a loop, since the menu hangs at the end of <body> and Tab out of
+    // it would land in the browser's own chrome with the menu still open.
+    menu.addEventListener("keydown", function (e) {
+      if (e.key !== "Tab") return;
+      var f = menuFocusables(); if (!f.length) return;
+      var edge = e.shiftKey ? f[0] : f[f.length - 1];
+      if (document.activeElement === edge) { e.preventDefault(); (e.shiftKey ? f[f.length - 1] : f[0]).focus(); }
+    });
+  }
+  function menuFocusables() {
+    return Array.prototype.filter.call(menu.querySelectorAll('button:not([disabled]), a[href], input, [tabindex="0"]'), function (n) { return n.getClientRects().length > 0; });
+  }
+  // A menu entry that runs an action. It takes the focus, and Enter or Space picks it like a click.
+  function menuItem(cls, text, onPick) {
+    var it = el("div", cls, text);
+    it.setAttribute("role", "button"); it.setAttribute("tabindex", "0");
+    it.addEventListener("click", function () { closeMenu(); onPick(); });
+    it.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); it.click(); } });
+    return it;
+  }
   // Focus that was inside the menu goes back to the gear that opened it, so Escape from the
   // Search button does not drop the keyboard onto the page's start.
   function closeMenu() {
@@ -2387,7 +2405,13 @@
     menu.remove(); menu = null; menuStatusEl = null;
     if (held && menuAnchor && document.contains(menuAnchor)) menuAnchor.focus();
   }
-  function toggleMenu(anchor, builder) { if (menu) closeMenu(); else openMenu(anchor, builder); }
+  // A menu opened from the keyboard, a click with no pointer behind it, puts the focus on its first
+  // entry.
+  function toggleMenu(anchor, builder, ev) {
+    if (menu) { closeMenu(); return; }
+    openMenu(anchor, builder);
+    if (ev && ev.detail === 0) { var f = menuFocusables(); if (f.length) f[0].focus(); }
+  }
 
   // The organizer behind the folder view, over the GraphQL helper header.js provides. Every
   // organizer write mutation returns the same wrapper as the read query, so they share a shape.
@@ -2545,20 +2569,14 @@
     var m = el("div", "cc-menu");
     m.addEventListener("click", function (e) { e.stopPropagation(); });
     m.appendChild(menuHead(t("moveToFolder")));
-    var rootLink = el("div", "cc-menu-link" + (entry.parentId === ccOrgView.rootId ? " cc-menu-link-current" : ""), t("rootLevel"));
-    rootLink.style.cursor = "pointer";
-    rootLink.addEventListener("click", function () { closeMenu(); ccOrgMoveToFolder(entry.id, ccOrgView.rootId); });
-    m.appendChild(rootLink);
+    m.appendChild(menuItem("cc-menu-link" + (entry.parentId === ccOrgView.rootId ? " cc-menu-link-current" : ""), t("rootLevel"), function () { ccOrgMoveToFolder(entry.id, ccOrgView.rootId); }));
     ccOrgView.flatEntries
-      // The root entry is excluded: it is a folder too, and rootLink above already covers it, so
-      // without this it appears a second time as its own destination.
+      // The root entry is excluded: it is a folder too, and the root level above already covers
+      // it, so without this it appears a second time as its own destination.
       .filter(function (f) { return (f.type === "folder" || f.type === "group") && f.id !== entry.id && f.id !== ccOrgView.rootId; })
       .forEach(function (f) {
         var indent = new Array(Math.max(0, f.depth - 1) + 1).join("　"); // one full-width space per nesting level under the root
-        var link = el("div", "cc-menu-link" + (entry.parentId === f.id ? " cc-menu-link-current" : ""), indent + f.name);
-        link.style.cursor = "pointer";
-        link.addEventListener("click", function () { closeMenu(); ccOrgMoveToFolder(entry.id, f.id); });
-        m.appendChild(link);
+        m.appendChild(menuItem("cc-menu-link" + (entry.parentId === f.id ? " cc-menu-link-current" : ""), indent + f.name, function () { ccOrgMoveToFolder(entry.id, f.id); }));
       });
     return m;
   }
