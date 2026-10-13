@@ -84,6 +84,7 @@
       "html .cc-win-notes .cc-notes pre code{background:none;padding:0;white-space:pre}" +
       "html .cc-win-notes .cc-notes a,html .cc-win-notes .cc-notes a:visited{color:var(--cc-accent-ink);text-decoration:none;border-radius:calc(var(--cc-radius-control) / 2)}" +
       "html .cc-win-notes .cc-notes a:hover{background:var(--cc-rbaccent,var(--cc-accent));color:var(--cc-rbaccent-text,var(--cc-accent-text))}" +
+      "html .cc-win-notes :is(.cc-notes, .cc-notes a):focus-visible{outline:none!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--cc-accent,#FCC419) 45%,transparent)!important}" +
       "html .cc-win a.cc-win-btn,html .cc-win a.cc-win-btn:visited{color:var(--cc-text);text-decoration:none}" +
       "html .cc-win a.cc-win-btn:hover{color:var(--cc-rb-ct,var(--cc-rbaccent-text,var(--cc-accent-text,#161616)))}" +
       ".cc-win-act .cc-win-link{margin-inline-end:auto}";
@@ -2193,6 +2194,7 @@
     var win = el("div", "cc-win cc-dlg cc-win-notes");
     var title = el("div", "cc-win-title", src.ver ? T("Neu in ", "New in ") + src.ver : T("Versionshinweise", "Release notes"));
     var card = el("div", "cc-win-card cc-notes");
+    card.setAttribute("tabindex", "0");   // long notes scroll, and the keyboard needs a way in
     card.appendChild(el("p", "cc-win-text", T("Lade Versionshinweise …", "Loading the release notes …")));
     var act = el("div", "cc-win-act");
     var link = el("a", "cc-win-btn cc-win-link", T("Auf GitHub ansehen", "View on GitHub"));

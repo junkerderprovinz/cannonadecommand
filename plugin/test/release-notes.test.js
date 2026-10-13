@@ -131,6 +131,7 @@ console.log('\nThe window');
   ok('the release page link opens the foot', foot[0].tagName === 'A' && foot[0].cls.has('cc-win-link') && foot[0].href === 'https://github.com/junkerderprovinz/cannonadecommand/releases/tag/v1.0.0' && foot[0].rel === 'noopener noreferrer');
   ok('and Close ends it', foot.length === 2 && foot[1].textContent === 'Schließen' && foot[1].cls.has('cc-win-btn'));
   ok('the window is modal, opened from the button, with Close focused', modalOpts.opener === opener && active === foot[1]);
+  ok('the notes take focus from the keyboard, so long notes scroll without a mouse', w.byClass('cc-notes')[0].getAttribute('tabindex') === '0');
   await tick(); await tick();
   ok('the notes replace the loading line', w.byClass('cc-notes-h')[0].textContent === 'Added' && w.byTag('strong')[0].textContent === 'One.' && !/Lade/.test(w.byClass('cc-notes')[0].textContent));
   foot[1].click();
@@ -168,6 +169,16 @@ console.log('\nThe window');
   const style = settings.slice(settings.indexOf('st.textContent ='), settings.indexOf('document.head.appendChild(st);'));
   ok('the window is wider than a question', /\.cc-dlg\.cc-win-notes\{width:min\(760px,calc\(100vw - 32px\)\)/.test(style));
   ok('its links leave Unraid\'s underline and colour behind', /html \.cc-win-notes \.cc-notes a,html \.cc-win-notes \.cc-notes a:visited\{color:var\(--cc-accent-ink\);text-decoration:none/.test(style));
+  const { candidates, withUnraid } = require('./cascade');
+  const page = withUnraid('settings').concat(['styles/docker.css']);
+  const focused = [
+    ['the notes card', { tag: 'div', classes: ['cc-win-card', 'cc-notes'], attrs: { tabindex: '0' }, inside: ['.cc-win', '.cc-win-notes'], html: ['cc-shares-on'], states: { 'focus-visible': true, focus: true } }],
+    ['a link in the notes', { tag: 'a', classes: [], attrs: { href: 'https://example.org/' }, inside: ['.cc-win', '.cc-win-notes', '.cc-notes'], html: ['cc-shares-on'], states: { 'focus-visible': true, focus: true } }],
+  ];
+  for (const [name, e] of focused) {
+    const halo = candidates(page, e, 'box-shadow').pop();
+    ok(name + ' gets the focus halo past the blanket no-ring rules', halo && /^0 0 0 3px color-mix\(in srgb,var\(--cc-accent,#FCC419\) 45%,transparent\)$/.test(halo.value), halo && halo.selector + ' ' + halo.value);
+  }
   ok('the release page link pushes Close to the end', /\.cc-win-act \.cc-win-link\{margin-inline-end:auto\}/.test(style));
 
   console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
