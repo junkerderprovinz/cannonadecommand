@@ -636,9 +636,11 @@
   // Makes a bar's fill slosh at its end (Tokens.css, .cc-slosh-edge), or takes the slosh off with
   // on === false. The phase is the time since the page loaded, so a bar that is drawn again
   // swings on from where the one before it was. A fill that already sloshes is left untouched,
-  // which keeps a MutationObserver that calls this from waking itself.
+  // which keeps a MutationObserver that calls this from waking itself. An empty bar holds no
+  // liquid, so its fill never sloshes.
   function slosh(fill, on) {
     if (!fill || !fill.classList) return fill;
+    if (!(parseFloat(fill.style.width) > 0)) on = false;
     var pops = fill.querySelectorAll(":scope > .cc-slosh-pop-bar");
     if (on === false) {
       if (!fill.classList.contains("cc-slosh-edge") && !pops.length) return fill;

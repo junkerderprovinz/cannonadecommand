@@ -67,7 +67,7 @@ console.log('\nCCTheme.slosh stamps a fill once');
   let clock = 12345.6789;
   global.performance = { now: () => clock };
   class F {
-    constructor() { this.kids = []; this.cls = new Set(); this.props = {}; this.appends = 0; const self = this; this.style = { setProperty: (k, v) => { self.props[k] = v; self.writes = (self.writes || 0) + 1; }, removeProperty: (k) => { delete self.props[k]; } }; }
+    constructor(width) { this.kids = []; this.cls = new Set(); this.props = {}; this.appends = 0; const self = this; this.style = { width: width === undefined ? '40%' : width, setProperty: (k, v) => { self.props[k] = v; self.writes = (self.writes || 0) + 1; }, removeProperty: (k) => { delete self.props[k]; } }; }
     get classList() { const c = this.cls; return { add: (x) => c.add(x), remove: (x) => c.delete(x), contains: (x) => c.has(x) }; }
     querySelectorAll(s) { return s === ':scope > .cc-slosh-pop-bar' ? this.kids.filter((k) => k.className === 'cc-slosh-pop-bar') : []; }
     appendChild(c) { this.kids.push(c); this.appends++; return c; }
@@ -87,6 +87,10 @@ console.log('\nCCTheme.slosh stamps a fill once');
   ok('on === false takes the class, the phase and the bubbles off', !f.cls.has('cc-slosh-edge') && !f.kids.length && !('--cc-slosh-phase' in f.props));
   const g = new F(); slosh(g, false);
   ok('taking it off a bar that never sloshed writes nothing', !g.writes && !g.appends);
+  const empty = new F('0%'); slosh(empty);
+  ok('an empty bar does not slosh, since it holds no liquid', !empty.cls.has('cc-slosh-edge') && !empty.kids.length);
+  const drained = new F(); slosh(drained); drained.style.width = '0%'; slosh(drained);
+  ok('a bar that empties stops sloshing', !drained.cls.has('cc-slosh-edge') && !drained.kids.length);
   ok('cc-theme.js publishes it', /slosh: slosh,/.test(read('scripts/cc-theme.js')));
 }
 
