@@ -567,7 +567,7 @@
       if (sib && /readmore|toggle/i.test(sib.className || "")) sib.style.setProperty("display", "none", "important");
     }
     if (desc) {
-      desc.style.setProperty("color", "#9a9a9a", "important"); desc.style.setProperty("font-size", "var(--cc-text-meta)", "important");
+      desc.style.setProperty("font-size", "var(--cc-text-meta)", "important");
       // inline on every pass, because the readmore lib leaves inline heights on some rows
       desc.style.setProperty("display", "block", "important");
       desc.style.setProperty("height", "auto", "important");

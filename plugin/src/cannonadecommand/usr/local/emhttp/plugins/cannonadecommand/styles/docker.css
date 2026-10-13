@@ -1130,7 +1130,9 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
 .cc-plugicm:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; transform: translateY(-1px); }
 /* the other tabs' tables (install errors etc.): same clean look */
 .cc-plug-lite thead th { text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-text-meta); }
-.cc-desc { display: block; max-height: 5em; overflow-y: auto; padding-right: 6px; width: 100%; box-sizing: border-box; margin: 0; scrollbar-gutter: stable; }
+.cc-desc { display: block; max-height: 5em; overflow-y: auto; padding-right: 6px; width: 100%; box-sizing: border-box; margin: 0; scrollbar-gutter: stable; color: #9a9a9a !important; }
+/* the light themes take their own muted ink, since the grey of the dark ones fades on white */
+html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #545454) !important; }
 .cc-desc::-webkit-scrollbar { width: 6px; }
 .cc-desc::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: var(--cc-radius-pill); }
 .cc-desc::-webkit-scrollbar-track { background: transparent; }
