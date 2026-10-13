@@ -183,3 +183,42 @@ func TestConcurrentMergesKeepEveryKey(t *testing.T) {
 		t.Errorf("%d keys survived, want %d", len(c.UISettings), writers)
 	}
 }
+
+func TestLoadConfigGivesToolsTheSettingsKeysOnce(t *testing.T) {
+	s := New(filepath.Join(t.TempDir(), "plan.json"))
+	ui := map[string]string{"cc.stylesettings": "0", "ccs.accent": "#ff8389", "ccs.iconbg": "0", "cc.accent": "#fcc419"}
+	if err := s.SaveConfig(model.Config{UISettings: ui}); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	c, err := s.LoadConfig()
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	got := c.UISettings
+	if got["cc.styletools"] != "0" || got["cct.accent"] != "#ff8389" || got["cct.iconbg"] != "0" {
+		t.Errorf("tools keys = %v", got)
+	}
+	if got["ccs.accent"] != "#ff8389" || got["cc.stylesettings"] != "0" {
+		t.Errorf("the settings keys changed: %v", got)
+	}
+
+	// Once Tools has a colour of its own, a later load leaves it alone.
+	ui = map[string]string{"cc.styletools": "0", "cct.accent": "#1d99f3", "ccs.accent": "#ff8389"}
+	if err := s.SaveConfig(model.Config{UISettings: ui}); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	if c, _ = s.LoadConfig(); c.UISettings["cct.accent"] != "#1d99f3" {
+		t.Errorf("cct.accent overwritten: %v", c.UISettings)
+	}
+}
+
+func TestLoadConfigLeavesAFreshMirrorWithoutToolsKeys(t *testing.T) {
+	s := New(filepath.Join(t.TempDir(), "plan.json"))
+	if err := s.SaveConfig(model.Config{UISettings: map[string]string{"cc.accent": "#fcc419"}}); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	c, _ := s.LoadConfig()
+	if len(c.UISettings) != 1 {
+		t.Errorf("ui settings = %v", c.UISettings)
+	}
+}

@@ -869,6 +869,19 @@
     move(0);
     return entry;
   }
+  // /Tools reads cc.styletools and cct.*. An install that only has the /Settings keys gets them
+  // copied once, the exception and every ccs.* value, so /Tools keeps its look; a set
+  // cc.styletools marks the copy as done. store.LoadConfig makes the same copy in the
+  // engine's mirror, which a browser on another origin adopts.
+  function splitToolsKeys(ls) {
+    if (ls.getItem("cc.styletools") != null) return;
+    var keys = [];
+    for (var i = 0; i < ls.length; i++) { var k = ls.key(i); if (k && k.indexOf("ccs.") === 0) keys.push(k); }
+    keys.forEach(function (k) { var t = "cct." + k.slice(4); if (ls.getItem(t) == null) ls.setItem(t, ls.getItem(k)); });
+    ls.setItem("cc.styletools", ls.getItem("cc.stylesettings") || "1");
+  }
+  try { splitToolsKeys(localStorage); } catch (e) {}
+
   window.CCTheme = {
     RB: RB, idealText: idealText, motionLevel: motionLevel, shapeName: shapeName, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects,
     registerSelectSync: registerSelectSync, nextSelIndex: nextSelIndex, wheelStepSelect: wheelStepSelect,

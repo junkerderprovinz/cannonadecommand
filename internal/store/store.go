@@ -8,6 +8,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/junkerderprovinz/cannonadecommand/internal/model"
@@ -43,7 +44,38 @@ func (s *Store) LoadConfig() (model.Config, error) {
 	var c model.Config
 	err := readJSON(s.cfgPath, &c)
 	renameUIValues(c.UISettings)
+	splitToolsKeys(c.UISettings)
 	return c, err
+}
+
+// splitToolsKeys copies the Settings keys to the Tools keys once, as cc-theme.js
+// does in the browser, so a page adopting the mirror on another origin finds
+// /Tools unchanged. A set cc.styletools marks the copy as done.
+func splitToolsKeys(ui map[string]string) {
+	if ui == nil {
+		return
+	}
+	if _, done := ui["cc.styletools"]; done {
+		return
+	}
+	adopt, seen := ui["cc.stylesettings"]
+	for k, v := range ui {
+		rest, ok := strings.CutPrefix(k, "ccs.")
+		if !ok {
+			continue
+		}
+		seen = true
+		if _, set := ui["cct."+rest]; !set {
+			ui["cct."+rest] = v
+		}
+	}
+	if !seen {
+		return
+	}
+	if adopt == "" {
+		adopt = "1"
+	}
+	ui["cc.styletools"] = adopt
 }
 
 // uiValueNames maps UI setting values stored under an older name to the current

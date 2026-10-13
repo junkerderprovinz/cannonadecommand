@@ -786,7 +786,7 @@
     var wrapMain = el("div", "cc-set-wrap");    // Allgemein, which also hosts the export and import card
     // Each area's adopt key, "1" or unset while it follows the global badge colour and "0" once it
     // has a colour of its own, with that area's key prefix and the switches showing it.
-    var ADOPT_PREF = { "cc.styleheader": "cch.", "cc.styleshares": "ccsh.", "cc.styledocker": "ccd.", "cc.styleplugin": "ccp.", "cc.stylevms": "ccv.", "cc.stylesettings": "ccs.", "cc.stylefavorites": "ccf.", "cc.stylemain": "ccm." };
+    var ADOPT_PREF = { "cc.styleheader": "cch.", "cc.styleshares": "ccsh.", "cc.styledocker": "ccd.", "cc.styleplugin": "ccp.", "cc.stylevms": "ccv.", "cc.stylesettings": "ccs.", "cc.styletools": "cct.", "cc.stylefavorites": "ccf.", "cc.stylemain": "ccm." };
     var adoptToggles = {};
     var styleCardSync = {}; // each adopt key's refresher, repainting an area card with the effective colour
     function syncAllStyleCards() { for (var k9 in styleCardSync) { try { styleCardSync[k9](); } catch (e9) {} } }
@@ -1341,7 +1341,8 @@
       ["cc.styledocker", "docker", T("Docker", "Docker")],
       ["cc.styleplugin", "plugins", T("Plugins", "Plugins")],
       ["cc.stylevms", "vms", T("VMs", "VMs")],
-      ["cc.stylesettings", "settings", T("Einstellungen und Werkzeuge", "Settings and Tools")],
+      ["cc.stylesettings", "settings", T("Einstellungen", "Settings")],
+      ["cc.styletools", "tools", T("Werkzeuge", "Tools")],
       ["cc.stylefavorites", "favorites", T("Favoriten", "Favorites")]
     ];
     var cExc = card(T("Bereichsfarben", "Area colours"));
@@ -1613,7 +1614,7 @@
       // Picking a colour in an area's card means that area uses its own style, so its adopt
       // toggle goes off; otherwise the read side keeps resolving the global accent and the pick
       // has no visible effect. Turning adopt back on follows the global colour again.
-      var ADOPT = { "ccd.": "cc.styledocker", "ccp.": "cc.styleplugin", "ccv.": "cc.stylevms", "cch.": "cc.styleheader", "ccs.": "cc.stylesettings", "ccsh.": "cc.styleshares", "ccf.": "cc.stylefavorites", "ccm.": "cc.stylemain" };
+      var ADOPT = { "ccd.": "cc.styledocker", "ccp.": "cc.styleplugin", "ccv.": "cc.stylevms", "cch.": "cc.styleheader", "ccs.": "cc.stylesettings", "cct.": "cc.styletools", "ccsh.": "cc.styleshares", "ccf.": "cc.stylefavorites", "ccm.": "cc.stylemain" };
       var adoptKey = ADOPT[P];
       // The card always shows the effective colour: the global accent while adopt is on, the
       // area's own while it is off, so the fields jump the moment it is flipped.
@@ -1706,7 +1707,7 @@
         var ic = get(prefix + "iconcolor", ""); if (/^#[0-9a-f]{6}$/i.test(ic)) return ic;
         return acc;
       }
-      function effIconBg() { return (ga() ? get("cc.iconbg", "0") : get(P + "iconbg", P === "ccs." ? "1" : "0")) === "1"; }
+      function effIconBg() { return (ga() ? get("cc.iconbg", "0") : get(P + "iconbg", P === "ccs." || P === "cct." ? "1" : "0")) === "1"; }
       function effIconStrength() { return parseInt(ga() ? get("cc.iconstrength", "100") : get(P + "iconstrength", "100"), 10) || 100; }
       function applyBgClasses() { var on = effIconBg(); cB.classList.toggle("cc-bg-mode", on); tpw.classList.toggle("cc-prev-bg", on); }
       var cBLT = logoToggles(cB, {
@@ -1794,7 +1795,7 @@
     cSh.appendChild(exceptionRow("cc.styleshares"));
     cSh.appendChild(tabviewRow("shares", syncSharesBar));
     var cSet = card(T("Stil", "Style"));
-    cSet.appendChild(exceptionRow("cc.stylesettings", T("An: Der Bereich nimmt seine Farbe aus der Badges-Karte darunter. Aus: Er folgt der globalen Badge-Farbe aus Allgemein. Gilt für /Einstellungen und /Werkzeuge zugleich, weil Unraid beide Seiten gleich aufbaut.", "On: this area takes its colour from the Badges card below. Off: it follows the global badge colour from General. It applies to /Settings and /Tools at once, since Unraid builds both pages the same way.")));
+    cSet.appendChild(exceptionRow("cc.stylesettings"));
     // tile size of the /Settings + /Tools grid is the GLOBAL cc.sgsize control in Allgemein (no per-tab copy).
     var cFav = card(T("Stil", "Style"));
     cFav.appendChild(exceptionRow("cc.stylefavorites"));
@@ -1802,11 +1803,8 @@
     cStart.appendChild(exceptionRow("cc.stylemain"));
     cStart.appendChild(tabviewRow("main", syncSharesBar));
     wrapHeader.appendChild(cH); wrapShares.appendChild(cSh); wrapPlugin.appendChild(cP); wrapVms.appendChild(cV); wrapSettings.appendChild(cSet); wrapFavorites.appendChild(cFav); wrapStart.appendChild(cStart);
-    // Unraid renders /Settings and /Tools with the identical tile grid, so both pages share one
-    // flag; a per-tab copy of it would do nothing on one of them. This tab therefore carries the
-    // same card and toggle wired to that same key, so either page can flip it.
     var cTools = card(T("Stil", "Style"));
-    cTools.appendChild(exceptionRow("cc.stylesettings", T("An: Der Bereich nimmt seine Farbe aus der Badges-Karte im Einstellungen-Tab. Aus: Er folgt der globalen Badge-Farbe aus Allgemein. Gilt für /Einstellungen und /Werkzeuge zugleich, weil Unraid beide Seiten gleich aufbaut.", "On: this area takes its colour from the Badges card on the Settings tab. Off: it follows the global badge colour from General. It applies to /Settings and /Tools at once, since Unraid builds both pages the same way.")));
+    cTools.appendChild(exceptionRow("cc.styletools"));
     wrapTools.appendChild(cTools);
     function syncPluginsBar() { try { if (typeof window.ccPluginsApply === "function") window.ccPluginsApply(); } catch (e) {} }
     function syncVmsBar() { try { if (typeof window.ccVmsApply === "function") window.ccVmsApply(); } catch (e) {} }
@@ -1916,6 +1914,7 @@
     })();
     buildStyleCards("ccsh.", wrapShares, [], true); // the shares tab pills are glyphs, so badges only
     buildStyleCards("ccs.", wrapSettings, ["fa-cog", "fa-globe", "fa-star"], false); // the settings tiles are glyphs, so the preview shows sample ones
+    buildStyleCards("cct.", wrapTools, ["fa-wrench", "fa-terminal", "fa-hdd-o"], false);
     buildStyleCards("ccp.", wrapPlugin, ["/plugins/dynamix.plugin.manager/images/dynamix.plugin.manager.png", "/plugins/dynamix.docker.manager/images/dynamix.docker.manager.png", "/plugins/cannonadecommand/images/cannonadecommand.png"]);
     buildStyleCards("ccv.", wrapVms, ["/plugins/dynamix.vm.manager/templates/images/linux.png", "/plugins/dynamix.vm.manager/templates/images/windows.png", "/plugins/cannonadecommand/images/cannonadecommand.png"]);
     buildStyleCards("ccf.", wrapFavorites, ["fa-star", "fa-heart", "fa-cog"], false); // glyph tiles again

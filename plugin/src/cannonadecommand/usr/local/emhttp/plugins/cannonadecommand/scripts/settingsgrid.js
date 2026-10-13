@@ -1,6 +1,6 @@
 // Restyles the category tiles on the /Settings and /Tools landing pages into square accent
 // badges. Loaded on every page through CannonadeCommand.SettingsGrid.page, it toggles
-// html.cc-settingsgrid-on only on those two pages while the "Einstellungen & Werkzeuge" area
+// html.cc-settingsgrid-on only on those two pages while the "Einstellungen und Werkzeuge" area
 // is on (cc.enable.settings, default on), mirrors the theme vars onto the root and paints each
 // badge in rainbow mode. Sizing and shape live in sheets/CannonadeCommand.SettingsGrid.css.
 (function () {
@@ -12,8 +12,10 @@
     var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
     return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.197 ? "#161616" : "#fff";
   }
-  // adopt toggle: cc.stylesettings on -> shared cc.* keys, else this area's own ccs.* keys
-  function eff(k, d) { return g("cc.stylesettings", "1") !== "0" ? g("cc." + k, d) : g("ccs." + k, d); }
+  // /Settings and /Tools are two areas with the same grid: each has its adopt key and its own key
+  // prefix, read while the adopt key is "0".
+  function area() { return /^\/Tools(\/|$)/.test(location.pathname) ? ["cc.styletools", "cct."] : ["cc.stylesettings", "ccs."]; }
+  function eff(k, d) { var a = area(); return g(a[0], "1") !== "0" ? g("cc." + k, d) : g(a[1] + k, d); }
   function accent() { var a = eff("accent", "#FCC419"); return /^#[0-9a-f]{6}$/i.test(a) ? a : "#FCC419"; }
   // Adopting the rainbow/accent for the icons is a global decision, so it bypasses eff(). While
   // it is on, bgColorEff() answers "" and paintGrid() takes the rotating colour per tile.
@@ -98,9 +100,9 @@
         var c = rbColor(i), tc = idealText(c);
         s.style.setProperty("--cc-rb-c", c); s.style.setProperty("--cc-rb-ct", tc); // per-tile colour for the neutral-mode :hover
         if (!neutral) {
-          // A picked icon colour (cc.iconcolor or ccs.iconcolor) wins over the rotating rainbow
-          // colour, as the var() order does in the other areas; the tile rotates only when no
-          // colour is picked.
+          // A picked icon colour (cc.iconcolor, or the area's own ccs.iconcolor or cct.iconcolor)
+          // wins over the rotating rainbow colour, as the var() order does in the other areas;
+          // the tile rotates only when no colour is picked.
           var iconSet = bgColorIsCustom();
           var bg = iconSet ? accBg : c, btc = iconSet ? idealText(accBg) : tc;
           s.style.setProperty("background", bg, "important");
@@ -259,7 +261,7 @@
     // Same global hook as the other areas: the settings page's live toggle and cc-theme.js's
     // cross-browser config adoption call it by name.
     try { window.ccSettingsGridApply = apply; } catch (e) {}
-    // The settings page writes cc.*/ccs.* keys from another tab. cc.stateCache is skipped
+    // The settings page writes the cc.*, ccs.* and cct.* keys from another tab. cc.stateCache is skipped
     // because docker.js rewrites it every 9s.
     try { window.addEventListener("storage", function (e) { if (e && e.key && e.key !== "cc.stateCache" && /^cc[a-z]*\./.test(e.key)) apply(); }); } catch (e) {}
   }

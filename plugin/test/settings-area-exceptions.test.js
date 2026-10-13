@@ -106,9 +106,9 @@ console.log('\nEvery area tab carries the exception, never the nine adopt cards'
   ok('the adopt label is gone', !/Globale Badge-Farbe übernehmen|Adopt the global badge colour/.test(settings));
   ok('no Stil card carries the old adopt bubble', !/card\(T\("Stil", "Style"\), T\(/.test(settings));
   const rows = [...settings.matchAll(/exceptionRow\("(cc\.style\w+)"/g)].map((m) => m[1]);
-  const want = ['cc.styledocker', 'cc.styleplugin', 'cc.stylevms', 'cc.styleheader', 'cc.styleshares', 'cc.stylesettings', 'cc.stylefavorites', 'cc.stylemain'];
+  const want = ['cc.styledocker', 'cc.styleplugin', 'cc.stylevms', 'cc.styleheader', 'cc.styleshares', 'cc.stylesettings', 'cc.styletools', 'cc.stylefavorites', 'cc.stylemain'];
   ok('every area key has its exception row', want.every((k) => rows.includes(k)), rows.join(' '));
-  ok('Settings and Tools share theirs', rows.filter((k) => k === 'cc.stylesettings').length === 2);
+  ok('Settings and Tools each have their own', rows.filter((k) => k === 'cc.stylesettings').length === 1 && rows.filter((k) => k === 'cc.styletools').length === 1);
   ok('the switch reads the key inverted', /toggle\(localStorage\.getItem\(key\) === "0", function \(v\) \{ setOwnColour\(key, v\); \}\)/.test(grabFn(settings, 'exceptionRow')));
   ok('a colour picked on an area card sets it apart', /setOwnColour\(adoptKey, true\)/.test(grabFn(settings, 'useOwn')));
   ok('the area picker has no select, so the wheel cannot add an exception', !/select/.test(grabFn(settings, 'areaPicker')));
