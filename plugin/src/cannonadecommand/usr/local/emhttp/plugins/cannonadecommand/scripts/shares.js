@@ -423,6 +423,10 @@
     } catch (e) {}
   }
   function ccWrapSelect(sel) {
+    // header.js's page-wide sweep may reach the select first. This page's overlay takes its place
+    // instead of nesting inside it, where both triggers would show.
+    var tsel = sel.parentNode;
+    if (tsel && tsel.classList.contains("cc-tsel")) { tsel.parentNode.insertBefore(sel, tsel); tsel.parentNode.removeChild(tsel); sel.removeAttribute("data-cc-tsel"); }
     sel.setAttribute("data-cc-sel", "1");                 // first, so the observer's re-fire is a no-op
     var wrap = el("span", "cc-sel"); sel.parentNode.insertBefore(wrap, sel);
     sel.style.display = "none"; wrap.appendChild(sel);

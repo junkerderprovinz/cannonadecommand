@@ -199,5 +199,18 @@ console.log('\nccSyncOne is idempotent, so it cannot drive the observer in a loo
   ok('a sync of unchanged options writes no text at all', writes === 0, writes + ' write(s)');
 }
 
+console.log('\nA select the page-wide sweep wrapped first gets one dropdown, not two');
+{
+  const { sel } = build();
+  const span = sel.parentNode;
+  const tsel = new N('span'); tsel.className = 'cc-tsel'; span.insertBefore(tsel, sel);
+  tsel.appendChild(sel); sel.setAttribute('data-cc-tsel', '1');
+  const trig = new N('span'); trig.className = 'cc-tsel-trigger'; tsel.appendChild(trig);
+  ccWrapSelect(sel);
+  ok('the generic wrapper is gone', !span.querySelector('.cc-tsel') && !span.querySelector('.cc-tsel-trigger'));
+  ok('and the page\'s own dropdown stands where it was', sel.parentNode.classList.contains('cc-sel') && sel.parentNode.parentNode === span && span.querySelectorAll('.cc-sel-trigger').length === 1);
+  ok('the select drops the generic wrapper\'s marker', !sel.hasAttribute('data-cc-tsel'));
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);
