@@ -113,13 +113,13 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbo
 .cc-act-th { font-size: var(--cc-text-meta); }
 /* The native tablesorter column headers become a surface-shade strip with dim chip text in tracked
    uppercase, set apart by shade rather than a separator line, and the orange sort caret takes the
-   accent (rainbow-aware). Scoped to the enhanced Docker table. */
-html.cc-docker-on table.cc-enh thead th {
+   accent (rainbow-aware). Scoped to the enhanced Docker table and the Plugins table, which match. */
+html.cc-docker-on table.cc-enh thead th, html.cc-on-plugins table.cc-plug thead th {
   background: var(--cc-surface-3, #2e2e2e) !important;
   color: var(--cc-text-chip, #cfcfcf) !important;
   border: none !important; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600;
 }
-html.cc-docker-on table.cc-enh thead tr { border: none !important; box-shadow: none !important; }
+html.cc-docker-on table.cc-enh thead tr, html.cc-on-plugins table.cc-plug thead tr { border: none !important; box-shadow: none !important; }
 /* tablesorter's orange caret on the sorted column takes the CC accent */
 html.cc-docker-on table.cc-enh thead th.tablesorter-headerAsc,
 html.cc-docker-on table.cc-enh thead th.tablesorter-headerDesc { color: var(--cc-accent-ink, #FCC419) !important; }
@@ -1093,14 +1093,15 @@ html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head {
 }
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head i,
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
-.cc-plug #plugin_list > tr > td { padding-top: 12px !important; padding-bottom: 12px !important; }
+.cc-plug #plugin_list > tr > td { padding-top: var(--cc-density, 9px) !important; padding-bottom: var(--cc-density, 9px) !important; }
 .cc-plug #plugin_list > tr > td:nth-child(2) { padding-right: 14px !important; } /* uniform right edge for the scroll windows */
 .cc-plug #plugin_list > tr > td:nth-child(2) p { margin: 0 !important; }
 .cc-plug thead th:first-child { width: 300px; }
 .cc-set-tbl, .cc-set-tbl th, .cc-set-tbl td, .cc-set-tbl tr { background: transparent !important; }
 .cc-plug #plugin_list > tr > td:first-child { text-align: left !important; }
-.cc-plugname { display: flex; align-items: center; gap: 14px; }
-.cc-plugico { display: flex !important; align-items: center; justify-content: center; flex: none; overflow: hidden; } /* no tile; the overflow clips the content-aware upscale */
+.cc-plugname { display: flex; align-items: center; gap: 12px; }
+/* One square for every logo, with or without a tile: the logo is contained and centred in it. */
+.cc-plugico { display: flex !important; align-items: center; justify-content: center; flex: none; overflow: hidden; width: var(--cc-logo-img, 62px); height: var(--cc-logo-img, 62px); box-sizing: border-box; }
 /* With the icon background on, the plugin logo sits on an accent badge and plugins.js recolours it
    monochrome through the mono filter or the glyph colour. */
 html.cc-plugins-iconbg .cc-plugico {
@@ -1149,7 +1150,7 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
 .cc-plugsup { font-size: var(--cc-text-meta); }
 .cc-plugicm { font-size: var(--cc-text-meta); }
 .cc-plugver { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-.cc-plug thead th { text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-text-meta); }
+.cc-plug thead th { font-size: var(--cc-text-meta); }
 .cc-plug .cc-b { display: inline-flex; gap: 5px; align-items: center; border-radius: var(--cc-radius-pill); padding: var(--cc-sm-pad, 3px 11px); font-size: var(--cc-sm-fs); }
 .cc-plug .cc-b .cc-b-k { opacity: .72; font-weight: 500; }
 

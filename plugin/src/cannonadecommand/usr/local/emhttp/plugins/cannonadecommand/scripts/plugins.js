@@ -300,8 +300,9 @@
     img.src = url;
   }
   function normalizeIcon(img) {
-    // key on the original src so a re-render (Unraid rewrites the row) still hits the cache
-    var src = img.getAttribute("data-cc-osrc") || img.src || ""; if (!src) return;
+    // Keyed on the source the pipeline chose, the plugin's own logo or a fetched one, so a
+    // re-render (Unraid rewrites the row) still hits the cache.
+    var src = img.getAttribute("data-cc-isrc") || img.getAttribute("data-cc-osrc") || img.src || ""; if (!src) return;
     if (src.indexOf("data:") === 0) return;
     if (normCache[src] != null) { if (normCache[src] !== "1") applyNorm(img, normCache[src]); return; }
     normCache[src] = "1"; // provisional
@@ -309,9 +310,10 @@
     probe.onerror = function () { normCache[src] = "1"; };
     probe.onload = function () {
       try {
-        var nw = probe.naturalWidth, nh = probe.naturalHeight; if (!nw || !nh) return;
         // draw the source contain-style into WxW so the measured bbox matches what is seen
-        var W = 96, cv = document.createElement("canvas"); cv.width = cv.height = W;
+        var W = 192, cv = document.createElement("canvas"); cv.width = cv.height = W;
+        // An SVG with only a viewBox has no natural size; drawn into the square it is contained all the same.
+        var nw = probe.naturalWidth || W, nh = probe.naturalHeight || W;
         var cx = cv.getContext("2d");
         var sc = Math.min(W / nw, W / nh), dw = nw * sc, dh = nh * sc, ox = (W - dw) / 2, oy = (W - dh) / 2;
         cx.drawImage(probe, ox, oy, dw, dh);
@@ -321,7 +323,7 @@
         if (maxX < 0) { normCache[src] = "1"; return; }
         var bw = maxX - minX + 1, bh = maxY - minY + 1;
         // re-render the cropped content, centred, filling 82% of the output square
-        var OUT = 128, avail = OUT * 0.82, k = Math.min(avail / bw, avail / bh);
+        var OUT = 192, avail = OUT * 0.82, k = Math.min(avail / bw, avail / bh);
         var out = document.createElement("canvas"); out.width = out.height = OUT;
         var ocx = out.getContext("2d"); ocx.imageSmoothingEnabled = true; ocx.imageSmoothingQuality = "high";
         var tw = bw * k, th = bh * k;
@@ -430,8 +432,10 @@
       if (!isGlyphEl) {
         el2.style.setProperty("object-fit", "contain", "important");
         el2.style.removeProperty("transform"); // superseded by content normalization
-        if (plan.url) plugSetIconSrc(el2, plan.url);   // a curated icon is already uniformly framed
-        else { plugSetIconSrc(el2, ""); normalizeIcon(el2); }   // crop to content bbox -> uniform visual size
+        // A fetched logo is cropped too: Simple Icons fill their whole box and dashboard-icons
+        // carry their own margins, so only the crop puts every logo at one size.
+        plugSetIconSrc(el2, plan.url);
+        normalizeIcon(el2);
         el2.style.setProperty("filter", want, "important");
       } else {
         // font glyph (fa- or icon-): size + center to visually match the images
@@ -650,6 +654,8 @@
       // accent from these :root vars
       document.documentElement.style.setProperty("--cc-accent", accent());
       document.documentElement.style.setProperty("--cc-accent-text", idealText(accent()));
+      // the rows are as dense as the Docker tab's (docker.js applySettings)
+      document.documentElement.style.setProperty("--cc-density", { compact: "5px", normal: "9px", airy: "14px" }[ls("cc.density")] || "9px");
       // logo-background badge: scope the docker.css .cc-plugico box on/off from the
       // adopt-aware key (honours "Adopt Docker style" via eff()), same as the Docker tab
       document.documentElement.classList.toggle("cc-plugins-iconbg", eff("iconbg") === "1");
