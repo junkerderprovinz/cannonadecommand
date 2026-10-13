@@ -5,6 +5,7 @@
 //   · Unraid's tablesorter fill or its rule line under the head row coming back through a rule
 //     that outweighs CC's
 //   · a head that the light themes leave too faint to read on white
+//   · Unraid's 2.8rem line on a head td making the Main and Shares heads taller than the rest
 const { candidates, tokens, resolve, cmp, PAGES } = require('./cascade');
 
 let pass = 0, fail = 0;
@@ -17,6 +18,7 @@ table.tablesorter thead tr th { font-weight: normal; font-size: 1.1rem; text-tra
 table.tablesorter thead tr .tablesorter-headerAsc, table.tablesorter thead tr .tablesorter-headerDesc { background-color: #3a3a3a; }
 table.unraid thead tr:first-child > td { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; background-color: #3a3a3a; }
 table.unraid thead tr:last-child { border-bottom: 1px solid #333; }
+table:where(:not(.unapi *)) thead td { line-height: 2.8rem; height: 2.8rem; white-space: nowrap; }
 ` };
 const page = (p) => [UNRAID_HEAD].concat(PAGES[p]);
 const winner = (pg, el, props) => {
@@ -56,6 +58,10 @@ for (const [name, pg, el, ctx] of HEADS) {
   ok('no shade under it', !sh || sh.value === 'none', sh && sh.selector + ' => ' + sh.value);
   const pb = winner(sheets, el, ['padding-bottom', 'padding']);
   ok('space under it sets it apart', !!pb && /^12px$/.test(pb.value), pb && pb.selector + ' => ' + pb.value);
+  if (el.tag === 'td') {
+    const lh = winner(sheets, el, ['line-height']), h = winner(sheets, el, ['height']);
+    ok('as tall as the th heads: no 2.8rem line', !!lh && lh.value === 'normal' && !!h && h.value === 'auto', (lh && lh.selector + ' => ' + lh.value) + ' / ' + (h && h.value));
+  }
   const row = { tag: 'tr', classes: [], inside: ctx.concat(['thead']), html: el.html };
   const b = winner(sheets, row, ['border', 'border-bottom']);
   ok('no line under the head row', !!b && /^(none|0|0px)$/.test(b.value), b && b.sheet + ': ' + b.selector + ' => ' + b.value);

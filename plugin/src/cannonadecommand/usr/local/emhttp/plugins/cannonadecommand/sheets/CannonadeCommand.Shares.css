@@ -63,12 +63,14 @@ html.cc-shares-on #displaybox table.unraid.share_status {
   overflow: hidden;
 }
 /* Every table head is GlimStone's eyebrow: no fill, the meta size in the muted ink, uppercase and
-   tracked. No rule line sets it apart from the rows, only the space under it. */
+   tracked. No rule line sets it apart from the rows, only the space under it. Unraid's 2.8rem line
+   on a head td goes, so these heads stand as tall as the th heads on Docker, Plugins and VMs. */
 html.cc-shares-on #displaybox table.unraid.share_status thead td,
 html.cc-shares-on #displaybox table.unraid.share_status thead th {
   background: transparent !important; color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important;
   font-weight: 500 !important; text-transform: uppercase !important; letter-spacing: 1.2px !important;
   border: none !important; box-shadow: none !important; padding-top: 8px !important; padding-bottom: 12px !important;
+  line-height: normal !important; height: auto !important;
 }
 html.cc-shares-on #displaybox table.unraid.share_status thead tr { border: none !important; box-shadow: none !important; }
 
@@ -263,6 +265,7 @@ html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status thead th {
   background: transparent !important; color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important;
   font-weight: 500 !important; text-transform: uppercase !important; letter-spacing: 1.2px !important;
   border: none !important; box-shadow: none !important; padding-top: 8px !important; padding-bottom: 12px !important;
+  line-height: normal !important; height: auto !important;
   white-space: nowrap; padding-left: 14px !important; padding-right: 14px !important;
 }
 /* An empty header cell takes no padding, and a header row with no text disappears; the subpool
