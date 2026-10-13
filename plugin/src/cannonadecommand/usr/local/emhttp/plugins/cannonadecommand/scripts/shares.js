@@ -843,13 +843,46 @@
       return cg;
     }
     // Stored widths wider than the page shrink in proportion to fit it, so the last columns are not
-    // cut off at its edge. Below half their width the columns get too narrow to read, so on a page
-    // that small the table keeps them and scrolls inside .TableContainer. A drag passes no fit and
-    // widens the table, as Explorer does.
-    function fitted(w, room) {
-      var sum = 0; for (var i = 0; i < w.length; i++) sum += w[i];
-      if (!room || sum <= room || room < sum / 2) return w;
-      return w.map(function (v) { return Math.max(min, Math.floor(v * room / sum)); });
+    // cut off at its edge, but a column stops at its header's whole label and the others shrink a
+    // little more for it. When the labels alone need more than the page, the table keeps them whole
+    // and scrolls inside .TableContainer. A drag passes no fit and widens the table, as Explorer
+    // does.
+    function fitted(w, room, labels) {
+      var sum = 0, i; for (i = 0; i < w.length; i++) sum += w[i];
+      if (!room || sum <= room) return w;
+      var lo = w.map(function (v, k) { return Math.min(v, Math.max(min, (labels && labels[k]) || min)); });
+      var floor = 0; for (i = 0; i < lo.length; i++) floor += lo[i];
+      if (floor >= room) return lo;
+      // A column pinned at its label leaves less room for the rest, which can pin another, so the
+      // scale is worked out again until no new column pins; that takes at most one pass per column.
+      var pinned = w.map(function () { return false; }), scale = room / sum;
+      for (var pass = 0; pass < w.length; pass++) {
+        var fixed = 0, free = 0, more = false;
+        for (i = 0; i < w.length; i++) { if (pinned[i]) fixed += lo[i]; else free += w[i]; }
+        scale = (room - fixed) / free;
+        for (i = 0; i < w.length; i++) if (!pinned[i] && w[i] * scale < lo[i]) { pinned[i] = true; more = true; }
+        if (!more) break;
+      }
+      return w.map(function (v, k) { return pinned[k] ? lo[k] : Math.floor(v * scale); });
+    }
+    // The width a header needs to show its label whole: the text in its own font, case and letter
+    // spacing, plus its padding. A canvas measures it, since a probe in the table would wake the
+    // observers that redraw it.
+    var ruler = null;
+    function labelWidths(tbs, n) {
+      for (var t = 0; t < tbs.length; t++) {
+        var h = headOf(tbs[t]); if (!h || h.children.length < n || !h.getClientRects().length) continue;
+        ruler = ruler || document.createElement("canvas").getContext("2d");
+        var out = [];
+        for (var i = 0; i < n; i++) {
+          var c = h.children[i], cs = getComputedStyle(c), txt = c.textContent.trim();
+          if (cs.textTransform === "uppercase") txt = txt.toUpperCase();
+          ruler.font = cs.fontStyle + " " + cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+          out.push(Math.ceil(ruler.measureText(txt).width + (parseFloat(cs.letterSpacing) || 0) * txt.length + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)) + 2);
+        }
+        return out;
+      }
+      return null;
     }
     function room(tbs) {   // a sub-tab hidden in native-tabs mode measures 0, so the widest one counts
       var r = 0; for (var t = 0; t < tbs.length; t++) r = Math.max(r, tbs[t].parentNode.clientWidth || 0);
@@ -857,7 +890,7 @@
     }
     function set(w, fit) {
       var tbs = tables();
-      if (fit) w = fitted(w, room(tbs));
+      if (fit) w = fitted(w, room(tbs), labelWidths(tbs, w.length));
       var sum = 0, i, n = w.length; for (i = 0; i < n; i++) sum += w[i];
       for (var t = 0; t < tbs.length; t++) {
         var cols = colgroup(tbs[t], n).children;
