@@ -61,19 +61,26 @@ console.log('\nThe gear menu\'s filter starts as a button');
 
 console.log('\nClosing the menu hands focus back to its gear');
 {
-  const make = (focusInside) => {
-    const gear = { focused: 0, focus() { this.focused++; } };
+  const refindSrc = grabFn(read('scripts/cc-theme.js'), 'refind');
+  const make = (focusInside, redrawn) => {
+    const mkGear = () => ({ focused: 0, focus() { this.focused++; }, getAttribute: (k) => (k === 'data-cc-focus-key' ? 'cc-hgear-grid' : null) });
+    const gear = mkGear(), fresh = redrawn ? mkGear() : null;
     const inner = {};
     const menu = { removed: false, remove() { this.removed = true; }, contains: (n) => n === inner };
-    const document = { activeElement: focusInside ? inner : {}, contains: (n) => n === gear };
-    const close = new Function('document', 'menu', 'menuAnchor', 'menuStatusEl', grabFn(docker, 'closeMenu') + '\ncloseMenu(); return menu;');
-    const left = close(document, menu, gear, null);
-    return { gear, menu, left };
+    const live = redrawn ? fresh : gear;
+    const document = { activeElement: focusInside ? inner : {}, contains: (n) => n === live, querySelector: (s) => (s === '[data-cc-focus-key="cc-hgear-grid"]' ? live : null) };
+    const refind = new Function('document', refindSrc + '\nreturn refind;')(document);
+    const close = new Function('document', 'window', 'menu', 'menuAnchor', 'menuStatusEl', grabFn(docker, 'closeMenu') + '\ncloseMenu(); return menu;');
+    const left = close(document, { CCTheme: { refind } }, menu, gear, null);
+    return { gear, fresh, menu, left };
   };
   const kb = make(true);
   ok('Escape from inside the menu puts the caret back on the gear', kb.menu.removed && kb.left === null && kb.gear.focused === 1);
   const mouse = make(false);
   ok('a click elsewhere leaves focus where the click put it', mouse.menu.removed && mouse.gear.focused === 0);
+  const tick = make(true, true);
+  ok('a gear the stats tick drew again in the meantime gets the caret instead', tick.fresh.focused === 1 && tick.gear.focused === 0);
+  ok('every gear carries a key to be found again by', /g\.setAttribute\("data-cc-focus-key", extra \|\| "cc-hgear"\)/.test(grabFn(docker, 'makeGear')));
 }
 
 console.log('\nThe menu wires it');

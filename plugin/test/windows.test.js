@@ -91,6 +91,7 @@ global.document = {
   createElement: (t) => new N(t),
   get activeElement() { return active || body; },
   contains: (n) => html.contains(n),
+  querySelector: (s) => html.querySelector(s),
   addEventListener: (t, fn) => { (docListeners[t] = docListeners[t] || []).push(fn); },
   removeEventListener: (t, fn) => { docListeners[t] = (docListeners[t] || []).filter((x) => x !== fn); },
 };
@@ -108,7 +109,7 @@ const CCTheme = new Function('localStorage',
   'function g(k, d) { return k in localStorage ? localStorage[k] : d; } function s(k, v) { localStorage[k] = v; }' +
   grabVar(theme, 'RB') + grabVar(theme, 'LUM_FLOOR') + grabVar(theme, 'winStack') + grabVar(theme, 'FOCUSABLE') +
   ['idealText', 'rbSeed', 'palette', 'lumOf', 'liftLight', 'lightTheme', 'surfacePalette', 'isRed', 'deleteSlot', 'shake',
-    'pressable', 'focusables', 'onWinKey', 'modal', 'paintWin', 'ask'].map((n) => grabFn(theme, n)).join('\n') +
+    'pressable', 'refind', 'focusables', 'onWinKey', 'modal', 'paintWin', 'ask'].map((n) => grabFn(theme, n)).join('\n') +
   '; return { RB: RB, isRed: isRed, modal: modal, ask: ask, paintWin: paintWin, pressable: pressable };')(store);
 
 function win(cls) {
@@ -167,6 +168,23 @@ console.log('\nThe modal: scrim, focus, Tab and Escape');
   ok('a second Escape closes the one below', !outer.w.parentNode);
   void h1; void h2;
 }
+
+console.log('\nAn opener drawn again while its window is open');
+{
+  const old = body.appendChild(new N('button')); old.setAttribute('data-cc-focus-key', 'cc-hgear-grid'); old.focus();
+  CCTheme.ask({ title: 'Neuen Ordner anlegen', input: { label: 'Name des Ordners' }, ok: 'Anlegen', cancel: 'Abbrechen', onOk: () => {} });
+  old.remove();
+  const fresh = body.appendChild(new N('button')); fresh.setAttribute('data-cc-focus-key', 'cc-hgear-grid');
+  key('Escape');
+  ok('the focus goes to the one drawn in its place, found by its key', document.activeElement === fresh);
+  const gone = body.appendChild(new N('span')); gone.setAttribute('tabindex', '0'); gone.focus();
+  CCTheme.ask({ title: 'Frage', ok: 'Ja', cancel: 'Nein', onOk: () => {} });
+  gone.remove();
+  key('Escape');
+  ok('an opener without a key that is gone takes the focus nowhere', document.activeElement !== gone);
+  fresh.remove();
+}
+
 
 console.log('\nA question in a window');
 {

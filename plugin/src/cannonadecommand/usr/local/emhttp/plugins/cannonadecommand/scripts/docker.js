@@ -2209,7 +2209,7 @@
   function renderCurrentView() { if (mode === "folder") renderFolderView(); else renderGrid(); }
 
   // the gear and its menu
-  function makeGear(extra) { var g = el("button", "cc-hgear" + (extra ? " " + extra : "") + (daemonUp === false ? " cc-hgear-down" : "")); g.innerHTML = ccGlyph("Gear"); g.type = "button"; var tip = daemonUp === false ? "CannonadeCommand: daemon not reachable" : "CannonadeCommand"; g.setAttribute("data-tip", tip); g.setAttribute("aria-label", tip); g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g, null, e); }); return g; }
+  function makeGear(extra) { var g = el("button", "cc-hgear" + (extra ? " " + extra : "") + (daemonUp === false ? " cc-hgear-down" : "")); g.innerHTML = ccGlyph("Gear"); g.type = "button"; g.setAttribute("data-cc-focus-key", extra || "cc-hgear"); var tip = daemonUp === false ? "CannonadeCommand: daemon not reachable" : "CannonadeCommand"; g.setAttribute("data-tip", tip); g.setAttribute("aria-label", tip); g.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); toggleMenu(g, null, e); }); return g; }
   function injectHeaderGear() {
     try {
       // never a second list-mode gear once one exists
@@ -2397,13 +2397,14 @@
     it.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); it.click(); } });
     return it;
   }
-  // Focus that was inside the menu goes back to the gear that opened it, so Escape from the
-  // Search button does not drop the keyboard onto the page's start.
+  // Focus that was inside the menu goes back to the gear that opened it, or to the one drawn in its
+  // place, so Escape from the Search button does not drop the keyboard onto the page's start.
   function closeMenu() {
     if (!menu) return;
     var held = menu.contains(document.activeElement);
     menu.remove(); menu = null; menuStatusEl = null;
-    if (held && menuAnchor && document.contains(menuAnchor)) menuAnchor.focus();
+    var back = held && window.CCTheme ? window.CCTheme.refind(menuAnchor) : null;
+    if (back) back.focus();
   }
   // A menu opened from the keyboard, a click with no pointer behind it, puts the focus on its first
   // entry.

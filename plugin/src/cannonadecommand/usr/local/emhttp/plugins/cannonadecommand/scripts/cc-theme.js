@@ -691,6 +691,14 @@
   // question asked from inside a window answers Escape before the window does.
   var winStack = [], winSeq = 0;
   var FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  // The control a window or menu hands the focus back to may have been drawn again while it was
+  // open, as the card view's gear is on every stats tick. One that carries data-cc-focus-key is
+  // found again by that key.
+  function refind(node) {
+    if (!node || document.contains(node)) return node;
+    var key = node.getAttribute && node.getAttribute("data-cc-focus-key");
+    return (key && document.querySelector('[data-cc-focus-key="' + key + '"]')) || null;
+  }
   function focusables(win) {
     return Array.prototype.filter.call(win.querySelectorAll(FOCUSABLE), function (n) { return n.getClientRects().length > 0; });
   }
@@ -728,7 +736,7 @@
       if (scrim.parentNode) scrim.parentNode.removeChild(scrim);
       if (win.parentNode) win.parentNode.removeChild(win);
       if (!winStack.length) document.removeEventListener("keydown", onWinKey, true);
-      try { if (opener && opener.focus && document.contains(opener)) opener.focus(); } catch (e) {}
+      try { var back = refind(opener); if (back && back.focus) back.focus(); } catch (e) {}
     }
     var entry = { win: win, dismiss: function () { if (opts.onDismiss) opts.onDismiss(); else close(); } };
     scrim.addEventListener("click", function (e) { e.stopPropagation(); entry.dismiss(); });
@@ -870,7 +878,7 @@
     CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG, delIcon: delIcon,
     lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark, liftLight: liftLight, lightTheme: lightTheme,
     liftSurface: liftSurface, surfacePalette: surfacePalette, isRed: isRed, deleteSlot: deleteSlot, toast: toast, shake: shake, fail: fail,
-    pressable: pressable, modal: modal, paintWin: paintWin, ask: ask, glyph: glyph, menu: menu, slosh: slosh,
+    pressable: pressable, modal: modal, refind: refind, paintWin: paintWin, ask: ask, glyph: glyph, menu: menu, slosh: slosh,
     icons: {
       MODES: ICON_MODES, SIMPLE_MAX: ICON_SIMPLE_MAX,
       globalMode: iconGlobalMode, mode: iconMode, override: iconOverride, setOverride: setIconOverride,

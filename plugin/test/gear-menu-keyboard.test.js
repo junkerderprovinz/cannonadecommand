@@ -37,7 +37,8 @@ document.body = new N('body');
 const el = (tag, cls, txt) => { const n = new N(tag); if (cls) n.className = cls; if (txt != null) n.text = txt; return n; };
 
 const src = ['openMenu', 'menuFocusables', 'menuItem', 'closeMenu', 'toggleMenu'].map((n) => grabFn(docker, n)).join('\n');
-const api = new Function('document', 'el', 'buildMenu', 'positionMenu',
+const refind = new Function('document', grabFn(fs.readFileSync(path.join(DIR, 'scripts/cc-theme.js'), 'utf8'), 'refind') + '\nreturn refind;')(document);
+const api = new Function('document', 'window', 'el', 'buildMenu', 'positionMenu',
   'var menu = null, menuAnchor = null, menuStatusEl = null;\n' + src + '\nreturn { toggleMenu: toggleMenu, menuItem: menuItem, get menu() { return menu; } };');
 
 let picked = 0;
@@ -53,7 +54,7 @@ function build() {
   const a = m.appendChild(el('a', 'cc-menu-link', 'Einstellungen')); a.setAttribute('href', '/Settings/CannonadeCommand');
   return m;
 }
-M = api(document, el, build, () => {});
+M = api(document, { CCTheme: { refind } }, el, build, () => {});
 const gear = document.body.appendChild(el('button', 'cc-hgear'));
 const label = (n) => n && n.text;
 
