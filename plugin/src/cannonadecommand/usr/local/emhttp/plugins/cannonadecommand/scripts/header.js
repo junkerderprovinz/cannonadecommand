@@ -1433,8 +1433,7 @@
         // show the base colour until the debounced pass re-classes them, which reads as a blink.
         // This callback is a microtask that runs after the .html() call but before the next paint,
         // so re-classing here puts the class on the new bars before they ever paint. ccStateBars
-        // adds the slosh's two bubble spans only to a bar that lacks them, so the pass its own
-        // insert wakes finds nothing to add and the observer settles.
+        // inserts no nodes of its own, so its pass cannot wake the observer again.
         for (var i = 0; i < recs.length; i++) { var t2 = recs[i].target; if (t2 && t2.closest && t2.closest("table.unraid.disk_status")) { try { ccStateBars(); } catch (e3) {} break; } }
         if (ccMainT) return; ccMainT = setTimeout(function () { ccMainT = null; try { ccStateBars(); ccPaintRotate(); ccToolsEnhance(); } catch (e2) {} }, 120);
       });

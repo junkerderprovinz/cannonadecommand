@@ -641,17 +641,15 @@
   function slosh(fill, on) {
     if (!fill || !fill.classList) return fill;
     if (!(parseFloat(fill.style.width) > 0)) on = false;
-    var pops = fill.querySelectorAll(":scope > .cc-slosh-pop-bar");
+    var sloshing = fill.classList.contains("cc-slosh-edge");
     if (on === false) {
-      if (!fill.classList.contains("cc-slosh-edge") && !pops.length) return fill;
+      if (!sloshing) return fill;
       fill.classList.remove("cc-slosh-edge"); fill.style.removeProperty("--cc-slosh-phase");
-      for (var r = 0; r < pops.length; r++) fill.removeChild(pops[r]);
       return fill;
     }
-    if (fill.classList.contains("cc-slosh-edge") && pops.length === 2) return fill;
+    if (sloshing) return fill;
     fill.classList.add("cc-slosh-edge");
     fill.style.setProperty("--cc-slosh-phase", (-performance.now() / 1000).toFixed(3) + "s");
-    for (var n = pops.length; n < 2; n++) { var s = document.createElement("span"); s.className = "cc-slosh-pop-bar"; s.setAttribute("aria-hidden", "true"); fill.appendChild(s); }
     return fill;
   }
 
