@@ -925,7 +925,7 @@
     // Bereiche: enable/disable each area CannonadeCommand enhances
     (function () {
       var c = card(T("Bereiche", "Areas"), T("Aktiviere, welche Bereiche CannonadeCommand verschönert. Ein deaktivierter Bereich blendet seinen Tab hier sofort aus.", "Choose which areas CannonadeCommand enhances. Disabling an area hides its tab here immediately."));
-      [["cc.enable.main", T("Start-Tab", "Start tab"), "0"], ["cc.enable.header", T("Kopfbereich", "Header area"), "0"], ["cc.enable.shares", T("Freigaben-Tab", "Shares tab"), "0"], ["cc.enable.docker", T("Docker-Tab", "Docker tab"), "1"], ["cc.enable.plugins", T("Plugin-Tab", "Plugins tab"), "1"], ["cc.enable.vms", T("VM-Tab", "VMs tab"), "1"], ["cc.enable.settings", T("Einstellungen- & Werkzeuge-Tabs", "Settings & Tools tabs"), "1"], ["cc.enable.favorites", T("Favoriten-Tab", "Favorites tab"), "1"]].forEach(function (a) {
+      [["cc.enable.main", T("Start", "Main"), "0"], ["cc.enable.header", T("Kopfbereich", "Header area"), "0"], ["cc.enable.shares", T("Freigaben", "Shares"), "0"], ["cc.enable.docker", T("Docker", "Docker"), "1"], ["cc.enable.plugins", T("Plugins", "Plugins"), "1"], ["cc.enable.vms", T("VMs", "VMs"), "1"], ["cc.enable.settings", T("Einstellungen und Werkzeuge", "Settings and Tools"), "1"], ["cc.enable.favorites", T("Favoriten", "Favorites"), "1"]].forEach(function (a) {
         var row = el("div", "cc-set-row cc-set-inline");
         var cur = localStorage.getItem(a[0]);
         if (a[0] === "cc.enable.favorites") {
@@ -997,14 +997,14 @@
       { id: "header", t: T("Kopfbereich", "Header area"), w: wrapHeader, key: "cc.enable.header" }
     ];
     [
-      { id: "main", t: T("Start-Tab", "Start tab"), w: wrapStart, key: "cc.enable.main", tabs: ["start", "main"] },
-      { id: "shares", t: T("Freigaben-Tab", "Shares tab"), w: wrapShares, key: "cc.enable.shares", tabs: ["freigaben", "shares"] },
-      { id: "docker", t: T("Docker-Tab", "Docker tab"), w: wrap, key: "cc.enable.docker", tabs: ["docker"] },
-      { id: "plugins", t: T("Plugin-Tab", "Plugins tab"), w: wrapPlugin, key: "cc.enable.plugins", tabs: ["plugins"] },
-      { id: "vms", t: T("VM-Tab", "VMs tab"), w: wrapVms, key: "cc.enable.vms", tabs: ["vms"] },
-      { id: "settings", t: T("Einstellungen-Tab", "Settings tab"), w: wrapSettings, key: "cc.enable.settings", tabs: ["einstellungen", "settings"] },
-      { id: "tools", t: T("Werkzeuge-Tab", "Tools tab"), w: wrapTools, key: "cc.enable.settings", tabs: ["werkzeuge", "tools"] },
-      { id: "favorites", t: T("Favoriten-Tab", "Favorites tab"), w: wrapFavorites, key: "cc.enable.favorites", tabs: ["favorites", "favoriten"] }
+      { id: "main", t: T("Start", "Main"), w: wrapStart, key: "cc.enable.main", tabs: ["start", "main"] },
+      { id: "shares", t: T("Freigaben", "Shares"), w: wrapShares, key: "cc.enable.shares", tabs: ["freigaben", "shares"] },
+      { id: "docker", t: T("Docker", "Docker"), w: wrap, key: "cc.enable.docker", tabs: ["docker"] },
+      { id: "plugins", t: T("Plugins", "Plugins"), w: wrapPlugin, key: "cc.enable.plugins", tabs: ["plugins"] },
+      { id: "vms", t: T("VMs", "VMs"), w: wrapVms, key: "cc.enable.vms", tabs: ["vms"] },
+      { id: "settings", t: T("Einstellungen", "Settings"), w: wrapSettings, key: "cc.enable.settings", tabs: ["einstellungen", "settings"] },
+      { id: "tools", t: T("Werkzeuge", "Tools"), w: wrapTools, key: "cc.enable.settings", tabs: ["werkzeuge", "tools"] },
+      { id: "favorites", t: T("Favoriten", "Favorites"), w: wrapFavorites, key: "cc.enable.favorites", tabs: ["favorites", "favoriten"] }
     ].map(function (s9, i9) { return { s: s9, i: i9, r: navRank(s9.tabs) }; })
       .sort(function (a9, b9) { return (a9.r < 0 ? 1e9 + a9.i : a9.r) - (b9.r < 0 ? 1e9 + b9.i : b9.r) || a9.i - b9.i; })
       .forEach(function (d9) { SECS.push(d9.s); });
@@ -1068,14 +1068,23 @@
       });
     }
     // Every tab takes the width of the widest one, and once the strip wraps its rows share the tabs
-    // evenly, so no row ends in an empty strip.
+    // evenly, so no row ends in an empty strip. Where that width would wrap a strip whose tabs fit
+    // one row at their own widths, they keep their own widths and share the rest of the row
+    // (GlimStone, "A label wraps only when its box has no room left").
     function sizeSetTabs() {
       var shown = tabBtns.filter(function (b) { return b.style.display !== "none"; });
       shown.forEach(function (b) { b.style.removeProperty("min-width"); b.style.removeProperty("flex"); });
-      var w = 0;
-      shown.forEach(function (b) { w = Math.max(w, Math.ceil(b.getBoundingClientRect().width)); });
+      tabRow.style.removeProperty("width"); tabRow.style.removeProperty("flex-wrap");
+      var w = 0, sum = 0;
+      shown.forEach(function (b) { var bw = Math.ceil(b.getBoundingClientRect().width); w = Math.max(w, bw); sum += bw; });
       if (!w) return;
       var cs = getComputedStyle(root), room = root.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+      var gaps = TAB_GAP * (shown.length - 1);
+      if (w * shown.length + gaps > room && sum + gaps <= room) {
+        tabRow.style.width = "100%"; tabRow.style.flexWrap = "nowrap";
+        shown.forEach(function (b) { b.style.flex = "1 0 auto"; });
+        return;
+      }
       var perRow = tabsPerRow(shown.length, w, TAB_GAP, room);
       shown.forEach(function (b) { b.style.minWidth = w + "px"; b.style.flex = "1 0 calc((100% - " + perRow + " * " + TAB_GAP + "px) / " + perRow + ")"; });
     }
@@ -1324,13 +1333,13 @@
     // follows it and lists only the areas set apart, each with its way back.
     var EXC_AREAS = [
       ["cc.styleheader", "header", T("Kopfbereich", "Header area")],
-      ["cc.stylemain", "main", T("Start-Tab", "Start tab")],
-      ["cc.styleshares", "shares", T("Freigaben-Tab", "Shares tab")],
-      ["cc.styledocker", "docker", T("Docker-Tab", "Docker tab")],
-      ["cc.styleplugin", "plugins", T("Plugin-Tab", "Plugins tab")],
-      ["cc.stylevms", "vms", T("VM-Tab", "VMs tab")],
-      ["cc.stylesettings", "settings", T("Einstellungen- und Werkzeuge-Tab", "Settings and Tools tabs")],
-      ["cc.stylefavorites", "favorites", T("Favoriten-Tab", "Favorites tab")]
+      ["cc.stylemain", "main", T("Start", "Main")],
+      ["cc.styleshares", "shares", T("Freigaben", "Shares")],
+      ["cc.styledocker", "docker", T("Docker", "Docker")],
+      ["cc.styleplugin", "plugins", T("Plugins", "Plugins")],
+      ["cc.stylevms", "vms", T("VMs", "VMs")],
+      ["cc.stylesettings", "settings", T("Einstellungen und Werkzeuge", "Settings and Tools")],
+      ["cc.stylefavorites", "favorites", T("Favoriten", "Favorites")]
     ];
     var cExc = card(T("Bereichsfarben", "Area colours"));
     wrapMain.appendChild(cExc);

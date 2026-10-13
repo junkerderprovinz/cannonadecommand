@@ -58,7 +58,29 @@ console.log('\nOne width, and a strip that wraps into even rows');
   ok('six that fit four go three and three', perRow(6, 100, 6, 4 * 106 - 6) === 3);
   ok('a box narrower than one tab still gives one per row', perRow(4, 300, 6, 200) === 1);
   const size = grabFn(settings, 'sizeSetTabs');
-  ok('every shown tab is pinned to the widest one', /b\.style\.minWidth = w \+ "px"/.test(size) && /Math\.max\(w, Math\.ceil\(b\.getBoundingClientRect\(\)\.width\)\)/.test(size));
+  ok('every shown tab is pinned to the widest one', /b\.style\.minWidth = w \+ "px"/.test(size) && /var bw = Math\.ceil\(b\.getBoundingClientRect\(\)\.width\); w = Math\.max\(w, bw\);/.test(size));
+  // The tabs at their measured widths, in a strip of a given room.
+  const run = (widths, room) => {
+    const style = () => { const s = { removeProperty(k) { delete s[k === 'min-width' ? 'minWidth' : k === 'flex-wrap' ? 'flexWrap' : k]; } }; return s; };
+    const tabBtns = widths.map((wd) => ({ style: style(), getBoundingClientRect: () => ({ width: wd }) }));
+    const tabRow = { style: style() };
+    const root = { clientWidth: room };
+    new Function('tabBtns', 'tabRow', 'root', 'getComputedStyle', 'TAB_GAP', grabFn(settings, 'tabsPerRow') + grabFn(settings, 'sizeSetTabs') + '; sizeSetTabs();')(tabBtns, tabRow, root, () => ({ paddingLeft: '0', paddingRight: '0' }), 6);
+    return { row: tabRow.style, tabs: tabBtns.map((b) => b.style) };
+  };
+  // Eleven tabs at widths the compact padding gives them, 1109px with the gaps.
+  const eleven = [104, 117, 75, 104, 87, 92, 70, 126, 109, 104, 61];
+  const fits = run(eleven, 1240);
+  ok('at 1280px the eleven tabs stay on one row at their own widths', fits.row.flexWrap === 'nowrap' && fits.row.width === '100%' && fits.tabs.every((t) => t.flex === '1 0 auto' && !t.minWidth), JSON.stringify(fits.row));
+  const wide = run(eleven, 1500);
+  ok('with room for the widest width on every tab they are all one width', !wide.row.flexWrap && wide.tabs.every((t) => t.minWidth === '126px'));
+  const narrow = run(eleven, 900);
+  ok('below that the strip wraps into even rows at one width', !narrow.row.flexWrap && narrow.tabs.every((t) => t.minWidth === '126px' && /calc\(\(100% - 6 \* 6px\) \/ 6\)/.test(t.flex)), narrow.tabs[0].flex);
+  const tab = body(css, '.cc-set-tab');
+  ok('a tab is a compact pill', decl(tab, 'padding') === '0 12px !important' && decl(tab, 'gap') === '6px', decl(tab, 'padding'));
+  ok('in the label\'s own case', decl(tab, 'text-transform') === 'none !important');
+  const labels = [...settings.matchAll(/\{ id: "(\w+)", t: T\("([^"]+)", "([^"]+)"\)/g)].map((m) => m[2] + '|' + m[3]);
+  ok('every tab carries the plain name of its Unraid tab', labels.every((l) => !/-Tab\b| tabs?\b/.test(l)), labels.join(' '));
   ok('the old pin is cleared before measuring', size.indexOf('removeProperty("min-width")') < size.indexOf('getBoundingClientRect'));
   ok('the sizing reruns when an area is switched off', /if \(activeHidden\) showSec\(0\);\s*sizeSetTabs\(\);/.test(settings));
   ok('and when the window resizes', /window\.__ccSetSizeTabs\(\); window\.__ccSetAlignSearch\(\);/.test(settings));

@@ -64,7 +64,7 @@ console.log('\nThe General card shows the default once and only the exceptions')
   ok('the second row adds an exception from every area that follows', picker && picker.items.length === 8);
   const one = paint({ 'cc.styledocker': '0', 'ccd.accent': '#1d99f3' }, all);
   ok('with one exception the lead says so', /except these/.test(one.rows[0].text()));
-  ok('the Docker tab is listed under it', one.rows.length === 3 && /Docker tab/.test(one.rows[1].text()));
+  ok('the Docker tab is listed under it', one.rows.length === 3 && /Docker/.test(one.rows[1].text()));
   const dot = one.rows[1].children[0].children.find((c) => c.cls === 'cc-set-excdot');
   ok('its row shows its own colour', dot && dot.style.background === '#1d99f3');
   const back = one.rows[1] && one.rows[1].children.find((c) => c.run);
