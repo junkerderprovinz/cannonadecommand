@@ -1165,22 +1165,16 @@ html.cc-shares-on.cc-on-share-detail #displaybox .ui-dropdownchecklist-item .ui-
    stay on the share-detail page, since /Main and the overview have no clone-settings block. */
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox section[role="tabpanel"] {
   display: block !important;                 /* beats the inline style.display:none and .tab-content{display:none} */
-  max-width: 960px; margin: 0 auto 28px;     /* a plain section: a badge heading over flowing content, no boxed frame */
+  margin: 0 0 28px;                          /* a plain section across the page: a badge heading over flowing content, no boxed frame */
   background: none; border-radius: 0; padding: 0; box-shadow: none;
   overflow: visible !important;              /* an open dropdown overlay must not grow a scrollbar here */
 }
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox section[role="tabpanel"]:last-child { margin-bottom: 0; }
-/* /Main sections are full-width data tables, not settings forms, so the 960px form width of the
-   rule above does not apply: they run to the #displaybox content edge with more vertical rhythm
-   between them. This has to stay after the merged rule, whose specificity it matches exactly, while
-   the :last-child rule above still outranks it, so the final section keeps margin-bottom 0. */
-html.cc-shares-on.cc-on-main.cc-sections-main #displaybox section[role="tabpanel"] {
-  max-width: none;
-  margin: 0 0 36px;
-}
-/* the /Shares overview sections are data tables too, so they get the same treatment as /Main */
-html.cc-shares-on.cc-on-shares.cc-sections-share #displaybox section[role="tabpanel"] {
-  max-width: none;
+/* /Main and the /Shares overview hold data tables rather than a form, so they get more vertical
+   rhythm between their sections. This has to stay after the merged rule, whose specificity it
+   matches exactly, while the :last-child rule above still outranks it, so the final section keeps
+   margin-bottom 0. */
+html.cc-shares-on:is(.cc-on-main.cc-sections-main, .cc-on-shares.cc-sections-share) #displaybox section[role="tabpanel"] {
   margin: 0 0 36px;
 }
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox nav.tabs button[role="tab"] { display: none !important; }
@@ -1222,7 +1216,6 @@ html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sec
    .cc-main-col and .cc-side-card, and whole forms move as units. There are no border lines; the
    .cc-card-head badge and the gap between the columns separate them. */
 html.cc-shares-on.cc-on-share-detail #displaybox .tab-content:has(.cc-split-row) {
-  max-width: 1480px;                                 /* wide enough for both columns to use the page */
   background: none; box-shadow: none; border-radius: 0; padding: 0;   /* a host, not a card, so no enclosing frame */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-split-row {
@@ -1231,7 +1224,7 @@ html.cc-shares-on.cc-on-share-detail #displaybox .cc-split-row {
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-split-row:last-child { margin-bottom: 0; }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-main-col {
-  flex: 1 1 620px; min-width: 0;                     /* host 1480 minus the side column and the gap leaves about 950px */
+  flex: 1 1 620px; min-width: 0;                     /* takes the page's width the side column leaves; the fields keep their own */
 }
 html.cc-shares-on.cc-on-share-detail #displaybox .cc-side-card {
   flex: 0 1 460px; min-width: 0; align-self: flex-start;   /* shrinks on a narrow page, never grows past its basis */

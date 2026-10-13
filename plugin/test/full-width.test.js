@@ -25,7 +25,7 @@ console.log('\nThe settings page uses the width it has');
   const page = withUnraid('settings');
   const wrap = { tag: 'div', classes: ['cc-set-wrap'], inside: ['#cc-settings'] };
   ok('the cards fill the row, 340px at the least', val(win(page, wrap, 'grid-template-columns')) === 'repeat(auto-fill, minmax(340px, 1fr))', val(win(page, wrap, 'grid-template-columns')));
-  ok('and are no longer packed against the left', !candidates(page, wrap, 'justify-content').length);
+  ok('and are not packed against the left', !candidates(page, wrap, 'justify-content').length);
 }
 
 console.log('\nA dropdown or a one-line field stands beside its name');
@@ -64,6 +64,17 @@ console.log('\nA window\'s actions stand at the end of its foot');
   ok('and its buttons keep their own width', val(win(docker, pbtn, 'flex')) === '0 0 auto', val(win(docker, pbtn, 'flex')));
   const ask = grabFn(fs.readFileSync(path.join(DIR, 'scripts/cc-theme.js'), 'utf8'), 'ask');
   ok('Close or Cancel comes first and the answer last', /act\.appendChild\(no\); act\.appendChild\(yes\);/.test(ask));
+}
+
+console.log('\nThe share detail page runs the full width');
+{
+  const every = withUnraid('every');
+  const html = ['cc-shares-on', 'cc-on-share-detail', 'cc-sections-share'];
+  const section = { tag: 'section', classes: [], attrs: { role: 'tabpanel' }, inside: ['#displaybox'], html };
+  ok('its sections have no width cap', !candidates(every, section, 'max-width').some((c) => /px/.test(c.value)), val(win(every, section, 'max-width')));
+  ok('and start at the page\'s edge instead of centring', val(win(every, section, 'margin')) === '0 0 28px', val(win(every, section, 'margin')));
+  const host = { tag: 'div', classes: ['tab-content'], inside: ['#displaybox'], has: ['.cc-split-row'], html };
+  ok('the row with the side column has no cap either', !candidates(every, host, 'max-width').some((c) => /px/.test(c.value)), val(win(every, host, 'max-width')));
 }
 
 console.log('\nA grid of cards stands on the page');
