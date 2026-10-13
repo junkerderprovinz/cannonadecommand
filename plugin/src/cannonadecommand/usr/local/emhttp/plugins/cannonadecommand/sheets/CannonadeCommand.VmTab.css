@@ -21,13 +21,15 @@ html.cc-vms-on:not(.Theme--sidebar) #displaybox div.title { padding-left: 0; }
 html.cc-vms-on:not(.Theme--sidebar) #displaybox:has(> nav.tabs) { padding-top: 12px; }
 html.cc-vms-on:not(.Theme--sidebar) #displaybox > nav.tabs { margin-top: 0 !important; }
 
-/* table rows as on Docker: no border lines, the header on the surface shade, every cell centred, density padding */
+/* table rows as on Docker: no border lines, the eyebrow header, every cell centred, density padding */
 html.cc-vms-on #displaybox table.tablesorter { background: none; }
 html.cc-vms-on #displaybox #kvm_list tr.sortable > td { border: none !important; vertical-align: middle !important; padding-top: var(--cc-density, 9px) !important; padding-bottom: var(--cc-density, 9px) !important; }
 html.cc-vms-on #displaybox table.tablesorter thead th {
-  background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important; border: none !important;
-  text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600;
+  background: transparent !important; color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important;
+  font-weight: 500 !important; text-transform: uppercase !important; letter-spacing: 1.2px !important;
+  border: none !important; box-shadow: none !important; padding-top: 8px !important; padding-bottom: 12px !important;
 }
+html.cc-vms-on #displaybox table.tablesorter thead tr { border: none !important; box-shadow: none !important; }
 
 /* Docker's badge rules, copied so the VM badges look the same. One pill shape for .cc-b and
    .cc-badge; the info badge is solid accent with light text. */

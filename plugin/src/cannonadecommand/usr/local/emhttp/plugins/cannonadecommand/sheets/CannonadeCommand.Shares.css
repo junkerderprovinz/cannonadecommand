@@ -62,11 +62,15 @@ html.cc-shares-on #displaybox table.unraid.share_status {
   border-radius: var(--cc-radius-control);
   overflow: hidden;
 }
+/* Every table head is GlimStone's eyebrow: no fill, the meta size in the muted ink, uppercase and
+   tracked. No rule line sets it apart from the rows, only the space under it. */
 html.cc-shares-on #displaybox table.unraid.share_status thead td,
 html.cc-shares-on #displaybox table.unraid.share_status thead th {
-  background: rgba(128, 128, 128, .14);
-  font-weight: 600;
+  background: transparent !important; color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important;
+  font-weight: 500 !important; text-transform: uppercase !important; letter-spacing: 1.2px !important;
+  border: none !important; box-shadow: none !important; padding-top: 8px !important; padding-bottom: 12px !important;
 }
+html.cc-shares-on #displaybox table.unraid.share_status thead tr { border: none !important; box-shadow: none !important; }
 
 /* Aligns the content with the menu bar. With the Header area on, the first menu pill starts at 15px
    (12px tile padding plus the 3px margin of nav-item > a); with it off, the native menu text starts
@@ -252,11 +256,17 @@ html.cc-shares-on.cc-on-main #displaybox .TableContainer table.unraid.disk_statu
 /* In native sub-tab mode the div.title bars separate the device groups in a panel (native margin
    2rem 0). In section mode the panels carry their own margin. */
 html.cc-shares-on.cc-on-main #displaybox div.title { margin-top: 32px; }
-/* header tint like the /Shares share_status header */
+/* the eyebrow head of the /Shares share_status table; full labels set each column's min-content
+   under the auto layout, and 14px matches the body cells */
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status thead td,
-html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status thead th { background: rgba(128, 128, 128, .14); font-weight: 600; white-space: nowrap; padding: 8px 14px; }   /* full labels set each column's min-content under the auto layout; 14px matches the body cells */
-/* Empty header cells get no tint, and a header row with no text disappears; the subpool divider
-   theads are empty rows that the tint would paint as a dark stripe. */
+html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status thead th {
+  background: transparent !important; color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important;
+  font-weight: 500 !important; text-transform: uppercase !important; letter-spacing: 1.2px !important;
+  border: none !important; box-shadow: none !important; padding-top: 8px !important; padding-bottom: 12px !important;
+  white-space: nowrap; padding-left: 14px !important; padding-right: 14px !important;
+}
+/* An empty header cell takes no padding, and a header row with no text disappears; the subpool
+   divider theads are empty rows that would open a gap. */
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status thead td:empty,
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status thead th:empty { background: transparent !important; padding: 0 !important; }
 html.cc-shares-on.cc-on-main #displaybox table.unraid.disk_status thead tr:not(:has(td:not(:empty), th:not(:empty))) { display: none !important; }

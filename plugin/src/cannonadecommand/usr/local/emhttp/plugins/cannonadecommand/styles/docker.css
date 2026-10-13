@@ -113,13 +113,14 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbo
 /* ACTIONS column: icon buttons, name as tooltip; "…" opens the native menu */
 .cc-actcell { white-space: nowrap; }
 .cc-act-th { font-size: var(--cc-text-meta); }
-/* The native tablesorter column headers become a surface-shade strip with dim chip text in tracked
-   uppercase, set apart by shade rather than a separator line, and the orange sort caret takes the
-   accent (rainbow-aware). Scoped to the enhanced Docker table and the Plugins table, which match. */
+/* The native tablesorter column headers become GlimStone's eyebrow: no fill, the meta size in the
+   muted ink, uppercase and tracked, set apart from the rows by the space under them rather than a
+   line. The orange sort caret takes the accent (rainbow-aware). Scoped to the enhanced Docker
+   table and the Plugins table, which match. */
 html.cc-docker-on table.cc-enh thead th, html.cc-on-plugins table.cc-plug thead th {
-  background: var(--cc-surface-3, #2e2e2e) !important;
-  color: var(--cc-text-chip, #cfcfcf) !important;
-  border: none !important; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600;
+  background: transparent !important; color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important;
+  font-weight: 500 !important; text-transform: uppercase !important; letter-spacing: 1.2px !important;
+  border: none !important; box-shadow: none !important; padding-top: 8px !important; padding-bottom: 12px !important;
 }
 html.cc-docker-on table.cc-enh thead tr, html.cc-on-plugins table.cc-plug thead tr { border: none !important; box-shadow: none !important; }
 /* tablesorter's orange caret on the sorted column takes the CC accent */
@@ -1138,7 +1139,8 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
 .cc-plugicm { transition: box-shadow .12s, transform .12s; }
 .cc-plugicm:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; transform: translateY(-1px); }
 /* the other tabs' tables (install errors etc.): same clean look */
-.cc-plug-lite thead th { text-transform: uppercase; letter-spacing: 1.5px; font-size: var(--cc-text-meta); }
+.cc-plug-lite thead th { background: transparent !important; color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important; font-weight: 500 !important; text-transform: uppercase !important; letter-spacing: 1.2px !important; border: none !important; box-shadow: none !important; padding-top: 8px !important; padding-bottom: 12px !important; }
+.cc-plug-lite thead tr { border: none !important; box-shadow: none !important; }
 .cc-desc { display: block; max-height: 5em; overflow-y: auto; padding-right: 6px; width: 100%; box-sizing: border-box; margin: 0; scrollbar-gutter: stable; color: #9a9a9a !important; }
 /* the light themes take their own muted ink, since the grey of the dark ones fades on white */
 html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #545454) !important; }
@@ -1152,7 +1154,6 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
 .cc-plugsup { font-size: var(--cc-text-meta); }
 .cc-plugicm { font-size: var(--cc-text-meta); }
 .cc-plugver { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-.cc-plug thead th { font-size: var(--cc-text-meta); }
 .cc-plug .cc-b { display: inline-flex; gap: 5px; align-items: center; border-radius: var(--cc-radius-pill); padding: var(--cc-sm-pad, 3px 11px); font-size: var(--cc-sm-fs); }
 .cc-plug .cc-b .cc-b-k { opacity: .72; font-weight: 500; }
 

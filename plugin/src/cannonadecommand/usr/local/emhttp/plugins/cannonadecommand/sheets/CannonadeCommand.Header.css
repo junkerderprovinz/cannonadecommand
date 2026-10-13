@@ -1453,21 +1453,22 @@ html.cc-header-on #displaybox:has(.user-list) a.button {
 html.cc-header-on #displaybox:has(.user-list) input[type="button"]:hover:not(:disabled),
 html.cc-header-on #displaybox:has(.user-list) input[type="submit"]:hover:not(:disabled) { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 
-/* Table header rows as quiet, tracked small caps in the chip tone on a subtle surface, separated
-   from the rows by shade. Only the text and background-color change, not the background shorthand,
-   so tablesorter's sort arrow image, the padding, widths and sorting stay native. */
+/* Table header rows as GlimStone's eyebrow: no fill, the meta size in the muted ink, uppercase and
+   tracked, set apart from the rows by the space under them. Only background-color changes, not the
+   background shorthand, so tablesorter's sort arrow image, the widths and sorting stay native. */
 html.cc-header-on .tablesorter > thead > tr > th,
 html.cc-header-on #kvm_table > thead > tr > th {
-  background-color: var(--cc-surface-3, #2e2e2e) !important;
-  color: var(--cc-text-chip, #cfcfcf) !important;
-  font-weight: 600 !important;
+  background-color: transparent !important;
+  color: var(--cc-text-dim, #8a8a8a) !important;
+  font-weight: 500 !important;
   letter-spacing: 1.2px !important;
   text-transform: uppercase !important;
   font-size: var(--cc-text-meta) !important;
+  box-shadow: none !important;
+  padding-top: 8px !important; padding-bottom: 12px !important;
 }
-/* a hairline highlight on top and a soft inset shade below instead of a border line, set per cell
-   since box-shadow on <thead> is unreliable */
-html.cc-header-on .tablesorter > thead > tr > th { box-shadow: inset 0 1px 0 rgba(255,255,255,.05), inset 0 -6px 8px -6px rgba(0,0,0,.35); }
+html.cc-header-on .tablesorter > thead > tr,
+html.cc-header-on #kvm_table > thead > tr { border: none !important; }
 
 /* the island's fill bars glide on each nchan tick instead of jumping */
 html.cc-header-on .cc-isl-fill { transition: width .5s ease, background-color .4s ease; }
