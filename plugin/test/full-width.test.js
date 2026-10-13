@@ -45,8 +45,9 @@ console.log('\nA dropdown or a one-line field stands beside its name');
     ok('ccDsel sizes the dropdown to its longest entry', wrap.style.props['--cc-dsel-w'] === 'min(calc(13ch + 52px), 340px)', wrap.style.props['--cc-dsel-w']);
   }
   ok('the motion setting is such a dropdown, beside its name', /themingCard\.appendChild\(segRow\(T\("Bewegung", "Motion"\)/.test(settings) && /function segRow\(labelText, opts, cur, onChange, help\) \{\s*return dropRow\(/.test(settings));
-  const flag = /"#cc-settings \.cc-flag-picker\{([^}]*)\}"/.exec(settings);
-  ok('the country picker starts from room for a long country name and takes what its row has', !!flag && /flex:1 1 calc\(18ch \+ 52px\)/.test(flag[1]) && /min-width:0/.test(flag[1]) && !/margin-top/.test(flag[1]), flag && flag[1]);
+  const flagRow = /"#cc-settings \.cc-flag-row\{([^}]*)\}"/.exec(settings), flag = /"#cc-settings \.cc-flag-row \.cc-flag-picker\{([^}]*)\}"/.exec(settings);
+  ok('the country picker takes a line of its own under the flag mode switch, the width of the card', !!flagRow && /flex-wrap:wrap/.test(flagRow[1]) && !!flag && /order:3/.test(flag[1]) && /flex:1 1 100%/.test(flag[1]), flag && flag[1]);
+  ok('the flag row carries the class that wraps it', /el\("div", "cc-set-row cc-set-inline cc-flag-row"\)/.test(settings) && /fr\.appendChild\(picker\);/.test(settings));
   ok('it keeps the row\'s end', val(win(page, dsel, 'margin-left')) === 'auto');
   const txt = { tag: 'input', classes: ['cc-set-txt'], attrs: { type: 'text' }, inside: ['#cc-settings'], html: ['cc-popups-on'] };
   const tw = win(page, txt, 'width'), tf = win(page, txt, 'flex');

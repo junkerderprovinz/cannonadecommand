@@ -49,9 +49,10 @@
       "#cc-settings .cc-set-empty svg{flex:none;width:28px;height:28px;opacity:.4}" +
       "#cc-settings .cc-set-empty-t{font-weight:600;color:var(--cc-text)}" +
       "#cc-settings .cc-set-empty-h{margin-top:2px;font-size:var(--cc-text-meta);color:var(--cc-text-dim)}" +
-      // The country picker stands between its label and the toggle and takes the room between them,
-      // from a width that holds a long country name, so a short one does not leave it narrow.
-      "#cc-settings .cc-flag-picker{position:relative;flex:1 1 calc(18ch + 52px);min-width:0;max-width:340px}" +
+      // The country picker takes a line of its own under the flag mode switch: beside its name and the
+      // switch a 340px card leaves it too little room for a name like "Bosnien und Herzegowina".
+      "#cc-settings .cc-flag-row{flex-wrap:wrap}" +
+      "#cc-settings .cc-flag-row .cc-flag-picker{position:relative;order:3;flex:1 1 100%;min-width:0}" +
       "#cc-settings .cc-flag-trigger{display:flex;align-items:center;gap:9px;background:#232323;border-radius:var(--cc-radius-control);padding:7px 12px;cursor:pointer;user-select:none}" +
       "#cc-settings .cc-flag-trigger:hover{background:color-mix(in srgb,#232323 85%,var(--cc-text,#e6e6e6))}" +
       "#cc-settings .cc-flag-name{font-size:var(--cc-text-subline);color:#eaeaea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
@@ -1208,7 +1209,7 @@
       // The flag palette has its own key, never the rainbow one, so the editor above keeps the
       // rainbow colours and the engine paints flag colours only while flag mode is on.
       var applyFlag = function (f9) { var pal = []; for (var k9 = 0; k9 < RBDEF.length; k9++) pal.push(f9.colors[k9 % f9.colors.length]); set("cc.flag", f9.code); set("cc.flagpal", JSON.stringify(pal)); };
-      var fr = el("div", "cc-set-row cc-set-inline");
+      var fr = el("div", "cc-set-row cc-set-inline cc-flag-row");
       fr.appendChild(el("span", null, T("Flaggen-Modus", "Flag mode")));
       fr.appendChild(toggle(flagOn, function (v) {
         if (v) { set("cc.flagmode", "1"); set("cc.rainbow", "1"); var f0 = curFlag() || window.CC_FLAGS.filter(function (x9) { return x9.code === "de"; })[0] || window.CC_FLAGS[0]; applyFlag(f0); }
@@ -1279,7 +1280,7 @@
       var moveSel = function (dir) { var items = list.querySelectorAll(".cc-flag-item"); if (!items.length) return; var cur = list.querySelector(".cc-flag-item.cc-sel"); var idx = cur ? Array.prototype.indexOf.call(items, cur) : -1; idx += dir; if (idx < 0) idx = 0; if (idx >= items.length) idx = items.length - 1; if (cur) cur.classList.remove("cc-sel"); items[idx].classList.add("cc-sel"); items[idx].scrollIntoView({ block: "nearest" }); };
       search.addEventListener("keydown", function (e9) { if (e9.key === "ArrowDown") { e9.preventDefault(); moveSel(1); } else if (e9.key === "ArrowUp") { e9.preventDefault(); moveSel(-1); } else if (e9.key === "Enter") { e9.preventDefault(); var sel = list.querySelector(".cc-flag-item.cc-sel") || list.querySelector(".cc-flag-item"); if (sel) sel.click(); } else if (e9.key === "Escape") { e9.preventDefault(); closePanel(); } });
       picker.appendChild(trigger); picker.appendChild(panel);
-      fr.insertBefore(picker, fr.lastChild);   // the picker sits between the label and its toggle
+      fr.appendChild(picker);
       // the selected flag's colours, shown apart from the rainbow editor
       var f1 = curFlag();
       if (f1) {
