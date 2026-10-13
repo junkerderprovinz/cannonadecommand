@@ -128,5 +128,12 @@ console.log('\nWindow labels and placeholders');
   }
 }
 
+console.log('\nA settings card, dark on a light theme');
+for (const theme of ['Theme--white', 'Theme--azure']) {
+  const card = { tag: 'div', classes: ['cc-set-card'], inside: ['#cc-settings'], html: [theme] };
+  const chip = candidates('settings', card, '--cc-text-chip').pop();
+  ok(theme + ': a grey chip inside it keeps the light ink', chip && chip.value === darkHtml['--cc-text-chip'], chip && chip.value);
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

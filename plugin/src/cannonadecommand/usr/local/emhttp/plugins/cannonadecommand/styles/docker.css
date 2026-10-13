@@ -1181,6 +1181,9 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
    instead, so on a light theme they take the page's ink. */
 html.Theme--white #cc-settings .cc-set-heroleft,
 html.Theme--azure #cc-settings .cc-set-heroleft { --txt: var(--cc-text, #1c1c1c); --dim: var(--cc-text-dim, #545454); color: var(--txt); }
+/* The cards stay dark on the light themes, so a grey chip inside one, such as an idle tab in an
+   area's preview, keeps the light chip ink instead of the page's dark one. */
+html:is(.Theme--white, .Theme--azure) #cc-settings .cc-set-card { --cc-text-chip: #cfcfcf; }
 /* The cards share the page's full width, so the last column ends at the same edge as the Docker
    list. A row keeps its name at the start and its control at the end, and a field has a width of
    its own rather than stretching with the card. Stacked cards keep GlimStone's 40px rhythm, since
