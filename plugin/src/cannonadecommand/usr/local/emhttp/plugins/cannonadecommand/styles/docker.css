@@ -499,8 +499,9 @@ html .cc-card-movebtn:hover { background: rgba(128, 128, 128, .18) !important; c
 .cc-dim { color: var(--cc-dim); }
 .cc-card-badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .cc-card-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-/* the limit gears on a grid card, as one full-width group at the bottom of the card */
-.cc-card-res { display: flex !important; width: 100%; border-top: 1px solid var(--cc-line); padding-top: 8px; margin-top: 2px; }
+/* the limit gears on a grid card, as one full-width group at the bottom of the card, set off by
+   space rather than a line */
+.cc-card-res { display: flex !important; width: 100%; margin-top: 12px; }
 .cc-life { display: inline-flex; gap: 6px; }
 html .cc-abtn { background: var(--cc-bg3); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: var(--cc-radius-pill); padding: 4px 10px; font-size: var(--cc-text-meta); cursor: pointer; transition: background .12s; }
 html .cc-abtn:hover { background: #333; }
@@ -1157,7 +1158,7 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
 /* the segments are a pill group with no outer frame */
 #cc-settings .cc-seg { border: none !important; background: #232323; border-radius: var(--cc-radius-pill); padding: 3px; gap: 3px; overflow: visible; }
 #cc-settings .cc-seg-btn { border: 0 !important; border-radius: var(--cc-radius-pill); }
-.cc-set-head { display: flex; flex-direction: column; gap: 5px; padding: 6px 0 16px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+.cc-set-head { display: flex; flex-direction: column; gap: 5px; padding: 6px 0 0; margin-bottom: 32px; }   /* space, not a line, sets the head off from the tabs */
 .cc-set-hero { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 6px; }
 .cc-set-heroleft { display: flex; align-items: center; gap: 16px; }
 .cc-set-logo { width: 64px; height: 64px; border-radius: var(--cc-radius-control); display: block; }
