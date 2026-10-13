@@ -17,18 +17,23 @@ $sock  = getenv('CC_SOCK') ?: '/var/run/cannonadecommand.sock';
 // (it never fetches on the request path); iconsvg: the cached SVG itself, served
 // as real image/svg+xml so an <img> can point straight at it, same-origin.
 // uisettings: merges a few cc.* UI settings into the config, for a page that is closing.
+// bugreport: the diagnostics file for a bug report, with its secrets already taken out
+// by the engine, passed on as a download.
 $allow = ['state' => ['GET'], 'stats' => ['GET'], 'hostcpu' => ['GET'], 'hostnet' => ['GET'], 'action' => ['POST'], 'limits' => ['GET', 'POST'], 'restartpolicy' => ['POST'], 'limitlog' => ['GET'],
     'bwstatus' => ['GET'], 'plan' => ['GET', 'PUT'], 'apply' => ['POST'], 'config' => ['GET', 'PUT'], 'uisettings' => ['PUT'], 'vms' => ['GET'], 'vmlimits' => ['POST'],
-    'vmdisks' => ['GET'], 'vmdiskresize' => ['POST'], 'icons' => ['POST'], 'iconsvg' => ['GET']];
+    'vmdisks' => ['GET'], 'vmdiskresize' => ['POST'], 'icons' => ['POST'], 'iconsvg' => ['GET'], 'bugreport' => ['GET']];
 
 $path   = isset($_GET['path']) ? preg_replace('/[^a-z]/', '', $_GET['path']) : '';
 $method = $_SERVER['REQUEST_METHOD'];
 
-// iconsvg answers with SVG artwork instead of JSON, cached by the browser so each
-// icon is fetched once.
+// iconsvg answers with SVG artwork, cached by the browser so each icon is fetched
+// once, and bugreport with plain text that is never cached.
 if ($path === 'iconsvg') {
     header('Content-Type: image/svg+xml');
     header('Cache-Control: public, max-age=86400');
+} elseif ($path === 'bugreport') {
+    header('Content-Type: text/plain; charset=utf-8');
+    header('Cache-Control: no-store');
 } else {
     header('Content-Type: application/json');
 }

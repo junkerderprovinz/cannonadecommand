@@ -482,3 +482,32 @@ func TestPutUISettingsRejectsForeignKeys(t *testing.T) {
 		}
 	}
 }
+
+func TestBugReportIsARedactedDownload(t *testing.T) {
+	s, h := newServer()
+	dir := t.TempDir()
+	logFile := filepath.Join(dir, "cc.log")
+	if err := os.WriteFile(logFile, []byte("webhook https://hooks.example/abc/SECRETPATH failed\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	s.Version = "v1.2.0"
+	s.Diag.LogFile = logFile
+	s.Store.(*memStore).cfg.Notify.Webhook = "https://hooks.example/abc/SECRETPATH"
+	s.Store.(*memStore).plan = model.Plan{Nodes: []model.Node{{Name: "db", Probe: model.Probe{Kind: model.ProbeExec, Command: "pg_isready --password=hunter2"}}}}
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest("GET", "/api/bugreport", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("code = %d", rec.Code)
+	}
+	if cd := rec.Header().Get("Content-Disposition"); !strings.HasPrefix(cd, `attachment; filename="cannonadecommand-bugreport-`) {
+		t.Errorf("Content-Disposition = %q", cd)
+	}
+	body := rec.Body.String()
+	if strings.Contains(body, "SECRETPATH") || strings.Contains(body, "hunter2") {
+		t.Errorf("the report leaks a secret:\n%s", body)
+	}
+	if !strings.Contains(body, "Engine:  v1.2.0") || !strings.Contains(body, `"name": "db"`) {
+		t.Errorf("the report lacks the version or the plan:\n%s", body)
+	}
+}
