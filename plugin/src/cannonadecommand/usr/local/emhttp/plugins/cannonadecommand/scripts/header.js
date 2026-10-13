@@ -2578,32 +2578,32 @@
     try {
       var filter = document.getElementById("searchFilter");
       if (!filter) return;
-      // The badge moves out of the top-right search bar into the left category sidebar, under the
-      // home item. CA rebuilds that sidebar on a view swap, so the next ccApps pass re-homes it.
+      // The badge moves out of the top-right search bar to the top of the left sidebar, first in
+      // CA's first list so the tab order starts there too. CA rebuilds that sidebar on a view
+      // swap, so the next ccApps pass re-homes it. The li carries no .caMenuItem: CA's menu
+      // handler would take a click into the field for a menu choice and drop the open category.
       var caMenu = document.querySelector("ul.caMenu");
       if (caMenu) {
         var li = document.getElementById("cc-ca-search-li");
-        if (!li) { li = document.createElement("li"); li.id = "cc-ca-search-li"; li.className = "caMenuItem cc-ca-search-li"; }
-        // This item carries .caMenuItem too, so on a menu without a startup button the query below
-        // could return it once inserted. The comparison after it would then always hold, every
-        // pass would re-insert the node, and that blurs whatever is focused inside it, which on a
-        // ccApps pass would tear the input away mid-typing.
-        var home = caMenu.querySelector("li.startupButton") || caMenu.querySelector("li.caMenuItem:not(#cc-ca-search-li)");
+        if (!li) { li = document.createElement("li"); li.id = "cc-ca-search-li"; li.className = "cc-ca-search-li"; }
         if (filter.parentElement !== li) li.appendChild(filter);
-        if (home && home !== li) { if (home.nextElementSibling !== li) caMenu.insertBefore(li, home.nextElementSibling); }
-        else if (li.parentElement !== caMenu) caMenu.insertBefore(li, caMenu.firstChild);
+        // Re-inserting the node on every pass would blur the input mid-typing, so it only moves
+        // when it is somewhere else.
+        if (li.parentElement !== caMenu) caMenu.insertBefore(li, caMenu.firstChild);
       }
       // cc-open is runtime state the handlers below own, never stamped here: ccApps re-runs on
       // every category and magnifier click, so a stamp would reopen the badge behind any collapse.
       // CA's markup carries no label text, so one is injected. Above the idempotency guard, which
       // is right for listeners, bound once per node, and wrong for DOM content, which has to be
       // repairable when CA rewrites the container's children but keeps the node.
-      if (!filter.querySelector(".cc-ca-search-label")) {
-        var lb = document.createElement("span");
+      var lb = filter.querySelector(".cc-ca-search-label");
+      if (!lb) {
+        lb = document.createElement("span");
         lb.className = "cc-ca-search-label";
-        lb.textContent = T("Suche", "Search");
         filter.appendChild(lb);
       }
+      var lbText = T("Apps durchsuchen", "Search apps");
+      if (lb.textContent !== lbText) lb.textContent = lbText;
       if (filter.getAttribute("data-cc-search") === "1") return;
       filter.setAttribute("data-cc-search", "1");
       var box = document.getElementById("searchBox");
@@ -2618,7 +2618,23 @@
         box.addEventListener("input", caFlag);
         box.addEventListener("keyup", caFlag);
         box.addEventListener("focus", caFlag);
-        box.addEventListener("blur", function () { setTimeout(function () { document.documentElement.classList.remove("cc-ca-searching"); }, 200); });
+        box.addEventListener("blur", function () {
+          setTimeout(function () {
+            document.documentElement.classList.remove("cc-ca-searching");
+            // An empty field turns back into the badge once the focus has left it. With text in
+            // it, it stays open, since a click on a suggestion blurs the box before it lands.
+            if (!box.value && document.activeElement !== box && filter.closest("li.cc-ca-search-li")) {
+              filter.classList.remove("cc-open");
+              document.documentElement.classList.remove("cc-ca-searchopen");
+            }
+          }, 200);
+        });
+        // Tab reaches the input while the field is still collapsed, so focus opens it like a click.
+        box.addEventListener("focus", function () {
+          if (filter.classList.contains("cc-open") || !filter.closest("li.cc-ca-search-li")) return;
+          filter.classList.add("cc-open");
+          document.documentElement.classList.add("cc-ca-searchopen");
+        });
       }
       // Delegated on the whole chip rather than on the magnifier, so a click on the icon or the
       // label opens it and a CA re-render of the inner icon cannot orphan the handler. The open
@@ -2715,35 +2731,22 @@
       ul.style.setProperty("right", "auto", "important");
     } catch (e) {}
   }
-  // The sidebar's sections read as cards. CA renders it as flat siblings across three lists, and
-  // CSS has no selector for a group of siblings, but the card is still drawn purely in CSS:
-  // wrapping the groups in a real element breaks CA outright, because its own show and hide logic
-  // addresses the sub-lists through their original sibling relationship. Each member instead gets
-  // a class plus an edge marker, and the sheet paints one continuous surface with the radius on
-  // the outer edges only. Nothing moves, and a class write is a no-op on a repeat pass.
-  function ccMark(items, title) {
-    try {
-      if (!items.length) return;
-      for (var i = 0; i < items.length; i++) {
-        var el = items[i], first = i === 0, last = i === items.length - 1;
-        el.classList.add("cc-card-in");
-        el.classList.toggle("cc-card-top", first);
-        el.classList.toggle("cc-card-bot", last);
-      }
-      // CA ships no heading for the categories, so one is supplied here.
-      if (title) {
-        var host = items[0].parentElement; if (!host) return;
-        var h = host.querySelector(":scope > .cc-ca-cardtitle");
-        if (!h) { h = document.createElement("li"); h.className = "cc-ca-cardtitle cc-card-in cc-card-top"; h.textContent = title; }
-        if (h.nextElementSibling !== items[0]) host.insertBefore(h, items[0]);
-        items[0].classList.remove("cc-card-top");   // the title is the card's top edge instead
-      }
-    } catch (e) {}
+  // A group heading for the sidebar. It goes first in its list, where no CA entry has it as the
+  // sibling its click handler opens, and Tokens.css moves it to its group by data-cc-group.
+  function ccEyebrow(list, group, text) {
+    var h = list.querySelector(':scope > li.cc-ca-eyebrow[data-cc-group="' + group + '"]');
+    if (!h) {
+      h = document.createElement("li");
+      h.className = "cc-ca-eyebrow";
+      h.setAttribute("data-cc-group", group);
+      list.insertBefore(h, list.firstChild);
+    }
+    if (h.textContent !== text) h.textContent = text;
   }
-  // The results-per-page control and the Docker Hub badge live in the main content area while the
-  // search chip is in the sidebar, so no selector can put one under the other. The real nodes are
-  // moved, never cloned, or their click handlers would be left behind. It bails the moment the host
-  // already holds them, so a run on every ccApps() pass is cheap.
+  // The results-per-page control and the Docker Hub badge live in CA's search area in the main
+  // column. Docker Hub belongs to a search and goes under the sidebar field; results per page is a
+  // preference and becomes a row of the Community Apps group. The real nodes are moved, never
+  // cloned, or their click handlers would be left behind, and a pass that finds them home is a no-op.
   function ccMoveSearchAreaBadges() {
     try {
       var searchLi = document.querySelector("li.cc-ca-search-li");
@@ -2755,10 +2758,15 @@
         host.className = "cc-ca-search-extras";
         filter.parentNode === searchLi ? searchLi.insertBefore(host, filter.nextSibling) : searchLi.appendChild(host);
       }
-      var mpp = document.querySelector(".searchArea .caButton.maxPerPage");
       var dh = document.querySelector(".searchArea .dockerSearch");
-      if (mpp && mpp.parentNode !== host) host.appendChild(mpp);
       if (dh && dh.parentNode !== host) host.appendChild(dh);
+      var mpp = document.getElementById("maxPerPage");
+      var meta = document.querySelector(".menuItems > ul.caMenu:last-child");
+      if (mpp && meta) {
+        var row = meta.querySelector(":scope > li.cc-ca-perpage-li");
+        if (!row) { row = document.createElement("li"); row.className = "cc-ca-perpage-li"; meta.appendChild(row); }
+        if (mpp.parentNode !== row) row.appendChild(mpp);
+      }
       // CA appends the per-page dropdown to <body> and positions it with offsets computed for the
       // control's old home, so after the move it opens near the page corner. One corrective write
       // loses: CA fades the node in and keeps touching its style across several frames, so the
@@ -2780,86 +2788,91 @@
       }
     } catch (e) {}
   }
-  // CA appends the live count to its own label, which is what forced the badge to wrap. The tail is
+  // CA appends the live count to its own label, which a sidebar row has no room for. The tail is
   // stripped on every pass, so it stays gone after a different per-page value is picked.
   function ccAppsStripCount() {
     try {
-      var mpp = document.querySelector(".cc-ca-search-extras .caButton.maxPerPage");
+      var mpp = document.querySelector(".cc-ca-perpage-li .caButton.maxPerPage");
       if (!mpp) return;
       var m = /^(.*?):\s*[\d,]+\s*$/.exec((mpp.textContent || "").trim());
       if (m) mpp.textContent = m[1];
     } catch (e) {}
   }
-  function ccAppsCards() {
+  // CA's sidebar entries keep their place in CA's lists, because its click handler opens whatever
+  // follows the clicked entry; Tokens.css orders them into groups. This pass adds what CA lacks: a
+  // heading per group, a mark on each half of the version line and keyboard access to the rows.
+  function ccAppsGroups() {
     try {
-      var menus = [].slice.call(document.querySelectorAll("ul.caMenu"));
-      if (!menus.length) return;
-      // The three lists are identified by content, never by index: CA fills them asynchronously, so
-      // on an early pass the category list may not exist yet and an index would point at the meta
-      // list, filing its entries under a card titled "Kategorien".
-      var mMain = null, mCats = null, mMeta = null;
-      for (var mi = 0; mi < menus.length; mi++) {
-        var m = menus[mi];
-        if (m.querySelector(".allApps, .caRepositoryMenu")) mMeta = m;
-        else if (m.querySelector("li.startupButton") || m.querySelector("#cc-ca-search-li")) mMain = m;
-        else if (m.querySelector("li.categoryMenu")) mCats = m;
+      var main = document.querySelector(".menuItems > ul.caMenu:first-child");
+      var cats = document.querySelector("#category_list > ul.caMenu");
+      var meta = document.querySelector(".menuItems > ul.caMenu:last-child");
+      if (main) {
+        ccEyebrow(main, "mine", T("Meine Apps", "My apps"));
+        ccEyebrow(main, "discover", T("Entdecken", "Discover"));
       }
-      // In the main list, home and search stay loose and each section heading opens a group that
-      // runs to the next heading. The action centre is excluded and becomes a badge of its own.
-      if (mMain) {
-        var kids = [].slice.call(mMain.children), group = null, groups = [];
-        for (var i = 0; i < kids.length; i++) {
-          var li = kids[i];
-          var isHead = li.classList && li.classList.contains("sectionMenu");
-          if (isHead && li.classList.contains("actionCentre")) { group = null; continue; }
-          if (isHead) { group = [li]; groups.push(group); continue; }
-          if (!group) continue;                                                       // anything before the first heading
-          if (li.querySelector && li.querySelector("hr")) { group = null; continue; }  // a rule ends the group
-          group.push(li);
+      // CA rewrites the category list on every load of it, which takes the heading along.
+      if (cats) ccEyebrow(cats, "categories", T("Kategorien", "Categories"));
+      if (meta && meta !== main) {
+        ccEyebrow(meta, "ca", "Community Apps");
+        // The label and the number have no class of their own. Each is found by itself, the label
+        // by its text and the number by CA's id, since CA puts an <hr> between them on some renders.
+        var num = meta.querySelector("#caInstalledVersion");
+        if (num && num.closest("li")) num.closest("li").classList.add("cc-ca-ver-num");
+        for (var i = 0; i < meta.children.length; i++) {
+          var n = meta.children[i];
+          if (!n.children.length && /^version$/i.test((n.textContent || "").trim())) n.classList.add("cc-ca-ver-label");
         }
-        for (var g = 0; g < groups.length; g++) ccMark(groups[g], null);
       }
-      // The categories have a list of their own and no heading, so they become one titled card.
-      if (mCats) {
-        var cats = [].slice.call(mCats.children).filter(function (n) { return !n.classList || !n.classList.contains("cc-ca-cardtitle"); });
-        if (cats.length) ccMark(cats, T("Kategorien", "Categories"));
+      // CA's entries are plain list items with no tab stop. The rows become one tab stop, the
+      // open entry or the first row, and the arrow keys walk them in the order they are shown,
+      // which is not CA's DOM order. Enter or Space clicks a row through CA's own handler; Support
+      // is a real link and answers Enter itself.
+      var rows = ccSidebarRows();
+      for (var k = 0; k < rows.length; k++) {
+        var r = rows[k];
+        if (r.hasAttribute("tabindex")) continue;
+        r.setAttribute("tabindex", "-1");
+        if (r.tagName !== "A") r.setAttribute("role", "button");
       }
-      // In the meta list every entry stands on its own, so each falls through to the standalone
-      // badge rule. The loop strips the card marks a box may still carry from an earlier render.
-      if (mMeta) {
-        var k2 = [].slice.call(mMeta.children), tail = [], seenCat = false;
-        for (var j = 0; j < k2.length; j++) {
-          var n = k2[j];
-          if (n.classList && n.classList.contains("categoryMenu")) { seenCat = true; tail = []; continue; }
-          if (!seenCat) continue;
-          if (n.querySelector && n.querySelector("hr")) continue;
-          if (!(n.textContent || "").trim()) continue;
-          tail.push(n);
-        }
-        for (var jt = 0; jt < tail.length; jt++) {
-          tail[jt].classList.remove("cc-card-in", "cc-card-top", "cc-card-bot");
-        }
-        // The version label and its number belong at the end of the sidebar, where CA renders them
-        // further up. They are a plain text pair with no click handler, so moving them is safe.
-        // Each is found on its own, the label by its text and the number by CA's own id, never by
-        // adjacency: CA re-injects an <hr> between the two on some renders, and a position-based
-        // pairing then takes the wrong neighbour and scrambles the tail further on every pass. The
-        // guard makes a pass where the order already matches a no-op.
-        var verLabel = null, verNumEl = mMeta.querySelector("#caInstalledVersion");
-        var verNum = verNumEl ? verNumEl.closest("li") : null;
-        for (var vi = 0; vi < tail.length; vi++) {
-          if ((tail[vi].textContent || "").trim().toUpperCase() === "VERSION") { verLabel = tail[vi]; break; }
-        }
-        if (verLabel && verNum) {
-          var kids = mMeta.children, lastIdx = kids.length - 1;
-          var alreadyLast = lastIdx >= 1 && kids[lastIdx - 1] === verLabel && kids[lastIdx] === verNum;
-          if (!alreadyLast) {
-            mMeta.appendChild(verLabel);
-            mMeta.appendChild(verNum);
+      if (rows.length && !rows.some(function (x) { return x.getAttribute("tabindex") === "0"; })) {
+        rows.filter(function (x) { return x.classList.contains("selectedMenu"); }).concat(rows)[0].setAttribute("tabindex", "0");
+      }
+      var menu = document.querySelector(".menuItems");
+      if (menu && !menu.hasAttribute("data-cc-keys")) {
+        menu.setAttribute("data-cc-keys", "1");
+        menu.addEventListener("focusin", function (e) {
+          var all = ccSidebarRows();
+          if (all.indexOf(e.target) < 0) return;
+          all.forEach(function (x) { x.setAttribute("tabindex", x === e.target ? "0" : "-1"); });
+        });
+        menu.addEventListener("keydown", function (e) {
+          var t = e.target, all = ccSidebarRows(), i = all.indexOf(t);
+          if (i < 0) return;
+          var to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: all.length - 1 }[e.key];
+          if (to !== undefined) {
+            e.preventDefault();
+            if (all[to]) all[to].focus();
+            return;
           }
-        }
+          if ((e.key === "Enter" || e.key === " ") && t.tagName !== "A") {
+            e.preventDefault();
+            t.click();
+          }
+        });
       }
     } catch (e) {}
+  }
+  // The rows a keyboard can reach, top to bottom as shown. A hidden row, such as a closed sub-list
+  // or an Action Centre CA has nothing for, has no client rects and is left out.
+  function ccSidebarRows() {
+    var all = document.querySelectorAll(".menuItems li.caMenuItem, .menuItems li.subCategory > ul.caMenuItem, #maxPerPage, .cc-ca-search-extras > .dockerSearch");
+    var out = [];
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].querySelector("hr")) continue;
+      var t = all[i].querySelector(":scope > a") || all[i];
+      if (t.getClientRects().length) out.push(t);
+    }
+    return out.sort(function (a, b) { return a.getBoundingClientRect().top - b.getBoundingClientRect().top; });
   }
   function ccAppsAlignRight() {
     try {
@@ -2881,15 +2894,16 @@
       }
     } catch (e) {}
   }
-  // The first section row lines up with the sidebar's home chip. The two badges differ in height,
-  // so their vertical centres are aligned rather than their tops, and it is measured, since a
-  // static margin drifts with the font size, the badge tier and the theme. Only the first row is
-  // nudged; its margin collapses out of the container, which pulls the whole column up, and the
-  // rows below keep their own rhythm.
+  // The first section row lines up with the top of the sidebar, the search field, or the home
+  // entry where there is none. The two differ in height, so their vertical centres are aligned
+  // rather than their tops, and it is measured, since a static margin drifts with the font size,
+  // the badge tier and the theme. Only the first row is nudged; its margin collapses out of the
+  // container, which pulls the whole column up, and the rows below keep their own rhythm. The open
+  // field has left the column, so it is not measured.
   function ccAppsAlignTop() {
     try {
-      var caMenu = document.querySelector("ul.caMenu"); if (!caMenu) return;
-      var home = caMenu.querySelector("li.startupButton") || caMenu.querySelector("li.caMenuItem:not(#cc-ca-search-li)");
+      var home = document.querySelector("li.cc-ca-search-li > #searchFilter") || document.querySelector("ul.caMenu > li.startupButton");
+      if (home && home.classList.contains("cc-open")) return;
       var head = document.querySelector(".ca_homeTemplatesHeader"); if (!home || !head) return;
       var badge = head.querySelector(".cc-sechead-badge") || head;
       var hr = home.getBoundingClientRect(), br = badge.getBoundingClientRect();
@@ -3337,10 +3351,9 @@
       ccAppsStamp(".ca_homeTemplatesHeader");
       ccAppsStamp(".caMenuItem.selectedMenu");
       ccAppsStamp("#searchFilter");
-      // The search-results header covers both homes in one selector: before ccMoveSearchAreaBadges()
-      // runs, or on a page without the host, these still sit under CA's own search area, and
-      // afterwards under the relocated one.
-      ccAppsStamp(".searchArea .caButton.maxPerPage, .searchArea .dockerSearch, .cc-ca-search-extras .caButton.maxPerPage, .cc-ca-search-extras .dockerSearch");
+      // Before ccMoveSearchAreaBadges() runs, or on a page without the sidebar, these still sit in
+      // CA's own search area as coloured badges; once moved they are plain sidebar rows.
+      ccAppsStamp(".searchArea .caButton.maxPerPage, .searchArea .dockerSearch");
       ccAppsStamp(".pageNavigation .pageNumber");
       ccAppsStamp("a.sortIcons");
       // the icons in the Statistics, Credits and Change Log panel, which CA fills on each open
@@ -3359,8 +3372,8 @@
       ccAppsStripCount();
       wireCaSearch();
       ccWireCaSearchCollapse();
-      ccAppsCards();
-      ccAppsStamp(".cc-ca-cardtitle, li.cc-card-in.sectionMenu");
+      ccAppsGroups();
+      ccAppsStamp("li.caMenuItem.actionCentre");
       // The installed status badge stays unstamped: it is a resting state, never accent-filled in
       // any mode, so it has nothing to stamp.
       ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton, .cc-castats .actionsButton, .cc-ca-menu-btn, .appDocker, .appPlugin, .appLanguage, .appDriver, .appRepository, .cc-cs-cta.cc-cs-cta-update, .cc-warn-badge");

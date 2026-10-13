@@ -790,7 +790,7 @@ html.cc-popups-on #menu   { box-sizing: border-box !important; padding-right: va
 /* The Apps (Community Applications) tab in the CC look: colour, shade and radius only, no layout
    changes, so CA's dynamic multi-state grid keeps working. Its selectors (#searchBox, .caMenuItem,
    .ca_holder) exist only on /Apps, so the cc-popups-on scope is enough. The search field matches the
-   CC settings search, the category sidebar becomes chips and the cards lose their border lines. */
+   CC settings search, the sidebar becomes grouped rows and the cards lose their border lines. */
 /* CA cards read --template-background for their base fill, the hover fill and the .cardDesc::after
    fade, so remapping its vars puts the whole card interior on CC surfaces in both themes. */
 html.cc-popups-on {
@@ -1002,51 +1002,49 @@ html.cc-popups-on .searchSubmit:hover { filter: brightness(1.08) !important; }
 /* position:relative with top:0, so the glyph can be nudged from here if a font ever puts it off the
    box centre; both states measure on-centre as it stands */
 html.cc-popups-on #searchButton { color: inherit !important; position: relative !important; top: 0 !important; }
-/* The sidebar search is the same collapsible badge, reusing the top-bar variant above. Its two
-   states are mutually exclusive (.cc-open against :not(.cc-open)), so source order never decides
-   which paints, and the collapsed state inherits the top-bar width transition. */
+/* In the sidebar the search is a field at the top of the column, the same collapsible badge as the
+   top-bar variant above: collapsed it shows the magnifier and a label, and a click or keyboard
+   focus opens it. The two states are mutually exclusive (.cc-open against :not(.cc-open)), so
+   source order never decides which paints. */
 html.cc-popups-on li.cc-ca-search-li {
-  list-style: none !important; margin: 3px 0 !important; padding: 0 !important; background: transparent !important;
+  list-style: none !important; padding: 0 !important; background: transparent !important;
   position: relative !important;   /* anchor for the expanded field, which leaves the flow (see below) */
 }
-/* the li also carries .caMenuItem, so CA's category hover would paint its own bar behind the badge;
-   the feedback belongs on the badge */
-html.cc-popups-on li.cc-ca-search-li:hover { background: transparent !important; filter: none !important; }
-/* Collapsed it is an ordinary sidebar badge, the same box as every sibling .caMenuItem chip: full
-   column width, 7px/12px padding, the shared radius, neutral at rest and coloured on hover, with a
-   magnifier and a label. */
 html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open) {
   display: flex !important; align-items: center !important; justify-content: flex-start !important;
   width: 100% !important; max-width: 100% !important; margin: 0 !important; order: 0 !important;
-  height: auto !important; min-height: 0 !important; padding: 7px 12px !important;
-  background: var(--cc-surface-2, #222222) !important;
-  color: var(--cc-text-chip, #cfcfcf) !important;
+  height: 32px !important; min-height: 0 !important; padding: 0 10px !important;
+  background: var(--cc-field-bg, #2e2e2e) !important; color: var(--cc-text-dim, #8a8a8a) !important;
   border-radius: var(--cc-radius-control) !important;
-  box-sizing: border-box !important; overflow: hidden !important; cursor: pointer !important;
+  box-sizing: border-box !important; overflow: hidden !important; cursor: text !important;
   box-shadow: none !important;
 }
 html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open):hover {
-  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; filter: none !important;
+  background: color-mix(in srgb, var(--cc-field-bg, #2e2e2e) 85%, var(--cc-text, #e6e6e6)) !important;
+  color: var(--cc-text, #e6e6e6) !important;
 }
-/* The hidden input still drives the chip's height: at width 0 it is invisible, but its 34px box
-   plus the chip's padding makes the badge 48px tall beside its 34px siblings. */
+html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open):focus-within {
+  box-shadow: 0 0 0 3px rgba(252, 196, 25, .42) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important;
+}
+/* The hidden input still drives the field's height: at width 0 it is invisible, but its 34px box
+   would stretch the collapsed field past its 32px. */
 html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open) #searchBox {
   width: 0 !important; min-width: 0 !important; padding: 0 !important; height: 20px !important;
 }
 html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open) .awesomplete { height: 20px !important; }
 html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open) .searchSubmit {
-  color: inherit !important;
+  color: inherit !important; font-size: var(--cc-text-subline) !important;
   width: auto !important; min-width: 0 !important; height: auto !important; padding: 0 !important; flex: 0 0 auto !important;
 }
-html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open):hover .searchSubmit { color: inherit !important; }
 /* The label follows the icon. #searchFilter is a flex row whose children carry an explicit order
    (.awesomplete 1, .searchSubmit 2), so an appended span would default to 0 and render first.
-   pointer-events:none keeps the click on the chip. */
+   pointer-events:none keeps the click on the field. */
 html.cc-popups-on li.cc-ca-search-li #searchFilter .cc-ca-search-label {
-  order: 3 !important; display: inline-flex !important; align-items: center !important;
-  margin-left: 6px !important; font-size: var(--cc-text-subline) !important; font-weight: 400 !important;
-  line-height: 1.3 !important; white-space: nowrap !important; color: inherit !important; pointer-events: none !important;
+  order: 3 !important; display: block !important; min-width: 0 !important;
+  margin-left: 8px !important; font-size: var(--cc-text-body) !important; font-weight: 400 !important;
+  line-height: 1.3 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+  color: inherit !important; pointer-events: none !important;
 }
 html.cc-popups-on li.cc-ca-search-li #searchFilter.cc-open .cc-ca-search-label { display: none !important; }
 /* CA's screen-reader hint uses the legacy clip:rect(0,0,0,0) trick without the width and height of
@@ -1057,59 +1055,9 @@ html.cc-popups-on li.cc-ca-search-li .visually-hidden {
   padding: 0 !important; margin: -1px !important; overflow: hidden !important;
   clip: rect(0, 0, 0, 0) !important; clip-path: inset(50%) !important; white-space: nowrap !important; border: 0 !important;
 }
-/* The reactive mode rests every badge grey and colours it on hover, and this chip follows it like
-   every other badge on /Apps. It repeats .cc-popups-on for the specificity reason noted at the
-   ribbon block below. */
-html.cc-apps-rbneutral.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open) {
-  background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
-}
-html.cc-apps-rbneutral.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open):hover {
-  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; filter: none !important;
-}
-/* Results per page and DockerHub, moved under the search badge. header.js ccMoveSearchAreaBadges()
-   moves the real .maxPerPage and .dockerSearch nodes, whose click handlers have to survive, into
-   this host beside #searchFilter. The sidebar column is about 132px, so the wide md-tier box of
-   their old home becomes a narrow full-width stack in the sm-tier language the sidebar already
-   uses. The gap matches the one every other loose sidebar badge has; at 4px they read as fused,
-   since they share the search badge's chip fill. */
-html.cc-popups-on .cc-ca-search-extras {
-  display: flex !important; flex-direction: column !important; gap: 6px !important; margin: 6px 0 0 !important;
-}
-/* A .ca_hide guard is no help here: during an active search .dockerSearch carries .ca_hide while it
-   is shown, because CA's own .ca_hide{display:none} and .caButton{display:inline-block} have the
-   same specificity and source order decides. So these rules apply unconditionally and set no
-   `display` at all: whatever hides the control stays in force, and where native shows it, it
-   renders as a block with the same colour, padding and radius, just without a flex box. */
-html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage,
-html.cc-popups-on .cc-ca-search-extras .dockerSearch {
-  width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
-  height: auto !important; min-height: 0 !important; padding: 7px 12px !important; margin: 0 !important;
-  /* The sidebar knows two sizes, badge and sub-badge, so these take the badge tier (body size) like
-     every other top-level sidebar entry and a long label wraps to two lines in the 132px column. */
-  font-size: var(--cc-text-body) !important; font-weight: 600 !important; line-height: 1.25 !important;
-  text-align: center !important; text-transform: none !important; letter-spacing: normal !important;
-  white-space: normal !important;   /* "Results Per Page: 12" wraps in a 132px column, unlike its old row */
-  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
-  border: none !important; border-radius: var(--cc-radius-pill) !important; cursor: pointer !important;
-  transition: background .12s ease, color .12s ease, filter .12s ease !important;
-}
-/* CA hides .maxPerPage with an inline display:none on the unpaginated home grid and shows it only on
-   a paginated list. It is a plain preference toggle, and setting it off a paginated view just
-   applies to the next one, so it is forced visible everywhere. .dockerSearch is only meaningful
-   during a search and keeps CA's own visibility. */
-html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage { display: flex !important; }
-html.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:hover,
-html.cc-popups-on .cc-ca-search-extras .dockerSearch:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
-/* like the search chip above: neutral at rest, coloured on hover */
-html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage,
-html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .dockerSearch {
-  background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
-}
-html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .caButton.maxPerPage:hover,
-html.cc-apps-rbneutral.cc-popups-on .cc-ca-search-extras .dockerSearch:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; filter: none !important;
-}
+/* Docker Hub, moved under the field by header.js ccMoveSearchAreaBadges(), is a row like every
+   other sidebar entry (see the rows below). */
+html.cc-popups-on .cc-ca-search-extras { display: block !important; margin: 0 !important; }
 /* Expanded, the field leaves the sidebar column and opens to the right in the geometry of the
    header's own search panel: the same width, height, surface, radius and elevation as
    #guiSearchBoxSpan in Header.css. It is absolute against the li, which is position:relative above,
@@ -1166,179 +1114,161 @@ html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li[aria-s
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
 
-/* CA's own .menuItems{width:14rem} is too narrow for the uppercase, letter-spaced section badges,
-   which wrap to two lines; the category chips below use a smaller font and already fit.
-   .ca_display_area is a flex layout, so the app grid takes whatever width is left. */
-html.cc-popups-on .ca_display_area .menuItems { width: 18rem !important; }
+/* The Apps sidebar: the search field on top, CA's entries in four groups under eyebrow headings,
+   every entry one 30px row, and the version on the last line. CA spreads the entries over two
+   lists and the category span, and its click handler opens whatever follows the clicked entry, so
+   moving an entry would make it open a stranger. The lists and the span step out of the box tree
+   with display:contents instead, and the column orders the entries by group. CA shows and hides
+   the sub-lists and the Action Centre through inline display, so no rule here sets display on one
+   of its entries (GlimStone rule 17); only the rule spacers are taken out. */
+html.cc-popups-on .ca_display_area .menuItems {
+  display: flex !important; flex-flow: row wrap !important; align-content: flex-start !important;
+  row-gap: 2px !important; width: max(18rem, 190px) !important; box-sizing: border-box !important;
+}
+html.cc-popups-on .menuItems > ul.caMenu,
+html.cc-popups-on .menuItems > #category_list,
+html.cc-popups-on #category_list > ul.caMenu { display: contents; }
+html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li {
+  flex: 0 0 100% !important; box-sizing: border-box !important; min-width: 0 !important;
+  margin: 0 !important; padding: 0 !important; list-style: none !important;
+  background: transparent !important; border: none !important;
+}
+html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li:has(> hr) { display: none !important; }
 
-/* The category sidebar: chips, grouping and shade separators rather than lines, with the active
-   fill on CA's own .selectedMenu class. */
-html.cc-popups-on .caMenu { padding: 4px !important; margin: 0 !important; }
-html.cc-popups-on .caMenuItem {
-  display: block !important; border: none !important; border-radius: var(--cc-radius-pill) !important;
-  margin: 3px 0 !important; padding: 7px 12px !important; line-height: 1.3 !important;
-  box-sizing: border-box !important; width: auto !important;
-  background: var(--cc-surface-2, rgba(128, 128, 128, .10)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
-  cursor: pointer !important; transition: background .12s, color .12s, filter .12s !important;
+/* The groups: Discover, My apps, Categories, Community Apps. Each list fills one group by
+   default and the entries that belong elsewhere are named; equal values keep CA's own order. */
+html.cc-popups-on :where(.menuItems > ul.caMenu:first-child) > li { order: 21 !important; }
+html.cc-popups-on :where(#category_list > ul.caMenu) > li { order: 31 !important; }
+html.cc-popups-on :where(.menuItems > ul.caMenu:last-child) > li { order: 41 !important; }
+html.cc-popups-on li.cc-ca-search-li { order: 1 !important; }
+html.cc-popups-on li.cc-ca-eyebrow[data-cc-group="discover"] { order: 10 !important; }
+html.cc-popups-on li.startupButton { order: 11 !important; }
+html.cc-popups-on li.allApps { order: 12 !important; }
+html.cc-popups-on li.actionCentre { order: 13 !important; }
+html.cc-popups-on li.caRepositoryMenu { order: 14 !important; }
+html.cc-popups-on li.cc-ca-eyebrow[data-cc-group="mine"] { order: 20 !important; }
+html.cc-popups-on li.cc-ca-eyebrow[data-cc-group="categories"] { order: 30 !important; }
+html.cc-popups-on li.cc-ca-eyebrow[data-cc-group="ca"] { order: 40 !important; }
+html.cc-popups-on li.cc-ca-perpage-li { order: 42 !important; }
+html.cc-popups-on li.showStatistics { order: 43 !important; }
+html.cc-popups-on li.caChangeLog { order: 44 !important; }
+html.cc-popups-on li.debugging { order: 45 !important; }
+html.cc-popups-on li.caMenuItem:has(> a) { order: 46 !important; }
+html.cc-popups-on li.showCredits { order: 47 !important; }
+html.cc-popups-on li.cc-ca-ver-label { order: 90 !important; }
+html.cc-popups-on li.cc-ca-ver-num { order: 91 !important; }
+
+/* One row shape for every entry, sub-entries and the two moved CA buttons included: no fill at
+   rest, a step toward the text on hover, the colour mode's fill on the open entry. */
+html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li.caMenuItem,
+html.cc-popups-on li.subCategory > ul.caMenuItem,
+html.cc-popups-on li.cc-ca-perpage-li > .caButton.maxPerPage,
+html.cc-popups-on .cc-ca-search-extras > .dockerSearch {
+  position: relative !important; top: 0 !important; left: 0 !important; box-sizing: border-box !important;
+  width: 100% !important; max-width: 100% !important; height: 30px !important; min-height: 0 !important;
+  margin: 0 !important; padding: 0 10px !important;
+  font-size: var(--cc-text-body) !important; font-weight: 400 !important; line-height: 30px !important;
+  letter-spacing: normal !important; text-transform: none !important; text-align: left !important; text-decoration: none !important;
+  white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+  color: var(--cc-text-chip, #cfcfcf) !important; background: transparent !important;
+  border: none !important; border-radius: var(--cc-radius-control) !important; box-shadow: none !important;
+  opacity: 1 !important; outline: none !important; cursor: pointer !important;
+  transition: background .12s ease, color .12s ease !important;
 }
-html.cc-popups-on .caMenuItem:hover {
+html.cc-popups-on li.subCategory > ul.caMenuItem { padding-left: 24px !important; }
+html.cc-popups-on li.subCategory > ul.caMenuItem + ul.caMenuItem { margin-top: 2px !important; }
+html.cc-popups-on .cc-ca-search-extras > .dockerSearch { margin-top: 2px !important; }
+html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li.caMenuItem:hover:not(.selectedMenu):not(.caMenuDisabled),
+html.cc-popups-on li.subCategory > ul.caMenuItem:hover:not(.selectedMenu):not(.caMenuDisabled),
+html.cc-popups-on li.cc-ca-perpage-li > .caButton.maxPerPage:hover,
+html.cc-popups-on .cc-ca-search-extras > .dockerSearch:hover {
+  background: var(--cc-hover-wash) !important; color: var(--cc-text, #e6e6e6) !important;
+}
+/* ccAppsStamp() writes the open entry's colour, so the rainbow and flag modes fill it with their
+   own and the ink is the contrast colour picked for that fill. The open entry is filled in the
+   reactive mode too: it marks where you are, not a hover. */
+html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li.caMenuItem.selectedMenu,
+html.cc-popups-on li.subCategory > ul.caMenuItem.selectedMenu {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
-/* The heading margin is for a loose section break; a card-nested title takes its spacing from the
-   card edge rules below, or the two fight over margin-top with only source order to settle it. */
-html.cc-popups-on .caMenuItem.sectionMenu:not(.cc-card-in) {
-  text-transform: uppercase !important; letter-spacing: .6px !important;
-  font-size: var(--cc-text-body) !important; font-weight: 600 !important; color: var(--cc-text, #e6e6e6) !important;
-  background: transparent !important; margin: 22px 0 6px !important; padding: 2px 8px !important; cursor: default !important;
+html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li.caMenuItem.selectedMenu:hover,
+html.cc-popups-on li.subCategory > ul.caMenuItem.selectedMenu:hover {
+  background: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) 85%, var(--cc-text, #e6e6e6)) !important;
 }
-html.cc-popups-on .caMenuItem.sectionMenu:not(.cc-card-in):hover { background: transparent !important; color: var(--cc-text, #e6e6e6) !important; filter: none !important; }
-/* Standalone entries need more room between them than a card's members, which share one background
-   and sit 3px apart on purpose. Every card member carries cc-card-in, so excluding it leaves card
-   spacing alone. */
-html.cc-popups-on .caMenu > li.caMenuItem:not(.cc-card-in) { margin: 6px 0 !important; }
-html.cc-popups-on .caMenu > li:not(.caMenuItem):not(.cc-card-in):not(:has(> hr)) { margin: 6px 0 !important; }
-html.cc-popups-on .subCategory { margin: 0 !important; padding: 0 !important; list-style: none !important; }
-/* .subCategory hosts two different things. The Docker and Plugins split of Installed and Previous
-   Apps (.onlyShowWithFeed) are full members of that list and match its badge size and width. The
-   category sub-list is a level below the category above it, so it keeps a smaller size and an
-   indent, which together is what makes it read as being inside that category. */
-html.cc-popups-on .subCategory.onlyShowWithFeed .caMenuItem {
-  font-size: var(--cc-text-body) !important; text-transform: none !important; letter-spacing: normal !important; font-weight: 600 !important;
+/* CA dims a disabled entry with opacity; a colour step keeps the row's shape in the same ink family */
+html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li.caMenuItem.caMenuDisabled {
+  color: var(--cc-text-dim2, #6f6f6f) !important; cursor: default !important;
 }
-/* The wrapping <li> carries .cc-card-in but not .caMenuItem, which only its <ul> children do, so
-   the class-less row rule further down is the one that would otherwise win. This selector repeats
-   its shape with one more :not(), so it outranks that rule wherever either sits, and the width:100%
-   child below computes against the full column instead of a padding-narrowed box. */
-html.cc-popups-on li.subCategory.onlyShowWithFeed.cc-card-in:not(.caMenuItem) { padding-left: 0 !important; padding-right: 0 !important; }
-html.cc-popups-on .subCategory:not(.onlyShowWithFeed) { padding-left: 14px !important; }
-html.cc-popups-on .subCategory:not(.onlyShowWithFeed) .caMenuItem { font-size: var(--cc-text-subline) !important; text-transform: none !important; letter-spacing: normal !important; font-weight: 400 !important; }
-/* a nested badge takes the same content-box width as every other badge in the sidebar, whatever its
-   wrapper's padding or CA's default <ul> margin would give it */
-html.cc-popups-on .subCategory .caMenuItem { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; margin: 2px 0 !important; }
-/* li.cc-ca-search-li hosts both #searchFilter and the relocated Results per page and DockerHub
-   badges, so clicking one of those makes CA mark the whole li .selectedMenu, its own bookkeeping
-   for the active sidebar item, and the fill below would paint the search chip and the badge as one
-   block. The li has no selected look of its own; its contents carry their own colours. */
-html.cc-popups-on .caMenuItem.selectedMenu:not(.cc-ca-search-li),
-html.cc-popups-on .caMenuItem.selectedMenu:not(.cc-ca-search-li):hover {
-  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
+/* header.js gives the rows a tab stop; Support is CA's own link and is focused as one */
+html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li.caMenuItem:focus-visible,
+html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li.caMenuItem:has(> a:focus-visible),
+html.cc-popups-on li.subCategory > ul.caMenuItem:focus-visible,
+html.cc-popups-on li.cc-ca-perpage-li > .caButton.maxPerPage:focus-visible,
+html.cc-popups-on .cc-ca-search-extras > .dockerSearch:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(252, 196, 25, .42) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important;
 }
-html.cc-popups-on .caMenuItem.selectedMenu:not(.cc-ca-search-li):hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
-html.cc-popups-on .caMenuItem a.caMenuItem {
-  color: inherit !important; text-decoration: none !important; display: inline !important; padding: 0 !important; margin: 0 !important;
+/* The link fills its row, so a click anywhere on Support opens it. */
+html.cc-popups-on li.caMenuItem > a.caMenuItem {
+  display: block !important; margin: 0 -10px !important; padding: 0 10px !important;
+  color: inherit !important; text-decoration: none !important; outline: none !important;
 }
 html.cc-popups-on a.caMenuItem { color: inherit !important; text-decoration: none !important; }
-html.cc-popups-on .caMenu hr, html.cc-popups-on hr.category_hr {
-  border: none !important; height: 0 !important; margin: 4px 0 !important;
-  background: transparent !important;
-}
-html.cc-popups-on li.caMenuItem:has(> hr) { background: transparent !important; padding: 0 !important; margin: 0 !important; cursor: default !important; }
-/* The chip fallback for a loose class-less row. :not(.cc-card-in) keeps it off card-nested rows,
-   which take their look from the card rules below: its :has(> hr) clause outranks those on the type
-   tier, so without the exclusion a card title with no other CA class would lose its card styling to
-   this rule. No margin here either, because the loose-badge gap rule above owns that and this one
-   would win the tie on source order. */
-html.cc-popups-on .caMenu > li:not(.caMenuItem):not(:has(> hr)):not(.cc-card-in) {
-  display: block !important; box-sizing: border-box !important; width: auto !important;
-  padding: 7px 12px !important;
-  background: var(--cc-surface-2, rgba(128, 128, 128, .10)) !important;
-  color: var(--cc-text-chip, #cfcfcf) !important;
-  border-radius: var(--cc-radius-pill) !important; font-size: var(--cc-text-subline) !important;
-}
-html.cc-popups-on .caMenuItem.sectionMenu:first-child { margin-top: 4px !important; }
 
-/* The sidebar cards. A card is a shade block, surface-1 on the page base, so its section reads as a
-   grouped panel while Home, the search badge, All Apps and Repositories stay loose chips outside
-   it. header.js ccAppsCards() only marks the members (cc-card-in plus cc-card-top and -bot) and
-   never re-parents them, because moving CA's <li> breaks CA's own show and hide of the Installed
-   and Previous sub-lists, so the card is drawn here as one continuous surface across the run,
-   rounded at its outer edges. */
-html.cc-popups-on li.cc-card-in {
-  background: var(--cc-surface-1, #1e1e1e) !important;
-  border: none !important; border-radius: 0 !important;
-  margin: 0 !important; padding: 4px 6px !important; box-sizing: border-box !important;
-  list-style: none !important;
-}
-/* The card takes the card radius, one step outside the chips it holds, and the gap around it
-   matches the gap between two loose badges, so a card is another block in the same rhythm. */
-html.cc-popups-on li.cc-card-top {
-  border-top-left-radius: var(--cc-radius-card) !important;
-  border-top-right-radius: var(--cc-radius-card) !important;
-  margin-top: 6px !important; padding-top: 8px !important;
-  box-shadow: 0 -1px 3px rgba(0, 0, 0, .18) !important;   /* the light theme's #fff on #f2f2f2 is too quiet a step on its own */
-}
-html.cc-popups-on li.cc-card-bot {
-  border-bottom-left-radius: var(--cc-radius-card) !important;
-  border-bottom-right-radius: var(--cc-radius-card) !important;
-  margin-bottom: 6px !important; padding-bottom: 8px !important;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, .22) !important;
-}
-/* The class-less rows CA emits, the version label and its number, are not .caMenuItem, so the
-   fallback chip rule would paint them as standalone chips; inside a card they are plain text. */
-html.cc-popups-on li.cc-card-in:not(.caMenuItem):not(.cc-ca-cardtitle) {
-  padding: 2px 8px !important; margin: 0 !important;
-  color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-subline) !important;
-  border-radius: 0 !important;
-}
-html.cc-popups-on li.cc-card-in:hover { filter: none !important; }
-/* The card title is filled like every other badge, with header.js stamping --cc-rb-c on it, and
-   stays non-interactive: cursor:default and no hover. */
-html.cc-popups-on li.cc-ca-cardtitle,
-html.cc-popups-on li.cc-card-in.sectionMenu {
-  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
-  text-transform: uppercase !important; letter-spacing: .6px !important;
-  font-size: var(--cc-text-body) !important; font-weight: 700 !important; cursor: default !important;
-}
-html.cc-popups-on li.cc-card-in.sectionMenu:hover { filter: none !important; }
-html.cc-apps-rbneutral.cc-popups-on li.cc-ca-cardtitle,
-html.cc-apps-rbneutral.cc-popups-on li.cc-card-in.sectionMenu {
-  background: var(--cc-chip, rgba(128, 128, 128, .18)) !important; color: var(--cc-text-chip, #cfcfcf) !important;
-}
-/* chips sitting ON the card surface lift one step so they stay readable against it */
-html.cc-popups-on li.cc-card-in .caMenuItem { background: var(--cc-surface-3, #2e2e2e) !important; }
-/* Hover only, with no exception for CA's .selectedMenu, so every card member colours the same way;
-   otherwise the open category would stay filled while its neighbours only react to the pointer. */
-html.cc-popups-on li.cc-card-in .caMenuItem:hover {
-  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
-}
-/* A card member that carries .caMenuItem on the element itself rather than on a wrapping <li>, such
-   as the favourite repo and every category chip, needs its own rule: the descendant combinator
-   above wants a separate ancestor. It sits on the same surface as every other card member. */
-html.cc-popups-on li.cc-card-in.caMenuItem:not(.sectionMenu):not(.cc-ca-cardtitle) {
-  background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important;
-}
-html.cc-popups-on li.cc-card-in.caMenuItem:not(.sectionMenu):not(.cc-ca-cardtitle):hover {
-  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
+/* The group headings are eyebrows: small, spaced capitals in the dim text, with the same gap above
+   each, the first one included. */
+html.cc-popups-on li.cc-ca-eyebrow {
+  padding: 14px 10px 4px !important;
+  font-size: var(--cc-text-meta) !important; font-weight: 600 !important; line-height: 16px !important;
+  letter-spacing: .14em !important; text-transform: uppercase !important;
+  white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+  color: var(--cc-text-dim, #8a8a8a) !important; cursor: default !important;
 }
 
-/* The Action Centre is a coloured badge that pulses when it appears. It carries .sectionMenu, which
-   CC otherwise paints as a transparent heading, so that is overridden here. The pulse runs six
-   cycles rather than forever, and CA re-renders the entry when its state changes, which restarts
-   the animation without an observer. */
+/* CA shows the Action Centre only while something waits for an action, and names no count, so a
+   dot marks it. The dot wears the entry's colour and swaps to its ink while the entry is open; in
+   the reactive mode it rests grey until the row is hovered. It pulses six times when CA brings the
+   entry in, and CA re-renders the entry when its state changes, which restarts it. */
 @keyframes cc-ac-pulse {
   0%, 100% { box-shadow: 0 0 0 0 var(--cc-ac-glow, rgba(252, 196, 25, .55)); }
-  50%      { box-shadow: 0 0 14px 4px var(--cc-ac-glow, rgba(252, 196, 25, .55)); }
+  50%      { box-shadow: 0 0 8px 3px var(--cc-ac-glow, rgba(252, 196, 25, .55)); }
 }
-html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre {
-  display: block !important; box-sizing: border-box !important;
-  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
-  color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
-  text-transform: uppercase !important; letter-spacing: .6px !important;
-  font-size: var(--cc-text-body) !important; font-weight: 700 !important;
-  margin: 6px 0 !important; padding: 7px 12px !important;
-  border-radius: var(--cc-radius-pill) !important; cursor: pointer !important;
+html.cc-popups-on li.caMenuItem.actionCentre {
+  padding-right: 28px !important;
   --cc-ac-glow: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) 55%, transparent);
-  animation: cc-ac-pulse 1.4s ease-in-out 6 !important;
 }
-html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
-/* The reactive mode is a colour contract, not a motion one, so it leaves this badge coloured and
-   pulsing. Reduced motion does stop the pulse. */
+html.cc-popups-on li.caMenuItem.actionCentre::after {
+  content: "" !important; position: absolute !important; top: 50% !important; right: 10px !important;
+  width: 8px !important; height: 8px !important; margin-top: -4px !important;
+  border-radius: var(--cc-radius-pill) !important;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
+  animation: cc-ac-pulse 1.4s ease-in-out 6;
+}
+html.cc-popups-on li.caMenuItem.actionCentre.selectedMenu::after { background: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
+html.cc-apps-rbneutral.cc-popups-on li.caMenuItem.actionCentre:not(.selectedMenu):not(:hover)::after { background: var(--cc-text-dim, #8a8a8a) !important; }
 @media (prefers-reduced-motion: reduce) {
-  html.cc-popups-on li.caMenuItem.sectionMenu.actionCentre { animation: none !important; }
+  html.cc-popups-on li.caMenuItem.actionCentre::after { animation: none; }
 }
+
+/* Results per page, moved into the Community Apps group by ccMoveSearchAreaBadges(). CA hides it
+   with an inline display:none on the unpaginated home grid and shows it only on a paginated list.
+   It is a plain preference toggle, and setting it off a paginated view just applies to the next
+   one, so it is forced visible everywhere. */
+html.cc-popups-on li.cc-ca-perpage-li > .caButton.maxPerPage { display: block !important; }
+
+/* The version label and its number share the last line, the number at the end. CA writes the
+   label in capitals, so it is set lower case with a capital first letter. */
+html.cc-popups-on li.cc-ca-ver-label,
+html.cc-popups-on li.cc-ca-ver-num {
+  padding-top: 14px !important;
+  font-size: var(--cc-text-meta) !important; line-height: 16px !important;
+  color: var(--cc-text-dim, #8a8a8a) !important; cursor: default !important;
+}
+html.cc-popups-on li.cc-ca-ver-label { flex: 1 1 0 !important; padding-left: 10px !important; text-transform: lowercase !important; }
+html.cc-popups-on li.cc-ca-ver-label::first-letter { text-transform: uppercase; }
+html.cc-popups-on li.cc-ca-ver-num { flex: 0 0 auto !important; padding-right: 10px !important; font-variant-numeric: tabular-nums; }
 
 /* the app card: surface, radius, no border line and a matching hover, with no size or position changes */
 html.cc-popups-on .ca_holder {
@@ -1801,12 +1731,11 @@ html.cc-popups-on #sidenavContent .cc-ic-card {
   border-radius: var(--cc-radius-card) !important; padding: 18px 16px 14px !important;
   margin: 30px 0 !important; box-sizing: border-box !important;
 }
-/* The legend badge reads the three-tier chain li.cc-ca-cardtitle uses, --cc-rb-c through
-   --cc-rbaccent to --cc-accent, so it picks up the per-badge colour ccAppsStamp() writes on each
-   legend rather than one flat accent for every section. It has no .cc-apps-rbneutral override: the
-   reactive mode is a hover contract and a legend is a non-interactive <span> with no hover, so it
-   would sit on the translucent chip fallback for good, the same reason the Action Centre badge is
-   exempt. */
+/* The legend badge reads the three-tier chain --cc-rb-c through --cc-rbaccent to --cc-accent, so
+   it picks up the per-badge colour ccAppsStamp() writes on each legend rather than one flat accent
+   for every section. It has no .cc-apps-rbneutral override: the reactive mode is a hover contract
+   and a legend is a non-interactive <span> with no hover, so it would sit on the translucent chip
+   fallback for good. */
 html.cc-popups-on #sidenavContent .cc-ic-legend {
   position: absolute !important; top: -13px !important; left: 16px !important; z-index: 1 !important;
   display: inline-flex !important; align-items: center !important; box-sizing: border-box !important;
