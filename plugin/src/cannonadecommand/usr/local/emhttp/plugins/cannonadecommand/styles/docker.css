@@ -1516,9 +1516,10 @@ div.js-actions .cc-allct:hover:not([aria-disabled="true"]) {
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
 }
 div.js-actions input[type=button].cc-bar-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; }
-/* the badge and the menu button clear box-shadow above with more weight than the shared halo in
-   Tokens.css */
-div.js-actions :is(.cc-bulkmode-badge, .cc-allct):focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important; }
+/* Every button in the bar shows focus with the halo, the natives included, since CC draws them:
+   the bar's own rules clear box-shadow with more weight than the shared halo in Tokens.css, and
+   the blanket rule for Unraid's controls would add a brightness step on top. */
+div.js-actions :is(input[type=button], .cc-bulkmode-badge, .cc-allct):focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important; filter: none; }
 
 /* ShipLog: where its changelog bubble is on the Docker tab, its buttons and severity pill take the
    CC look. The .sl-bubble selector matches only once ShipLog has rendered one, so with the plugin

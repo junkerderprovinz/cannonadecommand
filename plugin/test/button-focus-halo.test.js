@@ -47,6 +47,17 @@ for (const page of ['every', 'docker', 'settings']) {
   }
 }
 
+console.log('\nThe Docker action bar\'s native buttons are drawn by CC, so they take the halo too');
+for (const [mode, html] of Object.entries(MODES)) {
+  for (const cls of [[], ['cc-bar-primary']]) {
+    const el = { tag: 'input', classes: cls, attrs: { type: 'button' }, states: { focus: true, 'focus-visible': true }, html, inside: ['.js-actions'], outside: ['#displaybox', '.cc-pop', '.cc-win', '#cc-settings', '.multi_installDiv'] };
+    const bs = candidates('docker', el, 'box-shadow'), w = bs[bs.length - 1];
+    ok(`${mode}: ${cls.length ? '"Container hinzufügen"' : 'a grey bar button'} shows the halo`, !!w && HALO.test(w.value), w && w.value + ' from ' + w.selector.slice(0, 70));
+    const f = candidates('docker', el, 'filter'), wf = f[f.length - 1];
+    ok(`${mode}: and no brightness step on top of it`, !wf || wf.value === 'none', wf && wf.value);
+  }
+}
+
 console.log('\nUnraid\'s own controls keep the brightness step');
 {
   const plain = { tag: 'button', classes: [], attrs: {}, states: { focus: true, 'focus-visible': true }, html: MODES.dark };
