@@ -1769,14 +1769,28 @@
       var count = el("span", "cc-bulkbar-count"); bar.appendChild(count);
       var startB = el("span", "cc-b cc-bulkbtn", de ? "Starten" : "Start"); startB.addEventListener("click", function () { ccBulkRun("start"); }); bar.appendChild(startB);
       var stopB = el("span", "cc-b cc-bulkbtn", de ? "Stoppen" : "Stop"); stopB.addEventListener("click", function () { ccBulkRun("stop"); }); bar.appendChild(stopB);
-      var rmB = el("span", "cc-b cc-bulkbtn", de ? "Entfernen" : "Remove"); rmB.addEventListener("click", ccBulkRemove); bar.appendChild(rmB);
+      var rmB = el("span", "cc-b cc-bulkbtn cc-bulkbtn-del", de ? "Entfernen" : "Remove"); rmB.addEventListener("click", ccBulkRemove); bar.appendChild(rmB);
       var clearB = el("span", "cc-b cc-bulkbtn cc-bulkbtn-clear", de ? "Aufheben" : "Clear"); clearB.addEventListener("click", function () { ccBulkSel = {}; ccBulkClearMarks(); ccBulkBarSync(); }); bar.appendChild(clearB);
       if (window.CCTheme) [startB, stopB, rmB, clearB].forEach(window.CCTheme.pressable);
       document.body.appendChild(bar);
       ccBulkBarEl = bar;
     }
     ccBulkBarEl.style.removeProperty("display");
+    colorBulkButtons(ccBulkBarEl);
     ccBulkBarEl.querySelector(".cc-bulkbar-count").textContent = names.length + " " + (de ? "ausgewählt" : "selected");
+  }
+  // The bar's buttons take palette slots for their hover the way the action bar's do, Entfernen
+  // through deleteSlot so a red slot passes to the next colour. Outside the rainbow modes the
+  // sheet falls back to the accent.
+  function colorBulkButtons(bar) {
+    var btns = Array.prototype.slice.call(bar.querySelectorAll(".cc-bulkbtn:not(.cc-bulkbtn-clear)"));
+    var rb = themingOn() && localStorage.getItem("cc.rainbow") === "1";
+    var pal = ccPalActive(RB_PAL), off = localStorage.getItem("cc.rainbowrot") === "0" ? 0 : RB_OFFSET;
+    btns.forEach(function (b, i) {
+      if (!rb) { b.style.removeProperty("--cc-rb-c"); b.style.removeProperty("--cc-rb-ct"); return; }
+      var c = b.classList.contains("cc-bulkbtn-del") && window.CCTheme ? window.CCTheme.deleteSlot(pal, i + off) : pal[(i + off) % pal.length];
+      b.style.setProperty("--cc-rb-c", c); b.style.setProperty("--cc-rb-ct", idealText(c));
+    });
   }
   // Picking rows the way a file manager does (GlimStone, "Lists"): Ctrl or Cmd and a click toggles
   // a row's tile and makes it the anchor, Shift and a click picks the rows from the anchor to this

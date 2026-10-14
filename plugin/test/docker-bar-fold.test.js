@@ -141,5 +141,25 @@ console.log('\nThe sheet');
   ok('a folded native stays hidden whatever Unraid\'s .show() writes inline', !!d && d.value === 'none' && d.important);
 }
 
+console.log('\nThe bar that appears once rows are picked');
+{
+  const tokens = fs.readFileSync(path.join(DIR, 'sheets/CannonadeCommand.Tokens.css'), 'utf8');
+  const island = /^\.cc-pop, \.cc-menu, \.cc-win, \.cc-rowmenu[^{]*\{/m.exec(tokens);
+  ok('it floats as a dark window on every theme, so its count stays readable on white', !!island && /\.cc-bulkbar\b/.test(island[0]), island && island[0]);
+  const win = (el, prop) => { const c = candidates(withUnraid('docker'), el, prop); return c[c.length - 1]; };
+  const bar = { tag: 'div', classes: ['cc-bulkbar'], html: ['cc-docker-on', 'Theme--white'] };
+  ok('its ground is the window surface', /^var\(--cc-surface-window/.test((win(bar, 'background') || {}).value || ''), (win(bar, 'background') || {}).value);
+  const btn = (cls, states) => ({ tag: 'span', classes: ['cc-b', 'cc-bulkbtn'].concat(cls), attrs: { role: 'button', tabindex: '0' }, states: states || {}, inside: ['.cc-bulkbar'], html: ['cc-docker-on'] });
+  for (const [n, e] of [['Starten', btn([])], ['Entfernen', btn(['cc-bulkbtn-del'])]]) {
+    ok(n + ' reads in sentence case like the action bar', (win(e, 'text-transform') || {}).value === 'none' && (win(e, 'letter-spacing') || {}).value === 'normal');
+    ok(n + ' rests grey', /^var\(--cc-surface-3/.test((win(e, 'background') || {}).value || ''), (win(e, 'background') || {}).value);
+    const hb = (win(btn(e.classes.slice(2), { hover: true }), 'background') || {}).value || '';
+    ok(n + ' takes its own palette slot or the accent under the pointer, never the area\'s rainbow accent', hb === 'var(--cc-rb-c, var(--cc-accent, #FCC419)) !important' || hb === 'var(--cc-rb-c, var(--cc-accent, #FCC419))', hb);
+  }
+  const sync = grab('ccBulkBarSync');
+  ok('Entfernen is marked as the delete, so the palette passes its red on', /"cc-b cc-bulkbtn cc-bulkbtn-del"/.test(sync));
+  ok('the slots are stamped each time the bar shows, through the delete-aware palette', /colorBulkButtons\(ccBulkBarEl\)/.test(sync) && /deleteSlot/.test(grab('colorBulkButtons')));
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);
