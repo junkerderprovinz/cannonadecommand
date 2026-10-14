@@ -74,6 +74,13 @@ console.log('\nHover steps toward the text, the open entry takes the colour mode
   ok('the reactive mode still fills the open entry', /^var\(--cc-rb-c/.test(val(reactive, 'background')), val(reactive, 'background'));
   const light = Object.assign(row(['categoryMenu']), { html: ['cc-popups-on', 'Theme--white'] });
   ok('the white theme reads the same tokens', /^var\(--cc-text-chip/.test(val(light, 'color')), val(light, 'color'));
+  // CA's start view marks nothing when its startup cookie says "onlynew", which no entry carries.
+  const home = row(['startupButton', 'cc-ca-home']);
+  ok('Start is filled like an open entry while the start view shows', /^var\(--cc-rb-c, var\(--cc-accent/.test(val(home, 'background')) && /^var\(--cc-rb-ct/.test(val(home, 'color')), val(home, 'background'));
+  ok('and answers hover with the same colour step', /^color-mix\(in srgb, var\(--cc-rb-c/.test(val(row(['startupButton', 'cc-ca-home'], { hover: true }), 'background')));
+  const hdr = fs.readFileSync(path.join(DIR, 'scripts/header.js'), 'utf8');
+  ok('the mark follows the start view and steps aside for any entry CA marks itself', /home\.classList\.toggle\("cc-ca-home", !document\.querySelector\("\.caMenuItem\.selectedMenu"\) && !!document\.querySelector\("\.ca_homeTemplatesHeader"\)\)/.test(hdr));
+  ok('and takes the stamped colour', /ccAppsStamp\("\.caMenuItem\.selectedMenu, li\.cc-ca-home"\)/.test(hdr));
 }
 
 console.log('\nA disabled entry is dimmed by colour and ignores the pointer');

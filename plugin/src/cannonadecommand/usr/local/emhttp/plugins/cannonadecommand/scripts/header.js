@@ -3349,7 +3349,11 @@
       // multi-select into another view.
       document.documentElement.classList.toggle("cc-apps-noselect", !document.querySelector(".ca_multiselect"));
       ccAppsStamp(".ca_homeTemplatesHeader");
-      ccAppsStamp(".caMenuItem.selectedMenu");
+      // CA's start view marks no entry when its startup cookie names "onlynew", a screen no entry
+      // carries, so Start is marked here while that view shows and nothing else is marked.
+      var home = document.querySelector("li.startupButton");
+      if (home) home.classList.toggle("cc-ca-home", !document.querySelector(".caMenuItem.selectedMenu") && !!document.querySelector(".ca_homeTemplatesHeader"));
+      ccAppsStamp(".caMenuItem.selectedMenu, li.cc-ca-home");
       ccAppsStamp("#searchFilter");
       // Before ccMoveSearchAreaBadges() runs, or on a page without the sidebar, these still sit in
       // CA's own search area as coloured badges; once moved they are plain sidebar rows.

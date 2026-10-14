@@ -1154,7 +1154,7 @@ html.cc-popups-on .cc-ca-search-extras > .dockerSearch {
 html.cc-popups-on li.subCategory > ul.caMenuItem { padding-left: 24px !important; }
 html.cc-popups-on li.subCategory > ul.caMenuItem + ul.caMenuItem { margin-top: 2px !important; }
 html.cc-popups-on .cc-ca-search-extras > .dockerSearch { margin-top: 2px !important; }
-html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li.caMenuItem:hover:not(.selectedMenu):not(.caMenuDisabled),
+html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li.caMenuItem:hover:not(.selectedMenu, .cc-ca-home):not(.caMenuDisabled),
 html.cc-popups-on li.subCategory > ul.caMenuItem:hover:not(.selectedMenu):not(.caMenuDisabled),
 html.cc-popups-on li.cc-ca-perpage-li > .caButton.maxPerPage:hover,
 html.cc-popups-on .cc-ca-search-extras > .dockerSearch:hover {
@@ -1162,13 +1162,14 @@ html.cc-popups-on .cc-ca-search-extras > .dockerSearch:hover {
 }
 /* ccAppsStamp() writes the open entry's colour, so the rainbow and flag modes fill it with their
    own and the ink is the contrast colour picked for that fill. The open entry is filled in the
-   reactive mode too: it marks where you are, not a hover. */
-html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li.caMenuItem.selectedMenu,
+   reactive mode too: it marks where you are, not a hover. header.js marks Start as cc-ca-home on
+   CA's start view, where CA itself marks nothing. */
+html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li.caMenuItem:is(.selectedMenu, .cc-ca-home),
 html.cc-popups-on li.subCategory > ul.caMenuItem.selectedMenu {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important;
   color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
-html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li.caMenuItem.selectedMenu:hover,
+html.cc-popups-on :where(.menuItems > ul.caMenu, #category_list > ul.caMenu) > li.caMenuItem:is(.selectedMenu, .cc-ca-home):hover,
 html.cc-popups-on li.subCategory > ul.caMenuItem.selectedMenu:hover {
   background: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) 85%, var(--cc-text, #e6e6e6)) !important;
 }
