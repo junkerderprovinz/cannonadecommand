@@ -92,9 +92,9 @@
       // A row or card that has nothing to act on stays out of the page and out of the search.
       "#cc-settings [hidden],#cc-settings .cc-set-off{display:none!important}" +
       "#cc-settings .cc-set-prose{text-align:start}" +
-      // The colour mode spans the card in a groove, and only the chosen mode is a badge.
-      "#cc-settings .cc-set-mode{display:flex;width:100%;box-sizing:border-box;margin-top:4px;background:var(--cc-surface-base,#161616)}" +
-      "#cc-settings .cc-set-mode .cc-seg-btn{flex:1 1 0;text-align:center;padding:7px 12px;font-size:var(--cc-text-subline)}" +
+      // The colour mode sits at the end of its row in a groove, and only the chosen mode is a badge.
+      "#cc-settings .cc-seg.cc-set-mode{display:inline-flex;flex:none;box-sizing:border-box;background:var(--cc-surface-base,#161616)}" +
+      "#cc-settings .cc-set-mode .cc-seg-btn{flex:none;text-align:center;padding:7px 12px;font-size:var(--cc-text-subline)}" +
       "#cc-settings .cc-set-mode .cc-seg-btn:not(.cc-seg-on){background:transparent;color:var(--cc-text-chip,#cfcfcf)}" +
       "#cc-settings .cc-set-mode .cc-seg-btn:not(.cc-seg-on):hover{background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6)}" +
       // An area's colour line and a row that names who decides its value.
@@ -471,7 +471,7 @@
     var code = get("cc.flag", "de"), pick = flags.filter(function (f) { return f.code === code; })[0] || flags.filter(function (f) { return f.code === "de"; })[0] || flags[0];
     applyFlag(pick);
   }
-  // GlimStone's horizontal selector in its well styling, across the card's width. The arrows
+  // GlimStone's horizontal selector in its well styling, compact at the end of its row. The arrows
   // move the choice and the focus with it, as in a radio group.
   function modeSelector(opts, cur, onPick) {
     var box = el("div", "cc-seg cc-set-mode"); box.setAttribute("role", "radiogroup");
@@ -1217,14 +1217,16 @@
     var mode = colorMode();
     var modes = [["accent", T("Akzent", "Accent")], ["rainbow", T("Regenbogen", "Rainbow")]];
     if (window.CC_FLAGS && window.CC_FLAGS.length) modes.push(["flag", T("Flagge", "Flag")]);
-    var modeLbl = el("div", "cc-set-lbl cc-set-lblwrap");
+    var modeRow = el("div", "cc-set-row cc-set-inline");
+    var modeLbl = el("span", "cc-set-lblwrap");
     modeLbl.appendChild(el("span", null, T("Farbmodus", "Colour mode")));
     modeLbl.appendChild(infoIcon(T("Akzent: alles in einer Farbe. Regenbogen: jedes Badge nimmt eine Farbe aus der Palette. Flagge: die Palette sind die Farben eines Landes.", "Accent: everything in one colour. Rainbow: every badge takes a colour from the palette. Flag: the palette is a country's colours.")));
-    c1.appendChild(modeLbl);
-    c1.appendChild(modeSelector(modes, mode, function (m) {
+    modeRow.appendChild(modeLbl);
+    modeRow.appendChild(modeSelector(modes, mode, function (m) {
       setColorMode(m); render(); syncHeaderBar(); syncSharesBar();
       var on = root.querySelector(".cc-set-mode .cc-seg-on"); if (on) on.focus();
     }));
+    c1.appendChild(modeRow);
     var prow = el("div", "cc-set-pickrow");
     var hexIn = el("input", "cc-set-hexin"); hexIn.type = "text"; hexIn.value = accent; hexIn.placeholder = "#FCC419"; hexIn.maxLength = 7; hexIn.spellcheck = false;
     // The handlers push the new colour onto the live bars as well: the header and the shares area

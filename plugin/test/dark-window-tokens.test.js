@@ -149,8 +149,9 @@ for (const theme of ['Theme--white', 'Theme--azure']) {
   const card = { tag: 'div', classes: ['cc-set-card'], inside: ['#cc-settings'], html: [theme] };
   const chip = candidates('settings', card, '--cc-text-chip').pop();
   ok(theme + ': a grey chip inside it keeps the light ink', chip && chip.value === darkHtml['--cc-text-chip'], chip && chip.value);
-  // A lock line's "Folgt" and a field's hint are quiet text on the dark card, not on the page.
-  for (const tok of ['--cc-text-dim', '--cc-text-hint']) {
+  // A lock line's "Folgt", a hint, the colour mode's groove and an off switch sit on the dark
+  // card, not on the page.
+  for (const tok of ['--cc-text-dim', '--cc-text-hint', '--cc-surface-base', '--cc-surface-3', '--cc-toggle-track-off']) {
     const got = candidates('settings', card, tok).pop();
     ok(theme + ': ' + tok + ' keeps its dark-theme value', got && got.value === darkHtml[tok], got && got.value);
   }

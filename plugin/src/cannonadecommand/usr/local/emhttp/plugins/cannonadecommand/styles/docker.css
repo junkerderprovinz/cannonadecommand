@@ -1213,9 +1213,13 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
    instead, so on a light theme they take the page's ink. */
 html.Theme--white #cc-settings .cc-set-heroleft,
 html.Theme--azure #cc-settings .cc-set-heroleft { --txt: var(--cc-text, #1c1c1c); --dim: var(--cc-text-dim, #545454); color: var(--txt); }
-/* The cards stay dark on the light themes, so the quiet inks inside one keep their dark-theme
-   values: a grey chip such as an idle tab in an area's preview, a lock line's "Folgt", a hint. */
-html:is(.Theme--white, .Theme--azure) #cc-settings .cc-set-card { --cc-text-chip: #cfcfcf; --cc-text-dim: #8a8a8a; --cc-text-hint: #a3a3a3; }
+/* The cards stay dark on the light themes, so the quiet tokens inside one keep their dark-theme
+   values: a grey chip such as an idle tab in an area's preview, a lock line's "Folgt", a hint, the
+   colour mode's groove and an off switch's track. */
+html:is(.Theme--white, .Theme--azure) #cc-settings .cc-set-card {
+  --cc-text-chip: #cfcfcf; --cc-text-dim: #8a8a8a; --cc-text-hint: #a3a3a3;
+  --cc-surface-base: #161616; --cc-surface-3: #2e2e2e; --cc-toggle-track-off: #3a3a3a;
+}
 /* The cards stand under each other at the page's full width, so they end at the same edge as the
    Docker list. A row keeps its name at the start and its control at the end, and a field, a
    picker or a slider keeps a width of its own rather than stretching with the card. Stacked cards

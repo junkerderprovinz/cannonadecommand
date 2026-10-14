@@ -1,4 +1,4 @@
-// The Badges card picks one colour mode, Accent, Rainbow or Flag, in a selector across the card,
+// The Badges card picks one colour mode, Accent, Rainbow or Flag, in a selector at the end of its row,
 // and shows only the controls of that mode under it. The mode lives in the two keys every area
 // script reads, cc.rainbow and cc.flagmode, so an install keeps its look on upgrade. Shape and
 // badge style sit in the Theming card.
@@ -58,6 +58,19 @@ console.log('\nOnly the chosen mode shows its controls');
   ok('nothing in the card is dimmed instead', !/rbOnly|style\.opacity = "\.4"/.test(settings));
   ok('the country row has its (i)', /frl\.appendChild\(infoIcon\(/.test(settings));
   ok('Flag is offered only with the flag list loaded', /if \(window\.CC_FLAGS && window\.CC_FLAGS\.length\) modes\.push\(\["flag", T\("Flagge", "Flag"\)\]\);/.test(settings));
+}
+
+// GlimStone, "The one horizontal selector": in a settings row a selector stays compact at the
+// row's end, with its label at the row's start. The Badges card holds other rows, so the mode
+// selector is one of them rather than a strip across the card.
+console.log('\nThe mode selector stands at the end of its row');
+{
+  ok('the label and the selector share one row', /var modeRow = el\("div", "cc-set-row cc-set-inline"\);/.test(settings) && /modeRow\.appendChild\(modeLbl\);/.test(settings) && /modeRow\.appendChild\(modeSelector\(/.test(settings) && /c1\.appendChild\(modeRow\);/.test(settings));
+  const css = /"#cc-settings \.cc-seg\.cc-set-mode\{([^}]*)\}"/.exec(settings);
+  ok('the groove hugs its segments instead of spanning the card', !!css && /display:inline-flex/.test(css[1]) && !/width:100%/.test(css[1]), css && css[1]);
+  ok('and is drawn deeper than the card, beating the generic segment rule', !!css && /background:var\(--cc-surface-base,#161616\)/.test(css[1]));
+  const seg = /"#cc-settings \.cc-set-mode \.cc-seg-btn\{([^}]*)\}"/.exec(settings);
+  ok('every segment hugs its label', !!seg && /flex:none/.test(seg[1]) && !/flex:1 1 0/.test(seg[1]), seg && seg[1]);
 }
 
 console.log('\nShape and badge style live in the Theming card');
