@@ -393,15 +393,69 @@
     var m = /addVMContext\('([^']+)'/.exec(h ? (h.getAttribute("onclick") || "") : "");
     return m ? m[1] : null;
   }
+  // A one-line field beside its label (GlimStone rule 35), with the hint in the label's (i).
   function vmFld(label, hint, value, ph) {
-    var wrap = el("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:3px;margin:0 0 10px 0";
-    var l = el("label", null, label); l.style.cssText = "font-size:var(--cc-text-meta);font-weight:600;color:var(--cc-text,#e6e6e6)";
-    var inp = el("input"); inp.type = "text"; inp.value = (value == null ? "" : String(value)); if (ph != null) inp.placeholder = String(ph);
-    inp.style.cssText = "background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:var(--cc-radius-control);padding:6px 10px;font-size:var(--cc-text-subline);outline:none";
+    var wrap = el("div", "cc-vm-row");
+    var l = el("label", "cc-vm-lbl", label);
+    if (hint && window.CCTheme && window.CCTheme.infoIcon) l.appendChild(window.CCTheme.infoIcon(hint));
+    var inp = el("input", "cc-vm-in"); inp.type = "text"; inp.value = (value == null ? "" : String(value)); if (ph != null) inp.placeholder = String(ph);
     wrap.appendChild(l); wrap.appendChild(inp);
-    if (hint) { var hh = el("div", null, hint); hh.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)"; wrap.appendChild(hh); }
     return { wrap: wrap, input: inp };
   }
+  // CC's dropdown for a <select> in the limits window, the settings page's ccDsel: the select
+  // stays as the value, hidden, and a pick fires its change.
+  function vmDsel(sel) {
+    var wrap = el("span", "cc-dsel"); sel.style.display = "none"; wrap.appendChild(sel);
+    var trig = el("span", "cc-dsel-trigger"); wrap.appendChild(trig);
+    if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(trig);
+    trig.setAttribute("aria-haspopup", "listbox");
+    var panel = el("div", "cc-dsel-panel"); wrap.appendChild(panel);
+    for (var k = 0; k < sel.options.length; k++) {
+      var chip = el("div", "cc-dsel-opt", sel.options[k].text); chip.setAttribute("data-i", k);
+      chip.addEventListener("click", (function (idx) {
+        return function (ev) {
+          ev.stopPropagation();
+          sel.selectedIndex = idx;
+          sel.dispatchEvent(new Event("change", { bubbles: true }));
+          vmDselSync(sel); wrap.classList.remove("cc-open"); trig.focus();
+        };
+      })(k));
+      panel.appendChild(chip);
+    }
+    trig.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      vmDselSync(sel);
+      if (wrap.classList.toggle("cc-open")) vmDselPosition(trig, panel);
+    });
+    vmDselSync(sel);
+    return wrap;
+  }
+  function vmDselSync(sel) {
+    var w = sel.parentNode; if (!w || !w.classList || !w.classList.contains("cc-dsel")) return;
+    var t2 = w.querySelector(".cc-dsel-trigger"), c = w.querySelectorAll(".cc-dsel-opt");
+    var label = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].text : "";
+    if (t2 && t2.textContent !== label) t2.textContent = label;
+    for (var k = 0; k < c.length; k++) { var o = sel.options[+c[k].getAttribute("data-i")]; if (o) c[k].classList.toggle("is-selected", o.selected); }
+  }
+  // The window's card scrolls, which would clip a panel inside it, so the open panel is fixed at its
+  // trigger. An ancestor of the window can still be its containing block (a transform or a filter
+  // does that), so the panel is measured once placed and moved by whatever it is off.
+  function vmDselPosition(trig, panel) {
+    try {
+      var r = trig.getBoundingClientRect(), gap = 4, edge = 14;
+      var below = window.innerHeight - r.bottom - edge, above = r.top - edge, down = below >= 200 || below >= above;
+      panel.style.position = "fixed"; panel.style.boxSizing = "border-box"; panel.style.bottom = "auto";
+      panel.style.minWidth = Math.round(r.width) + "px";
+      panel.style.maxHeight = Math.max(140, (down ? below : above) - gap) + "px";
+      panel.style.left = Math.round(r.left) + "px"; panel.style.top = "0px";
+      var want = down ? r.bottom + gap : r.top - gap - panel.offsetHeight;
+      var p = panel.getBoundingClientRect();
+      panel.style.left = Math.round(r.left + (r.left - p.left)) + "px";
+      panel.style.top = Math.round(want - p.top) + "px";
+    } catch (e) {}
+  }
+  try { if (window.CCTheme && window.CCTheme.registerSelectSync) window.CCTheme.registerSelectSync(function (sel, wrap) { if (!wrap || !wrap.closest || !wrap.closest("#cc-vmlim")) return false; vmDselSync(sel); return true; }); } catch (e) {}
+  try { document.addEventListener("click", function () { var o = document.querySelectorAll("#cc-vmlim .cc-dsel.cc-open"); for (var i = 0; i < o.length; i++) o[i].classList.remove("cc-open"); }); } catch (e) {}
   // The BW badge, like Docker's: a running VM shows its live throughput from pollVmBw, any other VM
   // its configured cap.
   var vmBwPrev = {}, vmRate = {}; // name -> {down,up,t} sample ; name -> {down,up} bytes/s
@@ -562,10 +616,10 @@
       // the Docker tab's core picker when the topology is known, else a cpuset text field
       var grid = buildCoreGrid(cores);
       if (grid) {
-        var pinWrap = el("div"); pinWrap.style.cssText = "display:flex;flex-direction:column;gap:5px;margin:0 0 10px 0";
-        var pinLbl = el("label", null, VMDE ? "CPU-Kerne (Pin)" : "CPU cores (pin)"); pinLbl.style.cssText = "font-size:var(--cc-text-meta);font-weight:600;color:var(--cc-text,#e6e6e6)";
-        var pinHint = el("div", null, VMDE ? "Kerne anklicken · nichts gewählt = alle" : "click cores · none = all"); pinHint.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)";
-        pinWrap.appendChild(pinLbl); pinWrap.appendChild(grid.node); pinWrap.appendChild(pinHint); card.appendChild(pinWrap);
+        var pinWrap = el("div", "cc-vm-block");
+        var pinLbl = el("label", "cc-vm-lbl", VMDE ? "CPU-Kerne (Pin)" : "CPU cores (pin)");
+        if (window.CCTheme && window.CCTheme.infoIcon) pinLbl.appendChild(window.CCTheme.infoIcon(VMDE ? "Kerne anklicken, die die VM nutzen darf. Ohne Auswahl nutzt sie alle." : "Click the cores the VM may use. With none picked it uses all of them."));
+        pinWrap.appendChild(pinLbl); pinWrap.appendChild(grid.node); card.appendChild(pinWrap);
         readCpuset = grid.read;
       } else {
         f.cores = vmFld(VMDE ? "CPU-Kerne (Pin)" : "CPU cores (pin)", VMDE ? "z. B. 6-15 · leer = alle" : "e.g. 6-15 · empty = all", cores, "6-15");
@@ -592,16 +646,16 @@
     // other per-item settings. It is a display choice and applies at once, not on Apply.
     (function () {
       var CI = window.CCTheme && window.CCTheme.icons; if (!CI) return;
-      var wrap = el("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:3px;margin:8px 0 10px 0";
-      var l = el("label", null, VMDE ? "Icon-Färbung" : "Icon colouring"); l.style.cssText = "font-size:var(--cc-text-meta);font-weight:600;color:var(--cc-text,#e6e6e6)";
-      var sel = el("select"); sel.style.cssText = "background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6);border:none;border-radius:var(--cc-radius-control);padding:6px 10px;font-size:var(--cc-text-subline);outline:none";
+      var row = el("div", "cc-vm-row");
+      var l = el("label", "cc-vm-lbl", VMDE ? "Icon-Färbung" : "Icon colouring");
+      var sel = el("select");
       var opts = VMDE
         ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Ink-Flatten"], ["tint", "Luminanz-Tint"]]
         : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Ink flatten"], ["tint", "Luminance tint"]];
       var cur = CI.override("vm", name);
       opts.forEach(function (o) { var op = el("option", null, o[1]); op.value = o[0]; if (o[0] === cur) op.selected = true; sel.appendChild(op); });
       sel.addEventListener("change", function () { CI.setOverride("vm", name, sel.value); paintVmIcons(); });   // `apply` here is the editor's Apply button
-      wrap.appendChild(l); wrap.appendChild(sel); card.appendChild(wrap);
+      row.appendChild(l); row.appendChild(vmDsel(sel)); card.appendChild(row);
     })();
     // the progress line of Apply, at the foot of the card
     var msg = el("div"); msg.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)"; card.appendChild(msg);
@@ -614,6 +668,7 @@
     var CT = window.CCTheme;
     if (CT && CT.pressable) { CT.pressable(cancel); if (apply) CT.pressable(apply); }
     if (CT && CT.paintWin) CT.paintWin(win);
+    if (CT && CT.paintSelects) CT.paintSelects(win);
     // place the window at the gear (clamped into the viewport; flips above if it would overflow the bottom)
     try {
       var r = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null, cw = win.offsetWidth || 420, ch = win.offsetHeight || 300;

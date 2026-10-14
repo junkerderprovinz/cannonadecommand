@@ -373,3 +373,40 @@ html.cc-vms-on #kvm_list .switch-button-background,
 html.cc-vms-on #kvm_list .switch-button-background .switch-button-button {
   border-radius: var(--cc-radius-pill) !important;
 }
+
+/* The limits window's rows (GlimStone rule 35): a field or a dropdown stands at the end of its
+   label's row with a width of its own; the core picker and the vDisk list keep their label above. */
+#cc-vmlim .cc-vm-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
+#cc-vmlim .cc-vm-block { display: flex; flex-direction: column; gap: 6px; margin: 0 0 12px; }
+#cc-vmlim .cc-vm-lbl { display: inline-flex; align-items: center; gap: 6px; font-size: var(--cc-text-subline); color: var(--cc-text, #e6e6e6); }
+#cc-vmlim .cc-vm-row > input { width: 140px; box-sizing: border-box; flex: none; background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text, #e6e6e6); border: none; border-radius: var(--cc-radius-control); padding: 6px 10px; font-size: var(--cc-text-subline); outline: none; }
+#cc-vmlim .cc-vm-row > input::placeholder { color: var(--cc-text-hint, #a3a3a3); opacity: 1; }   /* a hint, not Unraid's link blue */
+/* vms.js vmDsel: the settings page's dropdown, on the window's field fill. */
+#cc-vmlim .cc-dsel { position: relative; display: inline-flex; flex: none; min-width: 200px; }
+#cc-vmlim .cc-dsel-trigger {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
+  flex: 1; min-width: 0; height: 32px; box-sizing: border-box;
+  background-color: var(--cc-surface-3, #2e2e2e); color: var(--cc-text, #e6e6e6);
+  border: 0; border-radius: var(--cc-radius-control); padding: 0 12px; font-size: var(--cc-text-subline); font-weight: 600;
+  cursor: pointer; transition: background-color .12s;
+}
+#cc-vmlim .cc-dsel-trigger:hover { background-color: color-mix(in srgb, var(--cc-surface-3, #2e2e2e) 85%, var(--cc-text, #e6e6e6)); }
+#cc-vmlim .cc-dsel-trigger::after {
+  content: ""; flex: 0 0 auto; width: 0; height: 0; margin-left: 8px;
+  border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--cc-text, #e6e6e6);
+}
+#cc-vmlim .cc-dsel-panel {
+  display: none; position: fixed; z-index: 30; flex-direction: column; gap: 6px; padding: 8px;
+  width: max-content; max-width: min(92vw, 420px); overflow-y: auto; overflow-x: hidden;
+  background: var(--cc-surface-window, #242424); border-radius: var(--cc-radius-card); box-shadow: var(--cc-elev-3, 0 12px 30px rgba(0, 0, 0, .6));
+}
+#cc-vmlim .cc-dsel.cc-open .cc-dsel-panel { display: flex; }
+#cc-vmlim .cc-dsel-opt {
+  display: flex; align-items: center; padding: 6px 12px; cursor: pointer; border-radius: var(--cc-radius-pill); white-space: nowrap;
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
+  transition: background .12s, color .12s;
+}
+#cc-vmlim .cc-dsel-opt:hover, #cc-vmlim .cc-dsel-opt.is-selected { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }
+html.cc-vm-rbneutral #cc-vmlim .cc-dsel-opt { background: rgba(128, 128, 128, .16); color: var(--cc-text, #e6e6e6); }
+html.cc-vm-rbneutral #cc-vmlim .cc-dsel-opt:hover,
+html.cc-vm-rbneutral #cc-vmlim .cc-dsel-opt.is-selected { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
