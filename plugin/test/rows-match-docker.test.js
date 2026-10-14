@@ -50,6 +50,19 @@ console.log('\nThe VM row');
   ok('a resting tile in the reactive mode is the Docker tile\'s grey', !!vrest && decl(vrest, 'background') === decl(drest, 'background'), decl(vrest, 'background') + ' vs ' + decl(drest, 'background'));
 }
 
+console.log('\nThe logo tile shows under the same switch on all three tabs');
+{
+  ok('Docker: the logo background or the adopt toggle', /function iconBgOn\(\) \{ return effc\("iconbg"\) === "1" \|\| iconBgAdopts\(\); \}/.test(dockerJs));
+  ok('Plugins: the same', /function iconBgOnP\(\) \{ return eff\("iconbg"\) === "1" \|\| iconBgAdoptsP\(\); \}/.test(plugJs) && /classList\.toggle\("cc-plugins-iconbg", iconBgOnP\(\)\)/.test(plugJs) && /var ibgOn = iconBgOnP\(\);/.test(plugJs));
+  ok('VMs: the same', /function iconBgOnV\(\) \{ return effK\("iconbg"\) === "1" \|\| iconBgAdoptsV\(\); \}/.test(vmsJs) && /var ibgOn = iconBgOnV\(\);/.test(vmsJs) && !/effK\("iconbg"\) !== "1"\) return;/.test(vmsJs));
+}
+
+console.log('\nThe names read in the text colour, as on the Plugins and VM tabs');
+{
+  const nm = body(docker, '.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .appname a');
+  ok('a container name takes the row\'s text colour, not Unraid\'s link blue', decl(nm, 'color') === 'inherit !important', nm);
+}
+
 console.log('\nThe plugin row');
 {
   const cell = body(docker, '.cc-plug #plugin_list > tr > td');

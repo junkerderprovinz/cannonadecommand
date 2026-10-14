@@ -127,6 +127,8 @@
   // Adopting the rainbow for the icon background is a global setting, so it bypasses eff()
   // (see docker.js iconBgAdopts()).
   function iconBgAdoptsP() { return ls("cc.iconbgrainbow") === "1"; }
+  // The adopt toggle implies the logo tile, as on the Docker tab (docker.js iconBgOn).
+  function iconBgOnP() { return eff("iconbg") === "1" || iconBgAdoptsP(); }
   function el(t, c, x) { var n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; }
 
   var RB_PAL = ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];
@@ -408,7 +410,7 @@
     if (ico) { ico.style.removeProperty("width"); ico.style.removeProperty("height"); }
     // Unraid puts one of three icon types in this cell: <img> (PNG), <i class="fa ..."> and
     // <i class="icon-... list"> (its own glyph font). All three are sized alike below.
-    var ibgOn = eff("iconbg") === "1";
+    var ibgOn = iconBgOnP();
     var ibgBg = plugBgColor();
     // With the adopt toggle on there are two shared filters, black ink and white ink, and each
     // row picks the one matching its own rowInk, the value stamped as its --cc-rb-ct above.
@@ -675,7 +677,7 @@
       document.documentElement.style.setProperty("--cc-density", { compact: "5px", normal: "9px", airy: "14px" }[ls("cc.density")] || "9px");
       // logo-background badge: scope the docker.css .cc-plugico box on/off from the
       // adopt-aware key (honours "Adopt Docker style" via eff()), same as the Docker tab
-      document.documentElement.classList.toggle("cc-plugins-iconbg", eff("iconbg") === "1");
+      document.documentElement.classList.toggle("cc-plugins-iconbg", iconBgOnP());
       // in rainbow and flag mode the logo tile takes the row palette (docker.css gates the tile rule on this)
       document.documentElement.classList.toggle("cc-plugins-rainbow", ls("cc.rainbow") === "1");
       // reactive rainbow: rows rest grey and colour on hover (docker.css hover rules gated here)

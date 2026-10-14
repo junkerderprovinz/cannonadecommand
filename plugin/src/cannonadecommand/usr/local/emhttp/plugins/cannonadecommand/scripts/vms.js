@@ -166,6 +166,8 @@
   function effK(k) { return ls("cc.stylevms") !== "0" ? ls("cc." + k) : ls("ccv." + k); }
   // Adopting the rainbow is a global decision, so it bypasses effK().
   function iconBgAdoptsV() { return ls("cc.iconbgrainbow") === "1"; }
+  // The adopt toggle implies the logo tile, as on the Docker tab (docker.js iconBgOn).
+  function iconBgOnV() { return effK("iconbg") === "1" || iconBgAdoptsV(); }
   function ccIdeal(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.197 ? "#161616" : "#fff"; }
   // A failed action shakes the control that was used and says why in a toast.
   function ccvFail(ctl, msg) { if (window.CCTheme) window.CCTheme.fail(ctl, msg); }
@@ -984,7 +986,7 @@
     // enhanceCells does not rebuild a finished cell, so the gear colours are refreshed here too
     try { refreshAllRes(); } catch (e) {}
     // Adopt off with no own tint colour needs the icon pass only for the badge.
-    if (ls("cc.stylevms") === "0" && !ls("ccv.iconcolor") && effK("iconbg") !== "1") return;
+    if (ls("cc.stylevms") === "0" && !ls("ccv.iconcolor") && !iconBgOnV()) return;
     paintVmIcons();
   }
   // The icon pass, separate from apply() so the per-VM dropdown can repaint at once: inside
@@ -992,7 +994,7 @@
   function paintVmIcons() {
     try {
       var imgs = vmImgs();
-      var ibgOn = effK("iconbg") === "1"; var ibgAcc = vmBgColor();
+      var ibgOn = iconBgOnV(); var ibgAcc = vmBgColor();
       // VmTab.css draws the badge box through html.cc-vm-iconbg; the ink flatten has to be an
       // inline filter on each logo.
       var root2 = document.documentElement;

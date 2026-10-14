@@ -78,6 +78,10 @@ html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbo
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .inner > i[id^='load-'],
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .inner > span.state { display: none !important; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .appname { font-size: var(--cc-text-title) !important; font-weight: 600 !important; letter-spacing: .1px; }
+/* A container's name takes the row's text colour, as a plugin's and a VM's do, rather than
+   Unraid's link blue, which reads at about 3:1 on the black theme. */
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .appname a,
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.ct-name .appname a:hover { color: inherit !important; }
 .cc-enh #docker_list tr:is(.sortable, .folder-element) > td { padding-top: var(--cc-density) !important; padding-bottom: var(--cc-density) !important; }
 /* The row height is mostly badge content, so the --cc-density padding on the cells is barely
    visible on its own; compact and airy also tighten or loosen the badge groups and the name meta. */
