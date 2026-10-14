@@ -1103,6 +1103,8 @@ html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head {
 }
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head i,
 html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
+/* Unraid's gap-1 is 2.5px on its 10px root, so the glyph and the title take a card title's 6px. */
+html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head > span.left { display: inline-flex; align-items: center; gap: 6px; }
 .cc-plug #plugin_list > tr > td { padding-top: var(--cc-density, 9px) !important; padding-bottom: var(--cc-density, 9px) !important; }
 .cc-plug #plugin_list > tr > td:nth-child(2) { padding-right: 14px !important; } /* uniform right edge for the scroll windows */
 .cc-plug #plugin_list > tr > td:nth-child(2) p { margin: 0 !important; }

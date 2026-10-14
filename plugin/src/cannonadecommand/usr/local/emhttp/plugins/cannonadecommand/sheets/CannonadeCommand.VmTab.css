@@ -311,6 +311,8 @@ html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head {
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head i,
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head i.title,
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
+/* Unraid's gap-1 is 2.5px on its 10px root, so the glyph and the title take a card title's 6px. */
+html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head > span.left { display: inline-flex; align-items: center; gap: 6px; }
 
 /* The list/grid toggle sits on the sub-tab row (nav.tabs .tabs-container), right-aligned, borderless
    and as tall as the sub-tabs (--cc-md-h), where Docker keeps its global controls too. */

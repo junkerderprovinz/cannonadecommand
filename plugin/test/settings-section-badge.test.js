@@ -74,6 +74,19 @@ console.log('\nOne section badge size');
   }
   const main = rules(read('sheets/CannonadeCommand.Shares.css')).find((r) => /\.cc-on-main\.cc-sections-main\) #displaybox \.cc-card-head$/.test(r.sel));
   ok('and so do the sections on Main', !!main && /var\(--cc-sec-fs\)/.test(decl(main.body, 'font-size') || ''));
+  // Unraid's section head is span.left with a glyph and the title, spaced by its own gap-1, which
+  // is 2.5px on Unraid's 10px root. Every section badge sets the 6px a card title has instead.
+  const gaps = {
+    'Main and Shares': ['sheets/CannonadeCommand.Shares.css', /cc-on-main\.cc-sections-main\) #displaybox \.cc-card-head > span\.left$/, /cc-on-main\.cc-sections-main\) #displaybox \.cc-card-head i$/],
+    'the VM sections': ['sheets/CannonadeCommand.VmTab.css', /cc-sections-vms #displaybox \.cc-card-head > span\.left$/, /cc-sections-vms #displaybox \.cc-card-head i$/],
+    'the Plugins sections': ['styles/docker.css', /cc-sections-plugins #displaybox \.cc-card-head > span\.left$/, /cc-sections-plugins #displaybox \.cc-card-head i$/],
+  };
+  for (const [what, [file, spanSel, iconSel]] of Object.entries(gaps)) {
+    const rs = rules(read(file));
+    const span = rs.find((r) => r.sel.split(',').some((s) => spanSel.test(s.trim())));
+    const icon = rs.find((r) => r.sel.split(',').some((s) => iconSel.test(s.trim())));
+    ok(what + ': the glyph stands 6px from the title', !!span && decl(span.body, 'display') === 'inline-flex' && decl(span.body, 'gap') === '6px' && !!icon && /^0\b/.test(decl(icon.body, 'margin') || '') && !/8px/.test(decl(icon.body, 'margin') || ''), span ? span.body : 'no rule');
+  }
 }
 
 console.log('\nA window title is a notch on the window\'s top edge');

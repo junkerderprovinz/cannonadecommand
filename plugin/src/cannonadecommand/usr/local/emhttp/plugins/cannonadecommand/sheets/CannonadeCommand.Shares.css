@@ -1221,7 +1221,9 @@ html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sec
 }
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head i.title,
 html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head i,
-html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head img.icon { color: inherit; margin: 0 8px 0 0; }   /* the native gap-1 leaves only about 4px between icon and title */
+html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head img.icon { color: inherit; margin: 0; }
+/* Unraid's gap-1 is 2.5px on its 10px root, so the glyph and the title take a card title's 6px. */
+html.cc-shares-on:is(.cc-on-share-detail.cc-sections-share, .cc-on-shares.cc-sections-share, .cc-on-main.cc-sections-main) #displaybox .cc-card-head > span.left { display: inline-flex; align-items: center; gap: 6px; }
 /* The UD head is the one section whose icon is a full-colour img at its natural size; the others are
    font glyphs that inherit ink and font size. Pin it to glyph size and monochrome it to the badge
    ink, as .cc-ud-h img does. */
