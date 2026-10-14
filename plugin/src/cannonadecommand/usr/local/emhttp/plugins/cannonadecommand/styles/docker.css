@@ -1182,15 +1182,16 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
    stays in view while they scroll. The tiles stand 4px apart at a 40px floor, and a name that needs
    it takes a second line. They keep that height rather than share the column's: with ten areas
    a shared height makes each tile twice as tall as its name. Below 1024px the column shows the glyphs
-   alone, and settings.js moves each name into its bubble. */
+   alone, and settings.js moves each name into its bubble. The two widths are GlimStone's 12.75rem
+   and 3.25rem in pixels, since Unraid sets the root font size to 10px. */
 .cc-set-body { display: flex; align-items: flex-start; gap: 24px; }
 .cc-set-main { flex: 1 1 auto; min-width: 0; }
-.cc-set-tabs { position: sticky; top: 12px; flex: none; box-sizing: border-box; width: 12.75rem; max-height: calc(100vh - 24px); overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 0 8px 0 4px; margin: 0; }
+.cc-set-tabs { position: sticky; top: 12px; flex: none; box-sizing: border-box; width: 204px; max-height: calc(100vh - 24px); overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 0 8px 0 4px; margin: 0; }
 .cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: flex !important; flex: none; min-height: 40px; align-items: center; justify-content: flex-start; gap: 10px; box-sizing: border-box; height: auto !important; padding: 0 12px !important; font-size: var(--cc-text-body) !important; font-weight: 600 !important; line-height: 20px; text-align: start; text-transform: none !important; letter-spacing: normal !important; border-radius: var(--cc-radius-control) !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS adds one to every button */
 .cc-set-tab[hidden] { display: none !important; }
 .cc-set-tablbl { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; text-wrap: balance; }
 @media (max-width: 1023px) {
-  .cc-set-tabs { width: 3.25rem; padding: 0 4px 0 0; }
+  .cc-set-tabs { width: 52px; padding: 0 4px 0 0; }
   .cc-set-tab { justify-content: center; padding: 0 !important; }
   .cc-set-tablbl { display: none; }
 }

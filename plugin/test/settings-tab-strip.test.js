@@ -53,7 +53,9 @@ console.log('\nThe tabs stand as vertical tiles beside the cards');
   const strip = body(css, '.cc-set-tabs');
   ok('the tiles stand in a column', decl(strip, 'display') === 'flex' && decl(strip, 'flex-direction') === 'column' && decl(strip, 'gap') === '4px', strip);
   ok('the column stays in view while the cards scroll, and scrolls itself past the window', decl(strip, 'position') === 'sticky' && decl(strip, 'max-height') === 'calc(100vh - 24px)');
-  ok('the column is 12.75rem wide with words', decl(strip, 'width') === '12.75rem');
+  // Unraid sets the root font size to 10px, so GlimStone's 12.75rem and 3.25rem are written as
+  // the 204px and 52px they mean.
+  ok('the column is 204px wide with words', decl(strip, 'width') === '204px', decl(strip, 'width'));
   ok('the column may scroll, since the wheel moves it', decl(strip, 'overflow-y') === 'auto');
   ok('the column and the cards share a row', decl(body(css, '.cc-set-body'), 'display') === 'flex' && decl(body(css, '.cc-set-main'), 'min-width') === '0');
   const tab = body(css, '.cc-set-tab');
@@ -73,7 +75,7 @@ console.log('\nThe tabs stand as vertical tiles beside the cards');
 console.log('\nBelow 1024px the column shows the glyphs alone');
 {
   const narrow = rules(read('styles/docker.css').slice(read('styles/docker.css').indexOf('@media (max-width: 1023px)')));
-  ok('the column narrows to 3.25rem', decl(body(narrow, '.cc-set-tabs'), 'width') === '3.25rem');
+  ok('the column narrows to 52px', decl(body(narrow, '.cc-set-tabs'), 'width') === '52px');
   ok('and the names leave the tiles', decl(body(narrow, '.cc-set-tablbl'), 'display') === 'none');
   const tips = /window\.__ccSetTabTips = function \(\) \{[\s\S]*?\n    \};/.exec(settings);
   ok('each name moves into the tile\'s bubble then', !!tips && /matchMedia\("\(max-width: 1023px\)"\)/.test(tips[0]) && /b\.setAttribute\("data-tip", SECS\[i\]\.t\)/.test(tips[0]) && /b\.removeAttribute\("data-tip"\)/.test(tips[0]));
