@@ -660,7 +660,7 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
    row child, and it sits on the label rather than on the row's gap, so the checkbox rows keep
    their tight spacing. */
 .cc-pop-lbl { color: var(--cc-text-hint, #a3a3a3); font-size: var(--cc-text-meta); flex: 0 0 auto; box-sizing: content-box; min-width: 100px; padding-right: 6px; white-space: nowrap; }
-.cc-pop-body.cc-dis { opacity: .4; pointer-events: none; }
+.cc-pop-body.cc-dis { display: none; }
 .cc-pop-foot { padding: 9px 14px; border-top: none; color: #8a8a8a; font-size: var(--cc-text-meta); }
 /* a rejection from the engine or Docker stays on screen instead of passing as a toast, and wraps */
 .cc-pop-err { display: none; margin: 0 10px 10px; padding: 7px 9px; border-radius: var(--cc-radius-control); background: rgba(220,53,69,.13); border: none; color: #ff7a7a; font-size: var(--cc-text-meta); line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
@@ -786,7 +786,7 @@ html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { backgr
    wrapper's margin supplies the rest */
 .cc-pop-sech-lone { display: block; color: #9a9a9a; padding: 10px 10px 5px; text-transform: uppercase; letter-spacing: .5px; font-size: var(--cc-text-meta); }
 .cc-pop-sub { padding-bottom: 4px; }
-.cc-pop-sub.cc-dis { opacity: .4; pointer-events: none; }
+.cc-pop-sub.cc-dis { display: none; }
 html .cc-btn-sm { margin: 4px 10px 6px; padding: 3px 10px; font-size: var(--cc-text-meta); }
 .cc-sched-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 10px 2px; }
 /* each schedule on its own card, so the action, time and days do not run together */

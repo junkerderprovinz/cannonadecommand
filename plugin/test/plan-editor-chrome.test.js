@@ -398,5 +398,14 @@ ok(/bevor CannonadeCommand stoppt/.test(src) && /before CannonadeCommand stops i
 // The other half: the source-code prefix a blind find-and-replace would destroy.
 ok(/cc-pop-lbl/.test(css) && /CC_GEAR_SVG/.test(src) && /"cc\.rainbow"/.test(src), 'the cc- class namespace, the CC_* constants and the cc.* keys stay as they are');
 
+// GlimStone, "Switches": a control that hangs off an off switch has no state behind it, so it is
+// absent rather than dimmed: the plan fields under "Im Startplan verwalten", the watchdog's
+// triggers under "Auto-Start" and the idle-stop numbers under its switch.
+console.log('\nPart 14: what hangs off an off switch is gone, not greyed');
+for (const sel of ['.cc-pop-body.cc-dis', '.cc-pop-sub.cc-dis']) {
+  const m = new RegExp(sel.replace(/\./g, '\\.') + '\\s*\\{([^}]*)\\}').exec(cssLive);
+  ok(!!m && /display:\s*none/.test(m[1]) && !/opacity/.test(m[1]), sel + ' hides its rows' + (m ? '  (' + m[1].trim() + ')' : ''));
+}
+
 console.log('\n' + (fail ? 'FAILED ' + fail + ' of ' + (pass + fail) : 'OK  ' + pass + ' passed'));
 process.exit(fail ? 1 : 0);
