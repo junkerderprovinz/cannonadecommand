@@ -1608,9 +1608,9 @@
     showC2(localStorage.getItem("cc.styledocker") === "0");
     (areaSync["cc.styledocker"] = areaSync["cc.styledocker"] || []).push(showC2);
 
-    var c3 = card(T("Spalten / Badges je Ansicht", "Columns / badges per view"), T("Welche Badges in der einfachen und in der Advanced-Ansicht erscheinen.", "Which badges appear in the Simple and the Advanced view."));
+    var c3 = card(T("Spalten / Badges je Ansicht", "Columns / badges per view"), T("Welche Badges in der einfachen und in der erweiterten Ansicht erscheinen.", "Which badges appear in the basic and the advanced view."));
     var tbl = el("table", "cc-set-tbl");
-    var thr = el("tr"); thr.appendChild(el("th")); thr.appendChild(thc(T("Einfach", "Simple"))); thr.appendChild(thc(T("Advanced", "Advanced"))); tbl.appendChild(thr);
+    var thr = el("tr"); thr.appendChild(el("th")); thr.appendChild(thc(T("Einfach", "Basic"))); thr.appendChild(thc(T("Erweitert", "Advanced"))); tbl.appendChild(thr);
     COLS.forEach(function (c, i) {
       var tr = el("tr"), hue = window.CCTheme ? window.CCTheme.rbColor(i, accent) : accent;   // one palette position per column
       tr.appendChild(el("td", "cc-set-cname", c.label));

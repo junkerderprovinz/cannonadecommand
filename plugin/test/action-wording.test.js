@@ -54,5 +54,11 @@ console.log('\nThe run state speaks the interface language');
   ok('the dependency bubble uses the label too', /bad\.push\(d \+ " \(" \+ runLabel\(lr\.state\)/.test(docker));
 }
 
+console.log('\nThe two Docker views have one name each');
+{
+  ok('the action bar calls them Einfache and Erweiterte Ansicht', /"Einfache Ansicht"/.test(docker) && /"Erweiterte Ansicht"/.test(docker));
+  ok('the badge matrix heads say Einfach and Erweitert in German, Basic and Advanced in English', /thc\(T\("Einfach", "Basic"\)\)/.test(settings) && /thc\(T\("Erweitert", "Advanced"\)\)/.test(settings));
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);
