@@ -1616,7 +1616,7 @@ html.cc-shares-on.cc-on-stats #displaybox > span.status input[type="button"]:hov
 html.cc-shares-on #displaybox .cc-muted {
   display: inline-flex; align-items: center;
   padding: var(--cc-bmd-pad, 4px 12px); border-radius: var(--cc-radius-pill);
-  background: rgba(128, 128, 128, .14); color: #9a9a9a;
+  background: rgba(128, 128, 128, .14); color: var(--cc-text-hint, #a3a3a3);
 }
 
 /* Row density (cc.density), through the same key and classes docker.css uses. shares.js ccDensity

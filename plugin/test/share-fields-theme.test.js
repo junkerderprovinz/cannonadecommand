@@ -38,6 +38,14 @@ console.log('\nThe ink reads on both pages');
   const lt = resolve('var(--cc-text)', light), dt = resolve('var(--cc-text)', dark);
   ok('dark ink on the white page, 4.5:1 at the least', ratio(lt, '#f2f2f2') >= 4.5, lt);
   ok('light ink on the black page, 4.5:1 at the least', ratio(dt, '#1c1b1b') >= 4.5, dt);
+
+  // "Keine nicht zugewiesenen Geräte" and the like sit in a grey pill, a 14% wash over the page.
+  const muted = { tag: 'span', classes: ['cc-muted'], inside: ['#displaybox'], html: ['cc-shares-on'] };
+  const mc = val(win(muted, 'color'));
+  for (const [name, scope, pill] of [['white', light, '#e2e2e2'], ['black', dark, '#2a2a2a']]) {
+    const ink = resolve(mc, scope);
+    ok('an empty-state notice reads at 4.5:1 on the ' + name + ' page', /^#[0-9a-f]{6}$/i.test(ink) && ratio(ink, pill) >= 4.5, ink + ' on ' + pill);
+  }
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
