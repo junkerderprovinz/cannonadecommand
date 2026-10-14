@@ -239,7 +239,7 @@ console.log('\nThe colours of a window');
   ok('in rainbow a deleting answer keeps off the red slot', !CCTheme.isRed(del), del);
   store['cc.flagmode'] = '1'; store['cc.flagpal'] = JSON.stringify(['#ED2939', '#FFFFFF', '#ED2939']);
   w = mk(true); CCTheme.paintWin(w);
-  ok('a flag keeps its own colours', w.querySelectorAll('.cc-win-btn')[1].styleProps['--cc-rb-c'] === '#ED2939');
+  ok('a flag\'s red passes to its next colour for a deleting answer too', w.querySelectorAll('.cc-win-btn')[1].styleProps['--cc-rb-c'] === '#FFFFFF', w.querySelectorAll('.cc-win-btn')[1].styleProps['--cc-rb-c']);
   delete store['cc.flagmode'];
   store['cc.rbmode'] = 'active'; w = mk(false); CCTheme.paintWin(w);
   ok('the reactive mode marks the window, so its main button rests grey', w.classList.contains('cc-win-reactive'));

@@ -173,7 +173,7 @@ console.log('\nColour modes');
   CCTheme.menu(a, many);
   store['cc.flagmode'] = '1'; store['cc.flagpal'] = JSON.stringify(['#ED2939', '#FFFFFF', '#ED2939']);
   CCTheme.menu(a, many);
-  ok('in flag mode a delete keeps the flag\'s own colour', its()[8].styleProps['--cc-rb-c'] === '#ED2939', its()[8].styleProps['--cc-rb-c']);
+  ok('in flag mode a delete leaves the flag\'s red for its next colour', its()[8].styleProps['--cc-rb-c'] === '#FFFFFF', its()[8].styleProps['--cc-rb-c']);
   CCTheme.menu(a, many);
 }
 

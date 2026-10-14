@@ -1,7 +1,8 @@
 // Under the rainbow every action takes the palette slot of its position, and a delete
 // can come round to red. A delete is never red, so it passes to the next slot that is
-// not, here on the Plugins page's delete badge, which reads its row's colour. A flag's
-// colours are the flag's own, so in flag mode a delete stays where it falls.
+// not, here on the Plugins page's delete badge, which reads its row's colour. A flag's red is
+// red too, so in flag mode a delete passes it the same way, while every other control keeps
+// the flag's colours where they fall.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand', 'scripts');
@@ -37,8 +38,9 @@ ok('a delete landing on red takes the next slot', CCTheme.deleteSlot(RB, 8) === 
 ok('a delete elsewhere keeps its own slot', CCTheme.deleteSlot(RB, 11) === RB[3]);
 ok('in a red and white palette of the user\'s own it takes the white', CCTheme.deleteSlot(AUSTRIA, 0) === '#FFFFFF');
 store['cc.flagmode'] = '1';
-ok('in flag mode the flag\'s red stays', CCTheme.deleteSlot(AUSTRIA, 0) === '#ED2939', CCTheme.deleteSlot(AUSTRIA, 0));
-ok('and every other slot is the flag\'s too', CCTheme.deleteSlot(AUSTRIA, 4) === '#FFFFFF');
+ok('in flag mode a delete on the flag\'s red takes the next colour', CCTheme.deleteSlot(AUSTRIA, 0) === '#FFFFFF', CCTheme.deleteSlot(AUSTRIA, 0));
+ok('and a delete on a white slot keeps it', CCTheme.deleteSlot(AUSTRIA, 4) === '#FFFFFF');
+ok('a flag that is all red keeps its colour, there being nothing else to take', CCTheme.deleteSlot(['#D21034', '#ED2939'], 0) === '#D21034');
 delete store['cc.flagmode'];
 
 function button(classes) {
@@ -76,7 +78,8 @@ console.log('\nThe delete badge on the Plugins page');
   ok('a badge in a row on the red slot gets a colour that is not red', !!own && !CCTheme.isRed(own), own);
   ok('a badge in an accent-coloured row keeps the row\'s colour', run({ 'cc.rainbow': '0' }) === undefined);
   store['cc.flagmode'] = '1';
-  ok('in flag mode it keeps the row\'s colour', run() === undefined);
+  const flag = run();
+  ok('in flag mode it leaves the red slot too', !!flag && !CCTheme.isRed(flag), flag);
   delete store['cc.flagmode'];
 }
 
