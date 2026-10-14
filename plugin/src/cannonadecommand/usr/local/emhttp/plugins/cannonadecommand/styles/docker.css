@@ -304,6 +304,12 @@ html.cc-tools-on .cc-b-del.cc-b-delicon {
   border: none !important; box-shadow: none !important;
   border-radius: var(--cc-radius-pill) !important; cursor: pointer;
 }
+/* The rule above clears box-shadow with more weight than the shared halo in Tokens.css. */
+html.cc-on-plugins .cc-b-del.cc-b-delicon:focus-visible,
+html.cc-tools-on .cc-b-del.cc-b-delicon:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important; }
+/* A description longer than its window scrolls, which makes it a tab stop in Chrome, so it shows
+   focus with the halo rather than the browser's ring. */
+.cc-plug .cc-desc:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent); border-radius: var(--cc-radius-control); }
 /* The glyph is CC_TRASH_SVG, the same can as the Startplan row's delete badge, drawn in
    currentColor so it takes the badge's ink on every fill. */
 .cc-b-delicon svg { width: 15px; height: 15px; display: block; pointer-events: none; }

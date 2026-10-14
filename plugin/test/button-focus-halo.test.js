@@ -58,6 +58,13 @@ for (const [mode, html] of Object.entries(MODES)) {
   }
 }
 
+console.log('\nThe trash badge on the Plugins page and on the install log');
+for (const html of [['cc-on-plugins', 'cc-docker-on'], ['cc-tools-on']]) {
+  const el = { tag: 'span', classes: ['cc-b-del', 'cc-b-delicon'], attrs: { tabindex: '0', role: 'button' }, states: { focus: true, 'focus-visible': true }, html };
+  const bs = candidates('docker', el, 'box-shadow'), w = bs[bs.length - 1];
+  ok(html[0] + ': it shows the halo', !!w && HALO.test(w.value), w && w.value + ' from ' + w.selector.slice(0, 70));
+}
+
 console.log('\nUnraid\'s own controls keep the brightness step');
 {
   const plain = { tag: 'button', classes: [], attrs: {}, states: { focus: true, 'focus-visible': true }, html: MODES.dark };

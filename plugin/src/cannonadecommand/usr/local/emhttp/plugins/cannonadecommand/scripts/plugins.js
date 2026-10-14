@@ -590,7 +590,9 @@
       // inline on every pass, because the readmore lib leaves inline heights on some rows
       desc.style.setProperty("display", "block", "important");
       desc.style.setProperty("height", "auto", "important");
-      desc.style.setProperty("max-height", "5em", "important");
+      // three whole lines, so no sliver of the next one shows under the window's edge
+      desc.style.setProperty("line-height", "1.5", "important");
+      desc.style.setProperty("max-height", "4.5em", "important");
       desc.style.setProperty("overflow-y", "auto", "important");
       // the same geometry in every row, so the scrollbars line up
       desc.style.setProperty("width", "100%", "important");

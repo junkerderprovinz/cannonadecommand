@@ -29,5 +29,17 @@ ok('azure takes the light ink too', ink(['Theme--azure'], true) === ink(['Theme-
 console.log('\nThe script leaves the colour to the sheet');
 ok('no inline colour on the description', !/desc\.style\.setProperty\("color"/.test(plugins));
 
+console.log('\nThe scroll window shows whole lines');
+ok('three lines at a line height of 1.5, so no sliver of a fourth shows at the bottom', /desc\.style\.setProperty\("line-height", "1\.5", "important"\);/.test(plugins) && /desc\.style\.setProperty\("max-height", "4\.5em", "important"\);/.test(plugins));
+
+console.log('\nA long description scrolls, so the keyboard reaches it and it shows the halo');
+{
+  const el = { tag: 'span', classes: ['cc-desc'], states: { focus: true, 'focus-visible': true }, html: ['cc-on-plugins'], inside: ['.cc-plug'] };
+  const w = candidates(page, el, 'box-shadow').pop();
+  ok('the 3px accent halo', !!w && /^0 0 0 3px color-mix\(in srgb, var\(--cc-accent, #FCC419\) 45%, transparent\)/.test(w.value), w && w.value);
+  const o = candidates(page, el, 'outline').pop();
+  ok('and not the browser\'s ring', !!o && /^none/.test(o.value), o && o.value);
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);
