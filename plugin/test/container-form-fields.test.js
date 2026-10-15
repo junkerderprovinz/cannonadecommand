@@ -49,9 +49,35 @@ console.log('\nLabels at the start, fields at the end, at a reading width');
 {
   const rule = (sel) => { const i = css.indexOf(sel + ' {'); return i < 0 ? '' : css.slice(i, css.indexOf('}', i)); };
   ok('the rows keep the settings cards\' width', /max-width:\s*920px/.test(rule('html.cc-docker-on.cc-on-addct #canvas form dl')));
+  ok('and stand in the middle of the window', /margin-inline:\s*auto/.test(rule('html.cc-docker-on.cc-on-addct #canvas form dl')));
+  ok('the title bar stands over them', /max-width:\s*920px;\s*margin-inline:\s*auto/.test(rule('html.cc-docker-on.cc-on-addct #canvas div.title')));
   ok('a label stands at the start of its column', /justify-self:\s*start/.test(rule('html.cc-docker-on.cc-on-addct #canvas form dl > dt > span.cc-varlab')));
   ok('a text field runs to the row\'s end', /width:\s*100%/.test(rule('html.cc-docker-on.cc-on-addct #canvas form dl > dd > :is(input[type="text"], input[type="number"], input[type="password"], textarea)')));
   ok('a switch stands at the row\'s end', /justify-content:\s*flex-end/.test(rule('html.cc-docker-on.cc-on-addct #canvas form dl > dd > span.flex-row:has(> .switch-button-background)')));
+}
+
+console.log('\nOnly a colour variable gets a colour swatch');
+{
+  const isColour = new Function(grabFn(docker, 'ctIsColorVar') + '\nreturn ctIsColorVar;')();
+  ok('an accent with a hex colour gets one', isColour('Accent (JD_ACCENT) Accent colour for the theme', '#ff8800'));
+  ok('and an empty colour field', isColour('Accent Color A 6-digit hex colour for buttons', ''));
+  ok('an unmasked key whose description says hex stays a text field', !isColour('App key 64 hexadecimal characters: run openssl rand -hex 32', '475078fab422db809d76123a276bb971'));
+  ok('also while the key is still empty', !isColour('Encryption Key openssl rand -hex 32', ''));
+  ok('a colour scheme that holds a theme name stays a text field', !isColour('Theme Color scheme, dark or light', 'dark'));
+
+  // ctColorSwatch() on two fields, then a pick in the first swatch.
+  const field = (value) => {
+    const f = { value, addEventListener() {}, dispatchEvent() {} };
+    f.parentNode = { insertBefore(sw) { f.swatch = sw; } };
+    return f;
+  };
+  const document = { createElement: () => ({ setAttribute() {}, addEventListener(t, fn) { this.onInput = fn; } }) };
+  const swatch = new Function('document', 'MARK', grabFn(docker, 'ctColorSwatch') + '\nreturn ctColorSwatch;')(document, 'data-cc');
+  global.Event = function () {};
+  const a = field('#111111'), b = field('#222222');
+  swatch(a); swatch(b);
+  a.swatch.value = '#abcdef'; a.swatch.onInput();
+  ok('each swatch writes into its own field', a.value === '#abcdef' && b.value === '#222222', a.value + ' ' + b.value);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
