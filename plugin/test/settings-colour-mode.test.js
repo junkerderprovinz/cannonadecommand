@@ -57,7 +57,7 @@ console.log('\nOnly the chosen mode shows its controls');
   ok('no rainbow or flag switch is left', !/T\("Regenbogen-Modus", "Rainbow mode"\)|T\("Flaggen-Modus", "Flag mode"\)/.test(settings));
   ok('nothing in the card is dimmed instead', !/rbOnly|style\.opacity = "\.4"/.test(settings));
   ok('the country row has its (i)', /frl\.appendChild\(infoIcon\(/.test(settings));
-  ok('Flag is offered only with the flag list loaded', /if \(window\.CC_FLAGS && window\.CC_FLAGS\.length\) modes\.push\(\["flag", T\("Flagge", "Flag"\)\]\);/.test(settings));
+  ok('Flag is offered only with the flag list loaded', /if \(window\.CC_FLAGS && window\.CC_FLAGS\.length\) modes\.push\(\["flag", T\("Flagge", "Flag"\), "colour-flag"\]\);/.test(settings));
 }
 
 // GlimStone, "The one horizontal selector": in a settings row a selector stays compact at the
@@ -116,7 +116,7 @@ console.log('\nA setting with a few choices is a horizontal selector, a long lis
   }
   const doc = { activeElement: null, createElement: (t) => ({ tag: t, style: {} }) };
   const mk = (t, c, x) => new N(t, c, x);
-  const make = new Function('el', 'document', 'infoIcon', 'paintToggles', 'ccDsel', grabFn(settings, 'modeSelector') + '\n' + grabFn(settings, 'segPicker') + '\nvar SEG_MAX = 6;\n' + grabFn(settings, 'dropRow') + '\nreturn dropRow;')(mk, doc, () => mk('span', 'cc-info'), () => {}, () => mk('span', 'cc-dsel'));
+  const make = new Function('el', 'document', 'infoIcon', 'paintToggles', 'ccDsel', 'segGlyph', grabFn(settings, 'modeSelector') + '\n' + grabFn(settings, 'segPicker') + '\nvar SEG_MAX = 6;\n' + grabFn(settings, 'dropRow') + '\nreturn dropRow;')(mk, doc, () => mk('span', 'cc-info'), () => {}, () => mk('span', 'cc-dsel'), (g) => mk('svg', 'cc-seg-ico', g));
   const got = [];
   const row = make('Form', [['round', 'Rund'], ['soft', 'Weich'], ['square', 'Eckig']], 'soft', (v) => got.push(v));
   const seg = row.kids[1];
@@ -128,8 +128,12 @@ console.log('\nA setting with a few choices is a horizontal selector, a long lis
   ok('the segment that was chosen before can be picked again', got[1] === 'soft');
   const sizes = make('Größe', ['16', '18', '20', '22', '24', '26', '28'].map((v) => [v, v + ' px']), '20', () => {});
   ok('seven sizes stay a dropdown', sizes.kids.some((k) => k.cls.has('cc-dsel')));
-  const fonts = make('Schriftart', [['', 'System'], ['Lobster', 'Lobster', 'Lobster']], '', () => {});
+  const fonts = make('Schriftart', ['Arial', 'Bahnschrift', 'Calibri', 'Cambria', 'Georgia', 'Lobster', 'Verdana'].map((f) => [f, f, f]), 'Arial', () => {});
   ok('a font list that previews its faces stays a dropdown', fonts.kids.some((k) => k.cls.has('cc-dsel')));
+  const shapes = make('Form', [['round', 'Rund', 'shape-round'], ['soft', 'Weich', 'shape-soft']], 'round', () => {}).kids[1];
+  ok('a segment shows its glyph before its label', shapes.kids.every((b) => b.kids[0].tag === 'svg' && b.kids[1].tag === 'span'), JSON.stringify(shapes.kids.map((b) => b.kids.map((k) => k.tag))));
+  ok('the glyph is the one the option names', shapes.kids[0].kids[0].textContent === 'shape-round' && shapes.kids[1].kids[0].textContent === 'shape-soft');
+  ok('and the label follows it', shapes.kids[0].kids[1].textContent === 'Rund');
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

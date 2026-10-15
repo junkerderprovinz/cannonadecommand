@@ -132,7 +132,7 @@ console.log('\nheader.js rewrites an old name once and stamps the shape');
 console.log('\nThe settings picker offers the three shapes');
 {
   const settings = read('scripts/settings.js');
-  ok('round, soft and square, as Rund, Weich and Eckig', /\[\["round", T\("Rund", "Round"\)\], \["soft", T\("Weich", "Soft"\)\], \["square", T\("Eckig", "Square"\)\]\]/.test(settings));
+  ok('round, soft and square, as Rund, Weich and Eckig', /\[\["round", T\("Rund", "Round"\), "shape-round"\], \["soft", T\("Weich", "Soft"\), "shape-soft"\], \["square", T\("Eckig", "Square"\), "shape-square"\]\]/.test(settings));
   ok('circle is no longer offered', !/\["circle",/.test(settings));
   ok('the picker shows the stored shape, old names included', /shapeName\(get\("cc\.badgeshape", "round"\)\), function \(v\) \{ set\("cc\.badgeshape", v\); applyShape\(\);/.test(settings));
   ok('a change stamps the attribute at once', /function applyShape\(\) \{ document\.documentElement\.setAttribute\("data-cc-shape", shapeName\(get\("cc\.badgeshape", "round"\)\)\); \}/.test(settings));

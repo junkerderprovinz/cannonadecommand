@@ -19,7 +19,7 @@ $sock  = getenv('CC_SOCK') ?: '/var/run/cannonadecommand.sock';
 // uisettings: merges a few cc.* UI settings into the config, for a page that is closing.
 // bugreport: the diagnostics file for a bug report, with its secrets already taken out
 // by the engine, passed on as a download.
-$allow = ['state' => ['GET'], 'stats' => ['GET'], 'hostcpu' => ['GET'], 'hostnet' => ['GET'], 'action' => ['POST'], 'limits' => ['GET', 'POST'], 'restartpolicy' => ['POST'], 'limitlog' => ['GET'],
+$allow = ['state' => ['GET'], 'stats' => ['GET'], 'hostcpu' => ['GET'], 'hostnet' => ['GET'], 'action' => ['POST'], 'limits' => ['GET', 'POST'], 'restartpolicy' => ['POST'],
     'bwstatus' => ['GET'], 'plan' => ['GET', 'PUT'], 'apply' => ['POST'], 'config' => ['GET', 'PUT'], 'uisettings' => ['PUT'], 'vms' => ['GET'], 'vmlimits' => ['POST'],
     'vmdisks' => ['GET'], 'vmdiskresize' => ['POST'], 'icons' => ['POST'], 'iconsvg' => ['GET'], 'bugreport' => ['GET']];
 

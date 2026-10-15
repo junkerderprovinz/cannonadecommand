@@ -82,7 +82,10 @@ console.log('\nThe field stands at the end of its row, as wide as its picker');
   const row = { tag: 'div', classes: ['cc-set-swatches', 'cc-fill'], inside: ['#cc-settings', '.cc-set-pickrow'] };
   ok('the preset row adds no margin of its own inside it', val(win(page, row, 'margin')) === '0');
   const hex = { tag: 'input', classes: ['cc-set-hexin'], attrs: { type: 'text' }, inside: ['#cc-settings', '.cc-set-swatches', '.cc-fill'] };
-  ok('the hex field takes two cells of the row', val(win(page, hex, 'flex')) === '2 2 0');
+  ok('the hex field takes what the row has left', val(win(page, hex, 'flex')) === '1 1 0');
+  const sq = (n) => val(win(page, n, 'flex')) === 'none' && val(win(page, n, 'width')) === '30px' && val(win(page, n, 'height')) === '30px';
+  ok('every swatch is a 30px square', sq({ tag: 'span', classes: ['cc-set-sw'], inside: ['#cc-settings', '.cc-set-swatches', '.cc-fill'] }));
+  ok('and so is the reset after a palette', sq({ tag: 'span', classes: ['cc-set-ibtn'], inside: ['#cc-settings', '.cc-set-swatches', '.cc-fill'] }));
   const fr = { tag: 'div', classes: ['cc-set-row', 'cc-set-fieldrow'], inside: ['#cc-settings', '.cc-set-card'] };
   ok('its name sits at the start of the first line', val(win(page, fr, 'align-items')) === 'flex-start' && val(win(page, fr, 'flex-wrap')) === 'nowrap');
 }

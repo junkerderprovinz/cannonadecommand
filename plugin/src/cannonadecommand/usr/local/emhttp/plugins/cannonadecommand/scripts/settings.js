@@ -18,15 +18,14 @@
       // the real flag image, at the same footprint as the stripe swatch
       "#cc-settings .cc-flag-img{display:inline-block;width:22px;height:15px;flex:0 0 auto;object-fit:cover;border-radius:calc(var(--cc-radius-control) / 4);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}" +
       "#cc-settings .cc-flag-img-lg{width:34px;height:22px}" +
-      // the palette rows fill the card width, with the reset as one more equal cell at the end
-      "#cc-settings .cc-set-swatches.cc-fill{display:flex;gap:6px;align-items:center}" +
-      // Every colour row shares out its width in equal cells, so a swatch is the same size in every
-      // card. A swatch and the reset take one cell each, the hex field two, since the code needs
+      "#cc-settings .cc-set-swatches.cc-fill{display:flex;gap:6px;align-items:center;justify-content:flex-end}" +
+      // Every swatch is the same 30px square in every card, and the reset after a palette is one
+      // more square of that size. The hex field takes what the row has left, since the code needs
       // the room.
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;border-radius:var(--cc-radius-pill)}" +
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:var(--cc-radius-pill);cursor:pointer;color:#cfcfcf;font-size:var(--cc-text-body);transition:filter .12s,background .12s,color .12s}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:none;width:30px;height:30px;box-sizing:border-box;border-radius:var(--cc-radius-pill)}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:none;width:30px;height:30px;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:var(--cc-radius-pill);cursor:pointer;color:#cfcfcf;font-size:var(--cc-text-body);transition:filter .12s,background .12s,color .12s}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn:hover{background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{flex:2 2 0;height:30px;min-width:0;box-sizing:border-box;padding:0 8px;align-self:center;font-size:var(--cc-text-meta);letter-spacing:0;margin:0}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;padding:0 8px;align-self:center;font-size:var(--cc-text-meta);letter-spacing:0;margin:0}" +
       // the settings search and the reset-everything button
       "#cc-settings .cc-set-searchrow{margin:12px 0 2px}" +
       "#cc-settings .cc-set-search{box-sizing:border-box;width:100%;max-width:420px;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:var(--cc-radius-control);padding:9px 13px;font-size:var(--cc-text-subline);transition:background-color .12s}" +
@@ -93,7 +92,20 @@
       "#cc-settings .cc-set-prose{text-align:start}" +
       // A selector sits at the end of its row in a groove, its segments one width, and only the chosen one is a badge.
       "#cc-settings .cc-seg.cc-set-mode{display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;flex:none;box-sizing:border-box;background:var(--cc-surface-base,#161616)}" +
-      "#cc-settings .cc-set-mode .cc-seg-btn{text-align:center;white-space:nowrap;padding:7px 12px;font-size:var(--cc-text-subline)}" +
+      "#cc-settings .cc-set-mode .cc-seg-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;padding:7px 12px;font-size:var(--cc-text-subline)}" +
+      "#cc-settings .cc-seg-ico{flex:none;width:14px;height:14px}" +
+      // a value of its own beside a selector, a short field with its unit after it
+      "#cc-settings .cc-set-numwrap{display:inline-flex;align-items:center;gap:6px;color:var(--cc-text-dim,#8a8a8a);font-size:var(--cc-text-subline)}" +
+      "#cc-settings .cc-set-numwrap .cc-set-num{flex:none;width:56px;min-width:0;margin:0;text-align:center}" +
+      // the Docker view sketches under their selector, each in a well of its own
+      "#cc-settings .cc-set-viewprev{justify-content:flex-end;gap:10px;flex-wrap:nowrap}" +
+      "#cc-settings .cc-set-vp{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 10px 6px;border-radius:var(--cc-radius-control);background:var(--cc-surface-base,#161616);color:var(--cc-text-dim,#8a8a8a);transition:color .12s,background-color .12s}" +
+      "#cc-settings .cc-set-vp svg{display:block;width:72px;height:43px}" +
+      "#cc-settings .cc-set-vp-lbl{font-size:var(--cc-text-meta);line-height:1.2}" +
+      "#cc-settings .cc-set-vp-on{background:var(--cc-surface-3,#2e2e2e);color:var(--cc-rb-c,var(--cc-accent,#FCC419))}" +
+      "#cc-settings .cc-set-vp-on .cc-set-vp-lbl{color:var(--cc-text,#e6e6e6)}" +
+      // A row whose choice has nothing to act on yet stays usable but rests dimmed.
+      "#cc-settings .cc-set-dim :is(.cc-set-lblwrap > span:first-child, .cc-seg){opacity:.45}" +
       "#cc-settings .cc-set-mode .cc-seg-btn:not(.cc-seg-on){background:transparent;color:var(--cc-text-chip,#cfcfcf)}" +
       "#cc-settings .cc-set-mode .cc-seg-btn:not(.cc-seg-on):hover{background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6)}" +
       // An area's colour line and a row that names who decides its value.
@@ -193,6 +205,52 @@
     svg.innerHTML = g[1];
     return svg;
   }
+  // A small glyph before each choice of a selector, as in KnightLoader's settings: filled shapes on
+  // currentColor in a 16-unit box, so a chosen segment inks its glyph with its label.
+  var SEG_GLYPHS = {
+    "motion-off": '<path d="M4.5 8a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0 -7 0Z"/>',
+    "motion-subtle": '<path d="M7 8a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0 -7 0ZM1.8 7.2h2.9a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-2.9a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
+    "motion-wild": '<path d="M8 8a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0 -7 0ZM1.8 3.7h3.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-3.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM0.8 7.2h4.9a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-4.9a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM1.8 10.7h3.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-3.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
+    "colour-accent": '<path d="M8 1.5C10.6 4.7 12.5 7.1 12.5 9.5a4.5 4.5 0 0 1-9 0C3.5 7.1 5.4 4.7 8 1.5Z"/>',
+    "colour-rainbow": '<path d="M1 12.5a7 7 0 0 1 14 0h-2a5 5 0 0 0-10 0ZM4.5 12.5a3.5 3.5 0 0 1 7 0h-2a1.5 1.5 0 0 0-3 0Z"/>',
+    "colour-flag": '<path d="M2.8 1.5h0a0.8 0.8 0 0 1 0.8 0.8v11.4a0.8 0.8 0 0 1 -0.8 0.8h0a0.8 0.8 0 0 1 -0.8 -0.8v-11.4a0.8 0.8 0 0 1 0.8 -0.8ZM4.5 2.5h9l-2.2 3.25 2.2 3.25h-9Z"/>',
+    "shape-round": '<path d="M2.5 8a5.5 5.5 0 1 0 11 0a5.5 5.5 0 1 0 -11 0Z"/>',
+    "shape-soft": '<path d="M5.5 2.5h5a3 3 0 0 1 3 3v5a3 3 0 0 1 -3 3h-5a3 3 0 0 1 -3 -3v-5a3 3 0 0 1 3 -3Z"/>',
+    "shape-square": '<path d="M2.5 2.5h11v11h-11Z"/>',
+    "badge-flat": '<path d="M5 4.5h6a3.5 3.5 0 0 1 3.5 3.5v0a3.5 3.5 0 0 1 -3.5 3.5h-6a3.5 3.5 0 0 1 -3.5 -3.5v0a3.5 3.5 0 0 1 3.5 -3.5Z"/>',
+    "badge-glass": '<path fill-rule="evenodd" d="M5 4.5h6a3.5 3.5 0 0 1 3.5 3.5v0a3.5 3.5 0 0 1 -3.5 3.5h-6a3.5 3.5 0 0 1 -3.5 -3.5v0a3.5 3.5 0 0 1 3.5 -3.5ZM5.2 5.6h1.8l-2.2 4.8H3ZM8 5.6h.9l-2.2 4.8h-.9Z"/>',
+    "density-compact": '<path d="M2.8 4.9h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.8 7.2h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.8 9.5h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
+    "density-normal": '<path d="M2.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.8 7.2h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.8 10.8h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
+    "density-airy": '<path d="M2.8 2h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.8 7.2h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.8 12.4h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
+    "size-s": '<path d="M6.2 5h3.6a1.2 1.2 0 0 1 1.2 1.2v3.6a1.2 1.2 0 0 1 -1.2 1.2h-3.6a1.2 1.2 0 0 1 -1.2 -1.2v-3.6a1.2 1.2 0 0 1 1.2 -1.2Z"/>',
+    "size-m": '<path d="M5.1 3.5h5.8a1.6 1.6 0 0 1 1.6 1.6v5.8a1.6 1.6 0 0 1 -1.6 1.6h-5.8a1.6 1.6 0 0 1 -1.6 -1.6v-5.8a1.6 1.6 0 0 1 1.6 -1.6Z"/>',
+    "size-l": '<path d="M4 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2v-8a2 2 0 0 1 2 -2Z"/>',
+    "icon-auto": '<path d="M8 1.5l1.5 5 5 1.5-5 1.5L8 14.5l-1.5-5-5-1.5 5-1.5Z"/>',
+    "icon-native": '<path fill-rule="evenodd" d="M3.5 2.5h9a2 2 0 0 1 2 2v7a2 2 0 0 1 -2 2h-9a2 2 0 0 1 -2 -2v-7a2 2 0 0 1 2 -2ZM3.6 4h8.8a0.6 0.6 0 0 1 0.6 0.6v6.8a0.6 0.6 0 0 1 -0.6 0.6h-8.8a0.6 0.6 0 0 1 -0.6 -0.6v-6.8a0.6 0.6 0 0 1 0.6 -0.6ZM4 11l2.8-3.4 2 2.3 1.4-1.4L12 11ZM9.4 6.2a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0Z"/>',
+    "icon-flat": '<path d="M2.5 8a5.5 5.5 0 1 0 11 0a5.5 5.5 0 1 0 -11 0Z"/>',
+    "icon-tint": '<path fill-rule="evenodd" d="M2.5 8a5.5 5.5 0 1 0 11 0a5.5 5.5 0 1 0 -11 0ZM8 4a4 4 0 0 1 0 8Z"/>',
+    "temp-low": '<path d="M2.8 9h1.4a0.8 0.8 0 0 1 0.8 0.8v3.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-3.4a0.8 0.8 0 0 1 0.8 -0.8Z"/><path opacity=".35" d="M7.3 6h1.4a0.8 0.8 0 0 1 0.8 0.8v6.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-6.4a0.8 0.8 0 0 1 0.8 -0.8ZM11.8 3h1.4a0.8 0.8 0 0 1 0.8 0.8v9.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-9.4a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
+    "temp-mid": '<path d="M2.8 9h1.4a0.8 0.8 0 0 1 0.8 0.8v3.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-3.4a0.8 0.8 0 0 1 0.8 -0.8ZM7.3 6h1.4a0.8 0.8 0 0 1 0.8 0.8v6.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-6.4a0.8 0.8 0 0 1 0.8 -0.8Z"/><path opacity=".35" d="M11.8 3h1.4a0.8 0.8 0 0 1 0.8 0.8v9.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-9.4a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
+    "temp-high": '<path d="M2.8 9h1.4a0.8 0.8 0 0 1 0.8 0.8v3.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-3.4a0.8 0.8 0 0 1 0.8 -0.8ZM7.3 6h1.4a0.8 0.8 0 0 1 0.8 0.8v6.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-6.4a0.8 0.8 0 0 1 0.8 -0.8ZM11.8 3h1.4a0.8 0.8 0 0 1 0.8 0.8v9.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-9.4a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
+    "temp-custom": '<path d="M2.5 13.5l.6-3.4 7.5-7.5a1.2 1.2 0 0 1 1.7 0l1.1 1.1a1.2 1.2 0 0 1 0 1.7l-7.5 7.5Z"/>',
+    "view-list": '<path d="M2.1 2.5h1.8a0.6 0.6 0 0 1 0.6 0.6v1.3a0.6 0.6 0 0 1 -0.6 0.6h-1.8a0.6 0.6 0 0 1 -0.6 -0.6v-1.3a0.6 0.6 0 0 1 0.6 -0.6ZM6.8 2.95h6.9a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-6.9a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.1 6.75h1.8a0.6 0.6 0 0 1 0.6 0.6v1.3a0.6 0.6 0 0 1 -0.6 0.6h-1.8a0.6 0.6 0 0 1 -0.6 -0.6v-1.3a0.6 0.6 0 0 1 0.6 -0.6ZM6.8 7.2h6.9a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-6.9a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.1 11h1.8a0.6 0.6 0 0 1 0.6 0.6v1.3a0.6 0.6 0 0 1 -0.6 0.6h-1.8a0.6 0.6 0 0 1 -0.6 -0.6v-1.3a0.6 0.6 0 0 1 0.6 -0.6ZM6.8 11.45h6.9a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-6.9a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
+    "view-grid": '<path d="M2.7 1.5h3.1a1.2 1.2 0 0 1 1.2 1.2v3.1a1.2 1.2 0 0 1 -1.2 1.2h-3.1a1.2 1.2 0 0 1 -1.2 -1.2v-3.1a1.2 1.2 0 0 1 1.2 -1.2ZM10.2 1.5h3.1a1.2 1.2 0 0 1 1.2 1.2v3.1a1.2 1.2 0 0 1 -1.2 1.2h-3.1a1.2 1.2 0 0 1 -1.2 -1.2v-3.1a1.2 1.2 0 0 1 1.2 -1.2ZM2.7 9h3.1a1.2 1.2 0 0 1 1.2 1.2v3.1a1.2 1.2 0 0 1 -1.2 1.2h-3.1a1.2 1.2 0 0 1 -1.2 -1.2v-3.1a1.2 1.2 0 0 1 1.2 -1.2ZM10.2 9h3.1a1.2 1.2 0 0 1 1.2 1.2v3.1a1.2 1.2 0 0 1 -1.2 1.2h-3.1a1.2 1.2 0 0 1 -1.2 -1.2v-3.1a1.2 1.2 0 0 1 1.2 -1.2Z"/>',
+    "view-folder": '<path d="M1.5 4a1.5 1.5 0 0 1 1.5-1.5h3.2l1.6 1.6h5.2a1.5 1.5 0 0 1 1.5 1.5V12a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 12Z"/>',
+    "weight-thin": '<path d="M2.6 7.4h10.8a0.6 0.6 0 0 1 0.6 0.6v0a0.6 0.6 0 0 1 -0.6 0.6h-10.8a0.6 0.6 0 0 1 -0.6 -0.6v0a0.6 0.6 0 0 1 0.6 -0.6Z"/>',
+    "weight-normal": '<path d="M3 7h10a1 1 0 0 1 1 1v0a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v0a1 1 0 0 1 1 -1Z"/>',
+    "weight-medium": '<path d="M3.4 6.6h9.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-9.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z"/>',
+    "weight-semibold": '<path d="M3.9 6.1h8.2a1.9 1.9 0 0 1 1.9 1.9v0a1.9 1.9 0 0 1 -1.9 1.9h-8.2a1.9 1.9 0 0 1 -1.9 -1.9v0a1.9 1.9 0 0 1 1.9 -1.9Z"/>',
+    "weight-bold": '<path d="M4.5 5.5h7a2.5 2.5 0 0 1 2.5 2.5v0a2.5 2.5 0 0 1 -2.5 2.5h-7a2.5 2.5 0 0 1 -2.5 -2.5v0a2.5 2.5 0 0 1 2.5 -2.5Z"/>',
+    "italic-off": '<path d="M7.1 2.5h1.8a0.6 0.6 0 0 1 0.6 0.6v9.8a0.6 0.6 0 0 1 -0.6 0.6h-1.8a0.6 0.6 0 0 1 -0.6 -0.6v-9.8a0.6 0.6 0 0 1 0.6 -0.6Z"/>',
+    "italic-on": '<path d="M8.6 2.5h3l-3.2 11h-3Z"/>'
+  };
+  function segGlyph(name) {
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "cc-seg-ico"); svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("viewBox", "0 0 16 16"); svg.setAttribute("fill", "currentColor");
+    svg.innerHTML = SEG_GLYPHS[name];
+    return svg;
+  }
   // The start tab, the header and the shares stay off until switched on, as their scripts read
   // them, so an unset key hides their tab here too.
   var OFF_BY_DEFAULT = { "cc.enable.main": true, "cc.enable.header": true, "cc.enable.shares": true };
@@ -210,6 +268,9 @@
   function get(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  // Whether the icons under a key prefix are tinted. An unset icontint means "on whenever an icon
+  // colour is set", which keeps the tint of installs that predate the switch.
+  function tintOnAt(prefix) { var v = get(prefix + "icontint", null); return v == null ? !!get(prefix + "iconcolor", "") : v === "1"; }
   // A failed save shakes the control that was used and says why in a toast.
   function failed(ctl, msg) { if (window.CCTheme) window.CCTheme.fail(ctl, msg); }
   // Older builds stored the flag palette in the shared cc.rbpal key. With a flag selected and
@@ -472,12 +533,14 @@
     var code = get("cc.flag", "de"), pick = flags.filter(function (f) { return f.code === code; })[0] || flags.filter(function (f) { return f.code === "de"; })[0] || flags[0];
     applyFlag(pick);
   }
-  // GlimStone's horizontal selector in its well styling, compact at the end of its row. The arrows
-  // move the choice and the focus with it, as in a radio group.
+  // GlimStone's horizontal selector in its well styling, compact at the end of its row. An option
+  // is [value, label, glyph]. The arrows move the choice and the focus with it, as in a radio group.
   function modeSelector(opts, cur, onPick) {
     var box = el("div", "cc-seg cc-set-mode"); box.setAttribute("role", "radiogroup");
     var btns = opts.map(function (o) {
-      var on = o[0] === cur, b = el("span", "cc-seg-btn" + (on ? " cc-seg-on" : ""), o[1]);
+      var on = o[0] === cur, b = el("span", "cc-seg-btn" + (on ? " cc-seg-on" : ""));
+      if (o[2]) b.appendChild(segGlyph(o[2]));
+      b.appendChild(el("span", null, o[1]));
       b.setAttribute("role", "radio"); b.setAttribute("aria-checked", on ? "true" : "false"); b.setAttribute("tabindex", on ? "0" : "-1");
       b.addEventListener("click", function () { if (!b.classList.contains("cc-seg-on")) onPick(o[0]); });
       box.appendChild(b);
@@ -599,7 +662,8 @@
     // The background and the tint are two independent pairs: the background draws the badge box
     // in its own colour, falling back to the tint colour and then the accent, while the tint
     // recolours the icon and has its own switch, so a badge alone never forces a recolour.
-    var st = { bg: false, bgColor: "", tint: false, color: "", strength: 100, accent: "#FCC419", size: null };
+    // `adopt` is the master switch that hands both colours to the badges.
+    var st = { bg: false, bgColor: "", tint: false, color: "", adopt: false, strength: 100, accent: "#FCC419", size: null };
     var bound = false;
     function C() { return window.CCTheme && window.CCTheme.icons; }
     function hex6(c) { c = String(c == null ? "" : c).trim(); return /^#[0-9a-f]{3}$/i.test(c) ? "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c; }
@@ -608,36 +672,43 @@
       if (/^#[0-9a-f]{6}$/i.test(st.color)) return st.color;
       return st.accent;
     }
-    // The same ink contract as docker.js iconInk(): nothing while the tint is off, and otherwise
-    // the picked tint colour kept off the surface colour, whether or not the badge is on too.
-    // badgeBg() stays the box's own colour and is never the icon's ink. A luminance tint outputs
-    // about half the target's luma, so that path doubles the floor.
-    function ink(forTint) {
+    // A badge colour by position, as the tabs stamp one on each row: the rotating palette while
+    // the rainbow is on, the accent otherwise.
+    function badgeAt(i) { return window.CCTheme && window.CCTheme.rbColor ? window.CCTheme.rbColor(i, st.accent) : st.accent; }
+    // The tile behind the i-th logo. Adopting, it takes the badge colour of its row.
+    function tileBg(i) {
+      if (!st.bg) return "";
+      return st.adopt ? badgeAt(i) : badgeBg();
+    }
+    // The same ink contract as docker.js iconInk(): nothing while the tint is off. Adopting over a
+    // tile, the black or white that reads on that tile; adopting without one, the badge colour
+    // docker.js picks for its icons; otherwise the picked tint colour. A colour of its own is kept
+    // off the surface colour, and a luminance tint outputs about half the target's luma, so that
+    // path doubles the floor. badgeBg() stays the box's own colour and is never the icon's ink.
+    function ink(forTint, i) {
       if (!st.tint) return "";
-      if (!/^#[0-9a-f]{6}$/i.test(st.color)) return "";
+      if (st.adopt && st.bg) return hex6(idealText(tileBg(i)));
+      var pick = hex6(st.adopt ? badgeAt(5) : st.color);
+      if (!/^#[0-9a-f]{6}$/i.test(pick)) return "";
       var T = window.CCTheme;
-      return (T && T.liftSurface) ? hex6(T.liftSurface(st.color, st.accent, T.LUM_FLOOR * (forTint ? 2 : 1))) : st.color;
+      return (T && T.liftSurface) ? hex6(T.liftSurface(pick, st.accent, T.LUM_FLOOR * (forTint ? 2 : 1))) : pick;
     }
     function host(id) {
       var h = document.getElementById(id);
       if (!h) { h = document.createElement("div"); h.id = id; h.setAttribute("aria-hidden", "true"); h.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(h); }
       return h;
     }
-    function flatFilter() {
-      var m = /^#?([0-9a-f]{6})$/i.exec(ink(false) || ""); if (!m) return "";
-      var n = parseInt(m[1], 16), r = ((n >> 16 & 255) / 255).toFixed(4), g = ((n >> 8 & 255) / 255).toFixed(4), b = ((n & 255) / 255).toFixed(4);
-      var id = fid + "-flat";
-      host(id + "-svg").innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + id + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="0 0 0 0 ' + r + ' 0 0 0 0 ' + g + ' 0 0 0 0 ' + b + ' 0 0 0 1 0"/></filter></svg>';
-      return "url(#" + id + ")";
-    }
-    function tintFilter() {
-      var m = /^#?([0-9a-f]{6})$/i.exec(ink(true) || ""); if (!m) return "";
-      var n = parseInt(m[1], 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
-      var s = Math.max(10, st.strength || 100) / 100, i = 1 - s;
-      function row(c, ix) { var v = [0.2126 * c * s, 0.7152 * c * s, 0.0722 * c * s, 0, 0]; v[ix] += i; return v.join(" "); }
-      var id = fid + "-tint";
-      host(id + "-svg").innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + id + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + row(r, 0) + " " + row(g, 1) + " " + row(b, 2) + ' 0 0 0 1 0"/></filter></svg>';
-      return "url(#" + id + ")";
+    // One filter per ink, since an adopted tile may want black ink beside white.
+    function filterDef(id, hex, tint) {
+      var n = parseInt(hex.slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255, vals;
+      if (tint) {
+        var s = Math.max(10, st.strength || 100) / 100, i = 1 - s;
+        var row = function (c, ix) { var v = [0.2126 * c * s, 0.7152 * c * s, 0.0722 * c * s, 0, 0]; v[ix] += i; return v.join(" "); };
+        vals = row(r, 0) + " " + row(g, 1) + " " + row(b, 2) + " 0 0 0 1 0";
+      } else {
+        vals = "0 0 0 0 " + r.toFixed(4) + " 0 0 0 0 " + g.toFixed(4) + " 0 0 0 0 " + b.toFixed(4) + " 0 0 0 1 0";
+      }
+      return '<filter id="' + id + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter>';
     }
     function radius() { return "var(--cc-radius-control)"; }   // the live logo tile is a tile
     function size() { return st.size || ({ s: "48px", m: "62px", l: "76px" })[get("cc.sgsize", "m")] || "62px"; }
@@ -651,12 +722,18 @@
       items.push({ tile: tile, node: node, name: name || "", glyph: node.tagName !== "IMG", src: src });
     }
     function paint() {
-      var Ci = C(), bg = badgeBg(), rad = radius(), sz = size(), flat = flatFilter(), tint = tintFilter();
+      var Ci = C(), rad = radius(), sz = size(), defs = {}, svg = "";
+      function filter(hex, tint) {
+        if (!hex) return "";
+        var id = fid + (tint ? "-tint-" : "-flat-") + hex.slice(1);
+        if (!defs[id]) { defs[id] = true; svg += filterDef(id, hex, tint); }
+        return "url(#" + id + ")";
+      }
       if (Ci) { var names = []; items.forEach(function (it) { if (it.name) names.push(it.name); }); if (names.length) Ci.want(names); }
-      items.forEach(function (it) {
+      items.forEach(function (it, i) {
         it.tile.style.width = it.tile.style.height = sz;
         it.tile.style.borderRadius = rad;
-        it.tile.style.background = st.bg ? bg : "";
+        it.tile.style.background = tileBg(i);
         it.tile.classList.toggle("cc-set-tile-bg", !!st.bg);
         // The plan comes from the pipeline, never from a local guess, so an unknown icon falls
         // through to the safe treatment exactly as it does on the real tab.
@@ -667,19 +744,19 @@
           var p = Ci.plan(it.name ? Ci.mode(scope, it.name) : Ci.globalMode(), kind, spread);
           plan = { treat: p.treat, url: (!it.glyph && it.name && (p.src === "glyph" || p.src === "color")) ? Ci.svgUrl(it.name) : "" };
         }
-        var want = plan.treat === "native" ? "none" : (plan.treat === "flat" ? (flat || tint || "none") : (tint || "none"));
         if (it.glyph) {
           it.node.style.fontSize = "calc(" + sz + " * .46)";
           // ink() already answers the picked colour while the tint is on and nothing while it is
           // off, badge or no badge; branching on the badge here would colour the glyph regardless.
-          it.node.style.color = plan.treat === "native" ? "" : (ink(false) || "");
+          it.node.style.color = plan.treat === "native" ? "" : ink(false, i);
           it.node.style.filter = "none";
         } else {
           var src = plan.url || it.src;
           if (it.node.getAttribute("src") !== src) it.node.src = src;
-          it.node.style.filter = want;
+          it.node.style.filter = plan.treat === "native" ? "none" : (filter(ink(plan.treat === "tint", i), plan.treat === "tint") || "none");
         }
       });
+      host(fid + "-svg").innerHTML = svg ? '<svg xmlns="http://www.w3.org/2000/svg">' + svg + "</svg>" : "";
     }
     // A "pending" name is still being looked up by the engine's workers; the pipeline calls back
     // when an answer lands, so the preview upgrades itself exactly like a real tab row does.
@@ -958,6 +1035,8 @@
     var areaSync = {};      // each adopt key's colour lines and area cards, told when the key flips
     var styleCardSync = {}; // each adopt key's refresher, repainting an area card with the effective colour
     function syncAllStyleCards() { for (var k9 in styleCardSync) { try { styleCardSync[k9](); } catch (e9) {} } }
+    // the global Logos & icons previews, which show an area's own icon values once it has them
+    var repaintLogoPrevs = function () {};
     // The master theming switch. Off keeps the Docker orchestration functions and disables every
     // visual change. It defaults on, so an existing install is unchanged, and the tabs pick a
     // change up through their storage listeners or on the next load.
@@ -1090,7 +1169,7 @@
     applyAnim();
     if (themingCard) {
       themingCard.appendChild(segRow(T("Bewegung", "Motion"),
-        [["off", T("Aus", "Off")], ["subtle", T("Dezent", "Subtle")], ["wild", T("Wild", "Wild")]],
+        [["off", T("Aus", "Off"), "motion-off"], ["subtle", T("Dezent", "Subtle"), "motion-subtle"], ["wild", T("Wild", "Wild"), "motion-wild"]],
         motionLevel(get("cc.anim", "subtle")),
         function (v) { set("cc.anim", v); applyAnim(); },
         T("Aus: nichts bewegt sich. Dezent: kurze Übergänge und Einblendungen. Wild: kräftigere Effekte, etwa Hauptleisten-Tabs, die beim Überfahren hüpfen. Wenn im System „Bewegung reduzieren“ an ist, gilt das bei jeder Stufe.", "Off: nothing moves. Subtle: short transitions and fades. Wild: stronger effects, such as main-bar tabs that hop on hover. If the system is set to reduce motion, that wins at every level."),
@@ -1229,8 +1308,8 @@
     var c1 = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
     // One colour mode at a time, and below the selector only the controls of the chosen one.
     var mode = colorMode();
-    var modes = [["accent", T("Akzent", "Accent")], ["rainbow", T("Regenbogen", "Rainbow")]];
-    if (window.CC_FLAGS && window.CC_FLAGS.length) modes.push(["flag", T("Flagge", "Flag")]);
+    var modes = [["accent", T("Akzent", "Accent"), "colour-accent"], ["rainbow", T("Regenbogen", "Rainbow"), "colour-rainbow"]];
+    if (window.CC_FLAGS && window.CC_FLAGS.length) modes.push(["flag", T("Flagge", "Flag"), "colour-flag"]);
     var modeRow = el("div", "cc-set-row cc-set-inline");
     var modeLbl = el("span", "cc-set-lblwrap");
     modeLbl.appendChild(el("span", null, T("Farbmodus", "Colour mode")));
@@ -1388,10 +1467,10 @@
       }
     }
     // GlimStone's three shapes, in its order. A name stored before them shows as the shape it reads as.
-    themingCard.appendChild(segRow(T("Form", "Shape"), [["round", T("Rund", "Round")], ["soft", T("Weich", "Soft")], ["square", T("Eckig", "Square")]], shapeName(get("cc.badgeshape", "round")), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); },
+    themingCard.appendChild(segRow(T("Form", "Shape"), [["round", T("Rund", "Round"), "shape-round"], ["soft", T("Weich", "Soft"), "shape-soft"], ["square", T("Eckig", "Square"), "shape-square"]], shapeName(get("cc.badgeshape", "round")), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); },
       T("Karten, Felder und Knöpfe ändern ihre Ecken gemeinsam.", "Cards, fields and buttons change their corners together.")));
     // One global badge style: glass adds a sheen to every badge at once, flat is the solid look.
-    themingCard.appendChild(segRow(T("Badge-Stil", "Badge style"), [["flat", "Flat"], ["glass", "Glass"]], get("cc.badgeglass", "0") === "1" ? "glass" : "flat", function (v) { set("cc.badgeglass", v === "glass" ? "1" : "0"); document.documentElement.classList.toggle("cc-badge-glass", v === "glass" && get("cc.theming", "1") !== "0"); syncHeaderBar(); syncSharesBar(); },
+    themingCard.appendChild(segRow(T("Badge-Stil", "Badge style"), [["flat", "Flat", "badge-flat"], ["glass", "Glass", "badge-glass"]], get("cc.badgeglass", "0") === "1" ? "glass" : "flat", function (v) { set("cc.badgeglass", v === "glass" ? "1" : "0"); document.documentElement.classList.toggle("cc-badge-glass", v === "glass" && get("cc.theming", "1") !== "0"); syncHeaderBar(); syncSharesBar(); },
       T("Flat: einfarbige Badges. Glass: ein Glanz auf jedem Badge.", "Flat: solid badges. Glass: a sheen on every badge.")));
     // The reactive toggle covers every colour mode: everything rests grey, colours on hover, and
     // the active item stays lit.
@@ -1466,7 +1545,7 @@
     paintExceptions();
     // Density and tile size are each one key every list reads, so they sit here with the other
     // global controls rather than being repeated per tab.
-    if (themingCard) themingCard.appendChild(segRow(T("Dichte", "Density"), [["compact", T("Kompakt", "Compact")], ["normal", "Normal"], ["airy", T("Luftig", "Airy")]], density, function (v) { density = v; set("cc.density", v); }, T("Gilt global für alle Listen: Docker, Start, Freigaben und VMs.", "Applies globally to every list: Docker, Start, Shares and VMs."), true));
+    if (themingCard) themingCard.appendChild(segRow(T("Dichte", "Density"), [["compact", T("Kompakt", "Compact"), "density-compact"], ["normal", "Normal", "density-normal"], ["airy", T("Luftig", "Airy"), "density-airy"]], density, function (v) { density = v; set("cc.density", v); }, T("Gilt global für alle Listen: Docker, Start, Freigaben und VMs.", "Applies globally to every list: Docker, Start, Shares and VMs."), true));
     if (themingCard) themingCard.appendChild(tileSizeRow());
     // The global logos card edits the shared icon keys every adopting tab resolves through eff().
     // It carries the same controls as a per-area card and the same preview: this is where the icon
@@ -1476,25 +1555,26 @@
       var cLI = card(T("Logos & Icons", "Logos & icons"), T("Globale Logo- und Icon-Farben. Bereiche ohne eigene Farbe folgen ihnen.", "Global logo and icon colours. Areas without a colour of their own follow them."));
       // the three previews at the bottom of this card, repainted by every control in it
       var gPrevs = [];
+      // Each preview shows what its tab renders: the global values, or the area's own once the
+      // area has a colour of its own, as effc() in docker.js and eff() in vms.js and plugins.js
+      // resolve them. Whether the colours are adopted is global either way.
       function gpaint() {
-        var acc9 = get("cc.accent", "#FCC419");
-        var strn = parseInt(get("cc.iconstrength", "100"), 10) || 100;
-        // The preview does not simulate the rainbow rotation, so while adopting it approximates
-        // the resolved background with the accent, as accurate as the rainbow-off case. The ink is
-        // then the automatic contrast for that tile, or the accent itself with no tile behind it.
-        var adopt9 = get("cc.iconbgrainbow", "0") === "1", bg9 = get("cc.iconbg", "0") === "1";
-        gPrevs.forEach(function (p9) { try { p9.set({ bg: bg9, bgColor: adopt9 ? acc9 : get("cc.iconbgcolor", ""), tint: gTintOnEff(), color: adoptInk(adopt9, bg9, acc9, get("cc.iconcolor", "")), strength: strn, accent: acc9, size: "48px" }); } catch (e9) {} });
+        var adopt9 = get("cc.iconbgrainbow", "0") === "1";
+        gPrevs.forEach(function (g9) {
+          var own = localStorage.getItem(g9.styleKey) === "0", pre = own ? g9.prefix : "cc.";
+          g9.label.textContent = own ? g9.name + " · " + T("eigene Farbe", "own colour") : g9.name;
+          try { g9.prev.set({ bg: get(pre + "iconbg", "0") === "1", bgColor: get(pre + "iconbgcolor", ""), tint: tintOnAt(pre), color: get(pre + "iconcolor", ""), adopt: adopt9, strength: parseInt(get(pre + "iconstrength", "100"), 10) || 100, accent: get(pre + "accent", "#FCC419"), size: "48px" }); } catch (e9) {}
+        });
+        // The colouring mode only acts on tinted icons, so without the tint its row rests dimmed.
+        modeRow.classList.toggle("cc-set-dim", !tintOnAt("cc."));
       }
       function gsync() { gpaint(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); } // an adopting area card repaints with the new globals
-      // An unset icontint means "on whenever a valid icon colour is set", which keeps the tint of
-      // installs that predate the toggle.
-      function gTintOnEff() { var v = get("cc.icontint", null); return v == null ? !!get("cc.iconcolor", "") : v === "1"; }
       var gLT = logoToggles(cLI, {
         getBg: function () { return get("cc.iconbg", "0") === "1"; },
         setBg: function (v) { set("cc.iconbg", v ? "1" : "0"); },
         getBgColor: function () { return get("cc.iconbgcolor", ""); },
         setBgColor: function (v) { set("cc.iconbgcolor", v); },
-        getTint: gTintOnEff,
+        getTint: function () { return tintOnAt("cc."); },
         setTint: function (v) { set("cc.icontint", v ? "1" : "0"); },
         getColor: function () { return get("cc.iconcolor", ""); },
         setColor: function (v) { set("cc.iconcolor", v); },
@@ -1509,25 +1589,28 @@
       // colour they use (that is the picker above). See cc-theme.js for the chain itself.
       // The default is "auto"; the other three are manual overrides and are respected even
       // where the automatic choice would have picked differently.
-      cLI.appendChild(segRow(T("Icon-Färbung", "Icon colouring"),
-        [["auto", T("Automatisch", "Automatic")], ["native", T("Natives Icon", "Native icon")], ["flat", T("Ink-Flatten", "Ink flatten")], ["tint", T("Luminanz-Tint", "Luminance tint")]],
+      var modeRow = segRow(T("Icon-Färbung", "Icon colouring"),
+        [["auto", T("Automatisch", "Automatic"), "icon-auto"], ["native", T("Natives Icon", "Native icon"), "icon-native"], ["flat", T("Ink-Flatten", "Ink flatten"), "icon-flat"], ["tint", T("Luminanz-Tint", "Luminance tint"), "icon-tint"]],
         get("cc.iconmode", "auto"),
         function (v) { set("cc.iconmode", v); gsync(); },
-        T("Ein Logo ist entweder eine einzelne durchgehende Form oder ein kleines mehrfarbiges Bild. Eine Form kann man komplett in deiner Farbe nachzeichnen und sie bleibt erkennbar; ein Bild würde dabei zum Farbklecks, weil Hintergrund und Motiv dieselbe Farbe bekämen. Darum zwei Behandlungen:\n\nAutomatisch (empfohlen): CannonadeCommand sieht sich jedes Logo an. Formen werden nachgezeichnet, für bekannte Programme wird dafür sogar ein echtes Marken-Logo geholt; Bilder werden nur eingefärbt.\nNatives Icon: nichts einfärben, jedes Logo bleibt wie geliefert.\nInk-Flatten: alles nachzeichnen, auch Bilder.\nLuminanz-Tint: alles nur einfärben, auch Formen.\n\nEinzelne Container, VMs und Plugins kannst du in ihrem eigenen Fenster abweichend einstellen; diese Einzelwahl gewinnt immer gegen die Einstellung hier.",
-          "A logo is either one solid shape or a small multi-colour picture. A shape can be redrawn entirely in your colour and stays recognisable; a picture would turn into a blob, because its background and its mark would end up the same colour. Hence two treatments:\n\nAutomatic (recommended): CannonadeCommand looks at each logo. Shapes are redrawn, and for a well-known app a real brand logo is fetched to redraw; pictures are only tinted.\nNative icon: no colouring, every logo stays as shipped.\nInk flatten: redraw everything, pictures included.\nLuminance tint: only tint everything, shapes included.\n\nIndividual containers, VMs and plugins can be set differently in their own window; that per-item choice always wins over the setting here.")));
+        T("Ein Logo ist entweder eine einzelne durchgehende Form oder ein kleines mehrfarbiges Bild. Eine Form kann man komplett in deiner Farbe nachzeichnen und sie bleibt erkennbar; ein Bild würde dabei zum Farbklecks, weil Hintergrund und Motiv dieselbe Farbe bekämen. Darum zwei Behandlungen:\n\nAutomatisch (empfohlen): CannonadeCommand sieht sich jedes Logo an. Formen werden nachgezeichnet, für bekannte Programme wird dafür sogar ein echtes Marken-Logo geholt; Bilder werden nur eingefärbt.\nNatives Icon: nichts einfärben, jedes Logo bleibt wie geliefert.\nInk-Flatten: alles nachzeichnen, auch Bilder.\nLuminanz-Tint: alles nur einfärben, auch Formen.\n\nDie Wahl wirkt, sobald „Icons einfärben“ an ist. Einzelne Container, VMs und Plugins kannst du in ihrem eigenen Fenster abweichend einstellen; diese Einzelwahl gewinnt immer gegen die Einstellung hier.",
+          "A logo is either one solid shape or a small multi-colour picture. A shape can be redrawn entirely in your colour and stays recognisable; a picture would turn into a blob, because its background and its mark would end up the same colour. Hence two treatments:\n\nAutomatic (recommended): CannonadeCommand looks at each logo. Shapes are redrawn, and for a well-known app a real brand logo is fetched to redraw; pictures are only tinted.\nNative icon: no colouring, every logo stays as shipped.\nInk flatten: redraw everything, pictures included.\nLuminance tint: only tint everything, shapes included.\n\nThe choice applies once “Tint icons” is on. Individual containers, VMs and plugins can be set differently in their own window; that per-item choice always wins over the setting here."));
+      cLI.appendChild(modeRow);
       // Three preview sections, each with that area's real icons, each running the same pipeline
       // the real tab runs, so the choice above is visible without leaving this tab.
       [
-        ["docker", T("Docker-Container", "Docker containers")],
-        ["vm", T("VMs", "VMs")],
-        ["plugin", T("Plugins", "Plugins")]
+        ["docker", T("Docker-Container", "Docker containers"), "cc.styledocker", "ccd."],
+        ["vm", T("VMs", "VMs"), "cc.stylevms", "ccv."],
+        ["plugin", T("Plugins", "Plugins"), "cc.styleplugin", "ccp."]
       ].forEach(function (sec9) {
-        cLI.appendChild(el("div", "cc-set-sublbl", sec9[1]));
+        var lbl9 = el("div", "cc-set-sublbl", sec9[1]);
+        cLI.appendChild(lbl9);
         var p9 = logoPreview(sec9[0], "cc-set-gprev-" + sec9[0]);
         var empty9 = el("div", "cc-set-prev-empty", T("Keine Symbole gefunden.", "No icons found."));
         empty9.style.display = "none";
         cLI.appendChild(p9.el); cLI.appendChild(empty9);
-        gPrevs.push(p9);
+        gPrevs.push({ prev: p9, label: lbl9, name: sec9[1], styleKey: sec9[2], prefix: sec9[3] });
+        (areaSync[sec9[2]] = areaSync[sec9[2]] || []).push(gpaint);   // an exception added or dropped repaints this section
         var fill9 = function (list9) {
           (list9 || []).slice(0, 4).forEach(function (it9) { p9.add(it9.src, it9.name || ""); });
           if (!p9.count()) empty9.style.display = "";
@@ -1539,6 +1622,7 @@
         rowIcons(sec9[0], 4).then(fill9);
       });
       gpaint();
+      repaintLogoPrevs = gpaint;
       wrapMain.appendChild(cLI);
     })();
     // Docker is an area like the others: an adopt card and its own badges card at the top of its
@@ -1553,22 +1637,21 @@
     buildStyleCards("ccd.", wrap, [], true);
 
     var c2 = card(T("Logos", "Logos"), T("Logo-Kacheln und Icons einfärben werden getrennt geschaltet, jedes mit seiner eigenen Farbe.", "Logo tiles and Tint icons are switched separately, each with its own colour."));
-    // As in the global card: an unset icontint means "on whenever a valid icon colour is set".
     // This Docker card edits the same global keys, not a scoped copy of them.
-    function c2TintOnEff() { var v = get("cc.icontint", null); return v == null ? !!get("cc.iconcolor", "") : v === "1"; }
     function c2OnChange() {
       var on = get("cc.iconbg", "0") === "1";
       c2.classList.toggle("cc-bg-mode", on);
       tprevWrap.classList.toggle("cc-prev-bg", on);
       try { tintPrev(); } catch (e9) {}
       syncAllStyleCards(); // the global icon keys changed, so an adopting area card follows
+      repaintLogoPrevs();
     }
     var c2LT = logoToggles(c2, {
       getBg: function () { return get("cc.iconbg", "0") === "1"; },
       setBg: function (v) { set("cc.iconbg", v ? "1" : "0"); },
       getBgColor: function () { return get("cc.iconbgcolor", ""); },
       setBgColor: function (v) { set("cc.iconbgcolor", v); },
-      getTint: c2TintOnEff,
+      getTint: function () { return tintOnAt("cc."); },
       setTint: function (v) { set("cc.icontint", v ? "1" : "0"); },
       getColor: function () { return get("cc.iconcolor", ""); },
       setColor: function (v) { set("cc.iconcolor", v); },
@@ -1581,12 +1664,12 @@
       hideAdoptRow: true
     });
     c2LT.strInput.value = String(iconstrength);
-    c2LT.strInput.addEventListener("input", function () { iconstrength = parseInt(c2LT.strInput.value, 10); set("cc.iconstrength", c2LT.strInput.value); try { tintPrev(); } catch (e9) {} syncAllStyleCards(); });
+    c2LT.strInput.addEventListener("input", function () { iconstrength = parseInt(c2LT.strInput.value, 10); set("cc.iconstrength", c2LT.strInput.value); try { tintPrev(); } catch (e9) {} syncAllStyleCards(); repaintLogoPrevs(); });
     // The tile size is one global key, and its control lives once in the Theming card. This Docker
     // card keeps the preview, which sizePrev() resizes whenever that control changes.
     function tileSizeRow() {
       // the tip goes through `help`, so the icon lands inside the label as it does on every row
-      return segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small")], ["m", T("Mittel", "Medium")], ["l", T("Groß", "Large")]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); try { sizePrev(); } catch (e) {} }, T("Gilt global: dieselbe Größe steuert das Einstellungen- und Werkzeuge-Raster und die Docker- und Plugin-Logos.", "Global: the same size drives the Settings and Tools grid and the Docker and Plugin logos."));
+      return segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small"), "size-s"], ["m", T("Mittel", "Medium"), "size-m"], ["l", T("Groß", "Large"), "size-l"]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); try { sizePrev(); } catch (e) {} }, T("Gilt global: dieselbe Größe steuert das Einstellungen- und Werkzeuge-Raster und die Docker- und Plugin-Logos.", "Global: the same size drives the Settings and Tools grid and the Docker and Plugin logos."));
     }
     c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var dockPrev = logoPreview("docker", "cc-set-dockprev");
@@ -1602,10 +1685,7 @@
       tintPrev();
     }).catch(function () { dockPrev.add("/plugins/cannonadecommand/images/cannonadecommand.png", ""); tintPrev(); });
     function tintPrev() {
-      var acc9 = get("cc.accent", "#FCC419");
-      // While adopting, the accent approximates the resolved background, as in gpaint() above.
-      var adopt9 = get("cc.iconbgrainbow", "0") === "1", bg9 = get("cc.iconbg", "0") === "1";
-      dockPrev.set({ bg: bg9, bgColor: adopt9 ? acc9 : get("cc.iconbgcolor", ""), tint: c2TintOnEff(), color: adoptInk(adopt9, bg9, acc9, get("cc.iconcolor", "")), strength: parseInt(get("cc.iconstrength", "100"), 10) || 100, accent: acc9 });
+      dockPrev.set({ bg: get("cc.iconbg", "0") === "1", bgColor: get("cc.iconbgcolor", ""), tint: tintOnAt("cc."), color: get("cc.iconcolor", ""), adopt: get("cc.iconbgrainbow", "0") === "1", strength: parseInt(get("cc.iconstrength", "100"), 10) || 100, accent: get("cc.accent", "#FCC419") });
     }
     c2.appendChild(tprevWrap); tintPrev(); c2OnChange(); sizePrev();   // the preview is the card's last block, sized to the tile-size control
     wrap.appendChild(c2);
@@ -1643,19 +1723,6 @@
     win.addEventListener("input", function () { notify.webhook = win.value.trim(); notifyDirty = true; afterQuiet("notify", function () { saveNotify(document.getElementById("cc-set-webhook")); }); });
     wrow.appendChild(win); c5.appendChild(wrow);
     wrap.appendChild(c5);
-
-    // the engine's last CPU and RAM limit operations, with the values it verified afterwards
-    var cd = card(T("Diagnose: CPU/RAM-Limits", "Diagnostics: CPU/RAM limits"), T("Die letzten Limit-Änderungen mit Docker-Ergebnis und verifizierten Werten danach.", "The most recent limit changes with docker's result and the verified values after."));
-    var diag = el("div", "cc-set-diag"); diag.textContent = "…"; cd.appendChild(diag); wrap.appendChild(cd);
-    apiRead("limitlog").then(function (ops) {
-      diag.textContent = "";
-      if (!ops || !ops.length) { diag.textContent = T("Noch keine Limit-Änderung seit dem Daemon-Start.", "No limit change since the daemon started."); return; }
-      ops.forEach(function (o) {
-        var row = el("div", "cc-set-diag-row" + (o.result === "ok" ? "" : " cc-set-diag-bad"));
-        row.textContent = o.time + "  " + o.name + "  [" + o.req + "]  → " + o.result + (o.after ? "  · " + T("danach", "after") + ": " + o.after : "");
-        diag.appendChild(row);
-      });
-    }).catch(function (e) { diag.textContent = T("Diagnose nicht verfügbar: ", "Diagnostics unavailable: ") + e.message; });
 
     var c6 = card(T("Bandbreite", "Bandwidth"), T("Schnittstelle im Container, auf der die Limits gesetzt werden. Leer heißt automatisch, also die Default-Route des Containers, und ist die Empfehlung. Pro-Container-Limits stellst du im Docker-Tab ein.", "The interface inside the container the limits are applied to. Blank means automatic, the container's default route, which is the recommendation. Per-container limits are set in the Docker tab."));
     var ifrow = el("div", "cc-set-row"); ifrow.appendChild(el("span", "cc-set-rl", T("Schnittstelle", "Interface")));
@@ -1796,7 +1863,6 @@
       // values, with it off the area's own. Every change here means the area uses its own style,
       // so the setters below always write the area's own key whatever ga() currently answers.
       function ga() { return !!adoptKey && localStorage.getItem(adoptKey) !== "0"; }
-      function tintOnAt(prefix) { var v = get(prefix + "icontint", null); return v == null ? !!get(prefix + "iconcolor", "") : v === "1"; }
       function bgColorAt(prefix) {
         var c = get(prefix + "iconbgcolor", ""); if (/^#[0-9a-f]{6}$/i.test(c)) return c;
         var ic = get(prefix + "iconcolor", ""); if (/^#[0-9a-f]{6}$/i.test(ic)) return ic;
@@ -1821,11 +1887,11 @@
         getAdopt: function () { return get("cc.iconbgrainbow", "0") === "1"; },
         setAdopt: function () {},
         getAccent: function () { return acc; },
-        onChange: function () { applyBgClasses(); try { tp(); } catch (e9) {} },
+        onChange: function () { applyBgClasses(); try { tp(); } catch (e9) {} repaintLogoPrevs(); },
         hideAdoptRow: true
       });
       cBLT.strInput.value = String(istr);
-      cBLT.strInput.addEventListener("input", function () { set(P + "iconstrength", cBLT.strInput.value); useOwn(); try { tp(); } catch (e9) {} });
+      cBLT.strInput.addEventListener("input", function () { set(P + "iconstrength", cBLT.strInput.value); useOwn(); try { tp(); } catch (e9) {} repaintLogoPrevs(); });
       cB.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
       // the pipeline scope this area's items live under, so a per-item pin shows up here too
       var PAREA = { "ccd.": "docker", "ccv.": "vm", "ccp.": "plugin" }[P];   // the areas whose rows carry real per-item logos
@@ -1850,14 +1916,12 @@
       }
       function tp() {
         var ga9 = ga();
-        // While adopting, the effective accent approximates the resolved background, as in the
-        // global card. It reads the global key, like getAdopt() above, so the preview never
+        // The adopt state is the global key, like getAdopt() above, so the preview never
         // disagrees with what that answers.
-        var adopt9 = get("cc.iconbgrainbow", "0") === "1", bg9 = effIconBg();
         pvl.set({
-          bg: bg9, bgColor: adopt9 ? acc : (ga9 ? get("cc.iconbgcolor", "") : get(P + "iconbgcolor", "")),
-          tint: ga9 ? tintOnAt("cc.") : tintOnAt(P), color: adoptInk(adopt9, bg9, acc, ga9 ? get("cc.iconcolor", "") : get(P + "iconcolor", "")),
-          strength: effIconStrength(), accent: acc, size: "48px"
+          bg: effIconBg(), bgColor: ga9 ? get("cc.iconbgcolor", "") : get(P + "iconbgcolor", ""),
+          tint: ga9 ? tintOnAt("cc.") : tintOnAt(P), color: ga9 ? get("cc.iconcolor", "") : get(P + "iconcolor", ""),
+          adopt: get("cc.iconbgrainbow", "0") === "1", strength: effIconStrength(), accent: acc, size: "48px"
         });
       }
       cB.appendChild(tpw); tp(); applyBgClasses();
@@ -1919,7 +1983,7 @@
       [["uptime", T("Betriebszeit", "Uptime")], ["os", T("Unraid-Edition", "Unraid edition")], ["version", T("Unraid-Version", "Unraid version")], ["array", T("Array-Zustand", "Array state")], ["fill", T("Array-Füllstand", "Array usage")], ["ram", T("RAM-Auslastung", "RAM usage")], ["cpu", T("CPU-Last", "CPU load")], ["containers", T("Laufende Container", "Running containers")], ["net", T("Netzwerk-Traffic", "Network traffic")], ["temps", T("Temperaturen", "Temperatures")]].forEach(function (it) {
         cI.appendChild(toggleRow(it[1], get("cc.isl." + it[0], "1") !== "0", function (v) { set("cc.isl." + it[0], v ? "1" : "0"); syncHeaderBar(); }));
       });
-      cI.appendChild(segRow(T("Temperatur-Warnschwelle", "Temperature warning threshold"), [["50", "50 °C"], ["60", "60 °C"], ["70", "70 °C"]], get("cc.tempwarn", "60"), function (v) { set("cc.tempwarn", v); syncHeaderBar(); }));
+      cI.appendChild(tempWarnRow(syncHeaderBar));
       wrapHeader.appendChild(cI);
     })();
     // The main-tab icons are markup CC inserts rather than a native element, so they get an on/off
@@ -1947,8 +2011,8 @@
       nmRow.appendChild(nmL); nmRow.appendChild(nmIn); cB.appendChild(nmRow);
       var SZ = ["16", "18", "20", "22", "24", "26", "28", "30", "32", "36", "40", "44", "48", "56", "64"].map(function (s) { return [s, s + " px"]; });
       cB.appendChild(dropRow(T("Größe", "Size"), SZ, get("cc.brand.size", "30"), function (v) { set("cc.brand.size", v); syncHeaderBar(); }));
-      cB.appendChild(dropRow(T("Stärke", "Weight"), [["300", T("Dünn", "Thin")], ["400", "Normal"], ["500", "Medium"], ["650", T("Halbfett", "Semibold")], ["800", T("Fett", "Bold")]], get("cc.brand.weight", "650"), function (v) { set("cc.brand.weight", v); syncHeaderBar(); }));
-      cB.appendChild(dropRow(T("Kursiv", "Italic"), [["0", T("Normal", "Normal")], ["1", T("Kursiv", "Italic")]], get("cc.brand.italic", "0"), function (v) { set("cc.brand.italic", v); syncHeaderBar(); }));
+      cB.appendChild(dropRow(T("Stärke", "Weight"), [["300", T("Dünn", "Thin"), "weight-thin"], ["400", "Normal", "weight-normal"], ["500", "Medium", "weight-medium"], ["650", T("Halbfett", "Semibold"), "weight-semibold"], ["800", T("Fett", "Bold"), "weight-bold"]], get("cc.brand.weight", "650"), function (v) { set("cc.brand.weight", v); syncHeaderBar(); }));
+      cB.appendChild(dropRow(T("Kursiv", "Italic"), [["0", T("Normal", "Normal"), "italic-off"], ["1", T("Kursiv", "Italic"), "italic-on"]], get("cc.brand.italic", "0"), function (v) { set("cc.brand.italic", v); syncHeaderBar(); }));
       // System faces, which render where the client has them. The Google families below are
       // downloaded, so they render anywhere.
       var SYS = [
@@ -2202,10 +2266,6 @@
   }
   // dark text on a light background and white on a dark one, by perceived luminance
   function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.197 ? "#161616" : "#fff"; }
-  // The icon colour a logo preview inks with, as the area scripts resolve it: adopting the badge
-  // colours gives the contrast for the tile, or the badge colour itself with no tile behind the
-  // icon; otherwise the picked colour.
-  function adoptInk(adopt, tile, badge, own) { return adopt ? (tile ? idealText(badge) : badge) : own; }
   // The preview uses the real palette, so it matches what the Docker tab shows.
   function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = (window.CCTheme && window.CCTheme.RB) || ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"]; var pal = DEF; try { var fj = get("cc.flagmode", "0") === "1" ? JSON.parse(get("cc.flagpal", "null")) : null; var j = (fj && fj.length) ? fj : JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} if (window.CCTheme && window.CCTheme.surfacePalette) pal = window.CCTheme.surfacePalette(pal, accent); Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
   // Every toggle on this page follows the colour engine. In rainbow mode each takes its own slot
@@ -2220,6 +2280,13 @@
       if (rainbow) { var c = rbC(i, accent); t.style.setProperty("--cc-rb-c", c); t.style.setProperty("--cc-rb-ct", idealText(c)); }
       else { t.style.removeProperty("--cc-rb-c"); t.style.removeProperty("--cc-rb-ct"); }
     }
+    // A lit view sketch wears the colour of the segment chosen above it, so the two always agree.
+    Array.prototype.forEach.call(root.querySelectorAll(".cc-set-viewslot"), function (slot) {
+      var on = slot.querySelector(".cc-set-mode .cc-seg-on"), c = on ? on.style.getPropertyValue("--cc-rb-c") : "";
+      Array.prototype.forEach.call(slot.querySelectorAll(".cc-set-vp"), function (fig) {
+        if (c && fig.classList.contains("cc-set-vp-on")) fig.style.setProperty("--cc-rb-c", c); else fig.style.removeProperty("--cc-rb-c");
+      });
+    });
   }
   // A card title counts through the palette from the first card of its own tab, so every tab
   // starts on the same hue. Without rainbow the stamp goes and the badge falls back to the accent.
@@ -2466,6 +2533,32 @@
   // need the organizer and a folder in it, and the cards and folders need the theming.
   var VIEW_ORG_Q = "{ docker { organizer { views { id prefs flatEntries { type } } } } }";
   var VIEW_ORG_SAVE = "mutation($viewId: String, $prefs: JSON!) { updateDockerViewPreferences(viewId: $viewId, prefs: $prefs) { version } }";
+  // A schematic of each view the selector offers, the chosen one lit in the colour of its
+  // segment: rows for the list, tiles for the grid, and tiles grouped under folder heads, since
+  // folders always show their containers as tiles.
+  function viewSketch(kind) {
+    var r = function (x, y, w, h, o) { return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="1.5"' + (o ? ' opacity="' + o + '"' : "") + "/>"; };
+    var s = "";
+    if (kind === "list") [1.5, 10.5, 19.5, 28.5].forEach(function (y) { s += r(1, y, 58, 6, 0.18) + r(3, y + 1, 4, 4) + r(10, y + 2, 22, 2) + r(40, y + 2, 8, 2, 0.6) + r(50, y + 2, 7, 2, 0.6); });
+    else if (kind === "grid") [1, 19].forEach(function (y) { [1, 21, 41].forEach(function (x) { s += r(x, y, 18, 16, 0.18) + r(x + 6, y + 3, 6, 6) + r(x + 3, y + 11.5, 12, 2, 0.6); }); });
+    else [1, 19].forEach(function (y) { s += r(1, y, 6, 4) + r(9, y + 1, 16, 2) + r(1, y + 6, 58, 10, 0.18); [3, 17, 31, 45].forEach(function (x) { s += r(x, y + 7.5, 12, 7, 0.55); }); });
+    return '<svg viewBox="0 0 60 36" fill="currentColor" aria-hidden="true">' + s + "</svg>";
+  }
+  function viewPreview(opts) {
+    var box = el("div", "cc-set-row cc-set-viewprev"), figs = {};
+    opts.forEach(function (o) {
+      var fig = el("div", "cc-set-vp");
+      fig.innerHTML = viewSketch(o[0]);
+      fig.appendChild(el("span", "cc-set-vp-lbl", o[1]));
+      box.appendChild(fig); figs[o[0]] = fig;
+    });
+    // paintToggles() gives the lit sketch the colour of the chosen segment.
+    function mark(v) {
+      Object.keys(figs).forEach(function (k) { figs[k].classList.toggle("cc-set-vp-on", k === v); });
+      paintToggles();
+    }
+    return { el: box, mark: mark };
+  }
   function viewRow(c) {
     var label = T("Ansicht", "View");
     var help = T("Wie der Docker-Tab die Container zeigt, dieselbe Wahl wie im Zahnrad-Menü dort. Ordner kannst du wählen, sobald es einen Ordner gibt.", "How the Docker tab shows the containers, the same choice as its gear menu. Folders can be picked once there is a folder.");
@@ -2476,13 +2569,15 @@
     var slot = el("div", "cc-set-viewslot"); c.appendChild(slot);
     function draw(org) {
       var folders = !!org && org.flatEntries.filter(function (e) { return e.type === "folder" || e.type === "group"; }).length > 1;
-      var opts = [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")]];
-      if (folders) opts.push(["folder", T("Ordner", "Folders")]);
+      var opts = [["list", T("Liste", "List"), "view-list"], ["grid", T("Raster", "Grid"), "view-grid"]];
+      if (folders) opts.push(["folder", T("Ordner", "Folders"), "view-folder"]);
       var cur = (org && org.prefs && org.prefs.ccViewMode) || get("cc.view", "list");
       if (!opts.some(function (o) { return o[0] === cur; })) cur = "list";
       slot.innerHTML = "";
+      var prev = viewPreview(opts);
       slot.appendChild(dropRow(label, opts, cur, function (v) {
         set("cc.view", v);
+        prev.mark(v);
         if (!org || !window.ccGql) return;
         var prefs = {}, was = org.prefs && typeof org.prefs === "object" ? org.prefs : {};
         Object.keys(was).forEach(function (k) { prefs[k] = was[k]; });
@@ -2490,6 +2585,8 @@
         window.ccGql(VIEW_ORG_SAVE, { viewId: org.id, prefs: prefs }).then(function (r) { return r.json(); })
           .then(function (j) { if (j && !j.errors) org.prefs = prefs; }).catch(function () {});
       }, help));
+      slot.appendChild(prev.el);
+      prev.mark(cur);
     }
     draw(null);
     if (window.ccGql) window.ccGql(VIEW_ORG_Q).then(function (r) { return r.json(); }).then(function (j) {
@@ -2497,15 +2594,52 @@
       if (v && v[0]) draw(v[0]);
     }).catch(function () {});
   }
+  // The temperature warning threshold: three presets, or a value of its own in a field beside
+  // them. Both land in cc.tempwarn as a plain number, which header.js reads as it is, and
+  // onChange runs after each write.
+  var TEMP_MIN = 30, TEMP_MAX = 110;
+  function tempWarnValid(v) { return /^\d{2,3}$/.test(String(v).trim()) && +v >= TEMP_MIN && +v <= TEMP_MAX; }
+  function tempWarnRow(onChange) {
+    var presets = [["50", "50 °C", "temp-low"], ["60", "60 °C", "temp-mid"], ["70", "70 °C", "temp-high"]];
+    var stored = function () { return get("cc.tempwarn", "60"); };
+    var isPreset = function (v) { return presets.some(function (p) { return p[0] === v; }); };
+    var field = el("span", "cc-set-numwrap"), num = el("input", "cc-set-txt cc-set-num");
+    num.type = "text"; num.inputMode = "numeric"; num.maxLength = 3; num.spellcheck = false;
+    num.setAttribute("aria-label", T("Eigene Warnschwelle in °C", "Own warning threshold in °C"));
+    field.appendChild(num); field.appendChild(el("span", "cc-set-unit", "°C"));
+    field.hidden = isPreset(stored());
+    num.value = stored();
+    var row = dropRow(T("Temperatur-Warnschwelle", "Temperature warning threshold"), presets.concat([["custom", T("Eigene", "Custom"), "temp-custom"]]), field.hidden ? stored() : "custom", function (v) {
+      field.hidden = v !== "custom";
+      if (v === "custom") { num.value = stored(); num.focus(); num.select(); return; }
+      set("cc.tempwarn", v); onChange();
+    }, T("Ab dieser Temperatur wird ein Wert in der Status-Insel orange, 15 °C darüber rot. Eigene: ein Wert von " + TEMP_MIN + " bis " + TEMP_MAX + " °C.", "From this temperature a reading in the status island turns orange, and red 15 °C above it. Custom: a value from " + TEMP_MIN + " to " + TEMP_MAX + " °C."));
+    num.addEventListener("input", function () {
+      var ok = tempWarnValid(num.value);
+      num.setAttribute("aria-invalid", ok ? "false" : "true");
+      if (ok) { set("cc.tempwarn", String(+num.value)); onChange(); }
+    });
+    // A value outside the range is never stored, and leaving the field puts the stored one back.
+    num.addEventListener("change", function () {
+      if (tempWarnValid(num.value)) return;
+      failed(num, T("Bitte einen Wert von " + TEMP_MIN + " bis " + TEMP_MAX + " °C.", "Please enter a value from " + TEMP_MIN + " to " + TEMP_MAX + " °C."));
+      num.value = stored(); num.setAttribute("aria-invalid", "false");
+    });
+    var end = el("span", "cc-set-colend");
+    end.appendChild(row.lastChild); end.appendChild(field);
+    row.appendChild(end);
+    return row;
+  }
   function segRow(labelText, opts, cur, onChange, help) {
     return dropRow(labelText, opts, cur, onChange, help);
   }
-  // A setting with up to six choices is GlimStone's horizontal selector at the end of its row. A
-  // longer list, and the font list whose entries preview their face, stays a dropdown: a native
-  // select dressed as a CC control. An option is [value, label, face].
+  // A setting with up to six choices is GlimStone's horizontal selector at the end of its row,
+  // where an option is [value, label, glyph]. A longer list stays a dropdown, a native select
+  // dressed as a CC control, where an option is [value, label, face] and the font list previews
+  // each face.
   var SEG_MAX = 6;
   function dropRow(labelText, opts, cur, onChange, help) {
-    if (opts.length <= SEG_MAX && !opts.some(function (o) { return o[2]; })) {
+    if (opts.length <= SEG_MAX) {
       var srow = el("div", "cc-set-row cc-set-inline"), lw = el("span", "cc-set-lblwrap");
       lw.appendChild(el("span", null, labelText)); if (help) lw.appendChild(infoIcon(help));
       srow.appendChild(lw); srow.appendChild(segPicker(opts, cur, onChange));
@@ -2598,26 +2732,10 @@
       // left inset, which brings both back inside.
       var padR = Math.round(rr.right - (document.documentElement.clientWidth - al));
       if (padR > 0 && padR < 80) root.style.paddingRight = padR + "px"; else root.style.paddingRight = "";
-      root.style.setProperty("--cc-set-tabs-h", tabsHeight() + "px");
     } catch (e) {}
   }
-  // The tile column runs from where it stands in the window down to the bottom edge, less the
-  // sticky gap and Unraid's footer while it shows, so the tiles share that height as KnightLoader's
-  // do. Once the page scrolls the column sticks 12px below the top, and it grows to fill what the
-  // window shows from there, so a scroll stamps the height again.
-  function tabsHeight() {
-    var body = root.querySelector(".cc-set-body");
-    var top = Math.max(12, body ? body.getBoundingClientRect().top : 0);
-    var foot = document.getElementById("footer"), fh = 0;
-    if (foot && getComputedStyle(foot).position === "fixed" && getComputedStyle(foot).display !== "none") fh = foot.offsetHeight;
-    return Math.max(160, Math.round(window.innerHeight - top - 12 - fh));
-  }
-  var alignT = null, tabsFrame = 0; // one resize and one scroll listener for the page's lifetime
+  var alignT = null; // one resize listener for the page's lifetime
   window.addEventListener("resize", function () { clearTimeout(alignT); alignT = setTimeout(alignSetTabs, 150); });
-  window.addEventListener("scroll", function () {
-    if (tabsFrame) return;
-    tabsFrame = window.requestAnimationFrame(function () { tabsFrame = 0; root.style.setProperty("--cc-set-tabs-h", tabsHeight() + "px"); });
-  }, { passive: true });
 
   // The sub-tabs re-sort when the main menu order changes, whether by a drag or by an auto-mount.
   // A menu mutation re-runs render(), which re-reads the live order and rebuilds the strip while

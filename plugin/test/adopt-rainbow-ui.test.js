@@ -149,19 +149,19 @@ console.log('\nAll three logoToggles() call sites wire real getters and setters'
 console.log('\nThe live preview follows the adopt state rather than the colour underneath it');
 {
   // gpaint() on the global card, tintPrev() on the Docker card and tp() on the
-  // generic one each build the object logoPreview().set() consumes. While adopting,
-  // each has to take the contrast ink for the approximated tile, or the badge colour
-  // with no tile, and leave the tint to its own switch, as the area scripts do.
+  // generic one each build the object logoPreview().set() consumes. Each hands over the
+  // adopt state, so the preview resolves the tile and the ink per logo as the area scripts
+  // do, and leaves the tint to its own switch.
   ['gpaint', 'tintPrev', 'tp'].forEach(name => {
     const b = fnBody(name);
     ok(name + '() is found in source', !!b, name);
     ok(name + '() reads the master adopt state', /iconbgrainbow/.test(b || ''), name);
-    ok(name + '() computes the ink through adoptInk()', /adoptInk\(adopt9, bg9, /.test(b || ''), name);
+    ok(name + '() hands the adopt state to the preview', /adopt: (adopt9|get\("cc\.iconbgrainbow", "0"\) === "1")/.test(b || ''), name);
     ok(name + '() leaves the tint to its switch', !/tint: adopt9/.test(b || ''), name);
     ok(name + '() references no icontintrainbow key', !/icontintrainbow/.test(b || ''), name);
   });
   const tpBody = fnBody('tp') || '';
-  ok('tp() reads cc.iconbgrainbow without the ga() gate, as the getAdopt above it does', /var adopt9 = get\("cc\.iconbgrainbow", "0"\) === "1", bg9 = effIconBg\(\);/.test(tpBody), tpBody);
+  ok('tp() reads cc.iconbgrainbow without the ga() gate, as the getAdopt above it does', /adopt: get\("cc\.iconbgrainbow", "0"\) === "1"/.test(tpBody), tpBody);
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

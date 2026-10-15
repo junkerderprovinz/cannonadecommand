@@ -1,6 +1,6 @@
 // Loading the settings page renders it more than once: at once, again when the engine config
-// arrives, and again when the menu order changes. Each render reads the engine state and the limit
-// log, so those reads share one request, and a failed read is tried again once before the Info tab
+// arrives, and again when the menu order changes. Each render reads the engine state and the config,
+// so those reads share one request, and a failed read is tried again once before the Info tab
 // says the engine cannot be reached.
 const fs = require('fs');
 const path = require('path');
@@ -36,8 +36,8 @@ const settle = (p) => p.then((v) => ({ v }), (e) => ({ e }));
     ok('and all three get its answer', a === b && b === c);
     await h.read('state');
     ok('a render a moment later reuses the answer', h.sent.length === 1, h.sent.join(', '));
-    await h.read('limitlog');
-    ok('another path has its own request', h.sent.length === 2 && h.sent[1] === 'GET limitlog', h.sent.join(', '));
+    await h.read('config');
+    ok('another path has its own request', h.sent.length === 2 && h.sent[1] === 'GET config', h.sent.join(', '));
   }
 
   console.log('\nA failed read is tried once more');
@@ -56,7 +56,6 @@ const settle = (p) => p.then((v) => ({ v }), (e) => ({ e }));
 
   console.log('\nThe page uses it');
   ok('the Info tab reads the engine state through it', /apiRead\("state"\)\.then\(function \(st\) \{/.test(settings) && !/api\("GET", "state"\)/.test(settings));
-  ok('the diagnostics card reads the limit log through it', /apiRead\("limitlog"\)/.test(settings) && !/api\("GET", "limitlog"\)/.test(settings));
   ok('the boot reads the config through it', /apiRead\("config"\)\.then\(function \(c\) \{\s*if \(!c \|\| typeof c !== "object"\) return;\s*fullConfig =/.test(settings));
   ok('the menu watcher starts from the order the first render read', /lastOrd9 = menuOrder\(\);/.test(settings));
 
