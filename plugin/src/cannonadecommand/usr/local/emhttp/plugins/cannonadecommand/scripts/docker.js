@@ -1585,15 +1585,14 @@
       // and the native Update-All button below the table covers ShipLog's pill.
       var tv = document.querySelector("div.ToggleViewMode");
       if (tv) tv.style.setProperty("display", "none", "important");
-      // The card and folder views carry their gear as a tile of their own, and their logos do not
-      // pick, so multi-select has nothing to pick there and leaves with the list.
-      if (mode !== "list") {
-        var listGear = document.querySelector(".cc-bar-adv .cc-hgear"); if (listGear) listGear.remove();
+      // The card and folder views keep the bar and its gear where the list has them, so the way
+      // back to the list is always in one place. Their logos do not pick, so multi-select has
+      // nothing to pick there and leaves with the list.
+      var listView = mode === "list";
+      if (!listView) {
         var bulkBadge = document.querySelector(".cc-bulkmode-badge"); if (bulkBadge) bulkBadge.remove();
         if (ccBulkModeOn) ccBulkModeToggle();
-        return;
-      }
-      if (!findRows().length) return; // no gear before the rows exist, or it flashes on load
+      } else if (!findRows().length) return; // no gear before the rows exist, or it flashes on load
       var oldAm = document.querySelector(".cc-advmini"); if (oldAm) oldAm.remove();
       var jsa = document.querySelector("div.js-actions");
       if (jsa) {
@@ -1601,18 +1600,18 @@
         // a gear as much as the card and folder views do. It sits beside the view switch in the
         // docked bar: a column header scrolls out of reach with a wide table and has no room
         // beside its label, while the bar wraps and stays on screen.
-        Array.prototype.slice.call(document.querySelectorAll(".cc-hgear:not(.cc-hgear-grid)")).forEach(function (x9) { if (!x9.closest(".cc-bar-adv")) x9.remove(); });
+        Array.prototype.slice.call(document.querySelectorAll(".cc-hgear")).forEach(function (x9) { if (!x9.closest(".cc-bar-adv")) x9.remove(); });
         var hc = document.querySelector(".cc-headctl"); if (hc) hc.remove();
         foldBar(jsa);
         ensureBarToggle(jsa);
-        ensureBulkModeBadge(jsa);
+        if (listView) ensureBulkModeBadge(jsa);
         var advGrp = jsa.querySelector(".cc-bar-adv");
         if (advGrp && !advGrp.querySelector(".cc-hgear")) advGrp.appendChild(makeGear("cc-hgear-home"));
       } else {
         // the Plugins and VM pages have a tab strip rather than a js-actions bar
         var tc9 = document.querySelector("nav.tabs .tabs-container");
         if (tc9) {
-          Array.prototype.slice.call(document.querySelectorAll(".cc-hgear:not(.cc-hgear-grid):not(.cc-hgear-home)")).forEach(function (x9) { x9.remove(); });
+          Array.prototype.slice.call(document.querySelectorAll(".cc-hgear:not(.cc-hgear-home)")).forEach(function (x9) { x9.remove(); });
           if (!tc9.querySelector(".cc-hgear-home")) tc9.appendChild(makeGear("cc-hgear-home"));
         }
       }
@@ -1974,17 +1973,9 @@
     // the grid's twin of the table's iconbg gate in applyEnhanceClasses, which the reactive
     // logo-tile rules key on, so the card view matches the list
     gridHolder.classList.toggle("cc-docker-iconbg", iconBgOn());
-    // The grid gets a gear of its own, since the list's lives near the native table, which is no
-    // anchor in the card view. A rebuild detaches the old one, so an open menu anchored to it is
-    // re-anchored here, or positionMenu() would compute from a disconnected node.
-    var hg = makeGear("cc-hgear-grid");
     var grid = el("div", "cc-grid");
     containers.slice().sort(function (a, b) { return a.name.localeCompare(b.name); }).forEach(function (c) { grid.appendChild(card(c)); });
-    // the gear is part of the grid, a small tile after the last card, rather than a floating
-    // button in the space above them
-    var gtile = el("div", "cc-card cc-gear-tile"); gtile.appendChild(hg); grid.appendChild(gtile);
     gridHolder.appendChild(grid);
-    if (menu && menuAnchor && !menuAnchor.isConnected) { menuAnchor = hg; positionMenu(); }
     applyIconTint();
     restoreGridFocus(focusKey);
   }
@@ -2135,7 +2126,6 @@
     function ccFolderBulk(fid, action) { runBulkAction(ccCollectFolderContainerNames(byParent, fid, containerByName), action); }
 
     var dense = folderDensity(); // applies to a folder's contents and to the root section alike
-    var hg = makeGear("cc-hgear-grid");
     var root = el("div", "cc-folderview" + (dense === "grid" ? " cc-folderview-grid" : dense === "list" ? " cc-folderview-list" : ""));
 
     // Drag and drop reordering. `dragEntry` is the entry being dragged, scoped to this render
@@ -2249,11 +2239,7 @@
       if (src.type === "container" || src.parentId !== ccOrgView.rootId) ccOrgMoveToPosition(src.id, ccOrgView.rootId, lastPos);
     });
 
-    // the gear tile takes the current density's shape, so it does not sit as an oversized square
-    // among tiny chips or slim rows
-    var gtile = el("div", "cc-card cc-gear-tile" + (dense === "grid" ? " cc-chip" : dense === "list" ? " cc-frow" : "")); gtile.appendChild(hg); root.appendChild(gtile);
     gridHolder.appendChild(root);
-    if (menu && menuAnchor && !menuAnchor.isConnected) { menuAnchor = hg; positionMenu(); }
     applyIconTint();
     window.scrollTo(0, savedScroll); // restored once the new DOM is in place
     restoreGridFocus(focusKey);
@@ -2268,7 +2254,7 @@
   function injectHeaderGear() {
     try {
       // never a second list-mode gear once one exists
-      if (document.querySelector(".cc-hgear:not(.cc-hgear-grid)")) return true;
+      if (document.querySelector(".cc-hgear")) return true;
       // Its home is the floating action bar on the Docker page or the tab strip on the others,
       // as in relocateTopBar, and never a column-header th, which the CSS hides in the basic view.
       var homeH = document.querySelector("div.js-actions") || document.querySelector("nav.tabs .tabs-container");

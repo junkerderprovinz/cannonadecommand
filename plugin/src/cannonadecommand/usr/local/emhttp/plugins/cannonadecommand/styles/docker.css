@@ -26,9 +26,6 @@ html .cc-hgear:hover { color: var(--cc-accent-ink, #FCC419); }
 html .cc-hgear-bar { margin-right: 10px; font-size: var(--cc-text-title); color: var(--cc-accent-ink, #FCC419); }
 .cc-hgear-th { float: right; }
 .cc-hgear-float { display: none !important; } /* fallback gear caused the load flash */
-/* the grid gear is a tile within the card grid, not a floating button */
-.cc-gear-tile { display: flex; align-items: center; justify-content: center; min-height: 90px; border: 1px dashed #333; background: transparent; }
-.cc-gear-tile .cc-hgear { position: static; font-size: var(--cc-text-title); }
 /* daemon unreachable → a permanent red gear (CPU/RAM/BW can't work without the daemon) */
 .cc-hgear-down { color: var(--cc-err-ink, #ff8389) !important; }
 .cc-ok-text { color: var(--cc-ok-ink, #6fdc8c); }
@@ -564,7 +561,6 @@ html .cc-abtn-primary { color: var(--cc-ok-ink, #6fdc8c); border-color: rgba(63,
 
 /* docker.js gives the folder-body gear tile whichever density is active, so it does not sit as a
    90px square among tiny chips or slim rows */
-.cc-gear-tile.cc-chip, .cc-gear-tile.cc-frow { min-height: auto; }
 
 /* The gear menu's filter, a filled field with no line around it. The html prefix and the menu
    class carry it past Unraid's input[type="text"] rule, which would draw an underline. */
