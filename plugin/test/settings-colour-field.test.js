@@ -75,7 +75,7 @@ console.log('\nThe field: picker on top, presets and hex field in one row under 
 console.log('\nThe field stands at the end of its row, as wide as its picker');
 {
   const page = withUnraid('settings');
-  const pick = { tag: 'div', classes: ['cc-set-pickrow'], inside: ['#cc-settings', '.cc-set-row'] };
+  const pick = { tag: 'div', classes: ['cc-set-pickrow'], inside: ['#cc-settings', '.cc-set-row'], outside: ['.cc-set-pickrow'] };
   ok('it is pushed to the row\'s end', /auto$/.test(val(win(page, pick, 'margin'))), val(win(page, pick, 'margin')));
   ok('it keeps a width of its own', val(win(page, pick, 'flex')) === '0 1 420px' && val(win(page, pick, 'max-width')) === '420px');
   ok('picker and row stretch to that one width', val(win(page, pick, 'flex-direction')) === 'column' && val(win(page, pick, 'align-items')) === 'stretch');
