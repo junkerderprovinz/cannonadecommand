@@ -3399,9 +3399,10 @@
     closePop();
     var pop = el("div", "cc-pop"); if (localStorage.getItem("cc.rainbow") === "1") pop.classList.add("cc-rainbow");
     var head = el("div", "cc-pop-head");
-    // The info text lives in one bubble beside the window title.
-    head.appendChild(el("span", "cc-win-title cc-pop-ttl", t("bandwidth") + ": " + name));
-    head.appendChild(infoBubble(LANG === "de"
+    // The info text lives in one bubble inside the window title, as on a card's title.
+    var bwTitle = el("span", "cc-win-title cc-pop-ttl", t("bandwidth") + ": " + name);
+    head.appendChild(bwTitle);
+    bwTitle.appendChild(infoBubble(LANG === "de"
       ? "Bandbreitenlimit pro Container: Upload wird per tbf-Shaper begrenzt, Download per Netfilter-Policing. 0 oder leer = unbegrenzt. Die Statuszeile unten prüft live, ob die Regel wirklich greift."
       : "Per-container bandwidth cap: upload is shaped via tbf, download via netfilter policing. 0 or blank = unlimited. The status line below verifies live that the rule is really in place."));
     pop.appendChild(head);
@@ -3454,14 +3455,14 @@
       else statClear(rDn);
     }).catch(function () {});
   }
-  // The round apply-status dot behind a field: a green check for verified applied, a red cross
-  // for failed, with the detail on hover. One dot per row, replaced in place on every re-check.
-  // It rides the same body-level bubble as the (i) explainers, so every hover explainer inside
-  // a CC window is one mechanism.
+  // The apply-status dot at the end of a row's label, so the field keeps the row's far end: a green
+  // check for verified applied, a red cross for failed, the detail in the same hover bubble as the
+  // (i) explainers. One dot per row, replaced in place on every re-check.
+  function statHost(row) { return row.querySelector(":scope > .cc-pop-lbl") || row; }
   function statDot(row, ok, text) {
     if (!row) return;
-    var d = row.querySelector(":scope > .cc-statdot");
-    if (!d) { d = el("span", "cc-statdot"); row.appendChild(d); }
+    var d = row.querySelector(".cc-statdot");
+    if (!d) { d = el("span", "cc-statdot"); statHost(row).appendChild(d); }
     d.className = "cc-statdot " + (ok ? "cc-stat-ok" : "cc-stat-bad");
     d.textContent = ok ? "✓" : "✕";
     if (text) { d.setAttribute("data-tip", text); d.setAttribute("aria-label", text); } else { d.removeAttribute("data-tip"); d.removeAttribute("aria-label"); }
@@ -3469,8 +3470,8 @@
   }
   // The dot's slot is reserved from the start, so the field does not shrink when the dot
   // appears; statDot only makes the placeholder visible.
-  function statSlot(row) { if (row && !row.querySelector(":scope > .cc-statdot")) row.appendChild(el("span", "cc-statdot cc-stat-slot")); }
-  function statClear(row) { var d = row && row.querySelector(":scope > .cc-statdot"); if (d) { d.className = "cc-statdot cc-stat-slot"; d.textContent = ""; d.removeAttribute("data-tip"); d.removeAttribute("aria-label"); } }   // data-tip goes too: an invisible slot with a live tip would pop a bubble over nothing
+  function statSlot(row) { if (row && !row.querySelector(".cc-statdot")) statHost(row).appendChild(el("span", "cc-statdot cc-stat-slot")); }
+  function statClear(row) { var d = row && row.querySelector(".cc-statdot"); if (d) { d.className = "cc-statdot cc-stat-slot"; d.textContent = ""; d.removeAttribute("data-tip"); d.removeAttribute("aria-label"); } }   // data-tip goes too: an invisible slot with a live tip would pop a bubble over nothing
   // The backend or Docker rejection stays in the open window, where a 4s toast would be
   // unreadable, so the reason `docker update` refused can still be read back. It is the only
   // way to diagnose a set or remove failure once a stale install is ruled out. Also logged.
@@ -3527,8 +3528,9 @@
     var title = which === "cpu" ? t("cpuLimit") : which === "ram" ? t("ramLimit") : "CPU / RAM";
     var pop = el("div", "cc-pop cc-pop-stat"); if (localStorage.getItem("cc.rainbow") === "1") pop.classList.add("cc-rainbow");
     var head = el("div", "cc-pop-head");
-    // The info text lives in one bubble beside the window title, not in a foot line.
-    head.appendChild(el("span", "cc-win-title cc-pop-ttl", title + ": " + name)); head.appendChild(infoBubble(t("limitsFoot"))); pop.appendChild(head);
+    // The info text lives in one bubble inside the window title, as on a card's title, not in a foot line.
+    var limTitle = el("span", "cc-win-title cc-pop-ttl", title + ": " + name);
+    limTitle.appendChild(infoBubble(t("limitsFoot"))); head.appendChild(limTitle); pop.appendChild(head);
     var body = el("div", "cc-pop-body"), memNum = null, memUnit = null, cpu = null;
     var readCpuset = function () { return ""; }, fillCpuset = function () {};
     if (showRam) {

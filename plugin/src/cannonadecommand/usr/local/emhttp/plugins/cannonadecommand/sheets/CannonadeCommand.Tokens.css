@@ -376,6 +376,8 @@ html.Theme--azure {
   font-size: var(--cc-sec-fs); font-weight: var(--cc-sec-fw); line-height: 1.2; letter-spacing: var(--cc-sec-ls);
   text-transform: uppercase; text-align: start; overflow-wrap: anywhere;
 }
+/* A window's (i) rides in its title badge, in the badge's ink, as it does on a card's title. */
+.cc-win-title .cc-info { color: inherit !important; opacity: 1 !important; }
 /* The close badge (CCTheme.modal) notches into the top right corner as the title does into the top
    left, on every .cc-win and .cc-pop, so the title stops 74px short of the right edge: the badge's
    16px inset, its 26px and a gap. */
