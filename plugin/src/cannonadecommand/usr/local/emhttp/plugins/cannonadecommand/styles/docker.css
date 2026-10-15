@@ -1553,6 +1553,12 @@ div.js-actions :is(input[type=button], .cc-bulkmode-badge, .cc-allct):focus-visi
 .sl-bubble .sl-upd:hover, .sl-bubble .sl-gh:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 .sl-bubble .sl-upd.sl-upd-off { background: transparent !important; color: var(--sl-dim) !important; border: 1px solid var(--sl-line2) !important; filter: none !important; }
 .sl-bubble .sl-pill { border-radius: var(--cc-radius-pill) !important; }
+/* ShipLog sizes its window, cards and section badges by a --cc-b-radius CC does not set, so they
+   stayed round in every shape; the shape engine's tokens take over: the window a card, its cards
+   a control, every section badge and the AI model tag a pill. */
+html .sl-bubble { border-radius: var(--cc-radius-card) !important; }
+html .sl-bubble :is(.sl-sec, .sl-aubar, .sl-unmaint-note) { border-radius: var(--cc-radius-control) !important; }
+html .sl-bubble :is(h4, .sl-ai) { border-radius: var(--cc-radius-pill) !important; }
 .sl-bubble .sl-x { border-radius: var(--cc-radius-pill) !important; }
 /* The close button rests on ShipLog's neutral chip and on hover takes the colour the repository
    button rests on: the accent, or its stamped --cc-rb-c. */
