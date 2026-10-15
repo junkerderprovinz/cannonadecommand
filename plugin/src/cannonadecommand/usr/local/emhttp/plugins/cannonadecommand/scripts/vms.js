@@ -659,14 +659,17 @@
     })();
     // the progress line of Apply, at the foot of the card
     var msg = el("div"); msg.style.cssText = "font-size:var(--cc-text-meta);color:var(--cc-text-dim,#8a8a8a)"; card.appendChild(msg);
-    var act = el("div", "cc-win-act");
-    var cancel = el("span", "cc-win-btn", VMDE ? "Schließen" : "Close"); act.appendChild(cancel);
+    // The close badge comes from the modal, so the row holds Apply alone, and a vDisk-only window,
+    // whose grow buttons act on their own, has no row at all.
     var apply = null;
-    if (hasLimFields) { apply = el("span", "cc-win-btn cc-win-go", VMDE ? "Anwenden" : "Apply"); act.appendChild(apply); }
-    win.appendChild(act);
+    if (hasLimFields) {
+      var act = el("div", "cc-win-act");
+      apply = el("span", "cc-win-btn cc-win-go", VMDE ? "Anwenden" : "Apply"); act.appendChild(apply);
+      win.appendChild(act);
+    }
     document.body.appendChild(win);
     var CT = window.CCTheme;
-    if (CT && CT.pressable) { CT.pressable(cancel); if (apply) CT.pressable(apply); }
+    if (CT && CT.pressable && apply) CT.pressable(apply);
     if (CT && CT.paintWin) CT.paintWin(win);
     if (CT && CT.paintSelects) CT.paintSelects(win);
     // place the window at the gear (clamped into the viewport; flips above if it would overflow the bottom)
@@ -681,7 +684,6 @@
     var into = f.cores ? f.cores.input : f.ram ? f.ram.input : f.dn ? f.dn.input : null;
     var modal = CT && CT.modal ? CT.modal(win, { opener: anchor, focus: into || undefined }) : null;
     function close() { if (modal) modal.close(); else if (win.parentNode) win.parentNode.removeChild(win); }
-    cancel.addEventListener("click", close);
     function intOr(s) { s = (s || "").trim(); if (s === "") return null; var n = parseInt(s, 10); return isNaN(n) ? null : n; }
     var busy = false;
     if (apply) apply.onclick = function () {

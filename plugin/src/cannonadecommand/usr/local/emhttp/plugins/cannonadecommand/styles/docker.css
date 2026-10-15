@@ -657,7 +657,7 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
 /* The title notches into the window's top edge with its info bubble beside it, the pair placed as
    one group, as on a .cc-win; the window's top padding leaves room under it. */
 .cc-pop { padding-top: 21px; }
-.cc-pop-head { position: absolute; top: 0; left: 24px; transform: translateY(-50%); display: flex; align-items: center; gap: 8px; max-width: calc(100% - 48px); padding: 0; border-bottom: none; }
+.cc-pop-head { position: absolute; top: 0; left: 24px; transform: translateY(-50%); display: flex; align-items: center; gap: 8px; max-width: calc(100% - 74px); padding: 0; border-bottom: none; }
 .cc-pop-head .cc-win-title { position: static; transform: none; flex: 0 1 auto; max-width: none; }
 .cc-pop-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }   /* an unwrapped row takes the full inset */
 /* The label column is a floor plus nowrap, not a fixed width: with a width, a label wider than the
@@ -1390,8 +1390,9 @@ html.cc-tools-rbneutral #cc-settings .cc-dsel-opt.is-selected {
 .cc-info svg { width: 15px; height: 15px; display: block; background: none; }
 .cc-info:hover, .cc-info:focus { opacity: 1; outline: none; }
 /* Every [data-tip] carrier in the settings panel and on the Docker pages is served by header.js's
-   body-level bubble, so only the anchor positions live here. */
-:is(#cc-settings, .cc-enh, .cc-grid-holder, .cc-actbar, .cc-pop, .cc-menu, nav.tabs) [data-tip],
+   body-level bubble, so only the anchor positions live here. A window's close badge keeps the
+   absolute place Tokens.css gives it in the corner. */
+:is(#cc-settings, .cc-enh, .cc-grid-holder, .cc-actbar, .cc-pop, .cc-menu, nav.tabs) [data-tip]:not(.cc-win-x),
 button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-tip] { position: relative; }
 .cc-set-mini { background: transparent; color: var(--dim); border: 1px solid var(--line2); border-radius: var(--cc-radius-pill); padding: 5px 12px; font-size: var(--cc-text-subline); cursor: pointer; }
 .cc-set-mini-on { color: #fff; border-color: var(--cc-accent, #FCC419); background: rgba(255,255,255,.05); }
@@ -2140,7 +2141,7 @@ html.cc-docker-on.cc-on-addct .ui-dialog select:focus-visible { outline: none !i
    sheet loads only on CC-governed pages, so the page-level selector is safe, and the field rules
    above already give focus a fill. The (i) and CC's own buttons, badges and fields keep their halo
    from Tokens.css, which this rule would outweigh by coming later. */
-:is(a, button, input, select, [tabindex]):where(:not(.cc-info, .cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast)):focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
+:is(a, button, input, select, [tabindex]):where(:not(.cc-info, .cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-win-x, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast)):focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
 
 /* The reactive rainbow on /Docker, gated on the html.cc-shares-rbneutral shares.js stamps on
    every page, the same contract as /Main. Every CC-painted control rests grey and takes its

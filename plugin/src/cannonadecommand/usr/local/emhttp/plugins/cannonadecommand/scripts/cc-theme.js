@@ -554,8 +554,7 @@
   // per-item settings window. Docker offers the same options in its Startplan window and the VM
   // tab in its limits editor.
   function iconPopover(anchor, scope, name, onChange) {
-    var de = false;
-    try { de = /de/i.test(document.documentElement.lang || "") || (localStorage.getItem("locale") || "").indexOf("de") === 0; } catch (e) {}
+    var de = german();
     var old = document.getElementById("cc-icm-pop"); if (old) old.remove();
     var ov = document.createElement("div"); ov.id = "cc-icm-pop";
     ov.style.cssText = "position:fixed;inset:0;z-index:99999";
@@ -712,8 +711,22 @@
     else if (e.shiftKey && a === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); }
   }
-  // win has to be in the document already. opts.onDismiss runs on Escape and on a scrim click and
-  // is expected to end in close(); without it those close the window outright.
+  function german() {
+    try { return /de/i.test(document.documentElement.lang || "") || (localStorage.getItem("locale") || "").indexOf("de") === 0; } catch (e) { return false; }
+  }
+  // The way out of every window, a square badge in its top right corner, so the button row at the
+  // bottom holds only the actions.
+  function closeBadge(run) {
+    var b = pressable(document.createElement("span"));
+    b.className = "cc-win-x";
+    b.innerHTML = glyph("Close");
+    var label = german() ? "Schließen" : "Close";
+    b.setAttribute("aria-label", label); b.setAttribute("data-tip", label);
+    b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); run(); });
+    return b;
+  }
+  // win has to be in the document already. opts.onDismiss runs on Escape, on a scrim click and on
+  // the close badge and is expected to end in close(); without it those close the window outright.
   function modal(win, opts) {
     opts = opts || {};
     var opener = opts.opener || document.activeElement, closed = false;
@@ -736,27 +749,30 @@
     }
     var entry = { win: win, dismiss: function () { if (opts.onDismiss) opts.onDismiss(); else close(); } };
     scrim.addEventListener("click", function (e) { e.stopPropagation(); entry.dismiss(); });
+    win.appendChild(closeBadge(function () { entry.dismiss(); }));
+    if (win.classList.contains("cc-win")) paintWin(win);
     if (!winStack.length) document.addEventListener("keydown", onWinKey, true);
     winStack.push(entry);
     // The first field or switch in the content, else the first button in the bottom row; never
-    // the (i) beside the title, whose bubble would open the moment the window does.
+    // the (i) beside the title, whose bubble would open the moment the window does, and never the
+    // close badge.
     var into = opts.focus;
     if (!into) {
-      var f = focusables(win).filter(function (n) { return !n.classList.contains("cc-info"); });
+      var f = focusables(win).filter(function (n) { return !n.classList.contains("cc-info") && !n.classList.contains("cc-win-x"); });
       into = f.filter(function (n) { return n.closest(".cc-win-card, .cc-pop-mid"); })[0] || f[0] || win;
     }
     try { into.focus(); } catch (e) {}
     return { close: close };
   }
 
-  // The title badge first, then each button, one palette slot after another in rainbow, a delete
-  // keeping off the red slot as on the rows. Under the reactive mode the main button rests grey;
-  // the title, a heading, keeps its colour.
+  // The title badge first, then each button and the close badge, one palette slot after another in
+  // rainbow, a delete keeping off the red slot as on the rows. Under the reactive mode the main
+  // button rests grey; the title, a heading, keeps its colour.
   function paintWin(win) {
     var rb = g("cc.theming", "1") !== "0" && g("cc.rainbow", "0") === "1";
     win.classList.toggle("cc-win-reactive", g("cc.theming", "1") !== "0" && g("cc.rbmode", "all") === "active");
     var p = surfacePalette(palette(), null), off = g("cc.rainbowrot", "1") === "0" ? 0 : rbSeed(p.length);
-    Array.prototype.forEach.call(win.querySelectorAll(".cc-win-title, .cc-win-btn"), function (el, i) {
+    Array.prototype.forEach.call(win.querySelectorAll(".cc-win-title, .cc-win-btn, .cc-win-x"), function (el, i) {
       if (!rb) { el.style.removeProperty("--cc-rb-c"); el.style.removeProperty("--cc-rb-ct"); return; }
       var c = el.classList.contains("cc-win-del") ? deleteSlot(p, i + off) : p[(i + off) % p.length];
       el.style.setProperty("--cc-rb-c", c); el.style.setProperty("--cc-rb-ct", idealText(c));
