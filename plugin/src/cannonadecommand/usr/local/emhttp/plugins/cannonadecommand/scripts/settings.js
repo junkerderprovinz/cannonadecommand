@@ -2544,18 +2544,23 @@
       root.style.setProperty("--cc-set-tabs-h", tabsHeight() + "px");
     } catch (e) {}
   }
-  // The tile column runs from its top down to the window's bottom edge, less the sticky gap and
-  // Unraid's footer while it shows, so the tiles share that height as KnightLoader's do. The top
-  // is the row's, which never sticks, so a render after a scroll measures the same column.
+  // The tile column runs from where it stands in the window down to the bottom edge, less the
+  // sticky gap and Unraid's footer while it shows, so the tiles share that height as KnightLoader's
+  // do. Once the page scrolls the column sticks 12px below the top, and it grows to fill what the
+  // window shows from there, so a scroll stamps the height again.
   function tabsHeight() {
     var body = root.querySelector(".cc-set-body");
-    var top = body ? body.getBoundingClientRect().top + window.scrollY : 0;
+    var top = Math.max(12, body ? body.getBoundingClientRect().top : 0);
     var foot = document.getElementById("footer"), fh = 0;
     if (foot && getComputedStyle(foot).position === "fixed" && getComputedStyle(foot).display !== "none") fh = foot.offsetHeight;
     return Math.max(160, Math.round(window.innerHeight - top - 12 - fh));
   }
-  var alignT = null; // one debounced resize listener for the page's lifetime
+  var alignT = null, tabsFrame = 0; // one resize and one scroll listener for the page's lifetime
   window.addEventListener("resize", function () { clearTimeout(alignT); alignT = setTimeout(alignSetTabs, 150); });
+  window.addEventListener("scroll", function () {
+    if (tabsFrame) return;
+    tabsFrame = window.requestAnimationFrame(function () { tabsFrame = 0; root.style.setProperty("--cc-set-tabs-h", tabsHeight() + "px"); });
+  }, { passive: true });
 
   // The sub-tabs re-sort when the main menu order changes, whether by a drag or by an auto-mount.
   // A menu mutation re-runs render(), which re-reads the live order and rebuilds the strip while

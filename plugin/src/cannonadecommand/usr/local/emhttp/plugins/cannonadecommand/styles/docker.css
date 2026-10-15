@@ -1217,6 +1217,9 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
 /* The cards stop at a reading width, so a row's name and its control stay close enough to read as
    one line. */
 .cc-set-main { flex: 1 1 auto; min-width: 0; max-width: 920px; }
+/* Unraid's .content scrolls on its own axis, which would make it the column's sticky frame; it
+   never scrolls, so the column would scroll away with the page. */
+#displaybox .content:has(> #cc-settings) { overflow: visible !important; }
 .cc-set-tabs { position: sticky; top: 12px; flex: none; box-sizing: border-box; width: 204px; height: var(--cc-set-tabs-h, auto); max-height: calc(100vh - 24px); overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 0 8px 0 4px; margin: 0; }
 .cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: flex !important; flex: 1 0 0; min-height: 40px; align-items: center; justify-content: flex-start; gap: 12px; box-sizing: border-box; height: auto !important; padding: 0 12px !important; font-size: var(--cc-text-body) !important; font-weight: 500 !important; line-height: 20px; text-align: start; text-transform: none !important; letter-spacing: normal !important; border-radius: var(--cc-radius-control) !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS adds one to every button */
 .cc-set-tab[hidden] { display: none !important; }
