@@ -458,6 +458,13 @@
         icoRes[key] = { kind: v.kind || "none", source: v.source || "", slug: v.slug || "" };
         delete icoWant[key];
       });
+      // The engine skips a name it normalises to nothing; left waiting, it would be asked for again
+      // at once by icoDrain, without end.
+      names.forEach(function (key) {
+        if (!icoWant[key]) return;
+        delete icoWant[key];
+        if (!icoRes[key]) { icoRes[key] = { kind: "none", source: "", slug: "" }; changed = true; }
+      });
       if (changed) { icoPolls = 0; icoNotify(); }
       icoDrain();
     }).catch(function () { icoInflight = false; icoSettleNone(); icoDrain(); });
