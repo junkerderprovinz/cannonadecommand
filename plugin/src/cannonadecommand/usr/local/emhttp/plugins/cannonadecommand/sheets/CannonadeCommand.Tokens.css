@@ -1004,6 +1004,7 @@ html.cc-popups-on #searchButton { color: inherit !important; position: relative 
 html.cc-popups-on li.cc-ca-search-li {
   list-style: none !important; padding: 0 !important; background: transparent !important;
   position: relative !important;   /* anchor for the expanded field, which leaves the flow (see below) */
+  flex-basis: calc(100% + 16px) !important; margin: 0 -8px !important;   /* over the cards' inset, as wide as a card */
 }
 html.cc-popups-on li.cc-ca-search-li #searchFilter:not(.cc-open) {
   display: flex !important; align-items: center !important; justify-content: flex-start !important;
@@ -1119,6 +1120,7 @@ html.cc-popups-on li.cc-ca-search-li #searchFilter .awesomplete > ul > li[aria-s
 html.cc-popups-on .ca_display_area .menuItems {
   display: flex !important; flex-flow: row wrap !important; align-content: flex-start !important;
   row-gap: 2px !important; width: max(18rem, 190px) !important; box-sizing: border-box !important;
+  padding: 0 8px 8px !important; position: relative !important; isolation: isolate !important;   /* the stacking context the cards sit in, under the rows */
 }
 html.cc-popups-on .menuItems > ul.caMenu,
 html.cc-popups-on .menuItems > #category_list,
@@ -1213,14 +1215,27 @@ html.cc-popups-on li.caMenuItem > a.caMenuItem {
 }
 html.cc-popups-on a.caMenuItem { color: inherit !important; text-decoration: none !important; }
 
-/* The group headings are eyebrows: small, spaced capitals in the dim text, with the same gap above
-   each, the first one included. */
+/* Each group stands on a card like the settings page's, its heading the section badge straddling
+   the card's top edge. header.js ccAppsCards() lays the card behind the rows from the badge's
+   centre to the last row; the column's side padding is the card's inset, and the cards keep
+   GlimStone's 40px apart, the badge reaching into the gap above. ccAppsStamp() gives each badge
+   its colour; a heading is not a control, so the reactive mode leaves it coloured. */
 html.cc-popups-on li.cc-ca-eyebrow {
-  padding: 14px 10px 4px !important;
-  font-size: var(--cc-text-meta) !important; font-weight: 600 !important; line-height: 16px !important;
-  letter-spacing: .14em !important; text-transform: uppercase !important;
-  white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
-  color: var(--cc-text-dim, #8a8a8a) !important; cursor: default !important;
+  padding: 35px 0 6px !important; line-height: 0 !important; cursor: default !important;
+}
+html.cc-popups-on li.cc-ca-eyebrow[data-cc-group="discover"] { padding-top: 24px !important; }
+html.cc-popups-on li.cc-ca-eyebrow > span {
+  display: inline-block; max-width: 100%; box-sizing: border-box; vertical-align: top;
+  height: var(--cc-sec-h, 22px); padding: var(--cc-sec-pad, 0 12px); border-radius: var(--cc-radius-pill);
+  font-size: var(--cc-sec-fs); font-weight: var(--cc-sec-fw, 500); line-height: var(--cc-sec-h, 22px);
+  letter-spacing: var(--cc-sec-ls, 1.2px); text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616));
+}
+.cc-ca-card { display: none; }
+html.cc-popups-on li.cc-ca-eyebrow > .cc-ca-card:not([hidden]) {
+  display: block; position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none;
+  background: var(--cc-surface-1, #1e1e1e); border-radius: var(--cc-radius-card); box-shadow: 0 2px 12px rgba(0, 0, 0, .3);
 }
 
 /* CA shows the Action Centre only while something waits for an action, and names no count, so a

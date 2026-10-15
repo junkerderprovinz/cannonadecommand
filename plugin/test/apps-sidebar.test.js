@@ -140,13 +140,26 @@ console.log('\nThe lists step out of the box tree and the column orders the grou
   ok('and the number its own width', val({ tag: 'li', classes: ['cc-ca-ver-num'], inside: IN_CATS }, 'flex') === '0 0 auto');
 }
 
-console.log('\nThe headings are eyebrows on the type scale');
+console.log('\nEach group stands on a card under a section badge');
 {
   const eb = { tag: 'li', classes: ['cc-ca-eyebrow'], attrs: { 'data-cc-group': 'mine' }, inside: IN_CATS };
-  ok('meta size', val(eb, 'font-size') === 'var(--cc-text-meta)', val(eb, 'font-size'));
-  ok('spaced capitals', val(eb, 'text-transform') === 'uppercase' && val(eb, 'letter-spacing') === '.14em');
-  ok('dim text', /^var\(--cc-text-dim,/.test(val(eb, 'color')), val(eb, 'color'));
-  ok('no pointer', val(eb, 'cursor') === 'default');
+  ok('no pointer on the heading', val(eb, 'cursor') === 'default');
+  const badge = { tag: 'span', classes: [], inside: ['.cc-ca-eyebrow'].concat(IN_CATS) };
+  ok('the badge is filled with the stamped colour', /^var\(--cc-rb-c, var\(--cc-accent/.test(val(badge, 'background')), val(badge, 'background'));
+  ok('with the ink picked for that fill', /^var\(--cc-rb-ct, var\(--cc-accent-text/.test(val(badge, 'color')), val(badge, 'color'));
+  ok('at the section badge height', val(badge, 'height') === 'var(--cc-sec-h, 22px)', val(badge, 'height'));
+  ok('in the section badge type', val(badge, 'font-size') === 'var(--cc-sec-fs)' && val(badge, 'text-transform') === 'uppercase');
+  ok('as a pill', val(badge, 'border-radius') === 'var(--cc-radius-pill)');
+  const card = { tag: 'div', classes: ['cc-ca-card'], inside: ['.cc-ca-eyebrow'].concat(IN_CATS) };
+  ok('the card lies under the rows', val(card, 'position') === 'absolute' && val(card, 'z-index') === '-1' && val(card, 'pointer-events') === 'none');
+  ok('on the surface and radius of the app cards beside it', /^var\(--cc-surface-1/.test(val(card, 'background')) && val(card, 'border-radius') === 'var(--cc-radius-card)', val(card, 'background'));
+  ok('a card with rows is drawn', val(card, 'display') === 'block');
+  ok('a card without rows to hold is not', val(Object.assign({}, card, { attrs: { hidden: '' } }), 'display') === 'none');
+  ok('without CC\'s pop-ups a leftover card stays out of the column', val(Object.assign({}, card, { html: ['Theme--black'] }), 'display') === 'none');
+  const column = { tag: 'div', classes: ['menuItems', 'menuAdjust'], inside: ['.ca_display_area'] };
+  ok('the column holds the cards in a stacking context of its own', val(column, 'isolation') === 'isolate' && val(column, 'position') === 'relative');
+  ok('its side padding is the cards\' inset', val(column, 'padding') === '0 8px 8px');
+  ok('the search field spans the full card width over it', val({ tag: 'li', id: 'cc-ca-search-li', classes: ['cc-ca-search-li'], inside: IN_CATS }, 'margin') === '0 -8px');
 }
 
 console.log('\nThe Action Centre carries a dot, not a green fill');
@@ -184,7 +197,7 @@ class El {
   appendChild(c) { return this.insertBefore(c, null); }
   insertBefore(c, ref) { if (c.parentElement) c.parentElement.children.splice(c.parentElement.children.indexOf(c), 1); c.parentElement = this; const i = ref ? this.children.indexOf(ref) : -1; i < 0 ? this.children.push(c) : this.children.splice(i, 0, c); return c; }
   getClientRects() { let e = this; while (e) { if (e.hidden) return []; e = e.parentElement; } return [1]; }
-  getBoundingClientRect() { return { top: this.top }; }
+  getBoundingClientRect() { const h = this.h || 0; return { top: this.top, bottom: this.top + h, height: h }; }
   addEventListener(t, f) { (this.listeners[t] = this.listeners[t] || []).push(f); }
   click() { this.clicks++; }
   focus() { this.ownerDoc.activeElement = this; (this.ownerDoc.root.listeners.focusin || []).forEach((f) => f({ target: this })); }
@@ -249,7 +262,7 @@ function sidebar() {
 function run(lang) {
   const s = sidebar();
   const make = new Function('document', 'T', fnSrc('ccEyebrow') + fnSrc('ccAppsGroups') + fnSrc('ccSidebarRows') + '\nreturn ccAppsGroups;');
-  const create = (tag) => { const e = new El(tag); e.ownerDoc = s.doc; return e; };
+  const create = (tag) => { const e = new El(tag); e.ownerDoc = s.doc; e.style = {}; return e; };
   s.doc.createElement = create;
   s.groups = make(s.doc, (de, en) => (lang === 'de' ? de : en));
   s.groups();
@@ -271,6 +284,33 @@ console.log('\nThe script adds a heading per group, first in its list');
   ok('English labels in English', run('en').main.children.map((c) => c.textContent).slice(0, 2).sort().join() === 'Discover,My apps');
   ok('the version label is marked', s.meta.children.some((c) => c.classList.contains('cc-ca-ver-label') && c.textContent === 'VERSION'));
   ok('and the number', s.meta.children.some((c) => c.classList.contains('cc-ca-ver-num') && c.querySelector('#caInstalledVersion')));
+  ok('every heading carries its badge and its card', s.menu.querySelectorAll('li.cc-ca-eyebrow').every((h) => h.children.length === 2 && h.children[0].tagName === 'SPAN' && h.children[1].classList.contains('cc-ca-card')));
+}
+
+console.log('\nA group\'s card runs from its badge to the last row the group shows');
+{
+  const s = run('de');
+  const by = (t) => s.menu.all().find((e) => e.textContent === t && e.classList.contains('caMenuItem'));
+  const head = (g) => s.menu.querySelector('li.cc-ca-eyebrow[data-cc-group="' + g + '"]');
+  // The column starts at 40 on the screen; a badge is 22 high and a row 30.
+  s.menu.top = 40;
+  const place = (e, order, top, h) => { e.order = order; e.top = top; e.h = h; };
+  place(head('discover'), 10, 50, 22); place(head('discover').children[0], 0, 50, 22);
+  place(by('Start'), 11, 80, 30); place(by('Alle Apps'), 12, 112, 30); place(by('Aktionszentrale'), 13, 144, 30);
+  place(head('mine'), 20, 210, 22); place(head('mine').children[0], 0, 210, 22);
+  by('Installierte Apps').hidden = true;
+  [head('categories'), head('ca')].forEach((h) => { h.hidden = true; });
+  s.main.children.filter((c) => c.querySelector('hr')).forEach((c) => { c.hidden = true; });
+  s.main.children.filter((c) => !c.order && !c.classList.contains('cc-ca-eyebrow')).forEach((c) => { c.order = 21; });
+  const cards = new Function('document', 'window', 'getComputedStyle', 'var ccCardRo = null, ccCardMenu = null;\n' + fnSrc('ccAppsCards') + '\nreturn ccAppsCards;')(s.doc, {}, (e) => ({ order: String(e.order || 0) }));
+  cards();
+  const disc = head('discover').children[1], mine = head('mine').children[1];
+  ok('the card\'s top edge runs through the badge\'s centre', disc.style.top === '21px', disc.style.top);
+  ok('and ends a card inset under the group\'s last row, though that row sits in another list', disc.style.height === '121px', disc.style.height);
+  ok('a group whose rows are all hidden draws no card', mine.hidden === true);
+  by('Installierte Apps').hidden = false; place(by('Installierte Apps'), 21, 240, 30);
+  cards();
+  ok('and draws it again once a row shows', mine.hidden === false && mine.style.height === '57px', mine.style.height);
 }
 
 console.log('\nThe rows are one tab stop and the arrows walk them as shown');

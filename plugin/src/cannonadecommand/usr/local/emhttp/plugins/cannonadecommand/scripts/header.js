@@ -2759,17 +2759,59 @@
       ul.style.setProperty("right", "auto", "important");
     } catch (e) {}
   }
-  // A group heading for the sidebar. It goes first in its list, where no CA entry has it as the
-  // sibling its click handler opens, and Tokens.css moves it to its group by data-cc-group.
+  // A group heading for the sidebar: the section badge of the group's card, and the card itself.
+  // It goes first in its list, where no CA entry has it as the sibling its click handler opens, and
+  // Tokens.css moves it to its group by data-cc-group. The card travels with its heading, so CA
+  // rewriting the category list takes both and the next pass brings both back.
   function ccEyebrow(list, group, text) {
     var h = list.querySelector(':scope > li.cc-ca-eyebrow[data-cc-group="' + group + '"]');
     if (!h) {
       h = document.createElement("li");
       h.className = "cc-ca-eyebrow";
       h.setAttribute("data-cc-group", group);
+      h.appendChild(document.createElement("span"));
+      var card = document.createElement("div");
+      card.className = "cc-ca-card";
+      h.appendChild(card);
       list.insertBefore(h, list.firstChild);
     }
-    if (h.textContent !== text) h.textContent = text;
+    if (h.firstChild.textContent !== text) h.firstChild.textContent = text;
+  }
+  // CA's entries cannot be wrapped in a card without breaking its click handler, so each group's
+  // card is a plate behind its rows, from the centre of the heading's badge to the last row the
+  // group shows. A row's group is its CSS order, which Tokens.css sets in steps of ten.
+  var ccCardRo = null, ccCardMenu = null;
+  function ccAppsCards() {
+    try {
+      var menu = document.querySelector(".ca_display_area .menuItems");
+      if (!menu) return;
+      if (menu !== ccCardMenu && window.ResizeObserver) {
+        if (ccCardRo) ccCardRo.disconnect();
+        ccCardMenu = menu;
+        ccCardRo = new ResizeObserver(ccAppsCards);   // a sub-list opening, the categories arriving
+        ccCardRo.observe(menu);
+      }
+      var top0 = menu.getBoundingClientRect().top, heads = {}, ends = {};
+      var lis = menu.querySelectorAll("ul.caMenu > li");
+      for (var i = 0; i < lis.length; i++) {
+        var li = lis[i];
+        if (!li.getClientRects().length) continue;
+        var g = Math.min(4, Math.floor((parseInt(getComputedStyle(li).order, 10) || 0) / 10));
+        if (!g) continue;
+        if (li.classList.contains("cc-ca-eyebrow")) heads[g] = li;
+        else ends[g] = Math.max(ends[g] || 0, li.getBoundingClientRect().bottom - top0);
+      }
+      for (var k in heads) {
+        var card = heads[k].querySelector(":scope > .cc-ca-card");
+        if (card.hidden !== !ends[k]) card.hidden = !ends[k];
+        if (!ends[k]) continue;
+        var b = heads[k].firstChild.getBoundingClientRect(), top = b.top + b.height / 2 - top0;
+        // the card's inset below its last row, as at its sides
+        var t = Math.round(top) + "px", ht = Math.round(ends[k] + 8 - top) + "px";
+        if (card.style.top !== t) card.style.top = t;
+        if (card.style.height !== ht) card.style.height = ht;
+      }
+    } catch (e) {}
   }
   // The results-per-page control and the Docker Hub badge live in CA's search area in the main
   // column. Docker Hub belongs to a search and goes under the sidebar field; results per page is a
@@ -3406,6 +3448,8 @@
       wireCaSearch();
       ccWireCaSearchCollapse();
       ccAppsGroups();
+      ccAppsStamp("li.cc-ca-eyebrow");
+      ccAppsCards();
       ccAppsStamp("li.caMenuItem.actionCentre");
       // The installed status badge stays unstamped: it is a resting state, never accent-filled in
       // any mode, so it has nothing to stamp.
