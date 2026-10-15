@@ -2034,15 +2034,32 @@
   // clamped into the viewport with the arrow staying over the anchor, and flips above the anchor
   // when the bottom edge would clip it. Hidden on scroll and on pointerdown.
   var ccTipBound = false, ccTipCur = null, ccTipKeys = false;
+  var ccTipFrame = 0, ccTipAt = "";
   function ccTipEl() {
     var d = document.getElementById("cc-tipfloat");
     if (!d) { d = document.createElement("div"); d.id = "cc-tipfloat"; document.body.appendChild(d); }
     return d;
   }
-  function ccTipHide() { var d = document.getElementById("cc-tipfloat"); if (d) d.style.display = "none"; ccTipCur = null; }
+  function ccTipHide() {
+    var d = document.getElementById("cc-tipfloat"); if (d) d.style.display = "none";
+    ccTipCur = null;
+    if (ccTipFrame) { window.cancelAnimationFrame(ccTipFrame); ccTipFrame = 0; }
+  }
+  // While a bubble stands it is checked once a frame. An anchor that moves, as a window does when it
+  // grows and the clamp slides it up, takes its bubble along, and one that leaves the page or is
+  // hidden takes it away, so no bubble is left standing on its own.
+  function ccTipFollow() {
+    ccTipFrame = 0;
+    if (!ccTipCur) return;
+    var r = ccTipCur.getBoundingClientRect();
+    if (!ccTipCur.isConnected || (!r.width && !r.height)) { ccTipHide(); return; }
+    if (Math.round(r.left) + "," + Math.round(r.top) !== ccTipAt) ccTipShow(ccTipCur);
+    ccTipFrame = window.requestAnimationFrame(ccTipFollow);
+  }
   function ccTipShow(t) {
     var tip = t.getAttribute("data-cc-tip") || t.getAttribute("data-tip"); if (!tip) return;
     var d = ccTipEl(), r = t.getBoundingClientRect();
+    ccTipAt = Math.round(r.left) + "," + Math.round(r.top);
     d.textContent = tip;
     d.style.display = "block";                                     // shown first, since it only measures while visible
     var vw = document.documentElement.clientWidth || window.innerWidth;
@@ -2077,6 +2094,7 @@
         }
         if (t === ccTipCur) return;                                // the bubble already stands on this anchor
         ccTipCur = t; ccTipShow(t);
+        if (!ccTipFrame) ccTipFrame = window.requestAnimationFrame(ccTipFollow);
       }
       function out(e) {
         if (!ccTipCur) return;

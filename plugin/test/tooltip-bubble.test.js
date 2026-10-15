@@ -27,7 +27,8 @@ class El {
   removeAttribute(k) { delete this.attrs[k]; }
   closest() { return this.attrs['data-tip'] || this.attrs.title ? this : null; }
   contains(o) { return o === this; }
-  getBoundingClientRect() { return { left: 100, top: 100, bottom: 120, width: 20, height: 20 }; }
+  getBoundingClientRect() { return this.rect || { left: 100, top: 100, bottom: 120, width: 20, height: 20 }; }
+  get isConnected() { return !this.gone; }
   get offsetWidth() { return 120; } get offsetHeight() { return 30; }
 }
 const listeners = {};
@@ -39,13 +40,15 @@ const document = {
   createElement: () => new El(),
   addEventListener: (t, fn) => { (listeners[t] = listeners[t] || []).push(fn); },
 };
-const window = { addEventListener() {}, innerWidth: 1200, innerHeight: 800 };
+let frames = [];
+const window = { addEventListener() {}, innerWidth: 1200, innerHeight: 800, requestAnimationFrame: (fn) => frames.push(fn), cancelAnimationFrame: () => { frames = []; } };
+const tick = () => { const f = frames; frames = []; f.forEach((fn) => fn()); };
 window.CCTheme = require('./theme-place')(window, document);
 const header = read('scripts/header.js');
-const decl = (/var ccTipBound = false, ccTipCur = null, ccTipKeys = false;/.exec(header) || [''])[0];
+const decl = (/var ccTipBound = false, ccTipCur = null, ccTipKeys = false;\n  var ccTipFrame = 0, ccTipAt = "";/.exec(header) || [''])[0];
 ok('the last-input flag is declared with the bubble state', !!decl);
 const wire = new Function('document', 'window',
-  decl + '\n' + grabFn(header, 'ccTipEl') + '\n' + grabFn(header, 'ccTipHide') + '\n' + grabFn(header, 'ccTipShow') + '\n' + grabFn(header, 'ccWireTips') + '\nccWireTips(); return { hide: ccTipHide };')(document, window);
+  decl + '\n' + grabFn(header, 'ccTipEl') + '\n' + grabFn(header, 'ccTipHide') + '\n' + grabFn(header, 'ccTipFollow') + '\n' + grabFn(header, 'ccTipShow') + '\n' + grabFn(header, 'ccWireTips') + '\nccWireTips(); return { hide: ccTipHide };')(document, window);
 const fire = (type, e) => (listeners[type] || []).forEach((fn) => fn(Object.assign({ type }, e)));
 const open = () => !!bubble && bubble.style.display === 'block';
 
@@ -74,6 +77,28 @@ console.log('\nHover always opens, focus only after the keyboard');
 
   fire('keydown', { key: 'Escape' });
   ok('Escape still closes it and counts as keyboard use', !open());
+}
+
+console.log('\nThe bubble stays with its anchor');
+{
+  const icon = new El({ 'data-tip': 'In a window' });
+  icon.rect = { left: 100, top: 100, bottom: 120, width: 20, height: 20 };
+  fire('mouseover', { target: icon });
+  const at = bubble.style.top;
+  icon.rect = { left: 100, top: 40, bottom: 60, width: 20, height: 20 };
+  tick();
+  ok('a window that slides up takes the bubble along', open() && at === '128px' && bubble.style.top === '68px', at + ' ' + bubble.style.top);
+  tick();
+  ok('it keeps checking while the bubble stands', frames.length === 1);
+  icon.gone = true;
+  tick();
+  ok('an anchor that leaves the page takes its bubble away', !open());
+  ok('and the frame loop stops with it', frames.length === 0);
+  const hidden = new El({ 'data-tip': 'Hidden' });
+  fire('mouseover', { target: hidden });
+  hidden.rect = { left: 0, top: 0, bottom: 0, width: 0, height: 0 };
+  tick();
+  ok('so does one that is hidden in place', !open());
 }
 
 console.log('\nThe sheet');
