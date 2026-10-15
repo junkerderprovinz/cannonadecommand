@@ -40,7 +40,7 @@ console.log('\nThe settings page uses the width it has');
 console.log('\nA dropdown or a one-line field stands beside its name');
 {
   const page = withUnraid('settings');
-  const dsel = { tag: 'span', classes: ['cc-dsel'], inside: ['#cc-settings'], outside: ['.cc-pop'] };
+  const dsel = { tag: 'span', classes: ['cc-dsel'], inside: ['#cc-settings'], outside: ['.cc-pop', '.cc-on-addct'] };   // the container form's gate never stands on the settings page
   // A flex line breaks on the basis, so a basis at the full width put the dropdown under a name
   // that it fits beside once it shrinks.
   ok('a dropdown breaks the line only at its narrowest width', val(win(page, dsel, 'flex')) === '1 1 120px' && val(win(page, dsel, 'min-width')) === '120px', val(win(page, dsel, 'flex')));

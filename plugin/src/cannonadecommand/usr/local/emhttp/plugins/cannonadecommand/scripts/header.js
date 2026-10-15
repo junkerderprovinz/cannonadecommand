@@ -1753,6 +1753,9 @@
   function ccWrapPageSelects() {
     try {
       if (!document.documentElement.classList.contains("cc-popups-on")) return;
+      // The container form's selects belong to docker.js, which loads later and would wrap a
+      // second trigger inside this one.
+      if (/^\/(Docker|Apps)\/(AddContainer|UpdateContainer)\/?$/.test(location.pathname)) return;
       var sels = document.querySelectorAll("#displaybox select:not([data-cc-tgl]):not([data-cc-tsel]):not([data-cc-dsel]):not([multiple])");
       for (var i = 0; i < sels.length; i++) {
         var s = sels[i];

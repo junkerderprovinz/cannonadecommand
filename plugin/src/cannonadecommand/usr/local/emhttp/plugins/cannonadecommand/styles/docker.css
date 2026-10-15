@@ -1620,6 +1620,13 @@ html.cc-docker-on.cc-on-addct .ui-dialog select {
   background: rgba(255, 255, 255, .07) !important; border: none !important; box-shadow: none !important;
   border-radius: var(--cc-radius-control) !important; padding: 6px 10px !important; color: #eaeaea !important;
 }
+/* On the light themes the form sits on the light page, where light ink on a faint white fill
+   vanishes, so its fields take the dark-on-light pair the dropdown triggers use. The dialog stays a
+   dark window and keeps the rule above. */
+html:is(.Theme--white, .Theme--azure).cc-docker-on.cc-on-addct #canvas :is(input[type="text"], input[type="number"], input[type="password"], textarea, select) { background: rgba(0, 0, 0, .06) !important; color: #1c1c1c !important; }
+html:is(.Theme--white, .Theme--azure).cc-docker-on.cc-on-addct #canvas :is(input, textarea, select):focus { background: rgba(0, 0, 0, .1) !important; }
+html:is(.Theme--white, .Theme--azure).cc-docker-on.cc-on-addct #canvas .ui-dropdownchecklist-selector { background: rgba(0, 0, 0, .06) !important; color: #1c1c1c !important; }
+html:is(.Theme--white, .Theme--azure).cc-docker-on.cc-on-addct #canvas .ui-dropdownchecklist-selector .ui-dropdownchecklist-text { color: #1c1c1c !important; }
 /* focus is a stronger fill, never an outline; the dialog-scoped block further down gives its own
    fields a darker feedback */
 html.cc-docker-on.cc-on-addct #canvas input:focus,
@@ -2043,11 +2050,30 @@ html.cc-docker-on.cc-on-addct .ui-dialog dl > dt.cc-dtlab {
   color: var(--cc-text-chip, #cfcfcf); font-weight: 600; line-height: 1.3;
 }
 /* The form is built from around a hundred separate <dl> grids that share no column widths, so a
-   max-content label column sizes each row on its own and the fields start at different x. The
-   native layout's own 35% 1fr with right-aligned labels lines every row up, and the label is
-   right-aligned in that column below. */
+   max-content label column sizes each row on its own and the fields start at different x. A fixed
+   label column lines every row up: the native 35% 1fr here, with the label right-aligned in it, and
+   a narrower one for the form itself below. */
 html.cc-docker-on.cc-on-addct #canvas dl,
 html.cc-docker-on.cc-on-addct .ui-dialog dl { grid-template-columns: 35% minmax(0, 1fr) !important; }
+/* On the form itself every label stands at the start of its row and every field or switch runs to
+   the row's end, as in a CC window. The rows keep the settings cards' reading width, so a name and
+   its field still read as one line on a wide screen. */
+html.cc-docker-on.cc-on-addct #canvas form dl { max-width: 920px; grid-template-columns: min(240px, 35%) minmax(0, 1fr) !important; }
+html.cc-docker-on.cc-on-addct #canvas form dl > dt { text-align: start !important; }
+html.cc-docker-on.cc-on-addct #canvas form dl > dt.cc-dtlab,
+html.cc-docker-on.cc-on-addct #canvas form dl > dt > span.cc-varlab { justify-self: start; }
+html.cc-docker-on.cc-on-addct #canvas form dl > dd > :is(input[type="text"], input[type="number"], input[type="password"], textarea, .cc-dsel),
+html.cc-docker-on.cc-on-addct #canvas form dl > dd .buttons-no-margin > :is(input[type="text"], input[type="number"], input[type="password"], .cc-dsel) { width: auto !important; max-width: none !important; box-sizing: border-box; }
+html.cc-docker-on.cc-on-addct #canvas form dl > dd > :is(input[type="text"], input[type="number"], input[type="password"], textarea) { width: 100% !important; }
+@media (min-width: 768px) { html.cc-docker-on.cc-on-addct #canvas form dl > dd .buttons-no-margin { flex-wrap: nowrap !important; } }
+html.cc-docker-on.cc-on-addct #canvas form dl > dd .buttons-no-margin > :is(input, .cc-dsel) { flex: 1 1 auto; min-width: 0; }
+html.cc-docker-on.cc-on-addct #canvas form dl > dd > .cc-dsel { display: flex; width: 100% !important; }
+html.cc-docker-on.cc-on-addct #canvas form dl > dd .buttons-no-margin > .cc-dsel { display: flex; }
+html.cc-docker-on.cc-on-addct #canvas form dl > dd .cc-dsel > .cc-dsel-trigger { flex: 1 1 auto; min-width: 0; }
+html.cc-docker-on.cc-on-addct #canvas form dl > dd > .ui-dropdownchecklist-selector-wrapper,
+html.cc-docker-on.cc-on-addct #canvas form dl > dd > .ui-dropdownchecklist-selector-wrapper > .ui-dropdownchecklist-selector { display: block !important; width: 100% !important; max-width: none !important; box-sizing: border-box; }
+html.cc-docker-on.cc-on-addct #canvas form dl > dd > span.flex-row:has(> .switch-button-background) { justify-content: flex-end; }
+html.cc-docker-on.cc-on-addct #canvas form dl:has(> dd > span.flex-row > .switch-button-background) > dt { align-self: center; }
 /* Unraid's Basic/Advanced toggle hides a row through jQuery, which writes an inline
    display:none. The label rules above force a display with !important, which beats that inline
    style and would bring a hidden row's label back as an orphan, so the hide is re-asserted here

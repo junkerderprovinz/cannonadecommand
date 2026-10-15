@@ -4090,7 +4090,8 @@
       var nd = host.childNodes[n];
       if (nd.nodeType === 3 && nd.textContent.replace(/\s+/g, "")) {
         if (!host.getAttribute("data-cc-lab")) host.setAttribute("data-cc-lab", nd.textContent);
-        nd.textContent = nd.textContent.replace(/\s*:\s*$/, "");
+        // The lead goes too: an env var label starts with two &nbsp; after its hidden icon.
+        nd.textContent = nd.textContent.replace(/^\s+|\s*:\s*$/g, "");
         return;
       }
     }
