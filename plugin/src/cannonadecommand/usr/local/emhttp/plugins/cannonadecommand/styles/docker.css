@@ -461,8 +461,10 @@ html .cc-b.cc-plan.cc-plan-failed  { background: var(--cc-err, #ff8389) !importa
    thing twice. */
 .cc-folderview, .cc-folder-group-body { display: grid; grid-template-columns: repeat(auto-fill, 240px); gap: 10px; }
 .cc-folderview { padding-top: 30px; }
+/* a phone holds one column, so the tiles take its whole width, still all the same size */
+@media (max-width: 540px) { .cc-folderview, .cc-folder-group-body { grid-template-columns: minmax(0, 1fr); } .cc-folderview .cc-card.cc-tile, .cc-tile-new { width: auto; } }
 .cc-folder-group { grid-column: 1 / -1; width: 100%; display: flex; flex-direction: column; gap: 10px; }
-.cc-folder-group-head { background: var(--cc-bg3); border-radius: var(--cc-radius-control); padding: 6px 8px 6px 12px; font-size: var(--cc-text-body); font-weight: 600; color: var(--cc-txt); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cc-folder-group-head { background: var(--cc-bg3); border-radius: var(--cc-radius-control); padding: 6px 8px 6px 12px; font-size: var(--cc-text-body); font-weight: 600; color: var(--cc-txt); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .cc-folder-group-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* The chevron and the label share one flex item, so the head's justify-content:space-between still
    splits label against actions; a third top-level flex child would pull the label off the left
@@ -470,6 +472,24 @@ html .cc-b.cc-plan.cc-plan-failed  { background: var(--cc-err, #ff8389) !importa
 .cc-folder-group-title { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
 .cc-folder-chev { flex: none; font-size: var(--cc-text-meta); width: 10px; text-align: center; color: var(--cc-dim, #8a8a8a); }
 .cc-folder-group-actions { display: flex; align-items: center; gap: 2px; flex: none; }
+/* the folder's icon, a section badge in its own colour or the colour mode's */
+.cc-folder-badge { flex: none; width: 22px; height: 22px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--cc-radius-control); background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
+.cc-folder-badge .cc-glyph { font-size: var(--cc-text-meta); }
+.cc-folder-badge img { width: 16px; height: 16px; object-fit: contain; }
+.cc-folder-count { flex: none; color: var(--cc-dim); font-size: var(--cc-text-meta); font-weight: 500; white-space: nowrap; }
+.cc-folder-spacer { flex: 1 1 0; }
+/* a folded folder's members, the stopped ones in grey */
+.cc-folder-peek { display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; }
+.cc-peek { flex: none; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--cc-radius-control); background: rgba(128, 128, 128, .18); cursor: pointer; transition: background .12s; }
+.cc-peek:hover { background: rgba(128, 128, 128, .3); }
+.cc-peek img { width: 18px; height: 18px; object-fit: contain; }
+.cc-peek-off img { filter: grayscale(1); opacity: .55; }
+.cc-peek-more { flex: none; color: var(--cc-dim); font-size: var(--cc-text-meta); font-weight: 500; }
+/* the folder's combined CPU and RAM, the tile's bars side by side */
+.cc-folder-load { flex: none; display: flex; gap: 14px; width: 280px; font-weight: 400; }
+.cc-folder-load .cc-stat { flex: 1; min-width: 0; gap: 6px; }
+.cc-folder-load .cc-stat-lbl { width: auto; }
+.cc-folder-load .cc-gauge { height: 4px; background: rgba(128, 128, 128, .25); }
 /* The folder write actions render only for folders CC created itself. Collapse, hide-stopped and
    the bulk start and stop are per-folder view state and container actions rather than folder
    restructuring, so they appear on any folder.
@@ -491,7 +511,7 @@ html .cc-folder-act-on { background: rgba(128, 128, 128, .18) !important; color:
 /* Drag and drop reordering in the folder view: a shade, never a border line. The dragged source
    fades and the hovered target takes an accent tint. */
 .cc-dragging { opacity: .4; }
-.cc-drop-target { background: color-mix(in srgb, var(--cc-accent, #FCC419) 16%, transparent) !important; border-radius: var(--cc-radius-card); }
+.cc-drop-target { background: color-mix(in srgb, var(--cc-accent, #FCC419) 16%, transparent) !important; box-shadow: 0 0 0 3px var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; border-radius: var(--cc-radius-card); }
 .cc-folder-group-head.cc-drop-target { border-radius: var(--cc-radius-control); }
 /* The per-card move-to-folder menu at the end of the card's head row, reachable by touch and
    keyboard where dragging is not. Its backgrounds need !important for the same reason as
@@ -555,6 +575,28 @@ html.cc-state-native .cc-tile-up { background: var(--cc-warn, #ff832b); color: v
 .cc-tile-state { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
 .cc-tile-dot { width: 8px !important; height: 8px !important; min-width: 8px !important; padding: 0 !important; margin: 0 !important; gap: 0 !important; border-radius: 50% !important; font-size: 0 !important; line-height: 0 !important; flex: 0 0 auto; box-shadow: 0 0 0 1px rgba(0, 0, 0, .25); }
 .cc-tile-status { font-size: var(--cc-text-meta); color: var(--cc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the last tile, which creates a folder, the size of the others and quiet until pointed at */
+.cc-tile-new { box-sizing: border-box; width: 240px; height: 130px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border-radius: var(--cc-radius-card); background: rgba(128, 128, 128, .1); color: var(--cc-dim); font-size: var(--cc-text-body); font-weight: 600; cursor: pointer; transition: background .12s, color .12s; }
+.cc-tile-new .cc-glyph { font-size: var(--cc-text-status); }
+.cc-tile-new:is(:hover, :focus-visible) { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)); }
+
+/* The folder editor: the name, a row of colour swatches, a row of icons and the member list with a
+   toggle per container. A swatch shows its pick by a check, an icon by the colour mode's fill. */
+.cc-pop.cc-pop-folder { width: 380px; }
+.cc-fpicks { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
+.cc-pop-folder .cc-pop-row:has(> .cc-fpicks) { flex-wrap: wrap !important; }
+.cc-fsw { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--cc-radius-control); background: var(--cc-fsw); color: var(--cc-fsw-t); cursor: pointer; }
+.cc-fsw-auto { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)); }
+.cc-fsw .cc-glyph { font-size: var(--cc-text-meta); opacity: 0; }
+.cc-fsw[aria-checked="true"] .cc-glyph { opacity: 1; }
+.cc-ficon { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--cc-radius-control); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text, #e6e6e6); cursor: pointer; transition: background .12s, color .12s; }
+.cc-ficon img { width: 20px; height: 20px; object-fit: contain; }
+.cc-ficon[aria-checked="true"] { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
+.cc-fsearch { flex: 1; }
+.cc-fmember-ico { flex: none; width: 20px; height: 20px; display: inline-flex; }
+.cc-fmember-ico img { width: 20px; height: 20px; object-fit: contain; }
+.cc-fmember-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--cc-text-meta); }
+.cc-fmember-in { margin-left: 6px; color: var(--cc-dim); }
 
 /* The gear menu's filter, a filled field with no line around it. The html prefix and the menu
    class carry it past Unraid's input[type="text"] rule, which would draw an underline. */

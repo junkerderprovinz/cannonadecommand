@@ -64,8 +64,8 @@ function run(entries, opts) {
   };
   const ccOrgView = opts.noOrgView ? null : { rootId: 'root', flatEntries: entries };
   const containers = {}; (opts.containers || []).forEach(c => { containers[c.name.replace(/^\//, '').toLowerCase()] = c; });
-  // Every collaborator renderFolderView() names resolves here; one not listed is a no-op, so the
-  // harness keeps working as the folder head gains buttons.
+  // Every collaborator renderFolderView() names resolves here; one not listed returns a bare node,
+  // so the harness keeps working as the folder head gains parts.
   const given = Object.assign({
     el, window: fakeWindow, localStorage: { getItem: () => null }, gridHolder: fakeGridHolder, ccOrgView, filterText: '', mode: 'folder',
     removeGridHolder: () => { removed = true; },
@@ -79,7 +79,7 @@ function run(entries, opts) {
   }, opts.given || {});
   const scope = new Proxy({}, {
     has: (o, k) => k in given || !(k in globalThis),
-    get: (o, k) => (k in given ? given[k] : k === Symbol.unscopables ? undefined : () => {}),
+    get: (o, k) => (k in given ? given[k] : k === Symbol.unscopables ? undefined : () => el('span', 'cc-stub')),
     set: (o, k, v) => { given[k] = v; return true; },
   });
   const fn = new Function('scope', 'with (scope) { ' + grabFn('renderFolderView') + '\nreturn renderFolderView; }')(scope);

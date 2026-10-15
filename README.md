@@ -142,10 +142,14 @@ Docker, Plugins, VMs, Settings) on or off independently, each with its own style
 - List view, a card (grid) view, and a Folder view (grouped by Unraid's own
   organizer). In the folder view every container is a tile of the same size:
   icon, name and IP, an update badge when one is ready, live CPU and RAM bars
-  while it runs, and WebUI, start or stop and restart. Folders collapse and
-  expand, can hide their stopped containers and start or stop everything in
-  them, and the live search opens any folder with a match. Scroll position is
-  kept across every folder action.
+  while it runs, and WebUI, start or stop and restart. A folder's head shows
+  how many of its containers run, their combined CPU and RAM, and their logos
+  while it is folded. Folders collapse and expand, can hide their stopped
+  containers, and start, stop, restart or update everything in them. The
+  pencil edits a folder's name, colour, icon and members, a tile at the end
+  creates a new one, and a container dragged onto a folder moves into it. The
+  live search opens any folder with a match, and the scroll position is kept
+  across every folder action.
 - Theming: one accent colour for everything, or rainbow mode with an editable
   palette; icon colours toggleable; settings sync across origins (IP, hostname,
   domain) via the engine, and they survive cleared browser data.

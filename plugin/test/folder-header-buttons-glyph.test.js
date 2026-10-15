@@ -56,12 +56,12 @@ console.log('\nfolderActBtn(): a glyph button, never raw emoji text');
   ok('holds the glyph cc-theme.js draws for the name it was given', b.innerHTML === '<glyph Eye>', b.innerHTML);
 }
 
-console.log('\nAll five folder-header buttons call folderActBtn()');
+console.log('\nEvery folder-header button calls folderActBtn()');
 {
   ok('hide-stopped button: an open eye, a crossed one while stopped containers are hidden', /var hsBtn = folderActBtn\("cc-folder-act" \+ \(hsOn \? " cc-folder-act-on" : ""\), hsOn \? "EyeOff" : "Eye", t\("hideStopped"\)\);/.test(src));
-  ok('bulk-start button: folderActBtn(..., "Play", t("bulkStartAll"))', /var startAllBtn = folderActBtn\("cc-folder-act", "Play", t\("bulkStartAll"\)\);/.test(src));
-  ok('bulk-stop button: folderActBtn(..., "Stop", t("bulkStopAll"))', /var stopAllBtn = folderActBtn\("cc-folder-act", "Stop", t\("bulkStopAll"\)\);/.test(src));
-  ok('rename button: folderActBtn(..., "Pencil", t("renameFolder"))', /var renBtn = folderActBtn\("cc-folder-act", "Pencil", t\("renameFolder"\)\);/.test(src));
+  ok('start, stop and restart all: Play, Stop and Refresh through folderActBtn()', /\[\["Play", "bulkStartAll", "start"\], \["Stop", "bulkStopAll", "stop"\], \["Refresh", "bulkRestartAll", "restart"\]\]\.forEach\(function \(b\) \{\s*var btn = folderActBtn\("cc-folder-act", b\[0\], t\(b\[1\]\)\);/.test(src));
+  ok('update all button: folderActBtn(..., "Download", t("bulkUpdateAll"))', /var updBtn = folderActBtn\("cc-folder-act", "Download", t\("bulkUpdateAll"\)\);/.test(src));
+  ok('edit button: folderActBtn(..., "Pencil", t("editFolder"))', /var editBtn = folderActBtn\("cc-folder-act", "Pencil", t\("editFolder"\)\);/.test(src));
   ok('delete button: folderActBtn(..., "Trash", t("deleteFolder"))', /var delBtn = folderActBtn\("cc-folder-act", "Trash", t\("deleteFolder"\)\);/.test(src));
 }
 

@@ -119,8 +119,8 @@
   // "CannonadeCommand" in both halves. "CC" is a source-code prefix, the cc- class namespace, the
   // CC_* constants and the cc.* keys, and it never leaves the source.
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Startplan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", search: "Suche", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge; Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen, restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container, kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle und kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“: dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner", renameFolder: "Ordner umbenennen", deleteFolder: "Ordner löschen", moveToFolder: "In Ordner verschieben", rootLevel: "(Wurzelebene)", iconMode: "Icon-Färbung", iconInherit: "folgt globaler Einstellung", iconAuto: "Automatisch", iconNative: "Natives Icon", iconFlat: "Ink-Flatten", iconTint: "Luminanz-Tint", hideStopped: "Gestoppte ausblenden", bulkStartAll: "Alle starten", bulkStopAll: "Alle stoppen", bulkPauseAll: "Alle pausieren", bulkResumeAll: "Alle fortsetzen", allContainers: "Alle Container", barAdd: "Container hinzufügen", barCheck: "Nach Aktualisierungen suchen", barUpdateAll: "Alle aktualisieren", barSizes: "Containergröße", updateCt: "Aktualisieren", discardTitle: "Ungespeicherte Änderungen verwerfen?", discard: "Verwerfen", keepEditing: "Weiter bearbeiten", cancel: "Abbrechen", newFolderTitle: "Neuen Ordner anlegen", folderName: "Name des Ordners", create: "Anlegen", renameFolderTitle: "Ordner „%s“ umbenennen", renameShort: "Umbenennen", deleteFolderTitle: "Ordner „%s“ löschen?", deleteShort: "Löschen" },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save start plan", startorder: "Start in order", filter: "filter…", search: "Search", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Start plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order; duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live, gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container, no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold and barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no”: this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder", renameFolder: "Rename folder", deleteFolder: "Delete folder", moveToFolder: "Move to folder", rootLevel: "(Root level)", iconMode: "Icon colouring", iconInherit: "follows the global setting", iconAuto: "Automatic", iconNative: "Native icon", iconFlat: "Ink flatten", iconTint: "Luminance tint", hideStopped: "Hide stopped", bulkStartAll: "Start all", bulkStopAll: "Stop all", bulkPauseAll: "Pause all", bulkResumeAll: "Resume all", allContainers: "All containers", barAdd: "Add container", barCheck: "Check for updates", barUpdateAll: "Update all", barSizes: "Container size", updateCt: "Update", discardTitle: "Discard unsaved changes?", discard: "Discard", keepEditing: "Keep editing", cancel: "Cancel", newFolderTitle: "Create a folder", folderName: "Folder name", create: "Create", renameFolderTitle: "Rename folder “%s”", renameShort: "Rename", deleteFolderTitle: "Delete folder “%s”?", deleteShort: "Delete" },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Startplan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", search: "Suche", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge; Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen, restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container, kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle und kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“: dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner", editFolder: "Ordner bearbeiten", deleteFolder: "Ordner löschen", moveToFolder: "In Ordner verschieben", rootLevel: "(Wurzelebene)", iconMode: "Icon-Färbung", iconInherit: "folgt globaler Einstellung", iconAuto: "Automatisch", iconNative: "Natives Icon", iconFlat: "Ink-Flatten", iconTint: "Luminanz-Tint", hideStopped: "Gestoppte ausblenden", bulkStartAll: "Alle starten", bulkStopAll: "Alle stoppen", bulkRestartAll: "Alle neu starten", bulkUpdateAll: "Alle aktualisieren", bulkPauseAll: "Alle pausieren", bulkResumeAll: "Alle fortsetzen", allContainers: "Alle Container", barAdd: "Container hinzufügen", barCheck: "Nach Aktualisierungen suchen", barUpdateAll: "Alle aktualisieren", barSizes: "Containergröße", updateCt: "Aktualisieren", discardTitle: "Ungespeicherte Änderungen verwerfen?", discard: "Verwerfen", keepEditing: "Weiter bearbeiten", cancel: "Abbrechen", newFolderTitle: "Neuen Ordner anlegen", folderName: "Name des Ordners", create: "Anlegen", folderColour: "Farbe", folderIcon: "Symbol", folderMembers: "Container", deleteFolderTitle: "Ordner „%s“ löschen?", deleteShort: "Löschen" },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save start plan", startorder: "Start in order", filter: "filter…", search: "Search", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Start plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order; duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live, gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container, no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold and barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no”: this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder", editFolder: "Edit folder", deleteFolder: "Delete folder", moveToFolder: "Move to folder", rootLevel: "(Root level)", iconMode: "Icon colouring", iconInherit: "follows the global setting", iconAuto: "Automatic", iconNative: "Native icon", iconFlat: "Ink flatten", iconTint: "Luminance tint", hideStopped: "Hide stopped", bulkStartAll: "Start all", bulkStopAll: "Stop all", bulkRestartAll: "Restart all", bulkUpdateAll: "Update all", bulkPauseAll: "Pause all", bulkResumeAll: "Resume all", allContainers: "All containers", barAdd: "Add container", barCheck: "Check for updates", barUpdateAll: "Update all", barSizes: "Container size", updateCt: "Update", discardTitle: "Discard unsaved changes?", discard: "Discard", keepEditing: "Keep editing", cancel: "Cancel", newFolderTitle: "Create a folder", folderName: "Folder name", create: "Create", folderColour: "Colour", folderIcon: "Icon", folderMembers: "Containers", deleteFolderTitle: "Delete folder “%s”?", deleteShort: "Delete" },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -1832,7 +1832,8 @@
   // start-in-parallel-then-reload mechanism rather than two.
   function runBulkAction(names, action, onDone) {
     if (!names.length) return Promise.resolve();
-    flash((action === "start" ? (LANG === "de" ? "Starte " : "Starting ") : (LANG === "de" ? "Stoppe " : "Stopping ")) + names.length + "…");
+    var de = LANG === "de", verb = action === "start" ? (de ? "Starte " : "Starting ") : action === "restart" ? (de ? "Starte neu: " : "Restarting ") : (de ? "Stoppe " : "Stopping ");
+    flash(verb + names.length + "…");
     return Promise.all(names.map(function (n) { return api("POST", "action", { name: n, action: action }).catch(function () {}); }))
       .then(function () { return load(); })
       .then(function () { flash(t("done")); if (onDone) onDone(); });
@@ -2113,6 +2114,206 @@
     b.innerHTML = ccGlyph(icon);
     return b;
   }
+  // A folder's colour and icon. The organizer stores a name and the members and nothing more, so
+  // these live beside the other cc.* preferences, keyed by the folder id like the collapse state.
+  // A colour of "" follows the colour mode; an icon is "g:<glyph>" or "c:<container>", whose logo
+  // it borrows.
+  var FOLDER_LOOK_KEY = "cc.folderLook";
+  function folderLook(id) { var l = readIdMap(FOLDER_LOOK_KEY)[id]; return { color: (l && l.color) || "", icon: (l && l.icon) || "" }; }
+  function setFolderLook(id, look) {
+    var m = readIdMap(FOLDER_LOOK_KEY);
+    if (look && (look.color || look.icon)) m[id] = { color: look.color || "", icon: look.icon || "" }; else delete m[id];
+    localStorage.setItem(FOLDER_LOOK_KEY, JSON.stringify(m));
+  }
+  // The head takes the folder's own colour, else under rainbow the palette slot of its place among
+  // the folders, else nothing and the CSS falls back to the accent.
+  function stampFolderColour(head, color, idx) {
+    var c = color || (themingOn() && localStorage.getItem("cc.rainbow") === "1" ? ccRbColor(idx) : "");
+    if (c) { head.style.setProperty("--cc-rb-c", c); head.style.setProperty("--cc-rb-ct", idealText(c)); }
+  }
+  function folderBadge(icon) {
+    var b = el("span", "cc-folder-badge");
+    var logo = /^c:/.test(icon || "") ? iconFor(icon.slice(2)) : "";
+    if (logo) { var im = el("img"); im.src = logo; im.alt = ""; b.appendChild(im); }
+    else b.innerHTML = ccGlyph(/^g:/.test(icon || "") ? icon.slice(2) : "Folder");
+    return b;
+  }
+  // The logos of a folded folder's containers, a stopped one in grey. A click opens the container's
+  // menu and leaves the folder folded.
+  var PEEK_MAX = 12;
+  function folderPeek(names) {
+    var wrap = el("span", "cc-folder-peek");
+    names.slice(0, PEEK_MAX).forEach(function (n) {
+      var c = containerByName(n); if (!c) return;
+      var b = el("span", "cc-peek" + (c.state === "running" ? "" : " cc-peek-off"));
+      var src = iconFor(c.name);
+      if (src) { var im = el("img"); im.src = src; im.alt = ""; b.appendChild(im); }
+      b.setAttribute("data-tip", c.name + " · " + stateLabel(c.state)); b.setAttribute("aria-label", c.name);
+      b.addEventListener("click", function (ev) { ev.preventDefault(); ev.stopPropagation(); containerMenu(b, c); });
+      if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(b);
+      wrap.appendChild(b);
+    });
+    if (names.length > PEEK_MAX) wrap.appendChild(el("span", "cc-peek-more", "+" + (names.length - PEEK_MAX)));
+    return wrap;
+  }
+  // The combined load of a folder's running containers. RAM is measured against the largest limit
+  // any container reports, which for a container without a limit of its own is the host's memory.
+  function folderLoad(names, statsMap) {
+    var cpu = 0, used = 0, total = 0;
+    Object.keys(statsMap).forEach(function (k) { total = Math.max(total, statsMap[k].mem_limit || 0); });
+    names.forEach(function (n) {
+      var c = containerByName(n), s = c && statsMap[c.name];
+      if (!s || c.state !== "running") return;
+      cpu += s.cpu_percent || 0; used += s.mem_used || 0;
+    });
+    return { cpu: Math.round(cpu * 100) / 100, used: used, ramPct: total ? used / total * 100 : 0 };
+  }
+  // The two bars in a folder's head, built like a tile's and repainted by refreshStats() from the
+  // member names they carry.
+  function folderLoadBars(names) {
+    var l = folderLoad(names, stats), wrap = el("span", "cc-folder-load");
+    wrap.ccNames = names;
+    wrap.appendChild(gauge("CPU", l.cpu, l.cpu + "%"));
+    wrap.appendChild(gauge("RAM", l.ramPct, humanBytes(l.used)));
+    return wrap;
+  }
+  function paintFolderLoad(wrap) {
+    var l = folderLoad(wrap.ccNames || [], stats), f = wrap.querySelectorAll(".cc-gauge-fill"), v = wrap.querySelectorAll(".cc-stat-val");
+    if (f[0]) f[0].style.width = Math.min(100, l.cpu) + "%";
+    if (v[0]) v[0].textContent = l.cpu + "%";
+    if (f[1]) f[1].style.width = Math.min(100, l.ramPct) + "%";
+    if (v[1]) v[1].textContent = humanBytes(l.used);
+  }
+  function newFolderTile() {
+    var b = el("span", "cc-tile-new"); b.innerHTML = ccGlyph("Folder");
+    b.appendChild(el("span", null, t("newFolder")));
+    b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); ccOrgCreateFolder(); });
+    if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(b);
+    return b;
+  }
+  // Updates every container of a folder that has one ready, in one run of Unraid's own update
+  // command, the way its Update All button does, after one question.
+  function ccFolderUpdate(names, ctl) {
+    var de = LANG === "de";
+    ccOrgAsk({
+      title: de ? names.length + " Container aktualisieren?" : "Update " + names.length + " container" + (names.length === 1 ? "" : "s") + "?",
+      text: names.join(", "), ok: t("updateCt"), cancel: t("cancel"), opener: ctl,
+      onOk: function () { window.openDocker("update_container " + names.map(encodeURIComponent).join("*"), t("bulkUpdateAll"), "", "loadlist"); }
+    });
+  }
+  // The organizer calls the folder editor's save makes, in order: the rename, then the containers
+  // switched in, then those switched out, which go back to the root and so to no folder at all.
+  // members is the set of container entry ids the folder should hold directly.
+  function ccFolderEditSteps(view, id, name, members) {
+    var self = view.flatEntries.filter(function (e2) { return e2.id === id; })[0], steps = [];
+    if (self && name && name !== self.name) steps.push({ q: ORG_RENAME_MUT, v: { folderId: id, newName: name }, m: "renameDockerFolder" });
+    var cts = view.flatEntries.filter(function (e2) { return e2.type === "container"; });
+    var add = cts.filter(function (e2) { return members[e2.id] && e2.parentId !== id; }).map(function (e2) { return e2.id; });
+    var out = cts.filter(function (e2) { return !members[e2.id] && e2.parentId === id; }).map(function (e2) { return e2.id; });
+    if (add.length) steps.push({ q: ORG_MOVE_MUT, v: { sourceEntryIds: add, destinationFolderId: id }, m: "moveDockerEntriesToFolder" });
+    if (out.length) steps.push({ q: ORG_MOVE_MUT, v: { sourceEntryIds: out, destinationFolderId: view.rootId }, m: "moveDockerEntriesToFolder" });
+    return steps;
+  }
+  function ccOrgRunSteps(steps) {
+    return steps.reduce(function (p, s) {
+      return p.then(function () { return ccOrgMutate(s.q, s.v).then(function (data) { return { data: data, m: s.m }; }); });
+    }, Promise.resolve(null)).then(function (last) { if (last) ccOrgAdopt(last.data, last.m); });
+  }
+  var FOLDER_GLYPHS = ["Folder", "Star", "VM", "Code", "Download", "Schedules", "Manual", "Power", "Log", "Gear"];
+  // The pencil on a folder's head: its name, colour and icon, and which containers it holds, one
+  // toggle each, sorted by name and narrowed by the search field.
+  function openFolderEditor(anchor, id) {
+    if (togglePop(anchor)) return;
+    closePop();
+    if (!ccOrgView) return;
+    var de = LANG === "de", self = ccOrgView.flatEntries.filter(function (e2) { return e2.id === id; })[0];
+    if (!self) return;
+    var look = folderLook(id), color = look.color, icon = look.icon || "g:Folder";
+    var cts = ccOrgView.flatEntries.filter(function (e2) { return e2.type === "container"; })
+      .map(function (e2) { return { e: e2, name: e2.name.replace(/^\//, "") }; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name); });
+    var members = {}; cts.forEach(function (x) { if (x.e.parentId === id) members[x.e.id] = true; });
+    var start = JSON.stringify([self.name, color, icon, Object.keys(members).sort()]);
+    var pop = el("div", "cc-pop cc-pop-folder"); if (localStorage.getItem("cc.rainbow") === "1") pop.classList.add("cc-rainbow");
+    var head = el("div", "cc-pop-head"), ttl = el("span", "cc-win-title cc-pop-ttl", t("editFolder"));
+    ttl.appendChild(infoBubble(de
+      ? "Name, Farbe und Symbol gelten nur für die Ordneransicht. Unten nimmst du Container in den Ordner auf oder wieder heraus; einer, der schon in einem anderen Ordner liegt, wechselt hierher, einer, den du herausnimmst, steht danach ohne Ordner da."
+      : "Name, colour and icon only apply to the folder view. Below you put containers into the folder or take them out; one that is already in another folder moves here, one you take out ends up in no folder."));
+    head.appendChild(ttl); pop.appendChild(head);
+    var body = el("div", "cc-pop-body");
+    var nrow = el("div", "cc-pop-row"); nrow.appendChild(el("label", "cc-pop-lbl", t("folderName")));
+    var nameIn = el("input", "cc-in"); nameIn.type = "text"; nameIn.value = self.name; nameIn.setAttribute("autocomplete", "off"); nameIn.setAttribute("aria-label", t("folderName"));
+    nrow.appendChild(nameIn); body.appendChild(nrow);
+    // A choice row of pressable chips, one of them picked, its pick shown by a check or a fill.
+    function picks(cls, items, cur, paint, onPick) {
+      var box = el("span", "cc-fpicks"); box.setAttribute("role", "radiogroup");
+      items.forEach(function (it) {
+        var b = el("span", cls); b.setAttribute("role", "radio"); b.setAttribute("tabindex", "0"); b.setAttribute("data-tip", it.tip); b.setAttribute("aria-label", it.tip);
+        paint(b, it);
+        b.addEventListener("click", function () { Array.prototype.forEach.call(box.children, function (x) { x.setAttribute("aria-checked", "false"); }); b.setAttribute("aria-checked", "true"); onPick(it.v); });
+        b.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); b.click(); } });
+        b.setAttribute("aria-checked", it.v === cur ? "true" : "false");
+        box.appendChild(b);
+      });
+      return box;
+    }
+    var crow = el("div", "cc-pop-row");
+    crow.appendChild(lblInfo(t("folderColour"), de ? "Die Farbe des Ordnersymbols. „Farbmodus“ übernimmt die Akzentfarbe oder im Regenbogen die Farbe, die der Ordner dort bekommt." : "The colour of the folder's icon. “Colour mode” takes the accent, or under rainbow the colour the folder gets there."));
+    var pal = ccPalActive(RB_PAL);
+    crow.appendChild(picks("cc-fsw", [{ v: "", tip: de ? "Farbmodus" : "Colour mode" }].concat(pal.map(function (c) { return { v: c, tip: c }; })), color, function (b, it) {
+      if (it.v) { b.style.setProperty("--cc-fsw", it.v); b.style.setProperty("--cc-fsw-t", idealText(it.v)); } else b.classList.add("cc-fsw-auto");
+      b.innerHTML = ccGlyph("Check");
+    }, function (v) { color = v; }));
+    body.appendChild(crow);
+    var irow = el("div", "cc-pop-row");
+    irow.appendChild(lblInfo(t("folderIcon"), de ? "Ein Symbol oder das Logo eines Containers aus diesem Ordner." : "A symbol, or the logo of one of this folder's containers."));
+    var iconItems = FOLDER_GLYPHS.map(function (g) { return { v: "g:" + g, tip: g, glyph: g }; })
+      .concat(cts.filter(function (x) { return members[x.e.id] && iconFor(x.name); }).map(function (x) { return { v: "c:" + x.name, tip: x.name, logo: iconFor(x.name) }; }));
+    irow.appendChild(picks("cc-ficon", iconItems, icon, function (b, it) {
+      if (it.logo) { var im = el("img"); im.src = it.logo; im.alt = ""; b.appendChild(im); } else b.innerHTML = ccGlyph(it.glyph);
+    }, function (v) { icon = v; }));
+    body.appendChild(irow);
+    pop.appendChild(body);
+    var list = el("div", "cc-pop-body cc-fmembers");
+    var srow = el("div", "cc-pop-row"); srow.appendChild(el("span", "cc-pop-sech", t("folderMembers")));
+    var find = el("input", "cc-in cc-fsearch"); find.type = "text"; find.placeholder = t("filter"); find.setAttribute("aria-label", t("search"));
+    srow.appendChild(find); list.appendChild(srow);
+    var rows = cts.map(function (x) {
+      var row = el("div", "cc-pop-row cc-fmember"); row.dataset.name = norm(x.name);
+      var src = iconFor(x.name), lg = el("span", "cc-fmember-ico");
+      if (src) { var im = el("img"); im.src = src; im.alt = ""; lg.appendChild(im); }
+      row.appendChild(lg);
+      var nm = el("span", "cc-fmember-name", x.name);
+      var other = x.e.parentId !== id && x.e.parentId !== ccOrgView.rootId && ccOrgView.flatEntries.filter(function (f) { return f.id === x.e.parentId; })[0];
+      if (other) nm.appendChild(el("span", "cc-fmember-in", "in " + other.name));
+      row.appendChild(nm);
+      var tg = el("span", "cc-set-toggle" + (members[x.e.id] ? " cc-set-toggle-on" : "")); tg.setAttribute("role", "switch"); tg.setAttribute("tabindex", "0");
+      tg.setAttribute("aria-checked", members[x.e.id] ? "true" : "false"); tg.setAttribute("aria-label", x.name); tg.appendChild(el("span", "cc-set-knob"));
+      function flip() { var on = !members[x.e.id]; if (on) members[x.e.id] = true; else delete members[x.e.id]; tg.classList.toggle("cc-set-toggle-on", on); tg.setAttribute("aria-checked", on ? "true" : "false"); }
+      tg.addEventListener("click", flip);
+      tg.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
+      row.appendChild(tg); list.appendChild(row);
+      return row;
+    });
+    find.addEventListener("input", function () { var q = norm(find.value); rows.forEach(function (r) { r.style.display = !q || r.dataset.name.indexOf(q) >= 0 ? "" : "none"; }); });
+    pop.appendChild(list);
+    var act = el("div", "cc-pop-row cc-pop-act");
+    var cancel = el("span", "cc-btn", t("cancel")); cancel.addEventListener("click", dismissPop);
+    var save = el("span", "cc-btn cc-btn-primary", t("saveShort"));
+    save.addEventListener("click", function () {
+      var name = nameIn.value.trim();
+      if (!name) { if (window.CCTheme && window.CCTheme.shake) window.CCTheme.shake(nameIn); nameIn.focus(); return; }
+      setFolderLook(id, { color: color, icon: icon === "g:Folder" ? "" : icon });
+      var steps = ccFolderEditSteps(ccOrgView, id, name, members);
+      closePop();
+      if (!steps.length) { if (mode === "folder") renderFolderView(); return; }
+      ccOrgRunSteps(steps).catch(function () { flash(t("invalid"), true); if (mode === "folder") renderFolderView(); });
+    });
+    act.appendChild(cancel); act.appendChild(save); pop.appendChild(act);
+    pop._unsaved = function () { return JSON.stringify([nameIn.value.trim(), color, icon, Object.keys(members).sort()]) !== start; };
+    document.body.appendChild(pop); hardenPop(pop);
+    placePop(pop, anchor, 360);
+  }
   // The folder view groups structurally. flatEntries already carries the depth, parent id and
   // position, so grouping is one bucket-by-parent pass rather than a recursive tree parser, and
   // every container in it, loose or in a folder, is a folderTile().
@@ -2141,7 +2342,7 @@
     // goes through runBulkAction(), the machinery the bulk-select bar uses.
     function ccFolderBulk(fid, action) { runBulkAction(ccCollectFolderContainerNames(byParent, fid, containerByName), action); }
 
-    var root = el("div", "cc-folderview");
+    var root = el("div", "cc-folderview"), folderIdx = 0;
     // the native rows, looked up once per render rather than once per tile
     var rowsByName = {};
     findRows().forEach(function (r) { rowsByName[rowName(r)] = r; });
@@ -2181,13 +2382,21 @@
         if (e.type === "folder" || e.type === "group") {
           if (filterText && !entryMatches(e)) return; // live search: a folder with no match anywhere inside it (and no name match itself) is hidden outright
           var collapsed = effectiveCollapsed(e);
+          var names = ccCollectFolderContainerNames(byParent, e.id, containerByName);
           var grp = el("div", "cc-folder-group" + (collapsed ? " cc-folder-collapsed" : "")); grp.setAttribute("data-fid", e.id);
           var head = el("div", "cc-folder-group-head");
+          stampFolderColour(head, folderLook(e.id).color, folderIdx++);
           var titleWrap = el("span", "cc-folder-group-title");
           var chev = el("span", "cc-folder-chev", collapsed ? "▸" : "▾"); chev.setAttribute("aria-hidden", "true");
           titleWrap.appendChild(chev);
-          titleWrap.appendChild(el("span", "cc-folder-group-label", e.name + " (" + (byParent[e.id] || []).length + ")"));
+          titleWrap.appendChild(folderBadge(folderLook(e.id).icon));
+          titleWrap.appendChild(el("span", "cc-folder-group-label", e.name));
+          var up = names.filter(function (n) { var c2 = containerByName(n); return c2 && c2.state === "running"; }).length;
+          titleWrap.appendChild(el("span", "cc-folder-count", up + "/" + names.length + " " + (LANG === "de" ? "laufen" : "running")));
           head.appendChild(titleWrap);
+          if (collapsed && names.length) head.appendChild(folderPeek(names));
+          head.appendChild(el("span", "cc-folder-spacer"));
+          if (up) head.appendChild(folderLoadBars(names));
           head.style.cursor = "pointer";
           // Collapse and expand, kept by setFolderCollapsed. A click on one of the action buttons
           // below never reaches here, since they all stop propagation.
@@ -2198,20 +2407,25 @@
           var hsBtn = folderActBtn("cc-folder-act" + (hsOn ? " cc-folder-act-on" : ""), hsOn ? "EyeOff" : "Eye", t("hideStopped"));
           hsBtn.addEventListener("click", function (ev) { ev.stopPropagation(); setFolderHideStopped(e.id, !folderHidesStopped(e.id)); renderFolderView(); });
           acts.appendChild(hsBtn);
-          // bulk start and stop for this folder's contents
-          var startAllBtn = folderActBtn("cc-folder-act", "Play", t("bulkStartAll"));
-          startAllBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccFolderBulk(e.id, "start"); });
-          var stopAllBtn = folderActBtn("cc-folder-act", "Stop", t("bulkStopAll"));
-          stopAllBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccFolderBulk(e.id, "stop"); });
-          acts.appendChild(startAllBtn); acts.appendChild(stopAllBtn);
-          // Rename and delete are offered only for folders CC created itself; one made by
+          [["Play", "bulkStartAll", "start"], ["Stop", "bulkStopAll", "stop"], ["Refresh", "bulkRestartAll", "restart"]].forEach(function (b) {
+            var btn = folderActBtn("cc-folder-act", b[0], t(b[1]));
+            btn.addEventListener("click", function (ev) { ev.stopPropagation(); ccFolderBulk(e.id, b[2]); });
+            acts.appendChild(btn);
+          });
+          var updatable = names.filter(function (n) { return updateReady(n, rowsByName[n]); });
+          if (updatable.length && typeof window.openDocker === "function") {
+            var updBtn = folderActBtn("cc-folder-act", "Download", t("bulkUpdateAll"));
+            updBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccFolderUpdate(updatable, updBtn); });
+            acts.appendChild(updBtn);
+          }
+          // Editing and deleting are offered only for folders CC created itself; one made by
           // another tool or by a future native UI stays read-only here.
           if (ccOrgIsOwned(e.id)) {
-            var renBtn = folderActBtn("cc-folder-act", "Pencil", t("renameFolder"));
-            renBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccOrgRenameFolder(e.id, e.name, renBtn); });
+            var editBtn = folderActBtn("cc-folder-act", "Pencil", t("editFolder"));
+            editBtn.addEventListener("click", function (ev) { ev.stopPropagation(); openFolderEditor(editBtn, e.id); });
             var delBtn = folderActBtn("cc-folder-act", "Trash", t("deleteFolder"));
             delBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccOrgDeleteFolder(e.id, delBtn); });
-            acts.appendChild(renBtn); acts.appendChild(delBtn);
+            acts.appendChild(editBtn); acts.appendChild(delBtn);
             // A folder reorders only where CC owns it, so one another tool manages is never
             // restructured. The head is the drag handle and the whole group moves.
             wireDragSource(head, e);
@@ -2250,6 +2464,7 @@
       });
     }
     renderEntries(ccOrgView.rootId, root);
+    if (!filterText) root.appendChild(newFolderTile());
     // dropping on the open background (not on any card/folder) files/reorders to the END of root
     wireDropTarget(root, function (src) {
       var rootKids = byParent[ccOrgView.rootId] || [];
@@ -2513,19 +2728,6 @@
       })
       .catch(function () { flash(t("invalid"), true); });
   }
-  function ccOrgRenameFolder(id, oldName, opener) {
-    if (!ccOrgIsOwned(id)) return; // a folder CC did not create is read-only
-    ccOrgAsk({
-      title: t("renameFolderTitle").replace("%s", oldName || ""), input: { value: oldName || "", label: t("folderName") },
-      ok: t("renameShort"), cancel: t("cancel"), opener: opener,
-      onOk: function (name) {
-        if (name === oldName) return;
-        ccOrgMutate(ORG_RENAME_MUT, { folderId: id, newName: name })
-          .then(function (data) { ccOrgAdopt(data, "renameDockerFolder"); })
-          .catch(function () { flash(t("invalid"), true); });
-      }
-    });
-  }
   function ccOrgDeleteFolder(id, opener) {
     if (!ccOrgIsOwned(id) || !ccOrgView) return; // a folder CC did not create is read-only
     var self2 = ccOrgView.flatEntries.filter(function (e2) { return e2.id === id; })[0];
@@ -2548,7 +2750,7 @@
     // has no cascade, so an unrescued delete orphans every container inside.
     var rescue = kids.length ? ccOrgMutate(ORG_MOVE_MUT, { sourceEntryIds: kids, destinationFolderId: parentId }) : Promise.resolve(null);
     rescue.then(function () { return ccOrgMutate(ORG_DELETE_MUT, { entryIds: [id] }); })
-      .then(function (data) { ccOrgUnmarkOwned(id); ccOrgAdopt(data, "deleteDockerEntries"); })
+      .then(function (data) { ccOrgUnmarkOwned(id); setFolderLook(id, null); ccOrgAdopt(data, "deleteDockerEntries"); })
       .catch(function () { flash(t("invalid"), true); });
   }
   // Moves an entry into another folder, appended at the end. Both the click menu and a drop on a
@@ -2646,6 +2848,7 @@
         netPrev[nm] = { rx: s.net_rx || 0, tx: s.net_tx || 0, t: now };
       });
       if ((mode === "grid" || mode === "folder") && gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll(".cc-card")).forEach(function (cd) { var s = stats[cd.dataset.name]; if (!s) return; var f = cd.querySelectorAll(".cc-gauge-fill"), v = cd.querySelectorAll(".cc-stat-val"); if (f[0]) f[0].style.width = Math.min(100, s.cpu_percent) + "%"; if (v[0]) v[0].textContent = (s.cpu_percent || 0) + "%"; if (f[1]) f[1].style.width = Math.min(100, s.mem_percent) + "%"; if (v[1]) v[1].textContent = humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit); var nv = cd.querySelector(".cc-card-net"); if (nv) nv.textContent = netRate(s); });
+      Array.prototype.slice.call(document.querySelectorAll(".cc-folder-load")).forEach(paintFolderLoad);
       // the resource badges update in both modes, since a grid card carries a resgroup too
       Array.prototype.slice.call(document.querySelectorAll(".cc-resgroup")).forEach(function (rg) { var cn = containerByName(rg.dataset.name); updateResGroup(rg, stats[rg.dataset.name], cn && cn.state); });
     }).catch(function () {});
