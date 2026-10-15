@@ -67,10 +67,11 @@ console.log('\nThe mode selector stands at the end of its row');
 {
   ok('the label and the selector share one row', /var modeRow = el\("div", "cc-set-row cc-set-inline"\);/.test(settings) && /modeRow\.appendChild\(modeLbl\);/.test(settings) && /modeRow\.appendChild\(modeSelector\(/.test(settings) && /c1\.appendChild\(modeRow\);/.test(settings));
   const css = /"#cc-settings \.cc-seg\.cc-set-mode\{([^}]*)\}"/.exec(settings);
-  ok('the groove hugs its segments instead of spanning the card', !!css && /display:inline-flex/.test(css[1]) && !/width:100%/.test(css[1]), css && css[1]);
+  ok('the groove hugs its segments instead of spanning the card', !!css && /display:inline-grid/.test(css[1]) && !/width:100%/.test(css[1]), css && css[1]);
+  ok('and gives every segment one width, as GlimStone\'s horizontal selector does', !!css && /grid-auto-flow:column/.test(css[1]) && /grid-auto-columns:1fr/.test(css[1]));
   ok('and is drawn deeper than the card, beating the generic segment rule', !!css && /background:var\(--cc-surface-base,#161616\)/.test(css[1]));
   const seg = /"#cc-settings \.cc-set-mode \.cc-seg-btn\{([^}]*)\}"/.exec(settings);
-  ok('every segment hugs its label', !!seg && /flex:none/.test(seg[1]) && !/flex:1 1 0/.test(seg[1]), seg && seg[1]);
+  ok('a segment keeps its label on one line', !!seg && /white-space:nowrap/.test(seg[1]), seg && seg[1]);
 }
 
 console.log('\nShape and badge style live in the Theming card');
@@ -83,7 +84,7 @@ console.log('\nShape and badge style live in the Theming card');
 console.log('\nThe selector is a radio group the arrows move through');
 {
   class N {
-    constructor(tag, cls, txt) { this.tag = tag; this.cls = new Set((cls || '').split(' ').filter(Boolean)); this.textContent = txt || ''; this.attrs = {}; this.on = {}; this.kids = []; }
+    constructor(tag, cls, txt) { this.tag = tag; this.cls = new Set((cls || '').split(' ').filter(Boolean)); this.classList = { contains: (c) => this.cls.has(c), toggle: (c, f) => (f ? this.cls.add(c) : this.cls.delete(c)) }; this.children = this.kids = []; this.textContent = txt || ''; this.attrs = {}; this.on = {}; }
     setAttribute(k, v) { this.attrs[k] = v; } appendChild(c) { this.kids.push(c); return c; }
     addEventListener(t, f) { this.on[t] = f; } focus() { doc.activeElement = this; }
   }
@@ -104,6 +105,31 @@ console.log('\nThe selector is a radio group the arrows move through');
   box.on.keydown({ key: 'ArrowRight', preventDefault() {} });
   ok('the last mode holds at the end', picks.length === 2);
   ok('the focus follows the choice into the rebuilt card', /var on = root\.querySelector\("\.cc-set-mode \.cc-seg-on"\); if \(on\) on\.focus\(\);/.test(settings));
+}
+
+console.log('\nA setting with a few choices is a horizontal selector, a long list stays a dropdown');
+{
+  class N {
+    constructor(tag, cls, txt) { this.tag = tag; this.cls = new Set((cls || '').split(' ').filter(Boolean)); this.classList = { contains: (c) => this.cls.has(c), toggle: (c, f) => (f ? this.cls.add(c) : this.cls.delete(c)) }; this.children = this.kids = []; this.textContent = txt || ''; this.attrs = {}; this.on = {}; }
+    setAttribute(k, v) { this.attrs[k] = v; } appendChild(c) { this.kids.push(c); return c; }
+    addEventListener(t, f) { this.on[t] = f; } focus() { doc.activeElement = this; }
+  }
+  const doc = { activeElement: null, createElement: (t) => ({ tag: t, style: {} }) };
+  const mk = (t, c, x) => new N(t, c, x);
+  const make = new Function('el', 'document', 'infoIcon', 'paintToggles', 'ccDsel', grabFn(settings, 'modeSelector') + '\n' + grabFn(settings, 'segPicker') + '\nvar SEG_MAX = 6;\n' + grabFn(settings, 'dropRow') + '\nreturn dropRow;')(mk, doc, () => mk('span', 'cc-info'), () => {}, () => mk('span', 'cc-dsel'));
+  const got = [];
+  const row = make('Form', [['round', 'Rund'], ['soft', 'Weich'], ['square', 'Eckig']], 'soft', (v) => got.push(v));
+  const seg = row.kids[1];
+  ok('three shapes are a selector at the end of the row, the name first', row.cls.has('cc-set-inline') && seg.cls.has('cc-set-mode') && row.kids[0].cls.has('cc-set-lblwrap'));
+  seg.kids[2].on.click();
+  ok('a pick runs the setting', got[0] === 'square');
+  ok('and moves the badge with it', seg.kids[2].cls.has('cc-seg-on') && !seg.kids[1].cls.has('cc-seg-on') && seg.kids[2].attrs['aria-checked'] === 'true');
+  seg.kids[1].on.click();
+  ok('the segment that was chosen before can be picked again', got[1] === 'soft');
+  const sizes = make('Größe', ['16', '18', '20', '22', '24', '26', '28'].map((v) => [v, v + ' px']), '20', () => {});
+  ok('seven sizes stay a dropdown', sizes.kids.some((k) => k.cls.has('cc-dsel')));
+  const fonts = make('Schriftart', [['', 'System'], ['Lobster', 'Lobster', 'Lobster']], '', () => {});
+  ok('a font list that previews its faces stays a dropdown', fonts.kids.some((k) => k.cls.has('cc-dsel')));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

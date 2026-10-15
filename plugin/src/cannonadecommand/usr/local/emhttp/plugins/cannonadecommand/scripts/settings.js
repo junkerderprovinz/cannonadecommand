@@ -91,9 +91,9 @@
       // A row or card that has nothing to act on stays out of the page and out of the search.
       "#cc-settings [hidden],#cc-settings .cc-set-off{display:none!important}" +
       "#cc-settings .cc-set-prose{text-align:start}" +
-      // The colour mode sits at the end of its row in a groove, and only the chosen mode is a badge.
-      "#cc-settings .cc-seg.cc-set-mode{display:inline-flex;flex:none;box-sizing:border-box;background:var(--cc-surface-base,#161616)}" +
-      "#cc-settings .cc-set-mode .cc-seg-btn{flex:none;text-align:center;padding:7px 12px;font-size:var(--cc-text-subline)}" +
+      // A selector sits at the end of its row in a groove, its segments one width, and only the chosen one is a badge.
+      "#cc-settings .cc-seg.cc-set-mode{display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;flex:none;box-sizing:border-box;background:var(--cc-surface-base,#161616)}" +
+      "#cc-settings .cc-set-mode .cc-seg-btn{text-align:center;white-space:nowrap;padding:7px 12px;font-size:var(--cc-text-subline)}" +
       "#cc-settings .cc-set-mode .cc-seg-btn:not(.cc-seg-on){background:transparent;color:var(--cc-text-chip,#cfcfcf)}" +
       "#cc-settings .cc-set-mode .cc-seg-btn:not(.cc-seg-on):hover{background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6)}" +
       // An area's colour line and a row that names who decides its value.
@@ -479,7 +479,7 @@
     var btns = opts.map(function (o) {
       var on = o[0] === cur, b = el("span", "cc-seg-btn" + (on ? " cc-seg-on" : ""), o[1]);
       b.setAttribute("role", "radio"); b.setAttribute("aria-checked", on ? "true" : "false"); b.setAttribute("tabindex", on ? "0" : "-1");
-      b.addEventListener("click", function () { if (!on) onPick(o[0]); });
+      b.addEventListener("click", function () { if (!b.classList.contains("cc-seg-on")) onPick(o[0]); });
       box.appendChild(b);
       return b;
     });
@@ -494,6 +494,19 @@
       e.preventDefault();
       to = Math.max(0, Math.min(btns.length - 1, to));
       if (to !== at) onPick(opts[to][0]);
+    });
+    return box;
+  }
+  // The selector for a setting that stays on the page: the pick moves the badge and runs onChange.
+  function segPicker(opts, cur, onChange) {
+    var box = modeSelector(opts, cur, function (v) {
+      Array.prototype.forEach.call(box.children, function (b, i) {
+        var on = opts[i][0] === v;
+        b.classList.toggle("cc-seg-on", on); b.setAttribute("aria-checked", on ? "true" : "false"); b.setAttribute("tabindex", on ? "0" : "-1");
+        if (on) b.focus();
+      });
+      paintToggles();
+      onChange(v);
     });
     return box;
   }
@@ -1531,6 +1544,9 @@
     // Docker is an area like the others: an adopt card and its own badges card at the top of its
     // tab. buildStyleCards writes the area's own accent key, which docker.js resolves through its
     // adopt-gated reader, so an install that never touches it follows the global colour.
+    var cV = card(T("Ansicht", "View"));
+    viewRow(cV);
+    wrap.appendChild(cV);
     var cD = card(T("Stil", "Style"));
     cD.appendChild(colourRow("cc.styledocker"));
     wrap.appendChild(cD);
@@ -2445,15 +2461,56 @@
     wrap.appendChild(trig); wrap.appendChild(panel);
     return wrap;
   }
-  // Every option row is a dropdown, so segRow() delegates to dropRow() and its callers keep the
-  // same options and handler; the select fires change, so the live effects still run. The old
-  // layout argument is ignored, since a dropdown always puts its label on the left.
+  // The Docker view, the same choice as the gear menu there: cc.view for this browser and the
+  // organizer's ccViewMode, which docker.js prefers on load, so either place sets both. Folders
+  // need the organizer and a folder in it, and the cards and folders need the theming.
+  var VIEW_ORG_Q = "{ docker { organizer { views { id prefs flatEntries { type } } } } }";
+  var VIEW_ORG_SAVE = "mutation($viewId: String, $prefs: JSON!) { updateDockerViewPreferences(viewId: $viewId, prefs: $prefs) { version } }";
+  function viewRow(c) {
+    var label = T("Ansicht", "View");
+    var help = T("Wie der Docker-Tab die Container zeigt, dieselbe Wahl wie im Zahnrad-Menü dort. Ordner kannst du wählen, sobald es einen Ordner gibt.", "How the Docker tab shows the containers, the same choice as its gear menu. Folders can be picked once there is a folder.");
+    if (get("cc.theming", "1") === "0") {
+      c.appendChild(lockRow(label, T("Liste, solange das Theming aus ist", "List while theming is off"), "Theming", function () { jumpTo("general", "Theming"); }, help));
+      return;
+    }
+    var slot = el("div", "cc-set-viewslot"); c.appendChild(slot);
+    function draw(org) {
+      var folders = !!org && org.flatEntries.filter(function (e) { return e.type === "folder" || e.type === "group"; }).length > 1;
+      var opts = [["list", T("Liste", "List")], ["grid", T("Raster", "Grid")]];
+      if (folders) opts.push(["folder", T("Ordner", "Folders")]);
+      var cur = (org && org.prefs && org.prefs.ccViewMode) || get("cc.view", "list");
+      if (!opts.some(function (o) { return o[0] === cur; })) cur = "list";
+      slot.innerHTML = "";
+      slot.appendChild(dropRow(label, opts, cur, function (v) {
+        set("cc.view", v);
+        if (!org || !window.ccGql) return;
+        var prefs = {}, was = org.prefs && typeof org.prefs === "object" ? org.prefs : {};
+        Object.keys(was).forEach(function (k) { prefs[k] = was[k]; });
+        prefs.ccViewMode = v;
+        window.ccGql(VIEW_ORG_SAVE, { viewId: org.id, prefs: prefs }).then(function (r) { return r.json(); })
+          .then(function (j) { if (j && !j.errors) org.prefs = prefs; }).catch(function () {});
+      }, help));
+    }
+    draw(null);
+    if (window.ccGql) window.ccGql(VIEW_ORG_Q).then(function (r) { return r.json(); }).then(function (j) {
+      var v = j && j.data && j.data.docker && j.data.docker.organizer && j.data.docker.organizer.views;
+      if (v && v[0]) draw(v[0]);
+    }).catch(function () {});
+  }
   function segRow(labelText, opts, cur, onChange, help) {
     return dropRow(labelText, opts, cur, onChange, help);
   }
-  // A native select dressed as a CC control. An option is [value, label, face], and with a face it
-  // renders in that font family, which the font picker uses.
+  // A setting with up to six choices is GlimStone's horizontal selector at the end of its row. A
+  // longer list, and the font list whose entries preview their face, stays a dropdown: a native
+  // select dressed as a CC control. An option is [value, label, face].
+  var SEG_MAX = 6;
   function dropRow(labelText, opts, cur, onChange, help) {
+    if (opts.length <= SEG_MAX && !opts.some(function (o) { return o[2]; })) {
+      var srow = el("div", "cc-set-row cc-set-inline"), lw = el("span", "cc-set-lblwrap");
+      lw.appendChild(el("span", null, labelText)); if (help) lw.appendChild(infoIcon(help));
+      srow.appendChild(lw); srow.appendChild(segPicker(opts, cur, onChange));
+      return srow;
+    }
     var row = el("div", "cc-set-row"); var rl = el("span", "cc-set-rl", labelText); if (help) rl.appendChild(infoIcon(help)); row.appendChild(rl);
     var sel = el("select", "cc-set-sel");
     opts.forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; if (o[0] === cur) op.selected = true; if (o[2]) op.style.fontFamily = o[2]; sel.appendChild(op); });

@@ -2587,11 +2587,12 @@
     return m;
   }
 
-  function setMode(m) {
+  // fromServer: the mode came from the organizer's own prefs, so there is nothing to save back.
+  function setMode(m, fromServer) {
     if (!themingOn() && m !== "list") m = "list"; // the grid and folder views belong to the theming
     if (m === "folder" && !ccOrgAvailable) m = "list"; // never enter the folder view without organizer data
     mode = m; localStorage.setItem(VIEW_KEY, m); refresh();
-    ccOrgSavePrefs({ ccViewMode: m });
+    if (!fromServer) ccOrgSavePrefs({ ccViewMode: m });
   }
   // The folder view takes part in the same stats tick as the grid, so the readouts on a folder
   // rendered at the detail density stay live. refreshStats() updates every .cc-resgroup in the
@@ -4419,7 +4420,7 @@
       ccOrgInit().then(function () {
         if (dead) return;
         var serverMode = ccOrgView && ccOrgView.prefs && ccOrgView.prefs.ccViewMode;
-        if (ccOrgAvailable && serverMode && serverMode !== mode) { setMode(serverMode); return; }
+        if (ccOrgAvailable && serverMode && serverMode !== mode) { setMode(serverMode, true); return; }
         // With no server prefs saved yet, fall back to the local-only signal, so a "folder"
         // choice made in this browser still restores.
         if (ccOrgAvailable && mode !== "folder" && localStorage.getItem(VIEW_KEY) === "folder" && ccOrgHasFolders()) setMode("folder");

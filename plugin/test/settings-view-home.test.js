@@ -1,6 +1,6 @@
-// Every setting has one home (GlimStone rule 29). The Docker list, grid or folder view lives in
-// the Docker tab's gear menu, which writes cc.view and the organizer's saved view mode, so the
-// settings page carries no second picker for it.
+// The Docker list, grid or folder view is chosen in two places, the Docker tab's gear menu and the
+// Docker tile on the settings page. Both write cc.view and the organizer's saved view mode, so
+// either one shows what the other picked.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand');
@@ -11,15 +11,45 @@ const ok = (name, cond, extra) => { cond ? (pass++, console.log('  PASS  ' + nam
 
 const settings = read('scripts/settings.js');
 const docker = read('scripts/docker.js');
+function grab(src, name) { const i = src.indexOf('function ' + name + '('); let d = 0; for (let k = src.indexOf('{', i); k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}') { d--; if (!d) return src.slice(i, k + 1); } } return ''; }
 
-console.log('\nThe view has one home');
-ok('the settings page has no view card', !/card\(T\("Ansicht", "View"\)/.test(settings) && !/Standard-Ansicht|Default view/.test(settings));
-ok('the settings page never writes cc.view', !/"cc\.view"/.test(settings));
-ok('nor the organizer view mode', !/ccViewMode/.test(settings));
-ok('the gear menu offers the view', /m\.appendChild\(menuHead\(t\("view"\)\)\)/.test(docker) && /setMode\("list"\)/.test(docker) && /setMode\("grid"\)/.test(docker) && /setMode\("folder"\)/.test(docker));
-ok('and saves it locally and on the server', /mode = m; localStorage\.setItem\(VIEW_KEY, m\);/.test(docker) && /ccOrgSavePrefs\(\{ ccViewMode: m \}\)/.test(docker));
-const writers = fs.readdirSync(path.join(DIR, 'scripts')).filter((f) => f.endsWith('.js') && f !== 'docker.js' && /setItem\("cc\.view"/.test(read('scripts/' + f)));
-ok('no other script writes the view', writers.length === 0, writers.join(' '));
+console.log('\nThe gear menu sets the view');
+ok('it offers the three views', /m\.appendChild\(menuHead\(t\("view"\)\)\)/.test(docker) && /setMode\("list"\)/.test(docker) && /setMode\("grid"\)/.test(docker) && /setMode\("folder"\)/.test(docker));
+ok('and saves a pick locally and on the server', /mode = m; localStorage\.setItem\(VIEW_KEY, m\);/.test(docker) && /if \(!fromServer\) ccOrgSavePrefs\(\{ ccViewMode: m \}\)/.test(docker));
+ok('a view restored from the server is not written back to it', /setMode\(serverMode, true\)/.test(docker));
+
+console.log('\nThe settings page sets the same view');
+const block = settings.slice(settings.indexOf('var VIEW_ORG_Q'), settings.indexOf('function viewRow('));
+async function viewRow(store, org) {
+  const rows = [], sent = [];
+  const mk = (tag, cls) => ({ tag, cls: cls || '', kids: [], innerHTML: '', appendChild(c) { this.kids.push(c); return c; } });
+  const window = { ccGql: (q, v) => { sent.push({ q, v }); return Promise.resolve({ json: () => Promise.resolve(/^mutation/.test(q) ? { data: {} } : { data: { docker: { organizer: { views: org ? [org] : [] } } } }) }); } };
+  const dropRow = (label, opts, cur, onChange) => { const r = { label, opts, cur, onChange }; rows.push(r); return r; };
+  const lockRow = (label, by) => ({ lock: by });
+  const c = mk('div');
+  new Function('el', 'get', 'set', 'T', 'dropRow', 'lockRow', 'jumpTo', 'window', 'c', block + grab(settings, 'viewRow') + '\nviewRow(c);')
+    .call(null, mk, (k, d) => (k in store ? store[k] : d), (k, v) => { store[k] = v; }, (de) => de, dropRow, lockRow, () => {}, window, c);
+  await new Promise((r) => setTimeout(r, 10));
+  return { c, rows, sent };
+}
+(async () => {
+  const org = { id: 'default', prefs: { ccViewMode: 'folder', other: 1 }, flatEntries: [{ type: 'folder' }, { type: 'folder' }, { type: 'container' }] };
+  const store = { 'cc.view': 'list' };
+  const r = await viewRow(store, org);
+  const row = r.rows[r.rows.length - 1];
+  ok('with folders it offers Liste, Raster and Ordner', row && row.opts.map((o) => o[0]).join() === 'list,grid,folder', row && row.opts.map((o) => o[0]).join());
+  ok('it shows the organizer\'s saved view, which the Docker tab opens with', row && row.cur === 'folder');
+  row.onChange('grid');
+  await new Promise((res) => setTimeout(res, 10));
+  const save = r.sent.find((x) => /^mutation/.test(x.q));
+  ok('a pick writes cc.view for this browser', store['cc.view'] === 'grid');
+  ok('and the organizer\'s view mode, keeping its other prefs', !!save && save.v.prefs.ccViewMode === 'grid' && save.v.prefs.other === 1 && save.v.viewId === 'default', save && JSON.stringify(save.v));
+  const bare = await viewRow({ 'cc.view': 'grid' }, { id: 'default', prefs: {}, flatEntries: [{ type: 'folder' }] });
+  const brow = bare.rows[bare.rows.length - 1];
+  ok('without a folder there is no Ordner to pick', brow && brow.opts.map((o) => o[0]).join() === 'list,grid' && brow.cur === 'grid');
+  const off = await viewRow({ 'cc.theming': '0' }, org);
+  ok('with theming off a lock line says the list stays', off.rows.length === 0 && off.c.kids[0] && /Liste/.test(off.c.kids[0].lock));
+  ok('the Docker tile carries the row', /var cV = card\(T\("Ansicht", "View"\)\);\s*viewRow\(cV\);/.test(settings));
 
 // With no settings card, the gear has to be on screen in every view, or a user in the list
 // view can never reach the grid, the folders or "New folder" again.
@@ -30,9 +60,12 @@ console.log('\nEvery view has a gear');
   ok('list: the gear sits beside the view switch in the docked bar', /advGrp = jsa\.querySelector\("\.cc-bar-adv"\)/.test(top) && /advGrp\.appendChild\(makeGear\("cc-hgear-home"\)\)/.test(top));
   ok('list: never in a column header, which scrolls away with a wide table', !/th\d?\.appendChild\(makeGear/.test(top) && !/cc-hgear-th2/.test(docker));
   ok('list: the stale-gear sweep spares the bar\'s gear', /if \(!x9\.closest\("\.cc-bar-adv"\)\) x9\.remove\(\)/.test(top));
-  ok('card and folder: the list gear goes, their own tile takes over', /if \(mode !== "list"\) \{\s*var listGear = document\.querySelector\("\.cc-bar-adv \.cc-hgear"\); if \(listGear\) listGear\.remove\(\);/.test(top));
-  ok('card view: a gear tile after the last card', /var gtile = el\("div", "cc-card cc-gear-tile"\); gtile\.appendChild\(hg\)/.test(fn('renderGrid')));
-  ok('folder view: a gear of its own', /makeGear\("cc-hgear-grid"\)/.test(fn('renderFolderView')));
+  const nonList = /if \(!listView\) \{([\s\S]*?)\} else if/.exec(top);
+  ok('card and folder keep the bar\'s gear, so the way back to the list stays in one place', !!nonList && !/return|\.remove\(\);\s*\/\/ gear|cc-bar-adv \.cc-hgear/.test(nonList[1]), nonList && nonList[1]);
+  ok('multi-select stays with the list', /if \(listView\) ensureBulkModeBadge\(jsa\)/.test(top));
+  for (const [view, f] of [['card', 'renderGrid'], ['folder', 'renderFolderView']]) {
+    ok(view + ' view rebuilds the bar and draws no gear of its own', /relocateTopBar\(\)/.test(fn(f)) && !/makeGear\(/.test(fn(f)));
+  }
   // In the flow of the wrapping bar the gear takes its own room, so it cannot sit over a label.
   const { candidates } = require('./cascade');
   const gear = { tag: 'button', classes: ['cc-hgear', 'cc-hgear-home'], attrs: { type: 'button' }, states: {}, html: ['cc-docker-on'], inside: ['.js-actions', '.cc-bar-adv'] };
@@ -80,3 +113,4 @@ console.log('\nMulti-select belongs to the list');
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);
+})();
