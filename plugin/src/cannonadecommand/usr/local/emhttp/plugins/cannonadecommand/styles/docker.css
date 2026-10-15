@@ -1410,10 +1410,6 @@ html.cc-tools-rbneutral #cc-settings .cc-dsel-opt.is-selected {
 button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-tip] { position: relative; }
 .cc-set-mini { background: transparent; color: var(--dim); border: 1px solid var(--line2); border-radius: var(--cc-radius-pill); padding: 5px 12px; font-size: var(--cc-text-subline); cursor: pointer; }
 .cc-set-mini-on { color: #fff; border-color: var(--cc-accent, #FCC419); background: rgba(255,255,255,.05); }
-/* the limit diagnostics card: monospace log lines, red on a rejection from Docker */
-.cc-set-diag { font-family: Consolas, "SFMono-Regular", monospace; font-size: var(--cc-text-meta); line-height: 1.6; color: #b9b9b9; max-height: 200px; overflow: auto; }
-.cc-set-diag-row { white-space: pre-wrap; word-break: break-word; padding: 2px 0; border-bottom: 1px solid #242424; }
-.cc-set-diag-bad { color: #ff7a7a; }
 /* The embedded colour picker, in place of <input type=color> and its OS popup: a
    saturation/value square and a hue bar drawn with CSS gradients, with draggable dots. */
 .cc-ip { flex: 1; min-width: 190px; }
