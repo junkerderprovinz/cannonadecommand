@@ -26,7 +26,7 @@ console.log('\nThe header shows the display name, else the server name');
     const hdr = mk('div'); hdr.insertBefore = (c) => { kids.push(c); c.id = 'cc-brand'; };
     const document = { title, getElementById: (id) => id === 'header' ? hdr : (id === 'cc-brand' ? kids[0] || null : null), createElement: mk, createTextNode: (t) => ({ text: t }), querySelector: () => null };
     const g = (k, d) => (k in store ? store[k] : d);
-    const fn = new Function('document', 'g', 'window', 'var ccBrandSig = "";\n' + grabFn(header, 'ccBrandOn') + '\n' + grabFn(header, 'ccBrand') + '\nccBrand();')(document, g, {});
+    new Function('document', 'g', 'window', 'var ccBrandSig = "";\n' + grabFn(header, 'ccBrandOn') + '\n' + grabFn(header, 'ccBrand') + '\nccBrand();')(document, g, {});
     const br = kids[0];
     return br ? br.children[0].children[0].text : null;
   }

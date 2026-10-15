@@ -727,7 +727,7 @@
       adoptTg = toggle(io.getAdopt(), function (v) { io.setAdopt(v); sync(); io.onChange(); });
       adoptRow = el("div", "cc-set-row cc-set-inline");
       var adoptLbl = el("span", "cc-set-lblwrap"); adoptLbl.appendChild(el("span", null, T("Badge-Farben übernehmen", "Use the badge colours")));
-      adoptLbl.appendChild(infoIcon(T("An: Logo-Kacheln und eingefärbte Icons nehmen die Farben der Badges, also den Regenbogen pro Logo oder die Akzentfarbe. Auf einer Kachel wird das Icon schwarz oder weiß, je nachdem, was darauf lesbar ist. Die Schalter darunter bleiben: Sie entscheiden weiter, ob es Kacheln gibt und ob Icons eingefärbt werden. Nur die beiden Farbwähler entfallen.", "On: logo tiles and tinted icons take the badge colours, which means the rainbow per logo or the accent. On a tile the icon turns black or white, whichever reads on it. The switches below stay and still decide whether there are tiles and whether icons are tinted. Only the two colour pickers go.")));
+      adoptLbl.appendChild(infoIcon(T("An: Logo-Kacheln und eingefärbte Icons nehmen die Farben der Badges, also den Regenbogen pro Logo oder die Akzentfarbe. Auf einer Kachel wird das Icon schwarz oder weiß, je nachdem, was darauf lesbar ist. Die Schalter darunter bleiben: Sie entscheiden weiter, ob es Kacheln gibt und ob Icons eingefärbt werden. Nur die beiden Farbwähler entfallen.", "On: logo tiles and tinted icons take the badge colours, the rainbow per logo or the accent. On a tile the icon turns black or white, whichever reads on it. The switches below stay and still decide whether there are tiles and whether icons are tinted. Only the two colour pickers are hidden.")));
       adoptRow.appendChild(adoptLbl); adoptRow.appendChild(adoptTg);
     }
 
@@ -1056,7 +1056,7 @@
           });
           natRow.appendChild(natTgl);
           var lw = el("span", "cc-set-lblwrap"); lw.appendChild(el("span", null, a[1])); row.appendChild(lw);
-          lw.appendChild(infoIcon(T("Gestaltet den Favoriten-Tab im CannonadeCommand-Stil. Braucht die Favoriten in Unraid.", "Styles the Favorites tab in CannonadeCommand's look. Needs the favourites in Unraid.")));
+          lw.appendChild(infoIcon(T("Gestaltet den Favoriten-Tab im CannonadeCommand-Stil. Dafür müssen die Favoriten in Unraid an sein.", "Styles the Favorites tab in CannonadeCommand's look. Needs favourites turned on in Unraid.")));
           var favTgl = toggle(cur == null ? true : cur !== "0", function (v) { localStorage.setItem("cc.enable.favorites", v ? "1" : "0"); refreshTabs(); });
           row.appendChild(favTgl);
           var favGate = function (live) {
@@ -1242,7 +1242,7 @@
     // marking it against the global accent would un-mark an area card's own pick whenever the
     // global colour changed.
     var prow = colourField(accent, function (v) { accent = v; set("cc.accent", v); root.style.setProperty("--cc-accent", v); root.style.setProperty("--cc-accent-text", idealText(v)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); }, { rowClass: "cc-set-swrow-global" });
-    if (mode === "accent") c1.appendChild(fieldRow(T("Akzentfarbe", "Accent colour"), T("Die eine Farbe aller Badges, Schalter und Knöpfe, solange der Farbmodus Akzent ist.", "The one colour of every badge, switch and button while the colour mode is Accent."), prow));
+    if (mode === "accent") c1.appendChild(fieldRow(T("Akzentfarbe", "Accent colour"), T("Die Farbe aller Badges, Schalter und Knöpfe im Farbmodus Akzent.", "The colour of every badge, switch and button in the Accent colour mode."), prow));
     // on: every reload deals a fresh colour mapping; off: the colours stay put
     var rrot = el("div", "cc-set-row cc-set-inline");
     var rrotL = el("span", "cc-set-lblwrap");
@@ -1544,7 +1544,7 @@
     wrap.appendChild(cD);
     buildStyleCards("ccd.", wrap, [], true);
 
-    var c2 = card(T("Logos", "Logos"), T("Logo-Kacheln und Icons einfärben schalten sich unabhängig voneinander, jedes mit seiner eigenen Farbe.", "Logo tiles and Tint icons switch on independently, each with its own colour."));
+    var c2 = card(T("Logos", "Logos"), T("Logo-Kacheln und Icons einfärben werden getrennt geschaltet, jedes mit seiner eigenen Farbe.", "Logo tiles and Tint icons are switched separately, each with its own colour."));
     // As in the global card: an unset icontint means "on whenever a valid icon colour is set".
     // This Docker card edits the same global keys, not a scoped copy of them.
     function c2TintOnEff() { var v = get("cc.icontint", null); return v == null ? !!get("cc.iconcolor", "") : v === "1"; }
@@ -1783,7 +1783,7 @@
         applyBgClasses(); tp();
       };
       into.appendChild(cA);
-      var cB = card(T("Logos", "Logos"), T("Logo-Kacheln und Icons einfärben schalten sich unabhängig voneinander, jedes mit seiner eigenen Farbe.", "Logo tiles and Tint icons switch on independently, each with its own colour."));
+      var cB = card(T("Logos", "Logos"), T("Logo-Kacheln und Icons einfärben werden getrennt geschaltet, jedes mit seiner eigenen Farbe.", "Logo tiles and Tint icons are switched separately, each with its own colour."));
       // ga() says whether this area adopts: with it on the card reads and previews the global icon
       // values, with it off the area's own. Every change here means the area uses its own style,
       // so the setters below always write the area's own key whatever ga() currently answers.

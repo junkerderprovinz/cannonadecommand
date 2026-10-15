@@ -27,7 +27,7 @@ console.log('\nThe settings page uses the width it has');
   ok('the cards stand under each other', val(win(page, wrap, 'display')) === 'flex' && val(win(page, wrap, 'flex-direction')) === 'column', val(win(page, wrap, 'display')));
   ok('and keep the 40px rhythm', val(win(page, wrap, 'gap')) === '40px');
   ok('no grid of columns is left', !candidates(page, wrap, 'grid-template-columns').length);
-  // A card across the whole window put a row's name and its switch a screen apart.
+  // A card across the whole window puts a row's name and its switch a screen apart.
   const main = { tag: 'div', classes: ['cc-set-main'], inside: ['#cc-settings'] };
   ok('the card column stops at a reading width', val(win(page, main, 'max-width')) === '920px', val(win(page, main, 'max-width')));
   ok('and still shrinks beside the tiles', val(win(page, main, 'min-width')) === '0' && val(win(page, main, 'flex')) === '1 1 auto');
