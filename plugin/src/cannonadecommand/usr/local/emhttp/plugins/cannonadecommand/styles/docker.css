@@ -1201,7 +1201,9 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
    alone, and settings.js moves each name into its bubble. The two widths are GlimStone's 12.75rem
    and 3.25rem in pixels, since Unraid sets the root font size to 10px. */
 .cc-set-body { display: flex; align-items: flex-start; gap: 24px; }
-.cc-set-main { flex: 1 1 auto; min-width: 0; }
+/* The cards stop at a reading width, so a row's name and its control stay close enough to read as
+   one line. */
+.cc-set-main { flex: 1 1 auto; min-width: 0; max-width: 920px; }
 .cc-set-tabs { position: sticky; top: 12px; flex: none; box-sizing: border-box; width: 204px; max-height: calc(100vh - 24px); overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 0 8px 0 4px; margin: 0; }
 .cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: flex !important; flex: none; min-height: 40px; align-items: center; justify-content: flex-start; gap: 10px; box-sizing: border-box; height: auto !important; padding: 0 12px !important; font-size: var(--cc-text-body) !important; font-weight: 600 !important; line-height: 20px; text-align: start; text-transform: none !important; letter-spacing: normal !important; border-radius: var(--cc-radius-control) !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS adds one to every button */
 .cc-set-tab[hidden] { display: none !important; }
@@ -1232,9 +1234,9 @@ html:is(.Theme--white, .Theme--azure) #cc-settings .cc-set-card {
   --cc-text-chip: #cfcfcf; --cc-text-dim: #8a8a8a; --cc-text-hint: #a3a3a3;
   --cc-surface-base: #161616; --cc-surface-3: #2e2e2e; --cc-toggle-track-off: #3a3a3a;
 }
-/* The cards stand under each other at the page's full width, so they end at the same edge as the
-   Docker list. A row keeps its name at the start and its control at the end, and a field, a
-   picker or a slider keeps a width of its own rather than stretching with the card. Stacked cards
+/* The cards stand under each other at the width of their column. A row keeps its name at the start
+   and its control at the end, and a field, a picker or a slider keeps a width of its own rather
+   than stretching with the card. Stacked cards
    keep GlimStone's 40px rhythm, since every card's title badge reaches into the gap above it. */
 .cc-set-wrap { display: flex; flex-direction: column; gap: 40px; }
 .cc-set-card { position: relative; background: #222222; border: none; border-radius: var(--cc-radius-card); padding: 22px 18px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
