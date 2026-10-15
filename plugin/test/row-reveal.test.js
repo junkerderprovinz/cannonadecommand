@@ -1,7 +1,7 @@
 // A row is quiet at rest (GlimStone rules 6 and 33). Its buttons come in while the pointer is over
 // the row or the focus is inside it, and stay on a touch screen, which has no hover; a running
 // container or VM shows no state, since running is the normal case. This holds for the Docker list,
-// the card and both folder densities, and for the VM rows. What can quietly break it:
+// the card and the folder view's tile, and for the VM rows. What can quietly break it:
 //   · hiding the buttons with visibility or display, which takes them out of the Tab order, so the
 //     keyboard can never bring them in
 //   · buttons that are not focusable, so :focus-within never fires
@@ -21,7 +21,7 @@ const docker = flat(read('styles/docker.css')), vm = flat(read('sheets/Cannonade
 console.log('\nThe buttons come in on hover and on focus');
 {
   ok('Docker: the bar and the single action rest invisible, by opacity', docker.includes('html.cc-docker-on :is(.cc-actbar, .cc-mrow-act) { opacity: 0; transition: opacity var(--cc-motion-fade-dur, 0s); }'));
-  ok('Docker: a list row, a card, a chip or a folder row brings them in on hover or focus',
+  ok('Docker: a list row, a card or a tile brings them in on hover or focus',
     docker.includes('html.cc-docker-on :is(#docker_list tr, .cc-card):is(:hover, :focus-within) :is(.cc-actbar, .cc-mrow-act), html.cc-docker-on .cc-actbar.cc-act-flash { opacity: 1; }'));
   ok('Docker: a touch screen keeps them', docker.includes('@media (hover: none) { html.cc-docker-on :is(.cc-actbar, .cc-mrow-act) { opacity: 1; } }'));
   ok('VMs: the bar rests invisible, by opacity', vm.includes('html.cc-vms-on .cc-actbar { opacity: 0; transition: opacity var(--cc-motion-fade-dur, 0s); }'));
@@ -51,8 +51,8 @@ console.log('\nA running container shows no state');
   ok('one rule hides the running state in every Docker view', !!rule);
   const sels = rule ? rule[1].split(/,(?![^(]*\))/).map((s) => s.trim()) : [];
   ok('list: the dot row under the name, while its dot says running', sels.includes('html.cc-docker-on .cc-enh .cc-ct-dotrow:has(> .cc-ct-statedot[data-name].cc-badge-running:not(.cc-badge-alert))'));
-  ok('card and folder list row: the state badge', sels.includes('html.cc-docker-on .cc-grid-holder :is(.cc-card-head, .cc-frow-status) > .cc-badge-running:not(.cc-badge-alert)'));
-  ok('chip: the dot and the word beside it', sels.includes('html.cc-docker-on .cc-grid-holder .cc-chip-dot.cc-badge-running:not(.cc-badge-alert)') && sels.includes('html.cc-docker-on .cc-grid-holder .cc-chip-dot.cc-badge-running:not(.cc-badge-alert) + .cc-chip-status'));
+  ok('card: the state badge', sels.includes('html.cc-docker-on .cc-grid-holder .cc-card-head > .cc-badge-running:not(.cc-badge-alert)'));
+  ok('tile: the dot and the word beside it', sels.includes('html.cc-docker-on .cc-grid-holder .cc-tile-dot.cc-badge-running:not(.cc-badge-alert)') && sels.includes('html.cc-docker-on .cc-grid-holder .cc-tile-dot.cc-badge-running:not(.cc-badge-alert) + .cc-tile-status'));
   ok('an unhealthy container keeps its state, every selector excludes the alert', sels.length === 4 && sels.every((s) => s.includes(':not(.cc-badge-alert)')));
   ok('the plan badge carries its dependency state itself, so no dot beside it competes with the reveal', !/depStateDot/.test(read('scripts/docker.js')) && sels[0].includes('[data-name]'));
   ok('VMs: a running VM\'s state badge goes', vm.includes('html.cc-vms-on #kvm_list td.vm-name .inner > span.state.cc-badge-running { display: none !important; }'));

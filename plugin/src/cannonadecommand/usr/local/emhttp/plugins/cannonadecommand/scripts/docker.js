@@ -119,8 +119,8 @@
   // "CannonadeCommand" in both halves. "CC" is a source-code prefix, the cc- class namespace, the
   // CC_* constants and the cc.* keys, and it never leaves the source.
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Startplan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", search: "Suche", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge; Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen, restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container, kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle und kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“: dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner", renameFolder: "Ordner umbenennen", deleteFolder: "Ordner löschen", moveToFolder: "In Ordner verschieben", rootLevel: "(Wurzelebene)", iconMode: "Icon-Färbung", iconInherit: "folgt globaler Einstellung", iconAuto: "Automatisch", iconNative: "Natives Icon", iconFlat: "Ink-Flatten", iconTint: "Luminanz-Tint", folderContent: "Ordnerinhalt", detailed: "Detailliert", hideStopped: "Gestoppte ausblenden", bulkStartAll: "Alle starten", bulkStopAll: "Alle stoppen", bulkPauseAll: "Alle pausieren", bulkResumeAll: "Alle fortsetzen", allContainers: "Alle Container", barAdd: "Container hinzufügen", barCheck: "Nach Aktualisierungen suchen", barUpdateAll: "Alle aktualisieren", barSizes: "Containergröße", updateCt: "Aktualisieren", discardTitle: "Ungespeicherte Änderungen verwerfen?", discard: "Verwerfen", keepEditing: "Weiter bearbeiten", cancel: "Abbrechen", newFolderTitle: "Neuen Ordner anlegen", folderName: "Name des Ordners", create: "Anlegen", renameFolderTitle: "Ordner „%s“ umbenennen", renameShort: "Umbenennen", deleteFolderTitle: "Ordner „%s“ löschen?", deleteShort: "Löschen" },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save start plan", startorder: "Start in order", filter: "filter…", search: "Search", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Start plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order; duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live, gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container, no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold and barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no”: this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder", renameFolder: "Rename folder", deleteFolder: "Delete folder", moveToFolder: "Move to folder", rootLevel: "(Root level)", iconMode: "Icon colouring", iconInherit: "follows the global setting", iconAuto: "Automatic", iconNative: "Native icon", iconFlat: "Ink flatten", iconTint: "Luminance tint", folderContent: "Folder contents", detailed: "Detailed", hideStopped: "Hide stopped", bulkStartAll: "Start all", bulkStopAll: "Stop all", bulkPauseAll: "Pause all", bulkResumeAll: "Resume all", allContainers: "All containers", barAdd: "Add container", barCheck: "Check for updates", barUpdateAll: "Update all", barSizes: "Container size", updateCt: "Update", discardTitle: "Discard unsaved changes?", discard: "Discard", keepEditing: "Keep editing", cancel: "Cancel", newFolderTitle: "Create a folder", folderName: "Folder name", create: "Create", renameFolderTitle: "Rename folder “%s”", renameShort: "Rename", deleteFolderTitle: "Delete folder “%s”?", deleteShort: "Delete" },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Startplan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", search: "Suche", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge; Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen, restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container, kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle und kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“: dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner", renameFolder: "Ordner umbenennen", deleteFolder: "Ordner löschen", moveToFolder: "In Ordner verschieben", rootLevel: "(Wurzelebene)", iconMode: "Icon-Färbung", iconInherit: "folgt globaler Einstellung", iconAuto: "Automatisch", iconNative: "Natives Icon", iconFlat: "Ink-Flatten", iconTint: "Luminanz-Tint", hideStopped: "Gestoppte ausblenden", bulkStartAll: "Alle starten", bulkStopAll: "Alle stoppen", bulkPauseAll: "Alle pausieren", bulkResumeAll: "Alle fortsetzen", allContainers: "Alle Container", barAdd: "Container hinzufügen", barCheck: "Nach Aktualisierungen suchen", barUpdateAll: "Alle aktualisieren", barSizes: "Containergröße", updateCt: "Aktualisieren", discardTitle: "Ungespeicherte Änderungen verwerfen?", discard: "Verwerfen", keepEditing: "Weiter bearbeiten", cancel: "Abbrechen", newFolderTitle: "Neuen Ordner anlegen", folderName: "Name des Ordners", create: "Anlegen", renameFolderTitle: "Ordner „%s“ umbenennen", renameShort: "Umbenennen", deleteFolderTitle: "Ordner „%s“ löschen?", deleteShort: "Löschen" },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save start plan", startorder: "Start in order", filter: "filter…", search: "Search", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Start plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order; duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live, gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container, no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold and barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no”: this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder", renameFolder: "Rename folder", deleteFolder: "Delete folder", moveToFolder: "Move to folder", rootLevel: "(Root level)", iconMode: "Icon colouring", iconInherit: "follows the global setting", iconAuto: "Automatic", iconNative: "Native icon", iconFlat: "Ink flatten", iconTint: "Luminance tint", hideStopped: "Hide stopped", bulkStartAll: "Start all", bulkStopAll: "Stop all", bulkPauseAll: "Pause all", bulkResumeAll: "Resume all", allContainers: "All containers", barAdd: "Add container", barCheck: "Check for updates", barUpdateAll: "Update all", barSizes: "Container size", updateCt: "Update", discardTitle: "Discard unsaved changes?", discard: "Discard", keepEditing: "Keep editing", cancel: "Cancel", newFolderTitle: "Create a folder", folderName: "Folder name", create: "Create", renameFolderTitle: "Rename folder “%s”", renameShort: "Rename", deleteFolderTitle: "Delete folder “%s”?", deleteShort: "Delete" },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -429,7 +429,7 @@
         if (unh) label += " ✕"; else if (c.health === "starting") label += " …";
         var isToggle = b.classList.contains("cc-badge-toggle");
         // Only the state and alert classes are rewritten: the hide rule for a running container
-        // is keyed on the dot's own class (cc-ct-statedot, cc-chip-dot), which has to survive.
+        // is keyed on the dot's own class (cc-ct-statedot, cc-tile-dot), which has to survive.
         var cls = Array.prototype.filter.call(b.classList, function (k) { return k === "cc-badge-toggle" || !/^cc-badge-/.test(k); })
           .concat("cc-badge-" + s, unh ? ["cc-badge-alert"] : []).join(" ");
         if (unh) b.setAttribute("data-tip", unhealthyTip());
@@ -1411,11 +1411,7 @@
     var r1 = el("div", "cc-actrow");
     r1.appendChild(cx.webui && running ? actBtn("ExternalLink", "WebUI", function () { window.open(cx.webui, "_blank"); }) : actBtnOff("ExternalLink", cx.webui ? (de ? "WebUI erst, wenn der Container läuft" : "WebUI once the container is running") : (de ? "kein WebUI" : "no WebUI")));
     r1.appendChild(term ? actBtn("Log", "Log", function () { window.openTerminal("docker", name, ".log"); }) : actBtnOff("Log", "Log"));
-    r1.appendChild(cx.xml ? actBtn("Pencil", de ? "Bearbeiten" : "Edit", function () {
-      // what Unraid's own editContainer() does; the template path stays unencoded
-      var p2 = location.pathname, x2 = p2.indexOf("?"); if (x2 !== -1) p2 = p2.substring(0, x2);
-      location.href = p2 + "/UpdateContainer?xmlTemplate=edit:" + cx.xml;
-    }) : actBtnOff("Pencil", de ? "kein Template" : "no template"));
+    r1.appendChild(cx.xml ? actBtn("Pencil", de ? "Bearbeiten" : "Edit", function () { editTemplate(cx.xml); }) : actBtnOff("Pencil", de ? "kein Template" : "no template"));
     var r2 = el("div", "cc-actrow");
     r2.appendChild(actBtn("Refresh", t("restart"), function () { doAction(name, "restart"); }));
     r2.appendChild(paused ? actBtn("Play", t("resume"), function () { doAction(name, "unpause"); })
@@ -1979,72 +1975,93 @@
     applyIconTint();
     restoreGridFocus(focusKey);
   }
-  // The folder view has three content densities, a second axis inside it: the folders are always
-  // grouped, and only their contents and the root section switch between detailed, grid and list.
-  // The list is the native Docker list's language, an icon, a name and a state and nothing else;
-  // the grid is a chip, a small icon with an inline name, a status dot with a short label and one
-  // action, wrapped tightly rather than one per row.
+  // The folder view shows every container as a tile of one fixed size, so the rows line up into a
+  // grid whatever the name or state: the icon, the name with its IP under it, CPU and RAM bars while
+  // it runs, the state while it does not, an update badge when one is ready, and WebUI, start or
+  // stop and restart. The rarer actions sit in the menu behind the icon.
   //
-  // All three reuse card()'s colour plumbing rather than reimplementing it: every wrapper keeps
-  // the cc-card class, so stampCardRainbow(), the reactive hover rules and every iconbg and shape
-  // selector that targets .cc-card apply, and every icon reuses .cc-card-ico, resized by its
-  // density's own rule. Every action button goes through actBtn() and tintAct(), the machinery
-  // actionBars() uses, so it takes the same tinting as every other action icon.
-  var FOLDER_DENSITY_KEY = "cc.folderDensity"; // "full" (the default), "grid" or "list"
-  function folderDensity() {
-    var v = localStorage.getItem(FOLDER_DENSITY_KEY);
-    if (v === "grid" || v === "list") return v;
-    if (v === "minimal") return "grid"; // an older stored value
-    return "full";
-  }
-  function setFolderDensity(v) {
-    localStorage.setItem(FOLDER_DENSITY_KEY, (v === "grid" || v === "list") ? v : "full");
-    if (mode === "folder") renderFolderView();
-  }
-  // The grid density: a small pill per container with the icon, name, a status dot with a short
-  // label and one action button on a line, wrapping tightly against its siblings, which
-  // .cc-folder-group-body-grid in docker.css lays out.
-  function folderChip(c) {
-    var wrap = el("div", "cc-card cc-chip"); wrap.dataset.name = c.name;
+  // The tile keeps the cc-card class and its icon .cc-card-ico, so stampCardRainbow(), the reactive
+  // hover rules and every iconbg and shape selector that targets .cc-card apply unchanged. The
+  // bars are gauge()'s, in the order refreshStats() expects, so the stats tick keeps them live.
+  // `row` is the container's native list row when the caller has it, which saves a table scan.
+  function folderTile(c, row) {
+    var wrap = el("div", "cc-card cc-tile"); wrap.dataset.name = c.name;
     stampCardRainbow(wrap, c.name);
-    var ico = iconFor(c.name);
-    if (ico) { var im = el("img", "cc-card-ico cc-chip-ico"); im.src = ico; im.setAttribute("data-cc-name", c.name); im.onerror = function () { this.style.visibility = "hidden"; }; wrap.appendChild(im); }
-    else wrap.appendChild(el("div", "cc-card-ico cc-chip-ico cc-card-ico-ph"));
-    wrap.appendChild(el("span", "cc-chip-name", c.name));
-    var st = (c && c.state) || "unknown";
-    var dot = el("span", "cc-badge cc-chip-dot cc-badge-" + st); dot.dataset.name = c.name;
-    wrap.appendChild(dot);
-    wrap.appendChild(el("span", "cc-chip-status", stateLabel(st)));
-    var running = c && c.state === "running", paused = c && c.state === "paused";
-    var actWrap = el("span", "cc-mrow-act cc-chip-act");
-    actWrap.appendChild(paused ? actBtn("Play", t("resume"), function () { doAction(c.name, "unpause"); })
-      : (running ? actBtn("Stop", t("stop"), function () { doAction(c.name, "stop"); })
-        : actBtn("Play", t("start"), function () { doAction(c.name, "start"); })));
-    tintAct(actWrap); // the tinting the full action bars use, rather than colour logic of its own
-    wrap.appendChild(actWrap);
+    var st = c.state || "unknown", running = st === "running", paused = st === "paused", de = LANG === "de";
+    var cx = ctxFor(c.name, row);
+    var head = el("div", "cc-tile-head");
+    var ico = iconFor(c.name), im;
+    if (ico) { im = el("img", "cc-card-ico cc-tile-ico"); im.src = ico; im.alt = ""; im.setAttribute("data-cc-name", c.name); im.onerror = function () { this.style.visibility = "hidden"; }; }
+    else im = el("span", "cc-card-ico cc-tile-ico cc-card-ico-ph");
+    var icoBtn = el("span", "cc-tile-icobtn"); icoBtn.appendChild(im);
+    icoBtn.setAttribute("aria-label", (de ? "Aktionen: " : "Actions: ") + c.name);
+    icoBtn.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); containerMenu(icoBtn, c, cx); });
+    if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(icoBtn);
+    head.appendChild(icoBtn);
+    var id = el("div", "cc-tile-id");
+    var nm = el("div", "cc-tile-name", c.name);
+    // The full name goes into the hover bubble only while the ellipsis cuts it.
+    nm.addEventListener("mouseover", function () { if (nm.scrollWidth > nm.clientWidth) nm.setAttribute("data-tip", c.name); else nm.removeAttribute("data-tip"); });
+    id.appendChild(nm);
+    if (c.ip) id.appendChild(el("div", "cc-tile-ip", c.ip));
+    head.appendChild(id);
+    wrap.appendChild(head);
+    var stats2 = el("div", "cc-tile-stats"), s = stats[c.name];
+    if (running) {
+      stats2.appendChild(gauge("CPU", s ? s.cpu_percent : 0, s ? (s.cpu_percent || 0) + "%" : "…"));
+      stats2.appendChild(gauge("RAM", s ? s.mem_percent : 0, s ? humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit) : "…"));
+    }
+    wrap.appendChild(stats2);
+    var foot = el("div", "cc-tile-foot");
+    var state = el("span", "cc-tile-state");
+    var dot = el("span", "cc-badge cc-tile-dot cc-badge-" + st + (showUnhealthy(c) ? " cc-badge-alert" : "")); dot.dataset.name = c.name;
+    state.appendChild(dot);
+    state.appendChild(el("span", "cc-tile-status", stateLabel(st)));
+    if (updateReady(c.name, row) && typeof window.updateContainer === "function") {
+      var up = el("span", "cc-tile-up", t("update")); up.setAttribute("data-tip", t("updateCt"));
+      up.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); window.updateContainer(c.name); });
+      if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(up);
+      state.appendChild(up);
+    }
+    foot.appendChild(state);
+    var acts = el("span", "cc-mrow-act cc-tile-act");
+    if (cx.webui) acts.appendChild(running ? actBtn("ExternalLink", "WebUI", function () { window.open(cx.webui, "_blank"); }) : actBtnOff("ExternalLink", de ? "WebUI erst, wenn der Container läuft" : "WebUI once the container is running"));
+    acts.appendChild(paused ? actBtn("Play", t("resume"), function () { doAction(c.name, "unpause"); })
+      : running ? actBtn("Stop", t("stop"), function () { doAction(c.name, "stop"); })
+        : actBtn("Play", t("start"), function () { doAction(c.name, "start"); }));
+    acts.appendChild(actBtn("Refresh", t("restart"), function () { doAction(c.name, "restart"); }));
+    tintAct(acts);
+    foot.appendChild(acts);
+    wrap.appendChild(foot);
     if (filterText && norm(c.name).indexOf(filterText) < 0) wrap.style.display = "none";
     return wrap;
   }
-  // The list density: full-width rows in the native Docker list's language, a larger icon tile
-  // with the name beside it and the state as a badge, but with no CPU, RAM, network or port
-  // column, one row per container.
-  function folderListRow(c) {
-    var wrap = el("div", "cc-card cc-frow"); wrap.dataset.name = c.name;
-    stampCardRainbow(wrap, c.name);
-    var ico = iconFor(c.name);
-    if (ico) { var im = el("img", "cc-card-ico", null); im.src = ico; im.setAttribute("data-cc-name", c.name); im.onerror = function () { this.style.visibility = "hidden"; }; wrap.appendChild(im); }
-    else wrap.appendChild(el("div", "cc-card-ico cc-card-ico-ph"));
-    wrap.appendChild(el("div", "cc-frow-name", c.name));
-    var statusWrap = el("span", "cc-frow-status"); statusWrap.appendChild(stateBadge(c)); wrap.appendChild(statusWrap);
-    var running = c && c.state === "running", paused = c && c.state === "paused";
-    var actWrap = el("span", "cc-mrow-act cc-frow-act");
-    actWrap.appendChild(paused ? actBtn("Play", t("resume"), function () { doAction(c.name, "unpause"); })
-      : (running ? actBtn("Stop", t("stop"), function () { doAction(c.name, "stop"); })
-        : actBtn("Play", t("start"), function () { doAction(c.name, "start"); })));
-    tintAct(actWrap);
-    wrap.appendChild(actWrap);
-    if (filterText && norm(c.name).indexOf(filterText) < 0) wrap.style.display = "none";
-    return wrap;
+  // Unraid's update column carries a top-level apply link only while an update is ready; the force
+  // link it always has sits inside a div.advanced.
+  function updateReady(name, row) {
+    var tr = row || findRows().filter(function (r) { return rowName(r) === name; })[0];
+    return !!(tr && tr.querySelector("td.updatecolumn > a.exec"));
+  }
+  // What Unraid's own editContainer() does; the template path stays unencoded.
+  function editTemplate(xml) {
+    var p2 = location.pathname, x2 = p2.indexOf("?"); if (x2 !== -1) p2 = p2.substring(0, x2);
+    location.href = p2 + "/UpdateContainer?xmlTemplate=edit:" + xml;
+  }
+  // The menu behind a tile's icon: log, console, edit, pause and the links the template carries,
+  // the actions the list keeps in its action block and the tile has no room for.
+  function containerMenu(anchor, c, cx) {
+    if (!window.CCTheme || !window.CCTheme.menu) return;
+    var name = c.name, de = LANG === "de", running = c.state === "running", term = typeof window.openTerminal === "function";
+    cx = cx || ctxFor(name);
+    var items = [];
+    if (term) items.push({ glyph: "Log", label: "Log", run: function () { window.openTerminal("docker", name, ".log"); } });
+    if (term && running) items.push({ glyph: "Code", label: de ? "Konsole" : "Console", run: function () { if (cx.shell) window.openTerminal("docker", name, cx.shell); else window.openTerminal("docker", name); } });
+    if (cx.xml) items.push({ glyph: "Pencil", label: de ? "Bearbeiten" : "Edit", run: function () { editTemplate(cx.xml); } });
+    if (running) items.push({ glyph: "Pause", label: t("pause"), run: function () { doAction(name, "pause"); } });
+    if (cx.tswebui) items.push({ glyph: "ExternalLink", label: "Tailscale WebUI", run: function () { window.open(cx.tswebui, "_blank"); } });
+    cx.links.forEach(function (l2) { items.push({ glyph: l2.glyph, label: l2.tip, run: function () { window.open(l2.url, "_blank"); } }); });
+    if (typeof window.rmContainer === "function" && cx.id) items.push({ glyph: "Trash", label: de ? "Entfernen" : "Remove", del: true, run: function () { window.rmContainer(name, cx.image, cx.id); } });
+    if (items.length) window.CCTheme.menu(anchor, items);
   }
   // The per-folder collapse and hide-stopped state, kept like every other cc.* preference: the
   // setItem and removeItem interceptor near the top of this file sweeps any key matching
@@ -2096,10 +2113,9 @@
     b.innerHTML = ccGlyph(icon);
     return b;
   }
-  // The folder view groups structurally and shows no aggregated figures per folder. flatEntries
-  // already carries the depth, parent id and position, so grouping is one bucket-by-parent pass
-  // rather than a recursive tree parser, and it reuses card(), so a folder's contents look like
-  // the grid's, only grouped under headers.
+  // The folder view groups structurally. flatEntries already carries the depth, parent id and
+  // position, so grouping is one bucket-by-parent pass rather than a recursive tree parser, and
+  // every container in it, loose or in a folder, is a folderTile().
   function renderFolderView() {
     // Every folder action re-renders through this function, which clears and rebuilds the whole
     // holder, and the browser resets the scroll position the moment the scrolled-into content is
@@ -2125,8 +2141,10 @@
     // goes through runBulkAction(), the machinery the bulk-select bar uses.
     function ccFolderBulk(fid, action) { runBulkAction(ccCollectFolderContainerNames(byParent, fid, containerByName), action); }
 
-    var dense = folderDensity(); // applies to a folder's contents and to the root section alike
-    var root = el("div", "cc-folderview" + (dense === "grid" ? " cc-folderview-grid" : dense === "list" ? " cc-folderview-list" : ""));
+    var root = el("div", "cc-folderview");
+    // the native rows, looked up once per render rather than once per tile
+    var rowsByName = {};
+    findRows().forEach(function (r) { rowsByName[rowName(r)] = r; });
 
     // Drag and drop reordering. `dragEntry` is the entry being dragged, scoped to this render
     // pass, since a successful move triggers a fresh render anyway. buildMoveMenu below is the
@@ -2155,7 +2173,7 @@
       var btn = el("button", "cc-card-movebtn"); btn.type = "button"; btn.title = t("moveToFolder");
       btn.innerHTML = ccGlyph("Folder"); btn.setAttribute("aria-label", t("moveToFolder"));
       btn.addEventListener("click", function (ev) { ev.stopPropagation(); ev.preventDefault(); toggleMenu(btn, function () { return buildMoveMenu(entry); }, ev); });
-      var head2 = cardEl.querySelector(".cc-card-head"); (head2 || cardEl).appendChild(btn);
+      cardEl.querySelector(".cc-tile-head").appendChild(btn);
     }
 
     function renderEntries(parentId, container) {
@@ -2200,7 +2218,7 @@
           }
           head.appendChild(acts);
           grp.appendChild(head);
-          var kids = el("div", "cc-folder-group-body" + (dense === "grid" ? " cc-folder-group-body-grid" : dense === "list" ? " cc-folder-group-body-list" : " cc-grid"));
+          var kids = el("div", "cc-folder-group-body");
           grp.appendChild(kids);
           container.appendChild(grp);
           // Dropping a container on this folder's head or its empty body files it in here at the
@@ -2220,7 +2238,7 @@
           if (c) {
             if (filterText && !entryMatches(e)) return;
             if (ccFolderHidesContainer(parentId, c)) return;
-            var cd = dense === "grid" ? folderChip(c) : dense === "list" ? folderListRow(c) : card(c);
+            var cd = folderTile(c, rowsByName[c.name]);
             wireDragSource(cd, e);
             // A drop on another container moves the dragged item to that one's own folder and
             // position, which covers a reorder within a folder and a move between two.
@@ -2328,24 +2346,6 @@
         seg.appendChild(bF);
       }
       var vrow = el("div", "cc-menu-row cc-menu-plain"); vrow.appendChild(seg); m.appendChild(vrow);
-      // The folder-content density, a second axis inside the folder view: the folders stay
-      // grouped and only their contents and the root section switch between the detail cards,
-      // the grid chips and the list rows. It reuses the same labels as the view switch above, so
-      // the two share a vocabulary, and it is offered only while the folder view is active,
-      // since it does nothing in the others.
-      if (mode === "folder") {
-        m.appendChild(menuHead(t("folderContent")));
-        var segD = el("div", "cc-seg");
-        var dense = folderDensity();
-        var bFull = el("button", "cc-seg-btn" + (dense === "full" ? " cc-seg-on" : ""), t("detailed"));
-        var bGrid = el("button", "cc-seg-btn" + (dense === "grid" ? " cc-seg-on" : ""), t("grid"));
-        var bList = el("button", "cc-seg-btn" + (dense === "list" ? " cc-seg-on" : ""), t("list"));
-        bFull.addEventListener("click", function () { closeMenu(); setFolderDensity("full"); });
-        bGrid.addEventListener("click", function () { closeMenu(); setFolderDensity("grid"); });
-        bList.addEventListener("click", function () { closeMenu(); setFolderDensity("list"); });
-        segD.appendChild(bFull); segD.appendChild(bGrid); segD.appendChild(bList);
-        var drow = el("div", "cc-menu-row cc-menu-plain"); drow.appendChild(segD); m.appendChild(drow);
-      }
       // New folder creates the first one, which is how the folder view above becomes available.
       if (ccOrgAvailable) {
         m.appendChild(menuItem("cc-menu-link", "+ " + t("newFolder"), ccOrgCreateFolder));
@@ -2594,10 +2594,8 @@
     mode = m; localStorage.setItem(VIEW_KEY, m); refresh();
     if (!fromServer) ccOrgSavePrefs({ ccViewMode: m });
   }
-  // The folder view takes part in the same stats tick as the grid, so the readouts on a folder
-  // rendered at the detail density stay live. refreshStats() updates every .cc-resgroup in the
-  // document whichever view built it, and the grid and list densities build none, so the tick
-  // does nothing for those two.
+  // The folder view takes part in the same stats tick as the grid, so the bars on its tiles stay
+  // live.
   function refresh() { applyMode(); if (mode === "grid" || mode === "folder" || (mode === "list" && colOn("res"))) refreshStats(); }
   // updates one resource badge group in place, its values only
   function updateResGroup(rg, s, state) {
@@ -2647,7 +2645,7 @@
         }
         netPrev[nm] = { rx: s.net_rx || 0, tx: s.net_tx || 0, t: now };
       });
-      if (mode === "grid" && gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll(".cc-card")).forEach(function (cd) { var s = stats[cd.dataset.name]; if (!s) return; var f = cd.querySelectorAll(".cc-gauge-fill"), v = cd.querySelectorAll(".cc-stat-val"); if (f[0]) f[0].style.width = Math.min(100, s.cpu_percent) + "%"; if (v[0]) v[0].textContent = (s.cpu_percent || 0) + "%"; if (f[1]) f[1].style.width = Math.min(100, s.mem_percent) + "%"; if (v[1]) v[1].textContent = humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit); var nv = cd.querySelector(".cc-card-net"); if (nv) nv.textContent = netRate(s); });
+      if ((mode === "grid" || mode === "folder") && gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll(".cc-card")).forEach(function (cd) { var s = stats[cd.dataset.name]; if (!s) return; var f = cd.querySelectorAll(".cc-gauge-fill"), v = cd.querySelectorAll(".cc-stat-val"); if (f[0]) f[0].style.width = Math.min(100, s.cpu_percent) + "%"; if (v[0]) v[0].textContent = (s.cpu_percent || 0) + "%"; if (f[1]) f[1].style.width = Math.min(100, s.mem_percent) + "%"; if (v[1]) v[1].textContent = humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit); var nv = cd.querySelector(".cc-card-net"); if (nv) nv.textContent = netRate(s); });
       // the resource badges update in both modes, since a grid card carries a resgroup too
       Array.prototype.slice.call(document.querySelectorAll(".cc-resgroup")).forEach(function (rg) { var cn = containerByName(rg.dataset.name); updateResGroup(rg, stats[rg.dataset.name], cn && cn.state); });
     }).catch(function () {});

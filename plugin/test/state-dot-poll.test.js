@@ -39,19 +39,19 @@ function poll(badges, containers) {
 }
 
 const DOT = badge('cc-badge cc-badge-running cc-ct-statedot', 'web');
-const CHIP = badge('cc-badge cc-chip-dot cc-badge-running', 'web');
+const TILE = badge('cc-badge cc-tile-dot cc-badge-running', 'web');
 const TOGGLE = badge('cc-badge cc-badge-running cc-badge-toggle', 'web');
 const box = { web: { name: 'web', state: 'running' } };
 
 console.log('\nThe poll keeps the class the hide rule needs');
-poll([DOT, CHIP, TOGGLE], box);
+poll([DOT, TILE, TOGGLE], box);
 ok('the list dot is still a statedot after a poll', DOT.classList.contains('cc-ct-statedot'), DOT.className);
-ok('the chip dot is still a chip dot', CHIP.classList.contains('cc-chip-dot'), CHIP.className);
+ok('the tile dot is still a tile dot', TILE.classList.contains('cc-tile-dot'), TILE.className);
 ok('the toggle stays a toggle', TOGGLE.classList.contains('cc-badge-toggle'), TOGGLE.className);
 ok('the dot\'s tooltip is its state', DOT.getAttribute('data-tip') === 'running');
 
 box.web.state = 'exited';
-poll([DOT, CHIP], box);
+poll([DOT, TILE], box);
 ok('a container that stops swaps the state class', DOT.classList.contains('cc-badge-exited') && !DOT.classList.contains('cc-badge-running'), DOT.className);
 ok('without picking up a second state class', DOT.className.split(' ').filter((k) => /^cc-badge-(running|exited)$/.test(k)).length === 1, DOT.className);
 box.web.state = 'running'; box.web.unhealthy = true;
@@ -66,10 +66,10 @@ console.log('\nAfter the poll the hide rule still catches a running dot');
   const dotrow = { tag: 'div', classes: ['cc-ct-dotrow'], attrs: {}, states: {}, html: ['cc-docker-on'], has: ['> .cc-ct-statedot[data-name].cc-badge-running:not(.cc-badge-alert)'] };
   const d = candidates('docker', dotrow, 'display');
   ok('the list dot row is hidden', d.length > 0 && d[d.length - 1].value === 'none');
-  const chip = { tag: 'span', classes: CHIP.className.split(' '), attrs: { 'data-name': 'web' }, states: {}, html: ['cc-docker-on'] };
-  box.web.state = 'running'; poll([CHIP], box); chip.classes = CHIP.className.split(' ');
-  const c = candidates('docker', chip, 'display');
-  ok('the chip dot is hidden', c.length > 0 && c[c.length - 1].value === 'none', c.map((x) => x.selector).join(' | '));
+  const tile = { tag: 'span', classes: TILE.className.split(' '), attrs: { 'data-name': 'web' }, states: {}, html: ['cc-docker-on'] };
+  box.web.state = 'running'; poll([TILE], box); tile.classes = TILE.className.split(' ');
+  const c = candidates('docker', tile, 'display');
+  ok('the tile dot is hidden', c.length > 0 && c[c.length - 1].value === 'none', c.map((x) => x.selector).join(' | '));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

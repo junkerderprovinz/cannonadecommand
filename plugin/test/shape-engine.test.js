@@ -50,7 +50,7 @@ const TOKEN = /^(var\(--cc-radius-(card|control|pill)\)|calc\(var\(--cc-radius-(
 // The round things that have to stay round in every shape, being dots, rings or a photo:
 // GlimStone keeps the colour picker's dot at 50% for the same reason.
 const ROUND = [
-  '.cc-ct-dotrow > .cc-badge', '.cc-chip-dot', '.cc-cfg', '.cc-ip-dot', '.cc-req::after', '#cc-ctout-status',
+  '.cc-ct-dotrow > .cc-badge', '.cc-tile-dot', '.cc-cfg', '.cc-ip-dot', '.cc-req::after', '#cc-ctout-status',
   '.cc-isl-dot', '.cc-nchan-loader', '.cc-dot', 'i.fa-circle.orb', '.cc-status-dot', '.cc-loader > span',
   '.cc-info:focus-visible', '.cc-acctinfo', '.cc-toolsinfo', '.popupAuthorIcon img', 'input[type="radio"]',
   '.inner > span.state.cc-badge',
@@ -66,7 +66,7 @@ ok('a token passes', radiusOk('.x', 'var(--cc-radius-pill) !important'));
 ok('a calc of a token passes', radiusOk('.x', 'calc(var(--cc-radius-control) / 2)'));
 ok('a literal fails', !radiusOk('.x', '6px'));
 ok('a min() cap fails', !radiusOk('.x', 'min(var(--cc-radius-pill), 50%)'));
-ok('50% on a dot passes', radiusOk('.cc-chip-dot', '50%'));
+ok('50% on a dot passes', radiusOk('.cc-tile-dot', '50%'));
 ok('50% on a badge fails', !radiusOk('.cc-b', '50%'));
 
 console.log('\nThe three tokens, and every shape answers all three');

@@ -1,10 +1,10 @@
 // Runs renderFolderView() out of docker.js against a synthetic organizer tree,
-// with its collaborators (card, folderChip, folderListRow, ensureGridHolder,
-// makeGear and the rest) stubbed, as in folder-mode-everywhere.test.js.
+// with its collaborators (folderTile, ensureGridHolder, makeGear and the rest)
+// stubbed, as in folder-mode-everywhere.test.js.
 //
-// It pins two things: the three densities dispatch through one render path, so
-// collapse, hide-stopped, bulk actions and search auto-expand work in each of
-// them, and a rebuild puts the page back at the scroll position it was at.
+// It pins two things: every container, loose or in a folder, is a tile, with
+// no density choice left to pick anything else, and a rebuild puts the page
+// back at the scroll position it was at.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand', 'scripts');
@@ -52,7 +52,7 @@ class N {
 }
 function el(tag, cls, txt) { const n = new N(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
 
-function run(entries, density, opts) {
+function run(entries, opts) {
   opts = opts || {};
   const scrollCalls = [];
   const fakeGridHolder = new N('div');
@@ -62,72 +62,64 @@ function run(entries, density, opts) {
     get scrollY() { return this._scrollY; },
     scrollTo(x, y) { scrollCalls.push([x, y]); },
   };
-  const byParentEntries = entries; // {id, type, name, parentId, position} per entry
-  const ccOrgView = opts.noOrgView ? null : { rootId: 'root', flatEntries: byParentEntries };
+  const ccOrgView = opts.noOrgView ? null : { rootId: 'root', flatEntries: entries };
   const containers = {}; (opts.containers || []).forEach(c => { containers[c.name.replace(/^\//, '').toLowerCase()] = c; });
-
-  const fn = new Function(
-    'el', 'window', 'localStorage', 'gridHolder', 'ccOrgView', 'filterText', 'mode', 'menu', 'menuAnchor',
-    'ensureGridHolder', 'removeGridHolder', 'relocateTopBar', 'effc', 'makeGear', 'applyIconTint',
-    'folderDensity', 'card', 'folderChip', 'folderListRow', 'containerByName', 'ccFolderHidesContainer', 't',
-    'iconBgOn', 'gridFocusKey', 'restoreGridFocus', 'ccGlyph',
-    grabFn('renderFolderView') + '\nreturn renderFolderView;'
-  )(
-    el, fakeWindow, { getItem: () => null }, fakeGridHolder, ccOrgView, '', 'folder', null, null,
-    () => {}, () => { removed = true; }, () => {}, () => '', () => el('button', 'cc-hgear'), () => {},
-    () => density,
-    () => el('div', 'cc-card cc-card-full-marker'),
-    () => el('div', 'cc-card cc-chip cc-chip-marker'),
-    () => el('div', 'cc-card cc-frow cc-frow-marker'),
-    (name) => containers[String(name).toLowerCase()] || null,
-    () => false,
-    (k) => k,
-    // iconBgOn(), which renderFolderView() gates .cc-docker-iconbg on.
-    () => false,
-    // no focus to keep in a detached holder
-    () => null, () => {},
-    (n) => '<glyph ' + n + '>'
-  );
+  // Every collaborator renderFolderView() names resolves here; one not listed is a no-op, so the
+  // harness keeps working as the folder head gains buttons.
+  const given = Object.assign({
+    el, window: fakeWindow, localStorage: { getItem: () => null }, gridHolder: fakeGridHolder, ccOrgView, filterText: '', mode: 'folder',
+    removeGridHolder: () => { removed = true; },
+    effc: () => '', iconBgOn: () => false, gridFocusKey: () => null, ccGlyph: (n) => '<glyph ' + n + '>', t: (k) => k, LANG: 'en',
+    folderTile: (c, row) => { const n = el('div', 'cc-card cc-tile'); n.row = row; const h = el('div', 'cc-tile-head'); n.appendChild(h); n.querySelector = (sel) => (sel === '.cc-tile-head' ? h : null); return n; },
+    findRows: () => (opts.rows || []), rowName: (r) => r.name,
+    containerByName: (name) => containers[String(name).toLowerCase()] || null,
+    ccFolderHidesContainer: () => false, ccEffectiveCollapsed: () => false, ccEntryMatches: () => true,
+    folderHidesStopped: () => false, ccOrgIsOwned: () => !!opts.owned, ccCollectFolderContainerNames: () => [],
+    folderActBtn: (cls) => el('button', cls), stats: {},
+  }, opts.given || {});
+  const scope = new Proxy({}, {
+    has: (o, k) => k in given || !(k in globalThis),
+    get: (o, k) => (k in given ? given[k] : k === Symbol.unscopables ? undefined : () => {}),
+    set: (o, k, v) => { given[k] = v; return true; },
+  });
+  const fn = new Function('scope', 'with (scope) { ' + grabFn('renderFolderView') + '\nreturn renderFolderView; }')(scope);
   fn();
   return { gridHolder: fakeGridHolder, scrollCalls: scrollCalls, removed: removed };
 }
 
-console.log('\nrenderFolderView() dispatches to the right per-item builder for each density');
+console.log('\nrenderFolderView() draws every container as a tile');
 {
-  const c = { name: '/plex', state: 'running' };
-  const entry = { id: 'e1', type: 'container', name: '/plex', parentId: 'root', position: 0 };
-
-  const full = run([entry], 'full', { containers: [c] });
-  const gridD = run([entry], 'grid', { containers: [c] });
-  const listD = run([entry], 'list', { containers: [c] });
-
-  function findMarker(gh, cls) { const walk = n => n.children.reduce((f, ch) => f || (ch.classList.contains(cls) ? ch : walk(ch)), null); return walk(gh); }
-
-  ok('"full" density uses card()', !!findMarker(full.gridHolder, 'cc-card-full-marker'));
-  ok('"full" density uses neither folderChip() nor folderListRow()', !findMarker(full.gridHolder, 'cc-chip-marker') && !findMarker(full.gridHolder, 'cc-frow-marker'));
-
-  ok('"grid" density uses folderChip()', !!findMarker(gridD.gridHolder, 'cc-chip-marker'));
-  ok('"grid" density uses neither card() nor folderListRow()', !findMarker(gridD.gridHolder, 'cc-card-full-marker') && !findMarker(gridD.gridHolder, 'cc-frow-marker'));
-
-  ok('"list" density uses folderListRow()', !!findMarker(listD.gridHolder, 'cc-frow-marker'));
-  ok('"list" density uses neither card() nor folderChip()', !findMarker(listD.gridHolder, 'cc-card-full-marker') && !findMarker(listD.gridHolder, 'cc-chip-marker'));
+  const plex = { name: 'plex', state: 'running' }, sonarr = { name: 'sonarr', state: 'exited' };
+  const entries = [
+    { id: 'e1', type: 'container', name: '/plex', parentId: 'root', position: 0 },
+    { id: 'f1', type: 'folder', name: 'Media', parentId: 'root', position: 1 },
+    { id: 'e2', type: 'container', name: '/sonarr', parentId: 'f1', position: 0 },
+  ];
+  const rowP = { name: 'plex' };
+  const out = run(entries, { containers: [plex, sonarr], rows: [rowP] });
+  const tiles = []; const walk = n => n.children.forEach(ch => { if (ch.classList.contains('cc-tile')) tiles.push(ch); walk(ch); }); walk(out.gridHolder);
+  ok('the loose container and the one in the folder are both tiles', tiles.length === 2, tiles.length);
+  ok('a tile gets its native row handed in, looked up once per render', tiles.some(t2 => t2.row === rowP));
+  ok('a container without a native row still renders', tiles.some(t2 => t2.row === undefined));
+  ok('the folder view root carries no density class', !/cc-folderview-(grid|list)/.test(out.gridHolder.children[0].className), out.gridHolder.children[0].className);
+  ok('renderFolderView() reads no density', !/folderDensity|folderChip|folderListRow/.test(grabFn('renderFolderView')));
 }
 
 console.log('\nrenderFolderView() preserves the scroll position across a full rebuild');
 {
   console.log('\n  ...with an empty organizer tree, where gridHolder is still torn down and rebuilt');
-  const empty = run([], 'full', { scrollY: 842 });
+  const empty = run([], { scrollY: 842 });
   ok('window.scrollTo() was called once', empty.scrollCalls.length === 1, JSON.stringify(empty.scrollCalls));
   ok('...restoring the pre-render scrollY at x=0', JSON.stringify(empty.scrollCalls[0]) === JSON.stringify([0, 842]), JSON.stringify(empty.scrollCalls));
 
   console.log('\n  ...with real content re-rendered');
   const c = { name: '/plex', state: 'running' };
   const entry = { id: 'e1', type: 'container', name: '/plex', parentId: 'root', position: 0 };
-  const withContent = run([entry], 'grid', { containers: [c], scrollY: 1337 });
+  const withContent = run([entry], { containers: [c], scrollY: 1337 });
   ok('scroll is still restored to the pre-render value after a non-trivial rebuild', JSON.stringify(withContent.scrollCalls[0]) === JSON.stringify([0, 1337]), JSON.stringify(withContent.scrollCalls));
 
   console.log('\n  ...and on the early return taken while ccOrgView is not loaded yet');
-  const guarded = run([], 'full', { noOrgView: true, scrollY: 55 });
+  const guarded = run([], { noOrgView: true, scrollY: 55 });
   ok('the early return calls window.scrollTo() before it leaves', guarded.scrollCalls.length === 1 && JSON.stringify(guarded.scrollCalls[0]) === JSON.stringify([0, 55]), JSON.stringify(guarded.scrollCalls));
   ok('...and still tears the grid holder down through removeGridHolder()', guarded.removed === true);
 }

@@ -10,8 +10,8 @@
 //
 // And .cc-card-ico needs the unconditional base rule the table row has. With only
 // the rainbow-gated rule, a plain accent and reactive mode off leave the icon on
-// its grey default, in the classic Grid and in every folder density, all of which
-// build through card(), folderChip() or folderListRow().
+// its grey default, in the classic Grid and in the folder view, both of which
+// build through card() or folderTile().
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand');
