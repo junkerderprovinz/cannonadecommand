@@ -2013,14 +2013,13 @@
     buildStyleCards("ccv.", wrapVms, ["/plugins/dynamix.vm.manager/templates/images/linux.png", "/plugins/dynamix.vm.manager/templates/images/windows.png", "/plugins/cannonadecommand/images/cannonadecommand.png"]);
     buildStyleCards("ccf.", wrapFavorites, ["fa-star", "fa-heart", "fa-cog"], false); // glyph tiles again
     buildStyleCards("ccm.", wrapStart, [], true); // /Main has value and name badges but no per-row logos
-    // Export and import of every cc-family setting, as a label row and two buttons in the Theming
-    // card.
+    // Export, import and reset of every cc-family setting, one row in the Theming card with the
+    // three buttons together at its end.
     (function () {
       var cX = themingCard;
-      var lblw = el("div", "cc-set-lbl cc-set-lblwrap");
+      var lblw = el("span", "cc-set-lblwrap");
       lblw.appendChild(el("span", null, T("Sichern & Übertragen", "Backup & transfer")));
       lblw.appendChild(infoIcon(T("Exportiert alle CannonadeCommand-Einstellungen (cc.*-Schlüssel) als JSON-Datei. Der Import schreibt sie zurück und lädt die Seite neu.", "Exports every CannonadeCommand setting (cc.* keys) as a JSON file. Import writes them back and reloads the page.")));
-      cX.appendChild(lblw);
       var ex = el("span", "cc-btn cc-set-xbtn", T("Exportieren", "Export"));
       ex.addEventListener("click", function () {
         try {
@@ -2082,7 +2081,9 @@
             .then(function () { location.reload(); }, function () { location.reload(); });
         } catch (e) { failed(rs, T("Zurücksetzen fehlgeschlagen: ", "Reset failed: ") + ((e && e.message) || e)); }
       }
-      var brow = el("div", "cc-set-row"); brow.appendChild(ex); brow.appendChild(im); brow.appendChild(rs);
+      var brow = el("div", "cc-set-row cc-set-inline"), bend = el("span", "cc-set-colend");
+      bend.appendChild(ex); bend.appendChild(im); bend.appendChild(rs);
+      brow.appendChild(lblw); brow.appendChild(bend);
       cX.appendChild(brow); cX.appendChild(fin);
     })();
     // The search filters cards and rows across every tab, matching a row's text and the
