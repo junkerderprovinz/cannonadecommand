@@ -92,7 +92,7 @@ console.log('\nPart 2: one helper marks the selected swatch everywhere');
   // Sweeping every swatch on the page against the global accent would un-mark each
   // area card's own pick, so syncSwOn is scoped to the global row.
   ok('syncSwOn touches the global accent row alone', /function syncSwOn\(\)[^\n]*cc-set-swrow-global/.test(src));
-  ok('the global accent row is the one carrying that class', /cc-set-swatches cc-fill cc-set-swrow-global/.test(src));
+  ok('the global accent row is the one carrying that class', /colourField\(accent, [^\n]*\{ rowClass: "cc-set-swrow-global" \}\)/.test(src));
 }
 
 console.log('\nPart 3: the footer toggle is global and lives in the Theming card');

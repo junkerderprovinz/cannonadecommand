@@ -56,7 +56,9 @@ const build = new Function('document', 'window', 'jumpTo',
   'var de = false;\n' +   // the English labels, so the assertions can search for ASCII text
   grabFn('el') + '\n' + grabFn('T') + '\n' + grabFn('infoIcon') + '\n' + grabFn('normHex') + '\n' +
   grabFn('hexToHsv') + '\n' + grabFn('hsvToHex') + '\n' + grabFn('inlinePicker') + '\n' + grabFn('toggle') + '\n' +
-  grabFn('actionBtn') + '\n' + grabFn('lockRow') + '\n' + grabFn('logoToggles') + '\n' +
+  grabFn('actionBtn') + '\n' + grabFn('lockRow') + '\n' + grabFn('fieldRow') + '\n' + grabFn('swMark') + '\n' + grabFn('swMarkRow') + '\n' +
+  grabFn('colourField') + '\n' + grabFn('ccTick') + '\n' + grabFn('idealText') + '\n' +
+  'var PRESETS = ["#FCC419", "#1D99F3"];\n' + grabFn('logoToggles') + '\n' +
   'return { logoToggles: logoToggles };'
 )(document, {}, (sec, title) => jumps.push([sec, title]));
 const lockOf = (into) => into.children.find((c) => c.classList.contains('cc-set-locked'));
@@ -120,7 +122,9 @@ console.log('\nA picker or the strength under a switch that is off is left out')
   const into = document.createElement('div');
   const io = makeIo();
   const h = build.logoToggles(into, io);
-  const pickers = into.children.filter((c) => c.classList.contains('cc-set-pickrow'));
+  // each colour field stands in a row of its own beside its name
+  const pickers = into.children.filter((c) => c.classList.contains('cc-set-fieldrow') && c.children.some((k) => k.classList.contains('cc-set-pickrow')));
+  ok('both colour fields are built, each with the presets and the hex field', pickers.length === 2 && pickers.every((p) => p.children[1].children[1].children.length === 3));
   ok('both switches off: no picker and no strength', pickers.every((p) => p.hidden) && h.strInput.parentNode.hidden);
   io._state.tint = true; h.sync();
   ok('the tint on: its picker and the strength come in', !pickers[1].hidden && !h.strInput.parentNode.hidden && pickers[0].hidden);

@@ -51,8 +51,8 @@ console.log('\nPicking a mode writes both keys');
 
 console.log('\nOnly the chosen mode shows its controls');
 {
-  ok('the accent picker and presets only in accent mode', /if \(mode === "accent"\) \{ c1\.appendChild\(prow\); c1\.appendChild\(srow\); \}/.test(settings));
-  ok('rotation and palette only in rainbow mode', /if \(mode === "rainbow"\) \{ c1\.appendChild\(rrot\); c1\.appendChild\(rbrow\); c1\.appendChild\(rbPickWrap\); \}/.test(settings));
+  ok('the accent colour field only in accent mode', /if \(mode === "accent"\) c1\.appendChild\(fieldRow\(T\("Akzentfarbe", "Accent colour"\), [^\n]*, prow\)\);/.test(settings));
+  ok('rotation and palette only in rainbow mode', /if \(mode === "rainbow"\) \{ c1\.appendChild\(rrot\); c1\.appendChild\(fieldRow\(T\("Palette", "Palette"\), [^\n]*, rbCol\)\); \}/.test(settings));
   ok('the country only in flag mode', /if \(mode === "flag"\) c1\.appendChild\(fr\);/.test(settings) && /if \(f1 && mode === "flag"\) \{/.test(settings));
   ok('no rainbow or flag switch is left', !/T\("Regenbogen-Modus", "Rainbow mode"\)|T\("Flaggen-Modus", "Flag mode"\)/.test(settings));
   ok('nothing in the card is dimmed instead', !/rbOnly|style\.opacity = "\.4"/.test(settings));

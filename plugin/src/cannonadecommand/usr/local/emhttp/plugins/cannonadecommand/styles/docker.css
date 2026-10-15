@@ -1410,11 +1410,16 @@ button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-t
 .cc-ip-dot { position: absolute; width: 12px; height: 12px; border: 2px solid #fff; border-radius: 50%; margin: -6px 0 0 -6px; box-shadow: 0 0 3px rgba(0,0,0,.8); pointer-events: none; }
 .cc-ip-hue { position: relative; height: 14px; margin-top: 8px; border-radius: var(--cc-radius-pill); background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); cursor: pointer; }
 .cc-ip-hdot { position: absolute; top: -2px; width: 8px; height: 18px; margin-left: -4px; background: #fff; border-radius: calc(var(--cc-radius-control) / 2); box-shadow: 0 0 3px rgba(0,0,0,.8); pointer-events: none; }
-/* the picker takes the card's width and the hex field sits under it */
-#cc-settings .cc-set-pickrow { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
-#cc-settings .cc-set-pickrow .cc-set-hexin { width: 110px; align-self: flex-start; }
+/* A colour field stands at the end of its row like every other control: the picker on top, and
+   under it the presets and the hex field in one row exactly as wide as the picker. */
+#cc-settings .cc-set-pickrow { display: flex; flex-direction: column; align-items: stretch; gap: 8px; flex: 0 1 420px; min-width: 0; margin: 0 0 0 auto; }
+#cc-settings .cc-set-pickrow > .cc-set-swatches { margin: 0; }
+/* the palette's field hangs under its swatches, so in that column it takes only its own height */
+#cc-settings .cc-set-pickrow > .cc-set-pickrow { flex: none; margin: 0; }
 .cc-ip { width: 100%; min-width: 0; }
 #cc-settings .cc-set-pickrow, #cc-settings .cc-set-swatches.cc-fill { max-width: 420px; }
+/* the name of a tall control sits on its first line, at the start */
+#cc-settings .cc-set-fieldrow { align-items: flex-start; flex-wrap: nowrap; }
 #cc-settings .cc-set-row input[type="range"] { flex: 0 1 280px; margin-left: auto; }
 /* an icon-only tile button in the settings, such as the palette undo arrow: the header tile's
    look on the shared control line, an accent fill with a contrast glyph */

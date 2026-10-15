@@ -78,8 +78,8 @@ console.log('\nlogoToggles(): one adopt toggle above both colour pickers, none w
   // pickers, and one line says what decides instead.
   ok('sync() guards adoptTg._setOn, adoptTg being null when hidden', /if \(adoptTg\) adoptTg\._setOn/.test(body));
   ok('sync() leaves both switch rows out while adopting', /bgRow\.hidden = tintRow\.hidden = adopting;/.test(body));
-  ok('sync() leaves the background picker out while adopting or while its switch is off', /bgPickRow\.hidden = adopting \|\| !io\.getBg\(\);/.test(body));
-  ok('sync() leaves the tint picker out while adopting or while its switch is off', /tintPickRow\.hidden = adopting \|\| !io\.getTint\(\);/.test(body));
+  ok('sync() leaves the tile colour out while adopting or while its switch is off', /bgColRow\.hidden = adopting \|\| !io\.getBg\(\);/.test(body));
+  ok('sync() leaves the icon colour out while adopting or while its switch is off', /tintColRow\.hidden = adopting \|\| !io\.getTint\(\);/.test(body));
   ok('sync() shows the line that names what decides only while adopting', /lock\.hidden = !adopting;/.test(body));
   ok('no switch in the card is dimmed instead', !/_setDisabled|style\.opacity/.test(body));
 

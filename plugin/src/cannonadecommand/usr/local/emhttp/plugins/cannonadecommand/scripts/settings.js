@@ -20,9 +20,9 @@
       "#cc-settings .cc-flag-img-lg{width:34px;height:22px}" +
       // the palette rows fill the card width, with the reset as one more equal cell at the end
       "#cc-settings .cc-set-swatches.cc-fill{display:flex;gap:6px;align-items:center}" +
-      // Every colour row is nine equal cells, so a swatch is the same size in every card. A swatch
-      // and the reset take one cell each, the hex field two, since the code needs the room, and the
-      // builder shows seven presets in a hex row to keep the total at nine.
+      // Every colour row shares out its width in equal cells, so a swatch is the same size in every
+      // card. A swatch and the reset take one cell each, the hex field two, since the code needs
+      // the room.
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;border-radius:var(--cc-radius-pill)}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:var(--cc-radius-pill);cursor:pointer;color:#cfcfcf;font-size:var(--cc-text-body);transition:filter .12s,background .12s,color .12s}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn:hover{background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
@@ -500,6 +500,14 @@
     var row = el("div", "cc-set-row"); row.appendChild(el("span", null, labelText)); var sp = el("span", "cc-set-spacer"); row.appendChild(sp);
     row.appendChild(toggle(on, onChange)); return row;
   }
+  // A tall control such as a colour field beside its name: the name and its bubble at the start of
+  // the first line, the control at the row's end.
+  function fieldRow(labelText, help, control) {
+    var row = el("div", "cc-set-row cc-set-fieldrow"), rl = el("span", "cc-set-rl", labelText);
+    if (help) rl.appendChild(infoIcon(help));
+    row.appendChild(rl); row.appendChild(control);
+    return row;
+  }
 
   // A switch whose value has no effect is left out, and this line stands in its place: it names
   // what decides instead and jumps there.
@@ -531,6 +539,37 @@
       var c = (sw.dataset.c || "").toLowerCase();
       swMark(sw, !!c && c === want, sw.dataset.c);
     });
+  }
+  // Every colour on this page is set with the same control: the embedded picker, and under it the
+  // GlimStone presets in one row with the hex field as its last cell, the row as wide as the
+  // picker. onPick gets "#rrggbb", or "" when opts.clearable lets the hex field be emptied.
+  // _set(hex, shown) repaints it without calling onPick, the picker on shown while hex is empty.
+  function colourField(hex, onPick, opts) {
+    opts = opts || {};
+    var valid = function (v) { return /^#[0-9a-f]{6}$/i.test(v || ""); };
+    var box = el("div", "cc-set-pickrow");
+    var hx = el("input", "cc-set-hexin"); hx.type = "text"; hx.value = hex || ""; hx.maxLength = 7; hx.spellcheck = false;
+    hx.placeholder = opts.placeholder || "#FCC419"; hx.setAttribute("aria-label", T("Farbe als Hex-Wert", "Colour as a hex value"));
+    var row = el("div", "cc-set-swatches cc-fill" + (opts.rowClass ? " " + opts.rowClass : ""));
+    var pk = inlinePicker(valid(hex) ? hex : (opts.fallback || "#FCC419"), function (v) { hx.value = v; swMarkRow(row, v); onPick(v); });
+    function pick(c) { pk._set(c); hx.value = c; swMarkRow(row, c); onPick(c); }
+    PRESETS.forEach(function (c) {
+      var sw = actionBtn("", "cc-set-sw", function () { pick(c); });
+      sw.setAttribute("data-tip", c); sw.setAttribute("aria-label", c); sw.style.background = c; sw.dataset.c = c;
+      row.appendChild(sw);
+    });
+    row.appendChild(hx);
+    hx.addEventListener("input", function () {
+      var v = normHex(hx.value);
+      if (v) { pk._set(v); swMarkRow(row, v); onPick(v); }
+      else if (!hx.value && opts.clearable) { swMarkRow(row, ""); onPick(""); }
+    });
+    box.appendChild(pk); box.appendChild(row);
+    swMarkRow(row, hex);
+    box._set = function (v, shown) { var p = valid(v) ? v : shown; if (valid(p)) pk._set(p); hx.value = v || ""; swMarkRow(row, v); };
+    box._get = pk._get;
+    box._row = row;
+    return box;
   }
 
   // One logo preview for every card that has one. It runs the tabs' own icon pipeline, which
@@ -682,26 +721,22 @@
 
     var bgTg = toggle(io.getBg(), function (v) {
       io.setBg(v);
-      if (v && !/^#[0-9a-f]{6}$/i.test(io.getBgColor())) { var seed = bgColorEff(); io.setBgColor(seed); bgPk._set(seed); bgHx.value = seed; }
+      if (v && !/^#[0-9a-f]{6}$/i.test(io.getBgColor())) { var seed = bgColorEff(); io.setBgColor(seed); bgPickRow._set(seed); }
       sync(); io.onChange();
     });
     var bgRow = el("div", "cc-set-row cc-set-inline"); bgRow.appendChild(el("span", null, T("Hintergrund", "Background"))); bgRow.appendChild(bgTg);
-    var bgHx = el("input", "cc-set-hexin"); bgHx.type = "text"; bgHx.value = io.getBgColor() || ""; bgHx.placeholder = "#FCC419"; bgHx.maxLength = 7; bgHx.spellcheck = false;
-    var bgPk = inlinePicker(bgColorEff(), function (v) { io.setBgColor(v); bgHx.value = v; sync(); io.onChange(); });
-    bgHx.addEventListener("input", function () { var v = normHex(bgHx.value); if (v) { io.setBgColor(v); bgPk._set(v); sync(); io.onChange(); } });
-    var bgPickRow = el("div", "cc-set-pickrow"); bgPickRow.appendChild(bgPk); bgPickRow.appendChild(bgHx);
+    var bgPickRow = colourField(io.getBgColor(), function (v) { io.setBgColor(v); sync(); io.onChange(); }, { fallback: bgColorEff() });
+    var bgColRow = fieldRow(T("Kachelfarbe", "Tile colour"), T("Die Farbe der Kachel hinter jedem Logo. Leer nimmt die Icon-Farbe, sonst die Akzentfarbe.", "The colour of the tile behind each logo. Empty takes the icon colour, otherwise the accent."), bgPickRow);
 
     var tintTg = toggle(io.getTint(), function (v) {
       io.setTint(v);
-      if (v && !/^#[0-9a-f]{6}$/i.test(io.getColor())) { var seed2 = tintPk._get(); io.setColor(seed2); tintHx.value = seed2; }
+      if (v && !/^#[0-9a-f]{6}$/i.test(io.getColor())) { var seed2 = tintPickRow._get(); io.setColor(seed2); tintPickRow._set(seed2); }
       sync(); io.onChange();
     });
     // The label reads "Icons"; the storage key and every name in the code stay as the tint.
     var tintRow = el("div", "cc-set-row cc-set-inline"); tintRow.appendChild(el("span", null, T("Icons", "Icons"))); tintRow.appendChild(tintTg);
-    var tintHx = el("input", "cc-set-hexin"); tintHx.type = "text"; tintHx.value = io.getColor() || ""; tintHx.placeholder = "#FCC419"; tintHx.maxLength = 7; tintHx.spellcheck = false;
-    var tintPk = inlinePicker(/^#[0-9a-f]{6}$/i.test(io.getColor()) ? io.getColor() : (/^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#FCC419"), function (v) { io.setColor(v); tintHx.value = v; sync(); io.onChange(); });
-    tintHx.addEventListener("input", function () { var v = normHex(tintHx.value); if (v) { io.setColor(v); tintPk._set(v); sync(); io.onChange(); } });
-    var tintPickRow = el("div", "cc-set-pickrow"); tintPickRow.appendChild(tintPk); tintPickRow.appendChild(tintHx);
+    var tintPickRow = colourField(io.getColor(), function (v) { io.setColor(v); sync(); io.onChange(); }, { fallback: /^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#FCC419" });
+    var tintColRow = fieldRow(T("Icon-Farbe", "Icon colour"), T("Die Farbe, in der die Logos eingefärbt werden.", "The colour the logos are tinted in."), tintPickRow);
 
     var strRow = el("div", "cc-set-row"); strRow.appendChild(el("span", "cc-set-rl", T("Intensität", "Strength")));
     var strInput = el("input"); strInput.type = "range"; strInput.min = "10"; strInput.max = "100"; strRow.appendChild(strInput);
@@ -714,21 +749,21 @@
       if (adoptTg) adoptTg._setOn(io.getAdopt());
       var adopting = io.getAdopt();
       bgTg._setOn(io.getBg());
-      bgHx.value = io.getBgColor() || ""; try { bgPk._set(bgColorEff()); } catch (e9) {}
+      bgPickRow._set(io.getBgColor(), bgColorEff());
       tintTg._setOn(io.getTint());
-      tintHx.value = io.getColor() || ""; try { if (/^#[0-9a-f]{6}$/i.test(io.getColor())) tintPk._set(io.getColor()); } catch (e9) {}
+      tintPickRow._set(io.getColor());
       lock.hidden = !adopting;
       bgRow.hidden = tintRow.hidden = adopting;
       // A picker or the strength under a switch that is off has nothing to act on, and the
       // strength only tunes the luminance tint.
-      bgPickRow.hidden = adopting || !io.getBg();
-      tintPickRow.hidden = adopting || !io.getTint();
+      bgColRow.hidden = adopting || !io.getBg();
+      tintColRow.hidden = adopting || !io.getTint();
       strRow.hidden = adopting || !io.getTint();
     }
     if (adoptRow) into.appendChild(adoptRow);
     into.appendChild(lock);
-    into.appendChild(bgRow); into.appendChild(bgPickRow);
-    into.appendChild(tintRow); into.appendChild(tintPickRow);
+    into.appendChild(bgRow); into.appendChild(bgColRow);
+    into.appendChild(tintRow); into.appendChild(tintColRow);
     into.appendChild(strRow);
     sync();
     return { sync: sync, strInput: strInput, bgToggle: bgTg, tintToggle: tintTg, adoptToggle: adoptTg };
@@ -911,64 +946,6 @@
     // update.php and reload, so flipping one here flips the native setting too. A multipart body
     // times out, hence URLSearchParams. The favourites field also drives cc.hidefavtab.
     if (typeof csrf_token !== "undefined") (function () {
-      var postDisplay = function (field, value) {
-        try {
-          var fd = new URLSearchParams();
-          fd.append("#file", "dynamix/dynamix.cfg"); fd.append("#section", "display");
-          fd.append("csrf_token", window.csrf_token); fd.append(field, value);
-          if (field === "favorites") set("cc.hidefavtab", value === "no" ? "1" : "0");
-          fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error(r.status); location.reload(); })
-            .catch(function () { failed(null, T("Die Anzeige-Einstellung wurde nicht gespeichert.", "The display setting was not saved.")); });
-        } catch (e9) {}
-      };
-      // a short help text per field, since the native page ships none
-      var H = {
-        width: ["Verpackt hält den Inhalt in fester Breite; Unbegrenzt nutzt die volle Fensterbreite.", "Packed keeps a fixed content width; Unlimited uses the full window width."],
-        locale: ["Sprache der WebGUI.", "Language of the WebGUI."],
-        font: ["Grundschriftgröße der Oberfläche.", "Base UI font size."],
-        tty: ["Schriftgröße im eingebauten Terminal.", "Font size in the built-in terminal."],
-        terminalButton: ["Terminal-Knopf im Kopfbereich anzeigen.", "Show the terminal button in the header."],
-        number: ["Dezimal- und Tausender-Trennzeichen für Zahlen.", "Decimal and thousands separators for numbers."],
-        scale: ["Einheit für Dateigrößen (automatisch oder fest).", "Unit for file sizes (automatic or fixed)."],
-        tabs: ["Unterseiten als Tabs oder als eine lange Abschnitts-Seite.", "Sub-pages as tabs or one long sectioned page."],
-        users: ["Wo das Benutzermenü sitzt: Kopfzeile oder Einstellungsmenü.", "Where the user menu sits: header or settings menu."],
-        resize: ["Listen automatisch mitwachsen lassen oder feste Höhe.", "Let lists grow automatically or use a fixed height."],
-        raw: ["Datenträgernamen normalisiert oder roh anzeigen.", "Show disk names normalised or raw."],
-        wwn: ["World-Wide-Name in der Geräte-ID einblenden.", "Show the World-Wide-Name in the device ID."],
-        total: ["Summenzeile mit Array-Gesamtwerten anzeigen.", "Show a totals row with array totals."],
-        usage: ["Auslastungsbalken pro Datenträger anzeigen.", "Show a usage bar per disk."],
-        unit: ["Temperaturen in Celsius oder Fahrenheit.", "Temperatures in Celsius or Fahrenheit."],
-        theme: ["Grund-Farbschema von Unraid (CannonadeCommand färbt darüber).", "Unraid's base colour scheme (CannonadeCommand paints over it)."],
-        text: ["Darstellung der Belegt/Frei-Spalten (Text, Balken, Farbe).", "How the used/free columns look (text, bar, colour)."],
-        headerdescription: ["Beschreibungstext im Kopfbereich anzeigen.", "Show the description text in the header."],
-        banner: ["Eigenes Kopf-Banner ein-/ausblenden (Bild unten hochladen).", "Show/hide a custom header banner (upload the image below)."],
-        showBannerGradient: ["Weichen Farbverlauf über dem Banner anzeigen.", "Show a soft gradient over the banner."],
-        favorites: ["Favoriten-Funktion aktivieren; Nein blendet den Favoriten-Tab aus.", "Enable favourites; No hides the Favorites tab."],
-        header: ["Native Kopfzeilen-Textfarbe. Sichtbar nur, wenn CannonadeCommands Kopfbereich AUS ist (sonst übermalt CannonadeCommand den Kopf).", "Native header text colour. Visible only when CannonadeCommand's header area is OFF (otherwise CannonadeCommand overpaints the header)."],
-        headermetacolor: ["Native Kopfzeilen-Sekundärtextfarbe. Wirkt nur bei ausgeschaltetem CannonadeCommand-Kopfbereich.", "Native header secondary text colour. Only when CannonadeCommand's header area is off."],
-        background: ["Native Kopf-Hintergrundfarbe. Wirkt nur bei ausgeschaltetem CannonadeCommand-Kopfbereich.", "Native header background colour. Only when CannonadeCommand's header area is off."]
-      };
-      function help(nm) { var h = H[nm]; return h ? T(h[0], h[1]) : ""; }
-      function fieldLabel(c, nm) { var dd = c.closest("dd"), dt = dd ? dd.previousElementSibling : null; return (dt && dt.tagName === "DT") ? (dt.textContent || "").replace(/\s*:\s*$/, "").trim() : nm; }
-      // A native header colour field becomes a picker and a hex input. It commits on a hex change
-      // or once the picker has settled, since dragging must not reload on every frame.
-      function colorRow(lbl, hexv, onCommit, helpTxt) {
-        hexv = (hexv || "").replace(/^#/, "");
-        var row = el("div", "cc-set-row"); var rl = el("span", "cc-set-rl", lbl); if (helpTxt) rl.appendChild(infoIcon(helpTxt)); row.appendChild(rl);
-        var pr = el("div", "cc-set-pickrow"), colT;
-        var hx = el("input", "cc-set-hexin"); hx.type = "text"; hx.value = hexv ? "#" + hexv : ""; hx.placeholder = "#000000"; hx.maxLength = 7; hx.spellcheck = false;
-        var pk = inlinePicker(/^[0-9a-f]{6}$/i.test(hexv) ? "#" + hexv : "#161616", function (v) { hx.value = v; clearTimeout(colT); colT = setTimeout(function () { onCommit(v.replace(/^#/, "")); }, 700); });
-        hx.addEventListener("change", function () { clearTimeout(colT); var v = normHex(hx.value); if (v) { pk._set(v); onCommit(v.replace(/^#/, "")); } else if (!hx.value) onCommit(""); });
-        pr.appendChild(pk); pr.appendChild(hx); row.appendChild(pr); return row;
-      }
-      // The banner upload is a file drop on Unraid's page, which this links out to rather than
-      // reimplementing a multipart upload through the proxy.
-      function bannerUploadRow() {
-        var row = el("div", "cc-set-row"); row.appendChild(el("span", "cc-set-rl", T("Eigenes Banner-Bild", "Custom banner image")));
-        var b = el("button", "cc-btn", T("Hochladen oder ändern", "Upload or change")); b.type = "button";
-        b.addEventListener("click", function () { location.href = "/Settings/DisplaySettings"; });
-        row.appendChild(b); return row;
-      }
       // The header colour pickers live on Unraid's own page too; this card keeps the quick link
       // and the theme coupling below.
       var postDisplayMulti = function (fields) {
@@ -1227,28 +1204,13 @@
       var on = root.querySelector(".cc-set-mode .cc-seg-on"); if (on) on.focus();
     }));
     c1.appendChild(modeRow);
-    var prow = el("div", "cc-set-pickrow");
-    var hexIn = el("input", "cc-set-hexin"); hexIn.type = "text"; hexIn.value = accent; hexIn.placeholder = "#FCC419"; hexIn.maxLength = 7; hexIn.spellcheck = false;
-    // The handlers push the new colour onto the live bars as well: the header and the shares area
+    // The handler pushes the new colour onto the live bars as well: the header and the shares area
     // own isolated vars, so writing --cc-accent here alone would leave them until the next reload.
-    var pick = inlinePicker(/^#[0-9a-f]{6}$/i.test(accent) ? accent : "#FCC419", function (v) { accent = v; hexIn.value = v; set("cc.accent", v); root.style.setProperty("--cc-accent", v); root.style.setProperty("--cc-accent-text", idealText(v)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); });
-    function setAccent(v) { accent = v; pick._set(v); hexIn.value = v; set("cc.accent", accent); root.style.setProperty("--cc-accent", accent); root.style.setProperty("--cc-accent-text", idealText(accent)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); }
-    hexIn.addEventListener("input", function () { var v = normHex(hexIn.value); if (v) setAccent(v); });
-    prow.appendChild(pick);
-    // The preset swatches fill the row with the hex field as its rightmost cell, the same layout
-    // every colour picker on this page uses. cc-set-swrow-global scopes syncSwOn() to this row:
-    // sweeping every swatch on the page and marking it against the global accent would un-mark an
-    // area card's own pick whenever the global colour changed.
-    var srow = el("div", "cc-set-swatches cc-fill cc-set-swrow-global");
-    PRESETS.forEach(function (c) {   // all eight presets, with the two-cell hex field after them
-      // a span rather than a button, which Unraid's global CSS would bloat into a bordered box
-      var sw = el("span", "cc-set-sw"); sw.setAttribute("data-tip", c); sw.style.background = c; sw.dataset.c = c;
-      swMark(sw, c === accent, c);
-      sw.addEventListener("click", function () { accent = c; set("cc.accent", accent); render(); syncHeaderBar(); syncSharesBar(); });
-      srow.appendChild(sw);
-    });
-    srow.appendChild(hexIn);
-    if (mode === "accent") { c1.appendChild(prow); c1.appendChild(srow); }
+    // cc-set-swrow-global scopes syncSwOn() to this row: sweeping every swatch on the page and
+    // marking it against the global accent would un-mark an area card's own pick whenever the
+    // global colour changed.
+    var prow = colourField(accent, function (v) { accent = v; set("cc.accent", v); root.style.setProperty("--cc-accent", v); root.style.setProperty("--cc-accent-text", idealText(v)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); }, { rowClass: "cc-set-swrow-global" });
+    if (mode === "accent") c1.appendChild(fieldRow(T("Akzentfarbe", "Accent colour"), T("Die eine Farbe aller Badges, Schalter und Knöpfe, solange der Farbmodus Akzent ist.", "The one colour of every badge, switch and button while the colour mode is Accent."), prow));
     // on: every reload deals a fresh colour mapping; off: the colours stay put
     var rrot = el("div", "cc-set-row cc-set-inline");
     var rrotL = el("span", "cc-set-lblwrap");
@@ -1256,22 +1218,25 @@
     rrotL.appendChild(infoIcon(T("Mischt die Rainbow-Farben bei jedem Neuladen der Seite neu durch, statt die Reihenfolge fest zu lassen.", "Reshuffles the rainbow colours on every page reload instead of keeping the order fixed.")));
     rrot.appendChild(rrotL);
     rrot.appendChild(toggle(get("cc.rainbowrot", "1") !== "0", function (v) { set("cc.rainbowrot", v ? "1" : "0"); syncHeaderBar(); syncSharesBar(); }));
-    // Every palette colour is editable: clicking a swatch opens the embedded picker below it. The
-    // palette is stored as JSON in cc.rbpal, which the Docker tab reads live.
+    // Every palette colour is editable: clicking a swatch marks it and opens the colour field below
+    // it for that place. The palette is stored as JSON in cc.rbpal, which the Docker tab reads live.
     var RBDEF = (window.CCTheme && window.CCTheme.RB) || ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"]; // the shared palette, or the swatches and the live UI disagree
     var rbpal = null; try { rbpal = JSON.parse(get("cc.rbpal", "null")); } catch (e) { rbpal = null; }
     if (!rbpal || rbpal.length !== RBDEF.length) rbpal = RBDEF.slice();
-    var rbrow = el("div", "cc-set-swatches cc-fill");
-    var rbPick = null, rbIdx = -1, rbPickWrap = el("div", "cc-set-pickrow"); rbPickWrap.style.display = "none";
+    var rbrow = el("div", "cc-set-swatches cc-fill"), rbIdx = -1;
+    var rbPick = colourField(rbpal[0], function (v) {   // its own key, so editing it never touches the flag palette
+      if (rbIdx < 0) return;
+      var sw = rbrow.children[rbIdx];
+      rbpal[rbIdx] = v; sw.style.background = v; sw.setAttribute("data-tip", v); swMark(sw, true, v);
+      set("cc.rbpal", JSON.stringify(rbpal)); syncHeaderBar(); syncSharesBar();
+    });
+    rbPick.hidden = true;
     rbpal.forEach(function (cx, ix) {
-      var sw = el("span", "cc-set-sw"); sw.style.background = cx; sw.setAttribute("data-tip", cx);
-      sw.addEventListener("click", function () {
-        rbIdx = ix; rbPickWrap.style.display = "";
-        if (!rbPick) {
-          rbPick = inlinePicker(rbpal[ix], function (v) { if (rbIdx >= 0) { rbpal[rbIdx] = v; rbrow.children[rbIdx].style.background = v; rbrow.children[rbIdx].setAttribute("data-tip", v); set("cc.rbpal", JSON.stringify(rbpal)); syncHeaderBar(); syncSharesBar(); } });   // its own key, so editing it never touches the flag palette
-          rbPickWrap.appendChild(rbPick);
-        } else rbPick._set(rbpal[ix]);
+      var sw = actionBtn("", "cc-set-sw", function () {
+        rbIdx = ix; rbPick.hidden = false; rbPick._set(rbpal[ix]);
+        Array.prototype.forEach.call(rbrow.querySelectorAll(".cc-set-sw"), function (o, j) { swMark(o, j === ix, rbpal[j]); });
       });
+      sw.style.background = cx; sw.setAttribute("data-tip", cx); sw.setAttribute("aria-label", cx);
       rbrow.appendChild(sw);
     });
     // a restore glyph right of the swatches, the same size as one of them
@@ -1280,7 +1245,8 @@
     rbReset.innerHTML = glyph("Restore");
     rbReset.addEventListener("click", function () { del("cc.rbpal"); render(); syncHeaderBar(); syncSharesBar(); });
     rbrow.appendChild(rbReset);
-    if (mode === "rainbow") { c1.appendChild(rrot); c1.appendChild(rbrow); c1.appendChild(rbPickWrap); }
+    var rbCol = el("div", "cc-set-pickrow"); rbCol.appendChild(rbrow); rbCol.appendChild(rbPick);
+    if (mode === "rainbow") { c1.appendChild(rrot); c1.appendChild(fieldRow(T("Palette", "Palette"), T("Ein Klick auf eine Farbe öffnet darunter den Farbwähler für diesen Platz der Palette.", "Clicking a colour opens the colour picker for that place in the palette below it."), rbCol)); }
     // In flag mode a country's colours become the active palette, cycled to fill every slot, and
     // drive the same engine. The picker searches
     // by name and shows real flag images; an emoji flag renders as two letter boxes on Windows.
@@ -1371,8 +1337,7 @@
       // the selected flag's colours, shown apart from the rainbow editor
       var f1 = curFlag();
       if (f1 && mode === "flag") {
-        c1.appendChild(el("div", "cc-set-lbl", T("Flaggenfarben", "Flag colours")));
-        var frow = el("div", "cc-set-swatches cc-fill");
+        var frow = el("div", "cc-set-swatches cc-fill"), fcol = el("div", "cc-set-pickrow");
         // The same count as the rainbow row, cycled from the flag's own colours, which matches the
         // palette the engine paints and keeps both rows the same shape.
         var fpal = []; for (var kf = 0; kf < RBDEF.length; kf++) fpal.push(f1.colors[kf % f1.colors.length]);
@@ -1381,7 +1346,8 @@
         fReset.innerHTML = glyph("Restore");
         fReset.addEventListener("click", function () { del("cc.flag"); del("cc.flagpal"); setColorMode("accent"); render(); syncHeaderBar(); syncSharesBar(); });
         frow.appendChild(fReset);
-        c1.appendChild(frow);
+        fcol.appendChild(frow);
+        c1.appendChild(fieldRow(T("Flaggenfarben", "Flag colours"), T("Die Farben der gewählten Flagge, so wie sie die Palette füllen. Der Pfeil setzt die Flagge zurück.", "The chosen flag's colours as they fill the palette. The arrow resets the flag."), fcol));
       }
     }
     // GlimStone's three shapes, in its order. A name stored before them shows as the shape it reads as.
@@ -1727,18 +1693,8 @@
         else { syncHeaderBar(); syncSharesBar(); }
       }
       var cA = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
-      var pr = el("div", "cc-set-pickrow");
-      var hx = el("input", "cc-set-hexin"); hx.type = "text"; hx.value = acc; hx.placeholder = "#FCC419"; hx.maxLength = 7; hx.spellcheck = false;
-      var pk = inlinePicker(/^#[0-9a-f]{6}$/i.test(acc) ? acc : "#FCC419", function (v) { acc = v; hx.value = v; set(P + "accent", v); useOwn(); paintPv(); });
-      hx.addEventListener("input", function () { var v = normHex(hx.value); if (v) { acc = v; pk._set(v); set(P + "accent", v); useOwn(); paintPv(); } });
-      pr.appendChild(pk); cA.appendChild(pr);
-      var sr = el("div", "cc-set-swatches cc-fill");
-      PRESETS.forEach(function (c) {   // all eight presets, with the two-cell hex field after them
-        var sw = el("span", "cc-set-sw"); sw.setAttribute("data-tip", c); sw.style.background = c; sw.dataset.c = c;   // the one attribute swMarkRow reads
-        sw.addEventListener("click", function () { acc = c; pk._set(c); hx.value = c; set(P + "accent", c); useOwn(); paintPv(); });
-        sr.appendChild(sw);
-      });
-      sr.appendChild(hx); cA.appendChild(sr);
+      var pr = colourField(acc, function (v) { acc = v; set(P + "accent", v); useOwn(); paintPv(); });
+      cA.appendChild(fieldRow(T("Akzentfarbe", "Accent colour"), T("Die Farbe der Badges in diesem Bereich. Eine Wahl hier gibt dem Bereich eine eigene Farbe.", "The colour of the badges in this area. A pick here gives the area a colour of its own."), pr));
       // Rainbow is a global mode with one switch and one palette in the Badges card, so an area
       // has no rainbow controls of its own, only the accent above. The preview still reflects it.
       var RB2 = (window.CCTheme && window.CCTheme.RB) || ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];   // the shared palette, so every preview matches the live UI
@@ -1781,7 +1737,7 @@
           if (isTabs && i9 !== activeIx) { b9.style.removeProperty("background"); b9.style.removeProperty("color"); return; } // an idle tab keeps its grey pill
           b9.style.setProperty("background", acc, "important"); b9.style.setProperty("color", idealText(acc), "important");
         });
-        swMarkRow(sr, acc);   // the preset row's tick follows the colour the preview shows
+        swMarkRow(pr._row, acc);   // the preset row's tick follows the colour the preview shows
       }
       paintPv();
       cA.appendChild(pv);
@@ -1790,8 +1746,7 @@
       // down, and this refresher only ever runs once buildStyleCards has finished.
       if (adoptKey) styleCardSync[adoptKey] = function () {
         acc = effAcc();
-        try { pk._set(/^#[0-9a-f]{6}$/i.test(acc) ? acc : "#FCC419"); } catch (e9) {}
-        hx.value = acc;
+        pr._set(acc, "#FCC419");
         paintPv();
         cBLT.sync();
         cBLT.strInput.value = String(effIconStrength());
@@ -1997,14 +1952,8 @@
       // load the Google faces so their dropdown previews (and any chosen one on this page) actually render
       try { if (window.CCTheme && window.CCTheme.loadGFonts) window.CCTheme.loadGFonts(GF.map(function (gf) { return gf[0]; })); } catch (e) {}
       cB.appendChild(dropRow(T("Schriftart", "Font"), FONTS, get("cc.brand.font", ""), function (v) { set("cc.brand.font", v); syncHeaderBar(); }));
-      // colour picker + hex (empty = default light)
-      var col = get("cc.brand.color", "");
-      cB.appendChild(el("div", "cc-set-lbl", T("Farbe", "Colour")));
-      var pr = el("div", "cc-set-pickrow");
-      var hx = el("input", "cc-set-hexin"); hx.type = "text"; hx.value = col || ""; hx.placeholder = "#f4f4f4"; hx.maxLength = 7; hx.spellcheck = false;
-      var pk = inlinePicker(/^#[0-9a-f]{6}$/i.test(col) ? col : "#f4f4f4", function (v) { hx.value = v; set("cc.brand.color", v); syncHeaderBar(); });
-      hx.addEventListener("input", function () { var v = normHex(hx.value); if (v) { pk._set(v); set("cc.brand.color", v); syncHeaderBar(); } else if (!hx.value) { del("cc.brand.color"); syncHeaderBar(); } });
-      pr.appendChild(pk); pr.appendChild(hx); cB.appendChild(pr);
+      var brandCol = colourField(get("cc.brand.color", ""), function (v) { if (v) set("cc.brand.color", v); else del("cc.brand.color"); syncHeaderBar(); }, { fallback: "#f4f4f4", placeholder: "#F4F4F4", clearable: true });
+      cB.appendChild(fieldRow(T("Farbe", "Colour"), T("Ein leeres Hex-Feld lässt den Namen in der hellen Standardfarbe.", "An empty hex field leaves the name in the light default colour."), brandCol));
       wrapHeader.appendChild(cB);
     })();
     // One show-and-hide per utility icon in the top right; on means visible. header.js stamps a
