@@ -530,7 +530,13 @@
     try {
       if (g("cc.theming", "1") === "0") return;
       var host = document.querySelector(".unapi div.fixed.z-50.bg-background");     // the Connect notification sheet
-      if (!host || host.querySelector(".cc-notif-badge")) return;
+      if (!host) return;
+      // The sheet's close control is a square icon badge in the corner, so it takes a bubble that
+      // names it, like every icon-only badge.
+      var x = host.querySelector(":scope > span.absolute > [role=\"button\"]");
+      if (x) x.classList.add("cc-notif-x");
+      if (x && !x.getAttribute("data-cc-tip")) { x.setAttribute("data-cc-tip", T("Schließen", "Close")); if (!x.getAttribute("aria-label")) x.setAttribute("aria-label", T("Schließen", "Close")); }
+      if (host.querySelector(".cc-notif-badge")) return;
       var arch = null, sp = host.querySelectorAll("span, button, a");
       for (var i = 0; i < sp.length; i++) { if (/^\s*(Alle archivieren|Archive all)\s*$/i.test(sp[i].textContent || "")) { arch = sp[i]; break; } }
       if (!arch || !arch.parentElement) return;                                     // the empty state and the archive tab have no link to attach to
@@ -1333,7 +1339,7 @@
           var host = prev ? (prev.querySelector("span, a") || prev) : null;
           if (host && !host.querySelector(".cc-acctinfo")) {
             var ic = document.createElement("span");
-            ic.className = "cc-acctinfo"; ic.textContent = "ⓘ";
+            ic.className = "cc-acctinfo"; ic.innerHTML = window.CCTheme.CC_INFO_SVG;
             ic.setAttribute("role", "button"); ic.tabIndex = 0; ic.setAttribute("aria-label", txt);
             ic.setAttribute("data-cc-info", txt);                          // the text the pinned bubble shows
             // data-cc-tip rides the same hover engine every other CC icon uses, so the text

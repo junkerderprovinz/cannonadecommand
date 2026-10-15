@@ -349,7 +349,7 @@ html.cc-header-on [data-cc-trig] :is(span, button, a):focus-visible {
    no frame, CC radius and an elevation shadow, like the ui-dialog and SweetAlert popups. Gated
    on cc-popups-on (master theming). */
 html.cc-popups-on .bg-popover {
-  background: #161616 !important; color: #e6e6e6 !important;
+  background: #1a1a1a !important; color: #e6e6e6 !important; padding: 6px !important;
   border: none !important; border-radius: var(--cc-radius-card) !important;
   box-shadow: 0 18px 50px rgba(0, 0, 0, .6) !important;
 }
@@ -366,7 +366,7 @@ html.cc-popups-on .bg-popover [data-active],
 html.cc-popups-on .bg-popover [aria-selected="true"],
 html.cc-popups-on .bg-popover [aria-current],
 html.cc-popups-on .bg-popover .active {
-  background: var(--cc-hdr-accent, #FCC419) !important; background-image: none !important; color: var(--cc-hdr-accent-text, #161616) !important; border-radius: var(--cc-radius-control);
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #FCC419))) !important; background-image: none !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #161616))) !important; border-radius: var(--cc-radius-control);
 }
 /* strip any residual gradient/background-image from the active item's CHILDREN and every
    gradient-classed node inside the popover (the orange fill is a Tailwind gradient utility) */
@@ -952,13 +952,32 @@ html.cc-popups-on .unapi div.fixed.z-50.bg-background .overflow-y-scroll::-webki
 /* the heading badge sits 4px in on an ml-1 wrapper; pull it back in line with the tabs, filters and cards */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background h2 { margin-left: -4px !important; }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background .divide-y > div { padding-top: 15px !important; padding-bottom: 15px !important; }
-/* the drawer title is the largest accent badge; every other control is one size smaller */
+/* The drawer title is a section badge, 22px like the title of every CC window and card. */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background h2 {
-  display: inline-flex !important; align-items: center; width: fit-content !important;
+  display: inline-flex !important; align-items: center; width: fit-content !important; box-sizing: border-box !important;
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
-  border-radius: var(--cc-radius-pill) !important; padding: 0 20px !important; min-height: 38px !important;
-  font-size: var(--cc-text-title) !important; font-weight: 700 !important; text-transform: uppercase; letter-spacing: .7px !important;
+  border-radius: var(--cc-radius-pill) !important; padding: var(--cc-sec-pad) !important; min-height: var(--cc-sec-h) !important; line-height: 1.2 !important;
+  font-size: var(--cc-sec-fs) !important; font-weight: var(--cc-sec-fw) !important; text-transform: uppercase; letter-spacing: var(--cc-sec-ls) !important;
 }
+/* The close control is the square icon badge every CC window has in its corner: the chip grey at
+   rest, the colour chain under the pointer. The selector outweighs the 30px floor further down that
+   every button in a reka dialog gets. */
+html.cc-popups-on .unapi [id^="reka-dialog-content"] .cc-notif-x[role="button"] {
+  width: var(--cc-icon-badge, 26px) !important; height: var(--cc-icon-badge, 26px) !important; min-height: 0 !important; padding: 0 !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important; opacity: 1 !important;
+  background: var(--cc-surface-chip) !important; color: var(--cc-ink-dim) !important;
+}
+html.cc-popups-on .unapi [id^="reka-dialog-content"] .cc-notif-x[role="button"]:hover {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
+}
+html.cc-popups-on .cc-notif-x svg { width: 14px !important; height: 14px !important; }
+/* Keyboard focus in the drawer and in the account menu is the halo of every CC control, in place
+   of Tailwind's offset ring; the list panel, which reka makes focusable, shows none. */
+html.cc-popups-on :is(.unapi div.fixed.z-50.bg-background, .bg-popover) :is(a, button, [role="button"], [role="tab"], [role="menuitem"]):focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important;
+}
+html.cc-popups-on .unapi div.fixed.z-50.bg-background [role="tabpanel"]:focus-visible { outline: none !important; box-shadow: none !important; }
 
 /* Bulk actions as badges. header.js ccNotifActions hides the native "Alle archivieren" link and
    puts cloned badges without Vue handlers into its column (.cc-notif-actions): archive and delete.
@@ -1359,9 +1378,11 @@ html.cc-header-on .cc-acctmenu li > a:hover {
 html.cc-header-on .cc-acctinfo {
   display: inline-flex; align-items: center; justify-content: center; margin-left: 7px; flex: 0 0 auto;
   width: 18px; height: 18px; font-size: var(--cc-text-body); line-height: 1; cursor: pointer; vertical-align: middle;
-  color: #b9b9b9; opacity: .9; border-radius: 50%;
+  color: var(--cc-ink-dim, #c9c9c9); opacity: .8; border-radius: 50%;
 }
-html.cc-header-on .cc-acctinfo:hover { color: var(--cc-rbaccent, var(--cc-accent, #FCC419)); opacity: 1; }
+/* the (i) glyph is neutral furniture, so hover only lifts it, never into the accent */
+html.cc-header-on .cc-acctinfo:hover { opacity: 1; }
+html.cc-header-on .cc-acctinfo svg { width: 15px; height: 15px; display: block; }
 /* the pinned info bubble the (i) opens, like the hover bubble and above every .unapi layer */
 html.cc-popups-on #cc-acctinfo-pop {
   position: fixed; z-index: 2147483647; width: max-content; max-width: 280px;
