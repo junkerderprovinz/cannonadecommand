@@ -605,6 +605,9 @@ html .cc-seg-btn:hover { color: var(--cc-txt); }
 .cc-menu-plain:hover { background: transparent; }
 .cc-menu-plain .cc-filter { width: 100%; }
 .cc-menu-plain .cc-btn { flex: 1; text-align: center; }
+/* The way to the settings page is a secondary button with its gear, a link that looks and reacts
+   like the buttons above it. */
+.cc-menu a.cc-menu-settings, .cc-menu a.cc-menu-settings:is(:hover, :focus, :visited) { display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
 .cc-menu-sep { height: 6px; background: transparent; margin: 0; }   /* spacing, not a line */
 .cc-menu-link { color: var(--cc-accent); font-size: var(--cc-text-meta); padding: 6px 8px; display: block; text-decoration: none; border-radius: var(--cc-radius-control); cursor: pointer; transition: background .12s, color .12s; }
 /* a colour-mode fill on hover and on keyboard focus, and no underline */

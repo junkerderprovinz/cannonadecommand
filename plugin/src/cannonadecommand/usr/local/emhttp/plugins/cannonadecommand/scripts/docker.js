@@ -2369,42 +2369,6 @@
         m.appendChild(menuItem("cc-menu-link", "+ " + t("newFolder"), ccOrgCreateFolder));
       }
     }
-    // The native switch row above the table is hidden, so this flips Unraid's own hidden
-    // checkbox and leaves the cookie and the re-render to it.
-    var segA = el("div", "cc-seg");
-    var advNow = isAdvancedView();
-    var bB = el("button", "cc-seg-btn" + (!advNow ? " cc-seg-on" : ""), LANG === "de" ? "Einfach" : "Basic");
-    var bA = el("button", "cc-seg-btn" + (advNow ? " cc-seg-on" : ""), LANG === "de" ? "Erweitert" : "Advanced");
-    function setAdvView(v) {
-      try { var inp = document.querySelector("input.advancedview"); if (inp && window.jQuery) window.jQuery(inp).prop("checked", v).trigger("change"); } catch (e2) {}
-      closeMenu();
-    }
-    bB.addEventListener("click", function () { setAdvView(false); });
-    bA.addEventListener("click", function () { setAdvView(true); });
-    segA.appendChild(bB); segA.appendChild(bA);
-    var arow = el("div", "cc-menu-row cc-menu-plain"); arow.appendChild(segA); m.appendChild(arow);
-    // the rainbow and icon-colour toggles belong to the theming, so they hide with it
-    if (themingOn()) {
-      var segR = el("div", "cc-seg");
-      var rbOn = localStorage.getItem("cc.rainbow") === "1";
-      var bRoff = el("button", "cc-seg-btn" + (!rbOn ? " cc-seg-on" : ""), LANG === "de" ? "Rainbow aus" : "Rainbow off");
-      var bRon = el("button", "cc-seg-btn" + (rbOn ? " cc-seg-on" : ""), LANG === "de" ? "Rainbow an" : "Rainbow on");
-      var setRb = function (v) { localStorage.setItem("cc.rainbow", v ? "1" : "0"); localStorage.setItem("cc.flagmode", "0"); closeMenu(); applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderCurrentView(); };
-      bRoff.addEventListener("click", function () { setRb(false); });
-      bRon.addEventListener("click", function () { setRb(true); });
-      segR.appendChild(bRoff); segR.appendChild(bRon);
-      var rrow = el("div", "cc-menu-row cc-menu-plain"); rrow.appendChild(segR); m.appendChild(rrow);
-      // the icon colours, on by default: the base palette, or the rainbow's in rainbow mode
-      var segC = el("div", "cc-seg");
-      var acOn = localStorage.getItem("cc.actcolors") !== "0";
-      var bCoff = el("button", "cc-seg-btn" + (!acOn ? " cc-seg-on" : ""), LANG === "de" ? "Icons grau" : "Icons grey");
-      var bCon = el("button", "cc-seg-btn" + (acOn ? " cc-seg-on" : ""), LANG === "de" ? "Icons farbig" : "Icons coloured");
-      var setAc = function (v) { localStorage.setItem("cc.actcolors", v ? "1" : "0"); closeMenu(); applySettings(); if (mode === "list") { if (themingOn()) applyEnhanceClasses(); else removeEnhanceClasses(); reinjectRowBadges(); } else renderCurrentView(); };
-      bCoff.addEventListener("click", function () { setAc(false); });
-      bCon.addEventListener("click", function () { setAc(true); });
-      segC.appendChild(bCoff); segC.appendChild(bCon);
-      var crow = el("div", "cc-menu-row cc-menu-plain"); crow.appendChild(segC); m.appendChild(crow);
-    }
     var frow = el("div", "cc-menu-row cc-menu-plain");
     var filter = el("input", "cc-filter"); filter.type = "text"; filter.placeholder = t("filter"); filter.value = filterText;
     filter.setAttribute("aria-label", t("search"));
@@ -2415,9 +2379,12 @@
     var save = el("button", "cc-btn", t("save")), fire = el("button", "cc-btn cc-btn-primary", t("startorder"));
     save.addEventListener("click", function () { savePlan(false, save); }); fire.addEventListener("click", function () { savePlan(true, fire); });
     prow.appendChild(save); prow.appendChild(fire); m.appendChild(prow);
-    var link = el("a", "cc-menu-link"); link.innerHTML = ccGlyph("Gear");
-    link.appendChild(document.createTextNode(" " + (LANG === "de" ? "Einstellungen (Farbe, Spalten)" : "Settings (colour, columns)")));
-    link.href = "/Settings/CannonadeCommand"; m.appendChild(link);
+    // The colours, the icons and the basic or advanced view are set elsewhere, on the settings page
+    // and with the switch beside the toolbar, so the menu keeps to the view of this page.
+    var srow = el("div", "cc-menu-row cc-menu-plain");
+    var link = el("a", "cc-btn cc-menu-settings"); link.innerHTML = ccGlyph("Gear");
+    link.appendChild(el("span", null, LANG === "de" ? "Einstellungen" : "Settings"));
+    link.href = "/Settings/CannonadeCommand"; srow.appendChild(link); m.appendChild(srow);
     paintSelectors(m);
     return m;
   }
