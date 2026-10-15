@@ -4,7 +4,7 @@
 //   1. the head counts running members, shows the members' logos only while folded,
 //      and the combined CPU and RAM only while one of them runs;
 //   2. restart all is always there, update all only with an update ready;
-//   3. edit and delete only on a folder CC created, and a folder CC creates is its own;
+//   3. every folder can be edited, deleted and dragged, whoever created it;
 //   4. the New folder tile closes the view, except while a search narrows it;
 //   5. the editor's save sends exactly the organizer calls the change needs, in the
 //      shape the organizer takes, and a removed container goes back to no folder;
@@ -70,7 +70,7 @@ function render(opts) {
     containerByName: (n) => CTS[String(n).toLowerCase()] || null,
     folderTile: (c) => { const n = el('div', 'cc-card cc-tile'); n.appendChild(el('div', 'cc-tile-head')); n.dataset.name = c.name; return n; },
     ccFolderHidesContainer: () => false, ccEntryMatches: () => true, ccEffectiveCollapsed: () => !!opts.collapsed,
-    folderHidesStopped: () => false, ccOrgIsOwned: () => !!opts.owned, folderActBtn: (cls, icon, title) => { const b = el('button', cls); b.title = title; b.icon = icon; return b; },
+    folderHidesStopped: () => false, folderActBtn: (cls, icon, title) => { const b = el('button', cls); b.title = title; b.icon = icon; return b; },
     folderLook: () => ({ color: '', icon: '' }), folderBadge: () => el('span', 'cc-folder-badge'),
     folderPeek: () => el('span', 'cc-folder-peek'), folderLoadBars: () => el('span', 'cc-folder-load'), newFolderTile: () => el('span', 'cc-tile-new'),
     updateReady: (n) => (opts.updates || []).includes(n),
@@ -108,11 +108,9 @@ console.log('\nThe members\' logos only while folded, the load only while one ru
 console.log('\nThe folder actions');
 {
   const plain = actTitles(render());
-  ok('hide stopped, start, stop and restart all on any folder', JSON.stringify(plain) === JSON.stringify(['hideStopped', 'bulkStartAll', 'bulkStopAll', 'bulkRestartAll']), plain.join(', '));
+  ok('hide stopped, start, stop, restart all, edit and delete on any folder', JSON.stringify(plain) === JSON.stringify(['hideStopped', 'bulkStartAll', 'bulkStopAll', 'bulkRestartAll', 'editFolder', 'deleteFolder']), plain.join(', '));
   ok('update all appears once a member has an update', actTitles(render({ updates: ['sonarr'] })).includes('bulkUpdateAll'));
   ok('not without Unraid\'s update command to run it', !actTitles(render({ updates: ['sonarr'], openDocker: false })).includes('bulkUpdateAll'));
-  const owned = actTitles(render({ owned: true }));
-  ok('edit and delete only on a folder CC created', !plain.includes('editFolder') && owned.includes('editFolder') && owned.includes('deleteFolder'));
 }
 
 console.log('\nThe New folder tile');
@@ -124,7 +122,6 @@ console.log('\nThe New folder tile');
   tile.fire('click');
   ok('a click runs the same create path as the gear menu', tile.created === true);
   ok('the gear menu keeps its New folder entry', /menuItem\("cc-menu-link", "\+ " \+ t\("newFolder"\), ccOrgCreateFolder\)/.test(src));
-  ok('a folder CC creates is marked as its own', /if \(created\) ccOrgMarkOwned\(created\.id\);/.test(grabFn('ccOrgCreateNamed')));
 }
 
 console.log('\nfolderLoad() adds up the running members');

@@ -74,7 +74,7 @@ function run(entries, opts) {
     findRows: () => (opts.rows || []), rowName: (r) => r.name,
     containerByName: (name) => containers[String(name).toLowerCase()] || null,
     ccFolderHidesContainer: () => false, ccEffectiveCollapsed: () => false, ccEntryMatches: () => true,
-    folderHidesStopped: () => false, ccOrgIsOwned: () => !!opts.owned, ccCollectFolderContainerNames: () => [],
+    folderHidesStopped: () => false, ccCollectFolderContainerNames: () => [],
     folderActBtn: (cls) => el('button', cls), stats: {},
   }, opts.given || {});
   const scope = new Proxy({}, {

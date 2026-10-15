@@ -2418,18 +2418,12 @@
             updBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccFolderUpdate(updatable, updBtn); });
             acts.appendChild(updBtn);
           }
-          // Editing and deleting are offered only for folders CC created itself; one made by
-          // another tool or by a future native UI stays read-only here.
-          if (ccOrgIsOwned(e.id)) {
-            var editBtn = folderActBtn("cc-folder-act", "Pencil", t("editFolder"));
-            editBtn.addEventListener("click", function (ev) { ev.stopPropagation(); openFolderEditor(editBtn, e.id); });
-            var delBtn = folderActBtn("cc-folder-act", "Trash", t("deleteFolder"));
-            delBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccOrgDeleteFolder(e.id, delBtn); });
-            acts.appendChild(editBtn); acts.appendChild(delBtn);
-            // A folder reorders only where CC owns it, so one another tool manages is never
-            // restructured. The head is the drag handle and the whole group moves.
-            wireDragSource(head, e);
-          }
+          var editBtn = folderActBtn("cc-folder-act", "Pencil", t("editFolder"));
+          editBtn.addEventListener("click", function (ev) { ev.stopPropagation(); openFolderEditor(editBtn, e.id); });
+          var delBtn = folderActBtn("cc-folder-act", "Trash", t("deleteFolder"));
+          delBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccOrgDeleteFolder(e.id, delBtn); });
+          acts.appendChild(editBtn); acts.appendChild(delBtn);
+          wireDragSource(head, e); // the head is the drag handle and the whole group moves
           head.appendChild(acts);
           grp.appendChild(head);
           var kids = el("div", "cc-folder-group-body");
@@ -2688,14 +2682,6 @@
       .catch(function () {}); // a failed prefs save stays quiet: localStorage already holds the value
   }
 
-  // The write actions. CC remembers which folders it created and renames or deletes only those,
-  // so a folder made by another organizer plugin, or by a future native UI, is read-only here.
-  // The other plugins work the same way.
-  var ORG_OWNED_KEY = "cc.orgOwned";
-  function ccOrgOwnedIds() { try { var a = JSON.parse(localStorage.getItem(ORG_OWNED_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
-  function ccOrgIsOwned(id) { return ccOrgOwnedIds().indexOf(id) >= 0; }
-  function ccOrgMarkOwned(id) { var a = ccOrgOwnedIds(); if (a.indexOf(id) < 0) { a.push(id); localStorage.setItem(ORG_OWNED_KEY, JSON.stringify(a)); } }
-  function ccOrgUnmarkOwned(id) { localStorage.setItem(ORG_OWNED_KEY, JSON.stringify(ccOrgOwnedIds().filter(function (x) { return x !== id; }))); }
   // Every write mutation returns the full fresh organizer state, so it is adopted in place rather
   // than fetched again, and the folder view repaints when it is on screen.
   function ccOrgAdopt(data, mutName) {
@@ -2713,23 +2699,15 @@
   }
   function ccOrgCreateNamed(name) {
     if (!ccOrgAvailable || !ccOrgView) return;
-    var beforeIds = ccOrgView.flatEntries.filter(function (e2) { return e2.parentId === ccOrgView.rootId; }).map(function (e2) { return e2.id; });
     ccOrgMutate(ORG_CREATE_MUT, { name: name, parentId: ccOrgView.rootId })
       .then(function (data) {
         ccOrgAdopt(data, "createDockerFolder");
-        // The new folder is found by name and type rather than by diffing against beforeIds: the
-        // root can gain an unrelated entry between the two snapshots, such as a container someone
-        // starts, and a plain diff would mark that as owned. beforeIds is only the tiebreaker for
-        // a folder of the same name that already existed.
-        var candidates = ccOrgView.flatEntries.filter(function (e2) { return e2.parentId === ccOrgView.rootId && e2.type === "folder" && e2.name === name; });
-        var created = candidates.filter(function (e2) { return beforeIds.indexOf(e2.id) < 0; })[0] || candidates[0];
-        if (created) ccOrgMarkOwned(created.id);
         setMode("folder"); // straight to the result, so the new folder is visible
       })
       .catch(function () { flash(t("invalid"), true); });
   }
   function ccOrgDeleteFolder(id, opener) {
-    if (!ccOrgIsOwned(id) || !ccOrgView) return; // a folder CC did not create is read-only
+    if (!ccOrgView) return;
     var self2 = ccOrgView.flatEntries.filter(function (e2) { return e2.id === id; })[0];
     var n = ccOrgView.flatEntries.filter(function (e2) { return e2.parentId === id; }).length, de = LANG === "de";
     var text = !n ? (de ? "Der Ordner ist leer." : "The folder is empty.")
@@ -2750,13 +2728,11 @@
     // has no cascade, so an unrescued delete orphans every container inside.
     var rescue = kids.length ? ccOrgMutate(ORG_MOVE_MUT, { sourceEntryIds: kids, destinationFolderId: parentId }) : Promise.resolve(null);
     rescue.then(function () { return ccOrgMutate(ORG_DELETE_MUT, { entryIds: [id] }); })
-      .then(function (data) { ccOrgUnmarkOwned(id); setFolderLook(id, null); ccOrgAdopt(data, "deleteDockerEntries"); })
+      .then(function (data) { setFolderLook(id, null); ccOrgAdopt(data, "deleteDockerEntries"); })
       .catch(function () { flash(t("invalid"), true); });
   }
   // Moves an entry into another folder, appended at the end. Both the click menu and a drop on a
-  // folder head come through here. There is no ownership check: filing a container into a folder
-  // does not restructure the folder, so it works with any of them, and only rename and delete
-  // are gated.
+  // folder head come through here.
   function ccOrgMoveToFolder(entryId, destFolderId) {
     if (!ccOrgAvailable || !ccOrgView) return;
     ccOrgMutate(ORG_MOVE_MUT, { sourceEntryIds: [entryId], destinationFolderId: destFolderId })
