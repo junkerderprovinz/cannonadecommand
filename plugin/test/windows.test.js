@@ -336,9 +336,10 @@ console.log('\nThe windows that use it');
   ok('it is modal through the shared helper', /CT\.modal\(win, \{ opener: anchor/.test(vmEd));
   ok('no typed corner ✕ and no transparent click layer', !/✕/.test(vmEd) && !/cc-vmlim-ov/.test(vms + read('sheets/CannonadeCommand.VmTab.css')));
 
-  const create = grabFn(docker, 'ccOrgCreateFolder'), rename = grabFn(docker, 'ccOrgRenameFolder'), del = grabFn(docker, 'ccOrgDeleteFolder');
+  const create = grabFn(docker, 'ccOrgCreateFolder'), edit = grabFn(docker, 'openFolderEditor'), del = grabFn(docker, 'ccOrgDeleteFolder');
   ok('a new folder is named in a window with a text field', /input: \{/.test(create) && /t\("newFolderTitle"\)/.test(create));
-  ok('a rename names the folder in the title and offers its old name', /t\("renameFolderTitle"\)\.replace\("%s", oldName/.test(rename) && /value: oldName/.test(rename));
+  ok('the folder editor is a CC window placed and made modal like the others, with its name prefilled', /el\("div", "cc-pop cc-pop-folder"\)/.test(edit) && /placePop\(pop, anchor, 360\)/.test(edit) && /nameIn\.value = self\.name/.test(edit));
+  ok('it asks before unsaved changes are dropped', /pop\._unsaved = function/.test(edit));
   ok('a delete names the folder and counts what moves up', /t\("deleteFolderTitle"\)\.replace\("%s"/.test(del) && /n === 1/.test(del) && /danger: true/.test(del));
   const tde = /deleteFolderTitle: "([^"]+)"/.exec(docker);
   ok('the German delete title says what happens', tde && tde[1] === 'Ordner „%s“ löschen?', tde && tde[1]);
