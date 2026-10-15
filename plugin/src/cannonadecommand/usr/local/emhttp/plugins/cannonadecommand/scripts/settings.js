@@ -511,9 +511,11 @@
 
   // A switch whose value has no effect is left out, and this line stands in its place: it names
   // what decides instead and jumps there.
-  function lockRow(label, by, jumpLabel, onJump) {
-    var row = el("div", "cc-set-row cc-set-inline cc-set-locked");
-    row.appendChild(el("span", null, label));
+  function lockRow(label, by, jumpLabel, onJump, help) {
+    var row = el("div", "cc-set-row cc-set-inline cc-set-locked"), lw = el("span", "cc-set-lblwrap");
+    lw.appendChild(el("span", null, label));
+    if (help) lw.appendChild(infoIcon(help));
+    row.appendChild(lw);
     var end = el("span", "cc-set-colend");
     end.appendChild(el("span", "cc-set-lockby", by));
     end.appendChild(actionBtn(jumpLabel, "cc-btn cc-set-xbtn", onJump));
@@ -694,11 +696,12 @@
   //
   // The adopt toggle is one switch, not one per control. Two would each have to resolve the tint
   // to a single flat hue, since the tint is one shared SVG filter for the whole page, so rainbow
-  // mode would paint every logo the same colour. With this one on, the background follows rainbow
-  // or the accent as any other badge does, per item, and the icon's ink becomes an automatic black
-  // or white contrast against whatever background that resolves to. Neither switch nor picker is
-  // consulted then, so they give way to a line that says what decides. With it off the two are
-  // independent. The colour resolution itself lives on the read side in each area script.
+  // mode would paint every logo the same colour. It takes over the colours only: the tile then
+  // follows rainbow or the accent as any other badge does, per item, and the icon's ink becomes an
+  // automatic black or white contrast against it, or the badge colour itself where no tile is
+  // behind the icon. The two switches still decide whether there is a tile and whether the icons
+  // are tinted, so they stay, and only the pickers give way to a line that says what decides. The
+  // colour resolution itself lives on the read side in each area script.
   function logoToggles(into, io) {
     function bgColorEff() {
       var c = io.getBgColor(); if (/^#[0-9a-f]{6}$/i.test(c)) return c;
@@ -714,8 +717,8 @@
       // the master toggle, first in the card and above every other row
       adoptTg = toggle(io.getAdopt(), function (v) { io.setAdopt(v); sync(); io.onChange(); });
       adoptRow = el("div", "cc-set-row cc-set-inline");
-      var adoptLbl = el("span", "cc-set-lblwrap"); adoptLbl.appendChild(el("span", null, T("Badge-Einstellungen übernehmen", "Adopt badge settings")));
-      adoptLbl.appendChild(infoIcon(T("An: Hintergrund und Icons folgen zusammen dem Regenbogen (rotierend, pro Symbol) oder der Akzentfarbe, wenn Regenbogen aus ist, genau wie jedes andere Badge. Das Symbol selbst wird dabei automatisch schwarz oder weiß eingefärbt, je nachdem was auf dem Hintergrund lesbar ist. Die beiden Farbwähler unten werden dabei ignoriert.", "On: background and icons together follow rainbow mode (rotating, per icon) or the plain accent when rainbow is off, exactly like every other badge. The icon itself is inked black or white, whichever reads on the resolved background. Both colour pickers below are ignored while this is on.")));
+      var adoptLbl = el("span", "cc-set-lblwrap"); adoptLbl.appendChild(el("span", null, T("Badge-Farben übernehmen", "Use the badge colours")));
+      adoptLbl.appendChild(infoIcon(T("An: Logo-Kacheln und eingefärbte Icons nehmen die Farben der Badges, also den Regenbogen pro Logo oder die Akzentfarbe. Auf einer Kachel wird das Icon schwarz oder weiß, je nachdem, was darauf lesbar ist. Die Schalter darunter bleiben: Sie entscheiden weiter, ob es Kacheln gibt und ob Icons eingefärbt werden. Nur die beiden Farbwähler entfallen.", "On: logo tiles and tinted icons take the badge colours, which means the rainbow per logo or the accent. On a tile the icon turns black or white, whichever reads on it. The switches below stay and still decide whether there are tiles and whether icons are tinted. Only the two colour pickers go.")));
       adoptRow.appendChild(adoptLbl); adoptRow.appendChild(adoptTg);
     }
 
@@ -724,7 +727,10 @@
       if (v && !/^#[0-9a-f]{6}$/i.test(io.getBgColor())) { var seed = bgColorEff(); io.setBgColor(seed); bgPickRow._set(seed); }
       sync(); io.onChange();
     });
-    var bgRow = el("div", "cc-set-row cc-set-inline"); bgRow.appendChild(el("span", null, T("Hintergrund", "Background"))); bgRow.appendChild(bgTg);
+    var bgRow = el("div", "cc-set-row cc-set-inline"), bgLbl = el("span", "cc-set-lblwrap");
+    bgLbl.appendChild(el("span", null, T("Logo-Kacheln", "Logo tiles")));
+    bgLbl.appendChild(infoIcon(T("Stellt jedes Logo auf eine farbige Kachel. Aus: die Logos stehen frei.", "Puts every logo on a coloured tile. Off: the logos stand on their own.")));
+    bgRow.appendChild(bgLbl); bgRow.appendChild(bgTg);
     var bgPickRow = colourField(io.getBgColor(), function (v) { io.setBgColor(v); sync(); io.onChange(); }, { fallback: bgColorEff() });
     var bgColRow = fieldRow(T("Kachelfarbe", "Tile colour"), T("Die Farbe der Kachel hinter jedem Logo. Leer nimmt die Icon-Farbe, sonst die Akzentfarbe.", "The colour of the tile behind each logo. Empty takes the icon colour, otherwise the accent."), bgPickRow);
 
@@ -733,17 +739,24 @@
       if (v && !/^#[0-9a-f]{6}$/i.test(io.getColor())) { var seed2 = tintPickRow._get(); io.setColor(seed2); tintPickRow._set(seed2); }
       sync(); io.onChange();
     });
-    // The label reads "Icons"; the storage key and every name in the code stay as the tint.
-    var tintRow = el("div", "cc-set-row cc-set-inline"); tintRow.appendChild(el("span", null, T("Icons", "Icons"))); tintRow.appendChild(tintTg);
+    // The storage key and every name in the code stay as the tint.
+    var tintRow = el("div", "cc-set-row cc-set-inline"), tintLbl = el("span", "cc-set-lblwrap");
+    tintLbl.appendChild(el("span", null, T("Icons einfärben", "Tint icons")));
+    tintLbl.appendChild(infoIcon(T("Färbt die Logos in einer Farbe ein. Wie das je Logo geschieht, entscheidet die Icon-Färbung. Aus: die Logos behalten ihre eigenen Farben.", "Tints the logos in one colour. Icon colouring decides how for each logo. Off: the logos keep their own colours.")));
+    tintRow.appendChild(tintLbl); tintRow.appendChild(tintTg);
     var tintPickRow = colourField(io.getColor(), function (v) { io.setColor(v); sync(); io.onChange(); }, { fallback: /^#[0-9a-f]{6}$/i.test(io.getAccent()) ? io.getAccent() : "#FCC419" });
     var tintColRow = fieldRow(T("Icon-Farbe", "Icon colour"), T("Die Farbe, in der die Logos eingefärbt werden.", "The colour the logos are tinted in."), tintPickRow);
 
-    var strRow = el("div", "cc-set-row"); strRow.appendChild(el("span", "cc-set-rl", T("Intensität", "Strength")));
+    var strRow = el("div", "cc-set-row"), strLbl = el("span", "cc-set-rl", T("Intensität", "Strength"));
+    strLbl.appendChild(infoIcon(T("Wie stark die Einfärbung über dem Original liegt.", "How strongly the tint covers the original.")));
+    strRow.appendChild(strLbl);
     var strInput = el("input"); strInput.type = "range"; strInput.min = "10"; strInput.max = "100"; strRow.appendChild(strInput);
     // On an area tab the global card decides; on the global card itself it is the badge colour.
+    var colours = T("Kachel- und Icon-Farbe", "Tile and icon colour");
+    var lockHelp = T("Solange „Badge-Farben übernehmen“ an ist, nehmen Kacheln und eingefärbte Icons die Farben der Badges.", "While “Use the badge colours” is on, tiles and tinted icons take the badge colours.");
     var lock = hideAdopt
-      ? lockRow(T("Hintergrund und Icons", "Background and icons"), T("Folgt", "Follows"), T("Allgemein › Logos & Icons", "General › Logos & icons"), function () { jumpTo("general", T("Logos & Icons", "Logos & icons")); })
-      : lockRow(T("Hintergrund und Icons", "Background and icons"), T("Folgt", "Follows"), T("Badges", "Badges"), function () { jumpTo("general", T("Badges", "Badges")); });
+      ? lockRow(colours, T("Folgt", "Follows"), T("Allgemein › Logos & Icons", "General › Logos & icons"), function () { jumpTo("general", T("Logos & Icons", "Logos & icons")); }, lockHelp)
+      : lockRow(colours, T("Folgt", "Follows"), T("Badges", "Badges"), function () { jumpTo("general", T("Badges", "Badges")); }, lockHelp);
 
     function sync() {
       if (adoptTg) adoptTg._setOn(io.getAdopt());
@@ -752,18 +765,18 @@
       bgPickRow._set(io.getBgColor(), bgColorEff());
       tintTg._setOn(io.getTint());
       tintPickRow._set(io.getColor());
-      lock.hidden = !adopting;
-      bgRow.hidden = tintRow.hidden = adopting;
-      // A picker or the strength under a switch that is off has nothing to act on, and the
-      // strength only tunes the luminance tint.
+      // Adopting takes over the colours alone, so the pickers give way to the line that names
+      // what decides and the switches stay. A picker or the strength under a switch that is off
+      // has nothing to act on, and the strength only tunes the luminance tint.
+      lock.hidden = !adopting || (!io.getBg() && !io.getTint());
       bgColRow.hidden = adopting || !io.getBg();
       tintColRow.hidden = adopting || !io.getTint();
-      strRow.hidden = adopting || !io.getTint();
+      strRow.hidden = !io.getTint();
     }
     if (adoptRow) into.appendChild(adoptRow);
-    into.appendChild(lock);
     into.appendChild(bgRow); into.appendChild(bgColRow);
     into.appendChild(tintRow); into.appendChild(tintColRow);
+    into.appendChild(lock);
     into.appendChild(strRow);
     sync();
     return { sync: sync, strInput: strInput, bgToggle: bgTg, tintToggle: tintTg, adoptToggle: adoptTg };
@@ -1361,7 +1374,7 @@
     var rmode = el("div", "cc-set-row cc-set-inline");
     var rmodeL = el("span", "cc-set-lblwrap");
     rmodeL.appendChild(el("span", null, T("Reaktiver Modus", "Reactive mode")));
-    rmodeL.appendChild(infoIcon(T("An: alles ruht grau und färbt sich beim Überfahren, Aktives bleibt farbig. Gilt global für alle Farbmodi (Regenbogen, Flagge und Normal) und alle Bereiche, Logo-Hintergründe eingeschlossen.", "On: everything rests grey and colours on hover, and the active item stays coloured. Global across every colour mode (rainbow, flag and accent) and every area, logo backgrounds included.")));
+    rmodeL.appendChild(infoIcon(T("An: alles ruht grau und färbt sich beim Überfahren, Aktives bleibt farbig. Gilt global für alle Farbmodi (Regenbogen, Flagge und Normal) und alle Bereiche, Logo-Kacheln eingeschlossen.", "On: everything rests grey and colours on hover, and the active item stays coloured. Global across every colour mode (rainbow, flag and accent) and every area, logo tiles included.")));
     rmode.appendChild(rmodeL);
     rmode.appendChild(toggle(get("cc.rbmode", "all") === "active", function (v) { set("cc.rbmode", v ? "active" : "all"); paintSetTabs(); syncHeaderBar(); syncSharesBar(); }));
     c1.appendChild(rmode);
@@ -1444,10 +1457,9 @@
         var strn = parseInt(get("cc.iconstrength", "100"), 10) || 100;
         // The preview does not simulate the rainbow rotation, so while adopting it approximates
         // the resolved background with the accent, as accurate as the rainbow-off case. The ink is
-        // then the automatic contrast for that background rather than the accent hue itself, and
-        // it is forced on, since while adopting it no longer depends on the tint's own switch.
-        var adopt9 = get("cc.iconbgrainbow", "0") === "1";
-        gPrevs.forEach(function (p9) { try { p9.set({ bg: get("cc.iconbg", "0") === "1", bgColor: adopt9 ? acc9 : get("cc.iconbgcolor", ""), tint: adopt9 ? true : gTintOnEff(), color: adopt9 ? idealText(acc9) : get("cc.iconcolor", ""), strength: strn, accent: acc9, size: "48px" }); } catch (e9) {} });
+        // then the automatic contrast for that tile, or the accent itself with no tile behind it.
+        var adopt9 = get("cc.iconbgrainbow", "0") === "1", bg9 = get("cc.iconbg", "0") === "1";
+        gPrevs.forEach(function (p9) { try { p9.set({ bg: bg9, bgColor: adopt9 ? acc9 : get("cc.iconbgcolor", ""), tint: gTintOnEff(), color: adoptInk(adopt9, bg9, acc9, get("cc.iconcolor", "")), strength: strn, accent: acc9, size: "48px" }); } catch (e9) {} });
       }
       function gsync() { gpaint(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); } // an adopting area card repaints with the new globals
       // An unset icontint means "on whenever a valid icon colour is set", which keeps the tint of
@@ -1513,7 +1525,7 @@
     wrap.appendChild(cD);
     buildStyleCards("ccd.", wrap, [], true);
 
-    var c2 = card(T("Logos", "Logos"), T("Die Schalter aktivieren Hintergrund und Icons unabhängig voneinander, jeder hat seine eigene Farbe.", "The switches turn the background and the icons on independently, each with its own colour."));
+    var c2 = card(T("Logos", "Logos"), T("Logo-Kacheln und Icons einfärben schalten sich unabhängig voneinander, jedes mit seiner eigenen Farbe.", "Logo tiles and Tint icons switch on independently, each with its own colour."));
     // As in the global card: an unset icontint means "on whenever a valid icon colour is set".
     // This Docker card edits the same global keys, not a scoped copy of them.
     function c2TintOnEff() { var v = get("cc.icontint", null); return v == null ? !!get("cc.iconcolor", "") : v === "1"; }
@@ -1564,10 +1576,9 @@
     }).catch(function () { dockPrev.add("/plugins/cannonadecommand/images/cannonadecommand.png", ""); tintPrev(); });
     function tintPrev() {
       var acc9 = get("cc.accent", "#FCC419");
-      // While adopting, the accent approximates the resolved background, as in gpaint() above, and
-      // the ink is its automatic contrast, forced on whatever the tint's own switch says.
-      var adopt9 = get("cc.iconbgrainbow", "0") === "1";
-      dockPrev.set({ bg: get("cc.iconbg", "0") === "1", bgColor: adopt9 ? acc9 : get("cc.iconbgcolor", ""), tint: adopt9 ? true : c2TintOnEff(), color: adopt9 ? idealText(acc9) : get("cc.iconcolor", ""), strength: parseInt(get("cc.iconstrength", "100"), 10) || 100, accent: acc9 });
+      // While adopting, the accent approximates the resolved background, as in gpaint() above.
+      var adopt9 = get("cc.iconbgrainbow", "0") === "1", bg9 = get("cc.iconbg", "0") === "1";
+      dockPrev.set({ bg: bg9, bgColor: adopt9 ? acc9 : get("cc.iconbgcolor", ""), tint: c2TintOnEff(), color: adoptInk(adopt9, bg9, acc9, get("cc.iconcolor", "")), strength: parseInt(get("cc.iconstrength", "100"), 10) || 100, accent: acc9 });
     }
     c2.appendChild(tprevWrap); tintPrev(); c2OnChange(); sizePrev();   // the preview is the card's last block, sized to the tile-size control
     wrap.appendChild(c2);
@@ -1753,7 +1764,7 @@
         applyBgClasses(); tp();
       };
       into.appendChild(cA);
-      var cB = card(T("Logos", "Logos"), T("Die Schalter aktivieren Hintergrund und Icons unabhängig voneinander, jeder hat seine eigene Farbe.", "The switches turn the background and the icons on independently, each with its own colour."));
+      var cB = card(T("Logos", "Logos"), T("Logo-Kacheln und Icons einfärben schalten sich unabhängig voneinander, jedes mit seiner eigenen Farbe.", "Logo tiles and Tint icons switch on independently, each with its own colour."));
       // ga() says whether this area adopts: with it on the card reads and previews the global icon
       // values, with it off the area's own. Every change here means the area uses its own style,
       // so the setters below always write the area's own key whatever ga() currently answers.
@@ -1812,13 +1823,13 @@
       }
       function tp() {
         var ga9 = ga();
-        // While adopting, the effective accent approximates the resolved background and the ink is
-        // its automatic contrast, as in the global card. It reads the global key, like getAdopt()
-        // above, so the preview never disagrees with what that answers.
-        var adopt9 = get("cc.iconbgrainbow", "0") === "1";
+        // While adopting, the effective accent approximates the resolved background, as in the
+        // global card. It reads the global key, like getAdopt() above, so the preview never
+        // disagrees with what that answers.
+        var adopt9 = get("cc.iconbgrainbow", "0") === "1", bg9 = effIconBg();
         pvl.set({
-          bg: effIconBg(), bgColor: adopt9 ? acc : (ga9 ? get("cc.iconbgcolor", "") : get(P + "iconbgcolor", "")),
-          tint: adopt9 ? true : (ga9 ? tintOnAt("cc.") : tintOnAt(P)), color: adopt9 ? idealText(acc) : (ga9 ? get("cc.iconcolor", "") : get(P + "iconcolor", "")),
+          bg: bg9, bgColor: adopt9 ? acc : (ga9 ? get("cc.iconbgcolor", "") : get(P + "iconbgcolor", "")),
+          tint: ga9 ? tintOnAt("cc.") : tintOnAt(P), color: adoptInk(adopt9, bg9, acc, ga9 ? get("cc.iconcolor", "") : get(P + "iconcolor", "")),
           strength: effIconStrength(), accent: acc, size: "48px"
         });
       }
@@ -2155,6 +2166,10 @@
   }
   // dark text on a light background and white on a dark one, by perceived luminance
   function idealText(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.197 ? "#161616" : "#fff"; }
+  // The icon colour a logo preview inks with, as the area scripts resolve it: adopting the badge
+  // colours gives the contrast for the tile, or the badge colour itself with no tile behind the
+  // icon; otherwise the picked colour.
+  function adoptInk(adopt, tile, badge, own) { return adopt ? (tile ? idealText(badge) : badge) : own; }
   // The preview uses the real palette, so it matches what the Docker tab shows.
   function paintPrev() { var p = document.getElementById("cc-set-prev"); if (!p) return; var DEF = (window.CCTheme && window.CCTheme.RB) || ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"]; var pal = DEF; try { var fj = get("cc.flagmode", "0") === "1" ? JSON.parse(get("cc.flagpal", "null")) : null; var j = (fj && fj.length) ? fj : JSON.parse(get("cc.rbpal", "null")); if (j && j.length) pal = j; } catch (e) {} if (window.CCTheme && window.CCTheme.surfacePalette) pal = window.CCTheme.surfacePalette(pal, accent); Array.prototype.slice.call(p.children).forEach(function (b, i) { var c = rainbow ? pal[i % pal.length] : accent; b.style.background = c; b.style.color = idealText(c); }); }
   // Every toggle on this page follows the colour engine. In rainbow mode each takes its own slot

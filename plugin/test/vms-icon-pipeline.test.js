@@ -67,12 +67,12 @@ const vmsApi = new Function('document', 'localStorage', 'window',
   'var dead = false;\n' +
   'var RB_PAL = ["#d9433f","#f97316","#fcc419","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
-  grabFn('ls') + '\n' + grabFn('vmTintOff') + '\n' + grabFn('effK') + '\n' + grabFn('iconBgAdoptsV') + '\n' + grabFn('ccIdeal') + '\n' + grabFn('ccAccent') + '\n' +
+  grabFn('ls') + '\n' + grabFn('vmTintOff') + '\n' + grabFn('effK') + '\n' + grabFn('iconBgAdoptsV') + '\n' + grabFn('iconBgOnV') + '\n' + grabFn('ccIdeal') + '\n' + grabFn('ccAccent') + '\n' +
   grabFn('ccHex6') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' +
   grabFn('vmPalStored') + '\n' + grabFn('vmPalActive') + '\n' + grabFn('vmRbColor') + '\n' + grabFn('vmAdoptTint') + '\n' +
   grabFn('vmTintOn') + '\n' + grabFn('vmBgColor') + '\n' + grabFn('vmIconInk') + '\n' + grabFn('vmItemAdoptInk') + '\n' +
   grabFn('ensureTintFilterAs') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('vmLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
-  'return { effK: effK, vmTintOn: vmTintOn, vmBgColor: vmBgColor, vmIconInk: vmIconInk, vmItemAdoptInk: vmItemAdoptInk, ensureTintFilter: ensureTintFilter, ensureTintFilterAs: ensureTintFilterAs, vmLogoSizes: vmLogoSizes, glyphInkAndFilter: glyphInkAndFilter, ccIdeal: ccIdeal, ccAccent: ccAccent, vmRbColor: vmRbColor, vmAdoptTint: vmAdoptTint };'
+  'return { iconBgOnV: iconBgOnV, effK: effK, vmTintOn: vmTintOn, vmBgColor: vmBgColor, vmIconInk: vmIconInk, vmItemAdoptInk: vmItemAdoptInk, ensureTintFilter: ensureTintFilter, ensureTintFilterAs: ensureTintFilterAs, vmLogoSizes: vmLogoSizes, glyphInkAndFilter: glyphInkAndFilter, ccIdeal: ccIdeal, ccAccent: ccAccent, vmRbColor: vmRbColor, vmAdoptTint: vmAdoptTint };'
 )(document, global.localStorage, global.window);
 
 let pass = 0, fail = 0;
@@ -130,7 +130,7 @@ console.log('\nHintergrund and Einfärben stay independent: the badge alone does
   reset();
 }
 
-console.log('\ncc.iconbgrainbow: "Badge-Einstellungen übernehmen" as one master toggle');
+console.log('\ncc.iconbgrainbow: "Badge-Farben übernehmen" takes over the colours only');
 {
   reset();
   localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#e5a00d');
@@ -151,8 +151,13 @@ console.log('\ncc.iconbgrainbow: "Badge-Einstellungen übernehmen" as one master
   ok('and not the picked colour', vmsApi.vmIconInk(false) !== '#00aa00');
 
   localStorage.setItem('cc.icontint', '0');
-  ok('adopting with Einfärben off: the ink is still the contrast colour', vmsApi.vmIconInk(false) === vmsApi.ccIdeal(vmsApi.vmRbColor(5)), vmsApi.vmIconInk(false));
+  ok('adopting with Tint icons off: no ink, the icons keep their own colours', vmsApi.vmIconInk(false) === '', vmsApi.vmIconInk(false));
   localStorage.setItem('cc.icontint', '1');
+
+  localStorage.setItem('cc.iconbg', '0');
+  ok('adopting with Logo tiles off: no tile', vmsApi.iconBgOnV() === false);
+  ok('and the ink is the badge colour itself, with no tile to contrast against', !/^(#fff|#161616|)$/.test(vmsApi.vmIconInk(false)), vmsApi.vmIconInk(false));
+  localStorage.setItem('cc.iconbg', '1');
 
   localStorage.setItem('cc.iconbgrainbow', '0');
   ok('turning the master toggle off brings the picked colour back', vmsApi.vmIconInk(false) === '#00aa00', vmsApi.vmIconInk(false));
@@ -168,6 +173,7 @@ console.log('\nvmItemAdoptInk(): the contrast ink per row, as docker.js\'s itemA
   // row's own --cc-rb-ct.
   reset();
   localStorage.setItem('cc.iconbgrainbow', '1');
+  localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.icontint', '1');
   localStorage.setItem('cc.rainbow', '1');
   localStorage.setItem('cc.accent', '#2f6feb');
 

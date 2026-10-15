@@ -1,21 +1,23 @@
-// Pins the "Badge-Einstellungen übernehmen" toggle in settings.js's logoToggles().
+// Pins the "Badge-Farben übernehmen" toggle in settings.js's logoToggles().
 //
-// A picked Hintergrund or Icons colour beats Rainbow's rotating colour, which
+// A picked tile or icon colour beats Rainbow's rotating colour, which
 // icon-rainbow-priority.test.js pins, so this toggle is how an icon is made to
 // follow Rainbow or the accent the way every other badge does. It is one master
 // toggle, not one per control: the tint is a single SVG filter for the whole page,
 // so a separately adopted tint could only pick one flat hue and every logo would
-// come out the same colour. With it on, Hintergrund follows the per-item rainbow
-// stamp and the ink becomes the automatic contrast colour for that background.
+// come out the same colour. With it on, the logo tile follows the per-item rainbow
+// stamp and the ink becomes the automatic contrast colour for that tile. It takes
+// over the colours only: the Logo tiles and Tint icons switches keep deciding
+// whether there is a tile and whether the icons are tinted.
 //
 // What this pins:
 //  1. logoToggles() builds one toggle, wired to io.getAdopt() and io.setAdopt(),
-//     above the Hintergrund row, dimming and disabling both colour pickers and
-//     both switches while adopting, and builds neither toggle nor row when
+//     above the Logo tiles row, leaving both colour pickers out while adopting
+//     and keeping both switches, and builds neither toggle nor row when
 //     io.hideAdoptRow is set.
 //  2. Its three call sites, the global "Logos & Icons" card, the Docker card and
 //     the generic per-area card from buildStyleCards(), wire real getters and
-//     setters against the storage keys the other Hintergrund and Icons controls
+//     setters against the storage keys the other tile and icon controls
 //     use, so a change to one cannot leave another dead. Only the global card
 //     shows the row; the other two hide it and read the global key, which makes
 //     adopting a global matter and leaves the per-area setAdopt() unreachable.
@@ -49,10 +51,12 @@ console.log('\nThe two-toggle keys are gone from settings.js');
 ok('no reference to cc.icontintrainbow is left', !/icontintrainbow/.test(code));
 ok('no reference to the per-control getters and setters is left', !/getBgRainbow|setBgRainbow|getTintRainbow|setTintRainbow/.test(code));
 
-console.log('\nThe tint row is labelled "Icons" in both languages');
+console.log('\nThe two switches are named for what they do, in both languages');
 ok('no "Einfärben" string is left', !/Einfärben/.test(code));
 ok('no "Colourise" string is left', !/Colourise/.test(code));
-ok('the tint row uses the "Icons" label pair', /T\("Icons", "Icons"\)/.test(code));
+ok('the tint row reads "Icons einfärben"', /T\("Icons einfärben", "Tint icons"\)/.test(code));
+ok('the tile row reads "Logo-Kacheln"', /T\("Logo-Kacheln", "Logo tiles"\)/.test(code));
+ok('no switch is called "Hintergrund" any more', !/T\("Hintergrund", "Background"\)/.test(code));
 
 console.log('\nlogoToggles(): one adopt toggle above both colour pickers, none when hidden');
 {
@@ -61,8 +65,8 @@ console.log('\nlogoToggles(): one adopt toggle above both colour pickers, none w
   const body = lt || '';
   ok('reads io.getAdopt() to seed the master toggle', /io\.getAdopt\(\)/.test(body));
   ok('writes io.setAdopt(v) on change', /io\.setAdopt\(v\)/.test(body));
-  ok('the German label appears once, so there is one toggle', (body.match(/Badge-Einstellungen übernehmen/g) || []).length === 1);
-  ok('the English label appears once', (body.match(/Adopt badge settings/g) || []).length === 1);
+  ok('the German label appears once, so there is one toggle', (body.match(/T\("Badge-Farben übernehmen"/g) || []).length === 1);
+  ok('the English label appears once', (body.match(/, "Use the badge colours"\)/g) || []).length === 1);
   ok('io.hideAdoptRow decides whether the toggle and row are built', /hideAdopt\s*=\s*!!io\.hideAdoptRow/.test(body));
   ok('adoptTg and adoptRow are built inside the !hideAdopt branch', /if \(!hideAdopt\) \{[\s\S]*adoptTg = toggle\(/.test(body));
 
@@ -77,10 +81,11 @@ console.log('\nlogoToggles(): one adopt toggle above both colour pickers, none w
   // A control that has no effect is left out, the two switches as much as their
   // pickers, and one line says what decides instead.
   ok('sync() guards adoptTg._setOn, adoptTg being null when hidden', /if \(adoptTg\) adoptTg\._setOn/.test(body));
-  ok('sync() leaves both switch rows out while adopting', /bgRow\.hidden = tintRow\.hidden = adopting;/.test(body));
+  ok('sync() never takes the switch rows out', !/(bgRow|tintRow)\.hidden/.test(body));
   ok('sync() leaves the tile colour out while adopting or while its switch is off', /bgColRow\.hidden = adopting \|\| !io\.getBg\(\);/.test(body));
   ok('sync() leaves the icon colour out while adopting or while its switch is off', /tintColRow\.hidden = adopting \|\| !io\.getTint\(\);/.test(body));
-  ok('sync() shows the line that names what decides only while adopting', /lock\.hidden = !adopting;/.test(body));
+  ok('sync() shows the line that names what decides only while adopting, and only with a switch on', /lock\.hidden = !adopting \|\| \(!io\.getBg\(\) && !io\.getTint\(\)\);/.test(body));
+  ok('sync() keeps the strength while the tint is on, adopting or not', /strRow\.hidden = !io\.getTint\(\);/.test(body));
   ok('no switch in the card is dimmed instead', !/_setDisabled|style\.opacity/.test(body));
 
   ok('the returned handle exposes adoptToggle', /adoptToggle: adoptTg/.test(body));
@@ -134,7 +139,7 @@ console.log('\nAll three logoToggles() call sites wire real getters and setters'
   ok(labels[2] + ': setAdopt is a no-op, no UI reaching it', /setAdopt: function \(\) \{\}/.test(sites[2]), sites[2]);
   ok(labels[2] + ': setAdopt writes no area-local key', !/set\(P \+ "iconbgrainbow"/.test(sites[2]), sites[2]);
 
-  // An area's own Hintergrund and Icons colours stay its own; only whether they
+  // An area's own tile and icon colours stay its own; only whether they
   // follow rainbow is global, which the still-gated colour getters show.
   ok(labels[2] + ': getBgColor stays gated by ga()', /getBgColor: function \(\) \{ return ga\(\) \?/.test(sites[2]), sites[2]);
 }
@@ -143,18 +148,18 @@ console.log('\nThe live preview follows the adopt state rather than the colour u
 {
   // gpaint() on the global card, tintPrev() on the Docker card and tp() on the
   // generic one each build the object logoPreview().set() consumes. While adopting,
-  // each has to substitute the contrast ink for the approximated background and
-  // force tint on, the ink no longer depending on the Icons switch, or the preview
-  // would show a stale colour or none.
+  // each has to take the contrast ink for the approximated tile, or the badge colour
+  // with no tile, and leave the tint to its own switch, as the area scripts do.
   ['gpaint', 'tintPrev', 'tp'].forEach(name => {
     const b = fnBody(name);
     ok(name + '() is found in source', !!b, name);
     ok(name + '() reads the master adopt state', /iconbgrainbow/.test(b || ''), name);
-    ok(name + '() computes the ink through idealText() while adopting', /idealText\(/.test(b || ''), name);
+    ok(name + '() computes the ink through adoptInk()', /adoptInk\(adopt9, bg9, /.test(b || ''), name);
+    ok(name + '() leaves the tint to its switch', !/tint: adopt9/.test(b || ''), name);
     ok(name + '() references no icontintrainbow key', !/icontintrainbow/.test(b || ''), name);
   });
   const tpBody = fnBody('tp') || '';
-  ok('tp() reads cc.iconbgrainbow without the ga() gate, as the getAdopt above it does', /var adopt9 = get\("cc\.iconbgrainbow", "0"\) === "1";/.test(tpBody), tpBody);
+  ok('tp() reads cc.iconbgrainbow without the ga() gate, as the getAdopt above it does', /var adopt9 = get\("cc\.iconbgrainbow", "0"\) === "1", bg9 = effIconBg\(\);/.test(tpBody), tpBody);
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

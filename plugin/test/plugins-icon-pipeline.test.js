@@ -70,12 +70,12 @@ function grabFn(name) {
 const pluginsApi = new Function('document', 'localStorage', 'window',
   'var RB_PAL = ["#d9433f","#f97316","#fcc419","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
-  grabFn('ls') + '\n' + grabFn('eff') + '\n' + grabFn('iconBgAdoptsP') + '\n' + grabFn('idealText') + '\n' + grabFn('accent') + '\n' +
+  grabFn('ls') + '\n' + grabFn('eff') + '\n' + grabFn('iconBgAdoptsP') + '\n' + grabFn('iconBgOnP') + '\n' + grabFn('idealText') + '\n' + grabFn('accent') + '\n' +
   grabFn('storedPal') + '\n' + grabFn('pal') + '\n' + grabFn('colorFor') + '\n' +
   grabFn('ccHex6') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' +
   grabFn('plugTintOn') + '\n' + grabFn('plugBgColor') + '\n' +
   grabFn('plugIconInk') + '\n' + grabFn('logoSize') + '\n' + grabFn('plugGlyphInkAndFilter') + '\n' +
-  'return { eff: eff, plugTintOn: plugTintOn, plugBgColor: plugBgColor, plugIconInk: plugIconInk, logoSize: logoSize, plugGlyphInkAndFilter: plugGlyphInkAndFilter, idealText: idealText, accent: accent, colorFor: colorFor };'
+  'return { iconBgOnP: iconBgOnP, eff: eff, plugTintOn: plugTintOn, plugBgColor: plugBgColor, plugIconInk: plugIconInk, logoSize: logoSize, plugGlyphInkAndFilter: plugGlyphInkAndFilter, idealText: idealText, accent: accent, colorFor: colorFor };'
 )(document, global.localStorage, global.window);
 
 let pass = 0, fail = 0;
@@ -131,7 +131,7 @@ console.log('\nHintergrund and Einfärben stay independent: the badge alone does
   reset();
 }
 
-console.log('\ncc.iconbgrainbow: "Badge-Einstellungen übernehmen" as one master toggle');
+console.log('\ncc.iconbgrainbow: "Badge-Farben übernehmen" takes over the colours only');
 {
   reset();
   localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#e5a00d');
@@ -152,8 +152,13 @@ console.log('\ncc.iconbgrainbow: "Badge-Einstellungen übernehmen" as one master
   ok('and not the picked colour', pluginsApi.plugIconInk(false) !== '#00aa00');
 
   localStorage.setItem('cc.icontint', '0');
-  ok('adopting with Einfärben off: the ink is still the contrast colour', pluginsApi.plugIconInk(false) === pluginsApi.idealText(pluginsApi.colorFor(5)), pluginsApi.plugIconInk(false));
+  ok('adopting with Tint icons off: no ink, the icons keep their own colours', pluginsApi.plugIconInk(false) === '', pluginsApi.plugIconInk(false));
   localStorage.setItem('cc.icontint', '1');
+
+  localStorage.setItem('cc.iconbg', '0');
+  ok('adopting with Logo tiles off: no tile', pluginsApi.iconBgOnP() === false);
+  ok('and the ink is the badge colour itself, with no tile to contrast against', !/^(#fff|#161616|)$/.test(pluginsApi.plugIconInk(false)), pluginsApi.plugIconInk(false));
+  localStorage.setItem('cc.iconbg', '1');
 
   localStorage.setItem('cc.iconbgrainbow', '0');
   ok('turning the master toggle off brings the picked colour back', pluginsApi.plugIconInk(false) === '#00aa00', pluginsApi.plugIconInk(false));
@@ -169,6 +174,7 @@ console.log('\nThe contrast ink per row, rather than one colour for the page');
   // for that row's own ink.
   reset();
   localStorage.setItem('cc.iconbgrainbow', '1');
+  localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.icontint', '1');
   localStorage.setItem('cc.rainbow', '1');
   localStorage.setItem('cc.accent', '#2f6feb');
 

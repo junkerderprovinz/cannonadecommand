@@ -1,12 +1,12 @@
-// Two things have to hold for a container icon to carry its Hintergrund colour on
-// the Docker tab, whether the colour is the area's own or comes from the global
-// "Badge-Einstellungen übernehmen" toggle.
+// Two things have to hold for a container icon to carry its logo tile on the
+// Docker tab, whether the tile's colour is the area's own or comes from the global
+// "Badge-Farben übernehmen" toggle.
 //
-// The class gate has to account for that master toggle. The Settings page says
-// turning it on carries Hintergrund with it, so the three sites that put
-// .cc-docker-iconbg on the native table, the classic Grid and the Folder view go
-// through one shared iconBgOn() helper rather than each testing the per-area
-// toggle on its own, where the class never reaches the DOM with adopt on alone.
+// The class gate is the Logo tiles switch alone. The adopt toggle takes over the
+// colours and nothing else, so the Settings page keeps the switch beside it, and
+// the three sites that put .cc-docker-iconbg on the native table, the classic Grid
+// and the Folder view go through one shared iconBgOn() helper so they cannot
+// drift apart.
 //
 // And .cc-card-ico needs the unconditional base rule the table row has. With only
 // the rainbow-gated rule, a plain accent and reactive mode off leave the icon on
@@ -44,7 +44,7 @@ const api = new Function('localStorage',
   'return { effc: effc, iconBgAdopts: iconBgAdopts, iconBgOn: iconBgOn };'
 )(localStorage);
 
-console.log('\niconBgOn(): the shared gate, effc("iconbg")==="1" || iconBgAdopts()');
+console.log('\niconBgOn(): the shared gate is the Logo tiles switch, whatever adopt says');
 {
   reset();
   ok('both off: iconBgOn() is false', api.iconBgOn() === false);
@@ -53,11 +53,13 @@ console.log('\niconBgOn(): the shared gate, effc("iconbg")==="1" || iconBgAdopts
   ok('the per-area toggle on, adopt off: true', api.iconBgOn() === true);
 
   reset(); localStorage.setItem('cc.iconbgrainbow', '1');
-  ok('adopt on, the per-area toggle never set: true', api.iconBgOn() === true);
-  ok('...where the per-area check on its own would say false', api.effc('iconbg') !== '1');
+  ok('adopt on, the switch never set: no tile', api.iconBgOn() === false);
 
   reset(); localStorage.setItem('cc.iconbgrainbow', '1'); localStorage.setItem('cc.iconbg', '0');
-  ok('adopt on with the per-area toggle off: true, as the Settings page says', api.iconBgOn() === true);
+  ok('adopt on with the switch off: no tile, as the Settings page shows the switch off', api.iconBgOn() === false);
+
+  reset(); localStorage.setItem('cc.iconbgrainbow', '1'); localStorage.setItem('cc.iconbg', '1');
+  ok('adopt on with the switch on: the tile, in the badge colours', api.iconBgOn() === true);
 
   reset(); localStorage.setItem('cc.styledocker', '0'); localStorage.setItem('ccd.iconbg', '1');
   ok('with Docker on its own style, the ccd. prefix reaches iconBgOn()', api.iconBgOn() === true);
@@ -69,10 +71,10 @@ console.log('\nAll three .cc-docker-iconbg call sites go through the shared help
   // occurrences is what shows both of them, and not one alone, were changed.
   const matches = src.match(/classList\.toggle\("cc-docker-iconbg",\s*iconBgOn\(\)\)/g) || [];
   ok('three call sites gate on iconBgOn(): the table, the classic Grid and the Folder view', matches.length === 3, String(matches.length));
-  ok('no call site inlines the check that ignores adopt', !/classList\.toggle\("cc-docker-iconbg",\s*effc\("iconbg"\)\s*===\s*"1"\)/.test(src));
+  ok('no call site inlines its own check', !/classList\.toggle\("cc-docker-iconbg",\s*effc\("iconbg"\)\s*===\s*"1"\)/.test(src));
 }
 
-console.log('\n.cc-card-ico carries an unconditional base Hintergrund rule, not only the rainbow one');
+console.log('\n.cc-card-ico carries an unconditional base tile rule, not only the rainbow one');
 {
   const base = css.match(/\.cc-grid-holder\.cc-docker-iconbg \.cc-card-ico\s*\{([^}]*)\}/);
   ok('the base rule exists, gated on .cc-docker-iconbg alone', !!base);

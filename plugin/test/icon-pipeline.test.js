@@ -91,9 +91,9 @@ function grabFn(name) {
 const dockerApi = new Function('document', 'localStorage', 'window',
   'var RB_PAL = ["#d9433f","#f97316","#fcc419","#1f9d55","#0ea5a4","#2f6feb","#8b5cf6","#e05299"];\n' +
   'var RB_OFFSET = 0;\n' +
-  grabFn('effc') + '\n' + grabFn('iconBgAdopts') + '\n' + grabFn('themingOn') + '\n' +
+  grabFn('effc') + '\n' + grabFn('iconBgAdopts') + '\n' + grabFn('iconBgOn') + '\n' + grabFn('themingOn') + '\n' +
   grabFn('idealText') + '\n' + grabFn('ccHex6') + '\n' + grabFn('tintOn') + '\n' + grabFn('ccPalStored') + '\n' + grabFn('ccPalActive') + '\n' + grabFn('ccRbColor') + '\n' + grabFn('iconAdoptTint') + '\n' + grabFn('bgColor') + '\n' + grabFn('iconInk') + '\n' + grabFn('itemAdoptInk') + '\n' + grabFn('ensureFlatFilter') + '\n' + grabFn('ensureMonoFilter') + '\n' + grabFn('ensureTintFilterAs') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('ccLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
-  'return { iconInk: iconInk, itemAdoptInk: itemAdoptInk, tintOn: tintOn, bgColor: bgColor, ensureFlatFilter: ensureFlatFilter, ensureMonoFilter: ensureMonoFilter, ensureTintFilter: ensureTintFilter, ensureTintFilterAs: ensureTintFilterAs, ccLogoSizes: ccLogoSizes, glyphInkAndFilter: glyphInkAndFilter, idealText: idealText, effc: effc, iconAdoptTint: iconAdoptTint, ccRbColor: ccRbColor };'
+  'return { iconInk: iconInk, iconBgOn: iconBgOn, itemAdoptInk: itemAdoptInk, tintOn: tintOn, bgColor: bgColor, ensureFlatFilter: ensureFlatFilter, ensureMonoFilter: ensureMonoFilter, ensureTintFilter: ensureTintFilter, ensureTintFilterAs: ensureTintFilterAs, ccLogoSizes: ccLogoSizes, glyphInkAndFilter: glyphInkAndFilter, idealText: idealText, effc: effc, iconAdoptTint: iconAdoptTint, ccRbColor: ccRbColor };'
 )(document, global.localStorage, global.window);
 
 let pass = 0, fail = 0;
@@ -346,12 +346,13 @@ console.log('\ndocker.js honours cc.styledocker for iconcolor, iconbg and iconst
   reset();
 }
 
-console.log('\ncc.iconbgrainbow: "Badge-Einstellungen übernehmen" as one master toggle');
+console.log('\ncc.iconbgrainbow: "Badge-Farben übernehmen" as one master toggle');
 {
-  // One toggle adopts both: the background follows Rainbow or the accent, and the
-  // ink becomes the automatic black or white contrast colour for it, whatever
-  // Einfärben's own state. Two independent toggles could not do that, the tint
-  // being a single page-wide filter that can only hold one hue.
+  // One toggle adopts both colours: the tile follows Rainbow or the accent, and the
+  // ink becomes the automatic black or white contrast colour for it. Two
+  // independent toggles could not do that, the tint being a single page-wide filter
+  // that can only hold one hue. It takes over colours only, so the Logo tiles and
+  // Tint icons switches still decide whether there is a tile and a tint at all.
   reset();
   localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.iconbgcolor', '#e5a00d');
   localStorage.setItem('cc.icontint', '1'); localStorage.setItem('cc.iconcolor', '#00aa00');
@@ -372,8 +373,14 @@ console.log('\ncc.iconbgrainbow: "Badge-Einstellungen übernehmen" as one master
   ok('and not the picked colour', dockerApi.iconInk(false) !== '#00aa00');
 
   localStorage.setItem('cc.icontint', '0');
-  ok('adopting with Einfärben off: the ink is still the contrast colour', dockerApi.iconInk(false) === dockerApi.idealText(dockerApi.ccRbColor(5)), dockerApi.iconInk(false));
+  ok('adopting with Tint icons off: no ink, the icons keep their own colours', dockerApi.iconInk(false) === '', dockerApi.iconInk(false));
   localStorage.setItem('cc.icontint', '1');
+
+  localStorage.setItem('cc.iconbg', '0');
+  ok('adopting with Logo tiles off: no tile, whatever the adopt toggle says', dockerApi.iconBgOn() === false);
+  ok('and the ink is the badge colour itself rather than a contrast for a tile that is not there', dockerApi.iconInk(false) !== '#fff' && dockerApi.iconInk(false) !== '#161616' && dockerApi.iconInk(false) !== '', dockerApi.iconInk(false));
+  localStorage.setItem('cc.iconbg', '1');
+  ok('adopting with Logo tiles on: the tile shows', dockerApi.iconBgOn() === true);
 
   localStorage.setItem('cc.iconbgrainbow', '0');
   ok('turning the master toggle off brings the picked colour back', dockerApi.iconInk(false) === '#00aa00', dockerApi.iconInk(false));
@@ -390,6 +397,7 @@ console.log('\nitemAdoptInk(): the contrast ink per item, rather than one for th
   // "automatisch schwarz oder weiß". itemAdoptInk() takes that item's own stamp.
   reset();
   localStorage.setItem('cc.iconbgrainbow', '1');
+  localStorage.setItem('cc.iconbg', '1'); localStorage.setItem('cc.icontint', '1');
   localStorage.setItem('cc.rainbow', '1');
   localStorage.setItem('cc.accent', '#2f6feb');
 
