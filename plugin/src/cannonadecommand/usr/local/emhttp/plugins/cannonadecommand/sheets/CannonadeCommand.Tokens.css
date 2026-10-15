@@ -239,6 +239,9 @@ html {
      delete, the trash on the Plugins page and the /Main icon tiles. A size per role reads as
      several sizes side by side on one card, so a dense row absorbs this one with its own padding. */
   --cc-icon-badge: 26px;
+  /* The room windows, menus and bubbles keep from the viewport's edges, CCTheme.edge() in the
+     scripts, which position them. */
+  --cc-edge: 16px;
 
   /* The semantic states: the fill, the ink on the fill, and the -ink colour for a state written as
      text on the page. Warning is orange, so yellow only ever means the accent. They are fixed per
@@ -273,6 +276,8 @@ html {
   --cc-elev-2: 0 10px 28px rgba(0, 0, 0, .38);  /* raised panel / menu */
   --cc-elev-3: 0 12px 30px rgba(0, 0, 0, .6);   /* modal / popup */
 }
+
+@media (min-width: 1440px) { html { --cc-edge: 24px; } }
 
 /* The light override, shared by the white and azure Unraid themes. The surface, text, track and state
    tokens flip; the rgba greys of --cc-chip and --cc-shade-line read fine on a light page, and
@@ -351,7 +356,7 @@ html.Theme--azure {
 }
 .cc-win {
   position: absolute; z-index: 99999; box-sizing: border-box;
-  width: 420px; max-width: calc(100vw - 32px); max-height: calc(100vh - 16px);
+  width: 420px; max-width: calc(100vw - 2 * var(--cc-edge)); max-height: calc(100vh - 2 * var(--cc-edge));
   display: flex; flex-direction: column; padding: 21px 10px 10px;   /* the top leaves room under the title notch */
   background: #1a1a1a; color: var(--cc-text); border: none; border-radius: var(--cc-radius-card);
   box-shadow: var(--cc-elev-3); font-size: var(--cc-text-subline); line-height: 1.5; text-align: start;

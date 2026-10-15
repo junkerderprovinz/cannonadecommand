@@ -672,13 +672,12 @@
     if (CT && CT.pressable && apply) CT.pressable(apply);
     if (CT && CT.paintWin) CT.paintWin(win);
     if (CT && CT.paintSelects) CT.paintSelects(win);
-    // place the window at the gear (clamped into the viewport; flips above if it would overflow the bottom)
+    // at the gear, above it when the page ends first, and off the viewport's edges
     try {
       var r = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null, cw = win.offsetWidth || 420, ch = win.offsetHeight || 300;
       if (r && (r.width || r.height)) {
-        var left = Math.max(8, Math.min(r.left, window.innerWidth - cw - 12));
-        var top = r.bottom + 6; if (top + ch > window.innerHeight - 8) top = Math.max(8, r.top - ch - 6);
-        win.style.left = (window.scrollX + left) + "px"; win.style.top = (window.scrollY + top) + "px";
+        var at = CT.placeAt(r, cw, ch, 6);
+        win.style.left = (window.scrollX + at.left) + "px"; win.style.top = (window.scrollY + at.top) + "px";
       } else { win.style.left = "50%"; win.style.top = "12vh"; win.style.transform = "translateX(-50%)"; }
     } catch (e) { win.style.left = "50%"; win.style.top = "12vh"; win.style.transform = "translateX(-50%)"; }
     var into = f.cores ? f.cores.input : f.ram ? f.ram.input : f.dn ? f.dn.input : null;

@@ -2422,14 +2422,11 @@
   }
   function positionMenu() {
     if (!menu || !menuAnchor) return;
-    var r = menuAnchor.getBoundingClientRect(), w = menu.offsetWidth || 240;
-    var left = Math.min(window.scrollX + r.right - w, window.scrollX + document.documentElement.clientWidth - w - 12);
-    menu.style.left = Math.max(window.scrollX + 8, left) + "px";
     // A gear near the bottom edge, such as the list view's in the docked bar or the card view's
     // tile after the last card, opens its menu upward.
-    var h = menu.offsetHeight, room = document.documentElement.clientHeight - r.bottom - 6;
-    var top = h > room && r.top - 6 > room ? Math.max(8, r.top - 6 - h) : r.bottom + 6;
-    menu.style.top = (window.scrollY + top) + "px";
+    var at = window.CCTheme.placeAt(menuAnchor.getBoundingClientRect(), menu.offsetWidth || 240, menu.offsetHeight, 6, true);
+    menu.style.left = (window.scrollX + at.left) + "px";
+    menu.style.top = (window.scrollY + at.top) + "px";
   }
   // `builder` lets another caller, the per-card move-to-folder button, reuse this menu,
   // positioning and outside-click machinery for its own panel, so there is one open-menu system.
@@ -2882,14 +2879,15 @@
       if (!pop || !pop.parentNode) return;
       var de = document.documentElement;
       var vh = de.clientHeight || window.innerHeight, vw = de.clientWidth || window.innerWidth;
+      var m = window.CCTheme.edge();
       var h = pop.offsetHeight || 0, top = parseFloat(pop.getAttribute("data-cc-top") || "0");
-      if (top + h + 8 > vh) top = Math.max(8, vh - h - 8);
-      pop.style.top = (window.scrollY + top) + "px";
+      if (top + h + m > vh) top = vh - h - m;
+      pop.style.top = (window.scrollY + Math.max(m, top)) + "px";
       var lAttr = pop.getAttribute("data-cc-left");
       if (lAttr !== null) {
         var w = pop.offsetWidth || parseFloat(pop.getAttribute("data-cc-minw") || "0") || 320, left = parseFloat(lAttr);
-        if (left + w + 12 > vw) left = vw - w - 12;
-        pop.style.left = (window.scrollX + Math.max(8, left)) + "px";
+        if (left + w + m > vw) left = vw - w - m;
+        pop.style.left = (window.scrollX + Math.max(m, left)) + "px";
       }
     } catch (e) {}
   }
@@ -3123,11 +3121,9 @@
       // behind is scroll-locked while a window stands (rule 15), so a panel off the fold would
       // be unreachable. Both edges are clamped, as in clampPop: a schedule row sits at the right
       // end of a window that is itself clamped to the viewport.
-      var r = wrap.getBoundingClientRect(), ph = panel.offsetHeight, pw = panel.offsetWidth;
-      var vh = document.documentElement.clientHeight || window.innerHeight, vw = document.documentElement.clientWidth || window.innerWidth;
-      var top = (r.bottom + 3 + ph > vh && r.top - 3 - ph > 0) ? r.top - 3 - ph : r.bottom + 3;
-      panel.style.left = Math.max(window.scrollX + 8, Math.min(window.scrollX + r.left, window.scrollX + vw - pw - 8)) + "px";
-      panel.style.top = (window.scrollY + Math.max(8, Math.min(top, vh - ph - 8))) + "px";
+      var at = window.CCTheme.placeAt(wrap.getBoundingClientRect(), panel.offsetWidth, panel.offsetHeight, 3);
+      panel.style.left = (window.scrollX + at.left) + "px";
+      panel.style.top = (window.scrollY + at.top) + "px";
       // Opens on the current value, so 22:45 does not show 00 at the top of both columns. This runs
       // after the panel stands where it belongs, or the browser scrolls the page to reach it.
       cols.forEach(function (cs) { for (var i = 0; i < cs.length; i++) if (cs[i].classList.contains("cc-drop-on")) { cs[i].parentNode.scrollTop = Math.max(0, cs[i].offsetTop - 64); break; } });
@@ -3191,8 +3187,10 @@
           panel.appendChild(it);
         });
         var r2 = after.getBoundingClientRect();
-        panel.style.left = (window.scrollX + r2.left) + "px"; panel.style.top = (window.scrollY + r2.bottom + 3) + "px"; panel.style.minWidth = r2.width + "px";
+        panel.style.minWidth = r2.width + "px";
         document.body.appendChild(panel);
+        var at = window.CCTheme.placeAt(r2, panel.offsetWidth, panel.offsetHeight, 3);
+        panel.style.left = (window.scrollX + at.left) + "px"; panel.style.top = (window.scrollY + at.top) + "px";
         paintSelects();   // the "Hängt ab von" list joins the colour modes like every other CC dropdown
         document.addEventListener("mousedown", onDoc, true);
       });

@@ -550,6 +550,20 @@
     return { treat: "tint", src: "native", why: spread == null ? "unmeasured" : "complex:" + spread };
   }
 
+  // The room every window, menu and bubble keeps from the viewport's edges, 16px and 24px on a wide
+  // screen. Tokens.css carries the same numbers as --cc-edge for the size caps.
+  function edge() {
+    return window.innerWidth >= 1440 ? 24 : 16;   // the viewport width, as in the min-width query beside --cc-edge
+  }
+  // left and top for a box of w by h under the anchor rect r, or above it when the page ends first,
+  // kept edge() inside the viewport. alignEnd lines its right edge up with the anchor's.
+  function placeAt(r, w, h, gap, alignEnd) {
+    var m = edge(), vw = document.documentElement.clientWidth || window.innerWidth, vh = document.documentElement.clientHeight || window.innerHeight;
+    var top = r.bottom + gap + h > vh - m && r.top - gap - h >= m ? r.top - gap - h : r.bottom + gap;
+    var left = alignEnd ? r.right - w : r.left;
+    return { left: Math.max(m, Math.min(left, vw - w - m)), top: Math.max(m, Math.min(top, vh - h - m)) };
+  }
+
   // The per-item mode picker as an anchored popover, for tabs such as Plugins that have no
   // per-item settings window. Docker offers the same options in its Startplan window and the VM
   // tab in its limits editor.
@@ -578,9 +592,8 @@
       var r = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null;
       var cw = card.offsetWidth || 250, ch = card.offsetHeight || 90;
       if (r && (r.width || r.height)) {
-        var left = Math.max(8, Math.min(r.left, window.innerWidth - cw - 12));
-        var top = r.bottom + 6; if (top + ch > window.innerHeight - 8) top = Math.max(8, r.top - ch - 6);
-        card.style.left = left + "px"; card.style.top = top + "px";
+        var at = placeAt(r, cw, ch, 6);
+        card.style.left = at.left + "px"; card.style.top = at.top + "px";
       } else { card.style.left = "50%"; card.style.top = "20vh"; card.style.transform = "translateX(-50%)"; }
     } catch (e3) { card.style.left = "50%"; card.style.top = "20vh"; }
     ov.addEventListener("click", function (ev) { if (ev.target === ov) ov.remove(); });
@@ -871,12 +884,9 @@
     anchor.setAttribute("aria-haspopup", "menu"); anchor.setAttribute("aria-expanded", "true");
     document.body.appendChild(m);
     // Under the control and flush with its right edge, or above it when the page ends first, and
-    // clamped into the viewport either way.
-    var r = anchor.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
-    var vw = document.documentElement.clientWidth || window.innerWidth, vh = document.documentElement.clientHeight || window.innerHeight;
-    var top = r.bottom + 6 + h > vh - 8 && r.top - 6 - h >= 8 ? r.top - 6 - h : r.bottom + 6;
-    m.style.left = Math.max(8, Math.min(r.right - w, vw - w - 8)) + "px";
-    m.style.top = Math.max(8, Math.min(top, vh - h - 8)) + "px";
+    // kept off the viewport's edges either way.
+    var at = placeAt(anchor.getBoundingClientRect(), m.offsetWidth, m.offsetHeight, 6, true);
+    m.style.left = at.left + "px"; m.style.top = at.top + "px";
     document.addEventListener("pointerdown", outside, true);
     window.addEventListener("scroll", scrolled, true);
     window.addEventListener("resize", resized);
@@ -904,6 +914,7 @@
     lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark, liftLight: liftLight, lightTheme: lightTheme,
     liftSurface: liftSurface, surfacePalette: surfacePalette, isRed: isRed, deleteSlot: deleteSlot, toast: toast, shake: shake, fail: fail,
     pressable: pressable, modal: modal, refind: refind, paintWin: paintWin, ask: ask, glyph: glyph, menu: menu, slosh: slosh,
+    edge: edge, placeAt: placeAt,
     icons: {
       MODES: ICON_MODES, SIMPLE_MAX: ICON_SIMPLE_MAX,
       globalMode: iconGlobalMode, mode: iconMode, override: iconOverride, setOverride: setIconOverride,

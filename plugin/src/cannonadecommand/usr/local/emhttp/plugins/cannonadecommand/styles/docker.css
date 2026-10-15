@@ -591,7 +591,7 @@ html .cc-seg-btn:hover { color: var(--cc-txt); }
 .cc-seg-btn.cc-seg-on { background: var(--cc-rb-c, var(--cc-accent)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); font-weight: 600; }
 
 .cc-menu { position: absolute; z-index: 99999; min-width: 190px; background: var(--cc-bg, #161616); border: none; border-radius: var(--cc-radius-card); box-shadow: 0 14px 40px rgba(0,0,0,.55); padding: 6px; font: var(--cc-text-subline)/1.5 "Segoe UI", system-ui, sans-serif; color: #e6e6e6; }
-.cc-menu-wide { min-width: 240px; max-width: 92vw; }
+.cc-menu-wide { min-width: 240px; max-width: calc(100vw - 2 * var(--cc-edge)); }
 .cc-menu-status { font-size: var(--cc-text-meta); padding: 2px 8px 6px; }
 .cc-menu-h { font-size: var(--cc-text-meta); text-transform: uppercase; letter-spacing: .5px; color: #8a8a8a; padding: 7px 8px 3px; }
 .cc-menu-row { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: var(--cc-radius-control); cursor: pointer; }
@@ -608,7 +608,7 @@ html .cc-seg-btn:hover { color: var(--cc-txt); }
 /* The editor windows follow the .cc-win template in Tokens.css: the dark frame, the title badge
    across the top, the content on the lighter .cc-pop-mid card and the button row at the bottom. A
    short fade and rise replaces the blink-on, and reduced motion drops it below. */
-.cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: 92vw; background: #1a1a1a; color: var(--cc-txt, #e6e6e6); border: none; border-radius: var(--cc-radius-card); box-shadow: var(--cc-elev-3); font: var(--cc-text-subline)/1.5 "Segoe UI", system-ui, sans-serif; animation: cc-pop-in .14s cubic-bezier(.2,.7,.3,1); }
+.cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: calc(100vw - 2 * var(--cc-edge)); background: #1a1a1a; color: var(--cc-txt, #e6e6e6); border: none; border-radius: var(--cc-radius-card); box-shadow: var(--cc-elev-3); font: var(--cc-text-subline)/1.5 "Segoe UI", system-ui, sans-serif; animation: cc-pop-in .14s cubic-bezier(.2,.7,.3,1); }
 @keyframes cc-pop-in { from { opacity: 0; transform: translateY(6px) scale(.985); } to { opacity: 1; transform: none; } }
 /* While a window stands, the page behind it is pinned: docker.js ccScrollLock sets
    html.cc-scrolllock and closePop(), the funnel every dismiss path goes through, releases it. The
@@ -618,7 +618,7 @@ html .cc-seg-btn:hover { color: var(--cc-txt); }
    out to the pinned page. */
 html.cc-scrolllock, html.cc-scrolllock body { overflow: hidden !important; }
 html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width the hidden scrollbar held, or the page jumps sideways on open */
-.cc-pop { display: flex; flex-direction: column; max-height: calc(100vh - 16px); }
+.cc-pop { display: flex; flex-direction: column; max-height: calc(100vh - 2 * var(--cc-edge)); }
 .cc-pop-mid { overflow-y: auto; overscroll-behavior: contain; min-height: 0; margin: 0 10px; padding: 4px 0; background: var(--cc-surface-window, #242424); border-radius: var(--cc-radius-control); box-shadow: var(--cc-elev-1); }
 @media (prefers-reduced-motion: reduce) { .cc-pop { animation: none; } }
 /* A popover lives on document.body, outside #cc-settings, so Unraid's global button, input and

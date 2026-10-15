@@ -83,6 +83,7 @@ global.window = {
   addEventListener(t, fn) { if (t === 'scroll') scrolls.push(fn); },
   removeEventListener(t, fn) { if (t === 'scroll' && scrolls.indexOf(fn) >= 0) scrolls.splice(scrolls.indexOf(fn), 1); },
 };
+Object.assign(global.window.CCTheme, require('./theme-place')(global.window, global.document));
 global.Event = class { constructor(type) { this.type = type; } };
 global.localStorage = { _d: {}, getItem(k) { return k in this._d ? this._d[k] : null; }, setItem(k, v) { this._d[k] = String(v); } };
 global.navigator = { language: 'de' };
@@ -276,6 +277,20 @@ const clamp = grabFn('clampPop');
 ok(/data-cc-top/.test(clamp), 'clampPop remembers the preferred top');
 ok(/data-cc-left/.test(clamp), 'and the preferred left, a wide window hanging off the right edge as the viewport shrinks');
 ok(/style\.left =/.test(clamp), 'clampPop is what writes left');
+{
+  const runClamp = new Function('window', 'document', clamp + '\nreturn clampPop;')(global.window, global.document);
+  const pop = (top, left, w, h) => ({ parentNode: {}, offsetHeight: h, offsetWidth: w, style: {}, getAttribute: (k) => ({ 'data-cc-top': String(top), 'data-cc-left': String(left) })[k] || null });
+  const right = pop(300, 1400, 372, 200); runClamp(right);
+  ok(right.style.left === (1500 - 372 - 24) + 'px', 'a window opened from the right-most column keeps 24px off a wide viewport\'s right edge', right.style.left);
+  const low = pop(860, 100, 372, 300); runClamp(low);
+  ok(low.style.top === (900 - 300 - 24) + 'px', 'and off its bottom edge', low.style.top);
+  const tall = pop(100, 100, 372, 2000); runClamp(tall);
+  ok(tall.style.top === '24px', 'a window taller than the viewport starts at the top margin, never above it', tall.style.top);
+  global.window.innerWidth = 1280; global.document.documentElement.clientWidth = 1280;
+  const narrow = pop(300, 1200, 372, 200); runClamp(narrow);
+  ok(narrow.style.left === (1280 - 372 - 16) + 'px', 'below 1440px the margin is 16px', narrow.style.left);
+  global.window.innerWidth = 1500; global.document.documentElement.clientWidth = 1500;
+}
 const place = grabFn('placePop');
 ok(!/style\.left =/.test(place), 'placePop leaves left to it, so one formula serves the first placement and every re-clamp');
 ok(/data-cc-left/.test(place), 'placePop records the anchor-relative left as the preference');

@@ -40,6 +40,7 @@ const document = {
   addEventListener: (t, fn) => { (listeners[t] = listeners[t] || []).push(fn); },
 };
 const window = { addEventListener() {}, innerWidth: 1200, innerHeight: 800 };
+window.CCTheme = require('./theme-place')(window, document);
 const header = read('scripts/header.js');
 const decl = (/var ccTipBound = false, ccTipCur = null, ccTipKeys = false;/.exec(header) || [''])[0];
 ok('the last-input flag is declared with the bubble state', !!decl);

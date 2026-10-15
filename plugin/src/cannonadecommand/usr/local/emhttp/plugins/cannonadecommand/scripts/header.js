@@ -1309,8 +1309,8 @@
             pop.textContent = icon.getAttribute("data-cc-info") || "";
             pop.setAttribute("data-src", icon.getAttribute("data-cc-info") || "");
             document.body.appendChild(pop);
-            var r = icon.getBoundingClientRect(), w = pop.offsetWidth, vw = window.innerWidth || document.documentElement.clientWidth;
-            pop.style.left = Math.max(8, Math.min(vw - 8 - w, r.left + r.width / 2 - w / 2)) + "px";
+            var r = icon.getBoundingClientRect(), w = pop.offsetWidth, vw = window.innerWidth || document.documentElement.clientWidth, m = window.CCTheme.edge();
+            pop.style.left = Math.max(m, Math.min(vw - m - w, r.left + r.width / 2 - w / 2)) + "px";
             pop.style.top = (r.bottom + 8) + "px";
             return;
           }
@@ -2047,11 +2047,11 @@
     d.style.display = "block";                                     // shown first, since it only measures while visible
     var vw = document.documentElement.clientWidth || window.innerWidth;
     var vh = document.documentElement.clientHeight || window.innerHeight;
-    var w = d.offsetWidth, h = d.offsetHeight, cx = r.left + r.width / 2;
-    var x = Math.max(8 + w / 2, Math.min(vw - 8 - w / 2, cx));     // clamped into the viewport, since rows run to both edges
+    var w = d.offsetWidth, h = d.offsetHeight, cx = r.left + r.width / 2, m = window.CCTheme.edge();
+    var x = Math.max(m + w / 2, Math.min(vw - m - w / 2, cx));     // kept off the viewport's edges, since rows run to both
     d.style.left = x + "px";                                       // left is the bubble's centre, which the CSS shifts back
     // a bubble that would clip at the bottom opens above the anchor, where it fits
-    var above = r.bottom + 8 + h > vh && r.top - 8 - h >= 0;
+    var above = r.bottom + 8 + h > vh - m && r.top - 8 - h >= m;
     d.classList.toggle("cc-tip-above", above);
     d.style.top = (above ? r.top - 8 - h : r.bottom + 8) + "px";
     d.style.setProperty("--cc-tip-ax", Math.max(10, Math.min(w - 10, cx - (x - w / 2))) + "px");   // the arrow stays over the anchor even when the bubble clamps
@@ -3077,7 +3077,8 @@
       // here as they are created.
       ccAppsStamp(".cc-ca-menu-item");
       var r = btn.getBoundingClientRect(), mr = menu.getBoundingClientRect();
-      menu.style.left = Math.max(8, Math.min(r.right - mr.width, window.innerWidth - mr.width - 8)) + "px";
+      var m = window.CCTheme.edge();
+      menu.style.left = Math.max(m, Math.min(r.right - mr.width, window.innerWidth - mr.width - m)) + "px";
       menu.style.top = (r.bottom + 4) + "px";
       ccCaMenuOpen = menu;
     });
