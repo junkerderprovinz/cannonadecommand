@@ -550,12 +550,25 @@
     return { treat: "tint", src: "native", why: spread == null ? "unmeasured" : "complex:" + spread };
   }
 
+  // The room every window, menu and bubble keeps from the viewport's edges, 16px and 24px on a wide
+  // screen. Tokens.css carries the same numbers as --cc-edge for the size caps.
+  function edge() {
+    return window.innerWidth >= 1440 ? 24 : 16;   // the viewport width, as in the min-width query beside --cc-edge
+  }
+  // left and top for a box of w by h under the anchor rect r, or above it when the page ends first,
+  // kept edge() inside the viewport. alignEnd lines its right edge up with the anchor's.
+  function placeAt(r, w, h, gap, alignEnd) {
+    var m = edge(), vw = document.documentElement.clientWidth || window.innerWidth, vh = document.documentElement.clientHeight || window.innerHeight;
+    var top = r.bottom + gap + h > vh - m && r.top - gap - h >= m ? r.top - gap - h : r.bottom + gap;
+    var left = alignEnd ? r.right - w : r.left;
+    return { left: Math.max(m, Math.min(left, vw - w - m)), top: Math.max(m, Math.min(top, vh - h - m)) };
+  }
+
   // The per-item mode picker as an anchored popover, for tabs such as Plugins that have no
   // per-item settings window. Docker offers the same options in its Startplan window and the VM
   // tab in its limits editor.
   function iconPopover(anchor, scope, name, onChange) {
-    var de = false;
-    try { de = /de/i.test(document.documentElement.lang || "") || (localStorage.getItem("locale") || "").indexOf("de") === 0; } catch (e) {}
+    var de = german();
     var old = document.getElementById("cc-icm-pop"); if (old) old.remove();
     var ov = document.createElement("div"); ov.id = "cc-icm-pop";
     ov.style.cssText = "position:fixed;inset:0;z-index:99999";
@@ -579,9 +592,8 @@
       var r = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : null;
       var cw = card.offsetWidth || 250, ch = card.offsetHeight || 90;
       if (r && (r.width || r.height)) {
-        var left = Math.max(8, Math.min(r.left, window.innerWidth - cw - 12));
-        var top = r.bottom + 6; if (top + ch > window.innerHeight - 8) top = Math.max(8, r.top - ch - 6);
-        card.style.left = left + "px"; card.style.top = top + "px";
+        var at = placeAt(r, cw, ch, 6);
+        card.style.left = at.left + "px"; card.style.top = at.top + "px";
       } else { card.style.left = "50%"; card.style.top = "20vh"; card.style.transform = "translateX(-50%)"; }
     } catch (e3) { card.style.left = "50%"; card.style.top = "20vh"; }
     ov.addEventListener("click", function (ev) { if (ev.target === ov) ov.remove(); });
@@ -712,8 +724,22 @@
     else if (e.shiftKey && a === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); }
   }
-  // win has to be in the document already. opts.onDismiss runs on Escape and on a scrim click and
-  // is expected to end in close(); without it those close the window outright.
+  function german() {
+    try { return /de/i.test(document.documentElement.lang || "") || (localStorage.getItem("locale") || "").indexOf("de") === 0; } catch (e) { return false; }
+  }
+  // The way out of every window, a square badge in its top right corner, so the button row at the
+  // bottom holds only the actions.
+  function closeBadge(run) {
+    var b = pressable(document.createElement("span"));
+    b.className = "cc-win-x";
+    b.innerHTML = glyph("Close");
+    var label = german() ? "Schließen" : "Close";
+    b.setAttribute("aria-label", label); b.setAttribute("data-tip", label);
+    b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); run(); });
+    return b;
+  }
+  // win has to be in the document already. opts.onDismiss runs on Escape, on a scrim click and on
+  // the close badge and is expected to end in close(); without it those close the window outright.
   function modal(win, opts) {
     opts = opts || {};
     var opener = opts.opener || document.activeElement, closed = false;
@@ -736,27 +762,30 @@
     }
     var entry = { win: win, dismiss: function () { if (opts.onDismiss) opts.onDismiss(); else close(); } };
     scrim.addEventListener("click", function (e) { e.stopPropagation(); entry.dismiss(); });
+    win.appendChild(closeBadge(function () { entry.dismiss(); }));
+    if (win.classList.contains("cc-win")) paintWin(win);
     if (!winStack.length) document.addEventListener("keydown", onWinKey, true);
     winStack.push(entry);
     // The first field or switch in the content, else the first button in the bottom row; never
-    // the (i) beside the title, whose bubble would open the moment the window does.
+    // the (i) beside the title, whose bubble would open the moment the window does, and never the
+    // close badge.
     var into = opts.focus;
     if (!into) {
-      var f = focusables(win).filter(function (n) { return !n.classList.contains("cc-info"); });
+      var f = focusables(win).filter(function (n) { return !n.classList.contains("cc-info") && !n.classList.contains("cc-win-x"); });
       into = f.filter(function (n) { return n.closest(".cc-win-card, .cc-pop-mid"); })[0] || f[0] || win;
     }
     try { into.focus(); } catch (e) {}
     return { close: close };
   }
 
-  // The title badge first, then each button, one palette slot after another in rainbow, a delete
-  // keeping off the red slot as on the rows. Under the reactive mode the main button rests grey;
-  // the title, a heading, keeps its colour.
+  // The title badge first, then each button and the close badge, one palette slot after another in
+  // rainbow, a delete keeping off the red slot as on the rows. Under the reactive mode the main
+  // button rests grey; the title, a heading, keeps its colour.
   function paintWin(win) {
     var rb = g("cc.theming", "1") !== "0" && g("cc.rainbow", "0") === "1";
     win.classList.toggle("cc-win-reactive", g("cc.theming", "1") !== "0" && g("cc.rbmode", "all") === "active");
     var p = surfacePalette(palette(), null), off = g("cc.rainbowrot", "1") === "0" ? 0 : rbSeed(p.length);
-    Array.prototype.forEach.call(win.querySelectorAll(".cc-win-title, .cc-win-btn"), function (el, i) {
+    Array.prototype.forEach.call(win.querySelectorAll(".cc-win-title, .cc-win-btn, .cc-win-x"), function (el, i) {
       if (!rb) { el.style.removeProperty("--cc-rb-c"); el.style.removeProperty("--cc-rb-ct"); return; }
       var c = el.classList.contains("cc-win-del") ? deleteSlot(p, i + off) : p[(i + off) % p.length];
       el.style.setProperty("--cc-rb-c", c); el.style.setProperty("--cc-rb-ct", idealText(c));
@@ -855,12 +884,9 @@
     anchor.setAttribute("aria-haspopup", "menu"); anchor.setAttribute("aria-expanded", "true");
     document.body.appendChild(m);
     // Under the control and flush with its right edge, or above it when the page ends first, and
-    // clamped into the viewport either way.
-    var r = anchor.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
-    var vw = document.documentElement.clientWidth || window.innerWidth, vh = document.documentElement.clientHeight || window.innerHeight;
-    var top = r.bottom + 6 + h > vh - 8 && r.top - 6 - h >= 8 ? r.top - 6 - h : r.bottom + 6;
-    m.style.left = Math.max(8, Math.min(r.right - w, vw - w - 8)) + "px";
-    m.style.top = Math.max(8, Math.min(top, vh - h - 8)) + "px";
+    // kept off the viewport's edges either way.
+    var at = placeAt(anchor.getBoundingClientRect(), m.offsetWidth, m.offsetHeight, 6, true);
+    m.style.left = at.left + "px"; m.style.top = at.top + "px";
     document.addEventListener("pointerdown", outside, true);
     window.addEventListener("scroll", scrolled, true);
     window.addEventListener("resize", resized);
@@ -904,6 +930,7 @@
     lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark, liftLight: liftLight, lightTheme: lightTheme,
     liftSurface: liftSurface, surfacePalette: surfacePalette, isRed: isRed, deleteSlot: deleteSlot, toast: toast, shake: shake, fail: fail,
     pressable: pressable, modal: modal, refind: refind, paintWin: paintWin, ask: ask, glyph: glyph, menu: menu, slosh: slosh,
+    edge: edge, placeAt: placeAt,
     icons: {
       MODES: ICON_MODES, SIMPLE_MAX: ICON_SIMPLE_MAX,
       globalMode: iconGlobalMode, mode: iconMode, override: iconOverride, setOverride: setIconOverride,

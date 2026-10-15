@@ -416,6 +416,11 @@ html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb
 .cc-menu-link a, .cc-menu-link a:hover { text-decoration: none !important; }
 a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 .cc-plan-on { box-shadow: none; } /* no inset ring; the chip's text already says it is active */
+/* A plan badge whose dependencies decide a state wears it in the state colour and its ink, in every
+   colour mode, as the run-state badges do: ready green, waiting orange, failed red. */
+html .cc-b.cc-plan.cc-plan-ready   { background: var(--cc-ok, #6fdc8c) !important;   color: var(--cc-ok-fg, #161616) !important; }
+html .cc-b.cc-plan.cc-plan-pending { background: var(--cc-warn, #ff832b) !important; color: var(--cc-warn-fg, #161616) !important; }
+html .cc-b.cc-plan.cc-plan-failed  { background: var(--cc-err, #ff8389) !important;  color: var(--cc-err-fg, #161616) !important; }
 
 /* The third-party markers as badges: the version column's span, stamped cc-3p, and the autostart
    cell's group label, wrapped cc-grp, both in the neutral grey of the changelog chip. cc-grp is a
@@ -591,7 +596,7 @@ html .cc-seg-btn:hover { color: var(--cc-txt); }
 .cc-seg-btn.cc-seg-on { background: var(--cc-rb-c, var(--cc-accent)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); font-weight: 600; }
 
 .cc-menu { position: absolute; z-index: 99999; min-width: 190px; background: var(--cc-bg, #161616); border: none; border-radius: var(--cc-radius-card); box-shadow: 0 14px 40px rgba(0,0,0,.55); padding: 6px; font: var(--cc-text-subline)/1.5 "Segoe UI", system-ui, sans-serif; color: #e6e6e6; }
-.cc-menu-wide { min-width: 240px; max-width: 92vw; }
+.cc-menu-wide { min-width: 240px; max-width: calc(100vw - 2 * var(--cc-edge)); }
 .cc-menu-status { font-size: var(--cc-text-meta); padding: 2px 8px 6px; }
 .cc-menu-h { font-size: var(--cc-text-meta); text-transform: uppercase; letter-spacing: .5px; color: #8a8a8a; padding: 7px 8px 3px; }
 .cc-menu-row { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: var(--cc-radius-control); cursor: pointer; }
@@ -600,6 +605,9 @@ html .cc-seg-btn:hover { color: var(--cc-txt); }
 .cc-menu-plain:hover { background: transparent; }
 .cc-menu-plain .cc-filter { width: 100%; }
 .cc-menu-plain .cc-btn { flex: 1; text-align: center; }
+/* The way to the settings page is a secondary button with its gear, a link that looks and reacts
+   like the buttons above it. */
+.cc-menu a.cc-menu-settings, .cc-menu a.cc-menu-settings:is(:hover, :focus, :visited) { display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
 .cc-menu-sep { height: 6px; background: transparent; margin: 0; }   /* spacing, not a line */
 .cc-menu-link { color: var(--cc-accent); font-size: var(--cc-text-meta); padding: 6px 8px; display: block; text-decoration: none; border-radius: var(--cc-radius-control); cursor: pointer; transition: background .12s, color .12s; }
 /* a colour-mode fill on hover and on keyboard focus, and no underline */
@@ -608,7 +616,7 @@ html .cc-seg-btn:hover { color: var(--cc-txt); }
 /* The editor windows follow the .cc-win template in Tokens.css: the dark frame, the title badge
    across the top, the content on the lighter .cc-pop-mid card and the button row at the bottom. A
    short fade and rise replaces the blink-on, and reduced motion drops it below. */
-.cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: 92vw; background: #1a1a1a; color: var(--cc-txt, #e6e6e6); border: none; border-radius: var(--cc-radius-card); box-shadow: var(--cc-elev-3); font: var(--cc-text-subline)/1.5 "Segoe UI", system-ui, sans-serif; animation: cc-pop-in .14s cubic-bezier(.2,.7,.3,1); }
+.cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: calc(100vw - 2 * var(--cc-edge)); background: #1a1a1a; color: var(--cc-txt, #e6e6e6); border: none; border-radius: var(--cc-radius-card); box-shadow: var(--cc-elev-3); font: var(--cc-text-subline)/1.5 "Segoe UI", system-ui, sans-serif; animation: cc-pop-in .14s cubic-bezier(.2,.7,.3,1); }
 @keyframes cc-pop-in { from { opacity: 0; transform: translateY(6px) scale(.985); } to { opacity: 1; transform: none; } }
 /* While a window stands, the page behind it is pinned: docker.js ccScrollLock sets
    html.cc-scrolllock and closePop(), the funnel every dismiss path goes through, releases it. The
@@ -618,7 +626,7 @@ html .cc-seg-btn:hover { color: var(--cc-txt); }
    out to the pinned page. */
 html.cc-scrolllock, html.cc-scrolllock body { overflow: hidden !important; }
 html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width the hidden scrollbar held, or the page jumps sideways on open */
-.cc-pop { display: flex; flex-direction: column; max-height: calc(100vh - 16px); }
+.cc-pop { display: flex; flex-direction: column; max-height: calc(100vh - 2 * var(--cc-edge)); }
 .cc-pop-mid { overflow-y: auto; overscroll-behavior: contain; min-height: 0; margin: 0 10px; padding: 4px 0; background: var(--cc-surface-window, #242424); border-radius: var(--cc-radius-control); box-shadow: var(--cc-elev-1); }
 @media (prefers-reduced-motion: reduce) { .cc-pop { animation: none; } }
 /* A popover lives on document.body, outside #cc-settings, so Unraid's global button, input and
@@ -657,7 +665,7 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
 /* The title notches into the window's top edge with its info bubble beside it, the pair placed as
    one group, as on a .cc-win; the window's top padding leaves room under it. */
 .cc-pop { padding-top: 21px; }
-.cc-pop-head { position: absolute; top: 0; left: 24px; transform: translateY(-50%); display: flex; align-items: center; gap: 8px; max-width: calc(100% - 48px); padding: 0; border-bottom: none; }
+.cc-pop-head { position: absolute; top: 0; left: 24px; transform: translateY(-50%); display: flex; align-items: center; gap: 8px; max-width: calc(100% - 74px); padding: 0; border-bottom: none; }
 .cc-pop-head .cc-win-title { position: static; transform: none; flex: 0 1 auto; max-width: none; }
 .cc-pop-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; }   /* an unwrapped row takes the full inset */
 /* The label column is a floor plus nowrap, not a fixed width: with a width, a label wider than the
@@ -1394,8 +1402,9 @@ html.cc-tools-rbneutral #cc-settings .cc-dsel-opt.is-selected {
 .cc-info svg { width: 15px; height: 15px; display: block; background: none; }
 .cc-info:hover, .cc-info:focus { opacity: 1; outline: none; }
 /* Every [data-tip] carrier in the settings panel and on the Docker pages is served by header.js's
-   body-level bubble, so only the anchor positions live here. */
-:is(#cc-settings, .cc-enh, .cc-grid-holder, .cc-actbar, .cc-pop, .cc-menu, nav.tabs) [data-tip],
+   body-level bubble, so only the anchor positions live here. A window's close badge keeps the
+   absolute place Tokens.css gives it in the corner. */
+:is(#cc-settings, .cc-enh, .cc-grid-holder, .cc-actbar, .cc-pop, .cc-menu, nav.tabs) [data-tip]:not(.cc-win-x),
 button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-tip] { position: relative; }
 .cc-set-mini { background: transparent; color: var(--dim); border: 1px solid var(--line2); border-radius: var(--cc-radius-pill); padding: 5px 12px; font-size: var(--cc-text-subline); cursor: pointer; }
 .cc-set-mini-on { color: #fff; border-color: var(--cc-accent, #FCC419); background: rgba(255,255,255,.05); }
@@ -1553,10 +1562,34 @@ div.js-actions :is(input[type=button], .cc-bulkmode-badge, .cc-allct):focus-visi
 .sl-bubble .sl-upd:hover, .sl-bubble .sl-gh:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 .sl-bubble .sl-upd.sl-upd-off { background: transparent !important; color: var(--sl-dim) !important; border: 1px solid var(--sl-line2) !important; filter: none !important; }
 .sl-bubble .sl-pill { border-radius: var(--cc-radius-pill) !important; }
+/* ShipLog sizes its window, cards and section badges by a radius variable CC does not set, which
+   leaves them round in every shape; the shape engine's tokens take over: the window a card, its cards
+   a control, every section badge and the AI model tag a pill. */
+html .sl-bubble { border-radius: var(--cc-radius-card) !important; }
+html .sl-bubble :is(.sl-sec, .sl-aubar, .sl-unmaint-note) { border-radius: var(--cc-radius-control) !important; }
+html .sl-bubble :is(h4, .sl-ai) { border-radius: var(--cc-radius-pill) !important; }
 .sl-bubble .sl-x { border-radius: var(--cc-radius-pill) !important; }
 /* The close button rests on ShipLog's neutral chip and on hover takes the colour the repository
    button rests on: the accent, or its stamped --cc-rb-c. */
 .sl-bubble .sl-x:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
+/* ShipLog's auto-update switch reads like every switch row in a CC window: the words and the (i)
+   at the left, GlimStone's switch at the far right. The label becomes display:contents so its parts
+   can be ordered inside the bar, and a press on the words or the track still reaches the checkbox
+   through the label. */
+html .sl-bubble .sl-au-row { display: contents; }
+html .sl-bubble .sl-au-row > span:not(.sl-au-track, .sl-au-info) { order: 1; cursor: pointer; }
+html .sl-bubble .sl-au-info { order: 2; }
+html .sl-bubble .sl-au-track {
+  order: 3; margin-inline-start: auto; cursor: pointer;
+  width: 44px; height: 24px; border-radius: var(--cc-radius-pill); background: var(--cc-toggle-track-off, #3a3a3a);
+}
+html .sl-bubble .sl-au-track::after { top: 3px; left: 3px; width: 18px; height: 18px; border-radius: var(--cc-radius-pill); background: #fff; }
+html .sl-bubble .sl-au-cb:checked + .sl-au-track { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); }
+html .sl-bubble .sl-au-cb:checked + .sl-au-track::after { transform: translateX(20px); background: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
+html .sl-bubble .sl-au-cb:focus-visible + .sl-au-track { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent); }
+html .sl-bubble .sl-au-row.sl-au-dis > * { opacity: .65; cursor: default; }
+html .sl-bubble .sl-au-state { order: 4; flex-basis: 100%; }
+html .sl-bubble .sl-au-state:empty { display: none; }
 /* ShipLog's buttons take the same rest and hover split as every other Docker-tab control in the
    reactive mode: docker.js enhanceShipLogBubble() skips its own paint here and only stamps
    --cc-rb-c and --cc-rb-ct for the hover rule to read. The close button rests on ShipLog's own
@@ -2149,7 +2182,7 @@ html.cc-docker-on.cc-on-addct .ui-dialog select:focus-visible { outline: none !i
    sheet loads only on CC-governed pages, so the page-level selector is safe, and the field rules
    above already give focus a fill. The (i) and CC's own buttons, badges and fields keep their halo
    from Tokens.css, which this rule would outweigh by coming later. */
-:is(a, button, input, select, [tabindex]):where(:not(.cc-info, .cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast)):focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
+:is(a, button, input, select, [tabindex]):where(:not(.cc-info, .cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-win-x, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast)):focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
 
 /* The reactive rainbow on /Docker, gated on the html.cc-shares-rbneutral shares.js stamps on
    every page, the same contract as /Main. Every CC-painted control rests grey and takes its

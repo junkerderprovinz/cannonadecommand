@@ -1,5 +1,5 @@
 // Every CannonadeCommand window is one kind of window (GlimStone rule 15): a title badge, a
-// lighter content card, a button row at the bottom with the way out on the left and the
+// lighter content card, a close badge in the top right corner, a button row at the bottom with the
 // forward action on the right, and the page darkened and blurred behind it. It is modal:
 // focus moves in, Tab stays inside, Escape and the scrim dismiss it, and focus returns to the
 // control that opened it. A question is asked in such a window rather than with
@@ -108,8 +108,9 @@ const theme = read('scripts/cc-theme.js');
 const CCTheme = new Function('localStorage',
   'function g(k, d) { return k in localStorage ? localStorage[k] : d; } function s(k, v) { localStorage[k] = v; }' +
   grabVar(theme, 'RB') + grabVar(theme, 'LUM_FLOOR') + grabVar(theme, 'winStack') + grabVar(theme, 'FOCUSABLE') +
+  'function glyph(name) { return "<svg>" + name + "</svg>"; }' +
   ['idealText', 'rbSeed', 'palette', 'lumOf', 'liftLight', 'lightTheme', 'surfacePalette', 'isRed', 'deleteSlot', 'shake',
-    'pressable', 'refind', 'focusables', 'onWinKey', 'modal', 'paintWin', 'ask'].map((n) => grabFn(theme, n)).join('\n') +
+    'pressable', 'refind', 'focusables', 'onWinKey', 'german', 'closeBadge', 'modal', 'paintWin', 'ask'].map((n) => grabFn(theme, n)).join('\n') +
   '; return { RB: RB, isRed: isRed, modal: modal, ask: ask, paintWin: paintWin, pressable: pressable };')(store);
 
 function win(cls) {
@@ -136,10 +137,15 @@ console.log('\nThe modal: scrim, focus, Tab and Escape');
   ok('the window says it is a modal dialog', w.getAttribute('role') === 'dialog' && w.getAttribute('aria-modal') === 'true');
   ok('named by its title badge', w.getAttribute('aria-labelledby') === w.querySelector('.cc-win-title').id && !!w.getAttribute('aria-labelledby'));
   ok('focus moves to the first field in the card, past the (i)', document.activeElement === a);
-  c.focus(); key('Tab');
-  ok('Tab on the last control wraps to the first', document.activeElement === info, document.activeElement.className);
+  const x = w.querySelector('.cc-win-x');
+  ok('the modal puts a close badge into the window', !!x && x.parentNode === w);
+  ok('named "Close" for a screen reader and in its bubble', x.getAttribute('aria-label') === 'Close' && x.getAttribute('data-tip') === 'Close');
+  ok('it answers the keyboard like a button', x.getAttribute('role') === 'button' && x.getAttribute('tabindex') === '0');
+  ok('it carries the close glyph', /Close/.test(x.innerHTML));
+  x.focus(); key('Tab');
+  ok('Tab on the last control, the close badge, wraps to the first', document.activeElement === info, document.activeElement.className);
   info.focus(); key('Tab', true);
-  ok('Shift+Tab on the first wraps to the last', document.activeElement === c);
+  ok('Shift+Tab on the first wraps to the close badge', document.activeElement === x);
   opener.focus(); key('Tab');
   ok('Tab from outside comes back in', w.contains(document.activeElement));
   b.focus(); key('Escape');
@@ -155,6 +161,25 @@ console.log('\nThe modal: scrim, focus, Tab and Escape');
   const scrim = body.querySelector('.cc-scrim');
   scrim.click();
   ok('a click on the scrim dismisses the window', n === 1 && !w.parentNode);
+}
+{
+  const { w } = win();
+  let n = 0;
+  const h = CCTheme.modal(w, { onDismiss: () => { n++; h.close(); } });
+  w.querySelector('.cc-win-x').click();
+  ok('the close badge dismisses through onDismiss, so unsaved work is still asked about', n === 1 && !w.parentNode);
+  const plain = win();
+  CCTheme.modal(plain.w);
+  plain.w.querySelector('.cc-win-x').click();
+  ok('without onDismiss it closes the window outright', !plain.w.parentNode);
+}
+{
+  const w = body.appendChild(new N('div')); w.className = 'cc-win';
+  const act = w.appendChild(new N('div')); act.className = 'cc-win-act';
+  const go = CCTheme.pressable(act.appendChild(new N('span'))); go.className = 'cc-win-btn';
+  const h = CCTheme.modal(w);
+  ok('a window with nothing else to focus starts on its action, not on the close badge', document.activeElement === go);
+  h.close();
 }
 {
   const outer = win();
@@ -270,6 +295,14 @@ console.log('\nThe sheet');
   ok('the editor windows share the frame', /\.cc-pop \{[^}]*background: #1a1a1a/.test(docker));
   ok('and the card', /\.cc-pop-mid \{[^}]*background: var\(--cc-surface-window/.test(docker));
   ok('no rule draws a typed close in the corner any more', !/\.cc-pop-x/.test(docker + tokens));
+  const xv = (prop, states) => { const r = top(['cc-win-x'], prop, states); return r && r.value; };
+  ok('the close badge notches into the top right corner', xv('position') === 'absolute' && xv('top') === '0' && xv('right') === '16px' && xv('transform') === 'translateY(-50%)');
+  ok('it is a square icon badge of the one icon-badge size', /var\(--cc-icon-badge/.test(xv('width')) && /var\(--cc-icon-badge/.test(xv('height')));
+  const onDocker = candidates('docker', { tag: 'span', classes: ['cc-win-x'], attrs: { class: 'cc-win-x', 'data-tip': 'Schließen' }, states: {}, inside: ['.cc-pop'] }, 'position').pop();
+  ok('on the Docker page the bubble anchors\' position:relative leaves it in the corner', onDocker && onDocker.value === 'absolute', onDocker && onDocker.selector);
+  ok('it follows the shape engine', xv('border-radius') === 'var(--cc-radius-pill)');
+  ok('it rests on the field grey and hovers in the colour chain', /--cc-surface-3/.test(xv('background')) && /var\(--cc-rb-c, var\(--cc-rbaccent, var\(--cc-accent/.test(xv('background', { hover: true })));
+  ok('the title badge leaves it room', top(['cc-win-title'], 'max-width').value === 'calc(100% - 74px)' && /\.cc-pop-head \{[^}]*max-width: calc\(100% - 74px\)/.test(docker));
 }
 
 console.log('\nThe windows that use it');
@@ -284,21 +317,22 @@ console.log('\nThe windows that use it');
   for (const fn of ['openEditor', 'openBandwidth', 'openLimits']) {
     const body = grabFn(docker, fn);
     ok(fn + ': a title badge naming the container', /el\("span", "cc-win-title cc-pop-ttl", .*?\+ ": " \+ name\)/.test(body));
-    ok(fn + ': Close first in the button row', /appendChild\(popCloseBtn\(\)\); [a-z]+\.appendChild\(/.test(body));
+    ok(fn + ': no Close in the button row, the close badge stands in the corner', !/popCloseBtn|t\("close"\)/.test(body));
     ok(fn + ': no typed corner ✕', !/✕/.test(body));
   }
   ok('the Startplan keeps its own Save', /bSave = el\("span", "cc-btn cc-btn-primary", t\("saveShort"\)\)/.test(grabFn(docker, 'openEditor')));
   const place = grabFn(docker, 'placePop'), close = grabFn(docker, 'closePop');
   ok('placePop makes every editor modal, focus returning to its badge', /CCTheme\.modal\(pop, \{ opener: anchor, onDismiss: dismissPop \}\)/.test(place));
   ok('closePop, the funnel of every dismiss, closes the modal', /popModal = null; m\.close\(\)/.test(close));
-  ok('the painter starts with the title badge', /var POP_PAINT_SEL = "[^"]*\.cc-pop-ttl"/.test(docker) && !/cc-pop-x/.test(docker));
+  ok('the painter covers the title badge and the close badge', /var POP_PAINT_SEL = "[^"]*\.cc-pop-ttl, \.cc-win-x"/.test(docker) && !/cc-pop-x/.test(docker));
+  ok('placePop paints again once the modal has added the close badge', /CCTheme\.modal\(pop, [^\n]*\n\s*paintPopChrome\(pop\);/.test(place));
   ok('the window buttons answer the keyboard', /CCTheme\.pressable\(b\)/.test(grabFn(docker, 'hardenPop')));
   ok('the gears that open the windows can be reached with Tab', /CCTheme\.pressable\(lb\)/.test(grabFn(docker, 'gearKeys')) && /return gearKeys\(lb\)/.test(grabFn(docker, 'limGear')) && /return gearKeys\(lb\)/.test(grabFn(docker, 'bwGear')));
 
   const vmEd = grabFn(vms, 'openVmEd');
   ok('the VM window is a .cc-win with a title badge', /el\("div", "cc-win"\)/.test(vmEd) && /el\("div", "cc-win-title", titleMap\[which\] \+ ": " \+ name\)/.test(vmEd));
   ok('its content sits on the card', /el\("div", "cc-win-card"\)/.test(vmEd));
-  ok('Close comes before Apply in its button row', vmEd.indexOf('"cc-win-btn", VMDE ? "Schließen"') > 0 && vmEd.indexOf('"cc-win-btn", VMDE ? "Schließen"') < vmEd.indexOf('"cc-win-btn cc-win-go", VMDE ? "Anwenden"'));
+  ok('its button row holds Apply alone, the close badge comes from the modal', vmEd.indexOf('VMDE ? "Schließen"') < 0 && vmEd.indexOf('"cc-win-btn cc-win-go", VMDE ? "Anwenden"') > 0);
   ok('it is modal through the shared helper', /CT\.modal\(win, \{ opener: anchor/.test(vmEd));
   ok('no typed corner ✕ and no transparent click layer', !/✕/.test(vmEd) && !/cc-vmlim-ov/.test(vms + read('sheets/CannonadeCommand.VmTab.css')));
 

@@ -87,7 +87,7 @@ const theme = read('scripts/cc-theme.js');
 const CCTheme = new Function('localStorage',
   'function g(k, d) { return k in localStorage ? localStorage[k] : d; } function s(k, v) { localStorage[k] = v; }' +
   grabVar(theme, 'RB') + grabVar(theme, 'LUM_FLOOR') + grabVar(theme, 'rowMenu') + '\n' + grabBlock(theme, 'var GLYPHS = {', '\n  };') + '\n' +
-  ['idealText', 'rbSeed', 'palette', 'lumOf', 'liftLight', 'lightTheme', 'surfacePalette', 'isRed', 'deleteSlot', 'glyph', 'menu'].map((n) => grabFn(theme, n)).join('\n') +
+  ['idealText', 'rbSeed', 'palette', 'lumOf', 'liftLight', 'lightTheme', 'surfacePalette', 'isRed', 'deleteSlot', 'glyph', 'edge', 'placeAt', 'menu'].map((n) => grabFn(theme, n)).join('\n') +
   '; return { RB: RB, isRed: isRed, glyph: glyph, menu: menu };')(store);
 
 function anchor() { const a = body.appendChild(new N('span')); a.className = 'cc-actbtn'; return a; }
@@ -114,6 +114,22 @@ console.log('\nThe menu and its items');
   ok('More says it has a menu and that it is open', a.getAttribute('aria-haspopup') === 'menu' && a.getAttribute('aria-expanded') === 'true');
   ok('the focus moves to the first item', active === its()[0]);
   ok('it stands under More, flush with its right edge', m.style.left === '426px' && m.style.top === '332px', m.style.left + ' ' + m.style.top);
+  {
+    const edgeAt = (w, rect) => {
+      const b = anchor(); b.rect = rect; html.clientWidth = w; window.innerWidth = w;
+      CCTheme.menu(b, items([])); const mm = menuEl(); const st = { left: mm.style.left, top: mm.style.top };
+      CCTheme.menu(b, items([]));   // a second press closes it
+      body.removeChild(b); return st;
+    };
+    const right = edgeAt(1000, { left: 974, right: 1000, top: 300, bottom: 326 });
+    ok('from the right-most column it keeps 16px off the viewport edge', right.left === '784px', right.left);
+    const wide = edgeAt(1600, { left: 1574, right: 1600, top: 300, bottom: 326 });
+    ok('on a wide screen it keeps 24px', wide.left === '1376px', wide.left);
+    const low = edgeAt(1000, { left: 600, right: 626, top: 660, bottom: 686 });
+    ok('near the bottom it opens upward and stays off the bottom edge', low.top === (660 - 6 - 120) + 'px', low.top);
+    html.clientWidth = 1000; window.innerWidth = 1000;
+    a.focus(); CCTheme.menu(a, items(log));
+  }
 
   key('ArrowDown'); ok('ArrowDown moves to the next item', active === its()[1]);
   key('End'); ok('End jumps to the last', active === its()[2]);

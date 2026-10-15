@@ -43,11 +43,14 @@ console.log('\nEvery view has a gear');
 
   // A gear near the bottom edge would hang its menu off screen.
   const place = new Function('window', 'document', 'menu', 'menuAnchor', fn('positionMenu') + '\npositionMenu(); return menu.style;');
-  const win = { scrollX: 0, scrollY: 0 }, doc = { documentElement: { clientWidth: 1600, clientHeight: 900 } };
-  const at = (top, bottom) => ({ getBoundingClientRect: () => ({ top, bottom, right: 1500 }) });
+  const win = { scrollX: 0, scrollY: 0, innerWidth: 1600, innerHeight: 900 }, doc = { documentElement: { clientWidth: 1600, clientHeight: 900 } };
+  win.CCTheme = require('./theme-place')(win, doc);
+  const at = (top, bottom, right) => ({ getBoundingClientRect: () => ({ top, bottom, left: (right || 1500) - 30, right: right || 1500 }) });
   const m = () => ({ offsetWidth: 240, offsetHeight: 400, style: {} });
   ok('a gear at the bottom opens its menu upward', place(win, doc, m(), at(860, 884)).top === (860 - 6 - 400) + 'px');
   ok('a gear near the top still opens downward', place(win, doc, m(), at(100, 124)).top === '130px');
+  ok('a gear in the right-most column keeps its menu 24px off the edge of a wide viewport', place(win, doc, m(), at(100, 124, 1600)).left === (1600 - 240 - 24) + 'px');
+  ok('and a menu that fits nowhere stays 24px off the bottom', place(win, doc, { offsetWidth: 240, offsetHeight: 880, style: {} }, at(100, 124)).top === '24px');
 }
 
 

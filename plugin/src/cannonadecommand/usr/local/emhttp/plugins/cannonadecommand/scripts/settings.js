@@ -88,7 +88,6 @@
       "html .cc-win-notes :is(.cc-notes, .cc-notes a):focus-visible{outline:none!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--cc-accent,#FCC419) 45%,transparent)!important}" +
       "html .cc-win a.cc-win-btn,html .cc-win a.cc-win-btn:visited{color:var(--cc-text);text-decoration:none}" +
       "html .cc-win a.cc-win-btn:hover{color:var(--cc-rb-ct,var(--cc-rbaccent-text,var(--cc-accent-text,#161616)))}" +
-      ".cc-win-act .cc-win-link{margin-inline-end:auto}" +
       // A row or card that has nothing to act on stays out of the page and out of the search.
       "#cc-settings [hidden],#cc-settings .cc-set-off{display:none!important}" +
       "#cc-settings .cc-set-prose{text-align:start}" +
@@ -2364,13 +2363,11 @@
     var act = el("div", "cc-win-act");
     var link = el("a", "cc-win-btn cc-win-link", T("Auf GitHub ansehen", "View on GitHub"));
     link.href = src.page; link.target = "_blank"; link.rel = "noopener noreferrer";
-    var close = C.pressable(el("span", "cc-win-btn", T("Schließen", "Close")));
-    act.appendChild(link); act.appendChild(close);
+    act.appendChild(link);
     win.appendChild(title); win.appendChild(card); win.appendChild(act);
     document.body.appendChild(win);
     C.paintWin(win);
-    var h = C.modal(win, { opener: opener, focus: close });
-    close.addEventListener("click", h.close);
+    C.modal(win, { opener: opener, focus: card });
     function say(text) { card.textContent = ""; card.appendChild(el("p", "cc-win-text", text)); }
     fetch(src.api, { headers: { Accept: "application/vnd.github+json" } })
       .then(function (r) { if (r.status === 404) throw new Error("missing"); if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })

@@ -56,8 +56,7 @@ console.log('\nThe question');
 }
 
 console.log('\nEvery way out asks');
-ok('the Close button', /function popCloseBtn\(\) \{[^\n]*addEventListener\("click", dismissPop\)/.test(docker));
-ok('Escape and the scrim, through the modal', /window\.CCTheme\.modal\(pop, \{ opener: anchor, onDismiss: dismissPop \}\)/.test(docker));
+ok('the close badge, Escape and the scrim, through the modal', /window\.CCTheme\.modal\(pop, \{ opener: anchor, onDismiss: dismissPop \}\)/.test(docker));
 ok('a click outside, but not a click in the question itself', /!e\.target\.closest\("\.cc-plan, \.cc-drop, \.cc-dlg"\)\) dismissPop\(\);/.test(docker));
 ok('Escape without a modal', /if \(e\.key === "Escape"\) \{ try \{ dismissPop\(\);/.test(docker));
 

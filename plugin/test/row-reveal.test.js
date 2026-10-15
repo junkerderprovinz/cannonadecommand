@@ -54,7 +54,7 @@ console.log('\nA running container shows no state');
   ok('card and folder list row: the state badge', sels.includes('html.cc-docker-on .cc-grid-holder :is(.cc-card-head, .cc-frow-status) > .cc-badge-running:not(.cc-badge-alert)'));
   ok('chip: the dot and the word beside it', sels.includes('html.cc-docker-on .cc-grid-holder .cc-chip-dot.cc-badge-running:not(.cc-badge-alert)') && sels.includes('html.cc-docker-on .cc-grid-holder .cc-chip-dot.cc-badge-running:not(.cc-badge-alert) + .cc-chip-status'));
   ok('an unhealthy container keeps its state, every selector excludes the alert', sels.length === 4 && sels.every((s) => s.includes(':not(.cc-badge-alert)')));
-  ok('the readiness dot beside the plan chip is not touched, it carries no data-name', /dot = el\("span", "cc-badge " \+ \(bad\.length \? "cc-badge-alert" : "cc-badge-running"\) \+ " cc-ct-statedot"\);/.test(read('scripts/docker.js')) && sels[0].includes('[data-name]'));
+  ok('the plan badge carries its dependency state itself, so no dot beside it competes with the reveal', !/depStateDot/.test(read('scripts/docker.js')) && sels[0].includes('[data-name]'));
   ok('VMs: a running VM\'s state badge goes', vm.includes('html.cc-vms-on #kvm_list td.vm-name .inner > span.state.cc-badge-running { display: none !important; }'));
   ok('a stopped one keeps it', !/span\.state\.cc-badge-(exited|paused)\s*\{[^}]*display: none/.test(vm));
 }

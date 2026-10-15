@@ -100,6 +100,11 @@ console.log('\nThe callers');
   ok('the move button passes its click on', /toggleMenu\(btn, function \(\) \{ return buildMoveMenu\(entry\); \}, ev\)/.test(docker));
   ok('"+ Neuer Ordner" is a menu entry', /m\.appendChild\(menuItem\("cc-menu-link", "\+ " \+ t\("newFolder"\), ccOrgCreateFolder\)\);/.test(grabFn(docker, 'buildMenu')));
   ok('every move target is a menu entry', (grabFn(docker, 'buildMoveMenu').match(/menuItem\(/g) || []).length === 2);
+  const bm = grabFn(docker, 'buildMenu');
+  ok('the menu keeps to the view: no rainbow and no icon colour switch, both live on the settings page', !/Rainbow (aus|an|off|on)|Icons (grau|farbig|grey|coloured)|cc\.actcolors|cc\.rainbow"/.test(bm));
+  ok('and no second basic or advanced switch beside the one at the toolbar', !/"Einfach"|"Erweitert"|setAdvView|input\.advancedview/.test(bm));
+  ok('the settings page opens from a secondary button with the gear glyph', /var link = el\("a", "cc-btn cc-menu-settings"\); link\.innerHTML = ccGlyph\("Gear"\);/.test(bm) && /link\.href = "\/Settings\/CannonadeCommand"/.test(bm) && !/cc-btn-primary cc-menu-settings/.test(bm));
+  ok('in a button row of its own', /var srow = el\("div", "cc-menu-row cc-menu-plain"\);[\s\S]*srow\.appendChild\(link\); m\.appendChild\(srow\);/.test(bm));
 }
 
 console.log('\nThe sheet');
@@ -107,6 +112,11 @@ console.log('\nThe sheet');
   const link = { tag: 'div', classes: ['cc-menu-link'], attrs: { role: 'button', tabindex: '0' }, inside: ['.cc-menu'], html: ['cc-docker-on'], states: { 'focus-visible': true, focus: true } };
   const bg = candidates(withUnraid('docker'), link, 'background').pop();
   ok('a focused entry fills like a hovered one, never a ring', bg && /^var\(--cc-rb-c, var\(--cc-accent, #FCC419\)\)$/.test(bg.value) && /:focus-visible/.test(bg.selector), bg && bg.selector);
+  const btn = (states) => ({ tag: 'a', classes: ['cc-btn', 'cc-menu-settings'], attrs: { href: '/Settings/CannonadeCommand' }, inside: ['.cc-menu', '.cc-menu-plain'], html: ['cc-docker-on'], states: states || {} });
+  const rest = candidates(withUnraid('docker'), btn(), 'background').pop(), hover = candidates(withUnraid('docker'), btn({ hover: true }), 'background').pop();
+  ok('the settings button rests like its neighbours and fills in the colour chain on hover', rest && rest.value.indexOf('#2e2e2e') === 0 && hover && /var\(--cc-rb-c/.test(hover.value), (rest && rest.value) + ' | ' + (hover && hover.value));
+  const deco = candidates(withUnraid('docker'), btn({ hover: true }), 'text-decoration').pop();
+  ok('and never underlines like a link', deco && /^none/.test(deco.value), deco && deco.selector + ' ' + deco.value);
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

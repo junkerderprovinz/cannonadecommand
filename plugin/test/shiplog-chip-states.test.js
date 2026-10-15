@@ -78,7 +78,7 @@ console.log('\nIn the reactive mode every button of the changelog window colours
   ok('it paints the stamped --cc-rb-c', /background:\s*var\(--cc-rb-c,/.test(body || ''), body);
   ok('with the stamped ink', /color:\s*var\(--cc-rb-ct,/.test(body || ''), body);
   const js = fs.readFileSync(path.join(DIR, 'scripts', 'docker.js'), 'utf8');
-  ok('docker.js stamps the close button too', /querySelectorAll\("\.sl-upd:not\(\.sl-upd-off\), \.sl-gh, \.sl-x"\)/.test(js));
+  ok('docker.js stamps the close button and the auto-update switch too', /querySelectorAll\("\.sl-upd:not\(\.sl-upd-off\), \.sl-gh, \.sl-x, \.sl-au-track"\)/.test(js));
 }
 
 // Outside the reactive mode nothing stamps the close button while rainbow is off, so its hover
@@ -90,6 +90,25 @@ console.log('\nThe close button hovers in the accent like the repository button 
   ok('it reads the stamp, then the accent', /background:\s*var\(--cc-rb-c,\s*var\(--cc-accent,/.test(body || ''), body);
   ok('with the accent text', /color:\s*var\(--cc-rb-ct,\s*var\(--cc-accent-text,/.test(body || ''), body);
   ok('and outranks ShipLog\'s own neutral hover', /!important/.test(body || ''), body);
+}
+
+console.log('\nThe ShipLog window follows the shape engine');
+{
+  const { PAGES, candidates } = require('./cascade');
+  // ShipLog's own radius rules, which read a --cc-b-radius CC never sets, loaded after CC's.
+  const shiplog = { name: 'shiplog/styles/docker.css', css:
+    '.sl-bubble{border-radius:min(var(--cc-b-radius,14px),14px)}' +
+    'html.cc-header-on .sl-bubble .sl-sec{border-radius:min(var(--cc-b-radius,10px),10px)}' +
+    'html.cc-header-on .sl-bubble .sl-aubar{border-radius:min(var(--cc-b-radius,10px),10px)}' +
+    'html.cc-header-on .sl-bubble h4{border-radius:var(--cc-b-radius,999px)}' +
+    'html.cc-header-on .sl-bubble .sl-unmaint-note h4{border-radius:var(--cc-b-radius,999px)}' +
+    '.sl-bubble .sl-ai{border-radius:4px}' };
+  const page = PAGES.docker.concat([shiplog]);
+  const radius = (tag, classes, inside) => { const c = candidates(page, { tag, classes, attrs: { class: classes.join(' ') }, states: {}, html: ['cc-header-on', 'cc-docker-on'], inside }, 'border-radius'); return c.length ? c[c.length - 1].value : null; };
+  ok('the window is a card', radius('div', ['sl-bubble'], []) === 'var(--cc-radius-card)');
+  ok('its cards are controls', radius('div', ['sl-sec'], ['.sl-bubble']) === 'var(--cc-radius-control)' && radius('div', ['sl-aubar'], ['.sl-bubble']) === 'var(--cc-radius-control)' && radius('div', ['sl-unmaint-note'], ['.sl-bubble']) === 'var(--cc-radius-control)');
+  ok('the section badges, "Neueste Releases" and the AI summary among them, are pills', radius('h4', [], ['.sl-bubble', '.sl-sec']) === 'var(--cc-radius-pill)' && radius('h4', [], ['.sl-bubble', '.sl-unmaint-note']) === 'var(--cc-radius-pill)', radius('h4', [], ['.sl-bubble', '.sl-sec']));
+  ok('and so is the model tag inside the summary badge', radius('span', ['sl-ai'], ['.sl-bubble', 'h4']) === 'var(--cc-radius-pill)');
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

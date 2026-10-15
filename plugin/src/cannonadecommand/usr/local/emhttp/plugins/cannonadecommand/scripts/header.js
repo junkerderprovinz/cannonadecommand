@@ -530,7 +530,13 @@
     try {
       if (g("cc.theming", "1") === "0") return;
       var host = document.querySelector(".unapi div.fixed.z-50.bg-background");     // the Connect notification sheet
-      if (!host || host.querySelector(".cc-notif-badge")) return;
+      if (!host) return;
+      // The sheet's close control is a square icon badge in the corner, so it takes a bubble that
+      // names it, like every icon-only badge.
+      var x = host.querySelector(":scope > span.absolute > [role=\"button\"]");
+      if (x) x.classList.add("cc-notif-x");
+      if (x && !x.getAttribute("data-cc-tip")) { x.setAttribute("data-cc-tip", T("Schließen", "Close")); if (!x.getAttribute("aria-label")) x.setAttribute("aria-label", T("Schließen", "Close")); }
+      if (host.querySelector(".cc-notif-badge")) return;
       var arch = null, sp = host.querySelectorAll("span, button, a");
       for (var i = 0; i < sp.length; i++) { if (/^\s*(Alle archivieren|Archive all)\s*$/i.test(sp[i].textContent || "")) { arch = sp[i]; break; } }
       if (!arch || !arch.parentElement) return;                                     // the empty state and the archive tab have no link to attach to
@@ -1309,8 +1315,8 @@
             pop.textContent = icon.getAttribute("data-cc-info") || "";
             pop.setAttribute("data-src", icon.getAttribute("data-cc-info") || "");
             document.body.appendChild(pop);
-            var r = icon.getBoundingClientRect(), w = pop.offsetWidth, vw = window.innerWidth || document.documentElement.clientWidth;
-            pop.style.left = Math.max(8, Math.min(vw - 8 - w, r.left + r.width / 2 - w / 2)) + "px";
+            var r = icon.getBoundingClientRect(), w = pop.offsetWidth, vw = window.innerWidth || document.documentElement.clientWidth, m = window.CCTheme.edge();
+            pop.style.left = Math.max(m, Math.min(vw - m - w, r.left + r.width / 2 - w / 2)) + "px";
             pop.style.top = (r.bottom + 8) + "px";
             return;
           }
@@ -1333,7 +1339,7 @@
           var host = prev ? (prev.querySelector("span, a") || prev) : null;
           if (host && !host.querySelector(".cc-acctinfo")) {
             var ic = document.createElement("span");
-            ic.className = "cc-acctinfo"; ic.textContent = "ⓘ";
+            ic.className = "cc-acctinfo"; ic.innerHTML = window.CCTheme.CC_INFO_SVG;
             ic.setAttribute("role", "button"); ic.tabIndex = 0; ic.setAttribute("aria-label", txt);
             ic.setAttribute("data-cc-info", txt);                          // the text the pinned bubble shows
             // data-cc-tip rides the same hover engine every other CC icon uses, so the text
@@ -2035,24 +2041,41 @@
   // clamped into the viewport with the arrow staying over the anchor, and flips above the anchor
   // when the bottom edge would clip it. Hidden on scroll and on pointerdown.
   var ccTipBound = false, ccTipCur = null, ccTipKeys = false;
+  var ccTipFrame = 0, ccTipAt = "";
   function ccTipEl() {
     var d = document.getElementById("cc-tipfloat");
     if (!d) { d = document.createElement("div"); d.id = "cc-tipfloat"; document.body.appendChild(d); }
     return d;
   }
-  function ccTipHide() { var d = document.getElementById("cc-tipfloat"); if (d) d.style.display = "none"; ccTipCur = null; }
+  function ccTipHide() {
+    var d = document.getElementById("cc-tipfloat"); if (d) d.style.display = "none";
+    ccTipCur = null;
+    if (ccTipFrame) { window.cancelAnimationFrame(ccTipFrame); ccTipFrame = 0; }
+  }
+  // While a bubble stands it is checked once a frame. An anchor that moves, as a window does when it
+  // grows and the clamp slides it up, takes its bubble along, and one that leaves the page or is
+  // hidden takes it away, so no bubble is left standing on its own.
+  function ccTipFollow() {
+    ccTipFrame = 0;
+    if (!ccTipCur) return;
+    var r = ccTipCur.getBoundingClientRect();
+    if (!ccTipCur.isConnected || (!r.width && !r.height)) { ccTipHide(); return; }
+    if (Math.round(r.left) + "," + Math.round(r.top) !== ccTipAt) ccTipShow(ccTipCur);
+    ccTipFrame = window.requestAnimationFrame(ccTipFollow);
+  }
   function ccTipShow(t) {
     var tip = t.getAttribute("data-cc-tip") || t.getAttribute("data-tip"); if (!tip) return;
     var d = ccTipEl(), r = t.getBoundingClientRect();
+    ccTipAt = Math.round(r.left) + "," + Math.round(r.top);
     d.textContent = tip;
     d.style.display = "block";                                     // shown first, since it only measures while visible
     var vw = document.documentElement.clientWidth || window.innerWidth;
     var vh = document.documentElement.clientHeight || window.innerHeight;
-    var w = d.offsetWidth, h = d.offsetHeight, cx = r.left + r.width / 2;
-    var x = Math.max(8 + w / 2, Math.min(vw - 8 - w / 2, cx));     // clamped into the viewport, since rows run to both edges
+    var w = d.offsetWidth, h = d.offsetHeight, cx = r.left + r.width / 2, m = window.CCTheme.edge();
+    var x = Math.max(m + w / 2, Math.min(vw - m - w / 2, cx));     // kept off the viewport's edges, since rows run to both
     d.style.left = x + "px";                                       // left is the bubble's centre, which the CSS shifts back
     // a bubble that would clip at the bottom opens above the anchor, where it fits
-    var above = r.bottom + 8 + h > vh && r.top - 8 - h >= 0;
+    var above = r.bottom + 8 + h > vh - m && r.top - 8 - h >= m;
     d.classList.toggle("cc-tip-above", above);
     d.style.top = (above ? r.top - 8 - h : r.bottom + 8) + "px";
     d.style.setProperty("--cc-tip-ax", Math.max(10, Math.min(w - 10, cx - (x - w / 2))) + "px");   // the arrow stays over the anchor even when the bubble clamps
@@ -2078,6 +2101,7 @@
         }
         if (t === ccTipCur) return;                                // the bubble already stands on this anchor
         ccTipCur = t; ccTipShow(t);
+        if (!ccTipFrame) ccTipFrame = window.requestAnimationFrame(ccTipFollow);
       }
       function out(e) {
         if (!ccTipCur) return;
@@ -3078,7 +3102,8 @@
       // here as they are created.
       ccAppsStamp(".cc-ca-menu-item");
       var r = btn.getBoundingClientRect(), mr = menu.getBoundingClientRect();
-      menu.style.left = Math.max(8, Math.min(r.right - mr.width, window.innerWidth - mr.width - 8)) + "px";
+      var m = window.CCTheme.edge();
+      menu.style.left = Math.max(m, Math.min(r.right - mr.width, window.innerWidth - mr.width - m)) + "px";
       menu.style.top = (r.bottom + 4) + "px";
       ccCaMenuOpen = menu;
     });

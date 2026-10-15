@@ -123,7 +123,7 @@ html[dir="rtl"] { --cc-dir-sign: -1; }   /* a keyframe does not mirror on its ow
 @media (prefers-reduced-motion: no-preference) {
   html :is(.cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-allct, .cc-b-copy,
            .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-hgear-home,
-           .cc-win-btn, .cc-seg-btn, .cc-set-tab, .cc-set-searchbadge, .cc-day, .cc-sched-x,
+           .cc-win-btn, .cc-win-x, .cc-seg-btn, .cc-set-tab, .cc-set-searchbadge, .cc-day, .cc-sched-x,
            .cc-b-del, .cc-plugsup, .cc-plugicm, .cc-flag-trigger, .cc-navtab, #cc-arrange-lock,
            a.cc-b[href], a.cc-badge, .cc-badge[onclick]):active:not(:disabled, [aria-disabled="true"], .cc-actoff),
   html.cc-docker-on :is(.sl-chip, .sl-updall):active {
@@ -239,6 +239,9 @@ html {
      delete, the trash on the Plugins page and the /Main icon tiles. A size per role reads as
      several sizes side by side on one card, so a dense row absorbs this one with its own padding. */
   --cc-icon-badge: 26px;
+  /* The room windows, menus and bubbles keep from the viewport's edges, CCTheme.edge() in the
+     scripts, which position them. */
+  --cc-edge: 16px;
 
   /* The semantic states: the fill, the ink on the fill, and the -ink colour for a state written as
      text on the page. Warning is orange, so yellow only ever means the accent. They are fixed per
@@ -273,6 +276,8 @@ html {
   --cc-elev-2: 0 10px 28px rgba(0, 0, 0, .38);  /* raised panel / menu */
   --cc-elev-3: 0 12px 30px rgba(0, 0, 0, .6);   /* modal / popup */
 }
+
+@media (min-width: 1440px) { html { --cc-edge: 24px; } }
 
 /* The light override, shared by the white and azure Unraid themes. The surface, text, track and state
    tokens flip; the rgba greys of --cc-chip and --cc-shade-line read fine on a light page, and
@@ -351,7 +356,7 @@ html.Theme--azure {
 }
 .cc-win {
   position: absolute; z-index: 99999; box-sizing: border-box;
-  width: 420px; max-width: calc(100vw - 32px); max-height: calc(100vh - 16px);
+  width: 420px; max-width: calc(100vw - 2 * var(--cc-edge)); max-height: calc(100vh - 2 * var(--cc-edge));
   display: flex; flex-direction: column; padding: 21px 10px 10px;   /* the top leaves room under the title notch */
   background: #1a1a1a; color: var(--cc-text); border: none; border-radius: var(--cc-radius-card);
   box-shadow: var(--cc-elev-3); font-size: var(--cc-text-subline); line-height: 1.5; text-align: start;
@@ -364,13 +369,25 @@ html.Theme--azure {
 .cc-win-title {
   position: absolute; top: 0; left: 24px; transform: translateY(-50%);
   display: inline-flex; align-items: center; gap: 6px; box-sizing: border-box;
-  max-width: calc(100% - 48px); min-height: var(--cc-sec-h); margin: 0; padding: var(--cc-sec-pad);
+  max-width: calc(100% - 74px); min-height: var(--cc-sec-h); margin: 0; padding: var(--cc-sec-pad);
   border-radius: var(--cc-radius-pill);
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)));
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
   font-size: var(--cc-sec-fs); font-weight: var(--cc-sec-fw); line-height: 1.2; letter-spacing: var(--cc-sec-ls);
   text-transform: uppercase; text-align: start; overflow-wrap: anywhere;
 }
+/* The close badge (CCTheme.modal) notches into the top right corner as the title does into the top
+   left, on every .cc-win and .cc-pop, so the title stops 74px short of the right edge: the badge's
+   16px inset, its 26px and a gap. */
+.cc-win-x {
+  position: absolute; top: 0; right: 16px; transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
+  width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); padding: 0;
+  border-radius: var(--cc-radius-pill); background: var(--cc-surface-3); color: var(--cc-text);
+  font-size: var(--cc-text-meta); cursor: pointer; user-select: none;
+  transition: background-color .12s, color .12s;
+}
+.cc-win-x:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
 .cc-win-card {
   flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
   padding: 14px; background: var(--cc-surface-window); border-radius: var(--cc-radius-control);
@@ -389,7 +406,7 @@ html .cc-win .cc-win-in:focus { background: #383838 !important; }
 /* Unraid paints every placeholder in the theme's link colour; a window's hint takes the muted ink
    instead, which reads at 4.5:1 on the field at rest and focused. */
 html .cc-win .cc-win-in::placeholder { color: var(--cc-text-hint, #a3a3a3) !important; opacity: 1 !important; }
-/* The actions stand at the end of the foot, Close first and the forward action last. */
+/* The actions stand at the end of the foot, the forward action last. */
 .cc-win-act { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; flex: none; padding: 10px 0 0; }
 .cc-win-btn {
   flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
@@ -451,7 +468,7 @@ html[data-cc-shape="square"] { --cc-radius-card: 0px; --cc-radius-control: 0px; 
    glow, not a border line. color-mix supplies the alpha, and the fixed-accent line above it is the
    fallback without color-mix. The blanket no-ring rules in docker.css, Shares.css and VmTab.css
    leave the same list out, so keep them in step. */
-:is(.cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast):focus-visible {
+:is(.cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-win-x, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast):focus-visible {
   outline: none !important;
   box-shadow: 0 0 0 3px rgba(252, 196, 25, .42) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important;

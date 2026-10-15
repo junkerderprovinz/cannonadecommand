@@ -31,7 +31,7 @@ console.log('\nNo action ends in an ellipsis');
   const dict = docker.slice(docker.indexOf('  var T = {'), docker.indexOf('  function t(k)'));
   const dictBad = [...dict.matchAll(/(\w+): "((?:[^"\\]|\\.)*)"/g)].filter((m) => trailing(m[2]) && !['filter', 'saving'].includes(m[1])).map((m) => m[1] + ': ' + m[2]);
   ok('docker.js keeps an ellipsis only on its filter placeholder and its saving note', dictBad.length === 0, dictBad.join(' | '));
-  ok('the gear menu link to the settings has none', /"Einstellungen \(Farbe, Spalten\)" : "Settings \(colour, columns\)"/.test(docker));
+  ok('the settings button in the gear menu has none', /LANG === "de" \? "Einstellungen" : "Settings"/.test(docker));
   ok('the categories list closes with a plain Close', /explicitClose: T\("Schließen", "Close"\)/.test(header));
 }
 

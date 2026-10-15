@@ -128,14 +128,13 @@ console.log('\nThe window');
   ok('titled after the running version', w.byClass('cc-win-title')[0].textContent === 'Neu in 1.0.0');
   ok('it says it is loading until the answer lands', /Lade Versionshinweise/.test(w.byClass('cc-notes')[0].textContent));
   const foot = w.byClass('cc-win-act')[0].childNodes;
-  ok('the release page link opens the foot', foot[0].tagName === 'A' && foot[0].cls.has('cc-win-link') && foot[0].href === 'https://github.com/junkerderprovinz/cannonadecommand/releases/tag/v1.0.0' && foot[0].rel === 'noopener noreferrer');
-  ok('and Close ends it', foot.length === 2 && foot[1].textContent === 'Schließen' && foot[1].cls.has('cc-win-btn'));
-  ok('the window is modal, opened from the button, with Close focused', modalOpts.opener === opener && active === foot[1]);
+  ok('the release page link is the only action in the foot', foot[0].tagName === 'A' && foot[0].cls.has('cc-win-link') && foot[0].href === 'https://github.com/junkerderprovinz/cannonadecommand/releases/tag/v1.0.0' && foot[0].rel === 'noopener noreferrer');
+  ok('the foot holds no Close, the modal puts its close badge in the corner', foot.length === 1 && !foot.some((n) => /Schließen/.test(n.textContent)));
+  ok('the window is modal, opened from the button, with the notes focused', modalOpts.opener === opener && active === w.byClass('cc-notes')[0]);
   ok('the notes take focus from the keyboard, so long notes scroll without a mouse', w.byClass('cc-notes')[0].getAttribute('tabindex') === '0');
   await tick(); await tick();
   ok('the notes replace the loading line', w.byClass('cc-notes-h')[0].textContent === 'Added' && w.byTag('strong')[0].textContent === 'One.' && !/Lade/.test(w.byClass('cc-notes')[0].textContent));
-  foot[1].click();
-  ok('Close closes it', !w.parentNode);
+  w.remove();
 
   const missing = load('1.1.0-rc1', answer(404, {}), theme);
   missing.open(opener);
@@ -179,7 +178,7 @@ console.log('\nThe window');
     const halo = candidates(page, e, 'box-shadow').pop();
     ok(name + ' gets the focus halo past the blanket no-ring rules', halo && /^0 0 0 3px color-mix\(in srgb,var\(--cc-accent,#FCC419\) 45%,transparent\)$/.test(halo.value), halo && halo.selector + ' ' + halo.value);
   }
-  ok('the release page link pushes Close to the end', /\.cc-win-act \.cc-win-link\{margin-inline-end:auto\}/.test(style));
+  ok('the release page link, the one action, stands at the end like every forward action', !/\.cc-win-link\{margin-inline-end:auto\}/.test(style));
 
   console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
   process.exit(fail ? 1 : 0);
