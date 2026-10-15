@@ -712,9 +712,12 @@
   var ccNavTruce = 0, ccNavTries = 0, ccNavLast = 0;   // see applyNavOrder
   var ccLockCapBound = false;
   function cancelHold() { if (ccHoldTimer) { clearTimeout(ccHoldTimer); ccHoldTimer = null; } ccPressXY = null; ccPressItem = null; }
+  // The lock is what ends arranging, so it holds still and a press on it stays a click: a wiggling
+  // lock misses clicks, and a press on a drag participant starts a drag.
+  function isNavLock(it) { return it.id === "cc-lock-item" || it.classList.contains("LockButton"); }
   function enterReorder() {   // the hold is satisfied, so the whole zone jiggles
     if (ccReorder) return; ccReorder = true;
-    navAllParts().forEach(function (it) { it.classList.add("cc-nav-wiggle"); });
+    navAllParts().forEach(function (it) { if (!isNavLock(it)) it.classList.add("cc-nav-wiggle"); });
   }
   function exitReorder() {    // back to plain, clickable items
     ccReorder = false; ccDragged = null; ccMoved = false;
@@ -744,7 +747,7 @@
       var tileR = document.querySelector("#menu .nav-tile.right");
       var injected = document.getElementById("cc-lock-item");
       if (!on || !tileR) { if (injected) injected.remove(); return; }
-      var native = tileR.querySelector(".nav-item.LockButton");
+      var native = document.querySelector("#menu .nav-item.LockButton");   // on the Docker tab Unraid puts it in the left tile
       if (native) {
         if (injected) injected.remove();   // the native one is there, and the capture toggle drives it
       } else if (!injected) {
@@ -862,7 +865,7 @@
     it.setAttribute("draggable", "false"); it.classList.add("cc-navdrag");
     var la = it.querySelectorAll("a"); for (var ai = 0; ai < la.length; ai++) la[ai].setAttribute("draggable", "false");
     it.addEventListener("pointerdown", function (e) {
-      if (e.button !== 0) return;
+      if (e.button !== 0 || isNavLock(it)) return;
       // Locked, this does nothing and the tab navigates; in arrange mode the same press drags at
       // once, with no hold, and everything already wiggles.
       if (!document.documentElement.classList.contains("cc-arrange")) return;
