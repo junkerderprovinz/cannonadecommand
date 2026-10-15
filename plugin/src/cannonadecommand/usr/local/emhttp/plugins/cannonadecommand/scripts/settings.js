@@ -2559,7 +2559,18 @@
       // left inset, which brings both back inside.
       var padR = Math.round(rr.right - (document.documentElement.clientWidth - al));
       if (padR > 0 && padR < 80) root.style.paddingRight = padR + "px"; else root.style.paddingRight = "";
+      root.style.setProperty("--cc-set-tabs-h", tabsHeight() + "px");
     } catch (e) {}
+  }
+  // The tile column runs from its top down to the window's bottom edge, less the sticky gap and
+  // Unraid's footer while it shows, so the tiles share that height as KnightLoader's do. The top
+  // is the row's, which never sticks, so a render after a scroll measures the same column.
+  function tabsHeight() {
+    var body = root.querySelector(".cc-set-body");
+    var top = body ? body.getBoundingClientRect().top + window.scrollY : 0;
+    var foot = document.getElementById("footer"), fh = 0;
+    if (foot && getComputedStyle(foot).position === "fixed" && getComputedStyle(foot).display !== "none") fh = foot.offsetHeight;
+    return Math.max(160, Math.round(window.innerHeight - top - 12 - fh));
   }
   var alignT = null; // one debounced resize listener for the page's lifetime
   window.addEventListener("resize", function () { clearTimeout(alignT); alignT = setTimeout(alignSetTabs, 150); });
