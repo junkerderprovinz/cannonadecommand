@@ -356,6 +356,15 @@
       return r.text().then(function (tx) { var d = null; try { d = tx ? JSON.parse(tx) : null; } catch (e) {} if (!r.ok) throw new Error((d && d.error) || ("HTTP " + r.status)); return d; });
     });
   }
+  // Writes fields of Unraid's display settings the way its own form does: a post to update.php
+  // with the form's #file and #section and the CSRF token, which merges them into dynamix.cfg. A
+  // multipart body times out, hence URLSearchParams.
+  function postDisplay(fields) {
+    var fd = new URLSearchParams();
+    fd.append("#file", "dynamix/dynamix.cfg"); fd.append("#section", "display"); fd.append("csrf_token", csrfToken());
+    Object.keys(fields).forEach(function (k) { fd.append(k, fields[k]); });
+    return fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); });
+  }
   // Loading the page renders more than once and every render reads the engine again, so a read in
   // flight or answered a moment ago is shared rather than sent again, and a read that fails is
   // tried once more before the page says the engine cannot be reached.
@@ -955,20 +964,15 @@
       wrapMain.appendChild(tc);
     })();
     // Unraid's display settings stay on Unraid's own page, which CC styles anyway, rather than
-    // being mirrored field by field. The few controls kept here post the same field through
-    // update.php and reload, so flipping one here flips the native setting too. A multipart body
-    // times out, hence URLSearchParams. The favourites field also drives cc.hidefavtab.
+    // being mirrored field by field. The few controls kept here write the native setting itself
+    // through postDisplay(), and the theme coupling reloads, since the native header only reads its
+    // colours on load.
     if (typeof csrf_token !== "undefined") (function () {
       // The header colour pickers live on Unraid's own page too; this card keeps the quick link
       // and the theme coupling below.
       var postDisplayMulti = function (fields) {
-        try {
-          var fd = new URLSearchParams();
-          fd.append("#file", "dynamix/dynamix.cfg"); fd.append("#section", "display"); fd.append("csrf_token", window.csrf_token);
-          Object.keys(fields).forEach(function (k9) { fd.append(k9, fields[k9]); });
-          fetch("/update.php", { method: "POST", body: fd, credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error(r.status); location.reload(); })
-            .catch(function () { failed(null, T("Die Anzeige-Einstellung wurde nicht gespeichert.", "The display setting was not saved.")); });
-        } catch (e9) {}
+        postDisplay(fields).then(function () { location.reload(); })
+          .catch(function () { failed(null, T("Die Anzeige-Einstellung wurde nicht gespeichert.", "The display setting was not saved.")); });
       };
       // Matches the native header background and text colour to Unraid's active theme, read from
       // the theme's real body colour.
@@ -1032,24 +1036,39 @@
         var cur = localStorage.getItem(a[0]);
         if (a[0] === "cc.enable.favorites") {
           // The favourites area needs Unraid's own favourites, or there is no tab to enhance.
-          // cc.hidefavtab mirrors the native "favorites=no"; while it is set the area is off and its
-          // switch gives way to a line that leads to Unraid's display settings. ccFavGateSync checks
+          // cc.hidefavtab mirrors the native "favorites=no", and the first switch here writes that
+          // native setting itself: the Favorites tab comes and goes at once through header.js,
+          // which hides it on cc.hidefavtab, so nothing needs a reload. While the native setting
+          // is off the area switch has nothing to act on and stays out. ccFavGateSync checks
           // again once the fetch above knows the native state.
+          var natRow = el("div", "cc-set-row cc-set-inline"), nlw = el("span", "cc-set-lblwrap");
+          nlw.appendChild(el("span", null, T("Favoriten in Unraid", "Favourites in Unraid")));
+          nlw.appendChild(infoIcon(T("Schaltet Unraids eigene Einstellung „Favoriten aktiviert“ (Einstellungen › Anzeige) sofort um. Aus blendet den Favoriten-Tab aus und nimmt die Herzen von den Kacheln unter Einstellungen und Werkzeuge.", "Switches Unraid's own setting “Favorites enabled” (Settings › Display Settings) right away. Off hides the Favorites tab and takes the hearts off the Settings and Tools tiles.")));
+          natRow.appendChild(nlw);
+          var natTgl = toggle(localStorage.getItem("cc.hidefavtab") !== "1", function (v) {
+            set("cc.hidefavtab", v ? "0" : "1");
+            if (v) localStorage.setItem("cc.enable.favorites", "1");
+            favGate(true); syncHeaderBar();
+            postDisplay({ favorites: v ? "yes" : "no" }).catch(function () {
+              set("cc.hidefavtab", v ? "1" : "0"); natTgl._setOn(!v); favGate(true); syncHeaderBar();
+              failed(natTgl, T("Unraids Favoriten-Einstellung wurde nicht gespeichert.", "Unraid's favourites setting was not saved."));
+            });
+          });
+          natRow.appendChild(natTgl);
           var lw = el("span", "cc-set-lblwrap"); lw.appendChild(el("span", null, a[1])); row.appendChild(lw);
-          lw.appendChild(infoIcon(T("Nur verfügbar, wenn Favoriten in den Unraid-Anzeige-Einstellungen aktiviert sind.", "Only available when favourites are enabled in Unraid's display settings.")));
+          lw.appendChild(infoIcon(T("Gestaltet den Favoriten-Tab im CannonadeCommand-Stil. Braucht die Favoriten in Unraid.", "Styles the Favorites tab in CannonadeCommand's look. Needs the favourites in Unraid.")));
           var favTgl = toggle(cur == null ? true : cur !== "0", function (v) { localStorage.setItem("cc.enable.favorites", v ? "1" : "0"); refreshTabs(); });
           row.appendChild(favTgl);
-          var favLock = lockRow(a[1], T("Aus in Unraid", "Off in Unraid"), T("Anzeige-Einstellungen", "Display settings"), function () { location.href = "/Settings/DisplaySettings"; });
           var favGate = function (live) {
             var off = localStorage.getItem("cc.hidefavtab") === "1";
-            row.hidden = off; favLock.hidden = !off;
-            if (!off || localStorage.getItem("cc.enable.favorites") === "0") return;
-            localStorage.setItem("cc.enable.favorites", "0"); favTgl._setOn(false);
+            natTgl._setOn(!off); row.hidden = off;
+            favTgl._setOn(localStorage.getItem("cc.enable.favorites") !== "0");
+            if (off && localStorage.getItem("cc.enable.favorites") !== "0") { localStorage.setItem("cc.enable.favorites", "0"); favTgl._setOn(false); }
             if (live) refreshTabs();
           };
           favGate(false);
           window.ccFavGateSync = function () { favGate(true); };
-          c.appendChild(row); c.appendChild(favLock); return;
+          c.appendChild(natRow); c.appendChild(row); return;
         }
         row.appendChild(el("span", null, a[1]));
         // The header area decides whether the Theming card's header colour switch shows.
