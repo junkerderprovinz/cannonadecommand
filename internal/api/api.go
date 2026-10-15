@@ -102,9 +102,6 @@ type Server struct {
 
 	mu      sync.Mutex
 	lastRun model.RunResult
-
-	opsMu    sync.Mutex
-	limitOps []limitOp
 }
 
 // Handler returns the HTTP router.
@@ -129,7 +126,6 @@ func (s *Server) Handler() http.Handler {
 		writeJSON(w, http.StatusOK, map[string]uint64{"rx": rx, "tx": tx})
 	})
 	mux.HandleFunc("GET /api/limits", s.handleGetLimits)
-	mux.HandleFunc("GET /api/limitlog", s.handleLimitLog)
 	mux.HandleFunc("GET /api/bwstatus", s.handleBwStatus)
 	mux.HandleFunc("POST /api/limits", s.handleSetLimits)
 	mux.HandleFunc("POST /api/restartpolicy", s.handleSetRestartPolicy)
@@ -873,35 +869,8 @@ func validRestartPolicy(p string) bool {
 	return false
 }
 
-// limitOp is one recorded limit change for the Settings diagnostics card.
-type limitOp struct {
-	Time   string `json:"time"`
-	Name   string `json:"name"`
-	Req    string `json:"req"`
-	Result string `json:"result"`
-	After  string `json:"after,omitempty"`
-}
-
 func (s *Server) recordOp(name, req, result, after string) {
 	log.Printf("limits: %s: %s -> %s %s", name, req, result, after)
-	s.opsMu.Lock()
-	defer s.opsMu.Unlock()
-	s.limitOps = append(s.limitOps, limitOp{Time: time.Now().Format("15:04:05"), Name: name, Req: req, Result: result, After: after})
-	if len(s.limitOps) > 20 {
-		s.limitOps = s.limitOps[len(s.limitOps)-20:]
-	}
-}
-
-// handleLimitLog returns the last recorded limit operations, newest first.
-func (s *Server) handleLimitLog(w http.ResponseWriter, _ *http.Request) {
-	s.opsMu.Lock()
-	out := make([]limitOp, len(s.limitOps))
-	copy(out, s.limitOps)
-	s.opsMu.Unlock()
-	for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
-		out[i], out[j] = out[j], out[i]
-	}
-	writeJSON(w, http.StatusOK, out)
 }
 
 // Pidder resolves a container's main process PID.
