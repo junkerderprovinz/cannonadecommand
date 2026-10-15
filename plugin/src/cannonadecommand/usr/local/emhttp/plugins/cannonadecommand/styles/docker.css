@@ -2122,6 +2122,9 @@ html.cc-docker-on.cc-on-addct div.title {
   border: none !important; border-radius: 0 !important;
   padding: 0 var(--cc-edge-gutter, 8px) 0 0 !important;   /* only the scrollbar gutter, so the toggle sits on the #displaybox content edge */
 }
+/* The title bar takes the form's reading width, so the view switch ends where the fields do. */
+html.cc-docker-on.cc-on-addct div.title:has(~ form dl, ~ * form dl),
+html.cc-docker-on.cc-on-addct #canvas div.title { max-width: 920px; box-sizing: border-box; padding-right: 0 !important; }
 /* the form page joins the house left edge: #displaybox lines up with the main menu bar through
    --cc-align-left, which header.js sets */
 html.cc-docker-on.cc-on-addct:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 15px); }
