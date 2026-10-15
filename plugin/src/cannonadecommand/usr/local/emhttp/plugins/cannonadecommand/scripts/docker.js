@@ -4146,27 +4146,30 @@
       }
     } catch (e) {}
   }
-  // A colour picker for colour variables, like the one on the settings page. A config row whose
-  // label or description mentions a colour (colour/color/hex/farbe)
-  // and holds a text input gets a swatch (a native <input type=color> styled as a CC dot) placed
-  // before the field, two-way synced. Empty text keeps the swatch at a neutral default (no write).
+  // A colour picker for colour variables, like the one on the settings page: a swatch (a native
+  // <input type=color> styled as a CC dot) before the field, two-way synced.
   function ctColorFields() {
     try {
       var dls = document.querySelectorAll("#canvas dl, .ui-dialog dl");
       for (var i = 0; i < dls.length; i++) {
-        var dl = dls[i], txt = (dl.textContent || "");
-        if (!/colou?r|\bhex\b|farbe/i.test(txt)) continue;
-        var inp = dl.querySelector('dd input[type="text"]');
-        if (!inp || inp.parentNode.querySelector(":scope > .cc-colorvar")) continue;
-        var sw = document.createElement("input"); sw.type = "color"; sw.className = "cc-colorvar";
-        sw.setAttribute(MARK, "1");
-        var hexOf = function (v) { v = String(v || "").trim(); return /^#?[0-9a-f]{6}$/i.test(v) ? (v[0] === "#" ? v : "#" + v) : ""; };
-        var seed = hexOf(inp.value); if (seed) sw.value = seed;
-        sw.addEventListener("input", function (e) { inp.value = e.target.value; try { inp.dispatchEvent(new Event("change", { bubbles: true })); } catch (e2) {} });
-        inp.addEventListener("input", function () { var h = hexOf(inp.value); if (h) sw.value = h; });
-        inp.parentNode.insertBefore(sw, inp);
+        var inp = dls[i].querySelector('dd input[type="text"]');
+        if (inp && !inp.parentNode.querySelector(":scope > .cc-colorvar") && ctIsColorVar(dls[i].textContent, inp.value)) ctColorSwatch(inp);
       }
     } catch (e) {}
+  }
+  // The row has to name a colour and hold one, or nothing yet. "hex" alone says nothing: a secret's
+  // description often reads "openssl rand -hex 32", and an unmasked key is no colour.
+  function ctIsColorVar(text, value) {
+    return /colou?r|farbe/i.test(text) && /^(#?[0-9a-f]{6})?$/i.test(String(value || "").trim());
+  }
+  function ctColorSwatch(inp) {
+    var hexOf = function (v) { v = String(v || "").trim(); return /^#?[0-9a-f]{6}$/i.test(v) ? (v[0] === "#" ? v : "#" + v) : ""; };
+    var sw = document.createElement("input"); sw.type = "color"; sw.className = "cc-colorvar";
+    sw.setAttribute(MARK, "1");
+    var seed = hexOf(inp.value); if (seed) sw.value = seed;
+    sw.addEventListener("input", function () { inp.value = sw.value; inp.dispatchEvent(new Event("change", { bubbles: true })); });
+    inp.addEventListener("input", function () { var h = hexOf(inp.value); if (h) sw.value = h; });
+    inp.parentNode.insertBefore(sw, inp);
   }
   // The native #dockerAllocations table ("Docker-Zuweisungen") shows "invalid IP" for a stopped
   // container's IP and "???" for its ports. The CC engine knows the configured static IP (survives a
