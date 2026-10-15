@@ -3253,12 +3253,12 @@
     var wSec = el("div", "cc-pop-auto");
     // cc-cb draws GlimStone's switch on the checkbox, so the toggles below keep reading .checked.
     var wHead = el("label", "cc-pop-row cc-pop-toggle"), wEn = el("input", "cc-cb"); wEn.type = "checkbox"; wEn.checked = !!(wd && wd.enabled);
-    wHead.appendChild(wEn); wHead.appendChild(el("span", "cc-pop-sech", t("watchdog"))); wSec.appendChild(wHead);
+    wHead.appendChild(el("span", "cc-pop-sech", t("watchdog"))); wHead.appendChild(el("span", "cc-set-spacer")); wHead.appendChild(wEn); wSec.appendChild(wHead);
     var wBody = el("div", "cc-pop-sub" + (wEn.checked ? "" : " cc-dis"));
     var wUrow = el("label", "cc-pop-row"), wU = el("input", "cc-cb"); wU.type = "checkbox"; wU.checked = wd ? !!wd.on_unhealthy : true;
-    wUrow.appendChild(wU); wUrow.appendChild(el("span", null, " " + t("wUnhealthy"))); wBody.appendChild(wUrow);
+    wUrow.appendChild(el("span", null, t("wUnhealthy"))); wUrow.appendChild(el("span", "cc-set-spacer")); wUrow.appendChild(wU); wBody.appendChild(wUrow);
     var wXrow = el("label", "cc-pop-row"), wX = el("input", "cc-cb"); wX.type = "checkbox"; wX.checked = wd ? !!wd.on_exit : false;
-    wXrow.appendChild(wX); wXrow.appendChild(el("span", null, " " + t("wExit"))); wBody.appendChild(wXrow);
+    wXrow.appendChild(el("span", null, t("wExit"))); wXrow.appendChild(el("span", "cc-set-spacer")); wXrow.appendChild(wX); wBody.appendChild(wXrow);
     var wMrow = el("div", "cc-pop-row"); wMrow.appendChild(el("label", "cc-pop-lbl", t("wMax")));
     // A new watchdog starts with a per-hour cap rather than unlimited, so a flapping container
     // is bounded and gives up once instead of restarting forever. An existing watchdog keeps
@@ -3274,7 +3274,7 @@
     var ni = idleStopFor(name);
     var nSec = el("div", "cc-pop-auto");
     var nHead = el("label", "cc-pop-row cc-pop-toggle"), nEn = el("input", "cc-cb"); nEn.type = "checkbox"; nEn.checked = !!(ni && ni.enabled);
-    nHead.appendChild(nEn); nHead.appendChild(el("span", "cc-pop-sech", t("idleStop"))); nHead.appendChild(infoBubble(t("idleFoot"))); nSec.appendChild(nHead);   // idleFoot rides as a bubble on the header, no loose foot text
+    nHead.appendChild(el("span", "cc-pop-sech", t("idleStop"))); nHead.appendChild(infoBubble(t("idleFoot"))); nHead.appendChild(el("span", "cc-set-spacer")); nHead.appendChild(nEn); nSec.appendChild(nHead);   // idleFoot rides as a bubble on the header, no loose foot text
     var nBody = el("div", "cc-pop-sub" + (nEn.checked ? "" : " cc-dis"));
     var nMrow = el("div", "cc-pop-row"); nMrow.appendChild(el("label", "cc-pop-lbl", t("idleMin")));
     var nMin = el("input", "cc-in cc-port"); nMin.type = "number"; nMin.min = "1"; nMin.placeholder = "30"; nMin.value = (ni && ni.idle_minutes) ? ni.idle_minutes : "";
@@ -3858,18 +3858,19 @@
   function enhanceShipLogBubble(bub) {
     try {
       if (!themingOn() || localStorage.getItem("cc.rainbow") !== "1") return; // accent and shape are pure CSS, rainbow is theming
-      // All three controls, the two action buttons and the close button, share one index
-      // sequence, so the bubble reads as one themed set.
+      // The controls, the two action buttons, the close button and the auto-update switch, share
+      // one index sequence, so the bubble reads as one themed set. The switch takes only the
+      // custom properties, since its off state rests grey.
       // The custom properties are always stamped, but the direct colours are forced only outside
       // the reactive sub-mode. An unconditional inline paint beats every CSS rest-state rule,
       // while every other Docker-tab control rests neutral under html.cc-shares-rbneutral and
       // takes its colour on :hover, where docker.css reads --cc-rb-c.
       var neutral = document.documentElement.classList.contains("cc-shares-rbneutral");
-      Array.prototype.slice.call(bub.querySelectorAll(".sl-upd:not(.sl-upd-off), .sl-gh, .sl-x")).forEach(function (bn, i) {
+      Array.prototype.slice.call(bub.querySelectorAll(".sl-upd:not(.sl-upd-off), .sl-gh, .sl-x, .sl-au-track")).forEach(function (bn, i) {
         var c = ccRbColor(i);
         bn.style.setProperty("--cc-rb-c", c);
         bn.style.setProperty("--cc-rb-ct", idealText(c));
-        if (neutral) { bn.style.removeProperty("background"); bn.style.removeProperty("color"); bn.style.removeProperty("border-color"); return; }
+        if (neutral || bn.classList.contains("sl-au-track")) { bn.style.removeProperty("background"); bn.style.removeProperty("color"); bn.style.removeProperty("border-color"); return; }
         bn.style.setProperty("background", c, "important");
         bn.style.setProperty("color", idealText(c), "important");
         bn.style.setProperty("border-color", c, "important");

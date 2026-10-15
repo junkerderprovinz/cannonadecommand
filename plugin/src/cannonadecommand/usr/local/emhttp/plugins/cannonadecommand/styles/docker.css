@@ -1549,6 +1549,24 @@ div.js-actions :is(input[type=button], .cc-bulkmode-badge, .cc-allct):focus-visi
 /* The close button rests on ShipLog's neutral chip and on hover takes the colour the repository
    button rests on: the accent, or its stamped --cc-rb-c. */
 .sl-bubble .sl-x:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
+/* ShipLog's auto-update switch reads like every switch row in a CC window: the words and the (i)
+   at the left, GlimStone's switch at the far right. The label becomes display:contents so its parts
+   can be ordered inside the bar, and a press on the words or the track still reaches the checkbox
+   through the label. */
+html .sl-bubble .sl-au-row { display: contents; }
+html .sl-bubble .sl-au-row > span:not(.sl-au-track, .sl-au-info) { order: 1; cursor: pointer; }
+html .sl-bubble .sl-au-info { order: 2; }
+html .sl-bubble .sl-au-track {
+  order: 3; margin-inline-start: auto; cursor: pointer;
+  width: 44px; height: 24px; border-radius: var(--cc-radius-pill); background: var(--cc-toggle-track-off, #3a3a3a);
+}
+html .sl-bubble .sl-au-track::after { top: 3px; left: 3px; width: 18px; height: 18px; border-radius: var(--cc-radius-pill); background: #fff; }
+html .sl-bubble .sl-au-cb:checked + .sl-au-track { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); }
+html .sl-bubble .sl-au-cb:checked + .sl-au-track::after { transform: translateX(20px); background: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
+html .sl-bubble .sl-au-cb:focus-visible + .sl-au-track { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent); }
+html .sl-bubble .sl-au-row.sl-au-dis > * { opacity: .65; cursor: default; }
+html .sl-bubble .sl-au-state { order: 4; flex-basis: 100%; }
+html .sl-bubble .sl-au-state:empty { display: none; }
 /* ShipLog's buttons take the same rest and hover split as every other Docker-tab control in the
    reactive mode: docker.js enhanceShipLogBubble() skips its own paint here and only stamps
    --cc-rb-c and --cc-rb-ct for the hover rule to read. The close button rests on ShipLog's own
