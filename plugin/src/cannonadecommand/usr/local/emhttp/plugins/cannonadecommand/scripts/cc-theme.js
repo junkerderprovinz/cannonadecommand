@@ -1010,21 +1010,17 @@
       if (pushing) { queued = true; return; }
       var keys = Object.keys(pending); if (!keys.length) return;
       pushing = true;
-      keys.forEach(function (k) { sending[k] = 1; delete pending[k]; });
-      var unsent = function () { keys.forEach(function (k) { pending[k] = 1; }); };
-      apiGet("config").then(function (c) {
-        if (!c || typeof c !== "object") { unsent(); return; }
-        var u = c.ui_settings || {};
-        keys.forEach(function (k) { var v = localStorage.getItem(k); if (v === null) delete u[k]; else u[k] = v; });
-        return apiPut("config", { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], idle_stops: c.idle_stops || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: u })
-          .then(function (r) { if (!r || !r.ok) unsent(); });
-      }).then(function () {
+      // Only the changed keys go out, merged by the engine, so a fresh browser cannot write its
+      // defaults over the rest of the engine's copy.
+      var body = {};
+      keys.forEach(function (k) { sending[k] = 1; delete pending[k]; body[k] = localStorage.getItem(k); });
+      apiPut("uisettings", body).then(function (r) { if (!r || !r.ok) keys.forEach(function (k) { pending[k] = 1; }); }).then(function () {
         pushing = false; sending = {};
         if (queued) { queued = false; push(); }
       });
     }
     // A write in the last moments before the page goes away would wait out the debounce and die
-    // with the page, and a push needs two round trips. On pagehide what is still unsynced goes out
+    // with the page. On pagehide what is still unsynced goes out
     // in one keepalive request that the engine merges into the config itself.
     window.addEventListener("pagehide", function () {
       var keys = Object.keys(pending).concat(Object.keys(sending));

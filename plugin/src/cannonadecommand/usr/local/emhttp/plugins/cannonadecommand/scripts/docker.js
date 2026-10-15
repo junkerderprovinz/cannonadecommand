@@ -290,25 +290,22 @@
     delete window.__ccLSEarly;
   })();
   function collectUISettings() { var o = {}; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && /^cc[a-z]*\./.test(k) && k !== "cc.stateCache") o[k] = localStorage.getItem(k); } return o; }
-  // merge the changed keys into the server map rather than replacing it wholesale
+  // Only the changed keys go out, and the engine merges them into its copy, so a browser that has
+  // not adopted that copy yet cannot write its own defaults over the rest of it.
   function pushUISettings() {
     if (uiPushing) { uiQueued = true; return; }
     var keys = Object.keys(uiPending); if (!keys.length) return;
     uiPushing = true;
-    keys.forEach(function (k) { uiSending[k] = 1; delete uiPending[k]; });
+    var body = {};
+    keys.forEach(function (k) { uiSending[k] = 1; delete uiPending[k]; body[k] = localStorage.getItem(k); });
     var unsent = function () { keys.forEach(function (k) { uiPending[k] = 1; }); };
-    api("GET", "config").then(function (c) {
-      if (!c || typeof c !== "object") { unsent(); return; }
-      var u = c.ui_settings || {};
-      keys.forEach(function (k) { var v = localStorage.getItem(k); if (v === null) delete u[k]; else u[k] = v; });
-      return api("PUT", "config", { schedules: c.schedules || [], watchdogs: c.watchdogs || [], bandwidths: c.bandwidths || [], idle_stops: c.idle_stops || [], notify: c.notify || { unraid: false, webhook: "" }, shape_iface: c.shape_iface || "", ui_settings: u });
-    }).catch(unsent).then(function () {
+    api("PUT", "uisettings", body).catch(unsent).then(function () {
       uiPushing = false; uiSending = {};
       if (uiQueued) { uiQueued = false; pushUISettings(); }
     });
   }
   // A write in the last moments before the page goes away would wait out the debounce and die
-  // with the page, and a push needs two round trips. On pagehide what is still unsynced goes out
+  // with the page. On pagehide what is still unsynced goes out
   // in one keepalive request that the engine merges into the config itself.
   window.addEventListener("pagehide", function () {
     var keys = Object.keys(uiPending).concat(Object.keys(uiSending));
