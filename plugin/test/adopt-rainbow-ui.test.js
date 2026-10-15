@@ -134,8 +134,10 @@ console.log('\nAll three logoToggles() call sites wire real getters and setters'
   sites.forEach((body, i) => {
     ok(labels[i] + ': getAdopt reads the global cc.iconbgrainbow key', /getAdopt: function \(\) \{ return get\("cc\.iconbgrainbow", "0"\) === "1"; \}/.test(body), body);
   });
-  ok(labels[0] + ': setAdopt writes the global cc.iconbgrainbow key', /setAdopt: function \(v\) \{ set\("cc\.iconbgrainbow", v \? "1" : "0"\); \}/.test(sites[0]), sites[0]);
-  ok(labels[1] + ': setAdopt writes the global cc.iconbgrainbow key', /setAdopt: function \(v\) \{ set\("cc\.iconbgrainbow", v \? "1" : "0"\); \}/.test(sites[1]), sites[1]);
+  // and marks the one-time tile step done, so a later flip never has its switches turned on
+  const setsAdopt = /setAdopt: function \(v\) \{ set\("cc\.iconbgrainbow", v \? "1" : "0"\); set\("cc\.iconadoptsplit", "1"\); \}/;
+  ok(labels[0] + ': setAdopt writes the global cc.iconbgrainbow key', setsAdopt.test(sites[0]), sites[0]);
+  ok(labels[1] + ': setAdopt writes the global cc.iconbgrainbow key', setsAdopt.test(sites[1]), sites[1]);
   ok(labels[2] + ': setAdopt is a no-op, no UI reaching it', /setAdopt: function \(\) \{\}/.test(sites[2]), sites[2]);
   ok(labels[2] + ': setAdopt writes no area-local key', !/set\(P \+ "iconbgrainbow"/.test(sites[2]), sites[2]);
 

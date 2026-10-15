@@ -212,6 +212,51 @@ func TestLoadConfigGivesToolsTheSettingsKeysOnce(t *testing.T) {
 	}
 }
 
+func TestLoadConfigKeepsTheTilesOfAnAdoptingConfigOnce(t *testing.T) {
+	s := New(filepath.Join(t.TempDir(), "plan.json"))
+	ui := map[string]string{
+		"cc.iconbgrainbow": "1", "cc.iconbg": "0", "cc.icontint": "0",
+		"cc.styledocker": "0", "ccd.iconbg": "0", "cc.stylevms": "1", "ccv.iconbg": "0",
+	}
+	if err := s.SaveConfig(model.Config{UISettings: ui}); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	c, err := s.LoadConfig()
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	got := c.UISettings
+	if got["cc.iconbg"] != "1" || got["cc.icontint"] != "1" || got["cc.iconadoptsplit"] != "1" {
+		t.Errorf("global switches = %v", got)
+	}
+	if got["ccd.iconbg"] != "1" || got["ccd.icontint"] != "1" {
+		t.Errorf("Docker has its own colours and keeps its tiles: %v", got)
+	}
+	if got["ccv.iconbg"] != "0" {
+		t.Errorf("the VMs follow the global keys, so their own stay: %v", got)
+	}
+
+	// Saved with the marker and a switch turned off since, the next load leaves it off.
+	got["cc.iconbg"] = "0"
+	if err := s.SaveConfig(model.Config{UISettings: got}); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	if c, _ = s.LoadConfig(); c.UISettings["cc.iconbg"] != "0" {
+		t.Errorf("a switch turned off after the step came back on: %v", c.UISettings)
+	}
+}
+
+func TestLoadConfigMarksANonAdoptingConfigWithoutTouchingIt(t *testing.T) {
+	s := New(filepath.Join(t.TempDir(), "plan.json"))
+	if err := s.SaveConfig(model.Config{UISettings: map[string]string{"cc.iconbgrainbow": "0", "cc.iconbg": "0"}}); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	c, _ := s.LoadConfig()
+	if c.UISettings["cc.iconbg"] != "0" || c.UISettings["cc.iconadoptsplit"] != "1" {
+		t.Errorf("ui settings = %v", c.UISettings)
+	}
+}
+
 func TestLoadConfigLeavesAFreshMirrorWithoutToolsKeys(t *testing.T) {
 	s := New(filepath.Join(t.TempDir(), "plan.json"))
 	if err := s.SaveConfig(model.Config{UISettings: map[string]string{"cc.accent": "#fcc419"}}); err != nil {

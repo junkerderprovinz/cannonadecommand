@@ -1494,7 +1494,7 @@
         getColor: function () { return get("cc.iconcolor", ""); },
         setColor: function (v) { set("cc.iconcolor", v); },
         getAdopt: function () { return get("cc.iconbgrainbow", "0") === "1"; },
-        setAdopt: function (v) { set("cc.iconbgrainbow", v ? "1" : "0"); },
+        setAdopt: function (v) { set("cc.iconbgrainbow", v ? "1" : "0"); set("cc.iconadoptsplit", "1"); },
         getAccent: function () { return get("cc.accent", "#FCC419"); },
         onChange: gsync
       });
@@ -1567,7 +1567,7 @@
       // These already read and write the global key, so hideAdoptRow is all it takes to keep this
       // card from showing a second copy of that switch.
       getAdopt: function () { return get("cc.iconbgrainbow", "0") === "1"; },
-      setAdopt: function (v) { set("cc.iconbgrainbow", v ? "1" : "0"); },
+      setAdopt: function (v) { set("cc.iconbgrainbow", v ? "1" : "0"); set("cc.iconadoptsplit", "1"); },
       getAccent: function () { return get("cc.accent", "#FCC419"); },
       onChange: c2OnChange,
       hideAdoptRow: true
