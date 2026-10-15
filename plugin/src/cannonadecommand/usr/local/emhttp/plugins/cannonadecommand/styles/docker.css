@@ -416,6 +416,11 @@ html:not(.cc-state-native).cc-docker-on .cc-limbtn-set { background: var(--cc-rb
 .cc-menu-link a, .cc-menu-link a:hover { text-decoration: none !important; }
 a.cc-b[href]:hover, .cc-b a[href]:hover, .cc-rowbadges a[href]:hover, .sl-chip:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 .cc-plan-on { box-shadow: none; } /* no inset ring; the chip's text already says it is active */
+/* A plan badge whose dependencies decide a state wears it in the state colour and its ink, in every
+   colour mode, as the run-state badges do: ready green, waiting orange, failed red. */
+html .cc-b.cc-plan.cc-plan-ready   { background: var(--cc-ok, #6fdc8c) !important;   color: var(--cc-ok-fg, #161616) !important; }
+html .cc-b.cc-plan.cc-plan-pending { background: var(--cc-warn, #ff832b) !important; color: var(--cc-warn-fg, #161616) !important; }
+html .cc-b.cc-plan.cc-plan-failed  { background: var(--cc-err, #ff8389) !important;  color: var(--cc-err-fg, #161616) !important; }
 
 /* The third-party markers as badges: the version column's span, stamped cc-3p, and the autostart
    cell's group label, wrapped cc-grp, both in the neutral grey of the changelog chip. cc-grp is a

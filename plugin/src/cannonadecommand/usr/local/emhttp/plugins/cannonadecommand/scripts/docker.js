@@ -494,17 +494,15 @@
     var chip = el("a", "cc-b cc-plan" + (node ? " cc-plan-on" : "") + (auto ? " cc-plan-auto" : ""));
     chip.href = "#"; chip.innerHTML = '<span class="cc-b-k"></span><span class="cc-b-v"></span>';
     chip.querySelector(".cc-b-k").textContent = t("plan");
-    chip.querySelector(".cc-b-v").textContent = depsTxt(node);
-    // no hover text: the chip's own label says it all
+    showPlanState(chip, name);
     chip.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openEditor(chip, name); });
     return chip;
   }
   function lastRunPill(name) { var lr = lastRun[name]; if (!lr) return null; var p = el("span", "cc-pill cc-pill-" + lr.state, runLabel(lr.state)); if (lr.reason) p.setAttribute("data-tip", lr.reason); return p; }
-  // A readiness dot beside the plan badge, built from the same recipe as the name cell's state
-  // dot, so it reads as the same thing rather than a new one. It is rendered only for a node with
-  // dependencies of its own; a container nothing depends on has nothing to summarise. Which
-  // dependency is not ready, and why, is in the tooltip, and openEditor lists them by name.
-  function depStateDot(name) {
+  // Where this container stands in the start plan, as far as its dependencies decide it: failed
+  // when one of them failed or was skipped, ready when all of them are, waiting otherwise. Only a
+  // node with dependencies of its own has a state; one that waits for nothing has nothing to say.
+  function planState(name) {
     var node = workingPlan[name], deps = (node && node.after) || [];
     if (!deps.length) return null;
     // The orchestrator runs the plan on its own triggers, such as an array start, not on every
@@ -513,19 +511,27 @@
     // readiness probe accepts a running container with no healthcheck as ready, so this falls
     // through to the live run state when there is no verdict yet and flags it only when that state
     // is not running either. A real verdict in last_run always wins over the live state.
-    var bad = [];
+    var bad = [], failed = false;
     deps.forEach(function (d) {
       var lr = lastRun[d];
-      if (lr) { if (lr.state !== "ready") bad.push(d + " (" + runLabel(lr.state) + (lr.reason ? ": " + lr.reason : "") + ")"); return; }
+      if (lr) {
+        if (lr.state === "failed" || lr.state === "skipped") failed = true;
+        if (lr.state !== "ready" && lr.state !== "degraded") bad.push(d + " (" + runLabel(lr.state) + (lr.reason ? ": " + lr.reason : "") + ")");
+        return;
+      }
       var c = containerByName(d);
       if (!c || c.state !== "running") bad.push(d + " (" + (c ? stateLabel(c.state) : t("depNotRun")) + ")");
     });
-    // The dot carries no data-name: syncStateBadges() sweeps every .cc-badge[data-name] on a poll
-    // and overwrites its class, text and tooltip with that container's own run state, and this dot
-    // summarises other containers' readiness rather than its own row's state.
-    var dot = el("span", "cc-badge " + (bad.length ? "cc-badge-alert" : "cc-badge-running") + " cc-ct-statedot");
-    dot.setAttribute("data-tip", bad.length ? t("depsBad") + " " + bad.join(", ") : t("depsOk"));
-    return dot;
+    return { state: failed ? "failed" : bad.length ? "pending" : "ready", tip: bad.length ? t("depsBad") + " " + bad.join(", ") : t("depsOk") };
+  }
+  // The plan badge carries that state in its value and in the state colour, "Startplan · wartet",
+  // and a badge without one says whether the container is in the plan at all.
+  var PLAN_STATES = ["ready", "pending", "failed"];
+  function showPlanState(chip, name) {
+    var st = planState(name);
+    PLAN_STATES.forEach(function (s) { chip.classList.toggle("cc-plan-" + s, !!st && st.state === s); });
+    chip.querySelector(".cc-b-v").textContent = st ? runLabel(st.state) : depsTxt(workingPlan[name]);
+    if (st) chip.setAttribute("data-tip", st.tip); else chip.removeAttribute("data-tip");
   }
   // A dot on a badge: filled when a value is configured here, hollow otherwise, so a row with a
   // CPU or RAM limit or a custom network reads apart from one on the defaults.
@@ -1265,11 +1271,6 @@
         var c9 = tr.querySelector(":scope > td:nth-child(10)"); // the actions column shifts this by one
         if (c9) {
           var ph = el("div", "cc-rowbadges cc-planholder"); ph.setAttribute(MARK, "1"); ph.appendChild(planBadge(name));
-          // The readiness dot uses the same .cc-ct-dotrow recipe as the one under the name, but
-          // beside the chip rather than below a line of text, so its row drops the top margin
-          // that context needs; ph is already inline-flex and centred.
-          var depDot = depStateDot(name);
-          if (depDot) { var ddr = el("span", "cc-ct-dotrow"); ddr.style.setProperty("margin-top", "0", "important"); ddr.appendChild(depDot); ph.appendChild(ddr); }
           // The gap between the toggle and the chip matches the one between the CPU and RAM
           // badges, written inline, and the stray <br>s in the native autostart cell that would
           // inflate it are switched off.
@@ -2938,7 +2939,7 @@
   }
   // clicking the SAME badge again closes its popover (toggle). Returns true if it closed.
   function togglePop(anchor) { if (openPop && openPopAnchor === anchor) { closePop(); return true; } return false; }
-  function refreshChip(chip, name) { var node = workingPlan[name]; chip.classList.toggle("cc-plan-on", !!node); var v = chip.querySelector(".cc-b-v"); if (v) v.textContent = depsTxt(node); }
+  function refreshChip(chip, name) { chip.classList.toggle("cc-plan-on", !!workingPlan[name]); showPlanState(chip, name); }
   // The (i) beside a label, whose hover explains the dropdown's options. It is the same .cc-info
   // every other area builds in cc-theme.js, riding the same body-level #cc-tipfloat, so it stays
   // neutral, cannot be clipped by an overflow ancestor, closes on Escape and on focus-out, and
