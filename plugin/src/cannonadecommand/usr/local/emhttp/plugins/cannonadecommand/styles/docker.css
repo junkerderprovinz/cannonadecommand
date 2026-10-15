@@ -2055,9 +2055,9 @@ html.cc-docker-on.cc-on-addct .ui-dialog dl > dt.cc-dtlab {
 html.cc-docker-on.cc-on-addct #canvas dl,
 html.cc-docker-on.cc-on-addct .ui-dialog dl { grid-template-columns: 35% minmax(0, 1fr) !important; }
 /* On the form itself every label stands at the start of its row and every field or switch runs to
-   the row's end, as in a CC window. The rows keep the settings cards' reading width, so a name and
-   its field still read as one line on a wide screen. */
-html.cc-docker-on.cc-on-addct #canvas form dl { max-width: 920px; grid-template-columns: min(240px, 35%) minmax(0, 1fr) !important; }
+   the row's end, as in a CC window. The rows keep the settings cards' reading width in the middle of the
+   window, so a name and its field still read as one line on a wide screen. */
+html.cc-docker-on.cc-on-addct #canvas form dl { max-width: 920px; margin-inline: auto; grid-template-columns: min(240px, 35%) minmax(0, 1fr) !important; }
 html.cc-docker-on.cc-on-addct #canvas form dl > dt { text-align: start !important; }
 html.cc-docker-on.cc-on-addct #canvas form dl > dt.cc-dtlab,
 html.cc-docker-on.cc-on-addct #canvas form dl > dt > span.cc-varlab { justify-self: start; }
@@ -2118,9 +2118,9 @@ html.cc-docker-on.cc-on-addct div.title {
   border: none !important; border-radius: 0 !important;
   padding: 0 var(--cc-edge-gutter, 8px) 0 0 !important;   /* only the scrollbar gutter, so the toggle sits on the #displaybox content edge */
 }
-/* The title bar takes the form's reading width, so the view switch ends where the fields do. */
+/* The title bar takes the form's reading width and place, so the view switch ends where the fields do. */
 html.cc-docker-on.cc-on-addct div.title:has(~ form dl, ~ * form dl),
-html.cc-docker-on.cc-on-addct #canvas div.title { max-width: 920px; box-sizing: border-box; padding-right: 0 !important; }
+html.cc-docker-on.cc-on-addct #canvas div.title { max-width: 920px; margin-inline: auto; box-sizing: border-box; padding-right: 0 !important; }
 /* the form page joins the house left edge: #displaybox lines up with the main menu bar through
    --cc-align-left, which header.js sets */
 html.cc-docker-on.cc-on-addct:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 15px); }

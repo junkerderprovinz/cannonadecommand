@@ -49,6 +49,8 @@ console.log('\nLabels at the start, fields at the end, at a reading width');
 {
   const rule = (sel) => { const i = css.indexOf(sel + ' {'); return i < 0 ? '' : css.slice(i, css.indexOf('}', i)); };
   ok('the rows keep the settings cards\' width', /max-width:\s*920px/.test(rule('html.cc-docker-on.cc-on-addct #canvas form dl')));
+  ok('and stand in the middle of the window', /margin-inline:\s*auto/.test(rule('html.cc-docker-on.cc-on-addct #canvas form dl')));
+  ok('the title bar stands over them', /max-width:\s*920px;\s*margin-inline:\s*auto/.test(rule('html.cc-docker-on.cc-on-addct #canvas div.title')));
   ok('a label stands at the start of its column', /justify-self:\s*start/.test(rule('html.cc-docker-on.cc-on-addct #canvas form dl > dt > span.cc-varlab')));
   ok('a text field runs to the row\'s end', /width:\s*100%/.test(rule('html.cc-docker-on.cc-on-addct #canvas form dl > dd > :is(input[type="text"], input[type="number"], input[type="password"], textarea)')));
   ok('a switch stands at the row\'s end', /justify-content:\s*flex-end/.test(rule('html.cc-docker-on.cc-on-addct #canvas form dl > dd > span.flex-row:has(> .switch-button-background)')));
