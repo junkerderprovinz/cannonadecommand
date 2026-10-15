@@ -125,10 +125,10 @@ console.log('\nSource audit: every render call site goes through renderCurrentVi
   const stillBuggy = (src.match(/mode === "list"[^\n]*else renderGrid\(\);/g) || []).length;
   ok('no "if list ... else renderGrid()" call site is left', stillBuggy === 0, stillBuggy);
 
-  // loadConfig, setRb, setAc and the restart-policy, bandwidth, limits and editor
-  // saves all fall back through renderCurrentView().
+  // loadConfig and the restart-policy, bandwidth, limits and editor saves all fall back
+  // through renderCurrentView().
   const routed = (src.match(/else renderCurrentView\(\);/g) || []).length;
-  ok('the seven call sites read "else renderCurrentView();"', routed === 7, routed);
+  ok('the five call sites read "else renderCurrentView();"', routed === 5, routed);
 
   // The icon-mode select and the storage-sync listener are written differently, so
   // they are checked by name rather than by counting the pattern.
