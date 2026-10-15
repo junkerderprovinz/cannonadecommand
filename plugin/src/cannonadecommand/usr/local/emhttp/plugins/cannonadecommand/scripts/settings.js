@@ -1929,6 +1929,14 @@
     // picker like every other colour control here.
     (function () {
       var cB = card(T("Servername", "Server name"), T("Aussehen des Servernamens oben links. Änderungen erscheinen live im Kopfbereich.", "Look of the server name at the top left. Changes appear live in the header."));
+      // A name for CC's header alone: Unraid's own server name stays as it is, and an empty field
+      // shows it again. The field shows it as the placeholder, read where header.js reads it.
+      var nmRow = el("div", "cc-set-row"), nmL = el("span", "cc-set-rl", T("Angezeigter Name", "Display name"));
+      nmL.appendChild(infoIcon(T("Der Name, den CannonadeCommand oben links im Kopfbereich zeigt. Leer zeigt Unraids Servernamen. Unraids eigener Servername bleibt dabei, wie er ist.", "The name CannonadeCommand shows at the top left of the header. Empty shows Unraid's server name. Unraid's own server name stays as it is.")));
+      var nmIn = el("input", "cc-set-txt"); nmIn.id = "cc-set-brandname"; nmIn.type = "text"; nmIn.maxLength = 40; nmIn.spellcheck = false;
+      nmIn.value = get("cc.brand.name", ""); nmIn.placeholder = (document.title.split("/")[0] || "").trim() || "Unraid";
+      nmIn.addEventListener("input", function () { var v = nmIn.value.trim(); if (v) set("cc.brand.name", v); else del("cc.brand.name"); syncHeaderBar(); });
+      nmRow.appendChild(nmL); nmRow.appendChild(nmIn); cB.appendChild(nmRow);
       var SZ = ["16", "18", "20", "22", "24", "26", "28", "30", "32", "36", "40", "44", "48", "56", "64"].map(function (s) { return [s, s + " px"]; });
       cB.appendChild(dropRow(T("Größe", "Size"), SZ, get("cc.brand.size", "30"), function (v) { set("cc.brand.size", v); syncHeaderBar(); }));
       cB.appendChild(dropRow(T("Stärke", "Weight"), [["300", T("Dünn", "Thin")], ["400", "Normal"], ["500", "Medium"], ["650", T("Halbfett", "Semibold")], ["800", T("Fett", "Bold")]], get("cc.brand.weight", "650"), function (v) { set("cc.brand.weight", v); syncHeaderBar(); }));

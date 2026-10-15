@@ -1958,9 +1958,10 @@
     } catch (e) {}
   }
   // The server name is a light-DOM sibling of the Connect components, never a child of them, since
-  // auto-mount rebuilds their nodes. It comes from the document title, else from the native
-  // server-name span in the profile, else it reads "Unraid". Gated on the header area and master
-  // theming but not on cc.island: hiding the status island must not take the name with it.
+  // auto-mount rebuilds their nodes. It is the display name set in CC's settings, else the
+  // document title, else the native server-name span in the profile, else it reads "Unraid".
+  // Gated on the header area and master theming but not on cc.island: hiding the status island
+  // must not take the name with it.
   var ccBrandSig = "";
   function ccBrandOn() { return g("cc.enable.header", "0") !== "0" && g("cc.theming", "1") !== "0"; }
   function ccBrand() {
@@ -1968,7 +1969,7 @@
       var br = document.getElementById("cc-brand");
       if (!ccBrandOn()) { if (br && br.parentNode) br.parentNode.removeChild(br); ccBrandSig = ""; return; }
       var hdr = document.getElementById("header"); if (!hdr) return;
-      var name = (document.title.split("/")[0] || "").replace(/^\s+|\s+$/g, "");
+      var name = g("cc.brand.name", "").replace(/^\s+|\s+$/g, "") || (document.title.split("/")[0] || "").replace(/^\s+|\s+$/g, "");
       if (!name) {   // a page without a title, so read the native server-name span
         var ns = document.querySelector("#UserProfile > div:nth-child(2) span");
         name = ((ns && ns.textContent) || "").replace(/^\s+|\s+$/g, "");
