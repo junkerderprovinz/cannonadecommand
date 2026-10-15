@@ -127,8 +127,8 @@
   // Adopting the rainbow for the icon background is a global setting, so it bypasses eff()
   // (see docker.js iconBgAdopts()).
   function iconBgAdoptsP() { return ls("cc.iconbgrainbow") === "1"; }
-  // The adopt toggle implies the logo tile, as on the Docker tab (docker.js iconBgOn).
-  function iconBgOnP() { return eff("iconbg") === "1" || iconBgAdoptsP(); }
+  // The logo tile has its own switch whether or not the colours are adopted (docker.js iconBgOn).
+  function iconBgOnP() { return eff("iconbg") === "1"; }
   function el(t, c, x) { var n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; }
 
   var RB_PAL = ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];
@@ -189,17 +189,17 @@
     if (ic && /^#?[0-9a-f]{6}$/i.test(ic)) return ccHex6(ic);
     return accent();
   }
-  // The icon pipeline's target colour, the same contract as docker.js iconInk(). With the adopt
-  // toggle on it is the black or white contrast colour for the resolved background, whatever the
-  // tint toggle says. Otherwise it is "" while the tint is off and the picked tint colour, lifted
-  // off the surface colour, while it is on, whether or not the background badge is on too.
+  // The icon pipeline's target colour, the same contract as docker.js iconInk(): "" while the tint
+  // is off, whether or not the background badge is on. With the tint on and the adopt toggle on it
+  // is the black or white contrast colour for the badge, or the badge colour itself with no badge
+  // behind the icon; otherwise the picked tint colour. Both are lifted off the surface colour.
   // forTint doubles the floor because a luminance tint lands at about half the target's luma (see
   // CCTheme.liftSurface); idealText() only answers #fff or #161616, so the contrast branch needs no
   // guard.
   function plugIconInk(forTint) {
-    if (iconBgAdoptsP()) return idealText(colorFor(5));
     if (!plugTintOn()) return "";
-    var pick = eff("iconcolor");
+    if (iconBgAdoptsP() && iconBgOnP()) return idealText(colorFor(5));
+    var pick = iconBgAdoptsP() ? colorFor(5) : eff("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftSurface) return ccHex6(pick);
@@ -412,10 +412,11 @@
     // <i class="icon-... list"> (its own glyph font). All three are sized alike below.
     var ibgOn = iconBgOnP();
     var ibgBg = plugBgColor();
-    // With the adopt toggle on there are two shared filters, black ink and white ink, and each
-    // row picks the one matching its own rowInk, the value stamped as its --cc-rb-ct above.
+    // With the adopt toggle on over a tinted badge there are two shared filters, black ink and
+    // white ink, and each row picks the one matching its own rowInk, the value stamped as its
+    // --cc-rb-ct above.
     var f2, pFlat, pInk;
-    if (iconBgAdoptsP()) {
+    if (iconBgAdoptsP() && ibgOn && plugTintOn()) {
       var rowBlk = rowInk !== "#fff";
       pFlat = rowBlk ? ensureFlatFilter("cc-plug-mono-svg-blk", "cc-plug-mono-tint-blk", "#161616") : ensureFlatFilter("cc-plug-mono-svg-wht", "cc-plug-mono-tint-wht", "#fff");
       f2 = rowBlk ? ensureTintAs("cc-plug-tint-svg-blk", "cc-plug-tint-blk", "#161616") : ensureTintAs("cc-plug-tint-svg-wht", "cc-plug-tint-wht", "#fff");

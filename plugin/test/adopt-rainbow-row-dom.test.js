@@ -1,9 +1,9 @@
 // Builds settings.js's logoToggles() against a DOM shim, for the two things the
 // string-slice checks in adopt-rainbow-ui.test.js cannot see: that io.hideAdoptRow
 // keeps the adopt row out of the built tree rather than hiding it with CSS, and
-// that while the master toggle adopts, the Hintergrund and Icons switches and
-// their pickers give way to one line that names what decides and jumps there,
-// and come back the moment adopting stops.
+// that while the master toggle adopts, the Logo tiles and Tint icons switches
+// stay while their pickers give way to one line that names what decides and
+// jumps there, and come back the moment adopting stops.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand', 'scripts');
@@ -56,7 +56,9 @@ const build = new Function('document', 'window', 'jumpTo',
   'var de = false;\n' +   // the English labels, so the assertions can search for ASCII text
   grabFn('el') + '\n' + grabFn('T') + '\n' + grabFn('infoIcon') + '\n' + grabFn('normHex') + '\n' +
   grabFn('hexToHsv') + '\n' + grabFn('hsvToHex') + '\n' + grabFn('inlinePicker') + '\n' + grabFn('toggle') + '\n' +
-  grabFn('actionBtn') + '\n' + grabFn('lockRow') + '\n' + grabFn('logoToggles') + '\n' +
+  grabFn('actionBtn') + '\n' + grabFn('lockRow') + '\n' + grabFn('fieldRow') + '\n' + grabFn('swMark') + '\n' + grabFn('swMarkRow') + '\n' +
+  grabFn('colourField') + '\n' + grabFn('ccTick') + '\n' + grabFn('idealText') + '\n' +
+  'var PRESETS = ["#FCC419", "#1D99F3"];\n' + grabFn('logoToggles') + '\n' +
   'return { logoToggles: logoToggles };'
 )(document, {}, (sec, title) => jumps.push([sec, title]));
 const lockOf = (into) => into.children.find((c) => c.classList.contains('cc-set-locked'));
@@ -78,41 +80,46 @@ console.log('\nio.hideAdoptRow keeps the adopt row out of the built DOM');
 {
   const globalInto = document.createElement('div');
   build.logoToggles(globalInto, makeIo());
-  ok('the global card, without hideAdoptRow, carries the adopt label', globalInto.textContent.indexOf('Adopt badge settings') >= 0, globalInto.textContent);
+  ok('the global card, without hideAdoptRow, carries the adopt label', globalInto.textContent.indexOf('Use the badge colours') >= 0, globalInto.textContent);
 
   const areaInto = document.createElement('div');
   build.logoToggles(areaInto, makeIo({ hideAdoptRow: true }));
-  ok('an area card, with hideAdoptRow, has no adopt label in its tree', areaInto.textContent.indexOf('Adopt badge settings') < 0, areaInto.textContent);
-  ok('and the area card still builds its own Hintergrund and Icons rows', areaInto.children.length > 0 && areaInto.textContent.indexOf('Background') >= 0);
+  ok('an area card, with hideAdoptRow, has no adopt label in its tree', areaInto.textContent.indexOf('Use the badge colours') < 0, areaInto.textContent);
+  ok('and the area card still builds its own Logo tiles and Tint icons rows', areaInto.textContent.indexOf('Logo tiles') >= 0 && areaInto.textContent.indexOf('Tint icons') >= 0);
 }
 
-console.log('\nWhile adopting, the switches give way to a line that names what decides');
+console.log('\nAdopting takes over the colours, and the switches stay');
 {
   const into = document.createElement('div');
   const io = makeIo({ hideAdoptRow: true });
   const h = build.logoToggles(into, io);
   const lock = lockOf(into);
+  const fields = into.children.filter((c) => c.classList.contains('cc-set-fieldrow'));
 
-  ok('not adopting: the Hintergrund and Icons rows show', !h.bgToggle.parentNode.hidden && !h.tintToggle.parentNode.hidden);
+  ok('not adopting: the Logo tiles and Tint icons rows show', !h.bgToggle.parentNode.hidden && !h.tintToggle.parentNode.hidden);
   ok('not adopting: the line is hidden', lock && lock.hidden === true);
   h.bgToggle.listeners.click[0]();
-  ok('not adopting: clicking the Hintergrund switch flips it', io._state.bgCalls === 1, io._state.bgCalls);
+  ok('not adopting: clicking the Logo tiles switch flips it', io._state.bgCalls === 1, io._state.bgCalls);
+  ok('the tile on: its colour field shows', !fields[0].hidden);
 
   io._state.adopt = true; // as if the master row, hidden on this card, had been used elsewhere
   h.sync();
-  ok('adopting: both switch rows are left out', h.bgToggle.parentNode.hidden && h.tintToggle.parentNode.hidden);
-  ok('adopting: the strength has nothing to tune and goes too', h.strInput.parentNode.hidden === true);
-  ok('adopting: the line shows', lock.hidden === false);
+  ok('adopting: both switch rows stay', !h.bgToggle.parentNode.hidden && !h.tintToggle.parentNode.hidden);
+  ok('adopting: the colour fields give way', fields.every((f) => f.hidden));
+  ok('adopting: the line shows in their place', lock.hidden === false);
   ok('on an area card it names the global card', /Follows/.test(lock.textContent) && /General › Logos & icons/.test(lock.textContent), lock.textContent);
   const jump = lock.children[1].children.find((c) => c.attrs.role === 'button');
   jump.listeners.click[0]();
   ok('and its button jumps to that card', jumps.length === 1 && jumps[0][0] === 'general' && jumps[0][1] === 'Logos & icons', JSON.stringify(jumps));
-
-  io._state.adopt = false;
-  h.sync();
-  ok('adopting off again: the switches are back', !h.bgToggle.parentNode.hidden && !h.tintToggle.parentNode.hidden && lock.hidden);
   h.tintToggle.listeners.click[0]();
-  ok('adopting off again: clicking the Icons switch flips it', io._state.tintCalls === 1, io._state.tintCalls);
+  ok('adopting: clicking the Tint icons switch still flips it', io._state.tintCalls === 1, io._state.tintCalls);
+  ok('adopting: the strength still tunes the tint', h.strInput.parentNode.hidden === false);
+  io._state.bg = false; io._state.tint = false; h.sync();
+  ok('adopting with both switches off: no colour to name, so no line', lock.hidden === true);
+
+  io._state.adopt = false; io._state.tint = true;
+  h.sync();
+  ok('adopting off again: the tint\'s colour field is back', !fields[1].hidden && lock.hidden);
 }
 
 console.log('\nA picker or the strength under a switch that is off is left out');
@@ -120,7 +127,9 @@ console.log('\nA picker or the strength under a switch that is off is left out')
   const into = document.createElement('div');
   const io = makeIo();
   const h = build.logoToggles(into, io);
-  const pickers = into.children.filter((c) => c.classList.contains('cc-set-pickrow'));
+  // each colour field stands in a row of its own beside its name
+  const pickers = into.children.filter((c) => c.classList.contains('cc-set-fieldrow') && c.children.some((k) => k.classList.contains('cc-set-pickrow')));
+  ok('both colour fields are built, each with the presets and the hex field', pickers.length === 2 && pickers.every((p) => p.children[1].children[1].children.length === 3));
   ok('both switches off: no picker and no strength', pickers.every((p) => p.hidden) && h.strInput.parentNode.hidden);
   io._state.tint = true; h.sync();
   ok('the tint on: its picker and the strength come in', !pickers[1].hidden && !h.strInput.parentNode.hidden && pickers[0].hidden);

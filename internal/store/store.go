@@ -45,7 +45,32 @@ func (s *Store) LoadConfig() (model.Config, error) {
 	err := readJSON(s.cfgPath, &c)
 	renameUIValues(c.UISettings)
 	splitToolsKeys(c.UISettings)
+	keepAdoptedTiles(c.UISettings)
 	return c, err
+}
+
+// adoptAreas maps each area whose logos can have a tile of their own to the key that says it
+// keeps its own colours and the prefix of those colours.
+var adoptAreas = map[string]string{"cc.styledocker": "ccd.", "cc.stylevms": "ccv.", "cc.styleplugin": "ccp."}
+
+// keepAdoptedTiles turns the tile and tint switches on once for a config that adopts the badge
+// colours, globally and for every area with colours of its own, so its logos keep the tile and
+// the ink adopting gave them. cc-theme.js runs the same step in the browser. cc.iconadoptsplit
+// marks it done, so a switch turned off later stays off.
+func keepAdoptedTiles(ui map[string]string) {
+	adopt, seen := ui["cc.iconbgrainbow"]
+	if !seen || ui["cc.iconadoptsplit"] != "" {
+		return
+	}
+	if adopt == "1" {
+		ui["cc.iconbg"], ui["cc.icontint"] = "1", "1"
+		for key, prefix := range adoptAreas {
+			if ui[key] == "0" {
+				ui[prefix+"iconbg"], ui[prefix+"icontint"] = "1", "1"
+			}
+		}
+	}
+	ui["cc.iconadoptsplit"] = "1"
 }
 
 // splitToolsKeys copies the Settings keys to the Tools keys once, as cc-theme.js

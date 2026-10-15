@@ -879,6 +879,22 @@
     ls.setItem("cc.styletools", ls.getItem("cc.stylesettings") || "1");
   }
   try { splitToolsKeys(localStorage); } catch (e) {}
+  // An install that adopts the badge colours gets the tile and tint switches turned on once,
+  // globally and for every area with colours of its own, so its logos keep the tile and the ink
+  // adopting gave them. cc.iconadoptsplit marks it done and a switch turned off later stays off.
+  // store.LoadConfig runs the same step on the engine's mirror.
+  function keepAdoptedTiles(ls) {
+    var adopt = ls.getItem("cc.iconbgrainbow");
+    if (adopt == null || ls.getItem("cc.iconadoptsplit")) return;
+    if (adopt === "1") {
+      ls.setItem("cc.iconbg", "1"); ls.setItem("cc.icontint", "1");
+      [["cc.styledocker", "ccd."], ["cc.stylevms", "ccv."], ["cc.styleplugin", "ccp."]].forEach(function (a) {
+        if (ls.getItem(a[0]) === "0") { ls.setItem(a[1] + "iconbg", "1"); ls.setItem(a[1] + "icontint", "1"); }
+      });
+    }
+    ls.setItem("cc.iconadoptsplit", "1");
+  }
+  try { keepAdoptedTiles(localStorage); } catch (e) {}
 
   window.CCTheme = {
     RB: RB, idealText: idealText, motionLevel: motionLevel, shapeName: shapeName, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects,

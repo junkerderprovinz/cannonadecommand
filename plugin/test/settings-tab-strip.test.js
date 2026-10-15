@@ -59,9 +59,10 @@ console.log('\nThe tabs stand as vertical tiles beside the cards');
   ok('the column may scroll, since the wheel moves it', decl(strip, 'overflow-y') === 'auto');
   ok('the column and the cards share a row', decl(body(css, '.cc-set-body'), 'display') === 'flex' && decl(body(css, '.cc-set-main'), 'min-width') === '0');
   const tab = body(css, '.cc-set-tab');
-  ok('every tile keeps a 40px floor and its own height', decl(tab, 'flex') === 'none' && decl(tab, 'min-height') === '40px', tab);
+  ok('the tiles share the column\'s height above a 40px floor', decl(tab, 'flex') === '1 0 0' && decl(tab, 'min-height') === '40px', tab);
+  ok('the column takes the height settings.js stamps', decl(strip, 'height') === 'var(--cc-set-tabs-h, auto)');
   ok('a tile takes the control radius, so a tall one stays a tile', /var\(--cc-radius-control\)/.test(decl(tab, 'border-radius') || ''));
-  ok('a tile is the glyph, then the name', decl(tab, 'justify-content') === 'flex-start' && decl(tab, 'gap') === '10px');
+  ok('a tile is the glyph, then the name, set as KnightLoader sets it', decl(tab, 'justify-content') === 'flex-start' && decl(tab, 'gap') === '12px' && decl(tab, 'font-weight') === '500 !important');
   ok('in the label\'s own case', decl(tab, 'text-transform') === 'none !important');
   ok('a long name takes a second line and no more', /-webkit-line-clamp:\s*2/.test(body(css, '.cc-set-tablbl')));
   ok('the glyph is 20px', decl(body(css, '.cc-set-tabico'), 'width') === '20px');
@@ -70,6 +71,22 @@ console.log('\nThe tabs stand as vertical tiles beside the cards');
   ok('every tab carries the plain name of its Unraid tab', labels.every((l) => !/-Tab\b| tabs?\b/.test(l)), labels.join(' '));
   ok('no strip sizing is left', !/sizeSetTabs|tabsPerRow|TAB_GAP/.test(settings));
   ok('the column is a vertical tab list', /tabRow\.setAttribute\("role", "tablist"\); tabRow\.setAttribute\("aria-orientation", "vertical"\);/.test(settings));
+}
+
+console.log('\nThe column runs down to the window\'s bottom edge');
+{
+  const fn = grabFn(settings, 'tabsHeight');
+  const run = (top, scrollY, footer) => {
+    const root = { querySelector: () => ({ getBoundingClientRect: () => ({ top }) }) };
+    const doc = { getElementById: () => footer ? { offsetHeight: footer.h, _cs: footer.cs } : null };
+    const gcs = (n) => n._cs;
+    return new Function('root', 'window', 'document', 'getComputedStyle', fn + '; return tabsHeight();')(root, { innerHeight: 1000, scrollY }, doc, gcs);
+  };
+  ok('the height is what the window leaves below the column, less the sticky gap', run(249, 0, null) === 739, run(249, 0, null));
+  ok('a scrolled page measures the same column', run(49, 200, null) === 739, run(49, 200, null));
+  ok('a fixed footer that shows is left out', run(249, 0, { h: 28, cs: { position: 'fixed', display: 'block' } }) === 711);
+  ok('a hidden footer costs nothing', run(249, 0, { h: 28, cs: { position: 'fixed', display: 'none' } }) === 739);
+  ok('every render and resize stamps it', /root\.style\.setProperty\("--cc-set-tabs-h", tabsHeight\(\) \+ "px"\)/.test(grabFn(settings, 'alignSetTabs')));
 }
 
 console.log('\nBelow 1024px the column shows the glyphs alone');

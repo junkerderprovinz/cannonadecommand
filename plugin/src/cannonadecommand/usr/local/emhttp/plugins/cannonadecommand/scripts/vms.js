@@ -73,14 +73,14 @@
     if (ic && /^#?[0-9a-f]{6}$/i.test(ic)) return ccHex6(ic);
     return ccAccent();
   }
-  // The icon ink, as in docker.js iconInk(): with adopt on, the black/white contrast for the
-  // resolved background; otherwise the picked tint colour kept off the surface colour, or "" while
-  // Einfärben is off. The badge colour is never the ink. `forTint` doubles the floor because a
+  // The icon ink, as in docker.js iconInk(): "" while the tint is off. With adopt on, the
+  // black/white contrast for the badge, or the badge colour itself with no badge behind the icon;
+  // otherwise the picked tint colour. Both are kept off the surface colour. `forTint` doubles the floor because a
   // luminance tint outputs roughly half the target's luma.
   function vmIconInk(forTint) {
-    if (iconBgAdoptsV()) return ccIdeal(vmAdoptTint());
     if (!vmTintOn()) return "";
-    var pick = effK("iconcolor");
+    if (iconBgAdoptsV() && iconBgOnV()) return ccIdeal(vmAdoptTint());
+    var pick = iconBgAdoptsV() ? vmAdoptTint() : effK("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftSurface) return ccHex6(pick);
@@ -166,8 +166,8 @@
   function effK(k) { return ls("cc.stylevms") !== "0" ? ls("cc." + k) : ls("ccv." + k); }
   // Adopting the rainbow is a global decision, so it bypasses effK().
   function iconBgAdoptsV() { return ls("cc.iconbgrainbow") === "1"; }
-  // The adopt toggle implies the logo tile, as on the Docker tab (docker.js iconBgOn).
-  function iconBgOnV() { return effK("iconbg") === "1" || iconBgAdoptsV(); }
+  // The logo tile has its own switch whether or not the colours are adopted (docker.js iconBgOn).
+  function iconBgOnV() { return effK("iconbg") === "1"; }
   function ccIdeal(hex) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "#fff"; var n = parseInt(m[1], 16), lin = function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }; return 0.2126 * lin(n >> 16 & 255) + 0.7152 * lin(n >> 8 & 255) + 0.0722 * lin(n & 255) > 0.197 ? "#161616" : "#fff"; }
   // A failed action shakes the control that was used and says why in a toast.
   function ccvFail(ctl, msg) { if (window.CCTheme) window.CCTheme.fail(ctl, msg); }
@@ -1055,10 +1055,10 @@
       var root2 = document.documentElement;
       root2.classList.toggle("cc-vm-iconbg", ibgOn);
       if (ibgOn && ibgAcc) root2.style.setProperty("--cc-iconbg-color", ibgAcc); else root2.style.removeProperty("--cc-iconbg-color");
-      // Adopting builds a black-ink and a white-ink filter once for the page, and each row picks
+      // Adopting over a tinted badge builds a black-ink and a white-ink filter once for the page, and each row picks
       // the one that matches its own background.
       var f, flat, c, fBlk, fWht, flatBlk, flatWht, vmInk;
-      var adopt = iconBgAdoptsV();
+      var adopt = iconBgAdoptsV() && iconBgOnV() && vmTintOn();
       if (adopt) {
         flatBlk = ensureFlatFilter("cc-vm-mono-svg-blk", "cc-vm-mono-tint-blk", "#161616");
         flatWht = ensureFlatFilter("cc-vm-mono-svg-wht", "cc-vm-mono-tint-wht", "#fff");

@@ -1195,15 +1195,19 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
 .cc-set-logo { width: 64px; height: 64px; border-radius: var(--cc-radius-control); display: block; }
 .cc-set-claim { color: var(--dim); font-size: var(--cc-text-subline); font-style: italic; margin-top: 2px; }
 /* GlimStone's vertical tiles: the tab selector turned on its side, a column beside the cards that
-   stays in view while they scroll. The tiles stand 4px apart at a 40px floor, and a name that needs
-   it takes a second line. They keep that height rather than share the column's: with ten areas
-   a shared height makes each tile twice as tall as its name. Below 1024px the column shows the glyphs
-   alone, and settings.js moves each name into its bubble. The two widths are GlimStone's 12.75rem
-   and 3.25rem in pixels, since Unraid sets the root font size to 10px. */
+   stays in view while they scroll. As in KnightLoader the column runs down to the window's bottom
+   edge and the tiles share its height: each grows from a zero basis above a 40px floor, 4px apart,
+   so a name on two lines leaves its tile as tall as the rest, and a list too long for the column
+   scrolls once its tiles reach the floor. settings.js alignSetTabs() stamps the height the window
+   leaves below the column's top. Below 1024px the column shows the glyphs alone, and settings.js
+   moves each name into its bubble. The two widths are GlimStone's 12.75rem and 3.25rem in pixels,
+   since Unraid sets the root font size to 10px. */
 .cc-set-body { display: flex; align-items: flex-start; gap: 24px; }
-.cc-set-main { flex: 1 1 auto; min-width: 0; }
-.cc-set-tabs { position: sticky; top: 12px; flex: none; box-sizing: border-box; width: 204px; max-height: calc(100vh - 24px); overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 0 8px 0 4px; margin: 0; }
-.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: flex !important; flex: none; min-height: 40px; align-items: center; justify-content: flex-start; gap: 10px; box-sizing: border-box; height: auto !important; padding: 0 12px !important; font-size: var(--cc-text-body) !important; font-weight: 600 !important; line-height: 20px; text-align: start; text-transform: none !important; letter-spacing: normal !important; border-radius: var(--cc-radius-control) !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS adds one to every button */
+/* The cards stop at a reading width, so a row's name and its control stay close enough to read as
+   one line. */
+.cc-set-main { flex: 1 1 auto; min-width: 0; max-width: 920px; }
+.cc-set-tabs { position: sticky; top: 12px; flex: none; box-sizing: border-box; width: 204px; height: var(--cc-set-tabs-h, auto); max-height: calc(100vh - 24px); overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 0 8px 0 4px; margin: 0; }
+.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: flex !important; flex: 1 0 0; min-height: 40px; align-items: center; justify-content: flex-start; gap: 12px; box-sizing: border-box; height: auto !important; padding: 0 12px !important; font-size: var(--cc-text-body) !important; font-weight: 500 !important; line-height: 20px; text-align: start; text-transform: none !important; letter-spacing: normal !important; border-radius: var(--cc-radius-control) !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS adds one to every button */
 .cc-set-tab[hidden] { display: none !important; }
 .cc-set-tablbl { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; text-wrap: balance; }
 @media (max-width: 1023px) {
@@ -1232,9 +1236,9 @@ html:is(.Theme--white, .Theme--azure) #cc-settings .cc-set-card {
   --cc-text-chip: #cfcfcf; --cc-text-dim: #8a8a8a; --cc-text-hint: #a3a3a3;
   --cc-surface-base: #161616; --cc-surface-3: #2e2e2e; --cc-toggle-track-off: #3a3a3a;
 }
-/* The cards stand under each other at the page's full width, so they end at the same edge as the
-   Docker list. A row keeps its name at the start and its control at the end, and a field, a
-   picker or a slider keeps a width of its own rather than stretching with the card. Stacked cards
+/* The cards stand under each other at the width of their column. A row keeps its name at the start
+   and its control at the end, and a field, a picker or a slider keeps a width of its own rather
+   than stretching with the card. Stacked cards
    keep GlimStone's 40px rhythm, since every card's title badge reaches into the gap above it. */
 .cc-set-wrap { display: flex; flex-direction: column; gap: 40px; }
 .cc-set-card { position: relative; background: #222222; border: none; border-radius: var(--cc-radius-card); padding: 22px 18px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
@@ -1406,11 +1410,16 @@ button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-t
 .cc-ip-dot { position: absolute; width: 12px; height: 12px; border: 2px solid #fff; border-radius: 50%; margin: -6px 0 0 -6px; box-shadow: 0 0 3px rgba(0,0,0,.8); pointer-events: none; }
 .cc-ip-hue { position: relative; height: 14px; margin-top: 8px; border-radius: var(--cc-radius-pill); background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); cursor: pointer; }
 .cc-ip-hdot { position: absolute; top: -2px; width: 8px; height: 18px; margin-left: -4px; background: #fff; border-radius: calc(var(--cc-radius-control) / 2); box-shadow: 0 0 3px rgba(0,0,0,.8); pointer-events: none; }
-/* the picker takes the card's width and the hex field sits under it */
-#cc-settings .cc-set-pickrow { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
-#cc-settings .cc-set-pickrow .cc-set-hexin { width: 110px; align-self: flex-start; }
+/* A colour field stands at the end of its row like every other control: the picker on top, and
+   under it the presets and the hex field in one row exactly as wide as the picker. */
+#cc-settings .cc-set-pickrow { display: flex; flex-direction: column; align-items: stretch; gap: 8px; flex: 0 1 420px; min-width: 0; margin: 0 0 0 auto; }
+#cc-settings .cc-set-pickrow > .cc-set-swatches { margin: 0; }
+/* the palette's field hangs under its swatches, so in that column it takes only its own height */
+#cc-settings .cc-set-pickrow > .cc-set-pickrow { flex: none; margin: 0; }
 .cc-ip { width: 100%; min-width: 0; }
 #cc-settings .cc-set-pickrow, #cc-settings .cc-set-swatches.cc-fill { max-width: 420px; }
+/* the name of a tall control sits on its first line, at the start */
+#cc-settings .cc-set-fieldrow { align-items: flex-start; flex-wrap: nowrap; }
 #cc-settings .cc-set-row input[type="range"] { flex: 0 1 280px; margin-left: auto; }
 /* an icon-only tile button in the settings, such as the palette undo arrow: the header tile's
    look on the shared control line, an accent fill with a contrast glyph */

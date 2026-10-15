@@ -53,10 +53,9 @@
   // using its own background and tint colours can still follow the rainbow, like one adopting the
   // global colours.
   function iconBgAdopts() { return localStorage.getItem("cc.iconbgrainbow") === "1"; }
-  // The adopt toggle implies the background is on, as bgColor() and iconInk() already treat it, so
-  // the three .cc-docker-iconbg gates below share this helper rather than testing the per-area key
-  // alone and drifting apart.
-  function iconBgOn() { return effc("iconbg") === "1" || iconBgAdopts(); }
+  // The logo tile has its own switch whether or not the colours are adopted, and the three
+  // .cc-docker-iconbg gates below share this helper so they cannot drift apart.
+  function iconBgOn() { return effc("iconbg") === "1"; }
   // cc.sgsize to [--cc-logo-img, --cc-logo-box]; vms.js and plugins.js keep their own copy. Both
   // applySettings() and applyIconTint()'s inline writes read it, so the two cannot disagree.
   function ccLogoSizes() { return ({ s: ["48px", "62px"], m: ["62px", "78px"], l: ["76px", "94px"] })[localStorage.getItem("cc.sgsize") || "m"] || ["62px", "78px"]; }
@@ -628,21 +627,21 @@
     if (ic && /^#?[0-9a-f]{6}$/i.test(ic)) return ccHex6(ic);
     return effc("accent") || "#FCC419";
   }
-  // The one colour both icon treatments paint with. With the adopt toggle on it is the black or
-  // white contrast colour for the resolved background, whatever the tint toggle says, as
-  // settingsgrid.js computes for its tiles; that is the only case where it answers a colour with
-  // the tint off. With the adopt toggle off it is "" while the tint is off, whatever the
-  // background badge does, which lets the pipeline fall back to the plain native icons, and the
-  // picked tint colour while it is on, kept off the surface colour by the shared guard. bgColor()
-  // governs the badge box's own background and never feeds the icon's ink.
+  // The one colour both icon treatments paint with. It is "" while the tint is off, whatever the
+  // background badge does, which lets the pipeline fall back to the plain native icons. With the
+  // tint on and the adopt toggle on it is the black or white contrast colour for the badge, as
+  // settingsgrid.js computes for its tiles, or the badge colour itself where no badge is behind
+  // the icon; with the adopt toggle off it is the picked tint colour. Both colours are kept off
+  // the surface colour by the shared guard. bgColor() governs the badge box's own background and
+  // never feeds the icon's ink.
   //
   // forTint doubles the floor: a luminance tint lands at about half the target's luma on
   // mid-bright artwork, so the badge floor alone leaves a dark target hard to make out against
   // the card. The contrast branch needs no guard, since idealText() answers #fff or #161616.
   function iconInk(forTint) {
-    if (iconBgAdopts()) return idealText(iconAdoptTint());
     if (!tintOn()) return "";
-    var pick = effc("iconcolor");
+    if (iconBgAdopts() && iconBgOn()) return idealText(iconAdoptTint());
+    var pick = iconBgAdopts() ? iconAdoptTint() : effc("iconcolor");
     var valid = pick && /^#?[0-9a-f]{6}$/i.test(pick);
     if (!valid) return "";
     if (!window.CCTheme || !window.CCTheme.liftSurface) return ccHex6(pick);
@@ -798,12 +797,12 @@
       var ibgAcc = bgColor();
       var ibgOn = effc("iconbg") === "1";
       if (ibgOn && ibgAcc) document.documentElement.style.setProperty("--cc-iconbg-color", ibgAcc); else document.documentElement.style.removeProperty("--cc-iconbg-color");
-      // With the adopt toggle on, idealText() answers only #161616 or #fff, so both ink filters
-      // are built once, page-wide rather than per item, and each icon below picks whichever
-      // matches its own resolved background through itemAdoptInk(), which reads the --cc-rb-ct
-      // its card or row already carries. With the toggle off there is one filter, built from
-      // iconInk()'s own picked colour, which may be any hue.
-      var f, flat, fBlk, fWht, flatBlk, flatWht, adopt = iconBgAdopts();
+      // With the adopt toggle on over a tinted badge, idealText() answers only #161616 or #fff, so
+      // both ink filters are built once, page-wide rather than per item, and each icon below picks
+      // whichever matches its own resolved background through itemAdoptInk(), which reads the
+      // --cc-rb-ct its card or row already carries. Otherwise there is one filter, built from
+      // iconInk()'s own colour, which may be any hue.
+      var f, flat, fBlk, fWht, flatBlk, flatWht, adopt = iconBgAdopts() && iconBgOn() && tintOn();
       if (adopt) {
         flatBlk = ensureFlatFilter("cc-mono-svg-blk", "cc-mono-tint-blk", "#161616");
         flatWht = ensureFlatFilter("cc-mono-svg-wht", "cc-mono-tint-wht", "#fff");

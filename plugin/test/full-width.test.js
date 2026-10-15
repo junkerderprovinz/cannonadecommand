@@ -1,5 +1,5 @@
 // Pages and windows run the full width (GlimStone, "The content column" and "Windows"). The
-// settings cards stand under each other at the page's full width, a dropdown or
+// settings cards stand under each other up to a reading width, a dropdown or
 // a one-line field stands beside its name with a width of its own (rule 35), and a window's
 // actions sit at the end of its foot with Close first. A grid of cards stands on the page: a
 // folder in the folder view has no card around its cards.
@@ -27,6 +27,10 @@ console.log('\nThe settings page uses the width it has');
   ok('the cards stand under each other', val(win(page, wrap, 'display')) === 'flex' && val(win(page, wrap, 'flex-direction')) === 'column', val(win(page, wrap, 'display')));
   ok('and keep the 40px rhythm', val(win(page, wrap, 'gap')) === '40px');
   ok('no grid of columns is left', !candidates(page, wrap, 'grid-template-columns').length);
+  // A card across the whole window puts a row's name and its switch a screen apart.
+  const main = { tag: 'div', classes: ['cc-set-main'], inside: ['#cc-settings'] };
+  ok('the card column stops at a reading width', val(win(page, main, 'max-width')) === '920px', val(win(page, main, 'max-width')));
+  ok('and still shrinks beside the tiles', val(win(page, main, 'min-width')) === '0' && val(win(page, main, 'flex')) === '1 1 auto');
   const pick = { tag: 'div', classes: ['cc-set-pickrow'], inside: ['#cc-settings'] };
   ok('a colour picker keeps a width of its own', val(win(page, pick, 'max-width')) === '420px', val(win(page, pick, 'max-width')));
   const range = { tag: 'input', classes: [], attrs: { type: 'range' }, inside: ['#cc-settings', '.cc-set-row'] };
