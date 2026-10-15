@@ -78,7 +78,7 @@ console.log('\nIn the reactive mode every button of the changelog window colours
   ok('it paints the stamped --cc-rb-c', /background:\s*var\(--cc-rb-c,/.test(body || ''), body);
   ok('with the stamped ink', /color:\s*var\(--cc-rb-ct,/.test(body || ''), body);
   const js = fs.readFileSync(path.join(DIR, 'scripts', 'docker.js'), 'utf8');
-  ok('docker.js stamps the close button too', /querySelectorAll\("\.sl-upd:not\(\.sl-upd-off\), \.sl-gh, \.sl-x"\)/.test(js));
+  ok('docker.js stamps the close button and the auto-update switch too', /querySelectorAll\("\.sl-upd:not\(\.sl-upd-off\), \.sl-gh, \.sl-x, \.sl-au-track"\)/.test(js));
 }
 
 // Outside the reactive mode nothing stamps the close button while rainbow is off, so its hover
