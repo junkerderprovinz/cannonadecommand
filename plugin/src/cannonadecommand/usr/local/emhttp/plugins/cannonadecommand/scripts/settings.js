@@ -18,15 +18,14 @@
       // the real flag image, at the same footprint as the stripe swatch
       "#cc-settings .cc-flag-img{display:inline-block;width:22px;height:15px;flex:0 0 auto;object-fit:cover;border-radius:calc(var(--cc-radius-control) / 4);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}" +
       "#cc-settings .cc-flag-img-lg{width:34px;height:22px}" +
-      // the palette rows fill the card width, with the reset as one more equal cell at the end
       "#cc-settings .cc-set-swatches.cc-fill{display:flex;gap:6px;align-items:center}" +
-      // Every colour row shares out its width in equal cells, so a swatch is the same size in every
-      // card. A swatch and the reset take one cell each, the hex field two, since the code needs
+      // Every swatch is the same 30px square in every card, and the reset after a palette is one
+      // more square of that size. The hex field takes what the row has left, since the code needs
       // the room.
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;border-radius:var(--cc-radius-pill)}" +
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:var(--cc-radius-pill);cursor:pointer;color:#cfcfcf;font-size:var(--cc-text-body);transition:filter .12s,background .12s,color .12s}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-sw{flex:none;width:30px;height:30px;box-sizing:border-box;border-radius:var(--cc-radius-pill)}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn{flex:none;width:30px;height:30px;box-sizing:border-box;margin:0;display:inline-flex;align-items:center;justify-content:center;background:#2e2e2e;border-radius:var(--cc-radius-pill);cursor:pointer;color:#cfcfcf;font-size:var(--cc-text-body);transition:filter .12s,background .12s,color .12s}" +
       "#cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn:hover{background:var(--cc-accent,#FCC419);color:var(--cc-accent-text, #161616)}" +
-      "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{flex:2 2 0;height:30px;min-width:0;box-sizing:border-box;padding:0 8px;align-self:center;font-size:var(--cc-text-meta);letter-spacing:0;margin:0}" +
+      "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{flex:1 1 0;height:30px;min-width:0;box-sizing:border-box;padding:0 8px;align-self:center;font-size:var(--cc-text-meta);letter-spacing:0;margin:0}" +
       // the settings search and the reset-everything button
       "#cc-settings .cc-set-searchrow{margin:12px 0 2px}" +
       "#cc-settings .cc-set-search{box-sizing:border-box;width:100%;max-width:420px;background:#232323;color:#eaeaea;border:none;outline:none;border-radius:var(--cc-radius-control);padding:9px 13px;font-size:var(--cc-text-subline);transition:background-color .12s}" +
