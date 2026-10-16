@@ -51,25 +51,40 @@ html.cc-dash-on table.dashboard .cc-dash-glyphed > img { display: none; }
 html.cc-dash-on table.dashboard .cc-dash-glyphed { gap: 0 !important; }
 html.cc-dash-on table.dashboard .tile-header .section { color: var(--cc-text-dim, #8a8a8a); }
 
-/* The tile controls are icon badges. Settings, info and fold come in while the pointer or the
-   focus is in the tile (rule 6), and stay on a touch screen; the system tile's power controls are
-   the tile's actions and always stand. */
-html.cc-dash-on table.dashboard .tile-header-right-controls { display: inline-flex; align-items: center; gap: 6px; }
-html.cc-dash-on table.dashboard .tile-header-right-controls > a,
-html.cc-dash-on table.dashboard .tile-header-right-controls > i.control:not(.tile),
-html.cc-dash-on table.dashboard .tile-ctrl > span.hand {
-  display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
-  width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); margin: 0;
-  background: var(--cc-chip); color: var(--cc-text-chip, #cfcfcf); border-radius: var(--cc-radius-pill);
-  font-size: var(--cc-text-subline); text-decoration: none; cursor: pointer;
+/* The tile controls are icon badges like a Docker card's actions (dashboard.js marks them
+   .cc-dash-btn and hands each its glyph and name): filled in the colour mode with the glyph in the
+   matching ink, one palette step per badge in rainbow, and in the reactive mode grey until the
+   pointer or the focus is in the tile. Settings, info and fold come in with the pointer or the
+   focus (rule 6), and stay on a touch screen; the system tile's power controls are the tile's
+   actions and always stand. DashStats.css sizes the power controls with !important, hence the
+   one on the font size. */
+html.cc-dash-on table.dashboard .tile-header-right-controls,
+html.cc-dash-on table.dashboard .tile-ctrl { display: inline-flex; align-items: center; gap: 6px !important; }
+html.cc-dash-on table.dashboard .cc-dash-btn {
+  display: inline-flex; flex: none; align-items: center; justify-content: center; box-sizing: border-box;
+  width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); margin: 0; padding: 0; border: none;
+  background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616));
+  border-radius: var(--cc-radius-pill); font-size: var(--cc-text-subline) !important; line-height: 1; text-decoration: none; cursor: pointer;
+  transition: background var(--cc-motion-control-dur, 0s), color var(--cc-motion-control-dur, 0s);
 }
-html.cc-dash-on table.dashboard .tile-header-right-controls > a > i.control { margin: 0; color: inherit; font-size: inherit; }
-html.cc-dash-on table.dashboard .tile-header-right-controls > a:hover,
-html.cc-dash-on table.dashboard .tile-header-right-controls > i.control:not(.tile):hover,
-html.cc-dash-on table.dashboard .tile-ctrl > span.hand:hover {
-  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
+html.cc-dash-on table.dashboard .cc-dash-btn > i.fa,
+html.cc-dash-on table.dashboard .cc-dash-btn.fa::before {
+  margin: 0; padding: 0; width: auto; height: auto; background: none; border-radius: 0; color: inherit; font-size: inherit; line-height: 1;
 }
-html.cc-dash-on table.dashboard .tile-ctrl { gap: 6px !important; margin-right: 6px; }
+html.cc-dash-on table.dashboard .cc-dash-btn.cc-dash-gl > i.fa { display: none; }
+html.cc-dash-on table.dashboard .cc-dash-btn.cc-dash-gl::before { content: none; }
+html.cc-dash-on table.dashboard .cc-dash-btn.cc-actoff { background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-dim, #8a8a8a); cursor: not-allowed; }
+html.cc-dash-on.cc-header-rbneutral table.dashboard > tbody:not(:hover, :focus-within) .cc-dash-btn:not(.cc-actoff) {
+  background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text, #e6e6e6);
+}
+
+/* The system tile's power controls stand in the card's bottom right corner while its content is
+   open. Folded, the card is its head row alone, and they stay in it. */
+html.cc-dash-on table.dashboard > tbody.system:not(:has(> tr:nth-child(2)[style*="none"])) .tile-ctrl {
+  position: absolute; right: 10px; bottom: 16px; z-index: 1;
+}
+/* the server's description is dropped where it only repeats the name the badge carries */
+html.cc-dash-on table.dashboard .cc-dash-dup { display: none; }
 html.cc-dash-on table.dashboard .tile-header-right-controls { opacity: 0; transition: opacity var(--cc-motion-control-dur, 0s); }
 html.cc-dash-on table.dashboard > tbody:is(:hover, :focus-within) .tile-header-right-controls { opacity: 1; }
 @media (hover: none) { html.cc-dash-on table.dashboard .tile-header-right-controls { opacity: 1; } }
@@ -213,4 +228,6 @@ html.cc-dash-on ul.dropdown-menu.dropdown-context > li.dropdown-header { color: 
   html.cc-dash-on table.dashboard td { overflow-wrap: anywhere; }
   html.cc-dash-on table.dashboard .cc-cores-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   html.cc-dash-on table.dashboard .cc-dash-rest { padding: 1px 6px; gap: 4px; }
+  /* the power controls get a line of their own under the uptime, which can reach them here */
+  html.cc-dash-on table.dashboard > tbody.system > tr:nth-child(2) > td { padding-bottom: calc(var(--cc-icon-badge, 26px) + 26px); }
 }

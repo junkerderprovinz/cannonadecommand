@@ -67,7 +67,7 @@ console.log('\nThe tile glyphs are filled');
 }
 
 // A minimal browser around dashboard.js: no tiles, two Smoothie charts, localStorage as a map.
-function run(store) {
+function run(store, dom = {}) {
   const classes = new Set();
   const listeners = {};
   const chart = (strokes) => ({
@@ -86,12 +86,13 @@ function run(store) {
     document: {
       readyState: 'complete',
       documentElement: { lang: 'de', classList: { toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)), contains: (c) => classes.has(c) } },
-      querySelectorAll: () => [],
-      querySelector: () => null,
+      querySelectorAll: dom.querySelectorAll || (() => []),
+      querySelector: dom.querySelector || (() => null),
       getElementById: () => null,
       addEventListener: () => {},
     },
   };
+  if (dom.CCTheme) win.CCTheme = ctx.CCTheme = dom.CCTheme;
   vm.runInNewContext(js, ctx);
   return { classes, win, fire: () => (listeners.storage || []).forEach((f) => f({ key: 'cc.enable.header' })) };
 }
@@ -118,6 +119,75 @@ console.log('\nThe charts follow the area');
   r.fire();
   ok('switched off, the area class goes', !r.classes.has('cc-dash-on'));
   ok('and the charts get their own colours and grid back', cpu.seriesSet[0].options.strokeStyle === '#ff8c2f' && net.seriesSet[0].options.strokeStyle === '#e22828' && cpu.options.grid.strokeStyle === '#2b2b2b' && cpu.options.grid.verticalSections === 4);
+}
+
+// A stand-in element: classes, attributes and the few calls dashboard.js makes on a control.
+function fake(tag, cls, attrs = {}, kids = []) {
+  const set = new Set(cls.split(' ').filter(Boolean)), at = { ...attrs };
+  return {
+    tagName: tag, html: '', listeners: 0, set,
+    classList: { contains: (c) => set.has(c), add: (...c) => c.forEach((x) => set.add(x)), remove: (...c) => c.forEach((x) => set.delete(x)), toggle: (c, on) => (on ? set.add(c) : set.delete(c)) },
+    hasAttribute: (n) => n in at, getAttribute: (n) => (n in at ? at[n] : null), setAttribute: (n, v) => { at[n] = String(v); }, removeAttribute: (n) => { delete at[n]; },
+    querySelector: (sel) => kids.find((k) => (sel === 'i.fa' ? k.set.has('fa') : /title/.test(sel) && (k.hasAttribute('title') || k.hasAttribute('data-cc-tip')))) || null,
+    querySelectorAll: () => [], insertAdjacentHTML(_, h) { this.html += h; }, addEventListener() { this.listeners++; },
+    style: { setProperty() {}, removeProperty() {} },
+  };
+}
+
+console.log('\nThe server card names the server once');
+{
+  const dup = (name, desc) => {
+    const span = fake('SPAN', ''); span.id = ''; span.textContent = desc;
+    const h = { textContent: name, nextElementSibling: span };
+    run({ 'cc.enable.header': '1' }, { querySelector: (s) => (/tbody\.system h3/.test(s) ? h : null) });
+    return span.set.has('cc-dash-dup');
+  };
+  ok('a description that repeats the name is dropped', dup('Bottich', ' Bottich '));
+  ok('in any letter case', dup('Bottich', 'BOTTICH'));
+  ok('a description of its own stays', !dup('Bottich', 'Medienserver im Keller'));
+  ok('an empty one is left alone', !dup('Bottich', ''));
+  ok('the dropped description is hidden by the sheet', selectors(css).some(([s, b]) => /\.cc-dash-dup$/.test(s) && /display:\s*none/.test(b)));
+}
+
+console.log('\nThe tile controls are CC icon badges');
+{
+  const gearIcon = fake('I', 'fa fa-fw fa-cog control', { title: 'Gehe zu den Identifikations-Einstellungen' });
+  const gear = fake('A', '', { href: '/Dashboard/Settings/Identification' }, [gearIcon]);
+  const stop = fake('SPAN', 'fa fa-fw fa-stop-circle hand', { title: 'Array stoppen', onclick: 'StopArray()' });
+  const busy = fake('SPAN', 'fa fa-fw fa-stop-circle busy', { title: 'Array stoppen' });
+  const off = fake('SPAN', 'fa fa-fw fa-power-off hand', { title: 'Shutdown the system', onclick: 'Shutdown()' });
+  const fold = fake('I', 'fa fa-fw fa-chevron-down control openclose', { title: 'Inhalt ein/ausblenden' });
+  const plugin = fake('SPAN', 'fa fa-fw fa-fire hand', { title: 'FireSquire' });
+  const all = [gear, stop, busy, off, fold, plugin];
+  const store = { 'cc.enable.header': '1' };
+  const r = run(store, {
+    querySelectorAll: (s) => (/tile-ctrl/.test(s) ? all : /cc-dash-btn/.test(s) ? all.filter((b) => b.set.has('cc-dash-btn')) : []),
+    CCTheme: { glyph: (n) => '<svg class="cc-glyph" data-n="' + n + '"></svg>' },
+  });
+  ok('each control is marked as a CC icon badge', all.every((b) => b.set.has('cc-actbtn') && b.set.has('cc-dash-btn')));
+  ok('the power off badge is named in plain German', off.getAttribute('data-cc-tip') === 'Herunterfahren' && off.getAttribute('aria-label') === 'Herunterfahren');
+  ok('the gear says where it leads, and its icon gives up the text a bubble would find first', gear.getAttribute('data-cc-tip') === 'Identifikation bearbeiten' && !gearIcon.hasAttribute('title'));
+  ok('the fold arrow says what a press does', fold.getAttribute('data-cc-tip') === 'Karte ausklappen');
+  ok('a plugin control keeps its own name', plugin.getAttribute('data-cc-tip') === 'FireSquire');
+  ok('the glyphs come from the set where it has the meaning', /data-n="Stop"/.test(stop.html) && /data-n="Power"/.test(off.html) && /data-n="Gear"/.test(gear.html) && plugin.html === '' && fold.html === '');
+  ok('a span control is reachable and pressable by keyboard', stop.getAttribute('role') === 'button' && stop.getAttribute('tabindex') === '0' && stop.listeners === 1);
+  ok('Unraid keeps its handlers', stop.getAttribute('onclick') === 'StopArray()' && off.getAttribute('onclick') === 'Shutdown()');
+  ok('a busy control rests greyed and takes no focus', busy.set.has('cc-actoff') && busy.getAttribute('aria-disabled') === 'true' && !busy.hasAttribute('tabindex'));
+  store['cc.enable.header'] = '0';
+  r.fire();
+  ok('switched off, every control is Unraid\'s again', all.every((b) => !b.set.has('cc-dash-btn') && !b.set.has('cc-actbtn') && !b.hasAttribute('data-cc-tip') && !b.hasAttribute('role')));
+  ok('with Unraid\'s own hover text back in place', gearIcon.getAttribute('title') === 'Gehe zu den Identifikations-Einstellungen' && stop.getAttribute('title') === 'Array stoppen');
+}
+
+console.log('\nThe badges and their corner in the sheet');
+{
+  const rules = selectors(css);
+  const badge = rules.find(([s]) => s === 'html.cc-dash-on table.dashboard .cc-dash-btn');
+  ok('a badge has the one icon badge size', !!badge && /width: var\(--cc-icon-badge, 26px\)/.test(badge[1]) && /height: var\(--cc-icon-badge, 26px\)/.test(badge[1]));
+  ok('it is filled in the colour mode', !!badge && /background: var\(--cc-rb-c, var\(--cc-accent/.test(badge[1]));
+  ok('the reactive mode rests it grey until the tile has the pointer or the focus', rules.some(([s]) => /cc-header-rbneutral table\.dashboard > tbody:not\(:hover, :focus-within\) \.cc-dash-btn/.test(s)));
+  const corner = rules.find(([s]) => /tbody\.system:not\(:has\(> tr:nth-child\(2\)\[style\*="none"\]\)\) \.tile-ctrl/.test(s));
+  ok('the power controls stand in the bottom right corner while the card is open', !!corner && /position: absolute/.test(corner[1]) && /bottom:/.test(corner[1]) && /right:/.test(corner[1]));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
