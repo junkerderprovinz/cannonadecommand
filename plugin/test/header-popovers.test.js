@@ -30,6 +30,8 @@ console.log('\nThe notification drawer');
   ok('keyboard focus shows the halo', /^0 0 0 3px color-mix\(in srgb, var\(--cc-accent, #FCC419\) 45%, transparent\)$/.test(val(tab, 'box-shadow') || ''), val(tab, 'box-shadow'));
   const panel = { tag: 'div', classes: [], attrs: { role: 'tabpanel', tabindex: '0' }, inside: SHEET, outside: ['.shrink-0'], states: { 'focus-visible': true, focus: true } };
   ok('the focusable list panel draws no ring at all', val(panel, 'box-shadow') === 'none');
+  const drawer = { tag: 'div', classes: ['fixed', 'z-50', 'bg-background'], inside: ['.unapi'] };
+  ok('a long list runs down to the 16px margin above the viewport\'s bottom edge', /^74px 16px /.test(val(drawer, 'inset') || '') && val(drawer, 'max-height') === 'calc(100vh - 90px)', val(drawer, 'max-height'));
 }
 
 console.log('\nThe account menu');
@@ -41,6 +43,13 @@ console.log('\nThe account menu');
   const c = val(info, 'color');
   ok('the (i) never takes the accent, not even under the pointer', !/accent/.test(c || ''), c);
   ok('and draws the outline (i) of every other info bubble, not a text character', /ic\.innerHTML = window\.CCTheme\.CC_INFO_SVG;/.test(read('scripts/header.js')) && !/"cc-acctinfo"; ic.textContent/.test(read('scripts/header.js')));
+  const header = read('scripts/header.js');
+  ok('it gets the close badge of every CC window, named in both languages', header.includes('mx.className = "cc-acct-x"; mx.innerHTML = window.CCTheme.glyph("Close");') && header.includes('mx.setAttribute("aria-label", T("Schließen", "Close"));'));
+  ok('which closes the menu with Escape, the key reka listens for', header.includes('menu.insertBefore(mx, menu.firstChild);') && /mx\.addEventListener\("click"[\s\S]{0,160}key: "Escape"/.test(header));
+  const x = { tag: 'span', classes: ['cc-acct-x'], inside: ['.cc-acctmenu'] };
+  ok('a square badge in the top right corner, the drawer\'s size', val(x, 'width') === 'var(--cc-icon-badge, 26px)' && val(x, 'height') === 'var(--cc-icon-badge, 26px)' && val(x, 'position') === 'absolute' && val(x, 'right') === '6px' && val(x, 'top') === '6px');
+  ok('on the chip grey at rest and in the colour chain under the pointer', /--cc-surface-chip/.test(val(x, 'background')) && CHAIN.test(val(Object.assign({}, x, { states: { hover: true } }), 'background') || ''));
+  ok('on a strip of its own above the first entry', val({ tag: 'div', classes: ['bg-popover', 'cc-acctmenu'] }, 'padding-top') === '38px');
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

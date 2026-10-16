@@ -1332,6 +1332,16 @@
         menu.classList.add("cc-acctmenu");
         if (menu.getAttribute("data-cc-acct") === "1") continue;
         menu.setAttribute("data-cc-acct", "1");
+        // The menu brings no close control of its own, unlike the notification drawer, so it gets
+        // the square badge in the corner that every CC window has. Escape is what reka closes on.
+        var mx = window.CCTheme.pressable(document.createElement("span"));
+        mx.className = "cc-acct-x"; mx.innerHTML = window.CCTheme.glyph("Close");
+        mx.setAttribute("aria-label", T("Schließen", "Close")); mx.setAttribute("data-cc-tip", T("Schließen", "Close"));
+        mx.addEventListener("click", function (e) {
+          e.preventDefault(); e.stopPropagation();
+          document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        });
+        menu.insertBefore(mx, menu.firstChild);
         var lis = menu.querySelectorAll("li");
         for (var i = 0; i < lis.length; i++) {
           var li = lis[i];
