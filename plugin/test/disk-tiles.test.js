@@ -241,6 +241,9 @@ console.log('\nEvery pool and section keeps its badge and stands beside the othe
   ok('on a phone every card takes the full width', /@media \(max-width: 600px\) \{[^@]*\.cc-dk-grid\.cc-dk-fit \{ grid-template-columns: minmax\(0, 1fr\); width: auto; \}/.test(css));
   const ud = grabFn(js, 'udRow');
   ok('Unassigned Devices\' parts move into one wrapping row, and only those', /hasCls\(c, "show-disks"\) \|\| hasCls\(c, "show-shares"\)/.test(ud) && /el\("div", "cc-dk-udrow"\)/.test(ud) && /\.cc-dk-udrow \{ display: flex; flex-wrap: wrap;/.test(css));
+  const lv = grabFn(js, 'level');
+  ok('beside the pools the boot cards drop by a pool\'s badge row, wrapped below they do not', /pool\.closest\("section"\)\.getBoundingClientRect\(\)\.top - boot\.closest\("section"\)\.getBoundingClientRect\(\)\.top\) < 1/.test(lv) && /boot\.style\.paddingTop = lift > 0 \? lift \+ "px" : "";/.test(lv));
+  ok('the levelling follows every render and a resize', /\n    level\(\);\n  \}/.test(js) && /window\.addEventListener\("resize", level\);/.test(js));
   ok('leaving the page puts them back where UD wrote them', /while \(r\.firstChild\) r\.parentNode\.insertBefore\(r\.firstChild, r\);/.test(grabFn(js, 'teardown')));
 
   const R = load({});

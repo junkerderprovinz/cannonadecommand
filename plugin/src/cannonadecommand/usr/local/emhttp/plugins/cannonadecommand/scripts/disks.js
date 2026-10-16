@@ -693,6 +693,18 @@
     root.classList.toggle("cc-dk-tiled", tiles && !all.some(function (S) {
       return S.key !== "ud" && !S.box.classList.contains("cc-dk-hidden");
     }));
+    level();
+  }
+  // While the boot device stands beside the pools, its cards drop by the height of a pool's badge
+  // row, so the card tops in that row line up. Wrapped below, it needs no gap.
+  function level() {
+    var boot = document.querySelector('#displaybox .cc-dk-host[data-cc-dk="boot"]');
+    if (!boot) return;
+    var pool = document.querySelector("#displaybox .cc-dk-pool"), lift = 0;
+    if (pool && Math.abs(pool.closest("section").getBoundingClientRect().top - boot.closest("section").getBoundingClientRect().top) < 1) {
+      lift = Math.round(pool.querySelector(".cc-dk-grid").getBoundingClientRect().top - pool.getBoundingClientRect().top);
+    }
+    boot.style.paddingTop = lift > 0 ? lift + "px" : "";
   }
   var frame = 0;
   function soon() { if (!frame) frame = (window.requestAnimationFrame || setTimeout)(function () { frame = 0; render(); }); }
@@ -722,6 +734,7 @@
     loadExtra();
     setInterval(loadExtra, 10 * 60 * 1000);
     watch();
+    window.addEventListener("resize", level);
     window.addEventListener("storage", function (e) { if (e && e.key && /^cc[a-z]*\./.test(e.key) && e.key !== "cc.stateCache") soon(); });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
