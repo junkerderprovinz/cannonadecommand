@@ -56,7 +56,7 @@ const build = new Function('document', 'window', 'jumpTo',
   'var de = false;\n' +   // the English labels, so the assertions can search for ASCII text
   grabFn('el') + '\n' + grabFn('T') + '\n' + grabFn('infoIcon') + '\n' + grabFn('normHex') + '\n' +
   grabFn('hexToHsv') + '\n' + grabFn('hsvToHex') + '\n' + grabFn('inlinePicker') + '\n' + grabFn('toggle') + '\n' +
-  grabFn('actionBtn') + '\n' + grabFn('lockRow') + '\n' + grabFn('fieldRow') + '\n' + grabFn('swMark') + '\n' + grabFn('swMarkRow') + '\n' +
+  grabFn('actionBtn') + '\n' + grabFn('inlineRow') + '\n' + grabFn('lockRow') + '\n' + grabFn('fieldRow') + '\n' + grabFn('swMark') + '\n' + grabFn('swMarkRow') + '\n' +
   grabFn('colourField') + '\n' + grabFn('ccTick') + '\n' + grabFn('idealText') + '\n' +
   'var PRESETS = ["#FCC419", "#1D99F3"];\n' + grabFn('logoToggles') + '\n' +
   'return { logoToggles: logoToggles };'
@@ -107,7 +107,7 @@ console.log('\nAdopting takes over the colours, and the switches stay');
   ok('adopting: both switch rows stay', !h.bgToggle.parentNode.hidden && !h.tintToggle.parentNode.hidden);
   ok('adopting: the colour fields give way', fields.every((f) => f.hidden));
   ok('adopting: the line shows in their place', lock.hidden === false);
-  ok('on an area card it names the global card', /Follows/.test(lock.textContent) && /General › Logos & icons/.test(lock.textContent), lock.textContent);
+  ok('on an area card it names the global card', /Follows General/.test(lock.textContent) && /Go to Logos & icons/.test(lock.textContent), lock.textContent);
   const jump = lock.children[1].children.find((c) => c.attrs.role === 'button');
   jump.listeners.click[0]();
   ok('and its button jumps to that card', jumps.length === 1 && jumps[0][0] === 'general' && jumps[0][1] === 'Logos & icons', JSON.stringify(jumps));

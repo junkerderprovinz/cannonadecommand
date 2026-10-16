@@ -23,7 +23,7 @@ const block = settings.slice(settings.indexOf('var VIEW_ORG_Q'), settings.indexO
 async function viewRow(store, org) {
   const rows = [], sent = [];
   const mk = (tag, cls, txt) => {
-    const n = { tag, cls: new Set((cls || '').split(' ').filter(Boolean)), textContent: txt || '', kids: [], innerHTML: '', style: { setProperty() {}, removeProperty() {} }, appendChild(c) { this.kids.push(c); c.parentNode = this; return c; }, querySelector: () => null };
+    const n = { tag, cls: new Set((cls || '').split(' ').filter(Boolean)), textContent: txt || '', kids: [], _h: '', get innerHTML() { return this._h; }, set innerHTML(v) { this._h = v; this.kids = []; }, style: { setProperty() {}, removeProperty() {} }, appendChild(c) { this.kids.push(c); c.parentNode = this; return c; }, querySelector: () => null };
     n.classList = { toggle: (k, on) => (on ? n.cls.add(k) : n.cls.delete(k)) };
     return n;
   };
@@ -43,20 +43,18 @@ async function viewRow(store, org) {
   const row = r.rows[r.rows.length - 1];
   ok('with folders it offers Liste, Raster and Ordner', row && row.opts.map((o) => o[0]).join() === 'list,grid,folder', row && row.opts.map((o) => o[0]).join());
   ok('it shows the organizer\'s saved view, which the Docker tab opens with', row && row.cur === 'folder');
-  const side = r.c.kids[1], sketches = () => side.kids[side.kids.length - 1].kids;
-  ok('under it a sketch of each view it offers', sketches().map((f) => f.kids[0].textContent).join() === 'Liste,Raster,Ordner' && sketches().every((f) => /^<svg viewBox="0 0 60 36"/.test(f.innerHTML)), sketches().map((f) => f.kids[0].textContent).join());
-  ok('the chosen view\'s sketch is lit', sketches().map((f) => f.cls.has('cc-set-vp-on')).join() === 'false,false,true');
+  const side = r.c.kids[1], preview = () => side.kids[side.kids.length - 1], shown = () => preview().kids[1].kids.map((k) => k.textContent).join();
+  ok('beside it a preview of the chosen view alone, under its label', preview().kids.length === 2 && preview().kids[0].textContent === 'Vorschau' && shown() === 'Ordner' && /^<svg viewBox="0 0 60 36"/.test(preview().kids[1].innerHTML), shown());
+  ok('the sketch wears the chosen segment\'s colour', preview().kids[1].cls.has('cc-set-vp-on'));
   row.onChange('grid');
   await new Promise((res) => setTimeout(res, 10));
   const save = r.sent.find((x) => /^mutation/.test(x.q));
   ok('a pick writes cc.view for this browser', store['cc.view'] === 'grid');
-  ok('and lights its sketch at once', sketches().map((f) => f.cls.has('cc-set-vp-on')).join() === 'false,true,false');
+  ok('and the preview shows it at once', shown() === 'Raster', shown());
   ok('and the organizer\'s view mode, keeping its other prefs', !!save && save.v.prefs.ccViewMode === 'grid' && save.v.prefs.other === 1 && save.v.viewId === 'default', save && JSON.stringify(save.v));
   const bare = await viewRow({ 'cc.view': 'grid' }, { id: 'default', prefs: {}, flatEntries: [{ type: 'folder' }] });
   const brow = bare.rows[bare.rows.length - 1];
   ok('without a folder there is no Ordner to pick', brow && brow.opts.map((o) => o[0]).join() === 'list,grid' && brow.cur === 'grid');
-  const bside = bare.c.kids[1];
-  ok('and no folder sketch either', bside.kids[bside.kids.length - 1].kids.length === 2);
   const off = await viewRow({ 'cc.theming': '0' }, org);
   ok('with theming off a lock line says the list stays', off.rows.length === 0 && off.c.kids[0] && /Liste/.test(off.c.kids[0].lock));
   ok('the Docker tile carries the row', /var cV = card\(T\("Ansicht", "View"\)\);\s*viewRow\(cV\);/.test(settings));

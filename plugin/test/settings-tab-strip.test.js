@@ -126,7 +126,7 @@ console.log('\nA tab shows only while its area is on');
   ok('General and Info have no switch and always show', fresh(null));
   const set = areaOn({ 'cc.enable.header': '1', 'cc.enable.docker': '0' });
   ok('a stored value wins either way', set('cc.enable.header') && !set('cc.enable.docker'));
-  const defaults = [...settings.matchAll(/\["(cc\.enable\.\w+)", T\("[^"]+", "[^"]+"\), "0"\]/g)].map((m) => m[1]).sort().join(' ');
+  const defaults = [...settings.matchAll(/\["(cc\.enable\.\w+)", T\("[^"]+", "[^"]+"\), "0"[,\]]/g)].map((m) => m[1]).sort().join(' ');
   ok('the areas card agrees on which start off', defaults === 'cc.enable.header cc.enable.main cc.enable.shares', defaults);
 }
 

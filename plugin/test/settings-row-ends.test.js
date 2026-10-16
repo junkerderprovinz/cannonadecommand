@@ -18,7 +18,7 @@ console.log('\nEach kind of control is pushed to its row\'s end');
 {
   const inline = { tag: 'div', classes: ['cc-set-row', 'cc-set-inline'], inside: ['#cc-settings', '.cc-set-card'] };
   ok('a switch row puts its name and its switch at the two ends', val(win(page, inline, 'justify-content')) === 'space-between' && val(win(page, inline, 'flex-wrap')) === 'nowrap');
-  ok('a toggleRow pushes its switch with a spacer', /function toggleRow[\s\S]*?cc-set-spacer[\s\S]*?row\.appendChild\(toggle\(on, onChange\)\)/.test(settings) && val(win(page, { tag: 'span', classes: ['cc-set-spacer'], inside: inCard }, 'flex')) === '1');
+  ok('a toggleRow is that same switch row', /function toggleRow\(labelText, help, on, onChange\) \{ return inlineRow\(labelText, help, toggle\(on, onChange\)\); \}/.test(settings) && /function inlineRow[\s\S]*?el\("div", "cc-set-row cc-set-inline"\)/.test(settings));
   ok('a dropdown', val(win(page, { tag: 'span', classes: ['cc-dsel'], inside: inCard, outside: ['.cc-pop'] }, 'margin-left')) === 'auto');
   ok('a one-line field', /auto$/.test(val(win(page, { tag: 'input', classes: ['cc-set-txt'], attrs: { type: 'text' }, inside: inCard, html: ['cc-popups-on'] }, 'margin'))));
   ok('a slider', val(win(page, { tag: 'input', classes: [], attrs: { type: 'range' }, inside: inCard }, 'margin-left')) === 'auto');

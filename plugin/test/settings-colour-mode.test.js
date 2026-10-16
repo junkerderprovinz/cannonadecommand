@@ -77,7 +77,7 @@ console.log('\nThe mode selector stands at the end of its row');
 console.log('\nShape and badge style live in the Theming card');
 {
   ok('Form', /themingCard\.appendChild\(segRow\(T\("Form", "Shape"\)/.test(settings));
-  ok('Badge-Stil, with its (i)', /themingCard\.appendChild\(segRow\(T\("Badge-Stil", "Badge style"\)[^\n]*\n\s+T\("Flat: /.test(settings));
+  ok('Badge-Stil, with its (i)', /themingCard\.appendChild\(segRow\(T\("Badge-Stil", "Badge style"\)[^\n]*\n\s+T\("Flach: /.test(settings));
   ok('neither stays in the Badges card', !/c1\.appendChild\(segRow\(T\("(Form|Badge-Stil)"/.test(settings));
 }
 

@@ -90,6 +90,9 @@
       // A row or card that has nothing to act on stays out of the page and out of the search.
       "#cc-settings [hidden],#cc-settings .cc-set-off{display:none!important}" +
       "#cc-settings .cc-set-prose{text-align:start}" +
+      // One font with the rest of Unraid: the page takes the theme's face, as every other page does.
+      "#cc-settings{font-family:inherit}" +
+      "#cc-settings .cc-set-cname .cc-info{margin-left:6px;vertical-align:-2px}" +
       // A selector sits at the end of its row in a groove, its segments one width, and only the chosen one is a badge.
       "#cc-settings .cc-seg.cc-set-mode{display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;flex:none;box-sizing:border-box;background:var(--cc-surface-base,#161616)}" +
       "#cc-settings .cc-set-mode .cc-seg-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;padding:7px 12px;font-size:var(--cc-text-subline)}" +
@@ -104,7 +107,8 @@
       "#cc-settings .cc-set-split-side.cc-set-split-auto{width:auto}" +
       "@media (max-width:1199px){#cc-settings .cc-set-split{grid-template-columns:minmax(0,1fr)}#cc-settings .cc-set-split-side{width:auto}}" +
       // the Docker view sketches beside their selector, each in a well of its own
-      "#cc-settings .cc-set-viewprev{display:flex;justify-content:flex-end;gap:10px;margin-top:12px}" +
+      "#cc-settings .cc-set-viewprev{display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin-top:12px}" +
+      "#cc-settings .cc-set-viewprev > .cc-set-lbl{margin:0}" +
       "#cc-settings .cc-set-vp{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 12px 8px;border-radius:var(--cc-radius-control);background:var(--cc-surface-base,#161616);color:var(--cc-text-dim,#8a8a8a);transition:color .12s,background-color .12s}" +
       "#cc-settings .cc-set-vp svg{display:block;width:108px;height:65px}" +
       "#cc-settings .cc-set-vp-lbl{font-size:var(--cc-text-meta);line-height:1.2}" +
@@ -162,7 +166,21 @@
       "#cc-settings .cc-rbtn-sheen{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}" +
       "#cc-settings .cc-rbtn-sheen::after{content:'';position:absolute;top:-12px;bottom:-12px;left:-64px;width:33px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28) 45%,rgba(255,255,255,.28) 55%,transparent);transform:skewX(-16deg)}" +
       "@keyframes cc-rbtn-sheen{to{left:calc(100% + 32px)}}" +
-      "@media (hover:hover) and (prefers-reduced-motion:no-preference){html:not([data-cc-motion=\"off\"]) #cc-settings .cc-rbtn-unit:hover .cc-rbtn-sheen::after{animation:cc-rbtn-sheen .7s linear}}";
+      "@media (hover:hover) and (prefers-reduced-motion:no-preference){html:not([data-cc-motion=\"off\"]) #cc-settings .cc-rbtn-unit:hover .cc-rbtn-sheen::after{animation:cc-rbtn-sheen .7s linear}}" +
+      // Where a row is too narrow for its name and its control, the control moves under the name
+      // and keeps the row's end (GlimStone, "Narrow windows"). A selector or a group of buttons
+      // still wider than the card breaks into even rows rather than pushing the page sideways.
+      "@media (max-width:1023px){" +
+        "#cc-settings .cc-set-row.cc-set-inline{flex-wrap:wrap;row-gap:8px}" +
+        "#cc-settings .cc-set-row.cc-set-inline > :last-child{margin-left:auto;max-width:100%}" +
+        "#cc-settings .cc-set-colend{flex-wrap:wrap;justify-content:flex-end;row-gap:8px;min-width:0}" +
+        "#cc-settings .cc-seg.cc-set-mode{display:flex;flex-wrap:wrap;justify-content:flex-end;max-width:100%;border-radius:var(--cc-radius-control)}" +
+        "#cc-settings .cc-set-mode .cc-seg-btn{flex:1 0 auto}" +
+        "#cc-settings .cc-set-fieldrow{flex-wrap:wrap;row-gap:8px}" +
+        "#cc-settings .cc-set-fieldrow > .cc-set-pickrow{flex:1 1 100%}" +
+        "#cc-settings .cc-set-swatches.cc-fill{flex-wrap:wrap}" +
+        "#cc-settings .cc-set-swatches.cc-fill .cc-set-hexin{min-width:90px}" +
+      "}";
     document.head.appendChild(st);
   })();
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
@@ -177,19 +195,19 @@
   var RELEASES_API = "https://api.github.com/repos/junkerderprovinz/cannonadecommand/releases";
 
   var COLS = [
-    { key: "update", label: T("Update-Status", "Update status") },
-    { key: "force", label: T("Update erzwingen", "Force update") },
-    { key: "version", label: T("Image-Tag (latest)", "Image tag (latest)") },
-    { key: "net", label: T("Netzwerk", "Network") },
-    { key: "ip", label: T("Container-IP", "Container IP") },
-    { key: "lan", label: T("LAN-IP", "LAN IP") },
-    { key: "port", label: T("Ports", "Ports") },
-    { key: "res", label: T("CPU / RAM", "CPU / RAM") },
-    { key: "id", label: T("Container-ID", "Container ID") },
-    { key: "von", label: T("Von / Quelle", "From / source") },
-    { key: "vol", label: T("Volumes", "Volumes") },
-    { key: "plan", label: T("Startplan", "Start plan") },
-    { key: "restart", label: T("Restart-Policy", "Restart policy") },
+    { key: "update", label: T("Update-Status", "Update status"), help: T("Ob für das Image ein Update bereitsteht.", "Whether an update is waiting for the image.") },
+    { key: "force", label: T("Update erzwingen", "Force update"), help: T("Ein Knopf, der das Image neu lädt, auch ohne gemeldetes Update.", "A button that pulls the image again, even when no update is reported.") },
+    { key: "version", label: T("Image-Tag (latest)", "Image tag (latest)"), help: T("Der Tag des Images, etwa latest oder 1.4.", "The image tag, such as latest or 1.4.") },
+    { key: "net", label: T("Netzwerk", "Network"), help: T("Das Netzwerk, in dem der Container läuft.", "The network the container runs in.") },
+    { key: "ip", label: T("Container-IP", "Container IP"), help: T("Die IP-Adresse des Containers in seinem Netzwerk.", "The container's IP address in its network.") },
+    { key: "lan", label: T("LAN-IP", "LAN IP"), help: T("Die Adresse, unter der der Container im LAN erreichbar ist.", "The address the container can be reached at on the LAN.") },
+    { key: "port", label: T("Ports", "Ports"), help: T("Die Ports, die der Container nach außen öffnet.", "The ports the container publishes.") },
+    { key: "res", label: T("CPU / RAM", "CPU / RAM"), help: T("Wie viel Prozessor und Arbeitsspeicher der Container gerade braucht.", "How much processor and memory the container uses right now.") },
+    { key: "id", label: T("Container-ID", "Container ID"), help: T("Die kurze ID des Containers.", "The container's short ID.") },
+    { key: "von", label: T("Von / Quelle", "From / source"), help: T("Woher das Image stammt, mit einem Link zu seiner Seite.", "Where the image comes from, with a link to its page.") },
+    { key: "vol", label: T("Volumes", "Volumes"), help: T("Die Ordner, die in den Container eingebunden sind.", "The folders mapped into the container.") },
+    { key: "plan", label: T("Startplan", "Start plan"), help: T("Wo der Container im Startplan steht.", "Where the container stands in the start plan.") },
+    { key: "restart", label: T("Restart-Policy", "Restart policy"), help: T("Wann Docker den Container von selbst neu startet.", "When Docker restarts the container on its own.") },
   ];
   // One glyph per settings tab, filled on currentColor, each with the viewBox glyphs.json crops to
   // its ink so every tab's glyph reads the same size.
@@ -604,10 +622,14 @@
     });
     return box;
   }
-  function toggleRow(labelText, on, onChange) {
-    var row = el("div", "cc-set-row"); row.appendChild(el("span", null, labelText)); var sp = el("span", "cc-set-spacer"); row.appendChild(sp);
-    row.appendChild(toggle(on, onChange)); return row;
+  // The one shape of a setting row: its name and (i) at the start, its control at the end.
+  function inlineRow(labelText, help, control) {
+    var row = el("div", "cc-set-row cc-set-inline"), lw = el("span", "cc-set-lblwrap");
+    lw.appendChild(el("span", null, labelText)); lw.appendChild(infoIcon(help));
+    row.appendChild(lw); row.appendChild(control);
+    return row;
   }
+  function toggleRow(labelText, help, on, onChange) { return inlineRow(labelText, help, toggle(on, onChange)); }
   // A tall control such as a colour field beside its name: the name and its bubble at the start of
   // the first line, the control at the row's end.
   function fieldRow(labelText, help, control) {
@@ -620,14 +642,11 @@
   // A switch whose value has no effect is left out, and this line stands in its place: it names
   // what decides instead and jumps there.
   function lockRow(label, by, jumpLabel, onJump, help) {
-    var row = el("div", "cc-set-row cc-set-inline cc-set-locked"), lw = el("span", "cc-set-lblwrap");
-    lw.appendChild(el("span", null, label));
-    if (help) lw.appendChild(infoIcon(help));
-    row.appendChild(lw);
     var end = el("span", "cc-set-colend");
     end.appendChild(el("span", "cc-set-lockby", by));
     end.appendChild(actionBtn(jumpLabel, "cc-btn cc-set-xbtn", onJump));
-    row.appendChild(end);
+    var row = inlineRow(label, help, end);
+    row.classList.add("cc-set-locked");
     return row;
   }
   // Every colour row draws the same swatch, so the picked one is marked the same way everywhere.
@@ -877,8 +896,8 @@
     var colours = T("Kachel- und Icon-Farbe", "Tile and icon colour");
     var lockHelp = T("Solange „Badge-Farben übernehmen“ an ist, nehmen Kacheln und eingefärbte Icons die Farben der Badges.", "While “Use the badge colours” is on, tiles and tinted icons take the badge colours.");
     var lock = hideAdopt
-      ? lockRow(colours, T("Folgt", "Follows"), T("Allgemein › Logos & Icons", "General › Logos & icons"), function () { jumpTo("general", T("Logos & Icons", "Logos & icons")); }, lockHelp)
-      : lockRow(colours, T("Folgt", "Follows"), T("Badges", "Badges"), function () { jumpTo("general", T("Badges", "Badges")); }, lockHelp);
+      ? lockRow(colours, T("Folgt Allgemein", "Follows General"), T("Zu Logos & Icons", "Go to Logos & icons"), function () { jumpTo("general", T("Logos & Icons", "Logos & icons")); }, lockHelp)
+      : lockRow(colours, T("Folgt den Badges", "Follows the badges"), T("Zu den Badges", "Go to Badges"), function () { jumpTo("general", T("Badges", "Badges")); }, lockHelp);
 
     function sync() {
       if (adoptTg) adoptTg._setOn(io.getAdopt());
@@ -1000,20 +1019,12 @@
     root.style.setProperty("--cc-accent", accent);
     root.style.setProperty("--cc-accent-text", idealText(accent));
 
+    // The page has no heading (GlimStone rule 30): the tile column already says where this is. The
+    // head row holds only the settings search, which filters cards and rows across every tab, a
+    // badge at the right with a magnifier that expands into the input on click.
     var head = el("div", "cc-set-head");
     var hero = el("div", "cc-set-hero");
-    var hleft = el("div", "cc-set-heroleft");
-    var lg = el("img", "cc-set-logo"); lg.src = "/plugins/cannonadecommand/images/cannonadecommand-unraid.svg"; lg.alt = "";   // the double-ring variant, which reads on every Unraid theme
-    hleft.appendChild(lg);
-    var htx = el("div", null);
-    var brand = el("div", "cc-set-brand"); brand.appendChild(el("b", null, "Cannonade")); brand.appendChild(el("span", null, "Command"));
-    htx.appendChild(brand);
-    htx.appendChild(el("div", "cc-set-claim", "Firepower and finish for Unraid's Docker, Plugins and VM tabs."));
-    hleft.appendChild(htx);
-    hero.appendChild(hleft);
     head.appendChild(hero);
-    // The settings search filters cards and rows across every tab. It sits at the right of the
-    // hero as a badge with a magnifier that expands into the input on click.
     var setSearch = el("input", "cc-set-search"); setSearch.type = "search"; setSearch.placeholder = T("Einstellungen durchsuchen …", "Search settings …"); setSearch.spellcheck = false;
     var searchBadge = el("div", "cc-set-searchbadge");
     var searchIcon = el("span", "cc-set-searchicon"); searchIcon.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M14 3.072a8 8 0 0 1 2.32 11.834l5.387 5.387a1 1 0 0 1 -1.414 1.414l-5.388 -5.387a8 8 0 1 1 -.905 -13.249" /></svg>';   // tabler filled/search
@@ -1077,7 +1088,7 @@
     var themingCard; // the first Allgemein card, which the backup section moves into
     (function () {
       var tc = card(T("Theming", "Theming"), T("Aus: nur die Docker-Funktionen von CannonadeCommand bleiben (Startplan, Abhängigkeiten, Health-Gate, Watchdog, Zeitpläne, Limits, Bandbreite, Auto-Stop bei Leerlauf). Das gesamte visuelle Theming, also Badges, Farben, Rainbow, Karten und die Umgestaltung aller Tabs, wird abgeschaltet.", "Off: only CannonadeCommand's Docker functions remain (start plan, dependencies, health gate, watchdog, schedules, limits, bandwidth, idle auto-stop). All visual theming, meaning badges, colours, rainbow, cards and every tab's restyling, is turned off."));
-      tc.appendChild(toggleRow(T("Theming aktiv", "Theming on"), localStorage.getItem("cc.theming") !== "0", function (v) { set("cc.theming", v ? "1" : "0"); render(); syncHeaderBar(); syncSharesBar(); }));
+      tc.appendChild(toggleRow(T("Theming aktiv", "Theming on"), T("Schaltet das Aussehen von CannonadeCommand an oder aus, die Docker-Funktionen arbeiten weiter.", "Turns CannonadeCommand's look on or off, while the Docker functions keep working."), localStorage.getItem("cc.theming") !== "0", function (v) { set("cc.theming", v ? "1" : "0"); render(); syncHeaderBar(); syncSharesBar(); }));
       themingCard = tc;
       wrapMain.appendChild(tc);
     })();
@@ -1117,16 +1128,12 @@
         b.style.marginLeft = "auto";   // flush right, like the switches in the rows around it
         b.addEventListener("click", function () { location.href = "/Settings/DisplaySettings"; });
         r.appendChild(b); cCard.appendChild(r);
-        var ar = el("div", "cc-set-row cc-set-inline");
-        var arl = el("span", "cc-set-lblwrap");
-        arl.appendChild(el("span", null, T("Kopf-Farben ans Thema koppeln", "Match header colours to the theme")));
-        arl.appendChild(infoIcon(T("An: die Kopfzeilen-Hintergrund- und Textfarbe folgen automatisch Unraids Farbschema, also dunkler Hintergrund mit heller Schrift beim dunklen Thema und umgekehrt. Wirkt, wenn CannonadeCommands Kopfbereich aus ist.", "On: the header background and text colour follow Unraid's colour scheme automatically, dark background with light text on a dark theme and the reverse on a light one. Applies while CannonadeCommand's header area is off.")));
-        ar.appendChild(arl);
-        ar.appendChild(toggle(get("cc.hdrauto", "1") === "1", function (v) { set("cc.hdrauto", v ? "1" : "0"); if (v) applyHdrAuto(); }));
+        var arLabel = T("Kopf-Farben ans Thema koppeln", "Match header colours to the theme");
+        var arHelp = T("An: die Kopfzeilen-Hintergrund- und Textfarbe folgen automatisch Unraids Farbschema, also dunkler Hintergrund mit heller Schrift beim dunklen Thema und umgekehrt. Wirkt, wenn CannonadeCommands Kopfbereich aus ist.", "On: the header background and text colour follow Unraid's colour scheme automatically, dark background with light text on a dark theme and the reverse on a light one. Applies while CannonadeCommand's header area is off.");
         // CannonadeCommand's own header area paints over the native colours, so while it is on the
         // switch has nothing to show and the line says so.
-        if (areaOn("cc.enable.header")) cCard.appendChild(lockRow(T("Kopf-Farben ans Thema koppeln", "Match header colours to the theme"), T("Übermalt vom Kopfbereich", "Painted over by the header area"), T("Bereiche", "Areas"), function () { jumpTo("general", T("Bereiche", "Areas")); }));
-        else cCard.appendChild(ar);
+        if (areaOn("cc.enable.header")) cCard.appendChild(lockRow(arLabel, T("Übermalt vom Kopfbereich", "Painted over by the header area"), T("Zu den Bereichen", "Go to Areas"), function () { jumpTo("general", T("Bereiche", "Areas")); }, arHelp));
+        else cCard.appendChild(toggleRow(arLabel, arHelp, get("cc.hdrauto", "1") === "1", function (v) { set("cc.hdrauto", v ? "1" : "0"); if (v) applyHdrAuto(); }));
         // Apply the coupling once for a fresh default-on state. It only bites while the CC header
         // area is off, and the flag is set before the call, so the reload postDisplay triggers
         // cannot loop.
@@ -1149,10 +1156,19 @@
     // Bereiche: enable/disable each area CannonadeCommand enhances
     (function () {
       var c = card(T("Bereiche", "Areas"), T("Aktiviere, welche Bereiche CannonadeCommand verschönert. Ein deaktivierter Bereich blendet seinen Tab hier sofort aus.", "Choose which areas CannonadeCommand enhances. Disabling an area hides its tab here immediately."));
-      [["cc.enable.main", T("Start", "Main"), "0"], ["cc.enable.header", T("Kopfbereich", "Header area"), "0"], ["cc.enable.shares", T("Freigaben", "Shares"), "0"], ["cc.enable.docker", T("Docker", "Docker"), "1"], ["cc.enable.plugins", T("Plugins", "Plugins"), "1"], ["cc.enable.vms", T("VMs", "VMs"), "1"], ["cc.enable.settings", T("Einstellungen und Werkzeuge", "Settings and Tools"), "1"], ["cc.enable.favorites", T("Favoriten", "Favorites"), "1"]].forEach(function (a) {
-        var row = el("div", "cc-set-row cc-set-inline");
+      [
+        ["cc.enable.main", T("Start", "Main"), "0", T("Gestaltet den Tab Start mit dem Array und seinen Laufwerken.", "Styles the Main tab with the array and its disks.")],
+        ["cc.enable.header", T("Kopfbereich", "Header area"), "0", T("Gestaltet die Menüleiste und den Streifen darüber mit der Status-Insel.", "Styles the menu bar and the strip above it with the status island.")],
+        ["cc.enable.shares", T("Freigaben", "Shares"), "0", T("Gestaltet den Tab Freigaben mit den Benutzer- und Laufwerksfreigaben.", "Styles the Shares tab with the user and disk shares.")],
+        ["cc.enable.docker", T("Docker", "Docker"), "1", T("Gestaltet den Docker-Tab und das Formular, in dem du einen Container anlegst oder änderst.", "Styles the Docker tab and the form where you add or edit a container.")],
+        ["cc.enable.plugins", T("Plugins", "Plugins"), "1", T("Gestaltet den Plugins-Tab.", "Styles the Plugins tab.")],
+        ["cc.enable.vms", T("VMs", "VMs"), "1", T("Gestaltet den VMs-Tab.", "Styles the VMs tab.")],
+        ["cc.enable.settings", T("Einstellungen und Werkzeuge", "Settings and Tools"), "1", T("Gestaltet die Kacheln und Seiten unter Einstellungen und Werkzeuge.", "Styles the tiles and pages under Settings and Tools.")],
+        ["cc.enable.favorites", T("Favoriten", "Favorites"), "1"]
+      ].forEach(function (a) {
         var cur = localStorage.getItem(a[0]);
         if (a[0] === "cc.enable.favorites") {
+          var row = el("div", "cc-set-row cc-set-inline");
           // The favourites area needs Unraid's own favourites, or there is no tab to enhance.
           // cc.hidefavtab mirrors the native "favorites=no", and the first switch here writes that
           // native setting itself: the Favorites tab comes and goes at once through header.js,
@@ -1188,10 +1204,8 @@
           window.ccFavGateSync = function () { favGate(true); };
           c.appendChild(natRow); c.appendChild(row); return;
         }
-        row.appendChild(el("span", null, a[1]));
         // The header area decides whether the Theming card's header colour switch shows.
-        row.appendChild(toggle(cur == null ? a[2] !== "0" : cur !== "0", function (v) { localStorage.setItem(a[0], v ? "1" : "0"); if (a[0] === "cc.enable.header") render(); else refreshTabs(); }));
-        c.appendChild(row);
+        c.appendChild(toggleRow(a[1], a[3], cur == null ? a[2] !== "0" : cur !== "0", function (v) { localStorage.setItem(a[0], v ? "1" : "0"); if (a[0] === "cc.enable.header") render(); else refreshTabs(); }));
       });
       wrapMain.appendChild(c);
     })();
@@ -1504,8 +1518,8 @@
     themingCard.appendChild(segRow(T("Form", "Shape"), [["round", T("Rund", "Round"), "IconCornerRound"], ["soft", T("Weich", "Soft"), "IconCornerSoft"], ["square", T("Eckig", "Square"), "IconCornerSquare"]], shapeName(get("cc.badgeshape", "round")), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); },
       T("Karten, Felder und Knöpfe ändern ihre Ecken gemeinsam.", "Cards, fields and buttons change their corners together.")));
     // One global badge style: glass adds a sheen to every badge at once, flat is the solid look.
-    themingCard.appendChild(segRow(T("Badge-Stil", "Badge style"), [["flat", "Flat", "IconBadgeFlat"], ["glass", "Glass", "IconBadgeGlass"]], get("cc.badgeglass", "0") === "1" ? "glass" : "flat", function (v) { set("cc.badgeglass", v === "glass" ? "1" : "0"); document.documentElement.classList.toggle("cc-badge-glass", v === "glass" && get("cc.theming", "1") !== "0"); syncHeaderBar(); syncSharesBar(); },
-      T("Flat: einfarbige Badges. Glass: ein Glanz auf jedem Badge.", "Flat: solid badges. Glass: a sheen on every badge.")));
+    themingCard.appendChild(segRow(T("Badge-Stil", "Badge style"), [["flat", T("Flach", "Flat"), "IconBadgeFlat"], ["glass", T("Glas", "Glass"), "IconBadgeGlass"]], get("cc.badgeglass", "0") === "1" ? "glass" : "flat", function (v) { set("cc.badgeglass", v === "glass" ? "1" : "0"); document.documentElement.classList.toggle("cc-badge-glass", v === "glass" && get("cc.theming", "1") !== "0"); syncHeaderBar(); syncSharesBar(); },
+      T("Flach: einfarbige Badges. Glas: ein Glanz auf jedem Badge.", "Flat: solid badges. Glass: a sheen on every badge.")));
     // The reactive toggle covers every colour mode: everything rests grey, colours on hover, and
     // the active item stays lit.
     var rmode = el("div", "cc-set-row cc-set-inline");
@@ -1566,12 +1580,15 @@
       own.forEach(function (a) {
         var row = el("div", "cc-set-row cc-set-inline"), nm = el("span", "cc-set-lblwrap"), dot = el("span", "cc-set-excdot");
         dot.style.background = get(ADOPT_PREF[a[0]] + "accent", "#FCC419");
-        nm.appendChild(dot); nm.appendChild(el("span", null, a[2])); row.appendChild(nm);
+        nm.appendChild(dot); nm.appendChild(el("span", null, a[2]));
+        nm.appendChild(infoIcon(T("Dieser Bereich hat eine eigene Farbe, bis du „Globale Farbe nutzen“ wählst.", "This area has a colour of its own until you pick “Use the global colour”.")));
+        row.appendChild(nm);
         row.appendChild(actionBtn(T("Globale Farbe nutzen", "Use the global colour"), "cc-btn", function () { setOwnColour(a[0], false); }));
         cExc.appendChild(row);
       });
       if (follow.length) {
-        var add = el("div", "cc-set-row"); add.appendChild(el("span", "cc-set-rl", T("Ausnahme hinzufügen", "Add an exception")));
+        var add = el("div", "cc-set-row"), addL = add.appendChild(el("span", "cc-set-rl", T("Ausnahme hinzufügen", "Add an exception")));
+        addL.appendChild(infoIcon(T("Gibt einem Bereich eine eigene Farbe, die du danach in seinem Tab wählst.", "Gives an area a colour of its own, which you then pick on its tab.")));
         add.appendChild(areaPicker(T("Bereich wählen", "Choose an area"), follow, function (a) { setOwnColour(a[0], true); localStorage.setItem("cc.settab", a[1]); render(); }));
         cExc.appendChild(add);
       }
@@ -1620,11 +1637,11 @@
       // The default is "auto"; the other three are manual overrides and are respected even
       // where the automatic choice would have picked differently.
       var modeRow = segRow(T("Icon-Färbung", "Icon colouring"),
-        [["auto", T("Automatisch", "Automatic"), "IconTintAuto"], ["native", T("Natives Icon", "Native icon"), "IconTintNative"], ["flat", T("Ink-Flatten", "Ink flatten"), "IconTintFlatten"], ["tint", T("Luminanz-Tint", "Luminance tint"), "IconTintLuminance"]],
+        [["auto", T("Automatisch", "Automatic"), "IconTintAuto"], ["native", T("Natives Icon", "Native icon"), "IconTintNative"], ["flat", T("Nachzeichnen", "Redraw"), "IconTintFlatten"], ["tint", T("Tönen", "Tone"), "IconTintLuminance"]],
         get("cc.iconmode", "auto"),
         function (v) { set("cc.iconmode", v); gsync(); },
-        T("Ein Logo ist entweder eine einzelne durchgehende Form oder ein kleines mehrfarbiges Bild. Eine Form kann man komplett in deiner Farbe nachzeichnen und sie bleibt erkennbar; ein Bild würde dabei zum Farbklecks, weil Hintergrund und Motiv dieselbe Farbe bekämen. Darum zwei Behandlungen:\n\nAutomatisch (empfohlen): CannonadeCommand sieht sich jedes Logo an. Formen werden nachgezeichnet, für bekannte Programme wird dafür sogar ein echtes Marken-Logo geholt; Bilder werden nur eingefärbt.\nNatives Icon: nichts einfärben, jedes Logo bleibt wie geliefert.\nInk-Flatten: alles nachzeichnen, auch Bilder.\nLuminanz-Tint: alles nur einfärben, auch Formen.\n\nDie Wahl wirkt, sobald „Icons einfärben“ an ist. Einzelne Container, VMs und Plugins kannst du in ihrem eigenen Fenster abweichend einstellen; diese Einzelwahl gewinnt immer gegen die Einstellung hier.",
-          "A logo is either one solid shape or a small multi-colour picture. A shape can be redrawn entirely in your colour and stays recognisable; a picture would turn into a blob, because its background and its mark would end up the same colour. Hence two treatments:\n\nAutomatic (recommended): CannonadeCommand looks at each logo. Shapes are redrawn, and for a well-known app a real brand logo is fetched to redraw; pictures are only tinted.\nNative icon: no colouring, every logo stays as shipped.\nInk flatten: redraw everything, pictures included.\nLuminance tint: only tint everything, shapes included.\n\nThe choice applies once “Tint icons” is on. Individual containers, VMs and plugins can be set differently in their own window; that per-item choice always wins over the setting here."));
+        T("Ein Logo ist entweder eine einzelne durchgehende Form oder ein kleines mehrfarbiges Bild. Eine Form kann man komplett in deiner Farbe nachzeichnen und sie bleibt erkennbar; ein Bild würde dabei zum Farbklecks, weil Hintergrund und Motiv dieselbe Farbe bekämen. Darum zwei Behandlungen:\n\nAutomatisch (empfohlen): CannonadeCommand sieht sich jedes Logo an. Formen werden nachgezeichnet, für bekannte Programme wird dafür sogar ein echtes Marken-Logo geholt; Bilder werden nur eingefärbt.\nNatives Icon: nichts einfärben, jedes Logo bleibt wie geliefert.\nNachzeichnen: alles nachzeichnen, auch Bilder.\nTönen: alles nur einfärben, auch Formen.\n\nDie Wahl wirkt, sobald „Icons einfärben“ an ist. Einzelne Container, VMs und Plugins kannst du in ihrem eigenen Fenster abweichend einstellen; diese Einzelwahl gewinnt immer gegen die Einstellung hier.",
+          "A logo is either one solid shape or a small multi-colour picture. A shape can be redrawn entirely in your colour and stays recognisable; a picture would turn into a blob, because its background and its mark would end up the same colour. Hence two treatments:\n\nAutomatic (recommended): CannonadeCommand looks at each logo. Shapes are redrawn, and for a well-known app a real brand logo is fetched to redraw; pictures are only tinted.\nNative icon: no colouring, every logo stays as shipped.\nRedraw: redraw everything, pictures included.\nTone: only tint everything, shapes included.\n\nThe choice applies once “Tint icons” is on. Individual containers, VMs and plugins can be set differently in their own window; that per-item choice always wins over the setting here."));
       cLI.appendChild(modeRow);
       // Three preview sections, each with that area's real icons, each running the same pipeline
       // the real tab runs, so the choice above is visible without leaving this tab.
@@ -1731,7 +1748,7 @@
     var thr = el("tr"); thr.appendChild(el("th")); thr.appendChild(thc(T("Einfach", "Basic"))); thr.appendChild(thc(T("Erweitert", "Advanced"))); tbl.appendChild(thr);
     COLS.forEach(function (c, i) {
       var tr = el("tr"), hue = window.CCTheme ? window.CCTheme.rbColor(i, accent) : accent;   // one palette position per column
-      tr.appendChild(el("td", "cc-set-cname", c.label));
+      tr.appendChild(el("td", "cc-set-cname", c.label)).appendChild(infoIcon(c.help));
       tr.appendChild(chkCell(c.key, "s", hue)); tr.appendChild(chkCell(c.key, "a", hue)); tbl.appendChild(tr);
     });
     c3.appendChild(tbl);
@@ -1743,13 +1760,13 @@
 
     // Notifications are engine-side and saved to the flash.
     var c5 = card(T("Benachrichtigungen", "Notifications"), T("Warnungen bei Watchdog-Neustarts, fehlgeschlagenen Starts und Zeitplan-Fehlern.", "Alerts on watchdog restarts, failed starts and schedule errors."));
-    var nrow = el("div", "cc-set-row cc-set-inline"); nrow.appendChild(el("span", null, T("Unraid-Benachrichtigungen", "Unraid notifications")));
     var ntg = toggle(notify.unraid, function (v) {
       notify.unraid = v; notifyDirty = true;
       saveNotify(ntg, function () { notify.unraid = !v; ntg._setOn(!v); });
     });
-    nrow.appendChild(ntg); c5.appendChild(nrow);
-    var wrow = el("div", "cc-set-row"); wrow.appendChild(el("span", "cc-set-rl", T("Webhook-URL", "Webhook URL")));
+    c5.appendChild(inlineRow(T("Unraid-Benachrichtigungen", "Unraid notifications"), T("Schickt die Warnungen auch als Unraid-Benachrichtigung.", "Also sends the alerts as Unraid notifications."), ntg));
+    var wrow = el("div", "cc-set-row"), wl = wrow.appendChild(el("span", "cc-set-rl", T("Webhook-URL", "Webhook URL")));
+    wl.appendChild(infoIcon(T("Eine Adresse, an die jede Warnung zusätzlich geht. Leer heißt aus.", "An address every alert is also sent to. Empty means off.")));
     var win = el("input", "cc-set-txt"); win.id = "cc-set-webhook"; win.type = "url"; win.placeholder = "https://…"; win.value = notify.webhook || "";
     // a render in the meantime replaces the field, so the save looks it up again when it fires
     win.addEventListener("input", function () { notify.webhook = win.value.trim(); notifyDirty = true; afterQuiet("notify", function () { saveNotify(document.getElementById("cc-set-webhook")); }); });
@@ -1757,7 +1774,8 @@
     wrap.appendChild(c5);
 
     var c6 = card(T("Bandbreite", "Bandwidth"), T("Schnittstelle im Container, auf der die Limits gesetzt werden. Leer heißt automatisch, also die Default-Route des Containers, und ist die Empfehlung. Pro-Container-Limits stellst du im Docker-Tab ein.", "The interface inside the container the limits are applied to. Blank means automatic, the container's default route, which is the recommendation. Per-container limits are set in the Docker tab."));
-    var ifrow = el("div", "cc-set-row"); ifrow.appendChild(el("span", "cc-set-rl", T("Schnittstelle", "Interface")));
+    var ifrow = el("div", "cc-set-row"), ifl = ifrow.appendChild(el("span", "cc-set-rl", T("Schnittstelle", "Interface")));
+    ifl.appendChild(infoIcon(T("Die Netzwerkschnittstelle im Container, auf der die Limits greifen. Leer heißt automatisch.", "The network interface inside the container the limits act on. Empty means automatic.")));
     var ifin = el("input", "cc-set-txt"); ifin.id = "cc-set-iface"; ifin.type = "text"; ifin.placeholder = T("automatisch", "automatic"); ifin.value = shapeIface; ifin.maxLength = 15; ifin.spellcheck = false; ifin.setAttribute("list", "cc-iface-list");
     var dl = el("datalist"); dl.id = "cc-iface-list"; ["eth0", "eth1", "eth2"].forEach(function (n) { var o = el("option"); o.value = n; dl.appendChild(o); });
     ifin.addEventListener("input", function () { shapeIface = ifin.value.trim(); shapeDirty = true; afterQuiet("shape", function () { saveShape(document.getElementById("cc-set-iface")); }); });
@@ -2014,11 +2032,22 @@
       // What the island shows only matters while it is shown, so those rows are shut while it is off.
       var shown = [];
       var gate = function () { var on = get("cc.island", "1") !== "0"; shown.forEach(function (r) { setRowEnabled(r, on); }); };
-      cI.appendChild(toggleRow(T("Status-Insel anzeigen", "Show status island"), get("cc.island", "1") !== "0", function (v) { set("cc.island", v ? "1" : "0"); gate(); syncHeaderBar(); }));
+      cI.appendChild(toggleRow(T("Status-Insel anzeigen", "Show status island"), T("Zeigt oben rechts die Insel mit den Werten des Servers.", "Shows the island with the server's readings at the top right."), get("cc.island", "1") !== "0", function (v) { set("cc.island", v ? "1" : "0"); gate(); syncHeaderBar(); }));
       // one switch per chip; header.js renders them in a fixed order and reads the keys live
       shown.push(cI.appendChild(el("div", "cc-set-lbl", T("Angezeigte Elemente", "Shown elements"))));
-      [["uptime", T("Betriebszeit", "Uptime")], ["os", T("Unraid-Edition", "Unraid edition")], ["version", T("Unraid-Version", "Unraid version")], ["array", T("Array-Zustand", "Array state")], ["fill", T("Array-Füllstand", "Array usage")], ["ram", T("RAM-Auslastung", "RAM usage")], ["cpu", T("CPU-Last", "CPU load")], ["containers", T("Laufende Container", "Running containers")], ["net", T("Netzwerk-Traffic", "Network traffic")], ["temps", T("Temperaturen", "Temperatures")]].forEach(function (it) {
-        shown.push(cI.appendChild(toggleRow(it[1], get("cc.isl." + it[0], "1") !== "0", function (v) { set("cc.isl." + it[0], v ? "1" : "0"); syncHeaderBar(); })));
+      [
+        ["uptime", T("Betriebszeit", "Uptime"), T("Wie lange der Server schon läuft.", "How long the server has been running.")],
+        ["os", T("Unraid-Edition", "Unraid edition"), T("Welche Unraid-Lizenz der Server hat, etwa Plus oder Pro.", "Which Unraid licence the server has, such as Plus or Pro.")],
+        ["version", T("Unraid-Version", "Unraid version"), T("Die Unraid-Version, die gerade läuft.", "The Unraid version that is running.")],
+        ["array", T("Array-Zustand", "Array state"), T("Ob das Array gestartet oder gestoppt ist.", "Whether the array is started or stopped.")],
+        ["fill", T("Array-Füllstand", "Array usage"), T("Wie voll das Array ist, als Balken mit Prozentwert.", "How full the array is, as a bar with a percentage.")],
+        ["ram", T("RAM-Auslastung", "RAM usage"), T("Wie viel Arbeitsspeicher belegt ist.", "How much memory is in use.")],
+        ["cpu", T("CPU-Last", "CPU load"), T("Wie stark der Prozessor gerade arbeitet.", "How busy the processor is right now.")],
+        ["containers", T("Laufende Container", "Running containers"), T("Wie viele Container laufen und wie viele gestoppt sind.", "How many containers are running and how many are stopped.")],
+        ["net", T("Netzwerk-Traffic", "Network traffic"), T("Wie viel der Server gerade empfängt und sendet.", "How much the server is receiving and sending right now.")],
+        ["temps", T("Temperaturen", "Temperatures"), T("Die Temperaturen von Prozessor und Mainboard, farbig ab der Warnschwelle.", "The processor and board temperatures, coloured from the warning threshold up.")]
+      ].forEach(function (it) {
+        shown.push(cI.appendChild(toggleRow(it[1], it[2], get("cc.isl." + it[0], "1") !== "0", function (v) { set("cc.isl." + it[0], v ? "1" : "0"); syncHeaderBar(); })));
       });
       shown.push(cI.appendChild(tempWarnRow(syncHeaderBar)));
       gate();
@@ -2029,9 +2058,9 @@
     // nothing else clears an icon already in the DOM.
     (function () {
       var cT = card(T("Haupttabs", "Main tabs"), T("Icon (Tabler, MIT-lizenziert) und/oder Text vor jedem Haupttab-Namen (Übersicht, Docker, VMs, …). Beides aus ist möglich, zeigt dann eine leere Pille.", "Icon (Tabler, MIT licensed) and/or text for every main tab label (Dashboard, Docker, VMs, …). Turning both off is possible and shows an empty pill."));
-      cT.appendChild(toggleRow(T("Icons anzeigen", "Show icons"), get("cc.tabicons", "1") !== "0", function (v) { set("cc.tabicons", v ? "1" : "0"); try { window.ccTabIcons && window.ccTabIcons(); } catch (e) {} }));
+      cT.appendChild(toggleRow(T("Icons anzeigen", "Show icons"), T("Setzt vor jeden Tab der Menüleiste ein kleines Symbol.", "Puts a small icon before every tab in the menu bar."), get("cc.tabicons", "1") !== "0", function (v) { set("cc.tabicons", v ? "1" : "0"); try { window.ccTabIcons && window.ccTabIcons(); } catch (e) {} }));
       // an icon-only mode beside the icon switch, in the same card, since both fill the same pill
-      cT.appendChild(toggleRow(T("Text anzeigen", "Show text"), get("cc.tabtext", "1") !== "0", function (v) { set("cc.tabtext", v ? "1" : "0"); try { window.ccTabIcons && window.ccTabIcons(); } catch (e) {} }));
+      cT.appendChild(toggleRow(T("Text anzeigen", "Show text"), T("Zeigt den Namen in jedem Tab, ohne ihn bleibt nur das Symbol.", "Shows the name in each tab, without it only the icon stays."), get("cc.tabtext", "1") !== "0", function (v) { set("cc.tabtext", v ? "1" : "0"); try { window.ccTabIcons && window.ccTabIcons(); } catch (e) {} }));
       wrapHeader.appendChild(cT);
     })();
     // The server name's look. header.js reads the cc.brand.* keys live and inlines them, so the
@@ -2048,9 +2077,12 @@
       nmIn.addEventListener("input", function () { var v = nmIn.value.trim(); if (v) set("cc.brand.name", v); else del("cc.brand.name"); syncHeaderBar(); });
       nmRow.appendChild(nmL); nmRow.appendChild(nmIn); cB.appendChild(nmRow);
       var SZ = ["16", "18", "20", "22", "24", "26", "28", "30", "32", "36", "40", "44", "48", "56", "64"].map(function (s) { return [s, s + " px"]; });
-      cB.appendChild(dropRow(T("Größe", "Size"), SZ, get("cc.brand.size", "30"), function (v) { set("cc.brand.size", v); syncHeaderBar(); }));
-      cB.appendChild(dropRow(T("Stärke", "Weight"), [["300", T("Dünn", "Thin"), "IconWeightThin"], ["400", "Normal", "IconWeightRegular"], ["500", "Medium", "IconWeightMedium"], ["650", T("Halbfett", "Semibold"), "IconWeightSemibold"], ["800", T("Fett", "Bold"), "IconWeightBold"]], get("cc.brand.weight", "650"), function (v) { set("cc.brand.weight", v); syncHeaderBar(); }));
-      cB.appendChild(dropRow(T("Kursiv", "Italic"), [["0", T("Normal", "Normal"), "IconUpright"], ["1", T("Kursiv", "Italic"), "IconItalic"]], get("cc.brand.italic", "0"), function (v) { set("cc.brand.italic", v); syncHeaderBar(); }));
+      cB.appendChild(dropRow(T("Größe", "Size"), SZ, get("cc.brand.size", "30"), function (v) { set("cc.brand.size", v); syncHeaderBar(); },
+        T("Die Schriftgröße des Servernamens.", "The font size of the server name.")));
+      cB.appendChild(dropRow(T("Stärke", "Weight"), [["300", T("Dünn", "Thin"), "IconWeightThin"], ["400", "Normal", "IconWeightRegular"], ["500", "Medium", "IconWeightMedium"], ["650", T("Halbfett", "Semibold"), "IconWeightSemibold"], ["800", T("Fett", "Bold"), "IconWeightBold"]], get("cc.brand.weight", "650"), function (v) { set("cc.brand.weight", v); syncHeaderBar(); },
+        T("Wie kräftig der Servername geschrieben ist.", "How heavy the server name is set.")));
+      cB.appendChild(dropRow(T("Kursiv", "Italic"), [["0", T("Normal", "Normal"), "IconUpright"], ["1", T("Kursiv", "Italic"), "IconItalic"]], get("cc.brand.italic", "0"), function (v) { set("cc.brand.italic", v); syncHeaderBar(); },
+        T("Stellt den Servernamen schräg.", "Sets the server name in italics.")));
       // System faces, which render where the client has them. The Google families below are
       // downloaded, so they render anywhere.
       var SYS = [
@@ -2099,7 +2131,8 @@
         .concat(rest).map(function (f) { return [f[0], f[1], f[2] || f[0]]; }); // o[2] = self-preview face
       // load the Google faces so their dropdown previews (and any chosen one on this page) actually render
       try { if (window.CCTheme && window.CCTheme.loadGFonts) window.CCTheme.loadGFonts(GF.map(function (gf) { return gf[0]; })); } catch (e) {}
-      cB.appendChild(dropRow(T("Schriftart", "Font"), FONTS, get("cc.brand.font", ""), function (v) { set("cc.brand.font", v); syncHeaderBar(); }));
+      cB.appendChild(dropRow(T("Schriftart", "Font"), FONTS, get("cc.brand.font", ""), function (v) { set("cc.brand.font", v); syncHeaderBar(); },
+        T("Die Schrift des Servernamens. Standard nimmt Unraids eigene.", "The server name's font. Default uses Unraid's own.")));
       var brandCol = colourField(get("cc.brand.color", ""), function (v) { if (v) set("cc.brand.color", v); else del("cc.brand.color"); syncHeaderBar(); }, { fallback: "#f4f4f4", placeholder: "#F4F4F4", clearable: true });
       cB.appendChild(fieldRow(T("Farbe", "Colour"), T("Ein leeres Hex-Feld lässt den Namen in der hellen Standardfarbe.", "An empty hex field leaves the name in the light default colour."), brandCol));
       wrapHeader.appendChild(cB);
@@ -2111,8 +2144,17 @@
       var cIc = card(T("Kopf-Icons", "Header icons"), T("Blende einzelne Icons oben rechts aus. Aus heißt versteckt.", "Hide individual icons in the top right. Off means hidden."));
       // The help icon is absent because its inline help moved into the bubbles, and the bell and
       // burger because they are integral: hiding one left its badge without an icon.
-      [["lang", T("Sprache", "Language")], ["search", T("Suche", "Search")], ["logout", T("Abmelden", "Logout")], ["terminal", T("Terminal", "Terminal")], ["browse", T("Datei-Verwaltung", "File manager")], ["feedback", T("Feedback", "Feedback")], ["info", T("Info", "Info")], ["log", T("Protokoll", "Log")]].forEach(function (ic) {
-        cIc.appendChild(toggleRow(ic[1], get("cc.hideicon." + ic[0], "0") === "0", function (v) { set("cc.hideicon." + ic[0], v ? "0" : "1"); syncHeaderBar(); }));
+      [
+        ["lang", T("Sprache", "Language"), T("Zeigt den Knopf, der die Sprache wechselt.", "Shows the button that switches the language.")],
+        ["search", T("Suche", "Search"), T("Zeigt den Knopf für die Suche.", "Shows the search button.")],
+        ["logout", T("Abmelden", "Logout"), T("Zeigt den Knopf zum Abmelden.", "Shows the button that logs you out.")],
+        ["terminal", T("Terminal", "Terminal"), T("Zeigt den Knopf, der ein Terminal auf dem Server öffnet.", "Shows the button that opens a terminal on the server.")],
+        ["browse", T("Datei-Verwaltung", "File manager"), T("Zeigt den Knopf, der die Datei-Verwaltung öffnet.", "Shows the button that opens the file manager.")],
+        ["feedback", T("Feedback", "Feedback"), T("Zeigt den Knopf, mit dem du Lime Technology Feedback schickst.", "Shows the button that sends feedback to Lime Technology.")],
+        ["info", T("Info", "Info"), T("Zeigt den Knopf mit den Systeminfos des Servers.", "Shows the button with the server's system info.")],
+        ["log", T("Protokoll", "Log"), T("Zeigt den Knopf, der das Systemprotokoll öffnet.", "Shows the button that opens the system log.")]
+      ].forEach(function (ic) {
+        cIc.appendChild(toggleRow(ic[1], ic[2], get("cc.hideicon." + ic[0], "0") === "0", function (v) { set("cc.hideicon." + ic[0], v ? "0" : "1"); syncHeaderBar(); }));
       });
       wrapHeader.appendChild(cIc);
     })();
@@ -2583,17 +2625,16 @@
     else [1, 19].forEach(function (y) { s += r(1, y, 6, 4) + r(9, y + 1, 16, 2) + r(1, y + 6, 58, 10, 0.18); [3, 17, 31, 45].forEach(function (x) { s += r(x, y + 7.5, 12, 7, 0.55); }); });
     return '<svg viewBox="0 0 60 36" fill="currentColor" aria-hidden="true">' + s + "</svg>";
   }
+  // The preview shows the chosen view alone, since a sketch of every view beside the selector would
+  // read as a second selector for the same choice.
   function viewPreview(opts) {
-    var box = el("div", "cc-set-viewprev"), figs = {};
-    opts.forEach(function (o) {
-      var fig = el("div", "cc-set-vp");
+    var box = el("div", "cc-set-viewprev"), fig = el("div", "cc-set-vp cc-set-vp-on");
+    box.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview"))); box.appendChild(fig);
+    // paintToggles() gives the sketch the colour of the chosen segment.
+    function mark(v) {
+      var o = opts.filter(function (x) { return x[0] === v; })[0] || opts[0];
       fig.innerHTML = viewSketch(o[0]);
       fig.appendChild(el("span", "cc-set-vp-lbl", o[1]));
-      box.appendChild(fig); figs[o[0]] = fig;
-    });
-    // paintToggles() gives the lit sketch the colour of the chosen segment.
-    function mark(v) {
-      Object.keys(figs).forEach(function (k) { figs[k].classList.toggle("cc-set-vp-on", k === v); });
       paintToggles();
     }
     return { el: box, mark: mark };
@@ -2602,7 +2643,7 @@
     var label = T("Ansicht", "View");
     var help = T("Wie der Docker-Tab die Container zeigt, dieselbe Wahl wie im Zahnrad-Menü dort. Ordner kannst du wählen, sobald es einen Ordner gibt.", "How the Docker tab shows the containers, the same choice as its gear menu. Folders can be picked once there is a folder.");
     if (get("cc.theming", "1") === "0") {
-      c.appendChild(lockRow(label, T("Liste, solange das Theming aus ist", "List while theming is off"), "Theming", function () { jumpTo("general", "Theming"); }, help));
+      c.appendChild(lockRow(label, T("Liste, solange das Theming aus ist", "List while theming is off"), T("Zum Theming", "Go to Theming"), function () { jumpTo("general", "Theming"); }, help));
       return;
     }
     var slot = el("div", "cc-set-viewslot"), side = el("div");
