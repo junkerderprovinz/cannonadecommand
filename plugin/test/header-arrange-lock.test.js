@@ -23,5 +23,24 @@ console.log('\nThe lock while arranging');
   ok('a press on the lock never starts a drag', /if \(e\.button !== 0 \|\| isNavLock\(it\)\) return;/.test(body('wireNavItem')));
 }
 
+console.log('\nArranging moves nothing on the page');
+{
+  const { candidates } = require('./cascade');
+  const win = (el, prop, arranging) => {
+    const html = ['cc-header-on', 'cc-popups-on'].concat(arranging ? ['cc-arrange'] : []);
+    const c = candidates('every', Object.assign({ attrs: {}, states: {}, html }, el), prop);
+    return c.length ? c[c.length - 1].value : null;
+  };
+  const trig = { tag: 'span', classes: [], attrs: { 'data-cc-trig': 'bell' }, inside: ['.cc-iconproxy'] };
+  ok('the ghost takes the bell\'s and the burger\'s slot instead of sitting beside them', win(trig, 'display', true) === 'none');
+  const island = { tag: 'span', classes: [], attrs: {}, id: 'cc-island' };
+  ok('the island keeps its row gap', win(island, 'gap', true) === win(island, 'gap', false), win(island, 'gap', true));
+  const row = { tag: 'span', classes: ['cc-isl-row'], inside: ['#cc-island'], states: { empty: true } };
+  ok('an empty row keeps its height', win(row, 'min-height', true) === win(row, 'min-height', false), win(row, 'min-height', true));
+  const lastTrig = { tag: 'span', classes: [], attrs: { 'data-cc-trig': 'burger' }, inside: ['.nav-tile', '.right', '.nav-item', '.util'], states: { 'last-child': true } };
+  const end = candidates('every', Object.assign({ html: ['cc-header-on'] }, lastTrig), 'margin-right').filter((d) => d.value === '0' && d.selector.includes('[data-cc-trig]'));
+  ok('a trailing bell or burger ends the row at its icon, as the ghost does', end.length > 0);
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

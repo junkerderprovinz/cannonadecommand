@@ -193,13 +193,12 @@ html.cc-header-on #cc-island .cc-isl-row {
   min-height: 22px;   /* each row keeps its slot, so the others do not move when one empties */
 }
 html.cc-header-on #cc-island .cc-isl-row:empty { display: flex; }   /* keep the empty slot so the other rows stay in place */
-/* in arrange mode empty rows are real drop targets, or a chip could never move into one */
-html.cc-header-on.cc-arrange #cc-island .cc-isl-row:empty { display: flex !important; min-height: 24px; min-width: 52px; }
+/* In arrange mode empty rows are real drop targets, or a chip could never move into one. They gain
+   width only: a taller row would grow the island and move every chip in the header. */
+html.cc-header-on.cc-arrange #cc-island .cc-isl-row:empty { display: flex !important; min-width: 52px; }
 /* the grab cursor shows only in arrange mode; otherwise the island is a passive display */
 html.cc-header-on #cc-island .cc-isl-chip { cursor: default; }
 html.cc-header-on.cc-arrange #cc-island .cc-isl-chip { cursor: grab; }
-/* while dragging: reveal the 3 drop zones + fade the dragged chip */
-html.cc-header-on.cc-arrange #cc-island { gap: 8px; }
 /* while arranging, the chips stay in place and only wiggle, so the rows get a dashed drop outline
    and nothing that would reflow them */
 html.cc-header-on.cc-arrange #cc-island .cc-isl-row { outline: 1px dashed rgba(255, 255, 255, .22); outline-offset: 3px; border-radius: var(--cc-radius-control); }
@@ -408,7 +407,9 @@ html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right { padding-right: 16
 }
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right { min-width: 0 !important; flex-wrap: nowrap !important; }
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right > *:last-child { margin-right: 0 !important; }
-html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right .nav-item.util:last-child > a { margin-right: 0 !important; }
+/* the adopted bell or burger ends the row as often as an <a> does, and the arrange ghost swaps in
+   for it at the same width */
+html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right .nav-item.util:last-child > :is(a, [data-cc-trig]) { margin-right: 0 !important; }
 /* Bell and burger proxies: draggable nav-items that hold each icon's slot in the flow. Normally
    header.js adopts the live reka trigger into the proxy and hides the proxy's own <a>, so two 36px
    boxes never sit side by side. In arrange mode it swaps them: the adopted trigger is hidden (CSS
@@ -429,8 +430,9 @@ html.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost {
 }
 html.cc-header-on.cc-header-rbneutral #menu .nav-item.cc-iconproxy .cc-proxy-ghost { background: rgba(128, 128, 128, .18); color: var(--cc-header-ink, #cfcfcf); }
 html.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost svg { width: 16px; height: 16px; color: inherit; fill: currentColor; }
-/* arrange mode: the adopted trigger hides and the ghost shows */
-html.cc-arrange.cc-header-on [data-cc-trig] { visibility: hidden !important; }
+/* arrange mode: the ghost takes the adopted trigger's slot instead of sitting beside it, so the row
+   keeps its width and the right tile never wraps onto a second line */
+html.cc-arrange.cc-header-on [data-cc-trig] { display: none !important; }
 html.cc-arrange.cc-header-on #menu .nav-item.cc-iconproxy .cc-proxy-ghost { visibility: visible; }
 
 /* the array usage meter as a minimal accent pill */
@@ -933,8 +935,9 @@ html.cc-popups-on .swal-modal .swal-button:focus { box-shadow: none !important; 
    keeps this inset from overriding them. */
 html.cc-popups-on .unapi div.fixed.z-50.bg-background:not(.top-1\/2) {
   inset: 74px 16px auto auto !important;
-  /* a floor keeps the empty state from collapsing into a stub; 82vh caps it when full */
-  height: auto !important; max-height: 82vh !important; min-height: min(380px, 82vh) !important;
+  /* A floor keeps the empty state from collapsing into a stub. A full list runs down to the same
+     16px margin above the viewport's bottom edge that the window keeps from its right edge. */
+  height: auto !important; max-height: calc(100vh - 90px) !important; min-height: min(380px, calc(100vh - 90px)) !important;
   width: min(560px, calc(100vw - 32px)) !important; max-width: none !important;   /* wider than the native sm:max-w-[540px] */
   border: none !important; border-radius: var(--cc-radius-card) !important;
   /* no ring and only a soft shadow, so the window lifts by its lighter surface against the evenly
@@ -998,7 +1001,7 @@ html.cc-popups-on .cc-notif-arch { background: #2a2a2a !important; color: #e6e6e
 html.cc-popups-on .cc-notif-arch:hover { background: #333 !important; color: #fff !important; }
 /* The rest of the notification centre in CC style; the Tailwind hooks fail soft. */
 
-/* The top wrapper is h-full, but the drawer's height is auto with max-height:82vh, so height:100%
+/* The top wrapper is h-full, but the drawer's height is auto with a max-height, so height:100%
    resolves to the content height and nothing scrolls. As a shrinkable flex child it fills the
    column, and the inner list is bounded and scrolls. Only the vertical flex-col wrappers get
    min-height:0, so the header rows keep their size. */
@@ -1367,6 +1370,20 @@ html.cc-popups-on [id^="reka-dialog-content"] [class*="inline-flex"][class*="jus
    folds its description into a .cc-acctinfo (i) bubble. It gets CC elevation and a colour-mode
    hover from the --cc-rb-c that ccPaintRotate stamps on each item. */
 html.cc-header-on .cc-acctmenu { box-shadow: 0 12px 30px rgba(0, 0, 0, .55) !important; border: none !important; }
+/* The close badge sits in the top right corner as in every CC window, the notification drawer's
+   badge in look and size, on a strip of its own so it never covers the first entry's (i). */
+html.cc-popups-on .cc-acctmenu { position: relative; padding-top: 38px !important; }
+html.cc-popups-on .cc-acctmenu .cc-acct-x {
+  position: absolute; top: 6px; right: 6px;
+  display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
+  width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px);
+  border-radius: var(--cc-radius-pill); background: var(--cc-surface-chip); color: var(--cc-ink-dim);
+  cursor: pointer; transition: background-color .12s, color .12s;
+}
+html.cc-popups-on .cc-acctmenu .cc-acct-x:hover {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
+}
+html.cc-popups-on .cc-acctmenu .cc-acct-x svg { width: 12px; height: 12px; }
 html.cc-header-on .cc-acctmenu li > span,
 html.cc-header-on .cc-acctmenu li > a { border-radius: var(--cc-radius-control) !important; transition: background .12s, color .12s; }
 html.cc-header-on .cc-acctmenu li > span:hover,

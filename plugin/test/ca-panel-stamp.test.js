@@ -21,9 +21,10 @@ for (const r of parseRules(tokens)) {
 }
 ok('the panel has rules that read --cc-rb-c', readers.length > 0);
 for (const sel of readers) {
-  // A stamp covers the rule if it names the same element under the panel, or an ancestor of it.
+  // A stamp covers the rule if it names the same element under the panel, in any state, or an
+  // ancestor of it.
   const tail = sel.slice(sel.indexOf('#alternateView'));
-  const covered = stamped.some((s) => s.split(',').map((x) => x.trim()).some((x) => tail === x || tail.startsWith(x + ' ')));
+  const covered = stamped.some((s) => s.split(',').map((x) => x.trim()).some((x) => tail === x || tail.startsWith(x + ' ') || tail.startsWith(x + ':')));
   ok(sel, covered, 'stamped: ' + stamped.filter((s) => /alternateView/.test(s)).join(' | '));
 }
 

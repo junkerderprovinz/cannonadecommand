@@ -1332,6 +1332,16 @@
         menu.classList.add("cc-acctmenu");
         if (menu.getAttribute("data-cc-acct") === "1") continue;
         menu.setAttribute("data-cc-acct", "1");
+        // The menu brings no close control of its own, unlike the notification drawer, so it gets
+        // the square badge in the corner that every CC window has. Escape is what reka closes on.
+        var mx = window.CCTheme.pressable(document.createElement("span"));
+        mx.className = "cc-acct-x"; mx.innerHTML = window.CCTheme.glyph("Close");
+        mx.setAttribute("aria-label", T("Schließen", "Close")); mx.setAttribute("data-cc-tip", T("Schließen", "Close"));
+        mx.addEventListener("click", function (e) {
+          e.preventDefault(); e.stopPropagation();
+          document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        });
+        menu.insertBefore(mx, menu.firstChild);
         var lis = menu.querySelectorAll("li");
         for (var i = 0; i < lis.length; i++) {
           var li = lis[i];
@@ -3180,6 +3190,34 @@
     area.appendChild(ccGlyphEl("Star"));
     if (dateTxt) area.title = dateTxt;
   }
+  // CA's Statistics, Credits and Change Log panel becomes a CC window: a frame around CA's own close
+  // button and content with a head row for the title and the close badge. CA reaches both through
+  // their class names and binds the close handler on the element itself, so moving them keeps CA
+  // working, while CA's .html() on each open would wipe anything placed inside the content. The
+  // observer on #alternateView re-runs this, so it writes nothing once the title is current.
+  function ccAppsAltView() {
+    var av = document.getElementById("alternateView");
+    if (!av) return;
+    var win = av.querySelector(":scope > .cc-av-win");
+    if (!win) {
+      var x = av.querySelector(":scope > .alternateViewClose"), content = av.querySelector(":scope > .alternateViewContent");
+      if (!x || !content) return;
+      win = ccMkEl("div", "cc-av-win");
+      var head = ccMkEl("div", "cc-av-head");
+      head.appendChild(ccMkEl("span", "cc-av-title"));
+      av.insertBefore(win, content);
+      win.appendChild(head); win.appendChild(content);
+      head.appendChild(x);
+      x.textContent = ""; x.appendChild(ccGlyphEl("Close"));
+      x.setAttribute("role", "button"); x.setAttribute("tabindex", "0");
+      x.setAttribute("aria-label", T("Schließen", "Close")); x.setAttribute("data-cc-tip", T("Schließen", "Close"));
+      x.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); x.click(); } });
+    }
+    var src = win.querySelector(".alternateViewContent .ca_center > font, .alternateViewContent .ca_creditTitle:not(.caLogoIcon)");
+    var title = src ? src.textContent.trim() : "";
+    var badge = win.querySelector(".cc-av-title");
+    if (badge.textContent !== title) badge.textContent = title;
+  }
   // The app-info side drawer is restructured into the same badge-card system the notification
   // centre and the update window use.
   // CA does not recreate the popup per app: it reuses one node and swaps its content. A plain
@@ -3287,6 +3325,18 @@
     cardify([changelogTitle, changelogMsg, changelogBody, changelogMore], T("Änderungsprotokoll", "Changelog"));
     cardify(templateErrEls, T("Vorlagenfehler", "Template Errors"));
   }
+  // CA puts its multi-select checkbox (Previous Apps, Action Centre) into the bottom button row, where
+  // it lands in the middle of the text and the buttons cover it. It moves into a round marker in the
+  // card's top right corner instead. The checkbox itself stays the click target, transparent over
+  // the marker, so CA's delegated handlers and the :checked state keep working.
+  function ccAppsSelectMark(holder) {
+    var box = holder.querySelector("input.ca_multiselect");
+    if (!box || box.parentElement.classList.contains("cc-ca-sel")) return;
+    var mark = ccMkEl("span", "cc-ca-sel");
+    holder.appendChild(mark);
+    mark.appendChild(box);
+    mark.appendChild(ccGlyphEl("Check"));
+  }
   // CA's inline warning glyph sits inside the app name and becomes a square badge like the type and
   // spotlight ones. Clicking it does what its native title says and opens the info popup.
   // ccAppsPositionTopBadges below places it among whichever badges the card actually has.
@@ -3307,8 +3357,9 @@
   // begins, measured against the card's real width.
   function ccAppsPositionTopBadges(holder) {
     var GAP = 6, W = 30, RIGHT0 = 10;
-    // from the corner inwards: menu, type, warning, spotlight
+    // from the corner inwards: selection marker, menu, type, warning, spotlight
     var order = [
+      holder.querySelector(".cc-ca-sel"),
       holder.querySelector(".cc-ca-menu-btn"),
       holder.querySelector(".appDocker, .appPlugin, .appLanguage, .appDriver, .appRepository"),
       holder.querySelector(".cc-warn-badge"),
@@ -3436,6 +3487,8 @@
       ccAppsStamp("a.sortIcons");
       // the icons in the Statistics, Credits and Change Log panel, which CA fills on each open
       ccAppsStamp("#alternateView i.fa");
+      ccAppsAltView();
+      ccAppsStamp("#alternateView .cc-av-title, #alternateView .alternateViewClose");
       // the card ribbons and spotlight badges, re-run every tick so a card that arrives later is stamped too
       ccAppsStamp(".officialCardBackground, .LTOfficialCardBackground, .installedCardBackground, .betaCardBackground, .homespotlightIconArea");
       // CA reuses one label slot for "Search for X", which says what was searched, and for the plain
@@ -3456,7 +3509,7 @@
       ccAppsStamp("li.caMenuItem.actionCentre");
       // The installed status badge stays unstamped: it is a resting state, never accent-filled in
       // any mode, so it has nothing to stamp.
-      ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton, .cc-castats .actionsButton, .cc-ca-menu-btn, .appDocker, .appPlugin, .appLanguage, .appDriver, .appRepository, .cc-cs-cta.cc-cs-cta-update, .cc-warn-badge");
+      ccAppsStamp(".ca_bottomLine .actionsButton, .ca_bottomLine .caButton, .cc-castats .actionsButton, .cc-ca-menu-btn, .appDocker, .appPlugin, .appLanguage, .appDriver, .appRepository, .cc-cs-cta.cc-cs-cta-update, .cc-warn-badge, .cc-ca-sel");
       // the info drawer's own button row, stamped every pass because CA rebuilds it on each open
       ccAppsStamp(".popupInfo .actionsPopup, .popupInfo .caButton");
       ccInfoCardEnhance();
@@ -3536,6 +3589,7 @@
         ccAppsCardMenu(holders[ci]);   // before the install button leaves .ca_bottomLine
         ccAppsTypeBadge(holders[ci]);
         ccAppsWarnBadge(holders[ci]);
+        ccAppsSelectMark(holders[ci]);
         ccAppsSpotlightBadge(holders[ci]);
         ccAppsPositionTopBadges(holders[ci]); // needs every badge above to exist before it compacts them
         ccAppsNameMarquee(holders[ci]);
