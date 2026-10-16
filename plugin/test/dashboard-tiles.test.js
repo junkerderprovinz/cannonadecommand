@@ -85,8 +85,10 @@ function run(store) {
     getComputedStyle: () => ({ getPropertyValue: (p) => (p === '--cc-accent' ? ' #1f9d55' : p === '--cc-text-dim' ? '#8a8a8a' : '') }),
     document: {
       readyState: 'complete',
-      documentElement: { classList: { toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)), contains: (c) => classes.has(c) } },
+      documentElement: { lang: 'de', classList: { toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)), contains: (c) => classes.has(c) } },
       querySelectorAll: () => [],
+      querySelector: () => null,
+      getElementById: () => null,
       addEventListener: () => {},
     },
   };
