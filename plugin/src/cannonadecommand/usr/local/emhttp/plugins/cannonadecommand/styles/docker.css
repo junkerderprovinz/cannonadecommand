@@ -468,8 +468,12 @@ html .cc-b.cc-plan.cc-plan-failed  { background: var(--cc-err, #ff8389) !importa
 
 /* Grid mode, the gear menu, the toast and the editor */
 /* A card is wide enough for its CPU, RAM and BW badges with their gears on one row, which puts
-   four cards side by side at 1917px. Narrower than that, a card takes the whole width. */
-.cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(400px, 100%), 1fr)); gap: 12px; padding-top: 30px; } /* room for the gear pinned top right */
+   four cards side by side at 1917px. Narrower than that, a card takes the whole width.
+   --cc-card-space is the one distance of the grid: between two cards, from a card's edge to its
+   content on all four sides, from the logo to the name and from one row of a card to the next.
+   Within a row the badges keep --cc-badge-gap, as they do in the list. */
+.cc-grid-holder { --cc-card-space: 12px; }
+.cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(400px, 100%), 1fr)); gap: var(--cc-card-space); padding-top: 30px; } /* room for the gear pinned top right */
 /* The folder view lays its tiles out on one fixed column width, as many to a row as fit, at the
    root and inside every folder alike, so every tile has the same size and they line up. A folder
    group breaks out to the full row width around its own grid. The group has no card of its own:
@@ -537,23 +541,25 @@ html .cc-folder-act-on { background: rgba(128, 128, 128, .18) !important; color:
 html .cc-card-movebtn { -webkit-appearance: none; appearance: none; background: transparent !important; border: none; outline: none; box-shadow: none !important; color: var(--cc-dim, #8a8a8a); cursor: pointer; font-size: var(--cc-text-subline); line-height: 1; padding: 3px 5px; border-radius: var(--cc-radius-pill); flex: none; transition: background .12s, color .12s; }
 html .cc-card-movebtn:hover { background: rgba(128, 128, 128, .18) !important; color: var(--cc-txt); }
 .cc-menu-link-current { background: rgba(128, 128, 128, .18); }
-.cc-card { background: var(--cc-bg2); border: none; border-radius: var(--cc-radius-card); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; transition: transform .12s, box-shadow .12s; }
+.cc-card { background: var(--cc-bg2); border: none; border-radius: var(--cc-radius-card); padding: var(--cc-card-space); display: flex; flex-direction: column; gap: var(--cc-card-space); transition: transform .12s, box-shadow .12s; }
 .cc-card:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0,0,0,.35); } /* elevation, not a border tint; the background contrast separates the card */
 .cc-card-head { display: flex; align-items: center; gap: 10px; }
 .cc-card-icobox { flex: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 44px; height: 44px; border-radius: var(--cc-radius-control); background: var(--cc-bg3); }
 .cc-card-ico { width: 80%; height: 80%; object-fit: contain; }
 .cc-card-name { flex: 1; min-width: 0; }
 .cc-card-title { font-weight: 600; font-size: var(--cc-text-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cc-card-ip { color: var(--cc-dim); font-size: var(--cc-text-meta); font-family: Consolas, "SFMono-Regular", monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The IP, network and ports wrap at a separator rather than run under the corner, and a third
+   line would push the name off the logo's middle, so the text stops after two with an ellipsis. */
+.cc-card-ip { color: var(--cc-dim); font-size: var(--cc-text-meta); font-family: Consolas, "SFMono-Regular", monospace; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 /* A grid card's head: the logo at the size the list uses, cc.sgsize through --cc-logo-box and
    --cc-logo-img, the name with its IP and network, and the corner on the right. A card too narrow
    for the corner beside the name puts it on a line of its own, still flush right. */
-.cc-card > .cc-card-head { flex-wrap: wrap; }
+.cc-card > .cc-card-head { flex-wrap: wrap; gap: var(--cc-card-space); }
 .cc-card-head > .cc-card-icobox { width: var(--cc-logo-box, 78px); height: var(--cc-logo-box, 78px); }
 .cc-card-head > .cc-card-icobox > .cc-card-ico { width: var(--cc-logo-img, 62px); height: var(--cc-logo-img, 62px); }
 .cc-card-head > .cc-card-name { flex: 1 1 100px; }
-.cc-card-corner { margin-left: auto; align-self: flex-start; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-.cc-card-cornerrow { display: flex; align-items: center; gap: 6px; }
+.cc-card-corner { margin-left: auto; align-self: flex-start; display: flex; flex-direction: column; align-items: flex-end; gap: var(--cc-badge-gap, 5px); }
+.cc-card-cornerrow { display: flex; align-items: center; gap: var(--cc-badge-gap, 5px); }
 /* On a phone the name and its IP keep the width beside the logo, and the corner becomes one row
    under them, the switch still at the right edge. */
 @media (max-width: 540px) { .cc-card-corner { flex: 1 0 100%; flex-direction: row-reverse; flex-wrap: wrap; align-items: center; } }
@@ -567,13 +573,11 @@ html .cc-card-movebtn:hover { background: rgba(128, 128, 128, .18) !important; c
 .cc-gauge-fill { height: 100%; background: var(--cc-ok, #6fdc8c); border-radius: var(--cc-radius-pill); transition: width .4s; }
 .cc-gauge-fill.cc-hot { background: var(--cc-err, #ff8389); }
 .cc-dim { color: var(--cc-dim); }
-.cc-card-badges { display: flex; flex-wrap: wrap; gap: 6px; }
-/* the limit gears on a grid card, as one full-width group at the bottom of the card, set off by
-   space rather than a line */
-.cc-card-res { display: flex !important; width: 100%; margin-top: 12px; }
+/* the limit gears on a grid card, as one full-width group at the bottom of the card */
+.cc-card-res { display: flex !important; width: 100%; }
 /* Badge and gear sit a little closer than in the list, and the badges are a little narrower, so
    CPU, RAM and BW keep to one row on a card while a container runs and its values grow. */
-.cc-card-res.cc-resgroup { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 5px 6px; }
+.cc-card-res.cc-resgroup { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--cc-badge-gap, 5px); }
 .cc-card-res .cc-resline { gap: 3px; }
 .cc-card-res .cc-resline > .cc-b { margin: 0; padding-inline: 8px; gap: 4px; }
 .cc-life { display: inline-flex; gap: 6px; }

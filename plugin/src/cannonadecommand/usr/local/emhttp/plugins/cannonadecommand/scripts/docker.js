@@ -1943,14 +1943,19 @@
     stampCardRainbow(wrap, c.name);
     var head = el("div", "cc-card-head");
     head.appendChild(cardIcon(c.name));
-    // The IP and the network stand as one line under the name, so neither has a badge of its
-    // own, and CPU, RAM and the network rate are the badges at the foot of the card, with no
-    // bars repeating them.
+    // The IP, the network and the published ports run as one line under the name, so none of
+    // them has a badge of its own, and CPU, RAM and the network rate are the badges at the foot
+    // of the card, with no bars repeating them. The no-break space keeps a dot from starting a
+    // wrapped line, and a port list cut short by the card comes up whole as the tip.
     var nb = el("div", "cc-card-name"), title = el("div", "cc-card-title", c.name);
     title.addEventListener("mouseover", function () { if (title.scrollWidth > title.clientWidth) title.setAttribute("data-tip", c.name); else title.removeAttribute("data-tip"); });
     nb.appendChild(title);
-    var where = [c.ip, c.network].filter(Boolean).join(" · ");
-    if (where) nb.appendChild(el("div", "cc-card-ip", where));
+    var where = [c.ip, c.network, (c.ports || []).join(", ")].filter(Boolean).join(" · ");
+    if (where) {
+      var ip = el("div", "cc-card-ip", where);
+      ip.addEventListener("mouseover", function () { if (ip.scrollHeight > ip.clientHeight) ip.setAttribute("data-tip", where); else ip.removeAttribute("data-tip"); });
+      nb.appendChild(ip);
+    }
     head.appendChild(nb);
     // The corner gathers whether and how the container starts: the start plan and the autostart
     // switch, and under them its state while it is not running and the plan's last run.
@@ -1966,11 +1971,6 @@
     var ab2 = actionBars(c.name, c);
     var abrow = el("div", "cc-card-actbar"); abrow.appendChild(ab2.bar);
     wrap.appendChild(abrow);
-    if (c.ports && c.ports.length) {
-      var badges = el("div", "cc-card-badges");
-      badges.appendChild(badgeInfo("PORT", c.ports.join(" "), "port"));
-      wrap.appendChild(badges);
-    }
     // the same three limit gears injectRowBadges puts in a list row, so the card view can open
     // the same editors
     var rg = el("div", "cc-rowbadges cc-resgroup cc-card-res"); rg.setAttribute(MARK, "1"); rg.dataset.name = c.name;
