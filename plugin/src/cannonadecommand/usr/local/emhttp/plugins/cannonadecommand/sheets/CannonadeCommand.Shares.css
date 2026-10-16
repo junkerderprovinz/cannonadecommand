@@ -1699,7 +1699,7 @@ html.cc-shares-on.cc-sht-on.cc-shares-rbneutral #displaybox .cc-sht-seg .cc-seg-
 html.cc-shares-on.cc-sht-on.cc-shares-rbneutral #displaybox .cc-sht-vsw:hover .cc-sht-seg .cc-seg-btn[aria-pressed="true"] { background: var(--cc-shr-accent, #FCC419); color: var(--cc-shr-accent-text, #161616); }
 
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-host { margin: 0 0 16px; }
-html.cc-shares-on.cc-sht-on #displaybox .cc-sht-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+html.cc-shares-on.cc-sht-on #displaybox .cc-sht-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
 @media (max-width: 600px) {
   html.cc-shares-on.cc-sht-on #displaybox .cc-sht-grid { grid-template-columns: minmax(0, 1fr); }
 }
@@ -1713,19 +1713,26 @@ html.cc-shares-on.cc-sht-on #displaybox .cc-sht-card:hover,
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-card:focus-within { background: var(--cc-sht-card-hover); }
 html.cc-shares-on.cc-sht-on #displaybox :is(.cc-sht-card, .cc-sht-ib, .cc-sht-cb):focus-visible { outline: none !important; box-shadow: 0 0 0 3px var(--cc-sht-c, var(--cc-shr-accent, #FCC419)) !important; filter: none; }
 
-html.cc-shares-on.cc-sht-on #displaybox .cc-sht-head { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: var(--cc-icon-badge, 26px); }
+/* The size text follows the name on its line and drops below it only when the card is too narrow. */
+html.cc-shares-on.cc-sht-on #displaybox .cc-sht-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; min-height: var(--cc-icon-badge, 26px); }
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-nb {
-  display: inline-flex; align-items: center; min-width: 0; height: 28px; padding: 0 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  display: inline-flex; align-items: center; min-width: 0; max-width: 100%; height: 28px; padding: 0 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   border-radius: var(--cc-radius-pill); background: var(--cc-sht-c, var(--cc-shr-accent, #FCC419)); color: var(--cc-sht-ct, var(--cc-shr-accent-text, #161616));
   font-size: var(--cc-text-body); font-weight: 700;
 }
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-dot { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--cc-text-dim2); }
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-dot.cc-sht-ok { background: var(--cc-ok); }
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-dot.cc-sht-warn { background: var(--cc-warn); }
+html.cc-shares-on.cc-sht-on #displaybox .cc-sht-size { display: inline-flex; gap: 10px; white-space: nowrap; font-size: var(--cc-text-meta); color: var(--cc-text-hint); font-variant-numeric: tabular-nums; }
+html.cc-shares-on.cc-sht-on #displaybox .cc-sht-size b { color: var(--cc-text); font-weight: 600; }
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-cmt { margin-top: -4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--cc-text-subline); color: var(--cc-text-dim); }
 
-/* The actions show on hover and keyboard focus, and always on a touch screen. */
-html.cc-shares-on.cc-sht-on #displaybox .cc-sht-acts { display: flex; gap: 5px; margin-left: auto; opacity: 0; transition: opacity var(--cc-motion-fade-dur, 0s); }
+/* The footer sits at the bottom of a card stretched to its row, so Compute lands in the corner.
+   The actions show on hover and keyboard focus, and always on a touch screen. */
+html.cc-shares-on.cc-sht-on #displaybox .cc-sht-foot { display: flex; align-items: center; gap: 8px; margin-top: auto; min-height: var(--cc-icon-badge, 26px); }
+html.cc-shares-on.cc-sht-on #displaybox .cc-sht-foot > :is(.cc-sht-cb, .cc-sht-busy) { margin-left: auto; }
+html.cc-shares-on.cc-sht-on #displaybox .cc-sht-busy { font-size: var(--cc-text-meta); color: var(--cc-text-hint); }
+html.cc-shares-on.cc-sht-on #displaybox .cc-sht-acts { display: flex; gap: 5px; opacity: 0; transition: opacity var(--cc-motion-fade-dur, 0s); }
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-card:hover .cc-sht-acts,
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-card:focus-within .cc-sht-acts { opacity: 1; }
 @media (hover: none) {
@@ -1751,11 +1758,8 @@ html.cc-shares-on.cc-sht-on #displaybox .cc-sht-chip i { margin: 0; }
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-part.cc-sht-warn { background: var(--cc-warn); color: var(--cc-warn-fg); }
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-part.cc-sht-warn b { color: inherit; }
 
-html.cc-shares-on.cc-sht-on #displaybox .cc-sht-use { display: flex; flex-direction: column; justify-content: center; gap: 5px; min-height: 26px; }
-html.cc-shares-on.cc-sht-on #displaybox .cc-sht-uselbl { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: var(--cc-text-meta); color: var(--cc-text-hint); font-variant-numeric: tabular-nums; }
-html.cc-shares-on.cc-sht-on #displaybox .cc-sht-uselbl b { color: var(--cc-text); font-weight: 600; }
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-cb {
-  display: inline-flex; align-items: center; height: 24px; padding: 0 11px; border-radius: var(--cc-radius-pill);
+  display: inline-flex; align-items: center; height: var(--cc-icon-badge, 26px); padding: 0 12px; border-radius: var(--cc-radius-pill);
   background: var(--cc-chip); color: var(--cc-text); font-size: var(--cc-text-meta); font-weight: 600; cursor: pointer;
 }
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-track { position: relative; height: 8px; border-radius: var(--cc-radius-pill); background: var(--cc-chip); overflow: hidden; }

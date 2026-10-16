@@ -149,25 +149,30 @@
     var off = !v || v === "-";
     return '<span class="cc-sht-chip' + (off ? " cc-sht-off" : "") + '">' + proto + " <b>" + esc(off ? t("off") : v) + "</b></span>";
   }
+  // Reading order: the name with its size, the comment, where the share lives and how it is
+  // exported, the per-disk split, and a footer with the actions and Compute in the corner.
   function cardHtml(sh, disk) {
     var acts = (sh.browse ? act("browse", t("browse"), "Folder") : "") +
       (sh.parts.length ? act("again", t("recompute"), "Refresh") : "") + act("open", t("settings"), "Gear");
     var dot = sh.prot ? '<span class="cc-sht-dot cc-sht-' + sh.prot + '"' + (sh.protTip ? ' data-tip="' + esc(sh.protTip) + '"' : "") + "></span>" : "";
-    var size = sh.compute ? '<span class="cc-sht-cb" role="button" tabindex="0" data-act="compute">' + esc(t("compute")) + "</span>"
-      : sh.busy ? "<span>" + esc(sh.busy) + "</span>"
-      : sh.size ? "<span><b>" + esc(sh.size) + "</b> " + esc(t("used")) + "</span>" : "";
     var pct = usage(sh, disk);
-    if (pct != null) size = "<span><b>" + esc(Math.round(pct)) + " %</b> " + esc(t("of") + " " + sh.size + " " + t("used")) + "</span>";
+    var used = pct != null ? "<span><b>" + esc(Math.round(pct)) + " %</b> " + esc(t("of") + " " + sh.size + " " + t("used")) + "</span>"
+      : sh.size ? "<span><b>" + esc(sh.size) + "</b> " + esc(t("used")) + "</span>" : "";
+    var free = sh.free ? "<span><b>" + esc(sh.free) + "</b> " + esc(t("free")) + "</span>" : "";
+    var corner = sh.compute ? '<span class="cc-sht-cb" role="button" tabindex="0" data-act="compute">' + esc(t("compute")) + "</span>"
+      : sh.busy ? '<span class="cc-sht-busy">' + esc(sh.busy) + "</span>" : "";
     var parts = sh.parts.map(function (p) {
       return '<span class="cc-sht-part' + (p.outside ? " cc-sht-warn" : "") + '"' + (p.outside ? ' data-tip="' + esc(t("outside")) + '"' : "") + ">" + esc(p.name) + " <b>" + esc(p.size) + "</b></span>";
     }).join("");
-    return '<div class="cc-sht-head">' + dot + '<span class="cc-sht-nb">' + esc(sh.name) + '</span><span class="cc-sht-acts">' + acts + "</span></div>" +
+    return '<div class="cc-sht-head">' + dot + '<span class="cc-sht-nb">' + esc(sh.name) + "</span>" +
+      (used || free ? '<span class="cc-sht-size">' + used + free + "</span>" : "") + "</div>" +
       (sh.comment ? '<div class="cc-sht-cmt">' + esc(sh.comment) + "</div>" : "") +
-      '<div class="cc-sht-chips">' + exportChip("SMB", sh.smb) + exportChip("NFS", sh.nfs) +
-      (sh.store ? '<span class="cc-sht-chip cc-sht-store"' + (sh.store.tip ? ' data-tip="' + esc(sh.store.tip) + '"' : "") + ">" + sh.store.html + "</span>" : "") + "</div>" +
-      '<div class="cc-sht-use"><div class="cc-sht-uselbl">' + size + "<span>" + esc(sh.free ? sh.free + " " + t("free") : "") + "</span></div>" +
-      (pct != null ? '<div class="cc-sht-track"><div class="cc-sht-fill ' + lvl(pct) + '" style="width:' + Math.max(pct, 1.5).toFixed(1) + '%"></div></div>' : "") + "</div>" +
-      (parts ? '<div class="cc-sht-parts">' + parts + "</div>" : "");
+      '<div class="cc-sht-chips">' +
+      (sh.store ? '<span class="cc-sht-chip cc-sht-store"' + (sh.store.tip ? ' data-tip="' + esc(sh.store.tip) + '"' : "") + ">" + sh.store.html + "</span>" : "") +
+      exportChip("SMB", sh.smb) + exportChip("NFS", sh.nfs) + "</div>" +
+      (pct != null ? '<div class="cc-sht-track"><div class="cc-sht-fill ' + lvl(pct) + '" style="width:' + Math.max(pct, 1.5).toFixed(1) + '%"></div></div>' : "") +
+      (parts ? '<div class="cc-sht-parts">' + parts + "</div>" : "") +
+      '<div class="cc-sht-foot"><span class="cc-sht-acts">' + acts + "</span>" + corner + "</div>";
   }
   function el(tagName, cls) { var n = document.createElement(tagName); if (cls) n.className = cls; return n; }
   function setHtml(n, v) { if (n && n.__ccHtml !== v) { n.innerHTML = v; n.__ccHtml = v; } }
