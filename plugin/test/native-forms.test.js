@@ -53,6 +53,30 @@ for (const type of ['button', 'submit']) {
   ok('a button on the share page is in sentence case too', val(win(share, 'text-transform')) === 'none', val(win(share, 'text-transform')));
 }
 
+console.log('\nA row keeps Unraid\'s own arrangement, in a card centred in the window');
+{
+  const rules = parseRules(read('sheets/CannonadeCommand.Forms.css'));
+  // The first rule for a selector is the desktop one; the phone rules follow in a media query.
+  const first = (sel) => rules.find((r) => r.selector === sel);
+  const decl = (r, prop) => { const d = r && r.decls.find((x) => x.prop === prop); return d ? d.value : '(none)'; };
+  const ROW = 'html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card)';
+  ok('the label column comes first and takes a bit over a third', /^minmax\(140px, 40%\) minmax\(0, 1fr\)$/.test(decl(first(ROW), 'grid-template-columns')), decl(first(ROW), 'grid-template-columns'));
+  ok('the label is right-aligned', decl(first(ROW + ' > dt'), 'text-align') === 'right', decl(first(ROW + ' > dt'), 'text-align'));
+  const dd = first(ROW + ' > dd');
+  ok('the control starts right beside it', decl(dd, 'justify-self') === 'start' && decl(dd, 'justify-content') === 'flex-start', decl(dd, 'justify-self') + ' ' + decl(dd, 'justify-content'));
+  ok('a value without a label stays in the value column', decl(first(ROW + ' > dd.cc-fm-wide'), 'grid-column') === '2');
+  ok('the card is centred', /^0 auto 40px$/.test(decl(first('html.cc-forms-on #displaybox .cc-fm-card'), 'margin')), decl(first('html.cc-forms-on #displaybox .cc-fm-card'), 'margin'));
+  const head = first('html.cc-forms-on #displaybox :is(div.title, div#title, table).cc-fm-head');
+  ok('the title badge follows the centred card', /calc\(max\(0px, \(100% - 920px\) \/ 2\) \+ 18px\)/.test(decl(head, 'margin')), decl(head, 'margin'));
+  const sw = { tag: 'input', classes: [], attrs: { type: 'checkbox' }, inside: ['#displaybox', '.cc-fm-card'], html: formsHtml };
+  ok('a switch stays where Unraid put its checkbox', val(win(sw, 'order')) === '(none)', val(win(sw, 'order')));
+  const src = read('scripts/forms.js').match(/function titleTable\(t\) \{[\s\S]*?\n  \}/)[0];
+  const titleTable = new Function('return ' + src)();
+  const th = { tagName: 'TH' }, td = { tagName: 'TD' };
+  ok('a table of one header cell counts as a section title', titleTable({ tagName: 'TABLE', rows: [{ cells: [th] }] }));
+  ok('a table with data does not', !titleTable({ tagName: 'TABLE', rows: [{ cells: [th] }, { cells: [td] }] }) && !titleTable({ tagName: 'TABLE', rows: [{ cells: [th, th] }] }));
+}
+
 console.log('\nforms.js leaves the forms working');
 {
   const js = read('scripts/forms.js');

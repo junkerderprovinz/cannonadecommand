@@ -94,6 +94,10 @@
     }
     return cards;
   }
+  // Unassigned Devices titles its sections with a table of one header cell and no body.
+  function titleTable(t) {
+    return t.tagName === "TABLE" && t.rows.length === 1 && t.rows[0].cells.length === 1 && t.rows[0].cells[0].tagName === "TH";
+  }
   // The section title right before a card becomes the badge on the card's top edge.
   // A card that opens its own wrapper (the VPN tunnel's block) takes the title before the wrapper.
   function markHead(card) {
@@ -104,7 +108,7 @@
       if (p || !at.parentElement || at.parentElement.matches("#displaybox, .content, .tab-content")) break;
       at = at.parentElement;
     }
-    var head = p && p.matches("div.title, div#title") && !p.closest(".cc-fm-card") ? p : null;
+    var head = p && (p.matches("div.title, div#title") || titleTable(p)) && !p.closest(".cc-fm-card") ? p : null;
     if (head) head.classList.add("cc-fm-head");
     card.classList.toggle("cc-fm-headed", !!head);
   }
