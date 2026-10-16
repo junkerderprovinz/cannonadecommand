@@ -383,11 +383,13 @@
   //
   // cc.iconmode is the global default and cc.iconov holds per-item pins:
   //   auto    the chain above (default)
-  //   native  no recolouring, but a curated colour icon still beats a poor shipped one
-  //   flat    always flatten, whatever the heuristic says
-  //   tint    always tint
+  //   native    no recolouring, but a curated colour icon still beats a poor shipped one
+  //   flat      always flatten, whatever the heuristic says
+  //   tint      always tint
+  //   original  the item's own icon as it ships, never swapped and never recoloured; offered per
+  //             item only
   var ICON_PROXY = "/plugins/cannonadecommand/server/ccapi.php";
-  var ICON_MODES = ["auto", "native", "flat", "tint"];
+  var ICON_MODES = ["auto", "native", "flat", "tint", "original"];
   // Luminance spread on a 0-255 scale, measured over the 55 containers of a real box. The values
   // are bimodal: flat glyphs land at 0.0-3.4 (Plex 0.53, Nginx 0.79, CCWB 3.4), anything with
   // internal structure at 17.3 and up (CrowdSec 17.3, Unraid's question.png 19.8, OpenCloud 39.0),
@@ -600,6 +602,7 @@
   // card is a black square. A tile is never flattened whole: "knock" inks its mark and drops the
   // plate, the flat look without the blank square.
   function iconPlan(mode, kind, spread, tile) {
+    if (mode === "original") return { treat: "native", src: "native", why: "mode:original" };
     if (mode === "native") return { treat: "native", src: kind === "color" ? "color" : "native", why: "mode:native" };
     if (mode === "tint") return { treat: "tint", src: kind === "color" ? "color" : "native", why: "mode:tint" };
     if (mode === "flat") {
@@ -856,8 +859,8 @@
     h.style.cssText = "font-size:var(--cc-text-subline);font-weight:700;margin:0 0 8px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
     card.appendChild(h);
     var opts = de
-      ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Nachzeichnen"], ["tint", "Tönen"]]
-      : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Redraw"], ["tint", "Tone"]];
+      ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Nachzeichnen"], ["tint", "Tönen"], ["original", "Original-Logo"]]
+      : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Redraw"], ["tint", "Tone"], ["original", "Original logo"]];
     var sel = document.createElement("select");
     sel.style.cssText = "width:100%;background:var(--cc-surface-3,#2e2e2e);color:var(--cc-txt,#e6e6e6);border:none;border-radius:var(--cc-radius-control);padding:6px 10px;font-size:var(--cc-text-subline);outline:none";
     var cur = iconOverride(scope, name);
@@ -1225,7 +1228,7 @@
     edge: edge, placeAt: placeAt,
     icons: {
       MODES: ICON_MODES, SIMPLE_MAX: ICON_SIMPLE_MAX,
-      globalMode: iconGlobalMode, mode: iconMode, override: iconOverride, setOverride: setIconOverride,
+      globalMode: iconGlobalMode, mode: iconMode, override: iconOverride, overrides: iconOverrides, setOverride: setIconOverride,
       want: iconWant, result: iconResult, svgUrl: iconSvgUrl, spread: iconSpread, tile: iconTile,
       measurePixels: iconMeasurePixels, plan: iconPlan, knock: iconKnockFilter, placeholder: iconPlaceholder,
       onResolved: onIconsResolved, popover: iconPopover

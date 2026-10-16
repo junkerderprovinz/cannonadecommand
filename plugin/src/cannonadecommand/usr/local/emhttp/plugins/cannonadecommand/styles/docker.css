@@ -172,6 +172,7 @@ a.sl-updall { display: none !important; }
 
 /* the badge geometry (padding, radius, font) every pill shares, native and CC's alike */
 .cc-b,
+.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn > span.green-text,
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn span.orange-text,
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn a.exec,
 .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn > div.advanced:last-of-type,
@@ -333,9 +334,8 @@ html.cc-tools-on .cc-b-del.cc-b-delicon:focus-visible { box-shadow: 0 0 0 3px co
 .cc-enh.cc-c-res #docker_list tr:is(.sortable, .folder-element) td.advanced .usage-disk { display: none; }
 .cc-enh.cc-c-ip #docker_list tr:is(.sortable, .folder-element) > td:nth-child(5) span.docker_readmore span.advanced { display: none !important; }
 
-/* the update status keeps its meaning: orange update ready, accent for force. Up to date is the
-   normal case and shows nothing (GlimStone rule 33). */
-.cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn > span.green-text { display: none !important; }
+/* the update status keeps its meaning: green up to date, orange update ready, accent for force */
+.cc-enh.cc-c-update #docker_list tr:is(.sortable, .folder-element) td.updatecolumn > span.green-text { background: var(--cc-ok, #6fdc8c); color: var(--cc-ok-fg, #161616) !important; }
 .cc-enh.cc-c-update #docker_list tr:is(.sortable, .folder-element) td.updatecolumn span.orange-text { background: var(--cc-warn, #ff832b); color: var(--cc-warn-fg, #161616) !important; }
 .cc-enh.cc-c-force  #docker_list tr:is(.sortable, .folder-element) td.updatecolumn a.exec { background: var(--cc-accent, #FCC419); color: var(--cc-accent-text, #161616) !important; }
 .cc-enh.cc-c-force  #docker_list tr:is(.sortable, .folder-element) td.updatecolumn a.exec:hover { background: var(--cc-accent-hover); }
@@ -344,6 +344,7 @@ html.cc-tools-on .cc-b-del.cc-b-delicon:focus-visible { box-shadow: 0 0 0 3px co
 /* A column toggle hides the datum rather than only dropping its colour, so a restyled native column
    that is off for the current view goes altogether. That also keeps the advanced-only pills out of
    the simple view, where their class is absent, without relying on how Unraid hides .advanced. */
+.cc-enh:not(.cc-c-update)  #docker_list tr:is(.sortable, .folder-element) td.updatecolumn > span.green-text,
 .cc-enh:not(.cc-c-update)  #docker_list tr:is(.sortable, .folder-element) td.updatecolumn span.orange-text,
 .cc-enh:not(.cc-c-force)   #docker_list tr:is(.sortable, .folder-element) td.updatecolumn div.advanced a.exec,
 .cc-enh:not(.cc-c-res)     #docker_list tr:is(.sortable, .folder-element) td.advanced span[class^='cpu-'],
@@ -610,20 +611,6 @@ html.cc-state-native .cc-tile-up { background: var(--cc-warn, #ff832b); color: v
 .cc-fmember-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--cc-text-meta); }
 .cc-fmember-in { margin-left: 6px; color: var(--cc-dim); }
 
-/* The gear menu's filter, a filled field with no line around it. The html prefix and the menu
-   class carry it past Unraid's input[type="text"] rule, which would draw an underline. */
-html .cc-menu .cc-filter {
-  box-sizing: border-box; width: 100%; height: 30px; min-height: 0; margin: 0; padding: 0 10px;
-  background: var(--cc-surface-3, #2e2e2e); color: var(--cc-txt, #e6e6e6); border: none; border-radius: var(--cc-radius-control);
-  box-shadow: none; font-size: var(--cc-text-meta); line-height: normal;
-}
-html .cc-menu .cc-filter:focus { background-color: #383838; outline: none; }
-/* The Search button and the field share one place: the button until it is pressed or a filter is
-   set, the field after. */
-.cc-search { display: flex; width: 100%; }
-.cc-search .cc-filter, .cc-search.cc-search-open .cc-search-btn { display: none; }
-.cc-search.cc-search-open .cc-filter { display: block; }
-html .cc-search-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 /* Buttons are filled, with no borders anywhere: a neutral fill for a secondary, the accent for a
    primary, and fills and shadows for separation. Every CC button rule carries the html prefix,
    which matches the weight of Unraid's button[type="button"]:where(...) and button:hover:where(...)
@@ -647,7 +634,6 @@ html .cc-seg-btn:hover { color: var(--cc-txt); }
 .cc-menu-row:hover { background: #262626; }
 .cc-menu-plain { cursor: default; gap: 8px; flex-wrap: wrap; }
 .cc-menu-plain:hover { background: transparent; }
-.cc-menu-plain .cc-filter { width: 100%; }
 .cc-menu-plain .cc-btn { flex: 1; text-align: center; }
 /* The way to the settings page is a secondary button with its gear, a link that looks and reacts
    like the buttons above it, and New folder carries its glyph the same way. */
@@ -799,7 +785,7 @@ html .cc-pop .cc-in:focus { background-color: #383838 !important; }
    as a link or as filled-in data. One rule here covers every field CC draws on these pages, in the
    label's colour, since a hint is furniture and sits at label brightness under the field's own
    value text. opacity:1 because Firefox dims placeholders on top of the colour. */
-html .cc-in::placeholder, html .cc-filter::placeholder,
+html .cc-in::placeholder,
 html .cc-pop input::placeholder, html .cc-menu input::placeholder { color: var(--cc-text-hint, #a3a3a3) !important; opacity: 1 !important; }
 /* appearance:none takes a select's native arrow, so a caret goes back: the same 8x5 triangle in
    the same grey that .cc-pop .cc-dsel-trigger::after draws with borders, so a native select, a
@@ -1248,8 +1234,6 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
 /* Unraid justifies the plugin descriptions, which tears wide gaps between the words of a narrow
    column, so they are set ragged like every other text. */
 html.cc-on-plugins .cc-desc, html.cc-on-plugins .cc-desc * { text-align: start !important; }
-/* Up to date is the normal case and shows nothing (GlimStone rule 33); plugins.js marks it. */
-html.cc-on-plugins #plugin_list .cc-plug-ok { display: none !important; }
 /* The tab bar's Check and Update buttons rest grey and take their palette slot, which plugins.js
    stamps, under the pointer. */
 html.cc-on-plugins input.cc-plugbar-btn { background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
@@ -2393,13 +2377,15 @@ html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list td.c
 html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #FCC419))) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card-ico { background: rgba(128, 128, 128, .18) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card:hover .cc-card-ico { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #FCC419))) !important; }
-/* The update column's badges join the row too: the orange "update" chip and the ShipLog changelog
-   chip rest grey in neutral and take their state colour on the row's hover.
+/* The update column's badges join the row too: the green "up to date" and orange "update" chips and
+   the ShipLog changelog chip rest grey in neutral and take their state colour on the row's hover.
    Placed after the .cc-c-update colour rules so equal-importance ties resolve by order. */
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn > span.green-text,
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn span.orange-text,
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element) td.updatecolumn .sl-chip {
   background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
+html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn > span.green-text { background: var(--cc-ok, #6fdc8c) !important; color: var(--cc-ok-fg, #161616) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn span.orange-text { background: var(--cc-warn, #ff832b) !important; color: var(--cc-warn-fg, #161616) !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip { background: #4a4a4a !important; color: #fff !important; }
 html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip:has(.sl-low) { background: var(--cc-ok, #6fdc8c) !important; color: var(--cc-ok-fg, #161616) !important; }
@@ -2425,6 +2411,7 @@ html.cc-shares-rbneutral.cc-docker-on .cc-enh #docker_list tr:is(.sortable, .fol
    band, and the row's hover colouring stays grey meanwhile. */
 html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand { background: rgba(128, 128, 128, .18) !important; }
 html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-b:not(.cc-plan-on),
+html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn > span.green-text,
 html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn span.orange-text,
 html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover td.updatecolumn .sl-chip,
 html.cc-actbar-hot.cc-shares-rbneutral.cc-docker-on #docker_list tr:is(.sortable, .folder-element):hover .cc-actbtn:not(.cc-actoff) { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }

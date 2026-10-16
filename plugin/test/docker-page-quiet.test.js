@@ -1,6 +1,6 @@
-// The Docker tab says only what deviates from the normal case (GlimStone rule 33) and names every
-// thing once. What can quietly break it:
-//   · the green "up to date" chip coming back in every row
+// The Docker tab keeps its normal case calm and names every thing once. The green "up to date"
+// chip stays, an exception to GlimStone rule 33. What can quietly break it:
+//   · the green "up to date" chip hidden
 //   · the gear menu reporting a healthy engine in maintenance jargon
 //   · Unraid's untranslated "3rd Party" standing beside its own "Drittanbieter"
 //   · the page action sliding back to the start of the bar
@@ -23,10 +23,15 @@ function grab(name) {
   throw new Error('unbalanced function: ' + name);
 }
 
-console.log('\nThe normal case is quiet');
+console.log('\nUp to date shows as a green chip');
 {
-  ok('"up to date" never shows in the update column', /td\.updatecolumn > span\.green-text \{ display: none !important; \}/.test(css));
-  ok('and no rule paints it any more', !/span\.green-text[^{,]*\{[^}]*background/.test(css));
+  ok('no rule hides it', !/span\.green-text \{ display: none/.test(css));
+  ok('it takes the ok green while its column is on', /\.cc-enh\.cc-c-update #docker_list tr:is\(\.sortable, \.folder-element\) td\.updatecolumn > span\.green-text \{ background: var\(--cc-ok, #6fdc8c\);/.test(css));
+  ok('and goes with the update-status column', /\.cc-enh:not\(\.cc-c-update\)  #docker_list tr:is\(\.sortable, \.folder-element\) td\.updatecolumn > span\.green-text,/.test(css));
+}
+
+console.log('\nThe gear menu is quiet');
+{
   const menu = grab('buildMenu');
   ok('the gear menu shows no status while the engine runs', /if \(daemonUp === false\)/.test(menu) && !/engine up/.test(js));
 }

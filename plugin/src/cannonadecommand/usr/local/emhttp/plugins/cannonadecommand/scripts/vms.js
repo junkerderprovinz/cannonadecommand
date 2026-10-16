@@ -650,8 +650,8 @@
       var l = el("label", "cc-vm-lbl", VMDE ? "Icon-Färbung" : "Icon colouring");
       var sel = el("select");
       var opts = VMDE
-        ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Nachzeichnen"], ["tint", "Tönen"]]
-        : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Redraw"], ["tint", "Tone"]];
+        ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Nachzeichnen"], ["tint", "Tönen"], ["original", "Original-Logo"]]
+        : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Redraw"], ["tint", "Tone"], ["original", "Original logo"]];
       var cur = CI.override("vm", name);
       opts.forEach(function (o) { var op = el("option", null, o[1]); op.value = o[0]; if (o[0] === cur) op.selected = true; sel.appendChild(op); });
       sel.addEventListener("change", function () { CI.setOverride("vm", name, sel.value); paintVmIcons(); });   // `apply` here is the editor's Apply button

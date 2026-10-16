@@ -2659,9 +2659,10 @@
           moT = null;
           reorderSearch();
           document.documentElement.classList.toggle("cc-search-open", !!document.getElementById("guiSearchBoxSpan"));
-          // gui_search opens an empty field that says nothing about what it finds
+          // gui_search opens an empty field that says nothing about what it finds; on the Docker
+          // tab it filters the containers too (docker.js followHeaderSearch)
           var sbox = document.getElementById("guiSearchBox");
-          if (sbox && !sbox.getAttribute("placeholder")) sbox.setAttribute("placeholder", T("Seite oder Einstellung suchen", "Search pages and settings"));
+          if (sbox && !sbox.getAttribute("placeholder")) sbox.setAttribute("placeholder", /^\/Docker\/?$/.test(location.pathname) ? T("Container oder Seite suchen", "Search containers and pages") : T("Seite oder Einstellung suchen", "Search pages and settings"));
           // A utility icon the native scripts append after boot gets its saved slot and its drag
           // wiring here; applyNavOrder is a no-op once the arrangement matches.
           if (document.documentElement.classList.contains("cc-header-on")) { applyNavOrder(); setupNavDrag(); }
