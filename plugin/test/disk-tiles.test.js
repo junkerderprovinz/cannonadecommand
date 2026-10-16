@@ -211,7 +211,7 @@ console.log('\nThe view: one switch and one key for the whole page');
   ok('the settings row writes the same key and nothing else', /set\("cc\.diskview", v\);/.test(row) && !/del\(/.test(row));
   ok('its bubble points to the switch on the page', /Der Schalter oben im Tab Start stellt dasselbe um\./.test(row) && /The switch at the top of the Main tab changes the same setting\./.test(row));
   ok('it offers Liste and Kacheln with the view glyphs', /\[\["list", T\("Liste", "List"\), "IconViewList"\], \["tiles", T\("Kacheln", "Tiles"\), "IconViewGrid"\]\]/.test(row));
-  ok('it has a bubble and a preview in the right column', /, help\)\);/.test(row) && /viewPreview\(opts, diskSketch\)/.test(row) && /splitCard\(c, \[prev\.el\], "cc-set-split-auto"\)/.test(row));
+  ok('it has a bubble and a preview right under its selector', /, help\)\);/.test(row) && /viewPreview\(opts, diskSketch\)/.test(row) && /c\.appendChild\(slot\); c\.appendChild\(prev\.el\);/.test(row));
   ok('a section shows "Ruht" only for a spun-down disk, never an active chip', /if \(d\.down\) h \+= '<span class="cc-dk-chip">' \+ glyph\("Moon"\) \+ esc\(t\("resting"\)\)/.test(js) && !/Aktiv/.test(js));
 }
 

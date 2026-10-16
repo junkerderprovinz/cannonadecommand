@@ -556,6 +556,11 @@ console.log('\nA tile keeps its mark: flattening the plate whole would leave a b
   const dk = CI.knock('#161616', { bg: 0.9, mk: 0.1, mark: 'dark' });
   ok('a dark mark gets a falling ramp', /values="0 0 0 0 0\.0863 0 0 0 0 0\.0863 0 0 0 0 0\.0863 -[\d.]+ -[\d.]+ -[\d.]+ 0 [\d.]+"/.test(host.innerHTML) && dk !== f);
   ok('no ink, no filter: the icon stays native like the flat filter leaves it', CI.knock('', tile) === '');
+  ok('full strength is the plain knock', CI.knock('#fff', tile, 100) === f);
+  const weak = CI.knock('#fff', tile, 34);
+  const weakDef = new RegExp('<filter id="' + weak.slice(5, -1) + '"[^]*?</filter>').exec(host.innerHTML)[0];
+  ok('a lower strength is a filter of its own, in tenths', weak === 'url(#cc-knock-2-15-ffffff-s3)' && CI.knock('#fff', tile, 29) === weak, weak);
+  ok('it lays the knocked mark over the faded original', /result="kk"/.test(weakDef) && /<feComponentTransfer in="kk" result="top"><feFuncA type="linear" slope="0\.3"\/>/.test(weakDef) && /<feComponentTransfer in="SourceGraphic" result="under"><feFuncA type="linear" slope="0\.7"\/>/.test(weakDef) && /<feMergeNode in="under"\/><feMergeNode in="top"\/>/.test(weakDef), weakDef);
 }
 
 console.log('\nA container without an icon shows the container glyph, not Unraid\'s question mark');

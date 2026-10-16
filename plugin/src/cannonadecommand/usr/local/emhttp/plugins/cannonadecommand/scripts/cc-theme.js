@@ -623,13 +623,14 @@
   // The filter for "knock": the mark's contrast against the plate becomes alpha, ramping from a
   // fifth of the way to the mark up to two thirds, and the picture's own alpha masks the result.
   // Both levels are rounded to sixteenths to keep the filters on a page few. Without an ink it
-  // answers "", like the flat filter, and the icon stays native.
-  function iconKnockFilter(ink, tile) {
+  // answers "", like the flat filter, and the icon stays native. A strength below 100 lays the
+  // knocked mark over the faded original, in tenths for the same reason.
+  function iconKnockFilter(ink, tile, strength) {
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(ink || "").replace(/^#?([0-9a-f])([0-9a-f])([0-9a-f])$/i, "#$1$1$2$2$3$3"));
     if (!m || !tile) return "";
     var q = function (v) { return Math.round(Math.max(0, Math.min(1, v)) * 16); };
-    var bq = q(tile.bg), mq = q(tile.mk);
-    var id = "cc-knock-" + bq + "-" + mq + "-" + (m[1] + m[2] + m[3]).toLowerCase();
+    var bq = q(tile.bg), mq = q(tile.mk), sq = Math.round(Math.max(10, Math.min(100, strength || 100)) / 10);
+    var id = "cc-knock-" + bq + "-" + mq + "-" + (m[1] + m[2] + m[3]).toLowerCase() + (sq < 10 ? "-s" + sq : "");
     var host = document.getElementById("cc-knock-svg");
     if (!host) {
       host = document.createElement("div"); host.id = "cc-knock-svg"; host.setAttribute("aria-hidden", "true");
@@ -644,7 +645,8 @@
       var ch = function (h) { return (parseInt(h, 16) / 255).toFixed(4); };
       var f = function (x) { return x.toFixed(4); };
       var vals = "0 0 0 0 " + ch(m[1]) + " 0 0 0 0 " + ch(m[2]) + " 0 0 0 0 " + ch(m[3]) + " " + f(c * 0.2126) + " " + f(c * 0.7152) + " " + f(c * 0.0722) + " 0 " + f(d);
-      icoKnock[id] = '<filter id="' + id + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '" result="k"/><feComposite in="k" in2="SourceGraphic" operator="in"/></filter>';
+      var blend = sq < 10 ? '<feComponentTransfer in="kk" result="top"><feFuncA type="linear" slope="' + sq / 10 + '"/></feComponentTransfer><feComponentTransfer in="SourceGraphic" result="under"><feFuncA type="linear" slope="' + (10 - sq) / 10 + '"/></feComponentTransfer><feMerge><feMergeNode in="under"/><feMergeNode in="top"/></feMerge>' : "";
+      icoKnock[id] = '<filter id="' + id + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '" result="k"/><feComposite in="k" in2="SourceGraphic" operator="in"' + (blend ? ' result="kk"' : "") + "/>" + blend + "</filter>";
       host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + Object.keys(icoKnock).map(function (k) { return icoKnock[k]; }).join("") + "</svg>";
     }
     return "url(#" + id + ")";
@@ -961,6 +963,15 @@
   // Every failure reports through both channels at once: the message in a toast and a shake on the
   // control that was used, when there is one.
   function fail(el, msg) { shake(el); return toast(msg, "error"); }
+  // A control that is off or locked shakes the same way when it is pressed anyway, with no toast:
+  // its (i) already says why. Where nothing may move, cc-deny swaps the opacity pulse for the
+  // accent halo a focus wears.
+  function deny(el) {
+    if (!el || !el.classList) return;
+    el.classList.add("cc-deny");
+    shake(el);
+    clearTimeout(el.ccDenyT); el.ccDenyT = setTimeout(function () { el.classList.remove("cc-deny"); }, 600);
+  }
 
   // A span that acts as a button: reachable with Tab, pressed with Enter or Space. CC draws its
   // buttons as spans because Unraid's global button rules would restyle a real one.
@@ -1222,7 +1233,7 @@
     gfonts: GFONTS, loadGFonts: loadGFonts, primaryFamily: primaryFamily,
     CC_INFO_SVG: CC_INFO_SVG, infoIcon: infoIcon, CC_TRASH_SVG: CC_TRASH_SVG, delIcon: delIcon,
     lumOf: lumOf, LUM_FLOOR: LUM_FLOOR, liftDark: liftDark, liftLight: liftLight, lightTheme: lightTheme,
-    liftSurface: liftSurface, surfacePalette: surfacePalette, isRed: isRed, deleteSlot: deleteSlot, toast: toast, shake: shake, fail: fail,
+    liftSurface: liftSurface, surfacePalette: surfacePalette, isRed: isRed, deleteSlot: deleteSlot, toast: toast, shake: shake, fail: fail, deny: deny,
     pressable: pressable, modal: modal, closeBadge: closeBadge,
     PRESETS: PRESETS, colorPicker: colorPicker, colorSwatch: colorSwatch, swMark: swMark, swMarkRow: swMarkRow, refind: refind, paintWin: paintWin, ask: ask, glyph: glyph, menu: menu, slosh: slosh,
     edge: edge, placeAt: placeAt,

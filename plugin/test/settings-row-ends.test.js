@@ -45,22 +45,15 @@ console.log('\nThe column matrix ends its switches at the card\'s right edge');
   ok('the switch drops the margin Unraid gives a checkbox', val(win(page, sw, 'margin')) === '0');
 }
 
-console.log('\nA preview stands in a column beside the rows');
+console.log('\nA preview closes its card, across the card\'s width');
 {
-  const calls = [...settings.matchAll(/splitCard\((\w+), (?:\[[^\]]*\]|\w+)(?:, "[^"]+")?\)/g)].map((m) => m[1]);
-  ok('every card with a preview splits it off', ['c1', 'cLI', 'c2', 'cA', 'cB', 'c'].every((c) => calls.includes(c)), calls.join(' '));
-  ok('the Docker view sketches go beside the selector', /splitCard\(c, \[side\], "cc-set-split-auto"\);/.test(settings) && /side\.appendChild\(prev\.el\);/.test(settings));
+  ok('no card puts its preview in a column of its own', !/splitCard|cc-set-split/.test(settings));
+  ok('the badge preview is the last block of its card', /c1\.appendChild\(el\("div", "cc-set-lbl", T\("Vorschau", "Preview"\)\)\);[\s\S]{0,1200}?prev\.id = "cc-set-prev"; c1\.appendChild\(prev\);\s*wrapMain\.appendChild\(c1\);/.test(settings));
+  ok('the global logo previews follow the last row', /cLI\.appendChild\(modeRow\);\s*cLI\.appendChild\(el\("div", "cc-set-lbl", T\("Vorschau", "Preview"\)\)\);/.test(settings) && /repaintLogoPrevs = gpaint;\s*wrapMain\.appendChild\(cLI\);/.test(settings));
+  ok('so does the Docker logo preview', /c2\.appendChild\(tprevWrap\);[^\n]*\n\s*wrap\.appendChild\(c2\);/.test(settings));
+  ok('and an area\'s badge and logo previews', /cA\.appendChild\(el\("div", "cc-set-lbl", T\("Vorschau", "Preview"\)\)\); cA\.appendChild\(pv\);/.test(settings) && /cB\.appendChild\(tpw\); tp\(\);/.test(settings));
+  ok('a view sketch sits right under its selector', /c\.appendChild\(slot\); c\.appendChild\(side\);/.test(settings) && /c\.appendChild\(slot\); c\.appendChild\(prev\.el\);/.test(settings));
   ok('the sketches are larger', /"#cc-settings \.cc-set-vp svg\{display:block;width:108px;height:65px\}"/.test(settings));
-  ok('rows left, preview right, both from the top', /"#cc-settings \.cc-set-split\{display:grid;grid-template-columns:minmax\(0,1fr\) auto;column-gap:24px;align-items:start\}"/.test(settings));
-  ok('a narrow page puts the preview under the rows', /@media \(max-width:1199px\)\{#cc-settings \.cc-set-split\{grid-template-columns:minmax\(0,1fr\)\}/.test(settings));
-  const split = new Function('el', /function splitCard\([\s\S]*?\n  \}/.exec(settings)[0] + '\nreturn splitCard;');
-  const mk = (cls) => ({ cls, children: [], classList: { contains: (c) => cls.split(' ').includes(c) }, appendChild(n) { if (n.parent) n.parent.children.splice(n.parent.children.indexOf(n), 1); n.parent = this; this.children.push(n); return n; } });
-  const fn = split((tag, cls) => mk(cls || ''));
-  const card = mk('cc-set-card'), head = card.appendChild(mk('cc-set-h')), row = card.appendChild(mk('cc-set-row')), lbl = card.appendChild(mk('cc-set-lbl')), pv = card.appendChild(mk('cc-set-prev'));
-  fn(card, [lbl, pv]);
-  const box = card.children[1];
-  ok('the card keeps its title badge first and gains one split box', card.children.length === 2 && card.children[0] === head && box.cls === 'cc-set-split');
-  ok('the rows go left and the preview right, in order', box.children[0].children[0] === row && box.children[1].children[0] === lbl && box.children[1].children[1] === pv);
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

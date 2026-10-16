@@ -132,7 +132,7 @@ console.log('\nThe global Logos & icons card previews the global values');
   ok('nor does an exception repaint them', !/areaSync\[sec9/.test(src));
   ok('an area with its own values previews them on its own tab', /tint: ga9 \? tintOnAt\("cc\."\) : tintOnAt\(P\)/.test(src));
   ok('the colouring mode is shut while the icons are not tinted', /setRowEnabled\(modeRow, tintOnAt\("cc\."\)\);/.test(g));
-  ok('a shut row fades and lets no click through', /\.cc-set-disabled :is\([^)]*\.cc-seg[^)]*\)\{opacity:\.45\}/.test(src) && /\.cc-set-disabled :is\(\.cc-seg, \.cc-set-toggle, \.cc-set-numwrap\)\{pointer-events:none;cursor:default\}/.test(src));
+  ok('a shut row fades and shows that it takes no press', /\.cc-set-disabled :is\([^)]*\.cc-seg[^)]*\)\{opacity:\.45\}/.test(src) && /\.cc-set-disabled :is\(\.cc-seg, \.cc-seg-btn, \.cc-set-toggle, \.cc-set-numwrap\)\{cursor:not-allowed\}/.test(src));
 }
 
 console.log('\nA shut row leaves the tab order and opens again with its switch');
