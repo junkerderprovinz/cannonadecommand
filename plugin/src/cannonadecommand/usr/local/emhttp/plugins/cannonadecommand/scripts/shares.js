@@ -65,7 +65,7 @@
   }
   // i18n as in docker.js: German when the page language is, else English
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
-  var T = { de: { browse: "Durchsuchen", protected: "Geschützt", unprotected: "Ungeschützt", protection: "Schutz" }, en: { browse: "Browse", protected: "Protected", unprotected: "Unprotected", protection: "Protection" } };
+  var T = { de: { browse: "Durchsuchen", protected: "Geschützt", unprotected: "Ungeschützt", protection: "Schutz", copy: "Einstellungen kopieren" }, en: { browse: "Browse", protected: "Protected", unprotected: "Unprotected", protection: "Protection", copy: "Copy settings" } };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
   // File manager: badges the owner, permission, size and date values. The page deletes and moves
@@ -239,6 +239,16 @@
     name.parentNode.insertBefore(bt, name.nextSibling);
     enhanceName(name);
     for (var i = 2; i < tds.length; i++) badgeCell(tds[i]); // SMB, NFS, Storage, Size, Free
+    noEllipsis(tr);
+  }
+  // An action says what it does and stops (GlimStone rule 23), so the Compute link loses its dots.
+  function noEllipsis(tr) {
+    var as = tr.querySelectorAll("a");
+    for (var i = 0; i < as.length; i++) {
+      var w = document.createTreeWalker(as[i], NodeFilter.SHOW_TEXT), n, last = null;
+      while ((n = w.nextNode())) if (n.nodeValue.trim()) last = n;
+      if (last && /\s*(\.\.\.|…)\s*$/.test(last.nodeValue)) last.nodeValue = last.nodeValue.replace(/\s*(\.\.\.|…)\s*$/, "");
+    }
   }
   function enhanceHead(table) {
     var head = table && table.querySelector("thead tr");
@@ -536,6 +546,7 @@
           }
           var main = el("div", "cc-main-col"), side = el("div", "cc-side-card");
           for (var m = 0; m < mains.length; m++) main.appendChild(mains[m]);
+          side.appendChild(el("div", "cc-side-head", t("copy")));
           side.appendChild(clone);
           rel.appendChild(main); rel.appendChild(side);
           rel.classList.add("cc-split-row");
@@ -553,7 +564,7 @@
         var row = rows[r];
         var main = row.querySelector(":scope > .cc-main-col"), side = row.querySelector(":scope > .cc-side-card");
         if (main) ccUnwrap(main);
-        if (side) ccUnwrap(side);
+        if (side) { var sh = side.querySelector(":scope > .cc-side-head"); if (sh) side.removeChild(sh); ccUnwrap(side); }
         row.classList.remove("cc-split-row");
       }
       var marks = document.querySelectorAll("#displaybox [data-cc-clone]");
@@ -612,7 +623,8 @@
     }
   }
   // Reverts cardPanels when Tab-Ansicht is off, so the native sub-tabs show.
-  function flattenTeardown() {
+  function flattenTeardown() { headsTeardown(); ccCardsTeardown(); }
+  function headsTeardown() {
     try {
       var stray = document.querySelectorAll("#displaybox .cc-card-head, #displaybox .cc-card-note");
       for (var s = 0; s < stray.length; s++) stray[s].parentNode.removeChild(stray[s]);
@@ -620,7 +632,6 @@
       for (var cd = 0; cd < carded.length; cd++) carded[cd].classList.remove("cc-carded");
       var marked = document.querySelectorAll("#displaybox [data-cc-card]");
       for (var m = 0; m < marked.length; m++) marked[m].removeAttribute("data-cc-card");
-      ccCardsTeardown();
     } catch (e) {}
   }
 
@@ -658,7 +669,8 @@
       }
       // Tab-Ansicht: native sub-tabs by default, or stacked sections. The default "0" has to match
       // the cc-sections-share stamp in apply(), or the flattened DOM lacks its gating class.
-      if (g("cc.sections.shares", "0") !== "0") cardPanels(box); else flattenTeardown();
+      // With the native sub-tabs the copy-settings block still becomes its own card beside the form.
+      if (g("cc.sections.shares", "0") !== "0") cardPanels(box); else { headsTeardown(); ccCards(box); }
       ccSelects(box);
     } catch (e) {}
   }
