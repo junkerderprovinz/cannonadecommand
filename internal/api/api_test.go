@@ -295,10 +295,49 @@ func TestLimitsDualWriteStripsTemplateConflicts(t *testing.T) {
 			t.Fatalf("conflicting template flag %q must be stripped:\n%s", gone, got)
 		}
 	}
-	for _, want := range []string{"--restart=always", "--memory=1073741824", "--cpus=2"} {
+	for _, want := range []string{"--restart=always", "--memory=1G", "--cpus=2"} {
 		if !strings.Contains(string(got), want) {
 			t.Fatalf("missing %q in rewritten template:\n%s", want, got)
 		}
+	}
+}
+
+func TestLimitsWriteMemoryToTemplateInHumanUnits(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		memBytes int64
+		old      string
+		want     string
+		wantLive int64
+	}{
+		{"2 GB over the byte form", 2147483648, "--memory=2147483648", "--memory=2G", 2147483648},
+		{"half a GB", 536870912, "--memory=4G", "--memory=512M", 536870912},
+		{"1.33 GB rounds to a whole megabyte", 1428076954, "", "--memory=1362M", 1362 << 20},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s, h := newServer()
+			dir := t.TempDir()
+			s.TemplatesDir = dir
+			f := filepath.Join(dir, "my-gluetun.xml")
+			tmpl := `<Container><Name>gluetun</Name><ExtraParams>--restart=always ` + tc.old + `</ExtraParams></Container>`
+			if err := os.WriteFile(f, []byte(tmpl), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			body, _ := json.Marshal(map[string]any{"name": "gluetun", "mem_bytes": tc.memBytes})
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, httptest.NewRequest("POST", "/api/limits", bytes.NewReader(body)))
+			if rec.Code != 200 {
+				t.Fatalf("set limits code = %d: %s", rec.Code, rec.Body)
+			}
+			got, _ := os.ReadFile(f)
+			if !strings.Contains(string(got), tc.want) || strings.Count(string(got), "--memory") != 1 {
+				t.Fatalf("want a single %q in the template:\n%s", tc.want, got)
+			}
+			fd := s.Docker.(*fakeDocker)
+			if live := fmt.Sprintf("limits:gluetun:%d:0", tc.wantLive); len(fd.actions) != 1 || fd.actions[0] != live {
+				t.Fatalf("live update must match the template, want %q, got %v", live, fd.actions)
+			}
+		})
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -94,6 +95,22 @@ func applyExtraParams(doc, name string, kv map[string]string) (string, bool) {
 		return doc[:i] + "  " + newEP + "\n" + doc[i:], true
 	}
 	return doc + "\n" + newEP + "\n", true
+}
+
+// FormatMemory writes a byte count the way a person types it into a template, in
+// the largest of G, M or K that divides it evenly: 2147483648 becomes "2G" and
+// half a gigabyte "512M". Docker reads these suffixes as powers of 1024, so it
+// parses the text back into the same byte count.
+func FormatMemory(b int64) string {
+	for _, u := range []struct {
+		size   int64
+		suffix string
+	}{{1 << 30, "G"}, {1 << 20, "M"}, {1 << 10, "K"}} {
+		if b >= u.size && b%u.size == 0 {
+			return strconv.FormatInt(b/u.size, 10) + u.suffix
+		}
+	}
+	return strconv.FormatInt(b, 10)
 }
 
 // StripFlags removes the given docker flags from a space-separated ExtraParams

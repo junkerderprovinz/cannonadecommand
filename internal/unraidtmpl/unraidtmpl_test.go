@@ -3,9 +3,72 @@ package unraidtmpl
 import (
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 )
+
+// dockerRAM parses a memory value with the grammar of docker's units.RAMInBytes,
+// which is how docker run reads --memory, so the tests can show that docker gets
+// back the byte count the template was written from.
+func dockerRAM(t *testing.T, s string) int64 {
+	t.Helper()
+	m := regexp.MustCompile(`^(\d+(?:\.\d+)?) ?([kKmMgGtTpP])?[iI]?[bB]?$`).FindStringSubmatch(s)
+	if m == nil {
+		t.Fatalf("docker would reject memory value %q", s)
+	}
+	n, err := strconv.ParseFloat(m[1], 64)
+	if err != nil {
+		t.Fatal(err)
+	}
+	shift := map[string]uint{"": 0, "k": 10, "m": 20, "g": 30, "t": 40, "p": 50}[strings.ToLower(m[2])]
+	return int64(n * float64(int64(1)<<shift))
+}
+
+func TestFormatMemory(t *testing.T) {
+	for _, tc := range []struct {
+		bytes int64
+		want  string
+	}{
+		{2147483648, "2G"},
+		{536870912, "512M"},
+		{1610612736, "1536M"},
+		{1428160512, "1362M"},
+		{10 << 30, "10G"},
+		{6 << 20, "6M"},
+		{1536, "1536"},
+		{3 << 10, "3K"},
+	} {
+		got := FormatMemory(tc.bytes)
+		if got != tc.want {
+			t.Errorf("FormatMemory(%d) = %q, want %q", tc.bytes, got, tc.want)
+		}
+		if back := dockerRAM(t, got); back != tc.bytes {
+			t.Errorf("docker reads %q as %d, want %d", got, back, tc.bytes)
+		}
+	}
+}
+
+// A template can carry the memory cap as a plain byte count or in any of docker's
+// spellings. Docker reads them all as the same size, and each one is replaced.
+func TestApplyExtraParams_ReplacesEveryMemorySpelling(t *testing.T) {
+	for _, old := range []string{"--memory=2147483648", "--memory=2G", "--memory 2g", "-m 2GB", "-m2g"} {
+		val := old[strings.IndexAny(old, "= ")+1:]
+		if strings.HasPrefix(old, "-m2") {
+			val = old[2:]
+		}
+		if got := dockerRAM(t, val); got != 2147483648 {
+			t.Fatalf("docker reads %q as %d, want 2147483648", old, got)
+		}
+		doc := `<Container><Name>x</Name><ExtraParams>--restart=always ` + old + ` --cpus=2</ExtraParams></Container>`
+		out, _ := applyExtraParams(doc, "x", map[string]string{"-m": "", "--memory": FormatMemory(1 << 30)})
+		want := "<ExtraParams>--restart=always --cpus=2 --memory=1G</ExtraParams>"
+		if !strings.Contains(out, want) {
+			t.Errorf("%q: want %s in:\n%s", old, want, out)
+		}
+	}
+}
 
 func TestApplyExtraParams_UpsertPreservesOthers(t *testing.T) {
 	doc := `<?xml version="1.0"?>

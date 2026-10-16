@@ -712,6 +712,11 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 			req.MemBytes = mt
 		}
 	}
+	// A GB figure with decimals lands between whole megabytes; rounding to one keeps
+	// the template readable ("1362M") and the live cap equal to it.
+	if !req.RemoveMem && req.MemBytes >= 1<<20 {
+		req.MemBytes = (req.MemBytes + 1<<19) >> 20 << 20
+	}
 	if req.RemoveCPU {
 		if n := hostcpu.Count(); n > 0 {
 			req.NanoCPUs = int64(n) * 1e9
@@ -747,7 +752,7 @@ func (s *Server) handleSetLimits(w http.ResponseWriter, r *http.Request) {
 			flags["--memory-swap"] = ""
 			flags["--memory-reservation"] = "" // a soft cap would fight the hard cap
 			if !req.RemoveMem {
-				flags["--memory"] = strconv.FormatInt(req.MemBytes, 10)
+				flags["--memory"] = unraidtmpl.FormatMemory(req.MemBytes)
 			}
 		}
 		if req.RemoveCPU || req.NanoCPUs > 0 || req.CpusetCPUs != "" {
