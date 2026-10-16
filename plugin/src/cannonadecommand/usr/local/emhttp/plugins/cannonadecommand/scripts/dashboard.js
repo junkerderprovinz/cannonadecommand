@@ -1,0 +1,168 @@
+/* CannonadeCommand: the Dashboard tiles as GlimStone cards.
+ *
+ * Loaded on every page through CannonadeCommand.Dashboard.page and gated to /Dashboard. It toggles
+ * html.cc-dash-on while the header area and master theming are on, puts a filled glyph into each
+ * tile title so CannonadeCommand.Dashboard.css can draw the title as a section badge, paints those
+ * badges in the colour mode and redraws the two live charts in the accent. Unraid renders the
+ * tiles once and only refreshes their values, so one pass after the page settles is enough; the
+ * badge colours follow a tile that is dragged to another place through the sortable's own event.
+ */
+(function () {
+  "use strict";
+  function g(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
+  function onDash() { try { return location.pathname.replace(/\/+$/, "") === "/Dashboard"; } catch (e) { return false; } }
+  function isLive() { return g("cc.theming", "1") !== "0" && g("cc.enable.header", "0") !== "0" && onDash(); }
+
+  // Filled drawings for Unraid's tile icons, which are outline glyphs of its own icon font. Tabler
+  // icons, filled set (MIT), on a 24 grid; Docker's brand mark from Simple Icons, the one the
+  // Docker tab in the menu bar wears. The log tile takes CCTheme's Log glyph.
+  var P = {
+    bolt: '<path d="M13 2l.018 .001l.016 .001l.083 .005l.011 .002h.011l.038 .009l.052 .008l.016 .006l.011 .001l.029 .011l.052 .014l.019 .009l.015 .004l.028 .014l.04 .017l.021 .012l.022 .01l.023 .015l.031 .017l.034 .024l.018 .011l.013 .012l.024 .017l.038 .034l.022 .017l.008 .01l.014 .012l.036 .041l.026 .027l.006 .009c.12 .147 .196 .322 .218 .513l.001 .012l.002 .041l.004 .064v6h5a1 1 0 0 1 .868 1.497l-.06 .091l-8 11c-.568 .783 -1.808 .38 -1.808 -.588v-6h-5a1 1 0 0 1 -.868 -1.497l.06 -.091l8 -11l.01 -.013l.018 -.024l.033 -.038l.018 -.022l.009 -.008l.013 -.014l.04 -.036l.028 -.026l.008 -.006a1 1 0 0 1 .402 -.199l.011 -.001l.027 -.005l.074 -.013l.011 -.001l.041 -.002z"/>',
+    board: '<path d="M5 3h5a1 1 0 0 1 1 1v3a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1v-2a2 2 0 0 1 2 -2"/><path d="M14 3h5a2 2 0 0 1 2 2v8a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1v-9a1 1 0 0 1 1 -1"/><path d="M14 16h6a1 1 0 0 1 1 1v2a2 2 0 0 1 -2 2h-5a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1"/><path d="M4 10h6a1 1 0 0 1 1 1v9a1 1 0 0 1 -1 1h-5a2 2 0 0 1 -2 -2v-8a1 1 0 0 1 1 -1"/>',
+    pie: '<path d="M9.883 2.207a1.9 1.9 0 0 1 2.087 1.522l.025 .167l.005 .104v7a1 1 0 0 0 .883 .993l.117 .007h6.8a2 2 0 0 1 2 2a1 1 0 0 1 -.026 .226a10 10 0 1 1 -12.27 -11.933l.27 -.067l.11 -.02z"/><path d="M14 3.5v5.5a1 1 0 0 0 1 1h5.5a1 1 0 0 0 .943 -1.332a10 10 0 0 0 -6.11 -6.111a1 1 0 0 0 -1.333 .943z"/>',
+    shieldLock: '<path d="M11.998 2l.118 .007l.059 .008l.061 .013l.111 .034a.993 .993 0 0 1 .217 .112l.104 .082l.255 .218a11 11 0 0 0 7.189 2.537l.342 -.01a1 1 0 0 1 1.005 .717a13 13 0 0 1 -9.208 16.25a1 1 0 0 1 -.502 0a13 13 0 0 1 -9.209 -16.25a1 1 0 0 1 1.005 -.717a11 11 0 0 0 7.531 -2.527l.263 -.225l.096 -.075a.993 .993 0 0 1 .217 -.112l.112 -.034a.97 .97 0 0 1 .119 -.021l.115 -.007zm.002 7a2 2 0 0 0 -1.995 1.85l-.005 .15l.005 .15a2 2 0 0 0 .995 1.581v1.769l.007 .117a1 1 0 0 0 1.993 -.117l.001 -1.768a2 2 0 0 0 -1.001 -3.732z"/>',
+    shieldCheck: '<path d="M11.998 2l.118 .007l.059 .008l.061 .013l.111 .034a.993 .993 0 0 1 .217 .112l.104 .082l.255 .218a11 11 0 0 0 7.189 2.537l.342 -.01a1 1 0 0 1 1.005 .717a13 13 0 0 1 -9.208 16.25a1 1 0 0 1 -.502 0a13 13 0 0 1 -9.209 -16.25a1 1 0 0 1 1.005 -.717a11 11 0 0 0 7.531 -2.527l.263 -.225l.096 -.075a.993 .993 0 0 1 .217 -.112l.112 -.034a.97 .97 0 0 1 .119 -.021l.115 -.007zm3.71 7.293a1 1 0 0 0 -1.415 0l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.32 1.497l2 2l.094 .083a1 1 0 0 0 1.32 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z"/>',
+    database: '<path d="M3 15.731c1.968 1.507 5.234 2.269 9 2.269c3.76 0 7.025 -.76 9 -2.252v2.252c0 2.425 -3.895 3.936 -8.693 3.998l-.307 .002c-4.938 0 -9 -1.523 -9 -4z"/><path d="M3 9.731c1.968 1.507 5.234 2.269 9 2.269c3.76 0 7.025 -.76 9 -2.252v2.252c0 2.477 -4.062 4 -9 4c-4.798 0 -8.77 -1.438 -8.979 -3.795l-.016 -.101l-.005 -.104z"/><path d="M12 2c1.041 0 2.044 .068 2.977 .198l.469 .071q .84 .14 1.586 .348l.44 .131l.075 .024a11 11 0 0 1 .805 .3l.199 .086q .535 .242 .967 .53q .165 .11 .313 .225a3.8 3.8 0 0 1 .669 .668l.091 .128q .07 .105 .129 .211l.07 .139q .163 .35 .2 .73l.01 .211c0 2.477 -4.062 4 -9 4c-4.798 0 -8.77 -1.438 -8.979 -3.795a1 1 0 0 1 -.021 -.205l.005 -.104l.016 -.1c.205 -2.306 4.01 -3.733 8.667 -3.794z"/>',
+    gauge: '<path d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-.293 3.953a1 1 0 0 0 -1.414 0l-2.59 2.59l-.083 .094l-.068 .1a2.001 2.001 0 0 0 -2.547 1.774l-.005 .149l.005 .15a2 2 0 1 0 3.917 -.701a.968 .968 0 0 0 .195 -.152l2.59 -2.59l.083 -.094a1 1 0 0 0 -.083 -1.32zm-4.707 -1.293a6 6 0 0 0 -6 6a1 1 0 0 0 2 0a4 4 0 0 1 4 -4a1 1 0 0 0 0 -2z"/>',
+    world: '<path d="M21.165 16a10 10 0 0 1 -8.434 5.973a1 1 0 0 0 .617 -.444a18 18 0 0 0 2.28 -5.528z"/><path d="M8.372 16a18 18 0 0 0 2.28 5.53a1 1 0 0 0 .616 .443a10 10 0 0 1 -8.433 -5.973z"/><path d="M13.57 16a16 16 0 0 1 -1.57 3.884a16 16 0 0 1 -1.57 -3.884"/><path d="M8.034 10a18 18 0 0 0 0 4h-5.832a10 10 0 0 1 -.002 -4z"/><path d="M13.952 10a16 16 0 0 1 0 4h-3.904a16 16 0 0 1 0 -4z"/><path d="M21.8 10a10.05 10.05 0 0 1 -.002 4h-5.832c.149 -1.329 .149 -2.67 0 -4z"/><path d="M11.267 2.027a1 1 0 0 0 -.615 .444a18 18 0 0 0 -2.28 5.529h-5.54a10.01 10.01 0 0 1 8.334 -5.967z"/><path d="M12 4.116a16 16 0 0 1 1.57 3.885h-3.14c.34 -1.317 .85 -2.6 1.53 -3.817z"/><path d="M12.733 2.026a10.01 10.01 0 0 1 8.435 5.974h-5.54a18 18 0 0 0 -2.28 -5.53a1 1 0 0 0 -.517 -.414z"/>',
+    cards: '<path d="M10.348 3.169l-7.15 3.113a2 2 0 0 0 -1.03 2.608l4.92 11.895a1.96 1.96 0 0 0 2.59 1.063l7.142 -3.11a2.002 2.002 0 0 0 1.036 -2.611l-4.92 -11.894a1.96 1.96 0 0 0 -2.588 -1.064z"/><path d="M16 3a2 2 0 0 1 1.995 1.85l.005 .15v3.5a1 1 0 0 1 -1.993 .117l-.007 -.117v-3.5h-1a1 1 0 0 1 -.117 -1.993l.117 -.007h1z"/><path d="M19.08 5.61a1 1 0 0 1 1.31 -.53c.257 .108 .505 .21 .769 .314a2 2 0 0 1 1.114 2.479l-.056 .146l-2.298 5.374a1 1 0 0 1 -1.878 -.676l.04 -.11l2.296 -5.371l-.366 -.148l-.402 -.167a1 1 0 0 1 -.53 -1.312z"/>',
+    desktop: '<path d="M7 21a1 1 0 0 1 0 -2h1v-2h-4a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-4v2h1a1 1 0 0 1 0 2zm7 -4h-4v2h4z"/>',
+    folder: '<path d="M9 3a1 1 0 0 1 .608 .206l.1 .087l2.706 2.707h6.586a3 3 0 0 1 2.995 2.824l.005 .176v8a3 3 0 0 1 -2.824 2.995l-.176 .005h-14a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-11a3 3 0 0 1 2.824 -2.995l.176 -.005h4z"/>',
+    user: '<path d="M12 2a5 5 0 1 1 -5 5l.005 -.217a5 5 0 0 1 4.995 -4.783z"/><path d="M14 14a5 5 0 0 1 5 5v1a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-1a5 5 0 0 1 5 -5h4z"/>',
+    battery: '<path d="M17 6a3 3 0 0 1 2.995 2.824l.005 .176v.086l.052 .019a1.5 1.5 0 0 1 .941 1.25l.007 .145v3a1.5 1.5 0 0 1 -.948 1.395l-.052 .018v.087a3 3 0 0 1 -2.824 2.995l-.176 .005h-11a3 3 0 0 1 -2.995 -2.824l-.005 -.176v-6a3 3 0 0 1 2.824 -2.995l.176 -.005h11z"/>',
+    tile: '<path d="M9 3a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2zm0 12a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-2a2 2 0 0 1 2 -2zm10 -4a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-6a2 2 0 0 1 2 -2zm0 -8a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-4a2 2 0 0 1 -2 -2v-2a2 2 0 0 1 2 -2z"/>',
+    docker: '<path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/>'
+  };
+  var BY_ICON = {
+    "icon-performance": "bolt", "icon-motherboard": "board", "icon-ram": "pie", "icon-vpn": "shieldLock",
+    "icon-health": "shieldCheck", "icon-disks": "database", "icon-disk": "database", "icon-cpu": "gauge",
+    "icon-ethernet": "world", "icon-hardware": "cards", "icon-virtualization": "desktop", "icon-docker": "docker",
+    "icon-folder": "folder", "icon-users": "user", "icon-ups": "battery", "icon-log": "log"
+  };
+  function glyphFor(icon) {
+    var name = "tile";
+    if (icon && icon.classList) for (var i = 0; i < icon.classList.length; i++) if (BY_ICON[icon.classList[i]]) { name = BY_ICON[icon.classList[i]]; break; }
+    if (name === "log" && window.CCTheme && CCTheme.glyph) return CCTheme.glyph("Log").replace('class="cc-glyph"', 'class="cc-glyph cc-dash-g"');
+    return '<svg class="cc-glyph cc-dash-g" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">' + P[name === "log" ? "tile" : name] + "</svg>";
+  }
+
+  // The title of a tile: its h3, or for a plugin tile that prints a bare word (the GPU tile) that
+  // word, wrapped so it can carry the badge.
+  function titleOf(left) {
+    var sec = left.querySelector(".section");
+    if (!sec) return null;
+    var h = sec.querySelector("h3.tile-header-main");
+    if (h) return h;
+    for (var n = sec.firstChild; n; n = n.nextSibling) {
+      if (n.nodeType === 3 && n.nodeValue.trim()) {
+        var w = document.createElement("span");
+        w.className = "cc-dash-wrap";
+        sec.insertBefore(w, n); w.appendChild(n);
+        return w;
+      }
+      if (n.nodeType === 1) break;
+    }
+    return null;
+  }
+
+  function heads() { return document.querySelectorAll("table.dashboard > tbody > tr:first-child .tile-header-left"); }
+
+  function decorate() {
+    var ls = heads();
+    for (var i = 0; i < ls.length; i++) {
+      var left = ls[i];
+      if (left.querySelector(".cc-dash-h")) continue;
+      var t = titleOf(left);
+      if (!t) continue;
+      var icon = left.querySelector(":scope > i.f32, :scope > i[class*='icon-']");
+      var img = left.querySelector(":scope > img");
+      t.classList.add("cc-dash-h");
+      if (img && !icon) {
+        var mini = document.createElement("img");
+        mini.className = "cc-dash-g cc-dash-img"; mini.src = img.src; mini.alt = "";
+        t.insertBefore(mini, t.firstChild);
+      } else {
+        t.insertAdjacentHTML("afterbegin", glyphFor(icon));
+      }
+      left.classList.add("cc-dash-glyphed");
+    }
+  }
+
+  function strip() {
+    var gs = document.querySelectorAll("table.dashboard .cc-dash-g");
+    for (var i = 0; i < gs.length; i++) gs[i].parentNode.removeChild(gs[i]);
+    var ws = document.querySelectorAll("table.dashboard .cc-dash-wrap");
+    for (var j = 0; j < ws.length; j++) { var w = ws[j]; while (w.firstChild) w.parentNode.insertBefore(w.firstChild, w); w.parentNode.removeChild(w); }
+    var hs = document.querySelectorAll("table.dashboard .cc-dash-h");
+    for (var k = 0; k < hs.length; k++) { hs[k].classList.remove("cc-dash-h"); hs[k].style.removeProperty("--cc-rb-c"); hs[k].style.removeProperty("--cc-rb-ct"); }
+    var ls = document.querySelectorAll("table.dashboard .cc-dash-glyphed");
+    for (var m = 0; m < ls.length; m++) ls[m].classList.remove("cc-dash-glyphed");
+  }
+
+  // A heading is not a control, so the reactive sub-mode leaves it coloured; in rainbow and flag
+  // mode each visible tile takes the next palette position in reading order.
+  function paint() {
+    var rb = g("cc.rainbow", "0") === "1" && window.CCTheme && CCTheme.rbColor;
+    var hs = document.querySelectorAll("table.dashboard > tbody:not([style*='none']) .cc-dash-h");
+    for (var i = 0; i < hs.length; i++) {
+      var h = hs[i];
+      if (rb) {
+        var c = CCTheme.rbColor(i, "#FCC419");
+        h.style.setProperty("--cc-rb-c", c); h.style.setProperty("--cc-rb-ct", CCTheme.idealText(c));
+      } else { h.style.removeProperty("--cc-rb-c"); h.style.removeProperty("--cc-rb-ct"); }
+    }
+  }
+
+  // GlimStone draws a chart in the one accent with no grid. The CPU line and the inbound traffic
+  // take the accent with a faint fill; outbound keeps the accent as a thinner line without fill, so
+  // the two stay apart without a second hue. The originals are kept for turning the area off.
+  var CHARTS = ["cpuchart", "netchart"];
+  function alpha(hex, a) { var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return "transparent"; var n = parseInt(m[1], 16); return "rgba(" + (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255) + "," + a + ")"; }
+  function paintCharts(on) {
+    var acc = "";
+    try { acc = getComputedStyle(document.documentElement).getPropertyValue("--cc-accent").trim(); } catch (e) {}
+    if (!/^#[0-9a-f]{6}$/i.test(acc)) acc = "#FCC419";
+    var text = "";
+    try { text = getComputedStyle(document.documentElement).getPropertyValue("--cc-text-dim").trim(); } catch (e) {}
+    CHARTS.forEach(function (name) {
+      var c = window[name];
+      if (!c || !c.options || !c.seriesSet) return;
+      if (!c.__ccOrig) c.__ccOrig = { grid: JSON.parse(JSON.stringify(c.options.grid)), label: c.options.labels.fillStyle, series: c.seriesSet.map(function (s) { return { stroke: s.options.strokeStyle, fill: s.options.fillStyle, width: s.options.lineWidth }; }) };
+      var o = c.__ccOrig;
+      if (on) {
+        c.options.grid.strokeStyle = "transparent"; c.options.grid.verticalSections = 0; c.options.grid.borderVisible = false;
+        if (text) c.options.labels.fillStyle = text;
+        c.seriesSet.forEach(function (s, i) {
+          s.options.strokeStyle = i === 0 ? acc : alpha(acc, 0.7);
+          s.options.fillStyle = i === 0 ? alpha(acc, 0.16) : undefined;
+          s.options.lineWidth = i === 0 ? 1.5 : 1;
+        });
+      } else {
+        c.options.grid = JSON.parse(JSON.stringify(o.grid)); c.options.labels.fillStyle = o.label;
+        c.seriesSet.forEach(function (s, i) { var v = o.series[i] || {}; s.options.strokeStyle = v.stroke; s.options.fillStyle = v.fill; s.options.lineWidth = v.width; });
+      }
+    });
+  }
+
+  var wasLive = false;
+  function apply() {
+    var live = isLive();
+    document.documentElement.classList.toggle("cc-dash-on", live);
+    if (live) { decorate(); paint(); paintCharts(true); }
+    else if (wasLive) { strip(); paintCharts(false); }
+    wasLive = live;
+  }
+
+  function boot() {
+    if (!onDash()) return;
+    apply();
+    // dynamix fills in plugin tiles and starts the charts after its own load handlers, so the pass
+    // runs again once that has happened.
+    setTimeout(apply, 1500);
+    setTimeout(apply, 5000);
+    try { if (window.jQuery) window.jQuery(document).on("sortupdate", "table.dashboard, .grid", function () { if (isLive()) paint(); }); } catch (e) {}
+    // cc.stateCache is skipped because docker.js rewrites it every 9s.
+    window.addEventListener("storage", function (e) { try { if (e && e.key && e.key !== "cc.stateCache" && /^cc\./.test(e.key)) apply(); } catch (e2) {} });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
+})();
