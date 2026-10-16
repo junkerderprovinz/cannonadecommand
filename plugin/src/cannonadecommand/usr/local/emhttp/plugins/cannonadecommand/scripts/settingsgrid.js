@@ -139,9 +139,32 @@
   // have no Title=, so every div.title there is one category heading, rendered by
   // PageBuilder.php tab_title() as <div class="title"><span class="left"><i></i>Label</span>.
   // The label is a bare text node, so span.left is the badge box and the sheet does the rest;
-  // JS stamps the rainbow colour per heading and inks a heading picture. data-cc-sgh marks what clearHeads() undoes
-  // and is not a skip guard, since the paint re-runs when the palette changes. The inner <i>
-  // carries class "title" as well, so selectors qualify div.title.
+  // JS stamps the rainbow colour per heading, inks a heading picture and names the categories
+  // Unraid leaves in English. data-cc-sgh marks what clearHeads() undoes and is not a skip guard,
+  // since the paint re-runs when the palette changes. The inner <i> carries class "title" as well,
+  // so selectors qualify div.title.
+  //
+  // Unraid's German has no words for three Tools categories. A heading is known by the page file
+  // in the comment Unraid writes in front of it, so a title some other language or plugin changes
+  // never matches by accident.
+  var HEAD_DE = { WebGui: "Weboberfläche", Wizards: "Assistenten", DiskUtilities: "Datenträger-Werkzeuge" };
+  function headPage(title) {
+    for (var c = title.previousSibling; c && c.nodeType !== 1; c = c.previousSibling) {
+      if (c.nodeType === 8) { var m = /([^\/\s]+)\.page\s*$/m.exec(c.nodeValue); return m ? m[1] : ""; }
+    }
+    return "";
+  }
+  function headLabel(h) {
+    for (var c = h.lastChild; c; c = c.previousSibling) if (c.nodeType === 3 && c.nodeValue.trim()) return c;
+    return null;
+  }
+  function nameHead(h) {
+    var de = (document.documentElement.lang || "").slice(0, 2).toLowerCase() === "de" && HEAD_DE[headPage(h.parentNode)];
+    var label = de && headLabel(h);
+    if (!label) return;
+    if (!h.hasAttribute("data-cc-sgh-text")) h.setAttribute("data-cc-sgh-text", label.nodeValue);
+    if (label.nodeValue !== de) label.nodeValue = de;
+  }
   function paintHeads() {
     try {
       // Headings keep their colour in both rainbow sub-modes, like the /Main heads; "active
@@ -152,6 +175,7 @@
       for (var i = 0; i < heads.length; i++) {
         var h = heads[i];
         h.setAttribute("data-cc-sgh", "1");               // teardown index (attribute write -> no childList re-fire)
+        nameHead(h);                                      // a text write, which the childList observer does not see either
         // A plugin's heading picture (img.icon) cannot take the text colour, so it is flattened
         // to the heading's ink like a glyph.
         var im = h.querySelector(":scope > img");
@@ -179,6 +203,9 @@
         h.style.removeProperty("background"); h.style.removeProperty("color");
         h.style.removeProperty("--cc-rb-c"); h.style.removeProperty("--cc-rb-ct");
         var im = h.querySelector(":scope > img"); if (im) im.style.removeProperty("filter");
+        var label = h.hasAttribute("data-cc-sgh-text") && headLabel(h);
+        if (label) label.nodeValue = h.getAttribute("data-cc-sgh-text");
+        h.removeAttribute("data-cc-sgh-text");
         h.removeAttribute("data-cc-sgh");
       }
     } catch (e) {}
