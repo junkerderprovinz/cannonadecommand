@@ -770,12 +770,16 @@
     if (!CI) return { treat: "tint", url: "" };
     var res = CI.result(name), kind = res ? res.kind : "";
     var mode = CI.mode(scope, name);
+    // Unraid's question-mark stand-in is replaced before anything is measured, so the plan is made
+    // for the picture that will show.
+    var stand = isGlyphEl ? "" : CI.placeholder(nativeSrc);
+    if (stand) nativeSrc = stand;
     // A font glyph is monochrome by construction: measure nothing, fetch nothing, ink it.
     var spread = isGlyphEl ? 0 : CI.spread(nativeSrc);
-    var plan = CI.plan(mode, kind === "pending" ? "" : kind, spread);
-    var url = "";
+    var plan = CI.plan(mode, kind === "pending" ? "" : kind, spread, isGlyphEl ? null : CI.tile(nativeSrc));
+    var url = stand;
     if (!isGlyphEl && (plan.src === "glyph" || plan.src === "color")) url = CI.svgUrl(name);
-    return { treat: plan.treat, url: url, why: plan.why };
+    return { treat: plan.treat, url: url, tile: plan.tile, why: plan.why };
   }
   function applyIconTint() {
     try {
@@ -840,7 +844,7 @@
           thisInk = rowInk;
         }
         // "native", or no ink colour at all, leaves the pixels alone
-        var want = plan.treat === "native" ? "" : (plan.treat === "flat" ? thisFlat : thisTint);
+        var want = plan.treat === "native" ? "" : plan.treat === "flat" ? thisFlat : plan.treat === "knock" ? CI.knock(thisInk, plan.tile) : thisTint;
         if (n.tagName === "IMG") { n.style.filter = want; }
         else {
           var gif = glyphInkAndFilter(plan, ibgOn, ibgAcc, thisInk, want);
@@ -867,13 +871,14 @@
           gnames.push(gn);
           var gp = CI ? iconTreatment("docker", gn, false, nativeIconSrc(g[j])) : { treat: "tint", url: "" };
           setIconSrc(g[j], gp.url);
-          var gFlat = flat, gTint = f;
+          var gFlat = flat, gTint = f, gInk = ink;
           if (adopt) {
-            var cardBlk = itemAdoptInk(g[j].closest(".cc-card")) !== "#fff";
+            gInk = itemAdoptInk(g[j].closest(".cc-card"));
+            var cardBlk = gInk !== "#fff";
             gFlat = cardBlk ? flatBlk : flatWht;
             gTint = cardBlk ? fBlk : fWht;
           }
-          g[j].style.filter = gp.treat === "native" ? "" : (gp.treat === "flat" ? gFlat : gTint);
+          g[j].style.filter = gp.treat === "native" ? "" : gp.treat === "flat" ? gFlat : gp.treat === "knock" ? CI.knock(gInk, gp.tile) : gTint;
         }
         if (CI && gnames.length) CI.want(gnames);
       }

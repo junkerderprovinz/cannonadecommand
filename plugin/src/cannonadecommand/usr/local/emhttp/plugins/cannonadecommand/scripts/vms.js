@@ -158,9 +158,9 @@
     if (!CI) return { treat: "tint", url: "" };
     var isGlyphEl = n.tagName !== "IMG";
     var res = CI.result(name), kind = res && res.kind !== "pending" ? res.kind : "";
-    var spread = isGlyphEl ? 0 : CI.spread(n.getAttribute("data-cc-osrc") || n.getAttribute("src") || "");
-    var plan = CI.plan(CI.mode("vm", name), kind, spread);
-    return { treat: plan.treat, url: (!isGlyphEl && (plan.src === "glyph" || plan.src === "color")) ? CI.svgUrl(name) : "" };
+    var src = isGlyphEl ? "" : n.getAttribute("data-cc-osrc") || n.getAttribute("src") || "";
+    var plan = CI.plan(CI.mode("vm", name), kind, isGlyphEl ? 0 : CI.spread(src), isGlyphEl ? null : CI.tile(src));
+    return { treat: plan.treat, tile: plan.tile, url: (!isGlyphEl && (plan.src === "glyph" || plan.src === "color")) ? CI.svgUrl(name) : "" };
   }
   // cc.stylevms on reads the shared cc.* keys, off the VM area's own ccv.* keys.
   function effK(k) { return ls("cc.stylevms") !== "0" ? ls("cc." + k) : ls("ccv." + k); }
@@ -1084,7 +1084,7 @@
           thisTint = rowBlk ? fBlk : fWht;
           thisInk = rowInk;
         }
-        var want = plan.treat === "native" ? "" : (plan.treat === "flat" ? thisFlat : thisTint);
+        var want = plan.treat === "native" ? "" : plan.treat === "flat" ? thisFlat : plan.treat === "knock" ? CI.knock(thisInk, plan.tile) : thisTint;
         if (n.tagName === "IMG") { vmSetIconSrc(n, plan.url); n.style.filter = want; if (ibgOn) n.style.removeProperty("color"); }
         // A glyph takes `color` with !important, since Unraid's VM CSS colours it through a class rule.
         else {

@@ -442,11 +442,11 @@
       var plan = { treat: "tint", url: "" };
       if (PCI && pName) {
         var pres = PCI.result(pName), pkind = (pres && pres.kind !== "pending") ? pres.kind : "";
-        var pspread = isGlyphEl ? 0 : PCI.spread(el2.getAttribute("data-cc-osrc") || el2.getAttribute("src") || "");
-        var pp = PCI.plan(PCI.mode("plugin", pName), pkind, pspread);
-        plan = { treat: pp.treat, url: (!isGlyphEl && (pp.src === "glyph" || pp.src === "color")) ? PCI.svgUrl(pName) : "" };
+        var psrc = isGlyphEl ? "" : el2.getAttribute("data-cc-osrc") || el2.getAttribute("src") || "";
+        var pp = PCI.plan(PCI.mode("plugin", pName), pkind, isGlyphEl ? 0 : PCI.spread(psrc), isGlyphEl ? null : PCI.tile(psrc));
+        plan = { treat: pp.treat, tile: pp.tile, url: (!isGlyphEl && (pp.src === "glyph" || pp.src === "color")) ? PCI.svgUrl(pName) : "" };
       }
-      var want = plan.treat === "native" ? "none" : (plan.treat === "flat" ? (pFlat || f2 || "none") : (f2 || "none"));
+      var want = plan.treat === "native" ? "none" : plan.treat === "flat" ? (pFlat || f2 || "none") : plan.treat === "knock" ? (PCI.knock(pInk, plan.tile) || "none") : (f2 || "none");
       if (!isGlyphEl) {
         el2.style.setProperty("object-fit", "contain", "important");
         el2.style.removeProperty("transform"); // superseded by content normalization

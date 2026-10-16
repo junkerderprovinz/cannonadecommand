@@ -307,8 +307,9 @@
   // controls; Unraid's own icons keep their Font Awesome. Each entry is the square viewBox cropped
   // to the drawing's ink and the drawing, so every glyph fills its box alike. Sources: Streamline
   // Core Solid, free set (CC BY 4.0), Tabler Icons (MIT), and drawings made for GlimStone,
-  // BombVault and KnightLoader. Log is drawn for CannonadeCommand, since the set has no log,
-  // and Star is Tabler's filled star, which the Favorites tab already wears.
+  // BombVault and KnightLoader. Log is drawn for CannonadeCommand, since the set has no log.
+  // Star is Tabler's filled star, which the Favorites tab already wears, and Containers is the
+  // Simple Icons whale (CC0).
   var GLYPHS = {
     "ExternalLink": ["0 0 14 14", '<path fill-rule="evenodd" d="M7 2 2.5 2a0.5 0.5 0 0 0 -0.5 0.5l0 9a0.5 0.5 0 0 0 0.5 0.5l9 0a0.5 0.5 0 0 0 0.5 -0.5L12 7a1 1 0 1 1 2 0l0 4.5a2.5 2.5 0 0 1 -2.5 2.5l-9 0A2.5 2.5 0 0 1 0 11.5l0 -9A2.5 2.5 0 0 1 2.5 0L7 0a1 1 0 0 1 0 2ZM9.538 0.309A0.5 0.5 0 0 1 10 0l3.5 0a0.5 0.5 0 0 1 0.5 0.5L14 4a0.5 0.5 0 0 1 -0.854 0.354L12.104 3.31 7.707 7.707a1 1 0 0 1 -1.414 -1.414l4.396 -4.397L9.646 0.854a0.5 0.5 0 0 1 -0.108 -0.545Z"/>'],
     "Gear": ["-0.001 0 14 14", '<path fill-rule="evenodd" d="m5.557 0.69 -0.463 1.195 -1.594 0.904 -1.27 -0.194a1.077 1.077 0 0 0 -1.078 0.528l-0.43 0.754a1.077 1.077 0 0 0 0.086 1.217l0.807 1.001v1.81L0.83 8.906a1.077 1.077 0 0 0 -0.086 1.217l0.43 0.754a1.077 1.077 0 0 0 1.078 0.528l1.27 -0.194 1.573 0.904 0.463 1.196a1.076 1.076 0 0 0 1 0.689h0.905a1.076 1.076 0 0 0 1.002 -0.69l0.463 -1.195 1.572 -0.904 1.27 0.194a1.077 1.077 0 0 0 1.078 -0.528l0.43 -0.754a1.077 1.077 0 0 0 -0.086 -1.217l-0.807 -1.001v-1.81l0.786 -1.001a1.077 1.077 0 0 0 0.086 -1.217l-0.43 -0.754a1.076 1.076 0 0 0 -1.078 -0.528l-1.27 0.194 -1.573 -0.904L8.443 0.689A1.077 1.077 0 0 0 7.442 0h-0.884a1.077 1.077 0 0 0 -1.001 0.69ZM7 9.25a2.25 2.25 0 1 0 0 -4.5 2.25 2.25 0 0 0 0 4.5Z"/>'],
@@ -340,7 +341,8 @@
     "EyeOff": ["0.044 0.044 13.912 13.912", '<path fill-rule="evenodd" d="M0.263638 1.32434c-0.2928929 -0.2929 -0.2928929 -0.767771 0 -1.060664 0.292894 -0.2928929 0.767772 -0.2928929 1.060662 0L3.95291 2.89228c0.90784 -0.49884 1.93998 -0.85203 3.04708 -0.85203 1.53199 0 2.92043 0.67629 4.03461 1.479 1.1182 0.80562 2.0034 1.76963 2.5393 2.41731l0.0045 0.00548c0.2393 0.29779 0.3653 0.67515 0.3653 1.05806s-0.126 0.76028 -0.3653 1.05806l-0.0045 0.00549c-0.4886 0.59054 -1.2677 1.44407 -2.2489 2.20075l2.4114 2.4113c0.2929 0.2929 0.2929 0.7678 0 1.0607 -0.2929 0.2929 -0.7678 0.2929 -1.0607 0L0.263638 1.32434ZM9.01713 7.95651c0.13771 -0.2899 0.21477 -0.61419 0.21477 -0.95649 0 -1.23264 -0.99926 -2.2319 -2.23191 -2.2319 -0.34229 0 -0.66659 0.07705 -0.95649 0.21476l2.97363 2.97363ZM0.426074 5.93656c0.319448 -0.38609 0.763036 -0.88458 1.306096 -1.39491l7.10402 7.10405c-0.58062 0.1961 -1.19587 0.3143 -1.8362 0.3143 -1.53198 0 -2.92042 -0.6763 -4.03459 -1.479C1.8472 9.67534 0.961967 8.71133 0.426074 8.06365L0.4216 8.05816C0.182285 7.76038 0.0562814 7.38301 0.0562814 7.0001S0.182285 6.23983 0.4216 5.94204l0.004474 -0.00548Z"/>'],
     "Schedules": ["0 0 14 14", '<path fill-rule="evenodd" d="M7 14c3.866 0 7 -3.134 7 -7 0 -3.86599 -3.134 -7 -7 -7 -3.86599 0 -7 3.13401 -7 7 0 3.866 3.13401 7 7 7Zm0.625 -9.5c0 -0.34518 -0.27982 -0.625 -0.625 -0.625s-0.625 0.27982 -0.625 0.625V7c0 0.14621 0.05126 0.28779 0.14486 0.40012l2.5 2.99998c0.22098 0.2652 0.61508 0.301 0.88026 0.08 0.26518 -0.2209 0.30098 -0.61504 0.08002 -0.88022L7.625 6.77372V4.5Z"/>'],
     "Log": ["0 0 14 14", '<path fill-rule="evenodd" d="M2.5 0h9A1.5 1.5 0 0 1 13 1.5v11a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 1 12.5v-11A1.5 1.5 0 0 1 2.5 0ZM4 3a.8.8 0 0 0 0 1.6h6A.8.8 0 0 0 10 3Zm0 3.2a.8.8 0 0 0 0 1.6h6a.8.8 0 0 0 0-1.6Zm0 3.2a.8.8 0 0 0 0 1.6h3.5a.8.8 0 0 0 0-1.6Z"/>'],
-    "Star": ["1.3 0.55 21.4 21.4", '<path d="M8.243 7.34l-6.38 .925l-.113 .023a1 1 0 0 0 -.44 1.684l4.622 4.499l-1.09 6.355l-.013 .11a1 1 0 0 0 1.464 .944l5.706 -3l5.693 3l.1 .046a1 1 0 0 0 1.352 -1.1l-1.091 -6.355l4.624 -4.5l.078 -.085a1 1 0 0 0 -.633 -1.62l-6.38 -.926l-2.852 -5.78a1 1 0 0 0 -1.794 0l-2.853 5.78z"/>']
+    "Star": ["1.3 0.55 21.4 21.4", '<path d="M8.243 7.34l-6.38 .925l-.113 .023a1 1 0 0 0 -.44 1.684l4.622 4.499l-1.09 6.355l-.013 .11a1 1 0 0 0 1.464 .944l5.706 -3l5.693 3l.1 .046a1 1 0 0 0 1.352 -1.1l-1.091 -6.355l4.624 -4.5l.078 -.085a1 1 0 0 0 -.633 -1.62l-6.38 -.926l-2.852 -5.78a1 1 0 0 0 -1.794 0l-2.853 5.78z"/>'],
+    "Containers": ["0 0 24 24", '<path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/>']
   };
   // The markup for one glyph, sized by the font size of whatever holds it (.cc-glyph in Tokens.css),
   // in the ink of its control.
@@ -396,7 +398,7 @@
   var icoWant = {};           // names asked for but not yet answered
   var icoInflight = false, icoTimer = null, icoLast = 0;
   var icoListeners = [];
-  var icoSimple = {};         // icon URL -> luminance stddev, or -1 when unmeasurable
+  var icoSimple = {};         // icon URL -> { s: luminance stddev or -1, t: tile or null }
   var icoMeasuring = {};
 
   function icoNorm(n) { return String(n == null ? "" : n).trim().toLowerCase(); }
@@ -506,20 +508,29 @@
 
   // Step 1: draw the icon small and take the standard deviation of luminance over its opaque
   // pixels, cached per URL. Until a measurement lands the caller uses the safe tint, and the
-  // repaint callback upgrades it afterwards.
+  // repaint callback upgrades it afterwards. The same pass tells whether the picture is a tile
+  // (see iconTileOf), so the two never need a second load.
   function iconSpread(url) {
+    var m = icoMeasure(url);
+    return m && m.s >= 0 ? m.s : null;
+  }
+  function iconTile(url) {
+    var m = icoMeasure(url);
+    return m && m.t ? m.t : null;
+  }
+  function icoMeasure(url) {
     if (!url) return null;
-    if (icoSimple[url] != null) return icoSimple[url] < 0 ? null : icoSimple[url];
-    try { var c = sessionStorage.getItem("ccico:" + url); if (c != null) { icoSimple[url] = parseFloat(c); return icoSimple[url] < 0 ? null : icoSimple[url]; } } catch (e) {}
+    if (icoSimple[url] != null) return icoSimple[url];
+    try { var c = sessionStorage.getItem("ccico2:" + url); if (c != null) { icoSimple[url] = JSON.parse(c); return icoSimple[url]; } } catch (e) {}
     if (icoMeasuring[url]) return null;
     icoMeasuring[url] = 1;
     var probe = new Image();
     var done = function (v) {
       icoSimple[url] = v; delete icoMeasuring[url];
-      try { sessionStorage.setItem("ccico:" + url, String(v)); } catch (e2) {}
+      try { sessionStorage.setItem("ccico2:" + url, JSON.stringify(v)); } catch (e2) {}
       icoNotify();
     };
-    probe.onerror = function () { done(-1); };
+    probe.onerror = function () { done({ s: -1 }); };
     probe.onload = function () {
       try {
         var W = 48, cv = document.createElement("canvas"); cv.width = cv.height = W;
@@ -527,34 +538,121 @@
         var nw = probe.naturalWidth || W, nh = probe.naturalHeight || W;
         var sc = Math.min(W / nw, W / nh), dw = nw * sc, dh = nh * sc;
         cx.drawImage(probe, (W - dw) / 2, (W - dh) / 2, dw, dh);
-        var d = cx.getImageData(0, 0, W, W).data, n = 0, sum = 0, sq = 0;
-        for (var i = 0; i < d.length; i += 4) {
-          if (d[i + 3] <= ICON_ALPHA_MIN) continue;
-          var L = 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
-          n++; sum += L; sq += L * L;
-        }
-        if (n < 16) { done(-1); return; }   // too little content to judge: leave it alone
-        var mean = sum / n, varc = Math.max(0, sq / n - mean * mean);
-        done(Math.round(Math.sqrt(varc) * 100) / 100);
-      } catch (e3) { done(-1); }            // a tainted canvas (cross-origin icon) lands here
+        done(iconMeasurePixels(cx.getImageData(0, 0, W, W).data, W));
+      } catch (e3) { done({ s: -1 }); }     // a tainted canvas (cross-origin icon) lands here
     };
     probe.src = url;
     return null;
+  }
+  // Pure over an RGBA buffer, so a test can feed it pictures. s is the luminance spread (-1 when
+  // there is too little content to judge), t the tile description or null.
+  function iconMeasurePixels(d, W) {
+    var n = 0, sum = 0, sq = 0, lum = [], span = 0;
+    for (var y = 0; y < W; y++) {
+      var first = -1, last = -1;
+      for (var x = 0; x < W; x++) {
+        var i = (y * W + x) * 4;
+        if (d[i + 3] <= ICON_ALPHA_MIN) continue;
+        var L = 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+        n++; sum += L; sq += L * L; lum.push(L);
+        if (first < 0) first = x;
+        last = x;
+      }
+      if (first >= 0) span += last - first + 1;
+    }
+    if (n < 16) return { s: -1 };
+    var mean = sum / n, varc = Math.max(0, sq / n - mean * mean);
+    return { s: Math.round(Math.sqrt(varc) * 100) / 100, t: iconTileOf(lum, n / span) };
+  }
+  // A tile is artwork drawn onto an opaque plate, such as a rounded square, a disc or a chip seen
+  // at an angle, rather than cut out of transparency. Flattening keeps only the outline, so a
+  // tile flattens to a blank shape. What carries the picture is the mark's contrast against the
+  // plate: bg and mk are the plate's and the mark's luminance (0-1), mark says which is lighter.
+  // fill is the share of each row's run from its first to its last opaque pixel that is opaque: a
+  // plate of any outline fills its rows, a glyph has gaps between its strokes.
+  var ICON_TILE_FILL = 0.9;
+  var ICON_TILE_STEP = 48;     // luminance a pixel must differ from the plate by to count as mark
+  function iconTileOf(lum, fill) {
+    if (fill < ICON_TILE_FILL) return null;
+    var hist = [], b, best = 0;
+    for (b = 0; b < 16; b++) hist[b] = 0;
+    lum.forEach(function (L) { hist[Math.min(15, Math.floor(L / 16))]++; });
+    for (b = 1; b < 16; b++) if (hist[b] > hist[best]) best = b;
+    var plate = 0, pn = 0, light = 0, dark = 0;
+    lum.forEach(function (L) {
+      var k = Math.min(15, Math.floor(L / 16));
+      if (Math.abs(k - best) <= 1) { plate += L; pn++; }
+    });
+    plate /= pn;
+    var lsum = 0, dsum = 0;
+    lum.forEach(function (L) { if (L > plate + ICON_TILE_STEP) { light++; lsum += L; } else if (L < plate - ICON_TILE_STEP) { dark++; dsum += L; } });
+    if (Math.max(light, dark) < lum.length * 0.03) return null;   // a plain plate: nothing to keep
+    var r2 = function (v) { return Math.round(v / 255 * 100) / 100; };
+    return light >= dark ? { bg: r2(plate), mk: r2(lsum / light), mark: "light" } : { bg: r2(plate), mk: r2(dsum / dark), mark: "dark" };
   }
 
   // Pure, so a DOM test can pin every branch without a browser.
   //   treat: "flat" | "tint" | "native"      what to do to the pixels
   //   src:   "native" | "glyph" | "color"    which picture to do it to
+  //   tile:  the tile iconTile() found, for "knock"
   // A glyph is only chosen when it will be inked, since an un-inked monochrome glyph on a dark
-  // card is a black square.
-  function iconPlan(mode, kind, spread) {
+  // card is a black square. A tile is never flattened whole: "knock" inks its mark and drops the
+  // plate, the flat look without the blank square.
+  function iconPlan(mode, kind, spread, tile) {
     if (mode === "native") return { treat: "native", src: kind === "color" ? "color" : "native", why: "mode:native" };
-    if (mode === "flat") return { treat: "flat", src: kind === "glyph" ? "glyph" : "native", why: "mode:flat" };
     if (mode === "tint") return { treat: "tint", src: kind === "color" ? "color" : "native", why: "mode:tint" };
-    if (spread != null && spread < ICON_SIMPLE_MAX) return { treat: "flat", src: "native", why: "simple:" + spread };
+    if (mode === "flat") {
+      if (kind === "glyph") return { treat: "flat", src: "glyph", why: "mode:flat" };
+      if (tile) return { treat: "knock", src: "native", why: "mode:flat tile", tile: tile };
+      if (spread == null) return { treat: "tint", src: "native", why: "mode:flat unmeasured" };
+      return { treat: "flat", src: "native", why: "mode:flat" };
+    }
+    if (spread != null && spread < ICON_SIMPLE_MAX) {
+      if (tile) return { treat: "knock", src: "native", why: "simple tile:" + spread, tile: tile };
+      return { treat: "flat", src: "native", why: "simple:" + spread };
+    }
     if (kind === "glyph") return { treat: "flat", src: "glyph", why: "glyph" };
     if (kind === "color") return { treat: "tint", src: "color", why: "color" };
     return { treat: "tint", src: "native", why: spread == null ? "unmeasured" : "complex:" + spread };
+  }
+
+  // The filter for "knock": the mark's contrast against the plate becomes alpha, ramping from a
+  // fifth of the way to the mark up to two thirds, and the picture's own alpha masks the result.
+  // Both levels are rounded to sixteenths to keep the filters on a page few. Without an ink it
+  // answers "", like the flat filter, and the icon stays native.
+  function iconKnockFilter(ink, tile) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(ink || "").replace(/^#?([0-9a-f])([0-9a-f])([0-9a-f])$/i, "#$1$1$2$2$3$3"));
+    if (!m || !tile) return "";
+    var q = function (v) { return Math.round(Math.max(0, Math.min(1, v)) * 16); };
+    var bq = q(tile.bg), mq = q(tile.mk);
+    var id = "cc-knock-" + bq + "-" + mq + "-" + (m[1] + m[2] + m[3]).toLowerCase();
+    var host = document.getElementById("cc-knock-svg");
+    if (!host) {
+      host = document.createElement("div"); host.id = "cc-knock-svg"; host.setAttribute("aria-hidden", "true");
+      host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden";
+      document.body.appendChild(host);
+      icoKnock = {};
+    }
+    if (!icoKnock[id]) {
+      // alpha = c * luminance + d; c turns negative for a mark darker than its plate
+      var bg = bq / 16, mk = mq / 16, from = bg + (mk - bg) / 5, to = bg + (mk - bg) * 2 / 3;
+      var c = 1 / (to - from), d = -c * from;
+      var ch = function (h) { return (parseInt(h, 16) / 255).toFixed(4); };
+      var f = function (x) { return x.toFixed(4); };
+      var vals = "0 0 0 0 " + ch(m[1]) + " 0 0 0 0 " + ch(m[2]) + " 0 0 0 0 " + ch(m[3]) + " " + f(c * 0.2126) + " " + f(c * 0.7152) + " " + f(c * 0.0722) + " 0 " + f(d);
+      icoKnock[id] = '<filter id="' + id + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '" result="k"/><feComposite in="k" in2="SourceGraphic" operator="in"/></filter>';
+      host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + Object.keys(icoKnock).map(function (k) { return icoKnock[k]; }).join("") + "</svg>";
+    }
+    return "url(#" + id + ")";
+  }
+  var icoKnock = {};
+
+  // Unraid's stand-in for a container without an icon is a grey disc with a question mark, which
+  // reads as an error and flattens to a blank disc. CC shows GlimStone's container glyph instead,
+  // in a neutral grey that the tint and the flat filter recolour like any other one-tone icon.
+  var ICON_PLACEHOLDER = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + GLYPHS.Containers[0] + '" width="96" height="96" fill="#8a8a8a">' + GLYPHS.Containers[1] + "</svg>");
+  function iconPlaceholder(src) {
+    return /\/dynamix\.docker\.manager\/images\/question\.png(\?|$)/.test(String(src || "")) ? ICON_PLACEHOLDER : "";
   }
 
   // The room every window, menu and bubble keeps from the viewport's edges, 16px and 24px on a wide
@@ -955,8 +1053,9 @@
     icons: {
       MODES: ICON_MODES, SIMPLE_MAX: ICON_SIMPLE_MAX,
       globalMode: iconGlobalMode, mode: iconMode, override: iconOverride, setOverride: setIconOverride,
-      want: iconWant, result: iconResult, svgUrl: iconSvgUrl, spread: iconSpread,
-      plan: iconPlan, onResolved: onIconsResolved, popover: iconPopover
+      want: iconWant, result: iconResult, svgUrl: iconSvgUrl, spread: iconSpread, tile: iconTile,
+      measurePixels: iconMeasurePixels, plan: iconPlan, knock: iconKnockFilter, placeholder: iconPlaceholder,
+      onResolved: onIconsResolved, popover: iconPopover
     }
   };
 
