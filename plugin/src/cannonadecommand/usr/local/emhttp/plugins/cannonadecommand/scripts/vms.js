@@ -972,7 +972,7 @@
         var diskTd = diskSpan ? diskSpan.parentNode : null;
         var vg = row.querySelectorAll(":scope > td > span.vmgraphics");  // graphics (L227) then ip (L228), document order
         var graphicsTd = vg[0] ? vg[0].parentNode : null, ipTd = vg[1] ? vg[1].parentNode : null;
-        if (descTd) vmCell(descTd, "", "");
+        if (descTd) vmCell(descTd, "", "desc");
         if (cpuTd) vmResCell(cpuTd, ramTd);
         if (graphicsTd) vmCell(graphicsTd, "", "");
         if (ipTd) vmIpCell(ipTd);

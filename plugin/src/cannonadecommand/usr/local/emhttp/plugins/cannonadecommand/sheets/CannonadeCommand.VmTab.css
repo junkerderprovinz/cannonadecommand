@@ -67,6 +67,8 @@ html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-ip  { background: v
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-b.cc-b-vol { background: var(--cc-rb-vol, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-vol-t, var(--cc-accent-text, #161616)) !important; }
 html.cc-vms-on #kvm_list .cc-b-k { opacity: .72; font-weight: 500; }
 html.cc-vms-on #kvm_list .cc-b-v { font-family: Consolas, "SFMono-Regular", monospace; }
+/* a description is prose, not a value, so it keeps the page's font */
+html.cc-vms-on #kvm_list .cc-b-desc .cc-b-v { font-family: inherit; }
 /* The badge value, including the a.vcpu-* CPU link vms.js moves into .cc-b-v, inherits the badge
    text colour; otherwise Unraid's link colour wins and the CPU number is unreadable. */
 html.cc-vms-on #kvm_list .cc-b a,
@@ -223,15 +225,21 @@ html.cc-vms-on .cc-act-flash .cc-actbtn { animation: cc-actflash .5s ease 3; }
 html.cc-vms-on.cc-vm-rbneutral .cc-actbtn:not(.cc-actoff) { background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text, #e6e6e6) !important; }
 html.cc-vms-on.cc-vm-rbneutral #kvm_list tr:hover .cc-actbtn:not(.cc-actoff) { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 
-/* bottom action buttons (input[type=button]) as CC accent pills */
+/* The buttons under the list are CC pills in sentence case. Only "VM hinzufügen", the action the
+   page exists for, is filled and stands at the right end of the row (GlimStone rule 3 and "Page
+   actions"); Start all and Stop all rest grey and take their palette slot under the pointer. */
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart) {
   border: none !important; box-shadow: none !important;
   height: var(--cc-md-h, 30px) !important; padding: var(--cc-md-btnpad, 0 14px) !important; min-width: 0 !important; box-sizing: border-box !important;
   border-radius: var(--cc-radius-pill) !important; cursor: pointer;
-  font-size: var(--cc-md-fs) !important; font-weight: 600 !important; text-transform: uppercase !important; letter-spacing: .6px !important;
-  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; transition: filter .12s;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: normal !important;
+  background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important; transition: background-color .12s, color .12s;
 }
-html.cc-vms-on #displaybox input[type="button"]:not(.autostart):hover:not(:disabled) { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
+html.cc-vms-on #displaybox input[type="button"]:not(.autostart):hover:not(:disabled) { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; }
+html.cc-vms-on #displaybox input#btnAddVM { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; }
+html.cc-vms-on #displaybox input#btnAddVM:hover:not(:disabled) { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; }
+html.cc-vms-on #displaybox div.js-actions:has(> #btnAddVM) { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+html.cc-vms-on #displaybox div.js-actions > #btnAddVM { order: 1; margin-left: auto !important; }
 html.cc-vms-on #displaybox input[type="button"]:not(.autostart):disabled { opacity: .45 !important; filter: grayscale(.4) !important; cursor: not-allowed !important; }
 
 /* VM logo context menu (addVMContext appends ul.dropdown-menu.dropdown-context to <body>) */
