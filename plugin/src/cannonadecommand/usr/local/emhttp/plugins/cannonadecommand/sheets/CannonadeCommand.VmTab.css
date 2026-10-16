@@ -342,7 +342,7 @@ html.cc-vms-on .cc-seg-btn.cc-seg-on { background: var(--cc-accent, #FCC419); co
 html.cc-vms-on.cc-vmgrid #displaybox table.tablesorter:has(#kvm_list) { display: block; background: none; }
 html.cc-vms-on.cc-vmgrid #displaybox table.tablesorter:has(#kvm_list) thead { display: none; }
 html.cc-vms-on.cc-vmgrid #displaybox table.tablesorter tbody#kvm_list {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; padding-top: 4px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(400px, 100%), 1fr)); gap: 12px; padding-top: 4px;
 }
 html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable {
   display: flex; flex-direction: column; gap: 10px;
