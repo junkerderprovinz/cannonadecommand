@@ -25,7 +25,7 @@ console.log('\nThe frame and its title');
   ok('at the height of a section badge', win(h2, 'min-height') === 'var(--cc-sec-h, 22px)' && win(h2, 'font-size') === 'var(--cc-sec-fs)', win(h2, 'min-height') + ' ' + win(h2, 'font-size'));
   ok('starting on the content\'s left edge', win(h2, 'left') === '24px' && win(h2, 'justify-content') === 'flex-start');
   const p = inSa('p');
-  ok('the text sits on a lighter card, read from the start', win(p, 'background') === '#242424' && win(p, 'text-align') === 'start', win(p, 'background'));
+  ok('the text sits on the window itself, read from the start', win(p, 'background') === 'none' && win(p, 'box-shadow') === 'none' && win(p, 'text-align') === 'start', win(p, 'background'));
 }
 
 console.log('\nThe buttons');
