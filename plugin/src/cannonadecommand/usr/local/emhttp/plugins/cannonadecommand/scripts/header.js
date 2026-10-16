@@ -3566,6 +3566,14 @@
     "UPDATED": ["Aktualisiert", "Updated"], "INSTALLED": ["Installiert", "Installed"],
     "SHOW MORE": ["Mehr anzeigen", "Show more"], "MEHR ANZEIGEN": ["Mehr anzeigen", "Show more"]
   };
+  function ccAppsBulkDe(v) {
+    if (v === "Select all on page") return "Alle auf der Seite auswählen";
+    var m = /^(Install|Update) (?:(\d+) )?Selected Applications?$/.exec(v);
+    if (!m) return "";
+    var verb = m[1] === "Install" ? "installieren" : "aktualisieren";
+    if (!m[2]) return "Ausgewählte " + verb;
+    return m[2] + (m[2] === "1" ? " App " : " Apps ") + verb;
+  }
   function ccAppsTranslateNative() {
     Array.prototype.slice.call(document.querySelectorAll(".homeMore, .installedCardText")).forEach(function (el) {
       if (el.children.length) return;
@@ -3582,6 +3590,12 @@
     });
     // The sort label is a bare text node among the sort links rather than an element of its own,
     // so this walks the child nodes instead of querying for it.
+    // The bulk bar's buttons, which CA rewrites with the count on every pick. They are type=button
+    // inputs, so the value is only their caption.
+    Array.prototype.slice.call(document.querySelectorAll(".multi_installDiv input[type='button']")).forEach(function (b) {
+      var xl = ccAppsBulkDe(b.value);
+      if (xl && b.value !== xl) b.value = xl;
+    });
     var sortArea = document.getElementById("sortIconArea");
     if (sortArea) {
       Array.prototype.slice.call(sortArea.childNodes).forEach(function (n) {
@@ -3721,7 +3735,7 @@
           var n = apps.length;
           window.CCTheme.ask({
             title: n === 1 ? T("1 App entfernen?", "Remove 1 app?") : T(n + " Apps entfernen?", "Remove " + n + " apps?"),
-            text: T("Sie werden endgültig aus „Previous Apps“ entfernt: ", "This removes them from “Previous Apps” for good: ") + names,
+            text: T("Sie werden endgültig aus „Bisherige Apps“ entfernt: ", "This removes them from “Previous Apps” for good: ") + names,
             ok: T("Entfernen", "Remove"), cancel: T("Abbrechen", "Cancel"), danger: true, opener: delBtn, onOk: go
           });
         });
@@ -3798,6 +3812,11 @@
         // The capture-phase listener sees the click before CA swaps in the drawer content, hence
         // the delay; the attach call is what catches the very first open of the session.
         if (e.target && e.target.closest && e.target.closest(".ca_appPopup")) { setTimeout(ccAppsSoon, 80); ccInfoObsAttach(0); }
+        if (e.target && e.target.closest && e.target.closest(".multi_installDiv")) setTimeout(ccAppsTranslateNative, 0);
+      }, true);
+      // CA rewrites the bulk bar's caption in English on every pick.
+      document.addEventListener("change", function (e) {
+        if (e.target && e.target.classList && e.target.classList.contains("ca_multiselect")) setTimeout(ccAppsTranslateNative, 0);
       }, true);
       // The measured right gutter moves with the viewport, so without a re-measure the padding
       // stays frozen at whatever the last pass computed and the toggle drifts off the gutter.
