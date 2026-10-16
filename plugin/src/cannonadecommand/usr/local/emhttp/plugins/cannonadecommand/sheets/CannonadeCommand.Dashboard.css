@@ -162,8 +162,27 @@ html.cc-dash-on table.dashboard .switch-button-button {
    drops Unraid's stand-in drawing. The case picker stays reachable: it comes in, dimmed, while the
    pointer or the focus is in the card, like the tile controls. */
 html.cc-dash-on table.dashboard .cc-dash-model { display: none; }
-html.cc-dash-on table.dashboard #casing:has(> #mycase.fa-hdd-o) { opacity: 0; transition: opacity var(--cc-motion-control-dur, 0s); }
-html.cc-dash-on table.dashboard > tbody:is(:hover, :focus-within) #casing:has(> #mycase.fa-hdd-o) { opacity: .4; }
+html.cc-dash-on table.dashboard #casing:has(> #mycase.fa-hdd-o) { opacity: 0; }
+html.cc-dash-on table.dashboard > tbody:is(:hover, :focus-within) #casing:has(> #mycase.fa-hdd-o) { opacity: 1; }
+
+/* The case rests in the dimmed text colour, like every resting symbol, and takes the mode colour
+   as ink under the pointer. A case from Unraid's set is a font glyph and simply takes the colour.
+   An uploaded picture with a transparent background is drawn as its cut-out in the same colour
+   (dashboard.js hands over its address); a photo without one would become a solid block, so it
+   stays a photo, grey at rest and in colour under the pointer. */
+html.cc-dash-on table.dashboard #casing {
+  color: var(--cc-text-dim, #8a8a8a); opacity: 1;
+  transition: color var(--cc-motion-control-dur, 0s), opacity var(--cc-motion-control-dur, 0s), filter var(--cc-motion-control-dur, 0s);
+}
+html.cc-dash-on table.dashboard #casing:is(:hover, :focus-visible) {
+  color: color-mix(in srgb, var(--cc-rbaccent, var(--cc-accent, #FCC419)) var(--cc-ink-mix, 100%), black);
+}
+html.cc-dash-on table.dashboard #casing > img[data-cc-case="cut"] {
+  background: currentColor; object-position: -99999px 0;
+  -webkit-mask: var(--cc-case-src) center / contain no-repeat; mask: var(--cc-case-src) center / contain no-repeat;
+}
+html.cc-dash-on table.dashboard #casing > img:not([data-cc-case="cut"]) { filter: grayscale(1); opacity: .7; transition: filter var(--cc-motion-control-dur, 0s), opacity var(--cc-motion-control-dur, 0s); }
+html.cc-dash-on table.dashboard #casing:is(:hover, :focus-visible) > img:not([data-cc-case="cut"]) { filter: none; opacity: 1; }
 
 /* The context menus a disk, a container or a VM opens are CC menus, dark on every theme like the
    row menu (Tokens.css .cc-rowmenu), instead of a white list. */

@@ -292,6 +292,25 @@
     w.parentNode.removeChild(w);
   }
 
+  // An uploaded case picture is drawn in the mode colour through its own alpha, which only works for
+  // a cut-out. Unraid swaps the picture after a new case is chosen, so this runs with the feed too.
+  function tintCase() {
+    var img = document.querySelector("table.dashboard #casing > img#mycase");
+    if (!img || img.getAttribute("data-cc-case")) return;
+    function look() {
+      var cut = false;
+      try {
+        var c = document.createElement("canvas"); c.width = c.height = 48;
+        var x = c.getContext("2d"); x.drawImage(img, 0, 0, 48, 48);
+        var d = x.getImageData(0, 0, 48, 48).data;
+        for (var i = 3; i < d.length && !cut; i += 4) cut = d[i] < 250;
+      } catch (e) {}
+      img.setAttribute("data-cc-case", cut ? "cut" : "photo");
+      if (cut) img.style.setProperty("--cc-case-src", 'url("' + img.src.replace(/"/g, "%22") + '")');
+    }
+    if (img.complete && img.naturalWidth) look(); else img.addEventListener("load", look, { once: true });
+  }
+
   // The disk rows and the pools' usage line come new with every message of Unraid's feed. A disk
   // that is spun down shows "*" for its temperature; it reads as resting, as on /Main.
   var USED = /^\s*Used:\s*(.+?)\s+of\s+(.+?)\s*\(([^)]*)\)\s*$/;
@@ -323,14 +342,14 @@
     var feed = window.dashboard;
     if (hooked || !feed || typeof feed.on !== "function") return;
     hooked = true;
-    feed.on("message", function () { if (wasLive) fixRows(); });
+    feed.on("message", function () { if (wasLive) { fixRows(); tintCase(); } });
   }
 
   var wasLive = false;
   function apply() {
     var live = isLive();
     document.documentElement.classList.toggle("cc-dash-on", live);
-    if (live) { decorate(); paint(); paintCharts(true); buildCores(); fixCards(); hideModel(); fixRows(); hookFeed(); }
+    if (live) { decorate(); paint(); paintCharts(true); buildCores(); fixCards(); hideModel(); tintCase(); fixRows(); hookFeed(); }
     else if (wasLive) { strip(); paintCharts(false); unbuildCores(); unswap(); showModel(); unfixRows(); }
     wasLive = live;
   }
