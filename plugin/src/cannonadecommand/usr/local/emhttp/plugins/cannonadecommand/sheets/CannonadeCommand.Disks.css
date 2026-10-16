@@ -57,6 +57,31 @@ html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow table.samba_mounts tr > td:is(
 html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow table.usb_absent tr > td:is(:nth-child(3), :nth-child(4), :nth-child(n+7)):not([colspan]) { display: none; }
 html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) :is(thead, tbody) td { padding-left: 8px; padding-right: 8px; }
 html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) .usage-disk:not(.sys):not(.mm) { min-width: 84px; }
+/* Array-Vorgang as a card: the state pills, then the array, disk and system controls, each group a
+   sub-card under a badge. Inside a group every row is its button, its bubble and what rides with
+   it, wrapping where the group is narrow; the status and description tracks of Shares.css's grid
+   shrink to nothing, since the pills and the bubbles carry them. The parity check card follows in
+   the flow instead of standing beside the table. */
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px 24px; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills { position: static; flex: none; padding-top: 12px; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg {
+  flex: 1 1 300px; min-width: min(100%, 300px); box-sizing: border-box; padding: 12px 16px !important;   /* Shares.css strips the left padding of anything holding an array_status table */
+  background: var(--cc-dk-card); border-radius: var(--cc-radius-card);
+}
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopt { display: flex; margin: 0 0 4px; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg p { margin: 0; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg table.array_status { background: none; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg table.array_status tr { grid-template-columns: auto minmax(0, 1fr) auto; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg table.array_status td { width: auto; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg table.array_status tr > td:is(:first-child, :nth-child(3)) { padding: 0 !important; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg table.array_status tr > td:nth-child(2) { flex-wrap: wrap; row-gap: 8px; white-space: normal; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg table.array_status .cc-aop-brow { flex-wrap: wrap; row-gap: 8px; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box > .cc-aop-pcard {
+  position: static; width: auto; max-width: none; margin-top: 16px; background: var(--cc-dk-card);
+}
+@media (max-width: 600px) {
+  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills { flex-direction: row; flex-wrap: wrap; gap: 8px; padding-top: 0; }
+}
 /* The column reset and the reads/writes toggle act on the tables only. */
 html.cc-dk-on.cc-dk-tiled #displaybox nav.tabs > span.status,
 html.cc-dk-on.cc-dk-tiled.cc-on-main.cc-sections-main #displaybox .cc-card-head > span.status { display: none !important; }

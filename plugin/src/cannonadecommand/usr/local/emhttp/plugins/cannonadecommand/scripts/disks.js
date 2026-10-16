@@ -14,13 +14,14 @@
 
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
   var TXT = {
-    de: { view: "Ansicht", list: "Liste", tiles: "Kacheln", spinDown: "Herunterfahren", spinUp: "Hochfahren", browse: "Durchsuchen", log: "Datenträgerprotokoll",
+    de: { view: "Ansicht", list: "Liste", tiles: "Kacheln", spinDown: "Platte anhalten", spinUp: "Platte anlaufen lassen", browse: "Durchsuchen", log: "Datenträgerprotokoll",
       resting: "Ruht", used: "belegt", free: "frei", of: "von", temp: "Temperatur", read: "Lesen", write: "Schreiben", errors: "Fehler",
       smartOk: "SMART ok", smartWarn: "SMART-Warnung", smartFail: "SMART-Fehler", smartOkTip: "SMART meldet nichts Auffälliges",
       smartFailTip: "Der SMART-Selbsttest ist fehlgeschlagen", parity: "Parität gültig, schützt %n Datenträger",
       tempTip: "Warnung ab %w, kritisch ab %c", tempNone: "Meldet keine Temperatur", tempDown: "Ruht und misst gerade nicht",
       serial: "Seriennummer", hours: "%n Betriebsstunden", wear: "Abnutzung %n %", counts: "Lesezugriffe %r, Schreibzugriffe %w",
-      member: "Gehört zum Pool %p", details: "Details",
+      member: "Gehört zum Pool %p", details: "Details", aopArray: "Array", aopDisks: "Platten", aopSystem: "System",
+      spinAllUp: "Platten anlaufen lassen", spinAllDown: "Platten anhalten",
       hdd: "Festplatte", ssd: "SATA-SSD", nvme: "NVMe-SSD", usb: "USB-Stick" },
     en: { view: "View", list: "List", tiles: "Tiles", spinDown: "Spin down", spinUp: "Spin up", browse: "Browse", log: "Disk log",
       resting: "Spun down", used: "used", free: "free", of: "of", temp: "Temperature", read: "Read", write: "Write", errors: "errors",
@@ -28,7 +29,7 @@
       smartFailTip: "The SMART self-assessment failed", parity: "Parity valid, protects %n disks",
       tempTip: "Warning from %w, critical from %c", tempNone: "Reports no temperature", tempDown: "Spun down, not measuring",
       serial: "Serial number", hours: "%n power-on hours", wear: "Wear %n %", counts: "Reads %r, writes %w",
-      member: "Part of pool %p", details: "Details",
+      member: "Part of pool %p", details: "Details", aopArray: "Array", aopDisks: "Disks", aopSystem: "System",
       hdd: "Hard disk", ssd: "SATA SSD", nvme: "NVMe SSD", usb: "USB flash drive" }
   };
   function t(k) { return (TXT[LANG] || TXT.en)[k] || TXT.en[k]; }
@@ -611,6 +612,69 @@
     parts.forEach(function (c) { row.appendChild(c); });
   }
 
+  // Array-Vorgang becomes a card like the disk sections: the state pills on the left, then the
+  // controls in three groups. Each form or table moves whole and a comment keeps its place, so
+  // names, ids and handlers stay as Unraid wrote them and the list view gets the page back as it was.
+  // Buttons other plugins hang into a form go with it; a block of their own joins the system group.
+  function aopGroup(n) {
+    if (n.matches('form[name="arrayOps"]') || n.querySelector('form[name="arrayOps"]')) return "Array";
+    if (n.matches('form[name="mover_schedule"]') || n.querySelector('#spinup-button, #spindown-button, form[name="mover_schedule"]')) return "Disks";
+    return "System";
+  }
+  function moveInto(box, n, before) {
+    if (!n.__ccAopMark) { n.__ccAopMark = document.createComment("cc-dk-aop"); n.parentNode.insertBefore(n.__ccAopMark, n); }
+    box.insertBefore(n, before || null);
+  }
+  function arrayOps(on) {
+    var form = document.querySelector('#displaybox form[name="arrayOps"]');
+    var sec = form && form.closest('section[role="tabpanel"]');
+    var box = document.querySelector("#displaybox .cc-dk-aop");
+    if (!on || !sec) {
+      if (!box) return;
+      Array.prototype.forEach.call(box.querySelectorAll(":scope > .cc-aop-pills, :scope > .cc-dk-aopg > :not(.cc-dk-aopt)"), function (n) {
+        var m = n.__ccAopMark;
+        if (m && m.parentNode) m.parentNode.replaceChild(n, m); else box.parentNode.insertBefore(n, box);
+        n.__ccAopMark = null;
+      });
+      box.parentNode.classList.remove("cc-dk-box");
+      box.parentNode.removeChild(box);
+      return;
+    }
+    sec.classList.add("cc-dk-box");
+    if (!box) {
+      box = el("div", "cc-dk-aop");
+      ["Array", "Disks", "System"].forEach(function (k) {
+        var grp = el("div", "cc-dk-aopg", '<div class="cc-dk-aopt"><span class="cc-dk-pb">' + esc(t("aop" + k)) + "</span></div>");
+        grp.setAttribute("data-g", k);
+        box.appendChild(grp);
+      });
+      var head = sec.querySelector(":scope > .cc-card-head");
+      sec.insertBefore(box, head ? head.nextSibling : sec.firstChild);
+    }
+    kids(sec).forEach(function (n) {
+      if (n !== box && (tag(n) === "TABLE" ? hasCls(n, "array_status") : n.querySelector("table.array_status"))) moveInto(box.querySelector('[data-g="' + aopGroup(n) + '"]'), n);
+    });
+    // shares.js stacks the pills at the section's top level, also after the groups are built.
+    var pills = sec.querySelector(":scope > .cc-aop-pills");
+    if (pills) moveInto(box, pills, box.firstChild);
+    kids(box).forEach(function (grp) { if (hasCls(grp, "cc-dk-aopg")) grp.classList.toggle("cc-dk-hidden", !grp.querySelector("table.array_status")); });
+  }
+  // Unraid's German calls spinning the disks up and down Hochfahren and Herunterfahren, the same as
+  // powering the server down, so the two disk buttons get names of their own. The bold labels in
+  // the description cell are what the bubbles beside the buttons read.
+  function spinNames(on) {
+    [["spinup-button", "spinAllUp", 0], ["spindown-button", "spinAllDown", 1]].forEach(function (x) {
+      var b = document.getElementById(x[0]); if (!b) return;
+      var row = b.closest("tr"), lab = row && row.children[2] ? row.children[2].querySelectorAll("strong")[x[2]] : null;
+      if (b.__ccOrig == null) b.__ccOrig = b.value;
+      if (lab && lab.__ccOrig == null) lab.__ccOrig = lab.textContent;
+      var name = on && LANG === "de" ? t(x[1]) : null;
+      var v = name || b.__ccOrig, lv = lab ? (name ? name + ":" : lab.__ccOrig) : null;
+      if (b.value !== v) b.value = v;
+      if (lab && lab.textContent !== lv) lab.textContent = lv;
+    });
+  }
+
   function renderSection(S) {
     var data = S.data;
     if (data.unknown) { drop(S); return; }
@@ -654,6 +718,8 @@
   }
 
   function teardown() {
+    arrayOps(false);
+    spinNames(false);
     document.documentElement.classList.remove("cc-dk-on", "cc-dk-tiled", "cc-dk-sides");
     Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-host, #displaybox .cc-dk-vsw"), function (n) { n.parentNode.removeChild(n); });
     Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-udrow"), function (r) {
@@ -689,6 +755,8 @@
       S.sec.classList.toggle("cc-dk-side", tiles && !S.data.offline && (S.key === "pools" || S.key === "boot"));
     });
     root.classList.toggle("cc-dk-sides", all.some(function (S) { return S.sec.classList.contains("cc-dk-side"); }));
+    arrayOps(tiles && root.classList.contains("cc-sections-main"));
+    spinNames(true);
     // The column and reads/writes controls act on the disk tables, so they go while none shows.
     root.classList.toggle("cc-dk-tiled", tiles && !all.some(function (S) {
       return S.key !== "ud" && !S.box.classList.contains("cc-dk-hidden");
@@ -723,6 +791,7 @@
       for (var i = 0; i < recs.length; i++) {
         var tg = recs[i].target;
         if (!tg || !tg.closest || tg.closest(".cc-dk-host, .cc-dk-vsw")) continue;
+        if (hasCls(tg, "cc-dk-box") && tg.querySelector(":scope > .cc-aop-pills")) { soon(); return; }
         if (tg.closest("table.disk_status, #usb_devices_list") || recs[i].addedNodes.length && tg.querySelector && tg.querySelector("table.disk_status")) { soon(); return; }
       }
     }).observe(host, { childList: true, subtree: true });
