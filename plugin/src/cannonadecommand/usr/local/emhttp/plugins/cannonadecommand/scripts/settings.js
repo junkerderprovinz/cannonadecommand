@@ -1158,7 +1158,7 @@
       var c = card(T("Bereiche", "Areas"), T("Aktiviere, welche Bereiche CannonadeCommand verschönert. Ein deaktivierter Bereich blendet seinen Tab hier sofort aus.", "Choose which areas CannonadeCommand enhances. Disabling an area hides its tab here immediately."));
       [
         ["cc.enable.main", T("Start", "Main"), "0", T("Gestaltet den Tab Start mit dem Array und seinen Laufwerken.", "Styles the Main tab with the array and its disks.")],
-        ["cc.enable.header", T("Kopfbereich", "Header area"), "0", T("Gestaltet die Menüleiste und den Streifen darüber mit der Status-Insel.", "Styles the menu bar and the strip above it with the status island.")],
+        ["cc.enable.header", T("Kopfbereich", "Header area"), "0", T("Gestaltet die Menüleiste, den Streifen darüber mit der Status-Insel und die Übersicht.", "Styles the menu bar, the strip above it with the status island, and the Dashboard.")],
         ["cc.enable.shares", T("Freigaben", "Shares"), "0", T("Gestaltet den Tab Freigaben mit den Benutzer- und Laufwerksfreigaben.", "Styles the Shares tab with the user and disk shares.")],
         ["cc.enable.docker", T("Docker", "Docker"), "1", T("Gestaltet den Docker-Tab und das Formular, in dem du einen Container anlegst oder änderst.", "Styles the Docker tab and the form where you add or edit a container.")],
         ["cc.enable.plugins", T("Plugins", "Plugins"), "1", T("Gestaltet den Plugins-Tab.", "Styles the Plugins tab.")],
