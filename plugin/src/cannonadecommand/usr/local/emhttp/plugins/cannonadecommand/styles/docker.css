@@ -467,7 +467,9 @@ html .cc-b.cc-plan.cc-plan-failed  { background: var(--cc-err, #ff8389) !importa
 .cc-pill-skipped { background: #3a3a3a; color: #c8c8c8; }
 
 /* Grid mode, the gear menu, the toast and the editor */
-.cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 12px; padding-top: 30px; } /* room for the gear pinned top right */
+/* A card is wide enough for its CPU, RAM and BW badges with their gears on one row, which puts
+   four cards side by side at 1917px. Narrower than that, a card takes the whole width. */
+.cc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(400px, 100%), 1fr)); gap: 12px; padding-top: 30px; } /* room for the gear pinned top right */
 /* The folder view lays its tiles out on one fixed column width, as many to a row as fit, at the
    root and inside every folder alike, so every tile has the same size and they line up. A folder
    group breaks out to the full row width around its own grid. The group has no card of its own:
@@ -555,7 +557,11 @@ html .cc-card-movebtn:hover { background: rgba(128, 128, 128, .18) !important; c
 /* the limit gears on a grid card, as one full-width group at the bottom of the card, set off by
    space rather than a line */
 .cc-card-res { display: flex !important; width: 100%; margin-top: 12px; }
-.cc-card-res.cc-resgroup { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 5px 12px; }
+/* Badge and gear sit a little closer than in the list, so CPU, RAM and BW keep to one row on a
+   card while a container runs and its values grow. */
+.cc-card-res.cc-resgroup { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 5px 6px; }
+.cc-card-res .cc-resline { gap: 3px; }
+.cc-card-res .cc-resline > .cc-b { margin: 0; }
 .cc-life { display: inline-flex; gap: 6px; }
 html .cc-abtn { background: var(--cc-bg3); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: var(--cc-radius-pill); padding: 4px 10px; font-size: var(--cc-text-meta); cursor: pointer; transition: background .12s; }
 html .cc-abtn:hover { background: #333; }
