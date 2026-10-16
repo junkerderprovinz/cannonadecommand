@@ -274,7 +274,7 @@ console.log('\nThe colours of a window');
 
 console.log('\nThe sheet');
 {
-  const el = (classes) => ({ tag: 'span', classes, attrs: { class: classes.join(' ') }, states: {} });
+  const el = (classes) => ({ tag: 'span', classes, attrs: { class: classes.join(' ') }, states: {}, outside: ['.sweet-alert'] });   // a CC window, which the confirmation styles in Header.css do not reach
   const top = (classes, prop, states) => { const e = el(classes); if (states) e.states = states; const c = candidates('every', e, prop); return c[c.length - 1]; };
   const scrimBg = top(['cc-scrim'], 'background'), scrimBlur = top(['cc-scrim'], 'backdrop-filter');
   ok('the scrim darkens with the shared token', scrimBg && /var\(--cc-backdrop-dim\)/.test(scrimBg.value));

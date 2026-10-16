@@ -887,6 +887,62 @@ html.cc-popups-on .sweet-alert .sa-button-container button:hover { box-shadow: i
 html.cc-popups-on .sweet-alert button.cancel[style*="display: none"],
 html.cc-popups-on .sweet-alert button.cancel[style*="display:none"] { display: none !important; }
 
+/* A confirmation, every .sweet-alert that streams no log and is more than the loader, is a
+   CannonadeCommand window as CCTheme.ask draws one: the title notched into the top edge as a section
+   badge, the close badge header.js adds in the top right corner, the text on a lighter card and
+   the buttons at the bottom right, the forward action last and the only one filled. The frame
+   leaves its overflow visible for the two notches, so a long text scrolls inside its card. */
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) {
+  width: 420px !important; max-width: calc(100vw - 2 * var(--cc-edge, 16px)) !important; box-sizing: border-box !important;
+  padding: 21px 10px 10px !important; overflow: visible !important; text-align: start !important;
+  font-size: var(--cc-text-subline); line-height: 1.5;
+}
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) h2 {
+  position: absolute !important; top: 0; left: 24px; transform: translateY(-50%);
+  display: inline-flex !important; align-items: center; justify-content: flex-start !important; box-sizing: border-box !important;
+  width: auto !important; max-width: calc(100% - 74px) !important; height: auto !important; min-height: var(--cc-sec-h, 22px) !important;
+  margin: 0 !important; padding: var(--cc-sec-pad, 0 12px) !important; border-radius: var(--cc-radius-pill) !important;
+  font-size: var(--cc-sec-fs) !important; font-weight: var(--cc-sec-fw, 500) !important; line-height: 1.2 !important;
+  letter-spacing: var(--cc-sec-ls, 1.2px) !important; text-align: start !important; overflow-wrap: anywhere;
+}
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) > p {
+  margin: 0 !important; padding: 14px !important; box-sizing: border-box; max-height: calc(92vh - 110px); overflow-y: auto;
+  background: #242424 !important; border-radius: var(--cc-radius-control); box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35));
+  color: #e6e6e6 !important; font-size: var(--cc-text-subline) !important; font-weight: 400 !important; text-align: start !important; overflow-wrap: anywhere;
+}
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) fieldset { margin: 0 !important; padding: 0 !important; border: none !important; }
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) fieldset input {
+  width: 100% !important; box-sizing: border-box !important; height: auto !important; margin: 10px 0 0 !important; padding: 7px 10px !important;
+  background: #2e2e2e !important; color: #e6e6e6 !important; border: none !important; border-radius: var(--cc-radius-control) !important;
+  box-shadow: none !important; outline: none !important; font-size: var(--cc-text-subline) !important; line-height: 1.4 !important;
+}
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) fieldset input:focus { background: #383838 !important; }
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) .sa-button-container {
+  justify-content: flex-end !important; gap: 8px; margin: 0 !important; padding: 10px 0 0 !important;
+}
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) .sa-confirm-button-container { order: 2; display: inline-flex; margin: 0 !important; }
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) .sa-button-container button {
+  min-width: 96px; height: auto !important; min-height: 32px; padding: 6px 14px !important; justify-content: center;
+  font-size: var(--cc-text-meta) !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: 0 !important;
+  transition: background-color .12s, color .12s;
+}
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) .sa-button-container button.cancel { order: 1; background: #2e2e2e !important; color: #e6e6e6 !important; }
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) .sa-button-container button.cancel:hover {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #161616))) !important; box-shadow: none !important;
+}
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) .sa-button-container button.confirm:hover {
+  background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #FCC419))) 85%, #e6e6e6) !important; box-shadow: none !important;
+}
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) .sa-button-container button:focus-visible {
+  outline: none !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important;
+}
+/* The close badge keeps its dark-window colours on a light theme, where the tokens it reads turn
+   light; it is shown on a confirmation only, since the node also serves the streaming windows. */
+html.cc-popups-on .sweet-alert > .cc-win-x { background: #2e2e2e; color: #e6e6e6; }
+html.cc-popups-on .sweet-alert > .cc-win-x:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-hdr-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-hdr-accent-text, #161616))); }
+.sweet-alert > .cc-win-x { display: none; }
+html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) > .cc-win-x { display: inline-flex; }
+
 /* The CA "UPDATING CONTENT" dialog shows only the centred CC loader over the blurred backdrop: no
    title, no "Please Wait" line, no buttons, no box. header.js sets .cc-only-loader on the shared
    .sweet-alert node only while the .updateContent-swal marker is up and removes it when the node is

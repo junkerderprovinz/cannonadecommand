@@ -194,7 +194,8 @@
       // goes through popBadge(), since these sit on the dark modal.
       var scopes = [];
       Array.prototype.forEach.call(document.querySelectorAll(".sweet-alert"), function (w) {
-        scopes.push({ root: w, title: w.querySelector("h2"), btns: "button.confirm, .sa-button-container button:not(.cancel)" });
+        swalClose(w);
+        scopes.push({ root: w, title: w.querySelector("h2"), btns: "button.confirm, .sa-button-container button, .cc-win-x" });
       });
       Array.prototype.forEach.call(document.querySelectorAll(".ui-dialog"), function (w) {
         scopes.push({ root: w, title: w.querySelector(".ui-dialog-title"), btns: ".ui-dialog-buttonpane button" });
@@ -210,13 +211,15 @@
         var n = 0;
         // The title badge shows no status of its own; running and done live in the bottom-left
         // indicator.
-        function stamp(el, legacy) {
+        function stamp(el, legacy, noRed) {
           if (!el) return;
           // An inline background on the title would outrank the var() chain for good after a live
           // mode switch, so it is always cleared.
           if (legacy) { el.style.removeProperty("background"); el.style.removeProperty("color"); }
           if (!rb) { el.style.removeProperty("--cc-rb-c"); el.style.removeProperty("--cc-rb-ct"); return; }   // in accent mode the CSS falls through to the plain accent, which popBadge's swap would override
-          var c = popBadge(n++), t = idealText(c);
+          var c = popBadge(n++);
+          for (var k = 0; noRed && k < 8 && window.CCTheme && window.CCTheme.isRed(c); k++) c = popBadge(n++);
+          var t = idealText(c);
           el.style.setProperty("--cc-rb-c", c); el.style.setProperty("--cc-rb-ct", t);
         }
         stamp(sc.title, true);
@@ -225,7 +228,8 @@
           // SweetAlert reuses one node for its whole lifecycle, so a leftover hidden Cancel must
           // not eat a palette slot and shift the visible buttons.
           if (b.offsetParent === null && getComputedStyle(b).display === "none") return;
-          stamp(b, false);
+          // A confirmation's forward button may well delete, and a delete is never red.
+          stamp(b, false, b.classList.contains("confirm"));
         });
       });
       // The iframe dialog paints its own badges from the parent and cannot read these CSS vars, so
@@ -233,6 +237,14 @@
       // colours.
       try { ccPopIframes(); } catch (ePI) {}
     } catch (e) {}
+  }
+  // A confirmation closes from CannonadeCommand's close badge in its corner. The press clicks
+  // SweetAlert's Cancel, shown or hidden, as Escape does, so the callback hears a cancel. SweetAlert
+  // keeps one node for every dialog, so the badge is added once and Header.css shows it only on a
+  // confirmation.
+  function swalClose(sa) {
+    if (sa.querySelector(":scope > .cc-win-x") || !window.CCTheme || !window.CCTheme.closeBadge) return;
+    sa.appendChild(window.CCTheme.closeBadge(function () { var c = sa.querySelector("button.cancel"); if (c) c.click(); }));
   }
   // docker.js's ctout window is a page navigation of its own, so it gets the one function it needs
   // rather than this file's observer machinery.
