@@ -390,7 +390,6 @@
   }
   function chipsHtml(d) {
     var x = extra[d.dev], h = "";
-    if (d.down) h += '<span class="cc-dk-chip">' + glyph("Moon") + esc(t("resting")) + "</span>";
     if ((d.state === "warn" || d.state === "err" || d.state === "new") && !d.parity) h += '<span class="cc-dk-chip cc-dk-' + (d.state === "new" ? "plain" : d.state) + '" data-tip="' + esc(d.stateTip) + '">' + esc(d.stateTip.split("\n")[0]) + "</span>";
     if (x && x.smart) {
       var cls = x.smart === "fail" ? " cc-dk-err" : x.smart === "warn" ? " cc-dk-warn" : "";

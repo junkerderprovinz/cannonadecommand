@@ -201,7 +201,6 @@ html.cc-dk-on #displaybox .cc-dk-chip {
   display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; white-space: nowrap;
   border-radius: var(--cc-radius-pill); background: var(--cc-chip); color: var(--cc-text-chip); font-size: var(--cc-text-meta);
 }
-html.cc-dk-on #displaybox .cc-dk-chip .cc-glyph { width: 1em; height: 1em; }
 html.cc-dk-on #displaybox .cc-dk-chip.cc-dk-warn { background: var(--cc-warn); color: var(--cc-warn-fg); }
 html.cc-dk-on #displaybox .cc-dk-chip.cc-dk-err { background: var(--cc-err); color: var(--cc-err-fg); }
 html.cc-dk-on #displaybox .cc-dk-chip:is(.cc-dk-warn, .cc-dk-err) .cc-dk-dot { background: currentColor; }
