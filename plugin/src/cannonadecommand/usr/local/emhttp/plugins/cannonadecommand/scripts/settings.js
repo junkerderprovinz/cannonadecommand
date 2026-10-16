@@ -1657,7 +1657,17 @@
     // stands outside the Logos card, which hides while Docker follows the global colour.
     var cOrig = card(T("Original-Logos", "Original logos"));
     wrap.appendChild(cOrig);
-    var origNames = [];
+    var origNames = [], origMissing = {}, origChecked = false;
+    // Unraid keeps a container's logo only after it downloaded the template's icon once, so a dead
+    // icon address leaves its question-mark stand-in in the row and the pin has nothing to show.
+    function checkOriginals() {
+      if (origChecked) return;
+      origChecked = true;
+      rowIcons("docker", 1000).then(function (list) {
+        list.forEach(function (it) { if (it.name) origMissing[it.name] = /\/question\.png(\?|$)/.test(it.src); });
+        paintOriginals();
+      });
+    }
     function paintOriginals() {
       var Ci = window.CCTheme && window.CCTheme.icons;
       if (!Ci) return;
@@ -1671,7 +1681,14 @@
       lead.appendChild(lw); cOrig.appendChild(lead);
       pinned.sort().forEach(function (low) {
         var row = el("div", "cc-set-row cc-set-inline cc-set-origrow"), nm = el("span", "cc-set-lblwrap");
-        nm.appendChild(el("span", null, shown(low)));
+        var real = shown(low);
+        nm.appendChild(el("span", null, real));
+        checkOriginals();
+        if (origMissing[real]) {
+          var miss = el("span", "cc-set-colstate", T("Kein eigenes Logo vorhanden", "No logo of its own"));
+          miss.appendChild(infoIcon(T("Die Logo-Adresse im Template dieses Containers antwortet nicht, deshalb hat Unraid nie ein Logo gespeichert. Trag im Container unter „Symbol-URL“ eine Adresse ein, die ein Bild liefert; danach erscheint es hier als Original-Logo.", "The icon address in this container's template does not answer, so Unraid never stored a logo. Enter an address that serves a picture under “Icon URL” in the container; it then shows here as the original logo.")));
+          nm.appendChild(miss);
+        }
         row.appendChild(nm);
         row.appendChild(actionBtn(T("Entfernen", "Remove"), "cc-btn", function () { Ci.setOverride("docker", low, ""); paintOriginals(); tintPrev(); }));
         cOrig.appendChild(row);

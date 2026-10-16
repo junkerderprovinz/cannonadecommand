@@ -70,27 +70,31 @@ console.log('\nEvery per-item picker offers it');
   ok('and the global setting does not, it is a choice for one item', !/\["original"/.test(settings.slice(settings.indexOf('Icon-Färbung", "Icon colouring"'), settings.indexOf('Icon-Färbung", "Icon colouring"') + 400)));
 }
 
+class N {
+  constructor(tag, cls, txt) { this.tag = tag; this.className = cls || ''; this.textContent = txt == null ? '' : txt; this.children = []; this.parentNode = null; }
+  appendChild(c) { c.parentNode = this; this.children.push(c); return c; }
+  removeChild(c) { this.children = this.children.filter(x => x !== c); c.parentNode = null; }
+  all() { return this.children.reduce((a, c) => a.concat([c], c.all()), []); }
+  querySelectorAll(sel) { const want = sel.slice(1); return this.all().filter(n => n.className.split(' ').includes(want)); }
+  text() { return this.textContent + this.children.map(c => c.text()).join(''); }
+}
+const el = (tag, cls, txt) => new N(tag, cls, txt);
+// paintOriginals with its helpers, built from the settings page's own source, so the test runs
+// the shipped code against a stub DOM and stub Docker rows.
+function settingsList(cOrig, names, picks, removes, onRepaint, rowIcons) {
+  const areaPicker = (label, items, onPick) => { const n = el('span', 'cc-dsel', label); n.items = items; n.pick = (i) => onPick(items[i]); picks.push(n); return n; };
+  const actionBtn = (text, cls, run) => { const n = el('span', cls, text); n.run = run; removes.push(n); return n; };
+  return new Function('cOrig', 'el', 'infoIcon', 'actionBtn', 'areaPicker', 'T', 'window', 'tintPrev', 'names', 'rowIcons',
+    'var origNames = names, origMissing = {}, origChecked = false;\n' + grabFn(settings, 'checkOriginals') + '\n' + grabFn(settings, 'paintOriginals') + '\nreturn paintOriginals;')(
+    cOrig, el, () => el('span', 'cc-info'), actionBtn, areaPicker, (de, en) => en, global.window, onRepaint, names, rowIcons);
+}
+
 console.log('\nThe settings page lists the pinned containers');
 {
-  class N {
-    constructor(tag, cls, txt) { this.tag = tag; this.className = cls || ''; this.textContent = txt == null ? '' : txt; this.children = []; this.parentNode = null; }
-    appendChild(c) { c.parentNode = this; this.children.push(c); return c; }
-    removeChild(c) { this.children = this.children.filter(x => x !== c); c.parentNode = null; }
-    all() { return this.children.reduce((a, c) => a.concat([c], c.all()), []); }
-    querySelectorAll(sel) { const want = sel.slice(1); return this.all().filter(n => n.className.split(' ').includes(want)); }
-    text() { return this.textContent + this.children.map(c => c.text()).join(''); }
-  }
-  const el = (tag, cls, txt) => new N(tag, cls, txt);
   const cOrig = el('div', 'cc-set-card');
   const picks = [], removes = [];
   let repaints = 0;
-  const areaPicker = (label, items, onPick) => { const n = el('span', 'cc-dsel', label); n.items = items; n.pick = (i) => onPick(items[i]); picks.push(n); return n; };
-  const actionBtn = (text, cls, run) => { const n = el('span', cls, text); n.run = run; removes.push(n); return n; };
-  const T = (de, en) => en;
-  let origNames = ['Plex', 'Sonarr', 'Nextcloud'];
-  const paint = new Function('cOrig', 'el', 'infoIcon', 'actionBtn', 'areaPicker', 'T', 'window', 'tintPrev', 'names',
-    'var origNames = names;\n' + grabFn(settings, 'paintOriginals') + '\nreturn paintOriginals;')(
-    cOrig, el, () => el('span', 'cc-info'), actionBtn, areaPicker, T, global.window, () => { repaints++; }, origNames);
+  const paint = settingsList(cOrig, ['Plex', 'Sonarr', 'Nextcloud'], picks, removes, () => { repaints++; }, () => new Promise(() => {}));
   CI.setOverride('docker', 'Sonarr', 'original');
   CI.setOverride('docker', 'Plex', 'flat');
   CI.setOverride('vm', 'Plex', 'original');
@@ -108,5 +112,29 @@ console.log('\nThe settings page lists the pinned containers');
   ok('the remove button is a plain secondary button, never red', removes.every(b => b.className === 'cc-btn'));
 }
 
-console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
-process.exit(fail ? 1 : 0);
+(async () => {
+  console.log('\nA pinned container without a logo of its own says so');
+  const cOrig = el('div', 'cc-set-card');
+  let asked = 0;
+  const paint = settingsList(cOrig, ['Plex', 'Cloudflared'], [], [], () => {}, (kind) => {
+    asked++;
+    return Promise.resolve(kind !== 'docker' ? [] : [
+      { name: 'Plex', src: '/state/plugins/dynamix.docker.manager/images/Plex-icon.png?1792110340' },
+      { name: 'Cloudflared', src: '/plugins/dynamix.docker.manager/images/question.png?' }
+    ]);
+  });
+  CI.setOverride('docker', 'Plex', 'original');
+  CI.setOverride('docker', 'Cloudflared', 'original');
+  paint();
+  await new Promise(r => setTimeout(r, 0));
+  const row = (n) => cOrig.querySelectorAll('.cc-set-origrow').filter(r => r.text().includes(n))[0];
+  ok('a container showing Unraid\'s stand-in carries the hint', row('Cloudflared') && row('Cloudflared').querySelectorAll('.cc-set-colstate').length === 1);
+  ok('one showing its own icon does not', row('Plex') && row('Plex').querySelectorAll('.cc-set-colstate').length === 0);
+  paint();
+  ok('the Docker rows are read once, not per repaint', asked === 1, String(asked));
+  CI.setOverride('docker', 'Plex', '');
+  CI.setOverride('docker', 'Cloudflared', '');
+
+  console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
+  process.exit(fail ? 1 : 0);
+})();
