@@ -1778,6 +1778,9 @@
     var cP = card(T("Stil", "Style"));
     cP.appendChild(colourRow("cc.styleplugin"));
     cP.appendChild(tabviewRow("plugins", syncPluginsBar));
+    var cPV = card(T("Ansicht", "View"));
+    pluginViewRow(cPV);
+    wrapPlugin.appendChild(cPV);
     // Every area carries the same style cards on its own key prefix, which apply while its adopt
     // toggle is off.
     function buildStyleCards(P, into, samples, noLogos) {
@@ -2673,6 +2676,24 @@
     var prev = viewPreview(opts, shareSketch), slot = el("div", "cc-set-viewslot cc-set-shareview");
     slot.appendChild(dropRow(label, opts, cur, function (v) {
       set("cc.shareview", v);
+      prev.mark(v);
+    }, help));
+    c.appendChild(slot); c.appendChild(prev.el);
+    prev.mark(cur);
+  }
+  // The plugin view on /Plugins, the same choice as the switch beside its Check button.
+  function pluginViewRow(c) {
+    var label = T("Plugins", "Plugins");
+    var help = T("Wie der Tab Plugins die installierten Plugins zeigt: als Liste wie in Unraid oder als Kacheln mit Logo, Version, Status und Aktionen je Plugin. Der Schalter oben im Tab Plugins stellt dasselbe um.", "How the Plugins tab shows the installed plugins: as Unraid's list or as tiles with the logo, version, status and actions of each plugin. The switch at the top of the Plugins tab changes the same setting.");
+    if (get("cc.theming", "1") === "0") {
+      c.appendChild(lockRow(label, T("Liste, solange das Theming aus ist", "List while theming is off"), T("Zum Theming", "Go to Theming"), function () { jumpTo("general", "Theming"); }, help));
+      return;
+    }
+    var opts = [["list", T("Liste", "List"), "IconViewList"], ["tiles", T("Kacheln", "Tiles"), "IconViewGrid"]];
+    var cur = get("cc.pluginview", "tiles") === "list" ? "list" : "tiles";
+    var prev = viewPreview(opts, function (kind) { return viewSketch(kind === "list" ? "list" : "grid"); }), slot = el("div", "cc-set-viewslot cc-set-pluginview");
+    slot.appendChild(dropRow(label, opts, cur, function (v) {
+      set("cc.pluginview", v);
       prev.mark(v);
     }, help));
     c.appendChild(slot); c.appendChild(prev.el);
