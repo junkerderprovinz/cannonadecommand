@@ -102,7 +102,11 @@ console.log('\nThe array operations on a narrow page');
 console.log('\nThe header on a phone');
 {
   const css = fs.readFileSync(path.join(DIR, 'sheets/CannonadeCommand.Header.css'), 'utf8');
-  ok('the island goes under a long server name instead of past the edge', /@media \(max-width: 767px\) \{ html\.cc-header-on #header \{ flex-wrap: wrap; \} \}/.test(css));
+  const at = css.indexOf('/* On a phone the name and the island');
+  const block = css.slice(css.indexOf('@media (max-width: 767.98px) {', at), css.indexOf('\n}\n', at));
+  ok('the island goes under a long server name instead of past the edge', /#header \{ flex-wrap: wrap;/.test(block) && /#cc-island \{[^}]*order: 3; flex: 1 0 100%;/.test(block));
+  ok('its three rows flow as one run of chips', /\.cc-isl-row:empty \{ display: contents; \}/.test(block));
+  ok('only the values worth a glance stay', /\[data-cc-chip="up"\], \[data-cc-chip="os"\], \[data-cc-chip="ver"\], \[data-cc-chip="net"\], \[data-cc-chip="docker"\]\) \{ display: none; \}/.test(block));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

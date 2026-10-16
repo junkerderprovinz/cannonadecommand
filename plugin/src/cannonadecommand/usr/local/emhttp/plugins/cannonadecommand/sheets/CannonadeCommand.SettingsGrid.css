@@ -163,9 +163,22 @@ html.cc-settingsgrid-heads-on #displaybox div.title > span.left > img.icon {
 /* Section heads always keep their colour: the rainbow "active only" mode greys only the tiles,
    and paintHeads stamps the colour in both sub-modes and removes any -headsneutral class. */
 
-/* keyboard focus draws no outline, ring or shadow; the feedback is brightness only */
-html.cc-settingsgrid-on #displaybox .Panel > a:focus-visible,
+/* With the badges off, as tinted or as Unraid's own icons, the tile keeps its icon, and its name is
+   not a blue text link standing under it: the whole tile is one button, its name in the neutral ink
+   at rest, filled one step up under the pointer like any tile without a fill of its own. */
+html.cc-settingsgrid-heads-on:not(.cc-settingsgrid-on) #displaybox .Panel > a {
+  display: block; border-radius: var(--cc-radius-control); text-decoration: none !important;
+  color: var(--cc-text-chip, #cfcfcf) !important; transition: background-color .12s, color .12s;
+}
+html.cc-settingsgrid-heads-on:not(.cc-settingsgrid-on) #displaybox .Panel > a .PanelText { color: inherit !important; text-decoration: none !important; }
+html.cc-settingsgrid-heads-on:not(.cc-settingsgrid-on) #displaybox .Panel > a:hover { background: var(--cc-hover-wash, rgba(128, 128, 128, .18)); color: var(--cc-text, #e6e6e6) !important; }
+
+/* keyboard focus is the accent halo, as on every CC control: around the badge, or around the
+   whole tile when there is none */
+html.cc-settingsgrid-on #displaybox .Panel > a:focus-visible { outline: none !important; box-shadow: none !important; }
+html.cc-settingsgrid-on #displaybox .Panel > a:focus-visible > span,
+html.cc-settingsgrid-heads-on:not(.cc-settingsgrid-on) #displaybox .Panel > a:focus-visible,
 html.cc-settingsgrid-heads-on #displaybox div.title a:focus-visible {
-  outline: none !important; box-shadow: none !important; filter: brightness(1.18);
+  outline: none !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important;
 }
 
