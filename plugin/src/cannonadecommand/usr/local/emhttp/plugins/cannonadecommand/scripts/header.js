@@ -4199,6 +4199,29 @@
       document.documentElement.classList.toggle("cc-footer-at-bottom", atBottom);
     } catch (e) {}
   }
+  // The arrows rest in the bottom corner and show only while the page scrolls, so they never sit
+  // over a card for long. Their floor is whatever is docked at the viewport's bottom edge, the
+  // fixed footer or the Docker action bar, measured here rather than assumed so a page without
+  // either keeps them in the corner.
+  var ccArrowsIdle = 0, ccArrowsFloor = -1;
+  function ccArrowsFloorMeasure() {
+    var vh = document.documentElement.clientHeight, floor = 0;
+    var docked = document.querySelectorAll("#footer, div.js-actions");
+    for (var i = 0; i < docked.length; i++) {
+      if (getComputedStyle(docked[i]).position !== "fixed") continue;
+      var r = docked[i].getBoundingClientRect();
+      if (r.height > 0 && r.top < vh) floor = Math.max(floor, Math.round(vh - r.top));
+    }
+    if (floor !== ccArrowsFloor) { ccArrowsFloor = floor; document.documentElement.style.setProperty("--cc-arrows-floor", floor + "px"); }
+  }
+  function ccArrowsWake() {
+    try {
+      var root = document.documentElement;
+      if (!root.classList.contains("cc-arrows-live")) { ccArrowsFloorMeasure(); root.classList.add("cc-arrows-live"); }
+      clearTimeout(ccArrowsIdle);
+      ccArrowsIdle = setTimeout(function () { root.classList.remove("cc-arrows-live"); }, 1400);
+    } catch (e) {}
+  }
   function ccLoaderBoot() {
     ccLoadState();
     ccAttachSwalObs();
@@ -4207,6 +4230,7 @@
     ccFooterArrowsBottom();                                                 // the initial state, for a page shorter than the viewport
     window.addEventListener("scroll", ccFooterArrowsBottom, { passive: true });
     window.addEventListener("resize", ccFooterArrowsBottom);
+    window.addEventListener("scroll", ccArrowsWake, { passive: true });
     // A permanent heartbeat rather than a bounded retry, which would only repair the first few
     // seconds of a page's life and miss a loader that opens minutes into a session. A timer
     // callback cannot re-enter itself the way an observer on a node Unraid churns can, and
