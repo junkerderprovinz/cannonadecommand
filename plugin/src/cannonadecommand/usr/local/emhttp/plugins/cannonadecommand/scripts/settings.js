@@ -1921,6 +1921,9 @@
     var cStart = card(T("Stil", "Style"));
     cStart.appendChild(colourRow("cc.stylemain"));
     cStart.appendChild(tabviewRow("main", syncSharesBar));
+    var cDisks = card(T("Ansicht", "View"));
+    diskViewRow(cDisks);
+    wrapStart.appendChild(cDisks);
     wrapHeader.appendChild(cH); wrapShares.appendChild(cSh); wrapPlugin.appendChild(cP); wrapVms.appendChild(cV); wrapSettings.appendChild(cSet); wrapFavorites.appendChild(cFav); wrapStart.appendChild(cStart);
     var cTools = card(T("Stil", "Style"));
     cTools.appendChild(colourRow("cc.styletools"));
@@ -2529,13 +2532,13 @@
   }
   // The preview shows the chosen view alone, since a sketch of every view beside the selector would
   // read as a second selector for the same choice.
-  function viewPreview(opts) {
+  function viewPreview(opts, sketch) {
     var box = el("div", "cc-set-viewprev"), fig = el("div", "cc-set-vp cc-set-vp-on");
     box.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview"))); box.appendChild(fig);
     // paintToggles() gives the sketch the colour of the chosen segment.
     function mark(v) {
       var o = opts.filter(function (x) { return x[0] === v; })[0] || opts[0];
-      fig.innerHTML = viewSketch(o[0]);
+      fig.innerHTML = (sketch || viewSketch)(o[0]);
       fig.appendChild(el("span", "cc-set-vp-lbl", o[1]));
       paintToggles();
     }
@@ -2577,6 +2580,34 @@
       var v = j && j.data && j.data.docker && j.data.docker.organizer && j.data.docker.organizer.views;
       if (v && v[0]) draw(v[0]);
     }).catch(function () {});
+  }
+  // The disk view on /Main, the same choice as the switch above each section there. A pick here
+  // clears the sections' own picks, so every section follows it.
+  function diskSketch(kind) {
+    if (kind === "list") return viewSketch("list");
+    var r = function (x, y, w, h, o) { return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="1.5"' + (o ? ' opacity="' + o + '"' : "") + "/>"; };
+    var s = "";
+    [1, 21, 41].forEach(function (x) { s += r(x, 1, 18, 34, 0.18) + r(x + 2, 3, 14, 13, 0.3) + '<circle cx="' + (x + 8) + '" cy="9.5" r="4.5"/>' + r(x + 3, 20, 12, 2.5) + r(x + 3, 26, 12, 2, 0.6) + r(x + 3, 30, 7, 2, 0.6); });
+    return '<svg viewBox="0 0 60 36" fill="currentColor" aria-hidden="true">' + s + "</svg>";
+  }
+  function diskViewRow(c) {
+    var label = T("Datenträger", "Disks");
+    var help = T("Wie der Tab Start die Datenträger zeigt: als Liste wie in Unraid oder als Kacheln mit einem Bild von jedem Laufwerk. Gilt für alle Abschnitte. Der Schalter über einem Abschnitt ändert nur diesen.", "How the Main tab shows the disks: as Unraid's list or as tiles with a picture of each drive. Applies to every section. The switch above a section changes only that one.");
+    if (get("cc.theming", "1") === "0") {
+      c.appendChild(lockRow(label, T("Liste, solange das Theming aus ist", "List while theming is off"), T("Zum Theming", "Go to Theming"), function () { jumpTo("general", "Theming"); }, help));
+      return;
+    }
+    var opts = [["list", T("Liste", "List"), "IconViewList"], ["tiles", T("Kacheln", "Tiles"), "IconViewGrid"]];
+    var cur = get("cc.diskview", "tiles") === "list" ? "list" : "tiles";
+    var prev = viewPreview(opts, diskSketch), slot = el("div", "cc-set-viewslot cc-set-diskview");
+    slot.appendChild(dropRow(label, opts, cur, function (v) {
+      set("cc.diskview", v);
+      ["array", "pools", "boot", "ud"].forEach(function (k) { del("cc.diskview." + k); });
+      prev.mark(v);
+    }, help));
+    c.appendChild(slot); c.appendChild(prev.el);
+    splitCard(c, [prev.el], "cc-set-split-auto");
+    prev.mark(cur);
   }
   // The temperature warning threshold: three presets, or a value of its own in a field beside
   // them. Both land in cc.tempwarn as a plain number, which header.js reads as it is, and
