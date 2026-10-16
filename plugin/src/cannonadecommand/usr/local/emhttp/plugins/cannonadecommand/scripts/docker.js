@@ -4276,7 +4276,7 @@
   function ctVarLabels() {
     try {
       // Environment variable labels, <dt><span>Label:</span></dt>, badge the inner span.
-      var sps = document.querySelectorAll("#canvas dl > dt > span, .ui-dialog dl > dt > span");
+      var sps = document.querySelectorAll("#canvas dl > dt > span:not(.cc-info), .ui-dialog dl > dt > span:not(.cc-info)");
       for (var i = 0; i < sps.length; i++) {
         var sp = sps[i];
         if (!sp.classList.contains("cc-varlab")) { ctStripColon(sp); sp.classList.add("cc-varlab"); }
@@ -4297,7 +4297,7 @@
       var dts = document.querySelectorAll("#canvas dl > dt, .ui-dialog dl > dt");
       for (var j = 0; j < dts.length; j++) {
         var dt = dts[j];
-        if (dt.querySelector(":scope > span")) continue; // a span label, handled above
+        if (dt.querySelector(":scope > span:not(.cc-info)")) continue; // a span label, handled above
         var hasText = false;
         for (var k = 0; k < dt.childNodes.length; k++) { var c = dt.childNodes[k]; if (c.nodeType === 3 && c.textContent.replace(/\s+/g, "")) { hasText = true; break; } }
         if (!hasText) continue; // an empty, layout-only dt
@@ -4347,6 +4347,82 @@
     sw.addEventListener("input", function () { inp.value = sw.value; inp.dispatchEvent(new Event("change", { bubbles: true })); });
     inp.addEventListener("input", function () { var h = hexOf(inp.value); if (h) sw.value = h; });
     inp.parentNode.insertBefore(sw, inp);
+  }
+  // Every field of the form explains itself in an (i) beside its label (GlimStone rule 8). Unraid's
+  // own fields get a sentence of ours, keyed by the field's name: their inline help blocks are not
+  // reliably the next sibling of the row they describe. A template variable takes the description
+  // its template gives it, which then leaves the page; a variable without one says what its kind
+  // does. Any other row falls back to Unraid's inline help when its wrapper holds only that row.
+  var CT_HELP = {
+    TemplateSelect: ["Eine gespeicherte Vorlage, die das Formular ausfüllt.", "A saved template that fills in the form."],
+    contName: ["Der Name des Containers, so wie ihn der Docker-Tab zeigt.", "The container's name as the Docker tab shows it."],
+    contOverview: ["Eine kurze Beschreibung, was der Container tut.", "A short description of what the container does."],
+    contRequires: ["Was der Container sonst noch braucht, etwa ein Plugin oder ein Gerät.", "Anything else the container needs, such as a plugin or a device."],
+    contRepository: ["Das Image, aus dem der Container läuft, etwa autor/app oder autor/app:1.2.", "The image the container runs, such as author/app or author/app:1.2."],
+    catSelect: ["Die Kategorien, unter denen die App in den Apps steht.", "The categories the app is listed under in Apps."],
+    contSupport: ["Link zum Hilfe-Thread der App, meist im Unraid-Forum.", "Link to the app's support thread, usually on the Unraid forum."],
+    contProject: ["Link zur Webseite des Projekts.", "Link to the project's website."],
+    contReadMe: ["Link zu einer Anleitung, die du vor dem ersten Start lesen solltest.", "Link to a guide worth reading before the first start."],
+    contRegistry: ["Die Seite des Images in seiner Registry, etwa auf Docker Hub.", "The image's page in its registry, such as Docker Hub."],
+    contIcon: ["Link zum Logo, das Unraid für den Container zeigt.", "Link to the logo Unraid shows for the container."],
+    contWebUI: ["Die Adresse, die ein Klick auf das Logo öffnet. [IP] und [PORT:1234] setzt Unraid selbst ein.", "The address a click on the logo opens. Unraid fills in [IP] and [PORT:1234]."],
+    contExtraParams: ["Weitere Optionen für docker run, etwa --runtime=nvidia.", "More options for docker run, such as --runtime=nvidia."],
+    contPostArgs: ["Argumente, die nach dem Image an den Container gehen.", "Arguments passed to the container after the image name."],
+    cpus: ["Die CPU-Kerne, die der Container nutzen darf. Keiner gewählt heißt alle.", "The CPU cores the container may use. None picked means all."],
+    contNetwork: ["Das Netzwerk des Containers: bridge teilt die IP des Servers, host sein ganzes Netz, ein eigenes wie br0 gibt ihm eine eigene IP.", "The container's network: bridge shares the server's IP, host its whole network, a custom one such as br0 gives it an IP of its own."],
+    contMyIP: ["Eine feste IP im gewählten Netzwerk. Leer vergibt Docker eine.", "A fixed IP in the chosen network. Empty lets Docker pick one."],
+    contMyMAC: ["Eine feste MAC-Adresse. Leer vergibt Docker eine.", "A fixed MAC address. Empty lets Docker pick one."],
+    netCONT: ["Der Container, dessen Netzwerk dieser mitbenutzt.", "The container whose network this one shares."],
+    contTailscale: ["Nimmt den Container als eigenes Gerät in dein Tailnet auf.", "Adds the container to your tailnet as a device of its own."],
+    contShell: ["Die Shell, die die Konsole im Container öffnet.", "The shell the console opens inside the container."],
+    contPrivileged: ["Gibt dem Container vollen Zugriff auf den Server. Nur einschalten, wenn die App es verlangt.", "Gives the container full access to the server. Only turn it on when the app asks for it."]
+  };
+  var CT_KIND_HELP = {
+    Port: ["Der Port am Server, der zu diesem Port im Container führt.", "The port on the server that leads to this port in the container."],
+    Path: ["Der Ordner am Server, der im Container eingebunden wird.", "The folder on the server that is mapped into the container."],
+    Variable: ["Ein Wert, den der Container beim Start als Umgebungsvariable bekommt.", "A value the container gets as an environment variable at start."],
+    Label: ["Eine Docker-Bezeichnung, die am Container hängt.", "A Docker label attached to the container."],
+    Device: ["Ein Gerät des Servers, das der Container nutzen darf.", "A device of the server the container may use."]
+  };
+  function ctHelpText(pair) { return pair ? (LANG === "de" ? pair[0] : pair[1]) : ""; }
+  function ctInfoBubbles() {
+    try {
+      // One <dl> can hold several dt and dd pairs, so each label is read with the dd after it.
+      var dts = document.querySelectorAll("#canvas form dl > dt");
+      for (var i = 0; i < dts.length; i++) {
+        var dt = dts[i], dl = dt.parentNode, dd = dt.nextElementSibling;
+        if (!dd || dd.tagName !== "DD") continue;
+        var host = dt.querySelector(":scope > span.cc-varlab") || (dt.classList.contains("cc-dtlab") ? dt : null);
+        if (!host || host.querySelector(":scope > .cc-info")) continue;
+        var tip = "", cfg = dl.closest("[id^='ConfigNum']");
+        if (cfg) {
+          var dsc = cfg.querySelector('input[name="confDescription[]"]'), kind = cfg.querySelector('input[name="confType[]"]');
+          tip = ((dsc && dsc.value) || "").trim();
+          if (tip) {
+            var notes = dd.querySelectorAll(".boxed > span.orange-text");
+            for (var n = 0; n < notes.length; n++) if ((notes[n].textContent || "").trim() === tip) notes[n].setAttribute("data-cc-help", "1");
+          } else tip = ctHelpText(CT_KIND_HELP[kind && kind.value]);
+        } else {
+          var field = dd.querySelector("select[name], select[id], input[name]:not([type=hidden]), input[id]:not([type=hidden]), textarea[name]");
+          var key = field ? (field.name || field.id) : "";
+          if (/^box\d+$/.test(key)) key = "cpus";
+          tip = ctHelpText(CT_HELP[key]);
+          var wrap = dl.parentElement, bq = wrap && wrap.querySelector(":scope > blockquote.inline_help");
+          if (!tip && field && bq && wrap.querySelectorAll(":scope > dl > dt").length === 1) tip = (bq.textContent || "").trim();
+        }
+        if (!tip) continue;
+        var ic = (window.CCTheme && window.CCTheme.infoIcon) ? window.CCTheme.infoIcon(tip) : null;
+        if (!ic) return;
+        ic.setAttribute(MARK, "1");
+        host.appendChild(ic);
+      }
+    } catch (e) {}
+  }
+  function ctInfoBubblesTeardown() {
+    try {
+      Array.prototype.forEach.call(document.querySelectorAll("#canvas dl > dt .cc-info[" + MARK + "]"), function (ic) { ic.parentNode.removeChild(ic); });
+      Array.prototype.forEach.call(document.querySelectorAll("#canvas .boxed > span.orange-text[data-cc-help]"), function (s) { s.removeAttribute("data-cc-help"); });
+    } catch (e) {}
   }
   // The native #dockerAllocations table ("Docker-Zuweisungen") shows "invalid IP" for a stopped
   // container's IP and "???" for its ports. The CC engine knows the configured static IP (survives a
@@ -4439,11 +4515,12 @@
       var on2 = localStorage.getItem("cc.enable.docker") !== "0" && themingOn();
       root.classList.toggle("cc-docker-on", on2);
       root.classList.toggle("cc-on-addct", on2 && onCtForm());   // page gate: every docker.css form rule requires BOTH classes
-      if (!on2) { ctSelectsTeardown(); ctTitleUnwrap(); ctVarLabelsTeardown(); return; }
+      if (!on2) { ctSelectsTeardown(); ctTitleUnwrap(); ctInfoBubblesTeardown(); ctVarLabelsTeardown(); return; }
       applySettings();                                           // --cc-accent, --cc-accent-text and the rainbow vars, the same chokepoint as list mode
       ctTitleWrap();
       ctVarLabels();                                             // every variable label -> a colon-free badge
       ctColorFields();                                           // colour variables get a picker swatch
+      ctInfoBubbles();
       // The jQuery-UI config dialog appends to body, outside #canvas, so its selects need the
       // second selector or they stay native. The body-childList observer re-enters here when
       // the dialog fills, so wrapping them in the same pass is enough.

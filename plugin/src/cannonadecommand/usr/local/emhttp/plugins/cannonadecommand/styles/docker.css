@@ -1760,6 +1760,10 @@ html.cc-docker-on.cc-on-addct #canvas label.checkbox .checkmark { background: rg
 html.cc-docker-on.cc-on-addct #canvas label.checkbox input:checked ~ .checkmark { background: var(--cc-accent, #FCC419) !important; }
 /* in a config row the .boxed description strip drops its orange for a muted note */
 html.cc-docker-on.cc-on-addct #canvas .boxed span.orange-text { color: #9a9a9a !important; }
+/* A description docker.js moved into the label's (i) leaves the page. The (i) stands last, after the
+   required dot, so the dot stays with the name. */
+html.cc-docker-on.cc-on-addct #canvas .boxed span.orange-text[data-cc-help] { display: none !important; }
+html.cc-docker-on.cc-on-addct #canvas dl > dt .cc-info { order: 1; color: inherit; }
 /* The dropdown overlay docker.js ctWrapSelect builds: the share-settings disk dropdown's look,
    chips in a floating panel with the accent on the selected one and on hover. */
 html.cc-docker-on.cc-on-addct .cc-dsel { position: relative; display: inline-block; }
