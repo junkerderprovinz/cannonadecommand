@@ -248,17 +248,32 @@ html.cc-header-on #cc-island .cc-isl-lead {
 html.cc-header-on #cc-island .cc-isl-net { cursor: pointer; }
 html.cc-header-on #cc-island .cc-isl-net .cc-isl-net-seg + .cc-isl-net-seg { margin-left: 8px; }
 /* On a phone the name and the island do not fit one row. The island goes under the name as one
-   flowing run of chips instead of its three right-aligned rows, which there stack into a column
-   as tall as the screen. Uptime, edition, version, network and the container count step back so
-   the run stays two lines; the array, its fill, CPU, RAM and the temperatures are what a glance
-   at a phone is for. The rows dissolve with display: contents, so the saved order still holds. */
+   row of chips instead of its three right-aligned rows, which there stack into a column as tall
+   as the screen, and it swipes sideways with the same snap and edge fade as the tabs below it
+   (header.js ccIslandStrip marks the side where more chips wait). Uptime, edition, version,
+   network and the container count step back; the array, its fill, CPU, RAM and the temperatures
+   are what a glance at a phone is for. The rows dissolve with display: contents, so the saved
+   order still holds. */
 @media (max-width: 767.98px) {
   html.cc-header-on:not(.Theme--sidebar) #header { flex-wrap: wrap; height: auto !important; padding-bottom: 10px; }
   html.cc-header-on #cc-brand .cc-brand-name { font-size: 36px !important; line-height: 1.2; }
   html.cc-header-on #cc-island {
-    order: 3; flex: 1 0 100%; max-width: none; box-sizing: border-box;
+    order: 3; flex: 1 0 100%; min-width: 0; max-width: none; box-sizing: border-box;
     margin: 6px 0 0; padding: 0 16px 0 7px;   /* on the tabs' 15px edge, less #header's own 8px */
-    flex-direction: row; flex-wrap: wrap; justify-content: flex-start; gap: 6px;
+    flex-direction: row; flex-wrap: nowrap; align-items: center; justify-content: flex-start; gap: 6px;
+    overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity; scroll-padding-inline: 7px; scrollbar-width: none;
+  }
+  html.cc-header-on #cc-island::-webkit-scrollbar { display: none; }
+  html.cc-header-on #cc-island .cc-isl-chip { flex: 0 0 auto; scroll-snap-align: start; }
+  html.cc-header-on #cc-island.cc-more-r {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  }
+  html.cc-header-on #cc-island.cc-more-l {
+    -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 40px), transparent);
+  }
+  html.cc-header-on #cc-island.cc-more-l.cc-more-r {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent);
   }
   html.cc-header-on #cc-island .cc-isl-row,
   html.cc-header-on #cc-island .cc-isl-row:empty { display: contents; }

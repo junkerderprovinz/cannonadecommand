@@ -181,9 +181,10 @@
   // Below 768px the tabs are one row that swipes sideways (Header.css), with the utility icons
   // moved into the burger's menu.
   function ccIsPhone() { return !!(window.matchMedia && window.matchMedia("(max-width: 767.98px)").matches); }
-  // The strip fades out at a side where more tabs wait. The classes name the physical side, so a
-  // right-to-left page, where scrollLeft runs negative, fades the correct one.
-  function ccTabEdges(tile) {
+  // A strip that swipes sideways, the tabs or the status island, fades out at a side where more
+  // wait. The classes name the physical side, so a right-to-left page, where scrollLeft runs
+  // negative, fades the correct one.
+  function ccStripEdges(tile) {
     var max = tile.scrollWidth - tile.clientWidth, s = Math.abs(tile.scrollLeft);
     var rtl = getComputedStyle(tile).direction === "rtl", before = s > 2, after = s < max - 2;
     tile.classList.toggle("cc-more-l", rtl ? after : before);
@@ -196,7 +197,7 @@
       var tile = navTile(); if (!tile) return;
       if (!tile.ccStrip) {
         tile.ccStrip = true;
-        tile.addEventListener("scroll", function () { ccTabEdges(tile); }, { passive: true });
+        tile.addEventListener("scroll", function () { ccStripEdges(tile); }, { passive: true });
         ["pointerdown", "wheel"].forEach(function (ev) { tile.addEventListener(ev, function () { tile.ccMoved = true; }, { passive: true }); });
       }
       var act = ccIsPhone() && !tile.ccMoved && tile.querySelector(":scope > .nav-item.active");
@@ -204,8 +205,15 @@
         var tr = tile.getBoundingClientRect(), ar = act.getBoundingClientRect();
         tile.scrollLeft += Math.round((ar.left + ar.width / 2) - (tr.left + tr.width / 2));
       }
-      ccTabEdges(tile);
+      ccStripEdges(tile);
     } catch (e) {}
+  }
+  // On a phone the island is one swiping row as well. Its chips are rebuilt in place on each live
+  // update, so the element and its scroll position stay.
+  function ccIslandStrip() {
+    var isle = document.getElementById("cc-island"); if (!isle) return;
+    if (!isle.ccStrip) { isle.ccStrip = true; isle.addEventListener("scroll", function () { ccStripEdges(isle); }, { passive: true }); }
+    ccStripEdges(isle);
   }
   // Popup badges follow the colour modes: the accent by default through the CSS vars, a palette slot
   // in rainbow mode. Painted from here because a dialog can appear as a direct body child at any
@@ -1228,7 +1236,7 @@
         }
       }
       // The per-service segments stay in the hidden native footer rather than on a chip.
-      ccIslandArrange(); ccWireIslandDrag();
+      ccIslandArrange(); ccWireIslandDrag(); ccIslandStrip();
     } catch (e) {}
   }
   // A chip can be dragged to any row and position. The layout is persisted as cc.isl.order, three
@@ -3921,11 +3929,12 @@
     // land off during the first paint, before the anchor is measured. Re-running the whole settle,
     // not just measureAlign, on the next frame and again on load corrects that once layout is
     // stable; every write is diffed, so the extra passes are cheap.
-    function reSettle() { try { measureAlign(); ccBrand(); ccDockProfile(); ccTabStrip(); } catch (e2) {} }
+    function reSettle() { try { measureAlign(); ccBrand(); ccDockProfile(); ccTabStrip(); ccIslandStrip(); } catch (e2) {} }
     try {
       if (window.requestAnimationFrame) window.requestAnimationFrame(reSettle);
       window.addEventListener("resize", measureAlign);
       window.addEventListener("resize", ccTabStrip);
+      window.addEventListener("resize", ccIslandStrip);
       window.addEventListener("load", reSettle);
     } catch (e) {}
     watchSearch();
