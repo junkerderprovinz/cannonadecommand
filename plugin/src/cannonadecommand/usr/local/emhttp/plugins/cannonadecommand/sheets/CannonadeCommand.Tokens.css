@@ -820,23 +820,24 @@ html.cc-badge-glass.cc-plugins-iconbg .cc-plugico > * { position: relative; z-in
    shadow above, as the wash on the other badges does. */
 html :is(.cc-actbtn:not(.cc-actoff), .cc-limbtn):hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 
-/* Unraid's quick-scroll arrows (a.move_to_end, a.move_to_top, fixed bottom right, stock red): they
-   take the CC accent, a transform lifts them above the docked action bar and footer so they clear
-   the view toggle without narrowing the bar, and they get a chip at the pill radius. */
+/* Unraid's quick-scroll arrows (a.move_to_end, a.back_to_top, fixed bottom right, stock red): small
+   chips at the pill radius in the bottom right corner of the content. They stand on whatever is
+   docked at the viewport's bottom edge, the fixed footer or the Docker action bar, which header.js
+   measures into --cc-arrows-floor, so they clear the view toggle without narrowing the bar. */
 html.cc-popups-on a[class*="move_to"],
 html.cc-popups-on a.back_to_top,
 html.cc-popups-on a[class*="back_to"] {
   right: calc(var(--cc-content-rgap, 0px) + var(--cc-edge-gutter, 8px)) !important;   /* the content right edge: viewport gutter plus the boxed-mode gap */
+  bottom: calc(var(--cc-arrows-floor, 0px) + 12px) !important;
   z-index: 9990 !important;                       /* above the page chrome, below the popup backdrops at 9998 */
   /* the badge carries the colour and the glyph reads on top of it, as every other CC badge does */
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
-  transform: translateY(calc(-1 * (var(--cc-footer-h, 0px) + var(--cc-actbar-h, 44px) + 8px))) !important;
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
   border-radius: var(--cc-radius-pill) !important;
-  width: 40px !important; height: 40px !important;
+  width: var(--cc-md-h, 30px) !important; height: var(--cc-md-h, 30px) !important;
   padding: 0 !important;
   align-items: center; justify-content: center;
-  font-size: 1.35rem !important; line-height: 1 !important;
+  font-size: var(--cc-text-title) !important; line-height: 1 !important;
   text-decoration: none !important;   /* the chip is an <a>, so Unraid's a:hover underline has to go */
 }
 /* dynamix.js fades .back_to_top out at scrollTop 0 through jQuery, which ends with a plain inline
@@ -845,17 +846,26 @@ html.cc-popups-on a[class*="back_to"] {
    through. .move_to_end has no native equivalent; header.js hides it by scroll position. */
 html.cc-popups-on a.back_to_top:not([style*="display: none"]),
 html.cc-popups-on a.move_to_end:not([style*="display: none"]) { display: flex !important; }
-/* a.move_to_end's own bottom-of-page hide (header.js ccFooterArrowsBottom) uses opacity and
-   pointer-events, never display, so no inline style can race another rule; the transition lives
-   here because the JS does not animate. */
-html.cc-popups-on a.move_to_end { transition: opacity .3s ease, background .12s ease, color .12s ease, filter .12s ease !important; }
+/* Both hide through opacity and pointer-events, never display, so no inline style can race
+   another rule, and dynamix's own fades, which only write an inline opacity, cannot bring them
+   back. a.move_to_end goes at the bottom of the page (header.js ccFooterArrowsBottom). Both rest
+   hidden unless the page is scrolling (header.js html.cc-arrows-live); a pointer or the keyboard
+   focus on one keeps it, except that a touch screen's tap leaves a hover behind that never ends. */
 html.cc-popups-on.cc-footer-at-bottom a.move_to_end { opacity: 0 !important; pointer-events: none !important; }
-/* both chips share one bottom row: the down chip flush at the content right edge, the up chip 50px
-   to its left (a 40px chip plus a 10px gap) */
-html.cc-popups-on a.move_to_end,
-html.cc-popups-on a.back_to_top { bottom: 24px !important; }
+@media (hover: hover) {
+  html.cc-popups-on:not(.cc-arrows-live) :is(a.back_to_top, a.move_to_end):not(:hover):not(:focus-visible) { opacity: 0 !important; pointer-events: none !important; }
+}
+@media (hover: none) {
+  html.cc-popups-on:not(.cc-arrows-live) :is(a.back_to_top, a.move_to_end):not(:focus-visible) { opacity: 0 !important; pointer-events: none !important; }
+}
+/* the fade is motion, so reduced motion and the "off" level show and hide them at once */
+@media (prefers-reduced-motion: no-preference) {
+  html.cc-popups-on:not([data-cc-motion="off"]) :is(a.back_to_top, a.move_to_end) { transition: opacity .3s ease, background .12s ease, color .12s ease, filter .12s ease !important; }
+}
+/* both chips share one bottom row: the down chip flush at the content right edge, the up chip one
+   chip and a 6px gap to its left */
 html.cc-popups-on a.move_to_end { right: calc(var(--cc-content-rgap, 0px) + var(--cc-edge-gutter, 8px)) !important; }
-html.cc-popups-on a.back_to_top { right: calc(var(--cc-content-rgap, 0px) + var(--cc-edge-gutter, 8px) + 50px) !important; }
+html.cc-popups-on a.back_to_top { right: calc(var(--cc-content-rgap, 0px) + var(--cc-edge-gutter, 8px) + var(--cc-md-h, 30px) + 6px) !important; }
 /* The round shape comes from the fa-arrow-circle glyph, not from the chip box, so a border-radius
    alone cannot square it; swap in the plain arrow glyph. */
 html.cc-popups-on a.move_to_end > i.fa::before { content: "\f063" !important; }  /* fa-arrow-down */
@@ -2439,7 +2449,7 @@ html.cc-popups-on .navigationArea {
 html.cc-popups-on .multi_installDiv .ca_hide.ca_hide,
 html.cc-popups-on .multi_installDiv [style*="display: none"][style*="display: none"] { display: none !important; }
 
-/* The footer arrows in all three colour modes. .back_to_top and .move_to_end are 40px badges
+/* The footer arrows in all three colour modes. .back_to_top and .move_to_end are small badges
    carrying a FontAwesome glyph; the badge takes the colour and the glyph the contrast colour. */
 html.cc-popups-on a.back_to_top,
 html.cc-popups-on a.move_to_end {

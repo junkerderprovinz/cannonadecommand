@@ -178,6 +178,35 @@
     } catch (e) {}
   }
   try { window.ccTabIcons = ccTabIcons; } catch (eTI) {}   // the settings page's live toggle hook
+  // Below 768px the tabs are one row that swipes sideways (Header.css), with the utility icons
+  // moved into the burger's menu.
+  function ccIsPhone() { return !!(window.matchMedia && window.matchMedia("(max-width: 767.98px)").matches); }
+  // The strip fades out at a side where more tabs wait. The classes name the physical side, so a
+  // right-to-left page, where scrollLeft runs negative, fades the correct one.
+  function ccTabEdges(tile) {
+    var max = tile.scrollWidth - tile.clientWidth, s = Math.abs(tile.scrollLeft);
+    var rtl = getComputedStyle(tile).direction === "rtl", before = s > 2, after = s < max - 2;
+    tile.classList.toggle("cc-more-l", rtl ? after : before);
+    tile.classList.toggle("cc-more-r", rtl ? before : after);
+  }
+  // The open tab is centred in the strip, which a later pass repeats once fonts and icons have
+  // settled, until the person moves the strip themselves.
+  function ccTabStrip() {
+    try {
+      var tile = navTile(); if (!tile) return;
+      if (!tile.ccStrip) {
+        tile.ccStrip = true;
+        tile.addEventListener("scroll", function () { ccTabEdges(tile); }, { passive: true });
+        ["pointerdown", "wheel"].forEach(function (ev) { tile.addEventListener(ev, function () { tile.ccMoved = true; }, { passive: true }); });
+      }
+      var act = ccIsPhone() && !tile.ccMoved && tile.querySelector(":scope > .nav-item.active");
+      if (act) {
+        var tr = tile.getBoundingClientRect(), ar = act.getBoundingClientRect();
+        tile.scrollLeft += Math.round((ar.left + ar.width / 2) - (tr.left + tr.width / 2));
+      }
+      ccTabEdges(tile);
+    } catch (e) {}
+  }
   // Popup badges follow the colour modes: the accent by default through the CSS vars, a palette slot
   // in rainbow mode. Painted from here because a dialog can appear as a direct body child at any
   // time.
@@ -466,7 +495,9 @@
       if (!pop) { if (dim) dim.style.display = "none"; return; }
       if (!dim) {
         dim = document.createElement("div"); dim.id = "cc-pop-dim";
-        dim.addEventListener("pointerdown", function () { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); });
+        // The Escape carries a keyCode as well: dynamix's shortcut handler reads nothing else and
+        // throws on a key event without one.
+        dim.addEventListener("pointerdown", function () { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", keyCode: 27, bubbles: true })); });
         document.body.appendChild(dim);
       }
       // The backdrop sits above #header and #menu so the blur covers the header band, and below
@@ -1351,6 +1382,7 @@
       for (var m = 0; m < menus.length; m++) {
         var menu = menus[m];
         menu.classList.add("cc-acctmenu");
+        ccAcctTools(menu);
         if (menu.getAttribute("data-cc-acct") === "1") continue;
         menu.setAttribute("data-cc-acct", "1");
         // The menu brings no close control of its own, unlike the notification drawer, so it gets
@@ -1360,7 +1392,7 @@
         mx.setAttribute("aria-label", T("Schließen", "Close")); mx.setAttribute("data-cc-tip", T("Schließen", "Close"));
         mx.addEventListener("click", function (e) {
           e.preventDefault(); e.stopPropagation();
-          document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+          document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", keyCode: 27, bubbles: true }));
         });
         menu.insertBefore(mx, menu.firstChild);
         // The strip the close badge sits on carries the title, as every CC window does.
@@ -1389,6 +1421,42 @@
         }
       }
     } catch (e) {}
+  }
+  // On a phone the burger's menu opens with a row of the utility icons the menu bar leaves out.
+  // Each copy presses its hidden original, so whatever Unraid or a plugin wired to that icon runs
+  // unchanged. An icon the person switched off stays computed display:none and gets no copy.
+  function ccAcctTools(menu) {
+    var trig = document.querySelector('[data-cc-trig="burger"]');
+    if (!ccIsPhone() || !trig || menu.getAttribute("aria-labelledby") !== trig.id || menu.querySelector(".cc-acct-tools")) return;
+    var row = document.createElement("div"); row.className = "cc-acct-tools";
+    var items = document.querySelectorAll("#menu .nav-tile.right > .nav-item.util:not(.cc-iconproxy)");
+    for (var i = 0; i < items.length; i++) {
+      var a = items[i].querySelector(":scope > a");
+      if (!a || getComputedStyle(items[i]).display === "none") continue;
+      var name = a.getAttribute("data-cc-tip") || a.getAttribute("title") || (a.textContent || "").trim();
+      var b = window.CCTheme.pressable(document.createElement("span"));
+      b.className = "cc-acct-tool"; b.setAttribute("aria-label", name); b.setAttribute("data-cc-tip", name);
+      // the icon's own palette slot for the hover, without the inline glyph colour paintNav forces
+      ["--cc-rb-c", "--cc-rb-ct"].forEach(function (v) { var c = a.style.getPropertyValue(v); if (c) b.style.setProperty(v, c); });
+      var glyph = a.querySelector("b, img, svg");
+      if (glyph) { glyph = glyph.cloneNode(true); glyph.removeAttribute("style"); b.appendChild(glyph); }
+      b.addEventListener("click", (function (orig) {
+        return function (e) {
+          e.preventDefault(); e.stopPropagation();
+          document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", keyCode: 27, bubbles: true }));
+          // reka hands the focus back to the burger at the end of the close animation, which
+          // would blur the field gui_search() focuses, and gui_search closes on that blur. So the
+          // original is pressed once the menu has left the page.
+          var tries = 0;
+          (function press() {
+            if (menu.isConnected && ++tries < 40) { setTimeout(press, 50); return; }
+            orig.click();
+          })();
+        };
+      })(a));
+      row.appendChild(b);
+    }
+    if (row.children.length) menu.insertBefore(row, menu.querySelector(":scope > div"));
   }
   // In rainbow mode two controls next to each other take different palette slots rather than one
   // shared colour. Each themed native button gets a slot rotated within its own row, each toggle
@@ -2609,6 +2677,7 @@
       paintNav();
       ccTabIcons();     // before measureAlign: inserting an icon changes the tab width
       measureAlign();   // once the pill geometry is live
+      ccTabStrip();
       ccIsland();
       ccBrand();
       watchIsland();
@@ -3852,10 +3921,11 @@
     // land off during the first paint, before the anchor is measured. Re-running the whole settle,
     // not just measureAlign, on the next frame and again on load corrects that once layout is
     // stable; every write is diffed, so the extra passes are cheap.
-    function reSettle() { try { measureAlign(); ccBrand(); ccDockProfile(); } catch (e2) {} }
+    function reSettle() { try { measureAlign(); ccBrand(); ccDockProfile(); ccTabStrip(); } catch (e2) {} }
     try {
       if (window.requestAnimationFrame) window.requestAnimationFrame(reSettle);
       window.addEventListener("resize", measureAlign);
+      window.addEventListener("resize", ccTabStrip);
       window.addEventListener("load", reSettle);
     } catch (e) {}
     watchSearch();
@@ -4129,6 +4199,29 @@
       document.documentElement.classList.toggle("cc-footer-at-bottom", atBottom);
     } catch (e) {}
   }
+  // The arrows rest in the bottom corner and show only while the page scrolls, so they never sit
+  // over a card for long. Their floor is whatever is docked at the viewport's bottom edge, the
+  // fixed footer or the Docker action bar, measured here rather than assumed so a page without
+  // either keeps them in the corner.
+  var ccArrowsIdle = 0, ccArrowsFloor = -1;
+  function ccArrowsFloorMeasure() {
+    var vh = document.documentElement.clientHeight, floor = 0;
+    var docked = document.querySelectorAll("#footer, div.js-actions");
+    for (var i = 0; i < docked.length; i++) {
+      if (getComputedStyle(docked[i]).position !== "fixed") continue;
+      var r = docked[i].getBoundingClientRect();
+      if (r.height > 0 && r.top < vh) floor = Math.max(floor, Math.round(vh - r.top));
+    }
+    if (floor !== ccArrowsFloor) { ccArrowsFloor = floor; document.documentElement.style.setProperty("--cc-arrows-floor", floor + "px"); }
+  }
+  function ccArrowsWake() {
+    try {
+      var root = document.documentElement;
+      if (!root.classList.contains("cc-arrows-live")) { ccArrowsFloorMeasure(); root.classList.add("cc-arrows-live"); }
+      clearTimeout(ccArrowsIdle);
+      ccArrowsIdle = setTimeout(function () { root.classList.remove("cc-arrows-live"); }, 1400);
+    } catch (e) {}
+  }
   function ccLoaderBoot() {
     ccLoadState();
     ccAttachSwalObs();
@@ -4137,6 +4230,7 @@
     ccFooterArrowsBottom();                                                 // the initial state, for a page shorter than the viewport
     window.addEventListener("scroll", ccFooterArrowsBottom, { passive: true });
     window.addEventListener("resize", ccFooterArrowsBottom);
+    window.addEventListener("scroll", ccArrowsWake, { passive: true });
     // A permanent heartbeat rather than a bounded retry, which would only repair the first few
     // seconds of a page's life and miss a loader that opens minutes into a session. A timer
     // callback cannot re-enter itself the way an observer on a node Unraid churns can, and
