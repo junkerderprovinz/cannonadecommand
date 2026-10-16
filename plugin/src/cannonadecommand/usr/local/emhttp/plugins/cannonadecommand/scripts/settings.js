@@ -100,13 +100,7 @@
       // a value of its own beside a selector, a short field with its unit after it
       "#cc-settings .cc-set-numwrap{display:inline-flex;align-items:center;gap:6px;color:var(--cc-text-dim,#8a8a8a);font-size:var(--cc-text-subline)}" +
       "#cc-settings .cc-set-numwrap .cc-set-num{flex:none;width:56px;min-width:0;margin:0;text-align:center}" +
-      // A card's preview column beside its rows, as wide as a row of four logo tiles; the view
-      // sketches take what they need. A narrow page puts the preview under the rows.
-      "#cc-settings .cc-set-split{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:24px;align-items:start}" +
-      "#cc-settings .cc-set-split-side{width:216px;min-width:0}" +
-      "#cc-settings .cc-set-split-side.cc-set-split-auto{width:auto}" +
-      "@media (max-width:1199px){#cc-settings .cc-set-split{grid-template-columns:minmax(0,1fr)}#cc-settings .cc-set-split-side{width:auto}}" +
-      // the Docker view sketches beside their selector, each in a well of its own
+      // a view sketch right under the selector it belongs to, in a well of its own
       "#cc-settings .cc-set-viewprev{display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin-top:12px}" +
       "#cc-settings .cc-set-viewprev > .cc-set-lbl{margin:0}" +
       "#cc-settings .cc-set-vp{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 12px 8px;border-radius:var(--cc-radius-control);background:var(--cc-surface-base,#161616);color:var(--cc-text-dim,#8a8a8a);transition:color .12s,background-color .12s}" +
@@ -114,12 +108,17 @@
       "#cc-settings .cc-set-vp-lbl{font-size:var(--cc-text-meta);line-height:1.2}" +
       "#cc-settings .cc-set-vp-on{background:var(--cc-surface-3,#2e2e2e);color:var(--cc-rb-c,var(--cc-accent,#FCC419))}" +
       "#cc-settings .cc-set-vp-on .cc-set-vp-lbl{color:var(--cc-text,#e6e6e6)}" +
-      // A row whose switch above it is off rests dimmed and takes neither a click nor the focus;
-      // its (i) still explains it.
+      // A row whose switch above it is off rests dimmed and out of the tab order;
+      // a press on it is refused (refuse() below), and its (i) still explains it. A disabled
+      // field takes no click at all, so its wrapper receives the press.
       "#cc-settings .cc-set-lbl.cc-set-disabled,#cc-settings .cc-set-disabled > span:first-child:not(.cc-set-lblwrap),#cc-settings .cc-set-disabled :is(.cc-set-lblwrap > span:first-child, .cc-seg, .cc-set-toggle, .cc-set-numwrap){opacity:.45}" +
-      "#cc-settings .cc-set-disabled :is(.cc-seg, .cc-set-toggle, .cc-set-numwrap){pointer-events:none;cursor:default}" +
+      "#cc-settings .cc-set-disabled :is(.cc-seg, .cc-seg-btn, .cc-set-toggle, .cc-set-numwrap){cursor:not-allowed}" +
+      "#cc-settings .cc-set-disabled input{pointer-events:none}" +
       "#cc-settings .cc-set-mode .cc-seg-btn:not(.cc-seg-on){background:transparent;color:var(--cc-text-chip,#cfcfcf)}" +
-      "#cc-settings .cc-set-mode .cc-seg-btn:not(.cc-seg-on):hover{background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6)}" +
+      "#cc-settings .cc-set-mode .cc-seg-btn:not(.cc-seg-on):not([aria-disabled=true]):hover{background:var(--cc-surface-3,#2e2e2e);color:var(--cc-text,#e6e6e6)}" +
+      "#cc-settings .cc-set-disabled .cc-set-mode .cc-seg-btn:not(.cc-seg-on):hover{background:transparent;color:var(--cc-text-chip,#cfcfcf)}" +
+      "#cc-settings .cc-set-mode .cc-seg-btn[aria-disabled=true]{opacity:.45;cursor:not-allowed}" +
+      "#cc-settings .cc-set-locked .cc-set-lockby{cursor:not-allowed}" +
       // An area's colour line and a row that names who decides its value.
       "#cc-settings .cc-set-colend{display:inline-flex;align-items:center;gap:12px;flex:none}" +
       "#cc-settings .cc-set-colend .cc-set-xbtn{margin:0}" +
@@ -472,16 +471,19 @@
     if (sub) h.appendChild(infoIcon(sub)); // the explanation lives behind the bubble, never on the card
     c.appendChild(h); return c;
   }
-  // A card with a preview keeps its rows on the left and the preview in a column on the right, top
-  // aligned; a narrow page stacks the preview under the rows. Called once the card is built, with
-  // the nodes that make up the preview.
-  function splitCard(c, preview, cls) {
-    var box = el("div", "cc-set-split"), rows = el("div", "cc-set-split-rows"), side = el("div", "cc-set-split-side" + (cls ? " " + cls : ""));
-    Array.prototype.slice.call(c.children).forEach(function (n) {
-      if (!n.classList.contains("cc-set-h")) (preview.indexOf(n) >= 0 ? side : rows).appendChild(n);
-    });
-    box.appendChild(rows); box.appendChild(side); c.appendChild(box);
+  // A control that cannot act right now still answers a press, so it reads as unavailable rather
+  // than broken: a shut row's control, a disabled choice and the line of a locked row shake, or
+  // glow where nothing may move (CCTheme.deny). Bound on the root once, in the capture phase, so
+  // the control's own handler never runs.
+  function refuse(e) {
+    if (e.type === "keydown" && e.key !== "Enter" && e.key !== " ") return;
+    var t = e.target, hit = t && t.closest && (t.closest(".cc-set-disabled :is(.cc-seg, .cc-set-toggle, .cc-set-numwrap)") || t.closest("[aria-disabled=true]") || t.closest(".cc-set-locked .cc-set-lockby"));
+    if (!hit || !root.contains(hit)) return;
+    e.preventDefault(); e.stopPropagation();
+    if (window.CCTheme && window.CCTheme.deny) window.CCTheme.deny(hit);
   }
+  root.addEventListener("click", refuse, true);
+  root.addEventListener("keydown", refuse, true);
   function elk(t) { var s = el("span", "cc-b-k"); s.textContent = t; return s; }
   function elv(t) { var s = el("span", "cc-b-v"); s.textContent = t; return s; }
   // The plugin's one info glyph, shared through cc-theme.js; this is the fallback for a page that
@@ -537,7 +539,8 @@
     applyFlag(pick);
   }
   // GlimStone's horizontal selector in its well styling, compact at the end of its row. An option
-  // is [value, label, glyph]. The arrows move the choice and the focus with it, as in a radio group.
+  // is [value, label, glyph, unavailable]. The arrows move the choice and the focus with it, as in
+  // a radio group; an unavailable choice stays in view and refuses the move.
   function modeSelector(opts, cur, onPick) {
     var box = el("div", "cc-seg cc-set-mode"); box.setAttribute("role", "radiogroup");
     var btns = opts.map(function (o) {
@@ -545,7 +548,8 @@
       if (o[2]) b.appendChild(segGlyph(o[2]));
       b.appendChild(el("span", null, o[1]));
       b.setAttribute("role", "radio"); b.setAttribute("aria-checked", on ? "true" : "false"); b.setAttribute("tabindex", on ? "0" : "-1");
-      b.addEventListener("click", function () { if (!b.classList.contains("cc-seg-on")) onPick(o[0]); });
+      if (o[3]) b.setAttribute("aria-disabled", "true");
+      b.addEventListener("click", function () { if (!o[3] && !b.classList.contains("cc-seg-on")) onPick(o[0]); });
       box.appendChild(b);
       return b;
     });
@@ -559,6 +563,7 @@
       if (to === null) return;
       e.preventDefault();
       to = Math.max(0, Math.min(btns.length - 1, to));
+      if (opts[to][3]) { if (window.CCTheme && window.CCTheme.deny) window.CCTheme.deny(btns[to]); return; }
       if (to !== at) onPick(opts[to][0]);
     });
     return box;
@@ -651,15 +656,17 @@
       if (!h) { h = document.createElement("div"); h.id = id; h.setAttribute("aria-hidden", "true"); h.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(h); }
       return h;
     }
-    // One filter per ink, since an adopted tile may want black ink beside white.
+    // One filter per ink, since an adopted tile may want black ink beside white. The strength
+    // blends either treatment back toward the original, as the VM tab does.
     function filterDef(id, hex, tint) {
       var n = parseInt(hex.slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255, vals;
+      var s = Math.max(10, st.strength || 100) / 100, i = 1 - s;
       if (tint) {
-        var s = Math.max(10, st.strength || 100) / 100, i = 1 - s;
         var row = function (c, ix) { var v = [0.2126 * c * s, 0.7152 * c * s, 0.0722 * c * s, 0, 0]; v[ix] += i; return v.join(" "); };
         vals = row(r, 0) + " " + row(g, 1) + " " + row(b, 2) + " 0 0 0 1 0";
       } else {
-        vals = "0 0 0 0 " + r.toFixed(4) + " 0 0 0 0 " + g.toFixed(4) + " 0 0 0 0 " + b.toFixed(4) + " 0 0 0 1 0";
+        var flat = function (c, ix) { var v = [0, 0, 0, 0, (c * s).toFixed(4)]; v[ix] = i.toFixed(4); return v.join(" "); };
+        vals = flat(r, 0) + " " + flat(g, 1) + " " + flat(b, 2) + " 0 0 0 1 0";
       }
       return '<filter id="' + id + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter>';
     }
@@ -706,7 +713,7 @@
         } else {
           var src = plan.url || it.src;
           if (it.node.getAttribute("src") !== src) it.node.src = src;
-          it.node.style.filter = plan.treat === "native" ? "none" : plan.treat === "knock" ? (Ci.knock(ink(false, i), plan.tile) || "none") : (filter(ink(plan.treat === "tint", i), plan.treat === "tint") || "none");
+          it.node.style.filter = plan.treat === "native" ? "none" : plan.treat === "knock" ? (Ci.knock(ink(false, i), plan.tile, st.strength) || "none") : (filter(ink(plan.treat === "tint", i), plan.treat === "tint") || "none");
         }
       });
       host(fid + "-svg").innerHTML = svg ? '<svg xmlns="http://www.w3.org/2000/svg">' + svg + "</svg>" : "";
@@ -1275,8 +1282,9 @@
     // own isolated vars, so writing --cc-accent here alone would leave them until the next reload.
     // cc-set-swrow-global scopes syncSwOn() to this row: sweeping every swatch on the page and
     // marking it against the global accent would un-mark an area card's own pick whenever the
-    // global colour changed.
-    var prow = colourField(accent, function (v) { accent = v; set("cc.accent", v); root.style.setProperty("--cc-accent", v); root.style.setProperty("--cc-accent-text", idealText(v)); paintPrev(); syncSwOn(); syncAllStyleCards(); syncHeaderBar(); syncSharesBar(); }, { rowClass: "cc-set-swrow-global" });
+    // global colour changed. The logo previews fall back to the accent for their tiles and ink,
+    // so they repaint with it.
+    var prow = colourField(accent, function (v) { accent = v; set("cc.accent", v); root.style.setProperty("--cc-accent", v); root.style.setProperty("--cc-accent-text", idealText(v)); paintPrev(); syncSwOn(); syncAllStyleCards(); repaintLogoPrevs(); tintPrev(); syncHeaderBar(); syncSharesBar(); }, { rowClass: "cc-set-swrow-global" });
     if (mode === "accent") c1.appendChild(fieldRow(T("Akzentfarbe", "Accent colour"), T("Die Farbe aller Badges, Schalter und Knöpfe im Farbmodus Akzent.", "The colour of every badge, switch and button in the Accent colour mode."), prow));
     // on: every reload deals a fresh colour mapping; off: the colours stay put
     var rrot = el("div", "cc-set-row cc-set-inline");
@@ -1296,6 +1304,8 @@
       var sw = rbrow.children[rbIdx];
       rbpal[rbIdx] = v; sw.style.background = v; sw.setAttribute("data-tip", v); swMark(sw, true, v);
       set("cc.rbpal", JSON.stringify(rbpal)); syncHeaderBar(); syncSharesBar();
+      // everything on this page that wears a palette colour, previews, switches and badges alike
+      paintPrev(); paintToggles(); paintCardHeads(); paintSetTabs(); repaintLogoPrevs(); tintPrev();
     });
     rbPick.hidden = true;
     rbpal.forEach(function (cx, ix) {
@@ -1439,7 +1449,7 @@
     snR.appendChild(snL);
     snR.appendChild(toggle(get("cc.statenative", "0") === "1", function (v) { set("cc.statenative", v ? "1" : "0"); syncHeaderBar(); syncSharesBar(); }));
     c1.appendChild(snR);
-    var prevLbl = c1.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
+    c1.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var prev = el("div", "cc-set-prev");
     // Eight mixed badges, so the whole palette sweep is visible; paintPrev colours each by index.
     var pvName = el("span", "cc-b cc-b-lg", "nextcloud");
@@ -1452,7 +1462,6 @@
     var pvTab = el("span", "cc-navtab cc-navtab-on", "Docker");
     [pvName, pvVal, pvVal2, pvName2, pvVal3, pvVal4, pvName3, pvTab].forEach(function (x9) { prev.appendChild(x9); });
     prev.id = "cc-set-prev"; c1.appendChild(prev);
-    splitCard(c1, [prevLbl, prev]);
     wrapMain.appendChild(c1);
     // The global badge colour is set once, in the card above. This card says that every area
     // follows it and lists only the areas set apart, each with its way back.
@@ -1509,7 +1518,7 @@
     (function () {
       var cLI = card(T("Logos & Icons", "Logos & icons"), T("Globale Logo- und Icon-Farben. Bereiche ohne eigene Farbe folgen ihnen.", "Global logo and icon colours. Areas without a colour of their own follow them."));
       // the three previews at the bottom of this card, repainted by every control in it
-      var gPrevs = [], gSide = [];
+      var gPrevs = [];
       // Each preview shows what the global values make of that area's icons. An area with a colour
       // of its own previews its own values on its own tab, so nothing here depends on it.
       function gpaint() {
@@ -1543,9 +1552,10 @@
         [["auto", T("Automatisch", "Automatic"), "IconTintAuto"], ["native", T("Natives Icon", "Native icon"), "IconTintNative"], ["flat", T("Nachzeichnen", "Redraw"), "IconTintFlatten"], ["tint", T("Tönen", "Tone"), "IconTintLuminance"]],
         get("cc.iconmode", "auto"),
         function (v) { set("cc.iconmode", v); gsync(); },
-        T("Ein Logo ist entweder eine einzelne durchgehende Form oder ein kleines mehrfarbiges Bild. Eine Form kann man komplett in deiner Farbe nachzeichnen und sie bleibt erkennbar; ein Bild würde dabei zum Farbklecks, weil Hintergrund und Motiv dieselbe Farbe bekämen. Darum zwei Behandlungen:\n\nAutomatisch (empfohlen): CannonadeCommand sieht sich jedes Logo an. Formen werden nachgezeichnet, für bekannte Programme wird dafür sogar ein echtes Marken-Logo geholt; Bilder werden nur eingefärbt.\nNatives Icon: nichts einfärben, jedes Logo bleibt wie geliefert.\nNachzeichnen: alles nachzeichnen, auch Bilder.\nTönen: alles nur einfärben, auch Formen.\n\nDie Wahl wirkt, sobald „Icons einfärben“ an ist. Einzelne Container, VMs und Plugins kannst du in ihrem eigenen Fenster abweichend einstellen; diese Einzelwahl gewinnt immer gegen die Einstellung hier.",
-          "A logo is either one solid shape or a small multi-colour picture. A shape can be redrawn entirely in your colour and stays recognisable; a picture would turn into a blob, because its background and its mark would end up the same colour. Hence two treatments:\n\nAutomatic (recommended): CannonadeCommand looks at each logo. Shapes are redrawn, and for a well-known app a real brand logo is fetched to redraw; pictures are only tinted.\nNative icon: no colouring, every logo stays as shipped.\nRedraw: redraw everything, pictures included.\nTone: only tint everything, shapes included.\n\nThe choice applies once “Tint icons” is on. Individual containers, VMs and plugins can be set differently in their own window; that per-item choice always wins over the setting here."));
+        T("Ein Logo ist entweder eine einzelne durchgehende Form oder ein kleines mehrfarbiges Bild. Eine Form kann man komplett in deiner Farbe nachzeichnen und sie bleibt erkennbar; ein Bild würde dabei zum Farbklecks, weil Hintergrund und Motiv dieselbe Farbe bekämen. Darum zwei Behandlungen:\n\nAutomatisch (empfohlen): CannonadeCommand sieht sich jedes Logo an. Formen werden nachgezeichnet, für bekannte Programme wird dafür sogar ein echtes Marken-Logo geholt; Bilder werden nur eingefärbt.\nNatives Icon: nichts einfärben. Für bekannte Programme nimmt CannonadeCommand dabei ein sauberes Marken-Logo in seinen eigenen Farben, sonst bleibt das Logo, wie es ist.\nNachzeichnen: alles nachzeichnen, auch Bilder.\nTönen: alles nur einfärben, auch Formen.\n\nDie Wahl wirkt, sobald „Icons einfärben“ an ist. Einzelne Container, VMs und Plugins kannst du in ihrem eigenen Fenster abweichend einstellen; diese Einzelwahl gewinnt immer gegen die Einstellung hier. Ganz unverändert bleibt ein Logo mit „Original-Logo“ im Startplan-Fenster des Containers.",
+          "A logo is either one solid shape or a small multi-colour picture. A shape can be redrawn entirely in your colour and stays recognisable; a picture would turn into a blob, because its background and its mark would end up the same colour. Hence two treatments:\n\nAutomatic (recommended): CannonadeCommand looks at each logo. Shapes are redrawn, and for a well-known app a real brand logo is fetched to redraw; pictures are only tinted.\nNative icon: no colouring. For a well-known app CannonadeCommand still uses a clean brand logo in its own colours, otherwise the logo stays as it is.\nRedraw: redraw everything, pictures included.\nTone: only tint everything, shapes included.\n\nThe choice applies once “Tint icons” is on. Individual containers, VMs and plugins can be set differently in their own window; that per-item choice always wins over the setting here. “Original logo” in a container's start plan window leaves its logo completely untouched."));
       cLI.appendChild(modeRow);
+      cLI.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
       // Three preview sections, each with that area's real icons, each running the same pipeline
       // the real tab runs, so the choice above is visible without leaving this tab.
       [
@@ -1559,7 +1569,6 @@
         var empty9 = el("div", "cc-set-prev-empty", T("Keine Symbole gefunden.", "No icons found."));
         empty9.style.display = "none";
         cLI.appendChild(p9.el); cLI.appendChild(empty9);
-        gSide.push(lbl9, p9.el, empty9);
         gPrevs.push(p9);
         var fill9 = function (list9) {
           (list9 || []).slice(0, 4).forEach(function (it9) { p9.add(it9.src, it9.name || ""); });
@@ -1573,7 +1582,6 @@
       });
       gpaint();
       repaintLogoPrevs = gpaint;
-      splitCard(cLI, gSide);
       wrapMain.appendChild(cLI);
     })();
     // Docker is an area like the others: an adopt card and its own badges card at the top of its
@@ -1622,7 +1630,7 @@
       // the tip goes through `help`, so the icon lands inside the label as it does on every row
       return segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small"), "IconSizeSmall"], ["m", T("Mittel", "Medium"), "IconSizeMedium"], ["l", T("Groß", "Large"), "IconSizeLarge"]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); try { sizePrev(); } catch (e) {} }, T("Gilt global: dieselbe Größe steuert das Einstellungen- und Werkzeuge-Raster und die Docker- und Plugin-Logos.", "Global: the same size drives the Settings and Tools grid and the Docker and Plugin logos."));
     }
-    var c2Lbl = c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
+    c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var dockPrev = logoPreview("docker", "cc-set-dockprev");
     var tprevWrap = dockPrev.el;
     // the preview logos take the size the tile-size control selects, so a change shows at once
@@ -1639,7 +1647,6 @@
       dockPrev.set({ bg: get("cc.iconbg", "0") === "1", bgColor: get("cc.iconbgcolor", ""), tint: tintOnAt("cc."), color: get("cc.iconcolor", ""), adopt: get("cc.iconbgrainbow", "0") === "1", strength: parseInt(get("cc.iconstrength", "100"), 10) || 100, accent: get("cc.accent", "#FCC419") });
     }
     c2.appendChild(tprevWrap); tintPrev(); c2OnChange(); sizePrev();   // the preview is the card's last block, sized to the tile-size control
-    splitCard(c2, [c2Lbl, tprevWrap]);
     wrap.appendChild(c2);
     // Docker's logo card stands in for an area logo card, so it shows only with an exception too.
     var showC2 = function (own) { c2.classList.toggle("cc-set-off", !own); };
@@ -1751,17 +1758,19 @@
         else { syncHeaderBar(); syncSharesBar(); }
       }
       var cA = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
+      var accLabel = T("Akzentfarbe", "Accent colour"), accHelp = T("Die Farbe der Badges in diesem Bereich. Eine Wahl hier gibt dem Bereich eine eigene Farbe.", "The colour of the badges in this area. A pick here gives the area a colour of its own.");
       var pr = colourField(acc, function (v) { acc = v; set(P + "accent", v); useOwn(); paintPv(); });
-      cA.appendChild(fieldRow(T("Akzentfarbe", "Accent colour"), T("Die Farbe der Badges in diesem Bereich. Eine Wahl hier gibt dem Bereich eine eigene Farbe.", "The colour of the badges in this area. A pick here gives the area a colour of its own."), pr));
-      // Rainbow is a global mode with one switch and one palette in the Badges card, so an area
-      // has no rainbow controls of its own, only the accent above. The preview still reflects it.
-      var RB2 = (window.CCTheme && window.CCTheme.RB) || ["#FF8389", "#FF832B", "#FCC419", "#6FDC8C", "#3DDBD9", "#1D99F3", "#BE95FF", "#FF7EB6"];   // the shared palette, so every preview matches the live UI
-      function storedPalG() { try { if (get("cc.flagmode", "0") === "1") { var fj = JSON.parse(get("cc.flagpal", "null")); if (fj && fj.length) return fj; } var pj = JSON.parse(get("cc.rbpal", "null")); if (pj && pj.length) return pj; } catch (e2) {} return RB2; }
-      function palG() { var p = storedPalG(); return (window.CCTheme && window.CCTheme.surfacePalette) ? window.CCTheme.surfacePalette(p, acc) : p; }
+      // Rainbow and flag are global modes with one palette in the Badges card, and every badge of
+      // an area then takes its colour from that palette. The accent has nothing to colour, so a
+      // line naming the colour mode stands in its place, and with no setting left the card shows
+      // no preview either.
+      var palMode = get("cc.rainbow", "0") === "1";
+      if (palMode) cA.appendChild(lockRow(accLabel, T("Folgt dem Farbmodus", "Follows the colour mode"), T("Zu den Badges", "Go to Badges"), function () { jumpTo("general", T("Badges", "Badges")); }, accHelp));
+      else cA.appendChild(fieldRow(accLabel, accHelp, pr));
       // The header and shares areas restyle Unraid tab bars, so their previews are tab pills, one
-      // of them active; every other area previews the Docker badges.
+      // of them active. Every other area previews what its own tab paints in this colour: names as
+      // large badges, values with their key, the Settings and Tools headings, the Favorites tiles.
       var isTabs = P === "cch." || P === "ccsh.";
-      var pvLbl = cA.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
       var pv = el("div", "cc-set-prev" + (isTabs ? " cc-set-navprev" : ""));
       var activeIx = P === "ccsh." ? 0 : 2; // one active tab, like the real bar
       var pvBadges;
@@ -1769,37 +1778,36 @@
         var TABS = P === "ccsh."
           ? [T("Benutzer-Freigaben", "User Shares"), T("Laufwerks-Freigaben", "Disk Shares")]
           : [T("Übersicht", "Main"), "Shares", "Docker", "VMs", T("Einstellungen", "Settings"), "Tools"];
-        pvBadges = TABS.map(function (nm9, i9) {
-          var t9 = el("span", "cc-navtab" + (i9 === activeIx ? " cc-navtab-on" : ""), nm9); pv.appendChild(t9); return t9;
-        });
+        pvBadges = TABS.map(function (nm9) { return el("span", "cc-navtab", nm9); });
+        pvBadges[activeIx].classList.add("cc-navtab-on");
       } else {
-        // The same eight samples the global Badges card shows, in the same order and painted by the
-        // same rule, so the two previews agree. Three would cut a palette of eight off after three
-        // hues and leave two of the badge tiers the tab paints out of the preview entirely.
         var mkName = function (t9) { return el("span", "cc-b cc-b-lg", t9); };
-        var mkVal = function (k9, v9) { var b8 = el("span", "cc-b"); b8.appendChild(elk(k9)); b8.appendChild(elv(v9)); return b8; };
-        pvBadges = [
-          mkName("nextcloud"), mkVal("CPU", "2/8"), mkVal("RAM", "1.2G"), mkName("plex"),
-          mkVal("IP", ".20.9"), mkVal("Port", "443"), mkName("grafana"), el("span", "cc-navtab cc-navtab-on", "Docker")
-        ];
-        pvBadges.forEach(function (b9) { pv.appendChild(b9); });
+        var mkVal = function (k9, v9) { var b8 = el("span", "cc-b"); if (k9) b8.appendChild(elk(k9)); b8.appendChild(elv(v9)); return b8; };
+        var mkTile = function (g9) {
+          var t8 = el("span", "cc-set-tile");
+          t8.style.width = t8.style.height = "48px"; t8.style.borderRadius = "var(--cc-radius-control)"; t8.style.fontSize = "22px";
+          t8.innerHTML = glyph(g9); return t8;
+        };
+        pvBadges = ({
+          "ccd.": function () { return [mkName("nextcloud"), mkVal("CPU", "2/8"), mkVal("RAM", "1.2G"), mkName("plex"), mkVal("IP", ".20.9"), mkVal("Port", "443"), mkName("grafana")]; },
+          "ccv.": function () { return [mkName("Windows 11"), mkVal("CPU", "4"), mkVal("RAM", "8G"), mkName("Home Assistant"), mkVal("IP", ".20.30"), mkVal("BW", "100M")]; },
+          "ccp.": function () { return [mkVal("Von", "dlandon"), mkVal("Version", "2026.10.01"), mkVal("", "Changelog"), mkVal("Von", "Squid"), mkVal("Version", "2026.09.14"), mkVal("", "Changelog")]; },
+          "ccm.": function () { return [mkName(T("Parität", "Parity")), mkVal("", "18 TB"), mkName("Disk 1"), mkVal("", "34 °C"), mkName("Cache"), mkVal("", "1 TB")]; },
+          "ccs.": function () { return [mkName(T("Systemeinstellungen", "System Settings")), mkName(T("Netzwerkdienste", "Network Services")), mkName(T("Benutzerwerkzeuge", "User Utilities"))]; },
+          "cct.": function () { return [mkName(T("Über", "About")), mkName(T("Systeminformationen", "System Information")), mkName(T("Benutzerwerkzeuge", "User Utilities"))]; },
+          "ccf.": function () { return ["Star", "Gear", "Folder"].map(mkTile); }
+        })[P]();
       }
+      pvBadges.forEach(function (b9) { pv.appendChild(b9); });
       function paintPv() {
-        var rbOn9 = get("cc.rainbow", "0") === "1", p9 = palG();
         pvBadges.forEach(function (b9, i9) {
-          if (rbOn9) {
-            var cr = p9[i9 % p9.length];
-            b9.style.setProperty("background", cr, "important"); b9.style.setProperty("color", idealText(cr), "important");
-            return;
-          }
-          if (isTabs && i9 !== activeIx) { b9.style.removeProperty("background"); b9.style.removeProperty("color"); return; } // an idle tab keeps its grey pill
+          if (isTabs && i9 !== activeIx) return;   // an idle tab keeps its grey pill
           b9.style.setProperty("background", acc, "important"); b9.style.setProperty("color", idealText(acc), "important");
         });
         swMarkRow(pr._row, acc);   // the preset row's tick follows the colour the preview shows
       }
       paintPv();
-      cA.appendChild(pv);
-      splitCard(cA, [pvLbl, pv]);
+      if (!palMode) { cA.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview"))); cA.appendChild(pv); }
       // An adopt flip or a global edit repaints this card with the effective colour, and the Logos
       // card below with the effective icon values. cBLT, applyBgClasses and tp are assigned further
       // down, and this refresher only ever runs once buildStyleCards has finished.
@@ -1846,7 +1854,7 @@
       });
       cBLT.strInput.value = String(istr);
       cBLT.strInput.addEventListener("input", function () { set(P + "iconstrength", cBLT.strInput.value); useOwn(); try { tp(); } catch (e9) {} repaintLogoPrevs(); });
-      var tpLbl = cB.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
+      cB.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
       // the pipeline scope this area's items live under, so a per-item pin shows up here too
       var PAREA = { "ccd.": "docker", "ccv.": "vm", "ccp.": "plugin" }[P];   // the areas whose rows carry real per-item logos
       var PSCOPE = PAREA || "docker";
@@ -1879,7 +1887,6 @@
         });
       }
       cB.appendChild(tpw); tp(); applyBgClasses();
-      splitCard(cB, [tpLbl, tpw]);
       // initial paint = the EFFECTIVE values (cA already initialises via effAcc(); run the
       // refresher once so cB starts on the global icon values while adopt is ON, own while OFF)
       if (adoptKey) { try { styleCardSync[adoptKey](); } catch (e9) {} }
@@ -2270,7 +2277,7 @@
     // A lit view sketch wears the colour of the segment chosen above it, so the two always agree.
     Array.prototype.forEach.call(root.querySelectorAll(".cc-set-viewslot"), function (slot) {
       var on = slot.querySelector(".cc-set-mode .cc-seg-on"), c = on ? on.style.getPropertyValue("--cc-rb-c") : "";
-      Array.prototype.forEach.call(slot.closest(".cc-set-split").querySelectorAll(".cc-set-vp"), function (fig) {
+      Array.prototype.forEach.call(slot.closest(".cc-set-card").querySelectorAll(".cc-set-vp"), function (fig) {
         if (c && fig.classList.contains("cc-set-vp-on")) fig.style.setProperty("--cc-rb-c", c); else fig.style.removeProperty("--cc-rb-c");
       });
     });
@@ -2516,7 +2523,8 @@
   }
   // The Docker view, the same choice as the gear menu there: cc.view for this browser and the
   // organizer's ccViewMode, which docker.js prefers on load, so either place sets both. Folders
-  // need the organizer and a folder in it, and the cards and folders need the theming.
+  // need the organizer, which shows an empty folder view with a tile for a first folder, and the
+  // cards and folders need the theming.
   var VIEW_ORG_Q = "{ docker { organizer { views { id prefs flatEntries { type } } } } }";
   var VIEW_ORG_SAVE = "mutation($viewId: String, $prefs: JSON!) { updateDockerViewPreferences(viewId: $viewId, prefs: $prefs) { version } }";
   // A schematic of each view the selector offers, the chosen one lit in the colour of its
@@ -2546,20 +2554,17 @@
   }
   function viewRow(c) {
     var label = T("Ansicht", "View");
-    var help = T("Wie der Docker-Tab die Container zeigt, dieselbe Wahl wie im Zahnrad-Menü dort. Ordner kannst du wählen, sobald es einen Ordner gibt.", "How the Docker tab shows the containers, the same choice as its gear menu. Folders can be picked once there is a folder.");
+    var help = T("Wie der Docker-Tab die Container zeigt, dieselbe Wahl wie im Zahnrad-Menü dort. Ordner lässt sich wählen, sobald Unraid Ordner für Docker anbietet; ohne Ordner zeigt die Ansicht die Container und eine Kachel „Neuer Ordner“.", "How the Docker tab shows the containers, the same choice as its gear menu. Folders can be picked once Unraid offers folders for Docker; with none yet, the view shows the containers and a “New folder” tile.");
     if (get("cc.theming", "1") === "0") {
       c.appendChild(lockRow(label, T("Liste, solange das Theming aus ist", "List while theming is off"), T("Zum Theming", "Go to Theming"), function () { jumpTo("general", "Theming"); }, help));
       return;
     }
     var slot = el("div", "cc-set-viewslot"), side = el("div");
     c.appendChild(slot); c.appendChild(side);
-    splitCard(c, [side], "cc-set-split-auto");
     function draw(org) {
-      var folders = !!org && org.flatEntries.filter(function (e) { return e.type === "folder" || e.type === "group"; }).length > 1;
-      var opts = [["list", T("Liste", "List"), "IconViewList"], ["grid", T("Raster", "Grid"), "IconViewGrid"]];
-      if (folders) opts.push(["folder", T("Ordner", "Folders"), "IconFolder"]);
+      var opts = [["list", T("Liste", "List"), "IconViewList"], ["grid", T("Raster", "Grid"), "IconViewGrid"], ["folder", T("Ordner", "Folders"), "IconFolder", !org]];
       var cur = (org && org.prefs && org.prefs.ccViewMode) || get("cc.view", "list");
-      if (!opts.some(function (o) { return o[0] === cur; })) cur = "list";
+      if (!opts.some(function (o) { return o[0] === cur && !o[3]; })) cur = "list";
       slot.innerHTML = ""; side.innerHTML = "";
       var prev = viewPreview(opts);
       slot.appendChild(dropRow(label, opts, cur, function (v) {
@@ -2606,7 +2611,6 @@
       prev.mark(v);
     }, help));
     c.appendChild(slot); c.appendChild(prev.el);
-    splitCard(c, [prev.el], "cc-set-split-auto");
     prev.mark(cur);
   }
   // The temperature warning threshold: three presets, or a value of its own in a field beside
@@ -2689,7 +2693,7 @@
       chip.addEventListener("click", (function (idx) {
         return function (ev) {
           ev.stopPropagation();
-          if (sel.options[idx].disabled) return;
+          if (sel.options[idx].disabled) { if (window.CCTheme && window.CCTheme.deny) window.CCTheme.deny(ev.currentTarget); return; }
           sel.selectedIndex = idx;
           sel.dispatchEvent(new Event("change", { bubbles: true }));
           ccDselSync(sel); wrap.classList.remove("cc-open"); trig.focus();

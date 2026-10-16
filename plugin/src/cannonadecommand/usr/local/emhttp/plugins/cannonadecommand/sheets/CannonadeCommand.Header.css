@@ -1307,6 +1307,14 @@ html .cc-toast.cc-toast-ok { color: var(--cc-ok-ink, #6fdc8c); }
 }
 @keyframes cc-shake-still { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
 .cc-shake { animation: cc-shake-still 300ms ease-in-out !important; }
+/* A press on a control that is off or locked (CCTheme.deny()) still shakes where motion is
+   allowed. Where it is not, the control glows once in the focus halo rather than fading, since it
+   is already dimmed. */
+@keyframes cc-deny-halo {
+  0%, 100% { box-shadow: none; }
+  30% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent); }
+}
+.cc-shake.cc-deny { animation: cc-deny-halo 450ms ease-out !important; }
 @media (prefers-reduced-motion: no-preference) {
   html:not([data-cc-motion="off"]) .cc-shake { animation: cc-shake var(--cc-motion-shake-dur, 360ms) ease-in-out !important; }
 }

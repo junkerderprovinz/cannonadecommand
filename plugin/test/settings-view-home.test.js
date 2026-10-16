@@ -31,8 +31,8 @@ async function viewRow(store, org) {
   const dropRow = (label, opts, cur, onChange) => { const r = { label, opts, cur, onChange }; rows.push(r); return r; };
   const lockRow = (label, by) => ({ lock: by });
   const c = mk('div');
-  new Function('el', 'get', 'set', 'T', 'dropRow', 'lockRow', 'jumpTo', 'window', 'c', 'paintToggles', 'splitCard', block + grab(settings, 'viewRow') + '\nviewRow(c);')
-    .call(null, mk, (k, d) => (k in store ? store[k] : d), (k, v) => { store[k] = v; }, (de) => de, dropRow, lockRow, () => {}, window, c, () => {}, () => {});
+  new Function('el', 'get', 'set', 'T', 'dropRow', 'lockRow', 'jumpTo', 'window', 'c', 'paintToggles', block + grab(settings, 'viewRow') + '\nviewRow(c);')
+    .call(null, mk, (k, d) => (k in store ? store[k] : d), (k, v) => { store[k] = v; }, (de) => de, dropRow, lockRow, () => {}, window, c, () => {});
   await new Promise((r) => setTimeout(r, 10));
   return { c, rows, sent };
 }
@@ -44,7 +44,7 @@ async function viewRow(store, org) {
   ok('with folders it offers Liste, Raster and Ordner', row && row.opts.map((o) => o[0]).join() === 'list,grid,folder', row && row.opts.map((o) => o[0]).join());
   ok('it shows the organizer\'s saved view, which the Docker tab opens with', row && row.cur === 'folder');
   const side = r.c.kids[1], preview = () => side.kids[side.kids.length - 1], shown = () => preview().kids[1].kids.map((k) => k.textContent).join();
-  ok('beside it a preview of the chosen view alone, under its label', preview().kids.length === 2 && preview().kids[0].textContent === 'Vorschau' && shown() === 'Ordner' && /^<svg viewBox="0 0 60 36"/.test(preview().kids[1].innerHTML), shown());
+  ok('right under it a preview of the chosen view alone, under its label', preview().kids.length === 2 && preview().kids[0].textContent === 'Vorschau' && shown() === 'Ordner' && /^<svg viewBox="0 0 60 36"/.test(preview().kids[1].innerHTML), shown());
   ok('the sketch wears the chosen segment\'s colour', preview().kids[1].cls.has('cc-set-vp-on'));
   row.onChange('grid');
   await new Promise((res) => setTimeout(res, 10));
@@ -54,7 +54,11 @@ async function viewRow(store, org) {
   ok('and the organizer\'s view mode, keeping its other prefs', !!save && save.v.prefs.ccViewMode === 'grid' && save.v.prefs.other === 1 && save.v.viewId === 'default', save && JSON.stringify(save.v));
   const bare = await viewRow({ 'cc.view': 'grid' }, { id: 'default', prefs: {}, flatEntries: [{ type: 'folder' }] });
   const brow = bare.rows[bare.rows.length - 1];
-  ok('without a folder there is no Ordner to pick', brow && brow.opts.map((o) => o[0]).join() === 'list,grid' && brow.cur === 'grid');
+  ok('with the organizer and no folder yet Ordner can be picked, as on the Docker tab', brow && brow.opts.map((o) => o[0] + (o[3] ? '-off' : '')).join() === 'list,grid,folder' && brow.cur === 'grid', brow && JSON.stringify(brow.opts));
+  const none = await viewRow({ 'cc.view': 'folder' }, null);
+  const nrow = none.rows[none.rows.length - 1];
+  ok('without the organizer Ordner stays in view but cannot be picked', nrow && nrow.opts.map((o) => o[0] + (o[3] ? '-off' : '')).join() === 'list,grid,folder-off', nrow && JSON.stringify(nrow.opts));
+  ok('and a stored folder view shows the list', nrow && nrow.cur === 'list');
   const off = await viewRow({ 'cc.theming': '0' }, org);
   ok('with theming off a lock line says the list stays', off.rows.length === 0 && off.c.kids[0] && /Liste/.test(off.c.kids[0].lock));
   ok('the Docker tile carries the row', /var cV = card\(T\("Ansicht", "View"\)\);\s*viewRow\(cV\);/.test(settings));

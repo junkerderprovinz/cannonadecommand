@@ -126,7 +126,7 @@ console.log('\nPart 4: one logo preview, running the tabs\' own icon pipeline');
   ['docker', 'vm', 'plugin'].forEach(s => ok('the global card previews the ' + s + ' area', new RegExp('\\["' + s + '", T\\(').test(src)));
   ok('the Docker card uses the shared preview', /logoPreview\("docker", "cc-set-dockprev"\)/.test(src));
   ok('the per-area cards use the shared preview', /logoPreview\(PSCOPE,/.test(src));
-  ok('the per-area badge preview shows the same eight samples as the global card',
+  ok('the Docker area previews container names and their values, as the global card does',
     /mkName\("nextcloud"\), mkVal\("CPU", "2\/8"\), mkVal\("RAM", "1\.2G"\), mkName\("plex"\)/.test(src));
 }
 

@@ -207,7 +207,7 @@ console.log('\nThe view: tiles by default, a section\'s own pick, the settings p
   const row = grabFn(settings, 'diskViewRow');
   ok('the settings row writes cc.diskview and clears the four section picks', /set\("cc\.diskview", v\);/.test(row) && /\["array", "pools", "boot", "ud"\]\.forEach\(function \(k\) \{ del\("cc\.diskview\." \+ k\); \}\);/.test(row));
   ok('it offers Liste and Kacheln with the view glyphs', /\[\["list", T\("Liste", "List"\), "IconViewList"\], \["tiles", T\("Kacheln", "Tiles"\), "IconViewGrid"\]\]/.test(row));
-  ok('it has a bubble and a preview in the right column', /, help\)\);/.test(row) && /viewPreview\(opts, diskSketch\)/.test(row) && /splitCard\(c, \[prev\.el\], "cc-set-split-auto"\)/.test(row));
+  ok('it has a bubble and a preview right under its selector', /, help\)\);/.test(row) && /viewPreview\(opts, diskSketch\)/.test(row) && /c\.appendChild\(slot\); c\.appendChild\(prev\.el\);/.test(row));
   ok('the section switches use the same keys', /s\(KEY \+ "\." \+ S\.key, o\[0\]\)/.test(js) && /var KEY = "cc\.diskview";/.test(js));
   ok('a section shows "Ruht" only for a spun-down disk, never an active chip', /if \(d\.down\) h \+= '<span class="cc-dk-chip">' \+ glyph\("Moon"\) \+ esc\(t\("resting"\)\)/.test(js) && !/Aktiv/.test(js));
 }
