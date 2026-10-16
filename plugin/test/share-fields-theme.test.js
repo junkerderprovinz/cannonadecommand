@@ -1,6 +1,6 @@
-// The share settings page fills its fields and dropdowns with a wash of the theme's ink and writes
-// in that ink, so they read on the white and azure pages as on the dark ones. A fixed light grey
-// text on a white wash disappears on a light page.
+// The share settings page fills its fields and dropdowns with the field step of the surface ladder,
+// which flips with the theme, and writes in the theme's ink, so they read on the white and azure
+// pages as on the dark ones. A fixed light grey text on a light field disappears.
 const { candidates, withUnraid, tokens, resolve } = require('./cascade');
 
 let pass = 0, fail = 0;
@@ -10,21 +10,22 @@ const page = withUnraid('every');
 const html = ['cc-shares-on', 'cc-on-share-detail', 'Theme--white'];
 const win = (e, prop) => { const c = candidates(page, e, prop); return c[c.length - 1]; };
 const val = (w) => (w ? w.value : '(none)');
-const inked = (v) => /^var\(--cc-text, #eaeaea\)$/.test(v);
-const washed = (v, pct) => new RegExp('^color-mix\\(in srgb, var\\(--cc-text, #e6e6e6\\) ' + pct + '%, transparent\\)$').test(v);
+const inked = (v) => /^var\(--cc-text, #e[6a]e[6a]e[6a]\)$/.test(v);
+const field = (v) => /^var\(--cc-surface-3, #2e2e2e\)$/.test(v);
+const raised = (v) => /^color-mix\(in srgb, var\(--cc-surface-3, #2e2e2e\) 85%, var\(--cc-text, #e6e6e6\)\)$/.test(v);
 
 console.log('\nThe fields follow the theme');
 {
-  const field = { tag: 'input', classes: [], attrs: { type: 'text' }, inside: ['#displaybox'], html };
-  ok('a text field writes in the theme\'s ink', inked(val(win(field, 'color'))), val(win(field, 'color')));
-  ok('on a wash of that ink', washed(val(win(field, 'background')), 7), val(win(field, 'background')));
-  ok('and a deeper wash on focus', washed(val(win(Object.assign({}, field, { states: { focus: true } }), 'background')), 12));
+  const input = { tag: 'input', classes: [], attrs: { type: 'text' }, inside: ['#displaybox'], html };
+  ok('a text field writes in the theme\'s ink', inked(val(win(input, 'color'))), val(win(input, 'color')));
+  ok('on the field step of the surface ladder', field(val(win(input, 'background'))), val(win(input, 'background')));
+  ok('and one step up on focus', raised(val(win(Object.assign({}, input, { states: { focus: true } }), 'background'))));
   const dd = { tag: 'span', classes: ['ui-dropdownchecklist'], inside: ['#displaybox'], html };
-  ok('the disk picker takes the same wash', washed(val(win(dd, 'background-color')), 7), val(win(dd, 'background-color')));
+  ok('the disk picker takes the same fill', field(val(win(dd, 'background-color'))), val(win(dd, 'background-color')));
   const ddText = { tag: 'span', classes: ['ui-dropdownchecklist-text'], inside: ['#displaybox'], outside: ['.ui-dropdownchecklist-item'], html };
   ok('and the same ink', inked(val(win(ddText, 'color'))));
   const trig = { tag: 'span', classes: ['cc-sel-trigger'], inside: ['#displaybox', '.cc-sel'], outside: ['.cc-open'], html };
-  ok('a single-select at rest too', washed(val(win(trig, 'background')), 7) && inked(val(win(trig, 'color'))), val(win(trig, 'background')));
+  ok('a single-select at rest too', field(val(win(trig, 'background'))) && inked(val(win(trig, 'color'))), val(win(trig, 'background')));
 }
 
 console.log('\nThe ink reads on both pages');
