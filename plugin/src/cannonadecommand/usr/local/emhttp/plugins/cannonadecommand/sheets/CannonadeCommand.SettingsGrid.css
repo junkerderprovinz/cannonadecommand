@@ -153,11 +153,16 @@ html.cc-settingsgrid-heads-on #displaybox div.title > span.left > img.icon {
   display: inline-block !important;   /* the sidebar themes set .Theme--sidebar i.title{display:none};
                                          this selector's (1,3,3) beats their (0,2,1) */
 }
-/* color: inherit cannot tint a raster heading icon (System Information, for one), so the filter
-   crushes it to black and inverts it to white to match the heading text. Heading images only. */
+/* A raster heading icon is as large as the glyphs beside it; paintHeads flattens it to the
+   heading's ink, since color: inherit cannot reach a picture. */
 html.cc-settingsgrid-heads-on #displaybox div.title > span.left > img.icon {
-  filter: brightness(0) invert(1) !important;
-  width: 20px !important; height: 20px !important; object-fit: contain !important;
+  width: 1em !important; height: 1em !important; max-width: none !important; max-height: none !important; object-fit: contain !important;
+}
+/* System Information's 16px binoculars blur into a blob at glyph size, so Font Awesome's binoculars
+   take their place, a glyph like every other heading carries. */
+html.cc-settingsgrid-heads-on #displaybox div.title > span.left > img.icon[src$="/systeminformation.png"] { display: none !important; }
+html.cc-settingsgrid-heads-on #displaybox div.title > span.left:has(> img.icon[src$="/systeminformation.png"])::before {
+  content: "\f1e5"; font: normal normal normal 1em/1 FontAwesome;
 }
 
 /* Section heads always keep their colour: the rainbow "active only" mode greys only the tiles,

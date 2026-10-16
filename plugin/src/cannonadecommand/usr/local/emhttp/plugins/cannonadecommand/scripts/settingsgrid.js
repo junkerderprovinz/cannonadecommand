@@ -44,19 +44,37 @@
     var v = eff("icontint", null);
     return v == null ? /^#[0-9a-f]{6}$/i.test(eff("iconcolor", "")) : v === "1";
   }
-  // Badge mode flattens a raster logo (img.PanelImg) to the badge's ink tone so it reads on the
-  // coloured box, as docker.js does. idealText() yields only two tones, so at most two filters
-  // coexist; each is built once on a body host the #displaybox observer never sees.
-  function ensureMonoFilter(ink) {
+  // The two filters a raster logo (img.PanelImg) takes on the badge, in the badge's ink: "mono"
+  // flattens every opaque pixel to the ink, "lum" keeps the shading as greys. On a light badge the
+  // greys run from the dark ink up to half white, since the plain luminance times a near-black ink
+  // is a blob again. idealText() yields only two tones, so there are at most four filters, each
+  // built once on a body host the #displaybox observer never sees.
+  function inkFilter(kind, ink) {
     var host = document.getElementById("cc-sg-mono-svg");
     if (!host) { host = document.createElement("div"); host.id = "cc-sg-mono-svg"; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
-    var light = ink === "#fff", filtId = "cc-sg-mono-" + (light ? "l" : "d");
+    var light = ink === "#fff", filtId = "cc-sg-" + kind + "-" + (light ? "l" : "d");
     if (!host.querySelector("#" + filtId)) {
-      var c = (light ? 1 : parseInt("16", 16) / 255).toFixed(4); // #fff -> 1.0000, #161616 -> 0.0863
-      var vals = "0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 0 " + c + " 0 0 0 1 0";
+      var c = light ? 1 : parseInt("16", 16) / 255; // #fff -> 1, #161616 -> 0.0863
+      var k = light ? 1 : 0.5, off = light ? 0 : c;
+      var row = kind === "mono" ? "0 0 0 0 " + c.toFixed(4) : (0.2126 * k).toFixed(4) + " " + (0.7152 * k).toFixed(4) + " " + (0.0722 * k).toFixed(4) + " 0 " + off.toFixed(4);
+      var vals = row + " " + row + " " + row + " 0 0 0 1 0";
       host.insertAdjacentHTML("beforeend", '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>');
     }
     return "url(#" + filtId + ")";
+  }
+  // The badge treatment of a raster logo, decided by the shared icon pipeline as on the Docker tab:
+  // a one-tone picture is flattened to the ink, a logo on its own plate keeps only its mark
+  // ("knock"), and full-colour artwork is tinted with its shading kept. Until the picture is
+  // measured the pipeline answers the safe tint, and onResolved repaints.
+  function badgeFilter(im, ink) {
+    var CI = window.CCTheme && window.CCTheme.icons;
+    if (!CI) return inkFilter("mono", ink);
+    var src = im.getAttribute("src") || "";
+    var plan = CI.plan(CI.globalMode(), "", CI.spread(src), CI.tile(src));
+    if (plan.treat === "native") return "none";
+    if (plan.treat === "flat") return inkFilter("mono", ink);
+    if (plan.treat === "knock") return CI.knock(ink, plan.tile, parseInt(eff("iconstrength", "100"), 10)) || inkFilter("mono", ink);
+    return inkFilter("lum", ink);
   }
   // cc.sgsize (global): tile badge [box, glyph]. The default m matches Docker's logo tile
   // (62px content + 8px pad); favorites.js reads the same key so /Favorites matches.
@@ -94,7 +112,8 @@
         if (!rb) {
           s.style.removeProperty("background"); s.style.removeProperty("--cc-rb-c"); s.style.removeProperty("--cc-rb-ct");
           if (gl) gl.style.removeProperty("color");      // glyph colour comes from CSS --cc-iconbg-text
-          if (im) im.style.setProperty("filter", ensureMonoFilter(idealText(accBgInk)), "important");
+          // "active only" rests the badge grey in accent mode too, where the glyph reads in white
+          if (im) im.style.setProperty("filter", badgeFilter(im, rbNeutral() ? "#fff" : idealText(accBgInk)), "important");
           continue;
         }
         var c = rbColor(i), tc = idealText(c);
@@ -107,11 +126,11 @@
           var bg = iconSet ? accBg : c, btc = iconSet ? idealText(accBg) : tc;
           s.style.setProperty("background", bg, "important");
           if (gl) gl.style.setProperty("color", btc, "important");
-          if (im) im.style.setProperty("filter", ensureMonoFilter(btc), "important"); // raster logo -> badge ink tone
+          if (im) im.style.setProperty("filter", badgeFilter(im, btc), "important");
         } else {
           s.style.removeProperty("background");          // CSS neutral-idle grey shows; hover recolours via --cc-rb-c
           if (gl) gl.style.removeProperty("color");
-          if (im) im.style.setProperty("filter", ensureMonoFilter("#fff"), "important"); // neutral badge is dark grey -> white-ink logo (idle + hover)
+          if (im) im.style.setProperty("filter", badgeFilter(im, "#fff"), "important"); // neutral badge is dark grey -> white-ink logo (idle + hover)
         }
       }
     } catch (e) {}
@@ -120,7 +139,7 @@
   // have no Title=, so every div.title there is one category heading, rendered by
   // PageBuilder.php tab_title() as <div class="title"><span class="left"><i></i>Label</span>.
   // The label is a bare text node, so span.left is the badge box and the sheet does the rest;
-  // JS only stamps the rainbow colour per heading. data-cc-sgh marks what clearHeads() undoes
+  // JS stamps the rainbow colour per heading and inks a heading picture. data-cc-sgh marks what clearHeads() undoes
   // and is not a skip guard, since the paint re-runs when the palette changes. The inner <i>
   // carries class "title" as well, so selectors qualify div.title.
   function paintHeads() {
@@ -133,14 +152,19 @@
       for (var i = 0; i < heads.length; i++) {
         var h = heads[i];
         h.setAttribute("data-cc-sgh", "1");               // teardown index (attribute write -> no childList re-fire)
+        // A plugin's heading picture (img.icon) cannot take the text colour, so it is flattened
+        // to the heading's ink like a glyph.
+        var im = h.querySelector(":scope > img");
         if (!rb) {
           h.style.removeProperty("background"); h.style.removeProperty("color");
           h.style.removeProperty("--cc-rb-c"); h.style.removeProperty("--cc-rb-ct"); // accent mode: let the sheet's --cc-accent show through
+          if (im) im.style.setProperty("filter", inkFilter("mono", idealText(accent())), "important");
           continue;
         }
         var c = rbColor(i), tc = idealText(c);
         h.style.setProperty("--cc-rb-c", c); h.style.setProperty("--cc-rb-ct", tc);
         h.style.setProperty("background", c, "important"); h.style.setProperty("color", tc, "important");
+        if (im) im.style.setProperty("filter", inkFilter("mono", tc), "important");
       }
     } catch (e) {}
   }
@@ -154,6 +178,7 @@
         var h = heads[i];
         h.style.removeProperty("background"); h.style.removeProperty("color");
         h.style.removeProperty("--cc-rb-c"); h.style.removeProperty("--cc-rb-ct");
+        var im = h.querySelector(":scope > img"); if (im) im.style.removeProperty("filter");
         h.removeAttribute("data-cc-sgh");
       }
     } catch (e) {}
@@ -223,7 +248,6 @@
         // --cc-accent is never written on another area's page.
         root.style.setProperty("--cc-accent", a);
         root.style.setProperty("--cc-accent-text", idealText(a));
-        paintHeads();
       } else {
         clearHeads(); // area/theming off or not a grid page -> native headings back
       }
@@ -238,6 +262,8 @@
       } else {
         clearTint();
       }
+      // After the tiles, because clearTint() drops the filter host a heading picture uses too.
+      if (live) paintHeads();
     } catch (e) {}
   }
   // Observes the content container, not body. apply() changes only attributes, so it cannot
@@ -261,6 +287,8 @@
     // Same global hook as the other areas: the settings page's live toggle and cc-theme.js's
     // cross-browser config adoption call it by name.
     try { window.ccSettingsGridApply = apply; } catch (e) {}
+    // A logo measured after the first paint gets its final treatment through this repaint.
+    try { if (window.CCTheme && window.CCTheme.icons) window.CCTheme.icons.onResolved(apply); } catch (e) {}
     // The settings page writes the cc.*, ccs.* and cct.* keys from another tab. cc.stateCache is skipped
     // because docker.js rewrites it every 9s.
     try { window.addEventListener("storage", function (e) { if (e && e.key && e.key !== "cc.stateCache" && /^cc[a-z]*\./.test(e.key)) apply(); }); } catch (e) {}
