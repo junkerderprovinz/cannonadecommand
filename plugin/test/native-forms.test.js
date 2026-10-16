@@ -77,13 +77,28 @@ console.log('\nA row keeps Unraid\'s own arrangement, in a card centred in the w
   ok('a table with data does not', !titleTable({ tagName: 'TABLE', rows: [{ cells: [th] }, { cells: [td] }] }) && !titleTable({ tagName: 'TABLE', rows: [{ cells: [th, th] }] }));
 }
 
-console.log('\nThe sub tabs and unbalanced follow the centred cards');
+console.log('\nThe sub tabs start at the page\'s left edge, over a centred card as anywhere else');
 {
-  const rules = parseRules(read('sheets/CannonadeCommand.Forms.css'));
-  const decl = (sel, prop) => { const r = rules.find((x) => x.selector === sel); const d = r && r.decls.find((x) => x.prop === prop); return d ? d.value : '(none)'; };
-  const NAV = 'html.cc-forms-on:not(.cc-on-share-detail) #displaybox:has(.cc-fm-card) > nav.tabs';
-  ok('the spacer before the tabs is as wide as the gap beside the card column', decl(NAV + '::before', 'flex') === '0 1 calc((100% - 920px) / 2)', decl(NAV + '::before', 'flex'));
-  ok('and the strip keeps its length, so the spacer gives way first', decl(NAV + ' > .tabs-container', 'flex') === '0 0 auto');
+  const sheets = fs.readdirSync(path.join(DIR, 'sheets')).filter((f) => f.endsWith('.css'));
+  const strip = /nav\.tabs(::?(before|after)|\s*>?\s*\.tabs-container)?$/;
+  const shifts = [];
+  for (const f of sheets) {
+    for (const r of parseRules(read('sheets/' + f))) {
+      for (const s of r.selector.split(',').map((x) => x.trim()).filter((x) => strip.test(x))) {
+        for (const d of r.decls) {
+          const moved = (d.prop === 'justify-content' && !/^((flex-)?start|normal)$/.test(d.value))
+            || (/^(margin|padding)-(left|inline-start)$/.test(d.prop) && !/^0(px)?\b/.test(d.value))
+            || (/::?before$/.test(s) && /^(flex|flex-basis|width|min-width)$/.test(d.prop) && !/^(0|0px|none|auto)$/.test(d.value));
+          if (moved) shifts.push(f + ': ' + s + ' { ' + d.prop + ': ' + d.value + ' }');
+        }
+      }
+    }
+  }
+  ok('no sheet centres the tab strip or pushes it in from the left', shifts.length === 0, shifts.slice(0, 3).join(' | '));
+}
+
+console.log('\nunbalanced follows the centred cards');
+{
   const js = read('scripts/forms.js');
   const fn = js.match(/function unbalanced\(box\) \{[\s\S]*?\n  \}/)[0];
   const node = (tag, cls) => { const n = { tagName: tag, cls: new Set(cls ? [cls] : []), prev: null }; n.classList = { add: (...c) => c.forEach((x) => n.cls.add(x)) }; n.matches = (s) => s === 'div.title' && tag === 'DIV' && n.cls.has('title'); Object.defineProperty(n, 'previousElementSibling', { get: () => n.prev }); n.querySelectorAll = () => []; return n; };

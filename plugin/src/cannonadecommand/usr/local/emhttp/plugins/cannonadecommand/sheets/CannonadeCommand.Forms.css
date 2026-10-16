@@ -49,12 +49,6 @@ html.cc-forms-on #displaybox table.cc-fm-head th {
 html.cc-forms-on #displaybox :is(.content, .tab-content, .cc-fm-card) > hr { border: none !important; background: none !important; height: 0; margin: 0; }
 /* A tab panel that is a card of its own keeps a gap under the tab strip. */
 html.cc-forms-on #displaybox section.cc-fm-card { margin-top: 20px !important; }
-/* The sub tabs over centred cards start on the cards' left edge. The spacer before the strip
-   gives way when the strip is longer than the room beside it, so a long strip moves left instead of
-   wrapping. The share page keeps its side card layout and its tabs where they are. */
-html.cc-forms-on:not(.cc-on-share-detail) #displaybox:has(.cc-fm-card) > nav.tabs { display: flex !important; justify-content: flex-start !important; }
-html.cc-forms-on:not(.cc-on-share-detail) #displaybox:has(.cc-fm-card) > nav.tabs::before { content: ""; flex: 0 1 calc((100% - 920px) / 2); min-width: 0; }
-html.cc-forms-on:not(.cc-on-share-detail) #displaybox:has(.cc-fm-card) > nav.tabs > .tabs-container { flex: 0 0 auto; width: auto !important; max-width: 100%; }
 /* A title that carries controls of its own (the VPN tunnel's switches) keeps the badge on its name
    and lets the controls stand beside it. */
 html.cc-forms-on #displaybox div.title.cc-fm-head:has(> span.right > *) {
