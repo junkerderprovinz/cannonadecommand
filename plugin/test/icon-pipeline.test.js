@@ -159,6 +159,12 @@ console.log('\nThe manual overrides are overrides, not suggestions');
   ok('native leaves the pixels alone whatever the heuristic says', p.treat === 'native', JSON.stringify(p));
   p = CI.plan('native', 'color', 200);
   ok('native still prefers a curated colour icon over a poor shipped one', p.src === 'color', JSON.stringify(p));
+  for (const kind of ['', 'glyph', 'color', 'none']) {
+    for (const spread of [1, 200, null]) {
+      p = CI.plan('original', kind, spread, { bg: 0.2, mk: 0.9, mark: 'light' });
+      ok('original keeps the shipped icon untouched (' + (kind || 'unknown') + ', ' + spread + ')', p.treat === 'native' && p.src === 'native', JSON.stringify(p));
+    }
+  }
 }
 
 console.log('\nGlobal default + per-item pin');
@@ -182,6 +188,10 @@ console.log('\nGlobal default + per-item pin');
 
   CI.setOverride('docker', 'Plex', 'nonsense');
   ok('an unknown mode is not stored as a pin', CI.mode('docker', 'Plex') === 'tint');
+
+  CI.setOverride('docker', 'Plex', 'original');
+  ok('the original logo is a pin like the others', CI.mode('docker', 'Plex') === 'original' && CI.overrides()['docker:plex'] === 'original');
+  CI.setOverride('docker', 'Plex', '');
 
   localStorage.setItem('cc.iconmode', 'nonsense');
   ok('an unknown global mode falls back to auto', CI.globalMode() === 'auto');

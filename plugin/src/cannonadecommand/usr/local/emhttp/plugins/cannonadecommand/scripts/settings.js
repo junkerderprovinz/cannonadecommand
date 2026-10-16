@@ -1646,6 +1646,43 @@
     showC2(localStorage.getItem("cc.styledocker") === "0");
     (areaSync["cc.styledocker"] = areaSync["cc.styledocker"] || []).push(showC2);
 
+    // The containers pinned to their original logo, the same pin their Startplan window sets. It
+    // stands outside the Logos card, which hides while Docker follows the global colour.
+    var cOrig = card(T("Original-Logos", "Original logos"));
+    wrap.appendChild(cOrig);
+    var origNames = [];
+    function paintOriginals() {
+      var Ci = window.CCTheme && window.CCTheme.icons;
+      if (!Ci) return;
+      Array.prototype.slice.call(cOrig.querySelectorAll(".cc-set-row")).forEach(function (r) { r.parentNode.removeChild(r); });
+      var all = Ci.overrides(), pinned = [];
+      Object.keys(all).forEach(function (k) { if (all[k] === "original" && k.indexOf("docker:") === 0) pinned.push(k.slice(7)); });
+      var shown = function (low) { return origNames.filter(function (n) { return n.toLowerCase() === low; })[0] || low; };
+      var lead = el("div", "cc-set-row"), lw = el("span", "cc-set-lblwrap");
+      lw.appendChild(el("span", null, pinned.length ? T("Diese Container zeigen ihr eigenes Logo:", "These containers show their own logo:") : T("Kein Container zeigt sein Original-Logo", "No container shows its original logo")));
+      lw.appendChild(infoIcon(T("Ein Container mit Original-Logo zeigt sein Logo genau wie geliefert: nie durch ein anderes ersetzt und nie eingefärbt. Dieselbe Wahl gibt es im Startplan-Fenster des Containers unter „Icon-Färbung“.", "A container with its original logo shows that logo exactly as it ships: never swapped for another and never tinted. The same choice sits in the container's Start plan window under “Icon colouring”.")));
+      lead.appendChild(lw); cOrig.appendChild(lead);
+      pinned.sort().forEach(function (low) {
+        var row = el("div", "cc-set-row cc-set-inline cc-set-origrow"), nm = el("span", "cc-set-lblwrap");
+        nm.appendChild(el("span", null, shown(low)));
+        row.appendChild(nm);
+        row.appendChild(actionBtn(T("Entfernen", "Remove"), "cc-btn", function () { Ci.setOverride("docker", low, ""); paintOriginals(); tintPrev(); }));
+        cOrig.appendChild(row);
+      });
+      var free = origNames.filter(function (n) { return pinned.indexOf(n.toLowerCase()) < 0; });
+      if (free.length) {
+        var add = el("div", "cc-set-row cc-set-origadd"), addL = add.appendChild(el("span", "cc-set-rl", T("Ausnahme hinzufügen", "Add an exception")));
+        addL.appendChild(infoIcon(T("Gibt einem Container sein Original-Logo.", "Gives a container its original logo.")));
+        add.appendChild(areaPicker(T("Container wählen", "Choose a container"), free.map(function (n) { return [n, n, n]; }), function (it) { Ci.setOverride("docker", it[0], "original"); paintOriginals(); tintPrev(); }));
+        cOrig.appendChild(add);
+      }
+    }
+    paintOriginals();
+    apiRead("state").then(function (st) {
+      origNames = ((st && st.containers) || []).map(function (c) { return c.name; }).filter(Boolean).sort(function (a, b) { return a.localeCompare(b); });
+      paintOriginals();
+    }).catch(function () {});
+
     var c3 = card(T("Spalten / Badges je Ansicht", "Columns / badges per view"), T("Welche Badges in der einfachen und in der erweiterten Ansicht erscheinen.", "Which badges appear in the basic and the advanced view."));
     var tbl = el("table", "cc-set-tbl");
     var thr = el("tr"); thr.appendChild(el("th")); thr.appendChild(thc(T("Einfach", "Basic"))); thr.appendChild(thc(T("Erweitert", "Advanced"))); tbl.appendChild(thr);
