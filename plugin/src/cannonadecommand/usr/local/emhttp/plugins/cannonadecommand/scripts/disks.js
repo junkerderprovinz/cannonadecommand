@@ -302,12 +302,13 @@
   }
   var INFO = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3" /><circle cx="8" cy="4.6" r="0.9" fill="currentColor" /><path d="M8 7v4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>';
 
-  // One drawing per kind of drive. The capacity stands in the card's badge, so the drawings carry
-  // none; a parity disk wears the shield. The gradients live once in the page, see defs().
+  // One drawing per kind of drive, its label in the card colour naming the kind; the capacity
+  // stands in the card's badge. A parity disk wears the shield beside its label. The gradients
+  // live once in the page, see defs().
   function drawHdd(d) {
     var sticker = d.parity
-      ? '<rect class="cc-dk-st" x="160" y="15" width="26" height="22" rx="3"/><svg class="cc-dk-ink" x="166" y="19" width="14" height="14" viewBox="' + OWN.ShieldOn[0] + '">' + OWN.ShieldOn[1] + "</svg>"
-      : "";
+      ? '<rect class="cc-dk-st" x="124" y="15" width="62" height="22" rx="3"/><svg class="cc-dk-ink" x="130" y="19" width="14" height="14" viewBox="' + OWN.ShieldOn[0] + '">' + OWN.ShieldOn[1] + '</svg><text class="cc-dk-ink" x="180" y="30.5" font-size="12" font-weight="800" letter-spacing="1.5" text-anchor="end">HDD</text>'
+      : '<rect class="cc-dk-st" x="132" y="15" width="54" height="22" rx="3"/><text class="cc-dk-ink" x="159.75" y="30.5" font-size="12" font-weight="800" letter-spacing="1.5" text-anchor="middle">HDD</text>';
     var streaks = "";
     [44, 36, 28, 20].forEach(function (r, i) { streaks += '<path d="M ' + (78 + r) + " 68 A " + r + " " + r + " 0 0 1 " + (78 + r * Math.cos(1.1 + i * 0.25)).toFixed(2) + " " + (68 + r * Math.sin(1.1 + i * 0.25)).toFixed(2) + '" fill="none" stroke="var(--cc-dk-sheen)" stroke-width="' + (2.6 - i * 0.4).toFixed(1) + '" stroke-linecap="round"/>'; });
     [40, 24].forEach(function (r) { streaks += '<path d="M ' + (78 - r) + " 68 A " + r + " " + r + " 0 0 1 " + (78 - r * Math.cos(0.7)).toFixed(2) + " " + (68 - r * Math.sin(0.7)).toFixed(2) + '" fill="none" stroke="var(--cc-dk-sheen)" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>'; });
@@ -353,6 +354,8 @@
     return '<svg class="cc-dk-drive" viewBox="10 22 174 92" aria-hidden="true"><rect x="22" y="52" width="46" height="32" rx="2" fill="url(#cc-dk-conn)"/>' +
       '<rect x="34" y="60" width="8" height="6" fill="#2a2a2a"/><rect x="50" y="60" width="8" height="6" fill="#2a2a2a"/>' +
       '<rect x="62" y="44" width="110" height="48" rx="10" fill="url(#cc-dk-plastic)"/><circle cx="160" cy="68" r="6" fill="var(--cc-dk-inset)"/>' +
+      '<rect class="cc-dk-st" x="76" y="56" width="66" height="24" rx="3"/>' +
+      '<text class="cc-dk-ink" x="109.75" y="72.5" font-size="12" font-weight="800" letter-spacing="1.5" text-anchor="middle">USB</text>' +
       '<circle class="cc-dk-led" cx="150" cy="54" r="2.6"/></svg>';
   }
   var DRAW = { hdd: drawHdd, ssd: drawSsd, nvme: drawNvme, usb: drawUsb };
