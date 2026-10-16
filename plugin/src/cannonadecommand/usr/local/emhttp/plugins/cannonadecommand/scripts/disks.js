@@ -302,13 +302,12 @@
   }
   var INFO = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3" /><circle cx="8" cy="4.6" r="0.9" fill="currentColor" /><path d="M8 7v4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>';
 
-  // One drawing per kind of drive, with the capacity on its sticker. The gradients live once in
-  // the page, see defs().
+  // One drawing per kind of drive. The capacity stands in the card's badge, so the drawings carry
+  // none; a parity disk wears the shield. The gradients live once in the page, see defs().
   function drawHdd(d) {
-    var size = esc(cap(d.size));
     var sticker = d.parity
-      ? '<rect class="cc-dk-st" x="124" y="15" width="62" height="22" rx="3"/><svg class="cc-dk-ink" x="130" y="19" width="14" height="14" viewBox="' + OWN.ShieldOn[0] + '">' + OWN.ShieldOn[1] + '</svg><text class="cc-dk-ink" x="180" y="30.5" font-size="12" font-weight="700" text-anchor="end">' + size + "</text>"
-      : '<rect class="cc-dk-st" x="132" y="15" width="54" height="22" rx="3"/><text class="cc-dk-ink" x="159" y="30.5" font-size="12" font-weight="700" text-anchor="middle">' + size + "</text>";
+      ? '<rect class="cc-dk-st" x="160" y="15" width="26" height="22" rx="3"/><svg class="cc-dk-ink" x="166" y="19" width="14" height="14" viewBox="' + OWN.ShieldOn[0] + '">' + OWN.ShieldOn[1] + "</svg>"
+      : "";
     var streaks = "";
     [44, 36, 28, 20].forEach(function (r, i) { streaks += '<path d="M ' + (78 + r) + " 68 A " + r + " " + r + " 0 0 1 " + (78 + r * Math.cos(1.1 + i * 0.25)).toFixed(2) + " " + (68 + r * Math.sin(1.1 + i * 0.25)).toFixed(2) + '" fill="none" stroke="var(--cc-dk-sheen)" stroke-width="' + (2.6 - i * 0.4).toFixed(1) + '" stroke-linecap="round"/>'; });
     [40, 24].forEach(function (r) { streaks += '<path d="M ' + (78 - r) + " 68 A " + r + " " + r + " 0 0 1 " + (78 - r * Math.cos(0.7)).toFixed(2) + " " + (68 - r * Math.sin(0.7)).toFixed(2) + '" fill="none" stroke="var(--cc-dk-sheen)" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>'; });
@@ -328,7 +327,7 @@
       '<circle class="cc-dk-led" cx="24" cy="118" r="3.2"/></g></svg>';
   }
   var clipN = 0;
-  function drawSsd(d) {
+  function drawSsd() {
     var id = "cc-dk-clip" + (++clipN), pins = "";
     for (var i = 0; i < 9; i++) pins += '<rect x="172" y="' + (42 + i * 6) + '" width="6" height="3" fill="var(--cc-dk-gold)"/>';
     return '<svg class="cc-dk-drive" viewBox="0 0 200 136" aria-hidden="true"><defs><clipPath id="' + id + '"><rect x="34" y="28" width="122" height="80" rx="5"/></clipPath></defs>' +
@@ -336,28 +335,24 @@
       '<rect x="34" y="28" width="122" height="80" rx="5" fill="#141414"/>' +
       '<rect class="cc-dk-st" x="34" y="28" width="122" height="24" rx="5"/><rect class="cc-dk-st" x="34" y="44" width="122" height="8"/>' +
       '<text class="cc-dk-ink" x="44" y="45" font-size="12" font-weight="800" letter-spacing="1.5">SSD</text>' +
-      '<text class="cc-dk-ink" x="146" y="45" font-size="12" font-weight="700" text-anchor="end">' + esc(cap(d.size)) + "</text>" +
       '<rect class="cc-dk-bar" x="44" y="64" width="70" height="5" rx="2.5"/><rect class="cc-dk-bar cc-dk-n2" x="44" y="76" width="96" height="5" rx="2.5"/><rect class="cc-dk-bar cc-dk-n3" x="44" y="88" width="52" height="5" rx="2.5"/>' +
       '<g clip-path="url(#' + id + ')"><rect class="cc-dk-sweep" x="34" y="28" width="56" height="80" fill="url(#cc-dk-sweep)"/></g>' +
       '<circle class="cc-dk-led" cx="156" cy="112" r="3"/></svg>';
   }
-  function drawNvme(d) {
+  function drawNvme() {
     var fingers = "";
     for (var i = 0; i < 12; i++) if (i !== 8) fingers += '<rect x="12" y="' + (49 + i * 3.3).toFixed(1) + '" width="9" height="2.2" fill="var(--cc-dk-gold)"/>';
     return '<svg class="cc-dk-drive" viewBox="2 24 196 88" aria-hidden="true"><rect x="10" y="46" width="182" height="44" rx="3" fill="var(--cc-dk-pcb)"/>' + fingers +
       '<circle cx="190" cy="68" r="5.5" fill="var(--cc-dk-inset)"/><path d="M24 60 H44 M24 68 H44 M24 76 H44" stroke="#3b3b3b" stroke-width="1.2"/>' +
       '<rect x="44" y="55" width="24" height="26" rx="2" fill="var(--cc-dk-nand)"/><rect x="49" y="60" width="14" height="16" rx="1" fill="#222"/>' +
       '<rect class="cc-dk-st" x="74" y="51" width="104" height="34" rx="2"/>' +
-      '<text class="cc-dk-ink" x="82" y="65" font-size="10" font-weight="800" letter-spacing="1">NVMe</text>' +
-      '<text class="cc-dk-ink" x="170" y="78.5" font-size="12" font-weight="700" text-anchor="end">' + esc(cap(d.size)) + "</text>" +
+      '<text class="cc-dk-ink" x="126" y="72.5" font-size="12" font-weight="800" letter-spacing="1" text-anchor="middle">NVMe</text>' +
       '<circle class="cc-dk-flow cc-dk-st" cx="22" cy="60" r="1.8"/><circle class="cc-dk-flow cc-dk-st cc-dk-n2" cx="22" cy="68" r="1.8"/><circle class="cc-dk-flow cc-dk-st cc-dk-n3" cx="22" cy="76" r="1.8"/></svg>';
   }
-  function drawUsb(d) {
+  function drawUsb() {
     return '<svg class="cc-dk-drive" viewBox="10 22 174 92" aria-hidden="true"><rect x="22" y="52" width="46" height="32" rx="2" fill="url(#cc-dk-conn)"/>' +
       '<rect x="34" y="60" width="8" height="6" fill="#2a2a2a"/><rect x="50" y="60" width="8" height="6" fill="#2a2a2a"/>' +
       '<rect x="62" y="44" width="110" height="48" rx="10" fill="url(#cc-dk-plastic)"/><circle cx="160" cy="68" r="6" fill="var(--cc-dk-inset)"/>' +
-      '<rect class="cc-dk-st" x="76" y="56" width="66" height="24" rx="3"/>' +
-      '<text class="cc-dk-ink" x="109" y="72.5" font-size="12" font-weight="800" text-anchor="middle" letter-spacing=".5">' + esc(cap(d.size)) + "</text>" +
       '<circle class="cc-dk-led" cx="150" cy="54" r="2.6"/></svg>';
   }
   var DRAW = { hdd: drawHdd, ssd: drawSsd, nvme: drawNvme, usb: drawUsb };
@@ -661,7 +656,7 @@
       while (r.firstChild) r.parentNode.insertBefore(r.firstChild, r);
       r.parentNode.removeChild(r);
     });
-    Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-hidden, #displaybox .cc-dk-side"), function (n) { n.classList.remove("cc-dk-hidden", "cc-dk-side"); });
+    Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-hidden, #displaybox .cc-dk-side, #displaybox .cc-dk-box"), function (n) { n.classList.remove("cc-dk-hidden", "cc-dk-side", "cc-dk-box"); });
   }
   function render() {
     if (!live()) { teardown(); return; }
@@ -684,8 +679,9 @@
         if (!tiles || S.data.offline) drop(S); else renderSection(S);
         if (S.key === "ud") udRow(S);
       } catch (e) {}
-      // In section view the pools and the boot device, each under its own badge, stand side by
-      // side while the page has room for both.
+      // Each section the tiles draw is a card around its disks. In section view the pools and the
+      // boot device stand side by side while the page has room for both.
+      S.sec.classList.toggle("cc-dk-box", tiles && !S.data.offline);
       S.sec.classList.toggle("cc-dk-side", tiles && !S.data.offline && (S.key === "pools" || S.key === "boot"));
     });
     root.classList.toggle("cc-dk-sides", all.some(function (S) { return S.sec.classList.contains("cc-dk-side"); }));

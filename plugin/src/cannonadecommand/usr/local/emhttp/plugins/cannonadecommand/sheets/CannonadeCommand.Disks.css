@@ -1,9 +1,12 @@
 /* The disk tiles on /Main (scripts/disks.js). Every rule waits for html.cc-dk-on, which disks.js
    sets only while the Start area styles /Main. A card takes its colour from --cc-dk-c, stamped per
-   card in the rainbow and flag modes, and otherwise the Start accent. */
+   card in the rainbow and flag modes, and otherwise the Start accent. In section view each section
+   is a card, and its disk cards, the summary strip and the notices sit on it one step up the
+   surface ramp. */
 html.cc-dk-on {
-  --cc-dk-card: var(--cc-surface-4);
-  --cc-dk-card-hover: var(--cc-surface-3);
+  --cc-dk-sec: var(--cc-surface-4);
+  --cc-dk-card: var(--cc-surface-3);
+  --cc-dk-card-hover: color-mix(in srgb, var(--cc-surface-3) 88%, var(--cc-text));
   --cc-dk-inset: var(--cc-surface-base);
   --cc-dk-metal-a: #5c5c5c; --cc-dk-metal-b: #2c2c2c; --cc-dk-well: #1e1e1e; --cc-dk-plat-a: #c4c4c4; --cc-dk-plat-b: #3a3a3a; --cc-dk-hub: #8e8e8e;
   --cc-dk-pcb: #1a1a1a; --cc-dk-nand: #0b0b0b; --cc-dk-gold: #c9a24a; --cc-dk-plastic: #2b2b2b; --cc-dk-plastic-b: #1c1c1c;
@@ -11,8 +14,9 @@ html.cc-dk-on {
   --cc-dk-rest: #4a4a4a; --cc-dk-rest-ink: #e6e6e6; --cc-dk-bar-off: #333;
 }
 html.cc-dk-on:is(.Theme--white, .Theme--azure) {
-  --cc-dk-card: var(--cc-surface-1);
-  --cc-dk-card-hover: color-mix(in srgb, var(--cc-surface-1) 94%, var(--cc-text));
+  --cc-dk-sec: var(--cc-surface-1);
+  --cc-dk-card: var(--cc-surface-2);
+  --cc-dk-card-hover: var(--cc-surface-3);
   --cc-dk-inset: var(--cc-surface-4);
   --cc-dk-metal-a: #d9d9d9; --cc-dk-metal-b: #a9a9a9; --cc-dk-well: #bdbdbd; --cc-dk-plat-a: #f4f4f4; --cc-dk-plat-b: #9c9c9c; --cc-dk-hub: #7a7a7a;
   --cc-dk-pcb: #2a2a2a; --cc-dk-nand: #151515; --cc-dk-gold: #c79b34; --cc-dk-plastic: #3a3a3a; --cc-dk-plastic-b: #262626;
@@ -20,16 +24,39 @@ html.cc-dk-on:is(.Theme--white, .Theme--azure) {
   --cc-dk-rest: #8d8d8d; --cc-dk-rest-ink: #ffffff; --cc-dk-bar-off: #4a4a4a;
 }
 html.cc-dk-on #displaybox .cc-dk-hidden { display: none !important; }
+/* In section view every section the tiles draw is a card with its badge inside. */
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section[role="tabpanel"].cc-dk-box {
+  box-sizing: border-box; margin-bottom: 24px; padding: 16px; background: var(--cc-dk-sec); border-radius: var(--cc-radius-card);
+}
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box .cc-card-head > .cc-ud-ctrls { top: 22px; right: 16px; }
+/* On a phone the UD controls do not fit beside the badge and take a row of their own under it. */
+@media (max-width: 600px) {
+  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box .cc-card-head:has(> .cc-ud-ctrls) { margin-bottom: 52px; }
+  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box .cc-card-head > .cc-ud-ctrls { top: 50px; }
+}
 /* In section view the pools and the boot device stand side by side while the page has room, each
    section under its own badge; every other section keeps the whole width. The second of them
    takes the rest of the row, so the boot hint under its card runs to the edge. */
-html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 36px; }
+html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 24px; }
 html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > * { flex: 1 1 100%; min-width: 0; }
 html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > section.cc-dk-side { flex: 0 1 auto; width: auto; }
 html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > section.cc-dk-side ~ section.cc-dk-side { flex-grow: 1; }
 /* Unassigned Devices' disks, network shares and past devices, side by side where they fit. */
-html.cc-dk-on #displaybox .cc-dk-udrow { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 24px; }
+html.cc-dk-on #displaybox .cc-dk-udrow { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px 24px; }
 html.cc-dk-on #displaybox .cc-dk-udrow > * { flex: 1 1 auto; min-width: 0; }
+/* In the tiles the three stand in one row on a wide screen: the two tables as wide as their
+   columns need, the disks in the rest, at least one card wide, their cards wrapping under each
+   other there. On a narrow screen a table scrolls in its own box. The tables leave out the columns
+   UD always keeps empty, and the line breaks UD puts between its parts would only push them out
+   of line. */
+html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow > .show-disks:not(:has(> .show-historical)) { flex: 1 1 260px; }
+html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow > :is(.show-shares, .show-disks:has(> .show-historical)) { flex: none; max-width: 100%; overflow-x: auto; }
+html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow table.usb_absent tbody td:nth-child(2) { white-space: normal; }
+html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(.show-disks > .show-shares, .show-historical > br) { display: none !important; }
+html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow table.samba_mounts tr > td:is(:nth-child(6), :nth-child(8)):not([colspan]),
+html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow table.usb_absent tr > td:is(:nth-child(3), :nth-child(4), :nth-child(n+7)):not([colspan]) { display: none; }
+html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) :is(thead, tbody) td { padding-left: 8px; padding-right: 8px; }
+html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) .usage-disk:not(.sys):not(.mm) { min-width: 84px; }
 /* The column reset and the reads/writes toggle act on the tables only. */
 html.cc-dk-on.cc-dk-tiled #displaybox nav.tabs > span.status,
 html.cc-dk-on.cc-dk-tiled.cc-on-main.cc-sections-main #displaybox .cc-card-head > span.status { display: none !important; }

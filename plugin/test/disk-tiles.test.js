@@ -227,7 +227,7 @@ console.log('\nThe tile view hides the table controls');
   // Shares.css shows it in section view with html.cc-shares-on.cc-on-main.cc-sections-main, four classes.
   ok('in section view the hide outranks Shares.css', hidden.includes('html.cc-dk-on.cc-dk-tiled.cc-on-main.cc-sections-main #displaybox .cc-card-head > span.status'));
   ok('only while no disk table of the array, the pools or the boot device shows', /root\.classList\.toggle\("cc-dk-tiled", tiles && !all\.some\(function \(S\) \{\s*return S\.key !== "ud"/.test(js));
-  ok('Unassigned Devices keeps its controls, which still act on the tiles', !/cc-ud-ctrls/.test(rules));
+  ok('Unassigned Devices keeps its controls, which still act on the tiles', !hidden.some((x) => /cc-ud-ctrls/.test(x)) && !/cc-ud-ctrls[^{}]*\{[^}]*(display|visibility|opacity):/.test(rules));
 }
 
 console.log('\nEvery pool and section keeps its badge and stands beside the others where it fits');
