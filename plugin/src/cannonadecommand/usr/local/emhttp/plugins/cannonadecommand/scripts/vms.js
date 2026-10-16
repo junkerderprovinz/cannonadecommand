@@ -179,16 +179,18 @@
     return /^#[0-9a-f]{3}$/i.test(c) ? "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c;
   }
   // Flattens every opaque pixel to one colour with alpha untouched, as docker.js does. Only
-  // aimed at a real glyph or an icon the complexity heuristic found to be one tone already.
-  function ensureFlatFilter(hostId, filtId, hex) {
+  // aimed at a real glyph or an icon the complexity heuristic found to be one tone already. A
+  // strength below 100 mixes each pixel back toward the original by that share.
+  function ensureFlatFilter(hostId, filtId, hex, strength) {
     var host = document.getElementById(hostId);
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ccHex6(hex) || "");
     if (!m) { if (host) host.remove(); return ""; }
-    var r = (parseInt(m[1], 16) / 255).toFixed(4), g2 = (parseInt(m[2], 16) / 255).toFixed(4), b = (parseInt(m[3], 16) / 255).toFixed(4);
+    var s = Math.max(10, Math.min(100, strength || 100)) / 100, keep = (1 - s).toFixed(4);
+    var r = (parseInt(m[1], 16) / 255 * s).toFixed(4), g2 = (parseInt(m[2], 16) / 255 * s).toFixed(4), b = (parseInt(m[3], 16) / 255 * s).toFixed(4);
     if (!host) { host = document.createElement("div"); host.id = hostId; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
-    var sig = filtId + "|" + r + "|" + g2 + "|" + b;
+    var sig = filtId + "|" + r + "|" + g2 + "|" + b + "|" + keep;
     if (host.dataset.sig !== sig) {
-      var vals = "0 0 0 0 " + r + " 0 0 0 0 " + g2 + " 0 0 0 0 " + b + " 0 0 0 1 0";
+      var vals = keep + " 0 0 0 " + r + " 0 " + keep + " 0 0 " + g2 + " 0 0 " + keep + " 0 " + b + " 0 0 0 1 0";
       host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>';
       host.dataset.sig = sig;
     }
@@ -1060,9 +1062,10 @@
       // the one that matches its own background.
       var f, flat, c, fBlk, fWht, flatBlk, flatWht, vmInk;
       var adopt = iconBgAdoptsV() && iconBgOnV() && vmTintOn();
+      var str = parseInt(effK("iconstrength") || "100", 10);
       if (adopt) {
-        flatBlk = ensureFlatFilter("cc-vm-mono-svg-blk", "cc-vm-mono-tint-blk", "#161616");
-        flatWht = ensureFlatFilter("cc-vm-mono-svg-wht", "cc-vm-mono-tint-wht", "#fff");
+        flatBlk = ensureFlatFilter("cc-vm-mono-svg-blk", "cc-vm-mono-tint-blk", "#161616", str);
+        flatWht = ensureFlatFilter("cc-vm-mono-svg-wht", "cc-vm-mono-tint-wht", "#fff", str);
         fBlk = ensureTintFilterAs("cc-vm-tint-svg-blk", "cc-vm-icon-tint-blk", "#161616") ? "url(#cc-vm-icon-tint-blk)" : "";
         fWht = ensureTintFilterAs("cc-vm-tint-svg-wht", "cc-vm-icon-tint-wht", "#fff") ? "url(#cc-vm-icon-tint-wht)" : "";
       } else {
@@ -1070,7 +1073,7 @@
         // One flat filter for the page from the tint's ink, which is "" while Einfärben is off, so
         // the badge alone never flattens the icons.
         vmInk = vmIconInk(false);
-        flat = vmInk ? ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", vmInk) : ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", "");
+        flat = ensureFlatFilter("cc-vm-mono-svg", "cc-vm-mono-tint", vmInk, str);
       }
       var CI = window.CCTheme && window.CCTheme.icons, vmNames = [];
       for (var i = 0; i < imgs.length; i++) {
@@ -1084,7 +1087,7 @@
           thisTint = rowBlk ? fBlk : fWht;
           thisInk = rowInk;
         }
-        var want = plan.treat === "native" ? "" : plan.treat === "flat" ? thisFlat : plan.treat === "knock" ? CI.knock(thisInk, plan.tile) : thisTint;
+        var want = plan.treat === "native" ? "" : plan.treat === "flat" ? thisFlat : plan.treat === "knock" ? CI.knock(thisInk, plan.tile, str) : thisTint;
         if (n.tagName === "IMG") { vmSetIconSrc(n, plan.url); n.style.filter = want; if (ibgOn) n.style.removeProperty("color"); }
         // A glyph takes `color` with !important, since Unraid's VM CSS colours it through a class rule.
         else {

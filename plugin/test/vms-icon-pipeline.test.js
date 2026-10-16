@@ -72,7 +72,7 @@ const vmsApi = new Function('document', 'localStorage', 'window',
   grabFn('vmPalStored') + '\n' + grabFn('vmPalActive') + '\n' + grabFn('vmRbColor') + '\n' + grabFn('vmAdoptTint') + '\n' +
   grabFn('vmTintOn') + '\n' + grabFn('vmBgColor') + '\n' + grabFn('vmIconInk') + '\n' + grabFn('vmItemAdoptInk') + '\n' +
   grabFn('ensureTintFilterAs') + '\n' + grabFn('ensureTintFilter') + '\n' + grabFn('vmLogoSizes') + '\n' + grabFn('glyphInkAndFilter') + '\n' +
-  'return { iconBgOnV: iconBgOnV, effK: effK, vmTintOn: vmTintOn, vmBgColor: vmBgColor, vmIconInk: vmIconInk, vmItemAdoptInk: vmItemAdoptInk, ensureTintFilter: ensureTintFilter, ensureTintFilterAs: ensureTintFilterAs, vmLogoSizes: vmLogoSizes, glyphInkAndFilter: glyphInkAndFilter, ccIdeal: ccIdeal, ccAccent: ccAccent, vmRbColor: vmRbColor, vmAdoptTint: vmAdoptTint };'
+  'return { iconBgOnV: iconBgOnV, effK: effK, vmTintOn: vmTintOn, vmBgColor: vmBgColor, vmIconInk: vmIconInk, vmItemAdoptInk: vmItemAdoptInk, ensureTintFilter: ensureTintFilter, ensureTintFilterAs: ensureTintFilterAs, vmLogoSizes: vmLogoSizes, glyphInkAndFilter: glyphInkAndFilter, ccIdeal: ccIdeal, ccAccent: ccAccent, vmRbColor: vmRbColor, vmAdoptTint: vmAdoptTint, ensureFlatFilter: ensureFlatFilter };'
 )(document, global.localStorage, global.window);
 
 let pass = 0, fail = 0;
@@ -225,6 +225,21 @@ console.log('\nA glyph never carries both a direct colour and the luminance-tint
   // The ink argument answers "" whenever Einfärben is off, badge or no badge, so
   // the badge state alone must not put a colour on a glyph.
   ok('Hintergrund on with no ink: no colour is forced onto the glyph', (function () { const r = vmsApi.glyphInkAndFilter({ treat: 'tint' }, true, '#2f6feb', ''); return !r.color; })());
+}
+
+console.log('\nThe strength slider reaches a redrawn VM icon');
+{
+  const vals = () => /values="([^"]+)"/.exec(byId['cc-vm-mono-svg'].innerHTML)[1].split(' ').map(Number);
+  vmsApi.ensureFlatFilter('cc-vm-mono-svg', 'cc-vm-mono-tint', '#ffffff', 100);
+  let v = vals();
+  ok('at full strength every pixel takes the ink', v[0] === 0 && v[4] === 1 && v[6] === 0 && v[9] === 1 && v[12] === 0 && v[14] === 1 && v[18] === 1, v.join(' '));
+  vmsApi.ensureFlatFilter('cc-vm-mono-svg', 'cc-vm-mono-tint', '#ffffff', 40);
+  v = vals();
+  ok('at 40 each channel keeps 60 per cent of the original', v[0] === 0.6 && v[6] === 0.6 && v[12] === 0.6, v.join(' '));
+  ok('and takes 40 per cent of the ink, alpha untouched', v[4] === 0.4 && v[9] === 0.4 && v[14] === 0.4 && v[18] === 1, v.join(' '));
+  vmsApi.ensureFlatFilter('cc-vm-mono-svg', 'cc-vm-mono-tint', '#ffffff');
+  ok('a caller that names no strength gets the full flatten, as the action icons need', vals()[0] === 0 && vals()[4] === 1);
+  ok('the page reads the slider for the icons', /var str = parseInt\(effK\("iconstrength"\) \|\| "100", 10\);/.test(src) && /ensureFlatFilter\("cc-vm-mono-svg", "cc-vm-mono-tint", vmInk, str\)/.test(src) && /CI\.knock\(thisInk, plan\.tile, str\)/.test(src));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
