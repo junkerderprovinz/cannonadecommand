@@ -35,5 +35,33 @@ console.log('\nNo control waits under a name of its own');
   ok('the backup buttons stand together at the end of their row', /bend\.appendChild\(ex\); bend\.appendChild\(im\); bend\.appendChild\(rs\);\s*brow\.appendChild\(lblw\); brow\.appendChild\(bend\);/.test(settings));
 }
 
+console.log('\nThe column matrix ends its switches at the card\'s right edge');
+{
+  const tbl = { tag: 'table', classes: ['cc-set-tbl'], inside: ['#cc-settings', '.cc-set-card'] };
+  const cell = { tag: 'td', classes: ['cc-set-chk'], inside: ['#cc-settings', '.cc-set-card', '.cc-set-tbl'] };
+  const sw = { tag: 'input', classes: ['cc-cb'], attrs: { type: 'checkbox' }, inside: ['#cc-settings', '.cc-set-card', '.cc-set-tbl', '.cc-set-chk'] };
+  ok('the table spans the card', val(win(page, tbl, 'width')) === '100%' && val(win(page, tbl, 'max-width')) === '(none)');
+  ok('a switch cell has no padding on its right and sets its switch at its end', /^5px 0 5px 28px/.test(val(win(page, cell, 'padding'))) && val(win(page, cell, 'text-align')) === 'right');
+  ok('the switch drops the margin Unraid gives a checkbox', val(win(page, sw, 'margin')) === '0');
+}
+
+console.log('\nA preview stands in a column beside the rows');
+{
+  const calls = [...settings.matchAll(/splitCard\((\w+), (?:\[[^\]]*\]|\w+)(?:, "[^"]+")?\)/g)].map((m) => m[1]);
+  ok('every card with a preview splits it off', ['c1', 'cLI', 'c2', 'cA', 'cB', 'c'].every((c) => calls.includes(c)), calls.join(' '));
+  ok('the Docker view sketches go beside the selector', /splitCard\(c, \[side\], "cc-set-split-auto"\);/.test(settings) && /side\.appendChild\(prev\.el\);/.test(settings));
+  ok('the sketches are larger', /"#cc-settings \.cc-set-vp svg\{display:block;width:108px;height:65px\}"/.test(settings));
+  ok('rows left, preview right, both from the top', /"#cc-settings \.cc-set-split\{display:grid;grid-template-columns:minmax\(0,1fr\) auto;column-gap:24px;align-items:start\}"/.test(settings));
+  ok('a narrow page puts the preview under the rows', /@media \(max-width:1199px\)\{#cc-settings \.cc-set-split\{grid-template-columns:minmax\(0,1fr\)\}/.test(settings));
+  const split = new Function('el', /function splitCard\([\s\S]*?\n  \}/.exec(settings)[0] + '\nreturn splitCard;');
+  const mk = (cls) => ({ cls, children: [], classList: { contains: (c) => cls.split(' ').includes(c) }, appendChild(n) { if (n.parent) n.parent.children.splice(n.parent.children.indexOf(n), 1); n.parent = this; this.children.push(n); return n; } });
+  const fn = split((tag, cls) => mk(cls || ''));
+  const card = mk('cc-set-card'), head = card.appendChild(mk('cc-set-h')), row = card.appendChild(mk('cc-set-row')), lbl = card.appendChild(mk('cc-set-lbl')), pv = card.appendChild(mk('cc-set-prev'));
+  fn(card, [lbl, pv]);
+  const box = card.children[1];
+  ok('the card keeps its title badge first and gains one split box', card.children.length === 2 && card.children[0] === head && box.cls === 'cc-set-split');
+  ok('the rows go left and the preview right, in order', box.children[0].children[0] === row && box.children[1].children[0] === lbl && box.children[1].children[1] === pv);
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

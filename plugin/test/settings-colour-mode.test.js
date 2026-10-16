@@ -57,7 +57,7 @@ console.log('\nOnly the chosen mode shows its controls');
   ok('no rainbow or flag switch is left', !/T\("Regenbogen-Modus", "Rainbow mode"\)|T\("Flaggen-Modus", "Flag mode"\)/.test(settings));
   ok('nothing in the card is dimmed instead', !/rbOnly|style\.opacity = "\.4"/.test(settings));
   ok('the country row has its (i)', /frl\.appendChild\(infoIcon\(/.test(settings));
-  ok('Flag is offered only with the flag list loaded', /if \(window\.CC_FLAGS && window\.CC_FLAGS\.length\) modes\.push\(\["flag", T\("Flagge", "Flag"\), "colour-flag"\]\);/.test(settings));
+  ok('Flag is offered only with the flag list loaded', /if \(window\.CC_FLAGS && window\.CC_FLAGS\.length\) modes\.push\(\["flag", T\("Flagge", "Flag"\), "IconFlag"\]\);/.test(settings));
 }
 
 // GlimStone, "The one horizontal selector": in a settings row a selector stays compact at the
@@ -65,7 +65,7 @@ console.log('\nOnly the chosen mode shows its controls');
 // selector is one of them rather than a strip across the card.
 console.log('\nThe mode selector stands at the end of its row');
 {
-  ok('the label and the selector share one row', /var modeRow = el\("div", "cc-set-row cc-set-inline"\);/.test(settings) && /modeRow\.appendChild\(modeLbl\);/.test(settings) && /modeRow\.appendChild\(modeSelector\(/.test(settings) && /c1\.appendChild\(modeRow\);/.test(settings));
+  ok('the label and the selector share one row', /var modeRow = el\("div", "cc-set-row cc-set-inline cc-set-colourmode"\);/.test(settings) && /modeRow\.appendChild\(modeLbl\);/.test(settings) && /modeRow\.appendChild\(modeSelector\(/.test(settings) && /c1\.appendChild\(modeRow\);/.test(settings));
   const css = /"#cc-settings \.cc-seg\.cc-set-mode\{([^}]*)\}"/.exec(settings);
   ok('the groove hugs its segments instead of spanning the card', !!css && /display:inline-grid/.test(css[1]) && !/width:100%/.test(css[1]), css && css[1]);
   ok('and gives every segment one width, as GlimStone\'s horizontal selector does', !!css && /grid-auto-flow:column/.test(css[1]) && /grid-auto-columns:1fr/.test(css[1]));
@@ -104,7 +104,7 @@ console.log('\nThe selector is a radio group the arrows move through');
   doc.activeElement = box.kids[2];
   box.on.keydown({ key: 'ArrowRight', preventDefault() {} });
   ok('the last mode holds at the end', picks.length === 2);
-  ok('the focus follows the choice into the rebuilt card', /var on = root\.querySelector\("\.cc-set-mode \.cc-seg-on"\); if \(on\) on\.focus\(\);/.test(settings));
+  ok('the focus follows the choice into the rebuilt card', /var on = root\.querySelector\("\.cc-set-colourmode \.cc-seg-on"\); if \(on\) on\.focus\(\{ preventScroll: true \}\);/.test(settings));
 }
 
 console.log('\nA setting with a few choices is a horizontal selector, a long list stays a dropdown');

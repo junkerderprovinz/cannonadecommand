@@ -96,7 +96,7 @@ console.log('\nheader.js rewrites a saved digit to its name, once');
 console.log('\nThe settings picker offers the three names');
 {
   const settings = read('scripts/settings.js');
-  ok('off, subtle and wild are the values', /\[\["off", T\("Aus", "Off"\), "motion-off"\], \["subtle", T\("Dezent", "Subtle"\), "motion-subtle"\], \["wild", T\("Wild", "Wild"\), "motion-wild"\]\]/.test(settings));
+  ok('off, subtle and wild are the values', /\[\["off", T\("Aus", "Off"\), "IconMotionOff"\], \["subtle", T\("Dezent", "Subtle"\), "IconMotionSubtle"\], \["wild", T\("Wild", "Wild"\), "IconMotionWild"\]\]/.test(settings));
   ok('the picker shows the stored level, digits included', /motionLevel\(get\("cc\.anim", "subtle"\)\),\s*function \(v\) \{ set\("cc\.anim", v\); applyAnim\(\); \}/.test(settings));
 }
 

@@ -1238,8 +1238,8 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
 .cc-set-logo { width: 64px; height: 64px; border-radius: var(--cc-radius-control); display: block; }
 .cc-set-claim { color: var(--dim); font-size: var(--cc-text-subline); font-style: italic; margin-top: 2px; }
 /* GlimStone's vertical tiles: the tab selector turned on its side, a column beside the cards that
-   stays in view while they scroll. Every tile is 44px tall, 4px apart, as in KnightLoader's
-   settings rail: two lines of a long name fit, and the column is as tall as its tiles and scrolls
+   stays in view while they scroll. Every tile is 66px tall, 4px apart, and keeps that height
+   whatever its name: two lines of a long name fit, and the column is as tall as its tiles and scrolls
    only where the window is shorter. Below 1024px the column shows the glyphs alone, and
    settings.js moves each name into its bubble. The two widths are GlimStone's 12.75rem and
    3.25rem in pixels, since Unraid sets the root font size to 10px. */
@@ -1251,7 +1251,7 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
    never scrolls, so the column would scroll away with the page. */
 #displaybox .content:has(> #cc-settings) { overflow: visible !important; }
 .cc-set-tabs { position: sticky; top: 12px; flex: none; box-sizing: border-box; width: 204px; max-height: calc(100vh - 24px); overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 0 8px 0 4px; margin: 0; }
-.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: flex !important; flex: none; align-items: center; justify-content: flex-start; gap: 12px; box-sizing: border-box; height: 44px !important; padding: 0 12px !important; font-size: var(--cc-text-body) !important; font-weight: 500 !important; line-height: 20px; text-align: start; text-transform: none !important; letter-spacing: normal !important; border-radius: var(--cc-radius-control) !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS adds one to every button */
+.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: flex !important; flex: none; align-items: center; justify-content: flex-start; gap: 12px; box-sizing: border-box; height: 66px !important; padding: 0 12px !important; font-size: var(--cc-text-body) !important; font-weight: 500 !important; line-height: 20px; text-align: start; text-transform: none !important; letter-spacing: normal !important; border-radius: var(--cc-radius-control) !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS adds one to every button */
 .cc-set-tab[hidden] { display: none !important; }
 .cc-set-tablbl { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; text-wrap: balance; }
 @media (max-width: 1023px) {
@@ -1482,11 +1482,16 @@ button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-t
 .cc-set-toggle-on .cc-set-knob { left: 21px; background: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 /* the hint under a gated toggle, naming its precondition */
 .cc-set-hint { margin-top: 3px; font-size: var(--cc-text-meta); line-height: 1.3; color: var(--dim2, #8a8a8a); max-width: 320px; }
-.cc-set-tbl { width: 100%; max-width: 560px; border-collapse: collapse; font-size: var(--cc-text-subline); margin-top: 4px; }
-.cc-set-tbl th { color: var(--dim2); font-size: var(--cc-text-meta); text-transform: uppercase; letter-spacing: .5px; font-weight: 500; padding: 4px 10px; text-align: center; }
-.cc-set-tbl td { padding: 5px 10px; border-top: 1px solid var(--line); }
-.cc-set-cname { text-align: left; }
-.cc-set-chk { text-align: center; }
+/* The column matrix spans its card like any row: the names at the start, and the two switch
+   columns as narrow as their heads, each switch at the end of its column, so the last one is
+   flush with the card's right edge. */
+.cc-set-tbl { width: 100%; border-collapse: collapse; font-size: var(--cc-text-subline); margin-top: 4px; }
+.cc-set-tbl th { color: var(--dim2); font-size: var(--cc-text-meta); text-transform: uppercase; letter-spacing: .5px; font-weight: 500; padding: 4px 0 4px 28px; text-align: right; width: 1%; white-space: nowrap; }
+.cc-set-tbl td { padding: 5px 0 5px 28px; border-top: 1px solid var(--line); }
+.cc-set-tbl th:first-child { width: auto; padding-left: 0; }
+.cc-set-tbl td.cc-set-cname { padding-left: 0; text-align: left; }
+.cc-set-chk { text-align: right; }
+#cc-settings .cc-set-tbl .cc-cb { margin: 0; vertical-align: middle; }   /* Unraid gives every checkbox a right margin */
 .cc-set-foot { color: var(--dim2); font-size: var(--cc-text-meta); margin-top: 20px; }
 /* A one-line field beside its name, filled like the dropdowns and as tall as them, and like them it
    wraps under the name only once its narrowest width no longer fits beside it. The id keeps

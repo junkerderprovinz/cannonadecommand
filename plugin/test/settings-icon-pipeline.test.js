@@ -124,14 +124,41 @@ console.log('\nAdopting the badge colours, tile by tile as the tabs paint them')
   resetSt();
 }
 
-console.log('\nThe global Logos & icons card previews what each tab renders');
+console.log('\nThe global Logos & icons card previews the global values');
 {
   const g = grabFn('gpaint');
-  ok('a section reads the area\'s own keys once the area has a colour of its own', /var own = localStorage\.getItem\(g9\.styleKey\) === "0", pre = own \? g9\.prefix : "cc\.";/.test(g) && /bg: get\(pre \+ "iconbg", "0"\) === "1"/.test(g) && /tint: tintOnAt\(pre\)/.test(g));
-  ok('and says so in its caption', /g9\.label\.textContent = own \?/.test(g));
-  ok('each section names its area\'s keys', /\["vm", T\("VMs", "VMs"\), "cc\.stylevms", "ccv\."\]/.test(src) && /\["plugin", T\("Plugins", "Plugins"\), "cc\.styleplugin", "ccp\."\]/.test(src));
-  ok('the colouring mode rests dimmed while the icons are not tinted', /modeRow\.classList\.toggle\("cc-set-dim", !tintOnAt\("cc\."\)\);/.test(g));
-  ok('a dimmed row stays usable and only fades', /"#cc-settings \.cc-set-dim :is\(\.cc-set-lblwrap > span:first-child, \.cc-seg\)\{opacity:\.45\}"/.test(src));
+  ok('every section shows the global values, whatever an area has of its own', /bg: get\("cc\.iconbg", "0"\) === "1"/.test(g) && /tint: tintOnAt\("cc\."\)/.test(g) && /strength: parseInt\(get\("cc\.iconstrength", "100"\), 10\)/.test(g) && !/styleKey|prefix|pre \+/.test(g));
+  ok('so no caption names an area\'s own colour', !/eigene Farbe", "own colour"/.test(g) && !/label\.textContent/.test(g));
+  ok('nor does an exception repaint them', !/areaSync\[sec9/.test(src));
+  ok('an area with its own values previews them on its own tab', /tint: ga9 \? tintOnAt\("cc\."\) : tintOnAt\(P\)/.test(src));
+  ok('the colouring mode is shut while the icons are not tinted', /setRowEnabled\(modeRow, tintOnAt\("cc\."\)\);/.test(g));
+  ok('a shut row fades and lets no click through', /\.cc-set-disabled :is\([^)]*\.cc-seg[^)]*\)\{opacity:\.45\}/.test(src) && /\.cc-set-disabled :is\(\.cc-seg, \.cc-set-toggle, \.cc-set-numwrap\)\{pointer-events:none;cursor:default\}/.test(src));
+}
+
+console.log('\nA shut row leaves the tab order and opens again with its switch');
+{
+  const setRowEnabled = new Function(grabFn('setRowEnabled') + '\nreturn setRowEnabled;')();
+  const node = (cls) => {
+    const attrs = {}, classes = new Set(cls.split(' '));
+    return { attrs, disabled: false, classList: { toggle(c, on) { on ? classes.add(c) : classes.delete(c); }, contains: (c) => classes.has(c) }, has: (c) => classes.has(c), setAttribute(k, v) { attrs[k] = String(v); }, removeAttribute(k) { delete attrs[k]; }, getAttribute: (k) => attrs[k] };
+  };
+  const seg = node('cc-seg'), on = node('cc-seg-btn cc-seg-on'), off = node('cc-seg-btn'), input = node('cc-set-num');
+  on.setAttribute('tabindex', '0'); off.setAttribute('tabindex', '-1');
+  const row = node('cc-set-row');
+  row.querySelectorAll = (sel) => ({ '.cc-seg, .cc-set-toggle': [seg], '.cc-set-toggle': [], '.cc-seg-btn': [on, off], 'input': [input] })[sel];
+  setRowEnabled(row, false);
+  ok('shut: the row is marked', row.has('cc-set-disabled'));
+  ok('shut: the selector says it is disabled', seg.getAttribute('aria-disabled') === 'true');
+  ok('shut: no segment is a tab stop', on.getAttribute('tabindex') === '-1' && off.getAttribute('tabindex') === '-1');
+  ok('shut: a field in the row is disabled', input.disabled === true);
+  setRowEnabled(row, true);
+  ok('open: the mark and the aria-disabled go', !row.has('cc-set-disabled') && seg.getAttribute('aria-disabled') === undefined);
+  ok('open: the chosen segment is the tab stop again', on.getAttribute('tabindex') === '0' && off.getAttribute('tabindex') === '-1');
+  ok('open: the field takes input again', input.disabled === false);
+  ok('the status island shuts what it shows while it is off', /var gate = function \(\) \{ var on = get\("cc\.island", "1"\) !== "0"; shown\.forEach\(function \(r\) \{ setRowEnabled\(r, on\); \}\); \};/.test(src) && /set\("cc\.island", v \? "1" : "0"\); gate\(\);/.test(src));
+}
+
+{
   ok('its bubble says when the choice applies', /Die Wahl wirkt, sobald „Icons einfärben“ an ist\./.test(src) && /The choice applies once “Tint icons” is on\./.test(src));
   ok('an edit on an area card repaints the sections too', (src.match(/repaintLogoPrevs\(\);/g) || []).length >= 4);
 }
