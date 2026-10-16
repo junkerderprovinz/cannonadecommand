@@ -791,8 +791,8 @@
         if (Ci) {
           var res = it.name ? Ci.result(it.name) : null, kind = (res && res.kind !== "pending") ? res.kind : "";
           var spread = it.glyph ? 0 : Ci.spread(it.src);
-          var p = Ci.plan(it.name ? Ci.mode(scope, it.name) : Ci.globalMode(), kind, spread);
-          plan = { treat: p.treat, url: (!it.glyph && it.name && (p.src === "glyph" || p.src === "color")) ? Ci.svgUrl(it.name) : "" };
+          var p = Ci.plan(it.name ? Ci.mode(scope, it.name) : Ci.globalMode(), kind, spread, it.glyph ? null : Ci.tile(it.src));
+          plan = { treat: p.treat, tile: p.tile, url: (!it.glyph && it.name && (p.src === "glyph" || p.src === "color")) ? Ci.svgUrl(it.name) : "" };
         }
         if (it.glyph) {
           it.node.style.fontSize = "calc(" + sz + " * .46)";
@@ -803,7 +803,7 @@
         } else {
           var src = plan.url || it.src;
           if (it.node.getAttribute("src") !== src) it.node.src = src;
-          it.node.style.filter = plan.treat === "native" ? "none" : (filter(ink(plan.treat === "tint", i), plan.treat === "tint") || "none");
+          it.node.style.filter = plan.treat === "native" ? "none" : plan.treat === "knock" ? (Ci.knock(ink(false, i), plan.tile) || "none") : (filter(ink(plan.treat === "tint", i), plan.treat === "tint") || "none");
         }
       });
       host(fid + "-svg").innerHTML = svg ? '<svg xmlns="http://www.w3.org/2000/svg">' + svg + "</svg>" : "";
