@@ -121,7 +121,7 @@ console.log('\nThe New folder tile');
   const tile = new Function('el', 'ccGlyph', 't', 'window', 'ccOrgCreateFolder', grabFn('newFolderTile') + '\nreturn newFolderTile;')(el, () => '', (k) => k, {}, () => { tile.created = true; })();
   tile.fire('click');
   ok('a click runs the same create path as the gear menu', tile.created === true);
-  ok('the gear menu keeps its New folder entry', /menuItem\("cc-menu-link", "\+ " \+ t\("newFolder"\), ccOrgCreateFolder\)/.test(src));
+  ok('the gear menu keeps its New folder button', /el\("button", "cc-btn cc-menu-newfolder"\)[\s\S]{0,200}t\("newFolder"\)[\s\S]{0,120}ccOrgCreateFolder\(\)/.test(src));
 }
 
 console.log('\nfolderLoad() adds up the running members');

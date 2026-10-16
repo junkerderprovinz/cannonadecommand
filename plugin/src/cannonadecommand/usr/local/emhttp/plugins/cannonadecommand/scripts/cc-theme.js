@@ -678,7 +678,7 @@
     var ov = document.createElement("div"); ov.id = "cc-icm-pop";
     ov.style.cssText = "position:fixed;inset:0;z-index:99999";
     var card = document.createElement("div");
-    card.style.cssText = "position:absolute;background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:var(--cc-radius-card);padding:12px 14px;width:250px;max-width:92vw;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font:var(--cc-text-subline)/1.5 \"Segoe UI\",system-ui,sans-serif";
+    card.style.cssText = "position:absolute;background:var(--cc-bg,#161616);color:var(--cc-txt,#e6e6e6);border-radius:var(--cc-radius-card);padding:12px 14px;width:250px;max-width:92vw;box-shadow:0 2px 5px rgba(0,0,0,.38),0 14px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);font-size:var(--cc-text-subline);line-height:1.5;font-family:inherit";
     var h = document.createElement("div");
     h.textContent = (de ? "Icon-Färbung" : "Icon colouring") + ": " + name;
     h.style.cssText = "font-size:var(--cc-text-subline);font-weight:700;margin:0 0 8px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
