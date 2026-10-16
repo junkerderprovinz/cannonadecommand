@@ -66,42 +66,39 @@ html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > section.cc-d
   html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > section.cc-dk-side { flex: 1 1 100%; }
   html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-host[data-cc-dk="array"] { width: auto; }
 }
-/* Unassigned Devices' disks, network shares and past devices, side by side where they fit. In the
-   section cards the shares and the past devices stand in a column beside the disks, which wraps
-   under them where both do not fit. */
+/* Unassigned Devices' disks, network shares and past devices, side by side where they fit. */
 html.cc-dk-on #displaybox .cc-dk-udrow { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px 24px; }
-html.cc-dk-on #displaybox :is(.cc-dk-udrow, .cc-dk-udcol) > * { flex: 1 1 auto; min-width: 0; }
-html.cc-dk-on #displaybox .cc-dk-udcol { display: contents; }
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udcol { display: flex; flex-direction: column; align-items: flex-start; }
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udcol > * { max-width: 100%; }
-/* In the tiles every part is a card as wide as its content: the disks as wide as their cards, which
-   wrap under each other once squeezed, the tables as wide as their columns, scrolling in their own
-   box on a narrow screen, since a scrolling card would clip its badge. The tables leave out the
-   columns UD always keeps empty, and the line breaks UD puts between its parts would only push
-   them out of line. */
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box :is(.cc-dk-udrow, .cc-dk-udcol) { gap: 40px 24px; }
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > * { flex: 0 1 auto; }
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box :is(.cc-dk-udrow, .cc-dk-udcol) > :is(.show-disks, .show-shares) {
+html.cc-dk-on #displaybox .cc-dk-udrow > * { flex: 1 1 auto; min-width: 0; }
+/* In the tiles every part is a card. On a wide screen the three stand in one row: the tables as
+   wide as their columns, the disks one card wide with their cards under each other, taking what is
+   left of the row; alone on a row they spread up to the width of their cards. A table scrolls in
+   its own box on a narrow screen, since a scrolling card would clip its badge. The tables leave out
+   the columns UD always keeps empty and keep their cells and bars tight, so all three fit at 1917
+   px, and the line breaks UD puts between its parts would only push them out of line. */
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow { gap: 40px 24px; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > * {
   box-sizing: border-box; padding: 0 16px 16px; background: var(--cc-dk-sec); border-radius: var(--cc-radius-card);
 }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > .show-disks:not(:has(> .show-historical)) { flex: 1 1 292px; max-width: max-content; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > :is(.show-shares, .show-disks:has(> .show-historical)) { flex: none; max-width: 100%; }
 /* A part's badges stay in the flow, half above the card's edge, so the three badges of the shares
    wrap onto a second line on a phone and push the table down instead of running over it. */
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box :is(.cc-dk-udrow, .cc-dk-udcol) > :is(.show-disks, .show-shares) > div.title,
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udcol .show-historical > div.title {
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > * > div.title,
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow .show-historical > div.title {
   position: relative; z-index: 1; height: auto; margin: calc(var(--cc-sec-h, 22px) / -2) 0 13px !important; padding: 0;   /* Shares.css sets the top margin with !important */
 }
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box :is(.cc-dk-udrow, .cc-dk-udcol) div.title > span.left { flex-wrap: wrap; row-gap: 6px; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow div.title > span.left { flex-wrap: wrap; row-gap: 6px; }
 @media (max-width: 600px) {
   html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > * { flex: 1 1 100%; }
-  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udcol { align-items: stretch; }
+  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > .show-disks:not(:has(> .show-historical)) { max-width: none; }
 }
 html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) { display: block; max-width: 100%; overflow-x: auto; }
 html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow table.usb_absent tbody td:nth-child(2) { white-space: normal; }
 html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(.show-disks > .show-shares, .show-historical > br) { display: none !important; }
 html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow table.samba_mounts tr > td:is(:nth-child(6), :nth-child(8)):not([colspan]),
 html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow table.usb_absent tr > td:is(:nth-child(3), :nth-child(4), :nth-child(n+7)):not([colspan]) { display: none; }
-html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) :is(thead, tbody) td { padding-left: 8px; padding-right: 8px; }
-html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) .usage-disk:not(.sys):not(.mm) { min-width: 84px; }
+html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) :is(thead, tbody) td { padding-left: 6px; padding-right: 6px; }
+html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) .usage-disk:not(.sys):not(.mm) { min-width: 72px; }
 /* Array-Vorgang as a card: the state badges, then the array, disk and system controls, each group a
    sub-card with its badge on the top edge. Inside a group every row is its button, its bubble and
    what rides with it, wrapping where the group is narrow; the status and description tracks of

@@ -601,15 +601,14 @@
     });
     order(wrap, boxes);
   }
-  // Unassigned Devices' parts share one wrapping row, the network shares and the past devices in a
-  // column beside the disks, since those two are short beside a row of disk cards. UD finds the
-  // parts by class, wherever they sit.
+  // Unassigned Devices' parts (its disks, the network shares, the past devices) share one wrapping
+  // row, so they stand side by side where the section has room. UD finds them by class, wherever
+  // they sit.
   function udRow(S) {
     var parts = kids(S.sec).filter(function (c) { return hasCls(c, "show-disks") || hasCls(c, "show-shares"); });
     if (!parts.length) return;
     var row = S.sec.querySelector(":scope > .cc-dk-udrow") || S.sec.insertBefore(el("div", "cc-dk-udrow"), parts[0]);
-    var col = row.querySelector(":scope > .cc-dk-udcol") || row.appendChild(el("div", "cc-dk-udcol"));
-    parts.forEach(function (c, i) { if (i) col.appendChild(c); else row.insertBefore(c, col); });
+    parts.forEach(function (c) { row.appendChild(c); });
   }
 
   // Array-Vorgang becomes a card like the disk sections: the state badges on the left, then the
@@ -721,7 +720,7 @@
     spinNames(false);
     document.documentElement.classList.remove("cc-dk-on", "cc-dk-tiled", "cc-dk-sides");
     Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-host, #displaybox .cc-dk-vsw"), function (n) { n.parentNode.removeChild(n); });
-    Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-udrow, #displaybox .cc-dk-udcol"), function (r) {
+    Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-udrow"), function (r) {
       while (r.firstChild) r.parentNode.insertBefore(r.firstChild, r);
       r.parentNode.removeChild(r);
     });
