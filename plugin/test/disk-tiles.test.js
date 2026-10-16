@@ -213,7 +213,7 @@ console.log('\nThe view: one switch and one key for the whole page');
   ok('its bubble points to the switch on the page', /Der Schalter oben im Tab Start stellt dasselbe um\./.test(row) && /The switch at the top of the Main tab changes the same setting\./.test(row));
   ok('it offers Liste and Kacheln with the view glyphs', /\[\["list", T\("Liste", "List"\), "IconViewList"\], \["tiles", T\("Kacheln", "Tiles"\), "IconViewGrid"\]\]/.test(row));
   ok('it has a bubble and a preview right under its selector', /, help\)\);/.test(row) && /viewPreview\(opts, diskSketch\)/.test(row) && /c\.appendChild\(slot\); c\.appendChild\(prev\.el\);/.test(row));
-  ok('a section shows "Ruht" only for a spun-down disk, never an active chip', /if \(d\.down\) h \+= '<span class="cc-dk-chip">' \+ glyph\("Moon"\) \+ esc\(t\("resting"\)\)/.test(js) && !/Aktiv/.test(js));
+  ok('a spun-down disk says "Ruht" once, where its temperature would be, never an active chip', /if \(d\.down\) return glyph\("Moon"\) \+ esc\(t\("resting"\)\);/.test(js) && (js.match(/t\("resting"\)/g) || []).length === 1 && !/Aktiv/.test(js));
 }
 
 console.log('\nThe tile view hides the table controls');
@@ -227,7 +227,7 @@ console.log('\nThe tile view hides the table controls');
   // Shares.css shows it in section view with html.cc-shares-on.cc-on-main.cc-sections-main, four classes.
   ok('in section view the hide outranks Shares.css', hidden.includes('html.cc-dk-on.cc-dk-tiled.cc-on-main.cc-sections-main #displaybox .cc-card-head > span.status'));
   ok('only while no disk table of the array, the pools or the boot device shows', /root\.classList\.toggle\("cc-dk-tiled", tiles && !all\.some\(function \(S\) \{\s*return S\.key !== "ud"/.test(js));
-  ok('Unassigned Devices keeps its controls, which still act on the tiles', !/cc-ud-ctrls/.test(rules));
+  ok('Unassigned Devices keeps its controls, which still act on the tiles', !hidden.some((x) => /cc-ud-ctrls/.test(x)) && !/cc-ud-ctrls[^{}]*\{[^}]*(display|visibility|opacity):/.test(rules));
 }
 
 console.log('\nEvery pool and section keeps its badge and stands beside the others where it fits');

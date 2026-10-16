@@ -14,13 +14,14 @@
 
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
   var TXT = {
-    de: { view: "Ansicht", list: "Liste", tiles: "Kacheln", spinDown: "Herunterfahren", spinUp: "Hochfahren", browse: "Durchsuchen", log: "Datenträgerprotokoll",
+    de: { view: "Ansicht", list: "Liste", tiles: "Kacheln", spinDown: "Platte anhalten", spinUp: "Platte anlaufen lassen", browse: "Durchsuchen", log: "Datenträgerprotokoll",
       resting: "Ruht", used: "belegt", free: "frei", of: "von", temp: "Temperatur", read: "Lesen", write: "Schreiben", errors: "Fehler",
       smartOk: "SMART ok", smartWarn: "SMART-Warnung", smartFail: "SMART-Fehler", smartOkTip: "SMART meldet nichts Auffälliges",
       smartFailTip: "Der SMART-Selbsttest ist fehlgeschlagen", parity: "Parität gültig, schützt %n Datenträger",
       tempTip: "Warnung ab %w, kritisch ab %c", tempNone: "Meldet keine Temperatur", tempDown: "Ruht und misst gerade nicht",
       serial: "Seriennummer", hours: "%n Betriebsstunden", wear: "Abnutzung %n %", counts: "Lesezugriffe %r, Schreibzugriffe %w",
-      member: "Gehört zum Pool %p", details: "Details",
+      member: "Gehört zum Pool %p", details: "Details", aopArray: "Array", aopDisks: "Platten", aopSystem: "System",
+      spinAllUp: "Platten anlaufen lassen", spinAllDown: "Platten anhalten",
       hdd: "Festplatte", ssd: "SATA-SSD", nvme: "NVMe-SSD", usb: "USB-Stick" },
     en: { view: "View", list: "List", tiles: "Tiles", spinDown: "Spin down", spinUp: "Spin up", browse: "Browse", log: "Disk log",
       resting: "Spun down", used: "used", free: "free", of: "of", temp: "Temperature", read: "Read", write: "Write", errors: "errors",
@@ -28,7 +29,7 @@
       smartFailTip: "The SMART self-assessment failed", parity: "Parity valid, protects %n disks",
       tempTip: "Warning from %w, critical from %c", tempNone: "Reports no temperature", tempDown: "Spun down, not measuring",
       serial: "Serial number", hours: "%n power-on hours", wear: "Wear %n %", counts: "Reads %r, writes %w",
-      member: "Part of pool %p", details: "Details",
+      member: "Part of pool %p", details: "Details", aopArray: "Array", aopDisks: "Disks", aopSystem: "System",
       hdd: "Hard disk", ssd: "SATA SSD", nvme: "NVMe SSD", usb: "USB flash drive" }
   };
   function t(k) { return (TXT[LANG] || TXT.en)[k] || TXT.en[k]; }
@@ -302,13 +303,13 @@
   }
   var INFO = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3" /><circle cx="8" cy="4.6" r="0.9" fill="currentColor" /><path d="M8 7v4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>';
 
-  // One drawing per kind of drive, with the capacity on its sticker. The gradients live once in
-  // the page, see defs().
+  // One drawing per kind of drive, its label in the card colour naming the kind; the capacity
+  // stands in the card's badge. A parity disk wears the shield beside its label. The gradients
+  // live once in the page, see defs().
   function drawHdd(d) {
-    var size = esc(cap(d.size));
     var sticker = d.parity
-      ? '<rect class="cc-dk-st" x="124" y="15" width="62" height="22" rx="3"/><svg class="cc-dk-ink" x="130" y="19" width="14" height="14" viewBox="' + OWN.ShieldOn[0] + '">' + OWN.ShieldOn[1] + '</svg><text class="cc-dk-ink" x="180" y="30.5" font-size="12" font-weight="700" text-anchor="end">' + size + "</text>"
-      : '<rect class="cc-dk-st" x="132" y="15" width="54" height="22" rx="3"/><text class="cc-dk-ink" x="159" y="30.5" font-size="12" font-weight="700" text-anchor="middle">' + size + "</text>";
+      ? '<rect class="cc-dk-st" x="124" y="15" width="62" height="22" rx="3"/><svg class="cc-dk-ink" x="130" y="19" width="14" height="14" viewBox="' + OWN.ShieldOn[0] + '">' + OWN.ShieldOn[1] + '</svg><text class="cc-dk-ink" x="180" y="30.5" font-size="12" font-weight="800" letter-spacing="1.5" text-anchor="end">HDD</text>'
+      : '<rect class="cc-dk-st" x="132" y="15" width="54" height="22" rx="3"/><text class="cc-dk-ink" x="159.75" y="30.5" font-size="12" font-weight="800" letter-spacing="1.5" text-anchor="middle">HDD</text>';
     var streaks = "";
     [44, 36, 28, 20].forEach(function (r, i) { streaks += '<path d="M ' + (78 + r) + " 68 A " + r + " " + r + " 0 0 1 " + (78 + r * Math.cos(1.1 + i * 0.25)).toFixed(2) + " " + (68 + r * Math.sin(1.1 + i * 0.25)).toFixed(2) + '" fill="none" stroke="var(--cc-dk-sheen)" stroke-width="' + (2.6 - i * 0.4).toFixed(1) + '" stroke-linecap="round"/>'; });
     [40, 24].forEach(function (r) { streaks += '<path d="M ' + (78 - r) + " 68 A " + r + " " + r + " 0 0 1 " + (78 - r * Math.cos(0.7)).toFixed(2) + " " + (68 - r * Math.sin(0.7)).toFixed(2) + '" fill="none" stroke="var(--cc-dk-sheen)" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>'; });
@@ -328,7 +329,7 @@
       '<circle class="cc-dk-led" cx="24" cy="118" r="3.2"/></g></svg>';
   }
   var clipN = 0;
-  function drawSsd(d) {
+  function drawSsd() {
     var id = "cc-dk-clip" + (++clipN), pins = "";
     for (var i = 0; i < 9; i++) pins += '<rect x="172" y="' + (42 + i * 6) + '" width="6" height="3" fill="var(--cc-dk-gold)"/>';
     return '<svg class="cc-dk-drive" viewBox="0 0 200 136" aria-hidden="true"><defs><clipPath id="' + id + '"><rect x="34" y="28" width="122" height="80" rx="5"/></clipPath></defs>' +
@@ -336,28 +337,26 @@
       '<rect x="34" y="28" width="122" height="80" rx="5" fill="#141414"/>' +
       '<rect class="cc-dk-st" x="34" y="28" width="122" height="24" rx="5"/><rect class="cc-dk-st" x="34" y="44" width="122" height="8"/>' +
       '<text class="cc-dk-ink" x="44" y="45" font-size="12" font-weight="800" letter-spacing="1.5">SSD</text>' +
-      '<text class="cc-dk-ink" x="146" y="45" font-size="12" font-weight="700" text-anchor="end">' + esc(cap(d.size)) + "</text>" +
       '<rect class="cc-dk-bar" x="44" y="64" width="70" height="5" rx="2.5"/><rect class="cc-dk-bar cc-dk-n2" x="44" y="76" width="96" height="5" rx="2.5"/><rect class="cc-dk-bar cc-dk-n3" x="44" y="88" width="52" height="5" rx="2.5"/>' +
       '<g clip-path="url(#' + id + ')"><rect class="cc-dk-sweep" x="34" y="28" width="56" height="80" fill="url(#cc-dk-sweep)"/></g>' +
       '<circle class="cc-dk-led" cx="156" cy="112" r="3"/></svg>';
   }
-  function drawNvme(d) {
+  function drawNvme() {
     var fingers = "";
     for (var i = 0; i < 12; i++) if (i !== 8) fingers += '<rect x="12" y="' + (49 + i * 3.3).toFixed(1) + '" width="9" height="2.2" fill="var(--cc-dk-gold)"/>';
     return '<svg class="cc-dk-drive" viewBox="2 24 196 88" aria-hidden="true"><rect x="10" y="46" width="182" height="44" rx="3" fill="var(--cc-dk-pcb)"/>' + fingers +
       '<circle cx="190" cy="68" r="5.5" fill="var(--cc-dk-inset)"/><path d="M24 60 H44 M24 68 H44 M24 76 H44" stroke="#3b3b3b" stroke-width="1.2"/>' +
       '<rect x="44" y="55" width="24" height="26" rx="2" fill="var(--cc-dk-nand)"/><rect x="49" y="60" width="14" height="16" rx="1" fill="#222"/>' +
       '<rect class="cc-dk-st" x="74" y="51" width="104" height="34" rx="2"/>' +
-      '<text class="cc-dk-ink" x="82" y="65" font-size="10" font-weight="800" letter-spacing="1">NVMe</text>' +
-      '<text class="cc-dk-ink" x="170" y="78.5" font-size="12" font-weight="700" text-anchor="end">' + esc(cap(d.size)) + "</text>" +
+      '<text class="cc-dk-ink" x="126" y="72.5" font-size="12" font-weight="800" letter-spacing="1" text-anchor="middle">NVMe</text>' +
       '<circle class="cc-dk-flow cc-dk-st" cx="22" cy="60" r="1.8"/><circle class="cc-dk-flow cc-dk-st cc-dk-n2" cx="22" cy="68" r="1.8"/><circle class="cc-dk-flow cc-dk-st cc-dk-n3" cx="22" cy="76" r="1.8"/></svg>';
   }
-  function drawUsb(d) {
+  function drawUsb() {
     return '<svg class="cc-dk-drive" viewBox="10 22 174 92" aria-hidden="true"><rect x="22" y="52" width="46" height="32" rx="2" fill="url(#cc-dk-conn)"/>' +
       '<rect x="34" y="60" width="8" height="6" fill="#2a2a2a"/><rect x="50" y="60" width="8" height="6" fill="#2a2a2a"/>' +
       '<rect x="62" y="44" width="110" height="48" rx="10" fill="url(#cc-dk-plastic)"/><circle cx="160" cy="68" r="6" fill="var(--cc-dk-inset)"/>' +
       '<rect class="cc-dk-st" x="76" y="56" width="66" height="24" rx="3"/>' +
-      '<text class="cc-dk-ink" x="109" y="72.5" font-size="12" font-weight="800" text-anchor="middle" letter-spacing=".5">' + esc(cap(d.size)) + "</text>" +
+      '<text class="cc-dk-ink" x="109.75" y="72.5" font-size="12" font-weight="800" letter-spacing="1.5" text-anchor="middle">USB</text>' +
       '<circle class="cc-dk-led" cx="150" cy="54" r="2.6"/></svg>';
   }
   var DRAW = { hdd: drawHdd, ssd: drawSsd, nvme: drawNvme, usb: drawUsb };
@@ -391,7 +390,6 @@
   }
   function chipsHtml(d) {
     var x = extra[d.dev], h = "";
-    if (d.down) h += '<span class="cc-dk-chip">' + glyph("Moon") + esc(t("resting")) + "</span>";
     if ((d.state === "warn" || d.state === "err" || d.state === "new") && !d.parity) h += '<span class="cc-dk-chip cc-dk-' + (d.state === "new" ? "plain" : d.state) + '" data-tip="' + esc(d.stateTip) + '">' + esc(d.stateTip.split("\n")[0]) + "</span>";
     if (x && x.smart) {
       var cls = x.smart === "fail" ? " cc-dk-err" : x.smart === "warn" ? " cc-dk-warn" : "";
@@ -402,7 +400,8 @@
     return h;
   }
   function tempHtml(d) {
-    if (!d.temp || d.down) return '<span class="cc-dk-dot cc-dk-idle"></span>*';
+    if (d.down) return glyph("Moon") + esc(t("resting"));
+    if (!d.temp) return '<span class="cc-dk-dot cc-dk-idle"></span>*';
     return '<span class="cc-dk-dot"></span>' + esc(nf.format(d.temp.shown) + " °" + d.temp.unit);
   }
   function busy(d) { return !d.down && (d.rd > 0 || d.wr > 0); }
@@ -612,6 +611,69 @@
     parts.forEach(function (c) { row.appendChild(c); });
   }
 
+  // Array-Vorgang becomes a card like the disk sections: the state pills on the left, then the
+  // controls in three groups. Each form or table moves whole and a comment keeps its place, so
+  // names, ids and handlers stay as Unraid wrote them and the list view gets the page back as it was.
+  // Buttons other plugins hang into a form go with it; a block of their own joins the system group.
+  function aopGroup(n) {
+    if (n.matches('form[name="arrayOps"]') || n.querySelector('form[name="arrayOps"]')) return "Array";
+    if (n.matches('form[name="mover_schedule"]') || n.querySelector('#spinup-button, #spindown-button, form[name="mover_schedule"]')) return "Disks";
+    return "System";
+  }
+  function moveInto(box, n, before) {
+    if (!n.__ccAopMark) { n.__ccAopMark = document.createComment("cc-dk-aop"); n.parentNode.insertBefore(n.__ccAopMark, n); }
+    box.insertBefore(n, before || null);
+  }
+  function arrayOps(on) {
+    var form = document.querySelector('#displaybox form[name="arrayOps"]');
+    var sec = form && form.closest('section[role="tabpanel"]');
+    var box = document.querySelector("#displaybox .cc-dk-aop");
+    if (!on || !sec) {
+      if (!box) return;
+      Array.prototype.forEach.call(box.querySelectorAll(":scope > .cc-aop-pills, :scope > .cc-dk-aopg > :not(.cc-dk-aopt)"), function (n) {
+        var m = n.__ccAopMark;
+        if (m && m.parentNode) m.parentNode.replaceChild(n, m); else box.parentNode.insertBefore(n, box);
+        n.__ccAopMark = null;
+      });
+      box.parentNode.classList.remove("cc-dk-box");
+      box.parentNode.removeChild(box);
+      return;
+    }
+    sec.classList.add("cc-dk-box");
+    if (!box) {
+      box = el("div", "cc-dk-aop");
+      ["Array", "Disks", "System"].forEach(function (k) {
+        var grp = el("div", "cc-dk-aopg", '<div class="cc-dk-aopt"><span class="cc-dk-pb">' + esc(t("aop" + k)) + "</span></div>");
+        grp.setAttribute("data-g", k);
+        box.appendChild(grp);
+      });
+      var head = sec.querySelector(":scope > .cc-card-head");
+      sec.insertBefore(box, head ? head.nextSibling : sec.firstChild);
+    }
+    kids(sec).forEach(function (n) {
+      if (n !== box && (tag(n) === "TABLE" ? hasCls(n, "array_status") : n.querySelector("table.array_status"))) moveInto(box.querySelector('[data-g="' + aopGroup(n) + '"]'), n);
+    });
+    // shares.js stacks the pills at the section's top level, also after the groups are built.
+    var pills = sec.querySelector(":scope > .cc-aop-pills");
+    if (pills) moveInto(box, pills, box.firstChild);
+    kids(box).forEach(function (grp) { if (hasCls(grp, "cc-dk-aopg")) grp.classList.toggle("cc-dk-hidden", !grp.querySelector("table.array_status")); });
+  }
+  // Unraid's German calls spinning the disks up and down Hochfahren and Herunterfahren, the same as
+  // powering the server down, so the two disk buttons get names of their own. The bold labels in
+  // the description cell are what the bubbles beside the buttons read.
+  function spinNames(on) {
+    [["spinup-button", "spinAllUp", 0], ["spindown-button", "spinAllDown", 1]].forEach(function (x) {
+      var b = document.getElementById(x[0]); if (!b) return;
+      var row = b.closest("tr"), lab = row && row.children[2] ? row.children[2].querySelectorAll("strong")[x[2]] : null;
+      if (b.__ccOrig == null) b.__ccOrig = b.value;
+      if (lab && lab.__ccOrig == null) lab.__ccOrig = lab.textContent;
+      var name = on && LANG === "de" ? t(x[1]) : null;
+      var v = name || b.__ccOrig, lv = lab ? (name ? name + ":" : lab.__ccOrig) : null;
+      if (b.value !== v) b.value = v;
+      if (lab && lab.textContent !== lv) lab.textContent = lv;
+    });
+  }
+
   function renderSection(S) {
     var data = S.data;
     if (data.unknown) { drop(S); return; }
@@ -655,13 +717,15 @@
   }
 
   function teardown() {
+    arrayOps(false);
+    spinNames(false);
     document.documentElement.classList.remove("cc-dk-on", "cc-dk-tiled", "cc-dk-sides");
     Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-host, #displaybox .cc-dk-vsw"), function (n) { n.parentNode.removeChild(n); });
     Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-udrow"), function (r) {
       while (r.firstChild) r.parentNode.insertBefore(r.firstChild, r);
       r.parentNode.removeChild(r);
     });
-    Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-hidden, #displaybox .cc-dk-side"), function (n) { n.classList.remove("cc-dk-hidden", "cc-dk-side"); });
+    Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-hidden, #displaybox .cc-dk-side, #displaybox .cc-dk-box"), function (n) { n.classList.remove("cc-dk-hidden", "cc-dk-side", "cc-dk-box"); });
   }
   function render() {
     if (!live()) { teardown(); return; }
@@ -684,11 +748,14 @@
         if (!tiles || S.data.offline) drop(S); else renderSection(S);
         if (S.key === "ud") udRow(S);
       } catch (e) {}
-      // In section view the pools and the boot device, each under its own badge, stand side by
-      // side while the page has room for both.
+      // Each section the tiles draw is a card around its disks. In section view the pools and the
+      // boot device stand side by side while the page has room for both.
+      S.sec.classList.toggle("cc-dk-box", tiles && !S.data.offline);
       S.sec.classList.toggle("cc-dk-side", tiles && !S.data.offline && (S.key === "pools" || S.key === "boot"));
     });
     root.classList.toggle("cc-dk-sides", all.some(function (S) { return S.sec.classList.contains("cc-dk-side"); }));
+    arrayOps(tiles && root.classList.contains("cc-sections-main"));
+    spinNames(true);
     // The column and reads/writes controls act on the disk tables, so they go while none shows.
     root.classList.toggle("cc-dk-tiled", tiles && !all.some(function (S) {
       return S.key !== "ud" && !S.box.classList.contains("cc-dk-hidden");
@@ -723,6 +790,7 @@
       for (var i = 0; i < recs.length; i++) {
         var tg = recs[i].target;
         if (!tg || !tg.closest || tg.closest(".cc-dk-host, .cc-dk-vsw")) continue;
+        if (hasCls(tg, "cc-dk-box") && tg.querySelector(":scope > .cc-aop-pills")) { soon(); return; }
         if (tg.closest("table.disk_status, #usb_devices_list") || recs[i].addedNodes.length && tg.querySelector && tg.querySelector("table.disk_status")) { soon(); return; }
       }
     }).observe(host, { childList: true, subtree: true });
