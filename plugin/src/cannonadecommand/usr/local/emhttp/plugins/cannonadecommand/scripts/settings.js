@@ -283,10 +283,9 @@
   var OFF_BY_DEFAULT = { "cc.enable.main": true, "cc.enable.header": true, "cc.enable.shares": true };
   // render() points this at its own tabs; a row that names who decides its value jumps there.
   var jumpTo = function () {};
-  // GlimStone's accent presets, the same eight in the same order in every app of the family, so
-  // Blue here is the Blue of the next app. Only the offer changes: a saved cc.accent is never
-  // rewritten, whichever preset it came from.
-  var PRESETS = ["#FCC419", "#1D99F3", "#6FDC8C", "#FF8389", "#BE95FF", "#FF832B", "#3DDBD9", "#FF7EB6"];
+  // The colour field is CannonadeCommand's one colour picker, shared through cc-theme.js with the
+  // colour fields of Unraid's own forms.
+  var PRESETS = window.CCTheme.PRESETS, colourField = window.CCTheme.colorPicker, swMark = window.CCTheme.swMark, swMarkRow = window.CCTheme.swMarkRow;
 
   // Each column gets an object of its own from a factory call: chkCell mutates these in place, so a
   // shared reference would let one checkbox flip every column that aliased it. Stays in step with
@@ -459,51 +458,6 @@
     sharedReads[path] = entry;
     return entry.p;
   }
-  // an embedded colour picker, with no OS popup window
-  function hexToHsv(hex) {
-    var m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return null;
-    var n = parseInt(m[1], 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
-    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, h = 0;
-    if (d) { if (mx === r) h = 60 * (((g - b) / d) % 6); else if (mx === g) h = 60 * ((b - r) / d + 2); else h = 60 * ((r - g) / d + 4); }
-    if (h < 0) h += 360;
-    return { h: h, s: mx ? d / mx : 0, v: mx };
-  }
-  function hsvToHex(h, s, v) {
-    var c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c, r = 0, g = 0, b = 0;
-    if (h < 60) { r = c; g = x; } else if (h < 120) { r = x; g = c; } else if (h < 180) { g = c; b = x; }
-    else if (h < 240) { g = x; b = c; } else if (h < 300) { r = x; b = c; } else { r = c; b = x; }
-    var f = function (u) { return ("0" + Math.round((u + m) * 255).toString(16)).slice(-2); };
-    return "#" + f(r) + f(g) + f(b);
-  }
-  // A saturation square and a hue bar; _set(hex) syncs it and _get() reads it back.
-  function inlinePicker(hex, onChange) {
-    var box = el("div", "cc-ip"), sv = el("div", "cc-ip-sv"), dot = el("span", "cc-ip-dot"), hue = el("div", "cc-ip-hue"), hdot = el("span", "cc-ip-hdot");
-    sv.appendChild(dot); hue.appendChild(hdot); box.appendChild(sv); box.appendChild(hue);
-    var st = hexToHsv(hex) || { h: 220, s: 0.8, v: 0.9 };
-    function paint() {
-      sv.style.background = "linear-gradient(to top, #000, rgba(0,0,0,0)), linear-gradient(to right, #fff, hsl(" + Math.round(st.h) + ",100%,50%))";
-      dot.style.left = (st.s * 100) + "%"; dot.style.top = ((1 - st.v) * 100) + "%";
-      hdot.style.left = (st.h / 360 * 100) + "%";
-    }
-    function emit() { onChange(hsvToHex(st.h, st.s, st.v)); }
-    function drag(target, apply2) {
-      function mv(e) {
-        var r = target.getBoundingClientRect();
-        var cx = e.touches ? e.touches[0].clientX : e.clientX, cy = e.touches ? e.touches[0].clientY : e.clientY;
-        apply2(Math.min(1, Math.max(0, (cx - r.left) / r.width)), Math.min(1, Math.max(0, (cy - r.top) / r.height)));
-        paint(); emit(); e.preventDefault();
-      }
-      function up() { document.removeEventListener("mousemove", mv); document.removeEventListener("mouseup", up); document.removeEventListener("touchmove", mv); document.removeEventListener("touchend", up); }
-      function down(e) { mv(e); document.addEventListener("mousemove", mv); document.addEventListener("mouseup", up); document.addEventListener("touchmove", mv); document.addEventListener("touchend", up); }
-      target.addEventListener("mousedown", down); target.addEventListener("touchstart", down);
-    }
-    drag(sv, function (x, y) { st.s = x; st.v = 1 - y; });
-    drag(hue, function (x) { st.h = Math.min(359.9, x * 360); });
-    box._set = function (h2) { var p = hexToHsv(h2); if (p) { st = p; paint(); } };
-    box._get = function () { return hsvToHex(st.h, st.s, st.v); };
-    paint(); return box;
-  }
-
   // Serialises the config read, modify and write, so two cards saving at nearly the same moment
   // cannot lose each other's field: each cycle waits for the previous one to settle.
   var cfgChain = Promise.resolve();
@@ -648,57 +602,6 @@
     var row = inlineRow(label, help, end);
     row.classList.add("cc-set-locked");
     return row;
-  }
-  // Every colour row draws the same swatch, so the picked one is marked the same way everywhere.
-  // The box never changes size, since a scaled swatch reads as a different size from its
-  // neighbours; the mark is a tick on the fill, and that tick needs an ink contrasting with this
-  // swatch's own colour, so the class and the ink are always set together.
-  function swMark(sw, on, colour) {
-    if (!sw) return;
-    sw.classList.toggle("cc-set-sw-on", !!on);
-    if (on) sw.style.setProperty("--cc-sw-tick", ccTick(idealText(colour || sw.dataset.c || "")));
-    else sw.style.removeProperty("--cc-sw-tick");
-  }
-  // Marks the swatch in `row` whose colour matches and unmarks the rest; dataset.c is the one
-  // attribute every preset swatch carries.
-  function swMarkRow(row, colour) {
-    if (!row) return;
-    var want = String(colour || "").toLowerCase();
-    Array.prototype.slice.call(row.querySelectorAll(".cc-set-sw")).forEach(function (sw) {
-      var c = (sw.dataset.c || "").toLowerCase();
-      swMark(sw, !!c && c === want, sw.dataset.c);
-    });
-  }
-  // Every colour on this page is set with the same control: the embedded picker, and under it the
-  // GlimStone presets in one row with the hex field as its last cell, the row as wide as the
-  // picker. onPick gets "#rrggbb", or "" when opts.clearable lets the hex field be emptied.
-  // _set(hex, shown) repaints it without calling onPick, the picker on shown while hex is empty.
-  function colourField(hex, onPick, opts) {
-    opts = opts || {};
-    var valid = function (v) { return /^#[0-9a-f]{6}$/i.test(v || ""); };
-    var box = el("div", "cc-set-pickrow");
-    var hx = el("input", "cc-set-hexin"); hx.type = "text"; hx.value = hex || ""; hx.maxLength = 7; hx.spellcheck = false;
-    hx.placeholder = opts.placeholder || "#FCC419"; hx.setAttribute("aria-label", T("Farbe als Hex-Wert", "Colour as a hex value"));
-    var row = el("div", "cc-set-swatches cc-fill" + (opts.rowClass ? " " + opts.rowClass : ""));
-    var pk = inlinePicker(valid(hex) ? hex : (opts.fallback || "#FCC419"), function (v) { hx.value = v; swMarkRow(row, v); onPick(v); });
-    function pick(c) { pk._set(c); hx.value = c; swMarkRow(row, c); onPick(c); }
-    PRESETS.forEach(function (c) {
-      var sw = actionBtn("", "cc-set-sw", function () { pick(c); });
-      sw.setAttribute("data-tip", c); sw.setAttribute("aria-label", c); sw.style.background = c; sw.dataset.c = c;
-      row.appendChild(sw);
-    });
-    row.appendChild(hx);
-    hx.addEventListener("input", function () {
-      var v = normHex(hx.value);
-      if (v) { pk._set(v); swMarkRow(row, v); onPick(v); }
-      else if (!hx.value && opts.clearable) { swMarkRow(row, ""); onPick(""); }
-    });
-    box.appendChild(pk); box.appendChild(row);
-    swMarkRow(row, hex);
-    box._set = function (v, shown) { var p = valid(v) ? v : shown; if (valid(p)) pk._set(p); hx.value = v || ""; swMarkRow(row, v); };
-    box._get = pk._get;
-    box._row = row;
-    return box;
   }
 
   // One logo preview for every card that has one. It runs the tabs' own icon pipeline, which
@@ -2385,7 +2288,6 @@
   function thc(t) { var e = el("th", null, t); return e; }
   // The badge-visibility matrix is a grid of on/off settings, so each cell is the shared .cc-cb
   // switch, carrying its own badge's colour and the ink for its knob.
-  function ccTick(c) { return "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='" + encodeURIComponent(c) + "' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>\")"; }
   function chkCell(key, v, color) { var td = el("td", "cc-set-chk"); var cb = el("input", "cc-cb"); cb.type = "checkbox"; cb.checked = !!(colview[key] && colview[key][v]); if (rainbow && color) { cb.style.setProperty("--cc-rb-c", color); cb.style.setProperty("--cc-rb-ct", idealText(color)); } cb.addEventListener("change", function () { var cur = colview[key] || { s: true, a: true }; colview[key] = { s: cur.s, a: cur.a }; colview[key][v] = cb.checked; set("cc.colview2", JSON.stringify(colview)); }); td.appendChild(cb); return td; }
   function versionRow(name, value) {
     var row = el("div", "cc-set-row cc-set-inline");

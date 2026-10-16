@@ -153,8 +153,8 @@ console.log('\nThe rainbow palette is GlimStone\'s Carbon 30 set, in every copy'
 console.log('\nThe accent presets are the GlimStone eight, all of them offered');
 {
   const settings = fs.readFileSync(path.join(SCRIPTS, 'settings.js'), 'utf8');
-  const m = /var PRESETS = (\[[^\]]*\]);/.exec(settings);
-  ok('PRESETS is declared', !!m);
+  const m = /var PRESETS = (\[[^\]]*\]);/.exec(fs.readFileSync(path.join(SCRIPTS, 'cc-theme.js'), 'utf8'));
+  ok('PRESETS is declared once, in cc-theme.js beside the picker', !!m && /var PRESETS = window\.CCTheme\.PRESETS/.test(settings));
   ok('in GlimStone\'s order', !!m && JSON.stringify(JSON.parse(m[1])) === JSON.stringify(GS_PRESETS), m && m[1]);
   ok('no picker cuts the row short', !/PRESETS\.slice\(/.test(settings));
   ok('the column matrix takes palette positions rather than a list of its own', /window\.CCTheme\.rbColor\(i, accent\)/.test(settings) && !/var RB = \["#1f9d55"/.test(settings));

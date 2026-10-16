@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { DIR, candidates, withUnraid } = require('./cascade');
 const settings = fs.readFileSync(path.join(DIR, 'scripts/settings.js'), 'utf8');
+const theme = fs.readFileSync(path.join(DIR, 'scripts/cc-theme.js'), 'utf8');
 
 let pass = 0, fail = 0;
 const ok = (name, cond, extra) => { cond ? (pass++, console.log('  PASS  ' + name)) : (fail++, console.log('  FAIL  ' + name + (extra ? '  -> ' + extra : ''))); };
@@ -18,15 +19,17 @@ function grabFn(src, name) {
 }
 const win = (page, e, prop) => { const c = candidates(page, e, prop); return c[c.length - 1]; };
 const val = (w) => (w ? w.value : '(none)');
-const code = settings.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.replace(/(^|\s)\/\/.*$/, '')).join('\n');
+const strip = (src) => src.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').map((l) => l.replace(/(^|\s)\/\/.*$/, '')).join('\n');
+const code = strip(settings), themeCode = strip(theme);
 
 console.log('\nNo colour on the page is set without the presets');
 {
-  const pickers = [...code.matchAll(/inlinePicker\(/g)].length;
-  ok('the bare picker is built in one place, inside colourField', pickers === 2 && /function colourField[\s\S]*?inlinePicker\(/.test(code), pickers);
-  const uses = [...code.matchAll(/colourField\(/g)].length - 1;
+  const pickers = [...themeCode.matchAll(/inlinePicker\(/g)].length;
+  ok('the bare picker is built in one place, inside CCTheme.colorPicker', pickers === 2 && /function colorPicker[\s\S]*?inlinePicker\(/.test(themeCode) && !/inlinePicker\(/.test(code), pickers);
+  ok('which the page takes as its colour field', /colourField = window\.CCTheme\.colorPicker\b/.test(code));
+  const uses = [...code.matchAll(/colourField\(/g)].length;
   ok('the accent, an area\'s accent, the tile, the icon, the server name and the palette all use it', uses >= 6, uses);
-  ok('no hex field is built outside it', [...code.matchAll(/el\("input", "cc-set-hexin"\)/g)].length === 1);
+  ok('no hex field is built outside it', !/cc-set-hexin"\)/.test(code) && [...themeCode.matchAll(/className = "cc-set-hexin"/g)].length === 1);
 }
 
 console.log('\nThe field: picker on top, presets and hex field in one row under it');
@@ -40,15 +43,16 @@ console.log('\nThe field: picker on top, presets and hex field in one row under 
     appendChild(c) { this.children.push(c); c.parentNode = this; return c; }
     setAttribute(k, v) { this.attrs[k] = String(v); }
     getAttribute(k) { return this.attrs[k]; }
+    hasAttribute(k) { return k in this.attrs; }
     addEventListener(t, f) { (this.listeners[t] = this.listeners[t] || []).push(f); }
     querySelectorAll(sel) { const out = []; const want = sel.replace('.', ''); (function walk(n) { n.children.forEach((k) => { if (k.cls.has(want)) out.push(k); walk(k); }); })(this); return out; }
   }
-  const document = { createElement: (t) => new N(t) };
+  const document = { createElement: (t) => new N(t), documentElement: { lang: 'en' } };
   const picks = [];
   const fake = function inlinePicker(hex, onChange) { const b = new N('div'); b.cls.add('cc-ip'); b.set = []; b._set = (h) => b.set.push(h); b._get = () => '#123456'; b.drag = onChange; return b; };
   const build = new Function('document', 'inlinePicker', 'PRESETS',
-    'var de = false;\n' + ['el', 'T', 'normHex', 'actionBtn', 'swMark', 'swMarkRow', 'ccTick', 'idealText', 'colourField'].map((n) => grabFn(settings, n)).join('\n') +
-    '\nreturn colourField;')(document, fake, ['#FCC419', '#1D99F3', '#6FDC8C']);
+    ['div', 'german', 'normHex', 'pressable', 'swMark', 'swMarkRow', 'swTick', 'idealText', 'colorPicker'].map((n) => grabFn(theme, n)).join('\n') +
+    '\nreturn colorPicker;')(document, fake, ['#FCC419', '#1D99F3', '#6FDC8C']);
   const f = build('#1d99f3', (v) => picks.push(v), { clearable: true });
   const [picker, row] = f.children;
   ok('the picker comes first, the row under it', picker.cls.has('cc-ip') && row.cls.has('cc-set-swatches') && row.cls.has('cc-fill'));

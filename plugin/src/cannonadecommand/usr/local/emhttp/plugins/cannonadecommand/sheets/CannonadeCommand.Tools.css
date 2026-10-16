@@ -551,10 +551,11 @@ html.cc-tools-on #displaybox .ui-dropdownchecklist-item:not(:has(input[type="che
 html.cc-tools-on #displaybox blockquote.inline_help[data-cc-help],
 html.cc-tools-on #displaybox .inline-help[data-cc-help] { display: none !important; }
 
-/* the native colour picker swatch ccToolsEnhance puts next to the header colour hex fields */
+/* the swatch before a colour field, which opens CannonadeCommand's colour picker (CCTheme.colorSwatch) */
 html.cc-tools-on #displaybox .cc-colpick {
-  width: 34px; height: 30px; padding: 2px; margin-right: 8px; flex: 0 0 auto; box-sizing: border-box;
-  background: var(--cc-tl-surface2, #232323) !important; border: none !important; outline: none !important;
+  width: 30px; height: 30px; padding: 3px; margin-right: 8px; flex: 0 0 auto; box-sizing: border-box;
+  background: linear-gradient(var(--cc-cp, transparent), var(--cc-cp, transparent)) content-box, var(--cc-tl-surface2, #232323) !important;
+  border: none !important; outline: none !important;
   border-radius: var(--cc-radius-control) !important; cursor: pointer; vertical-align: middle;
 }
 html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch-wrapper { padding: 0; }

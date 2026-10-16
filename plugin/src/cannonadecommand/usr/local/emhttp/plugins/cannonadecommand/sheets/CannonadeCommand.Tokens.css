@@ -323,7 +323,7 @@ html.Theme--azure {
    each token the light override flips reads its dark value again. The tokens mixed from those on
    <html> are computed there with the light values and inherited as finished colours, so they are
    mixed again here. */
-.cc-pop, .cc-menu, .cc-win, .cc-rowmenu, .cc-bulkbar, #cc-settings .cc-set-empty, html.cc-popups-on #alternateView .cc-av-win,
+.cc-pop, .cc-menu, .cc-win, .cc-rowmenu, .cc-cpop, .cc-bulkbar, #cc-settings .cc-set-empty, html.cc-popups-on #alternateView .cc-av-win,
 html.cc-popups-on #alternateView .alternateViewContent {
   --cc-surface-1: #1e1e1e;  --cc-surface-2: #222222;  --cc-surface-3: #2e2e2e;  --cc-surface-base: #161616;
   --cc-surface-4: #262626;  --cc-surface-window: #242424;  --cc-surface-card: #191919;  --cc-surface-deep: #0f0f0f;
@@ -445,6 +445,53 @@ html .cc-win .cc-win-in::placeholder { color: var(--cc-text-hint, #a3a3a3) !impo
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)));
   color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
 }
+/* CannonadeCommand's colour picker (CCTheme.colorPicker), on the settings page and in the panel a
+   colour field of Unraid's own forms opens: a saturation and value square and a hue bar drawn with
+   CSS gradients, with draggable dots, and under it the presets in one row with the hex field. */
+.cc-ip { flex: 1; width: 100%; min-width: 0; }
+.cc-ip-sv { position: relative; height: 112px; border-radius: var(--cc-radius-control); border: 1px solid #2a2a2a; cursor: crosshair; }
+.cc-ip-dot { position: absolute; width: 12px; height: 12px; border: 2px solid #fff; border-radius: 50%; margin: -6px 0 0 -6px; box-shadow: 0 0 3px rgba(0,0,0,.8); pointer-events: none; }
+.cc-ip-hue { position: relative; height: 14px; margin-top: 8px; border-radius: var(--cc-radius-pill); background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); cursor: pointer; }
+.cc-ip-hdot { position: absolute; top: -2px; width: 8px; height: 18px; margin-left: -4px; background: #fff; border-radius: calc(var(--cc-radius-control) / 2); box-shadow: 0 0 3px rgba(0,0,0,.8); pointer-events: none; }
+/* The swatches and the hex field share one line: with flex-wrap the row breaks once there are
+   enough swatches and the hex field drops below them. The swatches are fixed-size through
+   .cc-set-sw's own flex:none, so the hex field absorbs the remaining width and reaches the row's
+   right edge, the same edge every dropdown row reaches. */
+.cc-set-swatches { display: flex; align-items: center; gap: 9px; flex-wrap: nowrap; margin-bottom: 6px; }
+.cc-set-sw { position: relative; width: 30px; height: 30px; box-sizing: border-box; border-radius: var(--cc-radius-pill); border: 2px solid transparent; cursor: pointer; padding: 0; flex: none; } /* one swatch size everywhere */
+/* The selected swatch keeps its box, so a row of one repeated shape has no odd cell in it and a
+   swatch in a flex:1 1 0 row stays in the grid it was sized into. It is marked by a brightness
+   step and a tick drawn inside it. The tick's ink has to contrast with the swatch's own colour,
+   since a white one is invisible on a light preset, so CCTheme.swMark stamps --cc-sw-tick with the
+   idealText ink; the fallback below keeps a class-only toggle visible. */
+.cc-set-sw-on { filter: brightness(1.15); }   /* a ring-free on-state */
+.cc-set-sw-on::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: var(--cc-sw-tick, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"));
+  background-repeat: no-repeat; background-position: center; background-size: 64% 64%;
+}
+/* The swatch CCTheme.colorSwatch puts before a colour field of someone else's form, the field's
+   colour inside a field's fill so a white or a black reads on every theme, and the panel it
+   opens, dark like the menus and as wide as the settings page's colour field. */
+.cc-colpick {
+  display: inline-block; flex: 0 0 auto; box-sizing: border-box; width: 30px; height: 30px; padding: 3px;
+  border-radius: var(--cc-radius-control); cursor: pointer; vertical-align: middle;
+  background: linear-gradient(var(--cc-cp, transparent), var(--cc-cp, transparent)) content-box, var(--cc-field-bg, #2e2e2e);
+}
+.cc-cpop {
+  position: fixed; z-index: 1000002; box-sizing: border-box; width: 420px; max-width: calc(100vw - 2 * var(--cc-edge, 16px));
+  padding: 12px; background: #1a1a1a; color: var(--cc-text); border-radius: var(--cc-radius-card);
+  box-shadow: var(--cc-elev-3); text-align: start;
+}
+.cc-cpop .cc-set-pickrow { display: flex; flex-direction: column; gap: 8px; }
+.cc-cpop .cc-set-swatches { gap: 6px; margin: 0; }
+html .cc-cpop .cc-set-hexin {
+  flex: 1 1 0; width: auto !important; min-width: 0; max-width: none !important; height: 30px !important; margin: 0 !important;
+  padding: 0 10px !important; box-sizing: border-box !important; background: var(--cc-surface-3) !important; color: var(--cc-text) !important;
+  border: none !important; border-radius: var(--cc-radius-control) !important; box-shadow: none !important; outline: none !important;
+  font-family: ui-monospace, "Cascadia Code", monospace; font-size: var(--cc-text-subline) !important; text-transform: uppercase; letter-spacing: .5px;
+}
+html .cc-cpop .cc-set-hexin:focus { background: #383838 !important; }
 /* Fixed digit advance width on every live badge value, so a value ticking from 9 to 100% cannot
    widen the pill and its column. */
 .cc-b-v, .cc-vmstat-chip, .cc-isl-val { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
@@ -471,7 +518,7 @@ html[data-cc-shape="square"] { --cc-radius-card: 0px; --cc-radius-control: 0px; 
    glow, not a border line. color-mix supplies the alpha, and the fixed-accent line above it is the
    fallback without color-mix. The blanket no-ring rules in docker.css, Shares.css and VmTab.css
    leave the same list out, so keep them in step. */
-:is(.cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-win-x, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast):focus-visible {
+:is(.cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-win-x, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-colpick, .cc-core, .cc-toast):focus-visible {
   outline: none !important;
   box-shadow: 0 0 0 3px rgba(252, 196, 25, .42) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important;

@@ -34,13 +34,14 @@ class N {
   removeChild(c) { const i = this.children.indexOf(c); if (i >= 0) { this.children.splice(i, 1); c.parentNode = null; } return c; }
   setAttribute(k, v) { this.attrs[k] = String(v); }
   getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }
+  hasAttribute(k) { return k in this.attrs; }
   removeAttribute(k) { delete this.attrs[k]; }
   addEventListener(t, fn) { (this.listeners[t] = this.listeners[t] || []).push(fn); }
   removeEventListener() {}
   querySelector() { return null; }
   querySelectorAll() { return []; }
 }
-const document = { createElement: t => new N(t), addEventListener: () => {}, removeEventListener: () => {} };
+const document = { documentElement: { lang: 'en' }, createElement: t => new N(t), addEventListener: () => {}, removeEventListener: () => {} };
 
 // Pull the builders out of settings.js.
 const src = fs.readFileSync(SETTINGS, 'utf8');
@@ -51,14 +52,22 @@ function grabFn(name) {
   for (let k = src.indexOf('{', i); k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}') { d--; if (!d) return src.slice(i, k + 1); } }
   throw new Error('unbalanced function: ' + name);
 }
+// The colour field comes from cc-theme.js, which the page reads as window.CCTheme.colorPicker.
+const theme = fs.readFileSync(path.join(DIR, 'cc-theme.js'), 'utf8');
+function grabTheme(name) {
+  const i = theme.indexOf('function ' + name + '(');
+  if (i < 0) throw new Error('function not found in cc-theme.js: ' + name);
+  let d = 0;
+  for (let k = theme.indexOf('{', i); k < theme.length; k++) { if (theme[k] === '{') d++; else if (theme[k] === '}') { d--; if (!d) return theme.slice(i, k + 1); } }
+  throw new Error('unbalanced function: ' + name);
+}
 const jumps = [];
 const build = new Function('document', 'window', 'jumpTo',
   'var de = false;\n' +   // the English labels, so the assertions can search for ASCII text
-  grabFn('el') + '\n' + grabFn('T') + '\n' + grabFn('infoIcon') + '\n' + grabFn('normHex') + '\n' +
-  grabFn('hexToHsv') + '\n' + grabFn('hsvToHex') + '\n' + grabFn('inlinePicker') + '\n' + grabFn('toggle') + '\n' +
-  grabFn('actionBtn') + '\n' + grabFn('inlineRow') + '\n' + grabFn('lockRow') + '\n' + grabFn('fieldRow') + '\n' + grabFn('swMark') + '\n' + grabFn('swMarkRow') + '\n' +
-  grabFn('colourField') + '\n' + grabFn('ccTick') + '\n' + grabFn('idealText') + '\n' +
-  'var PRESETS = ["#FCC419", "#1D99F3"];\n' + grabFn('logoToggles') + '\n' +
+  grabFn('el') + '\n' + grabFn('T') + '\n' + grabFn('infoIcon') + '\n' + grabFn('normHex') + '\n' + grabFn('toggle') + '\n' +
+  grabFn('actionBtn') + '\n' + grabFn('inlineRow') + '\n' + grabFn('lockRow') + '\n' + grabFn('fieldRow') + '\n' +
+  ['hexToHsv', 'hsvToHex', 'div', 'german', 'pressable', 'inlinePicker', 'swTick', 'swMark', 'swMarkRow', 'idealText', 'colorPicker'].map(grabTheme).join('\n') + '\n' +
+  'var PRESETS = ["#FCC419", "#1D99F3"], colourField = colorPicker;\n' + grabFn('logoToggles') + '\n' +
   'return { logoToggles: logoToggles };'
 )(document, {}, (sec, title) => jumps.push([sec, title]));
 const lockOf = (into) => into.children.find((c) => c.classList.contains('cc-set-locked'));

@@ -4374,14 +4374,13 @@
       a.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") open(ev); });
     } catch (e) {}
   }
-  // A colour picker for colour variables, like the one on the settings page: a swatch (a native
-  // <input type=color> styled as a CC dot) before the field, two-way synced.
+  // A colour variable gets a swatch before its field that opens the settings page's colour picker.
   function ctColorFields() {
     try {
       var dls = document.querySelectorAll("#canvas dl, .ui-dialog dl");
       for (var i = 0; i < dls.length; i++) {
         var inp = dls[i].querySelector('dd input[type="text"]');
-        if (inp && !inp.parentNode.querySelector(":scope > .cc-colorvar") && ctIsColorVar(dls[i].textContent, inp.value)) ctColorSwatch(inp);
+        if (inp && !inp.parentNode.querySelector(":scope > .cc-colorvar") && ctIsColorVar(dls[i].textContent, inp.value)) ctColorSwatch(inp, dls[i].querySelector("dt"));
       }
     } catch (e) {}
   }
@@ -4390,14 +4389,12 @@
   function ctIsColorVar(text, value) {
     return /colou?r|farbe/i.test(text) && /^(#?[0-9a-f]{6})?$/i.test(String(value || "").trim());
   }
-  function ctColorSwatch(inp) {
-    var hexOf = function (v) { v = String(v || "").trim(); return /^#?[0-9a-f]{6}$/i.test(v) ? (v[0] === "#" ? v : "#" + v) : ""; };
-    var sw = document.createElement("input"); sw.type = "color"; sw.className = "cc-colorvar";
-    sw.setAttribute(MARK, "1");
-    var seed = hexOf(inp.value); if (seed) sw.value = seed;
-    sw.addEventListener("input", function () { inp.value = sw.value; inp.dispatchEvent(new Event("change", { bubbles: true })); });
-    inp.addEventListener("input", function () { var h = hexOf(inp.value); if (h) sw.value = h; });
-    inp.parentNode.insertBefore(sw, inp);
+  // A value written without the # keeps that form; an empty field takes the #.
+  function ctColorSwatch(inp, dt) {
+    if (!window.CCTheme) return;
+    var label = dt ? (dt.textContent || "").replace(/[\s:ⓘ]+$/, "").trim() : "";
+    var sw = window.CCTheme.colorSwatch(inp, { hash: !/^[0-9a-f]{6}$/i.test(String(inp.value || "").trim()), label: label });
+    sw.classList.add("cc-colorvar"); sw.setAttribute(MARK, "1");
   }
   // Every field of the form explains itself in an (i) beside its label (GlimStone rule 8). Unraid's
   // own fields get a sentence of ours, keyed by the field's name: their inline help blocks are not

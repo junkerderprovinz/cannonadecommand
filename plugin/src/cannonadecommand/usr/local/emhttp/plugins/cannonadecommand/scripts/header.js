@@ -2012,25 +2012,22 @@
       }
       ccRowHelp();
       // Unraid's header colour fields are plain hex text inputs with no picker, so each gets a
-      // native colour swatch synced both ways. They are recognised by a hex value together with a
-      // colour-like name, and the swatch writes the field and fires change, so Apply still works.
+      // swatch that opens CannonadeCommand's colour picker, and a native <input type=color> opens
+      // that picker instead of the system's. Text fields are recognised by a hex value together
+      // with a colour-like name; the picker writes the field without the # Unraid leaves out and
+      // fires input and change, so Apply still works.
       var COLNAMES = { header: 1, headermetacolor: 1, background: 1, headertext: 1 };
-      function hex6(x) { x = String(x || "").replace(/^#/, ""); if (x.length === 3) x = x[0] + x[0] + x[1] + x[1] + x[2] + x[2]; return "#" + (x || "000000").toLowerCase(); }
-      var cinp = document.querySelectorAll("#displaybox input[type=text]:not([data-cc-colpick])");
+      var cinp = window.CCTheme ? document.querySelectorAll("#displaybox input[type=text]:not([data-cc-colpick]), #displaybox input[type=color]:not([data-cc-colpick])") : [];
       for (var ci = 0; ci < cinp.length; ci++) {
         var inp = cinp[ci], v = (inp.value || "").trim();
-        if (!/^#?[0-9a-f]{3}$|^#?[0-9a-f]{6}$/i.test(v)) continue;
         var dd0 = inp.closest("dd"), dt0 = dd0 && dd0.previousElementSibling;
         var lbl = dt0 ? (dt0.textContent || "") : "";
-        if (!COLNAMES[inp.name] && !/farbe|colou?r/i.test(lbl + " " + inp.name)) continue;   // only genuine colour fields
+        if (inp.type === "text") {
+          if (!/^#?[0-9a-f]{3}$|^#?[0-9a-f]{6}$/i.test(v)) continue;
+          if (!COLNAMES[inp.name] && !/farbe|colou?r/i.test(lbl + " " + inp.name)) continue;   // only genuine colour fields
+        }
         inp.setAttribute("data-cc-colpick", "1");
-        var pk = document.createElement("input"); pk.type = "color"; pk.className = "cc-colpick"; pk.value = hex6(v);
-        pk.setAttribute("aria-label", (lbl || inp.name || "Farbe").replace(/\s*:\s*$/, "").trim());
-        inp.parentNode.insertBefore(pk, inp);
-        (function (inp2, pk2) {
-          pk2.addEventListener("input", function () { inp2.value = pk2.value.replace(/^#/, ""); inp2.dispatchEvent(new Event("input", { bubbles: true })); inp2.dispatchEvent(new Event("change", { bubbles: true })); });
-          inp2.addEventListener("input", function () { var vv = (inp2.value || "").trim(); if (/^#?[0-9a-f]{3}$|^#?[0-9a-f]{6}$/i.test(vv)) pk2.value = hex6(vv); });
-        })(inp, pk);
+        window.CCTheme.colorSwatch(inp, { hash: v.charAt(0) === "#", label: (lbl || inp.name || "").replace(/[\s:ⓘ]+$/, "").trim() });
       }
       // On the VM manager settings page the remove link beside the VirtIO ISO dropdown becomes the
       // trash icon the Plugins tab uses. Gated to /Settings/VM so no other "remove" matches, and

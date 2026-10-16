@@ -1637,7 +1637,7 @@ html.cc-shares-on.cc-on-main #displaybox table.array_status.cc-dens-airy td:not(
    feedback. The filter is not !important, so the :hover and :disabled filters still outrank it.
    The (i) and CC's own buttons, badges and fields keep the halo Tokens.css gives them, and the
    :where() leaves this rule's weight as it is. */
-html.cc-shares-on :is(a, button, input, select, textarea, summary, [tabindex]):where(:not(.cc-info, .cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-win-x, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast)):focus-visible {
+html.cc-shares-on :is(a, button, input, select, textarea, summary, [tabindex]):where(:not(.cc-info, .cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-win-x, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-colpick, .cc-core, .cc-toast)):focus-visible {
   outline: none !important; box-shadow: none !important; filter: brightness(1.18);
 }
 

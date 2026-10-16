@@ -1355,24 +1355,6 @@ html:is(.Theme--white, .Theme--azure) #cc-settings .cc-set-card {
 .cc-set-row-segfirst .cc-seg { margin-left: auto; }
 #cc-settings .cc-seg-btn { padding: 5px 12px; }
 .cc-set-spacer { flex: 1; }
-/* The swatches and the hex field share one line: with flex-wrap the row breaks once there are
-   enough swatches and the hex field drops below them. The swatches are fixed-size through
-   .cc-set-sw's own flex:none, so the hex field absorbs the remaining width and reaches the row's
-   right edge, the same edge every dropdown row in this card reaches. */
-.cc-set-swatches { display: flex; align-items: center; gap: 9px; flex-wrap: nowrap; margin-bottom: 6px; }
-.cc-set-sw { position: relative; width: 30px; height: 30px; box-sizing: border-box; border-radius: var(--cc-radius-pill); border: 2px solid transparent; cursor: pointer; padding: 0; flex: none; } /* one swatch size everywhere */
-/* The selected swatch keeps its box, so a row of one repeated shape has no odd cell in it and a
-   swatch in a flex:1 1 0 row stays in the grid it was sized into. It is marked by a brightness
-   step and a tick drawn inside it by settings.js ccTick(). The tick's ink has to contrast with the
-   swatch's own colour, since
-   a white one is invisible on a light preset, so settings.js stamps --cc-sw-tick with the
-   idealText ink; the fallback below keeps a class-only toggle visible. */
-.cc-set-sw-on { filter: brightness(1.15); }   /* a ring-free on-state */
-.cc-set-sw-on::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background-image: var(--cc-sw-tick, url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8.5l3.2 3.2L13 5' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"));
-  background-repeat: no-repeat; background-position: center; background-size: 64% 64%;
-}
 /* Unraid's global input CSS strips a colour picker to a thin line, so appearance:none and the
    swatch pseudo-elements draw it as a real swatch. The sizing lives on the .cc-set-pick classes
    below. */
@@ -1488,20 +1470,12 @@ html.cc-tools-rbneutral #cc-settings .cc-dsel-opt.is-selected {
 button.cc-hgear[data-tip], .cc-b[data-tip], .cc-badge[data-tip], .cc-pill[data-tip] { position: relative; }
 .cc-set-mini { background: transparent; color: var(--dim); border: 1px solid var(--line2); border-radius: var(--cc-radius-pill); padding: 5px 12px; font-size: var(--cc-text-subline); cursor: pointer; }
 .cc-set-mini-on { color: #fff; border-color: var(--cc-accent, #FCC419); background: rgba(255,255,255,.05); }
-/* The embedded colour picker, in place of <input type=color> and its OS popup: a
-   saturation/value square and a hue bar drawn with CSS gradients, with draggable dots. */
-.cc-ip { flex: 1; min-width: 190px; }
-.cc-ip-sv { position: relative; height: 112px; border-radius: var(--cc-radius-control); border: 1px solid #2a2a2a; cursor: crosshair; }
-.cc-ip-dot { position: absolute; width: 12px; height: 12px; border: 2px solid #fff; border-radius: 50%; margin: -6px 0 0 -6px; box-shadow: 0 0 3px rgba(0,0,0,.8); pointer-events: none; }
-.cc-ip-hue { position: relative; height: 14px; margin-top: 8px; border-radius: var(--cc-radius-pill); background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); cursor: pointer; }
-.cc-ip-hdot { position: absolute; top: -2px; width: 8px; height: 18px; margin-left: -4px; background: #fff; border-radius: calc(var(--cc-radius-control) / 2); box-shadow: 0 0 3px rgba(0,0,0,.8); pointer-events: none; }
 /* A colour field stands at the end of its row like every other control: the picker on top, and
    under it the presets and the hex field in one row exactly as wide as the picker. */
 #cc-settings .cc-set-pickrow { display: flex; flex-direction: column; align-items: stretch; gap: 8px; flex: 0 1 420px; min-width: 0; margin: 0 0 0 auto; }
 #cc-settings .cc-set-pickrow > .cc-set-swatches { margin: 0; }
 /* the palette's field hangs under its swatches, so in that column it takes only its own height */
 #cc-settings .cc-set-pickrow > .cc-set-pickrow { flex: none; margin: 0; }
-.cc-ip { width: 100%; min-width: 0; }
 #cc-settings .cc-set-pickrow, #cc-settings .cc-set-swatches.cc-fill { max-width: 420px; }
 /* the name of a tall control sits on its first line, at the start */
 #cc-settings .cc-set-fieldrow { align-items: flex-start; flex-wrap: nowrap; }
@@ -2225,14 +2199,8 @@ html.cc-docker-on.cc-on-addct #canvas dl > dt.cc-dtlab.cc-req::after,
 html.cc-docker-on.cc-on-addct .ui-dialog dl > dt.cc-dtlab.cc-req::after {
   content: ""; flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: #ff5b57;
 }
-/* the colour-variable swatch docker.js ctColorFields builds: a native colour input as a CC dot */
-html.cc-docker-on.cc-on-addct .cc-colorvar {
-  -webkit-appearance: none; appearance: none; width: 30px; height: 30px; padding: 0;
-  border: none !important; border-radius: var(--cc-radius-control); background: none; cursor: pointer;
-  flex: 0 0 auto; margin-right: 8px; vertical-align: middle;
-}
-html.cc-docker-on.cc-on-addct .cc-colorvar::-webkit-color-swatch { border: none; border-radius: var(--cc-radius-control); }
-html.cc-docker-on.cc-on-addct .cc-colorvar::-webkit-color-swatch-wrapper { padding: 0; }
+/* the colour-variable swatch docker.js ctColorFields puts before the field */
+html.cc-docker-on.cc-on-addct .cc-colorvar { margin-right: 8px; }
 /* on a colour-variable row the input fills the rest of the cell, so it reaches the same right edge
    as the plain rows despite the swatch beside it */
 html.cc-docker-on.cc-on-addct dd:has(> .cc-colorvar),
@@ -2346,7 +2314,7 @@ html.cc-docker-on.cc-on-addct .ui-dialog select:focus-visible { outline: none !i
    sheet loads only on CC-governed pages, so the page-level selector is safe, and the field rules
    above already give focus a fill. The (i) and CC's own buttons, badges and fields keep their halo
    from Tokens.css, which this rule would outweigh by coming later. */
-:is(a, button, input, select, [tabindex]):where(:not(.cc-info, .cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-win-x, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-core, .cc-toast)):focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
+:is(a, button, input, select, [tabindex]):where(:not(.cc-info, .cc-b, .cc-badge, .cc-btn, .cc-abtn, .cc-actbtn, .cc-limbtn, .cc-bulkbtn, .cc-bulkmode-badge, .cc-b-copy, .cc-b-del, .cc-badge-toggle, .cc-plan, .cc-card-movebtn, .cc-folder-act, .cc-hgear, .cc-win-btn, .cc-win-x, .cc-seg-btn, .cc-set-tab, .cc-day, .cc-sched-x, .cc-plugsup, .cc-plugicm, .cc-in, .cc-set-toggle, .cc-set-sw, .cc-colpick, .cc-core, .cc-toast)):focus-visible { outline: none !important; box-shadow: none !important; filter: brightness(1.18); }
 
 /* The reactive rainbow on /Docker, gated on the html.cc-shares-rbneutral shares.js stamps on
    every page, the same contract as /Main. Every CC-painted control rests grey and takes its

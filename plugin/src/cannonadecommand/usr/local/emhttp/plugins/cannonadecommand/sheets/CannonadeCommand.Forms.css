@@ -78,7 +78,7 @@ html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > dd {
 }
 html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > dd.cc-fm-wide { grid-column: 1 / -1 !important; justify-self: stretch; }
 html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > .cc-fm-void,
-html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > dd > span:empty { display: none !important; }
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > dd > span:empty:not(.cc-colpick) { display: none !important; }
 /* A row without a label at the start (a checkbox list, a matrix line) puts its text first and its
    switch last, across the card. */
 html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > dd.cc-fm-wide > :is(span, label):not(.cc-del-wrap):has(> input[type="checkbox"]) { width: 100%; justify-content: flex-start; text-align: left; }
@@ -114,9 +114,10 @@ html.cc-forms-on #displaybox .cc-fm-card dd:has(> textarea) { grid-column: 1 / -
 html.cc-forms-on #displaybox .cc-fm-card :is(.cc-tsel-trigger, .cc-sel-trigger) { min-height: var(--cc-md-h, 30px); }
 html.cc-forms-on #displaybox .cc-fm-card :is(.cc-tsel, .cc-sel) { max-width: 100%; }
 
-/* A colour field: the swatch header.js adds and the hex code beside it, as one short control. */
+/* A colour field: the swatch that opens CannonadeCommand's colour picker and the hex code beside
+   it, as one short control. */
 html.cc-forms-on #displaybox .cc-fm-card dd:has(> .cc-colpick) { flex-wrap: nowrap !important; max-width: none !important; }
-html.cc-forms-on #displaybox .cc-fm-card dd > .cc-colpick { width: 30px !important; height: 30px !important; padding: 0 !important; margin: 0 !important; border-radius: var(--cc-radius-control) !important; overflow: hidden; }
+html.cc-forms-on #displaybox .cc-fm-card dd > .cc-colpick { width: 30px !important; height: 30px !important; padding: 3px !important; margin: 0 !important; border-radius: var(--cc-radius-control) !important; overflow: hidden; }
 html.cc-forms-on #displaybox .cc-fm-card dd > .cc-colpick::-webkit-color-swatch { border-radius: 0; }
 html.cc-forms-on #displaybox .cc-fm-card dd > input[type="text"][data-cc-colpick] { width: 120px !important; font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
 /* A sentence with a warning sign stays on the page in the warning ink. */

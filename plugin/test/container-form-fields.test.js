@@ -69,19 +69,15 @@ console.log('\nOnly a colour variable gets a colour swatch');
   ok('also while the key is still empty', !isColour('Encryption Key openssl rand -hex 32', ''));
   ok('a colour scheme that holds a theme name stays a text field', !isColour('Theme Color scheme, dark or light', 'dark'));
 
-  // ctColorSwatch() on two fields, then a pick in the first swatch.
-  const field = (value) => {
-    const f = { value, addEventListener() {}, dispatchEvent() {} };
-    f.parentNode = { insertBefore(sw) { f.swatch = sw; } };
-    return f;
-  };
-  const document = { createElement: () => ({ setAttribute() {}, addEventListener(t, fn) { this.onInput = fn; } }) };
-  const swatch = new Function('document', 'MARK', grabFn(docker, 'ctColorSwatch') + '\nreturn ctColorSwatch;')(document, 'data-cc');
-  global.Event = function () {};
-  const a = field('#111111'), b = field('#222222');
-  swatch(a); swatch(b);
-  a.swatch.value = '#abcdef'; a.swatch.onInput();
-  ok('each swatch writes into its own field', a.value === '#abcdef' && b.value === '#222222', a.value + ' ' + b.value);
+  // ctColorSwatch() hands each field to the shared swatch, which colour-picker-shared.test.js covers.
+  const handed = [];
+  const window = { CCTheme: { colorSwatch(inp, opts) { const sw = { attrs: {}, cls: [], classList: { add: (c) => sw.cls.push(c) }, setAttribute(k, v) { sw.attrs[k] = v; } }; handed.push([inp, opts]); return sw; } } };
+  const swatch = new Function('window', 'MARK', grabFn(docker, 'ctColorSwatch') + '\nreturn ctColorSwatch;')(window, 'data-cc');
+  const a = { value: '#111111' }, b = { value: '222222' }, c = { value: '' };
+  swatch(a, { textContent: 'Accent colour:' }); swatch(b, null); swatch(c, null);
+  ok('each field gets a swatch of its own, named after its row', handed[0][0] === a && handed[1][0] === b && handed[0][1].label === 'Accent colour');
+  ok('a value keeps its form, with or without the #', handed[0][1].hash === true && handed[1][1].hash === false, JSON.stringify(handed.map((h) => h[1].hash)));
+  ok('an empty field takes the #', handed[2][1].hash === true);
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -23,7 +23,8 @@ const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand');
 const SETTINGS = process.argv[2] || path.join(DIR, 'scripts', 'settings.js');
-const CSS = process.argv[3] || path.join(DIR, 'styles', 'docker.css');
+const CSS = process.argv[3] || path.join(DIR, 'sheets', 'CannonadeCommand.Tokens.css');
+const THEME = fs.readFileSync(path.join(DIR, 'scripts', 'cc-theme.js'), 'utf8');
 
 let pass = 0, fail = 0;
 const ok = (name, cond, extra) => { cond ? (pass++, console.log('  PASS  ' + name)) : (fail++, console.log('  FAIL  ' + name + (extra ? '  -> ' + extra : ''))); };
@@ -80,8 +81,8 @@ console.log('\nPart 1: the selected swatch is a mark, never a different size');
 
 console.log('\nPart 2: one helper marks the selected swatch everywhere');
 {
-  ok('swMark exists, holding the class and the contrast ink in one place', /function swMark\s*\(/.test(src));
-  ok('swMarkRow exists, marking one swatch in a row', /function swMarkRow\s*\(/.test(src));
+  ok('swMark exists, holding the class and the contrast ink in one place', /function swMark\s*\(/.test(THEME) && /swMark = window\.CCTheme\.swMark\b/.test(src));
+  ok('swMarkRow exists, marking one swatch in a row', /function swMarkRow\s*\(/.test(THEME) && /swMarkRow = window\.CCTheme\.swMarkRow\b/.test(src));
   // A write that goes round the helper loses the ink, and lets a card mark a
   // swatch its preview is not showing.
   const strays = code.split('\n').map((l, i) => ({ l, n: i + 1 }))
