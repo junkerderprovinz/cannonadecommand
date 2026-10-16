@@ -1158,7 +1158,7 @@
     // adopt() corrects localStorage from the server copy after the page has already drawn itself
     // with the old values, so call the repaint hooks the area scripts expose for live toggles and
     // the correction shows without another reload.
-    var CC_AREA_APPLY_HOOKS = ["ccHeaderApply", "ccSharesApply", "ccVmsApply", "ccPluginsApply", "ccFavoritesApply", "ccSettingsGridApply"];
+    var CC_AREA_APPLY_HOOKS = ["ccHeaderApply", "ccSharesApply", "ccDisksApply", "ccVmsApply", "ccPluginsApply", "ccFavoritesApply", "ccSettingsGridApply"];
     function rerenderAdoptedAreas() {
       CC_AREA_APPLY_HOOKS.forEach(function (fnName) {
         try { if (typeof window[fnName] === "function") window[fnName](); } catch (e) {}

@@ -1,0 +1,197 @@
+/* The disk tiles on /Main (scripts/disks.js). Every rule waits for html.cc-dk-on, which disks.js
+   sets only while the Start area styles /Main. A card takes its colour from --cc-dk-c, stamped per
+   card in the rainbow and flag modes, and otherwise the Start accent. */
+html.cc-dk-on {
+  --cc-dk-card: var(--cc-surface-4);
+  --cc-dk-card-hover: var(--cc-surface-3);
+  --cc-dk-inset: var(--cc-surface-base);
+  --cc-dk-metal-a: #5c5c5c; --cc-dk-metal-b: #2c2c2c; --cc-dk-well: #1e1e1e; --cc-dk-plat-a: #c4c4c4; --cc-dk-plat-b: #3a3a3a; --cc-dk-hub: #8e8e8e;
+  --cc-dk-pcb: #1a1a1a; --cc-dk-nand: #0b0b0b; --cc-dk-gold: #c9a24a; --cc-dk-plastic: #2b2b2b; --cc-dk-plastic-b: #1c1c1c;
+  --cc-dk-led-off: #3a3a3a; --cc-dk-sheen: rgba(255, 255, 255, .22); --cc-dk-arm: #b8b8b8; --cc-dk-arm-hi: #d8d8d8;
+  --cc-dk-rest: #4a4a4a; --cc-dk-rest-ink: #e6e6e6; --cc-dk-bar-off: #333;
+}
+html.cc-dk-on:is(.Theme--white, .Theme--azure) {
+  --cc-dk-card: var(--cc-surface-1);
+  --cc-dk-card-hover: color-mix(in srgb, var(--cc-surface-1) 94%, var(--cc-text));
+  --cc-dk-inset: var(--cc-surface-4);
+  --cc-dk-metal-a: #d9d9d9; --cc-dk-metal-b: #a9a9a9; --cc-dk-well: #bdbdbd; --cc-dk-plat-a: #f4f4f4; --cc-dk-plat-b: #9c9c9c; --cc-dk-hub: #7a7a7a;
+  --cc-dk-pcb: #2a2a2a; --cc-dk-nand: #151515; --cc-dk-gold: #c79b34; --cc-dk-plastic: #3a3a3a; --cc-dk-plastic-b: #262626;
+  --cc-dk-led-off: #9a9a9a; --cc-dk-sheen: rgba(255, 255, 255, .5); --cc-dk-arm: #7a7a7a; --cc-dk-arm-hi: #9a9a9a;
+  --cc-dk-rest: #8d8d8d; --cc-dk-rest-ink: #ffffff; --cc-dk-bar-off: #4a4a4a;
+}
+html.cc-dk-on #displaybox .cc-dk-hidden { display: none !important; }
+
+/* The view switch. In section view it sits at the right end of the badge row, left of the
+   controls shares.js parks there, and on a phone it drops under the badge. */
+html.cc-dk-on #displaybox .cc-dk-vsw { display: flex; justify-content: flex-end; margin: 0 0 12px; }
+html.cc-dk-on #displaybox .cc-dk-vsw.cc-dk-inhead { position: absolute; top: -4px; right: var(--cc-dk-right, 0px); margin: 0; z-index: 1; }
+@media (max-width: 600px) {
+  html.cc-dk-on #displaybox .cc-dk-vsw.cc-dk-inhead { position: static; margin: -6px 0 12px; }
+}
+html.cc-dk-on #displaybox .cc-dk-seg { display: inline-flex; gap: 3px; padding: 3px; background: var(--cc-dk-inset); border-radius: var(--cc-radius-pill); }
+html.cc-dk-on #displaybox .cc-dk-seg .cc-seg-btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 11px; border: 0; border-radius: var(--cc-radius-pill);
+  background: transparent; color: var(--cc-text-hint); font-size: var(--cc-text-subline); line-height: 1; box-shadow: none; cursor: pointer; user-select: none;
+  transition: background-color var(--cc-motion-control-dur, 0s), color var(--cc-motion-control-dur, 0s);
+}
+html.cc-dk-on #displaybox .cc-dk-seg .cc-seg-btn .cc-glyph { width: 1em; height: 1em; flex: none; }
+html.cc-dk-on #displaybox .cc-dk-seg .cc-seg-btn:hover { background: var(--cc-chip); color: var(--cc-text); }
+html.cc-dk-on #displaybox .cc-dk-seg .cc-seg-btn[aria-pressed="true"] { background: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); color: var(--cc-dk-ct, var(--cc-shr-accent-text, #161616)); }
+html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-seg .cc-seg-btn[aria-pressed="true"] { background: var(--cc-surface-3); color: var(--cc-text); }
+html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-vsw:hover .cc-dk-seg .cc-seg-btn[aria-pressed="true"] { background: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); color: var(--cc-dk-ct, var(--cc-shr-accent-text, #161616)); }
+
+html.cc-dk-on #displaybox .cc-dk-host { margin: 0 0 4px; }
+html.cc-dk-on #displaybox .cc-dk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+html.cc-dk-on #displaybox .cc-dk-pools { display: flex; flex-wrap: wrap; gap: 18px 24px; align-items: flex-start; }
+html.cc-dk-on #displaybox .cc-dk-pool { flex: 0 1 auto; min-width: 0; }
+html.cc-dk-on #displaybox .cc-dk-pool .cc-dk-grid { grid-template-columns: repeat(auto-fill, 260px); }
+html.cc-dk-on #displaybox .cc-dk-eyebrow { display: flex; gap: 8px; align-items: baseline; margin: 0 0 8px; font-size: var(--cc-text-meta); font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--cc-text-hint); }
+html.cc-dk-on #displaybox .cc-dk-eyebrow span { font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--cc-text-dim); }
+@media (max-width: 600px) {
+  html.cc-dk-on #displaybox .cc-dk-grid,
+  html.cc-dk-on #displaybox .cc-dk-pool .cc-dk-grid { grid-template-columns: minmax(0, 1fr); }
+  html.cc-dk-on #displaybox .cc-dk-pool { flex: 1 1 100%; }
+}
+
+html.cc-dk-on #displaybox .cc-dk-card {
+  position: relative; display: flex; flex-direction: column; gap: 9px; min-width: 0; padding: 12px;
+  background: var(--cc-dk-card); color: var(--cc-text); border-radius: var(--cc-radius-card); cursor: pointer;
+  font-size: var(--cc-text-body); line-height: 1.4; text-align: left;
+  transition: background-color var(--cc-motion-control-dur, 0s);
+}
+html.cc-dk-on #displaybox .cc-dk-card:hover,
+html.cc-dk-on #displaybox .cc-dk-card:focus-within { background: var(--cc-dk-card-hover); }
+html.cc-dk-on #displaybox .cc-dk-card:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); }
+html.cc-dk-on #displaybox .cc-dk-art { position: relative; height: 112px; background: var(--cc-dk-inset); border-radius: var(--cc-radius-control); overflow: hidden; }
+html.cc-dk-on #displaybox .cc-dk-art svg.cc-dk-drive { position: absolute; inset: 0; width: 100%; height: 100%; }
+html.cc-dk-on #displaybox .cc-dk-art text { font-family: inherit; }
+html.cc-dk-on #displaybox .cc-dk-card.cc-dk-down svg.cc-dk-drive { opacity: .62; }
+
+/* The action badges show on hover and keyboard focus, and always on a touch screen. */
+html.cc-dk-on #displaybox .cc-dk-acts {
+  position: absolute; top: 5px; right: 5px; display: flex; gap: 5px; padding: 3px;
+  border-radius: var(--cc-radius-pill); background: var(--cc-dk-inset); opacity: 0;
+  transition: opacity var(--cc-motion-fade-dur, 0s);
+}
+html.cc-dk-on #displaybox .cc-dk-acts:empty { display: none; }
+html.cc-dk-on #displaybox .cc-dk-card:hover .cc-dk-acts,
+html.cc-dk-on #displaybox .cc-dk-card:focus-within .cc-dk-acts { opacity: 1; }
+@media (hover: none) {
+  html.cc-dk-on #displaybox .cc-dk-acts { opacity: 1; }
+}
+html.cc-dk-on #displaybox .cc-dk-ib {
+  display: inline-flex; align-items: center; justify-content: center; width: var(--cc-icon-badge); height: var(--cc-icon-badge);
+  border-radius: var(--cc-radius-pill); background: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); color: var(--cc-dk-ct, var(--cc-shr-accent-text, #161616));
+  font-size: var(--cc-text-subline); cursor: pointer;
+}
+html.cc-dk-on #displaybox .cc-dk-ib .cc-glyph { width: 1em; height: 1em; }
+html.cc-dk-on #displaybox .cc-dk-ib:hover { box-shadow: inset 0 0 0 99px var(--cc-hover-wash); }
+html.cc-dk-on #displaybox .cc-dk-ib:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); }
+html.cc-dk-on #displaybox .cc-dk-wait .cc-dk-ib[data-act="spin"] { opacity: .5; pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) {
+  html.cc-dk-on #displaybox .cc-dk-ib:active { scale: var(--cc-motion-press-scale, 1); }
+}
+
+html.cc-dk-on #displaybox .cc-dk-namerow { display: flex; align-items: center; gap: 8px; min-width: 0; }
+html.cc-dk-on #displaybox .cc-dk-nb {
+  display: inline-flex; align-items: center; height: 28px; padding: 0 12px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  border-radius: var(--cc-radius-pill); background: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); color: var(--cc-dk-ct, var(--cc-shr-accent-text, #161616));
+  font-size: var(--cc-text-body); font-weight: 700;
+  transition: background-color var(--cc-motion-control-dur, 0s), color var(--cc-motion-control-dur, 0s);
+}
+html.cc-dk-on #displaybox .cc-dk-info { flex: none; color: var(--cc-text-dim); cursor: help; }
+html.cc-dk-on #displaybox .cc-dk-info:hover,
+html.cc-dk-on #displaybox .cc-dk-info:focus-visible { color: var(--cc-text); }
+html.cc-dk-on #displaybox .cc-dk-dev { margin-left: auto; font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: var(--cc-text-meta); color: var(--cc-text-dim); }
+html.cc-dk-on #displaybox .cc-dk-model { margin-top: -3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--cc-text-subline); color: var(--cc-text-dim); }
+
+html.cc-dk-on #displaybox .cc-dk-use { display: flex; flex-direction: column; justify-content: center; gap: 5px; min-height: 34px; }
+html.cc-dk-on #displaybox .cc-dk-uselbl { display: flex; justify-content: space-between; gap: 8px; font-size: var(--cc-text-meta); color: var(--cc-text-hint); font-variant-numeric: tabular-nums; }
+html.cc-dk-on #displaybox .cc-dk-uselbl b { color: var(--cc-text); font-weight: 600; }
+html.cc-dk-on #displaybox .cc-dk-track { position: relative; display: block; height: 8px; border-radius: var(--cc-radius-pill); background: var(--cc-chip); overflow: hidden; }
+html.cc-dk-on #displaybox .cc-dk-fill { position: absolute; inset: 0 auto 0 0; display: block; border-radius: var(--cc-radius-pill); background: var(--cc-ok); }
+html.cc-dk-on #displaybox .cc-dk-fill.cc-dk-warn { background: var(--cc-warn); }
+html.cc-dk-on #displaybox .cc-dk-fill.cc-dk-err { background: var(--cc-err); }
+html.cc-dk-on #displaybox .cc-dk-parity { display: flex; align-items: center; gap: 7px; font-size: var(--cc-text-subline); color: var(--cc-text-hint); }
+html.cc-dk-on #displaybox .cc-dk-dot { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--cc-ok); }
+html.cc-dk-on #displaybox .cc-dk-dot.cc-dk-idle { background: var(--cc-text-dim2); }
+html.cc-dk-on #displaybox .cc-dk-dot.cc-dk-warn { background: var(--cc-warn); }
+html.cc-dk-on #displaybox .cc-dk-dot.cc-dk-err { background: var(--cc-err); }
+
+html.cc-dk-on #displaybox .cc-dk-chips { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 5px; min-height: 22px; }
+html.cc-dk-on #displaybox .cc-dk-chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; white-space: nowrap;
+  border-radius: var(--cc-radius-pill); background: var(--cc-chip); color: var(--cc-text-chip); font-size: var(--cc-text-meta);
+}
+html.cc-dk-on #displaybox .cc-dk-chip .cc-glyph { width: 1em; height: 1em; }
+html.cc-dk-on #displaybox .cc-dk-chip.cc-dk-warn { background: var(--cc-warn); color: var(--cc-warn-fg); }
+html.cc-dk-on #displaybox .cc-dk-chip.cc-dk-err { background: var(--cc-err); color: var(--cc-err-fg); }
+html.cc-dk-on #displaybox .cc-dk-chip:is(.cc-dk-warn, .cc-dk-err) .cc-dk-dot { background: currentColor; }
+
+html.cc-dk-on #displaybox .cc-dk-io { display: grid; grid-template-columns: .8fr 1fr 1fr; gap: 8px; font-size: var(--cc-text-meta); color: var(--cc-text-dim); font-variant-numeric: tabular-nums; }
+html.cc-dk-on #displaybox .cc-dk-io > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+html.cc-dk-on #displaybox .cc-dk-io b { display: inline-flex; align-items: center; gap: 6px; color: var(--cc-text); font-size: var(--cc-text-subline); font-weight: 600; white-space: nowrap; }
+html.cc-dk-on #displaybox .cc-dk-io b.cc-dk-warn { color: var(--cc-warn-ink); }
+html.cc-dk-on #displaybox .cc-dk-io b.cc-dk-err { color: var(--cc-err-ink); }
+html.cc-dk-on #displaybox .cc-dk-io b.cc-dk-warn .cc-dk-dot { background: var(--cc-warn); }
+html.cc-dk-on #displaybox .cc-dk-io b.cc-dk-err .cc-dk-dot { background: var(--cc-err); }
+
+html.cc-dk-on #displaybox .cc-dk-sum {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-top: 12px; padding: 10px 14px;
+  background: var(--cc-dk-card); border-radius: var(--cc-radius-card); font-size: var(--cc-text-subline); color: var(--cc-text-hint); font-variant-numeric: tabular-nums;
+}
+html.cc-dk-on #displaybox .cc-dk-sum b { color: var(--cc-text); }
+html.cc-dk-on #displaybox .cc-dk-sumbar { width: 220px; max-width: 100%; }
+html.cc-dk-on #displaybox .cc-dk-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 28px 16px; text-align: center;
+  background: var(--cc-dk-card); border-radius: var(--cc-radius-card); color: var(--cc-text-dim); font-size: var(--cc-text-subline);
+}
+html.cc-dk-on #displaybox .cc-dk-empty b { color: var(--cc-text-hint); font-weight: 600; }
+
+/* The drawings. The sticker carries the card colour, the LED and the label lines light up in it
+   while the disk reads or writes. */
+html.cc-dk-on #displaybox .cc-dk-st { fill: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); }
+html.cc-dk-on #displaybox .cc-dk-ink { fill: var(--cc-dk-ct, var(--cc-shr-accent-text, #161616)); }
+html.cc-dk-on #displaybox :is(.cc-dk-plat, .cc-dk-arm, .cc-dk-seek) { transform-box: view-box; }
+html.cc-dk-on #displaybox .cc-dk-arm { rotate: 0deg; transition: rotate var(--cc-motion-disk-park, 0s) cubic-bezier(.4, 0, .2, 1); }
+html.cc-dk-on #displaybox .cc-dk-card.cc-dk-down .cc-dk-arm { rotate: 24deg; }
+html.cc-dk-on #displaybox .cc-dk-led { fill: var(--cc-dk-led-off); }
+html.cc-dk-on #displaybox .cc-dk-card.cc-dk-busy .cc-dk-led { fill: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); }
+html.cc-dk-on #displaybox :is(.cc-dk-sweep, .cc-dk-flow) { opacity: 0; }
+html.cc-dk-on #displaybox .cc-dk-bar { fill: var(--cc-dk-bar-off); transform-box: fill-box; transform-origin: left center; }
+html.cc-dk-on #displaybox .cc-dk-card.cc-dk-busy .cc-dk-bar { fill: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); }
+
+/* Reactive mode: a card rests grey and takes its colour while it is hovered or focused. */
+html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-card:not(:hover):not(:focus-within) :is(.cc-dk-nb, .cc-dk-ib) { background: var(--cc-chip); color: var(--cc-text); }
+html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-card:not(:hover):not(:focus-within) .cc-dk-st { fill: var(--cc-dk-rest); }
+html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-card:not(:hover):not(:focus-within) .cc-dk-ink { fill: var(--cc-dk-rest-ink); }
+html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-card.cc-dk-busy:not(:hover):not(:focus-within) :is(.cc-dk-led, .cc-dk-bar) { fill: var(--cc-text); }
+
+/* The motion reads the disk dials in Tokens.css, inside the no-preference gate, and stops at "off".
+   A disk that spins down keeps its platter where it was. */
+@keyframes cc-dk-spin { to { rotate: 360deg; } }
+@keyframes cc-dk-seek {
+  0%, 100% { rotate: calc(var(--cc-motion-disk-swing, 0deg) * -.6); }
+  30% { rotate: calc(var(--cc-motion-disk-swing, 0deg) * .7); }
+  55% { rotate: calc(var(--cc-motion-disk-swing, 0deg) * -.2); }
+  80% { rotate: calc(var(--cc-motion-disk-swing, 0deg) * .9); }
+}
+@keyframes cc-dk-blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@keyframes cc-dk-sweep { from { transform: translateX(-60px); opacity: 0; } 15%, 85% { opacity: 1; } to { transform: translateX(130px); opacity: 0; } }
+@keyframes cc-dk-bars { 0%, 100% { scale: .25 1; opacity: .55; } 50% { scale: 1 1; opacity: 1; } }
+@keyframes cc-dk-flow { from { transform: translateX(0); opacity: 0; } 15%, 85% { opacity: 1; } to { transform: translateX(46px); opacity: 0; } }
+@keyframes cc-dk-in { from { transform: translateY(var(--cc-motion-disk-rise, 0px)); opacity: .001; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-plat { animation: cc-dk-spin var(--cc-motion-disk-spin) linear infinite; }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-down .cc-dk-plat { animation-play-state: paused; }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy:not(.cc-dk-down) .cc-dk-seek { animation: cc-dk-seek var(--cc-motion-disk-seek) ease-in-out infinite; }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-led { animation: cc-dk-blink calc(var(--cc-motion-disk-blink) * var(--cc-dk-k, 1)) var(--cc-motion-disk-blink-ease) infinite; }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-sweep { animation: cc-dk-sweep calc(var(--cc-motion-disk-flow) * var(--cc-dk-k, 1)) ease-in-out infinite; }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-bar { animation: cc-dk-bars calc(var(--cc-motion-disk-flow) * var(--cc-dk-k, 1) * .8) ease-in-out infinite; }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-bar.cc-dk-n2 { animation-delay: calc(var(--cc-motion-disk-flow) * var(--cc-dk-k, 1) * -.27); }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-bar.cc-dk-n3 { animation-delay: calc(var(--cc-motion-disk-flow) * var(--cc-dk-k, 1) * -.53); }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-flow { animation: cc-dk-flow var(--cc-motion-disk-flow) linear infinite; }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-flow.cc-dk-n2 { animation-delay: calc(var(--cc-motion-disk-flow) / -3); }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-flow.cc-dk-n3 { animation-delay: calc(var(--cc-motion-disk-flow) / -1.5); }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-enter { animation: cc-dk-in .42s var(--cc-motion-disk-ease) both; animation-delay: min(calc(var(--cc-dk-i, 0) * var(--cc-motion-disk-stagger)), 480ms); }
+}
