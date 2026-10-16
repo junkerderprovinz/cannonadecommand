@@ -246,13 +246,40 @@ func TestLoadConfigKeepsTheTilesOfAnAdoptingConfigOnce(t *testing.T) {
 	}
 }
 
+func TestLoadConfigGivesTheSettingsAndToolsGridsTheirTilesOnce(t *testing.T) {
+	s := New(filepath.Join(t.TempDir(), "plan.json"))
+	ui := map[string]string{
+		"cc.iconbgrainbow": "1", "cc.iconadoptsplit": "1", "cc.iconbg": "0",
+		"cc.stylesettings": "0", "ccs.iconbg": "0", "cc.styletools": "1", "cct.iconbg": "0",
+	}
+	if err := s.SaveConfig(model.Config{UISettings: ui}); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	c, _ := s.LoadConfig()
+	got := c.UISettings
+	if got["ccs.iconbg"] != "1" || got["ccs.icontint"] != "1" || got["cc.iconadoptgrid"] != "1" {
+		t.Errorf("Settings has its own colours and gets its tiles and tint: %v", got)
+	}
+	if got["cct.iconbg"] != "0" || got["cct.icontint"] != "" || got["cc.iconbg"] != "0" {
+		t.Errorf("Tools follows the global keys, so neither its own nor the global ones change: %v", got)
+	}
+
+	got["ccs.iconbg"] = "0"
+	if err := s.SaveConfig(model.Config{UISettings: got}); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	if c, _ = s.LoadConfig(); c.UISettings["ccs.iconbg"] != "0" {
+		t.Errorf("a grid switch turned off after the step came back on: %v", c.UISettings)
+	}
+}
+
 func TestLoadConfigMarksANonAdoptingConfigWithoutTouchingIt(t *testing.T) {
 	s := New(filepath.Join(t.TempDir(), "plan.json"))
 	if err := s.SaveConfig(model.Config{UISettings: map[string]string{"cc.iconbgrainbow": "0", "cc.iconbg": "0"}}); err != nil {
 		t.Fatalf("save: %v", err)
 	}
 	c, _ := s.LoadConfig()
-	if c.UISettings["cc.iconbg"] != "0" || c.UISettings["cc.iconadoptsplit"] != "1" {
+	if c.UISettings["cc.iconbg"] != "0" || c.UISettings["cc.iconadoptsplit"] != "1" || c.UISettings["cc.iconadoptgrid"] != "1" {
 		t.Errorf("ui settings = %v", c.UISettings)
 	}
 }

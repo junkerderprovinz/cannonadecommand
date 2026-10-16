@@ -46,5 +46,23 @@ console.log('\nEvery other install is left as it is');
   ok('it runs on every page, after the Tools split', /try \{ splitToolsKeys\(localStorage\); \} catch \(e\) \{\}\s*\/\/[\s\S]*?try \{ keepAdoptedTiles\(localStorage\); \} catch \(e\) \{\}/.test(theme));
 }
 
+console.log('\nThe Settings and Tools grids get the same step, also after the one above has run');
+{
+  const grid = new Function(grabFn(theme, 'keepAdoptedGridTiles') + '; return keepAdoptedGridTiles;')();
+  const ls = store({ 'cc.iconbgrainbow': '1', 'cc.iconadoptsplit': '1', 'cc.iconbg': '0', 'cc.stylesettings': '0', 'ccs.iconbg': '0', 'cc.styletools': '1', 'cct.iconbg': '0' });
+  grid(ls);
+  ok('a grid with colours of its own gets tiles and tint', ls.s['ccs.iconbg'] === '1' && ls.s['ccs.icontint'] === '1');
+  ok('a grid that follows the global keys keeps its own as they were', ls.s['cct.iconbg'] === '0' && !('cct.icontint' in ls.s));
+  ok('the global switches stay as they are', ls.s['cc.iconbg'] === '0' && !('cc.icontint' in ls.s));
+  ok('the step is marked done under its own marker', ls.s['cc.iconadoptgrid'] === '1');
+  ls.s['ccs.iconbg'] = '0'; ls.writes.length = 0;
+  grid(ls);
+  ok('a second run writes nothing', ls.writes.length === 0 && ls.s['ccs.iconbg'] === '0');
+  const fresh = store({});
+  grid(fresh);
+  ok('a fresh install gets no key at all', fresh.writes.length === 0);
+  ok('it runs on every page, after the first step', /try \{ keepAdoptedTiles\(localStorage\); \} catch \(e\) \{\}[\s\S]*?try \{ keepAdoptedGridTiles\(localStorage\); \} catch \(e\) \{\}/.test(theme));
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

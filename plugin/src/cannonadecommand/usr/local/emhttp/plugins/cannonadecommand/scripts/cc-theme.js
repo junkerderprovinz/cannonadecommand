@@ -928,6 +928,20 @@
     ls.setItem("cc.iconadoptsplit", "1");
   }
   try { keepAdoptedTiles(localStorage); } catch (e) {}
+  // The Settings and Tools grids take the same step under a marker of their own, so an install
+  // that has already run the one above gets it for them as well. Without it a grid with colours
+  // of its own shows neither tiles nor tint while the other areas show both.
+  function keepAdoptedGridTiles(ls) {
+    var adopt = ls.getItem("cc.iconbgrainbow");
+    if (adopt == null || ls.getItem("cc.iconadoptgrid")) return;
+    if (adopt === "1") {
+      [["cc.stylesettings", "ccs."], ["cc.styletools", "cct."]].forEach(function (a) {
+        if (ls.getItem(a[0]) === "0") { ls.setItem(a[1] + "iconbg", "1"); ls.setItem(a[1] + "icontint", "1"); }
+      });
+    }
+    ls.setItem("cc.iconadoptgrid", "1");
+  }
+  try { keepAdoptedGridTiles(localStorage); } catch (e) {}
 
   window.CCTheme = {
     RB: RB, idealText: idealText, motionLevel: motionLevel, shapeName: shapeName, rbSeed: rbSeed, palette: palette, rbColor: rbColor, paintSelects: paintSelects,

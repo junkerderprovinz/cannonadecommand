@@ -46,6 +46,7 @@ func (s *Store) LoadConfig() (model.Config, error) {
 	renameUIValues(c.UISettings)
 	splitToolsKeys(c.UISettings)
 	keepAdoptedTiles(c.UISettings)
+	keepAdoptedGridTiles(c.UISettings)
 	return c, err
 }
 
@@ -71,6 +72,27 @@ func keepAdoptedTiles(ui map[string]string) {
 		}
 	}
 	ui["cc.iconadoptsplit"] = "1"
+}
+
+// gridAdoptAreas lists the Settings and Tools grids the way adoptAreas lists the other areas.
+var gridAdoptAreas = map[string]string{"cc.stylesettings": "ccs.", "cc.styletools": "cct."}
+
+// keepAdoptedGridTiles takes the keepAdoptedTiles step for the Settings and Tools grids under a
+// marker of its own, cc.iconadoptgrid, so a config that has already run that step gets it for
+// the grids as well. cc-theme.js runs the same step in the browser.
+func keepAdoptedGridTiles(ui map[string]string) {
+	adopt, seen := ui["cc.iconbgrainbow"]
+	if !seen || ui["cc.iconadoptgrid"] != "" {
+		return
+	}
+	if adopt == "1" {
+		for key, prefix := range gridAdoptAreas {
+			if ui[key] == "0" {
+				ui[prefix+"iconbg"], ui[prefix+"icontint"] = "1", "1"
+			}
+		}
+	}
+	ui["cc.iconadoptgrid"] = "1"
 }
 
 // splitToolsKeys copies the Settings keys to the Tools keys once, as cc-theme.js
