@@ -1,9 +1,9 @@
 // On a phone the menu bar keeps to one row: Unraid keeps both tiles as one clipped row each below
 // 768px, and wrapped they would take four lines at 390px. The tabs swipe sideways and fade out
 // where more wait, a tab that has a glyph shows only the glyph except the open one, and the utility
-// icons open from the burger with the bell left beside it. The user list and the settings tiles
-// follow the same house rules on every width: a page has no heading, the page action floats, and
-// a tile is one button.
+// icons open from the burger with the bell left beside it. The status chips above the tabs swipe
+// as one row too. The user list and the settings tiles follow the same house rules on every width:
+// a page has no heading, the page action floats, and a tile is one button.
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -15,9 +15,9 @@ const read = (rel) => fs.readFileSync(path.join(DIR, rel), 'utf8');
 const css = read('sheets/CannonadeCommand.Header.css');
 const header = read('scripts/header.js');
 const body = (name) => { const i = header.indexOf('function ' + name + '('); return i < 0 ? '' : header.slice(i, header.indexOf('\n  }\n', i)); };
-// The sheets as a phone reads them: every rule, less the ones for 768px and up.
-function withoutDesktop(src) {
-  const open = '@media (min-width: 768px) {';
+// The sheets as a phone reads them, less the rules for 768px and up, and as a desktop reads them,
+// less the phone rules.
+function without(src, open) {
   for (let at = src.indexOf(open); at >= 0; at = src.indexOf(open)) {
     let d = 0, k = at + open.length - 1;
     for (; k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}' && !--d) break; }
@@ -25,7 +25,8 @@ function withoutDesktop(src) {
   }
   return src;
 }
-const PHONE = PAGES.every.map((f) => ({ name: f, css: withoutDesktop(read(f)) }));
+const PHONE = PAGES.every.map((f) => ({ name: f, css: without(read(f), '@media (min-width: 768px) {') }));
+const DESKTOP = PAGES.every.map((f) => ({ name: f, css: without(read(f), '@media (max-width: 767.98px) {') }));
 const media = (src, from) => { const at = src.indexOf(from); const open = src.lastIndexOf('@media (max-width: 767.98px) {', at); return src.slice(open, src.indexOf('\n}\n', at)); };
 
 console.log('\nThe menu bar on a phone');
@@ -59,10 +60,29 @@ console.log('\nThe menu bar on a phone');
   ok('the open tab is brought into view on load and on resize', /ccTabStrip\(\);/.test(body('apply')) && header.includes('window.addEventListener("resize", ccTabStrip);'));
 }
 
+console.log('\nThe status island on a phone');
+{
+  const html = ['cc-header-on', 'cc-popups-on', 'Theme--black'];
+  const val = (sheets, el, prop) => { const c = candidates(sheets, Object.assign({ attrs: {}, states: {}, html }, el), prop); return c.length ? c[c.length - 1].value : null; };
+  const isle = { tag: 'span', classes: [], id: 'cc-island' };
+  const chip = { tag: 'span', classes: ['cc-isl-chip'], inside: ['#cc-island'] };
+  ok('the chips stay on one line', val(PHONE, isle, 'flex-direction') === 'row' && val(PHONE, isle, 'flex-wrap') === 'nowrap');
+  ok('and swipe sideways, snapping to a chip', val(PHONE, isle, 'overflow-x') === 'auto' && val(PHONE, isle, 'overflow-y') === 'hidden' && val(PHONE, isle, 'scroll-snap-type') === 'x proximity');
+  ok('without a scrollbar', val(PHONE, isle, 'scrollbar-width') === 'none' && css.includes('#cc-island::-webkit-scrollbar { display: none; }'));
+  ok('a swipe past the end leaves the page where it is', val(PHONE, isle, 'overscroll-behavior-x') === 'contain');
+  ok('the row is as wide as the screen, never wider', val(PHONE, isle, 'flex') === '1 0 100%' && val(PHONE, isle, 'min-width') === '0' && val(PHONE, isle, 'box-sizing') === 'border-box');
+  ok('a chip keeps its size and is a snap point', val(PHONE, chip, 'flex') === '0 0 auto' && val(PHONE, chip, 'scroll-snap-align') === 'start');
+  const fade = (side) => val(PHONE, { tag: 'span', classes: [side], id: 'cc-island' }, 'mask-image') || '';
+  ok('the side where more chips wait fades out, as the tabs do', fade('cc-more-r').startsWith('linear-gradient(to right') && fade('cc-more-l').startsWith('linear-gradient(to left'));
+  ok('on a desktop the island keeps its rows and does not scroll', val(DESKTOP, isle, 'flex-direction') === 'column' && val(DESKTOP, isle, 'overflow-x') === null && val(DESKTOP, chip, 'scroll-snap-align') === null);
+  ok('the fade follows each rebuild, a resize and the settle after load', body('ccIsland').includes('ccIslandStrip();') && header.includes('window.addEventListener("resize", ccIslandStrip);') && /function reSettle\(\) \{[^\n]*ccIslandStrip\(\);/.test(header));
+  ok('a rebuild refills the island in place, so a swiped row keeps its position', body('ccIsland').includes('while (isle.firstChild) isle.removeChild(isle.firstChild);'));
+}
+
 // A minimal browser around the strip's edge marks and the burger menu's icon row.
 function load(win) {
   const ctx = vm.createContext(Object.assign({ setTimeout: (f) => f(), KeyboardEvent: function (t, o) { this.type = t; Object.assign(this, o); } }, win));
-  vm.runInContext(['ccIsPhone', 'ccTabEdges', 'ccAcctTools'].map((n) => body(n) + '\n  }\n').join(''), ctx);
+  vm.runInContext(['ccIsPhone', 'ccStripEdges', 'ccIslandStrip', 'ccAcctTools'].map((n) => body(n) + '\n  }\n').join(''), ctx);
   return ctx;
 }
 class El {
@@ -87,7 +107,7 @@ console.log('\nThe tab strip fades where more tabs wait');
 {
   const run = (scrollLeft, dir) => {
     const tile = new El('div', { scrollWidth: 600, clientWidth: 300, scrollLeft });
-    load({ getComputedStyle: () => ({ direction: dir || 'ltr' }) }).ccTabEdges(tile);
+    load({ getComputedStyle: () => ({ direction: dir || 'ltr' }) }).ccStripEdges(tile);
     return [...tile.cls].sort().join(' ');
   };
   ok('at the start, on the right only', run(0) === 'cc-more-r', run(0));
@@ -95,8 +115,23 @@ console.log('\nThe tab strip fades where more tabs wait');
   ok('at the end, on the left only', run(300) === 'cc-more-l', run(300));
   ok('a right-to-left strip starts at the right, so it fades on the left', run(0, 'rtl') === 'cc-more-l', run(0, 'rtl'));
   const fits = new El('div', { scrollWidth: 300, clientWidth: 300, scrollLeft: 0 });
-  load({ getComputedStyle: () => ({ direction: 'ltr' }) }).ccTabEdges(fits);
+  load({ getComputedStyle: () => ({ direction: 'ltr' }) }).ccStripEdges(fits);
   ok('a strip that fits does not fade at all', fits.cls.size === 0);
+}
+
+console.log('\nThe status island fades where more chips wait');
+{
+  const isle = new El('span', { scrollWidth: 650, clientWidth: 382, scrollLeft: 0 });
+  const ctx = load({ document: { getElementById: (id) => (id === 'cc-island' ? isle : null) }, getComputedStyle: () => ({ direction: 'ltr' }) });
+  ctx.ccIslandStrip();
+  ok('at the start, on the right only', [...isle.cls].join(' ') === 'cc-more-r', [...isle.cls].join(' '));
+  isle.scrollLeft = 268; isle.listeners.scroll[0]();
+  ok('swiped to the end, on the left only', [...isle.cls].join(' ') === 'cc-more-l', [...isle.cls].join(' '));
+  ctx.ccIslandStrip();
+  ok('a later rebuild adds no second scroll listener', isle.listeners.scroll.length === 1);
+  let threw = false;
+  try { load({ document: { getElementById: () => null } }).ccIslandStrip(); } catch (e) { threw = true; }
+  ok('with the island switched off there is nothing to mark', !threw);
 }
 
 console.log('\nThe burger menu carries the utility icons on a phone');
