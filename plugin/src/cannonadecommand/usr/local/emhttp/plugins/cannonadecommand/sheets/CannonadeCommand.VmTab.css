@@ -322,37 +322,121 @@ html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head img.icon { color: inher
 /* Unraid's gap-1 is 2.5px on its 10px root, so the glyph and the title take a card title's 6px. */
 html.cc-vms-on.cc-sections-vms #displaybox .cc-card-head > span.left { display: inline-flex; align-items: center; gap: 6px; }
 
-/* The list/grid toggle sits on the sub-tab row (nav.tabs .tabs-container), right-aligned, borderless
-   and as tall as the sub-tabs (--cc-md-h), where Docker keeps its global controls too. */
-html.cc-vms-on #displaybox nav.tabs .tabs-container { display: flex; align-items: center; }
-html.cc-vms-on #displaybox nav.tabs .tabs-container > .cc-vm-viewseg { margin-left: auto; }
-html.cc-vms-on .cc-seg { display: inline-flex; border: none; border-radius: var(--cc-radius-pill); overflow: visible; gap: 4px; }
-html.cc-vms-on .cc-seg-btn {
-  background: #2a2a2a; color: #b5b5b5; border: none; border-radius: var(--cc-radius-pill);
-  height: var(--cc-md-h, 30px); box-sizing: border-box; padding: 0 16px;
-  font-size: var(--cc-md-fs); line-height: 1; cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
+/* The Liste/Kacheln switch at the right end of the sub-tab bar, the same one /Main and /Shares
+   carry there. */
+html.cc-vms-on { --cc-vm-inset: var(--cc-surface-base); }
+html.cc-vms-on:is(.Theme--white, .Theme--azure) { --cc-vm-inset: var(--cc-surface-4); }
+html.cc-vms-on #displaybox > nav.tabs > .cc-vm-vsw { display: flex; align-self: center; margin-left: auto; }
+html.cc-vms-on.cc-sections-vms #displaybox > nav.tabs > .cc-vm-vsw { margin-bottom: 4px; }
+html.cc-vms-on #displaybox .cc-vm-seg { display: inline-flex; gap: 3px; padding: 3px; background: var(--cc-vm-inset); border-radius: var(--cc-radius-pill); }
+html.cc-vms-on #displaybox .cc-vm-seg .cc-seg-btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 11px; border: 0; border-radius: var(--cc-radius-pill);
+  background: transparent; color: var(--cc-text-hint); font-size: var(--cc-text-subline); line-height: 1; box-shadow: none; cursor: pointer; user-select: none;
+  transition: background-color var(--cc-motion-control-dur, 0s), color var(--cc-motion-control-dur, 0s);
 }
-html.cc-vms-on .cc-seg-btn:hover { color: #e6e6e6; }
-html.cc-vms-on .cc-seg-btn.cc-seg-on { background: var(--cc-accent, #FCC419); color: var(--cc-accent-text, #161616); font-weight: 600; }
+html.cc-vms-on #displaybox .cc-vm-seg .cc-seg-btn .cc-glyph { width: 1em; height: 1em; flex: none; }
+html.cc-vms-on #displaybox .cc-vm-seg .cc-seg-btn:hover { background: var(--cc-chip); color: var(--cc-text); }
+html.cc-vms-on #displaybox .cc-vm-seg .cc-seg-btn[aria-pressed="true"] { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)); }
+html.cc-vms-on.cc-vm-rbneutral #displaybox .cc-vm-seg .cc-seg-btn[aria-pressed="true"] { background: var(--cc-surface-3); color: var(--cc-text); }
+html.cc-vms-on.cc-vm-rbneutral #displaybox .cc-vm-vsw:hover .cc-vm-seg .cc-seg-btn[aria-pressed="true"] { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)); }
+/* A phone gives the switch a line of its own under the sub-tabs, flush right. */
+@media (max-width: 600px) {
+  html.cc-vms-on #displaybox > nav.tabs { flex-wrap: wrap; height: auto; row-gap: 6px; }
+}
 
-/* Grid view (cc.vmview="grid", html.cc-vmgrid). vms.js has no engine data, so the native #kvm_list
-   table is reflowed into cards with CSS and every cell and badge stays live. Scoped to
-   table.tablesorter:has(#kvm_list) so the #vmstats table, also a .tablesorter, is left alone. */
-html.cc-vms-on.cc-vmgrid #displaybox table.tablesorter:has(#kvm_list) { display: block; background: none; }
-html.cc-vms-on.cc-vmgrid #displaybox table.tablesorter:has(#kvm_list) thead { display: none; }
-html.cc-vms-on.cc-vmgrid #displaybox table.tablesorter tbody#kvm_list {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(400px, 100%), 1fr)); gap: 12px; padding-top: 4px;
+/* The tiles (cc.vmview="grid", html.cc-vmgrid). vms.js draws them into .cc-vm-grid beside the
+   table, which stays in the page as their source but out of sight. Laid out like the Docker grid
+   card: four to a row at 1917px, --cc-card-space between cards, around a card's content and
+   between its rows, --cc-badge-gap within a row. */
+html.cc-vms-on.cc-vmgrid #displaybox #kvm_table { display: none !important; }
+html.cc-vms-on .cc-vm-grid-holder { --cc-card-space: 12px; margin: 6px 0 14px; color: var(--cc-text, #e6e6e6); font-size: var(--cc-text-subline); line-height: 1.45; }
+html.cc-vms-on .cc-vm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(400px, 100%), 1fr)); gap: var(--cc-card-space); }
+html.cc-vms-on .cc-vmc {
+  background: var(--cc-surface-1, #1e1e1e); border: none; border-radius: var(--cc-radius-card); padding: var(--cc-card-space);
+  display: flex; flex-direction: column; gap: var(--cc-card-space); min-width: 0; transition: transform .12s, box-shadow .12s;
 }
-html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable {
-  display: flex; flex-direction: column; gap: 10px;
-  background: #1e1e1e; border: none; border-radius: var(--cc-radius-card); padding: 12px 14px;
-  transition: transform .12s, box-shadow .12s;
+html.cc-vms-on .cc-vmc:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0, 0, 0, .35); }   /* elevation, not a border tint */
+/* The head: the logo at the size the list uses, the name with its IP, and the corner on the right.
+   A card too narrow for the corner beside the name puts it on a line of its own. */
+html.cc-vms-on .cc-vmc-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cc-card-space); }
+html.cc-vms-on .cc-vmc-icobox {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; overflow: hidden;
+  width: var(--cc-logo-box, 78px); height: var(--cc-logo-box, 78px); border-radius: var(--cc-radius-control); background: var(--cc-surface-4, #262626);
 }
-html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0, 0, 0, .35); } /* elevation only, no border at rest or on hover */
-html.cc-vms-on.cc-vmgrid #kvm_list tr.sortable > td {
-  display: block; border: none !important; padding: 0 !important; max-width: none !important; white-space: normal !important;
+html.cc-vms-on .cc-vmc-icobox > img.img { display: block; width: var(--cc-logo-img, 62px); height: var(--cc-logo-img, 62px); object-fit: contain; margin: 0; }
+html.cc-vms-on .cc-vmc-icobox > i.img {
+  display: flex; align-items: center; justify-content: center; margin: 0;
+  width: var(--cc-logo-img, 62px); height: var(--cc-logo-img, 62px); font-size: var(--cc-logo-img, 62px); line-height: 1;
 }
+/* The logo tile takes the list's colour chain: the picked colour, then the row's rainbow slot. */
+html.cc-vms-on.cc-vm-iconbg .cc-vmc-icobox { background: var(--cc-iconbg-color, var(--cc-accent, #FCC419)); }
+html.cc-vms-on.cc-vm-iconbg.cc-vm-rainbow:not(.cc-vm-rbneutral) .cc-vmc-icobox { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)))); }
+html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral .cc-vmc-icobox { background: rgba(128, 128, 128, .18); }
+html.cc-vms-on.cc-vm-iconbg.cc-vm-rbneutral .cc-vmc:hover .cc-vmc-icobox { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419)))); }
+html.cc-vms-on .cc-vmc-name { flex: 1 1 100px; min-width: 0; }
+html.cc-vms-on .cc-vmc-title { font-weight: 600; font-size: var(--cc-text-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.cc-vms-on .cc-vmc-title > i.fa-warning { margin-left: 6px; }
+/* Several addresses wrap, and a third line would push the name off the logo's middle. */
+html.cc-vms-on .cc-vmc-ip {
+  color: var(--cc-text-dim, #8a8a8a); font-size: var(--cc-text-meta); font-family: Consolas, "SFMono-Regular", monospace;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
+html.cc-vms-on .cc-vmc-ip:has(> .cc-vmb-noip) { display: block; overflow: visible; }
+html.cc-vms-on .cc-vmc-corner { margin-left: auto; align-self: flex-start; display: flex; flex-direction: column; align-items: flex-end; gap: var(--cc-badge-gap, 5px); }
+html.cc-vms-on .cc-vmc-cornerrow { display: flex; align-items: center; gap: var(--cc-badge-gap, 5px); }
+@media (max-width: 540px) { html.cc-vms-on .cc-vmc-corner { flex: 1 0 100%; flex-direction: row-reverse; flex-wrap: wrap; align-items: center; } }
+/* the actions in one row; they come in on hover and focus and stay on a touch screen */
+html.cc-vms-on .cc-vmc-actbar .cc-actbar { flex-direction: row; flex-wrap: wrap; gap: var(--cc-badge-gap, 5px); }
+html.cc-vms-on .cc-vmc-actbar .cc-actrow { display: contents; }
+html.cc-vms-on .cc-vmc:is(:hover, :focus-within) .cc-actbar { opacity: 1; }
+/* The resource badges at the foot, each as tall as the gear beside it, so a row reads as one line. */
+html.cc-vms-on .cc-vmc-res.cc-resgroup { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--cc-badge-gap, 5px); width: 100%; }
+html.cc-vms-on .cc-vmc-res .cc-resline { display: inline-flex; align-items: center; gap: 3px; }
+html.cc-vms-on .cc-vmc :is(.cc-b, .cc-badge) { height: var(--cc-icon-badge, 26px); box-sizing: border-box; padding-block: 0; margin: 0; }
+html.cc-vms-on .cc-vmc-res .cc-b { padding-inline: 8px; gap: 4px; }
+/* The autostart switch, CC's toggle over Unraid's own checkbox. */
+html.cc-vms-on .cc-vmc .cc-set-toggle { width: 44px; height: 24px; border-radius: var(--cc-radius-pill); border: none; padding: 0; background: var(--cc-toggle-track-off, #3a3a3a); position: relative; cursor: pointer; transition: background .15s; flex: none; box-sizing: border-box; }
+html.cc-vms-on .cc-vmc .cc-set-toggle-on { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); }
+html.cc-vms-on .cc-vmc .cc-set-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: var(--cc-radius-pill); background: #fff; transition: left .15s; }
+html.cc-vms-on .cc-vmc .cc-set-toggle-on .cc-set-knob { left: 21px; background: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)); }
+
+/* The tiles' badges and gears take the list's look and colours. */
+html.cc-vms-on .cc-vm-grid .cc-b,
+html.cc-vms-on .cc-vm-grid .cc-badge {
+  display: inline-flex; align-items: center; gap: 5px; border: none !important;
+  border-radius: var(--cc-radius-pill); font-size: var(--cc-sm-fs); font-weight: 600; line-height: 1.35; white-space: nowrap; text-decoration: none;
+}
+html.cc-vms-on .cc-vm-grid .cc-b { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)); }
+html.cc-vms-on .cc-vm-grid .cc-b-k { opacity: .72; font-weight: 500; }
+html.cc-vms-on .cc-vm-grid .cc-b-v { font-family: Consolas, "SFMono-Regular", monospace; }
+html.cc-vms-on .cc-vm-grid .cc-b a,
+html.cc-vms-on .cc-vm-grid .cc-b a i { color: inherit !important; text-decoration: none !important; }
+html.cc-vms-on .cc-vm-grid .cc-badge { padding-inline: 11px; }
+html.cc-vms-on .cc-vm-grid .cc-badge-paused { background: var(--cc-warn, #ff832b); color: var(--cc-warn-fg, #161616); }
+html.cc-vms-on .cc-vm-grid .cc-badge-exited { background: var(--cc-badge-neutral, #3c3c3c); color: var(--cc-text-chip, #cfcfcf); }
+html.cc-vms-on.cc-vm-rainbow .cc-vm-grid .cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-accent, #FCC419)); color: var(--cc-rb-cpu-t, var(--cc-accent-text, #161616)); }
+html.cc-vms-on.cc-vm-rainbow .cc-vm-grid .cc-b-ram { background: var(--cc-rb-ram, var(--cc-accent, #FCC419)); color: var(--cc-rb-ram-t, var(--cc-accent-text, #161616)); }
+html.cc-vms-on.cc-vm-rainbow .cc-vm-grid .cc-b-bw { background: var(--cc-rb-bw, var(--cc-accent, #FCC419)); color: var(--cc-rb-bw-t, var(--cc-accent-text, #161616)); }
+html.cc-vms-on.cc-vm-rainbow .cc-vm-grid .cc-b-vol { background: var(--cc-rb-vol, var(--cc-accent, #FCC419)); color: var(--cc-rb-vol-t, var(--cc-accent-text, #161616)); }
+/* reactive: the badges rest grey and take their colour while the pointer is on the tile */
+html.cc-vms-on.cc-vm-rbneutral .cc-vm-grid .cc-b { background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
+html.cc-vms-on.cc-vm-rbneutral .cc-vm-grid .cc-vmc:hover .cc-b { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important; }
+html.cc-vms-on.cc-vm-rbneutral .cc-vm-grid .cc-vmc:hover .cc-b.cc-b-cpu { background: var(--cc-rb-cpu, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-cpu-t, var(--cc-accent-text, #161616)) !important; }
+html.cc-vms-on.cc-vm-rbneutral .cc-vm-grid .cc-vmc:hover .cc-b.cc-b-ram { background: var(--cc-rb-ram, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ram-t, var(--cc-accent-text, #161616)) !important; }
+html.cc-vms-on.cc-vm-rbneutral .cc-vm-grid .cc-vmc:hover .cc-b.cc-b-bw { background: var(--cc-rb-bw, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-bw-t, var(--cc-accent-text, #161616)) !important; }
+html.cc-vms-on.cc-vm-rbneutral .cc-vm-grid .cc-vmc:hover .cc-b.cc-b-vol { background: var(--cc-rb-vol, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-vol-t, var(--cc-accent-text, #161616)) !important; }
+html.cc-vms-on.cc-vm-rbneutral .cc-vm-grid .cc-vmc:hover .cc-actbtn:not(.cc-actoff) { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
+html.cc-vms-on .cc-vm-grid .cc-limbtn { display: inline-flex; align-items: center; justify-content: center; width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); box-sizing: border-box; border-radius: var(--cc-radius-pill); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text, #e6e6e6); cursor: pointer; margin: 0; }
+html.cc-vms-on .cc-vm-grid .cc-limbtn:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
+html.cc-vms-on .cc-vm-grid .cc-limbtn-set { color: var(--cc-ok-fg, #161616); background: var(--cc-ok, #6fdc8c); }
+html.cc-vms-on.cc-vm-rainbow .cc-vm-grid .cc-limbtn-set { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; }
+
+/* No IP yet: a muted dash with the explanation in its (i), in the list and on the tile. docker.css,
+   which styles the (i) elsewhere, is not loaded on /VMs. */
+html.cc-vms-on .cc-vmb-noip { display: inline-flex; align-items: center; gap: 6px; color: var(--cc-text-dim, #8a8a8a); font-family: inherit; }
+html.cc-vms-on .cc-vmb-noip .cc-info { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; color: var(--cc-text, #e6e6e6); opacity: .8; cursor: help; flex: 0 0 auto; }
+html.cc-vms-on .cc-vmb-noip .cc-info:hover { opacity: 1; }
+html.cc-vms-on .cc-vmb-noip .cc-info svg { width: 15px; height: 15px; display: block; }
 
 /* Rainbow mode (html.cc-vm-rainbow) reads the global cc.rainbow and the --cc-rb-* palette vms.js
    stamps on <html>. Only the CPU, RAM and IP badges recolour; the state badge keeps its meaning

@@ -1,5 +1,5 @@
-/* CannonadeCommand for Unraid's VMs tab: state and info badges, the VM icon tint and the
- * per-VM limits. It reacts live to settings changes through the storage event and clears
+/* CannonadeCommand for Unraid's VMs tab: state and info badges, the VM icon tint, the per-VM
+ * limits and the tiles. It reacts live to settings changes through the storage event and clears
  * itself after an uninstall, when the same-origin proxy answers 404. The selectors follow
  * Unraid's VM manager DOM; a build that renders icons differently gets no tint.
  */
@@ -128,14 +128,19 @@
     return "#" + m[1] + m[2] + m[3];
   }
   // From dynamix.vm.manager VMMachines.php: the VM list is tbody#kvm_list and each row's
-  // td.vm-name holds the icon at span[id^="vm-"] > .img (an <img> or an <i> glyph).
+  // td.vm-name holds the icon at span[id^="vm-"] > .img (an <img> or an <i> glyph). The tiles
+  // carry a copy of it, which takes the same tint.
   function vmImgs() {
-    var sels = ["#kvm_list td.vm-name span[id^='vm-'] > .img", "#kvm_list td.vm-name img.img", "#kvm_list td.vm-name img"];
-    for (var i = 0; i < sels.length; i++) { var n = document.querySelectorAll(sels[i]); if (n.length) return n; }
-    return [];
+    var sels = ["#kvm_list td.vm-name span[id^='vm-'] > .img", "#kvm_list td.vm-name img.img", "#kvm_list td.vm-name img"], out = [];
+    for (var i = 0; i < sels.length; i++) { var n = document.querySelectorAll(sels[i]); if (n.length) { out = Array.prototype.slice.call(n); break; } }
+    return out.concat(Array.prototype.slice.call(document.querySelectorAll(".cc-vm-grid .cc-vmc-icobox > .img")));
   }
   // The VM behind one icon element, for the icon pipeline's lookup + per-VM pin.
-  function vmIconName(n) { var tr = n && n.closest ? n.closest("tr") : null; return (tr && vmNameOf(tr)) || ""; }
+  function vmIconName(n) {
+    var host = n && n.closest ? n.closest("tr, .cc-vmc") : null;
+    if (!host) return "";
+    return host.tagName === "TR" ? (vmNameOf(host) || "") : (host.getAttribute("data-name") || "");
+  }
   // A glyph gets either a css colour or the luminance filter, never both, or the tint would
   // double and dim the hue. Kept separate so the tests can reach it; ibgOn and ibgAcc are unused
   // because `ink` already says whether Einfärben is on.
@@ -226,20 +231,42 @@
       rt.setProperty("--cc-rb-" + k, c); rt.setProperty("--cc-rb-" + k + "-t", ccIdeal(c));
     });
   }
-  // The VM tab has no grid view: a CSS reflow of Unraid's live tablesorter/sortable table
-  // fights its drag and sort machinery, and vms.js has no data model to render real cards.
-  function currentView() { return "list"; }
+  // The list is the default, as on the Docker tab. The tiles belong to the theming, so they never
+  // show with theming off.
+  function currentView() { return (ls(VMVIEW_KEY) === "grid" && ls("cc.theming") !== "0") ? "grid" : "list"; }
   function applyView() {
-    document.documentElement.classList.toggle("cc-vmgrid", currentView() === "grid");
-    var tg = document.getElementById("cc-vm-viewtoggle"); if (!tg) return;
-    var g = currentView() === "grid", b = tg.querySelectorAll(".cc-seg-btn");
-    if (b[0]) b[0].classList.toggle("cc-seg-on", !g); if (b[1]) b[1].classList.toggle("cc-seg-on", g);
+    var g = currentView() === "grid";
+    document.documentElement.classList.toggle("cc-vmgrid", g);
+    var tg = document.getElementById("cc-vm-viewtoggle");
+    if (tg) Array.prototype.forEach.call(tg.querySelectorAll(".cc-seg-btn"), function (b) {
+      var on = b.getAttribute("data-v") === (g ? "grid" : "list");
+      b.classList.toggle("cc-seg-on", on); b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    if (g) renderVmGrid(); else removeVmGrid();
   }
+  // The Liste/Kacheln switch at the right end of the sub-tab bar, the same one /Main and /Shares
+  // carry there.
   function ensureViewToggle() {
-    // removes a List/Grid toggle an older version may have left in the page
-    var ex = document.getElementById("cc-vm-viewtoggle");
-    if (ex) { var eb = ex.closest(".cc-vm-toolbar") || ex; if (eb.parentNode) eb.parentNode.removeChild(eb); }
+    if (document.getElementById("cc-vm-viewtoggle")) return;
+    var nav = document.querySelector("#displaybox > nav.tabs");
+    if (!nav) return;
+    var de = LANG === "de";
+    var sw = el("div", "cc-vm-vsw"); sw.id = "cc-vm-viewtoggle";
+    var seg = el("span", "cc-vm-seg");
+    seg.setAttribute("role", "group"); seg.setAttribute("aria-label", de ? "Ansicht" : "View");
+    [["list", de ? "Liste" : "List", "ViewList"], ["grid", de ? "Kacheln" : "Tiles", "ViewGrid"]].forEach(function (o) {
+      var b = el("span", "cc-seg-btn");
+      b.innerHTML = ccGlyph(o[2]);
+      b.appendChild(el("span", null, o[1]));
+      b.setAttribute("data-v", o[0]);
+      if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(b); else { b.setAttribute("role", "button"); b.setAttribute("tabindex", "0"); }
+      b.addEventListener("click", function () { try { localStorage.setItem(VMVIEW_KEY, o[0]); } catch (e) {} apply(); });
+      seg.appendChild(b);
+    });
+    sw.appendChild(seg);
+    nav.appendChild(sw);
   }
+  function removeViewToggle() { var vt = document.getElementById("cc-vm-viewtoggle"); if (vt && vt.parentNode) vt.parentNode.removeChild(vt); }
   // Tab-Ansicht: flattens the /VMs sub-tabs (#kvm_list and #vmstats) into stacked sections, each
   // headed by a .cc-card-head cloned from its hidden tab button. Same MainContentTabbed DOM as
   // /Shares/Share and /Main.
@@ -309,7 +336,7 @@
       ["cc-vm-tint-svg", "cc-vm-mono-svg", "cc-vm-tint-svg-blk", "cc-vm-tint-svg-wht", "cc-vm-mono-svg-blk", "cc-vm-mono-svg-wht"].forEach(function (id) { var h = document.getElementById(id); if (h) h.remove(); });
       document.documentElement.classList.remove("cc-vmgrid", "cc-vm-rainbow", "cc-vm-rbneutral");
       RB_KINDS.forEach(function (k) { document.documentElement.style.removeProperty("--cc-rb-" + k); document.documentElement.style.removeProperty("--cc-rb-" + k + "-t"); });
-      var vt = document.getElementById("cc-vm-viewtoggle"); if (vt) { var vbar = vt.closest(".cc-vm-toolbar") || vt; if (vbar.parentNode) vbar.parentNode.removeChild(vbar); }
+      removeViewToggle(); removeVmGrid();
     } catch (e) {}
   }
   // from docker.js, so the VM badges share Docker's classes and structure
@@ -549,7 +576,7 @@
     syncGear(group.querySelector(".cc-lim-bw"), s.bw, "bw");
     var bwv = group.querySelector(".cc-b-bw .cc-b-v"); if (bwv) bwv.textContent = vmBwText(lim);
   }
-  function refreshAllRes() { try { Array.prototype.forEach.call(document.querySelectorAll("#kvm_list .cc-resgroup[data-cc-vm]"), refreshResGroup); } catch (e) {} }
+  function refreshAllRes() { try { Array.prototype.forEach.call(document.querySelectorAll("#kvm_list .cc-resgroup[data-cc-vm], .cc-vm-grid .cc-resgroup[data-cc-vm]"), refreshResGroup); } catch (e) {} }
   // one resource line: badge + its gear, side by side (docker.js resLine). Gear optional.
   function vmResLine(badge, gear) { var l = el("div", "cc-resline"); l.appendChild(badge); if (gear) l.appendChild(gear); return l; }
   // One live-resize row per disk, grow only (the engine rejects a shrink).
@@ -884,22 +911,49 @@
       head.setAttribute("data-cc-reshdr", "1");
     } catch (e) {}
   }
+  // Cells are found by class and content (VMMachines.php L217-229) rather than by index, which the
+  // injected Actions td or a missing description would shift. span.vmgraphics marks the graphics
+  // cell and then the IP cell, and is matched at any depth, since a badged cell holds it inside
+  // its badge.
+  function vmCells(row) {
+    var c = { name: row.querySelector(":scope > td.vm-name"), desc: null };
+    var vcpuA = row.querySelector(":scope > td a[class*='vcpu-']");   // <a class='vcpu-$uuid'> (L224)
+    c.cpu = vcpuA ? vcpuA.closest("td") : null;
+    c.ram = c.cpu ? c.cpu.nextElementSibling : null;                  // $mem cell (L225)
+    if (c.cpu) { var p = c.cpu.previousElementSibling; if (p && !p.classList.contains("vm-name") && !p.classList.contains("cc-actcell")) c.desc = p; }
+    var diskSpan = row.querySelector(":scope > td > span.state");      // vm-name's span.state is nested deeper (L226)
+    c.disk = diskSpan ? diskSpan.parentNode : null;
+    var vg = row.querySelectorAll(":scope > td span.vmgraphics");      // graphics (L227) then ip (L228), document order
+    c.graphics = vg[0] ? vg[0].closest("td") : null;
+    c.ip = vg[1] ? vg[1].closest("td") : null;
+    return c;
+  }
   // The native IP cell joins one "addr/prefix" per line with <br>, and textContent would glue the
-  // lines together, so the split follows the <br> elements. Each valid address becomes a Docker-style
-  // click-to-copy pill; without any (a "guest agent" note) the native content stays.
-  function vmIpCell(td) {
-    if (!td || td.classList.contains("cc-vmb-cell")) return;
+  // lines together, so the split follows the <br> elements.
+  function vmIpLines(td) {
     var span = td.querySelector("span.vmgraphics") || td, lines = [], cur = "";
     Array.prototype.forEach.call(span.childNodes, function (n) {
       if (n.nodeType === 1 && n.tagName === "BR") { lines.push(cur); cur = ""; }
       else cur += (n.textContent || "");
     });
     lines.push(cur);
-    var ips = lines.map(function (s) { return s.trim(); }).filter(function (s) {
+    return lines.map(function (s) { return s.trim(); }).filter(function (s) {
       return /^(?:\d{1,3}\.){3}\d{1,3}(?:\/\d+)?$/.test(s) || /^[0-9a-f:]+(?:\/\d+)?$/i.test(s);
     });
-    if (!ips.length) return;
-    var wrap = el("span", "cc-vmb-ips");
+  }
+  // Without an address Unraid writes the same sentence about the guest agent into every row, so a
+  // muted dash stands there instead and the sentence becomes the (i) beside it.
+  function vmNoIp() {
+    var s = el("span", "cc-vmb-noip");
+    s.appendChild(el("span", "cc-vmb-noip-dash", "-"));
+    if (window.CCTheme && window.CCTheme.infoIcon) s.appendChild(window.CCTheme.infoIcon(LANG === "de" ? "Die IP-Adresse steht hier, sobald in der VM der QEMU-Gast-Agent läuft." : "The IP address shows here once the QEMU guest agent runs in the VM."));
+    return s;
+  }
+  // Each address becomes a Docker-style click-to-copy pill.
+  function vmIpCell(td) {
+    if (!td || td.classList.contains("cc-vmb-cell")) return;
+    var ips = vmIpLines(td), wrap = el("span", "cc-vmb-ips");
+    if (!ips.length) wrap.appendChild(vmNoIp());
     ips.forEach(function (ip) {
       var b = el("span", "cc-b cc-b-info cc-b-ip cc-b-copy"); b.appendChild(el("span", "cc-b-k", "IP")); b.appendChild(el("span", "cc-b-v", ip));
       b.title = "Klicken zum Kopieren";
@@ -909,42 +963,164 @@
     for (var c = td.firstChild; c; c = c.nextSibling) { if (c.nodeType === 1) c.style.display = "none"; }  // hide native, don't destroy -> reversible teardown
     td.appendChild(wrap); td.classList.add("cc-vmb-cell", "cc-vmb-ipcell");
   }
-  // The disks cell holds span.state = "DISKS&nbsp;&nbsp;&nbsp;&nbsp;CDS<a.hand ISO-picker><br>(Snapshots: X)",
-  // which vmCell skips for its <br>. It splits into vDisks, CD and Snapshots badges; the ISO picker
-  // is cloned into the CD badge (its inline onclick survives cloneNode) and the native span hidden.
-  function vmDiskCell(td) {
-    if (!td || td.classList.contains("cc-vmb-cell")) return;
-    var span = td.querySelector(":scope > span.state"); if (!span) return;
+  // The disks cell holds span.state = "DISKS&nbsp;&nbsp;&nbsp;&nbsp;CDS<a.hand ISO-picker><br>(Snapshots: X)".
+  // DISKS and CDS each read "count / size", so they are told apart by the run of spaces between
+  // them rather than by single spaces.
+  function vmDiskParts(span) {
     var preTxt = "", postTxt = "", seenBr = false, link = null;
     Array.prototype.forEach.call(span.childNodes, function (n) {
       if (n.nodeType === 1 && n.tagName === "BR") { seenBr = true; return; }
       if (!seenBr) { if (n.nodeType === 1 && n.classList && n.classList.contains("hand")) link = n; else preTxt += (n.textContent || ""); }
       else postTxt += (n.textContent || "");
     });
-    var parts = preTxt.split(/\s+/).map(function (s) { return s.trim(); }).filter(function (s) { return s !== ""; });
-    var disksVal = parts.length ? parts[0] : "", cdsVal = parts.length > 1 ? parts.slice(1).join(" ") : "";
+    var parts = preTxt.split(/[\s ]{2,}/).map(function (s) { return s.trim(); }).filter(function (s) { return s !== ""; });
     var sm = /\(([^:]+):\s*([^)]*)\)/.exec(postTxt.replace(/ /g, " ").trim());
-    var snapLabel = sm ? sm[1].trim() : "Snapshots", snapVal = sm ? sm[2].trim() : "";
-    var mk = function (label, value, kind) {
-      var b = el("span", "cc-b cc-b-info" + (kind ? " cc-b-" + kind : "")); b.appendChild(el("span", "cc-b-k", label));
-      var v = el("span", "cc-b-v"); v.textContent = value; b.appendChild(v); return b;
-    };
+    return { disks: parts[0] || "", cds: parts.slice(1).join(" "), link: link, snapLabel: sm ? sm[1].trim() : "Snapshots", snapVal: sm ? sm[2].trim() : "" };
+  }
+  function vmBadge(label, value, kind) {
+    var b = el("span", "cc-b cc-b-info" + (kind ? " cc-b-" + kind : ""));
+    if (label) b.appendChild(el("span", "cc-b-k", label));
+    b.appendChild(el("span", "cc-b-v", value));
+    return b;
+  }
+  // vDisks with the live-resize gear, CD with a copy of the ISO picker (its inline onclick survives
+  // cloneNode) and Snapshots, for the list cell and the tile alike.
+  function vmDiskBadges(name, p) {
+    var out = [];
+    if (p.disks && p.disks !== "-") { var vd = vmBadge("vDisks", p.disks, "vol"); out.push(name ? vmResLine(vd, vmGear(name, "disk", false)) : vd); }
+    if (p.cds) {
+      var cd = vmBadge("CD", p.cds, "vol");
+      if (p.link) { var cl = p.link.cloneNode(true); cl.style.marginLeft = "6px"; cd.querySelector(".cc-b-v").appendChild(cl); }
+      out.push(cd);
+    }
+    if (p.snapVal) out.push(vmBadge(p.snapLabel, p.snapVal, ""));
+    return out;
+  }
+  // vmCell skips the disks cell for its <br>, so it gets its own badges and the native span is hidden.
+  function vmDiskCell(td) {
+    if (!td || td.classList.contains("cc-vmb-cell")) return;
+    var span = td.querySelector(":scope > span.state"); if (!span) return;
+    var badges = vmDiskBadges(vmNameOf(td.closest("tr")), vmDiskParts(span));
+    if (!badges.length) return;                         // nothing parseable -> leave native untouched
     var wrap = el("span", "cc-vmb-disks");
-    if (disksVal && disksVal !== "-") {
-      // the gear opens the live-resize editor
-      var vmn = vmNameOf(td.closest("tr"));
-      var vdB = mk("vDisks", disksVal, "vol");
-      wrap.appendChild(vmn ? vmResLine(vdB, vmGear(vmn, "disk", false)) : vdB);
-    }
-    if (cdsVal) {
-      var cdB = mk("CD", cdsVal, "vol");
-      if (link) { var cl = link.cloneNode(true); cl.style.marginLeft = "6px"; cdB.querySelector(".cc-b-v").appendChild(cl); }
-      wrap.appendChild(cdB);
-    }
-    if (snapVal) wrap.appendChild(mk(snapLabel, snapVal, ""));
-    if (!wrap.childNodes.length) return;               // nothing parseable -> leave native untouched
+    badges.forEach(function (b) { wrap.appendChild(b); });
     span.style.display = "none";                        // hide native, reversible
     td.appendChild(wrap); td.classList.add("cc-vmb-cell", "cc-vmb-diskcell");
+  }
+  // The tiles. Unraid's table stays in the page, hidden, as their source: loadlist() rebuilds it and
+  // its controls carry Unraid's own handlers. The tiles live in a container of their own beside it,
+  // since a CSS reflow of the live table fights tablesorter and the drag sorting. A tile is drawn
+  // from its row and redrawn only when what it shows has changed, so hover and focus survive the
+  // frequent passes.
+  var vmGridHolder = null;
+  function removeVmGrid() { if (vmGridHolder && vmGridHolder.parentNode) vmGridHolder.parentNode.removeChild(vmGridHolder); vmGridHolder = null; }
+  function vmRowData(tr) {
+    var cx = vmCtxFor(tr), c = vmCells(tr);
+    var txt = function (n) { return n ? (n.textContent || "").replace(/\s+/g, " ").trim() : ""; };
+    var st = c.name ? c.name.querySelector("span.state") : null;
+    var ds = /cc-badge-(running|paused|exited)/.exec(st ? st.className : "");
+    var dspan = c.disk ? c.disk.querySelector(":scope > span.state") : null;
+    var auto = tr.querySelector("input.autostart");
+    return {
+      name: cx.name || vmNameOf(tr) || "", uuid: cx.uuid, state: ds ? ds[1] : "exited", label: txt(st),
+      cpu: txt(c.cpu ? c.cpu.querySelector("a[class*='vcpu-']") : null) || "-",
+      ram: txt(c.cpu && c.cpu.querySelector(".cc-b-ram .cc-b-v") || c.ram) || "-",
+      disks: dspan ? vmDiskParts(dspan) : null,
+      graphics: txt(c.graphics ? c.graphics.querySelector("span.vmgraphics") : null),
+      ips: c.ip ? vmIpLines(c.ip) : [],
+      auto: auto ? auto.checked : null,
+      ctx: [cx.state, cx.vmrcurl, cx.log, cx.webui].join("|")
+    };
+  }
+  function vmCardSig(d) { return JSON.stringify(d, function (k, v) { return k === "link" ? (v ? v.getAttribute("onclick") : "") : v; }); }
+  // A tile's autostart switch works the row's own checkbox through Unraid's switchButton, so
+  // Unraid's change handler saves it exactly as a click in the list would.
+  function vmNativeAuto(uuid) { return uuid ? document.querySelector('#kvm_list input.autostart[uuid="' + uuid + '"]') : null; }
+  function vmAutoSwitch(uuid) {
+    if (!vmNativeAuto(uuid)) return null;
+    var tg = el("span", "cc-set-toggle cc-vmc-auto"); tg.setAttribute("role", "switch"); tg.setAttribute("tabindex", "0");
+    tg.setAttribute("aria-label", "Autostart"); tg.setAttribute("data-tip", "Autostart");
+    tg.appendChild(el("span", "cc-set-knob"));
+    function show(on) { tg.classList.toggle("cc-set-toggle-on", on); tg.setAttribute("aria-checked", on ? "true" : "false"); }
+    function flip() {
+      var b = vmNativeAuto(uuid); if (!b) return;
+      var sw = b.parentNode ? b.parentNode.querySelector(".switch-button-background") : null;
+      if (sw) sw.click(); else b.click();
+      show(b.checked);
+    }
+    show(vmNativeAuto(uuid).checked);
+    tg.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); flip(); });
+    tg.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
+    return tg;
+  }
+  // Laid out like the Docker grid card: the logo, the name with the IP under it, the autostart
+  // switch in the corner with the state under it while the VM is not running, the action buttons
+  // in one row and the resource badges with their gears at the foot.
+  function vmCard(tr, d) {
+    var card = el("div", "cc-vmc"); card.setAttribute("data-name", d.name);
+    var head = el("div", "cc-vmc-head");
+    var box = el("span", "cc-vmc-icobox"), ico = tr.querySelector("td.vm-name span.hand > .img");
+    if (ico) { var ic = ico.cloneNode(true); ic.removeAttribute("style"); box.appendChild(ic); }
+    head.appendChild(box);
+    var nb = el("div", "cc-vmc-name"), title = el("div", "cc-vmc-title", d.name);
+    // PCI Changed and the like, which also say why the VM cannot start
+    Array.prototype.forEach.call(tr.querySelectorAll("td.vm-name .inner > i.fa-warning"), function (w) { title.appendChild(w.cloneNode(true)); });
+    title.addEventListener("mouseover", function () { if (title.scrollWidth > title.clientWidth) title.setAttribute("data-tip", d.name); else title.removeAttribute("data-tip"); });
+    nb.appendChild(title);
+    var ip = el("div", "cc-vmc-ip");
+    // a list cut short after two lines comes up whole as the tip
+    if (d.ips.length) {
+      ip.textContent = d.ips.join(" · ");
+      ip.addEventListener("mouseover", function () { if (ip.scrollHeight > ip.clientHeight) ip.setAttribute("data-tip", d.ips.join(" · ")); else ip.removeAttribute("data-tip"); });
+    } else ip.appendChild(vmNoIp());
+    nb.appendChild(ip);
+    head.appendChild(nb);
+    var corner = el("div", "cc-vmc-corner"), auto = vmAutoSwitch(d.uuid);
+    if (auto) { var r1 = el("div", "cc-vmc-cornerrow"); r1.appendChild(auto); corner.appendChild(r1); }
+    if (d.state !== "running" && d.label) { var r2 = el("div", "cc-vmc-cornerrow cc-vmc-state"); r2.appendChild(el("span", "cc-badge cc-badge-" + d.state, d.label)); corner.appendChild(r2); }
+    head.appendChild(corner);
+    card.appendChild(head);
+    var bar = el("div", "cc-vmc-actbar"); bar.appendChild(vmActionBars(tr).bar);
+    card.appendChild(bar);
+    var lim = vmLims[d.name] || {}, s = limSet(lim);
+    var rg = el("div", "cc-resgroup cc-vmc-res"); rg.setAttribute("data-cc-vm", d.name);
+    rg.appendChild(vmResLine(vmBadge("CPU", d.cpu, "cpu"), vmGear(d.name, "cpu", s.cpu)));
+    rg.appendChild(vmResLine(vmBadge("RAM", d.ram, "ram"), vmGear(d.name, "ram", s.ram)));
+    rg.appendChild(vmResLine(vmBadge("BW", vmBwText(lim), "bw"), vmGear(d.name, "bw", s.bw)));
+    if (d.disks) vmDiskBadges(d.name, d.disks).forEach(function (b) { rg.appendChild(b); });
+    if (d.graphics) rg.appendChild(vmBadge("", d.graphics, ""));
+    card.appendChild(rg);
+    return card;
+  }
+  function renderVmGrid() {
+    var table = document.getElementById("kvm_table");
+    if (!table || !table.parentNode) return;
+    if (!vmGridHolder || vmGridHolder.parentNode !== table.parentNode) {
+      removeVmGrid();
+      vmGridHolder = el("div", "cc-vm-grid-holder");
+      vmGridHolder.appendChild(el("div", "cc-vm-grid"));
+      table.parentNode.insertBefore(vmGridHolder, table);
+    }
+    var grid = vmGridHolder.firstChild, have = {}, seen = {}, prev = null;
+    Array.prototype.forEach.call(grid.children, function (k) { have[k.getAttribute("data-name")] = k; });
+    var rows = document.querySelectorAll("#kvm_list tr.sortable");
+    for (var i = 0; i < rows.length; i++) {
+      var tr = rows[i], d = vmRowData(tr);
+      if (!d.name) continue;
+      seen[d.name] = true;
+      var sig = vmCardSig(d), card = have[d.name];
+      if (!card || card.getAttribute("data-cc-sig") !== sig) {
+        var fresh = vmCard(tr, d); fresh.setAttribute("data-cc-sig", sig);
+        if (card) grid.replaceChild(fresh, card);
+        card = fresh;
+      }
+      // the row's rainbow slot, which the logo tile and the adopt ink fall back to
+      ["--cc-rb-c", "--cc-rb-ct"].forEach(function (k) { var v = tr.style.getPropertyValue(k); if (v) card.style.setProperty(k, v); else card.style.removeProperty(k); });
+      var want = prev ? prev.nextSibling : grid.firstChild;
+      if (card !== want) grid.insertBefore(card, want);
+      prev = card;
+    }
+    Object.keys(have).forEach(function (n) { if (!seen[n] && have[n].parentNode) grid.removeChild(have[n]); });
   }
   function enhanceCells() {
     try {
@@ -962,24 +1138,13 @@
             row.style.setProperty("--cc-rb-c", _c); row.style.setProperty("--cc-rb-ct", ccIdeal(_c));
           } else { row.style.removeProperty("--cc-rb-c"); row.style.removeProperty("--cc-rb-ct"); }
         } catch (_eR) {}
-        // Cells are found by class and content (VMMachines.php L217-229) rather than by index, which
-        // the injected Actions td or a missing description would shift.
-        var nameTd = row.querySelector(":scope > td.vm-name");
-        var vcpuA = row.querySelector(":scope > td a[class*='vcpu-']");   // <a class='vcpu-$uuid'> (L224)
-        var cpuTd = vcpuA ? vcpuA.closest("td") : null;
-        var ramTd = cpuTd ? cpuTd.nextElementSibling : null;             // $mem cell (L225)
-        var descTd = null;                                               // the cell before vCPU, unless it's name/Actions
-        if (cpuTd) { var p = cpuTd.previousElementSibling; if (p && !p.classList.contains("vm-name") && !p.classList.contains("cc-actcell")) descTd = p; }
-        var diskSpan = row.querySelector(":scope > td > span.state");    // vm-name's span.state is nested deeper (L226)
-        var diskTd = diskSpan ? diskSpan.parentNode : null;
-        var vg = row.querySelectorAll(":scope > td > span.vmgraphics");  // graphics (L227) then ip (L228), document order
-        var graphicsTd = vg[0] ? vg[0].parentNode : null, ipTd = vg[1] ? vg[1].parentNode : null;
-        if (descTd) vmCell(descTd, "", "desc");
-        if (cpuTd) vmResCell(cpuTd, ramTd);
-        if (graphicsTd) vmCell(graphicsTd, "", "");
-        if (ipTd) vmIpCell(ipTd);
-        if (diskTd) vmDiskCell(diskTd);
-        injectVmActionCell(row, nameTd);
+        var c = vmCells(row);
+        if (c.desc) vmCell(c.desc, "", "desc");
+        if (c.cpu) vmResCell(c.cpu, c.ram);
+        if (c.graphics) vmCell(c.graphics, "", "");
+        if (c.ip) vmIpCell(c.ip);
+        if (c.disk) vmDiskCell(c.disk);
+        injectVmActionCell(row, c.name);
       }
     } catch (e) {}
   }
@@ -1040,7 +1205,7 @@
     try { ensureViewToggle(); applyView(); } catch (e) {}
     try { applyRainbowPalette(); var vmRb = ls("cc.theming") !== "0" && ls("cc.rainbow") === "1"; root.classList.toggle("cc-vm-rainbow", vmRb); root.classList.toggle("cc-vm-rbneutral", ls("cc.theming") !== "0" && ls("cc.rbmode") === "active"); } catch (e) {} // reactive: badges rest grey and colour on hover, in accent mode too
     // The action bars' rebuild signature ignores the colour mode, so they are re-tinted in place.
-    try { Array.prototype.forEach.call(document.querySelectorAll("#kvm_list td.cc-actcell"), function (cell) { tintAct(cell); }); } catch (e) {}
+    try { Array.prototype.forEach.call(document.querySelectorAll("#kvm_list td.cc-actcell, .cc-vm-grid .cc-vmc-actbar"), function (cell) { tintAct(cell); }); } catch (e) {}
     // enhanceCells does not rebuild a finished cell, so the gear colours are refreshed here too
     try { refreshAllRes(); } catch (e) {}
     // Adopt off with no own tint colour needs the icon pass only for the badge.
@@ -1082,7 +1247,7 @@
         var plan = vmIconPlan(n, vname);
         var thisFlat = flat, thisTint = f, thisInk = vmInk;
         if (adopt) {
-          var rowInk = vmItemAdoptInk(n.closest("tr")), rowBlk = rowInk !== "#fff";
+          var rowInk = vmItemAdoptInk(n.closest("tr, .cc-vmc")), rowBlk = rowInk !== "#fff";
           thisFlat = rowBlk ? flatBlk : flatWht;
           thisTint = rowBlk ? fBlk : fWht;
           thisInk = rowInk;
@@ -1154,7 +1319,7 @@
     try { if (liveTimer) clearInterval(liveTimer); liveTimer = null; } catch (e) {}
     try { if (vmBwTimer) { clearInterval(vmBwTimer); vmBwTimer = null; } } catch (e) {}
     try { document.documentElement.classList.remove("cc-vms-on", "cc-vm-iconbg", "cc-sections-vms", "cc-vmgrid", "cc-vm-rainbow", "cc-vm-rbneutral"); document.documentElement.style.removeProperty("--cc-iconbg-color"); } catch (e) {}
-    try { RB_KINDS.forEach(function (k) { document.documentElement.style.removeProperty("--cc-rb-" + k); document.documentElement.style.removeProperty("--cc-rb-" + k + "-t"); }); var vt = document.getElementById("cc-vm-viewtoggle"); if (vt) { var vbar = vt.closest(".cc-vm-toolbar") || vt; if (vbar.parentNode) vbar.parentNode.removeChild(vbar); } } catch (e) {}
+    try { RB_KINDS.forEach(function (k) { document.documentElement.style.removeProperty("--cc-rb-" + k); document.documentElement.style.removeProperty("--cc-rb-" + k + "-t"); }); removeViewToggle(); removeVmGrid(); } catch (e) {}
     try { enhanceCellsTeardown(); flattenTeardown(); } catch (e) {}
     try { var imgs = vmImgs(); for (var i = 0; i < imgs.length; i++) { imgs[i].style.filter = ""; imgs[i].style.removeProperty("color"); var w = imgs[i].parentElement; if (w) { w.style.removeProperty("background"); w.style.removeProperty("border-radius"); w.style.removeProperty("width"); w.style.removeProperty("height"); w.style.removeProperty("padding"); w.style.removeProperty("display"); w.style.removeProperty("align-items"); w.style.removeProperty("justify-content"); w.style.removeProperty("box-sizing"); } } } catch (e) {}
     try { ["cc-vm-tint-svg", "cc-vm-mono-svg", "cc-vm-tint-svg-blk", "cc-vm-tint-svg-wht", "cc-vm-mono-svg-blk", "cc-vm-mono-svg-wht"].forEach(function (id) { var h = document.getElementById(id); if (h) h.remove(); }); } catch (e) {}

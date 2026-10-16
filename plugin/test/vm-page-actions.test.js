@@ -16,7 +16,7 @@ ok('in sentence case', base && /text-transform: none !important;/.test(base[1]) 
 ok('and take their palette slot under the pointer', /input\[type="button"\]:not\(\.autostart\):hover:not\(:disabled\) \{ background: var\(--cc-rb-c/.test(css));
 ok('only VM hinzufügen is filled', /input#btnAddVM \{ background: var\(--cc-rb-c, var\(--cc-rbaccent, var\(--cc-accent/.test(css));
 ok('and it stands at the right end of the row', /div\.js-actions:has\(> #btnAddVM\) \{ display: flex;/.test(css) && /> #btnAddVM \{ order: 1; margin-left: auto !important; \}/.test(css));
-ok('the description badge is marked', /vmCell\(descTd, "", "desc"\)/.test(js));
+ok('the description badge is marked', /vmCell\(c\.desc, "", "desc"\)/.test(js));
 ok('and keeps the page font', /#kvm_list \.cc-b-desc \.cc-b-v \{ font-family: inherit; \}/.test(css));
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
