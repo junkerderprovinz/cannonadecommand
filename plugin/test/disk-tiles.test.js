@@ -6,6 +6,7 @@
 //   · a second view switch, or a key per section that the page switch cannot take back
 //   · a table control left in the tile view, where it does nothing
 //   · an animation outside the motion gate, or one that keeps running at "off"
+//   · a section or a pool folded into another, where it loses its own badge
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -65,7 +66,7 @@ const tbody = (rows) => parse('<tbody>' + rows + '</tbody>').children[0];
 
 // The readers out of disks.js, with the helpers they call.
 const READERS = ['kids', 'tag', 'attr', 'hasCls', 'find', 'text', 'clean', 'bytes', 'rate', 'temp', 'parseCall', 'run', 'cells', 'usage', 'fsInfo', 'linkName',
-  'kindOf', 'orbState', 'splitId', 'ioText', 'readRow', 'readArray', 'readPool', 'readBoot', 'readUd', 'cardOf', 'act', 'onClick', 'view', 'order'];
+  'kindOf', 'orbState', 'splitId', 'ioText', 'readRow', 'readArray', 'readPool', 'readBoot', 'readUd', 'cardOf', 'act', 'onClick', 'view', 'order', 'cap'];
 function load(env) {
   const src = [grabVar(js, 'POW'), grabVar(js, 'CALLS'), grabVar(js, 'KEY')].concat(READERS.map((n) => grabFn(js, n))).join('\n') + '\nreturn {' + READERS.join(',') + '};';
   return new Function('window', 'location', 'g', src)(env.window || {}, env.location || {}, env.g || (() => null));
@@ -229,13 +230,21 @@ console.log('\nThe tile view hides the table controls');
   ok('Unassigned Devices keeps its controls, which still act on the tiles', !/cc-ud-ctrls/.test(rules));
 }
 
-console.log('\nSmall pools and the boot device share a row');
+console.log('\nEvery pool and section keeps its badge and stands beside the others where it fits');
 {
-  ok('a pool of three or more devices fills a row alone', /\(p\.disks\.length > 2 \? big : small\)\.push\(box\)/.test(js));
-  ok('the boot device joins the small pools under its section title', /small\.push\(group\(wrap, "data-boot", "1", boot\.title/.test(js));
-  ok('only in section view, where its own section can step aside', /root\.classList\.contains\("cc-sections-main"\)/.test(js) && /html\.cc-dk-on\.cc-on-main\.cc-sections-main #displaybox section\[role="tabpanel"\]\.cc-dk-merged \{ display: none !important; \}/.test(css));
-  ok('a pool in the shared row gets one column per device', /grid\.style\.setProperty\("--cc-dk-n", items\.length\)/.test(js) && /repeat\(var\(--cc-dk-n, 1\), 260px\)/.test(css));
-  ok('on a phone every card takes the full width', /@media \(max-width: 600px\) \{[^@]*\.cc-dk-pool\.cc-dk-big \.cc-dk-grid \{ grid-template-columns: minmax\(0, 1fr\); \}/.test(css));
+  ok('each pool is headed by its own section badge', /'<span class="cc-dk-pb">' \+ esc\(p\.name\)/.test(js) && /\.cc-dk-pb \{[^}]*min-height: var\(--cc-sec-h, 22px\)[^}]*text-transform: uppercase/.test(css));
+  ok('the boot device keeps its own section', !/cc-dk-merged/.test(js + css) && /function drawPools\(host, pools\)/.test(js));
+  ok('the pools and the boot device are the sections that stand side by side', /S\.sec\.classList\.toggle\("cc-dk-side", tiles && !S\.data\.offline && \(S\.key === "pools" \|\| S\.key === "boot"\)\)/.test(js));
+  ok('such a section is as wide as its content, the page wraps the rest', /\.cc-sections-main #displaybox \{ display: flex; flex-wrap: wrap;/.test(css) && /#displaybox > section\.cc-dk-side \{ flex: 0 1 auto; width: auto; \}/.test(css));
+  ok('a grid beside others is as wide as its cards and wraps them when squeezed', /grid\.style\.setProperty\("--cc-dk-n", items\.length\)/.test(js) && /\.cc-dk-grid\.cc-dk-fit \{ grid-template-columns: repeat\(auto-fill, 260px\); width: calc\(var\(--cc-dk-n, 1\) \* 272px - 12px\); max-width: 100%; \}/.test(css));
+  ok('the pool summary and the boot hint do not widen their section', /:is\(\.cc-dk-pool > \.cc-dk-sum, \.cc-dk-host > \.cc-dk-notes\) \{ contain: inline-size; \}/.test(css));
+  ok('on a phone every card takes the full width', /@media \(max-width: 600px\) \{[^@]*\.cc-dk-grid\.cc-dk-fit \{ grid-template-columns: minmax\(0, 1fr\); width: auto; \}/.test(css));
+  const ud = grabFn(js, 'udRow');
+  ok('Unassigned Devices\' parts move into one wrapping row, and only those', /hasCls\(c, "show-disks"\) \|\| hasCls\(c, "show-shares"\)/.test(ud) && /el\("div", "cc-dk-udrow"\)/.test(ud) && /\.cc-dk-udrow \{ display: flex; flex-wrap: wrap;/.test(css));
+  const lv = grabFn(js, 'level');
+  ok('beside the pools the boot cards drop by a pool\'s badge row, wrapped below they do not', /pool\.closest\("section"\)\.getBoundingClientRect\(\)\.top - boot\.closest\("section"\)\.getBoundingClientRect\(\)\.top\) < 1/.test(lv) && /boot\.style\.paddingTop = lift > 0 \? lift \+ "px" : "";/.test(lv));
+  ok('the levelling follows every render and a resize', /\n    level\(\);\n  \}/.test(js) && /window\.addEventListener\("resize", level\);/.test(js));
+  ok('leaving the page puts them back where UD wrote them', /while \(r\.firstChild\) r\.parentNode\.insertBefore\(r\.firstChild, r\);/.test(grabFn(js, 'teardown')));
 
   const R = load({});
   const node = (id) => ({ id, parentNode: null });
@@ -247,6 +256,15 @@ console.log('\nSmall pools and the boot device share a row');
   [a, b, c].forEach((n) => parent.insertBefore(n, null));
   R.order(parent, [c, a, d]);
   ok('the rows keep the order they are given and lose what is left over', parent.children.map((n) => n.id).join('') === 'cad');
+}
+
+console.log('\nThe capacity has a badge of its own');
+{
+  ok('beside the name on every card that knows its size', /<span class="cc-dk-nb">' \+ esc\(d\.name\) \+ "<\/span>" \+ \(d\.size \? '<span class="cc-dk-cap">' \+ esc\(cap\(d\.size\)\)/.test(js));
+  const R = load({});
+  ok('whole sizes read as Unraid prints them', R.cap(18e12) === '18 TB' && R.cap(500e9) === '500 GB' && R.cap(63.1e9) === '63 GB');
+  ok('a size under ten keeps its decimal', R.cap(1.5e12) === '1.5 TB' && R.cap(2e12) === '2 TB');
+  ok('the drawing keeps a margin to the edge of its well', /\.cc-dk-art \{[^}]*height: 140px;/.test(css) && /svg\.cc-dk-drive \{ position: absolute; inset: 14px 12px;/.test(css));
 }
 
 console.log('\ndisks.php reads emhttp\'s own files');

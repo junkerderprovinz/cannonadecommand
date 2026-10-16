@@ -250,7 +250,12 @@
     return out;
   }
 
-  function cap(b) { if (b == null) return ""; return b >= 1e12 ? Math.round(b / 1e12) + " TB" : Math.round(b / 1e9) + " GB"; }
+  // A size under ten keeps its first decimal, so a 1.5 TB disk does not read as 2 TB.
+  function cap(b) {
+    if (b == null) return "";
+    var v = b >= 1e12 ? b / 1e12 : b / 1e9;
+    return (v < 10 ? Math.round(v * 10) / 10 : Math.round(v)) + (b >= 1e12 ? " TB" : " GB");
+  }
   function lvl(p) { return p >= 90 ? "cc-dk-err" : p >= 70 ? "cc-dk-warn" : "cc-dk-ok"; }
   function esc(v) { return String(v == null ? "" : v).replace(/[&<>"']/g, function (ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]; }); }
   function fill(str, map) { return str.replace(/%(\w)/g, function (m, k) { return map[k] != null ? map[k] : m; }); }
@@ -297,8 +302,8 @@
   }
   var INFO = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.3" /><circle cx="8" cy="4.6" r="0.9" fill="currentColor" /><path d="M8 7v4.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>';
 
-  // One drawing per kind of drive. The capacity is printed on the drive, so the text under it
-  // leaves the size out. The gradients live once in the page, see defs().
+  // One drawing per kind of drive, with the capacity on its sticker. The gradients live once in
+  // the page, see defs().
   function drawHdd(d) {
     var size = esc(cap(d.size));
     var sticker = d.parity
@@ -413,7 +418,7 @@
     c.style.setProperty("--cc-dk-i", i);
     if (ctx.colour) { c.style.setProperty("--cc-dk-c", ctx.colour); c.style.setProperty("--cc-dk-ct", ctx.ink); }
     c.innerHTML = '<div class="cc-dk-art">' + DRAW[d.kind](d) + '<div class="cc-dk-acts">' + actions(d) + "</div></div>" +
-      '<div class="cc-dk-namerow"><span class="cc-dk-nb">' + esc(d.name) + '</span><span class="cc-info cc-dk-info" tabindex="0" data-f="tip">' + INFO + '</span><span class="cc-dk-dev">' + esc(d.dev) + "</span></div>" +
+      '<div class="cc-dk-namerow"><span class="cc-dk-nb">' + esc(d.name) + "</span>" + (d.size ? '<span class="cc-dk-cap">' + esc(cap(d.size)) + "</span>" : "") + '<span class="cc-info cc-dk-info" tabindex="0" data-f="tip">' + INFO + '</span><span class="cc-dk-dev">' + esc(d.dev) + "</span></div>" +
       '<div class="cc-dk-model">' + esc(d.model + (d.fs ? " · " + d.fs.fs : "")) + "</div>" + useHtml(d, ctx) +
       '<div class="cc-dk-chips" data-f="chips"></div>' +
       '<div class="cc-dk-io"><div>' + esc(t("temp")) + '<b data-f="temp"></b></div><div>' + esc(t("read")) + '<b data-f="rd"></b></div><div>' + esc(t("write")) + '<b data-f="wr"></b></div></div>';
@@ -560,13 +565,18 @@
     list.forEach(function (c, i) { if (parent.children[i] !== c) parent.insertBefore(c, parent.children[i] || null); });
     while (parent.children.length > list.length) parent.removeChild(parent.lastChild);
   }
-  function group(wrap, key, val, title, sub, items) {
-    var box = wrap.querySelector(".cc-dk-pool[" + key + '="' + val + '"]');
-    if (!box) { box = el("div", "cc-dk-pool", '<div class="cc-dk-eyebrow"></div><div class="cc-dk-grid"></div>'); box.setAttribute(key, val); }
-    setHtml(box.querySelector(".cc-dk-eyebrow"), esc(title) + "<span>" + esc(sub.filter(Boolean).join(" · ")) + "</span>");
+  // A pool under its own section badge, which takes the colour of its first card, with the file
+  // system and the pool state beside it.
+  function poolBox(wrap, p, items) {
+    var box = wrap.querySelector('.cc-dk-pool[data-pool="' + p.key + '"]');
+    if (!box) { box = el("div", "cc-dk-pool", '<div class="cc-dk-phead"></div><div class="cc-dk-grid cc-dk-fit"></div>'); box.setAttribute("data-pool", p.key); }
+    setHtml(box.querySelector(".cc-dk-phead"), '<span class="cc-dk-pb">' + esc(p.name) + "</span><span>" + esc([p.fs && p.fs.fs, p.status].filter(Boolean).join(" · ")) + "</span>");
     var grid = box.querySelector(".cc-dk-grid");
     grid.style.setProperty("--cc-dk-n", items.length);
     fillGrid(grid, items, colourAt);
+    var c = colourAt(items[0].n);
+    if (c) { box.style.setProperty("--cc-dk-c", c); box.style.setProperty("--cc-dk-ct", ink(c)); }
+    else { box.style.removeProperty("--cc-dk-c"); box.style.removeProperty("--cc-dk-ct"); }
     return box;
   }
   function notesStrip(host, notes) {
@@ -575,12 +585,10 @@
     if (!box) box = host.appendChild(el("div", "cc-dk-sum cc-dk-notes"));
     setHtml(box, notes.map(function (td) { return "<span>" + td.innerHTML + "</span>"; }).join(""));
   }
-  // Pools of one or two devices share a row with the boot device, each under its own eyebrow; a
-  // larger pool keeps a row of its own.
-  function drawPools(host, pools, boot) {
+  // The pools stand side by side while the row has room for them, and wrap when it has not.
+  function drawPools(host, pools) {
     var wrap = host.querySelector(":scope > .cc-dk-pools") || host.insertBefore(el("div", "cc-dk-pools"), host.firstChild);
-    var row = wrap.querySelector(":scope > .cc-dk-prow") || el("div", "cc-dk-prow");
-    var big = [], small = [], n = 0;
+    var boxes = [], n = 0;
     pools.forEach(function (p) {
       if (!p.disks.length) return;
       var multi = p.disks.length > 1;
@@ -588,33 +596,37 @@
         var shown = Object.assign({}, d, { name: multi ? p.name + " " + d.name.replace(/\D+/g, "") : p.name, fs: multi ? null : p.fs, browse: d.browse || (multi ? "" : p.browse) });
         return { d: shown, ctx: { member: multi ? p.name : "" }, n: n++ };
       });
-      var box = group(wrap, "data-pool", p.key, p.name, [p.fs && p.fs.fs, p.status], items);
+      var box = poolBox(wrap, p, items);
       strip(box, "cc-dk-sum", multi && p.fs ? sumHtml({ label: p.name, temp: null, rdText: "", wrText: "", fs: p.fs }) : "");
-      box.classList.toggle("cc-dk-big", p.disks.length > 2);
-      (p.disks.length > 2 ? big : small).push(box);
+      boxes.push(box);
     });
-    if (boot && boot.data.disks.length) {
-      var first = boot.data.disks[0];
-      small.push(group(wrap, "data-boot", "1", boot.title, [first.fs && first.fs.fs], cardsOf(boot.data.disks, n)));
-    }
-    order(row, small);
-    order(wrap, small.length ? big.concat(row) : big);
-    notesStrip(host, boot ? boot.data.notes : []);
+    order(wrap, boxes);
+  }
+  // Unassigned Devices' parts (its disks, the network shares, the past devices) share one wrapping
+  // row, so they stand side by side where the section has room. UD finds them by class, wherever
+  // they sit.
+  function udRow(S) {
+    var parts = kids(S.sec).filter(function (c) { return hasCls(c, "show-disks") || hasCls(c, "show-shares"); });
+    if (!parts.length) return;
+    var row = S.sec.querySelector(":scope > .cc-dk-udrow") || S.sec.insertBefore(el("div", "cc-dk-udrow"), parts[0]);
+    parts.forEach(function (c) { row.appendChild(c); });
   }
 
-  function renderSection(S, boot) {
+  function renderSection(S) {
     var data = S.data;
     if (data.unknown) { drop(S); return; }
     S.box.classList.add("cc-dk-hidden");
     var host = hostFor(S);
-    if (S.key === "pools") { drawPools(host, data.pools, boot); return; }
+    if (S.key === "pools") { drawPools(host, data.pools); return; }
     if (S.key === "ud" && !data.disks.length) {
       host.innerHTML = "";
       host.appendChild(el("div", "cc-dk-empty", "<b>" + esc(data.notice) + "</b>"));
       return;
     }
     var empty = host.querySelector(":scope > .cc-dk-empty"); if (empty) host.removeChild(empty);
-    var grid = host.querySelector(":scope > .cc-dk-grid") || host.insertBefore(el("div", "cc-dk-grid"), host.firstChild);
+    // Beside other sections the boot and Unassigned Devices grids are as wide as their cards.
+    var grid = host.querySelector(":scope > .cc-dk-grid") || host.insertBefore(el("div", S.key === "array" ? "cc-dk-grid" : "cc-dk-grid cc-dk-fit"), host.firstChild);
+    grid.style.setProperty("--cc-dk-n", data.disks.length);
     fillGrid(grid, cardsOf(data.disks, 0), colourAt);
     if (S.key === "array") strip(host, "cc-dk-sum", data.total ? sumHtml(data.total) : "");
     if (S.key === "boot") notesStrip(host, data.notes);
@@ -643,9 +655,13 @@
   }
 
   function teardown() {
-    document.documentElement.classList.remove("cc-dk-on", "cc-dk-tiled");
+    document.documentElement.classList.remove("cc-dk-on", "cc-dk-tiled", "cc-dk-sides");
     Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-host, #displaybox .cc-dk-vsw"), function (n) { n.parentNode.removeChild(n); });
-    Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-hidden, #displaybox .cc-dk-merged"), function (n) { n.classList.remove("cc-dk-hidden", "cc-dk-merged"); });
+    Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-udrow"), function (r) {
+      while (r.firstChild) r.parentNode.insertBefore(r.firstChild, r);
+      r.parentNode.removeChild(r);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-hidden, #displaybox .cc-dk-side"), function (n) { n.classList.remove("cc-dk-hidden", "cc-dk-side"); });
   }
   function render() {
     if (!live()) { teardown(); return; }
@@ -663,22 +679,32 @@
         b.setAttribute("aria-pressed", on ? "true" : "false"); b.classList.toggle("cc-seg-on", on);
       });
     }
-    // In section view the boot device joins the pools' row, so its own section steps aside.
-    var pools = tiles && open.filter(function (S) { return S.key === "pools"; })[0];
-    var boot = tiles && open.filter(function (S) { return S.key === "boot"; })[0];
-    var head = pools && boot && root.classList.contains("cc-sections-main") && boot.sec.querySelector(":scope > .cc-card-head");
-    var merged = head ? { title: clean(text(head.querySelector("span.left") || head)), data: boot.data } : null;
     all.forEach(function (S) {
       try {
-        S.sec.classList.toggle("cc-dk-merged", !!merged && S === boot);
-        if (!tiles || S.data.offline || (merged && S === boot)) drop(S);
-        else renderSection(S, S === pools ? merged : null);
+        if (!tiles || S.data.offline) drop(S); else renderSection(S);
+        if (S.key === "ud") udRow(S);
       } catch (e) {}
+      // In section view the pools and the boot device, each under its own badge, stand side by
+      // side while the page has room for both.
+      S.sec.classList.toggle("cc-dk-side", tiles && !S.data.offline && (S.key === "pools" || S.key === "boot"));
     });
+    root.classList.toggle("cc-dk-sides", all.some(function (S) { return S.sec.classList.contains("cc-dk-side"); }));
     // The column and reads/writes controls act on the disk tables, so they go while none shows.
     root.classList.toggle("cc-dk-tiled", tiles && !all.some(function (S) {
-      return S.key !== "ud" && !S.sec.classList.contains("cc-dk-merged") && !S.box.classList.contains("cc-dk-hidden");
+      return S.key !== "ud" && !S.box.classList.contains("cc-dk-hidden");
     }));
+    level();
+  }
+  // While the boot device stands beside the pools, its cards drop by the height of a pool's badge
+  // row, so the card tops in that row line up. Wrapped below, it needs no gap.
+  function level() {
+    var boot = document.querySelector('#displaybox .cc-dk-host[data-cc-dk="boot"]');
+    if (!boot) return;
+    var pool = document.querySelector("#displaybox .cc-dk-pool"), lift = 0;
+    if (pool && Math.abs(pool.closest("section").getBoundingClientRect().top - boot.closest("section").getBoundingClientRect().top) < 1) {
+      lift = Math.round(pool.querySelector(".cc-dk-grid").getBoundingClientRect().top - pool.getBoundingClientRect().top);
+    }
+    boot.style.paddingTop = lift > 0 ? lift + "px" : "";
   }
   var frame = 0;
   function soon() { if (!frame) frame = (window.requestAnimationFrame || setTimeout)(function () { frame = 0; render(); }); }
@@ -708,6 +734,7 @@
     loadExtra();
     setInterval(loadExtra, 10 * 60 * 1000);
     watch();
+    window.addEventListener("resize", level);
     window.addEventListener("storage", function (e) { if (e && e.key && /^cc[a-z]*\./.test(e.key) && e.key !== "cc.stateCache") soon(); });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();

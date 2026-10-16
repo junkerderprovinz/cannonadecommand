@@ -20,9 +20,16 @@ html.cc-dk-on:is(.Theme--white, .Theme--azure) {
   --cc-dk-rest: #8d8d8d; --cc-dk-rest-ink: #ffffff; --cc-dk-bar-off: #4a4a4a;
 }
 html.cc-dk-on #displaybox .cc-dk-hidden { display: none !important; }
-/* The boot device's section, while its card sits in the pools' row; the panel rule in Shares.css
-   is as specific, so this one names the area too. */
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section[role="tabpanel"].cc-dk-merged { display: none !important; }
+/* In section view the pools and the boot device stand side by side while the page has room, each
+   section under its own badge; every other section keeps the whole width. The second of them
+   takes the rest of the row, so the boot hint under its card runs to the edge. */
+html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 36px; }
+html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > * { flex: 1 1 100%; min-width: 0; }
+html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > section.cc-dk-side { flex: 0 1 auto; width: auto; }
+html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > section.cc-dk-side ~ section.cc-dk-side { flex-grow: 1; }
+/* Unassigned Devices' disks, network shares and past devices, side by side where they fit. */
+html.cc-dk-on #displaybox .cc-dk-udrow { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 24px; }
+html.cc-dk-on #displaybox .cc-dk-udrow > * { flex: 1 1 auto; min-width: 0; }
 /* The column reset and the reads/writes toggle act on the tables only. */
 html.cc-dk-on.cc-dk-tiled #displaybox nav.tabs > span.status,
 html.cc-dk-on.cc-dk-tiled.cc-on-main.cc-sections-main #displaybox .cc-card-head > span.status { display: none !important; }
@@ -45,18 +52,23 @@ html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-vsw:hover .cc-dk-seg .cc-se
 
 html.cc-dk-on #displaybox .cc-dk-host { margin: 0 0 4px; }
 html.cc-dk-on #displaybox .cc-dk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-/* Pools of one or two devices and the boot device share a row, a larger pool fills one alone. */
-html.cc-dk-on #displaybox .cc-dk-pools { display: flex; flex-direction: column; gap: 18px; }
-html.cc-dk-on #displaybox .cc-dk-prow { display: flex; flex-wrap: wrap; gap: 18px 24px; align-items: flex-start; }
+/* A grid that stands beside others is as wide as its cards, and wraps them once it is squeezed. */
+html.cc-dk-on #displaybox .cc-dk-grid.cc-dk-fit { grid-template-columns: repeat(auto-fill, 260px); width: calc(var(--cc-dk-n, 1) * 272px - 12px); max-width: 100%; }
+/* The pools stand side by side and wrap when the row is full. The summary strip and the boot hint
+   take the width the cards give them instead of widening the section. */
+html.cc-dk-on #displaybox .cc-dk-pools { display: flex; flex-wrap: wrap; gap: 18px 24px; align-items: flex-start; }
 html.cc-dk-on #displaybox .cc-dk-pool { flex: 0 1 auto; min-width: 0; }
-html.cc-dk-on #displaybox .cc-dk-pool .cc-dk-grid { grid-template-columns: repeat(var(--cc-dk-n, 1), 260px); }
-html.cc-dk-on #displaybox .cc-dk-pool.cc-dk-big .cc-dk-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-html.cc-dk-on #displaybox .cc-dk-eyebrow { display: flex; gap: 8px; align-items: baseline; margin: 0 0 8px; font-size: var(--cc-text-meta); font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--cc-text-hint); }
-html.cc-dk-on #displaybox .cc-dk-eyebrow span { font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--cc-text-dim); }
+html.cc-dk-on #displaybox :is(.cc-dk-pool > .cc-dk-sum, .cc-dk-host > .cc-dk-notes) { contain: inline-size; }
+/* A pool's heading is a section badge, like the parts of the Unassigned Devices section. */
+html.cc-dk-on #displaybox .cc-dk-phead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 12px; font-size: var(--cc-text-meta); color: var(--cc-text-dim); }
+html.cc-dk-on #displaybox .cc-dk-pb {
+  display: inline-flex; align-items: center; min-height: var(--cc-sec-h, 22px); box-sizing: border-box; padding: var(--cc-sec-pad, 0 12px);
+  border-radius: var(--cc-radius-pill); background: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); color: var(--cc-dk-ct, var(--cc-shr-accent-text, #161616));
+  font-size: var(--cc-sec-fs); font-weight: var(--cc-sec-fw, 500); letter-spacing: var(--cc-sec-ls, 1.2px); text-transform: uppercase; line-height: 1; white-space: nowrap;
+}
 @media (max-width: 600px) {
   html.cc-dk-on #displaybox .cc-dk-grid,
-  html.cc-dk-on #displaybox .cc-dk-pool .cc-dk-grid,
-  html.cc-dk-on #displaybox .cc-dk-pool.cc-dk-big .cc-dk-grid { grid-template-columns: minmax(0, 1fr); }
+  html.cc-dk-on #displaybox .cc-dk-grid.cc-dk-fit { grid-template-columns: minmax(0, 1fr); width: auto; }
   html.cc-dk-on #displaybox .cc-dk-pool { flex: 1 1 100%; }
 }
 
@@ -69,8 +81,9 @@ html.cc-dk-on #displaybox .cc-dk-card {
 html.cc-dk-on #displaybox .cc-dk-card:hover,
 html.cc-dk-on #displaybox .cc-dk-card:focus-within { background: var(--cc-dk-card-hover); }
 html.cc-dk-on #displaybox .cc-dk-card:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); }
-html.cc-dk-on #displaybox .cc-dk-art { position: relative; height: 112px; background: var(--cc-dk-inset); border-radius: var(--cc-radius-control); overflow: hidden; }
-html.cc-dk-on #displaybox .cc-dk-art svg.cc-dk-drive { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* Every drawing keeps a margin to the edge of its well, the same on every card. */
+html.cc-dk-on #displaybox .cc-dk-art { position: relative; height: 140px; background: var(--cc-dk-inset); border-radius: var(--cc-radius-control); overflow: hidden; }
+html.cc-dk-on #displaybox .cc-dk-art svg.cc-dk-drive { position: absolute; inset: 14px 12px; width: calc(100% - 24px); height: calc(100% - 28px); }
 html.cc-dk-on #displaybox .cc-dk-art text { font-family: inherit; }
 html.cc-dk-on #displaybox .cc-dk-card.cc-dk-down svg.cc-dk-drive { opacity: .62; }
 
@@ -105,6 +118,12 @@ html.cc-dk-on #displaybox .cc-dk-nb {
   border-radius: var(--cc-radius-pill); background: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); color: var(--cc-dk-ct, var(--cc-shr-accent-text, #161616));
   font-size: var(--cc-text-body); font-weight: 700;
   transition: background-color var(--cc-motion-control-dur, 0s), color var(--cc-motion-control-dur, 0s);
+}
+/* The whole capacity of the disk, beside its name. */
+html.cc-dk-on #displaybox .cc-dk-cap {
+  display: inline-flex; align-items: center; flex: none; height: 28px; padding: 0 10px; white-space: nowrap;
+  border-radius: var(--cc-radius-pill); background: var(--cc-chip); color: var(--cc-text);
+  font-size: var(--cc-text-subline); font-weight: 600; font-variant-numeric: tabular-nums;
 }
 html.cc-dk-on #displaybox .cc-dk-info { flex: none; color: var(--cc-text-dim); cursor: help; }
 html.cc-dk-on #displaybox .cc-dk-info:hover,
