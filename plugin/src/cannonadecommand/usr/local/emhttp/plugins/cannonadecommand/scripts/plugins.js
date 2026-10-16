@@ -544,8 +544,7 @@
     }
     if (stEl && !stEl.getAttribute(MARK)) {
       var t2 = sid.textContent.toLowerCase();
-      // Up to date is the normal case and shows nothing (GlimStone rule 33).
-      if (/up.to.date|aktuell|neue?sten stand|current/.test(t2)) { stEl.classList.add("cc-plug-ok"); stEl.setAttribute(MARK, "1"); }
+      if (/up.to.date|aktuell|neue?sten stand|current/.test(t2)) { pill(stEl, stNative ? "var(--cc-ok, #6fdc8c)" : palC, stNative ? "var(--cc-ok-fg, #161616)" : palT); stEl.setAttribute(MARK, "1"); }
       else if (/update|aktualis|install/.test(t2) && !/checking|prüf/.test(t2)) { pill(stEl, stNative ? "var(--cc-warn, #ff832b)" : palC, stNative ? "var(--cc-warn-fg, #161616)" : palT); stEl.setAttribute(MARK, "1"); }
     }
     var lnk = sid.querySelector("a"); if (lnk) lnk.style.setProperty("color", "inherit", "important");

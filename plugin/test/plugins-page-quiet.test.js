@@ -1,6 +1,6 @@
-// The Plugins tab shows deviations only, offers one delete per row, keeps its buttons secondary
-// and fits a phone. What can quietly break it:
-//   · "Auf dem neusten Stand" painted as a pill in every row again
+// The Plugins tab shows "Auf dem neusten Stand" as its pill like the Docker tab, offers one delete
+// per row, keeps its buttons secondary and fits a phone. What can quietly break it:
+//   · "Auf dem neusten Stand" hidden instead of shown
 //   · Unraid's update check showing the native remove button beside CC's trash, since it writes an
 //     inline display over anything set inline
 //   · uppercase labels from Unraid's input styling on the status and bar buttons
@@ -15,9 +15,9 @@ const css = fs.readFileSync(path.join(DIR, 'styles/docker.css'), 'utf8');
 let pass = 0, fail = 0;
 const ok = (name, cond, extra) => { cond ? (pass++, console.log('  PASS  ' + name)) : (fail++, console.log('  FAIL  ' + name + (extra ? '  -> ' + extra : ''))); };
 
-console.log('\nThe normal case is quiet');
-ok('an up-to-date plugin is marked, not painted', /if \(\/up\.to\.date[^\n]*\{ stEl\.classList\.add\("cc-plug-ok"\); stEl\.setAttribute\(MARK, "1"\); \}/.test(js));
-ok('and the mark hides it', /html\.cc-on-plugins #plugin_list \.cc-plug-ok \{ display: none !important; \}/.test(css));
+console.log('\nThe status shows as a pill');
+ok('an up-to-date plugin is painted ok green or in the colour mode', /if \(\/up\.to\.date[^\n]*\{ pill\(stEl, stNative \? "var\(--cc-ok, #6fdc8c\)" : palC/.test(js));
+ok('and nothing hides it', !/cc-plug-ok/.test(js + css));
 ok('an update still shows as its pill', /else if \(\/update\|aktualis\|install\/\.test\(t2\)[^\n]*pill\(stEl/.test(js));
 
 console.log('\nOne delete per row');
