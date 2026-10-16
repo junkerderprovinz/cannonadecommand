@@ -955,6 +955,9 @@
   }
 
   function render() {
+    // Emptying the root shortens the page, and a layout read while it is rebuilt clamps the scroll
+    // to the top, so the page is put back where it stood once the cards are in again.
+    var keepY = window.scrollY;
     root.innerHTML = "";
     // The theming snapshot is re-read on every render: these are module-level variables read once
     // at load, and a setting change calls render(), so without this the page repaints from the
@@ -1311,14 +1314,14 @@
     var mode = colorMode();
     var modes = [["accent", T("Akzent", "Accent"), "IconAccent"], ["rainbow", T("Regenbogen", "Rainbow"), "IconRainbow"]];
     if (window.CC_FLAGS && window.CC_FLAGS.length) modes.push(["flag", T("Flagge", "Flag"), "IconFlag"]);
-    var modeRow = el("div", "cc-set-row cc-set-inline");
+    var modeRow = el("div", "cc-set-row cc-set-inline cc-set-colourmode");
     var modeLbl = el("span", "cc-set-lblwrap");
     modeLbl.appendChild(el("span", null, T("Farbmodus", "Colour mode")));
     modeLbl.appendChild(infoIcon(T("Akzent: alles in einer Farbe. Regenbogen: jedes Badge nimmt eine Farbe aus der Palette. Flagge: die Palette sind die Farben eines Landes.", "Accent: everything in one colour. Rainbow: every badge takes a colour from the palette. Flag: the palette is a country's colours.")));
     modeRow.appendChild(modeLbl);
     modeRow.appendChild(modeSelector(modes, mode, function (m) {
       setColorMode(m); render(); syncHeaderBar(); syncSharesBar();
-      var on = root.querySelector(".cc-set-mode .cc-seg-on"); if (on) on.focus();
+      var on = root.querySelector(".cc-set-colourmode .cc-seg-on"); if (on) on.focus({ preventScroll: true });
     }));
     c1.appendChild(modeRow);
     // The handler pushes the new colour onto the live bars as well: the header and the shares area
@@ -2237,6 +2240,7 @@
     showSec(ix0);
     setSearch.addEventListener("input", function () { runFilter(setSearch.value); });
     paintPrev(); paintToggles(); paintSelects(); paintCardHeads();
+    if (window.scrollY !== keepY) window.scrollTo(0, keepY);
   }
   // This page's own .cc-dsel dropdowns take the colour mode through the painter every area shares
   // (cc-theme.js); without the stamp each option would show the flat accent in rainbow and flag
