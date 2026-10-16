@@ -31,8 +31,8 @@ async function viewRow(store, org) {
   const dropRow = (label, opts, cur, onChange) => { const r = { label, opts, cur, onChange }; rows.push(r); return r; };
   const lockRow = (label, by) => ({ lock: by });
   const c = mk('div');
-  new Function('el', 'get', 'set', 'T', 'dropRow', 'lockRow', 'jumpTo', 'window', 'c', 'paintToggles', block + grab(settings, 'viewRow') + '\nviewRow(c);')
-    .call(null, mk, (k, d) => (k in store ? store[k] : d), (k, v) => { store[k] = v; }, (de) => de, dropRow, lockRow, () => {}, window, c, () => {});
+  new Function('el', 'get', 'set', 'T', 'dropRow', 'lockRow', 'jumpTo', 'window', 'c', 'paintToggles', 'splitCard', block + grab(settings, 'viewRow') + '\nviewRow(c);')
+    .call(null, mk, (k, d) => (k in store ? store[k] : d), (k, v) => { store[k] = v; }, (de) => de, dropRow, lockRow, () => {}, window, c, () => {}, () => {});
   await new Promise((r) => setTimeout(r, 10));
   return { c, rows, sent };
 }
@@ -43,7 +43,7 @@ async function viewRow(store, org) {
   const row = r.rows[r.rows.length - 1];
   ok('with folders it offers Liste, Raster and Ordner', row && row.opts.map((o) => o[0]).join() === 'list,grid,folder', row && row.opts.map((o) => o[0]).join());
   ok('it shows the organizer\'s saved view, which the Docker tab opens with', row && row.cur === 'folder');
-  const slot = r.c.kids[0], sketches = () => slot.kids[slot.kids.length - 1].kids;
+  const side = r.c.kids[1], sketches = () => side.kids[side.kids.length - 1].kids;
   ok('under it a sketch of each view it offers', sketches().map((f) => f.kids[0].textContent).join() === 'Liste,Raster,Ordner' && sketches().every((f) => /^<svg viewBox="0 0 60 36"/.test(f.innerHTML)), sketches().map((f) => f.kids[0].textContent).join());
   ok('the chosen view\'s sketch is lit', sketches().map((f) => f.cls.has('cc-set-vp-on')).join() === 'false,false,true');
   row.onChange('grid');
@@ -55,8 +55,8 @@ async function viewRow(store, org) {
   const bare = await viewRow({ 'cc.view': 'grid' }, { id: 'default', prefs: {}, flatEntries: [{ type: 'folder' }] });
   const brow = bare.rows[bare.rows.length - 1];
   ok('without a folder there is no Ordner to pick', brow && brow.opts.map((o) => o[0]).join() === 'list,grid' && brow.cur === 'grid');
-  const bslot = bare.c.kids[0];
-  ok('and no folder sketch either', bslot.kids[bslot.kids.length - 1].kids.length === 2);
+  const bside = bare.c.kids[1];
+  ok('and no folder sketch either', bside.kids[bside.kids.length - 1].kids.length === 2);
   const off = await viewRow({ 'cc.theming': '0' }, org);
   ok('with theming off a lock line says the list stays', off.rows.length === 0 && off.c.kids[0] && /Liste/.test(off.c.kids[0].lock));
   ok('the Docker tile carries the row', /var cV = card\(T\("Ansicht", "View"\)\);\s*viewRow\(cV\);/.test(settings));
