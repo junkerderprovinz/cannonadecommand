@@ -705,15 +705,16 @@
     c = String(c == null ? "" : c).trim();
     return /^#[0-9a-f]{3}$/i.test(c) ? "#" + c[1] + c[1] + c[2] + c[2] + c[3] + c[3] : c;
   }
-  function ensureFlatFilter(hostId, filtId, hex) {
+  function ensureFlatFilter(hostId, filtId, hex, strength) {
     var host = document.getElementById(hostId);
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ccHex6(hex) || "");
     if (!m) { if (host) host.remove(); return ""; }
-    var r = (parseInt(m[1], 16) / 255).toFixed(4), g2 = (parseInt(m[2], 16) / 255).toFixed(4), b = (parseInt(m[3], 16) / 255).toFixed(4);
+    var s = Math.max(10, Math.min(100, strength || 100)) / 100, keep = s === 1 ? "0" : (1 - s).toFixed(4);
+    var r = (parseInt(m[1], 16) / 255 * s).toFixed(4), g2 = (parseInt(m[2], 16) / 255 * s).toFixed(4), b = (parseInt(m[3], 16) / 255 * s).toFixed(4);
     if (!host) { host = document.createElement("div"); host.id = hostId; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
-    var sig = filtId + "|" + r + "|" + g2 + "|" + b;
+    var sig = filtId + "|" + r + "|" + g2 + "|" + b + "|" + keep;
     if (host.dataset.sig !== sig) {
-      var vals = "0 0 0 0 " + r + " 0 0 0 0 " + g2 + " 0 0 0 0 " + b + " 0 0 0 1 0";
+      var vals = keep + " 0 0 0 " + r + " 0 " + keep + " 0 0 " + g2 + " 0 0 " + keep + " 0 " + b + " 0 0 0 1 0";
       host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>';
       host.dataset.sig = sig;
     }
@@ -810,15 +811,16 @@
       // --cc-rb-ct its card or row already carries. Otherwise there is one filter, built from
       // iconInk()'s own colour, which may be any hue.
       var f, flat, fBlk, fWht, flatBlk, flatWht, adopt = iconBgAdopts() && iconBgOn() && tintOn();
+      var str = parseInt(effc("iconstrength") || "100", 10);
       if (adopt) {
-        flatBlk = ensureFlatFilter("cc-mono-svg-blk", "cc-mono-tint-blk", "#161616");
-        flatWht = ensureFlatFilter("cc-mono-svg-wht", "cc-mono-tint-wht", "#fff");
+        flatBlk = ensureFlatFilter("cc-mono-svg-blk", "cc-mono-tint-blk", "#161616", str);
+        flatWht = ensureFlatFilter("cc-mono-svg-wht", "cc-mono-tint-wht", "#fff", str);
         fBlk = ensureTintFilterAs("cc-tint-svg-blk", "cc-icon-tint-blk", "#161616") ? "url(#cc-icon-tint-blk)" : "";
         fWht = ensureTintFilterAs("cc-tint-svg-wht", "cc-icon-tint-wht", "#fff") ? "url(#cc-icon-tint-wht)" : "";
       } else {
         f = iconFilter();
         var ink = iconInk(false);
-        flat = ink ? ensureFlatFilter("cc-mono-svg", "cc-mono-tint", ink) : ensureFlatFilter("cc-mono-svg", "cc-mono-tint", "");
+        flat = ensureFlatFilter("cc-mono-svg", "cc-mono-tint", ink, str);
       }
       // Every name on the page goes to the engine in one batch, which it answers from its cache
       // without blocking. A name it has not looked up yet stays native for this pass and repaints
@@ -844,7 +846,7 @@
           thisInk = rowInk;
         }
         // "native", or no ink colour at all, leaves the pixels alone
-        var want = plan.treat === "native" ? "" : plan.treat === "flat" ? thisFlat : plan.treat === "knock" ? CI.knock(thisInk, plan.tile) : thisTint;
+        var want = plan.treat === "native" ? "" : plan.treat === "flat" ? thisFlat : plan.treat === "knock" ? CI.knock(thisInk, plan.tile, str) : thisTint;
         if (n.tagName === "IMG") { n.style.filter = want; }
         else {
           var gif = glyphInkAndFilter(plan, ibgOn, ibgAcc, thisInk, want);
@@ -878,7 +880,7 @@
             gFlat = cardBlk ? flatBlk : flatWht;
             gTint = cardBlk ? fBlk : fWht;
           }
-          g[j].style.filter = gp.treat === "native" ? "" : gp.treat === "flat" ? gFlat : gp.treat === "knock" ? CI.knock(gInk, gp.tile) : gTint;
+          g[j].style.filter = gp.treat === "native" ? "" : gp.treat === "flat" ? gFlat : gp.treat === "knock" ? CI.knock(gInk, gp.tile, str) : gTint;
         }
         if (CI && gnames.length) CI.want(gnames);
       }

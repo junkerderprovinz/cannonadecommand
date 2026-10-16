@@ -487,6 +487,8 @@ console.log('\nThe flat filter flattens to one colour and keeps alpha');
   ok('rebuilding with the same colour changes nothing, so no observer loop starts', host.dataset.sig === sig);
   dockerApi.ensureFlatFilter('cc-test-flat', 'cc-test-flat-f', '#00ff00');
   ok('a colour change does rebuild', host.dataset.sig !== sig);
+  dockerApi.ensureFlatFilter('cc-test-flat', 'cc-test-flat-f', '#ff8800', 30);
+  ok('a strength of 30 keeps 70 % of the original pixel and adds 30 % of the ink', /values="0\.7000 0 0 0 0\.3000 0 0\.7000 0 0 0\.1600 0 0 0\.7000 0 0\.0000 0 0 0 1 0"/.test(host.innerHTML), host.innerHTML);
 
   ok('no colour removes the filter host entirely', dockerApi.ensureFlatFilter('cc-test-flat', 'cc-test-flat-f', '') === '');
 }

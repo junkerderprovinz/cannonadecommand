@@ -257,15 +257,16 @@
   // Flattens a logo to one ink colour with an SVG feColorMatrix that keeps alpha, the same
   // contract as docker.js ensureFlatFilter. Signature-guarded so the MutationObserver never
   // rewrites identical SVG in a repaint loop.
-  function ensureFlatFilter(hostId, filtId, hex) {
+  function ensureFlatFilter(hostId, filtId, hex, strength) {
     var host = document.getElementById(hostId);
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(ccHex6(hex) || "");
     if (!m) { if (host) host.remove(); return ""; }
-    var r = (parseInt(m[1], 16) / 255).toFixed(4), g2 = (parseInt(m[2], 16) / 255).toFixed(4), b = (parseInt(m[3], 16) / 255).toFixed(4);
+    var s = Math.max(10, Math.min(100, strength || 100)) / 100, keep = s === 1 ? "0" : (1 - s).toFixed(4);
+    var r = (parseInt(m[1], 16) / 255 * s).toFixed(4), g2 = (parseInt(m[2], 16) / 255 * s).toFixed(4), b = (parseInt(m[3], 16) / 255 * s).toFixed(4);
     if (!host) { host = document.createElement("div"); host.id = hostId; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
-    var sig = filtId + "|" + r + "|" + g2 + "|" + b;
+    var sig = filtId + "|" + r + "|" + g2 + "|" + b + "|" + keep;
     if (host.dataset.sig !== sig) {
-      var vals = "0 0 0 0 " + r + " 0 0 0 0 " + g2 + " 0 0 0 0 " + b + " 0 0 0 1 0";
+      var vals = keep + " 0 0 0 " + r + " 0 " + keep + " 0 0 " + g2 + " 0 0 " + keep + " 0 " + b + " 0 0 0 1 0";
       host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>';
       host.dataset.sig = sig;
     }
@@ -432,10 +433,10 @@
     // With the adopt toggle on over a tinted badge there are two shared filters, black ink and
     // white ink, and each row picks the one matching its own rowInk, the value stamped as its
     // --cc-rb-ct above.
-    var f2, pFlat, pInk;
+    var f2, pFlat, pInk, str = parseInt(eff("iconstrength") || "100", 10);
     if (iconBgAdoptsP() && ibgOn && plugTintOn()) {
       var rowBlk = rowInk !== "#fff";
-      pFlat = rowBlk ? ensureFlatFilter("cc-plug-mono-svg-blk", "cc-plug-mono-tint-blk", "#161616") : ensureFlatFilter("cc-plug-mono-svg-wht", "cc-plug-mono-tint-wht", "#fff");
+      pFlat = rowBlk ? ensureFlatFilter("cc-plug-mono-svg-blk", "cc-plug-mono-tint-blk", "#161616", str) : ensureFlatFilter("cc-plug-mono-svg-wht", "cc-plug-mono-tint-wht", "#fff", str);
       f2 = rowBlk ? ensureTintAs("cc-plug-tint-svg-blk", "cc-plug-tint-blk", "#161616") : ensureTintAs("cc-plug-tint-svg-wht", "cc-plug-tint-wht", "#fff");
       pInk = rowInk;
     } else {
@@ -443,7 +444,7 @@
       pInk = plugIconInk(false);
       // Branch on pInk, which is "" whenever the tint is off; branching on ibgOn would flatten
       // every icon to the box's ink with the tint off.
-      pFlat = pInk ? ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", pInk) : ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", "");
+      pFlat = ensureFlatFilter("cc-plug-mono-svg", "cc-plug-mono-tint", pInk, str);
     }
     var LOGO = logoSize(); // cc.sgsize step = Docker/VM logo size (m default 62px)
     var GLYPH = "calc(" + LOGO + " * .82)";   // a glyph fills its em box, so at 82% it matches the crop of the raster logos
@@ -463,7 +464,7 @@
         var pp = PCI.plan(PCI.mode("plugin", pName), pkind, isGlyphEl ? 0 : PCI.spread(psrc), isGlyphEl ? null : PCI.tile(psrc));
         plan = { treat: pp.treat, tile: pp.tile, url: (!isGlyphEl && (pp.src === "glyph" || pp.src === "color")) ? PCI.svgUrl(pName) : "" };
       }
-      var want = plan.treat === "native" ? "none" : plan.treat === "flat" ? (pFlat || f2 || "none") : plan.treat === "knock" ? (PCI.knock(pInk, plan.tile) || "none") : (f2 || "none");
+      var want = plan.treat === "native" ? "none" : plan.treat === "flat" ? (pFlat || f2 || "none") : plan.treat === "knock" ? (PCI.knock(pInk, plan.tile, str) || "none") : (f2 || "none");
       if (!isGlyphEl) {
         el2.style.setProperty("object-fit", "contain", "important");
         el2.style.removeProperty("transform"); // superseded by content normalization
