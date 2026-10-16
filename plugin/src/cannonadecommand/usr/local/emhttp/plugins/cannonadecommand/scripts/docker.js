@@ -1003,7 +1003,7 @@
   // Unraid's other language packs keep their own labels. The natives stay in the bar, hidden, so
   // Unraid keeps enabling and disabling them, and the menu clicks them.
   var BAR_LABELS = { addContainer: "barAdd", checkAll: "barCheck", updateAll: "barUpdateAll", contSizes: "barSizes" };
-  var BAR_FOLD = [["startAll", "bulkStartAll", "Power"], ["stopAll", "bulkStopAll", "Stop"], ["pauseAll", "bulkPauseAll", "Pause"], ["resumeAll", "bulkResumeAll", "Play"]];
+  var BAR_FOLD = [["startAll", "bulkStartAll", "Play"], ["stopAll", "bulkStopAll", "Stop"], ["pauseAll", "bulkPauseAll", "Pause"], ["resumeAll", "bulkResumeAll", "Resume"]];
   function barNative(bar, fn) { return bar.querySelector('input[type=button][onclick^="' + fn + '("]'); }
   function foldBar(bar) {
     var own = /^(de|en)/i.test(document.documentElement.lang || "en");
@@ -1429,7 +1429,7 @@
     r1.appendChild(cx.xml ? actBtn("Pencil", de ? "Bearbeiten" : "Edit", function () { editTemplate(cx.xml); }) : actBtnOff("Pencil", de ? "kein Template" : "no template"));
     var r2 = el("div", "cc-actrow");
     r2.appendChild(actBtn("Refresh", t("restart"), function () { doAction(name, "restart"); }));
-    r2.appendChild(paused ? actBtn("Play", t("resume"), function () { doAction(name, "unpause"); })
+    r2.appendChild(paused ? actBtn("Resume", t("resume"), function () { doAction(name, "unpause"); })
       : (running ? actBtn("Pause", t("pause"), function () { doAction(name, "pause"); }) : actBtnOff("Pause", t("pause"))));
     // The stop and start slot. Its action is re-derived at click time, so a stale bar never runs
     // the opposite of what the container needs.
@@ -2042,7 +2042,7 @@
     foot.appendChild(state);
     var acts = el("span", "cc-mrow-act cc-tile-act");
     if (cx.webui) acts.appendChild(running ? actBtn("ExternalLink", "WebUI", function () { window.open(cx.webui, "_blank"); }) : actBtnOff("ExternalLink", de ? "WebUI erst, wenn der Container läuft" : "WebUI once the container is running"));
-    acts.appendChild(paused ? actBtn("Play", t("resume"), function () { doAction(c.name, "unpause"); })
+    acts.appendChild(paused ? actBtn("Resume", t("resume"), function () { doAction(c.name, "unpause"); })
       : running ? actBtn("Stop", t("stop"), function () { doAction(c.name, "stop"); })
         : actBtn("Play", t("start"), function () { doAction(c.name, "start"); }));
     acts.appendChild(actBtn("Refresh", t("restart"), function () { doAction(c.name, "restart"); }));

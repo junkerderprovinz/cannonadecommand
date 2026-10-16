@@ -57,6 +57,18 @@ console.log('\nEvery name the scripts ask for is in the set');
   for (const [n, where] of asked) ok(n + ' (' + [...where].join(', ') + ') is in the set', n in GLYPHS);
 }
 
+// Starting and resuming are two meanings, so a paused container or VM never offers the start glyph.
+console.log('\nResume and start wear their own glyphs');
+{
+  const docker = read('scripts/docker.js'), vms = read('scripts/vms.js');
+  const resumes = [...docker.matchAll(/actBtn\("([A-Za-z]+)", t\("resume"\)/g), ...vms.matchAll(/actBtn\("([A-Za-z]+)", de \? "Fortsetzen"/g)].map((m) => m[1]);
+  const starts = [...docker.matchAll(/actBtn\("([A-Za-z]+)", t\("start"\)/g), ...vms.matchAll(/actBtn\("([A-Za-z]+)", de \? "Starten"/g)].map((m) => m[1]);
+  ok('every resume button wears Resume', resumes.length >= 3 && resumes.every((g) => g === 'Resume'), resumes.join(' '));
+  ok('every start button wears Play', starts.length >= 2 && starts.every((g) => g === 'Play'), starts.join(' '));
+  ok('in the "Alle Container" menu too', /\["startAll", "bulkStartAll", "Play"\]/.test(docker) && /\["resumeAll", "bulkResumeAll", "Resume"\]/.test(docker));
+  ok('Resume is in the set', 'Resume' in GLYPHS);
+}
+
 console.log('\nNo script builds a Font Awesome glyph of its own');
 {
   for (const f of ['scripts/docker.js', 'scripts/vms.js', 'scripts/header.js', 'scripts/settings.js', 'scripts/shares.js', 'scripts/plugins.js', 'scripts/settingsgrid.js', 'scripts/favorites.js']) {
