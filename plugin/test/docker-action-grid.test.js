@@ -89,7 +89,7 @@ console.log('\nAn action that does not apply keeps its slot');
 {
   const stopped = rows(api.bars('web', { state: 'exited' }, null).bar);
   ok('a stopped container: WebUI, console and pause disabled, start in the stop slot', stopped.join(' / ') === 'ExternalLink- Log Pencil / Refresh Pause- Play / Code- Download Trash More', stopped.join(' / '));
-  ok('a paused one resumes from the pause slot', rows(api.bars('web', { state: 'paused' }, null).bar)[1] === 'Refresh Play Stop');
+  ok('a paused one resumes from the pause slot', rows(api.bars('web', { state: 'paused' }, null).bar)[1] === 'Refresh Resume Stop');
   ctx = { webui: '', xml: '', tswebui: '', shell: '', id: '', image: '', links: [] };
   const bare = rows(api.bars('bare', { state: 'running' }, null).bar);
   ok('no WebUI, no template, no id and no links: every slot stays, disabled', bare.join(' / ') === 'ExternalLink- Log Pencil- / Refresh Pause Stop / Code Download Trash- More-', bare.join(' / '));
