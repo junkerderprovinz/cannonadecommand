@@ -888,10 +888,11 @@ html.cc-popups-on .sweet-alert button.cancel[style*="display: none"],
 html.cc-popups-on .sweet-alert button.cancel[style*="display:none"] { display: none !important; }
 
 /* A confirmation, every .sweet-alert that streams no log and is more than the loader, is a
-   CannonadeCommand window as CCTheme.ask draws one: the title notched into the top edge as a section
-   badge, the close badge header.js adds in the top right corner, the text on a lighter card and
-   the buttons at the bottom right, the forward action last and the only one filled. The frame
-   leaves its overflow visible for the two notches, so a long text scrolls inside its card. */
+   CannonadeCommand window: the title notched into the top edge as a section badge, the close badge
+   header.js adds in the top right corner, the text straight on the window's one surface (GlimStone
+   rule 15) and the buttons at the bottom right, the forward action last and the only one filled.
+   The frame leaves its overflow visible for the two notches, so a long text scrolls in its own
+   box. */
 html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) {
   width: 420px !important; max-width: calc(100vw - 2 * var(--cc-edge, 16px)) !important; box-sizing: border-box !important;
   padding: 21px 10px 10px !important; overflow: visible !important; text-align: start !important;
@@ -906,8 +907,8 @@ html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) h2 {
   letter-spacing: var(--cc-sec-ls, 1.2px) !important; text-align: start !important; overflow-wrap: anywhere;
 }
 html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) > p {
-  margin: 0 !important; padding: 14px !important; box-sizing: border-box; max-height: calc(92vh - 110px); overflow-y: auto;
-  background: #242424 !important; border-radius: var(--cc-radius-control); box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35));
+  margin: 0 !important; padding: 6px 14px 4px !important; box-sizing: border-box; max-height: calc(92vh - 110px); overflow-y: auto;
+  background: none !important; box-shadow: none !important;
   color: #e6e6e6 !important; font-size: var(--cc-text-subline) !important; font-weight: 400 !important; text-align: start !important; overflow-wrap: anywhere;
 }
 html.cc-popups-on .sweet-alert:not(.nchan, .cc-only-loader):not(:has(pre)) fieldset { margin: 0 !important; padding: 0 !important; border: none !important; }
