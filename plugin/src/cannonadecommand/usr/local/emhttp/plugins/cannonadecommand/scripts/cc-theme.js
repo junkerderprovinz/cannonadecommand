@@ -684,8 +684,8 @@
     h.style.cssText = "font-size:var(--cc-text-subline);font-weight:700;margin:0 0 8px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
     card.appendChild(h);
     var opts = de
-      ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Ink-Flatten"], ["tint", "Luminanz-Tint"]]
-      : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Ink flatten"], ["tint", "Luminance tint"]];
+      ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Nachzeichnen"], ["tint", "Tönen"]]
+      : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Redraw"], ["tint", "Tone"]];
     var sel = document.createElement("select");
     sel.style.cssText = "width:100%;background:var(--cc-surface-3,#2e2e2e);color:var(--cc-txt,#e6e6e6);border:none;border-radius:var(--cc-radius-control);padding:6px 10px;font-size:var(--cc-text-subline);outline:none";
     var cur = iconOverride(scope, name);
