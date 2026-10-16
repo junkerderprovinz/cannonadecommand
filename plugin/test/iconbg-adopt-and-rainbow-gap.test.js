@@ -8,7 +8,7 @@
 // and the Folder view go through one shared iconBgOn() helper so they cannot
 // drift apart.
 //
-// And .cc-card-ico needs the unconditional base rule the table row has. With only
+// And .cc-card-icobox needs the unconditional base rule the table row has. With only
 // the rainbow-gated rule, a plain accent and reactive mode off leave the icon on
 // its grey default, in the classic Grid and in the folder view, both of which
 // build through card() or folderTile().
@@ -74,16 +74,16 @@ console.log('\nAll three .cc-docker-iconbg call sites go through the shared help
   ok('no call site inlines its own check', !/classList\.toggle\("cc-docker-iconbg",\s*effc\("iconbg"\)\s*===\s*"1"\)/.test(src));
 }
 
-console.log('\n.cc-card-ico carries an unconditional base tile rule, not only the rainbow one');
+console.log('\n.cc-card-icobox carries an unconditional base tile rule, not only the rainbow one');
 {
-  const base = css.match(/\.cc-grid-holder\.cc-docker-iconbg \.cc-card-ico\s*\{([^}]*)\}/);
+  const base = css.match(/\.cc-grid-holder\.cc-docker-iconbg \.cc-card-icobox\s*\{([^}]*)\}/);
   ok('the base rule exists, gated on .cc-docker-iconbg alone', !!base);
   const baseBody = base ? base[1] : '';
   ok('the base rule uses the --cc-iconbg-color to --cc-accent chain', /--cc-iconbg-color/.test(baseBody) && /--cc-accent/.test(baseBody));
   ok('the base rule is !important, to beat the grey default on the same selector', /!important/.test(baseBody));
   ok('the base rule leaves --cc-rb-c to the rainbow rule', !/--cc-rb-c/.test(baseBody));
 
-  const rainbow = css.match(/\.cc-grid-holder\.cc-docker-iconbg\.cc-rainbow \.cc-card-ico\s*\{([^}]*)\}/);
+  const rainbow = css.match(/\.cc-grid-holder\.cc-docker-iconbg\.cc-rainbow \.cc-card-icobox\s*\{([^}]*)\}/);
   ok('the rainbow-gated rule is still there', !!rainbow);
   const rbBody = rainbow ? rainbow[1] : '';
   ok('the rainbow rule keeps --cc-rb-c ahead of --cc-accent', /--cc-iconbg-color.*--cc-rb-c.*--cc-accent/.test(rbBody.replace(/\s+/g, ' ')));
@@ -93,8 +93,8 @@ console.log('\n.cc-card-ico carries an unconditional base tile rule, not only th
   ok('the base rule is declared before the rainbow rule', css.indexOf(base[0]) < css.indexOf(rainbow[0]));
 
   // Reactive mode's rest and hover pair is more specific again and stays as it is.
-  ok('the reactive rest rule, the neutral grey, is unchanged', /html\.cc-shares-rbneutral\.cc-docker-on \.cc-grid-holder\.cc-docker-iconbg \.cc-card-ico\s*\{\s*background:\s*rgba\(128, 128, 128, \.18\)\s*!important;\s*\}/.test(css));
-  ok('the reactive hover rule, the real colour, is unchanged', /html\.cc-shares-rbneutral\.cc-docker-on \.cc-grid-holder\.cc-docker-iconbg \.cc-card:hover \.cc-card-ico/.test(css));
+  ok('the reactive rest rule, the neutral grey, is unchanged', /html\.cc-shares-rbneutral\.cc-docker-on \.cc-grid-holder\.cc-docker-iconbg \.cc-card-icobox\s*\{\s*background:\s*rgba\(128, 128, 128, \.18\)\s*!important;\s*\}/.test(css));
+  ok('the reactive hover rule, the real colour, is unchanged', /html\.cc-shares-rbneutral\.cc-docker-on \.cc-grid-holder\.cc-docker-iconbg \.cc-card:hover \.cc-card-icobox/.test(css));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

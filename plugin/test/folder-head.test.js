@@ -64,7 +64,7 @@ function render(opts) {
   const holder = new N('div');
   const given = Object.assign({
     el, window: { scrollY: 0, scrollTo() {}, openDocker: opts.openDocker === false ? undefined : () => {} },
-    localStorage: { getItem: () => null }, gridHolder: holder, ccOrgView: { rootId: 'root', flatEntries: opts.entries || ENTRIES },
+    localStorage: { getItem: () => null }, gridHolder: holder, folderDrag: null, ccOrgView: { rootId: 'root', flatEntries: opts.entries || ENTRIES },
     filterText: opts.filterText || '', mode: 'folder', LANG: 'en', t: (k) => k, effc: () => '', iconBgOn: () => false, gridFocusKey: () => null,
     ccGlyph: (n) => '<glyph ' + n + '>', findRows: () => [], rowName: (r) => r.name,
     containerByName: (n) => CTS[String(n).toLowerCase()] || null,
@@ -124,7 +124,7 @@ console.log('\nThe New folder tile');
   ok('the gear menu keeps its New folder button', /el\("button", "cc-btn cc-menu-newfolder"\)[\s\S]{0,200}t\("newFolder"\)[\s\S]{0,120}ccOrgCreateFolder\(\)/.test(src));
   const menu = grabFn('buildMenu');
   ok('which shows only in the folder view', /if \(ccOrgAvailable && mode === "folder"\) \{\s*var nrow/.test(menu));
-  ok('and the folder view is offered before the first folder exists', /if \(ccOrgAvailable\) \{\s*var bF/.test(menu) && !/ccOrgHasFolders/.test(src));
+  ok('and the folder view is offered before the first folder exists', /if \(ccOrgAvailable\) views\.push\(\["folder"/.test(menu) && !/ccOrgHasFolders/.test(src));
 }
 
 console.log('\nfolderLoad() adds up the running members');
@@ -178,8 +178,13 @@ console.log('\nUpdate all');
 console.log('\nDrag and drop');
 {
   ok('a drop target wears a 3px accent halo, never a border line', /\.cc-drop-target \{[^}]*box-shadow: 0 0 0 3px var\(--cc-rb-c, var\(--cc-rbaccent, var\(--cc-accent/.test(css) && !/\.cc-drop-target \{[^}]*border:/.test(css));
-  ok('a container dropped on a folder head files into it', /wireDropTarget\(head, function \(src\) \{\s*if \(src\.type === "container"\) ccOrgMoveToFolder\(src\.id, e\.id\);/.test(src));
-  ok('one dropped on the free area leaves its folder for the root', /wireDropTarget\(root, function \(src\) \{[\s\S]*?ccOrgMoveToPosition\(src\.id, ccOrgView\.rootId, lastPos\)/.test(src));
+  const view = grabFn('renderFolderView');
+  ok('a container over a folder head moves into that folder while it is dragged', /head = t\.closest\("\.cc-folder-group-head"\)/.test(view) && /if \(body && d\.el\.parentNode !== body\) slideInto\(d\.el, body, null\);/.test(view));
+  ok('the others slide aside from where they stood', /function slideInto\(node, parent, before\) \{[\s\S]*?getBoundingClientRect\(\)[\s\S]*?parent\.insertBefore\(node, before\);[\s\S]*?translate\(/.test(view));
+  ok('the drop saves the place the item holds, among the folder\'s other entries', /function saveDrag\(d\) \{[\s\S]*?ccOrgMoveToPosition\(d\.entry\.id, dest, pos\);/.test(view));
+  ok('a cancelled drag puts the saved order back', /if \(!d \|\| !d\.dropped \|\| !saveDrag\(d\)\) renderFolderView\(\);/.test(view));
+  ok('no render tears the dragged item away mid-drag', /function renderFolderView\(\) \{\s*if \(folderDrag\) return;/.test(src));
+  ok('a failed save puts the item back too', /moveDockerItemsToPosition"\); \}\)[\s\S]{0,140}\.catch\(function \(\) \{ flash\(t\("invalid"\), true\); if \(mode === "folder"\) renderFolderView\(\); \}\)/.test(src));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
