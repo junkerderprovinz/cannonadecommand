@@ -77,6 +77,23 @@ console.log('\nA row keeps Unraid\'s own arrangement, in a card centred in the w
   ok('a table with data does not', !titleTable({ tagName: 'TABLE', rows: [{ cells: [th] }, { cells: [td] }] }) && !titleTable({ tagName: 'TABLE', rows: [{ cells: [th, th] }] }));
 }
 
+console.log('\nThe sub tabs and unbalanced follow the centred cards');
+{
+  const rules = parseRules(read('sheets/CannonadeCommand.Forms.css'));
+  const decl = (sel, prop) => { const r = rules.find((x) => x.selector === sel); const d = r && r.decls.find((x) => x.prop === prop); return d ? d.value : '(none)'; };
+  const NAV = 'html.cc-forms-on:not(.cc-on-share-detail) #displaybox:has(.cc-fm-card) > nav.tabs';
+  ok('the spacer before the tabs is as wide as the gap beside the card column', decl(NAV + '::before', 'flex') === '0 1 calc((100% - 920px) / 2)', decl(NAV + '::before', 'flex'));
+  ok('and the strip keeps its length, so the spacer gives way first', decl(NAV + ' > .tabs-container', 'flex') === '0 0 auto');
+  const js = read('scripts/forms.js');
+  const fn = js.match(/function unbalanced\(box\) \{[\s\S]*?\n  \}/)[0];
+  const node = (tag, cls) => { const n = { tagName: tag, cls: new Set(cls ? [cls] : []), prev: null }; n.classList = { add: (...c) => c.forEach((x) => n.cls.add(x)) }; n.matches = (s) => s === 'div.title' && tag === 'DIV' && n.cls.has('title'); Object.defineProperty(n, 'previousElementSibling', { get: () => n.prev }); n.querySelectorAll = () => []; return n; };
+  const title = node('DIV', 'title'), ver = node('B'), style = node('STYLE'), form = node('FORM');
+  ver.prev = title; style.prev = ver; form.prev = style;
+  new Function('stripColon', 'return ' + fn)(() => {})({ querySelector: () => form });
+  ok('unbalanced\'s form becomes a card', form.cls.has('cc-fm-card') && form.cls.has('cc-fm-ub'));
+  ok('its page title becomes the badge, past its own style sheet and version line', title.cls.has('cc-fm-head') && ver.cls.has('cc-fm-ubver'));
+}
+
 console.log('\nforms.js leaves the forms working');
 {
   const js = read('scripts/forms.js');

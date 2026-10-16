@@ -338,11 +338,27 @@
     });
   }
 
+  // unbalanced lays its settings out in a grid of its own instead of dl rows. Its form is a card
+  // all the same, with the page title as the badge; Forms.css draws the version line between the
+  // two into the card's top corner.
+  function unbalanced(box) {
+    var f = box.querySelector('form[name="unbalanced_settings"]');
+    if (!f) return;
+    f.classList.add("cc-fm-card", "cc-fm-headed", "cc-fm-ub");
+    var labels = f.querySelectorAll(".unbalanced-settings-panel > .label");
+    for (var i = 0; i < labels.length; i++) stripColon(labels[i]);
+    for (var p = f.previousElementSibling; p && !p.matches("div.title"); p = p.previousElementSibling) {
+      if (p.tagName === "B") p.classList.add("cc-fm-ubver");
+    }
+    if (p) p.classList.add("cc-fm-head");
+  }
+
   function enhance() {
     var on = active();
     root.classList.toggle("cc-forms-on", on);
     if (!on) { teardown(); return; }
     var box = document.getElementById("displaybox"); if (!box) return;
+    unbalanced(box);
     var cards = markCards(box), extra = new Map();
     for (var i = 0; i < cards.length; i++) {
       markHead(cards[i]); markRows(cards[i]); helpIcons(cards[i]); namedTips(cards[i]);
