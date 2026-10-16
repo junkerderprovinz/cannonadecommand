@@ -68,7 +68,7 @@ console.log('\nThe temperature threshold takes a value of its own');
   ok('only a valid value is stored', /if \(ok\) \{ set\("cc\.tempwarn", String\(\+num\.value\)\); onChange\(\); \}/.test(row));
   ok('an invalid one says why and goes back to the stored value', /if \(tempWarnValid\(num\.value\)\) return;\s*failed\(num,/.test(row) && /num\.value = stored\(\);/.test(row));
   ok('the field stands right of the selector', /end\.appendChild\(row\.lastChild\); end\.appendChild\(field\);/.test(row));
-  ok('the status island card uses it', /cI\.appendChild\(tempWarnRow\(syncHeaderBar\)\);/.test(settings));
+  ok('the status island card uses it', /cI\.appendChild\(tempWarnRow\(syncHeaderBar\)\)/.test(settings));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
