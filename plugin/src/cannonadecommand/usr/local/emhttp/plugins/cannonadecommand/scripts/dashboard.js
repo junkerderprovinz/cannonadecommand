@@ -17,8 +17,12 @@
 
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
   var TXT = {
-    de: { resting: "Ruht", cores: "%c Kerne", coresHt: "%c Kerne, %t Threads", "P-Core": "P-Kerne", "E-Core": "E-Kerne" },
-    en: { resting: "Spun down", cores: "%c cores", coresHt: "%c cores, %t threads", "P-Core": "P-cores", "E-Core": "E-cores" }
+    de: { resting: "Ruht", cores: "%c Kerne", coresHt: "%c Kerne, %t Threads", "P-Core": "P-Kerne", "E-Core": "E-Kerne",
+          stop: "Array stoppen", start: "Array starten", sleep: "Ruhezustand", reboot: "Neu starten", off: "Herunterfahren",
+          ident: "Identifikation bearbeiten", foldAll: "Alle Karten ein- oder ausklappen", fold: "Karte einklappen", unfold: "Karte ausklappen" },
+    en: { resting: "Spun down", cores: "%c cores", coresHt: "%c cores, %t threads", "P-Core": "P-cores", "E-Core": "E-cores",
+          stop: "Stop the array", start: "Start the array", sleep: "Sleep", reboot: "Reboot", off: "Shut down",
+          ident: "Edit identification", foldAll: "Fold or unfold all cards", fold: "Fold card", unfold: "Unfold card" }
   };
   function t(k) { return (TXT[LANG] || TXT.en)[k] || TXT.en[k]; }
 
@@ -120,6 +124,100 @@
         h.style.setProperty("--cc-rb-c", c); h.style.setProperty("--cc-rb-ct", CCTheme.idealText(c));
       } else { h.style.removeProperty("--cc-rb-c"); h.style.removeProperty("--cc-rb-ct"); }
     }
+    // the icon badges of each tile run through the palette on their own, as a Docker row's do
+    var ts = document.querySelectorAll("table.dashboard > tbody");
+    for (var j = 0; j < ts.length; j++) {
+      var bs = ts[j].querySelectorAll(".cc-dash-btn:not(.cc-actoff)");
+      for (var k = 0; k < bs.length; k++) {
+        if (rb) {
+          var bc = CCTheme.rbColor(k, "#FCC419");
+          bs[k].style.setProperty("--cc-rb-c", bc); bs[k].style.setProperty("--cc-rb-ct", CCTheme.idealText(bc));
+        } else { bs[k].style.removeProperty("--cc-rb-c"); bs[k].style.removeProperty("--cc-rb-ct"); }
+      }
+    }
+  }
+
+  // The system tile's power controls and every tile's header controls become CC icon badges. They
+  // stay Unraid's own elements with Unraid's handlers and confirmations; each takes a glyph from the
+  // set where the set has the meaning, a name for the bubble and for a screen reader, and Tab and
+  // Enter. A control with no name of CC's own keeps Unraid's text.
+  var BTN_GLYPH = { "fa-stop-circle": "Stop", "fa-play-circle": "Play", "fa-moon-o": "Moon", "fa-refresh": "Refresh", "fa-power-off": "Power", "fa-cog": "Gear", "fa-info-circle": "Info" };
+  function btnName(b) {
+    var c = b.classList;
+    if (c.contains("fa-stop-circle")) return t("stop");
+    if (c.contains("fa-play-circle")) return t("start");
+    if (c.contains("fa-moon-o")) return t("sleep");
+    if (c.contains("fa-refresh")) return t("reboot");
+    if (c.contains("fa-power-off")) return t("off");
+    if (c.contains("fa-eject")) return t("foldAll");
+    if (c.contains("openclose")) return t(c.contains("fa-chevron-down") ? "unfold" : "fold");
+    if (b.getAttribute("href") === "/Dashboard/Settings/Identification") return t("ident");
+    return "";
+  }
+  function btnGlyph(b) {
+    var i = b.tagName === "A" ? b.querySelector("i.fa") : b;
+    for (var k in BTN_GLYPH) if (i && i.classList.contains(k)) return BTN_GLYPH[k];
+    return "";
+  }
+  function controls() {
+    return document.querySelectorAll("table.dashboard .tile-ctrl > span:is(.hand, .busy), table.dashboard .tile-header-right-controls > :is(a, i.control:not(.tile))");
+  }
+
+  var BTNS = [];
+  function badgeControls() {
+    var bs = controls();
+    for (var i = 0; i < bs.length; i++) {
+      var b = bs[i];
+      if (b.classList.contains("cc-dash-btn")) continue;
+      // Unraid puts the gear's text on the icon inside the link, where a bubble would find it before
+      // the link's own name.
+      var holder = b.hasAttribute("title") || b.hasAttribute("data-cc-tip") ? b : b.querySelector("[title], [data-cc-tip]");
+      var rec = { b: b, holder: holder, title: holder ? holder.getAttribute("title") || holder.getAttribute("data-cc-tip") : null };
+      BTNS.push(rec);
+      if (holder) { holder.removeAttribute("title"); holder.removeAttribute("data-cc-tip"); }
+      var name = btnName(b) || rec.title;
+      if (name) { b.setAttribute("data-cc-tip", name); b.setAttribute("aria-label", name); }
+      b.classList.add("cc-actbtn", "cc-dash-btn");
+      if (b.classList.contains("busy")) { b.classList.add("cc-actoff"); b.setAttribute("aria-disabled", "true"); }
+      else if (b.tagName !== "A") {
+        b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+        if (!b.ccKeys) { b.ccKeys = true; b.addEventListener("keydown", pressKey); }
+      }
+      var gl = btnGlyph(b);
+      if (gl && window.CCTheme && CCTheme.glyph) { b.insertAdjacentHTML("beforeend", CCTheme.glyph(gl)); b.classList.add("cc-dash-gl"); }
+    }
+  }
+  function pressKey(e) {
+    if (!this.classList.contains("cc-dash-btn") || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault(); e.stopPropagation(); this.click();
+  }
+  // Unraid turns the fold arrow over on a click, so its name follows after Unraid's handler ran.
+  function renameFolds() {
+    var fs = document.querySelectorAll("table.dashboard .cc-dash-btn.openclose");
+    for (var i = 0; i < fs.length; i++) { var n = btnName(fs[i]); fs[i].setAttribute("data-cc-tip", n); fs[i].setAttribute("aria-label", n); }
+  }
+  function unbadgeControls() {
+    BTNS.forEach(function (r) {
+      var b = r.b, gs = b.querySelectorAll(":scope > .cc-glyph");
+      for (var i = 0; i < gs.length; i++) b.removeChild(gs[i]);
+      b.classList.remove("cc-actbtn", "cc-dash-btn", "cc-dash-gl", "cc-actoff");
+      ["data-cc-tip", "aria-label", "aria-disabled", "role", "tabindex"].forEach(function (a) { b.removeAttribute(a); });
+      b.style.removeProperty("--cc-rb-c"); b.style.removeProperty("--cc-rb-ct");
+      if (r.holder && r.title) r.holder.setAttribute("title", r.title);
+    });
+    BTNS = [];
+  }
+
+  // The system tile prints the server's description under its name, and a server whose description
+  // is its name would show the name twice.
+  function hideDupName() {
+    var h = document.querySelector("table.dashboard tbody.system h3.tile-header-main"), d = h && h.nextElementSibling;
+    if (!d || d.tagName !== "SPAN" || d.id) return;
+    d.classList.toggle("cc-dash-dup", !!d.textContent.trim() && d.textContent.trim().toLowerCase() === h.textContent.trim().toLowerCase());
+  }
+  function showDupName() {
+    var d = document.querySelector("table.dashboard .cc-dash-dup");
+    if (d) d.classList.remove("cc-dash-dup");
   }
 
   // GlimStone draws a chart in the one accent with no grid. The CPU line and the inbound traffic
@@ -349,8 +447,8 @@
   function apply() {
     var live = isLive();
     document.documentElement.classList.toggle("cc-dash-on", live);
-    if (live) { decorate(); paint(); paintCharts(true); buildCores(); fixCards(); hideModel(); tintCase(); fixRows(); hookFeed(); }
-    else if (wasLive) { strip(); paintCharts(false); unbuildCores(); unswap(); showModel(); unfixRows(); }
+    if (live) { decorate(); badgeControls(); paint(); paintCharts(true); buildCores(); fixCards(); hideModel(); hideDupName(); tintCase(); fixRows(); hookFeed(); }
+    else if (wasLive) { strip(); unbadgeControls(); paintCharts(false); unbuildCores(); unswap(); showModel(); showDupName(); unfixRows(); }
     wasLive = live;
   }
 
@@ -362,6 +460,7 @@
     setTimeout(apply, 1500);
     setTimeout(apply, 5000);
     try { if (window.jQuery) window.jQuery(document).on("sortupdate", "table.dashboard, .grid", function () { if (isLive()) paint(); }); } catch (e) {}
+    document.addEventListener("click", function (e) { if (wasLive && e.target.closest && e.target.closest("table.dashboard .cc-dash-btn")) renameFolds(); });
     // cc.stateCache is skipped because docker.js rewrites it every 9s.
     window.addEventListener("storage", function (e) { try { if (e && e.key && e.key !== "cc.stateCache" && /^cc\./.test(e.key)) apply(); } catch (e2) {} });
   }
