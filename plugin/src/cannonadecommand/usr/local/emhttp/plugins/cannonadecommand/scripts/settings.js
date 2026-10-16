@@ -1957,6 +1957,9 @@
     var cSh = card(T("Stil", "Style"));
     cSh.appendChild(colourRow("cc.styleshares"));
     cSh.appendChild(tabviewRow("shares", syncSharesBar));
+    var cShV = card(T("Ansicht", "View"));
+    shareViewRow(cShV);
+    wrapShares.appendChild(cShV);
     var cSet = card(T("Stil", "Style"));
     cSet.appendChild(colourRow("cc.stylesettings"));
     // tile size of the /Settings + /Tools grid is the GLOBAL cc.sgsize control in Allgemein (no per-tab copy).
@@ -2644,6 +2647,32 @@
     var prev = viewPreview(opts, diskSketch), slot = el("div", "cc-set-viewslot cc-set-diskview");
     slot.appendChild(dropRow(label, opts, cur, function (v) {
       set("cc.diskview", v);
+      prev.mark(v);
+    }, help));
+    c.appendChild(slot); c.appendChild(prev.el);
+    prev.mark(cur);
+  }
+  // The share view on /Shares, the same choice as the switch in its tab bar, for the user and the
+  // disk shares alike.
+  function shareSketch(kind) {
+    if (kind === "list") return viewSketch("list");
+    var r = function (x, y, w, h, o) { return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="1.5"' + (o ? ' opacity="' + o + '"' : "") + "/>"; };
+    var s = "";
+    [1, 19].forEach(function (y) { [1, 21, 41].forEach(function (x) { s += r(x, y, 18, 16, 0.18) + r(x + 2, y + 2, 9, 3.5) + r(x + 2, y + 7, 5, 2.5, 0.6) + r(x + 8, y + 7, 5, 2.5, 0.6) + r(x + 2, y + 11.5, 14, 2, 0.45); }); });
+    return '<svg viewBox="0 0 60 36" fill="currentColor" aria-hidden="true">' + s + "</svg>";
+  }
+  function shareViewRow(c) {
+    var label = T("Freigaben", "Shares");
+    var help = T("Wie der Tab Freigaben die Benutzer- und Datenträgerfreigaben zeigt: als Liste wie in Unraid oder als Kacheln mit Export, Speicher und Größe je Freigabe. Der Schalter oben im Tab Freigaben stellt dasselbe um.", "How the Shares tab shows the user and disk shares: as Unraid's list or as tiles with the export, storage and size of each share. The switch at the top of the Shares tab changes the same setting.");
+    if (get("cc.theming", "1") === "0") {
+      c.appendChild(lockRow(label, T("Liste, solange das Theming aus ist", "List while theming is off"), T("Zum Theming", "Go to Theming"), function () { jumpTo("general", "Theming"); }, help));
+      return;
+    }
+    var opts = [["list", T("Liste", "List"), "IconViewList"], ["tiles", T("Kacheln", "Tiles"), "IconViewGrid"]];
+    var cur = get("cc.shareview", "list") === "tiles" ? "tiles" : "list";
+    var prev = viewPreview(opts, shareSketch), slot = el("div", "cc-set-viewslot cc-set-shareview");
+    slot.appendChild(dropRow(label, opts, cur, function (v) {
+      set("cc.shareview", v);
       prev.mark(v);
     }, help));
     c.appendChild(slot); c.appendChild(prev.el);
