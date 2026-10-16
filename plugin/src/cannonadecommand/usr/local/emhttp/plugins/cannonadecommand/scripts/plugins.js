@@ -175,6 +175,21 @@
       ok: de ? "Entfernen" : "Remove", cancel: de ? "Abbrechen" : "Cancel", danger: true, opener: opener, onOk: run
     });
   }
+  // The Plugins tab has no per-item settings window, so the icon pin is a small gear on the logo
+  // that opens the shared popover from cc-theme.js.
+  function iconGear(name) {
+    if (!window.CCTheme || !window.CCTheme.icons || !name) return null;
+    var tip = LANG === "de" ? "Icon-Färbung" : "Icon colouring";
+    var g = el("span", "cc-plugicm"); g.setAttribute(MARK, "1");
+    g.innerHTML = window.CCTheme.glyph("Gear");
+    g.setAttribute("data-tip", tip); g.setAttribute("aria-label", tip + ": " + name);
+    window.CCTheme.pressable(g);
+    g.addEventListener("click", function (ev) {
+      ev.preventDefault(); ev.stopPropagation();
+      window.CCTheme.icons.popover(g, "plugin", name, function () { try { paint(); } catch (e3) {} });
+    });
+    return g;
+  }
   // One global tile size key (cc.sgsize, not eff-gated): s 48/62, m 62/78, l 76/94 [img, box].
   // docker.js does not run on this page, so the vars are stamped here for the docker.css
   // #plugin_list and .cc-plugico rules; returns the img size for the inline stamps.
@@ -232,13 +247,26 @@
   // coexist; ensureTint() keeps the cc-plug-tint spelling.
   function ensureTintAs(hostId, filtId, ic) {
     var hex = /^#?([0-9a-f]{6})$/i.exec(ic || "");
+    if (!hex) { var old = document.getElementById(hostId); if (old) old.remove(); return ""; }
+    var n = parseInt(hex[1], 16);
+    return lumFilterAs(hostId, filtId, [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255], 0);
+  }
+  // Full-colour artwork on a badge in its contrast ink keeps its shading as greys. Luminance times
+  // a near-black ink is a blob, and dark artwork sinks into a dark badge, so on a light badge the
+  // greys run from the ink up to half white and on a dark one from 40 % grey up to white, as
+  // settingsgrid.js draws the tile logos on /Settings and /Tools.
+  function ensureShadeAs(hostId, filtId, light) {
+    var k = light ? 0.6 : 0.5;
+    return lumFilterAs(hostId, filtId, [k, k, k], light ? 0.4 : 0x16 / 255);
+  }
+  // Each channel is the pixel's luminance times rgb plus off, blended back over the original by
+  // cc.iconstrength.
+  function lumFilterAs(hostId, filtId, rgb, off) {
     var host = document.getElementById(hostId);
-    if (!hex) { if (host) host.remove(); return ""; }
-    var n = parseInt(hex[1], 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
     var st = Math.max(10, parseInt(eff("iconstrength") || "100", 10)) / 100;
     var lr = 0.2126, lg = 0.7152, lb = 0.0722, i2 = 1 - st;
-    function row(c, idx) { var v = [lr * c * st, lg * c * st, lb * c * st, 0, 0]; v[idx] += i2; return v.join(" "); }
-    var vals = row(r, 0) + " " + row(g, 1) + " " + row(b, 2) + " 0 0 0 1 0";
+    function row(c, idx) { var v = [lr * c * st, lg * c * st, lb * c * st, 0, off * st]; v[idx] += i2; return v.join(" "); }
+    var vals = row(rgb[0], 0) + " " + row(rgb[1], 1) + " " + row(rgb[2], 2) + " 0 0 0 1 0";
     if (!host) { host = document.createElement("div"); host.id = hostId; host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
     var sig = filtId + "|" + vals;
     if (host.dataset.sig !== sig) {
@@ -376,9 +404,9 @@
     var rowInk = "";
     try { var rc = colorFor(idx); rowInk = idealText(rc); tr.style.setProperty("--cc-rb-c", rc); tr.style.setProperty("--cc-rb-ct", rowInk); } catch (e0) {}
     for (var i = 0; i < tds.length; i++) tds[i].style.setProperty("vertical-align", "middle", "important");
-    // Column 1 becomes the plugin cell, like Docker's ct-name: the logo at container size, the
-    // name, and the support thread badge underneath. The name is the <strong> in column 2's
-    // README markdown.
+    // Column 1 becomes the plugin cell, like Docker's ct-name: the logo at container size with the
+    // icon colouring gear on it, and the name with the support thread link beside it. The name is
+    // the <strong> in column 2's README markdown.
     if (!tds[0].getAttribute(MARK)) {
       tds[0].setAttribute(MARK, "1");
       var nameEl = tds[1].querySelector("h1, h2, h3") || tds[1].querySelector("strong, b");
@@ -389,37 +417,18 @@
       var box = el("div", "cc-plugname");
       var icoWrap = el("div", "cc-plugico");
       while (tds[0].firstChild) icoWrap.appendChild(tds[0].firstChild);
+      var gear = iconGear(nm);
+      if (gear) icoWrap.appendChild(gear);
       var txt = el("div", "cc-plugtxt");
       txt.appendChild(el("div", "cc-plugtitle", nm));
       if (sup) {
-        var sb = el("a", "cc-b cc-plugsup", LANG === "de" ? "Support-Thread" : "Support thread");
-        sb.href = sup.href; sb.target = "_blank"; sb.setAttribute(MARK, "1");
-        var sbg = restBg(idx + 9);
-        sb.style.setProperty("background", sbg, "important");
-        sb.style.setProperty("color", idealText(sbg), "important");
-        sb.style.setProperty("text-decoration", "none", "important");
+        var sb = el("a", "cc-pluglink cc-plugsup", LANG === "de" ? "Support-Thread" : "Support thread");
+        sb.href = sup.href; sb.target = "_blank"; sb.rel = "noopener"; sb.setAttribute(MARK, "1");
         sup.remove();
         txt.appendChild(sb);
       }
       // This block runs once, so the name is kept for the icon lookup and the per-plugin pin.
       tds[0].setAttribute("data-cc-pname", nm || "");
-      // The Plugins tab has no per-item settings window, so the icon pin gets a small control
-      // next to the name that opens the shared popover from cc-theme.js.
-      if (window.CCTheme && window.CCTheme.icons && nm) {
-        var icb = el("span", "cc-b cc-plugicm", LANG === "de" ? "Icon" : "Icon");
-        icb.setAttribute(MARK, "1");
-        icb.title = LANG === "de" ? "Icon-Färbung für dieses Plugin" : "Icon colouring for this plugin";
-        icb.style.setProperty("cursor", "pointer", "important");
-        icb.style.setProperty("text-decoration", "none", "important");
-        var ibg2 = restBg(idx + 4);
-        icb.style.setProperty("background", ibg2, "important");
-        icb.style.setProperty("color", idealText(ibg2), "important");
-        icb.addEventListener("click", function (ev) {
-          ev.preventDefault(); ev.stopPropagation();
-          window.CCTheme.icons.popover(icb, "plugin", nm, function () { try { paint(); } catch (e3) {} });
-        });
-        txt.appendChild(icb);
-      }
       box.appendChild(icoWrap); box.appendChild(txt);
       tds[0].appendChild(box);
     }
@@ -432,13 +441,13 @@
     var ibgBg = plugBgColor();
     // With the adopt toggle on over a tinted badge there are two shared filters, black ink and
     // white ink, and each row picks the one matching its own rowInk, the value stamped as its
-    // --cc-rb-ct above.
+    // --cc-rb-ct above. In the reactive mode the badge rests grey, so the ink is white there.
     var f2, pFlat, pInk, str = parseInt(eff("iconstrength") || "100", 10);
     if (iconBgAdoptsP() && ibgOn && plugTintOn()) {
-      var rowBlk = rowInk !== "#fff";
+      var badgeInk = reactive() ? "#fff" : rowInk, rowBlk = badgeInk !== "#fff";
       pFlat = rowBlk ? ensureFlatFilter("cc-plug-mono-svg-blk", "cc-plug-mono-tint-blk", "#161616", str) : ensureFlatFilter("cc-plug-mono-svg-wht", "cc-plug-mono-tint-wht", "#fff", str);
-      f2 = rowBlk ? ensureTintAs("cc-plug-tint-svg-blk", "cc-plug-tint-blk", "#161616") : ensureTintAs("cc-plug-tint-svg-wht", "cc-plug-tint-wht", "#fff");
-      pInk = rowInk;
+      f2 = rowBlk ? ensureShadeAs("cc-plug-tint-svg-blk", "cc-plug-tint-blk", false) : ensureShadeAs("cc-plug-tint-svg-wht", "cc-plug-tint-wht", true);
+      pInk = badgeInk;
     } else {
       f2 = ensureTint();
       pInk = plugIconInk(false);
@@ -491,8 +500,8 @@
       if (name) { au.textContent = ""; var ab = badge("Von", name, idx); ab.classList.add("cc-b-von", "cc-b-pauthor", "cc-plugauth"); au.appendChild(ab); }
     }
     // Column 4 (vid) is rebuilt after every ajax rewrite: [Neu <new>] (orange, only with a pending
-    // update), [Version <old>], [Changelog]. The native info circle keeps its delegated handler;
-    // it is hidden and the changelog badge clicks it.
+    // update) on a line of its own, then [Version <old>] with the changelog link beside it. The
+    // native info circle keeps its delegated handler; it is hidden and the link clicks it.
     var vid = tds[3];
     var col = vid.querySelector(".cc-plugver");
     if (!col) { col = el("div", "cc-plugver"); vid.appendChild(col); }
@@ -500,7 +509,7 @@
     if (redV && redV.textContent.trim()) {
       redV.setAttribute(MARK, "1");
       redV.style.setProperty("display", "none", "important");
-      var nb0 = el("span", "cc-b"); nb0.setAttribute(MARK, "1");
+      var nb0 = el("span", "cc-b cc-plugnew"); nb0.setAttribute(MARK, "1");
       nb0.appendChild(el("span", "cc-b-k", "Neu"));
       nb0.appendChild(el("span", "cc-b-v", redV.textContent.trim()));
       nb0.style.setProperty("background", "var(--cc-warn, #ff832b)", "important");
@@ -515,12 +524,8 @@
       if (vtxt) { var vb = badge("Version", vtxt, idx + 3); vb.classList.add("cc-verb"); col.appendChild(vb); }
       if (icon) {
         icon.style.setProperty("display", "none", "important");
-        var ib = el("span", "cc-b"); ib.setAttribute(MARK, "1");
-        ib.appendChild(el("span", "cc-b-v", "Changelog"));
-        var bg2 = restBg(idx + 6);
-        ib.style.setProperty("background", bg2, "important");
-        ib.style.setProperty("color", idealText(bg2), "important");
-        ib.style.setProperty("cursor", "pointer", "important");
+        var ib = el("span", "cc-pluglink cc-plugchg", "Changelog"); ib.setAttribute(MARK, "1");
+        if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(ib);
         ib.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); icon.click(); });
         col.appendChild(ib);
       }
@@ -765,6 +770,8 @@
           b2.setAttribute(MARK, "1");
         }
       });
+      // The tiles read the rows this pass has just painted (plugintiles.js).
+      if (typeof window.ccPluginTilesApply === "function") window.ccPluginTilesApply();
     } catch (e) {}
   }
 

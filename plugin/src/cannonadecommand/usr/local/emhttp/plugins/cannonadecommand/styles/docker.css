@@ -1218,7 +1218,7 @@ html.cc-on-plugins.cc-sections-plugins #displaybox .cc-card-head > span.left { d
 .cc-plug #plugin_list > tr > td { padding-top: var(--cc-density, 9px) !important; padding-bottom: var(--cc-density, 9px) !important; }
 .cc-plug #plugin_list > tr > td:nth-child(2) { padding-right: 14px !important; } /* uniform right edge for the scroll windows */
 .cc-plug #plugin_list > tr > td:nth-child(2) p { margin: 0 !important; }
-.cc-plug thead th:first-child { width: 300px; }
+.cc-plug thead th:first-child { width: 340px; }
 .cc-set-tbl, .cc-set-tbl th, .cc-set-tbl td, .cc-set-tbl tr { background: transparent !important; }
 .cc-plug #plugin_list > tr > td:first-child { text-align: left !important; }
 .cc-plugname { display: flex; align-items: center; gap: 12px; }
@@ -1250,13 +1250,6 @@ html.cc-plugins-iconbg.cc-plugins-rainbow .cc-plugico { background: var(--cc-ico
   object-fit: contain !important; text-align: center !important;
   display: inline-block !important; vertical-align: middle !important; box-sizing: border-box !important;
 }
-.cc-plugsup { transition: box-shadow .12s, transform .12s; }
-.cc-plugsup:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; transform: translateY(-1px); }
-/* The per-plugin icon-mode pin. The Plugins tab has no per-item settings window, so the choice
-   lives on this badge next to the name and opens the shared picker, with the same rest and hover
-   as the support badge above. */
-.cc-plugicm { transition: box-shadow .12s, transform .12s; }
-.cc-plugicm:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; transform: translateY(-1px); }
 /* the other tabs' tables (install errors etc.): same clean look */
 .cc-plug-lite thead th { background: transparent !important; color: var(--cc-text-dim, #8a8a8a) !important; font-size: var(--cc-text-meta) !important; font-weight: 500 !important; text-transform: uppercase !important; letter-spacing: 1.2px !important; border: none !important; box-shadow: none !important; padding-top: 8px !important; padding-bottom: 12px !important; }
 .cc-plug-lite thead tr { border: none !important; box-shadow: none !important; }
@@ -1275,11 +1268,13 @@ html.cc-on-plugins .cc-desc, html.cc-on-plugins .cc-desc * { text-align: start !
 html.cc-on-plugins input.cc-plugbar-btn { background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-on-plugins input.cc-plugbar-btn:hover:not(:disabled) { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 .cc-plug-lite tbody td { padding-top: 6px !important; padding-bottom: 6px !important; }
-.cc-plugtxt { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-.cc-plugtitle { font-size: var(--cc-text-title); font-weight: 600; } /* the Docker tab's container-name look */
-.cc-plugsup { font-size: var(--cc-text-meta); }
-.cc-plugicm { font-size: var(--cc-text-meta); }
-.cc-plugver { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+/* The name with the support link beside it, and the version with the changelog link beside it;
+   a pending update's Neu badge takes a line of its own above them. A long name wraps rather than
+   pushing the link under it. The links live in CannonadeCommand.Plugins.css. */
+.cc-plugtxt { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.cc-plugtitle { min-width: 0; font-size: var(--cc-text-title); font-weight: 600; } /* the Docker tab's container-name look */
+.cc-plugver { display: grid; grid-template-columns: auto auto; justify-content: start; align-items: center; gap: 5px 10px; }
+.cc-plugver > .cc-plugnew { grid-column: 1 / -1; justify-self: start; }
 .cc-plug .cc-b { display: inline-flex; gap: 5px; align-items: center; border-radius: var(--cc-radius-pill); padding: var(--cc-sm-pad, 3px 11px); font-size: var(--cc-sm-fs); }
 .cc-plug .cc-b .cc-b-k { opacity: .72; font-weight: 500; }
 
@@ -2463,12 +2458,11 @@ html.cc-shares-rbneutral.cc-plugins-iconbg #plugin_list tr:hover .cc-plugico { b
    stays rainbow-first, unlike the logo tile below. */
 html.cc-shares-rbneutral.cc-on-plugins #plugin_list .cc-b-del { background: rgba(128, 128, 128, .18) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
 html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b,
-html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b-del,
-html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-plugsup {
+html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b-del {
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;
 }
-/* The two that do something, delete and the support link, step once more under the pointer itself. */
-html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover :is(.cc-b-del, .cc-plugsup):hover {
+/* Delete does something, so it steps once more under the pointer itself. */
+html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b-del:hover {
   background: color-mix(in srgb, var(--cc-rb-c, var(--cc-accent, #FCC419)) 85%, var(--cc-text, #e6e6e6)) !important;
 }
 /* The logo tile is the icon badge rather than a value badge, so a configured icon colour wins

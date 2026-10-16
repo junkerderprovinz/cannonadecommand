@@ -128,7 +128,7 @@ console.log('\nBadges that are not icon logos stay rainbow-first');
   ok('CPU badge rule exists', cpuBody != null);
   ok('CPU badge: --cc-rb-c comes first', /background:\s*var\(--cc-rb-cpu,/.test(cpuBody || ''), cpuBody);
 
-  const genericPluginHoverSel = 'html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b,\nhtml.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b-del,\nhtml.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-plugsup';
+  const genericPluginHoverSel = 'html.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b,\nhtml.cc-shares-rbneutral.cc-on-plugins #plugin_list tr:hover .cc-b-del';
   const genBody = ruleBody(css, genericPluginHoverSel);
   ok('generic plugin value-badge hover rule exists, the delete badge among the badges', genBody != null);
   ok('generic plugin value badge: --cc-rb-c comes first', /background:\s*var\(--cc-rb-c,\s*var\(--cc-accent,/.test(genBody || ''), genBody);
