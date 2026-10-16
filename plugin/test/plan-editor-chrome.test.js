@@ -354,7 +354,7 @@ ok(/cc-dropin"\)\) \? "5px 24px 5px 8px"/.test(harden), 'hardenPop exempts it fr
 // and the button row span the card's width. Pinned as the shape of the fix, since one
 // number everywhere is what a later tidy-up would write back.
 console.log('\nPart 12: one 24px side inset for the whole window');
-ok(/\.cc-pop-mid \{[^}]*margin: 0 10px/.test(css), 'the content card sits 10px inside the window');
+ok(/\.cc-pop-mid \{[^}]*margin: 0 10px/.test(css), 'the content sits 10px inside the window');
 ok(/\.cc-pop-row \{[^}]*padding: 8px 14px/.test(css), 'an unwrapped .cc-pop-row (the manage-toggle line) takes the full 14px inside the card itself');
 ok(/\.cc-pop-body \.cc-pop-row, \.cc-pop-auto \.cc-pop-row \{ padding: 3px 10px !important/.test(css), 'a wrapped row keeps 10 and lets its wrapper margin supply the other 4');
 ok(/\.cc-pop-body \{[^}]*margin: 6px 4px 2px/.test(css) && /\.cc-pop-auto \{[^}]*margin: 6px 4px/.test(css), 'both wrappers carry that 4px margin, the two halves of 14 having to agree');

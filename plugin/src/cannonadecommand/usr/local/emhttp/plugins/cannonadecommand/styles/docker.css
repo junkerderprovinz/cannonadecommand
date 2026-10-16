@@ -644,8 +644,9 @@ html .cc-seg-btn:hover { color: var(--cc-txt); }
 .cc-menu-link:is(:hover, :focus-visible) { outline: none; text-decoration: none; background: var(--cc-rb-c, var(--cc-accent, #FCC419)); color: var(--cc-rb-ct, var(--cc-accent-text, #161616)); }
 
 /* The editor windows follow the .cc-win template in Tokens.css: the dark frame, the title badge
-   across the top, the content on the lighter .cc-pop-mid card and the button row at the bottom. A
-   short fade and rise replaces the blink-on, and reduced motion drops it below. */
+   across the top, the content in .cc-pop-mid straight on the frame, its one surface, and the button
+   row at the bottom. A short fade and rise replaces the blink-on, and reduced motion drops it
+   below. */
 .cc-pop { position: absolute; z-index: 99999; width: 340px; max-width: calc(100vw - 2 * var(--cc-edge)); background: #1a1a1a; color: var(--cc-txt, #e6e6e6); border: none; border-radius: var(--cc-radius-card); box-shadow: var(--cc-elev-3); font-size: var(--cc-text-subline); line-height: 1.5; font-family: inherit; animation: cc-pop-in .14s cubic-bezier(.2,.7,.3,1); }
 @keyframes cc-pop-in { from { opacity: 0; transform: translateY(6px) scale(.985); } to { opacity: 1; transform: none; } }
 /* While a window stands, the page behind it is pinned: docker.js ccScrollLock sets
@@ -657,7 +658,7 @@ html .cc-seg-btn:hover { color: var(--cc-txt); }
 html.cc-scrolllock, html.cc-scrolllock body { overflow: hidden !important; }
 html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width the hidden scrollbar held, or the page jumps sideways on open */
 .cc-pop { display: flex; flex-direction: column; max-height: calc(100vh - 2 * var(--cc-edge)); }
-.cc-pop-mid { overflow-y: auto; overscroll-behavior: contain; min-height: 0; margin: 0 10px; padding: 4px 0; background: var(--cc-surface-window, #242424); border-radius: var(--cc-radius-control); box-shadow: var(--cc-elev-1); }
+.cc-pop-mid { overflow-y: auto; overscroll-behavior: contain; min-height: 0; margin: 0 10px; padding: 4px 0; }
 @media (prefers-reduced-motion: reduce) { .cc-pop { animation: none; } }
 /* A popover lives on document.body, outside #cc-settings, so Unraid's global button, input and
    select theming reaches it: orange borders, uppercasing that clips a button label, and underlines
@@ -817,7 +818,7 @@ html .cc-pop .cc-btn-primary, html .cc-menu .cc-btn-primary { background: var(--
 html .cc-pop .cc-btn-primary:hover, html .cc-menu .cc-btn-primary:hover { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important; }
 /* The plan editor groups its sections: plan fields, watchdog and schedules each get their own
    block, so the rows sit tight instead of drifting apart. */
-.cc-pop-body { background: transparent; border: none; border-radius: var(--cc-radius-control); margin: 6px 4px 2px; padding: 3px 0; }   /* flat: spacing only, the card behind is .cc-pop-mid */
+.cc-pop-body { background: transparent; border: none; border-radius: var(--cc-radius-control); margin: 6px 4px 2px; padding: 3px 0; }   /* flat: spacing only */
 /* Unraid's theme gives inputs and labels margins and min-heights that push the editor rows apart;
    the !important is because its sheet can load after this one. */
 .cc-pop-body .cc-pop-row, .cc-pop-auto .cc-pop-row { padding: 3px 10px !important; }

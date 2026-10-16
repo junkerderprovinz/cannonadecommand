@@ -605,7 +605,7 @@
     var showBw = which === "all" || which === "bw", showDisk = which === "all" || which === "disk";
     var hasLimFields = showCpu || showRam || showBw;
     // A CannonadeCommand window anchored at the gear, in the .cc-win template of Tokens.css, the
-    // same frame, title badge, card and button row as Docker's editors.
+    // same frame, title badge, content and button row as Docker's editors.
     var win = el("div", "cc-win"); win.id = "cc-vmlim";
     var titleMap = { cpu: VMDE ? "CPU-Limit" : "CPU limit", ram: VMDE ? "RAM-Limit" : "RAM limit", bw: VMDE ? "Bandbreite" : "Bandwidth", disk: VMDE ? "vDisk-Größe" : "vDisk size", all: VMDE ? "VM-Limits" : "VM limits" };
     win.appendChild(el("div", "cc-win-title", titleMap[which] + ": " + name));

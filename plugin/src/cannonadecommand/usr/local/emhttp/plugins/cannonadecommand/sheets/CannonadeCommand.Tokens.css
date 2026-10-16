@@ -386,9 +386,9 @@ html.cc-popups-on #alternateView .alternateViewContent {
   --cc-card-bg: var(--cc-surface-1);  --cc-card-inset: var(--cc-surface-2);  --cc-field-bg: var(--cc-surface-3);
 }
 
-/* A CannonadeCommand window (GlimStone rule 15, in the look of CC's update window): a dark frame,
-   the title as a badge across its full width, the content on a lighter card, the buttons in a row
-   at the bottom, no line anywhere. CCTheme.modal puts the scrim behind it, one step under the
+/* A CannonadeCommand window (GlimStone rule 15, in the look of CC's update window): one dark
+   surface, the title as a badge across its full width, the content straight on it, the buttons in
+   a row at the bottom, no line anywhere. CCTheme.modal puts the scrim behind it, one step under the
    window's own z-index. The scrim and these windows live here because this sheet is on every page:
    the VM tab, the Plugins page and the CannonadeCommand settings ask questions too. A .cc-dlg is a
    question window, centred and above Unraid's own popovers, whose z-index reaches 999999. */
@@ -435,8 +435,7 @@ html.cc-popups-on #alternateView .alternateViewContent {
 .cc-win-x:hover { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
 .cc-win-card {
   flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
-  padding: 14px; background: var(--cc-surface-window); border-radius: var(--cc-radius-control);
-  box-shadow: var(--cc-elev-1);
+  padding: 6px 14px 4px;
 }
 html .cc-win .cc-win-text { margin: 0; color: var(--cc-text); white-space: pre-line; overflow-wrap: anywhere; }
 html .cc-win .cc-win-in {
