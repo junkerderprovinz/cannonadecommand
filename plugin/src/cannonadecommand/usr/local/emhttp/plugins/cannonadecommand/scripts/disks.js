@@ -400,7 +400,8 @@
     return h;
   }
   function tempHtml(d) {
-    if (!d.temp || d.down) return '<span class="cc-dk-dot cc-dk-idle"></span>*';
+    if (d.down) return glyph("Moon") + esc(t("resting"));
+    if (!d.temp) return '<span class="cc-dk-dot cc-dk-idle"></span>*';
     return '<span class="cc-dk-dot"></span>' + esc(nf.format(d.temp.shown) + " °" + d.temp.unit);
   }
   function busy(d) { return !d.down && (d.rd > 0 || d.wr > 0); }

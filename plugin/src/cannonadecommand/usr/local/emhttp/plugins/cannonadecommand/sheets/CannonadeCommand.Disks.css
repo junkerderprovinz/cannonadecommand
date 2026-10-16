@@ -184,6 +184,7 @@ html.cc-dk-on #displaybox .cc-dk-chip:is(.cc-dk-warn, .cc-dk-err) .cc-dk-dot { b
 html.cc-dk-on #displaybox .cc-dk-io { display: grid; grid-template-columns: .8fr 1fr 1fr; gap: 8px; font-size: var(--cc-text-meta); color: var(--cc-text-dim); font-variant-numeric: tabular-nums; }
 html.cc-dk-on #displaybox .cc-dk-io > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 html.cc-dk-on #displaybox .cc-dk-io b { display: inline-flex; align-items: center; gap: 6px; color: var(--cc-text); font-size: var(--cc-text-subline); font-weight: 600; white-space: nowrap; }
+html.cc-dk-on #displaybox .cc-dk-io b .cc-glyph { width: 1em; height: 1em; flex: none; }
 html.cc-dk-on #displaybox .cc-dk-io b.cc-dk-warn { color: var(--cc-warn-ink); }
 html.cc-dk-on #displaybox .cc-dk-io b.cc-dk-err { color: var(--cc-err-ink); }
 html.cc-dk-on #displaybox .cc-dk-io b.cc-dk-warn .cc-dk-dot { background: var(--cc-warn); }
