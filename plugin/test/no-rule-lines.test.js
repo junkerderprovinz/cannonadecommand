@@ -16,8 +16,10 @@ for (const [name, page, e] of parts) {
   const found = lines(withUnraid(page), e);
   ok(name + ' draws no line', !found.length, found.join(' | '));
 }
-const res = candidates(withUnraid('docker'), parts[0][2], 'margin-top').pop();
-ok('the limit group keeps its distance from the badges above', res && parseFloat(res.value) >= 8, res && res.value);
+// The card's own gap sets the limit group off from the action row above it.
+const card = candidates(withUnraid('docker'), { tag: 'div', classes: ['cc-card'], inside: ['.cc-grid-holder'], outside: ['#docker_list', '.cc-enh'], html: ['cc-docker-on'] }, 'gap').pop();
+const space = candidates(withUnraid('docker'), { tag: 'div', classes: ['cc-grid-holder'], html: ['cc-docker-on'] }, '--cc-card-space').pop();
+ok('the limit group keeps its distance from the action row above', card && /var\(--cc-card-space\)/.test(card.value) && space && parseFloat(space.value) >= 8, (card && card.value) + ' / ' + (space && space.value));
 const head = candidates(withUnraid('settings'), parts[1][2], 'margin-bottom').pop();
 ok('the settings head keeps its distance from the tabs', head && parseFloat(head.value) >= 24, head && head.value);
 
