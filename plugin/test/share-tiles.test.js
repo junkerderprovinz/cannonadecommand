@@ -151,14 +151,15 @@ console.log('\nThe view: one switch and one key for both tables');
 {
   const store = {};
   const R = load({ g: (k, d) => (k in store ? store[k] : d) });
-  ok('unset, the page keeps Unraid\'s list', R.view() === 'list');
-  store['cc.shareview'] = 'tiles';
-  ok('cc.shareview = tiles shows the tiles', R.view() === 'tiles');
+  ok('unset, the page shows tiles', R.view() === 'tiles');
+  store['cc.shareview'] = 'list';
+  ok('cc.shareview = list shows Unraid\'s list', R.view() === 'list');
   ok('the switch writes cc.shareview', /var KEY = "cc\.shareview";/.test(js) && /s\(KEY, o\[0\]\)/.test(js));
   ok('there is one switch, in the tab bar ahead of the column reset', (js.match(/el\("div", "cc-sht-vsw"\)/g) || []).length === 1 && /nav\.insertBefore\(sw, nav\.querySelector\(":scope > \.cc-colreset"\)\)/.test(js));
   const settings = read('scripts/settings.js');
   const row = grabFn(settings, 'shareViewRow');
   ok('the settings row writes the same key and nothing else', /set\("cc\.shareview", v\);/.test(row) && (row.match(/set\(/g) || []).length === 1);
+  ok('it starts from tiles as the page does', /var cur = get\("cc\.shareview", "tiles"\) === "list" \? "list" : "tiles";/.test(row));
   ok('it offers Liste and Kacheln with the view glyphs', /\[\["list", T\("Liste", "List"\), "IconViewList"\], \["tiles", T\("Kacheln", "Tiles"\), "IconViewGrid"\]\]/.test(row));
   ok('its bubble points to the switch on the page', /Der Schalter oben im Tab Freigaben stellt dasselbe um\./.test(row));
   ok('it sits in the Freigaben tab', /shareViewRow\(cShV\);\s*wrapShares\.appendChild\(cShV\);/.test(settings));

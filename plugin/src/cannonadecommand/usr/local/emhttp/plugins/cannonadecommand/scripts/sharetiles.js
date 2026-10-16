@@ -26,7 +26,7 @@
     return g("cc.theming", "1") !== "0" && g("cc.enable.shares", "0") !== "0" && pn() === "/Shares" && !!document.querySelector("#displaybox nav.tabs");
   }
   // One key for both tables, written by the switch and by the settings page.
-  function view() { return g(KEY, "list") === "tiles" ? "tiles" : "list"; }
+  function view() { return g(KEY, "tiles") === "list" ? "list" : "tiles"; }
 
   // Tree helpers that use children, childNodes, tagName and getAttribute only, so the readers run
   // on the live rows, on the rows shares.js has badged, and on the test shim alike.

@@ -2669,7 +2669,7 @@
       return;
     }
     var opts = [["list", T("Liste", "List"), "IconViewList"], ["tiles", T("Kacheln", "Tiles"), "IconViewGrid"]];
-    var cur = get("cc.shareview", "list") === "tiles" ? "tiles" : "list";
+    var cur = get("cc.shareview", "tiles") === "list" ? "list" : "tiles";
     var prev = viewPreview(opts, shareSketch), slot = el("div", "cc-set-viewslot cc-set-shareview");
     slot.appendChild(dropRow(label, opts, cur, function (v) {
       set("cc.shareview", v);
