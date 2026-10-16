@@ -2151,6 +2151,9 @@ html.cc-docker-on.cc-on-addct div.title {
 /* The title bar takes the form's reading width and place, so the view switch ends where the fields do. */
 html.cc-docker-on.cc-on-addct div.title:has(~ form dl, ~ * form dl),
 html.cc-docker-on.cc-on-addct #canvas div.title { max-width: 920px; margin-inline: auto; box-sizing: border-box; padding-right: 0 !important; }
+/* the gap under the main menu bar that the Docker list and the Apps cards keep, which the bare
+   title bar would otherwise give up to sit right against the menu */
+html.cc-docker-on.cc-on-addct #displaybox > .content > div.title:first-child { margin-top: 20px; }
 /* the form page joins the house left edge: #displaybox lines up with the main menu bar through
    --cc-align-left, which header.js sets */
 html.cc-docker-on.cc-on-addct:not(.Theme--sidebar) #displaybox { padding-left: var(--cc-align-left, 15px); }
