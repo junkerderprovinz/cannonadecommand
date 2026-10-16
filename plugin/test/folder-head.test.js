@@ -122,6 +122,9 @@ console.log('\nThe New folder tile');
   tile.fire('click');
   ok('a click runs the same create path as the gear menu', tile.created === true);
   ok('the gear menu keeps its New folder button', /el\("button", "cc-btn cc-menu-newfolder"\)[\s\S]{0,200}t\("newFolder"\)[\s\S]{0,120}ccOrgCreateFolder\(\)/.test(src));
+  const menu = grabFn('buildMenu');
+  ok('which shows only in the folder view', /if \(ccOrgAvailable && mode === "folder"\) \{\s*var nrow/.test(menu));
+  ok('and the folder view is offered before the first folder exists', /if \(ccOrgAvailable\) \{\s*var bF/.test(menu) && !/ccOrgHasFolders/.test(src));
 }
 
 console.log('\nfolderLoad() adds up the running members');

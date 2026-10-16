@@ -611,20 +611,6 @@ html.cc-state-native .cc-tile-up { background: var(--cc-warn, #ff832b); color: v
 .cc-fmember-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--cc-text-meta); }
 .cc-fmember-in { margin-left: 6px; color: var(--cc-dim); }
 
-/* The gear menu's filter, a filled field with no line around it. The html prefix and the menu
-   class carry it past Unraid's input[type="text"] rule, which would draw an underline. */
-html .cc-menu .cc-filter {
-  box-sizing: border-box; width: 100%; height: 30px; min-height: 0; margin: 0; padding: 0 10px;
-  background: var(--cc-surface-3, #2e2e2e); color: var(--cc-txt, #e6e6e6); border: none; border-radius: var(--cc-radius-control);
-  box-shadow: none; font-size: var(--cc-text-meta); line-height: normal;
-}
-html .cc-menu .cc-filter:focus { background-color: #383838; outline: none; }
-/* The Search button and the field share one place: the button until it is pressed or a filter is
-   set, the field after. */
-.cc-search { display: flex; width: 100%; }
-.cc-search .cc-filter, .cc-search.cc-search-open .cc-search-btn { display: none; }
-.cc-search.cc-search-open .cc-filter { display: block; }
-html .cc-search-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 /* Buttons are filled, with no borders anywhere: a neutral fill for a secondary, the accent for a
    primary, and fills and shadows for separation. Every CC button rule carries the html prefix,
    which matches the weight of Unraid's button[type="button"]:where(...) and button:hover:where(...)
@@ -648,7 +634,6 @@ html .cc-seg-btn:hover { color: var(--cc-txt); }
 .cc-menu-row:hover { background: #262626; }
 .cc-menu-plain { cursor: default; gap: 8px; flex-wrap: wrap; }
 .cc-menu-plain:hover { background: transparent; }
-.cc-menu-plain .cc-filter { width: 100%; }
 .cc-menu-plain .cc-btn { flex: 1; text-align: center; }
 /* The way to the settings page is a secondary button with its gear, a link that looks and reacts
    like the buttons above it, and New folder carries its glyph the same way. */
@@ -800,7 +785,7 @@ html .cc-pop .cc-in:focus { background-color: #383838 !important; }
    as a link or as filled-in data. One rule here covers every field CC draws on these pages, in the
    label's colour, since a hint is furniture and sits at label brightness under the field's own
    value text. opacity:1 because Firefox dims placeholders on top of the colour. */
-html .cc-in::placeholder, html .cc-filter::placeholder,
+html .cc-in::placeholder,
 html .cc-pop input::placeholder, html .cc-menu input::placeholder { color: var(--cc-text-hint, #a3a3a3) !important; opacity: 1 !important; }
 /* appearance:none takes a select's native arrow, so a caret goes back: the same 8x5 triangle in
    the same grey that .cc-pop .cc-dsel-trigger::after draws with borders, so a native select, a

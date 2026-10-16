@@ -2523,26 +2523,6 @@
       else { s.style.removeProperty("--cc-rb-c"); s.style.removeProperty("--cc-rb-ct"); }
     });
   }
-  // A search starts as a Search button and turns into the field when pressed (GlimStone, "Every
-  // other search"). A field that holds text stays a field, so a forgotten filter cannot hide
-  // behind the button, and Escape stops here so the menu around it stays open.
-  function searchToggle(field, onClear) {
-    var wrap = el("span", "cc-search");
-    var btn = el("button", "cc-btn cc-search-btn"); btn.type = "button";
-    btn.innerHTML = ccGlyph("Search"); btn.appendChild(el("span", null, t("search")));
-    wrap.appendChild(btn); wrap.appendChild(field);
-    function show(open) { wrap.classList.toggle("cc-search-open", open); }
-    show(!!field.value);
-    btn.addEventListener("click", function () { show(true); field.focus(); });
-    field.addEventListener("keydown", function (e) {
-      if (e.key !== "Escape") return;
-      e.preventDefault(); e.stopPropagation();
-      if (field.value) { field.value = ""; onClear(); return; }
-      show(false); btn.focus();
-    });
-    field.addEventListener("blur", function () { if (!field.value) show(false); });
-    return wrap;
-  }
   function buildMenu() {
     var m = el("div", "cc-menu cc-menu-wide");
     m.addEventListener("click", function (e) { e.stopPropagation(); });
@@ -2557,16 +2537,15 @@
       var bG = el("button", "cc-seg-btn" + (mode === "grid" ? " cc-seg-on" : ""), t("grid"));
       bL.addEventListener("click", function () { closeMenu(); setMode("list"); }); bG.addEventListener("click", function () { closeMenu(); setMode("grid"); });
       seg.appendChild(bL); seg.appendChild(bG);
-      // The folder view is offered once the organizer has folders; an always-empty third tab
-      // would only confuse.
-      if (ccOrgAvailable && ccOrgHasFolders()) {
+      // The folder view is where folders are made, so it is offered as soon as the organizer is
+      // there, before the first folder exists.
+      if (ccOrgAvailable) {
         var bF = el("button", "cc-seg-btn" + (mode === "folder" ? " cc-seg-on" : ""), LANG === "de" ? "Ordner" : "Folder");
         bF.addEventListener("click", function () { closeMenu(); setMode("folder"); });
         seg.appendChild(bF);
       }
       var vrow = el("div", "cc-menu-row cc-menu-plain"); vrow.appendChild(seg); m.appendChild(vrow);
-      // New folder creates the first one, which is how the folder view above becomes available.
-      if (ccOrgAvailable) {
+      if (ccOrgAvailable && mode === "folder") {
         var nrow = el("div", "cc-menu-row cc-menu-plain");
         var nb = el("button", "cc-btn cc-menu-newfolder"); nb.type = "button";
         nb.innerHTML = ccGlyph("Folder"); nb.appendChild(el("span", null, t("newFolder")));
@@ -2574,12 +2553,7 @@
         nrow.appendChild(nb); m.appendChild(nrow);
       }
     }
-    var frow = el("div", "cc-menu-row cc-menu-plain");
-    var filter = el("input", "cc-filter"); filter.type = "text"; filter.placeholder = t("filter"); filter.value = filterText;
-    filter.setAttribute("aria-label", t("search"));
-    filter.addEventListener("input", function () { filterText = norm(filter.value); applyFilter(); });
-    frow.appendChild(searchToggle(filter, function () { filterText = ""; applyFilter(); })); m.appendChild(frow);
-    m.appendChild(el("div", "cc-menu-sep"));
+    if (m.children.length) m.appendChild(el("div", "cc-menu-sep"));
     var prow = el("div", "cc-menu-row cc-menu-plain");
     var save = el("button", "cc-btn", t("save")), fire = el("button", "cc-btn cc-btn-primary", t("startorder"));
     save.addEventListener("click", function () { savePlan(false, save); }); fire.addEventListener("click", function () { savePlan(true, fire); });
@@ -2671,12 +2645,6 @@
     return ccGql(mutation, variables)
       .then(function (r) { return r.json(); })
       .then(function (j) { if (j.errors) throw new Error(j.errors[0].message); return j.data; });
-  }
-  // Whether any folder beyond the root exists. Both "folder" and "group" count, as the other
-  // organizer tools treat them alike.
-  function ccOrgHasFolders() {
-    if (!ccOrgView) return false;
-    return ccOrgView.flatEntries.filter(function (e) { return e.type === "folder" || e.type === "group"; }).length > 1;
   }
   function ccOrgInit() {
     return ccOrgQuery().then(function (v) { ccOrgView = v; ccOrgAvailable = !!v; })
@@ -2815,12 +2783,32 @@
   // The folder view filters through a full re-render, which recomputes the per-card visibility
   // and the per-folder auto-expand together; see entryMatches() and effectiveCollapsed() inside
   // renderFolderView. It is cheap, being structural grouping with no stats to recompute, and the
-  // filter input lives in the open gear menu rather than inside gridHolder, so rebuilding that
-  // never touches the field being typed into.
+  // field being typed into is the header's, outside gridHolder, so rebuilding that never touches it.
   function applyFilter() {
     if (mode === "grid") { if (gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll(".cc-card")).forEach(function (cd) { cd.style.display = (!filterText || norm(cd.dataset.name).indexOf(filterText) >= 0) ? "" : "none"; }); }
     else if (mode === "folder") { if (ccOrgView) renderFolderView(); }
     else findRows().forEach(function (tr) { tr.style.display = (!filterText || norm(rowName(tr)).indexOf(filterText) >= 0) ? "" : "none"; });
+  }
+  // The header's page search filters the containers while it is open on this tab. Unraid removes
+  // the box on blur, and the filter goes with it once the pointer is up, so the click that blurred
+  // the box still lands on the row it was aimed at.
+  var headSearchWired = false;
+  function followHeaderSearch() {
+    if (headSearchWired) return;
+    headSearchWired = true;
+    var watch = 0, down = false;
+    document.addEventListener("pointerdown", function () { down = true; }, true);
+    ["pointerup", "pointercancel"].forEach(function (k) { document.addEventListener(k, function () { down = false; }, true); });
+    document.addEventListener("input", function (e) {
+      if (dead || !e.target || e.target.id !== "guiSearchBox") return;
+      filterText = norm(e.target.value); applyFilter();
+      if (watch) return;
+      watch = setInterval(function () {
+        if (document.getElementById("guiSearchBox") || down) return;
+        clearInterval(watch); watch = 0;
+        if (filterText && !dead) { filterText = ""; applyFilter(); }
+      }, 250);
+    });
   }
   function refreshStats() {
     api("GET", "stats").then(function (m) {
@@ -4717,19 +4705,20 @@
       // callback fires only on an actual change, see icoNotify in cc-theme.js, so this settles
       // after a handful of passes and cannot become a repaint loop.
       try { if (window.CCTheme && window.CCTheme.icons) window.CCTheme.icons.onResolved(function () { if (!dead) applyIconTint(); }); } catch (e8) {}
+      followHeaderSearch();
       // The organizer probe runs in parallel with everything below and never blocks first paint.
       // Once it resolves, the view mode is reconciled against the server's saved choice, which
       // is the restore path: the synchronous initial mode reads localStorage, which is
       // per-browser and cannot know the server-persisted choice on a fresh device. The server
       // wins where it differs, and setMode() re-applies every normal guard, theming off and no
-      // folders yet, so this cannot land in a broken state.
+      // organizer, so this cannot land in a broken state.
       ccOrgInit().then(function () {
         if (dead) return;
         var serverMode = ccOrgView && ccOrgView.prefs && ccOrgView.prefs.ccViewMode;
         if (ccOrgAvailable && serverMode && serverMode !== mode) { setMode(serverMode, true); return; }
         // With no server prefs saved yet, fall back to the local-only signal, so a "folder"
         // choice made in this browser still restores.
-        if (ccOrgAvailable && mode !== "folder" && localStorage.getItem(VIEW_KEY) === "folder" && ccOrgHasFolders()) setMode("folder");
+        if (ccOrgAvailable && mode !== "folder" && localStorage.getItem(VIEW_KEY) === "folder") setMode("folder");
       });
       // The last known engine state seeds the badges for an instant first paint; the live fetch
       // corrects them moments later.
