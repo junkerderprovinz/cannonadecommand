@@ -8,10 +8,15 @@
  * Carbon dark surfaces (#161616/#1c1c1c), no borders or rings, focus shown as brightness, the
  * accent from --cc-accent (fallback #FCC419), content indented to the menu bar (--cc-align-left). */
 
-html.cc-tools-on { --cc-tl-surface: #1c1c1c; --cc-tl-surface2: #232323; }
+html.cc-tools-on { --cc-tl-surface: #1c1c1c; }
 /* The fieldsets and the Unraid API cards on --cc-tl-surface take the page's text, which a light
    theme turns dark, so their surface turns light with it. --cc-tl-surface2, the fill of the form
-   controls, stays dark. */
+   controls, is the field step of the surface ladder and flips with the theme as well, with the
+   page's text on it. */
+html.cc-tools-on, html.cc-popups-on { --cc-tl-surface2: var(--cc-surface-3, #2e2e2e); }
+/* A placeholder is a quiet hint, never the link blue Unraid gives it. */
+html.cc-tools-on #displaybox :is(input, textarea)::placeholder,
+html.cc-shares-on.cc-on-share-detail #displaybox :is(input, textarea)::placeholder { color: var(--cc-text-hint, #a3a3a3) !important; opacity: 1; }
 html.cc-tools-on.Theme--white,
 html.cc-tools-on.Theme--azure { --cc-tl-surface: var(--cc-surface-1, #ffffff); }
 
@@ -58,6 +63,10 @@ html.cc-tools-on #displaybox table:not(.cc-enh) td {
 }
 html.cc-tools-on #displaybox table:not(.cc-enh) thead th { color: #9a9a9a; text-transform: uppercase; font-size: var(--cc-text-meta); letter-spacing: .6px; }
 html.cc-tools-on #displaybox table:not(.cc-enh) tr:hover td { background: rgba(255, 255, 255, .03) !important; }
+/* The File Integrity disk table gives every disk column a fixed narrow width, so the tracked
+   eyebrow heads ran into each other; the columns take the width of their head instead. */
+html.cc-tools-on #displaybox form[name="integrity_control"] table.share_status { table-layout: auto !important; width: auto !important; }
+html.cc-tools-on #displaybox form[name="integrity_control"] table.share_status :is(th, td) { width: auto !important; white-space: nowrap; }
 /* The disk sub-tab lists (Attributes, Self-Test, Identity) have no zebra and no line under the
    header row. Each row shows its own palette colour on hover in rainbow mode (--cc-rb-c per row
    from header.js ccPaintRotate), the accent otherwise, and value badges are flattened to plain
@@ -141,11 +150,10 @@ html.cc-diskpage #displaybox .main-content div,
 html.cc-diskpage #displaybox .main-content dl,
 html.cc-diskpage #displaybox .main-content section.section { border: none !important; box-shadow: none !important; }
 
-/* Form rows keep the native dynamix float layout (right-aligned floated dt, block dd, native field
-   widths). Only the label and value colours change for the dark surface, and a CC toggle in a dd
-   is centred vertically. */
+/* The label and value colours of a form row. Where forms.js lays the form out as a card,
+   CannonadeCommand.Forms.css takes the row over: label at the start, control at the end. */
 html.cc-tools-on #displaybox dl > dt { color: var(--cc-text-chip, #cfcfcf); }
-html.cc-tools-on #displaybox dl > dd { color: #d6d6d6; }
+html.cc-tools-on #displaybox dl > dd { color: var(--cc-text-chip, #cfcfcf); }
 html.cc-tools-on #displaybox dl > dd > .cc-tgl,
 html.cc-tools-on #displaybox dl > dd .switch-button-background { vertical-align: middle; }
 /* The native Help button shows the inline_help blocks CC otherwise replaces with (i) bubbles; shown,
@@ -164,13 +172,13 @@ html.cc-tools-on #displaybox input[type="password"],
 html.cc-tools-on #displaybox input[type="search"],
 html.cc-tools-on #displaybox select,
 html.cc-tools-on #displaybox textarea {
-  background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important;
+  background: var(--cc-tl-surface2, #232323) !important; color: var(--cc-text, #e6e6e6) !important;
   border: none !important; outline: none !important; border-radius: var(--cc-radius-control) !important;
   box-shadow: none !important;
 }
 html.cc-tools-on #displaybox input:focus,
 html.cc-tools-on #displaybox select:focus,
-html.cc-tools-on #displaybox textarea:focus { outline: none !important; box-shadow: none !important; background: rgba(255, 255, 255, .11) !important; }
+html.cc-tools-on #displaybox textarea:focus { outline: none !important; box-shadow: none !important; background: color-mix(in srgb, var(--cc-tl-surface2) 85%, var(--cc-text, #e6e6e6)) !important; }
 
 /* buttons, including the install log's "VIEW CONTAINER LOG" and "FERTIG": accent, md size, no ring */
 html.cc-tools-on #displaybox input[type="button"],
@@ -200,17 +208,12 @@ html.cc-tools-on form[name="SSLSettings"] input[type="text"],
 html.cc-tools-on form[name="SSLSettings"] input[type="number"],
 html.cc-tools-on form[name="SSLSettings"] input[type="password"],
 html.cc-tools-on form[name="SSLSettings"] select {
-  background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important;
+  background: var(--cc-tl-surface2, #232323) !important; color: var(--cc-text, #e6e6e6) !important;
   border: none !important; outline: none !important; border-radius: var(--cc-radius-control) !important;
   box-shadow: none !important;
 }
 html.cc-tools-on form[name="SSLSettings"] input:focus,
-html.cc-tools-on form[name="SSLSettings"] select:focus { outline: none !important; box-shadow: none !important; background: rgba(255, 255, 255, .11) !important; }
-/* the TELNET, SSH and UPnP checkboxes sit outside the form; #joel-start-defaults is their stable
-   ancestor */
-html.cc-tools-on #joel-start-defaults input[type="checkbox"] {
-  accent-color: var(--cc-rbaccent, var(--cc-accent, #FCC419)); cursor: pointer;
-}
+html.cc-tools-on form[name="SSLSettings"] select:focus { outline: none !important; box-shadow: none !important; background: color-mix(in srgb, var(--cc-tl-surface2) 85%, var(--cc-text, #e6e6e6)) !important; }
 html.cc-tools-on form[name="SSLSettings"] input[type="button"],
 html.cc-tools-on form[name="SSLSettings"] input[type="submit"] {
   background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
@@ -330,16 +333,16 @@ html.cc-tools-on #displaybox .switch-button-background {
 }
 html.cc-tools-on #displaybox .switch-button-background .switch-button-button { border-radius: var(--cc-radius-pill) !important; }
 html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; }
-/* The reka boot editor renders the native switch at a narrow inline 25x11, so every disk-page
-   toggle gets the full 44x24 CC geometry for track, knob and checked position, as the .advancedview
-   rule below does for the disk detail form; !important beats the inline sizes. */
-html.cc-diskpage #displaybox .switch-button-background {
+/* The native switch plugin draws a narrow 25x11 track (the boot editor, the VPN tunnel head, the
+   System Devices filters), so every one gets the full 44x24 CC geometry for track, knob and checked
+   position; !important beats the inline sizes. */
+html.cc-tools-on #displaybox .switch-button-background {
   width: 44px !important; height: 24px !important; border-radius: var(--cc-radius-pill) !important;
 }
-html.cc-diskpage #displaybox .switch-button-background .switch-button-button {
+html.cc-tools-on #displaybox .switch-button-background .switch-button-button {
   width: 18px !important; height: 18px !important; top: 3px !important; left: 3px !important; border-radius: var(--cc-radius-pill) !important;
 }
-html.cc-diskpage #displaybox .switch-button-background.checked .switch-button-button { left: 23px !important; }
+html.cc-tools-on #displaybox .switch-button-background.checked .switch-button-button { left: 23px !important; }
 
 /* The Basic/Advanced view switch sits in the top-right corner of the content with a full-size CC
    track. The knob's inline left is beaten by an !important rule keyed on .checked, so it snaps to
@@ -378,7 +381,7 @@ html.cc-popups-on #displaybox .cc-tsel-trigger {
   display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
   min-width: 240px; min-height: 34px; box-sizing: border-box;
   background: var(--cc-tl-surface2, #232323); border-radius: var(--cc-radius-control);
-  padding: 4px 12px; color: #eaeaea; cursor: pointer; transition: background .12s, color .12s;
+  padding: 4px 12px; color: var(--cc-text, #e6e6e6); cursor: pointer; transition: background .12s, color .12s;
 }
 /* The Dashboard tiles' four dropdowns (CPU timescale, network interface, view and timescale) are
    inline controls in a tile header, where the native selects are 38-119px wide. 240px would push
@@ -471,7 +474,7 @@ html.cc-tools-on #displaybox .ui-dropdownchecklist-selector-wrapper {
    padding would grow it past its 25px row. */
 html.cc-tools-on #displaybox .ui-dropdownchecklist-selector {
   position: relative; box-sizing: border-box !important; display: inline-flex !important; align-items: center;
-  background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important;
+  background: var(--cc-tl-surface2, #232323) !important; color: var(--cc-text, #e6e6e6) !important;
   border: none !important; box-shadow: none !important; border-radius: var(--cc-radius-control) !important;
   min-height: 0 !important; height: 30px !important; line-height: 1 !important; padding: 0 30px 0 12px !important; transition: background .12s, color .12s;
 }
@@ -562,17 +565,41 @@ html.cc-tools-on #displaybox .cc-colpick::-webkit-color-swatch { border: none; b
 html.cc-tools-on #displaybox dd:has(> .cc-colpick) { flex-direction: row !important; align-items: center; max-width: 240px; }
 html.cc-tools-on #displaybox dd:has(> .cc-colpick) input[type="text"][data-cc-colpick] { flex: 1 1 auto; width: auto; min-width: 0; }
 
-/* native checkboxes: dark, borderless, accent when checked */
-html.cc-tools-on #displaybox input[type="checkbox"] {
-  -webkit-appearance: none; appearance: none; width: 18px; height: 18px; box-sizing: border-box; flex: none;
-  background: var(--cc-tl-surface2, #232323); border: none !important; outline: none !important; border-radius: calc(var(--cc-radius-control) / 3);
-  cursor: pointer; vertical-align: middle; position: relative; margin: 0 6px 0 0;
+/* Every native checkbox on these pages and on the share edit page is GlimStone's switch, drawn on
+   the checkbox itself, so the form still posts it and Unraid's handlers still read .checked: the
+   44x24 track and 18px knob of .cc-cb. The knob takes the fill's ink, since a white knob vanishes
+   on a light palette slot. */
+html.cc-tools-on #displaybox input[type="checkbox"]:not(.cc-cb),
+html.cc-tools-on #joel-start-defaults input[type="checkbox"]:not(.cc-cb),
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="checkbox"]:not(.cc-cb) {
+  -webkit-appearance: none !important; appearance: none !important; position: relative; flex: none;
+  width: 44px !important; height: 24px !important; box-sizing: border-box; padding: 0; margin: 0 6px 0 0;
+  border: none !important; outline: none !important; box-shadow: none; border-radius: var(--cc-radius-pill) !important;
+  background: var(--cc-toggle-track-off, #3a3a3a); accent-color: auto;
+  cursor: pointer; vertical-align: middle; transition: background-color .12s;
 }
-html.cc-tools-on #displaybox input[type="checkbox"]:checked { background: var(--cc-accent, #FCC419); }
-html.cc-tools-on #displaybox input[type="checkbox"]:checked::after {
-  content: ""; position: absolute; left: 5.5px; top: 1.5px; width: 4px; height: 9px;
-  border: solid var(--cc-accent-text, #161616); border-width: 0 2px 2px 0; transform: rotate(45deg);
+html.cc-tools-on #displaybox input[type="checkbox"]:not(.cc-cb)::before,
+html.cc-tools-on #joel-start-defaults input[type="checkbox"]:not(.cc-cb)::before,
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="checkbox"]:not(.cc-cb)::before {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+  border-radius: var(--cc-radius-pill); background: var(--cc-toggle-knob, #fff); transition: left .15s;
 }
+html.cc-tools-on #displaybox input[type="checkbox"]:not(.cc-cb):hover:not(:disabled),
+html.cc-tools-on #joel-start-defaults input[type="checkbox"]:not(.cc-cb):hover:not(:disabled),
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="checkbox"]:not(.cc-cb):hover:not(:disabled) { background: color-mix(in srgb, var(--cc-toggle-track-off, #3a3a3a) 85%, var(--cc-text, #e6e6e6)); }
+html.cc-tools-on #displaybox input[type="checkbox"]:not(.cc-cb):checked,
+html.cc-tools-on #joel-start-defaults input[type="checkbox"]:not(.cc-cb):checked,
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="checkbox"]:not(.cc-cb):checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); }
+html.cc-tools-on #displaybox input[type="checkbox"]:not(.cc-cb):checked:hover:not(:disabled),
+html.cc-tools-on #joel-start-defaults input[type="checkbox"]:not(.cc-cb):checked:hover:not(:disabled),
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="checkbox"]:not(.cc-cb):checked:hover:not(:disabled) { background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)); }
+html.cc-tools-on #displaybox input[type="checkbox"]:not(.cc-cb):checked::before,
+html.cc-tools-on #joel-start-defaults input[type="checkbox"]:not(.cc-cb):checked::before,
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="checkbox"]:not(.cc-cb):checked::before { left: 23px; background: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))); }
+html.cc-tools-on #displaybox input[type="checkbox"]:not(.cc-cb):disabled,
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="checkbox"]:not(.cc-cb):disabled { opacity: .45; cursor: not-allowed; }
+html.cc-tools-on #displaybox input[type="checkbox"]:not(.cc-cb):focus-visible,
+html.cc-shares-on.cc-on-share-detail #displaybox input[type="checkbox"]:not(.cc-cb):focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important; }
 /* radio buttons (Energiemodus): dark, borderless, round, with an accent dot when checked */
 html.cc-tools-on #displaybox input[type="radio"] {
   -webkit-appearance: none; appearance: none; width: 18px; height: 18px; box-sizing: border-box; flex: none;
@@ -589,7 +616,7 @@ html.cc-tools-on #displaybox .switch-button-background { background: var(--cc-to
 html.cc-tools-on #displaybox .switch-button-background.checked { background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important; }
 /* multi / list selects -> CC dark fill, borderless (they stay native selects) */
 html.cc-tools-on #displaybox select[multiple],
-html.cc-tools-on #displaybox select[size]:not([size="1"]) { background: var(--cc-tl-surface2, #232323) !important; color: #eaeaea !important; border: none !important; outline: none !important; border-radius: var(--cc-radius-control) !important; padding: 4px 6px !important; }
+html.cc-tools-on #displaybox select[size]:not([size="1"]) { background: var(--cc-tl-surface2, #232323) !important; color: var(--cc-text, #e6e6e6) !important; border: none !important; outline: none !important; border-radius: var(--cc-radius-control) !important; padding: 4px 6px !important; }
 html.cc-tools-on #displaybox select[multiple] option:checked,
 html.cc-tools-on #displaybox select[size] option:checked { background: var(--cc-accent, #FCC419) linear-gradient(0deg, var(--cc-accent, #FCC419), var(--cc-accent, #FCC419)); color: var(--cc-accent-text, #161616); }
 /* no border lines on tools content */

@@ -1,0 +1,243 @@
+/* CannonadeCommand: Unraid's native settings forms as GlimStone cards, on the Settings and Tools
+ * sub-pages, the disk, pool and boot device pages and the share edit page. Every rule is scoped to
+ * html.cc-forms-on, which scripts/forms.js stamps on those pages, and keys on the classes it puts
+ * on Unraid's own markup:
+ *   .cc-fm-card     a form (or a loose run of rows) that becomes one card, at most 920px wide
+ *   .cc-fm-head     the section title before a card, drawn as the badge on the card's top edge
+ *   .cc-fm-wide     a row value without a label of its own, which spans the row
+ *   .cc-fm-actions  a row of nothing but buttons, the card's footer
+ *   .cc-fm-btns     a row value of nothing but buttons, laid out like the footer
+ *   .cc-fm-primary  the one forward action (Apply, Save), filled with the colour mode
+ * Each row has its label at the start and its control at the end (GlimStone rule 35). The sheet
+ * loads after Tools.css and Shares.css, so a rule here wins a tie with theirs. */
+
+html.cc-forms-on { --cc-fm-card: #222222; --cc-fm-btn: #353535; }
+html.cc-forms-on:is(.Theme--white, .Theme--azure) { --cc-fm-card: #ffffff; --cc-fm-btn: #e0e0e0; }
+
+html.cc-forms-on #displaybox .cc-fm-card {
+  position: relative; box-sizing: border-box; max-width: 920px; width: auto; float: none;
+  margin: 0 0 40px !important; padding: 16px 18px 12px !important;
+  background: var(--cc-fm-card) !important; border: none !important; border-radius: var(--cc-radius-card) !important;
+  box-shadow: var(--cc-elev-1, 0 1px 4px rgba(0, 0, 0, .35)) !important;
+}
+html.cc-forms-on #displaybox .cc-fm-card.cc-fm-headed { padding-top: 24px !important; }
+/* The badge straddles the card's top edge and sits on its content edge, like a CC settings card. */
+html.cc-forms-on #displaybox div.title.cc-fm-head {
+  position: relative; z-index: 2; margin: 4px 0 -11px 18px !important; max-width: calc(100% - 36px);
+}
+/* Some pages title a later section with a bare div#title instead of div.title; it becomes the same
+   section badge. */
+html.cc-forms-on #displaybox div#title.cc-fm-head:not(.title) {
+  display: inline-flex !important; align-items: center; gap: 6px; width: fit-content !important; box-sizing: border-box;
+  min-height: var(--cc-sec-h, 22px); padding: var(--cc-sec-pad, 0 12px) !important; border-radius: var(--cc-radius-pill);
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
+  font-size: var(--cc-sec-fs); font-weight: var(--cc-sec-fw, 500); letter-spacing: var(--cc-sec-ls, 1.2px); text-transform: uppercase; line-height: 1;
+}
+html.cc-forms-on #displaybox div#title.cc-fm-head:not(.title) :is(i, img) { color: inherit; filter: none; }
+/* Cards are separated by their gap, so Unraid's rule lines between them go (GlimStone rule 5). */
+html.cc-forms-on #displaybox :is(.content, .tab-content, .cc-fm-card) > hr { border: none !important; background: none !important; height: 0; margin: 0; }
+/* A tab panel that is a card of its own keeps a gap under the tab strip. */
+html.cc-forms-on #displaybox section.cc-fm-card { margin-top: 20px !important; }
+/* A title that carries controls of its own (the VPN tunnel's switches) keeps the badge on its name
+   and lets the controls stand beside it. */
+html.cc-forms-on #displaybox div.title.cc-fm-head:has(> span.right > *) {
+  background: transparent !important; padding: 0 !important; gap: 12px; text-transform: none; letter-spacing: normal;
+}
+html.cc-forms-on #displaybox div.title.cc-fm-head:has(> span.right > *) > span.left {
+  display: inline-flex; align-items: center; gap: 6px; min-height: var(--cc-sec-h, 22px); box-sizing: border-box;
+  padding: var(--cc-sec-pad, 0 12px); border-radius: var(--cc-radius-pill);
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
+  text-transform: uppercase; letter-spacing: var(--cc-sec-ls, 1.2px);
+}
+html.cc-forms-on #displaybox div.title.cc-fm-head > span.right { color: var(--cc-text, #e6e6e6); font-size: var(--cc-text-subline); }
+html.cc-forms-on #displaybox div.title.cc-fm-head > span.right :is(.label, .switch-button-label) {
+  text-transform: none !important; letter-spacing: normal !important; font-weight: 500; float: none !important;
+  line-height: 24px; color: var(--cc-text-chip, #cfcfcf) !important; background: none !important; padding: 0 !important;
+}
+/* Unraid's lighter bands inside a form (the DNS block, the proxy groups, the share sections) go:
+   the card is the one surface. */
+html.cc-forms-on #displaybox .cc-fm-card .shade,
+html.cc-forms-on #displaybox .shade:has(> .cc-fm-card) {
+  background: none !important; margin: 0 !important; padding: 0 !important; border-radius: 0 !important;
+}
+
+/* A row: the label at the start, the control at the end. */
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) {
+  display: grid !important; grid-template-columns: minmax(min(180px, 40%), 1fr) auto !important; gap: 10px 24px !important; align-items: center !important;
+  width: auto !important; float: none !important;
+}
+html.cc-forms-on #displaybox .cc-fm-card dl { margin: 0 !important; padding: 8px 0 !important; max-width: none !important; }
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > dt {
+  grid-column: 1; text-align: left !important; float: none !important; width: auto !important; margin: 0 !important; padding: 0 !important;
+  color: var(--cc-text, #e6e6e6) !important; font-size: var(--cc-text-body); font-weight: 500; line-height: 1.35;
+}
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > dd {
+  grid-column: 2; justify-self: end; display: flex !important; flex-flow: row wrap !important; align-items: center; justify-content: flex-end;
+  gap: 8px 10px !important; margin: 0 !important; padding: 0 !important; width: auto !important; max-width: 100%; min-width: 0; float: none !important;
+  text-align: right; color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-text-body);
+}
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > dd.cc-fm-wide { grid-column: 1 / -1 !important; justify-self: stretch; }
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > .cc-fm-void,
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > dd > span:empty { display: none !important; }
+/* A row without a label at the start (a checkbox list, a matrix line) puts its text first and its
+   switch last, across the card. */
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > dd.cc-fm-wide > :is(span, label):not(.cc-del-wrap):has(> input[type="checkbox"]) { width: 100%; justify-content: flex-start; text-align: left; }
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > dd.cc-fm-wide > :is(span, label):not(.cc-del-wrap):has(> input[type="checkbox"]) > input[type="checkbox"]:not(.cc-cb) { margin: 0 0 0 auto !important; }
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > dd.cc-fm-wide > span:has(> label > input[type="checkbox"]) {
+  display: flex !important; width: 100%; align-items: center; gap: 10px; text-align: left;
+}
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card) > dd.cc-fm-wide > span:has(> label > input[type="checkbox"]) > label { order: 2; margin-left: auto; }
+/* the SMART attribute number beside its name */
+html.cc-forms-on #displaybox .cc-fm-card dd span.code { color: var(--cc-text-dim, #8a8a8a); font-size: var(--cc-text-subline); }
+html.cc-forms-on #displaybox .cc-fm-card :is(span, label):not(.cc-del-wrap):has(> input[type="checkbox"]) {
+  display: inline-flex !important; align-items: center; gap: 10px; text-transform: none;
+}
+html.cc-forms-on #displaybox .cc-fm-card :is(span, label):not(.cc-del-wrap):has(> input[type="checkbox"]) > input[type="checkbox"]:not(.cc-cb) { order: 2; margin: 0 !important; }
+html.cc-forms-on #displaybox .cc-fm-card :is(span, label):not(.cc-del-wrap):has(> input[type="checkbox"]) > :not(input) { order: 1; }
+
+/* A matrix line (the Notifications page's delivery switches): its name, then one labelled switch
+   per channel, spaced as separate controls. */
+html.cc-forms-on #displaybox .cc-fm-card dd span:has(> :is(label, span) > input[type="checkbox"]),
+html.cc-forms-on #displaybox .cc-fm-card dd > span:has(> .notifications-checkbox-group-title) {
+  display: inline-flex !important; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 20px;
+}
+html.cc-forms-on #displaybox .cc-fm-card .notifications-checkbox-group-title { font-style: normal; color: var(--cc-text-dim, #8a8a8a); text-align: left; }
+
+/* Fields keep a width of their own at the row's end: a number is short, a line of text longer, a
+   dropdown takes the trigger's 240px. Lists and text areas use the card's width. */
+html.cc-forms-on #displaybox .cc-fm-card dd :is(input[type="text"], input[type="password"], input[type="email"], input[type="url"], input[type="search"], input:not([type])) {
+  width: 280px !important; max-width: 100% !important; min-width: 0 !important; box-sizing: border-box;
+}
+html.cc-forms-on #displaybox .cc-fm-card dd input[type="number"] { width: 120px !important; max-width: 100% !important; box-sizing: border-box; }
+html.cc-forms-on #displaybox .cc-fm-card dd textarea { width: 100% !important; box-sizing: border-box; }
+html.cc-forms-on #displaybox .cc-fm-card dd:has(> textarea) { grid-column: 1 / -1 !important; justify-self: stretch; }
+html.cc-forms-on #displaybox .cc-fm-card :is(.cc-tsel-trigger, .cc-sel-trigger) { min-height: var(--cc-md-h, 30px); }
+html.cc-forms-on #displaybox .cc-fm-card :is(.cc-tsel, .cc-sel) { max-width: 100%; }
+
+/* A colour field: the swatch header.js adds and the hex code beside it, as one short control. */
+html.cc-forms-on #displaybox .cc-fm-card dd:has(> .cc-colpick) { flex-wrap: nowrap !important; max-width: none !important; }
+html.cc-forms-on #displaybox .cc-fm-card dd > .cc-colpick { width: 30px !important; height: 30px !important; padding: 0 !important; margin: 0 !important; border-radius: var(--cc-radius-control) !important; overflow: hidden; }
+html.cc-forms-on #displaybox .cc-fm-card dd > .cc-colpick::-webkit-color-swatch { border-radius: 0; }
+html.cc-forms-on #displaybox .cc-fm-card dd > input[type="text"][data-cc-colpick] { width: 120px !important; font-family: ui-monospace, "Cascadia Code", Menlo, monospace; }
+/* A sentence with a warning sign stays on the page in the warning ink. */
+html.cc-forms-on #displaybox .cc-fm-card dd .orange-text:has(.fa-warning, .fa-exclamation-triangle) { color: var(--cc-warn-ink, #ff832b) !important; text-align: right; font-size: var(--cc-text-subline); }
+
+/* The section's buttons close the card: the forward action at the end, a reset such as Standard
+   at the start, and every other button just before the forward one. */
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card).cc-fm-actions {
+  display: flex !important; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px !important; padding-top: 14px !important;
+}
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card).cc-fm-actions > dt { margin-right: auto !important; display: flex; gap: 10px; }
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card).cc-fm-actions > dt:empty { display: none; }
+html.cc-forms-on #displaybox .cc-fm-card dd.cc-fm-btns,
+html.cc-forms-on #displaybox .cc-fm-card dd.cc-fm-btns > span:not(.cc-fm-hinted) {
+  display: flex !important; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; width: auto !important; margin: 0 !important; padding: 0 !important;
+}
+html.cc-forms-on #displaybox .cc-fm-card dd.cc-fm-btns:not(.cc-fm-wide) { padding-top: 0 !important; }
+html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card):not(.cc-fm-actions) > dd.cc-fm-btns.cc-fm-wide { padding-top: 6px !important; }
+html.cc-forms-on #displaybox .cc-fm-card :is(dl.cc-fm-actions, dd.cc-fm-btns) .cc-fm-primary { order: 3; }
+html.cc-forms-on #displaybox .cc-fm-card :is(dl.cc-fm-actions, dd.cc-fm-btns) :is(.cc-fm-hinticon, .cc-fm-link) { order: -1; }
+html.cc-forms-on #displaybox .cc-fm-card :is(dl.cc-fm-actions, dd.cc-fm-btns) :is(input[type="button"], input[type="submit"], input[type="reset"], button, a.button) { margin: 0 !important; width: auto !important; }
+
+/* Native buttons as badges: sentence case at the md stage, neutral at rest and the colour mode
+   under the pointer. The forward action is the view's filled one; in the reactive mode it rests
+   neutral too. CC's own controls carry a cc- class and keep their rules. */
+html.cc-forms-on #displaybox :is(input[type="button"], input[type="submit"], input[type="reset"], button:not([role="tab"]), a.button):is(:not([class*="cc-"]), .cc-fm-primary):where(:not(.unapi *, .main-content *)) {
+  display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
+  height: var(--cc-md-h, 30px) !important; min-width: 0 !important; padding: var(--cc-md-btnpad, 0 14px) !important;
+  font-family: inherit !important; font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
+  text-transform: none !important; letter-spacing: normal !important; text-decoration: none !important; white-space: nowrap;
+  background: var(--cc-fm-btn) !important; color: var(--cc-text, #e6e6e6) !important;
+  border: none !important; outline: none !important; border-radius: var(--cc-radius-pill) !important; box-shadow: none !important;
+  cursor: pointer; transition: background-color .12s, color .12s; filter: none !important;
+}
+html.cc-forms-on #displaybox :is(input[type="button"], input[type="submit"], input[type="reset"], button:not([role="tab"]), a.button):is(:not([class*="cc-"]), .cc-fm-primary):where(:not(.unapi *, .main-content *)):hover:not(:disabled) {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
+}
+html.cc-forms-on #displaybox :is(input, button, a).cc-fm-primary:where(:not(.unapi *, .main-content *)):not(:disabled) {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
+}
+html.cc-forms-on #displaybox :is(input, button, a).cc-fm-primary:where(:not(.unapi *, .main-content *)):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) 85%, var(--cc-text, #e6e6e6)) !important;
+}
+html.cc-forms-on.cc-tools-rbneutral #displaybox :is(input, button, a).cc-fm-primary:where(:not(.unapi *, .main-content *)):not(:disabled):not(:hover) {
+  background: var(--cc-fm-btn) !important; color: var(--cc-text, #e6e6e6) !important;
+}
+/* Apply stays disabled until something changes: then it is a plain grey badge, not a dim accent. */
+html.cc-forms-on #displaybox :is(input[type="button"], input[type="submit"], input[type="reset"], button:not([role="tab"]), a.button):is(:not([class*="cc-"]), .cc-fm-primary):where(:not(.unapi *, .main-content *)):disabled {
+  background: var(--cc-fm-btn) !important; color: var(--cc-text-dim, #8a8a8a) !important; opacity: 1 !important; cursor: not-allowed;
+}
+html.cc-forms-on #displaybox :is(input[type="button"], input[type="submit"], input[type="reset"], button:not([role="tab"]), a.button):is(:not([class*="cc-"]), .cc-fm-primary):where(:not(.unapi *, .main-content *)):focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important; outline: none !important;
+}
+
+/* The (i) on a label: GlimStone's stroke glyph, neutral, carrying Unraid's own help text. */
+html.cc-forms-on #displaybox .cc-toolsinfo {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; margin-left: 7px;
+  width: 15px; height: 15px; border-radius: 50%; line-height: 0; color: var(--cc-text, #e6e6e6); opacity: .8; cursor: help;
+  vertical-align: -2px; position: relative; top: 0;
+}
+html.cc-forms-on #displaybox .cc-toolsinfo svg { width: 15px; height: 15px; display: block; }
+html.cc-forms-on #displaybox .cc-toolsinfo:is(:hover, :focus-visible) { opacity: 1; color: var(--cc-text, #e6e6e6); }
+html.cc-forms-on #displaybox .cc-toolsinfo:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent); }
+html.cc-forms-on #displaybox .cc-fm-hinticon { margin-left: 0; }
+html.cc-forms-on #displaybox :is(blockquote.inline_help, .inline-help)[data-cc-help],
+html.cc-forms-on #displaybox .cc-fm-hinted { display: none !important; }
+/* the link a hint sentence carried, kept on the page as a badge beside its (i) */
+html.cc-forms-on #displaybox a.cc-fm-link {
+  display: inline-flex; align-items: center; height: var(--cc-md-h, 30px); box-sizing: border-box; padding: var(--cc-md-btnpad, 0 14px);
+  border-radius: var(--cc-radius-pill); background: var(--cc-fm-btn); color: var(--cc-text, #e6e6e6) !important;
+  font-size: var(--cc-md-fs); font-weight: 600; text-decoration: none !important; filter: none !important;
+}
+html.cc-forms-on #displaybox a.cc-fm-link:hover {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
+}
+
+/* A link inside a row is a badge too (GlimStone rule 13), quiet until the pointer reaches it. */
+html.cc-forms-on #displaybox .cc-fm-card dd a:not(.button):not([class*="cc-"]):not(:has(img, i:only-child)) {
+  display: inline-flex; align-items: center; min-height: 26px; box-sizing: border-box; padding: 0 12px;
+  border-radius: var(--cc-radius-pill); background: var(--cc-fm-btn); color: var(--cc-text, #e6e6e6) !important;
+  font-size: var(--cc-text-subline); font-weight: 500; text-decoration: none !important; filter: none !important;
+}
+html.cc-forms-on #displaybox .cc-fm-card dd a:not(.button):not([class*="cc-"]):not(:has(img, i:only-child)):hover {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important;
+}
+
+/* The one horizontal selector forms.js builds from a radio group: every segment a badge with a
+   quiet fill, the chosen one filled with the colour mode. */
+html.cc-forms-on #displaybox .cc-fm-segsrc { display: none !important; }
+html.cc-forms-on #displaybox .cc-fm-seg { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+html.cc-forms-on #displaybox .cc-fm-segbtn {
+  display: inline-flex; align-items: center; height: var(--cc-md-h, 30px); box-sizing: border-box; padding: var(--cc-md-btnpad, 0 14px);
+  border-radius: var(--cc-radius-pill); background: var(--cc-fm-btn); color: var(--cc-text, #e6e6e6);
+  font-size: var(--cc-md-fs); font-weight: 600; cursor: pointer; user-select: none; transition: background-color .12s, color .12s;
+}
+html.cc-forms-on #displaybox .cc-fm-segbtn:hover { background: color-mix(in srgb, var(--cc-fm-btn) 85%, var(--cc-text, #e6e6e6)); }
+html.cc-forms-on #displaybox .cc-fm-segbtn.cc-fm-segon {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
+}
+html.cc-forms-on #displaybox .cc-fm-segbtn.cc-fm-segoff { opacity: .45; cursor: not-allowed; }
+html.cc-forms-on #displaybox .cc-fm-segbtn:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent); }
+
+/* The Basic/Advanced switch lines up with the right edge of the cards, on the row of the first
+   title badge, rather than at the far edge of the window. */
+html.cc-forms-on #displaybox dl:has(.advancedview) {
+  left: 0 !important; right: auto !important; width: min(920px, 100%) !important; top: 4px !important; padding: 0 !important; pointer-events: none;
+}
+html.cc-forms-on #displaybox dl:has(.advancedview) > * { pointer-events: auto; }
+
+/* Unraid's own switch labels (Basic and Advanced, Show all) in sentence case. */
+html.cc-forms-on #displaybox .switch-button-label { text-transform: none !important; letter-spacing: normal !important; font-size: var(--cc-text-subline); }
+
+/* At phone width a field moves under its name and keeps the row's end; a switch or a short
+   selector stays beside it. */
+@media (max-width: 600px) {
+  html.cc-forms-on #displaybox .cc-fm-card { padding-left: 14px !important; padding-right: 14px !important; }
+  html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card):has(> dd :is(input[type="text"], input[type="password"], input[type="number"], input:not([type]), .cc-tsel, .cc-sel, .ui-dropdownchecklist, .cc-fm-seg)) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  html.cc-forms-on #displaybox :is(.cc-fm-card dl, dl.cc-fm-card):has(> dd :is(input[type="text"], input[type="password"], input[type="number"], input:not([type]), .cc-tsel, .cc-sel, .ui-dropdownchecklist, .cc-fm-seg)) > :is(dt, dd) { grid-column: 1 !important; }
+  html.cc-forms-on #displaybox .cc-fm-card :is(.cc-tsel-trigger, .cc-sel-trigger) { min-width: 0; max-width: 100%; }
+}

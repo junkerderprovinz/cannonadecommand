@@ -19,7 +19,7 @@ const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local'
 // The Menu="Buttons:N" sheets load in <head> on every page in N order; docker.css
 // follows on the pages that link it, and settings.js adds its own <style> last.
 const HEAD = ['sheets/CannonadeCommand.Tokens.css', 'sheets/CannonadeCommand.Header.css', 'sheets/CannonadeCommand.SettingsGrid.css',
-  'sheets/CannonadeCommand.Tools.css', 'sheets/CannonadeCommand.Shares.css', 'sheets/CannonadeCommand.VmTab.css', 'sheets/CannonadeCommand.Favorites.css'];
+  'sheets/CannonadeCommand.Tools.css', 'sheets/CannonadeCommand.Shares.css', 'sheets/CannonadeCommand.Forms.css', 'sheets/CannonadeCommand.VmTab.css', 'sheets/CannonadeCommand.Favorites.css'];
 const PAGES = { every: HEAD, docker: HEAD.concat(['styles/docker.css']), settings: HEAD.concat(['styles/docker.css', 'scripts/settings.js']) };
 
 function settingsStyle() {
