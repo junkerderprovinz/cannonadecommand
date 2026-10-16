@@ -6,12 +6,21 @@
  * badges in the colour mode and redraws the two live charts in the accent. Unraid renders the
  * tiles once and only refreshes their values, so one pass after the page settles is enough; the
  * badge colours follow a tile that is dragged to another place through the sortable's own event.
+ * The disk rows are the exception: Unraid rebuilds them on every message of its dashboard feed, so
+ * their fixes run again from a listener on that same feed.
  */
 (function () {
   "use strict";
   function g(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
   function onDash() { try { return location.pathname.replace(/\/+$/, "") === "/Dashboard"; } catch (e) { return false; } }
   function isLive() { return g("cc.theming", "1") !== "0" && g("cc.enable.header", "0") !== "0" && onDash(); }
+
+  var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
+  var TXT = {
+    de: { resting: "Ruht", cores: "%c Kerne", coresHt: "%c Kerne, %t Threads", "P-Core": "P-Kerne", "E-Core": "E-Kerne" },
+    en: { resting: "Spun down", cores: "%c cores", coresHt: "%c cores, %t threads", "P-Core": "P-cores", "E-Core": "E-cores" }
+  };
+  function t(k) { return (TXT[LANG] || TXT.en)[k] || TXT.en[k]; }
 
   // Filled drawings for Unraid's tile icons, which are outline glyphs of its own icon font. Tabler
   // icons, filled set (MIT), on a 24 grid; Docker's brand mark from Simple Icons, the one the
@@ -144,12 +153,185 @@
     });
   }
 
+  function el(tag, cls) { var e = document.createElement(tag); if (cls) e.className = cls; return e; }
+  function hasCls(e, c) { return !!(e && e.classList && e.classList.contains(c)); }
+
+  // Unraid prints one row per physical core: a label such as "CPU 0 (P-Core) - HT 1" or "CPU 4", then
+  // one load cell per thread, whose bar carries the thread number in its id. The grid is built from
+  // those cells and the core type in the label's brackets, never from a CPU model, so it holds for
+  // any thread count, with or without hyperthreading or core types. The cells move into the grid
+  // as they are; Unraid finds them by id and class on every update, so the bars stay live.
+  function threadsOf(tr) {
+    var out = [], td = tr && tr.children[0];
+    if (!td || !hasCls(tr, "cpu_open")) return out;
+    for (var i = 0; i < td.children.length; i++) {
+      var cell = td.children[i];
+      for (var j = 0; j < cell.children.length; j++) {
+        var bar = cell.children[j], m = hasCls(bar, "usage-disk") && bar.children[0] && /^cpu(\d+)$/.exec(bar.children[0].id || "");
+        if (m) { out.push({ n: +m[1], cell: cell }); break; }
+      }
+    }
+    return out;
+  }
+
+  function coreHead(gr) {
+    var h = el("div", "cc-cores-head"), name = el("span"), n = el("span", "cc-cores-n");
+    var threads = gr.cores.reduce(function (a, c) { return a + c.threads.length; }, 0);
+    name.textContent = t(gr.type) || gr.type;
+    n.textContent = (threads > gr.cores.length ? t("coresHt") : t("cores")).replace("%c", gr.cores.length).replace("%t", threads);
+    h.appendChild(name); h.appendChild(n);
+    return h;
+  }
+
+  var CORES = [];
+  function gridOf(rows) {
+    var groups = [], byType = {}, moved = [];
+    rows.forEach(function (tr) {
+      var td = tr.children[0], label = td.children[0], m = /\(([^)]+)\)/.exec((label && label.textContent) || ""), type = m ? m[1].trim() : "";
+      if (!byType[type]) groups.push(byType[type] = { type: type, cores: [] });
+      byType[type].cores.push({ td: td, threads: threadsOf(tr) });
+    });
+    var box = el("div", "cc-cores");
+    groups.forEach(function (gr) {
+      var wrap = el("div", "cc-cores-group"), grid = el("div", "cc-cores-grid");
+      // A CPU without core types is one plain group and needs no heading.
+      if (gr.type) wrap.appendChild(coreHead(gr));
+      gr.cores.forEach(function (c) {
+        var core = el("div", c.threads.length > 1 ? "cc-core cc-core-ht" : "cc-core");
+        c.threads.forEach(function (th, k) {
+          var cell = el("div", "cc-thr"), n = el("span", "cc-thr-n");
+          n.textContent = (k ? "HT " : "CPU ") + th.n;
+          moved.push([th.cell, c.td]);
+          cell.appendChild(n); cell.appendChild(th.cell);
+          core.appendChild(cell);
+        });
+        grid.appendChild(core);
+      });
+      wrap.appendChild(grid);
+      box.appendChild(wrap);
+    });
+    // The grid lives in the run's first row. Unraid watches every core row to decide whether the
+    // per core values are on screen, and this one stays visible while the grid is.
+    var td = el("td", "cc-cores-td");
+    td.appendChild(box);
+    rows[0].appendChild(td);
+    rows[0].classList.add("cc-cores-host");
+    for (var i = 1; i < rows.length; i++) rows[i].classList.add("cc-cores-spent");
+    CORES.push({ rows: rows, td: td, moved: moved });
+  }
+
+  // Each physical CPU of a multi socket board has its own run of core rows under its own power
+  // line, so each run becomes its own grid.
+  function buildCores() {
+    var main = document.getElementById("cpu_main");
+    if (CORES.length || !main) return;
+    var rows = main.parentNode.children, run = [];
+    for (var i = 0; i < rows.length; i++) {
+      if (threadsOf(rows[i]).length) run.push(rows[i]);
+      else if (run.length) { gridOf(run); run = []; }
+    }
+    if (run.length) gridOf(run);
+  }
+
+  function unbuildCores() {
+    CORES.forEach(function (c) {
+      c.moved.forEach(function (m) { m[1].appendChild(m[0]); });
+      c.td.parentNode.removeChild(c.td);
+      c.rows.forEach(function (tr) { tr.classList.remove("cc-cores-host"); tr.classList.remove("cc-cores-spent"); });
+    });
+    CORES = [];
+  }
+
+  // Text nodes CC rewrote, with Unraid's wording, so switching the area off puts it back.
+  var SWAPS = [];
+  function swap(node, text) {
+    if (!node || node.nodeType !== 3 || node.nodeValue === text) return;
+    if (SWAPS.length > 40) SWAPS = SWAPS.filter(function (s) { return s[0].isConnected; });
+    SWAPS.push([node, node.nodeValue, text]);
+    node.nodeValue = text;
+  }
+  function unswap() {
+    SWAPS.forEach(function (s) { if (s[0].nodeValue === s[2]) s[0].nodeValue = s[1]; });
+    SWAPS = [];
+  }
+
+  // Strings the German translation of Unraid leaves in English or gets wrong. Each is found by its
+  // place in the card, and only Unraid's own wording is replaced, so a fixed translation stays.
+  function pie(id, label, tip) {
+    var p = document.getElementById(id), a = p && p.previousElementSibling;
+    if (!hasCls(a, "info")) return;
+    if (label) swap(a.firstChild, label);
+    var s = a.querySelector("span"), n = s && s.firstChild;
+    if (tip && n && n.nodeType === 3 && /^\s*Percent usage/.test(n.nodeValue)) swap(n, tip + ((/\s\([^)]*\)\s*$/.exec(n.nodeValue) || [""])[0]));
+  }
+  function fixCards() {
+    if (LANG !== "de") return;
+    pie("sys1", "Boot-Gerät", "Nutzungsanteil des Boot-Geräts in Prozent");
+    pie("sys2", "Log-Dateisystem");
+    pie("sys3", "", "Nutzungsanteil des Docker-Speichers in Prozent");
+    var hs = document.querySelectorAll("table.dashboard tr.header span.w18");
+    for (var i = 0; i < hs.length; i++) for (var n = hs[i].firstChild; n; n = n.nextSibling) if (n.nodeType === 3 && /^\s*Mbr Status\s*$/i.test(n.nodeValue)) swap(n, "MBR-Status");
+  }
+
+  // Unraid prints "---" for a server without a model name, which says nothing, so the model block
+  // goes until one is set under Identification. The fallback case picture is handled in the sheet.
+  function hideModel() {
+    var hd = document.querySelector("table.dashboard tbody.system .leftside > span.header");
+    if (!hd || hd.parentNode.querySelector(".cc-dash-model")) return;
+    var nodes = [hd], val = "";
+    for (var n = hd.nextSibling; n && !(n.nodeType === 1 && n.matches("span.header")); n = n.nextSibling) { nodes.push(n); val += n.textContent; }
+    if (val.trim() !== "---") return;
+    var w = el("span", "cc-dash-model");
+    hd.parentNode.insertBefore(w, hd);
+    nodes.forEach(function (x) { w.appendChild(x); });
+  }
+  function showModel() {
+    var w = document.querySelector("table.dashboard .cc-dash-model");
+    if (!w) return;
+    while (w.firstChild) w.parentNode.insertBefore(w.firstChild, w);
+    w.parentNode.removeChild(w);
+  }
+
+  // The disk rows and the pools' usage line come new with every message of Unraid's feed. A disk
+  // that is spun down shows "*" for its temperature; it reads as resting, as on /Main.
+  var USED = /^\s*Used:\s*(.+?)\s+of\s+(.+?)\s*\(([^)]*)\)\s*$/;
+  function fixRows() {
+    var cs = document.querySelectorAll("table.dashboard tr.updated > td > span.w18:nth-of-type(3)");
+    for (var i = 0; i < cs.length; i++) {
+      var n = cs[i].firstChild;
+      if (!n || n.nodeType !== 3 || n.nodeValue.trim() !== "*") continue;
+      var r = el("span", "cc-dash-rest");
+      r.innerHTML = (window.CCTheme && CCTheme.glyph ? CCTheme.glyph("Moon") : "") + t("resting");
+      cs[i].replaceChild(r, n);
+    }
+    if (LANG !== "de") return;
+    var us = document.querySelectorAll("table.dashboard [id^='pool_usage']");
+    for (var j = 0; j < us.length; j++) {
+      var m = us[j].firstChild && USED.exec(us[j].firstChild.nodeValue || "");
+      if (m) swap(us[j].firstChild, m[1] + " von " + m[2] + " verwendet (" + m[3] + ")");
+    }
+    var as = document.querySelectorAll("table.dashboard tr.updated span.w26 > a[title$=' settings']");
+    for (var k = 0; k < as.length; k++) as[k].title = "Einstellungen für " + as[k].title.replace(/ settings$/, "");
+  }
+  function unfixRows() {
+    var rs = document.querySelectorAll("table.dashboard .cc-dash-rest");
+    for (var i = 0; i < rs.length; i++) rs[i].parentNode.replaceChild(document.createTextNode("*"), rs[i]);
+  }
+
+  var hooked = false;
+  function hookFeed() {
+    var feed = window.dashboard;
+    if (hooked || !feed || typeof feed.on !== "function") return;
+    hooked = true;
+    feed.on("message", function () { if (wasLive) fixRows(); });
+  }
+
   var wasLive = false;
   function apply() {
     var live = isLive();
     document.documentElement.classList.toggle("cc-dash-on", live);
-    if (live) { decorate(); paint(); paintCharts(true); }
-    else if (wasLive) { strip(); paintCharts(false); }
+    if (live) { decorate(); paint(); paintCharts(true); buildCores(); fixCards(); hideModel(); fixRows(); hookFeed(); }
+    else if (wasLive) { strip(); paintCharts(false); unbuildCores(); unswap(); showModel(); unfixRows(); }
     wasLive = live;
   }
 

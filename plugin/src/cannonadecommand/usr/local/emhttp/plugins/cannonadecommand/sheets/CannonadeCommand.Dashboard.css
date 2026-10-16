@@ -108,6 +108,39 @@ html.cc-dash-on table.dashboard .outer:is(.stopped, .paused) .inner > .state { c
 html.cc-dash-on table.dashboard .outer { background: none; }
 html.cc-dash-on table.dashboard .outer .inner span[class*="blue"] { color: inherit; }
 
+/* A spun-down disk rests, with the moon and the word the disk tiles on /Main use */
+html.cc-dash-on table.dashboard .cc-dash-rest {
+  display: inline-flex; align-items: center; gap: 5px; padding: 1px 9px; white-space: nowrap;
+  border-radius: var(--cc-radius-pill); background: var(--cc-chip); color: var(--cc-text-chip, #cfcfcf); font-size: var(--cc-text-meta);
+}
+html.cc-dash-on table.dashboard .cc-dash-rest .cc-glyph { width: 1em; height: 1em; }
+
+/* The processor's cores as a grid of small tiles, one per physical core, holding a load and a bar
+   per thread. dashboard.js moves Unraid's own load cells in, so their inline widths and colours
+   keep arriving; only the box around them changes. A core with two threads takes two columns, so
+   a hyperthreaded pair always shares one row. */
+html.cc-dash-on table.dashboard > tbody > tr.cc-cores-host > td:not(.cc-cores-td),
+html.cc-dash-on table.dashboard > tbody > tr.cpu_open.cc-cores-spent { display: none !important; }
+html.cc-dash-on table.dashboard .cc-cores { display: grid; gap: 14px; padding: 6px 0 4px; }
+html.cc-dash-on table.dashboard .cc-cores-head { display: flex; align-items: baseline; gap: 8px; margin: 0 0 6px; font-size: var(--cc-text-meta); }
+html.cc-dash-on table.dashboard .cc-cores-head > span:first-child { color: var(--cc-text, #e6e6e6); font-weight: 600; }
+html.cc-dash-on table.dashboard .cc-cores-n { color: var(--cc-text-dim, #8a8a8a); }
+html.cc-dash-on table.dashboard .cc-cores-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+html.cc-dash-on table.dashboard .cc-core {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0;
+  padding: 6px 9px 7px; background: var(--cc-chip); border-radius: var(--cc-radius-control);
+}
+html.cc-dash-on table.dashboard .cc-core-ht { grid-column: span 2; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html.cc-dash-on table.dashboard .cc-thr {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; row-gap: 4px; min-width: 0;
+  font-size: var(--cc-text-meta); line-height: 1.2;
+}
+html.cc-dash-on table.dashboard .cc-thr > span:not(.cc-thr-n) { display: contents; }
+html.cc-dash-on table.dashboard .cc-thr-n { color: var(--cc-text-dim, #8a8a8a); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.cc-dash-on table.dashboard .cc-thr .load { float: none; width: auto; margin: 0; padding: 0 0 0 6px; text-align: right; font-variant-numeric: tabular-nums; }
+html.cc-dash-on table.dashboard .cc-thr .usage-disk { grid-column: 1 / -1; float: none; width: auto; height: 4px; margin: 0; overflow: hidden; border-radius: var(--cc-radius-pill); background: var(--cc-surface-2, #222222); }
+html.cc-dash-on table.dashboard .cc-thr .usage-disk > span:first-child { top: 0; height: 100%; border-radius: inherit; }
+
 /* The interface legend reads in the accent, inbound full and outbound fainter, matching the chart
    dashboard.js draws in the one accent without a grid. */
 html.cc-dash-on table.dashboard .view4.red-text,
@@ -124,6 +157,13 @@ html.cc-dash-on table.dashboard .switch-button-button {
   border: none !important; box-shadow: none !important; border-radius: var(--cc-radius-pill) !important;
   background: var(--cc-toggle-knob, #fff) !important; width: 14px !important; height: 14px !important; top: 3px !important;
 }
+
+/* A server without a model name drops the model block (dashboard.js), and one without a case
+   drops Unraid's stand-in drawing. The case picker stays reachable: it comes in, dimmed, while the
+   pointer or the focus is in the card, like the tile controls. */
+html.cc-dash-on table.dashboard .cc-dash-model { display: none; }
+html.cc-dash-on table.dashboard #casing:has(> #mycase.fa-hdd-o) { opacity: 0; transition: opacity var(--cc-motion-control-dur, 0s); }
+html.cc-dash-on table.dashboard > tbody:is(:hover, :focus-within) #casing:has(> #mycase.fa-hdd-o) { opacity: .4; }
 
 /* The context menus a disk, a container or a VM opens are CC menus, dark on every theme like the
    row menu (Tokens.css .cc-rowmenu), instead of a white list. */
@@ -143,8 +183,8 @@ html.cc-dash-on ul.dropdown-menu.dropdown-context > li > a i { color: inherit !i
 html.cc-dash-on ul.dropdown-menu.dropdown-context > li.divider { height: 0; margin: 2px 0 !important; background: none !important; border: none !important; }
 html.cc-dash-on ul.dropdown-menu.dropdown-context > li.dropdown-header { color: #8a8a8a !important; font-size: var(--cc-text-meta); padding: 6px 10px; }
 
-/* At phone width the three columns stack, every tile takes the full width, and the memory pies
-   wrap instead of running out of the card. */
+/* At phone width the three columns stack, every tile takes the full width, the memory pies
+   wrap instead of running out of the card, and the core grid halves to two columns. */
 @media (max-width: 760px) {
   html.cc-dash-on .grid { grid-template-columns: minmax(0, 1fr) !important; }
   html.cc-dash-on .grid > .tile { width: auto !important; min-width: 0 !important; max-width: 100%; }
@@ -152,4 +192,6 @@ html.cc-dash-on ul.dropdown-menu.dropdown-context > li.dropdown-header { color: 
   html.cc-dash-on table.dashboard .tile-system-memory-body,
   html.cc-dash-on table.dashboard .tile-system-memory-charts { flex-wrap: wrap; min-width: 0; }
   html.cc-dash-on table.dashboard td { overflow-wrap: anywhere; }
+  html.cc-dash-on table.dashboard .cc-cores-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html.cc-dash-on table.dashboard .cc-dash-rest { padding: 1px 6px; gap: 4px; }
 }
