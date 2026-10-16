@@ -568,7 +568,7 @@
   // system and the pool state beside it.
   function poolBox(wrap, p, items) {
     var box = wrap.querySelector('.cc-dk-pool[data-pool="' + p.key + '"]');
-    if (!box) { box = el("div", "cc-dk-pool", '<div class="cc-dk-phead"></div><div class="cc-dk-grid cc-dk-fit"></div>'); box.setAttribute("data-pool", p.key); }
+    if (!box) { box = el("div", "cc-dk-pool", '<div class="cc-dk-phead"></div><div class="cc-dk-grid"></div>'); box.setAttribute("data-pool", p.key); }
     setHtml(box.querySelector(".cc-dk-phead"), '<span class="cc-dk-pb">' + esc(p.name) + "</span><span>" + esc([p.fs && p.fs.fs, p.status].filter(Boolean).join(" · ")) + "</span>");
     var grid = box.querySelector(".cc-dk-grid");
     grid.style.setProperty("--cc-dk-n", items.length);
@@ -601,17 +601,18 @@
     });
     order(wrap, boxes);
   }
-  // Unassigned Devices' parts (its disks, the network shares, the past devices) share one wrapping
-  // row, so they stand side by side where the section has room. UD finds them by class, wherever
-  // they sit.
+  // Unassigned Devices' parts share one wrapping row, the network shares and the past devices in a
+  // column beside the disks, since those two are short beside a row of disk cards. UD finds the
+  // parts by class, wherever they sit.
   function udRow(S) {
     var parts = kids(S.sec).filter(function (c) { return hasCls(c, "show-disks") || hasCls(c, "show-shares"); });
     if (!parts.length) return;
     var row = S.sec.querySelector(":scope > .cc-dk-udrow") || S.sec.insertBefore(el("div", "cc-dk-udrow"), parts[0]);
-    parts.forEach(function (c) { row.appendChild(c); });
+    var col = row.querySelector(":scope > .cc-dk-udcol") || row.appendChild(el("div", "cc-dk-udcol"));
+    parts.forEach(function (c, i) { if (i) col.appendChild(c); else row.insertBefore(c, col); });
   }
 
-  // Array-Vorgang becomes a card like the disk sections: the state pills on the left, then the
+  // Array-Vorgang becomes a card like the disk sections: the state badges on the left, then the
   // controls in three groups. Each form or table moves whole and a comment keeps its place, so
   // names, ids and handlers stay as Unraid wrote them and the list view gets the page back as it was.
   // Buttons other plugins hang into a form go with it; a block of their own joins the system group.
@@ -686,8 +687,7 @@
       return;
     }
     var empty = host.querySelector(":scope > .cc-dk-empty"); if (empty) host.removeChild(empty);
-    // Beside other sections the boot and Unassigned Devices grids are as wide as their cards.
-    var grid = host.querySelector(":scope > .cc-dk-grid") || host.insertBefore(el("div", S.key === "array" ? "cc-dk-grid" : "cc-dk-grid cc-dk-fit"), host.firstChild);
+    var grid = host.querySelector(":scope > .cc-dk-grid") || host.insertBefore(el("div", "cc-dk-grid"), host.firstChild);
     grid.style.setProperty("--cc-dk-n", data.disks.length);
     fillGrid(grid, cardsOf(data.disks, 0), colourAt);
     if (S.key === "array") strip(host, "cc-dk-sum", data.total ? sumHtml(data.total) : "");
@@ -721,7 +721,7 @@
     spinNames(false);
     document.documentElement.classList.remove("cc-dk-on", "cc-dk-tiled", "cc-dk-sides");
     Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-host, #displaybox .cc-dk-vsw"), function (n) { n.parentNode.removeChild(n); });
-    Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-udrow"), function (r) {
+    Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-udrow, #displaybox .cc-dk-udcol"), function (r) {
       while (r.firstChild) r.parentNode.insertBefore(r.firstChild, r);
       r.parentNode.removeChild(r);
     });
