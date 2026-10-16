@@ -51,7 +51,7 @@ console.log('\nA running container shows no state');
   ok('one rule hides the running state in every Docker view', !!rule);
   const sels = rule ? rule[1].split(/,(?![^(]*\))/).map((s) => s.trim()) : [];
   ok('list: the dot row under the name, while its dot says running', sels.includes('html.cc-docker-on .cc-enh .cc-ct-dotrow:has(> .cc-ct-statedot[data-name].cc-badge-running:not(.cc-badge-alert))'));
-  ok('card: the state badge', sels.includes('html.cc-docker-on .cc-grid-holder .cc-card-head > .cc-badge-running:not(.cc-badge-alert)'));
+  ok('card: the state badge', sels.includes('html.cc-docker-on .cc-grid-holder .cc-card-state > .cc-badge-running:not(.cc-badge-alert)'));
   ok('tile: the dot and the word beside it', sels.includes('html.cc-docker-on .cc-grid-holder .cc-tile-dot.cc-badge-running:not(.cc-badge-alert)') && sels.includes('html.cc-docker-on .cc-grid-holder .cc-tile-dot.cc-badge-running:not(.cc-badge-alert) + .cc-tile-status'));
   ok('an unhealthy container keeps its state, every selector excludes the alert', sels.length === 4 && sels.every((s) => s.includes(':not(.cc-badge-alert)')));
   ok('the plan badge carries its dependency state itself, so no dot beside it competes with the reveal', !/depStateDot/.test(read('scripts/docker.js')) && sels[0].includes('[data-name]'));

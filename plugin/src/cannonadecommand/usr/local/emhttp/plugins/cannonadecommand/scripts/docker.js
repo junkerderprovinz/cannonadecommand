@@ -1921,26 +1921,56 @@
     else box.appendChild(el("span", "cc-card-ico cc-card-ico-ph"));
     return box;
   }
+  // A card's autostart switch works the list's own checkbox, which stays in the hidden table, so
+  // Unraid's change handler saves it exactly as a click in the list would. Without that row there
+  // is nothing to save through, and the card shows no switch.
+  function nativeAutostart(name) { return document.querySelector('#docker_list input.autostart[container="' + CSS.escape(name) + '"]'); }
+  function autostartSwitch(name) {
+    var box = nativeAutostart(name);
+    if (!box) return null;
+    var tg = el("span", "cc-set-toggle cc-card-auto"); tg.setAttribute("role", "switch"); tg.setAttribute("tabindex", "0");
+    tg.setAttribute("aria-label", "Autostart"); tg.setAttribute("data-tip", "Autostart");
+    tg.appendChild(el("span", "cc-set-knob"));
+    function show(on) { tg.classList.toggle("cc-set-toggle-on", on); tg.setAttribute("aria-checked", on ? "true" : "false"); }
+    function flip() { var b = nativeAutostart(name); if (!b) return; b.click(); show(b.checked); }
+    show(box.checked);
+    tg.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); flip(); });
+    tg.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flip(); } });
+    return tg;
+  }
   function card(c) {
     var wrap = el("div", "cc-card"); wrap.dataset.name = c.name;
     stampCardRainbow(wrap, c.name);
     var head = el("div", "cc-card-head");
     head.appendChild(cardIcon(c.name));
-    // The IP stands under the name, so it has no badge of its own, and CPU, RAM and the network
-    // rate are the badges at the foot of the card, with no bars repeating them.
-    var nb = el("div", "cc-card-name"); nb.appendChild(el("div", "cc-card-title", c.name)); if (c.ip) nb.appendChild(el("div", "cc-card-ip", c.ip)); head.appendChild(nb);
-    head.appendChild(stateBadge(c)); wrap.appendChild(head);
+    // The IP and the network stand as one line under the name, so neither has a badge of its
+    // own, and CPU, RAM and the network rate are the badges at the foot of the card, with no
+    // bars repeating them.
+    var nb = el("div", "cc-card-name"), title = el("div", "cc-card-title", c.name);
+    title.addEventListener("mouseover", function () { if (title.scrollWidth > title.clientWidth) title.setAttribute("data-tip", c.name); else title.removeAttribute("data-tip"); });
+    nb.appendChild(title);
+    var where = [c.ip, c.network].filter(Boolean).join(" · ");
+    if (where) nb.appendChild(el("div", "cc-card-ip", where));
+    head.appendChild(nb);
+    // The corner gathers whether and how the container starts: the start plan and the autostart
+    // switch, and under them its state while it is not running and the plan's last run.
+    var corner = el("div", "cc-card-corner"), startRow = el("div", "cc-card-cornerrow");
+    startRow.appendChild(planBadge(c.name));
+    var auto = autostartSwitch(c.name); if (auto) startRow.appendChild(auto);
+    corner.appendChild(startRow);
+    var stateRow = el("div", "cc-card-cornerrow cc-card-state");
+    stateRow.appendChild(stateBadge(c));
+    var p = lastRunPill(c.name); if (p) stateRow.appendChild(p);
+    corner.appendChild(stateRow);
+    head.appendChild(corner); wrap.appendChild(head);
     var ab2 = actionBars(c.name, c);
     var abrow = el("div", "cc-card-actbar"); abrow.appendChild(ab2.bar);
     wrap.appendChild(abrow);
-    var badges = el("div", "cc-card-badges");
-    if (c.network) badges.appendChild(badgeInfo("NET", c.network, "net"));
-    if (c.ports && c.ports.length) badges.appendChild(badgeInfo("PORT", c.ports.join(" "), "port"));
-    if (badges.children.length) wrap.appendChild(badges);
-    var act = el("div", "cc-card-actions");
-    act.appendChild(planBadge(c.name)); // start, stop and pause live in the icon block above
-    var p = lastRunPill(c.name); if (p) act.appendChild(p);
-    wrap.appendChild(act);
+    if (c.ports && c.ports.length) {
+      var badges = el("div", "cc-card-badges");
+      badges.appendChild(badgeInfo("PORT", c.ports.join(" "), "port"));
+      wrap.appendChild(badges);
+    }
     // the same three limit gears injectRowBadges puts in a list row, so the card view can open
     // the same editors
     var rg = el("div", "cc-rowbadges cc-resgroup cc-card-res"); rg.setAttribute(MARK, "1"); rg.dataset.name = c.name;

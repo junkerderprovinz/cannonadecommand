@@ -195,7 +195,7 @@ a.sl-updall { display: none !important; }
    container that stops shows its state on the next poll. The readiness dot beside the plan chip
    carries no data-name and is left alone. */
 html.cc-docker-on .cc-enh .cc-ct-dotrow:has(> .cc-ct-statedot[data-name].cc-badge-running:not(.cc-badge-alert)),
-html.cc-docker-on .cc-grid-holder .cc-card-head > .cc-badge-running:not(.cc-badge-alert),
+html.cc-docker-on .cc-grid-holder .cc-card-state > .cc-badge-running:not(.cc-badge-alert),
 html.cc-docker-on .cc-grid-holder .cc-tile-dot.cc-badge-running:not(.cc-badge-alert),
 html.cc-docker-on .cc-grid-holder .cc-tile-dot.cc-badge-running:not(.cc-badge-alert) + .cc-tile-status { display: none !important; }
 .cc-enh .cc-ct-dotrow > .cc-badge {
@@ -545,6 +545,21 @@ html .cc-card-movebtn:hover { background: rgba(128, 128, 128, .18) !important; c
 .cc-card-name { flex: 1; min-width: 0; }
 .cc-card-title { font-weight: 600; font-size: var(--cc-text-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cc-card-ip { color: var(--cc-dim); font-size: var(--cc-text-meta); font-family: Consolas, "SFMono-Regular", monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* A grid card's head: the logo at the size the list uses, cc.sgsize through --cc-logo-box and
+   --cc-logo-img, the name with its IP and network, and the corner on the right. A card too narrow
+   for the corner beside the name puts it on a line of its own, still flush right. */
+.cc-card > .cc-card-head { flex-wrap: wrap; }
+.cc-card-head > .cc-card-icobox { width: var(--cc-logo-box, 78px); height: var(--cc-logo-box, 78px); }
+.cc-card-head > .cc-card-icobox > .cc-card-ico { width: var(--cc-logo-img, 62px); height: var(--cc-logo-img, 62px); }
+.cc-card-head > .cc-card-name { flex: 1 1 100px; }
+.cc-card-corner { margin-left: auto; align-self: flex-start; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.cc-card-cornerrow { display: flex; align-items: center; gap: 6px; }
+/* On a phone the name and its IP keep the width beside the logo, and the corner becomes one row
+   under them, the switch still at the right edge. */
+@media (max-width: 540px) { .cc-card-corner { flex: 1 0 100%; flex-direction: row-reverse; flex-wrap: wrap; align-items: center; } }
+/* Every badge on a card is as tall as the gears and action buttons beside it, so a row of them
+   reads as one line; the badge takes up the icon size, as the token asks of a dense row. */
+.cc-card:not(.cc-tile) :is(.cc-b, .cc-badge, .cc-pill) { height: var(--cc-icon-badge, 26px); box-sizing: border-box; padding-block: 0; margin: 0; }
 .cc-stat { display: flex; align-items: center; gap: 8px; font-size: var(--cc-text-meta); }
 .cc-stat-lbl { color: var(--cc-dim); width: 30px; flex: none; }
 .cc-stat-val { color: var(--cc-dim); margin-left: auto; white-space: nowrap; }
@@ -553,15 +568,14 @@ html .cc-card-movebtn:hover { background: rgba(128, 128, 128, .18) !important; c
 .cc-gauge-fill.cc-hot { background: var(--cc-err, #ff8389); }
 .cc-dim { color: var(--cc-dim); }
 .cc-card-badges { display: flex; flex-wrap: wrap; gap: 6px; }
-.cc-card-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 /* the limit gears on a grid card, as one full-width group at the bottom of the card, set off by
    space rather than a line */
 .cc-card-res { display: flex !important; width: 100%; margin-top: 12px; }
-/* Badge and gear sit a little closer than in the list, so CPU, RAM and BW keep to one row on a
-   card while a container runs and its values grow. */
+/* Badge and gear sit a little closer than in the list, and the badges are a little narrower, so
+   CPU, RAM and BW keep to one row on a card while a container runs and its values grow. */
 .cc-card-res.cc-resgroup { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 5px 6px; }
 .cc-card-res .cc-resline { gap: 3px; }
-.cc-card-res .cc-resline > .cc-b { margin: 0; }
+.cc-card-res .cc-resline > .cc-b { margin: 0; padding-inline: 8px; gap: 4px; }
 .cc-life { display: inline-flex; gap: 6px; }
 html .cc-abtn { background: var(--cc-bg3); color: var(--cc-txt); border: 1px solid var(--cc-line); border-radius: var(--cc-radius-pill); padding: 4px 10px; font-size: var(--cc-text-meta); cursor: pointer; transition: background .12s; }
 html .cc-abtn:hover { background: #333; }
