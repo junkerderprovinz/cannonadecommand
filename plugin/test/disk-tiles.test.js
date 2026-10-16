@@ -227,7 +227,7 @@ console.log('\nThe tile view hides the table controls');
   // Shares.css shows it in section view with html.cc-shares-on.cc-on-main.cc-sections-main, four classes.
   ok('in section view the hide outranks Shares.css', hidden.includes('html.cc-dk-on.cc-dk-tiled.cc-on-main.cc-sections-main #displaybox .cc-card-head > span.status'));
   ok('only while no disk table of the array, the pools or the boot device shows', /root\.classList\.toggle\("cc-dk-tiled", tiles && !all\.some\(function \(S\) \{\s*return S\.key !== "ud"/.test(js));
-  ok('Unassigned Devices keeps its controls, which still act on the tiles', !hidden.some((x) => /cc-ud-ctrls/.test(x)) && !/cc-ud-ctrls[^{}]*\{[^}]*(display|visibility|opacity):/.test(rules));
+  ok('Unassigned Devices keeps its controls, which still act on the tiles', !hidden.some((x) => /cc-ud-ctrls/.test(x)) && !/cc-ud-ctrls[^{}]*\{[^}]*(display: none|visibility: hidden|opacity: 0)/.test(rules));
 }
 
 console.log('\nEvery pool and section keeps its badge and stands beside the others where it fits');
@@ -236,11 +236,16 @@ console.log('\nEvery pool and section keeps its badge and stands beside the othe
   ok('the boot device keeps its own section', !/cc-dk-merged/.test(js + css) && /function drawPools\(host, pools\)/.test(js));
   ok('the pools and the boot device are the sections that stand side by side', /S\.sec\.classList\.toggle\("cc-dk-side", tiles && !S\.data\.offline && \(S\.key === "pools" \|\| S\.key === "boot"\)\)/.test(js));
   ok('such a section is as wide as its content, the page wraps the rest', /\.cc-sections-main #displaybox \{ display: flex; flex-wrap: wrap;/.test(css) && /#displaybox > section\.cc-dk-side \{ flex: 0 1 auto; width: auto; \}/.test(css));
-  ok('a grid beside others is as wide as its cards and wraps them when squeezed', /grid\.style\.setProperty\("--cc-dk-n", items\.length\)/.test(js) && /\.cc-dk-grid\.cc-dk-fit \{ grid-template-columns: repeat\(auto-fill, 260px\); width: calc\(var\(--cc-dk-n, 1\) \* 272px - 12px\); max-width: 100%; \}/.test(css));
-  ok('the pool summary and the boot hint do not widen their section', /:is\(\.cc-dk-pool > \.cc-dk-sum, \.cc-dk-host > \.cc-dk-notes\) \{ contain: inline-size; \}/.test(css));
-  ok('on a phone every card takes the full width', /@media \(max-width: 600px\) \{[^@]*\.cc-dk-grid\.cc-dk-fit \{ grid-template-columns: minmax\(0, 1fr\); width: auto; \}/.test(css));
+  ok('a grid is as wide as its cards and wraps them when squeezed', /grid\.style\.setProperty\("--cc-dk-n", items\.length\)/.test(js) && /\.cc-dk-grid \{ display: grid; grid-template-columns: repeat\(auto-fill, minmax\(260px, 1fr\)\); gap: 12px; width: calc\(var\(--cc-dk-n, 1\) \* 272px - 12px\); max-width: 100%; \}/.test(css));
+  ok('the array card hugs its row of disks', /\.cc-dk-host\[data-cc-dk="array"\] \{\s*box-sizing: border-box; width: fit-content; max-width: 100%;/.test(css));
+  ok('the summary strips and the boot hint do not widen their card', /:is\(\.cc-dk-pool, \.cc-dk-host\) > :is\(\.cc-dk-sum, \.cc-dk-notes\) \{ contain: inline-size; \}/.test(css));
+  ok('on a phone every card takes the full width', /@media \(max-width: 600px\) \{[^@]*\.cc-dk-grid \{ grid-template-columns: minmax\(0, 1fr\); width: auto; \}/.test(css));
   const ud = grabFn(js, 'udRow');
   ok('Unassigned Devices\' parts move into one wrapping row, and only those', /hasCls\(c, "show-disks"\) \|\| hasCls\(c, "show-shares"\)/.test(ud) && /el\("div", "cc-dk-udrow"\)/.test(ud) && /\.cc-dk-udrow \{ display: flex; flex-wrap: wrap;/.test(css));
+  ok('each of the three is a card of its own with its badge on the edge', /\.cc-dk-box \.cc-dk-udrow > \* \{\s*box-sizing: border-box; padding: 0 16px 16px; background: var\(--cc-dk-sec\);/.test(css) && /margin: calc\(var\(--cc-sec-h, 22px\) \/ -2\) 0 13px !important;/.test(css));
+  ok('beside the tables the disks are one card wide and take the rest of the row', /\.cc-dk-udrow > \.show-disks:not\(:has\(> \.show-historical\)\) \{ flex: 1 1 292px; max-width: max-content; \}/.test(css) && /\.usage-disk:not\(\.sys\):not\(\.mm\) \{ min-width: 72px; \}/.test(css));
+  ok('every section badge sits on its card\'s top edge', /section\.cc-dk-box > \.cc-card-head \{\s*position: absolute; top: 0; left: 16px; z-index: 1; transform: translateY\(-50%\);/.test(css) && /\.cc-dk-aopt \{ position: absolute; top: 0; left: 16px; z-index: 1; display: flex; margin: 0; transform: translateY\(-50%\); \}/.test(css));
+  ok('the array and parity states are chips with a dot in the state colour', /\.cc-aop-pills > \.cc-aop-status\.cc-aop-ok::before \{ background: var\(--cc-ok\); \}/.test(css) && /\.cc-aop-pills > \.cc-aop-status\.cc-aop-warn::before \{ background: var\(--cc-warn\); \}/.test(css));
   const lv = grabFn(js, 'level');
   ok('beside the pools the boot cards drop by a pool\'s badge row, wrapped below they do not', /pool\.closest\("section"\)\.getBoundingClientRect\(\)\.top - boot\.closest\("section"\)\.getBoundingClientRect\(\)\.top\) < 1/.test(lv) && /boot\.style\.paddingTop = lift > 0 \? lift \+ "px" : "";/.test(lv));
   ok('the levelling follows every render and a resize', /\n    level\(\);\n  \}/.test(js) && /window\.addEventListener\("resize", level\);/.test(js));

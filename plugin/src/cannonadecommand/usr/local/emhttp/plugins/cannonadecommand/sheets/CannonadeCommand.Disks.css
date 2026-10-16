@@ -24,51 +24,105 @@ html.cc-dk-on:is(.Theme--white, .Theme--azure) {
   --cc-dk-rest: #8d8d8d; --cc-dk-rest-ink: #ffffff; --cc-dk-bar-off: #4a4a4a;
 }
 html.cc-dk-on #displaybox .cc-dk-hidden { display: none !important; }
-/* In section view every section the tiles draw is a card with its badge inside. */
+/* In section view every section the tiles draw is a card, its badge straddling the top edge on
+   the content edge, as the Dashboard tiles and the settings cards carry theirs (GlimStone rules 11
+   and 20). The badge reaches half its height above the card, so the cards keep 40px between them. */
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section[role="tabpanel"].cc-dk-box {
-  box-sizing: border-box; margin-bottom: 24px; padding: 16px; background: var(--cc-dk-sec); border-radius: var(--cc-radius-card);
+  position: relative; box-sizing: border-box; margin-bottom: 40px; padding: 24px 16px 16px; background: var(--cc-dk-sec); border-radius: var(--cc-radius-card);
 }
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box .cc-card-head > .cc-ud-ctrls { top: 22px; right: 16px; }
-/* On a phone the UD controls do not fit beside the badge and take a row of their own under it. */
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box > .cc-card-head {
+  position: absolute; top: 0; left: 16px; z-index: 1; transform: translateY(-50%); max-width: calc(100% - 32px); margin: 0;
+}
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox nav.tabs > .cc-dk-vsw { margin-bottom: 28px; }
+/* The array card is as wide as its row of disks. The section keeps the whole row, so no pool moves
+   up beside it, and the card is drawn on the tile host inside it instead. */
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .cc-dk-host[data-cc-dk="array"]) { padding: 0; background: none; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-host[data-cc-dk="array"] {
+  box-sizing: border-box; width: fit-content; max-width: 100%; margin: 0; padding: 24px 16px 16px; background: var(--cc-dk-sec); border-radius: var(--cc-radius-card);
+}
+/* Unassigned Devices' disks, network shares and past devices are three cards of their own, each
+   under its own badge, so the section itself draws no card and its badge stays hidden. Its one
+   column is as wide as the cards, and UD's controls, which stay in that head, sit at the right end
+   of their badge line: a placed absolute child of a grid takes its grid area as containing block. */
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .cc-dk-udrow) {
+  display: grid !important; grid-template-columns: minmax(0, max-content); padding: 0; background: none;
+}
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .cc-dk-udrow) > .cc-card-head {
+  grid-area: 1 / 1 / 2 / 2; inset: 0 0 auto; transform: none; max-width: none; height: 0; min-height: 0; padding: 0; visibility: hidden;
+}
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box .cc-card-head > .cc-ud-ctrls { top: 0; right: 0; transform: translateY(-50%); visibility: visible; }
+/* On a phone the UD controls do not fit beside a badge and take a row of their own above the cards. */
 @media (max-width: 600px) {
-  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box .cc-card-head:has(> .cc-ud-ctrls) { margin-bottom: 52px; }
-  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box .cc-card-head > .cc-ud-ctrls { top: 50px; }
+  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .cc-dk-udrow) { grid-template-columns: minmax(0, 1fr); padding-top: 50px; }
+  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .cc-dk-udrow) > .cc-card-head { grid-area: auto; }
+  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box .cc-card-head > .cc-ud-ctrls { transform: none; }
 }
 /* In section view the pools and the boot device stand side by side while the page has room, each
-   section under its own badge; every other section keeps the whole width. The second of them
-   takes the rest of the row, so the boot hint under its card runs to the edge. */
+   section under its own badge and as wide as its cards; every other section keeps the whole row. */
 html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 24px; }
 html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > * { flex: 1 1 100%; min-width: 0; }
 html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > section.cc-dk-side { flex: 0 1 auto; width: auto; }
-html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > section.cc-dk-side ~ section.cc-dk-side { flex-grow: 1; }
+@media (max-width: 600px) {
+  html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > section.cc-dk-side { flex: 1 1 100%; }
+  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-host[data-cc-dk="array"] { width: auto; }
+}
 /* Unassigned Devices' disks, network shares and past devices, side by side where they fit. */
 html.cc-dk-on #displaybox .cc-dk-udrow { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px 24px; }
 html.cc-dk-on #displaybox .cc-dk-udrow > * { flex: 1 1 auto; min-width: 0; }
-/* In the tiles the three stand in one row on a wide screen: the two tables as wide as their
-   columns need, the disks in the rest, at least one card wide, their cards wrapping under each
-   other there. On a narrow screen a table scrolls in its own box. The tables leave out the columns
-   UD always keeps empty, and the line breaks UD puts between its parts would only push them out
-   of line. */
-html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow > .show-disks:not(:has(> .show-historical)) { flex: 1 1 260px; }
-html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow > :is(.show-shares, .show-disks:has(> .show-historical)) { flex: none; max-width: 100%; overflow-x: auto; }
+/* In the tiles every part is a card. On a wide screen the three stand in one row: the tables as
+   wide as their columns, the disks one card wide with their cards under each other, taking what is
+   left of the row; alone on a row they spread up to the width of their cards. A table scrolls in
+   its own box on a narrow screen, since a scrolling card would clip its badge. The tables leave out
+   the columns UD always keeps empty and keep their cells and bars tight, so all three fit at 1917
+   px, and the line breaks UD puts between its parts would only push them out of line. */
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow { gap: 40px 24px; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > * {
+  box-sizing: border-box; padding: 0 16px 16px; background: var(--cc-dk-sec); border-radius: var(--cc-radius-card);
+}
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > .show-disks:not(:has(> .show-historical)) { flex: 1 1 292px; max-width: max-content; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > :is(.show-shares, .show-disks:has(> .show-historical)) { flex: none; max-width: 100%; }
+/* A part's badges stay in the flow, half above the card's edge, so the three badges of the shares
+   wrap onto a second line on a phone and push the table down instead of running over it. */
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > * > div.title,
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow .show-historical > div.title {
+  position: relative; z-index: 1; height: auto; margin: calc(var(--cc-sec-h, 22px) / -2) 0 13px !important; padding: 0;   /* Shares.css sets the top margin with !important */
+}
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow div.title > span.left { flex-wrap: wrap; row-gap: 6px; }
+@media (max-width: 600px) {
+  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > * { flex: 1 1 100%; }
+  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > .show-disks:not(:has(> .show-historical)) { max-width: none; }
+}
+html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) { display: block; max-width: 100%; overflow-x: auto; }
 html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow table.usb_absent tbody td:nth-child(2) { white-space: normal; }
 html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(.show-disks > .show-shares, .show-historical > br) { display: none !important; }
 html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow table.samba_mounts tr > td:is(:nth-child(6), :nth-child(8)):not([colspan]),
 html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow table.usb_absent tr > td:is(:nth-child(3), :nth-child(4), :nth-child(n+7)):not([colspan]) { display: none; }
-html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) :is(thead, tbody) td { padding-left: 8px; padding-right: 8px; }
-html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) .usage-disk:not(.sys):not(.mm) { min-width: 84px; }
-/* Array-Vorgang as a card: the state pills, then the array, disk and system controls, each group a
-   sub-card under a badge. Inside a group every row is its button, its bubble and what rides with
-   it, wrapping where the group is narrow; the status and description tracks of Shares.css's grid
-   shrink to nothing, since the pills and the bubbles carry them. The parity check card follows in
-   the flow instead of standing beside the table. */
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px 24px; }
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills { position: static; flex: none; padding-top: 12px; }
+html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) :is(thead, tbody) td { padding-left: 6px; padding-right: 6px; }
+html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) .usage-disk:not(.sys):not(.mm) { min-width: 72px; }
+/* Array-Vorgang as a card: the state badges, then the array, disk and system controls, each group a
+   sub-card with its badge on the top edge. Inside a group every row is its button, its bubble and
+   what rides with it, wrapping where the group is narrow; the status and description tracks of
+   Shares.css's grid shrink to nothing, since the badges and the bubbles carry them. The parity
+   check card follows in the flow instead of standing beside the table. */
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 32px 24px; margin-top: 16px; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills { position: static; flex: none; gap: 8px; padding-top: 49px; }   /* the first chip level with the first button row */
+/* The array state and the parity state are chips like a disk's SMART chip, the dot in the state's
+   colour: green while all is well, orange for a check that runs or a warning, red for the rest. */
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-b.cc-aop-status {
+  gap: 6px; height: 22px; min-height: 0; padding: 0 9px !important; border-radius: var(--cc-radius-pill);
+  background: var(--cc-chip); color: var(--cc-text-chip); font-size: var(--cc-text-meta); font-weight: 400; line-height: 1;
+}
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status strong { font-weight: inherit; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status::before {
+  content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--cc-err);
+}
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status.cc-aop-ok::before { background: var(--cc-ok); }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status.cc-aop-warn::before { background: var(--cc-warn); }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg {
-  flex: 1 1 300px; min-width: min(100%, 300px); box-sizing: border-box; padding: 12px 16px !important;   /* Shares.css strips the left padding of anything holding an array_status table */
+  position: relative; flex: 1 1 300px; min-width: min(100%, 300px); box-sizing: border-box; padding: 24px 16px 12px !important;   /* Shares.css strips the left padding of anything holding an array_status table */
   background: var(--cc-dk-card); border-radius: var(--cc-radius-card);
 }
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopt { display: flex; margin: 0 0 4px; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopt { position: absolute; top: 0; left: 16px; z-index: 1; display: flex; margin: 0; transform: translateY(-50%); }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg p { margin: 0; }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg table.array_status { background: none; }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg table.array_status tr { grid-template-columns: auto minmax(0, 1fr) auto; }
@@ -103,15 +157,15 @@ html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-seg .cc-seg-btn[aria-presse
 html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-vsw:hover .cc-dk-seg .cc-seg-btn[aria-pressed="true"] { background: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); color: var(--cc-dk-ct, var(--cc-shr-accent-text, #161616)); }
 
 html.cc-dk-on #displaybox .cc-dk-host { margin: 0 0 4px; }
-html.cc-dk-on #displaybox .cc-dk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-/* A grid that stands beside others is as wide as its cards, and wraps them once it is squeezed. */
-html.cc-dk-on #displaybox .cc-dk-grid.cc-dk-fit { grid-template-columns: repeat(auto-fill, 260px); width: calc(var(--cc-dk-n, 1) * 272px - 12px); max-width: 100%; }
-/* The pools stand side by side and wrap when the row is full. The summary strip and the boot hint
-   take the width the cards give them instead of widening the section. */
+/* A grid is as wide as its cards, so its card hugs them, and wraps them once it is squeezed, the
+   columns then sharing the width. */
+html.cc-dk-on #displaybox .cc-dk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; width: calc(var(--cc-dk-n, 1) * 272px - 12px); max-width: 100%; }
+/* The pools stand side by side and wrap when the row is full. The summary strips and the boot hint
+   take the width the cards give them instead of widening their card. */
 html.cc-dk-on #displaybox .cc-dk-pools { display: flex; flex-wrap: wrap; gap: 18px 24px; align-items: flex-start; }
 html.cc-dk-on #displaybox .cc-dk-pool { flex: 0 1 auto; min-width: 0; }
-html.cc-dk-on #displaybox :is(.cc-dk-pool > .cc-dk-sum, .cc-dk-host > .cc-dk-notes) { contain: inline-size; }
-/* A pool's heading is a section badge, like the parts of the Unassigned Devices section. */
+html.cc-dk-on #displaybox :is(.cc-dk-pool, .cc-dk-host) > :is(.cc-dk-sum, .cc-dk-notes) { contain: inline-size; }
+/* A pool's heading is a section badge above its cards. */
 html.cc-dk-on #displaybox .cc-dk-phead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 12px; font-size: var(--cc-text-meta); color: var(--cc-text-dim); }
 html.cc-dk-on #displaybox .cc-dk-pb {
   display: inline-flex; align-items: center; min-height: var(--cc-sec-h, 22px); box-sizing: border-box; padding: var(--cc-sec-pad, 0 12px);
@@ -119,8 +173,7 @@ html.cc-dk-on #displaybox .cc-dk-pb {
   font-size: var(--cc-sec-fs); font-weight: var(--cc-sec-fw, 500); letter-spacing: var(--cc-sec-ls, 1.2px); text-transform: uppercase; line-height: 1; white-space: nowrap;
 }
 @media (max-width: 600px) {
-  html.cc-dk-on #displaybox .cc-dk-grid,
-  html.cc-dk-on #displaybox .cc-dk-grid.cc-dk-fit { grid-template-columns: minmax(0, 1fr); width: auto; }
+  html.cc-dk-on #displaybox .cc-dk-grid { grid-template-columns: minmax(0, 1fr); width: auto; }
   html.cc-dk-on #displaybox .cc-dk-pool { flex: 1 1 100%; }
 }
 

@@ -568,7 +568,7 @@
   // system and the pool state beside it.
   function poolBox(wrap, p, items) {
     var box = wrap.querySelector('.cc-dk-pool[data-pool="' + p.key + '"]');
-    if (!box) { box = el("div", "cc-dk-pool", '<div class="cc-dk-phead"></div><div class="cc-dk-grid cc-dk-fit"></div>'); box.setAttribute("data-pool", p.key); }
+    if (!box) { box = el("div", "cc-dk-pool", '<div class="cc-dk-phead"></div><div class="cc-dk-grid"></div>'); box.setAttribute("data-pool", p.key); }
     setHtml(box.querySelector(".cc-dk-phead"), '<span class="cc-dk-pb">' + esc(p.name) + "</span><span>" + esc([p.fs && p.fs.fs, p.status].filter(Boolean).join(" · ")) + "</span>");
     var grid = box.querySelector(".cc-dk-grid");
     grid.style.setProperty("--cc-dk-n", items.length);
@@ -611,7 +611,7 @@
     parts.forEach(function (c) { row.appendChild(c); });
   }
 
-  // Array-Vorgang becomes a card like the disk sections: the state pills on the left, then the
+  // Array-Vorgang becomes a card like the disk sections: the state badges on the left, then the
   // controls in three groups. Each form or table moves whole and a comment keeps its place, so
   // names, ids and handlers stay as Unraid wrote them and the list view gets the page back as it was.
   // Buttons other plugins hang into a form go with it; a block of their own joins the system group.
@@ -686,8 +686,7 @@
       return;
     }
     var empty = host.querySelector(":scope > .cc-dk-empty"); if (empty) host.removeChild(empty);
-    // Beside other sections the boot and Unassigned Devices grids are as wide as their cards.
-    var grid = host.querySelector(":scope > .cc-dk-grid") || host.insertBefore(el("div", S.key === "array" ? "cc-dk-grid" : "cc-dk-grid cc-dk-fit"), host.firstChild);
+    var grid = host.querySelector(":scope > .cc-dk-grid") || host.insertBefore(el("div", "cc-dk-grid"), host.firstChild);
     grid.style.setProperty("--cc-dk-n", data.disks.length);
     fillGrid(grid, cardsOf(data.disks, 0), colourAt);
     if (S.key === "array") strip(host, "cc-dk-sum", data.total ? sumHtml(data.total) : "");
