@@ -177,9 +177,6 @@ html.cc-header-on .tooltipster-base .tooltipster-arrow { display: none !importan
    them. Small chips (about 22px, meta-size text) with 10px state dots and no borders: the grey fill
    is the chip, and header.js sets each dot's colour inline. */
 html.cc-header-on #header { display: flex; align-items: center; }   /* a flex row so margin-left:auto works and everything centres on the 91px line */
-/* on a phone a long server name and the island do not fit one row, and the island goes under the
-   name rather than past the page's edge */
-@media (max-width: 767px) { html.cc-header-on #header { flex-wrap: wrap; } }
 /* The island is a column of three right-aligned rows. header.js fills them in the saved
    cc.isl.order and lets the user long-press and drag a chip to any row and position. */
 html.cc-header-on #cc-island {
@@ -250,6 +247,25 @@ html.cc-header-on #cc-island .cc-isl-lead {
 /* the network up/down chip toggles bit and byte on click; its two segments sit side by side */
 html.cc-header-on #cc-island .cc-isl-net { cursor: pointer; }
 html.cc-header-on #cc-island .cc-isl-net .cc-isl-net-seg + .cc-isl-net-seg { margin-left: 8px; }
+/* On a phone the name and the island do not fit one row. The island goes under the name as one
+   flowing run of chips instead of its three right-aligned rows, which there stack into a column
+   as tall as the screen. Uptime, edition, version, network and the container count step back so
+   the run stays two lines; the array, its fill, CPU, RAM and the temperatures are what a glance
+   at a phone is for. The rows dissolve with display: contents, so the saved order still holds. */
+@media (max-width: 767.98px) {
+  html.cc-header-on:not(.Theme--sidebar) #header { flex-wrap: wrap; height: auto !important; padding-bottom: 10px; }
+  html.cc-header-on #cc-brand .cc-brand-name { font-size: 36px !important; line-height: 1.2; }
+  html.cc-header-on #cc-island {
+    order: 3; flex: 1 0 100%; max-width: none; box-sizing: border-box;
+    margin: 6px 0 0; padding: 0 16px 0 7px;   /* on the tabs' 15px edge, less #header's own 8px */
+    flex-direction: row; flex-wrap: wrap; justify-content: flex-start; gap: 6px;
+  }
+  html.cc-header-on #cc-island .cc-isl-row,
+  html.cc-header-on #cc-island .cc-isl-row:empty { display: contents; }
+  html.cc-header-on #cc-island .cc-isl-chip:is([data-cc-chip="up"], [data-cc-chip="os"], [data-cc-chip="ver"], [data-cc-chip="net"], [data-cc-chip="docker"]) { display: none; }
+  html.cc-header-on #cc-island .cc-isl-chip { padding: 3px 9px; }
+  html.cc-header-on #cc-island .cc-isl-bar { width: 32px; }
+}
 
 /* Top header: brand, version chip, bell and burger in CC style. The Connect components render
    light DOM, so outside CSS reaches them and survives their auto-mount rebuilds, which DOM changes
@@ -406,6 +422,22 @@ html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right { padding-right: 16
   html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right { flex: 0 0 auto !important; margin-left: auto !important; }
 }
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right { min-width: 0 !important; flex-wrap: nowrap !important; }
+/* Below 768px Unraid keeps both tiles as one row each, clipped at the screen's edge. Both wrap
+   instead, the icons on lines of their own under the tabs. A tab that has its glyph shows only
+   the glyph there, except the open one, so eleven tabs take two lines rather than four; header.js
+   keeps the name on the link as its aria-label. */
+@media (max-width: 767.98px) {
+  html.cc-header-on:not(.Theme--sidebar) #menu { display: flex !important; flex-wrap: wrap !important; height: auto !important; overflow: visible !important; }
+  html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile,
+  html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right {
+    width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
+    flex-wrap: wrap !important; justify-content: flex-start !important; row-gap: 6px;
+    height: auto !important; overflow: visible !important; padding: 3px 16px 3px 12px !important;
+  }
+  html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search):not(.active) > a:has(> svg.cc-tab-ico) { padding: 0 12px !important; }
+  html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search):not(.active) > a:has(> svg.cc-tab-ico) > span.cc-tab-label { display: none; }
+  html.cc-header-on #menu .nav-tile .nav-item:not(.util):not(.gui_search):not(.active) > a:has(> svg.cc-tab-ico) > svg.cc-tab-ico { margin-right: 0; }
+}
 html.cc-header-on:not(.Theme--sidebar) #menu .nav-tile.right > *:last-child { margin-right: 0 !important; }
 /* the adopted bell or burger ends the row as often as an <a> does, and the arrange ghost swaps in
    for it at the same width */
@@ -457,21 +489,25 @@ html.cc-header-on #menu .usage-bar > span {
    child of .nav-tile.right, where its width would push the icons aside and make the row scroll. So
    the field leaves the flex flow at every width and drops below the icon row as a floating panel.
    Gated on cc-popups-on (master theming) rather than the header area, since this fixes the layout
-   rather than restyling it. */
+   rather than restyling it. The panel is the span, dark like CC's menus on every theme and raised
+   above the page it floats over; the shadow sits there because the focus rule takes the field's. */
 html.cc-popups-on:not(.Theme--sidebar) #menu .nav-tile.right { position: relative !important; }
 html.cc-popups-on:not(.Theme--sidebar) #guiSearchBoxSpan {
   position: absolute !important; top: calc(100% + 8px) !important; right: 0 !important; left: auto !important;
-  width: min(92vw, 360px) !important; max-width: 92vw !important; margin: 0 !important;
+  width: min(92vw, 360px) !important; max-width: 92vw !important; margin: 0 !important; box-sizing: border-box !important;
+  padding: 6px !important; background: #1a1a1a !important; border-radius: var(--cc-radius-card) !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .4) !important;
   z-index: 10050 !important;
 }
 html.cc-popups-on:not(.Theme--sidebar) #guiSearchBox {
   width: 100% !important; max-width: 100% !important;
-  height: 40px !important; padding: 0 14px 0 2.4rem !important;   /* the native 2.4rem left padding holds the magnifier glyph (#guiSearchBoxSpan:after, left:1.5rem) */
+  height: 40px !important; padding: 0 14px 0 calc(2.4rem + 10px) !important;   /* the native 2.4rem holds the magnifier glyph (#guiSearchBoxSpan:after, left:1.5rem), and the panel's padding moves it in */
   border: none !important; border-radius: var(--cc-radius-control) !important;
-  background: var(--cc-surface-3, #2e2e2e) !important; color: #eaeaea !important; font-size: var(--cc-md-fs) !important;
-  box-shadow: 0 14px 40px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .4) !important; outline: none !important;
+  background: #2e2e2e !important; color: #eaeaea !important; font-size: var(--cc-md-fs) !important;
+  box-shadow: none !important; outline: none !important;
 }
-html.cc-popups-on:not(.Theme--sidebar) #guiSearchBoxSpan:after { color: var(--cc-text-dim, #8a8a8a) !important; }
+html.cc-popups-on:not(.Theme--sidebar) #guiSearchBox::placeholder { color: #a3a3a3 !important; opacity: 1 !important; }
+html.cc-popups-on:not(.Theme--sidebar) #guiSearchBoxSpan:after { color: #8a8a8a !important; }
 html.cc-popups-on:not(.Theme--sidebar) #guiSearchBoxSpan .awesomplete { width: 100% !important; }
 @media (min-width: 768px) {
   /* keep every util icon and the user menu visible while searching; !important beats gui_search's
@@ -1099,6 +1135,14 @@ html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] span
   font-size: var(--cc-text-subline) !important; font-weight: 600 !important; box-shadow: none !important; border: none !important; transition: background-color .12s, color .12s, filter .12s;
 }
 html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] span[class*="rounded-md"][class*="inline-flex"]:hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
+/* A card's buttons come in under the pointer or with the focus inside it, as every list row's do,
+   and stay on a touch screen, which has no hover. Opacity keeps their place, so the card does not
+   jump, and keeps them in the tab order. */
+html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] :is(a[class*="text-primary"], span[class*="rounded-md"][class*="inline-flex"]) { opacity: 0; transition: opacity .12s, background-color .12s, color .12s; }
+html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"]:is(:hover, :focus-within) :is(a[class*="text-primary"], span[class*="rounded-md"][class*="inline-flex"]) { opacity: 1; }
+@media (hover: none) {
+  html.cc-popups-on .unapi div.fixed.z-50.bg-background [class~="group/item"] :is(a[class*="text-primary"], span[class*="rounded-md"][class*="inline-flex"]) { opacity: 1; }
+}
 /* in the reactive sub-mode (cc-header-rbneutral) Archiv rests neutral and colours on hover */
 html.cc-popups-on.cc-header-rbneutral .unapi div.fixed.z-50.bg-background [class~="group/item"] span[class*="rounded-md"][class*="inline-flex"]:not(:hover) {
   background: var(--cc-surface-chip) !important; color: var(--cc-ink) !important; filter: none !important;
@@ -1365,6 +1409,69 @@ html.cc-popups-on [id^="reka-dialog-content"] [class~="group/item"] {
 html.cc-popups-on [id^="reka-tooltip-content"] { display: none !important; }
 html.cc-popups-on [id^="reka-dialog-content"] [class*="inline-flex"][class*="justify-center"] { border-radius: var(--cc-radius-pill) !important; min-height: 30px !important; }
 
+/* Unraid's context menus (context.js appends a ul.dropdown-menu.dropdown-context to <body>: the
+   disk menus on the Dashboard and /Main, a container's or an app's right-click menu) look like
+   CC's own row menu, .cc-rowmenu in Tokens.css: dark on every theme, so the colours are literal,
+   and an entry without a fill of its own that takes the mode colour under the pointer. Global,
+   since this sheet is on every page; the VM tab and CA's two ID-scoped menus keep their own,
+   more specific rules. */
+html.cc-popups-on ul.dropdown-menu.dropdown-context {
+  min-width: 180px !important; padding: 6px !important; margin: 0 !important;
+  background: #1a1a1a !important; color: #e6e6e6 !important; border: none !important;
+  border-radius: var(--cc-radius-card) !important; box-shadow: var(--cc-elev-3, 0 10px 24px rgba(0, 0, 0, .5)) !important;
+}
+html.cc-popups-on ul.dropdown-menu.dropdown-context::before,
+html.cc-popups-on ul.dropdown-menu.dropdown-context::after { display: none !important; }   /* the white pointer triangle, drawn with borders */
+html.cc-popups-on ul.dropdown-menu.dropdown-context > li { margin: 0 !important; border: none !important; }
+html.cc-popups-on ul.dropdown-menu.dropdown-context > li > a {
+  display: flex !important; align-items: center; gap: 10px; padding: 7px 10px !important;
+  border-radius: var(--cc-radius-control) !important; background: transparent !important; color: #e6e6e6 !important;
+  font-size: var(--cc-text-subline) !important; line-height: 1.4 !important; white-space: nowrap; text-decoration: none !important;
+  transition: background-color .12s, color .12s;
+}
+html.cc-popups-on ul.dropdown-menu.dropdown-context > li > a:is(:hover, :focus-visible) {
+  background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))) !important;
+  color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616))) !important; outline: none !important;
+}
+html.cc-popups-on ul.dropdown-menu.dropdown-context > li > a i { width: 1.25em; margin: 0 !important; font-size: var(--cc-text-body) !important; color: inherit !important; text-align: center; }
+html.cc-popups-on ul.dropdown-menu.dropdown-context > li.divider { height: 1px !important; margin: 4px 6px !important; padding: 0 !important; background: rgba(255, 255, 255, .08) !important; border: none !important; }
+html.cc-popups-on ul.dropdown-menu.dropdown-context > li.dropdown-header {
+  padding: 6px 10px 4px !important; color: #8a8a8a !important; background: none !important;
+  font-size: var(--cc-text-meta) !important; font-weight: 600; letter-spacing: .4px; text-transform: uppercase;
+}
+
+/* CA's app cards: Installieren, the installed states, Mehr anzeigen and the ribbons are buttons and
+   badges, which in CC speak in ordinary case without letter spacing, like the CC buttons Tokens.css
+   frees from Unraid's capitals. header.js rewrites the ribbon and Show more texts CA writes in
+   capitals. This sheet loads after Tokens.css, so the same weight wins. */
+html.cc-popups-on .cc-castats .actionsButton,
+html.cc-popups-on .cc-castats .cc-cs-cta,
+html.cc-popups-on .ca_homeTemplatesHeader .homeMore,
+html.cc-popups-on .ca_homeTemplatesLine2 .homeMore,
+html.cc-popups-on :is(.officialCardBackground, .LTOfficialCardBackground, .betaCardBackground) {
+  text-transform: none !important; letter-spacing: normal !important; font-weight: 600 !important;
+}
+
+/* The user list (/Users and /Settings/Users, html.cc-userlist from header.js). Its first div.title
+   only names the page, and a page has no heading. Unraid paints i.title in the theme's accent,
+   which can be the section badge's own colour. Adding a user is what the page is for, so it is
+   the page action in the window's corner, below Unraid's back-to-top arrow. */
+html.cc-userlist #displaybox div.title:has(+ div#title.title) { display: none !important; }
+html.cc-userlist #displaybox div.title i.title { color: inherit !important; margin: 0 6px 0 0 !important; }
+html.cc-userlist #displaybox { padding-bottom: 96px; }
+html.cc-userlist #displaybox form[action$="/UserAdd"] input[type="submit"] {
+  position: fixed; right: 24px; bottom: 24px; z-index: 50;
+  height: 40px !important; margin: 0 !important;   /* GlimStone's key button step, 2.5rem of its 16px root */
+  box-shadow: var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
+}
+html.cc-userlist #displaybox form[action$="/UserAdd"] input[type="submit"]:hover:not(:disabled) {
+  box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash), var(--cc-elev-2, 0 10px 28px rgba(0, 0, 0, .38)) !important;
+}
+/* Fertig stays in the list as the one secondary action, grey until the pointer reaches it. */
+html.cc-userlist #displaybox form[action$="/UserAdd"] input[type="button"]:not(:hover) {
+  background: rgba(128, 128, 128, .18) !important; color: var(--cc-text, #e6e6e6) !important;
+}
+
 /* The account popover (Lizenz verwalten, Auf Updates prüfen, Konto, Einstellungen) sits in the
    body, outside #displaybox, so these rules are page-global. header.js tags it .cc-acctmenu and
    folds its description into a .cc-acctinfo (i) bubble. It gets CC elevation and a colour-mode
@@ -1384,6 +1491,17 @@ html.cc-popups-on .cc-acctmenu .cc-acct-x:hover {
   background: var(--cc-rb-c, var(--cc-rbaccent, var(--cc-accent, #FCC419))); color: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
 }
 html.cc-popups-on .cc-acctmenu .cc-acct-x svg { width: 12px; height: 12px; }
+/* the title badge on the strip's left, a section badge like .cc-win-title, centred on the close
+   badge's line */
+html.cc-popups-on .cc-acctmenu .cc-acct-title {
+  position: absolute; top: 8px; left: 8px;
+  display: inline-flex; align-items: center; box-sizing: border-box;
+  min-height: var(--cc-sec-h, 22px); padding: var(--cc-sec-pad, 0 12px);
+  border-radius: var(--cc-radius-pill);
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
+  font-size: var(--cc-sec-fs); font-weight: var(--cc-sec-fw, 500); line-height: 1.2; letter-spacing: var(--cc-sec-ls, 1.2px);
+  text-transform: uppercase; white-space: nowrap; pointer-events: none;
+}
 html.cc-header-on .cc-acctmenu li > span,
 html.cc-header-on .cc-acctmenu li > a { border-radius: var(--cc-radius-control) !important; transition: background .12s, color .12s; }
 html.cc-header-on .cc-acctmenu li > span:hover,

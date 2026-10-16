@@ -50,6 +50,20 @@ console.log('\nThe account menu');
   ok('a square badge in the top right corner, the drawer\'s size', val(x, 'width') === 'var(--cc-icon-badge, 26px)' && val(x, 'height') === 'var(--cc-icon-badge, 26px)' && val(x, 'position') === 'absolute' && val(x, 'right') === '6px' && val(x, 'top') === '6px');
   ok('on the chip grey at rest and in the colour chain under the pointer', /--cc-surface-chip/.test(val(x, 'background')) && CHAIN.test(val(Object.assign({}, x, { states: { hover: true } }), 'background') || ''));
   ok('on a strip of its own above the first entry', val({ tag: 'div', classes: ['bg-popover', 'cc-acctmenu'] }, 'padding-top') === '38px');
+  ok('the strip carries the title, named in both languages', header.includes('mt.className = "cc-acct-title"; mt.textContent = T("Konto", "Account");'));
+  const title = { tag: 'span', classes: ['cc-acct-title'], inside: ['.cc-acctmenu'] };
+  ok('a section badge on the strip\'s left, as every window title', val(title, 'position') === 'absolute' && val(title, 'left') === '8px' && val(title, 'min-height') === 'var(--cc-sec-h, 22px)' && val(title, 'font-size') === 'var(--cc-sec-fs)' && val(title, 'text-transform') === 'uppercase');
+  ok('always coloured, since a title is not a control', /var\(--cc-rbaccent, var\(--cc-accent/.test(val(title, 'background') || ''));
+}
+
+console.log('\nA notification card');
+{
+  const header = read('scripts/header.js');
+  const css = read('sheets/CannonadeCommand.Header.css');
+  ok('its buttons rest hidden, keeping their place', css.includes('[class~="group/item"] :is(a[class*="text-primary"], span[class*="rounded-md"][class*="inline-flex"]) { opacity: 0;'));
+  ok('and come in with the pointer or the focus on the card', /\[class~="group\/item"\]:is\(:hover, :focus-within\) :is\(a\[class\*="text-primary"\], span\[class\*="rounded-md"\]\[class\*="inline-flex"\]\) \{ opacity: 1; \}/.test(css));
+  ok('a touch screen keeps them', /@media \(hover: none\) \{\s*html\.cc-popups-on \.unapi div\.fixed\.z-50\.bg-background \[class~="group\/item"\] :is\([^)]*\)[^{]*\{ opacity: 1; \}/.test(css));
+  ok('the archive button says what it does', header.includes('cbt.nodeValue.replace("Archiv", "Archivieren")'));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

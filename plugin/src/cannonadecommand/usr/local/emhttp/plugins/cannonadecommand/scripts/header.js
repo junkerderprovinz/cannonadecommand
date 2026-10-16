@@ -167,6 +167,8 @@
               lbl.className = "cc-tab-label";
               a.replaceChild(lbl, node);
               lbl.appendChild(node);
+              // A phone shows only the glyph, and a hidden label names nothing.
+              a.setAttribute("aria-label", node.textContent.trim());
               break;
             }
           }
@@ -536,6 +538,13 @@
       var x = host.querySelector(":scope > span.absolute > [role=\"button\"]");
       if (x) x.classList.add("cc-notif-x");
       if (x && !x.getAttribute("data-cc-tip")) { x.setAttribute("data-cc-tip", T("Schließen", "Close")); if (!x.getAttribute("aria-label")) x.setAttribute("aria-label", T("Schließen", "Close")); }
+      // A button says what it does, and the German pack names the card action with a noun. Looked
+      // at on every call, since Vue rebuilds the cards as they arrive.
+      var cardBtns = host.querySelectorAll('[class~="group/item"] span[class*="rounded-md"][class*="inline-flex"]');
+      for (var cb = 0; cb < cardBtns.length; cb++) {
+        var cbt = ccLabelText(cardBtns[cb]);
+        if (cbt && cbt.nodeValue.trim() === "Archiv") cbt.nodeValue = cbt.nodeValue.replace("Archiv", "Archivieren");
+      }
       if (host.querySelector(".cc-notif-badge")) return;
       var arch = null, sp = host.querySelectorAll("span, button, a");
       for (var i = 0; i < sp.length; i++) { if (/^\s*(Alle archivieren|Archive all)\s*$/i.test(sp[i].textContent || "")) { arch = sp[i]; break; } }
@@ -1342,6 +1351,10 @@
           document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
         });
         menu.insertBefore(mx, menu.firstChild);
+        // The strip the close badge sits on carries the title, as every CC window does.
+        var mt = document.createElement("span");
+        mt.className = "cc-acct-title"; mt.textContent = T("Konto", "Account");
+        menu.insertBefore(mt, menu.firstChild);
         var lis = menu.querySelectorAll("li");
         for (var i = 0; i < lis.length; i++) {
           var li = lis[i];
@@ -1491,6 +1504,102 @@
   };
   function ccTransHelp(txt) {
     try { if (LANG !== "de") return txt; var k = (txt || "").replace(/\s+/g, " ").trim(); return CC_HELP_DE[k] || txt; } catch (e) { return txt; }
+  }
+  // The last text node of a settings label, wherever its markup nests it, leaving out an (i).
+  function ccLabelText(dt) {
+    var w = document.createTreeWalker(dt, NodeFilter.SHOW_TEXT), n, last = null;
+    while ((n = w.nextNode())) { if (n.nodeValue.trim() && !(n.parentElement && n.parentElement.closest(".cc-toolsinfo"))) last = n; }
+    return last;
+  }
+  // A help block after a list of several rows explains the last labelled one, which is also where
+  // Unraid puts its help cursor; the rows above it are other settings.
+  function ccHelpOwner(dl) {
+    var dts = dl.querySelectorAll(":scope > dt");
+    for (var i = dts.length - 1; i >= 0; i--) { if (ccLabelText(dts[i])) return dts[i]; }
+    return dts[0] || null;
+  }
+  // Bubble texts for settings Unraid and two plugins ship without help, keyed by the field's name,
+  // so they hold in every language. A path before the name limits a generic name to its page. A
+  // third entry is the German label for a plugin page that has no translation of its own.
+  var NTP_SRV = ["Name oder Adresse eines Zeitservers, etwa pool.ntp.org. Die weiteren springen ein, wenn einer nicht antwortet.", "Name or address of a time server, such as pool.ntp.org. The others step in when one does not answer."];
+  var PTP_SRV = ["Adresse einer PTP-Uhr im Netz. Nur im Modus Unicast nötig.", "Address of a PTP clock on the network. Only needed in Unicast mode."];
+  var AMD_UNIT = ["Zeigt, wie stark dieser Baustein einer AMD-Karte arbeitet, so wie radeontop es meldet.", "Shows how busy this part of an AMD card is, as radeontop reports it."];
+  var CC_ROW_HELP = {
+    diskSpindownDelay: ["Wie lange der Datenträger ohne Zugriff läuft, bevor er sich abschaltet. „Standard verwenden“ nimmt den Wert aus den Datenträger-Einstellungen.", "How long the disk keeps spinning without access before it spins down. “Use default” takes the value from Disk Settings."],
+    diskFsProfile: ["Wie ein Pool seine Daten auf die Datenträger verteilt, etwa gespiegelt oder verteilt.", "How a pool spreads its data across its disks, for example mirrored or striped."],
+    diskCompression: ["Komprimiert neue Daten beim Schreiben. Das spart Platz und kostet etwas Rechenzeit.", "Compresses new data as it is written. This saves space and costs a little CPU time."],
+    diskAutotrim: ["Meldet einer SSD laufend, welche Blöcke frei sind, damit sie schnell bleibt.", "Keeps telling an SSD which blocks are free, so it stays fast."],
+    zfs_arc_mode: ["Wie viel Arbeitsspeicher ZFS höchstens als Lesecache nutzen darf. Unbegrenzt gibt den Speicher wieder frei, wenn andere ihn brauchen.", "The most memory ZFS may use as its read cache. Unlimited gives the memory back when something else needs it."],
+    zfs_arc_max_custom: ["Die Obergrenze für den ZFS-Lesecache in GB, wenn darüber ein eigener Wert gewählt ist.", "The cap for the ZFS read cache in GB, when a custom value is chosen above."],
+    display_power: ["Zeigt bei NVMe-Laufwerken an, wie viel Strom sie gerade brauchen.", "Shows how much power NVMe drives draw right now."],
+    "/Settings/Notifications language_update": ["Wie oft Unraid nach neuen Übersetzungen der Oberfläche sucht und dich darauf hinweist.", "How often Unraid looks for new translations of the interface and tells you about them."],
+    "/Settings/Notifications AuthUser": ["Der Benutzername für den Mailserver, meist deine E-Mail-Adresse.", "The user name for the mail server, usually your email address."],
+    "/Settings/Notifications Enabled": ["Schaltet diesen Benachrichtigungsdienst ein oder aus.", "Turns this notification service on or off."],
+    "/Settings/DateTime display_date": ["Wie Unraid ein Datum schreibt.", "How Unraid writes a date."],
+    "/Settings/DateTime display_time": ["Ob Uhrzeiten mit 12 oder 24 Stunden erscheinen.", "Whether times show in 12 or 24 hour format."],
+    USE_NTP: ["Woher der Server seine Uhrzeit nimmt: aus dem Internet (NTP), von einer Uhr im lokalen Netz (PTP) oder von Hand gestellt.", "Where the server takes its time from: the internet (NTP), a clock on the local network (PTP), or set by hand."],
+    NTP_POLL: ["Wie oft der Server die Zeitserver fragt. Öfter hält die Uhr genauer.", "How often the server asks the time servers. More often keeps the clock more exact."],
+    NTP_SERVER1: NTP_SRV, NTP_SERVER2: NTP_SRV, NTP_SERVER3: NTP_SRV, NTP_SERVER4: NTP_SRV,
+    PTP_TRANSPORT: ["Über welches Protokoll die PTP-Zeit im Netz läuft. Es muss zur Uhr in deinem Netz passen.", "Which protocol carries PTP time on the network. It has to match the clock on your network."],
+    PTP_MODE: ["Multicast findet die Uhr im Netz selbst, Unicast fragt nur die Server darunter.", "Multicast finds the clock on the network by itself, Unicast only asks the servers below."],
+    PTP_SERVER1: PTP_SRV, PTP_SERVER2: PTP_SRV, PTP_SERVER3: PTP_SRV, PTP_SERVER4: PTP_SRV,
+    PTP_PORT: ["Die Netzwerkschnittstelle, über die PTP läuft.", "The network interface PTP runs on."],
+    PTP_CLOCK: ["Hardware nimmt die Uhr der Netzwerkkarte und ist genauer, Software geht mit jeder Karte.", "Hardware uses the network card's clock and is more exact, Software works with any card."],
+    MULTIGPU: ["Welche Grafikkarten die Kachel im Dashboard zeigt. Du kannst mehrere wählen.", "Which graphics cards the Dashboard tile shows. You can pick several.", "Grafikkarten im Dashboard"],
+    TEMPFORMAT: ["In welcher Einheit Temperaturen erscheinen.", "The unit temperatures are shown in.", "Temperatureinheit"],
+    UIREFRESH: ["Ob die Kachel ihre Werte selbst neu lädt, und in welchem Abstand in Millisekunden.", "Whether the tile reloads its values by itself, and how often in milliseconds.", "Automatisch aktualisieren (Millisekunden)"],
+    DEBUGLOG: ["Schreibt ausführliche Meldungen ins Systemprotokoll. Nur für die Fehlersuche.", "Writes detailed messages to the system log. Only for troubleshooting.", "Debug-Protokoll"],
+    DISPCLOCKS: ["Zeigt den Takt von Grafikchip und Grafikspeicher.", "Shows the clock speed of the graphics chip and its memory.", "GPU- und Speichertakt (Nvidia/Intel/AMD)"],
+    DISPPCIUTIL: ["Zeigt, wie stark der PCIe-Bus oder der Speichercontroller arbeitet.", "Shows how busy the PCIe bus or the memory controller is.", "PCI- und IMC-Auslastung (Nvidia/Intel)"],
+    DISPPWRDRAW: ["Zeigt, wie viel Strom die Karte gerade braucht.", "Shows how much power the card draws right now.", "Leistungsaufnahme (Nvidia/Intel/AMD**)"],
+    DISPPWRSTATE: ["Zeigt den Energiezustand der Karte, von P0 für volle Leistung abwärts.", "Shows the card's power state, from P0 for full power downwards.", "Energiezustand (Nvidia/Intel)"],
+    DISPMEMUTIL: ["Zeigt, wie viel Grafikspeicher belegt ist.", "Shows how much graphics memory is in use.", "Speicherauslastung (Nvidia/AMD)"],
+    DISPTEMP: ["Zeigt die Temperatur des Grafikchips.", "Shows the temperature of the graphics chip.", "Temperatur (Nvidia/AMD)"],
+    DISPFAN: ["Zeigt, wie schnell der Lüfter der Karte dreht.", "Shows how fast the card's fan spins.", "Lüfter (Nvidia/Intel/AMD**)"],
+    DISPSESSIONS: ["Zeigt, welche Programme die Karte gerade nutzen, etwa beim Transcoding.", "Shows which programs use the card right now, for example while transcoding.", "Aktive Sitzungen (Nvidia/Intel/AMD)"],
+    DISPENCDEC: ["Zeigt, wie stark die Einheiten für Video-Kodierung und -Dekodierung arbeiten.", "Shows how busy the video encode and decode units are.", "Encoder- und Decoder-Auslastung"],
+    DISPTHROTTLE: ["Zeigt, ob und warum die Karte ihren Takt drosselt, etwa wegen Hitze.", "Shows whether and why the card slows its clock, for example from heat.", "Drosselung"],
+    INTELBACKEND: ["Mit welchem Werkzeug die Werte einer Intel-Karte gelesen werden.", "Which tool reads the values of an Intel card.", "Intel-Backend (i915)"],
+    DISP3DRENDER: ["Zeigt, wie stark die 3D-Einheit arbeitet.", "Shows how busy the 3D unit is.", "3D-Last"],
+    DISPBLITTER: ["Zeigt, wie stark die Einheit arbeitet, die Bildbereiche kopiert.", "Shows how busy the unit that copies image regions is.", "Blitter-Last"],
+    DISPVIDEO: ["Zeigt, wie stark die Videoeinheit arbeitet, die beim Transcoding rechnet.", "Shows how busy the video unit used for transcoding is.", "Video-Last"],
+    DISPVIDENH: ["Zeigt, wie stark die Einheit für Skalierung und Bildverbesserung arbeitet.", "Shows how busy the scaling and enhancement unit is.", "Videoverbesserung"],
+    DISPCOMPUTE: ["Zeigt, wie stark Berechnungen die Karte auslasten, etwa für KI.", "Shows how busy compute work keeps the card, for example AI.", "Rechenlast"],
+    DISPINTERRUPT: ["Zeigt, wie oft die Karte den Prozessor pro Sekunde unterbricht.", "Shows how often per second the card interrupts the processor.", "Interrupts pro Sekunde"],
+    DISPPWRDRWSEL: ["Ob die Leistung des Grafikchips, des ganzen Prozessors oder der höhere der beiden Werte erscheint.", "Whether to show the power of the graphics chip, of the whole processor, or the higher of the two.", "Quelle der Leistungsaufnahme"],
+    DISPEVENT: AMD_UNIT.concat("Auslastung Event Engine"), DISPVERTEX: AMD_UNIT.concat("Auslastung Vertex Tesselator"), DISPTEXTURE: AMD_UNIT.concat("Auslastung Texture Addresser"),
+    DISPSHADEREXP: AMD_UNIT.concat("Auslastung Shader Export"), DISPSEQUENCER: AMD_UNIT.concat("Auslastung Sequencer Cache"), DISPSHADERINTER: AMD_UNIT.concat("Auslastung Shader Interpolator"),
+    DISPSCANCON: AMD_UNIT.concat("Auslastung Scan Converter"), DISPPRIMASSEM: AMD_UNIT.concat("Auslastung Primitive Assembly"), DISPDEPTHBLK: AMD_UNIT.concat("Auslastung Depth Block"),
+    DISPCOLORBLK: AMD_UNIT.concat("Auslastung Color Block"), DISPGFXTRANS: AMD_UNIT.concat("Auslastung Graphics Translation"),
+    "/Settings/UserscriptsEnhanced default_expanded": ["Neue Kategorien stehen in der Skriptliste gleich offen.", "New categories start opened in the script list.", "Neue Kategorien aufgeklappt"],
+    "/Settings/UserscriptsEnhanced uncategorized_expanded": ["Die Skripte ohne Kategorie stehen gleich offen.", "The scripts without a category start opened.", "Skripte ohne Kategorie aufgeklappt"],
+    "/Settings/UserscriptsEnhanced capitalized": ["Schreibt Kategorienamen mit großem Anfangsbuchstaben.", "Starts category names with a capital letter.", "Kategorienamen großschreiben"],
+    "/Settings/UserscriptsEnhanced enable_search": ["Zeigt über der Skriptliste ein Suchfeld.", "Shows a search field above the script list.", "Suche"],
+    "/Settings/UserscriptsEnhanced hide_description": ["Blendet die Beschreibungen in der Liste aus, alle oder nur die leeren.", "Hides the descriptions in the list, all of them or only the empty ones.", "Skriptbeschreibungen ausblenden"],
+    "/Settings/UserscriptsEnhanced hide_what_is_cron": ["Blendet den Hinweis aus, der Cron erklärt.", "Hides the note that explains cron.", "Hinweis zu Cron ausblenden"],
+    "/Settings/UserscriptsEnhanced hide_how_to_add_scripts": ["Blendet den Knopf aus, der zeigt, wie man Skripte hinzufügt.", "Hides the button that shows how to add scripts.", "Anleitungsknopf ausblenden"],
+    "/Settings/UserscriptsEnhanced hide_help": ["Blendet den Hinweis aus, wo es Hilfe zum Plugin gibt.", "Hides the note on where to get help with the plugin.", "Hilfehinweis ausblenden"]
+  };
+  // Gives a settings row the (i) Unraid left out, from CC_ROW_HELP, once the native help blocks
+  // have found their rows. Buttons are actions, not settings, so a row needs a real field.
+  function ccRowHelp() {
+    var path = location.pathname.replace(/\/+$/, "");
+    var dts = document.querySelectorAll("#displaybox dl > dt");
+    for (var i = 0; i < dts.length; i++) {
+      var dt = dts[i];
+      if (dt.querySelector(".cc-toolsinfo")) continue;
+      var dd = dt.nextElementSibling;
+      var ctl = dd && dd.tagName === "DD" ? dd.querySelector("input[name]:not([type=hidden]):not([type=button]):not([type=submit]), select[name], textarea[name]") : null;
+      if (!ctl) continue;
+      var name = ctl.name.replace(/\[\]$/, "").replace(/\.\d+$/, "");
+      var e = CC_ROW_HELP[path + " " + name] || CC_ROW_HELP[name];
+      if (!e) continue;
+      var tn = ccLabelText(dt);
+      if (!tn) continue;
+      if (e[2] && LANG === "de") tn.nodeValue = e[2];
+      var ic = document.createElement("span"); ic.className = "cc-toolsinfo"; ic.setAttribute("data-cc-tip", T(e[0], e[1])); ic.textContent = "ⓘ";
+      tn.parentNode.appendChild(ic);
+    }
   }
   // On cc-tools-on pages the native <select> is replaced with the same overlay dropdown the Docker
   // add-container form uses, under its own class names so nothing else unwraps it. The real select
@@ -1828,13 +1937,11 @@
   function ccToolsEnhance() {
     try {
       if (!document.documentElement.classList.contains("cc-tools-on")) return;
-      var dts = document.querySelectorAll("#displaybox dl > dt:not([data-cc-nocolon])");
+      // Every pass looks again, since some pages write their labels after the first one.
+      var dts = document.querySelectorAll("#displaybox dl > dt");
       for (var i = 0; i < dts.length; i++) {
-        var dt = dts[i]; dt.setAttribute("data-cc-nocolon", "1");
-        var walk = dt.querySelector("span") || dt;   // the label text usually sits in the first span
-        var tn = null;
-        for (var j = walk.childNodes.length - 1; j >= 0; j--) { if (walk.childNodes[j].nodeType === 3 && (walk.childNodes[j].nodeValue || "").trim()) { tn = walk.childNodes[j]; break; } }
-        if (tn) tn.nodeValue = tn.nodeValue.replace(/\s*:\s*$/, "");
+        var tn = ccLabelText(dts[i]);
+        if (tn && /:\s*$/.test(tn.nodeValue)) tn.nodeValue = tn.nodeValue.replace(/\s*:\s*$/, "");
       }
       // The coloured status word in the page-title span becomes a state dot, with the word as its
       // tooltip, like the disk state dots.
@@ -1850,22 +1957,28 @@
       }
       // Unraid's per-setting help is a blockquote, whose text moves onto a small icon on the label
       // and rides the CC bubble; the native block is hidden.
-      var helps = document.querySelectorAll("#displaybox blockquote.inline_help:not([data-cc-help]), #displaybox .inline-help:not([data-cc-help])");
+      // A block already moved is looked at again, because some pages rewrite the label it went
+      // into and take the icon with it.
+      var helps = document.querySelectorAll("#displaybox blockquote.inline_help, #displaybox .inline-help");
       for (var h = 0; h < helps.length; h++) {
-        var bq = helps[h]; bq.setAttribute("data-cc-help", "1");
+        var bq = helps[h];
+        if (bq.__ccIcon && bq.__ccIcon.isConnected) continue;
+        bq.setAttribute("data-cc-help", "1");
         var txt = ccTransHelp((bq.textContent || "").trim()); if (!txt) { continue; }
         // The help block sits either inside the field's dd or as a flat sibling after the dl it
         // describes, so the label is resolved both ways.
         var lab = null, dd = bq.closest("dd");
         if (dd) lab = dd.previousElementSibling;
-        else { var pv = bq.previousElementSibling; while (pv && pv.tagName !== "DL" && pv.tagName !== "DT") pv = pv.previousElementSibling; if (pv) lab = pv.tagName === "DL" ? pv.querySelector("dt") : pv; }
+        else { var pv = bq.previousElementSibling; while (pv && pv.tagName !== "DL" && pv.tagName !== "DT") pv = pv.previousElementSibling; if (pv) lab = pv.tagName === "DL" ? ccHelpOwner(pv) : pv; }
         var host = (lab && lab.tagName === "DT") ? (lab.querySelector("span") || lab) : null;
         // Without a label span, fall back to the value cell or the label itself, so no help block
         // is left inline.
         if (!host && dd) host = dd;
         if (!host && lab) host = lab;
         if (host) {
-          if (!host.querySelector(":scope > .cc-toolsinfo")) { var ic = document.createElement("span"); ic.className = "cc-toolsinfo"; ic.setAttribute("data-cc-tip", txt); ic.textContent = "ⓘ"; host.appendChild(ic); }
+          var ic = host.querySelector(":scope > .cc-toolsinfo");
+          if (!ic) { ic = document.createElement("span"); ic.className = "cc-toolsinfo"; ic.setAttribute("data-cc-tip", txt); ic.textContent = "ⓘ"; host.appendChild(ic); }
+          bq.__ccIcon = ic;
           bq.style.display = "none";
         }
       }
@@ -1897,6 +2010,7 @@
           if (afterBare && afterBare.tagName === "DD") afterBare.style.gridColumn = "2";
         }
       }
+      ccRowHelp();
       // Unraid's header colour fields are plain hex text inputs with no picker, so each gets a
       // native colour swatch synced both ways. They are recognised by a hex value together with a
       // colour-like name, and the swatch writes the field and fires change, so Apply still works.
@@ -2434,7 +2548,10 @@
         // the fallback below would match them and its generic legend rule would fight the one
         // docker.js already applies there, inflating the badges past either rule on its own.
         var ctOutPg = /^\/(Docker|Apps)\/(AddContainer|UpdateContainer)$/.test(p0);
-        var toolsPg = !ownPg && !ctOutPg && (/^\/Tools\//.test(p0) || /^\/Settings\/./.test(p0) || diskPg || caSettingsPg || !!document.querySelector("#displaybox fieldset legend"));
+        // /Users is the user list and editor of /Settings/Users, reached from the header when
+        // Unraid's users menu sits there.
+        var usersPg = /^\/Users(\/|$)/.test(p0);
+        var toolsPg = !ownPg && !ctOutPg && (/^\/Tools\//.test(p0) || /^\/Settings\/./.test(p0) || usersPg || diskPg || caSettingsPg || !!document.querySelector("#displaybox fieldset legend"));
         root.classList.toggle("cc-tools-on", toolsPg && g("cc.theming", "1") !== "0");
         // The disk detail form is a full-width native grid whose labels and values would spread to
         // the screen edges, so the compact grid is kept for these pages alone.
@@ -2443,6 +2560,9 @@
         // are scoped here rather than reaching every menu trigger on other /Settings pages.
         var apiKeysPg = /^\/Settings\/ApiKeys\b/.test(p0);
         root.classList.toggle("cc-apikeyspage", apiKeysPg && toolsPg && g("cc.theming", "1") !== "0");
+        // The user list carries a page title above its sections and an add button that is the
+        // page's action; the header sheet handles both on either address.
+        root.classList.toggle("cc-userlist", /^\/(Settings\/)?Users\/?$/.test(p0) && toolsPg && g("cc.theming", "1") !== "0");
       } catch (e0) {}
       ccArrFill();
       ccStateBars();
@@ -2530,6 +2650,9 @@
           moT = null;
           reorderSearch();
           document.documentElement.classList.toggle("cc-search-open", !!document.getElementById("guiSearchBoxSpan"));
+          // gui_search opens an empty field that says nothing about what it finds
+          var sbox = document.getElementById("guiSearchBox");
+          if (sbox && !sbox.getAttribute("placeholder")) sbox.setAttribute("placeholder", T("Seite oder Einstellung suchen", "Search pages and settings"));
           // A utility icon the native scripts append after boot gets its saved slot and its drag
           // wiring here; applyNavOrder is a no-op once the arrangement matches.
           if (document.documentElement.classList.contains("cc-header-on")) { applyNavOrder(); setupNavDrag(); }
@@ -3408,7 +3531,7 @@
   var CC_APPS_XLATE_DE = {
     "Home": "Start", "Installed Apps": "Installierte Apps", "Previous Apps": "Bisherige Apps",
     "Pinned Apps": "Angeheftete Apps", "Favourite Repo": "Bevorzugtes Repository", "Action Centre": "Aktionszentrale",
-    "SHOW MORE": "MEHR ANZEIGEN", "Results Per Page": "Ergebnisse pro Seite", "Sort By:": "Sortieren nach:",
+    "Results Per Page": "Ergebnisse pro Seite", "Sort By:": "Sortieren nach:",
     "Name Ascending": "Name aufsteigend", "Name Descending": "Name absteigend", "Date Added": "Hinzugefügt am",
     "Language": "Sprache", "Media Applications": "Medienanwendungen", "Media Servers": "Medienserver",
     "Network Services": "Netzwerkdienste", "Tools / Utilities": "Werkzeuge", "Utilities": "Dienstprogramme",
@@ -3427,7 +3550,19 @@
     "The most popular plugins installed by other Unraid users": "Die beliebtesten Plugins, die von anderen Unraid-Nutzern installiert wurden",
     "An assortment of randomly chosen apps": "Eine Auswahl zufällig ausgewählter Apps"
   };
+  // CA writes its card ribbons and Show more in capitals, in both languages, where every other CC
+  // badge and button speaks in ordinary case.
+  var CC_APPS_CASE = {
+    "OFFICIAL": ["Offiziell", "Official"], "LIMETECH": ["Limetech", "Limetech"], "BETA": ["Beta", "Beta"],
+    "UPDATED": ["Aktualisiert", "Updated"], "INSTALLED": ["Installiert", "Installed"],
+    "SHOW MORE": ["Mehr anzeigen", "Show more"], "MEHR ANZEIGEN": ["Mehr anzeigen", "Show more"]
+  };
   function ccAppsTranslateNative() {
+    Array.prototype.slice.call(document.querySelectorAll(".homeMore, .installedCardText")).forEach(function (el) {
+      if (el.children.length) return;
+      var c = CC_APPS_CASE[el.textContent.trim()];
+      if (c && el.textContent !== T(c[0], c[1])) el.textContent = T(c[0], c[1]);
+    });
     if (LANG !== "de") return;
     // Leaf elements whose whole text is one dictionary entry. An element with children is skipped,
     // since overwriting its textContent would destroy that markup.
