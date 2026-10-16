@@ -4289,7 +4289,7 @@
   function ctVarLabels() {
     try {
       // Environment variable labels, <dt><span>Label:</span></dt>, badge the inner span.
-      var sps = document.querySelectorAll("#canvas dl > dt > span, .ui-dialog dl > dt > span");
+      var sps = document.querySelectorAll("#canvas dl > dt > span:not(.cc-info), .ui-dialog dl > dt > span:not(.cc-info)");
       for (var i = 0; i < sps.length; i++) {
         var sp = sps[i];
         if (!sp.classList.contains("cc-varlab")) { ctStripColon(sp); sp.classList.add("cc-varlab"); }
@@ -4310,7 +4310,7 @@
       var dts = document.querySelectorAll("#canvas dl > dt, .ui-dialog dl > dt");
       for (var j = 0; j < dts.length; j++) {
         var dt = dts[j];
-        if (dt.querySelector(":scope > span")) continue; // a span label, handled above
+        if (dt.querySelector(":scope > span:not(.cc-info)")) continue; // a span label, handled above
         var hasText = false;
         for (var k = 0; k < dt.childNodes.length; k++) { var c = dt.childNodes[k]; if (c.nodeType === 3 && c.textContent.replace(/\s+/g, "")) { hasText = true; break; } }
         if (!hasText) continue; // an empty, layout-only dt
@@ -4334,6 +4334,44 @@
         if (cdt.lastChild && cdt.lastChild.nodeType === 3) cdt.lastChild.textContent = cdt.getAttribute("data-cc-dtcolon");
         cdt.removeAttribute("data-cc-dtcolon");
       }
+    } catch (e) {}
+  }
+  // Nothing in the form unfolds in place (GlimStone rule 26). The paths and ports Unraid tucks
+  // behind "Mehr Einstellungen zeigen" are shown with the others, through Unraid's own toggle so
+  // its state stays true, and the list of every container's ports and addresses opens in a window.
+  function ctUnfold() {
+    try {
+      var rm = document.getElementById("readmore_toggle");
+      if (rm && !rm.hasAttribute("data-cc-open")) {
+        rm.setAttribute("data-cc-open", "1");
+        if (rm.classList.contains("readmore_collapsed") && typeof window.toggleReadmore === "function") window.toggleReadmore();
+        var rdl = rm.closest("dl"); if (rdl) rdl.classList.add("cc-ct-foldrow");
+      }
+      var at = document.getElementById("allocations_toggle"), list = document.getElementById("dockerAllocations");
+      var a = at && at.querySelector("a");
+      if (!a || !list || a.hasAttribute("data-cc-win")) return;
+      a.setAttribute("data-cc-win", "1");
+      a.textContent = LANG === "de" ? "Docker-Zuweisungen" : "Docker allocations";
+      a.setAttribute("role", "button"); a.setAttribute("tabindex", "0");
+      var open = function (ev) {
+        ev.preventDefault(); ev.stopPropagation();
+        if (!window.CCTheme || !window.CCTheme.modal) return;
+        var home = list.parentNode, next = list.nextSibling;
+        var win = el("div", "cc-win cc-dlg cc-ct-allocwin");
+        win.appendChild(el("div", "cc-win-title", a.textContent));
+        var card = el("div", "cc-win-card"); win.appendChild(card);
+        document.body.appendChild(win);
+        card.appendChild(list); list.style.display = "block";
+        ccAllocSortApply(); ccAllocFill();
+        var h = window.CCTheme.modal(win, { opener: a, onDismiss: function () {
+          list.style.display = "none"; home.insertBefore(list, next);
+          h.close();
+        } });
+      };
+      // The capture listener on the cell runs before Unraid's inline onclick on the link, which
+      // would unfold the list in place.
+      at.addEventListener("click", function (ev) { if (ev.target.closest("a")) open(ev); }, true);
+      a.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") open(ev); });
     } catch (e) {}
   }
   // A colour picker for colour variables, like the one on the settings page: a swatch (a native
@@ -4456,6 +4494,7 @@
       applySettings();                                           // --cc-accent, --cc-accent-text and the rainbow vars, the same chokepoint as list mode
       ctTitleWrap();
       ctVarLabels();                                             // every variable label -> a colon-free badge
+      ctUnfold();
       ctColorFields();                                           // colour variables get a picker swatch
       // The jQuery-UI config dialog appends to body, outside #canvas, so its selects need the
       // second selector or they stay native. The body-childList observer re-enters here when

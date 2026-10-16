@@ -246,6 +246,8 @@ html.cc-docker-on .cc-grid-holder .cc-tile-dot.cc-badge-running:not(.cc-badge-al
    over the faded logo, in that colour's ink. The fill sits on ::before under the logo and the
    tick on ::after over it, so no tile background rule (logo background, rainbow, reactive) has
    to be outweighed. */
+/* GlimStone's filled IconCheck, the tick of every selection mark */
+:root { --cc-tick-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0.3 0.549 13.399 13.399'><path d='M4.381 12.219 L4.574 12.378 L4.793 12.497 L5.032 12.572 L5.155 12.592 L5.405 12.596 L5.651 12.552 L5.884 12.461 L6.096 12.328 L6.278 12.157 L13.457 3.957 L13.584 3.736 L13.666 3.495 L13.699 3.242 L13.683 2.988 L13.656 2.863 L13.566 2.625 L13.431 2.408 L13.257 2.222 L13.05 2.074 L12.936 2.016 L12.695 1.934 L12.442 1.901 L12.188 1.917 L11.942 1.983 L11.713 2.096 L11.511 2.251 L5.238 9.399 L2.519 6.681 L2.425 6.595 L2.213 6.454 L1.977 6.356 L1.854 6.325 L1.6 6.3 L1.346 6.325 L1.223 6.356 L0.987 6.454 L0.775 6.595 L0.595 6.775 L0.454 6.987 L0.399 7.103 L0.325 7.346 L0.3 7.6 L0.306 7.727 L0.356 7.977 L0.399 8.097 L0.519 8.322 L0.681 8.519Z'/></svg>"); }
 html td.ct-name span.cc-pick { position: relative; border-radius: var(--cc-radius-control); }
 html td.ct-name span.cc-pick > :is(img, i) { position: relative; z-index: 1; transition: opacity .12s; }
 html td.ct-name span.cc-pick::before {
@@ -260,8 +262,8 @@ html td.ct-name span.cc-pick[aria-checked="true"] > :is(img, i) { opacity: .18; 
 html td.ct-name span.cc-pick[aria-checked="true"]::after {
   content: ""; position: absolute; inset: 0; z-index: 2; margin: auto; width: 42%; height: 42%; pointer-events: none;
   background: var(--cc-rb-ct, var(--cc-rbaccent-text, var(--cc-accent-text, #161616)));
-  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0.3 0.549 13.399 13.399'><path d='M4.381 12.219 L4.574 12.378 L4.793 12.497 L5.032 12.572 L5.155 12.592 L5.405 12.596 L5.651 12.552 L5.884 12.461 L6.096 12.328 L6.278 12.157 L13.457 3.957 L13.584 3.736 L13.666 3.495 L13.699 3.242 L13.683 2.988 L13.656 2.863 L13.566 2.625 L13.431 2.408 L13.257 2.222 L13.05 2.074 L12.936 2.016 L12.695 1.934 L12.442 1.901 L12.188 1.917 L11.942 1.983 L11.713 2.096 L11.511 2.251 L5.238 9.399 L2.519 6.681 L2.425 6.595 L2.213 6.454 L1.977 6.356 L1.854 6.325 L1.6 6.3 L1.346 6.325 L1.223 6.356 L0.987 6.454 L0.775 6.595 L0.595 6.775 L0.454 6.987 L0.399 7.103 L0.325 7.346 L0.3 7.6 L0.306 7.727 L0.356 7.977 L0.399 8.097 L0.519 8.322 L0.681 8.519Z'/></svg>") center / contain no-repeat;
-          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0.3 0.549 13.399 13.399'><path d='M4.381 12.219 L4.574 12.378 L4.793 12.497 L5.032 12.572 L5.155 12.592 L5.405 12.596 L5.651 12.552 L5.884 12.461 L6.096 12.328 L6.278 12.157 L13.457 3.957 L13.584 3.736 L13.666 3.495 L13.699 3.242 L13.683 2.988 L13.656 2.863 L13.566 2.625 L13.431 2.408 L13.257 2.222 L13.05 2.074 L12.936 2.016 L12.695 1.934 L12.442 1.901 L12.188 1.917 L11.942 1.983 L11.713 2.096 L11.511 2.251 L5.238 9.399 L2.519 6.681 L2.425 6.595 L2.213 6.454 L1.977 6.356 L1.854 6.325 L1.6 6.3 L1.346 6.325 L1.223 6.356 L0.987 6.454 L0.775 6.595 L0.595 6.775 L0.454 6.987 L0.399 7.103 L0.325 7.346 L0.3 7.6 L0.306 7.727 L0.356 7.977 L0.399 8.097 L0.519 8.322 L0.681 8.519Z'/></svg>") center / contain no-repeat;
+  -webkit-mask: var(--cc-tick-mask) center / contain no-repeat;
+          mask: var(--cc-tick-mask) center / contain no-repeat;
 }
 html td.ct-name span.cc-pick:focus-visible {
   outline: none !important;
@@ -299,9 +301,12 @@ html.cc-docker-on #cc-toasts { bottom: calc(var(--cc-footer-h, 0px) + var(--cc-a
 /* On the Plugins page the per-row uninstall is a trash icon with a CC confirmation, since
    plugins.js gates the native openInstall behind ccPluginConfirm, so Unraid's separate confirm
    checkbox is hidden and the text badge collapses to an icon. The html.cc-on-plugins scope beats
-   the .cc-b-del rule above for the box. */
+   the .cc-b-del rule above for the box. Unraid shows its remove inputs again after every update
+   check by writing an inline display, so the native button the trash replaces is hidden by class,
+   not inline, or each row would carry two deletes. */
 html.cc-on-plugins .cc-cb-del.cc-cb-hidden,
-html.cc-tools-on .cc-cb-del.cc-cb-hidden { display: none !important; }
+html.cc-tools-on .cc-cb-del.cc-cb-hidden,
+html.cc-on-plugins input.cc-b-del.cc-rm-native { display: none !important; }
 html.cc-on-plugins .cc-b-del.cc-b-delicon,
 html.cc-tools-on .cc-b-del.cc-b-delicon {
   width: var(--cc-icon-badge, 26px) !important; min-width: var(--cc-icon-badge, 26px) !important; height: var(--cc-icon-badge, 26px) !important; padding: 0 !important;
@@ -1124,6 +1129,18 @@ nav.tabs.cc-has-plugbtns > .tabs-container { flex: 1 1 auto !important; min-widt
 #cc-plugbtns > span.status.vhshift { margin: 0 !important; }
 /* the strip stays one nowrap line; the buttons sit outside it in #cc-plugbtns and cannot wrap */
 nav.tabs .tabs-container { flex-wrap: nowrap !important; }
+/* At phone width a strip wraps rather than scrolling, the buttons stand under it (plugins.js
+   plugPinTick), and each plugin row becomes a block: the plugin and its description on lines of
+   their own, author, version, status and delete wrapping under them, so no column is cut off. */
+@media (max-width: 600px) {
+  html.cc-on-plugins nav.tabs .tabs-container { flex-wrap: wrap !important; overflow: visible !important; height: auto !important; row-gap: 8px; }
+  html.cc-on-plugins #cc-plugbtns { height: auto; }
+  html.cc-on-plugins #plugin_table, html.cc-on-plugins #plugin_table > tbody { display: block; width: 100% !important; min-width: 0 !important; }
+  html.cc-on-plugins #plugin_table > thead { display: none; }
+  html.cc-on-plugins #plugin_list > tr { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 8px; height: auto !important; }
+  html.cc-on-plugins #plugin_list > tr > td { display: block; width: auto !important; height: auto !important; max-width: 100% !important; min-width: 0 !important; padding: 0 !important; }
+  html.cc-on-plugins #plugin_list > tr > td:nth-child(-n+2) { flex: 1 0 100%; }
+}
 /* The Plugins section view flattens the native sub-tabs, the MainContentTabbed markup of
    nav.tabs button[role=tab] with a sibling section[role=tabpanel], into stacked sections, as the
    Shares and Main blocks do. plugins.js sets html.cc-on-plugins and toggles html.cc-sections-plugins
@@ -1228,6 +1245,15 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
 .cc-desc::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: var(--cc-radius-pill); }
 .cc-desc::-webkit-scrollbar-track { background: transparent; }
 .cc-descin { display: block; }
+/* Unraid justifies the plugin descriptions, which tears wide gaps between the words of a narrow
+   column, so they are set ragged like every other text. */
+html.cc-on-plugins .cc-desc, html.cc-on-plugins .cc-desc * { text-align: start !important; }
+/* Up to date is the normal case and shows nothing (GlimStone rule 33); plugins.js marks it. */
+html.cc-on-plugins #plugin_list .cc-plug-ok { display: none !important; }
+/* The tab bar's Check and Update buttons rest grey and take their palette slot, which plugins.js
+   stamps, under the pointer. */
+html.cc-on-plugins input.cc-plugbar-btn { background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
+html.cc-on-plugins input.cc-plugbar-btn:hover:not(:disabled) { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
 .cc-plug-lite tbody td { padding-top: 6px !important; padding-bottom: 6px !important; }
 .cc-plugtxt { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .cc-plugtitle { font-size: var(--cc-text-title); font-weight: 600; } /* the Docker tab's container-name look */
@@ -1689,8 +1715,9 @@ html.cc-docker-on.cc-on-addct #canvas select:focus,
 html.cc-docker-on.cc-on-addct .ui-dialog input:focus,
 html.cc-docker-on.cc-on-addct .ui-dialog textarea:focus,
 html.cc-docker-on.cc-on-addct .ui-dialog select:focus { outline: none !important; box-shadow: none !important; background: rgba(255, 255, 255, .11) !important; }
-/* One pill shape for every button. The submit and the config-row and dialog buttons take the
-   accent, the done button stays a neutral secondary: the same split as the share detail page. */
+/* One pill shape for every button, its label in sentence case. The submit and the dialog buttons
+   take the accent, the done button stays a neutral secondary: the same split as the share detail
+   page. */
 html.cc-docker-on.cc-on-addct #canvas input[type="submit"],
 html.cc-docker-on.cc-on-addct #canvas input[type="button"],
 html.cc-docker-on.cc-on-addct #canvas button:not([role="tab"]),
@@ -1698,12 +1725,43 @@ html.cc-docker-on.cc-on-addct .ui-dialog .ui-dialog-buttonpane button {
   border: none !important; box-shadow: none !important;
   padding: var(--cc-md-btnpad, 0 14px) !important; height: var(--cc-md-h, 30px) !important; box-sizing: border-box !important;
   font-size: var(--cc-md-fs) !important; font-weight: 600 !important;
-  text-transform: uppercase !important; letter-spacing: .6px !important; font-family: inherit !important;
+  text-transform: none !important; letter-spacing: normal !important; font-family: inherit !important;
   border-radius: var(--cc-radius-pill) !important; cursor: pointer; transition: filter .12s, opacity .12s;
   display: inline-flex !important; align-items: center; justify-content: center;
   background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important;   /* rainbow: ctApply stamps per button; unstamped = accent */
 }
 html.cc-docker-on.cc-on-addct #canvas input[type="button"] { background: #4a4a4a !important; color: #f0f0f0 !important; }   /* the done button is neutral */
+/* Apply is the form's one filled button (GlimStone rule 3). Save, which keeps the template without
+   running it, and the edit and remove buttons of every path and port rest neutral and take the
+   mode colour under the pointer. */
+html.cc-docker-on.cc-on-addct #canvas form button[name="dryRun"],
+html.cc-docker-on.cc-on-addct #canvas form dl > dd .buttons-no-margin button { background: var(--cc-surface-3, #2e2e2e) !important; color: var(--cc-text-chip, #cfcfcf) !important; }
+html.cc-docker-on.cc-on-addct #canvas form button[name="dryRun"]:hover:not(:disabled),
+html.cc-docker-on.cc-on-addct #canvas form dl > dd .buttons-no-margin button:hover { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; color: var(--cc-rb-ct, var(--cc-accent-text, #161616)) !important; }
+/* A path's or port's buttons come in while the pointer is on its row or the focus inside it
+   (GlimStone rule 6), over opacity, so Tab still reaches them; a touch screen keeps them. */
+html.cc-docker-on.cc-on-addct #canvas form dl > dd .buttons-no-margin button { opacity: 0; transition: opacity .12s, background-color .12s, color .12s; }
+html.cc-docker-on.cc-on-addct #canvas form dl:is(:hover, :focus-within) > dd .buttons-no-margin button { opacity: 1; }
+@media (hover: none) { html.cc-docker-on.cc-on-addct #canvas form dl > dd .buttons-no-margin button { opacity: 1; } }
+/* The going-ahead action stands on the right of its row ("Button order in a pair"): Done, Save,
+   Apply. */
+html.cc-docker-on.cc-on-addct #canvas form dd > span.inline-block:has(> input[type="submit"]) { display: inline-flex !important; flex-wrap: wrap; gap: 8px; }
+html.cc-docker-on.cc-on-addct #canvas form dd > span.inline-block > input[type="button"] { order: 1; }
+html.cc-docker-on.cc-on-addct #canvas form dd > span.inline-block > button[name="dryRun"] { order: 2; }
+html.cc-docker-on.cc-on-addct #canvas form dd > span.inline-block > input[type="submit"] { order: 3; }
+/* A form switch says its state itself, so the "Aus"/"An" word beside it is only kept for a screen
+   reader. The title bar's view switch keeps its label, which names it. */
+html.cc-docker-on.cc-on-addct #canvas form dl > dd .switch-button-label {
+  position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; clip-path: inset(50%) !important; white-space: nowrap !important; margin: 0 !important; padding: 0 !important;
+}
+html.cc-docker-on.cc-on-addct #canvas form dl > dd .switch-button-background { margin-right: 0; }
+/* At phone width the title badge and the view switch take a line each rather than squeezing the
+   badge onto two. */
+@media (max-width: 600px) {
+  html.cc-docker-on.cc-on-addct div.title { flex-wrap: wrap; row-gap: 10px; }
+  html.cc-docker-on.cc-on-addct #displaybox div.title > span.left { white-space: nowrap; }
+  html.cc-docker-on.cc-on-addct div.title span.right { margin-left: auto; }
+}
 /* In the reactive sub-mode, which shares.js stamps as html.cc-shares-rbneutral on every page, the
    buttons rest grey and take their stamped colour on hover; the title badge and the checked
    toggles keep theirs. */
@@ -1775,9 +1833,12 @@ html.cc-docker-on.cc-on-addct .switch-button-background .switch-button-button {
   border: none !important; transition: left .15s;
 }
 html.cc-docker-on.cc-on-addct .switch-button-background.checked .switch-button-button { left: 21px !important; }
-/* the CPU assignment grid (label.checkbox > input + span.checkmark): the checked pin takes the accent */
-html.cc-docker-on.cc-on-addct #canvas label.checkbox .checkmark { background: rgba(255, 255, 255, .12) !important; border: none !important; border-radius: calc(var(--cc-radius-control) / 3); }
-html.cc-docker-on.cc-on-addct #canvas label.checkbox input:checked ~ .checkmark { background: var(--cc-accent, #FCC419) !important; }
+/* The CPU assignment grid (label.checkbox > input + span.checkmark) picks cores, so each core is
+   the round selection mark (GlimStone, "Switches"): a grey disc at rest, filled with the mode
+   colour and carrying GlimStone's tick in the fill's ink once picked. */
+html.cc-docker-on.cc-on-addct #canvas label.checkbox .checkmark { background: rgba(255, 255, 255, .12) !important; border: none !important; border-radius: var(--cc-radius-pill); }
+html.cc-docker-on.cc-on-addct #canvas label.checkbox input:checked ~ .checkmark { background: var(--cc-rb-c, var(--cc-accent, #FCC419)) !important; }
+html.cc-docker-on.cc-on-addct #canvas label.checkbox input:checked ~ .checkmark::after { content: ""; display: block; position: absolute; inset: 0; margin: auto; width: 60%; height: 60%; border: none; transform: none; background: var(--cc-rb-ct, var(--cc-accent-text, #161616)); -webkit-mask: var(--cc-tick-mask) center / contain no-repeat; mask: var(--cc-tick-mask) center / contain no-repeat; }
 /* in a config row the .boxed description strip drops its orange for a muted note */
 html.cc-docker-on.cc-on-addct #canvas .boxed span.orange-text { color: #9a9a9a !important; }
 /* The dropdown overlay docker.js ctWrapSelect builds: the share-settings disk dropdown's look,
@@ -1913,7 +1974,15 @@ html.cc-tools-rbneutral .cc-pop .cc-dsel-opt.is-selected {
 html.cc-docker-on.cc-on-addct #canvas dl > dt > span.docker-allocation-dt.cc-varlab,
 html.cc-docker-on.cc-on-addct .ui-dialog dl > dt > span.docker-allocation-dt.cc-varlab,
 html.cc-docker-on.cc-on-addct #canvas #dockerAllocations dt,
-html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations dt { display: none !important; }
+html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations dt,
+html.cc-docker-on.cc-on-addct .cc-ct-allocwin #dockerAllocations dt { display: none !important; }
+/* The paths and ports behind "Mehr Einstellungen zeigen" stand with the others (docker.js
+   ctUnfold), so the row that unfolded them goes. */
+html.cc-docker-on.cc-on-addct #canvas dl.cc-ct-foldrow { display: none !important; }
+/* The allocations open in a window as wide as their four columns need, the rows scrolling inside
+   its card. */
+html.cc-docker-on.cc-on-addct .cc-win.cc-ct-allocwin { width: 720px; }
+html.cc-docker-on.cc-on-addct .cc-ct-allocwin #dockerAllocations { margin: 0 !important; max-width: none !important; width: auto !important; }
 /* For a stopped container the engine fills in the configured static IP and published ports, so
    Unraid's red invalid-IP styling goes and the cells read as configured rather than live: a calm
    colour in italics. */
@@ -1933,14 +2002,16 @@ html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations { width: auto !impor
 html.cc-docker-on.cc-on-addct #dockerAllocations dl { display: block !important; margin: 0 !important; }
 html.cc-docker-on.cc-on-addct #dockerAllocations dl > dd { display: block !important; width: 100% !important; margin: 0 !important; }
 html.cc-docker-on.cc-on-addct #canvas #dockerAllocations .docker-allocation-row,
-html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .docker-allocation-row {
+html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .docker-allocation-row,
+html.cc-docker-on.cc-on-addct .cc-ct-allocwin #dockerAllocations .docker-allocation-row {
   /* the native row has a fixed width, which collapses the fractional columns to their content */
   width: 100% !important; box-sizing: border-box !important;
   grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1.6fr) !important;
   align-items: center; padding: 5px 10px !important; border-radius: var(--cc-radius-control); column-gap: 12px;
 }
 html.cc-docker-on.cc-on-addct #canvas #dockerAllocations .docker-allocation-row:nth-child(even),
-html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .docker-allocation-row:nth-child(even) {
+html.cc-docker-on.cc-on-addct .ui-dialog #dockerAllocations .docker-allocation-row:nth-child(even),
+html.cc-docker-on.cc-on-addct .cc-ct-allocwin #dockerAllocations .docker-allocation-row:nth-child(even) {
   background: rgba(255, 255, 255, .04) !important;
 }
 /* the allocations sort bar sits above the list, its active button in the colour mode */
@@ -2435,10 +2506,10 @@ html .cc-set-toggle.cc-set-toggle, html .cc-set-knob.cc-set-knob { border-radius
 /* Unraid's global control CSS inflates the reset button, so it is pinned to one swatch cell, the
    same height and one flex unit, and loses any focus ring. */
 #cc-settings .cc-set-swatches.cc-fill .cc-set-ibtn { min-width: 0 !important; max-width: none !important; height: 30px !important; box-sizing: border-box !important; padding: 0 !important; margin: 0 !important; outline: none !important; }
-/* The categories widget's inner selector carries extra left padding, which indents its text
-   against every other input, so the wrapper's indent is zeroed and the trigger takes the same
-   padding as the other fields. */
+/* The categories widget nests its text in a selector that both carried padding, which indented the
+   text against every other input, and stood as a block, which put it at the top of the box. The
+   trigger takes the text fields' own 10px and centres the text; the text itself has none. */
 html.cc-docker-on.cc-on-addct #ddcl-catSelect { padding: 0 !important; }
 html.cc-docker-on.cc-on-addct #ddcl-catSelect > a,
-html.cc-docker-on.cc-on-addct #ddcl-catSelect .ui-dropdownchecklist-selector,
-html.cc-docker-on.cc-on-addct #ddcl-catSelect .ui-dropdownchecklist-text { box-sizing: border-box !important; width: 100% !important; margin: 0 !important; padding: 0 12px !important; text-indent: 0 !important; }
+html.cc-docker-on.cc-on-addct #canvas form dl > dd > #ddcl-catSelect > .ui-dropdownchecklist-selector { box-sizing: border-box !important; width: 100% !important; margin: 0 !important; padding: 0 10px !important; text-indent: 0 !important; display: flex !important; align-items: center !important; }
+html.cc-docker-on.cc-on-addct #ddcl-catSelect .ui-dropdownchecklist-text { box-sizing: border-box !important; width: auto !important; min-width: 0; flex: 1 1 auto; margin: 0 !important; padding: 0 !important; text-indent: 0 !important; text-overflow: ellipsis; }
