@@ -47,15 +47,16 @@
   // The two filters a raster logo (img.PanelImg) takes on the badge, in the badge's ink: "mono"
   // flattens every opaque pixel to the ink, "lum" keeps the shading as greys. On a light badge the
   // greys run from the dark ink up to half white, since the plain luminance times a near-black ink
-  // is a blob again. idealText() yields only two tones, so there are at most four filters, each
-  // built once on a body host the #displaybox observer never sees.
+  // is a blob again, and on a dark badge from 40 % grey up to white, since dark artwork such as
+  // the Nvidia lettering would sink into it. idealText() yields only two tones, so there are at
+  // most four filters, each built once on a body host the #displaybox observer never sees.
   function inkFilter(kind, ink) {
     var host = document.getElementById("cc-sg-mono-svg");
     if (!host) { host = document.createElement("div"); host.id = "cc-sg-mono-svg"; host.setAttribute("aria-hidden", "true"); host.style.cssText = "position:absolute;width:0;height:0;overflow:hidden"; document.body.appendChild(host); }
     var light = ink === "#fff", filtId = "cc-sg-" + kind + "-" + (light ? "l" : "d");
     if (!host.querySelector("#" + filtId)) {
       var c = light ? 1 : parseInt("16", 16) / 255; // #fff -> 1, #161616 -> 0.0863
-      var k = light ? 1 : 0.5, off = light ? 0 : c;
+      var k = light ? 0.6 : 0.5, off = light ? 0.4 : c;
       var row = kind === "mono" ? "0 0 0 0 " + c.toFixed(4) : (0.2126 * k).toFixed(4) + " " + (0.7152 * k).toFixed(4) + " " + (0.0722 * k).toFixed(4) + " 0 " + off.toFixed(4);
       var vals = row + " " + row + " " + row + " 0 0 0 1 0";
       host.insertAdjacentHTML("beforeend", '<svg xmlns="http://www.w3.org/2000/svg"><filter id="' + filtId + '" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%"><feColorMatrix type="matrix" values="' + vals + '"/></filter></svg>');
