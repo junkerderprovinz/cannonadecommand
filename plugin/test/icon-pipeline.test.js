@@ -500,5 +500,63 @@ console.log('\nThe engine URL the frontend points an <img> at');
   ok('carries the name, url-encoded and lowercased', u.indexOf('name=stirling-pdf') > 0, u);
 }
 
+console.log('\nA tile keeps its mark: flattening the plate whole would leave a blank square');
+{
+  // 48x48 RGBA pictures: a plate with a mark drawn on it, a glyph cut out of transparency, and a
+  // plain plate with nothing on it.
+  const W = 48;
+  const picture = (fn) => { const d = new Uint8ClampedArray(W * W * 4); for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) { const p = fn(x, y); if (p) d.set(p, (y * W + x) * 4); } return d; };
+  const disc = (x, y) => (x - 23.5) ** 2 + (y - 23.5) ** 2 < 22 * 22;
+  const tailscale = picture((x, y) => (x > 3 && x < 44 && y > 3 && y < 44) ? ((x - 12) ** 2 + (y - 24) ** 2 < 16 || (x - 24) ** 2 + (y - 24) ** 2 < 16 || (x - 36) ** 2 + (y - 24) ** 2 < 16 ? [240, 240, 240, 255] : [30, 30, 30, 255]) : null);
+  const question = picture((x, y) => disc(x, y) ? (x > 20 && x < 28 && y > 10 && y < 38 ? [255, 255, 255, 255] : [190, 190, 190, 255]) : null);
+  const darkMark = picture((x, y) => (x > 3 && x < 44 && y > 3 && y < 44) ? (x > 14 && x < 34 && y > 20 && y < 28 ? [20, 20, 20, 255] : [230, 230, 230, 255]) : null);
+  const glyph = picture((x, y) => (x > 4 && x < 44 && ((y > 4 && y < 12) || (y > 20 && y < 28) || (y > 36 && y < 44))) ? [255, 255, 255, 255] : null);
+  const plain = picture((x, y) => disc(x, y) ? [40, 120, 200, 255] : null);
+
+  let t = CI.measurePixels(tailscale, W).t;
+  ok('a dark plate with light dots is a tile with a light mark', t && t.mark === 'light' && t.bg < 0.2 && t.mk > 0.8, JSON.stringify(t));
+  t = CI.measurePixels(question, W).t;
+  ok('a grey disc with a white mark is a tile too, whatever the plate\'s outline', t && t.mark === 'light', JSON.stringify(t));
+  t = CI.measurePixels(darkMark, W).t;
+  ok('a light plate with a dark mark says so', t && t.mark === 'dark' && t.bg > 0.8, JSON.stringify(t));
+  ok('a glyph with gaps between its strokes is no tile', CI.measurePixels(glyph, W).t === null);
+  ok('a plain plate with nothing on it is no tile, it flattens as it always did', CI.measurePixels(plain, W).t === null);
+  ok('the spread is measured in the same pass', CI.measurePixels(tailscale, W).s > CI.SIMPLE_MAX);
+
+  const tile = { bg: 0.12, mk: 0.94, mark: 'light' };
+  let p = CI.plan('flat', '', 57, tile);
+  ok('flat mode knocks a tile out instead of flattening it to a square', p.treat === 'knock' && p.src === 'native' && p.tile === tile, JSON.stringify(p));
+  p = CI.plan('flat', 'glyph', 57, tile);
+  ok('a fetched glyph still wins in flat mode, it is no tile', p.treat === 'flat' && p.src === 'glyph', JSON.stringify(p));
+  p = CI.plan('flat', '', null, null);
+  ok('flat mode tints an icon that is not measured yet, so no square shows before the measurement lands', p.treat === 'tint', JSON.stringify(p));
+  ok('a font glyph, measured as 0, still flattens in flat mode', CI.plan('flat', '', 0, null).treat === 'flat');
+  ok('auto mode still tints a complex tile', CI.plan('auto', '', 57, tile).treat === 'tint');
+  ok('tint and native ignore the tile', CI.plan('tint', '', 57, tile).treat === 'tint' && CI.plan('native', '', 57, tile).treat === 'native');
+
+  const f = CI.knock('#fff', tile);
+  ok('the knock filter is referenced by id', /^url\(#cc-knock-\d+-\d+-ffffff\)$/.test(f), f);
+  const host = document.getElementById('cc-knock-svg');
+  ok('and lives in one shared host', host && host.innerHTML.indexOf(f.slice(5, -1)) > 0);
+  ok('its colour is the ink and its alpha comes from the luminance', /values="0 0 0 0 1\.0000 0 0 0 0 1\.0000 0 0 0 0 1\.0000 [\d.]+ [\d.]+ [\d.]+ 0 -[\d.]+"/.test(host.innerHTML), host.innerHTML.slice(0, 300));
+  ok('masked by the picture\'s own alpha, so the transparent corners stay transparent', /<feComposite in="k" in2="SourceGraphic" operator="in"\/>/.test(host.innerHTML));
+  const before = host.innerHTML;
+  CI.knock('#ffffff', tile);
+  ok('asking again for the same filter writes nothing', host.innerHTML === before);
+  const dk = CI.knock('#161616', { bg: 0.9, mk: 0.1, mark: 'dark' });
+  ok('a dark mark gets a falling ramp', /values="0 0 0 0 0\.0863 0 0 0 0 0\.0863 0 0 0 0 0\.0863 -[\d.]+ -[\d.]+ -[\d.]+ 0 [\d.]+"/.test(host.innerHTML) && dk !== f);
+  ok('no ink, no filter: the icon stays native like the flat filter leaves it', CI.knock('', tile) === '');
+}
+
+console.log('\nA container without an icon shows the container glyph, not Unraid\'s question mark');
+{
+  const q = CI.placeholder('/plugins/dynamix.docker.manager/images/question.png?1700089733');
+  ok('Unraid\'s question.png is replaced', /^data:image\/svg\+xml,/.test(q), q.slice(0, 40));
+  ok('by the container glyph in a neutral grey the filters can recolour', decodeURIComponent(q).indexOf('fill="#8a8a8a"') > 0);
+  ok('a real icon is left alone', CI.placeholder('/state/plugins/dynamix.docker.manager/images/Plex-icon.png') === '');
+  const dsrc = fs.readFileSync(DOCKER, 'utf8');
+  ok('docker.js plans the placeholder before it measures anything', /var stand = isGlyphEl \? "" : CI\.placeholder\(nativeSrc\);\s*if \(stand\) nativeSrc = stand;/.test(dsrc));
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);

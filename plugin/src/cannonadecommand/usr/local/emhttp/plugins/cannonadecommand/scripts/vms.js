@@ -158,9 +158,9 @@
     if (!CI) return { treat: "tint", url: "" };
     var isGlyphEl = n.tagName !== "IMG";
     var res = CI.result(name), kind = res && res.kind !== "pending" ? res.kind : "";
-    var spread = isGlyphEl ? 0 : CI.spread(n.getAttribute("data-cc-osrc") || n.getAttribute("src") || "");
-    var plan = CI.plan(CI.mode("vm", name), kind, spread);
-    return { treat: plan.treat, url: (!isGlyphEl && (plan.src === "glyph" || plan.src === "color")) ? CI.svgUrl(name) : "" };
+    var src = isGlyphEl ? "" : n.getAttribute("data-cc-osrc") || n.getAttribute("src") || "";
+    var plan = CI.plan(CI.mode("vm", name), kind, isGlyphEl ? 0 : CI.spread(src), isGlyphEl ? null : CI.tile(src));
+    return { treat: plan.treat, tile: plan.tile, url: (!isGlyphEl && (plan.src === "glyph" || plan.src === "color")) ? CI.svgUrl(name) : "" };
   }
   // cc.stylevms on reads the shared cc.* keys, off the VM area's own ccv.* keys.
   function effK(k) { return ls("cc.stylevms") !== "0" ? ls("cc." + k) : ls("ccv." + k); }
@@ -650,8 +650,8 @@
       var l = el("label", "cc-vm-lbl", VMDE ? "Icon-Färbung" : "Icon colouring");
       var sel = el("select");
       var opts = VMDE
-        ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Ink-Flatten"], ["tint", "Luminanz-Tint"]]
-        : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Ink flatten"], ["tint", "Luminance tint"]];
+        ? [["", "folgt globaler Einstellung"], ["auto", "Automatisch"], ["native", "Natives Icon"], ["flat", "Nachzeichnen"], ["tint", "Tönen"]]
+        : [["", "follows the global setting"], ["auto", "Automatic"], ["native", "Native icon"], ["flat", "Redraw"], ["tint", "Tone"]];
       var cur = CI.override("vm", name);
       opts.forEach(function (o) { var op = el("option", null, o[1]); op.value = o[0]; if (o[0] === cur) op.selected = true; sel.appendChild(op); });
       sel.addEventListener("change", function () { CI.setOverride("vm", name, sel.value); paintVmIcons(); });   // `apply` here is the editor's Apply button
@@ -972,7 +972,7 @@
         var diskTd = diskSpan ? diskSpan.parentNode : null;
         var vg = row.querySelectorAll(":scope > td > span.vmgraphics");  // graphics (L227) then ip (L228), document order
         var graphicsTd = vg[0] ? vg[0].parentNode : null, ipTd = vg[1] ? vg[1].parentNode : null;
-        if (descTd) vmCell(descTd, "", "");
+        if (descTd) vmCell(descTd, "", "desc");
         if (cpuTd) vmResCell(cpuTd, ramTd);
         if (graphicsTd) vmCell(graphicsTd, "", "");
         if (ipTd) vmIpCell(ipTd);
@@ -1084,7 +1084,7 @@
           thisTint = rowBlk ? fBlk : fWht;
           thisInk = rowInk;
         }
-        var want = plan.treat === "native" ? "" : (plan.treat === "flat" ? thisFlat : thisTint);
+        var want = plan.treat === "native" ? "" : plan.treat === "flat" ? thisFlat : plan.treat === "knock" ? CI.knock(thisInk, plan.tile) : thisTint;
         if (n.tagName === "IMG") { vmSetIconSrc(n, plan.url); n.style.filter = want; if (ibgOn) n.style.removeProperty("color"); }
         // A glyph takes `color` with !important, since Unraid's VM CSS colours it through a class rule.
         else {

@@ -119,8 +119,8 @@
   // "CannonadeCommand" in both halves. "CC" is a source-code prefix, the cc- class namespace, the
   // CC_* constants and the cc.* keys, and it never leaves the source.
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Startplan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", search: "Suche", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge; Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen, restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container, kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle und kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“: dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner", editFolder: "Ordner bearbeiten", deleteFolder: "Ordner löschen", moveToFolder: "In Ordner verschieben", rootLevel: "(Wurzelebene)", iconMode: "Icon-Färbung", iconInherit: "folgt globaler Einstellung", iconAuto: "Automatisch", iconNative: "Natives Icon", iconFlat: "Ink-Flatten", iconTint: "Luminanz-Tint", hideStopped: "Gestoppte ausblenden", bulkStartAll: "Alle starten", bulkStopAll: "Alle stoppen", bulkRestartAll: "Alle neu starten", bulkUpdateAll: "Alle aktualisieren", bulkPauseAll: "Alle pausieren", bulkResumeAll: "Alle fortsetzen", allContainers: "Alle Container", barAdd: "Container hinzufügen", barCheck: "Nach Aktualisierungen suchen", barUpdateAll: "Alle aktualisieren", barSizes: "Containergröße", updateCt: "Aktualisieren", discardTitle: "Ungespeicherte Änderungen verwerfen?", discard: "Verwerfen", keepEditing: "Weiter bearbeiten", cancel: "Abbrechen", newFolderTitle: "Neuen Ordner anlegen", folderName: "Name des Ordners", create: "Anlegen", folderColour: "Farbe", folderIcon: "Symbol", folderMembers: "Container", deleteFolderTitle: "Ordner „%s“ löschen?", deleteShort: "Löschen" },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save start plan", startorder: "Start in order", filter: "filter…", search: "Search", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Start plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order; duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live, gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container, no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold and barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no”: this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder", editFolder: "Edit folder", deleteFolder: "Delete folder", moveToFolder: "Move to folder", rootLevel: "(Root level)", iconMode: "Icon colouring", iconInherit: "follows the global setting", iconAuto: "Automatic", iconNative: "Native icon", iconFlat: "Ink flatten", iconTint: "Luminance tint", hideStopped: "Hide stopped", bulkStartAll: "Start all", bulkStopAll: "Stop all", bulkRestartAll: "Restart all", bulkUpdateAll: "Update all", bulkPauseAll: "Pause all", bulkResumeAll: "Resume all", allContainers: "All containers", barAdd: "Add container", barCheck: "Check for updates", barUpdateAll: "Update all", barSizes: "Container size", updateCt: "Update", discardTitle: "Discard unsaved changes?", discard: "Discard", keepEditing: "Keep editing", cancel: "Cancel", newFolderTitle: "Create a folder", folderName: "Folder name", create: "Create", folderColour: "Colour", folderIcon: "Icon", folderMembers: "Containers", deleteFolderTitle: "Delete folder “%s”?", deleteShort: "Delete" },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Startplan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", search: "Suche", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge; Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen, restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container, kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle und kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“: dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner", editFolder: "Ordner bearbeiten", deleteFolder: "Ordner löschen", moveToFolder: "In Ordner verschieben", rootLevel: "(Wurzelebene)", iconMode: "Icon-Färbung", iconInherit: "folgt globaler Einstellung", iconAuto: "Automatisch", iconNative: "Natives Icon", iconFlat: "Nachzeichnen", iconTint: "Tönen", hideStopped: "Gestoppte ausblenden", bulkStartAll: "Alle starten", bulkStopAll: "Alle stoppen", bulkRestartAll: "Alle neu starten", bulkUpdateAll: "Alle aktualisieren", bulkPauseAll: "Alle pausieren", bulkResumeAll: "Alle fortsetzen", allContainers: "Alle Container", barAdd: "Container hinzufügen", barCheck: "Nach Aktualisierungen suchen", barUpdateAll: "Alle aktualisieren", barSizes: "Containergröße", updateCt: "Aktualisieren", discardTitle: "Ungespeicherte Änderungen verwerfen?", discard: "Verwerfen", keepEditing: "Weiter bearbeiten", cancel: "Abbrechen", newFolderTitle: "Neuen Ordner anlegen", folderName: "Name des Ordners", create: "Anlegen", folderColour: "Farbe", folderIcon: "Symbol", folderMembers: "Container", deleteFolderTitle: "Ordner „%s“ löschen?", deleteShort: "Löschen", thirdParty: "Drittanbieter", daemonDown: "Dienst nicht erreichbar, Limits und Bandbreite ruhen", manageInfo: "Nimmt den Container in den Startplan auf. CannonadeCommand startet ihn nach seinen Abhängigkeiten und wartet, bis er bereit ist.", watchdogInfo: "Startet den Container neu, wenn er abstürzt oder als unhealthy gemeldet wird." },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save start plan", startorder: "Start in order", filter: "filter…", search: "Search", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Start plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order; duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live, gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container, no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold and barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no”: this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder", editFolder: "Edit folder", deleteFolder: "Delete folder", moveToFolder: "Move to folder", rootLevel: "(Root level)", iconMode: "Icon colouring", iconInherit: "follows the global setting", iconAuto: "Automatic", iconNative: "Native icon", iconFlat: "Redraw", iconTint: "Tone", hideStopped: "Hide stopped", bulkStartAll: "Start all", bulkStopAll: "Stop all", bulkRestartAll: "Restart all", bulkUpdateAll: "Update all", bulkPauseAll: "Pause all", bulkResumeAll: "Resume all", allContainers: "All containers", barAdd: "Add container", barCheck: "Check for updates", barUpdateAll: "Update all", barSizes: "Container size", updateCt: "Update", discardTitle: "Discard unsaved changes?", discard: "Discard", keepEditing: "Keep editing", cancel: "Cancel", newFolderTitle: "Create a folder", folderName: "Folder name", create: "Create", folderColour: "Colour", folderIcon: "Icon", folderMembers: "Containers", deleteFolderTitle: "Delete folder “%s”?", deleteShort: "Delete", thirdParty: "Third party", daemonDown: "Service not reachable, limits and bandwidth are paused", manageInfo: "Adds the container to the start plan. CannonadeCommand starts it after its dependencies and waits until it is ready.", watchdogInfo: "Restarts the container when it crashes or reports unhealthy." },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -152,7 +152,7 @@
   var limits = {}; // name to the configured caps {mem_bytes,nano_cpus,cpuset_cpus}, for the "limit set" dots
   var hostCpus = 0, hostCoreOf = [], hostMem = 0; // the host's logical CPU count, its hyperthread grouping and its total RAM
   var hostPCores = [], hostECores = []; // the P and E core lists of an Intel hybrid CPU, empty elsewhere
-  var filterText = "", gridHolder = null, openPop = null, openPopAnchor = null, menu = null, menuAnchor = null, menuStatusEl = null, flashToast = null;
+  var filterText = "", gridHolder = null, openPop = null, openPopAnchor = null, menu = null, menuAnchor = null, flashToast = null;
   var mo = null, dead = false, lastAdv = false, timers = [], moPending = false, moTimer = null, lastObsLoad = 0, moTrail = false;
   var ccFirstPaintDone = false;   // cleared once, in moSweep()
   var ccUpBg = "", ccUpFg = "";   // the update-pill colours, computed once per pass rather than per row
@@ -770,12 +770,16 @@
     if (!CI) return { treat: "tint", url: "" };
     var res = CI.result(name), kind = res ? res.kind : "";
     var mode = CI.mode(scope, name);
+    // Unraid's question-mark stand-in is replaced before anything is measured, so the plan is made
+    // for the picture that will show.
+    var stand = isGlyphEl ? "" : CI.placeholder(nativeSrc);
+    if (stand) nativeSrc = stand;
     // A font glyph is monochrome by construction: measure nothing, fetch nothing, ink it.
     var spread = isGlyphEl ? 0 : CI.spread(nativeSrc);
-    var plan = CI.plan(mode, kind === "pending" ? "" : kind, spread);
-    var url = "";
+    var plan = CI.plan(mode, kind === "pending" ? "" : kind, spread, isGlyphEl ? null : CI.tile(nativeSrc));
+    var url = stand;
     if (!isGlyphEl && (plan.src === "glyph" || plan.src === "color")) url = CI.svgUrl(name);
-    return { treat: plan.treat, url: url, why: plan.why };
+    return { treat: plan.treat, url: url, tile: plan.tile, why: plan.why };
   }
   function applyIconTint() {
     try {
@@ -840,7 +844,7 @@
           thisInk = rowInk;
         }
         // "native", or no ink colour at all, leaves the pixels alone
-        var want = plan.treat === "native" ? "" : (plan.treat === "flat" ? thisFlat : thisTint);
+        var want = plan.treat === "native" ? "" : plan.treat === "flat" ? thisFlat : plan.treat === "knock" ? CI.knock(thisInk, plan.tile) : thisTint;
         if (n.tagName === "IMG") { n.style.filter = want; }
         else {
           var gif = glyphInkAndFilter(plan, ibgOn, ibgAcc, thisInk, want);
@@ -867,13 +871,14 @@
           gnames.push(gn);
           var gp = CI ? iconTreatment("docker", gn, false, nativeIconSrc(g[j])) : { treat: "tint", url: "" };
           setIconSrc(g[j], gp.url);
-          var gFlat = flat, gTint = f;
+          var gFlat = flat, gTint = f, gInk = ink;
           if (adopt) {
-            var cardBlk = itemAdoptInk(g[j].closest(".cc-card")) !== "#fff";
+            gInk = itemAdoptInk(g[j].closest(".cc-card"));
+            var cardBlk = gInk !== "#fff";
             gFlat = cardBlk ? flatBlk : flatWht;
             gTint = cardBlk ? fBlk : fWht;
           }
-          g[j].style.filter = gp.treat === "native" ? "" : (gp.treat === "flat" ? gFlat : gTint);
+          g[j].style.filter = gp.treat === "native" ? "" : gp.treat === "flat" ? gFlat : gp.treat === "knock" ? CI.knock(gInk, gp.tile) : gTint;
         }
         if (CI && gnames.length) CI.want(gnames);
       }
@@ -998,7 +1003,7 @@
   // Unraid's other language packs keep their own labels. The natives stay in the bar, hidden, so
   // Unraid keeps enabling and disabling them, and the menu clicks them.
   var BAR_LABELS = { addContainer: "barAdd", checkAll: "barCheck", updateAll: "barUpdateAll", contSizes: "barSizes" };
-  var BAR_FOLD = [["startAll", "bulkStartAll", "Play"], ["stopAll", "bulkStopAll", "Stop"], ["pauseAll", "bulkPauseAll", "Pause"], ["resumeAll", "bulkResumeAll", "Play"]];
+  var BAR_FOLD = [["startAll", "bulkStartAll", "Power"], ["stopAll", "bulkStopAll", "Stop"], ["pauseAll", "bulkPauseAll", "Pause"], ["resumeAll", "bulkResumeAll", "Play"]];
   function barNative(bar, fn) { return bar.querySelector('input[type=button][onclick^="' + fn + '("]'); }
   function foldBar(bar) {
     var own = /^(de|en)/i.test(document.documentElement.lang || "en");
@@ -1057,13 +1062,15 @@
         var iv = null;
         w.addEventListener("mouseenter", function () {
           var over = t.scrollWidth - w.clientWidth; if (over <= 2) return;
+          w.classList.add("cc-vrun");
           var dur = Math.max(1000, Math.round(over / 55 * 1000)), toEnd = true;
           t.style.transition = "transform " + (dur / 1000) + "s linear"; t.style.transform = "translateX(-" + over + "px)";
           iv = setInterval(function () { if (!t.isConnected) { clearInterval(iv); return; } toEnd = !toEnd; t.style.transform = "translateX(" + (toEnd ? -over : 0) + "px)"; }, dur + 700);
         });
         w.addEventListener("mouseleave", function () {
           if (iv) { clearInterval(iv); iv = null; }
-          t.style.transition = "transform .3s ease"; t.style.transform = "translateX(0)";
+          w.classList.remove("cc-vrun");
+          t.style.transition = "none"; t.style.transform = "none";
         });
       });
       cell.innerHTML = ""; cell.appendChild(host);
@@ -1228,7 +1235,7 @@
           // The third-party version status: Unraid's class-less span, an icon with text, becomes
           // a neutral badge matching the changelog chip under it. Only classes are added, no DOM
           // is moved, and clearRowBadges strips them again.
-          Array.prototype.slice.call(upCell.querySelectorAll("span > i.fa-docker")).forEach(function (fi) { fi.parentElement.classList.add("cc-b", "cc-3p"); });
+          Array.prototype.slice.call(upCell.querySelectorAll("span > i.fa-docker")).forEach(function (fi) { fi.parentElement.classList.add("cc-b", "cc-3p"); thirdPartyWord(fi.parentElement); });
         }
         var p = lastRunPill(name); if (p) vh.appendChild(p); // the last plan run is orchestration status, so it shows with theming off too
         if (vh.children.length) upCell.appendChild(vh);
@@ -1302,10 +1309,18 @@
           var gi = c9b.querySelector(":scope > i.fa");
           var gt = null;
           for (var gn = 0; gn < c9b.childNodes.length; gn++) { var nd0 = c9b.childNodes[gn]; if (nd0.nodeType === 3 && nd0.textContent.replace(/\s+/g, "")) { gt = nd0; break; } }
-          if (gi && gt) { var gb = el("span", "cc-b cc-grp"); c9b.insertBefore(gb, gi); gb.appendChild(gi); gb.appendChild(gt); }
+          if (gi && gt) { var gb = el("span", "cc-b cc-grp"); c9b.insertBefore(gb, gi); gb.appendChild(gi); gb.appendChild(gt); thirdPartyWord(gb); }
         }
       }
     } catch (e) { /* one bad row must not break Unraid's page */ }
+  }
+  // Unraid labels a container it did not create "3rd Party" in the autostart cell, untranslated,
+  // and by its translated name in the version cell. Both read the one word CC uses for it.
+  function thirdPartyWord(badge) {
+    for (var i = 0; i < badge.childNodes.length; i++) {
+      var n = badge.childNodes[i];
+      if (n.nodeType === 3 && /3rd\s*party|drittanbieter/i.test(n.textContent)) { n.textContent = " " + t("thirdParty"); return; }
+    }
   }
   // The per-container context data, read from the row's own onclick attribute:
   // DockerContainers.php puts addDockerContainerContext('name','image','template',started,paused,
@@ -2531,14 +2546,9 @@
   function buildMenu() {
     var m = el("div", "cc-menu cc-menu-wide");
     m.addEventListener("click", function (e) { e.stopPropagation(); });
-    // Without the daemon the limits and bandwidth cannot work at all, so the status says so in
-    // red. The versions live in the settings page's Info tab.
-    if (daemonUp === false) {
-      menuStatusEl = el("div", "cc-menu-status cc-bad-text", "engine down, daemon not reachable");
-    } else {
-      menuStatusEl = el("div", "cc-menu-status cc-ok-text", "engine up · " + containers.length);
-    }
-    m.appendChild(menuStatusEl);
+    // Without the daemon the limits and bandwidth cannot work at all, so the menu says so in red.
+    // A running daemon is the normal case and shows nothing (GlimStone rule 33).
+    if (daemonUp === false) m.appendChild(el("div", "cc-menu-status cc-bad-text", t("daemonDown")));
     // The list and grid choice belongs to the theming, so it is hidden with theming off.
     if (themingOn()) {
       m.appendChild(menuHead(t("view")));
@@ -2557,7 +2567,11 @@
       var vrow = el("div", "cc-menu-row cc-menu-plain"); vrow.appendChild(seg); m.appendChild(vrow);
       // New folder creates the first one, which is how the folder view above becomes available.
       if (ccOrgAvailable) {
-        m.appendChild(menuItem("cc-menu-link", "+ " + t("newFolder"), ccOrgCreateFolder));
+        var nrow = el("div", "cc-menu-row cc-menu-plain");
+        var nb = el("button", "cc-btn cc-menu-newfolder"); nb.type = "button";
+        nb.innerHTML = ccGlyph("Folder"); nb.appendChild(el("span", null, t("newFolder")));
+        nb.addEventListener("click", function () { closeMenu(); ccOrgCreateFolder(); });
+        nrow.appendChild(nb); m.appendChild(nrow);
       }
     }
     var frow = el("div", "cc-menu-row cc-menu-plain");
@@ -2616,7 +2630,7 @@
   function closeMenu() {
     if (!menu) return;
     var held = menu.contains(document.activeElement);
-    menu.remove(); menu = null; menuStatusEl = null;
+    menu.remove(); menu = null;
     var back = held && window.CCTheme ? window.CCTheme.refind(menuAnchor) : null;
     if (back) back.focus();
   }
@@ -3125,15 +3139,15 @@
   function iconModeItems() {
     return LANG === "de"
       ? [["", "Wie CannonadeCommand das Logo dieses Eintrags einfärbt. Ohne eigene Wahl gilt, was in den Einstellungen unter „Icon-Färbung“ steht."],
-          ["Automatisch", "CannonadeCommand entscheidet selbst: einfarbige Logos werden zu sauberer Tinte geglättet, für bekannte Programme wird ein echtes Glyph-Logo geholt, alles andere bekommt eine Tönung, die die Zeichnung im Bild erhält."],
+          ["Automatisch", "CannonadeCommand entscheidet selbst: Formen werden nachgezeichnet, für bekannte Programme wird dafür ein echtes Marken-Logo geholt, Bilder werden nur getönt."],
           ["Natives Icon", "Keine Einfärbung. Das Logo bleibt in seinen echten Farben; nur ein deutlich besseres Logo aus der gepflegten Sammlung wird noch bevorzugt."],
-          ["Ink-Flatten", "Immer zu einer flachen Tinte glätten. Bei bunten Logos mit Hintergrund kann dabei die Zeichnung verloren gehen; das ist Teil der Wahl."],
-          ["Luminanz-Tint", "Immer tönen. Helle Stellen bleiben hell, dunkle dunkel, das Logo behält seine Zeichnung."]]
+          ["Nachzeichnen", "Immer in deiner Farbe nachzeichnen. Ein Logo auf einer Fläche behält sein Motiv, die Fläche fällt weg."],
+          ["Tönen", "Immer nur tönen. Helle Stellen bleiben hell, dunkle dunkel, das Logo behält seine Zeichnung."]]
       : [["", "How CannonadeCommand colours this entry's logo. With no choice of its own, the Settings page's “Icon colouring” applies."],
-          ["Automatic", "CannonadeCommand decides: single-tone logos are flattened to clean ink, known apps get a real glyph logo fetched for them, everything else is tinted in a way that keeps the drawing inside the image."],
+          ["Automatic", "CannonadeCommand decides: shapes are redrawn, with a real brand logo fetched for well-known apps, and pictures are only toned."],
           ["Native icon", "No colouring. The logo keeps its real colours; only a markedly better logo from the curated set is still preferred."],
-          ["Ink flatten", "Always flatten to one flat ink. On colourful logos with a background this can lose the drawing; that is part of the choice."],
-          ["Luminance tint", "Always tint. Bright stays bright, dark stays dark, the logo keeps its drawing."]];
+          ["Redraw", "Always redraw in your colour. A logo drawn on a plate keeps its mark and loses the plate."],
+          ["Tone", "Always only tone. Bright stays bright, dark stays dark, the logo keeps its drawing."]];
   }
   function iconModeSelect(scope, name) {
     var CI = window.CCTheme && window.CCTheme.icons;
@@ -3282,7 +3296,7 @@
     function flipManage() { manageOn = !manageOn; manageTog.classList.toggle("cc-set-toggle-on", manageOn); manageTog.setAttribute("aria-checked", manageOn ? "true" : "false"); commit(); }
     manageTog.addEventListener("click", flipManage);
     manageTog.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flipManage(); } });
-    var mrow = el("div", "cc-pop-row cc-pop-toggle"); mrow.appendChild(el("span", "cc-pop-sech", t("manage"))); mrow.appendChild(el("span", "cc-set-spacer")); mrow.appendChild(manageTog); pop.appendChild(mrow);
+    var mrow = el("div", "cc-pop-row cc-pop-toggle"); mrow.appendChild(el("span", "cc-pop-sech", t("manage"))); mrow.appendChild(infoBubble(t("manageInfo"))); mrow.appendChild(el("span", "cc-set-spacer")); mrow.appendChild(manageTog); pop.appendChild(mrow);
     var body = el("div", "cc-pop-body" + (existing ? "" : " cc-dis"));
     // This is the one field in the window whose behaviour the control does not show: a text box
     // holding a comma list that is really a click-to-toggle multi-select, feeding an ordering
@@ -3381,7 +3395,7 @@
     var wSec = el("div", "cc-pop-auto");
     // cc-cb draws GlimStone's switch on the checkbox, so the toggles below keep reading .checked.
     var wHead = el("label", "cc-pop-row cc-pop-toggle"), wEn = el("input", "cc-cb"); wEn.type = "checkbox"; wEn.checked = !!(wd && wd.enabled);
-    wHead.appendChild(el("span", "cc-pop-sech", t("watchdog"))); wHead.appendChild(el("span", "cc-set-spacer")); wHead.appendChild(wEn); wSec.appendChild(wHead);
+    wHead.appendChild(el("span", "cc-pop-sech", t("watchdog"))); wHead.appendChild(infoBubble(t("watchdogInfo"))); wHead.appendChild(el("span", "cc-set-spacer")); wHead.appendChild(wEn); wSec.appendChild(wHead);
     var wBody = el("div", "cc-pop-sub" + (wEn.checked ? "" : " cc-dis"));
     var wUrow = el("label", "cc-pop-row"), wU = el("input", "cc-cb"); wU.type = "checkbox"; wU.checked = wd ? !!wd.on_unhealthy : true;
     wUrow.appendChild(el("span", null, t("wUnhealthy"))); wUrow.appendChild(el("span", "cc-set-spacer")); wUrow.appendChild(wU); wBody.appendChild(wUrow);
@@ -3893,7 +3907,6 @@
   // A failure also shakes ctl, the control that was used, when the caller has one.
   function flash(msg, bad, ctl) {
     try {
-      if (menuStatusEl) { menuStatusEl.textContent = msg; menuStatusEl.className = "cc-menu-status " + (bad ? "cc-bad-text" : "cc-ok-text"); }
       // A progress note ("saving…") is rewritten by the result that follows it rather than
       // stacking a second toast under it.
       var kind = bad ? "error" : "";
@@ -4323,6 +4336,44 @@
       }
     } catch (e) {}
   }
+  // Nothing in the form unfolds in place (GlimStone rule 26). The paths and ports Unraid tucks
+  // behind "Mehr Einstellungen zeigen" are shown with the others, through Unraid's own toggle so
+  // its state stays true, and the list of every container's ports and addresses opens in a window.
+  function ctUnfold() {
+    try {
+      var rm = document.getElementById("readmore_toggle");
+      if (rm && !rm.hasAttribute("data-cc-open")) {
+        rm.setAttribute("data-cc-open", "1");
+        if (rm.classList.contains("readmore_collapsed") && typeof window.toggleReadmore === "function") window.toggleReadmore();
+        var rdl = rm.closest("dl"); if (rdl) rdl.classList.add("cc-ct-foldrow");
+      }
+      var at = document.getElementById("allocations_toggle"), list = document.getElementById("dockerAllocations");
+      var a = at && at.querySelector("a");
+      if (!a || !list || a.hasAttribute("data-cc-win")) return;
+      a.setAttribute("data-cc-win", "1");
+      a.textContent = LANG === "de" ? "Docker-Zuweisungen" : "Docker allocations";
+      a.setAttribute("role", "button"); a.setAttribute("tabindex", "0");
+      var open = function (ev) {
+        ev.preventDefault(); ev.stopPropagation();
+        if (!window.CCTheme || !window.CCTheme.modal) return;
+        var home = list.parentNode, next = list.nextSibling;
+        var win = el("div", "cc-win cc-dlg cc-ct-allocwin");
+        win.appendChild(el("div", "cc-win-title", a.textContent));
+        var card = el("div", "cc-win-card"); win.appendChild(card);
+        document.body.appendChild(win);
+        card.appendChild(list); list.style.display = "block";
+        ccAllocSortApply(); ccAllocFill();
+        var h = window.CCTheme.modal(win, { opener: a, onDismiss: function () {
+          list.style.display = "none"; home.insertBefore(list, next);
+          h.close();
+        } });
+      };
+      // The capture listener on the cell runs before Unraid's inline onclick on the link, which
+      // would unfold the list in place.
+      at.addEventListener("click", function (ev) { if (ev.target.closest("a")) open(ev); }, true);
+      a.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") open(ev); });
+    } catch (e) {}
+  }
   // A colour picker for colour variables, like the one on the settings page: a swatch (a native
   // <input type=color> styled as a CC dot) before the field, two-way synced.
   function ctColorFields() {
@@ -4519,6 +4570,7 @@
       applySettings();                                           // --cc-accent, --cc-accent-text and the rainbow vars, the same chokepoint as list mode
       ctTitleWrap();
       ctVarLabels();                                             // every variable label -> a colon-free badge
+      ctUnfold();
       ctColorFields();                                           // colour variables get a picker swatch
       ctInfoBubbles();
       // The jQuery-UI config dialog appends to body, outside #canvas, so its selects need the

@@ -98,7 +98,7 @@ console.log('\nThe callers');
 {
   ok('the gear passes its click on', /toggleMenu\(g, null, e\)/.test(grabFn(docker, 'makeGear')));
   ok('the move button passes its click on', /toggleMenu\(btn, function \(\) \{ return buildMoveMenu\(entry\); \}, ev\)/.test(docker));
-  ok('"+ Neuer Ordner" is a menu entry', /m\.appendChild\(menuItem\("cc-menu-link", "\+ " \+ t\("newFolder"\), ccOrgCreateFolder\)\);/.test(grabFn(docker, 'buildMenu')));
+  ok('New folder is a button, which Tab and Enter reach on their own', /el\("button", "cc-btn cc-menu-newfolder"\); nb\.type = "button";/.test(grabFn(docker, 'buildMenu')));
   ok('every move target is a menu entry', (grabFn(docker, 'buildMoveMenu').match(/menuItem\(/g) || []).length === 2);
   const bm = grabFn(docker, 'buildMenu');
   ok('the menu keeps to the view: no rainbow and no icon colour switch, both live on the settings page', !/Rainbow (aus|an|off|on)|Icons (grau|farbig|grey|coloured)|cc\.actcolors|cc\.rainbow"/.test(bm));

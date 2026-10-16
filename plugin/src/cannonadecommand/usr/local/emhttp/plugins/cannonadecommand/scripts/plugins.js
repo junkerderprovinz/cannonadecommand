@@ -36,7 +36,14 @@
       }
       var host = document.getElementById("cc-plugbtns");
       if (!host) { host = document.createElement("div"); host.id = "cc-plugbtns"; }
-      if (host.parentNode !== db) db.appendChild(host);
+      // At phone width the tab row has no room on its right, so the buttons stand in the flow under
+      // it, where they can wrap, instead of being pinned over the tabs.
+      var narrow = window.matchMedia && window.matchMedia("(max-width: 600px)").matches;
+      var strip = narrow && !_ccNoTab ? tab.closest("nav.tabs, div.tabs, .tabs") : null;
+      if (strip) {
+        if (host.previousSibling !== strip) strip.parentNode.insertBefore(host, strip.nextSibling);
+        ["position", "top", "right", "z-index"].forEach(function (p) { host.style.removeProperty(p); });
+      } else if (host.parentNode !== db) db.appendChild(host);
       var spans = document.querySelectorAll("#displaybox span.status.vhshift, #displaybox span.vhshift, #checkall, #updateall, #removeall");
       for (var sp = 0; sp < spans.length; sp++) { var s = spans[sp]; if (s !== host && !host.contains(s) && s.parentNode !== host) host.appendChild(s); }
       if (!host.firstChild) {
@@ -52,6 +59,14 @@
         }
       }
       if (!host.firstChild) return;
+      if (strip) {
+        host.style.setProperty("display", "flex", "important");
+        host.style.setProperty("flex-wrap", "wrap", "important");
+        host.style.setProperty("gap", "8px", "important");
+        host.style.setProperty("margin", "10px 0 0", "important");
+        return;
+      }
+      host.style.removeProperty("flex-wrap");
       db.style.setProperty("position", "relative", "important");
       host.style.setProperty("position", "absolute", "important");
       host.style.setProperty("display", "inline-flex", "important");
@@ -273,6 +288,8 @@
     node.style.setProperty("display", "inline-block", "important");
     node.style.setProperty("line-height", "1.5", "important");
     node.style.setProperty("text-decoration", "none", "important");
+    node.style.setProperty("text-transform", "none", "important");
+    node.style.setProperty("letter-spacing", "normal", "important");
     // This runs on a <span> and on a native <input type=button>, which brings browser button
     // chrome and a Tokens.css height rule meant for the page-level update button, so the whole
     // box model is set here to give both the same size.
@@ -442,11 +459,11 @@
       var plan = { treat: "tint", url: "" };
       if (PCI && pName) {
         var pres = PCI.result(pName), pkind = (pres && pres.kind !== "pending") ? pres.kind : "";
-        var pspread = isGlyphEl ? 0 : PCI.spread(el2.getAttribute("data-cc-osrc") || el2.getAttribute("src") || "");
-        var pp = PCI.plan(PCI.mode("plugin", pName), pkind, pspread);
-        plan = { treat: pp.treat, url: (!isGlyphEl && (pp.src === "glyph" || pp.src === "color")) ? PCI.svgUrl(pName) : "" };
+        var psrc = isGlyphEl ? "" : el2.getAttribute("data-cc-osrc") || el2.getAttribute("src") || "";
+        var pp = PCI.plan(PCI.mode("plugin", pName), pkind, isGlyphEl ? 0 : PCI.spread(psrc), isGlyphEl ? null : PCI.tile(psrc));
+        plan = { treat: pp.treat, tile: pp.tile, url: (!isGlyphEl && (pp.src === "glyph" || pp.src === "color")) ? PCI.svgUrl(pName) : "" };
       }
-      var want = plan.treat === "native" ? "none" : (plan.treat === "flat" ? (pFlat || f2 || "none") : (f2 || "none"));
+      var want = plan.treat === "native" ? "none" : plan.treat === "flat" ? (pFlat || f2 || "none") : plan.treat === "knock" ? (PCI.knock(pInk, plan.tile) || "none") : (f2 || "none");
       if (!isGlyphEl) {
         el2.style.setProperty("object-fit", "contain", "important");
         el2.style.removeProperty("transform"); // superseded by content normalization
@@ -527,7 +544,8 @@
     }
     if (stEl && !stEl.getAttribute(MARK)) {
       var t2 = sid.textContent.toLowerCase();
-      if (/up.to.date|aktuell|neue?sten stand|current/.test(t2)) { pill(stEl, stNative ? "var(--cc-ok, #6fdc8c)" : palC, stNative ? "var(--cc-ok-fg, #161616)" : palT); stEl.setAttribute(MARK, "1"); }
+      // Up to date is the normal case and shows nothing (GlimStone rule 33).
+      if (/up.to.date|aktuell|neue?sten stand|current/.test(t2)) { stEl.classList.add("cc-plug-ok"); stEl.setAttribute(MARK, "1"); }
       else if (/update|aktualis|install/.test(t2) && !/checking|prüf/.test(t2)) { pill(stEl, stNative ? "var(--cc-warn, #ff832b)" : palC, stNative ? "var(--cc-warn-fg, #161616)" : palT); stEl.setAttribute(MARK, "1"); }
     }
     var lnk = sid.querySelector("a"); if (lnk) lnk.style.setProperty("color", "inherit", "important");
@@ -561,7 +579,7 @@
       if (native && window.CCTheme) {
         rm.removeAttribute("onclick");
         rm.disabled = false;
-        rm.style.setProperty("display", "none", "important");
+        rm.classList.add("cc-rm-native");
         var slug = (tr.id || "").trim() || "Plugin";
         var runNative; try { runNative = new Function(native); } catch (e) { runNative = function () {}; }
         var ico = window.CCTheme.delIcon(LANG === "de" ? "Plugin löschen" : "Delete plugin", function () { ccPluginConfirm(slug, runNative, ico); });
@@ -725,10 +743,16 @@
         if (ac5 && !ac5.getAttribute(MARK)) { ac5.setAttribute(MARK, "1"); pill(ac5, accent(), idealText(accent())); ac5.style.setProperty("cursor", "pointer", "important"); }
       });
       plugPinTick();
-      // the Check/Update/Remove buttons in the tab bar become accent pills
+      // The Check/Update/Remove buttons in the tab bar rest grey like every secondary button, and
+      // take their palette slot under the pointer (docker.css .cc-plugbar-btn): the page has no
+      // filled action of its own (GlimStone rule 3).
       Array.prototype.slice.call(document.querySelectorAll("#checkall input, #updateall input, #removeall input")).forEach(function (b2, i2) {
+        var bc = colorFor(i2 + 6);
+        b2.style.setProperty("--cc-rb-c", bc); b2.style.setProperty("--cc-rb-ct", idealText(bc));
         if (!b2.getAttribute(MARK)) {
-          pill(b2, colorFor(i2 + 6));
+          pill(b2, "");
+          b2.style.removeProperty("background"); b2.style.removeProperty("color");
+          b2.classList.add("cc-plugbar-btn");
           // The md size of the tab pills, with the height fixed and the text centred. An inline
           // !important outranks every sheet, so the values come from the tokens.
           b2.style.setProperty("height", "var(--cc-md-h, 30px)", "important");
@@ -737,8 +761,6 @@
           b2.style.setProperty("box-sizing", "border-box", "important");
           b2.style.setProperty("font-size", "var(--cc-md-fs)", "important");
           b2.style.setProperty("font-weight", "600", "important");
-          b2.style.setProperty("text-transform", "uppercase", "important");
-          b2.style.setProperty("letter-spacing", "1.5px", "important");
           b2.style.setProperty("cursor", "pointer", "important");
           b2.setAttribute(MARK, "1");
         }

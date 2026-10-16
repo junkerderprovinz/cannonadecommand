@@ -116,7 +116,7 @@ console.log('\nThe update check shows its verdict on the button');
   console.log('\nEach version appears once');
   ok('the footer line is gone', !/verLine|cc-set-version-foot/.test(settings) && !/\.cc-set-version\b/.test(css));
   ok('the gear menu shows no version', !/CC_VER|UI v|daemonVersion/.test(docker));
-  ok('the gear menu keeps the engine status', /"engine up · " \+ containers\.length/.test(docker) && /"engine down, daemon not reachable"/.test(docker));
+  ok('the gear menu reports the engine only while it is down', /if \(daemonUp === false\) m\.appendChild\(el\("div", "cc-menu-status cc-bad-text", t\("daemonDown"\)\)\);/.test(docker) && !/engine up/.test(docker));
 
   console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
   process.exit(fail ? 1 : 0);
