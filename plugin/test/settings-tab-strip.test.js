@@ -59,7 +59,7 @@ console.log('\nThe tabs stand as vertical tiles beside the cards');
   ok('the column may scroll, since the wheel moves it', decl(strip, 'overflow-y') === 'auto');
   ok('the column and the cards share a row', decl(body(css, '.cc-set-body'), 'display') === 'flex' && decl(body(css, '.cc-set-main'), 'min-width') === '0');
   const tab = body(css, '.cc-set-tab');
-  ok('every tile is a compact 44px and never grows', decl(tab, 'flex') === 'none' && decl(tab, 'height') === '44px !important' && decl(tab, 'min-height') === null, tab);
+  ok('every tile is 66px tall and never grows', decl(tab, 'flex') === 'none' && decl(tab, 'height') === '66px !important' && decl(tab, 'min-height') === null, tab);
   ok('the column is as tall as its tiles', decl(strip, 'height') === null && decl(strip, 'flex') === 'none');
   ok('a tile takes the control radius, so a tall one stays a tile', /var\(--cc-radius-control\)/.test(decl(tab, 'border-radius') || ''));
   ok('a tile is the glyph, then the name, set as KnightLoader sets it', decl(tab, 'justify-content') === 'flex-start' && decl(tab, 'gap') === '12px' && decl(tab, 'font-weight') === '500 !important');

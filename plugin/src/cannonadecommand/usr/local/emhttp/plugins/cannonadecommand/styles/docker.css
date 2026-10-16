@@ -1238,8 +1238,8 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
 .cc-set-logo { width: 64px; height: 64px; border-radius: var(--cc-radius-control); display: block; }
 .cc-set-claim { color: var(--dim); font-size: var(--cc-text-subline); font-style: italic; margin-top: 2px; }
 /* GlimStone's vertical tiles: the tab selector turned on its side, a column beside the cards that
-   stays in view while they scroll. Every tile is 44px tall, 4px apart, as in KnightLoader's
-   settings rail: two lines of a long name fit, and the column is as tall as its tiles and scrolls
+   stays in view while they scroll. Every tile is 66px tall, 4px apart, and keeps that height
+   whatever its name: two lines of a long name fit, and the column is as tall as its tiles and scrolls
    only where the window is shorter. Below 1024px the column shows the glyphs alone, and
    settings.js moves each name into its bubble. The two widths are GlimStone's 12.75rem and
    3.25rem in pixels, since Unraid sets the root font size to 10px. */
@@ -1251,7 +1251,7 @@ html:is(.Theme--white, .Theme--azure) .cc-desc { color: var(--cc-text-dim, #5454
    never scrolls, so the column would scroll away with the page. */
 #displaybox .content:has(> #cc-settings) { overflow: visible !important; }
 .cc-set-tabs { position: sticky; top: 12px; flex: none; box-sizing: border-box; width: 204px; max-height: calc(100vh - 24px); overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 0 8px 0 4px; margin: 0; }
-.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: flex !important; flex: none; align-items: center; justify-content: flex-start; gap: 12px; box-sizing: border-box; height: 44px !important; padding: 0 12px !important; font-size: var(--cc-text-body) !important; font-weight: 500 !important; line-height: 20px; text-align: start; text-transform: none !important; letter-spacing: normal !important; border-radius: var(--cc-radius-control) !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS adds one to every button */
+.cc-set-tab { background: #2a2a2a !important; border: none !important; box-shadow: none !important; margin: 0 !important; color: #b5b5b5 !important; cursor: pointer; display: flex !important; flex: none; align-items: center; justify-content: flex-start; gap: 12px; box-sizing: border-box; height: 66px !important; padding: 0 12px !important; font-size: var(--cc-text-body) !important; font-weight: 500 !important; line-height: 20px; text-align: start; text-transform: none !important; letter-spacing: normal !important; border-radius: var(--cc-radius-control) !important; font-family: inherit !important; } /* the margin is forced because Unraid's global button CSS adds one to every button */
 .cc-set-tab[hidden] { display: none !important; }
 .cc-set-tablbl { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; text-wrap: balance; }
 @media (max-width: 1023px) {
