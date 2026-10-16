@@ -67,7 +67,7 @@ function run(entries, opts) {
   // Every collaborator renderFolderView() names resolves here; one not listed returns a bare node,
   // so the harness keeps working as the folder head gains parts.
   const given = Object.assign({
-    el, window: fakeWindow, localStorage: { getItem: () => null }, gridHolder: fakeGridHolder, ccOrgView, filterText: '', mode: 'folder',
+    el, window: fakeWindow, localStorage: { getItem: () => null }, gridHolder: fakeGridHolder, ccOrgView, filterText: '', mode: 'folder', folderDrag: null,
     removeGridHolder: () => { removed = true; },
     effc: () => '', iconBgOn: () => false, gridFocusKey: () => null, ccGlyph: (n) => '<glyph ' + n + '>', t: (k) => k, LANG: 'en',
     folderTile: (c, row) => { const n = el('div', 'cc-card cc-tile'); n.row = row; const h = el('div', 'cc-tile-head'); n.appendChild(h); n.querySelector = (sel) => (sel === '.cc-tile-head' ? h : null); return n; },

@@ -66,7 +66,7 @@ const scope = new Proxy(env, {
   set: (o, k, v) => { env[k] = v; return true; },
 });
 const api = new Function('scope', 'with (scope) {\n' +
-  ['el', 'norm', 't', 'stateLabel', 'humanBytes', 'gauge', 'actBtn', 'actBtnOff', 'folderTile', 'updateReady'].map(grabFn).join('\n') +
+  ['el', 'norm', 't', 'stateLabel', 'humanBytes', 'gauge', 'actBtn', 'actBtnOff', 'cardIcon', 'folderTile', 'updateReady'].map(grabFn).join('\n') +
   '\nreturn { folderTile: folderTile, updateReady: updateReady }; }')(scope);
 env.ctxFor = (name) => Object.assign({ webui: '', links: [] }, env.ctx[name] || {});
 env.doAction = (name, action) => calls.push([action, name]);
@@ -156,7 +156,10 @@ console.log('\nThe density choice is gone');
   ok('the gear menu offers no folder content choice', !/folderContent|"Detailliert"/.test(src));
   const css = fs.readFileSync(path.join(DIR, 'styles', 'docker.css'), 'utf8');
   ok('docker.css has no rules left for the chip or the list row', !/\.cc-(chip|frow)\b|cc-folderview-(grid|list)|cc-folder-group-body-(grid|list)/.test(css));
-  ok('every tile has the same size on one fixed grid column', /\.cc-card\.cc-tile \{[^}]*width: 240px; height: 130px;/.test(css) && /\.cc-folderview, \.cc-folder-group-body \{ display: grid; grid-template-columns: repeat\(auto-fill, 240px\);/.test(css));
+  ok('every tile has the same size on one fixed grid column', /\.cc-card\.cc-tile \{[^}]*width: 264px; height: var\(--cc-tile-h\);/.test(css) && /\.cc-folderview, \.cc-folder-group-body \{ display: grid; grid-template-columns: repeat\(auto-fill, 264px\);/.test(css));
+  ok('one height for the simple view and a taller one with the bars of the advanced view', /\.cc-grid-holder \{ --cc-tile-h: 84px; \}/.test(css) && /\.cc-grid-holder\.cc-adv \{ --cc-tile-h: 122px; \}/.test(css) && /\.cc-grid-holder:not\(\.cc-adv\) \.cc-tile-stats \{ display: none; \}/.test(css));
+  ok('the logo box runs the tile\'s full height on its left', /\.cc-card\.cc-tile \{[^}]*flex-direction: row;/.test(css) && /\.cc-tile-icobtn \{[^}]*align-self: stretch;/.test(css));
+  ok('the box carries the tile colour, never the logo the ink filter runs over', /\.cc-grid-holder\.cc-docker-iconbg \.cc-card-icobox \{/.test(css) && !/\.cc-card-ico \{[^}]*background/.test(css));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

@@ -1535,6 +1535,7 @@
       lbl.textContent = advWord(next);
       try { document.cookie = "docker_listview_mode=" + (next ? "advanced" : "basic") + "; path=/"; } catch (e9) {}
       try { var inp9 = document.querySelector("input.advancedview"); if (inp9) inp9.checked = next; } catch (e9) {}
+      if (gridHolder) gridHolder.classList.toggle("cc-adv", next);
       // One full re-enhancement per flip. loadlist() replaces #docker_list wholesale, which wakes
       // the MutationObserver, and its sweep already runs applyEnhanceClasses() and
       // injectAllRowBadges() against the fresh rows: its callbacks arrive as microtasks after
@@ -1911,27 +1912,29 @@
       wrap.style.removeProperty("--cc-rb-c"); wrap.style.removeProperty("--cc-rb-ct");
     }
   }
+  // A card's logo inside the box that carries its tile colour. The colour sits on the box, as it
+  // sits on span.hand in the list, because the ink filter applyIconTint() puts on the <img> would
+  // flatten a background of the image's own into one block of ink.
+  function cardIcon(name, extra) {
+    var box = el("span", "cc-card-icobox" + (extra ? " " + extra : "")), ico = iconFor(name);
+    if (ico) { var im = el("img", "cc-card-ico"); im.src = ico; im.alt = ""; im.setAttribute("data-cc-name", name); im.onerror = function () { this.style.visibility = "hidden"; }; box.appendChild(im); }
+    else box.appendChild(el("span", "cc-card-ico cc-card-ico-ph"));
+    return box;
+  }
   function card(c) {
     var wrap = el("div", "cc-card"); wrap.dataset.name = c.name;
     stampCardRainbow(wrap, c.name);
     var head = el("div", "cc-card-head");
-    var ico = iconFor(c.name);
-    if (ico) { var im = el("img", "cc-card-ico"); im.src = ico; im.setAttribute("data-cc-name", c.name); im.onerror = function () { this.style.visibility = "hidden"; }; head.appendChild(im); } else head.appendChild(el("div", "cc-card-ico cc-card-ico-ph"));
-    var nb = el("div", "cc-card-name"); nb.appendChild(el("div", "cc-card-title", c.name)); nb.appendChild(el("div", "cc-card-img", c.image || "")); head.appendChild(nb);
+    head.appendChild(cardIcon(c.name));
+    // The IP stands under the name, so it has no badge of its own, and CPU, RAM and the network
+    // rate are the badges at the foot of the card, with no bars repeating them.
+    var nb = el("div", "cc-card-name"); nb.appendChild(el("div", "cc-card-title", c.name)); if (c.ip) nb.appendChild(el("div", "cc-card-ip", c.ip)); head.appendChild(nb);
     head.appendChild(stateBadge(c)); wrap.appendChild(head);
     var ab2 = actionBars(c.name, c);
     var abrow = el("div", "cc-card-actbar"); abrow.appendChild(ab2.bar);
     wrap.appendChild(abrow);
-    var s = stats[c.name], sb = el("div", "cc-card-stats");
-    if (s && c.state === "running") {
-      sb.appendChild(gauge("CPU", s.cpu_percent, (s.cpu_percent || 0) + "%"));
-      sb.appendChild(gauge("RAM", s.mem_percent, humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit)));
-      var nl = el("div", "cc-stat cc-stat-net"); nl.appendChild(el("span", "cc-stat-lbl", "NET")); nl.appendChild(el("span", "cc-stat-val cc-card-net", netRate(s))); sb.appendChild(nl);
-    } else sb.appendChild(el("div", "cc-stat cc-dim", c.state === "running" ? "…" : "not running"));
-    wrap.appendChild(sb);
     var badges = el("div", "cc-card-badges");
     if (c.network) badges.appendChild(badgeInfo("NET", c.network, "net"));
-    if (c.ip) badges.appendChild(badgeInfo("IP", c.ip, "ip"));
     if (c.ports && c.ports.length) badges.appendChild(badgeInfo("PORT", c.ports.join(" "), "port"));
     if (badges.children.length) wrap.appendChild(badges);
     var act = el("div", "cc-card-actions");
@@ -1995,8 +1998,8 @@
   }
   // The folder view shows every container as a tile of one fixed size, so the rows line up into a
   // grid whatever the name or state: the icon, the name with its IP under it, CPU and RAM bars while
-  // it runs, the state while it does not, an update badge when one is ready, and WebUI, start or
-  // stop and restart. The rarer actions sit in the menu behind the icon.
+  // it runs in the advanced view, the state while it does not, an update badge when one is ready,
+  // and WebUI, start or stop and restart. The rarer actions sit in the menu behind the icon.
   //
   // The tile keeps the cc-card class and its icon .cc-card-ico, so stampCardRainbow(), the reactive
   // hover rules and every iconbg and shape selector that targets .cc-card apply unchanged. The
@@ -2007,15 +2010,13 @@
     stampCardRainbow(wrap, c.name);
     var st = c.state || "unknown", running = st === "running", paused = st === "paused", de = LANG === "de";
     var cx = ctxFor(c.name, row);
-    var head = el("div", "cc-tile-head");
-    var ico = iconFor(c.name), im;
-    if (ico) { im = el("img", "cc-card-ico cc-tile-ico"); im.src = ico; im.alt = ""; im.setAttribute("data-cc-name", c.name); im.onerror = function () { this.style.visibility = "hidden"; }; }
-    else im = el("span", "cc-card-ico cc-tile-ico cc-card-ico-ph");
-    var icoBtn = el("span", "cc-tile-icobtn"); icoBtn.appendChild(im);
+    var icoBtn = cardIcon(c.name, "cc-tile-icobtn");
     icoBtn.setAttribute("aria-label", (de ? "Aktionen: " : "Actions: ") + c.name);
     icoBtn.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); containerMenu(icoBtn, c, cx); });
     if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(icoBtn);
-    head.appendChild(icoBtn);
+    wrap.appendChild(icoBtn);
+    var body = el("div", "cc-tile-body");
+    var head = el("div", "cc-tile-head");
     var id = el("div", "cc-tile-id");
     var nm = el("div", "cc-tile-name", c.name);
     // The full name goes into the hover bubble only while the ellipsis cuts it.
@@ -2023,13 +2024,13 @@
     id.appendChild(nm);
     if (c.ip) id.appendChild(el("div", "cc-tile-ip", c.ip));
     head.appendChild(id);
-    wrap.appendChild(head);
+    body.appendChild(head);
     var stats2 = el("div", "cc-tile-stats"), s = stats[c.name];
     if (running) {
       stats2.appendChild(gauge("CPU", s ? s.cpu_percent : 0, s ? (s.cpu_percent || 0) + "%" : "…"));
       stats2.appendChild(gauge("RAM", s ? s.mem_percent : 0, s ? humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit) : "…"));
     }
-    wrap.appendChild(stats2);
+    body.appendChild(stats2);
     var foot = el("div", "cc-tile-foot");
     var state = el("span", "cc-tile-state");
     var dot = el("span", "cc-badge cc-tile-dot cc-badge-" + st + (showUnhealthy(c) ? " cc-badge-alert" : "")); dot.dataset.name = c.name;
@@ -2050,7 +2051,8 @@
     acts.appendChild(actBtn("Refresh", t("restart"), function () { doAction(c.name, "restart"); }));
     tintAct(acts);
     foot.appendChild(acts);
-    wrap.appendChild(foot);
+    body.appendChild(foot);
+    wrap.appendChild(body);
     if (filterText && norm(c.name).indexOf(filterText) < 0) wrap.style.display = "none";
     return wrap;
   }
@@ -2334,7 +2336,11 @@
   // The folder view groups structurally. flatEntries already carries the depth, parent id and
   // position, so grouping is one bucket-by-parent pass rather than a recursive tree parser, and
   // every container in it, loose or in a folder, is a folderTile().
+  // The folder view's drag in progress. A render in the middle of a drag would tear the dragged
+  // element out from under the pointer, so renderFolderView() waits for the drag to end.
+  var folderDrag = null;
   function renderFolderView() {
+    if (folderDrag) return;
     // Every folder action re-renders through this function, which clears and rebuilds the whole
     // holder, and the browser resets the scroll position the moment the scrolled-into content is
     // torn out. Capturing and restoring it here covers every trigger path, since they all funnel
@@ -2346,6 +2352,8 @@
     gridHolder.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
     gridHolder.classList.toggle("cc-tint-icons", !!effc("iconcolor"));
     gridHolder.classList.toggle("cc-docker-iconbg", iconBgOn());
+    // the folder tiles show their CPU and RAM bars in the advanced view only
+    gridHolder.classList.toggle("cc-adv", isAdvancedView());
     if (!ccOrgView) { removeGridHolder(); window.scrollTo(0, savedScroll); return; }
     var byParent = {};
     ccOrgView.flatEntries.forEach(function (e) { (byParent[e.parentId] = byParent[e.parentId] || []).push(e); });
@@ -2364,28 +2372,89 @@
     var rowsByName = {};
     findRows().forEach(function (r) { rowsByName[rowName(r)] = r; });
 
-    // Drag and drop reordering. `dragEntry` is the entry being dragged, scoped to this render
-    // pass, since a successful move triggers a fresh render anyway. buildMoveMenu below is the
-    // same action by click, for touch and keyboard.
-    var dragEntry = null;
+    // Drag and drop reordering, live: the dragged tile or folder is its own placeholder and moves
+    // through the page as the pointer travels, so the others make room while it passes, and the
+    // place it holds when it is dropped is what gets saved. buildMoveMenu below is the same action
+    // by click, for touch and keyboard.
     function clearDropHighlights() { Array.prototype.slice.call(gridHolder.querySelectorAll(".cc-drop-target")).forEach(function (n) { n.classList.remove("cc-drop-target"); }); }
-    function wireDragSource(el2, entry) {
-      el2.draggable = true;
-      el2.addEventListener("dragstart", function (ev) { dragEntry = entry; el2.classList.add("cc-dragging"); try { ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", entry.id); } catch (e2) {} });
-      el2.addEventListener("dragend", function () { el2.classList.remove("cc-dragging"); dragEntry = null; clearDropHighlights(); });
-    }
-    // dragover and drop both bubble, so they are stopped here and only the deepest target under
-    // the cursor reacts; otherwise a drop over a card also fires its folder's and the root's
-    // handlers and highlights three nested targets at once.
-    function wireDropTarget(el2, onDrop) {
-      el2.addEventListener("dragover", function (ev) { if (!dragEntry) return; ev.preventDefault(); ev.stopPropagation(); ev.dataTransfer.dropEffect = "move"; clearDropHighlights(); el2.classList.add("cc-drop-target"); });
-      el2.addEventListener("dragleave", function () { el2.classList.remove("cc-drop-target"); });
-      el2.addEventListener("drop", function (ev) {
-        ev.preventDefault(); ev.stopPropagation(); clearDropHighlights();
-        if (!dragEntry) return;
-        var src = dragEntry; dragEntry = null;
-        onDrop(src);
+    function wireDragSource(handle, moved, entry) {
+      handle.draggable = true;
+      handle.addEventListener("dragstart", function (ev) {
+        folderDrag = { entry: entry, el: moved, over: null, calm: 0, dropped: false };
+        try { ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", entry.id); } catch (e2) {}
+        // faded only once the browser has taken its picture of the element to drag
+        setTimeout(function () { moved.classList.add("cc-dragging"); }, 0);
       });
+      handle.addEventListener("dragend", function () {
+        var d = folderDrag; folderDrag = null;
+        moved.classList.remove("cc-dragging"); clearDropHighlights();
+        // A cancelled drag, or one that ends where it began, gets the saved order back and any
+        // render that waited for the drag.
+        if (!d || !d.dropped || !saveDrag(d)) renderFolderView();
+      });
+    }
+    // Moves an element and lets everything it pushes aside slide over from where it stood.
+    function slideInto(node, parent, before) {
+      var items = Array.prototype.slice.call(root.querySelectorAll(".cc-tile, .cc-folder-group, .cc-tile-new"));
+      var was = items.map(function (n) { return n.getBoundingClientRect(); });
+      parent.insertBefore(node, before);
+      items.forEach(function (n, i) {
+        var now = n.getBoundingClientRect(), dx = was[i].left - now.left, dy = was[i].top - now.top;
+        if (!dx && !dy) return;
+        n.style.transition = "none"; n.style.transform = "translate(" + dx + "px, " + dy + "px)";
+        void n.offsetWidth;
+        n.style.transition = ""; n.style.transform = "";
+      });
+    }
+    // The dragged item goes before an item it reaches going up the page and after one it reaches
+    // going down. It moves past the same item once until the pointer has left that item, since the
+    // item slides away under the pointer as the dragged one takes its place. A container enters a
+    // folder over the folder's head; a folder moves among the entries beside it. While the others
+    // slide nothing moves again, so a tile passing under the pointer on its way is no target.
+    function dragOver(ev) {
+      var d = folderDrag; if (!d) return;
+      ev.preventDefault();
+      try { ev.dataTransfer.dropEffect = "move"; } catch (e2) {}
+      if (Date.now() < d.calm) return;
+      var t = ev.target && ev.target.nodeType === 1 ? ev.target : ev.target && ev.target.parentElement;
+      if (!t || d.el.contains(t)) { d.over = null; clearDropHighlights(); return; }
+      var ref = null, head = null;
+      if (d.entry.type === "container") {
+        head = t.closest(".cc-folder-group-head");
+        ref = head ? null : t.closest(".cc-tile[data-eid], .cc-tile-new");
+      } else {
+        for (ref = t; ref && ref.parentNode !== d.el.parentNode; ref = ref.parentNode) {}
+        if (ref && !ref.matches(".cc-tile, .cc-folder-group, .cc-tile-new")) ref = null;
+      }
+      var target = head || ref;
+      if (!target) { d.over = null; clearDropHighlights(); return; }
+      if (d.over === target) return;
+      d.over = target; clearDropHighlights();
+      if (head) {
+        head.classList.add("cc-drop-target");
+        var body = head.parentNode.querySelector(":scope > .cc-folder-group-body");
+        if (body && d.el.parentNode !== body) slideInto(d.el, body, null);
+      } else {
+        var after = !ref.classList.contains("cc-tile-new") && !!(d.el.compareDocumentPosition(ref) & Node.DOCUMENT_POSITION_FOLLOWING);
+        slideInto(d.el, ref.parentNode, after ? ref.nextSibling : ref);
+      }
+      d.calm = Date.now() + (parseFloat(getComputedStyle(d.el).transitionDuration) || 0) * 1000;
+    }
+    // Saves the place a dropped item holds. Its position counts among the other entries of its new
+    // folder and is read off its nearest neighbour on the page, since an entry the filter or "hide
+    // stopped" keeps off the page has no element of its own. Answers whether anything was sent.
+    function saveDrag(d) {
+      var host = d.el.parentNode;
+      var dest = host === root ? ccOrgView.rootId : host && host.classList.contains("cc-folder-group-body") ? host.parentNode.getAttribute("data-fid") : null;
+      if (!dest) return false;
+      var others = (byParent[dest] || []).filter(function (x) { return x.id !== d.entry.id; }).map(function (x) { return x.id; });
+      var next = d.el.nextElementSibling, prev = d.el.previousElementSibling, pos;
+      if (next && next.dataset.eid) pos = others.indexOf(next.dataset.eid);
+      else if (prev && prev.dataset.eid) pos = others.indexOf(prev.dataset.eid) + 1;
+      else pos = others.length;
+      if (dest === d.entry.parentId && pos === (byParent[dest] || []).indexOf(d.entry)) return false;
+      ccOrgMoveToPosition(d.entry.id, dest, pos);
+      return true;
     }
     function attachMoveButton(cardEl, entry) {
       var btn = el("button", "cc-card-movebtn"); btn.type = "button"; btn.title = t("moveToFolder");
@@ -2400,7 +2469,7 @@
           if (filterText && !entryMatches(e)) return; // live search: a folder with no match anywhere inside it (and no name match itself) is hidden outright
           var collapsed = effectiveCollapsed(e);
           var names = ccCollectFolderContainerNames(byParent, e.id, containerByName);
-          var grp = el("div", "cc-folder-group" + (collapsed ? " cc-folder-collapsed" : "")); grp.setAttribute("data-fid", e.id);
+          var grp = el("div", "cc-folder-group" + (collapsed ? " cc-folder-collapsed" : "")); grp.setAttribute("data-fid", e.id); grp.dataset.eid = e.id;
           var head = el("div", "cc-folder-group-head");
           stampFolderColour(head, folderLook(e.id).color, folderIdx++);
           var titleWrap = el("span", "cc-folder-group-title");
@@ -2440,20 +2509,12 @@
           var delBtn = folderActBtn("cc-folder-act", "Trash", t("deleteFolder"));
           delBtn.addEventListener("click", function (ev) { ev.stopPropagation(); ccOrgDeleteFolder(e.id, delBtn); });
           acts.appendChild(editBtn); acts.appendChild(delBtn);
-          wireDragSource(head, e); // the head is the drag handle and the whole group moves
+          wireDragSource(head, grp, e); // the head is the drag handle and the whole group moves
           head.appendChild(acts);
           grp.appendChild(head);
           var kids = el("div", "cc-folder-group-body");
           grp.appendChild(kids);
           container.appendChild(grp);
-          // Dropping a container on this folder's head or its empty body files it in here at the
-          // end; dropping a folder on the head puts it next to this one, which is a same-level
-          // reorder, since folders only live at the root.
-          wireDropTarget(head, function (src) {
-            if (src.type === "container") ccOrgMoveToFolder(src.id, e.id);
-            else if (src.id !== e.id) ccOrgMoveToPosition(src.id, e.parentId, e.position);
-          });
-          wireDropTarget(kids, function (src) { if (src.type === "container" && src.id !== e.id) ccOrgMoveToFolder(src.id, e.id); });
           renderEntries(e.id, kids); // a nested folder renders inside its own group's body, even collapsed, so the auto-expand still finds matches
         } else {
           var name = e.name.replace(/^\//, ""); // the organizer names containers docker-style, with a leading slash
@@ -2463,11 +2524,8 @@
           if (c) {
             if (filterText && !entryMatches(e)) return;
             if (ccFolderHidesContainer(parentId, c)) return;
-            var cd = folderTile(c, rowsByName[c.name]);
-            wireDragSource(cd, e);
-            // A drop on another container moves the dragged item to that one's own folder and
-            // position, which covers a reorder within a folder and a move between two.
-            wireDropTarget(cd, function (src) { if (src.id !== e.id) ccOrgMoveToPosition(src.id, e.parentId, e.position); });
+            var cd = folderTile(c, rowsByName[c.name]); cd.dataset.eid = e.id;
+            wireDragSource(cd, cd, e);
             attachMoveButton(cd, e);
             container.appendChild(cd);
           }
@@ -2476,12 +2534,9 @@
     }
     renderEntries(ccOrgView.rootId, root);
     if (!filterText) root.appendChild(newFolderTile());
-    // dropping on the open background (not on any card/folder) files/reorders to the END of root
-    wireDropTarget(root, function (src) {
-      var rootKids = byParent[ccOrgView.rootId] || [];
-      var lastPos = rootKids.length ? rootKids[rootKids.length - 1].position + 1 : 0;
-      if (src.type === "container" || src.parentId !== ccOrgView.rootId) ccOrgMoveToPosition(src.id, ccOrgView.rootId, lastPos);
-    });
+    // A drop anywhere in the view keeps the place the item was dragged to.
+    root.addEventListener("dragover", dragOver);
+    root.addEventListener("drop", function (ev) { if (!folderDrag) return; ev.preventDefault(); folderDrag.dropped = true; });
 
     gridHolder.appendChild(root);
     applyIconTint();
@@ -2534,18 +2589,20 @@
     // The list and grid choice belongs to the theming, so it is hidden with theming off.
     if (themingOn()) {
       m.appendChild(menuHead(t("view")));
-      var seg = el("div", "cc-seg");
-      var bL = el("button", "cc-seg-btn" + (mode === "list" ? " cc-seg-on" : ""), t("list"));
-      var bG = el("button", "cc-seg-btn" + (mode === "grid" ? " cc-seg-on" : ""), t("grid"));
-      bL.addEventListener("click", function () { closeMenu(); setMode("list"); }); bG.addEventListener("click", function () { closeMenu(); setMode("grid"); });
-      seg.appendChild(bL); seg.appendChild(bG);
+      // The horizontal selector of the settings page, in its well, with the same glyphs as the
+      // view selector there.
+      var seg = el("div", "cc-seg cc-set-mode"); seg.setAttribute("role", "radiogroup"); seg.setAttribute("aria-label", t("view"));
+      var views = [["list", t("list"), "ViewList"], ["grid", t("grid"), "ViewGrid"]];
       // The folder view is where folders are made, so it is offered as soon as the organizer is
       // there, before the first folder exists.
-      if (ccOrgAvailable) {
-        var bF = el("button", "cc-seg-btn" + (mode === "folder" ? " cc-seg-on" : ""), LANG === "de" ? "Ordner" : "Folder");
-        bF.addEventListener("click", function () { closeMenu(); setMode("folder"); });
-        seg.appendChild(bF);
-      }
+      if (ccOrgAvailable) views.push(["folder", LANG === "de" ? "Ordner" : "Folder", "Folder"]);
+      views.forEach(function (v) {
+        var b = el("button", "cc-seg-btn" + (mode === v[0] ? " cc-seg-on" : "")); b.type = "button";
+        b.setAttribute("role", "radio"); b.setAttribute("aria-checked", mode === v[0] ? "true" : "false");
+        b.innerHTML = ccGlyph(v[2]); b.appendChild(el("span", null, v[1]));
+        b.addEventListener("click", function () { closeMenu(); setMode(v[0]); });
+        seg.appendChild(b);
+      });
       var vrow = el("div", "cc-menu-row cc-menu-plain"); vrow.appendChild(seg); m.appendChild(vrow);
       if (ccOrgAvailable && mode === "folder") {
         var nrow = el("div", "cc-menu-row cc-menu-plain");
@@ -2730,7 +2787,8 @@
     if (!ccOrgAvailable || !ccOrgView) return;
     ccOrgMutate(ORG_MOVEPOS_MUT, { sourceEntryIds: [entryId], destinationFolderId: destFolderId, position: position })
       .then(function (data) { ccOrgAdopt(data, "moveDockerItemsToPosition"); })
-      .catch(function () { flash(t("invalid"), true); });
+      // a drag leaves the item where it was dropped, so a failed save puts it back
+      .catch(function () { flash(t("invalid"), true); if (mode === "folder") renderFolderView(); });
   }
   // The click-menu equivalent of dragging a card onto a folder, for touch and keyboard.
   function buildMoveMenu(entry) {
@@ -2827,7 +2885,8 @@
         }
         netPrev[nm] = { rx: s.net_rx || 0, tx: s.net_tx || 0, t: now };
       });
-      if ((mode === "grid" || mode === "folder") && gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll(".cc-card")).forEach(function (cd) { var s = stats[cd.dataset.name]; if (!s) return; var f = cd.querySelectorAll(".cc-gauge-fill"), v = cd.querySelectorAll(".cc-stat-val"); if (f[0]) f[0].style.width = Math.min(100, s.cpu_percent) + "%"; if (v[0]) v[0].textContent = (s.cpu_percent || 0) + "%"; if (f[1]) f[1].style.width = Math.min(100, s.mem_percent) + "%"; if (v[1]) v[1].textContent = humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit); var nv = cd.querySelector(".cc-card-net"); if (nv) nv.textContent = netRate(s); });
+      // the folder tiles carry bars; a grid card shows its values in the resource badges below
+      if (mode === "folder" && gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll(".cc-tile")).forEach(function (cd) { var s = stats[cd.dataset.name]; if (!s) return; var f = cd.querySelectorAll(".cc-gauge-fill"), v = cd.querySelectorAll(".cc-stat-val"); if (f[0]) f[0].style.width = Math.min(100, s.cpu_percent) + "%"; if (v[0]) v[0].textContent = (s.cpu_percent || 0) + "%"; if (f[1]) f[1].style.width = Math.min(100, s.mem_percent) + "%"; if (v[1]) v[1].textContent = humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit); });
       Array.prototype.slice.call(document.querySelectorAll(".cc-folder-load")).forEach(paintFolderLoad);
       // the resource badges update in both modes, since a grid card carries a resgroup too
       Array.prototype.slice.call(document.querySelectorAll(".cc-resgroup")).forEach(function (rg) { var cn = containerByName(rg.dataset.name); updateResGroup(rg, stats[rg.dataset.name], cn && cn.state); });

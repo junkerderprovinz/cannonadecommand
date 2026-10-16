@@ -14,7 +14,8 @@ const docker = read('scripts/docker.js');
 function grab(src, name) { const i = src.indexOf('function ' + name + '('); let d = 0; for (let k = src.indexOf('{', i); k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}') { d--; if (!d) return src.slice(i, k + 1); } } return ''; }
 
 console.log('\nThe gear menu sets the view');
-ok('it offers the three views', /m\.appendChild\(menuHead\(t\("view"\)\)\)/.test(docker) && /setMode\("list"\)/.test(docker) && /setMode\("grid"\)/.test(docker) && /setMode\("folder"\)/.test(docker));
+ok('it offers the three views', /m\.appendChild\(menuHead\(t\("view"\)\)\)/.test(docker) && /\["list", t\("list"\), "ViewList"\], \["grid", t\("grid"\), "ViewGrid"\]/.test(docker) && /views\.push\(\["folder", /.test(docker) && /setMode\(v\[0\]\)/.test(docker));
+ok('as the horizontal selector the settings page uses', /el\("div", "cc-seg cc-set-mode"\); seg\.setAttribute\("role", "radiogroup"\)/.test(docker));
 ok('and saves a pick locally and on the server', /mode = m; localStorage\.setItem\(VIEW_KEY, m\);/.test(docker) && /if \(!fromServer\) ccOrgSavePrefs\(\{ ccViewMode: m \}\)/.test(docker));
 ok('a view restored from the server is not written back to it', /setMode\(serverMode, true\)/.test(docker));
 

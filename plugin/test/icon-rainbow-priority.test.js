@@ -36,9 +36,9 @@ function iconbgFirst(body) { return /background:\s*var\(--cc-iconbg-color,\s*var
 console.log('\nDocker icon logo badge: a configured icon colour wins over the rainbow palette');
 {
   const listSel = '.cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr:is(.sortable, .folder-element) td.ct-name .outer > span.hand';
-  const gridSel = '.cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card-ico';
+  const gridSel = '.cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card-icobox';
   const listHoverSel = 'html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg.cc-rainbow #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand';
-  const gridHoverSel = 'html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card:hover .cc-card-ico';
+  const gridHoverSel = 'html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg.cc-rainbow .cc-card:hover .cc-card-icobox';
   [
     ['list-mode tile (non-reactive rainbow)', listSel],
     ['grid-mode tile (non-reactive rainbow)', gridSel],
@@ -108,7 +108,7 @@ console.log('\nDocker icon logo badge on hover with no icon colour configured: -
   // leave the badge with no colour source at all while the master adopt toggle is
   // on, since bgColor() answers "" then.
   const listNoColorHoverSel = 'html.cc-shares-rbneutral.cc-docker-on .cc-enh.cc-docker-iconbg #docker_list tr:is(.sortable, .folder-element):hover td.ct-name .outer > span.hand';
-  const gridNoColorHoverSel = 'html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card:hover .cc-card-ico';
+  const gridNoColorHoverSel = 'html.cc-shares-rbneutral.cc-docker-on .cc-grid-holder.cc-docker-iconbg .cc-card:hover .cc-card-icobox';
   [
     ['list-mode tile (reactive hover, no icon colour configured)', listNoColorHoverSel],
     ['grid-mode tile (reactive hover, no icon colour configured)', gridNoColorHoverSel],
