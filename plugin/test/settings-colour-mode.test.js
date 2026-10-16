@@ -57,7 +57,7 @@ console.log('\nOnly the chosen mode shows its controls');
   ok('no rainbow or flag switch is left', !/T\("Regenbogen-Modus", "Rainbow mode"\)|T\("Flaggen-Modus", "Flag mode"\)/.test(settings));
   ok('nothing in the card is dimmed instead', !/rbOnly|style\.opacity = "\.4"/.test(settings));
   ok('the country row has its (i)', /frl\.appendChild\(infoIcon\(/.test(settings));
-  ok('Flag is offered only with the flag list loaded', /if \(window\.CC_FLAGS && window\.CC_FLAGS\.length\) modes\.push\(\["flag", T\("Flagge", "Flag"\), "colour-flag"\]\);/.test(settings));
+  ok('Flag is offered only with the flag list loaded', /if \(window\.CC_FLAGS && window\.CC_FLAGS\.length\) modes\.push\(\["flag", T\("Flagge", "Flag"\), "IconFlag"\]\);/.test(settings));
 }
 
 // GlimStone, "The one horizontal selector": in a settings row a selector stays compact at the

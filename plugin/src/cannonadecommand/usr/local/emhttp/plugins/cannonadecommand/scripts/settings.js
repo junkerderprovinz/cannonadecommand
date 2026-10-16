@@ -205,50 +205,51 @@
     svg.innerHTML = g[1];
     return svg;
   }
-  // A small glyph before each choice of a selector, as in KnightLoader's settings: filled shapes on
-  // currentColor in a 16-unit box, so a chosen segment inks its glyph with its label.
+  // A small glyph before each choice of a selector, as in KnightLoader's and BombVault's settings:
+  // GlimStone's drawing for that choice under its name in glyphs.json, with the viewBox it crops
+  // to its ink, filled on currentColor so a chosen segment inks its glyph with its label.
   var SEG_GLYPHS = {
-    "motion-off": '<path d="M4.5 8a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0 -7 0Z"/>',
-    "motion-subtle": '<path d="M7 8a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0 -7 0ZM1.8 7.2h2.9a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-2.9a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
-    "motion-wild": '<path d="M8 8a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0 -7 0ZM1.8 3.7h3.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-3.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM0.8 7.2h4.9a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-4.9a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM1.8 10.7h3.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-3.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
-    "colour-accent": '<path d="M8 1.5C10.6 4.7 12.5 7.1 12.5 9.5a4.5 4.5 0 0 1-9 0C3.5 7.1 5.4 4.7 8 1.5Z"/>',
-    "colour-rainbow": '<path d="M1 12.5a7 7 0 0 1 14 0h-2a5 5 0 0 0-10 0ZM4.5 12.5a3.5 3.5 0 0 1 7 0h-2a1.5 1.5 0 0 0-3 0Z"/>',
-    "colour-flag": '<path d="M2.8 1.5h0a0.8 0.8 0 0 1 0.8 0.8v11.4a0.8 0.8 0 0 1 -0.8 0.8h0a0.8 0.8 0 0 1 -0.8 -0.8v-11.4a0.8 0.8 0 0 1 0.8 -0.8ZM4.5 2.5h9l-2.2 3.25 2.2 3.25h-9Z"/>',
-    "shape-round": '<path d="M2.5 8a5.5 5.5 0 1 0 11 0a5.5 5.5 0 1 0 -11 0Z"/>',
-    "shape-soft": '<path d="M5.5 2.5h5a3 3 0 0 1 3 3v5a3 3 0 0 1 -3 3h-5a3 3 0 0 1 -3 -3v-5a3 3 0 0 1 3 -3Z"/>',
-    "shape-square": '<path d="M2.5 2.5h11v11h-11Z"/>',
-    "badge-flat": '<path d="M5 4.5h6a3.5 3.5 0 0 1 3.5 3.5v0a3.5 3.5 0 0 1 -3.5 3.5h-6a3.5 3.5 0 0 1 -3.5 -3.5v0a3.5 3.5 0 0 1 3.5 -3.5Z"/>',
-    "badge-glass": '<path fill-rule="evenodd" d="M5 4.5h6a3.5 3.5 0 0 1 3.5 3.5v0a3.5 3.5 0 0 1 -3.5 3.5h-6a3.5 3.5 0 0 1 -3.5 -3.5v0a3.5 3.5 0 0 1 3.5 -3.5ZM5.2 5.6h1.8l-2.2 4.8H3ZM8 5.6h.9l-2.2 4.8h-.9Z"/>',
-    "density-compact": '<path d="M2.8 4.9h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.8 7.2h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.8 9.5h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
-    "density-normal": '<path d="M2.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.8 7.2h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.8 10.8h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
-    "density-airy": '<path d="M2.8 2h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.8 7.2h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.8 12.4h10.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
-    "size-s": '<path d="M6.2 5h3.6a1.2 1.2 0 0 1 1.2 1.2v3.6a1.2 1.2 0 0 1 -1.2 1.2h-3.6a1.2 1.2 0 0 1 -1.2 -1.2v-3.6a1.2 1.2 0 0 1 1.2 -1.2Z"/>',
-    "size-m": '<path d="M5.1 3.5h5.8a1.6 1.6 0 0 1 1.6 1.6v5.8a1.6 1.6 0 0 1 -1.6 1.6h-5.8a1.6 1.6 0 0 1 -1.6 -1.6v-5.8a1.6 1.6 0 0 1 1.6 -1.6Z"/>',
-    "size-l": '<path d="M4 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2v-8a2 2 0 0 1 2 -2Z"/>',
-    "icon-auto": '<path d="M8 1.5l1.5 5 5 1.5-5 1.5L8 14.5l-1.5-5-5-1.5 5-1.5Z"/>',
-    "icon-native": '<path fill-rule="evenodd" d="M3.5 2.5h9a2 2 0 0 1 2 2v7a2 2 0 0 1 -2 2h-9a2 2 0 0 1 -2 -2v-7a2 2 0 0 1 2 -2ZM3.6 4h8.8a0.6 0.6 0 0 1 0.6 0.6v6.8a0.6 0.6 0 0 1 -0.6 0.6h-8.8a0.6 0.6 0 0 1 -0.6 -0.6v-6.8a0.6 0.6 0 0 1 0.6 -0.6ZM4 11l2.8-3.4 2 2.3 1.4-1.4L12 11ZM9.4 6.2a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0Z"/>',
-    "icon-flat": '<path d="M2.5 8a5.5 5.5 0 1 0 11 0a5.5 5.5 0 1 0 -11 0Z"/>',
-    "icon-tint": '<path fill-rule="evenodd" d="M2.5 8a5.5 5.5 0 1 0 11 0a5.5 5.5 0 1 0 -11 0ZM8 4a4 4 0 0 1 0 8Z"/>',
-    "temp-low": '<path d="M2.8 9h1.4a0.8 0.8 0 0 1 0.8 0.8v3.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-3.4a0.8 0.8 0 0 1 0.8 -0.8Z"/><path opacity=".35" d="M7.3 6h1.4a0.8 0.8 0 0 1 0.8 0.8v6.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-6.4a0.8 0.8 0 0 1 0.8 -0.8ZM11.8 3h1.4a0.8 0.8 0 0 1 0.8 0.8v9.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-9.4a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
-    "temp-mid": '<path d="M2.8 9h1.4a0.8 0.8 0 0 1 0.8 0.8v3.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-3.4a0.8 0.8 0 0 1 0.8 -0.8ZM7.3 6h1.4a0.8 0.8 0 0 1 0.8 0.8v6.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-6.4a0.8 0.8 0 0 1 0.8 -0.8Z"/><path opacity=".35" d="M11.8 3h1.4a0.8 0.8 0 0 1 0.8 0.8v9.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-9.4a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
-    "temp-high": '<path d="M2.8 9h1.4a0.8 0.8 0 0 1 0.8 0.8v3.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-3.4a0.8 0.8 0 0 1 0.8 -0.8ZM7.3 6h1.4a0.8 0.8 0 0 1 0.8 0.8v6.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-6.4a0.8 0.8 0 0 1 0.8 -0.8ZM11.8 3h1.4a0.8 0.8 0 0 1 0.8 0.8v9.4a0.8 0.8 0 0 1 -0.8 0.8h-1.4a0.8 0.8 0 0 1 -0.8 -0.8v-9.4a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
-    "temp-custom": '<path d="M2.5 13.5l.6-3.4 7.5-7.5a1.2 1.2 0 0 1 1.7 0l1.1 1.1a1.2 1.2 0 0 1 0 1.7l-7.5 7.5Z"/>',
-    "view-list": '<path d="M2.1 2.5h1.8a0.6 0.6 0 0 1 0.6 0.6v1.3a0.6 0.6 0 0 1 -0.6 0.6h-1.8a0.6 0.6 0 0 1 -0.6 -0.6v-1.3a0.6 0.6 0 0 1 0.6 -0.6ZM6.8 2.95h6.9a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-6.9a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.1 6.75h1.8a0.6 0.6 0 0 1 0.6 0.6v1.3a0.6 0.6 0 0 1 -0.6 0.6h-1.8a0.6 0.6 0 0 1 -0.6 -0.6v-1.3a0.6 0.6 0 0 1 0.6 -0.6ZM6.8 7.2h6.9a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-6.9a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8ZM2.1 11h1.8a0.6 0.6 0 0 1 0.6 0.6v1.3a0.6 0.6 0 0 1 -0.6 0.6h-1.8a0.6 0.6 0 0 1 -0.6 -0.6v-1.3a0.6 0.6 0 0 1 0.6 -0.6ZM6.8 11.45h6.9a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-6.9a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8Z"/>',
-    "view-grid": '<path d="M2.7 1.5h3.1a1.2 1.2 0 0 1 1.2 1.2v3.1a1.2 1.2 0 0 1 -1.2 1.2h-3.1a1.2 1.2 0 0 1 -1.2 -1.2v-3.1a1.2 1.2 0 0 1 1.2 -1.2ZM10.2 1.5h3.1a1.2 1.2 0 0 1 1.2 1.2v3.1a1.2 1.2 0 0 1 -1.2 1.2h-3.1a1.2 1.2 0 0 1 -1.2 -1.2v-3.1a1.2 1.2 0 0 1 1.2 -1.2ZM2.7 9h3.1a1.2 1.2 0 0 1 1.2 1.2v3.1a1.2 1.2 0 0 1 -1.2 1.2h-3.1a1.2 1.2 0 0 1 -1.2 -1.2v-3.1a1.2 1.2 0 0 1 1.2 -1.2ZM10.2 9h3.1a1.2 1.2 0 0 1 1.2 1.2v3.1a1.2 1.2 0 0 1 -1.2 1.2h-3.1a1.2 1.2 0 0 1 -1.2 -1.2v-3.1a1.2 1.2 0 0 1 1.2 -1.2Z"/>',
-    "view-folder": '<path d="M1.5 4a1.5 1.5 0 0 1 1.5-1.5h3.2l1.6 1.6h5.2a1.5 1.5 0 0 1 1.5 1.5V12a1.5 1.5 0 0 1-1.5 1.5H3A1.5 1.5 0 0 1 1.5 12Z"/>',
-    "weight-thin": '<path d="M2.6 7.4h10.8a0.6 0.6 0 0 1 0.6 0.6v0a0.6 0.6 0 0 1 -0.6 0.6h-10.8a0.6 0.6 0 0 1 -0.6 -0.6v0a0.6 0.6 0 0 1 0.6 -0.6Z"/>',
-    "weight-normal": '<path d="M3 7h10a1 1 0 0 1 1 1v0a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v0a1 1 0 0 1 1 -1Z"/>',
-    "weight-medium": '<path d="M3.4 6.6h9.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-9.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z"/>',
-    "weight-semibold": '<path d="M3.9 6.1h8.2a1.9 1.9 0 0 1 1.9 1.9v0a1.9 1.9 0 0 1 -1.9 1.9h-8.2a1.9 1.9 0 0 1 -1.9 -1.9v0a1.9 1.9 0 0 1 1.9 -1.9Z"/>',
-    "weight-bold": '<path d="M4.5 5.5h7a2.5 2.5 0 0 1 2.5 2.5v0a2.5 2.5 0 0 1 -2.5 2.5h-7a2.5 2.5 0 0 1 -2.5 -2.5v0a2.5 2.5 0 0 1 2.5 -2.5Z"/>',
-    "italic-off": '<path d="M7.1 2.5h1.8a0.6 0.6 0 0 1 0.6 0.6v9.8a0.6 0.6 0 0 1 -0.6 0.6h-1.8a0.6 0.6 0 0 1 -0.6 -0.6v-9.8a0.6 0.6 0 0 1 0.6 -0.6Z"/>',
-    "italic-on": '<path d="M8.6 2.5h3l-3.2 11h-3Z"/>'
+    IconMotionOff: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M1 6H13A1 1 0 0 1 13 8H1A1 1 0 0 1 1 6Z" />'],
+    IconMotionSubtle: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M1.48 7.88 2.63 6.98 3.24 6.6 3.51 6.49 3.79 6.42 4.04 6.4 4.3 6.44 4.76 6.6 5.24 6.89 5.78 7.29 7.3 8.52 7.73 8.83 8.18 9.1 8.73 9.36 9.24 9.51 9.77 9.59 10.23 9.59 10.76 9.51 11.37 9.32 11.93 9.04 12.54 8.65 13.26 8.09 13.78 7.63 13.89 7.46 13.96 7.28 14 7.09 13.99 6.89 13.95 6.7 13.88 6.52 13.77 6.36 13.63 6.22 13.46 6.11 13.28 6.04 13.09 6 12.89 6.01 12.7 6.05 12.52 6.12 11.44 6.97 11.05 7.23 10.76 7.4 10.49 7.51 10.21 7.58 9.96 7.6 9.7 7.56 9.24 7.4 8.76 7.11 8.22 6.71 6.7 5.48 6.27 5.17 5.82 4.9 5.27 4.64 4.76 4.49 4.23 4.41 3.77 4.41 3.34 4.47 2.86 4.6 2.44 4.77 2 5 1.46 5.35 0.82 5.85 0.36 6.23 0.22 6.37 0.11 6.54 0.04 6.72 0 6.91 0.01 7.11 0.05 7.3 0.12 7.48 0.23 7.64 0.37 7.78 0.54 7.89 0.72 7.96 0.91 8 1.11 7.99 1.3 7.95Z" />'],
+    IconMotionWild: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M1.86 7.51 2.6 5.56 3 4.7 3.24 5.18 3.52 5.86 4.73 9.14 5.04 9.87 5.32 10.39 5.7 10.94 5.88 11.12 6.1 11.3 6.39 11.47 6.61 11.55 6.84 11.59 7.08 11.6 7.32 11.56 7.53 11.5 7.73 11.41 7.97 11.25 8.18 11.07 8.37 10.85 8.7 10.36 8.96 9.87 9.27 9.14 10.48 5.86 10.76 5.18 11 4.7 11.19 5.08 11.47 5.73 12.06 7.33 12.14 7.51 12.26 7.67 12.4 7.8 12.57 7.9 12.75 7.97 12.95 8 13.14 7.99 13.33 7.94 13.51 7.86 13.67 7.74 13.8 7.6 13.9 7.43 13.97 7.25 14 7.05 13.99 6.86 13.94 6.67 13.25 4.81 12.84 3.91 12.44 3.25 12.21 2.97 12 2.77 11.74 2.6 11.54 2.5 11.24 2.42 11 2.4 10.76 2.42 10.53 2.48 10.14 2.67 9.84 2.92 9.49 3.35 9.19 3.85 8.93 4.37 8.62 5.13 7.42 8.38 7.22 8.87 7 9.3 6.78 8.87 6.51 8.2 5.3 4.93 4.98 4.19 4.71 3.66 4.33 3.11 4.16 2.92 3.95 2.73 3.68 2.56 3.47 2.48 3.24 2.42 3 2.4 2.76 2.42 2.54 2.48 2.16 2.66 1.79 2.97 1.45 3.4 1.08 4.05 0.75 4.79 0.28 6.03 0.06 6.67 0.01 6.86 0 7.05 0.03 7.25 0.1 7.43 0.2 7.6 0.33 7.74 0.49 7.86 0.67 7.94 0.86 7.99 1.05 8 1.25 7.97 1.43 7.9 1.6 7.8 1.74 7.67Z" />'],
+    IconAccent: ["0.3 0.6 13.4 13.4", '<path fill-rule="evenodd" clip-rule="evenodd" d="M7 0.6C7 0.6 12 6.203 12 9A5 5 0 0 1 2 9C2 6.203 7 0.6 7 0.6Z" />'],
+    IconRainbow: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M0 10.5A7 7 0 0 1 14 10.5H12A5 5 0 0 0 2 10.5ZM3.5 10.5A3.5 3.5 0 0 1 10.5 10.5H8.5A1.5 1.5 0 0 0 5.5 10.5Z" />'],
+    IconFlag: ["0.2 0.2 13.6 13.6", '<path d="M3.4 1.2L3.4 12.8A1 1 0 0 1 1.4 12.8L1.4 1.2A1 1 0 0 1 3.4 1.2ZM3.4 1.4L12.6 1.4L10.2 4.85L12.6 8.3L3.4 8.3Z" />'],
+    IconCornerRound: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M6 0H8A6 6 0 0 1 14 6V8A6 6 0 0 1 8 14H6A6 6 0 0 1 0 8V6A6 6 0 0 1 6 0ZM6 2H8A4 4 0 0 1 12 6V8A4 4 0 0 1 8 12H6A4 4 0 0 1 2 8V6A4 4 0 0 1 6 2Z" />'],
+    IconCornerSoft: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M3 0H11A3 3 0 0 1 14 3V11A3 3 0 0 1 11 14H3A3 3 0 0 1 0 11V3A3 3 0 0 1 3 0ZM3 2H11A1 1 0 0 1 12 3V11A1 1 0 0 1 11 12H3A1 1 0 0 1 2 11V3A1 1 0 0 1 3 2Z" />'],
+    IconCornerSquare: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M0 0H14V14H0ZM2 2H12V12H2Z" />'],
+    IconBadgeFlat: ["0.5 0.5 13 13", '<path fill-rule="evenodd" clip-rule="evenodd" d="M4 3.5H10A3.5 3.5 0 0 1 13.5 7V7A3.5 3.5 0 0 1 10 10.5H4A3.5 3.5 0 0 1 0.5 7V7A3.5 3.5 0 0 1 4 3.5Z" />'],
+    IconBadgeGlass: ["0.5 0.5 13 13", '<path fill-rule="evenodd" clip-rule="evenodd" d="M4 3.5H10A3.5 3.5 0 0 1 13.5 7V7A3.5 3.5 0 0 1 10 10.5H4A3.5 3.5 0 0 1 0.5 7V7A3.5 3.5 0 0 1 4 3.5ZM5.4 4.9L3.2 9.1L4.9 9.1L7.1 4.9ZM8.3 4.9L6.1 9.1L7.2 9.1L9.4 4.9Z" />'],
+    IconDensityCompact: ["0.2 0.2 13.6 13.6", '<path d="M1 1.8L13 1.8A0.8 0.8 0 0 1 13 3.4L1 3.4A0.8 0.8 0 0 1 1 1.8ZM1 4.73L13 4.73A0.8 0.8 0 0 1 13 6.33L1 6.33A0.8 0.8 0 0 1 1 4.73ZM1 7.67L13 7.67A0.8 0.8 0 0 1 13 9.27L1 9.27A0.8 0.8 0 0 1 1 7.67ZM1 10.6L13 10.6A0.8 0.8 0 0 1 13 12.2L1 12.2A0.8 0.8 0 0 1 1 10.6Z" />'],
+    IconDensityNormal: ["0.1 0.1 13.8 13.8", '<path d="M1 2.1L13 2.1A0.9 0.9 0 0 1 13 3.9L1 3.9A0.9 0.9 0 0 1 1 2.1ZM1 6.1L13 6.1A0.9 0.9 0 0 1 13 7.9L1 7.9A0.9 0.9 0 0 1 1 6.1ZM1 10.1L13 10.1A0.9 0.9 0 0 1 13 11.9L1 11.9A0.9 0.9 0 0 1 1 10.1Z" />'],
+    IconDensityAiry: ["0.1 0.1 13.8 13.8", '<path d="M1 2.6L13 2.6A0.9 0.9 0 0 1 13 4.4L1 4.4A0.9 0.9 0 0 1 1 2.6ZM1 9.6L13 9.6A0.9 0.9 0 0 1 13 11.4L1 11.4A0.9 0.9 0 0 1 1 9.6Z" />'],
+    IconSizeSmall: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M5.4 4H8.6A1.4 1.4 0 0 1 10 5.4V8.6A1.4 1.4 0 0 1 8.6 10H5.4A1.4 1.4 0 0 1 4 8.6V5.4A1.4 1.4 0 0 1 5.4 4Z" />'],
+    IconSizeMedium: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M4.3 2.5H9.7A1.8 1.8 0 0 1 11.5 4.3V9.7A1.8 1.8 0 0 1 9.7 11.5H4.3A1.8 1.8 0 0 1 2.5 9.7V4.3A1.8 1.8 0 0 1 4.3 2.5Z" />'],
+    IconSizeLarge: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M3.2 1H10.8A2.2 2.2 0 0 1 13 3.2V10.8A2.2 2.2 0 0 1 10.8 13H3.2A2.2 2.2 0 0 1 1 10.8V3.2A2.2 2.2 0 0 1 3.2 1Z" />'],
+    IconTintAuto: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M7 0C7.6 4.6 9.4 6.4 14 7C9.4 7.6 7.6 9.4 7 14C6.4 9.4 4.6 7.6 0 7C4.6 6.4 6.4 4.6 7 0Z" />'],
+    IconTintNative: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M2 1H12A2 2 0 0 1 14 3V11A2 2 0 0 1 12 13H2A2 2 0 0 1 0 11V3A2 2 0 0 1 2 1ZM2.3 2.5A0.8 0.8 0 0 0 1.5 3.3V10.7A0.8 0.8 0 0 0 2.3 11.5H11.7A0.8 0.8 0 0 0 12.5 10.7V3.3A0.8 0.8 0 0 0 11.7 2.5ZM1.5 11.5L5.4 6.4L8.1 9.3L9.6 7.9L12.5 11.5ZM8.2 5A1.4 1.4 0 1 1 11 5A1.4 1.4 0 1 1 8.2 5Z" />'],
+    IconTintFlatten: ["0.3 0.199 13.401 13.401", '<path d="M4.8 2.4A2.2 2.2 0 1 1 9.2 2.4A2.2 2.2 0 1 1 4.8 2.4ZM6.1 3.6H7.9A0.5 0.5 0 0 1 8.4 4.1V7.5A0.5 0.5 0 0 1 7.9 8H6.1A0.5 0.5 0 0 1 5.6 7.5V4.1A0.5 0.5 0 0 1 6.1 3.6ZM2.7 7H11.3A1.2 1.2 0 0 1 12.5 8.2V9.4A1.2 1.2 0 0 1 11.3 10.6H2.7A1.2 1.2 0 0 1 1.5 9.4V8.2A1.2 1.2 0 0 1 2.7 7ZM1.6 11.4H12.4A1.1 1.1 0 0 1 13.5 12.5V12.5A1.1 1.1 0 0 1 12.4 13.6H1.6A1.1 1.1 0 0 1 0.5 12.5V12.5A1.1 1.1 0 0 1 1.6 11.4Z" />'],
+    IconTintLuminance: ["0.3 0.6 13.4 13.4", '<path fill-rule="evenodd" clip-rule="evenodd" d="M7 0.6C7 0.6 12 6.203 12 9A5 5 0 0 1 2 9C2 6.203 7 0.6 7 0.6ZM7 3.12C7 3.12 10.5 7.042 10.5 9A3.5 3.5 0 0 1 3.5 9C3.5 7.042 7 3.12 7 3.12ZM7 3.12C7 3.12 3.5 7.042 3.5 9A3.5 3.5 0 0 0 7 12.5Z" />'],
+    IconTempLow: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M4.25 2.75A2.75 2.75 0 0 1 9.75 2.75V8.335A3.5 3.5 0 1 1 4.25 8.335ZM5.75 8.6V2.75A1.25 1.25 0 0 1 8.25 2.75V8.6Z" />'],
+    IconTempMid: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M4.25 2.75A2.75 2.75 0 0 1 9.75 2.75V8.335A3.5 3.5 0 1 1 4.25 8.335ZM5.75 5.6V2.75A1.25 1.25 0 0 1 8.25 2.75V5.6Z" />'],
+    IconTempHigh: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M4.25 2.75A2.75 2.75 0 0 1 9.75 2.75V8.335A3.5 3.5 0 1 1 4.25 8.335Z" />'],
+    IconCustomValue: ["0 0 14 14", '<path fill-rule="evenodd" clip-rule="evenodd" d="M2 2.5H12A2 2 0 0 1 14 4.5V9.5A2 2 0 0 1 12 11.5H2A2 2 0 0 1 0 9.5V4.5A2 2 0 0 1 2 2.5ZM2.3 4A0.8 0.8 0 0 0 1.5 4.8V9.2A0.8 0.8 0 0 0 2.3 10H11.7A0.8 0.8 0 0 0 12.5 9.2V4.8A0.8 0.8 0 0 0 11.7 4ZM4.4 5.1H4.4A0.8 0.8 0 0 1 5.2 5.9V8.1A0.8 0.8 0 0 1 4.4 8.9H4.4A0.8 0.8 0 0 1 3.6 8.1V5.9A0.8 0.8 0 0 1 4.4 5.1Z" />'],
+    IconViewList: ["0.5 0.5 13 13", '<path d="M1.3 0.5H2.7A0.8 0.8 0 0 1 3.5 1.3V2.7A0.8 0.8 0 0 1 2.7 3.5H1.3A0.8 0.8 0 0 1 0.5 2.7V1.3A0.8 0.8 0 0 1 1.3 0.5ZM6 0.9L12.4 0.9A1.1 1.1 0 0 1 12.4 3.1L6 3.1A1.1 1.1 0 0 1 6 0.9ZM1.3 5.5H2.7A0.8 0.8 0 0 1 3.5 6.3V7.7A0.8 0.8 0 0 1 2.7 8.5H1.3A0.8 0.8 0 0 1 0.5 7.7V6.3A0.8 0.8 0 0 1 1.3 5.5ZM6 5.9L12.4 5.9A1.1 1.1 0 0 1 12.4 8.1L6 8.1A1.1 1.1 0 0 1 6 5.9ZM1.3 10.5H2.7A0.8 0.8 0 0 1 3.5 11.3V12.7A0.8 0.8 0 0 1 2.7 13.5H1.3A0.8 0.8 0 0 1 0.5 12.7V11.3A0.8 0.8 0 0 1 1.3 10.5ZM6 10.9L12.4 10.9A1.1 1.1 0 0 1 12.4 13.1L6 13.1A1.1 1.1 0 0 1 6 10.9Z" />'],
+    IconViewGrid: ["0 0 14 14", '<path d="M1.5 0H4.5A1.5 1.5 0 0 1 6 1.5V4.5A1.5 1.5 0 0 1 4.5 6H1.5A1.5 1.5 0 0 1 0 4.5V1.5A1.5 1.5 0 0 1 1.5 0ZM9.5 0H12.5A1.5 1.5 0 0 1 14 1.5V4.5A1.5 1.5 0 0 1 12.5 6H9.5A1.5 1.5 0 0 1 8 4.5V1.5A1.5 1.5 0 0 1 9.5 0ZM1.5 8H4.5A1.5 1.5 0 0 1 6 9.5V12.5A1.5 1.5 0 0 1 4.5 14H1.5A1.5 1.5 0 0 1 0 12.5V9.5A1.5 1.5 0 0 1 1.5 8ZM9.5 8H12.5A1.5 1.5 0 0 1 14 9.5V12.5A1.5 1.5 0 0 1 12.5 14H9.5A1.5 1.5 0 0 1 8 12.5V9.5A1.5 1.5 0 0 1 9.5 8Z" />'],
+    IconFolder: ["0 0 14 14", '<path d="M6.12675 0.805269c-0.2708 -0.205804 -0.60343 -0.313418 -0.9433 -0.305333H1.5c-0.39782 0 -0.779356 0.158035 -1.06066 0.43934C0.158035 1.22058 0 1.60211 0 1.99994v9.99996c0 0.3979 0.158035 0.7794 0.43934 1.0607 0.281304 0.2813 0.66283 0.4393 1.06066 0.4393h11c0.3978 0 0.7794 -0.158 1.0607 -0.4393S14 12.3978 14 11.9999V3.99994c0 -0.39783 -0.158 -0.77936 -0.4393 -1.06066 -0.2813 -0.28131 -0.6629 -0.43934 -1.0607 -0.43934H6.89039l-0.21495 -0.85979c-0.08224 -0.33249 -0.27599 -0.62762 -0.54869 -0.834881Z"></path>'],
+    IconWeightThin: ["1 1 12 12", '<path d="M7.556 1.826L3.156 12.626A0.6 0.6 0 0 1 2.044 12.174L6.444 1.374A0.6 0.6 0 0 1 7.556 1.826ZM7.556 1.374L11.956 12.174A0.6 0.6 0 0 1 10.844 12.626L6.444 1.826A0.6 0.6 0 0 1 7.556 1.374ZM3.944 8.5L10.056 8.5A0.6 0.6 0 0 1 10.056 9.7L3.944 9.7A0.6 0.6 0 0 1 3.944 8.5Z" />'],
+    IconWeightRegular: ["0.76 0.759 12.482 12.482", '<path d="M7.787 1.921L3.387 12.721A0.85 0.85 0 0 1 1.813 12.079L6.213 1.279A0.85 0.85 0 0 1 7.787 1.921ZM7.787 1.279L12.187 12.079A0.85 0.85 0 0 1 10.613 12.721L6.213 1.921A0.85 0.85 0 0 1 7.787 1.279ZM3.944 8.25L10.056 8.25A0.85 0.85 0 0 1 10.056 9.95L3.944 9.95A0.85 0.85 0 0 1 3.944 8.25Z" />'],
+    IconWeightMedium: ["0.5 0.5 13 13", '<path d="M8.019 2.015L3.619 12.815A1.1 1.1 0 0 1 1.581 11.985L5.981 1.185A1.1 1.1 0 0 1 8.019 2.015ZM8.019 1.185L12.419 11.985A1.1 1.1 0 0 1 10.381 12.815L5.981 2.015A1.1 1.1 0 0 1 8.019 1.185ZM3.944 8L10.056 8A1.1 1.1 0 0 1 10.056 10.2L3.944 10.2A1.1 1.1 0 0 1 3.944 8Z" />'],
+    IconWeightSemibold: ["0.277 0.278 13.444 13.444", '<path d="M8.25 2.109L3.85 12.909A1.35 1.35 0 0 1 1.35 11.891L5.75 1.091A1.35 1.35 0 0 1 8.25 2.109ZM8.25 1.091L12.65 11.891A1.35 1.35 0 0 1 10.15 12.909L5.75 2.109A1.35 1.35 0 0 1 8.25 1.091ZM3.944 7.75L10.056 7.75A1.35 1.35 0 0 1 10.056 10.45L3.944 10.45A1.35 1.35 0 0 1 3.944 7.75Z" />'],
+    IconWeightBold: ["0 0 14.001 14.001", '<path d="M8.482 2.204L4.082 13.004A1.6 1.6 0 0 1 1.118 11.796L5.518 0.996A1.6 1.6 0 0 1 8.482 2.204ZM8.482 0.996L12.882 11.796A1.6 1.6 0 0 1 9.918 13.004L5.518 2.204A1.6 1.6 0 0 1 8.482 0.996ZM3.944 7.5L10.056 7.5A1.6 1.6 0 0 1 10.056 10.7L3.944 10.7A1.6 1.6 0 0 1 3.944 7.5Z" />'],
+    IconUpright: ["0.9 0.9 12.2 12.2", '<path d="M8.1 2L8.1 12A1.1 1.1 0 0 1 5.9 12L5.9 2A1.1 1.1 0 0 1 8.1 2ZM4 0.9L10 0.9A1.1 1.1 0 0 1 10 3.1L4 3.1A1.1 1.1 0 0 1 4 0.9ZM4 10.9L10 10.9A1.1 1.1 0 0 1 10 13.1L4 13.1A1.1 1.1 0 0 1 4 10.9Z" />'],
+    IconItalic: ["0.899 0.9 12.2 12.2", '<path d="M9.648 2.335L6.448 12.335A1.1 1.1 0 0 1 4.352 11.665L7.552 1.665A1.1 1.1 0 0 1 9.648 2.335ZM5.6 0.9L11.6 0.9A1.1 1.1 0 0 1 11.6 3.1L5.6 3.1A1.1 1.1 0 0 1 5.6 0.9ZM2.4 10.9L8.4 10.9A1.1 1.1 0 0 1 8.4 13.1L2.4 13.1A1.1 1.1 0 0 1 2.4 10.9Z" />']
   };
   function segGlyph(name) {
-    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    var g = SEG_GLYPHS[name], svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("class", "cc-seg-ico"); svg.setAttribute("aria-hidden", "true");
-    svg.setAttribute("viewBox", "0 0 16 16"); svg.setAttribute("fill", "currentColor");
-    svg.innerHTML = SEG_GLYPHS[name];
+    svg.setAttribute("viewBox", g[0]); svg.setAttribute("fill", "currentColor");
+    svg.innerHTML = g[1];
     return svg;
   }
   // The start tab, the header and the shares stay off until switched on, as their scripts read
@@ -1169,7 +1170,7 @@
     applyAnim();
     if (themingCard) {
       themingCard.appendChild(segRow(T("Bewegung", "Motion"),
-        [["off", T("Aus", "Off"), "motion-off"], ["subtle", T("Dezent", "Subtle"), "motion-subtle"], ["wild", T("Wild", "Wild"), "motion-wild"]],
+        [["off", T("Aus", "Off"), "IconMotionOff"], ["subtle", T("Dezent", "Subtle"), "IconMotionSubtle"], ["wild", T("Wild", "Wild"), "IconMotionWild"]],
         motionLevel(get("cc.anim", "subtle")),
         function (v) { set("cc.anim", v); applyAnim(); },
         T("Aus: nichts bewegt sich. Dezent: kurze Übergänge und Einblendungen. Wild: kräftigere Effekte, etwa Hauptleisten-Tabs, die beim Überfahren hüpfen. Wenn im System „Bewegung reduzieren“ an ist, gilt das bei jeder Stufe.", "Off: nothing moves. Subtle: short transitions and fades. Wild: stronger effects, such as main-bar tabs that hop on hover. If the system is set to reduce motion, that wins at every level."),
@@ -1308,8 +1309,8 @@
     var c1 = card(T("Badges", "Badges"), T("Akzentfarbe und Farbmodus der Badges.", "Accent colour and colour mode of the badges."));
     // One colour mode at a time, and below the selector only the controls of the chosen one.
     var mode = colorMode();
-    var modes = [["accent", T("Akzent", "Accent"), "colour-accent"], ["rainbow", T("Regenbogen", "Rainbow"), "colour-rainbow"]];
-    if (window.CC_FLAGS && window.CC_FLAGS.length) modes.push(["flag", T("Flagge", "Flag"), "colour-flag"]);
+    var modes = [["accent", T("Akzent", "Accent"), "IconAccent"], ["rainbow", T("Regenbogen", "Rainbow"), "IconRainbow"]];
+    if (window.CC_FLAGS && window.CC_FLAGS.length) modes.push(["flag", T("Flagge", "Flag"), "IconFlag"]);
     var modeRow = el("div", "cc-set-row cc-set-inline");
     var modeLbl = el("span", "cc-set-lblwrap");
     modeLbl.appendChild(el("span", null, T("Farbmodus", "Colour mode")));
@@ -1467,10 +1468,10 @@
       }
     }
     // GlimStone's three shapes, in its order. A name stored before them shows as the shape it reads as.
-    themingCard.appendChild(segRow(T("Form", "Shape"), [["round", T("Rund", "Round"), "shape-round"], ["soft", T("Weich", "Soft"), "shape-soft"], ["square", T("Eckig", "Square"), "shape-square"]], shapeName(get("cc.badgeshape", "round")), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); },
+    themingCard.appendChild(segRow(T("Form", "Shape"), [["round", T("Rund", "Round"), "IconCornerRound"], ["soft", T("Weich", "Soft"), "IconCornerSoft"], ["square", T("Eckig", "Square"), "IconCornerSquare"]], shapeName(get("cc.badgeshape", "round")), function (v) { set("cc.badgeshape", v); applyShape(); syncHeaderBar(); syncSharesBar(); },
       T("Karten, Felder und Knöpfe ändern ihre Ecken gemeinsam.", "Cards, fields and buttons change their corners together.")));
     // One global badge style: glass adds a sheen to every badge at once, flat is the solid look.
-    themingCard.appendChild(segRow(T("Badge-Stil", "Badge style"), [["flat", "Flat", "badge-flat"], ["glass", "Glass", "badge-glass"]], get("cc.badgeglass", "0") === "1" ? "glass" : "flat", function (v) { set("cc.badgeglass", v === "glass" ? "1" : "0"); document.documentElement.classList.toggle("cc-badge-glass", v === "glass" && get("cc.theming", "1") !== "0"); syncHeaderBar(); syncSharesBar(); },
+    themingCard.appendChild(segRow(T("Badge-Stil", "Badge style"), [["flat", "Flat", "IconBadgeFlat"], ["glass", "Glass", "IconBadgeGlass"]], get("cc.badgeglass", "0") === "1" ? "glass" : "flat", function (v) { set("cc.badgeglass", v === "glass" ? "1" : "0"); document.documentElement.classList.toggle("cc-badge-glass", v === "glass" && get("cc.theming", "1") !== "0"); syncHeaderBar(); syncSharesBar(); },
       T("Flat: einfarbige Badges. Glass: ein Glanz auf jedem Badge.", "Flat: solid badges. Glass: a sheen on every badge.")));
     // The reactive toggle covers every colour mode: everything rests grey, colours on hover, and
     // the active item stays lit.
@@ -1545,7 +1546,7 @@
     paintExceptions();
     // Density and tile size are each one key every list reads, so they sit here with the other
     // global controls rather than being repeated per tab.
-    if (themingCard) themingCard.appendChild(segRow(T("Dichte", "Density"), [["compact", T("Kompakt", "Compact"), "density-compact"], ["normal", "Normal", "density-normal"], ["airy", T("Luftig", "Airy"), "density-airy"]], density, function (v) { density = v; set("cc.density", v); }, T("Gilt global für alle Listen: Docker, Start, Freigaben und VMs.", "Applies globally to every list: Docker, Start, Shares and VMs."), true));
+    if (themingCard) themingCard.appendChild(segRow(T("Dichte", "Density"), [["compact", T("Kompakt", "Compact"), "IconDensityCompact"], ["normal", "Normal", "IconDensityNormal"], ["airy", T("Luftig", "Airy"), "IconDensityAiry"]], density, function (v) { density = v; set("cc.density", v); }, T("Gilt global für alle Listen: Docker, Start, Freigaben und VMs.", "Applies globally to every list: Docker, Start, Shares and VMs."), true));
     if (themingCard) themingCard.appendChild(tileSizeRow());
     // The global logos card edits the shared icon keys every adopting tab resolves through eff().
     // It carries the same controls as a per-area card and the same preview: this is where the icon
@@ -1590,7 +1591,7 @@
       // The default is "auto"; the other three are manual overrides and are respected even
       // where the automatic choice would have picked differently.
       var modeRow = segRow(T("Icon-Färbung", "Icon colouring"),
-        [["auto", T("Automatisch", "Automatic"), "icon-auto"], ["native", T("Natives Icon", "Native icon"), "icon-native"], ["flat", T("Ink-Flatten", "Ink flatten"), "icon-flat"], ["tint", T("Luminanz-Tint", "Luminance tint"), "icon-tint"]],
+        [["auto", T("Automatisch", "Automatic"), "IconTintAuto"], ["native", T("Natives Icon", "Native icon"), "IconTintNative"], ["flat", T("Ink-Flatten", "Ink flatten"), "IconTintFlatten"], ["tint", T("Luminanz-Tint", "Luminance tint"), "IconTintLuminance"]],
         get("cc.iconmode", "auto"),
         function (v) { set("cc.iconmode", v); gsync(); },
         T("Ein Logo ist entweder eine einzelne durchgehende Form oder ein kleines mehrfarbiges Bild. Eine Form kann man komplett in deiner Farbe nachzeichnen und sie bleibt erkennbar; ein Bild würde dabei zum Farbklecks, weil Hintergrund und Motiv dieselbe Farbe bekämen. Darum zwei Behandlungen:\n\nAutomatisch (empfohlen): CannonadeCommand sieht sich jedes Logo an. Formen werden nachgezeichnet, für bekannte Programme wird dafür sogar ein echtes Marken-Logo geholt; Bilder werden nur eingefärbt.\nNatives Icon: nichts einfärben, jedes Logo bleibt wie geliefert.\nInk-Flatten: alles nachzeichnen, auch Bilder.\nLuminanz-Tint: alles nur einfärben, auch Formen.\n\nDie Wahl wirkt, sobald „Icons einfärben“ an ist. Einzelne Container, VMs und Plugins kannst du in ihrem eigenen Fenster abweichend einstellen; diese Einzelwahl gewinnt immer gegen die Einstellung hier.",
@@ -1669,7 +1670,7 @@
     // card keeps the preview, which sizePrev() resizes whenever that control changes.
     function tileSizeRow() {
       // the tip goes through `help`, so the icon lands inside the label as it does on every row
-      return segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small"), "size-s"], ["m", T("Mittel", "Medium"), "size-m"], ["l", T("Groß", "Large"), "size-l"]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); try { sizePrev(); } catch (e) {} }, T("Gilt global: dieselbe Größe steuert das Einstellungen- und Werkzeuge-Raster und die Docker- und Plugin-Logos.", "Global: the same size drives the Settings and Tools grid and the Docker and Plugin logos."));
+      return segRow(T("Kachelgröße", "Tile size"), [["s", T("Klein", "Small"), "IconSizeSmall"], ["m", T("Mittel", "Medium"), "IconSizeMedium"], ["l", T("Groß", "Large"), "IconSizeLarge"]], get("cc.sgsize", "m"), function (v) { set("cc.sgsize", v); try { sizePrev(); } catch (e) {} }, T("Gilt global: dieselbe Größe steuert das Einstellungen- und Werkzeuge-Raster und die Docker- und Plugin-Logos.", "Global: the same size drives the Settings and Tools grid and the Docker and Plugin logos."));
     }
     c2.appendChild(el("div", "cc-set-lbl", T("Vorschau", "Preview")));
     var dockPrev = logoPreview("docker", "cc-set-dockprev");
@@ -2011,8 +2012,8 @@
       nmRow.appendChild(nmL); nmRow.appendChild(nmIn); cB.appendChild(nmRow);
       var SZ = ["16", "18", "20", "22", "24", "26", "28", "30", "32", "36", "40", "44", "48", "56", "64"].map(function (s) { return [s, s + " px"]; });
       cB.appendChild(dropRow(T("Größe", "Size"), SZ, get("cc.brand.size", "30"), function (v) { set("cc.brand.size", v); syncHeaderBar(); }));
-      cB.appendChild(dropRow(T("Stärke", "Weight"), [["300", T("Dünn", "Thin"), "weight-thin"], ["400", "Normal", "weight-normal"], ["500", "Medium", "weight-medium"], ["650", T("Halbfett", "Semibold"), "weight-semibold"], ["800", T("Fett", "Bold"), "weight-bold"]], get("cc.brand.weight", "650"), function (v) { set("cc.brand.weight", v); syncHeaderBar(); }));
-      cB.appendChild(dropRow(T("Kursiv", "Italic"), [["0", T("Normal", "Normal"), "italic-off"], ["1", T("Kursiv", "Italic"), "italic-on"]], get("cc.brand.italic", "0"), function (v) { set("cc.brand.italic", v); syncHeaderBar(); }));
+      cB.appendChild(dropRow(T("Stärke", "Weight"), [["300", T("Dünn", "Thin"), "IconWeightThin"], ["400", "Normal", "IconWeightRegular"], ["500", "Medium", "IconWeightMedium"], ["650", T("Halbfett", "Semibold"), "IconWeightSemibold"], ["800", T("Fett", "Bold"), "IconWeightBold"]], get("cc.brand.weight", "650"), function (v) { set("cc.brand.weight", v); syncHeaderBar(); }));
+      cB.appendChild(dropRow(T("Kursiv", "Italic"), [["0", T("Normal", "Normal"), "IconUpright"], ["1", T("Kursiv", "Italic"), "IconItalic"]], get("cc.brand.italic", "0"), function (v) { set("cc.brand.italic", v); syncHeaderBar(); }));
       // System faces, which render where the client has them. The Google families below are
       // downloaded, so they render anywhere.
       var SYS = [
@@ -2569,8 +2570,8 @@
     var slot = el("div", "cc-set-viewslot"); c.appendChild(slot);
     function draw(org) {
       var folders = !!org && org.flatEntries.filter(function (e) { return e.type === "folder" || e.type === "group"; }).length > 1;
-      var opts = [["list", T("Liste", "List"), "view-list"], ["grid", T("Raster", "Grid"), "view-grid"]];
-      if (folders) opts.push(["folder", T("Ordner", "Folders"), "view-folder"]);
+      var opts = [["list", T("Liste", "List"), "IconViewList"], ["grid", T("Raster", "Grid"), "IconViewGrid"]];
+      if (folders) opts.push(["folder", T("Ordner", "Folders"), "IconFolder"]);
       var cur = (org && org.prefs && org.prefs.ccViewMode) || get("cc.view", "list");
       if (!opts.some(function (o) { return o[0] === cur; })) cur = "list";
       slot.innerHTML = "";
@@ -2600,7 +2601,7 @@
   var TEMP_MIN = 30, TEMP_MAX = 110;
   function tempWarnValid(v) { return /^\d{2,3}$/.test(String(v).trim()) && +v >= TEMP_MIN && +v <= TEMP_MAX; }
   function tempWarnRow(onChange) {
-    var presets = [["50", "50 °C", "temp-low"], ["60", "60 °C", "temp-mid"], ["70", "70 °C", "temp-high"]];
+    var presets = [["50", "50 °C", "IconTempLow"], ["60", "60 °C", "IconTempMid"], ["70", "70 °C", "IconTempHigh"]];
     var stored = function () { return get("cc.tempwarn", "60"); };
     var isPreset = function (v) { return presets.some(function (p) { return p[0] === v; }); };
     var field = el("span", "cc-set-numwrap"), num = el("input", "cc-set-txt cc-set-num");
@@ -2609,7 +2610,7 @@
     field.appendChild(num); field.appendChild(el("span", "cc-set-unit", "°C"));
     field.hidden = isPreset(stored());
     num.value = stored();
-    var row = dropRow(T("Temperatur-Warnschwelle", "Temperature warning threshold"), presets.concat([["custom", T("Eigene", "Custom"), "temp-custom"]]), field.hidden ? stored() : "custom", function (v) {
+    var row = dropRow(T("Temperatur-Warnschwelle", "Temperature warning threshold"), presets.concat([["custom", T("Eigene", "Custom"), "IconCustomValue"]]), field.hidden ? stored() : "custom", function (v) {
       field.hidden = v !== "custom";
       if (v === "custom") { num.value = stored(); num.focus(); num.select(); return; }
       set("cc.tempwarn", v); onChange();
